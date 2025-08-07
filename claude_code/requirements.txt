@@ -1,0 +1,10 @@
+agency-swarm
+pydantic>=2.0.0
+requests>=2.25.0
+subprocess32; python_version < '3'
+glob2>=0.7
+jupyter>=1.0.0
+nbformat>=5.0.0
+beautifulsoup4>=4.9.0
+markdown>=3.3.0
+html2text>=2020.1.16
