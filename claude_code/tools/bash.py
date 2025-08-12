@@ -125,10 +125,11 @@ class Bash(BaseTool):
         description="The command to execute"
     )
     
-    timeout: Optional[int] = Field(
-        None,
-        description="Optional timeout in milliseconds (max 600000)",
-        le=600000
+    timeout: int = Field(
+        120000,
+        description="Optional timeout in milliseconds (max 600000, min 5000)",
+        ge=5000,
+        le=600000,
     )
     
     description: Optional[str] = Field(
@@ -149,23 +150,32 @@ class Bash(BaseTool):
                 capture_output=True,
                 text=True,
                 timeout=timeout_seconds,
-                cwd=os.getcwd()
+                cwd=os.getcwd(),
             )
-            
-            # Combine stdout and stderr
-            output = result.stdout
-            if result.stderr:
-                output += f"\n{result.stderr}"
-            
+
+            stdout = result.stdout or ""
+            stderr = result.stderr or ""
+
+            combined = []
+            combined.append(f"Exit code: {result.returncode}")
+            if stdout:
+                combined.append("--- STDOUT ---")
+                combined.append(stdout.rstrip())
+            if stderr:
+                combined.append("--- STDERR ---")
+                combined.append(stderr.rstrip())
+
+            output = "\n".join(combined).strip()
+
             # Truncate output if too long
             if len(output) > 30000:
-                output = output[:30000] + "\n... (output truncated)"
-            
+                output = output[:30000] + "\n... (output truncated to 30000 characters)"
+
             # Return output or indicate success if no output
-            return output if output.strip() else "Command executed successfully (no output)"
+            return output if output else "Exit code: 0\nCommand executed successfully (no output)"
             
         except subprocess.TimeoutExpired:
-            return f"Command timed out after {timeout_seconds} seconds"
+            return f"Exit code: 124\nError: Command timed out after {timeout_seconds} seconds"
         except Exception as e:
             return f"Error executing command: {str(e)}"
 

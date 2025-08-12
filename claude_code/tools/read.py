@@ -38,7 +38,7 @@ class Read(BaseTool):
             # Check if it's an image file (basic check)
             mime_type, _ = mimetypes.guess_type(self.file_path)
             if mime_type and mime_type.startswith('image/'):
-                return f"[IMAGE FILE: {self.file_path}]\\nThis is an image file ({mime_type}). In a multimodal environment, the image content would be displayed visually."
+                return f"[IMAGE FILE: {self.file_path}]\nThis is an image file ({mime_type}). In a multimodal environment, the image content would be displayed visually."
             
             # Check if it's a Jupyter notebook
             if self.file_path.endswith('.ipynb'):
@@ -72,14 +72,14 @@ class Read(BaseTool):
                 selected_lines = lines[start_line:start_line + 2000]
             
             # Format output with line numbers (cat -n style)
-            result = ""
+            result_lines = []
             for i, line in enumerate(selected_lines, start=start_line + 1):
                 # Truncate lines longer than 2000 characters
                 if len(line) > 2000:
-                    line = line[:1997] + "...\\n"
-                
-                # Format with line number (spaces + line number + tab)
-                result += f"    {i}→{line}"
+                    line = line[:1997] + "...\n"
+                # cat -n style: right-aligned 6-width line number, tab, then content
+                result_lines.append(f"{i:>6}\t{line.rstrip()}\n")
+            result = "".join(result_lines)
             
             # Add metadata about truncation
             total_lines = len(lines)
@@ -87,9 +87,9 @@ class Read(BaseTool):
             
             if lines_shown < total_lines:
                 if self.offset or self.limit:
-                    result += f"\\n[Showing lines {start_line + 1}-{start_line + lines_shown} of {total_lines} total lines]"
+                    result += f"\n[Truncated: showing lines {start_line + 1}-{start_line + lines_shown} of {total_lines} total lines]"
                 else:
-                    result += f"\\n[Showing first {lines_shown} of {total_lines} total lines]"
+                    result += f"\n[Truncated: showing first {lines_shown} of {total_lines} total lines]"
             
             return result.rstrip()
             
@@ -113,6 +113,6 @@ if __name__ == "__main__":
     
     # Test with offset
     tool2 = Read(file_path=current_file, offset=20, limit=5)
-    print("\\n" + "="*50 + "\\n")
+    print("\n" + "="*50 + "\n")
     print("Reading 5 lines starting from line 20:")
     print(tool2.run())
