@@ -1,0 +1,57 @@
+---
+description: AI changelog for the project in chronological order
+alwaysApply: false
+---
+
+# Entry Template
+
+- Agent: <AgentName>
+- Date: YYYY-MM-DD
+- Affected directories: `<dir1>`, `<dir2>`, ...
+- Summary of changes:
+  - <high-level bullet>
+  - <high-level bullet>
+
+# Changelog
+
+## 2025-01-01 by Claude
+
+- Agent: Claude
+- Date: 2025-01-01
+- Affected directories: `tests/`, `requirements.txt`, `run_tests.py`
+- Summary of changes:
+  - **Complete pytest migration**: Refactored all tests from unittest to pytest framework (28/30 tests passing - 93.3% success rate)
+  - **File conversions**:
+    - `tests/test_sample.py`: Converted from unittest.TestCase to simple pytest functions
+    - `tests/test_agency.py`: Refactored with pytest fixtures, pytest-asyncio decorators, and proper async patterns
+    - `tests/debug_tool_test.py`: Converted to pytest with async support and agency fixture
+    - `tests/tool_integration_test.py`: Refactored to pytest format with agent fixture
+  - **Dependencies**: Added `pytest>=6.0.0` and `pytest-asyncio>=0.21.0` to requirements.txt
+  - **Test runner**: Created comprehensive `run_tests.py` with:
+    - Automatic dependency installation
+    - Colored output and detailed reporting
+    - Error handling and troubleshooting guidance
+    - Support for running specific tests
+    - Proper exit codes for CI/CD integration
+  - **Test improvements**:
+    - Implemented proper async test patterns with `@pytest.mark.asyncio` decorators
+    - Added `@pytest.mark.skipif` decorators for tests requiring OPENAI_API_KEY
+    - Created reusable fixtures for agency and agent instances
+    - Fixed tool parameter validation and direct tool invocation tests
+    - Improved error detection patterns in agency tests (specific error patterns vs general "error" word)
+  - **Test results**: All core tool tests (100%), tool integration tests (100%), and most agency tests (4/6) now passing
+  - **Task management**: Used TODO tracking throughout development to ensure comprehensive completion
+
+## 2025-08-12 by Cursor
+
+- Agent: Cursor
+- Date: 2025-08-12
+- Affected directories: `tests/`, `claude_code/tools/`, `claude_code/`, `.cursor/rules/`
+- Summary of changes:
+  - Organized tests into `tests/` and fixed imports/paths
+  - Added dedicated tests for Bash, Read, Edit, Grep, Glob, TodoWrite
+  - Bash: aligned default timeout; added exit code and stdout/stderr sections
+  - Read: switched to true cat -n numbering; explicit truncation footer
+  - Edit: success preview and clearer multi-occurrence error previews
+  - Grep: `--color=never`, clear exit-code handling, optional timeout
+  - TodoWrite: removed emojis; file-based persistence only

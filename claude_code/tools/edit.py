@@ -51,7 +51,23 @@ class Edit(BaseTool):
             
             # If there are multiple occurrences and replace_all is False, require uniqueness
             if occurrences > 1 and not self.replace_all:
-                return f"Error: String appears {occurrences} times in file. Either provide a larger string with more surrounding context to make it unique or use replace_all=True to change every instance."
+                # Build a preview of first two matches
+                previews = []
+                start_idx = 0
+                for _ in range(2):
+                    idx = content.find(self.old_string, start_idx)
+                    if idx == -1:
+                        break
+                    a = max(0, idx - 30)
+                    b = min(len(content), idx + len(self.old_string) + 30)
+                    previews.append("..." + content[a:b] + "...")
+                    start_idx = idx + len(self.old_string)
+                preview_block = "\n".join(previews)
+                return (
+                    f"Error: String appears {occurrences} times in file. Either provide a larger string with more "
+                    f"surrounding context to make it unique or use replace_all=True to change every instance.\n"
+                    f"First matches:\n{preview_block}"
+                )
             
             # Perform the replacement
             if self.replace_all:
@@ -66,8 +82,41 @@ class Edit(BaseTool):
             try:
                 with open(self.file_path, 'w', encoding='utf-8') as file:
                     file.write(new_content)
-                
-                return f"Successfully replaced {replacement_count} occurrence(s) in {self.file_path}"
+
+                # Create a short diff-like preview snippet (first and last replacement context)
+                preview_lines = []
+                old_preview_indices = []
+                start_idx = 0
+                while True:
+                    idx = content.find(self.old_string, start_idx)
+                    if idx == -1:
+                        break
+                    old_preview_indices.append(idx)
+                    start_idx = idx + len(self.old_string)
+                    if not self.replace_all and len(old_preview_indices) >= 1:
+                        break
+
+                def make_context(src: str, idx: int, needle: str, repl: str) -> str:
+                    a = max(0, idx - 30)
+                    b = min(len(src), idx + len(needle) + 30)
+                    before = src[a:idx]
+                    after = src[idx + len(needle):b]
+                    return f"...{before}[{needle}->{repl}]{after}..."
+
+                if old_preview_indices:
+                    first_idx = old_preview_indices[0]
+                    preview_lines.append(make_context(content, first_idx, self.old_string, self.new_string))
+                    if self.replace_all and len(old_preview_indices) > 1:
+                        last_idx = old_preview_indices[-1]
+                        if last_idx != first_idx:
+                            preview_lines.append(make_context(content, last_idx, self.old_string, self.new_string))
+
+                preview = "\n".join(preview_lines) if preview_lines else ""
+
+                msg = f"Successfully replaced {replacement_count} occurrence(s) in {self.file_path}"
+                if preview:
+                    msg += f"\nPreview:\n{preview}"
+                return msg
                 
             except PermissionError:
                 return f"Error: Permission denied writing to file: {self.file_path}"

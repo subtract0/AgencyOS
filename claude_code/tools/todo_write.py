@@ -79,18 +79,20 @@ class TodoWrite(BaseTool):
             # Add timestamp to todos
             current_time = datetime.now().isoformat()
             
-            # Convert todos to dict format for JSON storage
-            todo_data = {
-                "updated_at": current_time,
-                "todos": [todo.model_dump() for todo in self.todos]
-            }
+            # Convert todos to dict format
+            todos_payload = [todo.model_dump() for todo in self.todos]
+
+            # Persist only to JSON file in this version (no shared state/context)
             
-            # Save to file for persistence
+            # Save to file for persistence (best-effort)
             try:
+                todo_data = {
+                    "updated_at": current_time,
+                    "todos": todos_payload
+                }
                 with open(self._todo_list_file, 'w') as f:
                     json.dump(todo_data, f, indent=2)
-            except Exception as e:
-                # Non-critical error, continue with in-memory operation
+            except Exception:
                 pass
             
             # Format the response
@@ -99,8 +101,8 @@ class TodoWrite(BaseTool):
             in_progress_tasks = len([t for t in self.todos if t.status == "in_progress"])
             pending_tasks = len([t for t in self.todos if t.status == "pending"])
             
-            result = f"📝 Todo List Updated ({current_time[:19]})\\n\\n"
-            result += f"📊 Summary: {total_tasks} total tasks - {completed_tasks} completed, {in_progress_tasks} in progress, {pending_tasks} pending\\n\\n"
+            result = f"Todo List Updated ({current_time[:19]})\n\n"
+            result += f"Summary: {total_tasks} total tasks - {completed_tasks} completed, {in_progress_tasks} in progress, {pending_tasks} pending\n\n"
             
             # Group tasks by status
             status_groups = {
@@ -114,37 +116,34 @@ class TodoWrite(BaseTool):
             
             # Display in_progress tasks first
             if status_groups["in_progress"]:
-                result += "🚧 IN PROGRESS:\\n"
+                result += "IN PROGRESS:\n"
                 for todo in status_groups["in_progress"]:
-                    priority_icon = {"high": "🔴", "medium": "🟡", "low": "🟢"}[todo.priority]
-                    result += f"  {priority_icon} [{todo.id}] {todo.content}\\n"
-                result += "\\n"
+                    result += f"  [{todo.priority.upper()}] [{todo.id}] {todo.content}\n"
+                result += "\n"
             
             # Display pending tasks
             if status_groups["pending"]:
-                result += "⏳ PENDING:\\n"
+                result += "PENDING:\n"
                 for todo in status_groups["pending"]:
-                    priority_icon = {"high": "🔴", "medium": "🟡", "low": "🟢"}[todo.priority]
-                    result += f"  {priority_icon} [{todo.id}] {todo.content}\\n"
-                result += "\\n"
+                    result += f"  [{todo.priority.upper()}] [{todo.id}] {todo.content}\n"
+                result += "\n"
             
             # Display completed tasks (limit to last 5 to avoid clutter)
             if status_groups["completed"]:
                 completed_to_show = status_groups["completed"][-5:]  # Show last 5 completed
-                result += f"✅ COMPLETED (showing last {len(completed_to_show)}):\\n"
+                result += f"COMPLETED (showing last {len(completed_to_show)}):\n"
                 for todo in completed_to_show:
-                    priority_icon = {"high": "🔴", "medium": "🟡", "low": "🟢"}[todo.priority]
-                    result += f"  {priority_icon} [{todo.id}] {todo.content}\\n"
+                    result += f"  [{todo.priority.upper()}] [{todo.id}] {todo.content}\n"
                 
                 if len(status_groups["completed"]) > 5:
-                    result += f"  ... and {len(status_groups['completed']) - 5} more completed tasks\\n"
-                result += "\\n"
+                    result += f"  ... and {len(status_groups['completed']) - 5} more completed tasks\n"
+                result += "\n"
             
             # Add usage tips
-            result += "💡 Tips:\\n"
-            result += "  - Keep only ONE task 'in_progress' at a time\\n"
-            result += "  - Mark tasks 'completed' immediately after finishing\\n"
-            result += "  - Break complex tasks into smaller, actionable steps\\n"
+            result += "Tips:\n"
+            result += "  - Keep only ONE task 'in_progress' at a time\n"
+            result += "  - Mark tasks 'completed' immediately after finishing\n"
+            result += "  - Break complex tasks into smaller, actionable steps\n"
             
             return result.strip()
             
@@ -216,6 +215,6 @@ if __name__ == "__main__":
     
     invalid_tool = TodoWrite(todos=invalid_todos)
     invalid_result = invalid_tool.run()
-    print("\\n" + "="*70 + "\\n")
+    print("\n" + "="*70 + "\n")
     print("Validation test (multiple in_progress - should fail):")
     print(invalid_result)

@@ -30,6 +30,7 @@ class Grep(BaseTool):
     type: Optional[str] = Field(None, description="File type to search (rg --type). Common types: js, py, rust, go, java, etc. More efficient than include for standard file types.")
     head_limit: Optional[int] = Field(None, description="Limit output to first N lines/entries, equivalent to '| head -N'. Works across all output modes: content (limits output lines), files_with_matches (limits file paths), count (limits count entries). When unspecified, shows all results from ripgrep.")
     multiline: Optional[bool] = Field(False, description="Enable multiline mode where . matches newlines and patterns can span lines (rg -U --multiline-dotall). Default: false.")
+    timeout: Optional[int] = Field(30000, description="Timeout in milliseconds for the ripgrep command.")
     
     def run(self):
         try:
@@ -40,7 +41,7 @@ class Grep(BaseTool):
                 return "Error: ripgrep (rg) is not installed. Please install ripgrep first."
             
             # Build ripgrep command
-            cmd = ["rg"]
+            cmd = ["rg", "--color=never"]
             
             # Add case insensitive flag
             if getattr(self, "i", None):
@@ -88,34 +89,61 @@ class Grep(BaseTool):
             
             # Execute ripgrep
             try:
+                timeout_seconds = (self.timeout / 1000) if self.timeout else 30
                 result = subprocess.run(
                     cmd,
                     capture_output=True,
                     text=True,
-                    timeout=30,
-                    cwd=os.getcwd()
+                    timeout=timeout_seconds,
+                    cwd=os.getcwd(),
                 )
-                
-                output = result.stdout
-                
-                # Handle empty results
-                if not output and result.returncode != 0:
-                    if result.stderr:
-                        return f"Error: {result.stderr.strip()}"
-                    else:
-                        return f"No matches found for pattern: {self.pattern}"
-                
+
+                stdout = (result.stdout or "").rstrip()
+                stderr = (result.stderr or "").rstrip()
+
+                # Exit code handling: 1 means no matches, other non-zero means error
+                if result.returncode == 1 and not stdout:
+                    return f"Exit code: 1\nNo matches found for pattern: {self.pattern}"
+
+                if result.returncode not in (0, 1):
+                    sections = [f"Exit code: {result.returncode}"]
+                    if stdout:
+                        sections.append("--- STDOUT ---")
+                        sections.append(stdout)
+                    if stderr:
+                        sections.append("--- STDERR ---")
+                        sections.append(stderr)
+                    return "\n".join(sections).strip()
+
+                output = stdout
+
                 # Apply head_limit if specified
                 if self.head_limit and output:
                     lines = output.split('\n')
                     if len(lines) > self.head_limit:
                         output = '\n'.join(lines[:self.head_limit])
                         output += f"\n... (output limited to first {self.head_limit} lines)"
-                
-                return output.strip() if output else f"No matches found for pattern: {self.pattern}"
-                
+
+                # Truncate very large outputs to 30000 characters
+                truncated = False
+                if len(output) > 30000:
+                    output = output[:30000]
+                    truncated = True
+
+                sections = [f"Exit code: {result.returncode}"]
+                if output:
+                    sections.append("--- STDOUT ---")
+                    sections.append(output)
+                if stderr:
+                    sections.append("--- STDERR ---")
+                    sections.append(stderr)
+                if truncated:
+                    sections.append("... (output truncated to 30000 characters)")
+
+                return "\n".join(sections).strip()
+
             except subprocess.TimeoutExpired:
-                return "Error: Search timed out after 30 seconds"
+                return f"Error: Search timed out after {int(timeout_seconds)} seconds"
                 
         except Exception as e:
             return f"Error during grep search: {str(e)}"
