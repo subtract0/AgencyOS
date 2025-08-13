@@ -7,7 +7,7 @@ import pytest
 import os
 from pathlib import Path
 from dotenv import load_dotenv
-from claude_code.claude_code_agent import create_claude_code_agent
+from agency_code_agent.agency_code_agent import create_agency_code_agent
 from agency_swarm import Agency
 
 # Load environment variables
@@ -21,7 +21,7 @@ skip_agency_tests = os.getenv("OPENAI_API_KEY") is None
 def agency():
     """Create agency with detailed settings for tool testing"""
     return Agency(
-        create_claude_code_agent(),
+        create_agency_code_agent(),
         communication_flows=[],
         shared_instructions="You MUST use the available tools to complete tasks. When asked to list files, use the LS tool. When asked to read files, use the Read tool. When asked to search files, use the Grep tool. Always execute the appropriate tools rather than providing instructions.",
     )
@@ -52,11 +52,11 @@ async def test_explicit_tool_instruction(agency):
 
 
 def test_manual_tool_import():
-    """Test manual tool import from claude_code tools"""
+    """Test manual tool import from agency_code_agent tools"""
     try:
-        from claude_code.tools.ls import LS
+        from agency_code_agent.tools.ls import LS
         repo_root = Path(__file__).resolve().parents[1]
-        ls_tool = LS(path=str(repo_root / "claude_code"))
+        ls_tool = LS(path=str(repo_root / "agency_code_agent"))
         
         # Test the tool directly
         ls_result = ls_tool.run()
@@ -69,7 +69,7 @@ def test_manual_tool_import():
 def test_tools_folder_analysis():
     """Test tools folder structure and contents"""
     repo_root = Path(__file__).resolve().parents[1]
-    tools_path = repo_root / "claude_code" / "tools"
+    tools_path = repo_root / "agency_code_agent" / "tools"
     
     assert tools_path.exists(), "Tools folder should exist"
     
@@ -81,7 +81,7 @@ def test_tools_folder_analysis():
     for tool_file in tool_files[:3]:  # Test first 3 tools
         tool_name = tool_file[:-3]  # Remove .py
         try:
-            module = __import__(f'claude_code.tools.{tool_name}', fromlist=[''])
+            module = __import__(f'agency_code_agent.tools.{tool_name}', fromlist=[''])
             classes = [cls for cls in dir(module) if not cls.startswith('_')]
             if classes:
                 successfully_imported += 1
@@ -96,7 +96,7 @@ def test_tools_folder_analysis():
 async def test_force_tool_usage(agency):
     """Test forcing tool usage with explicit instruction"""
     repo_root = Path(__file__).resolve().parents[1]
-    target_dir = str(repo_root / "claude_code")
+    target_dir = str(repo_root / "agency_code_agent")
     
     result = await agency.get_response(f"I need you to run the LS tool right now to show all files in {target_dir} directory")
     
@@ -106,6 +106,6 @@ async def test_force_tool_usage(agency):
 
 def test_agent_creation():
     """Test that the agent can be created successfully"""
-    agent = create_claude_code_agent()
+    agent = create_agency_code_agent()
     assert agent is not None, "Agent should be created successfully"
     assert hasattr(agent, 'name'), "Agent should have a name attribute"

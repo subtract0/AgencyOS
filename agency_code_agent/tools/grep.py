@@ -30,7 +30,6 @@ class Grep(BaseTool):
     type: Optional[str] = Field(None, description="File type to search (rg --type). Common types: js, py, rust, go, java, etc. More efficient than include for standard file types.")
     head_limit: Optional[int] = Field(None, description="Limit output to first N lines/entries, equivalent to '| head -N'. Works across all output modes: content (limits output lines), files_with_matches (limits file paths), count (limits count entries). When unspecified, shows all results from ripgrep.")
     multiline: Optional[bool] = Field(False, description="Enable multiline mode where . matches newlines and patterns can span lines (rg -U --multiline-dotall). Default: false.")
-    timeout: Optional[int] = Field(30000, description="Timeout in milliseconds for the ripgrep command.")
     
     def run(self):
         try:
@@ -89,12 +88,11 @@ class Grep(BaseTool):
             
             # Execute ripgrep
             try:
-                timeout_seconds = (self.timeout / 1000) if self.timeout else 30
                 result = subprocess.run(
                     cmd,
                     capture_output=True,
                     text=True,
-                    timeout=timeout_seconds,
+                    timeout=30,  # 30 second timeout
                     cwd=os.getcwd(),
                 )
 
@@ -143,7 +141,7 @@ class Grep(BaseTool):
                 return "\n".join(sections).strip()
 
             except subprocess.TimeoutExpired:
-                return f"Error: Search timed out after {int(timeout_seconds)} seconds"
+                return "Error: Search timed out after 30 seconds"
                 
         except Exception as e:
             return f"Error during grep search: {str(e)}"

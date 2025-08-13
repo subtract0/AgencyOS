@@ -3,6 +3,9 @@ from pydantic import BaseModel, Field
 from typing import List, Optional
 import os
 
+# Import the global read files registry
+from agency_code_agent.tools.read import _global_read_files
+
 class EditOperation(BaseModel):
     old_string: str = Field(..., description="The text to replace")
     new_string: str = Field(..., description="The text to replace it with")
@@ -61,27 +64,39 @@ class MultiEdit(BaseTool):
             # Check if this is a new file creation (first edit has empty old_string)
             creating_new_file = (len(self.edits) > 0 and self.edits[0].old_string == "")
             
+            # For existing files, check if the file has been read first (YAML precondition)
+            if not creating_new_file:
+                abs_file_path = os.path.abspath(self.file_path)
+                file_has_been_read = False
+                
+                # Check in shared state first
+                if self.context is not None:
+                    read_files = self.context.get("read_files", set())
+                    file_has_been_read = abs_file_path in read_files
+                
+                # Check global fallback if not found in context
+                if not file_has_been_read:
+                    file_has_been_read = abs_file_path in _global_read_files
+                
+                if not file_has_been_read:
+                    return "Error: You must use Read tool at least once before editing this file. This tool will error if you attempt an edit without reading the file first."
+            
             if creating_new_file:
-                # Create new file
+                # Prepare for new file creation (but don't write yet - ensure atomicity)
                 if os.path.exists(self.file_path):
                     return f"Error: File already exists, cannot create new file: {self.file_path}"
                 
-                # Create directory if it doesn't exist
+                # Check directory exists or can be created
                 directory = os.path.dirname(self.file_path)
                 if directory and not os.path.exists(directory):
                     try:
-                        os.makedirs(directory)
+                        os.makedirs(directory, exist_ok=True)
                     except Exception as e:
                         return f"Error creating directory {directory}: {str(e)}"
                 
-                # Create the new file with first edit's new_string
-                try:
-                    with open(self.file_path, 'w', encoding='utf-8') as file:
-                        file.write(self.edits[0].new_string)
-                    content = self.edits[0].new_string
-                    remaining_edits = self.edits[1:]  # Skip first edit since it's file creation
-                except Exception as e:
-                    return f"Error creating new file: {str(e)}"
+                # Start with initial content from first edit (in memory only)
+                content = self.edits[0].new_string
+                remaining_edits = self.edits[1:]  # Skip first edit since it's file creation
             else:
                 # Working with existing file
                 if not os.path.exists(self.file_path):

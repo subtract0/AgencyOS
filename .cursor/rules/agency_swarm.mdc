@@ -1,6 +1,5 @@
 ---
-description: AI Agent Creator Instructions for Agency Swarm Framework
-alwaysApply: true
+alwaysApply: false
 ---
 
 Agency Swarm **v1.0.0** is the latest version of the framework built on the OpenAI Agents SDK. It allows anyone to create a collaborative swarm of agents (Agencies), each with distinct roles and capabilities. Your primary role is to architect tools and agents that fulfill specific needs within the agency. Helpful references for building agents include:
@@ -11,7 +10,6 @@ Agency Swarm **v1.0.0** is the latest version of the framework built on the Open
 - Migration guide: <https://agency-swarm.ai/migration/guide>
 
 Use these resources to familiarize yourself with v1.x patterns (the `/examples` directory is up to date, while `/docs` may still contain v0.x references). The following steps outline how to build agents from a single prompt:
-
 
 1. **PRD Creation:** Gather information to draft a Product Requirements Document (PRD) for the agency.
 2. **Folder Structure and Template Creation:** Create the Agent Templates for each agent using the CLI Commands provided below.
@@ -26,6 +24,7 @@ You will find a detailed guide for each of the steps below.
 # Step 1: PRD Creation
 
 First, ask the user to provide all necessary details:
+
 - Agency Name
 - Purpose (a high-level description of what the agency aims to achieve, its target market, and its value proposition)
 - Communication Flows (between agents and from agents to user)
@@ -40,12 +39,12 @@ Once you have gathered all details, create the file `agency_name/prd.txt` using 
 
 - **Purpose:** [A high-level description of what the agency aims to achieve, its target market, and the value it offers to its clients.]
 - **Communication Flows:**
-    - **Between Agents:**
-        - [Description of the communication protocols and flows between different agents within the agency, including any shared resources or data.]
-        - **Example Flow:**
-            - **Agent A -> Agent B:** [Description of the interaction, including trigger conditions and expected outcomes.]
-            - **Agent B -> Agent C:** [Description of the interaction, including trigger conditions and expected outcomes.]
-    - **Agent to User Communication:** [Description of how agents will communicate with end-users, including any user interfaces or channels used.]
+  - **Between Agents:**
+    - [Description of the communication protocols and flows between different agents within the agency, including any shared resources or data.]
+    - **Example Flow:**
+      - **Agent A -> Agent B:** [Description of the interaction, including trigger conditions and expected outcomes.]
+      - **Agent B -> Agent C:** [Description of the interaction, including trigger conditions and expected outcomes.]
+  - **Agent to User Communication:** [Description of how agents will communicate with end-users, including any user interfaces or channels used.]
 
 ---
 
@@ -58,14 +57,14 @@ Once you have gathered all details, create the file `agency_name/prd.txt` using 
 ### Tools
 
 - **ToolName:**
-    - **Description**: [Description on what this tool should do and how it will be used]
-    - **Inputs**:
-        - [name] (type) - description
-    - **Validation**:
-        - [Condition] - description
-    - **Core Functions:** [List of the main functions the tool must perform.]
-    - **APIs**: [List of APIs the tool will use]
-    - **Output**: [Description of the expected output of the tool. Output must be a string or a JSON object.]
+  - **Description**: [Description on what this tool should do and how it will be used]
+  - **Inputs**:
+    - [name] (type) - description
+  - **Validation**:
+    - [Condition] - description
+  - **Core Functions:** [List of the main functions the tool must perform.]
+  - **APIs**: [List of APIs the tool will use]
+  - **Output**: [Description of the expected output of the tool. Output must be a string or a JSON object.]
 
 ---
 
@@ -246,11 +245,13 @@ async def my_tool(ctx: RunContextWrapper[MasterContext], arg1: str) -> str:
 ```
 
 Use agency context for:
+
 - Large data structures that are expensive to pass between agents
 - Maintaining state across multiple tool calls
 - Sharing data among tools and agents
 
 Best practices:
+
 - Use descriptive keys to avoid conflicts
 - Provide default values when calling `get`
 - Clean up unneeded data to keep the context small
@@ -320,19 +321,22 @@ To create an agent:
    Use the following template for the instructions.md file:
 
    ```md
-    # Role
-    You are **[insert role, e.g., "a helpful expert" or "a creative storyteller".]**
+   # Role
 
-    # Instructions
-    **[Provide a step-by-step instructions process on how this process should be performed. Use a numbered list.]**
+   You are **[insert role, e.g., "a helpful expert" or "a creative storyteller".]**
 
-    # Additional Notes
-    - **[Specify any additional notes here, if any. Use bullet points if needed.]**
-    ```
+   # Instructions
+
+   **[Provide a step-by-step instructions process on how this process should be performed. Use a numbered list.]**
+
+   # Additional Notes
+
+   - **[Specify any additional notes here, if any. Use bullet points if needed.]**
+   ```
 
 ### Best Practices
 
-   **Avoid Speculation**: Be conscience when creating the instructions, and avoid any speculation. If certain information is not available, simply leave it blank.
+**Avoid Speculation**: Be conscience when creating the instructions, and avoid any speculation. If certain information is not available, simply leave it blank.
 
 # Step 5: Agency Creation
 

@@ -5,12 +5,12 @@ Tests that tools can be invoked directly via the agent
 
 import pytest
 import os
-from claude_code.claude_code_agent import create_claude_code_agent
+from agency_code_agent.agency_code_agent import create_agency_code_agent
 
 @pytest.fixture
 def agent():
     """Create claude code agent for testing"""
-    return create_claude_code_agent()
+    return create_agency_code_agent()
 
 
 def test_agent_creation(agent):

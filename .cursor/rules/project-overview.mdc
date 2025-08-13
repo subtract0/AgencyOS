@@ -1,0 +1,204 @@
+---
+alwaysApply: true
+---
+
+You are building a general coding agent called Agency Code with Agency Swarm framework.
+
+# Agency Swarm Framework Overview
+
+Agency Swarm is an open-source agent orchestration framework (v1.x) built on the OpenAI Agents SDK. It lets you compose multiple specialized agents, each with its own tools and instructions, into a coordinated agency with explicit, directional communication flows. See: [Overview](https://agency-swarm.ai/welcome/overview.md), [Agents](https://agency-swarm.ai/core-framework/agents/overview.md), [Agencies](https://agency-swarm.ai/core-framework/agencies/overview.md), and [Communication Flows](https://agency-swarm.ai/core-framework/agencies/communication-flows.md).
+
+## Key Concepts
+
+- Agents: Independent workers with role-specific instructions and toolsets.
+- Tools: Pydantic-validated actions agents can execute; can be classes or `@function_tool` functions.
+- Agency: A graph of agents with defined communication flows, plus shared instructions.
+- Shared State: Optional context for cross-tool/agent data sharing.
+- MCP Integration: Optional external tool servers via Model Context Protocol.
+
+## Create a Tool (class-based)
+
+```python
+from agency_swarm.tools import BaseTool
+from pydantic import Field
+from dotenv import load_dotenv
+import os
+
+load_dotenv()
+
+class MyCustomTool(BaseTool):
+    """Fetches or computes something useful for an agent task."""
+    query: str = Field(..., description="Search or input text")
+
+    def run(self) -> str:
+        api_key = os.getenv("MY_API_KEY", "")
+        # Implement real logic (no placeholders)
+        return f"Processed: {self.query}"
+
+if __name__ == "__main__":
+    print(MyCustomTool(query="hello").run())
+```
+
+## Create a Tool (function-based)
+
+```python
+from agents import function_tool
+from dotenv import load_dotenv
+
+load_dotenv()
+
+@function_tool
+def my_function_tool(text: str) -> str:
+    """Simple functional tool example."""
+    return text.upper()
+
+if __name__ == "__main__":
+    print(my_function_tool("ok"))
+```
+
+## Create an Agent
+
+```python
+from agents import ModelSettings
+from agency_swarm import Agent
+
+developer = Agent(
+    name="Developer",
+    description="Writes and edits code based on tasks.",
+    instructions="./instructions.md",
+    tools_folder="./tools",
+    model_settings=ModelSettings(model="gpt-4o", temperature=0.2, max_completion_tokens=20000),
+)
+```
+
+## Create an Agency
+
+```python
+from dotenv import load_dotenv
+from agency_swarm import Agency
+from ceo import ceo
+from developer import developer
+
+load_dotenv()
+
+agency = Agency(
+    ceo,
+    communication_flows=[(ceo, developer)],  # left can initiate to right
+    shared_instructions="agency_manifesto.md",
+)
+
+if __name__ == "__main__":
+    agency.terminal_demo()
+```
+
+## Shared State (optional)
+
+```python
+from agency_swarm.tools import BaseTool
+from pydantic import Field
+
+class RememberValue(BaseTool):
+    key: str = Field(..., description="Shared-state key")
+    value: str = Field(..., description="Value to store")
+
+    def run(self) -> str:
+        # _context is a private RunContextWrapper initialized by the agent
+        if self._context is not None and getattr(self._context, "context", None) is not None:
+            self._context.context.set(self.key, self.value)
+            return self._context.context.get(self.key, "")
+        return ""
+
+# Notes:
+# - _context is private and set by the agent; it holds RunContextWrapper[MasterContext]
+# - Use self._context.context to access shared state for set/get operations
+```
+
+## MCP Integration (optional)
+
+```python
+from agency_swarm.tools.mcp import MCPServerStdio
+
+filesystem_server = MCPServerStdio(
+    name="Filesystem_Server",
+    params={"command": "npx", "args": ["-y", "@modelcontextprotocol/server-filesystem", "."]},
+    cache_tools_list=True,
+)
+# Attach to an Agent via the mcp_servers list when instantiating it
+```
+
+## References
+
+- Tools: [Step-by-Step Guide](https://agency-swarm.ai/core-framework/tools/custom-tools/step-by-step-guide.md), [Overview](https://agency-swarm.ai/core-framework/tools/overview.md)
+- Agents: [Overview](https://agency-swarm.ai/core-framework/agents/overview.md), [Built-in Tools](https://agency-swarm.ai/core-framework/agents/built-in-tools.md)
+- Agencies: [Overview](https://agency-swarm.ai/core-framework/agencies/overview.md), [Communication Flows](https://agency-swarm.ai/core-framework/agencies/communication-flows.md)
+- Migration to v1.x: [Guide](https://agency-swarm.ai/migration/guide.md)
+- Full documentation: [Agency Swarm](https://agency-swarm.ai/llms.txt)
+
+# Directory Structure
+
+```
+Agency-Code/
+  - agency.py
+  - agency_code_agent/
+    - __init__.py
+    - agency_code_agent.py
+    - instructions.md
+    - tools/
+      - __init__.py
+      - bash.py
+      - edit.py
+      - glob.py
+      - grep.py
+      - ls.py
+      - multi_edit.py
+      - notebook_edit.py
+      - notebook_read.py
+      - read.py
+      - task.py
+      - todo_write.py
+      - write.py
+  - claude_code_prompts_and_tools.yaml
+  - LICENSE
+  - README.md
+  - requirements.txt
+  - run_tests.py
+  - tests/
+    - conftest.py
+    - debug_tool_test.py
+    - test_agency.py
+    - test_bash_tool.py
+    - test_edit_tool.py
+    - test_generated_sample.py
+    - test_glob_tool.py
+    - test_grep_tool.py
+    - test_ls_tool.py
+    - test_multi_edit_tool.py
+    - test_notebook_edit_tool.py
+    - test_notebook_read_tool.py
+    - test_read_tool.py
+    - test_sample.py
+    - test_task_tool.py
+    - test_todo_write_tool.py
+    - test_write_tool.py
+    - tool_integration_test.py
+```
+
+# Workflow
+
+- To-do list (always follow in order; do not skip steps):
+
+  1. Modify or add the appropriate test(s) in `tests/` to define the desired behavior.
+  2. Review existing tests to understand current behavior and coverage; adjust tests if behavior changes.
+  3. Implement the minimal code changes (tools/agents/agency) to satisfy the updated tests.
+  4. Run `python run_tests.py` or `pytest`; fix failures until green.
+  5. Refactor for clarity/DRY while keeping tests green.
+  6. Validate the agency entrypoint if applicable: `python agency_name/agency.py`.
+
+- Tool constraints:
+
+  - **Never modify tool parameters (field names/types) or descriptions unless explicitly instructed by the user.**
+  - Before any tool change, ensure tests are updated first to reflect intended behavior.
+
+- Code quality:
+  - Follow DRY; extract shared logic into helpers where appropriate.
+  - Keep tools production-ready: load env with `dotenv`, fetch secrets from environment, no placeholders.

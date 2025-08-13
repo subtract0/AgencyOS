@@ -3,6 +3,9 @@ from pydantic import Field
 from typing import Optional
 import os
 
+# Import the global read files registry
+from agency_code_agent.tools.read import _global_read_files
+
 class Edit(BaseTool):
     """
     Performs exact string replacements in files.
@@ -23,6 +26,22 @@ class Edit(BaseTool):
     
     def run(self):
         try:
+            # Check if the file has been read first (YAML precondition)
+            abs_file_path = os.path.abspath(self.file_path)
+            file_has_been_read = False
+            
+            # Check in shared state first
+            if self.context is not None:
+                read_files = self.context.get("read_files", set())
+                file_has_been_read = abs_file_path in read_files
+            
+            # Check global fallback if not found in context
+            if not file_has_been_read:
+                file_has_been_read = abs_file_path in _global_read_files
+            
+            if not file_has_been_read:
+                return "Error: You must use Read tool at least once before editing this file. This tool will error if you attempt an edit without reading the file first."
+            
             # Validate that old_string and new_string are different
             if self.old_string == self.new_string:
                 return "Error: old_string and new_string must be different"

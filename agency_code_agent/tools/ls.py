@@ -61,13 +61,13 @@ class LS(BaseTool):
                 try:
                     stat_info = os.stat(full_path)
                     
-                    # Determine type
-                    if os.path.isdir(full_path):
+                    # Determine type (check symlink first since os.stat follows links)
+                    if os.path.islink(full_path):
+                        item_type = "LINK"
+                    elif os.path.isdir(full_path):
                         item_type = "DIR"
                     elif os.path.isfile(full_path):
                         item_type = "FILE"
-                    elif os.path.islink(full_path):
-                        item_type = "LINK"
                     else:
                         item_type = "OTHER"
                     
