@@ -1,6 +1,6 @@
 import os
 from pathlib import Path
-from claude_code.tools.glob import Glob
+from agency_code_agent.tools.glob import Glob
 
 
 def test_glob_simple_pattern(tmp_path: Path):

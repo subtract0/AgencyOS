@@ -4,6 +4,9 @@ from typing import Optional
 import os
 import mimetypes
 
+# Global registry for tracking read files when context is not available
+_global_read_files = set()
+
 class Read(BaseTool):
     """
     Reads a file from the local filesystem. You can access any file directly by using this tool.
@@ -27,6 +30,17 @@ class Read(BaseTool):
     
     def run(self):
         try:
+            # Track that this file has been read in shared state (or global fallback)
+            abs_path = os.path.abspath(self.file_path)
+            if self.context is not None:
+                read_files = self.context.get("read_files", set())
+                read_files.add(abs_path)
+                self.context.set("read_files", read_files)
+            else:
+                # Fallback for when context is not available (e.g., in tests)
+                global _global_read_files
+                _global_read_files.add(abs_path)
+            
             # Check if path exists
             if not os.path.exists(self.file_path):
                 return f"Error: File does not exist: {self.file_path}"

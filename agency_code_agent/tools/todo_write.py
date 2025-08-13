@@ -67,7 +67,7 @@ class TodoWrite(BaseTool):
     todos: List[TodoItem] = Field(..., description="The updated todo list")
     
     # Class variable to store the todo list across invocations
-    _todo_list_file = "/tmp/claude_code_todos.json"
+    _todo_list_file = "/tmp/agency_code_agent_todos.json"
     
     def run(self):
         try:

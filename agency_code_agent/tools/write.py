@@ -2,6 +2,9 @@ from agency_swarm.tools import BaseTool
 from pydantic import Field
 import os
 
+# Import the global read files registry
+from agency_code_agent.tools.read import _global_read_files
+
 class Write(BaseTool):
     """
     Writes a file to the local filesystem.
@@ -27,6 +30,22 @@ class Write(BaseTool):
             file_exists = os.path.exists(self.file_path)
             
             if file_exists:
+                # For existing files, check if the file has been read first (YAML precondition)
+                abs_file_path = os.path.abspath(self.file_path)
+                file_has_been_read = False
+                
+                # Check in shared state first
+                if self.context is not None:
+                    read_files = self.context.get("read_files", set())
+                    file_has_been_read = abs_file_path in read_files
+                
+                # Check global fallback if not found in context
+                if not file_has_been_read:
+                    file_has_been_read = abs_file_path in _global_read_files
+                
+                if not file_has_been_read:
+                    return "Error: You must use Read tool at least once before overwriting this existing file. This tool will fail if you did not read the file first."
+                
                 # Verify it's a file and not a directory
                 if not os.path.isfile(self.file_path):
                     return f"Error: Path exists but is not a file: {self.file_path}"

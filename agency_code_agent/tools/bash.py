@@ -1,8 +1,13 @@
 from agency_swarm.tools import BaseTool
 from pydantic import Field
-from typing import Optional
 import subprocess
 import os
+import threading
+from typing import Optional
+
+# Global execution lock to prevent parallel bash commands
+_bash_execution_lock = threading.Lock()
+_bash_busy = False  # Track if a bash command is currently executing
 
 class Bash(BaseTool):
     """
@@ -119,15 +124,10 @@ class Bash(BaseTool):
     # Other common operations
     - View comments on a Github PR: gh api repos/foo/bar/pulls/123/comments
     """
-    
-    command: str = Field(
-        ...,
-        description="The command to execute"
-    )
-    
+    command: str = Field(..., description="The bash command to execute")
     timeout: int = Field(
         120000,
-        description="Optional timeout in milliseconds (max 600000, min 5000)",
+        description="Timeout in milliseconds (max 600000, min 5000)",
         ge=5000,
         le=600000,
     )
@@ -136,48 +136,94 @@ class Bash(BaseTool):
         None,
         description="Clear, concise description of what this command does in 5-10 words. Examples:\nInput: ls\nOutput: Lists files in current directory\n\nInput: git status\nOutput: Shows working tree status\n\nInput: npm install\nOutput: Installs package dependencies\n\nInput: mkdir foo\nOutput: Creates directory 'foo'"
     )
-    
+
     def run(self):
         """Execute the bash command."""
+        global _bash_busy
+        
         try:
-            # Set timeout (default to 120 seconds if not specified)
-            timeout_seconds = (self.timeout / 1000) if self.timeout else 120
+            # Check if another bash command is currently executing
+            if _bash_busy:
+                return """Exit code: 1
+Error: Terminal is currently busy executing another command. 
+
+🔄 Only one bash command can execute at a time to prevent conflicts.
+
+💡 Please wait for the current command to complete before submitting the next one.
+   Submit your commands sequentially, not in parallel.
+
+ℹ️  If you have multiple commands to run, either:
+   - Wait and submit them one at a time, or  
+   - Combine them using ';' or '&&' operators in a single command
+   
+Example: echo "first" && echo "second" && ls -la"""
             
-            # Execute the command
+            # Set timeout (convert from milliseconds to seconds)
+            timeout_seconds = self.timeout / 1000
+            
+            # Prepare the command - add non-interactive flags for common interactive commands
+            command = self.command
+            
+            # Add non-interactive flags for common commands that might hang
+            interactive_commands = {
+                'npx create-next-app': lambda cmd: cmd if '--yes' in cmd else cmd + ' --yes',
+                'npm init': lambda cmd: cmd if '-y' in cmd else cmd + ' -y', 
+                'yarn create': lambda cmd: cmd if '--yes' in cmd else cmd + ' --yes',
+            }
+            
+            for cmd_pattern, modifier in interactive_commands.items():
+                if cmd_pattern in command:
+                    command = modifier(command)
+                    break
+            
+            # Execute with proper locking to prevent parallel execution
+            with _bash_execution_lock:
+                _bash_busy = True
+                try:
+                    return self._execute_bash_command(command, timeout_seconds)
+                finally:
+                    _bash_busy = False
+            
+        except Exception as e:
+            _bash_busy = False  # Make sure to clear busy flag on exception
+            return f"Exit code: 1\nError executing command: {str(e)}"
+
+    def _execute_bash_command(self, command, timeout_seconds):
+        """Execute a bash command using subprocess.run with proper timeout."""
+        try:
+            # Execute command with subprocess.run
             result = subprocess.run(
-                self.command,
-                shell=True,
+                ['/bin/bash', '-c', command],
                 capture_output=True,
                 text=True,
                 timeout=timeout_seconds,
                 cwd=os.getcwd(),
+                env=os.environ.copy()
             )
-
-            stdout = result.stdout or ""
-            stderr = result.stderr or ""
-
-            combined = []
-            combined.append(f"Exit code: {result.returncode}")
-            if stdout:
-                combined.append("--- STDOUT ---")
-                combined.append(stdout.rstrip())
-            if stderr:
-                combined.append("--- STDERR ---")
-                combined.append(stderr.rstrip())
-
-            output = "\n".join(combined).strip()
-
-            # Truncate output if too long
+            
+            # Combine stdout and stderr
+            output = ""
+            if result.stdout:
+                output += result.stdout
+            if result.stderr:
+                if output:
+                    output += "\n"
+                output += result.stderr
+            
+            # Handle empty output
+            if not output.strip():
+                return f"Exit code: {result.returncode}\n(Command completed with no output)"
+            
+            # Truncate if too long
             if len(output) > 30000:
                 output = output[:30000] + "\n... (output truncated to 30000 characters)"
-
-            # Return output or indicate success if no output
-            return output if output else "Exit code: 0\nCommand executed successfully (no output)"
+            
+            return f"Exit code: {result.returncode}\n--- OUTPUT ---\n{output.strip()}"
             
         except subprocess.TimeoutExpired:
-            return f"Exit code: 124\nError: Command timed out after {timeout_seconds} seconds"
+            return f"Exit code: 124\nCommand timed out after {timeout_seconds} seconds"
         except Exception as e:
-            return f"Error executing command: {str(e)}"
+            return f"Exit code: 1\nError executing command: {str(e)}"
 
 # Create alias for Agency Swarm tool loading (expects class name = file name)
 bash = Bash

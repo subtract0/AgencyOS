@@ -1,6 +1,6 @@
 import os
 from pathlib import Path
-from claude_code.tools.grep import Grep
+from agency_code_agent.tools.grep import Grep
 
 
 def test_grep_files_with_matches(tmp_path: Path):

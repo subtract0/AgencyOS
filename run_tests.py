@@ -68,7 +68,7 @@ def main():
             print("- Check the output above for specific test failures")
             print("- Ensure all dependencies are installed correctly")
             print("- Verify environment variables are set (if needed)")
-            print("- Check that all tool files are present in claude_code/tools/")
+            print("- Check that all tool files are present in agency_code_agent/tools/")
         
         return result.returncode
         
