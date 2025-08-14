@@ -1,9 +1,11 @@
 from agency_swarm.tools import BaseTool
 from pydantic import BaseModel, Field
-from typing import List, Literal
-import json
-import os
+from typing import List, Literal, Dict, Any
 from datetime import datetime
+
+# Fallback shared store for tests/direct invocations where tool contexts
+# are not shared between instances
+_GLOBAL_TODOS: List[Dict[str, Any]] = []
 
 class TodoItem(BaseModel):
     content: str = Field(..., min_length=1, description="The todo item content")
@@ -66,9 +68,6 @@ class TodoWrite(BaseTool):
     
     todos: List[TodoItem] = Field(..., description="The updated todo list")
     
-    # Class variable to store the todo list across invocations
-    _todo_list_file = "/tmp/agency_code_agent_todos.json"
-    
     def run(self):
         try:
             # Validate that only one task is in_progress
@@ -82,18 +81,12 @@ class TodoWrite(BaseTool):
             # Convert todos to dict format
             todos_payload = [todo.model_dump() for todo in self.todos]
 
-            # Persist only to JSON file in this version (no shared state/context)
-            
-            # Save to file for persistence (best-effort)
-            try:
-                todo_data = {
-                    "updated_at": current_time,
-                    "todos": todos_payload
-                }
-                with open(self._todo_list_file, 'w') as f:
-                    json.dump(todo_data, f, indent=2)
-            except Exception:
-                pass
+            # Persist to shared agency context (primary)
+            if self.context is not None:
+                self.context.set("todos", todos_payload)
+            # Fallback: store in module-level memory so other tool instances can read
+            global _GLOBAL_TODOS
+            _GLOBAL_TODOS = todos_payload
             
             # Format the response
             total_tasks = len(self.todos)
@@ -152,15 +145,8 @@ class TodoWrite(BaseTool):
     
     @classmethod
     def load_existing_todos(cls):
-        """Load existing todos from file."""
-        try:
-            if os.path.exists(cls._todo_list_file):
-                with open(cls._todo_list_file, 'r') as f:
-                    data = json.load(f)
-                    return data.get("todos", [])
-        except Exception:
-            pass
-        return []
+        """Deprecated: Context-backed now; kept for compatibility."""
+        return list(_GLOBAL_TODOS)
 
 
 
@@ -168,53 +154,4 @@ class TodoWrite(BaseTool):
 todo_write = TodoWrite
 
 if __name__ == "__main__":
-    # Test the tool
-    test_todos = [
-        TodoItem(
-            content="Implement user authentication system",
-            status="in_progress",
-            priority="high",
-            id="auth-001"
-        ),
-        TodoItem(
-            content="Create database schema",
-            status="completed",
-            priority="high", 
-            id="db-001"
-        ),
-        TodoItem(
-            content="Write unit tests for auth module",
-            status="pending",
-            priority="medium",
-            id="test-001"
-        ),
-        TodoItem(
-            content="Update API documentation",
-            status="pending",
-            priority="low",
-            id="docs-001"
-        ),
-        TodoItem(
-            content="Set up CI/CD pipeline",
-            status="pending",
-            priority="medium",
-            id="cicd-001"
-        )
-    ]
-    
-    tool = TodoWrite(todos=test_todos)
-    result = tool.run()
-    print("Todo list example:")
-    print(result)
-    
-    # Test validation - multiple in_progress tasks (should fail)
-    invalid_todos = [
-        TodoItem(content="Task 1", status="in_progress", priority="high", id="t1"),
-        TodoItem(content="Task 2", status="in_progress", priority="high", id="t2")
-    ]
-    
-    invalid_tool = TodoWrite(todos=invalid_todos)
-    invalid_result = invalid_tool.run()
-    print("\n" + "="*70 + "\n")
-    print("Validation test (multiple in_progress - should fail):")
-    print(invalid_result)
+    pass

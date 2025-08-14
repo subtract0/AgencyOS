@@ -1,5 +1,6 @@
 from agency_swarm import Agency
-from agency_code_agent.agency_code_agent import agency_code_agent
+from agency_code_agent.agency_code_agent import create_agency_code_agent
+from planner_agent.planner_agent import create_planner_agent
 import os
 import platform
 from datetime import datetime
@@ -19,9 +20,16 @@ with open(os.path.join(current_dir, "agency_code_agent", "instructions.md"), "r"
         today=datetime.now().strftime("%Y-%m-%d")
     )
 
+# Create agents
+planner = create_planner_agent()
+coder = create_agency_code_agent()
+
+# Set up mutual handoffs after both agents are created
+planner.handoffs = [coder]
+coder.handoffs = [planner]
+
 agency = Agency(
-    agency_code_agent,
-    communication_flows=[],
+    coder,
     shared_instructions=instructions,
 )
 
