@@ -1,8 +1,5 @@
 from agency_swarm import Agent
 import os
-import platform
-from datetime import datetime
-
 from agents import WebSearchTool, ModelSettings
 
 
@@ -13,7 +10,6 @@ def create_agency_code_agent(model: str = "gpt-5", reasoning_effort: str = "high
     """Factory that returns a fresh AgencyCodeAgent instance.
     Use this in tests to avoid reusing a singleton across multiple agencies.
     """
-
     return Agent(
         name="AgencyCodeAgent",
         description=(
@@ -34,5 +30,5 @@ def create_agency_code_agent(model: str = "gpt-5", reasoning_effort: str = "high
         )         
     )
 
-# Backward-compatible singleton export for non-test usage
-agency_code_agent = create_agency_code_agent()
+# Note: We don't create a singleton at module level to avoid circular imports.
+# Use create_agency_code_agent() directly or import and call when needed.

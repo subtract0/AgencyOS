@@ -103,14 +103,8 @@ class RememberValue(BaseTool):
 
     def run(self) -> str:
         # _context is a private RunContextWrapper initialized by the agent
-        if self._context is not None and getattr(self._context, "context", None) is not None:
-            self._context.context.set(self.key, self.value)
-            return self._context.context.get(self.key, "")
-        return ""
-
-# Notes:
-# - _context is private and set by the agent; it holds RunContextWrapper[MasterContext]
-# - Use self._context.context to access shared state for set/get operations
+        self._context.set(self.key, self.value)
+        return self._context.get(self.key, "")
 ```
 
 ## MCP Integration (optional)
@@ -156,6 +150,7 @@ Agency-Code/
       - read.py
       - task.py
       - todo_write.py
+      - todo_complete.py
       - write.py
   - claude_code_prompts_and_tools.yaml
   - LICENSE
