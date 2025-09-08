@@ -22,7 +22,8 @@ with open(os.path.join(current_dir, "agency_code_agent", "instructions.md"), "r"
 
 # Create agents
 planner = create_planner_agent()
-coder = create_agency_code_agent(model="litellm/anthropic/claude-sonnet-4-20250514")
+# coder = create_agency_code_agent(model="litellm/anthropic/claude-sonnet-4-20250514")
+coder = create_agency_code_agent()
 
 # Set up mutual handoffs after both agents are created
 planner.handoffs = [coder]
