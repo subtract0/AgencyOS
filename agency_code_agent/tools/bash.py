@@ -1,13 +1,15 @@
-from agency_swarm.tools import BaseTool
-from pydantic import Field
-import subprocess
 import os
+import subprocess
 import threading
 from typing import Optional
+
+from agency_swarm.tools import BaseTool
+from pydantic import Field
 
 # Global execution lock to prevent parallel bash commands
 _bash_execution_lock = threading.Lock()
 _bash_busy = False  # Track if a bash command is currently executing
+
 
 class Bash(BaseTool):
     """
@@ -124,6 +126,7 @@ class Bash(BaseTool):
     # Other common operations
     - View comments on a Github PR: gh api repos/foo/bar/pulls/123/comments
     """
+
     command: str = Field(..., description="The bash command to execute")
     timeout: int = Field(
         120000,
@@ -131,21 +134,21 @@ class Bash(BaseTool):
         ge=5000,
         le=600000,
     )
-    
+
     description: Optional[str] = Field(
         None,
-        description="Clear, concise description of what this command does in 5-10 words. Examples:\nInput: ls\nOutput: Lists files in current directory\n\nInput: git status\nOutput: Shows working tree status\n\nInput: npm install\nOutput: Installs package dependencies\n\nInput: mkdir foo\nOutput: Creates directory 'foo'"
+        description="Clear, concise description of what this command does in 5-10 words. Examples:\nInput: ls\nOutput: Lists files in current directory\n\nInput: git status\nOutput: Shows working tree status\n\nInput: npm install\nOutput: Installs package dependencies\n\nInput: mkdir foo\nOutput: Creates directory 'foo'",
     )
 
     def run(self):
         """Execute the bash command."""
         global _bash_busy
-        
+
         try:
             # Check if another bash command is currently executing
             if _bash_busy:
                 return """Exit code: 1
-Error: Terminal is currently busy executing another command. 
+Error: Terminal is currently busy executing another command.
 
 🔄 Only one bash command can execute at a time to prevent conflicts.
 
@@ -153,29 +156,31 @@ Error: Terminal is currently busy executing another command.
    Submit your commands sequentially, not in parallel.
 
 ℹ️  If you have multiple commands to run, either:
-   - Wait and submit them one at a time, or  
+   - Wait and submit them one at a time, or
    - Combine them using ';' or '&&' operators in a single command
-   
+
 Example: echo "first" && echo "second" && ls -la"""
-            
+
             # Set timeout (convert from milliseconds to seconds)
             timeout_seconds = self.timeout / 1000
-            
+
             # Prepare the command - add non-interactive flags for common interactive commands
             command = self.command
-            
+
             # Add non-interactive flags for common commands that might hang
             interactive_commands = {
-                'npx create-next-app': lambda cmd: cmd if '--yes' in cmd else cmd + ' --yes',
-                'npm init': lambda cmd: cmd if '-y' in cmd else cmd + ' -y', 
-                'yarn create': lambda cmd: cmd if '--yes' in cmd else cmd + ' --yes',
+                "npx create-next-app": lambda cmd: cmd
+                if "--yes" in cmd
+                else cmd + " --yes",
+                "npm init": lambda cmd: cmd if "-y" in cmd else cmd + " -y",
+                "yarn create": lambda cmd: cmd if "--yes" in cmd else cmd + " --yes",
             }
-            
+
             for cmd_pattern, modifier in interactive_commands.items():
                 if cmd_pattern in command:
                     command = modifier(command)
                     break
-            
+
             # Execute with proper locking to prevent parallel execution
             with _bash_execution_lock:
                 _bash_busy = True
@@ -183,7 +188,7 @@ Example: echo "first" && echo "second" && ls -la"""
                     return self._execute_bash_command(command, timeout_seconds)
                 finally:
                     _bash_busy = False
-            
+
         except Exception as e:
             _bash_busy = False  # Make sure to clear busy flag on exception
             return f"Exit code: 1\nError executing command: {str(e)}"
@@ -191,16 +196,41 @@ Example: echo "first" && echo "second" && ls -la"""
     def _execute_bash_command(self, command, timeout_seconds):
         """Execute a bash command using subprocess.run with proper timeout."""
         try:
-            # Execute command with subprocess.run
+            # Build execution command, sandboxing writes to CWD and /tmp on macOS when available
+            exec_cmd = ["/bin/bash", "-c", command]
+            try:
+                if os.uname().sysname == "Darwin" and os.path.exists(
+                    "/usr/bin/sandbox-exec"
+                ):
+                    cwd = os.getcwd()
+                    policy = f"""(version 1)
+(allow default)
+(deny file-write*)
+(allow file-write* (subpath \"{cwd}\"))
+(allow file-write* (subpath \"/tmp\"))
+(allow file-write* (subpath \"/private/tmp\"))
+"""
+                    exec_cmd = [
+                        "/usr/bin/sandbox-exec",
+                        "-p",
+                        policy,
+                        "/bin/bash",
+                        "-c",
+                        command,
+                    ]
+            except Exception:
+                # If sandbox detection/build fails, fall back to normal execution
+                exec_cmd = ["/bin/bash", "-c", command]
+
             result = subprocess.run(
-                ['/bin/bash', '-c', command],
+                exec_cmd,
                 capture_output=True,
                 text=True,
                 timeout=timeout_seconds,
                 cwd=os.getcwd(),
-                env=os.environ.copy()
+                env=os.environ.copy(),
             )
-            
+
             # Combine stdout and stderr
             output = ""
             if result.stdout:
@@ -209,21 +239,22 @@ Example: echo "first" && echo "second" && ls -la"""
                 if output:
                     output += "\n"
                 output += result.stderr
-            
+
             # Handle empty output
             if not output.strip():
                 return f"Exit code: {result.returncode}\n(Command completed with no output)"
-            
+
             # Truncate if too long
             if len(output) > 30000:
                 output = output[:30000] + "\n... (output truncated to 30000 characters)"
-            
+
             return f"Exit code: {result.returncode}\n--- OUTPUT ---\n{output.strip()}"
-            
+
         except subprocess.TimeoutExpired:
             return f"Exit code: 124\nCommand timed out after {timeout_seconds} seconds"
         except Exception as e:
             return f"Exit code: 1\nError executing command: {str(e)}"
+
 
 # Create alias for Agency Swarm tool loading (expects class name = file name)
 bash = Bash
