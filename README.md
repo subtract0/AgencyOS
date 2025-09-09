@@ -6,7 +6,6 @@ Agency Code is a local, testable coding agent built with Agency Swarm that behav
 
 - Answers and executes developer tasks inside your repository using first-class tools instead of brittle shell parsing.
 - Enforces a disciplined workflow: read → change → test → commit. Tests live in `tests/` and cover tools and agent behaviors.
-- Runs entirely on your machine; no remote writes unless you explicitly push.
 
 ## Key features
 
