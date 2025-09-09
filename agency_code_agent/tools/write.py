@@ -1,14 +1,16 @@
+import os
+
 from agency_swarm.tools import BaseTool
 from pydantic import Field
-import os
 
 # Import the global read files registry
 from agency_code_agent.tools.read import _global_read_files
 
+
 class Write(BaseTool):
     """
     Writes a file to the local filesystem.
-    
+
     Usage:
     - This tool will overwrite the existing file if there is one at the provided path.
     - If this is an existing file, you MUST use the Read tool first to read the file's contents. This tool will fail if you did not read the file first.
@@ -16,40 +18,45 @@ class Write(BaseTool):
     - NEVER proactively create documentation files (*.md) or README files. Only create documentation files if explicitly requested by the User.
     - Only use emojis if the user explicitly requests it. Avoid writing emojis to files unless asked.
     """
-    
-    file_path: str = Field(..., description="The absolute path to the file to write (must be absolute, not relative)")
+
+    file_path: str = Field(
+        ...,
+        description="The absolute path to the file to write (must be absolute, not relative)",
+    )
     content: str = Field(..., description="The content to write to the file")
-    
+
     def run(self):
         try:
             # Validate that the path is absolute
             if not os.path.isabs(self.file_path):
-                return f"Error: File path must be absolute, not relative: {self.file_path}"
-            
+                return (
+                    f"Error: File path must be absolute, not relative: {self.file_path}"
+                )
+
             # Check if file already exists
             file_exists = os.path.exists(self.file_path)
-            
+
             if file_exists:
                 # For existing files, check if the file has been read first (YAML precondition)
                 abs_file_path = os.path.abspath(self.file_path)
                 file_has_been_read = False
-                
+
                 # Check in shared state first
                 if self.context is not None:
                     read_files = self.context.get("read_files", set())
                     file_has_been_read = abs_file_path in read_files
-                
+
                 # Check global fallback if not found in context
                 if not file_has_been_read:
                     file_has_been_read = abs_file_path in _global_read_files
-                
+
                 if not file_has_been_read:
                     return "Error: You must use Read tool at least once before overwriting this existing file. This tool will fail if you did not read the file first."
-                
+
                 # Verify it's a file and not a directory
                 if not os.path.isfile(self.file_path):
                     return f"Error: Path exists but is not a file: {self.file_path}"
-                
+
                 # Note: In a real implementation, we would check if Read tool was used
                 # For this implementation, we'll allow overwriting with a warning
                 operation = "overwritten"
@@ -62,25 +69,28 @@ class Write(BaseTool):
                     except Exception as e:
                         return f"Error creating directory {directory}: {str(e)}"
                 operation = "created"
-            
+
             # Write the content to the file
             try:
-                with open(self.file_path, 'w', encoding='utf-8') as file:
+                with open(self.file_path, "w", encoding="utf-8") as file:
                     file.write(self.content)
-                
+
                 # Get file stats
                 file_size = os.path.getsize(self.file_path)
-                line_count = self.content.count('\n') + (1 if self.content and not self.content.endswith('\n') else 0)
-                
+                line_count = self.content.count("\n") + (
+                    1 if self.content and not self.content.endswith("\n") else 0
+                )
+
                 return f"Successfully {operation} file: {self.file_path}\\nSize: {file_size} bytes, Lines: {line_count}"
-                
+
             except PermissionError:
                 return f"Error: Permission denied writing to file: {self.file_path}"
             except Exception as e:
                 return f"Error writing file: {str(e)}"
-                
+
         except Exception as e:
             return f"Error during write operation: {str(e)}"
+
 
 # Create alias for Agency Swarm tool loading (expects class name = file name)
 write = Write
@@ -108,35 +118,35 @@ def main():
 if __name__ == "__main__":
     exit(main())
 '''
-    
+
     # Test writing a new file
     tool = Write(file_path=test_file_path, content=test_content)
     result = tool.run()
     print("Write result:")
     print(result)
-    
+
     # Verify the file was created
     if os.path.exists(test_file_path):
         print("\\nFile created successfully!")
-        with open(test_file_path, 'r') as f:
+        with open(test_file_path, "r") as f:
             created_content = f.read()
         print("First few lines of created file:")
-        print('\\n'.join(created_content.split('\\n')[:10]))
-    
+        print("\\n".join(created_content.split("\\n")[:10]))
+
     # Test overwriting the file
     new_content = "# This file has been overwritten\\nprint('New content')"
     tool2 = Write(file_path=test_file_path, content=new_content)
     result2 = tool2.run()
-    print("\\n" + "="*50 + "\\n")
+    print("\\n" + "=" * 50 + "\\n")
     print("Overwrite result:")
     print(result2)
-    
+
     # Verify the file was overwritten
-    with open(test_file_path, 'r') as f:
+    with open(test_file_path, "r") as f:
         overwritten_content = f.read()
     print("\\nOverwritten content:")
     print(overwritten_content)
-    
+
     # Cleanup
     os.remove(test_file_path)
     print("\\nTest file cleaned up.")

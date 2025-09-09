@@ -1,14 +1,23 @@
-from agency_swarm import Agent
 import os
-from agents import WebSearchTool, ModelSettings
+
+from agency_swarm import Agent
+from agents import (
+    ModelSettings,
+    WebSearchTool,
+    set_default_openai_api,
+    set_default_openai_client,
+    set_tracing_disabled,
+)
 from openai import AsyncOpenAI
-from agents import set_tracing_disabled, set_default_openai_api, set_default_openai_client
 from openai.types.shared.reasoning import Reasoning
 
 # Get the absolute path to the current file's directory
 current_dir = os.path.dirname(os.path.abspath(__file__))
 
-def create_agency_code_agent(model: str = "gpt-5", reasoning_effort: str = "high") -> Agent:
+
+def create_agency_code_agent(
+    model: str = "gpt-5", reasoning_effort: str = "high"
+) -> Agent:
     """Factory that returns a fresh AgencyCodeAgent instance.
     Use this in tests to avoid reusing a singleton across multiple agencies.
     """
@@ -42,13 +51,14 @@ def create_agency_code_agent(model: str = "gpt-5", reasoning_effort: str = "high
             truncation="auto",
             extra_body=(
                 {"web_search_options": {"search_context_size": "medium"}}
-                if is_claude else
-                {"search_parameters": {"mode": "on", "returnCitations": True}}
-                if is_grok else
-                None
+                if is_claude
+                else {"search_parameters": {"mode": "on", "returnCitations": True}}
+                if is_grok
+                else None
             ),
         ),
     )
+
 
 # Note: We don't create a singleton at module level to avoid circular imports.
 # Use create_agency_code_agent() directly or import and call when needed.

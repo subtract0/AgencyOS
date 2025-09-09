@@ -1,11 +1,13 @@
-from agency_swarm import Agency
-from agency_code_agent.agency_code_agent import create_agency_code_agent
-from planner_agent.planner_agent import create_planner_agent
 import os
 import platform
 from datetime import datetime
 
+from agency_swarm import Agency
 from dotenv import load_dotenv
+
+from agency_code_agent.agency_code_agent import create_agency_code_agent
+from planner_agent.planner_agent import create_planner_agent
+
 load_dotenv()
 
 current_dir = os.path.dirname(os.path.abspath(__file__))
@@ -17,7 +19,7 @@ with open(os.path.join(current_dir, "agency_code_agent", "instructions.md"), "r"
         is_git_repo=os.path.isdir(".git"),
         platform=platform.system(),
         os_version=platform.release(),
-        today=datetime.now().strftime("%Y-%m-%d")
+        today=datetime.now().strftime("%Y-%m-%d"),
     )
 
 # Create agents

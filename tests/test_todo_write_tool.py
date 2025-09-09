@@ -1,6 +1,7 @@
 from pathlib import Path
-from agency_code_agent.tools.todo_write import TodoWrite, TodoItem
+
 from agency_code_agent.tools.todo_complete import TodoComplete
+from agency_code_agent.tools.todo_write import TodoItem, TodoWrite
 
 
 def test_todo_write_no_emojis_and_summary(tmp_path: Path):
@@ -36,5 +37,3 @@ def test_todo_complete_next_and_specific():
     complete_tool2 = TodoComplete(number=2)
     res2 = complete_tool2.run()
     assert "Todo updated: marked one item as completed" in res2
-
-

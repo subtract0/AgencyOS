@@ -1,9 +1,11 @@
-from agency_swarm import Agent
 import os
+
+from agency_swarm import Agent
 from agents import ModelSettings
 
 # Get the absolute path to the current file's directory
 current_dir = os.path.dirname(os.path.abspath(__file__))
+
 
 def create_planner_agent(model: str = "gpt-5", reasoning_effort: str = "high") -> Agent:
     """Factory that returns a fresh PlannerAgent instance.
@@ -23,8 +25,9 @@ def create_planner_agent(model: str = "gpt-5", reasoning_effort: str = "high") -
             reasoning={
                 "effort": reasoning_effort,
             }
-        )
+        ),
     )
+
 
 # Note: We don't create a singleton at module level to avoid circular imports.
 # Use create_planner_agent() directly or import and call when needed.

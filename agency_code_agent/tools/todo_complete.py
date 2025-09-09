@@ -1,7 +1,8 @@
+from datetime import datetime
+from typing import Any, Dict, List, Optional
+
 from agency_swarm.tools import BaseTool
 from pydantic import Field
-from typing import Optional, List, Dict, Any
-from datetime import datetime
 
 
 class TodoComplete(BaseTool):
@@ -26,7 +27,8 @@ class TodoComplete(BaseTool):
         # Fallback: import from write tool's module-level store
         if not todos:
             try:
-                from agency_code_agent.tools.todo_write import TodoWrite, _GLOBAL_TODOS
+                from agency_code_agent.tools.todo_write import _GLOBAL_TODOS, TodoWrite
+
                 if _GLOBAL_TODOS:
                     todos = list(_GLOBAL_TODOS)
                 if not todos:
@@ -41,6 +43,7 @@ class TodoComplete(BaseTool):
         # Fallback: also persist to write tool's global store
         try:
             import agency_code_agent.tools.todo_write as tw
+
             tw._GLOBAL_TODOS = list(todos)
         except Exception:
             pass
@@ -53,7 +56,9 @@ class TodoComplete(BaseTool):
         idx: Optional[int] = None
         if self.number is not None:
             if self.number < 1 or self.number > len(todos):
-                return f"Invalid todo number: {self.number}. There are {len(todos)} todos."
+                return (
+                    f"Invalid todo number: {self.number}. There are {len(todos)} todos."
+                )
             idx = self.number - 1
         else:
             for i, t in enumerate(todos):
@@ -88,13 +93,17 @@ class TodoComplete(BaseTool):
         if status_groups["in_progress"]:
             lines.append("IN PROGRESS:")
             for t in status_groups["in_progress"]:
-                lines.append(f"  [{t.get('priority', 'MED').upper()}] {t.get('content', '')}")
+                lines.append(
+                    f"  [{t.get('priority', 'MED').upper()}] {t.get('content', '')}"
+                )
             lines.append("")
 
         if status_groups["pending"]:
             lines.append("PENDING:")
             for t in status_groups["pending"]:
-                lines.append(f"  [{t.get('priority', 'MED').upper()}] {t.get('content', '')}")
+                lines.append(
+                    f"  [{t.get('priority', 'MED').upper()}] {t.get('content', '')}"
+                )
             lines.append("")
 
         return "\n".join(l for l in lines if l is not None).strip()
@@ -102,5 +111,3 @@ class TodoComplete(BaseTool):
 
 # Create alias for Agency Swarm tool loading (expects class name = file name)
 todo_complete = TodoComplete
-
-
