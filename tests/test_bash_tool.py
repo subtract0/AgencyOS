@@ -270,6 +270,7 @@ def test_bash_working_directory():
 def test_bash_sandbox_allows_write_in_cwd(tmp_path):
     """On macOS with sandbox, writing inside CWD should be allowed"""
     import os
+    import shutil
     import sys
 
     if sys.platform != "darwin" or not os.path.exists("/usr/bin/sandbox-exec"):
@@ -277,19 +278,31 @@ def test_bash_sandbox_allows_write_in_cwd(tmp_path):
 
     # Create a target file under current working directory
     target_dir = tmp_path  # pytest tmp under CWD by default when set as relative
+    created_sandbox_dir = False
     # Ensure path is under CWD
     if not str(target_dir).startswith(os.getcwd()):
-        target_dir = os.path.join(os.getcwd(), "sandbox_cwd")
-        os.makedirs(target_dir, exist_ok=True)
-        target_dir = Path(target_dir)
+        cwd = Path(os.getcwd())
+        target_dir = cwd / "sandbox_cwd"
+        target_dir.mkdir(parents=True, exist_ok=True)
+        created_sandbox_dir = True
 
     target_file = target_dir / "allowed_write.txt"
 
-    tool = Bash(command=f"echo 'ok' > {target_file}")
-    out = tool.run()
-    assert "Exit code: 0" in out
-    assert target_file.exists()
-    assert target_file.read_text().strip() == "ok"
+    try:
+        tool = Bash(command=f"echo 'ok' > {target_file}")
+        out = tool.run()
+        assert "Exit code: 0" in out
+        assert target_file.exists()
+        assert target_file.read_text().strip() == "ok"
+    finally:
+        if created_sandbox_dir:
+            # Clean up sandbox directory created under CWD
+            try:
+                if target_file.exists():
+                    target_file.unlink()
+                shutil.rmtree(target_dir, ignore_errors=True)
+            except Exception:
+                pass
 
 
 def test_bash_sandbox_denies_write_outside_allowed():
