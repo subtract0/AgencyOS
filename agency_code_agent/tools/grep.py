@@ -119,7 +119,7 @@ class Grep(BaseTool):
             # Add pattern
             cmd.append(self.pattern)
 
-            # Add search path
+            # Add search path; respect .gitignore by default via ripgrep
             if self.path:
                 cmd.append(self.path)
             else:
