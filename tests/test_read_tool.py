@@ -1,5 +1,5 @@
-import os
 from pathlib import Path
+
 from agency_code_agent.tools.read import Read
 
 
@@ -23,4 +23,3 @@ def test_read_with_offset_and_limit(tmp_path: Path):
     out = tool.run()
     assert "\tB" in out and "\tC" in out
     assert "Truncated:" in out or "total lines" in out
-

@@ -1,5 +1,5 @@
-import os
 from pathlib import Path
+
 from agency_code_agent.tools.grep import Grep
 
 
@@ -18,9 +18,10 @@ def test_grep_files_with_matches(tmp_path: Path):
 def test_grep_no_matches(tmp_path: Path):
     f = tmp_path / "a.txt"
     f.write_text("nothing here\n", encoding="utf-8")
-    tool = Grep(pattern="doesnotmatch", path=str(tmp_path), output_mode="files_with_matches")
+    tool = Grep(
+        pattern="doesnotmatch", path=str(tmp_path), output_mode="files_with_matches"
+    )
     out = tool.run()
     if "ripgrep (rg) is not installed" in out:
         return
     assert "No matches found for pattern" in out
-

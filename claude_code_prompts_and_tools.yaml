@@ -12,16 +12,16 @@ messages:
       ALWAYS prefer editing an existing file to creating a new one.
       NEVER proactively create documentation files (*.md) or README files. Only create documentation files if explicitly requested by the User.
 
-            
+
             IMPORTANT: this context may or may not be relevant to your tasks. You should not respond to this context or otherwise consider it in your response unless it is highly relevant to your task. Most of the time, it is not relevant.
       </system-reminder>
   - type: text
     text: tell me a joke
   - type: text
-    text: <system-reminder>This is a reminder that your todo list is currently 
+    text: <system-reminder>This is a reminder that your todo list is currently
       empty. DO NOT mention this to the user explicitly because they are already
-      aware. If you are working on tasks that would benefit from a todo list 
-      please use the TodoWrite tool to create one. If not, please feel free to 
+      aware. If you are working on tasks that would benefit from a todo list
+      please use the TodoWrite tool to create one. If not, please feel free to
       ignore. Again do not mention this message to the user.</system-reminder>
     cache_control:
       type: ephemeral
@@ -39,7 +39,7 @@ system:
     IMPORTANT: Assist with defensive security tasks only. Refuse to create, modify, or improve code that may be used maliciously. Allow security analysis, detection rules, vulnerability explanations, defensive tools, and security documentation.
     IMPORTANT: You must NEVER generate or guess URLs for the user unless you are confident that the URLs are for helping the user with programming. You may use URLs provided by the user in their messages or local files.
 
-    If the user asks for help or wants to give feedback inform them of the following: 
+    If the user asks for help or wants to give feedback inform them of the following:
     - /help: Get help with using Claude Code
     - To give feedback, users should report the issue at https://github.com/anthropics/claude-code/issues
 
@@ -122,7 +122,7 @@ system:
 
     <example>
     user: Run the build and fix any type errors
-    assistant: I'm going to use the TodoWrite tool to write the following items to the todo list: 
+    assistant: I'm going to use the TodoWrite tool to write the following items to the todo list:
     - Run the build
     - Fix any type errors
 
@@ -430,15 +430,15 @@ tools:
     properties:
       pattern:
         type: string
-        description: The regular expression pattern to search for in file 
+        description: The regular expression pattern to search for in file
           contents
       path:
         type: string
-        description: File or directory to search in (rg PATH). Defaults to 
+        description: File or directory to search in (rg PATH). Defaults to
           current working directory.
       glob:
         type: string
-        description: Glob pattern to filter files (e.g. "*.js", "*.{ts,tsx}") - 
+        description: Glob pattern to filter files (e.g. "*.js", "*.{ts,tsx}") -
           maps to rg --glob
       output_mode:
         type: string
@@ -488,17 +488,17 @@ tools:
     additionalProperties: false
     $schema: http://json-schema.org/draft-07/schema#
 - name: LS
-  description: Lists files and directories in a given path. The path parameter 
+  description: Lists files and directories in a given path. The path parameter
     must be an absolute path, not a relative path. You can optionally provide an
-    array of glob patterns to ignore with the ignore parameter. You should 
-    generally prefer the Glob and Grep tools, if you know which directories to 
+    array of glob patterns to ignore with the ignore parameter. You should
+    generally prefer the Glob and Grep tools, if you know which directories to
     search.
   input_schema:
     type: object
     properties:
       path:
         type: string
-        description: The absolute path to the directory to list (must be 
+        description: The absolute path to the directory to list (must be
           absolute, not relative)
       ignore:
         type: array
@@ -511,10 +511,10 @@ tools:
     $schema: http://json-schema.org/draft-07/schema#
 - name: exit_plan_mode
   description: |
-    Use this tool when you are in plan mode and have finished presenting your plan and are ready to code. This will prompt the user to exit plan mode. 
+    Use this tool when you are in plan mode and have finished presenting your plan and are ready to code. This will prompt the user to exit plan mode.
     IMPORTANT: Only use this tool when the task requires planning the implementation steps of a task that requires writing code. For research tasks where you're gathering information, searching files, reading files or in general trying to understand the codebase - do NOT use this tool.
 
-    Eg. 
+    Eg.
     1. Initial task: "Search for and understand the implementation of vim mode in the codebase" - Do not use the exit plan mode tool because you are not planning the implementation steps of a task.
     2. Initial task: "Help me implement yank mode for vim" - Use the exit plan mode tool after you have finished planning the implementation steps of the task.
   input_schema:
@@ -541,7 +541,7 @@ tools:
     - Results are returned using cat -n format, with line numbers starting at 1
     - This tool allows Claude Code to read images (eg PNG, JPG, etc). When reading an image file the contents are presented visually as Claude Code is a multimodal LLM.
     - For Jupyter notebooks (.ipynb files), use the NotebookRead instead
-    - You have the capability to call multiple tools in a single response. It is always better to speculatively read multiple files as a batch that are potentially useful. 
+    - You have the capability to call multiple tools in a single response. It is always better to speculatively read multiple files as a batch that are potentially useful.
     - You will regularly be asked to read screenshots. If the user provides a path to a screenshot ALWAYS use this tool to view the file at the path. This tool will work with all temporary file paths like /var/folders/123/abc/T/TemporaryItems/NSIRD_screencaptureui_ZfB1tD/Screenshot.png
     - If you read a file that exists but has empty contents you will receive a system reminder warning in place of file contents.
   input_schema:
@@ -552,11 +552,11 @@ tools:
         description: The absolute path to the file to read
       offset:
         type: number
-        description: The line number to start reading from. Only provide if the 
+        description: The line number to start reading from. Only provide if the
           file is too large to read at once
       limit:
         type: number
-        description: The number of lines to read. Only provide if the file is 
+        description: The number of lines to read. Only provide if the file is
           too large to read at once.
     required:
     - file_path
@@ -564,14 +564,14 @@ tools:
     $schema: http://json-schema.org/draft-07/schema#
 - name: Edit
   description: |-
-    Performs exact string replacements in files. 
+    Performs exact string replacements in files.
 
     Usage:
-    - You must use your `Read` tool at least once in the conversation before editing. This tool will error if you attempt an edit without reading the file. 
+    - You must use your `Read` tool at least once in the conversation before editing. This tool will error if you attempt an edit without reading the file.
     - When editing text from Read tool output, ensure you preserve the exact indentation (tabs/spaces) as it appears AFTER the line number prefix. The line number prefix format is: spaces + line number + tab. Everything after that tab is the actual file content to match. Never include any part of the line number prefix in the old_string or new_string.
     - ALWAYS prefer editing existing files in the codebase. NEVER write new files unless explicitly required.
     - Only use emojis if the user explicitly requests it. Avoid adding emojis to files unless asked.
-    - The edit will FAIL if `old_string` is not unique in the file. Either provide a larger string with more surrounding context to make it unique or use `replace_all` to change every instance of `old_string`. 
+    - The edit will FAIL if `old_string` is not unique in the file. Either provide a larger string with more surrounding context to make it unique or use `replace_all` to change every instance of `old_string`.
     - Use `replace_all` for replacing and renaming strings across the file. This parameter is useful if you want to rename a variable for instance.
   input_schema:
     type: object
@@ -584,7 +584,7 @@ tools:
         description: The text to replace
       new_string:
         type: string
-        description: The text to replace it with (must be different from 
+        description: The text to replace it with (must be different from
           old_string)
       replace_all:
         type: boolean
@@ -666,7 +666,7 @@ tools:
           - new_string
           additionalProperties: false
         minItems: 1
-        description: Array of edit operations to perform sequentially on the 
+        description: Array of edit operations to perform sequentially on the
           file
     required:
     - file_path
@@ -688,7 +688,7 @@ tools:
     properties:
       file_path:
         type: string
-        description: The absolute path to the file to write (must be absolute, 
+        description: The absolute path to the file to write (must be absolute,
           not relative)
       content:
         type: string
@@ -699,46 +699,46 @@ tools:
     additionalProperties: false
     $schema: http://json-schema.org/draft-07/schema#
 - name: NotebookRead
-  description: Reads a Jupyter notebook (.ipynb file) and returns all of the 
-    cells with their outputs. Jupyter notebooks are interactive documents that 
-    combine code, text, and visualizations, commonly used for data analysis and 
-    scientific computing. The notebook_path parameter must be an absolute path, 
+  description: Reads a Jupyter notebook (.ipynb file) and returns all of the
+    cells with their outputs. Jupyter notebooks are interactive documents that
+    combine code, text, and visualizations, commonly used for data analysis and
+    scientific computing. The notebook_path parameter must be an absolute path,
     not a relative path.
   input_schema:
     type: object
     properties:
       notebook_path:
         type: string
-        description: The absolute path to the Jupyter notebook file to read 
+        description: The absolute path to the Jupyter notebook file to read
           (must be absolute, not relative)
       cell_id:
         type: string
-        description: The ID of a specific cell to read. If not provided, all 
+        description: The ID of a specific cell to read. If not provided, all
           cells will be read.
     required:
     - notebook_path
     additionalProperties: false
     $schema: http://json-schema.org/draft-07/schema#
 - name: NotebookEdit
-  description: Completely replaces the contents of a specific cell in a Jupyter 
-    notebook (.ipynb file) with new source. Jupyter notebooks are interactive 
-    documents that combine code, text, and visualizations, commonly used for 
-    data analysis and scientific computing. The notebook_path parameter must be 
-    an absolute path, not a relative path. The cell_number is 0-indexed. Use 
-    edit_mode=insert to add a new cell at the index specified by cell_number. 
-    Use edit_mode=delete to delete the cell at the index specified by 
+  description: Completely replaces the contents of a specific cell in a Jupyter
+    notebook (.ipynb file) with new source. Jupyter notebooks are interactive
+    documents that combine code, text, and visualizations, commonly used for
+    data analysis and scientific computing. The notebook_path parameter must be
+    an absolute path, not a relative path. The cell_number is 0-indexed. Use
+    edit_mode=insert to add a new cell at the index specified by cell_number.
+    Use edit_mode=delete to delete the cell at the index specified by
     cell_number.
   input_schema:
     type: object
     properties:
       notebook_path:
         type: string
-        description: The absolute path to the Jupyter notebook file to edit 
+        description: The absolute path to the Jupyter notebook file to edit
           (must be absolute, not relative)
       cell_id:
         type: string
-        description: The ID of the cell to edit. When inserting a new cell, the 
-          new cell will be inserted after the cell with this ID, or at the 
+        description: The ID of the cell to edit. When inserting a new cell, the
+          new cell will be inserted after the cell with this ID, or at the
           beginning if not specified.
       new_source:
         type: string
@@ -748,8 +748,8 @@ tools:
         enum:
         - code
         - markdown
-        description: The type of the cell (code or markdown). If not specified, 
-          it defaults to the current cell type. If using edit_mode=insert, this 
+        description: The type of the cell (code or markdown). If not specified,
+          it defaults to the current cell type. If using edit_mode=insert, this
           is required.
       edit_mode:
         type: string
@@ -757,7 +757,7 @@ tools:
         - replace
         - insert
         - delete
-        description: The type of edit to make (replace, insert, delete). 
+        description: The type of edit to make (replace, insert, delete).
           Defaults to replace.
     required:
     - notebook_path

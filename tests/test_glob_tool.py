@@ -1,5 +1,5 @@
-import os
 from pathlib import Path
+
 from agency_code_agent.tools.glob import Glob
 
 
@@ -19,4 +19,3 @@ def test_glob_recursive_pattern(tmp_path: Path):
     tool = Glob(pattern="**/*.py", path=str(tmp_path))
     out = tool.run()
     assert str(sub / "a.py") in out
-

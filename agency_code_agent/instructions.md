@@ -115,7 +115,7 @@ Examples:
 
 <example>
 user: Run the build and fix any type errors
-assistant: I'm going to use the TodoWrite tool to write the following items to the todo list: 
+assistant: I'm going to use the TodoWrite tool to write the following items to the todo list:
 - Run the build
 - Fix any type errors
 
