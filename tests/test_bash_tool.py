@@ -59,7 +59,7 @@ def test_bash_environment_variables():
 
 def test_bash_file_operations():
     """Test file creation and manipulation via bash"""
-    with tempfile.TemporaryDirectory() as temp_dir:
+    with tempfile.TemporaryDirectory(dir="/tmp") as temp_dir:
         temp_path = Path(temp_dir)
         test_file = temp_path / "test_file.txt"
         
@@ -117,7 +117,7 @@ done
 
 def test_bash_git_operations():
     """Test git operations (if git is available)"""
-    with tempfile.TemporaryDirectory() as temp_dir:
+    with tempfile.TemporaryDirectory(dir="/tmp") as temp_dir:
         # Initialize a git repo
         tool = Bash(command=f"cd {temp_dir} && git init && git config user.email 'test@example.com' && git config user.name 'Test User'")
         out = tool.run()
