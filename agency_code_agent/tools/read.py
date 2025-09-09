@@ -36,10 +36,9 @@ class Read(BaseTool):
                 read_files = self.context.get("read_files", set())
                 read_files.add(abs_path)
                 self.context.set("read_files", read_files)
-            else:
-                # Fallback for when context is not available (e.g., in tests)
-                global _global_read_files
-                _global_read_files.add(abs_path)
+            # Always mirror into global registry to ensure persistence across tool instances in tests
+            global _global_read_files
+            _global_read_files.add(abs_path)
             
             # Check if path exists
             if not os.path.exists(self.file_path):

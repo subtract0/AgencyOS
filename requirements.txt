@@ -1,5 +1,4 @@
-git+https://github.com/bonk1t/agency-swarm.git@dev/migrate-to-responses-api-agents-sdk
-openai==1.95.1
+git+https://github.com/VRSEN/agency-swarm.git@main
 pydantic>=2.0.0
 requests>=2.25.0
 subprocess32; python_version < '3'
