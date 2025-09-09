@@ -14,13 +14,17 @@ current_dir = os.path.dirname(os.path.abspath(__file__))
 
 with open(os.path.join(current_dir, "agency_code_agent", "instructions.md"), "r") as f:
     instructions = f.read()
-    instructions = instructions.format(
-        cwd=os.getcwd(),
-        is_git_repo=os.path.isdir(".git"),
-        platform=platform.system(),
-        os_version=platform.release(),
-        today=datetime.now().strftime("%Y-%m-%d"),
-    )
+
+    # Safely replace only our known placeholders without raising on stray braces
+    placeholders = {
+        "{cwd}": os.getcwd(),
+        "{is_git_repo}": os.path.isdir(".git"),
+        "{platform}": platform.system(),
+        "{os_version}": platform.release(),
+        "{today}": datetime.now().strftime("%Y-%m-%d"),
+    }
+    for key, value in placeholders.items():
+        instructions = instructions.replace(key, str(value))
 
 # Create agents
 planner = create_planner_agent()
