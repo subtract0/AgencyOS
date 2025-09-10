@@ -57,8 +57,6 @@ class Write(BaseTool):
                 if not os.path.isfile(self.file_path):
                     return f"Error: Path exists but is not a file: {self.file_path}"
 
-                # Note: In a real implementation, we would check if Read tool was used
-                # For this implementation, we'll allow overwriting with a warning
                 operation = "overwritten"
             else:
                 # Create directory if it doesn't exist

@@ -1,3 +1,11 @@
+import os
+import sys
+
+# Ensure project root is first on sys.path so stdlib `glob` isn't shadowed
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..")))
+
+import asyncio
+
 from agency_swarm.tools import BaseTool
 from pydantic import Field
 
@@ -23,22 +31,18 @@ class Task(BaseTool):
 
     def run(self):
         try:
-            # For this implementation, we'll simulate agent functionality
-            # In a real implementation, this would launch a separate agent process
+            # Construct a fast sub-agency and execute the prompt normally
+            from agency_swarm import Agency
 
-            # Basic search functionality based on common patterns
-            if "search" in self.prompt.lower() or "find" in self.prompt.lower():
-                return f"Task '{self.description}' initiated. Searching with prompt: {self.prompt}\n\nNote: This is a simulated agent response. In production, this would launch a separate agent with full tool access."
+            from agency_code_agent.agency_code_agent import create_agency_code_agent
 
-            # Analysis functionality
-            elif (
-                "analyze" in self.prompt.lower() or "understand" in self.prompt.lower()
-            ):
-                return f"Task '{self.description}' initiated. Analyzing with prompt: {self.prompt}\n\nNote: This is a simulated agent response. In production, this would launch a separate agent with full tool access."
+            sub_agent = create_agency_code_agent(
+                model="gpt-5-mini", reasoning_effort="low"
+            )
+            sub_agency = Agency(sub_agent)
 
-            # General task handling
-            else:
-                return f"Task '{self.description}' initiated with prompt: {self.prompt}\n\nNote: This is a simulated agent response. In production, this would launch a separate agent with full tool access to complete the requested task."
+            result = asyncio.run(sub_agency.get_response(self.prompt))
+            return result.text if hasattr(result, "text") else str(result)
 
         except Exception as e:
             return f"Error executing task: {str(e)}"
@@ -48,9 +52,11 @@ class Task(BaseTool):
 task = Task
 
 if __name__ == "__main__":
-    # Test the tool
-    tool = Task(
-        description="Search files",
-        prompt="Find all Python files containing 'import requests' in the current directory",
+    from dotenv import load_dotenv
+
+    load_dotenv()
+    prompt = (
+        "Search the web for the Agency Swarm framework official documentation and the "
+        "release date of version 1.0.0. Provide the exact date and one authoritative link."
     )
-    print(tool.run())
+    print(Task(description="Web research", prompt=prompt).run())
