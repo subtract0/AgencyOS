@@ -16,7 +16,7 @@ current_dir = os.path.dirname(os.path.abspath(__file__))
 
 
 def create_agency_code_agent(
-    model: str = "gpt-5", reasoning_effort: str = "high"
+    model: str = "gpt-5-mini", reasoning_effort: str = "medium"
 ) -> Agent:
     """Factory that returns a fresh AgencyCodeAgent instance.
     Use this in tests to avoid reusing a singleton across multiple agencies.
@@ -34,13 +34,8 @@ def create_agency_code_agent(
 
     return Agent(
         name="AgencyCodeAgent",
-        description=(
-            "An interactive CLI tool that helps users with software engineering tasks. "
-            "Assists with defensive security tasks only. Provides concise, direct, "
-            "and to-the-point responses for command line interface interactions."
-        ),
-        # instructions are in shared_instructions.md for agency
-        instructions=None,
+        description="An interactive CLI tool that helps users with software engineering tasks.",
+        instructions="./instructions.md",
         tools_folder=os.path.join(current_dir, "tools"),
         model=model,
         openai_client=None if is_openai else client,

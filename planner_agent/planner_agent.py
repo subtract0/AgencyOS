@@ -18,7 +18,7 @@ def create_planner_agent(model: str = "gpt-5", reasoning_effort: str = "high") -
             "and structure software development projects into manageable, actionable tasks. "
             "Provides clear project roadmaps and coordinates with the AgencyCodeAgent for execution."
         ),
-        instructions="hello this is a test",
+        instructions="./instructions.md",
         tools_folder=os.path.join(current_dir, "tools"),
         model=model,
         model_settings=ModelSettings(
