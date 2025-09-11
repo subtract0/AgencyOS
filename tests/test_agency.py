@@ -3,6 +3,8 @@ Test Agency for Claude Code Agent
 Tests the agent with 5 diverse queries to validate functionality
 """
 
+import os
+
 import pytest
 from agency_swarm import Agency
 from dotenv import load_dotenv
@@ -11,6 +13,14 @@ from agency_code_agent.agency_code_agent import create_agency_code_agent
 
 # Load environment variables
 load_dotenv()
+
+
+@pytest.fixture(autouse=True)
+def cleanup_fib():
+    """Clean up fib.py after each test"""
+    yield
+    if os.path.exists("fib.py"):
+        os.unlink("fib.py")
 
 
 @pytest.fixture

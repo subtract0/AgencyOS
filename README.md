@@ -36,6 +36,10 @@ pytest -q
 python agency.py
 ```
 
+## Demo Tasks
+
+See [`demo_tasks/README.md`](demo_tasks/README.md).
+
 ## Development conventions
 
 - Prefer editing existing files; avoid generating docs unless requested.
