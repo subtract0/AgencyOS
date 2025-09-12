@@ -100,18 +100,16 @@ class MultiEdit(BaseTool):
                 if not os.path.isfile(self.file_path):
                     return f"Error: Path is not a file: {self.file_path}"
 
-                # Enforce prior Read only for .txt files (per test expectations)
-                _, ext = os.path.splitext(self.file_path)
-                if ext.lower() == ".txt":
-                    abs_file_path = os.path.abspath(self.file_path)
-                    file_has_been_read = False
-                    if self.context is not None:
-                        read_files = self.context.get("read_files", set())
-                        file_has_been_read = abs_file_path in read_files
-                    if not file_has_been_read:
-                        file_has_been_read = abs_file_path in _global_read_files
-                    if not file_has_been_read:
-                        return "Error: You must use Read tool at least once before editing this file. This tool will error if you attempt an edit without reading the file first."
+                # Enforce prior Read for all existing files
+                abs_file_path = os.path.abspath(self.file_path)
+                file_has_been_read = False
+                if self.context is not None:
+                    read_files = self.context.get("read_files", set())
+                    file_has_been_read = abs_file_path in read_files
+                if not file_has_been_read:
+                    file_has_been_read = abs_file_path in _global_read_files
+                if not file_has_been_read:
+                    return "Error: You must use Read tool at least once before editing this file. This tool will error if you attempt an edit without reading the file first."
 
                 # Read the existing file
                 try:

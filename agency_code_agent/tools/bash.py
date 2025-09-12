@@ -36,9 +36,8 @@ class Bash(BaseTool):
       - You can specify an optional timeout in milliseconds (up to 600000ms / 10 minutes). If not specified, commands will timeout after 120000ms (2 minutes).
       - It is very helpful if you write a clear, concise description of what this command does in 5-10 words.
       - If the output exceeds 30000 characters, output will be truncated before being returned to you.
-      - VERY IMPORTANT: You MUST avoid using search commands like `find` and `grep`. Instead use Grep, Glob, or Task to search. You MUST avoid read tools like `cat`, `head`, `tail`, and `ls`, and use Read and LS to read files.
-     - If you _still_ need to run `grep`, STOP. ALWAYS USE ripgrep at `rg` first, which all ${PRODUCT_NAME} users have pre-installed.
-      - When issuing multiple commands, use the ';' or '&&' operator to separate them. DO NOT use newlines (newlines are ok in quoted strings).
+      - VERY IMPORTANT: Prefer the specialized tools (Grep, Glob, Read, LS, Task) over shell commands with the same names. Do not call CLI `grep`, `find`, or `rg` here for code/content search; use the Grep tool. Do not call CLI `ls` to enumerate; use the LS tool. Do not call CLI `cat`/`head`/`tail` to read files; use the Read tool.
+      - When issuing multiple commands, use the ';' or '&&' operator to separate them. Multiline scripts are allowed when needed.
       - Try to maintain your current working directory throughout the session by using absolute paths and avoiding usage of `cd`. You may use `cd` if the User explicitly requests it.
         <good-example>
         pytest /foo/bar/tests
