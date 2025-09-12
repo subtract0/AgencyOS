@@ -15,6 +15,18 @@ from openai.types.shared.reasoning import Reasoning
 current_dir = os.path.dirname(os.path.abspath(__file__))
 
 
+def select_instructions_file(model: str) -> str:
+    """Return absolute path to the appropriate instructions file for the model.
+    Uses instructions-gpt-5.md for any gpt-5* model, otherwise instructions.md.
+    """
+    filename = (
+        "instructions-gpt-5.md"
+        if model.lower().startswith("gpt-5")
+        else "instructions.md"
+    )
+    return os.path.join(current_dir, filename)
+
+
 def create_agency_code_agent(
     model: str = "gpt-5-mini", reasoning_effort: str = "medium"
 ) -> Agent:
@@ -26,8 +38,9 @@ def create_agency_code_agent(
     is_grok = "grok" in model
 
     if not is_openai:
-        BASE_URL = "http://localhost:4000"
-        client = AsyncOpenAI(base_url=BASE_URL, api_key="any-key")
+        BASE_URL = os.getenv("OPENAI_BASE_URL", "http://localhost:4000")
+        api_key = os.getenv("OPENAI_API_KEY", "")
+        client = AsyncOpenAI(base_url=BASE_URL, api_key=api_key)
         set_default_openai_client(client)
         set_tracing_disabled(disabled=True)
         set_default_openai_api("chat_completions")
@@ -35,7 +48,7 @@ def create_agency_code_agent(
     return Agent(
         name="AgencyCodeAgent",
         description="An interactive CLI tool that helps users with software engineering tasks.",
-        instructions="./instructions.md",
+        instructions=select_instructions_file(model),
         tools_folder=os.path.join(current_dir, "tools"),
         model=model,
         openai_client=None if is_openai else client,

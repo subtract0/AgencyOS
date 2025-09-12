@@ -7,6 +7,18 @@ from agents import ModelSettings
 current_dir = os.path.dirname(os.path.abspath(__file__))
 
 
+def select_instructions_file(model: str) -> str:
+    """Return absolute path to the appropriate instructions file for the model.
+    Uses instructions-gpt-5.md for any gpt-5* model, otherwise instructions.md.
+    """
+    filename = (
+        "instructions-gpt-5.md"
+        if model.lower().startswith("gpt-5")
+        else "instructions.md"
+    )
+    return os.path.join(current_dir, filename)
+
+
 def create_planner_agent(model: str = "gpt-5", reasoning_effort: str = "high") -> Agent:
     """Factory that returns a fresh PlannerAgent instance.
     Use this in tests to avoid reusing a singleton across multiple agencies.
@@ -18,7 +30,7 @@ def create_planner_agent(model: str = "gpt-5", reasoning_effort: str = "high") -
             "and structure software development projects into manageable, actionable tasks. "
             "Provides clear project roadmaps and coordinates with the AgencyCodeAgent for execution."
         ),
-        instructions="./instructions.md",
+        instructions=select_instructions_file(model),
         tools_folder=os.path.join(current_dir, "tools"),
         model=model,
         model_settings=ModelSettings(

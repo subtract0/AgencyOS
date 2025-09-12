@@ -1,5 +1,5 @@
 """
-Tool Integration Test for Claude Code Agent
+Tool Integration Test for Agency Code Agent
 Tests that tools can be invoked directly via the agent
 """
 
@@ -10,7 +10,7 @@ from agency_code_agent.agency_code_agent import create_agency_code_agent
 
 @pytest.fixture
 def agent():
-    """Create claude code agent for testing"""
+    """Create agency code agent for testing"""
     return create_agency_code_agent()
 
 

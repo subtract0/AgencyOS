@@ -105,8 +105,8 @@ class TodoWrite(BaseTool):
             )
             pending_tasks = len([t for t in self.todos if t.status == "pending"])
 
-            result = f"Todo List Updated ({current_time[:19]})\n\n"
-            result += f"Summary: {total_tasks} total tasks - {completed_tasks} completed, {in_progress_tasks} in progress, {pending_tasks} pending\n\n"
+            result = f"Todo List Updated ({current_time[:19]})\n"
+            result += f"Summary: total={total_tasks}, done={completed_tasks}, in_progress={in_progress_tasks}, pending={pending_tasks}\n"
 
             # Group tasks by status
             status_groups = {"in_progress": [], "pending": [], "completed": []}
