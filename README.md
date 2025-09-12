@@ -1,85 +1,117 @@
-# Agency Code
+# 👨‍💻 Agency Code
 
-Agency Code is a local, testable coding agent built with Agency Swarm that behaves like a focused “Claude Code”-style developer inside your repo. It provides a set of tools (LS, Read, Grep, Glob, Edit, MultiEdit, Write, NotebookRead/Edit, Bash, TodoWrite, etc.) and an agent orchestration layer so you can iterate on code with safety and strong tests.
+Fully open sourced version of Claude Code built with [Agency Swarm](https://agency-swarm.ai/welcome/overview) framework.
 
-## What it does
+## 🔥 Key features
 
-- Answers and executes developer tasks inside your repository using first-class tools instead of brittle shell parsing.
-- Enforces a disciplined workflow: read → change → test → commit. Tests live in `tests/` and cover tools and agent behaviors.
+- **Developer Agent**: The primiary developer agent with the same set of tools as Claude Code.
+- **Planner Agent**: Planner agent that acts exactly as Claude Code's planning mode.
+- **Full Control**: Full access to all 14 tools from Claude Code, agency structure and prompts.
+- **Easy Subagent Creation**: Simple subagent creation process using Cursor or Claude Code itself.
 
-## Key features
+👨‍💻 Additionally, you can experiment by adding other features from Agency Swarm framework, unsupported by Claude Code, like multi-level hybrid communication flows.
 
-- Agency Swarm agents: a primary “Developer” and an optional “Planner” for complex tasks.
-- Comprehensive toolbelt:
-  - Files: `LS`, `Read`, `Write`, `Edit`, `MultiEdit`, `Glob`, `Grep`.
-  - Notebooks: `NotebookRead`, `NotebookEdit`.
-  - Process & workflow: `Bash` (macOS sandboxed writes to CWD and `/tmp`), `Task`, `TodoWrite`, `ExitPlanMode`.
-- Tests-first workflow with `pytest` and a convenience runner `python run_tests.py`.
+## 🚀 Quick start
 
-- Model-specific instructions:
-  - Agents load instructions based on model. For GPT‑5 class models (names starting with `gpt-5`), they use `instructions-gpt-5.md`; otherwise they use `instructions.md`.
+1. Create and activate a virtual environment (Python 3.13), then install deps:
 
-## Requirements
+   ```
+   python3.13 -m venv .venv
+   source .venv/bin/activate
+   python -m pip install --upgrade pip
+   python -m pip install -r requirements.txt
+   ```
 
-- Python 3.13
+2. Try the agency (terminal demo):
 
-## Quick start
+   ```
+   sudo python agency.py
+   ```
 
-1) Create and activate a virtual environment (Python 3.13), then install deps:
+- Don't forget to run the command with sudo if you're on macOS.
+- The agent won't be able to edit files outside of your current directory.
 
-```
-python3.13 -m venv .venv
-source .venv/bin/activate
-python -m pip install --upgrade pip
-python -m pip install -r requirements.txt
-```
+## 🔧 Adding Subagents
 
-2) Run tests:
+- To add a subagent, simply prompt _Cursor_ or _Claude Code_ itself. For example:
 
-```
-pytest -q
-```
+  ```
+  Ask me questions until you have enough context to create a QA tester subagent for my project
+  ```
 
-3) Try the agency (terminal demo):
+  After that it should create another folder in the root directory called `qa_tester_agent/` and modify the `agency.py` structure.
 
-```
-python agency.py
-```
+- Additionally, there is a template in the `subagent_template/` folder that you can use to create a new subagent yourself.
 
-## Demo Tasks
+## 📝 Demo Tasks
 
-See [`demo_tasks/README.md`](demo_tasks/README.md).
-
-## Development conventions
-
-- Prefer editing existing files; avoid generating docs unless requested.
-- Use absolute paths with tools; don’t shell out to `cat`/`grep`/`find` when `Read`/`Grep`/`Glob` exist.
-- Keep changes minimal; run tests and pre-commit before committing:
+### 🌌 Particle Galaxy Simulator
 
 ```
-pre-commit run --all-files
-pytest -q
+Create a full-screen interactive particle galaxy simulator using HTML5 Canvas and JavaScript. Include:
+  - 2000 glowing particles that form a spiral galaxy shape
+  - Particles should have different colors (blues, purples, pinks, whites) and sizes
+  - Mouse movement creates gravitational pull that attracts/repels particles
+  - Click to create a "supernova" explosion effect that pushes particles outward
+  - Add trailing effects for particle movement
+  - Include controls to adjust: particle count, rotation speed, color themes (nebula/aurora/cosmic)
+  - Add background stars that twinkle
+  - Display FPS counter and particle count
+  - Make it responsive and add a glow/bloom effect to particles
+  All in a single HTML file with inline CSS and JavaScript. Make it mesmerizing and cinematic.
 ```
 
-## Security & sandboxing
-
-- On macOS, `Bash` executes under `sandbox-exec` with file writes allowed only in the current working directory and `/tmp` (`/private/tmp`).
-- The agent does not push to remotes unless you ask it to.
-
-## Structure
+### 🎮 Real-Time Multiplayer Drawing Game
 
 ```
-agency.py                         # agency entrypoint
-agency_code_agent/                # developer agent and tools
-  instructions.md                 # default model-agnostic instructions
-  instructions-gpt-5.md           # GPT-5 tuned instructions
-planner_agent/                    # optional planner agent
-  instructions.md                 # default model-agnostic instructions
-  instructions-gpt-5.md           # GPT-5 tuned instructions
-tests/                            # tool and agent tests
-run_tests.py                      # convenience test runner
+Build a full-stack multiplayer drawing game like Skribbl.io using Next.js 14 with App Router, Socket.io, and Prisma. Create:
+
+Frontend:
+- Modern glassmorphism UI with Tailwind CSS and Framer Motion animations
+- Canvas drawing board with brush size, color picker, eraser, clear, and undo/redo
+- Real-time player list showing scores, avatars, and who's drawing
+- Chat with guess submission and proximity indicators (hot/cold)
+- Countdown timer with animated progress ring
+- Word reveal animation when round ends
+- Lobby system with room codes and shareable links
+- Mobile responsive with touch drawing support
+
+Backend:
+- WebSocket server for real-time drawing synchronization
+- SQLite database with Prisma for games, players, scores, and word history
+- Game state machine: lobby → choosing word → drawing → guessing → reveal → scores
+- Anti-cheat: rate limiting, profanity filter, drawing flood protection
+- Word database with difficulty levels and categories
+- Dynamic scoring based on guess speed and hints used
+- Reconnection handling with game state restoration
+- REST API endpoints for leaderboards and statistics
+
+Features:
+- Custom word lists creation
+- Private rooms with passwords
+- Spectator mode
+- Drawing replay system
+- Power-ups: extra time, letter hints, freeze opponents
+- Achievement system with badges
+- Sound effects and background music toggles
+
+Deploy-ready with environment variables for production. Include sample .env.local file.
 ```
 
-## Inspired by Claude Code
+### 📈 Stock Price Predictor with Live Charts
 
-This project mirrors the “code-first, tool-driven” agent pattern popularized by Claude Code: fast, local feedback loops; structured tools instead of free-form shell; and strong test coverage to keep edits safe and incremental.
+```
+Build a Streamlit app that predicts stock prices using yfinance and scikit-learn:
+- Dropdown to select from 10 popular stocks (AAPL, GOOGL, TSLA, etc.)
+- Download last 2 years of data and display candlestick chart using plotly
+- Train a simple LSTM model to predict next 30 days
+- Show prediction vs actual historical performance
+- Display current price, change, and volume in metric cards
+- Add moving averages (20, 50, 200 day) overlay on chart
+- Buy/sell signal based on moving average crossover
+Style with green/red colors for profit/loss.
+```
+
+## Contributing
+
+We'll be supporting and improving this repo in the future. Any contributions are welcome! Please feel free to submit a pull request.
