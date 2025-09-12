@@ -28,7 +28,7 @@ class Edit(BaseTool):
         description="The text to replace it with (must be different from old_string)",
     )
     replace_all: Optional[bool] = Field(
-        False, description="Replace all occurences of old_string (default false)"
+        False, description="Replace all occurrences of old_string (default false)"
     )
 
     def run(self):

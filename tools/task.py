@@ -14,7 +14,7 @@ class Task(BaseTool):
     """
     Launch a new agent that has access to the following tools: Bash, Glob, Grep, LS, exit_plan_mode, Read, Edit, MultiEdit, Write, NotebookRead, NotebookEdit, TodoWrite, WebSearch.
 
-    When to use the this Task Tool:
+    When to use this Task Tool:
     - If you are searching for a keyword like "config" or "logger", or for questions like "which file does X?"
     - Open-ended searches that may require multiple rounds of searching
 

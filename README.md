@@ -4,7 +4,7 @@ Fully open sourced version of Claude Code built with [Agency Swarm](https://agen
 
 ## 🔥 Key features
 
-- **Developer Agent**: The primiary developer agent with the same set of tools as Claude Code.
+- **Developer Agent**: The primary developer agent with the same set of tools as Claude Code.
 - **Planner Agent**: Planner agent that acts exactly as Claude Code's planning mode.
 - **Full Control**: Full access to all 14 tools from Claude Code, agency structure and prompts.
 - **Easy Subagent Creation**: Simple subagent creation process using Cursor or Claude Code itself.
