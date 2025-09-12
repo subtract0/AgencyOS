@@ -13,7 +13,7 @@ class Glob(BaseTool):
     - Supports glob patterns like "**/*.js" or "src/**/*.ts"
     - Returns matching file paths sorted by modification time
     - Use this tool when you need to find files by name patterns
-    - When doing open-ended searches that may require multiple rounds, use the Agent tool instead
+    - When doing open-ended searches that may require multiple rounds, use the Task tool instead
     """
 
     pattern: str = Field(..., description="The glob pattern to match files against")

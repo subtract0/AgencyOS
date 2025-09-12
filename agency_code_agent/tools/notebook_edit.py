@@ -10,9 +10,15 @@ class NotebookEdit(BaseTool):
     """
     Completely replaces the contents of a specific cell in a Jupyter notebook (.ipynb file) with new source.
     Jupyter notebooks are interactive documents that combine code, text, and visualizations, commonly used for data analysis and scientific computing.
-    The notebook_path parameter must be an absolute path, not a relative path. The cell_number is 0-indexed.
-    Use edit_mode=insert to add a new cell at the index specified by cell_number.
-    Use edit_mode=delete to delete the cell at the index specified by cell_number.
+    The notebook_path parameter must be an absolute path, not a relative path.
+
+    Targeting cells:
+    - Use cell_id to specify the target cell. It may be either an explicit cell "id" value from the notebook, or a numeric string representing the 0-indexed cell position (e.g., "0", "1", ...).
+
+    Edit modes:
+    - edit_mode=replace (default): replaces the content of the targeted cell. If cell_type is provided, the cell's type will also be updated.
+    - edit_mode=insert: inserts a new cell AFTER the cell specified by cell_id; if cell_id is not provided, inserts at the beginning. cell_type is required when inserting.
+    - edit_mode=delete: deletes the targeted cell.
     """
 
     notebook_path: str = Field(

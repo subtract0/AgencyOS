@@ -33,8 +33,8 @@ def test_multi_edit_requires_prior_read():
         os.unlink(tmp_path)
 
 
-def test_multi_edit_read_first_requirement_varies_by_extension(tmp_path: Path):
-    """Assert read-first enforced for .txt but not for .py per implementation"""
+def test_multi_edit_read_first_required_for_all_extensions(tmp_path: Path):
+    """Read-first must be enforced for any existing file extension."""
     # .txt requires read first
     txt_file = tmp_path / "sample.txt"
     txt_file.write_text("alpha beta gamma")
@@ -47,15 +47,16 @@ def test_multi_edit_read_first_requirement_varies_by_extension(tmp_path: Path):
         or "read the file first" in result_txt.lower()
     )
 
-    # .py does NOT enforce read first
+    # .py also requires read first now
     py_file = tmp_path / "sample.py"
     py_file.write_text("print('alpha')\nvalue = 1")
 
     edits_py = [EditOperation(old_string="value = 1", new_string="value = 2")]
     tool_py = MultiEdit(file_path=str(py_file), edits=edits_py)
     result_py = tool_py.run()
-    assert "Successfully applied" in result_py
-    assert "value = 2" in py_file.read_text()
+    assert (
+        "must use Read tool" in result_py or "read the file first" in result_py.lower()
+    )
 
 
 def test_multi_edit_works_after_read():
@@ -152,6 +153,16 @@ def another_function():
 
     read_tool = Read(file_path=str(test_file))
     read_tool.run()
+
+    # Read first (required precondition)
+    from agency_code_agent.tools.read import Read
+
+    Read(file_path=str(test_file)).run()
+
+    # Read first (required precondition)
+    from agency_code_agent.tools.read import Read
+
+    Read(file_path=str(test_file)).run()
 
     tool = MultiEdit(file_path=str(test_file), edits=edits)
     result = tool.run()
@@ -324,6 +335,10 @@ result = instance.old_method(10)
         ),
     ]
 
+    from agency_code_agent.tools.read import Read
+
+    Read(file_path=str(test_file)).run()
+
     tool = MultiEdit(file_path=str(test_file), edits=edits)
     result = tool.run()
 
@@ -372,6 +387,11 @@ def test_multi_edit_json_config_update(tmp_path: Path):
         ),
     ]
 
+    # Read first (required precondition)
+    from agency_code_agent.tools.read import Read
+
+    Read(file_path=str(config_file)).run()
+
     tool = MultiEdit(file_path=str(config_file), edits=edits)
     result = tool.run()
 
@@ -395,6 +415,11 @@ def test_multi_edit_error_string_not_found(tmp_path: Path):
         EditOperation(old_string="function", new_string="new_function"),
         EditOperation(old_string="nonexistent_string", new_string="replacement"),
     ]
+
+    # Read first (required precondition)
+    from agency_code_agent.tools.read import Read
+
+    Read(file_path=str(test_file)).run()
 
     tool = MultiEdit(file_path=str(test_file), edits=edits)
     result = tool.run()
@@ -424,6 +449,11 @@ def test_helper():
         EditOperation(old_string="test", new_string="exam")  # Appears multiple times
     ]
 
+    # Read first (required precondition)
+    from agency_code_agent.tools.read import Read
+
+    Read(file_path=str(test_file)).run()
+
     tool = MultiEdit(file_path=str(test_file), edits=edits)
     result = tool.run()
 
@@ -442,6 +472,11 @@ def test_multi_edit_error_same_strings(tmp_path: Path):
     edits = [
         EditOperation(old_string="function", new_string="function")  # Same strings
     ]
+
+    # Read first (required precondition)
+    from agency_code_agent.tools.read import Read
+
+    Read(file_path=str(test_file)).run()
 
     tool = MultiEdit(file_path=str(test_file), edits=edits)
     result = tool.run()
@@ -503,6 +538,11 @@ def test_multi_edit_html_template(tmp_path: Path):
         EditOperation(old_string="old content", new_string="fresh content"),
     ]
 
+    # Read first (required precondition)
+    from agency_code_agent.tools.read import Read
+
+    Read(file_path=str(template_file)).run()
+
     tool = MultiEdit(file_path=str(template_file), edits=edits)
     result = tool.run()
 
@@ -543,6 +583,11 @@ def test_multi_edit_whitespace_preservation(tmp_path: Path):
         EditOperation(old_string='"  value  "', new_string='"  new_value  "'),
     ]
 
+    # Read first (required precondition)
+    from agency_code_agent.tools.read import Read
+
+    Read(file_path=str(test_file)).run()
+
     tool = MultiEdit(file_path=str(test_file), edits=edits)
     result = tool.run()
 
@@ -577,6 +622,11 @@ def greet():
         EditOperation(old_string="你好世界", new_string="欢迎来到世界"),
         EditOperation(old_string="こんにちは世界", new_string="世界へようこそ"),
     ]
+
+    # Read first (required precondition)
+    from agency_code_agent.tools.read import Read
+
+    Read(file_path=str(test_file)).run()
 
     tool = MultiEdit(file_path=str(test_file), edits=edits)
     result = tool.run()
@@ -616,6 +666,11 @@ def test_multi_edit_large_file(tmp_path: Path):
         ),
         EditOperation(old_string="old_value", new_string="new_value", replace_all=True),
     ]
+
+    # Read first (required precondition)
+    from agency_code_agent.tools.read import Read
+
+    Read(file_path=str(test_file)).run()
 
     tool = MultiEdit(file_path=str(test_file), edits=edits)
     result = tool.run()
