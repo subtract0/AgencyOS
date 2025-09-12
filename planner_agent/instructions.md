@@ -67,7 +67,6 @@ Skip detailed planning for:
 In these cases, offer brief guidance and hand off directly to the AgencyCodeAgent.
 
 # Additional Guidelines
-- **Prioritize security:** Only plan for defensive security tasks; never support malicious code.
 - **Preserve codebase patterns:** Follow existing frameworks, libraries, and conventions.
 - **Ensure maintainability:** Factor in long-term code quality and documentation.
 - **Think systematically:** Consider integration, testing strategy, and deployment.

@@ -2,6 +2,7 @@ import os
 
 from agency_swarm import Agent
 from agents import ModelSettings
+from openai.types.shared.reasoning import Reasoning
 
 # Get the absolute path to the current file's directory
 current_dir = os.path.dirname(os.path.abspath(__file__))
@@ -33,9 +34,9 @@ def create_planner_agent(model: str = "gpt-5", reasoning_effort: str = "high") -
         instructions=select_instructions_file(model),
         model=model,
         model_settings=ModelSettings(
-            reasoning={
-                "effort": reasoning_effort,
-            }
+            reasoning=Reasoning(effort=reasoning_effort, summary="auto")
+            if model.lower().startswith("gpt-5")
+            else None,
         ),
     )
 

@@ -44,3 +44,24 @@ def test_render_instructions_replaces_model_placeholder():
     template = os.path.join(repo_root, "agency_code_agent", "instructions.md")
     text = render_instructions(template, "gpt-5-mini")
     assert "Model Name: gpt-5-mini" in text
+
+
+def test_reasoning_summary_auto_for_agents():
+    from agency_code_agent.agency_code_agent import create_agency_code_agent
+    from planner_agent.planner_agent import create_planner_agent
+
+    code_agent = create_agency_code_agent(model="gpt-5-mini", reasoning_effort="low")
+    planner_agent = create_planner_agent(model="gpt-5", reasoning_effort="high")
+
+    # For OpenAI GPT-5 models, reasoning should be configured and summary set to auto
+    assert code_agent.model_settings is not None
+    assert getattr(code_agent.model_settings, "reasoning", None) is not None
+    assert getattr(code_agent.model_settings.reasoning, "summary", None) == "auto"
+
+    assert planner_agent.model_settings is not None
+    # planner may use dict or object depending on implementation; normalize
+    reasoning = getattr(planner_agent.model_settings, "reasoning", None)
+    if isinstance(reasoning, dict):
+        assert reasoning.get("summary") == "auto"
+    else:
+        assert getattr(reasoning, "summary", None) == "auto"
