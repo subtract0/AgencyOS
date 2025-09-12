@@ -12,7 +12,7 @@ class EditOperation(BaseModel):
     old_string: str = Field(..., description="The text to replace")
     new_string: str = Field(..., description="The text to replace it with")
     replace_all: Optional[bool] = Field(
-        False, description="Replace all occurences of old_string (default false)."
+        False, description="Replace all occurrences of old_string (default false)."
     )
 
 
@@ -29,7 +29,7 @@ class MultiEdit(BaseTool):
     2. edits: An array of edit operations to perform, where each edit contains:
        - old_string: The text to replace (must match the file contents exactly, including all whitespace and indentation)
        - new_string: The edited text to replace the old_string
-       - replace_all: Replace all occurences of old_string. This parameter is optional and defaults to false.
+       - replace_all: Replace all occurrences of old_string. This parameter is optional and defaults to false.
 
     IMPORTANT:
     - All edits are applied in sequence, in the order they are provided
