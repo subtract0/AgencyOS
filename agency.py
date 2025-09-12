@@ -7,6 +7,7 @@ from dotenv import load_dotenv
 
 from agency_code_agent.agency_code_agent import create_agency_code_agent
 from planner_agent.planner_agent import create_planner_agent
+from agency_swarm.tools import SendMessageHandoff
 
 load_dotenv()
 
@@ -31,6 +32,7 @@ def render_instructions(template_path: str, model_name: str) -> str:
 
 # Create agents
 planner = create_planner_agent(model="gpt-5", reasoning_effort="high")
+
 # coder = create_agency_code_agent(model="litellm/anthropic/claude-sonnet-4-20250514")
 coder = create_agency_code_agent(model="gpt-5-mini", reasoning_effort="medium")
 
@@ -40,16 +42,18 @@ shared_template = (
     if coder.model.lower().startswith("gpt-5")
     else os.path.join(current_dir, "agency_code_agent", "instructions.md")
 )
-instructions = render_instructions(shared_template, coder.model)
 
-# Set up mutual handoffs after both agents are created
-planner.handoffs = [coder]
-coder.handoffs = [planner]
+instructions = render_instructions(shared_template, coder.model)
 
 agency = Agency(
     coder,
+    communication_flows=[
+        (coder, planner, SendMessageHandoff),
+        (planner, coder, SendMessageHandoff),
+    ],
     shared_instructions=instructions,
 )
 
 if __name__ == "__main__":
     agency.terminal_demo()
+    # agency.visualize()
