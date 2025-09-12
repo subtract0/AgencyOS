@@ -1,4 +1,6 @@
 import os
+import platform
+from datetime import datetime
 
 from agency_swarm import Agent
 from agents import (
@@ -27,10 +29,8 @@ from tools import (
     TodoWrite,
 )
 
-
 # Get the absolute path to the current file's directory
 current_dir = os.path.dirname(os.path.abspath(__file__))
-
 
 def select_instructions_file(model: str) -> str:
     """Return absolute path to the appropriate instructions file for the model.
@@ -43,6 +43,20 @@ def select_instructions_file(model: str) -> str:
     )
     return os.path.join(current_dir, filename)
 
+def render_instructions(template_path: str, model_name: str) -> str:
+    with open(template_path, "r") as f:
+        content = f.read()
+    placeholders = {
+        "{cwd}": os.getcwd(),
+        "{is_git_repo}": os.path.isdir(".git"),
+        "{platform}": platform.system(),
+        "{os_version}": platform.release(),
+        "{today}": datetime.now().strftime("%Y-%m-%d"),
+        "{model}": model_name,
+    }
+    for key, value in placeholders.items():
+        content = content.replace(key, str(value))
+    return content
 
 def create_agency_code_agent(
     model: str = "gpt-5-mini", reasoning_effort: str = "medium"
@@ -62,10 +76,12 @@ def create_agency_code_agent(
         set_tracing_disabled(disabled=True)
         set_default_openai_api("chat_completions")
 
+    instructions = render_instructions(select_instructions_file(model), model)
+
     return Agent(
         name="AgencyCodeAgent",
         description="An interactive CLI tool that helps users with software engineering tasks.",
-        instructions=select_instructions_file(model),
+        instructions=instructions,
         tools_folder=os.path.join(current_dir, "tools"),
         model=model,
         openai_client=None if is_openai else client,

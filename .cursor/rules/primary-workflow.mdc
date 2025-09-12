@@ -137,22 +137,25 @@ Agency-Code/
     - __init__.py
     - agency_code_agent.py
     - instructions.md
-    - tools/
-      - __init__.py
-      - bash.py
-      - edit.py
-      - glob.py
-      - grep.py
-      - ls.py
-      - multi_edit.py
-      - notebook_edit.py
-      - notebook_read.py
-      - read.py
-      - task.py
-      - todo_write.py
-      - todo_complete.py
-      - write.py
-  - claude_code_prompts_and_tools.yaml
+  - subagent_name/
+    - __init__.py
+    - subagent_name.py
+    - instructions.md
+  - tools/
+    - __init__.py
+    - bash.py
+    - edit.py
+    - glob.py
+    - grep.py
+    - ls.py
+    - multi_edit.py
+    - notebook_edit.py
+    - notebook_read.py
+    - read.py
+    - task.py
+    - todo_write.py
+    - todo_complete.py
+    - write.py
   - LICENSE
   - README.md
   - requirements.txt
@@ -178,22 +181,17 @@ Agency-Code/
     - tool_integration_test.py
 ```
 
-# Workflow
+# Common Workflows
 
-- To-do list (always follow in order; do not skip steps):
+### Adding tools
 
-  1. Modify or add the appropriate test(s) in `tests/` to define the desired behavior.
-  2. Review existing tests to understand current behavior and coverage; adjust tests if behavior changes.
-  3. Implement the minimal code changes (tools/agents/agency) to satisfy the updated tests.
-  4. Run `python run_tests.py` or `pytest`; fix failures until green.
-  5. Refactor for clarity/DRY while keeping tests green.
-  6. Validate the agency entrypoint if applicable: `python agency_name/agency.py`.
+1. Create a new tool class in the `tools` folder: `tools/tool_name.py` or in a subagent specific tools folder: `subagent_name/tools/tool_name.py`
+2. Add tool to the agent in the agent file: `subagent_name/subagent_name.py`
 
-- Tool constraints:
+### Adding subagents
 
-  - **Never modify tool parameters (field names/types) or descriptions unless explicitly instructed by the user.**
-  - Before any tool change, ensure tests are updated first to reflect intended behavior.
-
-- Code quality:
-  - Follow DRY; extract shared logic into helpers where appropriate.
-  - Keep tools production-ready: load env with `dotenv`, fetch secrets from environment, no placeholders.
+1. Create a new agent folder in the root directory: `subagent_name/`
+2. Create instruction.md file for the agent: `subagent_name/instructions.md` following the template in `subagent_template/instructions.md`
+3. Read the `./tools` folder and deteremine the necessary files to import for this agent. Subagent might not need all the tools, so only import the necessary ones. For example, for a planner agent, you might only need the `Read`, `Bash`, `LS`, and `Grep` tools.
+4. Create an agent file: `subagent_name/subagent_name.py` following the template in `subagent_template/subagent1.py`
+5. Add subagent to the agency.py file: `agency.py`
