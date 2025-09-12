@@ -85,7 +85,11 @@ def create_agency_code_agent(
             TodoWrite,
         ] + ([WebSearchTool()] if is_openai else []),
         model_settings=ModelSettings(
-            reasoning=Reasoning(effort=reasoning_effort) if is_openai else None,
+            reasoning=(
+                Reasoning(effort=reasoning_effort, summary="auto")
+                if is_openai
+                else None
+            ),
             truncation="auto",
             extra_body=(
                 {"web_search_options": {"search_context_size": "medium"}}
