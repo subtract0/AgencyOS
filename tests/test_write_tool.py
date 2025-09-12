@@ -3,15 +3,13 @@ from pathlib import Path
 
 import pytest
 
-from agency_code_agent.tools.write import Write
+from tools import Write, Read
 
 
 def test_write_existing_file_requires_prior_read():
     """Test that Write tool requires using Read tool first for existing files"""
     import os
     import tempfile
-
-    from agency_code_agent.tools.write import Write
 
     with tempfile.NamedTemporaryFile(mode="w", delete=False, suffix=".txt") as tmp:
         tmp.write("Existing content")
@@ -37,8 +35,6 @@ def test_write_existing_file_works_after_read():
     """Test that Write tool works after using Read tool first for existing files"""
     import os
     import tempfile
-
-    from agency_code_agent.tools.read import Read
 
     with tempfile.NamedTemporaryFile(mode="w", delete=False, suffix=".txt") as tmp:
         tmp.write("Existing content")
@@ -117,8 +113,6 @@ def test_write_overwrite_existing_file(tmp_path: Path):
         f.write(initial_content)
 
     # Read the file first (required precondition for overwriting existing files)
-    from agency_code_agent.tools.read import Read
-
     read_tool = Read(file_path=file_path)
     read_tool.run()
 
@@ -273,8 +267,6 @@ def test_write_error_path_is_directory(tmp_path: Path):
     content = "This should fail"
 
     # Try to read the directory first (will fail but satisfies precondition check)
-    from agency_code_agent.tools.read import Read
-
     read_tool = Read(file_path=dir_path)
     try:
         read_tool.run()
@@ -318,8 +310,6 @@ def test_write_line_counting_with_various_endings(tmp_path: Path):
     # Test content not ending with newline
     content_no_newline = "Line 1\nLine 2\nLine 3"
     # Read the file first (required for overwriting existing file)
-    from agency_code_agent.tools.read import Read
-
     read_tool2 = Read(file_path=file_path)
     read_tool2.run()
     tool2 = Write(file_path=file_path, content=content_no_newline)
@@ -368,8 +358,6 @@ def test_write_file_size_reporting(tmp_path: Path):
     # Test larger content
     large_content = "A" * 1024  # 1KB
     # Read the file first (required for overwriting existing file)
-    from agency_code_agent.tools.read import Read
-
     read_tool = Read(file_path=file_path)
     read_tool.run()
     tool2 = Write(file_path=file_path, content=large_content)

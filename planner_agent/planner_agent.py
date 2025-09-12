@@ -31,7 +31,6 @@ def create_planner_agent(model: str = "gpt-5", reasoning_effort: str = "high") -
             "Provides clear project roadmaps and coordinates with the AgencyCodeAgent for execution."
         ),
         instructions=select_instructions_file(model),
-        tools_folder=os.path.join(current_dir, "tools"),
         model=model,
         model_settings=ModelSettings(
             reasoning={

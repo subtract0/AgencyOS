@@ -4,7 +4,7 @@ from pathlib import Path
 
 import pytest
 
-from agency_code_agent.tools.ls import LS
+from tools import LS
 
 
 def test_ls_simple_directory(tmp_path: Path):

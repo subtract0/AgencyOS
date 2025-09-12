@@ -1,6 +1,6 @@
 from pathlib import Path
 
-from agency_code_agent.tools.todo_write import TodoItem, TodoWrite
+from tools.todo_write import TodoItem, TodoWrite
 
 
 def test_todo_write_no_emojis_and_summary(tmp_path: Path):
