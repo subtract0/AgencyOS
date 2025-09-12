@@ -1,12 +1,15 @@
 from datetime import datetime
-from typing import Any, Dict, List, Literal
+from typing import List, Literal
 
 from agency_swarm.tools import BaseTool
 from pydantic import BaseModel, Field
 
-# Fallback shared store for tests/direct invocations where tool contexts
-# are not shared between instances
-_GLOBAL_TODOS: List[Dict[str, Any]] = []
+"""TodoWrite tool - persists todos exclusively via Agency Swarm shared context.
+
+This module intentionally avoids any module-level global state to ensure
+production-ready behavior aligned with the Agency Swarm framework. All
+persistence is handled through the tool's provided `context` (shared state).
+"""
 
 
 class TodoItem(BaseModel):
@@ -90,12 +93,10 @@ class TodoWrite(BaseTool):
             # Convert todos to dict format
             todos_payload = [todo.model_dump() for todo in self.todos]
 
-            # Persist to shared agency context (primary)
+            # Persist to shared agency context when available. The framework
+            # manages the context lifecycle; if not present, simply skip.
             if self.context is not None:
                 self.context.set("todos", todos_payload)
-            # Fallback: store in module-level memory so other tool instances can read
-            global _GLOBAL_TODOS
-            _GLOBAL_TODOS = todos_payload
 
             # Format the response
             total_tasks = len(self.todos)
@@ -157,11 +158,6 @@ class TodoWrite(BaseTool):
 
         except Exception as e:
             return f"Error managing todo list: {str(e)}"
-
-    @classmethod
-    def load_existing_todos(cls):
-        """Deprecated: Context-backed now; kept for compatibility."""
-        return list(_GLOBAL_TODOS)
 
 
 # Create alias for Agency Swarm tool loading (expects class name = file name)
