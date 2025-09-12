@@ -12,7 +12,7 @@ from pydantic import Field
 
 class Task(BaseTool):
     """
-    Launch a new agent that has access to the following tools: Bash, Glob, Grep, LS, exit_plan_mode, Read, Edit, MultiEdit, Write, NotebookRead, NotebookEdit, WebFetch, TodoWrite, WebSearch.
+    Launch a new agent that has access to the following tools: Bash, Glob, Grep, LS, exit_plan_mode, Read, Edit, MultiEdit, Write, NotebookRead, NotebookEdit, TodoWrite, WebSearch.
 
     When to use the Agent tool:
     - If you are searching for a keyword like "config" or "logger", or for questions like "which file does X?"

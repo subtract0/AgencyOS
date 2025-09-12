@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Test Runner for Claude Code Agency
+Test Runner for Agency Code Agency
 Runs all tests using pytest framework
 """
 
@@ -13,7 +13,7 @@ from pathlib import Path
 def main():
     """Run all tests using pytest"""
     print("=" * 60)
-    print("CLAUDE CODE AGENCY - TEST RUNNER")
+    print("AGENCY CODE AGENCY - TEST RUNNER")
     print("=" * 60)
 
     # Change to the project root directory
@@ -66,7 +66,7 @@ def main():
             print("\n📊 Test Summary:")
             print("- All test suites executed successfully")
             print("- No failures or errors detected")
-            print("- Claude Code Agency is ready for use")
+            print("- Agency Code Agency is ready for use")
         else:
             print("❌ Some tests failed!")
             print(f"Exit code: {result.returncode}")

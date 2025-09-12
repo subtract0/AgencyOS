@@ -12,24 +12,35 @@ load_dotenv()
 
 current_dir = os.path.dirname(os.path.abspath(__file__))
 
-with open(os.path.join(current_dir, "agency_code_agent", "instructions.md"), "r") as f:
-    instructions = f.read()
 
-    # Safely replace only our known placeholders without raising on stray braces
+def render_instructions(template_path: str, model_name: str) -> str:
+    with open(template_path, "r") as f:
+        content = f.read()
     placeholders = {
         "{cwd}": os.getcwd(),
         "{is_git_repo}": os.path.isdir(".git"),
         "{platform}": platform.system(),
         "{os_version}": platform.release(),
         "{today}": datetime.now().strftime("%Y-%m-%d"),
+        "{model}": model_name,
     }
     for key, value in placeholders.items():
-        instructions = instructions.replace(key, str(value))
+        content = content.replace(key, str(value))
+    return content
+
 
 # Create agents
-planner = create_planner_agent()
+planner = create_planner_agent(model="gpt-5", reasoning_effort="high")
 # coder = create_agency_code_agent(model="litellm/anthropic/claude-sonnet-4-20250514")
-coder = create_agency_code_agent()
+coder = create_agency_code_agent(model="gpt-5-mini", reasoning_effort="medium")
+
+# Choose shared instructions template based on coder model
+shared_template = (
+    os.path.join(current_dir, "agency_code_agent", "instructions-gpt-5.md")
+    if coder.model.lower().startswith("gpt-5")
+    else os.path.join(current_dir, "agency_code_agent", "instructions.md")
+)
+instructions = render_instructions(shared_template, coder.model)
 
 # Set up mutual handoffs after both agents are created
 planner.handoffs = [coder]

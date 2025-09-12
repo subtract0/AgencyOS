@@ -1,5 +1,5 @@
 """
-Test Agency for Claude Code Agent
+Test Agency for Agency Code Agent
 Tests the agent with 5 diverse queries to validate functionality
 """
 
@@ -29,7 +29,7 @@ def agency():
     return Agency(
         create_agency_code_agent(model="gpt-5-mini", reasoning_effort="low"),
         communication_flows=[],  # Single agent, no communication flows needed
-        shared_instructions="Test agency for Claude Code Agent functionality validation.",
+        shared_instructions="Test agency for Agency Code Agent functionality validation.",
     )
 
 
@@ -59,7 +59,7 @@ def test_queries():
             "id": 4,
             "category": "Web Research",
             "query": "Search for information about Agency Swarm framework and fetch content from the official documentation",
-            "expected": "Should use WebSearch and WebFetch tools",
+            "expected": "Should use WebSearch tool",
         },
         {
             "id": 5,

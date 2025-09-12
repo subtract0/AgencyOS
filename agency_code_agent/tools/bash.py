@@ -64,10 +64,7 @@ class Bash(BaseTool):
       - Ensure it accurately reflects the changes and their purpose
     3. You have the capability to call multiple tools in a single response. When multiple independent pieces of information are requested, batch your tool calls together for optimal performance. ALWAYS run the following commands in parallel:
        - Add relevant untracked files to the staging area.
-       - Create the commit with a message ending with:
-       🤖 Generated with [Claude Code](https://claude.ai/code)
-
-       Co-Authored-By: Claude <noreply@anthropic.com>
+       - Create the commit.
        - Run git status to make sure the commit succeeded.
     4. If the commit fails due to pre-commit hook changes, retry the commit ONCE to include these automated changes. If it fails again, it usually means a pre-commit hook is preventing the commit. If the commit succeeds but you notice that files were modified by the pre-commit hook, you MUST amend your commit to include them.
 
@@ -82,10 +79,6 @@ class Bash(BaseTool):
     <example>
     git commit -m "$(cat <<'EOF'
        Commit message here.
-
-       🤖 Generated with [Claude Code](https://claude.ai/code)
-
-       Co-Authored-By: Claude <noreply@anthropic.com>
        EOF
        )"
     </example>
@@ -112,8 +105,6 @@ class Bash(BaseTool):
 
     ## Test plan
     [Checklist of TODOs for testing the pull request...]
-
-    🤖 Generated with [Claude Code](https://claude.ai/code)
     EOF
     )"
     </example>

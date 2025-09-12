@@ -13,14 +13,24 @@ Agency Code is a local, testable coding agent built with Agency Swarm that behav
 - Comprehensive toolbelt:
   - Files: `LS`, `Read`, `Write`, `Edit`, `MultiEdit`, `Glob`, `Grep`.
   - Notebooks: `NotebookRead`, `NotebookEdit`.
-  - Process: `Bash` (macOS sandboxed writes to CWD and /tmp), `TodoWrite`/`TodoComplete`.
+  - Process & workflow: `Bash` (macOS sandboxed writes to CWD and `/tmp`), `Task`, `TodoWrite`, `ExitPlanMode`.
 - Tests-first workflow with `pytest` and a convenience runner `python run_tests.py`.
+
+- Model-specific instructions:
+  - Agents load instructions based on model. For GPT‑5 class models (names starting with `gpt-5`), they use `instructions-gpt-5.md`; otherwise they use `instructions.md`.
+
+## Requirements
+
+- Python 3.13
 
 ## Quick start
 
-1) Install deps:
+1) Create and activate a virtual environment (Python 3.13), then install deps:
 
 ```
+python3.13 -m venv .venv
+source .venv/bin/activate
+python -m pip install --upgrade pip
 python -m pip install -r requirements.txt
 ```
 
@@ -61,7 +71,11 @@ pytest -q
 ```
 agency.py                         # agency entrypoint
 agency_code_agent/                # developer agent and tools
+  instructions.md                 # default model-agnostic instructions
+  instructions-gpt-5.md           # GPT-5 tuned instructions
 planner_agent/                    # optional planner agent
+  instructions.md                 # default model-agnostic instructions
+  instructions-gpt-5.md           # GPT-5 tuned instructions
 tests/                            # tool and agent tests
 run_tests.py                      # convenience test runner
 ```
