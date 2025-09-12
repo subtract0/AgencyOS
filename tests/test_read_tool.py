@@ -1,6 +1,6 @@
 from pathlib import Path
 
-from agency_code_agent.tools.read import Read
+from tools import Read
 
 
 def test_read_cat_numbering_and_truncation(tmp_path: Path):

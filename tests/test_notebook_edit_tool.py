@@ -1,7 +1,7 @@
 import json
 from pathlib import Path
 
-from agency_code_agent.tools.notebook_edit import NotebookEdit
+from tools import NotebookEdit
 
 
 def create_sample_notebook(file_path: str, cells_data: list = None):

@@ -1,14 +1,13 @@
 from pathlib import Path
 
-from agency_code_agent.tools.edit import Edit
+from tools import Edit
+from tools import Read
 
 
 def test_edit_requires_prior_read():
     """Test that Edit tool requires using Read tool first"""
     import os
     import tempfile
-
-    from agency_code_agent.tools.edit import Edit
 
     with tempfile.NamedTemporaryFile(mode="w", delete=False, suffix=".txt") as tmp:
         tmp.write("Hello world\nThis is a test")
@@ -35,8 +34,6 @@ def test_edit_works_after_read():
     import os
     import tempfile
 
-    from agency_code_agent.tools.read import Read
-
     with tempfile.NamedTemporaryFile(mode="w", delete=False, suffix=".txt") as tmp:
         tmp.write("Hello world\nThis is a test")
         tmp_path = tmp.name
@@ -61,8 +58,6 @@ def test_edit_works_after_read():
 
 
 def test_edit_unique_replacement_and_preview(tmp_path: Path):
-    from agency_code_agent.tools.read import Read
-
     p = tmp_path / "file.txt"
     p.write_text("hello world\nbye\n", encoding="utf-8")
     # Read the file first (required precondition)
@@ -77,8 +72,6 @@ def test_edit_unique_replacement_and_preview(tmp_path: Path):
 
 
 def test_edit_multiple_occurrences_error_with_previews(tmp_path: Path):
-    from agency_code_agent.tools.read import Read
-
     p = tmp_path / "multi.txt"
     p.write_text("a test a test a\n", encoding="utf-8")
     # Read the file first (required precondition)

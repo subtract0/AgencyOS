@@ -11,6 +11,23 @@ from agents import (
 from openai import AsyncOpenAI
 from openai.types.shared.reasoning import Reasoning
 
+from tools import (
+    Task,
+    Bash,
+    Glob,
+    Grep,
+    LS,
+    ExitPlanMode,
+    Read,
+    Edit,
+    MultiEdit,
+    Write,
+    NotebookRead,
+    NotebookEdit,
+    TodoWrite,
+)
+
+
 # Get the absolute path to the current file's directory
 current_dir = os.path.dirname(os.path.abspath(__file__))
 
@@ -52,8 +69,21 @@ def create_agency_code_agent(
         tools_folder=os.path.join(current_dir, "tools"),
         model=model,
         openai_client=None if is_openai else client,
-        # Only works with OpenAI models
-        tools=[WebSearchTool()] if is_openai else [],
+        tools=[
+            Task,
+            Bash,
+            Glob,
+            Grep,
+            LS,
+            ExitPlanMode,
+            Read,
+            Edit,
+            MultiEdit,
+            Write,
+            NotebookRead,
+            NotebookEdit,
+            TodoWrite,
+        ] + ([WebSearchTool()] if is_openai else []),
         model_settings=ModelSettings(
             reasoning=Reasoning(effort=reasoning_effort) if is_openai else None,
             truncation="auto",

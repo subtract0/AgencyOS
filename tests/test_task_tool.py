@@ -1,4 +1,4 @@
-from agency_code_agent.tools.task import Task
+from tools import Task
 
 
 def test_task_web_research():

@@ -2,15 +2,13 @@ from pathlib import Path
 
 import pytest
 
-from agency_code_agent.tools.multi_edit import EditOperation, MultiEdit
-
+from tools import MultiEdit, Read
+from tools.multi_edit import EditOperation
 
 def test_multi_edit_requires_prior_read():
     """Test that MultiEdit tool requires using Read tool first"""
     import os
     import tempfile
-
-    from agency_code_agent.tools.multi_edit import EditOperation, MultiEdit
 
     with tempfile.NamedTemporaryFile(mode="w", delete=False, suffix=".txt") as tmp:
         tmp.write("Hello world\nThis is a test")
@@ -63,8 +61,6 @@ def test_multi_edit_works_after_read():
     """Test that MultiEdit tool works after using Read tool first"""
     import os
     import tempfile
-
-    from agency_code_agent.tools.read import Read
 
     with tempfile.NamedTemporaryFile(mode="w", delete=False, suffix=".txt") as tmp:
         tmp.write("Hello world\nThis is a test")
@@ -149,19 +145,14 @@ def another_function():
     ]
 
     # Read the file first (required precondition)
-    from agency_code_agent.tools.read import Read
 
     read_tool = Read(file_path=str(test_file))
     read_tool.run()
 
     # Read first (required precondition)
-    from agency_code_agent.tools.read import Read
-
     Read(file_path=str(test_file)).run()
 
     # Read first (required precondition)
-    from agency_code_agent.tools.read import Read
-
     Read(file_path=str(test_file)).run()
 
     tool = MultiEdit(file_path=str(test_file), edits=edits)
@@ -199,8 +190,6 @@ def handle_old_records():
     ]
 
     # Read the file first (required precondition)
-    from agency_code_agent.tools.read import Read
-
     read_tool = Read(file_path=str(test_file))
     read_tool.run()
 
@@ -244,8 +233,6 @@ def test_multi_edit_sequential_operations(tmp_path: Path):
     ]
 
     # Read the file first (required precondition)
-    from agency_code_agent.tools.read import Read
-
     read_tool = Read(file_path=str(test_file))
     read_tool.run()
 
@@ -335,8 +322,6 @@ result = instance.old_method(10)
         ),
     ]
 
-    from agency_code_agent.tools.read import Read
-
     Read(file_path=str(test_file)).run()
 
     tool = MultiEdit(file_path=str(test_file), edits=edits)
@@ -388,8 +373,6 @@ def test_multi_edit_json_config_update(tmp_path: Path):
     ]
 
     # Read first (required precondition)
-    from agency_code_agent.tools.read import Read
-
     Read(file_path=str(config_file)).run()
 
     tool = MultiEdit(file_path=str(config_file), edits=edits)
@@ -417,8 +400,6 @@ def test_multi_edit_error_string_not_found(tmp_path: Path):
     ]
 
     # Read first (required precondition)
-    from agency_code_agent.tools.read import Read
-
     Read(file_path=str(test_file)).run()
 
     tool = MultiEdit(file_path=str(test_file), edits=edits)
@@ -450,8 +431,6 @@ def test_helper():
     ]
 
     # Read first (required precondition)
-    from agency_code_agent.tools.read import Read
-
     Read(file_path=str(test_file)).run()
 
     tool = MultiEdit(file_path=str(test_file), edits=edits)
@@ -474,8 +453,6 @@ def test_multi_edit_error_same_strings(tmp_path: Path):
     ]
 
     # Read first (required precondition)
-    from agency_code_agent.tools.read import Read
-
     Read(file_path=str(test_file)).run()
 
     tool = MultiEdit(file_path=str(test_file), edits=edits)
@@ -539,8 +516,6 @@ def test_multi_edit_html_template(tmp_path: Path):
     ]
 
     # Read first (required precondition)
-    from agency_code_agent.tools.read import Read
-
     Read(file_path=str(template_file)).run()
 
     tool = MultiEdit(file_path=str(template_file), edits=edits)
@@ -584,8 +559,6 @@ def test_multi_edit_whitespace_preservation(tmp_path: Path):
     ]
 
     # Read first (required precondition)
-    from agency_code_agent.tools.read import Read
-
     Read(file_path=str(test_file)).run()
 
     tool = MultiEdit(file_path=str(test_file), edits=edits)
@@ -624,8 +597,6 @@ def greet():
     ]
 
     # Read first (required precondition)
-    from agency_code_agent.tools.read import Read
-
     Read(file_path=str(test_file)).run()
 
     tool = MultiEdit(file_path=str(test_file), edits=edits)
@@ -668,8 +639,6 @@ def test_multi_edit_large_file(tmp_path: Path):
     ]
 
     # Read first (required precondition)
-    from agency_code_agent.tools.read import Read
-
     Read(file_path=str(test_file)).run()
 
     tool = MultiEdit(file_path=str(test_file), edits=edits)

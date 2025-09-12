@@ -3,7 +3,7 @@ from pathlib import Path
 
 import pytest
 
-from agency_code_agent.tools.bash import Bash
+from tools import Bash
 
 
 def test_bash_default_timeout_and_exit_code():

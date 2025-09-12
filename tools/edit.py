@@ -5,7 +5,7 @@ from agency_swarm.tools import BaseTool
 from pydantic import Field
 
 # Import the global read files registry
-from agency_code_agent.tools.read import _global_read_files
+from tools.read import _global_read_files
 
 
 class Edit(BaseTool):
