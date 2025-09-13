@@ -13,24 +13,26 @@ from agents import (
 from openai import AsyncOpenAI
 from openai.types.shared.reasoning import Reasoning
 
+from system_reminder_hook import create_system_reminder_hook
 from tools import (
-    Task,
+    LS,
     Bash,
+    Edit,
+    ExitPlanMode,
     Glob,
     Grep,
-    LS,
-    ExitPlanMode,
-    Read,
-    Edit,
     MultiEdit,
-    Write,
-    NotebookRead,
     NotebookEdit,
+    NotebookRead,
+    Read,
+    Task,
     TodoWrite,
+    Write,
 )
 
 # Get the absolute path to the current file's directory
 current_dir = os.path.dirname(os.path.abspath(__file__))
+
 
 def select_instructions_file(model: str) -> str:
     """Return absolute path to the appropriate instructions file for the model.
@@ -42,6 +44,7 @@ def select_instructions_file(model: str) -> str:
         else "instructions.md"
     )
     return os.path.join(current_dir, filename)
+
 
 def render_instructions(template_path: str, model_name: str) -> str:
     with open(template_path, "r") as f:
@@ -57,6 +60,7 @@ def render_instructions(template_path: str, model_name: str) -> str:
     for key, value in placeholders.items():
         content = content.replace(key, str(value))
     return content
+
 
 def create_agency_code_agent(
     model: str = "gpt-5-mini", reasoning_effort: str = "medium"
@@ -78,6 +82,8 @@ def create_agency_code_agent(
 
     instructions = render_instructions(select_instructions_file(model), model)
 
+    reminder_hook = create_system_reminder_hook()
+
     return Agent(
         name="AgencyCodeAgent",
         description="An interactive CLI tool that helps users with software engineering tasks.",
@@ -85,6 +91,7 @@ def create_agency_code_agent(
         tools_folder=os.path.join(current_dir, "tools"),
         model=model,
         openai_client=None if is_openai else client,
+        hooks=reminder_hook,
         tools=[
             Task,
             Bash,
@@ -99,7 +106,8 @@ def create_agency_code_agent(
             NotebookRead,
             NotebookEdit,
             TodoWrite,
-        ] + ([WebSearchTool()] if is_openai else []),
+        ]
+        + ([WebSearchTool()] if is_openai else []),
         model_settings=ModelSettings(
             reasoning=(
                 Reasoning(effort=reasoning_effort, summary="auto")
