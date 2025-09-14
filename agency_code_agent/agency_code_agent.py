@@ -3,6 +3,9 @@ import platform
 from datetime import datetime
 
 from agency_swarm import Agent
+from openai import AsyncOpenAI
+from openai.types.shared.reasoning import Reasoning
+
 from agents import (
     ModelSettings,
     WebSearchTool,
@@ -11,15 +14,13 @@ from agents import (
     set_tracing_disabled,
 )
 from agents.extensions.models.litellm_model import LitellmModel
-from openai import AsyncOpenAI
-from openai.types.shared.reasoning import Reasoning
-
 from system_reminder_hook import create_system_reminder_hook
 from tools import (
     LS,
     Bash,
     Edit,
     ExitPlanMode,
+    Git,
     Glob,
     Grep,
     MultiEdit,
@@ -98,6 +99,7 @@ def create_agency_code_agent(
             NotebookRead,
             NotebookEdit,
             TodoWrite,
+            Git,
         ]
         + ([WebSearchTool()] if is_openai else []),
         model_settings=ModelSettings(

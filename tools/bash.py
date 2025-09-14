@@ -117,7 +117,10 @@ class Bash(BaseTool):
     - View comments on a Github PR: gh api repos/foo/bar/pulls/123/comments
     """
 
-    command: str = Field(..., description="The bash command to execute. Make sure to add interactive flags like --yes, -y, --force, -f, etc.")
+    command: str = Field(
+        ...,
+        description="The bash command to execute. Make sure to add interactive flags like --yes, -y, --force, -f, etc.",
+    )
     timeout: int = Field(
         120000,
         description="Timeout in milliseconds (max 600000, min 5000)",
@@ -236,7 +239,9 @@ Example: echo "first" && echo "second" && ls -la"""
 
             # Truncate if too long
             if len(output) > 30000:
-                output = output[-30000:] + "\n (output truncated to last 30000 characters)"
+                output = (
+                    output[-30000:] + "\n (output truncated to last 30000 characters)"
+                )
 
             return f"Exit code: {result.returncode}\n--- OUTPUT ---\n{output.strip()}"
 
