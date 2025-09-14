@@ -10,7 +10,6 @@ Reminders include:
 - Current TODO list status
 """
 
-from datetime import datetime
 from typing import Optional
 
 from agents import AgentHooks, RunContextWrapper
@@ -24,7 +23,24 @@ class SystemReminderHook(AgentHooks):
 
     def __init__(self):
         self.tool_call_count = 0
-        self.last_user_message_time = None
+
+    async def on_start(self, context: RunContextWrapper, agent) -> None:
+        """Called when agent starts processing a user message or is activated."""
+        # Inject reminder after every user message
+        self._inject_reminder(context, "user_message")
+
+    async def on_end(self, context: RunContextWrapper, agent, output) -> None:
+        """Called when the agent finishes processing a user message."""
+        return None
+
+    async def on_handoff(self, context: RunContextWrapper, *args, **kwargs) -> None:
+        """Called when a handoff occurs.
+
+        Supports both call styles:
+        - RunHooks: on_handoff(context, from_agent=..., to_agent=...)
+        - AgentHooks: on_handoff(context, agent=..., source=...)
+        """
+        return None
 
     async def on_tool_start(self, context: RunContextWrapper, agent, tool) -> None:
         """Called before each tool execution."""
@@ -40,14 +56,6 @@ class SystemReminderHook(AgentHooks):
         if self.tool_call_count >= 15:
             self._inject_reminder(context, "tool_call_limit")
             self.tool_call_count = 0
-
-    async def on_start(self, context: RunContextWrapper, agent) -> None:
-        """Called when agent starts processing a user message or is activated."""
-        current_time = datetime.now()
-        self.last_user_message_time = current_time
-
-        # Inject reminder after every user message
-        self._inject_reminder(context, "user_message")
 
     async def on_llm_start(
         self,
@@ -76,7 +84,11 @@ class SystemReminderHook(AgentHooks):
             # Do not interrupt the flow if injection fails
             return None
 
-    # Compatibility wrappers for runners expecting on_agent_start/on_agent_end
+    async def on_llm_end(self, context: RunContextWrapper, agent, response) -> None:
+        """Called after the LLM returns a response."""
+        return None
+
+    # Compatibility wrappers so runner can call run-level names even if this is AgentHooks
     async def on_agent_start(
         self, context: RunContextWrapper, agent, *args, **kwargs
     ) -> None:
