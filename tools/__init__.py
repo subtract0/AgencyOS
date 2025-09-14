@@ -1,6 +1,7 @@
 from .bash import Bash
 from .edit import Edit
 from .exit_plan_mode import ExitPlanMode
+from .git import Git
 from .glob import Glob
 from .grep import Grep
 from .ls import LS
@@ -26,4 +27,5 @@ __all__ = [
     "NotebookRead",
     "NotebookEdit",
     "TodoWrite",
+    "Git",
 ]
