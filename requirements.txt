@@ -1,10 +1,11 @@
 git+https://github.com/VRSEN/agency-swarm.git@main
-pydantic>=2.0.0
-requests>=2.25.0
-jupyter>=1.0.0
-nbformat>=5.0.0
 beautifulsoup4>=4.9.0
-markdown>=3.3.0
+dulwich>=0.21.6
 html2text>=2020.1.16
+jupyter>=1.0.0
+markdown>=3.3.0
+nbformat>=5.0.0
+pydantic>=2.0.0
 pytest>=6.0.0
 pytest-asyncio>=0.21.0
+requests>=2.25.0

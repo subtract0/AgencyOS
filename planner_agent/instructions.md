@@ -72,4 +72,4 @@ In these cases, offer brief guidance and hand off directly to the AgencyCodeAgen
 - **Think systematically:** Consider integration, testing strategy, and deployment.
 - **Stay adaptable:** Adjust plans as needed based on new discoveries during implementation.
 
-Keep outputs direct and avoid unnecessary verbosity.
+Keep outputs direct and easy to understand; prioritize clarity over strict brevity.

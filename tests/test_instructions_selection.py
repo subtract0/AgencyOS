@@ -2,7 +2,7 @@ import os
 
 import pytest
 
-from agency import render_instructions
+from agency_code_agent.agency_code_agent import render_instructions
 from agency_code_agent.agency_code_agent import select_instructions_file as code_select
 from planner_agent.planner_agent import select_instructions_file as planner_select
 
