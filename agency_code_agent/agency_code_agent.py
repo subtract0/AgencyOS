@@ -10,6 +10,7 @@ from agents import (
     set_default_openai_client,
     set_tracing_disabled,
 )
+from agents.extensions.models.litellm_model import LitellmModel
 from openai import AsyncOpenAI
 from openai.types.shared.reasoning import Reasoning
 
@@ -72,14 +73,6 @@ def create_agency_code_agent(
     is_claude = "claude" in model
     is_grok = "grok" in model
 
-    if not is_openai:
-        BASE_URL = os.getenv("OPENAI_BASE_URL", "http://localhost:4000")
-        api_key = os.getenv("OPENAI_API_KEY", "")
-        client = AsyncOpenAI(base_url=BASE_URL, api_key=api_key)
-        set_default_openai_client(client)
-        set_tracing_disabled(disabled=True)
-        set_default_openai_api("chat_completions")
-
     instructions = render_instructions(select_instructions_file(model), model)
 
     reminder_hook = create_system_reminder_hook()
@@ -89,8 +82,7 @@ def create_agency_code_agent(
         description="An interactive CLI tool that helps users with software engineering tasks.",
         instructions=instructions,
         tools_folder=os.path.join(current_dir, "tools"),
-        model=model,
-        openai_client=None if is_openai else client,
+        model=model if is_openai else LitellmModel(model=model),
         hooks=reminder_hook,
         tools=[
             Task,
@@ -115,6 +107,7 @@ def create_agency_code_agent(
                 else None
             ),
             truncation="auto",
+            max_tokens=32000,
             extra_body=(
                 {"web_search_options": {"search_context_size": "medium"}}
                 if is_claude
