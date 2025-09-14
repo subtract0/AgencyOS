@@ -3,6 +3,8 @@ Test Planner Agent behavior, specifically verifying that it asks clarifying ques
 when requirements are unclear or incomplete.
 """
 
+import os
+
 import pytest
 from agency_swarm import Agency
 from dotenv import load_dotenv
@@ -12,6 +14,14 @@ from planner_agent.planner_agent import create_planner_agent
 
 # Load environment variables
 load_dotenv()
+
+
+@pytest.fixture(autouse=True)
+def cleanup_fib():
+    """Clean up fib.py after each test"""
+    yield
+    if os.path.exists("fib.py"):
+        os.unlink("fib.py")
 
 
 @pytest.fixture
