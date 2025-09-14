@@ -14,7 +14,7 @@ current_dir = os.path.dirname(os.path.abspath(__file__))
 # Create agents
 planner = create_planner_agent(model="gpt-5", reasoning_effort="high")
 coder = create_agency_code_agent(model="gpt-5", reasoning_effort="high")
-# coder = create_agency_code_agent(model="litellm/anthropic/claude-sonnet-4-20250514")
+# coder = create_agency_code_agent(model="anthropic/claude-sonnet-4-20250514")
 
 agency = Agency(
     coder,
