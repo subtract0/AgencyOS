@@ -122,10 +122,10 @@ class Bash(BaseTool):
         description="The bash command to execute. Make sure to add interactive flags like --yes, -y, --force, -f, etc.",
     )
     timeout: int = Field(
-        120000,
+        60000,
         description="Timeout in milliseconds (max 600000, min 5000)",
         ge=5000,
-        le=600000,
+        le=60000,
     )
 
     description: Optional[str] = Field(
