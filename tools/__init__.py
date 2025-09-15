@@ -12,6 +12,7 @@ from .read import Read
 from .task import Task
 from .todo_write import TodoWrite
 from .write import Write
+from .claude_web_search import ClaudeWebSearch
 
 __all__ = [
     "Task",
@@ -28,4 +29,5 @@ __all__ = [
     "NotebookEdit",
     "TodoWrite",
     "Git",
+    "ClaudeWebSearch",
 ]

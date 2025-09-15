@@ -28,9 +28,11 @@ class SystemReminderHook(AgentHooks):
         """Called when agent starts processing a user message or is activated."""
         # Inject reminder after every user message
         self._inject_reminder(context, "user_message")
+        self._filter_duplicates(context)
 
     async def on_end(self, context: RunContextWrapper, agent, output) -> None:
         """Called when the agent finishes processing a user message."""
+        self._filter_duplicates(context)
         return None
 
     async def on_handoff(self, context: RunContextWrapper, *args, **kwargs) -> None:
@@ -189,6 +191,37 @@ NEVER proactively create documentation files (*.md) or README files. Only create
 
         except Exception as e:
             print(f"Warning: Could not inject reminder into conversation: {e}")
+
+    # Due to the fix, handoffs create duplicate function calls
+    def _filter_duplicates(self, context) -> None:
+        """Filter duplicates from the message store directly."""
+
+        thread_manager = context.context.thread_manager
+        
+        # Access the message store directly
+        messages = thread_manager._store.messages
+        
+        # Filter duplicates based on call_id for function calls
+        call_ids = []
+        filtered_messages = []
+        
+        for message in messages:
+            # Check if message has call_id and is a function call
+            call_id = message.get("call_id")
+            
+            if call_id and message.get("type") == "function_call":
+                if call_id in call_ids:
+                    continue  # Skip this duplicate message
+                else:
+                    call_ids.append(call_id)
+                    filtered_messages.append(message)
+            else:
+                # Messages without call_id or non-function calls are always included
+                filtered_messages.append(message)
+        
+        # Update the message store directly
+        if len(filtered_messages) != len(messages):
+            thread_manager._store.messages = filtered_messages
 
 
 # Factory function to create the hook

@@ -13,14 +13,15 @@ litellm.modify_params = True
 load_dotenv()
 
 current_dir = os.path.dirname(os.path.abspath(__file__))
+litellm.modify_params=True
 
 # Create agents
-planner = create_planner_agent(model="gpt-5", reasoning_effort="high")
+planner = create_planner_agent(model="anthropic/claude-sonnet-4-20250514", reasoning_effort="high")
 # coder = create_agency_code_agent(model="gpt-5", reasoning_effort="high")
 coder = create_agency_code_agent(model="anthropic/claude-sonnet-4-20250514", reasoning_effort="high")
 
 agency = Agency(
-    coder,
+    coder, planner,
     communication_flows=[
         (coder, planner, SendMessageHandoff),
         (planner, coder, SendMessageHandoff),

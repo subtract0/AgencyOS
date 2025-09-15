@@ -3,15 +3,11 @@ import platform
 from datetime import datetime
 
 from agency_swarm import Agent
-from openai import AsyncOpenAI
 from openai.types.shared.reasoning import Reasoning
 
 from agents import (
     ModelSettings,
     WebSearchTool,
-    set_default_openai_api,
-    set_default_openai_client,
-    set_tracing_disabled,
 )
 from agents.extensions.models.litellm_model import LitellmModel
 from system_reminder_hook import create_system_reminder_hook
@@ -30,6 +26,7 @@ from tools import (
     Task,
     TodoWrite,
     Write,
+    ClaudeWebSearch,
 )
 
 # Get the absolute path to the current file's directory
@@ -82,7 +79,7 @@ def create_agency_code_agent(
         description="An interactive CLI tool that helps users with software engineering tasks.",
         instructions=instructions,
         tools_folder=os.path.join(current_dir, "tools"),
-        model=model if is_openai else LitellmModel(model=model),
+        model=LitellmModel(model=model),
         hooks=reminder_hook,
         tools=[
             Task,
@@ -100,7 +97,8 @@ def create_agency_code_agent(
             TodoWrite,
             Git,
         ]
-        + ([WebSearchTool()] if is_openai else []),
+        + ([WebSearchTool()] if is_openai else [])
+        + ([ClaudeWebSearch] if is_claude else []),
         model_settings=ModelSettings(
             reasoning=(
                 Reasoning(effort=reasoning_effort, summary="auto")
@@ -110,9 +108,7 @@ def create_agency_code_agent(
             truncation="auto",
             max_tokens=32000,
             extra_body=(
-                {"web_search_options": {"search_context_size": "medium"}}
-                if is_claude
-                else {"search_parameters": {"mode": "on", "returnCitations": True}}
+                {"search_parameters": {"mode": "on", "returnCitations": True}}
                 if is_grok
                 else None
             ),
