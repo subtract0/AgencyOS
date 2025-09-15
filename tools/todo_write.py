@@ -13,9 +13,11 @@ persistence is handled through the tool's provided `context` (shared state).
 
 
 class TodoItem(BaseModel):
-    content: str = Field(..., min_length=1, description="The todo item content")
+    task: str = Field(
+        ..., min_length=1, description="The human-readable task description. Required parameter."
+    )
     status: Literal["pending", "in_progress", "completed"] = Field(
-        ..., description="The status of the todo item"
+        ..., description="The status of the todo item. Required parameter."
     )
     priority: Literal["high", "medium", "low"] = Field(
         "medium", description="The priority of the todo item. Defaults to 'medium'"
@@ -118,14 +120,14 @@ class TodoWrite(BaseTool):
             if status_groups["in_progress"]:
                 result += "IN PROGRESS:\n"
                 for todo in status_groups["in_progress"]:
-                    result += f"  [{todo.priority.upper()}] {todo.content}\n"
+                    result += f"  [{todo.priority.upper()}] {todo.task}\n"
                 result += "\n"
 
             # Display pending tasks
             if status_groups["pending"]:
                 result += "PENDING:\n"
                 for todo in status_groups["pending"]:
-                    result += f"  [{todo.priority.upper()}] {todo.content}\n"
+                    result += f"  [{todo.priority.upper()}] {todo.task}\n"
                 result += "\n"
 
             # Display completed tasks (limit to last 5 to avoid clutter)
@@ -135,7 +137,7 @@ class TodoWrite(BaseTool):
                 ]  # Show last 5 completed
                 result += f"COMPLETED (showing last {len(completed_to_show)}):\n"
                 for todo in completed_to_show:
-                    result += f"  [{todo.priority.upper()}] {todo.content}\n"
+                    result += f"  [{todo.priority.upper()}] {todo.task}\n"
 
                 if len(status_groups["completed"]) > 5:
                     result += f"  ... and {len(status_groups['completed']) - 5} more completed tasks\n"

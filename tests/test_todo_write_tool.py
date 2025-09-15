@@ -5,8 +5,8 @@ from tools.todo_write import TodoItem, TodoWrite
 
 def test_todo_write_no_emojis_and_summary(tmp_path: Path):
     todos = [
-        TodoItem(content="Do A", status="pending"),
-        TodoItem(content="Do B", status="completed", priority="low"),
+        TodoItem(task="Do A", status="pending"),
+        TodoItem(task="Do B", status="completed", priority="low"),
     ]
     tool = TodoWrite(todos=todos)
     out = tool.run()
@@ -18,8 +18,8 @@ def test_todo_write_no_emojis_and_summary(tmp_path: Path):
 
 def test_todo_write_minimal_format():
     todos = [
-        TodoItem(content="A", status="in_progress"),
-        TodoItem(content="B", status="pending", priority="low"),
+        TodoItem(task="A", status="in_progress"),
+        TodoItem(task="B", status="pending", priority="low"),
     ]
     out = TodoWrite(todos=todos).run()
     assert "IN PROGRESS:" in out
