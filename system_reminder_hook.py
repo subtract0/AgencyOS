@@ -163,7 +163,7 @@ NEVER proactively create documentation files (*.md) or README files. Only create
                 reminder += "\nCurrent in-progress tasks:\n"
                 for todo in todos:
                     if todo.get("status") == "in_progress":
-                        reminder += f"- {todo.get('content', 'Unknown task')}\n"
+                        reminder += f"- {todo.get('task', 'Unknown task')}\n"
         else:
             reminder += "# TODO List\nConsider using the TodoWrite tool to plan and track your tasks.\n"
 
@@ -205,9 +205,9 @@ if __name__ == "__main__":
 
     # Test reminder message creation
     test_todos = [
-        {"id": "1", "content": "Test task 1", "status": "pending"},
-        {"id": "2", "content": "Test task 2", "status": "in_progress"},
-        {"id": "3", "content": "Test task 3", "status": "completed"},
+        {"task": "Test task 1", "status": "pending"},
+        {"task": "Test task 2", "status": "in_progress"},
+        {"task": "Test task 3", "status": "completed"},
     ]
 
     reminder = hook._create_reminder_message("tool_call_limit", test_todos)
