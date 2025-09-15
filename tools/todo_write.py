@@ -18,9 +18,8 @@ class TodoItem(BaseModel):
         ..., description="The status of the todo item"
     )
     priority: Literal["high", "medium", "low"] = Field(
-        ..., description="The priority of the todo item"
+        "medium", description="The priority of the todo item. Defaults to 'medium'"
     )
-    id: str = Field(..., description="Unique identifier for the todo item")
 
 
 class TodoWrite(BaseTool):
@@ -119,18 +118,14 @@ class TodoWrite(BaseTool):
             if status_groups["in_progress"]:
                 result += "IN PROGRESS:\n"
                 for todo in status_groups["in_progress"]:
-                    result += (
-                        f"  [{todo.priority.upper()}] [{todo.id}] {todo.content}\n"
-                    )
+                    result += f"  [{todo.priority.upper()}] {todo.content}\n"
                 result += "\n"
 
             # Display pending tasks
             if status_groups["pending"]:
                 result += "PENDING:\n"
                 for todo in status_groups["pending"]:
-                    result += (
-                        f"  [{todo.priority.upper()}] [{todo.id}] {todo.content}\n"
-                    )
+                    result += f"  [{todo.priority.upper()}] {todo.content}\n"
                 result += "\n"
 
             # Display completed tasks (limit to last 5 to avoid clutter)
@@ -140,9 +135,7 @@ class TodoWrite(BaseTool):
                 ]  # Show last 5 completed
                 result += f"COMPLETED (showing last {len(completed_to_show)}):\n"
                 for todo in completed_to_show:
-                    result += (
-                        f"  [{todo.priority.upper()}] [{todo.id}] {todo.content}\n"
-                    )
+                    result += f"  [{todo.priority.upper()}] {todo.content}\n"
 
                 if len(status_groups["completed"]) > 5:
                     result += f"  ... and {len(status_groups['completed']) - 5} more completed tasks\n"
