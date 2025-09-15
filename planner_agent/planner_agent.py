@@ -5,6 +5,7 @@ from agents import ModelSettings
 from openai.types.shared.reasoning import Reasoning
 
 from system_reminder_hook import create_system_reminder_hook
+from agents.extensions.models.litellm_model import LitellmModel
 
 # Get the absolute path to the current file's directory
 current_dir = os.path.dirname(os.path.abspath(__file__))
@@ -28,6 +29,10 @@ def create_planner_agent(model: str = "gpt-5", reasoning_effort: str = "high") -
     """
     reminder_hook = create_system_reminder_hook()
 
+    is_openai = "gpt" in model
+    is_claude = "claude" in model
+    is_grok = "grok" in model
+
     return Agent(
         name="PlannerAgent",
         description=(
@@ -36,13 +41,22 @@ def create_planner_agent(model: str = "gpt-5", reasoning_effort: str = "high") -
             "Provides clear project roadmaps and coordinates with the AgencyCodeAgent for execution."
         ),
         instructions=select_instructions_file(model),
-        model=model,
+        model=LitellmModel(model=model),
         hooks=reminder_hook,
         model_settings=ModelSettings(
-            reasoning=Reasoning(effort=reasoning_effort, summary="auto")
-            if model.lower().startswith("gpt-5")
-            else None,
-        ),
+            reasoning=(
+                Reasoning(effort=reasoning_effort, summary="auto")
+                if is_openai or is_claude
+                else None
+            ),
+            truncation="auto",
+            max_tokens=32000,
+            extra_body=(
+                {"search_parameters": {"mode": "on", "returnCitations": True}}
+                if is_grok
+                else None
+            ),
+        )
     )
 
 
