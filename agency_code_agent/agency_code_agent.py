@@ -35,7 +35,6 @@ from tools import (
 # Get the absolute path to the current file's directory
 current_dir = os.path.dirname(os.path.abspath(__file__))
 
-
 def select_instructions_file(model: str) -> str:
     """Return absolute path to the appropriate instructions file for the model.
     Uses instructions-gpt-5.md for any gpt-5* model, otherwise instructions.md.
@@ -105,7 +104,7 @@ def create_agency_code_agent(
         model_settings=ModelSettings(
             reasoning=(
                 Reasoning(effort=reasoning_effort, summary="auto")
-                if is_openai
+                if is_openai or is_claude
                 else None
             ),
             truncation="auto",

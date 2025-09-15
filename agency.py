@@ -6,6 +6,9 @@ from dotenv import load_dotenv
 
 from agency_code_agent.agency_code_agent import create_agency_code_agent
 from planner_agent.planner_agent import create_planner_agent
+import litellm
+
+litellm.modify_params = True
 
 load_dotenv()
 
@@ -14,7 +17,7 @@ current_dir = os.path.dirname(os.path.abspath(__file__))
 # Create agents
 planner = create_planner_agent(model="gpt-5", reasoning_effort="high")
 # coder = create_agency_code_agent(model="gpt-5", reasoning_effort="high")
-coder = create_agency_code_agent(model="anthropic/claude-sonnet-4-20250514")
+coder = create_agency_code_agent(model="anthropic/claude-sonnet-4-20250514", reasoning_effort="high")
 
 agency = Agency(
     coder,
