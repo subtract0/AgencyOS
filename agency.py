@@ -25,8 +25,7 @@ agency = Agency(
     communication_flows=[
         (coder, planner, SendMessageHandoff),
         (planner, coder, SendMessageHandoff),
-    ],
-    shared_instructions="./shared_instructions.md",
+    ]
 )
 
 if __name__ == "__main__":
