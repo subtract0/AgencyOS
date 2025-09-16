@@ -24,12 +24,13 @@ current_dir = os.path.dirname(os.path.abspath(__file__))
 litellm.modify_params = True
 
 # Create agents
+model = "anthropic/claude-sonnet-4-20250514"
 planner = create_planner_agent(
-    model="anthropic/claude-sonnet-4-20250514", reasoning_effort="high"
+    model=model, reasoning_effort="high"
 )
 # coder = create_agency_code_agent(model="gpt-5", reasoning_effort="high")
 coder = create_agency_code_agent(
-    model="anthropic/claude-sonnet-4-20250514", reasoning_effort="high"
+    model=model, reasoning_effort="high"
 )
 
 agency = Agency(
@@ -42,5 +43,5 @@ agency = Agency(
 )
 
 if __name__ == "__main__":
-    agency.terminal_demo(show_reasoning=False)
+    agency.terminal_demo(show_reasoning=False if model.startswith("anthropic") else True)
     # agency.visualize()
