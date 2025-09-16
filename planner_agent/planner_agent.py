@@ -2,10 +2,9 @@ import os
 
 from agency_swarm import Agent
 from agents import ModelSettings
+from agents.extensions.models.litellm_model import LitellmModel
 from openai.types.shared.reasoning import Reasoning
 
-from system_reminder_hook import create_system_reminder_hook
-from agents.extensions.models.litellm_model import LitellmModel
 
 # Get the absolute path to the current file's directory
 current_dir = os.path.dirname(os.path.abspath(__file__))
@@ -27,7 +26,6 @@ def create_planner_agent(model: str = "gpt-5", reasoning_effort: str = "high") -
     """Factory that returns a fresh PlannerAgent instance.
     Use this in tests to avoid reusing a singleton across multiple agencies.
     """
-    reminder_hook = create_system_reminder_hook()
 
     is_openai = "gpt" in model
     is_claude = "claude" in model
@@ -42,7 +40,6 @@ def create_planner_agent(model: str = "gpt-5", reasoning_effort: str = "high") -
         ),
         instructions=select_instructions_file(model),
         model=LitellmModel(model=model),
-        hooks=reminder_hook,
         model_settings=ModelSettings(
             reasoning=(
                 Reasoning(effort=reasoning_effort, summary="auto")
