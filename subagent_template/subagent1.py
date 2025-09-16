@@ -2,9 +2,10 @@ from agency_swarm import Agent
 from agents import ModelSettings, WebSearchTool
 from openai.types.shared.reasoning import Reasoning
 from tools import Read, Bash, LS, Grep
+from agents.extensions.models.litellm_model import LitellmModel
 
 subagent1 = Agent(
-        name="PlannerAgent",
+        name="Subagent1",
         description=(
             "A strategic planning and task breakdown specialist that helps organize "
             "and structure software development projects into manageable, actionable tasks. "
@@ -18,9 +19,8 @@ subagent1 = Agent(
             Grep,
             WebSearchTool(),
         ],
-        model="gpt-5",
+        model=LitellmModel(model="gpt-5"),
         model_settings=ModelSettings(
             reasoning=Reasoning(effort="high", summary="detailed")
-            ,
-        ),
+        )
     )
