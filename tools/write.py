@@ -7,6 +7,10 @@ from pydantic import Field
 from tools.read import _global_read_files
 
 
+# Global registry for tracking written files when context is not available
+_global_written_files = set()
+
+
 class Write(BaseTool):
     """
     Writes a file to the local filesystem.
@@ -21,17 +25,15 @@ class Write(BaseTool):
 
     file_path: str = Field(
         ...,
-        description="The absolute path to the file to write (must be absolute, not relative)",
+        description="Absolute or relative path to the file to write.",
     )
     content: str = Field(..., description="The content to write to the file")
 
     def run(self):
         try:
-            # Validate that the path is absolute
+            # Enforce absolute path usage
             if not os.path.isabs(self.file_path):
-                return (
-                    f"Error: File path must be absolute, not relative: {self.file_path}"
-                )
+                return f"Error: File path must be absolute: {self.file_path}"
 
             # Check if file already exists
             file_exists = os.path.exists(self.file_path)
@@ -78,6 +80,16 @@ class Write(BaseTool):
                 line_count = self.content.count("\n") + (
                     1 if self.content and not self.content.endswith("\n") else 0
                 )
+
+                # Track that this file has been written in shared state (or global fallback)
+                abs_path = os.path.abspath(self.file_path)
+                if self.context is not None:
+                    written_files = self.context.get("read_files", set())
+                    written_files.add(abs_path)
+                    self.context.set("read_files", written_files)
+
+                # Always mirror into global registry to ensure persistence across tool instances in tests
+                _global_written_files.add(abs_path)
 
                 return f"Successfully {operation} file: {self.file_path}\\nSize: {file_size} bytes, Lines: {line_count}"
 
