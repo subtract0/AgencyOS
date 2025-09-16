@@ -23,7 +23,6 @@ from tools import (
     NotebookEdit,
     NotebookRead,
     Read,
-    Task,
     TodoWrite,
     Write,
     ClaudeWebSearch,
@@ -82,7 +81,6 @@ def create_agency_code_agent(
         model=LitellmModel(model=model),
         hooks=reminder_hook,
         tools=[
-            Task,
             Bash,
             Glob,
             Grep,
