@@ -64,7 +64,7 @@ class MultiEdit(BaseTool):
     file_path: str = Field(..., description="The absolute path to the file to modify")
     edits: List[EditOperation] = Field(
         ...,
-        min_items=1,
+        min_length=1,
         description="Array of edit operations to perform sequentially on the file",
     )
 

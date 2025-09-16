@@ -33,4 +33,3 @@
 ## Configuration & Secrets
 - Store provider keys and model overrides in `.env`; `dotenv` loads them in `agency.py`, so never commit secrets.
 - Document new environment variables in `README.md`, and update both agent factories when introducing models or reasoning modes.
-- Keep `shared_instructions.md` aligned with tool access or guardrail changes so autonomous agents stay in sync.
