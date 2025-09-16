@@ -61,55 +61,48 @@ Create a full-screen interactive particle galaxy simulator using HTML5 Canvas an
   All in a single HTML file with inline CSS and JavaScript. Make it mesmerizing and cinematic.
 ```
 
-### 🎮 Real-Time Multiplayer Drawing Game
+### 🎨 Multiplayer Pixel Art Board
 
 ```
-Build a full-stack multiplayer drawing game like Skribbl.io using Next.js 14 with App Router, Socket.io, and Prisma. Create:
+Create a shared pixel art canvas like r/place using Next.js and Socket.io:
 
-Frontend:
-- Modern glassmorphism UI with Tailwind CSS and Framer Motion animations
-- Canvas drawing board with brush size, color picker, eraser, clear, and undo/redo
-- Real-time player list showing scores, avatars, and who's drawing
-- Chat with guess submission and proximity indicators (hot/cold)
-- Countdown timer with animated progress ring
-- Word reveal animation when round ends
-- Lobby system with room codes and shareable links
-- Mobile responsive with touch drawing support
+- 50x50 grid where each player can color one pixel at a time
+- 16 color palette at the bottom
+- See other players' cursors moving in real-time with their names
+- 5-second cooldown between placing pixels (show countdown on cursor)
+- Minimap in corner showing full canvas
+- Chat box for players to coordinate
+- Download canvas as image button
+- Show "Player X placed a pixel" notifications
+- Persist canvas state in JSON file
+- Mobile friendly with pinch to zoom
 
-Backend:
-- WebSocket server for real-time drawing synchronization
-- SQLite database with Prisma for games, players, scores, and word history
-- Game state machine: lobby → choosing word → drawing → guessing → reveal → scores
-- Anti-cheat: rate limiting, profanity filter, drawing flood protection
-- Word database with difficulty levels and categories
-- Dynamic scoring based on guess speed and hints used
-- Reconnection handling with game state restoration
-- REST API endpoints for leaderboards and statistics
-
-Features:
-- Custom word lists creation
-- Private rooms with passwords
-- Spectator mode
-- Drawing replay system
-- Power-ups: extra time, letter hints, freeze opponents
-- Achievement system with badges
-- Sound effects and background music toggles
-
-Deploy-ready with environment variables for production. Include sample .env.local file.
+Simple and fun - just a shared canvas everyone can draw on together. Add rainbow gradient background.
 ```
 
-### 📈 Stock Price Predictor with Live Charts
+### 📚 Agency Swarm PDF Chat App
 
 ```
-Build a Streamlit app that predicts stock prices using yfinance and scikit-learn:
-- Dropdown to select from 10 popular stocks (AAPL, GOOGL, TSLA, etc.)
-- Download last 2 years of data and display candlestick chart using plotly
-- Train a simple LSTM model to predict next 30 days
-- Show prediction vs actual historical performance
-- Display current price, change, and volume in metric cards
-- Add moving averages (20, 50, 200 day) overlay on chart
-- Buy/sell signal based on moving average crossover
-Style with green/red colors for profit/loss.
+Create a Streamlit PDF chat app using PyPDF2 and OpenAI API with Agency Swarm framework:
+- File uploader accepting multiple PDFs
+- Extract and display PDF text in expandable sections
+- Chat interface where users ask questions about the PDFs
+- Use agency-swarm to create an agent that can answer questions about the PDFs. (Reference below)
+   - Use file_ids parameter in agency.get_response_sync method for allowing the agent to use the uploaded files.
+- Create an endpoint for uploading files to openai. (Reference below)
+   - Set purpose to "user_data".
+   - Attach file in file_ids parameter of get_response method in agency-swarm. (Check reference.)
+- OPENAI_API_KEY is provided in the ./.env file. Copy it to the .env file in the backend server folder.
+- Export conversation as markdown
+Include sample questions and nice chat UI with user/assistant message bubbles.
+
+References:
+- agency-swarm quick start: https://agency-swarm.ai/welcome/getting-started/from-scratch
+- Openai API file upload reference: https://platform.openai.com/docs/api-reference/files/create
+
+Before starting the task make sure to first use the WebSearch tool to read the references above.
+
+**Important**: The agency-swarm integration must **actually** work. Do not use any placeholder messages and do not come back to me until it's fully tested and completed. Run the backend server and test the integration.
 ```
 
 ## Contributing
