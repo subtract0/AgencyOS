@@ -122,7 +122,7 @@ class Bash(BaseTool):
         description="The bash command to execute. Make sure to add interactive flags like --yes, -y, --force, -f, etc.",
     )
     timeout: int = Field(
-        60000,
+        12000,
         description="Timeout in milliseconds (max 600000, min 5000)",
         ge=5000,
         le=60000,
@@ -188,6 +188,7 @@ Example: echo "first" && echo "second" && ls -la"""
 
     def _execute_bash_command(self, command, timeout_seconds):
         """Execute a bash command using subprocess.run with proper timeout."""
+        output = ""
         try:
             # Build execution command, sandboxing writes to CWD and /tmp on macOS when available
             exec_cmd = ["/bin/bash", "-c", command]
@@ -225,7 +226,6 @@ Example: echo "first" && echo "second" && ls -la"""
             )
 
             # Combine stdout and stderr
-            output = ""
             if result.stdout:
                 output += result.stdout
             if result.stderr:
@@ -246,9 +246,9 @@ Example: echo "first" && echo "second" && ls -la"""
             return f"Exit code: {result.returncode}\n--- OUTPUT ---\n{output.strip()}"
 
         except subprocess.TimeoutExpired:
-            return f"Exit code: 124\nCommand timed out after {timeout_seconds} seconds"
+            return f"Exit code: 124\nCommand timed out after {timeout_seconds} seconds\n--- OUTPUT ---\n{output.strip()}"
         except Exception as e:
-            return f"Exit code: 1\nError executing command: {str(e)}"
+            return f"Exit code: 1\nError executing command: {str(e)}\n--- OUTPUT ---\n{output.strip()}"
 
 
 # Create alias for Agency Swarm tool loading (expects class name = file name)
