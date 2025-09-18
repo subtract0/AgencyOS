@@ -22,6 +22,13 @@ Fully open sourced version of Claude Code built with [Agency Swarm](https://agen
    python -m pip install -r requirements.txt
    ```
 
+   > ⚠️ There is currently a bug in LiteLLM with Anthropic reasoning models.  
+   > To fix this, after installing the requirements, run:
+   >
+   > ```
+   > python -m pip install git+https://github.com/openai/openai-agents-python.git@main
+   > ```
+
 2. Try the agency (terminal demo):
 
    ```

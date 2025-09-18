@@ -1,16 +1,18 @@
 import os
-import platform
-from datetime import datetime
 
 from agency_swarm import Agent
-from openai.types.shared.reasoning import Reasoning
 
 from agents import (
-    ModelSettings,
     WebSearchTool,
 )
-from agents.extensions.models.litellm_model import LitellmModel
-from system_hooks import create_system_reminder_hook
+from shared.agent_utils import (
+    detect_model_type,
+    select_instructions_file,
+    render_instructions,
+    create_model_settings,
+    get_model_instance,
+)
+from shared.system_hooks import create_system_reminder_hook
 from tools import (
     LS,
     Bash,
@@ -31,32 +33,6 @@ from tools import (
 # Get the absolute path to the current file's directory
 current_dir = os.path.dirname(os.path.abspath(__file__))
 
-def select_instructions_file(model: str) -> str:
-    """Return absolute path to the appropriate instructions file for the model.
-    Uses instructions-gpt-5.md for any gpt-5* model, otherwise instructions.md.
-    """
-    filename = (
-        "instructions-gpt-5.md"
-        if model.lower().startswith("gpt-5")
-        else "instructions.md"
-    )
-    return os.path.join(current_dir, filename)
-
-
-def render_instructions(template_path: str, model_name: str) -> str:
-    with open(template_path, "r") as f:
-        content = f.read()
-    placeholders = {
-        "{cwd}": os.getcwd(),
-        "{is_git_repo}": os.path.isdir(".git"),
-        "{platform}": platform.system(),
-        "{os_version}": platform.release(),
-        "{today}": datetime.now().strftime("%Y-%m-%d"),
-        "{model}": model_name,
-    }
-    for key, value in placeholders.items():
-        content = content.replace(key, str(value))
-    return content
 
 
 def create_agency_code_agent(
@@ -65,11 +41,10 @@ def create_agency_code_agent(
     """Factory that returns a fresh AgencyCodeAgent instance.
     Use this in tests to avoid reusing a singleton across multiple agencies.
     """
-    is_openai = "gpt" in model
-    is_claude = "claude" in model
-    is_grok = "grok" in model
+    is_openai, is_claude, _ = detect_model_type(model)
 
-    instructions = render_instructions(select_instructions_file(model), model)
+    instructions_file = select_instructions_file(current_dir, model)
+    instructions = render_instructions(instructions_file, model)
 
     reminder_hook = create_system_reminder_hook()
 
@@ -78,7 +53,7 @@ def create_agency_code_agent(
         description="An interactive CLI tool that helps users with software engineering tasks.",
         instructions=instructions,
         tools_folder=os.path.join(current_dir, "tools"),
-        model=LitellmModel(model=model) if not is_openai else model,
+        model=get_model_instance(model),
         hooks=reminder_hook,
         tools=[
             Bash,
@@ -97,20 +72,7 @@ def create_agency_code_agent(
         ]
         + ([WebSearchTool()] if is_openai else [])
         + ([ClaudeWebSearch] if is_claude else []),
-        model_settings=ModelSettings(
-            reasoning=(
-                Reasoning(effort=reasoning_effort, summary="auto")
-                if is_openai or is_claude
-                else None
-            ),
-            truncation="auto",
-            max_tokens=32000,
-            extra_body=(
-                {"search_parameters": {"mode": "on", "returnCitations": True}}
-                if is_grok
-                else None
-            ),
-        ),
+        model_settings=create_model_settings(model, reasoning_effort),
     )
 
 

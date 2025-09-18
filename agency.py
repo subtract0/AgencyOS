@@ -1,6 +1,6 @@
 import os
 
-from utils import silence_warnings_and_logs
+from shared.utils import silence_warnings_and_logs
 
 silence_warnings_and_logs()
 
@@ -17,8 +17,8 @@ from agency_code_agent.agency_code_agent import (  # noqa: E402 - must import af
 from planner_agent.planner_agent import (  # noqa: E402 - must import after warning suppression
     create_planner_agent,
 )
-from frontend_developer.frontend_developer import (  # noqa: E402 - must import after warning suppression
-    create_frontend_developer_agent,
+from subagent_example.subagent_example import (  # noqa: E402 - must import after warning suppression
+    create_subagent_example,
 )
 
 load_dotenv()
@@ -38,7 +38,7 @@ planner = create_planner_agent(
 coder = create_agency_code_agent(
     model=model, reasoning_effort="high"
 )
-frontend_developer = create_frontend_developer_agent(
+subagent_example = create_subagent_example(
     model=model, reasoning_effort="high"
 )
 
@@ -48,11 +48,11 @@ agency = Agency(
     communication_flows=[
         (coder, planner, SendMessageHandoff),
         (planner, coder, SendMessageHandoff),
-        # (coder, frontend_developer) # example for how to add a subagent
+        # (coder, subagent_example) # example for how to add a subagent
     ],
     shared_instructions="./project-overview.md",
 )
 
 if __name__ == "__main__":
-    # agency.terminal_demo(show_reasoning=False if model.startswith("anthropic") else True)
-    agency.visualize()
+    agency.terminal_demo(show_reasoning=False if model.startswith("anthropic") else True)
+    # agency.visualize()
