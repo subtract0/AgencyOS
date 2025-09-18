@@ -10,7 +10,7 @@ from agents import (
     WebSearchTool,
 )
 from agents.extensions.models.litellm_model import LitellmModel
-from system_reminder_hook import create_system_reminder_hook
+from system_hooks import create_system_reminder_hook
 from tools import (
     LS,
     Bash,

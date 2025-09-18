@@ -4,6 +4,7 @@ from agency_swarm import Agent
 from agents import ModelSettings
 from agents.extensions.models.litellm_model import LitellmModel
 from openai.types.shared.reasoning import Reasoning
+from system_hooks import create_message_filter_hook
 
 
 # Get the absolute path to the current file's directory
@@ -31,6 +32,8 @@ def create_planner_agent(model: str = "gpt-5", reasoning_effort: str = "high") -
     is_claude = "claude" in model
     is_grok = "grok" in model
 
+    filter_hook = create_message_filter_hook()
+
     return Agent(
         name="PlannerAgent",
         description=(
@@ -40,6 +43,7 @@ def create_planner_agent(model: str = "gpt-5", reasoning_effort: str = "high") -
         ),
         instructions=select_instructions_file(model),
         model=LitellmModel(model=model),
+        hooks=filter_hook,
         model_settings=ModelSettings(
             reasoning=(
                 Reasoning(effort=reasoning_effort, summary="auto")
