@@ -1,37 +1,21 @@
 import os
 
 from agency_swarm import Agent
-from agents import ModelSettings
-from agents.extensions.models.litellm_model import LitellmModel
-from openai.types.shared.reasoning import Reasoning
-from system_hooks import create_message_filter_hook
-
+from shared.agent_utils import (
+    detect_model_type,
+    select_instructions_file,
+    create_model_settings,
+    get_model_instance,
+)
+from shared.system_hooks import create_message_filter_hook
 
 # Get the absolute path to the current file's directory
 current_dir = os.path.dirname(os.path.abspath(__file__))
-
-
-def select_instructions_file(model: str) -> str:
-    """Return absolute path to the appropriate instructions file for the model.
-    Uses instructions-gpt-5.md for any gpt-5* model, otherwise instructions.md.
-    """
-    filename = (
-        "instructions-gpt-5.md"
-        if model.lower().startswith("gpt-5")
-        else "instructions.md"
-    )
-    return os.path.join(current_dir, filename)
-
 
 def create_planner_agent(model: str = "gpt-5", reasoning_effort: str = "high") -> Agent:
     """Factory that returns a fresh PlannerAgent instance.
     Use this in tests to avoid reusing a singleton across multiple agencies.
     """
-
-    is_openai = "gpt" in model
-    is_claude = "claude" in model
-    is_grok = "grok" in model
-
     filter_hook = create_message_filter_hook()
 
     return Agent(
@@ -41,23 +25,10 @@ def create_planner_agent(model: str = "gpt-5", reasoning_effort: str = "high") -
             "and structure software development projects into manageable, actionable tasks. "
             "Provides clear project roadmaps and coordinates with the AgencyCodeAgent for execution."
         ),
-        instructions=select_instructions_file(model),
-        model=LitellmModel(model=model) if not is_openai else model,
-        hooks=filter_hook, # hook to fix some issues with anthropic models in litellm
-        model_settings=ModelSettings(
-            reasoning=(
-                Reasoning(effort=reasoning_effort, summary="auto")
-                if is_openai or is_claude
-                else None
-            ),
-            truncation="auto",
-            max_tokens=32000,
-            extra_body=(
-                {"search_parameters": {"mode": "on", "returnCitations": True}}
-                if is_grok
-                else None
-            ),
-        )
+        instructions=select_instructions_file(current_dir, model),
+        model=get_model_instance(model),
+        hooks=filter_hook,
+        model_settings=create_model_settings(model, reasoning_effort),
     )
 
 

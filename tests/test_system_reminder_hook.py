@@ -2,7 +2,7 @@ from typing import Any
 
 import pytest
 
-from system_hooks import create_system_reminder_hook
+from shared.system_hooks import create_system_reminder_hook
 
 
 class MockContext:
