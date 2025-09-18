@@ -48,7 +48,7 @@ Fully open sourced version of Claude Code built with [Agency Swarm](https://agen
 
   After that it should create another folder in the root directory called `qa_tester_agent/` and modify the `agency.py` structure.
 
-- Additionally, there is a template in the `subagent_template/` folder that you can use to create a new subagent yourself.
+- Additionally, there is a template in the `subagent_example/` folder that you can use to create a new subagent yourself.
 
 ## 📝 Demo Tasks
 
