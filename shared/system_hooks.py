@@ -2,6 +2,7 @@ from typing import Optional
 
 from agents import AgentHooks, RunContextWrapper
 
+
 class SystemReminderHook(AgentHooks):
     """
     System reminder hook for Agency Code to inject periodic reminders about important instructions.
@@ -29,13 +30,9 @@ class SystemReminderHook(AgentHooks):
         filter_duplicates(context)
         return None
 
-    async def on_handoff(self, context: RunContextWrapper, *args, **kwargs) -> None:
-        """Called when a handoff occurs.
-
-        Supports both call styles:
-        - RunHooks: on_handoff(context, from_agent=..., to_agent=...)
-        - AgentHooks: on_handoff(context, agent=..., source=...)
-        """
+    async def on_handoff(self, context: RunContextWrapper, agent, source) -> None:
+        """Called when the agent is being handed off to. The `source` is the agent that is handing
+        off to this agent."""
         return None
 
     async def on_tool_start(self, context: RunContextWrapper, agent, tool) -> None:
@@ -82,17 +79,6 @@ class SystemReminderHook(AgentHooks):
 
     async def on_llm_end(self, context: RunContextWrapper, agent, response) -> None:
         """Called after the LLM returns a response."""
-        return None
-
-    # Compatibility wrappers so runner can call run-level names even if this is AgentHooks
-    async def on_agent_start(
-        self, context: RunContextWrapper, agent, *args, **kwargs
-    ) -> None:
-        await self.on_start(context, agent)
-
-    async def on_agent_end(
-        self, context: RunContextWrapper, agent, output, *args, **kwargs
-    ) -> None:
         return None
 
     def _inject_reminder(self, ctx: RunContextWrapper, trigger_type: str) -> None:
@@ -186,6 +172,7 @@ NEVER proactively create documentation files (*.md) or README files. Only create
         except Exception as e:
             print(f"Warning: Could not inject reminder into conversation: {e}")
 
+
 class MessageFilterHook(AgentHooks):
     """
     Message filter hook for Agency Code to filter duplicates and reorder messages.
@@ -207,17 +194,17 @@ def filter_duplicates(context) -> None:
     """Filter duplicates and reorder messages."""
 
     thread_manager = context.context.thread_manager
-    
+
     # Access the message store directly
     messages = thread_manager._store.messages
-    
+
     # Step 1: Filter duplicates based on call_id for function calls
     call_ids_seen = set()
     deduplicated_messages = []
-    
+
     for message in messages:
         call_id = message.get("call_id")
-        
+
         if call_id and message.get("type") == "function_call":
             if call_id in call_ids_seen:
                 continue
@@ -227,33 +214,37 @@ def filter_duplicates(context) -> None:
         else:
             # Messages without call_id or non-function calls are always included
             deduplicated_messages.append(message)
-    
+
     # Step 2: Reorder messages so function_call is immediately followed by function_call_output
     reordered_messages = []
     function_calls = {}  # call_id -> function_call message
     function_outputs = {}  # call_id -> function_call_output message
-    
+
     # Separate messages by type
     for message in deduplicated_messages:
         msg_type = message.get("type")
         call_id = message.get("call_id")
-        
+
         if msg_type == "function_call" and call_id:
             function_calls[call_id] = message
         elif msg_type == "function_call_output" and call_id:
             function_outputs[call_id] = message
-    
+
     # Build the reordered list: keep function_call_outputs in place, move function_calls to come before their outputs
     processed_call_ids = set()
-    
+
     for message in deduplicated_messages:
         msg_type = message.get("type")
         call_id = message.get("call_id")
-        
+
         # If it's a function output, add the corresponding call before it
-        if msg_type == "function_call_output" and call_id and call_id not in processed_call_ids:
+        if (
+            msg_type == "function_call_output"
+            and call_id
+            and call_id not in processed_call_ids
+        ):
             processed_call_ids.add(call_id)
-            
+
             if call_id in function_calls:
                 function_call_msg = function_calls[call_id]
                 # Adjust timestamps to avoid collisions with same-timestamp reasoning
@@ -268,19 +259,23 @@ def filter_duplicates(context) -> None:
                 reordered_messages.append(function_call_msg)
             else:
                 print(f"[WARNING] No function_call found for call_id: {call_id}")
-            
-            reordered_messages.append(message)  # Keep function_call_output in its position
-        
+
+            reordered_messages.append(
+                message
+            )  # Keep function_call_output in its position
+
         # If it's not a function call or output, add it as-is
         elif msg_type not in ["function_call", "function_call_output"]:
             reordered_messages.append(message)
-        
+
         # Preserve standalone function_call (no matching output or missing call_id)
-        elif msg_type == "function_call" and (not call_id or call_id not in function_outputs):
+        elif msg_type == "function_call" and (
+            not call_id or call_id not in function_outputs
+        ):
             reordered_messages.append(message)
-        
+
         # Function calls with matching outputs are handled when we process their corresponding outputs
-    
+
     # Update the message store directly
     if len(reordered_messages) != len(messages) or any(
         orig != new for orig, new in zip(messages, reordered_messages)
@@ -292,6 +287,7 @@ def filter_duplicates(context) -> None:
 def create_system_reminder_hook():
     """Create and return a SystemReminderHook instance."""
     return SystemReminderHook()
+
 
 def create_message_filter_hook():
     """Create and return a MessageFilterHook instance."""
