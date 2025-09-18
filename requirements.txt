@@ -11,4 +11,4 @@ pytest>=6.0.0
 pytest-asyncio>=0.21.0
 requests>=2.25.0
 # Install after the initial requirements install
-# git+https://github.com/serialx/openai-agents-python.git@main
+# git+https://github.com/openai/openai-agents-python.git@main
