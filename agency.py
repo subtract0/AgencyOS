@@ -17,14 +17,20 @@ from agency_code_agent.agency_code_agent import (  # noqa: E402 - must import af
 from planner_agent.planner_agent import (  # noqa: E402 - must import after warning suppression
     create_planner_agent,
 )
+from frontend_developer.frontend_developer import (  # noqa: E402 - must import after warning suppression
+    create_frontend_developer_agent,
+)
 
 load_dotenv()
 
 current_dir = os.path.dirname(os.path.abspath(__file__))
 litellm.modify_params = True
 
-# Create agents
-model = "anthropic/claude-sonnet-4-20250514"
+# switch between models here
+# model = "anthropic/claude-sonnet-4-20250514"
+model = "gpt-5"
+
+# create agents
 planner = create_planner_agent(
     model=model, reasoning_effort="high"
 )
@@ -32,16 +38,21 @@ planner = create_planner_agent(
 coder = create_agency_code_agent(
     model=model, reasoning_effort="high"
 )
+frontend_developer = create_frontend_developer_agent(
+    model=model, reasoning_effort="high"
+)
 
 agency = Agency(
-    coder,
-    planner,
+    coder, planner,
+    name="AgencyCode",
     communication_flows=[
         (coder, planner, SendMessageHandoff),
         (planner, coder, SendMessageHandoff),
+        # (coder, frontend_developer) # example for how to add a subagent
     ],
+    shared_instructions="./project-overview.md",
 )
 
 if __name__ == "__main__":
-    agency.terminal_demo(show_reasoning=False if model.startswith("anthropic") else True)
-    # agency.visualize()
+    # agency.terminal_demo(show_reasoning=False if model.startswith("anthropic") else True)
+    agency.visualize()

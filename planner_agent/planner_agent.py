@@ -42,8 +42,8 @@ def create_planner_agent(model: str = "gpt-5", reasoning_effort: str = "high") -
             "Provides clear project roadmaps and coordinates with the AgencyCodeAgent for execution."
         ),
         instructions=select_instructions_file(model),
-        model=LitellmModel(model=model),
-        hooks=filter_hook,
+        model=LitellmModel(model=model) if not is_openai else model,
+        hooks=filter_hook, # hook to fix some issues with anthropic models in litellm
         model_settings=ModelSettings(
             reasoning=(
                 Reasoning(effort=reasoning_effort, summary="auto")

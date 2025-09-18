@@ -78,7 +78,7 @@ def create_agency_code_agent(
         description="An interactive CLI tool that helps users with software engineering tasks.",
         instructions=instructions,
         tools_folder=os.path.join(current_dir, "tools"),
-        model=LitellmModel(model=model),
+        model=LitellmModel(model=model) if not is_openai else model,
         hooks=reminder_hook,
         tools=[
             Bash,
