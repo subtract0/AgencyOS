@@ -5,6 +5,16 @@ import pytest
 from shared.system_hooks import create_system_reminder_hook
 
 
+class MockMessageStore:
+    def __init__(self):
+        self.messages = []
+
+
+class MockThreadManager:
+    def __init__(self):
+        self._store = MockMessageStore()
+
+
 class MockContext:
     def __init__(self, with_todos: bool = True):
         self._data = {}
@@ -16,6 +26,7 @@ class MockContext:
                     {"id": "3", "content": "Task C", "status": "completed"},
                 ]
             }
+        self.thread_manager = MockThreadManager()
 
     def get(self, key: str, default: Any = None) -> Any:
         return self._data.get(key, default)
