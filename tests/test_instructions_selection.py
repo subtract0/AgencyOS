@@ -2,9 +2,21 @@ import os
 
 import pytest
 
+from agency_code_agent import agency_code_agent
 from agency_code_agent.agency_code_agent import render_instructions
-from agency_code_agent.agency_code_agent import select_instructions_file as code_select
-from planner_agent.planner_agent import select_instructions_file as planner_select
+from planner_agent import planner_agent
+from shared.agent_utils import select_instructions_file as shared_select
+
+CODE_BASE_DIR = os.path.dirname(os.path.abspath(agency_code_agent.__file__))
+PLANNER_BASE_DIR = os.path.dirname(os.path.abspath(planner_agent.__file__))
+
+
+def code_select(model_name: str) -> str:
+    return shared_select(CODE_BASE_DIR, model_name)
+
+
+def planner_select(model_name: str) -> str:
+    return shared_select(PLANNER_BASE_DIR, model_name)
 
 
 @pytest.mark.parametrize(
