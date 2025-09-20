@@ -64,9 +64,7 @@ class FirestoreStore(MemoryStore):
             # Check for emulator
             emulator_host = os.getenv("FIRESTORE_EMULATOR_HOST")
             if emulator_host:
-                logger.info(
-                    f"FirestoreStore: Using emulator at {emulator_host}"
-                )
+                logger.info(f"FirestoreStore: Using emulator at {emulator_host}")
                 # Set up emulator client
                 os.environ["GOOGLE_CLOUD_PROJECT"] = "agency-dev"
                 self._client = firestore.Client()
@@ -121,10 +119,10 @@ class FirestoreStore(MemoryStore):
             return self._fallback_store.store(key, content, tags)
 
         memory_record = {
-            'key': key,
-            'content': content,
-            'tags': tags,
-            'timestamp': datetime.now().isoformat()
+            "key": key,
+            "content": content,
+            "tags": tags,
+            "timestamp": datetime.now().isoformat(),
         }
 
         try:
@@ -149,7 +147,7 @@ class FirestoreStore(MemoryStore):
 
         try:
             # Firestore query for documents where tags array contains any of the search tags
-            query = self._collection.where('tags', 'array_contains_any', tags)
+            query = self._collection.where("tags", "array_contains_any", tags)
             docs = query.stream()
 
             memories = []
@@ -158,8 +156,10 @@ class FirestoreStore(MemoryStore):
                 memories.append(memory)
 
             # Sort by timestamp (newest first)
-            memories.sort(key=lambda x: x.get('timestamp', ''), reverse=True)
-            logger.debug(f"FirestoreStore: Found {len(memories)} memories for tags: {tags}")
+            memories.sort(key=lambda x: x.get("timestamp", ""), reverse=True)
+            logger.debug(
+                f"FirestoreStore: Found {len(memories)} memories for tags: {tags}"
+            )
             return memories
 
         except Exception as e:
@@ -181,7 +181,7 @@ class FirestoreStore(MemoryStore):
                 memories.append(memory)
 
             # Sort by timestamp (newest first)
-            memories.sort(key=lambda x: x.get('timestamp', ''), reverse=True)
+            memories.sort(key=lambda x: x.get("timestamp", ""), reverse=True)
             logger.debug(f"FirestoreStore: Retrieved {len(memories)} total memories")
             return memories
 
