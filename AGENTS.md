@@ -30,6 +30,16 @@
 - Group related edits, call out instruction or template updates in the PR description, and list the verification commands you ran.
 - Reference issues or tasks and include terminal output or screenshots when UX or agent behaviour changes.
 
+## Memory Integration & Agent Context
+- Agents now share a unified memory system through `shared.agent_context` that enables cross-session learning.
+- Memory flows through the complete agent lifecycle: initialization → tool execution → response generation → memory consolidation.
+- The `create_agent_context(memory=shared_memory)` pattern injects memory capabilities into both planner and developer agents.
+- Memory operations use a verbose fallback policy: warnings are logged but execution continues if memory storage fails.
+- Session transcripts are automatically generated and stored in `logs/sessions/` for learning analysis and debugging.
+- Memory stores support tagging and search functionality for efficient retrieval of relevant context.
+
 ## Configuration & Secrets
 - Store provider keys and model overrides in `.env`; `dotenv` loads them in `agency.py`, so never commit secrets.
+- Memory configuration: Set `FRESH_USE_FIRESTORE=true` for persistent Firestore backend or leave unset for in-memory default.
+- For local development with Firestore emulator, set `FIRESTORE_EMULATOR_HOST=localhost:8080`.
 - Document new environment variables in `README.md`, and update both agent factories when introducing models or reasoning modes.

@@ -8,8 +8,34 @@ Fully open sourced version of Claude Code built with [Agency Swarm](https://agen
 - **Planner Agent**: Planner agent that acts exactly as Claude Code's planning mode.
 - **Full Control**: Full access to all 14 tools from Claude Code, agency structure and prompts.
 - **Easy Subagent Creation**: Simple subagent creation process using Cursor or Claude Code itself.
+- **Memory API & Learning**: Built-in memory system with in-memory default and optional Firestore backend for persistent learning across sessions.
 
 👨‍💻 Additionally, you can experiment by adding other features from Agency Swarm framework, unsupported by Claude Code, like multi-level hybrid communication flows.
+
+## 🧠 Memory API & Learning
+
+Agency Code includes a comprehensive memory system that enables agents to learn and retain information across sessions:
+
+### Memory Backends
+- **In-Memory Store** (default): Fast, session-based memory that doesn't persist between runs
+- **Firestore Backend** (optional): Persistent storage that maintains memory across sessions and agent restarts
+
+### Key Environment Variables
+- `FRESH_USE_FIRESTORE=true`: Enable Firestore backend for persistent memory
+- `FIRESTORE_EMULATOR_HOST=localhost:8080`: Use local Firestore emulator for development
+
+### Session Transcripts
+- All session interactions are automatically logged to `logs/sessions/`
+- Transcripts include memory records, timestamps, and tagged content
+- Sessions can be analyzed for learning consolidation and pattern recognition
+
+### Memory Integration
+- Agents automatically store and retrieve contextual information
+- Memory is tagged and searchable for efficient retrieval
+- Learning consolidation provides insights into memory usage patterns
+- Verbose fallback policy ensures graceful degradation when memory operations fail
+
+> **Note**: Memory system follows MCP Ref 688cf28d-e69c-4624-b7cb-0725f36f9518 assumptions for agent context integration.
 
 ## 🚀 Quick start
 
