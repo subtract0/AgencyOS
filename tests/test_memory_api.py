@@ -140,6 +140,11 @@ class TestMemoryClass:
         assert len(direct_result) == 1
         assert direct_result[0]["key"] == "test"
 
+        # Also verify through memory interface
+        memory_result = memory.get_all()
+        assert len(memory_result) == 1
+        assert memory_result[0]["key"] == "test"
+
 
 class TestFirestoreStore:
     """Test FirestoreStore fallback behavior."""
@@ -161,7 +166,8 @@ class TestFirestoreStore:
     def test_firestore_fallback_on_import_error(self):
         """Test fallback when google-cloud-firestore is not available."""
         with patch.dict(os.environ, {"FRESH_USE_FIRESTORE": "true"}):
-            with patch('agency_memory.firestore_store.firestore', side_effect=ImportError()):
+            # Patch the import at the module level
+            with patch('builtins.__import__', side_effect=lambda name, *args: ImportError() if 'google.cloud' in name else __import__(name, *args)):
                 store = FirestoreStore()
 
                 # Should use fallback
