@@ -29,11 +29,11 @@ def consolidate_learnings(memories: List[Dict[str, Any]]) -> Dict[str, Any]:
     """
     if not memories:
         return {
-            'summary': 'No memories to analyze',
-            'total_memories': 0,
-            'tag_frequencies': {},
-            'patterns': {},
-            'generated_at': datetime.now().isoformat()
+            "summary": "No memories to analyze",
+            "total_memories": 0,
+            "tag_frequencies": {},
+            "patterns": {},
+            "generated_at": datetime.now().isoformat(),
         }
 
     # Initialize counters and analyzers
@@ -45,21 +45,21 @@ def consolidate_learnings(memories: List[Dict[str, Any]]) -> Dict[str, Any]:
     # Process each memory
     for memory in memories:
         # Count tags
-        tags = memory.get('tags', [])
+        tags = memory.get("tags", [])
         tag_counter.update(tags)
 
         # Analyze content types
-        content = memory.get('content', '')
+        content = memory.get("content", "")
         content_type = _categorize_content(content)
         content_types[content_type] += 1
 
         # Time pattern analysis
-        timestamp_str = memory.get('timestamp', '')
+        timestamp_str = memory.get("timestamp", "")
         if timestamp_str:
             try:
-                timestamp = datetime.fromisoformat(timestamp_str.replace('Z', '+00:00'))
+                timestamp = datetime.fromisoformat(timestamp_str.replace("Z", "+00:00"))
                 hour = timestamp.hour
-                day = timestamp.strftime('%A')
+                day = timestamp.strftime("%A")
                 hourly_distribution[hour] += 1
                 daily_distribution[day] += 1
             except (ValueError, AttributeError):
@@ -72,38 +72,47 @@ def consolidate_learnings(memories: List[Dict[str, Any]]) -> Dict[str, Any]:
     # Calculate tag usage patterns
     tag_frequencies = dict(tag_counter)
     unique_tags = len(tag_frequencies)
-    avg_tags_per_memory = sum(len(m.get('tags', [])) for m in memories) / total_memories
+    avg_tags_per_memory = sum(len(m.get("tags", [])) for m in memories) / total_memories
 
     # Find peak usage times
-    peak_hour = max(hourly_distribution.items(), key=lambda x: x[1])[0] if hourly_distribution else None
-    peak_day = max(daily_distribution.items(), key=lambda x: x[1])[0] if daily_distribution else None
+    peak_hour = (
+        max(hourly_distribution.items(), key=lambda x: x[1])[0]
+        if hourly_distribution
+        else None
+    )
+    peak_day = (
+        max(daily_distribution.items(), key=lambda x: x[1])[0]
+        if daily_distribution
+        else None
+    )
 
     # Content analysis
     content_breakdown = dict(content_types)
 
     # Build structured summary
     summary = {
-        'summary': f'Analyzed {total_memories} memories with {unique_tags} unique tags',
-        'total_memories': total_memories,
-        'unique_tags': unique_tags,
-        'avg_tags_per_memory': round(avg_tags_per_memory, 2),
-
-        'tag_frequencies': tag_frequencies,
-        'top_tags': [{'tag': tag, 'count': count} for tag, count in top_tags],
-
-        'patterns': {
-            'content_types': content_breakdown,
-            'peak_hour': peak_hour,
-            'peak_day': peak_day,
-            'hourly_distribution': dict(hourly_distribution),
-            'daily_distribution': dict(daily_distribution)
+        "summary": f"Analyzed {total_memories} memories with {unique_tags} unique tags",
+        "total_memories": total_memories,
+        "unique_tags": unique_tags,
+        "avg_tags_per_memory": round(avg_tags_per_memory, 2),
+        "tag_frequencies": tag_frequencies,
+        "top_tags": [{"tag": tag, "count": count} for tag, count in top_tags],
+        "patterns": {
+            "content_types": content_breakdown,
+            "peak_hour": peak_hour,
+            "peak_day": peak_day,
+            "hourly_distribution": dict(hourly_distribution),
+            "daily_distribution": dict(daily_distribution),
         },
-
-        'insights': _generate_insights(
-            total_memories, unique_tags, top_tags, content_breakdown, peak_hour, peak_day
+        "insights": _generate_insights(
+            total_memories,
+            unique_tags,
+            top_tags,
+            content_breakdown,
+            peak_hour,
+            peak_day,
         ),
-
-        'generated_at': datetime.now().isoformat()
+        "generated_at": datetime.now().isoformat(),
     }
 
     logger.info(f"Learning consolidation completed: {total_memories} memories analyzed")
@@ -120,32 +129,32 @@ def _categorize_content(content: Any) -> str:
     Returns:
         Content category string
     """
-    if content is None or content == '':
-        return 'empty'
+    if content is None or content == "":
+        return "empty"
 
     if isinstance(content, str):
         content_lower = content.lower().strip()
 
         # Check for common patterns
-        if content_lower.startswith(('error', 'exception', 'failed')):
-            return 'error'
-        elif content_lower.startswith(('success', 'completed', 'finished')):
-            return 'success'
-        elif any(cmd in content_lower for cmd in ['git', 'npm', 'pip', 'docker']):
-            return 'command'
-        elif content_lower.startswith(('http', 'https', 'www')):
-            return 'url'
+        if content_lower.startswith(("error", "exception", "failed")):
+            return "error"
+        elif content_lower.startswith(("success", "completed", "finished")):
+            return "success"
+        elif any(cmd in content_lower for cmd in ["git", "npm", "pip", "docker"]):
+            return "command"
+        elif content_lower.startswith(("http", "https", "www")):
+            return "url"
         elif len(content) > 200:
-            return 'long_text'
+            return "long_text"
         else:
-            return 'text'
+            return "text"
 
     elif isinstance(content, (dict, list)):
-        return 'structured'
+        return "structured"
     elif isinstance(content, (int, float)):
-        return 'numeric'
+        return "numeric"
     else:
-        return 'other'
+        return "other"
 
 
 def _generate_insights(
@@ -154,7 +163,7 @@ def _generate_insights(
     top_tags: List[tuple],
     content_breakdown: Dict[str, int],
     peak_hour: int,
-    peak_day: str
+    peak_day: str,
 ) -> List[str]:
     """
     Generate human-readable insights from analysis.
@@ -182,7 +191,9 @@ def _generate_insights(
     if top_tags:
         most_used_tag, count = top_tags[0]
         percentage = (count / total_memories) * 100
-        insights.append(f"Most used tag: '{most_used_tag}' ({percentage:.1f}% of memories)")
+        insights.append(
+            f"Most used tag: '{most_used_tag}' ({percentage:.1f}% of memories)"
+        )
 
     # Content type insights
     if content_breakdown:
@@ -191,9 +202,15 @@ def _generate_insights(
 
     # Time pattern insights
     if peak_hour is not None:
-        time_label = "morning" if 6 <= peak_hour < 12 else \
-                    "afternoon" if 12 <= peak_hour < 18 else \
-                    "evening" if 18 <= peak_hour < 22 else "night"
+        time_label = (
+            "morning"
+            if 6 <= peak_hour < 12
+            else "afternoon"
+            if 12 <= peak_hour < 18
+            else "evening"
+            if 18 <= peak_hour < 22
+            else "night"
+        )
         insights.append(f"Peak usage time: {time_label} (hour {peak_hour})")
 
     if peak_day:
@@ -202,7 +219,9 @@ def _generate_insights(
     return insights
 
 
-def generate_learning_report(memories: List[Dict[str, Any]], session_id: str = None) -> str:
+def generate_learning_report(
+    memories: List[Dict[str, Any]], session_id: str = None
+) -> str:
     """
     Generate a formatted learning report from consolidated analysis.
 
@@ -230,24 +249,26 @@ def generate_learning_report(memories: List[Dict[str, Any]], session_id: str = N
     report += f"- **Average Tags per Memory:** {analysis['avg_tags_per_memory']}\n\n"
 
     # Top tags
-    if analysis['top_tags']:
+    if analysis["top_tags"]:
         report += "## Most Used Tags\n\n"
-        for tag_info in analysis['top_tags'][:5]:
+        for tag_info in analysis["top_tags"][:5]:
             report += f"- **{tag_info['tag']}:** {tag_info['count']} times\n"
         report += "\n"
 
     # Insights
-    if analysis['insights']:
+    if analysis["insights"]:
         report += "## Key Insights\n\n"
-        for insight in analysis['insights']:
+        for insight in analysis["insights"]:
             report += f"- {insight}\n"
         report += "\n"
 
     # Content analysis
-    content_types = analysis['patterns'].get('content_types', {})
+    content_types = analysis["patterns"].get("content_types", {})
     if content_types:
         report += "## Content Analysis\n\n"
-        for content_type, count in sorted(content_types.items(), key=lambda x: x[1], reverse=True):
+        for content_type, count in sorted(
+            content_types.items(), key=lambda x: x[1], reverse=True
+        ):
             report += f"- **{content_type.replace('_', ' ').title()}:** {count}\n"
 
     return report
