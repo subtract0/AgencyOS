@@ -15,7 +15,7 @@ from agency_memory import (
     FirestoreStore,
     consolidate_learnings,
     create_session_transcript,
-    generate_learning_report
+    generate_learning_report,
 )
 
 
@@ -167,7 +167,12 @@ class TestFirestoreStore:
         """Test fallback when google-cloud-firestore is not available."""
         with patch.dict(os.environ, {"FRESH_USE_FIRESTORE": "true"}):
             # Patch the import at the module level
-            with patch('builtins.__import__', side_effect=lambda name, *args: ImportError() if 'google.cloud' in name else __import__(name, *args)):
+            with patch(
+                "builtins.__import__",
+                side_effect=lambda name, *args: ImportError()
+                if "google.cloud" in name
+                else __import__(name, *args),
+            ):
                 store = FirestoreStore()
 
                 # Should use fallback
@@ -176,10 +181,13 @@ class TestFirestoreStore:
 
     def test_firestore_emulator_configuration(self):
         """Test Firestore emulator host configuration."""
-        with patch.dict(os.environ, {
-            "FRESH_USE_FIRESTORE": "true",
-            "FIRESTORE_EMULATOR_HOST": "localhost:8080"
-        }):
+        with patch.dict(
+            os.environ,
+            {
+                "FRESH_USE_FIRESTORE": "true",
+                "FIRESTORE_EMULATOR_HOST": "localhost:8080",
+            },
+        ):
             # Mock the firestore module
             mock_firestore = MagicMock()
             mock_client = MagicMock()
@@ -189,7 +197,7 @@ class TestFirestoreStore:
             mock_client.collection.return_value = mock_collection
             mock_collection.limit.return_value.stream.return_value = []
 
-            with patch('agency_memory.firestore_store.firestore', mock_firestore):
+            with patch("agency_memory.firestore_store.firestore", mock_firestore):
                 store = FirestoreStore()
 
                 # Should attempt to use Firestore
@@ -214,20 +222,20 @@ class TestLearningConsolidation:
                 "key": "mem1",
                 "content": "test content",
                 "tags": ["work", "urgent"],
-                "timestamp": "2023-01-01T10:00:00"
+                "timestamp": "2023-01-01T10:00:00",
             },
             {
                 "key": "mem2",
                 "content": "another test",
                 "tags": ["work", "research"],
-                "timestamp": "2023-01-01T14:00:00"
+                "timestamp": "2023-01-01T14:00:00",
             },
             {
                 "key": "mem3",
                 "content": "personal note",
                 "tags": ["personal"],
-                "timestamp": "2023-01-01T20:00:00"
-            }
+                "timestamp": "2023-01-01T20:00:00",
+            },
         ]
 
         result = consolidate_learnings(memories)
@@ -242,9 +250,24 @@ class TestLearningConsolidation:
     def test_consolidate_tag_patterns(self):
         """Test tag frequency analysis."""
         memories = [
-            {"key": "m1", "content": "c1", "tags": ["common", "rare1"], "timestamp": "2023-01-01T10:00:00"},
-            {"key": "m2", "content": "c2", "tags": ["common", "rare2"], "timestamp": "2023-01-01T11:00:00"},
-            {"key": "m3", "content": "c3", "tags": ["common"], "timestamp": "2023-01-01T12:00:00"},
+            {
+                "key": "m1",
+                "content": "c1",
+                "tags": ["common", "rare1"],
+                "timestamp": "2023-01-01T10:00:00",
+            },
+            {
+                "key": "m2",
+                "content": "c2",
+                "tags": ["common", "rare2"],
+                "timestamp": "2023-01-01T11:00:00",
+            },
+            {
+                "key": "m3",
+                "content": "c3",
+                "tags": ["common"],
+                "timestamp": "2023-01-01T12:00:00",
+            },
         ]
 
         result = consolidate_learnings(memories)
@@ -257,7 +280,12 @@ class TestLearningConsolidation:
     def test_generate_learning_report(self):
         """Test learning report generation."""
         memories = [
-            {"key": "m1", "content": "test", "tags": ["work"], "timestamp": "2023-01-01T10:00:00"}
+            {
+                "key": "m1",
+                "content": "test",
+                "tags": ["work"],
+                "timestamp": "2023-01-01T10:00:00",
+            }
         ]
 
         report = generate_learning_report(memories, "test_session")
@@ -277,13 +305,13 @@ class TestSessionTranscript:
                 "key": "test_memory",
                 "content": "Test content for transcript",
                 "tags": ["test", "transcript"],
-                "timestamp": "2023-01-01T10:00:00"
+                "timestamp": "2023-01-01T10:00:00",
             }
         ]
 
         with tempfile.TemporaryDirectory() as temp_dir:
             # Patch the hardcoded path in create_session_transcript
-            with patch('agency_memory.memory.os.path.join') as mock_join:
+            with patch("agency_memory.memory.os.path.join") as mock_join:
                 mock_join.return_value = os.path.join(temp_dir, "test_transcript.md")
 
                 filepath = create_session_transcript(memories, "test_session")
@@ -292,7 +320,7 @@ class TestSessionTranscript:
                 assert os.path.exists(filepath)
 
                 # Check content
-                with open(filepath, 'r') as f:
+                with open(filepath, "r") as f:
                     content = f.read()
 
                 assert "Session Transcript: test_session" in content
@@ -303,12 +331,12 @@ class TestSessionTranscript:
     def test_create_empty_session_transcript(self):
         """Test transcript creation with no memories."""
         with tempfile.TemporaryDirectory() as temp_dir:
-            with patch('agency_memory.memory.os.path.join') as mock_join:
+            with patch("agency_memory.memory.os.path.join") as mock_join:
                 mock_join.return_value = os.path.join(temp_dir, "empty_transcript.md")
 
                 filepath = create_session_transcript([], "empty_session")
 
-                with open(filepath, 'r') as f:
+                with open(filepath, "r") as f:
                     content = f.read()
 
                 assert "No memories recorded for this session" in content
@@ -401,14 +429,16 @@ class TestIntegration:
             transcript_file = os.path.join(temp_dir, "empty_test.md")
 
             # Use a fixed file path instead of mocking
-            with patch('agency_memory.memory.os.path.join', return_value=transcript_file):
+            with patch(
+                "agency_memory.memory.os.path.join", return_value=transcript_file
+            ):
                 filepath = create_session_transcript([], "empty_session")
 
                 # File should be created
                 assert os.path.exists(transcript_file)
 
                 # Check content
-                with open(transcript_file, 'r') as f:
+                with open(transcript_file, "r") as f:
                     content = f.read()
 
                 assert "No memories recorded" in content
@@ -441,8 +471,12 @@ class TestIntegration:
         with tempfile.TemporaryDirectory() as temp_dir:
             transcript_file = os.path.join(temp_dir, "integration_test.md")
 
-            with patch('agency_memory.memory.os.path.join', return_value=transcript_file):
-                transcript_path = create_session_transcript(all_memories, "integration_test")
+            with patch(
+                "agency_memory.memory.os.path.join", return_value=transcript_file
+            ):
+                transcript_path = create_session_transcript(
+                    all_memories, "integration_test"
+                )
                 assert os.path.exists(transcript_file)
 
     def test_fallback_messages_logged(self, caplog):
@@ -451,8 +485,10 @@ class TestIntegration:
             store = FirestoreStore()
 
             # Check that fallback message was logged
-            assert any("falling back to InMemoryStore" in record.message.lower()
-                      for record in caplog.records)
+            assert any(
+                "falling back to InMemoryStore" in record.message.lower()
+                for record in caplog.records
+            )
 
 
 if __name__ == "__main__":

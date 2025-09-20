@@ -6,15 +6,14 @@ memory records during agent lifecycle events and tool invocations.
 """
 
 import pytest
-import asyncio
-import os
 import tempfile
 from unittest.mock import MagicMock, patch
 from datetime import datetime
 
 # Import the modules we're testing
 import sys
-sys.path.append('/Users/am/Code/Agency')
+
+sys.path.append("/Users/am/Code/Agency")
 
 from shared.system_hooks import MemoryIntegrationHook, create_memory_integration_hook
 from shared.agent_context import AgentContext, create_agent_context
@@ -106,7 +105,9 @@ class TestMemoryIntegrationHook:
         assert hook.agent_context.session_id.startswith("session_")
 
     @pytest.mark.asyncio
-    async def test_on_start_stores_session_start(self, memory_hook, mock_agent, mock_context):
+    async def test_on_start_stores_session_start(
+        self, memory_hook, mock_agent, mock_context
+    ):
         """Test that on_start stores session start memory."""
         # Call the hook
         await memory_hook.on_start(mock_context, mock_agent)
@@ -128,13 +129,17 @@ class TestMemoryIntegrationHook:
         assert memory_hook.session_start_time is not None
 
     @pytest.mark.asyncio
-    async def test_on_end_stores_session_end(self, memory_hook, mock_agent, mock_context):
+    async def test_on_end_stores_session_end(
+        self, memory_hook, mock_agent, mock_context
+    ):
         """Test that on_end stores session end memory."""
         # Set up a start time first
         memory_hook.session_start_time = datetime.now().isoformat()
 
         # Mock the transcript generation to avoid file system operations
-        with patch.object(memory_hook, '_generate_session_transcript') as mock_transcript:
+        with patch.object(
+            memory_hook, "_generate_session_transcript"
+        ) as mock_transcript:
             mock_transcript.return_value = None
 
             # Call the hook
@@ -158,12 +163,16 @@ class TestMemoryIntegrationHook:
         mock_transcript.assert_called_once()
 
     @pytest.mark.asyncio
-    async def test_on_tool_start_stores_tool_call(self, memory_hook, mock_agent, mock_context, mock_tool):
+    async def test_on_tool_start_stores_tool_call(
+        self, memory_hook, mock_agent, mock_context, mock_tool
+    ):
         """Test that on_tool_start stores tool call memory."""
         await memory_hook.on_tool_start(mock_context, mock_agent, mock_tool)
 
         # Verify memory was stored
-        memories = memory_hook.agent_context.search_memories(["tool", "TestTool", "call"])
+        memories = memory_hook.agent_context.search_memories(
+            ["tool", "TestTool", "call"]
+        )
         assert len(memories) == 1
 
         memory = memories[0]
@@ -179,14 +188,18 @@ class TestMemoryIntegrationHook:
         assert content["tool_parameters"]["file_path"] == "/test/path"
 
     @pytest.mark.asyncio
-    async def test_on_tool_end_stores_tool_result(self, memory_hook, mock_agent, mock_context, mock_tool):
+    async def test_on_tool_end_stores_tool_result(
+        self, memory_hook, mock_agent, mock_context, mock_tool
+    ):
         """Test that on_tool_end stores tool result memory."""
         result = "This is a test tool result with some content"
 
         await memory_hook.on_tool_end(mock_context, mock_agent, mock_tool, result)
 
         # Verify memory was stored
-        memories = memory_hook.agent_context.search_memories(["tool", "TestTool", "result"])
+        memories = memory_hook.agent_context.search_memories(
+            ["tool", "TestTool", "result"]
+        )
         assert len(memories) == 1
 
         memory = memories[0]
@@ -202,7 +215,9 @@ class TestMemoryIntegrationHook:
         assert content["result_size"] == len(result)
 
     @pytest.mark.asyncio
-    async def test_tool_result_truncation(self, memory_hook, mock_agent, mock_context, mock_tool):
+    async def test_tool_result_truncation(
+        self, memory_hook, mock_agent, mock_context, mock_tool
+    ):
         """Test that large tool results are properly truncated."""
         # Create a large result (> 1000 chars)
         large_result = "x" * 1500
@@ -210,7 +225,9 @@ class TestMemoryIntegrationHook:
         await memory_hook.on_tool_end(mock_context, mock_agent, mock_tool, large_result)
 
         # Verify truncation occurred
-        memories = memory_hook.agent_context.search_memories(["tool", "TestTool", "result"])
+        memories = memory_hook.agent_context.search_memories(
+            ["tool", "TestTool", "result"]
+        )
         memory = memories[0]
 
         content = memory["content"]
@@ -219,18 +236,25 @@ class TestMemoryIntegrationHook:
         assert content["result_size"] == 1500  # Original size is preserved
 
     @pytest.mark.asyncio
-    async def test_tool_parameter_sanitization(self, memory_hook, mock_agent, mock_context):
+    async def test_tool_parameter_sanitization(
+        self, memory_hook, mock_agent, mock_context
+    ):
         """Test that sensitive tool parameters are redacted."""
-        sensitive_tool = MockTool("SensitiveTool", {
-            "file_path": "/test/path",
-            "password": "secret123",
-            "api_key": "key123",
-            "token": "token123"
-        })
+        sensitive_tool = MockTool(
+            "SensitiveTool",
+            {
+                "file_path": "/test/path",
+                "password": "secret123",
+                "api_key": "key123",
+                "token": "token123",
+            },
+        )
 
         await memory_hook.on_tool_start(mock_context, mock_agent, sensitive_tool)
 
-        memories = memory_hook.agent_context.search_memories(["tool", "SensitiveTool", "call"])
+        memories = memory_hook.agent_context.search_memories(
+            ["tool", "SensitiveTool", "call"]
+        )
         memory = memories[0]
 
         params = memory["content"]["tool_parameters"]
@@ -240,14 +264,18 @@ class TestMemoryIntegrationHook:
         assert params["token"] == "[REDACTED]"
 
     @pytest.mark.asyncio
-    async def test_error_handling_in_tool_end(self, memory_hook, mock_agent, mock_context, mock_tool):
+    async def test_error_handling_in_tool_end(
+        self, memory_hook, mock_agent, mock_context, mock_tool
+    ):
         """Test error handling when tool_end fails."""
         # Force an error by making agent_context None
         original_context = memory_hook.agent_context
         memory_hook.agent_context = None
 
         # This should not raise an exception
-        await memory_hook.on_tool_end(mock_context, mock_agent, mock_tool, "test result")
+        await memory_hook.on_tool_end(
+            mock_context, mock_agent, mock_tool, "test result"
+        )
 
         # Restore context
         memory_hook.agent_context = original_context
@@ -321,7 +349,9 @@ class TestIntegrationScenarios:
     """Test complete agent/tool flow scenarios."""
 
     @pytest.mark.asyncio
-    async def test_complete_session_flow(self, memory_hook, mock_agent, mock_context, mock_tool):
+    async def test_complete_session_flow(
+        self, memory_hook, mock_agent, mock_context, mock_tool
+    ):
         """Test a complete session with multiple tool calls."""
         # Session start
         await memory_hook.on_start(mock_context, mock_agent)
@@ -336,7 +366,7 @@ class TestIntegrationScenarios:
         await memory_hook.on_tool_end(mock_context, mock_agent, tool2, "Result 2")
 
         # Session end
-        with patch.object(memory_hook, '_generate_session_transcript'):
+        with patch.object(memory_hook, "_generate_session_transcript"):
             await memory_hook.on_end(mock_context, mock_agent, {"status": "complete"})
 
         # Verify all memories were stored
@@ -370,7 +400,7 @@ class TestIntegrationScenarios:
         # Create a temporary directory for testing
         with tempfile.TemporaryDirectory() as temp_dir:
             # Patch the transcript directory
-            with patch('shared.system_hooks.create_session_transcript') as mock_create:
+            with patch("shared.system_hooks.create_session_transcript") as mock_create:
                 mock_create.return_value = f"{temp_dir}/test_transcript.md"
 
                 await memory_hook._generate_session_transcript()
@@ -387,8 +417,12 @@ class TestIntegrationScenarios:
     def test_memory_search_functionality(self, memory_hook):
         """Test that memory search works correctly with session tags."""
         # Store some memories
-        memory_hook.agent_context.store_memory("tool1", {"tool": "test"}, ["tool", "call"])
-        memory_hook.agent_context.store_memory("error1", {"error": "failed"}, ["error", "tool"])
+        memory_hook.agent_context.store_memory(
+            "tool1", {"tool": "test"}, ["tool", "call"]
+        )
+        memory_hook.agent_context.store_memory(
+            "error1", {"error": "failed"}, ["error", "tool"]
+        )
 
         # Search for tool memories
         tool_memories = memory_hook.agent_context.search_memories(["tool"])
