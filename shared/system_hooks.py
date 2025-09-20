@@ -240,7 +240,7 @@ class MemoryIntegrationHook(AgentHooks):
                     # Filter out potentially sensitive information
                     safe_params = {}
                     for key, value in params.items():
-                        if key.lower() in ['password', 'token', 'key', 'secret', 'auth']:
+                        if any(sensitive in key.lower() for sensitive in ['password', 'token', 'key', 'secret', 'auth', 'api_key']):
                             safe_params[key] = "[REDACTED]"
                         else:
                             safe_params[key] = self._truncate_content(str(value), 100)
@@ -257,7 +257,8 @@ class MemoryIntegrationHook(AgentHooks):
         if len(content) <= max_length:
             return content
 
-        return content[:max_length] + "...[truncated]"
+        truncation_suffix = "...[truncated]"
+        return content[:max_length] + truncation_suffix
 
     def _calculate_session_duration(self) -> Optional[str]:
         """Calculate session duration if start time is available."""

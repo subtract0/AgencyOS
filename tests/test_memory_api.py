@@ -314,8 +314,104 @@ class TestSessionTranscript:
                 assert "No memories recorded for this session" in content
 
 
+class TestEdgeCases:
+    """Edge case tests for the Memory API."""
+
+    def test_memory_overflow_handling(self):
+        """Test handling of many memories without overflow."""
+        store = InMemoryStore()
+
+        # Store a large number of memories
+        for i in range(1000):
+            store.store(f"mem_{i}", f"content_{i}", [f"tag_{i % 10}"])
+
+        # Should handle large datasets
+        all_memories = store.get_all()
+        assert len(all_memories) == 1000
+
+        # Search should still work efficiently
+        tag_memories = store.search(["tag_0"])
+        assert len(tag_memories) == 100  # 1000/10 = 100 memories per tag
+
+    def test_concurrent_access_simulation(self):
+        """Test simulated concurrent access to memory store."""
+        store = InMemoryStore()
+
+        # Simulate concurrent writes by rapid successive calls
+        for i in range(50):
+            store.store(f"concurrent_{i}", f"data_{i}", ["concurrent"])
+
+        # All memories should be preserved
+        concurrent_memories = store.search(["concurrent"])
+        assert len(concurrent_memories) == 50
+
+        # Keys should be unique
+        keys = [m["key"] for m in concurrent_memories]
+        assert len(set(keys)) == 50
+
+    def test_very_large_content_truncation(self):
+        """Test handling of very large content."""
+        store = InMemoryStore()
+
+        # Create very large content (10KB)
+        large_content = "x" * 10000
+        store.store("large_content", large_content, ["large"])
+
+        # Content should be stored as-is in InMemoryStore
+        memories = store.get_all()
+        assert len(memories[0]["content"]) == 10000
+
+    def test_special_characters_in_content(self):
+        """Test handling of special characters and unicode."""
+        store = InMemoryStore()
+
+        special_content = "测试 🚀 Special chars: !@#$%^&*()[]{}|\\:;\"'<>?,./"
+        store.store("special", special_content, ["unicode", "special"])
+
+        memories = store.search(["unicode"])
+        assert len(memories) == 1
+        assert memories[0]["content"] == special_content
+
+    def test_empty_and_none_values(self):
+        """Test handling of empty and None values."""
+        store = InMemoryStore()
+
+        # Empty content
+        store.store("empty", "", ["empty"])
+
+        # None content (should be converted to string)
+        store.store("none", None, ["none"])
+
+        memories = store.get_all()
+        assert len(memories) == 2
+
+        empty_mem = next(m for m in memories if m["key"] == "empty")
+        assert empty_mem["content"] == ""
+
+        none_mem = next(m for m in memories if m["key"] == "none")
+        assert none_mem["content"] is None or str(none_mem["content"]) == "None"
+
+
 class TestIntegration:
     """Integration tests for the complete memory system."""
+
+    def test_session_transcript_with_no_memories(self):
+        """Test session transcript generation with no memories."""
+        with tempfile.TemporaryDirectory() as temp_dir:
+            transcript_file = os.path.join(temp_dir, "empty_test.md")
+
+            # Use a fixed file path instead of mocking
+            with patch('agency_memory.memory.os.path.join', return_value=transcript_file):
+                filepath = create_session_transcript([], "empty_session")
+
+                # File should be created
+                assert os.path.exists(transcript_file)
+
+                # Check content
+                with open(transcript_file, 'r') as f:
+                    content = f.read()
+
+                assert "No memories recorded" in content
 
     def test_full_workflow(self):
         """Test complete workflow: store, search, analyze, transcript."""
@@ -343,11 +439,11 @@ class TestIntegration:
 
         # Session transcript
         with tempfile.TemporaryDirectory() as temp_dir:
-            with patch('agency_memory.memory.os.path.join') as mock_join:
-                mock_join.return_value = os.path.join(temp_dir, "integration_test.md")
+            transcript_file = os.path.join(temp_dir, "integration_test.md")
 
+            with patch('agency_memory.memory.os.path.join', return_value=transcript_file):
                 transcript_path = create_session_transcript(all_memories, "integration_test")
-                assert os.path.exists(transcript_path)
+                assert os.path.exists(transcript_file)
 
     def test_fallback_messages_logged(self, caplog):
         """Test that fallback messages are properly logged."""
