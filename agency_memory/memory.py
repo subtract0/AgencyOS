@@ -80,19 +80,19 @@ class Memory:
 
     def __init__(self, store: Optional[MemoryStore] = None):
         """Initialize with store backend. Defaults to InMemoryStore."""
-        self.store = store or InMemoryStore()
+        self._store = store or InMemoryStore()
 
     def store(self, key: str, content: Any, tags: List[str]) -> None:
         """Store content with key and tags."""
-        self.store.store(key, content, tags)
+        self._store.store(key, content, tags)
 
     def search(self, tags: List[str]) -> List[Dict[str, Any]]:
         """Search memories by tags."""
-        return self.store.search(tags)
+        return self._store.search(tags)
 
     def get_all(self) -> List[Dict[str, Any]]:
         """Get all memories."""
-        return self.store.get_all()
+        return self._store.get_all()
 
 
 def create_session_transcript(memories: List[Dict[str, Any]], session_id: str) -> str:
