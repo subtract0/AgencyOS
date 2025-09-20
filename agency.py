@@ -14,9 +14,11 @@ from dotenv import load_dotenv  # noqa: E402 - must import after warning suppres
 from agency_code_agent.agency_code_agent import (  # noqa: E402 - must import after warning suppression
     create_agency_code_agent,
 )
+from agency_memory import Memory, create_firestore_store  # noqa: E402 - must import after warning suppression
 from planner_agent.planner_agent import (  # noqa: E402 - must import after warning suppression
     create_planner_agent,
 )
+from shared.agent_context import create_agent_context  # noqa: E402 - must import after warning suppression
 from subagent_example.subagent_example import (  # noqa: E402 - must import after warning suppression
     create_subagent_example,
 )
@@ -30,13 +32,19 @@ litellm.modify_params = True
 # model = "anthropic/claude-sonnet-4-20250514"
 model = "gpt-5"
 
-# create agents
+# Create shared memory and agent context for the agency
+# This allows memory sharing between agents while maintaining backward compatibility
+memory_store = create_firestore_store() if os.getenv("FRESH_USE_FIRESTORE", "").lower() == "true" else None
+shared_memory = Memory(store=memory_store)
+shared_context = create_agent_context(memory=shared_memory)
+
+# create agents with shared context
 planner = create_planner_agent(
-    model=model, reasoning_effort="high"
+    model=model, reasoning_effort="high", agent_context=shared_context
 )
 # coder = create_agency_code_agent(model="gpt-5", reasoning_effort="high")
 coder = create_agency_code_agent(
-    model=model, reasoning_effort="high"
+    model=model, reasoning_effort="high", agent_context=shared_context
 )
 subagent_example = create_subagent_example(
     model=model, reasoning_effort="high"

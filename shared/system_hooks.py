@@ -1,4 +1,4 @@
-from typing import Optional
+from typing import Optional, List
 import logging
 import os
 from datetime import datetime
@@ -8,6 +8,74 @@ from agency_memory import Memory, create_session_transcript
 from .agent_context import AgentContext, create_agent_context
 
 logger = logging.getLogger(__name__)
+
+
+class CompositeHook(AgentHooks):
+    """
+    Composite hook that combines multiple AgentHooks instances.
+
+    Allows multiple hooks to be used together by delegating calls to all hooks.
+    """
+
+    def __init__(self, hooks: List[AgentHooks]):
+        """Initialize with a list of hooks to delegate to."""
+        self.hooks = hooks
+
+    async def on_start(self, context: RunContextWrapper, agent) -> None:
+        """Call on_start for all hooks."""
+        for hook in self.hooks:
+            try:
+                await hook.on_start(context, agent)
+            except Exception as e:
+                logger.warning(f"Hook {type(hook).__name__}.on_start failed: {e}")
+
+    async def on_end(self, context: RunContextWrapper, agent, output) -> None:
+        """Call on_end for all hooks."""
+        for hook in self.hooks:
+            try:
+                await hook.on_end(context, agent, output)
+            except Exception as e:
+                logger.warning(f"Hook {type(hook).__name__}.on_end failed: {e}")
+
+    async def on_handoff(self, context: RunContextWrapper, agent, source) -> None:
+        """Call on_handoff for all hooks."""
+        for hook in self.hooks:
+            try:
+                await hook.on_handoff(context, agent, source)
+            except Exception as e:
+                logger.warning(f"Hook {type(hook).__name__}.on_handoff failed: {e}")
+
+    async def on_tool_start(self, context: RunContextWrapper, agent, tool) -> None:
+        """Call on_tool_start for all hooks."""
+        for hook in self.hooks:
+            try:
+                await hook.on_tool_start(context, agent, tool)
+            except Exception as e:
+                logger.warning(f"Hook {type(hook).__name__}.on_tool_start failed: {e}")
+
+    async def on_tool_end(self, context: RunContextWrapper, agent, tool, result: str) -> None:
+        """Call on_tool_end for all hooks."""
+        for hook in self.hooks:
+            try:
+                await hook.on_tool_end(context, agent, tool, result)
+            except Exception as e:
+                logger.warning(f"Hook {type(hook).__name__}.on_tool_end failed: {e}")
+
+    async def on_llm_start(self, context: RunContextWrapper, agent, system_prompt: Optional[str], input_items: list) -> None:
+        """Call on_llm_start for all hooks."""
+        for hook in self.hooks:
+            try:
+                await hook.on_llm_start(context, agent, system_prompt, input_items)
+            except Exception as e:
+                logger.warning(f"Hook {type(hook).__name__}.on_llm_start failed: {e}")
+
+    async def on_llm_end(self, context: RunContextWrapper, agent, response) -> None:
+        """Call on_llm_end for all hooks."""
+        for hook in self.hooks:
+            try:
+                await hook.on_llm_end(context, agent, response)
+            except Exception as e:
+                logger.warning(f"Hook {type(hook).__name__}.on_llm_end failed: {e}")
 
 
 class MemoryIntegrationHook(AgentHooks):
@@ -520,6 +588,11 @@ def create_system_reminder_hook():
 def create_message_filter_hook():
     """Create and return a MessageFilterHook instance."""
     return MessageFilterHook()
+
+
+def create_composite_hook(hooks: List[AgentHooks]):
+    """Create and return a CompositeHook instance that combines multiple hooks."""
+    return CompositeHook(hooks)
 
 
 if __name__ == "__main__":
