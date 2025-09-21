@@ -405,7 +405,7 @@ def test_recommendations_generation():
 
 
 def test_memory_integration(mock_agent_context):
-    """Test integration with agent context."""
+    """Test integration with Memory API and agent context."""
     with patch('auditor_agent.auditor_agent.create_agent_context') as mock_create_context:
         mock_create_context.return_value = mock_agent_context
 

@@ -502,8 +502,7 @@ def test_severity_filtering(sample_source_file, sample_audit_report):
     assert result_data["violations_addressed"] == 2  # Only critical and high
 
 
-@patch('test_generator_agent.test_generator_agent.Memory')
-def test_memory_integration(mock_memory, mock_agent_context):
+def test_memory_integration(mock_agent_context):
     """Test integration with Memory API."""
     with patch('test_generator_agent.test_generator_agent.create_agent_context') as mock_create_context:
         mock_create_context.return_value = mock_agent_context
