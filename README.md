@@ -9,8 +9,37 @@ Fully open sourced version of Claude Code built with [Agency Swarm](https://agen
 - **Full Control**: Full access to all 14 tools from Claude Code, agency structure and prompts.
 - **Easy Subagent Creation**: Simple subagent creation process using Cursor or Claude Code itself.
 - **Memory API & Learning**: Built-in memory system with in-memory default and optional Firestore backend for persistent learning across sessions.
+- **CodeHealer Integration**: Specialized test quality automation with NECESSARY pattern analysis and Q(T) scoring.
 
 👨‍💻 Additionally, you can experiment by adding other features from Agency Swarm framework, unsupported by Claude Code, like multi-level hybrid communication flows.
+
+## 🏥 CodeHealer - Test Quality Automation
+
+The Agency has been enhanced with **CodeHealer** capabilities - a specialized test quality automation system:
+
+### AuditorAgent
+- Analyzes codebases using the NECESSARY pattern (9 universal test properties)
+- Calculates Q(T) scores: `Q(T) = Π(p_i) × (|B_c| / |B|)`
+- Identifies test quality violations with severity levels
+- Generates actionable improvement recommendations
+
+### TestGeneratorAgent
+- Generates NECESSARY-compliant tests based on audit reports
+- Property-specific test templates for each violation type
+- Prioritizes high-impact improvements
+- Creates comprehensive test suites that maximize Q(T) scores
+
+### NECESSARY Pattern
+The 9 universal properties of high-quality tests:
+- **N**: No Missing Behaviors (comprehensive coverage)
+- **E**: Edge Cases (boundary condition testing)
+- **C**: Comprehensive (multiple test vectors)
+- **E**: Error Conditions (exception handling)
+- **S**: State Validation (object state verification)
+- **S**: Side Effects (external impact testing)
+- **A**: Async Operations (asynchronous code coverage)
+- **R**: Regression Prevention (historical bug coverage)
+- **Y**: Yielding Confidence (overall quality assurance)
 
 ## 🧠 Memory API & Learning
 
