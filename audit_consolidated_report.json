@@ -1,0 +1,108 @@
+{
+  "audit_summary": {
+    "timestamp": "2025-09-21T13:30:00Z",
+    "total_modules_analyzed": 25,
+    "overall_qt_score": 0.58,
+    "critical_violations": 12,
+    "modules_requiring_immediate_healing": 5
+  },
+  "module_scores": {
+    "agency_code_agent": {
+      "qt_score": 0.685,
+      "status": "MODERATE",
+      "critical_issues": ["Missing error condition tests", "Insufficient edge case coverage"]
+    },
+    "tools": {
+      "bash.py": {"qt_score": 0.0, "status": "CRITICAL"},
+      "edit.py": {"qt_score": 0.0, "status": "CRITICAL"},
+      "read.py": {"qt_score": 0.43, "status": "CRITICAL"},
+      "grep.py": {"qt_score": 0.41, "status": "CRITICAL"},
+      "write.py": {"qt_score": 0.58, "status": "NEEDS_HEALING"},
+      "todo_write.py": {"qt_score": 0.52, "status": "NEEDS_HEALING"},
+      "multi_edit.py": {"qt_score": 0.72, "status": "ACCEPTABLE"},
+      "glob.py": {"qt_score": 0.68, "status": "ACCEPTABLE"}
+    },
+    "memory_system": {
+      "qt_score": 0.67,
+      "status": "MODERATE",
+      "critical_issues": ["Async operations undertested", "Thread safety not validated"]
+    },
+    "shared_utilities": {
+      "qt_score": 0.74,
+      "status": "GOOD",
+      "issues": ["Hook composition edge cases", "Model config error handling"]
+    }
+  },
+  "priority_healing_targets": [
+    {
+      "priority": 1,
+      "module": "tools/read.py",
+      "qt_score": 0.43,
+      "reason": "Fundamental file operation tool with only 2 tests",
+      "missing_tests": ["Binary file detection", "Encoding handling", "Line truncation", "Image detection"]
+    },
+    {
+      "priority": 2,
+      "module": "tools/grep.py",
+      "qt_score": 0.41,
+      "reason": "Critical search tool with only 2 tests",
+      "missing_tests": ["Regex patterns", "Multiline mode", "File filtering", "Context lines"]
+    },
+    {
+      "priority": 3,
+      "module": "tools/bash.py",
+      "qt_score": 0.0,
+      "reason": "Zero test infrastructure quality despite 21 tests",
+      "missing_tests": ["Test infrastructure", "Async operations"]
+    },
+    {
+      "priority": 4,
+      "module": "tools/edit.py",
+      "qt_score": 0.0,
+      "reason": "Only 4 tests for complex file manipulation",
+      "missing_tests": ["Edge cases", "Comprehensive coverage", "State validation"]
+    },
+    {
+      "priority": 5,
+      "module": "tools/todo_write.py",
+      "qt_score": 0.52,
+      "reason": "State management tool with insufficient validation",
+      "missing_tests": ["Context persistence", "Error handling", "Multiple in-progress validation"]
+    }
+  ],
+  "necessary_property_summary": {
+    "N_no_missing_behaviors": {"avg_score": 0.62, "modules_below_threshold": 8},
+    "E_edge_cases": {"avg_score": 0.55, "modules_below_threshold": 10},
+    "C_comprehensive": {"avg_score": 0.68, "modules_below_threshold": 6},
+    "E_error_conditions": {"avg_score": 0.48, "modules_below_threshold": 12},
+    "S_state_validation": {"avg_score": 0.65, "modules_below_threshold": 7},
+    "S_side_effects": {"avg_score": 0.60, "modules_below_threshold": 8},
+    "A_async_operations": {"avg_score": 0.73, "modules_below_threshold": 4},
+    "R_regression_prevention": {"avg_score": 0.62, "modules_below_threshold": 7},
+    "Y_yielding_confidence": {"avg_score": 0.58, "modules_below_threshold": 9}
+  },
+  "healing_strategy": {
+    "phase_1_critical": {
+      "target_modules": ["read.py", "grep.py", "bash.py", "edit.py"],
+      "expected_tests": 60,
+      "focus": "Error conditions and edge cases"
+    },
+    "phase_2_important": {
+      "target_modules": ["todo_write.py", "write.py", "memory.py"],
+      "expected_tests": 35,
+      "focus": "State validation and async operations"
+    },
+    "phase_3_optimization": {
+      "target_modules": ["multi_edit.py", "glob.py", "shared/*"],
+      "expected_tests": 20,
+      "focus": "Edge cases and confidence"
+    }
+  },
+  "expected_outcome": {
+    "initial_qt_score": 0.58,
+    "target_qt_score": 0.85,
+    "improvement": "+46.5%",
+    "new_tests_required": 115,
+    "estimated_time": "45 minutes"
+  }
+}
