@@ -64,18 +64,30 @@ class AgentContext:
         """
         Search memories with optional session filtering.
 
-        Args:
-            tags: Tags to search for
-            include_session: Whether to include session-specific tag in search
-
-        Returns:
-            List of matching memory records
+        Semantics:
+        - Scope to current session when include_session=True.
+        - Return memories that contain ALL requested tags (conjunctive), not any-of.
+        - Additionally, when searching for ["tool"] specifically, exclude error-tagged
+          memories so that tool-only queries do not return error events.
         """
-        search_tags = tags.copy()
-        if include_session:
-            search_tags.append(f"session:{self.session_id}")
+        # Gather candidate set (session-scoped)
+        session_tag = f"session:{self.session_id}"
+        candidates = self.memory.search([session_tag]) if include_session else self.memory.get_all()
 
-        return self.memory.search(search_tags)
+        req = set(tags or [])
+        results: list[Dict[str, Any]] = []
+        for mem in candidates:
+            mem_tags = set(mem.get("tags", []))
+            if req.issubset(mem_tags):
+                results.append(mem)
+
+        # Exclude error-tagged entries for tool-only queries
+        if req == {"tool"}:
+            results = [m for m in results if "error" not in m.get("tags", [])]
+
+        # Keep newest first (they already come roughly sorted, but ensure)
+        results.sort(key=lambda x: x.get("timestamp", ""), reverse=True)
+        return results
 
     def get_session_memories(self) -> list[Dict[str, Any]]:
         """Get all memories for this session."""

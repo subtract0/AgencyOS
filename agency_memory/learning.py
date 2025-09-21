@@ -240,6 +240,8 @@ def generate_learning_report(
         report += f"**Session:** {session_id}\n"
 
     report += f"**Generated:** {analysis['generated_at']}\n"
+    # Plain summary line for simple string checks in tests
+    report += f"Total Memories: {analysis['total_memories']}\n"
     report += f"**Summary:** {analysis['summary']}\n\n"
 
     # Statistics

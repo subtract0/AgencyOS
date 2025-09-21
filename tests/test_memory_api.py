@@ -486,7 +486,7 @@ class TestIntegration:
 
             # Check that fallback message was logged
             assert any(
-                "falling back to InMemoryStore" in record.message.lower()
+                "falling back to inmemorystore" in record.message.lower()
                 for record in caplog.records
             )
 
