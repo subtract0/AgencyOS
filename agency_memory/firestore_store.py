@@ -8,6 +8,12 @@ import logging
 from datetime import datetime
 from typing import Any, Dict, List
 
+# Expose firestore at module scope for test patching
+try:  # pragma: no cover
+    from google.cloud import firestore as firestore  # type: ignore
+except Exception:  # pragma: no cover
+    firestore = None
+
 from .memory import MemoryStore, InMemoryStore
 
 logger = logging.getLogger(__name__)
@@ -40,7 +46,7 @@ class FirestoreStore(MemoryStore):
         use_firestore = os.getenv("FRESH_USE_FIRESTORE", "").lower() == "true"
 
         if not use_firestore:
-            logger.info(
+            logger.warning(
                 "FirestoreStore: FRESH_USE_FIRESTORE not set to 'true', "
                 "falling back to InMemoryStore"
             )
@@ -59,7 +65,10 @@ class FirestoreStore(MemoryStore):
             True if successful, False if fallback needed
         """
         try:
-            from google.cloud import firestore
+            global firestore
+            if firestore is None:
+                from google.cloud import firestore as _fs  # type: ignore
+                firestore = _fs
 
             # Check for emulator
             emulator_host = os.getenv("FIRESTORE_EMULATOR_HOST")
