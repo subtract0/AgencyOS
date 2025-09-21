@@ -1,9 +1,29 @@
 # Repository Guidelines
 
+## CodeHealer Agents
+
+### AuditorAgent
+- **Purpose**: Analyzes codebases for test quality using NECESSARY pattern
+- **Location**: `auditor_agent/`
+- **Q(T) Score**: Calculates test quality metric: `Q(T) = Π(p_i) × (|B_c| / |B|)`
+- **NECESSARY Properties**: Evaluates 9 universal test quality properties (N-E-C-E-S-S-A-R-Y)
+- **Memory Integration**: Stores audit reports and violation patterns for learning
+- **Output**: Structured JSON reports with violations and recommendations
+
+### TestGeneratorAgent
+- **Purpose**: Generates NECESSARY-compliant tests based on audit reports
+- **Location**: `test_generator_agent/`
+- **Strategy**: Property-specific test generation templates for each violation type
+- **Prioritization**: Focuses on high-impact violations first
+- **Memory Integration**: Learns from generated test patterns and success rates
+- **Output**: Test files that maximize Q(T) score improvements
+
 ## Project Structure & Module Organization
-- `agency.py` wires planner and developer agents and loads settings from `.env`.
+- `agency.py` wires planner, developer, auditor and test generator agents and loads settings from `.env`.
 - `agency_code_agent/` contains the primary agent, prompts, and its `tools/`; extend or reuse logic here.
 - `planner_agent/` mirrors the coder setup for planning mode; keep configs aligned when features move between agents.
+- `auditor_agent/` analyzes codebases using NECESSARY pattern and calculates Q(T) scores for test quality.
+- `test_generator_agent/` generates NECESSARY-compliant tests based on audit reports to improve quality.
 - `tests/` holds pytest coverage for tools, planner, and integration flows; follow its layout for new scenarios.
 - `subagent_template/` scaffolds new agents, while shared adapters sit in `tools/` and `agents/` for reuse.
 

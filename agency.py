@@ -15,6 +15,7 @@ from agency_code_agent.agency_code_agent import (  # noqa: E402 - must import af
     create_agency_code_agent,
 )
 from agency_memory import Memory, create_firestore_store  # noqa: E402 - must import after warning suppression
+from auditor_agent import create_auditor_agent  # noqa: E402 - must import after warning suppression
 from planner_agent.planner_agent import (  # noqa: E402 - must import after warning suppression
     create_planner_agent,
 )
@@ -22,6 +23,7 @@ from shared.agent_context import create_agent_context  # noqa: E402 - must impor
 from subagent_example.subagent_example import (  # noqa: E402 - must import after warning suppression
     create_subagent_example,
 )
+from test_generator_agent import create_test_generator_agent  # noqa: E402 - must import after warning suppression
 
 load_dotenv()
 
@@ -46,16 +48,25 @@ planner = create_planner_agent(
 coder = create_agency_code_agent(
     model=model, reasoning_effort="high", agent_context=shared_context
 )
+auditor = create_auditor_agent(
+    model=model, reasoning_effort="high", agent_context=shared_context
+)
+test_generator = create_test_generator_agent(
+    model=model, reasoning_effort="high", agent_context=shared_context
+)
 subagent_example = create_subagent_example(
     model=model, reasoning_effort="high"
 )
 
 agency = Agency(
-    coder, planner,
+    coder, planner, auditor, test_generator,
     name="AgencyCode",
     communication_flows=[
         (coder, planner, SendMessageHandoff),
         (planner, coder, SendMessageHandoff),
+        (planner, auditor, SendMessageHandoff),
+        (auditor, test_generator, SendMessageHandoff),
+        (test_generator, coder, SendMessageHandoff),
         # (coder, subagent_example) # example for how to add a subagent
     ],
     shared_instructions="./project-overview.md",
