@@ -1,9 +1,29 @@
 # Repository Guidelines
 
+## CodeHealer Agents
+
+### AuditorAgent
+- **Purpose**: Analyzes codebases for test quality using NECESSARY pattern
+- **Location**: `auditor_agent/`
+- **Q(T) Score**: Calculates test quality metric: `Q(T) = Π(p_i) × (|B_c| / |B|)`
+- **NECESSARY Properties**: Evaluates 9 universal test quality properties (N-E-C-E-S-S-A-R-Y)
+- **Memory Integration**: Stores audit reports and violation patterns for learning
+- **Output**: Structured JSON reports with violations and recommendations
+
+### TestGeneratorAgent
+- **Purpose**: Generates NECESSARY-compliant tests based on audit reports
+- **Location**: `test_generator_agent/`
+- **Strategy**: Property-specific test generation templates for each violation type
+- **Prioritization**: Focuses on high-impact violations first
+- **Memory Integration**: Learns from generated test patterns and success rates
+- **Output**: Test files that maximize Q(T) score improvements
+
 ## Project Structure & Module Organization
-- `agency.py` wires planner and developer agents and loads settings from `.env`.
+- `agency.py` wires planner, developer, auditor and test generator agents and loads settings from `.env`.
 - `agency_code_agent/` contains the primary agent, prompts, and its `tools/`; extend or reuse logic here.
 - `planner_agent/` mirrors the coder setup for planning mode; keep configs aligned when features move between agents.
+- `auditor_agent/` analyzes codebases using NECESSARY pattern and calculates Q(T) scores for test quality.
+- `test_generator_agent/` generates NECESSARY-compliant tests based on audit reports to improve quality.
 - `tests/` holds pytest coverage for tools, planner, and integration flows; follow its layout for new scenarios.
 - `subagent_template/` scaffolds new agents, while shared adapters sit in `tools/` and `agents/` for reuse.
 
@@ -30,6 +50,16 @@
 - Group related edits, call out instruction or template updates in the PR description, and list the verification commands you ran.
 - Reference issues or tasks and include terminal output or screenshots when UX or agent behaviour changes.
 
+## Memory Integration & Agent Context
+- Agents now share a unified memory system through `shared.agent_context` that enables cross-session learning.
+- Memory flows through the complete agent lifecycle: initialization → tool execution → response generation → memory consolidation.
+- The `create_agent_context(memory=shared_memory)` pattern injects memory capabilities into both planner and developer agents.
+- Memory operations use a verbose fallback policy: warnings are logged but execution continues if memory storage fails.
+- Session transcripts are automatically generated and stored in `logs/sessions/` for learning analysis and debugging.
+- Memory stores support tagging and search functionality for efficient retrieval of relevant context.
+
 ## Configuration & Secrets
 - Store provider keys and model overrides in `.env`; `dotenv` loads them in `agency.py`, so never commit secrets.
+- Memory configuration: Set `FRESH_USE_FIRESTORE=true` for persistent Firestore backend or leave unset for in-memory default.
+- For local development with Firestore emulator, set `FIRESTORE_EMULATOR_HOST=localhost:8080`.
 - Document new environment variables in `README.md`, and update both agent factories when introducing models or reasoning modes.

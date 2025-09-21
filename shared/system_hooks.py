@@ -1,6 +1,298 @@
-from typing import Optional
+from typing import Optional, List
+import logging
+import os
+from datetime import datetime
 
 from agents import AgentHooks, RunContextWrapper
+from agency_memory import Memory, create_session_transcript
+from .agent_context import AgentContext, create_agent_context
+
+logger = logging.getLogger(__name__)
+
+
+class CompositeHook(AgentHooks):
+    """
+    Composite hook that combines multiple AgentHooks instances.
+
+    Allows multiple hooks to be used together by delegating calls to all hooks.
+    """
+
+    def __init__(self, hooks: List[AgentHooks]):
+        """Initialize with a list of hooks to delegate to."""
+        self.hooks = hooks
+
+    async def on_start(self, context: RunContextWrapper, agent) -> None:
+        """Call on_start for all hooks."""
+        for hook in self.hooks:
+            try:
+                await hook.on_start(context, agent)
+            except Exception as e:
+                logger.warning(f"Hook {type(hook).__name__}.on_start failed: {e}")
+
+    async def on_end(self, context: RunContextWrapper, agent, output) -> None:
+        """Call on_end for all hooks."""
+        for hook in self.hooks:
+            try:
+                await hook.on_end(context, agent, output)
+            except Exception as e:
+                logger.warning(f"Hook {type(hook).__name__}.on_end failed: {e}")
+
+    async def on_handoff(self, context: RunContextWrapper, agent, source) -> None:
+        """Call on_handoff for all hooks."""
+        for hook in self.hooks:
+            try:
+                await hook.on_handoff(context, agent, source)
+            except Exception as e:
+                logger.warning(f"Hook {type(hook).__name__}.on_handoff failed: {e}")
+
+    async def on_tool_start(self, context: RunContextWrapper, agent, tool) -> None:
+        """Call on_tool_start for all hooks."""
+        for hook in self.hooks:
+            try:
+                await hook.on_tool_start(context, agent, tool)
+            except Exception as e:
+                logger.warning(f"Hook {type(hook).__name__}.on_tool_start failed: {e}")
+
+    async def on_tool_end(self, context: RunContextWrapper, agent, tool, result: str) -> None:
+        """Call on_tool_end for all hooks."""
+        for hook in self.hooks:
+            try:
+                await hook.on_tool_end(context, agent, tool, result)
+            except Exception as e:
+                logger.warning(f"Hook {type(hook).__name__}.on_tool_end failed: {e}")
+
+    async def on_llm_start(self, context: RunContextWrapper, agent, system_prompt: Optional[str], input_items: list) -> None:
+        """Call on_llm_start for all hooks."""
+        for hook in self.hooks:
+            try:
+                await hook.on_llm_start(context, agent, system_prompt, input_items)
+            except Exception as e:
+                logger.warning(f"Hook {type(hook).__name__}.on_llm_start failed: {e}")
+
+    async def on_llm_end(self, context: RunContextWrapper, agent, response) -> None:
+        """Call on_llm_end for all hooks."""
+        for hook in self.hooks:
+            try:
+                await hook.on_llm_end(context, agent, response)
+            except Exception as e:
+                logger.warning(f"Hook {type(hook).__name__}.on_llm_end failed: {e}")
+
+
+class MemoryIntegrationHook(AgentHooks):
+    """
+    Memory integration hook for tracking agent lifecycle and tool usage.
+
+    Stores memories for:
+    - Session start/end events
+    - Tool invocations and results
+    - Errors
+    - Session transcripts
+    """
+
+    def __init__(self, agent_context: Optional[AgentContext] = None):
+        """
+        Initialize with optional agent context.
+
+        Args:
+            agent_context: AgentContext instance. Creates default if None.
+        """
+        self.agent_context = agent_context or create_agent_context()
+        self.session_start_time = None
+        logger.debug(f"MemoryIntegrationHook initialized for session: {self.agent_context.session_id}")
+
+    async def on_start(self, context: RunContextWrapper, agent) -> None:
+        """Called when agent starts processing a user message or is activated."""
+        try:
+            timestamp = datetime.now().isoformat()
+            self.session_start_time = timestamp
+
+            # Store session start event
+            metadata = {
+                "agent_type": type(agent).__name__ if agent else "unknown",
+                "timestamp": timestamp,
+                "context_id": getattr(context, 'id', 'unknown') if context else 'unknown'
+            }
+
+            key = f"session_start_{timestamp}"
+            self.agent_context.store_memory(key, metadata, ["session", "start"])
+            logger.debug(f"Stored session start memory: {key}")
+
+        except Exception as e:
+            logger.warning(f"Failed to store session start memory: {e}")
+
+    async def on_end(self, context: RunContextWrapper, agent, output) -> None:
+        """Called when the agent finishes processing a user message."""
+        try:
+            timestamp = datetime.now().isoformat()
+
+            # Store session end event
+            metadata = {
+                "agent_type": type(agent).__name__ if agent else "unknown",
+                "timestamp": timestamp,
+                "session_duration": self._calculate_session_duration(),
+                "output_summary": self._truncate_content(str(output) if output else "no output", 200)
+            }
+
+            key = f"session_end_{timestamp}"
+            self.agent_context.store_memory(key, metadata, ["session", "end"])
+            logger.debug(f"Stored session end memory: {key}")
+
+            # Generate session transcript
+            await self._generate_session_transcript()
+
+        except Exception as e:
+            logger.warning(f"Failed to store session end memory: {e}")
+
+    async def on_handoff(self, context: RunContextWrapper, agent, source) -> None:
+        """Called when the agent is being handed off to."""
+        try:
+            timestamp = datetime.now().isoformat()
+
+            metadata = {
+                "target_agent": type(agent).__name__ if agent else "unknown",
+                "source_agent": type(source).__name__ if source else "unknown",
+                "timestamp": timestamp
+            }
+
+            key = f"handoff_{timestamp}"
+            self.agent_context.store_memory(key, metadata, ["handoff", "agent_transfer"])
+            logger.debug(f"Stored handoff memory: {key}")
+
+        except Exception as e:
+            logger.warning(f"Failed to store handoff memory: {e}")
+
+    async def on_tool_start(self, context: RunContextWrapper, agent, tool) -> None:
+        """Called before each tool execution."""
+        try:
+            timestamp = datetime.now().isoformat()
+            tool_name = getattr(tool, 'name', 'unknown_tool')
+
+            metadata = {
+                "tool_name": tool_name,
+                "timestamp": timestamp,
+                "agent_type": type(agent).__name__ if agent else "unknown",
+                "tool_parameters": self._safe_extract_tool_params(tool)
+            }
+
+            key = f"tool_call_{tool_name}_{timestamp}"
+            self.agent_context.store_memory(key, metadata, ["tool", tool_name, "call"])
+            logger.debug(f"Stored tool start memory: {key}")
+
+        except Exception as e:
+            logger.warning(f"Failed to store tool start memory: {e}")
+
+    async def on_tool_end(self, context: RunContextWrapper, agent, tool, result: str) -> None:
+        """Called after each tool execution."""
+        try:
+            timestamp = datetime.now().isoformat()
+            tool_name = getattr(tool, 'name', 'unknown_tool')
+
+            # Truncate large results
+            truncated_result = self._truncate_content(result, 1000)
+
+            metadata = {
+                "tool_name": tool_name,
+                "timestamp": timestamp,
+                "agent_type": type(agent).__name__ if agent else "unknown",
+                "result": truncated_result,
+                "result_size": len(result) if result else 0
+            }
+
+            key = f"tool_result_{tool_name}_{timestamp}"
+            self.agent_context.store_memory(key, metadata, ["tool", tool_name, "result"])
+            logger.debug(f"Stored tool result memory: {key}")
+
+        except Exception as e:
+            logger.warning(f"Failed to store tool result memory: {e}")
+
+            # Store error memory if tool execution failed
+            try:
+                error_metadata = {
+                    "tool_name": tool_name,
+                    "timestamp": timestamp,
+                    "error": str(e),
+                    "agent_type": type(agent).__name__ if agent else "unknown"
+                }
+
+                error_key = f"tool_error_{tool_name}_{timestamp}"
+                self.agent_context.store_memory(error_key, error_metadata, ["error", tool_name])
+
+            except Exception as nested_e:
+                logger.error(f"Failed to store error memory: {nested_e}")
+
+    async def on_llm_start(self, context: RunContextWrapper, agent, system_prompt: Optional[str], input_items: list) -> None:
+        """Called before LLM invocation."""
+        # Memory integration hook doesn't need to modify LLM calls
+        pass
+
+    async def on_llm_end(self, context: RunContextWrapper, agent, response) -> None:
+        """Called after the LLM returns a response."""
+        # Memory integration hook doesn't need to process LLM responses
+        pass
+
+    def _safe_extract_tool_params(self, tool) -> dict:
+        """Safely extract tool parameters without exposing sensitive data."""
+        try:
+            # Try to get parameters in a safe way
+            if hasattr(tool, 'parameters'):
+                params = tool.parameters
+                if isinstance(params, dict):
+                    # Filter out potentially sensitive information
+                    safe_params = {}
+                    for key, value in params.items():
+                        if any(sensitive in key.lower() for sensitive in ['password', 'token', 'key', 'secret', 'auth', 'api_key']):
+                            safe_params[key] = "[REDACTED]"
+                        else:
+                            safe_params[key] = self._truncate_content(str(value), 100)
+                    return safe_params
+            return {"parameters": "not_available"}
+        except Exception:
+            return {"parameters": "extraction_failed"}
+
+    def _truncate_content(self, content: str, max_length: int) -> str:
+        """Truncate content to specified length with indicator."""
+        if not content:
+            return ""
+
+        if len(content) <= max_length:
+            return content
+
+        truncation_suffix = "...[truncated]"
+        return content[:max_length] + truncation_suffix
+
+    def _calculate_session_duration(self) -> Optional[str]:
+        """Calculate session duration if start time is available."""
+        if not self.session_start_time:
+            return None
+
+        try:
+            start_dt = datetime.fromisoformat(self.session_start_time)
+            end_dt = datetime.now()
+            duration = end_dt - start_dt
+            return str(duration)
+        except Exception:
+            return None
+
+    async def _generate_session_transcript(self) -> None:
+        """Generate and save session transcript."""
+        try:
+            # Get all session memories
+            session_memories = self.agent_context.get_session_memories()
+
+            if not session_memories:
+                logger.debug("No session memories to create transcript")
+                return
+
+            # Ensure logs/sessions directory exists
+            transcript_dir = "/Users/am/Code/Agency/logs/sessions"
+            os.makedirs(transcript_dir, exist_ok=True)
+
+            # Create transcript
+            transcript_path = create_session_transcript(session_memories, self.agent_context.session_id)
+            logger.info(f"Session transcript created: {transcript_path}")
+
+        except Exception as e:
+            logger.error(f"Failed to generate session transcript: {e}")
 
 
 class SystemReminderHook(AgentHooks):
@@ -283,7 +575,12 @@ def filter_duplicates(context) -> None:
         thread_manager._store.messages = reordered_messages
 
 
-# Factory function to create the hook
+# Factory functions to create hooks
+def create_memory_integration_hook(agent_context: Optional[AgentContext] = None):
+    """Create and return a MemoryIntegrationHook instance."""
+    return MemoryIntegrationHook(agent_context=agent_context)
+
+
 def create_system_reminder_hook():
     """Create and return a SystemReminderHook instance."""
     return SystemReminderHook()
@@ -294,11 +591,23 @@ def create_message_filter_hook():
     return MessageFilterHook()
 
 
+def create_composite_hook(hooks: List[AgentHooks]):
+    """Create and return a CompositeHook instance that combines multiple hooks."""
+    return CompositeHook(hooks)
+
+
 if __name__ == "__main__":
     # Test the hook creation
-    hook = create_system_reminder_hook()
+    print("Testing hook creation...")
+
+    # Test memory integration hook
+    memory_hook = create_memory_integration_hook()
+    print(f"MemoryIntegrationHook created successfully for session: {memory_hook.agent_context.session_id}")
+
+    # Test system reminder hook
+    reminder_hook = create_system_reminder_hook()
     print("SystemReminderHook created successfully")
-    print(f"Initial tool call count: {hook.tool_call_count}")
+    print(f"Initial tool call count: {reminder_hook.tool_call_count}")
 
     # Test reminder message creation
     test_todos = [
@@ -307,6 +616,12 @@ if __name__ == "__main__":
         {"task": "Test task 3", "status": "completed"},
     ]
 
-    reminder = hook._create_reminder_message("tool_call_limit", test_todos)
+    reminder = reminder_hook._create_reminder_message("tool_call_limit", test_todos)
     print("\nSample reminder message:")
     print(reminder)
+
+    # Test message filter hook
+    filter_hook = create_message_filter_hook()
+    print("\nMessageFilterHook created successfully")
+
+    print("\nAll hooks initialized successfully!")

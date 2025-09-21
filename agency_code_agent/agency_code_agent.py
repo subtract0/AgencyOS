@@ -5,6 +5,8 @@ from agency_swarm import Agent
 from agents import (
     WebSearchTool,
 )
+from agency_memory import Memory
+from shared.agent_context import AgentContext, create_agent_context
 from shared.agent_utils import (
     detect_model_type,
     select_instructions_file,
@@ -12,7 +14,7 @@ from shared.agent_utils import (
     create_model_settings,
     get_model_instance,
 )
-from shared.system_hooks import create_system_reminder_hook
+from shared.system_hooks import create_system_reminder_hook, create_memory_integration_hook, create_composite_hook
 from tools import (
     LS,
     Bash,
@@ -36,17 +38,41 @@ current_dir = os.path.dirname(os.path.abspath(__file__))
 
 
 def create_agency_code_agent(
-    model: str = "gpt-5-mini", reasoning_effort: str = "medium"
+    model: str = "gpt-5-mini", reasoning_effort: str = "medium", agent_context: AgentContext = None
 ) -> Agent:
     """Factory that returns a fresh AgencyCodeAgent instance.
     Use this in tests to avoid reusing a singleton across multiple agencies.
+
+    Args:
+        model: Model name to use
+        reasoning_effort: Reasoning effort level
+        agent_context: Optional AgentContext for memory integration
     """
     is_openai, is_claude, _ = detect_model_type(model)
 
     instructions_file = select_instructions_file(current_dir, model)
     instructions = render_instructions(instructions_file, model)
 
+    # Create agent context if not provided
+    if agent_context is None:
+        agent_context = create_agent_context()
+
+    # Create hooks with memory integration
     reminder_hook = create_system_reminder_hook()
+    memory_hook = create_memory_integration_hook(agent_context)
+    combined_hook = create_composite_hook([reminder_hook, memory_hook])
+
+    # Log agent creation
+    agent_context.store_memory(
+        f"agent_created_{agent_context.session_id}",
+        {
+            "agent_type": "AgencyCodeAgent",
+            "model": model,
+            "reasoning_effort": reasoning_effort,
+            "session_id": agent_context.session_id
+        },
+        ["agency", "coder", "creation"]
+    )
 
     return Agent(
         name="AgencyCodeAgent",
@@ -54,7 +80,7 @@ def create_agency_code_agent(
         instructions=instructions,
         tools_folder=os.path.join(current_dir, "tools"),
         model=get_model_instance(model),
-        hooks=reminder_hook,
+        hooks=combined_hook,
         tools=[
             Bash,
             Glob,
