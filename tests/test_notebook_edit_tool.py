@@ -436,8 +436,8 @@ def test_notebook_edit_preserve_metadata(tmp_path: Path):
 
     updated_cell = updated_notebook["cells"][0]
     assert updated_cell["metadata"]["tags"] == ["important", "analysis"]
-    assert updated_cell["metadata"]["collapsed"] == False
-    assert updated_cell["metadata"]["scrolled"] == True
+    assert not updated_cell["metadata"]["collapsed"]
+    assert updated_cell["metadata"]["scrolled"]
 
     # But source should be updated
     source_content = "".join(updated_cell["source"])

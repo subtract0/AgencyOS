@@ -198,7 +198,7 @@ class TestFirestoreStore:
             mock_collection.limit.return_value.stream.return_value = []
 
             with patch("agency_memory.firestore_store.firestore", mock_firestore):
-                store = FirestoreStore()
+                _ = FirestoreStore()
 
                 # Should attempt to use Firestore
                 assert mock_firestore.Client.called
@@ -432,7 +432,7 @@ class TestIntegration:
             with patch(
                 "agency_memory.memory.os.path.join", return_value=transcript_file
             ):
-                filepath = create_session_transcript([], "empty_session")
+                _ = create_session_transcript([], "empty_session")
 
                 # File should be created
                 assert os.path.exists(transcript_file)
@@ -474,7 +474,7 @@ class TestIntegration:
             with patch(
                 "agency_memory.memory.os.path.join", return_value=transcript_file
             ):
-                transcript_path = create_session_transcript(
+                _ = create_session_transcript(
                     all_memories, "integration_test"
                 )
                 assert os.path.exists(transcript_file)
@@ -482,7 +482,7 @@ class TestIntegration:
     def test_fallback_messages_logged(self, caplog):
         """Test that fallback messages are properly logged."""
         with patch.dict(os.environ, {}, clear=True):
-            store = FirestoreStore()
+            _ = FirestoreStore()
 
             # Check that fallback message was logged
             assert any(

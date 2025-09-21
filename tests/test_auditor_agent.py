@@ -7,13 +7,11 @@ import os
 import json
 import tempfile
 from pathlib import Path
-from unittest.mock import Mock, patch, MagicMock
+from unittest.mock import Mock, patch
 
 import pytest
 
 from auditor_agent.auditor_agent import create_auditor_agent, AnalyzeCodebase
-from auditor_agent.ast_analyzer import ASTAnalyzer
-from shared.agent_context import create_agent_context
 
 
 @pytest.fixture
@@ -412,7 +410,7 @@ def test_memory_integration(mock_memory, mock_agent_context):
     with patch('auditor_agent.auditor_agent.create_agent_context') as mock_create_context:
         mock_create_context.return_value = mock_agent_context
 
-        agent = create_auditor_agent(model="gpt-5-mini", reasoning_effort="low")
+        _ = create_auditor_agent(model="gpt-5-mini", reasoning_effort="low")
 
         # Verify memory storage was called during agent creation
         mock_agent_context.store_memory.assert_called()

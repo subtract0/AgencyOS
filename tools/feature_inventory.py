@@ -6,15 +6,12 @@ Reads FEATURES.md and checks for corresponding test files to provide
 a compact report of feature coverage.
 """
 
-import os
 import re
 from pathlib import Path
 
 
 def extract_features_from_md(features_file):
     """Extract features and test files from FEATURES.md"""
-    features = []
-
     with open(features_file, 'r') as f:
         content = f.read()
 
@@ -75,7 +72,7 @@ def main():
     existing_tests = sum(1 for r in coverage_report.values() if r['exists'])
     total_test_functions = sum(r['test_count'] for r in coverage_report.values() if r['test_count'] > 0)
 
-    print(f"📊 Summary:")
+    print("📊 Summary:")
     print(f"   Features documented: {len(features)}")
     print(f"   Test files referenced: {total_tests}")
     print(f"   Test files found: {existing_tests}/{total_tests}")

@@ -51,11 +51,11 @@ class NotebookRead(BaseTool):
 
             # Validate notebook structure
             if "cells" not in notebook_data:
-                return f"Error: Invalid notebook format - no 'cells' key found"
+                return "Error: Invalid notebook format - no 'cells' key found"
 
             cells = notebook_data["cells"]
             if not isinstance(cells, list):
-                return f"Error: Invalid notebook format - 'cells' is not a list"
+                return "Error: Invalid notebook format - 'cells' is not a list"
 
             # If specific cell_id requested, find and return that cell
             if self.cell_id:

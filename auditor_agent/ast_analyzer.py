@@ -4,8 +4,7 @@ Extracts functions, classes, and behavioral coverage metrics.
 """
 
 import ast
-import json
-from typing import Dict, List, Any, Set
+from typing import Dict, Any
 from pathlib import Path
 
 

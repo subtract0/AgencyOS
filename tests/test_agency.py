@@ -3,14 +3,12 @@ Test Agency for Agency Code Agent
 Tests the agent with 5 diverse queries to validate functionality
 """
 
-import os
 
 import pytest
-from unittest.mock import MagicMock, patch, AsyncMock
+from unittest.mock import MagicMock, patch
 from agency_swarm import Agency
 from dotenv import load_dotenv
 
-from agency_code_agent.agency_code_agent import create_agency_code_agent
 
 # Load environment variables
 load_dotenv()

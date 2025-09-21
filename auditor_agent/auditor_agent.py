@@ -4,14 +4,12 @@ AuditorAgent - Quality Assurance Agent for NECESSARY pattern analysis and Q(T) s
 
 import os
 import json
-from typing import Dict, List, Any, Optional
-from pathlib import Path
+from typing import Dict, List
 
 from agency_swarm import Agent
 from agency_swarm.tools import BaseTool as Tool
 from pydantic import Field
 
-from agency_memory import Memory
 from shared.agent_context import AgentContext, create_agent_context
 from shared.agent_utils import (
     detect_model_type,

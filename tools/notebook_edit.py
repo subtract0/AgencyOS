@@ -68,11 +68,11 @@ class NotebookEdit(BaseTool):
 
             # Validate notebook structure
             if "cells" not in notebook_data:
-                return f"Error: Invalid notebook format - no 'cells' key found"
+                return "Error: Invalid notebook format - no 'cells' key found"
 
             cells = notebook_data["cells"]
             if not isinstance(cells, list):
-                return f"Error: Invalid notebook format - 'cells' is not a list"
+                return "Error: Invalid notebook format - 'cells' is not a list"
 
             # Handle different edit modes
             if self.edit_mode == "insert":

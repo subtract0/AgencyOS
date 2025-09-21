@@ -7,9 +7,9 @@ def test_git_status_current_repo():
     print("\nSTATUS:\n" + out)
     assert isinstance(out, str)
     assert out.strip() != ""
-    lines = [l for l in out.splitlines() if l.strip()]
+    lines = [line for line in out.splitlines() if line.strip()]
     markers = ("?? ", " M ", " A ", " D ", " S ")
-    has_marker = any(l.startswith(markers) for l in lines)
+    has_marker = any(line.startswith(markers) for line in lines)
     assert "(clean)" in out or has_marker
 
 
@@ -34,7 +34,7 @@ def test_git_log_with_max_lines():
     tool = Git(cmd="log", max_lines=10)
     out = tool.run()
     assert isinstance(out, str)
-    lines = out.splitlines()
+    _ = out.splitlines()
     # Should respect max_lines limit or be shorter if less history
 
 

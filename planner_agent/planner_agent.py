@@ -1,10 +1,8 @@
 import os
 
 from agency_swarm import Agent
-from agency_memory import Memory
 from shared.agent_context import AgentContext, create_agent_context
 from shared.agent_utils import (
-    detect_model_type,
     select_instructions_file,
     create_model_settings,
     get_model_instance,

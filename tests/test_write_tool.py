@@ -270,7 +270,7 @@ def test_write_error_path_is_directory(tmp_path: Path):
     read_tool = Read(file_path=dir_path)
     try:
         read_tool.run()
-    except:
+    except Exception:
         pass  # Expected to fail since it's a directory
 
     tool = Write(file_path=dir_path, content=content)
