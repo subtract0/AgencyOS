@@ -227,7 +227,8 @@ def test_calculator_init():
         assert "def test_" in test_content
         assert "assert" in test_content
 
-        return {
+        # Store results in instance variable for inspection if needed
+        self.healing_results = {
             "initial_qt": initial_qt_score,
             "final_qt": final_qt_score,
             "improvement": improvement,
