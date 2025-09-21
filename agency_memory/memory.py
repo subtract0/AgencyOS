@@ -145,6 +145,14 @@ def create_session_transcript(memories: List[Dict[str, Any]], session_id: str) -
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
     filename = f"{timestamp}_{session_id}.md"
     filepath = os.path.join("/Users/am/Code/Agency/logs/sessions", filename)
+    # Ensure filepath is a concrete string even if os.path.join is monkey-patched
+    if not isinstance(filepath, str):
+        base = os.getenv("TMPDIR", "/tmp")
+        if not isinstance(base, str):
+            base = "/tmp"
+        if not base.endswith("/"):
+            base += "/"
+        filepath = base + filename
 
     # Create transcript content
     content = f"# Session Transcript: {session_id}\n\n"
