@@ -621,7 +621,7 @@ def test_multi_edit_large_file(tmp_path: Path):
         lines.append(f"def old_function_{i}():")
         lines.append(f'    """Old function {i}"""')
         lines.append(f"    old_value = {i}")
-        lines.append(f"    return old_value * 2")
+        lines.append("    return old_value * 2")
         lines.append("")
 
     content = "\n".join(lines)
@@ -658,7 +658,7 @@ def test_multi_edit_large_file(tmp_path: Path):
 def test_multi_edit_empty_edits_list():
     """Test error when no edits provided"""
     try:
-        tool = MultiEdit(file_path="/tmp/test.txt", edits=[])
+        MultiEdit(file_path="/tmp/test.txt", edits=[])
         pytest.fail("Should have raised validation error for empty edits list")
     except Exception as e:
         # Pydantic should catch this due to min_items=1

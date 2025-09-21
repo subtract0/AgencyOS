@@ -7,12 +7,11 @@ import os
 import json
 import tempfile
 from pathlib import Path
-from unittest.mock import Mock, patch, MagicMock
+from unittest.mock import Mock, patch
 
 import pytest
 
 from test_generator_agent.test_generator_agent import create_test_generator_agent, GenerateTests
-from shared.agent_context import create_agent_context
 
 
 @pytest.fixture
@@ -456,7 +455,7 @@ def test_necessary_compliance_verification(sample_source_file, sample_audit_repo
 
     for prop in necessary_properties:
         violation = {"property": prop, "severity": "high"}
-        tests = tool._generate_tests_for_violation(violation, analysis)
+        tool._generate_tests_for_violation(violation, analysis)
 
         # Verify tests are generated for each property
         if prop in ["N", "E", "C", "E2", "A"]:  # Properties that should generate tests
@@ -509,7 +508,7 @@ def test_memory_integration(mock_memory, mock_agent_context):
     with patch('test_generator_agent.test_generator_agent.create_agent_context') as mock_create_context:
         mock_create_context.return_value = mock_agent_context
 
-        agent = create_test_generator_agent(model="gpt-5-mini", reasoning_effort="low")
+        create_test_generator_agent(model="gpt-5-mini", reasoning_effort="low")
 
         # Verify memory storage was called during agent creation
         mock_agent_context.store_memory.assert_called()

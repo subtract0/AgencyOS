@@ -1,5 +1,4 @@
 import os
-from typing import List, Optional
 
 from agency_swarm.tools import BaseTool
 from pydantic import Field

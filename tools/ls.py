@@ -118,7 +118,7 @@ class LS(BaseTool):
                         }
                     )
 
-                except (OSError, IOError) as e:
+                except (OSError, IOError):
                     detailed_items.append(
                         {
                             "name": item,

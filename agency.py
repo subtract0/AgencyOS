@@ -6,8 +6,8 @@ silence_warnings_and_logs()
 
 import litellm  # noqa: E402 - must import after warning suppression
 from agency_swarm import Agency  # noqa: E402 - must import after warning suppression
-from agency_swarm.tools import (
-    SendMessageHandoff,  # noqa: E402 - must import after warning suppression
+from agency_swarm.tools import (  # noqa: E402 - must import after warning suppression
+    SendMessageHandoff,
 )
 from dotenv import load_dotenv  # noqa: E402 - must import after warning suppression
 

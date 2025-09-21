@@ -63,7 +63,7 @@ class Read(BaseTool):
 
             # Check if it's a Jupyter notebook
             if self.file_path.endswith(".ipynb"):
-                return f"Error: This is a Jupyter notebook file. Please use the NotebookRead tool instead."
+                return "Error: This is a Jupyter notebook file. Please use the NotebookRead tool instead."
 
             # Try to read the file
             try:

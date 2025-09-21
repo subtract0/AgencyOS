@@ -4,7 +4,7 @@ import os
 from datetime import datetime
 
 from agents import AgentHooks, RunContextWrapper
-from agency_memory import Memory, create_session_transcript
+from agency_memory import create_session_transcript
 from .agent_context import AgentContext, create_agent_context
 
 logger = logging.getLogger(__name__)

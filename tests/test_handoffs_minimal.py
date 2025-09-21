@@ -1,5 +1,5 @@
 import pytest
-from unittest.mock import AsyncMock, MagicMock, patch, create_autospec
+from unittest.mock import MagicMock, patch, create_autospec
 
 from agency_swarm import Agency, Agent
 from agency_swarm.tools import SendMessageHandoff
