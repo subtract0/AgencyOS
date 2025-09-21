@@ -23,3 +23,19 @@ def cleanup_test_artifacts():
     for filename in test_files:
         if os.path.exists(filename):
             os.unlink(filename)
+
+
+@pytest.fixture
+def temp_workspace(tmp_path):
+    """Provide a temporary workspace directory for tests."""
+    workspace = tmp_path / "test_workspace"
+    workspace.mkdir(exist_ok=True)
+    return workspace
+
+
+@pytest.fixture
+def temp_file_with_content(tmp_path):
+    """Provide a temporary file with default content."""
+    test_file = tmp_path / "test_file.txt"
+    test_file.write_text("Hello World\nThis is a test file\nWith multiple lines")
+    return test_file
