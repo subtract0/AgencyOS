@@ -404,8 +404,7 @@ def test_recommendations_generation():
     assert len(violation_recs) > 0
 
 
-@patch('auditor_agent.auditor_agent.Memory')
-def test_memory_integration(mock_memory, mock_agent_context):
+def test_memory_integration(mock_agent_context):
     """Test integration with Memory API."""
     with patch('auditor_agent.auditor_agent.create_agent_context') as mock_create_context:
         mock_create_context.return_value = mock_agent_context
