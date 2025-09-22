@@ -18,7 +18,37 @@ python run_tests.py test_specific_file.py    # Run specific test file
 python tests/run_memory_tests.py             # Run memory system tests
 python -m pytest tests/ -v                   # Direct pytest execution
 python -m pytest tests/ -v -m "not integration"  # Unit tests only via pytest
+python -m pytest tests/test_specific.py::TestClass::test_method  # Run specific test method
+python -m pytest tests/ -v --tb=short        # Show short traceback format
+python -m pytest tests/ -v -x                # Stop on first failure
+python -m pytest tests/ -v --lf              # Run only last failed tests
+python -m pytest tests/ -v --co              # Collect tests without running
 ```
+
+### Testing Quality Patterns
+The Agency enforces 100% test success rate via constitutional requirements (ADR-002):
+
+**NECESSARY Pattern Analysis:**
+- **N**: No Missing Behaviors - All code paths covered
+- **E**: Edge Cases - Boundary conditions tested
+- **C**: Comprehensive - Multiple test vectors per function
+- **E**: Error Conditions - Exception handling verified
+- **S**: State Validation - Object state changes confirmed
+- **S**: Side Effects - External impacts tested
+- **A**: Async Operations - Concurrent code coverage
+- **R**: Regression Prevention - Historical bugs covered
+- **Y**: Yielding Confidence - Overall quality assurance
+
+**Quality Score Calculation:**
+```python
+Q(T) = Π(property_scores) × (|behaviors_covered| / |total_behaviors|)
+```
+
+**Test Markers:**
+- `@pytest.mark.unit` - Fast unit tests (< 1s each)
+- `@pytest.mark.integration` - Slower integration tests
+- `@pytest.mark.asyncio` - Async test functions
+- `pytest.skip()` - Platform-specific skipping
 
 ### Code Quality
 ```bash
@@ -63,14 +93,131 @@ TestGenerator → Coder (test implementation)
 Coder → Merger (integration)
 ```
 
-### Memory System
-All agents share a unified memory system via `AgentContext`:
-- **In-memory store** (default): Session-based memory
-- **Firestore backend** (optional): Set `FRESH_USE_FIRESTORE=true` for persistence
-- **VectorStore**: Learning consolidation and similarity search for institutional knowledge
-- **Session tracking**: Automatic transcript generation in `logs/sessions/`
-- **Composite hooks**: MemoryIntegrationHook, SystemReminderHook, MessageFilterHook for lifecycle management
-- **Learning triggers**: After successful sessions, error resolution, effective patterns, performance milestones
+### Agent Communication Patterns
+
+**Message Handoff System:**
+```python
+from agency_swarm.tools import SendMessageHandoff
+
+# Standard handoff pattern
+handoff_tool = SendMessageHandoff(
+    recipient=target_agent_name,
+    message="Context-specific instructions",
+    context_variables={"key": "value"}
+)
+```
+
+**Communication Types:**
+- **Unidirectional**: ChiefArchitect → Auditor (strategic oversight)
+- **Bidirectional**: Planner ↔ Coder (collaborative planning/implementation)
+- **Sequential**: Auditor → TestGenerator → Coder (quality improvement pipeline)
+- **Context-Aware**: Based on intent routing (e.g., "tts" triggers WorkCompletionSummaryAgent)
+
+**Agent Selection Logic:**
+1. **Intent Detection**: Message content analyzed for keywords/patterns
+2. **Context Routing**: `context['route_to_agent']` variable controls flow
+3. **Capability Matching**: Task requirements matched to agent toolsets
+4. **Load Balancing**: Future: distribute work across agent instances
+
+**Handoff Context Variables:**
+- `session_id`: Tracks conversation continuity
+- `task_priority`: Influences agent response timing
+- `tools_needed`: Suggests required tool subset
+- `complexity_level`: Affects reasoning effort setting
+
+### Memory System Integration
+
+**Unified Agent Context:**
+```python
+from shared.agent_context import AgentContext, create_agent_context
+from agency_memory import Memory, create_firestore_store
+
+# Shared memory across all agents
+memory_store = create_firestore_store() if os.getenv("FRESH_USE_FIRESTORE") else None
+shared_memory = Memory(store=memory_store)
+shared_context = create_agent_context(memory=shared_memory)
+```
+
+**Memory Storage Patterns:**
+```python
+# Store structured data with tags for efficient retrieval
+agent_context.store_memory(
+    f"pattern_{session_id}",
+    {
+        "pattern_type": "error_resolution",
+        "context": {...},
+        "success_rate": 0.95,
+        "timestamp": datetime.now().isoformat()
+    },
+    ["error_handling", "success_pattern", "learning"]
+)
+
+# Retrieve relevant patterns
+patterns = agent_context.query_memory(
+    tags=["error_handling"],
+    limit=5,
+    similarity_threshold=0.7
+)
+```
+
+**VectorStore Learning Integration:**
+```python
+# Automatic learning consolidation
+class LearningMemoryHook:
+    def after_successful_operation(self, context, result):
+        # Extract patterns from successful operations
+        patterns = self.extract_success_patterns(context, result)
+
+        # Store in VectorStore for similarity search
+        self.vector_store.add_patterns(patterns)
+
+        # Update agent's learning context
+        context.update_learnings(patterns)
+```
+
+**Session Transcript Analysis:**
+- **Automatic logging**: All interactions saved to `logs/sessions/session_YYYYMMDD_HHMMSS.md`
+- **Pattern extraction**: LearningAgent analyzes transcripts for effective patterns
+- **Knowledge consolidation**: Successful patterns stored in VectorStore
+- **Cross-session learning**: Historical patterns inform current decisions
+
+**Memory Hooks Lifecycle:**
+```python
+# Composite hook pattern for memory integration
+filter_hook = create_message_filter_hook()           # Pre-process messages
+memory_hook = create_memory_integration_hook(context) # Store/retrieve memory
+combined_hook = create_composite_hook([filter_hook, memory_hook])
+
+# Agent creation with memory integration
+agent = Agent(
+    name="ExampleAgent",
+    hooks=combined_hook,  # Automatic memory lifecycle management
+    # ... other configuration
+)
+```
+
+**Learning Trigger Conditions:**
+1. **Task Completion**: Successful multi-step operations
+2. **Error Recovery**: Patterns that resolved failures
+3. **Performance Milestones**: Operations exceeding efficiency thresholds
+4. **Tool Effectiveness**: Successful tool combinations and sequences
+5. **Constitutional Compliance**: Patterns maintaining 100% compliance
+
+**Memory Fallback Strategy:**
+```python
+# Graceful degradation when memory operations fail
+try:
+    result = memory_store.query(query_params)
+except MemoryStoreError:
+    logger.warning("Memory store unavailable, proceeding without historical context")
+    result = default_behavior()
+```
+
+**Context Preservation Across Sessions:**
+- **Session continuity**: Key context variables persist between sessions
+- **Agent handoffs**: Context automatically transferred between agents
+- **State reconstruction**: Ability to resume interrupted workflows
+- **Learning application**: Historical patterns automatically applied to new tasks
 
 ### Constitutional Governance
 The Agency operates under strict constitutional principles (`constitution.md`):
@@ -94,6 +241,115 @@ Central tools in `tools/` directory:
 - Permission handling: Graceful degradation for filesystem errors
 - Background execution: Support for long-running commands with `run_in_background`
 - Error resilience: Comprehensive error handling with fallback mechanisms
+
+### Error Handling & Resilience Patterns
+
+**RetryController Architecture:**
+```python
+from shared.retry_controller import RetryController, ExponentialBackoffStrategy
+
+# Standard retry pattern
+controller = RetryController(
+    strategy=ExponentialBackoffStrategy(max_retries=3, base_delay=1.0),
+    circuit_breaker_enabled=True
+)
+
+@controller.with_retry
+def operation_with_resilience():
+    # Your operation here
+    pass
+```
+
+**Circuit Breaker Pattern:**
+- **Closed State**: Normal operation, failures tracked
+- **Open State**: Fails fast, prevents cascade failures
+- **Half-Open State**: Gradual recovery testing
+- **Thresholds**: 5 failures trigger open state, 60s timeout
+
+**Snapshot/Undo Mechanism:**
+```python
+from tools import UndoSnapshot
+
+# Create workspace snapshot before risky operations
+snapshot = UndoSnapshot()
+snapshot_id = snapshot.create_snapshot("pre_refactor_state")
+
+try:
+    # Perform risky operation
+    perform_complex_refactoring()
+except Exception:
+    # Restore on failure
+    snapshot.restore_snapshot(snapshot_id)
+    raise
+```
+
+**Error Recovery Strategies:**
+1. **Graceful Degradation**: Fallback to simpler approaches
+2. **Automatic Retry**: Exponential backoff with jitter
+3. **State Restoration**: Undo mechanisms for failed operations
+4. **Context Preservation**: Maintain session state across failures
+5. **Learning Integration**: Store failure patterns for future avoidance
+
+**Constitutional Enforcement:**
+- **Article I**: Complete context before action (no partial operations)
+- **Article II**: 100% test verification (failures block progress)
+- **Article III**: Automated quality gates (no manual overrides)
+- All operations must pass constitutional validation before execution
+
+### Performance Optimization Patterns
+
+**Parallel Tool Execution:**
+```python
+# Batch multiple tools in single response for optimal performance
+tools.batch_execute([
+    Read(file_path="/path/to/file1.py"),
+    Read(file_path="/path/to/file2.py"),
+    Grep(pattern="function.*", glob="**/*.py")
+])
+```
+
+**Context Management:**
+- **32K token limit**: Auto-truncation for memory operations
+- **Context preservation**: Essential information retained across operations
+- **Memory optimization**: Efficient storage and retrieval patterns
+- **Session boundaries**: Clean context transitions between sessions
+
+**Background Execution Patterns:**
+```python
+# Long-running commands with background execution
+bash_result = Bash(
+    command="npm run build",
+    run_in_background=True,
+    timeout=600000  # 10 minutes
+)
+
+# Monitor progress with BashOutput
+while not bash_result.completed:
+    output = BashOutput(bash_id=bash_result.id)
+    # Process incremental output
+```
+
+**Tool Selection Optimization:**
+- **Model-aware tooling**: Different tools for OpenAI vs Claude vs Grok
+- **Capability matching**: Right tool for the task complexity
+- **Resource allocation**: Memory vs speed tradeoffs
+- **Concurrent operations**: Multiple agents working simultaneously
+
+**Memory System Performance:**
+```python
+# Efficient memory patterns
+agent_context.store_memory(
+    key=f"pattern_{session_id}",
+    data={"compressed": True, "indexed": True},
+    tags=["performance", "optimization"]  # For fast retrieval
+)
+```
+
+**Agent Reasoning Optimization:**
+- **High effort**: Complex planning and architecture decisions
+- **Medium effort**: Standard implementation tasks
+- **Low effort**: Simple operations and summaries
+- **Adaptive effort**: Dynamic adjustment based on task complexity
 
 ## Key Patterns
 
@@ -135,12 +391,190 @@ The 9 universal test quality properties:
 
 Quality score: `Q(T) = Π(p_i) × (|B_c| / |B|)`
 
-### Spec-Driven Development Process
-1. Constitutional compliance check via `/constitution.md`
-2. Formal specification generation in `/specs/` directory
-3. Technical planning in `/plans/` directory
-4. Task breakdown using TodoWrite tool with traceability
-5. Implementation with continuous constitutional validation
+### Spec-Driven Development Workflow
+
+**Phase 1: Constitutional Analysis**
+```bash
+# Always start with constitutional review
+constitution_check = read_constitution()
+validate_against_articles(planned_feature)
+```
+
+**Phase 2: Specification Creation**
+```markdown
+# specs/spec-XXX-feature-name.md
+## Goals
+- Primary objectives and success criteria
+
+## Non-Goals
+- Explicitly excluded scope
+
+## Personas
+- Target users and use cases
+
+## Acceptance Criteria
+- Verifiable completion requirements
+```
+
+**Phase 3: Technical Planning**
+```markdown
+# plans/plan-XXX-feature-name.md
+## Architecture Overview
+- System design and component interactions
+
+## Agent Assignments
+- Which agents handle which aspects
+
+## Tool Usage Strategy
+- Required tools and execution patterns
+
+## Implementation Contracts
+- Interfaces and data flow specifications
+```
+
+**Phase 4: Task Decomposition**
+```python
+# TodoWrite integration with spec traceability
+TodoWrite(todos=[
+    {
+        "content": "Implement core feature logic",
+        "status": "pending",
+        "activeForm": "Implementing core feature logic",
+        "spec_reference": "spec-XXX.md#goals",
+        "plan_reference": "plan-XXX.md#implementation"
+    }
+])
+```
+
+**Phase 5: Constitutional Implementation**
+- All code changes pass ADR-002 (100% test verification)
+- Complete context gathering per ADR-001
+- Automated enforcement via ADR-003
+- Continuous learning integration per ADR-004
+
+**Phase 6: Quality Validation**
+```bash
+# Constitutional compliance pipeline
+python run_tests.py --run-all  # Must achieve 100% pass rate
+ruff check . --fix             # Code quality enforcement
+pre-commit run --all-files     # Pre-commit hook validation
+```
+
+**Workflow Checkpoints:**
+1. **Spec Approval**: Stakeholder sign-off on goals and criteria
+2. **Plan Review**: Technical architecture validation
+3. **Implementation Gates**: Each task verified against acceptance criteria
+4. **Constitutional Validation**: Every change passes all articles
+5. **Quality Gates**: 100% test success before merge
+
+### Advanced Tool Patterns
+
+**Context Handoff Mechanism:**
+```python
+from tools import ContextHandoff
+
+# Transfer context between agents
+handoff = ContextHandoff()
+handoff.create_handoff(
+    from_agent="PlannerAgent",
+    to_agent="AgencyCodeAgent",
+    context={
+        "task_id": "implement_feature_x",
+        "specifications": {...},
+        "constraints": {...}
+    },
+    priority="high"
+)
+```
+
+**Workspace Snapshot Management:**
+```python
+from tools import UndoSnapshot
+
+# Create snapshots for risky operations
+snapshot = UndoSnapshot()
+
+# Before major refactoring
+snapshot_id = snapshot.create_snapshot("pre_refactor")
+perform_complex_refactoring()
+
+# Restore if issues detected
+if has_issues():
+    snapshot.restore_snapshot(snapshot_id)
+```
+
+**Background Process Monitoring:**
+```python
+# Start long-running process
+bash_process = Bash(
+    command="npm run build:production",
+    run_in_background=True,
+    timeout=1800000  # 30 minutes
+)
+
+# Monitor with progress filtering
+output = BashOutput(
+    bash_id=bash_process.id,
+    filter=".*error.*|.*warning.*"  # Only show errors/warnings
+)
+```
+
+**Multi-File Operations:**
+```python
+# Batch file operations for efficiency
+MultiEdit(
+    file_path="/path/to/file.py",
+    edits=[
+        {"old_string": "old_pattern_1", "new_string": "new_pattern_1"},
+        {"old_string": "old_pattern_2", "new_string": "new_pattern_2"},
+        {"old_string": "class_name", "new_string": "new_class_name", "replace_all": True}
+    ]
+)
+```
+
+**Smart Search Patterns:**
+```python
+# Efficient codebase exploration
+search_results = Grep(
+    pattern="def create_.*_agent",
+    glob="**/*.py",
+    output_mode="files_with_matches",
+    head_limit=20
+)
+
+# Context-aware file discovery
+config_files = Glob(
+    pattern="**/config*.{py,json,yaml,yml}",
+    path="."
+)
+```
+
+**Model-Aware Tool Selection:**
+```python
+# Automatic tool selection based on model capabilities
+def select_tools_for_model(model: str) -> list:
+    is_openai, is_claude, is_grok = detect_model_type(model)
+
+    if is_openai:
+        return [Read, Write, Edit, MultiEdit, Bash, TodoWrite]
+    elif is_claude:
+        return [Read, Write, Edit, Grep, Glob, Bash, TodoWrite]
+    elif is_grok:
+        return [Read, Write, Edit, ClaudeWebSearch, Bash, TodoWrite]
+```
+
+**Error-Resilient Patterns:**
+```python
+# Tool execution with automatic retry
+@retry_on_failure(max_attempts=3, backoff_factor=2.0)
+def resilient_file_operation(file_path: str, content: str):
+    try:
+        return Write(file_path=file_path, content=content)
+    except PermissionError:
+        # Fallback to temporary location
+        temp_path = f"/tmp/{os.path.basename(file_path)}"
+        return Write(file_path=temp_path, content=content)
+```
 
 ## Core Operating Rules
 
@@ -161,6 +595,140 @@ Quality score: `Q(T) = Π(p_i) × (|B_c| / |B|)`
 - **TodoWrite usage**: Track all tasks, mark completed immediately
 - **Planner handoff**: For complex tasks (5+ steps, multi-component architecture)
 - **Constitutional validation**: Every action must comply with `/constitution.md`
+
+### CI/CD Integration & Automation
+
+**GitHub Actions Workflows:**
+```yaml
+# .github/workflows/ci.yml - Core CI Pipeline
+name: CI Pipeline
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  test:
+    strategy:
+      matrix:
+        python-version: ['3.12', '3.13']
+    steps:
+      - uses: actions/checkout@v4
+      - name: Run comprehensive test suite
+        run: |
+          python run_tests.py --run-all  # 100% pass rate required
+          ruff check . --fix
+          pre-commit run --all-files
+```
+
+**Merge Guardian Protection:**
+```yaml
+# .github/workflows/merge-guardian.yml
+# Enforces constitutional Article III (Automated Enforcement)
+name: Merge Guardian
+on:
+  pull_request:
+    types: [opened, synchronize]
+
+jobs:
+  constitutional-compliance:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Verify 100% test success
+        run: |
+          if [ $TEST_EXIT_CODE -ne 0 ]; then
+            echo "❌ BLOCKED by Constitution Article II"
+            echo "100% test success required - no exceptions"
+            exit 1
+          fi
+```
+
+**Pre-commit Hook Enforcement:**
+```bash
+# .pre-commit-config.yaml integration
+repos:
+  - repo: local
+    hooks:
+      - id: constitutional-validation
+        name: Constitutional Compliance Check
+        entry: python scripts/validate_constitution.py
+        language: python
+        always_run: true
+        pass_filenames: false
+```
+
+**Automated Quality Gates:**
+- **Code Quality**: Ruff linting and formatting enforced
+- **Test Coverage**: 100% test success rate (no negotiation)
+- **Constitutional Compliance**: All 5 articles validated
+- **Security Scanning**: Dependency vulnerability checks
+- **Performance Monitoring**: Test execution time tracking
+
+**Branch Protection Rules:**
+```json
+{
+  "required_status_checks": {
+    "strict": true,
+    "contexts": [
+      "CI Pipeline / test (3.12)",
+      "CI Pipeline / test (3.13)",
+      "Merge Guardian / constitutional-compliance",
+      "Claude Code Review / review"
+    ]
+  },
+  "enforce_admins": true,
+  "required_pull_request_reviews": {
+    "required_approving_review_count": 1,
+    "dismiss_stale_reviews": true
+  }
+}
+```
+
+**Deployment Automation Patterns:**
+```bash
+# Automated deployment pipeline
+deploy_staging() {
+    # Deploy to staging environment
+    kubectl apply -f k8s/staging/
+    run_integration_tests
+    if [ $? -eq 0 ]; then
+        echo "✅ Staging deployment successful"
+    else
+        rollback_staging
+        exit 1
+    fi
+}
+
+deploy_production() {
+    # Blue-green deployment pattern
+    deploy_blue_environment
+    run_smoke_tests
+    switch_traffic_to_blue
+    monitor_health_metrics
+}
+```
+
+**Monitoring and Observability:**
+- **Agent Performance Metrics**: Execution time, success rates, error patterns
+- **Memory Usage Tracking**: VectorStore efficiency, context size optimization
+- **Constitutional Compliance Monitoring**: Violation detection and alerting
+- **Learning Effectiveness**: Pattern application success rates
+
+**Rollback Strategies:**
+```bash
+# Automatic rollback on constitutional violations
+monitor_constitutional_compliance() {
+    while true; do
+        if detect_constitutional_violation; then
+            echo "🚨 Constitutional violation detected"
+            trigger_automatic_rollback
+            alert_development_team
+        fi
+        sleep 60
+    done
+}
+```
 
 ## Important Notes
 

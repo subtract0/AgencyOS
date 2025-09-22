@@ -28,6 +28,7 @@ from learning_agent import create_learning_agent  # noqa: E402 - must import aft
 from chief_architect_agent import create_chief_architect_agent  # noqa: E402 - must import after warning suppression
 from merger_agent.merger_agent import create_merger_agent  # noqa: E402 - must import after warning suppression
 from work_completion_summary_agent import create_work_completion_summary_agent  # noqa: E402 - must import after warning suppression
+from toolsmith_agent import create_toolsmith_agent  # noqa: E402 - must import after warning suppression
 
 load_dotenv()
 
@@ -79,20 +80,25 @@ merger = create_merger_agent(
 summary = create_work_completion_summary_agent(
     model=model, reasoning_effort="low", agent_context=shared_context
 )
+toolsmith = create_toolsmith_agent(
+    model=model, reasoning_effort="high", agent_context=shared_context
+)
 
 agency = Agency(
-    chief_architect, coder, planner, auditor, test_generator, learning_agent, merger, summary,
+    chief_architect, coder, planner, auditor, test_generator, learning_agent, merger, summary, toolsmith,
     name="AgencyCode",
     communication_flows=[
         (chief_architect, auditor, SendMessageHandoff),
         (chief_architect, learning_agent, SendMessageHandoff),
         (chief_architect, planner, SendMessageHandoff),
+        (chief_architect, toolsmith, SendMessageHandoff),
         (planner, coder, SendMessageHandoff),
         (coder, planner, SendMessageHandoff),
         (planner, auditor, SendMessageHandoff),
         (auditor, test_generator, SendMessageHandoff),
         (test_generator, coder, SendMessageHandoff),
         (coder, merger, SendMessageHandoff),
+        (toolsmith, merger, SendMessageHandoff),
         # Route-aware wiring: IntentRouterHook sets context['route_to_agent'] to
         # 'WorkCompletionSummaryAgent' on 'tts|audio summary' intents. Flows below
         # enable that routing additively without changing defaults.

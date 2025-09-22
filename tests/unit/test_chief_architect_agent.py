@@ -82,7 +82,7 @@ class TestChiefArchitectAgentInitialization:
 
             # Verify tool names (checking types as strings since they're imported)
             tool_names = [str(tool) for tool in tools]
-            assert len(tools) == 9  # LS, Read, Grep, Glob, TodoWrite, Write, Edit, Bash, RunArchitectureLoop
+            assert len(tools) == 10  # LS, Read, Grep, Glob, TodoWrite, Write, Edit, Bash, ContextMessageHandoff, RunArchitectureLoop
 
             # Verify RunArchitectureLoop is included
             assert any('RunArchitectureLoop' in str(tool.__name__) if hasattr(tool, '__name__') else False
