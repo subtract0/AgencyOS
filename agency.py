@@ -25,6 +25,8 @@ from subagent_example.subagent_example import (  # noqa: E402 - must import afte
 )
 from test_generator_agent import create_test_generator_agent  # noqa: E402 - must import after warning suppression
 from learning_agent import create_learning_agent  # noqa: E402 - must import after warning suppression
+from chief_architect_agent import create_chief_architect_agent  # noqa: E402 - must import after warning suppression
+from merger_agent.merger_agent import create_merger_agent  # noqa: E402 - must import after warning suppression
 
 load_dotenv()
 
@@ -67,19 +69,26 @@ subagent_example = create_subagent_example(
 learning_agent = create_learning_agent(
     model=model, reasoning_effort="high", agent_context=shared_context
 )
+chief_architect = create_chief_architect_agent(
+    model=model, reasoning_effort="high", agent_context=shared_context
+)
+merger = create_merger_agent(
+    model=model, reasoning_effort="high", agent_context=shared_context
+)
 
 agency = Agency(
-    coder, planner, auditor, test_generator, learning_agent,
+    chief_architect, coder, planner, auditor, test_generator, learning_agent, merger,
     name="AgencyCode",
     communication_flows=[
-        (coder, planner, SendMessageHandoff),
+        (chief_architect, auditor, SendMessageHandoff),
+        (chief_architect, learning_agent, SendMessageHandoff),
+        (chief_architect, planner, SendMessageHandoff),
         (planner, coder, SendMessageHandoff),
+        (coder, planner, SendMessageHandoff),
         (planner, auditor, SendMessageHandoff),
         (auditor, test_generator, SendMessageHandoff),
         (test_generator, coder, SendMessageHandoff),
-        (planner, learning_agent, SendMessageHandoff),  # Planner can delegate learning analysis
-        (auditor, learning_agent, SendMessageHandoff),  # Auditor can request pattern analysis
-        # (coder, subagent_example) # example for how to add a subagent
+        (coder, merger, SendMessageHandoff),
     ],
     shared_instructions="./project-overview.md",
 )

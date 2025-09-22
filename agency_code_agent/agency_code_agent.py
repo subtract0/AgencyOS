@@ -75,7 +75,13 @@ def create_agency_code_agent(
 
     return Agent(
         name="AgencyCodeAgent",
-        description="The primary software engineer. Responsible for writing, editing, and debugging code based on detailed plans from the PlannerAgent. Executes hands-on file system operations and is the main 'doer' in the agency.",
+        description=(
+            "The primary software engineer and implementation specialist. Proactively triggered when code changes are needed, "
+            "files require editing, or technical implementation is requested. Executes all hands-on development tasks including "
+            "writing, editing, debugging, and testing code. Works from detailed plans provided by the PlannerAgent. "
+            "When prompting this agent, provide specific file paths, code requirements, and any architectural constraints. "
+            "Remember, this agent has full access to all development tools and is responsible for maintaining code quality standards."
+        ),
         instructions=instructions,
         tools_folder=os.path.join(current_dir, "tools"),
         model=get_model_instance(model),

@@ -43,6 +43,7 @@ class VectorStore:
         """
         self._embeddings: Dict[str, List[float]] = {}
         self._memory_texts: Dict[str, str] = {}
+        self._memory_records: Dict[str, Dict[str, Any]] = {}
         self._embedding_provider = embedding_provider
         self._embedding_function = None
 
@@ -130,7 +131,10 @@ class VectorStore:
             memory_key: Unique memory identifier
             memory_content: Memory record with content and metadata
         """
-        # Extract searchable text from memory
+        if "key" not in memory_content:
+            memory_content["key"] = memory_key
+        self._memory_records[memory_key] = memory_content
+
         searchable_text = self._extract_searchable_text(memory_content)
         self._memory_texts[memory_key] = searchable_text
 
@@ -379,6 +383,23 @@ class VectorStore:
 
         return dot_product / (magnitude1 * magnitude2)
 
+    def search(self, query: str, namespace: Optional[str] = None, limit: int = 10) -> List[Dict[str, Any]]:
+        try:
+            memories = list(self._memory_records.values())
+            if namespace:
+                memories = [m for m in memories if m.get("metadata", {}).get("namespace") == namespace]
+            results = self.hybrid_search(query, memories, top_k=limit)
+            return [
+                {
+                    **r.memory,
+                    "relevance_score": r.similarity_score,
+                    "search_type": r.search_type,
+                }
+                for r in results
+            ]
+        except Exception:
+            return []
+
     def remove_memory(self, memory_key: str) -> None:
         """
         Remove memory from vector store.
@@ -388,6 +409,7 @@ class VectorStore:
         """
         self._embeddings.pop(memory_key, None)
         self._memory_texts.pop(memory_key, None)
+        self._memory_records.pop(memory_key, None)
 
     def get_stats(self) -> Dict[str, Any]:
         """
@@ -401,6 +423,7 @@ class VectorStore:
             "memories_with_embeddings": len(self._embeddings),
             "embedding_provider": self._embedding_provider,
             "embedding_available": self._embedding_function is not None,
+            "has_embeddings": self._embedding_function is not None,
             "last_updated": datetime.now().isoformat(),
         }
 

@@ -1,0 +1,84 @@
+ERROR    agency_swarm.agency.setup:setup.py:270 Error registering subagent 'PlannerAgent' for sender 'AgencyCodeAgent': Mock object has no attribute 'handoffs'
+Traceback (most recent call last):
+  File "/Users/am/Code/Agency/.venv/lib/python3.13/site-packages/agency_swarm/agency/setup.py", line 257, in configure_agents
+    agent_instance.handoffs.append(handoff_instance)
+    ^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/homebrew/Cellar/python@3.13/3.13.7/Frameworks/Python.framework/Versions/3.13/lib/python3.13/unittest/mock.py", line 690, in __getattr__
+    raise AttributeError("Mock object has no attribute %r" % name)
+AttributeError: Mock object has no attribute 'handoffs'
+ERROR    agency_swarm.agency.setup:setup.py:270 Error registering subagent 'AgencyCodeAgent' for sender 'PlannerAgent': Mock object has no attribute 'handoffs'
+Traceback (most recent call last):
+  File "/Users/am/Code/Agency/.venv/lib/python3.13/site-packages/agency_swarm/agency/setup.py", line 257, in configure_agents
+    agent_instance.handoffs.append(handoff_instance)
+    ^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/homebrew/Cellar/python@3.13/3.13.7/Frameworks/Python.framework/Versions/3.13/lib/python3.13/unittest/mock.py", line 690, in __getattr__
+    raise AttributeError("Mock object has no attribute %r" % name)
+AttributeError: Mock object has no attribute 'handoffs'
+ERROR    agency_swarm.agency.setup:setup.py:270 Error registering subagent 'PlannerAgent' for sender 'AgencyCodeAgent': Mock object has no attribute 'handoffs'
+Traceback (most recent call last):
+  File "/Users/am/Code/Agency/.venv/lib/python3.13/site-packages/agency_swarm/agency/setup.py", line 257, in configure_agents
+    agent_instance.handoffs.append(handoff_instance)
+    ^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/homebrew/Cellar/python@3.13/3.13.7/Frameworks/Python.framework/Versions/3.13/lib/python3.13/unittest/mock.py", line 690, in __getattr__
+    raise AttributeError("Mock object has no attribute %r" % name)
+AttributeError: Mock object has no attribute 'handoffs'
+ERROR    agency_swarm.agency.setup:setup.py:270 Error registering subagent 'AgencyCodeAgent' for sender 'PlannerAgent': Mock object has no attribute 'handoffs'
+Traceback (most recent call last):
+  File "/Users/am/Code/Agency/.venv/lib/python3.13/site-packages/agency_swarm/agency/setup.py", line 257, in configure_agents
+    agent_instance.handoffs.append(handoff_instance)
+    ^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/homebrew/Cellar/python@3.13/3.13.7/Frameworks/Python.framework/Versions/3.13/lib/python3.13/unittest/mock.py", line 690, in __getattr__
+    raise AttributeError("Mock object has no attribute %r" % name)
+AttributeError: Mock object has no attribute 'handoffs'
+ERROR    agency_swarm.agency.setup:setup.py:270 Error registering subagent 'PlannerAgent' for sender 'AgencyCodeAgent': Mock object has no attribute 'handoffs'
+Traceback (most recent call last):
+  File "/Users/am/Code/Agency/.venv/lib/python3.13/site-packages/agency_swarm/agency/setup.py", line 257, in configure_agents
+    agent_instance.handoffs.append(handoff_instance)
+    ^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/homebrew/Cellar/python@3.13/3.13.7/Frameworks/Python.framework/Versions/3.13/lib/python3.13/unittest/mock.py", line 690, in __getattr__
+    raise AttributeError("Mock object has no attribute %r" % name)
+AttributeError: Mock object has no attribute 'handoffs'
+ERROR    agency_swarm.agency.setup:setup.py:270 Error registering subagent 'AgencyCodeAgent' for sender 'PlannerAgent': Mock object has no attribute 'handoffs'
+Traceback (most recent call last):
+  File "/Users/am/Code/Agency/.venv/lib/python3.13/site-packages/agency_swarm/agency/setup.py", line 257, in configure_agents
+    agent_instance.handoffs.append(handoff_instance)
+    ^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/homebrew/Cellar/python@3.13/3.13.7/Frameworks/Python.framework/Versions/3.13/lib/python3.13/unittest/mock.py", line 690, in __getattr__
+    raise AttributeError("Mock object has no attribute %r" % name)
+AttributeError: Mock object has no attribute 'handoffs'
+ERROR    agency_swarm.agency.setup:setup.py:270 Error registering subagent 'PlannerAgent' for sender 'AgencyCodeAgent': Mock object has no attribute 'handoffs'
+Traceback (most recent call last):
+  File "/Users/am/Code/Agency/.venv/lib/python3.13/site-packages/agency_swarm/agency/setup.py", line 257, in configure_agents
+    agent_instance.handoffs.append(handoff_instance)
+    ^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/homebrew/Cellar/python@3.13/3.13.7/Frameworks/Python.framework/Versions/3.13/lib/python3.13/unittest/mock.py", line 690, in __getattr__
+    raise AttributeError("Mock object has no attribute %r" % name)
+AttributeError: Mock object has no attribute 'handoffs'
+ERROR    agency_swarm.agency.setup:setup.py:270 Error registering subagent 'PlannerAgent' for sender 'AgencyCodeAgent': Mock object has no attribute 'handoffs'
+Traceback (most recent call last):
+  File "/Users/am/Code/Agency/.venv/lib/python3.13/site-packages/agency_swarm/agency/setup.py", line 257, in configure_agents
+    agent_instance.handoffs.append(handoff_instance)
+    ^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/homebrew/Cellar/python@3.13/3.13.7/Frameworks/Python.framework/Versions/3.13/lib/python3.13/unittest/mock.py", line 690, in __getattr__
+    raise AttributeError("Mock object has no attribute %r" % name)
+AttributeError: Mock object has no attribute 'handoffs'
+ERROR    agency_swarm.agency.setup:setup.py:270 Error registering subagent 'AgencyCodeAgent' for sender 'PlannerAgent': Mock object has no attribute 'handoffs'
+Traceback (most recent call last):
+  File "/Users/am/Code/Agency/.venv/lib/python3.13/site-packages/agency_swarm/agency/setup.py", line 257, in configure_agents
+    agent_instance.handoffs.append(handoff_instance)
+    ^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/homebrew/Cellar/python@3.13/3.13.7/Frameworks/Python.framework/Versions/3.13/lib/python3.13/unittest/mock.py", line 690, in __getattr__
+    raise AttributeError("Mock object has no attribute %r" % name)
+AttributeError: Mock object has no attribute 'handoffs'
+WARNING  shared.system_hooks:system_hooks.py:226 Failed to store tool result memory: 'NoneType' object has no attribute 'store_memory'
+ERROR    shared.system_hooks:system_hooks.py:241 Failed to store error memory: 'NoneType' object has no attribute 'store_memory'
+WARNING  agency_swarm.agent.tools:tools.py:128 Tools folder path is not a directory. Skipping... /Users/am/Code/Agency/agency_code_agent/tools
+WARNING  agency_memory.firestore_store:firestore_store.py:49 FirestoreStore: FRESH_USE_FIRESTORE not set to 'true', falling back to InMemoryStore
+WARNING  agency_memory.firestore_store:firestore_store.py:111 FirestoreStore: Initialization failed: maximum recursion depth exceeded. Falling back to InMemoryStore
+WARNING  agency_memory.firestore_store:firestore_store.py:49 FirestoreStore: FRESH_USE_FIRESTORE not set to 'true', falling back to InMemoryStore
+WARNING  agency_swarm.agent.tools:tools.py:128 Tools folder path is not a directory. Skipping... /Users/am/Code/Agency/agency_code_agent/tools
+WARNING  agency_swarm.agent.tools:tools.py:128 Tools folder path is not a directory. Skipping... /Users/am/Code/Agency/agency_code_agent/tools
+WARNING  agency_swarm.agent.tools:tools.py:128 Tools folder path is not a directory. Skipping... /Users/am/Code/Agency/agency_code_agent/tools
+WARNING  agency_swarm.agent.tools:tools.py:128 Tools folder path is not a directory. Skipping... /Users/am/Code/Agency/agency_code_agent/tools
+WARNING  agency_swarm.agent.tools:tools.py:128 Tools folder path is not a directory. Skipping... /Users/am/Code/Agency/agency_code_agent/tools
+WARNING  agency_swarm.agent.tools:tools.py:128 Tools folder path is not a directory. Skipping... /Users/am/Code/Agency/agency_code_agent/tools

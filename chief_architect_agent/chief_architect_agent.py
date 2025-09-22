@@ -30,7 +30,15 @@ def create_chief_architect_agent(model: str = "gpt-5", reasoning_effort: str = "
 
     return Agent(
         name="ChiefArchitectAgent",
-        description="The strategic leader and architect. Reviews audit results and VectorStore knowledge to identify systemic improvements. Initiates autonomous improvement cycles through [SELF-DIRECTED TASK] entries, driving the agency's continuous evolution.",
+        description=(
+            "The autonomous strategic leader and continuous improvement orchestrator. Proactively triggered periodically "
+            "for system health checks, when Q(T) scores indicate systemic issues, or when VectorStore patterns suggest "
+            "optimization opportunities. Reviews audit reports, memory patterns, and constitutional compliance to identify "
+            "high-impact improvements. Creates [SELF-DIRECTED TASK] entries that other agents must treat as high-priority "
+            "user instructions. Drives spec-driven fixes end-to-end through the RunArchitectureLoop tool. When prompting "
+            "this agent, provide context about recent failures, performance metrics, or areas of concern. Remember, this "
+            "agent has authority to initiate autonomous improvement cycles and its directives supersede routine tasks."
+        ),
         instructions=select_instructions_file(current_dir, model),
         model=get_model_instance(model),
         hooks=combined_hook,

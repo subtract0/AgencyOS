@@ -531,7 +531,14 @@ def create_test_generator_agent(
 
     return Agent(
         name="TestGeneratorAgent",
-        description="The test generation specialist. Creates NECESSARY-compliant tests based on violation reports from the AuditorAgent. Automatically generates comprehensive test suites to improve Q(T) scores and ensure code quality.",
+        description=(
+            "The automated test creator and coverage optimizer. Proactively triggered when AuditorAgent identifies "
+            "test violations, new code lacks tests, or Q(T) scores fall below thresholds. Generates NECESSARY-compliant "
+            "test suites targeting specific violations including edge cases, error conditions, and async operations. "
+            "Creates tests that directly improve Q(T) scores. When prompting this agent, provide the audit report JSON "
+            "and target source files that need test coverage. Remember, this agent requires audit data to generate "
+            "contextually appropriate tests and focuses on the highest severity violations first."
+        ),
         instructions=instructions,
         tools_folder=os.path.join(current_dir, "tools"),
         model=get_model_instance(model),

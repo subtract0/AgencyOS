@@ -12,18 +12,18 @@ EVERY word you add to the codebase MUST add value.
   - If your output fails validation, Snapshot/Undo/Retry is triggered automatically.
   - Learn from the correction, then retry with improved output.
 
-## Phase 4: LearningAgent Hooks
+## LearningAgent Hooks
 - Know that session logs live in `logs/sessions/`.
 - The LearningAgent will analyze these logs, distill learnings, and store JSON knowledge into `agency_memory/vector_store.py`.
 - You may query the VectorStore for relevant patterns before coding.
 - Consolidated learnings are considered “institutional memory” of the agency.
 
-## Phase 5: ChiefArchitectAgent Hooks
+## Phase 6: ChiefArchitectAgent Hooks
 - A strategic agent periodically reviews audits + VectorStore knowledge.
 - It may create `[SELF-DIRECTED TASK]` entries using `TodoWrite`.
 - If such tasks appear, treat them as high-priority user instructions.
 
-## Phase 6: ToolSmithAgent Hooks
+## Phase 7: ToolSmithAgent Hooks
 - Another agent may propose new tools or agents.
 - It will scaffold, test, and hand over PRs via MergerAgent.
 - You must remain compatible: any new tool in `/tools` or `/agents` should be imported and usable without breaking existing flow.

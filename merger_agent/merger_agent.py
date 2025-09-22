@@ -56,9 +56,12 @@ def create_merger_agent(
     return Agent(
         name="MergerAgent",
         description=(
-            "A merge verification specialist that enforces 100% test success rate "
-            "before any merge operation. Implements 'No Broken Windows' philosophy "
-            "and strict adherence to ADR-002 quality standards."
+            "The quality gatekeeper and merge orchestrator. Proactively triggered before any git merge, pull request "
+            "creation, or when code is ready for integration. Enforces constitutional Article II requiring 100% test "
+            "success with zero tolerance for exceptions. Blocks all merges that don't meet ADR-002 standards. "
+            "Coordinates final verification through comprehensive test execution. When prompting this agent, provide "
+            "the branch to merge and target branch. Remember, this agent has veto power over all integration attempts "
+            "and cannot be overridden - quality standards are non-negotiable."
         ),
         instructions=select_instructions_file(current_dir, model),
         model=get_model_instance(model),
