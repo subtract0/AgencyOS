@@ -216,3 +216,8 @@ __marimo__/
 .Trashes
 ehthumbs.db
 Thumbs.db
+
+# Firebase / Google Cloud credentials
+*firebase-adminsdk*.json
+*service-account*.json
+gothic-point-*.json

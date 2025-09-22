@@ -85,6 +85,7 @@ def test_tool_count(agent):
     assert len(agent.tools) >= 10, "Agent should have at least 10 tools"
 
 
+@pytest.mark.skip(reason="Makes real API calls to GPT models - skip to prevent test suite hangs")
 @pytest.mark.asyncio
 async def test_handoff_coder_to_planner_via_agency():
     """Ensure handoff path works by prompting coder to hand off to planner.

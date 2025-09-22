@@ -1,0 +1,484 @@
+name: "Merge Guardian - ADR-002 Enforcement"
+
+# This workflow enforces ADR-002: "100% Verifikation und Stabilität"
+# - All tests must pass with 0 failures before merge
+# - Implements "No Broken Windows" policy
+# - Provides comprehensive test verification and reporting
+
+on:
+  # Trigger on all pull request events
+  pull_request:
+    types: [opened, synchronize, reopened, ready_for_review]
+    branches: [main]
+
+  # Trigger on pushes to main branch (for verification)
+  push:
+    branches: [main]
+
+  # Allow manual workflow execution
+  workflow_dispatch:
+    inputs:
+      reason:
+        description: 'Reason for manual execution'
+        required: false
+        default: 'Manual ADR-002 verification'
+
+env:
+  # Enforce strict CI environment
+  CI: true
+  PYTHONPATH: ${{ github.workspace }}
+  # Disable pytest cachedir to ensure clean test runs
+  PYTEST_DISABLE_PLUGIN_AUTOLOAD: 1
+
+jobs:
+  # Core test verification job - enforces ADR-002 compliance
+  test-verification:
+    name: "ADR-002 Test Verification"
+    runs-on: ubuntu-latest
+
+    # Required permissions for comprehensive reporting
+    permissions:
+      contents: read
+      pull-requests: write
+      checks: write
+
+    outputs:
+      test-status: ${{ steps.test-execution.outputs.status }}
+      test-summary: ${{ steps.test-execution.outputs.summary }}
+      failure-count: ${{ steps.test-execution.outputs.failures }}
+
+    steps:
+      - name: "🔍 Checkout Repository"
+        uses: actions/checkout@v4
+        with:
+          # Full history for comprehensive analysis
+          fetch-depth: 0
+
+      - name: "🐍 Set up Python 3.13"
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+          # Use exact version for consistency
+          cache: 'pip'
+
+      - name: "📦 Cache Dependencies"
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-pip-python3.13-${{ hashFiles('requirements.txt') }}
+          restore-keys: |
+            ${{ runner.os }}-pip-python3.13-
+            ${{ runner.os }}-pip-
+
+      - name: "⚙️ Install Dependencies"
+        run: |
+          echo "🔧 Installing test dependencies for ADR-002 verification..."
+          python -m pip install --upgrade pip
+
+          echo "📋 Installing base requirements..."
+          python -m pip install -r requirements.txt
+
+          echo "🔨 Applying LiteLLM fix for Anthropic reasoning models..."
+          # This fixes a critical bug with Anthropic models in litellm
+          python -m pip install git+https://github.com/openai/openai-agents-python.git@main
+
+          echo "✅ Dependencies installed successfully"
+
+          # Verify critical packages
+          python -c "import pytest; print(f'pytest version: {pytest.__version__}')"
+          python -c "import agency_swarm; print('agency_swarm imported successfully')"
+
+      - name: "🧪 Execute ADR-002 Test Suite"
+        id: test-execution
+        run: |
+          echo "🎯 Starting ADR-002 compliance verification..."
+          echo "📊 ADR-002 requires: 100% test success rate (0 failures)"
+          echo "🚫 No Broken Windows policy: Any failure blocks merge"
+          echo ""
+
+          # Run tests and capture detailed output
+          echo "▶️ Executing comprehensive test suite..."
+
+          # Create test results directory
+          mkdir -p test-results
+
+          # Run tests with comprehensive reporting
+          set +e  # Don't exit on test failures, we need to process results
+
+          python run_tests.py > test-results/test-output.log 2>&1
+          TEST_EXIT_CODE=$?
+
+          # Parse test results for detailed analysis
+          echo "📊 Analyzing test results..."
+
+          # Extract test statistics from pytest output
+          if grep -q "passed" test-results/test-output.log; then
+            PASSED_TESTS=$(grep -o "[0-9]\+ passed" test-results/test-output.log | tail -1 | grep -o "[0-9]\+")
+          else
+            PASSED_TESTS=0
+          fi
+
+          if grep -q "failed" test-results/test-output.log; then
+            FAILED_TESTS=$(grep -o "[0-9]\+ failed" test-results/test-output.log | tail -1 | grep -o "[0-9]\+")
+          else
+            FAILED_TESTS=0
+          fi
+
+          if grep -q "skipped" test-results/test-output.log; then
+            SKIPPED_TESTS=$(grep -o "[0-9]\+ skipped" test-results/test-output.log | tail -1 | grep -o "[0-9]\+")
+          else
+            SKIPPED_TESTS=0
+          fi
+
+          TOTAL_TESTS=$((PASSED_TESTS + FAILED_TESTS + SKIPPED_TESTS))
+
+          echo "📈 Test Statistics:"
+          echo "  Total Tests: $TOTAL_TESTS"
+          echo "  ✅ Passed: $PASSED_TESTS"
+          echo "  ❌ Failed: $FAILED_TESTS"
+          echo "  ⏭️ Skipped: $SKIPPED_TESTS"
+          echo "  Exit Code: $TEST_EXIT_CODE"
+
+          # ADR-002 Compliance Check
+          echo ""
+          echo "🔍 ADR-002 Compliance Analysis:"
+
+          if [ $TEST_EXIT_CODE -eq 0 ] && [ $FAILED_TESTS -eq 0 ]; then
+            echo "✅ ADR-002 COMPLIANT: All tests passed successfully"
+            echo "🎯 Success Rate: 100% ($PASSED_TESTS/$TOTAL_TESTS effective tests)"
+            echo "status=success" >> $GITHUB_OUTPUT
+            echo "summary=✅ ADR-002 COMPLIANT: $PASSED_TESTS tests passed, 0 failures" >> $GITHUB_OUTPUT
+
+            # Create success artifact
+            cat > test-results/adr-002-status.json << EOF
+          {
+            "adr_002_compliant": true,
+            "total_tests": $TOTAL_TESTS,
+            "passed_tests": $PASSED_TESTS,
+            "failed_tests": $FAILED_TESTS,
+            "skipped_tests": $SKIPPED_TESTS,
+            "exit_code": $TEST_EXIT_CODE,
+            "compliance_message": "ADR-002 COMPLIANT: 100% test success rate achieved"
+          }
+          EOF
+
+          else
+            echo "❌ ADR-002 VIOLATION: Test failures detected"
+            echo "🚫 Failed Tests: $FAILED_TESTS"
+            echo "💥 Exit Code: $TEST_EXIT_CODE"
+            echo "⚠️ No Broken Windows policy violated!"
+            echo ""
+            echo "🔧 Required Actions:"
+            echo "  1. Fix all failing tests"
+            echo "  2. Ensure 100% test pass rate"
+            echo "  3. Re-run this workflow"
+            echo "  4. No exceptions - ADR-002 is non-negotiable"
+
+            echo "status=failure" >> $GITHUB_OUTPUT
+            echo "summary=❌ ADR-002 VIOLATION: $FAILED_TESTS test failures detected" >> $GITHUB_OUTPUT
+
+            # Create failure artifact
+            cat > test-results/adr-002-status.json << EOF
+          {
+            "adr_002_compliant": false,
+            "total_tests": $TOTAL_TESTS,
+            "passed_tests": $PASSED_TESTS,
+            "failed_tests": $FAILED_TESTS,
+            "skipped_tests": $SKIPPED_TESTS,
+            "exit_code": $TEST_EXIT_CODE,
+            "compliance_message": "ADR-002 VIOLATION: Test failures detected - No Broken Windows policy violated"
+          }
+          EOF
+          fi
+
+          echo "failures=$FAILED_TESTS" >> $GITHUB_OUTPUT
+
+          # Display test output for debugging
+          echo ""
+          echo "📋 Full Test Output:"
+          echo "===================="
+          cat test-results/test-output.log
+          echo "===================="
+
+          # Exit with appropriate code for job status
+          exit $TEST_EXIT_CODE
+
+      - name: "📊 Generate Test Report Artifact"
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: adr-002-test-report-${{ github.sha }}
+          path: |
+            test-results/
+          retention-days: 30
+
+      - name: "💬 Comment Test Results on PR"
+        if: always() && github.event_name == 'pull_request'
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const fs = require('fs');
+
+            // Read test results
+            let adrStatus = {};
+            try {
+              const statusData = fs.readFileSync('test-results/adr-002-status.json', 'utf8');
+              adrStatus = JSON.parse(statusData);
+            } catch (error) {
+              console.log('Could not read ADR status file:', error);
+            }
+
+            // Create comprehensive PR comment
+            const testStatus = '${{ steps.test-execution.outputs.status }}';
+            const failureCount = '${{ steps.test-execution.outputs.failures }}';
+
+            let commentBody = '';
+
+            if (testStatus === 'success') {
+              commentBody = `## 🎯 ADR-002 Compliance: ✅ APPROVED
+
+            **Merge Guardian Status**: All systems green! 🚀
+
+            ### Test Results Summary
+            - **Total Tests**: ${adrStatus.total_tests || 'N/A'}
+            - **✅ Passed**: ${adrStatus.passed_tests || 'N/A'}
+            - **❌ Failed**: ${adrStatus.failed_tests || 0}
+            - **⏭️ Skipped**: ${adrStatus.skipped_tests || 0}
+            - **Success Rate**: 100% ✨
+
+            ### ADR-002 Verification
+            ✅ **100% Test Success Rate Achieved**
+            ✅ **No Broken Windows Policy Maintained**
+            ✅ **Ready for Merge**
+
+            ---
+            *This PR meets all ADR-002 requirements and is approved for merge.*
+            `;
+            } else {
+              commentBody = `## 🚫 ADR-002 Compliance: ❌ BLOCKED
+
+            **Merge Guardian Status**: Merge blocked due to test failures! 🛑
+
+            ### Test Results Summary
+            - **Total Tests**: ${adrStatus.total_tests || 'N/A'}
+            - **✅ Passed**: ${adrStatus.passed_tests || 'N/A'}
+            - **❌ Failed**: ${adrStatus.failed_tests || failureCount}
+            - **⏭️ Skipped**: ${adrStatus.skipped_tests || 0}
+
+            ### ⚠️ ADR-002 Violations Detected
+
+            ${failureCount > 0 ? `❌ **${failureCount} test(s) are failing**` : '❌ **Test execution failed**'}
+
+            ### Required Actions
+            1. 🔧 **Fix all failing tests** - No exceptions
+            2. 🧪 **Ensure 100% pass rate** - ADR-002 requirement
+            3. ♻️ **Re-run tests** - Push new commits to trigger re-check
+            4. ✅ **Verify compliance** - All tests must pass
+
+            ### Branch Protection
+            🚫 **This PR cannot be merged until all tests pass**
+            🔒 **No bypass allowed** - ADR-002 is non-negotiable
+            🏆 **"No Broken Windows"** - Quality is not optional
+
+            ---
+            *ADR-002 enforces 100% test success rate. Fix the issues above and push changes to re-trigger verification.*
+            `;
+            }
+
+            // Post or update comment
+            const { data: comments } = await github.rest.issues.listComments({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+            });
+
+            const existingComment = comments.find(comment =>
+              comment.body.includes('ADR-002 Compliance:')
+            );
+
+            if (existingComment) {
+              await github.rest.issues.updateComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                comment_id: existingComment.id,
+                body: commentBody
+              });
+            } else {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: context.issue.number,
+                body: commentBody
+              });
+            }
+
+  # Merge readiness assessment - only runs if tests pass
+  merge-readiness:
+    name: "🛡️ Merge Readiness Assessment"
+    needs: test-verification
+    runs-on: ubuntu-latest
+    if: always()
+
+    permissions:
+      contents: read
+      pull-requests: write
+
+    steps:
+      - name: "📋 Assess Merge Readiness"
+        run: |
+          echo "🔍 Evaluating merge readiness against ADR-002..."
+
+          TEST_STATUS="${{ needs.test-verification.outputs.test-status }}"
+          FAILURE_COUNT="${{ needs.test-verification.outputs.failure-count }}"
+
+          echo "📊 Assessment Results:"
+          echo "  Test Status: $TEST_STATUS"
+          echo "  Failed Tests: $FAILURE_COUNT"
+
+          if [ "$TEST_STATUS" = "success" ] && [ "$FAILURE_COUNT" = "0" ]; then
+            echo ""
+            echo "✅ MERGE APPROVED"
+            echo "🎯 ADR-002 requirements fully satisfied"
+            echo "🚀 This PR is ready for merge"
+            echo "🛡️ No Broken Windows policy maintained"
+
+            # Create success summary
+            cat >> $GITHUB_STEP_SUMMARY << EOF
+          ## 🎯 ADR-002 Merge Guardian: APPROVED ✅
+
+          ### Status: Ready for Merge 🚀
+
+          **All ADR-002 requirements satisfied:**
+          - ✅ 100% test success rate achieved
+          - ✅ Zero test failures detected
+          - ✅ No Broken Windows policy maintained
+          - ✅ Quality standards upheld
+
+          **Merge is approved and recommended.**
+          EOF
+
+          else
+            echo ""
+            echo "❌ MERGE BLOCKED"
+            echo "🚫 ADR-002 requirements NOT satisfied"
+            echo "⚠️ Test failures must be resolved first"
+            echo "🔧 Fix all issues before attempting merge"
+
+            # Create failure summary
+            cat >> $GITHUB_STEP_SUMMARY << EOF
+          ## 🚫 ADR-002 Merge Guardian: BLOCKED ❌
+
+          ### Status: Merge Not Permitted 🛑
+
+          **ADR-002 violations detected:**
+          - ❌ Test failures present ($FAILURE_COUNT failed)
+          - ❌ 100% success rate requirement not met
+          - ❌ No Broken Windows policy violated
+          - ❌ Quality standards not satisfied
+
+          **Required actions:**
+          1. Fix all failing tests
+          2. Achieve 100% test pass rate
+          3. Re-run verification workflow
+          4. Obtain ADR-002 compliance approval
+
+          **Merge will remain blocked until all tests pass.**
+          EOF
+
+            # Fail the job to block merge
+            exit 1
+          fi
+
+      - name: "📝 Create Merge Readiness Report"
+        if: always()
+        run: |
+          mkdir -p reports
+
+          cat > reports/merge-readiness.md << EOF
+          # ADR-002 Merge Readiness Report
+
+          **Generated**: $(date -u '+%Y-%m-%d %H:%M:%S UTC')
+          **Workflow**: Merge Guardian - ADR-002 Enforcement
+          **Commit**: ${{ github.sha }}
+          **Branch**: ${{ github.head_ref || github.ref_name }}
+
+          ## Assessment Summary
+
+          **Test Status**: ${{ needs.test-verification.outputs.test-status }}
+          **Failed Tests**: ${{ needs.test-verification.outputs.failure-count }}
+          **Summary**: ${{ needs.test-verification.outputs.test-summary }}
+
+          ## ADR-002 Compliance
+
+          ADR-002 requires:
+          - 100% test success rate (0 failures)
+          - "No Broken Windows" policy enforcement
+          - Comprehensive test verification before merge
+
+          ## Branch Protection Requirements
+
+          To enforce ADR-002, configure branch protection rules:
+
+          1. **Require status checks**:
+             - \`ADR-002 Test Verification\`
+             - \`Merge Readiness Assessment\`
+
+          2. **Require branches to be up to date**: ✅
+
+          3. **Restrict pushes**:
+             - Require pull request reviews
+             - No bypass for administrators
+
+          4. **Required checks must pass**: ✅
+
+          ## Recommendation
+
+          ${{ needs.test-verification.outputs.test-status == 'success' && needs.test-verification.outputs.failure-count == '0' && '✅ **APPROVE MERGE** - All ADR-002 requirements satisfied' || '❌ **BLOCK MERGE** - ADR-002 violations must be resolved first' }}
+          EOF
+
+          echo "📋 Merge readiness report generated"
+
+      - name: "📎 Upload Merge Readiness Report"
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: merge-readiness-report-${{ github.sha }}
+          path: reports/
+          retention-days: 90
+
+# Branch Protection Configuration (to be applied in repository settings):
+#
+# This workflow enforces ADR-002 through the following mechanisms:
+#
+# 1. Required Status Checks:
+#    - "ADR-002 Test Verification" job must pass
+#    - "Merge Readiness Assessment" job must pass
+#    - Both jobs will fail if any tests fail
+#
+# 2. No Bypass Policy:
+#    - Even administrators cannot bypass these checks
+#    - Enforces "No Broken Windows" at the repository level
+#
+# 3. Automatic Blocking:
+#    - Any test failure immediately blocks merge
+#    - Clear feedback provided on PR with remediation steps
+#    - Detailed artifacts generated for debugging
+#
+# 4. Comprehensive Reporting:
+#    - Test results posted as PR comments
+#    - Detailed artifacts with test outputs
+#    - Merge readiness assessments
+#
+# To configure branch protection:
+# 1. Go to Settings > Branches
+# 2. Add rule for 'main' branch
+# 3. Enable "Require status checks to pass before merging"
+# 4. Select required checks:
+#    - "ADR-002 Test Verification"
+#    - "Merge Readiness Assessment"
+# 5. Enable "Require branches to be up to date before merging"
+# 6. Enable "Restrict pushes that create files"
+# 7. DO NOT enable "Allow administrators to bypass"
+#
+# This ensures 100% ADR-002 compliance with zero exceptions.

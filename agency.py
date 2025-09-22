@@ -24,6 +24,7 @@ from subagent_example.subagent_example import (  # noqa: E402 - must import afte
     create_subagent_example,
 )
 from test_generator_agent import create_test_generator_agent  # noqa: E402 - must import after warning suppression
+from learning_agent import create_learning_agent  # noqa: E402 - must import after warning suppression
 
 load_dotenv()
 
@@ -39,6 +40,12 @@ model = "gpt-5"
 memory_store = create_firestore_store() if os.getenv("FRESH_USE_FIRESTORE", "").lower() == "true" else None
 shared_memory = Memory(store=memory_store)
 shared_context = create_agent_context(memory=shared_memory)
+
+# Learning Agent Configuration:
+# - Automatically analyzes session transcripts in logs/sessions/
+# - Extracts successful patterns and consolidates insights
+# - Trigger conditions: After complex tasks, on errors, or periodically
+# - Can be invoked by Planner for strategic learning or Auditor for pattern analysis
 
 # create agents with shared context
 planner = create_planner_agent(
@@ -57,9 +64,12 @@ test_generator = create_test_generator_agent(
 subagent_example = create_subagent_example(
     model=model, reasoning_effort="high"
 )
+learning_agent = create_learning_agent(
+    model=model, reasoning_effort="high", agent_context=shared_context
+)
 
 agency = Agency(
-    coder, planner, auditor, test_generator,
+    coder, planner, auditor, test_generator, learning_agent,
     name="AgencyCode",
     communication_flows=[
         (coder, planner, SendMessageHandoff),
@@ -67,6 +77,8 @@ agency = Agency(
         (planner, auditor, SendMessageHandoff),
         (auditor, test_generator, SendMessageHandoff),
         (test_generator, coder, SendMessageHandoff),
+        (planner, learning_agent, SendMessageHandoff),  # Planner can delegate learning analysis
+        (auditor, learning_agent, SendMessageHandoff),  # Auditor can request pattern analysis
         # (coder, subagent_example) # example for how to add a subagent
     ],
     shared_instructions="./project-overview.md",
