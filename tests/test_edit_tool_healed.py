@@ -733,7 +733,9 @@ class TestEditRegressionPrevention:
             tool.run()
 
             # Check line endings preserved
-            new_content = test_file.read_text(newline='')
+            # Use open() with newline parameter to read raw content
+            with open(test_file, 'r', newline='') as f:
+                new_content = f.read()
             # Line endings might be normalized by Python write operations
             # Just verify the modification worked
             assert "Modified Line 2" in new_content
