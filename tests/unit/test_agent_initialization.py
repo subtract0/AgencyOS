@@ -33,7 +33,7 @@ class TestAgentInitialization:
             # Check agent parameters
             call_kwargs = mock_agent_class.call_args[1]
             assert call_kwargs['name'] == "AgencyCodeAgent"
-            assert "interactive CLI tool" in call_kwargs['description']
+            assert "primary software engineer" in call_kwargs['description']
 
     def test_model_detection_and_configuration(self, mock_agent_context):
         """Test model detection and configuration logic."""

@@ -531,7 +531,7 @@ def create_test_generator_agent(
 
     return Agent(
         name="TestGeneratorAgent",
-        description="Specialized agent for generating NECESSARY-compliant tests to address quality violations.",
+        description="The test generation specialist. Creates NECESSARY-compliant tests based on violation reports from the AuditorAgent. Automatically generates comprehensive test suites to improve Q(T) scores and ensure code quality.",
         instructions=instructions,
         tools_folder=os.path.join(current_dir, "tools"),
         model=get_model_instance(model),

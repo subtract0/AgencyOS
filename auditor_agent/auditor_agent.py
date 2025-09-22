@@ -298,7 +298,7 @@ def create_auditor_agent(
 
     return Agent(
         name="AuditorAgent",
-        description="Quality assurance agent that calculates Q(T) scores and identifies NECESSARY pattern violations.",
+        description="The quality assurance specialist. Audits the codebase for test coverage and quality using the NECESSARY pattern. Calculates Q(T) scores and provides detailed violation reports to guide the TestGeneratorAgent and inform the ChiefArchitectAgent.",
         instructions=instructions,
         tools_folder=os.path.join(current_dir, "tools"),
         model=get_model_instance(model),
