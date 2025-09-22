@@ -298,7 +298,14 @@ def create_auditor_agent(
 
     return Agent(
         name="AuditorAgent",
-        description="The quality assurance specialist. Audits the codebase for test coverage and quality using the NECESSARY pattern. Calculates Q(T) scores and provides detailed violation reports to guide the TestGeneratorAgent and inform the ChiefArchitectAgent.",
+        description=(
+            "The quality assurance enforcer and test coverage analyst. Proactively triggered after code changes, "
+            "before merges, or when test quality needs assessment. Performs deep analysis using the NECESSARY pattern "
+            "to calculate Q(T) scores and identify testing gaps. Generates violation reports that guide the TestGeneratorAgent "
+            "and informs the ChiefArchitectAgent of systemic issues. When prompting this agent, specify the target directory "
+            "or files to audit and the desired analysis depth (full or verification mode). Remember, this agent enforces "
+            "the constitutional 100% test success requirement and blocks merges that don't meet quality standards."
+        ),
         instructions=instructions,
         tools_folder=os.path.join(current_dir, "tools"),
         model=get_model_instance(model),

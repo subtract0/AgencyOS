@@ -181,9 +181,16 @@ def create_session_transcript(memories: List[Dict[str, Any]], session_id: str) -
     # Ensure directory exists
     os.makedirs(os.path.dirname(filepath), exist_ok=True)
 
-    # Write transcript
-    with open(filepath, "w", encoding="utf-8") as f:
-        f.write(content)
+    # Write transcript with fallback if permission is denied
+    try:
+        with open(filepath, "w", encoding="utf-8") as f:
+            f.write(content)
+    except PermissionError:
+        fallback_path = f"/tmp/{filename}"
+        os.makedirs(os.path.dirname(fallback_path), exist_ok=True)
+        with open(fallback_path, "w", encoding="utf-8") as f:
+            f.write(content)
+        filepath = fallback_path
 
     logger.info(f"Session transcript created: {filepath}")
     return filepath

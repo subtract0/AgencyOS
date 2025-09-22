@@ -56,9 +56,12 @@ def create_learning_agent(model: str = "gpt-5", reasoning_effort: str = "high", 
     return Agent(
         name="LearningAgent",
         description=(
-            "A continuous learning specialist that analyzes session transcripts, extracts successful patterns, "
-            "and consolidates insights to improve the collective intelligence of the Agency system. "
-            "Focuses on tool usage patterns, error resolution strategies, and task completion optimizations."
+            "The institutional memory curator and pattern recognition specialist. Proactively triggered after successful "
+            "task completions, error resolutions, or at session end to extract learnings. Analyzes transcripts in "
+            "logs/sessions/ to identify reusable patterns, successful strategies, and common pitfalls. Stores consolidated "
+            "knowledge in VectorStore for future reference by all agents. When prompting this agent, specify the session "
+            "or time range to analyze and any specific patterns to look for. Remember, this agent builds the collective "
+            "intelligence that improves agency performance over time and its learnings become institutional memory."
         ),
         instructions=select_instructions_file(current_dir, model),
         model=get_model_instance(model),

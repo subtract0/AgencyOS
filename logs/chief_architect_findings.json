@@ -1,0 +1,23 @@
+{
+  "timestamp": "2025-09-22T10:37:16.993967",
+  "audit": {
+    "total_behaviors": 285,
+    "total_tests": 698
+  },
+  "vector_store_stats": {
+    "total_memories": 0,
+    "memories_with_embeddings": 0,
+    "embedding_provider": null,
+    "embedding_available": false,
+    "has_embeddings": false,
+    "last_updated": "2025-09-22T10:37:17.386816"
+  },
+  "api_mismatches": {
+    "issues": [],
+    "learning_uses_search": true
+  },
+  "selected_target": {
+    "title": "Improve test coverage",
+    "reason": "Default fallback"
+  }
+}

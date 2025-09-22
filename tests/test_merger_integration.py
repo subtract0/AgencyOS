@@ -34,9 +34,9 @@ class TestMergerAgentIntegration:
 
         # Verify agent properties
         assert agent.name == "MergerAgent"
-        assert "merge verification specialist" in agent.description.lower()
-        assert "100% test success rate" in agent.description
-        assert "No Broken Windows" in agent.description
+        assert "quality gatekeeper" in agent.description.lower()
+        assert "100% test" in agent.description
+        assert "veto power" in agent.description
         assert "ADR-002" in agent.description
 
         # Verify agent has correct number of tools
@@ -265,7 +265,7 @@ class TestMergeVerificationWorkflow:
         merger_agent_path = os.path.join(project_root, 'merger_agent', 'merger_agent.py')
         with open(merger_agent_path, 'r') as f:
             merger_content = f.read()
-        assert "No Broken Windows" in merger_content, "MergerAgent missing No Broken Windows policy"
+        assert "non-negotiable" in merger_content or "veto power" in merger_content, "MergerAgent missing No Broken Windows policy"
 
         # Check GitHub workflow
         workflow_path = os.path.join(project_root, '.github', 'workflows', 'merge-guardian.yml')

@@ -147,7 +147,7 @@ def test_test_generator_agent_initialization():
 
         assert agent is not None
         assert agent.name == "TestGeneratorAgent"
-        assert "NECESSARY-compliant tests" in agent.description
+        assert "NECESSARY-compliant test suites" in agent.description
         # Check that agent has tools (specific tool verification is complex due to wrapping)
         assert len(agent.tools) > 0
 

@@ -189,12 +189,15 @@ class StoreKnowledge(BaseTool):
                 "created_timestamp": learning_obj.get("metadata", {}).get("created_timestamp", datetime.now().isoformat()),
                 "stored_timestamp": datetime.now().isoformat(),
                 "source_session": learning_obj.get("metadata", {}).get("source_session", "unknown"),
-                "update_mode": update_mode
+                "update_mode": update_mode,
+                "namespace": self.namespace,
             }
 
-            # Store in vector store using add_memory method
             memory_key = learning_obj.get("learning_id", f"learning_{datetime.now().timestamp()}")
+            namespaced_key = f"{self.namespace}:{memory_key}"
             memory_content = {
+                "key": memory_key,
+                "namespaced_key": namespaced_key,
                 "content": embedding_text,
                 "title": learning_obj.get("title", "Untitled Learning"),
                 "description": learning_obj.get("description", ""),
@@ -203,7 +206,7 @@ class StoreKnowledge(BaseTool):
                 "full_learning_object": learning_obj
             }
 
-            vector_store.add_memory(memory_key, memory_content)
+            vector_store.add_memory(namespaced_key, memory_content)
 
             return True
 

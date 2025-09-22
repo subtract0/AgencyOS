@@ -45,9 +45,12 @@ def create_planner_agent(model: str = "gpt-5", reasoning_effort: str = "high", a
     return Agent(
         name="PlannerAgent",
         description=(
-            "A strategic planning and task breakdown specialist that helps organize "
-            "and structure software development projects into manageable, actionable tasks. "
-            "Provides clear project roadmaps and coordinates with the AgencyCodeAgent for execution."
+            "The strategic architect and task orchestrator. Proactively triggered when tasks require breakdown into steps, "
+            "complex features need planning, or when the user requests architectural guidance. Creates formal specifications "
+            "in /specs/ and technical plans in /plans/ following constitutional requirements. Coordinates bidirectional "
+            "handoffs with AgencyCodeAgent for implementation. When prompting this agent, describe the high-level goals "
+            "and any constraints or requirements. Remember, this agent specializes in spec-driven development and maintains "
+            "project-wide consistency."
         ),
         instructions=select_instructions_file(current_dir, model),
         model=get_model_instance(model),
