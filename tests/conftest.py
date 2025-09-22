@@ -1,5 +1,6 @@
 import os
 import sys
+import time
 from pathlib import Path
 
 import pytest
@@ -23,6 +24,32 @@ def cleanup_test_artifacts():
     for filename in test_files:
         if os.path.exists(filename):
             os.unlink(filename)
+
+    # Clean up handoff logs created during tests
+    handoff_logs_dir = "logs/handoffs"
+    if os.path.exists(handoff_logs_dir):
+        for filename in os.listdir(handoff_logs_dir):
+            if filename.startswith("handoff_") and filename.endswith(".json"):
+                file_path = os.path.join(handoff_logs_dir, filename)
+                # Only clean up recent test files (avoid cleaning user's actual handoffs)
+                if os.path.getmtime(file_path) > (time.time() - 300):  # 5 minutes
+                    try:
+                        os.unlink(file_path)
+                    except OSError:
+                        pass  # File might be in use, skip cleanup
+
+    # Clean up snapshot logs created during tests
+    snapshot_logs_dir = "logs/snapshots"
+    if os.path.exists(snapshot_logs_dir):
+        for filename in os.listdir(snapshot_logs_dir):
+            if filename.startswith("snapshot_") and filename.endswith(".json"):
+                file_path = os.path.join(snapshot_logs_dir, filename)
+                # Only clean up recent test files
+                if os.path.getmtime(file_path) > (time.time() - 300):  # 5 minutes
+                    try:
+                        os.unlink(file_path)
+                    except OSError:
+                        pass  # File might be in use, skip cleanup
 
 
 @pytest.fixture

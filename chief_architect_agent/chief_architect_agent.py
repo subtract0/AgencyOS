@@ -7,7 +7,7 @@ from shared.system_hooks import (
     create_memory_integration_hook,
     create_composite_hook,
 )
-from tools import LS, Read, Grep, Glob, TodoWrite, Write, Edit, Bash
+from tools import LS, Read, Grep, Glob, TodoWrite, Write, Edit, Bash, ContextMessageHandoff
 from .tools.architecture_loop import RunArchitectureLoop
 
 current_dir = os.path.dirname(os.path.abspath(__file__))
@@ -49,7 +49,7 @@ def create_chief_architect_agent(model: str = "gpt-5", reasoning_effort: str = "
         instructions=select_instructions_file(current_dir, model),
         model=get_model_instance(model),
         hooks=combined_hook,
-        tools=[LS, Read, Grep, Glob, TodoWrite, Write, Edit, Bash, RunArchitectureLoop],
+        tools=[LS, Read, Grep, Glob, TodoWrite, Write, Edit, Bash, ContextMessageHandoff, RunArchitectureLoop],
         tools_folder=os.path.join(current_dir, "tools"),
         model_settings=create_model_settings(model, reasoning_effort),
     )

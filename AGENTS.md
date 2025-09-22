@@ -18,13 +18,28 @@
 - **Memory Integration**: Learns from generated test patterns and success rates
 - **Output**: Test files that maximize Q(T) score improvements
 
+### ToolSmithAgent
+- **Purpose**: Meta-agent craftsman that scaffolds, implements, tests, and hands off new tools
+- **Location**: `toolsmith_agent/`
+- **Capabilities**: Parses tool directives, scaffolds BaseTool + Pydantic patterns, generates tests
+- **Integration**: Updates `tools/__init__.py` exports additively and idempotently
+- **Quality Gates**: Runs pytest and aborts on failures (Constitutional Article II compliance)
+- **Handoff Pattern**: Delivers green artifacts to MergerAgent for verification and integration
+- **Learning**: Stores successful/failed scaffolding patterns in memory for improvement
+- **Communication Flow**: ChiefArchitectAgent → ToolSmithAgent → MergerAgent
+
 ## Project Structure & Module Organization
-- `agency.py` wires planner, developer, auditor and test generator agents and loads settings from `.env`.
+- `agency.py` wires all 8 agents (planner, developer, auditor, test generator, toolsmith, etc.) and loads settings from `.env`.
 - `agency_code_agent/` contains the primary agent, prompts, and its `tools/`; extend or reuse logic here.
 - `planner_agent/` mirrors the coder setup for planning mode; keep configs aligned when features move between agents.
 - `auditor_agent/` analyzes codebases using NECESSARY pattern and calculates Q(T) scores for test quality.
 - `test_generator_agent/` generates NECESSARY-compliant tests based on audit reports to improve quality.
-- `tests/` holds pytest coverage for tools, planner, and integration flows; follow its layout for new scenarios.
+- `toolsmith_agent/` meta-agent for dynamic tool creation, scaffolding, and integration into the agency.
+- `chief_architect_agent/` strategic oversight agent with self-directed task creation and system optimization.
+- `learning_agent/` analyzes session transcripts and consolidates patterns into institutional memory.
+- `merger_agent/` handles integration, pull request management, and final verification of changes.
+- `work_completion_summary_agent/` provides concise audio summaries and suggests next steps.
+- `tests/` holds pytest coverage for tools, agents, and integration flows; follow its layout for new scenarios.
 - `subagent_template/` scaffolds new agents, while shared adapters sit in `tools/` and `agents/` for reuse.
 
 ## Build, Test, and Development Commands
