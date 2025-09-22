@@ -6,6 +6,7 @@ thread-safety, and multiple backoff strategies for handling transient failures.
 """
 
 import asyncio
+import logging
 import random
 import signal
 import threading
@@ -166,6 +167,61 @@ class LinearBackoffStrategy(RetryStrategy):
         return attempt < self.max_attempts
 
 
+class CircuitBreakerOpenError(RuntimeError):
+    pass
+
+
+class CircuitBreaker:
+    """Simple circuit breaker to prevent thrashing on repeated failures."""
+
+    def __init__(self, failure_threshold: int = 3, recovery_timeout: float = 5.0):
+        self.failure_threshold = max(1, int(failure_threshold))
+        self.recovery_timeout = float(recovery_timeout)
+        self.state = "closed"
+        self.failure_count = 0
+        self.opened_at: Optional[float] = None
+        self._logger = logging.getLogger("shared.retry_controller")
+
+    def allow_request(self) -> bool:
+        if self.state == "closed":
+            return True
+        if self.state == "open":
+            # Stay open until timeout expires
+            if self.opened_at is not None and (time.time() - self.opened_at) >= self.recovery_timeout:
+                # Move to half-open (allow a probe)
+                self.state = "half_open"
+                self._logger.info("circuit_half_open", extra={
+                    "failure_threshold": self.failure_threshold,
+                    "recovery_timeout": self.recovery_timeout,
+                })
+                return True
+            return False
+        if self.state == "half_open":
+            # Allow a single probe (the controller will call record_success/failure)
+            return True
+        return True
+
+    def record_success(self):
+        # Reset to closed on any success
+        prev_state = self.state
+        self.state = "closed"
+        self.failure_count = 0
+        self.opened_at = None
+        if prev_state != "closed":
+            self._logger.info("circuit_closed")
+
+    def record_failure(self):
+        self.failure_count += 1
+        self._logger.info("circuit_failure", extra={"failure_count": self.failure_count})
+        if self.failure_count >= self.failure_threshold:
+            self.state = "open"
+            self.opened_at = time.time()
+            self._logger.warning("circuit_open", extra={
+                "failure_threshold": self.failure_threshold,
+                "recovery_timeout": self.recovery_timeout,
+            })
+
+
 class RetryController:
     """
     Main retry controller that orchestrates retry logic with memory integration.
@@ -178,7 +234,8 @@ class RetryController:
         self,
         strategy: RetryStrategy,
         agent_context: Optional[Any] = None,
-        timeout: Optional[float] = None
+        timeout: Optional[float] = None,
+        circuit_breaker: Optional[CircuitBreaker] = None,
     ):
         """
         Initialize retry controller.
@@ -187,10 +244,12 @@ class RetryController:
             strategy: Retry strategy to use
             agent_context: Optional agent context for memory integration
             timeout: Optional timeout for retry operations
+            circuit_breaker: Optional CircuitBreaker instance for thrash protection
         """
         self.strategy = strategy
         self.agent_context = agent_context
         self.timeout = timeout
+        self.circuit_breaker = circuit_breaker
 
         # Thread-safe statistics tracking
         self._stats_lock = threading.Lock()
@@ -220,6 +279,12 @@ class RetryController:
         start_time = time.time()
         attempt = 0
         last_exception = None
+
+        # Circuit breaker guard
+        if self.circuit_breaker and not self.circuit_breaker.allow_request():
+            logging.getLogger("shared.retry_controller").warning("circuit_blocked_request")
+            self._record_memory_event("circuit_open", {"timeout": self.circuit_breaker.recovery_timeout})
+            raise CircuitBreakerOpenError("Circuit breaker open. Try later.")
 
         with self._stats_lock:
             self._stats["total_executions"] += 1
@@ -257,6 +322,9 @@ class RetryController:
                         "attempt": attempt,
                         "total_attempts": attempt + 1
                     })
+                # Reset breaker on any success
+                if self.circuit_breaker:
+                    self.circuit_breaker.record_success()
 
                 return result
 
@@ -266,6 +334,10 @@ class RetryController:
                     raise TimeoutError("Retry operation timed out")
 
                 last_exception = e
+
+                # Update breaker on failure
+                if self.circuit_breaker:
+                    self.circuit_breaker.record_failure()
 
                 # Check if we should retry
                 if not self.strategy.should_retry(attempt, e):

@@ -221,3 +221,8 @@ Thumbs.db
 *firebase-adminsdk*.json
 *service-account*.json
 gothic-point-*.json
+
+# Agency session logs and runtime data
+logs/sessions/
+logs/handoffs/
+logs/snapshots/

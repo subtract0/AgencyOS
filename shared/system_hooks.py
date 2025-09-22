@@ -631,6 +631,158 @@ def create_composite_hook(hooks: List[AgentHooks]):
     return CompositeHook(hooks)
 
 
+# ============ New Hooks: Intent Router, Tool Wrapper (Retry), Mutation Snapshot ============
+from .retry_controller import RetryController, ExponentialBackoffStrategy, CircuitBreaker
+import os
+import shutil
+from typing import Any
+
+
+class IntentRouterHook(AgentHooks):
+    """Detect intent keywords and set a routing hint in context.
+
+    If user input contains 'tts', 'tts summary', or 'audio summary', set
+    context flag route_to_agent = 'WorkCompletionSummaryAgent'.
+    """
+
+    def __init__(self):
+        self.triggers = {"tts", "tts summary", "audio summary"}
+
+    async def on_start(self, context: RunContextWrapper, agent) -> None:
+        try:
+            text = None
+            # Try common keys
+            for key in ("latest_user_prompt", "user_input", "prompt", "message"):
+                try:
+                    if hasattr(context, "context"):
+                        text = context.context.get(key, None)
+                        if text:
+                            break
+                except Exception:
+                    continue
+            if not text:
+                return
+            lowered = str(text).lower()
+            if any(t in lowered for t in self.triggers):
+                try:
+                    context.context.set("route_to_agent", "WorkCompletionSummaryAgent")
+                except Exception:
+                    pass
+        except Exception:
+            # Never block flow on router failures
+            return
+
+
+class ToolWrapperHook(AgentHooks):
+    """Wrap tool.run with RetryController to handle transient errors."""
+
+    def __init__(self, initial_delay: float = 0.01, max_attempts: int = 2, breaker_threshold: int = 3, breaker_timeout: float = 5.0):
+        strategy = ExponentialBackoffStrategy(initial_delay=initial_delay, jitter=False, max_attempts=max_attempts)
+        breaker = CircuitBreaker(failure_threshold=breaker_threshold, recovery_timeout=breaker_timeout)
+        self.controller = RetryController(strategy=strategy, circuit_breaker=breaker)
+
+    async def on_tool_start(self, context: RunContextWrapper, agent, tool) -> None:
+        try:
+            if getattr(tool, "_wrapped_by_retry", False):
+                return
+            run = getattr(tool, "run", None)
+            if callable(run):
+                def wrapped_run(*args, **kwargs):
+                    return self.controller.execute_with_retry(run, *args, **kwargs)
+                setattr(tool, "run", wrapped_run)
+                setattr(tool, "_wrapped_by_retry", True)
+        except Exception:
+            # Do not block if wrapping fails
+            return
+
+
+class MutationSnapshotHook(AgentHooks):
+    """Create file snapshots before mutating tools (Write/Edit/MultiEdit)."""
+
+    async def on_tool_start(self, context: RunContextWrapper, agent, tool) -> None:
+        try:
+            name = getattr(tool, "name", tool.__class__.__name__)
+            if name not in {"Write", "Edit", "MultiEdit"}:
+                return
+            files = self._extract_target_files(tool)
+            if not files:
+                return
+            self._snapshot_files(files)
+        except Exception:
+            return
+
+    def _extract_target_files(self, tool: Any) -> list:
+        paths = []
+        # Common field
+        fp = getattr(tool, "file_path", None)
+        if isinstance(fp, str):
+            paths.append(fp)
+        # MultiEdit operations support
+        ops = getattr(tool, "operations", None)
+        try:
+            if ops:
+                for op in ops:
+                    p = getattr(op, "file_path", None) or (op.get("file_path") if isinstance(op, dict) else None)
+                    if isinstance(p, str):
+                        paths.append(p)
+        except Exception:
+            pass
+        # Filter unique, existing files under repo root
+        root = os.getcwd()
+        uniq = []
+        for p in paths:
+            try:
+                abspath = os.path.abspath(p)
+                if not abspath.startswith(root):
+                    continue
+                if os.path.isfile(abspath) and abspath not in uniq:
+                    uniq.append(abspath)
+            except Exception:
+                continue
+        return uniq
+
+    def _snapshot_files(self, files: list) -> None:
+        from datetime import datetime
+        root = os.getcwd()
+        base = os.path.join(root, "logs", "snapshots", datetime.utcnow().strftime("%Y%m%d_%H%M%S_%f"))
+        files_dir = os.path.join(base, "files")
+        os.makedirs(files_dir, exist_ok=True)
+        manifest = {"files": []}
+        for f in files:
+            try:
+                rel = os.path.relpath(f, root)
+                dst = os.path.join(files_dir, rel)
+                os.makedirs(os.path.dirname(dst), exist_ok=True)
+                shutil.copy2(f, dst)
+                manifest["files"].append({"path": rel})
+            except Exception:
+                continue
+        try:
+            with open(os.path.join(base, "manifest.json"), "w", encoding="utf-8") as out:
+                import json
+                json.dump(manifest, out, indent=2)
+        except Exception:
+            pass
+
+
+# Factories for new hooks
+
+def create_intent_router_hook():
+    return IntentRouterHook()
+
+
+def create_tool_wrapper_hook():
+    # Allow env tuning without breaking defaults
+    threshold = int(os.getenv("AGENCY_BREAKER_THRESHOLD", "3"))
+    timeout = float(os.getenv("AGENCY_BREAKER_TIMEOUT", "5.0"))
+    max_attempts = int(os.getenv("AGENCY_RETRY_MAX_ATTEMPTS", "2"))
+    return ToolWrapperHook(max_attempts=max_attempts, breaker_threshold=threshold, breaker_timeout=timeout)
+
+
+def create_mutation_snapshot_hook():
+    return MutationSnapshotHook()
+
+
 if __name__ == "__main__":
     # Test the hook creation
     print("Testing hook creation...")
