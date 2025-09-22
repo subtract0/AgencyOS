@@ -12,6 +12,10 @@ from .read import Read
 from .todo_write import TodoWrite
 from .write import Write
 from .claude_web_search import ClaudeWebSearch
+from .context_handoff import ContextMessageHandoff
+from .context_handoff import ContextMessageHandoff as HandoffWithContext
+from .undo_snapshot import WorkspaceSnapshot, WorkspaceUndo
+from .handoff_context_read import HandoffContextRead
 
 __all__ = [
     "Bash",
@@ -28,4 +32,9 @@ __all__ = [
     "TodoWrite",
     "Git",
     "ClaudeWebSearch",
+    "ContextMessageHandoff",
+    "HandoffWithContext",
+    "WorkspaceSnapshot",
+    "WorkspaceUndo",
+    "HandoffContextRead",
 ]

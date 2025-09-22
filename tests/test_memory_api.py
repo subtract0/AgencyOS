@@ -481,14 +481,29 @@ class TestIntegration:
 
     def test_fallback_messages_logged(self, caplog):
         """Test that fallback messages are properly logged."""
-        with patch.dict(os.environ, {}, clear=True):
-            _ = FirestoreStore()
+        import logging
+
+        # Clear any previous log records and set up fresh capture
+        caplog.clear()
+
+        # Ensure we capture from the right logger
+        with caplog.at_level(logging.WARNING, logger="agency_memory.firestore_store"):
+            with patch.dict(os.environ, {}, clear=True):
+                _ = FirestoreStore()
 
             # Check that fallback message was logged
-            assert any(
-                "falling back to inmemorystore" in record.message.lower()
-                for record in caplog.records
-            )
+            fallback_messages = [
+                record.message for record in caplog.records
+                if "falling back to inmemorystore" in record.message.lower()
+            ]
+
+            # More detailed assertion with debugging info
+            if not fallback_messages:
+                print(f"Captured {len(caplog.records)} log records:")
+                for i, record in enumerate(caplog.records):
+                    print(f"  {i}: {record.levelname} - {record.name} - {record.message}")
+
+            assert len(fallback_messages) > 0, f"Expected fallback message not found. Captured {len(caplog.records)} records."
 
 
 if __name__ == "__main__":
