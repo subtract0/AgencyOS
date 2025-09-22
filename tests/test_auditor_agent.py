@@ -140,7 +140,7 @@ def test_auditor_agent_initialization():
 
         assert agent is not None
         assert agent.name == "AuditorAgent"
-        assert "Quality assurance agent" in agent.description
+        assert "quality assurance specialist" in agent.description
         # Check that agent has tools (specific tool verification is complex due to wrapping)
         assert len(agent.tools) > 0
 

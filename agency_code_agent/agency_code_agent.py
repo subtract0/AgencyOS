@@ -75,7 +75,7 @@ def create_agency_code_agent(
 
     return Agent(
         name="AgencyCodeAgent",
-        description="An interactive CLI tool that helps users with software engineering tasks.",
+        description="The primary software engineer. Responsible for writing, editing, and debugging code based on detailed plans from the PlannerAgent. Executes hands-on file system operations and is the main 'doer' in the agency.",
         instructions=instructions,
         tools_folder=os.path.join(current_dir, "tools"),
         model=get_model_instance(model),
