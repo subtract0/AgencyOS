@@ -150,6 +150,7 @@ def aggregate(
     since: str = "1h",
     telemetry_dir: Optional[str] = None,
     now: Optional[datetime] = None,
+    run_id: Optional[str] = None,
 ) -> Dict[str, Any]:
     """Aggregate telemetry events into a dashboard-friendly summary.
 
@@ -178,6 +179,10 @@ def aggregate(
     by_model: Dict[str, Dict[str, Any]] = {}
 
     for evt in _load_events_since(dir_path, since_dt):
+        # Filter by run_id if specified
+        if run_id is not None and evt.get("run_id") != run_id:
+            continue
+
         total_events += 1
         evt_type = evt.get("type")
         agent = evt.get("agent") or "unknown"
@@ -317,6 +322,47 @@ def aggregate(
     }
 
     return summary
+
+
+def list_events(
+    since: str = "1h",
+    telemetry_dir: Optional[str] = None,
+    now: Optional[datetime] = None,
+    run_id: Optional[str] = None,
+    grep: Optional[str] = None,
+    limit: int = 200,
+) -> List[Dict[str, Any]]:
+    """List raw telemetry events with optional filtering."""
+    import re
+
+    now_dt = now or _iso_now()
+    since_dt = _parse_since(since, now=now_dt)
+    dir_path = _telemetry_dir(telemetry_dir)
+
+    events = []
+    grep_pattern = re.compile(grep, re.IGNORECASE) if grep else None
+
+    for evt in _load_events_since(dir_path, since_dt):
+        # Filter by run_id if specified
+        if run_id is not None and evt.get("run_id") != run_id:
+            continue
+
+        # Filter by grep pattern if specified
+        if grep_pattern is not None:
+            # Remove datetime object before JSON serialization for grep
+            evt_for_grep = {k: v for k, v in evt.items() if k != "_ts_dt"}
+            event_text = json.dumps(evt_for_grep, ensure_ascii=False)
+            if not grep_pattern.search(event_text):
+                continue
+
+        # Remove internal _ts_dt field before returning
+        evt_clean = {k: v for k, v in evt.items() if k != "_ts_dt"}
+        events.append(evt_clean)
+
+        if len(events) >= limit:
+            break
+
+    return events
 
 
 # Backward-compatible stub retained for any callers using aggregate_basic

@@ -17,7 +17,7 @@ def _write_events(dir_path: str, date: datetime, events: list[dict]) -> None:
 
 def test_heartbeat_running_detection(tmp_path, monkeypatch):
     now = datetime(2025, 1, 1, 0, 0, 20, tzinfo=timezone.utc)
-    base = now
+    base = now - timedelta(seconds=20)
     dir_path = tmp_path / "telemetry"
 
     # Task started at t=0, heartbeat at t=10, unfinished
