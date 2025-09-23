@@ -318,9 +318,9 @@ class MemoryIntegrationHook(AgentHooks):
                 logger.debug("No session memories to create transcript")
                 return
 
-            # Ensure logs/sessions directory exists
-            transcript_dir = "/Users/am/Code/Agency/logs/sessions"
-            os.makedirs(transcript_dir, exist_ok=True)
+            # Ensure logs/sessions directory exists (env override supported)
+            base_dir = os.environ.get("AGENCY_SESSIONS_DIR") or os.path.join(os.getcwd(), "logs", "sessions")
+            os.makedirs(base_dir, exist_ok=True)
 
             # Create transcript
             transcript_path = create_session_transcript(session_memories, self.agent_context.session_id)

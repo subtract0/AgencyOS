@@ -35,8 +35,9 @@ class AnalyzeSession(BaseTool):
         try:
             # Normalize the session file path
             if not self.session_file.startswith('/'):
-                # Relative path, prepend logs/sessions
-                session_path = f"/Users/am/Code/Agency/logs/sessions/{self.session_file}"
+                # Relative path, prepend logs/sessions under project root or env override
+                base_dir = os.environ.get("AGENCY_SESSIONS_DIR") or os.path.join(os.getcwd(), "logs", "sessions")
+                session_path = os.path.join(base_dir, self.session_file)
             else:
                 session_path = self.session_file
 

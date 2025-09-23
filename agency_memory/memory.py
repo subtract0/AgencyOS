@@ -144,7 +144,13 @@ def create_session_transcript(memories: List[Dict[str, Any]], session_id: str) -
     """
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
     filename = f"{timestamp}_{session_id}.md"
-    filepath = os.path.join("/Users/am/Code/Agency/logs/sessions", filename)
+
+    # Resolve base directory: env override or ./logs/sessions relative to CWD
+    base_dir = os.environ.get("AGENCY_SESSIONS_DIR") or os.path.join(
+        os.getcwd(), "logs", "sessions"
+    )
+    filepath = os.path.join(base_dir, filename)
+
     # Ensure filepath is a concrete string even if os.path.join is monkey-patched
     if not isinstance(filepath, str):
         base = os.getenv("TMPDIR", "/tmp")

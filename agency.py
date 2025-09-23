@@ -38,6 +38,7 @@ litellm.modify_params = True
 # switch between models here
 # model = "anthropic/claude-sonnet-4-20250514"
 model = "gpt-5"
+lesser_model = "gpt-5-mini"
 
 # Create shared memory and agent context for the agency
 # This allows memory sharing between agents while maintaining backward compatibility
@@ -57,13 +58,13 @@ planner = create_planner_agent(
 )
 # coder = create_agency_code_agent(model="gpt-5", reasoning_effort="high")
 coder = create_agency_code_agent(
-    model=model, reasoning_effort="high", agent_context=shared_context
+    model=model, reasoning_effort="medium", agent_context=shared_context
 )
 auditor = create_auditor_agent(
     model=model, reasoning_effort="high", agent_context=shared_context
 )
 test_generator = create_test_generator_agent(
-    model=model, reasoning_effort="high", agent_context=shared_context
+    model=lesser_model, reasoning_effort="medium", agent_context=shared_context
 )
 subagent_example = create_subagent_example(
     model=model, reasoning_effort="high"
@@ -75,13 +76,13 @@ chief_architect = create_chief_architect_agent(
     model=model, reasoning_effort="high", agent_context=shared_context
 )
 merger = create_merger_agent(
-    model=model, reasoning_effort="high", agent_context=shared_context
+    model=lesser_model, reasoning_effort="medium", agent_context=shared_context
 )
 summary = create_work_completion_summary_agent(
-    model=model, reasoning_effort="low", agent_context=shared_context
+    model=lesser_model, reasoning_effort="low", agent_context=shared_context
 )
 toolsmith = create_toolsmith_agent(
-    model=model, reasoning_effort="high", agent_context=shared_context
+    model=model, reasoning_effort="medium", agent_context=shared_context
 )
 
 agency = Agency(
@@ -95,6 +96,7 @@ agency = Agency(
         (planner, coder, SendMessageHandoff),
         (coder, planner, SendMessageHandoff),
         (planner, auditor, SendMessageHandoff),
+        (auditor, coder, SendMessageHandoff),
         (auditor, test_generator, SendMessageHandoff),
         (test_generator, coder, SendMessageHandoff),
         (coder, merger, SendMessageHandoff),
