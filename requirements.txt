@@ -10,5 +10,11 @@ pydantic>=2.0.0
 pytest>=6.0.0
 pytest-asyncio>=0.21.0
 requests>=2.25.0
+# Dependencies for self-healing system
+numpy>=1.21.0
+scikit-learn>=1.0.0
+scipy>=1.7.0
+flask>=2.0.0
+plotly>=5.0.0
 # Install after the initial requirements install to fix a bug with anthropic models in litellm
 # git+https://github.com/openai/openai-agents-python.git@main

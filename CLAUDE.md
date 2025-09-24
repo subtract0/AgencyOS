@@ -4,9 +4,21 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Development Commands
 
+### Quick Start with CLI Helper
+```bash
+./agency_cli setup    # Complete environment setup
+./agency_cli test     # Run comprehensive test suite
+./agency_cli demo     # Autonomous healing demonstration
+./agency_cli run      # Start the Agency (requires sudo on macOS)
+./agency_cli health   # System health and healing status
+./agency_cli logs     # View recent logs and activities
+```
+
 ### Running the Agency
 ```bash
-sudo python agency.py  # Terminal demo - requires sudo on macOS for filesystem access
+sudo python agency.py          # Direct terminal demo - requires sudo on macOS for filesystem access
+./agency_cli run              # CLI helper (recommended)
+python demo_autonomous_healing.py  # Autonomous healing demonstration
 ```
 
 ### Testing
@@ -59,6 +71,10 @@ pre-commit run --all-files  # Run all pre-commit hooks
 
 ### Initial Setup
 ```bash
+# Recommended: Use CLI helper for complete setup
+./agency_cli setup
+
+# Manual setup (if needed)
 python3.13 -m venv .venv
 source .venv/bin/activate
 python -m pip install --upgrade pip
@@ -67,19 +83,59 @@ python -m pip install -r requirements.txt
 python -m pip install git+https://github.com/openai/openai-agents-python.git@main
 ```
 
+## 🏥 Autonomous Healing System
+
+### Core Capability
+The Agency features **undeniable autonomous healing** that detects, analyzes, and fixes software errors without human intervention.
+
+### NoneType Error Auto-Fix
+**Complete workflow**: Detection → LLM Analysis → Fix Application → Test Verification → Auto-Commit
+
+#### Key Components
+- **NoneTypeErrorDetector**: Automatic error detection from logs and runtime failures
+- **LLMNoneTypeFixer**: GPT-5 powered intelligent fix generation with context awareness
+- **ApplyAndVerifyPatch**: Autonomous patch application with complete safety verification
+- **AutonomousHealingOrchestrator**: End-to-end coordination of the healing process
+
+#### Safety Mechanisms
+- **Test-Driven Verification**: No changes without 100% test success rate
+- **Automatic Rollback**: Failed fixes immediately reverted to maintain system integrity
+- **Constitutional Compliance**: All healing actions follow governance principles
+- **Complete Audit Trail**: Every autonomous action logged and traceable
+
+### Demonstration
+```bash
+# See autonomous healing in action
+./agency_cli demo
+python demo_autonomous_healing.py
+
+# Monitor healing status
+./agency_cli health
+./agency_cli logs
+```
+
 ## Architecture Overview
 
-### Multi-Agent System (7 Agents)
-The Agency implements a sophisticated multi-agent architecture using the Agency Swarm framework:
+### Simplified Multi-Agent System (10 Agents)
+The Agency implements a **focused, constitutional multi-agent architecture** using the Agency Swarm framework:
 
 **Core Agents:**
-- **ChiefArchitectAgent** (`chief_architect_agent/`): Strategic oversight, reviews audits and VectorStore knowledge, creates self-directed tasks
-- **AgencyCodeAgent** (`agency_code_agent/`): Primary developer agent with 16 tools for file operations, search, and system commands
-- **PlannerAgent** (`planner_agent/`): Strategic planning using spec-kit methodology for formal specifications and plans
-- **AuditorAgent** (`auditor_agent/`): CodeHealer integration analyzing test quality using NECESSARY pattern
-- **TestGeneratorAgent** (`test_generator_agent/`): Creates NECESSARY-compliant tests from audit reports
-- **LearningAgent** (`learning_agent/`): Analyzes session transcripts and consolidates patterns into institutional memory
-- **MergerAgent** (`merger_agent/`): Handles integration and pull request management
+- **ChiefArchitectAgent**: Strategic oversight, self-directed task creation, and architectural guidance
+- **AgencyCodeAgent**: Primary development agent with comprehensive toolset for implementation
+- **PlannerAgent**: Strategic planning using spec-kit methodology for formal specifications
+- **AuditorAgent**: Quality analysis using NECESSARY pattern and Q(T) scoring
+- **TestGeneratorAgent**: NECESSARY-compliant test generation from audit reports
+- **LearningAgent**: Pattern analysis and institutional memory with VectorStore integration
+- **MergerAgent**: Integration and pull request management
+- **QualityEnforcerAgent** ⭐: **Constitutional compliance and autonomous healing core**
+- **ToolsmithAgent**: Tool development and enhancement
+- **WorkCompletionSummaryAgent**: Intelligent task summaries and completion reporting
+
+**Key Simplifications:**
+- Removed over-engineered agents (BottleneckOptimizer, CostOptimizer, ConstitutionalEnforcement)
+- Consolidated responsibilities into focused, single-purpose agents
+- Streamlined communication flows from 32 to 18 essential patterns
+- Enhanced QualityEnforcerAgent with complete autonomous healing capabilities
 
 **Communication Flow:**
 ```

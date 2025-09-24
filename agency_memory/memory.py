@@ -98,6 +98,10 @@ class InMemoryStore(MemoryStore):
         logger.debug(f"Found {len(matches)} memories matching tags: {tags}")
         return matches
 
+    def get(self, key: str) -> Optional[Dict[str, Any]]:
+        """Get a specific memory by key."""
+        return self._memories.get(key)
+
     def get_all(self) -> List[Dict[str, Any]]:
         """Return all memories sorted by timestamp (newest first)."""
         all_memories = list(self._memories.values())
@@ -118,13 +122,25 @@ class Memory:
         """Initialize with store backend. Defaults to InMemoryStore."""
         self._store = store or InMemoryStore()
 
-    def store(self, key: str, content: Any, tags: List[str]) -> None:
-        """Store content with key and tags."""
+    def store(self, key: str, content: Any, tags: List[str] = None) -> None:
+        """Store content with key and optional tags."""
+        tags = tags or []  # Default to empty list if not provided
         self._store.store(key, content, tags)
 
     def search(self, tags: List[str]) -> List[Dict[str, Any]]:
         """Search memories by tags."""
         return self._store.search(tags)
+
+    def get(self, key: str) -> Optional[Dict[str, Any]]:
+        """Get a specific memory by key."""
+        if hasattr(self._store, 'get'):
+            return self._store.get(key)
+        # Fallback: search all and find by key
+        all_memories = self.get_all()
+        for memory in all_memories:
+            if memory.get('key') == key:
+                return memory
+        return None
 
     def get_all(self) -> List[Dict[str, Any]]:
         """Get all memories."""
