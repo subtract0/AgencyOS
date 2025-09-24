@@ -1,6 +1,6 @@
-# 👨‍💻 Agency Code
+# 👨‍💻 Monastery Agency
 
-Fully open sourced version of Claude Code built with [Agency Swarm](https://agency-swarm.ai/welcome/overview) framework.
+Based on a open source version of Claude Code VRSEN/Agency-Code built with [Agency Swarm](https://agency-swarm.ai/welcome/overview) framework.
 
 ## 🔥 Key features
 
@@ -167,6 +167,3 @@ Before starting the task make sure to first use the WebSearch tool to read the r
 **Important**: The agency-swarm integration must **actually** work. Do not use any placeholder messages and do not come back to me until it's fully tested and completed. Run the backend server and test the integration.
 ```
 
-## Contributing
-
-We'll be supporting and improving this repo in the future. Any contributions are welcome! Please feel free to submit a pull request.
