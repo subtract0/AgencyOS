@@ -15,7 +15,7 @@ Based on a open source version of Claude Code VRSEN/Agency-Code built with [Agen
 
 ## 🏥 CodeHealer - Test Quality Automation
 
-The Agency has been enhanced with **CodeHealer** capabilities - a specialized test quality automation system:
+The Monastery Agency has been enhanced with **CodeHealer** capabilities - a specialized test quality automation system:
 
 ### AuditorAgent
 - Analyzes codebases using the NECESSARY pattern (9 universal test properties)
@@ -43,7 +43,7 @@ The 9 universal properties of high-quality tests:
 
 ## 🧠 Memory API & Learning
 
-Agency Code includes a comprehensive memory system that enables agents to learn and retain information across sessions:
+The Monastery Agency includes a comprehensive memory system that enables agents to learn and retain information across sessions:
 
 ### Memory Backends
 - **In-Memory Store** (default): Fast, session-based memory that doesn't persist between runs
