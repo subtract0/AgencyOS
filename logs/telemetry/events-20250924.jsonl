@@ -1,0 +1,766 @@
+{"type": "cli_command_started", "command": "health", "args": {}, "started_at": 1758675154.592053, "ts": "2025-09-24T00:52:34.592Z"}
+{"type": "cli_command_finished", "command": "health", "status": "success", "finished_at": 1758675154.827004, "duration_s": 0.23495101928710938, "ts": "2025-09-24T00:52:34.827Z"}
+{"type": "cli_command_started", "command": "health", "args": {}, "started_at": 1758675671.461285, "ts": "2025-09-24T01:01:11.461Z"}
+{"type": "cli_command_finished", "command": "health", "status": "success", "finished_at": 1758675671.8137338, "duration_s": 0.3524487018585205, "ts": "2025-09-24T01:01:11.813Z"}
+{"type": "cli_command_started", "command": "logs", "args": {}, "started_at": 1758675674.4918048, "ts": "2025-09-24T01:01:14.491Z"}
+{"type": "cli_command_finished", "command": "logs", "status": "success", "finished_at": 1758675674.492845, "duration_s": 0.0010402202606201172, "ts": "2025-09-24T01:01:14.492Z"}
+{"type": "cli_command_started", "command": "test", "args": {}, "started_at": 1758675677.209613, "ts": "2025-09-24T01:01:17.209Z"}
+{"type": "cli_command_started", "command": "health", "args": {}, "started_at": 1758675820.293257, "ts": "2025-09-24T01:03:40.293Z"}
+{"type": "cli_command_finished", "command": "health", "status": "success", "finished_at": 1758675820.6514502, "duration_s": 0.35819315910339355, "ts": "2025-09-24T01:03:40.651Z"}
+{"type": "cli_command_started", "command": "logs", "args": {}, "started_at": 1758675823.546463, "ts": "2025-09-24T01:03:43.546Z"}
+{"type": "cli_command_finished", "command": "logs", "status": "success", "finished_at": 1758675823.5474718, "duration_s": 0.001008749008178711, "ts": "2025-09-24T01:03:43.547Z"}
+{"type": "cli_command_started", "command": "test", "args": {}, "started_at": 1758675826.32881, "ts": "2025-09-24T01:03:46.328Z"}
+{"type": "cli_command_started", "command": "demo", "args": {}, "started_at": 1758675886.417883, "ts": "2025-09-24T01:04:46.417Z"}
+{"type": "cli_command_finished", "command": "demo", "status": "success", "finished_at": 1758675886.447736, "duration_s": 0.029853105545043945, "ts": "2025-09-24T01:04:46.447Z"}
+{"type": "cli_command_started", "command": "health", "args": {}, "started_at": 1758675970.27072, "ts": "2025-09-24T01:06:10.270Z"}
+{"type": "cli_command_finished", "command": "health", "status": "success", "finished_at": 1758675970.646512, "duration_s": 0.3757920265197754, "ts": "2025-09-24T01:06:10.646Z"}
+{"type": "cli_command_started", "command": "logs", "args": {}, "started_at": 1758675973.685308, "ts": "2025-09-24T01:06:13.685Z"}
+{"type": "cli_command_finished", "command": "logs", "status": "success", "finished_at": 1758675973.686296, "duration_s": 0.000988006591796875, "ts": "2025-09-24T01:06:13.686Z"}
+{"type": "cli_command_started", "command": "test", "args": {}, "started_at": 1758675976.815445, "ts": "2025-09-24T01:06:16.815Z"}
+{"type": "cli_command_started", "command": "demo", "args": {}, "started_at": 1758676036.849152, "ts": "2025-09-24T01:07:16.849Z"}
+{"type": "cli_command_finished", "command": "demo", "status": "success", "finished_at": 1758676036.881504, "duration_s": 0.03235197067260742, "ts": "2025-09-24T01:07:16.881Z"}
+{"type": "cli_command_started", "command": "health", "args": {}, "started_at": 1758676141.8724859, "ts": "2025-09-24T01:09:01.872Z"}
+{"type": "cli_command_finished", "command": "health", "status": "success", "finished_at": 1758676142.4736152, "duration_s": 0.6011292934417725, "ts": "2025-09-24T01:09:02.473Z"}
+{"type": "cli_command_started", "command": "logs", "args": {}, "started_at": 1758676146.82051, "ts": "2025-09-24T01:09:06.820Z"}
+{"type": "cli_command_finished", "command": "logs", "status": "success", "finished_at": 1758676146.82197, "duration_s": 0.0014600753784179688, "ts": "2025-09-24T01:09:06.821Z"}
+{"type": "cli_command_started", "command": "test", "args": {}, "started_at": 1758676150.5575511, "ts": "2025-09-24T01:09:10.557Z"}
+{"type": "cli_command_started", "command": "demo", "args": {}, "started_at": 1758676211.223061, "ts": "2025-09-24T01:10:11.223Z"}
+{"type": "cli_command_finished", "command": "demo", "status": "success", "finished_at": 1758676211.268445, "duration_s": 0.04538393020629883, "ts": "2025-09-24T01:10:11.268Z"}
+{"type": "cli_command_started", "command": "health", "args": {}, "started_at": 1758676319.22287, "ts": "2025-09-24T01:11:59.222Z"}
+{"type": "cli_command_finished", "command": "health", "status": "success", "finished_at": 1758676319.638965, "duration_s": 0.4160947799682617, "ts": "2025-09-24T01:11:59.639Z"}
+{"type": "cli_command_started", "command": "logs", "args": {}, "started_at": 1758676323.925345, "ts": "2025-09-24T01:12:03.925Z"}
+{"type": "cli_command_finished", "command": "logs", "status": "success", "finished_at": 1758676323.928982, "duration_s": 0.003637075424194336, "ts": "2025-09-24T01:12:03.929Z"}
+{"type": "cli_command_started", "command": "test", "args": {}, "started_at": 1758676328.623253, "ts": "2025-09-24T01:12:08.623Z"}
+{"type": "cli_command_started", "command": "health", "args": {}, "started_at": 1758676571.758715, "ts": "2025-09-24T01:16:11.758Z"}
+{"type": "cli_command_finished", "command": "health", "status": "success", "finished_at": 1758676572.1487591, "duration_s": 0.3900442123413086, "ts": "2025-09-24T01:16:12.148Z"}
+{"type": "cli_command_started", "command": "run", "args": {"show_reasoning": true}, "started_at": 1758676763.941677, "ts": "2025-09-24T01:19:23.941Z"}
+{"type": "cli_command_started", "command": "health", "args": {}, "started_at": 1758676994.941448, "ts": "2025-09-24T01:23:14.941Z"}
+{"type": "cli_command_finished", "command": "health", "status": "success", "finished_at": 1758676995.670084, "duration_s": 0.7286360263824463, "ts": "2025-09-24T01:23:15.670Z"}
+{"type": "cli_command_started", "command": "logs", "args": {}, "started_at": 1758677000.2203672, "ts": "2025-09-24T01:23:20.220Z"}
+{"type": "cli_command_finished", "command": "logs", "status": "success", "finished_at": 1758677000.221612, "duration_s": 0.0012447834014892578, "ts": "2025-09-24T01:23:20.221Z"}
+{"type": "cli_command_started", "command": "test", "args": {}, "started_at": 1758677004.5231118, "ts": "2025-09-24T01:23:24.523Z"}
+{"type": "cli_command_started", "command": "demo", "args": {}, "started_at": 1758677065.079087, "ts": "2025-09-24T01:24:25.079Z"}
+{"type": "cli_command_finished", "command": "demo", "status": "success", "finished_at": 1758677065.1330402, "duration_s": 0.05395317077636719, "ts": "2025-09-24T01:24:25.133Z"}
+{"type": "cli_command_started", "command": "health", "args": {}, "started_at": 1758677165.517189, "ts": "2025-09-24T01:26:05.517Z"}
+{"type": "cli_command_finished", "command": "health", "status": "success", "finished_at": 1758677166.308863, "duration_s": 0.7916738986968994, "ts": "2025-09-24T01:26:06.308Z"}
+{"type": "cli_command_started", "command": "logs", "args": {}, "started_at": 1758677172.0095842, "ts": "2025-09-24T01:26:12.009Z"}
+{"type": "cli_command_finished", "command": "logs", "status": "success", "finished_at": 1758677172.0117528, "duration_s": 0.0021686553955078125, "ts": "2025-09-24T01:26:12.011Z"}
+{"type": "cli_command_started", "command": "test", "args": {}, "started_at": 1758677179.452215, "ts": "2025-09-24T01:26:19.452Z"}
+{"type": "cli_command_started", "command": "health", "args": {}, "started_at": 1758677362.588765, "ts": "2025-09-24T01:29:22.588Z"}
+{"type": "cli_command_finished", "command": "health", "status": "success", "finished_at": 1758677363.2140229, "duration_s": 0.6252579689025879, "ts": "2025-09-24T01:29:23.214Z"}
+{"type": "cli_command_started", "command": "logs", "args": {}, "started_at": 1758677370.324833, "ts": "2025-09-24T01:29:30.324Z"}
+{"type": "cli_command_finished", "command": "logs", "status": "success", "finished_at": 1758677370.327169, "duration_s": 0.0023360252380371094, "ts": "2025-09-24T01:29:30.327Z"}
+{"type": "cli_command_started", "command": "test", "args": {}, "started_at": 1758677378.5733702, "ts": "2025-09-24T01:29:38.573Z"}
+{"type": "cli_command_started", "command": "health", "args": {}, "started_at": 1758678075.328552, "ts": "2025-09-24T01:41:15.328Z"}
+{"type": "cli_command_finished", "command": "health", "status": "success", "finished_at": 1758678075.66488, "duration_s": 0.33632802963256836, "ts": "2025-09-24T01:41:15.664Z"}
+{"type": "cli_command_started", "command": "logs", "args": {}, "started_at": 1758678078.306879, "ts": "2025-09-24T01:41:18.306Z"}
+{"type": "cli_command_finished", "command": "logs", "status": "success", "finished_at": 1758678078.307831, "duration_s": 0.0009520053863525391, "ts": "2025-09-24T01:41:18.307Z"}
+{"type": "cli_command_started", "command": "test", "args": {}, "started_at": 1758678080.9250839, "ts": "2025-09-24T01:41:20.925Z"}
+{"type": "cli_command_finished", "command": "test", "status": "success", "finished_at": 1758678080.95004, "duration_s": 0.024956226348876953, "ts": "2025-09-24T01:41:20.950Z"}
+{"type": "cli_command_started", "command": "demo", "args": {}, "started_at": 1758678083.573753, "ts": "2025-09-24T01:41:23.573Z"}
+{"type": "cli_command_finished", "command": "demo", "status": "success", "finished_at": 1758678083.599158, "duration_s": 0.025404930114746094, "ts": "2025-09-24T01:41:23.599Z"}
+{"type": "cli_command_started", "command": "health", "args": {}, "started_at": 1758705557.648437, "ts": "2025-09-24T09:19:17.648Z"}
+{"type": "cli_command_finished", "command": "health", "status": "success", "finished_at": 1758705557.8985229, "duration_s": 0.25008583068847656, "ts": "2025-09-24T09:19:17.898Z"}
+{"type": "cli_command_started", "command": "health", "args": {}, "started_at": 1758706845.8983161, "ts": "2025-09-24T09:40:45.898Z"}
+{"type": "cli_command_finished", "command": "health", "status": "success", "finished_at": 1758706846.233293, "duration_s": 0.3349769115447998, "ts": "2025-09-24T09:40:46.233Z"}
+{"type": "cli_command_started", "command": "logs", "args": {}, "started_at": 1758706848.872948, "ts": "2025-09-24T09:40:48.872Z"}
+{"type": "cli_command_finished", "command": "logs", "status": "success", "finished_at": 1758706848.873879, "duration_s": 0.0009310245513916016, "ts": "2025-09-24T09:40:48.873Z"}
+{"type": "cli_command_started", "command": "test", "args": {}, "started_at": 1758706851.4965749, "ts": "2025-09-24T09:40:51.496Z"}
+{"type": "cli_command_finished", "command": "test", "status": "success", "finished_at": 1758706851.5210571, "duration_s": 0.024482250213623047, "ts": "2025-09-24T09:40:51.521Z"}
+{"type": "cli_command_started", "command": "demo", "args": {}, "started_at": 1758706854.1389508, "ts": "2025-09-24T09:40:54.138Z"}
+{"type": "cli_command_finished", "command": "demo", "status": "success", "finished_at": 1758706854.164822, "duration_s": 0.02587127685546875, "ts": "2025-09-24T09:40:54.164Z"}
+{"type": "cli_command_started", "command": "health", "args": {}, "started_at": 1758706877.723617, "ts": "2025-09-24T09:41:17.723Z"}
+{"type": "cli_command_finished", "command": "health", "status": "success", "finished_at": 1758706878.061244, "duration_s": 0.33762693405151367, "ts": "2025-09-24T09:41:18.061Z"}
+{"type": "cli_command_started", "command": "logs", "args": {}, "started_at": 1758706880.678547, "ts": "2025-09-24T09:41:20.678Z"}
+{"type": "cli_command_finished", "command": "logs", "status": "success", "finished_at": 1758706880.679567, "duration_s": 0.001020193099975586, "ts": "2025-09-24T09:41:20.679Z"}
+{"type": "cli_command_started", "command": "test", "args": {}, "started_at": 1758706883.2924302, "ts": "2025-09-24T09:41:23.292Z"}
+{"type": "cli_command_finished", "command": "test", "status": "success", "finished_at": 1758706883.3181078, "duration_s": 0.02567768096923828, "ts": "2025-09-24T09:41:23.318Z"}
+{"type": "cli_command_started", "command": "demo", "args": {}, "started_at": 1758706885.928803, "ts": "2025-09-24T09:41:25.928Z"}
+{"type": "cli_command_finished", "command": "demo", "status": "success", "finished_at": 1758706885.953886, "duration_s": 0.025083065032958984, "ts": "2025-09-24T09:41:25.953Z"}
+{"type": "cli_command_started", "command": "health", "args": {}, "started_at": 1758706924.49597, "ts": "2025-09-24T09:42:04.495Z"}
+{"type": "cli_command_finished", "command": "health", "status": "success", "finished_at": 1758706924.8298502, "duration_s": 0.3338801860809326, "ts": "2025-09-24T09:42:04.829Z"}
+{"type": "cli_command_started", "command": "logs", "args": {}, "started_at": 1758706927.468158, "ts": "2025-09-24T09:42:07.468Z"}
+{"type": "cli_command_finished", "command": "logs", "status": "success", "finished_at": 1758706927.469096, "duration_s": 0.0009379386901855469, "ts": "2025-09-24T09:42:07.469Z"}
+{"type": "cli_command_started", "command": "test", "args": {}, "started_at": 1758706930.104481, "ts": "2025-09-24T09:42:10.104Z"}
+{"type": "cli_command_finished", "command": "test", "status": "success", "finished_at": 1758706930.129327, "duration_s": 0.02484607696533203, "ts": "2025-09-24T09:42:10.129Z"}
+{"type": "cli_command_started", "command": "demo", "args": {}, "started_at": 1758706932.760027, "ts": "2025-09-24T09:42:12.760Z"}
+{"type": "cli_command_finished", "command": "demo", "status": "success", "finished_at": 1758706932.785161, "duration_s": 0.02513408660888672, "ts": "2025-09-24T09:42:12.785Z"}
+{"type": "cli_command_started", "command": "health", "args": {}, "started_at": 1758707095.2759109, "ts": "2025-09-24T09:44:55.275Z"}
+{"type": "cli_command_finished", "command": "health", "status": "success", "finished_at": 1758707095.614589, "duration_s": 0.33867812156677246, "ts": "2025-09-24T09:44:55.614Z"}
+{"type": "cli_command_started", "command": "logs", "args": {}, "started_at": 1758707098.2432508, "ts": "2025-09-24T09:44:58.243Z"}
+{"type": "cli_command_finished", "command": "logs", "status": "success", "finished_at": 1758707098.244398, "duration_s": 0.0011472702026367188, "ts": "2025-09-24T09:44:58.244Z"}
+{"type": "cli_command_started", "command": "test", "args": {}, "started_at": 1758707100.8682728, "ts": "2025-09-24T09:45:00.868Z"}
+{"type": "cli_command_finished", "command": "test", "status": "success", "finished_at": 1758707100.896363, "duration_s": 0.028090238571166992, "ts": "2025-09-24T09:45:00.896Z"}
+{"type": "cli_command_started", "command": "demo", "args": {}, "started_at": 1758707103.5215611, "ts": "2025-09-24T09:45:03.521Z"}
+{"type": "cli_command_finished", "command": "demo", "status": "success", "finished_at": 1758707103.546189, "duration_s": 0.0246279239654541, "ts": "2025-09-24T09:45:03.546Z"}
+{"type": "cli_command_started", "command": "health", "args": {}, "started_at": 1758707143.8172858, "ts": "2025-09-24T09:45:43.817Z"}
+{"type": "cli_command_finished", "command": "health", "status": "success", "finished_at": 1758707144.157357, "duration_s": 0.3400712013244629, "ts": "2025-09-24T09:45:44.157Z"}
+{"type": "cli_command_started", "command": "logs", "args": {}, "started_at": 1758707146.79933, "ts": "2025-09-24T09:45:46.799Z"}
+{"type": "cli_command_finished", "command": "logs", "status": "success", "finished_at": 1758707146.800514, "duration_s": 0.0011839866638183594, "ts": "2025-09-24T09:45:46.800Z"}
+{"type": "cli_command_started", "command": "test", "args": {}, "started_at": 1758707149.423137, "ts": "2025-09-24T09:45:49.423Z"}
+{"type": "cli_command_finished", "command": "test", "status": "success", "finished_at": 1758707149.451343, "duration_s": 0.02820611000061035, "ts": "2025-09-24T09:45:49.451Z"}
+{"type": "cli_command_started", "command": "demo", "args": {}, "started_at": 1758707152.068102, "ts": "2025-09-24T09:45:52.068Z"}
+{"type": "cli_command_finished", "command": "demo", "status": "success", "finished_at": 1758707152.093444, "duration_s": 0.025342226028442383, "ts": "2025-09-24T09:45:52.093Z"}
+{"type": "cli_command_started", "command": "health", "args": {}, "started_at": 1758714758.9721742, "ts": "2025-09-24T11:52:38.972Z"}
+{"type": "cli_command_finished", "command": "health", "status": "success", "finished_at": 1758714759.3231869, "duration_s": 0.3510127067565918, "ts": "2025-09-24T11:52:39.323Z"}
+{"type": "cli_command_started", "command": "logs", "args": {}, "started_at": 1758714761.987964, "ts": "2025-09-24T11:52:41.987Z"}
+{"type": "cli_command_finished", "command": "logs", "status": "success", "finished_at": 1758714761.9889028, "duration_s": 0.0009388923645019531, "ts": "2025-09-24T11:52:41.988Z"}
+{"type": "cli_command_started", "command": "test", "args": {}, "started_at": 1758714764.62048, "ts": "2025-09-24T11:52:44.620Z"}
+{"type": "cli_command_finished", "command": "test", "status": "success", "finished_at": 1758714764.648246, "duration_s": 0.027765989303588867, "ts": "2025-09-24T11:52:44.648Z"}
+{"type": "cli_command_started", "command": "demo", "args": {}, "started_at": 1758714767.367798, "ts": "2025-09-24T11:52:47.367Z"}
+{"type": "cli_command_finished", "command": "demo", "status": "success", "finished_at": 1758714767.396687, "duration_s": 0.028888940811157227, "ts": "2025-09-24T11:52:47.396Z"}
+{"type": "cli_command_started", "command": "health", "args": {}, "started_at": 1758714905.992141, "ts": "2025-09-24T11:55:05.992Z"}
+{"type": "cli_command_finished", "command": "health", "status": "success", "finished_at": 1758714906.3453, "duration_s": 0.35315895080566406, "ts": "2025-09-24T11:55:06.345Z"}
+{"type": "cli_command_started", "command": "logs", "args": {}, "started_at": 1758714908.975123, "ts": "2025-09-24T11:55:08.975Z"}
+{"type": "cli_command_finished", "command": "logs", "status": "success", "finished_at": 1758714908.976084, "duration_s": 0.0009610652923583984, "ts": "2025-09-24T11:55:08.976Z"}
+{"type": "cli_command_started", "command": "test", "args": {}, "started_at": 1758714911.585236, "ts": "2025-09-24T11:55:11.585Z"}
+{"type": "cli_command_finished", "command": "test", "status": "success", "finished_at": 1758714911.61385, "duration_s": 0.028614044189453125, "ts": "2025-09-24T11:55:11.613Z"}
+{"type": "cli_command_started", "command": "demo", "args": {}, "started_at": 1758714914.213217, "ts": "2025-09-24T11:55:14.213Z"}
+{"type": "cli_command_finished", "command": "demo", "status": "success", "finished_at": 1758714914.238158, "duration_s": 0.024940967559814453, "ts": "2025-09-24T11:55:14.238Z"}
+{"type": "cli_command_started", "command": "health", "args": {}, "started_at": 1758714966.475254, "ts": "2025-09-24T11:56:06.475Z"}
+{"type": "cli_command_finished", "command": "health", "status": "success", "finished_at": 1758714966.804233, "duration_s": 0.3289790153503418, "ts": "2025-09-24T11:56:06.804Z"}
+{"type": "cli_command_started", "command": "logs", "args": {}, "started_at": 1758714969.4515111, "ts": "2025-09-24T11:56:09.451Z"}
+{"type": "cli_command_finished", "command": "logs", "status": "success", "finished_at": 1758714969.452437, "duration_s": 0.0009257793426513672, "ts": "2025-09-24T11:56:09.452Z"}
+{"type": "cli_command_started", "command": "test", "args": {}, "started_at": 1758714972.060802, "ts": "2025-09-24T11:56:12.060Z"}
+{"type": "cli_command_finished", "command": "test", "status": "success", "finished_at": 1758714972.0882602, "duration_s": 0.02745819091796875, "ts": "2025-09-24T11:56:12.088Z"}
+{"type": "cli_command_started", "command": "demo", "args": {}, "started_at": 1758714974.728846, "ts": "2025-09-24T11:56:14.728Z"}
+{"type": "cli_command_finished", "command": "demo", "status": "success", "finished_at": 1758714974.754163, "duration_s": 0.025316953659057617, "ts": "2025-09-24T11:56:14.754Z"}
+{"type": "cli_command_started", "command": "health", "args": {}, "started_at": 1758715101.605661, "ts": "2025-09-24T11:58:21.605Z"}
+{"type": "cli_command_finished", "command": "health", "status": "success", "finished_at": 1758715101.930084, "duration_s": 0.32442307472229004, "ts": "2025-09-24T11:58:21.930Z"}
+{"type": "cli_command_started", "command": "logs", "args": {}, "started_at": 1758715104.566628, "ts": "2025-09-24T11:58:24.566Z"}
+{"type": "cli_command_finished", "command": "logs", "status": "success", "finished_at": 1758715104.56769, "duration_s": 0.0010619163513183594, "ts": "2025-09-24T11:58:24.567Z"}
+{"type": "cli_command_started", "command": "test", "args": {}, "started_at": 1758715107.168829, "ts": "2025-09-24T11:58:27.168Z"}
+{"type": "cli_command_finished", "command": "test", "status": "success", "finished_at": 1758715107.196553, "duration_s": 0.027724027633666992, "ts": "2025-09-24T11:58:27.196Z"}
+{"type": "cli_command_started", "command": "demo", "args": {}, "started_at": 1758715109.826182, "ts": "2025-09-24T11:58:29.826Z"}
+{"type": "cli_command_finished", "command": "demo", "status": "success", "finished_at": 1758715109.851576, "duration_s": 0.025394201278686523, "ts": "2025-09-24T11:58:29.851Z"}
+{"type": "cli_command_started", "command": "health", "args": {}, "started_at": 1758715150.427532, "ts": "2025-09-24T11:59:10.427Z"}
+{"type": "cli_command_finished", "command": "health", "status": "success", "finished_at": 1758715150.76469, "duration_s": 0.3371579647064209, "ts": "2025-09-24T11:59:10.764Z"}
+{"type": "cli_command_started", "command": "logs", "args": {}, "started_at": 1758715153.42216, "ts": "2025-09-24T11:59:13.422Z"}
+{"type": "cli_command_finished", "command": "logs", "status": "success", "finished_at": 1758715153.4230888, "duration_s": 0.0009288787841796875, "ts": "2025-09-24T11:59:13.423Z"}
+{"type": "cli_command_started", "command": "test", "args": {}, "started_at": 1758715156.081432, "ts": "2025-09-24T11:59:16.081Z"}
+{"type": "cli_command_finished", "command": "test", "status": "success", "finished_at": 1758715156.1102662, "duration_s": 0.028834104537963867, "ts": "2025-09-24T11:59:16.110Z"}
+{"type": "cli_command_started", "command": "demo", "args": {}, "started_at": 1758715158.8745222, "ts": "2025-09-24T11:59:18.874Z"}
+{"type": "cli_command_finished", "command": "demo", "status": "success", "finished_at": 1758715158.90117, "duration_s": 0.02664780616760254, "ts": "2025-09-24T11:59:18.901Z"}
+{"type": "orchestrator_started", "max_concurrency": 2, "tasks": 2, "started_at": 1758716532.403011, "ts": "2025-09-24T12:22:12.403Z"}
+{"type": "task_started", "id": "ta[REDACTED]", "agent": "stub_factory", "attempt": 1, "started_at": 1758716532.403362, "ts": "2025-09-24T12:22:12.403Z"}
+{"type": "task_started", "id": "ta[REDACTED]", "agent": "stub_factory", "attempt": 1, "started_at": 1758716532.403479, "ts": "2025-09-24T12:22:12.403Z"}
+{"type": "heartbeat", "run_id": null, "id": "ta[REDACTED]", "agent": "stub_factory", "attempt": 1, "pid": 73407, "running_for_s": 0.00022029876708984375, "ts": "2025-09-24T12:22:12.403Z"}
+{"type": "heartbeat", "run_id": null, "id": "ta[REDACTED]", "agent": "stub_factory", "attempt": 1, "pid": 73407, "running_for_s": 0.00018596649169921875, "ts": "2025-09-24T12:22:12.403Z"}
+{"type": "task_finished", "id": "ta[REDACTED]", "agent": "stub_factory", "attempt": 1, "status": "success", "started_at": 1758716532.4033458, "finished_at": 1758716532.504583, "duration_s": 0.10123705863952637, "errors": null, "ts": "2025-09-24T12:22:12.504Z"}
+{"type": "task_finished", "id": "ta[REDACTED]", "agent": "stub_factory", "attempt": 1, "status": "success", "started_at": 1758716532.403472, "finished_at": 1758716532.5048058, "duration_s": 0.1013338565826416, "errors": null, "ts": "2025-09-24T12:22:12.504Z"}
+{"type": "orchestrator_finished", "finished_at": 1758716532.5049868, "tasks": 2, "ts": "2025-09-24T12:22:12.505Z"}
+{"type": "orchestrator_started", "max_concurrency": 1, "tasks": 1, "started_at": 1758716532.506902, "ts": "2025-09-24T12:22:12.506Z"}
+{"type": "task_started", "id": "ta[REDACTED]", "agent": "flaky_factory", "attempt": 1, "started_at": 1758716532.5070531, "ts": "2025-09-24T12:22:12.507Z"}
+{"type": "heartbeat", "run_id": null, "id": "ta[REDACTED]", "agent": "flaky_factory", "attempt": 1, "pid": 73407, "running_for_s": 0.00012993812561035156, "ts": "2025-09-24T12:22:12.507Z"}
+{"type": "task_started", "id": "ta[REDACTED]", "agent": "flaky_factory", "attempt": 2, "started_at": 1758716532.608298, "ts": "2025-09-24T12:22:12.608Z"}
+{"type": "task_finished", "id": "ta[REDACTED]", "agent": "flaky_factory", "attempt": 2, "status": "success", "started_at": 1758716532.5070431, "finished_at": 1758716532.608906, "duration_s": 0.10186290740966797, "errors": null, "ts": "2025-09-24T12:22:12.608Z"}
+{"type": "orchestrator_finished", "finished_at": 1758716532.609339, "tasks": 1, "ts": "2025-09-24T12:22:12.609Z"}
+{"type": "orchestrator_started", "max_concurrency": 6, "tasks": 6, "started_at": 1758717229.675065, "ts": "2025-09-24T12:33:49.675Z"}
+{"type": "task_started", "id": "data_analysis", "agent": "DataAnalyst", "attempt": 1, "started_at": 1758717229.6776571, "ts": "2025-09-24T12:33:49.677Z"}
+{"type": "task_started", "id": "code_review", "agent": "CodeReviewer", "attempt": 1, "started_at": 1758717229.6777961, "ts": "2025-09-24T12:33:49.677Z"}
+{"type": "task_started", "id": "documentation", "agent": "TechnicalWriter", "attempt": 1, "started_at": 1758717229.6778738, "ts": "2025-09-24T12:33:49.677Z"}
+{"type": "task_started", "id": "testing", "agent": "TestEngineer", "attempt": 1, "started_at": 1758717229.677942, "ts": "2025-09-24T12:33:49.677Z"}
+{"type": "task_started", "id": "optimization", "agent": "PerformanceOptimizer", "attempt": 1, "started_at": 1758717229.678001, "ts": "2025-09-24T12:33:49.678Z"}
+{"type": "task_started", "id": "monitoring", "agent": "SystemMonitor", "attempt": 1, "started_at": 1758717229.678057, "ts": "2025-09-24T12:33:49.678Z"}
+{"type": "heartbeat", "run_id": null, "id": "data_analysis", "agent": "DataAnalyst", "attempt": 1, "pid": 77085, "running_for_s": 0.0004761219024658203, "ts": "2025-09-24T12:33:49.678Z"}
+{"type": "heartbeat", "run_id": null, "id": "code_review", "agent": "CodeReviewer", "attempt": 1, "pid": 77085, "running_for_s": 0.0003991127014160156, "ts": "2025-09-24T12:33:49.678Z"}
+{"type": "heartbeat", "run_id": null, "id": "documentation", "agent": "TechnicalWriter", "attempt": 1, "pid": 77085, "running_for_s": 0.0003769397735595703, "ts": "2025-09-24T12:33:49.678Z"}
+{"type": "heartbeat", "run_id": null, "id": "testing", "agent": "TestEngineer", "attempt": 1, "pid": 77085, "running_for_s": 0.00036597251892089844, "ts": "2025-09-24T12:33:49.678Z"}
+{"type": "heartbeat", "run_id": null, "id": "optimization", "agent": "PerformanceOptimizer", "attempt": 1, "pid": 77085, "running_for_s": 0.00041675567626953125, "ts": "2025-09-24T12:33:49.678Z"}
+{"type": "heartbeat", "run_id": null, "id": "monitoring", "agent": "SystemMonitor", "attempt": 1, "pid": 77085, "running_for_s": 0.0004181861877441406, "ts": "2025-09-24T12:33:49.678Z"}
+{"type": "task_finished", "id": "documentation", "agent": "TechnicalWriter", "attempt": 1, "status": "success", "started_at": 1758717229.67787, "finished_at": 1758717230.770305, "duration_s": 1.0924348831176758, "errors": null, "usage": {"prompt_tokens": 250, "completion_tokens": 189, "total_tokens": 488}, "model": "gpt-4o-mini", "ts": "2025-09-24T12:33:50.770Z"}
+{"type": "task_finished", "id": "code_review", "agent": "CodeReviewer", "attempt": 1, "status": "success", "started_at": 1758717229.6777909, "finished_at": 1758717231.069, "duration_s": 1.3912091255187988, "errors": null, "usage": {"prompt_tokens": 121, "completion_tokens": 123, "total_tokens": 327}, "model": "gpt-4o-mini", "ts": "2025-09-24T12:33:51.069Z"}
+{"type": "task_finished", "id": "monitoring", "agent": "SystemMonitor", "attempt": 1, "status": "success", "started_at": 1758717229.6780539, "finished_at": 1758717231.64192, "duration_s": 1.9638662338256836, "errors": null, "usage": {"prompt_tokens": 415, "completion_tokens": 98, "total_tokens": 200}, "model": "gpt-4o-mini", "ts": "2025-09-24T12:33:51.642Z"}
+{"type": "task_finished", "id": "data_analysis", "agent": "DataAnalyst", "attempt": 1, "status": "success", "started_at": 1758717229.67765, "finished_at": 1758717232.1385531, "duration_s": 2.4609031677246094, "errors": null, "usage": {"prompt_tokens": 309, "completion_tokens": 55, "total_tokens": 541}, "model": "claude-3-5-sonnet", "ts": "2025-09-24T12:33:52.138Z"}
+{"type": "task_finished", "id": "testing", "agent": "TestEngineer", "attempt": 1, "status": "success", "started_at": 1758717229.677938, "finished_at": 1758717233.117485, "duration_s": 3.439547061920166, "errors": null, "usage": {"prompt_tokens": 415, "completion_tokens": 173, "total_tokens": 521}, "model": "claude-3-5-sonnet", "ts": "2025-09-24T12:33:53.117Z"}
+{"type": "task_finished", "id": "optimization", "agent": "PerformanceOptimizer", "attempt": 1, "status": "success", "started_at": 1758717229.677999, "finished_at": 1758717233.6194549, "duration_s": 3.941455841064453, "errors": null, "usage": {"prompt_tokens": 165, "completion_tokens": 194, "total_tokens": 209}, "model": "claude-3-5-sonnet", "ts": "2025-09-24T12:33:53.619Z"}
+{"type": "orchestrator_finished", "finished_at": 1758717233.620585, "tasks": 6, "ts": "2025-09-24T12:33:53.620Z"}
+{"type": "orchestrator_started", "max_concurrency": 2, "tasks": 1, "started_at": 1758717293.707314, "ts": "2025-09-24T12:34:53.707Z"}
+{"type": "task_started", "id": "test_task", "agent": "TestAgent", "attempt": 1, "started_at": 1758717293.70748, "ts": "2025-09-24T12:34:53.707Z"}
+{"type": "heartbeat", "run_id": null, "id": "test_task", "agent": "TestAgent", "attempt": 1, "pid": 77181, "running_for_s": 0.00010514259338378906, "ts": "2025-09-24T12:34:53.707Z"}
+{"type": "task_finished", "id": "test_task", "agent": "TestAgent", "attempt": 1, "status": "success", "started_at": 1758717293.7074718, "finished_at": 1758717293.809653, "duration_s": 0.10218119621276855, "errors": null, "usage": {"total_tokens": 100}, "model": "test-model", "ts": "2025-09-24T12:34:53.809Z"}
+{"type": "orchestrator_finished", "finished_at": 1758717293.809941, "tasks": 1, "ts": "2025-09-24T12:34:53.809Z"}
+{"type": "orchestrator_started", "max_concurrency": 2, "tasks": 4, "started_at": 1758717293.8124852, "ts": "2025-09-24T12:34:53.812Z"}
+{"type": "task_started", "id": "task_0", "agent": "Agent0", "attempt": 1, "started_at": 1758717293.812643, "ts": "2025-09-24T12:34:53.812Z"}
+{"type": "task_started", "id": "task_1", "agent": "Agent1", "attempt": 1, "started_at": 1758717293.812771, "ts": "2025-09-24T12:34:53.812Z"}
+{"type": "heartbeat", "run_id": null, "id": "task_0", "agent": "Agent0", "attempt": 1, "pid": 77181, "running_for_s": 0.000270843505859375, "ts": "2025-09-24T12:34:53.812Z"}
+{"type": "heartbeat", "run_id": null, "id": "task_1", "agent": "Agent1", "attempt": 1, "pid": 77181, "running_for_s": 0.00024819374084472656, "ts": "2025-09-24T12:34:53.813Z"}
+{"type": "task_finished", "id": "task_0", "agent": "Agent0", "attempt": 1, "status": "success", "started_at": 1758717293.812633, "finished_at": 1758717294.014967, "duration_s": 0.20233392715454102, "errors": null, "usage": {"total_tokens": 100}, "model": "test-model", "ts": "2025-09-24T12:34:54.015Z"}
+{"type": "task_finished", "id": "task_1", "agent": "Agent1", "attempt": 1, "status": "success", "started_at": 1758717293.812765, "finished_at": 1758717294.015991, "duration_s": 0.20322608947753906, "errors": null, "usage": {"total_tokens": 100}, "model": "test-model", "ts": "2025-09-24T12:34:54.016Z"}
+{"type": "task_started", "id": "task_2", "agent": "Agent2", "attempt": 1, "started_at": 1758717294.016584, "ts": "2025-09-24T12:34:54.016Z"}
+{"type": "task_started", "id": "task_3", "agent": "Agent3", "attempt": 1, "started_at": 1758717294.017025, "ts": "2025-09-24T12:34:54.017Z"}
+{"type": "heartbeat", "run_id": null, "id": "task_2", "agent": "Agent2", "attempt": 1, "pid": 77181, "running_for_s": 0.0007390975952148438, "ts": "2025-09-24T12:34:54.017Z"}
+{"type": "heartbeat", "run_id": null, "id": "task_3", "agent": "Agent3", "attempt": 1, "pid": 77181, "running_for_s": 0.0004942417144775391, "ts": "2025-09-24T12:34:54.017Z"}
+{"type": "task_finished", "id": "task_2", "agent": "Agent2", "attempt": 1, "status": "success", "started_at": 1758717294.0165398, "finished_at": 1758717294.2187798, "duration_s": 0.202239990234375, "errors": null, "usage": {"total_tokens": 100}, "model": "test-model", "ts": "2025-09-24T12:34:54.219Z"}
+{"type": "task_finished", "id": "task_3", "agent": "Agent3", "attempt": 1, "status": "success", "started_at": 1758717294.017012, "finished_at": 1758717294.2196748, "duration_s": 0.20266294479370117, "errors": null, "usage": {"total_tokens": 100}, "model": "test-model", "ts": "2025-09-24T12:34:54.219Z"}
+{"type": "orchestrator_finished", "finished_at": 1758717294.220137, "tasks": 4, "ts": "2025-09-24T12:34:54.220Z"}
+{"type": "orchestrator_started", "max_concurrency": 1, "tasks": 1, "started_at": 1758717294.225148, "ts": "2025-09-24T12:34:54.225Z"}
+{"type": "task_started", "id": "timeout_task", "agent": "SlowAgent", "attempt": 1, "started_at": 1758717294.2256808, "ts": "2025-09-24T12:34:54.225Z"}
+{"type": "heartbeat", "run_id": null, "id": "timeout_task", "agent": "SlowAgent", "attempt": 1, "pid": 77181, "running_for_s": 0.0004048347473144531, "ts": "2025-09-24T12:34:54.226Z"}
+{"type": "task_finished", "id": "timeout_task", "agent": "SlowAgent", "attempt": 1, "status": "timeout", "started_at": 1758717294.225644, "finished_at": 1758717294.3282108, "duration_s": 0.10256671905517578, "errors": ["timeout"], "ts": "2025-09-24T12:34:54.328Z"}
+{"type": "orchestrator_finished", "finished_at": 1758717294.329216, "tasks": 1, "ts": "2025-09-24T12:34:54.329Z"}
+{"type": "orchestrator_started", "max_concurrency": 1, "tasks": 1, "started_at": 1758717294.334771, "ts": "2025-09-24T12:34:54.334Z"}
+{"type": "task_started", "id": "retry_task", "agent": "FlakyAgent", "attempt": 1, "started_at": 1758717294.3351092, "ts": "2025-09-24T12:34:54.335Z"}
+{"type": "heartbeat", "run_id": null, "id": "retry_task", "agent": "FlakyAgent", "attempt": 1, "pid": 77181, "running_for_s": 0.00022101402282714844, "ts": "2025-09-24T12:34:54.335Z"}
+{"type": "task_started", "id": "retry_task", "agent": "FlakyAgent", "attempt": 2, "started_at": 1758717294.449566, "ts": "2025-09-24T12:34:54.449Z"}
+{"type": "task_started", "id": "retry_task", "agent": "FlakyAgent", "attempt": 3, "started_at": 1758717294.5647209, "ts": "2025-09-24T12:34:54.564Z"}
+{"type": "task_finished", "id": "retry_task", "agent": "FlakyAgent", "attempt": 3, "status": "success", "started_at": 1758717294.335088, "finished_at": 1758717294.667137, "duration_s": 0.3320488929748535, "errors": null, "usage": {"total_tokens": 100}, "model": "test-model", "ts": "2025-09-24T12:34:54.667Z"}
+{"type": "orchestrator_finished", "finished_at": 1758717294.6680589, "tasks": 1, "ts": "2025-09-24T12:34:54.668Z"}
+{"type": "orchestrator_started", "max_concurrency": 1, "tasks": 1, "started_at": 1758717294.673184, "ts": "2025-09-24T12:34:54.673Z"}
+{"type": "task_started", "id": "failing_task", "agent": "FailingAgent", "attempt": 1, "started_at": 1758717294.6735182, "ts": "2025-09-24T12:34:54.673Z"}
+{"type": "heartbeat", "run_id": null, "id": "failing_task", "agent": "FailingAgent", "attempt": 1, "pid": 77181, "running_for_s": 0.00032591819763183594, "ts": "2025-09-24T12:34:54.673Z"}
+{"type": "task_started", "id": "failing_task", "agent": "FailingAgent", "attempt": 2, "started_at": 1758717294.788147, "ts": "2025-09-24T12:34:54.788Z"}
+{"type": "task_finished", "id": "failing_task", "agent": "FailingAgent", "attempt": 2, "status": "failed", "started_at": 1758717294.6734982, "finished_at": 1758717294.890995, "duration_s": 0.2174968719482422, "errors": ["FailingAgent simulated failure (attempt 1)", "FailingAgent simulated failure (attempt 2)"], "ts": "2025-09-24T12:34:54.891Z"}
+{"type": "orchestrator_finished", "finished_at": 1758717294.8917382, "tasks": 1, "ts": "2025-09-24T12:34:54.891Z"}
+{"type": "orchestrator_started", "max_concurrency": 1, "tasks": 1, "started_at": 1758717294.897226, "ts": "2025-09-24T12:34:54.897Z"}
+{"type": "task_started", "id": "backoff_task", "agent": "BackoffAgent", "attempt": 1, "started_at": 1758717294.8983302, "ts": "2025-09-24T12:34:54.898Z"}
+{"type": "heartbeat", "run_id": null, "id": "backoff_task", "agent": "BackoffAgent", "attempt": 1, "pid": 77181, "running_for_s": 0.000370025634765625, "ts": "2025-09-24T12:34:54.898Z"}
+{"type": "task_started", "id": "backoff_task", "agent": "BackoffAgent", "attempt": 2, "started_at": 1758717295.103022, "ts": "2025-09-24T12:34:55.103Z"}
+{"type": "task_started", "id": "backoff_task", "agent": "BackoffAgent", "attempt": 3, "started_at": 1758717295.4082491, "ts": "2025-09-24T12:34:55.408Z"}
+{"type": "task_finished", "id": "backoff_task", "agent": "BackoffAgent", "attempt": 3, "status": "success", "started_at": 1758717294.898294, "finished_at": 1758717295.5111418, "duration_s": 0.6128478050231934, "errors": null, "usage": {"total_tokens": 100}, "model": "test-model", "ts": "2025-09-24T12:34:55.511Z"}
+{"type": "orchestrator_finished", "finished_at": 1758717295.511534, "tasks": 1, "ts": "2025-09-24T12:34:55.511Z"}
+{"type": "orchestrator_started", "max_concurrency": 2, "tasks": 1, "started_at": 1758717295.515542, "ts": "2025-09-24T12:34:55.515Z"}
+{"type": "task_started", "id": "telemetry_task", "agent": "TelemetryAgent", "attempt": 1, "started_at": 1758717295.515844, "ts": "2025-09-24T12:34:55.515Z"}
+{"type": "heartbeat", "run_id": null, "id": "telemetry_task", "agent": "TelemetryAgent", "attempt": 1, "pid": 77181, "running_for_s": 0.0001709461212158203, "ts": "2025-09-24T12:34:55.516Z"}
+{"type": "task_finished", "id": "telemetry_task", "agent": "TelemetryAgent", "attempt": 1, "status": "success", "started_at": 1758717295.51583, "finished_at": 1758717295.618096, "duration_s": 0.10226607322692871, "errors": null, "usage": {"total_tokens": 100}, "model": "test-model", "ts": "2025-09-24T12:34:55.618Z"}
+{"type": "orchestrator_finished", "finished_at": 1758717295.618458, "tasks": 1, "ts": "2025-09-24T12:34:55.618Z"}
+{"type": "orchestrator_started", "max_concurrency": 2, "tasks": 3, "started_at": 1758717295.79422, "ts": "2025-09-24T12:34:55.794Z"}
+{"type": "task_started", "id": "agg_task_0", "agent": "AggAgent0", "attempt": 1, "started_at": 1758717295.794372, "ts": "2025-09-24T12:34:55.794Z"}
+{"type": "task_started", "id": "agg_task_1", "agent": "AggAgent1", "attempt": 1, "started_at": 1758717295.794448, "ts": "2025-09-24T12:34:55.794Z"}
+{"type": "heartbeat", "run_id": null, "id": "agg_task_0", "agent": "AggAgent0", "attempt": 1, "pid": 77181, "running_for_s": 0.00015997886657714844, "ts": "2025-09-24T12:34:55.794Z"}
+{"type": "heartbeat", "run_id": null, "id": "agg_task_1", "agent": "AggAgent1", "attempt": 1, "pid": 77181, "running_for_s": 0.0001437664031982422, "ts": "2025-09-24T12:34:55.794Z"}
+{"type": "task_finished", "id": "agg_task_0", "agent": "AggAgent0", "attempt": 1, "status": "success", "started_at": 1758717295.794366, "finished_at": 1758717295.896526, "duration_s": 0.10216021537780762, "errors": null, "usage": {"total_tokens": 100}, "model": "test-model", "ts": "2025-09-24T12:34:55.896Z"}
+{"type": "task_finished", "id": "agg_task_1", "agent": "AggAgent1", "attempt": 1, "status": "success", "started_at": 1758717295.794444, "finished_at": 1758717295.896767, "duration_s": 0.10232281684875488, "errors": null, "usage": {"total_tokens": 100}, "model": "test-model", "ts": "2025-09-24T12:34:55.896Z"}
+{"type": "task_started", "id": "agg_task_2", "agent": "AggAgent2", "attempt": 1, "started_at": 1758717295.897074, "ts": "2025-09-24T12:34:55.897Z"}
+{"type": "heartbeat", "run_id": null, "id": "agg_task_2", "agent": "AggAgent2", "attempt": 1, "pid": 77181, "running_for_s": 0.0001652240753173828, "ts": "2025-09-24T12:34:55.897Z"}
+{"type": "task_finished", "id": "agg_task_2", "agent": "AggAgent2", "attempt": 1, "status": "success", "started_at": 1758717295.8970618, "finished_at": 1758717295.9993489, "duration_s": 0.10228705406188965, "errors": null, "usage": {"total_tokens": 100}, "model": "test-model", "ts": "2025-09-24T12:34:55.999Z"}
+{"type": "orchestrator_finished", "finished_at": 1758717296.000028, "tasks": 3, "ts": "2025-09-24T12:34:56.000Z"}
+{"type": "orchestrator_started", "max_concurrency": 1, "tasks": 1, "started_at": 1758717296.121946, "ts": "2025-09-24T12:34:56.121Z"}
+{"type": "heartbeat", "run_id": null, "id": "factory_fail", "agent": "FailingFactory", "attempt": 0, "pid": 77181, "running_for_s": 2.9087066650390625e-05, "ts": "2025-09-24T12:34:56.122Z"}
+{"type": "orchestrator_started", "max_concurrency": 3, "tasks": 3, "started_at": 1758717296.133562, "ts": "2025-09-24T12:34:56.133Z"}
+{"type": "task_started", "id": "success_task", "agent": "SuccessAgent", "attempt": 1, "started_at": 1758717296.133693, "ts": "2025-09-24T12:34:56.133Z"}
+{"type": "task_started", "id": "fail_task", "agent": "FailAgent", "attempt": 1, "started_at": 1758717296.13378, "ts": "2025-09-24T12:34:56.133Z"}
+{"type": "task_started", "id": "another_success", "agent": "AnotherSuccessAgent", "attempt": 1, "started_at": 1758717296.133861, "ts": "2025-09-24T12:34:56.133Z"}
+{"type": "heartbeat", "run_id": null, "id": "success_task", "agent": "SuccessAgent", "attempt": 1, "pid": 77181, "running_for_s": 0.00025916099548339844, "ts": "2025-09-24T12:34:56.133Z"}
+{"type": "heartbeat", "run_id": null, "id": "fail_task", "agent": "FailAgent", "attempt": 1, "pid": 77181, "running_for_s": 0.0002460479736328125, "ts": "2025-09-24T12:34:56.134Z"}
+{"type": "heartbeat", "run_id": null, "id": "another_success", "agent": "AnotherSuccessAgent", "attempt": 1, "pid": 77181, "running_for_s": 0.0002760887145996094, "ts": "2025-09-24T12:34:56.134Z"}
+{"type": "task_finished", "id": "success_task", "agent": "SuccessAgent", "attempt": 1, "status": "success", "started_at": 1758717296.133687, "finished_at": 1758717296.234674, "duration_s": 0.10098695755004883, "errors": null, "usage": {"total_tokens": 100}, "model": "test-model", "ts": "2025-09-24T12:34:56.234Z"}
+{"type": "task_finished", "id": "fail_task", "agent": "FailAgent", "attempt": 1, "status": "failed", "started_at": 1758717296.133775, "finished_at": 1758717296.2351491, "duration_s": 0.10137414932250977, "errors": ["FailAgent simulated failure (attempt 1)"], "ts": "2025-09-24T12:34:56.235Z"}
+{"type": "task_finished", "id": "another_success", "agent": "AnotherSuccessAgent", "attempt": 1, "status": "success", "started_at": 1758717296.133857, "finished_at": 1758717296.23544, "duration_s": 0.10158300399780273, "errors": null, "usage": {"total_tokens": 100}, "model": "test-model", "ts": "2025-09-24T12:34:56.235Z"}
+{"type": "orchestrator_finished", "finished_at": 1758717296.235739, "tasks": 3, "ts": "2025-09-24T12:34:56.235Z"}
+{"type": "orchestrator_started", "max_concurrency": 2, "tasks": 1, "started_at": 1758717357.605953, "ts": "2025-09-24T12:35:57.605Z"}
+{"type": "task_started", "id": "test_task", "agent": "TestAgent", "attempt": 1, "started_at": 1758717357.60623, "ts": "2025-09-24T12:35:57.606Z"}
+{"type": "heartbeat", "run_id": null, "id": "test_task", "agent": "TestAgent", "attempt": 1, "pid": 77383, "running_for_s": 0.00010085105895996094, "ts": "2025-09-24T12:35:57.606Z"}
+{"type": "task_finished", "id": "test_task", "agent": "TestAgent", "attempt": 1, "status": "success", "started_at": 1758717357.606223, "finished_at": 1758717357.70842, "duration_s": 0.10219693183898926, "errors": null, "usage": {"total_tokens": 100}, "model": "test-model", "ts": "2025-09-24T12:35:57.708Z"}
+{"type": "orchestrator_finished", "finished_at": 1758717357.70869, "tasks": 1, "ts": "2025-09-24T12:35:57.708Z"}
+{"type": "orchestrator_started", "max_concurrency": 2, "tasks": 4, "started_at": 1758717357.71122, "ts": "2025-09-24T12:35:57.711Z"}
+{"type": "task_started", "id": "task_0", "agent": "Agent0", "attempt": 1, "started_at": 1758717357.711374, "ts": "2025-09-24T12:35:57.711Z"}
+{"type": "task_started", "id": "task_1", "agent": "Agent1", "attempt": 1, "started_at": 1758717357.711487, "ts": "2025-09-24T12:35:57.711Z"}
+{"type": "heartbeat", "run_id": null, "id": "task_0", "agent": "Agent0", "attempt": 1, "pid": 77383, "running_for_s": 0.0002338886260986328, "ts": "2025-09-24T12:35:57.711Z"}
+{"type": "heartbeat", "run_id": null, "id": "task_1", "agent": "Agent1", "attempt": 1, "pid": 77383, "running_for_s": 0.00020503997802734375, "ts": "2025-09-24T12:35:57.711Z"}
+{"type": "task_finished", "id": "task_0", "agent": "Agent0", "attempt": 1, "status": "success", "started_at": 1758717357.7113652, "finished_at": 1758717357.9136581, "duration_s": 0.20229291915893555, "errors": null, "usage": {"total_tokens": 100}, "model": "test-model", "ts": "2025-09-24T12:35:57.913Z"}
+{"type": "task_finished", "id": "task_1", "agent": "Agent1", "attempt": 1, "status": "success", "started_at": 1758717357.7114801, "finished_at": 1758717357.914467, "duration_s": 0.2029869556427002, "errors": null, "usage": {"total_tokens": 100}, "model": "test-model", "ts": "2025-09-24T12:35:57.914Z"}
+{"type": "task_started", "id": "task_2", "agent": "Agent2", "attempt": 1, "started_at": 1758717357.9148648, "ts": "2025-09-24T12:35:57.914Z"}
+{"type": "task_started", "id": "task_3", "agent": "Agent3", "attempt": 1, "started_at": 1758717357.915143, "ts": "2025-09-24T12:35:57.915Z"}
+{"type": "heartbeat", "run_id": null, "id": "task_2", "agent": "Agent2", "attempt": 1, "pid": 77383, "running_for_s": 0.0005507469177246094, "ts": "2025-09-24T12:35:57.915Z"}
+{"type": "heartbeat", "run_id": null, "id": "task_3", "agent": "Agent3", "attempt": 1, "pid": 77383, "running_for_s": 0.0005476474761962891, "ts": "2025-09-24T12:35:57.915Z"}
+{"type": "task_finished", "id": "task_2", "agent": "Agent2", "attempt": 1, "status": "success", "started_at": 1758717357.9148312, "finished_at": 1758717358.116008, "duration_s": 0.20117688179016113, "errors": null, "usage": {"total_tokens": 100}, "model": "test-model", "ts": "2025-09-24T12:35:58.116Z"}
+{"type": "task_finished", "id": "task_3", "agent": "Agent3", "attempt": 1, "status": "success", "started_at": 1758717357.9151292, "finished_at": 1758717358.1167989, "duration_s": 0.20166969299316406, "errors": null, "usage": {"total_tokens": 100}, "model": "test-model", "ts": "2025-09-24T12:35:58.116Z"}
+{"type": "orchestrator_finished", "finished_at": 1758717358.1172092, "tasks": 4, "ts": "2025-09-24T12:35:58.117Z"}
+{"type": "orchestrator_started", "max_concurrency": 1, "tasks": 1, "started_at": 1758717358.122057, "ts": "2025-09-24T12:35:58.122Z"}
+{"type": "task_started", "id": "timeout_task", "agent": "SlowAgent", "attempt": 1, "started_at": 1758717358.122457, "ts": "2025-09-24T12:35:58.122Z"}
+{"type": "heartbeat", "run_id": null, "id": "timeout_task", "agent": "SlowAgent", "attempt": 1, "pid": 77383, "running_for_s": 0.0002899169921875, "ts": "2025-09-24T12:35:58.122Z"}
+{"type": "task_finished", "id": "timeout_task", "agent": "SlowAgent", "attempt": 1, "status": "timeout", "started_at": 1758717358.122436, "finished_at": 1758717358.224868, "duration_s": 0.1024320125579834, "errors": ["timeout"], "ts": "2025-09-24T12:35:58.225Z"}
+{"type": "orchestrator_finished", "finished_at": 1758717358.225742, "tasks": 1, "ts": "2025-09-24T12:35:58.225Z"}
+{"type": "orchestrator_started", "max_concurrency": 1, "tasks": 1, "started_at": 1758717358.230746, "ts": "2025-09-24T12:35:58.230Z"}
+{"type": "task_started", "id": "retry_task", "agent": "FlakyAgent", "attempt": 1, "started_at": 1758717358.23107, "ts": "2025-09-24T12:35:58.231Z"}
+{"type": "heartbeat", "run_id": null, "id": "retry_task", "agent": "FlakyAgent", "attempt": 1, "pid": 77383, "running_for_s": 0.00023221969604492188, "ts": "2025-09-24T12:35:58.231Z"}
+{"type": "task_started", "id": "retry_task", "agent": "FlakyAgent", "attempt": 2, "started_at": 1758717358.345612, "ts": "2025-09-24T12:35:58.345Z"}
+{"type": "task_started", "id": "retry_task", "agent": "FlakyAgent", "attempt": 3, "started_at": 1758717358.4605389, "ts": "2025-09-24T12:35:58.460Z"}
+{"type": "task_finished", "id": "retry_task", "agent": "FlakyAgent", "attempt": 3, "status": "success", "started_at": 1758717358.231046, "finished_at": 1758717358.562958, "duration_s": 0.3319120407104492, "errors": null, "usage": {"total_tokens": 100}, "model": "test-model", "ts": "2025-09-24T12:35:58.563Z"}
+{"type": "orchestrator_finished", "finished_at": 1758717358.563821, "tasks": 1, "ts": "2025-09-24T12:35:58.563Z"}
+{"type": "orchestrator_started", "max_concurrency": 1, "tasks": 1, "started_at": 1758717358.5688949, "ts": "2025-09-24T12:35:58.568Z"}
+{"type": "task_started", "id": "failing_task", "agent": "FailingAgent", "attempt": 1, "started_at": 1758717358.5692139, "ts": "2025-09-24T12:35:58.569Z"}
+{"type": "heartbeat", "run_id": null, "id": "failing_task", "agent": "FailingAgent", "attempt": 1, "pid": 77383, "running_for_s": 0.00041413307189941406, "ts": "2025-09-24T12:35:58.569Z"}
+{"type": "task_started", "id": "failing_task", "agent": "FailingAgent", "attempt": 2, "started_at": 1758717358.683913, "ts": "2025-09-24T12:35:58.684Z"}
+{"type": "task_finished", "id": "failing_task", "agent": "FailingAgent", "attempt": 2, "status": "failed", "started_at": 1758717358.569193, "finished_at": 1758717358.787049, "duration_s": 0.21785616874694824, "errors": ["FailingAgent simulated failure (attempt 1)", "FailingAgent simulated failure (attempt 2)"], "ts": "2025-09-24T12:35:58.787Z"}
+{"type": "orchestrator_finished", "finished_at": 1758717358.788245, "tasks": 1, "ts": "2025-09-24T12:35:58.788Z"}
+{"type": "orchestrator_started", "max_concurrency": 1, "tasks": 1, "started_at": 1758717358.793653, "ts": "2025-09-24T12:35:58.793Z"}
+{"type": "task_started", "id": "backoff_task", "agent": "BackoffAgent", "attempt": 1, "started_at": 1758717358.794167, "ts": "2025-09-24T12:35:58.794Z"}
+{"type": "heartbeat", "run_id": null, "id": "backoff_task", "agent": "BackoffAgent", "attempt": 1, "pid": 77383, "running_for_s": 0.00025200843811035156, "ts": "2025-09-24T12:35:58.794Z"}
+{"type": "task_started", "id": "backoff_task", "agent": "BackoffAgent", "attempt": 2, "started_at": 1758717358.998733, "ts": "2025-09-24T12:35:58.998Z"}
+{"type": "task_started", "id": "backoff_task", "agent": "BackoffAgent", "attempt": 3, "started_at": 1758717359.303919, "ts": "2025-09-24T12:35:59.304Z"}
+{"type": "task_finished", "id": "backoff_task", "agent": "BackoffAgent", "attempt": 3, "status": "success", "started_at": 1758717358.794142, "finished_at": 1758717359.4069, "duration_s": 0.6127579212188721, "errors": null, "usage": {"total_tokens": 100}, "model": "test-model", "ts": "2025-09-24T12:35:59.407Z"}
+{"type": "orchestrator_finished", "finished_at": 1758717359.407719, "tasks": 1, "ts": "2025-09-24T12:35:59.407Z"}
+{"type": "orchestrator_started", "max_concurrency": 2, "tasks": 1, "started_at": 1758717359.413148, "ts": "2025-09-24T12:35:59.413Z"}
+{"type": "task_started", "id": "telemetry_task", "agent": "TelemetryAgent", "attempt": 1, "started_at": 1758717359.413532, "ts": "2025-09-24T12:35:59.413Z"}
+{"type": "heartbeat", "run_id": null, "id": "telemetry_task", "agent": "TelemetryAgent", "attempt": 1, "pid": 77383, "running_for_s": 0.00023126602172851562, "ts": "2025-09-24T12:35:59.413Z"}
+{"type": "task_finished", "id": "telemetry_task", "agent": "TelemetryAgent", "attempt": 1, "status": "success", "started_at": 1758717359.413513, "finished_at": 1758717359.5157871, "duration_s": 0.10227417945861816, "errors": null, "usage": {"total_tokens": 100}, "model": "test-model", "ts": "2025-09-24T12:35:59.515Z"}
+{"type": "orchestrator_finished", "finished_at": 1758717359.516165, "tasks": 1, "ts": "2025-09-24T12:35:59.516Z"}
+{"type": "orchestrator_started", "max_concurrency": 2, "tasks": 3, "started_at": 1758717359.724352, "ts": "2025-09-24T12:35:59.724Z"}
+{"type": "task_started", "id": "agg_task_0", "agent": "AggAgent0", "attempt": 1, "started_at": 1758717359.724797, "ts": "2025-09-24T12:35:59.724Z"}
+{"type": "task_started", "id": "agg_task_1", "agent": "AggAgent1", "attempt": 1, "started_at": 1758717359.7251022, "ts": "2025-09-24T12:35:59.725Z"}
+{"type": "heartbeat", "run_id": null, "id": "agg_task_0", "agent": "AggAgent0", "attempt": 1, "pid": 77383, "running_for_s": 0.0005710124969482422, "ts": "2025-09-24T12:35:59.725Z"}
+{"type": "heartbeat", "run_id": null, "id": "agg_task_1", "agent": "AggAgent1", "attempt": 1, "pid": 77383, "running_for_s": 0.0004391670227050781, "ts": "2025-09-24T12:35:59.725Z"}
+{"type": "task_finished", "id": "agg_task_0", "agent": "AggAgent0", "attempt": 1, "status": "success", "started_at": 1758717359.724781, "finished_at": 1758717359.827216, "duration_s": 0.10243487358093262, "errors": null, "usage": {"total_tokens": 100}, "model": "test-model", "ts": "2025-09-24T12:35:59.827Z"}
+{"type": "task_finished", "id": "agg_task_1", "agent": "AggAgent1", "attempt": 1, "status": "success", "started_at": 1758717359.7250838, "finished_at": 1758717359.827926, "duration_s": 0.10284209251403809, "errors": null, "usage": {"total_tokens": 100}, "model": "test-model", "ts": "2025-09-24T12:35:59.828Z"}
+{"type": "task_started", "id": "agg_task_2", "agent": "AggAgent2", "attempt": 1, "started_at": 1758717359.828345, "ts": "2025-09-24T12:35:59.828Z"}
+{"type": "heartbeat", "run_id": null, "id": "agg_task_2", "agent": "AggAgent2", "attempt": 1, "pid": 77383, "running_for_s": 0.0003311634063720703, "ts": "2025-09-24T12:35:59.828Z"}
+{"type": "task_finished", "id": "agg_task_2", "agent": "AggAgent2", "attempt": 1, "status": "success", "started_at": 1758717359.8283079, "finished_at": 1758717359.930659, "duration_s": 0.10235118865966797, "errors": null, "usage": {"total_tokens": 100}, "model": "test-model", "ts": "2025-09-24T12:35:59.930Z"}
+{"type": "orchestrator_finished", "finished_at": 1758717359.931108, "tasks": 3, "ts": "2025-09-24T12:35:59.931Z"}
+{"type": "orchestrator_started", "max_concurrency": 1, "tasks": 1, "started_at": 1758717360.146901, "ts": "2025-09-24T12:36:00.146Z"}
+{"type": "task_finished", "id": "factory_fail", "agent": "FailingFactory", "attempt": 1, "status": "failed", "started_at": 1758717360.147419, "finished_at": 1758717360.147441, "duration_s": 2.193450927734375e-05, "errors": ["Agent factory failed: Factory creation failed"], "ts": "2025-09-24T12:36:00.147Z"}
+{"type": "heartbeat", "run_id": null, "id": "factory_fail", "agent": "FailingFactory", "attempt": 0, "pid": 77383, "running_for_s": 0.00037384033203125, "ts": "2025-09-24T12:36:00.147Z"}
+{"type": "orchestrator_finished", "finished_at": 1758717360.148045, "tasks": 1, "ts": "2025-09-24T12:36:00.148Z"}
+{"type": "orchestrator_started", "max_concurrency": 3, "tasks": 3, "started_at": 1758717360.151417, "ts": "2025-09-24T12:36:00.151Z"}
+{"type": "task_started", "id": "success_task", "agent": "SuccessAgent", "attempt": 1, "started_at": 1758717360.151638, "ts": "2025-09-24T12:36:00.151Z"}
+{"type": "task_started", "id": "fail_task", "agent": "FailAgent", "attempt": 1, "started_at": 1758717360.151801, "ts": "2025-09-24T12:36:00.151Z"}
+{"type": "task_started", "id": "another_success", "agent": "AnotherSuccessAgent", "attempt": 1, "started_at": 1758717360.1519349, "ts": "2025-09-24T12:36:00.151Z"}
+{"type": "heartbeat", "run_id": null, "id": "success_task", "agent": "SuccessAgent", "attempt": 1, "pid": 77383, "running_for_s": 0.00043320655822753906, "ts": "2025-09-24T12:36:00.152Z"}
+{"type": "heartbeat", "run_id": null, "id": "fail_task", "agent": "FailAgent", "attempt": 1, "pid": 77383, "running_for_s": 0.00038313865661621094, "ts": "2025-09-24T12:36:00.152Z"}
+{"type": "heartbeat", "run_id": null, "id": "another_success", "agent": "AnotherSuccessAgent", "attempt": 1, "pid": 77383, "running_for_s": 0.00035572052001953125, "ts": "2025-09-24T12:36:00.152Z"}
+{"type": "task_finished", "id": "success_task", "agent": "SuccessAgent", "attempt": 1, "status": "success", "started_at": 1758717360.151625, "finished_at": 1758717360.253942, "duration_s": 0.10231709480285645, "errors": null, "usage": {"total_tokens": 100}, "model": "test-model", "ts": "2025-09-24T12:36:00.254Z"}
+{"type": "task_finished", "id": "fail_task", "agent": "FailAgent", "attempt": 1, "status": "failed", "started_at": 1758717360.151792, "finished_at": 1758717360.2547798, "duration_s": 0.10298776626586914, "errors": ["FailAgent simulated failure (attempt 1)"], "ts": "2025-09-24T12:36:00.254Z"}
+{"type": "task_finished", "id": "another_success", "agent": "AnotherSuccessAgent", "attempt": 1, "status": "success", "started_at": 1758717360.1519291, "finished_at": 1758717360.2550762, "duration_s": 0.10314702987670898, "errors": null, "usage": {"total_tokens": 100}, "model": "test-model", "ts": "2025-09-24T12:36:00.255Z"}
+{"type": "orchestrator_finished", "finished_at": 1758717360.255413, "tasks": 3, "ts": "2025-09-24T12:36:00.255Z"}
+{"type": "cli_command_started", "command": "health", "args": {}, "started_at": 1758717458.655964, "ts": "2025-09-24T12:37:38.655Z"}
+{"type": "cli_command_finished", "command": "health", "status": "success", "finished_at": 1758717459.020192, "duration_s": 0.3642280101776123, "ts": "2025-09-24T12:37:39.020Z"}
+{"type": "cli_command_started", "command": "logs", "args": {}, "started_at": 1758717461.665783, "ts": "2025-09-24T12:37:41.665Z"}
+{"type": "cli_command_finished", "command": "logs", "status": "success", "finished_at": 1758717461.666751, "duration_s": 0.0009679794311523438, "ts": "2025-09-24T12:37:41.666Z"}
+{"type": "cli_command_started", "command": "test", "args": {}, "started_at": 1758717464.2865942, "ts": "2025-09-24T12:37:44.286Z"}
+{"type": "cli_command_finished", "command": "test", "status": "success", "finished_at": 1758717464.314921, "duration_s": 0.028326749801635742, "ts": "2025-09-24T12:37:44.315Z"}
+{"type": "cli_command_started", "command": "demo", "args": {}, "started_at": 1758717466.95122, "ts": "2025-09-24T12:37:46.951Z"}
+{"type": "cli_command_finished", "command": "demo", "status": "success", "finished_at": 1758717466.976267, "duration_s": 0.02504706382751465, "ts": "2025-09-24T12:37:46.976Z"}
+{"type": "orchestrator_started", "max_concurrency": 2, "tasks": 1, "started_at": 1758717467.44912, "ts": "2025-09-24T12:37:47.449Z"}
+{"type": "task_started", "id": "test_task", "agent": "TestAgent", "attempt": 1, "started_at": 1758717467.449295, "ts": "2025-09-24T12:37:47.449Z"}
+{"type": "heartbeat", "run_id": null, "id": "test_task", "agent": "TestAgent", "attempt": 1, "pid": 77745, "running_for_s": 0.0001220703125, "ts": "2025-09-24T12:37:47.449Z"}
+{"type": "task_finished", "id": "test_task", "agent": "TestAgent", "attempt": 1, "status": "success", "started_at": 1758717467.449282, "finished_at": 1758717467.551456, "duration_s": 0.10217404365539551, "errors": null, "usage": {"total_tokens": 100}, "model": "test-model", "ts": "2025-09-24T12:37:47.551Z"}
+{"type": "orchestrator_finished", "finished_at": 1758717467.551718, "tasks": 1, "ts": "2025-09-24T12:37:47.551Z"}
+{"type": "orchestrator_started", "max_concurrency": 2, "tasks": 4, "started_at": 1758717467.553808, "ts": "2025-09-24T12:37:47.553Z"}
+{"type": "task_started", "id": "task_0", "agent": "Agent0", "attempt": 1, "started_at": 1758717467.553962, "ts": "2025-09-24T12:37:47.553Z"}
+{"type": "task_started", "id": "task_1", "agent": "Agent1", "attempt": 1, "started_at": 1758717467.554079, "ts": "2025-09-24T12:37:47.554Z"}
+{"type": "heartbeat", "run_id": null, "id": "task_0", "agent": "Agent0", "attempt": 1, "pid": 77745, "running_for_s": 0.0002491474151611328, "ts": "2025-09-24T12:37:47.554Z"}
+{"type": "heartbeat", "run_id": null, "id": "task_1", "agent": "Agent1", "attempt": 1, "pid": 77745, "running_for_s": 0.0002288818359375, "ts": "2025-09-24T12:37:47.554Z"}
+{"type": "task_finished", "id": "task_0", "agent": "Agent0", "attempt": 1, "status": "success", "started_at": 1758717467.553953, "finished_at": 1758717467.756242, "duration_s": 0.20228910446166992, "errors": null, "usage": {"total_tokens": 100}, "model": "test-model", "ts": "2025-09-24T12:37:47.756Z"}
+{"type": "task_finished", "id": "task_1", "agent": "Agent1", "attempt": 1, "status": "success", "started_at": 1758717467.554074, "finished_at": 1758717467.757216, "duration_s": 0.2031419277191162, "errors": null, "usage": {"total_tokens": 100}, "model": "test-model", "ts": "2025-09-24T12:37:47.757Z"}
+{"type": "task_started", "id": "task_2", "agent": "Agent2", "attempt": 1, "started_at": 1758717467.757727, "ts": "2025-09-24T12:37:47.757Z"}
+{"type": "task_started", "id": "task_3", "agent": "Agent3", "attempt": 1, "started_at": 1758717467.757974, "ts": "2025-09-24T12:37:47.758Z"}
+{"type": "heartbeat", "run_id": null, "id": "task_2", "agent": "Agent2", "attempt": 1, "pid": 77745, "running_for_s": 0.0004410743713378906, "ts": "2025-09-24T12:37:47.758Z"}
+{"type": "heartbeat", "run_id": null, "id": "task_3", "agent": "Agent3", "attempt": 1, "pid": 77745, "running_for_s": 0.0003108978271484375, "ts": "2025-09-24T12:37:47.758Z"}
+{"type": "task_finished", "id": "task_2", "agent": "Agent2", "attempt": 1, "status": "success", "started_at": 1758717467.7576919, "finished_at": 1758717467.960094, "duration_s": 0.20240211486816406, "errors": null, "usage": {"total_tokens": 100}, "model": "test-model", "ts": "2025-09-24T12:37:47.960Z"}
+{"type": "task_finished", "id": "task_3", "agent": "Agent3", "attempt": 1, "status": "success", "started_at": 1758717467.7579641, "finished_at": 1758717467.960675, "duration_s": 0.20271086692810059, "errors": null, "usage": {"total_tokens": 100}, "model": "test-model", "ts": "2025-09-24T12:37:47.960Z"}
+{"type": "orchestrator_finished", "finished_at": 1758717467.961231, "tasks": 4, "ts": "2025-09-24T12:37:47.961Z"}
+{"type": "orchestrator_started", "max_concurrency": 1, "tasks": 1, "started_at": 1758717467.96578, "ts": "2025-09-24T12:37:47.965Z"}
+{"type": "task_started", "id": "timeout_task", "agent": "SlowAgent", "attempt": 1, "started_at": 1758717467.966132, "ts": "2025-09-24T12:37:47.966Z"}
+{"type": "heartbeat", "run_id": null, "id": "timeout_task", "agent": "SlowAgent", "attempt": 1, "pid": 77745, "running_for_s": 0.0002980232238769531, "ts": "2025-09-24T12:37:47.966Z"}
+{"type": "task_finished", "id": "timeout_task", "agent": "SlowAgent", "attempt": 1, "status": "timeout", "started_at": 1758717467.9661179, "finished_at": 1758717468.068579, "duration_s": 0.10246109962463379, "errors": ["timeout"], "ts": "2025-09-24T12:37:48.068Z"}
+{"type": "orchestrator_finished", "finished_at": 1758717468.069528, "tasks": 1, "ts": "2025-09-24T12:37:48.069Z"}
+{"type": "orchestrator_started", "max_concurrency": 1, "tasks": 1, "started_at": 1758717468.074199, "ts": "2025-09-24T12:37:48.074Z"}
+{"type": "task_started", "id": "retry_task", "agent": "FlakyAgent", "attempt": 1, "started_at": 1758717468.074558, "ts": "2025-09-24T12:37:48.074Z"}
+{"type": "heartbeat", "run_id": null, "id": "retry_task", "agent": "FlakyAgent", "attempt": 1, "pid": 77745, "running_for_s": 0.00023102760314941406, "ts": "2025-09-24T12:37:48.074Z"}
+{"type": "task_started", "id": "retry_task", "agent": "FlakyAgent", "attempt": 2, "started_at": 1758717468.189111, "ts": "2025-09-24T12:37:48.189Z"}
+{"type": "task_started", "id": "retry_task", "agent": "FlakyAgent", "attempt": 3, "started_at": 1758717468.304257, "ts": "2025-09-24T12:37:48.304Z"}
+{"type": "task_finished", "id": "retry_task", "agent": "FlakyAgent", "attempt": 3, "status": "success", "started_at": 1758717468.074542, "finished_at": 1758717468.407132, "duration_s": 0.33258986473083496, "errors": null, "usage": {"total_tokens": 100}, "model": "test-model", "ts": "2025-09-24T12:37:48.407Z"}
+{"type": "orchestrator_finished", "finished_at": 1758717468.407417, "tasks": 1, "ts": "2025-09-24T12:37:48.407Z"}
+{"type": "orchestrator_started", "max_concurrency": 1, "tasks": 1, "started_at": 1758717468.4092422, "ts": "2025-09-24T12:37:48.409Z"}
+{"type": "task_started", "id": "failing_task", "agent": "FailingAgent", "attempt": 1, "started_at": 1758717468.409377, "ts": "2025-09-24T12:37:48.409Z"}
+{"type": "heartbeat", "run_id": null, "id": "failing_task", "agent": "FailingAgent", "attempt": 1, "pid": 77745, "running_for_s": 0.00011205673217773438, "ts": "2025-09-24T12:37:48.409Z"}
+{"type": "task_started", "id": "failing_task", "agent": "FailingAgent", "attempt": 2, "started_at": 1758717468.523068, "ts": "2025-09-24T12:37:48.523Z"}
+{"type": "task_finished", "id": "failing_task", "agent": "FailingAgent", "attempt": 2, "status": "failed", "started_at": 1758717468.409369, "finished_at": 1758717468.625609, "duration_s": 0.21623992919921875, "errors": ["FailingAgent simulated failure (attempt 1)", "FailingAgent simulated failure (attempt 2)"], "ts": "2025-09-24T12:37:48.625Z"}
+{"type": "orchestrator_finished", "finished_at": 1758717468.627925, "tasks": 1, "ts": "2025-09-24T12:37:48.628Z"}
+{"type": "orchestrator_started", "max_concurrency": 1, "tasks": 1, "started_at": 1758717468.633347, "ts": "2025-09-24T12:37:48.633Z"}
+{"type": "task_started", "id": "backoff_task", "agent": "BackoffAgent", "attempt": 1, "started_at": 1758717468.633784, "ts": "2025-09-24T12:37:48.633Z"}
+{"type": "heartbeat", "run_id": null, "id": "backoff_task", "agent": "BackoffAgent", "attempt": 1, "pid": 77745, "running_for_s": 0.00027489662170410156, "ts": "2025-09-24T12:37:48.634Z"}
+{"type": "task_started", "id": "backoff_task", "agent": "BackoffAgent", "attempt": 2, "started_at": 1758717468.8383842, "ts": "2025-09-24T12:37:48.838Z"}
+{"type": "task_started", "id": "backoff_task", "agent": "BackoffAgent", "attempt": 3, "started_at": 1758717469.1436028, "ts": "2025-09-24T12:37:49.143Z"}
+{"type": "task_finished", "id": "backoff_task", "agent": "BackoffAgent", "attempt": 3, "status": "success", "started_at": 1758717468.6337621, "finished_at": 1758717469.246685, "duration_s": 0.6129229068756104, "errors": null, "usage": {"total_tokens": 100}, "model": "test-model", "ts": "2025-09-24T12:37:49.246Z"}
+{"type": "orchestrator_finished", "finished_at": 1758717469.2476668, "tasks": 1, "ts": "2025-09-24T12:37:49.247Z"}
+{"type": "orchestrator_started", "max_concurrency": 2, "tasks": 1, "started_at": 1758717469.253078, "ts": "2025-09-24T12:37:49.253Z"}
+{"type": "task_started", "id": "telemetry_task", "agent": "TelemetryAgent", "attempt": 1, "started_at": 1758717469.25346, "ts": "2025-09-24T12:37:49.253Z"}
+{"type": "heartbeat", "run_id": null, "id": "telemetry_task", "agent": "TelemetryAgent", "attempt": 1, "pid": 77745, "running_for_s": 0.00020194053649902344, "ts": "2025-09-24T12:37:49.253Z"}
+{"type": "task_finished", "id": "telemetry_task", "agent": "TelemetryAgent", "attempt": 1, "status": "success", "started_at": 1758717469.253443, "finished_at": 1758717469.3557801, "duration_s": 0.10233712196350098, "errors": null, "usage": {"total_tokens": 100}, "model": "test-model", "ts": "2025-09-24T12:37:49.356Z"}
+{"type": "orchestrator_finished", "finished_at": 1758717469.35671, "tasks": 1, "ts": "2025-09-24T12:37:49.356Z"}
+{"type": "orchestrator_started", "max_concurrency": 2, "tasks": 3, "started_at": 1758717469.563643, "ts": "2025-09-24T12:37:49.563Z"}
+{"type": "task_started", "id": "agg_task_0", "agent": "AggAgent0", "attempt": 1, "started_at": 1758717469.5639548, "ts": "2025-09-24T12:37:49.563Z"}
+{"type": "task_started", "id": "agg_task_1", "agent": "AggAgent1", "attempt": 1, "started_at": 1758717469.564227, "ts": "2025-09-24T12:37:49.564Z"}
+{"type": "heartbeat", "run_id": null, "id": "agg_task_0", "agent": "AggAgent0", "attempt": 1, "pid": 77745, "running_for_s": 0.0004489421844482422, "ts": "2025-09-24T12:37:49.564Z"}
+{"type": "heartbeat", "run_id": null, "id": "agg_task_1", "agent": "AggAgent1", "attempt": 1, "pid": 77745, "running_for_s": 0.0002989768981933594, "ts": "2025-09-24T12:37:49.564Z"}
+{"type": "task_finished", "id": "agg_task_0", "agent": "AggAgent0", "attempt": 1, "status": "success", "started_at": 1758717469.563942, "finished_at": 1758717469.666352, "duration_s": 0.10241007804870605, "errors": null, "usage": {"total_tokens": 100}, "model": "test-model", "ts": "2025-09-24T12:37:49.666Z"}
+{"type": "task_finished", "id": "agg_task_1", "agent": "AggAgent1", "attempt": 1, "status": "success", "started_at": 1758717469.564219, "finished_at": 1758717469.6670232, "duration_s": 0.10280418395996094, "errors": null, "usage": {"total_tokens": 100}, "model": "test-model", "ts": "2025-09-24T12:37:49.667Z"}
+{"type": "task_started", "id": "agg_task_2", "agent": "AggAgent2", "attempt": 1, "started_at": 1758717469.667381, "ts": "2025-09-24T12:37:49.667Z"}
+{"type": "heartbeat", "run_id": null, "id": "agg_task_2", "agent": "AggAgent2", "attempt": 1, "pid": 77745, "running_for_s": 0.00026297569274902344, "ts": "2025-09-24T12:37:49.667Z"}
+{"type": "task_finished", "id": "agg_task_2", "agent": "AggAgent2", "attempt": 1, "status": "success", "started_at": 1758717469.66735, "finished_at": 1758717469.769752, "duration_s": 0.1024019718170166, "errors": null, "usage": {"total_tokens": 100}, "model": "test-model", "ts": "2025-09-24T12:37:49.770Z"}
+{"type": "orchestrator_finished", "finished_at": 1758717469.770742, "tasks": 3, "ts": "2025-09-24T12:37:49.770Z"}
+{"type": "orchestrator_started", "max_concurrency": 1, "tasks": 1, "started_at": 1758717469.987467, "ts": "2025-09-24T12:37:49.987Z"}
+{"type": "task_finished", "id": "factory_fail", "agent": "FailingFactory", "attempt": 1, "status": "failed", "started_at": 1758717469.9880462, "finished_at": 1758717469.988068, "duration_s": 2.193450927734375e-05, "errors": ["Agent factory failed: Factory creation failed"], "ts": "2025-09-24T12:37:49.988Z"}
+{"type": "heartbeat", "run_id": null, "id": "factory_fail", "agent": "FailingFactory", "attempt": 0, "pid": 77745, "running_for_s": 0.0002658367156982422, "ts": "2025-09-24T12:37:49.988Z"}
+{"type": "orchestrator_finished", "finished_at": 1758717469.9885042, "tasks": 1, "ts": "2025-09-24T12:37:49.988Z"}
+{"type": "orchestrator_started", "max_concurrency": 3, "tasks": 3, "started_at": 1758717469.991681, "ts": "2025-09-24T12:37:49.991Z"}
+{"type": "task_started", "id": "success_task", "agent": "SuccessAgent", "attempt": 1, "started_at": 1758717469.991889, "ts": "2025-09-24T12:37:49.991Z"}
+{"type": "task_started", "id": "fail_task", "agent": "FailAgent", "attempt": 1, "started_at": 1758717469.9921339, "ts": "2025-09-24T12:37:49.992Z"}
+{"type": "task_started", "id": "another_success", "agent": "AnotherSuccessAgent", "attempt": 1, "started_at": 1758717469.9922822, "ts": "2025-09-24T12:37:49.992Z"}
+{"type": "heartbeat", "run_id": null, "id": "success_task", "agent": "SuccessAgent", "attempt": 1, "pid": 77745, "running_for_s": 0.0005588531494140625, "ts": "2025-09-24T12:37:49.992Z"}
+{"type": "heartbeat", "run_id": null, "id": "fail_task", "agent": "FailAgent", "attempt": 1, "pid": 77745, "running_for_s": 0.0004279613494873047, "ts": "2025-09-24T12:37:49.992Z"}
+{"type": "heartbeat", "run_id": null, "id": "another_success", "agent": "AnotherSuccessAgent", "attempt": 1, "pid": 77745, "running_for_s": 0.0003902912139892578, "ts": "2025-09-24T12:37:49.992Z"}
+{"type": "task_finished", "id": "success_task", "agent": "SuccessAgent", "attempt": 1, "status": "success", "started_at": 1758717469.991877, "finished_at": 1758717470.094217, "duration_s": 0.1023399829864502, "errors": null, "usage": {"total_tokens": 100}, "model": "test-model", "ts": "2025-09-24T12:37:50.094Z"}
+{"type": "task_finished", "id": "fail_task", "agent": "FailAgent", "attempt": 1, "status": "failed", "started_at": 1758717469.992125, "finished_at": 1758717470.094607, "duration_s": 0.10248208045959473, "errors": ["FailAgent simulated failure (attempt 1)"], "ts": "2025-09-24T12:37:50.094Z"}
+{"type": "task_finished", "id": "another_success", "agent": "AnotherSuccessAgent", "attempt": 1, "status": "success", "started_at": 1758717469.9922738, "finished_at": 1758717470.0949981, "duration_s": 0.10272431373596191, "errors": null, "usage": {"total_tokens": 100}, "model": "test-model", "ts": "2025-09-24T12:37:50.095Z"}
+{"type": "orchestrator_finished", "finished_at": 1758717470.095266, "tasks": 3, "ts": "2025-09-24T12:37:50.095Z"}
+{"type": "orchestrator_started", "max_concurrency": 6, "tasks": 6, "started_at": 1758717497.50912, "ts": "2025-09-24T12:38:17.509Z"}
+{"type": "task_started", "id": "data_analysis", "agent": "DataAnalyst", "attempt": 1, "started_at": 1758717497.509283, "ts": "2025-09-24T12:38:17.509Z"}
+{"type": "task_started", "id": "code_review", "agent": "CodeReviewer", "attempt": 1, "started_at": 1758717497.5093682, "ts": "2025-09-24T12:38:17.509Z"}
+{"type": "task_started", "id": "documentation", "agent": "TechnicalWriter", "attempt": 1, "started_at": 1758717497.5094342, "ts": "2025-09-24T12:38:17.509Z"}
+{"type": "task_started", "id": "testing", "agent": "TestEngineer", "attempt": 1, "started_at": 1758717497.5094929, "ts": "2025-09-24T12:38:17.509Z"}
+{"type": "task_started", "id": "optimization", "agent": "PerformanceOptimizer", "attempt": 1, "started_at": 1758717497.509548, "ts": "2025-09-24T12:38:17.509Z"}
+{"type": "task_started", "id": "monitoring", "agent": "SystemMonitor", "attempt": 1, "started_at": 1758717497.509604, "ts": "2025-09-24T12:38:17.509Z"}
+{"type": "heartbeat", "run_id": null, "id": "data_analysis", "agent": "DataAnalyst", "attempt": 1, "pid": 78333, "running_for_s": 0.00039505958557128906, "ts": "2025-09-24T12:38:17.509Z"}
+{"type": "heartbeat", "run_id": null, "id": "code_review", "agent": "CodeReviewer", "attempt": 1, "pid": 78333, "running_for_s": 0.0003600120544433594, "ts": "2025-09-24T12:38:17.509Z"}
+{"type": "heartbeat", "run_id": null, "id": "documentation", "agent": "TechnicalWriter", "attempt": 1, "pid": 78333, "running_for_s": 0.0003457069396972656, "ts": "2025-09-24T12:38:17.509Z"}
+{"type": "heartbeat", "run_id": null, "id": "testing", "agent": "TestEngineer", "attempt": 1, "pid": 78333, "running_for_s": 0.0003399848937988281, "ts": "2025-09-24T12:38:17.509Z"}
+{"type": "heartbeat", "run_id": null, "id": "optimization", "agent": "PerformanceOptimizer", "attempt": 1, "pid": 78333, "running_for_s": 0.00033211708068847656, "ts": "2025-09-24T12:38:17.509Z"}
+{"type": "heartbeat", "run_id": null, "id": "monitoring", "agent": "SystemMonitor", "attempt": 1, "pid": 78333, "running_for_s": 0.0003237724304199219, "ts": "2025-09-24T12:38:17.509Z"}
+{"type": "task_finished", "id": "monitoring", "agent": "SystemMonitor", "attempt": 1, "status": "success", "started_at": 1758717497.509602, "finished_at": 1758717499.001759, "duration_s": 1.492156982421875, "errors": null, "usage": {"prompt_tokens": 473, "completion_tokens": 102, "total_tokens": 540}, "model": "gpt-4o", "ts": "2025-09-24T12:38:19.002Z"}
+{"type": "task_finished", "id": "data_analysis", "agent": "DataAnalyst", "attempt": 1, "status": "success", "started_at": 1758717497.509276, "finished_at": 1758717499.431679, "duration_s": 1.92240309715271, "errors": null, "usage": {"prompt_tokens": 380, "completion_tokens": 199, "total_tokens": 695}, "model": "gpt-4o-mini", "ts": "2025-09-24T12:38:19.431Z"}
+{"type": "task_finished", "id": "documentation", "agent": "TechnicalWriter", "attempt": 1, "status": "success", "started_at": 1758717497.5094311, "finished_at": 1758717499.893347, "duration_s": 2.383915901184082, "errors": null, "usage": {"prompt_tokens": 173, "completion_tokens": 187, "total_tokens": 470}, "model": "gpt-4o-mini", "ts": "2025-09-24T12:38:19.893Z"}
+{"type": "task_started", "id": "code_review", "agent": "CodeReviewer", "attempt": 2, "started_at": 1758717501.1847029, "ts": "2025-09-24T12:38:21.184Z"}
+{"type": "task_started", "id": "optimization", "agent": "PerformanceOptimizer", "attempt": 2, "started_at": 1758717501.222846, "ts": "2025-09-24T12:38:21.223Z"}
+{"type": "task_started", "id": "testing", "agent": "TestEngineer", "attempt": 2, "started_at": 1758717501.965281, "ts": "2025-09-24T12:38:21.965Z"}
+{"type": "heartbeat", "run_id": null, "id": "code_review", "agent": "CodeReviewer", "attempt": 2, "pid": 78333, "running_for_s": 5.002676010131836, "ts": "2025-09-24T12:38:22.512Z"}
+{"type": "heartbeat", "run_id": null, "id": "testing", "agent": "TestEngineer", "attempt": 2, "pid": 78333, "running_for_s": 5.00333309173584, "ts": "2025-09-24T12:38:22.512Z"}
+{"type": "heartbeat", "run_id": null, "id": "optimization", "agent": "PerformanceOptimizer", "attempt": 2, "pid": 78333, "running_for_s": 5.0036070346832275, "ts": "2025-09-24T12:38:22.513Z"}
+{"type": "task_finished", "id": "testing", "agent": "TestEngineer", "attempt": 2, "status": "success", "started_at": 1758717497.50949, "finished_at": 1758717503.190055, "duration_s": 5.680564880371094, "errors": null, "usage": {"prompt_tokens": 286, "completion_tokens": 125, "total_tokens": 372}, "model": "gpt-4o", "ts": "2025-09-24T12:38:23.190Z"}
+{"type": "task_finished", "id": "code_review", "agent": "CodeReviewer", "attempt": 2, "status": "success", "started_at": 1758717497.509364, "finished_at": 1758717503.665772, "duration_s": 6.156408071517944, "errors": null, "usage": {"prompt_tokens": 141, "completion_tokens": 114, "total_tokens": 426}, "model": "gpt-4o", "ts": "2025-09-24T12:38:23.666Z"}
+{"type": "task_finished", "id": "optimization", "agent": "PerformanceOptimizer", "attempt": 2, "status": "success", "started_at": 1758717497.5095448, "finished_at": 1758717505.742957, "duration_s": 8.233412265777588, "errors": null, "usage": {"prompt_tokens": 127, "completion_tokens": 113, "total_tokens": 368}, "model": "claude-3-5-sonnet", "ts": "2025-09-24T12:38:25.743Z"}
+{"type": "orchestrator_finished", "finished_at": 1758717505.7439811, "tasks": 6, "ts": "2025-09-24T12:38:25.744Z"}
+{"type": "cli_command_started", "command": "health", "args": {}, "started_at": 1758718119.5226738, "ts": "2025-09-24T12:48:39.522Z"}
+{"type": "cli_command_finished", "command": "health", "status": "success", "finished_at": 1758718119.8773818, "duration_s": 0.3547079563140869, "ts": "2025-09-24T12:48:39.877Z"}
+{"type": "cli_command_started", "command": "logs", "args": {}, "started_at": 1758718122.518781, "ts": "2025-09-24T12:48:42.518Z"}
+{"type": "cli_command_finished", "command": "logs", "status": "success", "finished_at": 1758718122.519745, "duration_s": 0.0009641647338867188, "ts": "2025-09-24T12:48:42.519Z"}
+{"type": "cli_command_started", "command": "test", "args": {}, "started_at": 1758718125.2172391, "ts": "2025-09-24T12:48:45.217Z"}
+{"type": "cli_command_finished", "command": "test", "status": "success", "finished_at": 1758718125.246023, "duration_s": 0.028783798217773438, "ts": "2025-09-24T12:48:45.246Z"}
+{"type": "cli_command_started", "command": "demo", "args": {}, "started_at": 1758718127.8884292, "ts": "2025-09-24T12:48:47.888Z"}
+{"type": "cli_command_finished", "command": "demo", "status": "success", "finished_at": 1758718127.914176, "duration_s": 0.025746822357177734, "ts": "2025-09-24T12:48:47.914Z"}
+{"type": "orchestrator_started", "max_concurrency": 2, "tasks": 1, "started_at": 1758718128.3791842, "ts": "2025-09-24T12:48:48.379Z"}
+{"type": "task_started", "id": "test_task", "agent": "TestAgent", "attempt": 1, "started_at": 1758718128.379364, "ts": "2025-09-24T12:48:48.379Z"}
+{"type": "heartbeat", "run_id": null, "id": "test_task", "agent": "TestAgent", "attempt": 1, "pid": 78690, "running_for_s": 0.00012683868408203125, "ts": "2025-09-24T12:48:48.379Z"}
+{"type": "task_finished", "id": "test_task", "agent": "TestAgent", "attempt": 1, "status": "success", "started_at": 1758718128.3793511, "finished_at": 1758718128.480544, "duration_s": 0.10119295120239258, "errors": null, "usage": {"total_tokens": 100}, "model": "test-model", "ts": "2025-09-24T12:48:48.480Z"}
+{"type": "orchestrator_finished", "finished_at": 1758718128.480788, "tasks": 1, "ts": "2025-09-24T12:48:48.480Z"}
+{"type": "orchestrator_started", "max_concurrency": 2, "tasks": 4, "started_at": 1758718128.482921, "ts": "2025-09-24T12:48:48.482Z"}
+{"type": "task_started", "id": "task_0", "agent": "Agent0", "attempt": 1, "started_at": 1758718128.483072, "ts": "2025-09-24T12:48:48.483Z"}
+{"type": "task_started", "id": "task_1", "agent": "Agent1", "attempt": 1, "started_at": 1758718128.4831948, "ts": "2025-09-24T12:48:48.483Z"}
+{"type": "heartbeat", "run_id": null, "id": "task_0", "agent": "Agent0", "attempt": 1, "pid": 78690, "running_for_s": 0.0002529621124267578, "ts": "2025-09-24T12:48:48.483Z"}
+{"type": "heartbeat", "run_id": null, "id": "task_1", "agent": "Agent1", "attempt": 1, "pid": 78690, "running_for_s": 0.00022983551025390625, "ts": "2025-09-24T12:48:48.483Z"}
+{"type": "task_finished", "id": "task_0", "agent": "Agent0", "attempt": 1, "status": "success", "started_at": 1758718128.483062, "finished_at": 1758718128.684402, "duration_s": 0.2013399600982666, "errors": null, "usage": {"total_tokens": 100}, "model": "test-model", "ts": "2025-09-24T12:48:48.684Z"}
+{"type": "task_finished", "id": "task_1", "agent": "Agent1", "attempt": 1, "status": "success", "started_at": 1758718128.48319, "finished_at": 1758718128.68551, "duration_s": 0.20231986045837402, "errors": null, "usage": {"total_tokens": 100}, "model": "test-model", "ts": "2025-09-24T12:48:48.685Z"}
+{"type": "task_started", "id": "task_2", "agent": "Agent2", "attempt": 1, "started_at": 1758718128.686105, "ts": "2025-09-24T12:48:48.686Z"}
+{"type": "task_started", "id": "task_3", "agent": "Agent3", "attempt": 1, "started_at": 1758718128.686521, "ts": "2025-09-24T12:48:48.686Z"}
+{"type": "heartbeat", "run_id": null, "id": "task_2", "agent": "Agent2", "attempt": 1, "pid": 78690, "running_for_s": 0.0007140636444091797, "ts": "2025-09-24T12:48:48.686Z"}
+{"type": "heartbeat", "run_id": null, "id": "task_3", "agent": "Agent3", "attempt": 1, "pid": 78690, "running_for_s": 0.0004711151123046875, "ts": "2025-09-24T12:48:48.687Z"}
+{"type": "task_finished", "id": "task_2", "agent": "Agent2", "attempt": 1, "status": "success", "started_at": 1758718128.686054, "finished_at": 1758718128.887177, "duration_s": 0.20112299919128418, "errors": null, "usage": {"total_tokens": 100}, "model": "test-model", "ts": "2025-09-24T12:48:48.887Z"}
+{"type": "task_finished", "id": "task_3", "agent": "Agent3", "attempt": 1, "status": "success", "started_at": 1758718128.686504, "finished_at": 1758718128.887394, "duration_s": 0.20089006423950195, "errors": null, "usage": {"total_tokens": 100}, "model": "test-model", "ts": "2025-09-24T12:48:48.887Z"}
+{"type": "orchestrator_finished", "finished_at": 1758718128.887537, "tasks": 4, "ts": "2025-09-24T12:48:48.887Z"}
+{"type": "orchestrator_started", "max_concurrency": 1, "tasks": 1, "started_at": 1758718128.8891048, "ts": "2025-09-24T12:48:48.889Z"}
+{"type": "task_started", "id": "timeout_task", "agent": "SlowAgent", "attempt": 1, "started_at": 1758718128.8892171, "ts": "2025-09-24T12:48:48.889Z"}
+{"type": "heartbeat", "run_id": null, "id": "timeout_task", "agent": "SlowAgent", "attempt": 1, "pid": 78690, "running_for_s": 9.965896606445312e-05, "ts": "2025-09-24T12:48:48.889Z"}
+{"type": "task_finished", "id": "timeout_task", "agent": "SlowAgent", "attempt": 1, "status": "timeout", "started_at": 1758718128.8892102, "finished_at": 1758718128.990516, "duration_s": 0.10130572319030762, "errors": ["timeout"], "ts": "2025-09-24T12:48:48.990Z"}
+{"type": "orchestrator_finished", "finished_at": 1758718128.991515, "tasks": 1, "ts": "2025-09-24T12:48:48.991Z"}
+{"type": "orchestrator_started", "max_concurrency": 1, "tasks": 1, "started_at": 1758718128.996429, "ts": "2025-09-24T12:48:48.996Z"}
+{"type": "task_started", "id": "retry_task", "agent": "FlakyAgent", "attempt": 1, "started_at": 1758718128.996778, "ts": "2025-09-24T12:48:48.996Z"}
+{"type": "heartbeat", "run_id": null, "id": "retry_task", "agent": "FlakyAgent", "attempt": 1, "pid": 78690, "running_for_s": 0.0002529621124267578, "ts": "2025-09-24T12:48:48.997Z"}
+{"type": "task_started", "id": "retry_task", "agent": "FlakyAgent", "attempt": 2, "started_at": 1758718129.109092, "ts": "2025-09-24T12:48:49.109Z"}
+{"type": "task_started", "id": "retry_task", "agent": "FlakyAgent", "attempt": 3, "started_at": 1758718129.221828, "ts": "2025-09-24T12:48:49.222Z"}
+{"type": "task_finished", "id": "retry_task", "agent": "FlakyAgent", "attempt": 3, "status": "success", "started_at": 1758718128.996759, "finished_at": 1758718129.323967, "duration_s": 0.3272080421447754, "errors": null, "usage": {"total_tokens": 100}, "model": "test-model", "ts": "2025-09-24T12:48:49.324Z"}
+{"type": "orchestrator_finished", "finished_at": 1758718129.325045, "tasks": 1, "ts": "2025-09-24T12:48:49.325Z"}
+{"type": "orchestrator_started", "max_concurrency": 1, "tasks": 1, "started_at": 1758718129.330776, "ts": "2025-09-24T12:48:49.330Z"}
+{"type": "task_started", "id": "failing_task", "agent": "FailingAgent", "attempt": 1, "started_at": 1758718129.331157, "ts": "2025-09-24T12:48:49.331Z"}
+{"type": "heartbeat", "run_id": null, "id": "failing_task", "agent": "FailingAgent", "attempt": 1, "pid": 78690, "running_for_s": 0.00025177001953125, "ts": "2025-09-24T12:48:49.331Z"}
+{"type": "task_started", "id": "failing_task", "agent": "FailingAgent", "attempt": 2, "started_at": 1758718129.4437041, "ts": "2025-09-24T12:48:49.443Z"}
+{"type": "task_finished", "id": "failing_task", "agent": "FailingAgent", "attempt": 2, "status": "failed", "started_at": 1758718129.331135, "finished_at": 1758718129.5456471, "duration_s": 0.21451210975646973, "errors": ["FailingAgent simulated failure (attempt 1)", "FailingAgent simulated failure (attempt 2)"], "ts": "2025-09-24T12:48:49.545Z"}
+{"type": "orchestrator_finished", "finished_at": 1758718129.54657, "tasks": 1, "ts": "2025-09-24T12:48:49.546Z"}
+{"type": "orchestrator_started", "max_concurrency": 1, "tasks": 1, "started_at": 1758718129.55181, "ts": "2025-09-24T12:48:49.551Z"}
+{"type": "task_started", "id": "backoff_task", "agent": "BackoffAgent", "attempt": 1, "started_at": 1758718129.552193, "ts": "2025-09-24T12:48:49.552Z"}
+{"type": "heartbeat", "run_id": null, "id": "backoff_task", "agent": "BackoffAgent", "attempt": 1, "pid": 78690, "running_for_s": 0.00023818016052246094, "ts": "2025-09-24T12:48:49.552Z"}
+{"type": "task_started", "id": "backoff_task", "agent": "BackoffAgent", "attempt": 2, "started_at": 1758718129.7540832, "ts": "2025-09-24T12:48:49.754Z"}
+{"type": "task_started", "id": "backoff_task", "agent": "BackoffAgent", "attempt": 3, "started_at": 1758718130.056587, "ts": "2025-09-24T12:48:50.056Z"}
+{"type": "task_finished", "id": "backoff_task", "agent": "BackoffAgent", "attempt": 3, "status": "success", "started_at": 1758718129.552168, "finished_at": 1758718130.1585448, "duration_s": 0.6063768863677979, "errors": null, "usage": {"total_tokens": 100}, "model": "test-model", "ts": "2025-09-24T12:48:50.158Z"}
+{"type": "orchestrator_finished", "finished_at": 1758718130.159343, "tasks": 1, "ts": "2025-09-24T12:48:50.159Z"}
+{"type": "orchestrator_started", "max_concurrency": 2, "tasks": 1, "started_at": 1758718130.1643279, "ts": "2025-09-24T12:48:50.164Z"}
+{"type": "task_started", "id": "telemetry_task", "agent": "TelemetryAgent", "attempt": 1, "started_at": 1758718130.164845, "ts": "2025-09-24T12:48:50.164Z"}
+{"type": "heartbeat", "run_id": null, "id": "telemetry_task", "agent": "TelemetryAgent", "attempt": 1, "pid": 78690, "running_for_s": 0.00026607513427734375, "ts": "2025-09-24T12:48:50.165Z"}
+{"type": "task_finished", "id": "telemetry_task", "agent": "TelemetryAgent", "attempt": 1, "status": "success", "started_at": 1758718130.1648178, "finished_at": 1758718130.266186, "duration_s": 0.10136818885803223, "errors": null, "usage": {"total_tokens": 100}, "model": "test-model", "ts": "2025-09-24T12:48:50.266Z"}
+{"type": "orchestrator_finished", "finished_at": 1758718130.2668989, "tasks": 1, "ts": "2025-09-24T12:48:50.266Z"}
+{"type": "orchestrator_started", "max_concurrency": 2, "tasks": 3, "started_at": 1758718130.4749172, "ts": "2025-09-24T12:48:50.475Z"}
+{"type": "task_started", "id": "agg_task_0", "agent": "AggAgent0", "attempt": 1, "started_at": 1758718130.4755359, "ts": "2025-09-24T12:48:50.475Z"}
+{"type": "task_started", "id": "agg_task_1", "agent": "AggAgent1", "attempt": 1, "started_at": 1758718130.4758542, "ts": "2025-09-24T12:48:50.475Z"}
+{"type": "heartbeat", "run_id": null, "id": "agg_task_0", "agent": "AggAgent0", "attempt": 1, "pid": 78690, "running_for_s": 0.0006070137023925781, "ts": "2025-09-24T12:48:50.476Z"}
+{"type": "heartbeat", "run_id": null, "id": "agg_task_1", "agent": "AggAgent1", "attempt": 1, "pid": 78690, "running_for_s": 0.0004658699035644531, "ts": "2025-09-24T12:48:50.476Z"}
+{"type": "task_finished", "id": "agg_task_0", "agent": "AggAgent0", "attempt": 1, "status": "success", "started_at": 1758718130.475511, "finished_at": 1758718130.576216, "duration_s": 0.10070490837097168, "errors": null, "usage": {"total_tokens": 100}, "model": "test-model", "ts": "2025-09-24T12:48:50.576Z"}
+{"type": "task_finished", "id": "agg_task_1", "agent": "AggAgent1", "attempt": 1, "status": "success", "started_at": 1758718130.4758332, "finished_at": 1758718130.576823, "duration_s": 0.10098981857299805, "errors": null, "usage": {"total_tokens": 100}, "model": "test-model", "ts": "2025-09-24T12:48:50.576Z"}
+{"type": "task_started", "id": "agg_task_2", "agent": "AggAgent2", "attempt": 1, "started_at": 1758718130.5772228, "ts": "2025-09-24T12:48:50.577Z"}
+{"type": "heartbeat", "run_id": null, "id": "agg_task_2", "agent": "AggAgent2", "attempt": 1, "pid": 78690, "running_for_s": 0.00026226043701171875, "ts": "2025-09-24T12:48:50.577Z"}
+{"type": "task_finished", "id": "agg_task_2", "agent": "AggAgent2", "attempt": 1, "status": "success", "started_at": 1758718130.577194, "finished_at": 1758718130.6785421, "duration_s": 0.1013481616973877, "errors": null, "usage": {"total_tokens": 100}, "model": "test-model", "ts": "2025-09-24T12:48:50.678Z"}
+{"type": "orchestrator_finished", "finished_at": 1758718130.679358, "tasks": 3, "ts": "2025-09-24T12:48:50.679Z"}
+{"type": "orchestrator_started", "max_concurrency": 1, "tasks": 1, "started_at": 1758718130.895228, "ts": "2025-09-24T12:48:50.895Z"}
+{"type": "task_finished", "id": "factory_fail", "agent": "FailingFactory", "attempt": 1, "status": "failed", "started_at": 1758718130.895755, "finished_at": 1758718130.895775, "duration_s": 2.002716064453125e-05, "errors": ["Agent factory failed: Factory creation failed"], "ts": "2025-09-24T12:48:50.895Z"}
+{"type": "heartbeat", "run_id": null, "id": "factory_fail", "agent": "FailingFactory", "attempt": 0, "pid": 78690, "running_for_s": 0.00031304359436035156, "ts": "2025-09-24T12:48:50.896Z"}
+{"type": "orchestrator_finished", "finished_at": 1758718130.896311, "tasks": 1, "ts": "2025-09-24T12:48:50.896Z"}
+{"type": "orchestrator_started", "max_concurrency": 3, "tasks": 3, "started_at": 1758718130.9000692, "ts": "2025-09-24T12:48:50.900Z"}
+{"type": "task_started", "id": "success_task", "agent": "SuccessAgent", "attempt": 1, "started_at": 1758718130.900346, "ts": "2025-09-24T12:48:50.900Z"}
+{"type": "task_started", "id": "fail_task", "agent": "FailAgent", "attempt": 1, "started_at": 1758718130.900643, "ts": "2025-09-24T12:48:50.900Z"}
+{"type": "task_started", "id": "another_success", "agent": "AnotherSuccessAgent", "attempt": 1, "started_at": 1758718130.9008582, "ts": "2025-09-24T12:48:50.900Z"}
+{"type": "heartbeat", "run_id": null, "id": "success_task", "agent": "SuccessAgent", "attempt": 1, "pid": 78690, "running_for_s": 0.0007171630859375, "ts": "2025-09-24T12:48:50.901Z"}
+{"type": "heartbeat", "run_id": null, "id": "fail_task", "agent": "FailAgent", "attempt": 1, "pid": 78690, "running_for_s": 0.0005450248718261719, "ts": "2025-09-24T12:48:50.901Z"}
+{"type": "heartbeat", "run_id": null, "id": "another_success", "agent": "AnotherSuccessAgent", "attempt": 1, "pid": 78690, "running_for_s": 0.0004458427429199219, "ts": "2025-09-24T12:48:50.901Z"}
+{"type": "task_finished", "id": "success_task", "agent": "SuccessAgent", "attempt": 1, "status": "success", "started_at": 1758718130.9003148, "finished_at": 1758718131.00174, "duration_s": 0.1014251708984375, "errors": null, "usage": {"total_tokens": 100}, "model": "test-model", "ts": "2025-09-24T12:48:51.001Z"}
+{"type": "task_finished", "id": "fail_task", "agent": "FailAgent", "attempt": 1, "status": "failed", "started_at": 1758718130.9006279, "finished_at": 1758718131.001997, "duration_s": 0.10136914253234863, "errors": ["FailAgent simulated failure (attempt 1)"], "ts": "2025-09-24T12:48:51.002Z"}
+{"type": "task_finished", "id": "another_success", "agent": "AnotherSuccessAgent", "attempt": 1, "status": "success", "started_at": 1758718130.9008482, "finished_at": 1758718131.002235, "duration_s": 0.10138678550720215, "errors": null, "usage": {"total_tokens": 100}, "model": "test-model", "ts": "2025-09-24T12:48:51.002Z"}
+{"type": "orchestrator_finished", "finished_at": 1758718131.00242, "tasks": 3, "ts": "2025-09-24T12:48:51.002Z"}
+{"type": "cli_command_started", "command": "health", "args": {}, "started_at": 1758718258.403739, "ts": "2025-09-24T12:50:58.403Z"}
+{"type": "cli_command_finished", "command": "health", "status": "success", "finished_at": 1758718258.738383, "duration_s": 0.334644079208374, "ts": "2025-09-24T12:50:58.738Z"}
+{"type": "cli_command_started", "command": "logs", "args": {}, "started_at": 1758718261.375514, "ts": "2025-09-24T12:51:01.375Z"}
+{"type": "cli_command_finished", "command": "logs", "status": "success", "finished_at": 1758718261.376483, "duration_s": 0.00096893310546875, "ts": "2025-09-24T12:51:01.376Z"}
+{"type": "cli_command_started", "command": "test", "args": {}, "started_at": 1758718264.1131892, "ts": "2025-09-24T12:51:04.113Z"}
+{"type": "cli_command_finished", "command": "test", "status": "success", "finished_at": 1758718264.1415691, "duration_s": 0.02837991714477539, "ts": "2025-09-24T12:51:04.141Z"}
+{"type": "cli_command_started", "command": "demo", "args": {}, "started_at": 1758718266.770473, "ts": "2025-09-24T12:51:06.770Z"}
+{"type": "cli_command_finished", "command": "demo", "status": "success", "finished_at": 1758718266.7952042, "duration_s": 0.024731159210205078, "ts": "2025-09-24T12:51:06.795Z"}
+{"type": "orchestrator_started", "max_concurrency": 2, "tasks": 1, "started_at": 1758718267.256344, "ts": "2025-09-24T12:51:07.256Z"}
+{"type": "task_started", "id": "test_task", "agent": "TestAgent", "attempt": 1, "started_at": 1758718267.256512, "ts": "2025-09-24T12:51:07.256Z"}
+{"type": "heartbeat", "run_id": null, "id": "test_task", "agent": "TestAgent", "attempt": 1, "pid": 79614, "running_for_s": 0.00011110305786132812, "ts": "2025-09-24T12:51:07.256Z"}
+{"type": "task_finished", "id": "test_task", "agent": "TestAgent", "attempt": 1, "status": "success", "started_at": 1758718267.256499, "finished_at": 1758718267.3576682, "duration_s": 0.10116910934448242, "errors": null, "usage": {"total_tokens": 100}, "model": "test-model", "ts": "2025-09-24T12:51:07.357Z"}
+{"type": "orchestrator_finished", "finished_at": 1758718267.3578959, "tasks": 1, "ts": "2025-09-24T12:51:07.357Z"}
+{"type": "orchestrator_started", "max_concurrency": 2, "tasks": 4, "started_at": 1758718267.360009, "ts": "2025-09-24T12:51:07.360Z"}
+{"type": "task_started", "id": "task_0", "agent": "Agent0", "attempt": 1, "started_at": 1758718267.3601549, "ts": "2025-09-24T12:51:07.360Z"}
+{"type": "task_started", "id": "task_1", "agent": "Agent1", "attempt": 1, "started_at": 1758718267.3602712, "ts": "2025-09-24T12:51:07.360Z"}
+{"type": "heartbeat", "run_id": null, "id": "task_0", "agent": "Agent0", "attempt": 1, "pid": 79614, "running_for_s": 0.00024509429931640625, "ts": "2025-09-24T12:51:07.360Z"}
+{"type": "heartbeat", "run_id": null, "id": "task_1", "agent": "Agent1", "attempt": 1, "pid": 79614, "running_for_s": 0.0002269744873046875, "ts": "2025-09-24T12:51:07.360Z"}
+{"type": "task_finished", "id": "task_0", "agent": "Agent0", "attempt": 1, "status": "success", "started_at": 1758718267.3601449, "finished_at": 1758718267.5614378, "duration_s": 0.2012929916381836, "errors": null, "usage": {"total_tokens": 100}, "model": "test-model", "ts": "2025-09-24T12:51:07.561Z"}
+{"type": "task_finished", "id": "task_1", "agent": "Agent1", "attempt": 1, "status": "success", "started_at": 1758718267.360265, "finished_at": 1758718267.562526, "duration_s": 0.20226097106933594, "errors": null, "usage": {"total_tokens": 100}, "model": "test-model", "ts": "2025-09-24T12:51:07.562Z"}
+{"type": "task_started", "id": "task_2", "agent": "Agent2", "attempt": 1, "started_at": 1758718267.5632389, "ts": "2025-09-24T12:51:07.563Z"}
+{"type": "task_started", "id": "task_3", "agent": "Agent3", "attempt": 1, "started_at": 1758718267.563669, "ts": "2025-09-24T12:51:07.563Z"}
+{"type": "heartbeat", "run_id": null, "id": "task_2", "agent": "Agent2", "attempt": 1, "pid": 79614, "running_for_s": 0.0008320808410644531, "ts": "2025-09-24T12:51:07.564Z"}
+{"type": "heartbeat", "run_id": null, "id": "task_3", "agent": "Agent3", "attempt": 1, "pid": 79614, "running_for_s": 0.0006289482116699219, "ts": "2025-09-24T12:51:07.564Z"}
+{"type": "task_finished", "id": "task_2", "agent": "Agent2", "attempt": 1, "status": "success", "started_at": 1758718267.563179, "finished_at": 1758718267.764779, "duration_s": 0.2016000747680664, "errors": null, "usage": {"total_tokens": 100}, "model": "test-model", "ts": "2025-09-24T12:51:07.764Z"}
+{"type": "task_finished", "id": "task_3", "agent": "Agent3", "attempt": 1, "status": "success", "started_at": 1758718267.563644, "finished_at": 1758718267.7655392, "duration_s": 0.20189523696899414, "errors": null, "usage": {"total_tokens": 100}, "model": "test-model", "ts": "2025-09-24T12:51:07.765Z"}
+{"type": "orchestrator_finished", "finished_at": 1758718267.7659578, "tasks": 4, "ts": "2025-09-24T12:51:07.766Z"}
+{"type": "orchestrator_started", "max_concurrency": 1, "tasks": 1, "started_at": 1758718267.7707179, "ts": "2025-09-24T12:51:07.770Z"}
+{"type": "task_started", "id": "timeout_task", "agent": "SlowAgent", "attempt": 1, "started_at": 1758718267.771113, "ts": "2025-09-24T12:51:07.771Z"}
+{"type": "heartbeat", "run_id": null, "id": "timeout_task", "agent": "SlowAgent", "attempt": 1, "pid": 79614, "running_for_s": 0.0002281665802001953, "ts": "2025-09-24T12:51:07.771Z"}
+{"type": "task_finished", "id": "timeout_task", "agent": "SlowAgent", "attempt": 1, "status": "timeout", "started_at": 1758718267.771092, "finished_at": 1758718267.8725371, "duration_s": 0.10144519805908203, "errors": ["timeout"], "ts": "2025-09-24T12:51:07.872Z"}
+{"type": "orchestrator_finished", "finished_at": 1758718267.873685, "tasks": 1, "ts": "2025-09-24T12:51:07.873Z"}
+{"type": "orchestrator_started", "max_concurrency": 1, "tasks": 1, "started_at": 1758718267.8795002, "ts": "2025-09-24T12:51:07.879Z"}
+{"type": "task_started", "id": "retry_task", "agent": "FlakyAgent", "attempt": 1, "started_at": 1758718267.880009, "ts": "2025-09-24T12:51:07.880Z"}
+{"type": "heartbeat", "run_id": null, "id": "retry_task", "agent": "FlakyAgent", "attempt": 1, "pid": 79614, "running_for_s": 0.00035381317138671875, "ts": "2025-09-24T12:51:07.880Z"}
+{"type": "task_started", "id": "retry_task", "agent": "FlakyAgent", "attempt": 2, "started_at": 1758718267.9926589, "ts": "2025-09-24T12:51:07.992Z"}
+{"type": "task_started", "id": "retry_task", "agent": "FlakyAgent", "attempt": 3, "started_at": 1758718268.105767, "ts": "2025-09-24T12:51:08.106Z"}
+{"type": "task_finished", "id": "retry_task", "agent": "FlakyAgent", "attempt": 3, "status": "success", "started_at": 1758718267.8799832, "finished_at": 1758718268.207842, "duration_s": 0.32785892486572266, "errors": null, "usage": {"total_tokens": 100}, "model": "test-model", "ts": "2025-09-24T12:51:08.208Z"}
+{"type": "orchestrator_finished", "finished_at": 1758718268.2087948, "tasks": 1, "ts": "2025-09-24T12:51:08.208Z"}
+{"type": "orchestrator_started", "max_concurrency": 1, "tasks": 1, "started_at": 1758718268.214741, "ts": "2025-09-24T12:51:08.214Z"}
+{"type": "task_started", "id": "failing_task", "agent": "FailingAgent", "attempt": 1, "started_at": 1758718268.215073, "ts": "2025-09-24T12:51:08.215Z"}
+{"type": "heartbeat", "run_id": null, "id": "failing_task", "agent": "FailingAgent", "attempt": 1, "pid": 79614, "running_for_s": 0.0002238750457763672, "ts": "2025-09-24T12:51:08.215Z"}
+{"type": "task_started", "id": "failing_task", "agent": "FailingAgent", "attempt": 2, "started_at": 1758718268.327649, "ts": "2025-09-24T12:51:08.327Z"}
+{"type": "task_finished", "id": "failing_task", "agent": "FailingAgent", "attempt": 2, "status": "failed", "started_at": 1758718268.2150521, "finished_at": 1758718268.42962, "duration_s": 0.2145678997039795, "errors": ["FailingAgent simulated failure (attempt 1)", "FailingAgent simulated failure (attempt 2)"], "ts": "2025-09-24T12:51:08.429Z"}
+{"type": "orchestrator_finished", "finished_at": 1758718268.430858, "tasks": 1, "ts": "2025-09-24T12:51:08.430Z"}
+{"type": "orchestrator_started", "max_concurrency": 1, "tasks": 1, "started_at": 1758718268.436245, "ts": "2025-09-24T12:51:08.436Z"}
+{"type": "task_started", "id": "backoff_task", "agent": "BackoffAgent", "attempt": 1, "started_at": 1758718268.436676, "ts": "2025-09-24T12:51:08.436Z"}
+{"type": "heartbeat", "run_id": null, "id": "backoff_task", "agent": "BackoffAgent", "attempt": 1, "pid": 79614, "running_for_s": 0.000247955322265625, "ts": "2025-09-24T12:51:08.436Z"}
+{"type": "task_started", "id": "backoff_task", "agent": "BackoffAgent", "attempt": 2, "started_at": 1758718268.639147, "ts": "2025-09-24T12:51:08.639Z"}
+{"type": "task_started", "id": "backoff_task", "agent": "BackoffAgent", "attempt": 3, "started_at": 1758718268.942195, "ts": "2025-09-24T12:51:08.942Z"}
+{"type": "task_finished", "id": "backoff_task", "agent": "BackoffAgent", "attempt": 3, "status": "success", "started_at": 1758718268.4366531, "finished_at": 1758718269.0441961, "duration_s": 0.6075429916381836, "errors": null, "usage": {"total_tokens": 100}, "model": "test-model", "ts": "2025-09-24T12:51:09.044Z"}
+{"type": "orchestrator_finished", "finished_at": 1758718269.045353, "tasks": 1, "ts": "2025-09-24T12:51:09.045Z"}
+{"type": "orchestrator_started", "max_concurrency": 2, "tasks": 1, "started_at": 1758718269.051544, "ts": "2025-09-24T12:51:09.051Z"}
+{"type": "task_started", "id": "telemetry_task", "agent": "TelemetryAgent", "attempt": 1, "started_at": 1758718269.051947, "ts": "2025-09-24T12:51:09.052Z"}
+{"type": "heartbeat", "run_id": null, "id": "telemetry_task", "agent": "TelemetryAgent", "attempt": 1, "pid": 79614, "running_for_s": 0.0002741813659667969, "ts": "2025-09-24T12:51:09.052Z"}
+{"type": "task_finished", "id": "telemetry_task", "agent": "TelemetryAgent", "attempt": 1, "status": "success", "started_at": 1758718269.051923, "finished_at": 1758718269.1533298, "duration_s": 0.10140681266784668, "errors": null, "usage": {"total_tokens": 100}, "model": "test-model", "ts": "2025-09-24T12:51:09.153Z"}
+{"type": "orchestrator_finished", "finished_at": 1758718269.1542358, "tasks": 1, "ts": "2025-09-24T12:51:09.154Z"}
+{"type": "orchestrator_started", "max_concurrency": 2, "tasks": 3, "started_at": 1758718269.36252, "ts": "2025-09-24T12:51:09.362Z"}
+{"type": "task_started", "id": "agg_task_0", "agent": "AggAgent0", "attempt": 1, "started_at": 1758718269.363047, "ts": "2025-09-24T12:51:09.363Z"}
+{"type": "task_started", "id": "agg_task_1", "agent": "AggAgent1", "attempt": 1, "started_at": 1758718269.363345, "ts": "2025-09-24T12:51:09.363Z"}
+{"type": "heartbeat", "run_id": null, "id": "agg_task_0", "agent": "AggAgent0", "attempt": 1, "pid": 79614, "running_for_s": 0.0004940032958984375, "ts": "2025-09-24T12:51:09.363Z"}
+{"type": "heartbeat", "run_id": null, "id": "agg_task_1", "agent": "AggAgent1", "attempt": 1, "pid": 79614, "running_for_s": 0.0003352165222167969, "ts": "2025-09-24T12:51:09.363Z"}
+{"type": "task_finished", "id": "agg_task_0", "agent": "AggAgent0", "attempt": 1, "status": "success", "started_at": 1758718269.363025, "finished_at": 1758718269.464519, "duration_s": 0.10149407386779785, "errors": null, "usage": {"total_tokens": 100}, "model": "test-model", "ts": "2025-09-24T12:51:09.464Z"}
+{"type": "task_finished", "id": "agg_task_1", "agent": "AggAgent1", "attempt": 1, "status": "success", "started_at": 1758718269.363335, "finished_at": 1758718269.465323, "duration_s": 0.10198807716369629, "errors": null, "usage": {"total_tokens": 100}, "model": "test-model", "ts": "2025-09-24T12:51:09.465Z"}
+{"type": "task_started", "id": "agg_task_2", "agent": "AggAgent2", "attempt": 1, "started_at": 1758718269.465773, "ts": "2025-09-24T12:51:09.465Z"}
+{"type": "heartbeat", "run_id": null, "id": "agg_task_2", "agent": "AggAgent2", "attempt": 1, "pid": 79614, "running_for_s": 0.0003368854522705078, "ts": "2025-09-24T12:51:09.466Z"}
+{"type": "task_finished", "id": "agg_task_2", "agent": "AggAgent2", "attempt": 1, "status": "success", "started_at": 1758718269.46573, "finished_at": 1758718269.567169, "duration_s": 0.10143899917602539, "errors": null, "usage": {"total_tokens": 100}, "model": "test-model", "ts": "2025-09-24T12:51:09.567Z"}
+{"type": "orchestrator_finished", "finished_at": 1758718269.5680041, "tasks": 3, "ts": "2025-09-24T12:51:09.568Z"}
+{"type": "orchestrator_started", "max_concurrency": 1, "tasks": 1, "started_at": 1758718269.77526, "ts": "2025-09-24T12:51:09.775Z"}
+{"type": "task_finished", "id": "factory_fail", "agent": "FailingFactory", "attempt": 1, "status": "failed", "started_at": 1758718269.775465, "finished_at": 1758718269.7754729, "duration_s": 7.867813110351562e-06, "errors": ["Agent factory failed: Factory creation failed"], "ts": "2025-09-24T12:51:09.775Z"}
+{"type": "heartbeat", "run_id": null, "id": "factory_fail", "agent": "FailingFactory", "attempt": 0, "pid": 79614, "running_for_s": 0.00012683868408203125, "ts": "2025-09-24T12:51:09.775Z"}
+{"type": "orchestrator_finished", "finished_at": 1758718269.7756999, "tasks": 1, "ts": "2025-09-24T12:51:09.775Z"}
+{"type": "orchestrator_started", "max_concurrency": 3, "tasks": 3, "started_at": 1758718269.777267, "ts": "2025-09-24T12:51:09.777Z"}
+{"type": "task_started", "id": "success_task", "agent": "SuccessAgent", "attempt": 1, "started_at": 1758718269.777386, "ts": "2025-09-24T12:51:09.777Z"}
+{"type": "task_started", "id": "fail_task", "agent": "FailAgent", "attempt": 1, "started_at": 1758718269.777471, "ts": "2025-09-24T12:51:09.777Z"}
+{"type": "task_started", "id": "another_success", "agent": "AnotherSuccessAgent", "attempt": 1, "started_at": 1758718269.777546, "ts": "2025-09-24T12:51:09.777Z"}
+{"type": "heartbeat", "run_id": null, "id": "success_task", "agent": "SuccessAgent", "attempt": 1, "pid": 79614, "running_for_s": 0.00025081634521484375, "ts": "2025-09-24T12:51:09.777Z"}
+{"type": "heartbeat", "run_id": null, "id": "fail_task", "agent": "FailAgent", "attempt": 1, "pid": 79614, "running_for_s": 0.0002357959747314453, "ts": "2025-09-24T12:51:09.777Z"}
+{"type": "heartbeat", "run_id": null, "id": "another_success", "agent": "AnotherSuccessAgent", "attempt": 1, "pid": 79614, "running_for_s": 0.00022411346435546875, "ts": "2025-09-24T12:51:09.777Z"}
+{"type": "task_finished", "id": "success_task", "agent": "SuccessAgent", "attempt": 1, "status": "success", "started_at": 1758718269.777379, "finished_at": 1758718269.878581, "duration_s": 0.10120201110839844, "errors": null, "usage": {"total_tokens": 100}, "model": "test-model", "ts": "2025-09-24T12:51:09.878Z"}
+{"type": "task_finished", "id": "fail_task", "agent": "FailAgent", "attempt": 1, "status": "failed", "started_at": 1758718269.777466, "finished_at": 1758718269.87928, "duration_s": 0.10181403160095215, "errors": ["FailAgent simulated failure (attempt 1)"], "ts": "2025-09-24T12:51:09.879Z"}
+{"type": "task_finished", "id": "another_success", "agent": "AnotherSuccessAgent", "attempt": 1, "status": "success", "started_at": 1758718269.7775428, "finished_at": 1758718269.8795588, "duration_s": 0.10201597213745117, "errors": null, "usage": {"total_tokens": 100}, "model": "test-model", "ts": "2025-09-24T12:51:09.879Z"}
+{"type": "orchestrator_finished", "finished_at": 1758718269.879838, "tasks": 3, "ts": "2025-09-24T12:51:09.879Z"}
+{"type": "cli_command_started", "command": "health", "args": {}, "started_at": 1758718293.321818, "ts": "2025-09-24T12:51:33.321Z"}
+{"type": "cli_command_finished", "command": "health", "status": "success", "finished_at": 1758718293.653093, "duration_s": 0.33127498626708984, "ts": "2025-09-24T12:51:33.653Z"}
+{"type": "cli_command_started", "command": "logs", "args": {}, "started_at": 1758718296.291713, "ts": "2025-09-24T12:51:36.291Z"}
+{"type": "cli_command_finished", "command": "logs", "status": "success", "finished_at": 1758718296.292632, "duration_s": 0.0009191036224365234, "ts": "2025-09-24T12:51:36.292Z"}
+{"type": "cli_command_started", "command": "test", "args": {}, "started_at": 1758718298.903428, "ts": "2025-09-24T12:51:38.903Z"}
+{"type": "cli_command_finished", "command": "test", "status": "success", "finished_at": 1758718298.930311, "duration_s": 0.02688288688659668, "ts": "2025-09-24T12:51:38.930Z"}
+{"type": "cli_command_started", "command": "demo", "args": {}, "started_at": 1758718301.549937, "ts": "2025-09-24T12:51:41.549Z"}
+{"type": "cli_command_finished", "command": "demo", "status": "success", "finished_at": 1758718301.575361, "duration_s": 0.02542400360107422, "ts": "2025-09-24T12:51:41.575Z"}
+{"type": "orchestrator_started", "max_concurrency": 2, "tasks": 1, "started_at": 1758718302.0305011, "ts": "2025-09-24T12:51:42.030Z"}
+{"type": "task_started", "id": "test_task", "agent": "TestAgent", "attempt": 1, "started_at": 1758718302.030663, "ts": "2025-09-24T12:51:42.030Z"}
+{"type": "heartbeat", "run_id": null, "id": "test_task", "agent": "TestAgent", "attempt": 1, "pid": 80091, "running_for_s": 0.00011420249938964844, "ts": "2025-09-24T12:51:42.030Z"}
+{"type": "task_finished", "id": "test_task", "agent": "TestAgent", "attempt": 1, "status": "success", "started_at": 1758718302.0306518, "finished_at": 1758718302.131863, "duration_s": 0.1012113094329834, "errors": null, "usage": {"total_tokens": 100}, "model": "test-model", "ts": "2025-09-24T12:51:42.131Z"}
+{"type": "orchestrator_finished", "finished_at": 1758718302.132156, "tasks": 1, "ts": "2025-09-24T12:51:42.132Z"}
+{"type": "orchestrator_started", "max_concurrency": 2, "tasks": 4, "started_at": 1758718302.134445, "ts": "2025-09-24T12:51:42.134Z"}
+{"type": "task_started", "id": "task_0", "agent": "Agent0", "attempt": 1, "started_at": 1758718302.134599, "ts": "2025-09-24T12:51:42.134Z"}
+{"type": "task_started", "id": "task_1", "agent": "Agent1", "attempt": 1, "started_at": 1758718302.1347241, "ts": "2025-09-24T12:51:42.134Z"}
+{"type": "heartbeat", "run_id": null, "id": "task_0", "agent": "Agent0", "attempt": 1, "pid": 80091, "running_for_s": 0.0002601146697998047, "ts": "2025-09-24T12:51:42.134Z"}
+{"type": "heartbeat", "run_id": null, "id": "task_1", "agent": "Agent1", "attempt": 1, "pid": 80091, "running_for_s": 0.000225067138671875, "ts": "2025-09-24T12:51:42.134Z"}
+{"type": "task_finished", "id": "task_0", "agent": "Agent0", "attempt": 1, "status": "success", "started_at": 1758718302.134589, "finished_at": 1758718302.3357701, "duration_s": 0.20118117332458496, "errors": null, "usage": {"total_tokens": 100}, "model": "test-model", "ts": "2025-09-24T12:51:42.335Z"}
+{"type": "task_finished", "id": "task_1", "agent": "Agent1", "attempt": 1, "status": "success", "started_at": 1758718302.134718, "finished_at": 1758718302.335992, "duration_s": 0.20127415657043457, "errors": null, "usage": {"total_tokens": 100}, "model": "test-model", "ts": "2025-09-24T12:51:42.336Z"}
+{"type": "task_started", "id": "task_2", "agent": "Agent2", "attempt": 1, "started_at": 1758718302.336125, "ts": "2025-09-24T12:51:42.336Z"}
+{"type": "task_started", "id": "task_3", "agent": "Agent3", "attempt": 1, "started_at": 1758718302.336223, "ts": "2025-09-24T12:51:42.336Z"}
+{"type": "heartbeat", "run_id": null, "id": "task_2", "agent": "Agent2", "attempt": 1, "pid": 80091, "running_for_s": 0.00019693374633789062, "ts": "2025-09-24T12:51:42.336Z"}
+{"type": "heartbeat", "run_id": null, "id": "task_3", "agent": "Agent3", "attempt": 1, "pid": 80091, "running_for_s": 0.00015997886657714844, "ts": "2025-09-24T12:51:42.336Z"}
+{"type": "task_finished", "id": "task_2", "agent": "Agent2", "attempt": 1, "status": "success", "started_at": 1758718302.336113, "finished_at": 1758718302.53743, "duration_s": 0.20131707191467285, "errors": null, "usage": {"total_tokens": 100}, "model": "test-model", "ts": "2025-09-24T12:51:42.537Z"}
+{"type": "task_finished", "id": "task_3", "agent": "Agent3", "attempt": 1, "status": "success", "started_at": 1758718302.336218, "finished_at": 1758718302.538367, "duration_s": 0.2021489143371582, "errors": null, "usage": {"total_tokens": 100}, "model": "test-model", "ts": "2025-09-24T12:51:42.538Z"}
+{"type": "orchestrator_finished", "finished_at": 1758718302.538837, "tasks": 4, "ts": "2025-09-24T12:51:42.538Z"}
+{"type": "orchestrator_started", "max_concurrency": 1, "tasks": 1, "started_at": 1758718302.5442739, "ts": "2025-09-24T12:51:42.544Z"}
+{"type": "task_started", "id": "timeout_task", "agent": "SlowAgent", "attempt": 1, "started_at": 1758718302.544821, "ts": "2025-09-24T12:51:42.544Z"}
+{"type": "heartbeat", "run_id": null, "id": "timeout_task", "agent": "SlowAgent", "attempt": 1, "pid": 80091, "running_for_s": 0.0002951622009277344, "ts": "2025-09-24T12:51:42.545Z"}
+{"type": "task_finished", "id": "timeout_task", "agent": "SlowAgent", "attempt": 1, "status": "timeout", "started_at": 1758718302.544798, "finished_at": 1758718302.6462872, "duration_s": 0.10148930549621582, "errors": ["timeout"], "ts": "2025-09-24T12:51:42.646Z"}
+{"type": "orchestrator_finished", "finished_at": 1758718302.64763, "tasks": 1, "ts": "2025-09-24T12:51:42.647Z"}
+{"type": "orchestrator_started", "max_concurrency": 1, "tasks": 1, "started_at": 1758718302.6536179, "ts": "2025-09-24T12:51:42.653Z"}
+{"type": "task_started", "id": "retry_task", "agent": "FlakyAgent", "attempt": 1, "started_at": 1758718302.653955, "ts": "2025-09-24T12:51:42.654Z"}
+{"type": "heartbeat", "run_id": null, "id": "retry_task", "agent": "FlakyAgent", "attempt": 1, "pid": 80091, "running_for_s": 0.00022983551025390625, "ts": "2025-09-24T12:51:42.654Z"}
+{"type": "task_started", "id": "retry_task", "agent": "FlakyAgent", "attempt": 2, "started_at": 1758718302.7664828, "ts": "2025-09-24T12:51:42.766Z"}
+{"type": "task_started", "id": "retry_task", "agent": "FlakyAgent", "attempt": 3, "started_at": 1758718302.879748, "ts": "2025-09-24T12:51:42.880Z"}
+{"type": "task_finished", "id": "retry_task", "agent": "FlakyAgent", "attempt": 3, "status": "success", "started_at": 1758718302.653932, "finished_at": 1758718302.981759, "duration_s": 0.32782697677612305, "errors": null, "usage": {"total_tokens": 100}, "model": "test-model", "ts": "2025-09-24T12:51:42.982Z"}
+{"type": "orchestrator_finished", "finished_at": 1758718302.9827058, "tasks": 1, "ts": "2025-09-24T12:51:42.982Z"}
+{"type": "orchestrator_started", "max_concurrency": 1, "tasks": 1, "started_at": 1758718302.987263, "ts": "2025-09-24T12:51:42.987Z"}
+{"type": "task_started", "id": "failing_task", "agent": "FailingAgent", "attempt": 1, "started_at": 1758718302.9875789, "ts": "2025-09-24T12:51:42.987Z"}
+{"type": "heartbeat", "run_id": null, "id": "failing_task", "agent": "FailingAgent", "attempt": 1, "pid": 80091, "running_for_s": 0.00020813941955566406, "ts": "2025-09-24T12:51:42.987Z"}
+{"type": "task_started", "id": "failing_task", "agent": "FailingAgent", "attempt": 2, "started_at": 1758718303.100045, "ts": "2025-09-24T12:51:43.100Z"}
+{"type": "task_finished", "id": "failing_task", "agent": "FailingAgent", "attempt": 2, "status": "failed", "started_at": 1758718302.987562, "finished_at": 1758718303.201865, "duration_s": 0.21430301666259766, "errors": ["FailingAgent simulated failure (attempt 1)", "FailingAgent simulated failure (attempt 2)"], "ts": "2025-09-24T12:51:43.202Z"}
+{"type": "orchestrator_finished", "finished_at": 1758718303.202805, "tasks": 1, "ts": "2025-09-24T12:51:43.202Z"}
+{"type": "orchestrator_started", "max_concurrency": 1, "tasks": 1, "started_at": 1758718303.208458, "ts": "2025-09-24T12:51:43.208Z"}
+{"type": "task_started", "id": "backoff_task", "agent": "BackoffAgent", "attempt": 1, "started_at": 1758718303.208944, "ts": "2025-09-24T12:51:43.208Z"}
+{"type": "heartbeat", "run_id": null, "id": "backoff_task", "agent": "BackoffAgent", "attempt": 1, "pid": 80091, "running_for_s": 0.0002560615539550781, "ts": "2025-09-24T12:51:43.209Z"}
+{"type": "task_started", "id": "backoff_task", "agent": "BackoffAgent", "attempt": 2, "started_at": 1758718303.4114912, "ts": "2025-09-24T12:51:43.411Z"}
+{"type": "task_started", "id": "backoff_task", "agent": "BackoffAgent", "attempt": 3, "started_at": 1758718303.7133, "ts": "2025-09-24T12:51:43.713Z"}
+{"type": "task_finished", "id": "backoff_task", "agent": "BackoffAgent", "attempt": 3, "status": "success", "started_at": 1758718303.2089229, "finished_at": 1758718303.815385, "duration_s": 0.6064622402191162, "errors": null, "usage": {"total_tokens": 100}, "model": "test-model", "ts": "2025-09-24T12:51:43.815Z"}
+{"type": "orchestrator_finished", "finished_at": 1758718303.816701, "tasks": 1, "ts": "2025-09-24T12:51:43.816Z"}
+{"type": "orchestrator_started", "max_concurrency": 2, "tasks": 1, "started_at": 1758718303.823582, "ts": "2025-09-24T12:51:43.823Z"}
+{"type": "task_started", "id": "telemetry_task", "agent": "TelemetryAgent", "attempt": 1, "started_at": 1758718303.823926, "ts": "2025-09-24T12:51:43.823Z"}
+{"type": "heartbeat", "run_id": null, "id": "telemetry_task", "agent": "TelemetryAgent", "attempt": 1, "pid": 80091, "running_for_s": 0.00023889541625976562, "ts": "2025-09-24T12:51:43.824Z"}
+{"type": "task_finished", "id": "telemetry_task", "agent": "TelemetryAgent", "attempt": 1, "status": "success", "started_at": 1758718303.823905, "finished_at": 1758718303.925303, "duration_s": 0.10139799118041992, "errors": null, "usage": {"total_tokens": 100}, "model": "test-model", "ts": "2025-09-24T12:51:43.925Z"}
+{"type": "orchestrator_finished", "finished_at": 1758718303.9264388, "tasks": 1, "ts": "2025-09-24T12:51:43.926Z"}
+{"type": "orchestrator_started", "max_concurrency": 2, "tasks": 3, "started_at": 1758718304.134128, "ts": "2025-09-24T12:51:44.134Z"}
+{"type": "task_started", "id": "agg_task_0", "agent": "AggAgent0", "attempt": 1, "started_at": 1758718304.134677, "ts": "2025-09-24T12:51:44.134Z"}
+{"type": "task_started", "id": "agg_task_1", "agent": "AggAgent1", "attempt": 1, "started_at": 1758718304.1349812, "ts": "2025-09-24T12:51:44.135Z"}
+{"type": "heartbeat", "run_id": null, "id": "agg_task_0", "agent": "AggAgent0", "attempt": 1, "pid": 80091, "running_for_s": 0.0005550384521484375, "ts": "2025-09-24T12:51:44.135Z"}
+{"type": "heartbeat", "run_id": null, "id": "agg_task_1", "agent": "AggAgent1", "attempt": 1, "pid": 80091, "running_for_s": 0.0004107952117919922, "ts": "2025-09-24T12:51:44.135Z"}
+{"type": "task_finished", "id": "agg_task_0", "agent": "AggAgent0", "attempt": 1, "status": "success", "started_at": 1758718304.134646, "finished_at": 1758718304.236149, "duration_s": 0.10150313377380371, "errors": null, "usage": {"total_tokens": 100}, "model": "test-model", "ts": "2025-09-24T12:51:44.236Z"}
+{"type": "task_finished", "id": "agg_task_1", "agent": "AggAgent1", "attempt": 1, "status": "success", "started_at": 1758718304.134967, "finished_at": 1758718304.237159, "duration_s": 0.10219192504882812, "errors": null, "usage": {"total_tokens": 100}, "model": "test-model", "ts": "2025-09-24T12:51:44.237Z"}
+{"type": "task_started", "id": "agg_task_2", "agent": "AggAgent2", "attempt": 1, "started_at": 1758718304.237789, "ts": "2025-09-24T12:51:44.237Z"}
+{"type": "heartbeat", "run_id": null, "id": "agg_task_2", "agent": "AggAgent2", "attempt": 1, "pid": 80091, "running_for_s": 0.000492095947265625, "ts": "2025-09-24T12:51:44.238Z"}
+{"type": "task_finished", "id": "agg_task_2", "agent": "AggAgent2", "attempt": 1, "status": "success", "started_at": 1758718304.2377338, "finished_at": 1758718304.339315, "duration_s": 0.10158109664916992, "errors": null, "usage": {"total_tokens": 100}, "model": "test-model", "ts": "2025-09-24T12:51:44.339Z"}
+{"type": "orchestrator_finished", "finished_at": 1758718304.340299, "tasks": 3, "ts": "2025-09-24T12:51:44.340Z"}
+{"type": "orchestrator_started", "max_concurrency": 1, "tasks": 1, "started_at": 1758718304.553511, "ts": "2025-09-24T12:51:44.553Z"}
+{"type": "task_finished", "id": "factory_fail", "agent": "FailingFactory", "attempt": 1, "status": "failed", "started_at": 1758718304.5538912, "finished_at": 1758718304.553906, "duration_s": 1.4781951904296875e-05, "errors": ["Agent factory failed: Factory creation failed"], "ts": "2025-09-24T12:51:44.553Z"}
+{"type": "heartbeat", "run_id": null, "id": "factory_fail", "agent": "FailingFactory", "attempt": 0, "pid": 80091, "running_for_s": 0.00023865699768066406, "ts": "2025-09-24T12:51:44.554Z"}
+{"type": "orchestrator_finished", "finished_at": 1758718304.5543292, "tasks": 1, "ts": "2025-09-24T12:51:44.554Z"}
+{"type": "orchestrator_started", "max_concurrency": 3, "tasks": 3, "started_at": 1758718304.556854, "ts": "2025-09-24T12:51:44.556Z"}
+{"type": "task_started", "id": "success_task", "agent": "SuccessAgent", "attempt": 1, "started_at": 1758718304.557041, "ts": "2025-09-24T12:51:44.557Z"}
+{"type": "task_started", "id": "fail_task", "agent": "FailAgent", "attempt": 1, "started_at": 1758718304.5572, "ts": "2025-09-24T12:51:44.557Z"}
+{"type": "task_started", "id": "another_success", "agent": "AnotherSuccessAgent", "attempt": 1, "started_at": 1758718304.5573351, "ts": "2025-09-24T12:51:44.557Z"}
+{"type": "heartbeat", "run_id": null, "id": "success_task", "agent": "SuccessAgent", "attempt": 1, "pid": 80091, "running_for_s": 0.00044798851013183594, "ts": "2025-09-24T12:51:44.557Z"}
+{"type": "heartbeat", "run_id": null, "id": "fail_task", "agent": "FailAgent", "attempt": 1, "pid": 80091, "running_for_s": 0.00040602684020996094, "ts": "2025-09-24T12:51:44.557Z"}
+{"type": "heartbeat", "run_id": null, "id": "another_success", "agent": "AnotherSuccessAgent", "attempt": 1, "pid": 80091, "running_for_s": 0.00038313865661621094, "ts": "2025-09-24T12:51:44.557Z"}
+{"type": "task_finished", "id": "success_task", "agent": "SuccessAgent", "attempt": 1, "status": "success", "started_at": 1758718304.55703, "finished_at": 1758718304.658337, "duration_s": 0.10130715370178223, "errors": null, "usage": {"total_tokens": 100}, "model": "test-model", "ts": "2025-09-24T12:51:44.658Z"}
+{"type": "task_finished", "id": "fail_task", "agent": "FailAgent", "attempt": 1, "status": "failed", "started_at": 1758718304.557193, "finished_at": 1758718304.659171, "duration_s": 0.10197806358337402, "errors": ["FailAgent simulated failure (attempt 1)"], "ts": "2025-09-24T12:51:44.659Z"}
+{"type": "task_finished", "id": "another_success", "agent": "AnotherSuccessAgent", "attempt": 1, "status": "success", "started_at": 1758718304.557327, "finished_at": 1758718304.659651, "duration_s": 0.10232400894165039, "errors": null, "usage": {"total_tokens": 100}, "model": "test-model", "ts": "2025-09-24T12:51:44.659Z"}
+{"type": "orchestrator_finished", "finished_at": 1758718304.660158, "tasks": 3, "ts": "2025-09-24T12:51:44.660Z"}
+{"type": "cli_command_started", "command": "health", "args": {}, "started_at": 1758718728.0348501, "ts": "2025-09-24T12:58:48.034Z"}
+{"type": "cli_command_finished", "command": "health", "status": "success", "finished_at": 1758718728.36494, "duration_s": 0.330089807510376, "ts": "2025-09-24T12:58:48.364Z"}
+{"type": "cli_command_started", "command": "logs", "args": {}, "started_at": 1758718731.005507, "ts": "2025-09-24T12:58:51.005Z"}
+{"type": "cli_command_finished", "command": "logs", "status": "success", "finished_at": 1758718731.006443, "duration_s": 0.0009360313415527344, "ts": "2025-09-24T12:58:51.006Z"}
+{"type": "cli_command_started", "command": "test", "args": {}, "started_at": 1758718733.614683, "ts": "2025-09-24T12:58:53.614Z"}
+{"type": "cli_command_finished", "command": "test", "status": "success", "finished_at": 1758718733.641792, "duration_s": 0.027109146118164062, "ts": "2025-09-24T12:58:53.641Z"}
+{"type": "cli_command_started", "command": "demo", "args": {}, "started_at": 1758718736.272407, "ts": "2025-09-24T12:58:56.272Z"}
+{"type": "cli_command_finished", "command": "demo", "status": "success", "finished_at": 1758718736.296959, "duration_s": 0.024551868438720703, "ts": "2025-09-24T12:58:56.296Z"}
+{"type": "orchestrator_started", "max_concurrency": 2, "tasks": 1, "started_at": 1758718736.767005, "ts": "2025-09-24T12:58:56.767Z"}
+{"type": "task_started", "id": "test_task", "agent": "TestAgent", "attempt": 1, "started_at": 1758718736.767185, "ts": "2025-09-24T12:58:56.767Z"}
+{"type": "heartbeat", "run_id": null, "id": "test_task", "agent": "TestAgent", "attempt": 1, "pid": 82301, "running_for_s": 0.00011801719665527344, "ts": "2025-09-24T12:58:56.767Z"}
+{"type": "task_finished", "id": "test_task", "agent": "TestAgent", "attempt": 1, "status": "success", "started_at": 1758718736.76717, "finished_at": 1758718736.8683882, "duration_s": 0.10121822357177734, "errors": null, "usage": {"total_tokens": 100}, "model": "test-model", "ts": "2025-09-24T12:58:56.868Z"}
+{"type": "orchestrator_finished", "finished_at": 1758718736.8686888, "tasks": 1, "ts": "2025-09-24T12:58:56.868Z"}
+{"type": "orchestrator_started", "max_concurrency": 2, "tasks": 4, "started_at": 1758718736.870937, "ts": "2025-09-24T12:58:56.870Z"}
+{"type": "task_started", "id": "task_0", "agent": "Agent0", "attempt": 1, "started_at": 1758718736.871088, "ts": "2025-09-24T12:58:56.871Z"}
+{"type": "task_started", "id": "task_1", "agent": "Agent1", "attempt": 1, "started_at": 1758718736.8712, "ts": "2025-09-24T12:58:56.871Z"}
+{"type": "heartbeat", "run_id": null, "id": "task_0", "agent": "Agent0", "attempt": 1, "pid": 82301, "running_for_s": 0.00023221969604492188, "ts": "2025-09-24T12:58:56.871Z"}
+{"type": "heartbeat", "run_id": null, "id": "task_1", "agent": "Agent1", "attempt": 1, "pid": 82301, "running_for_s": 0.00020503997802734375, "ts": "2025-09-24T12:58:56.871Z"}
+{"type": "task_finished", "id": "task_0", "agent": "Agent0", "attempt": 1, "status": "success", "started_at": 1758718736.8710778, "finished_at": 1758718737.072382, "duration_s": 0.20130419731140137, "errors": null, "usage": {"total_tokens": 100}, "model": "test-model", "ts": "2025-09-24T12:58:57.072Z"}
+{"type": "task_finished", "id": "task_1", "agent": "Agent1", "attempt": 1, "status": "success", "started_at": 1758718736.871192, "finished_at": 1758718737.073389, "duration_s": 0.20219707489013672, "errors": null, "usage": {"total_tokens": 100}, "model": "test-model", "ts": "2025-09-24T12:58:57.073Z"}
+{"type": "task_started", "id": "task_2", "agent": "Agent2", "attempt": 1, "started_at": 1758718737.073858, "ts": "2025-09-24T12:58:57.073Z"}
+{"type": "task_started", "id": "task_3", "agent": "Agent3", "attempt": 1, "started_at": 1758718737.0741591, "ts": "2025-09-24T12:58:57.074Z"}
+{"type": "heartbeat", "run_id": null, "id": "task_2", "agent": "Agent2", "attempt": 1, "pid": 82301, "running_for_s": 0.0005481243133544922, "ts": "2025-09-24T12:58:57.074Z"}
+{"type": "heartbeat", "run_id": null, "id": "task_3", "agent": "Agent3", "attempt": 1, "pid": 82301, "running_for_s": 0.00038814544677734375, "ts": "2025-09-24T12:58:57.074Z"}
+{"type": "task_finished", "id": "task_2", "agent": "Agent2", "attempt": 1, "status": "success", "started_at": 1758718737.073813, "finished_at": 1758718737.2753448, "duration_s": 0.20153188705444336, "errors": null, "usage": {"total_tokens": 100}, "model": "test-model", "ts": "2025-09-24T12:58:57.275Z"}
+{"type": "task_finished", "id": "task_3", "agent": "Agent3", "attempt": 1, "status": "success", "started_at": 1758718737.074144, "finished_at": 1758718737.276163, "duration_s": 0.20201921463012695, "errors": null, "usage": {"total_tokens": 100}, "model": "test-model", "ts": "2025-09-24T12:58:57.276Z"}
+{"type": "orchestrator_finished", "finished_at": 1758718737.276587, "tasks": 4, "ts": "2025-09-24T12:58:57.276Z"}
+{"type": "orchestrator_started", "max_concurrency": 1, "tasks": 1, "started_at": 1758718737.281698, "ts": "2025-09-24T12:58:57.281Z"}
+{"type": "task_started", "id": "timeout_task", "agent": "SlowAgent", "attempt": 1, "started_at": 1758718737.2822552, "ts": "2025-09-24T12:58:57.282Z"}
+{"type": "heartbeat", "run_id": null, "id": "timeout_task", "agent": "SlowAgent", "attempt": 1, "pid": 82301, "running_for_s": 0.0003771781921386719, "ts": "2025-09-24T12:58:57.282Z"}
+{"type": "task_finished", "id": "timeout_task", "agent": "SlowAgent", "attempt": 1, "status": "timeout", "started_at": 1758718737.282219, "finished_at": 1758718737.3837152, "duration_s": 0.10149621963500977, "errors": ["timeout"], "ts": "2025-09-24T12:58:57.383Z"}
+{"type": "orchestrator_finished", "finished_at": 1758718737.384536, "tasks": 1, "ts": "2025-09-24T12:58:57.384Z"}
+{"type": "orchestrator_started", "max_concurrency": 1, "tasks": 1, "started_at": 1758718737.388961, "ts": "2025-09-24T12:58:57.389Z"}
+{"type": "task_started", "id": "retry_task", "agent": "FlakyAgent", "attempt": 1, "started_at": 1758718737.389313, "ts": "2025-09-24T12:58:57.389Z"}
+{"type": "heartbeat", "run_id": null, "id": "retry_task", "agent": "FlakyAgent", "attempt": 1, "pid": 82301, "running_for_s": 0.00020194053649902344, "ts": "2025-09-24T12:58:57.389Z"}
+{"type": "task_started", "id": "retry_task", "agent": "FlakyAgent", "attempt": 2, "started_at": 1758718737.5012548, "ts": "2025-09-24T12:58:57.501Z"}
+{"type": "task_started", "id": "retry_task", "agent": "FlakyAgent", "attempt": 3, "started_at": 1758718737.6138299, "ts": "2025-09-24T12:58:57.614Z"}
+{"type": "task_finished", "id": "retry_task", "agent": "FlakyAgent", "attempt": 3, "status": "success", "started_at": 1758718737.389297, "finished_at": 1758718737.715669, "duration_s": 0.3263719081878662, "errors": null, "usage": {"total_tokens": 100}, "model": "test-model", "ts": "2025-09-24T12:58:57.716Z"}
+{"type": "orchestrator_finished", "finished_at": 1758718737.716853, "tasks": 1, "ts": "2025-09-24T12:58:57.716Z"}
+{"type": "orchestrator_started", "max_concurrency": 1, "tasks": 1, "started_at": 1758718737.722958, "ts": "2025-09-24T12:58:57.723Z"}
+{"type": "task_started", "id": "failing_task", "agent": "FailingAgent", "attempt": 1, "started_at": 1758718737.7232928, "ts": "2025-09-24T12:58:57.723Z"}
+{"type": "heartbeat", "run_id": null, "id": "failing_task", "agent": "FailingAgent", "attempt": 1, "pid": 82301, "running_for_s": 0.00022912025451660156, "ts": "2025-09-24T12:58:57.723Z"}
+{"type": "task_started", "id": "failing_task", "agent": "FailingAgent", "attempt": 2, "started_at": 1758718737.835804, "ts": "2025-09-24T12:58:57.836Z"}
+{"type": "task_finished", "id": "failing_task", "agent": "FailingAgent", "attempt": 2, "status": "failed", "started_at": 1758718737.7232718, "finished_at": 1758718737.937772, "duration_s": 0.21450018882751465, "errors": ["FailingAgent simulated failure (attempt 1)", "FailingAgent simulated failure (attempt 2)"], "ts": "2025-09-24T12:58:57.938Z"}
+{"type": "orchestrator_finished", "finished_at": 1758718737.9389539, "tasks": 1, "ts": "2025-09-24T12:58:57.939Z"}
+{"type": "orchestrator_started", "max_concurrency": 1, "tasks": 1, "started_at": 1758718737.944133, "ts": "2025-09-24T12:58:57.944Z"}
+{"type": "task_started", "id": "backoff_task", "agent": "BackoffAgent", "attempt": 1, "started_at": 1758718737.944536, "ts": "2025-09-24T12:58:57.944Z"}
+{"type": "heartbeat", "run_id": null, "id": "backoff_task", "agent": "BackoffAgent", "attempt": 1, "pid": 82301, "running_for_s": 0.0002582073211669922, "ts": "2025-09-24T12:58:57.944Z"}
+{"type": "task_started", "id": "backoff_task", "agent": "BackoffAgent", "attempt": 2, "started_at": 1758718738.1467252, "ts": "2025-09-24T12:58:58.146Z"}
+{"type": "task_started", "id": "backoff_task", "agent": "BackoffAgent", "attempt": 3, "started_at": 1758718738.449891, "ts": "2025-09-24T12:58:58.450Z"}
+{"type": "task_finished", "id": "backoff_task", "agent": "BackoffAgent", "attempt": 3, "status": "success", "started_at": 1758718737.944512, "finished_at": 1758718738.551776, "duration_s": 0.6072640419006348, "errors": null, "usage": {"total_tokens": 100}, "model": "test-model", "ts": "2025-09-24T12:58:58.551Z"}
+{"type": "orchestrator_finished", "finished_at": 1758718738.552115, "tasks": 1, "ts": "2025-09-24T12:58:58.552Z"}
+{"type": "orchestrator_started", "max_concurrency": 2, "tasks": 1, "started_at": 1758718738.554694, "ts": "2025-09-24T12:58:58.554Z"}
+{"type": "task_started", "id": "telemetry_task", "agent": "TelemetryAgent", "attempt": 1, "started_at": 1758718738.554854, "ts": "2025-09-24T12:58:58.554Z"}
+{"type": "heartbeat", "run_id": null, "id": "telemetry_task", "agent": "TelemetryAgent", "attempt": 1, "pid": 82301, "running_for_s": 0.00013327598571777344, "ts": "2025-09-24T12:58:58.555Z"}
+{"type": "task_finished", "id": "telemetry_task", "agent": "TelemetryAgent", "attempt": 1, "status": "success", "started_at": 1758718738.5548449, "finished_at": 1758718738.656068, "duration_s": 0.10122323036193848, "errors": null, "usage": {"total_tokens": 100}, "model": "test-model", "ts": "2025-09-24T12:58:58.656Z"}
+{"type": "orchestrator_finished", "finished_at": 1758718738.656735, "tasks": 1, "ts": "2025-09-24T12:58:58.656Z"}
+{"type": "orchestrator_started", "max_concurrency": 2, "tasks": 3, "started_at": 1758718738.862126, "ts": "2025-09-24T12:58:58.862Z"}
+{"type": "task_started", "id": "agg_task_0", "agent": "AggAgent0", "attempt": 1, "started_at": 1758718738.862415, "ts": "2025-09-24T12:58:58.862Z"}
+{"type": "task_started", "id": "agg_task_1", "agent": "AggAgent1", "attempt": 1, "started_at": 1758718738.86275, "ts": "2025-09-24T12:58:58.862Z"}
+{"type": "heartbeat", "run_id": null, "id": "agg_task_0", "agent": "AggAgent0", "attempt": 1, "pid": 82301, "running_for_s": 0.0005118846893310547, "ts": "2025-09-24T12:58:58.862Z"}
+{"type": "heartbeat", "run_id": null, "id": "agg_task_1", "agent": "AggAgent1", "attempt": 1, "pid": 82301, "running_for_s": 0.0003180503845214844, "ts": "2025-09-24T12:58:58.863Z"}
+{"type": "task_finished", "id": "agg_task_0", "agent": "AggAgent0", "attempt": 1, "status": "success", "started_at": 1758718738.862404, "finished_at": 1758718738.96384, "duration_s": 0.10143589973449707, "errors": null, "usage": {"total_tokens": 100}, "model": "test-model", "ts": "2025-09-24T12:58:58.963Z"}
+{"type": "task_finished", "id": "agg_task_1", "agent": "AggAgent1", "attempt": 1, "status": "success", "started_at": 1758718738.862741, "finished_at": 1758718738.9642859, "duration_s": 0.10154485702514648, "errors": null, "usage": {"total_tokens": 100}, "model": "test-model", "ts": "2025-09-24T12:58:58.964Z"}
+{"type": "task_started", "id": "agg_task_2", "agent": "AggAgent2", "attempt": 1, "started_at": 1758718738.964587, "ts": "2025-09-24T12:58:58.964Z"}
+{"type": "heartbeat", "run_id": null, "id": "agg_task_2", "agent": "AggAgent2", "attempt": 1, "pid": 82301, "running_for_s": 0.00023508071899414062, "ts": "2025-09-24T12:58:58.964Z"}
+{"type": "task_finished", "id": "agg_task_2", "agent": "AggAgent2", "attempt": 1, "status": "success", "started_at": 1758718738.964569, "finished_at": 1758718739.065944, "duration_s": 0.10137486457824707, "errors": null, "usage": {"total_tokens": 100}, "model": "test-model", "ts": "2025-09-24T12:58:59.066Z"}
+{"type": "orchestrator_finished", "finished_at": 1758718739.066792, "tasks": 3, "ts": "2025-09-24T12:58:59.066Z"}
+{"type": "orchestrator_started", "max_concurrency": 1, "tasks": 1, "started_at": 1758718739.281096, "ts": "2025-09-24T12:58:59.281Z"}
+{"type": "task_finished", "id": "factory_fail", "agent": "FailingFactory", "attempt": 1, "status": "failed", "started_at": 1758718739.2814531, "finished_at": 1758718739.2814689, "duration_s": 1.5735626220703125e-05, "errors": ["Agent factory failed: Factory creation failed"], "ts": "2025-09-24T12:58:59.281Z"}
+{"type": "heartbeat", "run_id": null, "id": "factory_fail", "agent": "FailingFactory", "attempt": 0, "pid": 82301, "running_for_s": 0.0004668235778808594, "ts": "2025-09-24T12:58:59.281Z"}
+{"type": "orchestrator_finished", "finished_at": 1758718739.28212, "tasks": 1, "ts": "2025-09-24T12:58:59.282Z"}
+{"type": "orchestrator_started", "max_concurrency": 3, "tasks": 3, "started_at": 1758718739.284414, "ts": "2025-09-24T12:58:59.284Z"}
+{"type": "task_started", "id": "success_task", "agent": "SuccessAgent", "attempt": 1, "started_at": 1758718739.28458, "ts": "2025-09-24T12:58:59.284Z"}
+{"type": "task_started", "id": "fail_task", "agent": "FailAgent", "attempt": 1, "started_at": 1758718739.28471, "ts": "2025-09-24T12:58:59.284Z"}
+{"type": "task_started", "id": "another_success", "agent": "AnotherSuccessAgent", "attempt": 1, "started_at": 1758718739.284829, "ts": "2025-09-24T12:58:59.284Z"}
+{"type": "heartbeat", "run_id": null, "id": "success_task", "agent": "SuccessAgent", "attempt": 1, "pid": 82301, "running_for_s": 0.00037980079650878906, "ts": "2025-09-24T12:58:59.284Z"}
+{"type": "heartbeat", "run_id": null, "id": "fail_task", "agent": "FailAgent", "attempt": 1, "pid": 82301, "running_for_s": 0.00036597251892089844, "ts": "2025-09-24T12:58:59.285Z"}
+{"type": "heartbeat", "run_id": null, "id": "another_success", "agent": "AnotherSuccessAgent", "attempt": 1, "pid": 82301, "running_for_s": 0.0003552436828613281, "ts": "2025-09-24T12:58:59.285Z"}
+{"type": "task_finished", "id": "success_task", "agent": "SuccessAgent", "attempt": 1, "status": "success", "started_at": 1758718739.2845702, "finished_at": 1758718739.385857, "duration_s": 0.1012868881225586, "errors": null, "usage": {"total_tokens": 100}, "model": "test-model", "ts": "2025-09-24T12:58:59.386Z"}
+{"type": "task_finished", "id": "fail_task", "agent": "FailAgent", "attempt": 1, "status": "failed", "started_at": 1758718739.284703, "finished_at": 1758718739.3865972, "duration_s": 0.10189414024353027, "errors": ["FailAgent simulated failure (attempt 1)"], "ts": "2025-09-24T12:58:59.386Z"}
+{"type": "task_finished", "id": "another_success", "agent": "AnotherSuccessAgent", "attempt": 1, "status": "success", "started_at": 1758718739.284823, "finished_at": 1758718739.386921, "duration_s": 0.10209798812866211, "errors": null, "usage": {"total_tokens": 100}, "model": "test-model", "ts": "2025-09-24T12:58:59.386Z"}
+{"type": "orchestrator_finished", "finished_at": 1758718739.387261, "tasks": 3, "ts": "2025-09-24T12:58:59.387Z"}

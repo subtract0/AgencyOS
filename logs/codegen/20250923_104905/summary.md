@@ -1,0 +1,3 @@
+# CodeGen Refactor Summary
+
+**Timestamp:** 2025-09-23T10:49:05.962642\n**Operation:** refactor\n**Total Items:** 2\n\n## Suggestions\n\n- **/private/var/folders/sj/ttm056wn69ncqkyty42kd_dc0000gn/T/pytest-of-am/pytest-503/test_cli_refactor_basic0/sample.py:2** [info] missing-type-hints: Public function 'func' missing type hints\n- **/private/var/folders/sj/ttm056wn69ncqkyty42kd_dc0000gn/T/pytest-of-am/pytest-503/test_cli_refactor_basic0/sample.py:5** [warning] broad-except: Catching too general exception\n

@@ -285,12 +285,80 @@ The Agency operates under strict constitutional principles (`constitution.md`):
 
 ### Tool System
 Central tools in `tools/` directory:
-- File operations: `read.py`, `write.py`, `edit.py`, `multi_edit.py`
-- Search: `grep.py`, `glob.py`, `ls.py`
-- Version control: `git.py`
-- System: `bash.py`, `todo_write.py`, `exit_plan_mode.py`
-- Specialized: `notebook_edit.py`, `notebook_read.py`, `claude_web_search.py`, `feature_inventory.py`
-- Model-specific: Tools auto-selected based on model type (OpenAI vs Claude vs Grok)
+- **File operations**: `read.py`, `write.py`, `edit.py`, `multi_edit.py`
+- **Search**: `grep.py`, `glob.py`, `ls.py`
+- **Version control**: `git.py`
+- **System**: `bash.py`, `todo_write.py`, `exit_plan_mode.py`
+- **Specialized**: `notebook_edit.py`, `notebook_read.py`, `claude_web_search.py`, `feature_inventory.py`
+- **Enterprise Infrastructure**: Extracted from 18K+ line enterprise branch:
+  - **Orchestrator System**: `orchestrator/` - Parallel execution, retry policies, telemetry
+  - **Telemetry System**: `telemetry/` - JSONL logging, secret sanitization, aggregation
+  - **CLI Tools**: `agency_cli/` - Dashboard, tail, navigation utilities
+  - **Codegen System**: `codegen/` - Static analysis, test generation, scaffolding
+- **Model-specific**: Tools auto-selected based on model type (OpenAI vs Claude vs Grok)
+
+### Enterprise Infrastructure Components
+
+**Orchestrator System** (`tools/orchestrator/`):
+```python
+from tools.orchestrator.scheduler import run_parallel, OrchestrationPolicy
+from tools.orchestrator.api import execute_parallel, execute_graph
+from tools.orchestrator.graph import TaskGraph, run_graph
+
+# Parallel task execution with retry policies
+policy = OrchestrationPolicy(max_concurrency=4, retry_max=3)
+result = await execute_parallel(ctx, tasks, policy)
+
+# DAG-based execution with dependencies
+graph = TaskGraph(nodes=task_specs, edges=dependencies)
+result = await execute_graph(ctx, graph, policy)
+```
+
+**Telemetry System** (`tools/telemetry/`):
+```python
+from tools.telemetry.sanitize import redact_event
+from tools.telemetry.aggregator import aggregate, list_events
+
+# Sanitize sensitive data before logging
+safe_event = redact_event(raw_event)
+
+# Get dashboard metrics and filtered events
+dashboard = aggregate(since="1h")
+events = list_events(since="15m", grep="error")
+```
+
+**CLI Tools** (`tools/agency_cli/`):
+```python
+from tools.agency_cli.dashboard import main as dashboard_main
+from tools.agency_cli.tail import main as tail_main
+from tools.agency_cli.nav import extract_symbols, find_references
+
+# Live dashboard - use as CLI: python -m tools.agency_cli.dashboard --watch
+dashboard_main()
+
+# Telemetry tail - use as CLI: python -m tools.agency_cli.tail --since=1h --grep=error
+tail_main()
+
+# Code navigation
+symbols = extract_symbols("tools/")  # Extract all Python symbols
+refs = find_references(".", "TaskSpec")  # Find all references to TaskSpec
+```
+
+**Codegen System** (`tools/codegen/`):
+```python
+from tools.codegen.analyzer import suggest_refactors
+from tools.codegen.test_gen import generate_tests_from_spec
+from tools.codegen.scaffold import scaffold_module
+
+# Static analysis with refactoring suggestions
+suggestions = suggest_refactors(["path/to/file.py"])
+
+# Generate test skeletons from specification acceptance criteria
+tests = generate_tests_from_spec("specs/spec-feature.md", "tests/")
+
+# Scaffold new modules from templates
+files = scaffold_module("tool", "my_tool", "tools/my_tool/")
+```
 
 **Enterprise Infrastructure Tools:**
 - **Orchestrator**: `tools/orchestrator/` - Advanced agent task coordination with parallel execution, retry policies, and telemetry

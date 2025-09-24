@@ -226,3 +226,4 @@ gothic-point-*.json
 logs/sessions/
 logs/handoffs/
 logs/snapshots/
+.npm-cache/

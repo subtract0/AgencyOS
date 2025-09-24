@@ -1,0 +1,25 @@
+{
+  "timestamp": "2025-09-23T10:49:05.962642",
+  "operation": "refactor",
+  "total_items": 2,
+  "results": [
+    {
+      "path": "/private/var/folders/sj/ttm056wn69ncqkyty42kd_dc0000gn/T/pytest-of-am/pytest-503/test_cli_refactor_basic0/sample.py",
+      "line": 2,
+      "severity": "info",
+      "rule_id": "missing-type-hints",
+      "message": "Public function 'func' missing type hints",
+      "fix_hint": "Add type annotations for parameters and return value",
+      "diff": null
+    },
+    {
+      "path": "/private/var/folders/sj/ttm056wn69ncqkyty42kd_dc0000gn/T/pytest-of-am/pytest-503/test_cli_refactor_basic0/sample.py",
+      "line": 5,
+      "severity": "warning",
+      "rule_id": "broad-except",
+      "message": "Catching too general exception",
+      "fix_hint": "Catch specific exception types instead",
+      "diff": null
+    }
+  ]
+}

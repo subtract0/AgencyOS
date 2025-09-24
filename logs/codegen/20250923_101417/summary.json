@@ -1,0 +1,22 @@
+{
+  "timestamp": "2025-09-23T10:14:17.162353",
+  "operation": "scaffold",
+  "total_items": 3,
+  "results": [
+    {
+      "path": "/private/var/folders/sj/ttm056wn69ncqkyty42kd_dc0000gn/T/pytest-of-am/pytest-480/test_cli_scaffold_basic0/scaffold_output/__init__.py",
+      "template": "tool",
+      "status": "created"
+    },
+    {
+      "path": "/private/var/folders/sj/ttm056wn69ncqkyty42kd_dc0000gn/T/pytest-of-am/pytest-480/test_cli_scaffold_basic0/scaffold_output/test_scaffold.py",
+      "template": "tool",
+      "status": "created"
+    },
+    {
+      "path": "/private/var/folders/sj/ttm056wn69ncqkyty42kd_dc0000gn/T/pytest-of-am/pytest-480/test_cli_scaffold_basic0/scaffold_output/cli.py",
+      "template": "tool",
+      "status": "created"
+    }
+  ]
+}
