@@ -292,6 +292,50 @@ Central tools in `tools/` directory:
 - Specialized: `notebook_edit.py`, `notebook_read.py`, `claude_web_search.py`, `feature_inventory.py`
 - Model-specific: Tools auto-selected based on model type (OpenAI vs Claude vs Grok)
 
+**Enterprise Infrastructure Tools:**
+- **Orchestrator**: `tools/orchestrator/` - Advanced agent task coordination with parallel execution, retry policies, and telemetry
+- **Telemetry**: `tools/telemetry/` - Production-grade event logging, sanitization, and real-time analysis
+
+**Orchestrator Usage:**
+```python
+from tools.orchestrator.scheduler import run_parallel, OrchestrationPolicy, TaskSpec, RetryPolicy
+
+# Define sophisticated orchestration policy
+policy = OrchestrationPolicy(
+    max_concurrency=6,                    # Parallel execution limit
+    retry=RetryPolicy(
+        max_attempts=3,                   # Retry failed tasks up to 3 times
+        backoff="exp",                    # Exponential backoff strategy
+        base_delay_s=0.5,                # Base delay between retries
+        jitter=0.2                       # Add jitter to prevent thundering herd
+    ),
+    timeout_s=30.0,                      # Task timeout
+    fairness="round_robin",              # Fair scheduling
+    cancellation="isolated"              # Isolated failure handling
+)
+
+# Execute tasks in parallel with full monitoring
+result = await run_parallel(context, task_specs, policy)
+```
+
+**Telemetry Integration:**
+```python
+from tools.telemetry.aggregator import aggregate, list_events
+from tools.telemetry.sanitize import redact_event
+
+# Get real-time dashboard metrics
+dashboard = aggregate(since="1h")
+print(f"Active agents: {dashboard['agents_active']}")
+print(f"Success rate: {dashboard['recent_results']}")
+print(f"Resource utilization: {dashboard['resources']['utilization']}")
+
+# Monitor recent events with filtering
+events = list_events(since="15m", grep="error", limit=50)
+
+# Sanitize sensitive data before logging
+safe_event = redact_event(raw_event)
+```
+
 **Tool Security Patterns:**
 - Path validation: All tools use absolute paths
 - Permission handling: Graceful degradation for filesystem errors

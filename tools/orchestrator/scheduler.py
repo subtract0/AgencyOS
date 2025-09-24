@@ -118,33 +118,56 @@ class _Scheduler:
 
         async def _heartbeat_loop() -> None:
             try:
-                # Defer first heartbeat until after interval to avoid overhead for very short tasks
                 while not stop_hb.is_set():
+                    _telemetry_emit(
+                        {
+                            "type": "heartbeat",
+                            "run_id": self._run_id,
+                            "id": task_id,
+                            "agent": agent_name,
+                            "attempt": attempts or 0,
+                            "pid": os.getpid(),
+                            "running_for_s": max(0.0, time.time() - started),
+                        }
+                    )
                     try:
                         await asyncio.wait_for(stop_hb.wait(), timeout=hb_interval)
-                        break  # stop requested
+                        break  # Stop event was set, exit loop
                     except asyncio.TimeoutError:
-                        # Interval elapsed without stop; emit heartbeat now
-                        _telemetry_emit(
-                            {
-                                "type": "heartbeat",
-                                "run_id": self._run_id,
-                                "id": task_id,
-                                "agent": agent_name,
-                                "attempt": attempts or 0,
-                                "pid": os.getpid(),
-                                "running_for_s": max(0.0, time.time() - started),
-                            }
-                        )
-                        continue
+                        continue  # Timeout is expected, emit another heartbeat
             except (asyncio.CancelledError, Exception):
                 # Handle cancellation and any other errors gracefully
                 return
 
         hb_task = asyncio.create_task(_heartbeat_loop())
 
-        # Create agent once per task (not per retry attempt)
-        agent = spec.agent_factory(ctx)
+        # Create agent once per task (not per retry attempt) - with error handling
+        try:
+            agent = spec.agent_factory(ctx)
+        except Exception as e:
+            # If agent creation fails, return failed result immediately
+            finished = time.time()
+            _telemetry_emit({
+                "type": "task_finished",
+                "id": task_id,
+                "agent": agent_name,
+                "attempt": 1,
+                "status": "failed",
+                "started_at": started,
+                "finished_at": finished,
+                "duration_s": max(0.0, finished - started),
+                "errors": [f"Agent factory failed: {str(e)}"],
+            })
+            return TaskResult(
+                id=task_id,
+                agent=agent_name,
+                status="failed",
+                started_at=started,
+                finished_at=finished,
+                attempts=1,
+                artifacts=None,
+                errors=[f"Agent factory failed: {str(e)}"],
+            )
 
         async def _attempt_once() -> Dict[str, Any]:
             # Agents may expose either run(prompt, **params) or run(spec.prompt, **params)
