@@ -21,6 +21,17 @@ from shared.system_hooks import create_system_reminder_hook, create_memory_integ
 from tools.auto_fix_nonetype import NoneTypeErrorDetector, LLMNoneTypeFixer, AutoNoneTypeFixer, SimpleNoneTypeMonitor
 from tools.apply_and_verify_patch import ApplyAndVerifyPatch, AutonomousHealingOrchestrator
 
+# Try to import unified core if available
+try:
+    if os.getenv("ENABLE_UNIFIED_CORE", "true").lower() == "true":
+        from core.self_healing import SelfHealingCore
+        from core.telemetry import emit
+        _unified_core_available = True
+    else:
+        _unified_core_available = False
+except ImportError:
+    _unified_core_available = False
+
 
 class ConstitutionalCheck(Tool):
     """Check code against constitutional requirements using LLM analysis."""

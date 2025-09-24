@@ -226,4 +226,5 @@ gothic-point-*.json
 logs/sessions/
 logs/handoffs/
 logs/snapshots/
+logs/events/run_*.jsonl
 .npm-cache/

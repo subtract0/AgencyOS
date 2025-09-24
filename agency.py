@@ -348,7 +348,16 @@ def _cmd_logs(args: argparse.Namespace) -> None:
 def _cmd_demo(args: argparse.Namespace) -> None:
     import runpy
     with _cli_event_scope("demo", {}):
-        runpy.run_path(os.path.join(current_dir, "demo_autonomous_healing.py"), run_name="__main__")
+        # Use unified demo if available, fallback to archived version
+        demo_unified = os.path.join(current_dir, "demo_unified.py")
+        demo_archived = os.path.join(current_dir, "demos/archive/demo_autonomous_healing.py")
+
+        if os.path.exists(demo_unified):
+            runpy.run_path(demo_unified, run_name="__main__")
+        elif os.path.exists(demo_archived):
+            runpy.run_path(demo_archived, run_name="__main__")
+        else:
+            print("❌ Demo file not found. Please run from the Agency directory.")
 
 
 def _cmd_test(args: argparse.Namespace) -> None:

@@ -31,16 +31,20 @@ def consolidate_learnings(source):
         try:
             memories = source.get_all()
             return _consolidate(memories)
-        except Exception:
-            pass
+        except Exception as e:
+            # Silently continue to try next method
+            import logging
+            logging.debug(f"Method get_all() failed: {e}")
 
     # 3) Memory wrapper exposing _store.get_all()
     if hasattr(source, '_store') and hasattr(getattr(source, '_store'), 'get_all'):
         try:
             memories = source._store.get_all()  # type: ignore[attr-defined]
             return _consolidate(memories)
-        except Exception:
-            pass
+        except Exception as e:
+            # Silently continue to try next method
+            import logging
+            logging.debug(f"Method get_all() failed: {e}")
 
     # 4) Bound method case (e.g., memory.get_all)
     if hasattr(source, '__self__'):

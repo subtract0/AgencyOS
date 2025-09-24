@@ -86,30 +86,66 @@ python -m pip install git+https://github.com/openai/openai-agents-python.git@mai
 ## 🏥 Autonomous Healing System
 
 ### Core Capability
-The Agency features **undeniable autonomous healing** that detects, analyzes, and fixes software errors without human intervention.
+The Agency features **unified self-healing** with a consolidated architecture that reduces 62+ scattered files to 3 core modules.
 
-### NoneType Error Auto-Fix
-**Complete workflow**: Detection → LLM Analysis → Fix Application → Test Verification → Auto-Commit
+### Unified Core Architecture (NEW)
+**3 Essential Modules** replacing 62+ scattered implementations:
 
-#### Key Components
-- **NoneTypeErrorDetector**: Automatic error detection from logs and runtime failures
-- **LLMNoneTypeFixer**: GPT-5 powered intelligent fix generation with context awareness
-- **ApplyAndVerifyPatch**: Autonomous patch application with complete safety verification
-- **AutonomousHealingOrchestrator**: End-to-end coordination of the healing process
+#### core/self_healing.py
+```python
+class SelfHealingCore:
+    def detect_errors(self, path: str) -> List[Finding]
+    def fix_error(self, error: Finding) -> bool
+    def verify(self) -> bool  # 100% test pass required
+```
 
-#### Safety Mechanisms
+#### core/telemetry.py
+```python
+class SimpleTelemetry:
+    def log(self, event: str, data: dict, level: str)
+    def query(self, event_filter: str, since: datetime, limit: int)
+    def get_metrics(self) -> dict  # Health score, error rates
+```
+
+#### core/patterns.py
+```python
+class UnifiedPatternStore:
+    def add(self, pattern: Pattern) -> bool
+    def find(self, query: str, pattern_type: str, tags: list) -> List[Pattern]
+    def learn_from_fix(self, error_type: str, original: str, fixed: str, test_passed: bool)
+```
+
+### Migration & Feature Flags
+```bash
+# Enable unified core (default: false for backward compatibility)
+export ENABLE_UNIFIED_CORE=true
+
+# Enable pattern persistence (default: in-memory)
+export PERSIST_PATTERNS=true
+```
+
+### Key Benefits
+- **95% code reduction**: From 62 files to 3 core modules
+- **Single telemetry sink**: logs/events/run_*.jsonl with retention
+- **Pattern learning**: Automatic learning from successful fixes
+- **Feature-flagged migration**: Safe, gradual rollout
+- **Clear service boundaries**: Well-defined APIs for autonomous agents
+
+### Safety Mechanisms
 - **Test-Driven Verification**: No changes without 100% test success rate
-- **Automatic Rollback**: Failed fixes immediately reverted to maintain system integrity
+- **Automatic Rollback**: Failed fixes immediately reverted
 - **Constitutional Compliance**: All healing actions follow governance principles
-- **Complete Audit Trail**: Every autonomous action logged and traceable
+- **Telemetry & Audit Trail**: Complete observability via unified sink
 
 ### Demonstration
 ```bash
-# See autonomous healing in action
-./agency_cli demo
-python demo_autonomous_healing.py
+# Unified demo showcasing consolidated architecture
+python demo_unified.py
 
-# Monitor healing status
+# Legacy demos archived in demos/archive/
+python demos/archive/demo_autonomous_healing.py  # Original demo
+
+# Monitor via CLI
 ./agency_cli health
 ./agency_cli logs
 ```

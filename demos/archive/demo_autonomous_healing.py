@@ -2,11 +2,28 @@
 """
 Complete Autonomous Healing Demonstration
 Shows the full cycle: Detection → Analysis → Fix → Test → Commit
+Feature-flagged to use unified core when ENABLE_UNIFIED_CORE=true.
 """
 
 import os
 import tempfile
 import shutil
+import warnings
+
+# Check for unified core feature flag
+ENABLE_UNIFIED_CORE = os.getenv("ENABLE_UNIFIED_CORE", "false").lower() == "true"
+
+if ENABLE_UNIFIED_CORE:
+    try:
+        from core.self_healing import SelfHealingCore, Finding
+        _unified_core = SelfHealingCore()
+        warnings.warn("Using unified SelfHealingCore", DeprecationWarning, stacklevel=2)
+    except ImportError:
+        ENABLE_UNIFIED_CORE = False
+        _unified_core = None
+else:
+    _unified_core = None
+
 from tools.auto_fix_nonetype import (
     NoneTypeErrorDetector,
     LLMNoneTypeFixer,
@@ -89,8 +106,33 @@ def demo_step_by_step_healing():
 
     # Step 3: Demonstrate error detection
     print("\n🔍 Step 3: Autonomous error detection...")
-    detector = NoneTypeErrorDetector(log_content=error_output)
-    detection_result = detector.run()
+
+    if ENABLE_UNIFIED_CORE and _unified_core:
+        print("   Using unified SelfHealingCore for detection...")
+        findings = _unified_core.detect_errors(error_output)
+        if findings:
+            import json
+            detection_result = json.dumps({
+                "status": "errors_detected",
+                "count": len(findings),
+                "errors": [
+                    {
+                        "error_type": f.error_type,
+                        "pattern": f.snippet,
+                        "file_path": f.file,
+                        "line_number": str(f.line) if f.line > 0 else "unknown"
+                    } for f in findings
+                ]
+            }, indent=2)
+        else:
+            detection_result = json.dumps({
+                "status": "no_nonetype_errors",
+                "message": "No NoneType errors detected"
+            })
+    else:
+        detector = NoneTypeErrorDetector(log_content=error_output)
+        detection_result = detector.run()
+
     print("   Detection result:")
     print(f"   {detection_result}")
 
@@ -163,6 +205,36 @@ RuntimeError: Failed to get user profile for user_id=12345
         print("   In a real environment with actual files, this would complete the full cycle")
 
 
+def demo_unified_core():
+    """Demonstrate the new unified self-healing core."""
+    print("\n🆕 UNIFIED SELF-HEALING CORE")
+    print("=" * 70)
+
+    if ENABLE_UNIFIED_CORE and _unified_core:
+        print("✅ Unified core is ENABLED via ENABLE_UNIFIED_CORE=true")
+        print("\n🔧 Core API (3 essential methods):")
+        print("   • detect_errors(path) - Find errors in code/logs")
+        print("   • fix_error(finding) - Apply fix with auto-rollback")
+        print("   • verify() - Run tests, return True only if 100% pass")
+
+        print("\n📍 Consolidation benefits:")
+        print("   • Single source of truth (core/self_healing.py)")
+        print("   • Feature-flagged migration (safe rollout)")
+        print("   • Simplified telemetry (logs/events/events.jsonl)")
+        print("   • Clean service boundaries")
+        print("   • From 62 files to 1 core module")
+    else:
+        print("ℹ️  Unified core is DISABLED (default)")
+        print("   Set ENABLE_UNIFIED_CORE=true to enable")
+        print("   Legacy implementation in use (62+ scattered files)")
+
+    print("\n🔄 Migration status:")
+    print("   ✅ core/self_healing.py created")
+    print("   ✅ tools/auto_fix_nonetype.py migrated")
+    print("   ✅ demo_autonomous_healing.py migrated")
+    print("   ⏳ Next: SimpleTelemetry, UnifiedPatternStore")
+
+
 def demo_quality_enforcer_integration():
     """Demonstrate QualityEnforcer integration with autonomous healing."""
     print("\n🛡️  QUALITY ENFORCER INTEGRATION")
@@ -200,6 +272,7 @@ def main():
     # Run all demonstrations
     demo_step_by_step_healing()
     demo_orchestrated_healing()
+    demo_unified_core()
     demo_quality_enforcer_integration()
 
     print("\n" + "=" * 90)

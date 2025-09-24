@@ -80,14 +80,34 @@ def main(test_mode="unit"):
     project_root = Path(__file__).resolve().parent
     os.chdir(project_root)
 
-    # VIRTUAL ENVIRONMENT CHECK
-    if not os.environ.get('VIRTUAL_ENV'):
-        print("⚠️  Warning: Not running in a virtual environment")
-        print("   Consider running: source .venv/bin/activate")
-        print("   Proceeding anyway...\n")
+    # VIRTUAL ENVIRONMENT CHECK AND ACTIVATION
+    venv_path = os.environ.get('VIRTUAL_ENV')
+    if not venv_path:
+        # Try to find and use the .venv in the project
+        potential_venv = project_root / '.venv'
+        if potential_venv.exists():
+            # Use the Python from the virtual environment
+            venv_python = potential_venv / 'bin' / 'python'
+            if not venv_python.exists():
+                # Windows path
+                venv_python = potential_venv / 'Scripts' / 'python.exe'
+
+            if venv_python.exists():
+                print(f"✅ Using virtual environment: {potential_venv}")
+                # Update sys.executable to use venv Python
+                python_executable = str(venv_python)
+            else:
+                print("⚠️  Warning: Virtual environment found but Python executable not found")
+                print("   Using system Python instead")
+                python_executable = sys.executable
+        else:
+            print("⚠️  Warning: Not running in a virtual environment")
+            print("   Consider running: source .venv/bin/activate")
+            print("   Proceeding with system Python...\n")
+            python_executable = sys.executable
     else:
-        venv_path = os.environ.get('VIRTUAL_ENV')
-        print(f"✅ Virtual environment: {venv_path}\n")
+        print(f"✅ Virtual environment: {venv_path}")
+        python_executable = sys.executable
 
     # Run pytest with verbose output
     print("\n🧪 Running tests with pytest...")
@@ -95,7 +115,7 @@ def main(test_mode="unit"):
 
     # Pytest arguments for comprehensive testing
     pytest_args = [
-        sys.executable,
+        python_executable,  # Use the determined Python executable
         "-m",
         "pytest",
         "tests/",  # Test directory

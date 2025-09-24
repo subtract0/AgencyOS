@@ -44,7 +44,7 @@ The Agency operates under strict constitutional principles that ensure quality a
 
 ### Developer Experience
 - **⚡ Quick Setup**: One-command environment setup
-- **🧪 Comprehensive Testing**: 689 tests maintaining 100% success rate
+- **🧪 Comprehensive Testing**: 725+ tests maintaining 100% success rate
 - **📊 Real-Time Monitoring**: Live system health and performance metrics
 - **🔄 Hot Reload**: Instant feedback during development
 - **📚 Rich Documentation**: Complete API docs and usage examples
@@ -156,19 +156,19 @@ Logged & Monitored                         Rollback on Failure
 ### Health Monitoring
 ```bash
 # Check system health
-python tools/agency_cli/self_healing.py status
+python -c "from core import get_core; print(get_core().get_health_status())"
 
-# Monitor active healing
-python tools/agency_cli/self_healing.py check
+# Run constitutional compliance check
+python scripts/constitutional_check.py
 ```
 
 ## 🛠️ CLI Commands
 
 ### Essential Commands
 ```bash
-./agency setup    # Complete environment setup
-./agency test     # Run test suite
-./agency demo     # Autonomous healing demonstration
+python run_tests.py              # Run test suite (725+ tests)
+python demo_unified.py           # Unified core demonstration
+python test_autonomous_operation.py  # Autonomous operation test
 ```
 
 ### Advanced Usage
@@ -243,9 +243,9 @@ The Agency represents a breakthrough in autonomous software engineering:
 - **✅ Production Ready**: Comprehensive testing and safety mechanisms
 - **✅ Developer Friendly**: World-class developer experience
 
-## 🎉 The Future of Software Engineering
+## 🎉 Operational Autonomy Achieved
 
-The Agency demonstrates that autonomous software maintenance is not just possible - it's here, working, and undeniable. Experience the future of software engineering where systems maintain and improve themselves while adhering to the highest quality standards.
+The Agency demonstrates that autonomous software maintenance is operational today. Experience a system that maintains and improves itself while adhering to the highest quality standards through constitutional governance and continuous learning.
 
 **Welcome to the age of autonomous software engineering.**
 

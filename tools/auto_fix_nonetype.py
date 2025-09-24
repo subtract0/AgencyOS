@@ -1,6 +1,7 @@
 """
 Auto-fix NoneType errors using LLM delegation and existing telemetry.
 Simple, focused self-healing for a specific error class.
+Feature-flagged to use unified core when ENABLE_UNIFIED_CORE=true.
 """
 
 import os
@@ -8,6 +9,7 @@ import re
 import json
 from typing import Optional, Dict, Any
 from datetime import datetime
+import warnings
 
 from agency_swarm.tools import BaseTool as Tool
 from pydantic import Field
@@ -15,6 +17,19 @@ from pydantic import Field
 from .edit import Edit
 from .read import Read
 from .bash import Bash
+
+# Check for unified core feature flag
+ENABLE_UNIFIED_CORE = os.getenv("ENABLE_UNIFIED_CORE", "true").lower() == "true"
+
+if ENABLE_UNIFIED_CORE:
+    try:
+        from core.self_healing import SelfHealingCore, Finding
+        _unified_core = SelfHealingCore()
+    except ImportError:
+        ENABLE_UNIFIED_CORE = False
+        _unified_core = None
+else:
+    _unified_core = None
 
 
 class NoneTypeErrorDetector(Tool):
@@ -25,7 +40,41 @@ class NoneTypeErrorDetector(Tool):
     def run(self) -> str:
         """Detect NoneType errors and extract context."""
 
-        # Common NoneType error patterns
+        # Use unified core if enabled
+        if ENABLE_UNIFIED_CORE and _unified_core:
+            warnings.warn("Using unified SelfHealingCore for detection", DeprecationWarning, stacklevel=2)
+            findings = _unified_core.detect_errors(self.log_content)
+
+            if findings:
+                errors_found = []
+                for finding in findings:
+                    # Extract attribute from snippet if it's an AttributeError
+                    attribute = None
+                    if "AttributeError" in finding.snippet:
+                        attr_match = re.search(r"has no attribute '(\w+)'", finding.snippet)
+                        if attr_match:
+                            attribute = attr_match.group(1)
+
+                    errors_found.append({
+                        "error_type": finding.error_type,
+                        "pattern": finding.snippet,
+                        "file_path": finding.file,
+                        "line_number": str(finding.line) if finding.line > 0 else "unknown",
+                        "attribute": attribute
+                    })
+
+                return json.dumps({
+                    "status": "errors_detected",
+                    "count": len(errors_found),
+                    "errors": errors_found
+                }, indent=2)
+            else:
+                return json.dumps({
+                    "status": "no_nonetype_errors",
+                    "message": "No NoneType errors detected in provided content"
+                })
+
+        # Legacy implementation (when feature flag is false)
         patterns = [
             r"AttributeError: 'NoneType' object has no attribute '(\w+)'",
             r"TypeError: 'NoneType' object is not (\w+)",

@@ -120,13 +120,16 @@ result = process_data(None)
 
     def test_autonomous_healing_complete_demo(self):
         """Test the autonomous healing demo runs."""
-        demo_path = Path("demo_autonomous_healing.py")
+        # Check for unified demo first, then archived version
+        demo_path = Path("demo_unified.py")
+        if not demo_path.exists():
+            demo_path = Path("demos/archive/demo_autonomous_healing.py")
         if demo_path.exists():
             # Just test that demo file exists and is accessible (no execution to avoid timeout)
             assert demo_path.is_file()
             print("✅ Autonomous healing: Demo file exists and is accessible")
         else:
-            pytest.fail("❌ Autonomous healing demo not found: demo_autonomous_healing.py")
+            pytest.fail(f"❌ Autonomous healing demo not found: {demo_path}")
 
     # ========== MULTI-AGENT TESTS ==========
 
@@ -665,7 +668,7 @@ def run_manual_verification():
 Before running automated tests, perform these manual checks:
 
 1. 🏥 AUTONOMOUS HEALING VERIFICATION:
-   python demo_autonomous_healing.py
+   python demo_unified.py  # or demos/archive/demo_autonomous_healing.py
    # Should show complete healing demo
 
 2. 🤖 MULTI-AGENT VERIFICATION:
