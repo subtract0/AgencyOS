@@ -11,6 +11,10 @@ from pathlib import Path
 
 
 def main(test_mode="unit"):
+    # RECURSION GUARD: Prevent nested test runs
+    if os.environ.get("AGENCY_NESTED_TEST") == "1":
+        print("⚠️  Nested test run detected; exiting to prevent recursion.")
+        sys.exit(0)
     """Run tests using pytest with specified mode
 
     Args:
@@ -75,7 +79,10 @@ def main(test_mode="unit"):
     # For "all" mode, no marker filtering is applied
 
     try:
-        result = subprocess.run(pytest_args, check=False)
+        # Set environment variable to prevent nested test runs
+        env = os.environ.copy()
+        env["AGENCY_NESTED_TEST"] = "1"
+        result = subprocess.run(pytest_args, check=False, env=env)
 
         print("\n" + "=" * 60)
         print("TEST EXECUTION COMPLETE")
@@ -137,7 +144,10 @@ def run_specific_test(test_name):
     ]
 
     try:
-        result = subprocess.run(pytest_args, check=False)
+        # Set environment variable to prevent nested test runs
+        env = os.environ.copy()
+        env["AGENCY_NESTED_TEST"] = "1"
+        result = subprocess.run(pytest_args, check=False, env=env)
 
         print("\n" + "=" * 60)
         print("SPECIFIC TEST EXECUTION COMPLETE")
