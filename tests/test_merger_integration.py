@@ -212,8 +212,8 @@ class TestGitHubWorkflowIntegration:
         with open(workflow_path, 'r') as f:
             content = f.read()
 
-        # Verify test execution
-        assert "python run_tests.py" in content, "Workflow missing test execution command"
+        # Verify test execution (either run_tests.py or pytest directly)
+        assert ("python run_tests.py" in content or "python -m pytest" in content), "Workflow missing test execution command"
         assert "TEST_EXIT_CODE" in content, "Workflow missing exit code capture"
 
         # Verify result processing
