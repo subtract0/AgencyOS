@@ -10,10 +10,34 @@ import sys
 import signal
 import tempfile
 import atexit
+import time
+import argparse
+import json
+from datetime import datetime, timezone
 from pathlib import Path
 
 
-def main(test_mode="unit"):
+def _record_timing(duration_s: float, test_mode: str, specific: str | None, exit_code: int, extra: dict | None = None) -> None:
+    try:
+        root = Path(__file__).resolve().parent
+        out_dir = root / "logs" / "benchmarks"
+        out_dir.mkdir(parents=True, exist_ok=True)
+        payload = {
+"ts": datetime.now(timezone.utc).isoformat(),
+            "mode": test_mode,
+            "specific": specific,
+            "duration_s": round(float(duration_s), 3),
+            "exit_code": int(exit_code),
+        }
+        if extra:
+            payload.update(extra)
+        with open(out_dir / "test_timings.jsonl", "a", encoding="utf-8") as f:
+            f.write(json.dumps(payload) + "\n")
+    except Exception:
+        pass
+
+
+def main(test_mode="unit", fast_only=False, timed: bool = False):
     # RECURSION GUARDS: Prevent nested test runs
     if os.environ.get("AGENCY_NESTED_TEST") == "1":
         print("⚠️  Nested test run detected; exiting to prevent recursion.")
@@ -61,7 +85,8 @@ def main(test_mode="unit"):
     """Run tests using pytest with specified mode
 
     Args:
-        test_mode: "unit", "integration", or "all"
+        test_mode: "unit", "integration", "all", "fast", "slow", "benchmark", or "github"
+        fast_only: If True, exclude slow and benchmark tests from default runs
     """
     print("=" * 60)
     print("AGENCY CODE AGENCY - TEST RUNNER")
@@ -69,9 +94,14 @@ def main(test_mode="unit"):
 
     # Display test mode
     mode_descriptions = {
-        "unit": "Unit Tests Only (excluding integration tests)",
+        "unit": "Unit Tests Only (excluding integration, slow, and benchmark tests)",
         "integration": "Integration Tests Only",
-        "all": "All Tests (Unit + Integration)"
+        "all": "All Tests (Unit + Integration)",
+        "fast": "Fast Unit Tests Only (excluding slow, benchmark, integration)",
+        "slow": "Slow Tests Only",
+        "benchmark": "Benchmark Tests Only",
+        "github": "GitHub Integration Tests Only",
+        "integration-only": "Integration Tests Only (same as integration)"
     }
     print(f"\n🎯 Test Mode: {mode_descriptions.get(test_mode, test_mode)}")
     print("-" * 40)
@@ -109,6 +139,9 @@ def main(test_mode="unit"):
         print(f"✅ Virtual environment: {venv_path}")
         python_executable = sys.executable
 
+    # Record start time for timing information
+    start_time = time.time()
+
     # Run pytest with verbose output
     print("\n🧪 Running tests with pytest...")
     print("-" * 40)
@@ -129,9 +162,20 @@ def main(test_mode="unit"):
 
     # Add marker selection based on test mode
     if test_mode == "unit":
-        pytest_args.extend(["-m", "not integration"])
-    elif test_mode == "integration":
+        if fast_only:
+            pytest_args.extend(["-m", "not integration and not slow and not benchmark"])
+        else:
+            pytest_args.extend(["-m", "not integration and not slow and not benchmark"])
+    elif test_mode == "integration" or test_mode == "integration-only":
         pytest_args.extend(["-m", "integration"])
+    elif test_mode == "fast":
+        pytest_args.extend(["-m", "not integration and not slow and not benchmark and not github"])
+    elif test_mode == "slow":
+        pytest_args.extend(["-m", "slow"])
+    elif test_mode == "benchmark":
+        pytest_args.extend(["-m", "benchmark"])
+    elif test_mode == "github":
+        pytest_args.extend(["-m", "github"])
     # For "all" mode, no marker filtering is applied
 
     try:
@@ -139,23 +183,35 @@ def main(test_mode="unit"):
         env = os.environ.copy()
         env["AGENCY_NESTED_TEST"] = "1"
 
-        # Add timeout for safety (10 minutes max)
+        # Add timeout for safety (60 seconds max for individual test groups)
+        timeout_seconds = 600 if test_mode == "all" else 60
         result = subprocess.run(
             pytest_args,
             check=False,
             env=env,
-            timeout=600,
+            timeout=timeout_seconds,
             start_new_session=True  # Create process group for clean shutdown
         )
+
+        # Calculate execution time
+        end_time = time.time()
+        execution_time = end_time - start_time
+
+        if timed:
+            _record_timing(execution_time, test_mode, specific=None, exit_code=result.returncode)
 
         print("\n" + "=" * 60)
         print("TEST EXECUTION COMPLETE")
         print("=" * 60)
 
+        # Display timing information
+        print(f"⏱️  Execution time: {execution_time:.2f} seconds")
+
         if result.returncode == 0:
             print("✅ All tests passed!")
             print("\n📊 Test Summary:")
             print(f"- {mode_descriptions.get(test_mode, test_mode)} executed successfully")
+            print(f"- Execution time: {execution_time:.2f} seconds")
             print("- No failures or errors detected")
             print("- Agency Code Agency is ready for use")
         else:
@@ -172,7 +228,8 @@ def main(test_mode="unit"):
         return result.returncode
 
     except subprocess.TimeoutExpired:
-        print("❌ Test run timed out after 10 minutes!")
+        timeout_desc = "10 minutes" if test_mode == "all" else "60 seconds"
+        print(f"❌ Test run timed out after {timeout_desc}!")
         print("   This may indicate infinite loops or stuck processes.")
         print("   Check for:")
         print("   - Recursive test execution")
@@ -198,7 +255,7 @@ def main(test_mode="unit"):
         return 1
 
 
-def run_specific_test(test_name):
+def run_specific_test(test_name, timed: bool = False):
     """Run a specific test file or test function"""
     print("=" * 60)
     print("AGENCY CODE AGENCY - SPECIFIC TEST RUNNER")
@@ -222,6 +279,7 @@ def run_specific_test(test_name):
         env["AGENCY_NESTED_TEST"] = "1"
 
         # Add timeout for safety (5 minutes for specific tests)
+        t0 = time.time()
         result = subprocess.run(
             pytest_args,
             check=False,
@@ -229,10 +287,14 @@ def run_specific_test(test_name):
             timeout=300,
             start_new_session=True
         )
+        duration = time.time() - t0
 
         print("\n" + "=" * 60)
         print("SPECIFIC TEST EXECUTION COMPLETE")
         print("=" * 60)
+
+        if timed:
+            _record_timing(duration, test_mode="specific", specific=test_name, exit_code=result.returncode)
 
         if result.returncode == 0:
             print("✅ Specific test passed!")
@@ -251,50 +313,104 @@ def run_specific_test(test_name):
         return 1
 
 
-def print_usage():
-    """Print usage information"""
-    print("Usage: python run_tests.py [OPTIONS] [SPECIFIC_TEST]")
-    print("\nOptions:")
-    print("  --run-integration    Run ONLY integration tests")
-    print("  --run-all           Run ALL tests (unit + integration)")
-    print("  --help              Show this help message")
-    print("\nDefault behavior:")
-    print("  - Runs unit tests only (excludes integration tests)")
-    print("\nExamples:")
-    print("  python run_tests.py                    # Run unit tests only")
-    print("  python run_tests.py --run-integration  # Run integration tests only")
-    print("  python run_tests.py --run-all          # Run all tests")
-    print("  python run_tests.py test_specific.py   # Run specific test file")
+def create_parser():
+    """Create argument parser for test runner"""
+    parser = argparse.ArgumentParser(
+        description="Agency Code Agency Test Runner",
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+        epilog="""Examples:
+  python run_tests.py                    # Run unit tests only (default)
+  python run_tests.py --fast             # Run fast unit tests only
+  python run_tests.py --slow             # Run slow tests only
+  python run_tests.py --benchmark        # Run benchmark tests only
+  python run_tests.py --github           # Run GitHub integration tests only
+  python run_tests.py --integration-only # Run integration tests only
+  python run_tests.py --run-integration  # Run integration tests only (legacy)
+  python run_tests.py --run-all          # Run all tests
+  python run_tests.py test_specific.py   # Run specific test file"""
+    )
+
+    # Test suite options (mutually exclusive)
+    test_group = parser.add_mutually_exclusive_group()
+    test_group.add_argument(
+        "--fast",
+        action="store_true",
+        help="Run only fast unit tests (exclude slow, benchmark, integration)"
+    )
+    test_group.add_argument(
+        "--slow",
+        action="store_true",
+        help="Run only slow tests"
+    )
+    test_group.add_argument(
+        "--benchmark",
+        action="store_true",
+        help="Run only benchmark tests"
+    )
+    test_group.add_argument(
+        "--github",
+        action="store_true",
+        help="Run only GitHub integration tests"
+    )
+    test_group.add_argument(
+        "--integration-only",
+        action="store_true",
+        help="Run ONLY integration tests (what we normally skip)"
+    )
+    test_group.add_argument(
+        "--run-integration",
+        action="store_true",
+        help="Run ONLY integration tests (legacy option)"
+    )
+    test_group.add_argument(
+        "--run-all",
+        action="store_true",
+        help="Run ALL tests (unit + integration)"
+    )
+
+    # Specific test file
+    parser.add_argument(
+        "specific_test",
+        nargs="?",
+        help="Run specific test file"
+    )
+
+    # Optional timing record
+    parser.add_argument(
+        "--timed",
+        action="store_true",
+        help="Record run duration to logs/benchmarks/test_timings.jsonl and print it"
+    )
+
+    return parser
 
 
 if __name__ == "__main__":
-    # Parse command line arguments
-    test_mode = "unit"  # Default to unit tests only
-    specific_test = None
+    parser = create_parser()
+    args = parser.parse_args()
 
-    # Check for command line options
-    if len(sys.argv) > 1:
-        arg = sys.argv[1]
+    # Determine test mode based on arguments
+    test_mode = "unit"  # Default to unit tests only (excluding slow and benchmark)
 
-        if arg in ["--help", "-h"]:
-            print_usage()
-            sys.exit(0)
-        elif arg == "--run-integration":
-            test_mode = "integration"
-        elif arg == "--run-all":
-            test_mode = "all"
-        elif arg.startswith("--"):
-            print(f"❌ Unknown option: {arg}")
-            print_usage()
-            sys.exit(1)
-        else:
-            # Treat as specific test file
-            specific_test = arg
+    if args.fast:
+        test_mode = "fast"
+    elif args.slow:
+        test_mode = "slow"
+    elif args.benchmark:
+        test_mode = "benchmark"
+    elif args.github:
+        test_mode = "github"
+    elif args.integration_only or args.run_integration:
+        test_mode = "integration"
+    elif args.run_all:
+        test_mode = "all"
 
     # Execute the appropriate test mode
-    if specific_test:
-        exit_code = run_specific_test(specific_test)
+    if args.specific_test:
+        exit_code = run_specific_test(args.specific_test, timed=args.timed)
     else:
-        exit_code = main(test_mode)
+        # Default behavior excludes slow and benchmark tests automatically
+        fast_only = test_mode == "unit"
+        exit_code = main(test_mode, fast_only=fast_only, timed=args.timed)
 
     sys.exit(exit_code)
