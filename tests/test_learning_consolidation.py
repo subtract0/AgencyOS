@@ -277,4 +277,7 @@ def test_invalid_timestamp_handling():
 
 
 if __name__ == "__main__":
-    pytest.main([__file__, "-v"])
+    # Skip nested pytest execution to prevent recursion
+    import os
+    if os.environ.get("AGENCY_NESTED_TEST") != "1":
+        pytest.main([__file__, "-v"])

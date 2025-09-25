@@ -1,0 +1,3 @@
+# CodeGen Scaffold Summary
+
+**Timestamp:** 2025-09-23T13:50:26.761135\n**Operation:** scaffold\n**Total Items:** 3\n\n## Created Files\n\n- **/private/var/folders/sj/ttm056wn69ncqkyty42kd_dc0000gn/T/pytest-of-am/pytest-506/test_cli_scaffold_basic0/scaffold_output/__init__.py** (tool): created\n- **/private/var/folders/sj/ttm056wn69ncqkyty42kd_dc0000gn/T/pytest-of-am/pytest-506/test_cli_scaffold_basic0/scaffold_output/test_scaffold.py** (tool): created\n- **/private/var/folders/sj/ttm056wn69ncqkyty42kd_dc0000gn/T/pytest-of-am/pytest-506/test_cli_scaffold_basic0/scaffold_output/cli.py** (tool): created\n

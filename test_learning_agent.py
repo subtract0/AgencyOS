@@ -316,8 +316,8 @@ def test_learning_agent_pipeline():
     try:
         os.unlink(temp_json_path)
         print(f"\n🧹 Cleaned up temporary file: {temp_json_path}")
-    except:
-        pass
+    except Exception as e:
+        print(f"⚠️  Could not clean up temporary file: {e}")
 
     print("\n" + "=" * 60)
     print("✅ LEARNING AGENT INTEGRATION TEST COMPLETED SUCCESSFULLY")

@@ -7,10 +7,57 @@ Runs all tests using pytest framework
 import os
 import subprocess
 import sys
+import signal
+import tempfile
+import atexit
 from pathlib import Path
 
 
 def main(test_mode="unit"):
+    # RECURSION GUARDS: Prevent nested test runs
+    if os.environ.get("AGENCY_NESTED_TEST") == "1":
+        print("⚠️  Nested test run detected; exiting to prevent recursion.")
+        sys.exit(0)
+
+    if "PYTEST_CURRENT_TEST" in os.environ:
+        print("⚠️  Running inside pytest process; exiting to prevent recursion.")
+        sys.exit(0)
+
+    # SINGLE INSTANCE LOCK: Prevent overlapping test runs
+    pid_file = Path(tempfile.gettempdir()) / "agency_test_runner.pid"
+
+    if pid_file.exists():
+        try:
+            with open(pid_file, 'r') as f:
+                old_pid = int(f.read().strip())
+            # Check if process is still running
+            os.kill(old_pid, 0)  # Will raise OSError if process doesn't exist
+            print(f"⚠️  Another test run is already active (PID: {old_pid})")
+            print("   Wait for it to complete or kill it manually if stuck.")
+            sys.exit(1)
+        except (OSError, ValueError):
+            # Process doesn't exist or PID file is corrupted, remove it
+            pid_file.unlink(missing_ok=True)
+
+    # Create PID file for this run
+    with open(pid_file, 'w') as f:
+        f.write(str(os.getpid()))
+
+    # Clean up PID file on exit
+    def cleanup_pid_file():
+        pid_file.unlink(missing_ok=True)
+
+    atexit.register(cleanup_pid_file)
+
+    # SIGNAL HANDLING: Clean shutdown on interruption
+    def signal_handler(sig, frame):
+        print(f"\n⚠️  Received signal {sig}, cleaning up...")
+        cleanup_pid_file()
+        sys.exit(1)
+
+    signal.signal(signal.SIGINT, signal_handler)
+    signal.signal(signal.SIGTERM, signal_handler)
+
     """Run tests using pytest with specified mode
 
     Args:
@@ -33,21 +80,34 @@ def main(test_mode="unit"):
     project_root = Path(__file__).resolve().parent
     os.chdir(project_root)
 
-    # Install dependencies first
-    print("\n📦 Installing test dependencies...")
-    try:
-        subprocess.run(
-            [sys.executable, "-m", "pip", "install", "-r", "requirements.txt"],
-            check=True,
-            capture_output=True,
-            text=True,
-        )
-        print("✅ Dependencies installed successfully")
-    except subprocess.CalledProcessError as e:
-        print(f"❌ Error installing dependencies: {e}")
-        print(f"stdout: {e.stdout}")
-        print(f"stderr: {e.stderr}")
-        return 1
+    # VIRTUAL ENVIRONMENT CHECK AND ACTIVATION
+    venv_path = os.environ.get('VIRTUAL_ENV')
+    if not venv_path:
+        # Try to find and use the .venv in the project
+        potential_venv = project_root / '.venv'
+        if potential_venv.exists():
+            # Use the Python from the virtual environment
+            venv_python = potential_venv / 'bin' / 'python'
+            if not venv_python.exists():
+                # Windows path
+                venv_python = potential_venv / 'Scripts' / 'python.exe'
+
+            if venv_python.exists():
+                print(f"✅ Using virtual environment: {potential_venv}")
+                # Update sys.executable to use venv Python
+                python_executable = str(venv_python)
+            else:
+                print("⚠️  Warning: Virtual environment found but Python executable not found")
+                print("   Using system Python instead")
+                python_executable = sys.executable
+        else:
+            print("⚠️  Warning: Not running in a virtual environment")
+            print("   Consider running: source .venv/bin/activate")
+            print("   Proceeding with system Python...\n")
+            python_executable = sys.executable
+    else:
+        print(f"✅ Virtual environment: {venv_path}")
+        python_executable = sys.executable
 
     # Run pytest with verbose output
     print("\n🧪 Running tests with pytest...")
@@ -55,7 +115,7 @@ def main(test_mode="unit"):
 
     # Pytest arguments for comprehensive testing
     pytest_args = [
-        sys.executable,
+        python_executable,  # Use the determined Python executable
         "-m",
         "pytest",
         "tests/",  # Test directory
@@ -75,7 +135,18 @@ def main(test_mode="unit"):
     # For "all" mode, no marker filtering is applied
 
     try:
-        result = subprocess.run(pytest_args, check=False)
+        # Set environment variable to prevent nested test runs
+        env = os.environ.copy()
+        env["AGENCY_NESTED_TEST"] = "1"
+
+        # Add timeout for safety (10 minutes max)
+        result = subprocess.run(
+            pytest_args,
+            check=False,
+            env=env,
+            timeout=600,
+            start_new_session=True  # Create process group for clean shutdown
+        )
 
         print("\n" + "=" * 60)
         print("TEST EXECUTION COMPLETE")
@@ -99,6 +170,15 @@ def main(test_mode="unit"):
                 print("- Integration tests may require additional setup or services")
 
         return result.returncode
+
+    except subprocess.TimeoutExpired:
+        print("❌ Test run timed out after 10 minutes!")
+        print("   This may indicate infinite loops or stuck processes.")
+        print("   Check for:")
+        print("   - Recursive test execution")
+        print("   - Hanging network requests")
+        print("   - Deadlocks in async code")
+        return 124  # Timeout exit code
 
     except FileNotFoundError:
         print("❌ pytest not found! Installing pytest...")
@@ -137,7 +217,18 @@ def run_specific_test(test_name):
     ]
 
     try:
-        result = subprocess.run(pytest_args, check=False)
+        # Set environment variable to prevent nested test runs
+        env = os.environ.copy()
+        env["AGENCY_NESTED_TEST"] = "1"
+
+        # Add timeout for safety (5 minutes for specific tests)
+        result = subprocess.run(
+            pytest_args,
+            check=False,
+            env=env,
+            timeout=300,
+            start_new_session=True
+        )
 
         print("\n" + "=" * 60)
         print("SPECIFIC TEST EXECUTION COMPLETE")
@@ -150,6 +241,11 @@ def run_specific_test(test_name):
             print(f"Exit code: {result.returncode}")
 
         return result.returncode
+
+    except subprocess.TimeoutExpired:
+        print("❌ Specific test run timed out after 5 minutes!")
+        return 124  # Timeout exit code
+
     except Exception as e:
         print(f"❌ Error running test: {e}")
         return 1

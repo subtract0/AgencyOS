@@ -1,0 +1,46 @@
+{
+  "demo_timestamp": "2025-09-24T01:20:31.895649",
+  "patterns_extracted": 35,
+  "patterns_stored": 34,
+  "store_stats": {
+    "total_patterns": 34,
+    "total_applications": 0,
+    "unique_domains": 12,
+    "domains": [
+      "agent_coordination",
+      "meta_learning",
+      "governance",
+      "task_completion",
+      "feature_development",
+      "refactoring",
+      "architecture",
+      "workflow",
+      "testing",
+      "development_workflow",
+      "debugging",
+      "tool_design"
+    ],
+    "validation_status": {
+      "validated": 33,
+      "unvalidated": 1,
+      "deprecated": 0
+    },
+    "average_effectiveness": 0.7263153594771241,
+    "average_success_rate": 0.8324346405228757,
+    "average_confidence": 0.6985294117647058,
+    "vector_store_stats": {
+      "total_memories": 34,
+      "memories_with_embeddings": 0,
+      "embedding_provider": "sentence-transformers",
+      "embedding_available": false,
+      "has_embeddings": false,
+      "last_updated": "2025-09-24T01:20:31.895803"
+    },
+    "last_updated": "2025-09-24T01:20:31.895804"
+  },
+  "application_stats": {
+    "total_applications": 0,
+    "message": "No applications recorded yet"
+  },
+  "demo_success": true
+}

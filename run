@@ -1,0 +1,16 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+cmd=${1:-}
+shift || true
+
+case "$cmd" in
+  verify-soak)
+    PERSIST_PATTERNS=true python autonomous_soak_test.py --verify-soak --markdown --channel=dashboard "$@"
+    ;;
+  *)
+    echo "Usage: ./run verify-soak [--report path] [--channel dashboard|pr|issue] [--markdown] [--pr-number N] [--repo owner/repo]" >&2
+    exit 2
+    ;;
+
+esac
