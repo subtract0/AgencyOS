@@ -184,7 +184,9 @@ def main(test_mode="unit", fast_only=False, timed: bool = False):
         env["AGENCY_NESTED_TEST"] = "1"
 
         # Add timeout for safety (60 seconds max for individual test groups)
-        timeout_seconds = 600 if test_mode == "all" else 60
+        # Allow override from environment for CI environments
+        default_timeout = 600 if test_mode == "all" else 60
+        timeout_seconds = int(os.environ.get('AGENCY_TEST_TIMEOUT_OVERRIDE', str(default_timeout)))
         result = subprocess.run(
             pytest_args,
             check=False,
