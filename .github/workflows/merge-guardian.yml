@@ -27,8 +27,6 @@ env:
   # Enforce strict CI environment
   CI: true
   PYTHONPATH: ${{ github.workspace }}
-  # Disable pytest cachedir to ensure clean test runs
-  PYTEST_DISABLE_PLUGIN_AUTOLOAD: 1
 
 jobs:
   # Core test verification job - enforces ADR-002 compliance
@@ -86,6 +84,7 @@ jobs:
 
           # Verify critical packages
           python -c "import pytest; print(f'pytest version: {pytest.__version__}')"
+          python -c "import pytest_asyncio; print(f'pytest-asyncio version: {pytest_asyncio.__version__}')"
           python -c "import agency_swarm; print('agency_swarm imported successfully')"
 
       - name: "🧪 Execute ADR-002 Test Suite"
