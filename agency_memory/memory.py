@@ -11,6 +11,7 @@ from typing import Any, Dict, List, Optional
 from abc import ABC, abstractmethod
 import os
 import logging
+from shared.models.memory import MemoryRecord, MemoryPriority, MemoryMetadata, MemorySearchResult
 
 logger = logging.getLogger(__name__)
 
@@ -33,7 +34,7 @@ class MemoryStore(ABC):
         pass
 
     @abstractmethod
-    def search(self, tags: List[str]) -> List[Dict[str, Any]]:
+    def search(self, tags: List[str]) -> MemorySearchResult:
         """Retrieve memories matching any of the provided tags.
 
         Implements semantic search pattern recommended in MCP standards.
@@ -42,7 +43,7 @@ class MemoryStore(ABC):
         pass
 
     @abstractmethod
-    def get_all(self) -> List[Dict[str, Any]]:
+    def get_all(self) -> MemorySearchResult:
         """Get all stored memories."""
         pass
 
@@ -56,7 +57,7 @@ class InMemoryStore(MemoryStore):
     """
 
     def __init__(self):
-        self._memories: Dict[str, Dict[str, Any]] = {}
+        self._memories: Dict[str, MemoryRecord] = {}
         logger.info(
             "InMemoryStore initialized - data will not persist between sessions"
         )
@@ -67,47 +68,59 @@ class InMemoryStore(MemoryStore):
         Implements MCP-compatible memory storage with structured metadata.
         Automatically adds timestamps for memory lifecycle management.
         """
-        memory_record = {
-            "key": key,
-            "content": content,
-            "tags": tags,
-            "timestamp": datetime.now().isoformat(),
-        }
+        memory_record = MemoryRecord(
+            key=key,
+            content=content,
+            tags=tags,
+            timestamp=datetime.now(),
+            priority=MemoryPriority.MEDIUM,
+            metadata=MemoryMetadata()
+        )
         self._memories[key] = memory_record
         logger.debug(f"Stored memory with key: {key}, tags: {tags}")
 
-    def search(self, tags: List[str]) -> List[Dict[str, Any]]:
+    def search(self, tags: List[str]) -> MemorySearchResult:
         """Return memories that have any of the specified tags.
 
         Implements tag-based retrieval pattern from MCP standards.
         Returns sorted results with newest memories first for optimal context.
         """
         if not tags:
-            return []
+            return MemorySearchResult(records=[], total_count=0, search_query={"tags": tags})
 
-        matches = []
+        matches: List[MemoryRecord] = []
         tag_set = set(tags)
 
         for memory in self._memories.values():
-            memory_tags = set(memory.get("tags", []))
+            memory_tags = set(memory.tags)
             if tag_set.intersection(memory_tags):
                 matches.append(memory)
 
         # Sort by timestamp (newest first)
-        matches.sort(key=lambda x: x["timestamp"], reverse=True)
+        matches.sort(key=lambda x: x.timestamp, reverse=True)
         logger.debug(f"Found {len(matches)} memories matching tags: {tags}")
-        return matches
 
-    def get(self, key: str) -> Optional[Dict[str, Any]]:
+        return MemorySearchResult(
+            records=matches,
+            total_count=len(matches),
+            search_query={"tags": tags}
+        )
+
+    def get(self, key: str) -> Optional[MemoryRecord]:
         """Get a specific memory by key."""
         return self._memories.get(key)
 
-    def get_all(self) -> List[Dict[str, Any]]:
+    def get_all(self) -> MemorySearchResult:
         """Return all memories sorted by timestamp (newest first)."""
         all_memories = list(self._memories.values())
-        all_memories.sort(key=lambda x: x["timestamp"], reverse=True)
+        all_memories.sort(key=lambda x: x.timestamp, reverse=True)
         logger.debug(f"Retrieved all {len(all_memories)} memories")
-        return all_memories
+
+        return MemorySearchResult(
+            records=all_memories,
+            total_count=len(all_memories),
+            search_query={}
+        )
 
 
 class Memory:
@@ -129,12 +142,19 @@ class Memory:
 
     def search(self, tags: List[str]) -> List[Dict[str, Any]]:
         """Search memories by tags."""
-        return self._store.search(tags)
+        result = self._store.search(tags)
+        # Handle both MemorySearchResult and direct list returns
+        if hasattr(result, 'records'):
+            return [record.to_dict() for record in result.records]
+        else:
+            # Already a list of dictionaries
+            return result
 
     def get(self, key: str) -> Optional[Dict[str, Any]]:
         """Get a specific memory by key."""
         if hasattr(self._store, 'get'):
-            return self._store.get(key)
+            record = self._store.get(key)
+            return record.to_dict() if record else None
         # Fallback: search all and find by key
         all_memories = self.get_all()
         for memory in all_memories:
@@ -144,7 +164,13 @@ class Memory:
 
     def get_all(self) -> List[Dict[str, Any]]:
         """Get all memories."""
-        return self._store.get_all()
+        result = self._store.get_all()
+        # Handle both MemorySearchResult and direct list returns
+        if hasattr(result, 'records'):
+            return [record.to_dict() for record in result.records]
+        else:
+            # Already a list of dictionaries
+            return result
 
 
 def create_session_transcript(memories: List[Dict[str, Any]], session_id: str) -> str:

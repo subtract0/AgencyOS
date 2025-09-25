@@ -49,6 +49,11 @@ addopts = [
     "--maxfail=3",              # Stop after 3 failures for faster feedback
     "--disable-warnings",       # Reduce noise from warnings
 ]
+filterwarnings = [
+    "error",                    # Turn warnings into errors
+    "ignore::UserWarning",      # But ignore user warnings
+    "ignore::DeprecationWarning", # And deprecation warnings
+]
 timeout = 300                   # 5 minute timeout per test
 asyncio_mode = "auto"
 asyncio_default_fixture_loop_scope = "function"
@@ -56,14 +61,6 @@ log_cli = false                 # Don't show logs during normal runs
 log_cli_level = "INFO"
 log_cli_format = "%(asctime)s [%(levelname)8s] %(name)s: %(message)s"
 log_cli_date_format = "%Y-%m-%d %H:%M:%S"
-
-# Configuration for different test modes
-[tool.pytest.ini_options.markers]
-filterwarnings = [
-    "error",                    # Turn warnings into errors
-    "ignore::UserWarning",      # But ignore user warnings
-    "ignore::DeprecationWarning", # And deprecation warnings
-]
 
 [tool.ruff]
 target-version = "py311"

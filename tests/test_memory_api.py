@@ -31,9 +31,9 @@ class TestInMemoryStore:
 
         # Retrieve all memories
         memories = store.get_all()
-        assert len(memories) == 1
+        assert len(memories.records) == 1
 
-        memory = memories[0]
+        memory = memories.records[0].to_dict()
         assert memory["key"] == "test_key"
         assert memory["content"] == "test content"
         assert memory["tags"] == ["tag1", "tag2"]
@@ -54,21 +54,21 @@ class TestInMemoryStore:
 
         # Search for "urgent" tag
         urgent_memories = store.search(["urgent"])
-        assert len(urgent_memories) == 2
-        keys = [m["key"] for m in urgent_memories]
+        assert len(urgent_memories.records) == 2
+        keys = [m.key for m in urgent_memories.records]
         assert "mem1" in keys
         assert "mem2" in keys
 
         # Search for "work" tag
         work_memories = store.search(["work"])
-        assert len(work_memories) == 2
-        keys = [m["key"] for m in work_memories]
+        assert len(work_memories.records) == 2
+        keys = [m.key for m in work_memories.records]
         assert "mem1" in keys
         assert "mem3" in keys
 
         # Search for multiple tags (OR operation)
         multi_memories = store.search(["work", "personal"])
-        assert len(multi_memories) == 3  # All memories match at least one tag
+        assert len(multi_memories.records) == 3  # All memories match at least one tag
 
     def test_search_empty_tags(self):
         """Test search with empty tag list."""
@@ -76,7 +76,7 @@ class TestInMemoryStore:
         store.store("test", "content", ["tag1"])
 
         result = store.search([])
-        assert result == []
+        assert len(result.records) == 0
 
     def test_timestamp_presence(self):
         """Test that all stored memories have timestamps."""
@@ -87,11 +87,10 @@ class TestInMemoryStore:
             store.store(f"key_{i}", f"content_{i}", [f"tag_{i}"])
 
         memories = store.get_all()
-        for memory in memories:
-            assert "timestamp" in memory
-            # Verify it's a valid ISO format timestamp
-            timestamp = datetime.fromisoformat(memory["timestamp"])
-            assert isinstance(timestamp, datetime)
+        for memory in memories.records:
+            assert memory.timestamp is not None
+            # Verify it's a valid datetime object
+            assert isinstance(memory.timestamp, datetime)
 
     def test_memory_ordering(self):
         """Test that memories are returned in chronological order (newest first)."""
@@ -107,12 +106,12 @@ class TestInMemoryStore:
         store.store("third", "content3", ["tag3"])
 
         memories = store.get_all()
-        assert len(memories) == 3
+        assert len(memories.records) == 3
 
         # Should be ordered newest first
-        assert memories[0]["key"] == "third"
-        assert memories[1]["key"] == "second"
-        assert memories[2]["key"] == "first"
+        assert memories.records[0].key == "third"
+        assert memories.records[1].key == "second"
+        assert memories.records[2].key == "first"
 
 
 class TestMemoryClass:
@@ -137,8 +136,8 @@ class TestMemoryClass:
 
         # Should be able to access directly from custom store
         direct_result = custom_store.get_all()
-        assert len(direct_result) == 1
-        assert direct_result[0]["key"] == "test"
+        assert len(direct_result.records) == 1
+        assert direct_result.records[0].key == "test"
 
         # Also verify through memory interface
         memory_result = memory.get_all()
@@ -161,7 +160,7 @@ class TestFirestoreStore:
             # Basic functionality should work
             store.store("test", "content", ["tag1"])
             memories = store.search(["tag1"])
-            assert len(memories) == 1
+            assert len(memories.records) == 1
 
     def test_firestore_fallback_on_import_error(self):
         """Test fallback when google-cloud-firestore is not available."""
@@ -355,11 +354,11 @@ class TestEdgeCases:
 
         # Should handle large datasets
         all_memories = store.get_all()
-        assert len(all_memories) == 1000
+        assert len(all_memories.records) == 1000
 
         # Search should still work efficiently
         tag_memories = store.search(["tag_0"])
-        assert len(tag_memories) == 100  # 1000/10 = 100 memories per tag
+        assert len(tag_memories.records) == 100  # 1000/10 = 100 memories per tag
 
     def test_concurrent_access_simulation(self):
         """Test simulated concurrent access to memory store."""
@@ -371,10 +370,10 @@ class TestEdgeCases:
 
         # All memories should be preserved
         concurrent_memories = store.search(["concurrent"])
-        assert len(concurrent_memories) == 50
+        assert len(concurrent_memories.records) == 50
 
         # Keys should be unique
-        keys = [m["key"] for m in concurrent_memories]
+        keys = [m.key for m in concurrent_memories.records]
         assert len(set(keys)) == 50
 
     def test_very_large_content_truncation(self):
@@ -387,7 +386,7 @@ class TestEdgeCases:
 
         # Content should be stored as-is in InMemoryStore
         memories = store.get_all()
-        assert len(memories[0]["content"]) == 10000
+        assert len(memories.records[0].content) == 10000
 
     def test_special_characters_in_content(self):
         """Test handling of special characters and unicode."""
@@ -397,8 +396,8 @@ class TestEdgeCases:
         store.store("special", special_content, ["unicode", "special"])
 
         memories = store.search(["unicode"])
-        assert len(memories) == 1
-        assert memories[0]["content"] == special_content
+        assert len(memories.records) == 1
+        assert memories.records[0].content == special_content
 
     def test_empty_and_none_values(self):
         """Test handling of empty and None values."""
@@ -411,13 +410,13 @@ class TestEdgeCases:
         store.store("none", None, ["none"])
 
         memories = store.get_all()
-        assert len(memories) == 2
+        assert len(memories.records) == 2
 
-        empty_mem = next(m for m in memories if m["key"] == "empty")
-        assert empty_mem["content"] == ""
+        empty_mem = next(m for m in memories.records if m.key == "empty")
+        assert empty_mem.content == ""
 
-        none_mem = next(m for m in memories if m["key"] == "none")
-        assert none_mem["content"] is None or str(none_mem["content"]) == "None"
+        none_mem = next(m for m in memories.records if m.key == "none")
+        assert none_mem.content is None or str(none_mem.content) == "None"
 
 
 class TestIntegration:

@@ -7,6 +7,11 @@ import logging
 from collections import Counter, defaultdict
 from datetime import datetime
 from typing import Any, Dict, List
+from shared.models.learning import (
+    LearningConsolidation, LearningInsight, PatternAnalysis,
+    ContentTypeBreakdown, TimeDistribution
+)
+from shared.models.memory import MemoryRecord
 
 logger = logging.getLogger(__name__)
 
@@ -28,6 +33,7 @@ def consolidate_learnings(memories: List[Dict[str, Any]]) -> Dict[str, Any]:
         Structured summary with learning insights
     """
     if not memories:
+        # Return simple dict for backward compatibility
         return {
             "summary": "No memories to analyze",
             "total_memories": 0,
@@ -89,34 +95,105 @@ def consolidate_learnings(memories: List[Dict[str, Any]]) -> Dict[str, Any]:
     # Content analysis
     content_breakdown = dict(content_types)
 
-    # Build structured summary
-    summary = {
-        "summary": f"Analyzed {total_memories} memories with {unique_tags} unique tags",
-        "total_memories": total_memories,
-        "unique_tags": unique_tags,
-        "avg_tags_per_memory": round(avg_tags_per_memory, 2),
-        "tag_frequencies": tag_frequencies,
-        "top_tags": [{"tag": tag, "count": count} for tag, count in top_tags],
-        "patterns": {
-            "content_types": content_breakdown,
-            "peak_hour": peak_hour,
-            "peak_day": peak_day,
-            "hourly_distribution": dict(hourly_distribution),
-            "daily_distribution": dict(daily_distribution),
-        },
-        "insights": _generate_insights(
-            total_memories,
-            unique_tags,
-            top_tags,
-            content_breakdown,
-            peak_hour,
-            peak_day,
-        ),
-        "generated_at": datetime.now().isoformat(),
-    }
+    # Build content type breakdown
+    # Add any missing types to 'other' for backward compatibility
+    structured_count = content_breakdown.get('structured', 0)
+    numeric_count = content_breakdown.get('numeric', 0)
+    other_count = content_breakdown.get('other', 0) + structured_count + numeric_count
+
+    content_type_breakdown = ContentTypeBreakdown(
+        text=content_breakdown.get('text', 0),
+        error=content_breakdown.get('error', 0),
+        success=content_breakdown.get('success', 0),
+        command=content_breakdown.get('command', 0),
+        url=content_breakdown.get('url', 0),
+        long_text=content_breakdown.get('long_text', 0),
+        code=content_breakdown.get('code', 0),
+        empty=content_breakdown.get('empty', 0),
+        other=other_count
+    )
+
+    # Build time distribution
+    time_distribution = TimeDistribution(
+        hourly=dict(hourly_distribution),
+        daily=dict(daily_distribution),
+        peak_hour=peak_hour,
+        peak_day=peak_day
+    )
+
+    # Build pattern analysis
+    patterns = PatternAnalysis(
+        content_types=content_type_breakdown,
+        time_distribution=time_distribution
+    )
+
+    # Build learning insights
+    insights = _generate_insights_models(
+        total_memories,
+        unique_tags,
+        top_tags,
+        content_breakdown,
+        peak_hour,
+        peak_day
+    )
+
+    # Build structured summary with Pydantic model
+    consolidation = LearningConsolidation(
+        summary=f"Analyzed {total_memories} memories with {unique_tags} unique tags",
+        total_memories=total_memories,
+        unique_tags=unique_tags,
+        avg_tags_per_memory=round(avg_tags_per_memory, 2),
+        tag_frequencies=tag_frequencies,
+        top_tags=[{"tag": tag, "count": count} for tag, count in top_tags],
+        patterns=patterns,
+        insights=insights,
+        generated_at=datetime.now()
+    )
 
     logger.info(f"Learning consolidation completed: {total_memories} memories analyzed")
-    return summary
+    # Return as dict for backward compatibility with flat structure
+    result = consolidation.to_dict()
+
+    # Flatten patterns for backward compatibility
+    if 'patterns' in result and isinstance(result['patterns'], dict):
+        patterns = result['patterns']
+        if 'time_distribution' in patterns and isinstance(patterns['time_distribution'], dict):
+            # Hoist time distribution fields to patterns level
+            time_dist = patterns['time_distribution']
+
+            # Fix hourly distribution keys - convert string keys back to integers
+            hourly_dist = time_dist.get('hourly', {})
+            if hourly_dist and isinstance(list(hourly_dist.keys())[0], str):
+                hourly_dist = {int(k): v for k, v in hourly_dist.items()}
+
+            patterns['hourly_distribution'] = hourly_dist
+            patterns['daily_distribution'] = time_dist.get('daily', {})
+            patterns['peak_hour'] = time_dist.get('peak_hour')
+            patterns['peak_day'] = time_dist.get('peak_day')
+            del patterns['time_distribution']
+
+        if 'content_types' in patterns and isinstance(patterns['content_types'], dict):
+            # Flatten content types and restore any missing legacy types
+            content_dict = patterns['content_types']
+            flat_content = {}
+            for k, v in content_dict.items():
+                if k != 'total' and k != 'get_dominant_type':  # Skip methods
+                    flat_content[k] = v
+
+            # Add back legacy types for backward compatibility
+            if 'structured' not in flat_content:
+                flat_content['structured'] = content_breakdown.get('structured', 0)
+            if 'numeric' not in flat_content:
+                flat_content['numeric'] = content_breakdown.get('numeric', 0)
+
+            patterns['content_types'] = flat_content
+
+    # Convert insights from list of objects to list of strings for backward compat
+    if 'insights' in result and isinstance(result['insights'], list):
+        if result['insights'] and isinstance(result['insights'][0], dict):
+            result['insights'] = [i['description'] for i in result['insights']]
+
+    return result
 
 
 def _categorize_content(content: Any) -> str:
@@ -157,14 +234,14 @@ def _categorize_content(content: Any) -> str:
         return "other"
 
 
-def _generate_insights(
+def _generate_insights_models(
     total_memories: int,
     unique_tags: int,
     top_tags: List[tuple],
     content_breakdown: Dict[str, int],
     peak_hour: int,
     peak_day: str,
-) -> List[str]:
+) -> List[LearningInsight]:
     """
     Generate human-readable insights from analysis.
 
@@ -175,30 +252,64 @@ def _generate_insights(
 
     # Memory volume insights
     if total_memories > 100:
-        insights.append(f"High memory activity with {total_memories} records")
+        insights.append(LearningInsight(
+            category="volume",
+            description=f"High memory activity with {total_memories} records",
+            importance="high",
+            confidence=0.9
+        ))
     elif total_memories > 50:
-        insights.append(f"Moderate memory activity with {total_memories} records")
+        insights.append(LearningInsight(
+            category="volume",
+            description=f"Moderate memory activity with {total_memories} records",
+            importance="medium",
+            confidence=0.9
+        ))
     else:
-        insights.append(f"Light memory activity with {total_memories} records")
+        insights.append(LearningInsight(
+            category="volume",
+            description=f"Light memory activity with {total_memories} records",
+            importance="low",
+            confidence=0.9
+        ))
 
     # Tag usage insights
     if unique_tags > total_memories * 0.8:
-        insights.append("High tag diversity - most memories have unique tags")
+        insights.append(LearningInsight(
+            category="diversity",
+            description="High tag diversity - most memories have unique tags",
+            importance="medium",
+            confidence=0.85
+        ))
     elif unique_tags < total_memories * 0.3:
-        insights.append("Low tag diversity - tags are reused frequently")
+        insights.append(LearningInsight(
+            category="diversity",
+            description="Low tag diversity - tags are reused frequently",
+            importance="medium",
+            confidence=0.85
+        ))
 
     # Popular tags
     if top_tags:
         most_used_tag, count = top_tags[0]
         percentage = (count / total_memories) * 100
-        insights.append(
-            f"Most used tag: '{most_used_tag}' ({percentage:.1f}% of memories)"
-        )
+        insights.append(LearningInsight(
+            category="tags",
+            description=f"Most used tag: '{most_used_tag}' ({percentage:.1f}% of memories)",
+            importance="medium",
+            confidence=0.95,
+            supporting_data={"tag": most_used_tag, "count": count, "percentage": percentage}
+        ))
 
     # Content type insights
     if content_breakdown:
         dominant_type = max(content_breakdown, key=content_breakdown.get)
-        insights.append(f"Dominant content type: {dominant_type}")
+        insights.append(LearningInsight(
+            category="content",
+            description=f"Dominant content type: {dominant_type}",
+            importance="low",
+            confidence=0.9
+        ))
 
     # Time pattern insights
     if peak_hour is not None:
@@ -211,10 +322,20 @@ def _generate_insights(
             if 18 <= peak_hour < 22
             else "night"
         )
-        insights.append(f"Peak usage time: {time_label} (hour {peak_hour})")
+        insights.append(LearningInsight(
+            category="temporal",
+            description=f"Peak usage time: {time_label} (hour {peak_hour})",
+            importance="low",
+            confidence=0.8
+        ))
 
     if peak_day:
-        insights.append(f"Most active day: {peak_day}")
+        insights.append(LearningInsight(
+            category="temporal",
+            description=f"Most active day: {peak_day}",
+            importance="low",
+            confidence=0.8
+        ))
 
     return insights
 

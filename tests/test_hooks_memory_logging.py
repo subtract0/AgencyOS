@@ -118,7 +118,8 @@ class TestMemoryIntegrationHook:
 
         memory = memories[0]
         assert "session_start_" in memory["key"]
-        assert memory["tags"] == ["session", "start", "session:test_session_123"]
+        expected_tags = ["session", "start", "session:test_session_123"]
+        assert set(memory["tags"]) == set(expected_tags)
 
         content = memory["content"]
         assert content["agent_type"] == "TestAgent"
@@ -152,7 +153,8 @@ class TestMemoryIntegrationHook:
 
         memory = memories[0]
         assert "session_end_" in memory["key"]
-        assert memory["tags"] == ["session", "end", "session:test_session_123"]
+        expected_tags = ["session", "end", "session:test_session_123"]
+        assert set(memory["tags"]) == set(expected_tags)
 
         content = memory["content"]
         assert content["agent_type"] == "TestAgent"

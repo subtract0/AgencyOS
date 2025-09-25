@@ -18,6 +18,10 @@ from dataclasses import dataclass
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import Any, Dict, Iterable, List, Optional, Tuple
+from shared.models.telemetry import (
+    TelemetryEvent, TelemetryMetrics, AgentMetrics,
+    SystemHealth, EventType, EventSeverity
+)
 
 
 # ------------------------
@@ -158,7 +162,7 @@ def list_events(since: str = "1h", grep: Optional[str] = None, limit: int = 200,
     return events
 
 
-def aggregate(since: str = "1h", telemetry_dir: Optional[str] = None) -> Dict[str, Any]:
+def aggregate(since: str = "1h", telemetry_dir: Optional[str] = None) -> TelemetryMetrics:
     """Aggregate telemetry for dashboard.
 
     Returns a summary dict with keys consumed by agency._render_dashboard_text:
@@ -289,13 +293,39 @@ def aggregate(since: str = "1h", telemetry_dir: Optional[str] = None) -> Dict[st
     except Exception:
         util = None
 
-    # Compose summary
-    summary: Dict[str, Any] = {
-        "metrics": {
-            "total_events": total_events,
-            "tasks_started": tasks_started,
-            "tasks_finished": tasks_finished,
-        },
+    # Build system health
+    system_health = SystemHealth(
+        status="healthy" if recent_results.get("failed", 0) < recent_results.get("success", 0) else "degraded",
+        total_events=total_events,
+        error_count=recent_results.get("failed", 0),
+        active_agents=agents_active,
+        uptime_seconds=(now - since_dt).total_seconds()
+    )
+
+    # Build agent metrics
+    agent_metrics_dict: Dict[str, AgentMetrics] = {}
+    for agent in agents_active:
+        agent_metrics_dict[agent] = AgentMetrics(
+            agent_id=agent,
+            total_invocations=0,  # Would need event tracking
+            successful_invocations=0,
+            failed_invocations=0
+        )
+
+    # Build telemetry metrics
+    telemetry_metrics = TelemetryMetrics(
+        period_start=since_dt,
+        period_end=now,
+        total_events=total_events,
+        events_by_type={"tasks_started": tasks_started, "tasks_finished": tasks_finished},
+        agent_metrics=agent_metrics_dict,
+        system_health=system_health
+    )
+
+    # For backward compatibility, attach additional data
+    # Convert to dict and add extra fields
+    summary = telemetry_metrics.model_dump()
+    summary.update({
         "agents_active": agents_active,
         "running_tasks": running_tasks,
         "recent_results": recent_results,
@@ -314,6 +344,13 @@ def aggregate(since: str = "1h", telemetry_dir: Optional[str] = None) -> Dict[st
             "tasks_started": tasks_started,
             "tasks_finished": tasks_finished,
         },
-    }
+        "metrics": {
+            "total_events": total_events,
+            "tasks_started": tasks_started,
+            "tasks_finished": tasks_finished,
+        }
+    })
 
+    # Return as dict for backward compatibility
+    # TODO: Update callers to use TelemetryMetrics directly
     return summary

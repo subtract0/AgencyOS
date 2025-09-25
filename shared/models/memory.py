@@ -53,8 +53,14 @@ class MemoryRecord(BaseModel):
 
     @field_validator('tags')
     def validate_tags(cls, v: List[str]) -> List[str]:
-        """Ensure tags are unique and non-empty."""
-        return list(set(tag for tag in v if tag and tag.strip()))
+        """Ensure tags are unique and non-empty while preserving order."""
+        seen = set()
+        result = []
+        for tag in v:
+            if tag and tag.strip() and tag not in seen:
+                seen.add(tag)
+                result.append(tag)
+        return result
 
     @field_validator('ttl_seconds')
     def validate_ttl(cls, v: Optional[int]) -> Optional[int]:
