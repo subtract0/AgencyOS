@@ -105,6 +105,10 @@ jobs:
           # Run tests with comprehensive reporting
           set +e  # Don't exit on test failures, we need to process results
 
+          # Set timeout override for CI environment
+          export AGENCY_TEST_TIMEOUT_OVERRIDE=300
+
+          # Run tests using run_tests.py to ensure consistent test selection
           python run_tests.py > test-results/test-output.log 2>&1
           TEST_EXIT_CODE=$?
 
