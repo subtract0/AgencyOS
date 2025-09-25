@@ -17,6 +17,9 @@ from pathlib import Path
 from unittest.mock import patch, MagicMock
 
 
+@pytest.mark.e2e
+@pytest.mark.integration
+@pytest.mark.slow
 class TestMasterE2E:
     """Complete E2E test of all claimed features."""
 
@@ -654,8 +657,8 @@ result = process_data(None)
         else:
             print("⚠️  MONASTERY 0.8.0 BETA: SIGNIFICANT GAPS DETECTED")
 
-        # Don't fail the test - this is a report
-        return validations
+        # Don't fail the test - this is a report; avoid returning non-None to silence pytest warning
+        # Intentionally no return value
 
 
 def run_manual_verification():
