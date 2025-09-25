@@ -443,6 +443,17 @@ def _cmd_health(args: argparse.Namespace) -> None:
             print("    (error reading healing activity)")
 
 
+def _cmd_kanban(args: argparse.Namespace) -> None:
+    # Start minimal stdlib Kanban server
+    from tools.kanban.server import run_server  # type: ignore
+    enabled = os.getenv("ENABLE_KANBAN_UI", "false").lower() == "true"
+    with _cli_event_scope("kanban", {"enabled": enabled}):
+        if not enabled:
+            print("ENABLE_KANBAN_UI=false; set it to 'true' to enable the Kanban UI.")
+            return
+        run_server()
+
+
 def _build_arg_parser() -> argparse.ArgumentParser:
     p = argparse.ArgumentParser(prog="agency", description="Agency runtime and utilities")
     sub = p.add_subparsers(dest="command")
@@ -480,6 +491,10 @@ def _build_arg_parser() -> argparse.ArgumentParser:
     # test
     sp = sub.add_parser("test", help="Run test suite")
     sp.set_defaults(func=_cmd_test)
+
+    # kanban
+    sp = sub.add_parser("kanban", help="Run minimal Kanban UI server")
+    sp.set_defaults(func=_cmd_kanban)
 
     return p
 
