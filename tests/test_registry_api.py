@@ -10,6 +10,9 @@ import tempfile
 import os
 from unittest.mock import patch
 
+# Flask imports are conditional since this is an integration test
+pytest.importorskip("flask", reason="Flask is required for registry API tests")
+
 from meta_learning.registry_api import create_app
 from meta_learning.agent_registry import AgentRegistry
 
@@ -33,6 +36,7 @@ def client(temp_registry):
         yield client
 
 
+@pytest.mark.integration
 class TestRegistryAPIBasic:
     """Test basic API functionality."""
 
@@ -80,6 +84,7 @@ class TestRegistryAPIBasic:
         assert response.status_code == 400
 
 
+@pytest.mark.integration
 class TestRegistryAPIInstances:
     """Test instance management."""
 
@@ -121,6 +126,7 @@ class TestRegistryAPIInstances:
         assert 'error' in data
 
 
+@pytest.mark.integration
 class TestRegistryAPIAIQ:
     """Test AIQ recording and retrieval."""
 
@@ -263,6 +269,7 @@ class TestRegistryAPIAIQ:
         assert len(data['top_performers']) == 2
 
 
+@pytest.mark.integration
 class TestRegistryAPIErrorHandling:
     """Test error handling and edge cases."""
 
