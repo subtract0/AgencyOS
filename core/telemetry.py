@@ -9,6 +9,7 @@ import glob
 import shutil
 from datetime import datetime, timedelta
 from typing import Dict, Any, List, Optional
+from shared.models.telemetry import TelemetryEvent, EventType, EventSeverity
 from pathlib import Path
 
 
@@ -68,8 +69,26 @@ class SimpleTelemetry:
             data: Event data dictionary
             level: Log level (info, warning, error, critical)
         """
+        # Map string level to EventSeverity
+        severity_map = {
+            "debug": EventSeverity.DEBUG,
+            "info": EventSeverity.INFO,
+            "warning": EventSeverity.WARNING,
+            "error": EventSeverity.ERROR,
+            "critical": EventSeverity.CRITICAL
+        }
+
+        # Create Pydantic model for validation
+        telemetry_event = TelemetryEvent(
+            event_id=f"{self.run_id}_{datetime.now().timestamp()}",
+            event_type=EventType.INFO,  # Default type, can be enhanced
+            severity=severity_map.get(level, EventSeverity.INFO),
+            metadata={"event_name": event, "run_id": self.run_id, **data}
+        )
+
+        # Convert to dict for backward compatibility
         entry = {
-            "ts": datetime.now().isoformat() + "Z",
+            "ts": telemetry_event.timestamp.isoformat() + "Z",
             "run_id": self.run_id,
             "level": level,
             "event": event,

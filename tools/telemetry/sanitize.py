@@ -3,6 +3,7 @@ from __future__ import annotations
 import copy
 import re
 from typing import Any, Dict
+from shared.models.telemetry import TelemetryEvent
 
 # Patterns for secret-like values
 _SECRET_VALUE_PATTERNS = [
@@ -54,6 +55,8 @@ def redact_event(event: Dict[str, Any]) -> Dict[str, Any]:
     - For known sensitive keys (case-insensitive), replace value with [REDACTED]
     - For string values, mask known secret-like patterns (OpenAI, GH PAT, Slack, Google)
     - Keep structure intact; avoid removing non-secret fields
+
+    Note: Still accepts Dict for backward compatibility, but can work with TelemetryEvent
     """
     if not isinstance(event, dict):
         return event
@@ -75,3 +78,33 @@ def redact_event(event: Dict[str, Any]) -> Dict[str, Any]:
         return obj
 
     return _walk(safe)
+
+
+def redact_telemetry_event(event: TelemetryEvent) -> TelemetryEvent:
+    """Redact sensitive material from a TelemetryEvent model.
+
+    Args:
+        event: TelemetryEvent to sanitize
+
+    Returns:
+        New TelemetryEvent with redacted metadata
+    """
+    # Convert to dict, redact, then rebuild
+    event_dict = event.model_dump()
+    redacted_dict = redact_event(event_dict)
+
+    # Create new TelemetryEvent with redacted data
+    return TelemetryEvent(
+        event_id=event.event_id,
+        event_type=event.event_type,
+        severity=event.severity,
+        timestamp=event.timestamp,
+        agent_id=event.agent_id,
+        session_id=event.session_id,
+        tool_name=event.tool_name,
+        duration_ms=event.duration_ms,
+        success=event.success,
+        error_message=redacted_dict.get('error_message'),
+        metadata=redacted_dict.get('metadata', {}),
+        tags=event.tags
+    )
