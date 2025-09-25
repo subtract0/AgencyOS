@@ -19,3 +19,13 @@ repos:
         exclude: ^docs/
       - id: ruff-format
         exclude: ^docs/
+
+  - repo: local
+    hooks:
+      - id: constitutional-check
+        name: Constitutional Compliance Fast Check
+        entry: python scripts/constitutional_check.py
+        language: python
+        pass_filenames: false
+        always_run: true
+        stages: [commit]

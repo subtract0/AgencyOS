@@ -14,6 +14,9 @@ if str(project_root) not in sys.path:
 # Load environment variables for tests (e.g., OPENAI_API_KEY)
 load_dotenv()
 
+# Ensure logs directory exists for pytest log file
+os.makedirs("logs", exist_ok=True)
+
 
 @pytest.fixture(autouse=True, scope="function")
 def cleanup_test_artifacts():

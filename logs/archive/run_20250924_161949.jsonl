@@ -1,0 +1,5 @@
+{"ts": "2025-09-24T16:19:49.560557Z", "run_id": "20250924_161949", "level": "info", "event": "demo_started", "data": {"timestamp": "2025-09-24T16:19:49.560556"}}
+{"ts": "2025-09-24T16:19:49.560661Z", "run_id": "20250924_161949", "level": "info", "event": "component_initialized", "data": {"components": ["healer", "telemetry", "patterns"]}}
+{"ts": "2025-09-24T16:19:49.561171Z", "run_id": "20250924_161949", "level": "info", "event": "pattern_store.pattern_added", "data": {"id": "demo_pattern_001", "type": "error_fix", "tags": ["NoneType", "null_check", "demo"]}}
+{"ts": "2025-09-24T16:19:49.561399Z", "run_id": "20250924_161949", "level": "info", "event": "self_healing.errors_detected", "data": {"count": 1, "types": ["NoneType"]}}
+{"ts": "2025-09-24T16:19:49.561432Z", "run_id": "20250924_161949", "level": "info", "event": "errors_detected", "data": {"count": 1, "types": ["NoneType"]}}

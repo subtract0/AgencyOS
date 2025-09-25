@@ -19,6 +19,9 @@ from .tools.analyze_session import AnalyzeSession
 from .tools.extract_insights import ExtractInsights
 from .tools.consolidate_learning import ConsolidateLearning
 from .tools.store_knowledge import StoreKnowledge
+from .tools.telemetry_pattern_analyzer import TelemetryPatternAnalyzer
+from .tools.self_healing_pattern_extractor import SelfHealingPatternExtractor
+from .tools.cross_session_learner import CrossSessionLearner
 
 # Get the absolute path to the current file's directory
 current_dir = os.path.dirname(os.path.abspath(__file__))
@@ -76,6 +79,9 @@ def create_learning_agent(model: str = "gpt-5", reasoning_effort: str = "high", 
             ExtractInsights,
             ConsolidateLearning,
             StoreKnowledge,
+            TelemetryPatternAnalyzer,
+            SelfHealingPatternExtractor,
+            CrossSessionLearner,
         ],
         model_settings=create_model_settings(model, reasoning_effort),
     )

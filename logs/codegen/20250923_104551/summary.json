@@ -1,0 +1,19 @@
+{
+  "timestamp": "2025-09-23T10:45:51.760715",
+  "operation": "gen-tests",
+  "total_items": 2,
+  "results": [
+    {
+      "path": "/private/var/folders/sj/ttm056wn69ncqkyty42kd_dc0000gn/T/pytest-of-am/pytest-498/test_cli_gen_tests_basic0/test_output/test_test-spec/test_ac1_basic_functionality_should_work.py",
+      "ac_id": "AC1",
+      "name": "ac1_basic_functionality_should_work",
+      "status": "created"
+    },
+    {
+      "path": "/private/var/folders/sj/ttm056wn69ncqkyty42kd_dc0000gn/T/pytest-of-am/pytest-498/test_cli_gen_tests_basic0/test_output/test_test-spec/test_ac2_error_handling_should_be_robust.py",
+      "ac_id": "AC2",
+      "name": "ac2_error_handling_should_be_robust",
+      "status": "created"
+    }
+  ]
+}

@@ -1,0 +1,3 @@
+# CodeGen Gen-Tests Summary
+
+**Timestamp:** 2025-09-23T10:14:14.820114\n**Operation:** gen-tests\n**Total Items:** 2\n\n## Generated Tests\n\n- **/private/var/folders/sj/ttm056wn69ncqkyty42kd_dc0000gn/T/pytest-of-am/pytest-480/test_cli_gen_tests_basic0/test_output/test_test-spec/test_ac1_basic_functionality_should_work.py** (AC1): created\n- **/private/var/folders/sj/ttm056wn69ncqkyty42kd_dc0000gn/T/pytest-of-am/pytest-480/test_cli_gen_tests_basic0/test_output/test_test-spec/test_ac2_error_handling_should_be_robust.py** (AC2): created\n

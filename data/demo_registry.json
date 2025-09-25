@@ -1,0 +1,422 @@
+{
+  "agents": [
+    {
+      "agent_id": "ce896fcd-07a3-40ce-87db-de20a9b00c94",
+      "name": "CodeWriterAgent",
+      "version": "1.0.0",
+      "status": "active",
+      "created_at": "2025-09-24T11:57:59.286945",
+      "metadata": {}
+    },
+    {
+      "agent_id": "337b8835-9a1b-493b-a9e1-5699618ec64d",
+      "name": "TestGeneratorAgent",
+      "version": "1.2.0",
+      "status": "active",
+      "created_at": "2025-09-24T11:57:59.287229",
+      "metadata": {}
+    },
+    {
+      "agent_id": "05a41e1b-1db9-43fe-bb75-58cb8779b2cb",
+      "name": "DebuggerAgent",
+      "version": "2.1.0",
+      "status": "active",
+      "created_at": "2025-09-24T11:57:59.287466",
+      "metadata": {}
+    }
+  ],
+  "instances": [
+    {
+      "instance_id": "a36d1577-a0a1-48c2-a2cf-c669d8133fee",
+      "agent_id": "ce896fcd-07a3-40ce-87db-de20a9b00c94",
+      "config": {
+        "learning_rate": 0.08452105612099063,
+        "context_size": 4096,
+        "model": "gpt-4"
+      },
+      "created_at": "2025-09-24T11:57:59.287550"
+    },
+    {
+      "instance_id": "eebf206c-4ad4-4b16-bf3d-143b2f92092a",
+      "agent_id": "337b8835-9a1b-493b-a9e1-5699618ec64d",
+      "config": {
+        "learning_rate": 0.0365436517472544,
+        "context_size": 2048,
+        "model": "local-llm"
+      },
+      "created_at": "2025-09-24T11:57:59.287644"
+    },
+    {
+      "instance_id": "a5c79a43-feea-44bd-89bd-87ad6440a9af",
+      "agent_id": "05a41e1b-1db9-43fe-bb75-58cb8779b2cb",
+      "config": {
+        "learning_rate": 0.048860519077770455,
+        "context_size": 1024,
+        "model": "claude-3"
+      },
+      "created_at": "2025-09-24T11:57:59.287727"
+    }
+  ],
+  "aiq_events": [
+    {
+      "event_id": "6ba452c6-a255-4f7a-9540-463675b48a35",
+      "agent_instance_id": "a36d1577-a0a1-48c2-a2cf-c669d8133fee",
+      "aiq_score": 74.69371317809475,
+      "timestamp": "2025-09-24T11:57:59.287817",
+      "metrics": {
+        "success_rate": 0.7053702625167265,
+        "avg_response_time": 1.1765432509097102,
+        "code_quality": 0.7782187837452086,
+        "test_coverage": 0.8649036477905522
+      }
+    },
+    {
+      "event_id": "c76e1da1-9112-4e08-b9a1-901425d0e24a",
+      "agent_instance_id": "eebf206c-4ad4-4b16-bf3d-143b2f92092a",
+      "aiq_score": 75.40285726387248,
+      "timestamp": "2025-09-24T11:57:59.287923",
+      "metrics": {
+        "success_rate": 0.7047690566473375,
+        "avg_response_time": 2.5427428989863303,
+        "code_quality": 0.7259654717239705,
+        "test_coverage": 0.8892639374394865
+      }
+    },
+    {
+      "event_id": "44047f24-0e3e-43f2-bd79-94d48ce1c488",
+      "agent_instance_id": "a5c79a43-feea-44bd-89bd-87ad6440a9af",
+      "aiq_score": 78.03968098488238,
+      "timestamp": "2025-09-24T11:57:59.288031",
+      "metrics": {
+        "success_rate": 0.8041642028646213,
+        "avg_response_time": 2.221219161942261,
+        "code_quality": 0.9233417626067741,
+        "test_coverage": 0.9445130018564655
+      }
+    },
+    {
+      "event_id": "a564555d-0ea0-4a6c-9858-75737a655903",
+      "agent_instance_id": "a36d1577-a0a1-48c2-a2cf-c669d8133fee",
+      "aiq_score": 82.8081992779355,
+      "timestamp": "2025-09-24T11:57:59.790214",
+      "metrics": {
+        "success_rate": 0.7843752867372183,
+        "avg_response_time": 2.5544112073124348,
+        "code_quality": 0.8261978879162206,
+        "test_coverage": 0.8575413324580661
+      }
+    },
+    {
+      "event_id": "a7e7495f-8b4a-40d7-89bc-88d508bb1b94",
+      "agent_instance_id": "eebf206c-4ad4-4b16-bf3d-143b2f92092a",
+      "aiq_score": 74.60239604278271,
+      "timestamp": "2025-09-24T11:57:59.791541",
+      "metrics": {
+        "success_rate": 0.664411604971435,
+        "avg_response_time": 2.451639478345295,
+        "code_quality": 0.9326528642219842,
+        "test_coverage": 0.8175550849520332
+      }
+    },
+    {
+      "event_id": "6e4a1e5e-e094-484a-9669-25d6317c5350",
+      "agent_instance_id": "a5c79a43-feea-44bd-89bd-87ad6440a9af",
+      "aiq_score": 69.66130100984742,
+      "timestamp": "2025-09-24T11:57:59.792325",
+      "metrics": {
+        "success_rate": 0.6273446469468515,
+        "avg_response_time": 0.6468009910669199,
+        "code_quality": 0.9392472458164014,
+        "test_coverage": 0.9062599499858517
+      }
+    },
+    {
+      "event_id": "fa796e59-9d4b-4406-8316-c480a649b086",
+      "agent_instance_id": "a36d1577-a0a1-48c2-a2cf-c669d8133fee",
+      "aiq_score": 71.13643765717109,
+      "timestamp": "2025-09-24T11:58:00.293862",
+      "metrics": {
+        "success_rate": 0.7888103740133097,
+        "avg_response_time": 2.606891761177223,
+        "code_quality": 0.8944201959358313,
+        "test_coverage": 0.8172617692990275
+      }
+    },
+    {
+      "event_id": "01c03a94-4945-4a38-bcde-43459c9fcff3",
+      "agent_instance_id": "eebf206c-4ad4-4b16-bf3d-143b2f92092a",
+      "aiq_score": 83.89437478705568,
+      "timestamp": "2025-09-24T11:58:00.294718",
+      "metrics": {
+        "success_rate": 0.8604735563991851,
+        "avg_response_time": 1.5759364508296312,
+        "code_quality": 0.8109573677356767,
+        "test_coverage": 0.868011854354812
+      }
+    },
+    {
+      "event_id": "5525aab3-4dc9-4706-b5dc-0af680989812",
+      "agent_instance_id": "a5c79a43-feea-44bd-89bd-87ad6440a9af",
+      "aiq_score": 75.31932012944094,
+      "timestamp": "2025-09-24T11:58:00.295392",
+      "metrics": {
+        "success_rate": 0.6842885518843063,
+        "avg_response_time": 2.8676525716585535,
+        "code_quality": 0.7340130351544872,
+        "test_coverage": 0.9549629052662186
+      }
+    },
+    {
+      "event_id": "eb12e6aa-d6c6-4012-b8df-f9de006e6085",
+      "agent_instance_id": "a36d1577-a0a1-48c2-a2cf-c669d8133fee",
+      "aiq_score": 75.3981793417775,
+      "timestamp": "2025-09-24T11:58:00.801106",
+      "metrics": {
+        "success_rate": 0.8015720408098674,
+        "avg_response_time": 2.0631816294470458,
+        "code_quality": 0.9471508137354231,
+        "test_coverage": 0.8877729206657706
+      }
+    },
+    {
+      "event_id": "9801a3c8-4f50-4633-9dbc-0a01ec1ff847",
+      "agent_instance_id": "eebf206c-4ad4-4b16-bf3d-143b2f92092a",
+      "aiq_score": 80.80106547618412,
+      "timestamp": "2025-09-24T11:58:00.803119",
+      "metrics": {
+        "success_rate": 0.725448857066235,
+        "avg_response_time": 0.9553635170612558,
+        "code_quality": 0.7607240583733463,
+        "test_coverage": 0.8645306907265026
+      }
+    },
+    {
+      "event_id": "c7b5bd9a-a114-4633-804d-93dca27d9f69",
+      "agent_instance_id": "a5c79a43-feea-44bd-89bd-87ad6440a9af",
+      "aiq_score": 84.56176540055135,
+      "timestamp": "2025-09-24T11:58:00.804508",
+      "metrics": {
+        "success_rate": 0.7532485964581005,
+        "avg_response_time": 2.9521723491366636,
+        "code_quality": 0.9164679966010392,
+        "test_coverage": 0.8701275097345806
+      }
+    },
+    {
+      "event_id": "c3164981-869f-4c4b-97ed-96d0ae2fa9f6",
+      "agent_instance_id": "a36d1577-a0a1-48c2-a2cf-c669d8133fee",
+      "aiq_score": 81.34742286854504,
+      "timestamp": "2025-09-24T11:58:01.308517",
+      "metrics": {
+        "success_rate": 0.8732125959416912,
+        "avg_response_time": 1.4859526184684677,
+        "code_quality": 0.9200626590703636,
+        "test_coverage": 0.9700619631499332
+      }
+    },
+    {
+      "event_id": "941ebe91-d133-4d08-a2cf-617f0bfd38c2",
+      "agent_instance_id": "eebf206c-4ad4-4b16-bf3d-143b2f92092a",
+      "aiq_score": 84.85912126397682,
+      "timestamp": "2025-09-24T11:58:01.309216",
+      "metrics": {
+        "success_rate": 0.9098627558349812,
+        "avg_response_time": 1.4990276700463816,
+        "code_quality": 0.7064236442425762,
+        "test_coverage": 0.8317104558705044
+      }
+    },
+    {
+      "event_id": "b382d6e1-6e66-424a-b117-300977d22833",
+      "agent_instance_id": "a5c79a43-feea-44bd-89bd-87ad6440a9af",
+      "aiq_score": 77.1769101204175,
+      "timestamp": "2025-09-24T11:58:01.309777",
+      "metrics": {
+        "success_rate": 0.8109520730914874,
+        "avg_response_time": 2.558801801356029,
+        "code_quality": 0.9726270309688632,
+        "test_coverage": 0.8505957298199648
+      }
+    },
+    {
+      "event_id": "1c33bc81-500b-4e71-958b-492c6fbac325",
+      "agent_instance_id": "a36d1577-a0a1-48c2-a2cf-c669d8133fee",
+      "aiq_score": 88.876229819597,
+      "timestamp": "2025-09-24T11:58:01.815431",
+      "metrics": {
+        "success_rate": 0.8637356656524819,
+        "avg_response_time": 2.3346349990714623,
+        "code_quality": 0.7402327594364184,
+        "test_coverage": 0.9902119048208575
+      }
+    },
+    {
+      "event_id": "77a285ad-112d-4f2d-a003-d73a91e2e91e",
+      "agent_instance_id": "eebf206c-4ad4-4b16-bf3d-143b2f92092a",
+      "aiq_score": 81.85114200939036,
+      "timestamp": "2025-09-24T11:58:01.817715",
+      "metrics": {
+        "success_rate": 0.75355696128874,
+        "avg_response_time": 1.8753787131257769,
+        "code_quality": 0.8717220023876102,
+        "test_coverage": 0.9667115584623928
+      }
+    },
+    {
+      "event_id": "458df2a8-5587-42ce-8bab-015249c2fdfd",
+      "agent_instance_id": "a5c79a43-feea-44bd-89bd-87ad6440a9af",
+      "aiq_score": 79.17771345261677,
+      "timestamp": "2025-09-24T11:58:01.818794",
+      "metrics": {
+        "success_rate": 0.7513342886549983,
+        "avg_response_time": 2.0386346252974192,
+        "code_quality": 0.7779000879221681,
+        "test_coverage": 0.862068181582571
+      }
+    },
+    {
+      "event_id": "2f28a14d-10b7-477e-aab8-061dfb7f03ce",
+      "agent_instance_id": "a36d1577-a0a1-48c2-a2cf-c669d8133fee",
+      "aiq_score": 88.36619094230616,
+      "timestamp": "2025-09-24T11:58:02.324917",
+      "metrics": {
+        "success_rate": 0.8783242280630305,
+        "avg_response_time": 1.0092891188225181,
+        "code_quality": 0.7970819797025946,
+        "test_coverage": 0.810812209371993
+      }
+    },
+    {
+      "event_id": "069fa8f4-6088-40cb-aed6-ce5265f8ef4a",
+      "agent_instance_id": "eebf206c-4ad4-4b16-bf3d-143b2f92092a",
+      "aiq_score": 87.21071720967731,
+      "timestamp": "2025-09-24T11:58:02.325536",
+      "metrics": {
+        "success_rate": 0.9157448912241417,
+        "avg_response_time": 2.1104533133689105,
+        "code_quality": 0.9012868006461311,
+        "test_coverage": 0.8356426924359219
+      }
+    },
+    {
+      "event_id": "39a94a2a-2e2f-4f7c-b00d-6abc1d13c9ee",
+      "agent_instance_id": "a5c79a43-feea-44bd-89bd-87ad6440a9af",
+      "aiq_score": 84.54710937318224,
+      "timestamp": "2025-09-24T11:58:02.325978",
+      "metrics": {
+        "success_rate": 0.8005790682731073,
+        "avg_response_time": 2.2893865750210374,
+        "code_quality": 0.8589122318740084,
+        "test_coverage": 0.8704980144234057
+      }
+    },
+    {
+      "event_id": "97ea16a6-485f-4d1c-a3bf-9f8f68d84611",
+      "agent_instance_id": "a36d1577-a0a1-48c2-a2cf-c669d8133fee",
+      "aiq_score": 95.7042709644532,
+      "timestamp": "2025-09-24T11:58:02.831616",
+      "metrics": {
+        "success_rate": 0.943796721274132,
+        "avg_response_time": 1.4128892031459948,
+        "code_quality": 0.7517378038133771,
+        "test_coverage": 0.8454759912811978
+      }
+    },
+    {
+      "event_id": "ccd6348e-9c05-450b-b035-fc1dc8c71619",
+      "agent_instance_id": "eebf206c-4ad4-4b16-bf3d-143b2f92092a",
+      "aiq_score": 90.72437131906375,
+      "timestamp": "2025-09-24T11:58:02.834384",
+      "metrics": {
+        "success_rate": 0.9821125049560924,
+        "avg_response_time": 2.0055479331528305,
+        "code_quality": 0.7201536664628471,
+        "test_coverage": 0.8253779486796962
+      }
+    },
+    {
+      "event_id": "50bc1914-e962-4487-b550-454355b3b311",
+      "agent_instance_id": "a5c79a43-feea-44bd-89bd-87ad6440a9af",
+      "aiq_score": 87.30898885258121,
+      "timestamp": "2025-09-24T11:58:02.835490",
+      "metrics": {
+        "success_rate": 0.9700999270826373,
+        "avg_response_time": 1.2916956555682066,
+        "code_quality": 0.8405740430743371,
+        "test_coverage": 0.8501325799512593
+      }
+    },
+    {
+      "event_id": "e64fb5e5-c2e5-4f98-8532-ba4f8954ab9c",
+      "agent_instance_id": "a36d1577-a0a1-48c2-a2cf-c669d8133fee",
+      "aiq_score": 86.21654337131726,
+      "timestamp": "2025-09-24T11:58:03.341443",
+      "metrics": {
+        "success_rate": 0.7982370602021709,
+        "avg_response_time": 0.7603792626786836,
+        "code_quality": 0.8742819703327663,
+        "test_coverage": 0.8106844809935319
+      }
+    },
+    {
+      "event_id": "4692560b-9fe5-42c0-9e66-bab4c263cda6",
+      "agent_instance_id": "eebf206c-4ad4-4b16-bf3d-143b2f92092a",
+      "aiq_score": 96.1669274289744,
+      "timestamp": "2025-09-24T11:58:03.342113",
+      "metrics": {
+        "success_rate": 0.9586400983587221,
+        "avg_response_time": 0.5755952138545299,
+        "code_quality": 0.9208788905399347,
+        "test_coverage": 0.9389425212351084
+      }
+    },
+    {
+      "event_id": "4921f742-fbae-4552-be84-3430182b9304",
+      "agent_instance_id": "a5c79a43-feea-44bd-89bd-87ad6440a9af",
+      "aiq_score": 83.22053609051888,
+      "timestamp": "2025-09-24T11:58:03.342586",
+      "metrics": {
+        "success_rate": 0.8587642309639701,
+        "avg_response_time": 2.3483817491171703,
+        "code_quality": 0.9425002100192816,
+        "test_coverage": 0.9653754955783522
+      }
+    },
+    {
+      "event_id": "dbc79450-2276-4745-9abe-991dbe2fb958",
+      "agent_instance_id": "a36d1577-a0a1-48c2-a2cf-c669d8133fee",
+      "aiq_score": 87.38617281464471,
+      "timestamp": "2025-09-24T11:58:03.848323",
+      "metrics": {
+        "success_rate": 0.8127239645828653,
+        "avg_response_time": 1.0062106090104694,
+        "code_quality": 0.8242489218314784,
+        "test_coverage": 0.8070780284234093
+      }
+    },
+    {
+      "event_id": "9d30192b-6e6e-4f71-b361-66c980eacd32",
+      "agent_instance_id": "eebf206c-4ad4-4b16-bf3d-143b2f92092a",
+      "aiq_score": 91.06243817183162,
+      "timestamp": "2025-09-24T11:58:03.850207",
+      "metrics": {
+        "success_rate": 1.0,
+        "avg_response_time": 2.39143311674313,
+        "code_quality": 0.9420168265991362,
+        "test_coverage": 0.9585272008552188
+      }
+    },
+    {
+      "event_id": "d2854866-cceb-4629-b137-ca5961a54377",
+      "agent_instance_id": "a5c79a43-feea-44bd-89bd-87ad6440a9af",
+      "aiq_score": 98.40092371692188,
+      "timestamp": "2025-09-24T11:58:03.851427",
+      "metrics": {
+        "success_rate": 0.9902906031024385,
+        "avg_response_time": 2.126980842128705,
+        "code_quality": 0.9968733227306847,
+        "test_coverage": 0.8603231197402437
+      }
+    }
+  ]
+}

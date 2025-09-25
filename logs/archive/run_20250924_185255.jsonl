@@ -1,0 +1,7 @@
+{"ts": "2025-09-24T18:52:56.686241Z", "run_id": "20250924_185255", "level": "info", "event": "self_healing.errors_detected", "data": {"count": 1, "types": ["NoneType"]}}
+{"ts": "2025-09-24T18:52:56.687255Z", "run_id": "20250924_185255", "level": "info", "event": "self_healing.errors_detected", "data": {"count": 1, "types": ["NoneType"]}}
+{"ts": "2025-09-24T18:52:56.688059Z", "run_id": "20250924_185255", "level": "info", "event": "self_healing.errors_detected", "data": {"count": 0, "types": []}}
+{"ts": "2025-09-24T18:52:56.688890Z", "run_id": "20250924_185255", "level": "info", "event": "self_healing.errors_detected", "data": {"count": 3, "types": ["NoneType"]}}
+{"ts": "2025-09-24T18:52:56.693784Z", "run_id": "20250924_185255", "level": "info", "event": "self_healing.errors_detected", "data": {"count": 1, "types": ["NoneType"]}}
+{"ts": "2025-09-24T18:52:56.698687Z", "run_id": "20250924_185255", "level": "info", "event": "self_healing.errors_detected", "data": {"count": 1, "types": ["NoneType"]}}
+{"ts": "2025-09-24T18:53:02.847939Z", "run_id": "20250924_185255", "level": "info", "event": "self_healing.errors_detected", "data": {"count": 1, "types": ["NoneType"]}}

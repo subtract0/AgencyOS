@@ -1,0 +1,37 @@
+{
+  "timestamp": "2025-09-23T10:08:35.058641",
+  "operation": "gen-tests",
+  "total_items": 5,
+  "results": [
+    {
+      "path": "/tmp/test_codegen/test_008-orchestrator-engine/test_ac1_execute_parallel_achieves_measured_speedup_vs_serial.py",
+      "ac_id": "AC1",
+      "name": "ac1_execute_parallel_achieves_measured_speedup_vs_serial",
+      "status": "created"
+    },
+    {
+      "path": "/tmp/test_codegen/test_008-orchestrator-engine/test_ac2_execute_graph_honors_dependencies_and_backpressure_no.py",
+      "ac_id": "AC2",
+      "name": "ac2_execute_graph_honors_dependencies_and_backpressure_no",
+      "status": "created"
+    },
+    {
+      "path": "/tmp/test_codegen/test_008-orchestrator-engine/test_ac3_retriestimeouts_deterministic_in_tests_failures_isolated.py",
+      "ac_id": "AC3",
+      "name": "ac3_retriestimeouts_deterministic_in_tests_failures_isolated",
+      "status": "created"
+    },
+    {
+      "path": "/tmp/test_codegen/test_008-orchestrator-engine/test_ac4_telemetry_events_emitted_and_visible_via.py",
+      "ac_id": "AC4",
+      "name": "ac4_telemetry_events_emitted_and_visible_via",
+      "status": "created"
+    },
+    {
+      "path": "/tmp/test_codegen/test_008-orchestrator-engine/test_ac5_all_tests_green_no_weakening_existing.py",
+      "ac_id": "AC5",
+      "name": "ac5_all_tests_green_no_weakening_existing",
+      "status": "created"
+    }
+  ]
+}

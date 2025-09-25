@@ -1,0 +1,183 @@
+# Learning Loop Configuration File
+# SPEC-LEARNING-001 Section 4: Integration & Testing
+#
+# This file configures the autonomous learning and healing system
+# according to the constitutional requirements and technical specifications.
+
+learning:
+  # Master enable/disable flag
+  enabled: true
+
+  # Event trigger configuration
+  triggers:
+    # File system monitoring
+    file_watch: true
+
+    # Error monitoring from logs and outputs
+    error_monitor: true
+
+    # Test result monitoring
+    test_monitor: true
+
+    # Git hook integration (pre-commit, post-commit)
+    git_hooks: true
+
+  # Pattern matching and confidence thresholds
+  thresholds:
+    # Minimum pattern confidence for application (0.0-1.0)
+    min_pattern_confidence: 0.3
+
+    # Minimum similarity score for pattern matching (0.0-1.0)
+    min_match_score: 0.5
+
+    # Cooldown period between healing attempts (minutes)
+    cooldown_minutes: 5
+
+    # Maximum retry attempts for failed operations
+    max_retries: 3
+
+  # Pattern storage and persistence configuration
+  storage:
+    # Storage backend: "sqlite" or "memory"
+    backend: "sqlite"
+
+    # Whether to persist patterns between sessions
+    persist_patterns: true
+
+    # Maximum number of patterns to keep in memory
+    max_patterns: 1000
+
+    # Days after which unused patterns are cleaned up
+    cleanup_days: 30
+
+  # Monitoring and observability
+  monitoring:
+    # Enable metrics collection
+    metrics_enabled: true
+
+    # Port for optional dashboard (if implemented)
+    dashboard_port: 8080
+
+    # Send alerts on healing failures
+    alert_on_failure: true
+
+# File watching patterns (as specified in SPEC-LEARNING-001)
+file_patterns:
+  # Python source files
+  python: "**/*.py"
+
+  # Documentation files
+  markdown: "**/*.md"
+
+  # Test files (specific pattern)
+  tests: "**/tests/**/*.py"
+
+  # CI/CD configuration files
+  ci_cd: ".github/**/*.yml"
+
+# Error detection patterns
+error_patterns:
+  # NoneType attribute errors
+  none_type: "AttributeError.*'NoneType'.*has no attribute.*"
+
+  # Import/module errors
+  import_error: "(?:ImportError|ModuleNotFoundError).*"
+
+  # Test failures
+  test_failure: "FAILED.*test_.*"
+
+  # Syntax errors with line numbers
+  syntax_error: "SyntaxError.*line\\s+(\\d+)"
+
+  # Type errors
+  type_error: "TypeError.*(?:arguments?|positional|keyword)"
+
+# Pattern learning configuration
+pattern_learning:
+  # Success pattern extraction settings
+  success_patterns:
+    # Initial confidence for new patterns
+    initial_confidence: 0.5
+
+    # Minimum tool calls to consider for pattern extraction
+    min_tool_calls: 1
+
+    # Maximum tool calls to avoid overly complex patterns
+    max_tool_calls: 10
+
+  # Anti-pattern (failure) learning settings
+  anti_patterns:
+    # Track patterns that lead to failures
+    track_failures: true
+
+    # Severity levels: "low", "medium", "high"
+    default_severity: "medium"
+
+    # Whether to learn from regression-causing patterns
+    learn_from_regressions: true
+
+# Autonomous operation settings
+autonomous:
+  # Default duration for autonomous operation (hours)
+  default_duration_hours: 24.0
+
+  # Health check interval during autonomous operation (seconds)
+  health_check_interval: 60
+
+  # Learning processing interval (seconds)
+  learning_interval: 300
+
+  # Pattern cleanup interval (seconds)
+  cleanup_interval: 3600
+
+# Constitutional compliance settings
+constitutional:
+  # Article I: Complete context before action
+  validate_context: true
+
+  # Article II: 100% test verification
+  require_test_success: true
+
+  # Article III: Automated enforcement
+  automated_enforcement: true
+
+  # Article IV: Continuous learning
+  continuous_learning: true
+
+  # Article V: Spec-driven development
+  spec_driven: true
+
+# Integration settings with other core components
+integration:
+  # Self-healing core integration
+  self_healing:
+    enabled: true
+    auto_fix_errors: true
+
+  # Pattern store integration
+  pattern_store:
+    enabled: true
+    auto_update_success_rates: true
+
+  # Telemetry integration
+  telemetry:
+    enabled: true
+    emit_learning_events: true
+    detailed_metrics: true
+
+# Logging configuration for learning loop
+logging:
+  # Log level for learning loop components
+  level: "INFO"
+
+  # Whether to log pattern applications
+  log_pattern_applications: true
+
+  # Whether to log all autonomous healing attempts
+  log_healing_attempts: true
+
+  # Whether to log file system events
+  log_file_events: false
+
+  # Maximum length for logged messages
+  max_message_length: 500
