@@ -105,7 +105,9 @@ jobs:
           # Run tests with comprehensive reporting
           set +e  # Don't exit on test failures, we need to process results
 
-          python run_tests.py > test-results/test-output.log 2>&1
+          # Run pytest directly to avoid timeout issues in run_tests.py
+          python -m pytest tests/ -m "not integration and not slow and not benchmark and not github" \
+            --tb=short --color=yes -v > test-results/test-output.log 2>&1
           TEST_EXIT_CODE=$?
 
           # Parse test results for detailed analysis
