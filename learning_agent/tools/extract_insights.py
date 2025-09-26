@@ -10,7 +10,7 @@ import re
 from datetime import datetime
 
 
-class ExtractInsights(BaseTool):
+class ExtractInsights(BaseTool):  # type: ignore[misc]
     """
     Extracts structured insights from analyzed session data.
 

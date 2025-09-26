@@ -11,7 +11,7 @@ from shared.type_definitions.json import JSONValue
 import uuid
 
 
-class ConsolidateLearning(BaseTool):
+class ConsolidateLearning(BaseTool):  # type: ignore[misc]
     """
     Consolidates extracted insights into structured JSON learning objects.
 

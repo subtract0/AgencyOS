@@ -8,7 +8,7 @@ from agency_swarm.tools import BaseTool
 from pydantic import Field
 
 
-class WorkspaceSnapshot(BaseTool):
+class WorkspaceSnapshot(BaseTool):  # type: ignore[misc]
     """
     Create a reversible snapshot of one or more files within the repository root.
     Stores copies under logs/snapshots/<snapshot_id>/ with a manifest for undo.
@@ -64,7 +64,7 @@ class WorkspaceSnapshot(BaseTool):
         return f"Snapshot created: {snapshot_id} (files={len(norm_files)})"
 
 
-class WorkspaceUndo(BaseTool):
+class WorkspaceUndo(BaseTool):  # type: ignore[misc]
     """
     Restore files from a previously created snapshot.
     """

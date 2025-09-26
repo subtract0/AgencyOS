@@ -11,7 +11,7 @@ from auditor_agent.ast_analyzer import ASTAnalyzer
 from agency_memory import VectorStore
 
 
-class RunArchitectureLoop(BaseTool):
+class RunArchitectureLoop(BaseTool):  # type: ignore[misc]
     target_path: str = Field(default=os.getcwd(), description="Root of the repository to audit")
     objective: str = Field(default="auto", description="Optional explicit objective override")
 

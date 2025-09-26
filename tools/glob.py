@@ -6,7 +6,7 @@ from agency_swarm.tools import BaseTool
 from pydantic import Field
 
 
-class Glob(BaseTool):
+class Glob(BaseTool):  # type: ignore[misc]
     """
     Fast file pattern matching tool that works with any codebase size.
 
