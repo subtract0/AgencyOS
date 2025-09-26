@@ -5,7 +5,7 @@ from agency_swarm import Agency, Agent
 from agency_swarm.tools import SendMessageHandoff
 
 
-def create_mock_agent(name: str, with_handoff: bool = True):
+def create_mock_agent(name: str, with_handoff: bool = True) -> MagicMock:
     """Create a properly mocked Agent instance."""
     mock_agent = create_autospec(Agent, instance=True)
     mock_agent.name = name
