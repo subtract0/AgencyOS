@@ -37,7 +37,7 @@ class ActionPriority:
         self.value = value
 
 # Mock functions for missing imports - these will return empty results
-def run_self_healing_check() -> Dict[str, Any]:
+def run_self_healing_check() -> JSONValue:
     """Mock function for missing self-healing check."""
     return {
         "success": False,
@@ -49,7 +49,7 @@ def run_self_healing_check() -> Dict[str, Any]:
         "action_results": []
     }
 
-def get_self_healing_status(telemetry_dir: Optional[str] = None) -> Dict[str, Any]:
+def get_self_healing_status(telemetry_dir: Optional[str] = None) -> JSONValue:
     """Mock function for missing self-healing status."""
     return {
         "running": False,
@@ -64,7 +64,7 @@ def get_self_healing_status(telemetry_dir: Optional[str] = None) -> Dict[str, An
         }
     }
 
-def get_self_healing_health() -> Dict[str, Any]:
+def get_self_healing_health() -> JSONValue:
     """Mock function for missing self-healing health."""
     return {
         "status": "unavailable",
@@ -76,7 +76,7 @@ def get_self_healing_health() -> Dict[str, Any]:
     }
 
 class MockFramework:
-    def get_trigger_status(self) -> Dict[str, Any]:
+    def get_trigger_status(self) -> JSONValue:
         return {
             "triggers": {},
             "active_conditions": [],
@@ -93,7 +93,7 @@ class MockFramework:
         pass
 
 class MockRegistry:
-    def get_action_status(self) -> Dict[str, Any]:
+    def get_action_status(self) -> JSONValue:
         return {
             "actions": {},
             "active_executions": 0,
@@ -101,7 +101,7 @@ class MockRegistry:
             "total_successes": 0
         }
 
-    def get_execution_history(self, limit: int = 20) -> List[Dict[str, Any]]:
+    def get_execution_history(self, limit: int = 20) -> List[JSONValue]:
         return []
 
 def create_default_trigger_framework() -> MockFramework:
@@ -204,7 +204,7 @@ def cmd_triggers(args: argparse.Namespace) -> None:
             return
 
         # Group triggers by type
-        by_type: Dict[str, List[Tuple[str, Dict[str, Any]]]] = {}
+        by_type: Dict[str, List[Tuple[str, JSONValue]]] = {}
         for name, config in triggers.items():
             if isinstance(config, dict):
                 trigger_type = config.get('type')
@@ -276,7 +276,7 @@ def cmd_actions(args: argparse.Namespace) -> None:
             return
 
         # Group actions by type
-        by_type: Dict[str, List[Tuple[str, Dict[str, Any]]]] = {}
+        by_type: Dict[str, List[Tuple[str, JSONValue]]] = {}
         for name, config in actions.items():
             if isinstance(config, dict):
                 action_type = config.get('type')
