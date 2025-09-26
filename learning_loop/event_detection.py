@@ -48,6 +48,13 @@ class Event:
     @classmethod
     def from_dict(cls, data: Dict[str, JSONValue]) -> "Event":
         """Create event from dictionary."""
+        if not isinstance(data["type"], str):
+            raise TypeError("Event type must be a string")
+        if not isinstance(data["timestamp"], str):
+            raise TypeError("Event timestamp must be a string")
+        if not isinstance(data["metadata"], dict):
+            raise TypeError("Event metadata must be a dictionary")
+
         return cls(
             type=data["type"],
             timestamp=datetime.fromisoformat(data["timestamp"]),
@@ -316,7 +323,7 @@ class ErrorMonitor:
         }
 
         # Track last read positions for efficient monitoring
-        self._file_positions = {}
+        self._file_positions: Dict[str, int] = {}
 
     def _default_callback(self, event: ErrorEvent):
         """Default callback that just logs errors."""
@@ -400,7 +407,7 @@ class ErrorMonitor:
 
     def _monitor_file(self, file_path: Path) -> List[ErrorEvent]:
         """Monitor a single file for new errors."""
-        events = []
+        events: List[ErrorEvent] = []
 
         try:
             if not file_path.exists():

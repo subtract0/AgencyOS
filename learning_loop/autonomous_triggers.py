@@ -88,8 +88,14 @@ class ErrorHandler(EventHandler):
         super().__init__("ErrorHandler")
         self.healing_trigger = None  # Will be set by EventRouter
 
-    async def handle(self, event: ErrorEvent) -> Response:
+    async def handle(self, event: Event, *args, **kwargs) -> Response:
         """Handle error event by triggering healing."""
+        if not isinstance(event, ErrorEvent):
+            return Response(
+                success=False,
+                handler_name=self.name,
+                error="Event is not an ErrorEvent"
+            )
         if not self.healing_trigger:
             return Response(
                 success=False,
@@ -160,8 +166,14 @@ class ChangeHandler(EventHandler):
     def __init__(self):
         super().__init__("ChangeHandler")
 
-    async def handle(self, event: FileEvent) -> Response:
+    async def handle(self, event: Event, *args, **kwargs) -> Response:
         """Handle file change event to check for improvement opportunities."""
+        if not isinstance(event, FileEvent):
+            return Response(
+                success=False,
+                handler_name=self.name,
+                error="Event is not a FileEvent"
+            )
         emit("change_handler_triggered", {
             "path": event.path,
             "file_type": event.file_type,
@@ -770,14 +782,19 @@ class PatternMatcher:
         )
 
         # Create trigger from pattern context
+        trigger: Trigger
         if pattern.pattern_type == "error_fix":
             error_type = pattern.context.get("error_type", "Unknown")
+            if not isinstance(error_type, str):
+                error_type = str(error_type)
             trigger = ErrorTrigger(
                 error_type=error_type,
                 error_pattern=f"{error_type}.*"
             )
         else:
-            trigger = TaskTrigger(keywords=pattern.tags)
+            # Ensure tags are strings
+            keywords = [str(tag) for tag in pattern.tags if tag is not None] if pattern.tags else ["general"]
+            trigger = TaskTrigger(keywords=keywords)
 
         # Create metadata
         metadata = PatternMetadata(

@@ -5,7 +5,7 @@ TestGeneratorAgent - Generates NECESSARY-compliant tests to address quality viol
 import os
 import json
 import ast
-from typing import Dict, List
+from typing import Dict, List, Any
 from pathlib import Path
 from textwrap import dedent
 
@@ -77,9 +77,9 @@ class GenerateTests(Tool):
             "test_names": [t["name"] for t in generated_tests]
         }, indent=2)
 
-    def _analyze_source_file(self, file_path: str) -> Dict:
+    def _analyze_source_file(self, file_path: str) -> Dict[str, Any]:
         """Analyze source file to understand testable behaviors."""
-        analysis = {
+        analysis: Dict[str, Any] = {
             "functions": [],
             "classes": [],
             "imports": [],
@@ -115,7 +115,7 @@ class GenerateTests(Tool):
                         analysis["functions"].append(func_info)
 
                 elif isinstance(node, ast.ClassDef):
-                    class_info = {
+                    class_info: Dict[str, Any] = {
                         "name": node.name,
                         "methods": [],
                         "docstring": ast.get_docstring(node)
@@ -138,7 +138,7 @@ class GenerateTests(Tool):
 
         return analysis
 
-    def _generate_tests_for_violation(self, violation: Dict, source_analysis: Dict) -> List[Dict]:
+    def _generate_tests_for_violation(self, violation: Dict[str, Any], source_analysis: Dict[str, Any]) -> List[Dict[str, Any]]:
         """Generate specific tests for a NECESSARY violation."""
         property_type = violation.get("property", "")
         tests = []
@@ -158,7 +158,7 @@ class GenerateTests(Tool):
 
         return tests
 
-    def _generate_basic_tests(self, analysis: Dict) -> List[Dict]:
+    def _generate_basic_tests(self, analysis: Dict[str, Any]) -> List[Dict[str, Any]]:
         """Generate basic happy path tests."""
         tests = []
 
@@ -188,7 +188,7 @@ class GenerateTests(Tool):
 
         return tests
 
-    def _generate_edge_case_tests(self, analysis: Dict) -> List[Dict]:
+    def _generate_edge_case_tests(self, analysis: Dict[str, Any]) -> List[Dict[str, Any]]:
         """Generate edge case tests."""
         tests = []
 
@@ -206,7 +206,7 @@ class GenerateTests(Tool):
 
         return tests
 
-    def _generate_comprehensive_tests(self, analysis: Dict) -> List[Dict]:
+    def _generate_comprehensive_tests(self, analysis: Dict[str, Any]) -> List[Dict[str, Any]]:
         """Generate comprehensive test coverage."""
         tests = []
 
@@ -224,7 +224,7 @@ class GenerateTests(Tool):
 
         return tests
 
-    def _generate_error_tests(self, analysis: Dict) -> List[Dict]:
+    def _generate_error_tests(self, analysis: Dict[str, Any]) -> List[Dict[str, Any]]:
         """Generate error condition tests."""
         tests = []
 
@@ -241,7 +241,7 @@ class GenerateTests(Tool):
 
         return tests
 
-    def _generate_state_tests(self, analysis: Dict) -> List[Dict]:
+    def _generate_state_tests(self, analysis: Dict[str, Any]) -> List[Dict[str, Any]]:
         """Generate state validation tests."""
         tests = []
 
@@ -258,7 +258,7 @@ class GenerateTests(Tool):
 
         return tests
 
-    def _generate_async_tests(self, analysis: Dict) -> List[Dict]:
+    def _generate_async_tests(self, analysis: Dict[str, Any]) -> List[Dict[str, Any]]:
         """Generate async operation tests."""
         tests = []
 
@@ -276,7 +276,7 @@ class GenerateTests(Tool):
 
         return tests
 
-    def _create_basic_test_code(self, func: Dict, module_name: str) -> str:
+    def _create_basic_test_code(self, func: Dict[str, Any], module_name: str) -> str:
         """Create basic test code for a function."""
         args_str = ", ".join(f"mock_{arg}" for arg in func["args"])
         call_str = f"{func['name']}({args_str})" if args_str else f"{func['name']}()"
@@ -303,7 +303,7 @@ class GenerateTests(Tool):
             {assertion}
         ''').strip()
 
-    def _create_basic_method_test_code(self, cls: Dict, method: Dict, module_name: str) -> str:
+    def _create_basic_method_test_code(self, cls: Dict[str, Any], method: Dict[str, Any], module_name: str) -> str:
         """Create basic test code for a class method."""
         if method["name"] == "__init__":
             return dedent(f'''
@@ -338,7 +338,7 @@ class GenerateTests(Tool):
             pass
         ''').strip()
 
-    def _create_edge_case_test_code(self, func: Dict, module_name: str) -> str:
+    def _create_edge_case_test_code(self, func: Dict[str, Any], module_name: str) -> str:
         """Create edge case test code."""
         return dedent(f'''
         def test_{func['name']}_edge_cases():
@@ -358,7 +358,7 @@ class GenerateTests(Tool):
             pass  # Implement specific edge cases
         ''').strip()
 
-    def _create_comprehensive_test_code(self, func: Dict, module_name: str) -> str:
+    def _create_comprehensive_test_code(self, func: Dict[str, Any], module_name: str) -> str:
         """Create comprehensive test code."""
         return dedent(f'''
         def test_{func['name']}_comprehensive():
@@ -376,7 +376,7 @@ class GenerateTests(Tool):
                 assert result == expected
         ''').strip()
 
-    def _create_error_test_code(self, func: Dict, module_name: str) -> str:
+    def _create_error_test_code(self, func: Dict[str, Any], module_name: str) -> str:
         """Create error condition test code."""
         return dedent(f'''
         def test_{func['name']}_error_conditions():
@@ -395,7 +395,7 @@ class GenerateTests(Tool):
             # Add more error condition tests as needed
         ''').strip()
 
-    def _create_state_test_code(self, cls: Dict, module_name: str) -> str:
+    def _create_state_test_code(self, cls: Dict[str, Any], module_name: str) -> str:
         """Create state validation test code."""
         return dedent(f'''
         def test_{cls['name'].lower()}_state_validation():
@@ -416,7 +416,7 @@ class GenerateTests(Tool):
             pass  # Implement specific state validations
         ''').strip()
 
-    def _create_async_test_code(self, func: Dict, module_name: str) -> str:
+    def _create_async_test_code(self, func: Dict[str, Any], module_name: str) -> str:
         """Create async test code."""
         args_str = ", ".join(f"mock_{arg}" for arg in func["args"])
         call_str = f"await {func['name']}({args_str})" if args_str else f"await {func['name']}()"
@@ -460,7 +460,7 @@ class GenerateTests(Tool):
 
         return "\n    ".join(mock_assignments)
 
-    def _create_test_file_content(self, tests: List[Dict], analysis: Dict) -> str:
+    def _create_test_file_content(self, tests: List[Dict[str, Any]], analysis: Dict[str, Any]) -> str:
         """Create complete test file content."""
         header = dedent(f'''
         """

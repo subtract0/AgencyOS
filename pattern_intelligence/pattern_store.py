@@ -7,7 +7,7 @@ for the Infinite Intelligence Amplifier.
 
 import json
 import logging
-from typing import Dict, List, Optional, Any
+from typing import Dict, List, Optional, Any, cast
 from shared.type_definitions.json import JSONValue
 from dataclasses import dataclass
 from datetime import datetime
@@ -86,7 +86,7 @@ class PatternStore:
             }
 
             # Add to vector store
-            self.vector_store.add_memory(pattern.metadata.pattern_id, memory_record)
+            self.vector_store.add_memory(pattern.metadata.pattern_id, cast(Dict[str, JSONValue], memory_record))
 
             # Cache the pattern
             self._patterns_cache[pattern.metadata.pattern_id] = pattern
@@ -133,8 +133,11 @@ class PatternStore:
             # Get all patterns if no specific query
             if not search_query:
                 all_memories = list(self.vector_store._memory_records.values())
-                pattern_memories = [m for m in all_memories
-                                  if m.get("metadata", {}).get("namespace") == self.namespace]
+                pattern_memories = []
+                for m in all_memories:
+                    metadata = m.get("metadata", {})
+                    if isinstance(metadata, dict) and metadata.get("namespace") == self.namespace:
+                        pattern_memories.append(m)
             else:
                 # Perform semantic/hybrid search
                 pattern_memories = self.vector_store.search(
@@ -160,7 +163,8 @@ class PatternStore:
                         continue
 
                     # Calculate relevance score
-                    relevance_score = memory.get("relevance_score", 0.5)
+                    relevance_score_raw = memory.get("relevance_score", 0.5)
+                    relevance_score = float(relevance_score_raw) if isinstance(relevance_score_raw, (int, float)) else 0.5
 
                     # Boost score based on effectiveness
                     effectiveness_boost = pattern.outcome.effectiveness_score() * 0.3
@@ -172,7 +176,7 @@ class PatternStore:
                     search_results.append(PatternSearchResult(
                         pattern=pattern,
                         relevance_score=final_score,
-                        search_type=memory.get("search_type", "hybrid"),
+                        search_type=str(memory.get("search_type", "hybrid")),
                         match_reason=match_reason
                     ))
 
@@ -268,7 +272,8 @@ class PatternStore:
 
             # Get all pattern memories
             for memory in self.vector_store._memory_records.values():
-                if memory.get("metadata", {}).get("namespace") == self.namespace:
+                metadata = memory.get("metadata", {})
+                if isinstance(metadata, dict) and metadata.get("namespace") == self.namespace:
                     try:
                         pattern_data = memory.get("content", {})
                         if isinstance(pattern_data, dict):
@@ -317,7 +322,8 @@ class PatternStore:
 
             # Analyze all patterns
             for memory in self.vector_store._memory_records.values():
-                if memory.get("metadata", {}).get("namespace") == self.namespace:
+                metadata = memory.get("metadata", {})
+                if isinstance(metadata, dict) and metadata.get("namespace") == self.namespace:
                     try:
                         pattern_data = memory.get("content", {})
                         if isinstance(pattern_data, dict):
@@ -342,7 +348,7 @@ class PatternStore:
                 "total_applications": total_applications,
                 "unique_domains": len(domains),
                 "domains": list(domains),
-                "validation_status": validation_counts,
+                "validation_status": cast(JSONValue, validation_counts),
                 "average_effectiveness": avg_effectiveness,
                 "average_success_rate": avg_success_rate,
                 "average_confidence": avg_confidence,
@@ -395,7 +401,8 @@ class PatternStore:
             all_patterns = []
 
             for memory in self.vector_store._memory_records.values():
-                if memory.get("metadata", {}).get("namespace") == self.namespace:
+                metadata = memory.get("metadata", {})
+                if isinstance(metadata, dict) and metadata.get("namespace") == self.namespace:
                     try:
                         pattern_data = memory.get("content", {})
                         if isinstance(pattern_data, dict):
@@ -422,7 +429,8 @@ class PatternStore:
             # Get all pattern memory keys
             pattern_keys = []
             for key, memory in self.vector_store._memory_records.items():
-                if memory.get("metadata", {}).get("namespace") == self.namespace:
+                metadata = memory.get("metadata", {})
+                if isinstance(metadata, dict) and metadata.get("namespace") == self.namespace:
                     pattern_keys.append(key)
 
             # Remove all pattern memories
