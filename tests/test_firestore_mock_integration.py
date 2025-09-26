@@ -265,9 +265,9 @@ class TestFirestoreMockIntegration:
 
         # Search for all batch items
         batch_results = store.search(["batch"])
-        assert len(batch_results) == batch_size
+        assert batch_results.total_count == batch_size
 
         # Verify all items are present
-        found_keys = {r["key"] for r in batch_results}
+        found_keys = {r.key for r in batch_results.records}
         expected_keys = {f"batch_item_{i}" for i in range(batch_size)}
         assert found_keys == expected_keys
