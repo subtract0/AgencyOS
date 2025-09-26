@@ -238,15 +238,25 @@ class SwarmMemoryStore(MemoryStore):
                 tags_value = match.get("tags", [])
                 tags_list = [str(tag) for tag in tags_value if isinstance(tag, str)] if isinstance(tags_value, list) else []
 
-                # Get priority with type validation
+                # Get priority with type validation and mapping
                 priority_value = match.get("priority", 1)
                 if isinstance(priority_value, (int, float)):
-                    try:
-                        priority = SharedMemoryPriority(int(priority_value))
-                    except ValueError:
-                        priority = SharedMemoryPriority.LOW
+                    # Map int priorities to string priorities
+                    priority_mapping = {
+                        1: SharedMemoryPriority.LOW,
+                        2: SharedMemoryPriority.MEDIUM,
+                        3: SharedMemoryPriority.HIGH,
+                        4: SharedMemoryPriority.CRITICAL
+                    }
+                    priority = priority_mapping.get(int(priority_value), SharedMemoryPriority.LOW)
                 else:
                     priority = SharedMemoryPriority.LOW
+
+                # Create metadata with agent_id from the match
+                metadata = MemoryMetadata()
+                match_agent_id = match.get("agent_id")
+                if isinstance(match_agent_id, str):
+                    metadata.agent_id = match_agent_id
 
                 record = MemoryRecord(
                     key=str(match.get("key", "")),
@@ -254,7 +264,7 @@ class SwarmMemoryStore(MemoryStore):
                     tags=tags_list,
                     timestamp=datetime.fromisoformat(str(match.get("timestamp", datetime.now().isoformat()))),
                     priority=priority,
-                    metadata=MemoryMetadata(),
+                    metadata=metadata,
                     ttl_seconds=None,
                     embedding=None
                 )
@@ -305,15 +315,25 @@ class SwarmMemoryStore(MemoryStore):
                 tags_value = memory_dict.get("tags", [])
                 tags_list = [str(tag) for tag in tags_value if isinstance(tag, str)] if isinstance(tags_value, list) else []
 
-                # Get priority with type validation
+                # Get priority with type validation and mapping
                 priority_value = memory_dict.get("priority", 1)
                 if isinstance(priority_value, (int, float)):
-                    try:
-                        priority = SharedMemoryPriority(int(priority_value))
-                    except ValueError:
-                        priority = SharedMemoryPriority.LOW
+                    # Map int priorities to string priorities
+                    priority_mapping = {
+                        1: SharedMemoryPriority.LOW,
+                        2: SharedMemoryPriority.MEDIUM,
+                        3: SharedMemoryPriority.HIGH,
+                        4: SharedMemoryPriority.CRITICAL
+                    }
+                    priority = priority_mapping.get(int(priority_value), SharedMemoryPriority.LOW)
                 else:
                     priority = SharedMemoryPriority.LOW
+
+                # Create metadata with agent_id from the memory_dict
+                metadata = MemoryMetadata()
+                dict_agent_id = memory_dict.get("agent_id")
+                if isinstance(dict_agent_id, str):
+                    metadata.agent_id = dict_agent_id
 
                 # Create MemoryRecord
                 record = MemoryRecord(
@@ -322,7 +342,7 @@ class SwarmMemoryStore(MemoryStore):
                     tags=tags_list,
                     timestamp=datetime.fromisoformat(str(memory_dict.get("timestamp", datetime.now().isoformat()))),
                     priority=priority,
-                    metadata=MemoryMetadata(),
+                    metadata=metadata,
                     ttl_seconds=None,
                     embedding=None
                 )
@@ -701,7 +721,7 @@ class SwarmMemoryStore(MemoryStore):
                                 "earliest": min(timestamps) if timestamps else "",
                                 "latest": max(timestamps) if timestamps else "",
                             },
-                            "priority_distribution": Counter(priorities),
+                            "priority_distribution": {str(k): v for k, v in Counter(priorities).items()},
                             "sample_keys": sample_keys,
                         }
 

@@ -544,8 +544,9 @@ class TestIntegrationScenarios:
         assert len(agent_memories) < 25
 
         # High priority memories should be preserved (first 3)
+        # Note: get_all() returns dicts with string priority values
         high_priority_count = sum(
-            1 for m in agent_memories if m["priority"] in [MemoryPriority.HIGH.value, MemoryPriority.CRITICAL.value]
+            1 for m in agent_memories if m.get("priority") in ["high", "critical"]
         )
         assert high_priority_count == 3  # Should preserve all high priority ones
 

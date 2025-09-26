@@ -505,7 +505,8 @@ class EnhancedSwarmMemoryStore:
             List of similarity results
         """
         # Get relevant memories from swarm store
-        memories = self.swarm_store.get_all(agent_id)
+        memories_result = self.swarm_store.get_all(agent_id)
+        memories = [record.to_dict() for record in memories_result.records]
 
         if include_shared:
             shared_memories = list(self.swarm_store._shared_knowledge.values())
@@ -538,7 +539,8 @@ class EnhancedSwarmMemoryStore:
         """
         if tags and query:
             # First filter by tags, then semantic search
-            tag_filtered = self.swarm_store.search(tags, agent_id, include_shared)
+            tag_filtered_result = self.swarm_store.search(tags, agent_id, include_shared)
+            tag_filtered = [record.to_dict() for record in tag_filtered_result.records]
             semantic_results = self.vector_store.hybrid_search(
                 query, tag_filtered, top_k
             )
@@ -574,7 +576,8 @@ class EnhancedSwarmMemoryStore:
             ]
         else:
             # Return all memories
-            return self.swarm_store.get_all(agent_id)[:top_k]
+            all_memories_result = self.swarm_store.get_all(agent_id)
+            return [record.to_dict() for record in all_memories_result.records[:top_k]]
 
     def __getattr__(self, name):
         """Delegate unknown methods to swarm_store."""
