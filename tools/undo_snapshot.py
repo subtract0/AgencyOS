@@ -26,8 +26,8 @@ class WorkspaceSnapshot(BaseTool):  # type: ignore[misc]
 
         # Validate and normalize files
         norm_files: List[Path] = []
-        for f in self.files:
-            p = Path(f).resolve()
+        for file_path in self.files:
+            p = Path(file_path).resolve()
             try:
                 p.relative_to(repo_root)
             except Exception:
@@ -44,7 +44,8 @@ class WorkspaceSnapshot(BaseTool):  # type: ignore[misc]
         files_dir = target / "files"
         files_dir.mkdir(parents=True, exist_ok=True)
 
-        manifest = {  # type: ignore[var-annotated]
+        from typing import Any, List, Dict
+        manifest: Dict[str, Any] = {
             "snapshot_id": snapshot_id,
             "repo_root": str(repo_root),
             "files": [],

@@ -5,7 +5,7 @@ import os
 import re
 from dataclasses import dataclass
 from datetime import datetime, timedelta, timezone
-from typing import Any, Dict, Iterable, List, Optional
+from typing import Any, Dict, Iterable, List, Optional, cast
 from shared.type_definitions.json import JSONValue
 
 # Public type alias for compatibility with prior stub
@@ -351,7 +351,7 @@ def aggregate(
     slow_tasks = [
         {"id": r["id"], "agent": r["agent"], "age_s": r["age_s"]}
         for r in running_all
-        if isinstance(r.get("age_s"), (int, float)) and r["age_s"] >= age_thresh
+        if isinstance(r.get("age_s"), (int, float)) and isinstance(r["age_s"], (int, float)) and float(r["age_s"]) >= age_thresh
     ][:10]
     retry_heavy = [
         {"id": tid, "agent": s.agent, "attempt": s.attempt}
@@ -375,14 +375,14 @@ def aggregate(
         "by_agent": {
             k: {
                 "tokens": v.get("tokens", 0) if isinstance(v.get("tokens"), (int, float)) else 0,
-                "usd": round(float(v.get("usd", 0.0)) if isinstance(v.get("usd"), (int, float)) else float(0.0), 6)
+                "usd": round(cast(float, v.get("usd")) if isinstance(v.get("usd"), (int, float)) else 0.0, 6)
             }
             for k, v in by_agent.items()
         },
         "by_model": {
             k: {
                 "tokens": v.get("tokens", 0) if isinstance(v.get("tokens"), (int, float)) else 0,
-                "usd": round(float(v.get("usd", 0.0)) if isinstance(v.get("usd"), (int, float)) else float(0.0), 6)
+                "usd": round(cast(float, v.get("usd")) if isinstance(v.get("usd"), (int, float)) else 0.0, 6)
             }
             for k, v in by_model.items()
         },
@@ -400,7 +400,7 @@ def aggregate(
     summary = {
         "running_tasks": running,
         "recent_results": recent_results,
-        "agents_active": sorted(agents),
+        "agents_active": list(sorted(agents)),
         "resources": resources,
         "costs": costs,
         "bottlenecks": bottlenecks,
@@ -416,7 +416,7 @@ def aggregate(
         },
     }
 
-    return summary
+    return cast(Dict[str, JSONValue], summary)
 
 
 def list_events(
@@ -469,5 +469,9 @@ def aggregate_basic(events: Iterable[Event]) -> Dict[str, JSONValue]:
         total += 1
         t_value = ev.get("type", "?")
         t = str(t_value) if isinstance(t_value, str) else "?"
-        counts[t] = counts.get(t, 0) + 1
+        current_count = counts.get(t, 0)
+        if isinstance(current_count, (int, float)):
+            counts[t] = int(current_count) + 1
+        else:
+            counts[t] = 1
     return {"total_events": total, "by_type": counts}

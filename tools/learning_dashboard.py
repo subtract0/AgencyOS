@@ -8,7 +8,7 @@ import logging
 import json
 import os
 from datetime import datetime, timedelta
-from typing import Dict, Any, List, Optional
+from typing import Dict, Any, List, Optional, Union, cast
 from shared.type_definitions.json import JSONValue
 from collections import defaultdict, Counter
 from dataclasses import dataclass
@@ -63,8 +63,8 @@ class LearningDashboard:
         """
         self.agent_context = agent_context
         self.vector_store = vector_store or VectorStore()
-        self.metrics_history = []
-        self.alerts = []
+        self.metrics_history: List[Dict[str, Any]] = []
+        self.alerts: List[LearningAlert] = []
 
         logger.info("LearningDashboard initialized")
 
@@ -98,7 +98,7 @@ class LearningDashboard:
             }
 
             logger.info(f"Generated comprehensive learning report with {len(metrics)} metrics and {len(alerts)} alerts")
-            return report
+            return cast(Dict[str, JSONValue], report)
 
         except Exception as e:
             logger.error(f"Error generating learning report: {e}")
@@ -139,35 +139,41 @@ class LearningDashboard:
 
     def _collect_vector_store_metrics(self) -> Dict[str, LearningMetric]:
         """Collect VectorStore performance metrics."""
-        metrics = {}
+        metrics: Dict[str, LearningMetric] = {}
 
         try:
             # Get VectorStore stats
             vector_stats = self.vector_store.get_stats()
 
             # Total memories metric
+            total_memories_raw = vector_stats.get('total_memories', 0)
+            total_memories = int(total_memories_raw) if isinstance(total_memories_raw, (int, float)) else 0
             metrics['total_memories'] = LearningMetric(
                 name="Total Memories",
-                value=vector_stats.get('total_memories', 0),
+                value=float(total_memories),
                 unit="count",
-                trend=self._calculate_metric_trend('total_memories', vector_stats.get('total_memories', 0)),
+                trend=self._calculate_metric_trend('total_memories', float(total_memories)),
                 description="Total number of memories stored in VectorStore",
                 timestamp=datetime.now().isoformat()
             )
 
             # Memories with embeddings metric
+            memories_with_embeddings_raw = vector_stats.get('memories_with_embeddings', 0)
+            memories_with_embeddings = int(memories_with_embeddings_raw) if isinstance(memories_with_embeddings_raw, (int, float)) else 0
             metrics['memories_with_embeddings'] = LearningMetric(
                 name="Memories with Embeddings",
-                value=vector_stats.get('memories_with_embeddings', 0),
+                value=float(memories_with_embeddings),
                 unit="count",
-                trend=self._calculate_metric_trend('memories_with_embeddings', vector_stats.get('memories_with_embeddings', 0)),
+                trend=self._calculate_metric_trend('memories_with_embeddings', float(memories_with_embeddings)),
                 description="Number of memories with semantic embeddings",
                 timestamp=datetime.now().isoformat()
             )
 
             # Embedding coverage rate
-            total = vector_stats.get('total_memories', 0)
-            with_embeddings = vector_stats.get('memories_with_embeddings', 0)
+            total_raw = vector_stats.get('total_memories', 0)
+            total = int(total_raw) if isinstance(total_raw, (int, float)) else 0
+            with_embeddings_raw = vector_stats.get('memories_with_embeddings', 0)
+            with_embeddings = int(with_embeddings_raw) if isinstance(with_embeddings_raw, (int, float)) else 0
             coverage_rate = (with_embeddings / total * 100) if total > 0 else 0
 
             metrics['embedding_coverage'] = LearningMetric(
@@ -382,10 +388,14 @@ class LearningDashboard:
         """Calculate trend for a metric based on history."""
         try:
             # Look for historical values of this metric
-            historical_values = []
+            historical_values: List[float] = []
             for record in self.metrics_history[-10:]:  # Last 10 records
-                if metric_name in record and 'value' in record[metric_name]:
-                    historical_values.append(record[metric_name]['value'])
+                if 'metrics' in record and metric_name in record['metrics']:
+                    metric_data = record['metrics'][metric_name]
+                    if isinstance(metric_data, dict) and 'value' in metric_data:
+                        value = metric_data['value']
+                        if isinstance(value, (int, float)):
+                            historical_values.append(float(value))
 
             if len(historical_values) < 2:
                 return "stable"
@@ -406,7 +416,7 @@ class LearningDashboard:
         """Check if memory is recent based on timestamp."""
         try:
             timestamp_str = memory.get('timestamp', '')
-            if timestamp_str:
+            if isinstance(timestamp_str, str) and timestamp_str:
                 memory_time = datetime.fromisoformat(timestamp_str.replace('Z', '+00:00'))
                 return memory_time >= cutoff_time
         except Exception:
@@ -419,14 +429,15 @@ class LearningDashboard:
         success_indicators = ['success', 'resolved', 'improved', 'effective', 'working']
         return any(indicator in content for indicator in success_indicators)
 
-    def _extract_learning_types(self, learning_memories: List[dict[str, JSONValue]]) -> List[str]:
+    def _extract_learning_types(self, learning_memories: List[Dict[str, JSONValue]]) -> List[str]:
         """Extract unique learning types from memories."""
-        types = set()
+        types: set[JSONValue] = set()
         for memory in learning_memories:
             content = memory.get('content', {})
             if isinstance(content, dict):
                 learning_type = content.get('type', content.get('learning_type', 'unknown'))
-                types.add(learning_type)
+                if isinstance(learning_type, str):
+                    types.add(learning_type)
             else:
                 # Try to extract type from text content
                 content_str = str(content).lower()
@@ -436,11 +447,11 @@ class LearningDashboard:
                     types.add('optimization')
                 elif 'pattern' in content_str:
                     types.add('pattern')
-        return list(types)
+        return [str(t) for t in types if isinstance(t, str)]
 
-    def _extract_learning_confidences(self, learning_memories: List[dict[str, JSONValue]]) -> List[float]:
+    def _extract_learning_confidences(self, learning_memories: List[Dict[str, JSONValue]]) -> List[float]:
         """Extract confidence scores from learning memories."""
-        confidences = []
+        confidences: List[float] = []
         for memory in learning_memories:
             content = memory.get('content', {})
             if isinstance(content, dict):
@@ -449,7 +460,7 @@ class LearningDashboard:
                     confidences.append(float(confidence))
         return confidences
 
-    def _calculate_knowledge_retention(self, cross_session_memories: List[dict[str, JSONValue]]) -> float:
+    def _calculate_knowledge_retention(self, cross_session_memories: List[Dict[str, JSONValue]]) -> float:
         """Calculate knowledge retention score."""
         try:
             if not cross_session_memories:
@@ -651,7 +662,7 @@ class LearningDashboard:
         except Exception as e:
             logger.warning(f"Error generating insights: {e}")
 
-        return insights
+        return cast(List[Dict[str, JSONValue]], insights)
 
     def _calculate_system_health(self, metrics: Dict[str, LearningMetric], alerts: List[LearningAlert]) -> Dict[str, JSONValue]:
         """Calculate overall learning system health score."""
@@ -776,7 +787,7 @@ class LearningDashboard:
         except Exception as e:
             logger.warning(f"Error generating recommendations: {e}")
 
-        return recommendations
+        return cast(List[Dict[str, JSONValue]], recommendations)
 
     def _get_alert_resolution_actions(self, alert: LearningAlert) -> List[str]:
         """Get specific actions to resolve an alert."""
@@ -816,9 +827,10 @@ class LearningDashboard:
 
             # Key highlights
             highlights = []
-            if health_score['score'] >= 80:
+            health_score_value = health_score.get('score', 0)
+            if isinstance(health_score_value, (int, float)) and health_score_value >= 80:
                 highlights.append("Learning system is performing excellently")
-            elif health_score['score'] >= 60:
+            elif isinstance(health_score_value, (int, float)) and health_score_value >= 60:
                 highlights.append("Learning system is performing well with room for improvement")
             else:
                 highlights.append("Learning system needs attention and optimization")
@@ -834,15 +846,18 @@ class LearningDashboard:
                 highlights.append(f"{critical_issues} critical issue(s) require immediate attention")
 
             return {
-                'health_status': health_score['status'],
-                'health_score': health_score['score'],
+                'health_status': health_score.get('status', 'unknown'),
+                'health_score': health_score.get('score', 0),
                 'metrics_tracked': total_metrics,
                 'positive_trends': positive_trends,
                 'negative_trends': negative_trends,
                 'critical_issues': critical_issues,
                 'warnings': warnings,
-                'key_highlights': highlights,
-                'overall_assessment': self._get_overall_assessment(health_score['score'], critical_issues),
+                'key_highlights': cast(List[JSONValue], highlights),
+                'overall_assessment': self._get_overall_assessment(
+                    float(score_val) if isinstance((score_val := health_score.get('score', 0)), (int, float)) else 0.0,
+                    critical_issues
+                ),
                 'summary_timestamp': datetime.now().isoformat()
             }
 

@@ -9,7 +9,7 @@ from __future__ import annotations
 import json
 import os
 from dataclasses import dataclass, asdict
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, cast
 from shared.type_definitions.json import JSONValue
 
 DEFAULT_PATH = os.path.join(os.getcwd(), "logs", "learning", "hints.json")
@@ -21,14 +21,14 @@ class Hint:
     action: Dict[str, JSONValue]
     confidence: float = 0.5
 
-    def to_dict(self) -> BaseResponse:
+    def to_dict(self) -> Dict[str, JSONValue]:
         return asdict(self)
 
 
 class LearningHintRegistry:
     def __init__(self, path: Optional[str] = None):
         self.path = path or DEFAULT_PATH
-        self.data: BaseResponse = {"version": 1, "hints": []}
+        self.data: Dict[str, JSONValue] = {"version": 1, "hints": []}
         # Auto-load if exists
         self._load()
 
@@ -55,12 +55,16 @@ class LearningHintRegistry:
             pass
 
     def register(self, hint: Hint) -> None:
-        hints = self.data.setdefault("hints", [])
-        hints.append(hint.to_dict())
+        hints_raw = self.data.setdefault("hints", [])
+        if isinstance(hints_raw, list):
+            hints_raw.append(hint.to_dict())
         self._save()
 
     def all(self) -> List[Hint]:
-        return [Hint(**h) for h in self.data.get("hints", []) if isinstance(h, dict)]
+        hints_raw = self.data.get("hints", [])
+        if not isinstance(hints_raw, list):
+            return []
+        return [Hint(**cast(Dict[str, Any], h)) for h in hints_raw if isinstance(h, dict)]
 
     def match_for_error(self, error_type: Optional[str], error_message: Optional[str]) -> Optional[Hint]:
         """Find a hint matching error type or error pattern."""
@@ -68,15 +72,23 @@ class LearningHintRegistry:
             return None
         et = (error_type or "").lower()
         em = error_message or ""
-        for h in self.data.get("hints", []):
+        hints_raw = self.data.get("hints", [])
+        if not isinstance(hints_raw, list):
+            return None
+        for h in hints_raw:
             try:
+                if not isinstance(h, dict):
+                    continue
                 m = h.get("match", {})
-                mt = (m.get("error_type") or "").lower()
+                if not isinstance(m, dict):
+                    continue
+                error_type_raw = m.get("error_type")
+                mt = (str(error_type_raw) or "").lower() if isinstance(error_type_raw, str) else ""
                 mp = m.get("error_pattern")
                 if mt and mt == et:
-                    return Hint(**h)
+                    return Hint(**cast(Dict[str, Any], h))
                 if mp and isinstance(mp, str) and mp in em:
-                    return Hint(**h)
+                    return Hint(**cast(Dict[str, Any], h))
             except Exception:
                 continue
         return None

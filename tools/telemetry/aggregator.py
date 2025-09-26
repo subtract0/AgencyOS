@@ -17,7 +17,7 @@ import os
 from dataclasses import dataclass
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
-from typing import Any, Dict, Iterable, List, Optional, Tuple
+from typing import Any, Dict, Iterable, List, Optional, Tuple, cast
 from shared.type_definitions.json import JSONValue
 from shared.models.telemetry import (
     TelemetryEvent, TelemetryMetrics, AgentMetrics,
@@ -119,7 +119,10 @@ def _load_events(since_dt: datetime, telemetry_dir: Optional[str] = None, limit:
             continue
 
     # Sort by timestamp ascending
-    events.sort(key=lambda e: e.get("_dt", _iso_now()))
+    def get_dt(e: Dict[str, JSONValue]) -> datetime:
+        dt_val = e.get("_dt", _iso_now())
+        return dt_val if isinstance(dt_val, datetime) else _iso_now()
+    events.sort(key=get_dt)
 
     if limit is not None and len(events) > limit:
         events = events[-limit:]
@@ -187,7 +190,7 @@ def aggregate(since: str = "1h", telemetry_dir: Optional[str] = None) -> Telemet
 
     # Running tasks tracking
     now = _iso_now()
-    tasks: Dict[str, Dict[str, JSONValue]] = {}
+    tasks: Dict[str, Dict[str, Any]] = {}
 
     # Resource snapshot (take latest orchestrator_started)
     max_concurrency: Optional[int] = None
@@ -200,7 +203,7 @@ def aggregate(since: str = "1h", telemetry_dir: Optional[str] = None) -> Telemet
     for ev in events:
         typ = ev.get("type")
         agent = ev.get("agent")
-        if agent and agent not in agents_active:
+        if agent and isinstance(agent, str) and agent not in agents_active:
             agents_active.append(agent)
 
         if typ == "orchestrator_started":
@@ -208,7 +211,8 @@ def aggregate(since: str = "1h", telemetry_dir: Optional[str] = None) -> Telemet
             dt = _parse_iso(ts) if isinstance(ts, str) else None
             if dt and (latest_orchestrator_ts is None or dt > latest_orchestrator_ts):
                 latest_orchestrator_ts = dt
-                max_concurrency = int(ev.get("max_concurrency", max_concurrency or 0)) or None
+                mc_val = ev.get("max_concurrency", max_concurrency or 0)
+                max_concurrency = int(mc_val) if isinstance(mc_val, (int, float)) else max_concurrency
 
         elif typ == "task_started":
             tasks_started += 1
@@ -253,14 +257,14 @@ def aggregate(since: str = "1h", telemetry_dir: Optional[str] = None) -> Telemet
             if isinstance(usage, dict):
                 tokens = usage.get("total_tokens")
                 try:
-                    if tokens is not None:
+                    if tokens is not None and isinstance(tokens, (int, float)):
                         total_tokens += int(tokens)
                 except Exception:
                     pass
                 # If cost provided, accumulate
                 cost = usage.get("total_usd") or ev.get("cost_usd")
                 try:
-                    if cost is not None:
+                    if cost is not None and isinstance(cost, (int, float)):
                         total_usd += float(cost)
                 except Exception:
                     pass
@@ -270,8 +274,10 @@ def aggregate(since: str = "1h", telemetry_dir: Optional[str] = None) -> Telemet
     for t in tasks.values():
         if t.get("finished"):
             continue
-        started_dt: datetime = t.get("started_dt", now)
-        last_hb_dt: Optional[datetime] = t.get("last_hb_dt")
+        started_dt_val = t.get("started_dt", now)
+        started_dt: datetime = started_dt_val if isinstance(started_dt_val, datetime) else now
+        last_hb_dt_val = t.get("last_hb_dt")
+        last_hb_dt: Optional[datetime] = last_hb_dt_val if isinstance(last_hb_dt_val, datetime) else None
         age_s = max(0.0, (now - started_dt).total_seconds())
         hb_age_s = (now - last_hb_dt).total_seconds() if isinstance(last_hb_dt, datetime) else None
         running_tasks.append({
@@ -282,7 +288,10 @@ def aggregate(since: str = "1h", telemetry_dir: Optional[str] = None) -> Telemet
         })
 
     # Sort and cap running tasks
-    running_tasks.sort(key=lambda r: r.get("age_s", 0.0), reverse=True)
+    def get_age_s(r: Dict[str, JSONValue]) -> float:
+        age_val = r.get("age_s", 0.0)
+        return float(age_val) if isinstance(age_val, (int, float)) else 0.0
+    running_tasks.sort(key=get_age_s, reverse=True)
     running_tasks = running_tasks[:10]
 
     # Resources
@@ -354,4 +363,4 @@ def aggregate(since: str = "1h", telemetry_dir: Optional[str] = None) -> Telemet
 
     # Return as dict for backward compatibility
     # TODO: Update callers to use TelemetryMetrics directly
-    return summary
+    return cast(TelemetryMetrics, summary)

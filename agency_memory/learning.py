@@ -6,7 +6,7 @@ Provides deterministic summarization of memory tag frequencies and patterns.
 import logging
 from collections import Counter, defaultdict
 from datetime import datetime
-from typing import Any, Dict, List
+from typing import Any, Dict, List, cast
 from shared.type_definitions.json import JSONValue
 from shared.models.learning import (
     LearningConsolidation, LearningInsight, PatternAnalysis,
@@ -44,16 +44,19 @@ def consolidate_learnings(memories: List[dict[str, JSONValue]]) -> Dict[str, JSO
         }
 
     # Initialize counters and analyzers
-    tag_counter = Counter()
-    content_types = Counter()
-    hourly_distribution = defaultdict(int)
-    daily_distribution = defaultdict(int)
+    tag_counter: Counter[str] = Counter()
+    content_types: Counter[str] = Counter()
+    hourly_distribution: defaultdict[int, int] = defaultdict(int)
+    daily_distribution: defaultdict[str, int] = defaultdict(int)
 
     # Process each memory
     for memory in memories:
         # Count tags
         tags = memory.get("tags", [])
-        tag_counter.update(tags)
+        if isinstance(tags, list):
+            # Filter to only string tags
+            string_tags = [str(tag) for tag in tags if isinstance(tag, str)]
+            tag_counter.update(string_tags)
 
         # Analyze content types
         content = memory.get("content", "")
@@ -62,7 +65,7 @@ def consolidate_learnings(memories: List[dict[str, JSONValue]]) -> Dict[str, JSO
 
         # Time pattern analysis
         timestamp_str = memory.get("timestamp", "")
-        if timestamp_str:
+        if isinstance(timestamp_str, str) and timestamp_str:
             try:
                 timestamp = datetime.fromisoformat(timestamp_str.replace("Z", "+00:00"))
                 hour = timestamp.hour
@@ -79,7 +82,13 @@ def consolidate_learnings(memories: List[dict[str, JSONValue]]) -> Dict[str, JSO
     # Calculate tag usage patterns
     tag_frequencies = dict(tag_counter)
     unique_tags = len(tag_frequencies)
-    avg_tags_per_memory = sum(len(m.get("tags", [])) for m in memories) / total_memories
+    # Calculate average tags per memory with type safety
+    total_tags = 0
+    for m in memories:
+        tags = m.get("tags", [])
+        if isinstance(tags, list):
+            total_tags += len(tags)
+    avg_tags_per_memory = total_tags / total_memories if total_memories > 0 else 0
 
     # Find peak usage times
     peak_hour = (
@@ -134,8 +143,8 @@ def consolidate_learnings(memories: List[dict[str, JSONValue]]) -> Dict[str, JSO
         unique_tags,
         top_tags,
         content_breakdown,
-        peak_hour,
-        peak_day
+        peak_hour if peak_hour is not None else 0,
+        peak_day if peak_day is not None else ""
     )
 
     # Build structured summary with Pydantic model
@@ -157,42 +166,54 @@ def consolidate_learnings(memories: List[dict[str, JSONValue]]) -> Dict[str, JSO
 
     # Flatten patterns for backward compatibility
     if 'patterns' in result and isinstance(result['patterns'], dict):
-        patterns = result['patterns']
-        if 'time_distribution' in patterns and isinstance(patterns['time_distribution'], dict):
+        patterns_dict = result['patterns']
+        patterns_result = patterns_dict.copy()  # Work with a copy
+
+        if 'time_distribution' in patterns_result and isinstance(patterns_result['time_distribution'], dict):
             # Hoist time distribution fields to patterns level
-            time_dist = patterns['time_distribution']
+            time_dist = patterns_result['time_distribution']
 
             # Fix hourly distribution keys - convert string keys back to integers
-            hourly_dist = time_dist.get('hourly', {})
-            if hourly_dist and isinstance(list(hourly_dist.keys())[0], str):
-                hourly_dist = {int(k): v for k, v in hourly_dist.items()}
+            hourly_dist_raw = time_dist.get('hourly', {})
+            processed_hourly_dist = {}
+            if isinstance(hourly_dist_raw, dict) and hourly_dist_raw:
+                for k, v in hourly_dist_raw.items():
+                    if isinstance(v, int):
+                        try:
+                            processed_hourly_dist[int(str(k))] = v
+                        except (ValueError, TypeError):
+                            pass
 
-            patterns['hourly_distribution'] = hourly_dist
-            patterns['daily_distribution'] = time_dist.get('daily', {})
-            patterns['peak_hour'] = time_dist.get('peak_hour')
-            patterns['peak_day'] = time_dist.get('peak_day')
-            del patterns['time_distribution']
+            patterns_result['hourly_distribution'] = cast(JSONValue, processed_hourly_dist)
+            patterns_result['daily_distribution'] = time_dist.get('daily', {})
+            patterns_result['peak_hour'] = time_dist.get('peak_hour')
+            patterns_result['peak_day'] = time_dist.get('peak_day')
+            del patterns_result['time_distribution']
+            result['patterns'] = patterns_result
 
-        if 'content_types' in patterns and isinstance(patterns['content_types'], dict):
+        if 'content_types' in patterns_result and isinstance(patterns_result['content_types'], dict):
             # Flatten content types and restore any missing legacy types
-            content_dict = patterns['content_types']
+            content_dict = patterns_result['content_types']
             flat_content = {}
-            for k, v in content_dict.items():
-                if k != 'total' and k != 'get_dominant_type':  # Skip methods
-                    flat_content[k] = v
+            if isinstance(content_dict, dict):
+                for k, v in content_dict.items():
+                    if k != 'total' and k != 'get_dominant_type':  # Skip methods
+                        flat_content[k] = v
 
-            # Add back legacy types for backward compatibility
-            if 'structured' not in flat_content:
-                flat_content['structured'] = content_breakdown.get('structured', 0)
-            if 'numeric' not in flat_content:
-                flat_content['numeric'] = content_breakdown.get('numeric', 0)
+                # Add back legacy types for backward compatibility
+                if 'structured' not in flat_content:
+                    flat_content['structured'] = content_breakdown.get('structured', 0)
+                if 'numeric' not in flat_content:
+                    flat_content['numeric'] = content_breakdown.get('numeric', 0)
 
-            patterns['content_types'] = flat_content
+                patterns_result['content_types'] = flat_content
+                result['patterns'] = patterns_result
 
     # Convert insights from list of objects to list of strings for backward compat
     if 'insights' in result and isinstance(result['insights'], list):
-        if result['insights'] and isinstance(result['insights'][0], dict):
-            result['insights'] = [i['description'] for i in result['insights']]
+        insights_list = result['insights']
+        if insights_list and isinstance(insights_list[0], dict):
+            result['insights'] = [i.get('description', '') for i in insights_list if isinstance(i, dict)]
 
     return result
 
@@ -304,7 +325,7 @@ def _generate_insights_models(
 
     # Content type insights
     if content_breakdown:
-        dominant_type = max(content_breakdown, key=content_breakdown.get)
+        dominant_type = max(content_breakdown.keys(), key=lambda k: content_breakdown[k])
         insights.append(LearningInsight(
             category="content",
             description=f"Dominant content type: {dominant_type}",
@@ -373,26 +394,42 @@ def generate_learning_report(
     report += f"- **Average Tags per Memory:** {analysis['avg_tags_per_memory']}\n\n"
 
     # Top tags
-    if analysis["top_tags"]:
+    top_tags = analysis.get("top_tags", [])
+    if isinstance(top_tags, list) and top_tags:
         report += "## Most Used Tags\n\n"
-        for tag_info in analysis["top_tags"][:5]:
-            report += f"- **{tag_info['tag']}:** {tag_info['count']} times\n"
+        for tag_info in top_tags[:5]:
+            if isinstance(tag_info, dict):
+                tag_name = tag_info.get('tag', 'unknown')
+                tag_count = tag_info.get('count', 0)
+                report += f"- **{tag_name}:** {tag_count} times\n"
         report += "\n"
 
     # Insights
-    if analysis["insights"]:
+    insights = analysis.get("insights", [])
+    if isinstance(insights, list) and insights:
         report += "## Key Insights\n\n"
-        for insight in analysis["insights"]:
-            report += f"- {insight}\n"
+        for insight in insights:
+            if isinstance(insight, str):
+                report += f"- {insight}\n"
         report += "\n"
 
     # Content analysis
-    content_types = analysis["patterns"].get("content_types", {})
-    if content_types:
+    patterns = analysis.get("patterns", {})
+    content_types: Dict[str, int] = {}
+    if isinstance(patterns, dict):
+        patterns_content_types = patterns.get("content_types", {})
+        if isinstance(patterns_content_types, dict):
+            # Ensure all values are integers
+            for k, v in patterns_content_types.items():
+                if isinstance(v, int):
+                    content_types[str(k)] = v
+
+    if isinstance(content_types, dict) and content_types:
         report += "## Content Analysis\n\n"
         for content_type, count in sorted(
-            content_types.items(), key=lambda x: x[1], reverse=True
+            content_types.items(), key=lambda x: x[1] if isinstance(x[1], int) else 0, reverse=True
         ):
-            report += f"- **{content_type.replace('_', ' ').title()}:** {count}\n"
+            if isinstance(count, int):
+                report += f"- **{str(content_type).replace('_', ' ').title()}:** {count}\n"
 
     return report
