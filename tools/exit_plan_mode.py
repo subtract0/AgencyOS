@@ -2,7 +2,7 @@ from agency_swarm.tools import BaseTool
 from pydantic import Field
 
 
-class ExitPlanMode(BaseTool):
+class ExitPlanMode(BaseTool):  # type: ignore[misc]
     """
     Use this tool when you are in plan mode and have finished presenting your plan and are ready to code. This will prompt the user to exit plan mode.
 

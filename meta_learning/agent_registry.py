@@ -13,7 +13,7 @@ from datetime import datetime
 from enum import Enum
 from pathlib import Path
 from typing import Dict, List, Optional, Any
-from shared.types.json import JSONValue
+from shared.type_definitions.json import JSONValue
 
 
 class AgentStatus(Enum):

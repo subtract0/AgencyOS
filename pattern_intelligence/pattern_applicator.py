@@ -10,7 +10,7 @@ The core intelligence engine that:
 
 import logging
 from typing import List, Dict, Any, Optional, Tuple
-from shared.types.json import JSONValue
+from shared.type_definitions.json import JSONValue
 from datetime import datetime
 import json
 

@@ -201,7 +201,7 @@ agency = Agency(
 import sys
 import argparse
 from typing import Any, Dict
-from shared.types.json import JSONValue
+from shared.type_definitions.json import JSONValue
 
 try:
     # Telemetry utilities for dashboard/tail subcommands

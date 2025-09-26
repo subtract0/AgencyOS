@@ -8,7 +8,7 @@ from agency_swarm.tools import BaseTool
 from pydantic import Field
 
 
-class HandoffContextRead(BaseTool):
+class HandoffContextRead(BaseTool):  # type: ignore[misc]
     """
     Read the most recent persisted ContextMessageHandoff payload(s) for a target agent
     from logs/handoffs/. Useful for consumers to retrieve mission context.

@@ -8,7 +8,7 @@ from agency_swarm.tools import BaseTool
 from pydantic import Field
 
 
-class WorkspaceSnapshot(BaseTool):
+class WorkspaceSnapshot(BaseTool):  # type: ignore[misc]
     """
     Create a reversible snapshot of one or more files within the repository root.
     Stores copies under logs/snapshots/<snapshot_id>/ with a manifest for undo.
@@ -44,7 +44,7 @@ class WorkspaceSnapshot(BaseTool):
         files_dir = target / "files"
         files_dir.mkdir(parents=True, exist_ok=True)
 
-        manifest = {
+        manifest = {  # type: ignore[var-annotated]
             "snapshot_id": snapshot_id,
             "repo_root": str(repo_root),
             "files": [],
@@ -64,7 +64,7 @@ class WorkspaceSnapshot(BaseTool):
         return f"Snapshot created: {snapshot_id} (files={len(norm_files)})"
 
 
-class WorkspaceUndo(BaseTool):
+class WorkspaceUndo(BaseTool):  # type: ignore[misc]
     """
     Restore files from a previously created snapshot.
     """
@@ -87,7 +87,7 @@ class WorkspaceUndo(BaseTool):
         except Exception as e:
             return f"Exit code: 1\nError: Corrupted manifest: {e}"
 
-        restored = []
+        restored: List[str] = []
         for entry in manifest.get("files", []):
             rel = Path(entry.get("path", ""))
             src = files_dir / rel

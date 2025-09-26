@@ -15,7 +15,7 @@ import json
 import math
 from datetime import datetime, timedelta
 from typing import Any, Dict, List, Optional, Set
-from shared.types.json import JSONValue
+from shared.type_definitions.json import JSONValue
 from collections import defaultdict, Counter
 from enum import Enum, IntEnum
 from dataclasses import dataclass, asdict

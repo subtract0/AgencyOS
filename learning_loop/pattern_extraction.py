@@ -17,7 +17,7 @@ import json
 import uuid
 from datetime import datetime
 from typing import Dict, List, Optional, Any, Union
-from shared.types.json import JSONValue
+from shared.type_definitions.json import JSONValue
 from dataclasses import dataclass, asdict
 from pathlib import Path
 

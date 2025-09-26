@@ -14,7 +14,7 @@ Adoption plan:
 from typing import List, Literal
 from pydantic import BaseModel, Field, ConfigDict
 
-from shared.types.json import JSONValue
+from shared.type_definitions.json import JSONValue
 
 
 CardType = Literal["error", "task", "pattern", "antipattern", "discovery"]

@@ -5,7 +5,7 @@ import json
 import os
 import sys
 from typing import Any, Dict
-from shared.types.json import JSONValue
+from shared.type_definitions.json import JSONValue
 
 from tools.telemetry.aggregator import aggregate
 

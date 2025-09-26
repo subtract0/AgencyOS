@@ -9,7 +9,7 @@ import json
 import os
 from datetime import datetime, timedelta
 from typing import Dict, Any, List, Optional
-from shared.types.json import JSONValue
+from shared.type_definitions.json import JSONValue
 from collections import defaultdict, Counter
 from dataclasses import dataclass
 

@@ -1,6 +1,6 @@
 import json
 from typing import List, Dict, Any
-from shared.types.json import JSONValue
+from shared.type_definitions.json import JSONValue
 
 from tools.kanban import adapters
 

@@ -12,7 +12,7 @@ import os
 from dataclasses import dataclass, asdict
 from datetime import datetime, timezone
 from typing import Any, Dict, List, Optional
-from shared.types.json import JSONValue
+from shared.type_definitions.json import JSONValue
 
 # Local telemetry aggregator (safe, stdlib)
 try:

@@ -5,13 +5,13 @@ from agency_swarm.tools import BaseTool
 from pydantic import Field
 import json
 import os
-from typing import List, Dict, Any, Optional
-from shared.types.json import JSONValue
+from typing import List, Dict, Any, Optional, Union, cast
+from shared.type_definitions.json import JSONValue
 from pathlib import Path
 from datetime import datetime
 
 
-class AnalyzeSession(BaseTool):
+class AnalyzeSession(BaseTool):  # type: ignore[misc]
     """
     Analyzes a session transcript file to extract patterns, tool usage, and outcomes.
 
@@ -81,18 +81,18 @@ class AnalyzeSession(BaseTool):
 
     def _analyze_tool_usage(self, session_data: Dict[str, JSONValue]) -> Dict[str, JSONValue]:
         """Analyze tool usage patterns from session data."""
-        entries = session_data.get("entries", [])
-        tool_counts = {}
-        tool_sequences = []
-        tool_errors = {}
+        entries = cast(List[Dict[str, JSONValue]], session_data.get("entries", []))
+        tool_counts: Dict[str, int] = {}
+        tool_sequences: List[str] = []
+        tool_errors: Dict[str, int] = {}
 
         for entry in entries:
-            tags = entry.get("tags", [])
-            content = entry.get("content", {})
+            tags = cast(List[str], entry.get("tags", []))
+            content = cast(Dict[str, JSONValue], entry.get("content", {}))
 
             # Count tool usage
             if "tool" in tags:
-                tool_name = content.get("tool_name", "unknown")
+                tool_name = cast(str, content.get("tool_name", "unknown"))
                 tool_counts[tool_name] = tool_counts.get(tool_name, 0) + 1
                 tool_sequences.append(tool_name)
 
@@ -119,21 +119,21 @@ class AnalyzeSession(BaseTool):
 
     def _analyze_error_patterns(self, session_data: Dict[str, JSONValue]) -> Dict[str, JSONValue]:
         """Analyze error patterns and resolution strategies."""
-        entries = session_data.get("entries", [])
-        errors = []
-        error_types = {}
-        resolution_patterns = []
+        entries = cast(List[Dict[str, JSONValue]], session_data.get("entries", []))
+        errors: List[Dict[str, Any]] = []
+        error_types: Dict[str, int] = {}
+        resolution_patterns: List[Dict[str, Any]] = []
 
         for i, entry in enumerate(entries):
-            tags = entry.get("tags", [])
-            content = entry.get("content", {})
+            tags = cast(List[str], entry.get("tags", []))
+            content = cast(Dict[str, JSONValue], entry.get("content", {}))
 
             if "error" in tags:
                 error_info = {
                     "timestamp": entry.get("timestamp"),
-                    "error_type": content.get("error_type", "unknown"),
+                    "error_type": cast(str, content.get("error_type", "unknown")),
                     "tool_name": content.get("tool_name"),
-                    "error_message": content.get("error_message", ""),
+                    "error_message": cast(str, content.get("error_message", "")),
                     "entry_index": i
                 }
                 errors.append(error_info)
@@ -158,14 +158,14 @@ class AnalyzeSession(BaseTool):
 
     def _analyze_workflow_patterns(self, session_data: Dict[str, JSONValue]) -> Dict[str, JSONValue]:
         """Analyze successful workflow sequences."""
-        entries = session_data.get("entries", [])
-        workflows = []
+        entries = cast(List[Dict[str, JSONValue]], session_data.get("entries", []))
+        workflows: List[List[Dict[str, JSONValue]]] = []
 
         # Identify workflow sequences by looking for task completion patterns
-        current_workflow = []
+        current_workflow: List[Dict[str, JSONValue]] = []
         for entry in entries:
-            tags = entry.get("tags", [])
-            content = entry.get("content", {})
+            tags = cast(List[str], entry.get("tags", []))
+            content = cast(Dict[str, JSONValue], entry.get("content", {}))
 
             if "task_start" in tags:
                 if current_workflow:
@@ -179,7 +179,7 @@ class AnalyzeSession(BaseTool):
                     current_workflow = []
 
         # Analyze successful workflows
-        successful_workflows = [w for w in workflows if any("success" in e.get("tags", []) for e in w)]
+        successful_workflows = [w for w in workflows if any("success" in cast(List[str], e.get("tags", [])) for e in w)]
 
         return {
             "workflow_analysis": {
@@ -192,11 +192,11 @@ class AnalyzeSession(BaseTool):
 
     def _analyze_agent_interactions(self, session_data: Dict[str, JSONValue]) -> Dict[str, JSONValue]:
         """Analyze patterns in agent-to-agent interactions."""
-        entries = session_data.get("entries", [])
-        interactions = {}
+        entries = cast(List[Dict[str, JSONValue]], session_data.get("entries", []))
+        interactions: Dict[str, int] = {}
 
         for entry in entries:
-            content = entry.get("content", {})
+            content = cast(Dict[str, JSONValue], entry.get("content", {}))
             if "agent_from" in content and "agent_to" in content:
                 interaction_key = f"{content['agent_from']} -> {content['agent_to']}"
                 interactions[interaction_key] = interactions.get(interaction_key, 0) + 1
@@ -211,11 +211,11 @@ class AnalyzeSession(BaseTool):
 
     def _analyze_task_outcomes(self, session_data: Dict[str, JSONValue]) -> Dict[str, JSONValue]:
         """Analyze task completion outcomes and success factors."""
-        entries = session_data.get("entries", [])
-        outcomes = {"success": 0, "failure": 0, "partial": 0}
+        entries = cast(List[Dict[str, JSONValue]], session_data.get("entries", []))
+        outcomes: Dict[str, int] = {"success": 0, "failure": 0, "partial": 0}
 
         for entry in entries:
-            tags = entry.get("tags", [])
+            tags = cast(List[str], entry.get("tags", []))
             if "task_complete" in tags:
                 if "success" in tags:
                     outcomes["success"] += 1
@@ -236,14 +236,14 @@ class AnalyzeSession(BaseTool):
 
     def _analyze_memory_usage(self, session_data: Dict[str, JSONValue]) -> Dict[str, JSONValue]:
         """Analyze memory storage and retrieval patterns."""
-        entries = session_data.get("entries", [])
-        memory_ops = {"store": 0, "retrieve": 0, "search": 0}
+        entries = cast(List[Dict[str, JSONValue]], session_data.get("entries", []))
+        memory_ops: Dict[str, int] = {"store": 0, "retrieve": 0, "search": 0}
 
         for entry in entries:
-            tags = entry.get("tags", [])
+            tags = cast(List[str], entry.get("tags", []))
             if "memory" in tags:
-                content = entry.get("content", {})
-                operation = content.get("operation", "unknown")
+                content = cast(Dict[str, JSONValue], entry.get("content", {}))
+                operation = cast(str, content.get("operation", "unknown"))
                 if operation in memory_ops:
                     memory_ops[operation] += 1
 
@@ -254,16 +254,17 @@ class AnalyzeSession(BaseTool):
             }
         }
 
-    def _find_resolution_pattern(self, entries: List[Dict[str, JSONValue]], error_index: int) -> Optional[Dict[str, JSONValue]]:
+    def _find_resolution_pattern(self, entries: List[Dict[str, JSONValue]], error_index: int) -> Optional[Dict[str, Any]]:
         """Find resolution patterns after an error."""
         # Look at next 3 entries for resolution
         resolution_window = entries[error_index + 1:error_index + 4]
 
         for entry in resolution_window:
-            tags = entry.get("tags", [])
+            tags = cast(List[str], entry.get("tags", []))
             if "success" in tags or "resolution" in tags:
+                content = cast(Dict[str, JSONValue], entry.get("content", {}))
                 return {
-                    "resolution_method": entry.get("content", {}).get("method", "unknown"),
+                    "resolution_method": cast(str, content.get("method", "unknown")),
                     "steps_to_resolution": len(resolution_window)
                 }
 

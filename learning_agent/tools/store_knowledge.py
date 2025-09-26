@@ -6,11 +6,11 @@ from pydantic import Field
 from agency_memory import VectorStore
 import json
 from typing import Dict, Any, List
-from shared.types.json import JSONValue
+from shared.type_definitions.json import JSONValue
 from datetime import datetime
 
 
-class StoreKnowledge(BaseTool):
+class StoreKnowledge(BaseTool):  # type: ignore[misc]
     """
     Stores structured learnings in the agency's VectorStore for future retrieval.
 

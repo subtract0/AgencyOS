@@ -4,7 +4,7 @@ Base pattern extractor interface and common functionality.
 
 from abc import ABC, abstractmethod
 from typing import List, Optional, Dict, Any
-from shared.types.json import JSONValue
+from shared.type_definitions.json import JSONValue
 import logging
 from datetime import datetime
 

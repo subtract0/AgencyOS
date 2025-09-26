@@ -11,7 +11,7 @@ import os
 from collections import defaultdict
 from pathlib import Path
 from typing import Dict, List, Set, Any
-from shared.types.json import JSONValue
+from shared.type_definitions.json import JSONValue
 
 class DictPatternAnalyzer(ast.NodeVisitor):
     """AST visitor to analyze Dict usage patterns."""

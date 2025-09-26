@@ -8,7 +8,7 @@ Automatically populates VectorStore during normal memory operations.
 import logging
 from datetime import datetime
 from typing import Any, Dict, List, Optional
-from shared.types.json import JSONValue
+from shared.type_definitions.json import JSONValue
 from .memory import MemoryStore
 from .vector_store import VectorStore, SimilarityResult
 import json

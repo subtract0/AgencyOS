@@ -6,12 +6,12 @@ from pydantic import Field
 import json
 import hashlib
 from datetime import datetime
-from typing import Dict, Any, List
-from shared.types.json import JSONValue
+from typing import Dict, Any, List, Optional, cast
+from shared.type_definitions.json import JSONValue
 import uuid
 
 
-class ConsolidateLearning(BaseTool):
+class ConsolidateLearning(BaseTool):  # type: ignore[misc]
     """
     Consolidates extracted insights into structured JSON learning objects.
 

@@ -12,7 +12,7 @@ import time
 import json
 from datetime import datetime
 from typing import Dict, List, Any
-from shared.types.json import JSONValue
+from shared.type_definitions.json import JSONValue
 
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 

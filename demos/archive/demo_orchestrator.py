@@ -21,7 +21,7 @@ import random
 import time
 from dataclasses import dataclass
 from typing import Any, Dict
-from shared.types.json import JSONValue
+from shared.type_definitions.json import JSONValue
 
 from shared.agent_context import AgentContext, create_agent_context
 from tools.orchestrator.scheduler import (

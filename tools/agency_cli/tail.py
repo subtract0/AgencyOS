@@ -4,7 +4,7 @@ import argparse
 import json
 import os
 from typing import Any, Dict, List
-from shared.types.json import JSONValue
+from shared.type_definitions.json import JSONValue
 
 from tools.telemetry.aggregator import list_events
 

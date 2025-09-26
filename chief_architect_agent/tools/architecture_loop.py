@@ -2,7 +2,7 @@ import os
 import json
 from datetime import datetime
 from typing import Any, Dict
-from shared.types.json import JSONValue
+from shared.type_definitions.json import JSONValue
 
 from agency_swarm.tools import BaseTool
 from pydantic import Field
@@ -11,7 +11,7 @@ from auditor_agent.ast_analyzer import ASTAnalyzer
 from agency_memory import VectorStore
 
 
-class RunArchitectureLoop(BaseTool):
+class RunArchitectureLoop(BaseTool):  # type: ignore[misc]
     target_path: str = Field(default=os.getcwd(), description="Root of the repository to audit")
     objective: str = Field(default="auto", description="Optional explicit objective override")
 

@@ -7,7 +7,7 @@ import json
 import sqlite3
 from dataclasses import dataclass, asdict
 from typing import List, Optional, Dict
-from shared.types.json import JSONValue
+from shared.type_definitions.json import JSONValue
 from datetime import datetime
 from pathlib import Path
 

@@ -3,7 +3,7 @@ from __future__ import annotations
 import copy
 import re
 from typing import Any, Dict
-from shared.types.json import JSONValue
+from shared.type_definitions.json import JSONValue
 from shared.models.telemetry import TelemetryEvent
 
 # Patterns for secret-like values

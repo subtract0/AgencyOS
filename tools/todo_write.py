@@ -24,7 +24,7 @@ class TodoItem(BaseModel):
     )
 
 
-class TodoWrite(BaseTool):
+class TodoWrite(BaseTool):  # type: ignore[misc]
     """
     Use this tool to create and manage a structured task list for your current coding session. This helps you track progress, organize complex tasks, and demonstrate thoroughness to the user.
     It also helps the user understand the progress of the task and overall progress of their requests.
@@ -102,9 +102,7 @@ class TodoWrite(BaseTool):
             # Format the response
             total_tasks = len(self.todos)
             completed_tasks = len([t for t in self.todos if t.status == "completed"])
-            in_progress_tasks = len(
-                [t for t in self.todos if t.status == "in_progress"]
-            )
+            in_progress_tasks = len([t for t in self.todos if t.status == "in_progress"])
             pending_tasks = len([t for t in self.todos if t.status == "pending"])
 
             result = f"Todo List Updated ({current_time[:19]})\n"

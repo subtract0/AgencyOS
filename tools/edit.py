@@ -8,7 +8,7 @@ from pydantic import Field
 from tools.read import _global_read_files
 
 
-class Edit(BaseTool):
+class Edit(BaseTool):  # type: ignore[misc]
     """
     Performs exact string replacements in files.
 

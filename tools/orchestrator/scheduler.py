@@ -9,7 +9,7 @@ import contextlib
 import uuid
 from datetime import datetime, timezone
 from typing import Any, Callable, Dict, List, Literal, Optional
-from shared.types.json import JSONValue
+from shared.type_definitions.json import JSONValue
 from shared.models.orchestrator import ExecutionMetrics
 
 from shared.agent_context import AgentContext  # type: ignore
