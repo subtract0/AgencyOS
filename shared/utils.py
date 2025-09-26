@@ -46,6 +46,6 @@ def silence_warnings_and_logs() -> None:
         def _noop_showwarning(*_args, **_kwargs):
             return None
 
-        warnings.showwarning = _noop_showwarning  # type: ignore[assignment]
+        warnings.showwarning = _noop_showwarning
     except Exception:
         pass

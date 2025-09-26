@@ -11,7 +11,7 @@ import time
 from datetime import datetime, timedelta
 from pathlib import Path
 
-def main():
+def main() -> int:
     """Launch the autonomous type safety migration."""
 
     print("=" * 60)
