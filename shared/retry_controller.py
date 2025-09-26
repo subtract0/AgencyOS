@@ -13,7 +13,7 @@ import threading
 import time
 from abc import ABC, abstractmethod
 from typing import Any, Callable, Optional, Dict, Union
-from shared.types.json import JSONValue
+from shared.type_definitions.json import JSONValue
 from functools import wraps
 
 

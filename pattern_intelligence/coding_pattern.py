@@ -8,7 +8,7 @@ that enables semantic search, application, and continuous improvement.
 
 from dataclasses import dataclass, field
 from typing import Any, Dict, List, Optional, Union
-from shared.types.json import JSONValue
+from shared.type_definitions.json import JSONValue
 from datetime import datetime
 import hashlib
 import json

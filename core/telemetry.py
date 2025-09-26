@@ -9,7 +9,7 @@ import glob
 import shutil
 from datetime import datetime, timedelta
 from typing import List, Optional
-from shared.types.json import JSONValue
+from shared.type_definitions.json import JSONValue
 from shared.models.telemetry import TelemetryEvent, EventType, EventSeverity
 from pathlib import Path
 

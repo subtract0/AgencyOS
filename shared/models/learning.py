@@ -5,7 +5,7 @@ Replaces Dict[str, Any] in learning consolidation and pattern analysis.
 
 from datetime import datetime
 from typing import Dict, List, Optional
-from shared.types.json import JSONValue
+from shared.type_definitions.json import JSONValue
 from pydantic import BaseModel, Field, field_validator, ConfigDict
 
 

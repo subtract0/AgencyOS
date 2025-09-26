@@ -13,7 +13,7 @@ import threading
 from datetime import datetime
 from pathlib import Path
 from typing import Dict, List, Optional, Any, Set, Callable
-from shared.types.json import JSONValue
+from shared.type_definitions.json import JSONValue
 from dataclasses import dataclass, asdict
 from watchdog.observers import Observer
 from watchdog.events import FileSystemEventHandler, FileModifiedEvent, FileCreatedEvent

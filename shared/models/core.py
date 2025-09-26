@@ -7,7 +7,7 @@ from datetime import datetime
 from typing import Optional, List, Union
 from enum import Enum
 from pydantic import BaseModel, Field, ConfigDict
-from shared.types.json import JSONValue
+from shared.type_definitions.json import JSONValue
 
 
 class HealthStatus(BaseModel):

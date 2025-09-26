@@ -6,7 +6,7 @@ Replaces Dict[str, Any] with concrete typed models.
 from datetime import datetime
 from enum import Enum
 from typing import List, Optional, Dict
-from shared.types.json import JSONValue
+from shared.type_definitions.json import JSONValue
 from pydantic import BaseModel, Field, field_validator, ConfigDict
 
 

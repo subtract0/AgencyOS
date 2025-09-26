@@ -5,7 +5,7 @@ Extracts functions, classes, and behavioral coverage metrics.
 
 import ast
 from typing import Dict, Any
-from shared.types.json import JSONValue
+from shared.type_definitions.json import JSONValue
 from pathlib import Path
 
 

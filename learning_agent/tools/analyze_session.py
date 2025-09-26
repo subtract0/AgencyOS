@@ -6,7 +6,7 @@ from pydantic import Field
 import json
 import os
 from typing import List, Dict, Any, Optional
-from shared.types.json import JSONValue
+from shared.type_definitions.json import JSONValue
 from pathlib import Path
 from datetime import datetime
 

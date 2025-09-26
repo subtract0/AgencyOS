@@ -10,7 +10,7 @@ import json
 import os
 from dataclasses import dataclass, asdict
 from typing import Any, Dict, List, Optional
-from shared.types.json import JSONValue
+from shared.type_definitions.json import JSONValue
 
 DEFAULT_PATH = os.path.join(os.getcwd(), "logs", "learning", "hints.json")
 

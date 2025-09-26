@@ -6,7 +6,7 @@ import re
 from dataclasses import dataclass
 from datetime import datetime, timedelta, timezone
 from typing import Any, Dict, Iterable, List, Optional
-from shared.types.json import JSONValue
+from shared.type_definitions.json import JSONValue
 
 # Public type alias for compatibility with prior stub
 Event = Dict[str, JSONValue]

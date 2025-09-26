@@ -8,7 +8,7 @@ See MCP_INTEGRATION_STANDARDS.md for detailed specifications.
 
 from datetime import datetime
 from typing import Any, Dict, List, Optional
-from shared.types.json import JSONValue
+from shared.type_definitions.json import JSONValue
 from abc import ABC, abstractmethod
 import os
 import logging

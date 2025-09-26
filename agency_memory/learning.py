@@ -7,7 +7,7 @@ import logging
 from collections import Counter, defaultdict
 from datetime import datetime
 from typing import Any, Dict, List
-from shared.types.json import JSONValue
+from shared.type_definitions.json import JSONValue
 from shared.models.learning import (
     LearningConsolidation, LearningInsight, PatternAnalysis,
     ContentTypeBreakdown, TimeDistribution
