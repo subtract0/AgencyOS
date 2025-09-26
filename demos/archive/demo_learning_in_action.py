@@ -12,6 +12,7 @@ import time
 import json
 from datetime import datetime
 from typing import Dict, List, Any
+from shared.types.json import JSONValue
 
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 
@@ -30,7 +31,7 @@ class LearningObserver:
         self.metrics_history = []
         self.current_cycle = 0
 
-    def record_learning_event(self, event_type: str, data: Dict[str, Any]):
+    def record_learning_event(self, event_type: str, data: Dict[str, JSONValue]):
         """Record a learning event with timestamp."""
         event = {
             "cycle": self.current_cycle,
@@ -90,7 +91,7 @@ def run_learning_cycle(
     meta_learning: MetaLearningEngine,
     intelligence_metrics: IntelligenceMetrics,
     observer: LearningObserver
-) -> Dict[str, Any]:
+) -> Dict[str, JSONValue]:
     """Run one complete learning cycle with detailed observation."""
 
     observer.start_cycle(cycle_number)

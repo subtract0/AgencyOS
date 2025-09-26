@@ -10,6 +10,7 @@ import tempfile
 import shutil
 from datetime import datetime
 from typing import Dict, Any, Optional
+from shared.types.json import JSONValue
 
 from agency_swarm.tools import BaseTool as Tool
 from pydantic import Field
@@ -115,7 +116,7 @@ The fix was correct but could not be committed.
 The Agency has successfully healed itself without human intervention!
 """
 
-    def _run_tests(self) -> Dict[str, Any]:
+    def _run_tests(self) -> Dict[str, JSONValue]:
         """Run the test suite and return results."""
         try:
             bash_tool = Bash(
@@ -157,7 +158,7 @@ The Agency has successfully healed itself without human intervention!
         except Exception as e:
             return f"❌ CRITICAL: Could not revert file: {e}"
 
-    def _commit_change(self) -> Dict[str, Any]:
+    def _commit_change(self) -> Dict[str, JSONValue]:
         """Commit the successful fix."""
         try:
             # Stage the changed file

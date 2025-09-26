@@ -1,0 +1,876 @@
+{
+  "summary": {
+    "files_analyzed": 52,
+    "patterns_found": 326,
+    "pattern_types": [
+      "function_arg",
+      "return_type",
+      "annotation"
+    ],
+    "top_structures": {
+      "Dict[str, Any]": 242,
+      "Dict": 30,
+      "Dict[str, LearningMetric]": 12,
+      "Dict[str, str]": 4,
+      "Dict[str, Pattern]": 1,
+      "Dict[str, Dict[str, Any]]": 9,
+      "Dict[str, List[float]]": 1,
+      "Dict[str, Set[str]]": 3,
+      "Dict[str, EnhancedMemoryRecord]": 1,
+      "Dict[MemoryType, Set[str]]": 1
+    }
+  },
+  "patterns": [
+    {
+      "file": "/Users/am/Code/Agency/agency.py",
+      "line": 213,
+      "class": null,
+      "function": "_render_dashboard_text",
+      "type": "function_arg",
+      "structure": "Dict[str, Any]"
+    },
+    {
+      "file": "/Users/am/Code/Agency/auditor_agent/auditor_agent.py",
+      "line": 72,
+      "class": "AnalyzeCodebase",
+      "function": "_analyze_necessary_compliance",
+      "type": "return_type",
+      "structure": "Dict"
+    },
+    {
+      "file": "/Users/am/Code/Agency/auditor_agent/auditor_agent.py",
+      "line": 72,
+      "class": "AnalyzeCodebase",
+      "function": "_analyze_necessary_compliance",
+      "type": "function_arg",
+      "structure": "Dict"
+    },
+    {
+      "file": "/Users/am/Code/Agency/auditor_agent/auditor_agent.py",
+      "line": 148,
+      "class": "AnalyzeCodebase",
+      "function": "_calculate_qt_score",
+      "type": "function_arg",
+      "structure": "Dict"
+    },
+    {
+      "file": "/Users/am/Code/Agency/auditor_agent/auditor_agent.py",
+      "line": 156,
+      "class": "AnalyzeCodebase",
+      "function": "_prioritize_violations",
+      "type": "function_arg",
+      "structure": "Dict"
+    },
+    {
+      "file": "/Users/am/Code/Agency/auditor_agent/auditor_agent.py",
+      "line": 156,
+      "class": "AnalyzeCodebase",
+      "function": "_prioritize_violations",
+      "type": "function_arg",
+      "structure": "Dict"
+    },
+    {
+      "file": "/Users/am/Code/Agency/auditor_agent/auditor_agent.py",
+      "line": 203,
+      "class": "AnalyzeCodebase",
+      "function": "_estimate_edge_case_coverage",
+      "type": "function_arg",
+      "structure": "Dict"
+    },
+    {
+      "file": "/Users/am/Code/Agency/auditor_agent/auditor_agent.py",
+      "line": 217,
+      "class": "AnalyzeCodebase",
+      "function": "_estimate_error_testing",
+      "type": "function_arg",
+      "structure": "Dict"
+    },
+    {
+      "file": "/Users/am/Code/Agency/auditor_agent/auditor_agent.py",
+      "line": 231,
+      "class": "AnalyzeCodebase",
+      "function": "_estimate_async_coverage",
+      "type": "function_arg",
+      "structure": "Dict"
+    },
+    {
+      "file": "/Users/am/Code/Agency/auditor_agent/ast_analyzer.py",
+      "line": 25,
+      "class": "ASTAnalyzer",
+      "function": "analyze_file",
+      "type": "return_type",
+      "structure": "Dict[str, Any]"
+    },
+    {
+      "file": "/Users/am/Code/Agency/auditor_agent/ast_analyzer.py",
+      "line": 54,
+      "class": "ASTAnalyzer",
+      "function": "analyze_directory",
+      "type": "return_type",
+      "structure": "Dict[str, Any]"
+    },
+    {
+      "file": "/Users/am/Code/Agency/tools/learning_dashboard.py",
+      "line": 70,
+      "class": "LearningDashboard",
+      "function": "generate_comprehensive_report",
+      "type": "return_type",
+      "structure": "Dict[str, Any]"
+    },
+    {
+      "file": "/Users/am/Code/Agency/tools/learning_dashboard.py",
+      "line": 109,
+      "class": "LearningDashboard",
+      "function": "_collect_all_metrics",
+      "type": "return_type",
+      "structure": "Dict[str, LearningMetric]"
+    },
+    {
+      "file": "/Users/am/Code/Agency/tools/learning_dashboard.py",
+      "line": 139,
+      "class": "LearningDashboard",
+      "function": "_collect_vector_store_metrics",
+      "type": "return_type",
+      "structure": "Dict[str, LearningMetric]"
+    },
+    {
+      "file": "/Users/am/Code/Agency/tools/learning_dashboard.py",
+      "line": 197,
+      "class": "LearningDashboard",
+      "function": "_collect_pattern_application_metrics",
+      "type": "return_type",
+      "structure": "Dict[str, LearningMetric]"
+    },
+    {
+      "file": "/Users/am/Code/Agency/tools/learning_dashboard.py",
+      "line": 245,
+      "class": "LearningDashboard",
+      "function": "_collect_learning_progression_metrics",
+      "type": "return_type",
+      "structure": "Dict[str, LearningMetric]"
+    },
+    {
+      "file": "/Users/am/Code/Agency/tools/learning_dashboard.py",
+      "line": 302,
+      "class": "LearningDashboard",
+      "function": "_collect_cross_session_metrics",
+      "type": "return_type",
+      "structure": "Dict[str, LearningMetric]"
+    },
+    {
+      "file": "/Users/am/Code/Agency/tools/learning_dashboard.py",
+      "line": 346,
+      "class": "LearningDashboard",
+      "function": "_collect_performance_metrics",
+      "type": "return_type",
+      "structure": "Dict[str, LearningMetric]"
+    },
+    {
+      "file": "/Users/am/Code/Agency/tools/learning_dashboard.py",
+      "line": 404,
+      "class": "LearningDashboard",
+      "function": "_is_recent_memory",
+      "type": "function_arg",
+      "structure": "Dict[str, Any]"
+    },
+    {
+      "file": "/Users/am/Code/Agency/tools/learning_dashboard.py",
+      "line": 415,
+      "class": "LearningDashboard",
+      "function": "_is_successful_application",
+      "type": "function_arg",
+      "structure": "Dict[str, Any]"
+    },
+    {
+      "file": "/Users/am/Code/Agency/tools/learning_dashboard.py",
+      "line": 488,
+      "class": "LearningDashboard",
+      "function": "_check_learning_alerts",
+      "type": "function_arg",
+      "structure": "Dict[str, LearningMetric]"
+    },
+    {
+      "file": "/Users/am/Code/Agency/tools/learning_dashboard.py",
+      "line": 550,
+      "class": "LearningDashboard",
+      "function": "_calculate_trends",
+      "type": "return_type",
+      "structure": "Dict[str, str]"
+    },
+    {
+      "file": "/Users/am/Code/Agency/tools/learning_dashboard.py",
+      "line": 550,
+      "class": "LearningDashboard",
+      "function": "_calculate_trends",
+      "type": "function_arg",
+      "structure": "Dict[str, LearningMetric]"
+    },
+    {
+      "file": "/Users/am/Code/Agency/tools/learning_dashboard.py",
+      "line": 586,
+      "class": "LearningDashboard",
+      "function": "_generate_learning_insights",
+      "type": "function_arg",
+      "structure": "Dict[str, LearningMetric]"
+    },
+    {
+      "file": "/Users/am/Code/Agency/tools/learning_dashboard.py",
+      "line": 586,
+      "class": "LearningDashboard",
+      "function": "_generate_learning_insights",
+      "type": "function_arg",
+      "structure": "Dict[str, str]"
+    },
+    {
+      "file": "/Users/am/Code/Agency/tools/learning_dashboard.py",
+      "line": 655,
+      "class": "LearningDashboard",
+      "function": "_calculate_system_health",
+      "type": "return_type",
+      "structure": "Dict[str, Any]"
+    },
+    {
+      "file": "/Users/am/Code/Agency/tools/learning_dashboard.py",
+      "line": 655,
+      "class": "LearningDashboard",
+      "function": "_calculate_system_health",
+      "type": "function_arg",
+      "structure": "Dict[str, LearningMetric]"
+    },
+    {
+      "file": "/Users/am/Code/Agency/tools/learning_dashboard.py",
+      "line": 719,
+      "class": "LearningDashboard",
+      "function": "_generate_improvement_recommendations",
+      "type": "function_arg",
+      "structure": "Dict[str, LearningMetric]"
+    },
+    {
+      "file": "/Users/am/Code/Agency/tools/learning_dashboard.py",
+      "line": 804,
+      "class": "LearningDashboard",
+      "function": "_create_executive_summary",
+      "type": "return_type",
+      "structure": "Dict[str, Any]"
+    },
+    {
+      "file": "/Users/am/Code/Agency/tools/learning_dashboard.py",
+      "line": 804,
+      "class": "LearningDashboard",
+      "function": "_create_executive_summary",
+      "type": "function_arg",
+      "structure": "Dict[str, Any]"
+    },
+    {
+      "file": "/Users/am/Code/Agency/tools/learning_dashboard.py",
+      "line": 804,
+      "class": "LearningDashboard",
+      "function": "_create_executive_summary",
+      "type": "function_arg",
+      "structure": "Dict[str, LearningMetric]"
+    },
+    {
+      "file": "/Users/am/Code/Agency/tools/analyze_type_patterns.py",
+      "line": 106,
+      "class": null,
+      "function": "analyze_actual_data_shapes",
+      "type": "return_type",
+      "structure": "Dict[str, Any]"
+    },
+    {
+      "file": "/Users/am/Code/Agency/tools/apply_and_verify_patch.py",
+      "line": 118,
+      "class": "ApplyAndVerifyPatch",
+      "function": "_run_tests",
+      "type": "return_type",
+      "structure": "Dict[str, Any]"
+    },
+    {
+      "file": "/Users/am/Code/Agency/tools/apply_and_verify_patch.py",
+      "line": 160,
+      "class": "ApplyAndVerifyPatch",
+      "function": "_commit_change",
+      "type": "return_type",
+      "structure": "Dict[str, Any]"
+    },
+    {
+      "file": "/Users/am/Code/Agency/tools/apply_and_verify_patch.py",
+      "line": 224,
+      "class": "ApplyAndVerifyPatch",
+      "function": "_log_successful_healing",
+      "type": "function_arg",
+      "structure": "Dict"
+    },
+    {
+      "file": "/Users/am/Code/Agency/tools/apply_and_verify_patch.py",
+      "line": 224,
+      "class": "ApplyAndVerifyPatch",
+      "function": "_log_successful_healing",
+      "type": "function_arg",
+      "structure": "Dict"
+    },
+    {
+      "file": "/Users/am/Code/Agency/tools/apply_and_verify_patch.py",
+      "line": 367,
+      "class": "AutonomousHealingOrchestrator",
+      "function": "_extract_problematic_code",
+      "type": "function_arg",
+      "structure": "Dict"
+    },
+    {
+      "file": "/Users/am/Code/Agency/tools/apply_and_verify_patch.py",
+      "line": 386,
+      "class": "AutonomousHealingOrchestrator",
+      "function": "_generate_simple_fix",
+      "type": "function_arg",
+      "structure": "Dict"
+    },
+    {
+      "file": "/Users/am/Code/Agency/core/patterns.py",
+      "line": 19,
+      "class": "Pattern",
+      "function": null,
+      "type": "annotation",
+      "structure": "Dict[str, Any]"
+    },
+    {
+      "file": "/Users/am/Code/Agency/core/patterns.py",
+      "line": 42,
+      "class": "UnifiedPatternStore",
+      "function": "__init__",
+      "type": "annotation",
+      "structure": "Dict[str, Pattern]"
+    },
+    {
+      "file": "/Users/am/Code/Agency/core/patterns.py",
+      "line": 190,
+      "class": "UnifiedPatternStore",
+      "function": "get_statistics",
+      "type": "return_type",
+      "structure": "Dict[str, Any]"
+    },
+    {
+      "file": "/Users/am/Code/Agency/core/patterns.py",
+      "line": 257,
+      "class": "UnifiedPatternStore",
+      "function": "_emit_telemetry",
+      "type": "function_arg",
+      "structure": "Dict[str, Any]"
+    },
+    {
+      "file": "/Users/am/Code/Agency/core/__init__.py",
+      "line": 80,
+      "class": "UnifiedCore",
+      "function": "detect_and_fix_errors",
+      "type": "return_type",
+      "structure": "Dict[str, Any]"
+    },
+    {
+      "file": "/Users/am/Code/Agency/core/__init__.py",
+      "line": 138,
+      "class": "UnifiedCore",
+      "function": "get_health_status",
+      "type": "return_type",
+      "structure": "Dict[str, Any]"
+    },
+    {
+      "file": "/Users/am/Code/Agency/core/__init__.py",
+      "line": 157,
+      "class": "UnifiedCore",
+      "function": "emit_event",
+      "type": "function_arg",
+      "structure": "Dict[str, Any]"
+    },
+    {
+      "file": "/Users/am/Code/Agency/core/__init__.py",
+      "line": 242,
+      "class": "UnifiedCore",
+      "function": "get_learning_metrics",
+      "type": "return_type",
+      "structure": "Dict[str, Any]"
+    },
+    {
+      "file": "/Users/am/Code/Agency/core/__init__.py",
+      "line": 256,
+      "class": "UnifiedCore",
+      "function": "learn_from_operation_result",
+      "type": "function_arg",
+      "structure": "Dict[str, Any]"
+    },
+    {
+      "file": "/Users/am/Code/Agency/core/__init__.py",
+      "line": 257,
+      "class": "UnifiedCore",
+      "function": "learn_from_operation_result",
+      "type": "function_arg",
+      "structure": "Dict[str, Any]"
+    },
+    {
+      "file": "/Users/am/Code/Agency/core/telemetry.py",
+      "line": 62,
+      "class": "SimpleTelemetry",
+      "function": "log",
+      "type": "function_arg",
+      "structure": "Dict[str, Any]"
+    },
+    {
+      "file": "/Users/am/Code/Agency/core/telemetry.py",
+      "line": 161,
+      "class": "SimpleTelemetry",
+      "function": "get_metrics",
+      "type": "return_type",
+      "structure": "Dict[str, Any]"
+    },
+    {
+      "file": "/Users/am/Code/Agency/core/telemetry.py",
+      "line": 311,
+      "class": null,
+      "function": "emit",
+      "type": "function_arg",
+      "structure": "Dict[str, Any]"
+    },
+    {
+      "file": "/Users/am/Code/Agency/core/unified_edit.py",
+      "line": 218,
+      "class": "UnifiedEdit",
+      "function": "validate_edit",
+      "type": "return_type",
+      "structure": "Dict[str, Any]"
+    },
+    {
+      "file": "/Users/am/Code/Agency/agency_memory/memory.py",
+      "line": 59,
+      "class": "InMemoryStore",
+      "function": "__init__",
+      "type": "annotation",
+      "structure": "Dict[str, Dict[str, Any]]"
+    },
+    {
+      "file": "/Users/am/Code/Agency/agency_memory/vector_store.py",
+      "line": 21,
+      "class": "SimilarityResult",
+      "function": null,
+      "type": "annotation",
+      "structure": "Dict[str, Any]"
+    },
+    {
+      "file": "/Users/am/Code/Agency/agency_memory/vector_store.py",
+      "line": 44,
+      "class": "VectorStore",
+      "function": "__init__",
+      "type": "annotation",
+      "structure": "Dict[str, List[float]]"
+    },
+    {
+      "file": "/Users/am/Code/Agency/agency_memory/vector_store.py",
+      "line": 45,
+      "class": "VectorStore",
+      "function": "__init__",
+      "type": "annotation",
+      "structure": "Dict[str, str]"
+    },
+    {
+      "file": "/Users/am/Code/Agency/agency_memory/vector_store.py",
+      "line": 46,
+      "class": "VectorStore",
+      "function": "__init__",
+      "type": "annotation",
+      "structure": "Dict[str, Dict[str, Any]]"
+    },
+    {
+      "file": "/Users/am/Code/Agency/agency_memory/vector_store.py",
+      "line": 126,
+      "class": "VectorStore",
+      "function": "add_memory",
+      "type": "function_arg",
+      "structure": "Dict[str, Any]"
+    },
+    {
+      "file": "/Users/am/Code/Agency/agency_memory/vector_store.py",
+      "line": 150,
+      "class": "VectorStore",
+      "function": "_extract_searchable_text",
+      "type": "function_arg",
+      "structure": "Dict[str, Any]"
+    },
+    {
+      "file": "/Users/am/Code/Agency/agency_memory/vector_store.py",
+      "line": 414,
+      "class": "VectorStore",
+      "function": "get_stats",
+      "type": "return_type",
+      "structure": "Dict[str, Any]"
+    },
+    {
+      "file": "/Users/am/Code/Agency/agency_memory/swarm_memory.py",
+      "line": 59,
+      "class": "SwarmMemoryStore",
+      "function": "__init__",
+      "type": "annotation",
+      "structure": "Dict[str, Dict[str, Any]]"
+    },
+    {
+      "file": "/Users/am/Code/Agency/agency_memory/swarm_memory.py",
+      "line": 60,
+      "class": "SwarmMemoryStore",
+      "function": "__init__",
+      "type": "annotation",
+      "structure": "Dict[str, Set[str]]"
+    },
+    {
+      "file": "/Users/am/Code/Agency/agency_memory/swarm_memory.py",
+      "line": 61,
+      "class": "SwarmMemoryStore",
+      "function": "__init__",
+      "type": "annotation",
+      "structure": "Dict[str, Dict[str, Any]]"
+    },
+    {
+      "file": "/Users/am/Code/Agency/agency_memory/swarm_memory.py",
+      "line": 62,
+      "class": "SwarmMemoryStore",
+      "function": "__init__",
+      "type": "annotation",
+      "structure": "Dict[str, Dict[str, Any]]"
+    },
+    {
+      "file": "/Users/am/Code/Agency/agency_memory/swarm_memory.py",
+      "line": 222,
+      "class": "SwarmMemoryStore",
+      "function": "get_agent_summary",
+      "type": "return_type",
+      "structure": "Dict[str, Any]"
+    },
+    {
+      "file": "/Users/am/Code/Agency/agency_memory/swarm_memory.py",
+      "line": 278,
+      "class": "SwarmMemoryStore",
+      "function": "get_swarm_overview",
+      "type": "return_type",
+      "structure": "Dict[str, Any]"
+    },
+    {
+      "file": "/Users/am/Code/Agency/agency_memory/swarm_memory.py",
+      "line": 392,
+      "class": "SwarmMemoryStore",
+      "function": "consolidate_agent_memories",
+      "type": "return_type",
+      "structure": "Dict[str, Any]"
+    },
+    {
+      "file": "/Users/am/Code/Agency/agency_memory/swarm_memory.py",
+      "line": 605,
+      "class": "SwarmMemory",
+      "function": "get_summary",
+      "type": "return_type",
+      "structure": "Dict[str, Any]"
+    },
+    {
+      "file": "/Users/am/Code/Agency/agency_memory/swarm_memory.py",
+      "line": 610,
+      "class": "SwarmMemory",
+      "function": "get_swarm_overview",
+      "type": "return_type",
+      "structure": "Dict[str, Any]"
+    },
+    {
+      "file": "/Users/am/Code/Agency/agency_memory/swarm_memory.py",
+      "line": 621,
+      "class": "SwarmMemory",
+      "function": "consolidate_memories",
+      "type": "return_type",
+      "structure": "Dict[str, Any]"
+    },
+    {
+      "file": "/Users/am/Code/Agency/agency_memory/memory_v2.py",
+      "line": 111,
+      "class": "EnhancedMemoryRecord",
+      "function": "to_dict",
+      "type": "return_type",
+      "structure": "Dict[str, Any]"
+    },
+    {
+      "file": "/Users/am/Code/Agency/agency_memory/memory_v2.py",
+      "line": 116,
+      "class": "EnhancedMemoryRecord",
+      "function": "from_dict",
+      "type": "function_arg",
+      "structure": "Dict[str, Any]"
+    },
+    {
+      "file": "/Users/am/Code/Agency/agency_memory/memory_v2.py",
+      "line": 370,
+      "class": "EnhancedMemoryStore",
+      "function": "get_memory_stats",
+      "type": "return_type",
+      "structure": "Dict[str, Any]"
+    },
+    {
+      "file": "/Users/am/Code/Agency/agency_memory/memory_v2.py",
+      "line": 385,
+      "class": "EnhancedInMemoryStore",
+      "function": "__init__",
+      "type": "annotation",
+      "structure": "Dict[str, EnhancedMemoryRecord]"
+    },
+    {
+      "file": "/Users/am/Code/Agency/agency_memory/memory_v2.py",
+      "line": 386,
+      "class": "EnhancedInMemoryStore",
+      "function": "__init__",
+      "type": "annotation",
+      "structure": "Dict[str, Set[str]]"
+    },
+    {
+      "file": "/Users/am/Code/Agency/agency_memory/memory_v2.py",
+      "line": 387,
+      "class": "EnhancedInMemoryStore",
+      "function": "__init__",
+      "type": "annotation",
+      "structure": "Dict[MemoryType, Set[str]]"
+    },
+    {
+      "file": "/Users/am/Code/Agency/agency_memory/memory_v2.py",
+      "line": 388,
+      "class": "EnhancedInMemoryStore",
+      "function": "__init__",
+      "type": "annotation",
+      "structure": "Dict[str, Set[str]]"
+    },
+    {
+      "file": "/Users/am/Code/Agency/agency_memory/memory_v2.py",
+      "line": 535,
+      "class": "EnhancedInMemoryStore",
+      "function": "get_memory_stats",
+      "type": "return_type",
+      "structure": "Dict[str, Any]"
+    },
+    {
+      "file": "/Users/am/Code/Agency/agency_memory/memory_v2.py",
+      "line": 629,
+      "class": "EnhancedInMemoryStore",
+      "function": "consolidate_agent_memories",
+      "type": "return_type",
+      "structure": "Dict[str, Any]"
+    },
+    {
+      "file": "/Users/am/Code/Agency/agency_memory/memory_v2.py",
+      "line": 873,
+      "class": "EnhancedSwarmMemory",
+      "function": "get_stats",
+      "type": "return_type",
+      "structure": "Dict[str, Any]"
+    },
+    {
+      "file": "/Users/am/Code/Agency/agency_memory/memory_v2.py",
+      "line": 878,
+      "class": "EnhancedSwarmMemory",
+      "function": "consolidate_memories",
+      "type": "return_type",
+      "structure": "Dict[str, Any]"
+    },
+    {
+      "file": "/Users/am/Code/Agency/agency_memory/memory_v2.py",
+      "line": 889,
+      "class": "EnhancedSwarmMemory",
+      "function": "get_swarm_overview",
+      "type": "return_type",
+      "structure": "Dict[str, Any]"
+    },
+    {
+      "file": "/Users/am/Code/Agency/agency_memory/memory_v2.py",
+      "line": 910,
+      "class": "EnhancedSwarmMemory",
+      "function": "create_episodic_memory",
+      "type": "function_arg",
+      "structure": "Dict[str, Any]"
+    },
+    {
+      "file": "/Users/am/Code/Agency/agency_memory/enhanced_memory_store.py",
+      "line": 34,
+      "class": "EnhancedMemoryStore",
+      "function": "__init__",
+      "type": "annotation",
+      "structure": "Dict[str, Dict[str, Any]]"
+    },
+    {
+      "file": "/Users/am/Code/Agency/agency_memory/enhanced_memory_store.py",
+      "line": 341,
+      "class": "EnhancedMemoryStore",
+      "function": "_is_successful_memory",
+      "type": "function_arg",
+      "structure": "Dict[str, Any]"
+    },
+    {
+      "file": "/Users/am/Code/Agency/agency_memory/enhanced_memory_store.py",
+      "line": 347,
+      "class": "EnhancedMemoryStore",
+      "function": "_is_resolved_error",
+      "type": "function_arg",
+      "structure": "Dict[str, Any]"
+    },
+    {
+      "file": "/Users/am/Code/Agency/agency_memory/enhanced_memory_store.py",
+      "line": 353,
+      "class": "EnhancedMemoryStore",
+      "function": "_check_learning_triggers",
+      "type": "function_arg",
+      "structure": "Dict[str, Any]"
+    },
+    {
+      "file": "/Users/am/Code/Agency/agency_memory/enhanced_memory_store.py",
+      "line": 385,
+      "class": "EnhancedMemoryStore",
+      "function": "get_vector_store_stats",
+      "type": "return_type",
+      "structure": "Dict[str, Any]"
+    },
+    {
+      "file": "/Users/am/Code/Agency/agency_memory/enhanced_memory_store.py",
+      "line": 393,
+      "class": "EnhancedMemoryStore",
+      "function": "optimize_vector_store",
+      "type": "return_type",
+      "structure": "Dict[str, Any]"
+    },
+    {
+      "file": "/Users/am/Code/Agency/agency_memory/enhanced_memory_store.py",
+      "line": 422,
+      "class": "EnhancedMemoryStore",
+      "function": "export_for_learning",
+      "type": "return_type",
+      "structure": "Dict[str, Any]"
+    },
+    {
+      "file": "/Users/am/Code/Agency/agency_memory/learning.py",
+      "line": 14,
+      "class": null,
+      "function": "consolidate_learnings",
+      "type": "return_type",
+      "structure": "Dict[str, Any]"
+    },
+    {
+      "file": "/Users/am/Code/Agency/agency_memory/learning.py",
+      "line": 164,
+      "class": null,
+      "function": "_generate_insights",
+      "type": "function_arg",
+      "structure": "Dict[str, int]"
+    },
+    {
+      "file": "/Users/am/Code/Agency/shared/retry_controller.py",
+      "line": 476,
+      "class": "RetryController",
+      "function": "get_statistics",
+      "type": "return_type",
+      "structure": "Dict[str, int]"
+    },
+    {
+      "file": "/Users/am/Code/Agency/shared/retry_controller.py",
+      "line": 511,
+      "class": "RetryController",
+      "function": "_record_memory_event",
+      "type": "function_arg",
+      "structure": "Dict[str, Any]"
+    },
+    {
+      "file": "/Users/am/Code/Agency/shared/agent_context.py",
+      "line": 33,
+      "class": "AgentContext",
+      "function": "__init__",
+      "type": "annotation",
+      "structure": "Dict[str, Any]"
+    },
+    {
+      "file": "/Users/am/Code/Agency/pattern_intelligence/pattern_store.py",
+      "line": 51,
+      "class": "PatternStore",
+      "function": "__init__",
+      "type": "annotation",
+      "structure": "Dict[str, CodingPattern]"
+    },
+    {
+      "file": "/Users/am/Code/Agency/pattern_intelligence/pattern_store.py",
+      "line": 309,
+      "class": "PatternStore",
+      "function": "get_stats",
+      "type": "return_type",
+      "structure": "Dict[str, Any]"
+    },
+    {
+      "file": "/Users/am/Code/Agency/pattern_intelligence/pattern_applicator.py",
+      "line": 171,
+      "class": "PatternApplicator",
+      "function": "auto_apply_pattern",
+      "type": "return_type",
+      "structure": "Dict[str, Any]"
+    },
+    {
+      "file": "/Users/am/Code/Agency/pattern_intelligence/pattern_applicator.py",
+      "line": 174,
+      "class": "PatternApplicator",
+      "function": "auto_apply_pattern",
+      "type": "function_arg",
+      "structure": "Dict[str, Any]"
+    },
+    {
+      "file": "/Users/am/Code/Agency/pattern_intelligence/pattern_applicator.py",
+      "line": 289,
+      "class": "PatternApplicator",
+      "function": "get_application_stats",
+      "type": "return_type",
+      "structure": "Dict[str, Any]"
+    }
+  ],
+  "data_shapes": {
+    "MemoryRecord": [
+      {
+        "key": "session_123",
+        "content": "Task completed",
+        "tags": [
+          "session",
+          "task"
+        ],
+        "timestamp": "2024-01-01T00:00:00",
+        "priority": "high",
+        "metadata": {
+          "agent": "code_agent"
+        }
+      }
+    ],
+    "LearningConsolidation": [
+      {
+        "summary": "Analyzed 100 memories",
+        "total_memories": 100,
+        "unique_tags": 25,
+        "avg_tags_per_memory": 3.5,
+        "tag_frequencies": {
+          "error": 10,
+          "success": 50
+        },
+        "patterns": {
+          "content_types": {
+            "text": 80,
+            "error": 20
+          },
+          "peak_hour": 14,
+          "peak_day": "Monday"
+        }
+      }
+    ],
+    "DashboardSummary": [
+      {
+        "metrics": {
+          "sessions_analyzed": 10,
+          "total_memories": 500,
+          "avg_memories_per_session": 50
+        },
+        "active_agents": [
+          "code_agent",
+          "auditor"
+        ],
+        "generated_at": "2024-01-01T00:00:00"
+      }
+    ]
+  }
+}

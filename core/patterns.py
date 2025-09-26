@@ -6,7 +6,8 @@ In-memory start with optional persistence to SQLite.
 import json
 import sqlite3
 from dataclasses import dataclass, asdict
-from typing import List, Dict, Any, Optional
+from typing import List, Optional, Dict
+from shared.types.json import JSONValue
 from datetime import datetime
 from pathlib import Path
 
@@ -16,7 +17,7 @@ class Pattern:
     """Represents a learned pattern from autonomous operations."""
     id: str
     pattern_type: str  # error_fix, optimization, refactoring, etc.
-    context: Dict[str, Any]
+    context: dict[str, JSONValue]
     solution: str
     success_rate: float
     usage_count: int
@@ -187,7 +188,7 @@ class UnifiedPatternStore:
 
         return pattern_id
 
-    def get_statistics(self) -> Dict[str, Any]:
+    def get_statistics(self) -> dict[str, JSONValue]:
         """
         Get store statistics.
 
@@ -254,7 +255,7 @@ class UnifiedPatternStore:
         else:
             return "general_transformation"
 
-    def _emit_telemetry(self, event: str, data: Dict[str, Any]):
+    def _emit_telemetry(self, event: str, data: dict[str, JSONValue]):
         """
         Emit telemetry event through unified system.
         """

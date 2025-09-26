@@ -13,6 +13,7 @@ import os
 import re
 import json
 from typing import List, Dict, Any, Optional
+from shared.types.json import JSONValue
 from datetime import datetime, timedelta
 import logging
 
@@ -362,7 +363,7 @@ class SessionPatternExtractor(BasePatternExtractor):
 
         return patterns
 
-    def _parse_session_file(self, file_path: str) -> Dict[str, Any]:
+    def _parse_session_file(self, file_path: str) -> Dict[str, JSONValue]:
         """Parse a session transcript file."""
         session_data = {
             'file_path': file_path,
@@ -428,7 +429,7 @@ class SessionPatternExtractor(BasePatternExtractor):
 
         return session_data
 
-    def _analyze_success_factors(self, successful_tasks: List[Dict[str, Any]]) -> Dict[str, Any]:
+    def _analyze_success_factors(self, successful_tasks: List[Dict[str, JSONValue]]) -> Dict[str, JSONValue]:
         """Analyze common factors in successful tasks."""
         factors = {
             'common_tools': [],
@@ -470,7 +471,7 @@ class SessionPatternExtractor(BasePatternExtractor):
 
         return factors
 
-    def _extract_problem_solving_approach(self, session_data: Dict[str, Any]) -> Optional[Dict[str, Any]]:
+    def _extract_problem_solving_approach(self, session_data: Dict[str, JSONValue]) -> Optional[Dict[str, JSONValue]]:
         """Extract problem-solving approach from session data."""
         content = session_data.get('content', '')
 
@@ -487,7 +488,7 @@ class SessionPatternExtractor(BasePatternExtractor):
 
         return None
 
-    def _extract_handoff_info(self, session_data: Dict[str, Any]) -> List[Dict[str, Any]]:
+    def _extract_handoff_info(self, session_data: Dict[str, JSONValue]) -> List[Dict[str, JSONValue]]:
         """Extract agent handoff information from session."""
         handoffs = []
         content = session_data.get('content', '')

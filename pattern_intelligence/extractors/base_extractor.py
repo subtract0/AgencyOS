@@ -4,6 +4,7 @@ Base pattern extractor interface and common functionality.
 
 from abc import ABC, abstractmethod
 from typing import List, Optional, Dict, Any
+from shared.types.json import JSONValue
 import logging
 from datetime import datetime
 
@@ -137,7 +138,7 @@ class BasePatternExtractor(ABC):
             logger.error(f"{self.source_name}: Pattern extraction failed: {e}")
             return []
 
-    def get_extraction_stats(self) -> Dict[str, Any]:
+    def get_extraction_stats(self) -> Dict[str, JSONValue]:
         """Get statistics about extracted patterns."""
         if not self.extracted_patterns:
             return {"total_patterns": 0, "message": "No patterns extracted yet"}
@@ -196,7 +197,7 @@ class BasePatternExtractor(ABC):
 
         return filtered_patterns
 
-    def analyze_success_factors(self) -> Dict[str, Any]:
+    def analyze_success_factors(self) -> Dict[str, JSONValue]:
         """Analyze what makes patterns successful."""
         if not self.extracted_patterns:
             return {"message": "No patterns to analyze"}

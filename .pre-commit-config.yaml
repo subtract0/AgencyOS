@@ -29,3 +29,11 @@ repos:
         pass_filenames: false
         always_run: true
         stages: [commit]
+
+      - id: no-dict-any
+        name: Ban Dict[str, Any]/dict[str, Any]
+        entry: python tools/quality/no_dict_any_check.py
+        language: python
+        pass_filenames: false
+        always_run: true
+        stages: [commit]

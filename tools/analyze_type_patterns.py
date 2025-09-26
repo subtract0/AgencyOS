@@ -11,13 +11,14 @@ import os
 from collections import defaultdict
 from pathlib import Path
 from typing import Dict, List, Set, Any
+from shared.types.json import JSONValue
 
 class DictPatternAnalyzer(ast.NodeVisitor):
     """AST visitor to analyze Dict usage patterns."""
 
     def __init__(self, filename: str):
         self.filename = filename
-        self.dict_patterns: List[Dict[str, Any]] = []
+        self.dict_patterns: List[dict[str, JSONValue]] = []
         self.current_function = None
         self.current_class = None
 
@@ -89,7 +90,7 @@ class DictPatternAnalyzer(ast.NodeVisitor):
         self.dict_patterns.append(pattern)
 
 
-def analyze_file(filepath: Path) -> List[Dict[str, Any]]:
+def analyze_file(filepath: Path) -> List[dict[str, JSONValue]]:
     """Analyze a single Python file for Dict patterns."""
     try:
         with open(filepath, 'r') as f:
@@ -103,7 +104,7 @@ def analyze_file(filepath: Path) -> List[Dict[str, Any]]:
         return []
 
 
-def analyze_actual_data_shapes() -> Dict[str, Any]:
+def analyze_actual_data_shapes() -> Dict[str, JSONValue]:
     """Analyze actual data shapes from runtime logs and test fixtures."""
     shapes = defaultdict(list)
 

@@ -9,8 +9,19 @@ import json
 import os
 from datetime import datetime, timedelta
 from typing import Dict, Any, List, Optional
+from shared.types.json import JSONValue
 import logging
 from collections import defaultdict
+from shared.models.patterns import (
+    HealingPattern,
+    PatternExtraction,
+    DataCollectionSummary,
+    SelfHealingEvent,
+    LearningObject,
+    PatternType,
+    ValidationStatus,
+    EventStatus
+)
 
 logger = logging.getLogger(__name__)
 
@@ -56,12 +67,12 @@ class SelfHealingPatternExtractor(BaseTool):
             # Collect data from various sources
             data_collection = self._collect_self_healing_data(time_boundary)
 
-            if not data_collection['total_events']:
+            if not data_collection.total_events:
                 return json.dumps({
                     "status": "no_data",
                     "message": "No self-healing events found in specified time window",
                     "time_window": self.time_window,
-                    "sources_checked": data_collection['sources_checked']
+                    "sources_checked": data_collection.sources_checked
                 }, indent=2)
 
             # Extract patterns
@@ -80,15 +91,15 @@ class SelfHealingPatternExtractor(BaseTool):
                 "extraction_timestamp": datetime.now().isoformat(),
                 "time_window": self.time_window,
                 "data_summary": {
-                    "total_events": data_collection['total_events'],
-                    "successful_events": data_collection['successful_events'],
-                    "sources_analyzed": data_collection['sources_checked'],
-                    "success_rate": data_collection['success_rate']
+                    "total_events": data_collection.total_events,
+                    "successful_events": data_collection.successful_events,
+                    "sources_analyzed": data_collection.sources_checked,
+                    "success_rate": data_collection.success_rate
                 },
                 "patterns_found": len(validated_patterns),
-                "patterns": validated_patterns,
+                "patterns": [p.model_dump() for p in validated_patterns],
                 "insights": insights,
-                "learning_objects": learning_objects,
+                "learning_objects": [lo.model_dump() for lo in learning_objects],
                 "recommendations": self._generate_recommendations(validated_patterns)
             }
 
@@ -112,42 +123,98 @@ class SelfHealingPatternExtractor(BaseTool):
         else:
             return timedelta(days=7)  # Default to 7 days
 
-    def _collect_self_healing_data(self, time_boundary: datetime) -> Dict[str, Any]:
+    def _collect_self_healing_data(self, time_boundary: datetime) -> DataCollectionSummary:
         """Collect self-healing data from various sources."""
-        data_collection = {
-            'events': [],
-            'sources_checked': [],
-            'total_events': 0,
-            'successful_events': 0,
-            'success_rate': 0.0
-        }
+        events_list = []
+        sources_checked = []
 
         if self.data_sources in ['all', 'logs']:
             log_data = self._collect_from_logs(time_boundary)
-            data_collection['events'].extend(log_data)
-            data_collection['sources_checked'].append('logs')
+            events_list.extend(log_data)
+            sources_checked.append('logs')
 
         if self.data_sources in ['all', 'telemetry']:
             telemetry_data = self._collect_from_telemetry(time_boundary)
-            data_collection['events'].extend(telemetry_data)
-            data_collection['sources_checked'].append('telemetry')
+            events_list.extend(telemetry_data)
+            sources_checked.append('telemetry')
 
         if self.data_sources in ['all', 'agent_memory']:
             memory_data = self._collect_from_agent_memory(time_boundary)
-            data_collection['events'].extend(memory_data)
-            data_collection['sources_checked'].append('agent_memory')
+            events_list.extend(memory_data)
+            sources_checked.append('agent_memory')
 
-        # Process collected data
-        data_collection['total_events'] = len(data_collection['events'])
-        successful_events = [e for e in data_collection['events'] if self._is_successful_event(e)]
-        data_collection['successful_events'] = len(successful_events)
+        # Process collected data and create structured events
+        structured_events = []
+        for event_data in events_list:
+            try:
+                structured_event = self._create_structured_event(event_data)
+                structured_events.append(structured_event)
+            except Exception as e:
+                logger.warning(f"Error structuring event: {e}")
+                continue
 
-        if data_collection['total_events'] > 0:
-            data_collection['success_rate'] = data_collection['successful_events'] / data_collection['total_events']
+        # Count successful events
+        successful_events = [e for e in structured_events if self._is_successful_structured_event(e)]
 
-        return data_collection
+        return DataCollectionSummary(
+            events=structured_events,
+            sources_checked=sources_checked,
+            total_events=len(structured_events),
+            successful_events=len(successful_events)
+        )
 
-    def _collect_from_logs(self, time_boundary: datetime) -> List[Dict[str, Any]]:
+    def _create_structured_event(self, event_data: Dict[str, JSONValue]) -> SelfHealingEvent:
+        """Create a structured SelfHealingEvent from raw event data."""
+        # Extract timestamp
+        timestamp_str = event_data.get('timestamp')
+        if timestamp_str:
+            try:
+                if isinstance(timestamp_str, str):
+                    timestamp = datetime.fromisoformat(timestamp_str.replace('Z', '+00:00'))
+                else:
+                    timestamp = timestamp_str if isinstance(timestamp_str, datetime) else datetime.now()
+            except:
+                timestamp = datetime.now()
+        else:
+            timestamp = datetime.now()
+
+        # Map status from string to EventStatus enum
+        status_str = event_data.get('status', 'pending').lower()
+        if status_str in ['success', 'successful']:
+            status = EventStatus.SUCCESS
+        elif status_str in ['resolved', 'completed']:
+            status = EventStatus.RESOLVED
+        elif status_str in ['failed', 'error']:
+            status = EventStatus.FAILED
+        else:
+            status = EventStatus.PENDING
+
+        return SelfHealingEvent(
+            event_id=event_data.get('event_id', f"event_{int(timestamp.timestamp())}"),
+            timestamp=timestamp,
+            source=event_data.get('source', 'unknown'),
+            event_type=event_data.get('event_type', 'unknown'),
+            status=status,
+            trigger_name=event_data.get('trigger_name'),
+            action_name=event_data.get('action_name'),
+            trigger_type=event_data.get('trigger_type'),
+            action_type=event_data.get('action_type'),
+            content=event_data.get('content'),
+            raw_line=event_data.get('raw_line'),
+            file=event_data.get('file'),
+            component=event_data.get('component'),
+            agent=event_data.get('agent'),
+            severity=event_data.get('severity'),
+            error_type=event_data.get('error_type'),
+            line_number=event_data.get('line_number'),
+            extracted_timestamp=event_data.get('extracted_timestamp')
+        )
+
+    def _is_successful_structured_event(self, event: SelfHealingEvent) -> bool:
+        """Check if structured event represents success."""
+        return event.status in [EventStatus.SUCCESS, EventStatus.SUCCESSFUL, EventStatus.RESOLVED, EventStatus.COMPLETED]
+
+    def _collect_from_logs(self, time_boundary: datetime) -> List[Dict[str, JSONValue]]:
         """Collect self-healing events from log files."""
         events = []
         logs_dir = os.path.join(os.getcwd(), "logs", "self_healing")
@@ -171,7 +238,7 @@ class SelfHealingPatternExtractor(BaseTool):
 
         return events
 
-    def _collect_from_telemetry(self, time_boundary: datetime) -> List[Dict[str, Any]]:
+    def _collect_from_telemetry(self, time_boundary: datetime) -> List[Dict[str, JSONValue]]:
         """Collect self-healing events from telemetry data."""
         events = []
         telemetry_dir = os.path.join(os.getcwd(), "logs", "telemetry")
@@ -198,7 +265,7 @@ class SelfHealingPatternExtractor(BaseTool):
 
         return events
 
-    def _collect_from_agent_memory(self, time_boundary: datetime) -> List[Dict[str, Any]]:
+    def _collect_from_agent_memory(self, time_boundary: datetime) -> List[Dict[str, JSONValue]]:
         """Collect self-healing events from agent memory/context."""
         events = []
 
@@ -222,7 +289,7 @@ class SelfHealingPatternExtractor(BaseTool):
 
         return events
 
-    def _parse_log_file(self, filepath: str, time_boundary: datetime) -> List[Dict[str, Any]]:
+    def _parse_log_file(self, filepath: str, time_boundary: datetime) -> List[Dict[str, JSONValue]]:
         """Parse log file for self-healing events."""
         events = []
 
@@ -248,7 +315,7 @@ class SelfHealingPatternExtractor(BaseTool):
 
         return events
 
-    def _parse_structured_log_line(self, line: str, time_boundary: datetime) -> Optional[Dict[str, Any]]:
+    def _parse_structured_log_line(self, line: str, time_boundary: datetime) -> Optional[Dict[str, JSONValue]]:
         """Parse structured log line for self-healing information."""
         try:
             # Look for timestamp
@@ -267,6 +334,7 @@ class SelfHealingPatternExtractor(BaseTool):
 
             # Extract key information
             event = {
+                'event_id': f"log_{int(datetime.now().timestamp())}",
                 'timestamp': timestamp_str or datetime.now().isoformat(),
                 'source': 'log_parsing',
                 'raw_line': line
@@ -300,7 +368,7 @@ class SelfHealingPatternExtractor(BaseTool):
         except Exception:
             return None
 
-    def _extract_healing_from_session(self, filepath: str) -> List[Dict[str, Any]]:
+    def _extract_healing_from_session(self, filepath: str) -> List[Dict[str, JSONValue]]:
         """Extract self-healing events from session transcript."""
         events = []
 
@@ -313,6 +381,7 @@ class SelfHealingPatternExtractor(BaseTool):
             for line in lines:
                 if any(keyword in line.lower() for keyword in ['self-healing', 'trigger', 'intelligent system', 'workflow']):
                     event = {
+                        'event_id': f"session_{int(datetime.now().timestamp())}",
                         'timestamp': datetime.now().isoformat(),
                         'source': 'session_transcript',
                         'file': os.path.basename(filepath),
@@ -326,7 +395,7 @@ class SelfHealingPatternExtractor(BaseTool):
 
         return events
 
-    def _is_self_healing_event(self, event: Dict[str, Any], time_boundary: datetime) -> bool:
+    def _is_self_healing_event(self, event: Dict[str, JSONValue], time_boundary: datetime) -> bool:
         """Check if event is related to self-healing and within time window."""
         # Check timestamp
         timestamp_str = event.get('timestamp')
@@ -344,7 +413,7 @@ class SelfHealingPatternExtractor(BaseTool):
 
         return any(keyword in text_content for keyword in healing_keywords)
 
-    def _is_successful_event(self, event: Dict[str, Any]) -> bool:
+    def _is_successful_event(self, event: Dict[str, JSONValue]) -> bool:
         """Determine if an event represents a successful self-healing action."""
         status = event.get('status', '').lower()
         if status in ['success', 'successful', 'resolved', 'completed']:
@@ -356,11 +425,11 @@ class SelfHealingPatternExtractor(BaseTool):
 
         return any(indicator in content for indicator in success_indicators)
 
-    def _extract_successful_patterns(self, data_collection: Dict[str, Any]) -> List[Dict[str, Any]]:
+    def _extract_successful_patterns(self, data_collection: DataCollectionSummary) -> List[HealingPattern]:
         """Extract patterns from successful self-healing events."""
         patterns = []
-        events = data_collection['events']
-        successful_events = [e for e in events if self._is_successful_event(e)]
+        events = data_collection.events
+        successful_events = [e for e in events if self._is_successful_structured_event(e)]
 
         if len(successful_events) < self.min_occurrences:
             return patterns
@@ -383,7 +452,7 @@ class SelfHealingPatternExtractor(BaseTool):
 
         return patterns
 
-    def _extract_trigger_action_patterns(self, events: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+    def _extract_trigger_action_patterns(self, events: List[SelfHealingEvent]) -> List[HealingPattern]:
         """Extract trigger-action correlation patterns."""
         patterns = []
 
@@ -391,8 +460,8 @@ class SelfHealingPatternExtractor(BaseTool):
         trigger_action_groups = defaultdict(list)
 
         for event in events:
-            trigger = event.get('trigger_name') or event.get('trigger_type', 'unknown')
-            action = event.get('action_name') or event.get('action_type', 'unknown')
+            trigger = event.trigger_name or event.trigger_type or 'unknown'
+            action = event.action_name or event.action_type or 'unknown'
 
             if trigger != 'unknown' and action != 'unknown':
                 key = f"{trigger}::{action}"
@@ -407,22 +476,23 @@ class SelfHealingPatternExtractor(BaseTool):
                 success_rate = len(combo_events) / len(events)  # Relative success
 
                 if success_rate >= self.success_threshold:
-                    patterns.append({
-                        'pattern_id': f'trigger_action_{trigger}_{action}',
-                        'pattern_type': 'trigger_action',
-                        'trigger': trigger,
-                        'action': action,
-                        'occurrences': len(combo_events),
-                        'success_rate': success_rate,
-                        'confidence': min(0.9, len(combo_events) / 10),
-                        'description': f'Trigger "{trigger}" successfully resolved by action "{action}"',
-                        'evidence': combo_events[:3],  # Sample evidence
-                        'effectiveness_score': success_rate * min(1.0, len(combo_events) / self.min_occurrences)
-                    })
+                    patterns.append(HealingPattern(
+                        pattern_id=f'trigger_action_{trigger}_{action}',
+                        pattern_type=PatternType.TRIGGER_ACTION,
+                        trigger=trigger,
+                        action=action,
+                        occurrences=len(combo_events),
+                        success_rate=success_rate,
+                        confidence=min(0.9, len(combo_events) / 10),
+                        description=f'Trigger "{trigger}" successfully resolved by action "{action}"',
+                        evidence=[e.model_dump() for e in combo_events[:3]],  # Sample evidence
+                        effectiveness_score=success_rate * min(1.0, len(combo_events) / self.min_occurrences),
+                        validation_status=ValidationStatus.PENDING
+                    ))
 
         return patterns
 
-    def _extract_context_patterns(self, events: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+    def _extract_context_patterns(self, events: List[SelfHealingEvent]) -> List[HealingPattern]:
         """Extract context-based success patterns."""
         patterns = []
 
@@ -433,14 +503,14 @@ class SelfHealingPatternExtractor(BaseTool):
             context_keys = []
 
             # Extract context information
-            if 'error_type' in event:
-                context_keys.append(f"error:{event['error_type']}")
-            if 'agent' in event:
-                context_keys.append(f"agent:{event['agent']}")
-            if 'component' in event:
-                context_keys.append(f"component:{event['component']}")
-            if 'severity' in event:
-                context_keys.append(f"severity:{event['severity']}")
+            if event.error_type:
+                context_keys.append(f"error:{event.error_type}")
+            if event.agent:
+                context_keys.append(f"agent:{event.agent}")
+            if event.component:
+                context_keys.append(f"component:{event.component}")
+            if event.severity:
+                context_keys.append(f"severity:{event.severity}")
 
             # Group by context combinations
             for context_key in context_keys:
@@ -452,21 +522,22 @@ class SelfHealingPatternExtractor(BaseTool):
                 success_rate = len(context_events) / len(events)
 
                 if success_rate >= self.success_threshold:
-                    patterns.append({
-                        'pattern_id': f'context_{context.replace(":", "_")}',
-                        'pattern_type': 'context',
-                        'context': context,
-                        'occurrences': len(context_events),
-                        'success_rate': success_rate,
-                        'confidence': min(0.8, len(context_events) / 8),
-                        'description': f'Successful resolution in context: {context}',
-                        'evidence': context_events[:2],
-                        'effectiveness_score': success_rate * min(1.0, len(context_events) / self.min_occurrences)
-                    })
+                    patterns.append(HealingPattern(
+                        pattern_id=f'context_{context.replace(":", "_")}',
+                        pattern_type=PatternType.CONTEXT,
+                        context=context,
+                        occurrences=len(context_events),
+                        success_rate=success_rate,
+                        confidence=min(0.8, len(context_events) / 8),
+                        description=f'Successful resolution in context: {context}',
+                        evidence=[e.model_dump() for e in context_events[:2]],
+                        effectiveness_score=success_rate * min(1.0, len(context_events) / self.min_occurrences),
+                        validation_status=ValidationStatus.PENDING
+                    ))
 
         return patterns
 
-    def _extract_timing_patterns(self, events: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+    def _extract_timing_patterns(self, events: List[SelfHealingEvent]) -> List[HealingPattern]:
         """Extract timing-based patterns."""
         patterns = []
 
@@ -474,51 +545,50 @@ class SelfHealingPatternExtractor(BaseTool):
         time_groups = defaultdict(list)
 
         for event in events:
-            timestamp_str = event.get('timestamp')
-            if timestamp_str:
-                try:
-                    timestamp = datetime.fromisoformat(timestamp_str.replace('Z', '+00:00'))
-                    hour = timestamp.hour
+            try:
+                timestamp = event.timestamp
+                hour = timestamp.hour
 
-                    # Group into time periods
-                    if 6 <= hour < 12:
-                        time_period = 'morning'
-                    elif 12 <= hour < 18:
-                        time_period = 'afternoon'
-                    elif 18 <= hour < 24:
-                        time_period = 'evening'
-                    else:
-                        time_period = 'night'
+                # Group into time periods
+                if 6 <= hour < 12:
+                    time_period = 'morning'
+                elif 12 <= hour < 18:
+                    time_period = 'afternoon'
+                elif 18 <= hour < 24:
+                    time_period = 'evening'
+                else:
+                    time_period = 'night'
 
-                    time_groups[time_period].append(event)
-                except:
-                    continue
+                time_groups[time_period].append(event)
+            except:
+                continue
 
         # Analyze time patterns
         for time_period, period_events in time_groups.items():
             if len(period_events) >= self.min_occurrences:
                 success_rate = len(period_events) / len(events)
 
-                patterns.append({
-                    'pattern_id': f'timing_{time_period}',
-                    'pattern_type': 'timing',
-                    'time_period': time_period,
-                    'occurrences': len(period_events),
-                    'success_rate': success_rate,
-                    'confidence': min(0.7, len(period_events) / 5),
-                    'description': f'Higher success rate during {time_period}',
-                    'evidence': period_events[:2],
-                    'effectiveness_score': success_rate * min(1.0, len(period_events) / self.min_occurrences)
-                })
+                patterns.append(HealingPattern(
+                    pattern_id=f'timing_{time_period}',
+                    pattern_type=PatternType.TIMING,
+                    time_period=time_period,
+                    occurrences=len(period_events),
+                    success_rate=success_rate,
+                    confidence=min(0.7, len(period_events) / 5),
+                    description=f'Higher success rate during {time_period}',
+                    evidence=[e.model_dump() for e in period_events[:2]],
+                    effectiveness_score=success_rate * min(1.0, len(period_events) / self.min_occurrences),
+                    validation_status=ValidationStatus.PENDING
+                ))
 
         return patterns
 
-    def _extract_sequence_patterns(self, events: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+    def _extract_sequence_patterns(self, events: List[SelfHealingEvent]) -> List[HealingPattern]:
         """Extract sequential action patterns."""
         patterns = []
 
         # Sort events by timestamp
-        sorted_events = sorted(events, key=lambda e: e.get('timestamp', ''))
+        sorted_events = sorted(events, key=lambda e: e.timestamp)
 
         # Look for action sequences (events within short time windows)
         sequence_window = timedelta(minutes=30)  # 30-minute window for sequences
@@ -526,12 +596,12 @@ class SelfHealingPatternExtractor(BaseTool):
 
         for i in range(len(sorted_events) - 1):
             try:
-                current_time = datetime.fromisoformat(sorted_events[i].get('timestamp', '').replace('Z', '+00:00'))
-                next_time = datetime.fromisoformat(sorted_events[i+1].get('timestamp', '').replace('Z', '+00:00'))
+                current_time = sorted_events[i].timestamp
+                next_time = sorted_events[i+1].timestamp
 
                 if next_time - current_time <= sequence_window:
-                    current_action = sorted_events[i].get('action_name') or sorted_events[i].get('action_type', '')
-                    next_action = sorted_events[i+1].get('action_name') or sorted_events[i+1].get('action_type', '')
+                    current_action = sorted_events[i].action_name or sorted_events[i].action_type or ''
+                    next_action = sorted_events[i+1].action_name or sorted_events[i+1].action_type or ''
 
                     if current_action and next_action:
                         sequence = f"{current_action} -> {next_action}"
@@ -552,44 +622,46 @@ class SelfHealingPatternExtractor(BaseTool):
             if len(seq_instances) >= self.min_occurrences:
                 avg_time_gap = sum(s['time_gap'] for s in seq_instances) / len(seq_instances)
 
-                patterns.append({
-                    'pattern_id': f'sequence_{sequence.replace(" -> ", "_to_")}',
-                    'pattern_type': 'sequence',
-                    'sequence': sequence,
-                    'occurrences': len(seq_instances),
-                    'average_time_gap': avg_time_gap,
-                    'confidence': min(0.8, len(seq_instances) / 6),
-                    'description': f'Successful action sequence: {sequence}',
-                    'evidence': seq_instances[:2],
-                    'effectiveness_score': len(seq_instances) / self.min_occurrences
-                })
+                patterns.append(HealingPattern(
+                    pattern_id=f'sequence_{sequence.replace(" -> ", "_to_")}',
+                    pattern_type=PatternType.SEQUENCE,
+                    sequence=sequence,
+                    occurrences=len(seq_instances),
+                    confidence=min(0.8, len(seq_instances) / 6),
+                    description=f'Successful action sequence: {sequence}',
+                    evidence=seq_instances[:2],
+                    effectiveness_score=len(seq_instances) / self.min_occurrences,
+                    validation_status=ValidationStatus.PENDING,
+                    success_rate=1.0  # Sequences from successful events
+                ))
 
         return patterns
 
-    def _validate_patterns(self, patterns: List[Dict[str, Any]], data_collection: Dict[str, Any]) -> List[Dict[str, Any]]:
+    def _validate_patterns(self, patterns: List[HealingPattern], data_collection: DataCollectionSummary) -> List[HealingPattern]:
         """Validate and score patterns based on confidence and effectiveness."""
         validated_patterns = []
 
         for pattern in patterns:
             # Calculate overall confidence score
-            base_confidence = pattern.get('confidence', 0)
-            effectiveness = pattern.get('effectiveness_score', 0)
-            occurrence_weight = min(1.0, pattern.get('occurrences', 0) / (self.min_occurrences * 2))
+            base_confidence = pattern.confidence
+            effectiveness = pattern.effectiveness_score
+            occurrence_weight = min(1.0, pattern.occurrences / (self.min_occurrences * 2))
 
             # Combined confidence score
             overall_confidence = (base_confidence * 0.4 + effectiveness * 0.4 + occurrence_weight * 0.2)
 
+            # Update the pattern with overall confidence
+            pattern.overall_confidence = overall_confidence
+
             if overall_confidence >= self.pattern_confidence:
-                pattern['overall_confidence'] = overall_confidence
-                pattern['validation_status'] = 'validated'
+                pattern.validation_status = ValidationStatus.VALIDATED
                 validated_patterns.append(pattern)
             else:
-                pattern['overall_confidence'] = overall_confidence
-                pattern['validation_status'] = 'insufficient_confidence'
+                pattern.validation_status = ValidationStatus.INSUFFICIENT_CONFIDENCE
 
         return validated_patterns
 
-    def _generate_actionable_insights(self, patterns: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+    def _generate_actionable_insights(self, patterns: List[Dict[str, JSONValue]]) -> List[Dict[str, JSONValue]]:
         """Generate actionable insights from validated patterns."""
         insights = []
 
@@ -610,8 +682,8 @@ class SelfHealingPatternExtractor(BaseTool):
                         'Create automated workflows for these successful patterns',
                         'Document these patterns as best practices'
                     ],
-                    'patterns': [p['pattern_id'] for p in type_patterns],
-                    'confidence': sum(p['overall_confidence'] for p in type_patterns) / len(type_patterns)
+                    'patterns': [p.pattern_id for p in type_patterns],
+                    'confidence': sum(p.overall_confidence for p in type_patterns) / len(type_patterns)
                 })
 
             elif pattern_type == 'context':
@@ -624,8 +696,8 @@ class SelfHealingPatternExtractor(BaseTool):
                         'Implement context-specific action selection',
                         'Monitor context changes for proactive interventions'
                     ],
-                    'patterns': [p['pattern_id'] for p in type_patterns],
-                    'confidence': sum(p['overall_confidence'] for p in type_patterns) / len(type_patterns)
+                    'patterns': [p.pattern_id for p in type_patterns],
+                    'confidence': sum(p.overall_confidence for p in type_patterns) / len(type_patterns)
                 })
 
             elif pattern_type == 'timing':
@@ -638,8 +710,8 @@ class SelfHealingPatternExtractor(BaseTool):
                         'Schedule maintenance during optimal time windows',
                         'Implement time-aware threshold adjustments'
                     ],
-                    'patterns': [p['pattern_id'] for p in type_patterns],
-                    'confidence': sum(p['overall_confidence'] for p in type_patterns) / len(type_patterns)
+                    'patterns': [p.pattern_id for p in type_patterns],
+                    'confidence': sum(p.overall_confidence for p in type_patterns) / len(type_patterns)
                 })
 
             elif pattern_type == 'sequence':
@@ -652,125 +724,123 @@ class SelfHealingPatternExtractor(BaseTool):
                         'Implement sequence-aware action scheduling',
                         'Monitor for sequence completion and optimization'
                     ],
-                    'patterns': [p['pattern_id'] for p in type_patterns],
-                    'confidence': sum(p['overall_confidence'] for p in type_patterns) / len(type_patterns)
+                    'patterns': [p.pattern_id for p in type_patterns],
+                    'confidence': sum(p.overall_confidence for p in type_patterns) / len(type_patterns)
                 })
 
         return insights
 
-    def _create_learning_objects(self, patterns: List[Dict[str, Any]], insights: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+    def _create_learning_objects(self, patterns: List[HealingPattern], insights: List[Dict[str, JSONValue]]) -> List[LearningObject]:
         """Create structured learning objects for VectorStore storage."""
         learning_objects = []
 
         for pattern in patterns:
-            learning_object = {
-                'learning_id': f"self_healing_pattern_{pattern['pattern_id']}_{int(datetime.now().timestamp())}",
-                'type': 'successful_pattern',
-                'category': 'self_healing',
-                'title': f"Self-Healing Pattern: {pattern['pattern_type'].title()}",
-                'description': pattern['description'],
-                'actionable_insight': self._create_actionable_insight_for_pattern(pattern),
-                'confidence': pattern['overall_confidence'],
-                'keywords': [
+            learning_object = LearningObject(
+                learning_id=f"self_healing_pattern_{pattern.pattern_id}_{int(datetime.now().timestamp())}",
+                type='successful_pattern',
+                category='self_healing',
+                title=f"Self-Healing Pattern: {pattern.pattern_type.value.title()}",
+                description=pattern.description,
+                actionable_insight=self._create_actionable_insight_for_pattern(pattern),
+                confidence=pattern.overall_confidence,
+                keywords=[
                     'self_healing',
-                    pattern['pattern_type'],
+                    pattern.pattern_type.value,
                     'successful_pattern',
                     'automation'
                 ],
-                'patterns': {
+                patterns={
                     'triggers': self._extract_pattern_triggers(pattern),
                     'actions': self._extract_pattern_actions(pattern),
                     'conditions': self._extract_pattern_conditions(pattern),
                     'outcomes': ['successful_resolution', 'pattern_validated']
                 },
-                'metadata': {
+                metadata={
                     'created_timestamp': datetime.now().isoformat(),
-                    'source_pattern_id': pattern['pattern_id'],
-                    'pattern_data': pattern,
+                    'source_pattern_id': pattern.pattern_id,
+                    'pattern_data': pattern.model_dump(),
                     'extraction_method': 'self_healing_pattern_extractor',
                     'time_window': self.time_window,
-                    'occurrences': pattern.get('occurrences', 0),
-                    'effectiveness_score': pattern.get('effectiveness_score', 0)
+                    'occurrences': pattern.occurrences,
+                    'effectiveness_score': pattern.effectiveness_score
                 },
-                'application_criteria': self._generate_application_criteria_for_pattern(pattern),
-                'success_metrics': [
-                    f"Pattern application success rate >= {pattern.get('success_rate', 0.8):.2f}",
+                application_criteria=self._generate_application_criteria_for_pattern(pattern),
+                success_metrics=[
+                    f"Pattern application success rate >= {pattern.success_rate:.2f}",
                     "Resolution time improvement",
                     "Reduced manual intervention needed"
                 ]
-            }
+            )
             learning_objects.append(learning_object)
 
         return learning_objects
 
-    def _create_actionable_insight_for_pattern(self, pattern: Dict[str, Any]) -> str:
+    def _create_actionable_insight_for_pattern(self, pattern: HealingPattern) -> str:
         """Create actionable insight text for a pattern."""
-        pattern_type = pattern['pattern_type']
+        pattern_type = pattern.pattern_type
 
-        if pattern_type == 'trigger_action':
-            return f"When trigger '{pattern['trigger']}' occurs, prioritize action '{pattern['action']}' for highest success rate ({pattern.get('success_rate', 0):.1%})"
-        elif pattern_type == 'context':
-            return f"In context '{pattern['context']}', current resolution approach shows {pattern.get('success_rate', 0):.1%} success rate - maintain and optimize this approach"
-        elif pattern_type == 'timing':
-            return f"Schedule self-healing actions during {pattern['time_period']} for optimal success rates"
-        elif pattern_type == 'sequence':
-            return f"Implement action sequence '{pattern['sequence']}' as a workflow template for consistent results"
+        if pattern_type == PatternType.TRIGGER_ACTION:
+            return f"When trigger '{pattern.trigger}' occurs, prioritize action '{pattern.action}' for highest success rate ({pattern.success_rate:.1%})"
+        elif pattern_type == PatternType.CONTEXT:
+            return f"In context '{pattern.context}', current resolution approach shows {pattern.success_rate:.1%} success rate - maintain and optimize this approach"
+        elif pattern_type == PatternType.TIMING:
+            return f"Schedule self-healing actions during {pattern.time_period} for optimal success rates"
+        elif pattern_type == PatternType.SEQUENCE:
+            return f"Implement action sequence '{pattern.sequence}' as a workflow template for consistent results"
         else:
-            return f"Apply this {pattern_type} pattern when similar conditions are detected"
+            return f"Apply this {pattern_type.value} pattern when similar conditions are detected"
 
-    def _extract_pattern_triggers(self, pattern: Dict[str, Any]) -> List[str]:
+    def _extract_pattern_triggers(self, pattern: HealingPattern) -> List[str]:
         """Extract trigger information from pattern."""
         triggers = []
-        if 'trigger' in pattern:
-            triggers.append(pattern['trigger'])
-        if 'context' in pattern:
-            triggers.append(f"context_match_{pattern['context']}")
-        if 'time_period' in pattern:
-            triggers.append(f"time_period_{pattern['time_period']}")
+        if pattern.trigger:
+            triggers.append(pattern.trigger)
+        if pattern.context:
+            triggers.append(f"context_match_{pattern.context}")
+        if pattern.time_period:
+            triggers.append(f"time_period_{pattern.time_period}")
         return triggers or ['pattern_conditions_met']
 
-    def _extract_pattern_actions(self, pattern: Dict[str, Any]) -> List[str]:
+    def _extract_pattern_actions(self, pattern: HealingPattern) -> List[str]:
         """Extract action information from pattern."""
         actions = []
-        if 'action' in pattern:
-            actions.append(pattern['action'])
-        if 'sequence' in pattern:
-            actions.extend(pattern['sequence'].split(' -> '))
+        if pattern.action:
+            actions.append(pattern.action)
+        if pattern.sequence:
+            actions.extend(pattern.sequence.split(' -> '))
         return actions or ['apply_pattern']
 
-    def _extract_pattern_conditions(self, pattern: Dict[str, Any]) -> List[str]:
+    def _extract_pattern_conditions(self, pattern: HealingPattern) -> List[str]:
         """Extract condition information from pattern."""
         conditions = []
-        if 'success_rate' in pattern:
-            conditions.append(f"success_rate >= {pattern['success_rate']:.2f}")
-        if 'occurrences' in pattern:
-            conditions.append(f"occurrences >= {pattern['occurrences']}")
+        conditions.append(f"success_rate >= {pattern.success_rate:.2f}")
+        conditions.append(f"occurrences >= {pattern.occurrences}")
         return conditions or ['pattern_validation_passed']
 
-    def _generate_application_criteria_for_pattern(self, pattern: Dict[str, Any]) -> List[str]:
+    def _generate_application_criteria_for_pattern(self, pattern: HealingPattern) -> List[str]:
         """Generate application criteria for pattern."""
         criteria = [
-            f"Pattern confidence >= {pattern['overall_confidence']:.2f}",
+            f"Pattern confidence >= {pattern.overall_confidence:.2f}",
             "Similar context or trigger detected",
             "No conflicting patterns active"
         ]
 
-        pattern_type = pattern['pattern_type']
-        if pattern_type == 'trigger_action':
-            criteria.append(f"Trigger type matches: {pattern['trigger']}")
-        elif pattern_type == 'context':
-            criteria.append(f"Context matches: {pattern['context']}")
-        elif pattern_type == 'timing':
-            criteria.append(f"Current time period: {pattern['time_period']}")
+        pattern_type = pattern.pattern_type
+        if pattern_type == PatternType.TRIGGER_ACTION:
+            criteria.append(f"Trigger type matches: {pattern.trigger}")
+        elif pattern_type == PatternType.CONTEXT:
+            criteria.append(f"Context matches: {pattern.context}")
+        elif pattern_type == PatternType.TIMING:
+            criteria.append(f"Current time period: {pattern.time_period}")
 
         return criteria
 
-    def _generate_recommendations(self, patterns: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+    def _generate_recommendations(self, patterns: List[HealingPattern]) -> List[Dict[str, JSONValue]]:
         """Generate specific recommendations based on patterns."""
         recommendations = []
 
         # High-confidence patterns get priority implementation
-        high_confidence_patterns = [p for p in patterns if p['overall_confidence'] > 0.8]
+        high_confidence_patterns = [p for p in patterns if p.overall_confidence > 0.8]
 
         if high_confidence_patterns:
             recommendations.append({

@@ -3,6 +3,7 @@ from __future__ import annotations
 import copy
 import re
 from typing import Any, Dict
+from shared.types.json import JSONValue
 from shared.models.telemetry import TelemetryEvent
 
 # Patterns for secret-like values
@@ -48,7 +49,7 @@ def _redact_any(val: Any) -> Any:
     return val
 
 
-def redact_event(event: Dict[str, Any]) -> Dict[str, Any]:
+def redact_event(event: Dict[str, JSONValue]) -> Dict[str, JSONValue]:
     """Redact sensitive material from a telemetry event.
 
     Rules:
@@ -64,7 +65,7 @@ def redact_event(event: Dict[str, Any]) -> Dict[str, Any]:
 
     def _walk(obj: Any) -> Any:
         if isinstance(obj, dict):
-            new: Dict[str, Any] = {}
+            new: Dict[str, JSONValue] = {}
             for k, v in obj.items():
                 if k.lower() in _SENSITIVE_KEYS:
                     new[k] = _REPLACEMENT

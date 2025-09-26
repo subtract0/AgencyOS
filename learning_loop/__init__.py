@@ -28,6 +28,7 @@ import threading
 import logging
 from datetime import datetime, timedelta
 from typing import Dict, List, Optional, Any, Callable
+from shared.types.json import JSONValue
 from pathlib import Path
 import yaml
 
@@ -139,7 +140,7 @@ class LearningLoop:
             ]
         })
 
-    def _load_config(self, config_path: Optional[str] = None) -> Dict[str, Any]:
+    def _load_config(self, config_path: Optional[str] = None) -> Dict[str, JSONValue]:
         """Load learning loop configuration from YAML file."""
         if config_path is None:
             config_path = "learning_config.yaml"
@@ -304,7 +305,7 @@ class LearningLoop:
             # Force stop
             self.is_running = False
 
-    def get_metrics(self) -> Dict[str, Any]:
+    def get_metrics(self) -> Dict[str, JSONValue]:
         """
         Get comprehensive learning loop metrics.
 

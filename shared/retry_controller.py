@@ -13,6 +13,7 @@ import threading
 import time
 from abc import ABC, abstractmethod
 from typing import Any, Callable, Optional, Dict, Union
+from shared.types.json import JSONValue
 from functools import wraps
 
 
@@ -508,7 +509,7 @@ class RetryController:
 
         return result[0]
 
-    def _record_memory_event(self, event_type: str, data: Dict[str, Any]) -> None:
+    def _record_memory_event(self, event_type: str, data: Dict[str, JSONValue]) -> None:
         """Record retry event in agent memory if context is available."""
         if self.agent_context and hasattr(self.agent_context, 'add_memory'):
             try:

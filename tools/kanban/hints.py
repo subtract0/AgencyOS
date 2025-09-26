@@ -10,14 +10,15 @@ import json
 import os
 from dataclasses import dataclass, asdict
 from typing import Any, Dict, List, Optional
+from shared.types.json import JSONValue
 
 DEFAULT_PATH = os.path.join(os.getcwd(), "logs", "learning", "hints.json")
 
 
 @dataclass
 class Hint:
-    match: Dict[str, Any]
-    action: Dict[str, Any]
+    match: Dict[str, JSONValue]
+    action: Dict[str, JSONValue]
     confidence: float = 0.5
 
     def to_dict(self) -> BaseResponse:

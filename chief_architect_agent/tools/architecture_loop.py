@@ -2,6 +2,7 @@ import os
 import json
 from datetime import datetime
 from typing import Any, Dict
+from shared.types.json import JSONValue
 
 from agency_swarm.tools import BaseTool
 from pydantic import Field
@@ -15,7 +16,7 @@ class RunArchitectureLoop(BaseTool):
     objective: str = Field(default="auto", description="Optional explicit objective override")
 
     def run(self) -> str:
-        findings: Dict[str, Any] = {"timestamp": datetime.now().isoformat()}
+        findings: Dict[str, JSONValue] = {"timestamp": datetime.now().isoformat()}
 
         analyzer = ASTAnalyzer()
         analysis = analyzer.analyze_directory(self.target_path)
@@ -44,8 +45,8 @@ class RunArchitectureLoop(BaseTool):
 
         return json.dumps(findings, indent=2)
 
-    def _detect_vectorstore_api_mismatches(self) -> Dict[str, Any]:
-        mismatches: Dict[str, Any] = {"issues": []}
+    def _detect_vectorstore_api_mismatches(self) -> Dict[str, JSONValue]:
+        mismatches: Dict[str, JSONValue] = {"issues": []}
         try:
             import inspect
             import agency_memory.vector_store as vs_mod
@@ -66,7 +67,7 @@ class RunArchitectureLoop(BaseTool):
             mismatches["error"] = str(e)
         return mismatches
 
-    def _choose_high_impact_target(self, findings: Dict[str, Any]) -> Dict[str, str]:
+    def _choose_high_impact_target(self, findings: Dict[str, JSONValue]) -> Dict[str, str]:
         issues = findings.get("api_mismatches", {}).get("issues", [])
         if any("VectorStore" in i for i in issues):
             return {

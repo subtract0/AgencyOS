@@ -8,7 +8,8 @@ import json
 import glob
 import shutil
 from datetime import datetime, timedelta
-from typing import Dict, Any, List, Optional
+from typing import List, Optional
+from shared.types.json import JSONValue
 from shared.models.telemetry import TelemetryEvent, EventType, EventSeverity
 from pathlib import Path
 
@@ -60,7 +61,7 @@ class SimpleTelemetry:
         except Exception:
             return False
 
-    def log(self, event: str, data: Dict[str, Any], level: str = "info"):
+    def log(self, event: str, data: dict[str, JSONValue], level: str = "info"):
         """
         Log a telemetry event to the unified sink.
 
@@ -128,7 +129,7 @@ class SimpleTelemetry:
     def query(self,
               event_filter: Optional[str] = None,
               since: Optional[datetime] = None,
-              limit: int = 100) -> List[Dict[str, Any]]:
+              limit: int = 100) -> List[dict[str, JSONValue]]:
         """
         Query recent telemetry events.
 
@@ -177,7 +178,7 @@ class SimpleTelemetry:
 
         return events
 
-    def get_metrics(self) -> Dict[str, Any]:
+    def get_metrics(self) -> dict[str, JSONValue]:
         """
         Get aggregated metrics from recent telemetry.
 
@@ -327,7 +328,7 @@ def get_telemetry() -> SimpleTelemetry:
     return _telemetry_instance
 
 
-def emit(event: str, data: Dict[str, Any] = None, level: str = "info"):
+def emit(event: str, data: dict[str, JSONValue] = None, level: str = "info"):
     """
     Convenience function to emit telemetry events.
 

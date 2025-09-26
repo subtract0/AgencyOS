@@ -33,6 +33,43 @@ from .context import (
     SessionMetadata,
     AgentState,
 )
+from .patterns import (
+    SessionInsight,
+    HealingPattern,
+    CrossSessionData,
+    PatternExtraction,
+    ToolExecutionResult,
+    ValidationOutcome,
+    TemporalPattern,
+    ContextFeatures,
+    PatternMatch,
+    LearningRecommendation,
+    ApplicationRecord,
+    LearningEffectiveness,
+    SelfHealingEvent,
+    DataCollectionSummary,
+    LearningObject,
+    PatternMatchSummary,
+    PatternType,
+    ValidationStatus,
+    ApplicationPriority,
+    EventStatus,
+)
+from .message import MessageEnvelope
+from .orchestrator import (
+    ExecutionMetrics,
+    TaskResultModel,
+    OrchestrationResultModel,
+    BackoffType,
+    FairnessType,
+    CancellationType,
+)
+from .kanban import (
+    KanbanCard,
+    KanbanFeed,
+    CardType,
+    CardStatus,
+)
 
 __all__ = [
     # Memory models
@@ -60,4 +97,39 @@ __all__ = [
     "AgentContextData",
     "SessionMetadata",
     "AgentState",
+    # Pattern models
+    "SessionInsight",
+    "HealingPattern",
+    "CrossSessionData",
+    "PatternExtraction",
+    "ToolExecutionResult",
+    "ValidationOutcome",
+    "TemporalPattern",
+    "ContextFeatures",
+    "PatternMatch",
+    "LearningRecommendation",
+    "ApplicationRecord",
+    "LearningEffectiveness",
+    "SelfHealingEvent",
+    "DataCollectionSummary",
+    "LearningObject",
+    "PatternMatchSummary",
+    "PatternType",
+    "ValidationStatus",
+    "ApplicationPriority",
+    "EventStatus",
+    # Messaging
+    "MessageEnvelope",
+    # Orchestrator models
+    "ExecutionMetrics",
+    "TaskResultModel",
+    "OrchestrationResultModel",
+    "BackoffType",
+    "FairnessType",
+    "CancellationType",
+    # Kanban models
+    "KanbanCard",
+    "KanbanFeed",
+    "CardType",
+    "CardStatus",
 ]

@@ -8,6 +8,7 @@ See MCP_INTEGRATION_STANDARDS.md for detailed specifications.
 
 from datetime import datetime
 from typing import Any, Dict, List, Optional
+from shared.types.json import JSONValue
 from abc import ABC, abstractmethod
 import os
 import logging
@@ -140,7 +141,7 @@ class Memory:
         tags = tags or []  # Default to empty list if not provided
         self._store.store(key, content, tags)
 
-    def search(self, tags: List[str]) -> List[Dict[str, Any]]:
+    def search(self, tags: List[str]) -> List[dict[str, JSONValue]]:
         """Search memories by tags."""
         result = self._store.search(tags)
         # Handle both MemorySearchResult and direct list returns
@@ -150,7 +151,7 @@ class Memory:
             # Already a list of dictionaries
             return result
 
-    def get(self, key: str) -> Optional[Dict[str, Any]]:
+    def get(self, key: str) -> Optional[dict[str, JSONValue]]:
         """Get a specific memory by key."""
         if hasattr(self._store, 'get'):
             record = self._store.get(key)
@@ -162,7 +163,7 @@ class Memory:
                 return memory
         return None
 
-    def get_all(self) -> List[Dict[str, Any]]:
+    def get_all(self) -> List[dict[str, JSONValue]]:
         """Get all memories."""
         result = self._store.get_all()
         # Handle both MemorySearchResult and direct list returns
@@ -173,7 +174,7 @@ class Memory:
             return result
 
 
-def create_session_transcript(memories: List[Dict[str, Any]], session_id: str) -> str:
+def create_session_transcript(memories: List[dict[str, JSONValue]], session_id: str) -> str:
     """
     Create a markdown session transcript from memories.
 

@@ -15,6 +15,7 @@ import json
 import math
 from datetime import datetime, timedelta
 from typing import Any, Dict, List, Optional, Set
+from shared.types.json import JSONValue
 from collections import defaultdict, Counter
 from enum import Enum, IntEnum
 from dataclasses import dataclass, asdict
@@ -108,12 +109,12 @@ class EnhancedMemoryRecord:
     def namespaced_key(self) -> str:
         return f"{self.metadata.agent_id}:{self.metadata.key}"
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> Dict[str, JSONValue]:
         """Convert to dictionary for storage."""
         return {"metadata": asdict(self.metadata), "content": asdict(self.content)}
 
     @classmethod
-    def from_dict(cls, data: Dict[str, Any]) -> "EnhancedMemoryRecord":
+    def from_dict(cls, data: Dict[str, JSONValue]) -> "EnhancedMemoryRecord":
         """Create from dictionary."""
         metadata = MemoryMetadata(**data["metadata"])
         content = MemoryContent(**data["content"])
@@ -367,7 +368,7 @@ class EnhancedMemoryStore(ABC):
         pass
 
     @abstractmethod
-    def get_memory_stats(self, agent_id: Optional[str] = None) -> Dict[str, Any]:
+    def get_memory_stats(self, agent_id: Optional[str] = None) -> Dict[str, JSONValue]:
         """Get memory statistics."""
         pass
 
@@ -532,7 +533,7 @@ class EnhancedInMemoryStore(EnhancedMemoryStore):
         logger.debug(f"Removed memory: {namespaced_key}")
         return True
 
-    def get_memory_stats(self, agent_id: Optional[str] = None) -> Dict[str, Any]:
+    def get_memory_stats(self, agent_id: Optional[str] = None) -> Dict[str, JSONValue]:
         """Get comprehensive memory statistics."""
         if agent_id:
             # Agent-specific stats
@@ -626,7 +627,7 @@ class EnhancedInMemoryStore(EnhancedMemoryStore):
         logger.info(f"Pruned {pruned_count} memories for agent {agent_id}")
         return pruned_count
 
-    def consolidate_agent_memories(self, agent_id: str) -> Dict[str, Any]:
+    def consolidate_agent_memories(self, agent_id: str) -> Dict[str, JSONValue]:
         """Consolidate agent memories using semantic clustering."""
         agent_memories = self.get_agent_memories(agent_id)
 
@@ -835,7 +836,7 @@ class EnhancedSwarmMemory:
         min_importance: float = 0.0,
         limit: int = 50,
         agent_id: Optional[str] = None,
-    ) -> List[Dict[str, Any]]:
+    ) -> List[Dict[str, JSONValue]]:
         """
         Search memories with advanced filtering.
 
@@ -870,12 +871,12 @@ class EnhancedSwarmMemory:
 
         return results
 
-    def get_stats(self, agent_id: Optional[str] = None) -> Dict[str, Any]:
+    def get_stats(self, agent_id: Optional[str] = None) -> Dict[str, JSONValue]:
         """Get memory statistics."""
         effective_agent_id = agent_id or self.agent_id
         return self._store.get_memory_stats(effective_agent_id)
 
-    def consolidate_memories(self, agent_id: Optional[str] = None) -> Dict[str, Any]:
+    def consolidate_memories(self, agent_id: Optional[str] = None) -> Dict[str, JSONValue]:
         """Consolidate agent memories using semantic clustering."""
         effective_agent_id = agent_id or self.agent_id
         if hasattr(self._store, "consolidate_agent_memories"):
@@ -886,7 +887,7 @@ class EnhancedSwarmMemory:
                 "message": "Store does not support consolidation",
             }
 
-    def get_swarm_overview(self) -> Dict[str, Any]:
+    def get_swarm_overview(self) -> Dict[str, JSONValue]:
         """Get overview of entire swarm memory state."""
         return self._store.get_memory_stats()
 
@@ -907,7 +908,7 @@ class EnhancedSwarmMemory:
     def create_episodic_memory(
         self,
         key: str,
-        event: Dict[str, Any],
+        event: Dict[str, JSONValue],
         tags: List[str],
         agent_id: Optional[str] = None,
     ) -> str:

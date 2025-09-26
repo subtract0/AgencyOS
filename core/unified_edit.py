@@ -5,7 +5,8 @@ Single entry point for all file modification operations.
 
 import os
 import json
-from typing import List, Dict, Any, Optional, Union
+from typing import List, Dict, Optional, Union
+from shared.types.json import JSONValue
 from pathlib import Path
 
 
@@ -220,7 +221,7 @@ class UnifiedEdit:
         file_path: str,
         old_string: str,
         new_string: str
-    ) -> Dict[str, Any]:
+    ) -> dict[str, JSONValue]:
         """
         Validate an edit before applying it.
 
@@ -280,8 +281,8 @@ class UnifiedEdit:
 
     def batch_edit(
         self,
-        operations: List[Dict[str, Any]]
-    ) -> List[Dict[str, Any]]:
+        operations: List[dict[str, JSONValue]]
+    ) -> List[dict[str, JSONValue]]:
         """
         Perform batch edit operations across multiple files.
 

@@ -6,6 +6,7 @@ from pydantic import Field
 from agency_memory import VectorStore
 import json
 from typing import Dict, Any, List
+from shared.types.json import JSONValue
 from datetime import datetime
 
 
@@ -49,7 +50,7 @@ class StoreKnowledge(BaseTool):
         except Exception as e:
             return f"Error storing knowledge: {str(e)}"
 
-    def _store_single_learning(self, learning_data: Dict[str, Any], vector_store: VectorStore) -> str:
+    def _store_single_learning(self, learning_data: Dict[str, JSONValue], vector_store: VectorStore) -> str:
         """Store a single learning object."""
         try:
             # Extract learning objects (handle both single learning and consolidated format)
@@ -90,7 +91,7 @@ class StoreKnowledge(BaseTool):
         except Exception as e:
             return f"Error in single learning storage: {str(e)}"
 
-    def _store_batch_learnings(self, learning_data: Dict[str, Any], vector_store: VectorStore) -> str:
+    def _store_batch_learnings(self, learning_data: Dict[str, JSONValue], vector_store: VectorStore) -> str:
         """Store multiple learning objects in batch mode."""
         try:
             learning_objects = learning_data.get("learning_objects", [])
@@ -125,7 +126,7 @@ class StoreKnowledge(BaseTool):
         except Exception as e:
             return f"Error in batch learning storage: {str(e)}"
 
-    def _update_existing_learning(self, learning_data: Dict[str, Any], vector_store: VectorStore) -> str:
+    def _update_existing_learning(self, learning_data: Dict[str, JSONValue], vector_store: VectorStore) -> str:
         """Update an existing learning object."""
         try:
             learning_id = learning_data.get("learning_id")
@@ -173,7 +174,7 @@ class StoreKnowledge(BaseTool):
         except Exception as e:
             return f"Error updating learning: {str(e)}"
 
-    def _store_learning_object(self, learning_obj: Dict[str, Any], vector_store: VectorStore, update_mode: bool = False) -> bool:
+    def _store_learning_object(self, learning_obj: Dict[str, JSONValue], vector_store: VectorStore, update_mode: bool = False) -> bool:
         """Store a single learning object in the vector store."""
         try:
             # Generate embedding text from key fields
@@ -214,7 +215,7 @@ class StoreKnowledge(BaseTool):
             print(f"Error storing learning object: {e}")
             return False
 
-    def _create_embedding_text(self, learning_obj: Dict[str, Any]) -> str:
+    def _create_embedding_text(self, learning_obj: Dict[str, JSONValue]) -> str:
         """Create text for embedding generation from learning object."""
         # Combine key textual fields for embedding
         text_parts = []
@@ -263,7 +264,7 @@ class StoreKnowledge(BaseTool):
 
         return " | ".join(text_parts)
 
-    def _get_storage_stats(self, vector_store: VectorStore) -> Dict[str, Any]:
+    def _get_storage_stats(self, vector_store: VectorStore) -> Dict[str, JSONValue]:
         """Get statistics about stored learnings."""
         try:
             # Get all learnings in the namespace

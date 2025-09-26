@@ -4,11 +4,13 @@ Replaces Dict[str, Any] in dashboard and reporting functions.
 """
 
 from datetime import datetime
-from typing import Dict, List, Optional, Any
-from pydantic import BaseModel, Field, field_validator
+from typing import Dict, List, Optional
+from shared.types.json import JSONValue
+from pydantic import BaseModel, Field, field_validator, ConfigDict
 
 
 class SessionSummary(BaseModel):
+    model_config = ConfigDict(extra="forbid")
     """Summary of a single session."""
     session_id: str
     start_time: datetime
@@ -40,6 +42,7 @@ class SessionSummary(BaseModel):
 
 
 class AgentActivity(BaseModel):
+    model_config = ConfigDict(extra="forbid")
     """Activity summary for a specific agent."""
     agent_id: str
     agent_type: str
@@ -73,6 +76,7 @@ class AgentActivity(BaseModel):
 
 
 class DashboardMetrics(BaseModel):
+    model_config = ConfigDict(extra="forbid")
     """Core metrics for dashboard display."""
     sessions_analyzed: int = 0
     total_memories: int = 0
@@ -96,6 +100,7 @@ class DashboardMetrics(BaseModel):
 
 
 class DashboardSummary(BaseModel):
+    model_config = ConfigDict(extra="forbid")
     """
     Complete dashboard summary.
     Replaces Dict[str, Any] returned from dashboard functions.
@@ -103,7 +108,7 @@ class DashboardSummary(BaseModel):
     metrics: DashboardMetrics = Field(default_factory=DashboardMetrics)
     active_sessions: List[SessionSummary] = Field(default_factory=list)
     agent_activities: Dict[str, AgentActivity] = Field(default_factory=dict)
-    recent_errors: List[Dict[str, Any]] = Field(default_factory=list)
+    recent_errors: List[Dict[str, JSONValue]] = Field(default_factory=list)
     performance_trends: Dict[str, List[float]] = Field(default_factory=dict)
     alerts: List[str] = Field(default_factory=list)
     generated_at: datetime = Field(default_factory=datetime.now)
@@ -138,7 +143,7 @@ class DashboardSummary(BaseModel):
         """Check if there are any alerts."""
         return len(self.alerts) > 0
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> Dict[str, JSONValue]:
         """Convert to dictionary for backward compatibility."""
         return self.model_dump(mode='json')
 

@@ -161,10 +161,29 @@ jobs:
           echo "- Constitutional Law #2: Strict typing enforcement active" >> $GITHUB_STEP_SUMMARY
           echo "⚠️ Type violations are being tracked for remediation" >> $GITHUB_STEP_SUMMARY
 
+  dict-any-ban:
+    name: Dict[Any] Ban
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Run no-dict-any checker
+        run: |
+          python tools/quality/no_dict_any_check.py
+
   # Gate job that ensures all tests pass
   ci-gate:
     name: CI Gate
-    needs: [test, lint, type-check]
+    needs: [test, lint, type-check, dict-any-ban]
     runs-on: ubuntu-latest
     if: always()
 

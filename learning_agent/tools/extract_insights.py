@@ -4,6 +4,7 @@ Extract actionable insights from session analysis.
 from agency_swarm.tools import BaseTool
 from pydantic import Field
 from typing import Dict, Any, List
+from shared.types.json import JSONValue
 import json
 import re
 from datetime import datetime
@@ -70,7 +71,7 @@ class ExtractInsights(BaseTool):
         except Exception as e:
             return f"Error extracting insights: {str(e)}"
 
-    def _extract_tool_insights(self, analysis_data: Dict[str, Any]) -> List[Dict[str, Any]]:
+    def _extract_tool_insights(self, analysis_data: Dict[str, JSONValue]) -> List[Dict[str, JSONValue]]:
         """Extract insights about tool usage patterns."""
         tool_analysis = analysis_data.get("tool_analysis", {})
         insights = []
@@ -123,7 +124,7 @@ class ExtractInsights(BaseTool):
 
         return insights
 
-    def _extract_error_insights(self, analysis_data: Dict[str, Any]) -> List[Dict[str, Any]]:
+    def _extract_error_insights(self, analysis_data: Dict[str, JSONValue]) -> List[Dict[str, JSONValue]]:
         """Extract insights about error patterns and resolution strategies."""
         error_analysis = analysis_data.get("error_analysis", {})
         insights = []
@@ -175,7 +176,7 @@ class ExtractInsights(BaseTool):
 
         return insights
 
-    def _extract_workflow_insights(self, analysis_data: Dict[str, Any]) -> List[Dict[str, Any]]:
+    def _extract_workflow_insights(self, analysis_data: Dict[str, JSONValue]) -> List[Dict[str, JSONValue]]:
         """Extract insights about successful workflow patterns."""
         workflow_analysis = analysis_data.get("workflow_analysis", {})
         insights = []
@@ -220,7 +221,7 @@ class ExtractInsights(BaseTool):
 
         return insights
 
-    def _extract_optimization_insights(self, analysis_data: Dict[str, Any]) -> List[Dict[str, Any]]:
+    def _extract_optimization_insights(self, analysis_data: Dict[str, JSONValue]) -> List[Dict[str, JSONValue]]:
         """Extract general optimization insights."""
         insights = []
 

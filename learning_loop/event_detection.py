@@ -13,6 +13,7 @@ import threading
 from datetime import datetime
 from pathlib import Path
 from typing import Dict, List, Optional, Any, Set, Callable
+from shared.types.json import JSONValue
 from dataclasses import dataclass, asdict
 from watchdog.observers import Observer
 from watchdog.events import FileSystemEventHandler, FileModifiedEvent, FileCreatedEvent
@@ -34,9 +35,9 @@ class Event:
     """Base event class for all detected events."""
     type: str
     timestamp: datetime
-    metadata: Dict[str, Any]
+    metadata: Dict[str, JSONValue]
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> Dict[str, JSONValue]:
         """Convert event to dictionary for serialization."""
         return {
             "type": self.type,
@@ -45,7 +46,7 @@ class Event:
         }
 
     @classmethod
-    def from_dict(cls, data: Dict[str, Any]) -> "Event":
+    def from_dict(cls, data: Dict[str, JSONValue]) -> "Event":
         """Create event from dictionary."""
         return cls(
             type=data["type"],

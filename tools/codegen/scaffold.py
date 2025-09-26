@@ -7,6 +7,7 @@ import dataclasses
 import os
 import re
 from typing import Dict, List, Optional
+from shared.types.json import JSONValue
 
 
 @dataclasses.dataclass
@@ -36,6 +37,7 @@ TODO: Add implementation details.
 from __future__ import annotations
 
 from typing import Any, Dict, List, Optional
+from shared.types.json import JSONValue
 
 
 class {{class_name}}:
@@ -46,7 +48,7 @@ class {{class_name}}:
         # TODO: Add initialization logic
         pass
 
-    def run(self, **params: Any) -> Dict[str, Any]:
+    def run(self, **params: Any) -> Dict[str, JSONValue]:
         """
         Execute {{name}} operation.
 
@@ -152,7 +154,7 @@ TEMPLATES = {
 }
 
 
-def scaffold_module(template: str, name: str, out_dir: str, params: Optional[Dict[str, Any]] = None) -> List[CreatedFile]:
+def scaffold_module(template: str, name: str, out_dir: str, params: Optional[Dict[str, JSONValue]] = None) -> List[CreatedFile]:
     """
     Create module scaffold from template.
 
@@ -234,7 +236,7 @@ def _to_class_name(name: str) -> str:
     return ''.join(word.capitalize() for word in words if word)
 
 
-def _render_template(template: str, variables: Dict[str, Any]) -> str:
+def _render_template(template: str, variables: Dict[str, JSONValue]) -> str:
     """Simple template rendering with {{var}} placeholders."""
     result = template
     for key, value in variables.items():

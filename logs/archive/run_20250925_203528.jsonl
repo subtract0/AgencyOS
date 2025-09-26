@@ -1,0 +1,6 @@
+{"ts": "2025-09-25T20:35:28.143242Z", "run_id": "20250925_203528", "level": "info", "event": "retention_applied", "data": {"archived_count": 1, "remaining_runs": 10}}
+{"ts": "2025-09-25T20:35:28.211457Z", "run_id": "20250925_203528", "level": "info", "event": "demo_started", "data": {"timestamp": "2025-09-25T20:35:28.211443"}}
+{"ts": "2025-09-25T20:35:28.211570Z", "run_id": "20250925_203528", "level": "info", "event": "component_initialized", "data": {"components": ["healer", "telemetry", "patterns"]}}
+{"ts": "2025-09-25T20:35:28.211984Z", "run_id": "20250925_203528", "level": "info", "event": "pattern_store.pattern_added", "data": {"id": "demo_pattern_001", "type": "error_fix", "tags": ["NoneType", "null_check", "demo"]}}
+{"ts": "2025-09-25T20:35:28.212261Z", "run_id": "20250925_203528", "level": "info", "event": "self_healing.errors_detected", "data": {"count": 1, "types": ["NoneType"]}}
+{"ts": "2025-09-25T20:35:28.212331Z", "run_id": "20250925_203528", "level": "info", "event": "errors_detected", "data": {"count": 1, "types": ["NoneType"]}}

@@ -9,6 +9,8 @@ import contextlib
 import uuid
 from datetime import datetime, timezone
 from typing import Any, Callable, Dict, List, Literal, Optional
+from shared.types.json import JSONValue
+from shared.models.orchestrator import ExecutionMetrics
 
 from shared.agent_context import AgentContext  # type: ignore
 
@@ -23,7 +25,7 @@ def _telemetry_enabled() -> bool:
     return v not in {"0", "false", "no"}
 
 
-def _telemetry_emit(event: Dict[str, Any]) -> None:
+def _telemetry_emit(event: Dict[str, JSONValue]) -> None:
     """Append a JSONL telemetry event. Fail-safe and non-blocking best-effort.
 
     Event schema (subset):
@@ -76,7 +78,7 @@ class OrchestrationPolicy:
 class TaskSpec:
     agent_factory: Callable[[AgentContext], Any]
     prompt: str
-    params: Optional[Dict[str, Any]] = None
+    params: Optional[Dict[str, JSONValue]] = None
     id: Optional[str] = None
 
 
@@ -88,15 +90,15 @@ class TaskResult:
     started_at: float
     finished_at: float
     attempts: int
-    artifacts: Optional[Dict[str, Any]]
+    artifacts: JSONValue | None
     errors: Optional[List[str]]
 
 
 @dataclasses.dataclass
 class OrchestrationResult:
     tasks: List[TaskResult]
-    metrics: Dict[str, Any]
-    merged: Dict[str, Any]
+    metrics: ExecutionMetrics
+    merged: Dict[str, JSONValue]
 
 
 class _Scheduler:
@@ -169,7 +171,7 @@ class _Scheduler:
                 errors=[f"Agent factory failed: {str(e)}"],
             )
 
-        async def _attempt_once() -> Dict[str, Any]:
+        async def _attempt_once() -> Dict[str, JSONValue]:
             # Agents may expose either run(prompt, **params) or run(spec.prompt, **params)
             import inspect
             params = spec.params or {}
@@ -217,7 +219,7 @@ class _Scheduler:
                             usage = artifacts["data"].get("usage")
                             model = artifacts["data"].get("model", model)
 
-                    ev: Dict[str, Any] = {
+                    ev: Dict[str, JSONValue] = {
                         "type": "task_finished",
                         "id": task_id,
                         "agent": agent_name,
@@ -334,10 +336,11 @@ async def run_parallel(ctx: AgentContext, specs: List[TaskSpec], policy: Orchest
 
     results = await asyncio.gather(*[_wrapped(s) for s in specs])
     finished = time.time()
-    metrics = {
-        "wall_time": finished - started,
-        "tasks": len(results),
-    }
+    metrics = ExecutionMetrics(
+        wall_time=finished - started,
+        tasks=len(results),
+        additional={},
+    )
 
     _telemetry_emit({
         "type": "orchestrator_finished",

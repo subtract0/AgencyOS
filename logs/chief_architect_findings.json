@@ -1,8 +1,8 @@
 {
-  "timestamp": "2025-09-23T20:57:14.047447",
+  "timestamp": "2025-09-25T23:59:06.955881",
   "audit": {
-    "total_behaviors": 546,
-    "total_tests": 792
+    "total_behaviors": 1040,
+    "total_tests": 897
   },
   "vector_store_stats": {
     "total_memories": 0,
@@ -10,7 +10,7 @@
     "embedding_provider": null,
     "embedding_available": false,
     "has_embeddings": false,
-    "last_updated": "2025-09-23T20:57:15.121618"
+    "last_updated": "2025-09-25T23:59:08.183867"
   },
   "api_mismatches": {
     "issues": [],

@@ -5,8 +5,9 @@ Replaces Dict[str, Any] in agent context management.
 
 from datetime import datetime
 from enum import Enum
-from typing import Dict, List, Optional, Any
-from pydantic import BaseModel, Field, field_validator
+from typing import Dict, List, Optional
+from shared.types.json import JSONValue
+from pydantic import BaseModel, Field, field_validator, ConfigDict
 
 
 class AgentStatus(str, Enum):
@@ -30,6 +31,7 @@ class TaskStatus(str, Enum):
 
 
 class SessionMetadata(BaseModel):
+    model_config = ConfigDict(extra="forbid")
     """Metadata for an agent session."""
     session_id: str
     start_time: datetime = Field(default_factory=datetime.now)
@@ -38,7 +40,7 @@ class SessionMetadata(BaseModel):
     user_id: Optional[str] = None
     environment: str = Field(default="production")
     tags: List[str] = Field(default_factory=list)
-    custom_data: Dict[str, Any] = Field(default_factory=dict)
+    custom_data: Dict[str, JSONValue] = Field(default_factory=dict)
 
     def is_active(self) -> bool:
         """Check if session is active."""
@@ -56,6 +58,7 @@ class SessionMetadata(BaseModel):
 
 
 class TaskContext(BaseModel):
+    model_config = ConfigDict(extra="forbid")
     """Context for a specific task."""
     task_id: str
     task_type: str
@@ -63,15 +66,15 @@ class TaskContext(BaseModel):
     created_at: datetime = Field(default_factory=datetime.now)
     started_at: Optional[datetime] = None
     completed_at: Optional[datetime] = None
-    input_data: Dict[str, Any] = Field(default_factory=dict)
-    output_data: Dict[str, Any] = Field(default_factory=dict)
+    input_data: Dict[str, JSONValue] = Field(default_factory=dict)
+    output_data: Dict[str, JSONValue] = Field(default_factory=dict)
     error_message: Optional[str] = None
     retry_count: int = 0
     max_retries: int = 3
     dependencies: List[str] = Field(default_factory=list)
 
     @field_validator('retry_count')
-    def validate_retry_count(cls, v: int, values: Dict[str, Any]) -> int:
+    def validate_retry_count(cls, v: int, values: Dict[str, object]) -> int:
         """Ensure retry count doesn't exceed max."""
         max_retries = values.get('max_retries', 3)
         if v > max_retries:
@@ -87,7 +90,7 @@ class TaskContext(BaseModel):
         self.status = TaskStatus.IN_PROGRESS
         self.started_at = datetime.now()
 
-    def mark_completed(self, output: Dict[str, Any]) -> None:
+    def mark_completed(self, output: Dict[str, JSONValue]) -> None:
         """Mark task as completed with output."""
         self.status = TaskStatus.COMPLETED
         self.completed_at = datetime.now()
@@ -101,6 +104,7 @@ class TaskContext(BaseModel):
 
 
 class AgentState(BaseModel):
+    model_config = ConfigDict(extra="forbid")
     """Current state of an agent."""
     agent_id: str
     agent_type: str
@@ -156,16 +160,17 @@ class AgentState(BaseModel):
 
 
 class AgentContextData(BaseModel):
+    model_config = ConfigDict(extra="forbid")
     """
     Complete agent context data.
     Replaces Dict[str, Any] for agent context management.
     """
     session: SessionMetadata
     agent_states: Dict[str, AgentState] = Field(default_factory=dict)
-    shared_memory: Dict[str, Any] = Field(default_factory=dict)
-    global_config: Dict[str, Any] = Field(default_factory=dict)
+    shared_memory: Dict[str, JSONValue] = Field(default_factory=dict)
+    global_config: Dict[str, JSONValue] = Field(default_factory=dict)
     active_handoffs: List[Dict[str, str]] = Field(default_factory=list)
-    message_queue: List[Dict[str, Any]] = Field(default_factory=list)
+    message_queue: List[Dict[str, JSONValue]] = Field(default_factory=list)
     performance_metrics: Dict[str, float] = Field(default_factory=dict)
 
     def add_agent(self, agent: AgentState) -> None:
@@ -197,11 +202,11 @@ class AgentContextData(BaseModel):
             for state in self.agent_states.values()
         )
 
-    def broadcast_message(self, message: Dict[str, Any]) -> None:
+    def broadcast_message(self, message: Dict[str, JSONValue]) -> None:
         """Add message to broadcast queue."""
         message['timestamp'] = datetime.now().isoformat()
         self.message_queue.append(message)
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> Dict[str, JSONValue]:
         """Convert to dictionary for backward compatibility."""
         return self.model_dump(mode='json')

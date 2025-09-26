@@ -4,7 +4,8 @@ Simplifies imports and provides a clean API for autonomous agents.
 """
 
 import os
-from typing import Optional, List, Dict, Any
+from typing import Optional, List
+from shared.types.json import JSONValue
 
 # Feature flags
 ENABLE_UNIFIED_CORE = os.getenv("ENABLE_UNIFIED_CORE", "true").lower() == "true"
@@ -14,6 +15,10 @@ PERSIST_PATTERNS = os.getenv("PERSIST_PATTERNS", "false").lower() == "true"
 from .self_healing import SelfHealingCore, Finding, Patch
 from .telemetry import SimpleTelemetry, get_telemetry, emit
 from .patterns import UnifiedPatternStore, Pattern, get_pattern_store
+from shared.models.core import (
+    ErrorDetectionResult, HealthStatus,
+    HealingAttempt, ToolCall, TelemetryEvent
+)
 
 # Learning loop imports (conditionally imported to avoid circular dependencies)
 try:
@@ -77,7 +82,7 @@ class UnifiedCore:
         self.patterns = get_unified_patterns()
         self.learning_loop = get_learning_loop() if ENABLE_UNIFIED_CORE else None
 
-    def detect_and_fix_errors(self, path: str) -> Dict[str, Any]:
+    def detect_and_fix_errors(self, path: str) -> ErrorDetectionResult:
         """
         Complete error detection and fixing workflow.
 
@@ -87,12 +92,12 @@ class UnifiedCore:
         Returns:
             Dictionary with results including errors found, fixes applied, and success status
         """
-        results = {
-            "errors_found": 0,
-            "fixes_applied": 0,
-            "success": True,
-            "details": []
-        }
+        results = ErrorDetectionResult(
+            errors_found=0,
+            fixes_applied=0,
+            success=True,
+            details=[]
+        )
 
         if not self.healing:
             self.telemetry.log("core.healing_disabled", {
@@ -102,19 +107,18 @@ class UnifiedCore:
 
         # Detect errors
         findings = self.healing.detect_errors(path)
-        results["errors_found"] = len(findings)
+        results.errors_found = len(findings)
+        results.findings = findings
 
         # Attempt to fix each error
         for finding in findings:
             fix_success = self.healing.fix_error(finding)
 
             if fix_success:
-                results["fixes_applied"] += 1
-                results["details"].append({
-                    "error": finding.snippet,
-                    "file": finding.file,
-                    "status": "fixed"
-                })
+                results.fixes_applied += 1
+                results.details.append(
+                    f"Fixed: {finding.snippet} in {finding.file}"
+                )
 
                 # Learn from successful fix
                 if self.patterns:
@@ -123,19 +127,17 @@ class UnifiedCore:
                         success=True
                     )
             else:
-                results["success"] = False
-                results["details"].append({
-                    "error": finding.snippet,
-                    "file": finding.file,
-                    "status": "failed"
-                })
+                results.success = False
+                results.details.append(
+                    f"Failed to fix: {finding.snippet} in {finding.file}"
+                )
 
         # Log results
-        self.telemetry.log("core.healing_complete", results)
+        self.telemetry.log("core.healing_complete", results.model_dump())
 
         return results
 
-    def get_health_status(self) -> Dict[str, Any]:
+    def get_health_status(self) -> HealthStatus:
         """
         Get overall system health status.
 
@@ -145,16 +147,18 @@ class UnifiedCore:
         metrics = self.telemetry.get_metrics()
         pattern_stats = self.patterns.get_statistics() if self.patterns else {}
 
-        return {
-            "health_score": metrics.get("health_score", 100.0),
-            "recent_errors": metrics.get("errors", 0),
-            "total_events": metrics.get("total_events", 0),
-            "pattern_count": pattern_stats.get("total_patterns", 0),
-            "average_success_rate": pattern_stats.get("average_success_rate", 0.0),
-            "status": "healthy" if metrics.get("health_score", 100) > 80 else "degraded"
-        }
+        health_score = metrics.get("health_score", 100.0)
+        return HealthStatus(
+            status="healthy" if health_score > 80 else "degraded",
+            healing_enabled=self.healing is not None,
+            patterns_loaded=pattern_stats.get("total_patterns", 0),
+            telemetry_active=self.telemetry is not None,
+            learning_loop_active=self.learning_loop is not None,
+            errors=metrics.get("recent_errors", []),
+            warnings=metrics.get("recent_warnings", [])
+        )
 
-    def emit_event(self, event: str, data: Dict[str, Any] = None, level: str = "info"):
+    def emit_event(self, event: str, data: dict[str, JSONValue] = None, level: str = "info"):
         """
         Emit a telemetry event.
 
@@ -239,22 +243,24 @@ class UnifiedCore:
                 "reason": "LearningLoop not available"
             }, level="warning")
 
-    def get_learning_metrics(self) -> Dict[str, Any]:
+    def get_learning_metrics(self) -> dict[str, JSONValue]:
         """
         Get learning loop operational metrics.
 
         Returns:
-            Dictionary with learning loop metrics or empty dict if unavailable
+            dict[str, JSONValue]: learning loop metrics when available, otherwise {}
         """
         if self.learning_loop:
-            return self.learning_loop.get_metrics()
+            # Preserve backward-compatible raw metrics dict expected by tests/consumers
+            metrics = self.learning_loop.get_metrics()
+            return metrics if isinstance(metrics, dict) else {}
         return {}
 
     def learn_from_operation_result(self, operation_id: str, success: bool,
                                   task_description: str = None,
-                                  tool_calls: List[Dict[str, Any]] = None,
-                                  initial_error: Dict[str, Any] = None,
-                                  final_state: Dict[str, Any] = None,
+                                  tool_calls: List[ToolCall] = None,
+                                  initial_error: str = None,
+                                  final_state: str = None,
                                   duration_seconds: float = 0.0):
         """
         Learn patterns from an operation result.

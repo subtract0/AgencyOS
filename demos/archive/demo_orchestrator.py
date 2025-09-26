@@ -21,6 +21,7 @@ import random
 import time
 from dataclasses import dataclass
 from typing import Any, Dict
+from shared.types.json import JSONValue
 
 from shared.agent_context import AgentContext, create_agent_context
 from tools.orchestrator.scheduler import (
@@ -40,7 +41,7 @@ class MockAgent:
     min_duration: float = 1.0
     max_duration: float = 5.0
 
-    async def run(self, prompt: str, **params) -> Dict[str, Any]:
+    async def run(self, prompt: str, **params) -> Dict[str, JSONValue]:
         """Simulate agent work with realistic timing and occasional failures."""
         duration = random.uniform(self.min_duration, self.max_duration)
         await asyncio.sleep(duration)

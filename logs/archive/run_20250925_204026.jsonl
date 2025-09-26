@@ -1,0 +1,3 @@
+{"ts": "2025-09-25T20:40:26.663278Z", "run_id": "20250925_204026", "level": "info", "event": "retention_applied", "data": {"archived_count": 1, "remaining_runs": 10}}
+{"ts": "2025-09-25T20:40:26.663469Z", "run_id": "20250925_204026", "level": "warning", "event": "learning_loop_unavailable", "data": {"reason": "LearningLoop not available or ENABLE_UNIFIED_CORE disabled"}}
+{"ts": "2025-09-25T20:40:26.663672Z", "run_id": "20250925_204026", "level": "info", "event": "learning_loop_not_running", "data": {}}

@@ -4,11 +4,13 @@ Replaces Dict[str, Any] in learning consolidation and pattern analysis.
 """
 
 from datetime import datetime
-from typing import Dict, List, Optional, Any
-from pydantic import BaseModel, Field, field_validator
+from typing import Dict, List, Optional
+from shared.types.json import JSONValue
+from pydantic import BaseModel, Field, field_validator, ConfigDict
 
 
 class LearningMetric(BaseModel):
+    model_config = ConfigDict(extra="forbid")
     """Individual learning metric."""
     name: str
     value: float
@@ -18,6 +20,7 @@ class LearningMetric(BaseModel):
 
 
 class ContentTypeBreakdown(BaseModel):
+    model_config = ConfigDict(extra="forbid")
     """Breakdown of content types in memories."""
     text: int = 0
     error: int = 0
@@ -40,6 +43,7 @@ class ContentTypeBreakdown(BaseModel):
 
 
 class TimeDistribution(BaseModel):
+    model_config = ConfigDict(extra="forbid")
     """Time-based distribution patterns."""
     hourly: Dict[int, int] = Field(default_factory=dict)
     daily: Dict[str, int] = Field(default_factory=dict)
@@ -56,6 +60,7 @@ class TimeDistribution(BaseModel):
 
 
 class PatternAnalysis(BaseModel):
+    model_config = ConfigDict(extra="forbid")
     """Pattern analysis results."""
     content_types: ContentTypeBreakdown = Field(default_factory=ContentTypeBreakdown)
     time_distribution: TimeDistribution = Field(default_factory=TimeDistribution)
@@ -73,15 +78,17 @@ class PatternAnalysis(BaseModel):
 
 
 class LearningInsight(BaseModel):
+    model_config = ConfigDict(extra="forbid")
     """Individual learning insight."""
     category: str
     description: str
     importance: str = Field(default="medium", pattern="^(low|medium|high|critical)$")
     confidence: float = Field(0.8, ge=0.0, le=1.0)
-    supporting_data: Dict[str, Any] = Field(default_factory=dict)
+    supporting_data: Dict[str, JSONValue] = Field(default_factory=dict)
 
 
 class LearningConsolidation(BaseModel):
+    model_config = ConfigDict(extra="forbid")
     """
     Consolidated learning results.
     Replaces Dict[str, Any] returned from consolidate_learnings().
@@ -91,7 +98,7 @@ class LearningConsolidation(BaseModel):
     unique_tags: int = Field(0, ge=0)
     avg_tags_per_memory: float = Field(0.0, ge=0.0)
     tag_frequencies: Dict[str, int] = Field(default_factory=dict)
-    top_tags: List[Dict[str, Any]] = Field(default_factory=list)
+    top_tags: List[Dict[str, JSONValue]] = Field(default_factory=list)
     patterns: PatternAnalysis = Field(default_factory=PatternAnalysis)
     insights: List[LearningInsight] = Field(default_factory=list)
     metrics: Dict[str, LearningMetric] = Field(default_factory=dict)
@@ -115,7 +122,7 @@ class LearningConsolidation(BaseModel):
             reverse=True
         )[:n]
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> Dict[str, JSONValue]:
         """Convert to dictionary for backward compatibility."""
         return self.model_dump(mode='json')
 
