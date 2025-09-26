@@ -18,6 +18,7 @@ from dataclasses import dataclass
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import Any, Dict, Iterable, List, Optional, Tuple
+from shared.types.json import JSONValue
 from shared.models.telemetry import (
     TelemetryEvent, TelemetryMetrics, AgentMetrics,
     SystemHealth, EventType, EventSeverity
@@ -85,9 +86,9 @@ def _iter_event_files(base_dir: Path) -> Iterable[Path]:
     return files
 
 
-def _load_events(since_dt: datetime, telemetry_dir: Optional[str] = None, limit: Optional[int] = None) -> List[Dict[str, Any]]:
+def _load_events(since_dt: datetime, telemetry_dir: Optional[str] = None, limit: Optional[int] = None) -> List[Dict[str, JSONValue]]:
     base = _telemetry_dir(telemetry_dir)
-    events: List[Dict[str, Any]] = []
+    events: List[Dict[str, JSONValue]] = []
 
     for fp in _iter_event_files(base):
         try:
@@ -129,7 +130,7 @@ def _load_events(since_dt: datetime, telemetry_dir: Optional[str] = None, limit:
 # Public API
 # ------------------------
 
-def list_events(since: str = "1h", grep: Optional[str] = None, limit: int = 200, telemetry_dir: Optional[str] = None) -> List[Dict[str, Any]]:
+def list_events(since: str = "1h", grep: Optional[str] = None, limit: int = 200, telemetry_dir: Optional[str] = None) -> List[Dict[str, JSONValue]]:
     """Return recent events within window.
 
     Args:
@@ -143,7 +144,7 @@ def list_events(since: str = "1h", grep: Optional[str] = None, limit: int = 200,
 
     if grep:
         g = grep.lower()
-        filtered: List[Dict[str, Any]] = []
+        filtered: List[Dict[str, JSONValue]] = []
         for ev in events:
             try:
                 s = json.dumps(ev, default=str).lower()
@@ -186,7 +187,7 @@ def aggregate(since: str = "1h", telemetry_dir: Optional[str] = None) -> Telemet
 
     # Running tasks tracking
     now = _iso_now()
-    tasks: Dict[str, Dict[str, Any]] = {}
+    tasks: Dict[str, Dict[str, JSONValue]] = {}
 
     # Resource snapshot (take latest orchestrator_started)
     max_concurrency: Optional[int] = None
@@ -265,7 +266,7 @@ def aggregate(since: str = "1h", telemetry_dir: Optional[str] = None) -> Telemet
                     pass
 
     # Derive running tasks (not finished)
-    running_tasks: List[Dict[str, Any]] = []
+    running_tasks: List[Dict[str, JSONValue]] = []
     for t in tasks.values():
         if t.get("finished"):
             continue

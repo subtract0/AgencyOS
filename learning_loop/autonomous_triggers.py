@@ -18,6 +18,7 @@ import re
 import json
 from datetime import datetime, timedelta
 from typing import Dict, List, Optional, Any, Callable, Union
+from shared.types.json import JSONValue
 from dataclasses import dataclass, asdict
 from pathlib import Path
 
@@ -37,7 +38,7 @@ class HealingResult:
     pattern_used: Optional[str] = None
     error_details: Optional[str] = None
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> Dict[str, JSONValue]:
         """Convert result to dictionary for telemetry."""
         return asdict(self)
 
@@ -49,7 +50,7 @@ class PatternMatch:
     score: float
     confidence: float
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> Dict[str, JSONValue]:
         """Convert match to dictionary for logging."""
         return {
             "pattern_id": self.pattern.id,

@@ -17,6 +17,7 @@ import tempfile
 import time
 from dataclasses import dataclass
 from typing import Any, Dict
+from shared.types.json import JSONValue
 from unittest.mock import MagicMock
 
 import pytest
@@ -43,7 +44,7 @@ class MockAgent:
     fail_attempts: int = 0
     call_count: int = 0
 
-    async def run(self, prompt: str, **params) -> Dict[str, Any]:
+    async def run(self, prompt: str, **params) -> Dict[str, JSONValue]:
         """Mock agent execution with configurable behavior."""
         self.call_count += 1
         await asyncio.sleep(self.duration)

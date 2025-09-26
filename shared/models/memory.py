@@ -5,8 +5,9 @@ Replaces Dict[str, Any] with concrete typed models.
 
 from datetime import datetime
 from enum import Enum
-from typing import Any, List, Optional, Dict
-from pydantic import BaseModel, Field, field_validator
+from typing import List, Optional, Dict
+from shared.types.json import JSONValue
+from pydantic import BaseModel, Field, field_validator, ConfigDict
 
 
 class MemoryPriority(str, Enum):
@@ -18,6 +19,7 @@ class MemoryPriority(str, Enum):
 
 
 class MemoryMetadata(BaseModel):
+    model_config = ConfigDict(extra="forbid")
     """Structured metadata for memory records."""
     agent_id: Optional[str] = None
     session_id: Optional[str] = None
@@ -26,7 +28,7 @@ class MemoryMetadata(BaseModel):
     error_type: Optional[str] = None
     success_rate: Optional[float] = None
     execution_time_ms: Optional[int] = None
-    additional: Dict[str, Any] = Field(default_factory=dict)
+    additional: Dict[str, JSONValue] = Field(default_factory=dict)
 
     @field_validator('success_rate')
     def validate_success_rate(cls, v: Optional[float]) -> Optional[float]:
@@ -36,9 +38,10 @@ class MemoryMetadata(BaseModel):
 
 
 class MemoryRecord(BaseModel):
+    model_config = ConfigDict(extra="forbid")
     """Core memory record model replacing Dict[str, Any]."""
     key: str = Field(..., description="Unique identifier for the memory")
-    content: Any = Field(..., description="The actual content to store")
+    content: JSONValue = Field(..., description="The actual content to store as JSON-compatible value")
     tags: List[str] = Field(default_factory=list, description="Tags for categorization")
     timestamp: datetime = Field(default_factory=datetime.now, description="When the memory was created")
     priority: MemoryPriority = Field(default=MemoryPriority.MEDIUM, description="Priority level")
@@ -46,10 +49,6 @@ class MemoryRecord(BaseModel):
     ttl_seconds: Optional[int] = Field(None, description="Time to live in seconds")
     embedding: Optional[List[float]] = Field(None, description="Vector embedding for semantic search")
 
-    class Config:
-        json_encoders = {
-            datetime: lambda v: v.isoformat()
-        }
 
     @field_validator('tags')
     def validate_tags(cls, v: List[str]) -> List[str]:
@@ -69,7 +68,7 @@ class MemoryRecord(BaseModel):
             raise ValueError('ttl_seconds must be positive')
         return v
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> Dict[str, JSONValue]:
         """Convert to dictionary for backward compatibility."""
         return self.model_dump(mode='json')
 
@@ -82,10 +81,11 @@ class MemoryRecord(BaseModel):
 
 
 class MemorySearchResult(BaseModel):
+    model_config = ConfigDict(extra="forbid")
     """Result from memory search operations."""
     records: List[MemoryRecord] = Field(default_factory=list)
     total_count: int = Field(0, description="Total matching records")
-    search_query: Dict[str, Any] = Field(default_factory=dict)
+    search_query: Dict[str, JSONValue] = Field(default_factory=dict)
     execution_time_ms: float = Field(0.0)
     relevance_scores: Optional[Dict[str, float]] = None
 

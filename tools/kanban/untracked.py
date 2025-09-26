@@ -14,6 +14,7 @@ import hashlib
 import os
 from pathlib import Path
 from typing import Any, Dict, List
+from shared.types.json import JSONValue
 
 from .adapters import _redact, _shorten, _iso_now, Card, _stable_id
 
@@ -48,7 +49,7 @@ def _read_snippet(fp: Path) -> str:
         return ""
 
 
-def discover_untracked_cards() -> List[Dict[str, Any]]:
+def discover_untracked_cards() -> List[Dict[str, JSONValue]]:
     # Check flag
     if os.getenv("LEARNING_UNTRACKED", "false").lower() != "true":
         return []

@@ -17,6 +17,7 @@ import json
 import uuid
 from datetime import datetime
 from typing import Dict, List, Optional, Any, Union
+from shared.types.json import JSONValue
 from dataclasses import dataclass, asdict
 from pathlib import Path
 
@@ -28,9 +29,9 @@ from core.telemetry import get_telemetry, emit
 class Trigger:
     """Base class for pattern triggers."""
     type: str
-    metadata: Dict[str, Any]
+    metadata: Dict[str, JSONValue]
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> Dict[str, JSONValue]:
         """Convert trigger to dictionary for serialization."""
         return {
             "type": self.type,
@@ -38,7 +39,7 @@ class Trigger:
         }
 
     @classmethod
-    def from_dict(cls, data: Dict[str, Any]) -> "Trigger":
+    def from_dict(cls, data: Dict[str, JSONValue]) -> "Trigger":
         """Create trigger from dictionary."""
         return cls(
             type=data["type"],
@@ -87,7 +88,7 @@ class Condition:
     value: Any  # expected value or condition details
     operator: str = "equals"  # "equals", "contains", "matches", etc.
 
-    def evaluate(self, context: Dict[str, Any]) -> bool:
+    def evaluate(self, context: Dict[str, JSONValue]) -> bool:
         """Evaluate this condition against a context."""
         if self.type == "file_exists":
             return Path(self.target).exists()
@@ -112,11 +113,11 @@ class Condition:
 class Action:
     """Represents a single action in a pattern."""
     tool: str
-    parameters: Dict[str, Any]
+    parameters: Dict[str, JSONValue]
     output_pattern: Optional[str] = None
     timeout_seconds: Optional[int] = None
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> Dict[str, JSONValue]:
         """Convert action to dictionary for serialization."""
         return {
             "tool": self.tool,
@@ -126,7 +127,7 @@ class Action:
         }
 
     @classmethod
-    def from_dict(cls, data: Dict[str, Any]) -> "Action":
+    def from_dict(cls, data: Dict[str, JSONValue]) -> "Action":
         """Create action from dictionary."""
         return cls(
             tool=data["tool"],
@@ -148,7 +149,7 @@ class PatternMetadata:
     source: str  # "learned", "manual", "imported"
     tags: List[str]
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> Dict[str, JSONValue]:
         """Convert metadata to dictionary."""
         return {
             "confidence": self.confidence,
@@ -162,7 +163,7 @@ class PatternMetadata:
         }
 
     @classmethod
-    def from_dict(cls, data: Dict[str, Any]) -> "PatternMetadata":
+    def from_dict(cls, data: Dict[str, JSONValue]) -> "PatternMetadata":
         """Create metadata from dictionary."""
         return cls(
             confidence=data["confidence"],
@@ -264,9 +265,9 @@ class Operation:
     """Represents an operation that can be learned from."""
     id: str
     task_description: Optional[str]
-    initial_error: Optional[Dict[str, Any]]
-    tool_calls: List[Dict[str, Any]]
-    final_state: Dict[str, Any]
+    initial_error: Optional[Dict[str, JSONValue]]
+    tool_calls: List[Dict[str, JSONValue]]
+    final_state: Dict[str, JSONValue]
     success: bool
     duration_seconds: float
     timestamp: datetime
@@ -282,7 +283,7 @@ class FailureReason:
     """Base class for failure analysis."""
     type: str
     description: str
-    details: Dict[str, Any]
+    details: Dict[str, JSONValue]
 
 
 class TestFailureAnalysis(FailureReason):
@@ -521,7 +522,7 @@ class PatternExtractor:
 
         return actions
 
-    def _generalize_parameters(self, parameters: Dict[str, Any]) -> Dict[str, Any]:
+    def _generalize_parameters(self, parameters: Dict[str, JSONValue]) -> Dict[str, JSONValue]:
         """Generalize parameters to make them reusable."""
         generalized = {}
 
@@ -766,7 +767,7 @@ class FailureLearner:
             details=final_state
         )
 
-    def _analyze_test_failures(self, test_results: Dict[str, Any]) -> str:
+    def _analyze_test_failures(self, test_results: Dict[str, JSONValue]) -> str:
         """Analyze test failures to determine root cause."""
         failures = test_results.get("failures", [])
 

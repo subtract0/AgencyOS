@@ -9,6 +9,7 @@ import json
 import os
 from datetime import datetime, timedelta
 from typing import Dict, Any, List, Optional
+from shared.types.json import JSONValue
 from collections import defaultdict, Counter
 from dataclasses import dataclass
 
@@ -67,7 +68,7 @@ class LearningDashboard:
 
         logger.info("LearningDashboard initialized")
 
-    def generate_comprehensive_report(self) -> Dict[str, Any]:
+    def generate_comprehensive_report(self) -> Dict[str, JSONValue]:
         """Generate comprehensive learning system report."""
         try:
             # Collect all metrics
@@ -401,7 +402,7 @@ class LearningDashboard:
         except Exception:
             return "stable"
 
-    def _is_recent_memory(self, memory: Dict[str, Any], cutoff_time: datetime) -> bool:
+    def _is_recent_memory(self, memory: Dict[str, JSONValue], cutoff_time: datetime) -> bool:
         """Check if memory is recent based on timestamp."""
         try:
             timestamp_str = memory.get('timestamp', '')
@@ -412,13 +413,13 @@ class LearningDashboard:
             pass
         return False
 
-    def _is_successful_application(self, memory: Dict[str, Any]) -> bool:
+    def _is_successful_application(self, memory: Dict[str, JSONValue]) -> bool:
         """Check if pattern application was successful."""
         content = str(memory.get('content', '')).lower()
         success_indicators = ['success', 'resolved', 'improved', 'effective', 'working']
         return any(indicator in content for indicator in success_indicators)
 
-    def _extract_learning_types(self, learning_memories: List[Dict[str, Any]]) -> List[str]:
+    def _extract_learning_types(self, learning_memories: List[dict[str, JSONValue]]) -> List[str]:
         """Extract unique learning types from memories."""
         types = set()
         for memory in learning_memories:
@@ -437,7 +438,7 @@ class LearningDashboard:
                     types.add('pattern')
         return list(types)
 
-    def _extract_learning_confidences(self, learning_memories: List[Dict[str, Any]]) -> List[float]:
+    def _extract_learning_confidences(self, learning_memories: List[dict[str, JSONValue]]) -> List[float]:
         """Extract confidence scores from learning memories."""
         confidences = []
         for memory in learning_memories:
@@ -448,7 +449,7 @@ class LearningDashboard:
                     confidences.append(float(confidence))
         return confidences
 
-    def _calculate_knowledge_retention(self, cross_session_memories: List[Dict[str, Any]]) -> float:
+    def _calculate_knowledge_retention(self, cross_session_memories: List[dict[str, JSONValue]]) -> float:
         """Calculate knowledge retention score."""
         try:
             if not cross_session_memories:
@@ -583,7 +584,7 @@ class LearningDashboard:
         else:
             return "stable"
 
-    def _generate_learning_insights(self, metrics: Dict[str, LearningMetric], trends: Dict[str, str]) -> List[Dict[str, Any]]:
+    def _generate_learning_insights(self, metrics: Dict[str, LearningMetric], trends: Dict[str, str]) -> List[Dict[str, JSONValue]]:
         """Generate insights based on metrics and trends."""
         insights = []
 
@@ -652,7 +653,7 @@ class LearningDashboard:
 
         return insights
 
-    def _calculate_system_health(self, metrics: Dict[str, LearningMetric], alerts: List[LearningAlert]) -> Dict[str, Any]:
+    def _calculate_system_health(self, metrics: Dict[str, LearningMetric], alerts: List[LearningAlert]) -> Dict[str, JSONValue]:
         """Calculate overall learning system health score."""
         try:
             # Base health score calculation
@@ -716,7 +717,7 @@ class LearningDashboard:
                 'calculation_timestamp': datetime.now().isoformat()
             }
 
-    def _generate_improvement_recommendations(self, metrics: Dict[str, LearningMetric], alerts: List[LearningAlert]) -> List[Dict[str, Any]]:
+    def _generate_improvement_recommendations(self, metrics: Dict[str, LearningMetric], alerts: List[LearningAlert]) -> List[Dict[str, JSONValue]]:
         """Generate specific recommendations for improving learning system."""
         recommendations = []
 
@@ -801,7 +802,7 @@ class LearningDashboard:
                 'Consider metric threshold adjustments'
             ]
 
-    def _create_executive_summary(self, health_score: Dict[str, Any], metrics: Dict[str, LearningMetric], alerts: List[LearningAlert]) -> Dict[str, Any]:
+    def _create_executive_summary(self, health_score: Dict[str, JSONValue], metrics: Dict[str, LearningMetric], alerts: List[LearningAlert]) -> Dict[str, JSONValue]:
         """Create executive summary of learning system status."""
         try:
             # Key statistics

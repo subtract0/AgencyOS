@@ -7,6 +7,7 @@ import logging
 from collections import Counter, defaultdict
 from datetime import datetime
 from typing import Any, Dict, List
+from shared.types.json import JSONValue
 from shared.models.learning import (
     LearningConsolidation, LearningInsight, PatternAnalysis,
     ContentTypeBreakdown, TimeDistribution
@@ -16,7 +17,7 @@ from shared.models.memory import MemoryRecord
 logger = logging.getLogger(__name__)
 
 
-def consolidate_learnings(memories: List[Dict[str, Any]]) -> Dict[str, Any]:
+def consolidate_learnings(memories: List[dict[str, JSONValue]]) -> Dict[str, JSONValue]:
     """
     Consolidate learnings from memory records into structured summary.
 
@@ -341,7 +342,7 @@ def _generate_insights_models(
 
 
 def generate_learning_report(
-    memories: List[Dict[str, Any]], session_id: str = None
+    memories: List[dict[str, JSONValue]], session_id: str = None
 ) -> str:
     """
     Generate a formatted learning report from consolidated analysis.

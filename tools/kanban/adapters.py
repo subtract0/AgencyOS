@@ -12,6 +12,7 @@ import os
 from dataclasses import dataclass, asdict
 from datetime import datetime, timezone
 from typing import Any, Dict, List, Optional
+from shared.types.json import JSONValue
 
 # Local telemetry aggregator (safe, stdlib)
 try:
@@ -40,7 +41,7 @@ class Card:
     links: List[str]
     tags: List[str]
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> Dict[str, JSONValue]:
         return asdict(self)
 
 
@@ -83,7 +84,7 @@ def _stable_id(*parts: str) -> str:
     return h.hexdigest()[:16]
 
 
-def _event_to_card(ev: Dict[str, Any]) -> Optional[Card]:
+def _event_to_card(ev: Dict[str, JSONValue]) -> Optional[Card]:
     typ = str(ev.get("type", "")).lower()
     ts = ev.get("ts") or _iso_now()
     agent = ev.get("agent") or "-"
@@ -189,7 +190,7 @@ def _patterns_to_cards() -> List[Card]:
     return cards
 
 
-def build_cards(window: str = "4h", telemetry_dir: Optional[str] = None, include_patterns: bool = True) -> List[Dict[str, Any]]:
+def build_cards(window: str = "4h", telemetry_dir: Optional[str] = None, include_patterns: bool = True) -> List[Dict[str, JSONValue]]:
     """Build cards from recent telemetry, optional pattern store, and optional untracked files.
 
     Args:
@@ -231,7 +232,7 @@ def build_cards(window: str = "4h", telemetry_dir: Optional[str] = None, include
     return [c.to_dict() for c in cards]
 
 
-def build_feed(window: str = "4h", telemetry_dir: Optional[str] = None, include_patterns: bool = True) -> Dict[str, Any]:
+def build_feed(window: str = "4h", telemetry_dir: Optional[str] = None, include_patterns: bool = True) -> Dict[str, JSONValue]:
     return {
         "generated_at": _iso_now(),
         "cards": build_cards(window=window, telemetry_dir=telemetry_dir, include_patterns=include_patterns),

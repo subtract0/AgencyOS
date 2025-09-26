@@ -5,6 +5,7 @@ Extracts functions, classes, and behavioral coverage metrics.
 
 import ast
 from typing import Dict, Any
+from shared.types.json import JSONValue
 from pathlib import Path
 
 
@@ -22,7 +23,7 @@ class ASTAnalyzer:
         self.behaviors = []
         self.complexity_metrics = {}
 
-    def analyze_file(self, file_path: str) -> Dict[str, Any]:
+    def analyze_file(self, file_path: str) -> Dict[str, JSONValue]:
         """Analyze a single Python file."""
         try:
             with open(file_path, 'r', encoding='utf-8') as f:
@@ -51,7 +52,7 @@ class ASTAnalyzer:
         except Exception as e:
             return {"error": str(e), "file_path": file_path}
 
-    def analyze_directory(self, dir_path: str) -> Dict[str, Any]:
+    def analyze_directory(self, dir_path: str) -> Dict[str, JSONValue]:
         """Analyze all Python files in directory."""
         results = {
             "source_files": [],

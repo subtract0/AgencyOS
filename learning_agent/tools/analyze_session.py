@@ -6,6 +6,7 @@ from pydantic import Field
 import json
 import os
 from typing import List, Dict, Any, Optional
+from shared.types.json import JSONValue
 from pathlib import Path
 from datetime import datetime
 
@@ -78,7 +79,7 @@ class AnalyzeSession(BaseTool):
         except Exception as e:
             return f"Error analyzing session: {str(e)}"
 
-    def _analyze_tool_usage(self, session_data: Dict[str, Any]) -> Dict[str, Any]:
+    def _analyze_tool_usage(self, session_data: Dict[str, JSONValue]) -> Dict[str, JSONValue]:
         """Analyze tool usage patterns from session data."""
         entries = session_data.get("entries", [])
         tool_counts = {}
@@ -116,7 +117,7 @@ class AnalyzeSession(BaseTool):
             }
         }
 
-    def _analyze_error_patterns(self, session_data: Dict[str, Any]) -> Dict[str, Any]:
+    def _analyze_error_patterns(self, session_data: Dict[str, JSONValue]) -> Dict[str, JSONValue]:
         """Analyze error patterns and resolution strategies."""
         entries = session_data.get("entries", [])
         errors = []
@@ -155,7 +156,7 @@ class AnalyzeSession(BaseTool):
             }
         }
 
-    def _analyze_workflow_patterns(self, session_data: Dict[str, Any]) -> Dict[str, Any]:
+    def _analyze_workflow_patterns(self, session_data: Dict[str, JSONValue]) -> Dict[str, JSONValue]:
         """Analyze successful workflow sequences."""
         entries = session_data.get("entries", [])
         workflows = []
@@ -189,7 +190,7 @@ class AnalyzeSession(BaseTool):
             }
         }
 
-    def _analyze_agent_interactions(self, session_data: Dict[str, Any]) -> Dict[str, Any]:
+    def _analyze_agent_interactions(self, session_data: Dict[str, JSONValue]) -> Dict[str, JSONValue]:
         """Analyze patterns in agent-to-agent interactions."""
         entries = session_data.get("entries", [])
         interactions = {}
@@ -208,7 +209,7 @@ class AnalyzeSession(BaseTool):
             }
         }
 
-    def _analyze_task_outcomes(self, session_data: Dict[str, Any]) -> Dict[str, Any]:
+    def _analyze_task_outcomes(self, session_data: Dict[str, JSONValue]) -> Dict[str, JSONValue]:
         """Analyze task completion outcomes and success factors."""
         entries = session_data.get("entries", [])
         outcomes = {"success": 0, "failure": 0, "partial": 0}
@@ -233,7 +234,7 @@ class AnalyzeSession(BaseTool):
             }
         }
 
-    def _analyze_memory_usage(self, session_data: Dict[str, Any]) -> Dict[str, Any]:
+    def _analyze_memory_usage(self, session_data: Dict[str, JSONValue]) -> Dict[str, JSONValue]:
         """Analyze memory storage and retrieval patterns."""
         entries = session_data.get("entries", [])
         memory_ops = {"store": 0, "retrieve": 0, "search": 0}
@@ -253,7 +254,7 @@ class AnalyzeSession(BaseTool):
             }
         }
 
-    def _find_resolution_pattern(self, entries: List[Dict[str, Any]], error_index: int) -> Optional[Dict[str, Any]]:
+    def _find_resolution_pattern(self, entries: List[Dict[str, JSONValue]], error_index: int) -> Optional[Dict[str, JSONValue]]:
         """Find resolution patterns after an error."""
         # Look at next 3 entries for resolution
         resolution_window = entries[error_index + 1:error_index + 4]

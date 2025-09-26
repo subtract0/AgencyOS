@@ -15,6 +15,7 @@ import ast
 import json
 import subprocess
 from typing import List, Dict, Any, Optional
+from shared.types.json import JSONValue
 from datetime import datetime, timedelta
 import logging
 
@@ -407,7 +408,7 @@ class LocalCodebaseExtractor(BasePatternExtractor):
 
         return self.create_pattern(context, solution, outcome, "memory_architecture", ["architecture", "memory"])
 
-    def _analyze_tool_implementations(self, tools_dir: str) -> Dict[str, Any]:
+    def _analyze_tool_implementations(self, tools_dir: str) -> Dict[str, JSONValue]:
         """Analyze patterns in tool implementations."""
         patterns = {"examples": [], "common_patterns": []}
 
@@ -431,7 +432,7 @@ class LocalCodebaseExtractor(BasePatternExtractor):
 
         return patterns
 
-    def _analyze_test_patterns(self, test_files: List[str]) -> Dict[str, Any]:
+    def _analyze_test_patterns(self, test_files: List[str]) -> Dict[str, JSONValue]:
         """Analyze patterns in test files."""
         patterns = {"patterns": [], "coverage": []}
 

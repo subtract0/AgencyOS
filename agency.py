@@ -201,6 +201,7 @@ agency = Agency(
 import sys
 import argparse
 from typing import Any, Dict
+from shared.types.json import JSONValue
 
 try:
     # Telemetry utilities for dashboard/tail subcommands
@@ -210,7 +211,7 @@ except Exception:
     list_events = None  # type: ignore
 
 
-def _render_dashboard_text(summary: Dict[str, Any]) -> None:
+def _render_dashboard_text(summary: Dict[str, JSONValue]) -> None:
     metrics = summary.get("metrics", {})
     total = metrics.get("total_events", 0)
     if total == 0:

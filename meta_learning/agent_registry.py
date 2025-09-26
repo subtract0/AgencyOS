@@ -13,6 +13,7 @@ from datetime import datetime
 from enum import Enum
 from pathlib import Path
 from typing import Dict, List, Optional, Any
+from shared.types.json import JSONValue
 
 
 class AgentStatus(Enum):
@@ -29,7 +30,7 @@ class Agent:
     version: str = "1.0.0"
     status: AgentStatus = AgentStatus.ACTIVE
     created_at: datetime = None
-    metadata: Dict[str, Any] = None
+    metadata: Dict[str, JSONValue] = None
 
     def __post_init__(self):
         if self.created_at is None:
@@ -43,7 +44,7 @@ class AgentInstance:
     """Agent configuration instance."""
     instance_id: str
     agent_id: str
-    config: Dict[str, Any] = None
+    config: Dict[str, JSONValue] = None
     created_at: datetime = None
 
     def __post_init__(self):
@@ -90,7 +91,7 @@ class AgentRegistry:
         self._save()
         return agent_id
 
-    def create_instance(self, agent_id: str, config: Dict[str, Any] = None) -> str:
+    def create_instance(self, agent_id: str, config: Dict[str, JSONValue] = None) -> str:
         """Create agent instance - returns instance_id."""
         if agent_id not in self.agents:
             raise ValueError(f"Agent {agent_id} not found")
@@ -188,37 +189,37 @@ class AgentRegistry:
             # Graceful degradation on corruption
             print(f"Warning: Could not load registry: {e}")
 
-    def _agent_to_dict(self, agent: Agent) -> Dict[str, Any]:
+    def _agent_to_dict(self, agent: Agent) -> Dict[str, JSONValue]:
         """Convert agent to dict for JSON storage."""
         data = asdict(agent)
         data["status"] = agent.status.value
         data["created_at"] = agent.created_at.isoformat()
         return data
 
-    def _dict_to_agent(self, data: Dict[str, Any]) -> Agent:
+    def _dict_to_agent(self, data: Dict[str, JSONValue]) -> Agent:
         """Convert dict to agent from JSON storage."""
         data["status"] = AgentStatus(data["status"])
         data["created_at"] = datetime.fromisoformat(data["created_at"])
         return Agent(**data)
 
-    def _instance_to_dict(self, instance: AgentInstance) -> Dict[str, Any]:
+    def _instance_to_dict(self, instance: AgentInstance) -> Dict[str, JSONValue]:
         """Convert instance to dict for JSON storage."""
         data = asdict(instance)
         data["created_at"] = instance.created_at.isoformat()
         return data
 
-    def _dict_to_instance(self, data: Dict[str, Any]) -> AgentInstance:
+    def _dict_to_instance(self, data: Dict[str, JSONValue]) -> AgentInstance:
         """Convert dict to instance from JSON storage."""
         data["created_at"] = datetime.fromisoformat(data["created_at"])
         return AgentInstance(**data)
 
-    def _event_to_dict(self, event: AIQEvent) -> Dict[str, Any]:
+    def _event_to_dict(self, event: AIQEvent) -> Dict[str, JSONValue]:
         """Convert event to dict for JSON storage."""
         data = asdict(event)
         data["timestamp"] = event.timestamp.isoformat()
         return data
 
-    def _dict_to_event(self, data: Dict[str, Any]) -> AIQEvent:
+    def _dict_to_event(self, data: Dict[str, JSONValue]) -> AIQEvent:
         """Convert dict to event from JSON storage."""
         data["timestamp"] = datetime.fromisoformat(data["timestamp"])
         return AIQEvent(**data)

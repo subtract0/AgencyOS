@@ -9,6 +9,7 @@ import json
 import os
 from datetime import datetime, timedelta
 from typing import Dict, Any, List, Optional
+from shared.types.json import JSONValue
 import logging
 
 logger = logging.getLogger(__name__)
@@ -111,7 +112,7 @@ class TelemetryPatternAnalyzer(BaseTool):
             # Default to 24 hours
             return timedelta(hours=24)
 
-    def _load_telemetry_data(self, telemetry_dir: str, cutoff_time: datetime) -> List[Dict[str, Any]]:
+    def _load_telemetry_data(self, telemetry_dir: str, cutoff_time: datetime) -> List[Dict[str, JSONValue]]:
         """Load telemetry data from files within time window."""
         telemetry_data = []
 
@@ -134,7 +135,7 @@ class TelemetryPatternAnalyzer(BaseTool):
 
         return telemetry_data
 
-    def _parse_telemetry_file(self, filepath: str) -> List[Dict[str, Any]]:
+    def _parse_telemetry_file(self, filepath: str) -> List[Dict[str, JSONValue]]:
         """Parse individual telemetry file."""
         data = []
 
@@ -162,7 +163,7 @@ class TelemetryPatternAnalyzer(BaseTool):
 
         return data
 
-    def _extract_patterns(self, telemetry_data: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+    def _extract_patterns(self, telemetry_data: List[Dict[str, JSONValue]]) -> List[Dict[str, JSONValue]]:
         """Extract patterns from telemetry data."""
         patterns = []
 
@@ -181,7 +182,7 @@ class TelemetryPatternAnalyzer(BaseTool):
 
         return patterns
 
-    def _extract_performance_patterns(self, data: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+    def _extract_performance_patterns(self, data: List[Dict[str, JSONValue]]) -> List[Dict[str, JSONValue]]:
         """Extract performance-related patterns."""
         patterns = []
 
@@ -236,7 +237,7 @@ class TelemetryPatternAnalyzer(BaseTool):
 
         return patterns
 
-    def _extract_error_patterns(self, data: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+    def _extract_error_patterns(self, data: List[Dict[str, JSONValue]]) -> List[Dict[str, JSONValue]]:
         """Extract error-related patterns."""
         patterns = []
 
@@ -271,7 +272,7 @@ class TelemetryPatternAnalyzer(BaseTool):
 
         return patterns
 
-    def _extract_self_healing_patterns(self, data: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+    def _extract_self_healing_patterns(self, data: List[Dict[str, JSONValue]]) -> List[Dict[str, JSONValue]]:
         """Extract self-healing action patterns."""
         patterns = []
 
@@ -319,7 +320,7 @@ class TelemetryPatternAnalyzer(BaseTool):
 
         return patterns
 
-    def _extract_agent_patterns(self, data: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+    def _extract_agent_patterns(self, data: List[Dict[str, JSONValue]]) -> List[Dict[str, JSONValue]]:
         """Extract agent interaction patterns."""
         patterns = []
 
@@ -350,7 +351,7 @@ class TelemetryPatternAnalyzer(BaseTool):
 
         return patterns
 
-    def _analyze_time_pattern(self, events: List[Dict[str, Any]]) -> Dict[str, Any]:
+    def _analyze_time_pattern(self, events: List[Dict[str, JSONValue]]) -> Dict[str, JSONValue]:
         """Analyze temporal patterns in events."""
         timestamps = [e.get('timestamp') for e in events if e.get('timestamp')]
         if not timestamps:
@@ -384,7 +385,7 @@ class TelemetryPatternAnalyzer(BaseTool):
             'pattern': 'frequent' if avg_interval < 300 else 'periodic' if avg_interval < 3600 else 'sparse'
         }
 
-    def _extract_common_triggers(self, successful_actions: List[Dict[str, Any]]) -> List[str]:
+    def _extract_common_triggers(self, successful_actions: List[Dict[str, JSONValue]]) -> List[str]:
         """Extract common triggers from successful actions."""
         triggers = {}
         for action in successful_actions:
@@ -395,7 +396,7 @@ class TelemetryPatternAnalyzer(BaseTool):
         sorted_triggers = sorted(triggers.items(), key=lambda x: x[1], reverse=True)
         return [trigger for trigger, count in sorted_triggers[:3]]
 
-    def _extract_effective_actions(self, successful_actions: List[Dict[str, Any]]) -> List[str]:
+    def _extract_effective_actions(self, successful_actions: List[Dict[str, JSONValue]]) -> List[str]:
         """Extract effective action types."""
         actions = {}
         for action in successful_actions:
@@ -406,7 +407,7 @@ class TelemetryPatternAnalyzer(BaseTool):
         sorted_actions = sorted(actions.items(), key=lambda x: x[1], reverse=True)
         return [action for action, count in sorted_actions[:3]]
 
-    def _extract_failure_causes(self, failed_actions: List[Dict[str, Any]]) -> List[str]:
+    def _extract_failure_causes(self, failed_actions: List[Dict[str, JSONValue]]) -> List[str]:
         """Extract common failure causes."""
         causes = {}
         for action in failed_actions:
@@ -418,7 +419,7 @@ class TelemetryPatternAnalyzer(BaseTool):
         sorted_causes = sorted(causes.items(), key=lambda x: x[1], reverse=True)
         return [cause for cause, count in sorted_causes[:3]]
 
-    def _extract_handoff_pairs(self, handoffs: List[Dict[str, Any]]) -> List[str]:
+    def _extract_handoff_pairs(self, handoffs: List[Dict[str, JSONValue]]) -> List[str]:
         """Extract common agent handoff pairs."""
         pairs = {}
         for handoff in handoffs:
@@ -431,11 +432,11 @@ class TelemetryPatternAnalyzer(BaseTool):
         sorted_pairs = sorted(pairs.items(), key=lambda x: x[1], reverse=True)
         return [pair for pair, count in sorted_pairs[:3]]
 
-    def _filter_by_confidence(self, patterns: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+    def _filter_by_confidence(self, patterns: List[Dict[str, JSONValue]]) -> List[Dict[str, JSONValue]]:
         """Filter patterns by minimum confidence threshold."""
         return [p for p in patterns if p.get('confidence', 0) >= self.min_confidence]
 
-    def _generate_insights(self, patterns: List[Dict[str, Any]], data: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+    def _generate_insights(self, patterns: List[Dict[str, JSONValue]], data: List[Dict[str, JSONValue]]) -> List[Dict[str, JSONValue]]:
         """Generate actionable insights from patterns."""
         insights = []
 
@@ -473,7 +474,7 @@ class TelemetryPatternAnalyzer(BaseTool):
 
         return insights
 
-    def _generate_recommendations(self, patterns: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+    def _generate_recommendations(self, patterns: List[Dict[str, JSONValue]]) -> List[Dict[str, JSONValue]]:
         """Generate specific recommendations based on patterns."""
         recommendations = []
 
@@ -506,7 +507,7 @@ class TelemetryPatternAnalyzer(BaseTool):
 
         return recommendations
 
-    def _get_pattern_specific_steps(self, pattern: Dict[str, Any]) -> List[str]:
+    def _get_pattern_specific_steps(self, pattern: Dict[str, JSONValue]) -> List[str]:
         """Get specific steps for addressing a pattern."""
         pattern_type = pattern.get('type', '')
         pattern_id = pattern.get('pattern_id', '')

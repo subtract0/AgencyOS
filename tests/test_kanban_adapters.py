@@ -1,10 +1,11 @@
 import json
 from typing import List, Dict, Any
+from shared.types.json import JSONValue
 
 from tools.kanban import adapters
 
 
-def _fake_events() -> List[Dict[str, Any]]:
+def _fake_events() -> List[Dict[str, JSONValue]]:
     return [
         {"type": "task_started", "agent": "Coder", "id": "t1", "ts": "2025-09-25T00:00:00Z"},
         {"type": "task_finished", "agent": "Coder", "id": "t1", "status": "success", "ts": "2025-09-25T00:05:00Z"},

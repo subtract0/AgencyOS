@@ -5,8 +5,9 @@ Replaces Dict[str, Any] in telemetry and metrics tracking.
 
 from datetime import datetime
 from enum import Enum
-from typing import Dict, List, Optional, Any
-from pydantic import BaseModel, Field, field_validator
+from typing import Dict, List, Optional
+from shared.types.json import JSONValue
+from pydantic import BaseModel, Field, field_validator, ConfigDict
 
 
 class EventType(str, Enum):
@@ -35,6 +36,7 @@ class EventSeverity(str, Enum):
 
 
 class TelemetryEvent(BaseModel):
+    model_config = ConfigDict(extra="forbid")
     """Individual telemetry event."""
     event_id: str
     event_type: EventType
@@ -46,7 +48,7 @@ class TelemetryEvent(BaseModel):
     duration_ms: Optional[float] = None
     success: bool = True
     error_message: Optional[str] = None
-    metadata: Dict[str, Any] = Field(default_factory=dict)
+    metadata: Dict[str, JSONValue] = Field(default_factory=dict)
     tags: List[str] = Field(default_factory=list)
 
     @field_validator('duration_ms')
@@ -69,6 +71,7 @@ class TelemetryEvent(BaseModel):
 
 
 class AgentMetrics(BaseModel):
+    model_config = ConfigDict(extra="forbid")
     """Metrics for a specific agent."""
     agent_id: str
     total_invocations: int = 0
@@ -117,6 +120,7 @@ class AgentMetrics(BaseModel):
 
 
 class SystemHealth(BaseModel):
+    model_config = ConfigDict(extra="forbid")
     """Overall system health metrics."""
     status: str = Field(default="healthy", pattern="^(healthy|degraded|critical)$")
     uptime_seconds: float = Field(0.0, ge=0.0)
@@ -146,6 +150,7 @@ class SystemHealth(BaseModel):
 
 
 class TelemetryMetrics(BaseModel):
+    model_config = ConfigDict(extra="forbid")
     """Aggregated telemetry metrics."""
     period_start: datetime
     period_end: datetime
@@ -155,7 +160,7 @@ class TelemetryMetrics(BaseModel):
     agent_metrics: Dict[str, AgentMetrics] = Field(default_factory=dict)
     system_health: SystemHealth = Field(default_factory=SystemHealth)
     top_errors: List[str] = Field(default_factory=list)
-    slowest_operations: List[Dict[str, Any]] = Field(default_factory=list)
+    slowest_operations: List[Dict[str, JSONValue]] = Field(default_factory=list)
 
     def add_event(self, event: TelemetryEvent) -> None:
         """Add an event to the metrics."""
@@ -186,7 +191,7 @@ class TelemetryMetrics(BaseModel):
 
         self.system_health.update_status()
 
-    def get_summary(self) -> Dict[str, Any]:
+    def get_summary(self) -> Dict[str, JSONValue]:
         """Get a summary of the metrics."""
         return {
             "period": f"{self.period_start.isoformat()} to {self.period_end.isoformat()}",

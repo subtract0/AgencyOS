@@ -4,6 +4,7 @@ import argparse
 import json
 import os
 from typing import Any, Dict, List
+from shared.types.json import JSONValue
 
 from tools.telemetry.aggregator import list_events
 
@@ -15,7 +16,7 @@ def _telemetry_dir() -> str:
     return os.environ.get(ENV_DIR) or DEFAULT_TELEMETRY_DIR
 
 
-def _render_text(events: List[Dict[str, Any]]) -> None:
+def _render_text(events: List[Dict[str, JSONValue]]) -> None:
     if not events:
         print("No telemetry events in window.")
         return

@@ -6,9 +6,10 @@ import re
 from dataclasses import dataclass
 from datetime import datetime, timedelta, timezone
 from typing import Any, Dict, Iterable, List, Optional
+from shared.types.json import JSONValue
 
 # Public type alias for compatibility with prior stub
-Event = Dict[str, Any]
+Event = Dict[str, JSONValue]
 
 # Environment variable to override telemetry directory
 ENV_DIR = "AGENCY_TELEMETRY_DIR"
@@ -86,7 +87,7 @@ def _iter_event_files(dir_path: str) -> Iterable[str]:
         return
 
 
-def _load_events_since(dir_path: str, since_dt: datetime) -> Iterable[Dict[str, Any]]:
+def _load_events_since(dir_path: str, since_dt: datetime) -> Iterable[Dict[str, JSONValue]]:
     for fp in _iter_event_files(dir_path):
         try:
             with open(fp, "r", encoding="utf-8") as f:
@@ -111,7 +112,7 @@ def _load_events_since(dir_path: str, since_dt: datetime) -> Iterable[Dict[str, 
             continue
 
 
-def _load_pricing() -> Dict[str, Any]:
+def _load_pricing() -> Dict[str, JSONValue]:
     try:
         raw = os.environ.get("AGENCY_PRICING_JSON")
         if not raw:
@@ -121,7 +122,7 @@ def _load_pricing() -> Dict[str, Any]:
         return {}
 
 
-def _estimate_cost(usage: Dict[str, Any], model: Optional[str], pricing: Dict[str, Any]) -> float:
+def _estimate_cost(usage: Dict[str, JSONValue], model: Optional[str], pricing: Dict[str, JSONValue]) -> float:
     try:
         if not usage:
             return 0.0
@@ -151,7 +152,7 @@ def aggregate(
     telemetry_dir: Optional[str] = None,
     now: Optional[datetime] = None,
     run_id: Optional[str] = None,
-) -> Dict[str, Any]:
+) -> Dict[str, JSONValue]:
     """Aggregate telemetry events into a dashboard-friendly summary.
 
     Returns a dict with keys: running_tasks, recent_results, agents_active, metrics, window, resources, costs
@@ -175,8 +176,8 @@ def aggregate(
     pricing = _load_pricing()
     total_tokens = 0
     total_usd = 0.0
-    by_agent: Dict[str, Dict[str, Any]] = {}
-    by_model: Dict[str, Dict[str, Any]] = {}
+    by_agent: Dict[str, Dict[str, JSONValue]] = {}
+    by_model: Dict[str, Dict[str, JSONValue]] = {}
 
     for evt in _load_events_since(dir_path, since_dt):
         # Filter by run_id if specified
@@ -242,7 +243,7 @@ def aggregate(
             # ignore other types if any
             pass
 
-    running_all: List[Dict[str, Any]] = []
+    running_all: List[Dict[str, JSONValue]] = []
     for tid, s in last_start_by_id.items():
         fts = last_finish_ts_by_id.get(tid)
         if fts is None or fts < s.ts:
@@ -331,7 +332,7 @@ def list_events(
     run_id: Optional[str] = None,
     grep: Optional[str] = None,
     limit: int = 200,
-) -> List[Dict[str, Any]]:
+) -> List[Dict[str, JSONValue]]:
     """List raw telemetry events with optional filtering."""
     import re
 
@@ -367,7 +368,7 @@ def list_events(
 
 # Backward-compatible stub retained for any callers using aggregate_basic
 
-def aggregate_basic(events: Iterable[Event]) -> Dict[str, Any]:
+def aggregate_basic(events: Iterable[Event]) -> Dict[str, JSONValue]:
     counts: Dict[str, int] = {}
     total = 0
     for ev in events:

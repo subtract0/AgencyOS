@@ -13,6 +13,7 @@ import re
 import json
 import subprocess
 from typing import List, Dict, Any, Optional
+from shared.types.json import JSONValue
 from datetime import datetime, timedelta
 import logging
 
@@ -253,7 +254,7 @@ class GitHubPatternExtractor(BasePatternExtractor):
 
         return patterns
 
-    def _parse_git_log_output(self, output: str) -> List[Dict[str, Any]]:
+    def _parse_git_log_output(self, output: str) -> List[Dict[str, JSONValue]]:
         """Parse git log output into structured data."""
         commits = []
         current_commit = None
@@ -295,7 +296,7 @@ class GitHubPatternExtractor(BasePatternExtractor):
 
         return commits
 
-    def _analyze_commit_frequency_patterns(self, commits: List[Dict[str, Any]]) -> List[CodingPattern]:
+    def _analyze_commit_frequency_patterns(self, commits: List[Dict[str, JSONValue]]) -> List[CodingPattern]:
         """Analyze commit frequency patterns."""
         patterns = []
 
@@ -341,7 +342,7 @@ class GitHubPatternExtractor(BasePatternExtractor):
 
         return patterns
 
-    def _analyze_commit_size_patterns(self, commits: List[Dict[str, Any]]) -> List[CodingPattern]:
+    def _analyze_commit_size_patterns(self, commits: List[Dict[str, JSONValue]]) -> List[CodingPattern]:
         """Analyze commit size patterns."""
         patterns = []
 
@@ -570,7 +571,7 @@ class GitHubPatternExtractor(BasePatternExtractor):
 
         return "New feature implementation"
 
-    def _analyze_fix_approach(self, diff_output: str, message: str) -> Dict[str, Any]:
+    def _analyze_fix_approach(self, diff_output: str, message: str) -> Dict[str, JSONValue]:
         """Analyze the approach used in a fix."""
         approach_data = {
             "approach": "Code modification to resolve issue",

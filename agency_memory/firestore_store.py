@@ -7,6 +7,7 @@ import os
 import logging
 from datetime import datetime
 from typing import Any, Dict, List
+from shared.types.json import JSONValue
 
 # Expose firestore at module scope for test patching
 try:  # pragma: no cover
@@ -146,7 +147,7 @@ class FirestoreStore(MemoryStore):
                 self._initialize_fallback()
             self._fallback_store.store(key, content, tags)
 
-    def search(self, tags: List[str]) -> List[Dict[str, Any]]:
+    def search(self, tags: List[str]) -> List[dict[str, JSONValue]]:
         """Search memories by tags using Firestore array-contains-any."""
         if self._fallback_store:
             return self._fallback_store.search(tags)
@@ -176,7 +177,7 @@ class FirestoreStore(MemoryStore):
             # Fall back to empty result rather than crash
             return []
 
-    def get_all(self) -> List[Dict[str, Any]]:
+    def get_all(self) -> List[dict[str, JSONValue]]:
         """Get all memories from Firestore."""
         if self._fallback_store:
             return self._fallback_store.get_all()

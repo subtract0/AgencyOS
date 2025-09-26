@@ -6,6 +6,7 @@ like Memory without using global state.
 """
 
 from typing import Optional, Any, Dict
+from shared.types.json import JSONValue
 from agency_memory import Memory
 import logging
 
@@ -30,7 +31,7 @@ class AgentContext:
         """
         self.memory = memory or Memory()
         self.session_id = session_id or self._generate_session_id()
-        self._metadata: Dict[str, Any] = {}
+        self._metadata: Dict[str, JSONValue] = {}
 
         logger.debug(f"AgentContext initialized with session_id: {self.session_id}")
 
@@ -39,11 +40,11 @@ class AgentContext:
         from datetime import datetime
         return f"session_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
 
-    def set_metadata(self, key: str, value: Any) -> None:
+    def set_metadata(self, key: str, value: JSONValue) -> None:
         """Set metadata for this context."""
         self._metadata[key] = value
 
-    def get_metadata(self, key: str, default: Any = None) -> Any:
+    def get_metadata(self, key: str, default: Optional[JSONValue] = None) -> Optional[JSONValue]:
         """Get metadata from this context."""
         return self._metadata.get(key, default)
 
@@ -60,7 +61,7 @@ class AgentContext:
         all_tags = tags + [f"session:{self.session_id}"]
         self.memory.store(key, content, all_tags)
 
-    def search_memories(self, tags: list[str], include_session: bool = True) -> list[Dict[str, Any]]:
+    def search_memories(self, tags: list[str], include_session: bool = True) -> list[dict[str, JSONValue]]:
         """
         Search memories with optional session filtering.
 
@@ -75,7 +76,7 @@ class AgentContext:
         candidates = self.memory.search([session_tag]) if include_session else self.memory.get_all()
 
         req = set(tags or [])
-        results: list[Dict[str, Any]] = []
+        results: list[dict[str, JSONValue]] = []
         for mem in candidates:
             mem_tags = set(mem.get("tags", []))
             if req.issubset(mem_tags):
@@ -89,7 +90,7 @@ class AgentContext:
         results.sort(key=lambda x: x.get("timestamp", ""), reverse=True)
         return results
 
-    def get_session_memories(self) -> list[Dict[str, Any]]:
+    def get_session_memories(self) -> list[dict[str, JSONValue]]:
         """Get all memories for this session."""
         return self.memory.search([f"session:{self.session_id}"])
 

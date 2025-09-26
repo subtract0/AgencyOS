@@ -5,6 +5,7 @@ import json
 import os
 import sys
 from typing import Any, Dict
+from shared.types.json import JSONValue
 
 from tools.telemetry.aggregator import aggregate
 
@@ -16,7 +17,7 @@ def _telemetry_dir() -> str:
     return os.environ.get(ENV_DIR) or DEFAULT_TELEMETRY_DIR
 
 
-def _render_text(summary: Dict[str, Any]) -> None:
+def _render_text(summary: Dict[str, JSONValue]) -> None:
     metrics = summary.get("metrics", {})
     total = metrics.get("total_events", 0)
     if total == 0:

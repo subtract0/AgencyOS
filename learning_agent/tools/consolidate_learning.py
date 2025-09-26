@@ -7,6 +7,7 @@ import json
 import hashlib
 from datetime import datetime
 from typing import Dict, Any, List
+from shared.types.json import JSONValue
 import uuid
 
 
@@ -63,7 +64,7 @@ class ConsolidateLearning(BaseTool):
         except Exception as e:
             return f"Error consolidating learning: {str(e)}"
 
-    def _create_learning_object(self, insight: Dict[str, Any], context: Dict[str, Any]) -> Dict[str, Any]:
+    def _create_learning_object(self, insight: Dict[str, JSONValue], context: Dict[str, JSONValue]) -> Dict[str, JSONValue]:
         """Create a standardized learning object from an insight."""
         try:
             # Generate unique learning ID based on content
@@ -115,7 +116,7 @@ class ConsolidateLearning(BaseTool):
                 "metadata": {"error": str(e)}
             }
 
-    def _determine_learning_type(self, insight: Dict[str, Any]) -> str:
+    def _determine_learning_type(self, insight: Dict[str, JSONValue]) -> str:
         """Automatically determine the learning type from insight characteristics."""
         insight_type = insight.get("type", "")
         category = insight.get("category", "")
@@ -147,7 +148,7 @@ class ConsolidateLearning(BaseTool):
         else:
             return "optimization"
 
-    def _extract_patterns(self, insight: Dict[str, Any]) -> Dict[str, Any]:
+    def _extract_patterns(self, insight: Dict[str, JSONValue]) -> Dict[str, JSONValue]:
         """Extract reusable patterns from the insight."""
         patterns = {
             "triggers": [],
@@ -197,7 +198,7 @@ class ConsolidateLearning(BaseTool):
 
         return patterns
 
-    def _generate_application_criteria(self, insight: Dict[str, Any], learning_type: str) -> List[str]:
+    def _generate_application_criteria(self, insight: Dict[str, JSONValue], learning_type: str) -> List[str]:
         """Generate criteria for when this learning should be applied."""
         criteria = []
 
@@ -244,7 +245,7 @@ class ConsolidateLearning(BaseTool):
 
         return criteria
 
-    def _generate_success_metrics(self, insight: Dict[str, Any], learning_type: str) -> List[str]:
+    def _generate_success_metrics(self, insight: Dict[str, JSONValue], learning_type: str) -> List[str]:
         """Generate metrics to measure the success of applying this learning."""
         metrics = []
 

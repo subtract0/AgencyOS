@@ -10,6 +10,7 @@ The core intelligence engine that:
 
 import logging
 from typing import List, Dict, Any, Optional, Tuple
+from shared.types.json import JSONValue
 from datetime import datetime
 import json
 
@@ -40,7 +41,7 @@ class PatternApplicator:
         """
         self.pattern_store = pattern_store
         self.confidence_threshold = confidence_threshold
-        self.application_history: List[Dict[str, Any]] = []
+        self.application_history: List[Dict[str, JSONValue]] = []
 
         logger.info(f"PatternApplicator initialized with confidence threshold: {confidence_threshold}")
 
@@ -106,7 +107,7 @@ class PatternApplicator:
         context_description: str,
         domain: str = None,
         max_recommendations: int = 3
-    ) -> List[Dict[str, Any]]:
+    ) -> List[Dict[str, JSONValue]]:
         """
         Get actionable pattern recommendations for current context.
 
@@ -171,9 +172,9 @@ class PatternApplicator:
     def auto_apply_pattern(
         self,
         pattern_id: str,
-        context_data: Dict[str, Any],
+        context_data: Dict[str, JSONValue],
         dry_run: bool = True
-    ) -> Dict[str, Any]:
+    ) -> Dict[str, JSONValue]:
         """
         Automatically apply a pattern (or simulate if dry_run=True).
 
@@ -240,7 +241,7 @@ class PatternApplicator:
         self,
         context_description: str,
         domain: str = None
-    ) -> List[Dict[str, Any]]:
+    ) -> List[Dict[str, JSONValue]]:
         """
         Suggest combinations of patterns that work well together.
 
@@ -286,7 +287,7 @@ class PatternApplicator:
             logger.error(f"Pattern combination suggestion failed: {e}")
             return []
 
-    def get_application_stats(self) -> Dict[str, Any]:
+    def get_application_stats(self) -> Dict[str, JSONValue]:
         """Get statistics about pattern applications."""
         if not self.application_history:
             return {"total_applications": 0, "message": "No applications recorded yet"}
@@ -355,8 +356,8 @@ class PatternApplicator:
     def _validate_pattern_application(
         self,
         pattern: CodingPattern,
-        context_data: Dict[str, Any]
-    ) -> Dict[str, Any]:
+        context_data: Dict[str, JSONValue]
+    ) -> Dict[str, JSONValue]:
         """Validate that a pattern can be safely applied."""
         validation = {"can_apply": True, "reason": ""}
 
@@ -393,8 +394,8 @@ class PatternApplicator:
     def _generate_application_plan(
         self,
         pattern: CodingPattern,
-        context_data: Dict[str, Any]
-    ) -> Dict[str, Any]:
+        context_data: Dict[str, JSONValue]
+    ) -> Dict[str, JSONValue]:
         """Generate a detailed plan for applying the pattern."""
         plan = {
             "pattern_id": pattern.metadata.pattern_id,
@@ -440,9 +441,9 @@ class PatternApplicator:
 
     def _execute_application_plan(
         self,
-        plan: Dict[str, Any],
+        plan: Dict[str, JSONValue],
         pattern: CodingPattern
-    ) -> Dict[str, Any]:
+    ) -> Dict[str, JSONValue]:
         """Execute the application plan (simulation for now)."""
         # In a real implementation, this would:
         # 1. Execute the actual steps
@@ -476,8 +477,8 @@ class PatternApplicator:
     def _record_application(
         self,
         pattern_id: str,
-        context_data: Dict[str, Any],
-        result: Dict[str, Any]
+        context_data: Dict[str, JSONValue],
+        result: Dict[str, JSONValue]
     ) -> None:
         """Record a pattern application attempt."""
         application_record = {

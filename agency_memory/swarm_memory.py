@@ -11,6 +11,7 @@ See MCP_INTEGRATION_STANDARDS.md for architectural guidelines.
 import logging
 from datetime import datetime, timedelta
 from typing import Any, Dict, List, Optional, Set
+from shared.types.json import JSONValue
 from collections import defaultdict, Counter
 from enum import IntEnum
 
@@ -56,10 +57,10 @@ class SwarmMemoryStore(MemoryStore):
             max_memories_per_agent: Maximum memories per agent before pruning
             pruning_threshold: When to trigger pruning (0.8 = 80% of max)
         """
-        self._memories: Dict[str, Dict[str, Any]] = {}
+        self._memories: Dict[str, Dict[str, JSONValue]] = {}
         self._agent_namespaces: Dict[str, Set[str]] = defaultdict(set)
-        self._shared_knowledge: Dict[str, Dict[str, Any]] = {}
-        self._memory_summaries: Dict[str, Dict[str, Any]] = {}
+        self._shared_knowledge: Dict[str, Dict[str, JSONValue]] = {}
+        self._memory_summaries: Dict[str, Dict[str, JSONValue]] = {}
 
         self.max_memories_per_agent = max_memories_per_agent
         self.pruning_threshold = pruning_threshold
@@ -133,7 +134,7 @@ class SwarmMemoryStore(MemoryStore):
         agent_id: str = "default",
         include_shared: bool = True,
         min_priority: MemoryPriority = MemoryPriority.LOW,
-    ) -> List[Dict[str, Any]]:
+    ) -> List[dict[str, JSONValue]]:
         """
         Search memories with agent-specific and shared results.
 
@@ -195,7 +196,7 @@ class SwarmMemoryStore(MemoryStore):
         )
         return matches
 
-    def get_all(self, agent_id: str = None) -> List[Dict[str, Any]]:
+    def get_all(self, agent_id: str = None) -> List[dict[str, JSONValue]]:
         """
         Get all memories, optionally filtered by agent.
 
@@ -219,7 +220,7 @@ class SwarmMemoryStore(MemoryStore):
 
         return memories
 
-    def get_agent_summary(self, agent_id: str) -> Dict[str, Any]:
+    def get_agent_summary(self, agent_id: str) -> Dict[str, JSONValue]:
         """
         Get memory summary for specific agent.
 
@@ -275,7 +276,7 @@ class SwarmMemoryStore(MemoryStore):
 
         return summary
 
-    def get_swarm_overview(self) -> Dict[str, Any]:
+    def get_swarm_overview(self) -> Dict[str, JSONValue]:
         """
         Get overview of entire swarm memory state.
 
@@ -391,7 +392,7 @@ class SwarmMemoryStore(MemoryStore):
 
     def consolidate_agent_memories(
         self, agent_id: str, max_summary_memories: int = 50
-    ) -> Dict[str, Any]:
+    ) -> Dict[str, JSONValue]:
         """
         Consolidate agent memories into summaries for context reduction.
 
@@ -581,7 +582,7 @@ class SwarmMemory(Memory):
         include_shared: bool = True,
         min_priority: MemoryPriority = MemoryPriority.LOW,
         agent_id: Optional[str] = None,
-    ) -> List[Dict[str, Any]]:
+    ) -> List[dict[str, JSONValue]]:
         """
         Search memories with swarm features.
 
@@ -602,12 +603,12 @@ class SwarmMemory(Memory):
             tags, effective_agent_id, include_shared, min_priority
         )
 
-    def get_summary(self, agent_id: Optional[str] = None) -> Dict[str, Any]:
+    def get_summary(self, agent_id: Optional[str] = None) -> Dict[str, JSONValue]:
         """Get memory summary for agent."""
         effective_agent_id = agent_id or self.agent_id
         return self._store.get_agent_summary(effective_agent_id)
 
-    def get_swarm_overview(self) -> Dict[str, Any]:
+    def get_swarm_overview(self) -> Dict[str, JSONValue]:
         """Get overview of entire swarm memory state."""
         return self._store.get_swarm_overview()
 
@@ -620,7 +621,7 @@ class SwarmMemory(Memory):
 
     def consolidate_memories(
         self, max_individual_memories: int = 50, agent_id: Optional[str] = None
-    ) -> Dict[str, Any]:
+    ) -> Dict[str, JSONValue]:
         """Consolidate agent memories into summaries."""
         effective_agent_id = agent_id or self.agent_id
         return self._store.consolidate_agent_memories(
@@ -650,6 +651,6 @@ class SwarmMemory(Memory):
 
         return False
 
-    def get_shared_memories(self) -> List[Dict[str, Any]]:
+    def get_shared_memories(self) -> List[dict[str, JSONValue]]:
         """Get all shared memories in the swarm."""
         return list(self._store._shared_knowledge.values())
