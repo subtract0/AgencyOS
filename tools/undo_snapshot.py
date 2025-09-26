@@ -2,7 +2,7 @@ import os
 import json
 import shutil
 from pathlib import Path
-from typing import List, Optional
+from typing import List, Optional, Dict, Any
 
 from agency_swarm.tools import BaseTool
 from pydantic import Field
@@ -44,7 +44,7 @@ class WorkspaceSnapshot(BaseTool):  # type: ignore[misc]
         files_dir = target / "files"
         files_dir.mkdir(parents=True, exist_ok=True)
 
-        manifest = {
+        manifest: Dict[str, Any] = {
             "snapshot_id": snapshot_id,
             "repo_root": str(repo_root),
             "files": [],
@@ -87,7 +87,7 @@ class WorkspaceUndo(BaseTool):  # type: ignore[misc]
         except Exception as e:
             return f"Exit code: 1\nError: Corrupted manifest: {e}"
 
-        restored = []
+        restored: List[str] = []
         for entry in manifest.get("files", []):
             rel = Path(entry.get("path", ""))
             src = files_dir / rel
