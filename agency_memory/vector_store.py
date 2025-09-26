@@ -556,7 +556,8 @@ class EnhancedSwarmMemoryStore:
         elif tags:
             # Tag-based search only
             results = self.swarm_store.search(tags, agent_id, include_shared)
-            return results[:top_k]
+            # Convert MemorySearchResult to list of dicts
+            return [record.to_dict() for record in results.records[:top_k]]
 
         elif query:
             # Semantic search only
