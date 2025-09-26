@@ -1,39 +1,45 @@
-repos:
-  - repo: https://github.com/pre-commit/pre-commit-hooks
+-   repo: https://github.com/pre-commit/pre-commit-hooks
     rev: v6.0.0
     hooks:
-      - id: trailing-whitespace
+    -   id: trailing-whitespace
         exclude: ^docs/
-      - id: end-of-file-fixer
+    -   id: end-of-file-fixer
         exclude: ^docs/
-      - id: check-yaml
-      - id: check-toml
-      - id: debug-statements
+    -   id: check-yaml
+    -   id: check-toml
+    -   id: debug-statements
         language_version: python3
 
-  - repo: https://github.com/astral-sh/ruff-pre-commit
+-   repo: https://github.com/astral-sh/ruff-pre-commit
     rev: v0.12.12
     hooks:
-      - id: ruff
+    -   id: ruff
         args: [--fix, --select=I]
         exclude: ^docs/
-      - id: ruff-format
+    -   id: ruff-format
         exclude: ^docs/
 
-  - repo: local
+-   repo: local
     hooks:
-      - id: constitutional-check
+    -   id: constitutional-check
         name: Constitutional Compliance Fast Check
         entry: python scripts/constitutional_check.py
         language: python
         pass_filenames: false
         always_run: true
         stages: [commit]
-
-      - id: no-dict-any
+    -   id: no-dict-any
         name: Ban Dict[str, Any]/dict[str, Any]
         entry: python tools/quality/no_dict_any_check.py
         language: python
+        pass_filenames: false
+        always_run: true
+        stages: [commit]
+    -   id: pytest
+        name: pytest
+        entry: python run_tests_parallel.py # Use the parallel runner
+        language: system
+        types: [python]
         pass_filenames: false
         always_run: true
         stages: [commit]

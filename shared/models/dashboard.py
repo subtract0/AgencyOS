@@ -87,8 +87,8 @@ class DashboardMetrics(BaseModel):
     active_agents: int = 0
     total_tools: int = 0
     system_uptime_hours: float = 0.0
-    error_rate: float = Field(0.0, ge=0.0, le=1.0)
-    success_rate: float = Field(1.0, ge=0.0, le=1.0)
+    error_rate: float = Field(default=0.0, ge=0.0, le=1.0)
+    success_rate: float = Field(default=1.0, ge=0.0, le=1.0)
     healing_triggers: int = 0
     patterns_detected: int = 0
 
@@ -105,7 +105,7 @@ class DashboardSummary(BaseModel):
     Complete dashboard summary.
     Replaces Dict[str, Any] returned from dashboard functions.
     """
-    metrics: DashboardMetrics = Field(default_factory=DashboardMetrics)
+    metrics: DashboardMetrics = Field(default_factory=lambda: DashboardMetrics())
     active_sessions: List[SessionSummary] = Field(default_factory=list)
     agent_activities: Dict[str, AgentActivity] = Field(default_factory=dict)
     recent_errors: List[Dict[str, JSONValue]] = Field(default_factory=list)
