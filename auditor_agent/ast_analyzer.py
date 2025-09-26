@@ -4,7 +4,7 @@ Extracts functions, classes, and behavioral coverage metrics.
 """
 
 import ast
-from typing import Dict, Any
+from typing import Dict, Any, List, Optional, cast
 from shared.type_definitions.json import JSONValue
 from pathlib import Path
 
@@ -40,21 +40,21 @@ class ASTAnalyzer:
             return {
                 "file_path": file_path,
                 "is_test_file": is_test_file,
-                "functions": visitor.functions,
-                "classes": visitor.classes,
-                "test_functions": visitor.test_functions if is_test_file else [],
+                "functions": cast(JSONValue, visitor.functions),
+                "classes": cast(JSONValue, visitor.classes),
+                "test_functions": cast(JSONValue, visitor.test_functions if is_test_file else []),
                 "behaviors": len(visitor.functions),
                 "complexity": visitor.calculate_complexity(),
                 "lines_of_code": len(content.splitlines()),
                 "has_docstrings": visitor.has_docstrings(),
-                "imports": visitor.imports
+                "imports": cast(JSONValue, visitor.imports)
             }
         except Exception as e:
             return {"error": str(e), "file_path": file_path}
 
     def analyze_directory(self, dir_path: str) -> Dict[str, JSONValue]:
         """Analyze all Python files in directory."""
-        results = {
+        results: Dict[str, JSONValue] = {
             "source_files": [],
             "test_files": [],
             "total_behaviors": 0,
@@ -71,15 +71,25 @@ class ASTAnalyzer:
                 continue
 
             if analysis["is_test_file"]:
-                results["test_files"].append(analysis)
-                results["total_test_functions"] += len(analysis["test_functions"])
+                test_files = results["test_files"]
+                if isinstance(test_files, list):
+                    test_files.append(analysis)
+                test_functions = analysis["test_functions"]
+                if isinstance(test_functions, list) and isinstance(results["total_test_functions"], (int, float)):
+                    results["total_test_functions"] = results["total_test_functions"] + len(test_functions)
             else:
-                results["source_files"].append(analysis)
-                results["total_behaviors"] += analysis["behaviors"]
+                source_files = results["source_files"]
+                if isinstance(source_files, list):
+                    source_files.append(analysis)
+                behaviors = analysis["behaviors"]
+                if isinstance(behaviors, (int, float)) and isinstance(results["total_behaviors"], (int, float)):
+                    results["total_behaviors"] = results["total_behaviors"] + behaviors
 
         # Calculate basic coverage ratio
-        if results["total_behaviors"] > 0:
-            results["coverage_ratio"] = results["total_test_functions"] / results["total_behaviors"]
+        total_behaviors = results["total_behaviors"]
+        total_test_functions = results["total_test_functions"]
+        if isinstance(total_behaviors, (int, float)) and isinstance(total_test_functions, (int, float)) and total_behaviors > 0:
+            results["coverage_ratio"] = total_test_functions / total_behaviors
 
         return results
 
@@ -99,12 +109,12 @@ class CodeVisitor(ast.NodeVisitor):
 
     def __init__(self, file_path: str):
         self.file_path = file_path
-        self.functions = []
-        self.classes = []
-        self.test_functions = []
-        self.imports = []
-        self.current_class = None
-        self.complexity_count = 0
+        self.functions: List[Dict[str, Any]] = []
+        self.classes: List[Dict[str, Any]] = []
+        self.test_functions: List[Dict[str, Any]] = []
+        self.imports: List[str] = []
+        self.current_class: Optional[str] = None
+        self.complexity_count: int = 0
 
     def visit_FunctionDef(self, node: ast.FunctionDef):
         """Visit function definition."""
