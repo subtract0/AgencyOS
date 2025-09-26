@@ -3,6 +3,7 @@ import json
 import shutil
 from pathlib import Path
 from typing import List, Optional
+from shared.type_definitions.json import JSONValue
 
 from agency_swarm.tools import BaseTool
 from pydantic import Field
@@ -44,8 +45,7 @@ class WorkspaceSnapshot(BaseTool):  # type: ignore[misc]
         files_dir = target / "files"
         files_dir.mkdir(parents=True, exist_ok=True)
 
-        from typing import Any, List, Dict
-        manifest: Dict[str, Any] = {
+        manifest: JSONValue = {
             "snapshot_id": snapshot_id,
             "repo_root": str(repo_root),
             "files": [],
