@@ -12,6 +12,7 @@ from shared.type_definitions.json import JSONValue
 from .memory import MemoryStore
 from shared.models.memory import MemorySearchResult, MemoryRecord, MemoryPriority, MemoryMetadata
 from .vector_store import VectorStore, SimilarityResult
+from .type_conversion_utils import MemoryConverter, create_memory_converter
 import json
 
 logger = logging.getLogger(__name__)
@@ -36,6 +37,7 @@ class EnhancedMemoryStore(MemoryStore):
         self._memories: Dict[str, Dict[str, JSONValue]] = {}
         self.vector_store = vector_store or VectorStore(embedding_provider=embedding_provider)
         self._learning_triggers: List[str] = []
+        self.memory_converter = create_memory_converter()
 
         logger.info(f"EnhancedMemoryStore initialized with embedding provider: {embedding_provider}")
 
@@ -94,42 +96,25 @@ class EnhancedMemoryStore(MemoryStore):
 
         for memory in self._memories.values():
             tags_value = memory.get("tags", [])
-            if isinstance(tags_value, list):
-                memory_tags = set(str(tag) for tag in tags_value if isinstance(tag, str))
-            else:
-                memory_tags = set()
+            memory_tags = set(self.memory_converter.extract_tags_list(tags_value))
             if tag_set.intersection(memory_tags):
                 matches.append(memory)
 
         # Sort by timestamp (newest first) with type guard
         def sort_key(x: Dict[str, JSONValue]) -> str:
             timestamp = x.get("timestamp")
-            return str(timestamp) if isinstance(timestamp, str) else ""
+            return self.memory_converter.safe_string_conversion(timestamp)
         matches.sort(key=sort_key, reverse=True)
         logger.debug(f"Found {len(matches)} memories matching tags: {tags}")
 
         # Convert to MemorySearchResult
         memory_records = []
         for match in matches:
-            try:
-                # Get tags with type validation
-                tags_value = match.get("tags", [])
-                tags_list = [str(tag) for tag in tags_value if isinstance(tag, str)] if isinstance(tags_value, list) else []
-
-                record = MemoryRecord(
-                    key=str(match.get("key", "")),
-                    content=match.get("content", ""),
-                    tags=tags_list,
-                    timestamp=datetime.fromisoformat(str(match.get("timestamp", datetime.now().isoformat()))),
-                    priority=MemoryPriority.LOW,
-                    metadata=MemoryMetadata(),
-                    ttl_seconds=None,
-                    embedding=None
-                )
+            record = self.memory_converter.memory_dict_to_record(match)
+            if record:
                 memory_records.append(record)
-            except Exception as e:
-                logger.warning(f"Failed to convert memory to MemoryRecord: {e}")
-                continue
+            else:
+                logger.warning(f"Failed to convert memory to MemoryRecord: {match.get('key', 'unknown')}")
 
         search_query: Dict[str, JSONValue] = {"tags": cast(JSONValue, tags)}
         return MemorySearchResult(
@@ -177,6 +162,86 @@ class EnhancedMemoryStore(MemoryStore):
             logger.error(f"Semantic search failed: {e}")
             return []
 
+    def _filter_memories_by_tags(self, tags: List[str]) -> List[Dict[str, JSONValue]]:
+        """
+        Filter memories by tags and return as list of dictionaries.
+
+        Args:
+            tags: List of tags to filter by
+
+        Returns:
+            List of filtered memory dictionaries
+        """
+        search_result = self.search(tags)
+        filtered_memories = []
+
+        for record in search_result.records:
+            memory_dict = self.memory_converter.record_to_dict(record)
+            filtered_memories.append(memory_dict)
+
+        return filtered_memories
+
+    def _perform_semantic_search_on_memories(self, query: str, memories: List[Dict[str, JSONValue]],
+                                           top_k: int) -> List[Dict[str, JSONValue]]:
+        """
+        Perform semantic search on a list of memories.
+
+        Args:
+            query: Search query
+            memories: List of memory dictionaries to search
+            top_k: Maximum number of results
+
+        Returns:
+            List of semantically similar memories with relevance scores
+        """
+        if not memories:
+            return []
+
+        try:
+            semantic_results = self.vector_store.hybrid_search(query, memories, top_k)
+            return [
+                self.memory_converter.add_relevance_score(
+                    result.memory, result.similarity_score, result.search_type
+                )
+                for result in semantic_results
+            ]
+        except Exception as e:
+            logger.error(f"Semantic search failed: {e}")
+            return []
+
+    def _format_tag_only_results(self, memories: List[Dict[str, JSONValue]],
+                                top_k: int) -> List[Dict[str, JSONValue]]:
+        """
+        Format tag-based search results.
+
+        Args:
+            memories: List of memory dictionaries
+            top_k: Maximum number of results
+
+        Returns:
+            Formatted list of memory dictionaries
+        """
+        return memories[:top_k]
+
+    def _format_all_memories_results(self, top_k: int) -> List[Dict[str, JSONValue]]:
+        """
+        Format all memories results.
+
+        Args:
+            top_k: Maximum number of results
+
+        Returns:
+            Formatted list of all memory dictionaries
+        """
+        all_result = self.get_all()
+        result_list = []
+
+        for record in all_result.records[:top_k]:
+            record_dict = self.memory_converter.record_to_dict(record)
+            result_list.append(record_dict)
+
+        return result_list
+
     def combined_search(self, tags: List[str] = None, query: str = None, top_k: int = 10) -> List[dict[str, JSONValue]]:
         """
         Perform combined tag-based and semantic search.
@@ -191,45 +256,13 @@ class EnhancedMemoryStore(MemoryStore):
         """
         if tags and query:
             # First filter by tags, then semantic search on filtered results
-            search_result = self.search(tags)
-            # Convert to list format for vector search
-            tag_filtered = []
-            for record in search_result.records:
-                memory_dict: Dict[str, JSONValue] = {
-                    "key": record.key,
-                    "content": record.content,
-                    "tags": cast(JSONValue, record.tags),
-                    "timestamp": record.timestamp.isoformat(),
-                }
-                tag_filtered.append(memory_dict)
-            if tag_filtered:
-                semantic_results = self.vector_store.hybrid_search(query, tag_filtered, top_k)
-                return [
-                    {
-                        **result.memory,
-                        "relevance_score": result.similarity_score,
-                        "search_type": result.search_type,
-                    }
-                    for result in semantic_results
-                ]
-            else:
-                return []
+            tag_filtered = self._filter_memories_by_tags(tags)
+            return self._perform_semantic_search_on_memories(query, tag_filtered, top_k)
 
         elif tags:
             # Tag-based search only
-            search_result = self.search(tags)
-            # Convert MemorySearchResult to list format
-            result_list = []
-            for record in search_result.records[:top_k]:
-                result_dict: Dict[str, JSONValue] = {
-                    "key": record.key,
-                    "content": record.content,
-                    "tags": cast(JSONValue, record.tags),
-                    "timestamp": record.timestamp.isoformat(),
-                    "priority": record.priority.value,
-                }
-                result_list.append(result_dict)
-            return result_list
+            tag_filtered = self._filter_memories_by_tags(tags)
+            return self._format_tag_only_results(tag_filtered, top_k)
 
         elif query:
             # Semantic search only
@@ -237,19 +270,7 @@ class EnhancedMemoryStore(MemoryStore):
 
         else:
             # Return all memories
-            all_result = self.get_all()
-            # Convert back to list for this method
-            result_list = []
-            for record in all_result.records[:top_k]:
-                record_dict = {
-                    "key": record.key,
-                    "content": record.content,
-                    "tags": cast(JSONValue, record.tags),
-                    "timestamp": record.timestamp.isoformat(),
-                    "priority": record.priority.value,
-                }
-                result_list.append(cast(Dict[str, JSONValue], record_dict))
-            return result_list
+            return self._format_all_memories_results(top_k)
 
     def get_all(self) -> MemorySearchResult:
         """Return all memories sorted by timestamp (newest first)."""
@@ -258,7 +279,7 @@ class EnhancedMemoryStore(MemoryStore):
         # Sort by timestamp with type guard
         def sort_key(x: Dict[str, JSONValue]) -> str:
             timestamp = x.get("timestamp")
-            return str(timestamp) if isinstance(timestamp, str) else ""
+            return self.memory_converter.safe_string_conversion(timestamp)
 
         all_memories.sort(key=sort_key, reverse=True)
         logger.debug(f"Retrieved all {len(all_memories)} memories")
@@ -266,25 +287,11 @@ class EnhancedMemoryStore(MemoryStore):
         # Convert to MemorySearchResult
         memory_records = []
         for memory in all_memories:
-            try:
-                # Get tags with type validation
-                tags_value = memory.get("tags", [])
-                tags_list = [str(tag) for tag in tags_value if isinstance(tag, str)] if isinstance(tags_value, list) else []
-
-                record = MemoryRecord(
-                    key=str(memory.get("key", "")),
-                    content=memory.get("content", ""),
-                    tags=tags_list,
-                    timestamp=datetime.fromisoformat(str(memory.get("timestamp", datetime.now().isoformat()))),
-                    priority=MemoryPriority.LOW,
-                    metadata=MemoryMetadata(),
-                    ttl_seconds=None,
-                    embedding=None
-                )
+            record = self.memory_converter.memory_dict_to_record(memory)
+            if record:
                 memory_records.append(record)
-            except Exception as e:
-                logger.warning(f"Failed to convert memory to MemoryRecord: {e}")
-                continue
+            else:
+                logger.warning(f"Failed to convert memory to MemoryRecord: {memory.get('key', 'unknown')}")
 
         return MemorySearchResult(
             records=memory_records,
@@ -352,9 +359,9 @@ class EnhancedMemoryStore(MemoryStore):
         tool_memories = []
         for m in memories:
             tags = m.get('tags', [])
-            if isinstance(tags, list):
-                if any('tool' in str(tag) for tag in tags if isinstance(tag, str)):
-                    tool_memories.append(m)
+            tags_list = self.memory_converter.extract_tags_list(tags)
+            if any('tool' in tag for tag in tags_list):
+                tool_memories.append(m)
 
         if len(tool_memories) < 3:
             return patterns
@@ -401,9 +408,9 @@ class EnhancedMemoryStore(MemoryStore):
         error_memories = []
         for m in memories:
             tags = m.get('tags', [])
-            if isinstance(tags, list):
-                if any('error' in str(tag) for tag in tags if isinstance(tag, str)):
-                    error_memories.append(m)
+            tags_list = self.memory_converter.extract_tags_list(tags)
+            if any('error' in tag for tag in tags_list):
+                error_memories.append(m)
 
         if len(error_memories) < 2:
             return patterns
@@ -458,10 +465,9 @@ class EnhancedMemoryStore(MemoryStore):
         handoff_memories = []
         for m in memories:
             tags = m.get('tags', [])
-            if isinstance(tags, list):
-                string_tags = [str(tag) for tag in tags if isinstance(tag, str)]
-                if any(keyword in string_tags for keyword in ['handoff', 'agent', 'communication']):
-                    handoff_memories.append(m)
+            tags_list = self.memory_converter.extract_tags_list(tags)
+            if any(keyword in tags_list for keyword in ['handoff', 'agent', 'communication']):
+                handoff_memories.append(m)
 
         if len(handoff_memories) < 3:
             return patterns
@@ -503,12 +509,12 @@ class EnhancedMemoryStore(MemoryStore):
         content = str(memory_record.get('content', '')).lower()
 
         # Trigger learning for certain types of memories
-        string_tags = [str(tag) for tag in tags if isinstance(tag, str)] if isinstance(tags, list) else []
+        tags_list = self.memory_converter.extract_tags_list(tags)
         learning_trigger_conditions = [
-            'success' in string_tags and 'task_completion' in string_tags,
-            'error' in string_tags and 'resolved' in content,
-            'optimization' in string_tags,
-            'pattern' in string_tags,
+            'success' in tags_list and 'task_completion' in tags_list,
+            'error' in tags_list and 'resolved' in content,
+            'optimization' in tags_list,
+            'pattern' in tags_list,
             len(self._memories) % 50 == 0  # Every 50 memories
         ]
 
@@ -592,10 +598,9 @@ class EnhancedMemoryStore(MemoryStore):
                 session_memories = []
                 for m in self._memories.values():
                     tags = m.get('tags', [])
-                    if isinstance(tags, list):
-                        string_tags = [str(tag) for tag in tags if isinstance(tag, str)]
-                        if f"session:{session_id}" in string_tags:
-                            session_memories.append(m)
+                    tags_list = self.memory_converter.extract_tags_list(tags)
+                    if f"session:{session_id}" in tags_list:
+                        session_memories.append(m)
             else:
                 session_memories = list(self._memories.values())
 
