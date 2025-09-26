@@ -4,7 +4,7 @@ Replaces Dict[str, Any] in learning consolidation and pattern analysis.
 """
 
 from datetime import datetime
-from typing import Dict, List, Optional
+from typing import Dict, List, Optional, Any
 from shared.type_definitions.json import JSONValue
 from pydantic import BaseModel, Field, field_validator, ConfigDict
 
@@ -39,7 +39,7 @@ class ContentTypeBreakdown(BaseModel):
     def get_dominant_type(self) -> str:
         """Get the most common content type."""
         counts = self.model_dump()
-        return max(counts, key=counts.get) if counts else "empty"
+        return max(counts, key=lambda x: counts[x]) if counts else "empty"
 
 
 class TimeDistribution(BaseModel):
@@ -62,11 +62,11 @@ class TimeDistribution(BaseModel):
 class PatternAnalysis(BaseModel):
     model_config = ConfigDict(extra="forbid")
     """Pattern analysis results."""
-    content_types: ContentTypeBreakdown = Field(default_factory=ContentTypeBreakdown)
-    time_distribution: TimeDistribution = Field(default_factory=TimeDistribution)
+    content_types: ContentTypeBreakdown = Field(default_factory=lambda: ContentTypeBreakdown())
+    time_distribution: TimeDistribution = Field(default_factory=lambda: TimeDistribution())
     common_sequences: List[List[str]] = Field(default_factory=list)
     anomalies_detected: int = 0
-    confidence_score: float = Field(0.0, ge=0.0, le=1.0)
+    confidence_score: float = Field(default=0.0, ge=0.0, le=1.0)
 
     def has_patterns(self) -> bool:
         """Check if any patterns were detected."""
@@ -83,7 +83,7 @@ class LearningInsight(BaseModel):
     category: str
     description: str
     importance: str = Field(default="medium", pattern="^(low|medium|high|critical)$")
-    confidence: float = Field(0.8, ge=0.0, le=1.0)
+    confidence: float = Field(default=0.8, ge=0.0, le=1.0)
     supporting_data: Dict[str, JSONValue] = Field(default_factory=dict)
 
 
@@ -94,12 +94,12 @@ class LearningConsolidation(BaseModel):
     Replaces Dict[str, Any] returned from consolidate_learnings().
     """
     summary: str
-    total_memories: int = Field(0, ge=0)
-    unique_tags: int = Field(0, ge=0)
-    avg_tags_per_memory: float = Field(0.0, ge=0.0)
+    total_memories: int = Field(default=0, ge=0)
+    unique_tags: int = Field(default=0, ge=0)
+    avg_tags_per_memory: float = Field(default=0.0, ge=0.0)
     tag_frequencies: Dict[str, int] = Field(default_factory=dict)
     top_tags: List[Dict[str, JSONValue]] = Field(default_factory=list)
-    patterns: PatternAnalysis = Field(default_factory=PatternAnalysis)
+    patterns: PatternAnalysis = Field(default_factory=lambda: PatternAnalysis())
     insights: List[LearningInsight] = Field(default_factory=list)
     metrics: Dict[str, LearningMetric] = Field(default_factory=dict)
     generated_at: datetime = Field(default_factory=datetime.now)

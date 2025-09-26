@@ -20,7 +20,7 @@ class MessageEnvelope(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     id: str = Field(..., description="Unique message identifier")
-    version: int = Field(1, ge=1, description="Envelope version for evolution")
+    version: int = Field(default=1, ge=1, description="Envelope version for evolution")
     type: str = Field(..., description="Message type or topic")
     sender: str = Field(..., description="Agent or component sending the message")
     recipient: Optional[str] = Field(None, description="Intended recipient agent (optional for broadcast)")
