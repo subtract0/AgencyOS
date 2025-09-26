@@ -3,7 +3,7 @@ Extract actionable insights from session analysis.
 """
 from agency_swarm.tools import BaseTool
 from pydantic import Field
-from typing import Dict, Any, List
+from typing import Dict, Any, List, Union, cast, Optional
 from shared.type_definitions.json import JSONValue
 import json
 import re
@@ -46,20 +46,21 @@ class ExtractInsights(BaseTool):  # type: ignore[misc]
             }
 
             if self.insight_type == "auto" or self.insight_type == "tool_pattern":
-                insights["insights"].extend(self._extract_tool_insights(analysis_data))
+                cast(List[Dict[str, Any]], insights["insights"]).extend(self._extract_tool_insights(analysis_data))
 
             if self.insight_type == "auto" or self.insight_type == "error_resolution":
-                insights["insights"].extend(self._extract_error_insights(analysis_data))
+                cast(List[Dict[str, Any]], insights["insights"]).extend(self._extract_error_insights(analysis_data))
 
             if self.insight_type == "auto" or self.insight_type == "task_completion":
-                insights["insights"].extend(self._extract_workflow_insights(analysis_data))
+                cast(List[Dict[str, Any]], insights["insights"]).extend(self._extract_workflow_insights(analysis_data))
 
             if self.insight_type == "auto" or self.insight_type == "optimization":
-                insights["insights"].extend(self._extract_optimization_insights(analysis_data))
+                cast(List[Dict[str, Any]], insights["insights"]).extend(self._extract_optimization_insights(analysis_data))
 
             # Filter by confidence threshold
+            insights_list = cast(List[Dict[str, Any]], insights["insights"])
             filtered_insights = [
-                insight for insight in insights["insights"]
+                insight for insight in insights_list
                 if insight.get("confidence", 0) >= self.confidence_threshold
             ]
 
@@ -71,21 +72,21 @@ class ExtractInsights(BaseTool):  # type: ignore[misc]
         except Exception as e:
             return f"Error extracting insights: {str(e)}"
 
-    def _extract_tool_insights(self, analysis_data: Dict[str, JSONValue]) -> List[Dict[str, JSONValue]]:
+    def _extract_tool_insights(self, analysis_data: Dict[str, JSONValue]) -> List[Dict[str, Any]]:
         """Extract insights about tool usage patterns."""
         tool_analysis = analysis_data.get("tool_analysis", {})
         insights = []
 
         # High-frequency tool patterns
-        tool_counts = tool_analysis.get("tool_usage_counts", {})
-        most_used = tool_analysis.get("most_used_tools", [])
+        tool_counts = cast(Dict[str, int], tool_analysis.get("tool_usage_counts", {}))
+        most_used = cast(List[Any], tool_analysis.get("most_used_tools", []))
 
         if most_used:
             insights.append({
                 "type": "tool_pattern",
                 "category": "high_frequency_tools",
                 "title": "Most Frequently Used Tools",
-                "description": f"Tools used most often: {', '.join([f'{tool} ({count})' for tool, count in most_used[:3]])}",
+                "description": f"Tools used most often: {', '.join([f'{tool} ({count})' for tool, count in cast(List[tuple], most_used)[:3]])}",
                 "actionable_insight": "Consider optimizing these high-frequency tools for better performance",
                 "confidence": 0.9,
                 "data": {"tools": most_used[:3]},
@@ -93,7 +94,7 @@ class ExtractInsights(BaseTool):  # type: ignore[misc]
             })
 
         # Tool success rate insights
-        success_rates = tool_analysis.get("tool_success_rates", {})
+        success_rates = cast(Dict[str, float], tool_analysis.get("tool_success_rates", {}))
         low_success_tools = [(tool, rate) for tool, rate in success_rates.items() if rate < 0.8]
 
         if low_success_tools:
@@ -109,7 +110,7 @@ class ExtractInsights(BaseTool):  # type: ignore[misc]
             })
 
         # Tool sequence patterns
-        sequence_length = tool_analysis.get("tool_sequence_length", 0)
+        sequence_length = cast(int, tool_analysis.get("tool_sequence_length", 0))
         if sequence_length > 10:
             insights.append({
                 "type": "tool_pattern",
@@ -124,13 +125,13 @@ class ExtractInsights(BaseTool):  # type: ignore[misc]
 
         return insights
 
-    def _extract_error_insights(self, analysis_data: Dict[str, JSONValue]) -> List[Dict[str, JSONValue]]:
+    def _extract_error_insights(self, analysis_data: Dict[str, JSONValue]) -> List[Dict[str, Any]]:
         """Extract insights about error patterns and resolution strategies."""
         error_analysis = analysis_data.get("error_analysis", {})
         insights = []
 
         # High error rate insight
-        error_rate = error_analysis.get("error_rate", 0)
+        error_rate = cast(float, error_analysis.get("error_rate", 0))
         if error_rate > 0.1:  # More than 10% error rate
             insights.append({
                 "type": "error_resolution",
@@ -144,7 +145,7 @@ class ExtractInsights(BaseTool):  # type: ignore[misc]
             })
 
         # Common error types
-        error_types = error_analysis.get("error_types", {})
+        error_types = cast(Dict[str, int], error_analysis.get("error_types", {}))
         if error_types:
             most_common_error = max(error_types.items(), key=lambda x: x[1])
             if most_common_error[1] > 2:  # More than 2 occurrences
@@ -160,9 +161,9 @@ class ExtractInsights(BaseTool):  # type: ignore[misc]
                 })
 
         # Resolution patterns
-        resolution_patterns = error_analysis.get("resolution_patterns", [])
+        resolution_patterns = cast(List[Dict[str, Any]], error_analysis.get("resolution_patterns", []))
         if resolution_patterns:
-            avg_resolution_steps = sum(p.get("steps_to_resolution", 0) for p in resolution_patterns) / len(resolution_patterns)
+            avg_resolution_steps = sum(cast(int, p.get("steps_to_resolution", 0)) for p in resolution_patterns) / len(resolution_patterns)
             insights.append({
                 "type": "error_resolution",
                 "category": "resolution_efficiency",
@@ -176,13 +177,13 @@ class ExtractInsights(BaseTool):  # type: ignore[misc]
 
         return insights
 
-    def _extract_workflow_insights(self, analysis_data: Dict[str, JSONValue]) -> List[Dict[str, JSONValue]]:
+    def _extract_workflow_insights(self, analysis_data: Dict[str, JSONValue]) -> List[Dict[str, Any]]:
         """Extract insights about successful workflow patterns."""
         workflow_analysis = analysis_data.get("workflow_analysis", {})
         insights = []
 
         # High success rate workflows
-        success_rate = workflow_analysis.get("success_rate", 0)
+        success_rate = cast(float, workflow_analysis.get("success_rate", 0))
         if success_rate > 0.8:
             insights.append({
                 "type": "task_completion",
@@ -196,7 +197,7 @@ class ExtractInsights(BaseTool):  # type: ignore[misc]
             })
 
         # Workflow efficiency
-        avg_length = workflow_analysis.get("average_workflow_length", 0)
+        avg_length = cast(float, workflow_analysis.get("average_workflow_length", 0))
         if avg_length > 0:
             if avg_length < 5:
                 efficiency_insight = "Workflows are very efficient with short sequences"
@@ -221,13 +222,13 @@ class ExtractInsights(BaseTool):  # type: ignore[misc]
 
         return insights
 
-    def _extract_optimization_insights(self, analysis_data: Dict[str, JSONValue]) -> List[Dict[str, JSONValue]]:
+    def _extract_optimization_insights(self, analysis_data: Dict[str, JSONValue]) -> List[Dict[str, Any]]:
         """Extract general optimization insights."""
         insights = []
 
         # Memory usage optimization
-        memory_analysis = analysis_data.get("memory_analysis", {})
-        memory_ops = memory_analysis.get("memory_operations", {})
+        memory_analysis = cast(Dict[str, JSONValue], analysis_data.get("memory_analysis", {}))
+        memory_ops = cast(Dict[str, int], memory_analysis.get("memory_operations", {}))
 
         if memory_ops:
             total_ops = sum(memory_ops.values())
@@ -259,8 +260,8 @@ class ExtractInsights(BaseTool):  # type: ignore[misc]
                 })
 
         # Agent interaction optimization
-        interaction_analysis = analysis_data.get("interaction_analysis", {})
-        total_interactions = interaction_analysis.get("total_interactions", 0)
+        interaction_analysis = cast(Dict[str, JSONValue], analysis_data.get("interaction_analysis", {}))
+        total_interactions = cast(int, interaction_analysis.get("total_interactions", 0))
 
         if total_interactions > 10:
             insights.append({

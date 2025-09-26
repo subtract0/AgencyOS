@@ -6,7 +6,7 @@ from pydantic import Field
 import json
 import hashlib
 from datetime import datetime
-from typing import Dict, Any, List
+from typing import Dict, Any, List, Optional, cast
 from shared.type_definitions.json import JSONValue
 import uuid
 

@@ -15,9 +15,11 @@ import argparse
 import json
 from datetime import datetime, timezone
 from pathlib import Path
+from typing import Dict, Any, Optional
+from types import FrameType
 
 
-def _record_timing(duration_s: float, test_mode: str, specific: str | None, exit_code: int, extra: dict | None = None) -> None:
+def _record_timing(duration_s: float, test_mode: str, specific: Optional[str], exit_code: int, extra: Optional[Dict[str, Any]] = None) -> None:
     try:
         root = Path(__file__).resolve().parent
         out_dir = root / "logs" / "benchmarks"
@@ -37,7 +39,7 @@ def _record_timing(duration_s: float, test_mode: str, specific: str | None, exit
         pass
 
 
-def main(test_mode="unit", fast_only=False, timed: bool = False):
+def main(test_mode: str = "unit", fast_only: bool = False, timed: bool = False) -> int:
     # RECURSION GUARDS: Prevent nested test runs
     if os.environ.get("AGENCY_NESTED_TEST") == "1":
         print("⚠️  Nested test run detected; exiting to prevent recursion.")
@@ -68,13 +70,13 @@ def main(test_mode="unit", fast_only=False, timed: bool = False):
         f.write(str(os.getpid()))
 
     # Clean up PID file on exit
-    def cleanup_pid_file():
+    def cleanup_pid_file() -> None:
         pid_file.unlink(missing_ok=True)
 
     atexit.register(cleanup_pid_file)
 
     # SIGNAL HANDLING: Clean shutdown on interruption
-    def signal_handler(sig, frame):
+    def signal_handler(sig: int, frame: Optional[FrameType]) -> None:
         print(f"\n⚠️  Received signal {sig}, cleaning up...")
         cleanup_pid_file()
         sys.exit(1)
@@ -257,7 +259,7 @@ def main(test_mode="unit", fast_only=False, timed: bool = False):
         return 1
 
 
-def run_specific_test(test_name, timed: bool = False):
+def run_specific_test(test_name: str, timed: bool = False) -> int:
     """Run a specific test file or test function"""
     print("=" * 60)
     print("AGENCY CODE AGENCY - SPECIFIC TEST RUNNER")
@@ -315,7 +317,7 @@ def run_specific_test(test_name, timed: bool = False):
         return 1
 
 
-def create_parser():
+def create_parser() -> argparse.ArgumentParser:
     """Create argument parser for test runner"""
     parser = argparse.ArgumentParser(
         description="Agency Code Agency Test Runner",
