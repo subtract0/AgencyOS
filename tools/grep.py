@@ -6,7 +6,7 @@ from agency_swarm.tools import BaseTool
 from pydantic import Field
 
 
-class Grep(BaseTool):
+class Grep(BaseTool):  # type: ignore[misc]
     """
     A powerful search tool built on ripgrep.
 

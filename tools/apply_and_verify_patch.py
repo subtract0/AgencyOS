@@ -10,7 +10,7 @@ import tempfile
 import shutil
 from datetime import datetime
 from typing import Dict, Any, Optional
-from shared.types.json import JSONValue
+from shared.type_definitions.json import JSONValue
 
 from agency_swarm.tools import BaseTool as Tool
 from pydantic import Field

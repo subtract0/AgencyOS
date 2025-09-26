@@ -11,7 +11,7 @@ import time
 from datetime import datetime, timedelta
 from pathlib import Path
 
-def main():
+def main() -> int:
     """Launch the autonomous type safety migration."""
 
     print("=" * 60)
@@ -137,14 +137,20 @@ Work autonomously. Begin immediately."""
                     break
 
                 # Read output
-                line = process.stdout.readline()
-                if not line and process.poll() is not None:
-                    break
+                if process.stdout is not None:
+                    line = process.stdout.readline()
+                    if not line and process.poll() is not None:
+                        break
 
-                if line:
-                    print(line.rstrip())
-                    log.write(line)
-                    log.flush()
+                    if line:
+                        print(line.rstrip())
+                        log.write(line)
+                        log.flush()
+                else:
+                    # If stdout is None, check if process is still running
+                    if process.poll() is not None:
+                        break
+                    time.sleep(0.1)  # Small delay to avoid busy waiting
 
         # Clean up temp file
         os.unlink(mission_file)

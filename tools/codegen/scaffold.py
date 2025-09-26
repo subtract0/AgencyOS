@@ -7,7 +7,7 @@ import dataclasses
 import os
 import re
 from typing import Dict, List, Optional
-from shared.types.json import JSONValue
+from shared.type_definitions.json import JSONValue
 
 
 @dataclasses.dataclass
@@ -37,7 +37,7 @@ TODO: Add implementation details.
 from __future__ import annotations
 
 from typing import Any, Dict, List, Optional
-from shared.types.json import JSONValue
+from shared.type_definitions.json import JSONValue
 
 
 class {{class_name}}:

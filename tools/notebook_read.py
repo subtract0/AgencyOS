@@ -6,7 +6,7 @@ from agency_swarm.tools import BaseTool
 from pydantic import Field
 
 
-class NotebookRead(BaseTool):
+class NotebookRead(BaseTool):  # type: ignore[misc]
     """
     Reads a Jupyter notebook (.ipynb file) and returns all of the cells with their outputs.
     Jupyter notebooks are interactive documents that combine code, text, and visualizations, commonly used for data analysis and scientific computing.

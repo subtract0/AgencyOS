@@ -9,7 +9,7 @@ import json
 import os
 from datetime import datetime, timedelta
 from typing import Dict, Any, List, Optional
-from shared.types.json import JSONValue
+from shared.type_definitions.json import JSONValue
 import logging
 from collections import defaultdict
 from shared.models.patterns import (
@@ -26,7 +26,7 @@ from shared.models.patterns import (
 logger = logging.getLogger(__name__)
 
 
-class SelfHealingPatternExtractor(BaseTool):
+class SelfHealingPatternExtractor(BaseTool):  # type: ignore[misc]
     """
     Extracts patterns from self-healing system actions and outcomes.
 

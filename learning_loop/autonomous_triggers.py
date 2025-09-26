@@ -18,7 +18,7 @@ import re
 import json
 from datetime import datetime, timedelta
 from typing import Dict, List, Optional, Any, Callable, Union
-from shared.types.json import JSONValue
+from shared.type_definitions.json import JSONValue
 from dataclasses import dataclass, asdict
 from pathlib import Path
 

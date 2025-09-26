@@ -12,7 +12,8 @@ import json
 import os
 import sys
 from datetime import datetime
-from typing import Any, Dict, Optional
+from typing import Any, List, Optional, Tuple
+from shared.type_definitions.json import JSONValue
 
 # Add project root to path when running directly
 if __name__ == "__main__":
@@ -49,7 +50,7 @@ def format_duration(seconds: float) -> str:
         return f"{seconds/3600:.1f}h"
 
 
-def cmd_status(args) -> None:
+def cmd_status(args: argparse.Namespace) -> None:
     """Show self-healing system status."""
     try:
         if args.health:
@@ -98,7 +99,7 @@ def cmd_status(args) -> None:
         sys.exit(1)
 
 
-def cmd_triggers(args) -> None:
+def cmd_triggers(args: argparse.Namespace) -> None:
     """Show trigger configurations and status."""
     try:
         framework = create_default_trigger_framework()
@@ -119,7 +120,7 @@ def cmd_triggers(args) -> None:
             return
 
         # Group triggers by type
-        by_type = {}
+        by_type: dict[str, List[Tuple[str, JSONValue]]] = {}
         for name, config in triggers.items():
             trigger_type = config['type']
             if trigger_type not in by_type:
@@ -161,7 +162,7 @@ def cmd_triggers(args) -> None:
         sys.exit(1)
 
 
-def cmd_actions(args) -> None:
+def cmd_actions(args: argparse.Namespace) -> None:
     """Show action registry configurations and status."""
     try:
         registry = create_default_action_registry()
@@ -181,7 +182,7 @@ def cmd_actions(args) -> None:
             return
 
         # Group actions by type
-        by_type = {}
+        by_type: dict[str, List[Tuple[str, JSONValue]]] = {}
         for name, config in actions.items():
             action_type = config['type']
             if action_type not in by_type:
@@ -227,7 +228,7 @@ def cmd_actions(args) -> None:
         sys.exit(1)
 
 
-def cmd_check(args) -> None:
+def cmd_check(args: argparse.Namespace) -> None:
     """Run a manual self-healing check."""
     try:
         print("Running self-healing check...")
@@ -269,7 +270,7 @@ def cmd_check(args) -> None:
         sys.exit(1)
 
 
-def cmd_history(args) -> None:
+def cmd_history(args: argparse.Namespace) -> None:
     """Show execution history."""
     try:
         registry = create_default_action_registry()
@@ -309,7 +310,7 @@ def cmd_history(args) -> None:
         sys.exit(1)
 
 
-def cmd_enable_trigger(args) -> None:
+def cmd_enable_trigger(args: argparse.Namespace) -> None:
     """Enable a specific trigger."""
     try:
         framework = create_default_trigger_framework()
@@ -323,7 +324,7 @@ def cmd_enable_trigger(args) -> None:
         sys.exit(1)
 
 
-def cmd_disable_trigger(args) -> None:
+def cmd_disable_trigger(args: argparse.Namespace) -> None:
     """Disable a specific trigger."""
     try:
         framework = create_default_trigger_framework()
@@ -337,7 +338,7 @@ def cmd_disable_trigger(args) -> None:
         sys.exit(1)
 
 
-def cmd_clear_conditions(args) -> None:
+def cmd_clear_conditions(args: argparse.Namespace) -> None:
     """Clear active conditions."""
     try:
         framework = create_default_trigger_framework()

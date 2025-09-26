@@ -6,7 +6,7 @@ from agency_swarm.tools import BaseTool
 from pydantic import Field
 
 
-class NotebookEdit(BaseTool):
+class NotebookEdit(BaseTool):  # type: ignore[misc]
     """
     Completely replaces the contents of a specific cell in a Jupyter notebook (.ipynb file) with new source.
     Jupyter notebooks are interactive documents that combine code, text, and visualizations, commonly used for data analysis and scientific computing.

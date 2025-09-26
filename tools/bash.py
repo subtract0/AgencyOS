@@ -11,7 +11,7 @@ _bash_execution_lock = threading.Lock()
 _bash_busy = False  # Track if a bash command is currently executing
 
 
-class Bash(BaseTool):
+class Bash(BaseTool):  # type: ignore[misc]
     """
     Executes a given bash command in a persistent shell session with optional timeout, ensuring proper handling and security measures.
 

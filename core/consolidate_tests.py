@@ -9,7 +9,7 @@ import shutil
 from pathlib import Path
 
 
-def consolidate_test_files():
+def consolidate_test_files() -> tuple[int, int]:
     """
     Consolidate healed test files into their main counterparts.
     Strategy: Since healed versions are more comprehensive, we'll:
@@ -96,7 +96,7 @@ def consolidate_test_files():
     return len(consolidated), len(errors)
 
 
-def restore_from_backup():
+def restore_from_backup() -> None:
     """Restore original test files from backup if needed."""
     tests_dir = Path("tests")
     backup_dir = tests_dir / "backup_pre_consolidation"

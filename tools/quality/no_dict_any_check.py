@@ -82,8 +82,8 @@ def _collect_violations(tree: ast.AST, filename: str) -> List[Tuple[int, int, st
     violations: List[Tuple[int, int, str]] = []
 
     class Visitor(ast.NodeVisitor):
-        def visit_AnnAssign(self, node: ast.AST) -> None:  # type: ignore[override]
-            ann = getattr(node, "annotation", None)
+        def visit_AnnAssign(self, node: ast.AnnAssign) -> None:
+            ann = node.annotation
             if isinstance(ann, ast.Subscript) and _match_dict_str_any(ann):
                 violations.append((node.lineno, node.col_offset, "annotation"))
             self.generic_visit(node)

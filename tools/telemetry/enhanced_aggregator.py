@@ -17,7 +17,7 @@ from collections import defaultdict, deque
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta, timezone
 from typing import Any, Dict, Iterable, List, Optional, Tuple
-from shared.types.json import JSONValue
+from shared.type_definitions.json import JSONValue
 from scipy import stats
 from sklearn.linear_model import LinearRegression
 

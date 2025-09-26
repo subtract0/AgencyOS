@@ -8,7 +8,7 @@ for the Infinite Intelligence Amplifier.
 import json
 import logging
 from typing import Dict, List, Optional, Any
-from shared.types.json import JSONValue
+from shared.type_definitions.json import JSONValue
 from dataclasses import dataclass
 from datetime import datetime
 

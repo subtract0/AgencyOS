@@ -7,9 +7,10 @@ Runs all memory-related tests and provides a summary report.
 
 import subprocess
 import sys
+from typing import Tuple, List
 
 
-def run_test_file(test_file):
+def run_test_file(test_file: str) -> Tuple[bool, str]:
     """Run a single test file and return results."""
     print(f"\n{'=' * 50}")
     print(f"Running {test_file}")
@@ -33,7 +34,7 @@ def run_test_file(test_file):
         return False, str(e)
 
 
-def main():
+def main() -> int:
     """Run all memory tests and provide summary."""
     print("Memory API Test Runner")
     print("=====================")

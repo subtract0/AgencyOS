@@ -10,7 +10,7 @@ metrics, and merged outputs used by the scheduler.
 from typing import Dict, List, Literal
 from pydantic import BaseModel, Field, ConfigDict
 
-from shared.types.json import JSONValue
+from shared.type_definitions.json import JSONValue
 
 
 BackoffType = Literal["fixed", "exp"]

@@ -14,7 +14,7 @@ import hashlib
 import os
 from pathlib import Path
 from typing import Any, Dict, List
-from shared.types.json import JSONValue
+from shared.type_definitions.json import JSONValue
 
 from .adapters import _redact, _shorten, _iso_now, Card, _stable_id
 

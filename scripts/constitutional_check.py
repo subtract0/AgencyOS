@@ -15,11 +15,11 @@ from typing import List, Tuple
 class ConstitutionalChecker:
     """Fast constitutional compliance checker."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.project_root = Path(__file__).parent.parent
         self.constitution_path = self.project_root / "constitution.md"
-        self.errors = []
-        self.warnings = []
+        self.errors: List[str] = []
+        self.warnings: List[str] = []
 
     def check_article_i_context(self) -> bool:
         """Article I: Complete Context Before Action - Check for TODO/FIXME markers."""
@@ -230,7 +230,7 @@ class ConstitutionalChecker:
             return True, f"Passed with {len(self.warnings)} warnings"
 
 
-def main():
+def main() -> int:
     """Main entry point for pre-commit hook."""
     # Skip in CI environment (full tests run there)
     if os.environ.get("CI"):

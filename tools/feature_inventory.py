@@ -8,9 +8,10 @@ a compact report of feature coverage.
 
 import re
 from pathlib import Path
+from typing import Dict, List, Tuple, Any
 
 
-def extract_features_from_md(features_file):
+def extract_features_from_md(features_file: Path) -> Tuple[List[str], List[str]]:
     """Extract features and test files from FEATURES.md"""
     with open(features_file, 'r') as f:
         content = f.read()
@@ -26,7 +27,7 @@ def extract_features_from_md(features_file):
     return feature_matches, test_files
 
 
-def check_test_files(test_files, project_root):
+def check_test_files(test_files: List[str], project_root: Path) -> Dict[str, Dict[str, Any]]:
     """Check which test files exist and count test functions"""
     coverage_report = {}
 
@@ -52,7 +53,7 @@ def check_test_files(test_files, project_root):
     return coverage_report
 
 
-def main():
+def main() -> None:
     """Generate feature coverage report"""
     project_root = Path(__file__).parent.parent
     features_file = project_root / "FEATURES.md"
