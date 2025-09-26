@@ -12,7 +12,8 @@ import json
 import os
 import sys
 from datetime import datetime
-from typing import Any, Dict, Optional
+from typing import Any, List, Optional, Tuple
+from shared.type_definitions.json import JSONValue
 
 # Add project root to path when running directly
 if __name__ == "__main__":
@@ -119,7 +120,7 @@ def cmd_triggers(args: argparse.Namespace) -> None:
             return
 
         # Group triggers by type
-        by_type: Dict[str, Any] = {}
+        by_type: dict[str, List[Tuple[str, JSONValue]]] = {}
         for name, config in triggers.items():
             trigger_type = config['type']
             if trigger_type not in by_type:
@@ -181,7 +182,7 @@ def cmd_actions(args: argparse.Namespace) -> None:
             return
 
         # Group actions by type
-        by_type: Dict[str, Any] = {}
+        by_type: dict[str, List[Tuple[str, JSONValue]]] = {}
         for name, config in actions.items():
             action_type = config['type']
             if action_type not in by_type:
