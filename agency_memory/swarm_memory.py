@@ -173,19 +173,19 @@ class SwarmMemoryStore(MemoryStore):
                 priority_val = memory.get("priority")
                 if isinstance(priority_val, (int, float)) and priority_val >= min_priority.value:
                     tags_value = memory.get("tags", [])
-                if isinstance(tags_value, list):
-                    memory_tags = set(str(tag) for tag in tags_value if isinstance(tag, str))
-                else:
-                    memory_tags = set()
-                if tag_set.intersection(memory_tags):
-                    # Update access tracking
-                    access_count = memory.get("access_count", 0)
-                    if isinstance(access_count, (int, float)):
-                        memory["access_count"] = int(access_count) + 1
+                    if isinstance(tags_value, list):
+                        memory_tags = set(str(tag) for tag in tags_value if isinstance(tag, str))
                     else:
-                        memory["access_count"] = 1
-                    memory["last_accessed"] = datetime.now().isoformat()
-                    matches.append(memory.copy())
+                        memory_tags = set()
+                    if tag_set.intersection(memory_tags):
+                        # Update access tracking
+                        access_count = memory.get("access_count", 0)
+                        if isinstance(access_count, (int, float)):
+                            memory["access_count"] = int(access_count) + 1
+                        else:
+                            memory["access_count"] = 1
+                        memory["last_accessed"] = datetime.now().isoformat()
+                        matches.append(memory.copy())
 
         # Include shared memories if requested
         if include_shared:
@@ -278,7 +278,7 @@ class SwarmMemoryStore(MemoryStore):
             execution_time_ms=0
         )
 
-    def get_all(self) -> MemorySearchResult:
+    def get_all(self, agent_id: Optional[str] = None) -> MemorySearchResult:
         """
         Get all memories, optionally filtered by agent.
 
@@ -289,7 +289,14 @@ class SwarmMemoryStore(MemoryStore):
             List of memory records
         """
         # Get all memories as MemoryRecord objects
-        memories = list(self._memories.values())
+        if agent_id:
+            memories = []
+            for namespaced_key in self._agent_namespaces.get(agent_id, set()):
+                memory = self._memories.get(namespaced_key)
+                if memory:
+                    memories.append(memory)
+        else:
+            memories = list(self._memories.values())
         memory_records = []
 
         for memory_dict in memories:
@@ -836,6 +843,8 @@ class SwarmMemory(Memory):
                 "tags": tags_as_json,
                 "timestamp": record.timestamp.isoformat(),
                 "priority": record.priority.value,
+                "agent_id": record.metadata.agent_id if record.metadata and record.metadata.agent_id else effective_agent_id,
+                "metadata": cast(JSONValue, record.metadata.model_dump()) if record.metadata else {}
             }
             result_list.append(record_dict)
         return result_list

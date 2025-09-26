@@ -166,22 +166,45 @@ class FirestoreStore(MemoryStore):
             query = self._collection.where("tags", "array_contains_any", tags)  # type: ignore
             docs = query.stream()
 
-            memories = []
+            memory_records = []
             for doc in docs:
-                memory = doc.to_dict()
-                memories.append(memory)
+                memory_dict = doc.to_dict()
+                # Convert dict to MemoryRecord
+                try:
+                    record = MemoryRecord(
+                        key=memory_dict.get("key", ""),
+                        content=memory_dict.get("content", ""),
+                        tags=memory_dict.get("tags", []),
+                        timestamp=datetime.fromisoformat(memory_dict.get("timestamp", datetime.now().isoformat())),
+                        priority=MemoryPriority(memory_dict.get("priority", "medium"))
+                    )
+                    memory_records.append(record)
+                except Exception as e:
+                    logger.warning(f"Failed to convert Firestore doc to MemoryRecord: {e}")
+                    continue
 
             # Sort by timestamp (newest first)
-            memories.sort(key=lambda x: x.get("timestamp", ""), reverse=True)
+            memory_records.sort(key=lambda x: x.timestamp, reverse=True)
             logger.debug(
-                f"FirestoreStore: Found {len(memories)} memories for tags: {tags}"
+                f"FirestoreStore: Found {len(memory_records)} memories for tags: {tags}"
             )
-            return memories  # type: ignore
+
+            return MemorySearchResult(
+                records=memory_records,
+                total_count=len(memory_records),
+                search_query={"tags": cast(JSONValue, tags)},
+                execution_time_ms=0
+            )
 
         except Exception as e:
             logger.error(f"FirestoreStore: Search failed for tags {tags}: {e}")
             # Fall back to empty result rather than crash
-            return []  # type: ignore
+            return MemorySearchResult(
+                records=[],
+                total_count=0,
+                search_query={"tags": cast(JSONValue, tags)},
+                execution_time_ms=0
+            )
 
     def get_all(self) -> MemorySearchResult:
         """Get all memories from Firestore."""
@@ -190,20 +213,43 @@ class FirestoreStore(MemoryStore):
 
         try:
             docs = self._collection.stream()  # type: ignore
-            memories = []
+            memory_records = []
 
             for doc in docs:
-                memory = doc.to_dict()
-                memories.append(memory)
+                memory_dict = doc.to_dict()
+                # Convert dict to MemoryRecord
+                try:
+                    record = MemoryRecord(
+                        key=memory_dict.get("key", ""),
+                        content=memory_dict.get("content", ""),
+                        tags=memory_dict.get("tags", []),
+                        timestamp=datetime.fromisoformat(memory_dict.get("timestamp", datetime.now().isoformat())),
+                        priority=MemoryPriority(memory_dict.get("priority", "medium"))
+                    )
+                    memory_records.append(record)
+                except Exception as e:
+                    logger.warning(f"Failed to convert Firestore doc to MemoryRecord: {e}")
+                    continue
 
             # Sort by timestamp (newest first)
-            memories.sort(key=lambda x: x.get("timestamp", ""), reverse=True)
-            logger.debug(f"FirestoreStore: Retrieved {len(memories)} total memories")
-            return memories  # type: ignore
+            memory_records.sort(key=lambda x: x.timestamp, reverse=True)
+            logger.debug(f"FirestoreStore: Retrieved {len(memory_records)} total memories")
+
+            return MemorySearchResult(
+                records=memory_records,
+                total_count=len(memory_records),
+                search_query={},
+                execution_time_ms=0
+            )
 
         except Exception as e:
             logger.error(f"FirestoreStore: Failed to retrieve all memories: {e}")
-            return []  # type: ignore
+            return MemorySearchResult(
+                records=[],
+                total_count=0,
+                search_query={},
+                execution_time_ms=0
+            )
 
 
 def create_firestore_store(collection_name: str = "agency_memories") -> FirestoreStore:
