@@ -7,7 +7,7 @@ Lightweight implementation with optional embeddings support.
 
 import logging
 import json
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Callable, cast
 from shared.type_definitions.json import JSONValue
 from dataclasses import dataclass
 from datetime import datetime
@@ -46,7 +46,7 @@ class VectorStore:
         self._memory_texts: Dict[str, str] = {}
         self._memory_records: Dict[str, Dict[str, JSONValue]] = {}
         self._embedding_provider = embedding_provider
-        self._embedding_function = None
+        self._embedding_function: Optional[Callable[[List[str]], List[List[float]]]] = None
 
         # Try to initialize embedding function
         self._initialize_embeddings()
@@ -166,7 +166,9 @@ class VectorStore:
 
         # Add tags
         if "tags" in memory and memory["tags"]:
-            text_parts.extend(memory["tags"])
+            tags = memory["tags"]
+            if isinstance(tags, list):
+                text_parts.extend(str(tag) for tag in tags if isinstance(tag, str))
 
         # Add content (convert to string if needed)
         content = memory.get("content", "")
@@ -178,7 +180,9 @@ class VectorStore:
         else:
             text_parts.append(str(content))
 
-        return " ".join(text_parts)
+        # Convert all parts to strings before joining
+        string_parts = [str(part) for part in text_parts]
+        return " ".join(string_parts)
 
     def semantic_search(
         self, query: str, memories: List[dict[str, JSONValue]], top_k: int = 10
@@ -212,14 +216,20 @@ class VectorStore:
 
                 # Ensure memory is in vector store
                 if memory_key not in self._embeddings:
-                    self.add_memory(memory_key, memory)
+                    if isinstance(memory, dict) and isinstance(memory_key, str):
+                        self.add_memory(memory_key, cast(Dict[str, JSONValue], memory))
+                    else:
+                        continue
 
                 # Skip if still no embedding
                 if memory_key not in self._embeddings:
                     continue
 
                 # Calculate cosine similarity
-                memory_embedding = self._embeddings[memory_key]
+                if isinstance(memory_key, str):
+                    memory_embedding = self._embeddings[memory_key]
+                else:
+                    continue
                 similarity = self._cosine_similarity(query_embedding, memory_embedding)
 
                 results.append(
@@ -260,11 +270,14 @@ class VectorStore:
             # Get searchable text
             memory_key = memory.get("namespaced_key", memory.get("key", ""))
 
-            if memory_key not in self._memory_texts:
-                searchable_text = self._extract_searchable_text(memory)
-                self._memory_texts[memory_key] = searchable_text
+            if isinstance(memory_key, str):
+                if memory_key not in self._memory_texts:
+                    searchable_text = self._extract_searchable_text(memory)
+                    self._memory_texts[memory_key] = searchable_text
+                else:
+                    searchable_text = self._memory_texts[memory_key]
             else:
-                searchable_text = self._memory_texts[memory_key]
+                continue
 
             # Calculate keyword overlap score
             memory_words = set(searchable_text.lower().split())
@@ -388,7 +401,13 @@ class VectorStore:
         try:
             memories = list(self._memory_records.values())
             if namespace:
-                memories = [m for m in memories if m.get("metadata", {}).get("namespace") == namespace]
+                filtered_memories = []
+                for m in memories:
+                    if isinstance(m, dict):
+                        metadata = m.get("metadata", {})
+                        if isinstance(metadata, dict) and metadata.get("namespace") == namespace:
+                            filtered_memories.append(m)
+                memories = filtered_memories
             results = self.hybrid_search(query, memories, top_k=limit)
             return [
                 {

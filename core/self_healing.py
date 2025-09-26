@@ -65,7 +65,7 @@ class SelfHealingCore:
         Returns:
             List of Finding objects with detected errors
         """
-        findings = []
+        findings: List[Finding] = []
 
         # Read content from path if it's a file
         if os.path.isfile(path):

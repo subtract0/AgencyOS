@@ -47,11 +47,11 @@ class UnifiedEdit:
     def edit(
         self,
         file_path: str,
-        old_string: str = None,
-        new_string: str = None,
-        edits: List[Dict[str, str]] = None,
-        cell_id: str = None,
-        cell_type: str = None,
+        old_string: Optional[str] = None,
+        new_string: Optional[str] = None,
+        edits: Optional[List[Dict[str, str]]] = None,
+        cell_id: Optional[str] = None,
+        cell_type: Optional[str] = None,
         edit_mode: str = "replace",
         replace_all: bool = False
     ) -> str:
@@ -75,13 +75,16 @@ class UnifiedEdit:
 
         # Detect file type
         if file_path.endswith('.ipynb'):
+            source = old_string or new_string or ""
             return self._edit_notebook(
-                file_path, old_string or new_string,
+                file_path, source,
                 cell_id, cell_type, edit_mode
             )
         elif edits and len(edits) > 1:
             return self._multi_edit(file_path, edits)
         else:
+            if old_string is None or new_string is None:
+                raise ValueError("old_string and new_string are required for single edits")
             return self._single_edit(
                 file_path, old_string, new_string, replace_all
             )
@@ -140,8 +143,8 @@ class UnifiedEdit:
         self,
         notebook_path: str,
         new_source: str,
-        cell_id: str = None,
-        cell_type: str = None,
+        cell_id: Optional[str] = None,
+        cell_type: Optional[str] = None,
         edit_mode: str = "replace"
     ) -> str:
         """
@@ -170,7 +173,7 @@ class UnifiedEdit:
     def smart_edit(
         self,
         file_path: str,
-        changes: Union[str, Dict[str, str], List[Dict[str, str]]]
+        changes: Union[str, Dict[str, JSONValue], List[Dict[str, JSONValue]]]
     ) -> str:
         """
         Smart edit that automatically determines the best approach.
@@ -199,11 +202,20 @@ class UnifiedEdit:
 
         elif isinstance(changes, dict):
             # Single edit operation
+            old = changes.get('old', changes.get('old_string'))
+            new = changes.get('new', changes.get('new_string'))
+            replace_all = changes.get('replace_all', False)
+
+            # Convert to proper types
+            old_string = str(old) if old is not None else None
+            new_string = str(new) if new is not None else None
+            replace_all_flag = bool(replace_all) if isinstance(replace_all, (bool, str)) else False
+
             return self.edit(
                 file_path=file_path,
-                old_string=changes.get('old', changes.get('old_string')),
-                new_string=changes.get('new', changes.get('new_string')),
-                replace_all=changes.get('replace_all', False)
+                old_string=old_string,
+                new_string=new_string,
+                replace_all=replace_all_flag
             )
 
         elif isinstance(changes, list):
@@ -211,7 +223,15 @@ class UnifiedEdit:
             if len(changes) == 1:
                 return self.smart_edit(file_path, changes[0])
             else:
-                return self.edit(file_path=file_path, edits=changes)
+                # Convert JSONValue dicts to string dicts for edit operations
+                edits = []
+                for change in changes:
+                    if isinstance(change, dict):
+                        edit_dict = {}
+                        for key, value in change.items():
+                            edit_dict[key] = str(value) if value is not None else ""
+                        edits.append(edit_dict)
+                return self.edit(file_path=file_path, edits=edits)
 
         else:
             return f"Unsupported changes format: {type(changes)}"
@@ -233,7 +253,7 @@ class UnifiedEdit:
         Returns:
             Validation result with details
         """
-        result = {
+        result: dict[str, JSONValue] = {
             "valid": True,
             "errors": [],
             "warnings": [],
@@ -243,7 +263,9 @@ class UnifiedEdit:
         # Check file exists
         if not os.path.exists(file_path):
             result["valid"] = False
-            result["errors"].append(f"File not found: {file_path}")
+            errors = result["errors"]
+            if isinstance(errors, list):
+                errors.append(f"File not found: {file_path}")
             return result
 
         # Check file is readable
@@ -252,37 +274,49 @@ class UnifiedEdit:
                 content = f.read()
         except Exception as e:
             result["valid"] = False
-            result["errors"].append(f"Cannot read file: {e}")
+            errors = result["errors"]
+            if isinstance(errors, list):
+                errors.append(f"Cannot read file: {e}")
             return result
 
         # Check old_string exists
         occurrences = content.count(old_string)
         if occurrences == 0:
             result["valid"] = False
-            result["errors"].append(f"String not found: {old_string}")
+            errors = result["errors"]
+            if isinstance(errors, list):
+                errors.append(f"String not found: {old_string}")
         elif occurrences > 1:
-            result["warnings"].append(
-                f"String appears {occurrences} times. Consider using replace_all=True"
-            )
-            result["info"]["occurrences"] = occurrences
+            warnings = result["warnings"]
+            if isinstance(warnings, list):
+                warnings.append(
+                    f"String appears {occurrences} times. Consider using replace_all=True"
+                )
+            info = result["info"]
+            if isinstance(info, dict):
+                info["occurrences"] = occurrences
 
         # Check strings are different
         if old_string == new_string:
             result["valid"] = False
-            result["errors"].append("old_string and new_string are identical")
+            errors = result["errors"]
+            if isinstance(errors, list):
+                errors.append("old_string and new_string are identical")
 
         # Add preview
         if result["valid"]:
             preview_start = max(0, content.find(old_string) - 50)
             preview_end = min(len(content), content.find(old_string) + len(old_string) + 50)
-            result["info"]["preview"] = content[preview_start:preview_end]
+            info = result["info"]
+            if isinstance(info, dict):
+                info["preview"] = content[preview_start:preview_end]
 
         return result
 
     def batch_edit(
         self,
         operations: List[dict[str, JSONValue]]
-    ) -> List[dict[str, JSONValue]]:
+    ) -> List[dict[str, Union[str, bool]]]:
         """
         Perform batch edit operations across multiple files.
 
@@ -292,14 +326,33 @@ class UnifiedEdit:
         Returns:
             List of results for each operation
         """
-        results = []
+        results: List[dict[str, Union[str, bool]]] = []
 
         for op in operations:
-            file_path = op.get('file_path')
+            file_path_val = op.get('file_path')
             changes = op.get('changes', op)
 
+            # Ensure file_path is a string
+            file_path = str(file_path_val) if file_path_val is not None else ""
+
             try:
-                result = self.smart_edit(file_path, changes)
+                # Convert changes to the expected type for smart_edit
+                from typing import cast
+                result = ""
+                if isinstance(changes, str):
+                    result = self.smart_edit(file_path, cast(str, changes))
+                elif isinstance(changes, dict):
+                    result = self.smart_edit(file_path, cast(dict, changes))
+                elif isinstance(changes, list):
+                    result = self.smart_edit(file_path, cast(list, changes))
+                else:
+                    results.append({
+                        "file": file_path,
+                        "success": False,
+                        "error": f"Unsupported changes type: {type(changes)}"
+                    })
+                    continue
+
                 results.append({
                     "file": file_path,
                     "success": "Successfully" in result,
@@ -335,8 +388,8 @@ def get_unified_edit() -> UnifiedEdit:
 # Convenience function for direct editing
 def edit_file(
     file_path: str,
-    old_string: str = None,
-    new_string: str = None,
+    old_string: Optional[str] = None,
+    new_string: Optional[str] = None,
     **kwargs
 ) -> str:
     """

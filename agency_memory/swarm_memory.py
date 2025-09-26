@@ -10,7 +10,7 @@ See MCP_INTEGRATION_STANDARDS.md for architectural guidelines.
 
 import logging
 from datetime import datetime, timedelta
-from typing import Any, Dict, List, Optional, Set
+from typing import Any, Dict, List, Optional, Set, cast
 from shared.type_definitions.json import JSONValue
 from collections import defaultdict, Counter
 from enum import IntEnum
@@ -155,7 +155,13 @@ class SwarmMemoryStore(MemoryStore):
             List of matching memory records sorted by priority and timestamp
         """
         if not tags:
-            return MemorySearchResult(records=[], total_count=0, search_query={"tags": tags})
+            empty_search_query: Dict[str, JSONValue] = {"tags": []}
+            return MemorySearchResult(
+                records=[],
+                total_count=0,
+                search_query=empty_search_query,
+                execution_time_ms=0
+            )
 
         matches = []
         tag_set = set(tags)
@@ -163,8 +169,14 @@ class SwarmMemoryStore(MemoryStore):
         # Search agent-specific memories
         for namespaced_key in self._agent_namespaces.get(agent_id, set()):
             memory = self._memories.get(namespaced_key)
-            if memory and isinstance(memory.get("priority"), (int, float)) and memory["priority"] >= min_priority.value:
-                memory_tags = set(memory.get("tags", []))
+            if memory:
+                priority_val = memory.get("priority")
+                if isinstance(priority_val, (int, float)) and priority_val >= min_priority.value:
+                    tags_value = memory.get("tags", [])
+                if isinstance(tags_value, list):
+                    memory_tags = set(str(tag) for tag in tags_value if isinstance(tag, str))
+                else:
+                    memory_tags = set()
                 if tag_set.intersection(memory_tags):
                     # Update access tracking
                     access_count = memory.get("access_count", 0)
@@ -178,16 +190,21 @@ class SwarmMemoryStore(MemoryStore):
         # Include shared memories if requested
         if include_shared:
             for shared_memory in self._shared_knowledge.values():
+                shared_priority = shared_memory.get("priority")
                 if (
                     shared_memory.get("agent_id") != agent_id
-                    and isinstance(shared_memory.get("priority"), (int, float))
-                    and shared_memory["priority"] >= min_priority.value
+                    and isinstance(shared_priority, (int, float))
+                    and shared_priority >= min_priority.value
                 ):
-                    memory_tags = set(shared_memory.get("tags", []))
+                    tags_value = shared_memory.get("tags", [])
+                    if isinstance(tags_value, list):
+                        memory_tags = set(str(tag) for tag in tags_value if isinstance(tag, str))
+                    else:
+                        memory_tags = set()
                     if tag_set.intersection(memory_tags):
                         # Update access tracking in the original memory record
-                        original_key = shared_memory["namespaced_key"]
-                        if original_key in self._memories:
+                        original_key = shared_memory.get("namespaced_key")
+                        if isinstance(original_key, str) and original_key in self._memories:
                             memory_ref = self._memories[original_key]
                             access_count = memory_ref.get("access_count", 0)
                             if isinstance(access_count, (int, float)):
@@ -217,26 +234,51 @@ class SwarmMemoryStore(MemoryStore):
         for match in matches:
             # Create MemoryRecord from dict
             try:
+                # Get tags with type validation
+                tags_value = match.get("tags", [])
+                tags_list = [str(tag) for tag in tags_value if isinstance(tag, str)] if isinstance(tags_value, list) else []
+
+                # Get priority with type validation
+                priority_value = match.get("priority", 1)
+                if isinstance(priority_value, (int, float)):
+                    try:
+                        priority = SharedMemoryPriority(int(priority_value))
+                    except ValueError:
+                        priority = SharedMemoryPriority.LOW
+                else:
+                    priority = SharedMemoryPriority.LOW
+
                 record = MemoryRecord(
                     key=str(match.get("key", "")),
                     content=match.get("content", ""),
-                    tags=match.get("tags", []) if isinstance(match.get("tags"), list) else [],
+                    tags=tags_list,
                     timestamp=datetime.fromisoformat(str(match.get("timestamp", datetime.now().isoformat()))),
-                    priority=MemoryPriority(int(match.get("priority", 1))) if isinstance(match.get("priority"), (int, float)) else MemoryPriority.LOW,
-                    metadata=MemoryMetadata()
+                    priority=priority,
+                    metadata=MemoryMetadata(),
+                    ttl_seconds=None,
+                    embedding=None
                 )
                 memory_records.append(record)
             except Exception as e:
                 logger.warning(f"Failed to convert memory to MemoryRecord: {e}")
                 continue
 
+        # Cast tags to JSONValue (list of strings becomes JSONValue)
+        tags_as_json: JSONValue = cast(JSONValue, tags)
+        agent_id_as_json: JSONValue = cast(JSONValue, agent_id)
+        search_query: Dict[str, JSONValue] = {
+            "tags": tags_as_json,
+            "agent_id": agent_id_as_json
+        }
+
         return MemorySearchResult(
             records=memory_records,
             total_count=len(memory_records),
-            search_query={"tags": tags, "agent_id": agent_id}
+            search_query=search_query,
+            execution_time_ms=0
         )
 
-    def get_all(self, agent_id: str = None) -> List[dict[str, JSONValue]]:
+    def get_all(self) -> MemorySearchResult:
         """
         Get all memories, optionally filtered by agent.
 
@@ -246,18 +288,77 @@ class SwarmMemoryStore(MemoryStore):
         Returns:
             List of memory records
         """
-        if agent_id:
-            memories = []
-            for namespaced_key in self._agent_namespaces.get(agent_id, set()):
-                memory = self._memories.get(namespaced_key)
-                if memory:
-                    memories.append(memory)
-        else:
-            memories = list(self._memories.values())
+        # Get all memories as MemoryRecord objects
+        memories = list(self._memories.values())
+        memory_records = []
 
-        # Sort by priority then timestamp
-        memories.sort(key=lambda x: (-x["priority"], x["timestamp"]), reverse=True)
+        for memory_dict in memories:
+            try:
+                # Get tags with type validation
+                tags_value = memory_dict.get("tags", [])
+                tags_list = [str(tag) for tag in tags_value if isinstance(tag, str)] if isinstance(tags_value, list) else []
 
+                # Get priority with type validation
+                priority_value = memory_dict.get("priority", 1)
+                if isinstance(priority_value, (int, float)):
+                    try:
+                        priority = SharedMemoryPriority(int(priority_value))
+                    except ValueError:
+                        priority = SharedMemoryPriority.LOW
+                else:
+                    priority = SharedMemoryPriority.LOW
+
+                # Create MemoryRecord
+                record = MemoryRecord(
+                    key=str(memory_dict.get("key", "")),
+                    content=memory_dict.get("content", ""),
+                    tags=tags_list,
+                    timestamp=datetime.fromisoformat(str(memory_dict.get("timestamp", datetime.now().isoformat()))),
+                    priority=priority,
+                    metadata=MemoryMetadata(),
+                    ttl_seconds=None,
+                    embedding=None
+                )
+                memory_records.append(record)
+            except Exception as e:
+                logger.warning(f"Failed to convert memory to MemoryRecord: {e}")
+                continue
+
+        # Sort by timestamp (newest first)
+        memory_records.sort(key=lambda x: x.timestamp, reverse=True)
+
+        return MemorySearchResult(
+            records=memory_records,
+            total_count=len(memory_records),
+            search_query={},
+            execution_time_ms=0
+        )
+
+    def get_agent_memories(self, agent_id: str) -> List[Dict[str, JSONValue]]:
+        """
+        Get all memories for a specific agent.
+
+        Args:
+            agent_id: Agent identifier
+
+        Returns:
+            List of memory dictionaries
+        """
+        memories = []
+        for namespaced_key in self._agent_namespaces.get(agent_id, set()):
+            memory = self._memories.get(namespaced_key)
+            if memory:
+                memories.append(memory)
+
+        # Sort by priority then timestamp with type guards
+        def sort_key(x: Dict[str, JSONValue]) -> tuple:
+            priority = x.get("priority", 0)
+            timestamp = x.get("timestamp", "")
+            priority_val = -int(priority) if isinstance(priority, (int, float)) else 0
+            timestamp_val = str(timestamp) if isinstance(timestamp, str) else ""
+            return (priority_val, timestamp_val)
+
+        memories.sort(key=sort_key, reverse=True)
         return memories
 
     def get_agent_summary(self, agent_id: str) -> Dict[str, JSONValue]:
@@ -270,7 +371,7 @@ class SwarmMemoryStore(MemoryStore):
         Returns:
             Summary statistics and insights
         """
-        agent_memories = self.get_all(agent_id)
+        agent_memories = self.get_agent_memories(agent_id)
 
         if not agent_memories:
             return {
@@ -281,17 +382,31 @@ class SwarmMemoryStore(MemoryStore):
 
         # Calculate statistics
         total_memories = len(agent_memories)
-        priority_counts = Counter(memory["priority"] for memory in agent_memories)
-        tag_counts = Counter()
-
+        priority_counts: Counter[int] = Counter()
         for memory in agent_memories:
-            tag_counts.update(memory.get("tags", []))
+            priority = memory.get("priority")
+            if isinstance(priority, (int, float)):
+                priority_counts[int(priority)] += 1
+
+        tag_counts: Counter[str] = Counter()
+        for memory in agent_memories:
+            tags_value = memory.get("tags", [])
+            if isinstance(tags_value, list):
+                tag_counts.update(str(tag) for tag in tags_value if isinstance(tag, str))
 
         # Calculate memory health metrics
-        avg_access_count = (
-            sum(memory["access_count"] for memory in agent_memories) / total_memories
-        )
-        shared_count = sum(1 for memory in agent_memories if memory["is_shared"])
+        total_access = 0
+        shared_count = 0
+        for memory in agent_memories:
+            access_count = memory.get("access_count", 0)
+            if isinstance(access_count, (int, float)):
+                total_access += int(access_count)
+
+            is_shared = memory.get("is_shared", False)
+            if isinstance(is_shared, bool) and is_shared:
+                shared_count += 1
+
+        avg_access_count = total_access / total_memories if total_memories > 0 else 0
 
         summary = {
             "agent_id": agent_id,
@@ -314,7 +429,8 @@ class SwarmMemoryStore(MemoryStore):
             "generated_at": datetime.now().isoformat(),
         }
 
-        return summary
+        # Cast to match return type
+        return cast(Dict[str, JSONValue], summary)
 
     def get_swarm_overview(self) -> Dict[str, JSONValue]:
         """
@@ -332,12 +448,17 @@ class SwarmMemoryStore(MemoryStore):
             agent_summaries[agent_id] = self.get_agent_summary(agent_id)
 
         # Cross-agent analysis
-        all_tags = Counter()
-        all_priorities = Counter()
+        all_tags: Counter[str] = Counter()
+        all_priorities: Counter[int] = Counter()
 
         for memory in self._memories.values():
-            all_tags.update(memory.get("tags", []))
-            all_priorities[memory["priority"]] += 1
+            tags_value = memory.get("tags", [])
+            if isinstance(tags_value, list):
+                all_tags.update(str(tag) for tag in tags_value if isinstance(tag, str))
+
+            priority = memory.get("priority")
+            if isinstance(priority, (int, float)):
+                all_priorities[int(priority)] += 1
 
         overview = {
             "total_agents": len(all_agents),
@@ -359,7 +480,8 @@ class SwarmMemoryStore(MemoryStore):
             "generated_at": datetime.now().isoformat(),
         }
 
-        return overview
+        # Cast to match return type
+        return cast(Dict[str, JSONValue], overview)
 
     def prune_memories(self, agent_id: str, target_count: Optional[int] = None) -> int:
         """
@@ -381,38 +503,56 @@ class SwarmMemoryStore(MemoryStore):
         if target_count is None:
             target_count = int(self.max_memories_per_agent * 0.7)
 
-        agent_memories = self.get_all(agent_id)
+        agent_memories = self.get_agent_memories(agent_id)
 
         if len(agent_memories) <= target_count:
             return 0
 
         # Sort memories for pruning (lowest priority, least accessed, oldest first)
-        agent_memories.sort(
-            key=lambda m: (m["priority"], m["access_count"], m["timestamp"])
-        )
+        def prune_sort_key(m: Dict[str, JSONValue]) -> tuple:
+            priority = m.get("priority", 0)
+            access_count = m.get("access_count", 0)
+            timestamp = m.get("timestamp", "")
+
+            priority_val = int(priority) if isinstance(priority, (int, float)) else 0
+            access_val = int(access_count) if isinstance(access_count, (int, float)) else 0
+            timestamp_val = str(timestamp) if isinstance(timestamp, str) else ""
+
+            return (priority_val, access_val, timestamp_val)
+
+        agent_memories.sort(key=prune_sort_key)
 
         memories_to_prune = agent_memories[: len(agent_memories) - target_count]
         pruned_count = 0
 
         for memory in memories_to_prune:
             # Don't prune critical or high priority memories
-            if memory["priority"] >= MemoryPriority.HIGH.value:
+            priority = memory.get("priority", 0)
+            if isinstance(priority, (int, float)) and priority >= MemoryPriority.HIGH.value:
                 continue
 
             # Don't prune very recently accessed memories (within 1 hour for tests)
-            last_accessed = datetime.fromisoformat(memory["last_accessed"])
-            if datetime.now() - last_accessed < timedelta(hours=1):
-                continue
+            last_accessed_val = memory.get("last_accessed")
+            if isinstance(last_accessed_val, str):
+                try:
+                    last_accessed = datetime.fromisoformat(last_accessed_val)
+                    if datetime.now() - last_accessed < timedelta(hours=1):
+                        continue
+                except ValueError:
+                    # Skip invalid timestamps
+                    continue
 
             # Remove from all stores
-            namespaced_key = memory["namespaced_key"]
-            if namespaced_key in self._memories:
+            namespaced_key = memory.get("namespaced_key")
+            if isinstance(namespaced_key, str) and namespaced_key in self._memories:
                 del self._memories[namespaced_key]
                 self._agent_namespaces[agent_id].discard(namespaced_key)
 
                 # Remove from shared knowledge if present
-                if memory["is_shared"] and memory["key"] in self._shared_knowledge:
-                    del self._shared_knowledge[memory["key"]]
+                is_shared = memory.get("is_shared")
+                key = memory.get("key")
+                if isinstance(is_shared, bool) and is_shared and isinstance(key, str) and key in self._shared_knowledge:
+                    del self._shared_knowledge[key]
 
                 pruned_count += 1
 
@@ -449,7 +589,7 @@ class SwarmMemoryStore(MemoryStore):
         Returns:
             Consolidation summary with statistics and metadata
         """
-        agent_memories = self.get_all(agent_id)
+        agent_memories = self.get_agent_memories(agent_id)
 
         if len(agent_memories) <= max_summary_memories:
             return {
@@ -464,22 +604,37 @@ class SwarmMemoryStore(MemoryStore):
 
         for memory in agent_memories:
             # Keep critical and high priority memories
-            if memory["priority"] >= MemoryPriority.HIGH.value:
+            priority = memory.get("priority", 0)
+            if isinstance(priority, (int, float)) and priority >= MemoryPriority.HIGH.value:
                 important_memories.append(memory)
             # Keep recently accessed memories
-            elif memory["access_count"] > 5:
-                important_memories.append(memory)
-            # Keep very recent memories
-            elif (
-                datetime.now() - datetime.fromisoformat(memory["timestamp"])
-            ).days < 7:
-                important_memories.append(memory)
             else:
-                summary_candidates.append(memory)
+                access_count = memory.get("access_count", 0)
+                if isinstance(access_count, (int, float)) and access_count > 5:
+                    important_memories.append(memory)
+                # Keep very recent memories
+                else:
+                    timestamp_val = memory.get("timestamp")
+                    if isinstance(timestamp_val, str):
+                        try:
+                            timestamp = datetime.fromisoformat(timestamp_val)
+                            if (datetime.now() - timestamp).days < 7:
+                                important_memories.append(memory)
+                            else:
+                                summary_candidates.append(memory)
+                        except ValueError:
+                            # Invalid timestamp, treat as summary candidate
+                            summary_candidates.append(memory)
+                    else:
+                        summary_candidates.append(memory)
 
         # If we still have too many important memories, limit to most recent
         if len(important_memories) > max_summary_memories:
-            important_memories.sort(key=lambda x: x["timestamp"], reverse=True)
+            def timestamp_sort_key(x: Dict[str, JSONValue]) -> str:
+                timestamp = x.get("timestamp")
+                return str(timestamp) if isinstance(timestamp, str) else ""
+
+            important_memories.sort(key=timestamp_sort_key, reverse=True)
             summary_candidates.extend(important_memories[max_summary_memories:])
             important_memories = important_memories[:max_summary_memories]
 
@@ -490,9 +645,14 @@ class SwarmMemoryStore(MemoryStore):
             )
 
             # Group by tags for better summary
-            tag_groups = defaultdict(list)
+            tag_groups: Dict[str, List[Dict[str, JSONValue]]] = defaultdict(list)
             for memory in summary_candidates:
-                primary_tag = memory["tags"][0] if memory["tags"] else "untagged"
+                tags_value = memory.get("tags", [])
+                if isinstance(tags_value, list) and len(tags_value) > 0:
+                    first_tag = tags_value[0]
+                    primary_tag = str(first_tag) if isinstance(first_tag, str) else "untagged"
+                else:
+                    primary_tag = "untagged"
                 tag_groups[primary_tag].append(memory)
 
             summary_content = {
@@ -504,17 +664,39 @@ class SwarmMemoryStore(MemoryStore):
             }
 
             for tag, memories in tag_groups.items():
-                summary_content["tag_summaries"][tag] = {
-                    "count": len(memories),
-                    "date_range": {
-                        "earliest": min(m["timestamp"] for m in memories),
-                        "latest": max(m["timestamp"] for m in memories),
-                    },
-                    "priority_distribution": Counter(m["priority"] for m in memories),
-                    "sample_keys": [
-                        m["key"] for m in memories[:3]
-                    ],  # Sample for reference
-                }
+                # Get valid timestamps
+                timestamps = []
+                for m in memories:
+                    ts = m.get("timestamp")
+                    if isinstance(ts, str):
+                        timestamps.append(ts)
+
+                # Get priorities
+                priorities = []
+                for m in memories:
+                    priority = m.get("priority")
+                    if isinstance(priority, (int, float)):
+                        priorities.append(int(priority))
+
+                # Get sample keys
+                sample_keys = []
+                for m in memories[:3]:
+                    key = m.get("key")
+                    if isinstance(key, str):
+                        sample_keys.append(key)
+
+                if isinstance(summary_content, dict) and "tag_summaries" in summary_content:
+                    tag_summaries = summary_content["tag_summaries"]
+                    if isinstance(tag_summaries, dict):
+                        tag_summaries[tag] = {
+                            "count": len(memories),
+                            "date_range": {
+                                "earliest": min(timestamps) if timestamps else "",
+                                "latest": max(timestamps) if timestamps else "",
+                            },
+                            "priority_distribution": Counter(priorities),
+                            "sample_keys": sample_keys,
+                        }
 
             # Store the summary
             self.store(
@@ -528,8 +710,8 @@ class SwarmMemoryStore(MemoryStore):
 
             # Remove consolidated memories
             for memory in summary_candidates:
-                namespaced_key = memory["namespaced_key"]
-                if namespaced_key in self._memories:
+                namespaced_key = memory.get("namespaced_key")
+                if isinstance(namespaced_key, str) and namespaced_key in self._memories:
                     del self._memories[namespaced_key]
                     self._agent_namespaces[agent_id].discard(namespaced_key)
 
@@ -594,7 +776,7 @@ class SwarmMemory(Memory):
         self,
         key: str,
         content: Any,
-        tags: List[str],
+        tags: List[str] = None,
         priority: MemoryPriority = MemoryPriority.NORMAL,
         is_shared: bool = False,
         agent_id: Optional[str] = None,
@@ -614,6 +796,7 @@ class SwarmMemory(Memory):
             agent_id: Override default agent ID
         """
         effective_agent_id = agent_id or self.agent_id
+        tags = tags or []  # Handle None case
         self._store.store(key, content, tags, effective_agent_id, priority, is_shared)
 
     def search(
@@ -639,9 +822,23 @@ class SwarmMemory(Memory):
             List of matching memories sorted by MCP priority patterns
         """
         effective_agent_id = agent_id or self.agent_id
-        return self._store.search(
+        search_result = self._store.search(
             tags, effective_agent_id, include_shared, min_priority
         )
+        # Convert MemorySearchResult to List[dict[str, JSONValue]]
+        result_list: List[dict[str, JSONValue]] = []
+        for record in search_result.records:
+            # Cast tags to JSONValue
+            tags_as_json: JSONValue = cast(JSONValue, record.tags)
+            record_dict: Dict[str, JSONValue] = {
+                "key": record.key,
+                "content": record.content,
+                "tags": tags_as_json,
+                "timestamp": record.timestamp.isoformat(),
+                "priority": record.priority.value,
+            }
+            result_list.append(record_dict)
+        return result_list
 
     def get_summary(self, agent_id: Optional[str] = None) -> Dict[str, JSONValue]:
         """Get memory summary for agent."""

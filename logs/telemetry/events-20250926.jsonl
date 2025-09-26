@@ -79,3 +79,4 @@
 {"type": "task_finished", "id": "fail_task", "agent": "FailAgent", "attempt": 1, "status": "failed", "started_at": 1758849009.9367669, "finished_at": 1758849010.039816, "duration_s": 0.10304903984069824, "errors": ["FailAgent simulated failure (attempt 1)"], "ts": "2025-09-26T01:10:10.039Z"}
 {"type": "task_finished", "id": "another_success", "agent": "AnotherSuccessAgent", "attempt": 1, "status": "success", "started_at": 1758849009.936875, "finished_at": 1758849010.040239, "duration_s": 0.1033639907836914, "errors": null, "usage": {"total_tokens": 100}, "model": "test-model", "ts": "2025-09-26T01:10:10.040Z"}
 {"type": "orchestrator_finished", "finished_at": 1758849010.040747, "tasks": 3, "ts": "2025-09-26T01:10:10.040Z"}
+{"type": "cli_command_finished", "command": "run", "status": "success", "finished_at": 1758885296.8500211, "duration_s": 15545.911081314087, "ts": "2025-09-26T11:14:56.855Z"}

@@ -66,15 +66,17 @@ class UnifiedPatternStore:
             self._save_to_db(pattern)
 
         # Log the addition
+        from typing import cast
+        tags_json = cast(JSONValue, pattern.tags)
         self._emit_telemetry("pattern_added", {
             "id": pattern.id,
             "type": pattern.pattern_type,
-            "tags": pattern.tags
+            "tags": tags_json
         })
 
         return True
 
-    def find(self, query: str = None, pattern_type: str = None, tags: List[str] = None) -> List[Pattern]:
+    def find(self, query: Optional[str] = None, pattern_type: Optional[str] = None, tags: Optional[List[str]] = None) -> List[Pattern]:
         """
         Find patterns matching criteria.
 
@@ -165,7 +167,7 @@ class UnifiedPatternStore:
         pattern_id = f"{error_type}_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
 
         # Extract pattern context
-        context = {
+        context: dict[str, JSONValue] = {
             "error_type": error_type,
             "original": original_code[:500],  # Limit size
             "transformation": self._extract_transformation(original_code, fixed_code)
@@ -205,8 +207,8 @@ class UnifiedPatternStore:
             }
 
         # Calculate statistics
-        pattern_types = {}
-        total_success = 0
+        pattern_types: dict[str, int] = {}
+        total_success: float = 0.0
         most_used = None
         most_successful = None
 
@@ -225,9 +227,12 @@ class UnifiedPatternStore:
             if not most_successful or pattern.success_rate > most_successful.success_rate:
                 most_successful = pattern
 
+        # Convert pattern_types to JSONValue compatible type
+        pattern_types_json: JSONValue = {k: v for k, v in pattern_types.items()}
+
         return {
             "total_patterns": len(self.patterns),
-            "pattern_types": pattern_types,
+            "pattern_types": pattern_types_json,
             "average_success_rate": total_success / len(self.patterns),
             "most_used": {
                 "id": most_used.id,

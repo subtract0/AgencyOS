@@ -7,7 +7,7 @@ See MCP_INTEGRATION_STANDARDS.md for detailed specifications.
 """
 
 from datetime import datetime
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, cast
 from shared.type_definitions.json import JSONValue
 from abc import ABC, abstractmethod
 import os
@@ -75,7 +75,9 @@ class InMemoryStore(MemoryStore):
             tags=tags,
             timestamp=datetime.now(),
             priority=MemoryPriority.MEDIUM,
-            metadata=MemoryMetadata()
+            metadata=MemoryMetadata(),
+            ttl_seconds=None,
+            embedding=None
         )
         self._memories[key] = memory_record
         logger.debug(f"Stored memory with key: {key}, tags: {tags}")
@@ -87,7 +89,13 @@ class InMemoryStore(MemoryStore):
         Returns sorted results with newest memories first for optimal context.
         """
         if not tags:
-            return MemorySearchResult(records=[], total_count=0, search_query={"tags": tags})
+            search_query: Dict[str, JSONValue] = {"tags": cast(JSONValue, tags)}
+            return MemorySearchResult(
+                records=[],
+                total_count=0,
+                search_query=search_query,
+                execution_time_ms=0
+            )
 
         matches: List[MemoryRecord] = []
         tag_set = set(tags)
@@ -101,10 +109,12 @@ class InMemoryStore(MemoryStore):
         matches.sort(key=lambda x: x.timestamp, reverse=True)
         logger.debug(f"Found {len(matches)} memories matching tags: {tags}")
 
+        final_search_query: Dict[str, JSONValue] = {"tags": cast(JSONValue, tags)}
         return MemorySearchResult(
             records=matches,
             total_count=len(matches),
-            search_query={"tags": tags}
+            search_query=final_search_query,
+            execution_time_ms=0
         )
 
     def get(self, key: str) -> Optional[MemoryRecord]:
@@ -120,7 +130,8 @@ class InMemoryStore(MemoryStore):
         return MemorySearchResult(
             records=all_memories,
             total_count=len(all_memories),
-            search_query={}
+            search_query={},
+            execution_time_ms=0
         )
 
 
@@ -141,21 +152,21 @@ class Memory:
         tags = tags or []  # Default to empty list if not provided
         self._store.store(key, content, tags)
 
-    def search(self, tags: List[str]) -> List[dict[str, JSONValue]]:
+    def search(self, tags: List[str]) -> List[Dict[str, JSONValue]]:
         """Search memories by tags."""
         result = self._store.search(tags)
         # Handle both MemorySearchResult and direct list returns
         if hasattr(result, 'records'):
-            return [record.to_dict() for record in result.records]
+            return [cast(Dict[str, JSONValue], record.to_dict()) for record in result.records]
         else:
             # Already a list of dictionaries
-            return result
+            return cast(List[Dict[str, JSONValue]], result)
 
-    def get(self, key: str) -> Optional[dict[str, JSONValue]]:
+    def get(self, key: str) -> Optional[Dict[str, JSONValue]]:
         """Get a specific memory by key."""
         if hasattr(self._store, 'get'):
             record = self._store.get(key)
-            return record.to_dict() if record else None
+            return cast(Dict[str, JSONValue], record.to_dict()) if record else None
         # Fallback: search all and find by key
         all_memories = self.get_all()
         for memory in all_memories:
@@ -163,15 +174,15 @@ class Memory:
                 return memory
         return None
 
-    def get_all(self) -> List[dict[str, JSONValue]]:
+    def get_all(self) -> List[Dict[str, JSONValue]]:
         """Get all memories."""
         result = self._store.get_all()
         # Handle both MemorySearchResult and direct list returns
         if hasattr(result, 'records'):
-            return [record.to_dict() for record in result.records]
+            return [cast(Dict[str, JSONValue], record.to_dict()) for record in result.records]
         else:
             # Already a list of dictionaries
-            return result
+            return cast(List[Dict[str, JSONValue]], result)
 
 
 def create_session_transcript(memories: List[dict[str, JSONValue]], session_id: str) -> str:
@@ -210,7 +221,12 @@ def create_session_transcript(memories: List[dict[str, JSONValue]], session_id: 
         for i, memory in enumerate(memories, 1):
             content += f"### {i}. {memory.get('key', 'Unnamed')}\n\n"
             content += f"**Timestamp:** {memory.get('timestamp', 'Unknown')}\n"
-            content += f"**Tags:** {', '.join(memory.get('tags', []))}\n\n"
+            tags = memory.get('tags', [])
+            if isinstance(tags, list):
+                tag_strings = [str(tag) for tag in tags if isinstance(tag, str)]
+                content += f"**Tags:** {', '.join(tag_strings)}\n\n"
+            else:
+                content += "**Tags:** \n\n"
 
             # Format content
             memory_content = memory.get("content", "")
