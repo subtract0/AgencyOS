@@ -5,7 +5,7 @@ Simplifies imports and provides a clean API for autonomous agents.
 
 import os
 from typing import Optional, List
-from shared.types.json import JSONValue
+from shared.type_definitions.json import JSONValue
 
 # Feature flags
 ENABLE_UNIFIED_CORE = os.getenv("ENABLE_UNIFIED_CORE", "true").lower() == "true"

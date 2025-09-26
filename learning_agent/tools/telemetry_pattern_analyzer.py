@@ -9,7 +9,7 @@ import json
 import os
 from datetime import datetime, timedelta
 from typing import Dict, Any, List, Optional
-from shared.types.json import JSONValue
+from shared.type_definitions.json import JSONValue
 import logging
 
 logger = logging.getLogger(__name__)

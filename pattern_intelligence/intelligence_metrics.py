@@ -7,7 +7,7 @@ Implements the AIQ (AI Intelligence Quotient) and growth tracking systems.
 
 import logging
 from typing import Dict, List, Any, Optional, Tuple
-from shared.types.json import JSONValue
+from shared.type_definitions.json import JSONValue
 from datetime import datetime, timedelta
 import json
 import math

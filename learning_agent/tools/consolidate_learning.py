@@ -7,7 +7,7 @@ import json
 import hashlib
 from datetime import datetime
 from typing import Dict, Any, List
-from shared.types.json import JSONValue
+from shared.type_definitions.json import JSONValue
 import uuid
 
 

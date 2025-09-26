@@ -28,7 +28,7 @@ import threading
 import logging
 from datetime import datetime, timedelta
 from typing import Dict, List, Optional, Any, Callable
-from shared.types.json import JSONValue
+from shared.type_definitions.json import JSONValue
 from pathlib import Path
 import yaml
 

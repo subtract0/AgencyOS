@@ -8,7 +8,7 @@ Lightweight implementation with optional embeddings support.
 import logging
 import json
 from typing import Any, Dict, List, Optional
-from shared.types.json import JSONValue
+from shared.type_definitions.json import JSONValue
 from dataclasses import dataclass
 from datetime import datetime
 

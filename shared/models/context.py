@@ -6,7 +6,7 @@ Replaces Dict[str, Any] in agent context management.
 from datetime import datetime
 from enum import Enum
 from typing import Dict, List, Optional
-from shared.types.json import JSONValue
+from shared.type_definitions.json import JSONValue
 from pydantic import BaseModel, Field, field_validator, ConfigDict
 
 

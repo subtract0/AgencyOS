@@ -6,7 +6,7 @@ Single entry point for all file modification operations.
 import os
 import json
 from typing import List, Dict, Optional, Union
-from shared.types.json import JSONValue
+from shared.type_definitions.json import JSONValue
 from pathlib import Path
 
 

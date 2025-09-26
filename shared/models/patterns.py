@@ -5,7 +5,7 @@ Replaces Dict[str, Any] in learning agent tools and self-healing systems.
 
 from datetime import datetime, timedelta
 from typing import Dict, List, Optional, Literal, Union
-from shared.types.json import JSONValue
+from shared.type_definitions.json import JSONValue
 from pydantic import BaseModel, Field, field_validator
 from enum import Enum
 

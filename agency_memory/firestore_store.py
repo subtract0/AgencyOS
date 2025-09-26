@@ -7,7 +7,7 @@ import os
 import logging
 from datetime import datetime
 from typing import Any, Dict, List
-from shared.types.json import JSONValue
+from shared.type_definitions.json import JSONValue
 
 # Expose firestore at module scope for test patching
 try:  # pragma: no cover

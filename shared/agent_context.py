@@ -6,7 +6,7 @@ like Memory without using global state.
 """
 
 from typing import Optional, Any, Dict
-from shared.types.json import JSONValue
+from shared.type_definitions.json import JSONValue
 from agency_memory import Memory
 import logging
 

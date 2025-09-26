@@ -10,7 +10,7 @@ from __future__ import annotations
 
 import os
 from typing import Any, Dict, List, Tuple
-from shared.types.json import JSONValue
+from shared.type_definitions.json import JSONValue
 
 from .hints import LearningHintRegistry, Hint
 

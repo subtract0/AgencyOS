@@ -2,7 +2,7 @@ import os
 import json
 from datetime import datetime
 from typing import Any, Dict
-from shared.types.json import JSONValue
+from shared.type_definitions.json import JSONValue
 
 from agency_swarm.tools import BaseTool
 from pydantic import Field

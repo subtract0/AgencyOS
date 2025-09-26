@@ -13,7 +13,7 @@ import re
 import json
 import subprocess
 from typing import List, Dict, Any, Optional
-from shared.types.json import JSONValue
+from shared.type_definitions.json import JSONValue
 from datetime import datetime, timedelta
 import logging
 

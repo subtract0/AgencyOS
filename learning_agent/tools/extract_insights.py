@@ -4,7 +4,7 @@ Extract actionable insights from session analysis.
 from agency_swarm.tools import BaseTool
 from pydantic import Field
 from typing import Dict, Any, List
-from shared.types.json import JSONValue
+from shared.type_definitions.json import JSONValue
 import json
 import re
 from datetime import datetime

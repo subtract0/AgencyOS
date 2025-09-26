@@ -11,7 +11,7 @@ See MCP_INTEGRATION_STANDARDS.md for architectural guidelines.
 import logging
 from datetime import datetime, timedelta
 from typing import Any, Dict, List, Optional, Set
-from shared.types.json import JSONValue
+from shared.type_definitions.json import JSONValue
 from collections import defaultdict, Counter
 from enum import IntEnum
 
