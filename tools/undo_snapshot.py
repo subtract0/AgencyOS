@@ -2,7 +2,7 @@ import os
 import json
 import shutil
 from pathlib import Path
-from typing import List, Optional, Dict, Any
+from typing import List, Optional
 
 from agency_swarm.tools import BaseTool
 from pydantic import Field
@@ -44,7 +44,7 @@ class WorkspaceSnapshot(BaseTool):  # type: ignore[misc]
         files_dir = target / "files"
         files_dir.mkdir(parents=True, exist_ok=True)
 
-        manifest: Dict[str, Any] = {
+        manifest = {  # type: ignore[var-annotated]
             "snapshot_id": snapshot_id,
             "repo_root": str(repo_root),
             "files": [],
