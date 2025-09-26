@@ -399,7 +399,7 @@ class GenerateTests(Tool):
         return dedent(f'''
         def test_{func.name}_edge_cases():
             """Test edge cases for {func.name}."""
-            from {module_name} import {func['name']}
+            from {module_name} import {func.name}
 
             # Test with empty/None values
             # Test with boundary values
@@ -419,7 +419,7 @@ class GenerateTests(Tool):
         return dedent(f'''
         def test_{func.name}_comprehensive():
             """Comprehensive test coverage for {func.name}."""
-            from {module_name} import {func['name']}
+            from {module_name} import {func.name}
 
             # Test multiple input combinations
             test_cases = [
