@@ -21,6 +21,8 @@ from .bash import Bash
 # Check for unified core feature flag
 ENABLE_UNIFIED_CORE = os.getenv("ENABLE_UNIFIED_CORE", "true").lower() == "true"
 
+_unified_core: Optional["SelfHealingCore"] = None
+
 if ENABLE_UNIFIED_CORE:
     try:
         from core.self_healing import SelfHealingCore, Finding
