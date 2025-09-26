@@ -28,7 +28,7 @@ from shared.models.patterns import (
 logger = logging.getLogger(__name__)
 
 
-class CrossSessionLearner(BaseTool):
+class CrossSessionLearner(BaseTool):  # type: ignore[misc]
     """
     Applies learnings from previous sessions to current context.
 

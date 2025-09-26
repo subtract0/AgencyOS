@@ -8,7 +8,7 @@ from agency_swarm.tools import BaseTool
 from pydantic import Field
 
 
-class ContextMessageHandoff(BaseTool):
+class ContextMessageHandoff(BaseTool):  # type: ignore[misc]
     """
     Enhanced handoff tool that packages a mission prompt and structured context
     for a recipient agent. Optionally persists the payload under logs/handoffs/.

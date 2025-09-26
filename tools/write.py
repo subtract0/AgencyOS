@@ -11,7 +11,7 @@ from tools.read import _global_read_files
 _global_written_files = set()
 
 
-class Write(BaseTool):
+class Write(BaseTool):  # type: ignore[misc]
     """
     Writes a file to the local filesystem.
 

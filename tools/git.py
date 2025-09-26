@@ -4,7 +4,7 @@ from agency_swarm.tools import BaseTool
 from pydantic import Field
 
 
-class Git(BaseTool):
+class Git(BaseTool):  # type: ignore[misc]
     """Read-only git operations using dulwich library only.
 
     Supports: status, diff, log, show. All operations are safe and non-destructive.

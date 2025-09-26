@@ -4,7 +4,7 @@ from pydantic import Field
 from typing import Optional, List, Union
 
 
-class ClaudeWebSearch(BaseTool):
+class ClaudeWebSearch(BaseTool):  # type: ignore[misc]
     """
     Sends an input request to the web search model and returns the results.
     """

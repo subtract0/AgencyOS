@@ -11,7 +11,7 @@ from pathlib import Path
 from datetime import datetime
 
 
-class AnalyzeSession(BaseTool):
+class AnalyzeSession(BaseTool):  # type: ignore[misc]
     """
     Analyzes a session transcript file to extract patterns, tool usage, and outcomes.
 

@@ -15,7 +15,7 @@ import logging
 logger = logging.getLogger(__name__)
 
 
-class TelemetryPatternAnalyzer(BaseTool):
+class TelemetryPatternAnalyzer(BaseTool):  # type: ignore[misc]
     """
     Analyzes telemetry data to extract learning patterns.
 
