@@ -189,32 +189,32 @@ def test_source_file_analysis(sample_source_file):
     tool = GenerateTests(audit_report=json.dumps({"violations": []}), target_file=sample_source_file)
     analysis = tool._analyze_source_file(sample_source_file)
 
-    # Check basic structure
-    assert "functions" in analysis
-    assert "classes" in analysis
-    assert "imports" in analysis
-    assert "module_name" in analysis
+    # Check basic structure - SourceAnalysis is now a Pydantic model
+    assert hasattr(analysis, "functions")
+    assert hasattr(analysis, "classes")
+    assert hasattr(analysis, "imports")
+    assert hasattr(analysis, "module_name")
 
     # Check function detection
-    function_names = [f["name"] for f in analysis["functions"]]
+    function_names = [f.name for f in analysis.functions]
     assert "add_numbers" in function_names
     assert "divide_numbers" in function_names
     assert "_private_method" not in function_names  # Private methods excluded
 
     # Check class detection
-    class_names = [c["name"] for c in analysis["classes"]]
+    class_names = [c.name for c in analysis.classes]
     assert "MathCalculator" in class_names
 
     # Check method detection within class
-    math_calc_class = next(c for c in analysis["classes"] if c["name"] == "MathCalculator")
-    method_names = [m["name"] for m in math_calc_class["methods"]]
+    math_calc_class = next(c for c in analysis.classes if c.name == "MathCalculator")
+    method_names = [m.name for m in math_calc_class.methods]
     assert "__init__" in method_names
     assert "calculate" in method_names
     assert "async_calculation" in method_names
     assert "_private_method" not in method_names  # Private methods excluded
 
     # Check async detection
-    async_functions = [f for f in analysis["functions"] if f.get("is_async", False)]
+    async_functions = [f for f in analysis.functions if f.is_async]
     assert len(async_functions) > 0
 
 
@@ -233,13 +233,13 @@ def test_basic_test_generation(sample_source_file, sample_audit_report):
 
     assert len(basic_tests) > 0
 
-    # Check test structure
+    # Check test structure - TestInfo is now a Pydantic model
     for test in basic_tests:
-        assert "name" in test
-        assert "code" in test
-        assert "type" in test
-        assert test["type"] == "basic"
-        assert test["name"].startswith("test_")
+        assert hasattr(test, "name")
+        assert hasattr(test, "code")
+        assert hasattr(test, "type")
+        assert test.type == "basic"
+        assert test.name.startswith("test_")
 
 
 def test_edge_case_test_generation(sample_source_file, sample_audit_report):
@@ -259,8 +259,8 @@ def test_edge_case_test_generation(sample_source_file, sample_audit_report):
 
     # Check test structure
     for test in edge_tests:
-        assert test["type"] == "edge_case"
-        assert "edge" in test["name"] or "boundary" in test["name"]
+        assert test.type == "edge_case"
+        assert "edge" in test.name or "boundary" in test.name
 
 
 def test_error_condition_test_generation(sample_source_file, sample_audit_report):
@@ -280,10 +280,10 @@ def test_error_condition_test_generation(sample_source_file, sample_audit_report
 
     # Check test structure
     for test in error_tests:
-        assert test["type"] == "error"
-        assert "error" in test["name"]
+        assert test.type == "error"
+        assert "error" in test.name
         # Error tests should include pytest.raises
-        assert "pytest.raises" in test["code"]
+        assert "pytest.raises" in test.code
 
 
 def test_async_test_generation(sample_source_file, sample_audit_report):
@@ -301,13 +301,13 @@ def test_async_test_generation(sample_source_file, sample_audit_report):
 
     assert len(async_tests) > 0
 
-    # Check test structure
+    # Check test structure - TestInfo is now a Pydantic model
     for test in async_tests:
-        assert test["type"] == "async"
-        assert "async" in test["name"]
+        assert test.type == "async"
+        assert "async" in test.name
         # Async tests should include @pytest.mark.asyncio and await
-        assert "@pytest.mark.asyncio" in test["code"]
-        assert "await" in test["code"]
+        assert "@pytest.mark.asyncio" in test.code
+        assert "await" in test.code
 
 
 def test_comprehensive_test_generation(sample_source_file, sample_audit_report):
@@ -327,8 +327,8 @@ def test_comprehensive_test_generation(sample_source_file, sample_audit_report):
 
     # Check test structure
     for test in comp_tests:
-        assert test["type"] == "comprehensive"
-        assert "comprehensive" in test["name"]
+        assert test.type == "comprehensive"
+        assert "comprehensive" in test.name
 
 
 def test_state_validation_test_generation(sample_source_file, sample_audit_report):
@@ -345,10 +345,10 @@ def test_state_validation_test_generation(sample_source_file, sample_audit_repor
     state_tests = tool._generate_tests_for_violation(violation, analysis)
 
     # Should generate state tests for classes
-    class_tests = [t for t in state_tests if t["type"] == "state"]
+    class_tests = [t for t in state_tests if t.type == "state"]
     if class_tests:  # Only if classes exist
         for test in class_tests:
-            assert "state" in test["name"]
+            assert "state" in test.name
 
 
 def test_test_file_path_generation(sample_source_file):
@@ -474,7 +474,7 @@ def test_error_handling_in_source_analysis():
         analysis = tool._analyze_source_file(invalid_file)
 
         # Should handle parse errors gracefully
-        assert "error" in analysis or analysis["functions"] == []
+        assert hasattr(analysis, "error") or len(analysis.functions) == 0
     finally:
         os.unlink(invalid_file)
 
@@ -546,13 +546,18 @@ def test_test_file_creation_and_naming(sample_source_file):
 
 def test_basic_test_code_generation():
     """Test basic test code generation for functions."""
+    from test_generator_agent.test_generator_agent import FunctionInfo
+
     tool = GenerateTests(audit_report=json.dumps({"violations": []}), target_file="/test/file.py")
 
-    func_info = {
-        "name": "add_numbers",
-        "args": ["a", "b"],
-        "has_return": True
-    }
+    func_info = FunctionInfo(
+        name="add_numbers",
+        args=["a", "b"],
+        has_return=True,
+        is_async=False,
+        docstring=None,
+        severity_score=0
+    )
 
     test_code = tool._create_basic_test_code(func_info, "math_utils")
 
@@ -566,13 +571,19 @@ def test_basic_test_code_generation():
 
 def test_method_test_code_generation():
     """Test test code generation for class methods."""
+    from test_generator_agent.test_generator_agent import ClassInfo, MethodInfo
+
     tool = GenerateTests(audit_report=json.dumps({"violations": []}), target_file="/test/file.py")
 
-    cls_info = {"name": "Calculator"}
-    method_info = {
-        "name": "calculate",
-        "args": ["self", "operation", "a", "b"]
-    }
+    cls_info = ClassInfo(name="Calculator", methods=[], docstring=None)
+    method_info = MethodInfo(
+        name="calculate",
+        args=["self", "operation", "a", "b"],
+        has_return=True,
+        is_async=False,
+        is_property=False,
+        docstring=None
+    )
 
     test_code = tool._create_basic_method_test_code(cls_info, method_info, "math_utils")
 

@@ -66,11 +66,13 @@ class ApplyAndVerifyPatch(Tool):
         if not test_result["success"]:
             # Tests failed - revert the change
             revert_result = self._revert_file(backup_content)
+            output = test_result['output']
+            output_snippet = output[:500] if isinstance(output, str) else str(output)[:500]
             return f"""❌ HEALING FAILED: Tests failed after applying patch
 
 PATCH APPLIED: {self.file_path}
 ERROR: {self.error_description}
-TEST FAILURE: {test_result['output'][:500]}...
+TEST FAILURE: {output_snippet}...
 
 REVERT STATUS: {revert_result}
 
@@ -98,13 +100,15 @@ The fix was correct but could not be committed.
         # Step 5: Log the successful healing
         self._log_successful_healing(timestamp, test_result, commit_result)
 
+        commit_hash = commit_result['commit_hash']
+        hash_snippet = commit_hash[:8] if isinstance(commit_hash, str) else str(commit_hash)[:8]
         return f"""🎉 AUTONOMOUS HEALING COMPLETE!
 
 📁 FILE: {self.file_path}
 🐛 ERROR: {self.error_description}
 ✅ PATCH: Applied successfully
 ✅ TESTS: All tests passing ({test_result.get('test_count', 'unknown')} tests)
-✅ COMMIT: {commit_result['commit_hash'][:8]}
+✅ COMMIT: {hash_snippet}
 
 🤖 This demonstrates UNDENIABLE autonomous self-healing:
    • Error detected and analyzed
@@ -330,7 +334,10 @@ class AutonomousHealingOrchestrator(Tool):
             # For this demo, we'll use a simple pattern matching approach
             # In a real system, this would use the GPT-5 prompt to get the actual fix
             original_problematic_line = self._extract_problematic_code(file_content, error)
-            fixed_line = self._generate_simple_fix(original_problematic_line, error)
+            if original_problematic_line is not None:
+                fixed_line = self._generate_simple_fix(original_problematic_line, error)
+            else:
+                fixed_line = None
 
             if not original_problematic_line or not fixed_line:
                 healing_results.append(f"❌ Could not generate code fix for {error['pattern']}")

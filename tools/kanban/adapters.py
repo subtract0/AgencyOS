@@ -11,7 +11,7 @@ import json
 import os
 from dataclasses import dataclass, asdict
 from datetime import datetime, timezone
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, cast
 from shared.type_definitions.json import JSONValue
 
 # Local telemetry aggregator (safe, stdlib)
@@ -140,7 +140,7 @@ def _event_to_card(ev: Dict[str, JSONValue]) -> Optional[Card]:
 
     source_ref = str(ev.get("id") or ev.get("run_id") or typ)
     created_at = ts if isinstance(ts, str) else _iso_now()
-    links = []
+    links: List[str] = []
 
     cid = _stable_id(source_ref, typ, created_at)
     return Card(
@@ -219,7 +219,30 @@ def build_cards(window: str = "4h", telemetry_dir: Optional[str] = None, include
     try:
         if os.getenv("LEARNING_UNTRACKED", "false").lower() == "true":
             from .untracked import discover_untracked_cards
-            cards.extend([Card(**c) for c in discover_untracked_cards()])
+            untracked_dicts = discover_untracked_cards()
+            for card_dict in untracked_dicts:
+                try:
+                    # Convert JSONValue fields back to expected types
+                    card = Card(
+                        id=str(card_dict.get('id', '')),
+                        type=str(card_dict.get('type', 'discovery')),
+                        title=str(card_dict.get('title', '')),
+                        summary=str(card_dict.get('summary', '')),
+                        source_ref=str(card_dict.get('source_ref', '')),
+                        status=str(card_dict.get('status', 'Learned')),
+                        created_at=str(card_dict.get('created_at', '')),
+                        links=[
+                            str(l) for l in cast(List[JSONValue], card_dict.get('links', []))
+                            if isinstance(l, str)
+                        ] if isinstance(card_dict.get('links'), list) else [],
+                        tags=[
+                            str(t) for t in cast(List[JSONValue], card_dict.get('tags', []))
+                            if isinstance(t, str)
+                        ] if isinstance(card_dict.get('tags'), list) else [],
+                    )
+                    cards.append(card)
+                except Exception:
+                    pass  # Skip malformed cards
     except Exception:
         pass
 
@@ -235,5 +258,5 @@ def build_cards(window: str = "4h", telemetry_dir: Optional[str] = None, include
 def build_feed(window: str = "4h", telemetry_dir: Optional[str] = None, include_patterns: bool = True) -> Dict[str, JSONValue]:
     return {
         "generated_at": _iso_now(),
-        "cards": build_cards(window=window, telemetry_dir=telemetry_dir, include_patterns=include_patterns),
+        "cards": cast(JSONValue, build_cards(window=window, telemetry_dir=telemetry_dir, include_patterns=include_patterns)),
     }

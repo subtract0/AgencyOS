@@ -16,13 +16,73 @@ import re
 import json
 import uuid
 from datetime import datetime
-from typing import Dict, List, Optional, Any, Union
+from typing import Dict, List, Optional, Any, Union, cast
 from shared.type_definitions.json import JSONValue
 from dataclasses import dataclass, asdict
 from pathlib import Path
 
 from core.patterns import UnifiedPatternStore, get_pattern_store, Pattern as ExistingPattern
 from core.telemetry import get_telemetry, emit
+
+
+def _safe_get_str(data: JSONValue, key: str, default: str = "") -> str:
+    """Safely extract string from JSONValue dict with type checking."""
+    if isinstance(data, dict) and key in data:
+        value = data[key]
+        if isinstance(value, str):
+            return value
+    return default
+
+
+def _safe_get_list(data: JSONValue, key: str, default: Optional[List[str]] = None) -> List[str]:
+    """Safely extract list of strings from JSONValue dict with type checking."""
+    if default is None:
+        default = []
+    if isinstance(data, dict) and key in data:
+        value = data[key]
+        if isinstance(value, list):
+            return [str(item) for item in value if isinstance(item, str)]
+    return default
+
+
+def _safe_get_float(data: JSONValue, key: str, default: float = 0.0) -> float:
+    """Safely extract float from JSONValue dict with type checking."""
+    if isinstance(data, dict) and key in data:
+        value = data[key]
+        if isinstance(value, (int, float)):
+            return float(value)
+    return default
+
+
+def _safe_get_int(data: JSONValue, key: str, default: int = 0) -> int:
+    """Safely extract int from JSONValue dict with type checking."""
+    if isinstance(data, dict) and key in data:
+        value = data[key]
+        if isinstance(value, int):
+            return value
+        elif isinstance(value, float):
+            return int(value)
+    return default
+
+
+def _safe_get_bool(data: JSONValue, key: str, default: bool = False) -> bool:
+    """Safely extract bool from JSONValue dict with type checking."""
+    if isinstance(data, dict) and key in data:
+        value = data[key]
+        if isinstance(value, bool):
+            return value
+    return default
+
+
+def _safe_get_dict(data: JSONValue, key: str, default: Optional[Dict[str, JSONValue]] = None) -> Dict[str, JSONValue]:
+    """Safely extract dict from JSONValue dict with type checking."""
+    if default is None:
+        default = {}
+    if isinstance(data, dict) and key in data:
+        value = data[key]
+        if isinstance(value, dict):
+            return value
+    return default
 
 
 @dataclass
@@ -42,8 +102,8 @@ class Trigger:
     def from_dict(cls, data: Dict[str, JSONValue]) -> "Trigger":
         """Create trigger from dictionary."""
         return cls(
-            type=data["type"],
-            metadata=data["metadata"]
+            type=_safe_get_str(data, "type"),
+            metadata=_safe_get_dict(data, "metadata")
         )
 
 
@@ -75,7 +135,7 @@ class TaskTrigger(Trigger):
         super().__init__(
             type="task",
             metadata={
-                "keywords": keywords
+                "keywords": cast(JSONValue, keywords)
             }
         )
 
@@ -94,9 +154,13 @@ class Condition:
             return Path(self.target).exists()
         elif self.type == "test_passes":
             # This would need integration with test runner
-            return context.get("tests_passing", False)
+            tests_passing = context.get("tests_passing", False)
+            return isinstance(tests_passing, bool) and tests_passing
         elif self.type == "error_absent":
-            return self.target not in context.get("errors", [])
+            errors = context.get("errors", [])
+            if isinstance(errors, list):
+                return self.target not in [str(e) for e in errors]
+            return True
         else:
             # Generic condition evaluation
             actual_value = context.get(self.target)
@@ -130,10 +194,10 @@ class Action:
     def from_dict(cls, data: Dict[str, JSONValue]) -> "Action":
         """Create action from dictionary."""
         return cls(
-            tool=data["tool"],
-            parameters=data["parameters"],
-            output_pattern=data.get("output_pattern"),
-            timeout_seconds=data.get("timeout_seconds")
+            tool=_safe_get_str(data, "tool"),
+            parameters=_safe_get_dict(data, "parameters"),
+            output_pattern=_safe_get_str(data, "output_pattern") if "output_pattern" in data else None,
+            timeout_seconds=_safe_get_int(data, "timeout_seconds") if "timeout_seconds" in data else None
         )
 
 
@@ -159,21 +223,21 @@ class PatternMetadata:
             "last_used": self.last_used.isoformat(),
             "created_at": self.created_at.isoformat(),
             "source": self.source,
-            "tags": self.tags
+            "tags": cast(JSONValue, self.tags)
         }
 
     @classmethod
     def from_dict(cls, data: Dict[str, JSONValue]) -> "PatternMetadata":
         """Create metadata from dictionary."""
         return cls(
-            confidence=data["confidence"],
-            usage_count=data["usage_count"],
-            success_count=data["success_count"],
-            failure_count=data["failure_count"],
-            last_used=datetime.fromisoformat(data["last_used"]),
-            created_at=datetime.fromisoformat(data["created_at"]),
-            source=data["source"],
-            tags=data["tags"]
+            confidence=_safe_get_float(data, "confidence"),
+            usage_count=_safe_get_int(data, "usage_count"),
+            success_count=_safe_get_int(data, "success_count"),
+            failure_count=_safe_get_int(data, "failure_count"),
+            last_used=datetime.fromisoformat(_safe_get_str(data, "last_used")),
+            created_at=datetime.fromisoformat(_safe_get_str(data, "created_at")),
+            source=_safe_get_str(data, "source"),
+            tags=_safe_get_list(data, "tags")
         )
 
 
@@ -211,35 +275,61 @@ class EnhancedPattern:
         context = pattern.context
 
         # Reconstruct trigger
-        trigger_data = context.get("trigger", {})
-        if trigger_data.get("type") == "error":
+        trigger_data = _safe_get_dict(context, "trigger")
+        trigger_type = _safe_get_str(trigger_data, "type")
+
+        trigger: Trigger
+        if trigger_type == "error":
+            trigger_metadata = _safe_get_dict(trigger_data, "metadata")
             trigger = ErrorTrigger(
-                error_type=trigger_data.get("metadata", {}).get("error_type", ""),
-                error_pattern=trigger_data.get("metadata", {}).get("error_pattern", "")
+                error_type=_safe_get_str(trigger_metadata, "error_type"),
+                error_pattern=_safe_get_str(trigger_metadata, "error_pattern")
             )
         else:
-            trigger = TaskTrigger(
-                keywords=trigger_data.get("metadata", {}).get("keywords", [])
-            )
+            trigger_metadata = _safe_get_dict(trigger_data, "metadata")
+            keywords = _safe_get_list(trigger_metadata, "keywords")
+            trigger = TaskTrigger(keywords=keywords)
 
         # Reconstruct conditions
-        preconditions = [
-            Condition(**pc_data) for pc_data in context.get("preconditions", [])
-        ]
-        postconditions = [
-            Condition(**pc_data) for pc_data in context.get("postconditions", [])
-        ]
+        preconditions_data = context.get("preconditions", [])
+        preconditions = []
+        if isinstance(preconditions_data, list):
+            for pc_data in preconditions_data:
+                if isinstance(pc_data, dict):
+                    preconditions.append(Condition(
+                        type=_safe_get_str(pc_data, "type"),
+                        target=_safe_get_str(pc_data, "target"),
+                        value=pc_data.get("value"),
+                        operator=_safe_get_str(pc_data, "operator", "equals")
+                    ))
+
+        postconditions_data = context.get("postconditions", [])
+        postconditions = []
+        if isinstance(postconditions_data, list):
+            for pc_data in postconditions_data:
+                if isinstance(pc_data, dict):
+                    postconditions.append(Condition(
+                        type=_safe_get_str(pc_data, "type"),
+                        target=_safe_get_str(pc_data, "target"),
+                        value=pc_data.get("value"),
+                        operator=_safe_get_str(pc_data, "operator", "equals")
+                    ))
 
         # Reconstruct actions
         try:
             actions_data = json.loads(pattern.solution)
-            actions = [Action.from_dict(action_data) for action_data in actions_data]
+            actions = []
+            if isinstance(actions_data, list):
+                for action_data in actions_data:
+                    if isinstance(action_data, dict):
+                        actions.append(Action.from_dict(action_data))
         except (json.JSONDecodeError, TypeError):
             # Fallback for legacy patterns
             actions = []
 
         # Reconstruct metadata
-        metadata = PatternMetadata(
+        tags = pattern.tags if isinstance(pattern.tags, list) else []
+        pattern_metadata = PatternMetadata(
             confidence=pattern.success_rate,
             usage_count=pattern.usage_count,
             success_count=int(pattern.success_rate * pattern.usage_count),
@@ -247,7 +337,7 @@ class EnhancedPattern:
             last_used=datetime.fromisoformat(pattern.last_used),
             created_at=datetime.fromisoformat(pattern.created_at),
             source="learned",
-            tags=pattern.tags
+            tags=[str(tag) for tag in tags if tag is not None]
         )
 
         return cls(
@@ -256,7 +346,7 @@ class EnhancedPattern:
             preconditions=preconditions,
             actions=actions,
             postconditions=postconditions,
-            metadata=metadata
+            metadata=pattern_metadata
         )
 
 
@@ -275,7 +365,12 @@ class Operation:
     @property
     def caused_regression(self) -> bool:
         """Check if operation caused a regression."""
-        return self.final_state.get("test_results", {}).get("regressions", 0) > 0
+        test_results = self.final_state.get("test_results", {})
+        if isinstance(test_results, dict):
+            regressions = test_results.get("regressions", 0)
+            if isinstance(regressions, (int, float)):
+                return regressions > 0
+        return False
 
 
 @dataclass
@@ -296,7 +391,7 @@ class TestFailureAnalysis(FailureReason):
             type="test_failure",
             description=f"Tests failed: {', '.join(failed_tests[:3])}",
             details={
-                "failed_tests": failed_tests,
+                "failed_tests": cast(JSONValue, failed_tests),
                 "root_cause": root_cause
             }
         )
@@ -416,8 +511,8 @@ class PatternExtractor:
     def _identify_trigger(self, operation: Operation) -> Trigger:
         """Identify what triggered this operation."""
         if operation.initial_error:
-            error_type = operation.initial_error.get("type", "Unknown")
-            error_message = operation.initial_error.get("message", "")
+            error_type = _safe_get_str(operation.initial_error, "type", "Unknown")
+            error_message = _safe_get_str(operation.initial_error, "message", "")
 
             # Extract error pattern using regex
             if "AttributeError" in error_message and "NoneType" in error_message:
@@ -474,7 +569,7 @@ class PatternExtractor:
 
         # If there was an error, add condition to check for its presence
         if operation.initial_error:
-            error_type = operation.initial_error.get("type", "")
+            error_type = _safe_get_str(operation.initial_error, "type")
             conditions.append(Condition(
                 type="error_present",
                 target="current_error_type",
@@ -484,8 +579,10 @@ class PatternExtractor:
 
         # Extract file existence preconditions from tool calls
         for tool_call in operation.tool_calls:
-            if tool_call.get("tool") == "Read":
-                file_path = tool_call.get("parameters", {}).get("file_path")
+            tool_name = _safe_get_str(tool_call, "tool")
+            if tool_name == "Read":
+                parameters = _safe_get_dict(tool_call, "parameters")
+                file_path = _safe_get_str(parameters, "file_path")
                 if file_path:
                     conditions.append(Condition(
                         type="file_exists",
@@ -501,9 +598,9 @@ class PatternExtractor:
         actions = []
 
         for tool_call in operation.tool_calls:
-            tool_name = tool_call.get("tool", "unknown")
-            parameters = tool_call.get("parameters", {})
-            output = tool_call.get("output", "")
+            tool_name = _safe_get_str(tool_call, "tool", "unknown")
+            parameters = _safe_get_dict(tool_call, "parameters")
+            output = _safe_get_str(tool_call, "output")
 
             # Generalize parameters to make pattern reusable
             generalized_params = self._generalize_parameters(parameters)
@@ -515,7 +612,7 @@ class PatternExtractor:
                 tool=tool_name,
                 parameters=generalized_params,
                 output_pattern=output_pattern,
-                timeout_seconds=tool_call.get("timeout", None)
+                timeout_seconds=_safe_get_int(tool_call, "timeout") if "timeout" in tool_call else None
             )
 
             actions.append(action)
@@ -524,7 +621,7 @@ class PatternExtractor:
 
     def _generalize_parameters(self, parameters: Dict[str, JSONValue]) -> Dict[str, JSONValue]:
         """Generalize parameters to make them reusable."""
-        generalized = {}
+        generalized: Dict[str, JSONValue] = {}
 
         for key, value in parameters.items():
             if key == "file_path" and isinstance(value, str):
@@ -587,8 +684,8 @@ class PatternExtractor:
 
         # Test passing condition if tests were involved (check both tool names and command content)
         test_involved = (
-            any("test" in tool_call.get("tool", "").lower() for tool_call in operation.tool_calls) or
-            any("pytest" in str(tool_call.get("parameters", {})).lower() for tool_call in operation.tool_calls)
+            any("test" in _safe_get_str(tool_call, "tool").lower() for tool_call in operation.tool_calls) or
+            any("pytest" in str(_safe_get_dict(tool_call, "parameters")).lower() for tool_call in operation.tool_calls)
         )
 
         if test_involved:
@@ -601,7 +698,7 @@ class PatternExtractor:
 
         # Error absence condition if we started with an error
         if operation.initial_error:
-            error_type = operation.initial_error.get("type", "")
+            error_type = _safe_get_str(operation.initial_error, "type")
             conditions.append(Condition(
                 type="error_absent",
                 target="errors",
@@ -623,7 +720,7 @@ class PatternExtractor:
             tags.extend(trigger.keywords)
 
         # Add tool-based tags
-        tools_used = {tool_call.get("tool", "") for tool_call in operation.tool_calls}
+        tools_used = {_safe_get_str(tool_call, "tool") for tool_call in operation.tool_calls}
         tags.extend([f"uses_{tool.lower()}" for tool in tools_used if tool])
 
         # Add complexity tags
@@ -728,10 +825,10 @@ class FailureLearner:
 
         for tool_call in operation.tool_calls:
             action = Action(
-                tool=tool_call.get("tool", "unknown"),
-                parameters=tool_call.get("parameters", {}),
+                tool=_safe_get_str(tool_call, "tool", "unknown"),
+                parameters=_safe_get_dict(tool_call, "parameters"),
                 output_pattern=None,  # Don't generalize for anti-patterns
-                timeout_seconds=tool_call.get("timeout", None)
+                timeout_seconds=_safe_get_int(tool_call, "timeout") if "timeout" in tool_call else None
             )
             actions.append(action)
 
@@ -742,9 +839,9 @@ class FailureLearner:
         final_state = operation.final_state
 
         # Check for test failures
-        test_results = final_state.get("test_results", {})
-        if test_results and not test_results.get("passed", True):
-            failed_tests = test_results.get("failures", [])
+        test_results = _safe_get_dict(final_state, "test_results")
+        if test_results and not _safe_get_bool(test_results, "passed", True):
+            failed_tests = _safe_get_list(test_results, "failures")
             root_cause = self._analyze_test_failures(test_results)
 
             return TestFailureAnalysis(
@@ -753,11 +850,11 @@ class FailureLearner:
             )
 
         # Check for execution errors
-        error = final_state.get("error")
+        error = _safe_get_dict(final_state, "error")
         if error:
             return ExecutionError(
-                error_type=error.get("type", "Unknown"),
-                error_message=error.get("message", "")
+                error_type=_safe_get_str(error, "type", "Unknown"),
+                error_message=_safe_get_str(error, "message")
             )
 
         # Generic failure reason
@@ -769,13 +866,13 @@ class FailureLearner:
 
     def _analyze_test_failures(self, test_results: Dict[str, JSONValue]) -> str:
         """Analyze test failures to determine root cause."""
-        failures = test_results.get("failures", [])
+        failures = _safe_get_list(test_results, "failures")
 
         if not failures:
             return "Unknown test failure"
 
         # Look for common patterns in failure messages
-        failure_text = " ".join(str(f) for f in failures).lower()
+        failure_text = " ".join(failures).lower()
 
         if "assertion" in failure_text:
             return "Assertion failures - logic error in implementation"
@@ -812,7 +909,7 @@ class FailureLearner:
             ])
 
         # Add tool-specific alternatives
-        tools_used = {tool_call.get("tool", "") for tool_call in operation.tool_calls}
+        tools_used = {_safe_get_str(tool_call, "tool") for tool_call in operation.tool_calls}
 
         if "Edit" in tools_used:
             alternatives.extend([
@@ -839,7 +936,7 @@ class FailureLearner:
             tags.append("regression")
 
         # Add tool-based tags
-        tools_used = {tool_call.get("tool", "") for tool_call in operation.tool_calls}
+        tools_used = {_safe_get_str(tool_call, "tool") for tool_call in operation.tool_calls}
         tags.extend([f"failed_with_{tool.lower()}" for tool in tools_used if tool])
 
         return tags

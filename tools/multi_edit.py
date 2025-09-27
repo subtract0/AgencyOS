@@ -195,8 +195,8 @@ def another_function():
 
     # Test multiple edits
     edits = [
-        EditOperation(old_string="old_function_name", new_string="new_function_name"),
-        EditOperation(old_string="Old message", new_string="New message"),
+        EditOperation(old_string="old_function_name", new_string="new_function_name", replace_all=False),
+        EditOperation(old_string="Old message", new_string="New message", replace_all=False),
         EditOperation(old_string="old_value", new_string="new_value", replace_all=True),
     ]
 
@@ -215,9 +215,9 @@ def another_function():
     new_file_path = "/tmp/test_new_file.txt"
     new_file_edits = [
         EditOperation(
-            old_string="", new_string="# New File\\nThis is a new file.\\nLine 2."
+            old_string="", new_string="# New File\\nThis is a new file.\\nLine 2.", replace_all=False
         ),
-        EditOperation(old_string="Line 2", new_string="Modified Line 2"),
+        EditOperation(old_string="Line 2", new_string="Modified Line 2", replace_all=False),
     ]
 
     tool2 = MultiEdit(file_path=new_file_path, edits=new_file_edits)

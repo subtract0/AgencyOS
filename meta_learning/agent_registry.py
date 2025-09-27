@@ -8,7 +8,7 @@ Every line adds measurable value to agent learning tracking.
 import json
 import os
 import uuid
-from dataclasses import dataclass, asdict
+from dataclasses import dataclass, asdict, field
 from datetime import datetime
 from enum import Enum
 from pathlib import Path
@@ -29,8 +29,8 @@ class Agent:
     name: str
     version: str = "1.0.0"
     status: AgentStatus = AgentStatus.ACTIVE
-    created_at: datetime = None
-    metadata: Dict[str, JSONValue] = None
+    created_at: Optional[datetime] = None
+    metadata: Optional[Dict[str, JSONValue]] = None
 
     def __post_init__(self):
         if self.created_at is None:
@@ -44,8 +44,8 @@ class AgentInstance:
     """Agent configuration instance."""
     instance_id: str
     agent_id: str
-    config: Dict[str, JSONValue] = None
-    created_at: datetime = None
+    config: Optional[Dict[str, JSONValue]] = None
+    created_at: Optional[datetime] = None
 
     def __post_init__(self):
         if self.created_at is None:
@@ -60,8 +60,8 @@ class AIQEvent:
     event_id: str
     agent_instance_id: str
     aiq_score: float
-    timestamp: datetime = None
-    metrics: Dict[str, float] = None
+    timestamp: Optional[datetime] = None
+    metrics: Optional[Dict[str, float]] = None
 
     def __post_init__(self):
         if self.timestamp is None:
@@ -129,7 +129,7 @@ class AgentRegistry:
 
         # Filter and sort events
         events = [e for e in self.aiq_events if e.agent_instance_id in instance_ids]
-        events.sort(key=lambda x: x.timestamp, reverse=True)
+        events.sort(key=lambda x: x.timestamp or datetime.min, reverse=True)
 
         return events[:limit]
 
@@ -140,7 +140,7 @@ class AgentRegistry:
 
         # Get latest score per agent
         latest_scores = {}
-        for event in sorted(self.aiq_events, key=lambda x: x.timestamp, reverse=True):
+        for event in sorted(self.aiq_events, key=lambda x: x.timestamp or datetime.min, reverse=True):
             instance = self.instances.get(event.agent_instance_id)
             if instance and instance.agent_id not in latest_scores:
                 agent = self.agents.get(instance.agent_id)
@@ -193,33 +193,60 @@ class AgentRegistry:
         """Convert agent to dict for JSON storage."""
         data = asdict(agent)
         data["status"] = agent.status.value
-        data["created_at"] = agent.created_at.isoformat()
+        data["created_at"] = agent.created_at.isoformat() if agent.created_at else None
         return data
 
     def _dict_to_agent(self, data: Dict[str, JSONValue]) -> Agent:
         """Convert dict to agent from JSON storage."""
-        data["status"] = AgentStatus(data["status"])
-        data["created_at"] = datetime.fromisoformat(data["created_at"])
-        return Agent(**data)
+        status = AgentStatus(data["status"]) if isinstance(data["status"], str) else AgentStatus.ACTIVE
+        created_at = datetime.fromisoformat(data["created_at"]) if data.get("created_at") and isinstance(data["created_at"], str) else None
+        metadata_raw = data.get("metadata")
+        metadata = metadata_raw if isinstance(metadata_raw, dict) else {}
+
+        return Agent(
+            agent_id=str(data["agent_id"]),
+            name=str(data["name"]),
+            version=str(data.get("version", "1.0.0")),
+            status=status,
+            created_at=created_at,
+            metadata=metadata
+        )
 
     def _instance_to_dict(self, instance: AgentInstance) -> Dict[str, JSONValue]:
         """Convert instance to dict for JSON storage."""
         data = asdict(instance)
-        data["created_at"] = instance.created_at.isoformat()
+        data["created_at"] = instance.created_at.isoformat() if instance.created_at else None
         return data
 
     def _dict_to_instance(self, data: Dict[str, JSONValue]) -> AgentInstance:
         """Convert dict to instance from JSON storage."""
-        data["created_at"] = datetime.fromisoformat(data["created_at"])
-        return AgentInstance(**data)
+        created_at = datetime.fromisoformat(data["created_at"]) if data.get("created_at") and isinstance(data["created_at"], str) else None
+        config_raw = data.get("config")
+        config = config_raw if isinstance(config_raw, dict) else {}
+
+        return AgentInstance(
+            instance_id=str(data["instance_id"]),
+            agent_id=str(data["agent_id"]),
+            config=config,
+            created_at=created_at
+        )
 
     def _event_to_dict(self, event: AIQEvent) -> Dict[str, JSONValue]:
         """Convert event to dict for JSON storage."""
         data = asdict(event)
-        data["timestamp"] = event.timestamp.isoformat()
+        data["timestamp"] = event.timestamp.isoformat() if event.timestamp else None
         return data
 
     def _dict_to_event(self, data: Dict[str, JSONValue]) -> AIQEvent:
         """Convert dict to event from JSON storage."""
-        data["timestamp"] = datetime.fromisoformat(data["timestamp"])
-        return AIQEvent(**data)
+        timestamp = datetime.fromisoformat(data["timestamp"]) if data.get("timestamp") and isinstance(data["timestamp"], str) else None
+        metrics_raw = data.get("metrics")
+        metrics = {str(k): float(v) for k, v in metrics_raw.items() if isinstance(v, (int, float))} if isinstance(metrics_raw, dict) else {}
+
+        return AIQEvent(
+            event_id=str(data["event_id"]),
+            agent_instance_id=str(data["agent_instance_id"]),
+            aiq_score=float(data["aiq_score"]) if isinstance(data["aiq_score"], (int, float)) else 0.0,
+            timestamp=timestamp,
+            metrics=metrics
+        )

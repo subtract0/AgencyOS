@@ -170,14 +170,14 @@ class TestFirestoreMockIntegration:
 
         # Test READ operation via search
         search_results = store.search(["integration"])
-        assert len(search_results) >= 1
+        assert search_results.total_count >= 1
 
         found_record = False
-        for result in search_results:
-            if result["key"] == test_key:
+        for result in search_results.records:
+            if result.key == test_key:
                 found_record = True
-                assert result["content"] == test_content
-                assert set(test_tags).issubset(set(result["tags"]))
+                assert result.content == test_content
+                assert set(test_tags).issubset(set(result.tags))
                 break
 
         assert found_record, "Created record should be found in search results"
@@ -190,11 +190,11 @@ class TestFirestoreMockIntegration:
         # Verify update
         search_after_update = store.search(["updated"])
         found_updated = False
-        for result in search_after_update:
-            if result["key"] == test_key:
+        for result in search_after_update.records:
+            if result.key == test_key:
                 found_updated = True
-                assert result["content"] == updated_content
-                assert "updated" in result["tags"]
+                assert result.content == updated_content
+                assert "updated" in result.tags
                 break
 
         assert found_updated, "Updated record should be found with new tag"
@@ -214,22 +214,22 @@ class TestFirestoreMockIntegration:
 
         # Test search with empty tags
         empty_results = store.search([])
-        assert empty_results == []
+        assert empty_results.total_count == 0
 
         # Test search with non-existent tags
         no_results = store.search(["nonexistent_tag_12345"])
-        assert no_results == []
+        assert no_results.total_count == 0
 
         # Test timestamp formatting
         test_key = f"timestamp_test_{int(time.time())}"
         store.store(test_key, "timestamp test", ["timestamp"])
 
         results = store.search(["timestamp"])
-        assert len(results) >= 1
+        assert results.total_count >= 1
 
-        for result in results:
-            if result["key"] == test_key:
-                timestamp_str = result["timestamp"]
+        for result in results.records:
+            if result.key == test_key:
+                timestamp_str = result.timestamp.isoformat()
                 # Verify timestamp is valid ISO format
                 parsed_timestamp = datetime.fromisoformat(timestamp_str)
                 assert isinstance(parsed_timestamp, datetime)
@@ -265,9 +265,9 @@ class TestFirestoreMockIntegration:
 
         # Search for all batch items
         batch_results = store.search(["batch"])
-        assert len(batch_results) == batch_size
+        assert batch_results.total_count == batch_size
 
         # Verify all items are present
-        found_keys = {r["key"] for r in batch_results}
+        found_keys = {r.key for r in batch_results.records}
         expected_keys = {f"batch_item_{i}" for i in range(batch_size)}
         assert found_keys == expected_keys

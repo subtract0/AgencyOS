@@ -10,7 +10,7 @@ import json
 import os
 from collections import defaultdict
 from pathlib import Path
-from typing import Dict, List, Set, Any
+from typing import Dict, List, Set, Any, Optional, cast
 from shared.type_definitions.json import JSONValue
 
 class DictPatternAnalyzer(ast.NodeVisitor):
@@ -19,12 +19,17 @@ class DictPatternAnalyzer(ast.NodeVisitor):
     def __init__(self, filename: str):
         self.filename = filename
         self.dict_patterns: List[dict[str, JSONValue]] = []
-        self.current_function = None
-        self.current_class = None
+        self.current_function: str | None = None
+        self.current_class: str | None = None
 
     def visit_FunctionDef(self, node: ast.FunctionDef) -> None:
+        """Analyze function context and return types."""
         old_function = self.current_function
         self.current_function = node.name
+
+        if node.returns and self._is_dict_annotation(node.returns):
+            self._record_pattern(node, "return_type")
+
         self.generic_visit(node)
         self.current_function = old_function
 
@@ -45,17 +50,6 @@ class DictPatternAnalyzer(ast.NodeVisitor):
         if node.annotation and self._is_dict_annotation(node.annotation):
             self._record_pattern(node, "function_arg")
         self.generic_visit(node)
-
-    def visit_FunctionDef(self, node: ast.FunctionDef) -> None:
-        """Analyze function return types."""
-        old_function = self.current_function
-        self.current_function = node.name
-
-        if node.returns and self._is_dict_annotation(node.returns):
-            self._record_pattern(node, "return_type")
-
-        self.generic_visit(node)
-        self.current_function = old_function
 
     def _is_dict_annotation(self, node: ast.AST) -> bool:
         """Check if node represents a Dict type annotation."""
@@ -106,10 +100,10 @@ def analyze_file(filepath: Path) -> List[dict[str, JSONValue]]:
 
 def analyze_actual_data_shapes() -> Dict[str, JSONValue]:
     """Analyze actual data shapes from runtime logs and test fixtures."""
-    shapes = defaultdict(list)
+    shapes: defaultdict[str, List[JSONValue]] = defaultdict(list)
 
     # Analyze memory patterns from tests
-    test_patterns = [
+    test_patterns: List[Dict[str, Any]] = [
         # Common memory record shape
         {
             "type": "MemoryRecord",
@@ -154,9 +148,11 @@ def analyze_actual_data_shapes() -> Dict[str, JSONValue]:
     ]
 
     for pattern in test_patterns:
-        shapes[pattern["type"]].append(pattern["example"])
+        if isinstance(pattern, dict) and "type" in pattern and "example" in pattern:
+            pattern_type = str(pattern["type"])
+            shapes[pattern_type].append(pattern["example"])
 
-    return dict(shapes)
+    return cast(Dict[str, JSONValue], dict(shapes))
 
 
 def main():

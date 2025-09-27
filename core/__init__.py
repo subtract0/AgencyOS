@@ -4,7 +4,7 @@ Simplifies imports and provides a clean API for autonomous agents.
 """
 
 import os
-from typing import Optional, List
+from typing import Optional, List, Union
 from shared.type_definitions.json import JSONValue
 
 # Feature flags
@@ -25,7 +25,7 @@ try:
     from learning_loop import LearningLoop
     LEARNING_LOOP_AVAILABLE = True
 except ImportError:
-    LearningLoop = None
+    LearningLoop = None  # type: ignore[misc,assignment]
     LEARNING_LOOP_AVAILABLE = False
 
 # Singleton instances
@@ -257,10 +257,10 @@ class UnifiedCore:
         return {}
 
     def learn_from_operation_result(self, operation_id: str, success: bool,
-                                  task_description: str = None,
-                                  tool_calls: List[ToolCall] = None,
-                                  initial_error: str = None,
-                                  final_state: str = None,
+                                  task_description: Optional[str] = None,
+                                  tool_calls: Optional[List[ToolCall]] = None,
+                                  initial_error: Optional[str] = None,
+                                  final_state: Optional[Union[str, dict[str, JSONValue]]] = None,
                                   duration_seconds: float = 0.0):
         """
         Learn patterns from an operation result.
@@ -283,12 +283,35 @@ class UnifiedCore:
         from learning_loop.pattern_extraction import Operation
         from datetime import datetime
 
+        # Convert types to match Operation model expectations
+        initial_error_dict: Optional[dict[str, JSONValue]] = None
+        if initial_error is not None:
+            initial_error_dict = {"error": initial_error}
+
+        tool_calls_dict: List[dict[str, JSONValue]] = []
+        if tool_calls:
+            for tool_call in tool_calls:
+                # Convert ToolCall to Dict[str, JSONValue]
+                if hasattr(tool_call, 'model_dump'):
+                    tool_calls_dict.append(tool_call.model_dump())
+                else:
+                    tool_calls_dict.append({
+                        "name": getattr(tool_call, "name", "unknown"),
+                        "args": getattr(tool_call, "args", {})
+                    })
+
+        final_state_dict: dict[str, JSONValue] = {}
+        if isinstance(final_state, dict):
+            final_state_dict = final_state
+        elif isinstance(final_state, str):
+            final_state_dict = {"state": final_state}
+
         operation = Operation(
             id=operation_id,
             task_description=task_description,
-            initial_error=initial_error,
-            tool_calls=tool_calls or [],
-            final_state=final_state or {},
+            initial_error=initial_error_dict,
+            tool_calls=tool_calls_dict,
+            final_state=final_state_dict,
             success=success,
             duration_seconds=duration_seconds,
             timestamp=datetime.now()

@@ -52,7 +52,13 @@ def main() -> None:
             print(f"Error: Invalid --now format: {args.now}")
             return
 
-    evs = list_events(since=args.since, telemetry_dir=_telemetry_dir(), run_id=args.run_id, grep=args.grep, limit=args.limit, now=now_dt)
+    # Note: list_events doesn't support run_id and now parameters
+    # For now, we'll use the basic functionality and filter manually if needed
+    evs = list_events(since=args.since, telemetry_dir=_telemetry_dir(), grep=args.grep, limit=args.limit)
+
+    # Manual filtering by run_id if provided
+    if args.run_id:
+        evs = [e for e in evs if e.get("run_id") == args.run_id]
 
     if args.format == "json":
         print(json.dumps(evs, indent=2))

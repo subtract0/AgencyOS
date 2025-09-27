@@ -14,7 +14,7 @@ import hashlib
 import json
 import math
 from datetime import datetime, timedelta
-from typing import Any, Dict, List, Optional, Set
+from typing import Any, Dict, List, Optional, Set, cast
 from shared.type_definitions.json import JSONValue
 from collections import defaultdict, Counter
 from enum import Enum, IntEnum
@@ -69,7 +69,7 @@ class MemoryMetadata:
     is_shared: bool
     consolidation_level: int = 0  # 0=original, 1=first consolidation, etc.
     parent_memory_id: Optional[str] = None
-    related_memory_ids: List[str] = None
+    related_memory_ids: Optional[List[str]] = None
 
     def __post_init__(self):
         if self.related_memory_ids is None:
@@ -116,8 +116,13 @@ class EnhancedMemoryRecord:
     @classmethod
     def from_dict(cls, data: Dict[str, JSONValue]) -> "EnhancedMemoryRecord":
         """Create from dictionary."""
-        metadata = MemoryMetadata(**data["metadata"])
-        content = MemoryContent(**data["content"])
+        metadata_data = data.get("metadata", {})
+        content_data = data.get("content", {})
+        if isinstance(metadata_data, dict) and isinstance(content_data, dict):
+            metadata = MemoryMetadata(**cast(Dict[str, Any], metadata_data))
+            content = MemoryContent(**cast(Dict[str, Any], content_data))
+        else:
+            raise ValueError("Invalid metadata or content data")
         return cls(metadata=metadata, content=content)
 
 
@@ -179,7 +184,7 @@ class AttentionMechanism:
 
         # Relevance score (contextual similarity)
         relevance_score = 0.5  # Default neutral relevance
-        if current_context and memory.content.embeddings.get("text"):
+        if current_context and memory.content.embeddings is not None and memory.content.embeddings.get("text"):
             # TODO: Implement semantic similarity calculation
             # This would require embedding the current_context and comparing
             relevance_score = self._calculate_semantic_similarity(
@@ -658,7 +663,7 @@ class EnhancedInMemoryStore(EnhancedMemoryStore):
             "action": "consolidated",
             "clusters_processed": len(clusters),
             "clusters_consolidated": len(consolidation_results),
-            "consolidation_summaries": consolidation_results,
+            "consolidation_summaries": cast(JSONValue, consolidation_results),
         }
 
     def _create_cluster_summary(

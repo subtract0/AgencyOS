@@ -110,7 +110,7 @@ class Glob(BaseTool):  # type: ignore[misc]
 
     def _simple_glob(self, root_dir: str, pattern: str, gitignore_patterns: List[str]):
         """Handle simple patterns without **."""
-        matches = []
+        matches: List[str] = []
 
         # If pattern contains path separators, handle directory structure
         if "/" in pattern or "\\\\" in pattern:

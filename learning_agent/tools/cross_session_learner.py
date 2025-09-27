@@ -8,10 +8,61 @@ from pydantic import Field
 import json
 import os
 from datetime import datetime, timedelta
-from typing import Dict, Any, List, Optional, Tuple
+from typing import Dict, Any, List, Optional, Tuple, cast
 from shared.type_definitions.json import JSONValue
 import logging
 from collections import defaultdict
+
+
+def _safe_get_str(data: JSONValue, key: str, default: str = "") -> str:
+    """Safely extract string from JSONValue dict with type checking."""
+    if isinstance(data, dict) and key in data:
+        value = data[key]
+        if isinstance(value, str):
+            return value
+    return default
+
+
+def _safe_get_list(data: JSONValue, key: str, default: Optional[List[str]] = None) -> List[str]:
+    """Safely extract list of strings from JSONValue dict with type checking."""
+    if default is None:
+        default = []
+    if isinstance(data, dict) and key in data:
+        value = data[key]
+        if isinstance(value, list):
+            return [str(item) for item in value if isinstance(item, str)]
+    return default
+
+
+def _safe_get_float(data: JSONValue, key: str, default: float = 0.0) -> float:
+    """Safely extract float from JSONValue dict with type checking."""
+    if isinstance(data, dict) and key in data:
+        value = data[key]
+        if isinstance(value, (int, float)):
+            return float(value)
+    return default
+
+
+def _safe_get_int(data: JSONValue, key: str, default: int = 0) -> int:
+    """Safely extract int from JSONValue dict with type checking."""
+    if isinstance(data, dict) and key in data:
+        value = data[key]
+        if isinstance(value, int):
+            return value
+        elif isinstance(value, float):
+            return int(value)
+    return default
+
+
+def _safe_get_dict(data: JSONValue, key: str, default: Optional[Dict[str, JSONValue]] = None) -> Dict[str, JSONValue]:
+    """Safely extract dict from JSONValue dict with type checking."""
+    if default is None:
+        default = {}
+    if isinstance(data, dict) and key in data:
+        value = data[key]
+        if isinstance(value, dict):
+            return value
+    return default
 from shared.models.patterns import (
     CrossSessionData,
     ContextFeatures,
@@ -185,7 +236,7 @@ class CrossSessionLearner(BaseTool):  # type: ignore[misc]
 
     def _load_from_session_transcripts(self) -> List[Dict[str, JSONValue]]:
         """Load learnings from session transcript analysis."""
-        learnings = []
+        learnings: List[Dict[str, JSONValue]] = []
 
         try:
             sessions_dir = os.path.join(os.getcwd(), "logs", "sessions")
@@ -211,7 +262,7 @@ class CrossSessionLearner(BaseTool):  # type: ignore[misc]
 
     def _load_from_learning_storage(self) -> List[Dict[str, JSONValue]]:
         """Load learnings from dedicated learning storage files."""
-        learnings = []
+        learnings: List[Dict[str, JSONValue]] = []
 
         try:
             learning_dir = os.path.join(os.getcwd(), "logs", "learnings")
@@ -238,7 +289,7 @@ class CrossSessionLearner(BaseTool):  # type: ignore[misc]
 
     def _extract_learnings_from_transcript(self, filepath: str) -> List[Dict[str, JSONValue]]:
         """Extract learning-relevant information from session transcript."""
-        learnings = []
+        learnings: List[Dict[str, JSONValue]] = []
 
         try:
             with open(filepath, 'r', encoding='utf-8') as f:
@@ -246,7 +297,7 @@ class CrossSessionLearner(BaseTool):  # type: ignore[misc]
 
             # Look for learning indicators
             lines = content.split('\n')
-            learning_contexts = []
+            learning_contexts: List[Dict[str, JSONValue]] = []
 
             for i, line in enumerate(lines):
                 if any(keyword in line.lower() for keyword in [
@@ -278,7 +329,7 @@ class CrossSessionLearner(BaseTool):  # type: ignore[misc]
         learning_indicators = ['learning_id', 'pattern', 'actionable_insight', 'confidence']
         return any(indicator in obj for indicator in learning_indicators)
 
-    def _find_relevant_patterns(self, context_data: Dict[str, JSONValue], learning_results: CrossSessionData) -> List[PatternMatch]:
+    def _find_relevant_patterns(self, context_data: Dict[str, JSONValue], learning_results: CrossSessionData) -> List[Dict[str, JSONValue]]:
         """Find patterns relevant to current context."""
         relevant_patterns = []
 
@@ -291,8 +342,9 @@ class CrossSessionLearner(BaseTool):  # type: ignore[misc]
                 relevance_score = self._calculate_relevance_score(context_features, learning)
 
                 if relevance_score >= self.similarity_threshold:
+                    pattern_id = _safe_get_str(learning, 'learning_id') or _safe_get_str(learning, 'pattern_id', 'unknown')
                     pattern_match = PatternMatch(
-                        pattern_id=learning.get('learning_id', learning.get('pattern_id', 'unknown')),
+                        pattern_id=pattern_id,
                         relevance_score=relevance_score,
                         match_reason=self._explain_match_reason(context_features, learning),
                         matched_features=context_features,
@@ -388,8 +440,10 @@ class CrossSessionLearner(BaseTool):  # type: ignore[misc]
             }
 
             # Keyword overlap score
-            learning_text = str(learning.get('content', '') + learning.get('description', '') +
-                             learning.get('actionable_insight', '')).lower()
+            content = _safe_get_str(learning, 'content')
+            description = _safe_get_str(learning, 'description')
+            insight = _safe_get_str(learning, 'actionable_insight')
+            learning_text = (content + ' ' + description + ' ' + insight).lower()
             learning_keywords = set(word for word in learning_text.split() if len(word) > 3)
 
             if context_features.keywords and learning_keywords:
@@ -399,7 +453,7 @@ class CrossSessionLearner(BaseTool):  # type: ignore[misc]
                 score += keyword_score * weights['keyword_overlap']
 
             # Context type match
-            learning_type = learning.get('type', learning.get('category', '')).lower()
+            learning_type = (_safe_get_str(learning, 'type') or _safe_get_str(learning, 'category')).lower()
             if context_features.context_type in learning_type or learning_type in context_features.context_type:
                 score += 1.0 * weights['context_type_match']
 

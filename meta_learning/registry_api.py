@@ -103,7 +103,7 @@ def create_app(registry: AgentRegistry = None) -> Flask:
                     {
                         'event_id': event.event_id,
                         'aiq_score': event.aiq_score,
-                        'timestamp': event.timestamp.isoformat(),
+                        'timestamp': event.timestamp.isoformat() if event.timestamp else None,
                         'metrics': event.metrics
                     }
                     for event in history

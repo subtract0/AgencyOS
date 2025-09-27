@@ -16,7 +16,7 @@ import re
 from collections import defaultdict, deque
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta, timezone
-from typing import Any, Dict, Iterable, List, Optional, Tuple
+from typing import Any, Dict, Iterable, List, Optional, Tuple, cast
 from shared.type_definitions.json import JSONValue
 from scipy import stats
 from sklearn.linear_model import LinearRegression
@@ -114,51 +114,60 @@ class EnhancedTelemetryAggregator:
         """Process a single event to extract time series data."""
         try:
             # Parse timestamp
-            ts_str = event.get('ts', '')
-            if not ts_str:
+            ts_value = event.get('ts', '')
+            if not isinstance(ts_value, str) or not ts_value:
                 return
 
             # Handle different timestamp formats
+            ts_str = ts_value
             if ts_str.endswith('Z'):
                 ts_str = ts_str[:-1] + '+00:00'
             timestamp = datetime.fromisoformat(ts_str).replace(tzinfo=timezone.utc)
 
             # Extract metrics based on event type
-            event_type = event.get('type', '')
+            event_type_value = event.get('type', '')
+            if not isinstance(event_type_value, str):
+                return
+            event_type = event_type_value
 
             if event_type == 'task_finished':
                 # Extract task duration, cost, and usage metrics
-                usage = event.get('usage', {})
-                if usage:
-                    tokens = usage.get('total_tokens', 0)
-                    if tokens > 0:
-                        self.metric_history['total_tokens'].append(
-                            TimeSeriesPoint(timestamp, float(tokens), {'event_id': event.get('id')})
-                        )
+                usage_value = event.get('usage', {})
+                if isinstance(usage_value, dict):
+                    usage = usage_value
+                    tokens_value = usage.get('total_tokens', 0)
+                    if isinstance(tokens_value, (int, float)):
+                        tokens = float(tokens_value)
+                        if tokens > 0:
+                            self.metric_history['total_tokens'].append(
+                                TimeSeriesPoint(timestamp, tokens, {'event_id': event.get('id')})
+                            )
 
-                # Extract cost if available
-                model = event.get('model', '')
-                if model and usage:
-                    # Simplified cost estimation
-                    cost = self._estimate_event_cost(usage, model)
-                    if cost > 0:
-                        self.metric_history['cost_per_task'].append(
-                            TimeSeriesPoint(timestamp, cost, {'model': model})
-                        )
+                    # Extract cost if available
+                    model_value = event.get('model', '')
+                    if isinstance(model_value, str) and model_value and usage:
+                        # Simplified cost estimation
+                        cost = self._estimate_event_cost(usage, model_value)
+                        if cost > 0:
+                            self.metric_history['cost_per_task'].append(
+                                TimeSeriesPoint(timestamp, cost, {'model': model_value})
+                            )
 
                 # Extract duration
-                duration = event.get('duration_s')
-                if duration is not None:
+                duration_value = event.get('duration_s')
+                if isinstance(duration_value, (int, float)):
                     self.metric_history['task_duration'].append(
-                        TimeSeriesPoint(timestamp, float(duration), {'agent': event.get('agent')})
+                        TimeSeriesPoint(timestamp, float(duration_value), {'agent': event.get('agent')})
                     )
 
                 # Extract status for error rate calculation
-                status = event.get('status', '').lower()
-                error_value = 1.0 if status == 'failed' else 0.0
-                self.metric_history['error_indicator'].append(
-                    TimeSeriesPoint(timestamp, error_value, {'status': status})
-                )
+                status_value = event.get('status', '')
+                if isinstance(status_value, str):
+                    status = status_value.lower()
+                    error_value = 1.0 if status == 'failed' else 0.0
+                    self.metric_history['error_indicator'].append(
+                        TimeSeriesPoint(timestamp, error_value, {'status': status})
+                    )
 
             elif event_type == 'heartbeat':
                 # Extract system utilization metrics if available
@@ -172,7 +181,12 @@ class EnhancedTelemetryAggregator:
     def _estimate_event_cost(self, usage: Dict[str, JSONValue], model: str) -> float:
         """Estimate cost for a single event."""
         # Simple cost estimation - this could be enhanced with real pricing data
-        tokens = usage.get('total_tokens', 0)
+        tokens_value = usage.get('total_tokens', 0)
+        if isinstance(tokens_value, (int, float)):
+            tokens = float(tokens_value)
+        else:
+            tokens = 0.0
+
         if 'gpt-4' in model.lower():
             return tokens * 0.00006  # Rough estimate
         elif 'gpt-3.5' in model.lower():
@@ -191,9 +205,11 @@ class EnhancedTelemetryAggregator:
         Returns:
             Enhanced aggregation results with time-series insights
         """
-        # Get base aggregation
-        base_result = aggregate(since=since, telemetry_dir=self.telemetry_dir)
+        # Get base aggregation - this actually returns a dict, not TelemetryMetrics
+        # (the type annotation is wrong in the base function)
+        base_result = cast(Dict[str, JSONValue], aggregate(since=since, telemetry_dir=self.telemetry_dir))
 
+        # base_result is already a dict
         if not include_timeseries:
             return base_result
 
@@ -212,16 +228,14 @@ class EnhancedTelemetryAggregator:
 
         # Enhance base result
         enhanced_result = base_result.copy()
-        enhanced_result.update({
-            'timeseries_analysis': {
-                'trends': [self._trend_to_dict(trend) for trend in trends],
-                'correlations': [self._correlation_to_dict(corr) for corr in correlations],
-                'anomalies': [self._anomaly_to_dict(anomaly) for anomaly in anomalies],
-                'predictions': predictions,
-                'data_quality': self._assess_data_quality(),
-                'analysis_timestamp': current_time.isoformat()
-            }
-        })
+        enhanced_result['timeseries_analysis'] = {
+            'trends': [self._trend_to_dict(trend) for trend in trends],
+            'correlations': [self._correlation_to_dict(corr) for corr in correlations],
+            'anomalies': [self._anomaly_to_dict(anomaly) for anomaly in anomalies],
+            'predictions': predictions,
+            'data_quality': self._assess_data_quality(),
+            'analysis_timestamp': current_time.isoformat()
+        }
 
         return enhanced_result
 
@@ -229,43 +243,69 @@ class EnhancedTelemetryAggregator:
         """Update time series with current aggregation data."""
         try:
             # Extract key metrics from current aggregation
-            resources = aggregation.get('resources', {})
-            costs = aggregation.get('costs', {})
-            bottlenecks = aggregation.get('bottlenecks', {})
-            results = aggregation.get('recent_results', {})
+            resources_value = aggregation.get('resources', {})
+            costs_value = aggregation.get('costs', {})
+            bottlenecks_value = aggregation.get('bottlenecks', {})
+            results_value = aggregation.get('recent_results', {})
 
-            # Update resource utilization metrics
-            if 'utilization' in resources and resources['utilization'] is not None:
-                self.metric_history['utilization'].append(
-                    TimeSeriesPoint(timestamp, float(resources['utilization']))
-                )
+            # Type guard for resources
+            if isinstance(resources_value, dict):
+                resources = resources_value
+                # Update resource utilization metrics
+                if 'utilization' in resources and resources['utilization'] is not None:
+                    util_value = resources['utilization']
+                    if isinstance(util_value, (int, float)):
+                        self.metric_history['utilization'].append(
+                            TimeSeriesPoint(timestamp, float(util_value))
+                        )
 
-            # Update running tasks count
-            running_count = resources.get('running', 0)
-            self.metric_history['running_tasks'].append(
-                TimeSeriesPoint(timestamp, float(running_count))
-            )
+                # Update running tasks count
+                running_value = resources.get('running', 0)
+                if isinstance(running_value, (int, float)):
+                    self.metric_history['running_tasks'].append(
+                        TimeSeriesPoint(timestamp, float(running_value))
+                    )
 
-            # Update cost metrics
-            total_cost = costs.get('total_usd', 0)
-            if total_cost > 0:
-                self.metric_history['total_cost'].append(
-                    TimeSeriesPoint(timestamp, float(total_cost))
-                )
+            # Type guard for costs
+            if isinstance(costs_value, dict):
+                costs = costs_value
+                # Update cost metrics
+                total_cost_value = costs.get('total_usd', 0)
+                if isinstance(total_cost_value, (int, float)):
+                    total_cost = float(total_cost_value)
+                    if total_cost > 0:
+                        self.metric_history['total_cost'].append(
+                            TimeSeriesPoint(timestamp, total_cost)
+                        )
 
-            # Update error rate
-            error_rate = bottlenecks.get('error_rate', 0)
-            self.metric_history['error_rate'].append(
-                TimeSeriesPoint(timestamp, float(error_rate))
-            )
+            # Type guard for bottlenecks
+            if isinstance(bottlenecks_value, dict):
+                bottlenecks = bottlenecks_value
+                # Update error rate
+                error_rate_value = bottlenecks.get('error_rate', 0)
+                if isinstance(error_rate_value, (int, float)):
+                    self.metric_history['error_rate'].append(
+                        TimeSeriesPoint(timestamp, float(error_rate_value))
+                    )
 
-            # Update task completion metrics
-            total_tasks = sum(results.values())
-            if total_tasks > 0:
-                success_rate = results.get('success', 0) / total_tasks
-                self.metric_history['success_rate'].append(
-                    TimeSeriesPoint(timestamp, float(success_rate))
-                )
+            # Type guard for results
+            if isinstance(results_value, dict):
+                results = results_value
+                # Update task completion metrics - extract numeric values
+                numeric_values: List[float] = []
+                for key, value in results.items():
+                    if isinstance(value, (int, float)):
+                        numeric_values.append(float(value))
+
+                if numeric_values:
+                    total_tasks = sum(numeric_values)
+                    if total_tasks > 0:
+                        success_value = results.get('success', 0)
+                        if isinstance(success_value, (int, float)):
+                            success_rate = float(success_value) / total_tasks
+                            self.metric_history['success_rate'].append(
+                                TimeSeriesPoint(timestamp, success_rate)
+                            )
 
         except Exception as e:
             # Continue without time-series update if there's an error
@@ -357,7 +397,7 @@ class EnhancedTelemetryAggregator:
 
     def _analyze_correlations(self, since_dt: datetime, current_time: datetime) -> List[CorrelationResult]:
         """Analyze correlations between different metrics."""
-        correlations = []
+        correlations: List[CorrelationResult] = []
         metric_names = list(self.metric_history.keys())
 
         # Only analyze correlations if we have multiple metrics
@@ -519,7 +559,7 @@ class EnhancedTelemetryAggregator:
 
     def _generate_predictions(self) -> Dict[str, JSONValue]:
         """Generate predictions for key metrics."""
-        predictions = {}
+        predictions: Dict[str, JSONValue] = {}
 
         # Get trend analyses for prediction
         current_time = _iso_now()
@@ -539,7 +579,7 @@ class EnhancedTelemetryAggregator:
 
     def _assess_data_quality(self) -> Dict[str, JSONValue]:
         """Assess the quality of time series data."""
-        quality = {
+        quality: Dict[str, JSONValue] = {
             'metrics_available': len(self.metric_history),
             'total_data_points': sum(len(points) for points in self.metric_history.values()),
             'data_freshness': {},
@@ -548,7 +588,7 @@ class EnhancedTelemetryAggregator:
         }
 
         current_time = _iso_now()
-        scores = []
+        scores: List[float] = []
 
         for metric_name, points in self.metric_history.items():
             if not points:
@@ -558,7 +598,8 @@ class EnhancedTelemetryAggregator:
             latest_point = max(points, key=lambda p: p.timestamp if isinstance(p, TimeSeriesPoint) else datetime.min.replace(tzinfo=timezone.utc))
             if isinstance(latest_point, TimeSeriesPoint):
                 freshness_hours = (current_time - latest_point.timestamp).total_seconds() / 3600
-                quality['data_freshness'][metric_name] = freshness_hours
+                if isinstance(quality['data_freshness'], dict):
+                    quality['data_freshness'][metric_name] = freshness_hours
 
                 # Score freshness (0-1, where 1 is very fresh)
                 if freshness_hours < 1:
@@ -575,12 +616,13 @@ class EnhancedTelemetryAggregator:
             # Check data completeness (number of points vs expected)
             expected_points = min(1000, 24 * 4)  # Expect up to 4 points per hour for 24 hours
             completeness = min(1.0, len(points) / expected_points)
-            quality['data_completeness'][metric_name] = completeness
+            if isinstance(quality['data_completeness'], dict):
+                quality['data_completeness'][metric_name] = completeness
             scores.append(completeness)
 
         # Calculate overall quality score
         if scores:
-            quality['overall_score'] = np.mean(scores)
+            quality['overall_score'] = float(np.mean(scores))
 
         return quality
 

@@ -185,7 +185,7 @@ class SimpleTelemetry:
         Returns:
             Dictionary with metrics like error rates, event counts, etc.
         """
-        metrics = {
+        metrics: dict[str, JSONValue] = {
             "total_events": 0,
             "errors": 0,
             "warnings": 0,
@@ -199,31 +199,63 @@ class SimpleTelemetry:
         events = self.query(since=since, limit=1000)
 
         for event in events:
-            metrics["total_events"] += 1
+            # Safely increment total events
+            total_events = metrics["total_events"]
+            if isinstance(total_events, int):
+                metrics["total_events"] = total_events + 1
 
             # Count by level
             level = event.get("level", "info")
             if level == "error":
-                metrics["errors"] += 1
-                metrics["recent_errors"].append({
-                    "time": event["ts"],
-                    "event": event["event"],
-                    "message": event.get("data", {}).get("error", "Unknown error")
-                })
-            elif level == "warning":
-                metrics["warnings"] += 1
+                # Safely increment errors
+                errors = metrics["errors"]
+                if isinstance(errors, int):
+                    metrics["errors"] = errors + 1
 
-            # Count by event type
-            event_type = event.get("event", "unknown")
-            metrics["event_types"][event_type] = metrics["event_types"].get(event_type, 0) + 1
+                # Safely append to recent errors list
+                recent_errors = metrics["recent_errors"]
+                if isinstance(recent_errors, list):
+                    # Get error message with type guards
+                    data = event.get("data", {})
+                    error_message = "Unknown error"
+                    if isinstance(data, dict):
+                        error_val = data.get("error", "Unknown error")
+                        error_message = str(error_val) if error_val is not None else "Unknown error"
+
+                    recent_errors.append({
+                        "time": event["ts"],
+                        "event": event["event"],
+                        "message": error_message
+                    })
+
+            elif level == "warning":
+                # Safely increment warnings
+                warnings = metrics["warnings"]
+                if isinstance(warnings, int):
+                    metrics["warnings"] = warnings + 1
+
+            # Count by event type with type guards
+            event_type_val = event.get("event", "unknown")
+            event_type = str(event_type_val) if event_type_val is not None else "unknown"
+            event_types = metrics["event_types"]
+            if isinstance(event_types, dict):
+                current_count = event_types.get(event_type, 0)
+                if isinstance(current_count, int):
+                    event_types[event_type] = current_count + 1
+                else:
+                    event_types[event_type] = 1
 
         # Calculate health score (100 = perfect, 0 = critical)
-        if metrics["total_events"] > 0:
-            error_rate = metrics["errors"] / metrics["total_events"]
+        total_events = metrics["total_events"]
+        errors = metrics["errors"]
+        if isinstance(total_events, int) and isinstance(errors, int) and total_events > 0:
+            error_rate = errors / total_events
             metrics["health_score"] = max(0, 100 * (1 - error_rate * 2))
 
         # Keep only 5 most recent errors
-        metrics["recent_errors"] = metrics["recent_errors"][-5:]
+        recent_errors = metrics["recent_errors"]
+        if isinstance(recent_errors, list):
+            metrics["recent_errors"] = recent_errors[-5:]
 
         return metrics
 
