@@ -147,7 +147,7 @@ class Memory:
         """Initialize with store backend. Defaults to InMemoryStore."""
         self._store = store or InMemoryStore()
 
-    def store(self, key: str, content: Any, tags: List[str] = None) -> None:
+    def store(self, key: str, content: Any, tags: Optional[List[str]] = None) -> None:
         """Store content with key and optional tags."""
         tags = tags or []  # Default to empty list if not provided
         self._store.store(key, content, tags)

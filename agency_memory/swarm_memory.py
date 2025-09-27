@@ -803,7 +803,7 @@ class SwarmMemory(Memory):
         self,
         key: str,
         content: Any,
-        tags: List[str] = None,
+        tags: Optional[List[str]] = None,
         priority: MemoryPriority = MemoryPriority.NORMAL,
         is_shared: bool = False,
         agent_id: Optional[str] = None,

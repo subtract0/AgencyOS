@@ -242,7 +242,7 @@ class EnhancedMemoryStore(MemoryStore):
 
         return result_list
 
-    def combined_search(self, tags: List[str] = None, query: str = None, top_k: int = 10) -> List[dict[str, JSONValue]]:
+    def combined_search(self, tags: Optional[List[str]] = None, query: Optional[str] = None, top_k: int = 10) -> List[dict[str, JSONValue]]:
         """
         Perform combined tag-based and semantic search.
 
@@ -590,7 +590,7 @@ class EnhancedMemoryStore(MemoryStore):
             logger.error(f"VectorStore optimization failed: {e}")
             return {'error': str(e)}
 
-    def export_for_learning(self, session_id: str = None) -> Dict[str, JSONValue]:
+    def export_for_learning(self, session_id: Optional[str] = None) -> Dict[str, JSONValue]:
         """Export memories in format suitable for learning analysis."""
         try:
             # Get memories for the session or all memories

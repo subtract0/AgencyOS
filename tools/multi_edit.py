@@ -11,8 +11,8 @@ from tools.read import _global_read_files
 class EditOperation(BaseModel):
     old_string: str = Field(..., description="The text to replace")
     new_string: str = Field(..., description="The text to replace it with")
-    replace_all: Optional[bool] = Field(
-        False, description="Replace all occurrences of old_string (default false)."
+    replace_all: bool = Field(
+        default=False, description="Replace all occurrences of old_string (default false)."
     )
 
 

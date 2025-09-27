@@ -19,7 +19,7 @@ Example usage:
         print(f"Error: {result.unwrap_err()}")
 """
 
-from typing import TypeVar, Generic, Callable, Union, Any, Optional
+from typing import TypeVar, Generic, Callable, Union, Any, Optional, Type
 from abc import ABC, abstractmethod
 
 T = TypeVar('T')
@@ -200,7 +200,7 @@ def err(error: E) -> Result[Any, E]:
     return Err(error)
 
 
-def try_result(func: Callable[[], T], catch_type: type = Exception) -> Result[T, str]:
+def try_result(func: Callable[[], T], catch_type: Type[BaseException] = Exception) -> Result[T, str]:
     """
     Execute a function and wrap the result in a Result type.
 
