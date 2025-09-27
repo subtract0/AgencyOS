@@ -1,4 +1,3 @@
-# mypy: disable-error-code="misc,assignment,arg-type,attr-defined,index,return-value,union-attr,dict-item,operator"
 """
 TestGeneratorAgent - Generates NECESSARY-compliant tests to address quality violations.
 """
@@ -227,8 +226,7 @@ class GenerateTests(Tool):
                 name=test_name,
                 code=test_code,
                 type="basic",
-                function=func.name,
-                **{"class": None}
+                function=func.name
             ))
 
         for cls in analysis.classes:
@@ -240,7 +238,7 @@ class GenerateTests(Tool):
                     name=test_name,
                     code=test_code,
                     type="basic",
-                    **{"class": cls.name},
+                    class_name=cls.name,
                     method=method.name
                 ))
 
@@ -259,8 +257,7 @@ class GenerateTests(Tool):
                     name=test_name,
                     code=test_code,
                     type="edge_case",
-                    function=func.name,
-                    **{"class": None}
+                    function=func.name
                 ))
 
         return tests
@@ -278,8 +275,7 @@ class GenerateTests(Tool):
                     name=test_name,
                     code=test_code,
                     type="comprehensive",
-                    function=func.name,
-                    **{"class": None}
+                    function=func.name
                 ))
 
         return tests
@@ -296,8 +292,7 @@ class GenerateTests(Tool):
                 name=test_name,
                 code=test_code,
                 type="error",
-                function=func.name,
-                **{"class": None}
+                function=func.name
             ))
 
         return tests
@@ -314,7 +309,7 @@ class GenerateTests(Tool):
                 name=test_name,
                 code=test_code,
                 type="state",
-                **{"class": cls.name}
+                class_name=cls.name
             ))
 
         return tests
@@ -332,8 +327,7 @@ class GenerateTests(Tool):
                     name=test_name,
                     code=test_code,
                     type="async",
-                    function=func.name,
-                    **{"class": None}
+                    function=func.name
                 ))
 
         return tests

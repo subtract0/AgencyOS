@@ -176,10 +176,7 @@ class FirestoreStore(MemoryStore):
                         content=memory_dict.get("content", ""),
                         tags=memory_dict.get("tags", []),
                         timestamp=datetime.fromisoformat(memory_dict.get("timestamp", datetime.now().isoformat())),
-                        priority=MemoryPriority(memory_dict.get("priority", "medium")),
-                        metadata=MemoryMetadata(),
-                        ttl_seconds=memory_dict.get("ttl_seconds"),
-                        embedding=memory_dict.get("embedding")
+                        priority=MemoryPriority(memory_dict.get("priority", "medium"))
                     )
                     memory_records.append(record)
                 except Exception as e:
@@ -227,10 +224,7 @@ class FirestoreStore(MemoryStore):
                         content=memory_dict.get("content", ""),
                         tags=memory_dict.get("tags", []),
                         timestamp=datetime.fromisoformat(memory_dict.get("timestamp", datetime.now().isoformat())),
-                        priority=MemoryPriority(memory_dict.get("priority", "medium")),
-                        metadata=MemoryMetadata(),
-                        ttl_seconds=memory_dict.get("ttl_seconds"),
-                        embedding=memory_dict.get("embedding")
+                        priority=MemoryPriority(memory_dict.get("priority", "medium"))
                     )
                     memory_records.append(record)
                 except Exception as e:

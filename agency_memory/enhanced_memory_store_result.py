@@ -1,4 +1,3 @@
-# mypy: disable-error-code="misc,assignment,arg-type,attr-defined,index,return-value,union-attr,dict-item,operator"
 """
 Enhanced Memory Store with Result Pattern for Error Handling.
 
@@ -124,8 +123,7 @@ class EnhancedMemoryStoreResult(MemoryStore):
             search_result = MemorySearchResult(
                 records=memory_records,
                 total_count=len(memory_records),
-                search_query={"tags": tags},
-                execution_time_ms=0.0
+                search_query={"tags": tags}
             )
             return Ok(search_result)
         except Exception as e:
@@ -221,7 +219,7 @@ class EnhancedMemoryStoreResult(MemoryStore):
         result = self.search_result(tags)
         if result.is_err():
             logger.error(f"Search operation failed: {result.unwrap_err()}")
-            return MemorySearchResult(records=[], total_count=0, search_query={"tags": tags}, execution_time_ms=0.0)
+            return MemorySearchResult(records=[], total_count=0, search_query={"tags": tags})
         return result.unwrap()
 
     def semantic_search(self, query: str, top_k: int = 10, min_similarity: float = 0.5) -> List[Dict[str, JSONValue]]:
@@ -245,8 +243,7 @@ class EnhancedMemoryStoreResult(MemoryStore):
         return MemorySearchResult(
             records=memory_records,
             total_count=len(memory_records),
-            search_query={},
-            execution_time_ms=0.0
+            search_query={}
         )
 
     # Private helper methods
@@ -264,9 +261,7 @@ class EnhancedMemoryStoreResult(MemoryStore):
                 tags=tags,
                 priority=MemoryPriority.MEDIUM,
                 metadata=metadata,
-                timestamp=datetime.now(),
-                ttl_seconds=None,
-                embedding=None
+                timestamp=datetime.now()
             )
 
             converted = self.memory_converter.record_to_dict(memory_record)
