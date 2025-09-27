@@ -132,15 +132,15 @@ def ensure_str(value: JSONValue) -> str:
     return ""
 
 
-def json_to_any_dict(data: JSONValue) -> Dict[str, Any]:
-    """Convert JSONValue dict to Dict[str, Any] for compatibility."""
+def json_to_any_dict(data: JSONValue) -> Dict[str, JSONValue]:
+    """Convert JSONValue dict to Dict[str, JSONValue] for compatibility."""
     if is_dict(data):
-        return cast(Dict[str, Any], data)
+        return cast(Dict[str, JSONValue], data)
     return {}
 
 
-def any_to_json_dict(data: Dict[str, Any]) -> Dict[str, JSONValue]:
-    """Convert Dict[str, Any] to JSONValue dict."""
+def any_to_json_dict(data: Dict[str, JSONValue]) -> Dict[str, JSONValue]:
+    """Convert Dict[str, JSONValue] to JSONValue dict."""
     return cast(Dict[str, JSONValue], data)
 
 
