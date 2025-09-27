@@ -91,7 +91,7 @@ class AgentRegistry:
         self._save()
         return agent_id
 
-    def create_instance(self, agent_id: str, config: Dict[str, JSONValue] = None) -> str:
+    def create_instance(self, agent_id: str, config: Optional[Dict[str, JSONValue]] = None) -> str:
         """Create agent instance - returns instance_id."""
         if agent_id not in self.agents:
             raise ValueError(f"Agent {agent_id} not found")
@@ -106,7 +106,7 @@ class AgentRegistry:
         self._save()
         return instance_id
 
-    def record_aiq(self, instance_id: str, aiq_score: float, metrics: Dict[str, float] = None) -> str:
+    def record_aiq(self, instance_id: str, aiq_score: float, metrics: Optional[Dict[str, float]] = None) -> str:
         """Record AIQ measurement - returns event_id."""
         if instance_id not in self.instances:
             raise ValueError(f"Instance {instance_id} not found")

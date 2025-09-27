@@ -1,4 +1,5 @@
 import os
+from typing import Optional
 
 from agency_swarm import Agent
 from shared.agent_context import AgentContext, create_agent_context
@@ -16,7 +17,7 @@ from shared.system_hooks import (
 # Get the absolute path to the current file's directory
 current_dir = os.path.dirname(os.path.abspath(__file__))
 
-def create_planner_agent(model: str = "gpt-5", reasoning_effort: str = "high", agent_context: AgentContext = None) -> Agent:
+def create_planner_agent(model: str = "gpt-5", reasoning_effort: str = "high", agent_context: Optional[AgentContext] = None) -> Agent:
     """Factory that returns a fresh PlannerAgent instance.
     Use this in tests to avoid reusing a singleton across multiple agencies.
 

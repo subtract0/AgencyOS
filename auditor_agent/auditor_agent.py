@@ -4,7 +4,7 @@ AuditorAgent - Quality Assurance Agent for NECESSARY pattern analysis and Q(T) s
 
 import os
 import json
-from typing import Dict, List
+from typing import Dict, List, Optional
 
 from agency_swarm import Agent
 from agency_swarm.tools import BaseTool as Tool
@@ -265,7 +265,7 @@ class AnalyzeCodebase(Tool):
 
 
 def create_auditor_agent(
-    model: str = "gpt-5", reasoning_effort: str = "medium", agent_context: AgentContext = None
+    model: str = "gpt-5", reasoning_effort: str = "medium", agent_context: Optional[AgentContext] = None
 ) -> Agent:
     """Factory that returns a fresh AuditorAgent instance."""
 

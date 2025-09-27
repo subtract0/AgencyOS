@@ -4,6 +4,11 @@ Result<T, E> pattern for functional error handling.
 Inspired by Rust's Result type, this provides a type-safe way to handle
 operations that may succeed or fail without using exceptions for control flow.
 
+IMPORTANT AGENCY OS PATTERN:
+The Result<T,E> pattern is the PREFERRED error handling approach throughout
+the Agency codebase. Don't use try/catch for control flow. This pattern makes
+error handling explicit, type-safe, and composable.
+
 Example usage:
     from shared.type_definitions.result import Result, Ok, Err
 
@@ -17,6 +22,12 @@ Example usage:
         print(f"Success: {result.unwrap()}")
     else:
         print(f"Error: {result.unwrap_err()}")
+
+    # Chain operations with and_then
+    result = divide(10, 2).and_then(lambda x: divide(x, 2))
+
+    # Provide defaults with unwrap_or
+    value = divide(10, 0).unwrap_or(0.0)
 """
 
 from typing import TypeVar, Generic, Callable, Union, Any, Optional

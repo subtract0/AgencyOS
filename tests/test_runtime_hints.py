@@ -9,7 +9,7 @@ def test_apply_env_hints_sets_and_appends(monkeypatch, tmp_path):
     reg.register(Hint(match={"error_type": "X"}, action={"env": {"FOO": "bar"}}, confidence=0.9))
     reg.register(Hint(match={"error_type": "Y"}, action={"env": {"PYTHONPATH_APPEND": "src"}}, confidence=0.9))
 
-    env = {}
+    env: dict[str, str] = {}
     applied = apply_env_hints_from_registry(reg, env)
     assert any(a["var"] == "FOO" and a["mode"] == "set" for a in applied)
     assert env.get("FOO") == "bar"
@@ -27,7 +27,7 @@ def test_apply_env_hints_threshold(monkeypatch, tmp_path):
     reg.register(Hint(match={"error_type": "Low"}, action={"env": {"LOW": "x"}}, confidence=0.2))
 
     monkeypatch.setenv("RUNTIME_HINTS_MIN_CONF", "0.5")
-    env = {}
+    env: dict[str, str] = {}
     applied = apply_env_hints_from_registry(reg, env)
     assert applied == []
     assert "LOW" not in env

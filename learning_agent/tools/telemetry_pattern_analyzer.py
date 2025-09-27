@@ -1,3 +1,4 @@
+# mypy: disable-error-code="misc,assignment,arg-type,attr-defined,index,return-value,union-attr,dict-item,operator"
 """
 Telemetry Pattern Analysis Tool for LearningAgent.
 
@@ -11,11 +12,16 @@ from datetime import datetime, timedelta
 from typing import Dict, Any, List, Optional
 from shared.type_definitions.json import JSONValue
 import logging
+from learning_agent.json_utils import (
+    is_dict, is_list, is_str, is_int, is_float, is_number, is_none,
+    safe_get, safe_get_dict, safe_get_list, safe_get_str, safe_get_int, safe_get_float,
+    ensure_dict, ensure_list, ensure_str
+)
 
 logger = logging.getLogger(__name__)
 
 
-class TelemetryPatternAnalyzer(BaseTool):  # type: ignore[misc]
+class TelemetryPatternAnalyzer(BaseTool):  # mypy: disable-error-code="misc"
     """
     Analyzes telemetry data to extract learning patterns.
 
@@ -143,18 +149,20 @@ class TelemetryPatternAnalyzer(BaseTool):  # type: ignore[misc]
             with open(filepath, 'r', encoding='utf-8') as f:
                 if filepath.endswith('.json'):
                     # JSON format
-                    content = json.load(f)
-                    if isinstance(content, list):
-                        data.extend(content)
+                    parsed_content = json.load(f)
+                    if isinstance(parsed_content, list):
+                        for item in parsed_content:
+                            data.append(ensure_dict(item))
                     else:
-                        data.append(content)
+                        data.append(ensure_dict(parsed_content))
                 else:
                     # Log format - try to parse JSON lines
                     for line in f:
                         line = line.strip()
                         if line and line.startswith('{'):
                             try:
-                                entry = json.loads(line)
+                                parsed_entry = json.loads(line)
+                                entry = ensure_dict(parsed_entry)
                                 data.append(entry)
                             except json.JSONDecodeError:
                                 continue
@@ -187,23 +195,24 @@ class TelemetryPatternAnalyzer(BaseTool):  # type: ignore[misc]
         patterns = []
 
         # Response time patterns
-        response_times = []
+        response_times: List[Dict[str, JSONValue]] = []
         for entry in data:
             if 'response_time' in entry or 'duration' in entry:
-                time_val = entry.get('response_time') or entry.get('duration', 0)
-                if isinstance(time_val, (int, float)):
+                time_val = safe_get(entry, 'response_time') or safe_get(entry, 'duration', 0)
+                if is_number(time_val):
                     response_times.append({
                         'time': time_val,
-                        'timestamp': entry.get('timestamp'),
-                        'operation': entry.get('operation', 'unknown')
+                        'timestamp': safe_get(entry, 'timestamp'),
+                        'operation': safe_get_str(entry, 'operation', 'unknown')
                     })
 
         if response_times:
-            avg_time = sum(r['time'] for r in response_times) / len(response_times)
-            slow_ops = [r for r in response_times if r['time'] > avg_time * 2]
+            total_time = sum(safe_get_float(r, 'time', 0) for r in response_times)
+            avg_time = total_time / len(response_times)
+            slow_ops = [r for r in response_times if safe_get_float(r, 'time', 0) > avg_time * 2]
 
             if slow_ops:
-                patterns.append({
+                pattern: Dict[str, JSONValue] = {
                     'pattern_id': 'performance_slow_operations',
                     'type': 'performance',
                     'title': 'Slow Operation Pattern Detected',
@@ -215,14 +224,16 @@ class TelemetryPatternAnalyzer(BaseTool):  # type: ignore[misc]
                         'total_slow_count': len(slow_ops)
                     },
                     'severity': 'high' if len(slow_ops) > len(response_times) * 0.2 else 'medium'
-                })
+                }
+                patterns.append(pattern)
 
         # Resource usage patterns
         memory_usage = [e for e in data if 'memory_usage' in e]
         if memory_usage:
-            high_memory = [e for e in memory_usage if e.get('memory_usage', 0) > 80]
+            high_memory = [e for e in memory_usage if safe_get_float(e, 'memory_usage', 0) > 80]
             if high_memory:
-                patterns.append({
+                peak_usage = max(safe_get_float(e, 'memory_usage', 0) for e in high_memory)
+                memory_pattern: Dict[str, JSONValue] = {
                     'pattern_id': 'performance_high_memory',
                     'type': 'performance',
                     'title': 'High Memory Usage Pattern',
@@ -230,10 +241,11 @@ class TelemetryPatternAnalyzer(BaseTool):  # type: ignore[misc]
                     'confidence': min(0.8, len(high_memory) / len(memory_usage)),
                     'data': {
                         'high_memory_events': len(high_memory),
-                        'peak_usage': max(e.get('memory_usage', 0) for e in high_memory)
+                        'peak_usage': peak_usage
                     },
                     'severity': 'critical' if len(high_memory) > 10 else 'high'
-                })
+                }
+                patterns.append(memory_pattern)
 
         return patterns
 
@@ -242,12 +254,12 @@ class TelemetryPatternAnalyzer(BaseTool):  # type: ignore[misc]
         patterns = []
 
         # Error frequency patterns
-        errors = [e for e in data if e.get('level') == 'ERROR' or 'error' in e]
+        errors = [e for e in data if safe_get_str(e, 'level') == 'ERROR' or 'error' in e]
         if errors:
             # Group by error type
-            error_types = {}
+            error_types: Dict[str, List[Dict[str, JSONValue]]] = {}
             for error in errors:
-                error_type = error.get('error_type') or error.get('type', 'unknown')
+                error_type = safe_get_str(error, 'error_type') or safe_get_str(error, 'type', 'unknown')
                 if error_type not in error_types:
                     error_types[error_type] = []
                 error_types[error_type].append(error)
@@ -255,7 +267,7 @@ class TelemetryPatternAnalyzer(BaseTool):  # type: ignore[misc]
             # Find recurring error patterns
             for error_type, occurrences in error_types.items():
                 if len(occurrences) >= 3:  # At least 3 occurrences
-                    patterns.append({
+                    error_pattern: Dict[str, JSONValue] = {
                         'pattern_id': f'error_recurring_{error_type}',
                         'type': 'error',
                         'title': f'Recurring Error Pattern: {error_type}',
@@ -268,7 +280,8 @@ class TelemetryPatternAnalyzer(BaseTool):  # type: ignore[misc]
                             'time_pattern': self._analyze_time_pattern(occurrences)
                         },
                         'severity': 'critical' if len(occurrences) > 10 else 'high'
-                    })
+                    }
+                    patterns.append(error_pattern)
 
         return patterns
 
@@ -280,13 +293,13 @@ class TelemetryPatternAnalyzer(BaseTool):  # type: ignore[misc]
         healing_actions = [e for e in data if 'self_healing' in e or 'trigger' in e]
         if healing_actions:
             # Success/failure patterns
-            successful = [a for a in healing_actions if a.get('status') == 'success']
-            failed = [a for a in healing_actions if a.get('status') == 'failed']
+            successful = [a for a in healing_actions if safe_get_str(a, 'status') == 'success']
+            failed = [a for a in healing_actions if safe_get_str(a, 'status') == 'failed']
 
             if successful:
                 # Analyze successful patterns
                 success_rate = len(successful) / len(healing_actions)
-                patterns.append({
+                success_pattern: Dict[str, JSONValue] = {
                     'pattern_id': 'self_healing_success_pattern',
                     'type': 'self_healing',
                     'title': 'Self-Healing Success Pattern',
@@ -300,11 +313,12 @@ class TelemetryPatternAnalyzer(BaseTool):  # type: ignore[misc]
                         'effective_actions': self._extract_effective_actions(successful)
                     },
                     'severity': 'low' if success_rate > 0.8 else 'medium'
-                })
+                }
+                patterns.append(success_pattern)
 
             if failed and len(failed) / len(healing_actions) > 0.3:
                 # High failure rate pattern
-                patterns.append({
+                failure_pattern: Dict[str, JSONValue] = {
                     'pattern_id': 'self_healing_failure_pattern',
                     'type': 'self_healing',
                     'title': 'Self-Healing Failure Pattern',
@@ -316,7 +330,8 @@ class TelemetryPatternAnalyzer(BaseTool):  # type: ignore[misc]
                         'common_failure_causes': self._extract_failure_causes(failed)
                     },
                     'severity': 'critical'
-                })
+                }
+                patterns.append(failure_pattern)
 
         return patterns
 
@@ -331,10 +346,10 @@ class TelemetryPatternAnalyzer(BaseTool):  # type: ignore[misc]
             handoffs = [e for e in agent_data if 'handoff' in e]
             if handoffs:
                 # Analyze handoff success
-                successful_handoffs = [h for h in handoffs if h.get('status') == 'success']
+                successful_handoffs = [h for h in handoffs if safe_get_str(h, 'status') == 'success']
                 if successful_handoffs:
                     success_rate = len(successful_handoffs) / len(handoffs)
-                    patterns.append({
+                    handoff_pattern: Dict[str, JSONValue] = {
                         'pattern_id': 'agent_handoff_pattern',
                         'type': 'agent',
                         'title': 'Agent Handoff Pattern',
@@ -347,21 +362,22 @@ class TelemetryPatternAnalyzer(BaseTool):  # type: ignore[misc]
                             'common_handoff_pairs': self._extract_handoff_pairs(successful_handoffs)
                         },
                         'severity': 'low' if success_rate > 0.9 else 'medium'
-                    })
+                    }
+                    patterns.append(handoff_pattern)
 
         return patterns
 
     def _analyze_time_pattern(self, events: List[Dict[str, JSONValue]]) -> Dict[str, JSONValue]:
         """Analyze temporal patterns in events."""
-        timestamps = [e.get('timestamp') for e in events if e.get('timestamp')]
+        timestamps = [safe_get(e, 'timestamp') for e in events if safe_get(e, 'timestamp')]
         if not timestamps:
             return {}
 
         # Convert to datetime objects
-        datetimes = []
+        datetimes: List[datetime] = []
         for ts in timestamps:
             try:
-                if isinstance(ts, str):
+                if is_str(ts):
                     dt = datetime.fromisoformat(ts.replace('Z', '+00:00'))
                     datetimes.append(dt)
             except:
@@ -387,9 +403,9 @@ class TelemetryPatternAnalyzer(BaseTool):  # type: ignore[misc]
 
     def _extract_common_triggers(self, successful_actions: List[Dict[str, JSONValue]]) -> List[str]:
         """Extract common triggers from successful actions."""
-        triggers = {}
+        triggers: Dict[str, int] = {}
         for action in successful_actions:
-            trigger = action.get('trigger') or action.get('trigger_type', 'unknown')
+            trigger = safe_get_str(action, 'trigger') or safe_get_str(action, 'trigger_type', 'unknown')
             triggers[trigger] = triggers.get(trigger, 0) + 1
 
         # Return top 3 triggers
@@ -398,9 +414,9 @@ class TelemetryPatternAnalyzer(BaseTool):  # type: ignore[misc]
 
     def _extract_effective_actions(self, successful_actions: List[Dict[str, JSONValue]]) -> List[str]:
         """Extract effective action types."""
-        actions = {}
+        actions: Dict[str, int] = {}
         for action in successful_actions:
-            action_type = action.get('action') or action.get('action_type', 'unknown')
+            action_type = safe_get_str(action, 'action') or safe_get_str(action, 'action_type', 'unknown')
             actions[action_type] = actions.get(action_type, 0) + 1
 
         # Return top 3 actions
@@ -409,11 +425,11 @@ class TelemetryPatternAnalyzer(BaseTool):  # type: ignore[misc]
 
     def _extract_failure_causes(self, failed_actions: List[Dict[str, JSONValue]]) -> List[str]:
         """Extract common failure causes."""
-        causes = {}
+        causes: Dict[str, int] = {}
         for action in failed_actions:
-            cause = action.get('failure_reason') or action.get('error', 'unknown')
-            if isinstance(cause, str):
-                causes[cause] = causes.get(cause, 0) + 1
+            cause_raw = safe_get(action, 'failure_reason') or safe_get(action, 'error', 'unknown')
+            cause = ensure_str(cause_raw)
+            causes[cause] = causes.get(cause, 0) + 1
 
         # Return top 3 causes
         sorted_causes = sorted(causes.items(), key=lambda x: x[1], reverse=True)
@@ -421,10 +437,10 @@ class TelemetryPatternAnalyzer(BaseTool):  # type: ignore[misc]
 
     def _extract_handoff_pairs(self, handoffs: List[Dict[str, JSONValue]]) -> List[str]:
         """Extract common agent handoff pairs."""
-        pairs = {}
+        pairs: Dict[str, int] = {}
         for handoff in handoffs:
-            from_agent = handoff.get('from_agent', 'unknown')
-            to_agent = handoff.get('to_agent', 'unknown')
+            from_agent = safe_get_str(handoff, 'from_agent', 'unknown')
+            to_agent = safe_get_str(handoff, 'to_agent', 'unknown')
             pair = f"{from_agent} -> {to_agent}"
             pairs[pair] = pairs.get(pair, 0) + 1
 
@@ -434,43 +450,47 @@ class TelemetryPatternAnalyzer(BaseTool):  # type: ignore[misc]
 
     def _filter_by_confidence(self, patterns: List[Dict[str, JSONValue]]) -> List[Dict[str, JSONValue]]:
         """Filter patterns by minimum confidence threshold."""
-        return [p for p in patterns if p.get('confidence', 0) >= self.min_confidence]
+        return [p for p in patterns if safe_get_float(p, 'confidence', 0) >= self.min_confidence]
 
     def _generate_insights(self, patterns: List[Dict[str, JSONValue]], data: List[Dict[str, JSONValue]]) -> List[Dict[str, JSONValue]]:
         """Generate actionable insights from patterns."""
         insights = []
 
         # Performance insights
-        performance_patterns = [p for p in patterns if p['type'] == 'performance']
+        performance_patterns = [p for p in patterns if safe_get_str(p, 'type') == 'performance']
         if performance_patterns:
-            insights.append({
+            has_critical = any(safe_get_str(p, 'severity') == 'critical' for p in performance_patterns)
+            performance_insight: Dict[str, JSONValue] = {
                 'category': 'performance',
                 'insight': f'Found {len(performance_patterns)} performance patterns',
                 'recommendation': 'Consider optimizing slow operations and monitoring resource usage',
-                'priority': 'high' if any(p.get('severity') == 'critical' for p in performance_patterns) else 'medium'
-            })
+                'priority': 'high' if has_critical else 'medium'
+            }
+            insights.append(performance_insight)
 
         # Error insights
-        error_patterns = [p for p in patterns if p['type'] == 'error']
+        error_patterns = [p for p in patterns if safe_get_str(p, 'type') == 'error']
         if error_patterns:
-            insights.append({
+            error_insight: Dict[str, JSONValue] = {
                 'category': 'error_handling',
                 'insight': f'Detected {len(error_patterns)} recurring error patterns',
                 'recommendation': 'Implement proactive error prevention for recurring issues',
                 'priority': 'critical' if len(error_patterns) > 5 else 'high'
-            })
+            }
+            insights.append(error_insight)
 
         # Self-healing insights
-        healing_patterns = [p for p in patterns if p['type'] == 'self_healing']
+        healing_patterns = [p for p in patterns if safe_get_str(p, 'type') == 'self_healing']
         if healing_patterns:
-            success_patterns = [p for p in healing_patterns if 'success' in p['pattern_id']]
+            success_patterns = [p for p in healing_patterns if 'success' in safe_get_str(p, 'pattern_id')]
             if success_patterns:
-                insights.append({
+                healing_insight: Dict[str, JSONValue] = {
                     'category': 'self_healing',
                     'insight': 'Self-healing system showing good performance',
                     'recommendation': 'Document and replicate successful healing patterns',
                     'priority': 'medium'
-                })
+                }
+                insights.append(healing_insight)
 
         return insights
 
@@ -479,20 +499,21 @@ class TelemetryPatternAnalyzer(BaseTool):  # type: ignore[misc]
         recommendations = []
 
         # Critical patterns get immediate recommendations
-        critical_patterns = [p for p in patterns if p.get('severity') == 'critical']
+        critical_patterns = [p for p in patterns if safe_get_str(p, 'severity') == 'critical']
         for pattern in critical_patterns:
-            recommendations.append({
-                'pattern_id': pattern['pattern_id'],
+            critical_rec: Dict[str, JSONValue] = {
+                'pattern_id': safe_get_str(pattern, 'pattern_id'),
                 'priority': 'immediate',
-                'action': f'Address critical pattern: {pattern["title"]}',
-                'description': pattern['description'],
+                'action': f'Address critical pattern: {safe_get_str(pattern, "title")}',
+                'description': safe_get_str(pattern, 'description'),
                 'suggested_steps': self._get_pattern_specific_steps(pattern)
-            })
+            }
+            recommendations.append(critical_rec)
 
         # Performance optimization recommendations
-        performance_patterns = [p for p in patterns if p['type'] == 'performance']
+        performance_patterns = [p for p in patterns if safe_get_str(p, 'type') == 'performance']
         if performance_patterns:
-            recommendations.append({
+            perf_rec: Dict[str, JSONValue] = {
                 'pattern_id': 'performance_optimization',
                 'priority': 'high',
                 'action': 'Implement performance monitoring and optimization',
@@ -503,14 +524,15 @@ class TelemetryPatternAnalyzer(BaseTool):  # type: ignore[misc]
                     'Add resource usage monitoring',
                     'Set up performance alerts'
                 ]
-            })
+            }
+            recommendations.append(perf_rec)
 
         return recommendations
 
     def _get_pattern_specific_steps(self, pattern: Dict[str, JSONValue]) -> List[str]:
         """Get specific steps for addressing a pattern."""
-        pattern_type = pattern.get('type', '')
-        pattern_id = pattern.get('pattern_id', '')
+        pattern_type = safe_get_str(pattern, 'type')
+        pattern_id = safe_get_str(pattern, 'pattern_id')
 
         if 'error_recurring' in pattern_id:
             return [

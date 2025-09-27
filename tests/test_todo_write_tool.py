@@ -5,7 +5,7 @@ from tools.todo_write import TodoItem, TodoWrite
 
 def test_todo_write_no_emojis_and_summary(tmp_path: Path):
     todos = [
-        TodoItem(task="Do A", status="pending"),
+        TodoItem(task="Do A", status="pending", priority="medium"),
         TodoItem(task="Do B", status="completed", priority="low"),
     ]
     tool = TodoWrite(todos=todos)

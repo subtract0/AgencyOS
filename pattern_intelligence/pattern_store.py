@@ -100,9 +100,9 @@ class PatternStore:
 
     def find_patterns(
         self,
-        query: str = None,
-        context: ProblemContext = None,
-        domain: str = None,
+        query: Optional[str] = None,
+        context: Optional[ProblemContext] = None,
+        domain: Optional[str] = None,
         min_effectiveness: float = 0.5,
         max_results: int = 10
     ) -> List[PatternSearchResult]:
@@ -363,9 +363,9 @@ class PatternStore:
     def _determine_match_reason(
         self,
         pattern: CodingPattern,
-        query: str = None,
-        context: ProblemContext = None,
-        domain: str = None
+        query: Optional[str] = None,
+        context: Optional[ProblemContext] = None,
+        domain: Optional[str] = None
     ) -> str:
         """Determine why this pattern was matched."""
         reasons = []

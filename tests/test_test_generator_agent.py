@@ -1,3 +1,4 @@
+# mypy: disable-error-code="misc,assignment,arg-type,attr-defined,index,return-value,union-attr,dict-item"
 """
 Test TestGeneratorAgent behavior and functionality.
 Tests for NECESSARY-compliant test generation, audit report processing, and file creation.

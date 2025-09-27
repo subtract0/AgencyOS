@@ -7,12 +7,14 @@ and verifies tag frequency analysis and learning report generation.
 
 import pytest
 from datetime import datetime, timedelta
+from typing import Dict, Any, List, cast
+from shared.type_definitions.json import JSONValue
 from agency_memory.learning import consolidate_learnings, generate_learning_report
 
 
 def test_consolidate_learnings_empty():
     """Test consolidation with empty memory set."""
-    result = consolidate_learnings([])
+    result = cast(Dict[str, Any], consolidate_learnings([]))
 
     assert result['summary'] == 'No memories to analyze'
     assert result['total_memories'] == 0
@@ -52,7 +54,7 @@ def test_consolidate_learnings_small_set():
         }
     ]
 
-    result = consolidate_learnings(memories)
+    result = cast(Dict[str, Any], consolidate_learnings(cast(List[Dict[str, JSONValue]], memories)))
 
     # Verify basic statistics
     assert result['total_memories'] == 4
@@ -107,7 +109,7 @@ def test_tag_frequency_analysis():
         }
     ]
 
-    result = consolidate_learnings(memories)
+    result = cast(Dict[str, Any], consolidate_learnings(cast(List[Dict[str, JSONValue]], memories)))
 
     # Agency should be most frequent (appears 3 times)
     assert result['tag_frequencies']['agency'] == 3
@@ -133,7 +135,7 @@ def test_content_type_categorization():
         {'key': 'numeric', 'content': 42, 'tags': ['test'], 'timestamp': datetime.now().isoformat()},
     ]
 
-    result = consolidate_learnings(memories)
+    result = cast(Dict[str, Any], consolidate_learnings(cast(List[Dict[str, JSONValue]], memories)))
 
     content_types = result['patterns']['content_types']
     assert content_types['empty'] == 1
@@ -171,7 +173,7 @@ def test_time_pattern_analysis():
         }
     ]
 
-    result = consolidate_learnings(memories)
+    result = cast(Dict[str, Any], consolidate_learnings(cast(List[Dict[str, JSONValue]], memories)))
 
     patterns = result['patterns']
 
@@ -204,7 +206,7 @@ def test_learning_report_generation():
         }
     ]
 
-    report = generate_learning_report(memories, session_id="test_session")
+    report = generate_learning_report(cast(List[Dict[str, JSONValue]], memories), session_id="test_session")
 
     # Verify report structure
     assert "# Learning Consolidation Report" in report
@@ -231,8 +233,8 @@ def test_insights_generation():
             'timestamp': datetime.now().isoformat()
         })
 
-    result = consolidate_learnings(many_memories)
-    insights = result['insights']
+    result = cast(Dict[str, Any], consolidate_learnings(cast(List[Dict[str, JSONValue]], many_memories)))
+    insights = cast(List[str], result['insights'])
 
     # Should detect high memory activity
     high_activity_insight = any('High memory activity' in insight for insight in insights)
@@ -267,7 +269,7 @@ def test_invalid_timestamp_handling():
     ]
 
     # Should not crash with invalid timestamps
-    result = consolidate_learnings(memories)
+    result = cast(Dict[str, Any], consolidate_learnings(cast(List[Dict[str, JSONValue]], memories)))
     assert result['total_memories'] == 3
 
     # Time patterns should only include valid timestamp
