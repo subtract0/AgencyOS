@@ -15,39 +15,25 @@ from datetime import datetime
 from typing import Any, Dict, List, Optional, Tuple, Union, cast
 from shared.type_definitions.json import JSONValue
 
-
-def safe_dict_get(data: JSONValue, key: str, default: Any = None) -> Any:
-    """Safely get a value from JSONValue that might be a dict."""
-    if isinstance(data, dict):
-        return data.get(key, default)
-    return default
-
-
-def safe_dict_cast(data: JSONValue) -> Dict[str, Any]:
-    """Safely cast JSONValue to dict."""
-    if isinstance(data, dict):
-        return cast(Dict[str, Any], data)
-    return {}
-
 # Add project root to path when running directly
 if __name__ == "__main__":
     sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', '..'))
 
 # Mock classes for missing modules
 class TriggerType:
-    def __init__(self, value: str) -> None:
+    def __init__(self, value: str):
         self.value = value
 
 class TriggerSeverity:
-    def __init__(self, value: str) -> None:
+    def __init__(self, value: str):
         self.value = value
 
 class ActionType:
-    def __init__(self, value: str) -> None:
+    def __init__(self, value: str):
         self.value = value
 
 class ActionPriority:
-    def __init__(self, value: str) -> None:
+    def __init__(self, value: str):
         self.value = value
 
 # Mock functions for missing imports - these will return empty results
@@ -155,18 +141,17 @@ def cmd_status(args: argparse.Namespace) -> None:
                 print(json.dumps(status, indent=2))
                 return
 
-            status_dict = cast(Dict[str, Any], status)
-            print(f"Self-Healing System Health: {status_dict['status'].upper()}")
-            print(f"Telemetry Access: {'✓' if status_dict['telemetry_healthy'] else '✗'}")
-            print(f"Triggers Enabled: {status_dict['triggers_enabled']}")
-            print(f"Actions Available: {status_dict['actions_available']}")
+            print(f"Self-Healing System Health: {status['status'].upper()}")
+            print(f"Telemetry Access: {'✓' if status['telemetry_healthy'] else '✗'}")
+            print(f"Triggers Enabled: {status['triggers_enabled']}")
+            print(f"Actions Available: {status['actions_available']}")
 
-            if status_dict['issues']:
+            if status['issues']:
                 print("\nIssues Detected:")
-                for issue in status_dict['issues']:
+                for issue in status['issues']:
                     print(f"  - {issue}")
 
-            print(f"\nLast Check: {format_timestamp(status_dict['last_check'])}")
+            print(f"\nLast Check: {format_timestamp(status['last_check'])}")
             return
 
         status = get_self_healing_status(args.telemetry_dir)
@@ -176,19 +161,18 @@ def cmd_status(args: argparse.Namespace) -> None:
             return
 
         # Text format
-        status_dict = cast(Dict[str, Any], status)
         print(f"Self-Healing System Status")
-        print(f"Running: {'Yes' if status_dict['running'] else 'No'}")
-        if status_dict['start_time']:
-            print(f"Started: {format_timestamp(status_dict['start_time'])}")
-        print(f"Uptime: {format_duration(status_dict['uptime_seconds'])}")
-        print(f"Monitoring Interval: {status_dict['monitoring_interval']}s")
-        print(f"Cycles Completed: {status_dict['cycles_completed']}")
-        print(f"Total Triggers Fired: {status_dict['total_triggers_fired']}")
-        print(f"Total Actions Executed: {status_dict['total_actions_executed']}")
+        print(f"Running: {'Yes' if status['running'] else 'No'}")
+        if status['start_time']:
+            print(f"Started: {format_timestamp(status['start_time'])}")
+        print(f"Uptime: {format_duration(status['uptime_seconds'])}")
+        print(f"Monitoring Interval: {status['monitoring_interval']}s")
+        print(f"Cycles Completed: {status['cycles_completed']}")
+        print(f"Total Triggers Fired: {status['total_triggers_fired']}")
+        print(f"Total Actions Executed: {status['total_actions_executed']}")
 
-        trigger_status = safe_dict_get(status_dict, 'trigger_framework_status', {})
-        active_conditions = safe_dict_get(trigger_status, 'active_conditions', [])
+        trigger_status = status.get('trigger_framework_status', {})
+        active_conditions = trigger_status.get('active_conditions', [])
         if active_conditions:
             print(f"\nActive Conditions: {', '.join(active_conditions)}")
 
@@ -207,9 +191,8 @@ def cmd_triggers(args: argparse.Namespace) -> None:
             print(json.dumps(trigger_status, indent=2))
             return
 
-        trigger_status_dict = cast(Dict[str, Any], trigger_status)
-        triggers = safe_dict_get(trigger_status_dict, 'triggers', {})
-        active_conditions = safe_dict_get(trigger_status_dict, 'active_conditions', [])
+        triggers = trigger_status.get('triggers', {})
+        active_conditions = trigger_status.get('active_conditions', [])
         if not isinstance(active_conditions, list):
             active_conditions = []
 
@@ -224,7 +207,7 @@ def cmd_triggers(args: argparse.Namespace) -> None:
         by_type: Dict[str, List[Tuple[str, JSONValue]]] = {}
         for name, config in triggers.items():
             if isinstance(config, dict):
-                trigger_type = safe_dict_get(config, 'type')
+                trigger_type = config.get('type')
                 if isinstance(trigger_type, str):
                     if trigger_type not in by_type:
                         by_type[trigger_type] = []
@@ -241,20 +224,20 @@ def cmd_triggers(args: argparse.Namespace) -> None:
             print("-" * 30)
 
             for name, config in type_triggers:
-                enabled = safe_dict_get(config, 'enabled', False)
+                enabled = config.get('enabled', False)
                 status_icon = "✓" if enabled else "✗"
                 active_icon = "🔥" if name in active_conditions else "  "
 
                 print(f"{active_icon} {status_icon} {name}")
-                print(f"    Threshold: {safe_dict_get(config, 'threshold', 'N/A')}")
-                print(f"    Target Agent: {safe_dict_get(config, 'target_agent', 'N/A')}")
-                print(f"    Fired: {safe_dict_get(config, 'trigger_count', 0)} times")
+                print(f"    Threshold: {config.get('threshold', 'N/A')}")
+                print(f"    Target Agent: {config.get('target_agent', 'N/A')}")
+                print(f"    Fired: {config.get('trigger_count', 0)} times")
 
-                last_triggered = safe_dict_get(config, 'last_triggered')
+                last_triggered = config.get('last_triggered')
                 last_triggered_str = last_triggered if isinstance(last_triggered, str) else None
                 print(f"    Last Triggered: {format_timestamp(last_triggered_str)}")
 
-                cooldown_remaining = safe_dict_get(config, 'cooldown_remaining', 0)
+                cooldown_remaining = config.get('cooldown_remaining', 0)
                 if isinstance(cooldown_remaining, (int, float)) and cooldown_remaining > 0:
                     print(f"    Cooldown: {format_duration(cooldown_remaining)}")
 
@@ -262,7 +245,7 @@ def cmd_triggers(args: argparse.Namespace) -> None:
             conditions_str = ', '.join(str(c) for c in active_conditions)
             print(f"\nACTIVE CONDITIONS: {conditions_str}")
 
-        constitutional_violations = safe_dict_get(trigger_status, 'constitutional_violations', [])
+        constitutional_violations = trigger_status.get('constitutional_violations', [])
         if isinstance(constitutional_violations, list) and constitutional_violations:
             print(f"\nCONSTITUTIONAL VIOLATIONS: {len(constitutional_violations)}")
             for violation in constitutional_violations[-5:]:  # Show last 5
@@ -283,7 +266,7 @@ def cmd_actions(args: argparse.Namespace) -> None:
             print(json.dumps(action_status, indent=2))
             return
 
-        actions = safe_dict_get(action_status, 'actions', {})
+        actions = action_status.get('actions', {})
 
         print("Self-Healing Actions Registry")
         print("=" * 40)
@@ -296,7 +279,7 @@ def cmd_actions(args: argparse.Namespace) -> None:
         by_type: Dict[str, List[Tuple[str, JSONValue]]] = {}
         for name, config in actions.items():
             if isinstance(config, dict):
-                action_type = safe_dict_get(config, 'type')
+                action_type = config.get('type')
                 if isinstance(action_type, str):
                     if action_type not in by_type:
                         by_type[action_type] = []
@@ -313,10 +296,10 @@ def cmd_actions(args: argparse.Namespace) -> None:
             print("-" * 30)
 
             for name, config in type_actions:
-                auto_execute = safe_dict_get(config, 'auto_execute', False)
+                auto_execute = config.get('auto_execute', False)
                 auto_icon = "🤖" if auto_execute else "👤"
 
-                priority = safe_dict_get(config, 'priority', 'low')
+                priority = config.get('priority', 'low')
                 priority_str = priority if isinstance(priority, str) else 'low'
                 priority_icon = {
                     'emergency': '🚨',
@@ -327,31 +310,31 @@ def cmd_actions(args: argparse.Namespace) -> None:
                 }.get(priority_str, '⚪')
 
                 print(f"{auto_icon} {priority_icon} {name}")
-                print(f"    Target Agent: {safe_dict_get(config, 'target_agent', 'N/A')}")
+                print(f"    Target Agent: {config.get('target_agent', 'N/A')}")
                 print(f"    Priority: {priority_str}")
 
-                trigger_types = safe_dict_get(config, 'trigger_types', [])
+                trigger_types = config.get('trigger_types', [])
                 if isinstance(trigger_types, list):
                     trigger_types_str = ', '.join(str(t) for t in trigger_types)
                 else:
                     trigger_types_str = 'N/A'
                 print(f"    Trigger Types: {trigger_types_str}")
-                execution_count = safe_dict_get(config, 'execution_count', 0)
-                success_rate = safe_dict_get(config, 'success_rate', 0.0)
+                execution_count = config.get('execution_count', 0)
+                success_rate = config.get('success_rate', 0.0)
                 if isinstance(success_rate, (int, float)):
                     print(f"    Executions: {execution_count} (success rate: {success_rate:.1%})")
                 else:
                     print(f"    Executions: {execution_count} (success rate: N/A)")
 
-                last_executed = safe_dict_get(config, 'last_executed')
+                last_executed = config.get('last_executed')
                 last_executed_str = last_executed if isinstance(last_executed, str) else None
                 print(f"    Last Executed: {format_timestamp(last_executed_str)}")
-                print(f"    Max Concurrent: {safe_dict_get(config, 'max_concurrent', 1)}")
+                print(f"    Max Concurrent: {config.get('max_concurrent', 1)}")
 
         print(f"\nSUMMARY:")
-        print(f"Active Executions: {safe_dict_get(action_status, 'active_executions', 0)}")
-        total_executions = safe_dict_get(action_status, 'total_executions', 0)
-        total_successes = safe_dict_get(action_status, 'total_successes', 0)
+        print(f"Active Executions: {action_status.get('active_executions', 0)}")
+        total_executions = action_status.get('total_executions', 0)
+        total_successes = action_status.get('total_successes', 0)
         print(f"Total Executions: {total_executions}")
         print(f"Total Successes: {total_successes}")
         if isinstance(total_executions, (int, float)) and total_executions > 0:
@@ -376,47 +359,47 @@ def cmd_check(args: argparse.Namespace) -> None:
             print(json.dumps(result, indent=2))
             return
 
-        success = safe_dict_get(result, 'success', False)
+        success = result.get('success', False)
         if success:
             print("✓ Self-healing check completed successfully")
-            print(f"Triggers Evaluated: {safe_dict_get(result, 'triggers_evaluated', 0)}")
-            triggers_fired = safe_dict_get(result, 'triggers_fired', 0)
-            actions_executed = safe_dict_get(result, 'actions_executed', 0)
+            print(f"Triggers Evaluated: {result.get('triggers_evaluated', 0)}")
+            triggers_fired = result.get('triggers_fired', 0)
+            actions_executed = result.get('actions_executed', 0)
             print(f"Triggers Fired: {triggers_fired}")
             print(f"Actions Executed: {actions_executed}")
 
-            if isinstance(triggers_fired, (int, float)) and triggers_fired > 0:
+            if triggers_fired > 0:
                 print("\nTRIGGERED CONDITIONS:")
-                trigger_results = safe_dict_get(result, 'trigger_results', [])
+                trigger_results = result.get('trigger_results', [])
                 if isinstance(trigger_results, list):
                     for trigger in trigger_results:
-                        if isinstance(trigger, dict) and safe_dict_get(trigger, 'triggered'):
-                            name = safe_dict_get(trigger, 'name', 'Unknown')
-                            severity = safe_dict_get(trigger, 'severity', 'Unknown')
-                            message = safe_dict_get(trigger, 'message', 'No message')
+                        if isinstance(trigger, dict) and trigger.get('triggered'):
+                            name = trigger.get('name', 'Unknown')
+                            severity = trigger.get('severity', 'Unknown')
+                            message = trigger.get('message', 'No message')
                             print(f"  🔥 {name} ({severity}) - {message}")
 
-            if isinstance(actions_executed, (int, float)) and actions_executed > 0:
+            if actions_executed > 0:
                 print("\nEXECUTED ACTIONS:")
-                action_results = safe_dict_get(result, 'action_results', [])
+                action_results = result.get('action_results', [])
                 if isinstance(action_results, list):
                     for action in action_results:
                         if isinstance(action, dict):
-                            success = safe_dict_get(action, 'success', False)
+                            success = action.get('success', False)
                             status_icon = "✓" if success else "✗"
-                            name = safe_dict_get(action, 'name', 'Unknown')
-                            message = safe_dict_get(action, 'message', 'No message')
+                            name = action.get('name', 'Unknown')
+                            message = action.get('message', 'No message')
                             print(f"  {status_icon} {name} - {message}")
 
-                            handoff_id = safe_dict_get(action, 'handoff_id')
+                            handoff_id = action.get('handoff_id')
                             if handoff_id:
                                 print(f"    Handoff ID: {handoff_id}")
 
-            if isinstance(triggers_fired, (int, float)) and triggers_fired == 0:
+            if triggers_fired == 0:
                 print("No issues detected - system operating normally")
 
         else:
-            error = safe_dict_get(result, 'error', 'Unknown error')
+            error = result.get('error', 'Unknown error')
             print(f"✗ Self-healing check failed: {error}")
             sys.exit(1)
 
@@ -444,29 +427,29 @@ def cmd_history(args: argparse.Namespace) -> None:
 
         for entry in history:
             if isinstance(entry, dict):
-                success = safe_dict_get(entry, 'success', False)
+                success = entry.get('success', False)
                 status_icon = "✓" if success else "✗"
 
-                timestamp_val = safe_dict_get(entry, 'timestamp')
+                timestamp_val = entry.get('timestamp')
                 timestamp_str = timestamp_val if isinstance(timestamp_val, str) else None
                 timestamp = format_timestamp(timestamp_str)
 
                 print(f"{status_icon} {timestamp}")
-                print(f"  Action: {safe_dict_get(entry, 'action_name', 'Unknown')} ({safe_dict_get(entry, 'action_type', 'Unknown')})")
-                print(f"  Trigger: {safe_dict_get(entry, 'trigger_name', 'Unknown')}")
-                print(f"  Target: {safe_dict_get(entry, 'target_agent', 'Unknown')}")
+                print(f"  Action: {entry.get('action_name', 'Unknown')} ({entry.get('action_type', 'Unknown')})")
+                print(f"  Trigger: {entry.get('trigger_name', 'Unknown')}")
+                print(f"  Target: {entry.get('target_agent', 'Unknown')}")
 
-                execution_time = safe_dict_get(entry, 'execution_time', 0)
+                execution_time = entry.get('execution_time', 0)
                 if isinstance(execution_time, (int, float)):
                     print(f"  Duration: {execution_time:.2f}s")
                 else:
                     print(f"  Duration: N/A")
 
-                handoff_id = safe_dict_get(entry, 'handoff_id')
+                handoff_id = entry.get('handoff_id')
                 if handoff_id:
                     print(f"  Handoff: {handoff_id}")
 
-                error = safe_dict_get(entry, 'error')
+                error = entry.get('error')
                 if error:
                     print(f"  Error: {error}")
 
