@@ -96,9 +96,9 @@ load_dotenv()
 current_dir = os.path.dirname(os.path.abspath(__file__))
 litellm.modify_params = True
 
-# switch between models here
+# switch between models here (kept for backward compatibility; not used directly)
 # model = "anthropic/claude-sonnet-4-20250514"
-model = "gpt-5"
+model = os.getenv("AGENCY_MODEL", "gpt-5")
 
 # Create shared memory and agent context for the agency with VectorStore integration
 # This allows memory sharing between agents with both tag-based and semantic search capabilities
@@ -136,39 +136,41 @@ shared_context = create_agent_context(memory=shared_memory)
 # - Works with existing agents for comprehensive quality assurance
 
 # create agents with shared context
+from shared.model_policy import agent_model
+
 planner = create_planner_agent(
-    model=model, reasoning_effort="high", agent_context=shared_context
+    model=agent_model("planner"), reasoning_effort="high", agent_context=shared_context
 )
 # coder = create_agency_code_agent(model="gpt-5", reasoning_effort="high")
 coder = create_agency_code_agent(
-    model=model, reasoning_effort="medium", agent_context=shared_context
+    model=agent_model("coder"), reasoning_effort="medium", agent_context=shared_context
 )
 auditor = create_auditor_agent(
-    model=model, reasoning_effort="high", agent_context=shared_context
+    model=agent_model("auditor"), reasoning_effort="high", agent_context=shared_context
 )
 test_generator = create_test_generator_agent(
-    model=model, reasoning_effort="medium", agent_context=shared_context
+    model=agent_model("test_generator"), reasoning_effort="medium", agent_context=shared_context
 )
 subagent_example = create_subagent_example(
-    model=model, reasoning_effort="medium"
+    model=agent_model("subagent_example"), reasoning_effort="medium"
 )
 learning_agent = create_learning_agent(
-    model=model, reasoning_effort="high", agent_context=shared_context
+    model=agent_model("learning"), reasoning_effort="high", agent_context=shared_context
 )
 chief_architect = create_chief_architect_agent(
-    model=model, reasoning_effort="medium", agent_context=shared_context
+    model=agent_model("chief_architect"), reasoning_effort="medium", agent_context=shared_context
 )
 merger = create_merger_agent(
-    model=model, reasoning_effort="medium", agent_context=shared_context
+    model=agent_model("merger"), reasoning_effort="medium", agent_context=shared_context
 )
 summary = create_work_completion_summary_agent(
-    model=model, reasoning_effort="low", agent_context=shared_context
+    model=agent_model("summary"), reasoning_effort="low", agent_context=shared_context
 )
 toolsmith = create_toolsmith_agent(
-    model=model, reasoning_effort="medium", agent_context=shared_context
+    model=agent_model("toolsmith"), reasoning_effort="medium", agent_context=shared_context
 )
 quality_enforcer = create_quality_enforcer_agent(
-    model=model, reasoning_effort="high", agent_context=shared_context
+    model=agent_model("quality_enforcer"), reasoning_effort="high", agent_context=shared_context
 )
 
 agency = Agency(
