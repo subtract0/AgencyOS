@@ -1,8 +1,10 @@
 # 🏥 Agency Code - Autonomous Software Engineering
 
-**Version 0.9.2** - Complete Type Safety & Constitutional Compliance
+**Version 0.9.2** - Complete Type Safety & E2E Workflow Revolution
 
 A revolutionary AI-powered software engineering system with **undeniable self-healing capabilities**. Built with [Agency Swarm](https://agency-swarm.ai/welcome/overview) framework and enhanced with autonomous healing, constitutional governance, and LLM-first architecture.
+
+[📖 **Full Release Notes for v0.9.2**](RELEASE_NOTES_0.9.2.md)
 
 ## 🚀 Autonomous Healing - The Key Differentiator
 
