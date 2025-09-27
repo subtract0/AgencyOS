@@ -26,7 +26,7 @@ DEFAULTS: dict[str, str] = {
     "merger": os.getenv("MERGER_MODEL", "gpt-5"),
     "learning": os.getenv("LEARNING_MODEL", "gpt-5"),
     "test_generator": os.getenv("TEST_GENERATOR_MODEL", "gpt-5"),
-    "summary": os.getenv("SUMMARY_MODEL", "gpt-5-mini"),
+    "summary": os.getenv("SUMMARY_MODEL", "gpt-5-nano"),
     "subagent_example": os.getenv("SUBAGENT_EXAMPLE_MODEL", "gpt-5-mini"),
     "toolsmith": os.getenv("TOOLSMITH_MODEL", "gpt-5"),
 }

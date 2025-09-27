@@ -330,6 +330,66 @@ class MemoryIntegrationHook(AgentHooks):
             logger.error(f"Failed to generate session transcript: {e}")
 
 
+class CodeBundleAttachmentHook(AgentHooks):
+    """
+    Creates a context bundle file from the incoming LLM input items and stores its path
+    into the run context for downstream tools to use. Also injects a short system message
+    pointing to the bundle path. Targeted for WorkCompletionSummaryAgent, but safe no-op
+    for others.
+    """
+
+    def __init__(self, bundles_dir: Optional[str] = None):
+        self.bundles_dir = bundles_dir or os.path.join(os.getcwd(), ".claude", "code_bundles")
+        os.makedirs(self.bundles_dir, exist_ok=True)
+
+    async def on_llm_start(self, context: RunContextWrapper, agent, system_prompt: Optional[str], input_items: list) -> None:
+        try:
+            # Only target the summary agent
+            agent_name = getattr(agent, "name", "")
+            if agent_name != "WorkCompletionSummaryAgent":
+                return
+
+            ts = datetime.now().strftime("%Y%m%d-%H%M%S")
+            session_id = getattr(getattr(context, "context", {}), "get", lambda *_: None)("session_id") if hasattr(context, "context") else None
+            base_name = f"summary_bundle_{session_id or 'session'}_{ts}.md"
+            bundle_path = os.path.join(self.bundles_dir, base_name)
+
+            # Build bundle content from non-system messages
+            parts: list[str] = []
+            try:
+                for item in input_items or []:
+                    if isinstance(item, dict):
+                        role = item.get("role", "")
+                        content = item.get("content", "")
+                        if role != "system" and isinstance(content, str) and content.strip():
+                            parts.append(f"# {role}\n\n{content}\n")
+                    else:
+                        # Fallback: stringify
+                        s = str(item)
+                        if s.strip():
+                            parts.append(s)
+            except Exception:
+                pass
+
+            text = "\n\n".join(parts) if parts else "(no non-system input captured)"
+            with open(bundle_path, "w", encoding="utf-8") as f:
+                f.write(text)
+
+            # Store path in run context for tools to access
+            if hasattr(context, "context") and isinstance(context.context, dict):
+                context.context["summary_bundle_path"] = bundle_path
+
+            # Inject a lightweight system note with the path
+            note = f"Code bundle prepared for summary at: {bundle_path}. Use this path if you need full context."
+            try:
+                input_items.insert(0, {"role": "system", "content": note})
+            except Exception:
+                # If input_items cannot be modified, ignore
+                pass
+        except Exception as e:
+            logger.warning(f"CodeBundleAttachmentHook failed: {e}")
+
+
 class SystemReminderHook(AgentHooks):
     """
     System reminder hook for Agency Code to inject periodic reminders about important instructions.
@@ -626,7 +686,24 @@ def create_message_filter_hook():
     return MessageFilterHook()
 
 
-def create_composite_hook(hooks: List[AgentHooks]):
+def create_composite_hook(hooks):
+    """Create a CompositeHook from either a list of hooks or varargs.
+
+    Backward compatible with existing call sites passing a list.
+    """
+    if hooks is None:
+        return CompositeHook([])
+    # If called with varargs accidentally, hooks may be a tuple
+    if not isinstance(hooks, list):
+        try:
+            hooks = list(hooks)
+        except Exception:
+            hooks = [hooks]
+    return CompositeHook(hooks)
+
+
+def create_code_bundle_attachment_hook() -> AgentHooks:
+    return CodeBundleAttachmentHook()
     """Create and return a CompositeHook instance that combines multiple hooks."""
     return CompositeHook(hooks)
 
