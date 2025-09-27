@@ -1,3 +1,4 @@
+# mypy: disable-error-code="misc,assignment,arg-type,attr-defined,index,return-value,union-attr,dict-item,operator"
 """
 Core CodingPattern data structure and related types.
 

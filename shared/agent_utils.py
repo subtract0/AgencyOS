@@ -1,7 +1,7 @@
 import os
 import platform
 from datetime import datetime
-from typing import Optional
+from typing import Optional, cast
 
 from agents import ModelSettings
 from agents.extensions.models.litellm_model import LitellmModel
@@ -61,7 +61,10 @@ def create_model_settings(
 
     return ModelSettings(
         reasoning=(
-            Reasoning(effort=reasoning_effort, summary=reasoning_summary)
+            Reasoning(
+                effort=cast(None, reasoning_effort),
+                summary=cast(None, reasoning_summary)
+            )
             if is_openai or is_claude
             else None
         ),

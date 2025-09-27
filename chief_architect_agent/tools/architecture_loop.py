@@ -1,7 +1,7 @@
 import os
 import json
 from datetime import datetime
-from typing import Any, Dict
+from typing import Any, Dict, cast
 from shared.type_definitions.json import JSONValue
 
 from agency_swarm.tools import BaseTool
@@ -33,7 +33,7 @@ class RunArchitectureLoop(BaseTool):  # type: ignore[misc]
         findings["api_mismatches"] = api_mismatches
 
         target = self._choose_high_impact_target(findings)
-        findings["selected_target"] = target
+        findings["selected_target"] = cast(JSONValue, target)
 
         out_path = os.path.join("logs", "chief_architect_findings.json")
         try:

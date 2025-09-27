@@ -191,7 +191,7 @@ def main():
         print(f"  - {pattern_type}: {len(instances)} instances")
 
     # Analyze common Dict structures
-    structures = defaultdict(int)
+    structures: defaultdict[str, int] = defaultdict(int)
     for pattern in all_patterns:
         structures[pattern["structure"]] += 1
 

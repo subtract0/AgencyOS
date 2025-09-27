@@ -158,7 +158,7 @@ class UnifiedCore:
             warnings=metrics.get("recent_warnings", [])
         )
 
-    def emit_event(self, event: str, data: dict[str, JSONValue] = None, level: str = "info"):
+    def emit_event(self, event: str, data: Optional[dict[str, JSONValue]] = None, level: str = "info"):
         """
         Emit a telemetry event.
 
@@ -182,7 +182,7 @@ class UnifiedCore:
         if self.patterns:
             self.patterns.learn_from_fix(error_type, original, fixed, success)
 
-    def find_patterns(self, query: str = None, pattern_type: str = None) -> List[Pattern]:
+    def find_patterns(self, query: Optional[str] = None, pattern_type: Optional[str] = None) -> List[Pattern]:
         """
         Find patterns matching criteria.
 

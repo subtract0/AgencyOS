@@ -1,10 +1,11 @@
 import json
 from pathlib import Path
+from typing import Optional
 
 from tools import NotebookEdit
 
 
-def create_sample_notebook(file_path: str, cells_data: list = None):
+def create_sample_notebook(file_path: str, cells_data: Optional[list] = None):
     """Helper function to create a sample Jupyter notebook"""
     if cells_data is None:
         cells_data = [

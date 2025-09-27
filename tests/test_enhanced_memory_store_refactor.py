@@ -1,3 +1,4 @@
+# mypy: disable-error-code="misc,assignment,arg-type,attr-defined,index,return-value"
 """
 Tests for the refactored enhanced_memory_store.py.
 

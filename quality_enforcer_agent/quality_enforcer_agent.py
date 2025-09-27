@@ -152,7 +152,7 @@ Use GPT-5 with prompt: "Analyze and fix this error: {self.error_message} in code
 
 
 def create_quality_enforcer_agent(
-    model: str = "gpt-5", reasoning_effort: str = "high", agent_context: AgentContext = None
+    model: str = "gpt-5", reasoning_effort: str = "high", agent_context: Optional[AgentContext] = None
 ) -> Agent:
     """Factory that returns a simplified QualityEnforcerAgent instance."""
 

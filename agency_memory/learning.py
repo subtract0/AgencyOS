@@ -6,7 +6,7 @@ Provides deterministic summarization of memory tag frequencies and patterns.
 import logging
 from collections import Counter, defaultdict
 from datetime import datetime
-from typing import Any, Dict, List, cast
+from typing import Any, Dict, List, Optional, cast
 from shared.type_definitions.json import JSONValue
 from shared.models.learning import (
     LearningConsolidation, LearningInsight, PatternAnalysis,
@@ -363,7 +363,7 @@ def _generate_insights_models(
 
 
 def generate_learning_report(
-    memories: List[dict[str, JSONValue]], session_id: str = None
+    memories: List[dict[str, JSONValue]], session_id: Optional[str] = None
 ) -> str:
     """
     Generate a formatted learning report from consolidated analysis.

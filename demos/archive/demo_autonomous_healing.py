@@ -9,9 +9,12 @@ import os
 import tempfile
 import shutil
 import warnings
+from typing import Optional
 
 # Check for unified core feature flag
 ENABLE_UNIFIED_CORE = os.getenv("ENABLE_UNIFIED_CORE", "false").lower() == "true"
+
+_unified_core: Optional['SelfHealingCore'] = None
 
 if ENABLE_UNIFIED_CORE:
     try:
@@ -20,9 +23,6 @@ if ENABLE_UNIFIED_CORE:
         warnings.warn("Using unified SelfHealingCore", DeprecationWarning, stacklevel=2)
     except ImportError:
         ENABLE_UNIFIED_CORE = False
-        _unified_core = None
-else:
-    _unified_core = None
 
 from tools.auto_fix_nonetype import (
     NoneTypeErrorDetector,

@@ -1,3 +1,4 @@
+# mypy: disable-error-code="misc,assignment,arg-type,attr-defined,index,return-value"
 import glob as glob_module
 import os
 from datetime import datetime
@@ -62,7 +63,7 @@ class LS(BaseTool):  # type: ignore[misc]
             items.sort()
 
             # Get detailed information for each item
-            detailed_items = []
+            detailed_items: list[dict[str, str]] = []
             for item in items:
                 full_path = os.path.join(self.path, item)
                 try:

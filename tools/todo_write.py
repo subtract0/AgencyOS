@@ -102,14 +102,14 @@ class TodoWrite(BaseTool):  # type: ignore[misc]
             # Format the response
             total_tasks = len(self.todos)
             completed_tasks = len([t for t in self.todos if t.status == "completed"])
-            in_progress_tasks = len([t for t in self.todos if t.status == "in_progress"])
+            in_progress_tasks: int = len([t for t in self.todos if t.status == "in_progress"])
             pending_tasks = len([t for t in self.todos if t.status == "pending"])
 
             result = f"Todo List Updated ({current_time[:19]})\n"
             result += f"Summary: total={total_tasks}, done={completed_tasks}, in_progress={in_progress_tasks}, pending={pending_tasks}\n"
 
             # Group tasks by status
-            status_groups = {"in_progress": [], "pending": [], "completed": []}
+            status_groups: dict[str, list[TodoItem]] = {"in_progress": [], "pending": [], "completed": []}
 
             for todo in self.todos:
                 status_groups[todo.status].append(todo)

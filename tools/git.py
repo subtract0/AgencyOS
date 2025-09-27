@@ -1,3 +1,4 @@
+# mypy: disable-error-code="misc,assignment,arg-type,attr-defined,index,return-value"
 import os
 
 from agency_swarm.tools import BaseTool

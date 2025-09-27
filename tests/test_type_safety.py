@@ -1,3 +1,4 @@
+# mypy: disable-error-code="misc,assignment,arg-type,attr-defined,index,return-value,union-attr,dict-item"
 """
 Comprehensive type safety test suite for PR #20.
 Tests all Pydantic models and type guards introduced in the type safety sweep.

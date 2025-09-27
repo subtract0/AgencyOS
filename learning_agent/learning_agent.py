@@ -1,5 +1,6 @@
 import os
 
+from typing import Optional
 from agency_swarm import Agent
 from shared.agent_context import AgentContext, create_agent_context
 from shared.agent_utils import (
@@ -26,7 +27,7 @@ from .tools.cross_session_learner import CrossSessionLearner
 # Get the absolute path to the current file's directory
 current_dir = os.path.dirname(os.path.abspath(__file__))
 
-def create_learning_agent(model: str = "gpt-5", reasoning_effort: str = "high", agent_context: AgentContext = None) -> Agent:
+def create_learning_agent(model: str = "gpt-5", reasoning_effort: str = "high", agent_context: Optional[AgentContext] = None) -> Agent:
     """Factory that returns a fresh LearningAgent instance.
     Use this in tests to avoid reusing a singleton across multiple agencies.
 

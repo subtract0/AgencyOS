@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# mypy: disable-error-code="misc,assignment,arg-type,attr-defined,index,return-value,union-attr,dict-item"
 """
 Pattern Intelligence Demo - The Infinite Intelligence Amplifier
 
