@@ -1003,6 +1003,9 @@ class TestEventDetectionSystem:
         system.error_monitor.stop.assert_called_once()
 
         # Check that the last call was for the stop event
+        # NOTE: Using assert_called_with (not assert_called_once_with) is intentional here
+        # because the system emits multiple events during operation. We're verifying that
+        # the stop event was emitted, not that it was the only event.
         mock_emit.assert_called_with("event_detection_stopped", {})
 
     def test_stop_idempotent(self):
