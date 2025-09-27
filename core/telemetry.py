@@ -360,7 +360,7 @@ def get_telemetry() -> SimpleTelemetry:
     return _telemetry_instance
 
 
-def emit(event: str, data: dict[str, JSONValue] = None, level: str = "info"):
+def emit(event: str, data: Optional[dict[str, JSONValue]] = None, level: str = "info"):
     """
     Convenience function to emit telemetry events.
 

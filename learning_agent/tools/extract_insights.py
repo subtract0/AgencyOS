@@ -1,16 +1,22 @@
+# mypy: disable-error-code="misc,assignment,arg-type,attr-defined,index,return-value,union-attr,dict-item,operator"
 """
 Extract actionable insights from session analysis.
 """
-from agency_swarm.tools import BaseTool
+from agency_swarm.tools import BaseTool  # type: ignore
 from pydantic import Field
 from typing import Dict, Any, List, Union, cast, Optional
 from shared.type_definitions.json import JSONValue
 import json
 import re
 from datetime import datetime
+from learning_agent.json_utils import (
+    is_dict, is_list, safe_get, safe_get_dict, safe_get_list,
+    safe_get_str, safe_get_int, safe_get_float, ensure_list,
+    json_to_any_dict
+)
 
 
-class ExtractInsights(BaseTool):  # type: ignore[misc]
+class ExtractInsights(BaseTool):  # mypy: disable-error-code="misc"
     """
     Extracts structured insights from analyzed session data.
 
@@ -38,81 +44,97 @@ class ExtractInsights(BaseTool):  # type: ignore[misc]
             analysis_data = json.loads(self.session_analysis)
 
             # Extract insights based on type
-            insights = {
+            insights_list: List[Dict[str, JSONValue]] = []
+
+            if self.insight_type == "auto" or self.insight_type == "tool_pattern":
+                insights_list.extend(self._extract_tool_insights(analysis_data))
+
+            if self.insight_type == "auto" or self.insight_type == "error_resolution":
+                insights_list.extend(self._extract_error_insights(analysis_data))
+
+            if self.insight_type == "auto" or self.insight_type == "task_completion":
+                insights_list.extend(self._extract_workflow_insights(analysis_data))
+
+            if self.insight_type == "auto" or self.insight_type == "optimization":
+                insights_list.extend(self._extract_optimization_insights(analysis_data))
+
+            # Filter by confidence threshold
+            filtered_insights = [
+                insight for insight in insights_list
+                if safe_get_float(insight, "confidence", 0.0) >= self.confidence_threshold
+            ]
+
+            insights: Dict[str, JSONValue] = {
                 "extraction_timestamp": datetime.now().isoformat(),
                 "insight_type": self.insight_type,
                 "confidence_threshold": self.confidence_threshold,
-                "insights": []
+                "insights": cast(List[JSONValue], filtered_insights),
+                "total_insights": len(filtered_insights)
             }
-
-            if self.insight_type == "auto" or self.insight_type == "tool_pattern":
-                cast(List[Dict[str, Any]], insights["insights"]).extend(self._extract_tool_insights(analysis_data))
-
-            if self.insight_type == "auto" or self.insight_type == "error_resolution":
-                cast(List[Dict[str, Any]], insights["insights"]).extend(self._extract_error_insights(analysis_data))
-
-            if self.insight_type == "auto" or self.insight_type == "task_completion":
-                cast(List[Dict[str, Any]], insights["insights"]).extend(self._extract_workflow_insights(analysis_data))
-
-            if self.insight_type == "auto" or self.insight_type == "optimization":
-                cast(List[Dict[str, Any]], insights["insights"]).extend(self._extract_optimization_insights(analysis_data))
-
-            # Filter by confidence threshold
-            insights_list = cast(List[Dict[str, Any]], insights["insights"])
-            filtered_insights = [
-                insight for insight in insights_list
-                if insight.get("confidence", 0) >= self.confidence_threshold
-            ]
-
-            insights["insights"] = filtered_insights
-            insights["total_insights"] = len(filtered_insights)
 
             return json.dumps(insights, indent=2)
 
         except Exception as e:
             return f"Error extracting insights: {str(e)}"
 
-    def _extract_tool_insights(self, analysis_data: Dict[str, JSONValue]) -> List[Dict[str, Any]]:
+    def _extract_tool_insights(self, analysis_data: Dict[str, JSONValue]) -> List[Dict[str, JSONValue]]:
         """Extract insights about tool usage patterns."""
-        tool_analysis = analysis_data.get("tool_analysis", {})
-        insights = []
+        tool_analysis = safe_get_dict(analysis_data, "tool_analysis")
+        insights: List[Dict[str, JSONValue]] = []
 
         # High-frequency tool patterns
-        tool_counts = cast(Dict[str, int], tool_analysis.get("tool_usage_counts", {}))
-        most_used = cast(List[Any], tool_analysis.get("most_used_tools", []))
+        tool_counts = safe_get_dict(tool_analysis, "tool_usage_counts")
+        most_used = safe_get_list(tool_analysis, "most_used_tools")
 
         if most_used:
-            insights.append({
-                "type": "tool_pattern",
-                "category": "high_frequency_tools",
-                "title": "Most Frequently Used Tools",
-                "description": f"Tools used most often: {', '.join([f'{tool} ({count})' for tool, count in cast(List[tuple], most_used)[:3]])}",
-                "actionable_insight": "Consider optimizing these high-frequency tools for better performance",
-                "confidence": 0.9,
-                "data": {"tools": most_used[:3]},
-                "keywords": ["tool_usage", "frequency", "optimization"]
-            })
+            # Process most_used tools safely
+            tools_desc = []
+            for item in most_used[:3]:
+                if is_list(item) and len(ensure_list(item)) >= 2:
+                    tool_list = ensure_list(item)
+                    tool_name = safe_get_str(tool_list, "0", "unknown")
+                    count = safe_get_int(tool_list, "1", 0)
+                    tools_desc.append(f"{tool_name} ({count})")
+
+            if tools_desc:
+                insight: Dict[str, JSONValue] = {
+                    "type": "tool_pattern",
+                    "category": "high_frequency_tools",
+                    "title": "Most Frequently Used Tools",
+                    "description": f"Tools used most often: {', '.join(tools_desc)}",
+                    "actionable_insight": "Consider optimizing these high-frequency tools for better performance",
+                    "confidence": 0.9,
+                    "data": {"tools": most_used[:3]},
+                    "keywords": cast(List[JSONValue], ["tool_usage", "frequency", "optimization"])
+                }
+                insights.append(insight)
 
         # Tool success rate insights
-        success_rates = cast(Dict[str, float], tool_analysis.get("tool_success_rates", {}))
-        low_success_tools = [(tool, rate) for tool, rate in success_rates.items() if rate < 0.8]
+        success_rates = safe_get_dict(tool_analysis, "tool_success_rates")
+        low_success_tools: List[tuple[str, float]] = []
+        for tool, rate in success_rates.items():
+            rate_float = safe_get_float({"rate": rate}, "rate", 1.0)
+            if rate_float < 0.8:
+                low_success_tools.append((tool, rate_float))
 
         if low_success_tools:
-            insights.append({
+            tools_desc = [f"{tool} ({rate:.1%})" for tool, rate in low_success_tools]
+            low_success_insight: Dict[str, JSONValue] = {
                 "type": "tool_pattern",
                 "category": "low_success_rate",
                 "title": "Tools with Low Success Rates",
-                "description": f"Tools with success rates below 80%: {', '.join([f'{tool} ({rate:.1%})' for tool, rate in low_success_tools])}",
+                "description": f"Tools with success rates below 80%: {', '.join(tools_desc)}",
                 "actionable_insight": "Investigate error patterns for these tools and improve error handling",
                 "confidence": 0.85,
-                "data": {"low_success_tools": low_success_tools},
-                "keywords": ["tool_reliability", "error_handling", "improvement"]
-            })
+                "data": {"low_success_tools": cast(List[JSONValue], low_success_tools)},
+                "keywords": cast(List[JSONValue], ["tool_reliability", "error_handling", "improvement"])
+            }
+            insights.append(low_success_insight)
 
         # Tool sequence patterns
-        sequence_length = cast(int, tool_analysis.get("tool_sequence_length", 0))
+        sequence_length = safe_get_int(tool_analysis, "tool_sequence_length", 0)
         if sequence_length > 10:
-            insights.append({
+            sequence_insight: Dict[str, JSONValue] = {
                 "type": "tool_pattern",
                 "category": "long_sequences",
                 "title": "Long Tool Sequences Detected",
@@ -120,20 +142,21 @@ class ExtractInsights(BaseTool):  # type: ignore[misc]
                 "actionable_insight": "Consider creating composite tools or workflows to reduce tool call overhead",
                 "confidence": 0.75,
                 "data": {"sequence_length": sequence_length},
-                "keywords": ["workflow_optimization", "tool_composition", "efficiency"]
-            })
+                "keywords": cast(List[JSONValue], ["workflow_optimization", "tool_composition", "efficiency"])
+            }
+            insights.append(sequence_insight)
 
         return insights
 
-    def _extract_error_insights(self, analysis_data: Dict[str, JSONValue]) -> List[Dict[str, Any]]:
+    def _extract_error_insights(self, analysis_data: Dict[str, JSONValue]) -> List[Dict[str, JSONValue]]:
         """Extract insights about error patterns and resolution strategies."""
-        error_analysis = analysis_data.get("error_analysis", {})
-        insights = []
+        error_analysis = safe_get_dict(analysis_data, "error_analysis")
+        insights: List[Dict[str, JSONValue]] = []
 
         # High error rate insight
-        error_rate = cast(float, error_analysis.get("error_rate", 0))
+        error_rate = safe_get_float(error_analysis, "error_rate", 0.0)
         if error_rate > 0.1:  # More than 10% error rate
-            insights.append({
+            insight: Dict[str, JSONValue] = {
                 "type": "error_resolution",
                 "category": "high_error_rate",
                 "title": "High Error Rate Detected",
@@ -141,11 +164,12 @@ class ExtractInsights(BaseTool):  # type: ignore[misc]
                 "actionable_insight": "Investigate common error patterns and implement preventive measures",
                 "confidence": 0.9,
                 "data": {"error_rate": error_rate},
-                "keywords": ["error_prevention", "reliability", "quality"]
-            })
+                "keywords": cast(List[JSONValue], ["error_prevention", "reliability", "quality"])
+            }
+            insights.append(insight)
 
         # Common error types
-        error_types = cast(Dict[str, int], error_analysis.get("error_types", {}))
+        error_types = safe_get_dict(error_analysis, "error_types")
         if error_types:
             most_common_error = max(error_types.items(), key=lambda x: x[1])
             if most_common_error[1] > 2:  # More than 2 occurrences

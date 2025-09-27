@@ -9,6 +9,10 @@ from typing import List, Dict, Any, Optional, Union, cast
 from shared.type_definitions.json import JSONValue
 from pathlib import Path
 from datetime import datetime
+from learning_agent.json_utils import (
+    is_dict, is_list, is_str, safe_get, safe_get_dict,
+    safe_get_list, safe_get_str, safe_get_int, ensure_list
+)
 
 
 class AnalyzeSession(BaseTool):  # type: ignore[misc]
@@ -65,14 +69,14 @@ class AnalyzeSession(BaseTool):  # type: ignore[misc]
             }
 
             if self.analysis_depth in ["standard", "comprehensive"]:
-                analysis.update(self._analyze_tool_usage(session_data))
-                analysis.update(self._analyze_error_patterns(session_data))
-                analysis.update(self._analyze_workflow_patterns(session_data))
+                analysis["tool_analysis"] = self._analyze_tool_usage(session_data)
+                analysis["error_analysis"] = self._analyze_error_patterns(session_data)
+                analysis["workflow_analysis"] = self._analyze_workflow_patterns(session_data)
 
             if self.analysis_depth == "comprehensive":
-                analysis.update(self._analyze_agent_interactions(session_data))
-                analysis.update(self._analyze_task_outcomes(session_data))
-                analysis.update(self._analyze_memory_usage(session_data))
+                analysis["agent_interactions"] = self._analyze_agent_interactions(session_data)
+                analysis["task_outcomes"] = self._analyze_task_outcomes(session_data)
+                analysis["memory_usage"] = self._analyze_memory_usage(session_data)
 
             return json.dumps(analysis, indent=2)
 
@@ -81,18 +85,20 @@ class AnalyzeSession(BaseTool):  # type: ignore[misc]
 
     def _analyze_tool_usage(self, session_data: Dict[str, JSONValue]) -> Dict[str, JSONValue]:
         """Analyze tool usage patterns from session data."""
-        entries = cast(List[Dict[str, JSONValue]], session_data.get("entries", []))
+        entries = safe_get_list(session_data, "entries")
         tool_counts: Dict[str, int] = {}
         tool_sequences: List[str] = []
         tool_errors: Dict[str, int] = {}
 
         for entry in entries:
-            tags = cast(List[str], entry.get("tags", []))
-            content = cast(Dict[str, JSONValue], entry.get("content", {}))
+            if not is_dict(entry):
+                continue
+            tags = safe_get_list(entry, "tags")
+            content = safe_get_dict(entry, "content")
 
             # Count tool usage
             if "tool" in tags:
-                tool_name = cast(str, content.get("tool_name", "unknown"))
+                tool_name = safe_get_str(content, "tool_name", "unknown")
                 tool_counts[tool_name] = tool_counts.get(tool_name, 0) + 1
                 tool_sequences.append(tool_name)
 
@@ -108,37 +114,37 @@ class AnalyzeSession(BaseTool):  # type: ignore[misc]
             tool_success_rates[tool] = success_rate
 
         return {
-            "tool_analysis": {
-                "tool_usage_counts": tool_counts,
-                "tool_success_rates": tool_success_rates,
-                "tool_error_counts": tool_errors,
-                "most_used_tools": sorted(tool_counts.items(), key=lambda x: x[1], reverse=True)[:5],
+                "tool_usage_counts": cast(Dict[str, JSONValue], tool_counts),
+                "tool_success_rates": cast(Dict[str, JSONValue], tool_success_rates),
+                "tool_error_counts": cast(Dict[str, JSONValue], tool_errors),
+                "most_used_tools": cast(List[JSONValue], sorted(tool_counts.items(), key=lambda x: x[1], reverse=True)[:5]),
                 "tool_sequence_length": len(tool_sequences)
-            }
         }
 
     def _analyze_error_patterns(self, session_data: Dict[str, JSONValue]) -> Dict[str, JSONValue]:
         """Analyze error patterns and resolution strategies."""
-        entries = cast(List[Dict[str, JSONValue]], session_data.get("entries", []))
-        errors: List[Dict[str, Any]] = []
+        entries = safe_get_list(session_data, "entries")
+        errors: List[Dict[str, JSONValue]] = []
         error_types: Dict[str, int] = {}
-        resolution_patterns: List[Dict[str, Any]] = []
+        resolution_patterns: List[Dict[str, JSONValue]] = []
 
         for i, entry in enumerate(entries):
-            tags = cast(List[str], entry.get("tags", []))
-            content = cast(Dict[str, JSONValue], entry.get("content", {}))
+            if not is_dict(entry):
+                continue
+            tags = safe_get_list(entry, "tags")
+            content = safe_get_dict(entry, "content")
 
             if "error" in tags:
-                error_info = {
-                    "timestamp": entry.get("timestamp"),
-                    "error_type": cast(str, content.get("error_type", "unknown")),
-                    "tool_name": content.get("tool_name"),
-                    "error_message": cast(str, content.get("error_message", "")),
+                error_info: Dict[str, JSONValue] = {
+                    "timestamp": safe_get(entry, "timestamp"),
+                    "error_type": safe_get_str(content, "error_type", "unknown"),
+                    "tool_name": safe_get(content, "tool_name"),
+                    "error_message": safe_get_str(content, "error_message", ""),
                     "entry_index": i
                 }
                 errors.append(error_info)
 
-                error_type = error_info["error_type"]
+                error_type = safe_get_str(error_info, "error_type", "unknown")
                 error_types[error_type] = error_types.get(error_type, 0) + 1
 
                 # Look for resolution patterns in next few entries
@@ -147,25 +153,25 @@ class AnalyzeSession(BaseTool):  # type: ignore[misc]
                     resolution_patterns.append(resolution)
 
         return {
-            "error_analysis": {
                 "total_errors": len(errors),
-                "error_types": error_types,
-                "error_details": errors,
-                "resolution_patterns": resolution_patterns,
+                "error_types": cast(Dict[str, JSONValue], error_types),
+                "error_details": cast(List[JSONValue], errors),
+                "resolution_patterns": cast(List[JSONValue], resolution_patterns),
                 "error_rate": len(errors) / len(entries) if entries else 0
-            }
         }
 
     def _analyze_workflow_patterns(self, session_data: Dict[str, JSONValue]) -> Dict[str, JSONValue]:
         """Analyze successful workflow sequences."""
-        entries = cast(List[Dict[str, JSONValue]], session_data.get("entries", []))
-        workflows: List[List[Dict[str, JSONValue]]] = []
+        entries = safe_get_list(session_data, "entries")
+        workflows: List[List[JSONValue]] = []
 
         # Identify workflow sequences by looking for task completion patterns
-        current_workflow: List[Dict[str, JSONValue]] = []
+        current_workflow: List[JSONValue] = []
         for entry in entries:
-            tags = cast(List[str], entry.get("tags", []))
-            content = cast(Dict[str, JSONValue], entry.get("content", {}))
+            if not is_dict(entry):
+                continue
+            tags = safe_get_list(entry, "tags")
+            content = safe_get_dict(entry, "content")
 
             if "task_start" in tags:
                 if current_workflow:
@@ -179,43 +185,48 @@ class AnalyzeSession(BaseTool):  # type: ignore[misc]
                     current_workflow = []
 
         # Analyze successful workflows
-        successful_workflows = [w for w in workflows if any("success" in cast(List[str], e.get("tags", [])) for e in w)]
+        successful_workflows = [
+            w for w in workflows
+            if any("success" in safe_get_list(e, "tags") if is_dict(e) else [] for e in w)
+        ]
 
         return {
-            "workflow_analysis": {
                 "total_workflows": len(workflows),
                 "successful_workflows": len(successful_workflows),
                 "success_rate": len(successful_workflows) / len(workflows) if workflows else 0,
                 "average_workflow_length": sum(len(w) for w in workflows) / len(workflows) if workflows else 0
-            }
         }
 
     def _analyze_agent_interactions(self, session_data: Dict[str, JSONValue]) -> Dict[str, JSONValue]:
         """Analyze patterns in agent-to-agent interactions."""
-        entries = cast(List[Dict[str, JSONValue]], session_data.get("entries", []))
+        entries = safe_get_list(session_data, "entries")
         interactions: Dict[str, int] = {}
 
         for entry in entries:
-            content = cast(Dict[str, JSONValue], entry.get("content", {}))
-            if "agent_from" in content and "agent_to" in content:
-                interaction_key = f"{content['agent_from']} -> {content['agent_to']}"
+            if not is_dict(entry):
+                continue
+            content = safe_get_dict(entry, "content")
+            agent_from = safe_get(content, "agent_from")
+            agent_to = safe_get(content, "agent_to")
+            if agent_from and agent_to:
+                interaction_key = f"{agent_from} -> {agent_to}"
                 interactions[interaction_key] = interactions.get(interaction_key, 0) + 1
 
         return {
-            "interaction_analysis": {
-                "agent_interactions": interactions,
+                "agent_interactions": cast(Dict[str, JSONValue], interactions),
                 "total_interactions": sum(interactions.values()),
-                "most_common_interactions": sorted(interactions.items(), key=lambda x: x[1], reverse=True)[:3]
-            }
+                "most_common_interactions": cast(List[JSONValue], sorted(interactions.items(), key=lambda x: x[1], reverse=True)[:3])
         }
 
     def _analyze_task_outcomes(self, session_data: Dict[str, JSONValue]) -> Dict[str, JSONValue]:
         """Analyze task completion outcomes and success factors."""
-        entries = cast(List[Dict[str, JSONValue]], session_data.get("entries", []))
+        entries = safe_get_list(session_data, "entries")
         outcomes: Dict[str, int] = {"success": 0, "failure": 0, "partial": 0}
 
         for entry in entries:
-            tags = cast(List[str], entry.get("tags", []))
+            if not is_dict(entry):
+                continue
+            tags = safe_get_list(entry, "tags")
             if "task_complete" in tags:
                 if "success" in tags:
                     outcomes["success"] += 1
@@ -227,44 +238,44 @@ class AnalyzeSession(BaseTool):  # type: ignore[misc]
         total_tasks = sum(outcomes.values())
 
         return {
-            "outcome_analysis": {
-                "task_outcomes": outcomes,
+                "task_outcomes": cast(Dict[str, JSONValue], outcomes),
                 "total_tasks": total_tasks,
                 "success_rate": outcomes["success"] / total_tasks if total_tasks > 0 else 0
-            }
         }
 
     def _analyze_memory_usage(self, session_data: Dict[str, JSONValue]) -> Dict[str, JSONValue]:
         """Analyze memory storage and retrieval patterns."""
-        entries = cast(List[Dict[str, JSONValue]], session_data.get("entries", []))
+        entries = safe_get_list(session_data, "entries")
         memory_ops: Dict[str, int] = {"store": 0, "retrieve": 0, "search": 0}
 
         for entry in entries:
-            tags = cast(List[str], entry.get("tags", []))
+            if not is_dict(entry):
+                continue
+            tags = safe_get_list(entry, "tags")
             if "memory" in tags:
-                content = cast(Dict[str, JSONValue], entry.get("content", {}))
-                operation = cast(str, content.get("operation", "unknown"))
+                content = safe_get_dict(entry, "content")
+                operation = safe_get_str(content, "operation", "unknown")
                 if operation in memory_ops:
                     memory_ops[operation] += 1
 
         return {
-            "memory_analysis": {
-                "memory_operations": memory_ops,
+                "memory_operations": cast(Dict[str, JSONValue], memory_ops),
                 "total_memory_ops": sum(memory_ops.values())
-            }
         }
 
-    def _find_resolution_pattern(self, entries: List[Dict[str, JSONValue]], error_index: int) -> Optional[Dict[str, Any]]:
+    def _find_resolution_pattern(self, entries: List[JSONValue], error_index: int) -> Optional[Dict[str, JSONValue]]:
         """Find resolution patterns after an error."""
         # Look at next 3 entries for resolution
         resolution_window = entries[error_index + 1:error_index + 4]
 
         for entry in resolution_window:
-            tags = cast(List[str], entry.get("tags", []))
+            if not is_dict(entry):
+                continue
+            tags = safe_get_list(entry, "tags")
             if "success" in tags or "resolution" in tags:
-                content = cast(Dict[str, JSONValue], entry.get("content", {}))
+                content = safe_get_dict(entry, "content")
                 return {
-                    "resolution_method": cast(str, content.get("method", "unknown")),
+                    "resolution_method": safe_get_str(content, "method", "unknown"),
                     "steps_to_resolution": len(resolution_window)
                 }
 

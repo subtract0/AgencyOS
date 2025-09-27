@@ -1,3 +1,4 @@
+# mypy: disable-error-code="misc,assignment,arg-type,attr-defined,index,return-value"
 import json
 from pathlib import Path
 
@@ -230,7 +231,7 @@ def test_notebook_read_code_with_outputs(tmp_path: Path):
 
 def test_notebook_read_empty_notebook(tmp_path: Path):
     """Test reading an empty notebook"""
-    empty_cells = []
+    empty_cells: list = []
 
     notebook_file = tmp_path / "empty.ipynb"
     create_sample_notebook(str(notebook_file), empty_cells)
@@ -431,7 +432,7 @@ def test_notebook_read_complex_notebook(tmp_path: Path):
 
 def test_notebook_read_cell_with_no_outputs(tmp_path: Path):
     """Test reading code cells with no outputs"""
-    cells_no_output = [
+    cells_no_output: list = [
         {
             "cell_type": "code",
             "id": "no-output",

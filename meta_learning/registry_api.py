@@ -6,12 +6,12 @@ Focused on essential endpoints that add immediate value.
 
 from flask import Flask, request, jsonify
 from datetime import datetime
-from typing import Dict, Any
+from typing import Dict, Any, Optional
 
 from .agent_registry import AgentRegistry
 
 
-def create_app(registry: AgentRegistry = None) -> Flask:
+def create_app(registry: Optional[AgentRegistry] = None) -> Flask:
     """Create Flask app with registry endpoints."""
     app = Flask(__name__)
 

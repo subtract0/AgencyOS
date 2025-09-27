@@ -97,7 +97,7 @@ class MemoryIntegrationHook(AgentHooks):
             agent_context: AgentContext instance. Creates default if None.
         """
         self.agent_context = agent_context or create_agent_context()
-        self.session_start_time = None
+        self.session_start_time: Optional[str] = None
         logger.debug(f"MemoryIntegrationHook initialized for session: {self.agent_context.session_id}")
 
     async def on_start(self, context: RunContextWrapper, agent) -> None:
@@ -747,7 +747,7 @@ class MutationSnapshotHook(AgentHooks):
         base = os.path.join(root, "logs", "snapshots", datetime.utcnow().strftime("%Y%m%d_%H%M%S_%f"))
         files_dir = os.path.join(base, "files")
         os.makedirs(files_dir, exist_ok=True)
-        manifest = {"files": []}
+        manifest: dict = {"files": []}
         for f in files:
             try:
                 rel = os.path.relpath(f, root)
