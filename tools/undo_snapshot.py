@@ -2,10 +2,24 @@ import os
 import json
 import shutil
 from pathlib import Path
-from typing import List, Optional
+from typing import List, Optional, Dict, Any
+from shared.type_definitions.json import JSONValue
 
 from agency_swarm.tools import BaseTool
-from pydantic import Field
+from pydantic import Field, BaseModel
+
+
+class FileEntry(BaseModel):
+    """Represents a file entry in the snapshot manifest."""
+    path: str
+
+
+class SnapshotManifest(BaseModel):
+    """Represents the snapshot manifest structure."""
+    snapshot_id: str
+    repo_root: str
+    files: List[FileEntry]
+    note: str
 
 
 class WorkspaceSnapshot(BaseTool):  # type: ignore[misc]
@@ -26,8 +40,8 @@ class WorkspaceSnapshot(BaseTool):  # type: ignore[misc]
 
         # Validate and normalize files
         norm_files: List[Path] = []
-        for f in self.files:
-            p = Path(f).resolve()
+        for file_path in self.files:
+            p = Path(file_path).resolve()
             try:
                 p.relative_to(repo_root)
             except Exception:
@@ -44,22 +58,22 @@ class WorkspaceSnapshot(BaseTool):  # type: ignore[misc]
         files_dir = target / "files"
         files_dir.mkdir(parents=True, exist_ok=True)
 
-        manifest = {  # type: ignore[var-annotated]
-            "snapshot_id": snapshot_id,
-            "repo_root": str(repo_root),
-            "files": [],
-            "note": self.note or "",
-        }
+        manifest = SnapshotManifest(
+            snapshot_id=snapshot_id,
+            repo_root=str(repo_root),
+            files=[],
+            note=self.note or ""
+        )
 
         for p in norm_files:
             rel = p.relative_to(repo_root)
             dst = files_dir / rel
             dst.parent.mkdir(parents=True, exist_ok=True)
             shutil.copy2(p, dst)
-            manifest["files"].append({"path": str(rel)})
+            manifest.files.append(FileEntry(path=str(rel)))
 
         with open(target / "manifest.json", "w", encoding="utf-8") as f:
-            json.dump(manifest, f, indent=2)
+            json.dump(manifest.model_dump(), f, indent=2)
 
         return f"Snapshot created: {snapshot_id} (files={len(norm_files)})"
 

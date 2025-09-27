@@ -148,7 +148,7 @@ class LearningLoop:
         config_file = Path(config_path)
 
         # Default configuration per SPEC-LEARNING-001
-        default_config = {
+        default_config: Dict[str, JSONValue] = {
             "learning": {
                 "enabled": True,
                 "triggers": {
@@ -314,7 +314,7 @@ class LearningLoop:
         """
         runtime = (datetime.now() - self.start_time).total_seconds() if self.start_time else 0
 
-        metrics = {
+        metrics: Dict[str, JSONValue] = {
             "runtime_seconds": runtime,
             "is_running": self.is_running,
             "operations": {
@@ -337,7 +337,9 @@ class LearningLoop:
         # Add pattern store statistics if available
         if self.pattern_store:
             pattern_stats = self.pattern_store.get_statistics()
-            metrics["patterns"].update(pattern_stats)
+            patterns_dict = metrics["patterns"]
+            if isinstance(patterns_dict, dict):
+                patterns_dict.update(pattern_stats)
 
         return metrics
 
@@ -439,11 +441,11 @@ class LearningLoop:
         except Exception as e:
             emit("autonomous_operation_error", {
                 "error": str(e),
-                "runtime_hours": (datetime.now() - self.start_time).total_seconds() / 3600
+                "runtime_hours": (datetime.now() - self.start_time).total_seconds() / 3600 if self.start_time else 0
             }, level="error")
 
         emit("autonomous_operation_completed", {
-            "actual_runtime_hours": (datetime.now() - self.start_time).total_seconds() / 3600,
+            "actual_runtime_hours": (datetime.now() - self.start_time).total_seconds() / 3600 if self.start_time else 0,
             "final_metrics": self.get_metrics()
         })
 

@@ -123,10 +123,10 @@ class SystemHealth(BaseModel):
     model_config = ConfigDict(extra="forbid")
     """Overall system health metrics."""
     status: str = Field(default="healthy", pattern="^(healthy|degraded|critical)$")
-    uptime_seconds: float = Field(0.0, ge=0.0)
-    total_events: int = Field(0, ge=0)
-    error_count: int = Field(0, ge=0)
-    warning_count: int = Field(0, ge=0)
+    uptime_seconds: float = Field(default=0.0, ge=0.0)
+    total_events: int = Field(default=0, ge=0)
+    error_count: int = Field(default=0, ge=0)
+    warning_count: int = Field(default=0, ge=0)
     active_agents: List[str] = Field(default_factory=list)
     memory_usage_mb: Optional[float] = None
     cpu_usage_percent: Optional[float] = None
@@ -158,7 +158,7 @@ class TelemetryMetrics(BaseModel):
     events_by_type: Dict[str, int] = Field(default_factory=dict)
     events_by_severity: Dict[str, int] = Field(default_factory=dict)
     agent_metrics: Dict[str, AgentMetrics] = Field(default_factory=dict)
-    system_health: SystemHealth = Field(default_factory=SystemHealth)
+    system_health: SystemHealth = Field(default_factory=lambda: SystemHealth())
     top_errors: List[str] = Field(default_factory=list)
     slowest_operations: List[Dict[str, JSONValue]] = Field(default_factory=list)
 

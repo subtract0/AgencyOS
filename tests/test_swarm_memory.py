@@ -60,8 +60,8 @@ class TestSwarmMemoryStore:
         high_priority = store.search(
             ["urgent", "routine", "optional"], min_priority=MemoryPriority.HIGH
         )
-        assert len(high_priority) == 1
-        assert high_priority[0]["key"] == "critical"
+        assert high_priority.total_count == 1
+        assert high_priority.records[0].key == "critical"
 
     def test_shared_memory(self):
         """Test cross-agent memory sharing."""
@@ -89,14 +89,14 @@ class TestSwarmMemoryStore:
         agent_b_results = store.search(
             ["shared"], agent_id="agent_b", include_shared=True
         )
-        assert len(agent_b_results) == 1
-        assert agent_b_results[0]["key"] == "shared_knowledge"
+        assert agent_b_results.total_count == 1
+        assert agent_b_results.records[0].key == "shared_knowledge"
 
         # Agent B should not see private memory
         agent_b_private = store.search(
             ["private"], agent_id="agent_b", include_shared=True
         )
-        assert len(agent_b_private) == 0
+        assert agent_b_private.total_count == 0
 
     def test_memory_access_tracking(self):
         """Test that memory access is tracked."""
@@ -143,10 +143,10 @@ class TestSwarmMemoryStore:
 
         # Should have triggered pruning
         agent_memories = store.get_all("agent_a")
-        assert len(agent_memories) < 6  # Some memories should be pruned
+        assert agent_memories.total_count < 6  # Some memories should be pruned
 
         # Should still have some memories but fewer than we added
-        assert len(agent_memories) >= 3  # At least some should remain
+        assert agent_memories.total_count >= 3  # At least some should remain
 
     def test_agent_summary(self):
         """Test agent memory summary generation."""
@@ -228,7 +228,7 @@ class TestSwarmMemoryStore:
 
         # Check that consolidation summary was created
         agent_memories = store.get_all("agent_a")
-        summary_memories = [m for m in agent_memories if "summary" in m.get("tags", [])]
+        summary_memories = [m for m in agent_memories.records if "summary" in m.tags]
         assert len(summary_memories) > 0
 
 
@@ -544,8 +544,9 @@ class TestIntegrationScenarios:
         assert len(agent_memories) < 25
 
         # High priority memories should be preserved (first 3)
+        # Note: get_all() returns dicts with string priority values
         high_priority_count = sum(
-            1 for m in agent_memories if m["priority"] >= MemoryPriority.HIGH.value
+            1 for m in agent_memories if m.get("priority") in ["high", "critical"]
         )
         assert high_priority_count == 3  # Should preserve all high priority ones
 

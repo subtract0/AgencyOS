@@ -12,7 +12,7 @@ import os
 import re
 import json
 import subprocess
-from typing import List, Dict, Any, Optional
+from typing import List, Dict, Any, Optional, cast
 from shared.type_definitions.json import JSONValue
 from datetime import datetime, timedelta
 import logging
@@ -37,7 +37,7 @@ class GitHubPatternExtractor(BasePatternExtractor):
         super().__init__("github", confidence_threshold)
         self.repo_path = os.path.abspath(repo_path)
 
-    def extract_patterns(self, days_back: int = 90, **kwargs) -> List[CodingPattern]:
+    def extract_patterns(self, days_back: int = 90, **kwargs: Any) -> List[CodingPattern]:
         """
         Extract patterns from GitHub repository history.
 
@@ -47,7 +47,7 @@ class GitHubPatternExtractor(BasePatternExtractor):
         Returns:
             List of discovered patterns
         """
-        patterns = []
+        patterns: List[CodingPattern] = []
 
         try:
             # Verify we're in a git repository
@@ -83,7 +83,7 @@ class GitHubPatternExtractor(BasePatternExtractor):
 
     def _extract_commit_patterns(self, days_back: int) -> List[CodingPattern]:
         """Extract patterns from commit messages and changes."""
-        patterns = []
+        patterns: List[CodingPattern] = []
 
         try:
             # Get commits with their stats
@@ -114,7 +114,7 @@ class GitHubPatternExtractor(BasePatternExtractor):
 
     def _extract_fix_patterns(self, days_back: int) -> List[CodingPattern]:
         """Extract patterns from bug fix commits."""
-        patterns = []
+        patterns: List[CodingPattern] = []
 
         try:
             # Get commits that mention fixes
@@ -162,7 +162,7 @@ class GitHubPatternExtractor(BasePatternExtractor):
 
     def _extract_refactoring_patterns(self, days_back: int) -> List[CodingPattern]:
         """Extract patterns from refactoring commits."""
-        patterns = []
+        patterns: List[CodingPattern] = []
 
         try:
             # Get commits that mention refactoring
@@ -209,7 +209,7 @@ class GitHubPatternExtractor(BasePatternExtractor):
 
     def _extract_feature_patterns(self, days_back: int) -> List[CodingPattern]:
         """Extract patterns from feature implementation commits."""
-        patterns = []
+        patterns: List[CodingPattern] = []
 
         try:
             # Get commits that mention features
@@ -256,8 +256,8 @@ class GitHubPatternExtractor(BasePatternExtractor):
 
     def _parse_git_log_output(self, output: str) -> List[Dict[str, JSONValue]]:
         """Parse git log output into structured data."""
-        commits = []
-        current_commit = None
+        commits: List[Dict[str, JSONValue]] = []
+        current_commit: Optional[Dict[str, JSONValue]] = None
 
         for line in output.split('\n'):
             if '|' in line and len(line.split('|')) == 4:
@@ -271,7 +271,7 @@ class GitHubPatternExtractor(BasePatternExtractor):
                     'message': parts[1],
                     'author': parts[2],
                     'date': parts[3],
-                    'files_changed': [],
+                    'files_changed': cast(JSONValue, []),
                     'total_insertions': 0,
                     'total_deletions': 0
                 }
@@ -283,13 +283,15 @@ class GitHubPatternExtractor(BasePatternExtractor):
                     deletions = int(parts[1]) if parts[1].isdigit() else 0
                     filename = parts[2]
 
-                    current_commit['files_changed'].append({
-                        'filename': filename,
-                        'insertions': insertions,
-                        'deletions': deletions
-                    })
-                    current_commit['total_insertions'] += insertions
-                    current_commit['total_deletions'] += deletions
+                    if isinstance(current_commit['files_changed'], list):
+                        current_commit['files_changed'].append(cast(JSONValue, {
+                            'filename': filename,
+                            'insertions': insertions,
+                            'deletions': deletions
+                        }))
+                    if isinstance(current_commit['total_insertions'], int) and isinstance(current_commit['total_deletions'], int):
+                        current_commit['total_insertions'] += insertions
+                        current_commit['total_deletions'] += deletions
 
         if current_commit:
             commits.append(current_commit)
@@ -298,14 +300,14 @@ class GitHubPatternExtractor(BasePatternExtractor):
 
     def _analyze_commit_frequency_patterns(self, commits: List[Dict[str, JSONValue]]) -> List[CodingPattern]:
         """Analyze commit frequency patterns."""
-        patterns = []
+        patterns: List[CodingPattern] = []
 
         if len(commits) < 10:
             return patterns
 
         # Calculate average commits per day
         if commits:
-            dates = [commit['date'][:10] for commit in commits]  # Extract date part
+            dates = [str(commit['date'])[:10] if isinstance(commit['date'], str) else "" for commit in commits]  # Extract date part
             unique_dates = set(dates)
             avg_commits_per_day = len(commits) / len(unique_dates)
 
@@ -344,13 +346,24 @@ class GitHubPatternExtractor(BasePatternExtractor):
 
     def _analyze_commit_size_patterns(self, commits: List[Dict[str, JSONValue]]) -> List[CodingPattern]:
         """Analyze commit size patterns."""
-        patterns = []
+        patterns: List[CodingPattern] = []
 
         if not commits:
             return patterns
 
         # Calculate commit sizes
-        commit_sizes = [commit['total_insertions'] + commit['total_deletions'] for commit in commits]
+        commit_sizes = []
+        for commit in commits:
+            insertions = commit.get('total_insertions', 0)
+            deletions = commit.get('total_deletions', 0)
+            if isinstance(insertions, (int, float)) and isinstance(deletions, (int, float)):
+                commit_sizes.append(int(insertions) + int(deletions))
+            else:
+                commit_sizes.append(0)
+
+        if not commit_sizes:
+            return patterns
+
         avg_size = sum(commit_sizes) / len(commit_sizes)
 
         if avg_size < 100:  # Small commit pattern
@@ -414,9 +427,9 @@ class GitHubPatternExtractor(BasePatternExtractor):
             )
 
             solution = SolutionApproach(
-                approach=fix_approach.get("approach", "Code fix with testing"),
-                implementation=fix_approach.get("implementation", "Identify issue, implement fix, validate"),
-                tools=fix_approach.get("tools", ["git", "testing"]),
+                approach=str(fix_approach.get("approach", "Code fix with testing")),
+                implementation=str(fix_approach.get("implementation", "Identify issue, implement fix, validate")),
+                tools=cast(List[str], fix_approach.get("tools", ["git", "testing"])),
                 reasoning="Resolve issue while maintaining system stability"
             )
 
@@ -573,23 +586,25 @@ class GitHubPatternExtractor(BasePatternExtractor):
 
     def _analyze_fix_approach(self, diff_output: str, message: str) -> Dict[str, JSONValue]:
         """Analyze the approach used in a fix."""
+        tools_list = ["git", "editor"]
         approach_data = {
             "approach": "Code modification to resolve issue",
             "implementation": "Direct code changes",
-            "tools": ["git", "editor"]
+            "tools": cast(JSONValue, tools_list)
         }
 
         # Look for test-related changes
         if "test" in diff_output.lower():
-            approach_data["tools"].append("testing")
+            tools_list.append("testing")
             approach_data["implementation"] = "Code changes with test validation"
 
         # Look for configuration changes
         if any(ext in diff_output for ext in [".json", ".yaml", ".yml", ".conf"]):
-            approach_data["tools"].append("configuration")
+            tools_list.append("configuration")
 
         # Look for dependency changes
         if any(file in diff_output for file in ["requirements.txt", "package.json", "Cargo.toml"]):
-            approach_data["tools"].append("dependency_management")
+            tools_list.append("dependency_management")
 
+        approach_data["tools"] = cast(JSONValue, tools_list)
         return approach_data

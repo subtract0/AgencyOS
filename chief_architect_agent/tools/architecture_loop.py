@@ -54,7 +54,9 @@ class RunArchitectureLoop(BaseTool):  # type: ignore[misc]
             methods = {name for name, _ in inspect.getmembers(vs_mod.VectorStore, inspect.isfunction)}
 
             if "search" not in methods:
-                mismatches["issues"].append("VectorStore missing .search API used by LearningAgent")
+                issues_list = mismatches["issues"]
+                if isinstance(issues_list, list):
+                    issues_list.append("VectorStore missing .search API used by LearningAgent")
 
             try:
                 from learning_agent.tools.store_knowledge import StoreKnowledge  # noqa: F401
@@ -68,10 +70,14 @@ class RunArchitectureLoop(BaseTool):  # type: ignore[misc]
         return mismatches
 
     def _choose_high_impact_target(self, findings: Dict[str, JSONValue]) -> Dict[str, str]:
-        issues = findings.get("api_mismatches", {}).get("issues", [])
-        if any("VectorStore" in i for i in issues):
-            return {
-                "title": "Harmonize VectorStore API with LearningAgent",
-                "reason": "Unblocks continuous learning pipeline and prevents recurring integration errors",
-            }
+        api_mismatches = findings.get("api_mismatches", {})
+        if isinstance(api_mismatches, dict):
+            issues = api_mismatches.get("issues", [])
+            if isinstance(issues, list):
+                vectorstore_issues = [str(i) for i in issues if isinstance(i, str) and "VectorStore" in i]
+                if vectorstore_issues:
+                    return {
+                        "title": "Harmonize VectorStore API with LearningAgent",
+                        "reason": "Unblocks continuous learning pipeline and prevents recurring integration errors",
+                    }
         return {"title": "Improve test coverage", "reason": "Default fallback"}

@@ -5,7 +5,7 @@ import os
 import re
 from dataclasses import dataclass
 from datetime import datetime, timedelta, timezone
-from typing import Any, Dict, Iterable, List, Optional
+from typing import Any, Dict, Iterable, List, Optional, cast
 from shared.type_definitions.json import JSONValue
 
 # Public type alias for compatibility with prior stub
@@ -126,22 +126,39 @@ def _estimate_cost(usage: Dict[str, JSONValue], model: Optional[str], pricing: D
     try:
         if not usage:
             return 0.0
-        prompt = float(usage.get("prompt_tokens") or 0)
-        completion = float(usage.get("completion_tokens") or 0)
-        total = float(usage.get("total_tokens") or (prompt + completion))
+
+        # Type guard for prompt_tokens
+        prompt_tokens_value = usage.get("prompt_tokens") or 0
+        prompt = float(prompt_tokens_value) if isinstance(prompt_tokens_value, (int, float)) else 0.0
+
+        # Type guard for completion_tokens
+        completion_tokens_value = usage.get("completion_tokens") or 0
+        completion = float(completion_tokens_value) if isinstance(completion_tokens_value, (int, float)) else 0.0
+
+        # Type guard for total_tokens
+        total_tokens_value = usage.get("total_tokens") or (prompt + completion)
+        total = float(total_tokens_value) if isinstance(total_tokens_value, (int, float)) else (prompt + completion)
         price = 0.0
         if model and model in pricing:
             entry = pricing[model]
             if isinstance(entry, dict):
-                p_prompt = float(entry.get("prompt", entry.get("price_per_1k_tokens", 0.0)) or 0.0)
-                p_completion = float(entry.get("completion", entry.get("price_per_1k_tokens", 0.0)) or 0.0)
+                # Type guards for pricing values
+                prompt_price_value = entry.get("prompt", entry.get("price_per_1k_tokens", 0.0)) or 0.0
+                p_prompt = float(prompt_price_value) if isinstance(prompt_price_value, (int, float)) else 0.0
+
+                completion_price_value = entry.get("completion", entry.get("price_per_1k_tokens", 0.0)) or 0.0
+                p_completion = float(completion_price_value) if isinstance(completion_price_value, (int, float)) else 0.0
+
                 if "prompt_tokens" in usage or "completion_tokens" in usage:
                     price = (prompt / 1000.0) * p_prompt + (completion / 1000.0) * p_completion
                 else:
-                    price = (total / 1000.0) * float(entry.get("price_per_1k_tokens", 0.0))
+                    per_1k_value = entry.get("price_per_1k_tokens", 0.0)
+                    per_1k_price = float(per_1k_value) if isinstance(per_1k_value, (int, float)) else 0.0
+                    price = (total / 1000.0) * per_1k_price
             else:
-                # flat price per 1k tokens
-                price = (total / 1000.0) * float(entry)
+                # flat price per 1k tokens - type guard for entry
+                entry_price = float(entry) if isinstance(entry, (int, float)) else 0.0
+                price = (total / 1000.0) * entry_price
         return round(price, 6)
     except Exception:
         return 0.0
@@ -186,33 +203,58 @@ def aggregate(
 
         total_events += 1
         evt_type = evt.get("type")
-        agent = evt.get("agent") or "unknown"
-        task_id = evt.get("id") or "unknown"
-        if agent:
+        agent_value = evt.get("agent") or "unknown"
+        agent = str(agent_value) if isinstance(agent_value, str) else "unknown"
+        task_id_value = evt.get("id") or "unknown"
+        task_id = str(task_id_value) if isinstance(task_id_value, str) else "unknown"
+        if agent and agent != "unknown":
             agents.add(agent)
 
         if evt_type == "task_started":
             tasks_started += 1
-            last_start_by_id[task_id] = _Start(
-                ts=evt["_ts_dt"],
-                agent=agent,
-                attempt=int(evt.get("attempt", 1) or 1),
-                started_at=evt.get("started_at"),
-            )
+            # Type guard for attempt
+            attempt_value = evt.get("attempt", 1) or 1
+            attempt = int(attempt_value) if isinstance(attempt_value, (int, float)) else 1
+
+            # Type guard for started_at
+            started_at_value = evt.get("started_at")
+            started_at = float(started_at_value) if isinstance(started_at_value, (int, float)) else None
+
+            # Type guard for _ts_dt (added during event loading)
+            ts_dt_value = evt.get("_ts_dt")
+            if isinstance(ts_dt_value, datetime):
+                last_start_by_id[task_id] = _Start(
+                    ts=ts_dt_value,
+                    agent=agent,
+                    attempt=attempt,
+                    started_at=started_at,
+                )
         elif evt_type == "task_finished":
             tasks_finished += 1
             status = str(evt.get("status", "")).lower()
             if status in recent_results:
                 recent_results[status] += 1
-            last_finish_ts_by_id[task_id] = evt["_ts_dt"]
+            # Type guard for _ts_dt
+            ts_dt_value = evt.get("_ts_dt")
+            if isinstance(ts_dt_value, datetime):
+                last_finish_ts_by_id[task_id] = ts_dt_value
 
             # Usage / model -> cost
-            usage = evt.get("usage")
-            model = evt.get("model")
+            usage_value = evt.get("usage")
+            usage = usage_value if isinstance(usage_value, dict) else {}
+            model_value = evt.get("model")
+            model = str(model_value) if isinstance(model_value, str) else None
             try:
-                p = int((usage or {}).get("prompt_tokens") or 0)
-                c = int((usage or {}).get("completion_tokens") or 0)
-                t = int((usage or {}).get("total_tokens") or (p + c))
+                # Type guards for token counts
+                prompt_tokens_value = usage.get("prompt_tokens") or 0
+                p = int(prompt_tokens_value) if isinstance(prompt_tokens_value, (int, float)) else 0
+
+                completion_tokens_value = usage.get("completion_tokens") or 0
+                c = int(completion_tokens_value) if isinstance(completion_tokens_value, (int, float)) else 0
+
+                # Type guard for total_tokens
+                total_tokens_value = usage.get("total_tokens") or (p + c)
+                t = int(total_tokens_value) if isinstance(total_tokens_value, (int, float)) else (p + c)
             except Exception:
                 p = c = t = 0
             if t:
@@ -221,20 +263,54 @@ def aggregate(
             total_usd += usd
 
             # by agent
-            if agent:
+            if agent and agent != "unknown":
                 agg = by_agent.setdefault(agent, {"tokens": 0, "usd": 0.0})
-                agg["tokens"] += t
-                agg["usd"] += usd
+                if "tokens" in agg:
+                    tokens_val = agg["tokens"]
+                    if isinstance(tokens_val, (int, float)):
+                        agg["tokens"] = int(tokens_val) + t
+                    else:
+                        agg["tokens"] = t
+                else:
+                    agg["tokens"] = t
+
+                if "usd" in agg:
+                    usd_val = agg["usd"]
+                    if isinstance(usd_val, (int, float)):
+                        agg["usd"] = float(usd_val) + usd
+                    else:
+                        agg["usd"] = usd
+                else:
+                    agg["usd"] = usd
             # by model
             if model:
                 aggm = by_model.setdefault(model, {"tokens": 0, "usd": 0.0})
-                aggm["tokens"] += t
-                aggm["usd"] += usd
+                if "tokens" in aggm:
+                    tokens_val = aggm["tokens"]
+                    if isinstance(tokens_val, (int, float)):
+                        aggm["tokens"] = int(tokens_val) + t
+                    else:
+                        aggm["tokens"] = t
+                else:
+                    aggm["tokens"] = t
+
+                if "usd" in aggm:
+                    usd_val = aggm["usd"]
+                    if isinstance(usd_val, (int, float)):
+                        aggm["usd"] = float(usd_val) + usd
+                    else:
+                        aggm["usd"] = usd
+                else:
+                    aggm["usd"] = usd
         elif evt_type == "heartbeat":
-            last_hb_ts_by_id[task_id] = evt["_ts_dt"]
+            # Type guard for _ts_dt
+            ts_dt_value = evt.get("_ts_dt")
+            if isinstance(ts_dt_value, datetime):
+                last_hb_ts_by_id[task_id] = ts_dt_value
         elif evt_type == "orchestrator_started":
             try:
-                mc = int(evt.get("max_concurrency")) if evt.get("max_concurrency") is not None else None
+                mc_value = evt.get("max_concurrency")
+                mc = int(mc_value) if isinstance(mc_value, (int, float)) and mc_value is not None else None
             except Exception:
                 mc = None
             if mc:
@@ -259,7 +335,12 @@ def aggregate(
                 "last_heartbeat_age_s": hb_age,
             })
 
-    running_all.sort(key=lambda x: x["age_s"], reverse=True)
+    # Type guard for sorting
+    def get_age_s(x: Dict[str, JSONValue]) -> float:
+        age_val = x.get("age_s", 0.0)
+        return float(age_val) if isinstance(age_val, (int, float)) else 0.0
+
+    running_all.sort(key=get_age_s, reverse=True)
     running = running_all[:10]
 
     # Bottleneck heuristics thresholds
@@ -269,7 +350,8 @@ def aggregate(
 
     slow_tasks = [
         {"id": r["id"], "agent": r["agent"], "age_s": r["age_s"]}
-        for r in running_all if r["age_s"] >= age_thresh
+        for r in running_all
+        if isinstance(r.get("age_s"), (int, float)) and isinstance(r["age_s"], (int, float)) and float(r["age_s"]) >= age_thresh
     ][:10]
     retry_heavy = [
         {"id": tid, "agent": s.agent, "attempt": s.attempt}
@@ -290,8 +372,20 @@ def aggregate(
     costs = {
         "total_tokens": total_tokens,
         "total_usd": round(total_usd, 6),
-        "by_agent": {k: {"tokens": v["tokens"], "usd": round(v["usd"], 6)} for k, v in by_agent.items()},
-        "by_model": {k: {"tokens": v["tokens"], "usd": round(v["usd"], 6)} for k, v in by_model.items()},
+        "by_agent": {
+            k: {
+                "tokens": v.get("tokens", 0) if isinstance(v.get("tokens"), (int, float)) else 0,
+                "usd": round(cast(float, v.get("usd")) if isinstance(v.get("usd"), (int, float)) else 0.0, 6)
+            }
+            for k, v in by_agent.items()
+        },
+        "by_model": {
+            k: {
+                "tokens": v.get("tokens", 0) if isinstance(v.get("tokens"), (int, float)) else 0,
+                "usd": round(cast(float, v.get("usd")) if isinstance(v.get("usd"), (int, float)) else 0.0, 6)
+            }
+            for k, v in by_model.items()
+        },
     }
 
     # Error rate & spike
@@ -306,7 +400,7 @@ def aggregate(
     summary = {
         "running_tasks": running,
         "recent_results": recent_results,
-        "agents_active": sorted(agents),
+        "agents_active": list(sorted(agents)),
         "resources": resources,
         "costs": costs,
         "bottlenecks": bottlenecks,
@@ -322,7 +416,7 @@ def aggregate(
         },
     }
 
-    return summary
+    return cast(Dict[str, JSONValue], summary)
 
 
 def list_events(
@@ -369,10 +463,15 @@ def list_events(
 # Backward-compatible stub retained for any callers using aggregate_basic
 
 def aggregate_basic(events: Iterable[Event]) -> Dict[str, JSONValue]:
-    counts: Dict[str, int] = {}
+    counts: Dict[str, JSONValue] = {}
     total = 0
     for ev in events:
         total += 1
-        t = ev.get("type", "?")
-        counts[t] = counts.get(t, 0) + 1
+        t_value = ev.get("type", "?")
+        t = str(t_value) if isinstance(t_value, str) else "?"
+        current_count = counts.get(t, 0)
+        if isinstance(current_count, (int, float)):
+            counts[t] = int(current_count) + 1
+        else:
+            counts[t] = 1
     return {"total_events": total, "by_type": counts}

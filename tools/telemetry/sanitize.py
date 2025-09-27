@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import copy
 import re
-from typing import Any, Dict
+from typing import Any, Dict, cast
 from shared.type_definitions.json import JSONValue
 from shared.models.telemetry import TelemetryEvent
 
@@ -105,7 +105,7 @@ def redact_telemetry_event(event: TelemetryEvent) -> TelemetryEvent:
         tool_name=event.tool_name,
         duration_ms=event.duration_ms,
         success=event.success,
-        error_message=redacted_dict.get('error_message'),
-        metadata=redacted_dict.get('metadata', {}),
+        error_message=cast(str, redacted_dict.get('error_message')) if isinstance(redacted_dict.get('error_message'), str) else None,
+        metadata=cast(Dict[str, JSONValue], redacted_dict.get('metadata')) if isinstance(redacted_dict.get('metadata'), dict) else {},
         tags=event.tags
     )

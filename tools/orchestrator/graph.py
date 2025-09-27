@@ -2,11 +2,13 @@ from __future__ import annotations
 
 import dataclasses
 from collections import defaultdict, deque
-from typing import Dict, List, Set, Tuple
+from typing import Dict, List, Set, Tuple, cast
 
 from shared.agent_context import AgentContext  # type: ignore
 
 from .scheduler import OrchestrationPolicy, OrchestrationResult, TaskResult, TaskSpec
+from shared.models.orchestrator import ExecutionMetrics
+from shared.type_definitions.json import JSONValue
 from .scheduler import run_parallel as _run_parallel
 
 
@@ -48,8 +50,9 @@ async def run_graph(ctx: AgentContext, graph: TaskGraph, policy: OrchestrationPo
         # (MVP does not auto-skip; policy can extend this)
     # Aggregate metrics (MVP: wall_time approximated by sum of levels)
     # In practice, _run_parallel returns times; a richer aggregator can be added later.
-    merged = {"summary": "dag_executed", "levels": len(levels)}
-    return OrchestrationResult(tasks=list(all_results.values()), metrics={}, merged=merged)
+    merged: Dict[str, JSONValue] = {"summary": "dag_executed", "levels": len(levels)}
+    metrics = ExecutionMetrics(wall_time=0.0, tasks=len(all_results), additional={})
+    return OrchestrationResult(tasks=list(all_results.values()), metrics=metrics, merged=merged)
 
 
 def _levels(graph: TaskGraph) -> List[List[str]]:

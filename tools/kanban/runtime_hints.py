@@ -9,13 +9,13 @@ Applies environment-level hint actions from LearningHintRegistry in a conservati
 from __future__ import annotations
 
 import os
-from typing import Any, Dict, List, Tuple
+from typing import Any, Dict, List, Tuple, MutableMapping
 from shared.type_definitions.json import JSONValue
 
 from .hints import LearningHintRegistry, Hint
 
 
-def _apply_env(env: ConfigData, key: str, value: str) -> Tuple[str, str, str]:
+def _apply_env(env: MutableMapping[str, str], key: str, value: str) -> Tuple[str, str, str]:
     """Apply env var with support for *_APPEND convention."""
     if key.endswith("_APPEND"):
         base = key[:-7]
@@ -30,7 +30,7 @@ def _apply_env(env: ConfigData, key: str, value: str) -> Tuple[str, str, str]:
         return (key, "kept", env[key])
 
 
-def apply_env_hints_from_registry(registry: LearningHintRegistry, env: ConfigData | None = None) -> List[dict[str, JSONValue]]:
+def apply_env_hints_from_registry(registry: LearningHintRegistry, env: MutableMapping[str, str] | None = None) -> List[Dict[str, JSONValue]]:
     env = env if env is not None else os.environ
     min_conf = float(os.getenv("RUNTIME_HINTS_MIN_CONF", "0.5"))
     applied: List[dict[str, JSONValue]] = []

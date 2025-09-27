@@ -7,11 +7,60 @@ that enables semantic search, application, and continuous improvement.
 """
 
 from dataclasses import dataclass, field
-from typing import Any, Dict, List, Optional, Union
+from typing import Any, Dict, List, Optional, Union, cast
 from shared.type_definitions.json import JSONValue
 from datetime import datetime
 import hashlib
 import json
+
+
+def _safe_get_str(data: JSONValue, key: str, default: str = "") -> str:
+    """Safely extract string from JSONValue dict with type checking."""
+    if isinstance(data, dict) and key in data:
+        value = data[key]
+        if isinstance(value, str):
+            return value
+    return default
+
+
+def _safe_get_list(data: JSONValue, key: str, default: Optional[List[str]] = None) -> List[str]:
+    """Safely extract list of strings from JSONValue dict with type checking."""
+    if default is None:
+        default = []
+    if isinstance(data, dict) and key in data:
+        value = data[key]
+        if isinstance(value, list):
+            return [str(item) for item in value if isinstance(item, str)]
+    return default
+
+
+def _safe_get_float(data: JSONValue, key: str, default: float = 0.0) -> float:
+    """Safely extract float from JSONValue dict with type checking."""
+    if isinstance(data, dict) and key in data:
+        value = data[key]
+        if isinstance(value, (int, float)):
+            return float(value)
+    return default
+
+
+def _safe_get_int(data: JSONValue, key: str, default: int = 0) -> int:
+    """Safely extract int from JSONValue dict with type checking."""
+    if isinstance(data, dict) and key in data:
+        value = data[key]
+        if isinstance(value, int):
+            return value
+        elif isinstance(value, float):
+            return int(value)
+    return default
+
+
+def _safe_get_optional_str(data: JSONValue, key: str) -> Optional[str]:
+    """Safely extract optional string from JSONValue dict with type checking."""
+    if isinstance(data, dict) and key in data:
+        value = data[key]
+        if isinstance(value, str):
+            return value
+    return None
 
 
 @dataclass
@@ -155,19 +204,19 @@ class CodingPattern:
             "context": {
                 "description": self.context.description,
                 "domain": self.context.domain,
-                "constraints": self.context.constraints,
-                "symptoms": self.context.symptoms,
+                "constraints": cast(JSONValue, self.context.constraints),
+                "symptoms": cast(JSONValue, self.context.symptoms),
                 "scale": self.context.scale,
                 "urgency": self.context.urgency,
             },
             "solution": {
                 "approach": self.solution.approach,
                 "implementation": self.solution.implementation,
-                "tools": self.solution.tools,
+                "tools": cast(JSONValue, self.solution.tools),
                 "reasoning": self.solution.reasoning,
-                "code_examples": self.solution.code_examples,
-                "dependencies": self.solution.dependencies,
-                "alternatives": self.solution.alternatives,
+                "code_examples": cast(JSONValue, self.solution.code_examples),
+                "dependencies": cast(JSONValue, self.solution.dependencies),
+                "alternatives": cast(JSONValue, self.solution.alternatives),
             },
             "outcome": {
                 "success_rate": self.outcome.success_rate,
@@ -188,8 +237,8 @@ class CodingPattern:
                 "last_applied": self.metadata.last_applied,
                 "application_count": self.metadata.application_count,
                 "validation_status": self.metadata.validation_status,
-                "tags": self.metadata.tags,
-                "related_patterns": self.metadata.related_patterns,
+                "tags": cast(JSONValue, self.metadata.tags),
+                "related_patterns": cast(JSONValue, self.metadata.related_patterns),
             },
             "searchable_text": self.to_searchable_text(),
         }
@@ -197,51 +246,52 @@ class CodingPattern:
     @classmethod
     def from_dict(cls, data: Dict[str, JSONValue]) -> "CodingPattern":
         """Create CodingPattern from dictionary."""
-        context_data = data["context"]
-        solution_data = data["solution"]
-        outcome_data = data["outcome"]
-        metadata_data = data["metadata"]
+        # Safely extract nested dicts with type checking
+        context_data = data.get("context", {})
+        solution_data = data.get("solution", {})
+        outcome_data = data.get("outcome", {})
+        metadata_data = data.get("metadata", {})
 
         context = ProblemContext(
-            description=context_data["description"],
-            domain=context_data["domain"],
-            constraints=context_data.get("constraints", []),
-            symptoms=context_data.get("symptoms", []),
-            scale=context_data.get("scale"),
-            urgency=context_data.get("urgency"),
+            description=_safe_get_str(context_data, "description"),
+            domain=_safe_get_str(context_data, "domain"),
+            constraints=_safe_get_list(context_data, "constraints"),
+            symptoms=_safe_get_list(context_data, "symptoms"),
+            scale=_safe_get_optional_str(context_data, "scale"),
+            urgency=_safe_get_optional_str(context_data, "urgency"),
         )
 
         solution = SolutionApproach(
-            approach=solution_data["approach"],
-            implementation=solution_data["implementation"],
-            tools=solution_data.get("tools", []),
-            reasoning=solution_data.get("reasoning", ""),
-            code_examples=solution_data.get("code_examples", []),
-            dependencies=solution_data.get("dependencies", []),
-            alternatives=solution_data.get("alternatives", []),
+            approach=_safe_get_str(solution_data, "approach"),
+            implementation=_safe_get_str(solution_data, "implementation"),
+            tools=_safe_get_list(solution_data, "tools"),
+            reasoning=_safe_get_str(solution_data, "reasoning"),
+            code_examples=_safe_get_list(solution_data, "code_examples"),
+            dependencies=_safe_get_list(solution_data, "dependencies"),
+            alternatives=_safe_get_list(solution_data, "alternatives"),
         )
 
         outcome = EffectivenessMetric(
-            success_rate=outcome_data["success_rate"],
-            performance_impact=outcome_data.get("performance_impact"),
-            maintainability_impact=outcome_data.get("maintainability_impact"),
-            user_impact=outcome_data.get("user_impact"),
-            technical_debt=outcome_data.get("technical_debt"),
-            adoption_rate=outcome_data.get("adoption_rate", 0),
-            longevity=outcome_data.get("longevity"),
-            confidence=outcome_data.get("confidence", 0.5),
+            success_rate=_safe_get_float(outcome_data, "success_rate"),
+            performance_impact=_safe_get_optional_str(outcome_data, "performance_impact"),
+            maintainability_impact=_safe_get_optional_str(outcome_data, "maintainability_impact"),
+            user_impact=_safe_get_optional_str(outcome_data, "user_impact"),
+            technical_debt=_safe_get_optional_str(outcome_data, "technical_debt"),
+            adoption_rate=_safe_get_int(outcome_data, "adoption_rate", 0),
+            longevity=_safe_get_optional_str(outcome_data, "longevity"),
+            confidence=_safe_get_float(outcome_data, "confidence", 0.5),
         )
 
         metadata = PatternMetadata(
-            pattern_id=metadata_data["pattern_id"],
-            discovered_timestamp=metadata_data["discovered_timestamp"],
-            source=metadata_data["source"],
-            discoverer=metadata_data.get("discoverer", "pattern_extractor"),
-            last_applied=metadata_data.get("last_applied"),
-            application_count=metadata_data.get("application_count", 0),
-            validation_status=metadata_data.get("validation_status", "unvalidated"),
-            tags=metadata_data.get("tags", []),
-            related_patterns=metadata_data.get("related_patterns", []),
+            pattern_id=_safe_get_str(metadata_data, "pattern_id"),
+            discovered_timestamp=_safe_get_str(metadata_data, "discovered_timestamp"),
+            source=_safe_get_str(metadata_data, "source"),
+            discoverer=_safe_get_str(metadata_data, "discoverer", "pattern_extractor"),
+            last_applied=_safe_get_optional_str(metadata_data, "last_applied"),
+            application_count=_safe_get_int(metadata_data, "application_count", 0),
+            validation_status=_safe_get_str(metadata_data, "validation_status", "unvalidated"),
+            tags=_safe_get_list(metadata_data, "tags"),
+            related_patterns=_safe_get_list(metadata_data, "related_patterns"),
         )
 
         return cls(context=context, solution=solution, outcome=outcome, metadata=metadata)

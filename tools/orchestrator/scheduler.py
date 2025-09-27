@@ -8,7 +8,7 @@ import time
 import contextlib
 import uuid
 from datetime import datetime, timezone
-from typing import Any, Callable, Dict, List, Literal, Optional
+from typing import Any, Callable, Dict, List, Literal, Optional, cast
 from shared.type_definitions.json import JSONValue
 from shared.models.orchestrator import ExecutionMetrics
 
@@ -212,12 +212,14 @@ class _Scheduler:
                         usage = artifacts.get("usage")
                         model = artifacts.get("model")
                         # Some agents may nest response under 'response' or 'data'
-                        if usage is None and isinstance(artifacts.get("response"), dict):
-                            usage = artifacts["response"].get("usage")
-                            model = artifacts["response"].get("model", model)
-                        if usage is None and isinstance(artifacts.get("data"), dict):
-                            usage = artifacts["data"].get("usage")
-                            model = artifacts["data"].get("model", model)
+                        response_data = artifacts.get("response")
+                        if usage is None and isinstance(response_data, dict):
+                            usage = response_data.get("usage")
+                            model = response_data.get("model", model)
+                        data_data = artifacts.get("data")
+                        if usage is None and isinstance(data_data, dict):
+                            usage = data_data.get("usage")
+                            model = data_data.get("model", model)
 
                     ev: Dict[str, JSONValue] = {
                         "type": "task_finished",
@@ -285,7 +287,7 @@ class _Scheduler:
                                 "started_at": started,
                                 "finished_at": finished,
                                 "duration_s": max(0.0, finished - started),
-                                "errors": errors,
+                                "errors": cast(JSONValue, errors),
                             }
                         )
                         return TaskResult(
