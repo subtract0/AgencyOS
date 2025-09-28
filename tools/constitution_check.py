@@ -403,16 +403,103 @@ class ConstitutionalEnforcer:
 
         print("\n" + "="*60)
 
-    def attempt_fixes(self, report: ComplianceReport) -> int:
+    def check_compliance(self) -> ComplianceReport:
+        """Alias for run_full_check for backward compatibility."""
+        return self.run_full_check()
+
+    def _fix_missing_docstring(self, file_path: str, line_number: int, func_name: str) -> bool:
+        """Attempt to fix missing docstring for a function."""
+        try:
+            with open(file_path, 'r') as f:
+                lines = f.readlines()
+
+            # Insert a basic docstring after the function definition
+            if line_number <= len(lines):
+                indent = '    '  # Basic indentation
+                docstring = f'{indent}"""TODO: Add docstring for {func_name}."""\n'
+                lines.insert(line_number, docstring)
+
+                with open(file_path, 'w') as f:
+                    f.writelines(lines)
+
+                if self.verbose:
+                    print(f"Added docstring for {func_name} in {file_path}")
+                return True
+        except Exception as e:
+            if self.verbose:
+                print(f"Failed to fix docstring in {file_path}: {e}")
+
+        return False
+
+    def generate_report(self, report: ComplianceReport, format: str = "text") -> str:
+        """Generate a report in the specified format."""
+        if format == "text":
+            output = []
+            output.append("Constitutional Compliance Report")
+            output.append("=" * 40)
+            output.append(f"Timestamp: {report.timestamp}")
+            output.append(f"Overall Compliance: {report.overall_compliance}")
+            output.append(f"Compliance Percentage: {report.compliance_percentage:.1f}%")
+            output.append("")
+
+            for article, checked in report.articles_checked.items():
+                output.append(f"{article}: {'✓' if checked else '✗'}")
+
+            output.append("")
+            output.append("Violations:")
+            for violation in report.violations:
+                output.append(f"- {violation.description}")
+
+            return "\n".join(output)
+
+        elif format == "json":
+            import json
+            return json.dumps({
+                "timestamp": report.timestamp.isoformat(),
+                "overall_compliance": report.overall_compliance,
+                "compliance_percentage": report.compliance_percentage,
+                "articles_checked": report.articles_checked,
+                "violations": [
+                    {
+                        "article": v.article,
+                        "severity": v.severity,
+                        "description": v.description,
+                        "file_path": v.file_path,
+                        "line_number": v.line_number,
+                        "suggested_fix": v.suggested_fix
+                    }
+                    for v in report.violations
+                ]
+            }, indent=2)
+
+        else:
+            raise ValueError(f"Unsupported format: {format}")
+
+    def attempt_fixes(self, report: ComplianceReport = None) -> int:
         """Attempt to automatically fix violations where possible."""
         fixed_count = 0
 
-        for violation in report.violations:
+        # Use violations from report if provided, otherwise use instance violations
+        violations = report.violations if report else self.violations
+
+        for violation in violations:
             if violation.severity == "critical":
                 continue  # Don't auto-fix critical issues
 
+            # Fix missing docstrings
+            if "docstring" in violation.description.lower() and violation.file_path and violation.line_number:
+                # Extract function name from description
+                func_name = "unknown_function"
+                if "'" in violation.description:
+                    parts = violation.description.split("'")
+                    if len(parts) >= 2:
+                        func_name = parts[1]
+
+                if self._fix_missing_docstring(violation.file_path, violation.line_number, func_name):
+                    fixed_count += 1
+
             # Example: Auto-create missing directories
-            if "directory not found" in violation.description.lower():
+            elif "directory not found" in violation.description.lower():
                 if violation.file_path:
                     path = Path(violation.file_path)
                     if not path.exists():
