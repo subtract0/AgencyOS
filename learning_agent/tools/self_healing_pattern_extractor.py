@@ -3,6 +3,7 @@
 Self-Healing Pattern Extraction Tool for LearningAgent.
 
 Extracts successful patterns and strategies from self-healing system actions.
+Now outputs unified CodingPattern format for the Infinite Intelligence Amplifier.
 """
 from agency_swarm.tools import BaseTool
 from pydantic import Field
@@ -27,6 +28,14 @@ from shared.models.patterns import (
     PatternType,
     ValidationStatus,
     EventStatus
+)
+# Import the unified CodingPattern format
+from pattern_intelligence.coding_pattern import (
+    CodingPattern,
+    ProblemContext,
+    SolutionApproach,
+    EffectivenessMetric,
+    PatternMetadata
 )
 
 logger = logging.getLogger(__name__)
@@ -81,7 +90,7 @@ class SelfHealingPatternExtractor(BaseTool):  # mypy: disable-error-code="misc"
                     "sources_checked": data_collection.sources_checked
                 }, indent=2)
 
-            # Extract patterns
+            # Extract patterns (now returns CodingPattern objects)
             patterns = self._extract_successful_patterns(data_collection)
 
             # Score and validate patterns
@@ -93,6 +102,19 @@ class SelfHealingPatternExtractor(BaseTool):  # mypy: disable-error-code="misc"
             # Create learning objects
             learning_objects = self._create_learning_objects(validated_patterns, insights)
 
+            # Support both formats during transition
+            legacy_patterns = []
+            coding_patterns = []
+            for p in validated_patterns:
+                if isinstance(p, CodingPattern):
+                    coding_patterns.append(p.to_dict())
+                    # Also create legacy format for backward compatibility
+                    legacy_patterns.append(HealingPattern.from_coding_pattern(p).model_dump())
+                elif isinstance(p, HealingPattern):
+                    legacy_patterns.append(p.model_dump())
+                    # Convert to new format
+                    coding_patterns.append(p.to_coding_pattern().to_dict())
+
             result = {
                 "extraction_timestamp": datetime.now().isoformat(),
                 "time_window": self.time_window,
@@ -103,7 +125,8 @@ class SelfHealingPatternExtractor(BaseTool):  # mypy: disable-error-code="misc"
                     "success_rate": data_collection.success_rate
                 },
                 "patterns_found": len(validated_patterns),
-                "patterns": [p.model_dump() for p in validated_patterns],
+                "patterns": legacy_patterns,  # Legacy format for compatibility
+                "coding_patterns": coding_patterns,  # New unified format
                 "insights": insights,
                 "learning_objects": [lo.model_dump() for lo in learning_objects],
                 "recommendations": self._generate_recommendations(validated_patterns)
@@ -179,7 +202,7 @@ class SelfHealingPatternExtractor(BaseTool):  # mypy: disable-error-code="misc"
                     timestamp = datetime.fromisoformat(timestamp_value.replace('Z', '+00:00'))
                 else:
                     timestamp = timestamp_value if isinstance(timestamp_value, datetime) else datetime.now()
-            except:
+            except (ValueError, TypeError) as e:
                 timestamp = datetime.now()
         else:
             timestamp = datetime.now()
@@ -316,7 +339,7 @@ class SelfHealingPatternExtractor(BaseTool):  # mypy: disable-error-code="misc"
                                 event = ensure_dict(parsed_event)
                                 if self._is_self_healing_event(event, time_boundary):
                                     events.append(event)
-                        except:
+                        except (json.JSONDecodeError, ValueError, KeyError) as e:
                             # Parse as structured log
                             event = self._parse_structured_log_line(line, time_boundary)
                             if event:
@@ -341,7 +364,7 @@ class SelfHealingPatternExtractor(BaseTool):  # mypy: disable-error-code="misc"
                         if timestamp < time_boundary:
                             return None
                         break
-                    except:
+                    except (ValueError, TypeError) as e:
                         continue
 
             # Extract key information
@@ -377,7 +400,15 @@ class SelfHealingPatternExtractor(BaseTool):  # mypy: disable-error-code="misc"
 
             return event
 
-        except Exception:
+        except (AttributeError, IndexError, ValueError) as e:
+            import logging
+            logger = logging.getLogger(__name__)
+            logger.warning(f"Failed to parse self-healing event from line: {e}")
+            return None
+        except Exception as e:
+            import logging
+            logger = logging.getLogger(__name__)
+            logger.error(f"Unexpected error parsing self-healing event: {e}")
             return None
 
     def _extract_healing_from_session(self, filepath: str) -> List[Dict[str, JSONValue]]:
@@ -417,7 +448,7 @@ class SelfHealingPatternExtractor(BaseTool):  # mypy: disable-error-code="misc"
                 timestamp = datetime.fromisoformat(timestamp_str.replace('Z', '+00:00'))
                 if timestamp < time_boundary:
                     return False
-            except:
+            except (ValueError, TypeError) as e:
                 pass
 
         # Check if it's self-healing related
@@ -440,9 +471,9 @@ class SelfHealingPatternExtractor(BaseTool):  # mypy: disable-error-code="misc"
 
         return any(indicator in content for indicator in success_indicators)
 
-    def _extract_successful_patterns(self, data_collection: DataCollectionSummary) -> List[HealingPattern]:
-        """Extract patterns from successful self-healing events."""
-        patterns: List[HealingPattern] = []
+    def _extract_successful_patterns(self, data_collection: DataCollectionSummary) -> List[CodingPattern]:
+        """Extract patterns from successful self-healing events - now returns CodingPattern objects."""
+        patterns: List[CodingPattern] = []
         events = data_collection.events
         successful_events = [e for e in events if self._is_successful_structured_event(e)]
 
@@ -467,8 +498,8 @@ class SelfHealingPatternExtractor(BaseTool):  # mypy: disable-error-code="misc"
 
         return patterns
 
-    def _extract_trigger_action_patterns(self, events: List[SelfHealingEvent]) -> List[HealingPattern]:
-        """Extract trigger-action correlation patterns."""
+    def _extract_trigger_action_patterns(self, events: List[SelfHealingEvent]) -> List[CodingPattern]:
+        """Extract trigger-action correlation patterns - now returns CodingPattern."""
         patterns = []
 
         # Group by trigger type and action type
@@ -491,23 +522,59 @@ class SelfHealingPatternExtractor(BaseTool):  # mypy: disable-error-code="misc"
                 success_rate = len(combo_events) / len(events)  # Relative success
 
                 if success_rate >= self.success_threshold:
-                    patterns.append(HealingPattern(
-                        pattern_id=f'trigger_action_{trigger}_{action}',
-                        pattern_type=PatternType.TRIGGER_ACTION,
-                        trigger=trigger,
-                        action=action,
-                        occurrences=len(combo_events),
+                    # Create CodingPattern instead of HealingPattern
+                    context = ProblemContext(
+                        description=f"Self-healing trigger '{trigger}' detected",
+                        domain="self_healing",
+                        constraints=[],
+                        symptoms=[trigger],
+                        scale=f"{len(combo_events)} occurrences",
+                        urgency="high" if success_rate > 0.9 else "medium"
+                    )
+
+                    solution = SolutionApproach(
+                        approach=f"Execute action '{action}' in response to trigger",
+                        implementation=f"When '{trigger}' is detected, automatically execute '{action}'",
+                        tools=["self_healing_system"],
+                        reasoning=f"This trigger-action pair has {success_rate:.1%} success rate",
+                        code_examples=[],
+                        dependencies=[],
+                        alternatives=[]
+                    )
+
+                    outcome = EffectivenessMetric(
                         success_rate=success_rate,
-                        confidence=min(0.9, len(combo_events) / 10),
-                        description=f'Trigger "{trigger}" successfully resolved by action "{action}"',
-                        evidence=[e.model_dump() for e in combo_events[:3]],  # Sample evidence
-                        effectiveness_score=success_rate * min(1.0, len(combo_events) / self.min_occurrences),
-                        validation_status=ValidationStatus.PENDING
+                        performance_impact=None,
+                        maintainability_impact="Reduces manual intervention",
+                        user_impact="Automatic issue resolution",
+                        technical_debt=None,
+                        adoption_rate=len(combo_events),
+                        longevity=None,
+                        confidence=self.pattern_confidence
+                    )
+
+                    metadata = PatternMetadata(
+                        pattern_id=f'trigger_action_{trigger}_{action}',
+                        discovered_timestamp=datetime.now().isoformat(),
+                        source="self_healing:trigger_action",
+                        discoverer="self_healing_pattern_extractor",
+                        last_applied=None,
+                        application_count=len(combo_events),
+                        validation_status="validated" if success_rate > 0.8 else "unvalidated",
+                        tags=["trigger_action", "self_healing", trigger, action],
+                        related_patterns=[]
+                    )
+
+                    patterns.append(CodingPattern(
+                        context=context,
+                        solution=solution,
+                        outcome=outcome,
+                        metadata=metadata
                     ))
 
         return patterns
 
-    def _extract_context_patterns(self, events: List[SelfHealingEvent]) -> List[HealingPattern]:
+    def _extract_context_patterns(self, events: List[SelfHealingEvent]) -> List[CodingPattern]:
         """Extract context-based success patterns."""
         patterns = []
 
@@ -537,22 +604,59 @@ class SelfHealingPatternExtractor(BaseTool):  # mypy: disable-error-code="misc"
                 success_rate = len(context_events) / len(events)
 
                 if success_rate >= self.success_threshold:
-                    patterns.append(HealingPattern(
-                        pattern_id=f'context_{context.replace(":", "_")}',
-                        pattern_type=PatternType.CONTEXT,
-                        context=context,
-                        occurrences=len(context_events),
+                    # Create CodingPattern for context pattern
+                    problem_context = ProblemContext(
+                        description=f"Issues in context: {context}",
+                        domain="self_healing_context",
+                        constraints=[],
+                        symptoms=[context],
+                        scale=f"{len(context_events)} occurrences",
+                        urgency="medium"
+                    )
+
+                    solution = SolutionApproach(
+                        approach=f"Context-aware resolution for {context}",
+                        implementation=f"Apply context-specific handling when in {context}",
+                        tools=["self_healing_system"],
+                        reasoning=f"This context has {success_rate:.1%} success rate",
+                        code_examples=[],
+                        dependencies=[],
+                        alternatives=[]
+                    )
+
+                    outcome = EffectivenessMetric(
                         success_rate=success_rate,
-                        confidence=min(0.8, len(context_events) / 8),
-                        description=f'Successful resolution in context: {context}',
-                        evidence=[e.model_dump() for e in context_events[:2]],
-                        effectiveness_score=success_rate * min(1.0, len(context_events) / self.min_occurrences),
-                        validation_status=ValidationStatus.PENDING
+                        performance_impact=None,
+                        maintainability_impact="Context-aware issue resolution",
+                        user_impact=None,
+                        technical_debt=None,
+                        adoption_rate=len(context_events),
+                        longevity=None,
+                        confidence=min(0.8, len(context_events) / 8)
+                    )
+
+                    metadata = PatternMetadata(
+                        pattern_id=f'context_{context.replace(":", "_")}',
+                        discovered_timestamp=datetime.now().isoformat(),
+                        source="self_healing:context",
+                        discoverer="self_healing_pattern_extractor",
+                        last_applied=None,
+                        application_count=len(context_events),
+                        validation_status="validated" if success_rate > 0.8 else "unvalidated",
+                        tags=["context_pattern", "self_healing", context],
+                        related_patterns=[]
+                    )
+
+                    patterns.append(CodingPattern(
+                        context=problem_context,
+                        solution=solution,
+                        outcome=outcome,
+                        metadata=metadata
                     ))
 
         return patterns
 
-    def _extract_timing_patterns(self, events: List[SelfHealingEvent]) -> List[HealingPattern]:
+    def _extract_timing_patterns(self, events: List[SelfHealingEvent]) -> List[CodingPattern]:
         """Extract timing-based patterns."""
         patterns = []
 
@@ -575,7 +679,7 @@ class SelfHealingPatternExtractor(BaseTool):  # mypy: disable-error-code="misc"
                     time_period = 'night'
 
                 time_groups[time_period].append(event)
-            except:
+            except (AttributeError, TypeError) as e:
                 continue
 
         # Analyze time patterns
@@ -598,7 +702,7 @@ class SelfHealingPatternExtractor(BaseTool):  # mypy: disable-error-code="misc"
 
         return patterns
 
-    def _extract_sequence_patterns(self, events: List[SelfHealingEvent]) -> List[HealingPattern]:
+    def _extract_sequence_patterns(self, events: List[SelfHealingEvent]) -> List[CodingPattern]:
         """Extract sequential action patterns."""
         patterns = []
 
@@ -625,7 +729,7 @@ class SelfHealingPatternExtractor(BaseTool):  # mypy: disable-error-code="misc"
                             'events': [sorted_events[i], sorted_events[i+1]],
                             'time_gap': (next_time - current_time).total_seconds()
                         })
-            except:
+            except (AttributeError, TypeError, IndexError) as e:
                 continue
 
         # Find common sequences
@@ -652,7 +756,7 @@ class SelfHealingPatternExtractor(BaseTool):  # mypy: disable-error-code="misc"
 
         return patterns
 
-    def _validate_patterns(self, patterns: List[HealingPattern], data_collection: DataCollectionSummary) -> List[HealingPattern]:
+    def _validate_patterns(self, patterns: List[CodingPattern], data_collection: DataCollectionSummary) -> List[CodingPattern]:
         """Validate and score patterns based on confidence and effectiveness."""
         validated_patterns = []
 
@@ -676,7 +780,7 @@ class SelfHealingPatternExtractor(BaseTool):  # mypy: disable-error-code="misc"
 
         return validated_patterns
 
-    def _generate_actionable_insights(self, patterns: List[HealingPattern]) -> List[Dict[str, JSONValue]]:
+    def _generate_actionable_insights(self, patterns: List[CodingPattern]) -> List[Dict[str, JSONValue]]:
         """Generate actionable insights from validated patterns."""
         insights = []
 
@@ -745,7 +849,7 @@ class SelfHealingPatternExtractor(BaseTool):  # mypy: disable-error-code="misc"
 
         return insights
 
-    def _create_learning_objects(self, patterns: List[HealingPattern], insights: List[Dict[str, JSONValue]]) -> List[LearningObject]:
+    def _create_learning_objects(self, patterns: List[CodingPattern], insights: List[Dict[str, JSONValue]]) -> List[LearningObject]:
         """Create structured learning objects for VectorStore storage."""
         learning_objects = []
 
@@ -850,7 +954,7 @@ class SelfHealingPatternExtractor(BaseTool):  # mypy: disable-error-code="misc"
 
         return criteria
 
-    def _generate_recommendations(self, patterns: List[HealingPattern]) -> List[Dict[str, JSONValue]]:
+    def _generate_recommendations(self, patterns: List[CodingPattern]) -> List[Dict[str, JSONValue]]:
         """Generate specific recommendations based on patterns."""
         recommendations = []
 

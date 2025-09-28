@@ -7,7 +7,7 @@ See MCP_INTEGRATION_STANDARDS.md for detailed specifications.
 """
 
 from datetime import datetime
-from typing import Any, Dict, List, Optional, cast
+from typing import Dict, List, Optional, cast, Union
 from shared.type_definitions.json import JSONValue
 from abc import ABC, abstractmethod
 import os
@@ -26,7 +26,7 @@ class MemoryStore(ABC):
     """
 
     @abstractmethod
-    def store(self, key: str, content: Any, tags: List[str]) -> None:
+    def store(self, key: str, content: JSONValue, tags: List[str]) -> None:
         """Store content with key, tags, and automatic timestamp.
 
         Implements MCP tool pattern for memory operations.
@@ -63,7 +63,7 @@ class InMemoryStore(MemoryStore):
             "InMemoryStore initialized - data will not persist between sessions"
         )
 
-    def store(self, key: str, content: Any, tags: List[str]) -> None:
+    def store(self, key: str, content: JSONValue, tags: List[str]) -> None:
         """Store content with timestamp and tags.
 
         Implements MCP-compatible memory storage with structured metadata.
@@ -147,7 +147,7 @@ class Memory:
         """Initialize with store backend. Defaults to InMemoryStore."""
         self._store = store or InMemoryStore()
 
-    def store(self, key: str, content: Any, tags: Optional[List[str]] = None) -> None:
+    def store(self, key: str, content: JSONValue, tags: Optional[List[str]] = None) -> None:
         """Store content with key and optional tags."""
         tags = tags or []  # Default to empty list if not provided
         self._store.store(key, content, tags)
@@ -157,7 +157,7 @@ class Memory:
         result = self._store.search(tags)
         # Handle both MemorySearchResult and direct list returns
         if hasattr(result, 'records'):
-            return [cast(Dict[str, JSONValue], record.to_dict()) for record in result.records]
+            return [record.to_dict() for record in result.records]
         else:
             # Already a list of dictionaries
             return cast(List[Dict[str, JSONValue]], result)
@@ -166,7 +166,7 @@ class Memory:
         """Get a specific memory by key."""
         if hasattr(self._store, 'get'):
             record = self._store.get(key)
-            return cast(Dict[str, JSONValue], record.to_dict()) if record else None
+            return record.to_dict() if record else None
         # Fallback: search all and find by key
         all_memories = self.get_all()
         for memory in all_memories:
@@ -179,13 +179,13 @@ class Memory:
         result = self._store.get_all()
         # Handle both MemorySearchResult and direct list returns
         if hasattr(result, 'records'):
-            return [cast(Dict[str, JSONValue], record.to_dict()) for record in result.records]
+            return [record.to_dict() for record in result.records]
         else:
             # Already a list of dictionaries
             return cast(List[Dict[str, JSONValue]], result)
 
 
-def create_session_transcript(memories: List[dict[str, JSONValue]], session_id: str) -> str:
+def create_session_transcript(memories: List[Dict[str, JSONValue]], session_id: str) -> str:
     """
     Create a markdown session transcript from memories.
 

@@ -35,53 +35,98 @@ class RegenerateWithGpt5(Tool):
 
     def run(self) -> str:
         try:
-            bundle_text = ""
-            if self.bundle_path and os.path.exists(self.bundle_path):
-                try:
-                    with open(self.bundle_path, "r", encoding="utf-8") as f:
-                        # Limit read to avoid token blowup
-                        bundle_text = f.read(120000)
-                except Exception as e:
-                    bundle_text = f"(failed to read bundle at {self.bundle_path}: {e})"
-
-            sys_prompt = (
-                "You are generating a concise, listener-friendly audio summary for TTS. Include what was done, why it matters, and 1–3 next steps."
-            )
-            user_payload = {
-                "task": "Regenerate audio summary at high quality",
-                "draft_summary": self.draft,
-                "bundle_excerpt": bundle_text[:60000] if bundle_text else "",
-                "extra_guidance": self.guidance or "",
-            }
-            messages = [
-                {"role": "system", "content": sys_prompt},
-                {"role": "user", "content": json.dumps(user_payload)},
-            ]
-
-            # Call GPT-5 with high reasoning; litellm will pass through extra fields
-            resp = litellm.completion(
-                model="gpt-5",
-                messages=messages,
-                extra_body={"reasoning": {"effort": "high"}},
-            )
-            # Extract content robustly across response shapes
-            content = None
-            try:
-                # litellm often returns an object with .choices
-                choices = getattr(resp, "choices", None) or resp.get("choices")  # type: ignore
-                if choices and len(choices) > 0:
-                    first = choices[0]
-                    msg = getattr(first, "message", None) or first.get("message")  # type: ignore
-                    if msg:
-                        content = getattr(msg, "content", None) or msg.get("content")  # type: ignore
-            except Exception:
-                pass
-
-            if not content:
-                content = str(resp)
+            bundle_text = self._load_bundle_content()
+            messages = self._prepare_gpt5_messages(bundle_text)
+            resp = self._call_gpt5_with_reasoning(messages)
+            content = self._extract_response_content(resp)
+            self._emit_telemetry_event()
             return content
         except Exception as e:
             return f"Escalation failed: {e}"
+
+    def _load_bundle_content(self) -> str:
+        """Load and return bundle content if path exists."""
+        if not self.bundle_path or not os.path.exists(self.bundle_path):
+            return ""
+
+        try:
+            with open(self.bundle_path, "r", encoding="utf-8") as f:
+                return f.read(120000)  # Limit read to avoid token blowup
+        except Exception as e:
+            return f"(failed to read bundle at {self.bundle_path}: {e})"
+
+    def _prepare_gpt5_messages(self, bundle_text: str) -> list:
+        """Prepare messages for GPT-5 API call."""
+        sys_prompt = (
+            "You are generating a concise, listener-friendly audio summary for TTS. Include what was done, why it matters, and 1–3 next steps."
+        )
+        user_payload = {
+            "task": "Regenerate audio summary at high quality",
+            "draft_summary": self.draft,
+            "bundle_excerpt": bundle_text[:60000] if bundle_text else "",
+            "extra_guidance": self.guidance or "",
+        }
+        return [
+            {"role": "system", "content": sys_prompt},
+            {"role": "user", "content": json.dumps(user_payload)},
+        ]
+
+    def _call_gpt5_with_reasoning(self, messages: list):
+        """Call GPT-5 with high reasoning effort."""
+        return litellm.completion(
+            model="gpt-5",
+            messages=messages,
+            extra_body={"reasoning": {"effort": "high"}},
+        )
+
+    def _extract_response_content(self, resp) -> str:
+        """Extract content from GPT-5 response robustly."""
+        content = None
+        try:
+            choices = getattr(resp, "choices", None) or resp.get("choices")  # type: ignore
+            if choices and len(choices) > 0:
+                first = choices[0]
+                msg = getattr(first, "message", None) or first.get("message")  # type: ignore
+                if msg:
+                    content = getattr(msg, "content", None) or msg.get("content")  # type: ignore
+        except Exception:
+            pass
+
+        return content if content else str(resp)
+
+    def _emit_telemetry_event(self) -> None:
+        """Emit telemetry event for escalation usage."""
+        try:
+            from tools.orchestrator.scheduler import _telemetry_emit  # type: ignore
+            _telemetry_emit({
+                "type": "escalation_used",
+                "agent": "WorkCompletionSummaryAgent",
+                "tool": "RegenerateWithGpt5",
+                "bundle_present": bool(self.bundle_path),
+            })
+        except Exception:
+            self._fallback_telemetry_write()
+
+    def _fallback_telemetry_write(self) -> None:
+        """Fallback telemetry writing when main telemetry fails."""
+        try:
+            import json as _json, os as _os
+            from datetime import datetime, timezone
+            base = os.path.join(os.getcwd(), "logs", "telemetry")
+            os.makedirs(base, exist_ok=True)
+            ts = datetime.now(timezone.utc)
+            fname = os.path.join(base, f"events-{ts:%Y%m%d}.jsonl")
+            ev = {
+                "ts": ts.isoformat(timespec="milliseconds").replace("+00:00", "Z"),
+                "type": "escalation_used",
+                "agent": "WorkCompletionSummaryAgent",
+                "tool": "RegenerateWithGpt5",
+                "bundle_present": bool(self.bundle_path),
+            }
+            with open(fname, "a", encoding="utf-8") as f:
+                f.write(_json.dumps(ev) + "\n")
+        except Exception:
+            pass
 
 
 def create_work_completion_summary_agent(

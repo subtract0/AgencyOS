@@ -163,7 +163,7 @@ class TestAutoNoneTypeFixer:
     @patch('tools.auto_fix_nonetype.Read')
     def test_handles_file_read_error(self, mock_read):
         """Should handle file reading errors gracefully."""
-        mock_read.side_effect = Exception("File not found")
+        mock_read.return_value.run.side_effect = FileNotFoundError("File not found")
 
         # Use an error message that will be detected
         error_message = "AttributeError: 'NoneType' object has no attribute 'value'"

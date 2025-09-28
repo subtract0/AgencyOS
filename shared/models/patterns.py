@@ -1,6 +1,9 @@
 """
 Pattern learning and extraction Pydantic models for Agency OS.
 Replaces Dict[str, Any] in learning agent tools and self-healing systems.
+
+NOTE: HealingPattern is being migrated to CodingPattern format.
+New code should use pattern_intelligence.CodingPattern.
 """
 
 from datetime import datetime, timedelta
@@ -8,6 +11,10 @@ from typing import Dict, List, Optional, Literal, Union
 from shared.type_definitions.json import JSONValue
 from pydantic import BaseModel, Field, field_validator
 from enum import Enum
+import warnings
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 class PatternType(str, Enum):
@@ -62,7 +69,12 @@ class SessionInsight(BaseModel):
 
 
 class HealingPattern(BaseModel):
-    """Self-healing pattern definition."""
+    """
+    Self-healing pattern definition.
+
+    NOTE: This class is maintained for compatibility but new code
+    should use pattern_intelligence.CodingPattern instead.
+    """
     pattern_id: str
     pattern_type: PatternType
     trigger: Optional[str] = None
@@ -81,6 +93,67 @@ class HealingPattern(BaseModel):
 
     class Config:
         extra = "forbid"
+
+    def to_coding_pattern(self):
+        """
+        Convert this HealingPattern to the unified CodingPattern format.
+
+        Returns:
+            CodingPattern: The converted pattern in the new format.
+        """
+        from pattern_intelligence.migration import healing_pattern_to_coding_pattern
+        return healing_pattern_to_coding_pattern(self)
+
+    @classmethod
+    def from_coding_pattern(cls, coding_pattern):
+        """
+        Create a HealingPattern from a CodingPattern for backward compatibility.
+
+        Args:
+            coding_pattern: A CodingPattern instance
+
+        Returns:
+            HealingPattern: Compatible representation
+        """
+        # Extract relevant fields from CodingPattern
+        trigger = coding_pattern.context.symptoms[0] if coding_pattern.context.symptoms else None
+        action = coding_pattern.solution.approach
+
+        # Map pattern type from domain
+        pattern_type_map = {
+            "self_healing": PatternType.GENERAL,
+            "trigger_action": PatternType.TRIGGER_ACTION,
+            "context": PatternType.CONTEXT,
+            "timing": PatternType.TIMING,
+            "sequence": PatternType.SEQUENCE
+        }
+        pattern_type = pattern_type_map.get(coding_pattern.context.domain, PatternType.GENERAL)
+
+        # Map validation status
+        validation_map = {
+            "validated": ValidationStatus.VALIDATED,
+            "unvalidated": ValidationStatus.PENDING,
+            "deprecated": ValidationStatus.FAILED
+        }
+        validation = validation_map.get(coding_pattern.metadata.validation_status, ValidationStatus.PENDING)
+
+        return cls(
+            pattern_id=coding_pattern.metadata.pattern_id,
+            pattern_type=pattern_type,
+            trigger=trigger,
+            action=action,
+            context=coding_pattern.context.description,
+            time_period=coding_pattern.outcome.longevity,
+            sequence=coding_pattern.solution.implementation,
+            occurrences=coding_pattern.outcome.adoption_rate,
+            success_rate=coding_pattern.outcome.success_rate,
+            confidence=coding_pattern.outcome.confidence,
+            overall_confidence=coding_pattern.outcome.confidence,
+            effectiveness_score=coding_pattern.outcome.effectiveness_score(),
+            description=coding_pattern.context.description,
+            evidence=[],  # Evidence not directly mapped
+            validation_status=validation
+        )
 
 
 class CrossSessionData(BaseModel):

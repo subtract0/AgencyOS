@@ -2,6 +2,7 @@ import pytest
 import json
 import tempfile
 import os
+from unittest.mock import Mock, patch, MagicMock
 
 from shared.agent_context import create_agent_context
 from toolsmith_agent import create_toolsmith_agent

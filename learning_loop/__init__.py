@@ -30,12 +30,13 @@ import logging
 from datetime import datetime, timedelta
 from typing import Dict, List, Optional, Any, Callable, cast
 from shared.type_definitions.json import JSONValue
+from shared.models.learning import OperationInfo
 from pathlib import Path
 import yaml  # type: ignore[import-untyped]
 
 # Core imports
 from core.self_healing import SelfHealingCore
-from core.patterns import UnifiedPatternStore, get_pattern_store
+from pattern_intelligence import PatternStore
 from core.telemetry import get_telemetry, emit
 from core import get_healing_core
 
@@ -100,7 +101,7 @@ class LearningLoop:
 
         # Initialize core components
         self.healing_core = get_healing_core()
-        self.pattern_store = get_pattern_store()
+        self.pattern_store = PatternStore()
 
         # Initialize learning loop components
         self.event_detection = EventDetectionSystem(
@@ -122,8 +123,8 @@ class LearningLoop:
         self.failure_count = 0
 
         # Operation tracking for learning
-        self._current_operations: Dict[str, Dict[str, Any]] = {}
-        self._completed_operations: List[Operation] = []
+        self._current_operations: Dict[str, OperationInfo] = {}
+        self._completed_operations: List[OperationInfo] = []
 
         # Background task management
         self._tasks: List[asyncio.Task[Any]] = []
@@ -230,8 +231,9 @@ class LearningLoop:
             })
 
             # Start event detection systems
-            config = cast(Dict[str, Any], self.config)
-            if cast(Dict[str, Any], cast(Dict[str, Any], config["learning"])["triggers"])["file_watch"]:
+            learning_config = cast(Dict[str, JSONValue], self.config.get("learning", {}))
+            triggers_config = cast(Dict[str, JSONValue], learning_config.get("triggers", {}))
+            if cast(bool, triggers_config.get("file_watch", False)):
                 self.event_detection.start()
                 emit("event_detection_started", {})
 
@@ -244,7 +246,7 @@ class LearningLoop:
 
             emit("learning_loop_started", {
                 "start_time": self.start_time.isoformat() if self.start_time else "unknown",
-                "enabled_triggers": cast(Dict[str, Any], cast(Dict[str, Any], config["learning"])["triggers"])
+                "enabled_triggers": triggers_config
             })
 
         except Exception as e:
@@ -482,7 +484,7 @@ class LearningLoop:
             raise RuntimeError("SelfHealingCore not available")
 
         if not self.pattern_store:
-            raise RuntimeError("UnifiedPatternStore not available")
+            raise RuntimeError("PatternStore not available")
 
         # Check configuration
         if not self.config["learning"]["enabled"]:

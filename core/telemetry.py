@@ -112,13 +112,19 @@ class SimpleTelemetry:
                 # Ensure file perms are correct (first creation enforces; chmod guards re-creation)
                 try:
                     _os.chmod(self.current_file, 0o600)
-                except Exception:
-                    pass
+                except OSError as e:
+                    import logging
+                    logger = logging.getLogger(__name__)
+                    logger.warning(f"Failed to set file permissions for telemetry: {e}")
             except Exception:
                 # Ensure the descriptor is closed on failure
                 try:
                     _os.close(fd)
-                except Exception:
+                except OSError as e:
+                    import logging
+                    logger = logging.getLogger(__name__)
+                    logger.error(f"Failed to close file descriptor during telemetry error: {e}")
+                    # Re-raise original exception, not the cleanup failure
                     pass
                 raise
         except Exception as e:

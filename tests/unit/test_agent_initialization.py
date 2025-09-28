@@ -95,7 +95,8 @@ class TestAgentInitialization:
                  patch('agency_code_agent.agency_code_agent.Agent') as mock_agent_class, \
                  patch('agency_code_agent.agency_code_agent.get_model_instance') as mock_model:
 
-                mock_settings.return_value = {"temperature": 0.7, "reasoning_effort": effort}
+                from agents.model_settings import ModelSettings
+                mock_settings.return_value = ModelSettings(temperature=0.7)
                 mock_model.return_value = "gpt-5-mini"
 
                 create_agency_code_agent(

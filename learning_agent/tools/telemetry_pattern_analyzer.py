@@ -380,7 +380,7 @@ class TelemetryPatternAnalyzer(BaseTool):  # mypy: disable-error-code="misc"
                 if is_str(ts):
                     dt = datetime.fromisoformat(ts.replace('Z', '+00:00'))
                     datetimes.append(dt)
-            except:
+            except (ValueError, TypeError) as e:
                 continue
 
         if len(datetimes) < 2:

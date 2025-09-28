@@ -175,10 +175,10 @@ class TestTypeGuards:
 
     def test_type_guard_for_optional_values(self):
         """Test type guards for Optional types."""
-        optional_value: Optional[Dict[str, Any]] = {"key": "value"}
+        optional_value: Optional[Dict[str, JSONValue]] = {"key": "value"}
 
         if optional_value is not None:
-            # After the guard, optional_value is Dict[str, Any]
+            # After the guard, optional_value is Dict[str, JSONValue]
             assert "key" in optional_value
             assert optional_value["key"] == "value"
 

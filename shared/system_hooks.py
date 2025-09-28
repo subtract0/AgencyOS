@@ -1,4 +1,4 @@
-from typing import Optional, List
+from typing import Optional, List, Protocol, runtime_checkable
 import logging
 import os
 from datetime import datetime
@@ -6,6 +6,11 @@ from datetime import datetime
 from agents import AgentHooks, RunContextWrapper
 from agency_memory import create_session_transcript
 from .agent_context import AgentContext, create_agent_context
+from .models.core import (
+    AgentInfo, ToolInfo, HookParameters, SessionEvent, HandoffEvent,
+    ToolEvent, ToolResultEvent, ToolErrorEvent, CodeBundleInfo,
+    FileSnapshot, SnapshotManifest, ToolProtocol, AgentProtocol
+)
 
 logger = logging.getLogger(__name__)
 
@@ -107,11 +112,15 @@ class MemoryIntegrationHook(AgentHooks):
             self.session_start_time = timestamp
 
             # Store session start event
-            metadata = {
-                "agent_type": type(agent).__name__ if agent else "unknown",
-                "timestamp": timestamp,
-                "context_id": getattr(context, 'id', 'unknown') if context else 'unknown'
-            }
+            agent_info = AgentInfo(
+                agent_type=type(agent).__name__ if agent else "unknown",
+                agent_name=getattr(agent, 'name', None)
+            )
+            metadata = SessionEvent(
+                timestamp=timestamp,
+                agent_info=agent_info,
+                context_id=getattr(context, 'id', 'unknown') if context else 'unknown'
+            ).model_dump()
 
             key = f"session_start_{timestamp}"
             self.agent_context.store_memory(key, metadata, ["session", "start"])
@@ -126,12 +135,17 @@ class MemoryIntegrationHook(AgentHooks):
             timestamp = datetime.now().isoformat()
 
             # Store session end event
-            metadata = {
-                "agent_type": type(agent).__name__ if agent else "unknown",
-                "timestamp": timestamp,
-                "session_duration": self._calculate_session_duration(),
-                "output_summary": self._truncate_content(str(output) if output else "no output", 200)
-            }
+            agent_info = AgentInfo(
+                agent_type=type(agent).__name__ if agent else "unknown",
+                agent_name=getattr(agent, 'name', None)
+            )
+            metadata = SessionEvent(
+                timestamp=timestamp,
+                agent_info=agent_info,
+                context_id="unknown",
+                session_duration=self._calculate_session_duration(),
+                output_summary=self._truncate_content(str(output) if output else "no output", 200)
+            ).model_dump()
 
             key = f"session_end_{timestamp}"
             self.agent_context.store_memory(key, metadata, ["session", "end"])
@@ -168,11 +182,11 @@ class MemoryIntegrationHook(AgentHooks):
             if source_label == target_label and target_label == "TargetAgent":
                 source_label = "SourceAgent"
 
-            metadata = {
-                "target_agent": target_label,
-                "source_agent": source_label,
-                "timestamp": timestamp
-            }
+            metadata = HandoffEvent(
+                timestamp=timestamp,
+                target_agent=target_label,
+                source_agent=source_label
+            ).model_dump()
 
             key = f"handoff_{timestamp}"
             self.agent_context.store_memory(key, metadata, ["handoff", "agent_transfer"])
@@ -187,12 +201,19 @@ class MemoryIntegrationHook(AgentHooks):
             timestamp = datetime.now().isoformat()
             tool_name = getattr(tool, 'name', 'unknown_tool')
 
-            metadata = {
-                "tool_name": tool_name,
-                "timestamp": timestamp,
-                "agent_type": type(agent).__name__ if agent else "unknown",
-                "tool_parameters": self._safe_extract_tool_params(tool)
-            }
+            agent_info = AgentInfo(
+                agent_type=type(agent).__name__ if agent else "unknown",
+                agent_name=getattr(agent, 'name', None)
+            )
+            tool_info = ToolInfo(
+                tool_name=tool_name,
+                parameters=self._safe_extract_tool_params(tool)
+            )
+            metadata = ToolEvent(
+                timestamp=timestamp,
+                agent_info=agent_info,
+                tool_info=tool_info
+            ).model_dump()
 
             key = f"tool_call_{tool_name}_{timestamp}"
             self.agent_context.store_memory(key, metadata, ["tool", tool_name, "call"])
@@ -210,13 +231,20 @@ class MemoryIntegrationHook(AgentHooks):
             # Truncate large results
             truncated_result = self._truncate_content(result, 1000)
 
-            metadata = {
-                "tool_name": tool_name,
-                "timestamp": timestamp,
-                "agent_type": type(agent).__name__ if agent else "unknown",
-                "result": truncated_result,
-                "result_size": len(result) if result else 0
-            }
+            agent_info = AgentInfo(
+                agent_type=type(agent).__name__ if agent else "unknown",
+                agent_name=getattr(agent, 'name', None)
+            )
+            tool_info = ToolInfo(
+                tool_name=tool_name,
+                result_size=len(result) if result else 0
+            )
+            metadata = ToolResultEvent(
+                timestamp=timestamp,
+                agent_info=agent_info,
+                tool_info=tool_info,
+                result=truncated_result
+            ).model_dump()
 
             key = f"tool_result_{tool_name}_{timestamp}"
             self.agent_context.store_memory(key, metadata, ["tool", tool_name, "result"])
@@ -227,12 +255,17 @@ class MemoryIntegrationHook(AgentHooks):
 
             # Store error memory if tool execution failed
             try:
-                error_metadata = {
-                    "tool_name": tool_name,
-                    "timestamp": timestamp,
-                    "error": str(e),
-                    "agent_type": type(agent).__name__ if agent else "unknown"
-                }
+                agent_info = AgentInfo(
+                    agent_type=type(agent).__name__ if agent else "unknown",
+                    agent_name=getattr(agent, 'name', None)
+                )
+                tool_info = ToolInfo(tool_name=tool_name)
+                error_metadata = ToolErrorEvent(
+                    timestamp=timestamp,
+                    agent_info=agent_info,
+                    tool_info=tool_info,
+                    error=str(e)
+                ).model_dump()
 
                 error_key = f"tool_error_{tool_name}_{timestamp}"
                 self.agent_context.store_memory(error_key, error_metadata, ["error", tool_name])
@@ -250,7 +283,7 @@ class MemoryIntegrationHook(AgentHooks):
         # Memory integration hook doesn't need to process LLM responses
         pass
 
-    def _safe_extract_tool_params(self, tool) -> dict:
+    def _safe_extract_tool_params(self, tool) -> HookParameters:
         """Safely extract tool parameters without exposing sensitive data."""
         try:
             # Try to get parameters in a safe way
@@ -259,15 +292,27 @@ class MemoryIntegrationHook(AgentHooks):
                 if isinstance(params, dict):
                     # Filter out potentially sensitive information
                     safe_params = {}
+                    redacted_keys = []
                     for key, value in params.items():
                         if any(sensitive in key.lower() for sensitive in ['password', 'token', 'key', 'secret', 'auth', 'api_key']):
                             safe_params[key] = "[REDACTED]"
+                            redacted_keys.append(key)
                         else:
                             safe_params[key] = self._truncate_content(str(value), 100)
-                    return safe_params
-            return {"parameters": "not_available"}
+                    return HookParameters(
+                        parameters=safe_params,
+                        sensitive_keys_redacted=redacted_keys,
+                        extraction_status="success"
+                    )
+            return HookParameters(
+                parameters={"parameters": "not_available"},
+                extraction_status="not_available"
+            )
         except Exception:
-            return {"parameters": "extraction_failed"}
+            return HookParameters(
+                parameters={"parameters": "extraction_failed"},
+                extraction_status="extraction_failed"
+            )
 
     def _truncate_content(self, content: str, max_length: int) -> str:
         """Truncate content to specified length with indicator.
@@ -368,8 +413,16 @@ class CodeBundleAttachmentHook(AgentHooks):
                         s = str(item)
                         if s.strip():
                             parts.append(s)
-            except Exception:
-                pass
+            except (AttributeError, TypeError) as e:
+                import logging
+                logger = logging.getLogger(__name__)
+                logger.warning(f"Failed to process input items for bundle creation: {e}")
+                # Continue with empty parts list
+            except Exception as e:
+                import logging
+                logger = logging.getLogger(__name__)
+                logger.error(f"Unexpected error processing input items: {e}")
+                # Continue with empty parts list
 
             text = "\n\n".join(parts) if parts else "(no non-system input captured)"
             with open(bundle_path, "w", encoding="utf-8") as f:
@@ -712,7 +765,7 @@ def create_code_bundle_attachment_hook() -> AgentHooks:
 from .retry_controller import RetryController, ExponentialBackoffStrategy, CircuitBreaker
 import os
 import shutil
-from typing import Any
+from typing import Union
 
 
 class IntentRouterHook(AgentHooks):
@@ -788,7 +841,7 @@ class MutationSnapshotHook(AgentHooks):
         except Exception:
             return
 
-    def _extract_target_files(self, tool: Any) -> list:
+    def _extract_target_files(self, tool: Union[ToolProtocol, object, dict]) -> List[str]:
         paths = []
         # Common field
         fp = getattr(tool, "file_path", None)
@@ -818,7 +871,7 @@ class MutationSnapshotHook(AgentHooks):
                 continue
         return uniq
 
-    def _snapshot_files(self, files: list) -> None:
+    def _snapshot_files(self, files: List[str]) -> None:
         from datetime import datetime
         root = os.getcwd()
         base = os.path.join(root, "logs", "snapshots", datetime.utcnow().strftime("%Y%m%d_%H%M%S_%f"))

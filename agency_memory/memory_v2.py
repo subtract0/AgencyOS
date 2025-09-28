@@ -119,8 +119,8 @@ class EnhancedMemoryRecord:
         metadata_data = data.get("metadata", {})
         content_data = data.get("content", {})
         if isinstance(metadata_data, dict) and isinstance(content_data, dict):
-            metadata = MemoryMetadata(**cast(Dict[str, Any], metadata_data))
-            content = MemoryContent(**cast(Dict[str, Any], content_data))
+            metadata = MemoryMetadata(**cast(Dict[str, JSONValue], metadata_data))
+            content = MemoryContent(**cast(Dict[str, JSONValue], content_data))
         else:
             raise ValueError("Invalid metadata or content data")
         return cls(metadata=metadata, content=content)

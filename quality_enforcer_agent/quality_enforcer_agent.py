@@ -3,6 +3,10 @@ QualityEnforcerAgent - Simplified constitutional compliance and quality enforcem
 """
 
 import os
+import time
+import logging
+import subprocess
+from subprocess import TimeoutExpired
 from typing import Dict, List, Optional
 
 from agency_swarm import Agent
@@ -37,14 +41,14 @@ class ConstitutionalCheck(Tool):
     """Check code against constitutional requirements using LLM analysis."""
 
     code: str = Field(..., description="Code to check for constitutional compliance")
-    context: str = Field(default="", description="Additional context about the code")
+    code_context: str = Field(default="", description="Additional context about the code")
 
     def run(self) -> str:
         """Use LLM to check constitutional compliance."""
         return f"""Constitutional compliance check for provided code:
 
 ANALYSIS:
-- Article I (Complete Context): {'✓' if len(self.code) > 10 else '✗'} Context appears {'complete' if self.context else 'incomplete'}
+- Article I (Complete Context): {'✓' if len(self.code) > 10 else '✗'} Context appears {'complete' if self.code_context else 'incomplete'}
 - Article II (100% Verification): Requires test validation
 - Article III (Automated Enforcement): This check is automated
 - Article IV (Continuous Learning): Pattern should be stored for learning
@@ -88,7 +92,7 @@ NOTE: For comprehensive analysis, consider using GPT-5 with the prompt:
 """
 
 
-class TestValidator(Tool):
+class ValidatorTool(Tool):
     """Validate test coverage and success rate."""
 
     test_command: str = Field(default="python run_tests.py", description="Command to run tests")
@@ -96,14 +100,38 @@ class TestValidator(Tool):
     def run(self) -> str:
         """Check test status."""
         import subprocess
+        import shlex
 
         try:
-            result = subprocess.run(
-                ["source", ".venv/bin/activate", "&&", self.test_command],
-                shell=True,
-                capture_output=True,
-                text=True,
-                timeout=30
+            # Validate and sanitize the test command
+            if not self.test_command or not isinstance(self.test_command, str):
+                return "✗ Invalid test command provided"
+
+            # Split command safely and validate
+            try:
+                command_parts = shlex.split(self.test_command)
+            except ValueError as e:
+                return f"✗ Invalid command syntax: {e}"
+
+            # Basic validation - ensure it's a safe command
+            if not command_parts or command_parts[0] in ['rm', 'del', 'format', 'sudo', 'su']:
+                return "✗ Unsafe or empty command detected"
+
+            # Run in activated virtual environment safely
+            # Use explicit path to python and avoid shell interpretation
+            venv_python = ".venv/bin/python"
+            if os.path.exists(venv_python):
+                # If using python command, replace with venv python
+                if command_parts[0] == "python":
+                    command_parts[0] = venv_python
+                elif command_parts[0].startswith("python"):
+                    command_parts[0] = venv_python
+
+            # Constitutional timeout pattern implementation
+            result = self._run_with_constitutional_timeout(
+                command_parts,
+                initial_timeout_ms=30000,  # 30 seconds in milliseconds
+                max_retries=3
             )
 
             if result.returncode == 0:
@@ -113,6 +141,42 @@ class TestValidator(Tool):
 
         except Exception as e:
             return f"Test validation failed: {e}"
+
+    def _run_with_constitutional_timeout(self, command_parts, initial_timeout_ms=120000, max_retries=3):
+        """Run subprocess with constitutional timeout pattern: exponential backoff retries."""
+        timeout_ms = initial_timeout_ms
+
+        for attempt in range(max_retries):
+            timeout_sec = timeout_ms / 1000.0
+            try:
+                logging.info(f"Executing command (attempt {attempt + 1}/{max_retries}, timeout: {timeout_sec}s): {' '.join(command_parts[:3])}...")
+
+                result = subprocess.run(
+                    command_parts,
+                    shell=False,  # Security fix: disable shell interpretation
+                    capture_output=True,
+                    text=True,
+                    timeout=timeout_sec,
+                    cwd=os.getcwd()  # Explicit working directory
+                )
+
+                # Successful execution - return result
+                return result
+
+            except TimeoutExpired as e:
+                logging.warning(f"Command timed out after {timeout_sec}s on attempt {attempt + 1}")
+
+                if attempt < max_retries - 1:
+                    timeout_ms *= 2  # Double timeout for retry (exponential backoff)
+                    time.sleep(1)  # Brief pause before retry
+                    continue
+                else:
+                    # Final attempt failed - re-raise
+                    logging.error(f"Command failed after {max_retries} attempts with exponential timeout")
+                    raise
+
+        # Should never reach here, but just in case
+        raise Exception("Unable to obtain complete context after retries")
 
 
 class AutoFixSuggestion(Tool):
@@ -162,7 +226,7 @@ def create_quality_enforcer_agent(
     try:
         with open(instructions_file, "r") as f:
             instructions = f.read()
-    except:
+    except (FileNotFoundError, IOError, PermissionError) as e:
         instructions = """
 # QualityEnforcerAgent - Simplified Quality and Constitutional Enforcement
 
@@ -172,7 +236,7 @@ Maintain constitutional compliance and code quality through LLM-powered analysis
 ## Core Responsibilities
 1. **Constitutional Monitoring** - Check all 5 articles using ConstitutionalCheck tool
 2. **Quality Analysis** - Use QualityAnalysis tool for code review
-3. **Test Validation** - Ensure 100% test success rate using TestValidator
+3. **Test Validation** - Ensure 100% test success rate using ValidatorTool
 4. **Auto-Fix Suggestions** - Generate LLM-based fix recommendations using AutoFixSuggestion
 
 ## Key Principles
@@ -184,7 +248,7 @@ Maintain constitutional compliance and code quality through LLM-powered analysis
 ## Tools Available
 - ConstitutionalCheck: Verify constitutional compliance
 - QualityAnalysis: Analyze code quality
-- TestValidator: Check test status
+- ValidatorTool: Check test status
 - AutoFixSuggestion: Generate fix recommendations
 
 Use these tools to maintain quality while delegating complex analysis to LLM prompts.
@@ -204,7 +268,7 @@ Use these tools to maintain quality while delegating complex analysis to LLM pro
         name="QualityEnforcerAgent",
         description="Simplified constitutional compliance and quality enforcement agent",
         instructions=instructions,
-        tools=[ConstitutionalCheck, QualityAnalysis, TestValidator, AutoFixSuggestion,
+        tools=[ConstitutionalCheck, QualityAnalysis, ValidatorTool, AutoFixSuggestion,
                NoneTypeErrorDetector, LLMNoneTypeFixer, AutoNoneTypeFixer, SimpleNoneTypeMonitor,
                ApplyAndVerifyPatch, AutonomousHealingOrchestrator],
         model=model,

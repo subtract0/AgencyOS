@@ -2,6 +2,7 @@ import os
 import sys
 import time
 from pathlib import Path
+from unittest.mock import Mock
 
 import pytest
 from dotenv import load_dotenv
@@ -69,3 +70,23 @@ def temp_file_with_content(tmp_path):
     test_file = tmp_path / "test_file.txt"
     test_file.write_text("Hello World\nThis is a test file\nWith multiple lines")
     return test_file
+
+
+@pytest.fixture
+def mock_agent_context():
+    """Mock AgentContext for integration tests."""
+    from datetime import datetime
+    import uuid
+
+    context = Mock()
+    timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+    unique_suffix = str(uuid.uuid4())[:8]
+    context.session_id = f"test_session_{timestamp}_{unique_suffix}"
+    context.store_memory = Mock()
+    context.retrieve_memory = Mock(return_value=None)
+    context.get_memories_by_tags = Mock(return_value=[])
+    context.search_memories = Mock(return_value=[])
+    context.get_session_memories = Mock(return_value=[])
+    context.set_metadata = Mock()
+    context.get_metadata = Mock(return_value=None)
+    return context

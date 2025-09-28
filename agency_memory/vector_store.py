@@ -418,7 +418,15 @@ class VectorStore:
                 }
                 for r in results
             ]
-        except Exception:
+        except (ValueError, KeyError) as e:
+            import logging
+            logger = logging.getLogger(__name__)
+            logger.error(f"Memory search failed for query '{query}': {e}")
+            return []
+        except Exception as e:
+            import logging
+            logger = logging.getLogger(__name__)
+            logger.critical(f"Unexpected error in memory search for query '{query}': {e}")
             return []
 
     def remove_memory(self, memory_key: str) -> None:

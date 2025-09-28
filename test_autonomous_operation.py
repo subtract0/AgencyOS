@@ -77,8 +77,8 @@ def demonstrate_autonomous_healing():
     try:
         learning_loop = get_learning_loop()
         print("✅ Learning loop initialized")
-    except:
-        print("⚠️  Learning loop not available, using core healing only")
+    except (ImportError, AttributeError, Exception) as e:
+        print(f"⚠️  Learning loop not available, using core healing only: {e}")
         learning_loop = None
 
     # Step 1: Inject an error

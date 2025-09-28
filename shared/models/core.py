@@ -4,7 +4,7 @@ Replaces all Dict[str, Any] usage in core modules.
 """
 
 from datetime import datetime
-from typing import Optional, List, Union
+from typing import Optional, List, Union, Protocol, runtime_checkable, Dict
 from enum import Enum
 from pydantic import BaseModel, Field, ConfigDict
 from shared.type_definitions.json import JSONValue
@@ -163,3 +163,134 @@ class SystemConfiguration(BaseModel):
     telemetry_buffer_size: int = Field(1000)
     pattern_cache_size: int = Field(100)
     debug_mode: bool = Field(False)
+
+
+# Hook system type models
+
+class HookParameters(BaseModel):
+    """Safe tool parameters for hook systems."""
+    model_config = ConfigDict(extra="forbid")
+
+    parameters: dict[str, JSONValue] = Field(default_factory=dict)
+    sensitive_keys_redacted: List[str] = Field(default_factory=list)
+    extraction_status: str = Field("success")
+
+
+class AgentInfo(BaseModel):
+    """Agent information for hook operations."""
+    model_config = ConfigDict(extra="forbid")
+
+    agent_type: str = Field(..., description="Type/class of the agent")
+    agent_name: Optional[str] = Field(None, description="Agent name if available")
+    agent_id: Optional[str] = Field(None, description="Unique agent identifier")
+
+
+class ToolInfo(BaseModel):
+    """Tool information for hook operations."""
+    model_config = ConfigDict(extra="forbid")
+
+    tool_name: str = Field(..., description="Name of the tool")
+    parameters: HookParameters = Field(default_factory=lambda: HookParameters())
+    result_size: int = Field(0, description="Size of tool result in characters")
+
+
+class SessionEvent(BaseModel):
+    """Session lifecycle event data."""
+    model_config = ConfigDict(extra="forbid")
+
+    timestamp: str = Field(..., description="ISO timestamp")
+    agent_info: AgentInfo = Field(..., description="Agent involved in the event")
+    context_id: str = Field("unknown", description="Context identifier")
+    session_duration: Optional[str] = Field(None, description="Duration string")
+    output_summary: Optional[str] = Field(None, description="Truncated output summary")
+
+
+class HandoffEvent(BaseModel):
+    """Agent handoff event data."""
+    model_config = ConfigDict(extra="forbid")
+
+    timestamp: str = Field(..., description="ISO timestamp")
+    target_agent: str = Field(..., description="Agent receiving handoff")
+    source_agent: str = Field(..., description="Agent initiating handoff")
+
+
+class ToolEvent(BaseModel):
+    """Tool execution event data."""
+    model_config = ConfigDict(extra="forbid")
+
+    timestamp: str = Field(..., description="ISO timestamp")
+    agent_info: AgentInfo = Field(..., description="Agent executing the tool")
+    tool_info: ToolInfo = Field(..., description="Tool information")
+
+
+class ToolResultEvent(ToolEvent):
+    """Tool execution result event data."""
+    result: str = Field(..., description="Truncated tool result")
+
+
+class ToolErrorEvent(ToolEvent):
+    """Tool execution error event data."""
+    error: str = Field(..., description="Error message")
+
+
+class CodeBundleInfo(BaseModel):
+    """Code bundle attachment information."""
+    model_config = ConfigDict(extra="forbid")
+
+    bundle_path: str = Field(..., description="Path to the created bundle")
+    session_id: Optional[str] = Field(None, description="Session identifier")
+    timestamp: str = Field(..., description="Creation timestamp")
+    content_size: int = Field(0, description="Size of bundled content")
+
+
+class FileSnapshot(BaseModel):
+    """File snapshot information."""
+    model_config = ConfigDict(extra="forbid")
+
+    path: str = Field(..., description="Relative path from repo root")
+    snapshot_path: str = Field(..., description="Path to snapshot file")
+    size_bytes: int = Field(0, description="File size in bytes")
+
+
+class SnapshotManifest(BaseModel):
+    """Manifest for file snapshots."""
+    model_config = ConfigDict(extra="forbid")
+
+    files: List[FileSnapshot] = Field(default_factory=list)
+    timestamp: str = Field(..., description="Snapshot creation time")
+    base_path: str = Field(..., description="Base directory for snapshots")
+
+
+# Hook system typed interfaces
+
+@runtime_checkable
+class ToolProtocol(Protocol):
+    """Protocol for tool objects used in hook systems."""
+    name: str
+    parameters: Optional[Dict[str, object]]
+
+    def run(self, *args, **kwargs) -> str:
+        """Execute the tool and return result."""
+        ...
+
+
+@runtime_checkable
+class AgentProtocol(Protocol):
+    """Protocol for agent objects used in hook systems."""
+    name: Optional[str]
+
+
+
+@runtime_checkable
+class RunContextProtocol(Protocol):
+    """Protocol for run context objects used in hook systems."""
+    context: Dict[str, object]
+    id: Optional[str]
+
+    def get(self, key: str, default=None) -> JSONValue:
+        """Get value from context."""
+        ...
+
+    def set(self, key: str, value: JSONValue) -> None:
+        """Set value in context."""
+        ...

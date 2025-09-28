@@ -1,8 +1,9 @@
-# mypy: disable-error-code="misc,assignment,arg-type,attr-defined,index,return-value,union-attr,dict-item,operator"
+# Type safety enabled - all type issues have been resolved
 import os
 import time
 from contextlib import contextmanager
-from typing import Optional
+from typing import Optional, Dict
+from shared.type_definitions.json import JSONValue
 
 from shared.utils import silence_warnings_and_logs
 
@@ -19,7 +20,7 @@ from dotenv import load_dotenv  # noqa: E402 - must import after warning suppres
 try:  # noqa: E402
     from tools.orchestrator.scheduler import _telemetry_emit as _tel_emit  # type: ignore
 except Exception:  # noqa: E402
-    def _tel_emit(event):  # type: ignore
+    def _tel_emit(event: dict) -> None:  # type: ignore
         try:
             # Fallback writer to logs/telemetry
             from datetime import datetime, timezone
@@ -32,17 +33,25 @@ except Exception:  # noqa: E402
             fname = os.path.join(base, f"events-{ts:%Y%m%d}.jsonl")
             with open(fname, "a", encoding="utf-8") as f:
                 f.write(_json.dumps(event) + "\n")
-        except Exception:
-            pass
+        except (OSError, IOError) as e:
+            import logging
+            logger = logging.getLogger(__name__)
+            logger.error(f"Failed to write telemetry event to {fname}: {e}")
+        except (TypeError, ValueError) as e:
+            import logging
+            logger = logging.getLogger(__name__)
+            logger.warning(f"Invalid event data format: {e}")
 
 
 @contextmanager
-def _cli_event_scope(command: Optional[str] = None, args_dict: Optional[dict] = None):
+def _cli_event_scope(command: Optional[str] = None, args_dict: Optional[Dict[str, JSONValue]] = None):
     started = time.time()
     try:
         _tel_emit({"type": "cli_command_started", "command": command, "args": args_dict or {}, "started_at": started})
-    except Exception:
-        pass
+    except Exception as e:
+        import logging
+        logger = logging.getLogger(__name__)
+        logger.warning(f"Failed to emit CLI command start event: {e}")
     try:
         yield
         try:
@@ -54,8 +63,10 @@ def _cli_event_scope(command: Optional[str] = None, args_dict: Optional[dict] = 
                 "finished_at": finished,
                 "duration_s": max(0.0, finished - started),
             })
-        except Exception:
-            pass
+        except Exception as e:
+            import logging
+            logger = logging.getLogger(__name__)
+            logger.warning(f"Failed to emit CLI command success event: {e}")
     except Exception as e:
         try:
             finished = time.time()
@@ -67,8 +78,10 @@ def _cli_event_scope(command: Optional[str] = None, args_dict: Optional[dict] = 
                 "finished_at": finished,
                 "duration_s": max(0.0, finished - started),
             })
-        except Exception:
-            pass
+        except Exception as nested_e:
+            import logging
+            logger = logging.getLogger(__name__)
+            logger.error(f"Failed to emit CLI command failure event: {nested_e}")
         raise
 
 from agency_code_agent.agency_code_agent import (  # noqa: E402 - must import after warning suppression
@@ -204,7 +217,7 @@ agency = Agency(
 
 import sys
 import argparse
-from typing import Any, Dict, cast
+from typing import cast
 from shared.type_definitions.json import JSONValue
 
 try:
@@ -252,6 +265,9 @@ def _render_dashboard_text(summary: Dict[str, JSONValue]) -> None:
     total_tokens = costs.get('total_tokens', 0)
     total_usd = costs.get('total_usd', 0.0)
     print(f"Costs: tokens={total_tokens} usd=${total_usd:.4f}")
+    # Escalations
+    esc = metrics.get('escalations_used', 0)
+    print(f"Escalations used: {esc}")
     print(
         f"Window: since={window.get('since')} events={total} started={metrics.get('tasks_started',0)} finished={metrics.get('tasks_finished',0)}"
     )
@@ -300,57 +316,41 @@ def _cmd_tail(args: argparse.Namespace) -> None:
             print(f"{ts} {typ} run={rid} id={tid} agent={agent_name} {status}")
 
 
+def _list_recent_files(directory: str, description: str, limit: int = 5) -> None:
+    """List recent files in a directory.
+
+    Args:
+        directory: Directory path to scan
+        description: Description for output header
+        limit: Maximum number of files to show
+    """
+    import os
+
+    print(f"\n{description}:" if not description.startswith("Recent") else f"{description}:")
+    if os.path.isdir(directory):
+        try:
+            entries = sorted(
+                ((name, os.path.getmtime(os.path.join(directory, name))) for name in os.listdir(directory)),
+                key=lambda x: x[1],
+                reverse=True,
+            )[:limit]
+            for name, _ in entries:
+                print(f"  {name}")
+        except Exception:
+            print(f"  (error reading {description.lower()})")
+    else:
+        print(f"  No {description.lower()} found")
+
+
 def _cmd_logs(args: argparse.Namespace) -> None:
+    """Show recent logs from various subsystems."""
     with _cli_event_scope("logs", {}):
         import os
         base = os.path.join(current_dir, "logs")
-        print("Recent Session Logs:")
-        sessions = os.path.join(base, "sessions")
-        if os.path.isdir(sessions):
-            try:
-                entries = sorted(
-                    ((name, os.path.getmtime(os.path.join(sessions, name))) for name in os.listdir(sessions)),
-                    key=lambda x: x[1],
-                    reverse=True,
-                )[:5]
-                for name, _ in entries:
-                    print(f"  {name}")
-            except Exception:
-                print("  (error reading session logs)")
-        else:
-            print("  No session logs found")
 
-        print("\nAutonomous Healing Logs:")
-        healing = os.path.join(base, "autonomous_healing")
-        if os.path.isdir(healing):
-            try:
-                entries = sorted(
-                    ((name, os.path.getmtime(os.path.join(healing, name))) for name in os.listdir(healing)),
-                    key=lambda x: x[1],
-                    reverse=True,
-                )[:5]
-                for name, _ in entries:
-                    print(f"  {name}")
-            except Exception:
-                print("  (error reading autonomous healing logs)")
-        else:
-            print("  No autonomous healing logs found")
-
-        print("\nTelemetry Logs:")
-        telem = os.path.join(base, "telemetry")
-        if os.path.isdir(telem):
-            try:
-                entries = sorted(
-                    ((name, os.path.getmtime(os.path.join(telem, name))) for name in os.listdir(telem)),
-                    key=lambda x: x[1],
-                    reverse=True,
-                )[:3]
-                for name, _ in entries:
-                    print(f"  {name}")
-            except Exception:
-                print("  (error reading telemetry logs)")
-        else:
-            print("  No telemetry logs found")
+        _list_recent_files(os.path.join(base, "sessions"), "Recent Session Logs", 5)
+        _list_recent_files(os.path.join(base, "autonomous_healing"), "Autonomous Healing Logs", 5)
+        _list_recent_files(os.path.join(base, "telemetry"), "Telemetry Logs", 3)
 
 
 def _cmd_demo(args: argparse.Namespace) -> None:
@@ -376,79 +376,98 @@ def _cmd_test(args: argparse.Namespace) -> None:
         subprocess.run(cmd, check=False)
 
 
-def _cmd_health(args: argparse.Namespace) -> None:
+def _check_test_status() -> None:
+    """Check test execution status."""
     import subprocess
+
+    print("  Test Status:")
+    try:
+        # Run a fast smoke subset to keep health under 30s
+        result = subprocess.run(
+            [sys.executable, "-m", "pytest", "tests/test_memory_api.py", "-q"],
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            text=True,
+            timeout=25,
+        )
+        if result.returncode == 0:
+            print("    \u2705 All tests passing (Constitutional Article II compliant)")
+        else:
+            print("    \u274C Some tests failing (Constitutional violation!)")
+    except subprocess.TimeoutExpired:
+        print("    (test run timed out)")
+    except Exception as e:
+        print("    (error running tests)")
+
+
+def _check_environment_status() -> None:
+    """Check Python environment status."""
+    print("  Environment:")
+    try:
+        print(f"    \u2705 Python: {sys.version.split()[0]}")
+    except Exception:
+        pass
+
+
+def _check_dependencies_status() -> None:
+    """Check core dependencies availability."""
+    print("  Dependencies:")
+    try:
+        import agency_swarm  # type: ignore  # noqa: F401
+        import litellm  # type: ignore  # noqa: F401
+        import pytest  # type: ignore  # noqa: F401
+        print("    \u2705 Core dependencies installed")
+    except Exception:
+        print("    \u274C Missing dependencies")
+
+
+def _check_healing_tools_status() -> None:
+    """Check autonomous healing tools availability."""
+    print("  Autonomous Healing:")
+    try:
+        from tools.auto_fix_nonetype import AutoNoneTypeFixer  # type: ignore  # noqa: F401
+        from tools.apply_and_verify_patch import ApplyAndVerifyPatch  # type: ignore  # noqa: F401
+        print("    \u2705 Autonomous healing tools available")
+    except Exception:
+        print("    \u274C Autonomous healing tools not found")
+
+
+def _check_recent_activity() -> None:
+    """Check recent autonomous healing activity."""
     import time
+
+    print("  Recent Activity:")
+    try:
+        logs_dir = os.path.join(current_dir, "logs", "autonomous_healing")
+        count = 0
+        if os.path.isdir(logs_dir):
+            now = time.time()
+            for name in os.listdir(logs_dir):
+                if name.endswith(".jsonl"):
+                    fp = os.path.join(logs_dir, name)
+                    try:
+                        if now - os.path.getmtime(fp) <= 86400:
+                            count += 1
+                    except Exception:
+                        continue
+        if count:
+            print(f"    \U0001F4CA {count} healing log files from last 24 hours")
+        else:
+            print(f"    \U0001F4CA No recent autonomous healing activity")
+    except Exception:
+        print("    (error reading healing activity)")
+
+
+def _cmd_health(args: argparse.Namespace) -> None:
+    """Check Agency health and autonomous healing status."""
     with _cli_event_scope("health", {}):
         print("\U0001F3E5 Checking Agency health and autonomous healing status...")
 
-        # Test Status
-        print("  Test Status:")
-        try:
-            # Run a fast smoke subset to keep health under 30s
-            result = subprocess.run(
-                [sys.executable, "-m", "pytest", "tests/test_memory_api.py", "-q"],
-                stdout=subprocess.PIPE,
-                stderr=subprocess.PIPE,
-                text=True,
-                timeout=25,
-            )
-            if result.returncode == 0:
-                print("    \u2705 All tests passing (Constitutional Article II compliant)")
-            else:
-                print("    \u274C Some tests failing (Constitutional violation!)")
-        except subprocess.TimeoutExpired:
-            print("    (test run timed out)")
-        except Exception as e:
-            print("    (error running tests)")
-
-        # Environment
-        print("  Environment:")
-        try:
-            print(f"    \u2705 Python: {sys.version.split()[0]}")
-        except Exception:
-            pass
-
-        # Dependencies
-        print("  Dependencies:")
-        try:
-            import agency_swarm  # type: ignore  # noqa: F401
-            import litellm  # type: ignore  # noqa: F401
-            import pytest  # type: ignore  # noqa: F401
-            print("    \u2705 Core dependencies installed")
-        except Exception:
-            print("    \u274C Missing dependencies")
-
-        # Autonomous Healing Tools
-        print("  Autonomous Healing:")
-        try:
-            from tools.auto_fix_nonetype import AutoNoneTypeFixer  # type: ignore  # noqa: F401
-            from tools.apply_and_verify_patch import ApplyAndVerifyPatch  # type: ignore  # noqa: F401
-            print("    \u2705 Autonomous healing tools available")
-        except Exception:
-            print("    \u274C Autonomous healing tools not found")
-
-        # Recent Activity (last 24h)
-        print("  Recent Activity:")
-        try:
-            logs_dir = os.path.join(current_dir, "logs", "autonomous_healing")
-            count = 0
-            if os.path.isdir(logs_dir):
-                now = time.time()
-                for name in os.listdir(logs_dir):
-                    if name.endswith(".jsonl"):
-                        fp = os.path.join(logs_dir, name)
-                        try:
-                            if now - os.path.getmtime(fp) <= 86400:
-                                count += 1
-                        except Exception:
-                            continue
-            if count:
-                print(f"    \U0001F4CA {count} healing log files from last 24 hours")
-            else:
-                print("    \U0001F4CA No recent autonomous healing activity")
-        except Exception:
-            print("    (error reading healing activity)")
+        _check_test_status()
+        _check_environment_status()
+        _check_dependencies_status()
+        _check_healing_tools_status()
+        _check_recent_activity()
 
 
 def _cmd_kanban(args: argparse.Namespace) -> None:

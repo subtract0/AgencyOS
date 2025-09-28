@@ -170,7 +170,10 @@ def _patterns_to_cards() -> List[Card]:
             try:
                 ctx = p.context if isinstance(p.context, dict) else {}
                 summary = _shorten(json.dumps(_redact(ctx)))
-            except Exception:
+            except (TypeError, ValueError) as e:
+                import logging
+                logger = logging.getLogger(__name__)
+                logger.warning(f"Failed to serialize pattern context for {p.id}: {e}")
                 summary = "Learned pattern"
             cid = _stable_id("pattern", p.id, created)
             cards.append(
@@ -186,7 +189,11 @@ def _patterns_to_cards() -> List[Card]:
                     tags=p.tags if isinstance(p.tags, list) else ["pattern"],
                 )
             )
-    except Exception:
+    except (AttributeError, TypeError) as e:
+        import logging
+        logger = logging.getLogger(__name__)
+        logger.error(f"Failed to create pattern cards: {e}")
+        # Return empty list on failure
         pass
     return cards
 

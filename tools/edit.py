@@ -31,131 +31,189 @@ class Edit(BaseTool):  # type: ignore[misc]
         False, description="Replace all occurrences of old_string (default false)"
     )
 
-    def run(self):
+    def _validate_preconditions(self) -> Optional[str]:
+        """Validate file read precondition and basic input validation."""
+        # Check if the file has been read first (YAML precondition)
+        abs_file_path = os.path.abspath(self.file_path)
+        file_has_been_read = False
+
+        # Check in shared state first
+        if self.context is not None:
+            read_files = self.context.get("read_files", set())
+            file_has_been_read = abs_file_path in read_files
+
+        # Check global fallback if not found in context
+        if not file_has_been_read:
+            file_has_been_read = abs_file_path in _global_read_files
+
+        if not file_has_been_read:
+            return "Error: You must use Read tool at least once before editing this file. This tool will error if you attempt an edit without reading the file first."
+
+        # Validate that old_string and new_string are different
+        if self.old_string == self.new_string:
+            return "Error: old_string and new_string must be different"
+
+        return None
+
+    def _validate_file_accessibility(self) -> Optional[str]:
+        """Validate file exists and is accessible."""
+        # Check if file exists
+        if not os.path.exists(self.file_path):
+            return f"Error: File does not exist: {self.file_path}"
+
+        # Check if it's a file
+        if not os.path.isfile(self.file_path):
+            return f"Error: Path is not a file: {self.file_path}"
+
+        return None
+
+    def _read_file_content(self) -> tuple[Optional[str], Optional[str]]:
+        """Read file content, returning (content, error_message)."""
         try:
-            # Check if the file has been read first (YAML precondition)
-            abs_file_path = os.path.abspath(self.file_path)
-            file_has_been_read = False
+            with open(self.file_path, "r", encoding="utf-8") as file:
+                content = file.read()
+            return content, None
+        except UnicodeDecodeError:
+            return None, f"Error: Unable to decode file {self.file_path}. It may be a binary file."
 
-            # Check in shared state first
-            if self.context is not None:
-                read_files = self.context.get("read_files", set())
-                file_has_been_read = abs_file_path in read_files
+    def _validate_string_exists(self, content: str) -> Optional[str]:
+        """Validate that the string to replace exists in the content."""
+        if self.old_string not in content:
+            return f"Error: String to replace not found in file.\\nString: {repr(self.old_string)}"
+        return None
 
-            # Check global fallback if not found in context
-            if not file_has_been_read:
-                file_has_been_read = abs_file_path in _global_read_files
+    def _check_uniqueness_requirement(self, content: str) -> Optional[str]:
+        """Check if multiple occurrences require replace_all flag."""
+        occurrences = content.count(self.old_string)
 
-            if not file_has_been_read:
-                return "Error: You must use Read tool at least once before editing this file. This tool will error if you attempt an edit without reading the file first."
+        # If there are multiple occurrences and replace_all is False, require uniqueness
+        if occurrences > 1 and not self.replace_all:
+            # Build a preview of first two matches
+            previews = []
+            start_idx = 0
+            for _ in range(2):
+                idx = content.find(self.old_string, start_idx)
+                if idx == -1:
+                    break
+                a = max(0, idx - 30)
+                b = min(len(content), idx + len(self.old_string) + 30)
+                previews.append("..." + content[a:b] + "...")
+                start_idx = idx + len(self.old_string)
+            preview_block = "\n".join(previews)
+            return (
+                f"Error: String appears {occurrences} times in file. Either provide a larger string with more "
+                f"surrounding context to make it unique or use replace_all=True to change every instance.\n"
+                f"First matches:\n{preview_block}"
+            )
 
-            # Validate that old_string and new_string are different
-            if self.old_string == self.new_string:
-                return "Error: old_string and new_string must be different"
+        return None
 
-            # Check if file exists
-            if not os.path.exists(self.file_path):
-                return f"Error: File does not exist: {self.file_path}"
+    def _perform_replacement(self, content: str) -> tuple[str, int]:
+        """Perform the string replacement and return new content and count."""
+        occurrences = content.count(self.old_string)
 
-            # Check if it's a file
-            if not os.path.isfile(self.file_path):
-                return f"Error: Path is not a file: {self.file_path}"
+        if self.replace_all:
+            new_content = content.replace(self.old_string, self.new_string)
+            replacement_count = occurrences
+        else:
+            # Replace only the first occurrence
+            new_content = content.replace(self.old_string, self.new_string, 1)
+            replacement_count = 1
 
-            # Read the file
-            try:
-                with open(self.file_path, "r", encoding="utf-8") as file:
-                    content = file.read()
-            except UnicodeDecodeError:
-                return f"Error: Unable to decode file {self.file_path}. It may be a binary file."
+        return new_content, replacement_count
 
-            # Check if old_string exists in the file
-            if self.old_string not in content:
-                return f"Error: String to replace not found in file.\\nString: {repr(self.old_string)}"
+    def _generate_preview(self, content: str) -> str:
+        """Generate a preview of the replacements made."""
+        preview_lines = []
+        old_preview_indices = []
+        start_idx = 0
+        while True:
+            idx = content.find(self.old_string, start_idx)
+            if idx == -1:
+                break
+            old_preview_indices.append(idx)
+            start_idx = idx + len(self.old_string)
+            if not self.replace_all and len(old_preview_indices) >= 1:
+                break
 
-            # Count occurrences
-            occurrences = content.count(self.old_string)
+        def make_context(src: str, idx: int, needle: str, repl: str) -> str:
+            a = max(0, idx - 30)
+            b = min(len(src), idx + len(needle) + 30)
+            before = src[a:idx]
+            after = src[idx + len(needle) : b]
+            return f"...{before}[{needle}->{repl}]{after}..."
 
-            # If there are multiple occurrences and replace_all is False, require uniqueness
-            if occurrences > 1 and not self.replace_all:
-                # Build a preview of first two matches
-                previews = []
-                start_idx = 0
-                for _ in range(2):
-                    idx = content.find(self.old_string, start_idx)
-                    if idx == -1:
-                        break
-                    a = max(0, idx - 30)
-                    b = min(len(content), idx + len(self.old_string) + 30)
-                    previews.append("..." + content[a:b] + "...")
-                    start_idx = idx + len(self.old_string)
-                preview_block = "\n".join(previews)
-                return (
-                    f"Error: String appears {occurrences} times in file. Either provide a larger string with more "
-                    f"surrounding context to make it unique or use replace_all=True to change every instance.\n"
-                    f"First matches:\n{preview_block}"
+        if old_preview_indices:
+            first_idx = old_preview_indices[0]
+            preview_lines.append(
+                make_context(
+                    content, first_idx, self.old_string, self.new_string
                 )
-
-            # Perform the replacement
-            if self.replace_all:
-                new_content = content.replace(self.old_string, self.new_string)
-                replacement_count = occurrences
-            else:
-                # Replace only the first occurrence
-                new_content = content.replace(self.old_string, self.new_string, 1)
-                replacement_count = 1
-
-            # Write the modified content back to the file
-            try:
-                with open(self.file_path, "w", encoding="utf-8") as file:
-                    file.write(new_content)
-
-                # Create a short diff-like preview snippet (first and last replacement context)
-                preview_lines = []
-                old_preview_indices = []
-                start_idx = 0
-                while True:
-                    idx = content.find(self.old_string, start_idx)
-                    if idx == -1:
-                        break
-                    old_preview_indices.append(idx)
-                    start_idx = idx + len(self.old_string)
-                    if not self.replace_all and len(old_preview_indices) >= 1:
-                        break
-
-                def make_context(src: str, idx: int, needle: str, repl: str) -> str:
-                    a = max(0, idx - 30)
-                    b = min(len(src), idx + len(needle) + 30)
-                    before = src[a:idx]
-                    after = src[idx + len(needle) : b]
-                    return f"...{before}[{needle}->{repl}]{after}..."
-
-                if old_preview_indices:
-                    first_idx = old_preview_indices[0]
+            )
+            if self.replace_all and len(old_preview_indices) > 1:
+                last_idx = old_preview_indices[-1]
+                if last_idx != first_idx:
                     preview_lines.append(
                         make_context(
-                            content, first_idx, self.old_string, self.new_string
+                            content, last_idx, self.old_string, self.new_string
                         )
                     )
-                    if self.replace_all and len(old_preview_indices) > 1:
-                        last_idx = old_preview_indices[-1]
-                        if last_idx != first_idx:
-                            preview_lines.append(
-                                make_context(
-                                    content, last_idx, self.old_string, self.new_string
-                                )
-                            )
 
-                preview = "\n".join(preview_lines) if preview_lines else ""
+        return "\n".join(preview_lines) if preview_lines else ""
 
-                msg = f"Successfully replaced {replacement_count} occurrence(s) in {self.file_path}"
-                if preview:
-                    msg += f"\nPreview:\n{preview}"
-                return msg
+    def _write_file_content(self, new_content: str) -> Optional[str]:
+        """Write new content to file, returning error message if failed."""
+        try:
+            with open(self.file_path, "w", encoding="utf-8") as file:
+                file.write(new_content)
+            return None
+        except PermissionError:
+            return f"Error: Permission denied writing to file: {self.file_path}"
+        except Exception as e:
+            return f"Error writing to file: {str(e)}"
 
-            except PermissionError:
-                return f"Error: Permission denied writing to file: {self.file_path}"
-            except Exception as e:
-                return f"Error writing to file: {str(e)}"
+    def run(self):
+        """Execute the edit operation with comprehensive validation and error handling."""
+        try:
+            # Validate preconditions
+            error = self._validate_preconditions()
+            if error:
+                return error
+
+            # Validate file accessibility
+            error = self._validate_file_accessibility()
+            if error:
+                return error
+
+            # Read file content
+            content, error = self._read_file_content()
+            if error:
+                return error
+
+            # Validate string exists
+            error = self._validate_string_exists(content)
+            if error:
+                return error
+
+            # Check uniqueness requirement
+            error = self._check_uniqueness_requirement(content)
+            if error:
+                return error
+
+            # Perform replacement
+            new_content, replacement_count = self._perform_replacement(content)
+
+            # Write modified content
+            error = self._write_file_content(new_content)
+            if error:
+                return error
+
+            # Generate preview and success message
+            preview = self._generate_preview(content)
+            msg = f"Successfully replaced {replacement_count} occurrence(s) in {self.file_path}"
+            if preview:
+                msg += f"\nPreview:\n{preview}"
+            return msg
 
         except Exception as e:
             return f"Error during edit operation: {str(e)}"

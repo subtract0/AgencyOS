@@ -35,6 +35,13 @@
         pass_filenames: false
         always_run: true
         stages: [commit]
+    -   id: test-health-check
+        name: Test Health Check
+        entry: python scripts/test_health_check.py
+        language: python
+        pass_filenames: false
+        always_run: true
+        stages: [commit]
     -   id: pytest
         name: pytest
         entry: python run_tests_parallel.py # Use the parallel runner

@@ -363,3 +363,50 @@ def test_write_file_size_reporting(tmp_path: Path):
     tool2 = Write(file_path=file_path, content=large_content)
     result2 = tool2.run()
     assert "Size: 1024 bytes" in result2
+
+
+def test_write_permission_error_handling():
+    """Test PermissionError handling during file writing"""
+    from unittest.mock import patch, mock_open
+
+    file_path = "/tmp/test_permission_error.txt"
+
+    # Mock open to raise PermissionError when writing
+    with patch('builtins.open', mock_open()) as mock_file:
+        mock_file.side_effect = PermissionError("Permission denied")
+
+        tool = Write(file_path=file_path, content="test content")
+        result = tool.run()
+
+        assert "Error: Permission denied writing to file" in result
+        assert file_path in result
+
+
+def test_write_general_exception_handling():
+    """Test general exception handling during file writing"""
+    from unittest.mock import patch, mock_open
+
+    file_path = "/tmp/test_general_error.txt"
+
+    # Mock open to raise a general exception when writing
+    with patch('builtins.open', mock_open()) as mock_file:
+        mock_file.side_effect = Exception("Disk full")
+
+        tool = Write(file_path=file_path, content="test content")
+        result = tool.run()
+
+        assert "Error writing file: Disk full" in result
+
+
+def test_write_operation_general_exception():
+    """Test general exception in the outer try block"""
+    from unittest.mock import patch
+
+    file_path = "/tmp/test_operation_error.txt"
+
+    # Mock os.path.exists to raise an exception
+    with patch('os.path.exists', side_effect=Exception("Filesystem error")):
+        tool = Write(file_path=file_path, content="test content")
+        result = tool.run()
+
+        assert "Error during write operation: Filesystem error" in result

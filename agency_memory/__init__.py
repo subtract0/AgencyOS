@@ -54,8 +54,14 @@ def consolidate_learnings(source):
             try:
                 memories = store_obj.get_all()
                 return _consolidate(memories)
-            except Exception:
-                pass
+            except AttributeError as e:
+                import logging
+                logger = logging.getLogger(__name__)
+                logger.warning(f"Memory store missing get_all method: {e}")
+            except Exception as e:
+                import logging
+                logger = logging.getLogger(__name__)
+                logger.error(f"Failed to retrieve memories from store: {e}")
 
     # Fallback to empty analysis
     return _consolidate([])

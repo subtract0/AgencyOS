@@ -127,9 +127,11 @@ learning:
         assert learning_loop.pattern_matcher is not None
 
         # Verify configuration loaded
-        config = cast(Dict[str, Any], learning_loop.config)
-        assert cast(Dict[str, Any], config["learning"])["enabled"] is True
-        assert cast(Dict[str, Any], cast(Dict[str, Any], config["learning"])["storage"])["backend"] == "memory"
+        config = cast(Dict[str, JSONValue], learning_loop.config)
+        learning_config = cast(Dict[str, JSONValue], config["learning"])
+        assert cast(bool, learning_config["enabled"]) is True
+        storage_config = cast(Dict[str, JSONValue], learning_config["storage"])
+        assert cast(str, storage_config["backend"]) == "memory"
 
     def test_learning_loop_start_stop_cycle(self) -> None:
         """Test complete learning loop start/stop cycle."""

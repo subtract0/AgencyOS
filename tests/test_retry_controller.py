@@ -537,8 +537,8 @@ class TestIntegrationWithTools:
 
             try:
                 controller.execute_with_retry(mock_func)
-            except:
-                pass
+            except Exception as e:
+                pass  # Expected to fail on last iteration
 
         # Verify the end result - statistics are correct
         stats = controller.get_statistics()

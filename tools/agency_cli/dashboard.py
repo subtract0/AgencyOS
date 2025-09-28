@@ -28,7 +28,7 @@ def _render_text(summary: TelemetryMetrics) -> None:
     agents = list(summary.agent_metrics.keys())
 
     # Mock data since the TelemetryMetrics doesn't have these fields
-    running: List[Dict[str, Any]] = []
+    running: List[Dict[str, JSONValue]] = []
     recent = {'success': 0, 'failed': 0, 'timeout': 0}
     window = {'since': summary.period_start.isoformat()}
     resources = {'running': 0, 'max_concurrency': None, 'utilization': None}

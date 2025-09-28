@@ -21,7 +21,7 @@ from shared.type_definitions.json import JSONValue
 from dataclasses import dataclass, asdict
 from pathlib import Path
 
-from core.patterns import UnifiedPatternStore, get_pattern_store, Pattern as ExistingPattern
+from pattern_intelligence import PatternStore, CodingPattern as ExistingPattern
 from core.telemetry import get_telemetry, emit
 
 
@@ -252,26 +252,56 @@ class EnhancedPattern:
     metadata: PatternMetadata
 
     def to_existing_pattern(self) -> ExistingPattern:
-        """Convert to existing UnifiedPatternStore Pattern format."""
-        return ExistingPattern(
-            id=self.id,
-            pattern_type=self.trigger.type,
-            context={
-                "trigger": self.trigger.to_dict(),
-                "preconditions": [asdict(pc) for pc in self.preconditions],
-                "postconditions": [asdict(pc) for pc in self.postconditions]
-            },
-            solution=json.dumps([action.to_dict() for action in self.actions]),
+        """Convert to existing PatternStore Pattern format."""
+        from pattern_intelligence.coding_pattern import (
+            CodingPattern, ProblemContext, SolutionApproach,
+            EffectivenessMetric, PatternMetadata as CodingPatternMetadata
+        )
+
+        # Build problem context from trigger and preconditions
+        problem_context = ProblemContext(
+            description=f"Trigger: {self.trigger.type} - {self.trigger.pattern}",
+            domain=self.trigger.type,
+            constraints=[pc.description for pc in self.preconditions],
+            symptoms=[self.trigger.pattern] if self.trigger.pattern else []
+        )
+
+        # Build solution approach from actions
+        solution_approach = SolutionApproach(
+            approach=f"Apply {len(self.actions)} actions when conditions are met",
+            implementation=json.dumps([action.to_dict() for action in self.actions]),
+            tools=[action.tool for action in self.actions if hasattr(action, 'tool')],
+            reasoning=f"Pattern triggered by {self.trigger.type}"
+        )
+
+        # Build effectiveness metric
+        effectiveness_metric = EffectivenessMetric(
             success_rate=self.metadata.confidence,
-            usage_count=self.metadata.usage_count,
-            created_at=self.metadata.created_at.isoformat(),
-            last_used=self.metadata.last_used.isoformat(),
+            adoption_rate=self.metadata.usage_count,
+            confidence=self.metadata.confidence
+        )
+
+        # Build metadata
+        coding_metadata = CodingPatternMetadata(
+            pattern_id=self.id,
+            discovered_timestamp=self.metadata.created_at.isoformat(),
+            source=self.metadata.source or "learning_loop",
+            application_count=self.metadata.usage_count,
+            last_applied=self.metadata.last_used.isoformat() if self.metadata.last_used else None,
             tags=self.metadata.tags
+        )
+
+        # Create and return CodingPattern
+        return CodingPattern(
+            context=problem_context,
+            solution=solution_approach,
+            outcome=effectiveness_metric,
+            metadata=coding_metadata
         )
 
     @classmethod
     def from_existing_pattern(cls, pattern: ExistingPattern) -> "EnhancedPattern":
-        """Create from existing UnifiedPatternStore Pattern format."""
+        """Create from existing PatternStore Pattern format."""
         context = pattern.context
 
         # Reconstruct trigger
@@ -431,14 +461,14 @@ class PatternExtractor:
     Implements SPEC-LEARNING-001 Section 2.1: Success Pattern Extraction.
     """
 
-    def __init__(self, pattern_store: Optional[UnifiedPatternStore] = None):
+    def __init__(self, pattern_store: Optional[PatternStore] = None):
         """
         Initialize pattern extractor.
 
         Args:
             pattern_store: Pattern storage instance (defaults to global store)
         """
-        self.pattern_store = pattern_store or get_pattern_store()
+        self.pattern_store = pattern_store or PatternStore()
         self.telemetry = get_telemetry()
 
     def extract_from_success(self, operation: Operation) -> EnhancedPattern:
@@ -741,14 +771,14 @@ class FailureLearner:
     Implements SPEC-LEARNING-001 Section 2.2: Failure Pattern Learning.
     """
 
-    def __init__(self, pattern_store: Optional[UnifiedPatternStore] = None):
+    def __init__(self, pattern_store: Optional[PatternStore] = None):
         """
         Initialize failure learner.
 
         Args:
             pattern_store: Pattern storage instance (defaults to global store)
         """
-        self.pattern_store = pattern_store or get_pattern_store()
+        self.pattern_store = pattern_store or PatternStore()
         self.telemetry = get_telemetry()
 
     def learn_from_failure(self, operation: Operation) -> AntiPattern:

@@ -200,3 +200,70 @@ class TelemetryMetrics(BaseModel):
             "active_agents": len(self.agent_metrics),
             "error_rate": self.system_health.error_count / self.total_events if self.total_events > 0 else 0
         }
+
+
+class TaskInfo(BaseModel):
+    """Information about a running task."""
+    model_config = ConfigDict(extra="forbid")
+    id: str
+    agent: str
+    age_s: float
+    last_heartbeat_age_s: Optional[float] = None
+
+
+class ResourceInfo(BaseModel):
+    """Resource utilization information."""
+    model_config = ConfigDict(extra="forbid")
+    max_concurrency: Optional[int] = None
+    running: int = 0
+    utilization: Optional[float] = None
+
+
+class CostInfo(BaseModel):
+    """Cost tracking information."""
+    model_config = ConfigDict(extra="forbid")
+    total_tokens: int = 0
+    total_usd: float = 0.0
+
+
+class WindowInfo(BaseModel):
+    """Time window information."""
+    model_config = ConfigDict(extra="forbid")
+    since: str
+    events: int = 0
+    tasks_started: int = 0
+    tasks_finished: int = 0
+
+
+class MetricsInfo(BaseModel):
+    """Aggregated metrics information."""
+    model_config = ConfigDict(extra="forbid")
+    total_events: int = 0
+    tasks_started: int = 0
+    tasks_finished: int = 0
+    escalations_used: int = 0
+
+
+class DashboardSummary(BaseModel):
+    """Dashboard summary model replacing Dict[str, Any] in telemetry aggregator."""
+    model_config = ConfigDict(extra="forbid")
+
+    # TelemetryMetrics fields
+    period_start: datetime
+    period_end: datetime
+    total_events: int = 0
+    events_by_type: Dict[str, int] = Field(default_factory=dict)
+    events_by_severity: Dict[str, int] = Field(default_factory=dict)
+    agent_metrics: Dict[str, AgentMetrics] = Field(default_factory=dict)
+    system_health: SystemHealth = Field(default_factory=lambda: SystemHealth())
+    top_errors: List[str] = Field(default_factory=list)
+    slowest_operations: List[Dict[str, JSONValue]] = Field(default_factory=list)
+
+    # Dashboard-specific fields
+    agents_active: List[str] = Field(default_factory=list)
+    running_tasks: List[TaskInfo] = Field(default_factory=list)
+    recent_results: Dict[str, int] = Field(default_factory=dict)
+    resources: ResourceInfo = Field(default_factory=lambda: ResourceInfo())
+    costs: CostInfo = Field(default_factory=lambda: CostInfo())
+    window: WindowInfo = Field(default_factory=lambda: WindowInfo(since="1h"))
+    metrics: MetricsInfo = Field(default_factory=lambda: MetricsInfo())
