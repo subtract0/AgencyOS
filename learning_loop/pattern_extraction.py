@@ -21,7 +21,8 @@ from shared.type_definitions.json import JSONValue
 from dataclasses import dataclass, asdict
 from pathlib import Path
 
-from pattern_intelligence import PatternStore, CodingPattern as ExistingPattern
+from pattern_intelligence import PatternStore
+from core.patterns import Pattern as ExistingPattern
 from core.telemetry import get_telemetry, emit
 
 
@@ -253,51 +254,49 @@ class EnhancedPattern:
 
     def to_existing_pattern(self) -> ExistingPattern:
         """Convert to existing PatternStore Pattern format."""
-        from pattern_intelligence.coding_pattern import (
-            CodingPattern, ProblemContext, SolutionApproach,
-            EffectivenessMetric, PatternMetadata as CodingPatternMetadata
-        )
 
-        # Build problem context from trigger and preconditions
-        problem_context = ProblemContext(
-            description=f"Trigger: {self.trigger.type} - {self.trigger.pattern}",
-            domain=self.trigger.type,
-            constraints=[pc.description for pc in self.preconditions],
-            symptoms=[self.trigger.pattern] if self.trigger.pattern else []
-        )
+        # Get pattern representation based on trigger type
+        trigger_pattern = self._get_trigger_pattern()
 
-        # Build solution approach from actions
-        solution_approach = SolutionApproach(
-            approach=f"Apply {len(self.actions)} actions when conditions are met",
-            implementation=json.dumps([action.to_dict() for action in self.actions]),
-            tools=[action.tool for action in self.actions if hasattr(action, 'tool')],
-            reasoning=f"Pattern triggered by {self.trigger.type}"
-        )
+        # Build context dictionary
+        context = {
+            "trigger": self.trigger.to_dict(),
+            "trigger_pattern": trigger_pattern,
+            "preconditions": [self._condition_to_string(pc) for pc in self.preconditions],
+            "postconditions": [self._condition_to_string(pc) for pc in self.postconditions]
+        }
 
-        # Build effectiveness metric
-        effectiveness_metric = EffectivenessMetric(
+        # Build solution as JSON serialized actions (as expected by tests)
+        import json
+        solution = json.dumps([action.to_dict() for action in self.actions])
+
+        # Create and return Pattern
+        return ExistingPattern(
+            id=self.id,
+            pattern_type=self.trigger.type,
+            context=context,
+            solution=solution,
             success_rate=self.metadata.confidence,
-            adoption_rate=self.metadata.usage_count,
-            confidence=self.metadata.confidence
-        )
-
-        # Build metadata
-        coding_metadata = CodingPatternMetadata(
-            pattern_id=self.id,
-            discovered_timestamp=self.metadata.created_at.isoformat(),
-            source=self.metadata.source or "learning_loop",
-            application_count=self.metadata.usage_count,
-            last_applied=self.metadata.last_used.isoformat() if self.metadata.last_used else None,
+            usage_count=self.metadata.usage_count,
+            created_at=self.metadata.created_at.isoformat(),
+            last_used=self.metadata.last_used.isoformat() if self.metadata.last_used else self.metadata.created_at.isoformat(),
             tags=self.metadata.tags
         )
 
-        # Create and return CodingPattern
-        return CodingPattern(
-            context=problem_context,
-            solution=solution_approach,
-            outcome=effectiveness_metric,
-            metadata=coding_metadata
-        )
+    def _get_trigger_pattern(self) -> str:
+        """Get pattern representation based on trigger type."""
+        if isinstance(self.trigger, ErrorTrigger):
+            return self.trigger.error_pattern
+        elif isinstance(self.trigger, TaskTrigger):
+            return ", ".join(self.trigger.keywords)
+        elif hasattr(self.trigger, 'pattern'):
+            return self.trigger.pattern  # type: ignore
+        else:
+            return str(self.trigger.metadata.get('pattern', ''))
+
+    def _condition_to_string(self, condition: Condition) -> str:
+        """Convert a Condition object to a string description."""
+        return f"{condition.type}: {condition.target} {condition.operator} {condition.value}"
 
     @classmethod
     def from_existing_pattern(cls, pattern: ExistingPattern) -> "EnhancedPattern":

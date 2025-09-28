@@ -7,7 +7,7 @@ import re
 import tempfile
 import os
 from pathlib import Path
-from unittest.mock import Mock, patch, mock_open
+from unittest.mock import Mock, patch, mock_open, MagicMock
 
 import pytest
 
@@ -563,19 +563,11 @@ def test_process_data():
 
         return project_root
 
-    @patch('tools.feature_inventory.Path.__file__')
-    def test_main_function_success(self, mock_file, mock_project_with_features, capsys):
+    def test_main_function_success(self, mock_project_with_features, capsys):
         """Test main function with successful execution."""
-        # Mock the __file__ path to point to our test project
-        mock_file.parent.parent = mock_project_with_features
-
-        # Change working directory to the mock project
-        original_cwd = os.getcwd()
-        try:
-            os.chdir(mock_project_with_features)
+        # Patch the project root calculation by patching __file__
+        with patch('tools.feature_inventory.__file__', str(mock_project_with_features / 'tools' / 'feature_inventory.py')):
             main()
-        finally:
-            os.chdir(original_cwd)
 
         captured = capsys.readouterr()
         output = captured.out
@@ -596,21 +588,15 @@ def test_process_data():
         assert "❌ tests/test_export.py" in output
         assert "✅ tests/test_reports.py ()" in output or "✅ tests/test_reports.py (0 tests)" in output
 
-    @patch('tools.feature_inventory.Path.__file__')
-    def test_main_function_missing_features_md(self, mock_file, tmp_path, capsys):
+    def test_main_function_missing_features_md(self, tmp_path, capsys):
         """Test main function when FEATURES.md is missing."""
         # Create empty project directory
         empty_project = tmp_path / "empty_project"
         empty_project.mkdir()
 
-        mock_file.parent.parent = empty_project
-
-        original_cwd = os.getcwd()
-        try:
-            os.chdir(empty_project)
+        # Patch the project root calculation by patching __file__
+        with patch('tools.feature_inventory.__file__', str(empty_project / 'tools' / 'feature_inventory.py')):
             main()
-        finally:
-            os.chdir(original_cwd)
 
         captured = capsys.readouterr()
         output = captured.out
@@ -618,27 +604,21 @@ def test_process_data():
         assert "❌ FEATURES.md not found" in output
 
     @patch('tools.feature_inventory.extract_features_from_md')
-    @patch('tools.feature_inventory.Path.__file__')
-    def test_main_function_extraction_error(self, mock_file, mock_extract, tmp_path, capsys):
+    def test_main_function_extraction_error(self, mock_extract, tmp_path, capsys):
         """Test main function when feature extraction fails."""
         # Create project with FEATURES.md
         project_root = tmp_path / "error_project"
         project_root.mkdir()
         (project_root / "FEATURES.md").write_text("# Features")
 
-        mock_file.parent.parent = project_root
         mock_extract.side_effect = Exception("Extraction failed")
 
-        original_cwd = os.getcwd()
-        try:
-            os.chdir(project_root)
+        # Patch the project root calculation by patching __file__
+        with patch('tools.feature_inventory.__file__', str(project_root / 'tools' / 'feature_inventory.py')):
             with pytest.raises(Exception, match="Extraction failed"):
                 main()
-        finally:
-            os.chdir(original_cwd)
 
-    @patch('tools.feature_inventory.Path.__file__')
-    def test_main_function_zero_coverage(self, mock_file, tmp_path, capsys):
+    def test_main_function_zero_coverage(self, tmp_path, capsys):
         """Test main function with zero test coverage."""
         # Create project with features but no test files
         project_root = tmp_path / "no_tests_project"
@@ -658,14 +638,9 @@ Description
 **Test Coverage**: `tests/test_two.py`
 ''')
 
-        mock_file.parent.parent = project_root
-
-        original_cwd = os.getcwd()
-        try:
-            os.chdir(project_root)
+        # Patch the project root calculation by patching __file__
+        with patch('tools.feature_inventory.__file__', str(project_root / 'tools' / 'feature_inventory.py')):
             main()
-        finally:
-            os.chdir(original_cwd)
 
         captured = capsys.readouterr()
         output = captured.out
@@ -676,8 +651,7 @@ Description
         assert "Total test functions: 0" in output
         assert "🎯 Overall Coverage: 0.0%" in output
 
-    @patch('tools.feature_inventory.Path.__file__')
-    def test_main_function_perfect_coverage(self, mock_file, tmp_path, capsys):
+    def test_main_function_perfect_coverage(self, tmp_path, capsys):
         """Test main function with perfect test coverage."""
         # Create project with complete test coverage
         project_root = tmp_path / "perfect_project"
@@ -699,14 +673,9 @@ Description
         (tests_dir / "test_one.py").write_text("def test_one(): pass")
         (tests_dir / "test_two.py").write_text("def test_two(): pass")
 
-        mock_file.parent.parent = project_root
-
-        original_cwd = os.getcwd()
-        try:
-            os.chdir(project_root)
+        # Patch the project root calculation by patching __file__
+        with patch('tools.feature_inventory.__file__', str(project_root / 'tools' / 'feature_inventory.py')):
             main()
-        finally:
-            os.chdir(original_cwd)
 
         captured = capsys.readouterr()
         output = captured.out
@@ -847,17 +816,9 @@ Handle UTF-8, UTF-16, and other encodings.
             (tests_dir / "test.py").write_text("def test_function(): pass")
 
             # Test that main function works with the real path
-            with patch('tools.feature_inventory.Path') as mock_path:
-                mock_path.__file__.parent.parent = project_root
-                mock_path.return_value.exists.return_value = True
-
+            with patch('tools.feature_inventory.__file__', str(project_root / 'tools' / 'feature_inventory.py')):
                 # This should not raise an exception
-                try:
-                    original_cwd = os.getcwd()
-                    os.chdir(project_root)
-                    main()
-                finally:
-                    os.chdir(original_cwd)
+                main()
 
     def test_check_test_files_concurrent_access(self, tmp_path):
         """Test check_test_files with concurrent file access scenarios."""

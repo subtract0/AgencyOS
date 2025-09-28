@@ -446,3 +446,21 @@ class PatternStore:
         except Exception as e:
             logger.error(f"Failed to clear patterns: {e}")
             return False
+
+    def search_patterns(self, query: str, limit: int = 10) -> List[CodingPattern]:
+        """
+        Search patterns using text query (facade compatibility).
+
+        Args:
+            query: Search query text
+            limit: Maximum results to return
+
+        Returns:
+            List of matching patterns
+        """
+        results = self.find_patterns(query=query, limit=limit)
+        return [result.pattern for result in results]
+
+    def clear(self) -> bool:
+        """Clear all patterns (alias for clear_patterns for facade compatibility)."""
+        return self.clear_patterns()

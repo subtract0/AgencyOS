@@ -97,8 +97,8 @@ class TestLearningAgentInitialization:
 
     def test_agent_creation_with_defaults(self):
         """Test agent creation with default parameters."""
-        with patch('learning_agent.Agent') as mock_agent_class, \
-             patch('learning_agent.create_agent_context') as mock_create_context:
+        with patch('learning_agent.learning_agent.Agent') as mock_agent_class, \
+             patch('learning_agent.learning_agent.create_agent_context') as mock_create_context:
 
             mock_context = Mock()
             mock_context.session_id = "test_session"
@@ -122,9 +122,9 @@ class TestLearningAgentInitialization:
 
     def test_agent_creation_with_custom_parameters(self, mock_agent_context):
         """Test agent creation with custom parameters."""
-        with patch('learning_agent.Agent') as mock_agent_class, \
-             patch('learning_agent.get_model_instance') as mock_model, \
-             patch('learning_agent.create_model_settings') as mock_settings:
+        with patch('learning_agent.learning_agent.Agent') as mock_agent_class, \
+             patch('learning_agent.learning_agent.get_model_instance') as mock_model, \
+             patch('learning_agent.learning_agent.create_model_settings') as mock_settings:
 
             mock_agent = Mock()
             mock_agent_class.return_value = mock_agent
@@ -152,9 +152,9 @@ class TestLearningAgentInitialization:
 
     def test_agent_tools_configuration(self, mock_agent_context):
         """Test that agent has all required learning tools configured."""
-        with patch('learning_agent.Agent') as mock_agent_class, \
-             patch('learning_agent.get_model_instance'), \
-             patch('learning_agent.create_model_settings'):
+        with patch('learning_agent.learning_agent.Agent') as mock_agent_class, \
+             patch('learning_agent.learning_agent.get_model_instance'), \
+             patch('learning_agent.learning_agent.create_model_settings'):
 
             mock_agent = Mock()
             mock_agent_class.return_value = mock_agent
@@ -182,9 +182,9 @@ class TestLearningAgentInitialization:
 
     def test_agent_memory_integration(self, mock_agent_context):
         """Test that agent properly integrates with memory system."""
-        with patch('learning_agent.Agent'), \
-             patch('learning_agent.get_model_instance'), \
-             patch('learning_agent.create_model_settings'):
+        with patch('learning_agent.learning_agent.Agent'), \
+             patch('learning_agent.learning_agent.get_model_instance'), \
+             patch('learning_agent.learning_agent.create_model_settings'):
 
             create_learning_agent(agent_context=mock_agent_context)
 
@@ -198,10 +198,10 @@ class TestLearningAgentInitialization:
 
     def test_instructions_file_selection(self, mock_agent_context):
         """Test that correct instructions file is selected."""
-        with patch('learning_agent.select_instructions_file') as mock_select, \
-             patch('learning_agent.Agent') as mock_agent_class, \
-             patch('learning_agent.get_model_instance'), \
-             patch('learning_agent.create_model_settings'):
+        with patch('learning_agent.learning_agent.select_instructions_file') as mock_select, \
+             patch('learning_agent.learning_agent.Agent') as mock_agent_class, \
+             patch('learning_agent.learning_agent.get_model_instance'), \
+             patch('learning_agent.learning_agent.create_model_settings'):
 
             mock_select.return_value = "/path/to/instructions-gpt-5.md"
             mock_agent = Mock()
@@ -217,12 +217,12 @@ class TestLearningAgentInitialization:
 
     def test_hooks_integration(self, mock_agent_context):
         """Test that system hooks are properly integrated."""
-        with patch('learning_agent.create_message_filter_hook') as mock_filter, \
-             patch('learning_agent.create_memory_integration_hook') as mock_memory, \
-             patch('learning_agent.create_composite_hook') as mock_composite, \
-             patch('learning_agent.Agent') as mock_agent_class, \
-             patch('learning_agent.get_model_instance'), \
-             patch('learning_agent.create_model_settings'):
+        with patch('learning_agent.learning_agent.create_message_filter_hook') as mock_filter, \
+             patch('learning_agent.learning_agent.create_memory_integration_hook') as mock_memory, \
+             patch('learning_agent.learning_agent.create_composite_hook') as mock_composite, \
+             patch('learning_agent.learning_agent.Agent') as mock_agent_class, \
+             patch('learning_agent.learning_agent.get_model_instance'), \
+             patch('learning_agent.learning_agent.create_model_settings'):
 
             mock_filter_hook = Mock()
             mock_memory_hook = Mock()
@@ -259,9 +259,9 @@ class TestLearningAgentSessionAnalysis:
 
     def test_agent_description_capabilities(self, mock_agent_context):
         """Test that agent description captures learning capabilities."""
-        with patch('learning_agent.Agent') as mock_agent_class, \
-             patch('learning_agent.get_model_instance'), \
-             patch('learning_agent.create_model_settings'):
+        with patch('learning_agent.learning_agent.Agent') as mock_agent_class, \
+             patch('learning_agent.learning_agent.get_model_instance'), \
+             patch('learning_agent.learning_agent.create_model_settings'):
 
             mock_agent = Mock()
             mock_agent_class.return_value = mock_agent
@@ -282,9 +282,9 @@ class TestLearningAgentSessionAnalysis:
 
     def test_learning_triggers_described(self, mock_agent_context):
         """Test that learning triggers are properly described."""
-        with patch('learning_agent.Agent') as mock_agent_class, \
-             patch('learning_agent.get_model_instance'), \
-             patch('learning_agent.create_model_settings'):
+        with patch('learning_agent.learning_agent.Agent') as mock_agent_class, \
+             patch('learning_agent.learning_agent.get_model_instance'), \
+             patch('learning_agent.learning_agent.create_model_settings'):
 
             mock_agent = Mock()
             mock_agent_class.return_value = mock_agent
@@ -302,9 +302,9 @@ class TestLearningAgentSessionAnalysis:
 
     def test_learning_outputs_described(self, mock_agent_context):
         """Test that learning outputs are properly described."""
-        with patch('learning_agent.Agent') as mock_agent_class, \
-             patch('learning_agent.get_model_instance'), \
-             patch('learning_agent.create_model_settings'):
+        with patch('learning_agent.learning_agent.Agent') as mock_agent_class, \
+             patch('learning_agent.learning_agent.get_model_instance'), \
+             patch('learning_agent.learning_agent.create_model_settings'):
 
             mock_agent = Mock()
             mock_agent_class.return_value = mock_agent
@@ -327,9 +327,9 @@ class TestLearningAgentToolIntegration:
 
     def test_basic_tool_availability(self, mock_agent_context):
         """Test that all basic tools are available to learning agent."""
-        with patch('learning_agent.Agent') as mock_agent_class, \
-             patch('learning_agent.get_model_instance'), \
-             patch('learning_agent.create_model_settings'):
+        with patch('learning_agent.learning_agent.Agent') as mock_agent_class, \
+             patch('learning_agent.learning_agent.get_model_instance'), \
+             patch('learning_agent.learning_agent.create_model_settings'):
 
             mock_agent = Mock()
             mock_agent_class.return_value = mock_agent
@@ -348,9 +348,9 @@ class TestLearningAgentToolIntegration:
 
     def test_specialized_learning_tools(self, mock_agent_context):
         """Test that specialized learning tools are available."""
-        with patch('learning_agent.Agent') as mock_agent_class, \
-             patch('learning_agent.get_model_instance'), \
-             patch('learning_agent.create_model_settings'):
+        with patch('learning_agent.learning_agent.Agent') as mock_agent_class, \
+             patch('learning_agent.learning_agent.get_model_instance'), \
+             patch('learning_agent.learning_agent.create_model_settings'):
 
             mock_agent = Mock()
             mock_agent_class.return_value = mock_agent
@@ -377,9 +377,9 @@ class TestLearningAgentToolIntegration:
 
     def test_tool_integration_with_context(self, mock_agent_context):
         """Test that tools are properly integrated with agent context."""
-        with patch('learning_agent.Agent') as mock_agent_class, \
-             patch('learning_agent.get_model_instance'), \
-             patch('learning_agent.create_model_settings'):
+        with patch('learning_agent.learning_agent.Agent') as mock_agent_class, \
+             patch('learning_agent.learning_agent.get_model_instance'), \
+             patch('learning_agent.learning_agent.create_model_settings'):
 
             mock_agent = Mock()
             mock_agent_class.return_value = mock_agent
@@ -391,9 +391,9 @@ class TestLearningAgentToolIntegration:
 
     def test_model_settings_for_learning(self, mock_agent_context):
         """Test that appropriate model settings are used for learning tasks."""
-        with patch('learning_agent.Agent') as mock_agent_class, \
-             patch('learning_agent.get_model_instance') as mock_model, \
-             patch('learning_agent.create_model_settings') as mock_settings:
+        with patch('learning_agent.learning_agent.Agent') as mock_agent_class, \
+             patch('learning_agent.learning_agent.get_model_instance') as mock_model, \
+             patch('learning_agent.learning_agent.create_model_settings') as mock_settings:
 
             mock_agent = Mock()
             mock_agent_class.return_value = mock_agent
@@ -421,7 +421,7 @@ class TestLearningAgentErrorHandling:
 
     def test_agent_creation_with_invalid_model(self):
         """Test error handling with invalid model."""
-        with patch('learning_agent.get_model_instance') as mock_model:
+        with patch('learning_agent.learning_agent.get_model_instance') as mock_model:
             mock_model.side_effect = ValueError("Invalid model")
 
             with pytest.raises(ValueError):
@@ -429,10 +429,10 @@ class TestLearningAgentErrorHandling:
 
     def test_agent_creation_without_context(self):
         """Test that agent context is auto-created when not provided."""
-        with patch('learning_agent.create_agent_context') as mock_create, \
-             patch('learning_agent.Agent') as mock_agent_class, \
-             patch('learning_agent.get_model_instance'), \
-             patch('learning_agent.create_model_settings'):
+        with patch('learning_agent.learning_agent.create_agent_context') as mock_create, \
+             patch('learning_agent.learning_agent.Agent') as mock_agent_class, \
+             patch('learning_agent.learning_agent.get_model_instance'), \
+             patch('learning_agent.learning_agent.create_model_settings'):
 
             mock_context = Mock()
             mock_context.session_id = "auto_created"
@@ -450,11 +450,11 @@ class TestLearningAgentErrorHandling:
 
     def test_hook_creation_failure_handling(self, mock_agent_context):
         """Test handling of hook creation failures."""
-        with patch('learning_agent.create_message_filter_hook') as mock_filter, \
-             patch('learning_agent.create_memory_integration_hook') as mock_memory, \
-             patch('learning_agent.Agent') as mock_agent_class, \
-             patch('learning_agent.get_model_instance'), \
-             patch('learning_agent.create_model_settings'):
+        with patch('learning_agent.learning_agent.create_message_filter_hook') as mock_filter, \
+             patch('learning_agent.learning_agent.create_memory_integration_hook') as mock_memory, \
+             patch('learning_agent.learning_agent.Agent') as mock_agent_class, \
+             patch('learning_agent.learning_agent.get_model_instance'), \
+             patch('learning_agent.learning_agent.create_model_settings'):
 
             mock_filter.side_effect = Exception("Hook creation failed")
 
@@ -463,10 +463,10 @@ class TestLearningAgentErrorHandling:
 
     def test_instructions_file_fallback(self, mock_agent_context):
         """Test fallback when instructions file is not found."""
-        with patch('learning_agent.select_instructions_file') as mock_select, \
-             patch('learning_agent.Agent') as mock_agent_class, \
-             patch('learning_agent.get_model_instance'), \
-             patch('learning_agent.create_model_settings'):
+        with patch('learning_agent.learning_agent.select_instructions_file') as mock_select, \
+             patch('learning_agent.learning_agent.Agent') as mock_agent_class, \
+             patch('learning_agent.learning_agent.get_model_instance'), \
+             patch('learning_agent.learning_agent.create_model_settings'):
 
             mock_select.side_effect = FileNotFoundError("Instructions not found")
             mock_agent = Mock()
@@ -482,9 +482,9 @@ class TestLearningAgentMemoryIntegration:
 
     def test_memory_logging_on_creation(self, mock_agent_context):
         """Test that agent creation is properly logged to memory."""
-        with patch('learning_agent.Agent'), \
-             patch('learning_agent.get_model_instance'), \
-             patch('learning_agent.create_model_settings'):
+        with patch('learning_agent.learning_agent.Agent'), \
+             patch('learning_agent.learning_agent.get_model_instance'), \
+             patch('learning_agent.learning_agent.create_model_settings'):
 
             create_learning_agent(
                 model="gpt-5",
@@ -511,10 +511,10 @@ class TestLearningAgentMemoryIntegration:
 
     def test_memory_context_integration(self, mock_agent_context):
         """Test that memory context is properly integrated."""
-        with patch('learning_agent.create_memory_integration_hook') as mock_memory_hook, \
-             patch('learning_agent.Agent'), \
-             patch('learning_agent.get_model_instance'), \
-             patch('learning_agent.create_model_settings'):
+        with patch('learning_agent.learning_agent.create_memory_integration_hook') as mock_memory_hook, \
+             patch('learning_agent.learning_agent.Agent'), \
+             patch('learning_agent.learning_agent.get_model_instance'), \
+             patch('learning_agent.learning_agent.create_model_settings'):
 
             create_learning_agent(agent_context=mock_agent_context)
 
@@ -524,9 +524,9 @@ class TestLearningAgentMemoryIntegration:
 
     def test_session_id_propagation(self, mock_agent_context):
         """Test that session ID is properly propagated."""
-        with patch('learning_agent.Agent'), \
-             patch('learning_agent.get_model_instance'), \
-             patch('learning_agent.create_model_settings'):
+        with patch('learning_agent.learning_agent.Agent'), \
+             patch('learning_agent.learning_agent.get_model_instance'), \
+             patch('learning_agent.learning_agent.create_model_settings'):
 
             mock_agent_context.session_id = "test_session_12345"
 
@@ -539,10 +539,10 @@ class TestLearningAgentMemoryIntegration:
 
     def test_memory_integration_with_auto_context(self):
         """Test memory integration when context is auto-created."""
-        with patch('learning_agent.create_agent_context') as mock_create, \
-             patch('learning_agent.Agent'), \
-             patch('learning_agent.get_model_instance'), \
-             patch('learning_agent.create_model_settings'):
+        with patch('learning_agent.learning_agent.create_agent_context') as mock_create, \
+             patch('learning_agent.learning_agent.Agent'), \
+             patch('learning_agent.learning_agent.get_model_instance'), \
+             patch('learning_agent.learning_agent.create_model_settings'):
 
             mock_context = Mock()
             mock_context.session_id = "auto_session"
@@ -560,10 +560,10 @@ class TestLearningAgentFactoryPattern:
 
     def test_factory_returns_fresh_instance(self):
         """Test that factory returns fresh agent instances."""
-        with patch('learning_agent.Agent') as mock_agent_class, \
-             patch('learning_agent.create_agent_context'), \
-             patch('learning_agent.get_model_instance'), \
-             patch('learning_agent.create_model_settings'):
+        with patch('learning_agent.learning_agent.Agent') as mock_agent_class, \
+             patch('learning_agent.learning_agent.create_agent_context'), \
+             patch('learning_agent.learning_agent.get_model_instance'), \
+             patch('learning_agent.learning_agent.create_model_settings'):
 
             mock_agent1 = Mock()
             mock_agent2 = Mock()
@@ -578,9 +578,9 @@ class TestLearningAgentFactoryPattern:
 
     def test_factory_with_different_contexts(self):
         """Test factory with different agent contexts."""
-        with patch('learning_agent.Agent') as mock_agent_class, \
-             patch('learning_agent.get_model_instance'), \
-             patch('learning_agent.create_model_settings'):
+        with patch('learning_agent.learning_agent.Agent') as mock_agent_class, \
+             patch('learning_agent.learning_agent.get_model_instance'), \
+             patch('learning_agent.learning_agent.create_model_settings'):
 
             context1 = Mock()
             context1.session_id = "session_1"
@@ -610,10 +610,10 @@ class TestLearningAgentFactoryPattern:
             {"model": "claude-3-sonnet", "reasoning_effort": "high"},
         ]
 
-        with patch('learning_agent.Agent') as mock_agent_class, \
-             patch('learning_agent.create_agent_context'), \
-             patch('learning_agent.get_model_instance'), \
-             patch('learning_agent.create_model_settings'):
+        with patch('learning_agent.learning_agent.Agent') as mock_agent_class, \
+             patch('learning_agent.learning_agent.create_agent_context'), \
+             patch('learning_agent.learning_agent.get_model_instance'), \
+             patch('learning_agent.learning_agent.create_model_settings'):
 
             for i, params in enumerate(test_cases):
                 mock_agent = Mock()
@@ -644,9 +644,9 @@ class TestLearningAgentConstitutionalCompliance:
 
     def test_agent_supports_continuous_learning_article_iv(self, mock_agent_context):
         """Test agent supports Article IV (Continuous Learning)."""
-        with patch('learning_agent.Agent') as mock_agent_class, \
-             patch('learning_agent.get_model_instance'), \
-             patch('learning_agent.create_model_settings'):
+        with patch('learning_agent.learning_agent.Agent') as mock_agent_class, \
+             patch('learning_agent.learning_agent.get_model_instance'), \
+             patch('learning_agent.learning_agent.create_model_settings'):
 
             mock_agent = Mock()
             mock_agent_class.return_value = mock_agent
@@ -665,9 +665,9 @@ class TestLearningAgentConstitutionalCompliance:
 
     def test_agent_description_mentions_collective_intelligence(self, mock_agent_context):
         """Test that agent description emphasizes collective intelligence."""
-        with patch('learning_agent.Agent') as mock_agent_class, \
-             patch('learning_agent.get_model_instance'), \
-             patch('learning_agent.create_model_settings'):
+        with patch('learning_agent.learning_agent.Agent') as mock_agent_class, \
+             patch('learning_agent.learning_agent.get_model_instance'), \
+             patch('learning_agent.learning_agent.create_model_settings'):
 
             mock_agent = Mock()
             mock_agent_class.return_value = mock_agent
@@ -684,9 +684,9 @@ class TestLearningAgentConstitutionalCompliance:
 
     def test_agent_memory_integration_supports_learning(self, mock_agent_context):
         """Test that memory integration supports learning objectives."""
-        with patch('learning_agent.Agent'), \
-             patch('learning_agent.get_model_instance'), \
-             patch('learning_agent.create_model_settings'):
+        with patch('learning_agent.learning_agent.Agent'), \
+             patch('learning_agent.learning_agent.get_model_instance'), \
+             patch('learning_agent.learning_agent.create_model_settings'):
 
             create_learning_agent(agent_context=mock_agent_context)
 

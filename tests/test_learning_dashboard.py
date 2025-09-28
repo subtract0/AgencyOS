@@ -1056,9 +1056,8 @@ class TestErrorHandlingAndEdgeCases:
 
     def test_dashboard_logging(self, mock_agent_context, mock_vector_store, caplog):
         """Test dashboard logging functionality."""
-        dashboard = LearningDashboard(mock_agent_context, mock_vector_store)
-
         with caplog.at_level(logging.INFO):
+            dashboard = LearningDashboard(mock_agent_context, mock_vector_store)
             dashboard.generate_comprehensive_report()
 
         # Should have logged initialization and report generation

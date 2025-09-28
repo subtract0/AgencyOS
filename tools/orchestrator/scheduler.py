@@ -317,7 +317,7 @@ class _Scheduler:
         # Create agent once per task (not per retry attempt) - with error handling
         try:
             agent = self._create_agent_safely(spec, ctx, task_id, agent_name, started)
-        except RuntimeError:
+        except RuntimeError as e:
             # Agent creation failed, return appropriate result
             finished = time.time()
             return TaskResult(
@@ -328,7 +328,7 @@ class _Scheduler:
                 finished_at=finished,
                 attempts=1,
                 artifacts=None,
-                errors=["Agent factory failed"],
+                errors=[str(e)],
             )
 
         try:

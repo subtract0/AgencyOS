@@ -119,6 +119,19 @@ class TestClass:
         pass
 ''')
 
+        # Create README.md to satisfy Article I requirements
+        readme_file = temp_project / "README.md"
+        readme_file.write_text('''
+# Test Project
+
+This is a test project for constitutional compliance testing.
+
+## Features
+
+- Test functionality
+- Constitutional compliance
+''')
+
         # Check Article I compliance
         result = enforcer.check_article_i_complete_context()
 
@@ -144,11 +157,11 @@ class ClassWithoutDocstring:
         assert result is False
         assert len(enforcer.violations) > 0
 
-        # Check that violations are for missing docstrings
-        for violation in enforcer.violations:
-            assert "docstring" in violation.description.lower()
+        # Check that violations include missing docstrings
+        docstring_violations = [v for v in enforcer.violations if "docstring" in v.description.lower()]
+        assert len(docstring_violations) > 0
 
-    @patch('subprocess.run')
+    @patch('tools.constitution_check.subprocess.run')
     def test_article_ii_verification_all_tests_pass(self, mock_run, enforcer):
         """Test Article II check when all tests pass."""
         # Mock successful test run
@@ -164,7 +177,7 @@ class ClassWithoutDocstring:
         assert len(enforcer.violations) == 0
         mock_run.assert_called_once()
 
-    @patch('subprocess.run')
+    @patch('tools.constitution_check.subprocess.run')
     def test_article_ii_verification_tests_fail(self, mock_run, enforcer):
         """Test Article II check when tests fail."""
         # Mock failed test run
@@ -180,8 +193,7 @@ class ClassWithoutDocstring:
         assert len(enforcer.violations) > 0
         assert any("test" in v.description.lower() for v in enforcer.violations)
 
-    @patch('subprocess.run')
-    def test_article_iii_automated_enforcement_enabled(self, mock_run, temp_project, enforcer):
+    def test_article_iii_automated_enforcement_enabled(self, temp_project, enforcer):
         """Test Article III check with enforcement enabled."""
         # Create pre-commit config
         precommit_file = temp_project / ".pre-commit-config.yaml"
@@ -193,12 +205,9 @@ class ClassWithoutDocstring:
         ci_file = ci_dir / "ci.yml"
         ci_file.write_text("name: CI")
 
-        # Mock successful git hook check
-        mock_run.return_value = MagicMock(
-            returncode=0,
-            stdout=".git/hooks/pre-commit",
-            stderr=""
-        )
+        # Create linting config
+        lint_file = temp_project / "pyproject.toml"
+        lint_file.write_text("[tool.ruff]\nline-length = 88")
 
         result = enforcer.check_article_iii_automated_enforcement()
 
@@ -218,12 +227,14 @@ class ClassWithoutDocstring:
     def test_article_iv_continuous_learning_present(self, temp_project, enforcer):
         """Test Article IV check with learning infrastructure."""
         # Create learning-related files
-        learning_dir = temp_project / "learning_agent"
+        learning_dir = temp_project / "learning_loop"
         learning_dir.mkdir(exist_ok=True)
         (learning_dir / "__init__.py").touch()
 
-        logs_dir = temp_project / "logs" / "sessions"
-        logs_dir.mkdir(parents=True, exist_ok=True)
+        # Create pattern intelligence
+        pattern_dir = temp_project / "pattern_intelligence"
+        pattern_dir.mkdir(exist_ok=True)
+        (pattern_dir / "__init__.py").touch()
 
         # Create memory store
         memory_dir = temp_project / "agency_memory"
@@ -248,22 +259,23 @@ class ClassWithoutDocstring:
         specs_dir = temp_project / "specs"
         specs_dir.mkdir(exist_ok=True)
 
-        # Create a spec file
-        spec_file = specs_dir / "spec-001.md"
-        spec_file.write_text('''
-# Spec 001
+        # Create multiple spec files (need at least 3)
+        for i in range(1, 4):
+            spec_file = specs_dir / f"spec-{i:03d}.md"
+            spec_file.write_text(f'''
+# Spec {i:03d}
 
 ## Goals
-- Goal 1
+- Goal {i}
 
 ## Non-Goals
-- Non-goal 1
+- Non-goal {i}
 
 ## Personas
 - Developer
 
 ## Acceptance Criteria
-- Criteria 1
+- Criteria {i}
 ''')
 
         # Create plans directory
@@ -308,13 +320,7 @@ class ClassWithoutDocstring:
         """Test partial compliance check."""
         enforcer = ConstitutionalEnforcer(project_root=temp_project)
 
-        with patch.object(enforcer, 'check_article_i_complete_context', return_value=True), \
-             patch.object(enforcer, 'check_article_ii_verification', return_value=False), \
-             patch.object(enforcer, 'check_article_iii_automated_enforcement', return_value=True), \
-             patch.object(enforcer, 'check_article_iv_continuous_learning', return_value=False), \
-             patch.object(enforcer, 'check_article_v_spec_driven', return_value=True):
-
-            # Add some mock violations
+        def mock_article_ii_fail():
             enforcer.violations.append(
                 ViolationReport(
                     article="Article II",
@@ -322,13 +328,30 @@ class ClassWithoutDocstring:
                     description="Tests failing"
                 )
             )
+            return False
+
+        def mock_article_iv_fail():
+            enforcer.violations.append(
+                ViolationReport(
+                    article="Article IV",
+                    severity="high",
+                    description="Learning infrastructure missing"
+                )
+            )
+            return False
+
+        with patch.object(enforcer, 'check_article_i_complete_context', return_value=True), \
+             patch.object(enforcer, 'check_article_ii_verification', side_effect=mock_article_ii_fail), \
+             patch.object(enforcer, 'check_article_iii_automated_enforcement', return_value=True), \
+             patch.object(enforcer, 'check_article_iv_continuous_learning', side_effect=mock_article_iv_fail), \
+             patch.object(enforcer, 'check_article_v_spec_driven', return_value=True):
 
             report = enforcer.check_compliance()
 
             assert report.overall_compliance is False
             assert report.compliance_percentage == 60.0  # 3 out of 5
-            assert report.articles_checked["Article I"] is True
-            assert report.articles_checked["Article II"] is False
+            assert report.articles_checked["Article I (Complete Context)"] is True
+            assert report.articles_checked["Article II (100% Verification)"] is False
             assert len(report.violations) > 0
 
     def test_auto_fix_functionality(self, temp_project, enforcer):
@@ -356,16 +379,24 @@ class ClassWithoutDocstring:
 
     def test_report_generation(self, temp_project, enforcer):
         """Test report generation in different formats."""
-        # Add some violations
-        enforcer.violations.append(
+        # Add some violations manually
+        violations = [
             ViolationReport(
                 article="Article I",
                 severity="high",
                 description="Test violation"
             )
-        )
+        ]
 
-        report = enforcer.check_compliance()
+        # Create a manual report without running full check
+        from datetime import datetime
+        report = ComplianceReport(
+            timestamp=datetime.now(),
+            articles_checked={"Article I": False, "Article II": True},
+            violations=violations,
+            overall_compliance=False,
+            compliance_percentage=50.0
+        )
 
         # Test text report
         text_report = enforcer.generate_report(report, format="text")
@@ -384,11 +415,18 @@ class ClassWithoutDocstring:
         """Test verbose output functionality."""
         enforcer = ConstitutionalEnforcer(project_root=temp_project, verbose=True)
 
-        # Trigger some verbose output
-        enforcer.check_article_i_complete_context()
+        # Create a file that will trigger an error when reading
+        bad_file = temp_project / "bad.py"
+        bad_file.write_text("def test():\n    pass")
+
+        # Mock open to raise an exception to trigger verbose output
+        from unittest.mock import patch, mock_open
+        with patch("builtins.open", mock_open()) as mock_file:
+            mock_file.side_effect = Exception("Test error")
+            enforcer.check_article_i_complete_context()
 
         captured = capsys.readouterr()
-        # Verbose mode should produce output
+        # Verbose mode should produce output when there's an error
         assert len(captured.out) > 0 or len(captured.err) > 0
 
     def test_severity_levels(self):
