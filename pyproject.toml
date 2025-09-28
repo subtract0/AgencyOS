@@ -26,6 +26,10 @@ Homepage = "https://github.com/agency/agency"
 Repository = "https://github.com/agency/agency"
 Issues = "https://github.com/agency/agency/issues"
 
+[tool.setuptools.packages.find]
+include = ["agency*", "shared*", "core*", "*_agent*"]
+exclude = ["tests*", "tmp*", "logs*", "data*", "plans*", "specs*", "demos*", "docker*", "patches*", "scratch*"]
+
 [tool.pytest.ini_options]
 minversion = "8.0"
 testpaths = ["tests"]
