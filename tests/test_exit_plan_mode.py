@@ -242,10 +242,10 @@ class TestExitPlanModeValidation:
     def test_plan_field_description(self):
         """Test plan field has correct description."""
         # This tests the Pydantic field configuration
-        field_info = ExitPlanMode.__fields__['plan']
-        assert "plan you came up with" in field_info.field_info.description
-        assert "markdown" in field_info.field_info.description.lower()
-        assert "concise" in field_info.field_info.description
+        field_info = ExitPlanMode.model_fields['plan']
+        assert "plan you came up with" in field_info.description
+        assert "markdown" in field_info.description.lower()
+        assert "concise" in field_info.description
 
 
 class TestMainExecution:
@@ -422,9 +422,9 @@ class TestExitPlanModeDocumentation:
 
     def test_field_metadata(self):
         """Test that fields have proper metadata."""
-        plan_field = ExitPlanMode.__fields__['plan']
-        assert plan_field.field_info.description is not None
-        assert len(plan_field.field_info.description) > 10  # Should have meaningful description
+        plan_field = ExitPlanMode.model_fields['plan']
+        assert plan_field.description is not None
+        assert len(plan_field.description) > 10  # Should have meaningful description
 
     def test_inheritance(self):
         """Test proper inheritance from BaseTool."""

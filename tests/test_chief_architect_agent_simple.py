@@ -28,7 +28,7 @@ class TestChiefArchitectAgentBasic:
 
     def test_agent_creation_succeeds(self):
         """Test that agent can be created without errors."""
-        with patch('agency_swarm.Agent') as mock_agent_class:
+        with patch('chief_architect_agent.chief_architect_agent.Agent') as mock_agent_class:
             # Mock all dependencies to avoid complex setup
             with patch('chief_architect_agent.chief_architect_agent.create_agent_context') as mock_context:
                 with patch('chief_architect_agent.chief_architect_agent.get_model_instance', return_value='gpt-5'):
@@ -56,7 +56,7 @@ class TestChiefArchitectAgentBasic:
 
     def test_agent_has_correct_name(self):
         """Test that agent is created with correct name."""
-        with patch('agency_swarm.Agent') as mock_agent_class:
+        with patch('chief_architect_agent.chief_architect_agent.Agent') as mock_agent_class:
             with patch('chief_architect_agent.chief_architect_agent.create_agent_context') as mock_context:
                 with patch('chief_architect_agent.chief_architect_agent.get_model_instance', return_value='gpt-5'):
                     with patch('chief_architect_agent.chief_architect_agent.create_model_settings', return_value=ModelSettings(temperature=0.1, max_tokens=32000, reasoning=Reasoning(effort="high", summary="auto"))):
@@ -83,7 +83,7 @@ class TestChiefArchitectAgentBasic:
 
     def test_agent_description_includes_key_terms(self):
         """Test that agent description contains expected terms."""
-        with patch('agency_swarm.Agent') as mock_agent_class:
+        with patch('chief_architect_agent.chief_architect_agent.Agent') as mock_agent_class:
             with patch('chief_architect_agent.chief_architect_agent.create_agent_context') as mock_context:
                 with patch('chief_architect_agent.chief_architect_agent.get_model_instance', return_value='gpt-5'):
                     with patch('chief_architect_agent.chief_architect_agent.create_model_settings', return_value=ModelSettings(temperature=0.1, max_tokens=32000, reasoning=Reasoning(effort="high", summary="auto"))):

@@ -71,7 +71,63 @@ class EnhancedMemoryStore(MemoryStore):
         # Check for learning trigger conditions
         self._check_learning_triggers(memory_record)
 
-        logger.debug(f"Stored memory with key: {key}, tags: {tags}")
+    def store_memory(self, key: str, value: Any, tags: List[str], metadata: dict = None) -> None:
+        """
+        Store memory with unified interface (facade compatibility).
+
+        Args:
+            key: Unique memory key
+            value: Content to store
+            tags: Tags for categorization
+            metadata: Additional metadata (ignored for now)
+        """
+        self.store(key, value, tags)
+
+    def get_memory(self, key: str) -> Optional[Any]:
+        """
+        Get memory by key (facade compatibility).
+
+        Args:
+            key: Memory key
+
+        Returns:
+            Memory content or None if not found
+        """
+        memory_record = self._memories.get(key)
+        if memory_record:
+            return memory_record.get("content")
+        return None
+
+    def get_memory_count(self) -> int:
+        """
+        Get total number of memories (facade compatibility).
+
+        Returns:
+            Number of stored memories
+        """
+        return len(self._memories)
+
+    def search_memories(self, query: str, tags: Optional[List[str]] = None, limit: int = 10) -> List[Dict[str, Any]]:
+        """
+        Search memories using text query and optional tags (facade compatibility).
+
+        Args:
+            query: Search query text
+            tags: Optional tags to filter by
+            limit: Maximum results to return
+
+        Returns:
+            List of matching memory records
+        """
+        if tags:
+            # Use existing tag-based search
+            result = self.search(tags)
+            memories = result.memories[:limit]
+        else:
+            # Use semantic search
+            memories = self.semantic_search(query, top_k=limit)
+
+        return memories
 
     def search(self, tags: List[str]) -> MemorySearchResult:
         """

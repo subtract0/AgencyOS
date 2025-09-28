@@ -1,8 +1,12 @@
 import os
 
 from typing import Optional
-from agency_swarm import Agent
+from agency_swarm import Agent as _Agent
 from shared.agent_context import AgentContext, create_agent_context
+
+# Create module-level alias for Agent to enable proper mocking
+# When tests patch 'learning_agent.Agent', this will be the target
+Agent = _Agent
 from shared.agent_utils import (
     select_instructions_file,
     create_model_settings,
@@ -96,10 +100,16 @@ def _create_agent_instance(model: str, reasoning_effort: str, combined_hook) -> 
     Returns:
         Configured Agent instance
     """
+    # Handle instructions file fallback gracefully
+    try:
+        instructions = select_instructions_file(current_dir, model)
+    except FileNotFoundError:
+        instructions = None  # Agent can handle None instructions
+
     return Agent(
         name="LearningAgent",
         description=_get_agent_description(),
-        instructions=select_instructions_file(current_dir, model),
+        instructions=instructions,
         model=get_model_instance(model),
         hooks=combined_hook,
         tools=_get_agent_tools(),
@@ -146,6 +156,19 @@ def _get_agent_tools() -> list:
         CrossSessionLearner,
     ]
 
+
+# Export classes and functions for testing/mocking
+__all__ = [
+    'create_learning_agent',
+    'Agent',
+    'create_agent_context',
+    'select_instructions_file',
+    'create_model_settings',
+    'get_model_instance',
+    'create_message_filter_hook',
+    'create_memory_integration_hook',
+    'create_composite_hook'
+]
 
 # Note: We don't create a singleton at module level to avoid circular imports.
 # Use create_learning_agent() directly or import and call when needed.

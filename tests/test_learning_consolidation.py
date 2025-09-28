@@ -7,7 +7,7 @@ and verifies tag frequency analysis and learning report generation.
 
 import pytest
 from datetime import datetime, timedelta
-from typing import Dict, List, cast
+from typing import Any, Dict, List, cast
 from shared.type_definitions.json import JSONValue
 from agency_memory.learning import consolidate_learnings, generate_learning_report
 

@@ -136,10 +136,13 @@ class TestChiefArchitectAgentInitialization:
     def test_agent_creation_with_defaults(self):
         """Test agent creation with default parameters."""
         with patch('chief_architect_agent.chief_architect_agent.Agent') as mock_agent_class, \
-             patch('chief_architect_agent.chief_architect_agent.create_agent_context', return_value='gpt-5') as mock_create_context, \
+             patch('chief_architect_agent.chief_architect_agent.create_agent_context') as mock_create_context, \
              patch('chief_architect_agent.chief_architect_agent.get_model_instance', return_value='gpt-5') as mock_model, \
              patch('chief_architect_agent.chief_architect_agent.create_model_settings') as mock_settings, \
-             patch('chief_architect_agent.chief_architect_agent.select_instructions_file', return_value='instructions.md'):
+             patch('chief_architect_agent.chief_architect_agent.select_instructions_file', return_value='instructions.md'), \
+             patch('chief_architect_agent.chief_architect_agent.create_message_filter_hook') as mock_filter, \
+             patch('chief_architect_agent.chief_architect_agent.create_memory_integration_hook') as mock_memory, \
+             patch('chief_architect_agent.chief_architect_agent.create_composite_hook') as mock_composite:
 
             mock_context = Mock()
             mock_context.session_id = "test_session"
@@ -155,6 +158,11 @@ class TestChiefArchitectAgentInitialization:
                 reasoning=Reasoning(effort="medium", summary="auto")
             )
 
+            # Mock the hooks
+            mock_filter.return_value = Mock()
+            mock_memory.return_value = Mock()
+            mock_composite.return_value = Mock()
+
             agent = create_chief_architect_agent()
 
             # Verify agent creation
@@ -169,10 +177,13 @@ class TestChiefArchitectAgentInitialization:
 
     def test_agent_creation_with_custom_parameters(self, mock_agent_context):
         """Test agent creation with custom parameters."""
-        with patch('agency_swarm.Agent', return_value='gpt-5') as mock_agent_class, \
-             patch('chief_architect_agent.chief_architect_agent.get_model_instance', return_value='gpt-5') as mock_model, \
+        with patch('chief_architect_agent.chief_architect_agent.Agent') as mock_agent_class, \
+             patch('chief_architect_agent.chief_architect_agent.get_model_instance', return_value='claude-3-sonnet') as mock_model, \
              patch('chief_architect_agent.chief_architect_agent.create_model_settings') as mock_settings, \
-             patch('chief_architect_agent.chief_architect_agent.select_instructions_file', return_value='instructions.md'):
+             patch('chief_architect_agent.chief_architect_agent.select_instructions_file', return_value='instructions.md'), \
+             patch('chief_architect_agent.chief_architect_agent.create_message_filter_hook') as mock_filter, \
+             patch('chief_architect_agent.chief_architect_agent.create_memory_integration_hook') as mock_memory, \
+             patch('chief_architect_agent.chief_architect_agent.create_composite_hook') as mock_composite:
 
             mock_agent = Mock()
             mock_agent_class.return_value = mock_agent
@@ -182,6 +193,11 @@ class TestChiefArchitectAgentInitialization:
                 max_tokens=32000,
                 reasoning=Reasoning(effort="medium", summary="auto")
             )
+
+            # Mock the hooks
+            mock_filter.return_value = Mock()
+            mock_memory.return_value = Mock()
+            mock_composite.return_value = Mock()
 
             agent = create_chief_architect_agent(
                 model="claude-3-sonnet",
@@ -201,10 +217,13 @@ class TestChiefArchitectAgentInitialization:
 
     def test_agent_tools_configuration(self, mock_agent_context):
         """Test that agent has all required architectural tools configured."""
-        with patch('agency_swarm.Agent') as mock_agent_class, \
+        with patch('chief_architect_agent.chief_architect_agent.Agent') as mock_agent_class, \
              patch('chief_architect_agent.chief_architect_agent.get_model_instance', return_value='gpt-5'), \
              patch('chief_architect_agent.chief_architect_agent.create_model_settings') as mock_settings, \
-             patch('chief_architect_agent.chief_architect_agent.select_instructions_file', return_value='instructions.md'):
+             patch('chief_architect_agent.chief_architect_agent.select_instructions_file', return_value='instructions.md'), \
+             patch('chief_architect_agent.chief_architect_agent.create_message_filter_hook') as mock_filter, \
+             patch('chief_architect_agent.chief_architect_agent.create_memory_integration_hook') as mock_memory, \
+             patch('chief_architect_agent.chief_architect_agent.create_composite_hook') as mock_composite:
 
             mock_agent = Mock()
             mock_agent_class.return_value = mock_agent
@@ -213,6 +232,11 @@ class TestChiefArchitectAgentInitialization:
                 max_tokens=32000,
                 reasoning=Reasoning(effort="high", summary="auto")
             )
+
+            # Mock the hooks
+            mock_filter.return_value = Mock()
+            mock_memory.return_value = Mock()
+            mock_composite.return_value = Mock()
 
             create_chief_architect_agent(agent_context=mock_agent_context)
 
@@ -232,10 +256,13 @@ class TestChiefArchitectAgentInitialization:
 
     def test_tools_folder_configuration(self, mock_agent_context):
         """Test that tools folder is correctly configured."""
-        with patch('agency_swarm.Agent') as mock_agent_class, \
+        with patch('chief_architect_agent.chief_architect_agent.Agent') as mock_agent_class, \
              patch('chief_architect_agent.chief_architect_agent.get_model_instance', return_value='gpt-5'), \
              patch('chief_architect_agent.chief_architect_agent.create_model_settings') as mock_settings, \
              patch('chief_architect_agent.chief_architect_agent.select_instructions_file', return_value='instructions.md'), \
+             patch('chief_architect_agent.chief_architect_agent.create_message_filter_hook') as mock_filter, \
+             patch('chief_architect_agent.chief_architect_agent.create_memory_integration_hook') as mock_memory, \
+             patch('chief_architect_agent.chief_architect_agent.create_composite_hook') as mock_composite, \
              patch('os.path.dirname') as mock_dirname, \
              patch('os.path.abspath') as mock_abspath, \
              patch('os.path.join') as mock_join:
@@ -252,6 +279,11 @@ class TestChiefArchitectAgentInitialization:
                 reasoning=Reasoning(effort="high", summary="auto")
             )
 
+            # Mock the hooks
+            mock_filter.return_value = Mock()
+            mock_memory.return_value = Mock()
+            mock_composite.return_value = Mock()
+
             create_chief_architect_agent(agent_context=mock_agent_context)
 
             # Verify tools folder was configured
@@ -260,10 +292,13 @@ class TestChiefArchitectAgentInitialization:
 
     def test_agent_memory_integration(self, mock_agent_context):
         """Test that agent properly integrates with memory system."""
-        with patch('agency_swarm.Agent') as mock_agent_class, \
+        with patch('chief_architect_agent.chief_architect_agent.Agent') as mock_agent_class, \
              patch('chief_architect_agent.chief_architect_agent.get_model_instance', return_value='gpt-5') as mock_model, \
              patch('chief_architect_agent.chief_architect_agent.create_model_settings') as mock_settings, \
-             patch('chief_architect_agent.chief_architect_agent.select_instructions_file', return_value='instructions.md'):
+             patch('chief_architect_agent.chief_architect_agent.select_instructions_file', return_value='instructions.md'), \
+             patch('chief_architect_agent.chief_architect_agent.create_message_filter_hook') as mock_filter, \
+             patch('chief_architect_agent.chief_architect_agent.create_memory_integration_hook') as mock_memory, \
+             patch('chief_architect_agent.chief_architect_agent.create_composite_hook') as mock_composite:
 
             mock_agent = Mock()
             mock_agent_class.return_value = mock_agent
@@ -272,6 +307,11 @@ class TestChiefArchitectAgentInitialization:
                 max_tokens=32000,
                 reasoning=Reasoning(effort="high", summary="auto")
             )
+
+            # Mock the hooks
+            mock_filter.return_value = Mock()
+            mock_memory.return_value = Mock()
+            mock_composite.return_value = Mock()
 
             create_chief_architect_agent(agent_context=mock_agent_context)
 
@@ -285,19 +325,24 @@ class TestChiefArchitectAgentInitialization:
 
     def test_instructions_file_selection(self, mock_agent_context):
         """Test that correct instructions file is selected."""
-        with patch('chief_architect_agent.chief_architect_agent.select_instructions_file', return_value='gpt-5') as mock_select, \
-             patch('agency_swarm.Agent', return_value='gpt-5') as mock_agent_class, \
+        with patch('chief_architect_agent.chief_architect_agent.select_instructions_file', return_value='/path/to/instructions-gpt-5.md') as mock_select, \
+             patch('chief_architect_agent.chief_architect_agent.Agent') as mock_agent_class, \
              patch('chief_architect_agent.chief_architect_agent.get_model_instance', return_value='gpt-5'), \
-             patch('chief_architect_agent.chief_architect_agent.create_model_settings') as mock_settings:
+             patch('chief_architect_agent.chief_architect_agent.create_model_settings') as mock_settings, \
+             patch('chief_architect_agent.chief_architect_agent.create_message_filter_hook') as mock_filter, \
+             patch('chief_architect_agent.chief_architect_agent.create_memory_integration_hook') as mock_memory, \
+             patch('chief_architect_agent.chief_architect_agent.create_composite_hook') as mock_composite:
             mock_settings.return_value = ModelSettings(
                 temperature=0.1,
                 max_tokens=32000,
                 reasoning=Reasoning(effort="high", summary="auto")
             )
 
-            mock_select.return_value = "/path/to/instructions-gpt-5.md"
             mock_agent = Mock()
             mock_agent_class.return_value = mock_agent
+            mock_filter.return_value = Mock()
+            mock_memory.return_value = Mock()
+            mock_composite.return_value = Mock()
 
             create_chief_architect_agent(model="gpt-5", agent_context=mock_agent_context)
 
@@ -309,18 +354,22 @@ class TestChiefArchitectAgentInitialization:
 
     def test_hooks_integration(self, mock_agent_context):
         """Test that system hooks are properly integrated."""
-        with patch('chief_architect_agent.chief_architect_agent.create_message_filter_hook', return_value='gpt-5') as mock_filter, \
-             patch('chief_architect_agent.chief_architect_agent.create_memory_integration_hook', return_value='gpt-5') as mock_memory, \
-             patch('chief_architect_agent.chief_architect_agent.create_composite_hook', return_value='gpt-5') as mock_composite, \
-             patch('agency_swarm.Agent', return_value='gpt-5') as mock_agent_class, \
+        with patch('chief_architect_agent.chief_architect_agent.create_message_filter_hook') as mock_filter, \
+             patch('chief_architect_agent.chief_architect_agent.create_memory_integration_hook') as mock_memory, \
+             patch('chief_architect_agent.chief_architect_agent.create_composite_hook') as mock_composite, \
+             patch('chief_architect_agent.chief_architect_agent.Agent') as mock_agent_class, \
              patch('chief_architect_agent.chief_architect_agent.get_model_instance', return_value='gpt-5'), \
-             patch('chief_architect_agent.chief_architect_agent.create_model_settings') as mock_settings:
+             patch('chief_architect_agent.chief_architect_agent.create_model_settings') as mock_settings, \
+             patch('chief_architect_agent.chief_architect_agent.select_instructions_file', return_value='instructions.md'):
             mock_settings.return_value = ModelSettings(
                 temperature=0.1,
                 max_tokens=32000,
                 reasoning=Reasoning(effort="high", summary="auto")
             )
 
+            mock_memory_hook = Mock()
+            mock_composite_hook = Mock()
+            mock_filter.return_value = Mock()
             mock_memory.return_value = mock_memory_hook
             mock_composite.return_value = mock_composite_hook
 
@@ -345,14 +394,26 @@ class TestChiefArchitectAgentDescription:
 
     def test_agent_description_strategic_leadership(self, mock_agent_context):
         """Test that agent description captures strategic leadership role."""
-        with patch('agency_swarm.Agent', return_value='gpt-5') as mock_agent_class, \
+        with patch('chief_architect_agent.chief_architect_agent.Agent') as mock_agent_class, \
              patch('chief_architect_agent.chief_architect_agent.get_model_instance', return_value='gpt-5'), \
-             patch('chief_architect_agent.chief_architect_agent.create_model_settings') as mock_settings:
+             patch('chief_architect_agent.chief_architect_agent.create_model_settings') as mock_settings, \
+             patch('chief_architect_agent.chief_architect_agent.select_instructions_file', return_value='instructions.md'), \
+             patch('chief_architect_agent.chief_architect_agent.create_message_filter_hook') as mock_filter, \
+             patch('chief_architect_agent.chief_architect_agent.create_memory_integration_hook') as mock_memory, \
+             patch('chief_architect_agent.chief_architect_agent.create_composite_hook') as mock_composite:
             mock_settings.return_value = ModelSettings(
                 temperature=0.1,
                 max_tokens=32000,
                 reasoning=Reasoning(effort="high", summary="auto")
             )
+
+            mock_agent = Mock()
+            mock_agent_class.return_value = mock_agent
+            mock_filter.return_value = Mock()
+            mock_memory.return_value = Mock()
+            mock_composite.return_value = Mock()
+
+            create_chief_architect_agent(agent_context=mock_agent_context)
 
             call_kwargs = mock_agent_class.call_args[1]
             description = call_kwargs['description']
@@ -363,14 +424,26 @@ class TestChiefArchitectAgentDescription:
 
     def test_agent_description_triggers(self, mock_agent_context):
         """Test that agent description captures trigger conditions."""
-        with patch('agency_swarm.Agent', return_value='gpt-5') as mock_agent_class, \
+        with patch('chief_architect_agent.chief_architect_agent.Agent') as mock_agent_class, \
              patch('chief_architect_agent.chief_architect_agent.get_model_instance', return_value='gpt-5'), \
-             patch('chief_architect_agent.chief_architect_agent.create_model_settings') as mock_settings:
+             patch('chief_architect_agent.chief_architect_agent.create_model_settings') as mock_settings, \
+             patch('chief_architect_agent.chief_architect_agent.select_instructions_file', return_value='instructions.md'), \
+             patch('chief_architect_agent.chief_architect_agent.create_message_filter_hook') as mock_filter, \
+             patch('chief_architect_agent.chief_architect_agent.create_memory_integration_hook') as mock_memory, \
+             patch('chief_architect_agent.chief_architect_agent.create_composite_hook') as mock_composite:
             mock_settings.return_value = ModelSettings(
                 temperature=0.1,
                 max_tokens=32000,
                 reasoning=Reasoning(effort="high", summary="auto")
             )
+
+            mock_agent = Mock()
+            mock_agent_class.return_value = mock_agent
+            mock_filter.return_value = Mock()
+            mock_memory.return_value = Mock()
+            mock_composite.return_value = Mock()
+
+            create_chief_architect_agent(agent_context=mock_agent_context)
 
             call_kwargs = mock_agent_class.call_args[1]
             description = call_kwargs['description']
@@ -385,14 +458,26 @@ class TestChiefArchitectAgentDescription:
 
     def test_agent_description_capabilities(self, mock_agent_context):
         """Test that agent description captures key capabilities."""
-        with patch('agency_swarm.Agent', return_value='gpt-5') as mock_agent_class, \
+        with patch('chief_architect_agent.chief_architect_agent.Agent') as mock_agent_class, \
              patch('chief_architect_agent.chief_architect_agent.get_model_instance', return_value='gpt-5'), \
-             patch('chief_architect_agent.chief_architect_agent.create_model_settings') as mock_settings:
+             patch('chief_architect_agent.chief_architect_agent.create_model_settings') as mock_settings, \
+             patch('chief_architect_agent.chief_architect_agent.select_instructions_file', return_value='instructions.md'), \
+             patch('chief_architect_agent.chief_architect_agent.create_message_filter_hook') as mock_filter, \
+             patch('chief_architect_agent.chief_architect_agent.create_memory_integration_hook') as mock_memory, \
+             patch('chief_architect_agent.chief_architect_agent.create_composite_hook') as mock_composite:
             mock_settings.return_value = ModelSettings(
                 temperature=0.1,
                 max_tokens=32000,
                 reasoning=Reasoning(effort="high", summary="auto")
             )
+
+            mock_agent = Mock()
+            mock_agent_class.return_value = mock_agent
+            mock_filter.return_value = Mock()
+            mock_memory.return_value = Mock()
+            mock_composite.return_value = Mock()
+
+            create_chief_architect_agent(agent_context=mock_agent_context)
 
             call_kwargs = mock_agent_class.call_args[1]
             description = call_kwargs['description']
@@ -407,14 +492,26 @@ class TestChiefArchitectAgentDescription:
 
     def test_agent_description_authority(self, mock_agent_context):
         """Test that agent description captures authority and autonomy."""
-        with patch('agency_swarm.Agent', return_value='gpt-5') as mock_agent_class, \
+        with patch('chief_architect_agent.chief_architect_agent.Agent') as mock_agent_class, \
              patch('chief_architect_agent.chief_architect_agent.get_model_instance', return_value='gpt-5'), \
-             patch('chief_architect_agent.chief_architect_agent.create_model_settings') as mock_settings:
+             patch('chief_architect_agent.chief_architect_agent.create_model_settings') as mock_settings, \
+             patch('chief_architect_agent.chief_architect_agent.select_instructions_file', return_value='instructions.md'), \
+             patch('chief_architect_agent.chief_architect_agent.create_message_filter_hook') as mock_filter, \
+             patch('chief_architect_agent.chief_architect_agent.create_memory_integration_hook') as mock_memory, \
+             patch('chief_architect_agent.chief_architect_agent.create_composite_hook') as mock_composite:
             mock_settings.return_value = ModelSettings(
                 temperature=0.1,
                 max_tokens=32000,
                 reasoning=Reasoning(effort="high", summary="auto")
             )
+
+            mock_agent = Mock()
+            mock_agent_class.return_value = mock_agent
+            mock_filter.return_value = Mock()
+            mock_memory.return_value = Mock()
+            mock_composite.return_value = Mock()
+
+            create_chief_architect_agent(agent_context=mock_agent_context)
 
             call_kwargs = mock_agent_class.call_args[1]
             description = call_kwargs['description']
@@ -427,14 +524,26 @@ class TestChiefArchitectAgentDescription:
 
     def test_agent_description_usage_guidance(self, mock_agent_context):
         """Test that agent description provides usage guidance."""
-        with patch('agency_swarm.Agent', return_value='gpt-5') as mock_agent_class, \
+        with patch('chief_architect_agent.chief_architect_agent.Agent') as mock_agent_class, \
              patch('chief_architect_agent.chief_architect_agent.get_model_instance', return_value='gpt-5'), \
-             patch('chief_architect_agent.chief_architect_agent.create_model_settings') as mock_settings:
+             patch('chief_architect_agent.chief_architect_agent.create_model_settings') as mock_settings, \
+             patch('chief_architect_agent.chief_architect_agent.select_instructions_file', return_value='instructions.md'), \
+             patch('chief_architect_agent.chief_architect_agent.create_message_filter_hook') as mock_filter, \
+             patch('chief_architect_agent.chief_architect_agent.create_memory_integration_hook') as mock_memory, \
+             patch('chief_architect_agent.chief_architect_agent.create_composite_hook') as mock_composite:
             mock_settings.return_value = ModelSettings(
                 temperature=0.1,
                 max_tokens=32000,
                 reasoning=Reasoning(effort="high", summary="auto")
             )
+
+            mock_agent = Mock()
+            mock_agent_class.return_value = mock_agent
+            mock_filter.return_value = Mock()
+            mock_memory.return_value = Mock()
+            mock_composite.return_value = Mock()
+
+            create_chief_architect_agent(agent_context=mock_agent_context)
 
             call_kwargs = mock_agent_class.call_args[1]
             description = call_kwargs['description']
@@ -459,10 +568,21 @@ class TestChiefArchitectAgentErrorHandling:
 
     def test_agent_creation_without_context(self):
         """Test that agent context is auto-created when not provided."""
-        with patch('chief_architect_agent.chief_architect_agent.create_agent_context', return_value='gpt-5') as mock_create, \
-             patch('agency_swarm.Agent', return_value='gpt-5') as mock_agent_class, \
+        with patch('chief_architect_agent.chief_architect_agent.create_agent_context') as mock_create, \
+             patch('chief_architect_agent.chief_architect_agent.Agent') as mock_agent_class, \
              patch('chief_architect_agent.chief_architect_agent.get_model_instance', return_value='gpt-5'), \
-             patch('chief_architect_agent.chief_architect_agent.create_model_settings') as mock_settings:
+             patch('chief_architect_agent.chief_architect_agent.create_model_settings') as mock_settings, \
+             patch('chief_architect_agent.chief_architect_agent.select_instructions_file', return_value='instructions.md'), \
+             patch('chief_architect_agent.chief_architect_agent.create_message_filter_hook') as mock_filter, \
+             patch('chief_architect_agent.chief_architect_agent.create_memory_integration_hook') as mock_memory, \
+             patch('chief_architect_agent.chief_architect_agent.create_composite_hook') as mock_composite:
+
+            # Create a proper mock context
+            mock_context = Mock()
+            mock_context.session_id = "test_session"
+            mock_context.store_memory = Mock()
+            mock_create.return_value = mock_context
+
             mock_settings.return_value = ModelSettings(
                 temperature=0.1,
                 max_tokens=32000,
@@ -471,6 +591,9 @@ class TestChiefArchitectAgentErrorHandling:
 
             mock_agent = Mock()
             mock_agent_class.return_value = mock_agent
+            mock_filter.return_value = Mock()
+            mock_memory.return_value = Mock()
+            mock_composite.return_value = Mock()
 
             agent = create_chief_architect_agent()
 
@@ -503,9 +626,13 @@ class TestChiefArchitectAgentErrorHandling:
 
     def test_tools_folder_path_errors(self, mock_agent_context):
         """Test handling of tools folder path errors."""
-        with patch('agency_swarm.Agent', return_value='gpt-5') as mock_agent_class, \
+        with patch('chief_architect_agent.chief_architect_agent.Agent') as mock_agent_class, \
              patch('chief_architect_agent.chief_architect_agent.get_model_instance', return_value='gpt-5'), \
              patch('chief_architect_agent.chief_architect_agent.create_model_settings') as mock_settings, \
+             patch('chief_architect_agent.chief_architect_agent.select_instructions_file', return_value='instructions.md'), \
+             patch('chief_architect_agent.chief_architect_agent.create_message_filter_hook') as mock_filter, \
+             patch('chief_architect_agent.chief_architect_agent.create_memory_integration_hook') as mock_memory, \
+             patch('chief_architect_agent.chief_architect_agent.create_composite_hook') as mock_composite, \
              patch('os.path.dirname') as mock_dirname:
 
             mock_dirname.side_effect = OSError("Path error")
@@ -516,6 +643,9 @@ class TestChiefArchitectAgentErrorHandling:
                 max_tokens=32000,
                 reasoning=Reasoning(effort="high", summary="auto")
             )
+            mock_filter.return_value = Mock()
+            mock_memory.return_value = Mock()
+            mock_composite.return_value = Mock()
 
             # Should handle path errors gracefully
             agent = create_chief_architect_agent(agent_context=mock_agent_context)
@@ -527,9 +657,24 @@ class TestChiefArchitectAgentMemoryIntegration:
 
     def test_memory_logging_on_creation(self, mock_agent_context):
         """Test that agent creation is properly logged to memory."""
-        with patch('agency_swarm.Agent', return_value='gpt-5'), \
+        with patch('chief_architect_agent.chief_architect_agent.Agent') as mock_agent_class, \
              patch('chief_architect_agent.chief_architect_agent.get_model_instance', return_value='gpt-5'), \
-             patch('chief_architect_agent.chief_architect_agent.create_model_settings') as mock_settings:
+             patch('chief_architect_agent.chief_architect_agent.create_model_settings') as mock_settings, \
+             patch('chief_architect_agent.chief_architect_agent.select_instructions_file', return_value='instructions.md'), \
+             patch('chief_architect_agent.chief_architect_agent.create_message_filter_hook') as mock_filter, \
+             patch('chief_architect_agent.chief_architect_agent.create_memory_integration_hook') as mock_memory, \
+             patch('chief_architect_agent.chief_architect_agent.create_composite_hook') as mock_composite:
+
+            mock_agent = Mock()
+            mock_agent_class.return_value = mock_agent
+            mock_settings.return_value = ModelSettings(
+                temperature=0.1,
+                max_tokens=32000,
+                reasoning=Reasoning(effort="high", summary="auto")
+            )
+            mock_filter.return_value = Mock()
+            mock_memory.return_value = Mock()
+            mock_composite.return_value = Mock()
 
             create_chief_architect_agent(
                 model="gpt-5",
@@ -556,10 +701,24 @@ class TestChiefArchitectAgentMemoryIntegration:
 
     def test_memory_context_integration(self, mock_agent_context):
         """Test that memory context is properly integrated."""
-        with patch('chief_architect_agent.chief_architect_agent.create_memory_integration_hook', return_value='gpt-5') as mock_memory_hook, \
-             patch('agency_swarm.Agent', return_value='gpt-5'), \
+        with patch('chief_architect_agent.chief_architect_agent.create_memory_integration_hook') as mock_memory_hook, \
+             patch('chief_architect_agent.chief_architect_agent.Agent') as mock_agent_class, \
              patch('chief_architect_agent.chief_architect_agent.get_model_instance', return_value='gpt-5'), \
-             patch('chief_architect_agent.chief_architect_agent.create_model_settings') as mock_settings:
+             patch('chief_architect_agent.chief_architect_agent.create_model_settings') as mock_settings, \
+             patch('chief_architect_agent.chief_architect_agent.select_instructions_file', return_value='instructions.md'), \
+             patch('chief_architect_agent.chief_architect_agent.create_message_filter_hook') as mock_filter, \
+             patch('chief_architect_agent.chief_architect_agent.create_composite_hook') as mock_composite:
+
+            mock_agent = Mock()
+            mock_agent_class.return_value = mock_agent
+            mock_settings.return_value = ModelSettings(
+                temperature=0.1,
+                max_tokens=32000,
+                reasoning=Reasoning(effort="high", summary="auto")
+            )
+            mock_filter.return_value = Mock()
+            mock_memory_hook.return_value = Mock()
+            mock_composite.return_value = Mock()
 
             create_chief_architect_agent(agent_context=mock_agent_context)
 
@@ -569,11 +728,26 @@ class TestChiefArchitectAgentMemoryIntegration:
 
     def test_session_id_propagation(self, mock_agent_context):
         """Test that session ID is properly propagated."""
-        with patch('agency_swarm.Agent', return_value='gpt-5'), \
+        with patch('chief_architect_agent.chief_architect_agent.Agent') as mock_agent_class, \
              patch('chief_architect_agent.chief_architect_agent.get_model_instance', return_value='gpt-5'), \
-             patch('chief_architect_agent.chief_architect_agent.create_model_settings') as mock_settings:
+             patch('chief_architect_agent.chief_architect_agent.create_model_settings') as mock_settings, \
+             patch('chief_architect_agent.chief_architect_agent.select_instructions_file', return_value='instructions.md'), \
+             patch('chief_architect_agent.chief_architect_agent.create_message_filter_hook') as mock_filter, \
+             patch('chief_architect_agent.chief_architect_agent.create_memory_integration_hook') as mock_memory, \
+             patch('chief_architect_agent.chief_architect_agent.create_composite_hook') as mock_composite:
 
             mock_agent_context.session_id = "architect_session_12345"
+
+            mock_agent = Mock()
+            mock_agent_class.return_value = mock_agent
+            mock_settings.return_value = ModelSettings(
+                temperature=0.1,
+                max_tokens=32000,
+                reasoning=Reasoning(effort="high", summary="auto")
+            )
+            mock_filter.return_value = Mock()
+            mock_memory.return_value = Mock()
+            mock_composite.return_value = Mock()
 
             create_chief_architect_agent(agent_context=mock_agent_context)
 
@@ -588,14 +762,26 @@ class TestChiefArchitectAgentToolIntegration:
 
     def test_basic_tools_availability(self, mock_agent_context):
         """Test that all basic tools are available to chief architect agent."""
-        with patch('agency_swarm.Agent', return_value='gpt-5') as mock_agent_class, \
+        with patch('chief_architect_agent.chief_architect_agent.Agent') as mock_agent_class, \
              patch('chief_architect_agent.chief_architect_agent.get_model_instance', return_value='gpt-5'), \
-             patch('chief_architect_agent.chief_architect_agent.create_model_settings') as mock_settings:
+             patch('chief_architect_agent.chief_architect_agent.create_model_settings') as mock_settings, \
+             patch('chief_architect_agent.chief_architect_agent.select_instructions_file', return_value='instructions.md'), \
+             patch('chief_architect_agent.chief_architect_agent.create_message_filter_hook') as mock_filter, \
+             patch('chief_architect_agent.chief_architect_agent.create_memory_integration_hook') as mock_memory, \
+             patch('chief_architect_agent.chief_architect_agent.create_composite_hook') as mock_composite:
             mock_settings.return_value = ModelSettings(
                 temperature=0.1,
                 max_tokens=32000,
                 reasoning=Reasoning(effort="high", summary="auto")
             )
+
+            mock_agent = Mock()
+            mock_agent_class.return_value = mock_agent
+            mock_filter.return_value = Mock()
+            mock_memory.return_value = Mock()
+            mock_composite.return_value = Mock()
+
+            create_chief_architect_agent(agent_context=mock_agent_context)
 
             call_kwargs = mock_agent_class.call_args[1]
             tools = call_kwargs['tools']
@@ -609,14 +795,26 @@ class TestChiefArchitectAgentToolIntegration:
 
     def test_specialized_architecture_tools(self, mock_agent_context):
         """Test that specialized architecture tools are available."""
-        with patch('agency_swarm.Agent', return_value='gpt-5') as mock_agent_class, \
+        with patch('chief_architect_agent.chief_architect_agent.Agent') as mock_agent_class, \
              patch('chief_architect_agent.chief_architect_agent.get_model_instance', return_value='gpt-5'), \
-             patch('chief_architect_agent.chief_architect_agent.create_model_settings') as mock_settings:
+             patch('chief_architect_agent.chief_architect_agent.create_model_settings') as mock_settings, \
+             patch('chief_architect_agent.chief_architect_agent.select_instructions_file', return_value='instructions.md'), \
+             patch('chief_architect_agent.chief_architect_agent.create_message_filter_hook') as mock_filter, \
+             patch('chief_architect_agent.chief_architect_agent.create_memory_integration_hook') as mock_memory, \
+             patch('chief_architect_agent.chief_architect_agent.create_composite_hook') as mock_composite:
             mock_settings.return_value = ModelSettings(
                 temperature=0.1,
                 max_tokens=32000,
                 reasoning=Reasoning(effort="high", summary="auto")
             )
+
+            mock_agent = Mock()
+            mock_agent_class.return_value = mock_agent
+            mock_filter.return_value = Mock()
+            mock_memory.return_value = Mock()
+            mock_composite.return_value = Mock()
+
+            create_chief_architect_agent(agent_context=mock_agent_context)
 
             call_kwargs = mock_agent_class.call_args[1]
             tools = call_kwargs['tools']
@@ -630,9 +828,13 @@ class TestChiefArchitectAgentToolIntegration:
 
     def test_model_settings_for_architecture(self, mock_agent_context):
         """Test that appropriate model settings are used for architecture tasks."""
-        with patch('agency_swarm.Agent', return_value='gpt-5') as mock_agent_class, \
+        with patch('chief_architect_agent.chief_architect_agent.Agent') as mock_agent_class, \
              patch('chief_architect_agent.chief_architect_agent.get_model_instance', return_value='gpt-5') as mock_model, \
-             patch('chief_architect_agent.chief_architect_agent.create_model_settings') as mock_settings:
+             patch('chief_architect_agent.chief_architect_agent.create_model_settings') as mock_settings, \
+             patch('chief_architect_agent.chief_architect_agent.select_instructions_file', return_value='instructions.md'), \
+             patch('chief_architect_agent.chief_architect_agent.create_message_filter_hook') as mock_filter, \
+             patch('chief_architect_agent.chief_architect_agent.create_memory_integration_hook') as mock_memory, \
+             patch('chief_architect_agent.chief_architect_agent.create_composite_hook') as mock_composite:
 
             mock_agent = Mock()
             mock_agent_class.return_value = mock_agent
@@ -642,6 +844,9 @@ class TestChiefArchitectAgentToolIntegration:
                 max_tokens=32000,
                 reasoning=Reasoning(effort="high", summary="auto")
             )
+            mock_filter.return_value = Mock()
+            mock_memory.return_value = Mock()
+            mock_composite.return_value = Mock()
 
             create_chief_architect_agent(
                 model="gpt-5",
@@ -663,14 +868,33 @@ class TestChiefArchitectAgentFactoryPattern:
 
     def test_factory_returns_fresh_instance(self):
         """Test that factory returns fresh agent instances."""
-        with patch('agency_swarm.Agent', return_value='gpt-5') as mock_agent_class, \
-             patch('chief_architect_agent.chief_architect_agent.create_agent_context', return_value='gpt-5'), \
+        with patch('chief_architect_agent.chief_architect_agent.Agent') as mock_agent_class, \
+             patch('chief_architect_agent.chief_architect_agent.create_agent_context') as mock_create_context, \
              patch('chief_architect_agent.chief_architect_agent.get_model_instance', return_value='gpt-5'), \
-             patch('chief_architect_agent.chief_architect_agent.create_model_settings') as mock_settings:
+             patch('chief_architect_agent.chief_architect_agent.create_model_settings') as mock_settings, \
+             patch('chief_architect_agent.chief_architect_agent.select_instructions_file', return_value='instructions.md'), \
+             patch('chief_architect_agent.chief_architect_agent.create_message_filter_hook') as mock_filter, \
+             patch('chief_architect_agent.chief_architect_agent.create_memory_integration_hook') as mock_memory, \
+             patch('chief_architect_agent.chief_architect_agent.create_composite_hook') as mock_composite:
+
+            # Create proper mock contexts
+            mock_context = Mock()
+            mock_context.session_id = "test_session"
+            mock_context.store_memory = Mock()
+            mock_create_context.return_value = mock_context
+
+            mock_settings.return_value = ModelSettings(
+                temperature=0.1,
+                max_tokens=32000,
+                reasoning=Reasoning(effort="high", summary="auto")
+            )
 
             mock_agent1 = Mock()
             mock_agent2 = Mock()
             mock_agent_class.side_effect = [mock_agent1, mock_agent2]
+            mock_filter.return_value = Mock()
+            mock_memory.return_value = Mock()
+            mock_composite.return_value = Mock()
 
             agent1 = create_chief_architect_agent()
             agent2 = create_chief_architect_agent()
@@ -681,9 +905,13 @@ class TestChiefArchitectAgentFactoryPattern:
 
     def test_factory_with_different_contexts(self):
         """Test factory with different agent contexts."""
-        with patch('agency_swarm.Agent', return_value='gpt-5') as mock_agent_class, \
+        with patch('chief_architect_agent.chief_architect_agent.Agent') as mock_agent_class, \
              patch('chief_architect_agent.chief_architect_agent.get_model_instance', return_value='gpt-5'), \
-             patch('chief_architect_agent.chief_architect_agent.create_model_settings') as mock_settings:
+             patch('chief_architect_agent.chief_architect_agent.create_model_settings') as mock_settings, \
+             patch('chief_architect_agent.chief_architect_agent.select_instructions_file', return_value='instructions.md'), \
+             patch('chief_architect_agent.chief_architect_agent.create_message_filter_hook') as mock_filter, \
+             patch('chief_architect_agent.chief_architect_agent.create_memory_integration_hook') as mock_memory, \
+             patch('chief_architect_agent.chief_architect_agent.create_composite_hook') as mock_composite:
 
             context1 = Mock()
             context1.session_id = "architect_session_1"
@@ -693,9 +921,18 @@ class TestChiefArchitectAgentFactoryPattern:
             context2.session_id = "architect_session_2"
             context2.store_memory = Mock()
 
+            mock_settings.return_value = ModelSettings(
+                temperature=0.1,
+                max_tokens=32000,
+                reasoning=Reasoning(effort="high", summary="auto")
+            )
+
             mock_agent1 = Mock()
             mock_agent2 = Mock()
             mock_agent_class.side_effect = [mock_agent1, mock_agent2]
+            mock_filter.return_value = Mock()
+            mock_memory.return_value = Mock()
+            mock_composite.return_value = Mock()
 
             agent1 = create_chief_architect_agent(agent_context=context1)
             agent2 = create_chief_architect_agent(agent_context=context2)
@@ -713,15 +950,30 @@ class TestChiefArchitectAgentFactoryPattern:
             {"model": "claude-3-sonnet", "reasoning_effort": "high"},
         ]
 
-        with patch('agency_swarm.Agent', return_value='gpt-5') as mock_agent_class, \
-             patch('chief_architect_agent.chief_architect_agent.create_agent_context', return_value='gpt-5'), \
+        with patch('chief_architect_agent.chief_architect_agent.Agent') as mock_agent_class, \
+             patch('chief_architect_agent.chief_architect_agent.create_agent_context') as mock_create_context, \
              patch('chief_architect_agent.chief_architect_agent.get_model_instance', return_value='gpt-5'), \
-             patch('chief_architect_agent.chief_architect_agent.create_model_settings') as mock_settings:
+             patch('chief_architect_agent.chief_architect_agent.create_model_settings') as mock_settings, \
+             patch('chief_architect_agent.chief_architect_agent.select_instructions_file', return_value='instructions.md'), \
+             patch('chief_architect_agent.chief_architect_agent.create_message_filter_hook') as mock_filter, \
+             patch('chief_architect_agent.chief_architect_agent.create_memory_integration_hook') as mock_memory, \
+             patch('chief_architect_agent.chief_architect_agent.create_composite_hook') as mock_composite:
+
+            # Create proper mock context
+            mock_context = Mock()
+            mock_context.session_id = "test_session"
+            mock_context.store_memory = Mock()
+            mock_create_context.return_value = mock_context
+
             mock_settings.return_value = ModelSettings(
                 temperature=0.1,
                 max_tokens=32000,
                 reasoning=Reasoning(effort="high", summary="auto")
             )
+
+            mock_filter.return_value = Mock()
+            mock_memory.return_value = Mock()
+            mock_composite.return_value = Mock()
 
             for i, params in enumerate(test_cases):
                 mock_agent = Mock()
@@ -737,14 +989,26 @@ class TestChiefArchitectAgentConstitutionalCompliance:
 
     def test_agent_supports_spec_driven_development_article_v(self, mock_agent_context):
         """Test agent supports Article V (Spec-Driven Development)."""
-        with patch('agency_swarm.Agent', return_value='gpt-5') as mock_agent_class, \
+        with patch('chief_architect_agent.chief_architect_agent.Agent') as mock_agent_class, \
              patch('chief_architect_agent.chief_architect_agent.get_model_instance', return_value='gpt-5'), \
-             patch('chief_architect_agent.chief_architect_agent.create_model_settings') as mock_settings:
+             patch('chief_architect_agent.chief_architect_agent.create_model_settings') as mock_settings, \
+             patch('chief_architect_agent.chief_architect_agent.select_instructions_file', return_value='instructions.md'), \
+             patch('chief_architect_agent.chief_architect_agent.create_message_filter_hook') as mock_filter, \
+             patch('chief_architect_agent.chief_architect_agent.create_memory_integration_hook') as mock_memory, \
+             patch('chief_architect_agent.chief_architect_agent.create_composite_hook') as mock_composite:
             mock_settings.return_value = ModelSettings(
                 temperature=0.1,
                 max_tokens=32000,
                 reasoning=Reasoning(effort="high", summary="auto")
             )
+
+            mock_agent = Mock()
+            mock_agent_class.return_value = mock_agent
+            mock_filter.return_value = Mock()
+            mock_memory.return_value = Mock()
+            mock_composite.return_value = Mock()
+
+            create_chief_architect_agent(agent_context=mock_agent_context)
 
             # Verify agent has tools for spec-driven development
             call_kwargs = mock_agent_class.call_args[1]
@@ -758,14 +1022,26 @@ class TestChiefArchitectAgentConstitutionalCompliance:
 
     def test_agent_description_mentions_constitutional_compliance(self, mock_agent_context):
         """Test that agent description emphasizes constitutional compliance."""
-        with patch('agency_swarm.Agent', return_value='gpt-5') as mock_agent_class, \
+        with patch('chief_architect_agent.chief_architect_agent.Agent') as mock_agent_class, \
              patch('chief_architect_agent.chief_architect_agent.get_model_instance', return_value='gpt-5'), \
-             patch('chief_architect_agent.chief_architect_agent.create_model_settings') as mock_settings:
+             patch('chief_architect_agent.chief_architect_agent.create_model_settings') as mock_settings, \
+             patch('chief_architect_agent.chief_architect_agent.select_instructions_file', return_value='instructions.md'), \
+             patch('chief_architect_agent.chief_architect_agent.create_message_filter_hook') as mock_filter, \
+             patch('chief_architect_agent.chief_architect_agent.create_memory_integration_hook') as mock_memory, \
+             patch('chief_architect_agent.chief_architect_agent.create_composite_hook') as mock_composite:
             mock_settings.return_value = ModelSettings(
                 temperature=0.1,
                 max_tokens=32000,
                 reasoning=Reasoning(effort="high", summary="auto")
             )
+
+            mock_agent = Mock()
+            mock_agent_class.return_value = mock_agent
+            mock_filter.return_value = Mock()
+            mock_memory.return_value = Mock()
+            mock_composite.return_value = Mock()
+
+            create_chief_architect_agent(agent_context=mock_agent_context)
 
             call_kwargs = mock_agent_class.call_args[1]
             description = call_kwargs['description']
@@ -776,14 +1052,26 @@ class TestChiefArchitectAgentConstitutionalCompliance:
 
     def test_agent_has_authority_for_high_priority_tasks(self, mock_agent_context):
         """Test that agent has authority to create high-priority tasks."""
-        with patch('agency_swarm.Agent', return_value='gpt-5') as mock_agent_class, \
+        with patch('chief_architect_agent.chief_architect_agent.Agent') as mock_agent_class, \
              patch('chief_architect_agent.chief_architect_agent.get_model_instance', return_value='gpt-5'), \
-             patch('chief_architect_agent.chief_architect_agent.create_model_settings') as mock_settings:
+             patch('chief_architect_agent.chief_architect_agent.create_model_settings') as mock_settings, \
+             patch('chief_architect_agent.chief_architect_agent.select_instructions_file', return_value='instructions.md'), \
+             patch('chief_architect_agent.chief_architect_agent.create_message_filter_hook') as mock_filter, \
+             patch('chief_architect_agent.chief_architect_agent.create_memory_integration_hook') as mock_memory, \
+             patch('chief_architect_agent.chief_architect_agent.create_composite_hook') as mock_composite:
             mock_settings.return_value = ModelSettings(
                 temperature=0.1,
                 max_tokens=32000,
                 reasoning=Reasoning(effort="high", summary="auto")
             )
+
+            mock_agent = Mock()
+            mock_agent_class.return_value = mock_agent
+            mock_filter.return_value = Mock()
+            mock_memory.return_value = Mock()
+            mock_composite.return_value = Mock()
+
+            create_chief_architect_agent(agent_context=mock_agent_context)
 
             call_kwargs = mock_agent_class.call_args[1]
             description = call_kwargs['description']
@@ -795,14 +1083,26 @@ class TestChiefArchitectAgentConstitutionalCompliance:
 
     def test_agent_architecture_loop_integration(self, mock_agent_context):
         """Test that agent integrates with architecture loop for spec-driven fixes."""
-        with patch('agency_swarm.Agent', return_value='gpt-5') as mock_agent_class, \
+        with patch('chief_architect_agent.chief_architect_agent.Agent') as mock_agent_class, \
              patch('chief_architect_agent.chief_architect_agent.get_model_instance', return_value='gpt-5'), \
-             patch('chief_architect_agent.chief_architect_agent.create_model_settings') as mock_settings:
+             patch('chief_architect_agent.chief_architect_agent.create_model_settings') as mock_settings, \
+             patch('chief_architect_agent.chief_architect_agent.select_instructions_file', return_value='instructions.md'), \
+             patch('chief_architect_agent.chief_architect_agent.create_message_filter_hook') as mock_filter, \
+             patch('chief_architect_agent.chief_architect_agent.create_memory_integration_hook') as mock_memory, \
+             patch('chief_architect_agent.chief_architect_agent.create_composite_hook') as mock_composite:
             mock_settings.return_value = ModelSettings(
                 temperature=0.1,
                 max_tokens=32000,
                 reasoning=Reasoning(effort="high", summary="auto")
             )
+
+            mock_agent = Mock()
+            mock_agent_class.return_value = mock_agent
+            mock_filter.return_value = Mock()
+            mock_memory.return_value = Mock()
+            mock_composite.return_value = Mock()
+
+            create_chief_architect_agent(agent_context=mock_agent_context)
 
             call_kwargs = mock_agent_class.call_args[1]
             description = call_kwargs['description']
@@ -813,9 +1113,24 @@ class TestChiefArchitectAgentConstitutionalCompliance:
 
     def test_agent_memory_integration_supports_learning(self, mock_agent_context):
         """Test that memory integration supports continuous learning."""
-        with patch('agency_swarm.Agent', return_value='gpt-5'), \
+        with patch('chief_architect_agent.chief_architect_agent.Agent') as mock_agent_class, \
              patch('chief_architect_agent.chief_architect_agent.get_model_instance', return_value='gpt-5'), \
-             patch('chief_architect_agent.chief_architect_agent.create_model_settings') as mock_settings:
+             patch('chief_architect_agent.chief_architect_agent.create_model_settings') as mock_settings, \
+             patch('chief_architect_agent.chief_architect_agent.select_instructions_file', return_value='instructions.md'), \
+             patch('chief_architect_agent.chief_architect_agent.create_message_filter_hook') as mock_filter, \
+             patch('chief_architect_agent.chief_architect_agent.create_memory_integration_hook') as mock_memory, \
+             patch('chief_architect_agent.chief_architect_agent.create_composite_hook') as mock_composite:
+
+            mock_agent = Mock()
+            mock_agent_class.return_value = mock_agent
+            mock_settings.return_value = ModelSettings(
+                temperature=0.1,
+                max_tokens=32000,
+                reasoning=Reasoning(effort="high", summary="auto")
+            )
+            mock_filter.return_value = Mock()
+            mock_memory.return_value = Mock()
+            mock_composite.return_value = Mock()
 
             create_chief_architect_agent(agent_context=mock_agent_context)
 
@@ -832,14 +1147,26 @@ class TestChiefArchitectAgentIntegration:
 
     def test_agent_integrates_with_audit_system(self, mock_agent_context):
         """Test that agent can integrate with audit system."""
-        with patch('agency_swarm.Agent', return_value='gpt-5') as mock_agent_class, \
+        with patch('chief_architect_agent.chief_architect_agent.Agent') as mock_agent_class, \
              patch('chief_architect_agent.chief_architect_agent.get_model_instance', return_value='gpt-5'), \
-             patch('chief_architect_agent.chief_architect_agent.create_model_settings') as mock_settings:
+             patch('chief_architect_agent.chief_architect_agent.create_model_settings') as mock_settings, \
+             patch('chief_architect_agent.chief_architect_agent.select_instructions_file', return_value='instructions.md'), \
+             patch('chief_architect_agent.chief_architect_agent.create_message_filter_hook') as mock_filter, \
+             patch('chief_architect_agent.chief_architect_agent.create_memory_integration_hook') as mock_memory, \
+             patch('chief_architect_agent.chief_architect_agent.create_composite_hook') as mock_composite:
             mock_settings.return_value = ModelSettings(
                 temperature=0.1,
                 max_tokens=32000,
                 reasoning=Reasoning(effort="high", summary="auto")
             )
+
+            mock_agent = Mock()
+            mock_agent_class.return_value = mock_agent
+            mock_filter.return_value = Mock()
+            mock_memory.return_value = Mock()
+            mock_composite.return_value = Mock()
+
+            create_chief_architect_agent(agent_context=mock_agent_context)
 
             call_kwargs = mock_agent_class.call_args[1]
             description = call_kwargs['description']
@@ -850,14 +1177,26 @@ class TestChiefArchitectAgentIntegration:
 
     def test_agent_integrates_with_memory_patterns(self, mock_agent_context):
         """Test that agent can integrate with memory pattern system."""
-        with patch('agency_swarm.Agent', return_value='gpt-5') as mock_agent_class, \
+        with patch('chief_architect_agent.chief_architect_agent.Agent') as mock_agent_class, \
              patch('chief_architect_agent.chief_architect_agent.get_model_instance', return_value='gpt-5'), \
-             patch('chief_architect_agent.chief_architect_agent.create_model_settings') as mock_settings:
+             patch('chief_architect_agent.chief_architect_agent.create_model_settings') as mock_settings, \
+             patch('chief_architect_agent.chief_architect_agent.select_instructions_file', return_value='instructions.md'), \
+             patch('chief_architect_agent.chief_architect_agent.create_message_filter_hook') as mock_filter, \
+             patch('chief_architect_agent.chief_architect_agent.create_memory_integration_hook') as mock_memory, \
+             patch('chief_architect_agent.chief_architect_agent.create_composite_hook') as mock_composite:
             mock_settings.return_value = ModelSettings(
                 temperature=0.1,
                 max_tokens=32000,
                 reasoning=Reasoning(effort="high", summary="auto")
             )
+
+            mock_agent = Mock()
+            mock_agent_class.return_value = mock_agent
+            mock_filter.return_value = Mock()
+            mock_memory.return_value = Mock()
+            mock_composite.return_value = Mock()
+
+            create_chief_architect_agent(agent_context=mock_agent_context)
 
             call_kwargs = mock_agent_class.call_args[1]
             description = call_kwargs['description']
@@ -868,14 +1207,26 @@ class TestChiefArchitectAgentIntegration:
 
     def test_agent_integrates_with_performance_metrics(self, mock_agent_context):
         """Test that agent can integrate with performance metrics."""
-        with patch('agency_swarm.Agent', return_value='gpt-5') as mock_agent_class, \
+        with patch('chief_architect_agent.chief_architect_agent.Agent') as mock_agent_class, \
              patch('chief_architect_agent.chief_architect_agent.get_model_instance', return_value='gpt-5'), \
-             patch('chief_architect_agent.chief_architect_agent.create_model_settings') as mock_settings:
+             patch('chief_architect_agent.chief_architect_agent.create_model_settings') as mock_settings, \
+             patch('chief_architect_agent.chief_architect_agent.select_instructions_file', return_value='instructions.md'), \
+             patch('chief_architect_agent.chief_architect_agent.create_message_filter_hook') as mock_filter, \
+             patch('chief_architect_agent.chief_architect_agent.create_memory_integration_hook') as mock_memory, \
+             patch('chief_architect_agent.chief_architect_agent.create_composite_hook') as mock_composite:
             mock_settings.return_value = ModelSettings(
                 temperature=0.1,
                 max_tokens=32000,
                 reasoning=Reasoning(effort="high", summary="auto")
             )
+
+            mock_agent = Mock()
+            mock_agent_class.return_value = mock_agent
+            mock_filter.return_value = Mock()
+            mock_memory.return_value = Mock()
+            mock_composite.return_value = Mock()
+
+            create_chief_architect_agent(agent_context=mock_agent_context)
 
             call_kwargs = mock_agent_class.call_args[1]
             description = call_kwargs['description']

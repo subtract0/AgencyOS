@@ -165,7 +165,7 @@ class ConstitutionalEnforcer:
                             suggested_fix="Run 'pytest -v' to see failures and fix them"
                         ))
 
-                compliant = False
+                    compliant = False
 
             finally:
                 # Clean up temporary file

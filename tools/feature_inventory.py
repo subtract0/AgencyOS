@@ -18,7 +18,7 @@ def extract_features_from_md(features_file: Path) -> Tuple[List[str], List[str]]
         content = f.read()
 
     # Find all test coverage references
-    test_pattern = r'\*\*Test Coverage\*\*:\s*`([^`]+)`'
+    test_pattern = r'\*\*Test Coverage\*\*\s*:\s*`([^`]+)`'
     test_files = re.findall(test_pattern, content)
 
     # Find feature sections (## or ### headings)
@@ -39,10 +39,14 @@ def check_test_files(test_files: List[str], project_root: Path) -> Dict[str, Dic
 
         if exists:
             try:
-                with open(full_path, 'r') as f:
+                with open(full_path, 'r', encoding='utf-8') as f:
                     content = f.read()
-                    # Count test functions
-                    test_count = len(re.findall(r'def test_', content))
+                    # Check for binary content (null bytes)
+                    if '\x00' in content:
+                        test_count = -1
+                    else:
+                        # Count test functions
+                        test_count = len(re.findall(r'def test_', content))
             except Exception:
                 test_count = -1
 
@@ -85,7 +89,12 @@ def main() -> None:
     print("📋 Test Coverage Details:")
     for test_file, report in sorted(coverage_report.items()):
         status = "✅" if report['exists'] else "❌"
-        count = f"({report['test_count']} tests)" if report['test_count'] > 0 else ""
+        if report['test_count'] > 0:
+            count = f"({report['test_count']} tests)"
+        elif report['test_count'] == 0 and report['exists']:
+            count = "(0 tests)"
+        else:
+            count = ""
         print(f"   {status} {test_file} {count}")
 
     print()

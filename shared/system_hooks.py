@@ -122,6 +122,9 @@ class MemoryIntegrationHook(AgentHooks):
                 context_id=getattr(context, 'id', 'unknown') if context else 'unknown'
             ).model_dump()
 
+            # Add top-level fields for backward compatibility with tests
+            metadata["agent_type"] = agent_info.agent_type
+
             key = f"session_start_{timestamp}"
             self.agent_context.store_memory(key, metadata, ["session", "start"])
             logger.debug(f"Stored session start memory: {key}")
@@ -146,6 +149,9 @@ class MemoryIntegrationHook(AgentHooks):
                 session_duration=self._calculate_session_duration(),
                 output_summary=self._truncate_content(str(output) if output else "no output", 200)
             ).model_dump()
+
+            # Add top-level fields for backward compatibility with tests
+            metadata["agent_type"] = agent_info.agent_type
 
             key = f"session_end_{timestamp}"
             self.agent_context.store_memory(key, metadata, ["session", "end"])
@@ -205,15 +211,21 @@ class MemoryIntegrationHook(AgentHooks):
                 agent_type=type(agent).__name__ if agent else "unknown",
                 agent_name=getattr(agent, 'name', None)
             )
+            tool_params = self._safe_extract_tool_params(tool)
             tool_info = ToolInfo(
                 tool_name=tool_name,
-                parameters=self._safe_extract_tool_params(tool)
+                parameters=tool_params
             )
             metadata = ToolEvent(
                 timestamp=timestamp,
                 agent_info=agent_info,
                 tool_info=tool_info
             ).model_dump()
+
+            # Add top-level fields for backward compatibility with tests
+            metadata["agent_type"] = agent_info.agent_type
+            metadata["tool_name"] = tool_name
+            metadata["tool_parameters"] = tool_params.parameters
 
             key = f"tool_call_{tool_name}_{timestamp}"
             self.agent_context.store_memory(key, metadata, ["tool", tool_name, "call"])
@@ -235,9 +247,10 @@ class MemoryIntegrationHook(AgentHooks):
                 agent_type=type(agent).__name__ if agent else "unknown",
                 agent_name=getattr(agent, 'name', None)
             )
+            result_size = len(result) if result else 0
             tool_info = ToolInfo(
                 tool_name=tool_name,
-                result_size=len(result) if result else 0
+                result_size=result_size
             )
             metadata = ToolResultEvent(
                 timestamp=timestamp,
@@ -245,6 +258,11 @@ class MemoryIntegrationHook(AgentHooks):
                 tool_info=tool_info,
                 result=truncated_result
             ).model_dump()
+
+            # Add top-level fields for backward compatibility with tests
+            metadata["agent_type"] = agent_info.agent_type
+            metadata["tool_name"] = tool_name
+            metadata["result_size"] = result_size
 
             key = f"tool_result_{tool_name}_{timestamp}"
             self.agent_context.store_memory(key, metadata, ["tool", tool_name, "result"])

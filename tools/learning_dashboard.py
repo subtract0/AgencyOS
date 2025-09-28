@@ -65,7 +65,6 @@ class LearningDashboard:
         self.vector_store = vector_store or VectorStore()
         self.metrics_history: List[Dict[str, JSONValue]] = []
         self.alerts: List[LearningAlert] = []
-
         logger.info("LearningDashboard initialized")
 
     def generate_comprehensive_report(self) -> Dict[str, JSONValue]:
