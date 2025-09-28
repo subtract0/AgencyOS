@@ -19,7 +19,7 @@ Decision
    - agency.py now calls agent_model(...) for each agent.
 
 2) Establish a “mini-first where safe” strategy (foundation only in this change):
-   - Use gpt-5-mini for low-risk tasks (summaries, listings, simple transformations).
+   - Use gpt-5-mini or gpt-5-nano for low-risk tasks (summaries, listings, simple transformations).
    - Critical flows remain on gpt-5 by default.
    - Future wiring for guardrails: validation gates will escalate from gpt-5-mini to gpt-5 on failure, with loud logs (per rules).
    - Complexity heuristics (e.g., prompt token thresholds) will skip mini upfront.

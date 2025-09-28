@@ -64,7 +64,7 @@ class DictPatternAnalyzer(ast.NodeVisitor):
         """Extract the structure of a Dict annotation."""
         try:
             return ast.unparse(node)
-        except:
+        except (AttributeError, ValueError, TypeError) as e:
             return "Dict"
 
     def _record_pattern(self, node: ast.AST, pattern_type: str) -> None:
@@ -103,7 +103,7 @@ def analyze_actual_data_shapes() -> Dict[str, JSONValue]:
     shapes: defaultdict[str, List[JSONValue]] = defaultdict(list)
 
     # Analyze memory patterns from tests
-    test_patterns: List[Dict[str, Any]] = [
+    test_patterns: List[Dict[str, JSONValue]] = [
         # Common memory record shape
         {
             "type": "MemoryRecord",

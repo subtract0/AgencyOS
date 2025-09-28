@@ -23,13 +23,16 @@ def silence_warnings_and_logs() -> None:
     ):
         try:
             warnings.filterwarnings("ignore", category=_category)
-        except Exception:
-            pass
+        except (AttributeError, TypeError) as e:
+            # Expected if warnings module doesn't support this category
+            logger = logging.getLogger(__name__)
+            logger.debug(f"Failed to set warning filter for {_category}: {e}")
 
     try:
         warnings.simplefilter("ignore")
-    except Exception:
-        pass
+    except (AttributeError, ValueError) as e:
+        logger = logging.getLogger(__name__)
+        logger.debug(f"Failed to set simple warning filter: {e}")
 
     # Route warnings through logging, then quiet noisy loggers
     try:
@@ -37,8 +40,9 @@ def silence_warnings_and_logs() -> None:
         logging.getLogger().setLevel(logging.ERROR)
         for _name in ("aiohttp", "httpx", "pydantic", "litellm", "agency_swarm"):
             logging.getLogger(_name).setLevel(logging.ERROR)
-    except Exception:
-        pass
+    except (AttributeError, ValueError) as e:
+        logger = logging.getLogger(__name__)
+        logger.warning(f"Failed to configure logging settings: {e}")
 
     # Final guard: disable default warning printer
     try:
@@ -47,5 +51,6 @@ def silence_warnings_and_logs() -> None:
             return None
 
         warnings.showwarning = _noop_showwarning
-    except Exception:
-        pass
+    except (AttributeError, TypeError) as e:
+        logger = logging.getLogger(__name__)
+        logger.debug(f"Failed to override warning display function: {e}")

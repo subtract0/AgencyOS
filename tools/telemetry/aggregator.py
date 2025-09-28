@@ -21,7 +21,8 @@ from typing import Any, Dict, Iterable, List, Optional, Tuple, cast
 from shared.type_definitions.json import JSONValue
 from shared.models.telemetry import (
     TelemetryEvent, TelemetryMetrics, AgentMetrics,
-    SystemHealth, EventType, EventSeverity
+    SystemHealth, EventType, EventSeverity, DashboardSummary,
+    TaskInfo, ResourceInfo, CostInfo, WindowInfo, MetricsInfo
 )
 
 
@@ -49,7 +50,15 @@ def _parse_iso(ts: str) -> Optional[datetime]:
         if ts.endswith("Z"):
             ts = ts[:-1] + "+00:00"
         return datetime.fromisoformat(ts)
-    except Exception:
+    except (ValueError, TypeError) as e:
+        import logging
+        logger = logging.getLogger(__name__)
+        logger.warning(f"Failed to parse ISO timestamp '{ts}': {e}")
+        return None
+    except Exception as e:
+        import logging
+        logger = logging.getLogger(__name__)
+        logger.error(f"Unexpected error parsing timestamp '{ts}': {e}")
         return None
 
 
@@ -166,7 +175,244 @@ def list_events(since: str = "1h", grep: Optional[str] = None, limit: int = 200,
     return events
 
 
-def aggregate(since: str = "1h", telemetry_dir: Optional[str] = None) -> TelemetryMetrics:
+@dataclass
+class _EventProcessingContext:
+    """Context object to hold state during event processing."""
+    total_events: int
+    tasks_started: int = 0
+    tasks_finished: int = 0
+    recent_results: Dict[str, int] = None
+    agents_active: List[str] = None
+    escalations_used: int = 0
+    tasks: Dict[str, Dict[str, JSONValue]] = None
+    max_concurrency: Optional[int] = None
+    latest_orchestrator_ts: Optional[datetime] = None
+    total_tokens: int = 0
+    total_usd: float = 0.0
+
+    def __post_init__(self):
+        if self.recent_results is None:
+            self.recent_results = {"success": 0, "failed": 0, "timeout": 0}
+        if self.agents_active is None:
+            self.agents_active = []
+        if self.tasks is None:
+            self.tasks = {}
+
+
+def _process_orchestrator_event(ev: Dict[str, JSONValue], ctx: _EventProcessingContext) -> None:
+    """Process orchestrator_started event to track max concurrency."""
+    ts = ev.get("ts")
+    dt = _parse_iso(ts) if isinstance(ts, str) else None
+    if dt and (ctx.latest_orchestrator_ts is None or dt > ctx.latest_orchestrator_ts):
+        ctx.latest_orchestrator_ts = dt
+        mc_val = ev.get("max_concurrency", ctx.max_concurrency or 0)
+        ctx.max_concurrency = int(mc_val) if isinstance(mc_val, (int, float)) else ctx.max_concurrency
+
+
+def _process_task_started_event(ev: Dict[str, JSONValue], ctx: _EventProcessingContext, now: datetime) -> None:
+    """Process task_started event to track running tasks."""
+    ctx.tasks_started += 1
+    tid = str(ev.get("id")) if ev.get("id") is not None else None
+    if not tid:
+        return
+
+    agent = ev.get("agent")
+    started_at = ev.get("started_at")
+    dt = None
+    if isinstance(started_at, (int, float)):
+        try:
+            dt = datetime.fromtimestamp(float(started_at), tz=timezone.utc)
+        except Exception:
+            dt = None
+    if dt is None:
+        ts = ev.get("ts")
+        dt = _parse_iso(ts) if isinstance(ts, str) else now
+
+    ctx.tasks[tid] = {
+        "id": tid,
+        "agent": agent or "-",
+        "started_dt": dt or now,
+        "last_hb_dt": None,
+        "finished": False,
+    }
+
+
+def _process_heartbeat_event(ev: Dict[str, JSONValue], ctx: _EventProcessingContext, now: datetime) -> None:
+    """Process heartbeat event to update task heartbeat timestamps."""
+    tid = str(ev.get("id")) if ev.get("id") is not None else None
+    if tid and tid in ctx.tasks:
+        ts = ev.get("ts")
+        hb_dt = _parse_iso(ts) if isinstance(ts, str) else None
+        ctx.tasks[tid]["last_hb_dt"] = hb_dt or now
+
+
+def _process_task_finished_event(ev: Dict[str, JSONValue], ctx: _EventProcessingContext) -> None:
+    """Process task_finished event and accumulate costs."""
+    ctx.tasks_finished += 1
+    status = str(ev.get("status", "")).lower()
+    if status in ctx.recent_results:
+        ctx.recent_results[status] += 1
+
+    tid = str(ev.get("id")) if ev.get("id") is not None else None
+    if tid and tid in ctx.tasks:
+        ctx.tasks[tid]["finished"] = True
+
+    # Cost accounting if present
+    usage = ev.get("usage")
+    if isinstance(usage, dict):
+        tokens = usage.get("total_tokens")
+        try:
+            if tokens is not None and isinstance(tokens, (int, float)):
+                ctx.total_tokens += int(tokens)
+        except (ValueError, OverflowError) as e:
+            import logging
+            logger = logging.getLogger(__name__)
+            logger.warning(f"Invalid token count in usage data: {tokens}, error: {e}")
+        # If cost provided, accumulate
+        cost = usage.get("total_usd") or ev.get("cost_usd")
+        try:
+            if cost is not None and isinstance(cost, (int, float)):
+                ctx.total_usd += float(cost)
+        except (ValueError, OverflowError) as e:
+            import logging
+            logger = logging.getLogger(__name__)
+            logger.warning(f"Invalid cost value in usage data: {cost}, error: {e}")
+
+
+def _process_events(events: List[Dict[str, JSONValue]]) -> _EventProcessingContext:
+    """Process all events and return aggregated context."""
+    ctx = _EventProcessingContext(total_events=len(events))
+    now = _iso_now()
+
+    for ev in events:
+        typ = ev.get("type")
+        agent = ev.get("agent")
+        if agent and isinstance(agent, str) and agent not in ctx.agents_active:
+            ctx.agents_active.append(agent)
+
+        if typ == "orchestrator_started":
+            _process_orchestrator_event(ev, ctx)
+        elif typ == "task_started":
+            _process_task_started_event(ev, ctx, now)
+        elif typ == "heartbeat":
+            _process_heartbeat_event(ev, ctx, now)
+        elif typ == "escalation_used":
+            ctx.escalations_used += 1
+        elif typ == "task_finished":
+            _process_task_finished_event(ev, ctx)
+
+    return ctx
+
+
+def _build_running_tasks(tasks: Dict[str, Dict[str, JSONValue]], now: datetime) -> List[TaskInfo]:
+    """Build list of running tasks with age and heartbeat information."""
+    running_tasks: List[TaskInfo] = []
+
+    for t in tasks.values():
+        if t.get("finished"):
+            continue
+
+        started_dt_val = t.get("started_dt", now)
+        started_dt: datetime = started_dt_val if isinstance(started_dt_val, datetime) else now
+        last_hb_dt_val = t.get("last_hb_dt")
+        last_hb_dt: Optional[datetime] = last_hb_dt_val if isinstance(last_hb_dt_val, datetime) else None
+
+        age_s = max(0.0, (now - started_dt).total_seconds())
+        hb_age_s = (now - last_hb_dt).total_seconds() if isinstance(last_hb_dt, datetime) else None
+
+        running_tasks.append(TaskInfo(
+            id=str(t.get("id", "-")),
+            agent=str(t.get("agent", "-")),
+            age_s=age_s,
+            last_heartbeat_age_s=hb_age_s,
+        ))
+
+    # Sort by age (oldest first) and cap at 10
+    running_tasks.sort(key=lambda r: r.age_s, reverse=True)
+    return running_tasks[:10]
+
+
+def _calculate_resource_utilization(running_count: int, max_concurrency: Optional[int]) -> Optional[float]:
+    """Calculate resource utilization percentage."""
+    try:
+        if max_concurrency and max_concurrency > 0:
+            return min(1.0, running_count / float(max_concurrency))
+    except Exception:
+        pass
+    return None
+
+
+def _build_system_health(ctx: _EventProcessingContext, since_dt: datetime, now: datetime) -> SystemHealth:
+    """Build SystemHealth object from processing context."""
+    status = "healthy" if ctx.recent_results.get("failed", 0) < ctx.recent_results.get("success", 0) else "degraded"
+    return SystemHealth(
+        status=status,
+        total_events=ctx.total_events,
+        error_count=ctx.recent_results.get("failed", 0),
+        active_agents=ctx.agents_active,
+        uptime_seconds=(now - since_dt).total_seconds()
+    )
+
+
+def _build_agent_metrics(agents_active: List[str]) -> Dict[str, AgentMetrics]:
+    """Build agent metrics dictionary for active agents."""
+    agent_metrics_dict: Dict[str, AgentMetrics] = {}
+    for agent in agents_active:
+        agent_metrics_dict[agent] = AgentMetrics(
+            agent_id=agent,
+            total_invocations=0,  # Would need event tracking
+            successful_invocations=0,
+            failed_invocations=0
+        )
+    return agent_metrics_dict
+
+
+def _build_dashboard_summary(telemetry_metrics: TelemetryMetrics, ctx: _EventProcessingContext,
+                           running_tasks: List[TaskInfo], since: str) -> DashboardSummary:
+    """Build dashboard summary with proper Pydantic models."""
+    running_count = len(running_tasks)
+    util = _calculate_resource_utilization(running_count, ctx.max_concurrency)
+
+    return DashboardSummary(
+        # TelemetryMetrics fields
+        period_start=telemetry_metrics.period_start,
+        period_end=telemetry_metrics.period_end,
+        total_events=telemetry_metrics.total_events,
+        events_by_type=telemetry_metrics.events_by_type,
+        events_by_severity=telemetry_metrics.events_by_severity,
+        agent_metrics=telemetry_metrics.agent_metrics,
+        system_health=telemetry_metrics.system_health,
+        top_errors=telemetry_metrics.top_errors,
+        slowest_operations=telemetry_metrics.slowest_operations,
+        # Dashboard-specific fields
+        agents_active=ctx.agents_active,
+        running_tasks=running_tasks,
+        recent_results=ctx.recent_results,
+        resources=ResourceInfo(
+            max_concurrency=ctx.max_concurrency,
+            running=running_count,
+            utilization=util,
+        ),
+        costs=CostInfo(
+            total_tokens=ctx.total_tokens,
+            total_usd=ctx.total_usd,
+        ),
+        window=WindowInfo(
+            since=since,
+            events=ctx.total_events,
+            tasks_started=ctx.tasks_started,
+            tasks_finished=ctx.tasks_finished,
+        ),
+        metrics=MetricsInfo(
+            total_events=ctx.total_events,
+            tasks_started=ctx.tasks_started,
+            tasks_finished=ctx.tasks_finished,
+            escalations_used=ctx.escalations_used,
+        )
+    )
+
+
+def aggregate(since: str = "1h", telemetry_dir: Optional[str] = None) -> DashboardSummary:
     """Aggregate telemetry for dashboard.
 
     Returns a summary dict with keys consumed by agency._render_dashboard_text:
@@ -180,187 +426,27 @@ def aggregate(since: str = "1h", telemetry_dir: Optional[str] = None) -> Telemet
     """
     since_dt = _parse_since(since)
     events = _load_events(since_dt, telemetry_dir=telemetry_dir, limit=None)
-
-    # Metrics and counters
-    total_events = len(events)
-    tasks_started = 0
-    tasks_finished = 0
-    recent_results = {"success": 0, "failed": 0, "timeout": 0}
-    agents_active: List[str] = []
-
-    # Running tasks tracking
     now = _iso_now()
-    tasks: Dict[str, Dict[str, Any]] = {}
 
-    # Resource snapshot (take latest orchestrator_started)
-    max_concurrency: Optional[int] = None
-    latest_orchestrator_ts: Optional[datetime] = None
+    # Process all events to extract metrics
+    ctx = _process_events(events)
 
-    # Cost counters (if usage present in events)
-    total_tokens = 0
-    total_usd = 0.0
+    # Build running tasks list
+    running_tasks = _build_running_tasks(ctx.tasks, now)
 
-    for ev in events:
-        typ = ev.get("type")
-        agent = ev.get("agent")
-        if agent and isinstance(agent, str) and agent not in agents_active:
-            agents_active.append(agent)
-
-        if typ == "orchestrator_started":
-            ts = ev.get("ts")
-            dt = _parse_iso(ts) if isinstance(ts, str) else None
-            if dt and (latest_orchestrator_ts is None or dt > latest_orchestrator_ts):
-                latest_orchestrator_ts = dt
-                mc_val = ev.get("max_concurrency", max_concurrency or 0)
-                max_concurrency = int(mc_val) if isinstance(mc_val, (int, float)) else max_concurrency
-
-        elif typ == "task_started":
-            tasks_started += 1
-            tid = str(ev.get("id")) if ev.get("id") is not None else None
-            if tid:
-                started_at = ev.get("started_at")
-                dt = None
-                if isinstance(started_at, (int, float)):
-                    try:
-                        dt = datetime.fromtimestamp(float(started_at), tz=timezone.utc)
-                    except Exception:
-                        dt = None
-                if dt is None:
-                    ts = ev.get("ts")
-                    dt = _parse_iso(ts) if isinstance(ts, str) else now
-                tasks[tid] = {
-                    "id": tid,
-                    "agent": agent or "-",
-                    "started_dt": dt or now,
-                    "last_hb_dt": None,
-                    "finished": False,
-                }
-
-        elif typ == "heartbeat":
-            tid = str(ev.get("id")) if ev.get("id") is not None else None
-            if tid and tid in tasks:
-                ts = ev.get("ts")
-                hb_dt = _parse_iso(ts) if isinstance(ts, str) else None
-                tasks[tid]["last_hb_dt"] = hb_dt or now
-
-        elif typ == "task_finished":
-            tasks_finished += 1
-            status = str(ev.get("status", "")).lower()
-            if status in recent_results:
-                recent_results[status] += 1
-            tid = str(ev.get("id")) if ev.get("id") is not None else None
-            if tid and tid in tasks:
-                tasks[tid]["finished"] = True
-
-            # Cost accounting if present
-            usage = ev.get("usage")
-            if isinstance(usage, dict):
-                tokens = usage.get("total_tokens")
-                try:
-                    if tokens is not None and isinstance(tokens, (int, float)):
-                        total_tokens += int(tokens)
-                except Exception:
-                    pass
-                # If cost provided, accumulate
-                cost = usage.get("total_usd") or ev.get("cost_usd")
-                try:
-                    if cost is not None and isinstance(cost, (int, float)):
-                        total_usd += float(cost)
-                except Exception:
-                    pass
-
-    # Derive running tasks (not finished)
-    running_tasks: List[Dict[str, JSONValue]] = []
-    for t in tasks.values():
-        if t.get("finished"):
-            continue
-        started_dt_val = t.get("started_dt", now)
-        started_dt: datetime = started_dt_val if isinstance(started_dt_val, datetime) else now
-        last_hb_dt_val = t.get("last_hb_dt")
-        last_hb_dt: Optional[datetime] = last_hb_dt_val if isinstance(last_hb_dt_val, datetime) else None
-        age_s = max(0.0, (now - started_dt).total_seconds())
-        hb_age_s = (now - last_hb_dt).total_seconds() if isinstance(last_hb_dt, datetime) else None
-        running_tasks.append({
-            "id": t.get("id", "-"),
-            "agent": t.get("agent", "-"),
-            "age_s": age_s,
-            "last_heartbeat_age_s": hb_age_s,
-        })
-
-    # Sort and cap running tasks
-    def get_age_s(r: Dict[str, JSONValue]) -> float:
-        age_val = r.get("age_s", 0.0)
-        return float(age_val) if isinstance(age_val, (int, float)) else 0.0
-    running_tasks.sort(key=get_age_s, reverse=True)
-    running_tasks = running_tasks[:10]
-
-    # Resources
-    running_count = len(running_tasks)
-    util = None
-    try:
-        if max_concurrency and max_concurrency > 0:
-            util = min(1.0, running_count / float(max_concurrency))
-    except Exception:
-        util = None
-
-    # Build system health
-    system_health = SystemHealth(
-        status="healthy" if recent_results.get("failed", 0) < recent_results.get("success", 0) else "degraded",
-        total_events=total_events,
-        error_count=recent_results.get("failed", 0),
-        active_agents=agents_active,
-        uptime_seconds=(now - since_dt).total_seconds()
-    )
-
-    # Build agent metrics
-    agent_metrics_dict: Dict[str, AgentMetrics] = {}
-    for agent in agents_active:
-        agent_metrics_dict[agent] = AgentMetrics(
-            agent_id=agent,
-            total_invocations=0,  # Would need event tracking
-            successful_invocations=0,
-            failed_invocations=0
-        )
+    # Build system health and agent metrics
+    system_health = _build_system_health(ctx, since_dt, now)
+    agent_metrics_dict = _build_agent_metrics(ctx.agents_active)
 
     # Build telemetry metrics
     telemetry_metrics = TelemetryMetrics(
         period_start=since_dt,
         period_end=now,
-        total_events=total_events,
-        events_by_type={"tasks_started": tasks_started, "tasks_finished": tasks_finished},
+        total_events=ctx.total_events,
+        events_by_type={"tasks_started": ctx.tasks_started, "tasks_finished": ctx.tasks_finished},
         agent_metrics=agent_metrics_dict,
         system_health=system_health
     )
 
-    # For backward compatibility, attach additional data
-    # Convert to dict and add extra fields
-    summary = telemetry_metrics.model_dump()
-    summary.update({
-        "agents_active": agents_active,
-        "running_tasks": running_tasks,
-        "recent_results": recent_results,
-        "resources": {
-            "max_concurrency": max_concurrency,
-            "running": running_count,
-            "utilization": util,
-        },
-        "costs": {
-            "total_tokens": total_tokens,
-            "total_usd": total_usd,
-        },
-        "window": {
-            "since": since,
-            "events": total_events,
-            "tasks_started": tasks_started,
-            "tasks_finished": tasks_finished,
-        },
-        "metrics": {
-            "total_events": total_events,
-            "tasks_started": tasks_started,
-            "tasks_finished": tasks_finished,
-        }
-    })
-
-    # Return as dict for backward compatibility
-    # TODO: Update callers to use TelemetryMetrics directly
-    return cast(TelemetryMetrics, summary)
+    # Build dashboard summary
+    return _build_dashboard_summary(telemetry_metrics, ctx, running_tasks, since)

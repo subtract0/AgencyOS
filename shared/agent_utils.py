@@ -18,11 +18,11 @@ def detect_model_type(model: str) -> tuple[bool, bool, bool]:
 
 def select_instructions_file(base_dir: str, model: str) -> str:
     """Return absolute path to the appropriate instructions file for the model.
-    Uses instructions-gpt-5.md for any gpt-5* model, otherwise instructions.md.
+    Uses instructions-gpt-4o.md for any gpt-4o* model, otherwise instructions.md.
     """
     filename = (
-        "instructions-gpt-5.md"
-        if model.lower().startswith("gpt-5")
+        "instructions-gpt-4o.md"
+        if model.lower().startswith("gpt-4o")
         else "instructions.md"
     )
     return os.path.join(base_dir, filename)

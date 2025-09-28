@@ -42,7 +42,7 @@ class RegenerateWithGpt5(Tool):
                 {"role": "user", "content": json.dumps(payload)},
             ]
             resp = litellm.completion(
-                model="gpt-5",
+                model="gpt-4o",
                 messages=messages,
                 extra_body={"reasoning": {"effort": "high"}},
             )
@@ -56,6 +56,35 @@ class RegenerateWithGpt5(Tool):
                         content = getattr(msg, "content", None) or msg.get("content")  # type: ignore
             except Exception:
                 pass
+            # Emit telemetry event: escalation used
+            try:
+                from tools.orchestrator.scheduler import _telemetry_emit  # type: ignore
+                _telemetry_emit({
+                    "type": "escalation_used",
+                    "agent": "SubagentExample",
+                    "tool": "RegenerateWithGpt5",
+                    "bundle_present": bool(self.bundle_path),
+                })
+            except Exception:
+                try:
+                    import json as _json, os as _os
+                    from datetime import datetime, timezone
+                    base = os.path.join(os.getcwd(), "logs", "telemetry")
+                    os.makedirs(base, exist_ok=True)
+                    ts = datetime.now(timezone.utc)
+                    fname = os.path.join(base, f"events-{ts:%Y%m%d}.jsonl")
+                    ev = {
+                        "ts": ts.isoformat(timespec="milliseconds").replace("+00:00", "Z"),
+                        "type": "escalation_used",
+                        "agent": "SubagentExample",
+                        "tool": "RegenerateWithGpt5",
+                        "bundle_present": bool(self.bundle_path),
+                    }
+                    with open(fname, "a", encoding="utf-8") as f:
+                        f.write(_json.dumps(ev) + "\n")
+                except Exception:
+                    pass
+
             return content or str(resp)
         except Exception as e:
             return f"Escalation failed: {e}"
@@ -63,11 +92,11 @@ class RegenerateWithGpt5(Tool):
 
 
 def create_subagent_example(
-    model: str = "gpt-5-mini", reasoning_effort: str = "low"
+    model: str = "gpt-4o-mini", reasoning_effort: str = "low"
 ) -> Agent:
     current_dir = os.path.dirname(os.path.abspath(__file__))
-    # Use gpt-5 specific instructions if applicable
-    instr_path = current_dir + ("/instructions-gpt-5.md" if model.lower().startswith("gpt-5") else "/instructions.md")
+    # Use gpt-4o specific instructions if applicable
+    instr_path = current_dir + ("/instructions-gpt-4o.md" if model.lower().startswith("gpt-4o") else "/instructions.md")
     instructions = render_instructions(instr_path, model)
     # Hooks: attach bundle so escalation tools can use it when available
     bundle_hook = create_code_bundle_attachment_hook()

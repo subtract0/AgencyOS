@@ -1357,7 +1357,7 @@ class TestFailureLearner:
 class TestIntegration:
     """Integration tests for pattern extraction components."""
 
-    @patch('learning_loop.pattern_extraction.get_pattern_store')
+    @patch('learning_loop.pattern_extraction.PatternStore')
     def test_end_to_end_success_pattern_extraction(self, mock_get_store):
         """Test complete success pattern extraction workflow."""
         mock_store = Mock()
@@ -1414,7 +1414,7 @@ class TestIntegration:
         assert isinstance(stored_pattern, ExistingPattern)
         assert stored_pattern.pattern_type == "error"
 
-    @patch('learning_loop.pattern_extraction.get_pattern_store')
+    @patch('learning_loop.pattern_extraction.PatternStore')
     def test_end_to_end_failure_pattern_learning(self, mock_get_store):
         """Test complete failure pattern learning workflow."""
         mock_store = Mock()

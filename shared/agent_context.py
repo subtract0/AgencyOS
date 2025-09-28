@@ -39,7 +39,10 @@ class AgentContext:
     def _generate_session_id(self) -> str:
         """Generate a unique session identifier."""
         from datetime import datetime
-        return f"session_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
+        import uuid
+        timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+        unique_suffix = str(uuid.uuid4())[:8]
+        return f"session_{timestamp}_{unique_suffix}"
 
     def set_metadata(self, key: str, value: JSONValue) -> None:
         """Set metadata for this context."""

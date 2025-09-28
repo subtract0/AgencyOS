@@ -6,6 +6,7 @@ from agency_swarm.tools import BaseTool  # type: ignore
 from pydantic import Field
 from typing import Dict, Any, List, Union, cast, Optional
 from shared.type_definitions.json import JSONValue
+from shared.models.learning import ExtractedInsight, InsightExtractionResult
 import json
 import re
 from datetime import datetime
@@ -44,7 +45,7 @@ class ExtractInsights(BaseTool):  # mypy: disable-error-code="misc"
             analysis_data = json.loads(self.session_analysis)
 
             # Extract insights based on type
-            insights_list: List[Dict[str, JSONValue]] = []
+            insights_list: List[ExtractedInsight] = []
 
             if self.insight_type == "auto" or self.insight_type == "tool_pattern":
                 insights_list.extend(self._extract_tool_insights(analysis_data))
@@ -61,26 +62,26 @@ class ExtractInsights(BaseTool):  # mypy: disable-error-code="misc"
             # Filter by confidence threshold
             filtered_insights = [
                 insight for insight in insights_list
-                if safe_get_float(insight, "confidence", 0.0) >= self.confidence_threshold
+                if insight.confidence >= self.confidence_threshold
             ]
 
-            insights: Dict[str, JSONValue] = {
-                "extraction_timestamp": datetime.now().isoformat(),
-                "insight_type": self.insight_type,
-                "confidence_threshold": self.confidence_threshold,
-                "insights": cast(List[JSONValue], filtered_insights),
-                "total_insights": len(filtered_insights)
-            }
+            result = InsightExtractionResult(
+                extraction_timestamp=datetime.now().isoformat(),
+                insight_type=self.insight_type,
+                confidence_threshold=self.confidence_threshold,
+                insights=filtered_insights,
+                total_insights=len(filtered_insights)
+            )
 
-            return json.dumps(insights, indent=2)
+            return result.model_dump_json(indent=2)
 
         except Exception as e:
             return f"Error extracting insights: {str(e)}"
 
-    def _extract_tool_insights(self, analysis_data: Dict[str, JSONValue]) -> List[Dict[str, JSONValue]]:
+    def _extract_tool_insights(self, analysis_data: Dict[str, JSONValue]) -> List[ExtractedInsight]:
         """Extract insights about tool usage patterns."""
         tool_analysis = safe_get_dict(analysis_data, "tool_analysis")
-        insights: List[Dict[str, JSONValue]] = []
+        insights: List[ExtractedInsight] = []
 
         # High-frequency tool patterns
         tool_counts = safe_get_dict(tool_analysis, "tool_usage_counts")
@@ -97,16 +98,16 @@ class ExtractInsights(BaseTool):  # mypy: disable-error-code="misc"
                     tools_desc.append(f"{tool_name} ({count})")
 
             if tools_desc:
-                insight: Dict[str, JSONValue] = {
-                    "type": "tool_pattern",
-                    "category": "high_frequency_tools",
-                    "title": "Most Frequently Used Tools",
-                    "description": f"Tools used most often: {', '.join(tools_desc)}",
-                    "actionable_insight": "Consider optimizing these high-frequency tools for better performance",
-                    "confidence": 0.9,
-                    "data": {"tools": most_used[:3]},
-                    "keywords": cast(List[JSONValue], ["tool_usage", "frequency", "optimization"])
-                }
+                insight = ExtractedInsight(
+                    type="tool_pattern",
+                    category="high_frequency_tools",
+                    title="Most Frequently Used Tools",
+                    description=f"Tools used most often: {', '.join(tools_desc)}",
+                    actionable_insight="Consider optimizing these high-frequency tools for better performance",
+                    confidence=0.9,
+                    data={"tools": cast(List[JSONValue], most_used[:3])},
+                    keywords=["tool_usage", "frequency", "optimization"]
+                )
                 insights.append(insight)
 
         # Tool success rate insights
@@ -119,53 +120,53 @@ class ExtractInsights(BaseTool):  # mypy: disable-error-code="misc"
 
         if low_success_tools:
             tools_desc = [f"{tool} ({rate:.1%})" for tool, rate in low_success_tools]
-            low_success_insight: Dict[str, JSONValue] = {
-                "type": "tool_pattern",
-                "category": "low_success_rate",
-                "title": "Tools with Low Success Rates",
-                "description": f"Tools with success rates below 80%: {', '.join(tools_desc)}",
-                "actionable_insight": "Investigate error patterns for these tools and improve error handling",
-                "confidence": 0.85,
-                "data": {"low_success_tools": cast(List[JSONValue], low_success_tools)},
-                "keywords": cast(List[JSONValue], ["tool_reliability", "error_handling", "improvement"])
-            }
+            low_success_insight = ExtractedInsight(
+                type="tool_pattern",
+                category="low_success_rate",
+                title="Tools with Low Success Rates",
+                description=f"Tools with success rates below 80%: {', '.join(tools_desc)}",
+                actionable_insight="Investigate error patterns for these tools and improve error handling",
+                confidence=0.85,
+                data={"low_success_tools": cast(List[JSONValue], [(t, r) for t, r in low_success_tools])},
+                keywords=["tool_reliability", "error_handling", "improvement"]
+            )
             insights.append(low_success_insight)
 
         # Tool sequence patterns
         sequence_length = safe_get_int(tool_analysis, "tool_sequence_length", 0)
         if sequence_length > 10:
-            sequence_insight: Dict[str, JSONValue] = {
-                "type": "tool_pattern",
-                "category": "long_sequences",
-                "title": "Long Tool Sequences Detected",
-                "description": f"Session contained {sequence_length} tool calls",
-                "actionable_insight": "Consider creating composite tools or workflows to reduce tool call overhead",
-                "confidence": 0.75,
-                "data": {"sequence_length": sequence_length},
-                "keywords": cast(List[JSONValue], ["workflow_optimization", "tool_composition", "efficiency"])
-            }
+            sequence_insight = ExtractedInsight(
+                type="tool_pattern",
+                category="long_sequences",
+                title="Long Tool Sequences Detected",
+                description=f"Session contained {sequence_length} tool calls",
+                actionable_insight="Consider creating composite tools or workflows to reduce tool call overhead",
+                confidence=0.75,
+                data={"sequence_length": sequence_length},
+                keywords=["workflow_optimization", "tool_composition", "efficiency"]
+            )
             insights.append(sequence_insight)
 
         return insights
 
-    def _extract_error_insights(self, analysis_data: Dict[str, JSONValue]) -> List[Dict[str, JSONValue]]:
+    def _extract_error_insights(self, analysis_data: Dict[str, JSONValue]) -> List[ExtractedInsight]:
         """Extract insights about error patterns and resolution strategies."""
         error_analysis = safe_get_dict(analysis_data, "error_analysis")
-        insights: List[Dict[str, JSONValue]] = []
+        insights: List[ExtractedInsight] = []
 
         # High error rate insight
         error_rate = safe_get_float(error_analysis, "error_rate", 0.0)
         if error_rate > 0.1:  # More than 10% error rate
-            insight: Dict[str, JSONValue] = {
-                "type": "error_resolution",
-                "category": "high_error_rate",
-                "title": "High Error Rate Detected",
-                "description": f"Session had {error_rate:.1%} error rate",
-                "actionable_insight": "Investigate common error patterns and implement preventive measures",
-                "confidence": 0.9,
-                "data": {"error_rate": error_rate},
-                "keywords": cast(List[JSONValue], ["error_prevention", "reliability", "quality"])
-            }
+            insight = ExtractedInsight(
+                type="error_resolution",
+                category="high_error_rate",
+                title="High Error Rate Detected",
+                description=f"Session had {error_rate:.1%} error rate",
+                actionable_insight="Investigate common error patterns and implement preventive measures",
+                confidence=0.9,
+                data={"error_rate": error_rate},
+                keywords=["error_prevention", "reliability", "quality"]
+            )
             insights.append(insight)
 
         # Common error types
@@ -173,52 +174,52 @@ class ExtractInsights(BaseTool):  # mypy: disable-error-code="misc"
         if error_types:
             most_common_error = max(error_types.items(), key=lambda x: x[1])
             if most_common_error[1] > 2:  # More than 2 occurrences
-                insights.append({
-                    "type": "error_resolution",
-                    "category": "common_error_type",
-                    "title": f"Frequent {most_common_error[0]} Errors",
-                    "description": f"'{most_common_error[0]}' error occurred {most_common_error[1]} times",
-                    "actionable_insight": f"Create specific error handling for {most_common_error[0]} errors",
-                    "confidence": 0.85,
-                    "data": {"error_type": most_common_error[0], "count": most_common_error[1]},
-                    "keywords": ["error_handling", most_common_error[0], "prevention"]
-                })
+                insights.append(ExtractedInsight(
+                    type="error_resolution",
+                    category="common_error_type",
+                    title=f"Frequent {most_common_error[0]} Errors",
+                    description=f"'{most_common_error[0]}' error occurred {most_common_error[1]} times",
+                    actionable_insight=f"Create specific error handling for {most_common_error[0]} errors",
+                    confidence=0.85,
+                    data={"error_type": most_common_error[0], "count": most_common_error[1]},
+                    keywords=["error_handling", most_common_error[0], "prevention"]
+                ))
 
         # Resolution patterns
-        resolution_patterns = cast(List[Dict[str, Any]], error_analysis.get("resolution_patterns", []))
+        resolution_patterns = cast(List[Dict[str, JSONValue]], error_analysis.get("resolution_patterns", []))
         if resolution_patterns:
             avg_resolution_steps = sum(cast(int, p.get("steps_to_resolution", 0)) for p in resolution_patterns) / len(resolution_patterns)
-            insights.append({
-                "type": "error_resolution",
-                "category": "resolution_efficiency",
-                "title": "Error Resolution Patterns",
-                "description": f"Found {len(resolution_patterns)} successful error resolutions with average {avg_resolution_steps:.1f} steps",
-                "actionable_insight": "Document successful resolution patterns for future reference",
-                "confidence": 0.8,
-                "data": {"resolution_patterns": resolution_patterns, "avg_steps": avg_resolution_steps},
-                "keywords": ["error_resolution", "documentation", "patterns"]
-            })
+            insights.append(ExtractedInsight(
+                type="error_resolution",
+                category="resolution_efficiency",
+                title="Error Resolution Patterns",
+                description=f"Found {len(resolution_patterns)} successful error resolutions with average {avg_resolution_steps:.1f} steps",
+                actionable_insight="Document successful resolution patterns for future reference",
+                confidence=0.8,
+                data={"resolution_patterns": cast(List[JSONValue], resolution_patterns), "avg_steps": avg_resolution_steps},
+                keywords=["error_resolution", "documentation", "patterns"]
+            ))
 
         return insights
 
-    def _extract_workflow_insights(self, analysis_data: Dict[str, JSONValue]) -> List[Dict[str, Any]]:
+    def _extract_workflow_insights(self, analysis_data: Dict[str, JSONValue]) -> List[ExtractedInsight]:
         """Extract insights about successful workflow patterns."""
         workflow_analysis = analysis_data.get("workflow_analysis", {})
-        insights = []
+        insights: List[ExtractedInsight] = []
 
         # High success rate workflows
         success_rate = cast(float, workflow_analysis.get("success_rate", 0))
         if success_rate > 0.8:
-            insights.append({
-                "type": "task_completion",
-                "category": "high_success_rate",
-                "title": "High Workflow Success Rate",
-                "description": f"Achieved {success_rate:.1%} workflow success rate",
-                "actionable_insight": "Document successful workflow patterns as templates for future tasks",
-                "confidence": 0.9,
-                "data": {"success_rate": success_rate},
-                "keywords": ["workflow_success", "templates", "best_practices"]
-            })
+            insights.append(ExtractedInsight(
+                type="task_completion",
+                category="high_success_rate",
+                title="High Workflow Success Rate",
+                description=f"Achieved {success_rate:.1%} workflow success rate",
+                actionable_insight="Document successful workflow patterns as templates for future tasks",
+                confidence=0.9,
+                data={"success_rate": success_rate},
+                keywords=["workflow_success", "templates", "best_practices"]
+            ))
 
         # Workflow efficiency
         avg_length = cast(float, workflow_analysis.get("average_workflow_length", 0))
@@ -233,22 +234,22 @@ class ExtractInsights(BaseTool):  # mypy: disable-error-code="misc"
                 efficiency_insight = "Workflow length appears optimal"
                 confidence = 0.7
 
-            insights.append({
-                "type": "task_completion",
-                "category": "workflow_efficiency",
-                "title": "Workflow Length Analysis",
-                "description": f"Average workflow length is {avg_length:.1f} steps",
-                "actionable_insight": efficiency_insight,
-                "confidence": confidence,
-                "data": {"avg_length": avg_length},
-                "keywords": ["workflow_efficiency", "optimization", "task_size"]
-            })
+            insights.append(ExtractedInsight(
+                type="task_completion",
+                category="workflow_efficiency",
+                title="Workflow Length Analysis",
+                description=f"Average workflow length is {avg_length:.1f} steps",
+                actionable_insight=efficiency_insight,
+                confidence=confidence,
+                data={"avg_length": avg_length},
+                keywords=["workflow_efficiency", "optimization", "task_size"]
+            ))
 
         return insights
 
-    def _extract_optimization_insights(self, analysis_data: Dict[str, JSONValue]) -> List[Dict[str, Any]]:
+    def _extract_optimization_insights(self, analysis_data: Dict[str, JSONValue]) -> List[ExtractedInsight]:
         """Extract general optimization insights."""
-        insights = []
+        insights: List[ExtractedInsight] = []
 
         # Memory usage optimization
         memory_analysis = cast(Dict[str, JSONValue], analysis_data.get("memory_analysis", {}))
@@ -260,43 +261,43 @@ class ExtractInsights(BaseTool):  # mypy: disable-error-code="misc"
             retrieve_ratio = memory_ops.get("retrieve", 0) / total_ops if total_ops > 0 else 0
 
             if store_ratio > 0.7:  # More storing than retrieving
-                insights.append({
-                    "type": "optimization",
-                    "category": "memory_usage",
-                    "title": "High Memory Storage Activity",
-                    "description": f"{store_ratio:.1%} of memory operations were storage",
-                    "actionable_insight": "Consider implementing memory consolidation to reduce storage overhead",
-                    "confidence": 0.75,
-                    "data": {"store_ratio": store_ratio, "total_ops": total_ops},
-                    "keywords": ["memory_optimization", "storage", "consolidation"]
-                })
+                insights.append(ExtractedInsight(
+                    type="optimization",
+                    category="memory_usage",
+                    title="High Memory Storage Activity",
+                    description=f"{store_ratio:.1%} of memory operations were storage",
+                    actionable_insight="Consider implementing memory consolidation to reduce storage overhead",
+                    confidence=0.75,
+                    data={"store_ratio": store_ratio, "total_ops": total_ops},
+                    keywords=["memory_optimization", "storage", "consolidation"]
+                ))
 
             if retrieve_ratio > 0.5:  # Good retrieval usage
-                insights.append({
-                    "type": "optimization",
-                    "category": "memory_usage",
-                    "title": "Good Memory Retrieval Usage",
-                    "description": f"{retrieve_ratio:.1%} of memory operations were retrieval",
-                    "actionable_insight": "Memory retrieval patterns show good reuse of stored knowledge",
-                    "confidence": 0.8,
-                    "data": {"retrieve_ratio": retrieve_ratio, "total_ops": total_ops},
-                    "keywords": ["memory_efficiency", "knowledge_reuse", "patterns"]
-                })
+                insights.append(ExtractedInsight(
+                    type="optimization",
+                    category="memory_usage",
+                    title="Good Memory Retrieval Usage",
+                    description=f"{retrieve_ratio:.1%} of memory operations were retrieval",
+                    actionable_insight="Memory retrieval patterns show good reuse of stored knowledge",
+                    confidence=0.8,
+                    data={"retrieve_ratio": retrieve_ratio, "total_ops": total_ops},
+                    keywords=["memory_efficiency", "knowledge_reuse", "patterns"]
+                ))
 
         # Agent interaction optimization
         interaction_analysis = cast(Dict[str, JSONValue], analysis_data.get("interaction_analysis", {}))
         total_interactions = cast(int, interaction_analysis.get("total_interactions", 0))
 
         if total_interactions > 10:
-            insights.append({
-                "type": "optimization",
-                "category": "agent_coordination",
-                "title": "High Agent Interaction Volume",
-                "description": f"Session had {total_interactions} agent interactions",
-                "actionable_insight": "Consider optimizing agent coordination to reduce communication overhead",
-                "confidence": 0.7,
-                "data": {"total_interactions": total_interactions},
-                "keywords": ["agent_coordination", "communication", "efficiency"]
-            })
+            insights.append(ExtractedInsight(
+                type="optimization",
+                category="agent_coordination",
+                title="High Agent Interaction Volume",
+                description=f"Session had {total_interactions} agent interactions",
+                actionable_insight="Consider optimizing agent coordination to reduce communication overhead",
+                confidence=0.7,
+                data={"total_interactions": total_interactions},
+                keywords=["agent_coordination", "communication", "efficiency"]
+            ))
 
         return insights

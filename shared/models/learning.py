@@ -133,3 +133,43 @@ class LearningConsolidation(BaseModel):
     def get_critical_insights(self) -> List[LearningInsight]:
         """Get only critical importance insights."""
         return [i for i in self.insights if i.importance == "critical"]
+
+
+class ExtractedInsight(BaseModel):
+    """Individual insight extracted from session analysis."""
+    model_config = ConfigDict(extra="forbid")
+
+    type: str  # tool_pattern, error_resolution, task_completion, optimization
+    category: str
+    title: str
+    description: str
+    actionable_insight: str
+    confidence: float = Field(ge=0.0, le=1.0)
+    data: Dict[str, JSONValue] = Field(default_factory=dict)
+    keywords: List[str] = Field(default_factory=list)
+
+
+class InsightExtractionResult(BaseModel):
+    """Result of insight extraction process."""
+    model_config = ConfigDict(extra="forbid")
+
+    extraction_timestamp: str
+    insight_type: str
+    confidence_threshold: float = Field(ge=0.0, le=1.0)
+    insights: List[ExtractedInsight] = Field(default_factory=list)
+    total_insights: int = Field(ge=0)
+
+
+class OperationInfo(BaseModel):
+    """Information about a learning loop operation."""
+    model_config = ConfigDict(extra="forbid")
+
+    id: str
+    task_description: Optional[str] = None
+    initial_error: Optional[Dict[str, JSONValue]] = None
+    tool_calls: List[Dict[str, JSONValue]] = Field(default_factory=list)
+    final_state: Dict[str, JSONValue] = Field(default_factory=dict)
+    success: bool = False
+    duration_seconds: float = 0.0
+    timestamp: datetime = Field(default_factory=datetime.now)
+    status: str = "pending"

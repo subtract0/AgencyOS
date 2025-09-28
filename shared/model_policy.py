@@ -18,7 +18,7 @@ import os
 DEFAULT_GLOBAL = os.getenv("AGENCY_MODEL", "gpt-5")
 
 DEFAULTS: dict[str, str] = {
-    "planner": os.getenv("PLANNER_MODEL", "o3"),
+    "planner": os.getenv("PLANNER_MODEL", "gpt-5"),  # Changed from expensive "o3"
     "chief_architect": os.getenv("CHIEF_ARCHITECT_MODEL", "gpt-5"),
     "coder": os.getenv("CODER_MODEL", "gpt-5"),
     "auditor": os.getenv("AUDITOR_MODEL", "gpt-5"),
@@ -26,7 +26,7 @@ DEFAULTS: dict[str, str] = {
     "merger": os.getenv("MERGER_MODEL", "gpt-5"),
     "learning": os.getenv("LEARNING_MODEL", "gpt-5"),
     "test_generator": os.getenv("TEST_GENERATOR_MODEL", "gpt-5"),
-    "summary": os.getenv("SUMMARY_MODEL", "gpt-5-nano"),
+    "summary": os.getenv("SUMMARY_MODEL", "gpt-5-mini"),  # Changed from non-existent "gpt-5-nano"
     "subagent_example": os.getenv("SUBAGENT_EXAMPLE_MODEL", "gpt-5-mini"),
     "toolsmith": os.getenv("TOOLSMITH_MODEL", "gpt-5"),
 }

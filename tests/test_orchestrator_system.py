@@ -302,7 +302,7 @@ class TestTelemetryIntegration:
                 assert hasattr(summary, 'agents_active')
         else:
             # Dict format
-            summary_dict = cast(Dict[str, Any], summary)
+            summary_dict = cast(Dict[str, JSONValue], summary)
             assert "metrics" in summary_dict
             # If we have events, verify they're counted correctly
             if summary_dict["metrics"]["tasks_started"] > 0:
@@ -325,7 +325,7 @@ class TestSanitization:
         })
 
         sanitized = redact_event(event)
-        sanitized_data = cast(Dict[str, Any], sanitized["data"])
+        sanitized_data = cast(Dict[str, JSONValue], sanitized["data"])
 
         assert sanitized_data["api_key"] == "[REDACTED]"
         assert sanitized_data["authorization"] == "[REDACTED]"
@@ -363,11 +363,11 @@ class TestSanitization:
         })
 
         sanitized = redact_event(event)
-        nested = cast(Dict[str, Any], sanitized["nested"])
-        level1 = cast(Dict[str, Any], nested["level1"])
-        level2 = cast(Dict[str, Any], level1["level2"])
+        nested = cast(Dict[str, JSONValue], sanitized["nested"])
+        level1 = cast(Dict[str, JSONValue], nested["level1"])
+        level2 = cast(Dict[str, JSONValue], level1["level2"])
         list_data = cast(List[Any], sanitized["list_data"])
-        list_item = cast(Dict[str, Any], list_data[1])
+        list_item = cast(Dict[str, JSONValue], list_data[1])
 
         # Structure should be preserved
         assert "nested" in sanitized

@@ -18,6 +18,7 @@ import os
 import sys
 import json
 import re
+import ast
 from datetime import datetime
 from pathlib import Path
 
@@ -71,9 +72,16 @@ def convert_markdown_session_to_json(markdown_path: str) -> dict:
             # Parse content (it's usually a dictionary representation)
             content_str = content_match.group(1).strip() if content_match else "{}"
             try:
-                # Try to parse as eval (since it's Python dict format)
-                content_data = eval(content_str) if content_str.startswith('{') else {"raw": content_str}
-            except:
+                # Safely parse as literal (no code execution)
+                if content_str.startswith('{') and content_str.endswith('}'):
+                    content_data = ast.literal_eval(content_str)
+                else:
+                    # Try JSON parsing first
+                    try:
+                        content_data = json.loads(content_str)
+                    except json.JSONDecodeError:
+                        content_data = {"raw": content_str}
+            except (ValueError, SyntaxError):
                 content_data = {"raw": content_str}
 
             entry = {
@@ -106,7 +114,7 @@ def test_learning_agent_pipeline():
     print("\n1. Creating LearningAgent instance...")
     try:
         agent_context = create_agent_context()
-        learning_agent = create_learning_agent(model="gpt-5", reasoning_effort="high", agent_context=agent_context)
+        learning_agent = create_learning_agent(model="gpt-4o", reasoning_effort="high", agent_context=agent_context)
         print("✅ LearningAgent created successfully")
         print(f"   - Agent name: {learning_agent.name}")
         print(f"   - Number of tools: {len(learning_agent.tools)}")
@@ -309,8 +317,8 @@ def test_learning_agent_pipeline():
             print(json.dumps(example_learning, indent=2))
         else:
             print("No learning objects to display")
-    except:
-        print("Could not display example learning object")
+    except (TypeError, ValueError, KeyError) as e:
+        print(f"Could not display example learning object: {e}")
 
     # Cleanup
     try:

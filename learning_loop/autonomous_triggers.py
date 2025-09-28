@@ -25,7 +25,7 @@ from pathlib import Path
 from learning_loop.event_detection import Event, ErrorEvent, FileEvent
 from learning_loop.pattern_extraction import EnhancedPattern
 from core.self_healing import SelfHealingCore, Finding
-from core.patterns import UnifiedPatternStore, get_pattern_store, Pattern
+from pattern_intelligence import PatternStore, CodingPattern as Pattern
 from core.telemetry import get_telemetry, emit
 
 
@@ -232,14 +232,14 @@ class EventRouter:
     4. Does this match a known pattern? → Apply pattern
     """
 
-    def __init__(self, pattern_store: Optional[UnifiedPatternStore] = None):
+    def __init__(self, pattern_store: Optional[PatternStore] = None):
         """
         Initialize event router with handlers and pattern matching.
 
         Args:
             pattern_store: Pattern storage instance (defaults to global store)
         """
-        self.pattern_store = pattern_store or get_pattern_store()
+        self.pattern_store = pattern_store or PatternStore()
         self.telemetry = get_telemetry()
         self.pattern_matcher = PatternMatcher(self.pattern_store)
 
@@ -349,7 +349,7 @@ class HealingTrigger:
     - Integration with SelfHealingCore
     """
 
-    def __init__(self, pattern_store: Optional[UnifiedPatternStore] = None):
+    def __init__(self, pattern_store: Optional[PatternStore] = None):
         """
         Initialize healing trigger with pattern store and cooldown tracking.
 
@@ -357,7 +357,7 @@ class HealingTrigger:
             pattern_store: Pattern storage instance (defaults to global store)
         """
         self.healing_core = SelfHealingCore()
-        self.pattern_store = pattern_store or get_pattern_store()
+        self.pattern_store = pattern_store or PatternStore()
         self.telemetry = get_telemetry()
 
         # Cooldown tracking per spec - prevent healing loops
@@ -591,14 +591,14 @@ class PatternMatcher:
     - Historical success: 0.2
     """
 
-    def __init__(self, pattern_store: Optional[UnifiedPatternStore] = None):
+    def __init__(self, pattern_store: Optional[PatternStore] = None):
         """
         Initialize pattern matcher with pattern store.
 
         Args:
             pattern_store: Pattern storage instance (defaults to global store)
         """
-        self.pattern_store = pattern_store or get_pattern_store()
+        self.pattern_store = pattern_store or PatternStore()
         self.telemetry = get_telemetry()
         self.min_threshold = 0.3  # Minimum confidence threshold per spec
 
@@ -775,7 +775,7 @@ class PatternMatcher:
         return confidence
 
     def _convert_to_enhanced_pattern(self, pattern: Pattern) -> EnhancedPattern:
-        """Convert UnifiedPatternStore Pattern to EnhancedPattern for scoring."""
+        """Convert PatternStore Pattern to EnhancedPattern for scoring."""
         # Import here to avoid circular imports
         from learning_loop.pattern_extraction import (
             EnhancedPattern, PatternMetadata, Trigger, ErrorTrigger, TaskTrigger

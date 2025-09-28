@@ -9,6 +9,7 @@ a compact report of feature coverage.
 import re
 from pathlib import Path
 from typing import Dict, List, Tuple, Any
+from shared.type_definitions.json import JSONValue
 
 
 def extract_features_from_md(features_file: Path) -> Tuple[List[str], List[str]]:
@@ -27,7 +28,7 @@ def extract_features_from_md(features_file: Path) -> Tuple[List[str], List[str]]
     return feature_matches, test_files
 
 
-def check_test_files(test_files: List[str], project_root: Path) -> Dict[str, Dict[str, Any]]:
+def check_test_files(test_files: List[str], project_root: Path) -> Dict[str, Dict[str, JSONValue]]:
     """Check which test files exist and count test functions"""
     coverage_report = {}
 

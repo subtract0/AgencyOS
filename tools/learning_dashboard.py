@@ -63,7 +63,7 @@ class LearningDashboard:
         """
         self.agent_context = agent_context
         self.vector_store = vector_store or VectorStore()
-        self.metrics_history: List[Dict[str, Any]] = []
+        self.metrics_history: List[Dict[str, JSONValue]] = []
         self.alerts: List[LearningAlert] = []
 
         logger.info("LearningDashboard initialized")
@@ -409,7 +409,10 @@ class LearningDashboard:
             else:
                 return "stable"
 
-        except Exception:
+        except (ValueError, TypeError, ZeroDivisionError) as e:
+            import logging
+            logger = logging.getLogger(__name__)
+            logger.warning(f"Failed to calculate metric trend: {e}")
             return "stable"
 
     def _is_recent_memory(self, memory: Dict[str, JSONValue], cutoff_time: datetime) -> bool:
@@ -419,8 +422,10 @@ class LearningDashboard:
             if isinstance(timestamp_str, str) and timestamp_str:
                 memory_time = datetime.fromisoformat(timestamp_str.replace('Z', '+00:00'))
                 return memory_time >= cutoff_time
-        except Exception:
-            pass
+        except (ValueError, TypeError) as e:
+            import logging
+            logger = logging.getLogger(__name__)
+            logger.debug(f"Failed to parse memory timestamp: {e}")
         return False
 
     def _is_successful_application(self, memory: Dict[str, JSONValue]) -> bool:

@@ -1,0 +1,939 @@
+============================================================
+TEST HEALTH CHECK REPORT
+============================================================
+
+❌ ERRORS FOUND (1):
+----------------------------------------
+File: dependencies
+Type: missing_packages
+Message: Missing test dependencies: pytest-mock
+
+
+⚠️  WARNINGS (207):
+----------------------------------------
+File: /Users/am/Code/Agency/tests/test_agency_fast.py
+Type: import_error
+Message: Cannot import from module: agency_code_agent.agency_code_agent
+
+File: /Users/am/Code/Agency/tests/test_agent_registry.py
+Type: import_error
+Message: Cannot import from module: meta_learning.agent_registry
+
+File: /Users/am/Code/Agency/tests/test_apply_and_verify_patch.py
+Type: import_error
+Message: Cannot import from module: tools.apply_and_verify_patch
+
+File: /Users/am/Code/Agency/tests/test_ast_analyzer.py
+Type: import_error
+Message: Cannot import from module: auditor_agent.ast_analyzer
+
+File: /Users/am/Code/Agency/tests/test_auditor_agent.py
+Type: import_error
+Message: Cannot import from module: auditor_agent.auditor_agent
+
+File: /Users/am/Code/Agency/tests/test_auto_fix_nonetype.py
+Type: import_error
+Message: Cannot import from module: tools.auto_fix_nonetype
+
+File: /Users/am/Code/Agency/tests/test_autonomous_triggers.py
+Type: import_error
+Message: Cannot import from module: learning_loop.autonomous_triggers
+
+File: /Users/am/Code/Agency/tests/test_autonomous_triggers.py
+Type: import_error
+Message: Cannot import from module: learning_loop.event_detection
+
+File: /Users/am/Code/Agency/tests/test_autonomous_triggers.py
+Type: import_error
+Message: Cannot import from module: learning_loop.pattern_extraction
+
+File: /Users/am/Code/Agency/tests/test_autonomous_triggers.py
+Type: import_error
+Message: Cannot import from module: core.patterns
+
+File: /Users/am/Code/Agency/tests/test_autonomous_triggers.py
+Type: import_error
+Message: Cannot import from module: core.self_healing
+
+File: /Users/am/Code/Agency/tests/test_autonomous_triggers.py
+Type: import_error
+Message: Cannot import from module: learning_loop.pattern_extraction
+
+File: /Users/am/Code/Agency/tests/test_autonomous_triggers.py
+Type: import_error
+Message: Cannot import from module: learning_loop.pattern_extraction
+
+File: /Users/am/Code/Agency/tests/test_autonomous_triggers.py
+Type: import_error
+Message: Cannot import from module: learning_loop.pattern_extraction
+
+File: /Users/am/Code/Agency/tests/test_autonomous_triggers.py
+Type: import_error
+Message: Cannot import from module: learning_loop.pattern_extraction
+
+File: /Users/am/Code/Agency/tests/test_bash_tool.py
+Type: import_error
+Message: Cannot import from module: tools
+
+File: /Users/am/Code/Agency/tests/test_bash_tool.py
+Type: import_error
+Message: Cannot import from module: tools.bash
+
+File: /Users/am/Code/Agency/tests/test_chief_architect_agent.py
+Type: import_error
+Message: Cannot import from module: chief_architect_agent
+
+File: /Users/am/Code/Agency/tests/test_chief_architect_agent.py
+Type: import_error
+Message: Cannot import from module: shared.agent_context
+
+File: /Users/am/Code/Agency/tests/test_circuit_breaker.py
+Type: import_error
+Message: Cannot import from module: shared.retry_controller
+
+File: /Users/am/Code/Agency/tests/test_circuit_breaker_observability.py
+Type: import_error
+Message: Cannot import from module: shared.system_hooks
+
+File: /Users/am/Code/Agency/tests/test_codehealer_integration.py
+Type: import_error
+Message: Cannot import from module: auditor_agent.auditor_agent
+
+File: /Users/am/Code/Agency/tests/test_codehealer_integration.py
+Type: import_error
+Message: Cannot import from module: test_generator_agent.test_generator_agent
+
+File: /Users/am/Code/Agency/tests/test_context_handoff_edge_cases.py
+Type: import_error
+Message: Cannot import from module: tools.context_handoff
+
+File: /Users/am/Code/Agency/tests/test_context_handoff_tool.py
+Type: import_error
+Message: Cannot import from module: tools.context_handoff
+
+File: /Users/am/Code/Agency/tests/test_e2e_router_agency_integration.py
+Type: import_error
+Message: Cannot import from module: agency
+
+File: /Users/am/Code/Agency/tests/test_edit_tool.py
+Type: import_error
+Message: Cannot import from module: tools
+
+File: /Users/am/Code/Agency/tests/test_edit_tool.py
+Type: import_error
+Message: Cannot import from module: tools
+
+File: /Users/am/Code/Agency/tests/test_edit_tool.py
+Type: import_error
+Message: Cannot import from module: tools.edit
+
+File: /Users/am/Code/Agency/tests/test_enhanced_memory_store_refactor.py
+Type: import_error
+Message: Cannot import from module: agency_memory.enhanced_memory_store
+
+File: /Users/am/Code/Agency/tests/test_enhanced_memory_store_refactor.py
+Type: import_error
+Message: Cannot import from module: agency_memory.type_conversion_utils
+
+File: /Users/am/Code/Agency/tests/test_enhanced_memory_store_refactor.py
+Type: import_error
+Message: Cannot import from module: shared.models.memory
+
+File: /Users/am/Code/Agency/tests/test_enhanced_memory_store_refactor.py
+Type: import_error
+Message: Cannot import from module: shared.type_definitions.json
+
+File: /Users/am/Code/Agency/tests/test_enhanced_memory_store_result.py
+Type: import_error
+Message: Cannot import from module: agency_memory.enhanced_memory_store_result
+
+File: /Users/am/Code/Agency/tests/test_enhanced_memory_store_result.py
+Type: import_error
+Message: Cannot import from module: shared.type_definitions.result
+
+File: /Users/am/Code/Agency/tests/test_enhanced_memory_store_result.py
+Type: import_error
+Message: Cannot import from module: shared.models.memory
+
+File: /Users/am/Code/Agency/tests/test_event_detection.py
+Type: import_error
+Message: Cannot import from module: shared.type_definitions.json
+
+File: /Users/am/Code/Agency/tests/test_event_detection.py
+Type: import_error
+Message: Cannot import from module: learning_loop.event_detection
+
+File: /Users/am/Code/Agency/tests/test_exit_plan_mode.py
+Type: import_error
+Message: Cannot import from module: tools.exit_plan_mode
+
+File: /Users/am/Code/Agency/tests/test_exit_plan_mode.py
+Type: import_error
+Message: Cannot import module: tools.exit_plan_mode
+
+File: /Users/am/Code/Agency/tests/test_feature_inventory.py
+Type: import_error
+Message: Cannot import from module: tools.feature_inventory
+
+File: /Users/am/Code/Agency/tests/test_firestore_mock_integration.py
+Type: import_error
+Message: Cannot import from module: agency_memory
+
+File: /Users/am/Code/Agency/tests/test_git_error_paths.py
+Type: import_error
+Message: Cannot import from module: tools.git
+
+File: /Users/am/Code/Agency/tests/test_git_tool.py
+Type: import_error
+Message: Cannot import from module: tools
+
+File: /Users/am/Code/Agency/tests/test_glob_tool.py
+Type: import_error
+Message: Cannot import from module: tools
+
+File: /Users/am/Code/Agency/tests/test_grep_tool.py
+Type: import_error
+Message: Cannot import from module: tools
+
+File: /Users/am/Code/Agency/tests/test_handoff_context_read_tool.py
+Type: import_error
+Message: Cannot import from module: tools.context_handoff
+
+File: /Users/am/Code/Agency/tests/test_handoff_context_read_tool.py
+Type: import_error
+Message: Cannot import from module: tools.handoff_context_read
+
+File: /Users/am/Code/Agency/tests/test_handoff_with_context_alias.py
+Type: import_error
+Message: Cannot import from module: tools
+
+File: /Users/am/Code/Agency/tests/test_hooks_intent_retry_snapshot.py
+Type: import_error
+Message: Cannot import from module: shared.system_hooks
+
+File: /Users/am/Code/Agency/tests/test_hooks_memory_logging.py
+Type: import_error
+Message: Cannot import from module: shared.system_hooks
+
+File: /Users/am/Code/Agency/tests/test_hooks_memory_logging.py
+Type: import_error
+Message: Cannot import from module: shared.agent_context
+
+File: /Users/am/Code/Agency/tests/test_hooks_memory_logging.py
+Type: import_error
+Message: Cannot import from module: agency_memory
+
+File: /Users/am/Code/Agency/tests/test_instructions_selection.py
+Type: import_error
+Message: Cannot import from module: agency_code_agent
+
+File: /Users/am/Code/Agency/tests/test_instructions_selection.py
+Type: import_error
+Message: Cannot import from module: agency_code_agent.agency_code_agent
+
+File: /Users/am/Code/Agency/tests/test_instructions_selection.py
+Type: import_error
+Message: Cannot import from module: planner_agent
+
+File: /Users/am/Code/Agency/tests/test_instructions_selection.py
+Type: import_error
+Message: Cannot import from module: shared.agent_utils
+
+File: /Users/am/Code/Agency/tests/test_instructions_selection.py
+Type: import_error
+Message: Cannot import from module: agency_code_agent.agency_code_agent
+
+File: /Users/am/Code/Agency/tests/test_instructions_selection.py
+Type: import_error
+Message: Cannot import from module: planner_agent.planner_agent
+
+File: /Users/am/Code/Agency/tests/test_integrations.py
+Type: import_error
+Message: Cannot import from module: agency_memory
+
+File: /Users/am/Code/Agency/tests/test_integrations.py
+Type: import_error
+Message: Cannot import from module: google.cloud
+
+File: /Users/am/Code/Agency/tests/test_json_utils.py
+Type: import_error
+Message: Cannot import from module: learning_agent.json_utils
+
+File: /Users/am/Code/Agency/tests/test_json_utils.py
+Type: import_error
+Message: Cannot import from module: shared.type_definitions.json
+
+File: /Users/am/Code/Agency/tests/test_kanban_adapters.py
+Type: import_error
+Message: Cannot import from module: shared.type_definitions.json
+
+File: /Users/am/Code/Agency/tests/test_kanban_adapters.py
+Type: import_error
+Message: Cannot import from module: tools.kanban
+
+File: /Users/am/Code/Agency/tests/test_kanban_smoke.py
+Type: import_error
+Message: Cannot import from module: tools.kanban
+
+File: /Users/am/Code/Agency/tests/test_learning_agent.py
+Type: import_error
+Message: Cannot import from module: learning_agent
+
+File: /Users/am/Code/Agency/tests/test_learning_agent.py
+Type: import_error
+Message: Cannot import from module: shared.agent_context
+
+File: /Users/am/Code/Agency/tests/test_learning_agent.py
+Type: import_error
+Message: Cannot import module: learning_agent
+
+File: /Users/am/Code/Agency/tests/test_learning_consolidation.py
+Type: import_error
+Message: Cannot import from module: shared.type_definitions.json
+
+File: /Users/am/Code/Agency/tests/test_learning_consolidation.py
+Type: import_error
+Message: Cannot import from module: agency_memory.learning
+
+File: /Users/am/Code/Agency/tests/test_learning_dashboard.py
+Type: import_error
+Message: Cannot import from module: tools.learning_dashboard
+
+File: /Users/am/Code/Agency/tests/test_learning_dashboard.py
+Type: import_error
+Message: Cannot import from module: shared.type_definitions.json
+
+File: /Users/am/Code/Agency/tests/test_learning_hints.py
+Type: import_error
+Message: Cannot import from module: tools.kanban.hints
+
+File: /Users/am/Code/Agency/tests/test_learning_loop_integration.py
+Type: import_error
+Message: Cannot import from module: shared.type_definitions.json
+
+File: /Users/am/Code/Agency/tests/test_learning_loop_integration.py
+Type: import_error
+Message: Cannot import from module: shared.models.core
+
+File: /Users/am/Code/Agency/tests/test_learning_loop_integration.py
+Type: import_error
+Message: Cannot import from module: tests.conftest
+
+File: /Users/am/Code/Agency/tests/test_learning_loop_integration.py
+Type: import_error
+Message: Cannot import from module: core
+
+File: /Users/am/Code/Agency/tests/test_learning_loop_integration.py
+Type: import_error
+Message: Cannot import from module: learning_loop
+
+File: /Users/am/Code/Agency/tests/test_learning_loop_integration.py
+Type: import_error
+Message: Cannot import from module: learning_loop.event_detection
+
+File: /Users/am/Code/Agency/tests/test_learning_loop_integration.py
+Type: import_error
+Message: Cannot import from module: learning_loop.pattern_extraction
+
+File: /Users/am/Code/Agency/tests/test_ls_tool.py
+Type: import_error
+Message: Cannot import from module: tools
+
+File: /Users/am/Code/Agency/tests/test_master_e2e.py
+Type: import_error
+Message: Cannot import from module: tools.auto_fix_nonetype
+
+File: /Users/am/Code/Agency/tests/test_master_e2e.py
+Type: import_error
+Message: Cannot import from module: tools.auto_fix_nonetype
+
+File: /Users/am/Code/Agency/tests/test_master_e2e.py
+Type: import_error
+Message: Cannot import from module: tools.apply_and_verify_patch
+
+File: /Users/am/Code/Agency/tests/test_master_e2e.py
+Type: import_error
+Message: Cannot import from module: tools.apply_and_verify_patch
+
+File: /Users/am/Code/Agency/tests/test_master_e2e.py
+Type: import_error
+Message: Cannot import from module: chief_architect_agent
+
+File: /Users/am/Code/Agency/tests/test_master_e2e.py
+Type: import_error
+Message: Cannot import from module: agency_code_agent.agency_code_agent
+
+File: /Users/am/Code/Agency/tests/test_master_e2e.py
+Type: import_error
+Message: Cannot import from module: planner_agent.planner_agent
+
+File: /Users/am/Code/Agency/tests/test_master_e2e.py
+Type: import_error
+Message: Cannot import from module: auditor_agent
+
+File: /Users/am/Code/Agency/tests/test_master_e2e.py
+Type: import_error
+Message: Cannot import from module: test_generator_agent
+
+File: /Users/am/Code/Agency/tests/test_master_e2e.py
+Type: import_error
+Message: Cannot import from module: learning_agent
+
+File: /Users/am/Code/Agency/tests/test_master_e2e.py
+Type: import_error
+Message: Cannot import from module: merger_agent.merger_agent
+
+File: /Users/am/Code/Agency/tests/test_master_e2e.py
+Type: import_error
+Message: Cannot import from module: toolsmith_agent
+
+File: /Users/am/Code/Agency/tests/test_master_e2e.py
+Type: import_error
+Message: Cannot import from module: work_completion_summary_agent
+
+File: /Users/am/Code/Agency/tests/test_master_e2e.py
+Type: import_error
+Message: Cannot import from module: quality_enforcer_agent
+
+File: /Users/am/Code/Agency/tests/test_master_e2e.py
+Type: import_error
+Message: Cannot import from module: agency_memory
+
+File: /Users/am/Code/Agency/tests/test_master_e2e.py
+Type: import_error
+Message: Cannot import from module: agency_memory
+
+File: /Users/am/Code/Agency/tests/test_master_e2e.py
+Type: import_error
+Message: Cannot import from module: agency_memory
+
+File: /Users/am/Code/Agency/tests/test_master_e2e.py
+Type: import_error
+Message: Cannot import from module: agency_memory
+
+File: /Users/am/Code/Agency/tests/test_master_e2e.py
+Type: import_error
+Message: Cannot import from module: agency_memory
+
+File: /Users/am/Code/Agency/tests/test_master_e2e.py
+Type: import_error
+Message: Cannot import from module: tools
+
+File: /Users/am/Code/Agency/tests/test_master_e2e.py
+Type: import_error
+Message: Cannot import from module: tools
+
+File: /Users/am/Code/Agency/tests/test_master_e2e.py
+Type: import_error
+Message: Cannot import from module: tools
+
+File: /Users/am/Code/Agency/tests/test_master_e2e.py
+Type: import_error
+Message: Cannot import from module: tools
+
+File: /Users/am/Code/Agency/tests/test_master_e2e.py
+Type: import_error
+Message: Cannot import from module: tools
+
+File: /Users/am/Code/Agency/tests/test_master_e2e.py
+Type: import_error
+Message: Cannot import from module: tools
+
+File: /Users/am/Code/Agency/tests/test_master_e2e.py
+Type: import_error
+Message: Cannot import from module: tools
+
+File: /Users/am/Code/Agency/tests/test_master_e2e.py
+Type: import_error
+Message: Cannot import from module: tools.auto_fix_nonetype
+
+File: /Users/am/Code/Agency/tests/test_master_e2e.py
+Type: import_error
+Message: Cannot import from module: tools.apply_and_verify_patch
+
+File: /Users/am/Code/Agency/tests/test_master_e2e.py
+Type: import_error
+Message: Cannot import from module: agency_code_agent.agency_code_agent
+
+File: /Users/am/Code/Agency/tests/test_master_e2e.py
+Type: import_error
+Message: Cannot import from module: planner_agent.planner_agent
+
+File: /Users/am/Code/Agency/tests/test_master_e2e.py
+Type: import_error
+Message: Cannot import from module: chief_architect_agent
+
+File: /Users/am/Code/Agency/tests/test_master_e2e.py
+Type: import_error
+Message: Cannot import from module: agency_memory
+
+File: /Users/am/Code/Agency/tests/test_master_e2e.py
+Type: import_error
+Message: Cannot import from module: tools
+
+File: /Users/am/Code/Agency/tests/test_memory_api.py
+Type: import_error
+Message: Cannot import from module: agency_memory
+
+File: /Users/am/Code/Agency/tests/test_merger_integration.py
+Type: import_error
+Message: Cannot import from module: shared.agent_context
+
+File: /Users/am/Code/Agency/tests/test_merger_integration.py
+Type: import_error
+Message: Cannot import from module: merger_agent
+
+File: /Users/am/Code/Agency/tests/test_multi_edit_tool.py
+Type: import_error
+Message: Cannot import from module: tools
+
+File: /Users/am/Code/Agency/tests/test_multi_edit_tool.py
+Type: import_error
+Message: Cannot import from module: tools.multi_edit
+
+File: /Users/am/Code/Agency/tests/test_mutation_snapshot_hook_multi_ops.py
+Type: import_error
+Message: Cannot import from module: shared.system_hooks
+
+File: /Users/am/Code/Agency/tests/test_notebook_edit_tool.py
+Type: import_error
+Message: Cannot import from module: tools
+
+File: /Users/am/Code/Agency/tests/test_notebook_read_tool.py
+Type: import_error
+Message: Cannot import from module: tools
+
+File: /Users/am/Code/Agency/tests/test_orchestrator_system.py
+Type: import_error
+Message: Cannot import from module: shared.type_definitions.json
+
+File: /Users/am/Code/Agency/tests/test_orchestrator_system.py
+Type: import_error
+Message: Cannot import from module: shared.agent_context
+
+File: /Users/am/Code/Agency/tests/test_orchestrator_system.py
+Type: import_error
+Message: Cannot import from module: tools.orchestrator.scheduler
+
+File: /Users/am/Code/Agency/tests/test_orchestrator_system.py
+Type: import_error
+Message: Cannot import from module: tools.telemetry.aggregator
+
+File: /Users/am/Code/Agency/tests/test_orchestrator_system.py
+Type: import_error
+Message: Cannot import from module: tools.telemetry.sanitize
+
+File: /Users/am/Code/Agency/tests/test_pattern_extraction.py
+Type: import_error
+Message: Cannot import from module: shared.type_definitions.json
+
+File: /Users/am/Code/Agency/tests/test_pattern_extraction.py
+Type: import_error
+Message: Cannot import from module: learning_loop.pattern_extraction
+
+File: /Users/am/Code/Agency/tests/test_pattern_extraction.py
+Type: import_error
+Message: Cannot import from module: core.patterns
+
+File: /Users/am/Code/Agency/tests/test_pattern_intelligence_benchmarks.py
+Type: import_error
+Message: Cannot import from module: pattern_intelligence
+
+File: /Users/am/Code/Agency/tests/test_pattern_intelligence_benchmarks.py
+Type: import_error
+Message: Cannot import from module: pattern_intelligence.extractors
+
+File: /Users/am/Code/Agency/tests/test_pattern_intelligence_benchmarks.py
+Type: import_error
+Message: Cannot import from module: pattern_intelligence.pattern_applicator
+
+File: /Users/am/Code/Agency/tests/test_pattern_intelligence_benchmarks.py
+Type: import_error
+Message: Cannot import from module: pattern_intelligence.meta_learning
+
+File: /Users/am/Code/Agency/tests/test_pattern_unification.py
+Type: import_error
+Message: Cannot import from module: core.patterns
+
+File: /Users/am/Code/Agency/tests/test_pattern_unification.py
+Type: import_error
+Message: Cannot import from module: shared.models.patterns
+
+File: /Users/am/Code/Agency/tests/test_pattern_unification.py
+Type: import_error
+Message: Cannot import from module: pattern_intelligence.coding_pattern
+
+File: /Users/am/Code/Agency/tests/test_pattern_unification.py
+Type: import_error
+Message: Cannot import from module: pattern_intelligence.pattern_store
+
+File: /Users/am/Code/Agency/tests/test_pattern_unification.py
+Type: import_error
+Message: Cannot import from module: pattern_intelligence.migration
+
+File: /Users/am/Code/Agency/tests/test_pattern_unification.py
+Type: import_error
+Message: Cannot import from module: learning_agent.tools.self_healing_pattern_extractor
+
+File: /Users/am/Code/Agency/tests/test_pattern_unification.py
+Type: import_error
+Message: Cannot import module: learning_agent.tools.self_healing_pattern_extractor
+
+File: /Users/am/Code/Agency/tests/test_planner_agent.py
+Type: import_error
+Message: Cannot import from module: agency_code_agent.agency_code_agent
+
+File: /Users/am/Code/Agency/tests/test_planner_agent.py
+Type: import_error
+Message: Cannot import from module: planner_agent.planner_agent
+
+File: /Users/am/Code/Agency/tests/test_pydantic_models.py
+Type: import_error
+Message: Cannot import from module: shared.models.memory
+
+File: /Users/am/Code/Agency/tests/test_pydantic_models.py
+Type: import_error
+Message: Cannot import from module: shared.models.learning
+
+File: /Users/am/Code/Agency/tests/test_pydantic_models.py
+Type: import_error
+Message: Cannot import from module: shared.models.telemetry
+
+File: /Users/am/Code/Agency/tests/test_pydantic_models.py
+Type: import_error
+Message: Cannot import from module: shared.models.dashboard
+
+File: /Users/am/Code/Agency/tests/test_pydantic_models.py
+Type: import_error
+Message: Cannot import from module: shared.models.context
+
+File: /Users/am/Code/Agency/tests/test_quality_enforcer_agent.py
+Type: import_error
+Message: Cannot import from module: quality_enforcer_agent
+
+File: /Users/am/Code/Agency/tests/test_quality_enforcer_agent.py
+Type: import_error
+Message: Cannot import from module: shared.agent_context
+
+File: /Users/am/Code/Agency/tests/test_read_tool.py
+Type: import_error
+Message: Cannot import from module: tools
+
+File: /Users/am/Code/Agency/tests/test_registry_api.py
+Type: import_error
+Message: Cannot import from module: meta_learning.registry_api
+
+File: /Users/am/Code/Agency/tests/test_registry_api.py
+Type: import_error
+Message: Cannot import from module: meta_learning.agent_registry
+
+File: /Users/am/Code/Agency/tests/test_result_pattern.py
+Type: import_error
+Message: Cannot import from module: shared.type_definitions.result
+
+File: /Users/am/Code/Agency/tests/test_retry_controller.py
+Type: import_error
+Message: Cannot import from module: shared.retry_controller
+
+File: /Users/am/Code/Agency/tests/test_retry_controller.py
+Type: import_error
+Message: Cannot import from module: shared.retry_controller
+
+File: /Users/am/Code/Agency/tests/test_retry_controller.py
+Type: import_error
+Message: Cannot import from module: shared.retry_controller
+
+File: /Users/am/Code/Agency/tests/test_retry_controller.py
+Type: import_error
+Message: Cannot import from module: shared.retry_controller
+
+File: /Users/am/Code/Agency/tests/test_retry_controller.py
+Type: import_error
+Message: Cannot import from module: shared.retry_controller
+
+File: /Users/am/Code/Agency/tests/test_retry_controller.py
+Type: import_error
+Message: Cannot import from module: shared.retry_controller
+
+File: /Users/am/Code/Agency/tests/test_retry_controller.py
+Type: import_error
+Message: Cannot import from module: shared.retry_controller
+
+File: /Users/am/Code/Agency/tests/test_retry_controller.py
+Type: import_error
+Message: Cannot import from module: shared.retry_controller
+
+File: /Users/am/Code/Agency/tests/test_retry_controller.py
+Type: import_error
+Message: Cannot import from module: shared.retry_controller
+
+File: /Users/am/Code/Agency/tests/test_retry_controller.py
+Type: import_error
+Message: Cannot import from module: shared.retry_controller
+
+File: /Users/am/Code/Agency/tests/test_retry_controller.py
+Type: import_error
+Message: Cannot import from module: shared.retry_controller
+
+File: /Users/am/Code/Agency/tests/test_retry_controller.py
+Type: import_error
+Message: Cannot import from module: shared.retry_controller
+
+File: /Users/am/Code/Agency/tests/test_retry_controller.py
+Type: import_error
+Message: Cannot import from module: shared.retry_controller
+
+File: /Users/am/Code/Agency/tests/test_retry_controller.py
+Type: import_error
+Message: Cannot import from module: shared.retry_controller
+
+File: /Users/am/Code/Agency/tests/test_retry_controller.py
+Type: import_error
+Message: Cannot import from module: shared.retry_controller
+
+File: /Users/am/Code/Agency/tests/test_retry_controller.py
+Type: import_error
+Message: Cannot import from module: shared.retry_controller
+
+File: /Users/am/Code/Agency/tests/test_retry_controller.py
+Type: import_error
+Message: Cannot import from module: shared.retry_controller
+
+File: /Users/am/Code/Agency/tests/test_retry_controller.py
+Type: import_error
+Message: Cannot import from module: shared.retry_controller
+
+File: /Users/am/Code/Agency/tests/test_retry_controller.py
+Type: import_error
+Message: Cannot import from module: shared.retry_controller
+
+File: /Users/am/Code/Agency/tests/test_retry_controller.py
+Type: import_error
+Message: Cannot import from module: shared.retry_controller
+
+File: /Users/am/Code/Agency/tests/test_retry_controller_additional.py
+Type: import_error
+Message: Cannot import from module: shared.retry_controller
+
+File: /Users/am/Code/Agency/tests/test_router_hook_edges.py
+Type: import_error
+Message: Cannot import from module: shared.system_hooks
+
+File: /Users/am/Code/Agency/tests/test_runtime_hints.py
+Type: import_error
+Message: Cannot import from module: tools.kanban.hints
+
+File: /Users/am/Code/Agency/tests/test_runtime_hints.py
+Type: import_error
+Message: Cannot import from module: tools.kanban.runtime_hints
+
+File: /Users/am/Code/Agency/tests/test_swarm_memory.py
+Type: import_error
+Message: Cannot import from module: agency_memory.swarm_memory
+
+File: /Users/am/Code/Agency/tests/test_swarm_memory.py
+Type: import_error
+Message: Cannot import from module: agency_memory.vector_store
+
+File: /Users/am/Code/Agency/tests/test_system_reminder_hook.py
+Type: import_error
+Message: Cannot import from module: shared.system_hooks
+
+File: /Users/am/Code/Agency/tests/test_telemetry_safety.py
+Type: import_error
+Message: Cannot import from module: core.telemetry
+
+File: /Users/am/Code/Agency/tests/test_test_generator_agent.py
+Type: import_error
+Message: Cannot import from module: test_generator_agent.test_generator_agent
+
+File: /Users/am/Code/Agency/tests/test_test_generator_agent.py
+Type: import_error
+Message: Cannot import from module: test_generator_agent.test_generator_agent
+
+File: /Users/am/Code/Agency/tests/test_test_generator_agent.py
+Type: import_error
+Message: Cannot import from module: test_generator_agent.test_generator_agent
+
+File: /Users/am/Code/Agency/tests/test_todo_write_tool.py
+Type: import_error
+Message: Cannot import from module: tools.todo_write
+
+File: /Users/am/Code/Agency/tests/test_tool_integration.py
+Type: import_error
+Message: Cannot import from module: agency_code_agent.agency_code_agent
+
+File: /Users/am/Code/Agency/tests/test_tool_integration.py
+Type: import_error
+Message: Cannot import from module: planner_agent.planner_agent
+
+File: /Users/am/Code/Agency/tests/test_toolsmith_agent_creation.py
+Type: import_error
+Message: Cannot import from module: shared.agent_context
+
+File: /Users/am/Code/Agency/tests/test_toolsmith_agent_creation.py
+Type: import_error
+Message: Cannot import from module: toolsmith_agent
+
+File: /Users/am/Code/Agency/tests/test_type_safety.py
+Type: import_error
+Message: Cannot import from module: shared.models.memory
+
+File: /Users/am/Code/Agency/tests/test_type_safety.py
+Type: import_error
+Message: Cannot import from module: shared.models.telemetry
+
+File: /Users/am/Code/Agency/tests/test_type_safety.py
+Type: import_error
+Message: Cannot import from module: shared.models.core
+
+File: /Users/am/Code/Agency/tests/test_type_safety.py
+Type: import_error
+Message: Cannot import from module: shared.type_definitions.json
+
+File: /Users/am/Code/Agency/tests/test_type_safety.py
+Type: import_error
+Message: Cannot import from module: shared.type_definitions.json
+
+File: /Users/am/Code/Agency/tests/test_undo_snapshot_tool.py
+Type: import_error
+Message: Cannot import from module: tools.undo_snapshot
+
+File: /Users/am/Code/Agency/tests/test_untracked_ingestion.py
+Type: import_error
+Message: Cannot import from module: tools.kanban.untracked
+
+File: /Users/am/Code/Agency/tests/test_workspace_undo_errors.py
+Type: import_error
+Message: Cannot import from module: tools.undo_snapshot
+
+File: /Users/am/Code/Agency/tests/test_write_tool.py
+Type: import_error
+Message: Cannot import from module: tools
+
+File: /Users/am/Code/Agency/tests/tool_integration_test.py
+Type: import_error
+Message: Cannot import from module: agency_code_agent.agency_code_agent
+
+File: /Users/am/Code/Agency/tests/unit/test_agent_initialization.py
+Type: import_error
+Message: Cannot import from module: agency_code_agent.agency_code_agent
+
+File: /Users/am/Code/Agency/tests/unit/test_architecture_loop.py
+Type: import_error
+Message: Cannot import from module: chief_architect_agent.tools.architecture_loop
+
+File: /Users/am/Code/Agency/tests/unit/test_chief_architect_agent.py
+Type: import_error
+Message: Cannot import from module: chief_architect_agent.chief_architect_agent
+
+File: /Users/am/Code/Agency/tests/unit/test_memory_integration.py
+Type: import_error
+Message: Cannot import from module: agency_code_agent.agency_code_agent
+
+File: /Users/am/Code/Agency/tests/unit/test_tool_dispatcher.py
+Type: import_error
+Message: Cannot import from module: agency_code_agent.agency_code_agent
+
+File: pytest_collection
+Type: collection_warning
+Message: Pytest collection has warnings:
+tests/test_agency.py: 6
+tests/test_agency_fast.py: 13
+tests/test_agent_registry.py: 21
+tests/test_apply_and_verify_patch.py: 3
+tests/test_ast_analyzer.py: 38
+tests/test_auditor_agent.py: 15
+tests/test_auto_fix_nonetype.py: 13
+tests/test_autonomous_triggers.py: 39
+tests/test_bash_tool.py: 30
+tests/test_chief_architect_agent.py: 34
+tests/test_circuit_breaker.py: 1
+tests/test_circuit_breaker_observability.py: 1
+tests/test_codehealer_integration.py: 10
+tests/test_context_handoff_edge_cases.py: 2
+tests/test_context_handoff_tool.py: 3
+tests/test_e2e_router_agency_integration.py: 1
+tests/test_edit_tool.py: 14
+tests/test_enhanced_memory_store_refactor.py: 33
+tests/test_enhanced_memory_store_result.py: 37
+tests/test_event_detection.py: 67
+tests/test_exit_plan_mode.py: 34
+tests/test_feature_inventory.py: 27
+tests/test_firestore_mock_integration.py: 4
+tests/test_git_error_paths.py: 4
+tests/test_git_tool.py: 13
+tests/test_glob_tool.py: 3
+tests/test_grep_tool.py: 2
+tests/test_handoff_context_read_tool.py: 2
+tests/test_handoff_with_context_alias.py: 1
+tests/test_handoffs_minimal.py: 5
+tests/test_hooks_intent_retry_snapshot.py: 3
+tests/test_hooks_memory_logging.py: 17
+tests/test_instructions_selection.py: 11
+tests/test_integrations.py: 6
+tests/test_json_utils.py: 21
+tests/test_kanban_adapters.py: 2
+tests/test_kanban_smoke.py: 2
+tests/test_learning_agent.py: 28
+tests/test_learning_consolidation.py: 8
+tests/test_learning_dashboard.py: 46
+tests/test_learning_hints.py: 1
+tests/test_learning_loop_integration.py: 25
+tests/test_ls_tool.py: 16
+tests/test_master_e2e.py: 28
+tests/test_memory_api.py: 24
+tests/test_merger_integration.py: 17
+tests/test_multi_edit_tool.py: 21
+tests/test_mutation_snapshot_hook_multi_ops.py: 1
+tests/test_notebook_edit_tool.py: 16
+tests/test_notebook_read_tool.py: 16
+tests/test_orchestrator_system.py: 13
+tests/test_pattern_extraction.py: 75
+tests/test_pattern_intelligence_benchmarks.py: 14
+tests/test_pattern_unification.py: 8
+tests/test_planner_agent.py: 5
+tests/test_pydantic_models.py: 22
+tests/test_quality_enforcer_agent.py: 38
+tests/test_read_tool.py: 2
+tests/test_result_pattern.py: 41
+tests/test_retry_controller.py: 30
+tests/test_retry_controller_additional.py: 2
+tests/test_router_hook_edges.py: 2
+tests/test_runtime_hints.py: 2
+tests/test_swarm_memory.py: 30
+tests/test_system_reminder_hook.py: 4
+tests/test_telemetry_safety.py: 4
+tests/test_test_generator_agent.py: 22
+tests/test_todo_write_tool.py: 2
+tests/test_tool_integration.py: 7
+tests/test_toolsmith_agent_creation.py: 7
+tests/test_type_safety.py: 24
+tests/test_undo_snapshot_tool.py: 1
+tests/test_untracked_ingestion.py: 2
+tests/test_workspace_undo_errors.py: 2
+tests/test_write_tool.py: 19
+tests/unit/test_agent_initialization.py: 13
+tests/unit/test_architecture_loop.py: 13
+tests/unit/test_chief_architect_agent.py: 10
+tests/unit/test_memory_integration.py: 11
+tests/unit/test_tool_dispatcher.py: 9
+
+[33m=============================== warnings summary ===============================[0m
+../../../../opt/homebrew/lib/python3.12/site-packages/pydantic/_internal/_config.py:323
+  /opt/homebrew/lib/python3.12/site-packages/pydantic/_internal/_config.py:323: PydanticDeprecatedSince20: Support for class-based `config` is deprecated, use ConfigDict instead. Deprecated in Pydantic V2.0 to be removed in V3.0. See Pydantic V2 Migration Guide at https://errors.pydantic.dev/2.11/migration/
+    warnings.warn(DEPRECATION_MESSAGE, DeprecationWarning)
+
+core/patterns.py:437
+  /Users/am/Code/Agency/core/patterns.py:437: DeprecationWarning: UnifiedPatternStore is deprecated. Use pattern_intelligence.PatternStore instead.
+    _pattern_store_instance = UnifiedPatternStore(persist=persist)
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+
+
+============================================================
+SUMMARY:
+- Errors: 1
+- Warnings: 207
+
+❌ Test suite has critical issues that need to be fixed.

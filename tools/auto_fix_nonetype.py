@@ -129,8 +129,8 @@ class LLMNoneTypeFixer(Tool):
 
         try:
             error_data = json.loads(self.error_info)
-        except:
-            return "Error: Invalid error information provided"
+        except (json.JSONDecodeError, ValueError) as e:
+            return f"Error: Invalid error information provided - {e}"
 
         if error_data["status"] != "errors_detected":
             return "No NoneType errors to fix"
@@ -229,8 +229,8 @@ class AutoNoneTypeFixer(Tool):
 
         try:
             error_data = json.loads(error_info)
-        except:
-            return f"Failed to parse error information: {error_info}"
+        except (json.JSONDecodeError, ValueError) as e:
+            return f"Failed to parse error information: {error_info} - {e}"
 
         if error_data["status"] != "errors_detected":
             return "No NoneType errors detected to auto-fix"
@@ -239,8 +239,8 @@ class AutoNoneTypeFixer(Tool):
         try:
             read_tool = Read(file_path=self.file_path)
             file_content = read_tool.run()
-        except:
-            return f"Failed to read file: {self.file_path}"
+        except (FileNotFoundError, IOError, PermissionError) as e:
+            return f"Failed to read file: {self.file_path} - {e}"
 
         # Step 3: Generate LLM-based fixes
         fixer = LLMNoneTypeFixer(

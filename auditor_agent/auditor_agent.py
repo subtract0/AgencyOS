@@ -77,73 +77,69 @@ class AnalyzeCodebase(Tool):
         if total_behaviors == 0:
             return {prop: {"score": 0.0, "violations": ["No behaviors found"]} for prop in "NECESSARY"}
 
-        # Calculate each NECESSARY property score
-        necessary_scores = {}
-
-        # N - No Missing Behaviors
         behavior_coverage = min(1.0, total_tests / total_behaviors) if total_behaviors > 0 else 0.0
-        necessary_scores["N"] = {
-            "score": behavior_coverage,
-            "violations": [] if behavior_coverage > 0.8 else [f"Low test coverage: {behavior_coverage:.2f}"]
-        }
-
-        # E - Edge Cases Covered (heuristic based on test patterns)
         edge_case_score = self._estimate_edge_case_coverage(analysis)
-        necessary_scores["E"] = {
-            "score": edge_case_score,
-            "violations": [] if edge_case_score > 0.6 else ["Insufficient edge case testing"]
-        }
-
-        # C - Comprehensive Coverage (multiple tests per behavior)
         comprehensive_score = min(1.0, (total_tests / max(1, total_behaviors)) / 2)
-        necessary_scores["C"] = {
-            "score": comprehensive_score,
-            "violations": [] if comprehensive_score > 0.5 else ["Need more test cases per behavior"]
-        }
 
-        # E - Error Conditions (heuristic based on exception testing)
-        error_score = self._estimate_error_testing(analysis)
-        necessary_scores["E2"] = {
-            "score": error_score,
-            "violations": [] if error_score > 0.4 else ["Insufficient error condition testing"]
-        }
-
-        # S - State Validation (heuristic based on assertion patterns)
-        state_score = 0.7  # Default reasonable score for state validation
-        necessary_scores["S"] = {
-            "score": state_score,
-            "violations": [] if state_score > 0.6 else ["State validation could be improved"]
-        }
-
-        # S - Side Effects (heuristic based on mock/patch patterns)
-        side_effect_score = 0.6  # Default reasonable score
-        necessary_scores["S2"] = {
-            "score": side_effect_score,
-            "violations": [] if side_effect_score > 0.5 else ["Side effect testing could be improved"]
-        }
-
-        # A - Async Operations (based on async function analysis)
-        async_score = self._estimate_async_coverage(analysis)
-        necessary_scores["A"] = {
-            "score": async_score,
-            "violations": [] if async_score > 0.7 else ["Async operation testing needs attention"]
-        }
-
-        # R - Regression Prevention (heuristic based on test history)
-        regression_score = 0.8  # Default good score for regression
-        necessary_scores["R"] = {
-            "score": regression_score,
-            "violations": [] if regression_score > 0.7 else ["Regression testing could be strengthened"]
-        }
-
-        # Y - Yielding Confidence (overall test quality heuristic)
-        confidence_score = min(1.0, (behavior_coverage + edge_case_score + comprehensive_score) / 3)
-        necessary_scores["Y"] = {
-            "score": confidence_score,
-            "violations": [] if confidence_score > 0.7 else ["Overall test confidence needs improvement"]
-        }
+        necessary_scores = self._calculate_core_necessary_scores(
+            behavior_coverage, edge_case_score, comprehensive_score, analysis
+        )
+        necessary_scores.update(self._calculate_extended_necessary_scores(
+            behavior_coverage, edge_case_score, comprehensive_score, analysis
+        ))
 
         return necessary_scores
+
+    def _calculate_core_necessary_scores(self, behavior_coverage: float, edge_case_score: float,
+                                       comprehensive_score: float, analysis: Dict) -> Dict:
+        """Calculate core NECESSARY scores (N, E, C, E2)."""
+        return {
+            "N": {
+                "score": behavior_coverage,
+                "violations": [] if behavior_coverage > 0.8 else [f"Low test coverage: {behavior_coverage:.2f}"]
+            },
+            "E": {
+                "score": edge_case_score,
+                "violations": [] if edge_case_score > 0.6 else ["Insufficient edge case testing"]
+            },
+            "C": {
+                "score": comprehensive_score,
+                "violations": [] if comprehensive_score > 0.5 else ["Need more test cases per behavior"]
+            },
+            "E2": {
+                "score": self._estimate_error_testing(analysis),
+                "violations": [] if self._estimate_error_testing(analysis) > 0.4 else ["Insufficient error condition testing"]
+            }
+        }
+
+    def _calculate_extended_necessary_scores(self, behavior_coverage: float, edge_case_score: float,
+                                           comprehensive_score: float, analysis: Dict) -> Dict:
+        """Calculate extended NECESSARY scores (S, S2, A, R, Y)."""
+        async_score = self._estimate_async_coverage(analysis)
+        confidence_score = min(1.0, (behavior_coverage + edge_case_score + comprehensive_score) / 3)
+
+        return {
+            "S": {
+                "score": 0.7,  # Default reasonable score for state validation
+                "violations": [] if 0.7 > 0.6 else ["State validation could be improved"]
+            },
+            "S2": {
+                "score": 0.6,  # Default reasonable score for side effects
+                "violations": [] if 0.6 > 0.5 else ["Side effect testing could be improved"]
+            },
+            "A": {
+                "score": async_score,
+                "violations": [] if async_score > 0.7 else ["Async operation testing needs attention"]
+            },
+            "R": {
+                "score": 0.8,  # Default good score for regression
+                "violations": [] if 0.8 > 0.7 else ["Regression testing could be strengthened"]
+            },
+            "Y": {
+                "score": confidence_score,
+                "violations": [] if confidence_score > 0.7 else ["Overall test confidence needs improvement"]
+            }
+        }
 
     def _calculate_qt_score(self, necessary_analysis: Dict) -> float:
         """Calculate Q(T) score from NECESSARY analysis."""
@@ -268,23 +264,38 @@ def create_auditor_agent(
     model: str = "gpt-5", reasoning_effort: str = "medium", agent_context: Optional[AgentContext] = None
 ) -> Agent:
     """Factory that returns a fresh AuditorAgent instance."""
-
     is_openai, is_claude, _ = detect_model_type(model)
-
     current_dir = os.path.dirname(os.path.abspath(__file__))
-    instructions_file = select_instructions_file(current_dir, model)
-    instructions = render_instructions(instructions_file, model)
 
-    # Create agent context if not provided
+    # Setup agent context and instructions
+    agent_context = _setup_agent_context(agent_context)
+    instructions = _prepare_agent_instructions(current_dir, model)
+
+    # Create hooks and log creation
+    combined_hook = _create_agent_hooks(agent_context)
+    _log_agent_creation(agent_context, model, reasoning_effort)
+
+    return _build_auditor_agent(current_dir, instructions, combined_hook, model, reasoning_effort)
+
+def _setup_agent_context(agent_context: Optional[AgentContext]) -> AgentContext:
+    """Setup agent context, creating if not provided."""
     if agent_context is None:
         agent_context = create_agent_context()
+    return agent_context
 
-    # Create hooks with memory integration
+def _prepare_agent_instructions(current_dir: str, model: str) -> str:
+    """Prepare agent instructions from file."""
+    instructions_file = select_instructions_file(current_dir, model)
+    return render_instructions(instructions_file, model)
+
+def _create_agent_hooks(agent_context: AgentContext):
+    """Create and combine agent hooks."""
     reminder_hook = create_system_reminder_hook()
     memory_hook = create_memory_integration_hook(agent_context)
-    combined_hook = create_composite_hook([reminder_hook, memory_hook])
+    return create_composite_hook([reminder_hook, memory_hook])
 
-    # Log agent creation
+def _log_agent_creation(agent_context: AgentContext, model: str, reasoning_effort: str) -> None:
+    """Log agent creation to memory."""
     agent_context.store_memory(
         f"auditor_agent_created_{agent_context.session_id}",
         {
@@ -296,6 +307,9 @@ def create_auditor_agent(
         ["agency", "auditor", "creation"]
     )
 
+def _build_auditor_agent(current_dir: str, instructions: str, combined_hook,
+                        model: str, reasoning_effort: str) -> Agent:
+    """Build and return the configured AuditorAgent."""
     return Agent(
         name="AuditorAgent",
         description=(

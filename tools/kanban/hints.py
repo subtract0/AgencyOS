@@ -64,7 +64,7 @@ class LearningHintRegistry:
         hints_raw = self.data.get("hints", [])
         if not isinstance(hints_raw, list):
             return []
-        return [Hint(**cast(Dict[str, Any], h)) for h in hints_raw if isinstance(h, dict)]
+        return [Hint(**cast(Dict[str, JSONValue], h)) for h in hints_raw if isinstance(h, dict)]
 
     def match_for_error(self, error_type: Optional[str], error_message: Optional[str]) -> Optional[Hint]:
         """Find a hint matching error type or error pattern."""
@@ -86,9 +86,9 @@ class LearningHintRegistry:
                 mt = (str(error_type_raw) or "").lower() if isinstance(error_type_raw, str) else ""
                 mp = m.get("error_pattern")
                 if mt and mt == et:
-                    return Hint(**cast(Dict[str, Any], h))
+                    return Hint(**cast(Dict[str, JSONValue], h))
                 if mp and isinstance(mp, str) and mp in em:
-                    return Hint(**cast(Dict[str, Any], h))
+                    return Hint(**cast(Dict[str, JSONValue], h))
             except Exception:
                 continue
         return None

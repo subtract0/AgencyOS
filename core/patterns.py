@@ -1,6 +1,10 @@
 """
 UnifiedPatternStore: Consolidated pattern learning and retrieval.
 In-memory start with optional persistence to SQLite.
+
+DEPRECATION NOTICE: This module is being migrated to pattern_intelligence.
+The Pattern class is deprecated in favor of CodingPattern.
+UnifiedPatternStore is deprecated in favor of PatternStore.
 """
 
 import json
@@ -10,11 +14,20 @@ from typing import List, Optional, Dict
 from shared.type_definitions.json import JSONValue
 from datetime import datetime
 from pathlib import Path
+import warnings
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 @dataclass
 class Pattern:
-    """Represents a learned pattern from autonomous operations."""
+    """
+    DEPRECATED: Use pattern_intelligence.CodingPattern instead.
+
+    Represents a learned pattern from autonomous operations.
+    This class is maintained for backward compatibility only.
+    """
     id: str
     pattern_type: str  # error_fix, optimization, refactoring, etc.
     context: dict[str, JSONValue]
@@ -25,11 +38,25 @@ class Pattern:
     last_used: str
     tags: List[str]
 
+    def __post_init__(self):
+        warnings.warn(
+            "Pattern class is deprecated. Use pattern_intelligence.CodingPattern instead.",
+            DeprecationWarning,
+            stacklevel=2
+        )
+
+    def to_coding_pattern(self):
+        """Convert this Pattern to the new CodingPattern format."""
+        from pattern_intelligence.migration import pattern_to_coding_pattern
+        return pattern_to_coding_pattern(self)
+
 
 class UnifiedPatternStore:
     """
+    DEPRECATED: Use pattern_intelligence.PatternStore instead.
+
     Unified storage for learned patterns from self-healing operations.
-    Starts in-memory, with optional SQLite persistence.
+    This class now delegates to the new PatternStore for compatibility.
     """
 
     def __init__(self, persist: bool = False, db_path: str = "logs/patterns.db"):
@@ -40,13 +67,35 @@ class UnifiedPatternStore:
             persist: Whether to persist patterns to SQLite
             db_path: Path to SQLite database file
         """
+        warnings.warn(
+            "UnifiedPatternStore is deprecated. Use pattern_intelligence.PatternStore instead.",
+            DeprecationWarning,
+            stacklevel=2
+        )
+
+        # Keep legacy storage for compatibility
         self.patterns: Dict[str, Pattern] = {}
         self.persist = persist
         self.db_path = Path(db_path) if persist else None
 
+        # Initialize the new PatternStore as the backend
+        from pattern_intelligence.pattern_store import PatternStore
+        self._new_store = PatternStore(namespace="legacy_migration")
+
         if self.persist:
             self._init_db()
             self._load_from_db()
+            # Migrate existing patterns to new store
+            self._migrate_to_new_store()
+
+    def _migrate_to_new_store(self):
+        """Migrate existing patterns to new PatternStore."""
+        for pattern in self.patterns.values():
+            try:
+                coding_pattern = pattern.to_coding_pattern()
+                self._new_store.store_pattern(coding_pattern)
+            except Exception as e:
+                logger.error(f"Failed to migrate pattern {pattern.id} to new store: {e}")
 
     def add(self, pattern: Pattern) -> bool:
         """
@@ -58,8 +107,15 @@ class UnifiedPatternStore:
         Returns:
             True if added successfully
         """
-        # Update in-memory store
+        # Update in-memory store for compatibility
         self.patterns[pattern.id] = pattern
+
+        # Also add to new store
+        try:
+            coding_pattern = pattern.to_coding_pattern()
+            self._new_store.store_pattern(coding_pattern)
+        except Exception as e:
+            logger.error(f"Failed to add pattern to new store: {e}")
 
         # Persist if enabled
         if self.persist:
@@ -198,27 +254,61 @@ class UnifiedPatternStore:
             Dictionary with pattern statistics
         """
         if not self.patterns:
-            return {
-                "total_patterns": 0,
-                "pattern_types": {},
-                "average_success_rate": 0.0,
-                "most_used": None,
-                "most_successful": None
-            }
+            return self._get_empty_statistics()
 
-        # Calculate statistics
+        # Calculate core metrics
+        pattern_types, total_success = self._calculate_pattern_metrics()
+        most_used, most_successful = self._find_pattern_extremes()
+
+        # Build statistics response
+        return self._build_statistics_response(
+            pattern_types, total_success, most_used, most_successful
+        )
+
+    def _get_empty_statistics(self) -> dict[str, JSONValue]:
+        """
+        Return empty statistics structure when no patterns exist.
+
+        Returns:
+            Empty statistics dictionary
+        """
+        return {
+            "total_patterns": 0,
+            "pattern_types": {},
+            "average_success_rate": 0.0,
+            "most_used": None,
+            "most_successful": None
+        }
+
+    def _calculate_pattern_metrics(self) -> tuple[dict[str, int], float]:
+        """
+        Calculate pattern type counts and total success rate.
+
+        Returns:
+            Tuple of (pattern_types_dict, total_success_rate)
+        """
         pattern_types: dict[str, int] = {}
         total_success: float = 0.0
-        most_used = None
-        most_successful = None
 
         for pattern in self.patterns.values():
             # Count by type
             pattern_types[pattern.pattern_type] = pattern_types.get(pattern.pattern_type, 0) + 1
-
             # Track success rate
             total_success += pattern.success_rate
 
+        return pattern_types, total_success
+
+    def _find_pattern_extremes(self) -> tuple[Optional[Pattern], Optional[Pattern]]:
+        """
+        Find the most used and most successful patterns.
+
+        Returns:
+            Tuple of (most_used_pattern, most_successful_pattern)
+        """
+        most_used = None
+        most_successful = None
+
+        for pattern in self.patterns.values():
             # Find most used
             if not most_used or pattern.usage_count > most_used.usage_count:
                 most_used = pattern
@@ -227,6 +317,27 @@ class UnifiedPatternStore:
             if not most_successful or pattern.success_rate > most_successful.success_rate:
                 most_successful = pattern
 
+        return most_used, most_successful
+
+    def _build_statistics_response(
+        self,
+        pattern_types: dict[str, int],
+        total_success: float,
+        most_used: Optional[Pattern],
+        most_successful: Optional[Pattern]
+    ) -> dict[str, JSONValue]:
+        """
+        Build the final statistics response dictionary.
+
+        Args:
+            pattern_types: Dictionary of pattern type counts
+            total_success: Total success rate across all patterns
+            most_used: Pattern with highest usage count
+            most_successful: Pattern with highest success rate
+
+        Returns:
+            Complete statistics dictionary
+        """
         # Convert pattern_types to JSONValue compatible type
         pattern_types_json: JSONValue = {k: v for k, v in pattern_types.items()}
 

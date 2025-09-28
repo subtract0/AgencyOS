@@ -161,8 +161,8 @@ class SelfHealingCore:
                 with open(error.file, 'w') as f:
                     f.write(original_content)
                 self._emit_event("rollback_complete", {"file": error.file})
-            except:
-                self._emit_event("rollback_failed", {"file": error.file}, level="error")
+            except (IOError, PermissionError, OSError) as e:
+                self._emit_event("rollback_failed", {"file": error.file, "error": str(e)}, level="error")
             return False
 
         # Learn from successful fix

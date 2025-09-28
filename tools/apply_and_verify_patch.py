@@ -284,8 +284,8 @@ class AutonomousHealingOrchestrator(Tool):
 
         try:
             detection_data = json.loads(detection_result)
-        except:
-            return f"❌ Failed to parse detection results: {detection_result}"
+        except (json.JSONDecodeError, ValueError) as e:
+            return f"❌ Failed to parse detection results: {detection_result} - {e}"
 
         if detection_data["status"] != "errors_detected":
             return "ℹ️  No NoneType errors detected for autonomous healing"
@@ -305,8 +305,8 @@ class AutonomousHealingOrchestrator(Tool):
                 try:
                     read_tool = Read(file_path=file_path)
                     file_content = read_tool.run()
-                except:
-                    healing_results.append(f"❌ Could not read file {file_path}")
+                except (FileNotFoundError, IOError, PermissionError) as e:
+                    healing_results.append(f"❌ Could not read file {file_path}: {e}")
                     continue
             else:
                 file_content = self.file_context
@@ -320,8 +320,8 @@ class AutonomousHealingOrchestrator(Tool):
 
             try:
                 fix_data = json.loads(fix_result)
-            except:
-                healing_results.append(f"❌ Failed to parse fix for {error['pattern']}")
+            except (json.JSONDecodeError, ValueError) as e:
+                healing_results.append(f"❌ Failed to parse fix for {error['pattern']}: {e}")
                 continue
 
             if fix_data["status"] != "fixes_generated" or not fix_data["fixes"]:

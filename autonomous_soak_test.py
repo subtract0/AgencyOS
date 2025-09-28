@@ -259,10 +259,11 @@ class SoakTestMonitor:
         print(f"📄 Full report saved to: {report_file}")
 
 
-def _verify_soak(report: Optional[str], channel: str, markdown: bool, pr_number: Optional[int], issue_number: Optional[int], repo: Optional[str], timeout_seconds: int) -> int:
-    """Run verify_soak.py and publish results to a channel.
+def _execute_verification_script(report: Optional[str], markdown: bool, timeout_seconds: int) -> Tuple[int, Path, Optional[Path]]:
+    """Execute the verify_soak.py script and return results.
 
-    Returns an exit code (0 success, non-zero on posting failures).
+    Returns:
+        Tuple of (exit_code, json_output_path, markdown_output_path)
     """
     analysis_dir = REPO_ROOT / "logs" / "analysis"
     analysis_dir.mkdir(parents=True, exist_ok=True)
@@ -286,150 +287,235 @@ def _verify_soak(report: Optional[str], channel: str, markdown: bool, pr_number:
         res = subprocess.run(cmd, cwd=str(REPO_ROOT), env=env, text=True, capture_output=True, timeout=timeout_seconds, check=False)
     except subprocess.TimeoutExpired:
         print("❌ verify_soak.py timed out; aborting", file=sys.stderr)
-        return 1
+        return 1, json_out, None
 
     if res.returncode != 0:
         print("❌ verify_soak.py failed:")
         print(res.stdout)
         print(res.stderr, file=sys.stderr)
-        return 1
+        return 1, json_out, None
 
     md_path = analysis_dir / json_out.name.replace(".json", ".md") if markdown else None
+    return 0, json_out, md_path
 
-    # Dashboard channel: update latest links and emit telemetry
-    def publish_dashboard() -> bool:
-        ok = True
-        def _link_or_copy(src: Optional[Path], dest_name: str):
-            nonlocal ok
-            if not src or not src.exists():
-                return
-            dest = analysis_dir / dest_name
-            try:
-                if dest.exists() or dest.is_symlink():
-                    dest.unlink()
-            except Exception:
-                pass
-            try:
-                dest.symlink_to(src)
-            except Exception:
-                try:
-                    import shutil as _sh
-                    _sh.copy2(src, dest)
-                except Exception:
-                    ok = False
-        _link_or_copy(json_out, "latest_soak_verification.json")
-        _link_or_copy(md_path, "latest_soak_verification.md")
+
+def _publish_to_dashboard(json_out: Path, md_path: Optional[Path]) -> bool:
+    """Publish results to dashboard by creating symlinks and emitting telemetry.
+
+    Returns:
+        True if successful, False if partial failure
+    """
+    analysis_dir = json_out.parent
+    ok = True
+
+    def _link_or_copy(src: Optional[Path], dest_name: str):
+        nonlocal ok
+        if not src or not src.exists():
+            return
+        dest = analysis_dir / dest_name
         try:
-            emit("soak_verification_posted", {
-                "json": str(json_out) if json_out.exists() else None,
-                "markdown": str(md_path) if (md_path and md_path.exists()) else None,
-                "channel": "dashboard"
-            })
+            if dest.exists() or dest.is_symlink():
+                dest.unlink()
         except Exception:
             pass
-        return ok
-
-    def gh_available() -> bool:
         try:
-            r = subprocess.run(["gh", "--version"], capture_output=True, text=True)
-            return r.returncode == 0
+            dest.symlink_to(src)
         except Exception:
-            return False
+            try:
+                import shutil as _sh
+                _sh.copy2(src, dest)
+            except Exception:
+                ok = False
 
-    def split_repo(r: Optional[str]) -> Tuple[Optional[str], Optional[str]]:
-        if not r:
-            rep = os.environ.get("GITHUB_REPOSITORY")
-            if rep and "/" in rep:
-                owner, name = rep.split("/", 1)
-                return owner, name
-            return None, None
-        if "/" not in r:
-            return None, None
-        owner, name = r.split("/", 1)
-        return owner, name
+    _link_or_copy(json_out, "latest_soak_verification.json")
+    _link_or_copy(md_path, "latest_soak_verification.md")
 
-    def post_pr(md_file: Path) -> bool:
-        owner, name = split_repo(repo)
-        local_pr = pr_number
-        if gh_available():
-            if not local_pr:
-                event_path = os.environ.get("GITHUB_EVENT_PATH")
-                if event_path and Path(event_path).exists():
-                    try:
-                        data = json.loads(Path(event_path).read_text())
-                        local_pr = local_pr or data.get("number") or data.get("pull_request", {}).get("number")
-                    except Exception:
-                        pass
-            if not local_pr:
-                print("⚠️  Cannot infer PR number. Provide --pr-number.")
-                return False
-            cmd = ["gh", "pr", "comment", str(local_pr), "-F", str(md_path)]
-            if owner and name:
-                cmd += ["--repo", f"{owner}/{name}"]
-            r = subprocess.run(cmd, text=True)
-            return r.returncode == 0
-        token = os.environ.get("GITHUB_TOKEN")
-        if not token:
-            print("⚠️  No gh CLI and no GITHUB_TOKEN available — cannot post PR comment.")
-            return False
-        if not (owner and name and local_pr):
-            print("⚠️  Missing --repo owner/repo or --pr-number for REST API posting.")
-            return False
-        import urllib.request, urllib.error
-        api = f"https://api.github.com/repos/{owner}/{name}/issues/{local_pr}/comments"
-        body = json.dumps({"body": md_path.read_text()}).encode("utf-8")
-        req = urllib.request.Request(api, data=body, method="POST")
-        req.add_header("Authorization", "token " + token)
-        req.add_header("Accept", "application/vnd.github+json")
-        req.add_header("Content-Type", "application/json")
+    try:
+        emit("soak_verification_posted", {
+            "json": str(json_out) if json_out.exists() else None,
+            "markdown": str(md_path) if (md_path and md_path.exists()) else None,
+            "channel": "dashboard"
+        })
+    except Exception:
+        pass
+
+    return ok
+
+
+def _check_github_cli_available() -> bool:
+    """Check if GitHub CLI is available.
+
+    Returns:
+        True if gh CLI is available, False otherwise
+    """
+    try:
+        r = subprocess.run(["gh", "--version"], capture_output=True, text=True)
+        return r.returncode == 0
+    except Exception:
+        return False
+
+
+def _parse_repository_info(repo: Optional[str]) -> Tuple[Optional[str], Optional[str]]:
+    """Parse repository information from input or environment.
+
+    Args:
+        repo: Repository in format "owner/name" or None
+
+    Returns:
+        Tuple of (owner, name) or (None, None) if parsing fails
+    """
+    if not repo:
+        rep = os.environ.get("GITHUB_REPOSITORY")
+        if rep and "/" in rep:
+            owner, name = rep.split("/", 1)
+            return owner, name
+        return None, None
+    if "/" not in repo:
+        return None, None
+    owner, name = repo.split("/", 1)
+    return owner, name
+
+
+def _auto_detect_pr_number(current_pr: Optional[int]) -> Optional[int]:
+    """Auto-detect PR number from GitHub event if not provided."""
+    if current_pr:
+        return current_pr
+
+    event_path = os.environ.get("GITHUB_EVENT_PATH")
+    if event_path and Path(event_path).exists():
         try:
-            with urllib.request.urlopen(req, timeout=10) as resp:
-                return 200 <= resp.status < 300
-        except Exception as e:
-            print(f"❌ GitHub API error: {e}", file=sys.stderr)
-            return False
+            data = json.loads(Path(event_path).read_text())
+            return data.get("number") or data.get("pull_request", {}).get("number")
+        except Exception:
+            pass
+    return None
 
-    def post_issue(md_file: Path) -> bool:
-        owner, name = split_repo(repo)
-        if gh_available():
-            if not issue_number:
-                print("⚠️  Provide --issue-number to post to an issue.")
-                return False
-            cmd = ["gh", "issue", "comment", str(issue_number), "-F", str(md_path)]
-            if owner and name:
-                cmd += ["--repo", f"{owner}/{name}"]
-            r = subprocess.run(cmd, text=True)
-            return r.returncode == 0
-        token = os.environ.get("GITHUB_TOKEN")
-        if not token:
-            print("⚠️  No gh CLI and no GITHUB_TOKEN available — cannot post issue comment.")
-            return False
-        if not (owner and name and issue_number):
-            print("⚠️  Missing --repo owner/repo or --issue-number for REST API posting.")
-            return False
-        import urllib.request, urllib.error
-        api = f"https://api.github.com/repos/{owner}/{name}/issues/{issue_number}/comments"
-        body = json.dumps({"body": md_path.read_text()}).encode("utf-8")
-        req = urllib.request.Request(api, data=body, method="POST")
-        req.add_header("Authorization", "token " + token)
-        req.add_header("Accept", "application/vnd.github+json")
-        req.add_header("Content-Type", "application/json")
-        try:
-            with urllib.request.urlopen(req, timeout=10) as resp:
-                return 200 <= resp.status < 300
-        except Exception as e:
-            print(f"❌ GitHub API error: {e}", file=sys.stderr)
-            return False
 
+def _post_via_github_api(md_file: Path, pr_number: int, owner: str, name: str) -> bool:
+    """Post comment via GitHub REST API."""
+    token = os.environ.get("GITHUB_TOKEN")
+    if not token:
+        print("⚠️  No gh CLI and no GITHUB_TOKEN available — cannot post PR comment.")
+        return False
+
+    import urllib.request, urllib.error
+    api = f"https://api.github.com/repos/{owner}/{name}/issues/{pr_number}/comments"
+    body = json.dumps({"body": md_file.read_text()}).encode("utf-8")
+    req = urllib.request.Request(api, data=body, method="POST")
+    req.add_header("Authorization", "token " + token)
+    req.add_header("Accept", "application/vnd.github+json")
+    req.add_header("Content-Type", "application/json")
+
+    try:
+        with urllib.request.urlopen(req, timeout=10) as resp:
+            return 200 <= resp.status < 300
+    except Exception as e:
+        print(f"❌ GitHub API error: {e}", file=sys.stderr)
+        return False
+
+
+def _post_pr_comment(md_file: Path, pr_number: Optional[int], repo: Optional[str]) -> bool:
+    """Post comment to a GitHub Pull Request.
+
+    Args:
+        md_file: Path to markdown file to post
+        pr_number: PR number or None to auto-detect
+        repo: Repository in format "owner/name"
+
+    Returns:
+        True if successful, False otherwise
+    """
+    owner, name = _parse_repository_info(repo)
+    local_pr = _auto_detect_pr_number(pr_number)
+
+    if _check_github_cli_available():
+        if not local_pr:
+            print("⚠️  Cannot infer PR number. Provide --pr-number.")
+            return False
+        cmd = ["gh", "pr", "comment", str(local_pr), "-F", str(md_file)]
+        if owner and name:
+            cmd += ["--repo", f"{owner}/{name}"]
+        r = subprocess.run(cmd, text=True)
+        return r.returncode == 0
+
+    # Fallback to REST API
+    if not (owner and name and local_pr):
+        print("⚠️  Missing --repo owner/repo or --pr-number for REST API posting.")
+        return False
+
+    return _post_via_github_api(md_file, local_pr, owner, name)
+
+
+def _post_issue_comment(md_file: Path, issue_number: Optional[int], repo: Optional[str]) -> bool:
+    """Post comment to a GitHub Issue.
+
+    Args:
+        md_file: Path to markdown file to post
+        issue_number: Issue number
+        repo: Repository in format "owner/name"
+
+    Returns:
+        True if successful, False otherwise
+    """
+    owner, name = _parse_repository_info(repo)
+
+    if _check_github_cli_available():
+        if not issue_number:
+            print("⚠️  Provide --issue-number to post to an issue.")
+            return False
+        cmd = ["gh", "issue", "comment", str(issue_number), "-F", str(md_file)]
+        if owner and name:
+            cmd += ["--repo", f"{owner}/{name}"]
+        r = subprocess.run(cmd, text=True)
+        return r.returncode == 0
+
+    # Fallback to REST API
+    token = os.environ.get("GITHUB_TOKEN")
+    if not token:
+        print("⚠️  No gh CLI and no GITHUB_TOKEN available — cannot post issue comment.")
+        return False
+    if not (owner and name and issue_number):
+        print("⚠️  Missing --repo owner/repo or --issue-number for REST API posting.")
+        return False
+
+    import urllib.request, urllib.error
+    api = f"https://api.github.com/repos/{owner}/{name}/issues/{issue_number}/comments"
+    body = json.dumps({"body": md_file.read_text()}).encode("utf-8")
+    req = urllib.request.Request(api, data=body, method="POST")
+    req.add_header("Authorization", "token " + token)
+    req.add_header("Accept", "application/vnd.github+json")
+    req.add_header("Content-Type", "application/json")
+
+    try:
+        with urllib.request.urlopen(req, timeout=10) as resp:
+            return 200 <= resp.status < 300
+    except Exception as e:
+        print(f"❌ GitHub API error: {e}", file=sys.stderr)
+        return False
+
+
+def _verify_soak(report: Optional[str], channel: str, markdown: bool, pr_number: Optional[int], issue_number: Optional[int], repo: Optional[str], timeout_seconds: int) -> int:
+    """Run verify_soak.py and publish results to a channel.
+
+    Returns an exit code (0 success, non-zero on posting failures).
+    """
+    # Execute verification script
+    exit_code, json_out, md_path = _execute_verification_script(report, markdown, timeout_seconds)
+    if exit_code != 0:
+        return exit_code
+
+    # Route to appropriate publishing method
     if channel == "dashboard":
-        ok = publish_dashboard()
+        ok = _publish_to_dashboard(json_out, md_path)
         print(f"✅ Dashboard update: {'ok' if ok else 'partial'} — {json_out}")
         return 0 if ok else 2
     else:
         if not md_path or not md_path.exists():
             print("⚠️  Markdown output is required for PR/issue comment. Re-run with --markdown.")
             return 2
-        posted = post_pr(md_path) if channel == "pr" else post_issue(md_path)
+
+        posted = _post_pr_comment(md_path, pr_number, repo) if channel == "pr" else _post_issue_comment(md_path, issue_number, repo)
+
         try:
             emit("soak_verification_posted", {
                 "json": str(json_out),
@@ -439,6 +525,7 @@ def _verify_soak(report: Optional[str], channel: str, markdown: bool, pr_number:
             })
         except Exception:
             pass
+
         if not posted:
             print("⚠️  Failed to post comment. See guidance above for creds or gh CLI.")
             return 3

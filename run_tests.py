@@ -15,11 +15,12 @@ import argparse
 import json
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Dict, Any, Optional
+from typing import Dict, Optional
+from shared.type_definitions.json import JSONValue
 from types import FrameType
 
 
-def _record_timing(duration_s: float, test_mode: str, specific: Optional[str], exit_code: int, extra: Optional[Dict[str, Any]] = None) -> None:
+def _record_timing(duration_s: float, test_mode: str, specific: Optional[str], exit_code: int, extra: Optional[Dict[str, JSONValue]] = None) -> None:
     try:
         root = Path(__file__).resolve().parent
         out_dir = root / "logs" / "benchmarks"
