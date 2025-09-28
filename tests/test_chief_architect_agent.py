@@ -22,6 +22,21 @@ from chief_architect_agent import create_chief_architect_agent
 from shared.agent_context import create_agent_context
 from agency_swarm import Agent
 
+try:
+    from agents.model_settings import ModelSettings
+    from openai.types.shared.reasoning import Reasoning
+except ImportError:
+    # If direct import fails, create mock classes for testing
+    class ModelSettings:
+        def __init__(self, **kwargs):
+            for key, value in kwargs.items():
+                setattr(self, key, value)
+
+    class Reasoning:
+        def __init__(self, **kwargs):
+            for key, value in kwargs.items():
+                setattr(self, key, value)
+
 
 @pytest.fixture
 def mock_agent_context():
@@ -106,7 +121,7 @@ class TestChiefArchitectAgentInitialization:
 
     def test_agent_creation_with_defaults(self):
         """Test agent creation with default parameters."""
-        with patch('agency_swarm.Agent', return_value='gpt-5') as mock_agent_class, \
+        with patch('chief_architect_agent.chief_architect_agent.Agent') as mock_agent_class, \
              patch('chief_architect_agent.chief_architect_agent.create_agent_context', return_value='gpt-5') as mock_create_context, \
              patch('chief_architect_agent.chief_architect_agent.get_model_instance', return_value='gpt-5') as mock_model, \
              patch('chief_architect_agent.chief_architect_agent.create_model_settings') as mock_settings, \
@@ -120,7 +135,11 @@ class TestChiefArchitectAgentInitialization:
             mock_agent = Mock()
             mock_agent_class.return_value = mock_agent
             mock_model.return_value = "gpt-5"
-            mock_settings.return_value = {"temperature": 0.1}
+            mock_settings.return_value = ModelSettings(
+                temperature=0.1,
+                max_tokens=32000,
+                reasoning=Reasoning(effort="medium", summary="auto")
+            )
 
             agent = create_chief_architect_agent()
 
@@ -144,7 +163,11 @@ class TestChiefArchitectAgentInitialization:
             mock_agent = Mock()
             mock_agent_class.return_value = mock_agent
             mock_model.return_value = "claude-3-sonnet"
-            mock_settings.return_value = {"temperature": 0.3}
+            mock_settings.return_value = ModelSettings(
+                temperature=0.3,
+                max_tokens=32000,
+                reasoning=Reasoning(effort="medium", summary="auto")
+            )
 
             agent = create_chief_architect_agent(
                 model="claude-3-sonnet",
@@ -571,7 +594,11 @@ class TestChiefArchitectAgentToolIntegration:
             mock_agent = Mock()
             mock_agent_class.return_value = mock_agent
             mock_model.return_value = "gpt-5"
-            mock_settings.return_value = {"temperature": 0.1}
+            mock_settings.return_value = ModelSettings(
+                temperature=0.1,
+                max_tokens=32000,
+                reasoning=Reasoning(effort="high", summary="auto")
+            )
 
             create_chief_architect_agent(
                 model="gpt-5",
