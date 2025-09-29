@@ -5,7 +5,7 @@ Pull Request #20 (Type Safety Sweep) is blocked with 9 failing tests. The missio
 
 ## Current Status
 - Branch: `feat/type-safety-final-sweep`
-- PR: https://github.com/subtract0/Agency/pull/20
+- PR: https://github.com/subtract0/AgencyOS/pull/20
 - Blockers: 9 failing tests + missing type safety test suite
 - Root cause: New Pydantic models in shared/models/ and isinstance() type guards lack tests
 

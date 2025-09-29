@@ -136,8 +136,8 @@ This release represents the Agency OS's ability to self-heal and maintain qualit
 ## 📦 Installation
 
 ```bash
-git clone https://github.com/subtract0/Agency.git
-cd Agency
+git clone https://github.com/subtract0/AgencyOS.git
+cd AgencyOS
 git checkout v0.9.3
 ./agency setup
 ```
