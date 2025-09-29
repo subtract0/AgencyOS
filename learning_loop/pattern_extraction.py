@@ -21,8 +21,7 @@ from shared.type_definitions.json import JSONValue
 from dataclasses import dataclass, asdict
 from pathlib import Path
 
-from pattern_intelligence import PatternStore
-from core.patterns import Pattern as ExistingPattern
+from pattern_intelligence import PatternStore, CodingPattern
 from core.telemetry import get_telemetry, emit
 
 
@@ -252,35 +251,67 @@ class EnhancedPattern:
     postconditions: List[Condition]
     metadata: PatternMetadata
 
-    def to_existing_pattern(self) -> ExistingPattern:
-        """Convert to existing PatternStore Pattern format."""
+    def to_coding_pattern(self) -> CodingPattern:
+        """Convert to CodingPattern format."""
+        from pattern_intelligence.coding_pattern import ProblemContext, SolutionApproach, EffectivenessMetric, PatternMetadata as CPMetadata
 
         # Get pattern representation based on trigger type
         trigger_pattern = self._get_trigger_pattern()
 
-        # Build context dictionary
-        context = {
-            "trigger": self.trigger.to_dict(),
-            "trigger_pattern": trigger_pattern,
-            "preconditions": [self._condition_to_string(pc) for pc in self.preconditions],
-            "postconditions": [self._condition_to_string(pc) for pc in self.postconditions]
-        }
+        # Build ProblemContext
+        context = ProblemContext(
+            description=trigger_pattern,
+            domain=self.trigger.type,
+            constraints=[self._condition_to_string(pc) for pc in self.preconditions],
+            symptoms=[],
+            scale=None,
+            urgency="medium"
+        )
 
-        # Build solution as JSON serialized actions (as expected by tests)
+        # Build SolutionApproach
         import json
-        solution = json.dumps([action.to_dict() for action in self.actions])
+        # Extract tools from actions
+        tools_list = [action.tool for action in self.actions if hasattr(action, 'tool') and action.tool]
+        solution = SolutionApproach(
+            approach=f"Enhanced pattern for {self.trigger.type}",
+            implementation=json.dumps([action.to_dict() for action in self.actions]),
+            tools=tools_list if tools_list else ["generic"],  # Ensure at least one tool
+            reasoning="Enhanced pattern extracted from learning loop",
+            code_examples=[],
+            dependencies=[],
+            alternatives=[]
+        )
 
-        # Create and return Pattern
-        return ExistingPattern(
-            id=self.id,
-            pattern_type=self.trigger.type,
+        # Build EffectivenessMetric
+        outcome = EffectivenessMetric(
+            success_rate=self.metadata.confidence,
+            performance_impact=None,
+            maintainability_impact=None,
+            user_impact=None,
+            technical_debt=None,
+            adoption_rate=self.metadata.usage_count,
+            longevity=None,
+            confidence=self.metadata.confidence
+        )
+
+        # Build PatternMetadata
+        metadata = CPMetadata(
+            pattern_id=self.id,
+            discovered_timestamp=self.metadata.created_at.isoformat(),
+            source="learning_loop:pattern_extraction",
+            discoverer="PatternExtractor",
+            last_applied=self.metadata.last_used.isoformat() if self.metadata.last_used else None,
+            application_count=self.metadata.usage_count,
+            validation_status="validated",
+            tags=self.metadata.tags,
+            related_patterns=[]
+        )
+
+        return CodingPattern(
             context=context,
             solution=solution,
-            success_rate=self.metadata.confidence,
-            usage_count=self.metadata.usage_count,
-            created_at=self.metadata.created_at.isoformat(),
-            last_used=self.metadata.last_used.isoformat() if self.metadata.last_used else self.metadata.created_at.isoformat(),
-            tags=self.metadata.tags
+            outcome=outcome,
+            metadata=metadata
         )
 
     def _get_trigger_pattern(self) -> str:
@@ -299,78 +330,60 @@ class EnhancedPattern:
         return f"{condition.type}: {condition.target} {condition.operator} {condition.value}"
 
     @classmethod
-    def from_existing_pattern(cls, pattern: ExistingPattern) -> "EnhancedPattern":
-        """Create from existing PatternStore Pattern format."""
-        context = pattern.context
-
-        # Reconstruct trigger
-        trigger_data = _safe_get_dict(context, "trigger")
-        trigger_type = _safe_get_str(trigger_data, "type")
-
-        trigger: Trigger
-        if trigger_type == "error":
-            trigger_metadata = _safe_get_dict(trigger_data, "metadata")
+    def from_coding_pattern(cls, pattern: CodingPattern) -> "EnhancedPattern":
+        """Create from CodingPattern format."""
+        # Simple conversion - create basic trigger from domain
+        if pattern.context.domain == "error":
             trigger = ErrorTrigger(
-                error_type=_safe_get_str(trigger_metadata, "error_type"),
-                error_pattern=_safe_get_str(trigger_metadata, "error_pattern")
+                error_type=pattern.context.description,
+                error_pattern=pattern.context.description
             )
         else:
-            trigger_metadata = _safe_get_dict(trigger_data, "metadata")
-            keywords = _safe_get_list(trigger_metadata, "keywords")
-            trigger = TaskTrigger(keywords=keywords)
+            trigger = TaskTrigger(keywords=[pattern.context.domain])
 
-        # Reconstruct conditions
-        preconditions_data = context.get("preconditions", [])
+        # Convert constraints to preconditions
         preconditions = []
-        if isinstance(preconditions_data, list):
-            for pc_data in preconditions_data:
-                if isinstance(pc_data, dict):
-                    preconditions.append(Condition(
-                        type=_safe_get_str(pc_data, "type"),
-                        target=_safe_get_str(pc_data, "target"),
-                        value=pc_data.get("value"),
-                        operator=_safe_get_str(pc_data, "operator", "equals")
-                    ))
+        for constraint in pattern.context.constraints:
+            preconditions.append(Condition(
+                type="constraint",
+                target="system",
+                value=constraint,
+                operator="equals"
+            ))
 
-        postconditions_data = context.get("postconditions", [])
+        # Convert postconditions (empty for now)
         postconditions = []
-        if isinstance(postconditions_data, list):
-            for pc_data in postconditions_data:
-                if isinstance(pc_data, dict):
-                    postconditions.append(Condition(
-                        type=_safe_get_str(pc_data, "type"),
-                        target=_safe_get_str(pc_data, "target"),
-                        value=pc_data.get("value"),
-                        operator=_safe_get_str(pc_data, "operator", "equals")
-                    ))
 
-        # Reconstruct actions
+        # Reconstruct actions from implementation
         try:
-            actions_data = json.loads(pattern.solution)
+            actions_data = json.loads(pattern.solution.implementation)
             actions = []
             if isinstance(actions_data, list):
                 for action_data in actions_data:
                     if isinstance(action_data, dict):
                         actions.append(Action.from_dict(action_data))
         except (json.JSONDecodeError, TypeError):
-            # Fallback for legacy patterns
-            actions = []
+            # Fallback - create a simple action
+            actions = [Action(
+                type="implementation",
+                parameters={"approach": pattern.solution.approach},
+                description=pattern.solution.reasoning
+            )]
 
         # Reconstruct metadata
-        tags = pattern.tags if isinstance(pattern.tags, list) else []
         pattern_metadata = PatternMetadata(
-            confidence=pattern.success_rate,
-            usage_count=pattern.usage_count,
-            success_count=int(pattern.success_rate * pattern.usage_count),
-            failure_count=pattern.usage_count - int(pattern.success_rate * pattern.usage_count),
-            last_used=datetime.fromisoformat(pattern.last_used),
-            created_at=datetime.fromisoformat(pattern.created_at),
-            source="learned",
-            tags=[str(tag) for tag in tags if tag is not None]
+            confidence=pattern.outcome.confidence or pattern.outcome.success_rate,
+            usage_count=pattern.outcome.adoption_rate or 0,
+            success_count=int((pattern.outcome.confidence or pattern.outcome.success_rate) * (pattern.outcome.adoption_rate or 0)),
+            failure_count=(pattern.outcome.adoption_rate or 0) - int((pattern.outcome.confidence or pattern.outcome.success_rate) * (pattern.outcome.adoption_rate or 0)),
+            last_used=datetime.fromisoformat(pattern.metadata.last_applied) if pattern.metadata.last_applied else datetime.fromisoformat(pattern.metadata.discovered_timestamp),
+            created_at=datetime.fromisoformat(pattern.metadata.discovered_timestamp),
+            source="pattern_intelligence",
+            tags=pattern.metadata.tags
         )
 
         return cls(
-            id=pattern.id,
+            id=pattern.metadata.pattern_id,
             trigger=trigger,
             preconditions=preconditions,
             actions=actions,
@@ -410,7 +423,7 @@ class FailureReason:
     details: Dict[str, JSONValue]
 
 
-class TestFailureAnalysis(FailureReason):
+class FailureAnalysisWithTests(FailureReason):
     """Failure due to test failures."""
 
     def __init__(self, failed_tests: List[str], root_cause: str):
@@ -524,8 +537,8 @@ class PatternExtractor:
         )
 
         # Store in pattern store
-        existing_pattern = pattern.to_existing_pattern()
-        self.pattern_store.add(existing_pattern)
+        existing_pattern = pattern.to_coding_pattern()
+        self.pattern_store.store_pattern(existing_pattern)
 
         # Emit telemetry
         emit("pattern_extracted", {
@@ -813,24 +826,59 @@ class FailureLearner:
         )
 
         # Store as negative pattern in pattern store
-        negative_pattern = ExistingPattern(
-            id=antipattern_id,
-            pattern_type="anti_pattern",
-            context={
-                "trigger": trigger.to_dict(),
-                "failed_approach": [action.to_dict() for action in failed_approach],
-                "failure_reason": asdict(failure_reason),
-                "severity": severity
-            },
-            solution=json.dumps(alternatives),
-            success_rate=0.0,  # Anti-patterns have 0 success rate
-            usage_count=0,
-            created_at=datetime.now().isoformat(),
-            last_used=datetime.now().isoformat(),
-            tags=self._generate_failure_tags(operation, failure_reason)
+        from pattern_intelligence.coding_pattern import ProblemContext, SolutionApproach, EffectivenessMetric, PatternMetadata as CPMetadata
+
+        # Build anti-pattern as CodingPattern
+        context = ProblemContext(
+            description=f"Anti-pattern: {failure_reason.type}",
+            domain="anti_pattern",
+            constraints=[],
+            symptoms=[str(failure_reason.details)],
+            scale=None,
+            urgency=severity
         )
 
-        self.pattern_store.add(negative_pattern)
+        solution = SolutionApproach(
+            approach="Avoid this pattern",
+            implementation=json.dumps(alternatives),
+            tools=[],
+            reasoning=f"Failed approach leads to: {failure_reason.details}",
+            code_examples=[],
+            dependencies=[],
+            alternatives=alternatives
+        )
+
+        outcome = EffectivenessMetric(
+            success_rate=0.0,  # Anti-patterns have 0 success rate
+            performance_impact="negative",
+            maintainability_impact="negative",
+            user_impact="negative",
+            technical_debt="high",
+            adoption_rate=0,
+            longevity=None,
+            confidence=1.0  # High confidence it's bad
+        )
+
+        metadata = CPMetadata(
+            pattern_id=antipattern_id,
+            discovered_timestamp=datetime.now().isoformat(),
+            source="learning_loop:anti_pattern",
+            discoverer="FailureLearner",
+            last_applied=None,
+            application_count=0,
+            validation_status="validated",
+            tags=self._generate_failure_tags(operation, failure_reason),
+            related_patterns=[]
+        )
+
+        negative_pattern = CodingPattern(
+            context=context,
+            solution=solution,
+            outcome=outcome,
+            metadata=metadata
+        )
+
+        self.pattern_store.store_pattern(negative_pattern)
 
         # Emit telemetry
         emit("antipattern_learned", {
@@ -873,7 +921,7 @@ class FailureLearner:
             failed_tests = _safe_get_list(test_results, "failures")
             root_cause = self._analyze_test_failures(test_results)
 
-            return TestFailureAnalysis(
+            return FailureAnalysisWithTests(
                 failed_tests=failed_tests,
                 root_cause=root_cause
             )

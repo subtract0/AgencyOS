@@ -161,6 +161,7 @@ def main(test_mode: str = "unit", fast_only: bool = False, timed: bool = False) 
         "--durations=10",  # Show 10 slowest tests
         # "-x",  # Stop on first failure - commented out to run all tests
         "--color=yes",  # Colored output
+        "-n", "auto",  # Parallel execution with pytest-xdist
     ]
 
     # Add marker selection based on test mode

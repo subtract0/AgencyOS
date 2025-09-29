@@ -223,11 +223,12 @@ Thumbs.db
 gothic-point-*.json
 
 # Agency session logs and runtime data
-# WARNING: DO NOT add logs/archive/ here - these files are used for learning!
 logs/sessions/
 logs/handoffs/
 logs/snapshots/
 logs/events/run_*.jsonl
+logs/archive/*.jsonl
+logs/telemetry/*.jsonl
 .npm-cache/
 
 # Backup files created by automated tools

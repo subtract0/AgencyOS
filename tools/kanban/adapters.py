@@ -23,7 +23,9 @@ except Exception:  # pragma: no cover
 
 # Pattern store (optional)
 try:
-    from core.patterns import get_pattern_store
+    from pattern_intelligence import PatternStore
+    def get_pattern_store():
+        return PatternStore()
 except Exception:  # pragma: no cover
     get_pattern_store = None  # type: ignore
 
@@ -163,30 +165,34 @@ def _patterns_to_cards() -> List[Card]:
         if get_pattern_store is None:
             return cards
         store = get_pattern_store()
-        patterns = list(store.patterns.values())  # type: ignore[attr-defined]
+        patterns = store.get_top_patterns(limit=50)  # Get up to 50 patterns
         for p in patterns:
-            created = p.created_at if isinstance(p.created_at, str) else _iso_now()
-            title = f"Pattern: {p.id}"
+            created = p.metadata.discovered_timestamp
+            title = f"Pattern: {p.metadata.pattern_id}"
             try:
-                ctx = p.context if isinstance(p.context, dict) else {}
+                ctx = {
+                    "description": p.context.description,
+                    "domain": p.context.domain,
+                    "approach": p.solution.approach
+                }
                 summary = _shorten(json.dumps(_redact(ctx)))
             except (TypeError, ValueError) as e:
                 import logging
                 logger = logging.getLogger(__name__)
-                logger.warning(f"Failed to serialize pattern context for {p.id}: {e}")
+                logger.warning(f"Failed to serialize pattern context for {p.metadata.pattern_id}: {e}")
                 summary = "Learned pattern"
-            cid = _stable_id("pattern", p.id, created)
+            cid = _stable_id("pattern", p.metadata.pattern_id, created)
             cards.append(
                 Card(
                     id=cid,
                     type="pattern",
                     title=title,
                     summary=summary,
-                    source_ref=p.id,
+                    source_ref=p.metadata.pattern_id,
                     status="Learned",
                     created_at=created,
                     links=[],
-                    tags=p.tags if isinstance(p.tags, list) else ["pattern"],
+                    tags=p.metadata.tags if isinstance(p.metadata.tags, list) else ["pattern"],
                 )
             )
     except (AttributeError, TypeError) as e:

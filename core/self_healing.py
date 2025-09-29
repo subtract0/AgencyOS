@@ -2,6 +2,12 @@
 Unified self-healing core module.
 Consolidates detection, fixing, and verification into three essential methods.
 Feature-flagged for gradual migration from 62+ scattered files.
+
+SAFETY FEATURES:
+- Defaults to dry-run mode (no actual fixes or commits)
+- Requires explicit SELF_HEALING_AUTO_COMMIT=true environment variable for git commits
+- All operations are logged for audit trail
+- Production use requires setting dry_run=False explicitly
 """
 
 import os
@@ -36,9 +42,14 @@ class SelfHealingCore:
     Start with NoneType errors, pluggable for other error types.
     """
 
-    def __init__(self):
-        """Initialize with feature flag check and unified systems."""
+    def __init__(self, dry_run=True):
+        """Initialize with feature flag check and unified systems.
+
+        Args:
+            dry_run: If True, no actual fixes or commits are made (default: True for safety)
+        """
         self.enabled = os.getenv("ENABLE_UNIFIED_CORE", "true").lower() == "true"
+        self.dry_run = dry_run  # Safety: default to dry-run mode
 
         # Use unified telemetry if available
         try:
@@ -49,8 +60,8 @@ class SelfHealingCore:
 
         # Use unified pattern store if available
         try:
-            from core.patterns import get_pattern_store
-            self.pattern_store = get_pattern_store()
+            from pattern_intelligence import PatternStore
+            self.pattern_store = PatternStore()
         except ImportError:
             self.pattern_store = None
 
@@ -67,11 +78,36 @@ class SelfHealingCore:
         """
         findings: List[Finding] = []
 
-        # Read content from path if it's a file
+        # Validate and sanitize file path
         if os.path.isfile(path):
+            # Input validation for file paths
+            # Normalize and validate the path
+            normalized_path = os.path.normpath(path)
+            abs_path = os.path.abspath(normalized_path)
+
+            # Security check: ensure path doesn't escape working directory or access sensitive areas
+            cwd = os.getcwd()
+            if not abs_path.startswith(cwd) and not abs_path.startswith('/tmp') and not abs_path.startswith('/var/log'):
+                self._emit_event("security_validation_failed", {
+                    "path": path,
+                    "reason": "Path outside allowed directories"
+                })
+                return findings
+
+            # Check for path traversal attempts
+            if '..' in normalized_path or normalized_path.startswith('~'):
+                self._emit_event("security_validation_failed", {
+                    "path": path,
+                    "reason": "Path traversal attempt detected"
+                })
+                return findings
+
             try:
-                with open(path, 'r') as f:
+                with open(abs_path, 'r', encoding='utf-8') as f:
                     content = f.read()
+            except UnicodeDecodeError:
+                self._emit_event("error_detection_failed", {"path": path, "error": "File is not UTF-8 encoded"})
+                return findings
             except Exception as e:
                 self._emit_event("error_detection_failed", {"path": path, "error": str(e)})
                 return findings
@@ -143,6 +179,14 @@ class SelfHealingCore:
             self._emit_event("fix_failed", {"reason": "cannot_generate_fix"})
             return False
 
+        # Safety check: dry-run mode
+        if self.dry_run:
+            self._emit_event("fix_skipped_dry_run", {
+                "file": error.file,
+                "message": "Dry-run mode enabled, fix not applied"
+            })
+            return True  # Pretend success in dry-run
+
         # Apply the fix
         try:
             with open(error.file, 'w') as f:
@@ -167,12 +211,58 @@ class SelfHealingCore:
 
         # Learn from successful fix
         if self.pattern_store and test_passed:
-            pattern_id = self.pattern_store.learn_from_fix(
-                error_type=error.error_type,
-                original_code=original_content[:1000],  # Limit size
-                fixed_code=fixed_content[:1000],
-                test_passed=True
+            from pattern_intelligence.coding_pattern import (
+                CodingPattern, ProblemContext, SolutionApproach,
+                EffectivenessMetric, PatternMetadata
             )
+            from datetime import datetime
+
+            # Create a CodingPattern from the fix
+            context = ProblemContext(
+                description=f"Fix for {error.error_type}",
+                domain="error_fixing",
+                constraints=[],
+                symptoms=[error.snippet[:200]],
+                scale=None,
+                urgency="medium"
+            )
+
+            solution = SolutionApproach(
+                approach=f"Self-healing fix for {error.error_type}",
+                implementation=fixed_content[:1000],
+                tools=["self_healing"],
+                reasoning="Automated fix applied and tested successfully",
+                code_examples=[original_content[:500], fixed_content[:500]],
+                dependencies=[],
+                alternatives=[]
+            )
+
+            outcome = EffectivenessMetric(
+                success_rate=1.0,
+                performance_impact=None,
+                maintainability_impact="Improved error handling",
+                user_impact=None,
+                technical_debt=None,
+                adoption_rate=1,
+                longevity=None,
+                confidence=0.9
+            )
+
+            pattern_id = f"self_heal_{error.error_type}_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
+            metadata = PatternMetadata(
+                pattern_id=pattern_id,
+                discovered_timestamp=datetime.now().isoformat(),
+                source="self_healing:core",
+                discoverer="SelfHealingCore",
+                last_applied=datetime.now().isoformat(),
+                application_count=1,
+                validation_status="validated",
+                tags=["self_healing", error.error_type, "automated"],
+                related_patterns=[]
+            )
+
+            pattern = CodingPattern(context, solution, outcome, metadata)
+            self.pattern_store.store_pattern(pattern)
             self._emit_event("pattern_learned", {"pattern_id": pattern_id})
 
         # Commit the successful fix
@@ -256,8 +346,24 @@ class SelfHealingCore:
 
     def _commit_fix(self, error: Finding):
         """
-        Commit successful fix (simplified from existing implementation).
+        Commit successful fix with safety checks.
         """
+        # Safety check: dry-run mode
+        if self.dry_run:
+            self._emit_event("commit_skipped_dry_run", {
+                "file": error.file,
+                "message": "Dry-run mode enabled, commit skipped for safety"
+            })
+            return
+
+        # Safety check: require explicit environment variable
+        if os.getenv("SELF_HEALING_AUTO_COMMIT", "false").lower() != "true":
+            self._emit_event("commit_skipped_no_permission", {
+                "file": error.file,
+                "message": "Auto-commit disabled. Set SELF_HEALING_AUTO_COMMIT=true to enable"
+            })
+            return
+
         try:
             # Stage the file
             subprocess.run(["git", "add", error.file], check=True)

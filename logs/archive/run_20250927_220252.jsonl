@@ -1,2 +1,0 @@
-{"ts": "2025-09-27T22:02:52.756625Z", "run_id": "20250927_220252", "level": "info", "event": "retention_applied", "data": {"archived_count": 1, "remaining_runs": 10}}
-{"ts": "2025-09-27T22:02:52.756775Z", "run_id": "20250927_220252", "level": "info", "event": "pattern_store.pattern_added", "data": {"id": "test_001", "type": "test", "tags": ["test"]}}

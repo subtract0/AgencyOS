@@ -101,8 +101,8 @@ class HealingPattern(BaseModel):
         Returns:
             CodingPattern: The converted pattern in the new format.
         """
-        from pattern_intelligence.migration import healing_pattern_to_coding_pattern
-        return healing_pattern_to_coding_pattern(self)
+        # Migration functionality removed - use pattern_intelligence.CodingPattern directly
+        raise NotImplementedError("Migration functionality removed - use pattern_intelligence.CodingPattern directly")
 
     @classmethod
     def from_coding_pattern(cls, coding_pattern):
