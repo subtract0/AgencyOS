@@ -1,0 +1,27 @@
+# DSPy Framework Requirements
+# For migrating AgencyOS from static markdown to dynamic DSPy
+
+# Core DSPy framework
+dspy-ai>=2.4.0
+
+# Vector embeddings and similarity search
+sentence-transformers>=2.2.0
+faiss-cpu>=1.7.0
+
+# Hyperparameter optimization
+optuna>=3.0.0
+
+# Experiment tracking and model management
+mlflow>=2.0.0
+
+# Additional utilities for DSPy
+numpy>=1.24.0
+pandas>=2.0.0
+scikit-learn>=1.3.0
+
+# For async operations
+asyncio>=3.4.3
+
+# Rich logging and progress bars
+rich>=13.0.0
+tqdm>=4.65.0
