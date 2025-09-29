@@ -14,7 +14,7 @@ os.environ["PERSIST_PATTERNS"] = "true"  # Enable pattern persistence
 
 from core.self_healing import SelfHealingCore, Finding
 from core.telemetry import get_telemetry, emit
-from core.patterns import get_pattern_store, Pattern
+from pattern_intelligence import PatternStore, CodingPattern
 
 
 def demo_unified_architecture():
@@ -25,12 +25,12 @@ def demo_unified_architecture():
     # Initialize unified components
     healer = SelfHealingCore()
     telemetry = get_telemetry()
-    patterns = get_pattern_store()
+    patterns = PatternStore()
 
     print("✅ Unified Components Initialized:")
     print(f"   • Self-Healing Core: {healer.enabled}")
     print(f"   • SimpleTelemetry: Active with {telemetry.retention_runs} run retention")
-    print(f"   • UnifiedPatternStore: {'Persistent' if patterns.persist else 'In-memory'}")
+    print(f"   • PatternStore: VectorStore-backed pattern intelligence")
 
     # Demonstrate telemetry
     print("\n📊 TELEMETRY DEMONSTRATION")
@@ -53,34 +53,67 @@ def demo_unified_architecture():
     print("-" * 40)
 
     # Create a sample pattern
-    sample_pattern = Pattern(
-        id="demo_pattern_001",
-        pattern_type="error_fix",
-        context={
-            "error": "NoneType",
-            "location": "demo_file.py:42",
-            "transformation": "add_null_check"
-        },
-        solution="if obj is not None:\n    obj.method()",
-        success_rate=0.95,
-        usage_count=10,
-        created_at=datetime.now().isoformat(),
-        last_used=datetime.now().isoformat(),
-        tags=["NoneType", "null_check", "demo"]
+    from pattern_intelligence.coding_pattern import (
+        ProblemContext, SolutionApproach, EffectivenessMetric, PatternMetadata
     )
 
-    patterns.add(sample_pattern)
-    print(f"✅ Pattern added: {sample_pattern.id}")
+    context = ProblemContext(
+        description="NoneType error fix demonstration",
+        domain="error_fix",
+        constraints=[],
+        symptoms=["NoneType error in demo_file.py:42"],
+        scale=None,
+        urgency="medium"
+    )
+
+    solution = SolutionApproach(
+        approach="Add null check before object access",
+        implementation="if obj is not None:\n    obj.method()",
+        tools=["manual_coding"],
+        reasoning="Prevent NoneType errors by checking for None before access",
+        code_examples=["if obj is not None:\n    obj.method()"],
+        dependencies=[],
+        alternatives=["use getattr with default", "try/except block"]
+    )
+
+    outcome = EffectivenessMetric(
+        success_rate=0.95,
+        performance_impact="minimal",
+        maintainability_impact="improved",
+        user_impact="positive",
+        technical_debt="reduced",
+        adoption_rate=10,
+        longevity="high",
+        confidence=0.9
+    )
+
+    metadata = PatternMetadata(
+        pattern_id="demo_pattern_001",
+        discovered_timestamp=datetime.now().isoformat(),
+        source="demo:unified_architecture",
+        discoverer="demo_script",
+        last_applied=datetime.now().isoformat(),
+        application_count=10,
+        validation_status="validated",
+        tags=["NoneType", "null_check", "demo"],
+        related_patterns=[]
+    )
+
+    sample_pattern = CodingPattern(context, solution, outcome, metadata)
+    patterns.store_pattern(sample_pattern)
+    print(f"✅ Pattern added: {sample_pattern.metadata.pattern_id}")
 
     # Find patterns
-    found = patterns.find(pattern_type="error_fix")
+    found = patterns.find_patterns(query="error_fix", max_results=10)
     print(f"Found {len(found)} error_fix patterns")
 
     # Get statistics
-    stats = patterns.get_statistics()
+    top_patterns = patterns.get_top_patterns(limit=10)
     print(f"Pattern Statistics:")
-    print(f"   • Total Patterns: {stats['total_patterns']}")
-    print(f"   • Average Success Rate: {stats['average_success_rate']:.2%}")
+    print(f"   • Total Top Patterns: {len(top_patterns)}")
+    if top_patterns:
+        avg_effectiveness = sum(p.outcome.effectiveness_score() for p in top_patterns) / len(top_patterns)
+        print(f"   • Average Effectiveness Score: {avg_effectiveness:.2f}")
 
 
 def demo_error_detection_and_fix():

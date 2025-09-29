@@ -93,9 +93,6 @@ from planner_agent.planner_agent import (  # noqa: E402 - must import after warn
     create_planner_agent,
 )
 from shared.agent_context import create_agent_context  # noqa: E402 - must import after warning suppression
-from subagent_example.subagent_example import (  # noqa: E402 - must import after warning suppression
-    create_subagent_example,
-)
 from test_generator_agent import create_test_generator_agent  # noqa: E402 - must import after warning suppression
 from learning_agent import create_learning_agent  # noqa: E402 - must import after warning suppression
 from chief_architect_agent import create_chief_architect_agent  # noqa: E402 - must import after warning suppression
@@ -163,9 +160,6 @@ auditor = create_auditor_agent(
 )
 test_generator = create_test_generator_agent(
     model=agent_model("test_generator"), reasoning_effort="medium", agent_context=shared_context
-)
-subagent_example = create_subagent_example(
-    model=agent_model("subagent_example"), reasoning_effort="medium"
 )
 learning_agent = create_learning_agent(
     model=agent_model("learning"), reasoning_effort="high", agent_context=shared_context
@@ -356,14 +350,11 @@ def _cmd_logs(args: argparse.Namespace) -> None:
 def _cmd_demo(args: argparse.Namespace) -> None:
     import runpy
     with _cli_event_scope("demo", {}):
-        # Use unified demo if available, fallback to archived version
+        # Use the canonical unified demo
         demo_unified = os.path.join(current_dir, "demo_unified.py")
-        demo_archived = os.path.join(current_dir, "demos/archive/demo_autonomous_healing.py")
 
         if os.path.exists(demo_unified):
             runpy.run_path(demo_unified, run_name="__main__")
-        elif os.path.exists(demo_archived):
-            runpy.run_path(demo_archived, run_name="__main__")
         else:
             print("❌ Demo file not found. Please run from the Agency directory.")
 

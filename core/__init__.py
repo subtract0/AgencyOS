@@ -4,7 +4,7 @@ Simplifies imports and provides a clean API for autonomous agents.
 """
 
 import os
-from typing import Optional, List, Union
+from typing import Optional, List, Union, Dict
 from shared.type_definitions.json import JSONValue
 
 # Feature flags
@@ -14,7 +14,7 @@ PERSIST_PATTERNS = os.getenv("PERSIST_PATTERNS", "false").lower() == "true"
 # Core imports
 from .self_healing import SelfHealingCore, Finding, Patch
 from .telemetry import SimpleTelemetry, get_telemetry, emit
-from .patterns import UnifiedPatternStore, Pattern, get_pattern_store
+from pattern_intelligence import PatternStore, CodingPattern
 from shared.models.core import (
     ErrorDetectionResult, HealthStatus,
     HealingAttempt, ToolCall, TelemetryEvent
@@ -31,7 +31,7 @@ except ImportError:
 # Singleton instances
 _healing_core: Optional[SelfHealingCore] = None
 _telemetry: Optional[SimpleTelemetry] = None
-_pattern_store: Optional[UnifiedPatternStore] = None
+_pattern_store: Optional[PatternStore] = None
 _learning_loop: Optional['LearningLoop'] = None
 
 
@@ -48,9 +48,12 @@ def get_unified_telemetry() -> SimpleTelemetry:
     return get_telemetry()
 
 
-def get_unified_patterns() -> UnifiedPatternStore:
+def get_unified_patterns() -> PatternStore:
     """Get the global pattern store instance."""
-    return get_pattern_store()
+    global _pattern_store
+    if _pattern_store is None:
+        _pattern_store = PatternStore()
+    return _pattern_store
 
 
 def get_learning_loop() -> Optional['LearningLoop']:
@@ -81,6 +84,8 @@ class UnifiedCore:
         self.telemetry = get_unified_telemetry()
         self.patterns = get_unified_patterns()
         self.learning_loop = get_learning_loop() if ENABLE_UNIFIED_CORE else None
+        # Backward compatibility attributes
+        self.pattern_store = get_unified_patterns() if PERSIST_PATTERNS else None
 
     def detect_and_fix_errors(self, path: str) -> ErrorDetectionResult:
         """
@@ -121,11 +126,8 @@ class UnifiedCore:
                 )
 
                 # Learn from successful fix
-                if self.patterns:
-                    self.patterns.update_success_rate(
-                        pattern_id=f"{finding.error_type}_auto",
-                        success=True
-                    )
+                # Note: PatternStore doesn't have update_success_rate method
+                # Learning happens in self_healing.py directly now
             else:
                 results.success = False
                 results.details.append(
@@ -137,6 +139,50 @@ class UnifiedCore:
 
         return results
 
+    def detect_errors(self, path: str) -> List[Finding]:
+        """
+        Detect errors in file or log content (backward compatibility).
+
+        Args:
+            path: File path or log content to analyze
+
+        Returns:
+            List of Finding objects with detected errors
+        """
+        if self.healing:
+            return self.healing.detect_errors(path)
+        return []
+
+    def fix_errors(self, errors: List[Finding]) -> List[Patch]:
+        """
+        Generate fixes for detected errors (backward compatibility).
+
+        Args:
+            errors: List of Finding objects to fix
+
+        Returns:
+            List of Patch objects with fixes
+        """
+        if self.healing:
+            patches = []
+            for error in errors:
+                patch = self.healing.generate_fix(error)
+                if patch:
+                    patches.append(patch)
+            return patches
+        return []
+
+    def verify_fix(self) -> bool:
+        """
+        Verify that fixes work correctly (backward compatibility).
+
+        Returns:
+            True if tests pass after fixes
+        """
+        if self.healing:
+            return self.healing.verify()
+        return True
+
     def get_health_status(self) -> HealthStatus:
         """
         Get overall system health status.
@@ -145,7 +191,11 @@ class UnifiedCore:
             Dictionary with health metrics and status
         """
         metrics = self.telemetry.get_metrics()
-        pattern_stats = self.patterns.get_statistics() if self.patterns else {}
+        # Get basic pattern stats from PatternStore
+        pattern_stats = {}
+        if self.patterns:
+            top_patterns = self.patterns.get_top_patterns(limit=10)
+            pattern_stats = {"total_patterns": len(top_patterns)}
 
         health_score = metrics.get("health_score", 100.0)
         return HealthStatus(
@@ -158,7 +208,7 @@ class UnifiedCore:
             warnings=metrics.get("recent_warnings", [])
         )
 
-    def emit_event(self, event: str, data: Optional[dict[str, JSONValue]] = None, level: str = "info"):
+    def emit_event(self, event: str, data: Optional[Dict[str, JSONValue]] = None, level: str = "info"):
         """
         Emit a telemetry event.
 
@@ -179,10 +229,74 @@ class UnifiedCore:
             fixed: Fixed code
             success: Whether the fix was successful
         """
-        if self.patterns:
-            self.patterns.learn_from_fix(error_type, original, fixed, success)
+        # Pattern learning has been migrated to the unified pattern intelligence system
+        # This method provides backward compatibility while delegating to the new system
 
-    def find_patterns(self, query: Optional[str] = None, pattern_type: Optional[str] = None) -> List[Pattern]:
+        if not self.pattern_store:
+            raise NotImplementedError(
+                "Pattern learning requires PatternStore initialization. "
+                "Migration: Use pattern_intelligence.pattern_store.PatternStore directly "
+                "or enable PERSIST_PATTERNS environment variable."
+            )
+
+        # Create a CodingPattern from the error fix
+        from pattern_intelligence.coding_pattern import (
+            ProblemContext, SolutionApproach, EffectivenessMetric, PatternMetadata
+        )
+        from datetime import datetime
+        import uuid
+
+        pattern = CodingPattern(
+            context=ProblemContext(
+                description=f"Fix for {error_type} error",
+                domain="error_fix",
+                constraints=[],
+                symptoms=[error_type],
+                scale=None,
+                urgency="medium"
+            ),
+            solution=SolutionApproach(
+                approach=f"Replace problematic code with fixed version",
+                implementation=fixed,
+                tools=["Edit"],
+                reasoning=f"Automated fix for {error_type}",
+                code_examples=[{"before": original, "after": fixed}],
+                dependencies=[],
+                alternatives=[]
+            ),
+            outcome=EffectivenessMetric(
+                success_rate=1.0 if success else 0.0,
+                performance_impact=None,
+                maintainability_impact=None,
+                user_impact=None,
+                technical_debt=None,
+                adoption_rate=1,
+                longevity=None,
+                confidence=0.8 if success else 0.2
+            ),
+            metadata=PatternMetadata(
+                pattern_id=f"fix_{error_type}_{uuid.uuid4().hex[:8]}",
+                discovered_timestamp=datetime.now().isoformat(),
+                source="unified_core.learn_pattern",
+                discoverer="UnifiedCore",
+                last_applied=datetime.now().isoformat() if success else None,
+                application_count=1 if success else 0,
+                validation_status="validated" if success else "failed",
+                tags=["error_fix", error_type.lower()],
+                related_patterns=[]
+            )
+        )
+
+        # Store the pattern
+        self.pattern_store.store_pattern(pattern)
+
+        self.emit_event("pattern_learned", {
+            "pattern_id": pattern.metadata.pattern_id,
+            "error_type": error_type,
+            "success": success
+        })
+
+    def find_patterns(self, query: Optional[str] = None, pattern_type: Optional[str] = None) -> List[CodingPattern]:
         """
         Find patterns matching criteria.
 
@@ -194,7 +308,11 @@ class UnifiedCore:
             List of matching patterns
         """
         if self.patterns:
-            return self.patterns.find(query=query, pattern_type=pattern_type)
+            if query:
+                search_results = self.patterns.find_patterns(search_query=query, max_results=10)
+                return [result.pattern for result in search_results]
+            else:
+                return self.patterns.get_top_patterns(limit=10)
         return []
 
     def start_learning_loop(self):
@@ -243,12 +361,12 @@ class UnifiedCore:
                 "reason": "LearningLoop not available"
             }, level="warning")
 
-    def get_learning_metrics(self) -> dict[str, JSONValue]:
+    def get_learning_metrics(self) -> Dict[str, JSONValue]:
         """
         Get learning loop operational metrics.
 
         Returns:
-            dict[str, JSONValue]: learning loop metrics when available, otherwise {}
+            Dict[str, JSONValue]: learning loop metrics when available, otherwise {}
         """
         if self.learning_loop:
             # Preserve backward-compatible raw metrics dict expected by tests/consumers
@@ -260,7 +378,7 @@ class UnifiedCore:
                                   task_description: Optional[str] = None,
                                   tool_calls: Optional[List[ToolCall]] = None,
                                   initial_error: Optional[str] = None,
-                                  final_state: Optional[Union[str, dict[str, JSONValue]]] = None,
+                                  final_state: Optional[Union[str, Dict[str, JSONValue]]] = None,
                                   duration_seconds: float = 0.0):
         """
         Learn patterns from an operation result.
@@ -284,11 +402,11 @@ class UnifiedCore:
         from datetime import datetime
 
         # Convert types to match Operation model expectations
-        initial_error_dict: Optional[dict[str, JSONValue]] = None
+        initial_error_dict: Optional[Dict[str, JSONValue]] = None
         if initial_error is not None:
             initial_error_dict = {"error": initial_error}
 
-        tool_calls_dict: List[dict[str, JSONValue]] = []
+        tool_calls_dict: List[Dict[str, JSONValue]] = []
         if tool_calls:
             for tool_call in tool_calls:
                 # Convert ToolCall to Dict[str, JSONValue]
@@ -300,7 +418,7 @@ class UnifiedCore:
                         "args": getattr(tool_call, "args", {})
                     })
 
-        final_state_dict: dict[str, JSONValue] = {}
+        final_state_dict: Dict[str, JSONValue] = {}
         if isinstance(final_state, dict):
             final_state_dict = final_state
         elif isinstance(final_state, str):
@@ -347,12 +465,12 @@ __all__ = [
     # Core components
     "SelfHealingCore",
     "SimpleTelemetry",
-    "UnifiedPatternStore",
+    "PatternStore",
 
     # Data classes
     "Finding",
     "Patch",
-    "Pattern",
+    "CodingPattern",
 
     # Convenience functions
     "emit",

@@ -10,7 +10,7 @@ import os
 #
 # Agent keys supported:
 #   planner, chief_architect, coder, auditor, quality_enforcer,
-#   merger, learning, test_generator, summary, subagent_example, toolsmith
+#   merger, learning, test_generator, summary, toolsmith
 #
 # Note: Planner defaults to `o3` per user rule; others stick to gpt-5 except
 # where low-risk summaries use gpt-5-mini by default.
@@ -27,7 +27,6 @@ DEFAULTS: dict[str, str] = {
     "learning": os.getenv("LEARNING_MODEL", "gpt-5"),
     "test_generator": os.getenv("TEST_GENERATOR_MODEL", "gpt-5"),
     "summary": os.getenv("SUMMARY_MODEL", "gpt-5-mini"),  # Changed from non-existent "gpt-5-nano"
-    "subagent_example": os.getenv("SUBAGENT_EXAMPLE_MODEL", "gpt-5-mini"),
     "toolsmith": os.getenv("TOOLSMITH_MODEL", "gpt-5"),
 }
 

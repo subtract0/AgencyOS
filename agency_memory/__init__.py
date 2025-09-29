@@ -2,8 +2,9 @@
 """
 Agency Memory Module
 
-Lightweight memory system with in-memory store and Firestore fallback.
-Provides store, search, and learning consolidation functionality.
+Consolidated memory system with enhanced memory store as the primary implementation.
+Provides comprehensive memory functionality with vector search, learning consolidation,
+and multiple backend options.
 """
 
 from .memory import Memory, MemoryStore, InMemoryStore, create_session_transcript
