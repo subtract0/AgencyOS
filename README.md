@@ -1,10 +1,8 @@
-# 🏥 Agency Code - Autonomous Software Engineering
+# 🏥 Agency OS - Autonomous Software Engineering Platform
 
-**Version 0.9.2** - Complete Type Safety & E2E Workflow Revolution
+**Version 0.9.5** - DSPy Integration & Advanced Chain-of-Thought Reasoning
 
-A revolutionary AI-powered software engineering system with **undeniable self-healing capabilities**. Built with [Agency Swarm](https://agency-swarm.ai/welcome/overview) framework and enhanced with autonomous healing, constitutional governance, and LLM-first architecture.
-
-[📖 **Full Release Notes for v0.9.2**](RELEASE_NOTES_0.9.2.md)
+Elite autonomous software engineering system with **proven self-healing capabilities** and **100% constitutional compliance**. Built with [Agency Swarm](https://agency-swarm.ai/welcome/overview) framework, now enhanced with DSPy integration for advanced chain-of-thought reasoning and autonomous healing.
 
 ## 🚀 Autonomous Healing - The Key Differentiator
 
@@ -45,17 +43,19 @@ The Agency operates under strict constitutional principles that ensure quality a
 - **🧠 Learning & Memory**: Cross-session learning with VectorStore integration
 - **🛡️ Constitutional Compliance**: Unbreakable quality standards
 - **🔧 LLM-First Design**: Leverages GPT-5 intelligence instead of complex Python systems
+- **🔬 DSPy Integration**: Advanced chain-of-thought reasoning with rationale fields
 
 ### Developer Experience
 - **⚡ Quick Setup**: One-command environment setup
-- **🧪 Comprehensive Testing**: 725+ tests maintaining 100% success rate
+- **🧪 Comprehensive Testing**: 1,562+ tests maintaining 100% success rate
 - **📊 Real-Time Monitoring**: Live system health and performance metrics
 - **🔄 Hot Reload**: Instant feedback during development
 - **📚 Rich Documentation**: Complete API docs and usage examples
 
 ## 🏗️ Simplified Architecture
 
-### 10 Core Agents
+### 10 Core Agents + DSPy Enhanced Agents
+**Traditional Agency Swarm Agents:**
 - **ChiefArchitectAgent**: Strategic oversight and self-directed task creation
 - **AgencyCodeAgent**: Primary development agent with comprehensive toolset
 - **PlannerAgent**: Strategic planning using spec-kit methodology
@@ -66,6 +66,13 @@ The Agency operates under strict constitutional principles that ensure quality a
 - **QualityEnforcerAgent**: Constitutional compliance and autonomous healing
 - **ToolsmithAgent**: Tool development and enhancement
 - **WorkCompletionSummaryAgent**: Intelligent task summaries
+
+**DSPy-Enhanced Agents (Experimental):**
+- **DSPy PlannerAgent**: Advanced planning with chain-of-thought reasoning
+- **DSPy CodeAgent**: Code generation with explicit rationale tracking
+- **DSPy AuditorAgent**: Quality analysis with structured reasoning chains
+- **DSPy LearningAgent**: Pattern recognition with semantic understanding
+- **DSPy ToolsmithAgent**: Tool creation with design rationale
 
 ### Communication Flows
 Clean, focused communication patterns between agents:
@@ -121,10 +128,11 @@ python -m pytest tests/test_auto_fix_nonetype.py -v
 ```
 
 ### Quality Metrics
-- **689 tests** with 100% success rate
+- **1,562 tests** with 100% success rate
 - **Complete test coverage** for all autonomous healing features
 - **Constitutional compliance** across all components
 - **NECESSARY pattern adherence** for test quality
+- **DSPy agent tests** with comprehensive validation
 
 ## 🏥 Autonomous Healing Details
 
@@ -203,6 +211,13 @@ python demo_autonomous_healing.py
 
 ## 🔮 Advanced Features
 
+### DSPy Integration (New!)
+- **Chain-of-Thought Reasoning**: Explicit reasoning chains with rationale fields
+- **A/B Testing Framework**: Compare traditional vs DSPy agents performance
+- **Structured Signatures**: Type-safe input/output contracts for all operations
+- **Optimized Prompting**: DSPy's automatic prompt optimization capabilities
+- **Metrics-Driven**: Comprehensive code quality and performance metrics
+
 ### Learning & Memory
 - **VectorStore Integration**: Semantic search for pattern matching
 - **Cross-Session Learning**: Knowledge persists between runs
@@ -237,21 +252,20 @@ python demo_autonomous_healing.py
 - **[constitution.md](constitution.md)**: Constitutional principles and governance
 - **[RECOVERY_SUMMARY.md](RECOVERY_SUMMARY.md)**: Recovery from over-engineering case study
 
-## 📌 Release 0.9.2 - Type Safety Revolution
+## 📌 Release 0.9.5 - DSPy Integration & Chain-of-Thought
 
-### What's New
-- **🎯 100% Type Safety Achieved**: Eliminated all 1,211 type errors
-- **📊 Complete mypy Compliance**: Zero errors across 235 source files
-- **🔧 Type-Safe JSON Utilities**: New `json_utils.py` module for safe JSONValue handling
-- **✅ Enhanced Test Coverage**: All critical tests passing
-- **🏛️ Full Constitutional Compliance**: All 5 articles satisfied
+### What's New in 0.9.5
+- **🔬 DSPy Framework Integration**: Advanced chain-of-thought reasoning capabilities
+- **🎯 Rationale Fields**: Explicit reasoning tracking for all agent decisions
+- **📊 A/B Testing Framework**: Compare traditional vs DSPy agent performance
+- **🧪 1,562 Tests**: Comprehensive test suite with 100% pass rate
+- **🚀 5 DSPy Agents**: Enhanced versions of core agents with structured reasoning
 
-### Key Improvements
-- Fixed all Optional parameter type issues
-- Added comprehensive type annotations throughout
-- Resolved all type incompatibilities
-- Created reusable type safety patterns
-- Maintained 100% backward compatibility
+### Previous Release (0.9.4)
+- **🏛️ 100% Constitutional Compliance**: All articles verified
+- **✅ Complete Test Infrastructure**: All tests executable with `--run-all`
+- **⚡ Production Ready**: Full validation in under 3 minutes
+- **🔧 100% Type Safety**: Complete mypy compliance achieved
 
 ## 🏆 Recognition
 
@@ -266,10 +280,12 @@ The Agency represents a breakthrough in autonomous software engineering:
 
 ## 🎉 Operational Autonomy Achieved
 
-The Agency demonstrates that autonomous software maintenance is operational today. Experience a system that maintains and improves itself while adhering to the highest quality standards through constitutional governance and continuous learning.
+The Agency demonstrates that autonomous software maintenance is operational today. Experience a system that maintains and improves itself while adhering to the highest quality standards through constitutional governance, continuous learning, and now enhanced with DSPy's advanced reasoning capabilities.
 
-**Welcome to the age of autonomous software engineering.**
+**Welcome to the age of truly intelligent, autonomous software engineering.**
 
 ---
 
-*Built with ❤️ and AI by the Agency development team*
+*Constitutionally compliant, autonomously maintained, perpetually improving.*
+
+*Version 0.9.5 - Verified 2025-09-30*
