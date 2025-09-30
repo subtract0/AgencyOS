@@ -54,9 +54,12 @@ jobs:
           echo "Running test suite with Python ${{ matrix.python-version }}"
           python run_tests.py
         env:
-          # Set test environment variables if needed
+          # Set test environment variables
           CI: true
           PYTHONPATH: ${{ github.workspace }}
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          # Ensure tests use mocked LLM
+          USE_MOCK_LLM: true
 
       - name: Test Summary
         if: always()

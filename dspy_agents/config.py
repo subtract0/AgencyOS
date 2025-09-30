@@ -12,7 +12,7 @@ ensuring all agents use consistent model settings and proper initialization.
 
 import os
 import logging
-from typing import Optional, Dict
+from typing import Optional, Dict, Any
 from functools import lru_cache
 
 logger = logging.getLogger(__name__)
@@ -54,6 +54,12 @@ class DSPyConfig:
         if not DSPY_AVAILABLE:
             logger.warning("DSPy not available - cannot initialize")
             return False
+
+        # Skip real initialization in test environment
+        if os.getenv("USE_MOCK_LLM") == "true" or os.getenv("CI") == "true":
+            logger.debug("Test environment detected - skipping real LLM initialization")
+            cls._initialized = True  # Mark as initialized for tests
+            return True
 
         try:
             # Get API key from environment
