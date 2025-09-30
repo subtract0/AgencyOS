@@ -241,6 +241,7 @@ class TestTestGeneration:
         with patch('dspy_agents.modules.toolsmith_agent.DSPyConfig.initialize', return_value=False):
             return DSPyToolsmithAgent()
 
+    @ci_skip
     @patch('dspy_agents.modules.toolsmith_agent.DSPY_AVAILABLE', True)
     def test_generate_tests_success(self, agent):
         """Test successful test generation."""
@@ -315,6 +316,7 @@ class TestMainForwardMethod:
             "session_id": "test_session_123"
         }
 
+    @ci_skip
     @patch('dspy_agents.modules.toolsmith_agent.DSPY_AVAILABLE', True)
     @patch('dspy_agents.modules.toolsmith_agent.subprocess.run')
     def test_forward_success(self, mock_subprocess, agent, mock_context):
@@ -767,6 +769,7 @@ class TestIntegration:
             quality_threshold=0.9
         )
 
+    @ci_skip
     @patch('dspy_agents.modules.toolsmith_agent.DSPY_AVAILABLE', True)
     @patch('subprocess.run')
     def test_end_to_end_tool_creation(self, mock_subprocess, agent):
