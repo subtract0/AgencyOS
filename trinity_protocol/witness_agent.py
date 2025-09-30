@@ -279,13 +279,15 @@ class WitnessAgent:
             assert isinstance(signal.data, dict)
             assert isinstance(signal.summary, str) and len(signal.summary) <= 120
             assert isinstance(signal.timestamp, str)
-            assert isinstance(signal.source_id, str)
+            assert isinstance(signal.source_id, str) or isinstance(signal.source_id, int)
 
             # Validate JSON serialization
             json.dumps(signal.to_dict())
 
             return True
-        except (AssertionError, TypeError, ValueError):
+        except (AssertionError, TypeError, ValueError) as e:
+            # Debug: print what failed
+            print(f"Signal validation failed: {signal}")
             return False
 
     def _get_priority_value(self, priority: str) -> int:
