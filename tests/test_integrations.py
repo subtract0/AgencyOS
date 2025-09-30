@@ -16,6 +16,12 @@ import pytest
 import time
 from datetime import datetime
 
+# CI skip marker for tests requiring external API keys
+ci_skip = pytest.mark.skipif(
+    os.environ.get("CI") == "true",
+    reason="Requires external API keys not available in CI"
+)
+
 # Test OpenAI integration only if available
 try:
     import openai
@@ -213,6 +219,7 @@ class TestOpenAIIntegration:
         client = openai.OpenAI(api_key=api_key)
         return client
 
+    @ci_skip
     def test_openai_embedding_integration(self, openai_client):
         """Test minimal cost OpenAI API integration with embeddings."""
         # Use a very short text to minimize cost
@@ -252,6 +259,7 @@ class TestOpenAIIntegration:
         except Exception as e:
             pytest.fail(f"Unexpected error during OpenAI API call: {e}")
 
+    @ci_skip
     def test_openai_api_key_validation(self):
         """Test that OpenAI API key is properly configured."""
         api_key = os.getenv("OPENAI_API_KEY")
@@ -272,6 +280,7 @@ class TestOpenAIIntegration:
         client = openai.OpenAI(api_key=api_key)
         assert client is not None, "OpenAI client should be created successfully"
 
+    @ci_skip
     def test_openai_minimal_completion(self, openai_client):
         """Test minimal completion to verify API connectivity."""
         try:
