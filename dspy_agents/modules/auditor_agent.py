@@ -12,6 +12,7 @@ from pathlib import Path
 import json
 from datetime import datetime
 from pydantic import BaseModel, Field, field_validator
+from shared.type_definitions.json import JSONValue
 
 # Conditional DSPy import with fallback
 try:
@@ -152,7 +153,7 @@ class DSPyAuditorAgent(dspy.Module if DSPY_AVAILABLE else object):
             self.report = self._fallback_report
 
         # Audit history for learning
-        self.audit_history: List[Dict[str, Any]] = []
+        self.audit_history: List[Dict[str, JSONValue]] = []
 
         logger.info(f"DSPyAuditorAgent initialized with model={model}, DSPy available: {DSPY_AVAILABLE}")
 
@@ -680,7 +681,7 @@ class DSPyAuditorAgent(dspy.Module if DSPY_AVAILABLE else object):
             'recommendations': ["Review and address findings"]
         })()
 
-    def get_audit_summary(self) -> Dict[str, Any]:
+    def get_audit_summary(self) -> Dict[str, JSONValue]:
         """Get summary of audit history and patterns."""
         if not self.audit_history:
             return {"message": "No audits performed yet"}
