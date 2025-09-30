@@ -1,8 +1,8 @@
 # 🏥 Agency OS - Autonomous Software Engineering Platform
 
-**Version 0.9.4** - Production-Ready Constitutional Autonomous Development
+**Version 0.9.5** - DSPy Integration & Advanced Chain-of-Thought Reasoning
 
-Elite autonomous software engineering system with **proven self-healing capabilities** and **100% constitutional compliance**. Built with [Agency Swarm](https://agency-swarm.ai/welcome/overview) framework, enhanced with autonomous healing, constitutional governance, and LLM-first architecture.
+Elite autonomous software engineering system with **proven self-healing capabilities** and **100% constitutional compliance**. Built with [Agency Swarm](https://agency-swarm.ai/welcome/overview) framework, now enhanced with DSPy integration for advanced chain-of-thought reasoning and autonomous healing.
 
 ## 🎯 Mission-Critical Features
 
@@ -17,6 +17,85 @@ Elite autonomous software engineering system with **proven self-healing capabili
 - **Zero test failures** under constitutional enforcement
 - **3-minute** comprehensive test execution
 - **185-second** full validation cycle
+
+## 🚀 Autonomous Healing - The Key Differentiator
+
+**The Agency can detect, analyze, fix, test, and commit software changes without human intervention.**
+
+### Real Autonomous Healing
+- **🔍 Error Detection**: Automatic recognition of NoneType errors from logs and runtime failures
+- **🧠 LLM-Powered Analysis**: GPT-5 generates intelligent fixes with context awareness
+- **🛠️ Automatic Application**: Patches applied autonomously with safety verification
+- **✅ Test Verification**: Complete test suite validation before any changes are committed
+- **📝 Version Control**: Automatic commits with full audit trails
+
+### See It In Action
+```bash
+# Quick demo of autonomous healing
+./agency demo
+
+# Run full autonomous healing demonstration
+python demo_autonomous_healing.py
+```
+
+## 🏛️ Constitutional Governance
+
+The Agency operates under strict constitutional principles that ensure quality and reliability:
+
+### The Five Articles
+1. **Complete Context**: No action without full understanding
+2. **100% Verification**: All tests must pass - no exceptions
+3. **Automated Enforcement**: Quality standards technically enforced
+4. **Continuous Learning**: Automatic improvement through experience
+5. **Spec-Driven Development**: All features require formal specifications
+
+## 🎯 Key Features
+
+### Core Capabilities
+- **🤖 Autonomous Healing**: Self-fixing software that learns and improves
+- **📐 Multi-Agent Architecture**: 10 specialized agents working in coordination
+- **🧠 Learning & Memory**: Cross-session learning with VectorStore integration
+- **🛡️ Constitutional Compliance**: Unbreakable quality standards
+- **🔧 LLM-First Design**: Leverages GPT-5 intelligence instead of complex Python systems
+- **🔬 DSPy Integration**: Advanced chain-of-thought reasoning with rationale fields
+
+### Developer Experience
+- **⚡ Quick Setup**: One-command environment setup
+- **🧪 Comprehensive Testing**: 1,562+ tests maintaining 100% success rate
+- **📊 Real-Time Monitoring**: Live system health and performance metrics
+- **🔄 Hot Reload**: Instant feedback during development
+- **📚 Rich Documentation**: Complete API docs and usage examples
+
+## 🏗️ Simplified Architecture
+
+### 10 Core Agents + DSPy Enhanced Agents
+**Traditional Agency Swarm Agents:**
+- **ChiefArchitectAgent**: Strategic oversight and self-directed task creation
+- **AgencyCodeAgent**: Primary development agent with comprehensive toolset
+- **PlannerAgent**: Strategic planning using spec-kit methodology
+- **AuditorAgent**: Quality analysis using NECESSARY pattern
+- **TestGeneratorAgent**: NECESSARY-compliant test generation
+- **LearningAgent**: Pattern analysis and institutional memory
+- **MergerAgent**: Integration and pull request management
+- **QualityEnforcerAgent**: Constitutional compliance and autonomous healing
+- **ToolsmithAgent**: Tool development and enhancement
+- **WorkCompletionSummaryAgent**: Intelligent task summaries
+
+**DSPy-Enhanced Agents (Experimental):**
+- **DSPy PlannerAgent**: Advanced planning with chain-of-thought reasoning
+- **DSPy CodeAgent**: Code generation with explicit rationale tracking
+- **DSPy AuditorAgent**: Quality analysis with structured reasoning chains
+- **DSPy LearningAgent**: Pattern recognition with semantic understanding
+- **DSPy ToolsmithAgent**: Tool creation with design rationale
+
+### Communication Flows
+Clean, focused communication patterns between agents:
+```
+ChiefArchitect → Strategic oversight of all agents
+QualityEnforcer ↔ TestGenerator ↔ Coder → Quality improvement pipeline
+Planner ↔ Coder → Development workflow
+Auditor → Quality assessment and violation detection
+```
 
 ## 🚀 Quick Start for Autonomous Operations
 
@@ -107,6 +186,14 @@ python run_tests.py --benchmark        # Performance tests
 - **E2E Tests**: Complete workflow validation
 - **API Tests**: External service integration (with timeouts)
 - **Benchmark Tests**: Performance validation
+- **DSPy Agent Tests**: Chain-of-thought reasoning validation
+
+### Quality Metrics
+- **1,562 tests** with 100% success rate
+- **Complete test coverage** for all autonomous healing features
+- **Constitutional compliance** across all components
+- **NECESSARY pattern adherence** for test quality
+- **DSPy agent tests** with comprehensive validation
 
 ## 🏥 Autonomous Healing System
 
@@ -122,6 +209,22 @@ Error Detection → LLM Analysis → Fix Generation → Test Validation → Auto
 - **Automatic Rollback**: Failed fixes immediately reverted
 - **Audit Trail**: Complete history in `logs/autonomous_healing/`
 - **Constitutional Guard**: No violations permitted
+
+### NoneType Error Auto-Fix
+The flagship autonomous healing capability:
+
+1. **Detection**: Scans logs and runtime errors for NoneType patterns
+2. **Analysis**: Uses LLM intelligence to understand context and generate fixes
+3. **Application**: Applies fixes with automatic rollback on test failure
+4. **Verification**: Runs complete test suite to ensure no regressions
+5. **Commitment**: Commits successful fixes with detailed audit trails
+
+### Healing Workflow
+```bash
+Error Detected → LLM Analysis → Fix Generated → Tests Pass → Auto-Commit
+     ↓                                              ↓
+Logged & Monitored                         Rollback on Failure
+```
 
 ## 📊 Development Workflow
 
@@ -187,6 +290,84 @@ python demo_autonomous_healing.py     # Healing capabilities
 python scripts/constitutional_check.py # Compliance verification
 ```
 
+### Advanced Usage
+```bash
+# Manual agency execution
+sudo python agency.py
+
+# Specific test categories
+python run_tests.py --run-integration
+
+# Autonomous healing demo
+python demo_autonomous_healing.py
+```
+
+## 📈 Performance & Scaling
+
+### Optimization Features
+- **LLM-First Architecture**: Delegates complex analysis to GPT-5
+- **Focused Tool Set**: Simplified from 36 to 10 essential tools
+- **Efficient Communication**: Streamlined agent interactions
+- **Background Processing**: Non-blocking operations for long-running tasks
+
+### Scalability
+- **Multi-Agent Coordination**: Parallel processing capabilities
+- **Memory Optimization**: Efficient context management
+- **Resource Monitoring**: Automatic performance tracking
+- **Load Balancing**: Smart agent utilization
+
+## 🔮 Advanced Features
+
+### DSPy Integration (New!)
+- **Chain-of-Thought Reasoning**: Explicit reasoning chains with rationale fields
+- **A/B Testing Framework**: Compare traditional vs DSPy agents performance
+- **Structured Signatures**: Type-safe input/output contracts for all operations
+- **Optimized Prompting**: DSPy's automatic prompt optimization capabilities
+- **Metrics-Driven**: Comprehensive code quality and performance metrics
+
+### Learning & Memory
+- **VectorStore Integration**: Semantic search for pattern matching
+- **Cross-Session Learning**: Knowledge persists between runs
+- **Pattern Recognition**: Automatic identification of successful strategies
+- **Institutional Memory**: Collective agent intelligence
+
+### Constitutional Enforcement
+- **Real-Time Monitoring**: Continuous compliance checking
+- **Automatic Violation Prevention**: Blocks non-compliant operations
+- **Emergency Response**: Crisis management and system protection
+- **Audit Trail**: Complete history of all enforcement actions
+
+## 🤝 Contributing
+
+### Development Workflow
+1. Fork the repository
+2. Create a feature branch
+3. Implement changes with tests
+4. Ensure 100% test pass rate
+5. Submit pull request
+
+### Code Quality Standards
+- **Constitutional Compliance**: All 5 articles must be followed
+- **Test Coverage**: 100% test success rate required
+- **LLM-First**: Prefer LLM delegation over complex Python systems
+- **Documentation**: Comprehensive docs for all features
+
+## 📊 Monitoring & Observability
+
+### Logging
+- **Autonomous Healing**: `logs/autonomous_healing/`
+- **Session Transcripts**: `logs/sessions/`
+- **Agent Communications**: `logs/telemetry/`
+
+### Health Monitoring
+```bash
+# Check system health
+python -c "from core import get_core; print(get_core().get_health_status())"
+
+# Run constitutional compliance check
+python scripts/constitutional_check.py
+```
+
 ## 📚 Documentation
 
 ### Core Documentation
@@ -194,6 +375,7 @@ python scripts/constitutional_check.py # Compliance verification
 - **[AGENTS.md](AGENTS.md)**: Complete agent architecture
 - **[CONSTITUTIONAL_COMPLIANCE_REPORT.md](CONSTITUTIONAL_COMPLIANCE_REPORT.md)**: Verification status
 - **[TEST_FIXES_SUMMARY.md](TEST_FIXES_SUMMARY.md)**: Testing infrastructure details
+- **[RECOVERY_SUMMARY.md](RECOVERY_SUMMARY.md)**: Recovery from over-engineering case study
 
 ### Specifications & Plans
 - **specs/**: Formal feature specifications (spec-kit methodology)
@@ -214,14 +396,20 @@ python scripts/constitutional_check.py # Compliance verification
 - ✅ Constitutional compliance is mandatory
 - ✅ Learning patterns must be captured
 
-## 📌 Release 0.9.4 - Production Constitutional Compliance
+## 📌 Release 0.9.5 - DSPy Integration & Chain-of-Thought
 
-### Achievements
-- **🎯 100% Test Success**: 1,562 tests passing, zero failures
-- **🏛️ Constitutional Compliance**: All articles verified
-- **🔧 Complete Test Infrastructure**: All tests executable with `--run-all`
-- **⚡ API Test Integration**: Timeouts prevent hanging
-- **📊 Production Ready**: Full validation in under 3 minutes
+### What's New in 0.9.5
+- **🔬 DSPy Framework Integration**: Advanced chain-of-thought reasoning capabilities
+- **🎯 Rationale Fields**: Explicit reasoning tracking for all agent decisions
+- **📊 A/B Testing Framework**: Compare traditional vs DSPy agent performance
+- **🧪 1,562 Tests**: Comprehensive test suite with 100% pass rate
+- **🚀 5 DSPy Agents**: Enhanced versions of core agents with structured reasoning
+
+### Previous Release (0.9.4)
+- **🏛️ 100% Constitutional Compliance**: All articles verified
+- **✅ Complete Test Infrastructure**: All tests executable with `--run-all`
+- **⚡ Production Ready**: Full validation in under 3 minutes
+- **🔧 100% Type Safety**: Complete mypy compliance achieved
 
 ### Infrastructure Improvements
 - Enhanced `run_tests.py` with true `--run-all` capability
@@ -239,6 +427,7 @@ The Agency has achieved **complete operational autonomy** with:
 - ✅ **Self-Healing Capabilities** operational
 - ✅ **Production-Ready** validation complete
 - ✅ **Autonomous Development** fully enabled
+- ✅ **DSPy Integration** for advanced reasoning
 
 ### Verification Command
 ```bash
@@ -246,14 +435,14 @@ The Agency has achieved **complete operational autonomy** with:
 python run_tests.py --run-all
 ```
 
-## 🎉 Welcome to Autonomous Excellence
+## 🎉 Operational Autonomy Achieved
 
-The Agency represents the pinnacle of autonomous software engineering, where constitutional principles ensure perfect quality, self-healing maintains system integrity, and intelligent agents collaborate to build and maintain production-grade software.
+The Agency demonstrates that autonomous software maintenance is operational today. Experience a system that maintains and improves itself while adhering to the highest quality standards through constitutional governance, continuous learning, and now enhanced with DSPy's advanced reasoning capabilities.
 
-**The age of truly autonomous, self-improving software is here.**
+**Welcome to the age of truly intelligent, autonomous software engineering.**
 
 ---
 
 *Constitutionally compliant, autonomously maintained, perpetually improving.*
 
-*Version 0.9.4 - Verified 2025-09-29*
+*Version 0.9.5 - Verified 2025-09-30*
