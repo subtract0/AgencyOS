@@ -20,6 +20,7 @@ from pathlib import Path
 from typing import Optional, Dict, Any, Literal
 from pydantic import BaseModel, Field
 from datetime import datetime
+from shared.type_definitions.json import JSONValue
 
 # Check DSPy availability
 try:
@@ -130,7 +131,7 @@ class TelemetryWrapper:
         
         return attr
     
-    def get_metrics(self) -> Dict[str, Any]:
+    def get_metrics(self) -> Dict[str, JSONValue]:
         """Get collected telemetry metrics."""
         return {
             "implementation": self.implementation_type,
@@ -158,7 +159,7 @@ class AgentLoader:
     
     def __init__(self):
         """Initialize the agent loader."""
-        self.loaded_agents: Dict[str, Any] = {}
+        self.loaded_agents: Dict[str, object] = {}  # Agents are objects, not JSONValue
         logger.info(f"AgentLoader initialized (DSPy available: {DSPY_AVAILABLE})")
     
     def _parse_frontmatter(self, agent_path: str) -> AgentFrontmatter:
