@@ -22,10 +22,15 @@ from pathlib import Path
 
 from pydantic import BaseModel, Field, ValidationError
 
+# Import DSPy configuration
+from ..config import DSPyConfig, DSPY_AVAILABLE
+
 # Conditional DSPy import for gradual migration
 try:
     import dspy
-    DSPY_AVAILABLE = True
+    # Auto-initialize DSPy if available
+    if DSPY_AVAILABLE:
+        DSPyConfig.initialize()
 except ImportError:
     # Fallback for when DSPy is not yet installed
     class dspy:

@@ -2,13 +2,52 @@
 
 This module contains DSPy-powered implementations of Agency agents that replace static markdown-based agents with adaptive, learning-based reasoning capabilities.
 
+## Configuration
+
+DSPy requires Language Model configuration. The module provides automatic configuration management:
+
+### Environment Variables
+
+```bash
+# Required - API Key (one of these)
+export OPENAI_API_KEY="your-api-key"
+# OR
+export ANTHROPIC_API_KEY="your-api-key"
+
+# Optional - Model Selection
+export DSPY_MODEL="openai/gpt-4o-mini"  # Default model
+
+# Optional - Agent-specific models
+export PLANNER_MODEL="openai/gpt-4o"
+export CODER_MODEL="openai/gpt-4o-mini"
+export AUDITOR_MODEL="openai/gpt-4o-mini"
+export TOOLSMITH_MODEL="openai/gpt-4o-mini"
+
+# Optional - Auto-initialization
+export AUTO_INIT_DSPY="true"  # Auto-initialize on import (default: true)
+```
+
+### Programmatic Configuration
+
+```python
+from dspy_agents.config import DSPyConfig
+
+# Initialize DSPy
+DSPyConfig.initialize()
+
+# Configure for specific agent type
+from dspy_agents.config import configure_dspy_for_agent
+configure_dspy_for_agent("planner")  # Uses PLANNER_MODEL env var
+```
+
 ## Features
 
-- **Adaptive Reasoning**: Uses DSPy's structured reasoning for code tasks
+- **Adaptive Reasoning**: Uses DSPy's structured reasoning with Chain of Thought
 - **Constitutional Compliance**: Enforces Agency's constitutional principles
 - **Learning from Patterns**: Learns from successful and failed executions
 - **Graceful Fallback**: Works even when DSPy is not installed
 - **Comprehensive Error Handling**: Robust error handling and logging
+- **Automatic Configuration**: Auto-configures LM on import when API keys present
 
 ## Components
 

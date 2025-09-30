@@ -9,6 +9,19 @@ from shared.utils import silence_warnings_and_logs
 
 silence_warnings_and_logs()
 
+# Initialize DSPy configuration if available
+try:
+    from dspy_agents.config import DSPyConfig, DSPY_AVAILABLE
+    if DSPY_AVAILABLE:
+        # Initialize DSPy for Agency agents
+        if DSPyConfig.initialize():
+            import logging
+            logger = logging.getLogger(__name__)
+            logger.info("DSPy configuration initialized for Agency agents")
+except ImportError:
+    # DSPy agents not available yet
+    pass
+
 import litellm  # noqa: E402 - must import after warning suppression
 from agency_swarm import Agency  # noqa: E402 - must import after warning suppression  # type: ignore
 from agency_swarm.tools import (  # noqa: E402 - must import after warning suppression  # type: ignore
