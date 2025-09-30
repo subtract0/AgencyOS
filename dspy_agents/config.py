@@ -12,7 +12,7 @@ ensuring all agents use consistent model settings and proper initialization.
 
 import os
 import logging
-from typing import Optional, Dict, Any
+from typing import Optional, Dict
 from functools import lru_cache
 
 logger = logging.getLogger(__name__)
@@ -31,7 +31,7 @@ class DSPyConfig:
     """Centralized DSPy configuration management."""
 
     _initialized = False
-    _lm_cache: Dict[str, Any] = {}
+    _lm_cache: Dict[str, object] = {}
 
     @classmethod
     def initialize(cls, force: bool = False) -> bool:
