@@ -1,0 +1,156 @@
+name: DSPy Agent Testing
+
+on:
+  push:
+    branches: [main, develop, feature/dspy-*]
+    paths:
+      - 'dspy_agents/**'
+      - 'tests/dspy_agents/**'
+      - 'requirements-dspy.txt'
+      - '.github/workflows/dspy-migration.yml'
+  pull_request:
+    branches: [main]
+    paths:
+      - 'dspy_agents/**'
+      - 'tests/dspy_agents/**'
+      - 'requirements-dspy.txt'
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ['3.11', '3.12']
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Cache dependencies
+        uses: actions/cache@v3
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-pip-${{ hashFiles('requirements*.txt') }}
+          restore-keys: |
+            ${{ runner.os }}-pip-
+
+      - name: Install base dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install uv
+          uv pip install -r requirements.txt
+
+      - name: Install DSPy dependencies
+        run: |
+          uv pip install -r requirements-dspy.txt
+
+      - name: Run DSPy unit tests
+        run: |
+          python -m pytest tests/dspy_agents/ -v --tb=short
+        env:
+          CI: true
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          USE_MOCK_LLM: true
+
+      - name: Evaluate agent performance
+        run: |
+          python scripts/evaluate_dspy_agents.py
+        env:
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          USE_MOCK_LLM: true
+        continue-on-error: true
+
+      - name: Run integration tests
+        run: |
+          python -m pytest tests/dspy_agents/test_integration.py -v --tb=short
+        env:
+          CI: true
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          USE_MOCK_LLM: true
+        continue-on-error: true
+
+      - name: Generate performance report
+        if: always()
+        run: |
+          python scripts/dspy_performance_report.py > performance_report.md || echo "Performance report generation failed"
+
+      - name: Upload performance artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: dspy-performance-${{ matrix.python-version }}
+          path: |
+            performance_report.md
+            mlruns/
+            logs/dspy_agents/
+
+  compatibility:
+    runs-on: ubuntu-latest
+    needs: test
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.12'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install uv
+          uv pip install -r requirements.txt
+          uv pip install -r requirements-dspy.txt
+
+      - name: Test backward compatibility
+        run: |
+          python scripts/test_dspy_compatibility.py
+
+      - name: Test fallback mode (without DSPy)
+        run: |
+          # Create virtual env without DSPy
+          python -m venv test_env
+          source test_env/bin/activate
+          pip install -r requirements.txt
+          python -c "from dspy_agents.modules.code_agent import DSPyCodeAgent; agent = DSPyCodeAgent(); print('Fallback mode works')"
+
+  benchmark:
+    runs-on: ubuntu-latest
+    needs: test
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.12'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install uv
+          uv pip install -r requirements.txt
+          uv pip install -r requirements-dspy.txt
+
+      - name: Run performance benchmarks
+        run: |
+          python scripts/benchmark_dspy_agents.py
+
+      - name: Compare with legacy agents
+        run: |
+          python scripts/compare_agent_performance.py
+
+      - name: Store benchmark results
+        uses: benchmark-action/github-action-benchmark@v1
+        with:
+          tool: 'customBiggerIsBetter'
+          output-file-path: benchmark_results.json
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          auto-push: true

@@ -188,6 +188,26 @@ This index catalogs all Architecture Decision Records for the Agency multi-agent
 
 ---
 
+### ADR-006: Claude Agent SDK Adoption  
+**Status:** Accepted  
+**Date:** 2025-09-30  
+**File:** `docs/adr/ADR-006-claude-agent-sdk-adoption.md`
+
+**Decision:** Adopt Claude Agent SDK (Python) via environment-gated wrapper.
+
+---
+
+### ADR-007: DSPy Agent Loader - Hybrid Architecture  
+**Status:** Accepted  
+**Date:** 2025-09-30  
+**File:** `docs/adr/ADR-007-dspy-agent-loader-hybrid-architecture.md`
+
+**Decision:** Implement hybrid loader for dual DSPy/traditional agent implementations with fallback.
+
+**Constitutional Compliance:** Articles I (Context), II (Verification), IV (Learning), V (Spec-driven)
+
+---
+
 ## Review Schedule
 
 - **Weekly:** Review new ADR proposals

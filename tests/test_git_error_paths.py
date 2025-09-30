@@ -8,7 +8,7 @@ import pytest
 from tools.git import Git
 
 
-@pytest.mark.skipif(os.getenv("AGENCY_SKIP_GIT", "") == "1", reason="Skipping git tests in this CI environment")
+@pytest.mark.skipif(os.getenv("AGENCY_SKIP_GIT", "") == "1" and os.getenv("FORCE_RUN_ALL_TESTS", "") != "1", reason="Skipping git tests in this CI environment")
 def test_git_missing_dulwich_import(monkeypatch):
     real_import = __import__
 
@@ -23,7 +23,7 @@ def test_git_missing_dulwich_import(monkeypatch):
     assert "dulwich not installed" in out
 
 
-@pytest.mark.skipif(os.getenv("AGENCY_SKIP_GIT", "") == "1", reason="Skipping git tests in this CI environment")
+@pytest.mark.skipif(os.getenv("AGENCY_SKIP_GIT", "") == "1" and os.getenv("FORCE_RUN_ALL_TESTS", "") != "1", reason="Skipping git tests in this CI environment")
 def test_git_open_repo_error(monkeypatch):
     # Create a fake dulwich.porcelain module
     dulwich = types.ModuleType("dulwich")
@@ -45,7 +45,7 @@ def test_git_open_repo_error(monkeypatch):
     assert "Error opening git repo" in out
 
 
-@pytest.mark.skipif(os.getenv("AGENCY_SKIP_GIT", "") == "1", reason="Skipping git tests in this CI environment")
+@pytest.mark.skipif(os.getenv("AGENCY_SKIP_GIT", "") == "1" and os.getenv("FORCE_RUN_ALL_TESTS", "") != "1", reason="Skipping git tests in this CI environment")
 def test_git_diff_error(monkeypatch):
     dulwich = types.ModuleType("dulwich")
     porcelain = types.ModuleType("dulwich.porcelain")
@@ -69,7 +69,7 @@ def test_git_diff_error(monkeypatch):
     assert "Error in diff" in out
 
 
-@pytest.mark.skipif(os.getenv("AGENCY_SKIP_GIT", "") == "1", reason="Skipping git tests in this CI environment")
+@pytest.mark.skipif(os.getenv("AGENCY_SKIP_GIT", "") == "1" and os.getenv("FORCE_RUN_ALL_TESTS", "") != "1", reason="Skipping git tests in this CI environment")
 def test_git_show_error(monkeypatch):
     dulwich = types.ModuleType("dulwich")
     porcelain = types.ModuleType("dulwich.porcelain")

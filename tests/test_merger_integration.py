@@ -119,7 +119,7 @@ class TestPreCommitHookIntegration:
         # Verify hook checks test results
         assert "TEST_EXIT_CODE" in content, "Hook missing test exit code checking"
 
-    @pytest.mark.skipif(not os.path.exists(os.path.join(project_root, '.venv')),
+    @pytest.mark.skipif(not os.path.exists(os.path.join(project_root, '.venv')) and os.getenv("FORCE_RUN_ALL_TESTS", "") != "1",
                        reason="Virtual environment not available")
     def test_pre_commit_hook_test_execution(self):
         """Test that pre-commit hook can execute tests (requires venv)."""

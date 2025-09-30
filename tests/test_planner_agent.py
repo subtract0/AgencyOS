@@ -95,7 +95,7 @@ def ambiguous_queries():
     ]
 
 
-@pytest.mark.skip(reason="Makes real API calls to GPT models - skip to prevent test suite hangs")
+@pytest.mark.timeout(30)  # 30 second timeout for API calls
 @pytest.mark.asyncio
 async def test_planner_asks_clarifying_questions_vague_auth(planner_agency):
     """Test that planner asks questions for vague authentication request"""
@@ -165,7 +165,7 @@ async def test_planner_asks_clarifying_questions_vague_auth(planner_agency):
         assert False, "Should not start detailed planning without clarification"
 
 
-@pytest.mark.skip(reason="Makes real API calls to GPT models - skip to prevent test suite hangs")
+@pytest.mark.timeout(30)  # 30 second timeout for API calls
 @pytest.mark.asyncio
 async def test_planner_asks_about_missing_context(planner_agency):
     """Test that planner asks for context when request lacks information"""
@@ -198,7 +198,7 @@ async def test_planner_asks_about_missing_context(planner_agency):
     assert asks_context, f"Should ask for bug context. Got: {response[:500]}..."
 
 
-@pytest.mark.skip(reason="Makes real API calls to GPT models - skip to prevent test suite hangs")
+@pytest.mark.timeout(30)  # 30 second timeout for API calls
 @pytest.mark.asyncio
 async def test_planner_asks_about_incomplete_requirements(planner_agency):
     """Test that planner asks for complete requirements"""
@@ -234,7 +234,7 @@ async def test_planner_asks_about_incomplete_requirements(planner_agency):
     )
 
 
-@pytest.mark.skip(reason="Makes real API calls to GPT models - skip to prevent test suite hangs")
+@pytest.mark.timeout(30)  # 30 second timeout for API calls
 @pytest.mark.asyncio
 async def test_planner_comprehensive_question_behavior(
     planner_agency, ambiguous_queries
@@ -311,7 +311,7 @@ async def test_planner_comprehensive_question_behavior(
     return results
 
 
-@pytest.mark.skip(reason="Makes real API calls to GPT models - skip to prevent test suite hangs")
+@pytest.mark.timeout(30)  # 30 second timeout for API calls
 @pytest.mark.asyncio
 async def test_planner_with_clear_requirements_minimal_questions(planner_agency):
     """Test that planner doesn't over-question when requirements are clear"""

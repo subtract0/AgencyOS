@@ -22,10 +22,15 @@ from pathlib import Path
 
 from pydantic import BaseModel, Field, ValidationError
 
+# Import DSPy configuration
+from ..config import DSPyConfig, DSPY_AVAILABLE
+
 # Conditional DSPy import for gradual migration
 try:
     import dspy
-    DSPY_AVAILABLE = True
+    # Auto-initialize DSPy if available
+    if DSPY_AVAILABLE:
+        DSPyConfig.initialize()
 except ImportError:
     # Fallback for when DSPy is not yet installed
     class dspy:
@@ -55,7 +60,7 @@ from ..signatures.base import (
     TestGenerationSignature,
     HandoffSignature,
     FileChange,
-    TestCase,
+    TestSpecification,
     VerificationResult,
     AgentResult,
 )
@@ -228,7 +233,7 @@ class DSPyToolsmithAgent(dspy.Module if DSPY_AVAILABLE else object):
                     )
                 ],
                 tests=[
-                    TestCase(
+                    TestSpecification(
                         test_file=test_artifact.file_path,
                         test_name=f"test_{parsed.tool_name}",
                         test_code=test_artifact.content,
@@ -318,7 +323,7 @@ class DSPyToolsmithAgent(dspy.Module if DSPY_AVAILABLE else object):
                 )
             ],
             tests=[
-                TestCase(
+                TestSpecification(
                     test_file=f"tests/test_{parsed['tool_name'].lower()}.py",
                     test_name=f"test_{parsed['tool_name'].lower()}",
                     test_code=test_code,
@@ -396,16 +401,19 @@ class DSPyToolsmithAgent(dspy.Module if DSPY_AVAILABLE else object):
         directive_lower = directive.lower()
 
         # Try multiple patterns to extract tool name
-        if "create" in directive_lower and "tool" in directive_lower:
-            words = directive.split()
-            for i, word in enumerate(words):
-                if word.lower() in ["tool", "agent", "component"]:
-                    if i > 0 and words[i-1].lower() not in ["a", "an", "the", "create", "new"]:
-                        tool_name = words[i-1].replace(",", "").replace(".", "")
+        words = directive.split()
+        for i, word in enumerate(words):
+            if word.lower() in ["tool", "agent", "component"]:
+                # Check word before "tool"
+                if i > 0:
+                    candidate = words[i-1]
+                    if candidate.lower() not in ["a", "an", "the", "create", "new", "build", "make"]:
+                        tool_name = candidate.replace(",", "").replace(".", "")
                         break
-                    elif i < len(words) - 1:
-                        tool_name = words[i+1].replace(",", "").replace(".", "")
-                        break
+                # Check word after "tool"
+                if i < len(words) - 1 and words[i+1].lower() != "for":
+                    tool_name = words[i+1].replace(",", "").replace(".", "")
+                    break
 
         # Generate comprehensive test cases based on directive
         test_cases = [
