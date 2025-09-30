@@ -126,3 +126,5 @@ exclude_lines = [
     "class .*\\bProtocol\\):",
     "@(abc\\.)?abstractmethod",
 ]
+[tool.poetry.dependencies]
+pydantic = "^2.11.9"

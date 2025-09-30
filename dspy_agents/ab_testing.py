@@ -10,12 +10,13 @@ import random
 import logging
 import json
 import time
-from typing import Dict, Any, Optional, Tuple, List
+from typing import Dict, Optional, Tuple, List
 from datetime import datetime, timedelta
 from pathlib import Path
 from enum import Enum
 from pydantic import BaseModel, Field
 import hashlib
+from shared.type_definitions.json import JSONValue
 
 logger = logging.getLogger(__name__)
 
@@ -96,7 +97,7 @@ class ABTestController:
         self.metrics_path.parent.mkdir(parents=True, exist_ok=True)
 
         self.experiments: Dict[str, ExperimentConfig] = {}
-        self.metrics: List[Dict[str, Any]] = []
+        self.metrics: List[Dict[str, JSONValue]] = []
 
         self._load_experiments()
 
@@ -233,7 +234,7 @@ class ABTestController:
         variant: str,
         metric_name: str,
         value: float,
-        metadata: Optional[Dict[str, Any]] = None
+        metadata: Optional[Dict[str, JSONValue]] = None
     ) -> None:
         """
         Record a metric for an experiment.
@@ -375,7 +376,7 @@ class ABTestController:
             confidence=config.confidence_level
         )
 
-    def _load_experiment_metrics(self, experiment_name: str) -> List[Dict[str, Any]]:
+    def _load_experiment_metrics(self, experiment_name: str) -> List[Dict[str, JSONValue]]:
         """Load metrics for a specific experiment."""
         metrics = []
 
@@ -391,7 +392,7 @@ class ABTestController:
 
         return metrics
 
-    def _aggregate_metrics(self, metrics: List[Dict[str, Any]]) -> Dict[str, float]:
+    def _aggregate_metrics(self, metrics: List[Dict[str, JSONValue]]) -> Dict[str, float]:
         """Aggregate metrics by type."""
         aggregated = {}
         metric_values: Dict[str, List[float]] = {}
@@ -412,8 +413,8 @@ class ABTestController:
 
     def _calculate_significance(
         self,
-        control: List[Dict[str, Any]],
-        treatment: List[Dict[str, Any]]
+        control: List[Dict[str, JSONValue]],
+        treatment: List[Dict[str, JSONValue]]
     ) -> Dict[str, bool]:
         """
         Calculate statistical significance (simplified).
@@ -489,7 +490,7 @@ class ABTestController:
         else:
             return "CONTINUE: Continue monitoring, no clear winner yet"
 
-    def get_experiment_status(self, name: str) -> Optional[Dict[str, Any]]:
+    def get_experiment_status(self, name: str) -> Optional[Dict[str, JSONValue]]:
         """Get current status of an experiment."""
         if name not in self.experiments:
             return None
@@ -513,7 +514,7 @@ class ABTestController:
             ) * 100
         }
 
-    def list_experiments(self) -> List[Dict[str, Any]]:
+    def list_experiments(self) -> List[Dict[str, JSONValue]]:
         """List all experiments with their status."""
         experiments = []
 

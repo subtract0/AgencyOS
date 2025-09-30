@@ -7,7 +7,7 @@ Automatically populates VectorStore during normal memory operations.
 
 import logging
 from datetime import datetime
-from typing import Any, Dict, List, Optional, cast
+from typing import Dict, List, Optional, cast
 from shared.type_definitions.json import JSONValue
 from .memory import MemoryStore
 from shared.models.memory import MemorySearchResult, MemoryRecord, MemoryPriority, MemoryMetadata
@@ -41,7 +41,7 @@ class EnhancedMemoryStore(MemoryStore):
 
         logger.info(f"EnhancedMemoryStore initialized with embedding provider: {embedding_provider}")
 
-    def store(self, key: str, content: Any, tags: List[str]) -> None:
+    def store(self, key: str, content: JSONValue, tags: List[str]) -> None:
         """
         Store content with automatic VectorStore integration.
 
@@ -71,7 +71,7 @@ class EnhancedMemoryStore(MemoryStore):
         # Check for learning trigger conditions
         self._check_learning_triggers(memory_record)
 
-    def store_memory(self, key: str, value: Any, tags: List[str], metadata: dict = None) -> None:
+    def store_memory(self, key: str, value: JSONValue, tags: List[str], metadata: Optional[Dict[str, JSONValue]] = None) -> None:
         """
         Store memory with unified interface (facade compatibility).
 
@@ -83,7 +83,7 @@ class EnhancedMemoryStore(MemoryStore):
         """
         self.store(key, value, tags)
 
-    def get_memory(self, key: str) -> Optional[Any]:
+    def get_memory(self, key: str) -> Optional[JSONValue]:
         """
         Get memory by key (facade compatibility).
 
@@ -107,7 +107,7 @@ class EnhancedMemoryStore(MemoryStore):
         """
         return len(self._memories)
 
-    def search_memories(self, query: str, tags: Optional[List[str]] = None, limit: int = 10) -> List[Dict[str, Any]]:
+    def search_memories(self, query: str, tags: Optional[List[str]] = None, limit: int = 10) -> List[Dict[str, JSONValue]]:
         """
         Search memories using text query and optional tags (facade compatibility).
 

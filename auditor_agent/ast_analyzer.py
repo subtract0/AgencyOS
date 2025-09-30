@@ -4,7 +4,7 @@ Extracts functions, classes, and behavioral coverage metrics.
 """
 
 import ast
-from typing import Dict, Any, List, Optional, cast
+from typing import Dict, List, Optional, cast
 from shared.type_definitions.json import JSONValue
 from pathlib import Path
 
@@ -109,9 +109,9 @@ class CodeVisitor(ast.NodeVisitor):
 
     def __init__(self, file_path: str):
         self.file_path = file_path
-        self.functions: List[Dict[str, Any]] = []
-        self.classes: List[Dict[str, Any]] = []
-        self.test_functions: List[Dict[str, Any]] = []
+        self.functions: List[Dict[str, JSONValue]] = []
+        self.classes: List[Dict[str, JSONValue]] = []
+        self.test_functions: List[Dict[str, JSONValue]] = []
         self.imports: List[str] = []
         self.current_class: Optional[str] = None
         self.complexity_count: int = 0

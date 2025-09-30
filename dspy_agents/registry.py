@@ -6,7 +6,7 @@ enabling gradual migration and A/B testing capabilities.
 """
 
 import logging
-from typing import Dict, Any, Optional, Type, Callable, List
+from typing import Dict, Optional, Type, Callable, List
 from enum import Enum
 import importlib
 import os
@@ -41,7 +41,7 @@ class AgentRegistry:
         """Initialize the agent registry."""
         self._dspy_agents: Dict[str, Type] = {}
         self._legacy_agents: Dict[str, Callable] = {}
-        self._agent_metadata: Dict[str, Dict[str, Any]] = {}
+        self._agent_metadata: Dict[str, Dict[str, JSONValue]] = {}
         self._initialized = False
         self._fallback_enabled = True
 
@@ -162,7 +162,7 @@ class AgentRegistry:
         prefer_dspy: bool = True,
         legacy_fallback: bool = True,
         **kwargs
-    ) -> Any:
+    ) -> object:
         """
         Get an agent instance by name.
 
@@ -202,7 +202,7 @@ class AgentRegistry:
         available = list(set(list(self._dspy_agents.keys()) + list(self._legacy_agents.keys())))
         raise ValueError(f"Agent '{name}' not found. Available agents: {available}")
 
-    def _create_dspy_agent(self, name: str, **kwargs) -> Any:
+    def _create_dspy_agent(self, name: str, **kwargs) -> object:
         """
         Create a DSPy agent instance.
 
@@ -229,7 +229,7 @@ class AgentRegistry:
 
         return agent
 
-    def _create_legacy_agent(self, name: str, **kwargs) -> Any:
+    def _create_legacy_agent(self, name: str, **kwargs) -> object:
         """
         Create a legacy agent instance.
 
@@ -442,7 +442,7 @@ def get_global_registry() -> AgentRegistry:
     return _global_registry
 
 
-def create_agent(name: str, **kwargs) -> Any:
+def create_agent(name: str, **kwargs) -> object:
     """
     Convenience function to create an agent using the global registry.
 
