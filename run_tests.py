@@ -15,9 +15,11 @@ import argparse
 import json
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Dict, Optional
-from shared.type_definitions.json import JSONValue
+from typing import Dict, Optional, Any
 from types import FrameType
+
+# Defer pydantic import to avoid module errors in pre-commit hook
+JSONValue = Any  # Type hint placeholder
 
 
 def _record_timing(duration_s: float, test_mode: str, specific: Optional[str], exit_code: int, extra: Optional[Dict[str, JSONValue]] = None) -> None:
@@ -162,8 +164,14 @@ def main(test_mode: str = "unit", fast_only: bool = False, timed: bool = False) 
         "--durations=10",  # Show 10 slowest tests
         # "-x",  # Stop on first failure - commented out to run all tests
         "--color=yes",  # Colored output
-        # Note: Removed -n auto (pytest-xdist) to avoid timeouts
     ]
+
+    # Add parallel execution if pytest-xdist is available
+    try:
+        import pytest_xdist  # noqa
+        pytest_args.extend(["-n", "4"])  # Parallel execution with 4 workers
+    except ImportError:
+        pass  # Run sequentially if xdist not available
 
     # Prepare environment variables
     env = os.environ.copy()
