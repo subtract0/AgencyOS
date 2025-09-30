@@ -17,6 +17,7 @@ import logging
 import traceback
 import json
 from typing import Dict, List, Any, Optional, Union
+from shared.type_definitions.json import JSONValue
 from datetime import datetime
 from pathlib import Path
 
@@ -83,7 +84,7 @@ class ExtractedPattern(BaseModel):
     description: str = Field(..., description="Description of the pattern")
     confidence: float = Field(..., description="Confidence score (0-1)")
     occurrences: int = Field(..., description="Number of occurrences")
-    context: Dict[str, Any] = Field(default_factory=dict, description="Additional context")
+    context: Dict[str, JSONValue] = Field(default_factory=dict, description="Additional context")
     keywords: List[str] = Field(default_factory=list, description="Keywords for retrieval")
 
 
@@ -107,7 +108,7 @@ class LearningResult(BaseModel):
     learnings_consolidated: int = Field(default=0, description="Number of learnings consolidated")
     knowledge_stored: bool = Field(default=False, description="Whether knowledge was stored")
     message: str = Field(..., description="Summary message")
-    details: Optional[Dict[str, Any]] = Field(None, description="Additional details")
+    details: Optional[Dict[str, JSONValue]] = Field(None, description="Additional details")
 
 
 class DSPyLearningAgent(dspy.Module if DSPY_AVAILABLE else object):
@@ -166,9 +167,9 @@ class DSPyLearningAgent(dspy.Module if DSPY_AVAILABLE else object):
     def forward(
         self,
         session_id: Optional[str] = None,
-        session_data: Optional[Dict[str, Any]] = None,
+        session_data: Optional[Dict[str, JSONValue]] = None,
         pattern_types: Optional[List[str]] = None,
-        context: Optional[Dict[str, Any]] = None,
+        context: Optional[Dict[str, JSONValue]] = None,
         **kwargs
     ) -> LearningResult:
         """
@@ -261,7 +262,7 @@ class DSPyLearningAgent(dspy.Module if DSPY_AVAILABLE else object):
     def _fallback_execution(
         self,
         context: LearningContext,
-        session_data: Optional[Dict[str, Any]]
+        session_data: Optional[Dict[str, JSONValue]]
     ) -> LearningResult:
         """
         Fallback execution when DSPy is not available.
@@ -301,7 +302,7 @@ class DSPyLearningAgent(dspy.Module if DSPY_AVAILABLE else object):
         self,
         session_path: str,
         focus_areas: Optional[List[str]] = None
-    ) -> Dict[str, Any]:
+    ) -> Dict[str, JSONValue]:
         """
         Analyze a specific session for patterns.
 
@@ -341,7 +342,7 @@ class DSPyLearningAgent(dspy.Module if DSPY_AVAILABLE else object):
         self,
         patterns: List[ExtractedPattern],
         min_occurrences: int = 2
-    ) -> List[Dict[str, Any]]:
+    ) -> List[Dict[str, JSONValue]]:
         """
         Extract actionable insights from patterns.
 
@@ -378,7 +379,7 @@ class DSPyLearningAgent(dspy.Module if DSPY_AVAILABLE else object):
 
     def consolidate_learning(
         self,
-        insights: List[Dict[str, Any]],
+        insights: List[Dict[str, JSONValue]],
         existing_learnings: Optional[List[ConsolidatedLearning]] = None
     ) -> List[ConsolidatedLearning]:
         """
@@ -446,7 +447,7 @@ class DSPyLearningAgent(dspy.Module if DSPY_AVAILABLE else object):
     def store_knowledge(
         self,
         learnings: List[ConsolidatedLearning],
-        metadata: Optional[Dict[str, Any]] = None
+        metadata: Optional[Dict[str, JSONValue]] = None
     ) -> bool:
         """
         Store consolidated learnings in knowledge base.
@@ -518,7 +519,7 @@ class DSPyLearningAgent(dspy.Module if DSPY_AVAILABLE else object):
         self,
         session_id: Optional[str],
         pattern_types: Optional[List[str]],
-        context: Dict[str, Any]
+        context: Dict[str, JSONValue]
     ) -> LearningContext:
         """Prepare and validate the learning context."""
         try:
@@ -540,7 +541,7 @@ class DSPyLearningAgent(dspy.Module if DSPY_AVAILABLE else object):
                 session_id=context.get("session_id", f"fallback_{datetime.now().strftime('%Y%m%d_%H%M%S')}")
             )
 
-    def _load_session_data(self, context: LearningContext) -> Dict[str, Any]:
+    def _load_session_data(self, context: LearningContext) -> Dict[str, JSONValue]:
         """Load session data from logs."""
         session_path = Path(context.logs_directory) / f"{context.session_id}.json"
 
@@ -556,7 +557,7 @@ class DSPyLearningAgent(dspy.Module if DSPY_AVAILABLE else object):
                 "events": []
             }
 
-    def _get_existing_knowledge(self, context: LearningContext) -> Dict[str, Any]:
+    def _get_existing_knowledge(self, context: LearningContext) -> Dict[str, JSONValue]:
         """Get existing knowledge from the knowledge base."""
         knowledge = {
             "categories": list(self.knowledge_base.keys()),
@@ -571,7 +572,7 @@ class DSPyLearningAgent(dspy.Module if DSPY_AVAILABLE else object):
 
         return knowledge
 
-    def _process_patterns(self, extraction_result: Any) -> List[Dict[str, Any]]:
+    def _process_patterns(self, extraction_result: Any) -> List[Dict[str, JSONValue]]:
         """Process raw DSPy extraction result into patterns."""
         patterns = []
 
@@ -593,7 +594,7 @@ class DSPyLearningAgent(dspy.Module if DSPY_AVAILABLE else object):
 
         return patterns
 
-    def _process_learnings(self, consolidation_result: Any) -> List[Dict[str, Any]]:
+    def _process_learnings(self, consolidation_result: Any) -> List[Dict[str, JSONValue]]:
         """Process raw DSPy consolidation result into learnings."""
         learnings = []
 
@@ -611,7 +612,7 @@ class DSPyLearningAgent(dspy.Module if DSPY_AVAILABLE else object):
 
         return learnings
 
-    def _update_knowledge_base(self, learnings: List[Dict[str, Any]], context: LearningContext):
+    def _update_knowledge_base(self, learnings: List[Dict[str, JSONValue]], context: LearningContext):
         """Update internal knowledge base with new learnings."""
         for learning in learnings:
             try:
@@ -630,12 +631,12 @@ class DSPyLearningAgent(dspy.Module if DSPY_AVAILABLE else object):
             except Exception as e:
                 logger.error(f"Error updating knowledge base: {str(e)}")
 
-    def _is_related_learning(self, insight: Dict[str, Any], learning: ConsolidatedLearning) -> bool:
+    def _is_related_learning(self, insight: Dict[str, JSONValue], learning: ConsolidatedLearning) -> bool:
         """Check if an insight is related to an existing learning."""
         # Simple type matching - could be enhanced with semantic similarity
         return insight.get("type") in learning.tags
 
-    def get_learning_summary(self) -> Dict[str, Any]:
+    def get_learning_summary(self) -> Dict[str, JSONValue]:
         """Get a summary of the knowledge base."""
         return {
             "total_categories": len(self.knowledge_base),

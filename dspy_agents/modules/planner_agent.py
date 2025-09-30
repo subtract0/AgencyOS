@@ -8,6 +8,7 @@ following the spec-kit methodology and constitutional requirements.
 import os
 import logging
 from typing import Dict, List, Any, Optional, Tuple
+from shared.type_definitions.json import JSONValue
 from pathlib import Path
 import json
 from datetime import datetime
@@ -67,7 +68,7 @@ class Specification(BaseModel):
     goals: List[str] = Field(..., description="Specific, measurable objectives")
     non_goals: List[str] = Field(..., description="Explicit scope boundaries")
     personas: Dict[str, str] = Field(..., description="User personas and their needs")
-    user_journeys: List[Dict[str, Any]] = Field(..., description="Detailed use cases")
+    user_journeys: List[Dict[str, JSONValue]] = Field(..., description="Detailed use cases")
     acceptance_criteria: List[str] = Field(..., description="Testable success conditions")
     constraints: List[str] = Field(default_factory=list, description="Technical or business constraints")
     assumptions: List[str] = Field(default_factory=list, description="Planning assumptions")
@@ -81,13 +82,13 @@ class TechnicalPlan(BaseModel):
 
     plan_id: str = Field(..., description="Unique plan ID")
     spec_id: str = Field(..., description="Reference to specification")
-    architecture: Dict[str, Any] = Field(..., description="System design and components")
+    architecture: Dict[str, JSONValue] = Field(..., description="System design and components")
     agent_assignments: Dict[str, List[str]] = Field(..., description="Agent to task mapping")
     tool_requirements: List[str] = Field(..., description="Required tools")
-    contracts: Dict[str, Any] = Field(..., description="APIs and interfaces")
-    quality_strategy: Dict[str, Any] = Field(..., description="Testing and validation approach")
-    risk_assessment: List[Dict[str, Any]] = Field(..., description="Risks and mitigations")
-    milestones: List[Dict[str, Any]] = Field(..., description="Key milestones")
+    contracts: Dict[str, JSONValue] = Field(..., description="APIs and interfaces")
+    quality_strategy: Dict[str, JSONValue] = Field(..., description="Testing and validation approach")
+    risk_assessment: List[Dict[str, JSONValue]] = Field(..., description="Risks and mitigations")
+    milestones: List[Dict[str, JSONValue]] = Field(..., description="Key milestones")
     estimated_duration: str = Field(..., description="Total estimated time")
     dependencies: List[str] = Field(default_factory=list, description="External dependencies")
 
@@ -100,9 +101,9 @@ class PlanningContext(BaseModel):
     mode: str = Field("full", description="Planning mode: full, simple, guidance")
     existing_specs: List[str] = Field(default_factory=list, description="Existing specifications")
     existing_plans: List[str] = Field(default_factory=list, description="Existing plans")
-    codebase_context: Dict[str, Any] = Field(default_factory=dict, description="Current codebase state")
+    codebase_context: Dict[str, JSONValue] = Field(default_factory=dict, description="Current codebase state")
     constitutional_requirements: List[str] = Field(default_factory=list, description="Constitution articles to follow")
-    learning_patterns: List[Dict[str, Any]] = Field(default_factory=list, description="Relevant historical patterns")
+    learning_patterns: List[Dict[str, JSONValue]] = Field(default_factory=list, description="Relevant historical patterns")
 
 
 class PlanningResult(BaseModel):
@@ -113,7 +114,7 @@ class PlanningResult(BaseModel):
     requirement_type: RequirementType = Field(..., description="Classified requirement")
     specification: Optional[Specification] = Field(None, description="Generated specification if needed")
     technical_plan: Optional[TechnicalPlan] = Field(None, description="Generated technical plan")
-    tasks: List[Dict[str, Any]] = Field(default_factory=list, description="Task breakdown")
+    tasks: List[Dict[str, JSONValue]] = Field(default_factory=list, description="Task breakdown")
     guidance: Optional[str] = Field(None, description="Direct guidance for simple tasks")
     recommendations: List[str] = Field(default_factory=list, description="Planning recommendations")
     timestamp: datetime = Field(default_factory=datetime.utcnow)
@@ -178,7 +179,7 @@ class DSPyPlannerAgent(dspy.Module if DSPY_AVAILABLE else object):
             self.breakdown = self._fallback_breakdown
 
         # Planning history for learning
-        self.planning_history: List[Dict[str, Any]] = []
+        self.planning_history: List[Dict[str, JSONValue]] = []
 
         logger.info(f"DSPyPlannerAgent initialized with model={model}, DSPy available: {DSPY_AVAILABLE}")
 
@@ -507,7 +508,7 @@ class DSPyPlannerAgent(dspy.Module if DSPY_AVAILABLE else object):
         self,
         technical_plan: TechnicalPlan,
         specification: Specification
-    ) -> List[Dict[str, Any]]:
+    ) -> List[Dict[str, JSONValue]]:
         """Break down plan into executable tasks."""
         tasks = []
 
@@ -638,7 +639,7 @@ class DSPyPlannerAgent(dspy.Module if DSPY_AVAILABLE else object):
         self,
         requirement_type: RequirementType,
         personas: Dict[str, str]
-    ) -> List[Dict[str, Any]]:
+    ) -> List[Dict[str, JSONValue]]:
         """Create user journey maps."""
         journeys = []
 
@@ -708,7 +709,7 @@ class DSPyPlannerAgent(dspy.Module if DSPY_AVAILABLE else object):
 
         return list(set(tools))
 
-    def _assess_risks(self, specification: Specification) -> List[Dict[str, Any]]:
+    def _assess_risks(self, specification: Specification) -> List[Dict[str, JSONValue]]:
         """Assess project risks."""
         risks = []
 
@@ -789,7 +790,7 @@ class DSPyPlannerAgent(dspy.Module if DSPY_AVAILABLE else object):
             'estimated_duration': 100
         })()
 
-    def get_planning_summary(self) -> Dict[str, Any]:
+    def get_planning_summary(self) -> Dict[str, JSONValue]:
         """Get summary of planning history."""
         if not self.planning_history:
             return {"message": "No planning sessions yet"}

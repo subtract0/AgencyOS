@@ -17,6 +17,7 @@ import logging
 import traceback
 import subprocess
 from typing import Dict, List, Any, Optional, Tuple
+from shared.type_definitions.json import JSONValue
 from datetime import datetime
 from pathlib import Path
 
@@ -95,7 +96,7 @@ class ToolArtifact(BaseModel):
     file_path: str = Field(..., description="Path to the artifact")
     content: str = Field(..., description="Content of the artifact")
     status: str = Field(..., description="Status: created, tested, ready")
-    test_results: Optional[Dict[str, Any]] = Field(None, description="Test execution results")
+    test_results: Optional[Dict[str, JSONValue]] = Field(None, description="Test execution results")
 
 
 class DSPyToolsmithAgent(dspy.Module if DSPY_AVAILABLE else object):
@@ -144,8 +145,8 @@ class DSPyToolsmithAgent(dspy.Module if DSPY_AVAILABLE else object):
             self.handoff_preparer = None
 
         # Initialize pattern storage
-        self.successful_tools: List[Dict[str, Any]] = []
-        self.failed_attempts: List[Dict[str, Any]] = []
+        self.successful_tools: List[Dict[str, JSONValue]] = []
+        self.failed_attempts: List[Dict[str, JSONValue]] = []
 
         status = "with DSPy" if DSPY_AVAILABLE else "in fallback mode (DSPy not available)"
         logger.info(f"DSPyToolsmithAgent initialized {status} - model={model}, reasoning={reasoning_effort}")
@@ -153,7 +154,7 @@ class DSPyToolsmithAgent(dspy.Module if DSPY_AVAILABLE else object):
     def forward(
         self,
         directive: str,
-        context: Optional[Dict[str, Any]] = None,
+        context: Optional[Dict[str, JSONValue]] = None,
         **kwargs
     ) -> AgentResult:
         """
@@ -347,7 +348,7 @@ class DSPyToolsmithAgent(dspy.Module if DSPY_AVAILABLE else object):
         directive: str,
         existing_tools: List[str],
         constitutional_requirements: List[str]
-    ) -> Dict[str, Any]:
+    ) -> Dict[str, JSONValue]:
         """
         Parse a tool creation directive.
 
@@ -387,7 +388,7 @@ class DSPyToolsmithAgent(dspy.Module if DSPY_AVAILABLE else object):
                 "implementation_plan": ["Error parsing directive"]
             }
 
-    def _fallback_parse_directive(self, directive: str) -> Dict[str, Any]:
+    def _fallback_parse_directive(self, directive: str) -> Dict[str, JSONValue]:
         """Fallback directive parsing when DSPy is not available.
 
         CONSTITUTIONAL COMPLIANCE - Article II: 100% Verification
@@ -450,7 +451,7 @@ class DSPyToolsmithAgent(dspy.Module if DSPY_AVAILABLE else object):
         self,
         tool_name: str,
         tool_description: str,
-        parameters: List[Dict[str, Any]],
+        parameters: List[Dict[str, JSONValue]],
         base_patterns: Dict[str, str]
     ) -> Tuple[str, List[str], Optional[str]]:
         """
@@ -487,7 +488,7 @@ class DSPyToolsmithAgent(dspy.Module if DSPY_AVAILABLE else object):
         self,
         tool_name: str,
         tool_description: str,
-        parameters: List[Dict[str, Any]]
+        parameters: List[Dict[str, JSONValue]]
     ) -> Tuple[str, List[str]]:
         """Fallback tool scaffolding when DSPy is not available."""
         imports = [
@@ -507,7 +508,7 @@ class {tool_name}(BaseModel):
     {tool_description}
     """
 
-    def run(self, **kwargs) -> Dict[str, Any]:
+    def run(self, **kwargs) -> Dict[str, JSONValue]:
         """Execute the tool."""
         # Implementation required
         return {{"success": True, "result": "Not implemented"}}
@@ -574,7 +575,7 @@ def test_{tool_name.lower()}_run():
     assert result["success"] is True
 '''
 
-    def _prepare_context(self, context: Dict[str, Any]) -> ToolCreationContext:
+    def _prepare_context(self, context: Dict[str, JSONValue]) -> ToolCreationContext:
         """Prepare and validate the tool creation context."""
         try:
             # Set defaults
@@ -607,7 +608,7 @@ def test_{tool_name.lower()}_run():
         self,
         tool_name: str,
         tool_description: str,
-        parameters: List[Dict[str, Any]],
+        parameters: List[Dict[str, JSONValue]],
         context: ToolCreationContext,
         design_rationale: Optional[str] = None
     ) -> ToolArtifact:
@@ -658,7 +659,7 @@ def test_{tool_name.lower()}_run():
             status="created"
         )
 
-    def _run_tests(self, test_file: str) -> Dict[str, Any]:
+    def _run_tests(self, test_file: str) -> Dict[str, JSONValue]:
         """Run tests for a tool."""
         try:
             # Run pytest
@@ -696,8 +697,8 @@ def test_{tool_name.lower()}_run():
     def _prepare_handoff(
         self,
         artifacts: List[ToolArtifact],
-        test_results: Dict[str, Any]
-    ) -> Dict[str, Any]:
+        test_results: Dict[str, JSONValue]
+    ) -> Dict[str, JSONValue]:
         """Prepare artifacts for handoff to MergerAgent."""
         try:
             if not self.dspy_available or self.handoff_preparer is None:
@@ -718,8 +719,8 @@ def test_{tool_name.lower()}_run():
     def _fallback_prepare_handoff(
         self,
         artifacts: List[ToolArtifact],
-        test_results: Dict[str, Any]
-    ) -> Dict[str, Any]:
+        test_results: Dict[str, JSONValue]
+    ) -> Dict[str, JSONValue]:
         """Fallback handoff preparation."""
         return {
             "artifacts": [a.model_dump() for a in artifacts],
@@ -769,7 +770,7 @@ def test_{tool_name.lower()}_run():
         stop_words = {"the", "a", "an", "and", "or", "but", "in", "on", "at", "to", "for", "of", "with", "by"}
         return [w for w in words if w not in stop_words and len(w) > 2][:10]
 
-    def get_learning_summary(self) -> Dict[str, Any]:
+    def get_learning_summary(self) -> Dict[str, JSONValue]:
         """Get summary of learned patterns."""
         total = len(self.successful_tools) + len(self.failed_attempts)
         return {

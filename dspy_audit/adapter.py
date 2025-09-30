@@ -6,6 +6,7 @@ Provides seamless transition and fallback mechanisms.
 
 import traceback
 from typing import Any
+from shared.type_definitions.json import JSONValue
 
 from .config import get_config, get_flags, should_use_dspy
 from .modules import AuditRefactorModule
@@ -68,7 +69,7 @@ class AuditAdapter:
         max_fixes: int = 3,
         force_legacy: bool = False,
         force_dspy: bool = False,
-    ) -> dict[str, Any]:
+    ) -> dict[str, JSONValue]:
         """
         Run audit using appropriate system.
 
@@ -103,7 +104,7 @@ class AuditAdapter:
             return True
         return should_use_dspy()
 
-    def _run_dspy_audit(self, code_path: str, max_fixes: int) -> dict[str, Any]:
+    def _run_dspy_audit(self, code_path: str, max_fixes: int) -> dict[str, JSONValue]:
         """Run audit using DSPy system."""
         try:
             print(f"Running DSPy audit on {code_path}")
@@ -132,7 +133,7 @@ class AuditAdapter:
 
             return {"error": str(e), "system": "dspy"}
 
-    def _run_legacy_audit(self, code_path: str, max_fixes: int) -> dict[str, Any]:
+    def _run_legacy_audit(self, code_path: str, max_fixes: int) -> dict[str, JSONValue]:
         """Run audit using legacy system."""
         try:
             print(f"Running legacy audit on {code_path}")
@@ -161,7 +162,7 @@ class AuditAdapter:
             print(f"Legacy audit failed: {e}")
             return {"error": str(e), "system": "legacy"}
 
-    def _dspy_to_standard_format(self, dspy_result: dict) -> dict[str, Any]:
+    def _dspy_to_standard_format(self, dspy_result: dict) -> dict[str, JSONValue]:
         """Convert DSPy result to standard format."""
         standard_result = {
             "system": "dspy",
@@ -303,7 +304,7 @@ class AuditAdapter:
 
         return recommendations
 
-    def compare_systems(self, code_path: str) -> dict[str, Any]:
+    def compare_systems(self, code_path: str) -> dict[str, JSONValue]:
         """
         Run both systems and compare results.
 

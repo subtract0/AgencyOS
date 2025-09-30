@@ -16,6 +16,7 @@ import os
 import logging
 import traceback
 from typing import Dict, List, Any, Optional, Union
+from shared.type_definitions.json import JSONValue
 from datetime import datetime
 from pathlib import Path
 
@@ -71,7 +72,7 @@ class CodeTaskContext(BaseModel):
     current_directory: str = Field(..., description="Current working directory")
     git_branch: str = Field(default="main", description="Current git branch")
     session_id: str = Field(..., description="Unique session identifier")
-    agent_context: Optional[Dict[str, Any]] = Field(None, description="Agent context for memory")
+    agent_context: Optional[Dict[str, JSONValue]] = Field(None, description="Agent context for memory")
     constitutional_articles: List[str] = Field(default_factory=lambda: [
         "TDD is Mandatory - Write tests before implementation",
         "Strict Typing Always - Use concrete types, avoid Any",
@@ -135,8 +136,8 @@ class DSPyCodeAgent(dspy.Module if DSPY_AVAILABLE else object):
             self.task_executor = None
 
         # Initialize learned patterns storage
-        self.success_patterns: List[Dict[str, Any]] = []
-        self.failure_patterns: List[Dict[str, Any]] = []
+        self.success_patterns: List[Dict[str, JSONValue]] = []
+        self.failure_patterns: List[Dict[str, JSONValue]] = []
 
         status = "with DSPy" if DSPY_AVAILABLE else "in fallback mode (DSPy not available)"
         logger.info(f"DSPyCodeAgent initialized {status} - model={model}, reasoning={reasoning_effort}")
@@ -144,7 +145,7 @@ class DSPyCodeAgent(dspy.Module if DSPY_AVAILABLE else object):
     def forward(
         self,
         task_description: str,
-        context: Optional[Dict[str, Any]] = None,
+        context: Optional[Dict[str, JSONValue]] = None,
         **kwargs
     ) -> AgentResult:
         """
@@ -235,7 +236,7 @@ class DSPyCodeAgent(dspy.Module if DSPY_AVAILABLE else object):
     def plan_task(
         self,
         task: str,
-        context: Dict[str, Any],
+        context: Dict[str, JSONValue],
         constraints: Optional[List[str]] = None
     ) -> TaskPlan:
         """
@@ -283,7 +284,7 @@ class DSPyCodeAgent(dspy.Module if DSPY_AVAILABLE else object):
     def _fallback_plan_task(
         self,
         task: str,
-        context: Dict[str, Any],
+        context: Dict[str, JSONValue],
         constraints: Optional[List[str]] = None
     ) -> TaskPlan:
         """Fallback planning when DSPy is not available."""
@@ -322,7 +323,7 @@ class DSPyCodeAgent(dspy.Module if DSPY_AVAILABLE else object):
     def implement_plan(
         self,
         plan: TaskPlan,
-        context: Dict[str, Any],
+        context: Dict[str, JSONValue],
         quality_standards: Optional[List[str]] = None
     ) -> tuple[List[FileChange], List[TestSpecification], str]:
         """
@@ -363,7 +364,7 @@ class DSPyCodeAgent(dspy.Module if DSPY_AVAILABLE else object):
     def _fallback_implement_plan(
         self,
         plan: TaskPlan,
-        context: Dict[str, Any],
+        context: Dict[str, JSONValue],
         quality_standards: Optional[List[str]] = None
     ) -> tuple[List[FileChange], List[TestSpecification], str]:
         """Fallback implementation when DSPy is not available."""
@@ -375,7 +376,7 @@ class DSPyCodeAgent(dspy.Module if DSPY_AVAILABLE else object):
     def verify_implementation(
         self,
         implementation: AgentResult,
-        test_results: Dict[str, Any],
+        test_results: Dict[str, JSONValue],
         constitutional_checks: Optional[List[str]] = None
     ) -> VerificationResult:
         """
@@ -421,7 +422,7 @@ class DSPyCodeAgent(dspy.Module if DSPY_AVAILABLE else object):
     def _fallback_verify_implementation(
         self,
         implementation: AgentResult,
-        test_results: Dict[str, Any],
+        test_results: Dict[str, JSONValue],
         constitutional_checks: Optional[List[str]] = None
     ) -> VerificationResult:
         """Fallback verification when DSPy is not available."""
@@ -435,7 +436,7 @@ class DSPyCodeAgent(dspy.Module if DSPY_AVAILABLE else object):
             error_details=["DSPy not available - basic verification only"]
         )
 
-    def _prepare_context(self, context: Dict[str, Any]) -> CodeTaskContext:
+    def _prepare_context(self, context: Dict[str, JSONValue]) -> CodeTaskContext:
         """Prepare and validate the task context."""
         try:
             # Set defaults for required fields
@@ -459,7 +460,7 @@ class DSPyCodeAgent(dspy.Module if DSPY_AVAILABLE else object):
                 session_id=f"fallback_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
             )
 
-    def _get_historical_patterns(self, task_description: str) -> List[Dict[str, Any]]:
+    def _get_historical_patterns(self, task_description: str) -> List[Dict[str, JSONValue]]:
         """Extract relevant historical patterns for the current task."""
         # In a full implementation, this would query a vectorstore or database
         # For now, return relevant patterns from memory
@@ -473,7 +474,7 @@ class DSPyCodeAgent(dspy.Module if DSPY_AVAILABLE else object):
         # Limit to top 5 most relevant patterns
         return relevant_patterns[:5]
 
-    def _is_pattern_relevant(self, pattern: Dict[str, Any], task: str) -> bool:
+    def _is_pattern_relevant(self, pattern: Dict[str, JSONValue], task: str) -> bool:
         """Determine if a pattern is relevant to the current task."""
         # Simple keyword matching - could be enhanced with semantic similarity
         pattern_keywords = pattern.get("keywords", [])
@@ -620,7 +621,7 @@ class DSPyCodeAgent(dspy.Module if DSPY_AVAILABLE else object):
 
         return keywords[:10]  # Limit to top 10 keywords
 
-    def get_learning_summary(self) -> Dict[str, Any]:
+    def get_learning_summary(self) -> Dict[str, JSONValue]:
         """Get a summary of learned patterns."""
         return {
             "success_patterns_count": len(self.success_patterns),
@@ -631,7 +632,7 @@ class DSPyCodeAgent(dspy.Module if DSPY_AVAILABLE else object):
             "common_failure_tasks": self._get_common_task_types(self.failure_patterns),
         }
 
-    def _get_common_task_types(self, patterns: List[Dict[str, Any]]) -> Dict[str, int]:
+    def _get_common_task_types(self, patterns: List[Dict[str, JSONValue]]) -> Dict[str, int]:
         """Get frequency of task types in patterns."""
         task_counts = {}
         for pattern in patterns:

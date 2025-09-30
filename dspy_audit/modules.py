@@ -7,6 +7,7 @@ Implements the core logic using DSPy's modular architecture.
 import json
 from pathlib import Path
 from typing import Any
+from shared.type_definitions.json import JSONValue
 
 # Conditional DSPy import for gradual migration
 try:
@@ -85,7 +86,7 @@ class AuditRefactorModule(dspy.Module):
         max_fixes: int = 3,
         available_time: int = 30,
         auto_rollback: bool = True,
-    ) -> dict[str, Any]:
+    ) -> dict[str, JSONValue]:
         """
         Execute the complete audit and refactor pipeline.
 
