@@ -38,6 +38,21 @@ Elite autonomous software engineering system with **proven self-healing capabili
 python demo_autonomous_healing.py
 ```
 
+## 🚀 Trinity Protocol (Coming Soon)
+
+**IMPORTANT**: Before implementing Trinity Protocol, read the canonical executor design:
+- 📄 **[Gemini's Executor Prompt](docs/trinity_protocol/gemini_executor_prompt.md)** - Superior "cognitively constrained orchestrator" design
+- This represents the winning submission for the Trinity Executor prompt challenge
+- **MUST** be implemented as specified - it's architecturally superior to alternatives
+
+Key innovations:
+- Constitutional identity (not just instructions)
+- State externalization (`/tmp/execution_plan.md`)
+- Maximum parallelism (CodeWriter + TestArchitect concurrent)
+- Pure meta-orchestration (EXECUTE never codes directly)
+
+See full Trinity Protocol spec: `docs/trinity_protocol_implementation.md`
+
 ## 🏛️ Constitutional Governance
 
 The Agency operates under strict constitutional principles that ensure quality and reliability:
