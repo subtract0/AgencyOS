@@ -910,10 +910,10 @@ class TestSignalVerification:
 
         assert witness_agent._verify_signal(valid_signal) is True
 
-    def test_rejects_signal_with_integer_source_id(self, witness_agent):
-        """Agent validation requires source_id to be string, not int."""
-        # This documents current behavior where integer source_id fails validation
-        invalid_signal = Signal(
+    def test_accepts_signal_with_integer_source_id(self, witness_agent):
+        """Agent validation accepts integer source_id (MessageBus returns integers)."""
+        # MessageBus returns integer IDs, so validation must accept both str and int
+        valid_signal = Signal(
             priority="NORMAL",
             source="telemetry",
             pattern="test_pattern",
@@ -921,11 +921,11 @@ class TestSignalVerification:
             data={},
             summary="Test",
             timestamp=datetime.now().isoformat(),
-            source_id=123  # Integer instead of string
+            source_id=123  # Integer is now accepted
         )
 
-        # Currently fails validation
-        assert witness_agent._verify_signal(invalid_signal) is False
+        # Should accept integer source_id
+        assert witness_agent._verify_signal(valid_signal) is True
 
 
 # Publishing tests
