@@ -3,12 +3,19 @@ Tool Integration Test for Agency Code Agent
 Tests that tools can be invoked directly via the agent
 """
 
+import os
 import pytest
 from agency_swarm import Agency
 from agency_swarm.tools import SendMessageHandoff
 
 from agency_code_agent.agency_code_agent import create_agency_code_agent
 from planner_agent.planner_agent import create_planner_agent
+
+# CI skip marker for tests requiring OpenAI API
+ci_skip = pytest.mark.skipif(
+    os.environ.get("CI") == "true",
+    reason="Requires OpenAI API access not available in CI"
+)
 
 
 @pytest.fixture
@@ -85,6 +92,7 @@ def test_tool_count(agent):
     assert len(agent.tools) >= 10, "Agent should have at least 10 tools"
 
 
+@ci_skip
 @pytest.mark.timeout(30)  # 30 second timeout for API calls
 @pytest.mark.asyncio
 async def test_handoff_coder_to_planner_via_agency():

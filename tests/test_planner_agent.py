@@ -15,6 +15,12 @@ from planner_agent.planner_agent import create_planner_agent
 # Load environment variables
 load_dotenv()
 
+# CI skip marker for tests requiring OpenAI API
+ci_skip = pytest.mark.skipif(
+    os.environ.get("CI") == "true",
+    reason="Requires OpenAI API access not available in CI"
+)
+
 
 @pytest.fixture(autouse=True)
 def cleanup_fib():
@@ -97,6 +103,7 @@ def ambiguous_queries():
 
 @pytest.mark.timeout(30)  # 30 second timeout for API calls
 @pytest.mark.asyncio
+@ci_skip
 async def test_planner_asks_clarifying_questions_vague_auth(planner_agency):
     """Test that planner asks questions for vague authentication request"""
     query = "Add authentication to the app"
@@ -167,6 +174,7 @@ async def test_planner_asks_clarifying_questions_vague_auth(planner_agency):
 
 @pytest.mark.timeout(30)  # 30 second timeout for API calls
 @pytest.mark.asyncio
+@ci_skip
 async def test_planner_asks_about_missing_context(planner_agency):
     """Test that planner asks for context when request lacks information"""
     query = "Fix the bug"
@@ -200,6 +208,7 @@ async def test_planner_asks_about_missing_context(planner_agency):
 
 @pytest.mark.timeout(30)  # 30 second timeout for API calls
 @pytest.mark.asyncio
+@ci_skip
 async def test_planner_asks_about_incomplete_requirements(planner_agency):
     """Test that planner asks for complete requirements"""
     query = "Create a database"
@@ -313,6 +322,7 @@ async def test_planner_comprehensive_question_behavior(
 
 @pytest.mark.timeout(30)  # 30 second timeout for API calls
 @pytest.mark.asyncio
+@ci_skip
 async def test_planner_with_clear_requirements_minimal_questions(planner_agency):
     """Test that planner doesn't over-question when requirements are clear"""
     clear_query = (
