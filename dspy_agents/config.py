@@ -89,11 +89,14 @@ class DSPyConfig:
             logger.info(f"Initializing DSPy with model: {model_name}")
 
             # Create LM instance with proper configuration
+            # Set temperature to 1 for gpt-4o models (they don't support other values)
+            temperature = 1.0 if "gpt-4o" in model_name else 0.7
+
             lm = LM(
                 model=model_name,
                 api_key=api_key,
                 max_tokens=4096,
-                temperature=0.7,
+                temperature=temperature,
                 cache=True  # Enable caching for efficiency
             )
 

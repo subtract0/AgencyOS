@@ -2,12 +2,23 @@ import json
 import os
 import time
 from pathlib import Path
+import tempfile
+import pytest
 
 from tools.context_handoff import ContextMessageHandoff
 from tools.handoff_context_read import HandoffContextRead
 
 
-def test_handoff_context_read_returns_latest_record():
+@pytest.fixture
+def isolated_handoff_dir(monkeypatch):
+    """Create an isolated temporary directory for handoff tests."""
+    with tempfile.TemporaryDirectory() as tmpdir:
+        # Change to temp directory to isolate file operations
+        monkeypatch.chdir(tmpdir)
+        yield tmpdir
+
+
+def test_handoff_context_read_returns_latest_record(isolated_handoff_dir):
     # Create two handoffs for the same target
     t1 = ContextMessageHandoff(
         target_agent="PlannerAgent",

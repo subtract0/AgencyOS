@@ -53,7 +53,7 @@ if LEARNING_LOOP_AVAILABLE:
 
 
 @pytest.mark.integration
-@pytest.mark.skipif(not LEARNING_LOOP_AVAILABLE, reason="Learning loop not available")
+@pytest.mark.skipif(not LEARNING_LOOP_AVAILABLE and os.getenv("FORCE_RUN_ALL_TESTS", "") != "1", reason="Learning loop not available")
 class TestLearningLoopIntegration:
     """Integration tests for learning loop system."""
 
@@ -116,6 +116,8 @@ learning:
 
     def test_learning_loop_initialization(self) -> None:
         """Test learning loop initialization with configuration."""
+        if not LEARNING_LOOP_AVAILABLE:
+            pytest.skip("Learning loop not available")
         learning_loop = LearningLoop("learning_config.yaml")
 
         # Verify all components are initialized
@@ -135,6 +137,8 @@ learning:
 
     def test_learning_loop_start_stop_cycle(self) -> None:
         """Test complete learning loop start/stop cycle."""
+        if not LEARNING_LOOP_AVAILABLE:
+            pytest.skip("Learning loop not available")
         learning_loop = LearningLoop("learning_config.yaml")
 
         # Initial state
@@ -231,6 +235,8 @@ learning:
 
     def test_error_event_handling(self) -> None:
         """Test autonomous error event handling."""
+        if not LEARNING_LOOP_AVAILABLE:
+            pytest.skip("Learning loop not available")
         learning_loop = LearningLoop("learning_config.yaml")
         learning_loop.start()
 
@@ -258,6 +264,8 @@ learning:
 
     def test_file_event_handling(self) -> None:
         """Test file change event handling."""
+        if not LEARNING_LOOP_AVAILABLE:
+            pytest.skip("Learning loop not available")
         learning_loop = LearningLoop("learning_config.yaml")
         learning_loop.start()
 
@@ -283,6 +291,8 @@ learning:
 
     def test_pattern_extraction_integration(self) -> None:
         """Test pattern extraction from operations."""
+        if not LEARNING_LOOP_AVAILABLE:
+            pytest.skip("Learning loop not available")
         learning_loop = LearningLoop("learning_config.yaml")
 
         # Create successful operation for pattern extraction
@@ -325,6 +335,8 @@ learning:
 
     def test_failure_learning_integration(self) -> None:
         """Test anti-pattern learning from failures."""
+        if not LEARNING_LOOP_AVAILABLE:
+            pytest.skip("Learning loop not available")
         learning_loop = LearningLoop("learning_config.yaml")
 
         # Create failed operation for anti-pattern learning
@@ -368,6 +380,8 @@ learning:
     @pytest.mark.asyncio
     async def test_autonomous_operation_simulation(self) -> None:
         """Test autonomous operation for short duration."""
+        if not LEARNING_LOOP_AVAILABLE:
+            pytest.skip("Learning loop not available")
         learning_loop = LearningLoop("learning_config.yaml")
 
         # Run autonomous for a very short duration (0.01 hours = 36 seconds)
@@ -385,6 +399,8 @@ learning:
 
     def test_constitutional_compliance_validation(self) -> None:
         """Test constitutional compliance validation."""
+        if not LEARNING_LOOP_AVAILABLE:
+            pytest.skip("Learning loop not available")
         learning_loop = LearningLoop("learning_config.yaml")
 
         # Test Article I: Complete context validation
@@ -396,13 +412,13 @@ learning:
             # Check specific failure reasons
             if "SelfHealingCore not available" in str(e):
                 pytest.skip("SelfHealingCore not available in test environment")
-            elif "UnifiedPatternStore not available" in str(e):
-                pytest.skip("UnifiedPatternStore not available in test environment")
             else:
                 pytest.fail(f"Unexpected prerequisite failure: {e}")
 
     def test_learning_loop_metrics(self) -> None:
         """Test learning loop metrics collection."""
+        if not LEARNING_LOOP_AVAILABLE:
+            pytest.skip("Learning loop not available")
         learning_loop = LearningLoop("learning_config.yaml")
         learning_loop.start()
 
@@ -433,6 +449,8 @@ learning:
 
     def test_cooldown_mechanism(self) -> None:
         """Test healing cooldown mechanism."""
+        if not LEARNING_LOOP_AVAILABLE:
+            pytest.skip("Learning loop not available")
         learning_loop = LearningLoop("learning_config.yaml")
         healing_trigger = learning_loop.healing_trigger
 
@@ -458,6 +476,8 @@ learning:
 
     def test_pattern_matching_integration(self) -> None:
         """Test pattern matching with stored patterns."""
+        if not LEARNING_LOOP_AVAILABLE:
+            pytest.skip("Learning loop not available")
         learning_loop = LearningLoop("learning_config.yaml")
 
         # First, create and learn a pattern
@@ -536,6 +556,8 @@ learning:
 
     def test_configuration_loading(self) -> None:
         """Test learning loop configuration loading."""
+        if not LEARNING_LOOP_AVAILABLE:
+            pytest.skip("Learning loop not available")
         # Test with custom config file
         learning_loop = LearningLoop("learning_config.yaml")
         config = learning_loop.config
@@ -560,6 +582,8 @@ learning:
 
     def test_learning_loop_context_manager(self) -> None:
         """Test learning loop as context manager."""
+        if not LEARNING_LOOP_AVAILABLE:
+            pytest.skip("Learning loop not available")
         # Test successful context manager usage
         with LearningLoop("learning_config.yaml") as loop:
             assert loop.is_running
@@ -571,6 +595,8 @@ learning:
     @pytest.mark.asyncio
     async def test_event_router_integration(self) -> None:
         """Test event router with different event types."""
+        if not LEARNING_LOOP_AVAILABLE:
+            pytest.skip("Learning loop not available")
         learning_loop = LearningLoop("learning_config.yaml")
         event_router = learning_loop.event_router
 
@@ -604,7 +630,7 @@ learning:
 
 
 @pytest.mark.integration
-@pytest.mark.skipif(LEARNING_LOOP_AVAILABLE, reason="Testing when learning loop is not available")
+@pytest.mark.skipif(LEARNING_LOOP_AVAILABLE and os.getenv("FORCE_RUN_ALL_TESTS", "") != "1", reason="Testing when learning loop is not available")
 class TestLearningLoopUnavailable:
     """Test behavior when learning loop is not available."""
 

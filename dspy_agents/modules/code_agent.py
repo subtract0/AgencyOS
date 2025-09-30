@@ -54,7 +54,7 @@ from ..signatures.base import (
     ImplementationSignature,
     VerificationSignature,
     FileChange,
-    TestCase,
+    TestSpecification,
     VerificationResult,
     AgentResult,
     TaskPlan,
@@ -324,7 +324,7 @@ class DSPyCodeAgent(dspy.Module if DSPY_AVAILABLE else object):
         plan: TaskPlan,
         context: Dict[str, Any],
         quality_standards: Optional[List[str]] = None
-    ) -> tuple[List[FileChange], List[TestCase], str]:
+    ) -> tuple[List[FileChange], List[TestSpecification], str]:
         """
         Implement code changes based on a plan.
 
@@ -365,7 +365,7 @@ class DSPyCodeAgent(dspy.Module if DSPY_AVAILABLE else object):
         plan: TaskPlan,
         context: Dict[str, Any],
         quality_standards: Optional[List[str]] = None
-    ) -> tuple[List[FileChange], List[TestCase], str]:
+    ) -> tuple[List[FileChange], List[TestSpecification], str]:
         """Fallback implementation when DSPy is not available."""
         notes = f"DSPy not available. Plan contains {len(plan.steps)} steps. " \
                f"Manual implementation required following Agency constitutional principles."
@@ -507,7 +507,7 @@ class DSPyCodeAgent(dspy.Module if DSPY_AVAILABLE else object):
             validated_tests = []
             for test in tests_added:
                 if isinstance(test, dict):
-                    validated_tests.append(TestCase(**test))
+                    validated_tests.append(TestSpecification(**test))
                 elif hasattr(test, 'model_dump'):
                     validated_tests.append(test)
                 else:

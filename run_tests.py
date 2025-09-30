@@ -164,6 +164,10 @@ def main(test_mode: str = "unit", fast_only: bool = False, timed: bool = False) 
         "-n", "auto",  # Parallel execution with pytest-xdist
     ]
 
+    # Prepare environment variables
+    env = os.environ.copy()
+    env["AGENCY_NESTED_TEST"] = "1"
+
     # Add marker selection based on test mode
     if test_mode == "unit":
         if fast_only:
@@ -180,13 +184,17 @@ def main(test_mode: str = "unit", fast_only: bool = False, timed: bool = False) 
         pytest_args.extend(["-m", "benchmark"])
     elif test_mode == "github":
         pytest_args.extend(["-m", "github"])
-    # For "all" mode, no marker filtering is applied
+    elif test_mode == "all":
+        # For "all" mode, force running ALL tests including skipped ones
+        pytest_args.extend(["--runxfail", "-p", "no:warnings"])
+        # Set environment variables to force-enable all conditional skips
+        env["FORCE_RUN_ALL_TESTS"] = "1"
+        env["AGENCY_SKIP_GIT"] = "0"
+        print("🚀 FORCE MODE: Running ALL tests including normally skipped ones")
+        print("   This will make real API calls and may incur costs")
+    # Default: no marker filtering is applied
 
     try:
-        # Set environment variable to prevent nested test runs
-        env = os.environ.copy()
-        env["AGENCY_NESTED_TEST"] = "1"
-
         # Add timeout for safety (600 seconds for all test modes to prevent timeouts)
         # Allow override from environment for CI environments
         default_timeout = 600  # 10 minutes for all test modes
