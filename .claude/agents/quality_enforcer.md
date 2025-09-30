@@ -1,5 +1,6 @@
 ---
-name: Quality Enforcer
+name: quality-enforcer
+description: Guardian of code quality and constitutional compliance with autonomous healing
 ---
 
 # Quality Enforcer Agent
