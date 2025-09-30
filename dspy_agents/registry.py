@@ -7,6 +7,7 @@ enabling gradual migration and A/B testing capabilities.
 
 import logging
 from typing import Dict, Any, Optional, Type, Callable, List
+from .type_definitions import AgentMetadata, PerformanceMetrics
 from enum import Enum
 import importlib
 import os
@@ -40,7 +41,7 @@ class AgentRegistry:
         """Initialize the agent registry."""
         self._dspy_agents: Dict[str, Type] = {}
         self._legacy_agents: Dict[str, Callable] = {}
-        self._agent_metadata: Dict[str, Dict[str, Any]] = {}
+        self._agent_metadata: Dict[str, AgentMetadata] = {}
         self._initialized = False
         self._fallback_enabled = True
 
@@ -249,7 +250,7 @@ class AgentRegistry:
 
         return creator_func(**kwargs)
 
-    def list_agents(self, agent_type: Optional[str] = None) -> List[Dict[str, Any]]:
+    def list_agents(self, agent_type: Optional[str] = None) -> List[AgentMetadata]:
         """
         List available agents with their metadata.
 
@@ -287,7 +288,7 @@ class AgentRegistry:
 
         return agents
 
-    def get_agent_metadata(self, name: str) -> Dict[str, Any]:
+    def get_agent_metadata(self, name: str) -> AgentMetadata:
         """
         Get metadata for a specific agent.
 
@@ -313,7 +314,7 @@ class AgentRegistry:
     def update_agent_metadata(
         self,
         name: str,
-        metadata: Dict[str, Any],
+        metadata: AgentMetadata,
         merge: bool = True
     ) -> None:
         """
@@ -335,7 +336,7 @@ class AgentRegistry:
         self,
         name: str,
         agent_class: Type,
-        metadata: Optional[Dict[str, Any]] = None
+        metadata: Optional[AgentMetadata] = None
     ) -> None:
         """
         Register a new DSPy agent.
@@ -364,7 +365,7 @@ class AgentRegistry:
         self,
         name: str,
         creator_func: Callable,
-        metadata: Optional[Dict[str, Any]] = None
+        metadata: Optional[AgentMetadata] = None
     ) -> None:
         """
         Register a new legacy agent.
@@ -389,7 +390,7 @@ class AgentRegistry:
 
         logger.info(f"Registered legacy agent: {agent_name}")
 
-    def get_performance_metrics(self) -> Dict[str, Any]:
+    def get_performance_metrics(self) -> PerformanceMetrics:
         """
         Get performance metrics for all agents.
 
@@ -456,7 +457,7 @@ def create_agent(name: str, **kwargs) -> Any:
     return registry.get_agent(name, **kwargs)
 
 
-def list_available_agents() -> List[Dict[str, Any]]:
+def list_available_agents() -> List[AgentMetadata]:
     """
     List all available agents in the system.
 

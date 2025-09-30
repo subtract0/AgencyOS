@@ -6,6 +6,7 @@ Allows gradual migration from legacy to DSPy-based system.
 
 import os
 from typing import Any
+from .type_definitions import ConfigDict
 
 
 class AuditConfig:
@@ -67,7 +68,7 @@ class AuditConfig:
         }
 
     @staticmethod
-    def get_audit_config() -> dict[str, Any]:
+    def get_audit_config() -> ConfigDict:
         """
         Get complete audit configuration.
 
@@ -215,7 +216,7 @@ class AuditConfig:
 audit_config = AuditConfig()
 
 
-def get_config() -> dict[str, Any]:
+def get_config() -> ConfigDict:
     """Get the audit configuration."""
     return audit_config.get_audit_config()
 

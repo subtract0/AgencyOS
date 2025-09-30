@@ -82,6 +82,254 @@ class LearningContext(TypedDict, total=False):
     knowledge_base_updated: bool
 
 
+class AgentMetadata(TypedDict, total=False):
+    """Type-safe agent metadata."""
+    type: str
+    version: str
+    capabilities: List[str]
+    status: str
+    performance_score: float
+    usage_count: int
+    last_used: Optional[str]
+    description: Optional[str]
+    author: Optional[str]
+    dependencies: List[str]
+
+
+class PerformanceMetrics(TypedDict, total=False):
+    """Type-safe performance metrics."""
+    total_agents: int
+    dspy_agents: int
+    legacy_agents: int
+    fallback_count: int
+    agent_usage: dict
+    average_performance: float
+
+
+class TaskDict(TypedDict, total=False):
+    """Type-safe task dictionary."""
+    id: str
+    name: str
+    description: str
+    status: str
+    priority: int
+    agent: Optional[str]
+    dependencies: List[str]
+    estimated_time: Optional[float]
+    actual_time: Optional[float]
+    result: Optional[str]
+
+
+class PatternDict(TypedDict, total=False):
+    """Type-safe pattern dictionary."""
+    id: str
+    type: str
+    name: str
+    description: str
+    confidence: float
+    frequency: int
+    examples: List[str]
+    metadata: dict
+
+
+class ToolParameterDict(TypedDict, total=False):
+    """Type-safe tool parameter dictionary."""
+    name: str
+    type: str
+    description: str
+    required: bool
+    default: Optional[Union[str, int, float, bool]]
+
+
+class ArtifactDict(TypedDict, total=False):
+    """Type-safe artifact dictionary."""
+    id: str
+    type: str
+    name: str
+    path: str
+    content: Optional[str]
+    created_at: str
+    metadata: dict
+
+
+class HandoffPackageDict(TypedDict, total=False):
+    """Type-safe handoff package dictionary."""
+    artifacts: List[ArtifactDict]
+    test_results: dict
+    integration_notes: str
+    summary: str
+    next_steps: List[str]
+
+
+class CoordinationPlanDict(TypedDict, total=False):
+    """Type-safe coordination plan dictionary."""
+    strategy: str
+    agents: List[str]
+    timeline: dict
+    checkpoints: List[str]
+    communication_protocol: dict
+
+
+class ToolTestResults(TypedDict, total=False):
+    """Type-safe tool test results."""
+    passed: int
+    failed: int
+    test_names: List[str]
+    error_messages: List[str]
+    coverage: Optional[float]
+    execution_time: float
+
+
+class SuccessfulTool(TypedDict, total=False):
+    """Type-safe successful tool record."""
+    name: str
+    path: str
+    created_at: str
+    test_status: str
+    quality_score: float
+
+
+class FailedAttempt(TypedDict, total=False):
+    """Type-safe failed attempt record."""
+    name: str
+    error: str
+    timestamp: str
+    context: dict
+
+
+class LearningMetrics(TypedDict, total=False):
+    """Type-safe learning metrics."""
+    successful_tools: List[dict]
+    failed_attempts: List[dict]
+    total_attempts: int
+    success_rate: float
+    common_failures: List[str]
+
+
+class ToolDirective(TypedDict, total=False):
+    """Type-safe tool directive."""
+    name: str
+    description: str
+    parameters: List[ToolParameterDict]
+    returns: str
+    requirements: List[str]
+
+
+class UserJourney(TypedDict, total=False):
+    """Type-safe user journey."""
+    name: str
+    description: str
+    steps: List[str]
+    expected_outcome: str
+
+
+class Architecture(TypedDict, total=False):
+    """Type-safe architecture definition."""
+    components: List[str]
+    interactions: dict
+    patterns: List[str]
+    technologies: List[str]
+
+
+class Contract(TypedDict, total=False):
+    """Type-safe contract definition."""
+    name: str
+    type: str
+    interface: dict
+    validation: List[str]
+
+
+class QualityStrategy(TypedDict, total=False):
+    """Type-safe quality strategy."""
+    testing_approach: str
+    coverage_targets: dict
+    validation_methods: List[str]
+    acceptance_criteria: List[str]
+
+
+class Risk(TypedDict, total=False):
+    """Type-safe risk assessment."""
+    type: str
+    description: str
+    likelihood: str
+    impact: str
+    mitigation: str
+
+
+class Milestone(TypedDict, total=False):
+    """Type-safe milestone."""
+    name: str
+    deliverables: List[str]
+    deadline: Optional[str]
+    dependencies: List[str]
+
+
+class PlanningSummary(TypedDict, total=False):
+    """Type-safe planning summary."""
+    total_specs: int
+    total_plans: int
+    successful_implementations: int
+    failed_attempts: int
+    average_task_count: float
+    planning_patterns: List[dict]
+
+
+class SessionData(TypedDict, total=False):
+    """Type-safe session data."""
+    session_id: str
+    start_time: str
+    end_time: Optional[str]
+    events: List[dict]
+    metrics: dict
+
+
+class Insight(TypedDict, total=False):
+    """Type-safe insight."""
+    type: str
+    description: str
+    confidence: float
+    evidence: List[str]
+    applications: List[str]
+
+
+class LearningSummary(TypedDict, total=False):
+    """Type-safe learning summary."""
+    total_sessions: int
+    patterns_extracted: int
+    learnings_consolidated: int
+    knowledge_updates: int
+    confidence_average: float
+    top_patterns: List[dict]
+
+
+class SuccessPattern(TypedDict, total=False):
+    """Type-safe success pattern."""
+    task: str
+    solution: str
+    outcome: str
+    confidence: float
+    timestamp: str
+
+
+class FailurePattern(TypedDict, total=False):
+    """Type-safe failure pattern."""
+    task: str
+    error: str
+    cause: str
+    resolution: Optional[str]
+    timestamp: str
+
+
+class CodeLearning(TypedDict, total=False):
+    """Type-safe code learning summary."""
+    total_tasks: int
+    success_rate: float
+    common_task_types: dict
+    success_patterns: List[dict]
+    failure_patterns: List[dict]
+    improvements_suggested: List[str]
+
+
 # Union type for all contexts
 Context = Union[
     DSPyContext,
@@ -105,4 +353,30 @@ __all__ = [
     "AuditContext",
     "LearningContext",
     "Context",
+    "AgentMetadata",
+    "PerformanceMetrics",
+    "TaskDict",
+    "PatternDict",
+    "ToolParameterDict",
+    "ArtifactDict",
+    "HandoffPackageDict",
+    "CoordinationPlanDict",
+    "ToolTestResults",
+    "SuccessfulTool",
+    "FailedAttempt",
+    "LearningMetrics",
+    "ToolDirective",
+    "UserJourney",
+    "Architecture",
+    "Contract",
+    "QualityStrategy",
+    "Risk",
+    "Milestone",
+    "PlanningSummary",
+    "SessionData",
+    "Insight",
+    "LearningSummary",
+    "SuccessPattern",
+    "FailurePattern",
+    "CodeLearning",
 ]

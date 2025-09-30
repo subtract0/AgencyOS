@@ -6,6 +6,7 @@ Provides seamless transition and fallback mechanisms.
 
 import traceback
 from typing import Any
+from .type_definitions import AuditResultDict
 
 from .config import get_config, get_flags, should_use_dspy
 from .modules import AuditRefactorModule
@@ -68,7 +69,7 @@ class AuditAdapter:
         max_fixes: int = 3,
         force_legacy: bool = False,
         force_dspy: bool = False,
-    ) -> dict[str, Any]:
+    ) -> AuditResultDict:
         """
         Run audit using appropriate system.
 

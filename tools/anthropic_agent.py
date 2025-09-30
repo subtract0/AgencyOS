@@ -18,7 +18,7 @@ Secrets:
 from __future__ import annotations
 
 import os
-from typing import Any, Dict, Optional
+from typing import Any, Optional, TypedDict, Union
 
 try:
     # Import is optional until enabled
@@ -42,13 +42,26 @@ def _parse_setting_sources(raw: str) -> list[str]:
     return [part.strip() for part in raw.split(",") if part.strip()]
 
 
-def get_options_config() -> Dict[str, Any]:
+class SystemPromptConfig(TypedDict, total=False):
+    """System prompt configuration."""
+    type: str
+    preset: str
+
+
+class AgentOptions(TypedDict, total=False):
+    """Claude Agent SDK options configuration."""
+    model: str
+    systemPrompt: Union[str, SystemPromptConfig]
+    settingSources: list[str]
+
+
+def get_options_config() -> AgentOptions:
     """Build a plain dict of options for the Claude Agent SDK.
 
     We avoid relying on the SDK's typed classes here so this function
     remains importable even if the SDK isn't installed yet.
     """
-    cfg: Dict[str, Any] = {}
+    cfg: AgentOptions = {}
 
     # Model
     cfg["model"] = os.getenv("CLAUDE_AGENT_MODEL", "claude-sonnet-4-5")
@@ -69,7 +82,7 @@ def get_options_config() -> Dict[str, Any]:
     return cfg
 
 
-def query_agent(prompt: str, extra_options: Optional[Dict[str, Any]] = None) -> Any:
+def query_agent(prompt: str, extra_options: Optional[AgentOptions] = None) -> Any:
     """Execute a simple query via the Claude Agent SDK when enabled.
 
     - Respects agent_enabled() flag
@@ -86,7 +99,7 @@ def query_agent(prompt: str, extra_options: Optional[Dict[str, Any]] = None) -> 
             "claude-agent-sdk is not installed. Ensure requirements are installed."
         )
 
-    options: Dict[str, Any] = get_options_config()
+    options: AgentOptions = get_options_config()
     if extra_options:
         options.update(extra_options)
 

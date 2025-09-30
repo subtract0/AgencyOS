@@ -28,6 +28,11 @@ except ImportError:
 
 from typing import List, Dict, Any, Optional
 from pydantic import BaseModel, Field
+from ..type_definitions import (
+    DSPyContext, TestResults, TaskDict, PatternDict,
+    ToolParameterDict, ArtifactDict, HandoffPackageDict,
+    CoordinationPlanDict
+)
 from datetime import datetime
 
 
@@ -95,8 +100,8 @@ if DSPY_AVAILABLE:
         """Execute a code engineering task following Agency standards."""
 
         task_description: str = dspy.InputField(desc="The task to perform")
-        context: Dict[str, Any] = dspy.InputField(desc="Repository and system context")
-        historical_patterns: List[Dict[str, Any]] = dspy.InputField(desc="Previously successful patterns")
+        context: DSPyContext = dspy.InputField(desc="Repository and system context")
+        historical_patterns: List[PatternDict] = dspy.InputField(desc="Previously successful patterns")
         constitutional_requirements: List[str] = dspy.InputField(desc="Constitutional requirements to follow")
 
         implementation_rationale: str = dspy.OutputField(desc="Step-by-step reasoning for the implementation approach, design decisions, and trade-offs considered")
@@ -110,7 +115,7 @@ if DSPY_AVAILABLE:
         """Create a detailed plan for a development task."""
 
         task: str = dspy.InputField(desc="Task to plan")
-        context: Dict[str, Any] = dspy.InputField(desc="Current system state and context")
+        context: DSPyContext = dspy.InputField(desc="Current system state and context")
         constraints: List[str] = dspy.InputField(desc="Constraints and requirements")
 
         plan: TaskPlan = dspy.OutputField(desc="Detailed execution plan")
@@ -134,7 +139,7 @@ if DSPY_AVAILABLE:
         """Verify that implementation meets all requirements."""
 
         implementation: AgentResult = dspy.InputField(desc="Implementation to verify")
-        test_results: Dict[str, Any] = dspy.InputField(desc="Results from running tests")
+        test_results: TestResults = dspy.InputField(desc="Results from running tests")
         constitutional_checks: List[str] = dspy.InputField(desc="Constitutional requirements to verify")
 
         verification_rationale: str = dspy.OutputField(desc="Explanation of verification approach, checks performed, confidence assessment, and reasoning for pass/fail decisions")
@@ -151,7 +156,7 @@ if DSPY_AVAILABLE:
 
         code_paths: List[str] = dspy.InputField(desc="Paths to analyze")
         audit_criteria: List[str] = dspy.InputField(desc="Criteria to audit against")
-        necessary_patterns: Dict[str, Any] = dspy.InputField(desc="NECESSARY patterns to check")
+        necessary_patterns: PatternDict = dspy.InputField(desc="NECESSARY patterns to check")
 
         audit_rationale: str = dspy.OutputField(desc="Reasoning behind audit findings, pattern detection logic, severity assessments, and compliance scoring methodology")
         findings: List[AuditFinding] = dspy.OutputField(desc="Audit findings")
@@ -162,11 +167,11 @@ if DSPY_AVAILABLE:
     class PrioritizationSignature(dspy.Signature):
         """Prioritize findings or tasks based on impact."""
 
-        items: List[Dict[str, Any]] = dspy.InputField(desc="Items to prioritize")
+        items: List[TaskDict] = dspy.InputField(desc="Items to prioritize")
         criteria: List[str] = dspy.InputField(desc="Prioritization criteria")
-        context: Dict[str, Any] = dspy.InputField(desc="Current system context")
+        context: DSPyContext = dspy.InputField(desc="Current system context")
 
-        prioritized_items: List[Dict[str, Any]] = dspy.OutputField(desc="Items in priority order")
+        prioritized_items: List[TaskDict] = dspy.OutputField(desc="Items in priority order")
         prioritization_rationale: str = dspy.OutputField(desc="Explanation of prioritization")
 
 
@@ -174,12 +179,12 @@ if DSPY_AVAILABLE:
         """Generate a comprehensive report from analysis."""
 
         findings: List[AuditFinding] = dspy.InputField(desc="Findings to report")
-        context: Dict[str, Any] = dspy.InputField(desc="Context for the report")
+        context: DSPyContext = dspy.InputField(desc="Context for the report")
         report_format: str = dspy.InputField(desc="Format for report: markdown, json, html")
 
         report_rationale: str = dspy.OutputField(desc="Reasoning for report structure, metric selection, and prioritization of recommendations")
         report: str = dspy.OutputField(desc="Generated report")
-        key_metrics: Dict[str, Any] = dspy.OutputField(desc="Key metrics from analysis")
+        key_metrics: dict = dspy.OutputField(desc="Key metrics from analysis")
         recommendations: List[str] = dspy.OutputField(desc="Top recommendations")
 
 
@@ -191,7 +196,7 @@ if DSPY_AVAILABLE:
         """Understand and analyze a feature request or task."""
 
         request: str = dspy.InputField(desc="User request or task description")
-        existing_context: Dict[str, Any] = dspy.InputField(desc="Current system state")
+        existing_context: DSPyContext = dspy.InputField(desc="Current system state")
         clarifying_questions: List[str] = dspy.InputField(desc="Questions to help understanding")
 
         understanding_rationale: str = dspy.OutputField(desc="Reasoning for interpretation, assumption derivation, and risk identification process")
@@ -205,7 +210,7 @@ if DSPY_AVAILABLE:
 
         understanding: str = dspy.InputField(desc="Understanding of the task")
         constraints: List[str] = dspy.InputField(desc="Technical and business constraints")
-        available_resources: Dict[str, Any] = dspy.InputField(desc="Available agents and tools")
+        available_resources: dict = dspy.InputField(desc="Available agents and tools")
 
         strategy_rationale: str = dspy.OutputField(desc="Reasoning for strategic approach, milestone selection, and success measurement methodology")
         strategy: str = dspy.OutputField(desc="Implementation strategy")
@@ -221,7 +226,7 @@ if DSPY_AVAILABLE:
         dependencies: List[str] = dspy.InputField(desc="Task dependencies")
 
         breakdown_rationale: str = dspy.OutputField(desc="Reasoning for task decomposition, sequencing, agent assignments, and time estimates")
-        tasks: List[Dict[str, Any]] = dspy.OutputField(desc="Granular tasks")
+        tasks: List[TaskDict] = dspy.OutputField(desc="Granular tasks")
         task_dependencies: Dict[str, List[str]] = dspy.OutputField(desc="Task dependency graph")
         estimated_duration: int = dspy.OutputField(desc="Total estimated duration in seconds")
 
@@ -233,34 +238,34 @@ if DSPY_AVAILABLE:
     class PatternExtractionSignature(dspy.Signature):
         """Extract patterns from successful operations."""
 
-        session_data: Dict[str, Any] = dspy.InputField(desc="Data from a session")
+        session_data: dict = dspy.InputField(desc="Data from a session")
         pattern_types: List[str] = dspy.InputField(desc="Types of patterns to look for")
         minimum_confidence: float = dspy.InputField(desc="Minimum confidence threshold")
 
         extraction_rationale: str = dspy.OutputField(desc="Reasoning for pattern identification, confidence assessment, and extraction methodology")
-        patterns: List[Dict[str, Any]] = dspy.OutputField(desc="Extracted patterns")
+        patterns: List[PatternDict] = dspy.OutputField(desc="Extracted patterns")
         confidence_scores: Dict[str, float] = dspy.OutputField(desc="Confidence in each pattern")
 
 
     class ConsolidationSignature(dspy.Signature):
         """Consolidate multiple patterns into learnings."""
 
-        patterns: List[Dict[str, Any]] = dspy.InputField(desc="Patterns to consolidate")
-        existing_knowledge: Dict[str, Any] = dspy.InputField(desc="Current knowledge base")
+        patterns: List[PatternDict] = dspy.InputField(desc="Patterns to consolidate")
+        existing_knowledge: dict = dspy.InputField(desc="Current knowledge base")
         validation_criteria: List[str] = dspy.InputField(desc="Criteria for valid learnings")
 
         consolidation_rationale: str = dspy.OutputField(desc="Reasoning for pattern consolidation, validation decisions, and knowledge integration approach")
-        consolidated_learnings: List[Dict[str, Any]] = dspy.OutputField(desc="Consolidated learnings")
-        knowledge_updates: Dict[str, Any] = dspy.OutputField(desc="Updates to knowledge base")
+        consolidated_learnings: List[PatternDict] = dspy.OutputField(desc="Consolidated learnings")
+        knowledge_updates: dict = dspy.OutputField(desc="Updates to knowledge base")
         validation_results: Dict[str, bool] = dspy.OutputField(desc="Validation outcomes")
 
 
     class StorageSignature(dspy.Signature):
         """Store learnings in the knowledge base."""
 
-        learnings: List[Dict[str, Any]] = dspy.InputField(desc="Learnings to store")
+        learnings: List[PatternDict] = dspy.InputField(desc="Learnings to store")
         storage_location: str = dspy.InputField(desc="Where to store: vectorstore, database, file")
-        metadata: Dict[str, Any] = dspy.InputField(desc="Metadata for the learnings")
+        metadata: dict = dspy.InputField(desc="Metadata for the learnings")
 
         storage_rationale: str = dspy.OutputField(desc="Reasoning for storage decisions, location selection, and metadata organization")
         storage_confirmation: bool = dspy.OutputField(desc="Whether storage succeeded")
@@ -282,7 +287,7 @@ if DSPY_AVAILABLE:
         design_rationale: str = dspy.OutputField(desc="Reasoning for tool design decisions, architectural choices, parameter selection, and integration considerations")
         tool_name: str = dspy.OutputField(desc="Name of the tool to create")
         tool_description: str = dspy.OutputField(desc="Description of the tool's purpose")
-        parameters: List[Dict[str, Any]] = dspy.OutputField(desc="Tool parameters specification")
+        parameters: List[ToolParameterDict] = dspy.OutputField(desc="Tool parameters specification")
         test_cases: List[str] = dspy.OutputField(desc="Test cases to implement")
         implementation_plan: List[str] = dspy.OutputField(desc="Steps to implement the tool")
 
@@ -292,7 +297,7 @@ if DSPY_AVAILABLE:
 
         tool_name: str = dspy.InputField(desc="Name of the tool")
         tool_description: str = dspy.InputField(desc="Description of the tool")
-        parameters: List[Dict[str, Any]] = dspy.InputField(desc="Tool parameters")
+        parameters: List[ToolParameterDict] = dspy.InputField(desc="Tool parameters")
         base_patterns: Dict[str, str] = dspy.InputField(desc="BaseTool and Pydantic patterns to follow")
 
         scaffolding_rationale: str = dspy.OutputField(desc="Reasoning for code structure, pattern application, type choices, and implementation approach")
@@ -319,12 +324,12 @@ if DSPY_AVAILABLE:
     class HandoffSignature(dspy.Signature):
         """Prepare artifacts for handoff to MergerAgent."""
 
-        artifacts: List[Dict[str, Any]] = dspy.InputField(desc="Created artifacts (tool, tests, etc)")
-        test_results: Dict[str, Any] = dspy.InputField(desc="Results from running tests")
+        artifacts: List[ArtifactDict] = dspy.InputField(desc="Created artifacts (tool, tests, etc)")
+        test_results: TestResults = dspy.InputField(desc="Results from running tests")
         integration_notes: str = dspy.InputField(desc="Notes for integration")
 
         handoff_rationale: str = dspy.OutputField(desc="Reasoning for handoff readiness, integration recommendations, and risk assessment")
-        handoff_package: Dict[str, Any] = dspy.OutputField(desc="Package for MergerAgent")
+        handoff_package: HandoffPackageDict = dspy.OutputField(desc="Package for MergerAgent")
         summary: str = dspy.OutputField(desc="Summary of created artifacts")
         next_steps: List[str] = dspy.OutputField(desc="Recommended next steps")
 
@@ -353,7 +358,7 @@ if DSPY_AVAILABLE:
         dependencies: Dict[str, List[str]] = dspy.InputField(desc="Agent dependencies")
 
         coordination_rationale: str = dspy.OutputField(desc="Reasoning for coordination approach, communication patterns, and synchronization strategy")
-        coordination_plan: Dict[str, Any] = dspy.OutputField(desc="How agents will work together")
+        coordination_plan: CoordinationPlanDict = dspy.OutputField(desc="How agents will work together")
         communication_protocol: Dict[str, str] = dspy.OutputField(desc="How agents communicate")
         synchronization_points: List[str] = dspy.OutputField(desc="When to synchronize")
 

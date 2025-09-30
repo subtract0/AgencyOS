@@ -5,10 +5,11 @@ Defines metrics for evaluating and optimizing the audit modules.
 """
 
 from typing import Any
+from .type_definitions import ExampleDict, PredictionDict
 
 
 def audit_effectiveness_metric(
-    example: dict[str, Any], prediction: dict[str, Any], trace: Any | None = None
+    example: ExampleDict, prediction: PredictionDict, trace: Any | None = None
 ) -> float:
     """
     Measure the effectiveness of an audit.
@@ -73,7 +74,7 @@ def audit_effectiveness_metric(
 
 
 def refactoring_success_metric(
-    example: dict[str, Any], prediction: dict[str, Any], trace: Any | None = None
+    example: ExampleDict, prediction: PredictionDict, trace: Any | None = None
 ) -> float:
     """
     Measure the success of refactoring operations.
@@ -129,7 +130,7 @@ def refactoring_success_metric(
 
 
 def constitutional_compliance_metric(
-    example: dict[str, Any], prediction: dict[str, Any], trace: Any | None = None
+    example: ExampleDict, prediction: PredictionDict, trace: Any | None = None
 ) -> float:
     """
     Measure constitutional compliance of the audit and fixes.
@@ -211,7 +212,7 @@ def constitutional_compliance_metric(
 
 
 def learning_effectiveness_metric(
-    example: dict[str, Any], prediction: dict[str, Any], trace: Any | None = None
+    example: ExampleDict, prediction: PredictionDict, trace: Any | None = None
 ) -> float:
     """
     Measure the effectiveness of learning and pattern extraction.
@@ -275,7 +276,7 @@ def learning_effectiveness_metric(
 
 
 def composite_audit_metric(
-    example: dict[str, Any], prediction: dict[str, Any], trace: Any | None = None
+    example: ExampleDict, prediction: PredictionDict, trace: Any | None = None
 ) -> float:
     """
     Composite metric combining all audit metrics.
