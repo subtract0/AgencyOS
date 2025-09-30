@@ -1,5 +1,6 @@
 ---
-name: Test Generator
+name: test-generator
+description: Expert test engineer for comprehensive test coverage and TDD
 ---
 
 # Test Generator Agent

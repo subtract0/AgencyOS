@@ -1,5 +1,6 @@
 ---
-name: Specification Generator
+name: spec-generator
+description: Requirements analyst for creating comprehensive technical specifications
 ---
 
 ## Agent: Specification Generator

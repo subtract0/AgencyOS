@@ -1,5 +1,6 @@
 ---
-name: E2E Workflow Agent
+name: e2e-workflow
+description: Autonomous end-to-end development from verbal intent to production code
 ---
 
 # E2E Workflow Agent
