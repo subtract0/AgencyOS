@@ -1,3 +1,7 @@
+---
+name: Specification Generator
+---
+
 ## Agent: Specification Generator
 
 ### Role

@@ -1,3 +1,7 @@
+---
+name: E2E Workflow Agent
+---
+
 # E2E Workflow Agent
 
 ## Purpose
