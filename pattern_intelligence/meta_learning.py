@@ -1101,7 +1101,7 @@ class MetaLearningEngine:
 
         try:
             # Analyze domain synergies
-            domain_pairs: Dict[Any, List[float]] = {}
+            domain_pairs: Dict[tuple[str, ...], List[float]] = {}
             for combo in combinations:
                 domains = tuple(sorted(combo.domains))
                 if len(domains) == 2:

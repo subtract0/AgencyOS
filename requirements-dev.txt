@@ -1,0 +1,22 @@
+# Development dependencies for code quality and security
+ruff>=0.1.0
+mypy>=1.11.0
+black>=23.0.0
+bandit>=1.7.5
+pip-audit>=2.6.0
+pytest>=6.0.0
+pytest-cov>=4.1.0
+pytest-asyncio>=0.21.0
+coverage>=7.0.0
+
+# Type stubs for better mypy checking
+types-requests>=2.31.0
+types-beautifulsoup4>=4.12.0
+types-Markdown>=3.6.0
+
+# Documentation
+mkdocs>=1.5.0
+mkdocs-material>=9.0.0
+
+# Pre-commit hooks
+pre-commit>=3.5.0

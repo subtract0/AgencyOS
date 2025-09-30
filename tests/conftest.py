@@ -36,11 +36,11 @@ def cleanup_test_artifacts():
             if filename.startswith("handoff_") and filename.endswith(".json"):
                 file_path = os.path.join(handoff_logs_dir, filename)
                 # Only clean up recent test files (avoid cleaning user's actual handoffs)
-                if os.path.getmtime(file_path) > (time.time() - 300):  # 5 minutes
-                    try:
+                try:
+                    if os.path.exists(file_path) and os.path.getmtime(file_path) > (time.time() - 300):  # 5 minutes
                         os.unlink(file_path)
-                    except OSError:
-                        pass  # File might be in use, skip cleanup
+                except OSError:
+                    pass  # File might be in use or doesn't exist, skip cleanup
 
     # Clean up snapshot logs created during tests
     snapshot_logs_dir = "logs/snapshots"
@@ -49,11 +49,11 @@ def cleanup_test_artifacts():
             if filename.startswith("snapshot_") and filename.endswith(".json"):
                 file_path = os.path.join(snapshot_logs_dir, filename)
                 # Only clean up recent test files
-                if os.path.getmtime(file_path) > (time.time() - 300):  # 5 minutes
-                    try:
+                try:
+                    if os.path.exists(file_path) and os.path.getmtime(file_path) > (time.time() - 300):  # 5 minutes
                         os.unlink(file_path)
-                    except OSError:
-                        pass  # File might be in use, skip cleanup
+                except OSError:
+                    pass  # File might be in use or doesn't exist, skip cleanup
 
 
 @pytest.fixture

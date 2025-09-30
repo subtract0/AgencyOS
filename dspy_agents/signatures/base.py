@@ -43,7 +43,7 @@ class FileChange(BaseModel):
     diff: Optional[str] = Field(None, description="Diff of changes for modify operations")
 
 
-class TestCase(BaseModel):
+class TestSpecification(BaseModel):
     """Represents a test case."""
     test_file: str = Field(..., description="Path to test file")
     test_name: str = Field(..., description="Name of the test function")
@@ -63,7 +63,7 @@ class AgentResult(BaseModel):
     """Standard result from an agent operation."""
     success: bool = Field(..., description="Whether the operation succeeded")
     changes: List[FileChange] = Field(default_factory=list, description="File changes made")
-    tests: List[TestCase] = Field(default_factory=list, description="Tests added or modified")
+    tests: List[TestSpecification] = Field(default_factory=list, description="Tests added or modified")
     verification: Optional[VerificationResult] = Field(None, description="Verification results")
     message: Optional[str] = Field(None, description="Summary message")
 
@@ -101,7 +101,7 @@ if DSPY_AVAILABLE:
 
         implementation_rationale: str = dspy.OutputField(desc="Step-by-step reasoning for the implementation approach, design decisions, and trade-offs considered")
         code_changes: List[FileChange] = dspy.OutputField(desc="File modifications to make")
-        tests_added: List[TestCase] = dspy.OutputField(desc="New or modified tests")
+        tests_added: List[TestSpecification] = dspy.OutputField(desc="New or modified tests")
         verification_status: VerificationResult = dspy.OutputField(desc="Validation results")
         execution_plan: TaskPlan = dspy.OutputField(desc="How the task was executed")
 
@@ -126,7 +126,7 @@ if DSPY_AVAILABLE:
 
         decision_rationale: str = dspy.OutputField(desc="Reasoning behind implementation choices, alternatives considered, and why specific approaches were selected")
         code_changes: List[FileChange] = dspy.OutputField(desc="Implemented changes")
-        tests_added: List[TestCase] = dspy.OutputField(desc="Tests for the changes")
+        tests_added: List[TestSpecification] = dspy.OutputField(desc="Tests for the changes")
         implementation_notes: str = dspy.OutputField(desc="Notes about implementation decisions")
 
 
@@ -439,7 +439,7 @@ else:
 # Export all signatures
 __all__ = [
     "FileChange",
-    "TestCase",
+    "TestSpecification",
     "VerificationResult",
     "AgentResult",
     "TaskPlan",
