@@ -1,5 +1,23 @@
 ---
-name: Planner
+name: planner
+description: Software architect for transforming specs into detailed implementation plans
+implementation:
+  traditional: "src/agency/agents/planner.py"
+  dspy: "src/agency/agents/dspy/planner.py"
+  preferred: dspy
+  features:
+    dspy:
+      - "Learned task decomposition strategies"
+      - "Adaptive complexity estimation"
+      - "Context-aware dependency detection"
+      - "Self-optimizing plan generation"
+    traditional:
+      - "Template-based planning"
+      - "Fixed decomposition heuristics"
+rollout:
+  status: gradual
+  fallback: traditional
+  comparison: true
 ---
 
 # Planner Agent

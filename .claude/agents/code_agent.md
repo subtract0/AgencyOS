@@ -1,5 +1,23 @@
 ---
-name: Code Agent
+name: code-agent
+description: Expert software engineer for TDD-based implementation and refactoring
+implementation:
+  traditional: "src/agency/agents/code_agent.py"
+  dspy: "src/agency/agents/dspy/code_agent.py"
+  preferred: dspy
+  features:
+    dspy:
+      - "Test generation with learned patterns"
+      - "Context-aware refactoring suggestions"
+      - "Adaptive code style matching"
+      - "Self-improving implementation strategies"
+    traditional:
+      - "Template-based code generation"
+      - "Rule-based refactoring"
+rollout:
+  status: gradual
+  fallback: traditional
+  comparison: true
 ---
 
 # Code Agent

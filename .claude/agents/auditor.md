@@ -1,5 +1,23 @@
 ---
-name: Auditor
+name: auditor
+description: Expert static code analysis agent for Python and TypeScript codebases
+implementation:
+  traditional: "src/agency/agents/auditor.py"
+  dspy: "src/agency/agents/dspy/auditor.py"
+  preferred: dspy
+  features:
+    dspy:
+      - "Adaptive prompting with optimized signatures"
+      - "Self-tuning issue detection thresholds"
+      - "Context-aware severity classification"
+      - "Pattern learning from audit history"
+    traditional:
+      - "Static rule-based analysis"
+      - "Deterministic output format"
+rollout:
+  status: gradual
+  fallback: traditional
+  comparison: true
 ---
 
 # Auditor Agent

@@ -115,6 +115,8 @@ class TestToolDirectiveParsing:
         mock_result.implementation_plan = ["Parse inputs", "Create tool", "Test"]
 
         agent.directive_parser = Mock(return_value=mock_result)
+        # Ensure agent thinks DSPy is available so it uses the mock
+        agent.dspy_available = True
 
         result = agent.parse_directive(
             "Create ContextMessageHandoff tool",
@@ -151,6 +153,8 @@ class TestToolDirectiveParsing:
     def test_parse_directive_with_error(self, agent):
         """Test directive parsing with error handling."""
         agent.directive_parser = Mock(side_effect=Exception("Parse error"))
+        # Ensure agent thinks DSPy is available so it tries to use the parser (which will error)
+        agent.dspy_available = True
 
         result = agent.parse_directive("Invalid directive", [], [])
 
