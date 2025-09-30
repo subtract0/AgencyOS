@@ -1,4 +1,4 @@
-# ExecutiveOrchestrator - EXECUTE Agent
+# EXECUTOR - Trinity Protocol Agent
 
 > Meta-orchestrator for Trinity Protocol. Pure function: `Task → Report | NULL`.
 

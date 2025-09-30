@@ -1,4 +1,4 @@
-# GrandArchitect - PLAN Agent
+# ARCHITECT - Trinity Protocol Agent
 
 > Strategic orchestrator for Trinity Protocol. Pure function: `Pattern → Task Graph | NULL`.
 

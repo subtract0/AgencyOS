@@ -1,13 +1,14 @@
 # Trinity Protocol - Agent Prompts
 
-Production-ready system prompts for Trinity Protocol agents. SpaceX style: maximum function, minimum mass.
+Production-ready system prompts for Trinity Protocol agents. Maximum function, minimum mass.
 
 ---
 
 ## Production Prompts (Use These)
 
-### 🔍 AUDITLEARN
-**File**: `auditlearn_prompt.md` (287 lines, 8.6KB)  
+### 👁️ WITNESS
+**File**: `WITNESS.md` (287 lines, 8.6KB)  
+**Role**: Perception - AUDITLEARN  
 **Model**: `qwen2.5-coder:7b-q3` (local, via Ollama)  
 **Function**: Stateless signal intelligence - detects patterns from telemetry/context
 
@@ -22,10 +23,28 @@ Production-ready system prompts for Trinity Protocol agents. SpaceX style: maxim
 
 ---
 
-### 🚀 EXECUTOR
-**File**: `executor_prompt.md` (265 lines, 9.1KB)  
+### 🏛️ ARCHITECT
+**File**: `ARCHITECT.md` (390 lines, 12KB)  
+**Role**: Cognition - PLAN  
+**Model**: `codestral-22b` (local) + `gpt-5`/`claude-4.1` (escalation)  
+**Function**: Strategic orchestrator - strategizes, decomposes, routes
+
+**Core Loop**: LISTEN → TRIAGE → GATHER CONTEXT → SELECT ENGINE → FORMULATE STRATEGY → EXTERNALIZE → GENERATE TASK GRAPH → SELF-VERIFY → PUBLISH → RESET
+
+**Key Features**:
+- Hybrid reasoning: local for routine, API for complex/critical
+- Complexity assessment and routing logic
+- Spec/ADR generation for complex tasks (Article V)
+- Historical pattern queries from Firestore
+- Task graph with DAG (directed acyclic graph)
+
+---
+
+### ⚙️ EXECUTOR
+**File**: `EXECUTOR.md` (265 lines, 9.1KB)  
+**Role**: Action - EXECUTE  
 **Model**: `claude-sonnet-4.5`  
-**Function**: Meta-orchestrator - delegates to sub-agents, verifies, reports
+**Function**: Meta-orchestrator - delegates, verifies, reports
 
 **Core Loop**: LISTEN → DECONSTRUCT → PLAN & EXTERNALIZE → ORCHESTRATE (PARALLEL) → HANDLE FAILURES → DELEGATE MERGE → ABSOLUTE VERIFICATION → REPORT → RESET
 
@@ -41,28 +60,28 @@ Production-ready system prompts for Trinity Protocol agents. SpaceX style: maxim
 ## Trinity Architecture
 
 ```
-┌──────────────┐      ┌──────────────┐      ┌──────────┐
-│ AUDITLEARN   │─────>│    PLAN      │─────>│ EXECUTE  │
-│              │      │              │      │          │
-│ • Monitor    │      │ • Strategize │      │ • Route  │
-│ • Detect     │      │ • Prioritize │      │ • Run    │
-│ • Learn      │      │ • Create     │      │ • Verify │
-└──────┬───────┘      └──────────────┘      └────┬─────┘
-       │                                           │
-       │          ┌──────────────────┐            │
-       └─────────>│  Message Bus     │<───────────┘
-                  │  (Telemetry)     │
-                  └──────────────────┘
+┌──────────┐      ┌──────────┐      ┌──────────┐
+│ WITNESS  │─────>│ARCHITECT │─────>│ EXECUTOR │
+│          │      │          │      │          │
+│ Sees     │      │Understands│      │   Does   │
+│ Detects  │      │ Strategize│      │ Verifies │
+│ Learns   │      │ Decomposes│      │  Reports │
+└────┬─────┘      └──────────┘      └────┬─────┘
+     │                                     │
+     │         ┌────────────┐             │
+     └────────>│Message Bus │<────────────┘
+               │(Telemetry) │
+               └────────────┘
 ```
 
 **Message Flow**:
-1. AUDITLEARN monitors `telemetry_stream` + `personal_context_stream`
+1. WITNESS monitors `telemetry_stream` + `personal_context_stream`
 2. Publishes patterns to `improvement_queue`
-3. PLAN consumes `improvement_queue`, creates tasks
+3. ARCHITECT consumes `improvement_queue`, creates tasks
 4. Publishes to `execution_queue`
-5. EXECUTE consumes `execution_queue`, delegates work
+5. EXECUTOR consumes `execution_queue`, delegates work
 6. Publishes outcomes to `telemetry_stream`
-7. Loop closes: AUDITLEARN learns from outcomes
+7. Loop closes: WITNESS learns from outcomes
 
 ---
 
@@ -82,21 +101,21 @@ All agents bound by `constitution.md`:
 
 | Agent | Prompt | Implementation | Phase |
 |-------|--------|----------------|-------|
-| AUDITLEARN | ✅ Ready | 🚧 In Progress | Weeks 1-4 |
-| PLAN | 📋 Pending | 📋 Not Started | Weeks 5-6 |
-| EXECUTE | ✅ Ready | 📋 Not Started | Weeks 5-6 |
+| WITNESS | ✅ Ready | 🚧 In Progress | Weeks 1-4 |
+| ARCHITECT | ✅ Ready | 📋 Not Started | Weeks 5-6 |
+| EXECUTOR | ✅ Ready | 📋 Not Started | Weeks 5-6 |
 
 ---
 
 ## Archive Files
 
 Original verbose versions preserved for reference:
-- `gemini_auditlearn_prompt.md` (428 lines, 17KB) - Full documentation
-- `gemini_executor_prompt.md` (192 lines, 9.1KB) - Original with philosophy
+- `gemini_auditlearn_prompt.md` (428 lines, 17KB)
+- `gemini_executor_prompt.md` (192 lines, 9.1KB)
 
 **When to use archives**: Training, understanding rationale, historical reference
 
-**Default**: Always use the production prompts (`auditlearn_prompt.md`, `executor_prompt.md`)
+**Default**: Always use production prompts (`WITNESS.md`, `ARCHITECT.md`, `EXECUTOR.md`)
 
 ---
 
@@ -105,7 +124,7 @@ Original verbose versions preserved for reference:
 - `../trinity_protocol_implementation.md` - 6-week implementation plan
 - `../../constitution.md` - Governance framework
 - `../adr/ADR-004-continuous-learning-system.md` - Learning architecture
-- `VERSIONS.md` - Version comparison and efficiency metrics
+- `VERSIONS.md` - Version comparison
 - MCP Ref: `688cf28d-e69c-4624-b7cb-0725f36f9518`
 
 ---
@@ -113,13 +132,17 @@ Original verbose versions preserved for reference:
 ## Quick Start
 
 ```bash
-# AUDITLEARN (local model)
+# WITNESS (local model)
 ollama pull qwen2.5-coder:7b-q3
-python -m trinity_protocol.auditlearn_agent
+python -m trinity_protocol.witness_agent
 
-# EXECUTE (cloud model)
+# ARCHITECT (hybrid local/cloud)
+ollama pull codestral-22b
+python -m trinity_protocol.architect_agent
+
+# EXECUTOR (cloud model)
 # Set ANTHROPIC_API_KEY in .env
-python -m trinity_protocol.execute_agent
+python -m trinity_protocol.executor_agent
 ```
 
 ---
