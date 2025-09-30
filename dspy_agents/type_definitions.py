@@ -5,8 +5,9 @@ This module provides type-safe definitions to replace Dict[str, Any] usage
 in compliance with Agency's constitutional requirement to avoid Any types.
 """
 
-from typing import TypedDict, Union, List, Optional, Literal
+from typing import TypedDict, Union, List, Optional, Literal, Dict
 from pydantic import BaseModel
+from shared.type_definitions.json import JSONValue
 
 
 class DSPyContext(TypedDict, total=False):
@@ -16,13 +17,13 @@ class DSPyContext(TypedDict, total=False):
     agent_name: str
     memory_store: Optional[object]
     vector_store: Optional[object]
-    historical_patterns: List[dict]
+    historical_patterns: List[Dict[str, JSONValue]]
     quality_standards: List[str]
     constitutional_requirements: List[str]
-    test_results: dict
+    test_results: Dict[str, JSONValue]
     implementation_notes: str
     error_details: Optional[List[str]]
-    metadata: dict
+    metadata: Dict[str, JSONValue]
 
 
 class AgentContext(TypedDict, total=False):
@@ -69,13 +70,13 @@ class AuditContext(TypedDict, total=False):
     target_paths: List[str]
     audit_type: Literal["security", "performance", "quality", "compliance"]
     severity_threshold: Literal["low", "medium", "high", "critical"]
-    findings: List[dict]
+    findings: List[Dict[str, JSONValue]]
     recommendations: List[str]
 
 
 class LearningContext(TypedDict, total=False):
     """Type-safe learning context."""
-    patterns_learned: List[dict]
+    patterns_learned: List[Dict[str, JSONValue]]
     success_rate: float
     failure_reasons: List[str]
     improvements_suggested: List[str]
@@ -91,7 +92,7 @@ Context = Union[
     PlannerContext,
     AuditContext,
     LearningContext,
-    dict  # Fallback for compatibility
+    Dict[str, JSONValue]  # Fallback for compatibility (typed)
 ]
 
 
