@@ -152,19 +152,37 @@ def main(test_mode: str = "unit", fast_only: bool = False, timed: bool = False) 
     print("-" * 40)
 
     # Pytest arguments for comprehensive testing
-    # Use uv run pytest for better dependency management
-    pytest_args = [
-        "uv",
-        "run",
-        "pytest",
-        "tests/",  # Test directory
-        "-v",  # Verbose output
-        "--tb=short",  # Short traceback format
-        "--strict-markers",  # Strict marker checking
-        "--durations=10",  # Show 10 slowest tests
-        # "-x",  # Stop on first failure - commented out to run all tests
-        "--color=yes",  # Colored output
-    ]
+    # Use uv run pytest in local dev, python -m pytest in CI
+    is_ci = os.environ.get("CI") == "true"
+
+    if is_ci:
+        # CI environment - use python -m pytest
+        pytest_args = [
+            python_executable,
+            "-m",
+            "pytest",
+            "tests/",  # Test directory
+            "-v",  # Verbose output
+            "--tb=short",  # Short traceback format
+            "--strict-markers",  # Strict marker checking
+            "--durations=10",  # Show 10 slowest tests
+            # "-x",  # Stop on first failure - commented out to run all tests
+            "--color=yes",  # Colored output
+        ]
+    else:
+        # Local development - use uv run pytest for better dependency management
+        pytest_args = [
+            "uv",
+            "run",
+            "pytest",
+            "tests/",  # Test directory
+            "-v",  # Verbose output
+            "--tb=short",  # Short traceback format
+            "--strict-markers",  # Strict marker checking
+            "--durations=10",  # Show 10 slowest tests
+            # "-x",  # Stop on first failure - commented out to run all tests
+            "--color=yes",  # Colored output
+        ]
 
     # Add parallel execution if pytest-xdist is available
     try:
