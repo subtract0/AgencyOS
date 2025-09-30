@@ -217,6 +217,7 @@ class TestTool(BaseModel):
     def test_scaffold_tool_with_error(self, agent):
         """Test tool scaffolding error handling."""
         agent.scaffolder = Mock(side_effect=Exception("Scaffold error"))
+        agent.dspy_available = True  # Force error path instead of fallback
 
         code, imports, rationale = agent.scaffold_tool("ErrorTool", "Error", [], {})
 
@@ -283,6 +284,7 @@ def test_run_method():
     def test_generate_tests_with_error(self, agent):
         """Test test generation error handling."""
         agent.test_generator = Mock(side_effect=Exception("Test gen error"))
+        agent.dspy_available = True  # Force error path instead of fallback
 
         test_code = agent.generate_tests("ErrorTool", "", [], True)
 
@@ -370,6 +372,7 @@ class TestMainForwardMethod:
     def test_forward_with_exception(self, agent, mock_context):
         """Test forward method exception handling."""
         agent.directive_parser = Mock(side_effect=Exception("Fatal error"))
+        agent.dspy_available = True  # Force error path instead of fallback
 
         result = agent.forward(
             "Create ErrorTool",
@@ -666,11 +669,13 @@ class TestHandoffPreparation:
         }
 
         agent.handoff_preparer = Mock(return_value=mock_result)
+        agent.dspy_available = True  # Ensure DSPy path is used
 
         test_results = {"success": True, "stdout": "Tests passed"}
 
         handoff = agent._prepare_handoff(sample_artifacts, test_results)
 
+        # The method returns the handoff_package from the mock_result
         assert handoff["ready"] is True
         assert len(handoff["artifacts"]) == 2
         assert "2 artifacts ready" in handoff["summary"]
