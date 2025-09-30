@@ -6,7 +6,7 @@ Provides proper DSPy initialization for tests and mock setups.
 
 import os
 import pytest
-from unittest.mock import Mock, MagicMock
+from unittest.mock import Mock, MagicMock, patch
 
 # Set test environment
 os.environ["OPENAI_API_KEY"] = "test-key-for-dspy"
@@ -19,6 +19,53 @@ try:
     DSPY_AVAILABLE = True
 except ImportError:
     DSPY_AVAILABLE = False
+
+# Global flag to prevent real API calls in tests
+MOCK_LM_ENABLED = True
+
+
+@pytest.fixture(autouse=True)
+def mock_dspy_for_tests():
+    """Automatically mock DSPy for all tests to prevent real API calls."""
+    if not DSPY_AVAILABLE or not MOCK_LM_ENABLED:
+        yield
+        return
+
+    # Create a mock LM that returns predictable responses
+    mock_lm = Mock()
+    mock_lm.model = "test-model"
+    mock_lm.temperature = 1.0
+    mock_lm.max_tokens = 4096
+
+    # Mock the LM __call__ to return test data
+    def mock_lm_call(*args, **kwargs):
+        # Return mock response based on the prompt
+        return Mock(
+            completions=[Mock(text="TestTool")],
+            tool_name="TestTool",
+            tool_description="Test tool description",
+            parameters=[],
+            test_cases=["test1"],
+            implementation_plan=["step1"],
+            design_rationale="Mock rationale"
+        )
+
+    mock_lm.__call__ = mock_lm_call
+
+    # Mock DSPy's LM class
+    with patch('dspy.LM') as MockLM:
+        MockLM.return_value = mock_lm
+
+        # Configure DSPy with the mock
+        dspy.configure(lm=mock_lm)
+
+        # Also patch DSPyConfig to use the mock
+        with patch.object(DSPyConfig, 'initialize', return_value=True):
+            with patch.object(DSPyConfig, 'get_lm', return_value=mock_lm):
+                DSPyConfig._initialized = True
+                DSPyConfig._lm_cache['test-model'] = mock_lm
+                yield
+                DSPyConfig.reset()
 
 
 @pytest.fixture(autouse=True)

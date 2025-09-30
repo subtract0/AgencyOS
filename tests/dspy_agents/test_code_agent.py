@@ -82,15 +82,15 @@ def sample_file_changes():
 @pytest.fixture
 def sample_test_cases():
     """Sample test cases for testing."""
-    from dspy_agents.signatures.base import TestCase
+    from dspy_agents.signatures.base import TestSpecification
     return [
-        TestCase(
+        TestSpecification(
             test_file="/test/test_file1.py",
             test_name="test_basic_functionality",
             test_code="def test_basic_functionality(): assert True",
             follows_necessary=True
         ),
-        TestCase(
+        TestSpecification(
             test_file="/test/test_file2.py",
             test_name="test_edge_case",
             test_code="def test_edge_case(): assert 1 == 1",
@@ -1185,13 +1185,13 @@ class TestDSPyCodeAgentIntegration:
         """Test complete workflow from task to result when DSPy is available."""
         with patch('dspy_agents.modules.code_agent.DSPY_AVAILABLE', True):
             from dspy_agents.modules.code_agent import DSPyCodeAgent
-            from dspy_agents.signatures.base import FileChange, TestCase, VerificationResult
+            from dspy_agents.signatures.base import FileChange, TestSpecification, VerificationResult
 
             agent = DSPyCodeAgent(enable_learning=True)
 
             # Mock all DSPy components
             mock_changes = [FileChange(file_path="/test.py", operation="create", content="test")]
-            mock_tests = [TestCase(test_file="/test_test.py", test_name="test_func",
+            mock_tests = [TestSpecification(test_file="/test_test.py", test_name="test_func",
                                  test_code="def test_func(): pass", follows_necessary=True)]
             mock_verification = VerificationResult(all_tests_pass=True, no_linting_errors=True,
                                                  constitutional_compliance=True, error_details=[])
@@ -1243,7 +1243,7 @@ class TestDSPyCodeAgentIntegration:
         """Test workflow using separate planning, implementation, and verification methods."""
         with patch('dspy_agents.modules.code_agent.DSPY_AVAILABLE', True):
             from dspy_agents.modules.code_agent import DSPyCodeAgent
-            from dspy_agents.signatures.base import TaskPlan, FileChange, TestCase, VerificationResult, AgentResult
+            from dspy_agents.signatures.base import TaskPlan, FileChange, TestSpecification, VerificationResult, AgentResult
 
             agent = DSPyCodeAgent()
 
@@ -1258,7 +1258,7 @@ class TestDSPyCodeAgentIntegration:
 
             # Mock implementation
             mock_changes = [FileChange(file_path="/impl.py", operation="create", content="impl")]
-            mock_tests = [TestCase(test_file="/test_impl.py", test_name="test_impl",
+            mock_tests = [TestSpecification(test_file="/test_impl.py", test_name="test_impl",
                                  test_code="def test_impl(): pass", follows_necessary=True)]
             mock_impl_result = Mock()
             mock_impl_result.code_changes = mock_changes

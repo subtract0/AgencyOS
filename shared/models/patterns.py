@@ -9,7 +9,7 @@ New code should use pattern_intelligence.CodingPattern.
 from datetime import datetime, timedelta
 from typing import Dict, List, Optional, Literal, Union
 from shared.type_definitions.json import JSONValue
-from pydantic import BaseModel, Field, field_validator
+from pydantic import BaseModel, Field, field_validator, ConfigDict
 from enum import Enum
 import warnings
 import logging
@@ -64,8 +64,7 @@ class SessionInsight(BaseModel):
     keywords: List[str] = Field(default_factory=list)
     actionable_insight: Optional[str] = None
 
-    class Config:
-        extra = "forbid"
+    model_config = ConfigDict(extra="forbid")
 
 
 class HealingPattern(BaseModel):
@@ -91,8 +90,7 @@ class HealingPattern(BaseModel):
     evidence: List[Dict[str, JSONValue]] = Field(default_factory=list)
     validation_status: ValidationStatus = ValidationStatus.PENDING
 
-    class Config:
-        extra = "forbid"
+    model_config = ConfigDict(extra="forbid")
 
     def to_coding_pattern(self):
         """
@@ -170,8 +168,7 @@ class CrossSessionData(BaseModel):
             return len(learnings)
         return v
 
-    class Config:
-        extra = "forbid"
+    model_config = ConfigDict(extra="forbid")
 
 
 class PatternExtraction(BaseModel):
@@ -185,8 +182,7 @@ class PatternExtraction(BaseModel):
     learning_objects: List[Dict[str, JSONValue]] = Field(default_factory=list)
     recommendations: List[Dict[str, JSONValue]] = Field(default_factory=list)
 
-    class Config:
-        extra = "forbid"
+    model_config = ConfigDict(extra="forbid")
 
 
 class ToolExecutionResult(BaseModel):
@@ -199,8 +195,7 @@ class ToolExecutionResult(BaseModel):
     execution_time: Optional[float] = None
     context: Dict[str, JSONValue] = Field(default_factory=dict)
 
-    class Config:
-        extra = "forbid"
+    model_config = ConfigDict(extra="forbid")
 
 
 class ValidationOutcome(BaseModel):
@@ -214,8 +209,7 @@ class ValidationOutcome(BaseModel):
     outcome_details: Dict[str, JSONValue] = Field(default_factory=dict)
     next_review_date: Optional[datetime] = None
 
-    class Config:
-        extra = "forbid"
+    model_config = ConfigDict(extra="forbid")
 
 
 class TemporalPattern(BaseModel):
@@ -237,8 +231,7 @@ class TemporalPattern(BaseModel):
             raise ValueError(f'end_hour ({v}) must be after start_hour ({start_hour})')
         return v
 
-    class Config:
-        extra = "forbid"
+    model_config = ConfigDict(extra="forbid")
 
 
 class ContextFeatures(BaseModel):
@@ -251,8 +244,7 @@ class ContextFeatures(BaseModel):
     tools_used: List[str] = Field(default_factory=list)
     error_types: List[str] = Field(default_factory=list)
 
-    class Config:
-        extra = "forbid"
+    model_config = ConfigDict(extra="forbid")
 
 
 class PatternMatch(BaseModel):
@@ -263,8 +255,7 @@ class PatternMatch(BaseModel):
     matched_features: ContextFeatures
     pattern_type: PatternType
 
-    class Config:
-        extra = "forbid"
+    model_config = ConfigDict(extra="forbid")
 
 
 class LearningRecommendation(BaseModel):
@@ -283,8 +274,7 @@ class LearningRecommendation(BaseModel):
     expected_benefit: str
     application_priority: ApplicationPriority
 
-    class Config:
-        extra = "forbid"
+    model_config = ConfigDict(extra="forbid")
 
 
 class ApplicationRecord(BaseModel):
@@ -299,8 +289,7 @@ class ApplicationRecord(BaseModel):
     status: Literal["applied", "pending", "failed"] = "applied"
     feedback_pending: bool = True
 
-    class Config:
-        extra = "forbid"
+    model_config = ConfigDict(extra="forbid")
 
 
 class LearningEffectiveness(BaseModel):
@@ -329,8 +318,7 @@ class LearningEffectiveness(BaseModel):
             return successful / total
         return 0.0
 
-    class Config:
-        extra = "forbid"
+    model_config = ConfigDict(extra="forbid")
 
 
 class SelfHealingEvent(BaseModel):
@@ -354,8 +342,7 @@ class SelfHealingEvent(BaseModel):
     line_number: Optional[int] = None
     extracted_timestamp: Optional[datetime] = None
 
-    class Config:
-        extra = "forbid"
+    model_config = ConfigDict(extra="forbid")
 
 
 class DataCollectionSummary(BaseModel):
@@ -383,8 +370,7 @@ class DataCollectionSummary(BaseModel):
             return successful / total
         return 0.0
 
-    class Config:
-        extra = "forbid"
+    model_config = ConfigDict(extra="forbid")
 
 
 class LearningObject(BaseModel):
@@ -403,8 +389,7 @@ class LearningObject(BaseModel):
     success_metrics: List[str] = Field(default_factory=list)
     created_timestamp: datetime = Field(default_factory=datetime.now)
 
-    class Config:
-        extra = "forbid"
+    model_config = ConfigDict(extra="forbid")
 
 
 class PatternMatchSummary(BaseModel):
@@ -414,5 +399,4 @@ class PatternMatchSummary(BaseModel):
     match_types: Dict[str, int] = Field(default_factory=dict)
     top_matches: List[Dict[str, JSONValue]] = Field(default_factory=list)
 
-    class Config:
-        extra = "forbid"
+    model_config = ConfigDict(extra="forbid")
