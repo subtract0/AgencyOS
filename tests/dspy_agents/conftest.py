@@ -9,7 +9,11 @@ import pytest
 from unittest.mock import Mock, MagicMock, patch
 
 # Set test environment
-os.environ["OPENAI_API_KEY"] = "test-key-for-dspy"
+# Use test key if not in CI (CI will provide real key but we still mock)
+if "CI" in os.environ or os.environ.get("USE_MOCK_LLM") == "true":
+    os.environ["OPENAI_API_KEY"] = os.environ.get("OPENAI_API_KEY", "test-key-for-dspy")
+else:
+    os.environ["OPENAI_API_KEY"] = "test-key-for-dspy"
 os.environ["DSPY_MODEL"] = "openai/gpt-4o-mini"
 os.environ["AUTO_INIT_DSPY"] = "false"  # Disable auto-init for tests
 
@@ -21,7 +25,12 @@ except ImportError:
     DSPY_AVAILABLE = False
 
 # Global flag to prevent real API calls in tests
+# Always mock in CI or when USE_MOCK_LLM is set
 MOCK_LM_ENABLED = True
+if "CI" in os.environ:
+    MOCK_LM_ENABLED = True
+if os.environ.get("USE_MOCK_LLM") == "true":
+    MOCK_LM_ENABLED = True
 
 
 @pytest.fixture(autouse=True)

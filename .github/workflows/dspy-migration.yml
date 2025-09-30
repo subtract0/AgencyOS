@@ -51,15 +51,26 @@ jobs:
       - name: Run DSPy unit tests
         run: |
           python -m pytest tests/dspy_agents/ -v --tb=short
+        env:
+          CI: true
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          USE_MOCK_LLM: true
 
       - name: Evaluate agent performance
         run: |
           python scripts/evaluate_dspy_agents.py
+        env:
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          USE_MOCK_LLM: true
         continue-on-error: true
 
       - name: Run integration tests
         run: |
           python -m pytest tests/dspy_agents/test_integration.py -v --tb=short
+        env:
+          CI: true
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          USE_MOCK_LLM: true
         continue-on-error: true
 
       - name: Generate performance report
