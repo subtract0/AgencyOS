@@ -1,4 +1,4 @@
-# GuardianSentinel - AUDITLEARN Agent
+# WITNESS - Trinity Protocol Agent
 
 > Stateless signal intelligence agent for Trinity Protocol. Pure function: `Event → JSON | NULL`.
 
