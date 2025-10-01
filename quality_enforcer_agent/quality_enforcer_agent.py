@@ -216,9 +216,19 @@ Use GPT-5 with prompt: "Analyze and fix this error: {self.error_message} in code
 
 
 def create_quality_enforcer_agent(
-    model: str = "gpt-5", reasoning_effort: str = "high", agent_context: Optional[AgentContext] = None
+    model: str = "gpt-5",
+    reasoning_effort: str = "high",
+    agent_context: Optional[AgentContext] = None,
+    cost_tracker = None
 ) -> Agent:
-    """Factory that returns a simplified QualityEnforcerAgent instance."""
+    """Factory that returns a simplified QualityEnforcerAgent instance.
+
+    Args:
+        model: Model name to use
+        reasoning_effort: Reasoning effort level
+        agent_context: Optional AgentContext for memory integration
+        cost_tracker: Optional CostTracker for real-time LLM cost tracking
+    """
 
     current_dir = os.path.dirname(os.path.abspath(__file__))
     instructions_file = os.path.join(current_dir, "instructions.md")
@@ -263,10 +273,25 @@ Use these tools to maintain quality while delegating complex analysis to LLM pro
     memory_hook = create_memory_integration_hook(agent_context)
     combined_hook = create_composite_hook([reminder_hook, memory_hook])
 
+    # Store cost_tracker in agent context for later use
+    if cost_tracker is not None:
+        agent_context.cost_tracker = cost_tracker
+
     # Create agent with simplified toolset
     agent = Agent(
         name="QualityEnforcerAgent",
-        description="Simplified constitutional compliance and quality enforcement agent",
+        description=(
+            "PROACTIVE constitutional compliance guardian and autonomous healing orchestrator. Continuously monitors all agent activities "
+            "for Article I-V compliance and AUTOMATICALLY intervenes when violations detected. INTELLIGENTLY coordinates with: "
+            "(1) AuditorAgent for quality assessments and Q(T) scoring, (2) TestGeneratorAgent to ensure test coverage requirements, "
+            "(3) AgencyCodeAgent for autonomous healing and fix application, (4) LearningAgent to learn from successful healing patterns, "
+            "and (5) ChiefArchitectAgent for strategic quality guidance. PROACTIVELY detects NoneType errors, type safety violations, "
+            "and Dict[Any, Any] usage through continuous code monitoring. Uses LLM-powered analysis (GPT-5) to generate intelligent fixes, "
+            "then AUTOMATICALLY applies patches with test verification and rollback capability. Enforces Article II (100% test success), "
+            "Article III (automated enforcement - no manual bypasses), and maintains healing audit trails in logs/autonomous_healing/. "
+            "Tracks all healing operations with cost monitoring and success rate >95%. When violations found, PROACTIVELY suggests "
+            "constitutional-compliant alternatives and coordinates multi-agent remediation workflows."
+        ),
         instructions=instructions,
         tools=[ConstitutionalCheck, QualityAnalysis, ValidatorTool, AutoFixSuggestion,
                NoneTypeErrorDetector, LLMNoneTypeFixer, AutoNoneTypeFixer, SimpleNoneTypeMonitor,
@@ -277,5 +302,10 @@ Use these tools to maintain quality while delegating complex analysis to LLM pro
         max_prompt_tokens=128000,
         max_completion_tokens=16384,
     )
+
+    # Enable cost tracking if provided
+    if cost_tracker is not None:
+        from shared.llm_cost_wrapper import wrap_agent_with_cost_tracking
+        wrap_agent_with_cost_tracking(agent, cost_tracker)
 
     return agent

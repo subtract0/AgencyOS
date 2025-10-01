@@ -313,12 +313,17 @@ def _build_auditor_agent(current_dir: str, instructions: str, combined_hook,
     return Agent(
         name="AuditorAgent",
         description=(
-            "The quality assurance enforcer and test coverage analyst. Proactively triggered after code changes, "
-            "before merges, or when test quality needs assessment. Performs deep analysis using the NECESSARY pattern "
-            "to calculate Q(T) scores and identify testing gaps. Generates violation reports that guide the TestGeneratorAgent "
-            "and informs the ChiefArchitectAgent of systemic issues. When prompting this agent, specify the target directory "
-            "or files to audit and the desired analysis depth (full or verification mode). Remember, this agent enforces "
-            "the constitutional 100% test success requirement and blocks merges that don't meet quality standards."
+            "PROACTIVE quality assurance specialist and NECESSARY pattern compliance auditor. Continuously analyzes codebase for "
+            "quality violations using AST-based analysis and Q(T) scoring methodology. AUTOMATICALLY triggered for code reviews, "
+            "quality assessments, and pattern detection. INTELLIGENTLY coordinates with: (1) TestGeneratorAgent to address coverage gaps, "
+            "(2) QualityEnforcerAgent for constitutional violations, (3) AgencyCodeAgent for quality improvements, "
+            "(4) LearningAgent to identify recurring anti-patterns, and (5) PlannerAgent for strategic refactoring planning. "
+            "Uses NECESSARY pattern analysis (Named, Executable, Comprehensive, Error-validated, State-verified, Side-effects controlled, "
+            "Assertions meaningful, Repeatable, Yield fast) to calculate quality scores. PROACTIVELY detects: type safety violations, "
+            "test coverage gaps, complexity issues, code smells, and anti-patterns. Generates detailed audit reports with Q(T) scores "
+            "(0.0-1.0 scale) and prioritized violation lists. READ-ONLY operations only - never modifies code, only analyzes and reports. "
+            "When prompting, specify target path and analysis mode (full/verification). Maintains comprehensive audit trails and "
+            "cross-session pattern learning via VectorStore."
         ),
         instructions=instructions,
         tools_folder=os.path.join(current_dir, "tools"),

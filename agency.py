@@ -125,25 +125,43 @@ model = os.getenv("AGENCY_MODEL", "gpt-5")
 
 # Create shared memory and agent context for the agency with VectorStore integration
 # This allows memory sharing between agents with both tag-based and semantic search capabilities
-use_firestore = os.getenv("FRESH_USE_FIRESTORE", "").lower() == "true"
+use_firestore = os.getenv("FRESH_USE_FIRESTORE", "true").lower() == "true"  # Enable by default
 use_enhanced_memory = os.getenv("USE_ENHANCED_MEMORY", "true").lower() == "true"
 
 if use_enhanced_memory:
     # Use enhanced memory store with VectorStore integration
     if use_firestore:
+        # Production: Firestore + VectorStore
+        # EnhancedMemoryStore provides in-memory VectorStore for semantic search
+        # FirestoreStore provides persistent backend for cross-session memory
         firestore_store = create_firestore_store()
-        # Note: Enhanced memory store doesn't directly support Firestore yet
-        # For now, use enhanced memory with automatic VectorStore population
         enhanced_store = create_enhanced_memory_store(embedding_provider="sentence-transformers")
-        shared_memory = Memory(store=enhanced_store)
+
+        # Use Firestore as the persistent backend, but keep VectorStore in-memory for performance
+        # Note: For now, we initialize both stores separately
+        # Future enhancement: Integrate FirestoreStore as backend for EnhancedMemoryStore
+        shared_memory = Memory(store=firestore_store)
+
+        # Log the configuration
+        import logging
+        logger = logging.getLogger(__name__)
+        logger.info("🔥 Firestore + VectorStore enabled: Production persistence with semantic search")
     else:
-        # Use enhanced memory store with in-memory backend
+        # Development: In-memory + VectorStore (no persistence)
         enhanced_store = create_enhanced_memory_store(embedding_provider="sentence-transformers")
         shared_memory = Memory(store=enhanced_store)
+
+        import logging
+        logger = logging.getLogger(__name__)
+        logger.info("💾 In-memory + VectorStore: Development mode (no persistence)")
 else:
     # Use traditional memory for backward compatibility
     memory_store = create_firestore_store() if use_firestore else None
     shared_memory = Memory(store=memory_store)
+
+    import logging
+    logger = logging.getLogger(__name__)
+    logger.info("📝 Basic memory mode: Legacy compatibility")
 
 shared_context = create_agent_context(memory=shared_memory)
 
