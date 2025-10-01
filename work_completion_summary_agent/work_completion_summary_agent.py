@@ -2,6 +2,7 @@ import os
 
 from agency_swarm import Agent
 from shared.agent_context import AgentContext, create_agent_context
+from shared.constitutional_validator import constitutional_compliance
 from shared.agent_utils import (
     select_instructions_file,
     create_model_settings,
@@ -129,6 +130,7 @@ class RegenerateWithGpt5(Tool):
             pass
 
 
+@constitutional_compliance
 def create_work_completion_summary_agent(
     model: str = "gpt-5-nano",
     reasoning_effort: str = "low",

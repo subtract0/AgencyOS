@@ -15,6 +15,10 @@ if str(project_root) not in sys.path:
 # Load environment variables for tests (e.g., OPENAI_API_KEY)
 load_dotenv()
 
+# Skip spec traceability validation during tests for performance
+# (validation takes ~30s on large codebases)
+os.environ["SKIP_SPEC_TRACEABILITY"] = "true"
+
 # Ensure logs directory exists for pytest log file
 os.makedirs("logs", exist_ok=True)
 

@@ -11,7 +11,7 @@ from pathlib import Path
 from datetime import datetime, timedelta
 
 from agency_swarm.tools import BaseTool
-from pydantic import Field
+from pydantic import Field, field_validator, ValidationInfo
 
 # Resource-based locking for file operations with TTL
 # Allows parallel execution except when accessing the same resources
@@ -249,6 +249,97 @@ class Bash(BaseTool):  # type: ignore[misc]
         description="Clear, concise description of what this command does in 5-10 words. Examples:\nInput: ls\nOutput: Lists files in current directory\n\nInput: git status\nOutput: Shows working tree status\n\nInput: npm install\nOutput: Installs package dependencies\n\nInput: mkdir foo\nOutput: Creates directory 'foo'",
     )
 
+    @field_validator('command')
+    @classmethod
+    def validate_command_pydantic(cls, v: str) -> str:
+        """
+        Pydantic field validator for command input validation.
+
+        This provides the first layer of security validation at the input level,
+        ensuring dangerous patterns are rejected before the command is processed.
+
+        Raises:
+            ValueError: If command fails Pydantic-level validation
+        """
+        # Empty command check
+        if not v or not v.strip():
+            raise ValueError("Empty command not allowed")
+
+        # Sanitize command for analysis
+        clean_command = v.strip().lower()
+
+        # Check for dangerous command patterns (strict blocking list)
+        for pattern in DANGEROUS_PATTERNS:
+            if re.search(pattern, clean_command, re.IGNORECASE):
+                raise ValueError(f"Dangerous pattern detected: {pattern}")
+
+        # Parse command tokens safely
+        try:
+            tokens = shlex.split(v)
+        except ValueError as e:
+            raise ValueError(f"Command parsing failed: {e}")
+
+        if not tokens:
+            raise ValueError("No valid command tokens found")
+
+        # Resolve command to canonical form and check against dangerous commands
+        main_command = tokens[0]
+
+        # Handle full paths and resolve to canonical command
+        if '/' in main_command:
+            try:
+                canonical_cmd = os.path.realpath(main_command)
+                main_command = os.path.basename(canonical_cmd)
+            except (OSError, ValueError):
+                main_command = os.path.basename(main_command)
+
+        # Check resolved command against dangerous commands (case-insensitive)
+        if main_command.lower() in DANGEROUS_COMMANDS:
+            raise ValueError(f"Dangerous command not allowed: {main_command}")
+
+        # Validate injection patterns (backticks and command substitution)
+        cls._validate_injection_patterns_static(v)
+
+        return v
+
+
+    @staticmethod
+    def _validate_injection_patterns_static(command: str) -> None:
+        """
+        Static method for validating command injection patterns.
+        Used by both Pydantic validator and runtime validation.
+
+        Raises:
+            ValueError: If dangerous injection patterns are detected
+        """
+        # Check for malicious backticks
+        backtick_pattern = r'`([^`]*)`'
+        backtick_matches = re.findall(backtick_pattern, command)
+        if backtick_matches:
+            dangerous_backticks = [match for match in backtick_matches
+                                 if any(danger in match.lower() for danger in ['rm', 'curl', 'wget', 'sudo', 'chmod'])]
+            if dangerous_backticks:
+                raise ValueError(f"Dangerous backtick execution detected: {dangerous_backticks}")
+
+        # Check for dangerous command substitution
+        substitution_pattern = r'\$\(([^)]*)\)'
+        substitution_matches = re.findall(substitution_pattern, command)
+        if substitution_matches:
+            safe_substitutions = ['pwd', 'date', 'whoami', 'basename', 'dirname', 'cat', 'echo']
+            dangerous_substitutions = []
+            for match in substitution_matches:
+                match_lower = match.lower().strip()
+                is_safe = any(match_lower.startswith(safe) for safe in safe_substitutions)
+                if not is_safe and any(danger in match_lower for danger in ['rm', 'curl', 'wget', 'sudo', 'chmod']):
+                    dangerous_substitutions.append(match)
+            if dangerous_substitutions:
+                raise ValueError(f"Dangerous command substitution detected: {dangerous_substitutions}")
+
+        # Check for suspicious command chaining
+        suspicious_chaining = re.findall(r'[;&|]+\s*(rm|sudo|chmod|curl.*\||wget.*\|)', command, re.IGNORECASE)
+        if suspicious_chaining:
+            raise ValueError(f"Suspicious command chaining detected: {suspicious_chaining}")
+
     def _validate_command_security(self, command: str) -> None:
         """
         Validate command against security policies (Article I: Context Verification).
@@ -331,34 +422,16 @@ class Bash(BaseTool):  # type: ignore[misc]
                         raise CommandValidationError(f"Write/delete operation to system directory not allowed: {token}")
 
     def _validate_injection_patterns(self, command: str) -> None:
-        """Check for command injection patterns."""
-        # Check for malicious backticks (but allow safe ones)
-        backtick_pattern = r'`([^`]*)`'
-        backtick_matches = re.findall(backtick_pattern, command)
-        if backtick_matches:
-            dangerous_backticks = [match for match in backtick_matches
-                                 if any(danger in match.lower() for danger in ['rm', 'curl', 'wget', 'sudo', 'chmod'])]
-            if dangerous_backticks:
-                raise CommandValidationError(f"Dangerous backtick execution detected: {dangerous_backticks}")
+        """
+        Check for command injection patterns.
 
-        # Check for dangerous command substitution (allow safe ones)
-        substitution_pattern = r'\$\(([^)]*)\)'
-        substitution_matches = re.findall(substitution_pattern, command)
-        if substitution_matches:
-            safe_substitutions = ['pwd', 'date', 'whoami', 'basename', 'dirname', 'cat', 'echo']
-            dangerous_substitutions = []
-            for match in substitution_matches:
-                match_lower = match.lower().strip()
-                is_safe = any(match_lower.startswith(safe) for safe in safe_substitutions)
-                if not is_safe and any(danger in match_lower for danger in ['rm', 'curl', 'wget', 'sudo', 'chmod']):
-                    dangerous_substitutions.append(match)
-            if dangerous_substitutions:
-                raise CommandValidationError(f"Dangerous command substitution detected: {dangerous_substitutions}")
-
-        # Check for suspicious command chaining (but allow legitimate pipes and commands)
-        suspicious_chaining = re.findall(r'[;&|]+\s*(rm|sudo|chmod|curl.*\||wget.*\|)', command, re.IGNORECASE)
-        if suspicious_chaining:
-            raise CommandValidationError(f"Suspicious command chaining detected: {suspicious_chaining}")
+        This method wraps the static validator to maintain backward compatibility
+        and convert ValueError to CommandValidationError.
+        """
+        try:
+            self._validate_injection_patterns_static(command)
+        except ValueError as e:
+            raise CommandValidationError(str(e))
 
     def run(self):
         """Execute the bash command with security validation."""

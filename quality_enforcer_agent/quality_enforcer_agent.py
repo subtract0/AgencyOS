@@ -14,6 +14,7 @@ from agency_swarm.tools import BaseTool as Tool
 from pydantic import BaseModel, Field
 
 from shared.agent_context import AgentContext, create_agent_context
+from shared.constitutional_validator import constitutional_compliance
 from shared.agent_utils import (
     detect_model_type,
     select_instructions_file,
@@ -359,6 +360,7 @@ Use GPT-5 with prompt: "Analyze and fix this error: {self.error_message} in code
 """
 
 
+@constitutional_compliance
 def create_quality_enforcer_agent(
     model: str = "gpt-5",
     reasoning_effort: str = "high",

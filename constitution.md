@@ -87,10 +87,17 @@ def ensure_complete_context(operation_func, max_retries=3):
 - **100% is not negotiable - no exceptions**
 
 #### Quality Requirements
-- Tests MUST verify REAL functionality
+- Tests MUST verify REAL functionality, not simulated behavior
 - No test deactivation or skip markers (except platform-specific)
 - No assertion removal to force test passage
 - When tests fail: code is wrong, not test
+
+#### No Simulation in Production (Amendment 2025-10-02)
+- Mocked functions SHALL NOT be merged to main branch
+- Simulated work (print statements, hardcoded responses) is NOT production-ready
+- Demonstration code MUST remain in feature branches or docs/examples/
+- Only fully-implemented, tested functionality may merge to main
+- "Green tests" means tests validate REAL behavior, not mock behavior
 
 #### "Delete the Fire First" Priority
 - BEFORE new features: all tests green

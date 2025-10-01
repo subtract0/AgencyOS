@@ -39,10 +39,14 @@ def test_git_log_with_max_lines():
 
 
 def test_git_unknown_command():
-    tool = Git(cmd="invalid_command")
-    out = tool.run()
-    assert "Exit code: 1" in out
-    assert "Unknown cmd" in out
+    """Test that invalid commands are rejected at validation time."""
+    from pydantic import ValidationError
+    import pytest
+
+    with pytest.raises(ValidationError) as exc_info:
+        Git(cmd="invalid_command")
+    # Verify the error message mentions valid options
+    assert "cmd" in str(exc_info.value)
 
 
 def test_git_tool_error_handling():

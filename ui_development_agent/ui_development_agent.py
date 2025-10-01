@@ -28,6 +28,7 @@ from agency_swarm.tools import BaseTool as Tool
 from pydantic import Field
 
 from shared.agent_context import AgentContext, create_agent_context
+from shared.constitutional_validator import constitutional_compliance
 from shared.agent_utils import (
     detect_model_type,
     select_instructions_file,
@@ -392,6 +393,7 @@ ws.addEventListener('message', (event) => {{
 """
 
 
+@constitutional_compliance
 def create_ui_development_agent(
     model: str = "claude-sonnet-4-20250514",
     reasoning_effort: str = "high",

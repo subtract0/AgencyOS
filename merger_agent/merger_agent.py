@@ -3,6 +3,7 @@ from typing import Optional
 
 from agency_swarm import Agent
 from shared.agent_context import AgentContext, create_agent_context
+from shared.constitutional_validator import constitutional_compliance
 from shared.agent_utils import (
     select_instructions_file,
     create_model_settings,
@@ -27,6 +28,7 @@ from tools import (
 current_dir = os.path.dirname(os.path.abspath(__file__))
 
 
+@constitutional_compliance
 def create_merger_agent(
     model: str = "gpt-5",
     reasoning_effort: str = "high",

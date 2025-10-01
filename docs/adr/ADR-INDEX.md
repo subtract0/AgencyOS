@@ -254,6 +254,30 @@ This index catalogs all Architecture Decision Records for the Agency multi-agent
 
 ---
 
+### ADR-018: Constitutional Timeout Wrapper
+**Status:** Accepted
+**Date:** 2025-10-02
+**File:** `docs/adr/ADR-018-constitutional-timeout-wrapper.md`
+
+**Decision:** Implement shared timeout wrapper utility for Article I compliance across all 35 tools.
+
+**Key Components:**
+- Decorator pattern (`@with_constitutional_timeout`) for minimal code changes
+- Constitutional retry logic (1x, 2x, 3x, 5x, 10x timeout multipliers)
+- Result<T,E> pattern integration for type-safe error handling
+- Telemetry integration for Article IV learning
+- Completeness validation (Article I: Context Verification)
+
+**Impact:**
+- Article I compliance: 90/100 → 100/100
+- Tool coverage: 2/35 (6%) → 35/35 (100%)
+- Migration effort: ~8.75 hours total (4-week rollout)
+- Zero performance regression (< 5% overhead for fast operations)
+
+**Constitutional Compliance:** Articles I (Complete Context - PRIMARY), II (100% Verification), IV (Continuous Learning)
+
+---
+
 ## Review Schedule
 
 - **Weekly:** Review new ADR proposals
@@ -271,5 +295,5 @@ This index catalogs all Architecture Decision Records for the Agency multi-agent
 
 ---
 
-*Last Updated: 2025-10-01*
+*Last Updated: 2025-10-02*
 *Next Review: 2025-11-01*

@@ -1,6 +1,7 @@
 import os
 from agency_swarm import Agent
 from shared.agent_context import AgentContext, create_agent_context
+from shared.constitutional_validator import constitutional_compliance
 from shared.agent_utils import select_instructions_file, create_model_settings, get_model_instance
 from shared.system_hooks import (
     create_message_filter_hook,
@@ -13,6 +14,7 @@ from .tools.architecture_loop import RunArchitectureLoop
 current_dir = os.path.dirname(os.path.abspath(__file__))
 
 
+@constitutional_compliance
 def create_chief_architect_agent(model: str = "gpt-5", reasoning_effort: str = "high", agent_context: AgentContext | None = None) -> Agent:
     if agent_context is None:
         agent_context = create_agent_context()
