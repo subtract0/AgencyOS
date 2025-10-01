@@ -15,6 +15,7 @@ from pydantic import Field, BaseModel
 from shared.type_definitions.json import JSONValue
 
 from shared.agent_context import AgentContext, create_agent_context
+from shared.constitutional_validator import constitutional_compliance
 from shared.agent_utils import (
     detect_model_type,
     select_instructions_file,
@@ -553,6 +554,7 @@ class GenerateTests(Tool):
         return False
 
 
+@constitutional_compliance
 def create_test_generator_agent(
     model: str = "gpt-5",
     reasoning_effort: str = "medium",

@@ -2,6 +2,7 @@ import os
 
 from agency_swarm import Agent
 from shared.agent_context import AgentContext, create_agent_context
+from shared.constitutional_validator import constitutional_compliance
 from shared.agent_utils import (
     select_instructions_file,
     create_model_settings,
@@ -18,6 +19,7 @@ from tools import Read, Write, Edit, MultiEdit, Grep, Glob, Bash, TodoWrite
 current_dir = os.path.dirname(os.path.abspath(__file__))
 
 
+@constitutional_compliance
 def create_toolsmith_agent(
     model: str = "gpt-5",
     reasoning_effort: str = "high",

@@ -76,46 +76,99 @@ class SelfHealingCore:
         Returns:
             List of Finding objects with detected errors
         """
-        findings: List[Finding] = []
+        # 1. Load content (from file or treat as string)
+        content = self._load_content_for_detection(path)
+        if content is None:
+            return []
 
-        # Validate and sanitize file path
-        if os.path.isfile(path):
-            # Input validation for file paths
-            # Normalize and validate the path
+        # 2. Scan for error patterns
+        findings = self._scan_for_error_patterns(content)
+
+        # 3. Emit telemetry
+        self._emit_event("errors_detected", {
+            "count": len(findings),
+            "types": list(set(f.error_type for f in findings))
+        })
+
+        return findings
+
+    def _load_content_for_detection(self, path: str) -> Optional[str]:
+        """
+        Load content from file path or treat as string content.
+
+        Args:
+            path: File path or log content string
+
+        Returns:
+            Content string, or None if validation/read fails
+        """
+        if not os.path.isfile(path):
+            # Treat as log content string
+            return path
+
+        # Validate file path security
+        if not self._validate_file_path_security(path):
+            return None
+
+        # Read file content
+        try:
             normalized_path = os.path.normpath(path)
             abs_path = os.path.abspath(normalized_path)
+            with open(abs_path, 'r', encoding='utf-8') as f:
+                return f.read()
+        except UnicodeDecodeError:
+            self._emit_event("error_detection_failed", {"path": path, "error": "File is not UTF-8 encoded"})
+            return None
+        except Exception as e:
+            self._emit_event("error_detection_failed", {"path": path, "error": str(e)})
+            return None
 
-            # Security check: ensure path doesn't escape working directory or access sensitive areas
-            cwd = os.getcwd()
-            if not abs_path.startswith(cwd) and not abs_path.startswith('/tmp') and not abs_path.startswith('/var/log'):
-                self._emit_event("security_validation_failed", {
-                    "path": path,
-                    "reason": "Path outside allowed directories"
-                })
-                return findings
+    def _validate_file_path_security(self, path: str) -> bool:
+        """
+        Validate file path for security (path traversal, allowed directories).
 
-            # Check for path traversal attempts
-            if '..' in normalized_path or normalized_path.startswith('~'):
-                self._emit_event("security_validation_failed", {
-                    "path": path,
-                    "reason": "Path traversal attempt detected"
-                })
-                return findings
+        Args:
+            path: File path to validate
 
-            try:
-                with open(abs_path, 'r', encoding='utf-8') as f:
-                    content = f.read()
-            except UnicodeDecodeError:
-                self._emit_event("error_detection_failed", {"path": path, "error": "File is not UTF-8 encoded"})
-                return findings
-            except Exception as e:
-                self._emit_event("error_detection_failed", {"path": path, "error": str(e)})
-                return findings
-        else:
-            # Treat as log content string
-            content = path
+        Returns:
+            True if path is safe, False otherwise
+        """
+        normalized_path = os.path.normpath(path)
+        abs_path = os.path.abspath(normalized_path)
 
-        # NoneType error patterns (from existing implementation)
+        # Security check: ensure path is in allowed directories
+        cwd = os.getcwd()
+        allowed_dirs = [cwd, '/tmp', '/var/log']
+        if not any(abs_path.startswith(d) for d in allowed_dirs):
+            self._emit_event("security_validation_failed", {
+                "path": path,
+                "reason": "Path outside allowed directories"
+            })
+            return False
+
+        # Check for path traversal attempts
+        if '..' in normalized_path or normalized_path.startswith('~'):
+            self._emit_event("security_validation_failed", {
+                "path": path,
+                "reason": "Path traversal attempt detected"
+            })
+            return False
+
+        return True
+
+    def _scan_for_error_patterns(self, content: str) -> List[Finding]:
+        """
+        Scan content for NoneType error patterns.
+
+        Args:
+            content: Log or file content to scan
+
+        Returns:
+            List of Finding objects for detected errors
+        """
+        findings: List[Finding] = []
+
+        # NoneType error patterns
         patterns = [
             r"AttributeError: 'NoneType' object has no attribute '(\w+)'",
             r"TypeError: 'NoneType' object is not (\w+)",
@@ -126,27 +179,36 @@ class SelfHealingCore:
         for pattern in patterns:
             matches = re.finditer(pattern, content, re.MULTILINE)
             for match in matches:
-                # Extract context
-                line_match = re.search(r'line (\d+)', content)
-                line_num = int(line_match.group(1)) if line_match else 0
-
-                file_match = re.search(r'File "([^"]+)"', content)
-                file_path = file_match.group(1) if file_match else "unknown"
-
-                finding = Finding(
-                    file=file_path,
-                    line=line_num,
-                    error_type="NoneType",
-                    snippet=match.group(0)
-                )
+                finding = self._extract_finding_from_match(match, content)
                 findings.append(finding)
 
-        self._emit_event("errors_detected", {
-            "count": len(findings),
-            "types": list(set(f.error_type for f in findings))
-        })
-
         return findings
+
+    def _extract_finding_from_match(self, match: re.Match, content: str) -> Finding:
+        """
+        Extract Finding object from regex match and content.
+
+        Args:
+            match: Regex match object
+            content: Full content being scanned
+
+        Returns:
+            Finding object with extracted metadata
+        """
+        # Extract line number
+        line_match = re.search(r'line (\d+)', content)
+        line_num = int(line_match.group(1)) if line_match else 0
+
+        # Extract file path
+        file_match = re.search(r'File "([^"]+)"', content)
+        file_path = file_match.group(1) if file_match else "unknown"
+
+        return Finding(
+            file=file_path,
+            line=line_num,
+            error_type="NoneType",
+            snippet=match.group(0)
+        )
 
     def fix_error(self, error: Finding) -> bool:
         """
@@ -159,27 +221,18 @@ class SelfHealingCore:
         Returns:
             True if fix successful and tests pass, False otherwise
         """
-        if error.file == "unknown" or not os.path.exists(error.file):
-            self._emit_event("fix_skipped", {"reason": "file_not_found", "file": error.file})
+        # 1. Validate and read file
+        original_content = self._read_file_for_fix(error)
+        if original_content is None:
             return False
 
-        # Read original file content for backup
-        try:
-            with open(error.file, 'r') as f:
-                original_content = f.read()
-            lines = original_content.split('\n')
-        except Exception as e:
-            self._emit_event("fix_failed", {"reason": "cannot_read_file", "error": str(e)})
-            return False
-
-        # Generate simple fix (from existing logic)
+        # 2. Generate fix
         fixed_content = self._generate_fix(original_content, error)
-
         if not fixed_content:
             self._emit_event("fix_failed", {"reason": "cannot_generate_fix"})
             return False
 
-        # Safety check: dry-run mode
+        # 3. Check dry-run mode
         if self.dry_run:
             self._emit_event("fix_skipped_dry_run", {
                 "file": error.file,
@@ -187,88 +240,165 @@ class SelfHealingCore:
             })
             return True  # Pretend success in dry-run
 
-        # Apply the fix
+        # 4. Apply fix to file
+        if not self._apply_fix_to_file(error.file, fixed_content):
+            return False
+
+        # 5. Verify with tests
+        test_passed = self.verify()
+
+        # 6. Rollback on failure
+        if not test_passed:
+            self._rollback_on_failure(error.file, original_content)
+            return False
+
+        # 7. Learn from successful fix
+        self._learn_from_fix(error, original_content, fixed_content)
+
+        # 8. Commit the successful fix
+        self._commit_fix(error)
+
+        return True
+
+    def _read_file_for_fix(self, error: Finding) -> Optional[str]:
+        """
+        Validate error file and read its content for fixing.
+
+        Args:
+            error: Finding object with file path
+
+        Returns:
+            File content as string, or None if validation/read fails
+        """
+        if error.file == "unknown" or not os.path.exists(error.file):
+            self._emit_event("fix_skipped", {"reason": "file_not_found", "file": error.file})
+            return None
+
         try:
-            with open(error.file, 'w') as f:
+            with open(error.file, 'r') as f:
+                return f.read()
+        except Exception as e:
+            self._emit_event("fix_failed", {"reason": "cannot_read_file", "error": str(e)})
+            return None
+
+    def _apply_fix_to_file(self, file_path: str, fixed_content: str) -> bool:
+        """
+        Apply generated fix to file on disk.
+
+        Args:
+            file_path: Path to file to modify
+            fixed_content: Fixed content to write
+
+        Returns:
+            True if write successful, False otherwise
+        """
+        try:
+            with open(file_path, 'w') as f:
                 f.write(fixed_content)
-            self._emit_event("patch_applied", {"file": error.file})
+            self._emit_event("patch_applied", {"file": file_path})
+            return True
         except Exception as e:
             self._emit_event("fix_failed", {"reason": "cannot_write_file", "error": str(e)})
             return False
 
-        # Verify with tests
-        test_passed = self.verify()
+    def _rollback_on_failure(self, file_path: str, original_content: str) -> None:
+        """
+        Rollback file to original content after test failure.
 
-        if not test_passed:
-            # Rollback on failure
-            try:
-                with open(error.file, 'w') as f:
-                    f.write(original_content)
-                self._emit_event("rollback_complete", {"file": error.file})
-            except (IOError, PermissionError, OSError) as e:
-                self._emit_event("rollback_failed", {"file": error.file, "error": str(e)}, level="error")
-            return False
+        Args:
+            file_path: Path to file to rollback
+            original_content: Original content to restore
+        """
+        try:
+            with open(file_path, 'w') as f:
+                f.write(original_content)
+            self._emit_event("rollback_complete", {"file": file_path})
+        except (IOError, PermissionError, OSError) as e:
+            self._emit_event("rollback_failed", {"file": file_path, "error": str(e)}, level="error")
 
-        # Learn from successful fix
-        if self.pattern_store and test_passed:
-            from pattern_intelligence.coding_pattern import (
-                CodingPattern, ProblemContext, SolutionApproach,
-                EffectivenessMetric, PatternMetadata
-            )
-            from datetime import datetime
+    def _learn_from_fix(self, error: Finding, original_content: str, fixed_content: str) -> None:
+        """
+        Store successful fix as a coding pattern for future learning.
 
-            # Create a CodingPattern from the fix
-            context = ProblemContext(
-                description=f"Fix for {error.error_type}",
-                domain="error_fixing",
-                constraints=[],
-                symptoms=[error.snippet[:200]],
-                scale=None,
-                urgency="medium"
-            )
+        Args:
+            error: Finding object that was fixed
+            original_content: Original file content before fix
+            fixed_content: Fixed file content after fix
+        """
+        if not self.pattern_store:
+            return
 
-            solution = SolutionApproach(
-                approach=f"Self-healing fix for {error.error_type}",
-                implementation=fixed_content[:1000],
-                tools=["self_healing"],
-                reasoning="Automated fix applied and tested successfully",
-                code_examples=[original_content[:500], fixed_content[:500]],
-                dependencies=[],
-                alternatives=[]
-            )
+        from pattern_intelligence.coding_pattern import CodingPattern
 
-            outcome = EffectivenessMetric(
-                success_rate=1.0,
-                performance_impact=None,
-                maintainability_impact="Improved error handling",
-                user_impact=None,
-                technical_debt=None,
-                adoption_rate=1,
-                longevity=None,
-                confidence=0.9
-            )
+        # Build pattern components
+        context = self._build_pattern_context(error)
+        solution = self._build_pattern_solution(error, original_content, fixed_content)
+        outcome = self._build_pattern_outcome()
+        metadata = self._build_pattern_metadata(error)
 
-            pattern_id = f"self_heal_{error.error_type}_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
-            metadata = PatternMetadata(
-                pattern_id=pattern_id,
-                discovered_timestamp=datetime.now().isoformat(),
-                source="self_healing:core",
-                discoverer="SelfHealingCore",
-                last_applied=datetime.now().isoformat(),
-                application_count=1,
-                validation_status="validated",
-                tags=["self_healing", error.error_type, "automated"],
-                related_patterns=[]
-            )
+        # Store pattern
+        pattern = CodingPattern(context, solution, outcome, metadata)
+        self.pattern_store.store_pattern(pattern)
+        self._emit_event("pattern_learned", {"pattern_id": metadata.pattern_id})
 
-            pattern = CodingPattern(context, solution, outcome, metadata)
-            self.pattern_store.store_pattern(pattern)
-            self._emit_event("pattern_learned", {"pattern_id": pattern_id})
+    def _build_pattern_context(self, error: Finding):
+        """Build ProblemContext for pattern learning."""
+        from pattern_intelligence.coding_pattern import ProblemContext
 
-        # Commit the successful fix
-        self._commit_fix(error)
+        return ProblemContext(
+            description=f"Fix for {error.error_type}",
+            domain="error_fixing",
+            constraints=[],
+            symptoms=[error.snippet[:200]],
+            scale=None,
+            urgency="medium"
+        )
 
-        return True
+    def _build_pattern_solution(self, error: Finding, original_content: str, fixed_content: str):
+        """Build SolutionApproach for pattern learning."""
+        from pattern_intelligence.coding_pattern import SolutionApproach
+
+        return SolutionApproach(
+            approach=f"Self-healing fix for {error.error_type}",
+            implementation=fixed_content[:1000],
+            tools=["self_healing"],
+            reasoning="Automated fix applied and tested successfully",
+            code_examples=[original_content[:500], fixed_content[:500]],
+            dependencies=[],
+            alternatives=[]
+        )
+
+    def _build_pattern_outcome(self):
+        """Build EffectivenessMetric for pattern learning."""
+        from pattern_intelligence.coding_pattern import EffectivenessMetric
+
+        return EffectivenessMetric(
+            success_rate=1.0,
+            performance_impact=None,
+            maintainability_impact="Improved error handling",
+            user_impact=None,
+            technical_debt=None,
+            adoption_rate=1,
+            longevity=None,
+            confidence=0.9
+        )
+
+    def _build_pattern_metadata(self, error: Finding):
+        """Build PatternMetadata for pattern learning."""
+        from pattern_intelligence.coding_pattern import PatternMetadata
+
+        pattern_id = f"self_heal_{error.error_type}_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
+        return PatternMetadata(
+            pattern_id=pattern_id,
+            discovered_timestamp=datetime.now().isoformat(),
+            source="self_healing:core",
+            discoverer="SelfHealingCore",
+            last_applied=datetime.now().isoformat(),
+            application_count=1,
+            validation_status="validated",
+            tags=["self_healing", error.error_type, "automated"],
+            related_patterns=[]
+        )
 
     def verify(self) -> bool:
         """

@@ -137,10 +137,14 @@ Read **`constitution.md`** in full before any action. Summary:
 - No bypass authority for anyone
 
 ### **Article IV: Continuous Learning and Improvement** (ADR-004)
+- **MANDATORY**: VectorStore integration is constitutionally required (not optional)
+- **ENFORCEMENT**: USE_ENHANCED_MEMORY must be 'true' - no disable flags permitted
 - Auto-triggers after sessions, errors, successes
 - Min confidence: 0.6, min evidence: 3 occurrences
-- VectorStore knowledge accumulation
-- Cross-session pattern recognition
+- VectorStore knowledge accumulation (required for all agents)
+- Cross-session pattern recognition (institutional memory)
+- Agents MUST query learnings before decisions
+- Agents MUST store successful patterns after operations
 
 ### **Article V: Spec-Driven Development** (ADR-007)
 - **Complex features**: spec.md → plan.md → TodoWrite tasks
@@ -334,8 +338,8 @@ AUDITOR_MODEL=gpt-5                   # Quality analysis
 QUALITY_ENFORCER_MODEL=gpt-5          # Constitutional compliance
 SUMMARY_MODEL=gpt-5-mini              # Cost-efficient summaries
 
-# Memory & Learning
-USE_ENHANCED_MEMORY=true              # VectorStore integration
+# Memory & Learning (MANDATORY - Article IV)
+USE_ENHANCED_MEMORY=true              # REQUIRED: VectorStore integration (constitutional mandate)
 FRESH_USE_FIRESTORE=false             # Optional Firestore backend
 
 # Testing
@@ -377,12 +381,13 @@ python run_tests.py --run-all         # Must show 100% pass rate
 
 ## **📊 Production Metrics**
 
-- **1,562 tests** passing with 100% success rate
+- **1,725+ tests** passing with 100% success rate (163 new constitutional compliance tests)
 - **Zero test failures** under constitutional enforcement
-- **3-minute** comprehensive test execution
-- **185-second** full validation cycle
+- **<3 seconds** for constitutional test suite validation
+- **139 test files** total across codebase
 - **>95% healing success rate** for autonomous fixes
-- **100% constitutional compliance** across all agents
+- **100% constitutional compliance** across all agents (Articles I-V)
+- **36 production tools** with security hardening (bash.py, git.py validated)
 
 ---
 

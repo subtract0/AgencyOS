@@ -7,6 +7,7 @@ from agents import (
     WebSearchTool,
 )
 from shared.agent_context import AgentContext, create_agent_context
+from shared.constitutional_validator import constitutional_compliance
 from shared.agent_utils import (
     detect_model_type,
     select_instructions_file,
@@ -41,6 +42,7 @@ current_dir = os.path.dirname(os.path.abspath(__file__))
 
 
 
+@constitutional_compliance
 def create_agency_code_agent(
     model: str = "gpt-5-mini",
     reasoning_effort: str = "medium",

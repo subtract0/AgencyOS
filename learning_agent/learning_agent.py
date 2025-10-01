@@ -3,6 +3,7 @@ import os
 from typing import Optional
 from agency_swarm import Agent as _Agent
 from shared.agent_context import AgentContext, create_agent_context
+from shared.constitutional_validator import constitutional_compliance
 
 # Create module-level alias for Agent to enable proper mocking
 # When tests patch 'learning_agent.Agent', this will be the target
@@ -31,6 +32,7 @@ from .tools.cross_session_learner import CrossSessionLearner
 # Get the absolute path to the current file's directory
 current_dir = os.path.dirname(os.path.abspath(__file__))
 
+@constitutional_compliance
 def create_learning_agent(model: str = "gpt-5", reasoning_effort: str = "high", agent_context: Optional[AgentContext] = None) -> Agent:
     """Factory that returns a fresh LearningAgent instance.
     Use this in tests to avoid reusing a singleton across multiple agencies.

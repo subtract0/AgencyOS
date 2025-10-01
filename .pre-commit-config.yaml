@@ -42,6 +42,13 @@
         pass_filenames: false
         always_run: true
         stages: [commit]
+    -   id: spec-traceability
+        name: Spec Traceability Validation
+        entry: python -m tools.spec_traceability
+        language: system
+        pass_filenames: false
+        always_run: true
+        stages: [commit]
     -   id: pytest
         name: pytest
         entry: python run_tests_parallel.py # Use the parallel runner

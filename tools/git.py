@@ -1,19 +1,81 @@
 # mypy: disable-error-code="misc,assignment,arg-type,attr-defined,index,return-value"
 import os
+import re
+from typing import Literal
 
 from agency_swarm.tools import BaseTool
-from pydantic import Field
+from pydantic import Field, field_validator
 
 
 class Git(BaseTool):  # type: ignore[misc]
     """Read-only git operations using dulwich library only.
 
     Supports: status, diff, log, show. All operations are safe and non-destructive.
+
+    Security: Command whitelisting and input validation prevent injection attacks.
     """
 
-    cmd: str = Field(..., description="Git command: status, diff, log, show")
-    ref: str = Field("HEAD", description="Git reference for diff/show operations")
-    max_lines: int = Field(20000, description="Max output lines")
+    cmd: Literal["status", "diff", "log", "show"] = Field(
+        ...,
+        description="Git command: status, diff, log, show (read-only operations only)"
+    )
+    ref: str = Field(
+        "HEAD",
+        description="Git reference for diff/show operations (branch, tag, or commit hash)"
+    )
+    max_lines: int = Field(
+        20000,
+        description="Max output lines (1-1000000)",
+        gt=0,
+        le=1000000
+    )
+
+    @field_validator('cmd')
+    @classmethod
+    def validate_cmd(cls, v: str) -> str:
+        """Validate command is whitelisted and not empty."""
+        if not v or not v.strip():
+            raise ValueError("Command cannot be empty or whitespace-only")
+        # Literal type already restricts to whitelist, but explicit check for clarity
+        allowed = {"status", "diff", "log", "show"}
+        if v not in allowed:
+            raise ValueError(f"Command '{v}' not in whitelist: {allowed}")
+        return v
+
+    @field_validator('ref')
+    @classmethod
+    def validate_ref(cls, v: str) -> str:
+        """Validate git reference doesn't contain injection patterns.
+
+        Blocks: command injection chars (;|&$`), null bytes, newlines, path traversal.
+        Allows: alphanumeric, dash, underscore, dot, forward slash, caret, tilde.
+        """
+        if not v or not v.strip():
+            raise ValueError("Reference cannot be empty or whitespace-only")
+
+        # Check for injection characters
+        dangerous_chars = {';', '|', '&', '$', '`', '\x00', '\n', '\r', '\t'}
+        for char in dangerous_chars:
+            if char in v:
+                raise ValueError(
+                    f"Reference contains unsafe character: {repr(char)}. "
+                    "Possible injection attempt blocked."
+                )
+
+        # Check for path traversal attempts
+        if '..' in v:
+            raise ValueError("Reference contains path traversal pattern '..' - blocked for security")
+
+        # Validate against safe pattern: git refs are alphanumeric with limited special chars
+        # Allow: a-z A-Z 0-9 - _ . / ^ ~ (common in git refs)
+        safe_pattern = re.compile(r'^[a-zA-Z0-9\-_./^~]+$')
+        if not safe_pattern.match(v):
+            raise ValueError(
+                f"Reference '{v}' contains invalid characters. "
+                "Only alphanumeric, dash, underscore, dot, slash, caret, and tilde allowed."
+            )
+
+        return v
 
     def run(self):
         try:
