@@ -38,13 +38,17 @@ def create_chief_architect_agent(model: str = "gpt-5", reasoning_effort: str = "
     return Agent(
         name="ChiefArchitectAgent",
         description=(
-            "The autonomous strategic leader and continuous improvement orchestrator. Proactively triggered periodically "
-            "for system health checks, when Q(T) scores indicate systemic issues, or when VectorStore patterns suggest "
-            "optimization opportunities. Reviews audit reports, memory patterns, and constitutional compliance to identify "
-            "high-impact improvements. Creates [SELF-DIRECTED TASK] entries that other agents must treat as high-priority "
-            "user instructions. Drives spec-driven fixes end-to-end through the RunArchitectureLoop tool. When prompting "
-            "this agent, provide context about recent failures, performance metrics, or areas of concern. Remember, this "
-            "agent has authority to initiate autonomous improvement cycles and its directives supersede routine tasks."
+            "PROACTIVE strategic oversight and self-directed task creation authority. Highest-level architectural decision maker "
+            "and ADR (Architecture Decision Record) creator. AUTOMATICALLY monitors system health, quality metrics, and strategic "
+            "alignment. INTELLIGENTLY coordinates with: (1) PlannerAgent for specification reviews, (2) LearningAgent for pattern "
+            "analysis and strategic insights, (3) AuditorAgent for system-wide quality assessments, (4) QualityEnforcer for "
+            "constitutional compliance enforcement, and (5) ALL AGENTS for architectural guidance. PROACTIVELY creates: ADRs for "
+            "major decisions (stored in docs/adr/), strategic refactoring plans, technical debt reduction strategies, and long-term "
+            "architecture evolution roadmaps. Uses self-directed task creation to initiate improvements without user prompting when "
+            "quality thresholds breached or architectural drift detected. Enforces Article V (spec-driven development) by ensuring "
+            "all complex features have formal specifications. Maintains ADR index, conducts architectural reviews, and provides "
+            "strategic guidance to all agents. When prompting, describe architectural challenges, technology decisions, or request "
+            "strategic planning. Uses high reasoning effort for critical architectural decisions."
         ),
         instructions=select_instructions_file(current_dir, model),
         model=get_model_instance(model),

@@ -42,7 +42,10 @@ current_dir = os.path.dirname(os.path.abspath(__file__))
 
 
 def create_agency_code_agent(
-    model: str = "gpt-5-mini", reasoning_effort: str = "medium", agent_context: AgentContext = None
+    model: str = "gpt-5-mini",
+    reasoning_effort: str = "medium",
+    agent_context: AgentContext = None,
+    cost_tracker = None
 ) -> Agent:
     """Factory that returns a fresh AgencyCodeAgent instance.
     Use this in tests to avoid reusing a singleton across multiple agencies.
@@ -51,6 +54,7 @@ def create_agency_code_agent(
         model: Model name to use
         reasoning_effort: Reasoning effort level
         agent_context: Optional AgentContext for memory integration
+        cost_tracker: Optional CostTracker for real-time LLM cost tracking
     """
     is_openai, is_claude, _ = detect_model_type(model)
 
@@ -76,19 +80,30 @@ def create_agency_code_agent(
             "agent_type": "AgencyCodeAgent",
             "model": model,
             "reasoning_effort": reasoning_effort,
-            "session_id": agent_context.session_id
+            "session_id": agent_context.session_id,
+            "cost_tracker_enabled": cost_tracker is not None
         },
         ["agency", "coder", "creation"]
     )
 
-    return Agent(
+    # Store cost_tracker in agent context for later use
+    if cost_tracker is not None:
+        agent_context.cost_tracker = cost_tracker
+
+    # Create agent
+    agent = Agent(
         name="AgencyCodeAgent",
         description=(
-            "The primary software engineer and implementation specialist. Proactively triggered when code changes are needed, "
-            "files require editing, or technical implementation is requested. Executes all hands-on development tasks including "
-            "writing, editing, debugging, and testing code. Works from detailed plans provided by the PlannerAgent. "
-            "When prompting this agent, provide specific file paths, code requirements, and any architectural constraints. "
-            "Remember, this agent has full access to all development tools and is responsible for maintaining code quality standards."
+            "PROACTIVE primary software engineer and implementation specialist with autonomous coordination capabilities. "
+            "Intelligently triggered when code changes, file edits, or technical implementation is needed. AUTOMATICALLY coordinates "
+            "with: (1) PlannerAgent for specifications and strategic guidance, (2) TestGeneratorAgent for TDD test-first development, "
+            "(3) QualityEnforcerAgent for constitutional Article II compliance (100% verification), (4) AuditorAgent for quality validation, "
+            "and (5) MergerAgent for integration. Executes all hands-on development using strict TDD methodology and Result<T,E> pattern. "
+            "PROACTIVELY suggests improvements, refactorings, and optimizations based on VectorStore learning patterns and shared memory. "
+            "Maintains real-time cost tracking for all LLM operations and enforces zero Dict[Any, Any] usage per constitutional requirements. "
+            "Works from detailed plans in /plans/ and ensures all code meets Article II (100% test success) before handoff to MergerAgent. "
+            "When prompting, provide file paths, code requirements, and architectural constraints. Has full tool access including Git, "
+            "file operations, web search, and TodoWrite for task coordination."
         ),
         instructions=instructions,
         tools_folder=os.path.join(current_dir, "tools"),
@@ -113,6 +128,13 @@ def create_agency_code_agent(
         + ([ClaudeWebSearch] if is_claude else []),
         model_settings=create_model_settings(model, reasoning_effort),
     )
+
+    # Enable cost tracking if provided
+    if cost_tracker is not None:
+        from shared.llm_cost_wrapper import wrap_agent_with_cost_tracking
+        wrap_agent_with_cost_tracking(agent, cost_tracker)
+
+    return agent
 
 
 # Note: We don't create a singleton at module level to avoid circular imports.

@@ -125,12 +125,16 @@ def _get_agent_description() -> str:
         Agent description string
     """
     return (
-        "The institutional memory curator and pattern recognition specialist. Proactively triggered after successful "
-        "task completions, error resolutions, or at session end to extract learnings. Analyzes transcripts in "
-        "logs/sessions/ to identify reusable patterns, successful strategies, and common pitfalls. Stores consolidated "
-        "knowledge in VectorStore for future reference by all agents. When prompting this agent, specify the session "
-        "or time range to analyze and any specific patterns to look for. Remember, this agent builds the collective "
-        "intelligence that improves agency performance over time and its learnings become institutional memory."
+        "PROACTIVE knowledge curator and institutional memory manager. Continuously extracts patterns from all agent sessions, "
+        "telemetry streams, and autonomous healing operations for cross-session learning. AUTOMATICALLY triggered: (a) after "
+        "successful task completions, (b) when errors resolved, (c) periodically for pattern consolidation, and (d) on-demand "
+        "by PlannerAgent or ChiefArchitectAgent for strategic insights. INTELLIGENTLY coordinates with: ALL AGENTS to collect "
+        "learning data and provide pattern-based recommendations. Analyzes logs/sessions/ for successful workflows, identifies "
+        "recurring patterns (min confidence 0.6, min evidence 3 occurrences), and stores validated learnings in VectorStore "
+        "for semantic search. PROACTIVELY suggests: workflow optimizations, cost reduction strategies, quality improvements, "
+        "and best practices based on historical data. Maintains Article IV (Continuous Learning) compliance by ensuring all "
+        "agents benefit from shared knowledge. Uses sentence-transformers for semantic pattern matching and Firestore for "
+        "cross-session persistence. When prompting, specify session data or request pattern analysis for specific domain."
     )
 
 

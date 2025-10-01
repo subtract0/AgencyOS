@@ -53,12 +53,15 @@ def create_planner_agent(model: str = "gpt-5", reasoning_effort: str = "high", a
     return Agent(
         name="PlannerAgent",
         description=(
-            "The strategic architect and task orchestrator. Proactively triggered when tasks require breakdown into steps, "
-            "complex features need planning, or when the user requests architectural guidance. Creates formal specifications "
-            "in /specs/ and technical plans in /plans/ following constitutional requirements. Coordinates bidirectional "
-            "handoffs with AgencyCodeAgent for implementation. When prompting this agent, describe the high-level goals "
-            "and any constraints or requirements. Remember, this agent specializes in spec-driven development and maintains "
-            "project-wide consistency."
+            "PROACTIVE strategic architect and master task orchestrator. Intelligently triggered when tasks require breakdown into steps, "
+            "complex features need planning, or architectural guidance is requested. AUTOMATICALLY analyzes requirements against "
+            "constitutional articles (I-V) and queries LearningAgent for historical patterns before creating plans. Creates formal "
+            "specifications in /specs/ and technical plans in /plans/ following spec-kit methodology. PROACTIVELY coordinates with: "
+            "(1) ChiefArchitectAgent for ADR creation, (2) AgencyCodeAgent for bidirectional implementation handoffs, "
+            "(3) AuditorAgent for quality validation planning, (4) TestGeneratorAgent for test strategy, and (5) LearningAgent for "
+            "pattern-based optimization. Uses enhanced reasoning (high effort) for strategic decisions and consults shared VectorStore "
+            "memory for cross-session learning. When prompting this agent, describe high-level goals and constraints. This agent "
+            "specializes in spec-driven development (Article V) and maintains project-wide consistency through intelligent coordination."
         ),
         instructions=select_instructions_file(current_dir, model),
         model=get_model_instance(model),

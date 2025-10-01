@@ -275,9 +275,10 @@ QUALITY_ENFORCER_MODEL=gpt-5 # Constitutional compliance
 
 ### Memory & Learning
 - **VectorStore Integration**: Semantic pattern matching
-- **Cross-Session Learning**: Persistent knowledge base
+- **Cross-Session Learning**: Persistent knowledge base with Firestore
 - **Pattern Recognition**: Automatic strategy identification
 - **Institutional Memory**: Collective agent intelligence
+- **Production Persistence**: Firestore backend for cross-session memory (see [Firestore Setup](docs/FIRESTORE_SETUP.md))
 
 ## 📈 Performance Metrics
 
@@ -395,6 +396,7 @@ python scripts/constitutional_check.py
 - **[CONSTITUTIONAL_COMPLIANCE_REPORT.md](CONSTITUTIONAL_COMPLIANCE_REPORT.md)**: Verification status
 - **[TEST_FIXES_SUMMARY.md](TEST_FIXES_SUMMARY.md)**: Testing infrastructure details
 - **[RECOVERY_SUMMARY.md](RECOVERY_SUMMARY.md)**: Recovery from over-engineering case study
+- **[docs/FIRESTORE_SETUP.md](docs/FIRESTORE_SETUP.md)**: Production memory persistence guide
 
 ### Specifications & Plans
 - **specs/**: Formal feature specifications (spec-kit methodology)

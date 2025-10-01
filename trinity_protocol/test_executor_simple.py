@@ -6,6 +6,7 @@ import asyncio
 from trinity_protocol.message_bus import MessageBus
 from trinity_protocol.cost_tracker import CostTracker, ModelTier
 from trinity_protocol.executor_agent import ExecutorAgent
+from shared.agent_context import create_agent_context
 
 
 async def main():
@@ -16,11 +17,13 @@ async def main():
     # Create infrastructure
     message_bus = MessageBus(":memory:")
     cost_tracker = CostTracker(":memory:", budget_usd=10.0)
+    agent_context = create_agent_context()
 
     # Create EXECUTOR
     executor = ExecutorAgent(
         message_bus=message_bus,
-        cost_tracker=cost_tracker
+        cost_tracker=cost_tracker,
+        agent_context=agent_context
     )
 
     print("\n✓ EXECUTOR agent initialized")

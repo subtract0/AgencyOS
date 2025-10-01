@@ -554,9 +554,19 @@ class GenerateTests(Tool):
 
 
 def create_test_generator_agent(
-    model: str = "gpt-5", reasoning_effort: str = "medium", agent_context: AgentContext = None
+    model: str = "gpt-5",
+    reasoning_effort: str = "medium",
+    agent_context: AgentContext = None,
+    cost_tracker = None
 ) -> Agent:
-    """Factory that returns a fresh TestGeneratorAgent instance."""
+    """Factory that returns a fresh TestGeneratorAgent instance.
+
+    Args:
+        model: Model name to use
+        reasoning_effort: Reasoning effort level
+        agent_context: Optional AgentContext for memory integration
+        cost_tracker: Optional CostTracker for real-time LLM cost tracking
+    """
 
     is_openai, is_claude, _ = detect_model_type(model)
 
@@ -580,20 +590,30 @@ def create_test_generator_agent(
             "agent_type": "TestGeneratorAgent",
             "model": model,
             "reasoning_effort": reasoning_effort,
-            "session_id": agent_context.session_id
+            "session_id": agent_context.session_id,
+            "cost_tracker_enabled": cost_tracker is not None
         },
         ["agency", "test_generator", "creation"]
     )
 
-    return Agent(
+    # Store cost_tracker in agent context for later use
+    if cost_tracker is not None:
+        agent_context.cost_tracker = cost_tracker
+
+    # Create agent
+    agent = Agent(
         name="TestGeneratorAgent",
         description=(
-            "The automated test creator and coverage optimizer. Proactively triggered when AuditorAgent identifies "
-            "test violations, new code lacks tests, or Q(T) scores fall below thresholds. Generates NECESSARY-compliant "
-            "test suites targeting specific violations including edge cases, error conditions, and async operations. "
-            "Creates tests that directly improve Q(T) scores. When prompting this agent, provide the audit report JSON "
-            "and target source files that need test coverage. Remember, this agent requires audit data to generate "
-            "contextually appropriate tests and focuses on the highest severity violations first."
+            "PROACTIVE test generation specialist ensuring 100% Article II compliance through TDD methodology. "
+            "Automatically triggered BEFORE code implementation (test-first) or to address coverage gaps identified by AuditorAgent. "
+            "INTELLIGENTLY coordinates with: (1) AgencyCodeAgent to ensure tests exist before implementation, "
+            "(2) AuditorAgent for NECESSARY pattern compliance validation, (3) QualityEnforcerAgent for constitutional verification, "
+            "and (4) PlannerAgent for test strategy alignment with specifications. Generates AAA-pattern (Arrange-Act-Assert) tests "
+            "using pytest framework with comprehensive edge case coverage. PROACTIVELY suggests additional test scenarios based on "
+            "VectorStore pattern analysis and learning from previous test failures. Enforces Article II requirement: every code task "
+            "MUST have corresponding test task. Uses NECESSARY pattern (Named, Executable, Comprehensive, Error-validated, State-verified, "
+            "Side-effects controlled, Assertions meaningful, Repeatable, Yield fast) for all generated tests. Maintains test coverage >80% "
+            "and ensures all tests are deterministic and isolated. When prompting, specify target code, behavior requirements, and edge cases."
         ),
         instructions=instructions,
         tools_folder=os.path.join(current_dir, "tools"),
@@ -611,3 +631,10 @@ def create_test_generator_agent(
         ],
         model_settings=create_model_settings(model, reasoning_effort),
     )
+
+    # Enable cost tracking if provided
+    if cost_tracker is not None:
+        from shared.llm_cost_wrapper import wrap_agent_with_cost_tracking
+        wrap_agent_with_cost_tracking(agent, cost_tracker)
+
+    return agent
