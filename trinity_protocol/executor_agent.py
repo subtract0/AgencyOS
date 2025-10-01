@@ -456,9 +456,9 @@ class ExecutorAgent:
             estimated_output_tokens = len(response) // 4
 
             # Determine model tier based on agent type
-            model_tier = ModelTier.PRODUCTION  # Most agents use production models
+            model_tier = ModelTier.CLOUD_STANDARD  # Most agents use standard models
             if agent_type == SubAgentType.TASK_SUMMARIZER:
-                model_tier = ModelTier.CHEAP  # Summary uses cheaper model
+                model_tier = ModelTier.CLOUD_MINI  # Summary uses cheaper model
 
             # Get model name from agent
             model_name = agent_model(self._agent_type_to_model_key(agent_type))
@@ -491,7 +491,7 @@ class ExecutorAgent:
             self.cost_tracker.track_call(
                 agent=agent_name,
                 model=agent_model(self._agent_type_to_model_key(agent_type)),
-                model_tier=ModelTier.PRODUCTION,
+                model_tier=ModelTier.CLOUD_STANDARD,
                 input_tokens=0,
                 output_tokens=0,
                 duration_seconds=duration_seconds,

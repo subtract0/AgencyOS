@@ -165,6 +165,38 @@ else:
 
 shared_context = create_agent_context(memory=shared_memory)
 
+# Cost Tracking Configuration:
+# - Tracks ALL LLM API calls (OpenAI/Anthropic) across all agents
+# - Provides real-time monitoring via CLI, web dashboard, and alerts
+# - Persists to SQLite (trinity_costs.db) and optionally Firestore
+# - Budget alerts prevent cost overruns
+cost_tracker_enabled = os.getenv("ENABLE_COST_TRACKING", "true").lower() == "true"
+cost_budget = float(os.getenv("COST_BUDGET_USD", "100.0"))
+
+if cost_tracker_enabled:
+    from trinity_protocol.cost_tracker import CostTracker
+    from shared.llm_cost_wrapper import wrap_openai_client
+
+    shared_cost_tracker = CostTracker(
+        db_path=os.path.join(current_dir, "trinity_costs.db"),
+        budget_usd=cost_budget
+    )
+
+    # Wrap OpenAI client globally for all agents
+    wrap_openai_client(
+        shared_cost_tracker,
+        agent_name="Agency",
+        correlation_id="agency-session"
+    )
+
+    # Attach to shared context for agent access
+    shared_context.cost_tracker = shared_cost_tracker
+
+    logger = logging.getLogger(__name__)
+    logger.info(f"💰 Cost tracking enabled: budget=${cost_budget:.2f} USD, db=trinity_costs.db")
+else:
+    shared_cost_tracker = None
+
 # Learning Agent Configuration:
 # - Automatically analyzes session transcripts in logs/sessions/
 # - Extracts successful patterns and consolidates insights
@@ -503,6 +535,86 @@ def _cmd_kanban(args: argparse.Namespace) -> None:
         run_server()
 
 
+def _cmd_cost_dashboard(args: argparse.Namespace) -> None:
+    """Launch CLI cost monitoring dashboard."""
+    with _cli_event_scope("cost_dashboard", {"live": args.live}):
+        from trinity_protocol.cost_dashboard import CostDashboard
+        from trinity_protocol.cost_tracker import CostTracker
+
+        tracker = CostTracker(
+            db_path=args.db,
+            budget_usd=args.budget
+        )
+
+        dashboard = CostDashboard(
+            cost_tracker=tracker,
+            refresh_interval=args.interval,
+            budget_warning_pct=args.warning_pct
+        )
+
+        if args.live:
+            print("Starting live cost dashboard... (Press Q to quit)")
+            import time
+            time.sleep(1)
+            dashboard.run_terminal_dashboard()
+        else:
+            dashboard.print_snapshot()
+
+
+def _cmd_cost_web(args: argparse.Namespace) -> None:
+    """Launch web-based cost monitoring dashboard."""
+    with _cli_event_scope("cost_web", {"port": args.port}):
+        from trinity_protocol.cost_dashboard_web import CostDashboardWeb
+        from trinity_protocol.cost_tracker import CostTracker
+
+        tracker = CostTracker(
+            db_path=args.db,
+            budget_usd=args.budget
+        )
+
+        dashboard = CostDashboardWeb(
+            cost_tracker=tracker,
+            refresh_interval=args.interval
+        )
+
+        dashboard.run(
+            host=args.host,
+            port=args.port,
+            debug=args.debug
+        )
+
+
+def _cmd_cost_alerts(args: argparse.Namespace) -> None:
+    """Check cost alerts or run continuous monitoring."""
+    with _cli_event_scope("cost_alerts", {"continuous": args.continuous}):
+        from trinity_protocol.cost_alerts import CostAlertSystem, AlertConfig, run_continuous_monitoring
+        from trinity_protocol.cost_tracker import CostTracker
+
+        tracker = CostTracker(
+            db_path=args.db,
+            budget_usd=args.budget
+        )
+
+        config = AlertConfig(
+            hourly_rate_max=args.hourly_max,
+            daily_budget_max=args.daily_max
+        )
+
+        if args.continuous:
+            run_continuous_monitoring(tracker, config, args.interval)
+        else:
+            alert_system = CostAlertSystem(tracker, config)
+            alerts = alert_system.check_all()
+
+            if alerts:
+                print(f"\n⚠️  {len(alerts)} alert(s) triggered:")
+                for alert in alerts:
+                    print(f"\n[{alert.level.value.upper()}] {alert.title}")
+                    print(f"  {alert.message}")
+            else:
+                print("✅ No alerts triggered. All costs within limits.")
+
+
 def _build_arg_parser() -> argparse.ArgumentParser:
     p = argparse.ArgumentParser(prog="agency", description="Agency runtime and utilities")
     sub = p.add_subparsers(dest="command")
@@ -544,6 +656,35 @@ def _build_arg_parser() -> argparse.ArgumentParser:
     # kanban
     sp = sub.add_parser("kanban", help="Run minimal Kanban UI server")
     sp.set_defaults(func=_cmd_kanban)
+
+    # cost-dashboard (CLI)
+    sp = sub.add_parser("cost-dashboard", help="Launch CLI cost monitoring dashboard")
+    sp.add_argument("--live", action="store_true", help="Run live dashboard with auto-refresh")
+    sp.add_argument("--interval", type=int, default=5, help="Refresh interval in seconds")
+    sp.add_argument("--db", type=str, default="trinity_costs.db", help="Path to cost database")
+    sp.add_argument("--budget", type=float, help="Budget limit in USD")
+    sp.add_argument("--warning-pct", type=float, default=80.0, help="Budget warning percentage")
+    sp.set_defaults(func=_cmd_cost_dashboard)
+
+    # cost-web
+    sp = sub.add_parser("cost-web", help="Launch web-based cost dashboard")
+    sp.add_argument("--port", type=int, default=8080, help="Port to listen on")
+    sp.add_argument("--host", type=str, default="0.0.0.0", help="Host to bind to")
+    sp.add_argument("--db", type=str, default="trinity_costs.db", help="Path to cost database")
+    sp.add_argument("--budget", type=float, help="Budget limit in USD")
+    sp.add_argument("--interval", type=int, default=5, help="Refresh interval in seconds")
+    sp.add_argument("--debug", action="store_true", help="Enable debug mode")
+    sp.set_defaults(func=_cmd_cost_web)
+
+    # cost-alerts
+    sp = sub.add_parser("cost-alerts", help="Check cost alerts or run continuous monitoring")
+    sp.add_argument("--db", type=str, default="trinity_costs.db", help="Path to cost database")
+    sp.add_argument("--budget", type=float, help="Budget limit in USD")
+    sp.add_argument("--hourly-max", type=float, help="Maximum hourly spending rate")
+    sp.add_argument("--daily-max", type=float, help="Maximum daily spending")
+    sp.add_argument("--continuous", action="store_true", help="Run continuous monitoring")
+    sp.add_argument("--interval", type=int, default=300, help="Check interval for continuous mode")
+    sp.set_defaults(func=_cmd_cost_alerts)
 
     return p
 

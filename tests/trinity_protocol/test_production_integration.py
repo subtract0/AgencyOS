@@ -133,17 +133,35 @@ async def test_architect_to_executor_flow(infrastructure):
             }
         )
 
-        # Wait for processing
-        await asyncio.sleep(3.0)
+        # Wait for processing with retry logic
+        max_attempts = 10
+        for attempt in range(max_attempts):
+            await asyncio.sleep(1.0)
+
+            architect_stats = architect.get_stats()
+            executor_stats = executor.get_stats()
+
+            # Check if ARCHITECT created tasks
+            if architect_stats.get("tasks_created", 0) > 0:
+                break
 
         # Verify ARCHITECT created tasks
-        architect_stats = architect.get_stats()
-        # Note: ARCHITECT stats structure may differ
         assert architect_stats is not None
+        assert architect_stats.get("tasks_created", 0) >= 1, (
+            f"ARCHITECT did not create tasks. Stats: {architect_stats}"
+        )
 
-        # Verify EXECUTOR received tasks
-        executor_stats = executor.get_stats()
-        assert executor_stats["tasks_processed"] >= 1
+        # Verify EXECUTOR received tasks (may take additional time)
+        for attempt in range(5):
+            executor_stats = executor.get_stats()
+            if executor_stats["tasks_processed"] >= 1:
+                break
+            await asyncio.sleep(1.0)
+
+        # Final verification
+        assert executor_stats["tasks_processed"] >= 1, (
+            f"EXECUTOR did not process tasks. Stats: {executor_stats}"
+        )
 
     finally:
         # Stop agents
@@ -390,6 +408,7 @@ def test_constitutional_compliance_type_checking():
             if "Dict[Any, Any]" in line
             and "from typing import" not in line
             and ".pyc" not in line
+            and ".md:" not in line  # Exclude markdown documentation
             and '"message"' not in line  # Exclude test data strings
             and '# ' not in line  # Exclude comments
         ]
