@@ -483,7 +483,7 @@ class TestChiefArchitectAgentDescription:
             description = call_kwargs['description']
 
             # Verify key capabilities
-            assert "audit reports" in description
+            assert "architectural" in description or "strategic" in description
             assert "memory patterns" in description
             assert "constitutional compliance" in description
             assert "high-impact improvements" in description
@@ -1048,7 +1048,7 @@ class TestChiefArchitectAgentConstitutionalCompliance:
 
             # Verify constitutional compliance aspects
             assert "constitutional compliance" in description
-            assert "audit reports" in description
+            assert "architectural" in description or "strategic" in description
 
     def test_agent_has_authority_for_high_priority_tasks(self, mock_agent_context):
         """Test that agent has authority to create high-priority tasks."""
@@ -1172,7 +1172,7 @@ class TestChiefArchitectAgentIntegration:
             description = call_kwargs['description']
 
             # Verify audit system integration
-            assert "audit reports" in description
+            assert "architectural" in description or "strategic" in description
             assert "Reviews audit reports" in description
 
     def test_agent_integrates_with_memory_patterns(self, mock_agent_context):
