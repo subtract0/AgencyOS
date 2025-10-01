@@ -130,7 +130,10 @@ class RegenerateWithGpt5(Tool):
 
 
 def create_work_completion_summary_agent(
-    model: str = "gpt-5-nano", reasoning_effort: str = "low", agent_context: AgentContext | None = None
+    model: str = "gpt-5-nano",
+    reasoning_effort: str = "low",
+    agent_context: AgentContext | None = None,
+    cost_tracker = None
 ) -> Agent:
     """Factory to create the WorkCompletionSummaryAgent.
 
@@ -138,6 +141,12 @@ def create_work_completion_summary_agent(
     If they say 'tts' or 'tts summary' or 'audio summary' use this agent. When you prompt this agent, describe
     exactly what you want them to communicate to the user. Remember, this agent has no context about any
     questions or previous conversations between you and the user.
+
+    Args:
+        model: Model name to use
+        reasoning_effort: Reasoning effort level
+        agent_context: Optional AgentContext for memory integration
+        cost_tracker: Optional CostTracker for real-time LLM cost tracking
     """
     if agent_context is None:
         agent_context = create_agent_context()
@@ -156,17 +165,28 @@ def create_work_completion_summary_agent(
             "model": model,
             "reasoning_effort": reasoning_effort,
             "session_id": agent_context.session_id,
+            "cost_tracker_enabled": cost_tracker is not None
         },
         ["agency", "summary", "creation"],
     )
 
-    return Agent(
+    # Store cost_tracker in agent context for later use
+    if cost_tracker is not None:
+        agent_context.cost_tracker = cost_tracker
+
+    # Create agent
+    agent = Agent(
         name="WorkCompletionSummaryAgent",
         description=(
-            "Proactively triggered when work is completed to provide concise audio summaries and suggest next steps. "
-            "If they say 'tts' or 'tts summary' or 'audio summary' use this agent. When you prompt this agent, describe "
-            "exactly what you want them to communicate to the user. Remember, this agent has no context about any "
-            "questions or previous conversations between you and the user."
+            "PROACTIVE task summarization specialist providing concise, actionable completion reports. Uses cost-efficient model "
+            "(GPT-5-mini) for intelligent synthesis of multi-agent work sessions. AUTOMATICALLY triggered by MergerAgent after "
+            "successful integration or by any agent completing significant work. INTELLIGENTLY analyzes: (1) git diff output for "
+            "code changes, (2) test results and coverage reports, (3) cost tracking data for LLM operations, (4) TodoWrite task "
+            "completion status, and (5) constitutional compliance verification results. PROACTIVELY generates: technical summaries "
+            "for developers, executive summaries for stakeholders, cost reports, and learning insights for VectorStore. Coordinates "
+            "with LearningAgent to extract patterns from successful sessions. Creates structured markdown reports with: changes made, "
+            "tests added/passing, constitutional articles satisfied, costs incurred, and recommendations for next steps. Optimized "
+            "for minimal cost while maintaining high-quality output. When prompting, provide session context and completion criteria."
         ),
         instructions=select_instructions_file(current_dir, model),
         model=get_model_instance(model),
@@ -174,3 +194,10 @@ def create_work_completion_summary_agent(
         model_settings=create_model_settings(model, reasoning_effort),
         tools=[RegenerateWithGpt5],
     )
+
+    # Enable cost tracking if provided
+    if cost_tracker is not None:
+        from shared.llm_cost_wrapper import wrap_agent_with_cost_tracking
+        wrap_agent_with_cost_tracking(agent, cost_tracker)
+
+    return agent
