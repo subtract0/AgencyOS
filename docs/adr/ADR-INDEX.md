@@ -197,14 +197,60 @@ This index catalogs all Architecture Decision Records for the Agency multi-agent
 
 ---
 
-### ADR-007: DSPy Agent Loader - Hybrid Architecture  
-**Status:** Accepted  
-**Date:** 2025-09-30  
+### ADR-007: DSPy Agent Loader - Hybrid Architecture
+**Status:** Accepted
+**Date:** 2025-09-30
 **File:** `docs/adr/ADR-007-dspy-agent-loader-hybrid-architecture.md`
 
 **Decision:** Implement hybrid loader for dual DSPy/traditional agent implementations with fallback.
 
 **Constitutional Compliance:** Articles I (Context), II (Verification), IV (Learning), V (Spec-driven)
+
+---
+
+## Trinity Life Assistant Architecture
+
+### ADR-016: Ambient Listener Architecture
+**Status:** Accepted
+**Date:** 2025-10-01
+**File:** `docs/adr/ADR-016-ambient-listener-architecture.md`
+
+**Decision:** Implement privacy-first ambient intelligence system with local Whisper AI transcription.
+
+**Key Components:**
+- 100% on-device audio processing (zero cloud transmission)
+- Whisper.cpp integration with Metal GPU acceleration
+- Memory-only audio buffer (never written to disk)
+- Pattern detection integration with WITNESS agent
+- Instant mute capability (<100ms)
+
+**Constitutional Compliance:** Articles I (Complete Context), II (100% Verification), IV (Continuous Learning), V (Spec-Driven)
+
+---
+
+### ADR-017: Phase 3 Project Execution Architecture
+**Status:** Accepted
+**Date:** 2025-10-01
+**File:** `docs/adr/ADR-017-phase3-project-execution.md`
+
+**Decision:** Implement spec-driven project execution engine for real-world task completion.
+
+**Key Components:**
+- Project initialization through conversational Q&A (5-10 questions)
+- LLM-powered spec generation from conversation transcripts
+- Daily check-in coordination (1-3 questions maximum)
+- Micro-task breakdown for adaptive execution
+- Real-world tool integration (web research, document generation, calendar)
+- Firestore persistence for cross-session project continuity
+- Budget enforcement and graceful degradation
+
+**Integration Points:**
+- HITL protocol for user approval workflows
+- Preference learning for optimal question timing
+- Pattern detection feeds project initialization
+- Foundation verifier ensures green main before execution
+
+**Constitutional Compliance:** All 5 Articles (I: Complete Context, II: 100% Verification, III: Automated Enforcement, IV: Continuous Learning, V: Spec-Driven Development)
 
 ---
 
@@ -225,5 +271,5 @@ This index catalogs all Architecture Decision Records for the Agency multi-agent
 
 ---
 
-*Last Updated: 2025-09-27*
-*Next Review: 2025-10-27*
+*Last Updated: 2025-10-01*
+*Next Review: 2025-11-01*

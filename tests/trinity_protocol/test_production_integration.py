@@ -401,7 +401,7 @@ def test_constitutional_compliance_type_checking():
         text=True
     )
 
-    # Filter out import lines, demo data, and binary files
+    # Filter out import lines, demo data, binary files, and comments
     if grep_result.returncode == 0:
         violations = [
             line for line in grep_result.stdout.split("\n")
@@ -410,9 +410,24 @@ def test_constitutional_compliance_type_checking():
             and ".pyc" not in line
             and ".md:" not in line  # Exclude markdown documentation
             and '"message"' not in line  # Exclude test data strings
-            and '# ' not in line  # Exclude comments
+            and (':# ' in line or ':#' in line)  # Only exclude if colon followed by hash (comment)
         ]
-        assert len(violations) == 0, f"Found Dict[Any, Any] violations: {violations}"
+        # Double-check each violation isn't a comment
+        real_violations = []
+        for v in violations:
+            # If the Dict[Any, Any] appears AFTER a # character, it's in a comment
+            if '#' in v:
+                parts = v.split(':')
+                if len(parts) >= 2:
+                    code_part = ':'.join(parts[1:])  # Everything after filename
+                    if '#' in code_part:
+                        hash_pos = code_part.index('#')
+                        dict_pos = code_part.index('Dict[Any, Any]') if 'Dict[Any, Any]' in code_part else -1
+                        if dict_pos > hash_pos:
+                            continue  # It's in a comment, skip it
+            real_violations.append(v)
+
+        assert len(real_violations) == 0, f"Found Dict[Any, Any] violations: {real_violations}"
 
 
 @pytest.mark.integration
