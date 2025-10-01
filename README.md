@@ -1,8 +1,14 @@
 # 🏥 Agency OS - Autonomous Software Engineering Platform
 
-**Version 0.9.5** - DSPy Integration & Advanced Chain-of-Thought Reasoning
+**Version 0.9.5** - DSPy Integration & Professional Git Workflow
 
-Elite autonomous software engineering system with **proven self-healing capabilities** and **100% constitutional compliance**. Built with [Agency Swarm](https://agency-swarm.ai/welcome/overview) framework, now enhanced with DSPy integration for advanced chain-of-thought reasoning and autonomous healing.
+Elite autonomous software engineering system with **proven self-healing capabilities**, **100% constitutional compliance**, and **professional Git workflow automation**. Built with [Agency Swarm](https://agency-swarm.ai/welcome/overview) framework, now enhanced with DSPy integration for advanced chain-of-thought reasoning and autonomous healing.
+
+### 🔄 Professional Development Workflow
+- **GitWorkflowTool**: Complete branch → commit → push → PR automation
+- **Green Main Enforcement**: Automated test validation before any merge
+- **Atomic Commits**: Constitutional compliance with clear, conventional commit messages
+- **Pull Request Automation**: GitHub CLI integration for seamless PR creation
 
 ## 🎯 Mission-Critical Features
 
