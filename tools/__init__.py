@@ -2,6 +2,7 @@ from .bash import Bash
 from .edit import Edit
 from .exit_plan_mode import ExitPlanMode
 from .git import Git
+from .git_workflow_tool import GitWorkflowToolAgency
 from .glob import Glob
 from .grep import Grep
 from .ls import LS
@@ -31,6 +32,7 @@ __all__ = [
     "NotebookEdit",
     "TodoWrite",
     "Git",
+    "GitWorkflowToolAgency",
     "ClaudeWebSearch",
     "ContextMessageHandoff",
     "HandoffWithContext",
