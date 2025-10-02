@@ -6,9 +6,36 @@ from agency_swarm.tools import BaseTool
 from pydantic import Field
 
 from shared.timeout_wrapper import with_constitutional_timeout
+from shared.tool_cache import with_cache
 
 # Global registry for tracking read files when context is not available
 _global_read_files = set()
+
+
+@with_cache(ttl_seconds=60, file_dependencies=lambda file_path: [file_path])
+def _read_file_lines_cached(file_path: str) -> list[str]:
+    """
+    Cached file reading helper.
+
+    Caches file contents for 60 seconds with file dependency tracking.
+    Cache invalidates when file is modified.
+
+    Args:
+        file_path: Absolute path to file
+
+    Returns:
+        List of lines from file
+
+    Raises:
+        UnicodeDecodeError: If file cannot be decoded
+    """
+    try:
+        with open(file_path, "r", encoding="utf-8") as file:
+            return file.readlines()
+    except UnicodeDecodeError:
+        # Try with different encoding
+        with open(file_path, "r", encoding="latin-1") as file:
+            return file.readlines()
 
 
 class Read(BaseTool):  # type: ignore[misc]
@@ -68,17 +95,11 @@ class Read(BaseTool):  # type: ignore[misc]
             if self.file_path.endswith(".ipynb"):
                 return "Error: This is a Jupyter notebook file. Please use the NotebookRead tool instead."
 
-            # Try to read the file
+            # Try to read the file (using cached helper for performance)
             try:
-                with open(self.file_path, "r", encoding="utf-8") as file:
-                    lines = file.readlines()
+                lines = _read_file_lines_cached(self.file_path)
             except UnicodeDecodeError:
-                # Try with different encodings
-                try:
-                    with open(self.file_path, "r", encoding="latin-1") as file:
-                        lines = file.readlines()
-                except UnicodeDecodeError:
-                    return f"Error: Unable to decode file {self.file_path}. It may be a binary file."
+                return f"Error: Unable to decode file {self.file_path}. It may be a binary file."
 
             # Handle empty file
             if not lines:

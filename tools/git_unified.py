@@ -46,6 +46,7 @@ from agency_swarm.tools import BaseTool
 from pydantic import BaseModel, Field, field_validator
 
 from shared.type_definitions.result import Result, Ok, Err
+from shared.tool_cache import with_cache
 
 
 # ============================================================================
@@ -173,9 +174,16 @@ class GitCore:
     # READ OPERATIONS
     # ========================================================================
 
+    @with_cache(
+        ttl_seconds=5,
+        file_dependencies=lambda self: [".git/index", ".git/HEAD"]
+    )
     def status(self) -> Result[str, GitError]:
         """
         Get git status (porcelain format).
+
+        Cached for 5 seconds with file dependency tracking on .git/index and .git/HEAD.
+        Cache invalidates when staging area or HEAD changes.
 
         Returns:
             Result[str, GitError]: Status output or error
@@ -357,9 +365,16 @@ class GitCore:
                 )
             )
 
+    @with_cache(
+        ttl_seconds=5,
+        file_dependencies=lambda self: [".git/HEAD"]
+    )
     def get_current_branch(self) -> Result[str, GitError]:
         """
         Get current branch name.
+
+        Cached for 5 seconds with file dependency tracking on .git/HEAD.
+        Cache invalidates when branch changes.
 
         Returns:
             Result[str, GitError]: Branch name or error
