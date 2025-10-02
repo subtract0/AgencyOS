@@ -25,8 +25,8 @@ try:
     from trinity_protocol.spec_from_conversation import SpecFromConversation
     from trinity_protocol.project_executor import ProjectExecutor
     from trinity_protocol.daily_checkin import DailyCheckinCoordinator
-    from trinity_protocol.models.project import Project, ProjectState
-    from trinity_protocol.models.patterns import DetectedPattern
+    from trinity_protocol.core.models.project import Project, ProjectState
+    from trinity_protocol.core.models.patterns import DetectedPattern
     IMPLEMENTATION_AVAILABLE = True
 except ImportError:
     IMPLEMENTATION_AVAILABLE = False
@@ -227,7 +227,7 @@ class TestPhase12Compatibility:
         learner = AlexPreferenceLearner()
 
         # Simulate recording response
-        from trinity_protocol.models.preferences import ResponseRecord
+        from trinity_protocol.core.models.preferences import ResponseRecord
         record = ResponseRecord(
             response_id="resp_test",
             question_id="q_test",
@@ -483,7 +483,7 @@ def create_mock_pattern():
 
 def create_mock_project_in_progress():
     """Create mock project in execution phase."""
-    from trinity_protocol.models.project import Project, ProjectState
+    from trinity_protocol.core.models.project import Project, ProjectState
 
     state = ProjectState(
         project_id="proj_test",
@@ -538,7 +538,7 @@ def create_mock_firestore():
 
 def create_mock_task(estimated_cost=0.5):
     """Create mock ProjectTask."""
-    from trinity_protocol.models.project import ProjectTask
+    from trinity_protocol.core.models.project import ProjectTask
 
     return ProjectTask(
         task_id="task_test",

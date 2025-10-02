@@ -26,12 +26,12 @@ from pathlib import Path
 from trinity_protocol.transcription_service import TranscriptionService
 from trinity_protocol.message_bus import MessageBus
 from trinity_protocol.conversation_context import ConversationContext
-from trinity_protocol.models.audio import (
+from trinity_protocol.experimental.models.audio import (
     AudioConfig,
     WhisperConfig,
     TranscriptionResult
 )
-from trinity_protocol.models.patterns import AmbientEvent
+from trinity_protocol.core.models.patterns import AmbientEvent
 
 # Result pattern
 try:

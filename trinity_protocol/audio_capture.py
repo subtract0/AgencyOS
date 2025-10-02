@@ -36,7 +36,7 @@ try:
 except ImportError:
     HAS_NUMPY = False
 
-from trinity_protocol.models.audio import (
+from trinity_protocol.experimental.models.audio import (
     AudioConfig,
     AudioSegment,
     VADResult,

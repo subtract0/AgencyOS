@@ -49,8 +49,8 @@ class TestArticleICompliance:
     async def test_incomplete_qa_session_blocks_spec_generation(self):
         """Test spec generation blocked without complete Q&A."""
         from trinity_protocol.spec_from_conversation import SpecFromConversation
-        from trinity_protocol.models.project import QASession, QAQuestion
-        from trinity_protocol.models.patterns import DetectedPattern, PatternType
+        from trinity_protocol.core.models.project import QASession, QAQuestion
+        from trinity_protocol.core.models.patterns import DetectedPattern, PatternType
 
         # Create at least 5 questions (required minimum)
         questions = [
@@ -98,7 +98,7 @@ class TestArticleICompliance:
     async def test_daily_planning_requires_complete_project_state(self):
         """Test daily planning blocked without complete context."""
         from trinity_protocol.project_executor import ProjectExecutor
-        from trinity_protocol.models.project import Project, ProjectState, ProjectMetadata
+        from trinity_protocol.core.models.project import Project, ProjectState, ProjectMetadata
 
         # Project with missing context (state is INITIALIZING without spec/plan)
         incomplete_project = Project(
@@ -117,7 +117,7 @@ class TestArticleICompliance:
         )
 
         # Test that incomplete plans cannot be created (Article I enforcement at model level)
-        from trinity_protocol.models.project import ProjectPlan, ProjectTask, TaskStatus
+        from trinity_protocol.core.models.project import ProjectPlan, ProjectTask, TaskStatus
         import pytest as pytest_module
         from pydantic import ValidationError
 
@@ -364,7 +364,7 @@ class TestArticleIVCompliance:
     @pytest.mark.asyncio
     async def test_project_outcome_logged_for_learning(self):
         """Test project outcomes stored for learning."""
-        from trinity_protocol.models.project import ProjectOutcome
+        from trinity_protocol.core.models.project import ProjectOutcome
 
         # Verify ProjectOutcome model exists and can be created (for learning)
         project = create_completed_project()
@@ -408,7 +408,7 @@ class TestArticleVCompliance:
     async def test_project_initialization_creates_spec(self):
         """Test all projects begin with formal spec."""
         from trinity_protocol.project_initializer import ProjectInitializer
-        from trinity_protocol.models.patterns import DetectedPattern, PatternType
+        from trinity_protocol.core.models.patterns import DetectedPattern, PatternType
 
         pattern = DetectedPattern(
             pattern_id="pattern_test",
@@ -436,7 +436,7 @@ class TestArticleVCompliance:
 
     def test_spec_template_compliance(self):
         """Test specs follow Agency template."""
-        from trinity_protocol.models.project import ProjectSpec, AcceptanceCriterion
+        from trinity_protocol.core.models.project import ProjectSpec, AcceptanceCriterion
 
         spec = ProjectSpec(
             spec_id="spec_test",
@@ -470,7 +470,7 @@ class TestArticleVCompliance:
     async def test_execution_blocked_without_approved_spec(self):
         """Test execution cannot start without approved spec."""
         from trinity_protocol.project_executor import ProjectExecutor
-        from trinity_protocol.models.project import (
+        from trinity_protocol.core.models.project import (
             Project, ProjectSpec, ProjectState, ProjectMetadata, AcceptanceCriterion,
             ProjectPlan, ProjectTask, TaskStatus
         )
@@ -559,7 +559,7 @@ class TestCrossArticleCompliance:
     async def test_complete_constitutional_workflow(self):
         """Test full workflow validates all 5 articles."""
         from trinity_protocol.project_initializer import ProjectInitializer
-        from trinity_protocol.models.patterns import DetectedPattern, PatternType
+        from trinity_protocol.core.models.patterns import DetectedPattern, PatternType
 
         # Article I: Complete context (pattern with evidence)
         pattern = DetectedPattern(
@@ -643,7 +643,7 @@ class TestQualityMetrics:
 
     def test_firestore_serialization_compatible(self):
         """Test models serialize to Firestore format."""
-        from trinity_protocol.models.project import Project
+        from trinity_protocol.core.models.project import Project
 
         project = create_mock_project()
 
@@ -663,7 +663,7 @@ class TestQualityMetrics:
 
 def create_mock_project():
     """Create mock project for testing."""
-    from trinity_protocol.models.project import Project, ProjectState, ProjectMetadata
+    from trinity_protocol.core.models.project import Project, ProjectState, ProjectMetadata
 
     return Project(
         project_id="proj_test",
@@ -683,7 +683,7 @@ def create_mock_project():
 
 def create_completed_project():
     """Create completed project for testing."""
-    from trinity_protocol.models.project import ProjectState
+    from trinity_protocol.core.models.project import ProjectState
 
     project = create_mock_project()
     # Update to completed state (use model_copy for frozen models)

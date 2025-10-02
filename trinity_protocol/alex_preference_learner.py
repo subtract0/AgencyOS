@@ -16,7 +16,7 @@ from collections import defaultdict
 from datetime import datetime, timedelta
 from typing import Dict, List, Optional, Tuple
 
-from trinity_protocol.models.preferences import (
+from trinity_protocol.core.models.preferences import (
     AlexPreferences,
     ContextualPattern,
     DayOfWeekPreference,

@@ -27,7 +27,7 @@ from datetime import datetime
 from typing import List, Dict, Any, Optional
 
 from trinity_protocol.message_bus import MessageBus
-from trinity_protocol.models.hitl import PreferencePattern, QuestionStats
+from trinity_protocol.core.models.hitl import PreferencePattern, QuestionStats
 
 
 class PreferenceLearning:

@@ -27,7 +27,7 @@ from typing import Optional
 
 from trinity_protocol.message_bus import MessageBus
 from trinity_protocol.human_review_queue import HumanReviewQueue
-from trinity_protocol.models.hitl import HumanResponse
+from trinity_protocol.core.models.hitl import HumanResponse
 
 
 class ResponseHandler:
@@ -278,11 +278,11 @@ class ResponseHandler:
             return None
 
         # Convert to HumanReviewRequest
-        from trinity_protocol.models.patterns import DetectedPattern
+        from trinity_protocol.core.models.patterns import DetectedPattern
 
         pattern_context = DetectedPattern.model_validate_json(row['pattern_context'])
 
-        from trinity_protocol.models.hitl import HumanReviewRequest
+        from trinity_protocol.core.models.hitl import HumanReviewRequest
 
         question = HumanReviewRequest(
             correlation_id=row['correlation_id'],

@@ -27,7 +27,7 @@ from pathlib import Path
 from typing import Optional
 from datetime import datetime
 
-from trinity_protocol.models.audio import (
+from trinity_protocol.experimental.models.audio import (
     WhisperConfig,
     AudioSegment,
     TranscriptionResult,

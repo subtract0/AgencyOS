@@ -4,7 +4,7 @@ Trinity Protocol data models.
 Exports all Pydantic models for ambient intelligence system.
 """
 
-from trinity_protocol.models.audio import (
+from trinity_protocol.experimental.models.audio import (
     AudioFormat,
     AudioConfig,
     AudioSegment,
@@ -15,7 +15,7 @@ from trinity_protocol.models.audio import (
     AudioCaptureStats,
 )
 
-from trinity_protocol.models.patterns import (
+from trinity_protocol.core.models.patterns import (
     PatternType,
     DetectedPattern,
     PatternContext,
@@ -25,7 +25,7 @@ from trinity_protocol.models.patterns import (
     RecurrenceMetrics,
 )
 
-from trinity_protocol.models.project import (
+from trinity_protocol.core.models.project import (
     ProjectState,
     TaskStatus,
     QuestionConfidence,

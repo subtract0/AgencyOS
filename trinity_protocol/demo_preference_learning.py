@@ -11,7 +11,7 @@ import random
 from datetime import datetime, timedelta
 from typing import List
 
-from trinity_protocol.models.preferences import (
+from trinity_protocol.core.models.preferences import (
     QuestionType,
     ResponseType,
     TopicCategory,

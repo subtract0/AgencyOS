@@ -13,7 +13,7 @@ import json
 from datetime import datetime
 from typing import Any, Dict, List, Optional
 
-from trinity_protocol.models.preferences import (
+from trinity_protocol.core.models.preferences import (
     AlexPreferences,
     PreferenceSnapshot,
     ResponseRecord,

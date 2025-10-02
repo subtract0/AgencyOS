@@ -28,7 +28,7 @@ from datetime import datetime
 
 from trinity_protocol.audio_capture import AudioCaptureModule
 from trinity_protocol.whisper_transcriber import WhisperTranscriber
-from trinity_protocol.models.audio import (
+from trinity_protocol.experimental.models.audio import (
     AudioConfig,
     WhisperConfig,
     AudioSegment,

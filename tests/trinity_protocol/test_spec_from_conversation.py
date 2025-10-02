@@ -28,7 +28,7 @@ try:
         generate_spec_markdown,
         request_spec_approval,
     )
-    from trinity_protocol.models.project import (
+    from trinity_protocol.core.models.project import (
         QASession,
         QAQuestion,
         QAAnswer,

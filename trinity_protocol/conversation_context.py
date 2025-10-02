@@ -16,7 +16,7 @@ from collections import deque
 from dataclasses import dataclass
 import hashlib
 
-from trinity_protocol.models.patterns import TopicCluster
+from trinity_protocol.core.models.patterns import TopicCluster
 
 
 @dataclass

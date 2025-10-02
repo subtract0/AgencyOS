@@ -20,7 +20,7 @@ from datetime import datetime, timedelta
 import re
 
 from trinity_protocol.conversation_context import ConversationContext
-from trinity_protocol.models.patterns import (
+from trinity_protocol.core.models.patterns import (
     DetectedPattern,
     PatternType,
     PatternContext,
