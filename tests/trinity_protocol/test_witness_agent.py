@@ -22,7 +22,7 @@ from unittest.mock import AsyncMock, Mock, MagicMock, patch
 from typing import Dict, Any, List
 
 from trinity_protocol.core.witness import WitnessAgent, Signal
-from trinity_protocol.pattern_detector import PatternMatch
+from shared.pattern_detector import PatternMatch
 from shared.message_bus import MessageBus
 from shared.persistent_store import PersistentStore
 

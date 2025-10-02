@@ -224,14 +224,16 @@ class WhisperTranscriber:
                     wav_file.setframerate(segment.sample_rate)
                     wav_file.writeframes(segment.data)
 
-                # Transcribe based on backend
+                # Transcribe based on backend (pass segment duration)
                 if self._backend == "whisper.cpp":
                     result = await self._transcribe_with_cpp(
-                        Path(temp_file.name)
+                        Path(temp_file.name),
+                        segment.duration_seconds
                     )
                 else:
                     result = await self._transcribe_with_python(
-                        Path(temp_file.name)
+                        Path(temp_file.name),
+                        segment.duration_seconds
                     )
 
                 return result
@@ -241,13 +243,15 @@ class WhisperTranscriber:
 
     async def _transcribe_with_cpp(
         self,
-        audio_path: Path
+        audio_path: Path,
+        duration_seconds: float
     ) -> Result[TranscriptionResult, str]:
         """
         Transcribe using whisper.cpp backend.
 
         Args:
             audio_path: Path to WAV file
+            duration_seconds: Duration of audio segment
 
         Returns:
             Result with TranscriptionResult or error message
@@ -267,7 +271,7 @@ class WhisperTranscriber:
                 text=text,
                 confidence=0.90,  # whisper.cpp doesn't provide confidence
                 language=self.config.language if self.config else "en",
-                duration_seconds=0.0,  # Will be set by caller
+                duration_seconds=duration_seconds,
                 timestamp=datetime.now().isoformat()
             )
 
@@ -278,13 +282,15 @@ class WhisperTranscriber:
 
     async def _transcribe_with_python(
         self,
-        audio_path: Path
+        audio_path: Path,
+        duration_seconds: float
     ) -> Result[TranscriptionResult, str]:
         """
         Transcribe using openai-whisper backend.
 
         Args:
             audio_path: Path to WAV file
+            duration_seconds: Duration of audio segment
 
         Returns:
             Result with TranscriptionResult or error message
@@ -329,7 +335,7 @@ class WhisperTranscriber:
                 text=text,
                 confidence=confidence,
                 language=language,
-                duration_seconds=result_dict.get("duration", 0.0),
+                duration_seconds=duration_seconds,
                 timestamp=datetime.now().isoformat(),
                 segments=segments if segments else None
             )

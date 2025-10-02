@@ -180,12 +180,12 @@ def create_work_completion_summary_agent(
     agent = Agent(
         name="WorkCompletionSummaryAgent",
         description=(
-            "PROACTIVE task summarization specialist providing concise, actionable completion reports. Uses cost-efficient model "
+            "PROACTIVE task summarization specialist providing concise, actionable completion reports including audio summaries. Uses cost-efficient model "
             "(GPT-5-mini) for intelligent synthesis of multi-agent work sessions. AUTOMATICALLY triggered by MergerAgent after "
             "successful integration or by any agent completing significant work. INTELLIGENTLY analyzes: (1) git diff output for "
             "code changes, (2) test results and coverage reports, (3) cost tracking data for LLM operations, (4) TodoWrite task "
             "completion status, and (5) constitutional compliance verification results. PROACTIVELY generates: technical summaries "
-            "for developers, executive summaries for stakeholders, cost reports, and learning insights for VectorStore. Coordinates "
+            "for developers, executive summaries for stakeholders, audio summaries for accessibility, cost reports, and learning insights for VectorStore. Coordinates "
             "with LearningAgent to extract patterns from successful sessions. Creates structured markdown reports with: changes made, "
             "tests added/passing, constitutional articles satisfied, costs incurred, and recommendations for next steps. Optimized "
             "for minimal cost while maintaining high-quality output. When prompting, provide session context and completion criteria."

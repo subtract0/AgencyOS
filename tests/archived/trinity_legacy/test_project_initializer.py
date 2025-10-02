@@ -13,31 +13,19 @@ Constitutional Compliance:
 - Article I: Complete context before spec generation
 - Article II: 100% verification (NECESSARY pattern)
 - Article V: Spec-driven development
+
+SKIP REASON: trinity_protocol.project_initializer was deleted during clean break.
+This module is no longer part of the production codebase.
 """
 
 import pytest
-from datetime import datetime
-from unittest.mock import Mock, AsyncMock, patch
-from shared.type_definitions.result import Result, Ok, Err
 
-try:
-    from trinity_protocol.project_initializer import (
-        ProjectInitializer,
-        generate_questions_for_pattern,
-        conduct_qa_session,
-        validate_qa_completeness,
-    )
-    from trinity_protocol.core.models.project import (
-        QASession,
-        QAQuestion,
-        QAAnswer,
-        Project,
-    )
-    from trinity_protocol.core.models.patterns import DetectedPattern
-    IMPLEMENTATION_AVAILABLE = True
-except ImportError:
-    IMPLEMENTATION_AVAILABLE = False
-    pytest.skip("Phase 3 ProjectInitializer not yet implemented", allow_module_level=True)
+pytestmark = pytest.mark.skip(reason="Module deleted in Trinity clean break - project_initializer removed from codebase")
+
+# Imports commented out - module deleted
+# from datetime import datetime
+# from unittest.mock import Mock, AsyncMock, patch
+# from shared.type_definitions.result import Result, Ok, Err
 
 
 # ============================================================================

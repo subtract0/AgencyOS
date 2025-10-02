@@ -61,7 +61,7 @@ from datetime import datetime, timedelta
 from typing import Optional
 
 from shared.message_bus import MessageBus
-from shared.hitl_protocol import HumanReviewQueue
+from shared.hitl_protocol import HITLProtocol  # Fixed: was HumanReviewQueue
 from trinity_protocol.core.models.hitl import HumanResponse
 
 
@@ -75,7 +75,7 @@ class ResponseHandler:
     def __init__(
         self,
         message_bus: MessageBus,
-        review_queue: HumanReviewQueue,
+        review_queue: HITLProtocol,  # Fixed: was HumanReviewQueue
         execution_queue_name: str = "execution_queue",
         telemetry_queue_name: str = "telemetry_stream",
         later_delay_hours: int = 4
@@ -85,7 +85,7 @@ class ResponseHandler:
 
         Args:
             message_bus: MessageBus for routing
-            review_queue: HumanReviewQueue for question lookup
+            review_queue: HITLProtocol for question lookup
             execution_queue_name: Queue for approved tasks
             telemetry_queue_name: Queue for learning signals
             later_delay_hours: Hours to wait before re-asking LATER questions

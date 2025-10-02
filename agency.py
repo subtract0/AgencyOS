@@ -169,13 +169,12 @@ cost_tracker_enabled = os.getenv("ENABLE_COST_TRACKING", "true").lower() == "tru
 cost_budget = float(os.getenv("COST_BUDGET_USD", "100.0"))
 
 if cost_tracker_enabled:
-    from trinity_protocol.cost_tracker import CostTracker
+    from shared.cost_tracker import CostTracker, SQLiteStorage
     from shared.llm_cost_wrapper import wrap_openai_client
 
-    shared_cost_tracker = CostTracker(
-        db_path=os.path.join(current_dir, "trinity_costs.db"),
-        budget_usd=cost_budget
-    )
+    storage = SQLiteStorage(os.path.join(current_dir, "trinity_costs.db"))
+    shared_cost_tracker = CostTracker(storage=storage)
+    shared_cost_tracker.set_budget(limit_usd=cost_budget, alert_threshold_pct=80.0)
 
     # Wrap OpenAI client globally for all agents
     wrap_openai_client(
@@ -534,7 +533,7 @@ def _cmd_cost_dashboard(args: argparse.Namespace) -> None:
     """Launch CLI cost monitoring dashboard."""
     with _cli_event_scope("cost_dashboard", {"live": args.live}):
         from trinity_protocol.cost_dashboard import CostDashboard
-        from trinity_protocol.cost_tracker import CostTracker
+        from shared.cost_tracker import CostTracker
 
         tracker = CostTracker(
             db_path=args.db,
@@ -560,7 +559,7 @@ def _cmd_cost_web(args: argparse.Namespace) -> None:
     """Launch web-based cost monitoring dashboard."""
     with _cli_event_scope("cost_web", {"port": args.port}):
         from trinity_protocol.cost_dashboard_web import CostDashboardWeb
-        from trinity_protocol.cost_tracker import CostTracker
+        from shared.cost_tracker import CostTracker
 
         tracker = CostTracker(
             db_path=args.db,
@@ -583,7 +582,7 @@ def _cmd_cost_alerts(args: argparse.Namespace) -> None:
     """Check cost alerts or run continuous monitoring."""
     with _cli_event_scope("cost_alerts", {"continuous": args.continuous}):
         from trinity_protocol.cost_alerts import CostAlertSystem, AlertConfig, run_continuous_monitoring
-        from trinity_protocol.cost_tracker import CostTracker
+        from shared.cost_tracker import CostTracker
 
         tracker = CostTracker(
             db_path=args.db,

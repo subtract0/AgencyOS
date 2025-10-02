@@ -1,0 +1,41 @@
+# Smoke Test Suite - Critical Path Tests for Rapid TDD Feedback
+# Target: <30 seconds total execution time
+#
+# These tests validate the core functionality of Agency OS without
+# running the full suite. Perfect for rapid red-green-refactor cycles.
+#
+# Usage: pytest -m smoke
+#
+# To add a test to the smoke suite:
+# @pytest.mark.smoke
+# def test_critical_functionality():
+#     ...
+
+# Core Agent Tests (6 critical agents)
+tests/unit/test_agency_code_agent_creation.py
+tests/unit/test_planner_agent_creation.py
+tests/unit/test_quality_enforcer_creation.py
+
+# Shared Infrastructure Tests
+tests/unit/test_agent_context.py
+tests/unit/test_cost_tracker.py
+tests/unit/test_result_pattern.py
+
+# Tool Tests (critical tools only)
+tests/unit/test_read_tool.py
+tests/unit/test_write_tool.py
+tests/unit/test_edit_tool.py
+tests/unit/test_bash_tool.py
+
+# Constitutional Compliance Tests
+tests/unit/test_constitution_validation.py
+
+# Memory/Learning Tests
+tests/unit/test_memory_store.py
+tests/unit/test_enhanced_memory.py
+
+# Integration Tests (minimal, fast only)
+tests/integration/test_agent_orchestration_simple.py
+tests/integration/test_cost_tracking_integration.py
+
+# Total: ~15-20 smoke tests, <30s execution

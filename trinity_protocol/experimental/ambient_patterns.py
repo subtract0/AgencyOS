@@ -496,7 +496,8 @@ class AmbientPatternDetector:
         # pattern_type is already a string due to use_enum_values=True
         pattern_type_str = pattern.pattern_type if isinstance(pattern.pattern_type, str) else pattern.pattern_type.value
 
-        self.pattern_store.store_pattern(
+        # Store using PersistentStore.store_pattern() method
+        result = self.pattern_store.store_pattern(
             pattern_type=pattern_type_str,
             pattern_name=pattern.topic,
             content=pattern.context_summary,
@@ -512,6 +513,12 @@ class AmbientPatternDetector:
             },
             evidence_count=pattern.mention_count
         )
+
+        # Log if storage fails
+        if result.is_err():
+            error = result.unwrap_err()
+            # Note: Using print instead of logger since logger might not be configured
+            print(f"Warning: Failed to persist pattern: {error}")
 
     def get_recurrence_metrics(self, topic: str) -> Optional[RecurrenceMetrics]:
         """

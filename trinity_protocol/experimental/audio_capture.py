@@ -218,7 +218,7 @@ class AudioCaptureModule:
     def _detect_speech(
         self,
         audio_data: bytes,
-        threshold: float = 500.0
+        threshold: float = 15.0
     ) -> VADResult:
         """
         Detect speech using RMS-based Voice Activity Detection.
@@ -314,10 +314,10 @@ class AudioCaptureModule:
             result = await self.capture_chunk(chunk_duration)
 
             if isinstance(result, Ok):
-                yield result.value
+                yield result.unwrap()
             else:
                 # Log error but continue streaming
-                print(f"Audio capture error: {result.error}")
+                print(f"Audio capture error: {result.unwrap_err()}")
                 await asyncio.sleep(0.1)
 
     async def save_segment_to_wav(

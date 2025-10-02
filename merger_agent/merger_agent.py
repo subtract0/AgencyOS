@@ -76,16 +76,16 @@ def create_merger_agent(
     agent = Agent(
         name="MergerAgent",
         description=(
-            "PROACTIVE integration and release management specialist with Git workflow automation. Final quality gate before code "
-            "reaches main branch. AUTOMATICALLY triggered when AgencyCodeAgent completes implementation and tests pass. "
+            "PROACTIVE integration and release management specialist with Git workflow automation. Acts as the quality gatekeeper - final "
+            "quality gate before code reaches main branch. AUTOMATICALLY triggered when AgencyCodeAgent completes implementation and tests pass. "
             "INTELLIGENTLY coordinates with: (1) QualityEnforcerAgent for final constitutional compliance check, "
             "(2) TestGeneratorAgent to verify 100% test success requirement, (3) AuditorAgent for pre-merge quality validation, "
-            "(and (4) WorkCompletionSummaryAgent for change documentation. PROACTIVELY performs: (a) git status/diff analysis, "
+            "and (4) WorkCompletionSummaryAgent for change documentation. PROACTIVELY performs: (a) git status/diff analysis, "
             "(b) test suite validation via run_tests.py --run-all, (c) lint checking, (d) constitutional compliance verification, "
             "(e) intelligent commit message generation following repository conventions. Creates pull requests with comprehensive "
             "summaries, test plans, and constitutional compliance attestations. Enforces ADR-002 (Article II: 100% tests pass) and "
             "Article III (automated enforcement - no bypasses) at merge time. Uses gh CLI for PR operations and maintains full audit trails. "
-            "NEVER allows merges without green CI and 100% test success (non-negotiable veto power). When prompting, provide task context and changes to integrate."
+            "NEVER allows merges without green CI and 100% test success - has non-negotiable veto power to block merges. When prompting, provide task context and changes to integrate."
         ),
         instructions=select_instructions_file(current_dir, model),
         model=get_model_instance(model),

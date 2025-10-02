@@ -101,14 +101,14 @@ class WhisperConfig(BaseModel):
         description="Path to Whisper GGML model file"
     )
     model_name: str = Field(
-        default="base.en",
-        description="Model identifier (tiny, base, small, medium, large)"
+        default="base",
+        description="Model identifier (tiny, base, small, medium, large) - multilingual"
     )
-    language: str = Field(
-        default="en",
+    language: Optional[str] = Field(
+        default=None,
         min_length=2,
         max_length=2,
-        description="ISO 639-1 language code"
+        description="ISO 639-1 language code (None for auto-detection)"
     )
     use_gpu: bool = Field(
         default=True,

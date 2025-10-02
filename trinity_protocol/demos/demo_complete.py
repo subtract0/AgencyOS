@@ -35,7 +35,7 @@ from trinity_protocol.core import (
 )
 from shared.message_bus import MessageBus
 from shared.persistent_store import PersistentStore
-from shared.cost_tracker import CostTracker, ModelTier
+from shared.cost_tracker import CostTracker, ModelTier, SQLiteStorage
 from shared.agent_context import create_agent_context
 
 
@@ -62,7 +62,12 @@ class TrinityCompleteDemo:
         print("\n[1/6] Initializing infrastructure...")
         self.message_bus = MessageBus(":memory:")
         self.pattern_store = PersistentStore(":memory:")
-        self.cost_tracker = CostTracker(":memory:", budget_usd=budget_usd)
+
+        # Create cost tracker with correct API
+        storage = SQLiteStorage(":memory:")
+        self.cost_tracker = CostTracker(storage=storage)
+        self.cost_tracker.set_budget(limit_usd=budget_usd, alert_threshold_pct=80.0)
+
         self.agent_context = create_agent_context()
 
         print(f"   ✓ Message Bus (3 queues: telemetry, improvement, execution)")
@@ -159,12 +164,45 @@ class TrinityCompleteDemo:
         print(" " * 22 + "💰 COST ANALYSIS")
         print("=" * 70)
 
-        self.cost_tracker.print_dashboard()
+        # Get and display cost summary
+        summary_result = self.cost_tracker.get_summary()
+        if summary_result.is_ok():
+            summary = summary_result.unwrap()
+            print(f"\nTotal Cost: ${summary.total_cost_usd:.4f}")
+            print(f"Total Calls: {summary.total_calls}")
+            print(f"Total Tokens In: {summary.total_tokens_in:,}")
+            print(f"Total Tokens Out: {summary.total_tokens_out:,}")
+            print(f"Success Rate: {summary.success_rate:.1%}")
+
+            if summary.by_operation:
+                print("\nCost by Operation:")
+                for op, cost in summary.by_operation.items():
+                    print(f"  {op}: ${cost:.4f}")
+
+            if summary.by_model:
+                print("\nCost by Model:")
+                for model, cost in summary.by_model.items():
+                    print(f"  {model}: ${cost:.4f}")
+
+            # Show budget status
+            budget_result = self.cost_tracker.get_budget_status()
+            if budget_result.is_ok():
+                budget = budget_result.unwrap()
+                if budget.limit_usd:
+                    print(f"\nBudget Status:")
+                    print(f"  Limit: ${budget.limit_usd:.2f}")
+                    print(f"  Spent: ${budget.spent_usd:.4f}")
+                    print(f"  Remaining: ${budget.remaining_usd:.4f}")
+                    print(f"  Percent Used: {budget.percent_used:.1f}%")
+                    if budget.alert_triggered:
+                        print("  ⚠️  Budget alert triggered!")
+                    if budget.limit_exceeded:
+                        print("  🔴 Budget limit exceeded!")
 
         # Cleanup
         self.message_bus.close()
         self.pattern_store.close()
-        self.cost_tracker.close()
+        self.cost_tracker.storage.close()
 
         print("\n" + "=" * 70)
         print(" " * 20 + "✅ DEMO COMPLETE")
@@ -341,7 +379,9 @@ async def demo_cost_tracking():
     print(" " * 20 + "COST TRACKING DEMO")
     print("=" * 70)
 
-    tracker = CostTracker(db_path=":memory:", budget_usd=5.0)
+    storage = SQLiteStorage(":memory:")
+    tracker = CostTracker(storage=storage)
+    tracker.set_budget(limit_usd=5.0, alert_threshold_pct=80.0)
 
     print("\n[1/2] Simulating LLM calls...")
 
@@ -355,23 +395,46 @@ async def demo_cost_tracking():
     ]
 
     for agent, model, tier, input_tokens, output_tokens in calls:
-        tracker.track_call(
-            agent=agent,
+        result = tracker.track(
+            operation=agent,
             model=model,
             model_tier=tier,
-            input_tokens=input_tokens,
-            output_tokens=output_tokens,
+            tokens_in=input_tokens,
+            tokens_out=output_tokens,
             duration_seconds=2.5,
             success=True,
-            task_id=f"demo-task-{agent}",
-            correlation_id="demo-corr-001"
+            metadata={"agent": agent}
         )
-        print(f"   ✓ {agent}: {model} ({input_tokens} → {output_tokens} tokens)")
+        if result.is_ok():
+            print(f"   ✓ {agent}: {model} ({input_tokens} → {output_tokens} tokens)")
+        else:
+            print(f"   ✗ {agent}: Failed to track - {result.unwrap_err()}")
 
     print("\n[2/2] Cost dashboard:")
-    tracker.print_dashboard()
 
-    tracker.close()
+    # Display summary
+    summary_result = tracker.get_summary()
+    if summary_result.is_ok():
+        summary = summary_result.unwrap()
+        print(f"\n  Total Cost: ${summary.total_cost_usd:.4f}")
+        print(f"  Total Calls: {summary.total_calls}")
+        print(f"  Success Rate: {summary.success_rate:.1%}")
+
+        print("\n  Cost by Agent:")
+        for op, cost in summary.by_operation.items():
+            print(f"    {op}: ${cost:.4f}")
+
+        print("\n  Cost by Model:")
+        for model, cost in summary.by_model.items():
+            print(f"    {model}: ${cost:.4f}")
+
+        # Show budget status
+        budget_result = tracker.get_budget_status()
+        if budget_result.is_ok():
+            budget = budget_result.unwrap()
+            print(f"\n  Budget: ${budget.spent_usd:.4f} / ${budget.limit_usd:.2f} ({budget.percent_used:.1f}%)")
+
+    tracker.storage.close()
     print("\n✅ Cost tracking demo complete\n")
 
 
