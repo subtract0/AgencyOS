@@ -25,6 +25,17 @@ ci_skip = pytest.mark.skipif(
     reason="Requires advanced DSPy features not fully configured in CI"
 )
 
+# Skip tests when DSPy is not available
+try:
+    from dspy_agents.config import DSPY_AVAILABLE
+except ImportError:
+    DSPY_AVAILABLE = False
+
+dspy_skip = pytest.mark.skipif(
+    not DSPY_AVAILABLE,
+    reason="DSPy not available - tests require full DSPy installation"
+)
+
 # Add parent directory to path for imports
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 
@@ -243,6 +254,7 @@ class TestTestGeneration:
 
     @ci_skip
     @patch('dspy_agents.modules.toolsmith_agent.DSPY_AVAILABLE', True)
+    @dspy_skip
     def test_generate_tests_success(self, agent):
         """Test successful test generation."""
         mock_result = Mock()
@@ -319,6 +331,7 @@ class TestMainForwardMethod:
     @ci_skip
     @patch('dspy_agents.modules.toolsmith_agent.DSPY_AVAILABLE', True)
     @patch('dspy_agents.modules.toolsmith_agent.subprocess.run')
+    @dspy_skip
     def test_forward_success(self, mock_subprocess, agent, mock_context):
         """Test successful tool creation flow."""
         # Mock directive parsing
@@ -772,6 +785,7 @@ class TestIntegration:
     @ci_skip
     @patch('dspy_agents.modules.toolsmith_agent.DSPY_AVAILABLE', True)
     @patch('subprocess.run')
+    @dspy_skip
     def test_end_to_end_tool_creation(self, mock_subprocess, agent):
         """Test complete tool creation workflow."""
         # Setup mocks for full workflow
@@ -864,6 +878,7 @@ class TestRationaleGeneration:
 
     @ci_skip
     @patch('dspy_agents.modules.toolsmith_agent.DSPY_AVAILABLE', True)
+    @dspy_skip
     def test_directive_parsing_generates_rationale(self, agent):
         """Test that directive parsing generates design rationale."""
         mock_result = Mock()
@@ -889,6 +904,7 @@ class TestRationaleGeneration:
 
     @ci_skip
     @patch('dspy_agents.modules.toolsmith_agent.DSPY_AVAILABLE', True)
+    @dspy_skip
     def test_scaffolding_generates_rationale(self, agent):
         """Test that scaffolding generates scaffolding rationale."""
         mock_result = Mock()
@@ -911,6 +927,7 @@ class TestRationaleGeneration:
 
     @ci_skip
     @patch('dspy_agents.modules.toolsmith_agent.DSPY_AVAILABLE', True)
+    @dspy_skip
     def test_rationale_logged_during_execution(self, agent, caplog):
         """Test that rationales are logged during execution for debugging."""
         import logging
