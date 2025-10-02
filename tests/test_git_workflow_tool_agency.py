@@ -378,19 +378,19 @@ def test_exception_handling():
 
 @pytest.mark.integration
 def test_merger_agent_has_git_workflow_tool():
-    """Test that MergerAgent has GitWorkflowToolAgency in toolset."""
+    """Test that MergerAgent has GitUnified in toolset (migrated from GitWorkflowToolAgency)."""
     from merger_agent.merger_agent import create_merger_agent
-    from tools import GitWorkflowToolAgency
+    from tools import GitUnified
 
     agent = create_merger_agent(model="gpt-5")
 
-    # Check that GitWorkflowToolAgency is in tools
-    # Agency Swarm wraps tools, so check the number of tools increased
-    assert len(agent.tools) >= 7  # Original 6 + GitWorkflowToolAgency
+    # Check that GitUnified is in tools (migrated from GitWorkflowToolAgency)
+    # Agency Swarm wraps tools, so check the number of tools
+    assert len(agent.tools) >= 6  # Bash, GitUnified, Read, Grep, Glob, TodoWrite
 
     # Verify we can import and instantiate the tool
-    tool = GitWorkflowToolAgency(
-        operation="get_status"
+    tool = GitUnified(
+        operation="status"
     )
     assert tool is not None
 
