@@ -1,23 +1,55 @@
-"""
-Audio capture module for Ambient Intelligence System.
+"""Audio Capture Module - EXPERIMENTAL
 
-Captures audio from system microphone with Voice Activity Detection (VAD).
+⚠️ **Status**: Experimental / Prototype
+⚠️ **Production Readiness**: NOT READY
+
+**Purpose**:
+Audio capture from system microphone with Voice Activity Detection (VAD).
 Uses PyAudio for audio capture and RMS-based VAD for speech detection.
 
-Privacy Guarantees:
-- Memory-only processing (no disk writes)
-- Rolling buffer with configurable max duration
-- Immediate buffer clearing on stop
+**Privacy Concerns**:
+- Microphone access (continuous capture capability)
+- Memory buffers contain raw audio (no encryption)
+- VAD threshold may miss privacy-sensitive whispers
+- Buffer clearing on stop (but no verification)
+- No audit trail for microphone access
 
-Constitutional Compliance:
-- Article I: Complete audio chunks before processing
-- Article II: Strict typing with Pydantic models
-- Article VII: Functions <50 lines
+**External Dependencies**:
+- pyaudio (platform-specific, requires manual compilation on macOS/Windows)
+- numpy (optional, for faster RMS calculation)
+- Platform audio drivers (CoreAudio on macOS, WASAPI on Windows)
 
-Performance Targets:
-- <10% CPU usage during continuous operation
-- <200MB memory footprint
-- Real-time capture without buffer overflow
+**Known Issues**:
+- Low test coverage (~10%)
+- No error handling for device disconnection
+- Privacy consent flow missing
+- RMS-based VAD is simplistic (high false positive rate)
+- Buffer overflow handling incomplete
+- No multi-device support (single microphone only)
+- save_segment_to_wav violates privacy-first design
+
+**To Upgrade to Production**:
+See: docs/TRINITY_UPGRADE_CHECKLIST.md
+
+Required steps:
+- [ ] 100% test coverage (currently ~10%)
+- [ ] Privacy consent flow implementation
+- [ ] Error handling (Result<T,E> pattern throughout)
+- [ ] Advanced VAD (ML-based, e.g., WebRTC VAD)
+- [ ] Cross-platform compatibility testing
+- [ ] Constitutional compliance (Articles I-V)
+- [ ] Security review (buffer encryption, secure clearing)
+- [ ] Remove save_segment_to_wav or gate behind explicit flag
+
+**Performance Targets**:
+- <10% CPU usage during continuous operation ✅ (achieved)
+- <200MB memory footprint ✅ (achieved)
+- Real-time capture without buffer overflow ⚠️ (needs testing)
+
+**Constitutional Compliance (Partial)**:
+- Article I: Complete audio chunks before processing ✅
+- Article II: Strict typing with Pydantic models ✅
+- Article VII: Functions <50 lines ✅ (most functions comply)
 """
 
 import asyncio

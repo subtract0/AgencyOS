@@ -17,7 +17,7 @@ import pytest
 import tempfile
 import os
 from pathlib import Path
-from trinity_protocol.persistent_store import PersistentStore, FAISS_AVAILABLE
+from shared.persistent_store import PersistentStore, FAISS_AVAILABLE
 
 
 class TestPersistentStoreInitialization:

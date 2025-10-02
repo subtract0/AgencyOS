@@ -15,9 +15,9 @@ Constitutional Compliance:
 
 import pytest
 from datetime import datetime, timedelta
-from trinity_protocol.witness_ambient_mode import AmbientPatternDetector
-from trinity_protocol.conversation_context import ConversationContext
-from trinity_protocol.persistent_store import PersistentStore
+from trinity_protocol.experimental.ambient_patterns import AmbientPatternDetector
+from trinity_protocol.experimental.conversation_context import ConversationContext
+from shared.persistent_store import PersistentStore
 from trinity_protocol.core.models.patterns import PatternType
 
 

@@ -205,7 +205,7 @@ class TestPhase12Compatibility:
     @pytest.mark.integration
     async def test_phase2_hitl_protocol_still_works(self):
         """Test HITL protocol continues to function."""
-        from trinity_protocol.human_review_queue import HumanReviewQueue
+        from shared.hitl_protocol import HumanReviewQueue
 
         hitl = HumanReviewQueue()
 
@@ -222,7 +222,7 @@ class TestPhase12Compatibility:
     @pytest.mark.integration
     async def test_phase2_preference_learning_still_works(self):
         """Test preference learning continues to function."""
-        from trinity_protocol.alex_preference_learner import AlexPreferenceLearner
+        from shared.preference_learning import AlexPreferenceLearner
 
         learner = AlexPreferenceLearner()
 

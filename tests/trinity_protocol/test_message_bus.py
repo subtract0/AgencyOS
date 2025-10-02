@@ -17,7 +17,7 @@ import pytest
 import tempfile
 import asyncio
 from pathlib import Path
-from trinity_protocol.message_bus import MessageBus, async_message_bus
+from shared.message_bus import MessageBus, async_message_bus
 
 
 class TestMessageBusInitialization:

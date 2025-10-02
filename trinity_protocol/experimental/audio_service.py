@@ -1,20 +1,52 @@
-"""
-Ambient Listener Service - Phase 4 Integration & Orchestration.
+"""Ambient Listener Service - EXPERIMENTAL
 
+⚠️ **Status**: Experimental / Prototype
+⚠️ **Production Readiness**: NOT READY
+
+**Purpose**:
+Phase 4 Integration & Orchestration for ambient audio.
 Orchestrates: AudioCapture → Whisper → MessageBus publishing.
 Publishes transcriptions to personal_context_stream for WITNESS consumption.
 
-Flow:
-1. Capture audio from microphone
-2. Transcribe with Whisper (local)
-3. Publish to message bus
-4. WITNESS consumes and detects patterns
-5. ARCHITECT receives patterns and formulates questions
+**Privacy Concerns**:
+- Microphone access (always-on listening)
+- Continuous audio capture without explicit user notification
+- No consent management (auto-start capability)
+- Transcriptions published to message bus (no access controls)
+- No opt-out mechanism during operation
 
-Constitutional Compliance:
-- Article I: Complete context (full audio chunks before transcription)
-- Article II: 100% verification (strict typing, error handling)
-- Article IV: Continuous learning (pattern persistence)
+**External Dependencies**:
+- pyaudio (platform-specific, requires manual compilation on some systems)
+- whisper.cpp or openai-whisper (local transcription)
+- message_bus module (experimental dependency)
+- transcription_service module (experimental dependency)
+
+**Known Issues**:
+- Low test coverage (~15%)
+- No error handling for audio device failures
+- Privacy consent flow missing
+- No pause/resume mechanism for user privacy
+- Continuous CPU/memory usage (no idle optimization)
+- No encryption for in-memory audio buffers
+- Message bus publishing lacks authentication
+
+**To Upgrade to Production**:
+See: docs/TRINITY_UPGRADE_CHECKLIST.md
+
+Required steps:
+- [ ] 100% test coverage (currently ~15%)
+- [ ] Privacy consent flow with clear notifications
+- [ ] Error handling (Result<T,E> pattern throughout)
+- [ ] Pause/resume controls for user privacy
+- [ ] Cross-platform compatibility (Windows, macOS, Linux)
+- [ ] Constitutional compliance (Articles I-V)
+- [ ] Security review (audio buffer encryption, access controls)
+- [ ] Resource optimization (idle state management)
+
+**Constitutional Compliance (Partial)**:
+- Article I: Complete context (full audio chunks before transcription) ✅
+- Article II: 100% verification (strict typing, error handling) ⚠️ (incomplete)
+- Article IV: Continuous learning (pattern persistence) ⚠️ (privacy concerns)
 """
 
 import asyncio
@@ -23,9 +55,9 @@ from typing import Optional
 from datetime import datetime
 from pathlib import Path
 
-from trinity_protocol.transcription_service import TranscriptionService
-from trinity_protocol.message_bus import MessageBus
-from trinity_protocol.conversation_context import ConversationContext
+from trinity_protocol.experimental.transcription_queue import TranscriptionService
+from shared.message_bus import MessageBus
+from trinity_protocol.experimental.conversation_context import ConversationContext
 from trinity_protocol.experimental.models.audio import (
     AudioConfig,
     WhisperConfig,
@@ -327,7 +359,7 @@ async def main():
     4. Publish to message bus
     5. WITNESS consumes
     """
-    from trinity_protocol.message_bus import MessageBus
+    from shared.message_bus import MessageBus
 
     # Initialize message bus
     bus = MessageBus(db_path="test_ambient.db")

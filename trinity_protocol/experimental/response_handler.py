@@ -1,32 +1,67 @@
-"""
-Response Handler for Trinity Protocol HITL System
+"""Response Handler for Trinity HITL - EXPERIMENTAL
 
-Processes user responses (YES/NO/LATER) and routes them appropriately:
-- YES: Route to EXECUTOR for immediate action
-- NO: Store for learning, do not execute
-- LATER: Schedule reminder, do not execute immediately
+⚠️ **Status**: Experimental / Prototype
+⚠️ **Production Readiness**: NOT READY
 
-Constitutional Compliance:
-- Article II: Strict typing - Pydantic models, no Dict[Any, Any]
-- Article IV: Continuous learning - track all responses
-- Privacy: Respect user decisions, never bypass NO responses
+**Purpose**:
+Response handler for Trinity Protocol Human-in-the-Loop system.
+Processes user responses (YES/NO/LATER) and routes them appropriately.
 
-Flow:
+**Privacy Concerns**:
+- Response tracking persisted indefinitely (no expiration)
+- Response times collected without explicit consent
+- LATER responses stored without encryption
+- No user control over response history deletion
+- Learning agent may infer sensitive patterns from responses
+
+**External Dependencies**:
+- message_bus module (experimental dependency)
+- human_review_queue module (experimental dependency)
+- telemetry_stream (for learning) ⚠️
+
+**Known Issues**:
+- Low test coverage (~20%)
+- No error handling for message bus failures
+- Privacy: no response data retention policies
+- Correlation ID validation incomplete
+- Missing rate limiting (spam responses possible)
+- No audit trail for response routing decisions
+- LATER scheduling not implemented (only logged)
+
+**To Upgrade to Production**:
+See: docs/TRINITY_UPGRADE_CHECKLIST.md
+
+Required steps:
+- [ ] 100% test coverage (currently ~20%)
+- [ ] Privacy: response data retention policies
+- [ ] Error handling (Result<T,E> pattern throughout)
+- [ ] Complete LATER scheduling implementation
+- [ ] Rate limiting and spam protection
+- [ ] Constitutional compliance (Articles I-V)
+- [ ] Security review (response authentication)
+- [ ] Audit trail for all routing decisions
+
+**Flow**:
 1. Receive response from QuestionDelivery
 2. Validate correlation ID matches question
 3. Route based on response_type:
    - YES → execution_queue (EXECUTOR picks up)
    - NO → telemetry_stream (learning agent analyzes)
-   - LATER → telemetry_stream + schedule reminder
+   - LATER → telemetry_stream + schedule reminder (⚠️ not implemented)
 4. Mark question as answered in review queue
 5. Calculate and store response time for learning
+
+**Constitutional Compliance (Partial)**:
+- Article II: Strict typing - Pydantic models, no Dict[Any, Any] ✅
+- Article IV: Continuous learning - track all responses ⚠️ (privacy concerns)
+- Privacy: Respect user decisions, never bypass NO responses ✅
 """
 
 from datetime import datetime, timedelta
 from typing import Optional
 
-from trinity_protocol.message_bus import MessageBus
-from trinity_protocol.human_review_queue import HumanReviewQueue
+from shared.message_bus import MessageBus
+from shared.hitl_protocol import HumanReviewQueue
 from trinity_protocol.core.models.hitl import HumanResponse
 
 

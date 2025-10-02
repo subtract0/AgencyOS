@@ -28,12 +28,14 @@ from datetime import datetime
 # Add parent directory to path
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 
-from trinity_protocol.message_bus import MessageBus
-from trinity_protocol.persistent_store import PersistentStore
-from trinity_protocol.cost_tracker import CostTracker, ModelTier
-from trinity_protocol.witness_agent import WitnessAgent
-from trinity_protocol.architect_agent import ArchitectAgent
-from trinity_protocol.executor_agent import ExecutorAgent
+from trinity_protocol.core import (
+    WitnessAgent,
+    ArchitectAgent,
+    ExecutorAgent
+)
+from shared.message_bus import MessageBus
+from shared.persistent_store import PersistentStore
+from shared.cost_tracker import CostTracker, ModelTier
 from shared.agent_context import create_agent_context
 
 

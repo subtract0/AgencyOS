@@ -144,7 +144,7 @@ def corrupted_audio_path(tmp_path):
 # ============================================================================
 
 try:
-    from trinity_protocol.transcription_service import TranscriptionService as RealTranscriptionService
+    from trinity_protocol.experimental.transcription_queue import TranscriptionService as RealTranscriptionService
     from trinity_protocol.experimental.models.audio import WhisperConfig
     REAL_IMPLEMENTATION_AVAILABLE = True
 except ImportError:

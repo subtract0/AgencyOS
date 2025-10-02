@@ -1,25 +1,58 @@
-"""
-WITNESS Ambient Mode - Pattern Detection for Ambient Transcriptions.
+"""Ambient Pattern Detection - EXPERIMENTAL
 
-Extends WITNESS agent with ambient-specific pattern detection:
+⚠️ **Status**: Experimental / Prototype
+⚠️ **Production Readiness**: NOT READY
+
+**Purpose**:
+Pattern detection for ambient transcriptions (WITNESS agent).
+Extends WITNESS with ambient-specific pattern detection:
 - Recurring topics (mentioned N times)
 - Project mentions
 - Frustrations
 - Action items
 
-Publishes detected patterns to improvement_queue for ARCHITECT.
+**Privacy Concerns**:
+- Processes ambient conversation data (always-on listening)
+- Pattern detection may capture sensitive topics
+- No explicit user consent flow implemented
+- Cross-session pattern storage (persistent tracking)
 
-Constitutional Compliance:
+**External Dependencies**:
+- Firestore (for persistent pattern storage)
+- conversation_context module (experimental dependency)
+
+**Known Issues**:
+- Low test coverage (~20%)
+- No error handling for pattern storage failures
+- Privacy consent flow missing
+- Topic extraction uses basic regex (low accuracy)
+- No rate limiting on pattern publishing
+- Cross-session learning lacks privacy controls
+
+**To Upgrade to Production**:
+See: docs/TRINITY_UPGRADE_CHECKLIST.md
+
+Required steps:
+- [ ] 100% test coverage (currently ~20%)
+- [ ] Privacy consent flow implementation
+- [ ] Error handling (Result<T,E> pattern throughout)
+- [ ] Improved topic extraction (NLP-based)
+- [ ] Rate limiting and deduplication
+- [ ] Constitutional compliance (Articles I-V)
+- [ ] Security review (pattern storage access controls)
+- [ ] User control over pattern retention
+
+**Constitutional Compliance (Partial)**:
 - Article I: Complete context (full conversation window before detection)
-- Article II: Strict typing (Pydantic models)
-- Article IV: Persist patterns to Firestore for learning
+- Article II: Strict typing (Pydantic models) ✅
+- Article IV: Persist patterns to Firestore for learning ⚠️ (privacy concerns)
 """
 
 from typing import Optional, Dict, Any, List
 from datetime import datetime, timedelta
 import re
 
-from trinity_protocol.conversation_context import ConversationContext
+from trinity_protocol.experimental.conversation_context import ConversationContext
 from trinity_protocol.core.models.patterns import (
     DetectedPattern,
     PatternType,
@@ -27,7 +60,7 @@ from trinity_protocol.core.models.patterns import (
     IntentClassification,
     RecurrenceMetrics
 )
-from trinity_protocol.persistent_store import PersistentStore
+from shared.persistent_store import PersistentStore
 
 
 class AmbientPatternDetector:
