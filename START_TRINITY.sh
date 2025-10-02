@@ -7,29 +7,51 @@ set -e
 echo "🎤 TRINITY PROTOCOL - Starting Ambient Intelligence"
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 
-# Check if Whisper is available (skip for now - can install later)
+# Test audio pipeline first
+echo "🧪 Testing audio pipeline..."
+if python trinity_protocol/test_audio_pipeline.py --quick 2>/dev/null; then
+    echo "✅ Audio pipeline validated"
+else
+    echo "⚠️  Audio pipeline issues detected (running in demo mode)"
+    echo "   Fix: brew install portaudio && pip install pyaudio openai-whisper"
+    echo "   Or continue in demo mode (limited functionality)"
+fi
+
+# Check if Whisper is available
+WHISPER_INSTALLED=false
 if python -c "import whisper" 2>/dev/null; then
     echo "✅ Whisper AI ready"
+    WHISPER_INSTALLED=true
     if [ ! -f "$HOME/.cache/whisper/base.en.pt" ]; then
         echo "📥 Downloading Whisper model (one-time, ~150MB)..."
         python -c "import whisper; whisper.load_model('base.en')"
     fi
 else
-    echo "⚠️  Whisper not installed (pip install openai-whisper)"
-    echo "   Skipping for now - Trinity will run in demo mode"
+    echo "⚠️  Whisper not installed"
+    echo "   Install: pip install openai-whisper"
+    echo "   Running in DEMO MODE (no real transcription)"
 fi
 
 # Create log directory
 mkdir -p logs/trinity_ambient
 
-# Start ambient listener in background
+# Start ambient listener in background (with better error handling)
 echo "🎧 Starting ambient listener..."
-nohup python trinity_protocol/ambient_listener_service.py \
+cd /Users/am/Code/Agency  # Ensure correct working directory
+nohup python -m trinity_protocol.ambient_listener_service \
     --model base.en \
     --min-confidence 0.6 \
     > logs/trinity_ambient/listener.log 2>&1 &
 LISTENER_PID=$!
 echo "   ✅ Listener PID: $LISTENER_PID"
+
+# Wait a moment to check if it started successfully
+sleep 2
+if kill -0 $LISTENER_PID 2>/dev/null; then
+    echo "   ✅ Listener running successfully"
+else
+    echo "   ❌ Listener failed to start (check logs/trinity_ambient/listener.log)"
+fi
 
 # Start pattern dashboard in another terminal (optional)
 echo "📊 Starting pattern dashboard..."
