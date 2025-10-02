@@ -18,9 +18,9 @@ from pathlib import Path
 from trinity_protocol.witness_agent import WitnessAgent
 from trinity_protocol.core.architect import ArchitectAgent
 from trinity_protocol.executor_agent import ExecutorAgent
-from trinity_protocol.message_bus import MessageBus
-from trinity_protocol.persistent_store import PersistentStore
-from trinity_protocol.cost_tracker import CostTracker
+from shared.message_bus import MessageBus
+from shared.persistent_store import PersistentStore
+from shared.cost_tracker import CostTracker
 from shared.agent_context import AgentContext
 
 
@@ -241,7 +241,7 @@ async def test_cost_tracking_integration(infrastructure):
     assert hasattr(tracker, "print_dashboard")
 
     # Verify summary structure
-    from trinity_protocol.cost_tracker import CostSummary
+    from shared.cost_tracker import CostSummary
     assert isinstance(initial_summary, CostSummary)
 
 
@@ -692,7 +692,7 @@ async def test_emergency_shutdown_on_budget_exceeded(infrastructure):
     tracker = infrastructure["tracker"]
 
     # Import ModelTier
-    from trinity_protocol.cost_tracker import ModelTier
+    from shared.cost_tracker import ModelTier
 
     # Set a very low budget threshold
     low_budget = 0.01  # $0.01 - will be exceeded quickly
@@ -847,7 +847,7 @@ async def test_constitutional_compliance_all_articles(infrastructure, temp_works
     assert architect.workspace_dir.exists()
 
     # Verify cost tracking is operational (resource management)
-    from trinity_protocol.cost_tracker import ModelTier
+    from shared.cost_tracker import ModelTier
     tracker.track_call(
         agent="test_agent",
         model="gpt-4o-mini",

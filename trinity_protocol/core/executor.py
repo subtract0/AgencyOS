@@ -33,7 +33,7 @@ from typing import Any, Dict, List, Optional
 from shared.agent_context import AgentContext
 from shared.cost_tracker import CostTracker, ModelTier
 from shared.model_policy import agent_model
-from trinity_protocol.message_bus import MessageBus
+from shared.message_bus import MessageBus
 
 # Import Agency sub-agent factories
 from agency_code_agent import create_agency_code_agent

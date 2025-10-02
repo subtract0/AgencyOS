@@ -257,7 +257,7 @@ class TestArticleIIICompliance:
     async def test_budget_enforcer_blocks_expensive_operations(self):
         """Test budget enforcer automatically blocks operations."""
         from trinity_protocol.budget_enforcer import BudgetEnforcer, BudgetExceededError
-        from trinity_protocol.cost_tracker import CostTracker
+        from shared.cost_tracker import CostTracker
 
         # Create cost tracker with high spending
         cost_tracker = CostTracker()
@@ -269,7 +269,7 @@ class TestArticleIIICompliance:
         )
 
         # Record high usage to trigger limit
-        from trinity_protocol.cost_tracker import ModelTier
+        from shared.cost_tracker import ModelTier
         for _ in range(15):
             cost_tracker.track_call(
                 agent="test_agent",
@@ -320,7 +320,7 @@ class TestArticleIIICompliance:
         """Test no bypass mechanisms exist."""
         # Verify budget enforcer has no override/bypass methods
         from trinity_protocol.budget_enforcer import BudgetEnforcer
-        from trinity_protocol.cost_tracker import CostTracker
+        from shared.cost_tracker import CostTracker
 
         cost_tracker = CostTracker()
         budget = BudgetEnforcer(cost_tracker=cost_tracker, daily_limit_usd=30.0)

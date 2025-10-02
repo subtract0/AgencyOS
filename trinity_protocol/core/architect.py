@@ -16,8 +16,8 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
-from trinity_protocol.message_bus import MessageBus
-from trinity_protocol.persistent_store import PersistentStore
+from shared.message_bus import MessageBus
+from shared.persistent_store import PersistentStore
 
 
 @dataclass

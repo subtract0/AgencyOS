@@ -21,7 +21,7 @@ import pytest
 import asyncio
 import tempfile
 from pathlib import Path
-from trinity_protocol.message_bus import MessageBus
+from shared.message_bus import MessageBus
 
 
 class TestMessagePersistenceAcrossRestarts:

@@ -23,16 +23,16 @@ from typing import List
 # Add parent directory to path
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 
-from trinity_protocol.core.models.preferences import (
+from trinity_protocol.core.models import (
     QuestionType,
     ResponseType,
     TopicCategory,
 )
-from trinity_protocol.alex_preference_learner import (
+from shared.preference_learning import (
     AlexPreferenceLearner,
     create_response_record,
+    PreferenceStore
 )
-from trinity_protocol.preference_store import PreferenceStore
 
 
 def generate_realistic_response_data() -> List:

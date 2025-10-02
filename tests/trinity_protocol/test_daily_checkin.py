@@ -32,7 +32,7 @@ try:
         CheckinQuestion,
         CheckinResponse,
     )
-    from trinity_protocol.preference_learning import PreferenceLearner
+    from shared.preference_learning import PreferenceLearner
     IMPLEMENTATION_AVAILABLE = True
 except ImportError:
     IMPLEMENTATION_AVAILABLE = False

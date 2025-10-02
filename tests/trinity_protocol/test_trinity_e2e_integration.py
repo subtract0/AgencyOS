@@ -23,10 +23,10 @@ from datetime import datetime, timedelta
 from typing import List, Optional
 from unittest.mock import AsyncMock, Mock, patch
 
-from trinity_protocol.message_bus import MessageBus
-from trinity_protocol.persistent_store import PersistentStore
-from trinity_protocol.human_review_queue import HumanReviewQueue
-from trinity_protocol.response_handler import ResponseHandler
+from shared.message_bus import MessageBus
+from shared.persistent_store import PersistentStore
+from shared.hitl_protocol import HumanReviewQueue
+from trinity_protocol.experimental.response_handler import ResponseHandler
 from trinity_protocol.project_initializer import ProjectInitializer
 from trinity_protocol.spec_from_conversation import SpecFromConversation
 from trinity_protocol.project_executor import ProjectExecutor
@@ -811,7 +811,7 @@ async def test_budget_enforcer_blocks_execution():
 
     Validates: BudgetEnforcer exceeds limit → Operations blocked
     """
-    from trinity_protocol.cost_tracker import CostTracker
+    from shared.cost_tracker import CostTracker
 
     tracker = CostTracker(":memory:")
     enforcer = BudgetEnforcer(
@@ -825,7 +825,7 @@ async def test_budget_enforcer_blocks_execution():
     assert status.status.value in ["healthy", "warning"]
 
     # Simulate high spending - use correct CostTracker.track_call signature
-    from trinity_protocol.cost_tracker import ModelTier
+    from shared.cost_tracker import ModelTier
     tracker.track_call(
         agent="test_agent",
         model="gpt-5",

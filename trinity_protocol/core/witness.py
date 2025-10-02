@@ -20,9 +20,9 @@ from datetime import datetime
 import json
 from dataclasses import dataclass, asdict
 
-from trinity_protocol.pattern_detector import PatternDetector, PatternMatch
-from trinity_protocol.message_bus import MessageBus
-from trinity_protocol.persistent_store import PersistentStore
+from shared.pattern_detector import PatternDetector, PatternMatch
+from shared.message_bus import MessageBus
+from shared.persistent_store import PersistentStore
 
 
 @dataclass

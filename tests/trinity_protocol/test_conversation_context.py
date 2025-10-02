@@ -10,7 +10,7 @@ Constitutional Compliance:
 
 import pytest
 from datetime import datetime, timedelta
-from trinity_protocol.conversation_context import ConversationContext, TranscriptEntry
+from trinity_protocol.experimental.conversation_context import ConversationContext, TranscriptEntry
 
 
 @pytest.fixture

@@ -22,8 +22,8 @@ from datetime import datetime
 from unittest.mock import AsyncMock, Mock, MagicMock, patch, call
 from typing import Dict, Any, List
 
-from trinity_protocol.message_bus import MessageBus
-from trinity_protocol.persistent_store import PersistentStore
+from shared.message_bus import MessageBus
+from shared.persistent_store import PersistentStore
 from trinity_protocol.core.architect import ArchitectAgent, Strategy, TaskSpec  # Import optimized implementation
 
 

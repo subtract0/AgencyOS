@@ -33,11 +33,11 @@ from trinity_protocol.core.models.preferences import (
     TimeOfDay,
     TopicCategory,
 )
-from trinity_protocol.alex_preference_learner import (
+from shared.preference_learning import (
     AlexPreferenceLearner,
     create_response_record,
 )
-from trinity_protocol.preference_store import PreferenceStore
+from shared.preference_learning import PreferenceStore
 
 
 # ============================================================================

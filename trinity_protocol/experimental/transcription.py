@@ -1,23 +1,57 @@
-"""
-Whisper transcription module for Ambient Intelligence System.
+"""Whisper Transcription Module - EXPERIMENTAL
 
-Transcribes audio using Whisper models with GPU acceleration.
+⚠️ **Status**: Experimental / Prototype
+⚠️ **Production Readiness**: NOT READY
+
+**Purpose**:
+Whisper-based audio transcription with GPU acceleration.
 Supports both whisper.cpp (fast, C++) and openai-whisper (Python fallback).
 
-Privacy Guarantees:
-- 100% local processing (no API calls)
-- No audio data leaves the machine
-- Memory-only transcription (no temp files)
+**Privacy Concerns**:
+- Temporary audio files written to disk (despite "memory-only" claim)
+- Whisper models may expose audio characteristics in embeddings
+- No secure deletion of temp files (OS-dependent cleanup)
+- Model weights stored unencrypted on disk
+- No audit trail for transcription operations
 
-Constitutional Compliance:
-- Article I: Complete audio processing before returning
-- Article II: Strict typing with Pydantic models
-- Article VII: Functions <50 lines
+**External Dependencies**:
+- whisper.cpp (requires manual compilation, C++ toolchain)
+- openai-whisper (Python fallback, slower)
+- PyTorch or TensorFlow (for openai-whisper)
+- GPU drivers (Metal on macOS, CUDA on Linux/Windows)
+- Model files (75MB - 1.5GB, requires download)
 
-Performance Targets:
-- <500ms latency for 1s audio (with whisper.cpp + Metal)
-- <2s latency with Python whisper (fallback)
-- RTF (real-time factor) <0.5
+**Known Issues**:
+- Low test coverage (~5%)
+- No error handling for model loading failures
+- Privacy: temp files violate "memory-only" claim
+- GPU detection unreliable across platforms
+- Whisper.cpp path hardcoded (not configurable)
+- No fallback if both whisper.cpp and openai-whisper fail
+- Language detection not exposed to caller
+
+**To Upgrade to Production**:
+See: docs/TRINITY_UPGRADE_CHECKLIST.md
+
+Required steps:
+- [ ] 100% test coverage (currently ~5%)
+- [ ] True memory-only transcription (no temp files)
+- [ ] Error handling (Result<T,E> pattern throughout)
+- [ ] Configurable model paths and GPU backends
+- [ ] Cross-platform GPU detection and fallback
+- [ ] Constitutional compliance (Articles I-V)
+- [ ] Security review (secure temp file handling)
+- [ ] Performance benchmarks on target hardware
+
+**Performance Targets**:
+- <500ms latency for 1s audio (whisper.cpp + Metal) ⚠️ (needs validation)
+- <2s latency with Python whisper (fallback) ⚠️ (needs validation)
+- RTF (real-time factor) <0.5 ⚠️ (not measured)
+
+**Constitutional Compliance (Partial)**:
+- Article I: Complete audio processing before returning ✅
+- Article II: Strict typing with Pydantic models ✅
+- Article VII: Functions <50 lines ⚠️ (some functions exceed limit)
 """
 
 import asyncio

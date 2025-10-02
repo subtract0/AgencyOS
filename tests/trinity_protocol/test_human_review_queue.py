@@ -19,8 +19,8 @@ import asyncio
 from pathlib import Path
 from datetime import datetime, timedelta
 
-from trinity_protocol.message_bus import MessageBus
-from trinity_protocol.human_review_queue import HumanReviewQueue
+from shared.message_bus import MessageBus
+from shared.hitl_protocol import HumanReviewQueue
 from trinity_protocol.core.models.hitl import HumanReviewRequest, HumanResponse
 from trinity_protocol.core.models.patterns import DetectedPattern, PatternType
 

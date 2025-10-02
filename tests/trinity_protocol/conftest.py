@@ -12,11 +12,10 @@ from unittest.mock import AsyncMock, Mock, MagicMock
 
 import pytest
 
-from trinity_protocol.core.architect import ArchitectAgent
-from trinity_protocol.executor_agent import ExecutorAgent
-from trinity_protocol.message_bus import MessageBus
-from trinity_protocol.persistent_store import PersistentStore
-from trinity_protocol.cost_tracker import CostTracker
+from trinity_protocol.core import ArchitectAgent, ExecutorAgent
+from shared.message_bus import MessageBus
+from shared.persistent_store import PersistentStore
+from shared.cost_tracker import CostTracker
 from shared.agent_context import AgentContext
 
 

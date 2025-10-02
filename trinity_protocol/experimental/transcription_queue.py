@@ -1,24 +1,57 @@
-"""
-Transcription Service - Main orchestrator for Ambient Intelligence.
+"""Transcription Queue Service - EXPERIMENTAL
 
+⚠️ **Status**: Experimental / Prototype
+⚠️ **Production Readiness**: NOT READY
+
+**Purpose**:
+Main orchestrator for ambient intelligence transcription pipeline.
 Coordinates audio capture and Whisper transcription for real-time
-speech-to-text processing with privacy-first design.
+speech-to-text processing.
 
-Constitutional Compliance:
-- Article I: Complete Context Before Action (full audio chunks)
-- Article II: 100% Verification (strict typing, comprehensive tests)
-- Article VII: Functions <50 lines, clear naming
+**Privacy Concerns**:
+- Audio queue held in memory (no bounds, potential memory exhaustion)
+- No encryption for queued audio data
+- Transcription results stored without user consent
+- No pause mechanism (continuous processing)
+- Queue persistence not implemented (data loss on crash)
 
-Performance Targets:
-- <500ms latency for 1s audio transcription
-- <10% CPU usage during continuous operation
-- <200MB memory footprint
-- Real-time factor (RTF) <0.5
+**External Dependencies**:
+- audio_capture module (experimental dependency)
+- whisper_transcriber module (experimental dependency)
+- asyncio (Python standard library) ✅
 
-Privacy Guarantees:
-- Memory-only processing (no disk writes for raw audio)
-- Local Whisper models (no cloud API calls)
-- User control (start/stop/pause)
+**Known Issues**:
+- Low test coverage (~10%)
+- No error handling for queue overflow
+- Privacy: no user control over queue retention
+- Memory bounds not enforced (unbounded queue growth)
+- No graceful shutdown (queued audio may be lost)
+- Missing async cancellation handling
+- No telemetry/monitoring for queue health
+
+**To Upgrade to Production**:
+See: docs/TRINITY_UPGRADE_CHECKLIST.md
+
+Required steps:
+- [ ] 100% test coverage (currently ~10%)
+- [ ] Privacy: bounded queue with overflow policies
+- [ ] Error handling (Result<T,E> pattern throughout)
+- [ ] Graceful shutdown (drain queue, persist state)
+- [ ] Memory bounds enforcement
+- [ ] Constitutional compliance (Articles I-V)
+- [ ] Security review (queue encryption, access controls)
+- [ ] Telemetry integration (queue metrics)
+
+**Performance Targets**:
+- <500ms latency for 1s audio transcription ⚠️ (needs validation)
+- <10% CPU usage during continuous operation ⚠️ (needs validation)
+- <200MB memory footprint ⚠️ (unbounded queue violates this)
+- Real-time factor (RTF) <0.5 ⚠️ (not measured)
+
+**Constitutional Compliance (Partial)**:
+- Article I: Complete Context Before Action (full audio chunks) ✅
+- Article II: 100% Verification (strict typing, comprehensive tests) ⚠️ (low test coverage)
+- Article VII: Functions <50 lines, clear naming ✅
 """
 
 import asyncio
@@ -26,8 +59,8 @@ from pathlib import Path
 from typing import Optional, AsyncGenerator
 from datetime import datetime
 
-from trinity_protocol.audio_capture import AudioCaptureModule
-from trinity_protocol.whisper_transcriber import WhisperTranscriber
+from trinity_protocol.experimental.audio_capture import AudioCaptureModule
+from trinity_protocol.experimental.transcription import WhisperTranscriber
 from trinity_protocol.experimental.models.audio import (
     AudioConfig,
     WhisperConfig,
@@ -105,13 +138,13 @@ class TranscriptionService:
         # Start audio capture
         audio_result = await self.audio_capture.start()
         if isinstance(audio_result, Err):
-            return Err(f"Audio capture failed: {audio_result.error}")
+            return Err(f"Audio capture failed: {audio_result._error}")
 
         # Start transcriber
         transcriber_result = await self.transcriber.start()
         if isinstance(transcriber_result, Err):
             await self.audio_capture.stop()  # Clean up
-            return Err(f"Transcriber failed: {transcriber_result.error}")
+            return Err(f"Transcriber failed: {transcriber_result._error}")
 
         self.is_running = True
         return Ok(None)

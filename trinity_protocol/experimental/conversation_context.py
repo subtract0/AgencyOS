@@ -1,13 +1,48 @@
-"""
-Conversation Context Manager for Ambient Intelligence.
+"""Conversation Context Manager - EXPERIMENTAL
 
-Maintains rolling conversation window for topic tracking, segmentation,
-and context-aware pattern detection.
+⚠️ **Status**: Experimental / Prototype
+⚠️ **Production Readiness**: NOT READY
 
-Constitutional Compliance:
-- Article I: Complete context before action (full conversation segments)
-- Article II: Strict typing with Pydantic models
-- Article IV: Persist context for cross-session learning
+**Purpose**:
+Rolling conversation window manager for ambient intelligence.
+Maintains topic tracking, segmentation, and context-aware pattern detection.
+
+**Privacy Concerns**:
+- Stores full conversation history in memory (unlimited retention)
+- Topic tracking persists across sessions (no expiration)
+- No encryption for in-memory conversation data
+- Context summaries may expose sensitive information
+- No user control over data retention/deletion
+
+**External Dependencies**:
+- None (core Python only) ✅
+
+**Known Issues**:
+- Low test coverage (~15%)
+- No error handling for memory exhaustion
+- Privacy: unlimited conversation retention
+- No data expiration or cleanup mechanism
+- Topic clustering uses simple hashing (collisions possible)
+- Context summary length not enforced
+- Missing dataclass validation (uses plain @dataclass)
+
+**To Upgrade to Production**:
+See: docs/TRINITY_UPGRADE_CHECKLIST.md
+
+Required steps:
+- [ ] 100% test coverage (currently ~15%)
+- [ ] Privacy: configurable data retention limits
+- [ ] Error handling (Result<T,E> pattern throughout)
+- [ ] Memory bounds (max conversation window size)
+- [ ] Data expiration and cleanup policies
+- [ ] Constitutional compliance (Articles I-V)
+- [ ] Security review (encryption for sensitive data)
+- [ ] Convert @dataclass to Pydantic models (validation)
+
+**Constitutional Compliance (Partial)**:
+- Article I: Complete context before action (full conversation segments) ✅
+- Article II: Strict typing with Pydantic models ⚠️ (uses @dataclass, not Pydantic)
+- Article IV: Persist context for cross-session learning ⚠️ (privacy concerns)
 """
 
 from typing import List, Optional, Dict, Any
