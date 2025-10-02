@@ -1,9 +1,32 @@
 """
-Trinity Protocol data models.
+Trinity Protocol Models - Backward Compatibility Layer
 
-Exports all Pydantic models for ambient intelligence system.
+⚠️ DEPRECATION WARNING ⚠️
+Importing models from 'trinity_protocol.models' is deprecated.
+
+**Deprecated Pattern:**
+  from trinity_protocol.models import Project, PatternType, ...
+
+**New Pattern (recommended):**
+  from trinity_protocol.core.models import Project, PatternType, HumanReviewRequest, ...
+
+This backward compatibility layer will be removed after 2025-11-02 (30 days).
+See: trinity_protocol/README_REORGANIZATION.md for migration guide
 """
 
+import warnings
+
+warnings.warn(
+    "\n⚠️ DEPRECATION WARNING ⚠️\n"
+    "  Importing models from 'trinity_protocol.models' is deprecated.\n"
+    "  Recommended: from trinity_protocol.core.models import Project, PatternType, ...\n"
+    "  This backward compatibility will be removed after 2025-11-02 (30 days).\n"
+    "  See: trinity_protocol/README_REORGANIZATION.md\n",
+    DeprecationWarning,
+    stacklevel=2
+)
+
+# Re-export from new locations for backward compatibility
 from trinity_protocol.experimental.models.audio import (
     AudioFormat,
     AudioConfig,
