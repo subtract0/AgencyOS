@@ -5,6 +5,8 @@ from typing import Optional
 from agency_swarm.tools import BaseTool
 from pydantic import Field
 
+from shared.timeout_wrapper import with_constitutional_timeout
+
 # Global registry for tracking read files when context is not available
 _global_read_files = set()
 
@@ -36,6 +38,7 @@ class Read(BaseTool):  # type: ignore[misc]
         description="The number of lines to read. Only provide if the file is too large to read at once.",
     )
 
+    @with_constitutional_timeout()
     def run(self):
         try:
             # Track that this file has been read in shared state (or global fallback)
