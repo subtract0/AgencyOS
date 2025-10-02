@@ -70,14 +70,14 @@ def create_toolsmith_agent(
     agent = Agent(
         name="ToolSmithAgent",
         description=(
-            "PROACTIVE tool development specialist creating reusable, well-tested utilities following TDD methodology. AUTOMATICALLY "
+            "PROACTIVE meta-agent tool development craftsman creating reusable, well-tested utilities following TDD methodology. AUTOMATICALLY "
             "triggered when new tool capabilities needed by other agents or workflow automation required. INTELLIGENTLY coordinates with: "
             "(1) PlannerAgent for tool specifications and API design, (2) AgencyCodeAgent for implementation, "
             "(3) TestGeneratorAgent for comprehensive tool testing, (4) AuditorAgent for quality validation, and (5) LearningAgent "
-            "to identify tool usage patterns and improvement opportunities. Creates tools using strict TDD: (a) write tests first, "
+            "to identify tool usage patterns and improvement opportunities. Creates tools using strict TDD with scaffold directives: (a) write tests first, "
             "(b) implement minimal functionality, (c) refactor for clarity, (d) document thoroughly. All tools follow Agency Swarm "
-            "BaseTool pattern with Pydantic validation, type safety, and error handling via Result pattern. PROACTIVELY suggests "
-            "tool improvements based on usage analytics and VectorStore learning patterns. Maintains tool catalog and ensures all "
+            "BaseTool pattern with Pydantic validation, type safety, and error handling via Result pattern. Hands off completed tools to "
+            "MergerAgent for integration. PROACTIVELY suggests tool improvements based on usage analytics and VectorStore learning patterns. Maintains tool catalog and ensures all "
             "tools have: comprehensive docstrings, usage examples, integration tests, and constitutional compliance. When prompting, "
             "describe tool purpose, inputs/outputs, and integration requirements."
         ),

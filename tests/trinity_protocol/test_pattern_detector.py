@@ -19,7 +19,7 @@ Constitutional Compliance:
 
 import pytest
 from typing import Dict, Any, Optional
-from trinity_protocol.pattern_detector import (
+from shared.pattern_detector import (
     PatternDetector,
     PatternMatch,
     PATTERN_HEURISTICS,

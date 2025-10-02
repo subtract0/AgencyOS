@@ -68,7 +68,7 @@ class AmbientListenerConfig(BaseModel):
     """Configuration for ambient listener service."""
 
     model_name: str = Field(
-        default="base.en", description="Whisper model name"
+        default="base", description="Whisper model name (multilingual)"
     )
     min_confidence: float = Field(
         default=0.6,
@@ -181,7 +181,7 @@ class AmbientListenerService:
         return WhisperConfig(
             model_path=str(model_path),
             model_name=config.model_name,
-            language="en",
+            language=None,  # Auto-detect language for multilingual support
             use_gpu=True,
             num_threads=4,
             beam_size=5,
@@ -380,8 +380,8 @@ def parse_args(args: Optional[List[str]] = None) -> argparse.Namespace:
     parser.add_argument(
         "--model",
         type=str,
-        default="base.en",
-        help="Whisper model name (default: base.en)",
+        default="base",
+        help="Whisper model name (default: base for multilingual)",
     )
 
     parser.add_argument(

@@ -15,7 +15,7 @@ Usage:
 import time
 import functools
 from typing import Optional, Any
-from trinity_protocol.cost_tracker import CostTracker, ModelTier
+from shared.cost_tracker import CostTracker, ModelTier
 
 
 def determine_model_tier(model: str) -> ModelTier:
@@ -158,7 +158,7 @@ def wrap_agent_with_cost_tracking(
 
     Example:
         >>> from agency_code_agent import create_agency_code_agent
-        >>> from trinity_protocol.cost_tracker import CostTracker
+        >>> from shared.cost_tracker import CostTracker
         >>>
         >>> tracker = CostTracker()
         >>> agent = create_agency_code_agent()

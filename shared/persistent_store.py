@@ -361,6 +361,108 @@ class PersistentStore:
         except Exception as e:
             return Err(StoreError(f"Failed to query entries: {e}"))
 
+    def store_pattern(
+        self,
+        pattern_type: str,
+        pattern_name: str,
+        content: str,
+        confidence: float,
+        metadata: Optional[Dict[str, Any]] = None,
+        evidence_count: int = 1
+    ) -> Result[str, StoreError]:
+        """
+        Store a pattern with a standardized structure.
+
+        This is a convenience method that wraps set() with a pattern-specific
+        key format and data structure.
+
+        Args:
+            pattern_type: Type of pattern (e.g., "action_item", "recurring_topic")
+            pattern_name: Name/topic of the pattern
+            content: Pattern content/description
+            confidence: Confidence score (0.0-1.0)
+            metadata: Optional additional metadata
+            evidence_count: Number of evidence occurrences
+
+        Returns:
+            Result[str, StoreError]: Ok(pattern_id) on success, Err on failure
+        """
+        # Generate unique pattern ID
+        timestamp = datetime.now().isoformat()
+        pattern_id = f"{pattern_type}:{pattern_name}:{timestamp}"
+
+        # Construct pattern data
+        pattern_data = {
+            "pattern_type": pattern_type,
+            "pattern_name": pattern_name,
+            "content": content,
+            "confidence": confidence,
+            "evidence_count": evidence_count,
+            "timestamp": timestamp,
+        }
+
+        # Merge additional metadata if provided
+        if metadata:
+            pattern_data["metadata"] = metadata
+
+        # Store using set() method
+        result = self.set(
+            key=pattern_id,
+            value=pattern_data,
+            metadata={
+                "pattern_type": pattern_type,
+                "pattern_name": pattern_name,
+            }
+        )
+
+        if result.is_err():
+            return Err(result.unwrap_err())
+
+        return Ok(pattern_id)
+
+    def search_patterns(
+        self,
+        pattern_type: Optional[str] = None,
+        pattern_name: Optional[str] = None
+    ) -> Result[List[Dict[str, Any]], StoreError]:
+        """
+        Search for patterns by type and/or name.
+
+        Args:
+            pattern_type: Optional pattern type filter
+            pattern_name: Optional pattern name filter
+
+        Returns:
+            Result[List[Dict], StoreError]: Ok(patterns) on success, Err on failure
+        """
+        all_entries_result = self.list_all()
+
+        if all_entries_result.is_err():
+            return Err(all_entries_result.unwrap_err())
+
+        try:
+            all_entries = all_entries_result.unwrap()
+            patterns = []
+
+            for entry in all_entries:
+                # Check if this is a pattern entry
+                if "pattern_type" not in entry.value:
+                    continue
+
+                # Apply filters
+                if pattern_type and entry.value.get("pattern_type") != pattern_type:
+                    continue
+
+                if pattern_name and entry.value.get("pattern_name") != pattern_name:
+                    continue
+
+                patterns.append(entry.value)
+
+            return Ok(patterns)
+
+        except Exception as e:
+            return Err(StoreError(f"Failed to search patterns: {e}"))
+
     def close(self) -> None:
         """Close database connection."""
         with self._lock:

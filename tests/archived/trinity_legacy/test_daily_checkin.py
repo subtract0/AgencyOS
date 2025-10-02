@@ -12,31 +12,19 @@ Tests cover:
 Constitutional Compliance:
 - Article II: 100% verification (NECESSARY pattern)
 - Article IV: Preference learning integration
+
+SKIP REASON: trinity_protocol.daily_checkin was deleted during clean break.
+This module is no longer part of the production codebase.
 """
 
 import pytest
-from datetime import datetime, timedelta
-from unittest.mock import Mock, AsyncMock
-from shared.type_definitions.result import Result, Ok, Err
 
-try:
-    from trinity_protocol.daily_checkin import (
-        DailyCheckinCoordinator,
-        generate_checkin_questions,
-        time_checkin_appropriately,
-        process_checkin_responses,
-    )
-    from trinity_protocol.core.models.project import (
-        Project,
-        DailyCheckin,
-        CheckinQuestion,
-        CheckinResponse,
-    )
-    from shared.preference_learning import PreferenceLearner
-    IMPLEMENTATION_AVAILABLE = True
-except ImportError:
-    IMPLEMENTATION_AVAILABLE = False
-    pytest.skip("Phase 3 DailyCheckin not yet implemented", allow_module_level=True)
+pytestmark = pytest.mark.skip(reason="Module deleted in Trinity clean break - daily_checkin removed from codebase")
+
+# Imports commented out - module deleted
+# from datetime import datetime, timedelta
+# from unittest.mock import Mock, AsyncMock
+# from shared.type_definitions.result import Result, Ok, Err
 
 
 class TestCheckinQuestionGeneration:

@@ -14,32 +14,19 @@ Constitutional Compliance:
 - Article I: Complete context before daily planning
 - Article II: 100% verification (NECESSARY pattern)
 - Article III: Budget enforcement integration
+
+SKIP REASON: trinity_protocol.project_executor was deleted during clean break.
+This module is no longer part of the production codebase.
 """
 
 import pytest
-from datetime import datetime, timedelta
-from unittest.mock import Mock, AsyncMock
-from shared.type_definitions.result import Result, Ok, Err
 
-try:
-    from trinity_protocol.project_executor import (
-        ProjectExecutor,
-        plan_daily_tasks,
-        execute_background_tasks,
-        detect_completion,
-        generate_deliverable,
-    )
-    from trinity_protocol.core.models.project import (
-        Project,
-        ProjectState,
-        ProjectTask,
-        ProjectPlan,
-        DailyTask,
-    )
-    IMPLEMENTATION_AVAILABLE = True
-except ImportError:
-    IMPLEMENTATION_AVAILABLE = False
-    pytest.skip("Phase 3 ProjectExecutor not yet implemented", allow_module_level=True)
+pytestmark = pytest.mark.skip(reason="Module deleted in Trinity clean break - project_executor removed from codebase")
+
+# Imports commented out - module deleted
+# from datetime import datetime, timedelta
+# from unittest.mock import Mock, AsyncMock
+# from shared.type_definitions.result import Result, Ok, Err
 
 
 # ============================================================================

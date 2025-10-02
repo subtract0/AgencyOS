@@ -15,18 +15,27 @@ NECESSARY Pattern Compliance:
 Constitutional Compliance:
 - Article II: 100% test pass requirement enforcement
 - Article I: Complete context (all tests must run)
+
+SKIP REASON: trinity_protocol.foundation_verifier was deleted during clean break.
+This module is no longer part of the production codebase.
 """
 
 import pytest
+
+pytestmark = pytest.mark.skip(reason="Module deleted in Trinity clean break - foundation_verifier removed from codebase")
+
+# Minimal imports for decorators (tests won't execute due to skip)
 import subprocess
 from unittest.mock import Mock, patch, MagicMock
 from datetime import datetime
-from trinity_protocol.foundation_verifier import (
-    FoundationVerifier,
-    BrokenFoundationError,
-    FoundationStatus,
-    VerificationResult
-)
+
+# Module imports commented out - module deleted
+# from trinity_protocol.foundation_verifier import (
+#     FoundationVerifier,
+#     BrokenFoundationError,
+#     FoundationStatus,
+#     VerificationResult
+# )
 
 
 class TestFoundationVerifierInitialization:

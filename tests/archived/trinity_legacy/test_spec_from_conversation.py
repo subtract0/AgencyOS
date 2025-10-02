@@ -14,30 +14,19 @@ Constitutional Compliance:
 - Article I: Complete Q&A context required
 - Article II: 100% verification (NECESSARY pattern)
 - Article V: Formal spec.md generation
+
+SKIP REASON: trinity_protocol.spec_from_conversation was deleted during clean break.
+This module is no longer part of the production codebase.
 """
 
 import pytest
-from datetime import datetime
-from unittest.mock import Mock, AsyncMock, patch
-from shared.type_definitions.result import Result, Ok, Err
 
-try:
-    from trinity_protocol.spec_from_conversation import (
-        SpecFromConversation,
-        extract_requirements,
-        generate_spec_markdown,
-        request_spec_approval,
-    )
-    from trinity_protocol.core.models.project import (
-        QASession,
-        QAQuestion,
-        QAAnswer,
-        ProjectSpec,
-    )
-    IMPLEMENTATION_AVAILABLE = True
-except ImportError:
-    IMPLEMENTATION_AVAILABLE = False
-    pytest.skip("Phase 3 SpecFromConversation not yet implemented", allow_module_level=True)
+pytestmark = pytest.mark.skip(reason="Module deleted in Trinity clean break - spec_from_conversation removed from codebase")
+
+# Imports commented out - module deleted
+# from datetime import datetime
+# from unittest.mock import Mock, AsyncMock, patch
+# from shared.type_definitions.result import Result, Ok, Err
 
 
 # ============================================================================

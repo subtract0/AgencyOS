@@ -185,7 +185,7 @@ class TranscriptionService:
         )
 
         if isinstance(result, Ok):
-            self._total_processed += result.value.duration_seconds
+            self._total_processed += result._value.duration_seconds
 
         return result
 
@@ -210,7 +210,7 @@ class TranscriptionService:
 
         if isinstance(result, Ok):
             # Update duration from segment
-            result.value.duration_seconds = segment.duration_seconds
+            result._value.duration_seconds = segment.duration_seconds
             self._total_processed += segment.duration_seconds
 
         return result
@@ -244,7 +244,7 @@ class TranscriptionService:
             result = await self.transcribe_segment(segment)
 
             if isinstance(result, Ok):
-                yield result.value
+                yield result._value
             else:
                 # Log error but continue streaming
                 print(f"Transcription error: {result.error}")

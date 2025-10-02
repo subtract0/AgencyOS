@@ -165,12 +165,16 @@ class TestFirestoreStore:
     def test_firestore_fallback_on_import_error(self):
         """Test fallback when google-cloud-firestore is not available."""
         with patch.dict(os.environ, {"FRESH_USE_FIRESTORE": "true"}):
-            # Patch the import at the module level
+            # Patch the import at the method level to properly trigger ImportError
             with patch(
+                "agency_memory.firestore_store.firestore", None
+            ), patch(
                 "builtins.__import__",
-                side_effect=lambda name, *args: ImportError()
-                if "google.cloud" in name
-                else __import__(name, *args),
+                side_effect=lambda name, *args, **kwargs: (
+                    (_ for _ in ()).throw(ImportError("Mocked import error"))
+                    if "google.cloud" in name
+                    else __import__(name, *args, **kwargs)
+                ),
             ):
                 store = FirestoreStore()
 

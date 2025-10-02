@@ -18,9 +18,14 @@ Constitutional Compliance:
 - Transparency: Clear cost tracking and alerting
 
 Implementation Target: trinity_protocol/budget_enforcer.py
+
+SKIP REASON: trinity_protocol.budget_enforcer was deleted during clean break.
+This module is no longer part of the production codebase.
 """
 
 import pytest
+
+pytestmark = pytest.mark.skip(reason="Module deleted in Trinity clean break - budget_enforcer removed from codebase")
 import asyncio
 from datetime import datetime, timedelta
 from typing import Optional, List

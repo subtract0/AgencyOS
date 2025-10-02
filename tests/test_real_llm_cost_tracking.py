@@ -19,7 +19,7 @@ import os
 from pathlib import Path
 from openai import OpenAI
 
-from trinity_protocol.cost_tracker import CostTracker, ModelTier
+from shared.cost_tracker import CostTracker, ModelTier
 from shared.llm_cost_wrapper import wrap_openai_client, create_cost_tracking_context
 from shared.agent_context import create_agent_context
 

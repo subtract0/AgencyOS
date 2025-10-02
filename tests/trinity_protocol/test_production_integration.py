@@ -15,9 +15,9 @@ import pytest
 import tempfile
 from pathlib import Path
 
-from trinity_protocol.witness_agent import WitnessAgent
+from trinity_protocol.core.witness import WitnessAgent
 from trinity_protocol.core.architect import ArchitectAgent
-from trinity_protocol.executor_agent import ExecutorAgent
+from trinity_protocol.core.executor import ExecutorAgent
 from shared.message_bus import MessageBus
 from shared.persistent_store import PersistentStore
 from shared.cost_tracker import CostTracker

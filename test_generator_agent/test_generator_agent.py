@@ -610,12 +610,12 @@ def create_test_generator_agent(
             "Automatically triggered BEFORE code implementation (test-first) or to address coverage gaps identified by AuditorAgent. "
             "INTELLIGENTLY coordinates with: (1) AgencyCodeAgent to ensure tests exist before implementation, "
             "(2) AuditorAgent for NECESSARY pattern compliance validation, (3) QualityEnforcerAgent for constitutional verification, "
-            "and (4) PlannerAgent for test strategy alignment with specifications. Generates AAA-pattern (Arrange-Act-Assert) tests "
-            "using pytest framework with comprehensive edge case coverage. PROACTIVELY suggests additional test scenarios based on "
-            "VectorStore pattern analysis and learning from previous test failures. Enforces Article II requirement: every code task "
-            "MUST have corresponding test task. Uses NECESSARY pattern (Named, Executable, Comprehensive, Error-validated, State-verified, "
-            "Side-effects controlled, Assertions meaningful, Repeatable, Yield fast) for all generated tests. Maintains test coverage >80% "
-            "and ensures all tests are deterministic and isolated. When prompting, specify target code, behavior requirements, and edge cases."
+            "and (4) PlannerAgent for test strategy alignment with specifications. Generates NECESSARY-compliant test suites using "
+            "AAA-pattern (Arrange-Act-Assert) with pytest framework and comprehensive edge case coverage. PROACTIVELY suggests additional "
+            "test scenarios based on VectorStore pattern analysis and learning from previous test failures. Enforces Article II requirement: "
+            "every code task MUST have corresponding test task. Uses NECESSARY pattern (Named, Executable, Comprehensive, Error-validated, "
+            "State-verified, Side-effects controlled, Assertions meaningful, Repeatable, Yield fast) for all generated tests. Maintains "
+            "test coverage >80% and ensures all tests are deterministic and isolated. When prompting, specify target code, behavior requirements, and edge cases."
         ),
         instructions=instructions,
         tools_folder=os.path.join(current_dir, "tools"),

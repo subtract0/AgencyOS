@@ -43,7 +43,7 @@ class TestMergerAgentIntegration:
         assert len(agent.tools) == 6
 
         # Verify required tools are present
-        expected_tools = ['Bash', 'Git', 'Read', 'Grep', 'Glob', 'TodoWrite']
+        expected_tools = ['Bash', 'GitUnified', 'Read', 'Grep', 'Glob', 'TodoWrite']
         actual_tools = [getattr(tool, 'name', getattr(tool, '__name__', str(tool))) for tool in agent.tools]
 
         for expected_tool in expected_tools:
@@ -82,7 +82,7 @@ class TestMergerAgentIntegration:
         # Verify tools include test verification capabilities
         tool_names = [tool.name for tool in agent.tools]
         assert 'Bash' in tool_names, "Bash tool required for test execution"
-        assert 'Git' in tool_names, "Git tool required for merge operations"
+        assert 'GitUnified' in tool_names, "Git tool required for merge operations"
 
 
 class TestPreCommitHookIntegration:
