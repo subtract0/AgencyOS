@@ -21,7 +21,7 @@ from datetime import datetime
 from unittest.mock import AsyncMock, Mock, MagicMock, patch
 from typing import Dict, Any, List
 
-from trinity_protocol.witness_agent import WitnessAgent, Signal
+from trinity_protocol.core.witness import WitnessAgent, Signal
 from trinity_protocol.pattern_detector import PatternMatch
 from trinity_protocol.message_bus import MessageBus
 from trinity_protocol.persistent_store import PersistentStore
