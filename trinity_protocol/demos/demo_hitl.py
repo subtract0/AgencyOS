@@ -13,15 +13,23 @@ Demonstrates the complete question-answer flow:
 6. PreferenceLearning analyzes responses
 
 Run this to see HITL in action!
+
+Usage:
+    python trinity_protocol/demos/demo_hitl.py
+    python trinity_protocol/demos/demo_hitl.py auto  # Automated mode
 """
 
 import asyncio
+import sys
 from datetime import datetime, timedelta
 from pathlib import Path
 
+# Add parent directory to path
+sys.path.insert(0, str(Path(__file__).parent.parent.parent))
+
 from trinity_protocol.message_bus import MessageBus
 from trinity_protocol.human_review_queue import HumanReviewQueue
-from trinity_protocol.response_handler import ResponseHandler
+from trinity_protocol.experimental.response_handler import ResponseHandler
 from trinity_protocol.question_delivery import QuestionDelivery
 from trinity_protocol.preference_learning import PreferenceLearning
 from trinity_protocol.core.models.hitl import HumanReviewRequest, HumanResponse

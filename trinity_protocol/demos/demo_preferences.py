@@ -4,12 +4,24 @@ Demo: Trinity Protocol Preference Learning System
 Demonstrates how the system learns Alex's preferences from response history
 and generates actionable recommendations for ARCHITECT.
 
-Run: python trinity_protocol/demo_preference_learning.py
+Shows:
+- 2 weeks of realistic simulated response data
+- Pattern analysis by topic, time, and question type
+- Recommendation generation from learned preferences
+- Preference persistence and retrieval
+
+Usage:
+    python trinity_protocol/demos/demo_preferences.py
 """
 
 import random
+import sys
 from datetime import datetime, timedelta
+from pathlib import Path
 from typing import List
+
+# Add parent directory to path
+sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 
 from trinity_protocol.core.models.preferences import (
     QuestionType,
