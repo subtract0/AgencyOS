@@ -29,7 +29,7 @@ try:
         detect_completion,
         generate_deliverable,
     )
-    from trinity_protocol.models.project import (
+    from trinity_protocol.core.models.project import (
         Project,
         ProjectState,
         ProjectTask,
@@ -534,7 +534,7 @@ class TestFirestorePersistence:
 
 def create_mock_project(phase="execution"):
     """Create mock project for testing."""
-    from trinity_protocol.models.project import (
+    from trinity_protocol.core.models.project import (
         Project, ProjectState, ProjectPlan, ProjectTask,
         ProjectSpec, QASession
     )

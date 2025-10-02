@@ -41,7 +41,7 @@ from shared.type_definitions.result import Result, Ok, Err
 from shared.message_bus import MessageBus
 
 # Re-export models from trinity for compatibility
-from trinity_protocol.models.preferences import (
+from trinity_protocol.core.models.preferences import (
     ResponseRecord,
     ResponseType,
     QuestionType,

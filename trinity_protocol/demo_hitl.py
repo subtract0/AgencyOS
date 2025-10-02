@@ -24,8 +24,8 @@ from trinity_protocol.human_review_queue import HumanReviewQueue
 from trinity_protocol.response_handler import ResponseHandler
 from trinity_protocol.question_delivery import QuestionDelivery
 from trinity_protocol.preference_learning import PreferenceLearning
-from trinity_protocol.models.hitl import HumanReviewRequest, HumanResponse
-from trinity_protocol.models.patterns import DetectedPattern, PatternType
+from trinity_protocol.core.models.hitl import HumanReviewRequest, HumanResponse
+from trinity_protocol.core.models.patterns import DetectedPattern, PatternType
 
 
 async def demo_hitl_flow():

@@ -26,7 +26,7 @@ from datetime import datetime, timedelta
 from typing import Optional, List, Dict, Any
 
 from trinity_protocol.message_bus import MessageBus
-from trinity_protocol.models.hitl import HumanReviewRequest, HumanResponse
+from trinity_protocol.core.models.hitl import HumanReviewRequest, HumanResponse
 
 
 class HumanReviewQueue:
@@ -182,7 +182,7 @@ class HumanReviewQueue:
         # Convert rows to HumanReviewRequest objects
         questions = []
         for row in rows:
-            from trinity_protocol.models.patterns import DetectedPattern
+            from trinity_protocol.core.models.patterns import DetectedPattern
 
             # Deserialize pattern context
             pattern_context = DetectedPattern.model_validate_json(row['pattern_context'])
@@ -230,7 +230,7 @@ class HumanReviewQueue:
         if not row:
             return None
 
-        from trinity_protocol.models.patterns import DetectedPattern
+        from trinity_protocol.core.models.patterns import DetectedPattern
 
         pattern_context = DetectedPattern.model_validate_json(row['pattern_context'])
 

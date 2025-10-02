@@ -15,7 +15,7 @@ from pydantic import BaseModel, Field
 from typing import Optional, Literal
 from datetime import datetime
 
-from trinity_protocol.models.patterns import DetectedPattern
+from trinity_protocol.core.models.patterns import DetectedPattern
 
 
 class HumanReviewRequest(BaseModel):

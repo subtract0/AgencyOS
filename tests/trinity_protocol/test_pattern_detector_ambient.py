@@ -18,7 +18,7 @@ from datetime import datetime, timedelta
 from trinity_protocol.witness_ambient_mode import AmbientPatternDetector
 from trinity_protocol.conversation_context import ConversationContext
 from trinity_protocol.persistent_store import PersistentStore
-from trinity_protocol.models.patterns import PatternType
+from trinity_protocol.core.models.patterns import PatternType
 
 
 @pytest.fixture
@@ -301,7 +301,7 @@ class TestIntentClassification:
 
     def test_classify_recurring_topic_intent(self, detector):
         """Should classify recurring topic intent correctly."""
-        from trinity_protocol.models.patterns import DetectedPattern
+        from trinity_protocol.core.models.patterns import DetectedPattern
 
         pattern = DetectedPattern(
             pattern_id="test_1",
@@ -323,7 +323,7 @@ class TestIntentClassification:
 
     def test_classify_frustration_intent(self, detector):
         """Should classify frustration as high priority."""
-        from trinity_protocol.models.patterns import DetectedPattern
+        from trinity_protocol.core.models.patterns import DetectedPattern
 
         pattern = DetectedPattern(
             pattern_id="test_2",
@@ -347,7 +347,7 @@ class TestIntentClassification:
 
     def test_suggested_action_generation(self, detector):
         """Should generate appropriate suggested actions."""
-        from trinity_protocol.models.patterns import DetectedPattern
+        from trinity_protocol.core.models.patterns import DetectedPattern
 
         pattern = DetectedPattern(
             pattern_id="test_3",
@@ -373,7 +373,7 @@ class TestPatternPersistence:
 
     def test_persist_pattern(self, detector):
         """Should persist pattern to storage."""
-        from trinity_protocol.models.patterns import DetectedPattern
+        from trinity_protocol.core.models.patterns import DetectedPattern
 
         pattern = DetectedPattern(
             pattern_id="test_persist",

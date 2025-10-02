@@ -34,9 +34,9 @@ from trinity_protocol.daily_checkin import DailyCheckin
 from trinity_protocol.budget_enforcer import BudgetEnforcer
 from trinity_protocol.foundation_verifier import FoundationVerifier
 
-from trinity_protocol.models.patterns import DetectedPattern
-from trinity_protocol.models.hitl import HumanReviewRequest, HumanResponse
-from trinity_protocol.models.project import (
+from trinity_protocol.core.models.patterns import DetectedPattern
+from trinity_protocol.core.models.hitl import HumanReviewRequest, HumanResponse
+from trinity_protocol.core.models.project import (
     Project,
     ProjectState,
     ProjectMetadata,

@@ -27,13 +27,13 @@ try:
         conduct_qa_session,
         validate_qa_completeness,
     )
-    from trinity_protocol.models.project import (
+    from trinity_protocol.core.models.project import (
         QASession,
         QAQuestion,
         QAAnswer,
         Project,
     )
-    from trinity_protocol.models.patterns import DetectedPattern
+    from trinity_protocol.core.models.patterns import DetectedPattern
     IMPLEMENTATION_AVAILABLE = True
 except ImportError:
     IMPLEMENTATION_AVAILABLE = False

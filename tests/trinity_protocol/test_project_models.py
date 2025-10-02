@@ -26,7 +26,7 @@ from pydantic import ValidationError
 # These imports will exist after implementation
 # Using try/except to make tests runnable before implementation
 try:
-    from trinity_protocol.models.project import (
+    from trinity_protocol.core.models.project import (
         Project,
         ProjectState,
         ProjectOutcome,
@@ -40,7 +40,7 @@ try:
         CheckinQuestion,
         CheckinResponse,
     )
-    from trinity_protocol.models.project import (
+    from trinity_protocol.core.models.project import (
         ProjectStatus,
         TaskStatus,
         QASessionStatus,

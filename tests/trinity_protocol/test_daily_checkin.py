@@ -26,7 +26,7 @@ try:
         time_checkin_appropriately,
         process_checkin_responses,
     )
-    from trinity_protocol.models.project import (
+    from trinity_protocol.core.models.project import (
         Project,
         DailyCheckin,
         CheckinQuestion,
@@ -336,7 +336,7 @@ class TestCheckinIntegration:
 
 def create_mock_project():
     """Create mock project for testing."""
-    from trinity_protocol.models.project import Project, ProjectState, ProjectPlan
+    from trinity_protocol.core.models.project import Project, ProjectState, ProjectPlan
 
     state = ProjectState(
         project_id="proj_test",

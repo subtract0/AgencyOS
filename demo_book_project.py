@@ -31,8 +31,8 @@ from rich import print as rprint
 from rich.prompt import Prompt, Confirm
 
 # Trinity Protocol imports
-from trinity_protocol.models.patterns import DetectedPattern, PatternType
-from trinity_protocol.models.project import (
+from trinity_protocol.core.models.patterns import DetectedPattern, PatternType
+from trinity_protocol.core.models.project import (
     Project, ProjectState, QASession, QAQuestion, QAAnswer,
     ProjectSpec, ProjectPlan, ProjectTask, TaskStatus, ProjectMetadata
 )
@@ -567,7 +567,7 @@ Want to hear more about the plan?
 
     def create_mock_spec(self) -> ProjectSpec:
         """Create mock specification."""
-        from trinity_protocol.models.project import AcceptanceCriterion
+        from trinity_protocol.core.models.project import AcceptanceCriterion
 
         return ProjectSpec(
             spec_id="spec_book_001",

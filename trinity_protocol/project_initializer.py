@@ -29,8 +29,8 @@ from datetime import datetime, timedelta
 from typing import List, Optional
 
 from trinity_protocol.message_bus import MessageBus
-from trinity_protocol.models.patterns import DetectedPattern
-from trinity_protocol.models.project import (
+from trinity_protocol.core.models.patterns import DetectedPattern
+from trinity_protocol.core.models.project import (
     Project,
     ProjectState,
     ProjectMetadata,

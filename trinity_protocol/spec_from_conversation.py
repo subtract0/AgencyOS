@@ -27,8 +27,8 @@ import uuid
 from datetime import datetime
 from typing import List, Tuple
 
-from trinity_protocol.models.patterns import DetectedPattern
-from trinity_protocol.models.project import (
+from trinity_protocol.core.models.patterns import DetectedPattern
+from trinity_protocol.core.models.project import (
     QASession,
     ProjectSpec,
     AcceptanceCriterion,
