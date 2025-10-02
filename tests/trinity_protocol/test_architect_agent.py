@@ -24,7 +24,7 @@ from typing import Dict, Any, List
 
 from trinity_protocol.message_bus import MessageBus
 from trinity_protocol.persistent_store import PersistentStore
-from trinity_protocol.architect_agent import ArchitectAgent, Strategy, TaskSpec  # Import real implementation
+from trinity_protocol.core.architect import ArchitectAgent, Strategy, TaskSpec  # Import optimized implementation
 
 
 # NOTE: Using real ArchitectAgent implementation (not mock)
