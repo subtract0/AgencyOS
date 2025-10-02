@@ -12,6 +12,7 @@ from datetime import datetime, timedelta
 
 from agency_swarm.tools import BaseTool
 from pydantic import Field, field_validator, ValidationInfo
+from shared.timeout_wrapper import with_constitutional_timeout, TimeoutConfig
 
 # Resource-based locking for file operations with TTL
 # Allows parallel execution except when accessing the same resources
@@ -249,6 +250,13 @@ class Bash(BaseTool):  # type: ignore[misc]
         description="Clear, concise description of what this command does in 5-10 words. Examples:\nInput: ls\nOutput: Lists files in current directory\n\nInput: git status\nOutput: Shows working tree status\n\nInput: npm install\nOutput: Installs package dependencies\n\nInput: mkdir foo\nOutput: Creates directory 'foo'",
     )
 
+    # Internal field for timeout configuration (set dynamically during execution)
+    timeout_config: Optional[TimeoutConfig] = Field(
+        default=None,
+        description="Constitutional timeout configuration (internal use)",
+        exclude=True  # Don't include in tool schema
+    )
+
     @field_validator('command')
     @classmethod
     def validate_command_pydantic(cls, v: str) -> str:
@@ -484,27 +492,57 @@ class Bash(BaseTool):  # type: ignore[misc]
 
             try:
                 # Execute command with resource locks held
-                return self._execute_bash_command(command, timeout_seconds)
+                # Configure timeout for decorator via instance attribute
+                timeout_ms = int(timeout_seconds * 1000)
+                self.timeout_config = TimeoutConfig(
+                    base_timeout_ms=timeout_ms,
+                    max_retries=3,  # Reduced from 5 to match previous behavior
+                    multipliers=[1, 2, 3, 5, 10],
+                    completeness_check=True,
+                    pause_between_retries_sec=2.0
+                )
+                return self._execute_bash_command(command)
             finally:
                 # Release all locks in reverse order
                 for lock in reversed(locks):
                     lock.release()
 
         except Exception as e:
-            return f"Exit code: 1\nError executing command: {str(e)}"
+            # Handle timeout wrapper exceptions
+            from shared.timeout_wrapper import TimeoutExhaustedError, IncompleteContextError
 
-    def _execute_bash_command(self, command, timeout_seconds):
+            if isinstance(e, TimeoutExhaustedError):
+                return f"Exit code: 124\nCommand timed out after constitutional retry attempts ({e.attempts} attempts, {e.total_time_ms}ms total)\n--- OUTPUT ---\n{getattr(e.last_error, 'stdout', '') if hasattr(e, 'last_error') else ''}"
+            elif isinstance(e, IncompleteContextError):
+                return f"Exit code: 1\nIncomplete context detected: {e.indicator}\nArticle I: NEVER proceed with incomplete data."
+            else:
+                return f"Exit code: 1\nError executing command: {str(e)}"
+
+    @with_constitutional_timeout()
+    def _execute_bash_command(self, command, timeout_ms=None):
         """Execute a bash command using subprocess.run with constitutional timeout pattern."""
-        # Convert timeout back to milliseconds for constitutional pattern
-        timeout_ms = int(timeout_seconds * 1000)
+        # timeout_ms is injected by the decorator based on self.timeout_config
+        timeout_sec = timeout_ms / 1000.0 if timeout_ms else 120.0  # Default 2 minutes
 
         try:
-            # Use constitutional timeout pattern with retry logic
-            result = self._run_with_constitutional_timeout(
-                command,
-                initial_timeout_ms=timeout_ms,
-                max_retries=3
+            logging.info(f"Executing bash command with timeout: {timeout_sec}s")
+
+            # Build execution command with enhanced sandboxing
+            exec_cmd = self._build_secure_execution_command(command)
+
+            result = subprocess.run(
+                exec_cmd,
+                capture_output=True,
+                text=True,
+                timeout=timeout_sec,
+                cwd=os.getcwd(),
+                env=self._get_secure_environment(),
             )
+
+            # Article I: Verify complete context - check for incomplete output indicators
+            if not self._is_output_complete(result):
+                logging.warning("Output appears incomplete, decorator will retry...")
+                raise Exception("Incomplete output detected")
 
             output = ""
             # Combine stdout and stderr
@@ -528,75 +566,14 @@ class Bash(BaseTool):  # type: ignore[misc]
             return f"Exit code: {result.returncode}\n--- OUTPUT ---\n{output.strip()}"
 
         except subprocess.TimeoutExpired as e:
-            return f"Exit code: 124\nCommand timed out after constitutional retry attempts\n--- OUTPUT ---\n{getattr(e, 'stdout', '') or ''}"
+            # Re-raise to let decorator handle retry logic
+            logging.warning(f"Bash command timed out after {timeout_sec}s")
+            raise
         except Exception as e:
-            return f"Exit code: 1\nError executing command: {str(e)}"
-
-    def _run_with_constitutional_timeout(self, command, initial_timeout_ms=120000, max_retries=5):
-        """
-        Run subprocess with constitutional timeout pattern: Article I compliance (2x, 3x, up to 10x).
-
-        Implements Article I Section 1.2: Timeout Handling
-        - At EVERY timeout: halt and analyze
-        - Retry with extended timeouts (2x, 3x, up to 10x)
-        - NEVER proceed with incomplete data
-        """
-        timeout_ms = initial_timeout_ms
-        last_output = ""
-        multipliers = [1, 2, 3, 5, 10]  # Article I: up to 10x timeout multiplier
-
-        for attempt in range(max_retries):
-            # Apply constitutional timeout multiplier
-            if attempt < len(multipliers):
-                current_timeout_ms = initial_timeout_ms * multipliers[attempt]
-            else:
-                current_timeout_ms = initial_timeout_ms * 10  # Cap at 10x
-
-            timeout_sec = current_timeout_ms / 1000.0
-
-            try:
-                logging.info(f"Executing bash command (attempt {attempt + 1}/{max_retries}, timeout: {timeout_sec}s, multiplier: {multipliers[attempt] if attempt < len(multipliers) else 10}x)")
-
-                # Build execution command with enhanced sandboxing
-                exec_cmd = self._build_secure_execution_command(command)
-
-                result = subprocess.run(
-                    exec_cmd,
-                    capture_output=True,
-                    text=True,
-                    timeout=timeout_sec,
-                    cwd=os.getcwd(),
-                    env=self._get_secure_environment(),
-                )
-
-                # Article I: Verify complete context - check for incomplete output indicators
-                if self._is_output_complete(result):
-                    logging.info(f"Command completed successfully on attempt {attempt + 1}")
-                    return result
-                else:
-                    logging.warning(f"Output appears incomplete on attempt {attempt + 1}, retrying...")
-                    last_output = result.stdout or ""
-                    continue
-
-            except subprocess.TimeoutExpired as e:
-                logging.warning(f"Bash command timed out after {timeout_sec}s on attempt {attempt + 1} (Article I: halt and analyze)")
-
-                # Capture any partial output from timeout
-                if hasattr(e, 'stdout') and e.stdout:
-                    last_output = e.stdout
-
-                if attempt < max_retries - 1:
-                    # Article I: Brief pause for analysis before retry
-                    time.sleep(2)  # Increased pause for proper analysis
-                    continue
-                else:
-                    # Final attempt failed - Article I: NEVER proceed with incomplete data
-                    logging.error(f"Bash command failed after {max_retries} attempts with constitutional timeout pattern (up to 10x)")
-                    e.stdout = last_output  # Preserve any captured output
-                    raise
-
-        # Article I: Unable to obtain complete context
-        raise Exception("Unable to obtain complete context after constitutional retries (Article I violation prevented)")
+            # Re-raise non-timeout exceptions to let decorator handle retries
+            if "Incomplete output" not in str(e):
+                logging.error(f"Error executing command: {str(e)}")
+            raise
 
     def _build_secure_execution_command(self, command: str) -> List[str]:
         """Build secure execution command with sandboxing."""
