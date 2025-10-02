@@ -3,6 +3,7 @@ from .edit import Edit
 from .exit_plan_mode import ExitPlanMode
 from .git import Git
 from .git_workflow_tool import GitWorkflowToolAgency
+from .git_unified import GitUnified, git_unified
 from .glob import Glob
 from .grep import Grep
 from .ls import LS
@@ -33,6 +34,8 @@ __all__ = [
     "TodoWrite",
     "Git",
     "GitWorkflowToolAgency",
+    "GitUnified",
+    "git_unified",
     "ClaudeWebSearch",
     "ContextMessageHandoff",
     "HandoffWithContext",

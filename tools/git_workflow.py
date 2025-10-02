@@ -111,6 +111,14 @@ class GitWorkflowTool:
             repo_path: Path to git repository (default: current directory)
             skip_validation: Skip .git validation (for testing)
         """
+        import warnings
+        warnings.warn(
+            "GitWorkflowTool is deprecated. Use GitUnified instead. "
+            "Migration guide: FEATURE_INVENTORY_GIT_UNIFIED.md. "
+            "This tool will be removed after 2025-11-02.",
+            DeprecationWarning,
+            stacklevel=2
+        )
         self.repo_path = Path(repo_path).resolve()
 
         # Validate repository (unless in test mode)

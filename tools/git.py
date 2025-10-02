@@ -78,6 +78,14 @@ class Git(BaseTool):  # type: ignore[misc]
         return v
 
     def run(self):
+        import warnings
+        warnings.warn(
+            "Git tool is deprecated. Use GitUnified instead: "
+            "from tools.git_unified import GitUnified. "
+            "This tool will be removed after 2025-11-02 (30 days).",
+            DeprecationWarning,
+            stacklevel=2
+        )
         try:
             from io import StringIO
 

@@ -581,8 +581,16 @@ class TestDulwichLibraryNotAvailable:
         # Arrange
         tool = Git(cmd="status")
 
-        # Act - Mock the import to raise an exception
-        with patch('builtins.__import__', side_effect=ImportError("No module named 'dulwich'")):
+        # Act - Mock the import to raise an exception (but allow warnings import)
+        import warnings as real_warnings
+        def mock_import(name, *args, **kwargs):
+            if name == 'warnings':
+                return real_warnings
+            if name == 'dulwich' or name.startswith('dulwich.'):
+                raise ImportError("No module named 'dulwich'")
+            return __import__(name, *args, **kwargs)
+
+        with patch('builtins.__import__', side_effect=mock_import):
             result = tool.run()
 
         # Assert - Should return helpful error message

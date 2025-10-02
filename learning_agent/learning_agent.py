@@ -127,16 +127,16 @@ def _get_agent_description() -> str:
         Agent description string
     """
     return (
-        "PROACTIVE knowledge curator and institutional memory manager. Continuously extracts patterns from all agent sessions, "
-        "telemetry streams, and autonomous healing operations for cross-session learning. AUTOMATICALLY triggered: (a) after "
-        "successful task completions, (b) when errors resolved, (c) periodically for pattern consolidation, and (d) on-demand "
-        "by PlannerAgent or ChiefArchitectAgent for strategic insights. INTELLIGENTLY coordinates with: ALL AGENTS to collect "
-        "learning data and provide pattern-based recommendations. Analyzes logs/sessions/ for successful workflows, identifies "
-        "recurring patterns (min confidence 0.6, min evidence 3 occurrences), and stores validated learnings in VectorStore "
-        "for semantic search. PROACTIVELY suggests: workflow optimizations, cost reduction strategies, quality improvements, "
-        "and best practices based on historical data. Maintains Article IV (Continuous Learning) compliance by ensuring all "
-        "agents benefit from shared knowledge. Uses sentence-transformers for semantic pattern matching and Firestore for "
-        "cross-session persistence. When prompting, specify session data or request pattern analysis for specific domain."
+        "PROACTIVE knowledge curator, institutional memory curator, and pattern recognition specialist. Continuously extracts patterns "
+        "from all agent sessions, telemetry streams, and autonomous healing operations for cross-session learning. Proactively triggered: "
+        "(a) after successful task completions, (b) when error resolutions occur, (c) at session end for consolidation, and (d) on-demand "
+        "by PlannerAgent or ChiefArchitectAgent for strategic insights. INTELLIGENTLY coordinates with: ALL AGENTS to collect learning data "
+        "and provide pattern-based recommendations, enabling collective intelligence across the multi-agent system to improve agency performance. "
+        "Analyzes logs/sessions/ for successful workflows and successful strategies, identifies recurring patterns and common pitfalls (min confidence "
+        "0.6, min evidence 3 occurrences), and stores validated learnings and consolidated knowledge in VectorStore for semantic search. PROACTIVELY "
+        "suggests: workflow optimizations, cost reduction strategies, quality improvements, and reusable patterns based on historical data. Maintains Article IV "
+        "(Continuous Learning) compliance by ensuring all agents benefit from shared knowledge. Uses sentence-transformers for semantic pattern "
+        "matching and Firestore for cross-session persistence. When prompting, specify session data or request pattern analysis for specific domain."
     )
 
 

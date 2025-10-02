@@ -130,6 +130,13 @@ class GitWorkflowToolAgency(BaseTool):  # type: ignore[misc]
         Returns:
             str: Operation result or error message
         """
+        import warnings
+        warnings.warn(
+            "GitWorkflowToolAgency is deprecated. Use GitUnified instead. "
+            "This tool will be removed after 2025-11-02.",
+            DeprecationWarning,
+            stacklevel=2
+        )
         try:
             # Get repository root
             repo_path = os.getcwd()
