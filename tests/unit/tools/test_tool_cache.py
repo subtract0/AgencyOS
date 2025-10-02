@@ -24,9 +24,11 @@ from shared.tool_cache import (
 )
 
 
+@pytest.mark.unit
 class TestCacheEntry:
     """Test CacheEntry dataclass."""
 
+    @pytest.mark.unit
     def test_cache_entry_creation(self):
         """Test basic cache entry creation."""
         entry = CacheEntry(
@@ -49,6 +51,7 @@ class TestCacheEntry:
         assert entry.file_dependencies is None
 
 
+@pytest.mark.unit
 class TestToolCache:
     """Test ToolCache core functionality."""
 
@@ -220,6 +223,7 @@ class TestToolCache:
         assert len(self.cache.cache) == 0
 
 
+@pytest.mark.unit
 class TestCacheDecorator:
     """Test @with_cache decorator functionality."""
 
@@ -364,6 +368,7 @@ class TestCacheDecorator:
         assert result_b2 == 15
 
 
+@pytest.mark.unit
 class TestGlobalCacheAPI:
     """Test global cache management functions."""
 
@@ -440,6 +445,7 @@ class TestGlobalCacheAPI:
         assert isinstance(stats["entries"], list)
 
 
+@pytest.mark.unit
 class TestCacheEdgeCases:
     """Test edge cases and error conditions."""
 
@@ -491,6 +497,7 @@ class TestCacheEdgeCases:
         assert documented_function.__doc__ == "This is a documented function."
 
 
+@pytest.mark.benchmark
 class TestCachePerformance:
     """Test cache performance characteristics."""
 
