@@ -1,33 +1,55 @@
+# Core Agency Swarm framework
 git+https://github.com/VRSEN/agency-swarm.git@main
-openai-agents[litellm]
+
+# LLM & AI dependencies
+openai-agents[litellm]>=0.2.0
+openai>=1.0.0
+anthropic>=0.25.0
+claude-agent-sdk>=0.1.0
+
+# Web scraping & processing
 beautifulsoup4>=4.9.0
-dulwich>=0.21.6
 html2text>=2020.1.16
+requests>=2.25.0
+
+# Git & Version Control
+dulwich>=0.21.6
+
+# Notebooks & Documentation
 jupyter>=1.0.0
 markdown>=3.3.0
 nbformat>=5.0.0
+
+# Data validation & models
 pydantic>=2.0.0
-pytest>=6.0.0
+pydantic-settings>=2.0.0
+
+# Testing framework
+pytest>=8.0.0
 pytest-asyncio>=0.21.0
 pytest-xdist>=3.0.0
-requests>=2.25.0
+pytest-timeout>=2.0.0
+pytest-cov>=4.0.0
+
+# Environment & Configuration
+python-dotenv>=1.0.0
 watchdog>=6.0.0
-# Dependencies for self-healing system
+
+# Self-healing system dependencies
 numpy>=1.21.0
 scikit-learn>=1.0.0
 scipy>=1.7.0
 flask>=2.0.0
 plotly>=5.0.0
-# Type checking dependencies
+
+# Type checking & validation
 mypy>=1.11.0
 types-requests>=2.31.0
 types-beautifulsoup4>=4.12.0
 types-Markdown>=3.6.0
-# Install after the initial requirements install to fix a bug with anthropic models in litellm
-# git+https://github.com/openai/openai-agents-python.git@main
 
-# Claude Agent SDK (Python)
-claude-agent-sdk>=0.1.0
+# Async & concurrency
+asyncio>=3.4.3
 
 # Optional: DSPy for advanced audit optimization (uncomment to enable)
 # dspy-ai>=2.4.0
