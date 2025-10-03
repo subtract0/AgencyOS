@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 """
 Generic Pattern Detector - Extracted from Trinity Protocol
 
@@ -18,7 +20,7 @@ Constitutional Compliance:
 """
 
 from typing import Dict, Any, List, Optional, Literal, Callable
-from shared.type_definitions import JSONValue
+from shared.type_definitions.json_value import JSONValue
 from pydantic import BaseModel, Field, validator
 from dataclasses import dataclass
 from datetime import datetime

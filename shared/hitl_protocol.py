@@ -50,6 +50,7 @@ from contextlib import asynccontextmanager
 from pydantic import BaseModel, Field, field_validator
 
 from shared.type_definitions.result import Result, Ok, Err
+from shared.type_definitions.json_value import JSONValue
 from shared.message_bus import MessageBus
 
 

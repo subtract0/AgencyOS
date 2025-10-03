@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 """
 Generic Cost Tracking System
 
@@ -40,6 +42,7 @@ from typing import Dict, List, Optional, Any
 
 from pydantic import BaseModel, Field, validator
 from shared.type_definitions.result import Result, Ok, Err
+from shared.type_definitions.json_value import JSONValue
 
 
 class ModelTier(str, Enum):

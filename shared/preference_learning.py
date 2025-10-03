@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 """
 Generic Preference Learning System
 
@@ -38,6 +40,7 @@ from typing import Dict, List, Optional, Tuple, Any
 from pydantic import BaseModel, Field
 
 from shared.type_definitions.result import Result, Ok, Err
+from shared.type_definitions.json_value import JSONValue
 from shared.message_bus import MessageBus
 
 # Re-export models from trinity for compatibility

@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 """
 Generic Persistent Store for Agency
 
@@ -26,6 +28,7 @@ from typing import Optional, Dict, List, Any, Callable
 from pydantic import BaseModel, field_validator
 
 from shared.type_definitions.result import Result, Ok, Err
+from shared.type_definitions.json_value import JSONValue
 
 
 class StoreError(Exception):

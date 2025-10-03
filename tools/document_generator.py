@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 """
 Document Generator Tool for Trinity Life Assistant Phase 3.
 
@@ -25,11 +27,12 @@ from datetime import datetime
 from agency_swarm.tools import BaseTool
 from pydantic import BaseModel, Field, field_validator
 from shared.type_definitions import Result, Ok, Err
+from shared.type_definitions.json_value import JSONValue
 
 
 # === Data Models ===
 
-class DocumentType(str, Enum, JSONValue):
+class DocumentType(str, Enum):
     """Types of documents that can be generated."""
     CHAPTER = "chapter"
     OUTLINE = "outline"

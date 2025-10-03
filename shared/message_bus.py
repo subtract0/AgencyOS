@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 """
 Generic Message Bus for Inter-Agent Communication
 
@@ -41,7 +43,7 @@ import asyncio
 from pathlib import Path
 from datetime import datetime
 from typing import Optional, Dict, List, Any, AsyncIterator
-from shared.type_definitions import JSONValue
+from shared.type_definitions.json_value import JSONValue
 from contextlib import asynccontextmanager
 import json
 
