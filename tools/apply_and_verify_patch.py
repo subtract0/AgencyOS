@@ -413,6 +413,9 @@ The Agency can now heal itself without any human intervention!
 {indent_str}    {original_line}
 {indent_str}else:
 {indent_str}    # Handle None case - auto-generated fix
-{indent_str}    pass  # TODO: Add appropriate None handling"""
+{indent_str}    # Default behavior: log warning and skip operation
+{indent_str}    import logging
+{indent_str}    logger = logging.getLogger(__name__)
+{indent_str}    logger.warning(f"Skipping operation: {{{variable_name!r}}} is None")"""
 
         return fixed_code
