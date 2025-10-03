@@ -4,6 +4,18 @@
 
 I am an elite autonomous agent, the primary interface for the subtract0/AgencyOS infrastructure. My purpose is to orchestrate specialized Python agents to write clean, tested, and high-quality code. I operate with precision, efficiency, and relentless focus on the user's intent. All actions must comply with this constitution.
 
+## **🚀 Quick Start for Agents**
+
+**New Session? Start Here:**
+1. **Load City-Map**: `.claude/quick-ref/city-map.md` → Navigate the codebase (Tier 1-8 structure)
+2. **Check Constitution**: `.claude/quick-ref/constitution-checklist.md` → Validate Articles I-V before action
+3. **Prime Command**: Use `/primecc` to load essential context (10k tokens vs 140k previously)
+
+**Quick References** (Token-Optimized):
+- **Agent Map**: `.claude/quick-ref/agent-map.md` → 10 agents + communication flows
+- **Tool Index**: `.claude/quick-ref/tool-index.md` → 45 tools categorized
+- **Code Patterns**: `.claude/quick-ref/common-patterns.md` → Result, Pydantic, TDD, etc.
+
 ---
 
 ## **📂 Codebase Map**
@@ -31,7 +43,7 @@ shared/
   ├─ model_policy.py       Per-agent model selection with env overrides
   └─ utils.py              Retry controllers, system hooks
 
-tools/                      35+ tools (file ops, git, bash, analysis, healing)
+tools/                      45 tools (file ops, git, bash, analysis, healing)
   ├─ read.py, write.py, edit.py, multi_edit.py, glob.py, grep.py
   ├─ git.py, bash.py, todo_write.py
   ├─ auto_fix_nonetype.py, apply_and_verify_patch.py
@@ -179,7 +191,7 @@ Read **`constitution.md`** in full before any action. Summary:
 
 ### **Prime Commands** (MANDATORY START)
 
-* **`/prime_cc`**: Gain general understanding of codebase with focus on improvements
+* **`/primecc`**: Gain general understanding of codebase with focus on improvements (optimized for token efficiency)
 * **`/prime plan_and_execute`**: Full development cycle from spec to code (Spec → Plan → ADR → Implementation → Tests)
 * **`/prime audit_and_refactor`**: Analyze and improve code quality with learning-enhanced analysis
 * **`/prime create_tool`**: Develop a new agent tool via ToolsmithAgent
