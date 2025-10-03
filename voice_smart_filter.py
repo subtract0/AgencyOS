@@ -31,9 +31,9 @@ except ImportError as e:
 SAMPLE_RATE = 16000
 CHUNK_DURATION = 3.0  # Shorter chunks for faster detection
 CHUNK_SIZE = int(SAMPLE_RATE * CHUNK_DURATION)
-RMS_THRESHOLD = 100.0  # Basic noise gate
-SPEECH_PROB_THRESHOLD = 0.7  # Silero VAD confidence
-SPEAKER_SIMILARITY_THRESHOLD = 0.75  # Speaker matching threshold
+RMS_THRESHOLD = 200.0  # Higher to filter background noise
+SPEECH_PROB_THRESHOLD = 0.85  # Stricter VAD confidence
+SPEAKER_SIMILARITY_THRESHOLD = 0.80  # Stricter speaker matching
 
 OUTPUT_DIR = Path("logs/trinity_ambient")
 OUTPUT_FILE = OUTPUT_DIR / "voice_smart_filtered.txt"

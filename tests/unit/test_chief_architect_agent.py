@@ -33,7 +33,7 @@ class TestChiefArchitectAgentInitialization:
             # Check agent parameters
             call_kwargs = mock_agent_class.call_args[1]
             assert call_kwargs['name'] == "ChiefArchitectAgent"
-            assert "autonomous strategic leader" in call_kwargs['description']
+            assert "PROACTIVE strategic oversight" in call_kwargs['description']
             assert "RunArchitectureLoop" in call_kwargs['description']
 
     def test_model_configuration(self, mock_agent_context):

@@ -1,0 +1,55 @@
+{
+  "customCommands": [
+    {
+      "name": "prime_snap",
+      "description": "Prime session from latest snapshot for quick recovery",
+      "path": ".claude/commands/prime_snap.md"
+    },
+    {
+      "name": "write_snap",
+      "description": "Write a snapshot of current state for future recovery",
+      "path": ".claude/commands/write_snap.md"
+    }
+  ],
+  "permissions": {
+    "allow": [
+      "Bash(python:*)",
+      "Bash(git add:*)",
+      "Bash(git commit:*)",
+      "Bash(mkdir:*)",
+      "Bash(source:*)",
+      "Bash(git checkout:*)",
+      "Bash(git tag:*)",
+      "Bash(git push:*)",
+      "Bash(git stash:*)",
+      "Bash(timeout 5 python -m pytest:*)",
+      "Bash(vm_stat:*)",
+      "Bash(echo $VIRTUAL_ENV)",
+      "Bash(gh pr list:*)",
+      "Bash(find:*)",
+      "Bash(xargs ls:*)",
+      "Bash(awk:*)",
+      "Bash(gh release list:*)",
+      "Bash(gh pr view:*)",
+      "Bash(uv run pytest:*)",
+      "Bash(pytest:*)",
+      "Bash(grep:*)",
+      "Bash(timeout 30 pytest --maxfail=1 --tb=line --no-header -q tests/)",
+      "Bash(git restore:*)",
+      "Bash(xargs python:*)",
+      "Bash(MYPYPATH=/Users/am/Code/Agency python -m mypy agency.py --ignore-missing-imports --no-error-summary)",
+      "Bash(gh run view:*)",
+      "Bash(gh api:*)",
+      "Read(//private/tmp/**)",
+      "Bash(gh pr checks:*)",
+      "Bash(gh auth:*)",
+      "Bash(tree:*)",
+      "Bash(git reset:*)",
+      "Bash(cat:*)",
+      "Bash(tee:*)"
+    ],
+    "deny": [],
+    "ask": []
+  },
+  "outputStyle": "default"
+}
