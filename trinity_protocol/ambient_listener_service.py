@@ -68,7 +68,7 @@ class AmbientListenerConfig(BaseModel):
     """Configuration for ambient listener service."""
 
     model_name: str = Field(
-        default="base", description="Whisper model name (multilingual)"
+        default="small.en", description="Whisper model name (small.en = best accuracy/speed balance)"
     )
     min_confidence: float = Field(
         default=0.6,
@@ -88,6 +88,46 @@ class AmbientListenerConfig(BaseModel):
         default=30.0,
         gt=0.0,
         description="Interval for pattern detection (seconds)",
+    )
+
+    # Improvement #1: Whisper accuracy parameters
+    temperature: float = Field(
+        default=0.0,
+        ge=0.0,
+        le=1.0,
+        description="Whisper temperature (0.0=deterministic, higher=creative)",
+    )
+    compression_ratio_threshold: float = Field(
+        default=2.4,
+        gt=0.0,
+        description="Compression ratio threshold for hallucination detection",
+    )
+    logprob_threshold: float = Field(
+        default=-1.0,
+        le=0.0,
+        description="Log probability threshold for low confidence filtering",
+    )
+    no_speech_threshold: float = Field(
+        default=0.6,
+        ge=0.0,
+        le=1.0,
+        description="Threshold for no-speech detection",
+    )
+
+    # Improvement #2: Empty transcription reduction
+    rms_threshold: float = Field(
+        default=0.015,
+        gt=0.0,
+        description="RMS threshold for speech detection (increased from default)",
+    )
+    min_text_length: int = Field(
+        default=3,
+        ge=1,
+        description="Minimum text length to consider valid transcription",
+    )
+    vad_aggressive: bool = Field(
+        default=True,
+        description="Use aggressive VAD settings to reduce false positives",
     )
 
     class Config:
@@ -185,6 +225,11 @@ class AmbientListenerService:
             use_gpu=True,
             num_threads=4,
             beam_size=5,
+            # Wire accuracy improvement parameters
+            temperature=config.temperature,
+            compression_ratio_threshold=config.compression_ratio_threshold,
+            logprob_threshold=config.logprob_threshold,
+            no_speech_threshold=config.no_speech_threshold,
         )
 
     async def start(self) -> Result[None, str]:

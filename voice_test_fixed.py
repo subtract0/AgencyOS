@@ -1,14 +1,16 @@
 #!/usr/bin/env python3
 """
-Simple Voice Capture - Append Transcriptions to File
-No complex dependencies, just: whisper + pyaudio
+FIXED Voice Capture - Optimized for Accuracy
+- Uses small.en model (better accuracy)
+- Forces English language
+- Higher VAD threshold
+- Real confidence scores
 """
 import os
 import sys
 import time
 from datetime import datetime
 
-# Try to import required packages
 try:
     import whisper
     import pyaudio
@@ -18,14 +20,13 @@ except ImportError as e:
     print("Install with: pip3 install openai-whisper pyaudio numpy")
     sys.exit(1)
 
-# Configuration
+# Configuration - OPTIMIZED
 SAMPLE_RATE = 16000
-CHUNK_DURATION = 5.0  # Capture 5 seconds at a time
+CHUNK_DURATION = 5.0
 CHUNK_SIZE = int(SAMPLE_RATE * CHUNK_DURATION)
-VAD_THRESHOLD = 300.0  # Higher threshold to avoid background noise (was 15.0)
-OUTPUT_FILE = "logs/trinity_ambient/voice_transcriptions.txt"
+VAD_THRESHOLD = 100.0  # Lower threshold for easier speech detection
+OUTPUT_FILE = "logs/trinity_ambient/voice_transcriptions_fixed.txt"
 
-# Ensure output directory exists
 os.makedirs(os.path.dirname(OUTPUT_FILE), exist_ok=True)
 
 def calculate_rms(audio_data):
@@ -35,30 +36,31 @@ def calculate_rms(audio_data):
         return 0.0
     return float(np.sqrt(np.mean(samples.astype(np.float32) ** 2)))
 
-def append_transcription(text, confidence=0.0, rms_level=0.0):
+def append_transcription(text, confidence, rms_level):
     """Append transcription to file with timestamp"""
     timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     with open(OUTPUT_FILE, "a") as f:
         f.write(f"[{timestamp}] RMS:{rms_level:.1f} Conf:{confidence:.2f} | {text}\n")
-    print(f"✅ Saved: {text[:50]}...")
+    print(f"✅ Saved: {text[:80]}...")
 
 def main():
-    print("🎤 Simple Voice Capture Starting...")
-    print(f"📝 Saving transcriptions to: {OUTPUT_FILE}")
-    print(f"🔊 VAD Threshold: {VAD_THRESHOLD}")
+    print("🎤 FIXED Voice Capture Starting...")
+    print(f"📝 Saving to: {OUTPUT_FILE}")
+    print(f"🔊 VAD Threshold: {VAD_THRESHOLD} (speak LOUDLY)")
     print(f"⏱️  Chunk Duration: {CHUNK_DURATION}s")
     print("=" * 60)
 
-    # Load Whisper model (upgraded to small.en for better accuracy)
-    print("Loading Whisper 'small.en' model (first run will download ~466MB)...")
-    model = whisper.load_model("small.en")
-    print("✅ Model loaded (WER: 5-8%, significantly better than base)")
+    # Load Whisper model - medium.en for best accuracy
+    print("📥 Downloading/Loading Whisper 'medium.en' model...")
+    print("   (First run: ~1.5GB download, please wait)")
+    model = whisper.load_model("medium.en")
+    print("✅ Model loaded: medium.en (WER: 3-5%, best accuracy)")
+    print("=" * 60)
 
     # Initialize PyAudio
     audio = pyaudio.PyAudio()
 
     try:
-        # Open microphone stream
         stream = audio.open(
             format=pyaudio.paInt16,
             channels=1,
@@ -68,12 +70,13 @@ def main():
         )
 
         print(f"\n🎙️  Listening... (Press Ctrl+C to stop)")
-        print("💡 SPEAK CLEARLY AND LOUDLY for best results\n")
+        print(f"💡 SPEAK LOUDLY - RMS must be >{VAD_THRESHOLD} to trigger\n")
 
         cycle = 0
         while True:
             cycle += 1
-            print(f"[{datetime.now().strftime('%H:%M:%S')}] Cycle {cycle}: Capturing {CHUNK_DURATION}s...")
+            timestamp = datetime.now().strftime('%H:%M:%S')
+            print(f"[{timestamp}] Cycle {cycle}: Capturing {CHUNK_DURATION}s...")
 
             # Read audio chunk
             audio_data = stream.read(CHUNK_SIZE, exception_on_overflow=False)
@@ -85,38 +88,39 @@ def main():
             if rms > VAD_THRESHOLD:
                 print(f"  🗣️  Speech detected! Transcribing...")
 
-                # Convert to float32 numpy array for Whisper
+                # Convert to float32 for Whisper
                 samples = np.frombuffer(audio_data, dtype=np.int16).astype(np.float32) / 32768.0
 
-                # Transcribe with optimized parameters
+                # Transcribe with OPTIMAL parameters
                 result = model.transcribe(
                     samples,
                     fp16=False,
-                    language="en",  # Force English (no language confusion)
+                    language="en",  # Force English
                     temperature=0.0,  # Deterministic
-                    beam_size=5,  # Better accuracy
-                    best_of=5,  # Multi-pass decoding
-                    condition_on_previous_text=False,  # Avoid hallucinations
+                    beam_size=5,  # Accuracy
+                    best_of=5,  # Multi-pass
+                    condition_on_previous_text=False,  # No hallucinations
                 )
+
                 text = result["text"].strip()
 
-                # Calculate real confidence from segments
+                # Calculate REAL confidence from segments
                 segments = result.get("segments", [])
                 if segments:
-                    # Use inverse of no_speech_prob as confidence
                     confidence = 1.0 - sum(s.get("no_speech_prob", 0.5) for s in segments) / len(segments)
                 else:
                     confidence = 0.0
 
                 if text:
                     print(f"  📝 Transcription: '{text}'")
+                    print(f"  🎯 Confidence: {confidence:.2f}")
                     append_transcription(text, confidence, rms)
                 else:
-                    print(f"  ⚠️  Empty transcription (background noise?)")
+                    print(f"  ⚠️  Empty transcription")
             else:
                 print(f"  💤 Silence (below threshold)")
 
-            print()  # Blank line between cycles
+            print()  # Blank line
 
     except KeyboardInterrupt:
         print("\n\n🛑 Stopped by user")
