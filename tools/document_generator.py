@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 """
 Document Generator Tool for Trinity Life Assistant Phase 3.
 
@@ -25,6 +27,7 @@ from datetime import datetime
 from agency_swarm.tools import BaseTool
 from pydantic import BaseModel, Field, field_validator
 from shared.type_definitions import Result, Ok, Err
+from shared.type_definitions.json_value import JSONValue
 
 
 # === Data Models ===
@@ -78,15 +81,15 @@ class Chapter(BaseModel):
     title: str = Field(..., description="Chapter title")
     content: str = Field(..., description="Chapter content")
     word_count: int = Field(..., description="Word count")
-    metadata: Dict[str, Any] = Field(default_factory=dict, description="Additional metadata")
+    metadata: JSONValue = Field(default_factory=dict, description="Additional metadata")
 
 
 class Outline(BaseModel):
     """Generated outline."""
     title: str = Field(..., description="Outline title")
     document_type: DocumentType = Field(..., description="Document type")
-    sections: List[Dict[str, Any]] = Field(..., description="Outline sections")
-    metadata: Dict[str, Any] = Field(default_factory=dict, description="Additional metadata")
+    sections: List[JSONValue] = Field(..., description="Outline sections")
+    metadata: JSONValue = Field(default_factory=dict, description="Additional metadata")
 
 
 class GeneratedDocument(BaseModel):
@@ -95,7 +98,7 @@ class GeneratedDocument(BaseModel):
     title: str = Field(..., description="Document title")
     content: str = Field(..., description="Document content")
     version: int = Field(default=1, description="Document version")
-    metadata: Dict[str, Any] = Field(default_factory=dict, description="Additional metadata")
+    metadata: JSONValue = Field(default_factory=dict, description="Additional metadata")
 
 
 class GenerationError(BaseModel):

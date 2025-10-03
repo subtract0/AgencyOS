@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 """
 Generic Pattern Detector - Extracted from Trinity Protocol
 
@@ -18,6 +20,7 @@ Constitutional Compliance:
 """
 
 from typing import Dict, Any, List, Optional, Literal, Callable
+from shared.type_definitions.json_value import JSONValue
 from pydantic import BaseModel, Field, validator
 from dataclasses import dataclass
 from datetime import datetime
@@ -37,8 +40,8 @@ class Pattern(BaseModel):
     description: str = Field(..., description="Pattern description")
     confidence: float = Field(..., ge=0.0, le=1.0, description="Confidence score")
     occurrences: int = Field(default=1, ge=1, description="Number of occurrences")
-    examples: List[Dict[str, Any]] = Field(default_factory=list, description="Example instances")
-    metadata: Dict[str, Any] = Field(default_factory=dict, description="Additional metadata")
+    examples: List[JSONValue] = Field(default_factory=list, description="Example instances")
+    metadata: JSONValue = Field(default_factory=dict, description="Additional metadata")
 
     @validator("confidence")
     def confidence_in_range(cls, v: float) -> float:
@@ -215,7 +218,7 @@ class PatternDetector:
     def detect(
         self,
         event_text: str,
-        metadata: Optional[Dict[str, Any]] = None
+        metadata: Optional[JSONValue] = None
     ) -> Optional[PatternMatch]:
         """
         Detect pattern in event text.
@@ -242,7 +245,7 @@ class PatternDetector:
     def _find_best_match(
         self,
         event_lower: str,
-        metadata: Optional[Dict[str, Any]]
+        metadata: Optional[JSONValue]
     ) -> Optional[PatternMatch]:
         """Find best matching pattern."""
         best_match: Optional[PatternMatch] = None
@@ -270,7 +273,7 @@ class PatternDetector:
         pattern_name: str,
         event_lower: str,
         keywords: Dict[str, float],
-        metadata: Optional[Dict[str, Any]]
+        metadata: Optional[JSONValue]
     ) -> PatternMatch:
         """Calculate pattern match confidence."""
         base_score = BASE_CONFIDENCE[pattern_type]
@@ -325,7 +328,7 @@ class PatternDetector:
         self,
         pattern_type: PatternType,
         pattern_name: str,
-        metadata: Dict[str, Any]
+        metadata: JSONValue
     ) -> float:
         """Calculate bonus from metadata."""
         bonus = 0.0
@@ -339,7 +342,7 @@ class PatternDetector:
     def _error_type_bonus(
         self,
         pattern_name: str,
-        metadata: Dict[str, Any]
+        metadata: JSONValue
     ) -> float:
         """Calculate error type bonus."""
         if "error_type" not in metadata:
@@ -358,7 +361,7 @@ class PatternDetector:
     def _file_extension_bonus(
         self,
         pattern_name: str,
-        metadata: Dict[str, Any]
+        metadata: JSONValue
     ) -> float:
         """Calculate file extension bonus."""
         if "file" not in metadata:
@@ -370,7 +373,7 @@ class PatternDetector:
 
         return 0.0
 
-    def _priority_bonus(self, metadata: Dict[str, Any]) -> float:
+    def _priority_bonus(self, metadata: JSONValue) -> float:
         """Calculate priority bonus."""
         if metadata.get("priority") == "CRITICAL":
             return 0.05
@@ -408,7 +411,7 @@ class PatternDetector:
         current = self.pattern_history.get(pattern_name, 0)
         self.pattern_history[pattern_name] = current + 1
 
-    def get_pattern_stats(self) -> Dict[str, Any]:
+    def get_pattern_stats(self) -> JSONValue:
         """
         Get statistics about detected patterns.
 
@@ -456,7 +459,7 @@ class PatternDetector:
     def detect_with_custom(
         self,
         event_text: str,
-        metadata: Optional[Dict[str, Any]] = None
+        metadata: Optional[JSONValue] = None
     ) -> Optional[PatternMatch]:
         """
         Detect using both built-in and custom detectors.

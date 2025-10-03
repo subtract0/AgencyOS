@@ -22,6 +22,7 @@ from pathlib import Path
 from datetime import datetime
 from unittest.mock import AsyncMock, Mock, MagicMock, patch, call, mock_open
 from typing import Dict, Any, List
+from shared.type_definitions import JSONValue
 
 # NOTE: EXECUTOR agent implementation will be created in trinity_protocol.executor_agent
 # For now, we define the expected interface based on the spec
@@ -66,7 +67,7 @@ class ExecutorAgent:
             task.cancel()
         await asyncio.gather(*self._tasks, return_exceptions=True)
 
-    async def _process_task(self, task: Dict[str, Any]) -> Dict[str, Any]:
+    async def _process_task(self, task: JSONValue) -> JSONValue:
         """
         9-step cycle:
         1. LISTEN (task received)
@@ -122,7 +123,7 @@ class ExecutorAgent:
             # Step 9: RESET
             self._cleanup_temp_files(task_id)
 
-    def _deconstruct_task(self, task: Dict[str, Any]) -> Dict[str, Any]:
+    def _deconstruct_task(self, task: JSONValue) -> JSONValue:
         """Break down task into sub-agent delegations."""
         task_type = task.get("type", "feature")
 
@@ -148,7 +149,7 @@ class ExecutorAgent:
 
         return plan
 
-    def _externalize_plan(self, task_id: str, plan: Dict[str, Any]) -> str:
+    def _externalize_plan(self, task_id: str, plan: JSONValue) -> str:
         """Write execution plan to /tmp/executor_plans/."""
         self.plans_dir.mkdir(parents=True, exist_ok=True)
         plan_path = self.plans_dir / f"{task_id}_plan.md"
@@ -167,7 +168,7 @@ class ExecutorAgent:
 
         return str(plan_path)
 
-    async def _orchestrate_parallel(self, plan: Dict[str, Any]) -> List[Dict[str, Any]]:
+    async def _orchestrate_parallel(self, plan: JSONValue) -> List[JSONValue]:
         """Orchestrate parallel sub-agent execution."""
         results = []
 
@@ -190,7 +191,7 @@ class ExecutorAgent:
 
         return results
 
-    async def _execute_sub_agent(self, name: str, agent: Any, plan: Dict[str, Any]) -> Dict[str, Any]:
+    async def _execute_sub_agent(self, name: str, agent: Any, plan: JSONValue) -> JSONValue:
         """Execute a single sub-agent task."""
         # Track cost if agent supports it
         if hasattr(agent, "execute"):
@@ -204,7 +205,7 @@ class ExecutorAgent:
             "summary": result.get("summary", "")
         }
 
-    async def _delegate_merge(self, results: List[Dict[str, Any]]) -> Dict[str, Any]:
+    async def _delegate_merge(self, results: List[JSONValue]) -> JSONValue:
         """Delegate to ReleaseManager for integration and commit."""
         release_manager = self.sub_agents.get("ReleaseManager")
 
@@ -232,7 +233,7 @@ class ExecutorAgent:
 
         return result.stdout
 
-    def _handle_failure(self, task_id: str, correlation_id: str, error: str) -> Dict[str, Any]:
+    def _handle_failure(self, task_id: str, correlation_id: str, error: str) -> JSONValue:
         """Log failure and prepare failure report."""
         error_log = self.plans_dir / f"{task_id}_error.log"
 
@@ -257,9 +258,9 @@ class ExecutorAgent:
         correlation_id: str,
         status: str,
         details: str,
-        sub_agent_reports: List[Dict[str, Any]],
+        sub_agent_reports: List[JSONValue],
         verification_result: str
-    ) -> Dict[str, Any]:
+    ) -> JSONValue:
         """Create minified JSON telemetry report."""
         return {
             "status": status,

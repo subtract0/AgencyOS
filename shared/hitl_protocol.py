@@ -50,6 +50,7 @@ from contextlib import asynccontextmanager
 from pydantic import BaseModel, Field, field_validator
 
 from shared.type_definitions.result import Result, Ok, Err
+from shared.type_definitions.json_value import JSONValue
 from shared.message_bus import MessageBus
 
 
@@ -398,7 +399,7 @@ class HITLProtocol:
     async def approve(
         self,
         action: str,
-        details: Optional[Dict[str, Any]] = None,
+        details: Optional[JSONValue] = None,
         timeout_seconds: Optional[int] = None,
     ) -> Result[bool, str]:
         """
@@ -614,7 +615,7 @@ class HITLProtocol:
         except Exception as e:
             return Err(f"Failed to expire questions: {str(e)}")
 
-    def get_stats(self) -> Dict[str, Any]:
+    def get_stats(self) -> JSONValue:
         """
         Get HITL statistics.
 
