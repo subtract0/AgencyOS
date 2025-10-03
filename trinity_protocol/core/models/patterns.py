@@ -12,6 +12,7 @@ Constitutional Compliance:
 
 from pydantic import BaseModel, Field
 from typing import Optional, List, Dict, Any, Literal
+from shared.type_definitions import JSONValue
 from datetime import datetime
 from enum import Enum
 
@@ -109,7 +110,7 @@ class PatternContext(BaseModel):
         max_items=5,
         description="Key transcript excerpts (max 5)"
     )
-    metadata: Dict[str, Any] = Field(
+    metadata: JSONValue = Field(
         default_factory=dict,
         description="Additional metadata"
     )
@@ -156,7 +157,7 @@ class AmbientEvent(BaseModel):
         default=None,
         description="Conversation segment ID"
     )
-    metadata: Dict[str, Any] = Field(
+    metadata: JSONValue = Field(
         default_factory=dict,
         description="Additional metadata"
     )

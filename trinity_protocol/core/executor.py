@@ -29,6 +29,7 @@ from datetime import datetime
 from enum import Enum
 from pathlib import Path
 from typing import Any, Dict, List, Optional
+from shared.type_definitions import JSONValue
 
 from shared.agent_context import AgentContext
 from shared.cost_tracker import CostTracker, ModelTier
@@ -75,7 +76,7 @@ class ExecutionPlan:
 
     task_id: str
     correlation_id: str
-    sub_agents: List[Dict[str, Any]]
+    sub_agents: List[JSONValue]
     parallel_groups: List[List[str]]
     verification_command: str = "python run_tests.py --run-all"
 
@@ -203,7 +204,7 @@ class ExecutorAgent:
         except asyncio.CancelledError:
             pass
 
-    async def _handle_message(self, message: Dict[str, Any]) -> None:
+    async def _handle_message(self, message: JSONValue) -> None:
         """Handle a single message from the queue."""
         task_id = message.get("task_id", str(uuid.uuid4()))
 
@@ -222,7 +223,7 @@ class ExecutorAgent:
         """Stop the agent gracefully."""
         self._running = False
 
-    async def _process_task(self, task: Dict[str, Any], task_id: str) -> None:
+    async def _process_task(self, task: JSONValue, task_id: str) -> None:
         """Process a single task through the 9-step cycle."""
         plan = self._deconstruct_task(task)
         self._externalize_plan(plan)
@@ -248,7 +249,7 @@ class ExecutorAgent:
         total_cost = sum(r.cost_usd for r in sub_agent_results)
         self._stats["total_cost_usd"] += total_cost
 
-    def _deconstruct_task(self, task: Dict[str, Any]) -> ExecutionPlan:
+    def _deconstruct_task(self, task: JSONValue) -> ExecutionPlan:
         """Step 2: Deconstruct task into sub-agent delegations."""
         task_id = task.get("task_id", str(uuid.uuid4()))
         task_type = task.get("task_type", "code_generation")
@@ -310,12 +311,12 @@ Timeout: {self.verification_timeout}s
 
         return all_results
 
-    def _find_agent_spec(self, agent_name: str, sub_agents: List[Dict[str, Any]]) -> Optional[Dict[str, Any]]:
+    def _find_agent_spec(self, agent_name: str, sub_agents: List[JSONValue]) -> Optional[JSONValue]:
         """Find agent spec by name."""
         return next((a for a in sub_agents if a["type"] == agent_name), None)
 
     async def _execute_sub_agent(
-        self, agent_name: str, sub_agents: List[Dict[str, Any]], task_id: str, correlation_id: str
+        self, agent_name: str, sub_agents: List[JSONValue], task_id: str, correlation_id: str
     ) -> SubAgentResult:
         """Execute a single sub-agent with real Agency agent."""
         start_time = datetime.now()
@@ -341,7 +342,7 @@ Timeout: {self.verification_timeout}s
             self._track_cost(agent_name, agent_type, duration, task_id, correlation_id, success=False)
             return SubAgentResult(agent=agent_name, status="failure", summary=f"Agent execution failed: {str(e)}", duration_seconds=duration, error=str(e))
 
-    async def _run_agent_async(self, agent: Any, agent_name: str, spec: Dict[str, Any]) -> str:
+    async def _run_agent_async(self, agent: Any, agent_name: str, spec: JSONValue) -> str:
         """Run agent in thread pool (Agency Swarm agents are synchronous)."""
         task_prompt = self._format_task_prompt(spec)
         loop = asyncio.get_event_loop()
@@ -359,7 +360,7 @@ Timeout: {self.verification_timeout}s
                 return sat
         raise ValueError(f"Unknown agent type: {agent_name}")
 
-    def _format_task_prompt(self, spec: Dict[str, Any]) -> str:
+    def _format_task_prompt(self, spec: JSONValue) -> str:
         """Format task specification as agent prompt."""
         parts = []
 
@@ -442,7 +443,7 @@ Timeout: {self.verification_timeout}s
         details: str,
         sub_agent_results: List[SubAgentResult],
         verification_result: str,
-    ) -> Dict[str, Any]:
+    ) -> JSONValue:
         """Step 8: Create minified JSON telemetry report."""
         return {
             "status": status,
@@ -456,7 +457,7 @@ Timeout: {self.verification_timeout}s
             "timestamp": datetime.now().isoformat(),
         }
 
-    async def _handle_task_failure(self, task_id: str, task: Dict[str, Any], error: Exception) -> None:
+    async def _handle_task_failure(self, task_id: str, task: JSONValue, error: Exception) -> None:
         """Step 5: Handle task failure by logging and reporting."""
         error_log = self.plans_dir / f"{task_id}_error.log"
         error_log.write_text(f"Task Failure: {task_id}\n\nTimestamp: {datetime.now().isoformat()}\nError: {str(error)}\nTask: {json.dumps(task, indent=2)}")
@@ -479,7 +480,7 @@ Timeout: {self.verification_timeout}s
             if file_path.exists():
                 file_path.unlink()
 
-    def get_stats(self) -> Dict[str, Any]:
+    def get_stats(self) -> JSONValue:
         """Get agent statistics."""
         return self._stats.copy()
 

@@ -398,7 +398,7 @@ class HITLProtocol:
     async def approve(
         self,
         action: str,
-        details: Optional[Dict[str, Any]] = None,
+        details: Optional[JSONValue] = None,
         timeout_seconds: Optional[int] = None,
     ) -> Result[bool, str]:
         """
@@ -614,7 +614,7 @@ class HITLProtocol:
         except Exception as e:
             return Err(f"Failed to expire questions: {str(e)}")
 
-    def get_stats(self) -> Dict[str, Any]:
+    def get_stats(self) -> JSONValue:
         """
         Get HITL statistics.
 

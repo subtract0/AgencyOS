@@ -209,7 +209,7 @@ class PreferenceStore:
         self._init_sqlite()
 
         # In-memory cache
-        self._cache: Dict[str, Any] = {
+        self._cache: JSONValue = {
             "responses": [],
             "current_preferences": None,
             "snapshots": []
@@ -505,7 +505,7 @@ class PreferenceLearner:
 
         return Ok(preferences)
 
-    def recommend(self, context: Dict[str, Any]) -> Result[RecommendationResult, str]:
+    def recommend(self, context: JSONValue) -> Result[RecommendationResult, str]:
         """
         Generate recommendation for question.
 

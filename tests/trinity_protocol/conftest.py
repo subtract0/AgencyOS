@@ -8,6 +8,7 @@ import asyncio
 import tempfile
 from pathlib import Path
 from typing import Any, Dict, List, AsyncIterator
+from shared.type_definitions import JSONValue
 from unittest.mock import AsyncMock, Mock, MagicMock
 
 import pytest
@@ -132,7 +133,7 @@ def executor_agent(message_bus, cost_tracker, mock_agent_context, temp_workspace
 
 
 @pytest.fixture
-def sample_improvement_signal() -> Dict[str, Any]:
+def sample_improvement_signal() -> JSONValue:
     """Sample improvement signal for testing."""
     return {
         "correlation_id": "test-correlation-123",
@@ -149,7 +150,7 @@ def sample_improvement_signal() -> Dict[str, Any]:
 
 
 @pytest.fixture
-def sample_execution_task() -> Dict[str, Any]:
+def sample_execution_task() -> JSONValue:
     """Sample execution task for testing."""
     return {
         "task_id": "test-task-456",
@@ -168,7 +169,7 @@ def sample_execution_task() -> Dict[str, Any]:
 
 
 @pytest.fixture
-def sample_pattern_results() -> List[Dict[str, Any]]:
+def sample_pattern_results() -> List[JSONValue]:
     """Sample historical pattern results."""
     return [
         {
@@ -187,7 +188,7 @@ def sample_pattern_results() -> List[Dict[str, Any]]:
 
 
 @pytest.fixture
-def sample_adr_results() -> List[Dict[str, Any]]:
+def sample_adr_results() -> List[JSONValue]:
     """Sample ADR query results."""
     return [
         {

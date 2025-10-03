@@ -46,6 +46,7 @@ Required steps:
 """
 
 from typing import List, Optional, Dict, Any
+from shared.type_definitions import JSONValue
 from datetime import datetime, timedelta
 from collections import deque
 from dataclasses import dataclass
@@ -375,7 +376,7 @@ class ConversationContext:
         self.conversation_start = None
         self.last_activity = None
 
-    def get_stats(self) -> Dict[str, Any]:
+    def get_stats(self) -> JSONValue:
         """
         Get conversation context statistics.
 

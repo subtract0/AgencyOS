@@ -16,6 +16,7 @@ Model: qwen2.5-coder:1.5b (local, fast, cost-free)
 
 import asyncio
 from typing import Optional, Dict, Any, List
+from shared.type_definitions import JSONValue
 from datetime import datetime
 import json
 from dataclasses import dataclass, asdict
@@ -32,13 +33,13 @@ class Signal:
     source: str  # telemetry, personal_context
     pattern: str  # Pattern name
     confidence: float  # 0.7-1.0
-    data: Dict[str, Any]  # Extracted metadata
+    data: JSONValue  # Extracted metadata
     summary: str  # Max 120 chars
     timestamp: str  # ISO8601
     source_id: str  # Event ID
     correlation_id: Optional[str] = None  # Optional correlation
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> JSONValue:
         """Convert to dict for JSON serialization."""
         return asdict(self)
 
@@ -128,7 +129,7 @@ class WitnessAgent:
                 print(f"Error processing event: {e}")
                 continue
 
-    async def _process_event(self, event: Dict[str, Any], source_type: str) -> None:
+    async def _process_event(self, event: JSONValue, source_type: str) -> None:
         """
         Process single event through the 8-step loop.
 
@@ -191,7 +192,7 @@ class WitnessAgent:
 
         # Step 8: RESET (implicit - no state carried to next event)
 
-    def _extract_text(self, event: Dict[str, Any]) -> Optional[str]:
+    def _extract_text(self, event: JSONValue) -> Optional[str]:
         """Extract text content from event."""
         # Try multiple common keys
         for key in ["message", "text", "content", "error", "description"]:
@@ -205,7 +206,7 @@ class WitnessAgent:
         self,
         pattern_match: PatternMatch,
         source_type: str,
-        event: Dict[str, Any]
+        event: JSONValue
     ) -> Signal:
         """Create Signal from pattern match."""
         # Determine priority
@@ -255,7 +256,7 @@ class WitnessAgent:
         else:  # user_intent
             return "NORMAL"
 
-    def _generate_summary(self, pattern_match: PatternMatch, event: Dict[str, Any]) -> str:
+    def _generate_summary(self, pattern_match: PatternMatch, event: JSONValue) -> str:
         """Generate summary string (max 120 chars)."""
         pattern_desc = pattern_match.pattern_name.replace("_", " ").title()
         source_text = self._extract_text(event) or "event"
@@ -305,7 +306,7 @@ class WitnessAgent:
         except asyncio.CancelledError:
             pass
 
-    def get_stats(self) -> Dict[str, Any]:
+    def get_stats(self) -> JSONValue:
         """Get WITNESS agent statistics."""
         detector_stats = self.detector.get_pattern_stats()
         store_stats = self.pattern_store.get_stats()
