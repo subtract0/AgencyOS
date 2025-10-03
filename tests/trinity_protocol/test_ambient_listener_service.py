@@ -34,7 +34,7 @@ class TestAmbientListenerConfig:
         """Test default configuration values."""
         config = AmbientListenerConfig()
 
-        assert config.model_name == "base.en"
+        assert config.model_name == "small.en"  # Updated default for better accuracy/speed balance
         assert config.min_confidence == 0.6
         assert config.chunk_duration == 3.0
         assert config.silence_threshold == 500.0
@@ -140,7 +140,7 @@ class TestAmbientListenerService:
     async def test_service_initialization(self, service):
         """Test service initializes with correct default state."""
         assert service.status == ServiceStatus.STOPPED
-        assert service.config.model_name == "base.en"
+        assert service.config.model_name == "small.en"  # Updated default
         assert service.config.min_confidence == 0.6
 
     @pytest.mark.asyncio
@@ -415,7 +415,7 @@ class TestAmbientListenerService:
 
         assert isinstance(whisper_config, WhisperConfig)
         assert whisper_config.model_name == "tiny.en"
-        assert whisper_config.language == "en"
+        assert whisper_config.language is None  # Auto-detect for multilingual support
 
 
 class TestAmbientListenerServiceIntegration:
