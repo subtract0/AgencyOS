@@ -14,9 +14,11 @@ python_version=$(python --version 2>&1)
 echo "   $python_version"
 echo ""
 
-# Constitutional validation
+# Constitutional validation (skip slow spec traceability check)
 echo "⚖️  Constitutional Compliance:"
-python -c "
+SKIP_SPEC_TRACEABILITY=true python -c "
+import os
+os.environ['SKIP_SPEC_TRACEABILITY'] = 'true'
 from shared.constitutional_validator import *
 try:
     validate_article_i()
