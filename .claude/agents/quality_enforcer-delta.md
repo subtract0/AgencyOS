@@ -37,7 +37,9 @@ agent_responsibilities: |
 ## Healing Modes (UNIQUE)
 
 ### Mode: heal
+
 Automatically fix detected issues:
+
 - Add missing type annotations
 - Remove unused imports
 - Fix formatting issues
@@ -46,7 +48,9 @@ Automatically fix detected issues:
 - Add missing documentation
 
 ### Mode: enforce
+
 Validate compliance and report violations:
+
 - Check all constitutional laws
 - Generate compliance report
 - Flag violations by severity
@@ -55,24 +59,28 @@ Validate compliance and report violations:
 ## Healing Workflow (UNIQUE)
 
 ### 1. Detect
+
 - Run static analysis tools (mypy, ruff, eslint)
 - Parse error and warning output
 - Categorize issues by type and severity
 - Identify auto-fixable vs manual issues
 
 ### 2. Diagnose
+
 - Analyze root cause of issues
 - Determine appropriate fix strategy
 - Check for related issues
 - Assess risk of automated fix
 
 ### 3. Heal
+
 - Apply automated fixes safely
 - Verify fix doesn't break tests
 - Ensure no regression introduced
 - Document changes made
 
 ### 4. Verify
+
 - Run tests after healing
 - Re-run static analysis
 - Confirm issues resolved
@@ -81,6 +89,7 @@ Validate compliance and report violations:
 ## Quality Metrics (UNIQUE)
 
 Track and report:
+
 - Type coverage percentage
 - Test coverage percentage
 - Linting error count
@@ -136,7 +145,7 @@ interface Data {
 }
 
 function processData(data: Data): string[] {
-  return data.items.map(item => item.id);
+  return data.items.map((item) => item.id);
 }
 ```
 
@@ -172,6 +181,7 @@ function processData(data: Data): string[] {
 ## Safety Protocols (UNIQUE)
 
 Before applying automated fixes:
+
 1. Verify tests exist and are passing
 2. Create git checkpoint for rollback
 3. Apply fixes incrementally

@@ -187,15 +187,15 @@ async for chunk in client.stream("Write a story"):
 
 ## Feature Mapping
 
-| Direct API | SDK Equivalent | Notes |
-|------------|----------------|-------|
-| `messages.create()` | `client.send()` | One-off queries use `query()` |
-| Manual message list | `client.send()` | Auto-managed history |
-| `tools` parameter | `custom_tools` | Use `@tool` decorator |
-| `stream()` | `client.stream()` | Enhanced with thinking |
-| Manual tool execution | Automatic | Set `permission_mode` |
-| N/A | Extended thinking | New capability |
-| N/A | MCP servers | New capability |
+| Direct API            | SDK Equivalent    | Notes                         |
+| --------------------- | ----------------- | ----------------------------- |
+| `messages.create()`   | `client.send()`   | One-off queries use `query()` |
+| Manual message list   | `client.send()`   | Auto-managed history          |
+| `tools` parameter     | `custom_tools`    | Use `@tool` decorator         |
+| `stream()`            | `client.stream()` | Enhanced with thinking        |
+| Manual tool execution | Automatic         | Set `permission_mode`         |
+| N/A                   | Extended thinking | New capability                |
+| N/A                   | MCP servers       | New capability                |
 
 ## Extended Thinking (New Feature)
 
@@ -266,6 +266,7 @@ options = ClaudeAgentOptions(
 ### Pattern 1: Simple Query
 
 **Before:**
+
 ```python
 response = client.messages.create(
     model="claude-opus-4-20250514",
@@ -275,6 +276,7 @@ answer = response.content[0].text
 ```
 
 **After:**
+
 ```python
 response = await query(prompt, api_key="your-api-key")
 answer = response.output_text
@@ -283,6 +285,7 @@ answer = response.output_text
 ### Pattern 2: Conversation Loop
 
 **Before:**
+
 ```python
 messages = []
 while True:
@@ -295,6 +298,7 @@ while True:
 ```
 
 **After:**
+
 ```python
 client = ClaudeAgentClient(api_key="your-api-key")
 while True:
@@ -306,6 +310,7 @@ while True:
 ### Pattern 3: File Operations Tool
 
 **Before:**
+
 ```python
 # Define tool schema
 # Handle tool calls manually
@@ -315,6 +320,7 @@ while True:
 ```
 
 **After:**
+
 ```python
 # Built-in file tools available automatically
 options = ClaudeAgentOptions(

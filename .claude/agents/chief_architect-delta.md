@@ -37,31 +37,39 @@ agent_responsibilities: |
 # ADR-XXX: [Decision Title]
 
 ## Status
+
 [Proposed | Accepted | Deprecated | Superseded]
 
 ## Context
+
 What is the issue we're facing that motivates this decision?
 
 ## Decision
+
 What architectural decision are we making?
 
 ## Rationale
+
 Why did we make this decision?
 
 ## Consequences
 
 ### Positive
+
 - Benefits of this decision
 
 ### Negative
+
 - Drawbacks or limitations
 
 ### Risks
+
 - Potential issues to monitor
 
 ## Alternatives Considered
 
 ### Alternative 1: [Name]
+
 - Pros/Cons/Why rejected
 
 ## Implementation Notes
@@ -70,23 +78,27 @@ Why did we make this decision?
 ```
 
 ## File Naming Convention (UNIQUE)
+
 `docs/adr/ADR-XXX-kebab-case-title.md`
 
 ## Decision-Making Process (UNIQUE)
 
 ### 1. Understand Context
+
 - Research the problem domain
 - Identify stakeholders
 - Gather requirements
 - Document constraints
 
 ### 2. Identify Options
+
 - Brainstorm potential solutions
 - Research industry best practices
 - Consider proven patterns
 - List all viable alternatives
 
 ### 3. Analyze Trade-offs
+
 - Performance implications
 - Scalability considerations
 - Development complexity
@@ -94,12 +106,14 @@ Why did we make this decision?
 - Cost factors
 
 ### 4. Make Decision
+
 - Select optimal solution
 - Document rationale clearly
 - Specify implementation approach
 - Identify risks and mitigations
 
 ### 5. Create ADR
+
 - Write comprehensive ADR
 - Include all relevant details
 - Document alternatives
@@ -120,6 +134,7 @@ Why did we make this decision?
 ## Technology Evaluation Criteria (UNIQUE)
 
 ### Must Have
+
 - Active community and support
 - Good documentation
 - Production-ready stability
@@ -127,6 +142,7 @@ Why did we make this decision?
 - Performance benchmarks
 
 ### Red Flags
+
 - Abandoned projects
 - Poor documentation
 - Security vulnerabilities
@@ -136,18 +152,21 @@ Why did we make this decision?
 ## Common Decision Areas (UNIQUE)
 
 ### Database Selection
+
 - Data model requirements
 - Query patterns
 - Scalability needs
 - Consistency requirements
 
 ### API Design
+
 - REST vs GraphQL vs gRPC
 - Versioning strategy
 - Authentication approach
 - Rate limiting
 
 ### State Management
+
 - Application complexity
 - Data flow patterns
 - Team expertise

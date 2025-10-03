@@ -26,7 +26,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: "20"
 
       - name: Install Claude Code
         run: npm install -g @anthropic-ai/claude-code
@@ -129,7 +129,7 @@ Save Claude Code output as artifacts:
 ```yaml
 permissions:
   contents: read
-  pull-requests: write  # Only if commenting on PRs
+  pull-requests: write # Only if commenting on PRs
 ```
 
 ## Troubleshooting
@@ -137,6 +137,7 @@ permissions:
 ### Rate Limits
 
 If you hit rate limits, consider:
+
 - Running reviews only on specific file types
 - Using conditional workflows
 - Implementing retry logic
@@ -144,6 +145,7 @@ If you hit rate limits, consider:
 ### Large Repositories
 
 For large repos:
+
 - Focus on changed files only
 - Use git diff to limit scope
 - Split tasks across multiple jobs
