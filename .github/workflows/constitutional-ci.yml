@@ -23,12 +23,11 @@ jobs:
 
       - name: Install dependencies
         run: |
-          python -m pip install --upgrade pip
-          # Install all project dependencies
-          if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
-          pip install -e .
-          # Install test dependencies
-          pip install pytest pytest-asyncio pytest-timeout python-dotenv pydantic
+          python -m pip install --upgrade pip setuptools wheel
+          # Install ALL requirements first (includes all dependencies)
+          pip install -r requirements.txt
+          # Then install package in editable mode (no dependencies, already installed)
+          pip install -e . --no-deps
 
       - name: Run constitutional validation
         run: |
@@ -61,8 +60,9 @@ jobs:
 
       - name: Install dependencies
         run: |
-          python -m pip install --upgrade pip
-          pip install -e .
+          python -m pip install --upgrade pip setuptools wheel
+          pip install -r requirements.txt
+          pip install -e . --no-deps
 
       - name: Run health check
         run: |
