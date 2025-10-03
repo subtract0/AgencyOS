@@ -298,9 +298,28 @@ class WhisperTranscriber:
         try:
             # Run in thread pool to avoid blocking
             loop = asyncio.get_event_loop()
+
+            # Build transcribe parameters with accuracy improvements
+            transcribe_params = {
+                "fp16": False,
+            }
+
+            # Add accuracy parameters if config exists
+            if self.config:
+                transcribe_params.update({
+                    "temperature": self.config.temperature,
+                    "compression_ratio_threshold": self.config.compression_ratio_threshold,
+                    "logprob_threshold": self.config.logprob_threshold,
+                    "no_speech_threshold": self.config.no_speech_threshold,
+                    "beam_size": self.config.beam_size,
+                })
+
+                if self.config.language:
+                    transcribe_params["language"] = self.config.language
+
             result_dict = await loop.run_in_executor(
                 None,
-                lambda: self._model.transcribe(str(audio_path))
+                lambda: self._model.transcribe(str(audio_path), **transcribe_params)
             )
 
             # Parse openai-whisper output
@@ -331,11 +350,14 @@ class WhisperTranscriber:
                 if s.get("text", "").strip()
             ]
 
+            # Improvement #3: Duration fallback for validation errors
+            final_duration = duration_seconds if duration_seconds > 0 else result_dict.get("duration", 1.0)
+
             result = TranscriptionResult(
                 text=text,
                 confidence=confidence,
                 language=language,
-                duration_seconds=duration_seconds,
+                duration_seconds=final_duration,
                 timestamp=datetime.now().isoformat(),
                 segments=segments if segments else None
             )

@@ -126,6 +126,29 @@ class WhisperConfig(BaseModel):
         le=10,
         description="Beam search size (higher=more accurate, slower)"
     )
+    # Improvement #1: Whisper accuracy parameters
+    temperature: float = Field(
+        default=0.0,
+        ge=0.0,
+        le=1.0,
+        description="Sampling temperature (0.0=deterministic)"
+    )
+    compression_ratio_threshold: float = Field(
+        default=2.4,
+        gt=0.0,
+        description="Hallucination detection threshold"
+    )
+    logprob_threshold: float = Field(
+        default=-1.0,
+        le=0.0,
+        description="Low-confidence token filtering threshold"
+    )
+    no_speech_threshold: float = Field(
+        default=0.6,
+        ge=0.0,
+        le=1.0,
+        description="No-speech detection threshold"
+    )
 
     class Config:
         """Pydantic config."""
