@@ -16,8 +16,10 @@ from typing import Dict, Any
 from agency_memory import FirestoreStore
 from shared.models.learning import ExtractedInsight
 
+# Mark ALL tests in this module as integration tests
+pytestmark = pytest.mark.integration
 
-@pytest.mark.integration
+
 class TestFirestoreLearningPersistence:
     """Integration tests for cross-session learning persistence."""
 

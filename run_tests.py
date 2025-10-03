@@ -168,6 +168,10 @@ def main(test_mode: str = "unit", fast_only: bool = False, timed: bool = False) 
             "--durations=10",  # Show 10 slowest tests
             # "-x",  # Stop on first failure - commented out to run all tests
             "--color=yes",  # Colored output
+            # Exclude integration tests that hang at collection time
+            "--ignore=tests/test_firestore_learning_persistence.py",
+            "--ignore=tests/test_firestore_mock_integration.py",
+            "--ignore=tests/e2e/",  # e2e tests import agency at module level
         ]
     else:
         # Local development - use uv run pytest for better dependency management
@@ -182,14 +186,19 @@ def main(test_mode: str = "unit", fast_only: bool = False, timed: bool = False) 
             "--durations=10",  # Show 10 slowest tests
             # "-x",  # Stop on first failure - commented out to run all tests
             "--color=yes",  # Colored output
+            # Exclude integration tests that hang at collection time
+            "--ignore=tests/test_firestore_learning_persistence.py",
+            "--ignore=tests/test_firestore_mock_integration.py",
+            "--ignore=tests/e2e/",  # e2e tests import agency at module level
         ]
 
+    # DISABLED: Parallel execution causes hangs with Firestore integration tests
     # Add parallel execution if pytest-xdist is available
-    try:
-        import pytest_xdist  # noqa
-        pytest_args.extend(["-n", "4"])  # Parallel execution with 4 workers
-    except ImportError:
-        pass  # Run sequentially if xdist not available
+    # try:
+    #     import pytest_xdist  # noqa
+    #     pytest_args.extend(["-n", "4"])  # Parallel execution with 4 workers
+    # except ImportError:
+    #     pass  # Run sequentially if xdist not available
 
     # Prepare environment variables
     env = os.environ.copy()

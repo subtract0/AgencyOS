@@ -1,6 +1,10 @@
+import pytest
 from unittest.mock import MagicMock
 
 from agency import agency
+
+# Mark ALL tests in this file as e2e to prevent collection when e2e is excluded
+pytestmark = pytest.mark.e2e
 
 
 def test_e2e_tts_routing_to_summary_via_agency():
