@@ -512,8 +512,13 @@ class GenerateTests(Tool):
                 mock_assignments.append(f'mock_{arg} = 5')
             elif "flag" in arg.lower() or "bool" in arg.lower():
                 mock_assignments.append(f'mock_{arg} = True')
+            elif "list" in arg.lower() or "items" in arg.lower():
+                mock_assignments.append(f'mock_{arg} = []')
+            elif "dict" in arg.lower() or "map" in arg.lower():
+                mock_assignments.append(f'mock_{arg} = {{}}')
             else:
-                mock_assignments.append(f'mock_{arg} = None  # TODO: Provide appropriate test value')
+                # Provide sensible default: empty string for unknown types
+                mock_assignments.append(f'mock_{arg} = ""  # Generic test value')
 
         return "\n    ".join(mock_assignments)
 

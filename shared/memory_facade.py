@@ -186,8 +186,13 @@ class UnifiedMemory:
         Returns count of migrated items by type.
         """
         with self._lock:
-            # TODO: Implement actual migration logic when needed
-            # This is a placeholder that demonstrates the pattern
+            # Migration strategy: Copy data from old_store to new_store
+            # 1. Extract all patterns from old_store (if supported)
+            # 2. Extract all memories from old_store
+            # 3. Bulk insert into new_store using appropriate methods
+            # 4. Validate migration with spot checks
+            # Note: Currently not needed as we use single store instance
+            # Implement when cross-store migration becomes necessary
             return MigrationStats(patterns=0, memories=0)
 
 
