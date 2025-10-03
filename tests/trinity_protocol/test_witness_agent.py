@@ -1033,11 +1033,12 @@ class TestPatternPersistence:
 
         await witness_agent._process_event(event, "telemetry")
 
-        # Search for failure patterns
-        patterns = witness_agent.pattern_store.search_patterns(
+        # Search for failure patterns (unwrap Result)
+        patterns_result = witness_agent.pattern_store.search_patterns(
             pattern_type="failure",
             min_confidence=0.0
         )
+        patterns = patterns_result.unwrap() if hasattr(patterns_result, 'unwrap') else patterns_result
 
         assert len(patterns) >= 1
 
@@ -1048,10 +1049,12 @@ class TestPatternPersistence:
 
         await witness_agent._process_event(event, "telemetry")
 
-        patterns = witness_agent.pattern_store.search_patterns(
+        # Search patterns (unwrap Result)
+        patterns_result = witness_agent.pattern_store.search_patterns(
             query="fatal crash",
             min_confidence=0.0
         )
+        patterns = patterns_result.unwrap() if hasattr(patterns_result, 'unwrap') else patterns_result
 
         if len(patterns) > 0:
             assert "fatal" in patterns[0]["content"].lower() or "crash" in patterns[0]["content"].lower()

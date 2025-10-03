@@ -91,11 +91,11 @@ def main():
                 # Convert to float32 for Whisper
                 samples = np.frombuffer(audio_data, dtype=np.int16).astype(np.float32) / 32768.0
 
-                # Transcribe with OPTIMAL parameters
+                # Transcribe with OPTIMAL parameters (auto-detect language)
                 result = model.transcribe(
                     samples,
                     fp16=False,
-                    language="en",  # Force English
+                    language=None,  # Auto-detect (German/English/etc)
                     temperature=0.0,  # Deterministic
                     beam_size=5,  # Accuracy
                     best_of=5,  # Multi-pass

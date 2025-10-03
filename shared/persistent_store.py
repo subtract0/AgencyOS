@@ -423,14 +423,18 @@ class PersistentStore:
     def search_patterns(
         self,
         pattern_type: Optional[str] = None,
-        pattern_name: Optional[str] = None
+        pattern_name: Optional[str] = None,
+        query: Optional[str] = None,
+        min_confidence: Optional[float] = None
     ) -> Result[List[Dict[str, Any]], StoreError]:
         """
-        Search for patterns by type and/or name.
+        Search for patterns by type, name, query text, and/or confidence.
 
         Args:
             pattern_type: Optional pattern type filter
             pattern_name: Optional pattern name filter
+            query: Optional text query to search in pattern summary
+            min_confidence: Optional minimum confidence threshold
 
         Returns:
             Result[List[Dict], StoreError]: Ok(patterns) on success, Err on failure
@@ -456,12 +460,68 @@ class PersistentStore:
                 if pattern_name and entry.value.get("pattern_name") != pattern_name:
                     continue
 
+                # Filter by query text (case-insensitive search in summary)
+                if query:
+                    summary = entry.value.get("summary", "").lower()
+                    if query.lower() not in summary:
+                        continue
+
+                # Filter by minimum confidence
+                if min_confidence is not None:
+                    confidence = entry.value.get("confidence", 0.0)
+                    if confidence < min_confidence:
+                        continue
+
                 patterns.append(entry.value)
 
             return Ok(patterns)
 
         except Exception as e:
             return Err(StoreError(f"Failed to search patterns: {e}"))
+
+    def get_stats(self) -> Dict[str, Any]:
+        """
+        Get statistics about the store.
+
+        Returns:
+            Dictionary with store statistics
+        """
+        if not self.conn:
+            return {
+                "total_patterns": 0,
+                "total_entries": 0,
+                "database_connected": False
+            }
+
+        try:
+            with self._lock:
+                cursor = self.conn.cursor()
+
+                # Get total entry count
+                cursor.execute(f"SELECT COUNT(*) as count FROM {self.table_name}")
+                total_entries = cursor.fetchone()['count']
+
+                # Get pattern count (entries with pattern_type metadata)
+                cursor.execute(
+                    f"SELECT COUNT(*) as count FROM {self.table_name} "
+                    f"WHERE value LIKE '%pattern_type%'"
+                )
+                pattern_count = cursor.fetchone()['count']
+
+                return {
+                    "total_patterns": pattern_count,
+                    "total_entries": total_entries,
+                    "database_connected": True,
+                    "table_name": self.table_name
+                }
+
+        except Exception as e:
+            return {
+                "total_patterns": 0,
+                "total_entries": 0,
+                "database_connected": False,
+                "error": str(e)
+            }
 
     def close(self) -> None:
         """Close database connection."""

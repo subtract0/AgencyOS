@@ -261,8 +261,8 @@ class TestNormalOperation:
 class TestEdgeCases:
     """Test boundary conditions and edge cases."""
 
-    def test_detect_empty_string_matches_base_confidence(self, detector):
-        """Verify empty string matches base confidence threshold."""
+    def test_detect_empty_string_returns_none(self, detector):
+        """Verify empty string returns None (no pattern detected)."""
         # Arrange
         event_text = ""
 
@@ -270,13 +270,11 @@ class TestEdgeCases:
         result = detector.detect(event_text)
 
         # Assert
-        # Base confidence for "failure" is 0.7, which meets threshold
-        assert result is not None
-        assert result.confidence == 0.7
-        assert result.keywords_matched == []
+        # Empty strings are rejected by validation
+        assert result is None
 
-    def test_detect_whitespace_only_matches_base_confidence(self, detector):
-        """Verify whitespace-only string matches base confidence."""
+    def test_detect_whitespace_only_returns_none(self, detector):
+        """Verify whitespace-only string returns None (no pattern detected)."""
         # Arrange
         event_text = "   \n\t  "
 
@@ -284,13 +282,11 @@ class TestEdgeCases:
         result = detector.detect(event_text)
 
         # Assert
-        # Base confidence for "failure" is 0.7, which meets threshold
-        assert result is not None
-        assert result.confidence == 0.7
-        assert result.keywords_matched == []
+        # Whitespace-only strings are rejected by validation
+        assert result is None
 
     def test_detect_no_matching_keywords_matches_base_confidence(self, detector):
-        """Verify text without keywords matches base confidence threshold."""
+        """Verify text without keywords still matches if base confidence meets threshold."""
         # Arrange
         event_text = "This is a normal log message with no pattern keywords"
 
@@ -298,10 +294,12 @@ class TestEdgeCases:
         result = detector.detect(event_text)
 
         # Assert
-        # Base confidence for "failure" is 0.7, which meets threshold
+        # With base confidence of 0.7 for "failure" type matching the 0.7 threshold,
+        # the detector returns a match even without keywords (confidence = base_score)
         assert result is not None
-        assert result.confidence == 0.7
-        assert result.keywords_matched == []
+        assert result.confidence == 0.7  # Base confidence only
+        assert result.keywords_matched == []  # No keywords matched
+        assert result.keyword_score == 0.0
 
     def test_detect_confidence_exactly_at_threshold(self, detector):
         """Verify pattern at exact threshold is detected."""

@@ -91,22 +91,25 @@ class TestToolCache:
         cached = self.cache.get("nonexistent_key")
         assert cached is None
 
+    @pytest.mark.usefixtures("fast_test_setup")
     def test_cache_ttl_expiration(self):
-        """Test cache entry expires after TTL."""
+        """Test cache entry expires after TTL (uses manual timestamp manipulation)."""
         key = "expiring_key"
         result = "value"
 
-        # Set with 1 second TTL
+        # Set entry with current timestamp
         self.cache.set(key, result)
 
         # Should hit within TTL
         cached = self.cache.get(key, ttl_seconds=1)
         assert cached == result
 
-        # Wait for expiration
-        time.sleep(1.1)
+        # Manually modify the entry's timestamp to simulate TTL expiration
+        # (time.sleep is mocked in unit tests, so we manipulate timestamps directly)
+        if key in self.cache.cache:
+            self.cache.cache[key].timestamp -= 2.0  # Move timestamp back 2 seconds
 
-        # Should miss after TTL
+        # Should miss after TTL (entry is now 2 seconds old, TTL is 1 second)
         cached = self.cache.get(key, ttl_seconds=1)
         assert cached is None
 
@@ -279,7 +282,8 @@ class TestCacheDecorator:
         assert self.call_count == 2
 
     def test_cache_decorator_ttl_expiration(self):
-        """Test cache decorator respects TTL."""
+        """Test cache decorator respects TTL (uses manual timestamp manipulation)."""
+        from shared.tool_cache import _tool_cache
 
         @with_cache(ttl_seconds=1)
         def short_lived_function(x: int) -> int:
@@ -296,8 +300,11 @@ class TestCacheDecorator:
         assert result2 == 15
         assert self.call_count == 1
 
-        # Wait for TTL expiration
-        time.sleep(1.1)
+        # Simulate TTL expiration by manipulating timestamp
+        # (time.sleep is mocked in unit tests)
+        cache_key = _tool_cache.get_cache_key("short_lived_function", (5,), {})
+        if cache_key in _tool_cache.cache:
+            _tool_cache.cache[cache_key].timestamp -= 2.0  # Move timestamp back 2 seconds
 
         # After TTL - cache miss
         result3 = short_lived_function(5)

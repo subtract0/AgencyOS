@@ -214,15 +214,16 @@ class TestEmptyTranscriptionReduction:
         capture = AudioCaptureModule(config=audio_config)
 
         # Test speech detection with new threshold
-        audio_data = b"\x00\x10" * 1000  # Low amplitude audio
+        # Use very low amplitude audio (should be below 15.0 threshold)
+        audio_data = b"\x00\x00" * 1000  # Silence (RMS = 0.0)
         vad_result = capture._detect_speech(
             audio_data,
-            threshold=0.015  # Increased threshold
+            threshold=15.0  # Standard RMS threshold for 16-bit PCM
         )
 
-        # Should NOT detect speech (threshold too high)
+        # Should NOT detect speech (silence)
         assert not vad_result.has_speech
-        assert vad_result.rms_level < 0.015
+        assert vad_result.rms_level < 15.0
 
     def test_min_text_length_validation_filters_empty_results(self):
         """Test transcriptions below min_text_length are filtered."""

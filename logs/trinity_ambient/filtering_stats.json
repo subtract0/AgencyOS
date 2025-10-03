@@ -1,0 +1,11 @@
+{
+  "total_chunks": 100,
+  "rms_rejected": 3,
+  "vad_rejected": 0,
+  "speaker_rejected": 0,
+  "transcribed": 97,
+  "total_audio_seconds": 300.0,
+  "transcribed_seconds": 291.0,
+  "estimated_cost_saved": 0.0009,
+  "estimated_cost_spent": 0.02910000000000007
+}
