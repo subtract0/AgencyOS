@@ -50,8 +50,7 @@ def message_bus(temp_db_paths):
 def pattern_store(temp_db_paths):
     """Provide test pattern store."""
     store = PersistentStore(
-        db_path=str(temp_db_paths["pattern_store"]),
-        embedding_model="all-MiniLM-L6-v2"
+        db_path=str(temp_db_paths["pattern_store"])
     )
     yield store
     store.close()
