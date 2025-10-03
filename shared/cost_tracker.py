@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 """
 Generic Cost Tracking System
 
@@ -40,6 +42,7 @@ from typing import Dict, List, Optional, Any
 
 from pydantic import BaseModel, Field, validator
 from shared.type_definitions.result import Result, Ok, Err
+from shared.type_definitions.json_value import JSONValue
 
 
 class ModelTier(str, Enum):
@@ -76,7 +79,7 @@ class CostEntry(BaseModel):
     cost_usd: float = Field(ge=0)
     duration_seconds: float = Field(ge=0)
     success: bool
-    metadata: Dict[str, Any] = Field(default_factory=dict)
+    metadata: JSONValue = Field(default_factory=dict)
     error: Optional[str] = None
 
     @validator('tokens_in', 'tokens_out')
@@ -457,7 +460,7 @@ class CostTracker:
         tokens_out: int,
         duration_seconds: float,
         success: bool,
-        metadata: Optional[Dict[str, Any]] = None,
+        metadata: Optional[JSONValue] = None,
         error: Optional[str] = None
     ) -> Result[CostEntry, CostTrackerError]:
         """Track a single operation cost."""

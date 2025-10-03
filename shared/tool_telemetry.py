@@ -18,12 +18,13 @@ Usage:
 import time
 from functools import wraps
 from typing import Callable, TypeVar, ParamSpec, Any
+from shared.type_definitions import JSONValue
 
 T = TypeVar('T')
 P = ParamSpec('P')
 
 # In-memory telemetry (could be persisted to SQLite/Firestore)
-_telemetry_data: list[dict[str, Any]] = []
+_telemetry_data: list[JSONValue] = []
 
 
 def instrument_tool(tool_name: str):
@@ -84,7 +85,7 @@ def instrument_tool(tool_name: str):
     return decorator
 
 
-def get_tool_stats(hours: int = 24) -> dict[str, Any]:
+def get_tool_stats(hours: int = 24) -> JSONValue:
     """
     Get tool execution statistics for last N hours.
 
@@ -144,7 +145,7 @@ def clear_telemetry():
     _telemetry_data.clear()
 
 
-def get_recent_errors(limit: int = 10) -> list[dict[str, Any]]:
+def get_recent_errors(limit: int = 10) -> list[JSONValue]:
     """
     Get recent errors from telemetry.
 

@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 """
 Generic Preference Learning System
 
@@ -38,6 +40,7 @@ from typing import Dict, List, Optional, Tuple, Any
 from pydantic import BaseModel, Field
 
 from shared.type_definitions.result import Result, Ok, Err
+from shared.type_definitions.json_value import JSONValue
 from shared.message_bus import MessageBus
 
 # Re-export models from trinity for compatibility
@@ -209,7 +212,7 @@ class PreferenceStore:
         self._init_sqlite()
 
         # In-memory cache
-        self._cache: Dict[str, Any] = {
+        self._cache: JSONValue = {
             "responses": [],
             "current_preferences": None,
             "snapshots": []
@@ -505,7 +508,7 @@ class PreferenceLearner:
 
         return Ok(preferences)
 
-    def recommend(self, context: Dict[str, Any]) -> Result[RecommendationResult, str]:
+    def recommend(self, context: JSONValue) -> Result[RecommendationResult, str]:
         """
         Generate recommendation for question.
 

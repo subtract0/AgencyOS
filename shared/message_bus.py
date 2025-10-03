@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 """
 Generic Message Bus for Inter-Agent Communication
 
@@ -41,6 +43,7 @@ import asyncio
 from pathlib import Path
 from datetime import datetime
 from typing import Optional, Dict, List, Any, AsyncIterator
+from shared.type_definitions.json_value import JSONValue
 from contextlib import asynccontextmanager
 import json
 
@@ -66,7 +69,7 @@ class Message:
     def __init__(
         self,
         queue_name: str,
-        message_data: Dict[str, Any],
+        message_data: JSONValue,
         priority: int = 0,
         correlation_id: Optional[str] = None,
         created_at: Optional[str] = None,
@@ -148,7 +151,7 @@ class MessageBus:
     async def publish(
         self,
         queue_name: str,
-        message: Dict[str, Any],
+        message: JSONValue,
         priority: int = 0,
         correlation_id: Optional[str] = None
     ) -> int:
@@ -194,7 +197,7 @@ class MessageBus:
         self,
         queue_name: str,
         batch_size: int = 1000
-    ) -> AsyncIterator[Dict[str, Any]]:
+    ) -> AsyncIterator[JSONValue]:
         """
         Subscribe to queue and yield messages as they arrive.
 
@@ -242,7 +245,7 @@ class MessageBus:
         self,
         queue_name: str,
         message_id: int,
-        message: Dict[str, Any]
+        message: JSONValue
     ) -> None:
         """Notify all subscribers of new message."""
         if queue_name in self.subscribers:
@@ -259,7 +262,7 @@ class MessageBus:
         self,
         queue_name: str,
         limit: int
-    ) -> List[Dict[str, Any]]:
+    ) -> List[JSONValue]:
         """
         Fetch pending messages from database.
 
@@ -346,7 +349,7 @@ class MessageBus:
     async def get_by_correlation(
         self,
         correlation_id: str
-    ) -> List[Dict[str, Any]]:
+    ) -> List[JSONValue]:
         """
         Get all messages with given correlation ID.
 
@@ -383,7 +386,7 @@ class MessageBus:
 
         return messages
 
-    def get_stats(self) -> Dict[str, Any]:
+    def get_stats(self) -> JSONValue:
         """
         Get message bus statistics.
 

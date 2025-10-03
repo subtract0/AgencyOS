@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 """
 Unified Memory Facade - Consolidates multiple memory systems into a single interface.
 
@@ -15,7 +17,7 @@ Constitutional Compliance:
 """
 
 from typing import Optional, List, Union, Dict
-from shared.type_definitions.json import JSONValue
+from shared.type_definitions.json_value import JSONValue
 from pydantic import BaseModel, Field
 from datetime import datetime
 import threading

@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 """
 Generic Persistent Store for Agency
 
@@ -26,6 +28,7 @@ from typing import Optional, Dict, List, Any, Callable
 from pydantic import BaseModel, field_validator
 
 from shared.type_definitions.result import Result, Ok, Err
+from shared.type_definitions.json_value import JSONValue
 
 
 class StoreError(Exception):
@@ -55,14 +58,14 @@ class StoreEntry(BaseModel):
         metadata: Optional metadata dict for tagging/filtering
     """
     key: str
-    value: Dict[str, Any]
+    value: JSONValue
     created_at: datetime
     updated_at: datetime
     metadata: Dict[str, str] = {}
 
     @field_validator('value')
     @classmethod
-    def validate_value_is_dict(cls, v: Any) -> Dict[str, Any]:
+    def validate_value_is_dict(cls, v: Any) -> JSONValue:
         """Ensure value is a dictionary."""
         if not isinstance(v, dict):
             raise ValueError("Value must be a dict")
@@ -134,7 +137,7 @@ class PersistentStore:
     def _validate_set_inputs(
         self,
         key: str,
-        value: Dict[str, Any]
+        value: JSONValue
     ) -> Optional[StoreError]:
         """Validate inputs for set operation. Returns error if invalid."""
         if not key or not isinstance(key, str):
@@ -176,7 +179,7 @@ class PersistentStore:
     def set(
         self,
         key: str,
-        value: Dict[str, Any],
+        value: JSONValue,
         metadata: Optional[Dict[str, str]] = None
     ) -> Result[None, StoreError]:
         """
@@ -208,7 +211,7 @@ class PersistentStore:
         except Exception as e:
             return Err(StoreError(f"Failed to store entry: {e}"))
 
-    def get(self, key: str) -> Result[Optional[Dict[str, Any]], StoreError]:
+    def get(self, key: str) -> Result[Optional[JSONValue], StoreError]:
         """
         Retrieve value for a key.
 
@@ -367,7 +370,7 @@ class PersistentStore:
         pattern_name: str,
         content: str,
         confidence: float,
-        metadata: Optional[Dict[str, Any]] = None,
+        metadata: Optional[JSONValue] = None,
         evidence_count: int = 1
     ) -> Result[str, StoreError]:
         """
@@ -426,7 +429,7 @@ class PersistentStore:
         pattern_name: Optional[str] = None,
         query: Optional[str] = None,
         min_confidence: Optional[float] = None
-    ) -> Result[List[Dict[str, Any]], StoreError]:
+    ) -> Result[List[JSONValue], StoreError]:
         """
         Search for patterns by type, name, query text, and/or confidence.
 
@@ -479,7 +482,7 @@ class PersistentStore:
         except Exception as e:
             return Err(StoreError(f"Failed to search patterns: {e}"))
 
-    def get_stats(self) -> Dict[str, Any]:
+    def get_stats(self) -> JSONValue:
         """
         Get statistics about the store.
 

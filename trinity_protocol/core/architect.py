@@ -15,6 +15,7 @@ from dataclasses import dataclass, field
 from datetime import datetime
 from pathlib import Path
 from typing import Any, Dict, List, Optional
+from shared.type_definitions import JSONValue
 
 from shared.message_bus import MessageBus
 from shared.persistent_store import PersistentStore
@@ -29,11 +30,11 @@ class TaskSpec:
     priority: str
     task_type: str
     sub_agent: str
-    spec: Dict[str, Any]
+    spec: JSONValue
     dependencies: List[str] = field(default_factory=list)
     timestamp: str = field(default_factory=lambda: datetime.now().isoformat())
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> JSONValue:
         """Convert to JSON-serializable dict."""
         return {
             "task_id": self.task_id,
@@ -119,7 +120,7 @@ class ArchitectAgent:
         """Stop the agent gracefully."""
         self._running = False
 
-    async def _process_signal(self, signal: Dict[str, Any], correlation_id: str) -> None:
+    async def _process_signal(self, signal: JSONValue, correlation_id: str) -> None:
         """Process a single signal through the 10-step cycle."""
         priority = signal.get("priority", "NORMAL")
         context = await self._gather_context(signal)
@@ -143,7 +144,7 @@ class ArchitectAgent:
                 correlation_id=correlation_id
             )
 
-    async def _gather_context(self, signal: Dict[str, Any]) -> Dict[str, Any]:
+    async def _gather_context(self, signal: JSONValue) -> JSONValue:
         """Step 3: Gather historical context (Article I)."""
         pattern_name = signal.get("pattern", "")
         historical_patterns = self.pattern_store.search_patterns(
@@ -156,7 +157,7 @@ class ArchitectAgent:
             "relevant_adrs": []
         }
 
-    def _assess_complexity(self, signal: Dict[str, Any]) -> float:
+    def _assess_complexity(self, signal: JSONValue) -> float:
         """Step 4a: Assess task complexity (0.0-1.0)."""
         score = 0.0
         pattern = signal.get("pattern", "")
@@ -186,7 +187,7 @@ class ArchitectAgent:
 
         return min(1.0, score)
 
-    def _select_reasoning_engine(self, signal: Dict[str, Any], complexity: float) -> str:
+    def _select_reasoning_engine(self, signal: JSONValue, complexity: float) -> str:
         """Step 4b: Select reasoning engine (hybrid doctrine)."""
         priority = signal.get("priority", "NORMAL")
 
@@ -200,8 +201,8 @@ class ArchitectAgent:
 
     async def _formulate_strategy(
         self,
-        signal: Dict[str, Any],
-        context: Dict[str, Any],
+        signal: JSONValue,
+        context: JSONValue,
         complexity: float,
         engine: str,
         correlation_id: str
@@ -220,8 +221,8 @@ class ArchitectAgent:
 
     async def _formulate_complex_strategy(
         self,
-        signal: Dict[str, Any],
-        context: Dict[str, Any],
+        signal: JSONValue,
+        context: JSONValue,
         complexity: float,
         engine: str,
         correlation_id: str
@@ -246,8 +247,8 @@ class ArchitectAgent:
 
     def _generate_spec(
         self,
-        signal: Dict[str, Any],
-        context: Dict[str, Any],
+        signal: JSONValue,
+        context: JSONValue,
         correlation_id: str
     ) -> str:
         """Generate formal specification document."""
@@ -286,7 +287,7 @@ Based on historical patterns:
 - Signal ID: {signal.get('source_id', 'N/A')}
 """
 
-    def _generate_adr(self, signal: Dict[str, Any], correlation_id: str) -> str:
+    def _generate_adr(self, signal: JSONValue, correlation_id: str) -> str:
         """Generate Architecture Decision Record."""
         pattern = signal.get("pattern", "unknown")
         data = signal.get("data", {})
@@ -443,7 +444,7 @@ Implement solution for {pattern} pattern.
     async def _handle_planning_failure(
         self,
         correlation_id: str,
-        signal: Dict[str, Any],
+        signal: JSONValue,
         error: Exception
     ) -> None:
         """Handle planning failures."""
@@ -461,16 +462,16 @@ Implement solution for {pattern} pattern.
             correlation_id=correlation_id
         )
 
-    def get_stats(self) -> Dict[str, Any]:
+    def get_stats(self) -> JSONValue:
         """Get agent statistics."""
         return self._stats.copy()
 
-    def _is_architectural(self, signal: Dict[str, Any]) -> bool:
+    def _is_architectural(self, signal: JSONValue) -> bool:
         """Check if signal requires architectural decision."""
         keywords = signal.get("data", {}).get("keywords", [])
         return "architecture" in keywords or signal.get("pattern") == "constitutional_violation"
 
-    def _format_historical_patterns(self, patterns: List[Dict[str, Any]]) -> str:
+    def _format_historical_patterns(self, patterns: List[JSONValue]) -> str:
         """Format historical patterns for spec."""
         if not patterns:
             return "No historical patterns found."

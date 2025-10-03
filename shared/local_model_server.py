@@ -16,6 +16,7 @@ Constitutional Compliance:
 
 import httpx
 from typing import Optional, Dict, Any, List, AsyncIterator
+from shared.type_definitions import JSONValue
 import json
 import asyncio
 from datetime import datetime
@@ -61,7 +62,7 @@ class OllamaClient:
         temperature: float = 0.3,
         max_tokens: Optional[int] = None,
         stream: bool = False
-    ) -> Dict[str, Any]:
+    ) -> JSONValue:
         """
         Generate completion from local model.
 
@@ -182,7 +183,7 @@ class OllamaClient:
                 except json.JSONDecodeError:
                     continue
 
-    async def list_models(self) -> List[Dict[str, Any]]:
+    async def list_models(self) -> List[JSONValue]:
         """
         List available models on Ollama server.
 
