@@ -63,7 +63,11 @@ def check_dependencies() -> tuple[bool, str]:
     try:
         import agency_swarm
         import pytest
-        import ruff
+        import importlib.util
+
+        # Check ruff availability without importing
+        if importlib.util.find_spec("ruff") is None:
+            return False, "Missing dependency: ruff"
 
         return True, "Core dependencies installed"
     except ImportError as e:
