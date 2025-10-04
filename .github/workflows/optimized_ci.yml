@@ -283,7 +283,14 @@ jobs:
         run: |
           # Get changed Python files
           CHANGED_FILES=$(git diff --name-only ${{ github.event.pull_request.base.sha }}...${{ github.sha }} | grep '\.py$' || echo "")
-          echo "changed_files=$CHANGED_FILES" >> $GITHUB_OUTPUT
+
+          # Use heredoc delimiter for multiline GITHUB_OUTPUT (prevents line break issues)
+          {
+            echo 'changed_files<<EOF'
+            echo "$CHANGED_FILES"
+            echo 'EOF'
+          } >> $GITHUB_OUTPUT
+
           echo "Changed files:"
           echo "$CHANGED_FILES"
 
