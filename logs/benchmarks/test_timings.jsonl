@@ -5,3 +5,5 @@
 {"ts": "2025-09-30T15:50:16.373462+00:00", "mode": "specific", "specific": "tests/test_grep_tool.py", "duration_s": 3.139, "exit_code": 0}
 {"ts": "2025-09-30T16:22:01.316303+00:00", "mode": "all", "specific": null, "duration_s": 0.048, "exit_code": 1}
 {"ts": "2025-09-30T23:34:44.212327+00:00", "mode": "specific", "specific": "tests/trinity_protocol/test_executor_agent.py", "duration_s": 0.132, "exit_code": 4}
+{"ts": "2025-10-04T02:36:17.825581+00:00", "mode": "specific", "specific": "tests/test_merger_integration.py", "duration_s": 3.766, "exit_code": 1}
+{"ts": "2025-10-04T02:36:30.393058+00:00", "mode": "specific", "specific": "tests/test_agency_code_agent.py", "duration_s": 3.253, "exit_code": 0}

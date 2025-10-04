@@ -187,7 +187,7 @@ def main(test_mode: str = "unit", fast_only: bool = False, timed: bool = False) 
     # Add parallel execution if pytest-xdist is available
     try:
         import pytest_xdist  # noqa
-        pytest_args.extend(["-n", "4"])  # Parallel execution with 4 workers
+        pytest_args.extend(["-n", "8"])  # Parallel execution with 8 workers (optimized for system)
     except ImportError:
         pass  # Run sequentially if xdist not available
 
