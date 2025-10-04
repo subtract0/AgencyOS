@@ -311,12 +311,12 @@ jobs:
               repo: context.repo.repo,
               body: `## ✅ PR Checks Passed
 
-**Test Mode**: ${modeDescriptions[testMode]}
-**Changed Files**: ${changeCount} Python files
+            Test Mode: ${modeDescriptions[testMode]}
+            Changed Files: ${changeCount} Python files
 
-All quality gates passed! Ready for review.
+            All quality gates passed! Ready for review.
 
----
-💡 Tip: Add \`[ci full]\` to commit message to force full test suite.
+            ---
+            💡 Tip: Add \`[ci full]\` to commit message to force full test suite.
               `
             })
