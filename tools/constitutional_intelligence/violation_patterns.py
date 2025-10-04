@@ -18,8 +18,10 @@ from datetime import UTC, datetime, timedelta
 from pathlib import Path
 from typing import Any
 
+from shared.type_definitions.json import JSONDict
 
-def load_violations(log_file: Path, days: int | None = None) -> list[dict[str, Any]]:
+
+def load_violations(log_file: Path, days: int | None = None) -> list[JSONDict]:
     """Load violations from JSONL file, optionally filtering by days."""
     if not log_file.exists():
         return []
@@ -43,7 +45,7 @@ def load_violations(log_file: Path, days: int | None = None) -> list[dict[str, A
     return violations
 
 
-def analyze_patterns(violations: list[dict[str, Any]]) -> dict[str, Any]:
+def analyze_patterns(violations: list[JSONDict]) -> JSONDict:
     """Extract actionable patterns from violations."""
 
     # Group by function
@@ -75,7 +77,7 @@ def analyze_patterns(violations: list[dict[str, Any]]) -> dict[str, Any]:
     }
 
 
-def generate_insights(patterns: dict[str, Any]) -> list[dict[str, Any]]:
+def generate_insights(patterns: JSONDict) -> list[JSONDict]:
     """Generate actionable insights from patterns."""
     insights = []
 
@@ -126,7 +128,7 @@ def generate_insights(patterns: dict[str, Any]) -> list[dict[str, Any]]:
     return insights
 
 
-def print_report(patterns: dict[str, Any], insights: list[dict[str, Any]]) -> None:
+def print_report(patterns: JSONDict, insights: list[JSONDict]) -> None:
     """Print human-readable report."""
     print("\n" + "=" * 80)
     print("CONSTITUTIONAL VIOLATION PATTERN ANALYSIS")
@@ -210,7 +212,7 @@ def print_report(patterns: dict[str, Any], insights: list[dict[str, Any]]) -> No
     print("\n" + "=" * 80 + "\n")
 
 
-def print_json_report(patterns: dict[str, Any], insights: list[dict[str, Any]]) -> None:
+def print_json_report(patterns: JSONDict, insights: list[JSONDict]) -> None:
     """Print JSON report for programmatic use."""
     report = {
         "summary": {

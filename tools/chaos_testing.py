@@ -22,6 +22,7 @@ from typing import Any, TypeVar
 
 from pydantic import BaseModel, Field
 
+from shared.type_definitions.json import JSONValue
 from shared.type_definitions.result import Err, Ok, Result
 
 T = TypeVar("T")
@@ -78,7 +79,7 @@ class ChaosEngine:
         """Initialize chaos engine with configuration."""
         self.config = config
         self.injections: list[ChaosInjection] = []
-        self.original_functions: dict[str, Any] = {}
+        self.original_functions: dict[str, JSONValue] = {}
         self.crash_count = 0
 
         if config.seed is not None:
