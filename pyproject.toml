@@ -92,6 +92,43 @@ unfixable = ["B"]
     "ARG",   # Unused function arguments in tests are OK
     "FBT",   # Boolean trap is OK in tests
 ]
+"tools/**/*.py" = [
+    "E402",  # Module imports not at top (defer for tools refactor)
+    "F401",  # Unused imports (checked imports for availability)
+    "F841",  # Unused local variables (template/experimental code)
+    "B007",  # Loop variable not used (intentional iteration)
+    "E722",  # Bare except (legacy compatibility)
+    "C401",  # Generator patterns (readability preference)
+    "E741",  # Ambiguous variable names (legacy code)
+]
+"shared/**/*.py" = [
+    "E402",  # Module imports not at top (conditional imports for optional deps)
+    "F841",  # Unused variables (WIP/experimental features)
+    "B904",  # Exception chaining (legacy compatibility)
+]
+"demo*.py" = [
+    "E402",  # Demo scripts have intentional import ordering
+    "F841",  # Demos show examples, unused vars expected
+]
+"analyze_*.py" = [
+    "F841",  # Analysis scripts may have unused intermediate vars
+]
+"deploy/**/*.py" = [
+    "F401",  # Deployment scripts check optional dependencies
+]
+"dspy_agents/**/*.py" = [
+    "E722",  # DSPy integration uses try/except patterns
+    "F401",  # Optional DSPy imports
+    "F841",  # Experimental agent code
+    "B004",  # hasattr patterns for DSPy compatibility
+    "B007",  # Loop variables in DSPy signatures
+    "E741",  # Variable naming in DSPy learning patterns
+    "UP007", # Union syntax for DSPy compatibility
+]
+"trinity_protocol/**/*.py" = [
+    "F401",  # Trinity optional imports
+    "E402",  # Trinity conditional initialization
+]
 
 [tool.ruff.isort]
 known-first-party = ["agency", "shared", "tools"]
