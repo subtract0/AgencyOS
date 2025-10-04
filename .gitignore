@@ -233,3 +233,8 @@ logs/telemetry/*.jsonl
 
 # Backup files created by automated tools
 *.bak
+
+# Test bloat backups (we have git!)
+.test_bloat_backup_*/
+*_backup_*/
+*.backup
