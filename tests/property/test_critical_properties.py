@@ -177,24 +177,30 @@ class TestRetryControllerProperties:
         assert breaker.failure_count == 0
         assert breaker.allow_request()
 
-    @settings(deadline=2000)  # Need time for sleep
+    @settings(deadline=None)  # Disable deadline for deterministic time mocking
     @given(st.floats(min_value=0.01, max_value=0.2))  # Reduce max to speed up tests
     def test_circuit_breaker_half_open_after_timeout(self, recovery_timeout: float):
         """PROPERTY: Circuit breaker transitions to half-open after timeout."""
+        from unittest.mock import patch
+
         breaker = CircuitBreaker(
             failure_threshold=1,
             recovery_timeout=recovery_timeout,
         )
 
-        # Open the circuit
-        breaker.record_failure()
-        assert breaker.state == "open"
+        # Mock time.time in the CircuitBreaker module to avoid race conditions
+        with patch("shared.retry_controller.time.time") as mock_time:
+            # Time 0: Open the circuit
+            mock_time.return_value = 0.0
+            breaker.record_failure()
+            assert breaker.state == "open"
 
-        # Wait for recovery timeout
-        time.sleep(recovery_timeout + 0.01)
+            # Time after recovery_timeout: Should transition to half-open
+            mock_time.return_value = recovery_timeout + 0.01
 
-        # Should allow probe (half-open)
-        assert breaker.allow_request()
+            # Should allow probe (half-open)
+            assert breaker.allow_request()
+            assert breaker.state == "half_open"
 
     @settings(deadline=1000)
     @given(st.integers(min_value=0, max_value=5))
@@ -430,12 +436,15 @@ class TestRetryStateful:
 
     def test_retry_controller_state_machine(self):
         """Run stateful tests on RetryController."""
+        from unittest.mock import patch
         from hypothesis.stateful import run_state_machine_as_test
 
-        run_state_machine_as_test(
-            RetryControllerStateMachine,
-            settings=settings(max_examples=20, stateful_step_count=10, deadline=2000),
-        )
+        # Mock time.sleep in retry_controller to make tests deterministic and fast
+        with patch("shared.retry_controller.time.sleep", return_value=None):
+            run_state_machine_as_test(
+                RetryControllerStateMachine,
+                settings=settings(max_examples=20, stateful_step_count=10, deadline=None),
+            )
 
 
 # ============================================================================
