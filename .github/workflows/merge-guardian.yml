@@ -108,8 +108,8 @@ jobs:
           # Set timeout override for CI environment
           export AGENCY_TEST_TIMEOUT_OVERRIDE=300
 
-          # Run tests using run_tests.py to ensure consistent test selection
-          python run_tests.py > test-results/test-output.log 2>&1
+          # Run tests using direct pytest command for consistent test selection
+          uv run pytest tests/ -n 8 -q -m "not integration and not slow and not benchmark" --ignore=tests/e2e --ignore=tests/test_firestore_learning_persistence.py --ignore=tests/test_firestore_mock_integration.py > test-results/test-output.log 2>&1
           TEST_EXIT_CODE=$?
 
           # Parse test results for detailed analysis
