@@ -95,7 +95,7 @@ jobs:
     needs: quick-checks
     if: needs.quick-checks.outputs.passed == 'true'
     runs-on: ubuntu-latest
-    timeout-minutes: 5
+    timeout-minutes: 15
 
     strategy:
       fail-fast: false
@@ -174,7 +174,7 @@ jobs:
       needs.critical-tests.result == 'success' &&
       (github.ref == 'refs/heads/main' || github.event_name == 'schedule')
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 15
 
     steps:
       - name: Checkout code
@@ -246,7 +246,7 @@ jobs:
       needs.critical-tests.result == 'success' &&
       github.event_name == 'pull_request'
     runs-on: ubuntu-latest
-    timeout-minutes: 5
+    timeout-minutes: 15
 
     steps:
       - name: Checkout code

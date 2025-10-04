@@ -198,13 +198,13 @@ def main(test_mode: str = "unit", fast_only: bool = False, timed: bool = False) 
             "--ignore=tests/e2e/",  # e2e tests import agency at module level
         ]
 
-    # DISABLED: Parallel execution causes hangs with Firestore integration tests
     # Add parallel execution if pytest-xdist is available
-    # try:
-    #     import pytest_xdist  # noqa
-    #     pytest_args.extend(["-n", "4"])  # Parallel execution with 4 workers
-    # except ImportError:
-    #     pass  # Run sequentially if xdist not available
+    # (Firestore tests excluded via --ignore flags, safe to parallelize)
+    try:
+        import pytest_xdist  # noqa
+        pytest_args.extend(["-n", "8"])  # Parallel execution with 8 workers (optimized)
+    except ImportError:
+        pass  # Run sequentially if xdist not available
 
     # Prepare environment variables
     env = os.environ.copy()
