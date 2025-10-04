@@ -22,9 +22,9 @@ Usage:
     files = scaffold_module("tool", "my_tool", "tools/my_tool/")
 """
 
-from .analyzer import suggest_refactors, Suggestion
-from .test_gen import generate_tests_from_spec, GeneratedTest
-from .scaffold import scaffold_module, CreatedFile
+from .analyzer import Suggestion, suggest_refactors
+from .scaffold import CreatedFile, scaffold_module
+from .test_gen import GeneratedTest, generate_tests_from_spec
 
 __all__ = [
     "suggest_refactors",
@@ -32,5 +32,5 @@ __all__ = [
     "generate_tests_from_spec",
     "GeneratedTest",
     "scaffold_module",
-    "CreatedFile"
+    "CreatedFile",
 ]

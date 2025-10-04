@@ -4,15 +4,15 @@ Test TestGeneratorAgent behavior and functionality.
 Tests for NECESSARY-compliant test generation, audit report processing, and file creation.
 """
 
-import os
 import json
+import os
 import tempfile
 from pathlib import Path
 from unittest.mock import Mock, patch
 
 import pytest
 
-from test_generator_agent.test_generator_agent import create_test_generator_agent, GenerateTests
+from test_generator_agent.test_generator_agent import GenerateTests, create_test_generator_agent
 
 
 @pytest.fixture
@@ -65,7 +65,7 @@ class MathCalculator:
         return "private"
 '''
 
-    with tempfile.NamedTemporaryFile(mode='w', suffix='.py', delete=False) as f:
+    with tempfile.NamedTemporaryFile(mode="w", suffix=".py", delete=False) as f:
         f.write(content)
         temp_file_path = f.name
 
@@ -92,7 +92,7 @@ def sample_audit_report():
             "S2": {"score": 0.6, "violations": []},
             "A": {"score": 0.3, "violations": ["Async operation testing needs attention"]},
             "R": {"score": 0.8, "violations": []},
-            "Y": {"score": 0.4, "violations": ["Overall test confidence needs improvement"]}
+            "Y": {"score": 0.4, "violations": ["Overall test confidence needs improvement"]},
         },
         "violations": [
             {
@@ -100,31 +100,31 @@ def sample_audit_report():
                 "severity": "critical",
                 "score": 0.3,
                 "description": "Low test coverage: 0.30",
-                "recommendation": "Add test cases for uncovered behaviors"
+                "recommendation": "Add test cases for uncovered behaviors",
             },
             {
                 "property": "E2",
                 "severity": "critical",
                 "score": 0.2,
                 "description": "Insufficient error condition testing",
-                "recommendation": "Implement error condition tests"
+                "recommendation": "Implement error condition tests",
             },
             {
                 "property": "A",
                 "severity": "critical",
                 "score": 0.3,
                 "description": "Async operation testing needs attention",
-                "recommendation": "Add async operation testing with proper await patterns"
+                "recommendation": "Add async operation testing with proper await patterns",
             },
             {
                 "property": "E",
                 "severity": "high",
                 "score": 0.4,
                 "description": "Insufficient edge case testing",
-                "recommendation": "Implement boundary condition and edge case tests"
-            }
+                "recommendation": "Implement boundary condition and edge case tests",
+            },
         ],
-        "recommendations": ["CRITICAL: Q(T) score below 0.6 requires immediate attention"]
+        "recommendations": ["CRITICAL: Q(T) score below 0.6 requires immediate attention"],
     }
 
 
@@ -139,7 +139,7 @@ def mock_agent_context():
 
 def test_test_generator_agent_initialization():
     """Test that TestGeneratorAgent can be initialized properly."""
-    with patch('test_generator_agent.test_generator_agent.create_agent_context') as mock_context:
+    with patch("test_generator_agent.test_generator_agent.create_agent_context") as mock_context:
         mock_context.return_value = Mock()
         mock_context.return_value.session_id = "test_session"
         mock_context.return_value.store_memory = Mock()
@@ -175,8 +175,7 @@ def test_generate_tests_invalid_json():
 def test_generate_tests_nonexistent_file(sample_audit_report):
     """Test GenerateTests handles nonexistent target files gracefully."""
     tool = GenerateTests(
-        audit_report=json.dumps(sample_audit_report),
-        target_file="/nonexistent/file.py"
+        audit_report=json.dumps(sample_audit_report), target_file="/nonexistent/file.py"
     )
     result = tool.run()
 
@@ -187,7 +186,9 @@ def test_generate_tests_nonexistent_file(sample_audit_report):
 
 def test_source_file_analysis(sample_source_file):
     """Test source file analysis functionality."""
-    tool = GenerateTests(audit_report=json.dumps({"violations": []}), target_file=sample_source_file)
+    tool = GenerateTests(
+        audit_report=json.dumps({"violations": []}), target_file=sample_source_file
+    )
     analysis = tool._analyze_source_file(sample_source_file)
 
     # Check basic structure - SourceAnalysis is now a Pydantic model
@@ -222,8 +223,7 @@ def test_source_file_analysis(sample_source_file):
 def test_basic_test_generation(sample_source_file, sample_audit_report):
     """Test basic test generation for functions."""
     tool = GenerateTests(
-        audit_report=json.dumps(sample_audit_report),
-        target_file=sample_source_file
+        audit_report=json.dumps(sample_audit_report), target_file=sample_source_file
     )
 
     analysis = tool._analyze_source_file(sample_source_file)
@@ -246,8 +246,7 @@ def test_basic_test_generation(sample_source_file, sample_audit_report):
 def test_edge_case_test_generation(sample_source_file, sample_audit_report):
     """Test edge case test generation."""
     tool = GenerateTests(
-        audit_report=json.dumps(sample_audit_report),
-        target_file=sample_source_file
+        audit_report=json.dumps(sample_audit_report), target_file=sample_source_file
     )
 
     analysis = tool._analyze_source_file(sample_source_file)
@@ -267,8 +266,7 @@ def test_edge_case_test_generation(sample_source_file, sample_audit_report):
 def test_error_condition_test_generation(sample_source_file, sample_audit_report):
     """Test error condition test generation."""
     tool = GenerateTests(
-        audit_report=json.dumps(sample_audit_report),
-        target_file=sample_source_file
+        audit_report=json.dumps(sample_audit_report), target_file=sample_source_file
     )
 
     analysis = tool._analyze_source_file(sample_source_file)
@@ -290,8 +288,7 @@ def test_error_condition_test_generation(sample_source_file, sample_audit_report
 def test_async_test_generation(sample_source_file, sample_audit_report):
     """Test async test generation."""
     tool = GenerateTests(
-        audit_report=json.dumps(sample_audit_report),
-        target_file=sample_source_file
+        audit_report=json.dumps(sample_audit_report), target_file=sample_source_file
     )
 
     analysis = tool._analyze_source_file(sample_source_file)
@@ -314,8 +311,7 @@ def test_async_test_generation(sample_source_file, sample_audit_report):
 def test_comprehensive_test_generation(sample_source_file, sample_audit_report):
     """Test comprehensive test generation."""
     tool = GenerateTests(
-        audit_report=json.dumps(sample_audit_report),
-        target_file=sample_source_file
+        audit_report=json.dumps(sample_audit_report), target_file=sample_source_file
     )
 
     analysis = tool._analyze_source_file(sample_source_file)
@@ -335,8 +331,7 @@ def test_comprehensive_test_generation(sample_source_file, sample_audit_report):
 def test_state_validation_test_generation(sample_source_file, sample_audit_report):
     """Test state validation test generation."""
     tool = GenerateTests(
-        audit_report=json.dumps(sample_audit_report),
-        target_file=sample_source_file
+        audit_report=json.dumps(sample_audit_report), target_file=sample_source_file
     )
 
     analysis = tool._analyze_source_file(sample_source_file)
@@ -354,7 +349,9 @@ def test_state_validation_test_generation(sample_source_file, sample_audit_repor
 
 def test_test_file_path_generation(sample_source_file):
     """Test test file path generation logic."""
-    tool = GenerateTests(audit_report=json.dumps({"violations": []}), target_file=sample_source_file)
+    tool = GenerateTests(
+        audit_report=json.dumps({"violations": []}), target_file=sample_source_file
+    )
 
     test_file_path = tool._get_test_file_path(sample_source_file)
 
@@ -382,8 +379,7 @@ def test_mock_argument_generation():
 def test_test_file_content_generation(sample_source_file, sample_audit_report):
     """Test complete test file content generation."""
     tool = GenerateTests(
-        audit_report=json.dumps(sample_audit_report),
-        target_file=sample_source_file
+        audit_report=json.dumps(sample_audit_report), target_file=sample_source_file
     )
 
     analysis = tool._analyze_source_file(sample_source_file)
@@ -409,12 +405,11 @@ def test_full_test_generation_workflow(sample_source_file, sample_audit_report):
     with tempfile.TemporaryDirectory() as temp_dir:
         # Copy source file to temp directory for isolated testing
         source_path = Path(temp_dir) / "math_utils.py"
-        with open(sample_source_file, 'r') as src:
+        with open(sample_source_file) as src:
             source_path.write_text(src.read())
 
         tool = GenerateTests(
-            audit_report=json.dumps(sample_audit_report),
-            target_file=str(source_path)
+            audit_report=json.dumps(sample_audit_report), target_file=str(source_path)
         )
 
         result = tool.run()
@@ -432,7 +427,7 @@ def test_full_test_generation_workflow(sample_source_file, sample_audit_report):
         assert os.path.exists(test_file_path)
 
         # Verify test file content
-        with open(test_file_path, 'r') as f:
+        with open(test_file_path) as f:
             test_content = f.read()
 
         assert "import pytest" in test_content
@@ -445,8 +440,7 @@ def test_full_test_generation_workflow(sample_source_file, sample_audit_report):
 def test_necessary_compliance_verification(sample_source_file, sample_audit_report):
     """Test that generated tests follow NECESSARY principles."""
     tool = GenerateTests(
-        audit_report=json.dumps(sample_audit_report),
-        target_file=sample_source_file
+        audit_report=json.dumps(sample_audit_report), target_file=sample_source_file
     )
 
     analysis = tool._analyze_source_file(sample_source_file)
@@ -466,7 +460,7 @@ def test_necessary_compliance_verification(sample_source_file, sample_audit_repo
 
 def test_error_handling_in_source_analysis():
     """Test error handling during source file analysis."""
-    with tempfile.NamedTemporaryFile(mode='w', suffix='.py', delete=False) as f:
+    with tempfile.NamedTemporaryFile(mode="w", suffix=".py", delete=False) as f:
         f.write("invalid python syntax ][")
         invalid_file = f.name
 
@@ -488,13 +482,10 @@ def test_severity_filtering(sample_source_file, sample_audit_report):
         {"property": "N", "severity": "critical", "description": "Critical issue"},
         {"property": "E", "severity": "high", "description": "High issue"},
         {"property": "C", "severity": "medium", "description": "Medium issue"},
-        {"property": "S", "severity": "low", "description": "Low issue"}
+        {"property": "S", "severity": "low", "description": "Low issue"},
     ]
 
-    tool = GenerateTests(
-        audit_report=json.dumps(modified_report),
-        target_file=sample_source_file
-    )
+    tool = GenerateTests(audit_report=json.dumps(modified_report), target_file=sample_source_file)
 
     result = tool.run()
     result_data = json.loads(result)
@@ -505,7 +496,9 @@ def test_severity_filtering(sample_source_file, sample_audit_report):
 
 def test_memory_integration(mock_agent_context):
     """Test integration with Memory API."""
-    with patch('test_generator_agent.test_generator_agent.create_agent_context') as mock_create_context:
+    with patch(
+        "test_generator_agent.test_generator_agent.create_agent_context"
+    ) as mock_create_context:
         mock_create_context.return_value = mock_agent_context
 
         create_test_generator_agent(model="gpt-5-mini", reasoning_effort="low")
@@ -524,12 +517,12 @@ def test_test_file_creation_and_naming(sample_source_file):
     """Test test file creation and naming conventions."""
     with tempfile.TemporaryDirectory() as temp_dir:
         source_path = Path(temp_dir) / "calculator.py"
-        with open(sample_source_file, 'r') as src:
+        with open(sample_source_file) as src:
             source_path.write_text(src.read())
 
         tool = GenerateTests(
             audit_report=json.dumps({"violations": [{"property": "N", "severity": "critical"}]}),
-            target_file=str(source_path)
+            target_file=str(source_path),
         )
 
         test_file_path = tool._get_test_file_path(str(source_path))
@@ -557,7 +550,7 @@ def test_basic_test_code_generation():
         has_return=True,
         is_async=False,
         docstring=None,
-        severity_score=0
+        severity_score=0,
     )
 
     test_code = tool._create_basic_test_code(func_info, "math_utils")
@@ -583,7 +576,7 @@ def test_method_test_code_generation():
         has_return=True,
         is_async=False,
         is_property=False,
-        docstring=None
+        docstring=None,
     )
 
     test_code = tool._create_basic_method_test_code(cls_info, method_info, "math_utils")

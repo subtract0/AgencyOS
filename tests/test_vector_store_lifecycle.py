@@ -25,11 +25,10 @@ NECESSARY Criteria:
 - Y: Yieldful - prevents memory leaks and search failures
 """
 
-import pytest
-from unittest.mock import Mock, patch, MagicMock
-from typing import Dict, List
+from unittest.mock import Mock
+
+from agency_memory.vector_store import VectorStore
 from shared.type_definitions.json import JSONValue
-from agency_memory.vector_store import VectorStore, SimilarityResult
 
 
 class TestAddMemory:
@@ -40,10 +39,10 @@ class TestAddMemory:
         # Arrange
         store = VectorStore()
         memory_key = "test_memory_001"
-        memory_content: Dict[str, JSONValue] = {
-            'content': 'Test memory content',
-            'tags': ['test', 'memory'],
-            'timestamp': '2025-10-03T12:00:00Z'
+        memory_content: dict[str, JSONValue] = {
+            "content": "Test memory content",
+            "tags": ["test", "memory"],
+            "timestamp": "2025-10-03T12:00:00Z",
         }
 
         # Act
@@ -51,32 +50,30 @@ class TestAddMemory:
 
         # Assert
         assert memory_key in store._memory_records
-        assert store._memory_records[memory_key]['content'] == 'Test memory content'
+        assert store._memory_records[memory_key]["content"] == "Test memory content"
 
     def test_add_memory_adds_key_to_content_if_missing(self):
         """Should add memory key to content if not present."""
         # Arrange
         store = VectorStore()
         memory_key = "test_memory_002"
-        memory_content: Dict[str, JSONValue] = {
-            'content': 'Test content'
-        }
+        memory_content: dict[str, JSONValue] = {"content": "Test content"}
 
         # Act
         store.add_memory(memory_key, memory_content)
 
         # Assert
-        assert store._memory_records[memory_key]['key'] == memory_key
+        assert store._memory_records[memory_key]["key"] == memory_key
 
     def test_add_memory_generates_searchable_text(self):
         """Should generate searchable text from memory content."""
         # Arrange
         store = VectorStore()
         memory_key = "test_memory_003"
-        memory_content: Dict[str, JSONValue] = {
-            'key': memory_key,
-            'content': 'Important test data',
-            'tags': ['important', 'test']
+        memory_content: dict[str, JSONValue] = {
+            "key": memory_key,
+            "content": "Important test data",
+            "tags": ["important", "test"],
         }
 
         # Act
@@ -85,8 +82,8 @@ class TestAddMemory:
         # Assert
         assert memory_key in store._memory_texts
         searchable_text = store._memory_texts[memory_key]
-        assert 'test_memory_003' in searchable_text
-        assert 'Important test data' in searchable_text
+        assert "test_memory_003" in searchable_text
+        assert "Important test data" in searchable_text
 
     def test_add_memory_generates_embedding_if_provider_available(self):
         """Should generate embedding when embedding provider is available."""
@@ -96,9 +93,7 @@ class TestAddMemory:
         store._embedding_function = mock_embed_fn
 
         memory_key = "test_memory_004"
-        memory_content: Dict[str, JSONValue] = {
-            'content': 'Test content for embedding'
-        }
+        memory_content: dict[str, JSONValue] = {"content": "Test content for embedding"}
 
         # Act
         store.add_memory(memory_key, memory_content)
@@ -110,6 +105,7 @@ class TestAddMemory:
 
     def test_add_memory_handles_embedding_failure_gracefully(self):
         """Should handle embedding generation failure without crashing."""
+
         # Arrange
         def failing_embed_fn(texts):
             raise RuntimeError("Embedding service unavailable")
@@ -118,9 +114,7 @@ class TestAddMemory:
         store._embedding_function = failing_embed_fn
 
         memory_key = "test_memory_005"
-        memory_content: Dict[str, JSONValue] = {
-            'content': 'Test content'
-        }
+        memory_content: dict[str, JSONValue] = {"content": "Test content"}
 
         # Act - should not raise
         store.add_memory(memory_key, memory_content)
@@ -136,15 +130,13 @@ class TestAddMemory:
 
         # Test with dict content
         memory_key_dict = "test_memory_006"
-        memory_content_dict: Dict[str, JSONValue] = {
-            'content': {'nested': 'data', 'values': [1, 2, 3]}
+        memory_content_dict: dict[str, JSONValue] = {
+            "content": {"nested": "data", "values": [1, 2, 3]}
         }
 
         # Test with list content
         memory_key_list = "test_memory_007"
-        memory_content_list: Dict[str, JSONValue] = {
-            'content': ['item1', 'item2', 'item3']
-        }
+        memory_content_list: dict[str, JSONValue] = {"content": ["item1", "item2", "item3"]}
 
         # Act
         store.add_memory(memory_key_dict, memory_content_dict)
@@ -162,60 +154,53 @@ class TestSearch:
         """Should return results matching the search query."""
         # Arrange
         store = VectorStore()
-        store.add_memory('memory_1', {
-            'content': 'Python programming tutorial',
-            'tags': ['python', 'tutorial']
-        })
-        store.add_memory('memory_2', {
-            'content': 'JavaScript framework guide',
-            'tags': ['javascript', 'guide']
-        })
+        store.add_memory(
+            "memory_1", {"content": "Python programming tutorial", "tags": ["python", "tutorial"]}
+        )
+        store.add_memory(
+            "memory_2", {"content": "JavaScript framework guide", "tags": ["javascript", "guide"]}
+        )
 
         # Act
-        results = store.search('python tutorial', limit=10)
+        results = store.search("python tutorial", limit=10)
 
         # Assert
         assert isinstance(results, list)
         assert len(results) > 0
         # Python memory should be in results
-        result_keys = [r.get('key') for r in results]
-        assert 'memory_1' in result_keys
+        result_keys = [r.get("key") for r in results]
+        assert "memory_1" in result_keys
 
     def test_search_filters_by_namespace(self):
         """Should filter results by namespace when provided."""
         # Arrange
         store = VectorStore()
-        store.add_memory('memory_1', {
-            'content': 'Test content 1',
-            'metadata': {'namespace': 'session_123'}
-        })
-        store.add_memory('memory_2', {
-            'content': 'Test content 2',
-            'metadata': {'namespace': 'session_456'}
-        })
+        store.add_memory(
+            "memory_1", {"content": "Test content 1", "metadata": {"namespace": "session_123"}}
+        )
+        store.add_memory(
+            "memory_2", {"content": "Test content 2", "metadata": {"namespace": "session_456"}}
+        )
 
         # Act
-        results = store.search('test', namespace='session_123', limit=10)
+        results = store.search("test", namespace="session_123", limit=10)
 
         # Assert
         # Should only return memories from session_123
         for result in results:
-            metadata = result.get('metadata', {})
+            metadata = result.get("metadata", {})
             if isinstance(metadata, dict):
-                assert metadata.get('namespace') == 'session_123'
+                assert metadata.get("namespace") == "session_123"
 
     def test_search_respects_limit_parameter(self):
         """Should respect the limit parameter for result count."""
         # Arrange
         store = VectorStore()
         for i in range(20):
-            store.add_memory(f'memory_{i}', {
-                'content': f'Test content {i}',
-                'tags': ['test']
-            })
+            store.add_memory(f"memory_{i}", {"content": f"Test content {i}", "tags": ["test"]})
 
         # Act
-        results = store.search('test', limit=5)
+        results = store.search("test", limit=5)
 
         # Assert
         assert len(results) <= 5
@@ -224,13 +209,10 @@ class TestSearch:
         """Should return empty list when no memories match."""
         # Arrange
         store = VectorStore()
-        store.add_memory('memory_1', {
-            'content': 'Python programming',
-            'tags': ['python']
-        })
+        store.add_memory("memory_1", {"content": "Python programming", "tags": ["python"]})
 
         # Act
-        results = store.search('nonexistent query xyz', limit=10)
+        results = store.search("nonexistent query xyz", limit=10)
 
         # Assert
         assert isinstance(results, list)
@@ -242,7 +224,7 @@ class TestSearch:
         store = VectorStore()
 
         # Act
-        results = store.search('any query', limit=10)
+        results = store.search("any query", limit=10)
 
         # Assert
         assert isinstance(results, list)
@@ -252,16 +234,18 @@ class TestSearch:
         """Should catch ValueError and return empty list."""
         # Arrange
         store = VectorStore()
-        store.add_memory('memory_1', {'content': 'Test'})
+        store.add_memory("memory_1", {"content": "Test"})
 
         # Mock hybrid_search to raise ValueError
         original_hybrid_search = store.hybrid_search
+
         def failing_search(*args, **kwargs):
             raise ValueError("Search configuration error")
+
         store.hybrid_search = failing_search
 
         # Act
-        results = store.search('test query', limit=10)
+        results = store.search("test query", limit=10)
 
         # Assert
         assert isinstance(results, list)
@@ -271,15 +255,16 @@ class TestSearch:
         """Should catch KeyError and return empty list."""
         # Arrange
         store = VectorStore()
-        store.add_memory('memory_1', {'content': 'Test'})
+        store.add_memory("memory_1", {"content": "Test"})
 
         # Mock to raise KeyError
         def failing_search(*args, **kwargs):
             raise KeyError("Missing required field")
+
         store.hybrid_search = failing_search
 
         # Act
-        results = store.search('test query', limit=10)
+        results = store.search("test query", limit=10)
 
         # Assert
         assert isinstance(results, list)
@@ -289,15 +274,16 @@ class TestSearch:
         """Should catch unexpected exceptions and return empty list."""
         # Arrange
         store = VectorStore()
-        store.add_memory('memory_1', {'content': 'Test'})
+        store.add_memory("memory_1", {"content": "Test"})
 
         # Mock to raise unexpected exception
         def failing_search(*args, **kwargs):
             raise RuntimeError("Unexpected critical error")
+
         store.hybrid_search = failing_search
 
         # Act
-        results = store.search('test query', limit=10)
+        results = store.search("test query", limit=10)
 
         # Assert
         assert isinstance(results, list)
@@ -307,19 +293,16 @@ class TestSearch:
         """Should include relevance_score and search_type in results."""
         # Arrange
         store = VectorStore()
-        store.add_memory('memory_1', {
-            'content': 'Test content for scoring',
-            'tags': ['test']
-        })
+        store.add_memory("memory_1", {"content": "Test content for scoring", "tags": ["test"]})
 
         # Act
-        results = store.search('test content', limit=10)
+        results = store.search("test content", limit=10)
 
         # Assert
         if len(results) > 0:
             result = results[0]
-            assert 'relevance_score' in result
-            assert 'search_type' in result
+            assert "relevance_score" in result
+            assert "search_type" in result
 
 
 class TestRemoveMemory:
@@ -330,9 +313,9 @@ class TestRemoveMemory:
         # Arrange
         store = VectorStore()
         memory_key = "test_memory_001"
-        memory_content: Dict[str, JSONValue] = {
-            'content': 'Test content to be removed',
-            'tags': ['test']
+        memory_content: dict[str, JSONValue] = {
+            "content": "Test content to be removed",
+            "tags": ["test"],
         }
         store.add_memory(memory_key, memory_content)
 
@@ -367,7 +350,7 @@ class TestRemoveMemory:
         store._embedding_function = mock_embed_fn
 
         memory_key = "test_memory_002"
-        store.add_memory(memory_key, {'content': 'Test content'})
+        store.add_memory(memory_key, {"content": "Test content"})
 
         # Verify embedding exists
         assert memory_key in store._embeddings
@@ -382,17 +365,17 @@ class TestRemoveMemory:
         """Should only remove specified memory, not others."""
         # Arrange
         store = VectorStore()
-        store.add_memory('memory_1', {'content': 'Keep this'})
-        store.add_memory('memory_2', {'content': 'Remove this'})
-        store.add_memory('memory_3', {'content': 'Keep this too'})
+        store.add_memory("memory_1", {"content": "Keep this"})
+        store.add_memory("memory_2", {"content": "Remove this"})
+        store.add_memory("memory_3", {"content": "Keep this too"})
 
         # Act
-        store.remove_memory('memory_2')
+        store.remove_memory("memory_2")
 
         # Assert
-        assert 'memory_1' in store._memory_records
-        assert 'memory_2' not in store._memory_records
-        assert 'memory_3' in store._memory_records
+        assert "memory_1" in store._memory_records
+        assert "memory_2" not in store._memory_records
+        assert "memory_3" in store._memory_records
 
 
 class TestGetStats:
@@ -402,17 +385,17 @@ class TestGetStats:
         """Should return accurate memory and embedding counts."""
         # Arrange
         store = VectorStore()
-        store.add_memory('memory_1', {'content': 'Test 1'})
-        store.add_memory('memory_2', {'content': 'Test 2'})
-        store.add_memory('memory_3', {'content': 'Test 3'})
+        store.add_memory("memory_1", {"content": "Test 1"})
+        store.add_memory("memory_2", {"content": "Test 2"})
+        store.add_memory("memory_3", {"content": "Test 3"})
 
         # Act
         stats = store.get_stats()
 
         # Assert
         assert isinstance(stats, dict)
-        assert stats['total_memories'] == 3
-        assert 'memories_with_embeddings' in stats
+        assert stats["total_memories"] == 3
+        assert "memories_with_embeddings" in stats
 
     def test_get_stats_includes_provider_information(self):
         """Should include embedding provider information."""
@@ -423,8 +406,8 @@ class TestGetStats:
         stats = store.get_stats()
 
         # Assert
-        assert 'embedding_provider' in stats
-        assert stats['embedding_provider'] == "openai"
+        assert "embedding_provider" in stats
+        assert stats["embedding_provider"] == "openai"
 
     def test_get_stats_indicates_embedding_availability(self):
         """Should indicate whether embeddings are available."""
@@ -437,8 +420,8 @@ class TestGetStats:
         stats_with = store_with.get_stats()
 
         # Assert
-        assert 'embedding_available' in stats_without
-        assert 'has_embeddings' in stats_without
+        assert "embedding_available" in stats_without
+        assert "has_embeddings" in stats_without
         # Note: actual availability depends on whether dependencies are installed
 
     def test_get_stats_includes_timestamp(self):
@@ -450,10 +433,11 @@ class TestGetStats:
         stats = store.get_stats()
 
         # Assert
-        assert 'last_updated' in stats
+        assert "last_updated" in stats
         # Verify it's a valid ISO timestamp
         from datetime import datetime
-        datetime.fromisoformat(stats['last_updated'])  # Should not raise
+
+        datetime.fromisoformat(stats["last_updated"])  # Should not raise
 
     def test_get_stats_on_empty_store(self):
         """Should return valid stats for empty store."""
@@ -464,22 +448,22 @@ class TestGetStats:
         stats = store.get_stats()
 
         # Assert
-        assert stats['total_memories'] == 0
-        assert stats['memories_with_embeddings'] == 0
+        assert stats["total_memories"] == 0
+        assert stats["memories_with_embeddings"] == 0
 
     def test_get_stats_after_add_and_remove(self):
         """Should reflect accurate counts after add and remove operations."""
         # Arrange
         store = VectorStore()
-        store.add_memory('memory_1', {'content': 'Test 1'})
-        store.add_memory('memory_2', {'content': 'Test 2'})
-        store.remove_memory('memory_1')
+        store.add_memory("memory_1", {"content": "Test 1"})
+        store.add_memory("memory_2", {"content": "Test 2"})
+        store.remove_memory("memory_1")
 
         # Act
         stats = store.get_stats()
 
         # Assert
-        assert stats['total_memories'] == 1
+        assert stats["total_memories"] == 1
 
 
 class TestVectorStoreIntegration:
@@ -491,33 +475,32 @@ class TestVectorStoreIntegration:
         store = VectorStore()
 
         # Act - Add
-        store.add_memory('task_001', {
-            'content': 'Complete Python refactoring task',
-            'tags': ['task', 'python']
-        })
-        store.add_memory('task_002', {
-            'content': 'Write tests for JavaScript module',
-            'tags': ['task', 'javascript']
-        })
+        store.add_memory(
+            "task_001", {"content": "Complete Python refactoring task", "tags": ["task", "python"]}
+        )
+        store.add_memory(
+            "task_002",
+            {"content": "Write tests for JavaScript module", "tags": ["task", "javascript"]},
+        )
 
         # Act - Search
-        results = store.search('python task', limit=10)
+        results = store.search("python task", limit=10)
         assert len(results) > 0
 
         # Act - Get stats
         stats = store.get_stats()
-        assert stats['total_memories'] == 2
+        assert stats["total_memories"] == 2
 
         # Act - Remove
-        store.remove_memory('task_001')
+        store.remove_memory("task_001")
 
         # Assert final state
         final_stats = store.get_stats()
-        assert final_stats['total_memories'] == 1
-        final_results = store.search('python task', limit=10)
+        assert final_stats["total_memories"] == 1
+        final_results = store.search("python task", limit=10)
         # Python task should not be found anymore
-        result_keys = [r.get('key') for r in final_results]
-        assert 'task_001' not in result_keys
+        result_keys = [r.get("key") for r in final_results]
+        assert "task_001" not in result_keys
 
     def test_concurrent_add_and_search(self):
         """Should handle concurrent add and search operations."""
@@ -526,13 +509,10 @@ class TestVectorStoreIntegration:
 
         # Act - Add multiple memories rapidly
         for i in range(10):
-            store.add_memory(f'memory_{i}', {
-                'content': f'Test content {i}',
-                'tags': ['test']
-            })
+            store.add_memory(f"memory_{i}", {"content": f"Test content {i}", "tags": ["test"]})
 
         # Act - Search while memories are present
-        results = store.search('test content', limit=5)
+        results = store.search("test content", limit=5)
 
         # Assert
         assert len(results) > 0
@@ -543,23 +523,23 @@ class TestVectorStoreIntegration:
         # Arrange
         store = VectorStore()
         original_content = {
-            'content': 'Original test data',
-            'tags': ['original', 'test'],
-            'metadata': {'priority': 'high'}
+            "content": "Original test data",
+            "tags": ["original", "test"],
+            "metadata": {"priority": "high"},
         }
 
         # Act
-        store.add_memory('persistent_memory', original_content)
+        store.add_memory("persistent_memory", original_content)
 
         # Search for it
-        results = store.search('original test', limit=10)
+        results = store.search("original test", limit=10)
 
         # Get stats
         stats = store.get_stats()
 
         # Assert - memory structure preserved
         assert len(results) > 0
-        found_memory = next((r for r in results if r.get('key') == 'persistent_memory'), None)
+        found_memory = next((r for r in results if r.get("key") == "persistent_memory"), None)
         assert found_memory is not None
-        assert found_memory['content'] == 'Original test data'
-        assert stats['total_memories'] == 1
+        assert found_memory["content"] == "Original test data"
+        assert stats["total_memories"] == 1

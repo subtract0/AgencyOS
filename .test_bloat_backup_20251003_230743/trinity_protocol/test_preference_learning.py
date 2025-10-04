@@ -17,11 +17,13 @@ Tests should be updated for new shared.preference_learning API.
 
 import pytest
 
-pytestmark = pytest.mark.skip(reason="Module refactored - AlexPreferenceLearner replaced by PreferenceLearner in shared/")
+pytestmark = pytest.mark.skip(
+    reason="Module refactored - AlexPreferenceLearner replaced by PreferenceLearner in shared/"
+)
 
 # Minimal imports for decorators and type hints (tests won't execute due to skip)
 from datetime import datetime, timedelta
-from typing import List
+
 from shared.preference_learning import ResponseRecord  # Still available in new API
 
 # Module imports commented out - module refactored
@@ -70,7 +72,7 @@ class TestPreferenceModels:
             response_time_seconds=5.2,
             context_before="Alex was reviewing coaching notes",
             day_of_week=DayOfWeek.TUESDAY,
-            time_of_day=TimeOfDay.MORNING
+            time_of_day=TimeOfDay.MORNING,
         )
 
         assert record.response_id == "resp_123"
@@ -88,7 +90,7 @@ class TestPreferenceModels:
             later_count=3,
             ignored_count=2,
             acceptance_rate=0.85,
-            confidence=0.95
+            confidence=0.95,
         )
 
         assert pref.acceptance_rate == 0.85
@@ -104,7 +106,7 @@ class TestPreferenceModels:
             no_count=5,
             acceptance_rate=0.90,
             confidence=0.9,
-            trend="increasing"
+            trend="increasing",
         )
 
         assert pref.acceptance_rate == 0.90
@@ -120,7 +122,7 @@ class TestPreferenceModels:
             yes_count=12,
             acceptance_rate=0.80,
             confidence=0.85,
-            examples=["Example 1", "Example 2"]
+            examples=["Example 1", "Example 2"],
         )
 
         assert len(pattern.context_keywords) == 2
@@ -136,7 +138,7 @@ class TestPreferenceModels:
             description="High acceptance rate on coaching topics",
             evidence=["85% acceptance", "20 responses"],
             confidence=0.90,
-            priority="high"
+            priority="high",
         )
 
         assert rec.priority == "high"
@@ -194,7 +196,7 @@ class TestUtilityFunctions:
             response_type=ResponseType.YES,
             timestamp=timestamp,
             response_time_seconds=3.5,
-            context_before="Context here"
+            context_before="Context here",
         )
 
         # Auto-populated fields
@@ -215,13 +217,11 @@ class TestAlexPreferenceLearner:
     def learner(self):
         """Create learner instance."""
         return AlexPreferenceLearner(
-            min_confidence_threshold=0.6,
-            min_sample_size=10,
-            trend_window_days=7
+            min_confidence_threshold=0.6, min_sample_size=10, trend_window_days=7
         )
 
     @pytest.fixture
-    def sample_responses(self) -> List[ResponseRecord]:
+    def sample_responses(self) -> list[ResponseRecord]:
         """Create sample response data."""
         base_time = datetime(2025, 10, 1, 10, 0)
         responses = []
@@ -237,7 +237,7 @@ class TestAlexPreferenceLearner:
                     response_type=ResponseType.YES if i < 12 else ResponseType.NO,
                     timestamp=base_time + timedelta(hours=i),
                     response_time_seconds=5.0,
-                    context_before="Alex reviewing coaching notes"
+                    context_before="Alex reviewing coaching notes",
                 )
             )
 
@@ -252,7 +252,7 @@ class TestAlexPreferenceLearner:
                     response_type=ResponseType.NO if i < 7 else ResponseType.YES,
                     timestamp=base_time + timedelta(hours=i, minutes=30),
                     response_time_seconds=2.0,
-                    context_before="Alex working on project"
+                    context_before="Alex working on project",
                 )
             )
 
@@ -329,7 +329,7 @@ class TestAlexPreferenceLearner:
                     question_type=QuestionType.HIGH_VALUE,
                     topic_category=TopicCategory.COACHING,
                     response_type=ResponseType.NO if i < 8 else ResponseType.YES,
-                    timestamp=base_time + timedelta(days=i)
+                    timestamp=base_time + timedelta(days=i),
                 )
             )
 
@@ -342,7 +342,7 @@ class TestAlexPreferenceLearner:
                     question_type=QuestionType.HIGH_VALUE,
                     topic_category=TopicCategory.COACHING,
                     response_type=ResponseType.YES if i < 8 else ResponseType.NO,
-                    timestamp=datetime.now() - timedelta(days=6-i)
+                    timestamp=datetime.now() - timedelta(days=6 - i),
                 )
             )
 
@@ -359,7 +359,8 @@ class TestAlexPreferenceLearner:
 
         # Should recommend increasing high-value questions (80% acceptance)
         high_value_recs = [
-            r for r in prefs.recommendations
+            r
+            for r in prefs.recommendations
             if "high_value" in r.title.lower() or "high_value" in r.description.lower()
         ]
         assert len(high_value_recs) > 0
@@ -367,7 +368,8 @@ class TestAlexPreferenceLearner:
         # Should recommend something about low-stakes questions (30% acceptance)
         # Either reduce frequency or acknowledge low acceptance
         low_stakes_recs = [
-            r for r in prefs.recommendations
+            r
+            for r in prefs.recommendations
             if "low_stakes" in r.title.lower() or "low_stakes" in r.description.lower()
         ]
         # Note: Recommendation may not always generate if confidence is low
@@ -390,17 +392,14 @@ class TestAlexPreferenceLearner:
                     topic_category=TopicCategory.BOOK_PROJECT,
                     response_type=ResponseType.YES,
                     timestamp=base_time + timedelta(hours=i),
-                    context_before="Alex mentioned book project in conversation"
+                    context_before="Alex mentioned book project in conversation",
                 )
             )
 
         prefs = learner.analyze_responses(responses)
 
         # Should detect "book" context pattern
-        book_patterns = [
-            p for p in prefs.contextual_patterns
-            if "book" in p.context_keywords
-        ]
+        book_patterns = [p for p in prefs.contextual_patterns if "book" in p.context_keywords]
         assert len(book_patterns) >= 1
 
     def test_overall_acceptance_rate(self, learner, sample_responses):
@@ -435,7 +434,7 @@ class TestPreferenceStore:
             topic_category=TopicCategory.COACHING,
             response_type=ResponseType.YES,
             timestamp=datetime.now(),
-            response_time_seconds=5.0
+            response_time_seconds=5.0,
         )
 
     def test_store_response(self, store, sample_record):
@@ -459,10 +458,7 @@ class TestPreferenceStore:
 
     def test_store_preferences(self, store):
         """Test storing preferences."""
-        prefs = AlexPreferences(
-            total_responses=50,
-            overall_acceptance_rate=0.75
-        )
+        prefs = AlexPreferences(total_responses=50, overall_acceptance_rate=0.75)
 
         snapshot_id = store.store_preferences(prefs, snapshot_reason="test")
 
@@ -477,11 +473,9 @@ class TestPreferenceStore:
         """Test retrieving preference history."""
         # Store multiple snapshots
         import time
+
         for i in range(3):
-            prefs = AlexPreferences(
-                total_responses=i * 10,
-                overall_acceptance_rate=0.5 + (i * 0.1)
-            )
+            prefs = AlexPreferences(total_responses=i * 10, overall_acceptance_rate=0.5 + (i * 0.1))
             store.store_preferences(prefs, snapshot_reason=f"snapshot_{i}")
             time.sleep(0.01)  # Ensure different timestamps
 
@@ -503,14 +497,12 @@ class TestPreferenceStore:
                     question_type=q_type,
                     topic_category=TopicCategory.COACHING,
                     response_type=ResponseType.YES,
-                    timestamp=datetime.now()
+                    timestamp=datetime.now(),
                 )
                 store.store_response(record)
 
         # Query high-value only
-        high_value_responses = store.query_responses(
-            question_type=QuestionType.HIGH_VALUE.value
-        )
+        high_value_responses = store.query_responses(question_type=QuestionType.HIGH_VALUE.value)
 
         assert len(high_value_responses) == 3
         assert all(r.question_type == QuestionType.HIGH_VALUE for r in high_value_responses)
@@ -527,7 +519,7 @@ class TestPreferenceStore:
                 question_type=QuestionType.HIGH_VALUE,
                 topic_category=TopicCategory.COACHING,
                 response_type=ResponseType.YES,
-                timestamp=base_time + timedelta(days=i)
+                timestamp=base_time + timedelta(days=i),
             )
             store.store_response(record)
 
@@ -600,7 +592,7 @@ class TestPreferenceLearningIntegration:
                 topic_category=TopicCategory.COACHING,
                 response_type=ResponseType.YES if i < 16 else ResponseType.NO,
                 timestamp=base_time + timedelta(hours=i),
-                context_before="coaching discussion"
+                context_before="coaching discussion",
             )
             store.store_response(record)
 
@@ -613,7 +605,7 @@ class TestPreferenceLearningIntegration:
                 topic_category=TopicCategory.FOOD,
                 response_type=ResponseType.NO if i < 8 else ResponseType.YES,
                 timestamp=base_time + timedelta(hours=i),
-                context_before="work session"
+                context_before="work session",
             )
             store.store_response(record)
 
@@ -642,7 +634,8 @@ class TestPreferenceLearningIntegration:
 
         # Should recommend more coaching questions
         coaching_recs = [
-            r for r in preferences.recommendations
+            r
+            for r in preferences.recommendations
             if "coaching" in r.title.lower() or "coaching" in r.description.lower()
         ]
         assert len(coaching_recs) > 0
@@ -661,7 +654,7 @@ class TestPreferenceLearningIntegration:
                 question_type=QuestionType.HIGH_VALUE,
                 topic_category=TopicCategory.COACHING,
                 response_type=ResponseType.NO if i < 7 else ResponseType.YES,
-                timestamp=base_time + timedelta(days=i)
+                timestamp=base_time + timedelta(days=i),
             )
             store.store_response(record)
 
@@ -681,7 +674,7 @@ class TestPreferenceLearningIntegration:
                 question_type=QuestionType.HIGH_VALUE,
                 topic_category=TopicCategory.COACHING,
                 response_type=ResponseType.YES if i < 8 else ResponseType.NO,
-                timestamp=datetime.now() - timedelta(days=6-i)
+                timestamp=datetime.now() - timedelta(days=6 - i),
             )
             store.store_response(record)
 

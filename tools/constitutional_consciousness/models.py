@@ -7,9 +7,8 @@ Constitutional Compliance:
 - Strict type safety throughout
 """
 
+
 from pydantic import BaseModel, Field
-from typing import List, Optional
-from datetime import datetime
 
 
 class ConstitutionalPattern(BaseModel):
@@ -17,12 +16,14 @@ class ConstitutionalPattern(BaseModel):
 
     pattern_id: str = Field(..., description="Unique pattern identifier")
     function_name: str = Field(..., description="Function triggering violations")
-    articles_violated: List[str] = Field(..., description="Constitutional articles violated")
+    articles_violated: list[str] = Field(..., description="Constitutional articles violated")
     frequency: int = Field(..., ge=0, description="Number of occurrences")
     confidence: float = Field(..., ge=0.0, le=1.0, description="Pattern confidence score")
-    roi_hours_saved: float = Field(..., ge=0.0, description="Estimated hours saved per year by fixing")
+    roi_hours_saved: float = Field(
+        ..., ge=0.0, description="Estimated hours saved per year by fixing"
+    )
     roi_cost_saved: float = Field(..., ge=0.0, description="Estimated cost saved per year (USD)")
-    fix_suggestion: Optional[str] = Field(None, description="Suggested fix or remediation")
+    fix_suggestion: str | None = Field(None, description="Suggested fix or remediation")
     first_seen: str = Field(..., description="ISO timestamp of first occurrence")
     last_seen: str = Field(..., description="ISO timestamp of last occurrence")
     trend: str = Field(..., description="Trend: INCREASING, STABLE, DECREASING")
@@ -50,11 +51,15 @@ class CycleReport(BaseModel):
 
     cycle_timestamp: str = Field(..., description="ISO timestamp of cycle execution")
     violations_analyzed: int = Field(..., ge=0, description="Total violations analyzed")
-    patterns_detected: List[ConstitutionalPattern] = Field(default_factory=list)
-    predictions: List[ViolationPrediction] = Field(default_factory=list)
-    fixes_suggested: List[dict] = Field(default_factory=list, description="Fix suggestions")
-    agents_evolved: List[str] = Field(default_factory=list, description="Agents updated with learnings")
-    total_roi_potential: float = Field(default=0.0, ge=0.0, description="Total potential ROI in USD")
+    patterns_detected: list[ConstitutionalPattern] = Field(default_factory=list)
+    predictions: list[ViolationPrediction] = Field(default_factory=list)
+    fixes_suggested: list[dict] = Field(default_factory=list, description="Fix suggestions")
+    agents_evolved: list[str] = Field(
+        default_factory=list, description="Agents updated with learnings"
+    )
+    total_roi_potential: float = Field(
+        default=0.0, ge=0.0, description="Total potential ROI in USD"
+    )
     vectorstore_updated: bool = Field(default=False, description="VectorStore integration status")
 
     @property

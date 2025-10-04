@@ -19,13 +19,13 @@ Constitutional Compliance:
 - Functions <50 lines
 """
 
-from typing import Dict, Any, List, Optional, Literal, Callable
-from shared.type_definitions.json_value import JSONValue
-from pydantic import BaseModel, Field, validator
+from collections.abc import Callable
 from dataclasses import dataclass
-from datetime import datetime
-import re
+from typing import Literal
 
+from pydantic import BaseModel, Field, validator
+
+from shared.type_definitions.json_value import JSONValue
 
 # Type definitions
 PatternType = Literal["failure", "opportunity", "user_intent"]
@@ -34,13 +34,14 @@ PatternType = Literal["failure", "opportunity", "user_intent"]
 # Pydantic models
 class Pattern(BaseModel):
     """Detected pattern result."""
+
     pattern_id: str = Field(..., description="Unique pattern identifier")
     pattern_type: PatternType = Field(..., description="Type of pattern")
     pattern_name: str = Field(..., description="Specific pattern name")
     description: str = Field(..., description="Pattern description")
     confidence: float = Field(..., ge=0.0, le=1.0, description="Confidence score")
     occurrences: int = Field(default=1, ge=1, description="Number of occurrences")
-    examples: List[JSONValue] = Field(default_factory=list, description="Example instances")
+    examples: list[JSONValue] = Field(default_factory=list, description="Example instances")
     metadata: JSONValue = Field(default_factory=dict, description="Additional metadata")
 
     @validator("confidence")
@@ -54,16 +55,17 @@ class Pattern(BaseModel):
 @dataclass
 class PatternMatch:
     """Result of pattern detection (internal use)."""
+
     pattern_type: PatternType
     pattern_name: str
     confidence: float
-    keywords_matched: List[str]
+    keywords_matched: list[str]
     base_score: float
     keyword_score: float
 
 
 # Pattern heuristics with keyword weights
-PATTERN_HEURISTICS: Dict[PatternType, Dict[str, Dict[str, float]]] = {
+PATTERN_HEURISTICS: dict[PatternType, dict[str, dict[str, float]]] = {
     "failure": {
         "critical_error": {
             "fatal": 0.25,
@@ -72,7 +74,7 @@ PATTERN_HEURISTICS: Dict[PatternType, Dict[str, Dict[str, float]]] = {
             "importerror": 0.20,
             "systemexit": 0.20,
             "exception": 0.10,
-            "traceback": 0.10
+            "traceback": 0.10,
         },
         "performance_regression": {
             "timeout": 0.25,
@@ -80,7 +82,7 @@ PATTERN_HEURISTICS: Dict[PatternType, Dict[str, Dict[str, float]]] = {
             "exceeded limit": 0.20,
             "slow": 0.15,
             "performance": 0.15,
-            "regression": 0.20
+            "regression": 0.20,
         },
         "flaky_test": {
             "test failed": 0.20,
@@ -88,7 +90,7 @@ PATTERN_HEURISTICS: Dict[PatternType, Dict[str, Dict[str, float]]] = {
             "intermittent": 0.20,
             "sometimes passes": 0.20,
             "flaky": 0.25,
-            "non-deterministic": 0.15
+            "non-deterministic": 0.15,
         },
         "integration_failure": {
             "api error": 0.20,
@@ -98,8 +100,8 @@ PATTERN_HEURISTICS: Dict[PatternType, Dict[str, Dict[str, float]]] = {
             "401": 0.20,
             "403": 0.20,
             "500": 0.20,
-            "503": 0.15
-        }
+            "503": 0.15,
+        },
     },
     "opportunity": {
         "constitutional_violation": {
@@ -109,7 +111,7 @@ PATTERN_HEURISTICS: Dict[PatternType, Dict[str, Dict[str, float]]] = {
             "bypass": 0.25,
             "skip test": 0.25,
             "# type: ignore": 0.15,
-            "try/catch": 0.10
+            "try/catch": 0.10,
         },
         "code_duplication": {
             "similar code": 0.25,
@@ -117,7 +119,7 @@ PATTERN_HEURISTICS: Dict[PatternType, Dict[str, Dict[str, float]]] = {
             "copy-paste": 0.20,
             "dry violation": 0.25,
             "duplicate": 0.20,
-            "repetition": 0.15
+            "repetition": 0.15,
         },
         "missing_tests": {
             "no tests": 0.30,
@@ -125,7 +127,7 @@ PATTERN_HEURISTICS: Dict[PatternType, Dict[str, Dict[str, float]]] = {
             "coverage low": 0.20,
             "0% coverage": 0.30,
             "missing test": 0.25,
-            "test gap": 0.20
+            "test gap": 0.20,
         },
         "type_safety": {
             "any": 0.20,
@@ -133,8 +135,8 @@ PATTERN_HEURISTICS: Dict[PatternType, Dict[str, Dict[str, float]]] = {
             "missing type hints": 0.25,
             "# type: ignore": 0.20,
             "no type": 0.15,
-            "type error": 0.20
-        }
+            "type error": 0.20,
+        },
     },
     "user_intent": {
         "recurring_topic": {
@@ -142,7 +144,7 @@ PATTERN_HEURISTICS: Dict[PatternType, Dict[str, Dict[str, float]]] = {
             "again": 0.15,
             "mentioned >3x": 0.30,
             "keeps coming up": 0.25,
-            "frequently": 0.20
+            "frequently": 0.20,
         },
         "feature_request": {
             "i need": 0.25,
@@ -150,7 +152,7 @@ PATTERN_HEURISTICS: Dict[PatternType, Dict[str, Dict[str, float]]] = {
             "please implement": 0.25,
             "would like": 0.20,
             "feature request": 0.30,
-            "new feature": 0.25
+            "new feature": 0.25,
         },
         "workflow_bottleneck": {
             "i always manually": 0.25,
@@ -158,7 +160,7 @@ PATTERN_HEURISTICS: Dict[PatternType, Dict[str, Dict[str, float]]] = {
             "repetitive task": 0.25,
             "slow process": 0.20,
             "time-consuming": 0.20,
-            "automate": 0.20
+            "automate": 0.20,
         },
         "frustration_signal": {
             "why doesn't": 0.20,
@@ -167,25 +169,21 @@ PATTERN_HEURISTICS: Dict[PatternType, Dict[str, Dict[str, float]]] = {
             "unclear": 0.15,
             "broken": 0.15,
             "not working": 0.15,
-            "frustrated": 0.25
-        }
-    }
+            "frustrated": 0.25,
+        },
+    },
 }
 
 
 # Base confidence scores per pattern type
-BASE_CONFIDENCE: Dict[PatternType, float] = {
-    "failure": 0.7,
-    "opportunity": 0.6,
-    "user_intent": 0.5
-}
+BASE_CONFIDENCE: dict[PatternType, float] = {"failure": 0.7, "opportunity": 0.6, "user_intent": 0.5}
 
 
 # Adaptive threshold adjustments
 ADAPTIVE_THRESHOLDS = {
     "critical_error": {"min_occurrences": 3, "threshold_reduction": 0.1},
     "flaky_test": {"min_occurrences": 2, "threshold_reduction": 0.15},
-    "constitutional_violation": {"min_occurrences": 1, "threshold_reduction": 0.0}
+    "constitutional_violation": {"min_occurrences": 1, "threshold_reduction": 0.0},
 }
 
 
@@ -212,14 +210,12 @@ class PatternDetector:
             min_confidence: Minimum confidence threshold for pattern matches
         """
         self.min_confidence = min_confidence
-        self.pattern_history: Dict[str, int] = {}
-        self.custom_detectors: Dict[str, Callable] = {}
+        self.pattern_history: dict[str, int] = {}
+        self.custom_detectors: dict[str, Callable] = {}
 
     def detect(
-        self,
-        event_text: str,
-        metadata: Optional[JSONValue] = None
-    ) -> Optional[PatternMatch]:
+        self, event_text: str, metadata: JSONValue | None = None
+    ) -> PatternMatch | None:
         """
         Detect pattern in event text.
 
@@ -243,22 +239,16 @@ class PatternDetector:
         return None
 
     def _find_best_match(
-        self,
-        event_lower: str,
-        metadata: Optional[JSONValue]
-    ) -> Optional[PatternMatch]:
+        self, event_lower: str, metadata: JSONValue | None
+    ) -> PatternMatch | None:
         """Find best matching pattern."""
-        best_match: Optional[PatternMatch] = None
+        best_match: PatternMatch | None = None
         best_confidence = 0.0
 
         for pattern_type in PATTERN_HEURISTICS:
             for pattern_name, keywords in PATTERN_HEURISTICS[pattern_type].items():
                 match = self._calculate_match(
-                    pattern_type,
-                    pattern_name,
-                    event_lower,
-                    keywords,
-                    metadata
+                    pattern_type, pattern_name, event_lower, keywords, metadata
                 )
 
                 if match.confidence > best_confidence:
@@ -272,22 +262,16 @@ class PatternDetector:
         pattern_type: PatternType,
         pattern_name: str,
         event_lower: str,
-        keywords: Dict[str, float],
-        metadata: Optional[JSONValue]
+        keywords: dict[str, float],
+        metadata: JSONValue | None,
     ) -> PatternMatch:
         """Calculate pattern match confidence."""
         base_score = BASE_CONFIDENCE[pattern_type]
-        keyword_score = self._calculate_keyword_score(
-            event_lower, keywords
-        )
-        matched_keywords = self._get_matched_keywords(
-            event_lower, keywords
-        )
+        keyword_score = self._calculate_keyword_score(event_lower, keywords)
+        matched_keywords = self._get_matched_keywords(event_lower, keywords)
 
         if metadata:
-            keyword_score += self._metadata_bonus(
-                pattern_type, pattern_name, metadata
-            )
+            keyword_score += self._metadata_bonus(pattern_type, pattern_name, metadata)
 
         confidence = min(1.0, base_score + keyword_score)
 
@@ -297,14 +281,10 @@ class PatternDetector:
             confidence=confidence,
             keywords_matched=matched_keywords,
             base_score=base_score,
-            keyword_score=keyword_score
+            keyword_score=keyword_score,
         )
 
-    def _calculate_keyword_score(
-        self,
-        event_lower: str,
-        keywords: Dict[str, float]
-    ) -> float:
+    def _calculate_keyword_score(self, event_lower: str, keywords: dict[str, float]) -> float:
         """Calculate keyword match score."""
         score = 0.0
         for keyword, weight in keywords.items():
@@ -312,11 +292,7 @@ class PatternDetector:
                 score += weight
         return score
 
-    def _get_matched_keywords(
-        self,
-        event_lower: str,
-        keywords: Dict[str, float]
-    ) -> List[str]:
+    def _get_matched_keywords(self, event_lower: str, keywords: dict[str, float]) -> list[str]:
         """Get list of matched keywords."""
         matched = []
         for keyword in keywords.keys():
@@ -325,10 +301,7 @@ class PatternDetector:
         return matched
 
     def _metadata_bonus(
-        self,
-        pattern_type: PatternType,
-        pattern_name: str,
-        metadata: JSONValue
+        self, pattern_type: PatternType, pattern_name: str, metadata: JSONValue
     ) -> float:
         """Calculate bonus from metadata."""
         bonus = 0.0
@@ -339,11 +312,7 @@ class PatternDetector:
 
         return bonus
 
-    def _error_type_bonus(
-        self,
-        pattern_name: str,
-        metadata: JSONValue
-    ) -> float:
+    def _error_type_bonus(self, pattern_name: str, metadata: JSONValue) -> float:
         """Calculate error type bonus."""
         if "error_type" not in metadata:
             return 0.0
@@ -358,11 +327,7 @@ class PatternDetector:
 
         return 0.0
 
-    def _file_extension_bonus(
-        self,
-        pattern_name: str,
-        metadata: JSONValue
-    ) -> float:
+    def _file_extension_bonus(self, pattern_name: str, metadata: JSONValue) -> float:
         """Calculate file extension bonus."""
         if "file" not in metadata:
             return 0.0
@@ -379,10 +344,7 @@ class PatternDetector:
             return 0.05
         return 0.0
 
-    def _apply_adaptive_threshold(
-        self,
-        match: PatternMatch
-    ) -> Optional[PatternMatch]:
+    def _apply_adaptive_threshold(self, match: PatternMatch) -> PatternMatch | None:
         """Apply adaptive threshold and update history."""
         threshold = self._get_adaptive_threshold(match.pattern_name)
 
@@ -424,28 +386,22 @@ class PatternDetector:
             "total_detections": total,
             "unique_patterns": len(self.pattern_history),
             "pattern_counts": dict(self.pattern_history),
-            "most_common": self._get_most_common(5)
+            "most_common": self._get_most_common(5),
         }
 
-    def _get_most_common(self, limit: int) -> List[tuple]:
+    def _get_most_common(self, limit: int) -> list[tuple]:
         """Get most common patterns."""
         if not self.pattern_history:
             return []
 
-        return sorted(
-            self.pattern_history.items(),
-            key=lambda x: x[1],
-            reverse=True
-        )[:limit]
+        return sorted(self.pattern_history.items(), key=lambda x: x[1], reverse=True)[:limit]
 
     def reset_history(self) -> None:
         """Reset pattern history (for new sessions)."""
         self.pattern_history.clear()
 
     def register_detector(
-        self,
-        name: str,
-        detector_func: Callable[[str, Optional[Dict]], Optional[PatternMatch]]
+        self, name: str, detector_func: Callable[[str, dict | None], PatternMatch | None]
     ) -> None:
         """
         Register custom pattern detector.
@@ -457,10 +413,8 @@ class PatternDetector:
         self.custom_detectors[name] = detector_func
 
     def detect_with_custom(
-        self,
-        event_text: str,
-        metadata: Optional[JSONValue] = None
-    ) -> Optional[PatternMatch]:
+        self, event_text: str, metadata: JSONValue | None = None
+    ) -> PatternMatch | None:
         """
         Detect using both built-in and custom detectors.
 

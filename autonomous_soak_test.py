@@ -18,26 +18,22 @@ Constitutional Compliance:
 - Article V: Spec-driven implementation
 """
 
+import argparse
+import asyncio
+import json
 import os
+import random
+import subprocess
 import sys
 import time
-import json
-import random
-import asyncio
-import argparse
-import subprocess
-import time
-import json
-from pathlib import Path
 from datetime import datetime, timedelta
-from typing import Dict, Any, List, Optional, Tuple
+from pathlib import Path
 
 # Enable unified core
 os.environ["ENABLE_UNIFIED_CORE"] = "true"
 
 from core import get_core, get_learning_loop
-from core.telemetry import get_telemetry, emit
-from learning_loop import LearningLoop
+from core.telemetry import emit, get_telemetry
 
 REPO_ROOT = Path(__file__).resolve().parent
 
@@ -63,7 +59,7 @@ class SoakTestMonitor:
             "healing_successes": 0,
             "api_calls": 0,
             "api_cost": 0.0,
-            "errors": []
+            "errors": [],
         }
         self.core = get_core()
         self.telemetry = get_telemetry()
@@ -90,11 +86,13 @@ class SoakTestMonitor:
                     # Avoid hanging per rules: bounded startup
                     await asyncio.wait_for(self.learning_loop.start(), timeout=5.0)
                     print("✅ Learning loop started")
-                except asyncio.TimeoutError:
+                except TimeoutError:
                     print("⚠️  Learning loop start timed out after 5s; proceeding without it")
                     self.learning_loop = None
             else:
-                print("⚠️  Learning loop not available or missing 'start' method; proceeding without it")
+                print(
+                    "⚠️  Learning loop not available or missing 'start' method; proceeding without it"
+                )
                 self.learning_loop = None
         except Exception as e:
             print(f"⚠️  Learning loop not available: {e}")
@@ -131,7 +129,7 @@ class SoakTestMonitor:
             try:
                 await asyncio.wait_for(self.learning_loop.stop(), timeout=5.0)
                 print("\n✅ Learning loop stopped")
-            except asyncio.TimeoutError:
+            except TimeoutError:
                 print("\n⚠️  Learning loop stop timed out after 5s; continuing shutdown")
         elif self.learning_loop:
             print("\n⚠️  Learning loop lacks 'stop' method; skipping shutdown step")
@@ -141,21 +139,16 @@ class SoakTestMonitor:
 
     async def simulate_event(self):
         """Simulate various system events for testing."""
-        event_types = [
-            "file_modified",
-            "error_detected",
-            "test_failure",
-            "pattern_matched"
-        ]
+        event_types = ["file_modified", "error_detected", "test_failure", "pattern_matched"]
 
         event_type = random.choice(event_types)
         self.metrics["events_detected"] += 1
 
         # Log the event
-        emit(f"soak_test_{event_type}", {
-            "iteration": self.metrics["events_detected"],
-            "timestamp": datetime.now().isoformat()
-        })
+        emit(
+            f"soak_test_{event_type}",
+            {"iteration": self.metrics["events_detected"], "timestamp": datetime.now().isoformat()},
+        )
 
         # Simulate API call cost (rough estimates)
         if event_type == "error_detected":
@@ -189,9 +182,11 @@ class SoakTestMonitor:
         """Print current status."""
         print(f"\n📊 Status Update - {datetime.now().strftime('%H:%M:%S')}")
         print(f"   Elapsed: {elapsed:.0f}s | Remaining: {remaining:.0f}s")
-        print(f"   Events: {self.metrics['events_detected']} | "
-              f"Patterns: {self.metrics['patterns_learned']} | "
-              f"Heals: {self.metrics['healing_successes']}/{self.metrics['healing_attempts']}")
+        print(
+            f"   Events: {self.metrics['events_detected']} | "
+            f"Patterns: {self.metrics['patterns_learned']} | "
+            f"Heals: {self.metrics['healing_successes']}/{self.metrics['healing_attempts']}"
+        )
         print(f"   API Cost: ${self.metrics['api_cost']:.2f} / ${self.budget:.2f}")
 
         # Check system health
@@ -209,28 +204,31 @@ class SoakTestMonitor:
         print(f"\n⏱️  Duration: {duration:.0f} seconds ({duration / 60:.1f} minutes)")
         print(f"🎯 Events Detected: {self.metrics['events_detected']}")
         print(f"📚 Patterns Learned: {self.metrics['patterns_learned']}")
-        print(f"🏥 Healing Success Rate: ", end="")
+        print("🏥 Healing Success Rate: ", end="")
 
         success_rate = 0.0  # default when there are no attempts
-        if self.metrics['healing_attempts'] > 0:
-            success_rate = (self.metrics['healing_successes'] /
-                            self.metrics['healing_attempts']) * 100
-            print(f"{success_rate:.1f}% "
-                  f"({self.metrics['healing_successes']}/{self.metrics['healing_attempts']})")
+        if self.metrics["healing_attempts"] > 0:
+            success_rate = (
+                self.metrics["healing_successes"] / self.metrics["healing_attempts"]
+            ) * 100
+            print(
+                f"{success_rate:.1f}% "
+                f"({self.metrics['healing_successes']}/{self.metrics['healing_attempts']})"
+            )
         else:
             print("No healing attempts")
 
         print(f"💰 API Usage: ${self.metrics['api_cost']:.2f} / ${self.budget:.2f}")
         print(f"📞 API Calls: {self.metrics['api_calls']}")
 
-        if self.metrics['errors']:
+        if self.metrics["errors"]:
             print(f"\n⚠️  Errors Encountered: {len(self.metrics['errors'])}")
-            for error in self.metrics['errors'][:5]:  # Show first 5 errors
+            for error in self.metrics["errors"][:5]:  # Show first 5 errors
                 print(f"   - {error}")
 
         # System health at end
         health = self.core.get_health_status()
-        print(f"\n🏥 Final System Health:")
+        print("\n🏥 Final System Health:")
         print(f"   Status: {health['status']}")
         print(f"   Health Score: {health['health_score']:.1f}%")
         print(f"   Pattern Count: {health['pattern_count']}")
@@ -238,7 +236,7 @@ class SoakTestMonitor:
 
         # Verdict
         print("\n" + "-" * 60)
-        if success_rate >= 60 and health['health_score'] >= 80:
+        if success_rate >= 60 and health["health_score"] >= 80:
             print("✅ SOAK TEST PASSED")
             print("   The system maintained stability and learning capability")
         else:
@@ -249,17 +247,23 @@ class SoakTestMonitor:
 
         # Save report to file
         report_file = f"soak_test_report_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json"
-        with open(report_file, 'w') as f:
-            json.dump({
-                "duration": duration,
-                "metrics": self.metrics,
-                "health": health,
-                "timestamp": datetime.now().isoformat()
-            }, f, indent=2)
+        with open(report_file, "w") as f:
+            json.dump(
+                {
+                    "duration": duration,
+                    "metrics": self.metrics,
+                    "health": health,
+                    "timestamp": datetime.now().isoformat(),
+                },
+                f,
+                indent=2,
+            )
         print(f"📄 Full report saved to: {report_file}")
 
 
-def _execute_verification_script(report: Optional[str], markdown: bool, timeout_seconds: int) -> Tuple[int, Path, Optional[Path]]:
+def _execute_verification_script(
+    report: str | None, markdown: bool, timeout_seconds: int
+) -> tuple[int, Path, Path | None]:
     """Execute the verify_soak.py script and return results.
 
     Returns:
@@ -273,7 +277,8 @@ def _execute_verification_script(report: Optional[str], markdown: bool, timeout_
     cmd = [
         sys.executable,
         str(REPO_ROOT / "commands" / "verify_soak.py"),
-        "--output", str(json_out),
+        "--output",
+        str(json_out),
     ]
     if report:
         cmd += ["--report", report]
@@ -284,7 +289,15 @@ def _execute_verification_script(report: Optional[str], markdown: bool, timeout_
     env["PERSIST_PATTERNS"] = "true"
 
     try:
-        res = subprocess.run(cmd, cwd=str(REPO_ROOT), env=env, text=True, capture_output=True, timeout=timeout_seconds, check=False)
+        res = subprocess.run(
+            cmd,
+            cwd=str(REPO_ROOT),
+            env=env,
+            text=True,
+            capture_output=True,
+            timeout=timeout_seconds,
+            check=False,
+        )
     except subprocess.TimeoutExpired:
         print("❌ verify_soak.py timed out; aborting", file=sys.stderr)
         return 1, json_out, None
@@ -299,7 +312,7 @@ def _execute_verification_script(report: Optional[str], markdown: bool, timeout_
     return 0, json_out, md_path
 
 
-def _publish_to_dashboard(json_out: Path, md_path: Optional[Path]) -> bool:
+def _publish_to_dashboard(json_out: Path, md_path: Path | None) -> bool:
     """Publish results to dashboard by creating symlinks and emitting telemetry.
 
     Returns:
@@ -308,7 +321,7 @@ def _publish_to_dashboard(json_out: Path, md_path: Optional[Path]) -> bool:
     analysis_dir = json_out.parent
     ok = True
 
-    def _link_or_copy(src: Optional[Path], dest_name: str):
+    def _link_or_copy(src: Path | None, dest_name: str):
         nonlocal ok
         if not src or not src.exists():
             return
@@ -323,6 +336,7 @@ def _publish_to_dashboard(json_out: Path, md_path: Optional[Path]) -> bool:
         except Exception:
             try:
                 import shutil as _sh
+
                 _sh.copy2(src, dest)
             except Exception:
                 ok = False
@@ -331,11 +345,14 @@ def _publish_to_dashboard(json_out: Path, md_path: Optional[Path]) -> bool:
     _link_or_copy(md_path, "latest_soak_verification.md")
 
     try:
-        emit("soak_verification_posted", {
-            "json": str(json_out) if json_out.exists() else None,
-            "markdown": str(md_path) if (md_path and md_path.exists()) else None,
-            "channel": "dashboard"
-        })
+        emit(
+            "soak_verification_posted",
+            {
+                "json": str(json_out) if json_out.exists() else None,
+                "markdown": str(md_path) if (md_path and md_path.exists()) else None,
+                "channel": "dashboard",
+            },
+        )
     except Exception:
         pass
 
@@ -355,7 +372,7 @@ def _check_github_cli_available() -> bool:
         return False
 
 
-def _parse_repository_info(repo: Optional[str]) -> Tuple[Optional[str], Optional[str]]:
+def _parse_repository_info(repo: str | None) -> tuple[str | None, str | None]:
     """Parse repository information from input or environment.
 
     Args:
@@ -376,7 +393,7 @@ def _parse_repository_info(repo: Optional[str]) -> Tuple[Optional[str], Optional
     return owner, name
 
 
-def _auto_detect_pr_number(current_pr: Optional[int]) -> Optional[int]:
+def _auto_detect_pr_number(current_pr: int | None) -> int | None:
     """Auto-detect PR number from GitHub event if not provided."""
     if current_pr:
         return current_pr
@@ -398,7 +415,9 @@ def _post_via_github_api(md_file: Path, pr_number: int, owner: str, name: str) -
         print("⚠️  No gh CLI and no GITHUB_TOKEN available — cannot post PR comment.")
         return False
 
-    import urllib.request, urllib.error
+    import urllib.error
+    import urllib.request
+
     api = f"https://api.github.com/repos/{owner}/{name}/issues/{pr_number}/comments"
     body = json.dumps({"body": md_file.read_text()}).encode("utf-8")
     req = urllib.request.Request(api, data=body, method="POST")
@@ -414,7 +433,7 @@ def _post_via_github_api(md_file: Path, pr_number: int, owner: str, name: str) -
         return False
 
 
-def _post_pr_comment(md_file: Path, pr_number: Optional[int], repo: Optional[str]) -> bool:
+def _post_pr_comment(md_file: Path, pr_number: int | None, repo: str | None) -> bool:
     """Post comment to a GitHub Pull Request.
 
     Args:
@@ -446,7 +465,7 @@ def _post_pr_comment(md_file: Path, pr_number: Optional[int], repo: Optional[str
     return _post_via_github_api(md_file, local_pr, owner, name)
 
 
-def _post_issue_comment(md_file: Path, issue_number: Optional[int], repo: Optional[str]) -> bool:
+def _post_issue_comment(md_file: Path, issue_number: int | None, repo: str | None) -> bool:
     """Post comment to a GitHub Issue.
 
     Args:
@@ -478,7 +497,9 @@ def _post_issue_comment(md_file: Path, issue_number: Optional[int], repo: Option
         print("⚠️  Missing --repo owner/repo or --issue-number for REST API posting.")
         return False
 
-    import urllib.request, urllib.error
+    import urllib.error
+    import urllib.request
+
     api = f"https://api.github.com/repos/{owner}/{name}/issues/{issue_number}/comments"
     body = json.dumps({"body": md_file.read_text()}).encode("utf-8")
     req = urllib.request.Request(api, data=body, method="POST")
@@ -494,7 +515,15 @@ def _post_issue_comment(md_file: Path, issue_number: Optional[int], repo: Option
         return False
 
 
-def _verify_soak(report: Optional[str], channel: str, markdown: bool, pr_number: Optional[int], issue_number: Optional[int], repo: Optional[str], timeout_seconds: int) -> int:
+def _verify_soak(
+    report: str | None,
+    channel: str,
+    markdown: bool,
+    pr_number: int | None,
+    issue_number: int | None,
+    repo: str | None,
+    timeout_seconds: int,
+) -> int:
     """Run verify_soak.py and publish results to a channel.
 
     Returns an exit code (0 success, non-zero on posting failures).
@@ -514,15 +543,22 @@ def _verify_soak(report: Optional[str], channel: str, markdown: bool, pr_number:
             print("⚠️  Markdown output is required for PR/issue comment. Re-run with --markdown.")
             return 2
 
-        posted = _post_pr_comment(md_path, pr_number, repo) if channel == "pr" else _post_issue_comment(md_path, issue_number, repo)
+        posted = (
+            _post_pr_comment(md_path, pr_number, repo)
+            if channel == "pr"
+            else _post_issue_comment(md_path, issue_number, repo)
+        )
 
         try:
-            emit("soak_verification_posted", {
-                "json": str(json_out),
-                "markdown": str(md_path),
-                "channel": channel,
-                "posted": posted,
-            })
+            emit(
+                "soak_verification_posted",
+                {
+                    "json": str(json_out),
+                    "markdown": str(md_path),
+                    "channel": channel,
+                    "posted": posted,
+                },
+            )
         except Exception:
             pass
 
@@ -540,23 +576,42 @@ def main():
         "--duration",
         type=int,
         default=3600,
-        help="Test duration in seconds (default: 3600 = 1 hour)"
+        help="Test duration in seconds (default: 3600 = 1 hour)",
     )
     parser.add_argument(
         "--budget",
         type=float,
         default=10.0,
-        help="Maximum budget for API calls in dollars (default: 10.0)"
+        help="Maximum budget for API calls in dollars (default: 10.0)",
     )
     # Verification/reporting integration (lean)
-    parser.add_argument("--verify-soak", action="store_true", help="Run soak verification and publish results instead of running the soak loop")
-    parser.add_argument("--report", type=str, help="Path to soak report JSON produced by the soak test")
-    parser.add_argument("--markdown", action="store_true", help="Also generate Markdown output for publishing")
-    parser.add_argument("--channel", choices=["dashboard", "pr", "issue"], default="dashboard", help="Where to publish results")
+    parser.add_argument(
+        "--verify-soak",
+        action="store_true",
+        help="Run soak verification and publish results instead of running the soak loop",
+    )
+    parser.add_argument(
+        "--report", type=str, help="Path to soak report JSON produced by the soak test"
+    )
+    parser.add_argument(
+        "--markdown", action="store_true", help="Also generate Markdown output for publishing"
+    )
+    parser.add_argument(
+        "--channel",
+        choices=["dashboard", "pr", "issue"],
+        default="dashboard",
+        help="Where to publish results",
+    )
     parser.add_argument("--pr-number", type=int, help="Pull Request number for PR channel")
     parser.add_argument("--issue-number", type=int, help="Issue number for issue channel")
-    parser.add_argument("--repo", type=str, help="owner/repo to target for PR/issue channels (defaults to GITHUB_REPOSITORY)")
-    parser.add_argument("--timeout-seconds", type=int, default=120, help="Timeout for verify_soak.py execution")
+    parser.add_argument(
+        "--repo",
+        type=str,
+        help="owner/repo to target for PR/issue channels (defaults to GITHUB_REPOSITORY)",
+    )
+    parser.add_argument(
+        "--timeout-seconds", type=int, default=120, help="Timeout for verify_soak.py execution"
+    )
 
     args = parser.parse_args()
 

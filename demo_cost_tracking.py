@@ -12,13 +12,13 @@ IMPORTANT: This makes real API calls with minimal tokens to control costs.
 """
 
 import os
-from openai import OpenAI
 
-from trinity_protocol.cost_tracker import CostTracker, ModelTier
-from shared.llm_cost_wrapper import wrap_openai_client
-from shared.agent_context import create_agent_context
+from openai import OpenAI
+from trinity_protocol.cost_tracker import CostTracker
 
 from agency_code_agent.agency_code_agent import create_agency_code_agent
+from shared.agent_context import create_agent_context
+from shared.llm_cost_wrapper import wrap_openai_client
 
 
 def demo_simple_cost_tracking():
@@ -38,10 +38,8 @@ def demo_simple_cost_tracking():
     client = OpenAI()
     response = client.chat.completions.create(
         model="gpt-4o-mini",
-        messages=[
-            {"role": "user", "content": "Explain cost tracking in 10 words or less."}
-        ],
-        max_tokens=15
+        messages=[{"role": "user", "content": "Explain cost tracking in 10 words or less."}],
+        max_tokens=15,
     )
 
     print(f"Response: {response.choices[0].message.content}")
@@ -52,12 +50,14 @@ def demo_simple_cost_tracking():
     # Show recent calls
     print("\nRecent API Calls:")
     for call in tracker.get_recent_calls(limit=5):
-        print(f"  - {call.agent}: {call.model} | "
-              f"${call.cost_usd:.6f} | "
-              f"{call.input_tokens} in + {call.output_tokens} out tokens")
+        print(
+            f"  - {call.agent}: {call.model} | "
+            f"${call.cost_usd:.6f} | "
+            f"{call.input_tokens} in + {call.output_tokens} out tokens"
+        )
 
     tracker.close()
-    print(f"\nCost data saved to: demo_costs.db")
+    print("\nCost data saved to: demo_costs.db")
 
 
 def demo_agent_cost_tracking():
@@ -72,9 +72,7 @@ def demo_agent_cost_tracking():
     # Create agent with cost tracking
     context = create_agent_context()
     agent = create_agency_code_agent(
-        model="gpt-4o-mini",
-        agent_context=context,
-        cost_tracker=tracker
+        model="gpt-4o-mini", agent_context=context, cost_tracker=tracker
     )
 
     print(f"\nCreated {agent.name} with cost tracking enabled")
@@ -82,7 +80,7 @@ def demo_agent_cost_tracking():
 
     # Verify integration
     summary = tracker.get_summary()
-    print(f"\nInitial state:")
+    print("\nInitial state:")
     print(f"  Total calls: {summary.total_calls}")
     print(f"  Total cost: ${summary.total_cost_usd:.6f}")
 
@@ -115,11 +113,9 @@ def demo_gpt5_cost_tracking():
     try:
         response = client.chat.completions.create(
             model="gpt-5",
-            messages=[
-                {"role": "user", "content": "Say 'Cost tracking works!' and nothing else"}
-            ],
+            messages=[{"role": "user", "content": "Say 'Cost tracking works!' and nothing else"}],
             max_completion_tokens=10,
-            reasoning_effort="low"
+            reasoning_effort="low",
         )
 
         print(f"Response: {response.choices[0].message.content}")
@@ -130,7 +126,7 @@ def demo_gpt5_cost_tracking():
 
         # Detailed call info
         recent = tracker.get_recent_calls(limit=1)[0]
-        print(f"\nDetailed cost breakdown:")
+        print("\nDetailed cost breakdown:")
         print(f"  Input tokens:  {recent.input_tokens:,}")
         print(f"  Output tokens: {recent.output_tokens:,}")
         print(f"  Duration:      {recent.duration_seconds:.2f}s")
@@ -172,7 +168,7 @@ def demo_multi_agent_tracking():
 
     # Verify all agents have tracking
     summary = tracker.get_summary()
-    print(f"\nShared tracker state:")
+    print("\nShared tracker state:")
     print(f"  Total calls: {summary.total_calls}")
     print(f"  Budget remaining: ${tracker.budget_usd - summary.total_cost_usd:.2f}")
 

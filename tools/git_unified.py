@@ -33,21 +33,17 @@ Usage:
     output = tool.run()
 """
 
-import os
 import re
 import subprocess
-from dataclasses import dataclass
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from enum import Enum
 from pathlib import Path
-from typing import List, Optional, Literal
 
 from agency_swarm.tools import BaseTool
-from pydantic import BaseModel, Field, field_validator
+from pydantic import BaseModel, Field
 
-from shared.type_definitions.result import Result, Ok, Err
 from shared.tool_cache import with_cache
-
+from shared.type_definitions.result import Err, Ok, Result
 
 # ============================================================================
 # ENUMS
@@ -102,8 +98,8 @@ class BranchInfo(BaseModel):
 
     name: str = Field(..., description="Branch name")
     created: bool = Field(..., description="Whether branch was newly created")
-    base_branch: Optional[str] = Field(None, description="Base branch")
-    created_at: Optional[datetime] = Field(None, description="Creation timestamp")
+    base_branch: str | None = Field(None, description="Base branch")
+    created_at: datetime | None = Field(None, description="Creation timestamp")
 
 
 class CommitInfo(BaseModel):
@@ -113,7 +109,7 @@ class CommitInfo(BaseModel):
     message: str = Field(..., description="Commit message")
     author: str = Field(default="", description="Commit author")
     timestamp: datetime = Field(
-        default_factory=lambda: datetime.now(timezone.utc),
+        default_factory=lambda: datetime.now(UTC),
         description="Commit timestamp",
     )
 
@@ -129,7 +125,7 @@ class PushInfo(BaseModel):
 class PRInfo(BaseModel):
     """Information about a Pull Request."""
 
-    number: Optional[int] = Field(None, description="PR number")
+    number: int | None = Field(None, description="PR number")
     url: str = Field(..., description="PR URL")
     title: str = Field(..., description="PR title")
     body: str = Field(default="", description="PR description")
@@ -174,10 +170,7 @@ class GitCore:
     # READ OPERATIONS
     # ========================================================================
 
-    @with_cache(
-        ttl_seconds=5,
-        file_dependencies=lambda self: [".git/index", ".git/HEAD"]
-    )
+    @with_cache(ttl_seconds=5, file_dependencies=lambda self: [".git/index", ".git/HEAD"])
     def status(self) -> Result[str, GitError]:
         """
         Get git status (porcelain format).
@@ -292,9 +285,7 @@ class GitCore:
     # BRANCH OPERATIONS
     # ========================================================================
 
-    def create_branch(
-        self, branch_name: str, base: str = "main"
-    ) -> Result[BranchInfo, GitError]:
+    def create_branch(self, branch_name: str, base: str = "main") -> Result[BranchInfo, GitError]:
         """
         Create new branch from base.
 
@@ -330,7 +321,7 @@ class GitCore:
                     name=branch_name,
                     created=True,
                     base_branch=base,
-                    created_at=datetime.now(timezone.utc),
+                    created_at=datetime.now(UTC),
                 )
             )
         else:
@@ -365,10 +356,7 @@ class GitCore:
                 )
             )
 
-    @with_cache(
-        ttl_seconds=5,
-        file_dependencies=lambda self: [".git/HEAD"]
-    )
+    @with_cache(ttl_seconds=5, file_dependencies=lambda self: [".git/HEAD"])
     def get_current_branch(self) -> Result[str, GitError]:
         """
         Get current branch name.
@@ -392,9 +380,7 @@ class GitCore:
                 )
             )
 
-    def delete_branch(
-        self, branch_name: str, force: bool = False
-    ) -> Result[None, GitError]:
+    def delete_branch(self, branch_name: str, force: bool = False) -> Result[None, GitError]:
         """
         Delete a branch.
 
@@ -423,7 +409,7 @@ class GitCore:
     # COMMIT OPERATIONS
     # ========================================================================
 
-    def stage_files(self, files: List[str]) -> Result[None, GitError]:
+    def stage_files(self, files: list[str]) -> Result[None, GitError]:
         """
         Stage specific files.
 
@@ -509,7 +495,7 @@ class GitCore:
             CommitInfo(
                 sha=sha,
                 message=message,
-                timestamp=datetime.now(timezone.utc),
+                timestamp=datetime.now(UTC),
             )
         )
 
@@ -517,9 +503,7 @@ class GitCore:
     # REMOTE OPERATIONS
     # ========================================================================
 
-    def push_branch(
-        self, branch: str, set_upstream: bool = False
-    ) -> Result[PushInfo, GitError]:
+    def push_branch(self, branch: str, set_upstream: bool = False) -> Result[PushInfo, GitError]:
         """
         Push branch to remote.
 
@@ -564,7 +548,7 @@ class GitCore:
         title: str,
         body: str,
         base: str = "main",
-        reviewers: Optional[List[str]] = None,
+        reviewers: list[str] | None = None,
     ) -> Result[PRInfo, GitError]:
         """
         Create Pull Request via GitHub CLI.
@@ -637,17 +621,13 @@ class GitCore:
                 )
             )
         except subprocess.TimeoutExpired:
-            return Err(
-                GitError(code="timeout", message="PR creation timed out")
-            )
+            return Err(GitError(code="timeout", message="PR creation timed out"))
 
     # ========================================================================
     # INTERNAL HELPERS
     # ========================================================================
 
-    def _run_git(
-        self, args: List[str], timeout: int = 30
-    ) -> subprocess.CompletedProcess:
+    def _run_git(self, args: list[str], timeout: int = 30) -> subprocess.CompletedProcess:
         """
         Run git command.
 
@@ -721,9 +701,7 @@ class GitCore:
     def _validate_ref(self, ref: str) -> Result[None, GitError]:
         """Validate git reference for security."""
         if not ref or not ref.strip():
-            return Err(
-                GitError(code="invalid_ref", message="Reference cannot be empty")
-            )
+            return Err(GitError(code="invalid_ref", message="Reference cannot be empty"))
 
         # Same validation as branch name
         return self._validate_branch_name(ref)
@@ -742,28 +720,20 @@ class GitUnified(BaseTool):  # type: ignore[misc]
     Supports 15 operations with Pydantic validation.
     """
 
-    operation: GitOperation = Field(
-        ..., description="Git operation to perform"
-    )
+    operation: GitOperation = Field(..., description="Git operation to perform")
 
     # Operation-specific parameters
-    branch_name: Optional[str] = Field(
-        None, description="Branch name (for branch operations)"
-    )
-    base_branch: Optional[str] = Field(
-        "main", description="Base branch (default: main)"
-    )
-    message: Optional[str] = Field(None, description="Commit message")
-    files: Optional[List[str]] = Field(
-        None, description="Files to stage (None = all)"
-    )
-    ref: Optional[str] = Field("HEAD", description="Git reference")
+    branch_name: str | None = Field(None, description="Branch name (for branch operations)")
+    base_branch: str | None = Field("main", description="Base branch (default: main)")
+    message: str | None = Field(None, description="Commit message")
+    files: list[str] | None = Field(None, description="Files to stage (None = all)")
+    ref: str | None = Field("HEAD", description="Git reference")
     force: bool = Field(False, description="Force operation")
 
     # PR parameters
-    pr_title: Optional[str] = Field(None, description="PR title")
-    pr_body: Optional[str] = Field(None, description="PR description")
-    reviewers: Optional[List[str]] = Field(None, description="PR reviewers")
+    pr_title: str | None = Field(None, description="PR title")
+    pr_body: str | None = Field(None, description="PR description")
+    reviewers: list[str] | None = Field(None, description="PR reviewers")
 
     # Repository path
     repo_path: str = Field(".", description="Repository path")
@@ -819,7 +789,9 @@ class GitUnified(BaseTool):  # type: ignore[misc]
             if not self.branch_name:
                 return "Error: branch_name required"
             result = git.switch_branch(self.branch_name)
-            return f"Switched to {self.branch_name}" if result.is_ok() else self._format_error(result)
+            return (
+                f"Switched to {self.branch_name}" if result.is_ok() else self._format_error(result)
+            )
 
         elif op == GitOperation.GET_CURRENT_BRANCH:
             result = git.get_current_branch()
@@ -829,7 +801,11 @@ class GitUnified(BaseTool):  # type: ignore[misc]
             if not self.branch_name:
                 return "Error: branch_name required"
             result = git.delete_branch(self.branch_name, force=self.force)
-            return f"Deleted branch: {self.branch_name}" if result.is_ok() else self._format_error(result)
+            return (
+                f"Deleted branch: {self.branch_name}"
+                if result.is_ok()
+                else self._format_error(result)
+            )
 
         # Commit operations
         elif op == GitOperation.STAGE:

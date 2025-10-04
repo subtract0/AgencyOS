@@ -16,18 +16,16 @@ import os
 import tempfile
 import time
 from dataclasses import dataclass
-from typing import Any, Dict, List, cast
-from shared.type_definitions.json import JSONValue
-from unittest.mock import MagicMock
+from typing import Any, cast
 
 import pytest
 
 from shared.agent_context import AgentContext, create_agent_context
+from shared.type_definitions.json import JSONValue
 from tools.orchestrator.scheduler import (
     OrchestrationPolicy,
     OrchestrationResult,
     RetryPolicy,
-    TaskResult,
     TaskSpec,
     run_parallel,
 )
@@ -38,13 +36,14 @@ from tools.telemetry.sanitize import redact_event
 @dataclass
 class MockAgent:
     """Mock agent for testing orchestrator functionality."""
+
     name: str
     duration: float = 0.1
     should_fail: bool = False
     fail_attempts: int = 0
     call_count: int = 0
 
-    async def run(self, prompt: str, **params: Any) -> Dict[str, JSONValue]:
+    async def run(self, prompt: str, **params: Any) -> dict[str, JSONValue]:
         """Mock agent execution with configurable behavior."""
         self.call_count += 1
         await asyncio.sleep(self.duration)
@@ -52,20 +51,25 @@ class MockAgent:
         if self.should_fail and self.call_count <= self.fail_attempts:
             raise RuntimeError(f"{self.name} simulated failure (attempt {self.call_count})")
 
-        return cast(Dict[str, JSONValue], {
-            "agent": self.name,
-            "prompt": prompt,
-            "params": params,
-            "call_count": self.call_count,
-            "usage": {"total_tokens": 100},
-            "model": "test-model",
-        })
+        return cast(
+            dict[str, JSONValue],
+            {
+                "agent": self.name,
+                "prompt": prompt,
+                "params": params,
+                "call_count": self.call_count,
+                "usage": {"total_tokens": 100},
+                "model": "test-model",
+            },
+        )
 
 
 def create_mock_agent_factory(name: str, **kwargs: Any) -> Any:
     """Factory to create mock agents compatible with orchestrator."""
+
     def factory(ctx: AgentContext) -> MockAgent:
         return MockAgent(name=name, **kwargs)
+
     factory.__name__ = name
     return factory
 
@@ -82,17 +86,17 @@ class TestOrchestrationBasics:
     def basic_policy(self) -> OrchestrationPolicy:
         """Basic orchestration policy for testing."""
         return OrchestrationPolicy(
-            max_concurrency=2,
-            retry=RetryPolicy(max_attempts=1),
-            timeout_s=5.0
+            max_concurrency=2, retry=RetryPolicy(max_attempts=1), timeout_s=5.0
         )
 
-    async def test_single_task_success(self, context: AgentContext, basic_policy: OrchestrationPolicy) -> None:
+    async def test_single_task_success(
+        self, context: AgentContext, basic_policy: OrchestrationPolicy
+    ) -> None:
         """Test successful execution of a single task."""
         task = TaskSpec(
             id="test_task",
             agent_factory=create_mock_agent_factory("TestAgent"),
-            prompt="Test prompt"
+            prompt="Test prompt",
         )
 
         result = await run_parallel(context, [task], basic_policy)
@@ -104,13 +108,15 @@ class TestOrchestrationBasics:
         assert result.tasks[0].attempts == 1
         assert result.tasks[0].artifacts is not None
 
-    async def test_multiple_tasks_parallel(self, context: AgentContext, basic_policy: OrchestrationPolicy) -> None:
+    async def test_multiple_tasks_parallel(
+        self, context: AgentContext, basic_policy: OrchestrationPolicy
+    ) -> None:
         """Test parallel execution of multiple tasks."""
         tasks = [
             TaskSpec(
                 id=f"task_{i}",
                 agent_factory=create_mock_agent_factory(f"Agent{i}", duration=0.2),
-                prompt=f"Task {i}"
+                prompt=f"Task {i}",
             )
             for i in range(4)
         ]
@@ -130,13 +136,15 @@ class TestOrchestrationBasics:
         """Test task timeout handling."""
         policy = OrchestrationPolicy(
             max_concurrency=1,
-            timeout_s=0.1  # Very short timeout
+            timeout_s=0.1,  # Very short timeout
         )
 
         task = TaskSpec(
             id="timeout_task",
-            agent_factory=create_mock_agent_factory("SlowAgent", duration=1.0),  # Longer than timeout
-            prompt="This will timeout"
+            agent_factory=create_mock_agent_factory(
+                "SlowAgent", duration=1.0
+            ),  # Longer than timeout
+            prompt="This will timeout",
         )
 
         result = await run_parallel(context, [task], policy)
@@ -156,14 +164,15 @@ class TestRetryPolicies:
     async def test_retry_on_failure(self, context: AgentContext) -> None:
         """Test retry mechanism with eventual success."""
         policy = OrchestrationPolicy(
-            max_concurrency=1,
-            retry=RetryPolicy(max_attempts=3, backoff="fixed", base_delay_s=0.01)
+            max_concurrency=1, retry=RetryPolicy(max_attempts=3, backoff="fixed", base_delay_s=0.01)
         )
 
         task = TaskSpec(
             id="retry_task",
-            agent_factory=create_mock_agent_factory("FlakyAgent", should_fail=True, fail_attempts=2),
-            prompt="Flaky task"
+            agent_factory=create_mock_agent_factory(
+                "FlakyAgent", should_fail=True, fail_attempts=2
+            ),
+            prompt="Flaky task",
         )
 
         result = await run_parallel(context, [task], policy)
@@ -175,14 +184,15 @@ class TestRetryPolicies:
     async def test_retry_exhaustion(self, context: AgentContext) -> None:
         """Test retry exhaustion with persistent failures."""
         policy = OrchestrationPolicy(
-            max_concurrency=1,
-            retry=RetryPolicy(max_attempts=2, backoff="fixed", base_delay_s=0.01)
+            max_concurrency=1, retry=RetryPolicy(max_attempts=2, backoff="fixed", base_delay_s=0.01)
         )
 
         task = TaskSpec(
             id="failing_task",
-            agent_factory=create_mock_agent_factory("FailingAgent", should_fail=True, fail_attempts=10),
-            prompt="Always failing task"
+            agent_factory=create_mock_agent_factory(
+                "FailingAgent", should_fail=True, fail_attempts=10
+            ),
+            prompt="Always failing task",
         )
 
         result = await run_parallel(context, [task], policy)
@@ -196,14 +206,15 @@ class TestRetryPolicies:
     async def test_exponential_backoff(self, context: AgentContext) -> None:
         """Test exponential backoff timing."""
         policy = OrchestrationPolicy(
-            max_concurrency=1,
-            retry=RetryPolicy(max_attempts=3, backoff="exp", base_delay_s=0.1)
+            max_concurrency=1, retry=RetryPolicy(max_attempts=3, backoff="exp", base_delay_s=0.1)
         )
 
         task = TaskSpec(
             id="backoff_task",
-            agent_factory=create_mock_agent_factory("BackoffAgent", should_fail=True, fail_attempts=2),
-            prompt="Backoff test"
+            agent_factory=create_mock_agent_factory(
+                "BackoffAgent", should_fail=True, fail_attempts=2
+            ),
+            prompt="Backoff test",
         )
 
         start_time = time.time()
@@ -239,7 +250,9 @@ class TestTelemetryIntegration:
     def policy(self) -> OrchestrationPolicy:
         return OrchestrationPolicy(max_concurrency=2)
 
-    async def test_telemetry_events_generated(self, context: AgentContext, policy: OrchestrationPolicy, temp_telemetry_dir: str) -> None:
+    async def test_telemetry_events_generated(
+        self, context: AgentContext, policy: OrchestrationPolicy, temp_telemetry_dir: str
+    ) -> None:
         """Test that orchestrator generates telemetry events."""
         # Enable telemetry
         os.environ["AGENCY_TELEMETRY_ENABLED"] = "1"
@@ -248,7 +261,7 @@ class TestTelemetryIntegration:
             TaskSpec(
                 id="telemetry_task",
                 agent_factory=create_mock_agent_factory("TelemetryAgent"),
-                prompt="Generate telemetry"
+                prompt="Generate telemetry",
             )
         ]
 
@@ -269,9 +282,13 @@ class TestTelemetryIntegration:
         if len(events) > 0:
             # Should have orchestrator_started, task_started, task_finished events
             event_types = [event.get("type") for event in events]
-            assert any(t in ["orchestrator_started", "task_started", "task_finished"] for t in event_types)
+            assert any(
+                t in ["orchestrator_started", "task_started", "task_finished"] for t in event_types
+            )
 
-    async def test_telemetry_aggregation(self, context: AgentContext, policy: OrchestrationPolicy, temp_telemetry_dir: str) -> None:
+    async def test_telemetry_aggregation(
+        self, context: AgentContext, policy: OrchestrationPolicy, temp_telemetry_dir: str
+    ) -> None:
         """Test telemetry aggregation functionality."""
         os.environ["AGENCY_TELEMETRY_ENABLED"] = "1"
 
@@ -279,7 +296,7 @@ class TestTelemetryIntegration:
             TaskSpec(
                 id=f"agg_task_{i}",
                 agent_factory=create_mock_agent_factory(f"AggAgent{i}"),
-                prompt=f"Aggregation test {i}"
+                prompt=f"Aggregation test {i}",
             )
             for i in range(3)
         ]
@@ -294,15 +311,15 @@ class TestTelemetryIntegration:
 
         # Check that aggregation works even if no events (graceful degradation)
         # Note: summary might be a TelemetryMetrics object or dict
-        if hasattr(summary, 'metrics'):
+        if hasattr(summary, "metrics"):
             # TelemetryMetrics object
-            metrics = getattr(summary, 'metrics')
-            if getattr(metrics, 'tasks_started', 0) > 0:
-                assert getattr(metrics, 'tasks_finished', 0) >= 0
-                assert hasattr(summary, 'agents_active')
+            metrics = getattr(summary, "metrics")
+            if getattr(metrics, "tasks_started", 0) > 0:
+                assert getattr(metrics, "tasks_finished", 0) >= 0
+                assert hasattr(summary, "agents_active")
         else:
             # Dict format
-            summary_dict = cast(Dict[str, JSONValue], summary)
+            summary_dict = cast(dict[str, JSONValue], summary)
             assert "metrics" in summary_dict
             # If we have events, verify they're counted correctly
             if summary_dict["metrics"]["tasks_started"] > 0:
@@ -315,17 +332,20 @@ class TestSanitization:
 
     def test_redact_api_keys(self) -> None:
         """Test API key redaction."""
-        event = cast(Dict[str, JSONValue], {
-            "type": "test_event",
-            "data": {
-                "api_key": "sk-1234567890abcdef",
-                "authorization": "Bearer token123",
-                "safe_data": "this should remain"
-            }
-        })
+        event = cast(
+            dict[str, JSONValue],
+            {
+                "type": "test_event",
+                "data": {
+                    "api_key": "sk-1234567890abcdef",
+                    "authorization": "Bearer token123",
+                    "safe_data": "this should remain",
+                },
+            },
+        )
 
         sanitized = redact_event(event)
-        sanitized_data = cast(Dict[str, JSONValue], sanitized["data"])
+        sanitized_data = cast(dict[str, JSONValue], sanitized["data"])
 
         assert sanitized_data["api_key"] == "[REDACTED]"
         assert sanitized_data["authorization"] == "[REDACTED]"
@@ -333,10 +353,13 @@ class TestSanitization:
 
     def test_redact_secret_patterns(self) -> None:
         """Test secret pattern redaction in strings."""
-        event = cast(Dict[str, JSONValue], {
-            "message": "Using API key sk-abc123def456 for authentication",
-            "log": "GitHub token ghp_xyz789abc123def456ghijk was used"  # Make it longer to match pattern
-        })
+        event = cast(
+            dict[str, JSONValue],
+            {
+                "message": "Using API key sk-abc123def456 for authentication",
+                "log": "GitHub token ghp_xyz789abc123def456ghijk was used",  # Make it longer to match pattern
+            },
+        )
 
         sanitized = redact_event(event)
         message = cast(str, sanitized["message"])
@@ -349,25 +372,21 @@ class TestSanitization:
 
     def test_preserve_structure(self) -> None:
         """Test that sanitization preserves event structure."""
-        event = cast(Dict[str, JSONValue], {
-            "type": "complex_event",
-            "nested": {
-                "level1": {
-                    "level2": {
-                        "secret": "password123",
-                        "public": "safe_value"
-                    }
-                }
+        event = cast(
+            dict[str, JSONValue],
+            {
+                "type": "complex_event",
+                "nested": {"level1": {"level2": {"secret": "password123", "public": "safe_value"}}},
+                "list_data": ["item1", {"api_key": "secret"}, "item3"],
             },
-            "list_data": ["item1", {"api_key": "secret"}, "item3"]
-        })
+        )
 
         sanitized = redact_event(event)
-        nested = cast(Dict[str, JSONValue], sanitized["nested"])
-        level1 = cast(Dict[str, JSONValue], nested["level1"])
-        level2 = cast(Dict[str, JSONValue], level1["level2"])
-        list_data = cast(List[Any], sanitized["list_data"])
-        list_item = cast(Dict[str, JSONValue], list_data[1])
+        nested = cast(dict[str, JSONValue], sanitized["nested"])
+        level1 = cast(dict[str, JSONValue], nested["level1"])
+        level2 = cast(dict[str, JSONValue], level1["level2"])
+        list_data = cast(list[Any], sanitized["list_data"])
+        list_item = cast(dict[str, JSONValue], list_data[1])
 
         # Structure should be preserved
         assert "nested" in sanitized
@@ -392,15 +411,17 @@ class TestErrorHandling:
 
     async def test_agent_factory_exception(self, context: AgentContext) -> None:
         """Test handling of agent factory exceptions."""
+
         def failing_factory(ctx: AgentContext) -> Any:
             raise RuntimeError("Factory creation failed")
+
         failing_factory.__name__ = "FailingFactory"
 
         policy = OrchestrationPolicy(max_concurrency=1)
         task = TaskSpec(
             id="factory_fail",
             agent_factory=failing_factory,
-            prompt="This will fail at factory level"
+            prompt="This will fail at factory level",
         )
 
         result = await run_parallel(context, [task], policy)
@@ -411,27 +432,26 @@ class TestErrorHandling:
 
     async def test_mixed_success_failure(self, context: AgentContext) -> None:
         """Test orchestration with mixed success and failure scenarios."""
-        policy = OrchestrationPolicy(
-            max_concurrency=3,
-            retry=RetryPolicy(max_attempts=1)
-        )
+        policy = OrchestrationPolicy(max_concurrency=3, retry=RetryPolicy(max_attempts=1))
 
         tasks = [
             TaskSpec(
                 id="success_task",
                 agent_factory=create_mock_agent_factory("SuccessAgent"),
-                prompt="Will succeed"
+                prompt="Will succeed",
             ),
             TaskSpec(
                 id="fail_task",
-                agent_factory=create_mock_agent_factory("FailAgent", should_fail=True, fail_attempts=10),
-                prompt="Will fail"
+                agent_factory=create_mock_agent_factory(
+                    "FailAgent", should_fail=True, fail_attempts=10
+                ),
+                prompt="Will fail",
             ),
             TaskSpec(
                 id="another_success",
                 agent_factory=create_mock_agent_factory("AnotherSuccessAgent"),
-                prompt="Will also succeed"
-            )
+                prompt="Will also succeed",
+            ),
         ]
 
         result = await run_parallel(context, tasks, policy)

@@ -51,9 +51,7 @@ async def test_injects_system_message_and_clears_pending():
     agent = MockAgent()
 
     # Manually inject a pending reminder
-    ctx.context.set(
-        "pending_system_reminder", "<system-reminder>test</system-reminder>"
-    )
+    ctx.context.set("pending_system_reminder", "<system-reminder>test</system-reminder>")
 
     input_items = []
     await hook.on_llm_start(ctx, agent, system_prompt=None, input_items=input_items)
@@ -61,9 +59,7 @@ async def test_injects_system_message_and_clears_pending():
     assert input_items, "Input items should not be empty after injection"
     assert input_items[0]["role"] == "system"
     assert "<system-reminder>" in input_items[0]["content"]
-    assert ctx.context.get("pending_system_reminder") is None, (
-        "Pending reminder must be cleared"
-    )
+    assert ctx.context.get("pending_system_reminder") is None, "Pending reminder must be cleared"
 
 
 @pytest.mark.asyncio

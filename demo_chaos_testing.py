@@ -6,6 +6,7 @@ Demonstrates Mars Rover-grade resilience testing capabilities.
 """
 
 import time
+
 from tools.chaos_testing import (
     ChaosConfig,
     ChaosEngine,
@@ -57,7 +58,7 @@ def demo_engine_chaos():
                 # Simulate file operation
                 with open(f"/tmp/chaos_demo_{i}.txt", "w") as f:
                     f.write(f"Data {i}")
-            except IOError:
+            except OSError:
                 # Graceful handling
                 pass
 

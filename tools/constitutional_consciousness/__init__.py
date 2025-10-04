@@ -16,8 +16,8 @@ Constitutional Compliance:
 from tools.constitutional_consciousness.feedback_loop import (
     ConstitutionalFeedbackLoop,
     ConstitutionalPattern,
-    ViolationPrediction,
     CycleReport,
+    ViolationPrediction,
 )
 
 __all__ = [

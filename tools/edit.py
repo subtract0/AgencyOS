@@ -1,5 +1,4 @@
 import os
-from typing import Optional
 
 from agency_swarm.tools import BaseTool
 from pydantic import Field
@@ -27,11 +26,11 @@ class Edit(BaseTool):  # type: ignore[misc]
         ...,
         description="The text to replace it with (must be different from old_string)",
     )
-    replace_all: Optional[bool] = Field(
+    replace_all: bool | None = Field(
         False, description="Replace all occurrences of old_string (default false)"
     )
 
-    def _validate_preconditions(self) -> Optional[str]:
+    def _validate_preconditions(self) -> str | None:
         """Validate file read precondition and basic input validation."""
         # Check if the file has been read first (YAML precondition)
         abs_file_path = os.path.abspath(self.file_path)
@@ -55,7 +54,7 @@ class Edit(BaseTool):  # type: ignore[misc]
 
         return None
 
-    def _validate_file_accessibility(self) -> Optional[str]:
+    def _validate_file_accessibility(self) -> str | None:
         """Validate file exists and is accessible."""
         # Check if file exists
         if not os.path.exists(self.file_path):
@@ -67,22 +66,22 @@ class Edit(BaseTool):  # type: ignore[misc]
 
         return None
 
-    def _read_file_content(self) -> tuple[Optional[str], Optional[str]]:
+    def _read_file_content(self) -> tuple[str | None, str | None]:
         """Read file content, returning (content, error_message)."""
         try:
-            with open(self.file_path, "r", encoding="utf-8") as file:
+            with open(self.file_path, encoding="utf-8") as file:
                 content = file.read()
             return content, None
         except UnicodeDecodeError:
             return None, f"Error: Unable to decode file {self.file_path}. It may be a binary file."
 
-    def _validate_string_exists(self, content: str) -> Optional[str]:
+    def _validate_string_exists(self, content: str) -> str | None:
         """Validate that the string to replace exists in the content."""
         if self.old_string not in content:
             return f"Error: String to replace not found in file.\\nString: {repr(self.old_string)}"
         return None
 
-    def _check_uniqueness_requirement(self, content: str) -> Optional[str]:
+    def _check_uniqueness_requirement(self, content: str) -> str | None:
         """Check if multiple occurrences require replace_all flag."""
         occurrences = content.count(self.old_string)
 
@@ -145,23 +144,17 @@ class Edit(BaseTool):  # type: ignore[misc]
 
         if old_preview_indices:
             first_idx = old_preview_indices[0]
-            preview_lines.append(
-                make_context(
-                    content, first_idx, self.old_string, self.new_string
-                )
-            )
+            preview_lines.append(make_context(content, first_idx, self.old_string, self.new_string))
             if self.replace_all and len(old_preview_indices) > 1:
                 last_idx = old_preview_indices[-1]
                 if last_idx != first_idx:
                     preview_lines.append(
-                        make_context(
-                            content, last_idx, self.old_string, self.new_string
-                        )
+                        make_context(content, last_idx, self.old_string, self.new_string)
                     )
 
         return "\n".join(preview_lines) if preview_lines else ""
 
-    def _write_file_content(self, new_content: str) -> Optional[str]:
+    def _write_file_content(self, new_content: str) -> str | None:
         """Write new content to file, returning error message if failed."""
         try:
             with open(self.file_path, "w", encoding="utf-8") as file:
@@ -239,15 +232,13 @@ Final line."""
     print("\\n" + "=" * 50 + "\\n")
 
     # Test single replacement
-    tool = Edit(
-        file_path=test_file_path, old_string="some text", new_string="REPLACED TEXT"
-    )
+    tool = Edit(file_path=test_file_path, old_string="some text", new_string="REPLACED TEXT")
     result = tool.run()
     print("Single replacement result:")
     print(result)
 
     # Read and show the modified content
-    with open(test_file_path, "r") as f:
+    with open(test_file_path) as f:
         modified_content = f.read()
     print("\\nModified content:")
     print(modified_content)
@@ -265,7 +256,7 @@ Final line."""
     print(result2)
 
     # Read and show final content
-    with open(test_file_path, "r") as f:
+    with open(test_file_path) as f:
         final_content = f.read()
     print("\\nFinal content:")
     print(final_content)

@@ -5,20 +5,28 @@ Tests the unified memory interface, thread safety, and proper routing
 to different backend systems.
 """
 
-import pytest
 import threading
 import time
-from unittest.mock import Mock, patch, MagicMock
 from concurrent.futures import ThreadPoolExecutor
+from unittest.mock import Mock, patch
 
-from shared.memory_facade import (
-    UnifiedMemory, MemoryQuery, SearchResults,
-    MemoryStats, MigrationStats, get_unified_memory,
-    store_pattern, store_memory, search_all
-)
 from pattern_intelligence.coding_pattern import (
-    CodingPattern, ProblemContext, SolutionApproach,
-    EffectivenessMetric, PatternMetadata
+    CodingPattern,
+    EffectivenessMetric,
+    PatternMetadata,
+    ProblemContext,
+    SolutionApproach,
+)
+from shared.memory_facade import (
+    MemoryQuery,
+    MemoryStats,
+    MigrationStats,
+    SearchResults,
+    UnifiedMemory,
+    get_unified_memory,
+    search_all,
+    store_memory,
+    store_pattern,
 )
 
 
@@ -32,7 +40,7 @@ class TestUnifiedMemory:
         assert memory.pattern_store is not None
         assert memory.memory_store is not None
         assert memory.legacy_memory is not None
-        assert hasattr(memory, '_lock')
+        assert hasattr(memory, "_lock")
 
     def test_store_pattern_dict(self):
         """Test storing a pattern from a dictionary."""
@@ -40,25 +48,19 @@ class TestUnifiedMemory:
 
         # Create a valid pattern dictionary
         pattern_dict = {
-            "context": ProblemContext(
-                description="Test pattern",
-                domain="testing"
-            ),
+            "context": ProblemContext(description="Test pattern", domain="testing"),
             "solution": SolutionApproach(
-                approach="Test approach",
-                implementation="Test implementation"
+                approach="Test approach", implementation="Test implementation"
             ),
-            "outcome": EffectivenessMetric(
-                success_rate=0.95
-            ),
+            "outcome": EffectivenessMetric(success_rate=0.95),
             "metadata": PatternMetadata(
                 pattern_id="test_pattern_001",
                 discovered_timestamp="2024-01-01T00:00:00",
-                source="test"
-            )
+                source="test",
+            ),
         }
 
-        with patch.object(memory.pattern_store, 'store_pattern', return_value="test_id"):
+        with patch.object(memory.pattern_store, "store_pattern", return_value="test_id"):
             result = memory.store_pattern(pattern_dict)
             assert result == "test_id"
 
@@ -67,25 +69,19 @@ class TestUnifiedMemory:
         memory = UnifiedMemory()
 
         pattern = CodingPattern(
-            context=ProblemContext(
-                description="Test pattern",
-                domain="testing"
-            ),
+            context=ProblemContext(description="Test pattern", domain="testing"),
             solution=SolutionApproach(
-                approach="Test approach",
-                implementation="Test implementation"
+                approach="Test approach", implementation="Test implementation"
             ),
-            outcome=EffectivenessMetric(
-                success_rate=0.95
-            ),
+            outcome=EffectivenessMetric(success_rate=0.95),
             metadata=PatternMetadata(
                 pattern_id="test_pattern_002",
                 discovered_timestamp="2024-01-01T00:00:00",
-                source="test"
-            )
+                source="test",
+            ),
         )
 
-        with patch.object(memory.pattern_store, 'store_pattern', return_value="test_id"):
+        with patch.object(memory.pattern_store, "store_pattern", return_value="test_id"):
             result = memory.store_pattern(pattern)
             assert result == "test_id"
 
@@ -93,13 +89,13 @@ class TestUnifiedMemory:
         """Test storing general memory."""
         memory = UnifiedMemory()
 
-        with patch.object(memory.memory_store, 'store_memory') as mock_store:
+        with patch.object(memory.memory_store, "store_memory") as mock_store:
             memory.store_memory("test_key", {"data": "value"}, ["tag1"], "category1")
             mock_store.assert_called_once_with(
                 key="test_key",
                 value={"data": "value"},
                 tags=["tag1"],
-                metadata={"category": "category1"}
+                metadata={"category": "category1"},
             )
 
     def test_search_unified(self):
@@ -107,14 +103,11 @@ class TestUnifiedMemory:
         memory = UnifiedMemory()
 
         query = MemoryQuery(
-            query="test search",
-            limit=5,
-            include_patterns=True,
-            include_memories=True
+            query="test search", limit=5, include_patterns=True, include_memories=True
         )
 
-        with patch.object(memory.pattern_store, 'search_patterns', return_value=["pattern1"]):
-            with patch.object(memory.memory_store, 'search_memories', return_value=["memory1"]):
+        with patch.object(memory.pattern_store, "search_patterns", return_value=["pattern1"]):
+            with patch.object(memory.memory_store, "search_memories", return_value=["memory1"]):
                 results = memory.search(query)
 
                 assert isinstance(results, SearchResults)
@@ -125,14 +118,10 @@ class TestUnifiedMemory:
         """Test searching only patterns."""
         memory = UnifiedMemory()
 
-        query = MemoryQuery(
-            query="test search",
-            include_patterns=True,
-            include_memories=False
-        )
+        query = MemoryQuery(query="test search", include_patterns=True, include_memories=False)
 
-        with patch.object(memory.pattern_store, 'search_patterns', return_value=["pattern1"]):
-            with patch.object(memory.memory_store, 'search_memories') as mock_mem:
+        with patch.object(memory.pattern_store, "search_patterns", return_value=["pattern1"]):
+            with patch.object(memory.memory_store, "search_memories") as mock_mem:
                 results = memory.search(query)
 
                 assert results.patterns == ["pattern1"]
@@ -144,7 +133,7 @@ class TestUnifiedMemory:
         memory = UnifiedMemory()
 
         mock_pattern = Mock(spec=CodingPattern)
-        with patch.object(memory.pattern_store, 'get_pattern', return_value=mock_pattern):
+        with patch.object(memory.pattern_store, "get_pattern", return_value=mock_pattern):
             result = memory.get_pattern("test_id")
             assert result == mock_pattern
 
@@ -152,7 +141,7 @@ class TestUnifiedMemory:
         """Test retrieving a specific memory."""
         memory = UnifiedMemory()
 
-        with patch.object(memory.memory_store, 'get_memory', return_value={"data": "value"}):
+        with patch.object(memory.memory_store, "get_memory", return_value={"data": "value"}):
             result = memory.get_memory("test_key")
             assert result == {"data": "value"}
 
@@ -161,7 +150,7 @@ class TestUnifiedMemory:
         memory = UnifiedMemory()
 
         mock_patterns = [Mock(spec=CodingPattern) for _ in range(3)]
-        with patch.object(memory.pattern_store, 'search_patterns', return_value=mock_patterns):
+        with patch.object(memory.pattern_store, "search_patterns", return_value=mock_patterns):
             results = memory.list_patterns(limit=10)
             assert len(results) == 3
 
@@ -176,7 +165,9 @@ class TestUnifiedMemory:
         pattern3 = Mock(spec=CodingPattern)
         pattern3.category = "test"
 
-        with patch.object(memory.pattern_store, 'search_patterns', return_value=[pattern1, pattern2, pattern3]):
+        with patch.object(
+            memory.pattern_store, "search_patterns", return_value=[pattern1, pattern2, pattern3]
+        ):
             results = memory.list_patterns(category="test")
             assert len(results) == 2
             assert all(p.category == "test" for p in results)
@@ -185,7 +176,7 @@ class TestUnifiedMemory:
         """Test clearing all patterns."""
         memory = UnifiedMemory()
 
-        with patch.object(memory.pattern_store, 'clear') as mock_clear:
+        with patch.object(memory.pattern_store, "clear") as mock_clear:
             memory.clear_patterns()
             mock_clear.assert_called_once()
 
@@ -193,8 +184,8 @@ class TestUnifiedMemory:
         """Test getting memory statistics."""
         memory = UnifiedMemory()
 
-        with patch.object(memory, 'list_patterns', return_value=[Mock(), Mock()]):
-            with patch.object(memory.memory_store, 'get_memory_count', return_value=5):
+        with patch.object(memory, "list_patterns", return_value=[Mock(), Mock()]):
+            with patch.object(memory.memory_store, "get_memory_count", return_value=5):
                 stats = memory.get_stats()
 
                 assert isinstance(stats, MemoryStats)
@@ -233,6 +224,7 @@ class TestSingleton:
 
         # Reset singleton for test
         import shared.memory_facade
+
         shared.memory_facade._unified_memory = None
 
         # Create multiple threads trying to get the singleton
@@ -254,19 +246,19 @@ class TestSingleton:
         memory = UnifiedMemory()
 
         # Mock the backends to count calls
-        call_count = {'patterns': 0, 'memories': 0}
+        call_count = {"patterns": 0, "memories": 0}
 
         def mock_store_pattern(pattern):
-            call_count['patterns'] += 1
+            call_count["patterns"] += 1
             time.sleep(0.001)  # Simulate work
             return f"pattern_{call_count['patterns']}"
 
         def mock_store_memory(key, value, tags, metadata):
-            call_count['memories'] += 1
+            call_count["memories"] += 1
             time.sleep(0.001)  # Simulate work
 
-        with patch.object(memory.pattern_store, 'store_pattern', side_effect=mock_store_pattern):
-            with patch.object(memory.memory_store, 'store_memory', side_effect=mock_store_memory):
+        with patch.object(memory.pattern_store, "store_pattern", side_effect=mock_store_pattern):
+            with patch.object(memory.memory_store, "store_memory", side_effect=mock_store_memory):
                 # Run concurrent operations
                 with ThreadPoolExecutor(max_workers=5) as executor:
                     # Submit pattern storage tasks
@@ -276,7 +268,7 @@ class TestSingleton:
                             context=ProblemContext(f"Test {i}", "test"),
                             solution=SolutionApproach(f"Solution {i}", f"Impl {i}"),
                             outcome=EffectivenessMetric(0.9),
-                            metadata=PatternMetadata(f"test_{i}", "2024-01-01T00:00:00", "test")
+                            metadata=PatternMetadata(f"test_{i}", "2024-01-01T00:00:00", "test"),
                         )
                         future = executor.submit(memory.store_pattern, pattern)
                         pattern_futures.append(future)
@@ -285,10 +277,7 @@ class TestSingleton:
                     memory_futures = []
                     for i in range(10):
                         future = executor.submit(
-                            memory.store_memory,
-                            f"key_{i}",
-                            {"value": i},
-                            [f"tag_{i}"]
+                            memory.store_memory, f"key_{i}", {"value": i}, [f"tag_{i}"]
                         )
                         memory_futures.append(future)
 
@@ -297,8 +286,8 @@ class TestSingleton:
                         future.result()
 
                 # Verify all operations completed
-                assert call_count['patterns'] == 10
-                assert call_count['memories'] == 10
+                assert call_count["patterns"] == 10
+                assert call_count["memories"] == 10
 
 
 class TestConvenienceFunctions:
@@ -310,10 +299,10 @@ class TestConvenienceFunctions:
             context=ProblemContext("Test", "test"),
             solution=SolutionApproach("Solution", "Implementation"),
             outcome=EffectivenessMetric(0.9),
-            metadata=PatternMetadata("test_001", "2024-01-01T00:00:00", "test")
+            metadata=PatternMetadata("test_001", "2024-01-01T00:00:00", "test"),
         )
 
-        with patch('shared.memory_facade.get_unified_memory') as mock_get:
+        with patch("shared.memory_facade.get_unified_memory") as mock_get:
             mock_memory = Mock()
             mock_memory.store_pattern.return_value = "test_id"
             mock_get.return_value = mock_memory
@@ -325,7 +314,7 @@ class TestConvenienceFunctions:
 
     def test_store_memory_convenience(self):
         """Test store_memory convenience function."""
-        with patch('shared.memory_facade.get_unified_memory') as mock_get:
+        with patch("shared.memory_facade.get_unified_memory") as mock_get:
             mock_memory = Mock()
             mock_get.return_value = mock_memory
 
@@ -337,7 +326,7 @@ class TestConvenienceFunctions:
 
     def test_search_all_convenience(self):
         """Test search_all convenience function."""
-        with patch('shared.memory_facade.get_unified_memory') as mock_get:
+        with patch("shared.memory_facade.get_unified_memory") as mock_get:
             mock_memory = Mock()
             mock_results = SearchResults()
             mock_memory.search.return_value = mock_results

@@ -14,24 +14,23 @@ Constitutional Compliance:
 import tempfile
 import textwrap
 from pathlib import Path
-import pytest
-from pydantic import BaseModel, ValidationError
-from shared.type_definitions.result import Result, Ok, Err
 
+import pytest
+from pydantic import ValidationError
 
 # Import the module we're testing (will fail initially - TDD)
 try:
     from tools.mutation_testing import (
+        ArithmeticMutator,
+        BooleanMutator,
+        ComparisonMutator,
+        ConstantMutator,
+        Mutation,
         MutationConfig,
         MutationResult,
         MutationScore,
         MutationTester,
-        Mutation,
         MutationType,
-        ArithmeticMutator,
-        ComparisonMutator,
-        BooleanMutator,
-        ConstantMutator,
         ReturnMutator,
     )
 except ImportError:
@@ -50,7 +49,7 @@ class TestMutationConfig:
             test_command="pytest tests/",
             mutation_types=["arithmetic", "comparison"],
             timeout_seconds=60,
-            parallel=True
+            parallel=True,
         )
         assert config.target_files == ["file1.py", "file2.py"]
         assert config.test_command == "pytest tests/"
@@ -61,9 +60,7 @@ class TestMutationConfig:
     def test_mutation_config_defaults(self):
         """Test default values for optional fields."""
         config = MutationConfig(
-            target_files=["file.py"],
-            test_command="pytest",
-            mutation_types=["arithmetic"]
+            target_files=["file.py"], test_command="pytest", mutation_types=["arithmetic"]
         )
         assert config.timeout_seconds == 60
         assert config.parallel is True
@@ -71,20 +68,12 @@ class TestMutationConfig:
     def test_mutation_config_validation_empty_files(self):
         """Test validation fails for empty target files."""
         with pytest.raises(ValidationError):
-            MutationConfig(
-                target_files=[],
-                test_command="pytest",
-                mutation_types=["arithmetic"]
-            )
+            MutationConfig(target_files=[], test_command="pytest", mutation_types=["arithmetic"])
 
     def test_mutation_config_validation_empty_command(self):
         """Test validation fails for empty test command."""
         with pytest.raises(ValidationError):
-            MutationConfig(
-                target_files=["file.py"],
-                test_command="",
-                mutation_types=["arithmetic"]
-            )
+            MutationConfig(target_files=["file.py"], test_command="", mutation_types=["arithmetic"])
 
 
 @pytest.mark.unit
@@ -101,7 +90,7 @@ class TestMutationResult:
             mutated_code="a - b",
             tests_passed=False,
             tests_failed=True,
-            execution_time=1.5
+            execution_time=1.5,
         )
         assert result.mutation_id == "mut_001"
         assert result.line_number == 42
@@ -117,7 +106,7 @@ class TestMutationResult:
             mutated_code="if x >= 0:",
             tests_passed=True,  # BAD - mutation survived!
             tests_failed=False,
-            execution_time=0.5
+            execution_time=0.5,
         )
         assert result.tests_passed is True
         assert result.tests_failed is False
@@ -138,7 +127,7 @@ class TestMutationScore:
                 mutated_code="a - b",
                 tests_passed=True,
                 tests_failed=False,
-                execution_time=0.1
+                execution_time=0.1,
             )
         ]
 
@@ -147,7 +136,7 @@ class TestMutationScore:
             mutations_caught=9,
             mutations_survived=1,
             mutation_score=0.9,
-            surviving_mutations=surviving
+            surviving_mutations=surviving,
         )
 
         assert score.total_mutations == 10
@@ -163,7 +152,7 @@ class TestMutationScore:
             mutations_caught=50,
             mutations_survived=0,
             mutation_score=1.0,
-            surviving_mutations=[]
+            surviving_mutations=[],
         )
         assert score.mutation_score == 1.0
         assert len(score.surviving_mutations) == 0
@@ -184,7 +173,7 @@ class TestMutation:
             original_code="a + b",
             mutated_code="a - b",
             original_node="BinOp(Add)",
-            mutated_node="BinOp(Sub)"
+            mutated_node="BinOp(Sub)",
         )
         assert mutation.mutation_type == MutationType.ARITHMETIC
         assert mutation.line_number == 10
@@ -207,10 +196,7 @@ class TestArithmeticMutator:
         mutations = mutator.generate_mutations(code, "test.py")
 
         assert len(mutations) > 0
-        addition_mutation = next(
-            (m for m in mutations if m.original_code == "a + b"),
-            None
-        )
+        addition_mutation = next((m for m in mutations if m.original_code == "a + b"), None)
         assert addition_mutation is not None
         assert addition_mutation.mutated_code == "a - b"
         assert addition_mutation.mutation_type == MutationType.ARITHMETIC
@@ -225,10 +211,7 @@ class TestArithmeticMutator:
         mutator = ArithmeticMutator()
         mutations = mutator.generate_mutations(code, "test.py")
 
-        mult_mutation = next(
-            (m for m in mutations if m.original_code == "x * y"),
-            None
-        )
+        mult_mutation = next((m for m in mutations if m.original_code == "x * y"), None)
         assert mult_mutation is not None
         assert mult_mutation.mutated_code == "x / y"
 
@@ -267,10 +250,7 @@ class TestComparisonMutator:
         mutator = ComparisonMutator()
         mutations = mutator.generate_mutations(code, "test.py")
 
-        eq_mutation = next(
-            (m for m in mutations if "==" in m.original_code),
-            None
-        )
+        eq_mutation = next((m for m in mutations if "==" in m.original_code), None)
         assert eq_mutation is not None
         assert "!=" in eq_mutation.mutated_code
 
@@ -284,10 +264,7 @@ class TestComparisonMutator:
         mutator = ComparisonMutator()
         mutations = mutator.generate_mutations(code, "test.py")
 
-        gt_mutation = next(
-            (m for m in mutations if ">" in m.original_code),
-            None
-        )
+        gt_mutation = next((m for m in mutations if ">" in m.original_code), None)
         assert gt_mutation is not None
         assert "<" in gt_mutation.mutated_code or "<=" in gt_mutation.mutated_code
 
@@ -325,10 +302,7 @@ class TestBooleanMutator:
         mutator = BooleanMutator()
         mutations = mutator.generate_mutations(code, "test.py")
 
-        and_mutation = next(
-            (m for m in mutations if "and" in m.original_code),
-            None
-        )
+        and_mutation = next((m for m in mutations if "and" in m.original_code), None)
         assert and_mutation is not None
         assert "or" in and_mutation.mutated_code
 
@@ -342,10 +316,7 @@ class TestBooleanMutator:
         mutator = BooleanMutator()
         mutations = mutator.generate_mutations(code, "test.py")
 
-        not_mutation = next(
-            (m for m in mutations if "not" in m.original_code),
-            None
-        )
+        not_mutation = next((m for m in mutations if "not" in m.original_code), None)
         assert not_mutation is not None
         # Should remove 'not'
         assert "not" not in not_mutation.mutated_code
@@ -365,10 +336,7 @@ class TestConstantMutator:
         mutator = ConstantMutator()
         mutations = mutator.generate_mutations(code, "test.py")
 
-        true_mutation = next(
-            (m for m in mutations if m.original_code == "True"),
-            None
-        )
+        true_mutation = next((m for m in mutations if m.original_code == "True"), None)
         assert true_mutation is not None
         assert true_mutation.mutated_code == "False"
 
@@ -382,10 +350,7 @@ class TestConstantMutator:
         mutator = ConstantMutator()
         mutations = mutator.generate_mutations(code, "test.py")
 
-        num_mutation = next(
-            (m for m in mutations if m.original_code == "42"),
-            None
-        )
+        num_mutation = next((m for m in mutations if m.original_code == "42"), None)
         assert num_mutation is not None
         # Should change to 0 or increment/decrement
         assert num_mutation.mutated_code in ["0", "41", "43"]
@@ -400,10 +365,7 @@ class TestConstantMutator:
         mutator = ConstantMutator()
         mutations = mutator.generate_mutations(code, "test.py")
 
-        str_mutation = next(
-            (m for m in mutations if "hello" in m.original_code),
-            None
-        )
+        str_mutation = next((m for m in mutations if "hello" in m.original_code), None)
         assert str_mutation is not None
         # Should change to empty string or different value
         assert str_mutation.mutated_code in ['""', "''", '"mutated"']
@@ -423,10 +385,7 @@ class TestReturnMutator:
         mutator = ReturnMutator()
         mutations = mutator.generate_mutations(code, "test.py")
 
-        return_mutation = next(
-            (m for m in mutations if "return 42" in m.original_code),
-            None
-        )
+        return_mutation = next((m for m in mutations if "return 42" in m.original_code), None)
         assert return_mutation is not None
         assert "None" in return_mutation.mutated_code
 
@@ -451,27 +410,25 @@ class TestMutationTesterBasics:
     def test_mutation_tester_initialization(self):
         """Test creating MutationTester with config."""
         config = MutationConfig(
-            target_files=["file.py"],
-            test_command="pytest",
-            mutation_types=["arithmetic"]
+            target_files=["file.py"], test_command="pytest", mutation_types=["arithmetic"]
         )
         tester = MutationTester(config)
         assert tester.config == config
 
     def test_generate_mutations_for_file(self):
         """Test generating mutations for a file."""
-        with tempfile.NamedTemporaryFile(mode='w', suffix='.py', delete=False) as f:
-            f.write(textwrap.dedent("""
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".py", delete=False) as f:
+            f.write(
+                textwrap.dedent("""
                 def add(a, b):
                     return a + b
-            """))
+            """)
+            )
             temp_file = f.name
 
         try:
             config = MutationConfig(
-                target_files=[temp_file],
-                test_command="pytest",
-                mutation_types=["arithmetic"]
+                target_files=[temp_file], test_command="pytest", mutation_types=["arithmetic"]
             )
             tester = MutationTester(config)
             mutations = tester.generate_mutations(temp_file)
@@ -485,7 +442,7 @@ class TestMutationTesterBasics:
 
     def test_apply_mutation_creates_backup(self):
         """Test applying mutation creates backup of original."""
-        with tempfile.NamedTemporaryFile(mode='w', suffix='.py', delete=False) as f:
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".py", delete=False) as f:
             original_code = textwrap.dedent("""
                 def add(a, b):
                     return a + b
@@ -503,13 +460,11 @@ class TestMutationTesterBasics:
                 original_code="a + b",
                 mutated_code="a - b",
                 original_node="BinOp(Add)",
-                mutated_node="BinOp(Sub)"
+                mutated_node="BinOp(Sub)",
             )
 
             config = MutationConfig(
-                target_files=[temp_file],
-                test_command="pytest",
-                mutation_types=["arithmetic"]
+                target_files=[temp_file], test_command="pytest", mutation_types=["arithmetic"]
             )
             tester = MutationTester(config)
             result = tester.apply_mutation(mutation)
@@ -533,7 +488,7 @@ class TestMutationTesterBasics:
 
     def test_restore_original_from_backup(self):
         """Test restoring original file from backup."""
-        with tempfile.NamedTemporaryFile(mode='w', suffix='.py', delete=False) as f:
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".py", delete=False) as f:
             original_code = "def original(): pass\n"
             f.write(original_code)
             temp_file = f.name
@@ -548,9 +503,7 @@ class TestMutationTesterBasics:
 
             # Restore
             config = MutationConfig(
-                target_files=[temp_file],
-                test_command="pytest",
-                mutation_types=["arithmetic"]
+                target_files=[temp_file], test_command="pytest", mutation_types=["arithmetic"]
             )
             tester = MutationTester(config)
             result = tester.restore_original(temp_file)
@@ -573,7 +526,7 @@ class TestMutationTesterExecution:
         config = MutationConfig(
             target_files=["dummy.py"],
             test_command="echo 'success' && exit 0",
-            mutation_types=["arithmetic"]
+            mutation_types=["arithmetic"],
         )
         tester = MutationTester(config)
         result = tester.run_tests()
@@ -584,9 +537,7 @@ class TestMutationTesterExecution:
     def test_run_tests_failure(self):
         """Test running tests that fail."""
         config = MutationConfig(
-            target_files=["dummy.py"],
-            test_command="exit 1",
-            mutation_types=["arithmetic"]
+            target_files=["dummy.py"], test_command="exit 1", mutation_types=["arithmetic"]
         )
         tester = MutationTester(config)
         result = tester.run_tests()
@@ -600,7 +551,7 @@ class TestMutationTesterExecution:
             target_files=["dummy.py"],
             test_command="sleep 10",
             mutation_types=["arithmetic"],
-            timeout_seconds=1
+            timeout_seconds=1,
         )
         tester = MutationTester(config)
         result = tester.run_tests()
@@ -617,19 +568,22 @@ class TestMutationTesterFullRun:
     def test_full_mutation_test_run(self):
         """Test complete mutation testing process."""
         # Create a simple Python file
-        with tempfile.NamedTemporaryFile(mode='w', suffix='.py', delete=False) as f:
-            f.write(textwrap.dedent("""
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".py", delete=False) as f:
+            f.write(
+                textwrap.dedent("""
                 def add(a, b):
                     return a + b
 
                 def is_positive(x):
                     return x > 0
-            """))
+            """)
+            )
             temp_file = f.name
 
         # Create a test file
-        with tempfile.NamedTemporaryFile(mode='w', suffix='.py', delete=False) as f:
-            f.write(textwrap.dedent("""
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".py", delete=False) as f:
+            f.write(
+                textwrap.dedent("""
                 import sys
                 sys.path.insert(0, '/tmp')
 
@@ -639,7 +593,8 @@ class TestMutationTesterFullRun:
 
                 def test_is_positive():
                     assert True  # Placeholder
-            """))
+            """)
+            )
             test_file = f.name
 
         try:
@@ -648,7 +603,7 @@ class TestMutationTesterFullRun:
                 test_command=f"python -m pytest {test_file} -v",
                 mutation_types=["arithmetic", "comparison"],
                 timeout_seconds=30,
-                parallel=False
+                parallel=False,
             )
 
             tester = MutationTester(config)
@@ -669,11 +624,13 @@ class TestMutationTesterFullRun:
     def test_mutation_score_calculation_correct(self):
         """Test mutation score is calculated correctly."""
         # Create file with simple function
-        with tempfile.NamedTemporaryFile(mode='w', suffix='.py', delete=False) as f:
-            f.write(textwrap.dedent("""
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".py", delete=False) as f:
+            f.write(
+                textwrap.dedent("""
                 def simple(x):
                     return x + 1
-            """))
+            """)
+            )
             temp_file = f.name
 
         try:
@@ -681,7 +638,7 @@ class TestMutationTesterFullRun:
                 target_files=[temp_file],
                 test_command="exit 1",  # All tests fail (good - catches mutations)
                 mutation_types=["arithmetic"],
-                parallel=False
+                parallel=False,
             )
 
             tester = MutationTester(config)
@@ -715,7 +672,7 @@ class TestMutationReporting:
                 mutated_code="a - b",
                 tests_passed=True,
                 tests_failed=False,
-                execution_time=0.5
+                execution_time=0.5,
             )
         ]
 
@@ -724,13 +681,11 @@ class TestMutationReporting:
             mutations_caught=9,
             mutations_survived=1,
             mutation_score=0.9,
-            surviving_mutations=surviving
+            surviving_mutations=surviving,
         )
 
         config = MutationConfig(
-            target_files=["file.py"],
-            test_command="pytest",
-            mutation_types=["arithmetic"]
+            target_files=["file.py"], test_command="pytest", mutation_types=["arithmetic"]
         )
         tester = MutationTester(config)
         report = tester.generate_report(score)
@@ -747,13 +702,11 @@ class TestMutationReporting:
             mutations_caught=20,
             mutations_survived=0,
             mutation_score=1.0,
-            surviving_mutations=[]
+            surviving_mutations=[],
         )
 
         config = MutationConfig(
-            target_files=["file.py"],
-            test_command="pytest",
-            mutation_types=["arithmetic"]
+            target_files=["file.py"], test_command="pytest", mutation_types=["arithmetic"]
         )
         tester = MutationTester(config)
         report = tester.generate_report(score)
@@ -772,7 +725,7 @@ class TestMutationReporting:
                 mutated_code="mutated",
                 tests_passed=True,
                 tests_failed=False,
-                execution_time=0.1
+                execution_time=0.1,
             )
             for i in range(8)  # 8 surviving out of 10
         ]
@@ -782,13 +735,11 @@ class TestMutationReporting:
             mutations_caught=2,
             mutations_survived=8,
             mutation_score=0.2,
-            surviving_mutations=surviving
+            surviving_mutations=surviving,
         )
 
         config = MutationConfig(
-            target_files=["file.py"],
-            test_command="pytest",
-            mutation_types=["arithmetic"]
+            target_files=["file.py"], test_command="pytest", mutation_types=["arithmetic"]
         )
         tester = MutationTester(config)
         report = tester.generate_report(score)
@@ -822,15 +773,13 @@ class TestEdgeCases:
 
     def test_mutation_on_syntax_error_file(self):
         """Test handling file with syntax errors."""
-        with tempfile.NamedTemporaryFile(mode='w', suffix='.py', delete=False) as f:
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".py", delete=False) as f:
             f.write("def broken(:\n    return invalid syntax")
             temp_file = f.name
 
         try:
             config = MutationConfig(
-                target_files=[temp_file],
-                test_command="pytest",
-                mutation_types=["arithmetic"]
+                target_files=[temp_file], test_command="pytest", mutation_types=["arithmetic"]
             )
             tester = MutationTester(config)
             result = tester.generate_mutations(temp_file)
@@ -843,15 +792,13 @@ class TestEdgeCases:
 
     def test_mutation_on_empty_file(self):
         """Test mutation on empty file."""
-        with tempfile.NamedTemporaryFile(mode='w', suffix='.py', delete=False) as f:
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".py", delete=False) as f:
             f.write("")
             temp_file = f.name
 
         try:
             config = MutationConfig(
-                target_files=[temp_file],
-                test_command="pytest",
-                mutation_types=["arithmetic"]
+                target_files=[temp_file], test_command="pytest", mutation_types=["arithmetic"]
             )
             tester = MutationTester(config)
             mutations = tester.generate_mutations(temp_file)
@@ -867,7 +814,7 @@ class TestEdgeCases:
         config = MutationConfig(
             target_files=["/nonexistent/file.py"],
             test_command="pytest",
-            mutation_types=["arithmetic"]
+            mutation_types=["arithmetic"],
         )
         tester = MutationTester(config)
         result = tester.generate_mutations("/nonexistent/file.py")

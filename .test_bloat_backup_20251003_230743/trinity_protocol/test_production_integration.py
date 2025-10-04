@@ -11,17 +11,18 @@ Constitutional Compliance:
 
 import asyncio
 import os
-import pytest
 import tempfile
 from pathlib import Path
 
-from trinity_protocol.core.witness import WitnessAgent
-from trinity_protocol.core.architect import ArchitectAgent
-from trinity_protocol.core.executor import ExecutorAgent
+import pytest
+
+from shared.agent_context import AgentContext
+from shared.cost_tracker import CostTracker
 from shared.message_bus import MessageBus
 from shared.persistent_store import PersistentStore
-from shared.cost_tracker import CostTracker
-from shared.agent_context import AgentContext
+from trinity_protocol.core.architect import ArchitectAgent
+from trinity_protocol.core.executor import ExecutorAgent
+from trinity_protocol.core.witness import WitnessAgent
 
 
 @pytest.fixture
@@ -40,12 +41,7 @@ def infrastructure():
     tracker = CostTracker(":memory:")
     context = AgentContext()
 
-    yield {
-        "bus": bus,
-        "store": store,
-        "tracker": tracker,
-        "context": context
-    }
+    yield {"bus": bus, "store": store, "tracker": tracker, "context": context}
 
     # Cleanup
     bus.close()
@@ -74,8 +70,8 @@ async def test_witness_to_architect_flow(infrastructure):
             {
                 "message": "Fatal error: ModuleNotFoundError in production",
                 "severity": "critical",
-                "error_type": "ModuleNotFoundError"
-            }
+                "error_type": "ModuleNotFoundError",
+            },
         )
 
         # Wait for processing
@@ -99,7 +95,7 @@ async def test_witness_to_architect_flow(infrastructure):
         try:
             await asyncio.wait_for(witness_task, timeout=2.0)
             await asyncio.wait_for(architect_task, timeout=2.0)
-        except (asyncio.TimeoutError, asyncio.CancelledError):
+        except (TimeoutError, asyncio.CancelledError):
             pass
 
 
@@ -129,8 +125,8 @@ async def test_architect_to_executor_flow(infrastructure):
                 "pattern_name": "critical_error",
                 "description": "Production error requiring code fix",
                 "priority": "CRITICAL",
-                "keywords": ["error", "production", "critical"]
-            }
+                "keywords": ["error", "production", "critical"],
+            },
         )
 
         # Wait for processing with retry logic
@@ -171,15 +167,14 @@ async def test_architect_to_executor_flow(infrastructure):
         try:
             await asyncio.wait_for(architect_task, timeout=2.0)
             await asyncio.wait_for(executor_task, timeout=2.0)
-        except (asyncio.TimeoutError, asyncio.CancelledError):
+        except (TimeoutError, asyncio.CancelledError):
             pass
 
 
 @pytest.mark.integration
 @pytest.mark.asyncio
 @pytest.mark.skipif(
-    not os.path.exists("run_tests.py"),
-    reason="Requires run_tests.py in project root"
+    not os.path.exists("run_tests.py"), reason="Requires run_tests.py in project root"
 )
 async def test_executor_verification_wiring(infrastructure, temp_workspace):
     """Test EXECUTOR runs real verification (Article II enforcement)."""
@@ -193,7 +188,7 @@ async def test_executor_verification_wiring(infrastructure, temp_workspace):
         tracker,
         context,
         plans_dir=str(temp_workspace),
-        verification_timeout=300  # 5 minutes
+        verification_timeout=300,  # 5 minutes
     )
 
     # Note: This test verifies the verification method exists and is wired
@@ -206,6 +201,7 @@ async def test_executor_verification_wiring(infrastructure, temp_workspace):
     # Verify it's the real implementation (not mocked)
     # Real implementation should execute subprocess
     import inspect
+
     source = inspect.getsource(executor._run_absolute_verification)
     assert "subprocess.run" in source or "create_subprocess_exec" in source
     assert "run_tests.py" in source
@@ -242,6 +238,7 @@ async def test_cost_tracking_integration(infrastructure):
 
     # Verify summary structure
     from shared.cost_tracker import CostSummary
+
     assert isinstance(initial_summary, CostSummary)
 
 
@@ -279,8 +276,8 @@ async def test_complete_trinity_loop(infrastructure):
                 "message": "Critical production error: Database connection failed",
                 "severity": "critical",
                 "error_type": "ConnectionError",
-                "subsystem": "database"
-            }
+                "subsystem": "database",
+            },
         )
 
         # Wait for complete cycle
@@ -302,10 +299,7 @@ async def test_complete_trinity_loop(infrastructure):
 
         # Verify pattern was persisted (Article IV: learning)
         patterns = store.search_patterns(
-            query="critical error",
-            pattern_type="failure",
-            min_confidence=0.5,
-            limit=10
+            query="critical error", pattern_type="failure", min_confidence=0.5, limit=10
         )
         assert len(patterns) >= 1
 
@@ -319,7 +313,7 @@ async def test_complete_trinity_loop(infrastructure):
             await asyncio.wait_for(witness_task, timeout=2.0)
             await asyncio.wait_for(architect_task, timeout=2.0)
             await asyncio.wait_for(executor_task, timeout=2.0)
-        except (asyncio.TimeoutError, asyncio.CancelledError):
+        except (TimeoutError, asyncio.CancelledError):
             pass
 
 
@@ -330,11 +324,7 @@ async def test_message_bus_persistence(infrastructure):
     bus = infrastructure["bus"]
 
     # Publish message
-    msg_id = await bus.publish(
-        "test_queue",
-        {"data": "test_message"},
-        priority=5
-    )
+    msg_id = await bus.publish("test_queue", {"data": "test_message"}, priority=5)
 
     assert msg_id is not None
 
@@ -357,17 +347,10 @@ async def test_agent_context_sharing(infrastructure):
     context = infrastructure["context"]
 
     # Store memory from one "agent"
-    context.store_memory(
-        "test_key",
-        "test_value",
-        tags=["integration", "test"]
-    )
+    context.store_memory("test_key", "test_value", tags=["integration", "test"])
 
     # Search from another "agent"
-    results = context.search_memories(
-        tags=["integration"],
-        include_session=True
-    )
+    results = context.search_memories(tags=["integration"], include_session=True)
 
     # Verify memory is accessible
     assert len(results) >= 1
@@ -387,7 +370,7 @@ def test_constitutional_compliance_type_checking():
     result = subprocess.run(
         ["python", "-m", "mypy", "trinity_protocol/", "--no-error-summary"],
         capture_output=True,
-        text=True
+        text=True,
     )
 
     # Should pass (or skip if mypy not installed)
@@ -396,33 +379,36 @@ def test_constitutional_compliance_type_checking():
 
     # Check for Dict[Any, Any] violations (not in import statements)
     grep_result = subprocess.run(
-        ["grep", "-r", "Dict\\[Any, Any\\]", "trinity_protocol/"],
-        capture_output=True,
-        text=True
+        ["grep", "-r", "Dict\\[Any, Any\\]", "trinity_protocol/"], capture_output=True, text=True
     )
 
     # Filter out import lines, demo data, binary files, and comments
     if grep_result.returncode == 0:
         violations = [
-            line for line in grep_result.stdout.split("\n")
+            line
+            for line in grep_result.stdout.split("\n")
             if "Dict[Any, Any]" in line
             and "from typing import" not in line
             and ".pyc" not in line
             and ".md:" not in line  # Exclude markdown documentation
             and '"message"' not in line  # Exclude test data strings
-            and (':# ' in line or ':#' in line)  # Only exclude if colon followed by hash (comment)
+            and (":# " in line or ":#" in line)  # Only exclude if colon followed by hash (comment)
         ]
         # Double-check each violation isn't a comment
         real_violations = []
         for v in violations:
             # If the Dict[Any, Any] appears AFTER a # character, it's in a comment
-            if '#' in v:
-                parts = v.split(':')
+            if "#" in v:
+                parts = v.split(":")
                 if len(parts) >= 2:
-                    code_part = ':'.join(parts[1:])  # Everything after filename
-                    if '#' in code_part:
-                        hash_pos = code_part.index('#')
-                        dict_pos = code_part.index('Dict[Any, Any]') if 'Dict[Any, Any]' in code_part else -1
+                    code_part = ":".join(parts[1:])  # Everything after filename
+                    if "#" in code_part:
+                        hash_pos = code_part.index("#")
+                        dict_pos = (
+                            code_part.index("Dict[Any, Any]")
+                            if "Dict[Any, Any]" in code_part
+                            else -1
+                        )
                         if dict_pos > hash_pos:
                             continue  # It's in a comment, skip it
             real_violations.append(v)
@@ -467,6 +453,7 @@ async def test_sub_agent_registry_wiring(infrastructure):
 
 # Performance benchmarks
 
+
 @pytest.mark.integration
 @pytest.mark.asyncio
 async def test_pattern_detection_latency(infrastructure):
@@ -485,11 +472,7 @@ async def test_pattern_detection_latency(infrastructure):
         # Publish 10 events
         for i in range(10):
             await bus.publish(
-                "telemetry_stream",
-                {
-                    "message": f"Error {i}: Test error",
-                    "severity": "critical"
-                }
+                "telemetry_stream", {"message": f"Error {i}: Test error", "severity": "critical"}
             )
 
         # Wait for processing
@@ -509,7 +492,7 @@ async def test_pattern_detection_latency(infrastructure):
         await witness.stop()
         try:
             await asyncio.wait_for(witness_task, timeout=2.0)
-        except (asyncio.TimeoutError, asyncio.CancelledError):
+        except (TimeoutError, asyncio.CancelledError):
             pass
 
 
@@ -525,11 +508,7 @@ async def test_message_throughput(infrastructure):
 
     # Publish 50 messages
     for i in range(50):
-        await bus.publish(
-            "test_queue",
-            {"index": i, "data": f"message_{i}"},
-            priority=5
-        )
+        await bus.publish("test_queue", {"index": i, "data": f"message_{i}"}, priority=5)
 
     duration = time.time() - start
 
@@ -555,15 +534,16 @@ async def test_learning_persistence_across_sessions(infrastructure):
         content="Database query optimization pattern for SQLAlchemy with high performance impact",
         confidence=0.85,
         evidence_count=5,
-        metadata={"framework": "SQLAlchemy", "impact": "high", "keywords": ["performance", "database", "query"]}
+        metadata={
+            "framework": "SQLAlchemy",
+            "impact": "high",
+            "keywords": ["performance", "database", "query"],
+        },
     )
 
     # Verify immediate retrieval
     patterns = store.search_patterns(
-        query="database optimization",
-        pattern_type="optimization",
-        min_confidence=0.8,
-        limit=10
+        query="database optimization", pattern_type="optimization", min_confidence=0.8, limit=10
     )
     assert len(patterns) >= 1
     assert any(p.get("id") == pattern_id for p in patterns)
@@ -571,10 +551,7 @@ async def test_learning_persistence_across_sessions(infrastructure):
     # Simulate session restart (in production, this would be a new process)
     # For this test, we verify the data persists in the store
     retrieved = store.search_patterns(
-        query="performance query",
-        pattern_type="optimization",
-        min_confidence=0.7,
-        limit=5
+        query="performance query", pattern_type="optimization", min_confidence=0.7, limit=5
     )
 
     assert len(retrieved) >= 1
@@ -600,6 +577,7 @@ async def test_article_ii_enforcement_blocks_bad_code(infrastructure, temp_works
 
     # Verify QualityEnforcer is wired
     from trinity_protocol.executor_agent import SubAgentType
+
     assert SubAgentType.IMMUNITY_ENFORCER in executor.sub_agents
     assert executor.sub_agents[SubAgentType.IMMUNITY_ENFORCER] is not None
 
@@ -622,10 +600,9 @@ def test_add_fails():
 
     # Run pytest on this file
     import subprocess
+
     result = subprocess.run(
-        ["python", "-m", "pytest", str(test_file), "-v"],
-        capture_output=True,
-        text=True
+        ["python", "-m", "pytest", str(test_file), "-v"], capture_output=True, text=True
     )
 
     # Verify tests ran and at least one failed
@@ -653,13 +630,14 @@ async def test_parallel_agent_coordination(infrastructure):
 
     # Verify all 6 sub-agent types are registered
     from trinity_protocol.executor_agent import SubAgentType
+
     expected_agents = [
         SubAgentType.CODE_WRITER,
         SubAgentType.TEST_ARCHITECT,
         SubAgentType.TOOL_DEVELOPER,
         SubAgentType.IMMUNITY_ENFORCER,
         SubAgentType.RELEASE_MANAGER,
-        SubAgentType.TASK_SUMMARIZER
+        SubAgentType.TASK_SUMMARIZER,
     ]
 
     for agent_type in expected_agents:
@@ -671,9 +649,7 @@ async def test_parallel_agent_coordination(infrastructure):
 
     # Store test data in shared context
     context.store_memory(
-        "test_coordination_key",
-        {"message": "parallel test data"},
-        tags=["coordination", "test"]
+        "test_coordination_key", {"message": "parallel test data"}, tags=["coordination", "test"]
     )
 
     # Retrieve to verify sharing works
@@ -706,7 +682,7 @@ async def test_emergency_shutdown_on_budget_exceeded(infrastructure):
             input_tokens=50000,  # 50k input tokens
             output_tokens=50000,  # 50k output tokens
             duration_seconds=1.0,
-            success=True
+            success=True,
         )
 
     # Get total cost
@@ -747,7 +723,7 @@ async def test_trinity_recovers_from_agent_failure(infrastructure):
             {
                 "signal_id": "malformed-signal-001",
                 # Missing pattern_name, description, etc.
-            }
+            },
         )
 
         # Wait for processing
@@ -766,8 +742,8 @@ async def test_trinity_recovers_from_agent_failure(infrastructure):
                 "pattern_name": "recovery_test",
                 "description": "Testing recovery after error",
                 "priority": "MEDIUM",
-                "keywords": ["recovery", "test"]
-            }
+                "keywords": ["recovery", "test"],
+            },
         )
 
         # Wait for processing
@@ -781,7 +757,7 @@ async def test_trinity_recovers_from_agent_failure(infrastructure):
         await architect.stop()
         try:
             await asyncio.wait_for(architect_task, timeout=2.0)
-        except (asyncio.TimeoutError, asyncio.CancelledError):
+        except (TimeoutError, asyncio.CancelledError):
             pass
 
 
@@ -815,6 +791,7 @@ async def test_constitutional_compliance_all_articles(infrastructure, temp_works
 
     # Article II: Verification - EXECUTOR has QualityEnforcer
     from trinity_protocol.executor_agent import SubAgentType
+
     assert SubAgentType.IMMUNITY_ENFORCER in executor.sub_agents
     enforcer = executor.sub_agents[SubAgentType.IMMUNITY_ENFORCER]
     assert enforcer is not None
@@ -831,14 +808,11 @@ async def test_constitutional_compliance_all_articles(infrastructure, temp_works
         content="Test pattern for constitutional compliance validation",
         confidence=0.9,
         evidence_count=3,
-        metadata={"keywords": ["constitutional", "compliance"]}
+        metadata={"keywords": ["constitutional", "compliance"]},
     )
 
     retrieved = store.search_patterns(
-        query="constitutional compliance",
-        pattern_type="test",
-        min_confidence=0.8,
-        limit=5
+        query="constitutional compliance", pattern_type="test", min_confidence=0.8, limit=5
     )
     assert len(retrieved) >= 1
 
@@ -848,6 +822,7 @@ async def test_constitutional_compliance_all_articles(infrastructure, temp_works
 
     # Verify cost tracking is operational (resource management)
     from shared.cost_tracker import ModelTier
+
     tracker.track_call(
         agent="test_agent",
         model="gpt-4o-mini",
@@ -855,7 +830,7 @@ async def test_constitutional_compliance_all_articles(infrastructure, temp_works
         input_tokens=500,
         output_tokens=500,
         duration_seconds=0.5,
-        success=True
+        success=True,
     )
 
     summary = tracker.get_summary()

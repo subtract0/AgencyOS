@@ -19,7 +19,9 @@ This module is no longer part of the production codebase.
 
 import pytest
 
-pytestmark = pytest.mark.skip(reason="Module deleted in Trinity clean break - daily_checkin removed from codebase")
+pytestmark = pytest.mark.skip(
+    reason="Module deleted in Trinity clean break - daily_checkin removed from codebase"
+)
 
 # Imports commented out - module deleted
 # from datetime import datetime, timedelta
@@ -36,9 +38,7 @@ class TestCheckinQuestionGeneration:
         project = create_mock_project()
 
         coordinator = DailyCheckinCoordinator(
-            preference_learner=Mock(),
-            llm_client=Mock(),
-            state_store=Mock()
+            preference_learner=Mock(), llm_client=Mock(), state_store=Mock()
         )
 
         result = await coordinator.generate_checkin_questions(project)
@@ -54,9 +54,7 @@ class TestCheckinQuestionGeneration:
         project.state.current_phase = "execution"
 
         coordinator = DailyCheckinCoordinator(
-            preference_learner=Mock(),
-            llm_client=Mock(),
-            state_store=Mock()
+            preference_learner=Mock(), llm_client=Mock(), state_store=Mock()
         )
 
         result = await coordinator.generate_checkin_questions(project)
@@ -64,7 +62,10 @@ class TestCheckinQuestionGeneration:
         assert result.is_ok()
         questions = result.value
         # Questions should reference current work
-        assert any("chapter" in q.question_text.lower() or "task" in q.question_text.lower() for q in questions)
+        assert any(
+            "chapter" in q.question_text.lower() or "task" in q.question_text.lower()
+            for q in questions
+        )
 
     @pytest.mark.asyncio
     async def test_questions_articulate_value(self):
@@ -72,9 +73,7 @@ class TestCheckinQuestionGeneration:
         project = create_mock_project()
 
         coordinator = DailyCheckinCoordinator(
-            preference_learner=Mock(),
-            llm_client=Mock(),
-            state_store=Mock()
+            preference_learner=Mock(), llm_client=Mock(), state_store=Mock()
         )
 
         result = await coordinator.generate_checkin_questions(project)
@@ -99,9 +98,7 @@ class TestCheckinScheduling:
         )
 
         coordinator = DailyCheckinCoordinator(
-            preference_learner=mock_preferences,
-            llm_client=Mock(),
-            state_store=Mock()
+            preference_learner=mock_preferences, llm_client=Mock(), state_store=Mock()
         )
 
         result = await coordinator.schedule_checkin(project)
@@ -115,9 +112,7 @@ class TestCheckinScheduling:
         project = create_mock_project()
 
         coordinator = DailyCheckinCoordinator(
-            preference_learner=Mock(),
-            llm_client=Mock(),
-            state_store=Mock()
+            preference_learner=Mock(), llm_client=Mock(), state_store=Mock()
         )
 
         scheduled_time = datetime(2025, 10, 1, 23, 30)  # 11:30 PM - quiet hours
@@ -132,9 +127,7 @@ class TestCheckinScheduling:
         project.state.last_checkin_at = datetime.now() - timedelta(hours=12)  # 12 hours ago
 
         coordinator = DailyCheckinCoordinator(
-            preference_learner=Mock(),
-            llm_client=Mock(),
-            state_store=Mock()
+            preference_learner=Mock(), llm_client=Mock(), state_store=Mock()
         )
 
         can_checkin = await coordinator.can_checkin_now(project)
@@ -150,9 +143,7 @@ class TestCheckinScheduling:
         project.state.last_checkin_at = datetime.now() - timedelta(hours=25)  # 25 hours ago
 
         coordinator = DailyCheckinCoordinator(
-            preference_learner=Mock(),
-            llm_client=Mock(),
-            state_store=Mock()
+            preference_learner=Mock(), llm_client=Mock(), state_store=Mock()
         )
 
         can_checkin = await coordinator.can_checkin_now(project)
@@ -176,7 +167,7 @@ class TestResponseProcessing:
                 response_text="Focus on tactics first",
                 responded_at=datetime.now(),
                 sentiment="positive",
-                action_needed=True
+                action_needed=True,
             )
         ]
 
@@ -184,9 +175,7 @@ class TestResponseProcessing:
         mock_store.update_project_state = AsyncMock(return_value=Ok(project.state))
 
         coordinator = DailyCheckinCoordinator(
-            preference_learner=Mock(),
-            llm_client=Mock(),
-            state_store=mock_store
+            preference_learner=Mock(), llm_client=Mock(), state_store=mock_store
         )
 
         result = await coordinator.process_responses(project, responses)
@@ -206,14 +195,12 @@ class TestResponseProcessing:
                 response_text="Yes, add case studies",
                 responded_at=datetime.now(),
                 sentiment="positive",
-                action_needed=True  # Should trigger task creation
+                action_needed=True,  # Should trigger task creation
             )
         ]
 
         coordinator = DailyCheckinCoordinator(
-            preference_learner=Mock(),
-            llm_client=Mock(),
-            state_store=Mock()
+            preference_learner=Mock(), llm_client=Mock(), state_store=Mock()
         )
 
         result = await coordinator.process_responses(project, responses)
@@ -233,14 +220,12 @@ class TestResponseProcessing:
                 response_text="Too many questions today",
                 responded_at=datetime.now(),
                 sentiment="negative",
-                action_needed=False
+                action_needed=False,
             )
         ]
 
         coordinator = DailyCheckinCoordinator(
-            preference_learner=Mock(),
-            llm_client=Mock(),
-            state_store=Mock()
+            preference_learner=Mock(), llm_client=Mock(), state_store=Mock()
         )
 
         result = await coordinator.process_responses(project, responses)
@@ -258,9 +243,7 @@ class TestCheckinIntegration:
         project = create_mock_project()
 
         mock_preferences = Mock()
-        mock_preferences.get_optimal_time = Mock(
-            return_value=datetime(2025, 10, 1, 9, 0)
-        )
+        mock_preferences.get_optimal_time = Mock(return_value=datetime(2025, 10, 1, 9, 0))
 
         mock_hitl = Mock()
         mock_hitl.ask_question = AsyncMock(return_value=Ok("User response"))
@@ -269,7 +252,7 @@ class TestCheckinIntegration:
             preference_learner=mock_preferences,
             llm_client=Mock(),
             state_store=Mock(),
-            hitl_queue=mock_hitl
+            hitl_queue=mock_hitl,
         )
 
         # 1. Generate questions
@@ -290,9 +273,7 @@ class TestCheckinIntegration:
         project = create_mock_project()
 
         coordinator = DailyCheckinCoordinator(
-            preference_learner=Mock(),
-            llm_client=Mock(),
-            state_store=Mock()
+            preference_learner=Mock(), llm_client=Mock(), state_store=Mock()
         )
 
         result = await coordinator.conduct_checkin(project)
@@ -312,9 +293,7 @@ class TestCheckinIntegration:
         mock_store.store_checkin = AsyncMock(return_value=Ok("checkin_id"))
 
         coordinator = DailyCheckinCoordinator(
-            preference_learner=Mock(),
-            llm_client=Mock(),
-            state_store=mock_store
+            preference_learner=Mock(), llm_client=Mock(), state_store=mock_store
         )
 
         await coordinator.conduct_checkin(project)
@@ -324,7 +303,7 @@ class TestCheckinIntegration:
 
 def create_mock_project():
     """Create mock project for testing."""
-    from trinity_protocol.core.models.project import Project, ProjectState, ProjectPlan
+    from trinity_protocol.core.models.project import Project, ProjectState
 
     state = ProjectState(
         project_id="proj_test",
@@ -337,7 +316,7 @@ def create_mock_project():
         progress_percentage=20,
         last_checkin_at=None,
         next_checkin_at=None,
-        blockers=[]
+        blockers=[],
     )
 
     return Project(
@@ -352,7 +331,7 @@ def create_mock_project():
         state=state,
         checkins=[],
         created_at=datetime.now(),
-        status="active"
+        status="active",
     )
 
 

@@ -3,21 +3,19 @@ ApplyAndVerifyPatch - Complete autonomous healing tool.
 Applies fixes, runs tests, commits if successful, reverts if failed.
 """
 
-import os
 import json
+import os
 import subprocess
-import tempfile
-import shutil
 from datetime import datetime
-from typing import Dict, Any, Optional
-from shared.type_definitions.json import JSONValue
 
 from agency_swarm.tools import BaseTool as Tool
 from pydantic import Field
 
-from .read import Read
-from .edit import Edit
+from shared.type_definitions.json import JSONValue
+
 from .bash import Bash
+from .edit import Edit
+from .read import Read
 
 
 class ApplyAndVerifyPatch(Tool):
@@ -48,9 +46,7 @@ class ApplyAndVerifyPatch(Tool):
         # Step 2: Apply the patch
         try:
             edit_tool = Edit(
-                file_path=self.file_path,
-                old_string=self.original_code,
-                new_string=self.fixed_code
+                file_path=self.file_path, old_string=self.original_code, new_string=self.fixed_code
             )
             edit_result = edit_tool.run()
 
@@ -66,7 +62,7 @@ class ApplyAndVerifyPatch(Tool):
         if not test_result["success"]:
             # Tests failed - revert the change
             revert_result = self._revert_file(backup_content)
-            output = test_result['output']
+            output = test_result["output"]
             output_snippet = output[:500] if isinstance(output, str) else str(output)[:500]
             return f"""❌ HEALING FAILED: Tests failed after applying patch
 
@@ -90,7 +86,7 @@ This indicates the generated fix was incorrect or incomplete.
 
 PATCH APPLIED: ✅ {self.file_path}
 TESTS: ✅ All tests passing
-COMMIT: ❌ {commit_result['error']}
+COMMIT: ❌ {commit_result["error"]}
 
 REVERT STATUS: {revert_result}
 
@@ -100,14 +96,14 @@ The fix was correct but could not be committed.
         # Step 5: Log the successful healing
         self._log_successful_healing(timestamp, test_result, commit_result)
 
-        commit_hash = commit_result['commit_hash']
+        commit_hash = commit_result["commit_hash"]
         hash_snippet = commit_hash[:8] if isinstance(commit_hash, str) else str(commit_hash)[:8]
         return f"""🎉 AUTONOMOUS HEALING COMPLETE!
 
 📁 FILE: {self.file_path}
 🐛 ERROR: {self.error_description}
 ✅ PATCH: Applied successfully
-✅ TESTS: All tests passing ({test_result.get('test_count', 'unknown')} tests)
+✅ TESTS: All tests passing ({test_result.get("test_count", "unknown")} tests)
 ✅ COMMIT: {hash_snippet}
 
 🤖 This demonstrates UNDENIABLE autonomous self-healing:
@@ -120,12 +116,12 @@ The fix was correct but could not be committed.
 The Agency has successfully healed itself without human intervention!
 """
 
-    def _run_tests(self) -> Dict[str, JSONValue]:
+    def _run_tests(self) -> dict[str, JSONValue]:
         """Run the test suite and return results."""
         try:
             bash_tool = Bash(
                 command="source .venv/bin/activate && python run_tests.py",
-                timeout=120000  # 2 minutes
+                timeout=120000,  # 2 minutes
             )
             result = bash_tool.run()
 
@@ -136,48 +132,35 @@ The Agency has successfully healed itself without human intervention!
             test_count = None
             if "collected" in result:
                 import re
-                match = re.search(r'collected (\d+) items', result)
+
+                match = re.search(r"collected (\d+) items", result)
                 if match:
                     test_count = match.group(1)
 
-            return {
-                "success": success,
-                "output": result,
-                "test_count": test_count
-            }
+            return {"success": success, "output": result, "test_count": test_count}
 
         except Exception as e:
-            return {
-                "success": False,
-                "output": f"Test execution failed: {e}",
-                "test_count": None
-            }
+            return {"success": False, "output": f"Test execution failed: {e}", "test_count": None}
 
     def _revert_file(self, backup_content: str) -> str:
         """Revert file to original content."""
         try:
-            with open(self.file_path, 'w') as f:
+            with open(self.file_path, "w") as f:
                 f.write(backup_content)
             return "✅ File reverted to original state"
         except Exception as e:
             return f"❌ CRITICAL: Could not revert file: {e}"
 
-    def _commit_change(self) -> Dict[str, JSONValue]:
+    def _commit_change(self) -> dict[str, JSONValue]:
         """Commit the successful fix."""
         try:
             # Stage the changed file
             stage_result = subprocess.run(
-                ["git", "add", self.file_path],
-                capture_output=True,
-                text=True,
-                timeout=30
+                ["git", "add", self.file_path], capture_output=True, text=True, timeout=30
             )
 
             if stage_result.returncode != 0:
-                return {
-                    "success": False,
-                    "error": f"Failed to stage file: {stage_result.stderr}"
-                }
+                return {"success": False, "error": f"Failed to stage file: {stage_result.stderr}"}
 
             # Create commit message
             commit_msg = f"""{self.commit_message_prefix}: Self-healing applied for NoneType error in {os.path.basename(self.file_path)}
@@ -192,41 +175,25 @@ Co-Authored-By: QualityEnforcerAgent <agent@agency.ai>"""
 
             # Commit the change
             commit_result = subprocess.run(
-                ["git", "commit", "-m", commit_msg],
-                capture_output=True,
-                text=True,
-                timeout=30
+                ["git", "commit", "-m", commit_msg], capture_output=True, text=True, timeout=30
             )
 
             if commit_result.returncode != 0:
-                return {
-                    "success": False,
-                    "error": f"Failed to commit: {commit_result.stderr}"
-                }
+                return {"success": False, "error": f"Failed to commit: {commit_result.stderr}"}
 
             # Get commit hash
             hash_result = subprocess.run(
-                ["git", "rev-parse", "HEAD"],
-                capture_output=True,
-                text=True,
-                timeout=10
+                ["git", "rev-parse", "HEAD"], capture_output=True, text=True, timeout=10
             )
 
             commit_hash = hash_result.stdout.strip() if hash_result.returncode == 0 else "unknown"
 
-            return {
-                "success": True,
-                "commit_hash": commit_hash,
-                "message": commit_msg
-            }
+            return {"success": True, "commit_hash": commit_hash, "message": commit_msg}
 
         except Exception as e:
-            return {
-                "success": False,
-                "error": f"Exception during commit: {e}"
-            }
+            return {"success": False, "error": f"Exception during commit: {e}"}
 
-    def _log_successful_healing(self, timestamp: str, test_result: Dict, commit_result: Dict):
+    def _log_successful_healing(self, timestamp: str, test_result: dict, commit_result: dict):
         """Log successful autonomous healing for audit trail."""
 
         log_entry = {
@@ -235,19 +202,22 @@ Co-Authored-By: QualityEnforcerAgent <agent@agency.ai>"""
             "file_path": self.file_path,
             "error_description": self.error_description,
             "patch_applied": {
-                "original_code": self.original_code[:200] + "..." if len(self.original_code) > 200 else self.original_code,
-                "fixed_code": self.fixed_code[:200] + "..." if len(self.fixed_code) > 200 else self.fixed_code
+                "original_code": self.original_code[:200] + "..."
+                if len(self.original_code) > 200
+                else self.original_code,
+                "fixed_code": self.fixed_code[:200] + "..."
+                if len(self.fixed_code) > 200
+                else self.fixed_code,
             },
             "verification": {
                 "tests_passed": test_result["success"],
                 "test_count": test_result.get("test_count"),
-                "test_output_snippet": test_result["output"][-200:] if test_result["output"] else ""
+                "test_output_snippet": test_result["output"][-200:]
+                if test_result["output"]
+                else "",
             },
-            "commit": {
-                "hash": commit_result["commit_hash"],
-                "message": commit_result["message"]
-            },
-            "status": "fully_autonomous_healing_complete"
+            "commit": {"hash": commit_result["commit_hash"], "message": commit_result["message"]},
+            "status": "fully_autonomous_healing_complete",
         }
 
         # Create logs directory if it doesn't exist
@@ -270,13 +240,15 @@ class AutonomousHealingOrchestrator(Tool):
     """
 
     error_log: str = Field(..., description="Error log or message to analyze and heal")
-    file_context: Optional[str] = Field(default=None, description="Optional file context for better analysis")
+    file_context: str | None = Field(
+        default=None, description="Optional file context for better analysis"
+    )
 
     def run(self) -> str:
         """Run the complete autonomous healing workflow."""
 
         # Import here to avoid circular imports
-        from tools.auto_fix_nonetype import NoneTypeErrorDetector, LLMNoneTypeFixer
+        from tools.auto_fix_nonetype import LLMNoneTypeFixer, NoneTypeErrorDetector
 
         # Step 1: Detect errors
         detector = NoneTypeErrorDetector(log_content=self.error_log)
@@ -297,7 +269,9 @@ class AutonomousHealingOrchestrator(Tool):
             file_path = error.get("file_path", "unknown")
 
             if file_path == "unknown" or not os.path.exists(file_path):
-                healing_results.append(f"⚠️  Skipped {error['pattern']}: File path unknown or doesn't exist")
+                healing_results.append(
+                    f"⚠️  Skipped {error['pattern']}: File path unknown or doesn't exist"
+                )
                 continue
 
             # Read file context if not provided
@@ -305,7 +279,7 @@ class AutonomousHealingOrchestrator(Tool):
                 try:
                     read_tool = Read(file_path=file_path)
                     file_content = read_tool.run()
-                except (FileNotFoundError, IOError, PermissionError) as e:
+                except (OSError, FileNotFoundError, PermissionError) as e:
                     healing_results.append(f"❌ Could not read file {file_path}: {e}")
                     continue
             else:
@@ -314,7 +288,7 @@ class AutonomousHealingOrchestrator(Tool):
             # Generate LLM-based fix
             fixer = LLMNoneTypeFixer(
                 error_info=json.dumps({"status": "errors_detected", "errors": [error]}),
-                code_context=file_content
+                code_context=file_content,
             )
             fix_result = fixer.run()
 
@@ -348,7 +322,7 @@ class AutonomousHealingOrchestrator(Tool):
                 file_path=file_path,
                 original_code=original_problematic_line,
                 fixed_code=fixed_line,
-                error_description=error["pattern"]
+                error_description=error["pattern"],
             )
 
             patch_result = patch_tool.run()
@@ -356,11 +330,11 @@ class AutonomousHealingOrchestrator(Tool):
 
         return f"""🤖 AUTONOMOUS HEALING ORCHESTRATION COMPLETE
 
-ERRORS DETECTED: {len(detection_data['errors'])}
+ERRORS DETECTED: {len(detection_data["errors"])}
 HEALING ATTEMPTS: {len(healing_results)}
 
 RESULTS:
-{chr(10).join(f'• {result}' for result in healing_results)}
+{chr(10).join(f"• {result}" for result in healing_results)}
 
 This demonstrates the complete autonomous healing pipeline:
 1. Error detection from logs
@@ -372,9 +346,9 @@ This demonstrates the complete autonomous healing pipeline:
 The Agency can now heal itself without any human intervention!
 """
 
-    def _extract_problematic_code(self, file_content: str, error: Dict) -> Optional[str]:
+    def _extract_problematic_code(self, file_content: str, error: dict) -> str | None:
         """Extract the problematic line of code from file content."""
-        lines = file_content.split('\n')
+        lines = file_content.split("\n")
 
         # Try to find the line with the attribute that failed
         attribute = error.get("attribute")
@@ -385,25 +359,28 @@ The Agency can now heal itself without any human intervention!
 
         # Fallback: look for common NoneType patterns
         for line in lines:
-            if any(pattern in line for pattern in [".get(", ".items(", ".keys(", ".values(", ".append("]):
+            if any(
+                pattern in line
+                for pattern in [".get(", ".items(", ".keys(", ".values(", ".append("]
+            ):
                 if "if" not in line.lower():
                     return line.strip()
 
         return None
 
-    def _generate_simple_fix(self, original_line: str, error: Dict) -> Optional[str]:
+    def _generate_simple_fix(self, original_line: str, error: dict) -> str | None:
         """Generate a simple null-check fix for the problematic line."""
 
         if not original_line:
             return None
 
         # Extract variable name (simple heuristic)
-        parts = original_line.split('.')
+        parts = original_line.split(".")
         if len(parts) < 2:
             return None
 
         variable_name = parts[0].strip()
-        rest_of_line = '.'.join(parts[1:])
+        rest_of_line = ".".join(parts[1:])
 
         # Generate null-check fix
         indent = len(original_line) - len(original_line.lstrip())

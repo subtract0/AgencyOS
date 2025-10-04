@@ -14,23 +14,23 @@ Constitutional Compliance:
 """
 
 import ast
-import re
-from pathlib import Path
-from typing import List, Dict, Set, Optional, Tuple
-from dataclasses import dataclass
 from collections import defaultdict
+from dataclasses import dataclass
+from pathlib import Path
 
 from pydantic import BaseModel, Field
-from shared.type_definitions.result import Result, Ok, Err
+
+from shared.type_definitions.result import Err, Ok, Result
 
 
 @dataclass
 class TestMetadata:
     """Metadata about a test function."""
+
     name: str
     file_path: str
-    imports: Set[str]
-    fixtures_used: Set[str]
+    imports: set[str]
+    fixtures_used: set[str]
     has_db_access: bool
     has_file_io: bool
     has_network_calls: bool
@@ -42,6 +42,7 @@ class TestMetadata:
 @dataclass
 class FixtureMetadata:
     """Metadata about a fixture."""
+
     name: str
     file_path: str
     scope: str  # function, class, module, session
@@ -52,10 +53,11 @@ class FixtureMetadata:
 
 class OptimizationPlan(BaseModel):
     """Test optimization plan with actionable recommendations."""
-    parallelizable_tests: List[str] = Field(..., description="Tests safe to parallelize")
-    expensive_fixtures: Dict[str, float] = Field(..., description="Fixtures and their cost in ms")
-    mock_candidates: List[Dict[str, str]] = Field(..., description="Tests needing mocks")
-    redundant_tests: List[Dict[str, str]] = Field(..., description="Potentially redundant tests")
+
+    parallelizable_tests: list[str] = Field(..., description="Tests safe to parallelize")
+    expensive_fixtures: dict[str, float] = Field(..., description="Fixtures and their cost in ms")
+    mock_candidates: list[dict[str, str]] = Field(..., description="Tests needing mocks")
+    redundant_tests: list[dict[str, str]] = Field(..., description="Potentially redundant tests")
     estimated_savings_seconds: float = Field(..., description="Total estimated time savings")
 
     class Config:
@@ -65,7 +67,7 @@ class OptimizationPlan(BaseModel):
                 "expensive_fixtures": {"db_session": 500.0},
                 "mock_candidates": [{"test": "test_api_call", "target": "requests.get"}],
                 "redundant_tests": [],
-                "estimated_savings_seconds": 45.0
+                "estimated_savings_seconds": 45.0,
             }
         }
 
@@ -75,8 +77,8 @@ class TestOptimizer:
 
     def __init__(self, project_root: Path):
         self.project_root = project_root
-        self.test_metadata: Dict[str, TestMetadata] = {}
-        self.fixture_metadata: Dict[str, FixtureMetadata] = {}
+        self.test_metadata: dict[str, TestMetadata] = {}
+        self.fixture_metadata: dict[str, FixtureMetadata] = {}
 
     def analyze_tests(self, test_dir: str = "tests/") -> Result[OptimizationPlan, str]:
         """
@@ -108,7 +110,7 @@ class TestOptimizer:
     def _analyze_test_file(self, file_path: Path) -> None:
         """Analyze a single test file for optimization opportunities."""
         try:
-            with open(file_path, 'r') as f:
+            with open(file_path) as f:
                 source = f.read()
 
             tree = ast.parse(source)
@@ -123,15 +125,15 @@ class TestOptimizer:
 
             # Find test functions
             for node in ast.walk(tree):
-                if isinstance(node, ast.FunctionDef) and node.name.startswith('test_'):
+                if isinstance(node, ast.FunctionDef) and node.name.startswith("test_"):
                     metadata = self._analyze_test_function(node, file_path, imports)
                     self.test_metadata[f"{file_path}::{node.name}"] = metadata
 
-        except Exception as e:
+        except Exception:
             # Skip files that can't be parsed
             pass
 
-    def _extract_imports(self, tree: ast.AST) -> Set[str]:
+    def _extract_imports(self, tree: ast.AST) -> set[str]:
         """Extract all imports from AST."""
         imports = set()
 
@@ -145,7 +147,7 @@ class TestOptimizer:
 
         return imports
 
-    def _extract_fixtures(self, tree: ast.AST, file_path: Path) -> Dict[str, FixtureMetadata]:
+    def _extract_fixtures(self, tree: ast.AST, file_path: Path) -> dict[str, FixtureMetadata]:
         """Extract pytest fixtures from AST."""
         fixtures = {}
 
@@ -173,7 +175,7 @@ class TestOptimizer:
                             scope=scope,
                             has_db_setup=has_db,
                             has_network_setup=has_network,
-                            estimated_cost_ms=cost_ms
+                            estimated_cost_ms=cost_ms,
                         )
 
         return fixtures
@@ -204,7 +206,15 @@ class TestOptimizer:
         """Check if function contains database setup."""
         source = ast.get_source_segment(ast.unparse(node), node)
         if source:
-            db_keywords = ['database', 'db', 'session', 'engine', 'sqlalchemy', 'create_all', 'drop_all']
+            db_keywords = [
+                "database",
+                "db",
+                "session",
+                "engine",
+                "sqlalchemy",
+                "create_all",
+                "drop_all",
+            ]
             return any(keyword in source.lower() for keyword in db_keywords)
         return False
 
@@ -212,29 +222,32 @@ class TestOptimizer:
         """Check if function contains network setup."""
         source = ast.get_source_segment(ast.unparse(node), node)
         if source:
-            network_keywords = ['requests', 'httpx', 'urllib', 'socket', 'api', 'http']
+            network_keywords = ["requests", "httpx", "urllib", "socket", "api", "http"]
             return any(keyword in source.lower() for keyword in network_keywords)
         return False
 
     def _analyze_test_function(
-        self,
-        node: ast.FunctionDef,
-        file_path: Path,
-        imports: Set[str]
+        self, node: ast.FunctionDef, file_path: Path, imports: set[str]
     ) -> TestMetadata:
         """Analyze a test function for optimization opportunities."""
 
         # Extract fixtures used
         fixtures_used = set()
         if node.args.args:
-            fixtures_used = {arg.arg for arg in node.args.args if arg.arg != 'self'}
+            fixtures_used = {arg.arg for arg in node.args.args if arg.arg != "self"}
 
         # Check for external dependencies
         source = ast.unparse(node)
 
-        has_db = any(keyword in source.lower() for keyword in ['session', 'database', 'db', 'query'])
-        has_file_io = any(keyword in source.lower() for keyword in ['open(', 'read(', 'write(', 'file'])
-        has_network = any(keyword in source.lower() for keyword in ['requests', 'urllib', 'http', 'api'])
+        has_db = any(
+            keyword in source.lower() for keyword in ["session", "database", "db", "query"]
+        )
+        has_file_io = any(
+            keyword in source.lower() for keyword in ["open(", "read(", "write(", "file"]
+        )
+        has_network = any(
+            keyword in source.lower() for keyword in ["requests", "urllib", "http", "api"]
+        )
         has_external = has_db or has_file_io or has_network
 
         # Check if async
@@ -250,7 +263,7 @@ class TestOptimizer:
             has_network_calls=has_network,
             has_external_deps=has_external,
             is_async=is_async,
-            line_number=node.lineno
+            line_number=node.lineno,
         )
 
     def _generate_optimization_plan(self) -> OptimizationPlan:
@@ -282,10 +295,10 @@ class TestOptimizer:
             expensive_fixtures=expensive_fixtures,
             mock_candidates=mock_candidates,
             redundant_tests=redundant,
-            estimated_savings_seconds=round(savings, 2)
+            estimated_savings_seconds=round(savings, 2),
         )
 
-    def find_parallelizable_tests(self) -> List[str]:
+    def find_parallelizable_tests(self) -> list[str]:
         """
         Find tests that can safely run in parallel.
 
@@ -299,17 +312,25 @@ class TestOptimizer:
         for test_id, metadata in self.test_metadata.items():
             # Check if test has no shared state
             is_safe = (
-                not metadata.has_db_access and
-                not metadata.has_file_io and
-                not metadata.has_network_calls
+                not metadata.has_db_access
+                and not metadata.has_file_io
+                and not metadata.has_network_calls
             )
 
             # Check if fixtures are safe
             fixtures_safe = all(
-                self.fixture_metadata.get(fixture, FixtureMetadata(
-                    name=fixture, file_path="", scope="function",
-                    has_db_setup=False, has_network_setup=False, estimated_cost_ms=0
-                )).scope in ['function', 'class']
+                self.fixture_metadata.get(
+                    fixture,
+                    FixtureMetadata(
+                        name=fixture,
+                        file_path="",
+                        scope="function",
+                        has_db_setup=False,
+                        has_network_setup=False,
+                        estimated_cost_ms=0,
+                    ),
+                ).scope
+                in ["function", "class"]
                 for fixture in metadata.fixtures_used
             )
 
@@ -318,7 +339,7 @@ class TestOptimizer:
 
         return parallelizable
 
-    def identify_expensive_fixtures(self) -> Dict[str, float]:
+    def identify_expensive_fixtures(self) -> dict[str, float]:
         """Find fixtures taking >100ms."""
         expensive = {}
 
@@ -328,38 +349,42 @@ class TestOptimizer:
 
         return expensive
 
-    def suggest_mocks(self) -> List[Dict[str, str]]:
+    def suggest_mocks(self) -> list[dict[str, str]]:
         """Suggest where to add mocks to improve performance."""
         suggestions = []
 
         for test_id, metadata in self.test_metadata.items():
             # Suggest mocking for tests with external dependencies
             if metadata.has_network_calls:
-                suggestions.append({
-                    "test": test_id,
-                    "target": "network calls",
-                    "reason": "External API calls detected",
-                    "estimated_savings": "500ms"
-                })
+                suggestions.append(
+                    {
+                        "test": test_id,
+                        "target": "network calls",
+                        "reason": "External API calls detected",
+                        "estimated_savings": "500ms",
+                    }
+                )
 
             if metadata.has_db_access and not any(
-                'mock' in fixture.lower() for fixture in metadata.fixtures_used
+                "mock" in fixture.lower() for fixture in metadata.fixtures_used
             ):
-                suggestions.append({
-                    "test": test_id,
-                    "target": "database access",
-                    "reason": "Real database usage detected",
-                    "estimated_savings": "200ms"
-                })
+                suggestions.append(
+                    {
+                        "test": test_id,
+                        "target": "database access",
+                        "reason": "Real database usage detected",
+                        "estimated_savings": "200ms",
+                    }
+                )
 
         return suggestions
 
-    def find_redundant_tests(self) -> List[Dict[str, str]]:
+    def find_redundant_tests(self) -> list[dict[str, str]]:
         """Identify potentially redundant test coverage."""
         redundant = []
 
         # Group tests by similarity (same fixtures, similar names)
-        test_groups: Dict[str, List[str]] = defaultdict(list)
+        test_groups: dict[str, list[str]] = defaultdict(list)
 
         for test_id, metadata in self.test_metadata.items():
             # Create key from fixtures
@@ -369,11 +394,13 @@ class TestOptimizer:
         # Flag groups with many similar tests
         for key, tests in test_groups.items():
             if len(tests) > 5:
-                redundant.append({
-                    "group": f"tests using fixtures: {', '.join(key)}",
-                    "count": str(len(tests)),
-                    "suggestion": "Consider consolidating similar tests"
-                })
+                redundant.append(
+                    {
+                        "group": f"tests using fixtures: {', '.join(key)}",
+                        "count": str(len(tests)),
+                        "suggestion": "Consider consolidating similar tests",
+                    }
+                )
 
         return redundant
 
@@ -385,7 +412,7 @@ class TestOptimizer:
             "## Parallelization Opportunities",
             "",
             f"**Found {len(plan.parallelizable_tests)} tests safe for parallel execution**",
-            ""
+            "",
         ]
 
         if plan.parallelizable_tests:
@@ -400,27 +427,21 @@ class TestOptimizer:
         else:
             lines.append("⚠️ No tests identified as safe for parallelization")
 
-        lines.extend([
-            "",
-            "## Expensive Fixtures",
-            ""
-        ])
+        lines.extend(["", "## Expensive Fixtures", ""])
 
         if plan.expensive_fixtures:
             lines.append("| Fixture Name | Estimated Cost (ms) | Recommendation |")
             lines.append("|--------------|-------------------|----------------|")
 
-            for fixture, cost in sorted(plan.expensive_fixtures.items(), key=lambda x: x[1], reverse=True):
+            for fixture, cost in sorted(
+                plan.expensive_fixtures.items(), key=lambda x: x[1], reverse=True
+            ):
                 rec = "Change to module/session scope" if cost > 200 else "Consider mocking"
                 lines.append(f"| {fixture} | {cost:.1f} | {rec} |")
         else:
             lines.append("✅ No expensive fixtures detected")
 
-        lines.extend([
-            "",
-            "## Mocking Opportunities",
-            ""
-        ])
+        lines.extend(["", "## Mocking Opportunities", ""])
 
         if plan.mock_candidates:
             lines.append(f"**Found {len(plan.mock_candidates)} tests that should use mocks**")
@@ -435,11 +456,7 @@ class TestOptimizer:
         else:
             lines.append("✅ No obvious mocking opportunities")
 
-        lines.extend([
-            "",
-            "## Redundant Test Coverage",
-            ""
-        ])
+        lines.extend(["", "## Redundant Test Coverage", ""])
 
         if plan.redundant_tests:
             for redundant in plan.redundant_tests:
@@ -449,53 +466,52 @@ class TestOptimizer:
         else:
             lines.append("✅ No redundant test patterns detected")
 
-        lines.extend([
-            "",
-            "## Estimated Time Savings",
-            "",
-            f"**Total estimated savings: {plan.estimated_savings_seconds:.1f} seconds**",
-            "",
-            "### Implementation Priority",
-            "",
-            "1. **Quick Wins (1 day):**",
-            "   - Enable pytest-xdist for parallel execution",
-            "   - Mock external API calls",
-            "",
-            "2. **Medium Effort (2-3 days):**",
-            "   - Optimize fixture scopes",
-            "   - Replace real database with in-memory mocks",
-            "",
-            "3. **Long Term (1 week):**",
-            "   - Consolidate redundant tests",
-            "   - Implement smart test selection",
-            "",
-            "---",
-            "",
-            "*Generated by Agency Test Optimizer*"
-        ])
+        lines.extend(
+            [
+                "",
+                "## Estimated Time Savings",
+                "",
+                f"**Total estimated savings: {plan.estimated_savings_seconds:.1f} seconds**",
+                "",
+                "### Implementation Priority",
+                "",
+                "1. **Quick Wins (1 day):**",
+                "   - Enable pytest-xdist for parallel execution",
+                "   - Mock external API calls",
+                "",
+                "2. **Medium Effort (2-3 days):**",
+                "   - Optimize fixture scopes",
+                "   - Replace real database with in-memory mocks",
+                "",
+                "3. **Long Term (1 week):**",
+                "   - Consolidate redundant tests",
+                "   - Implement smart test selection",
+                "",
+                "---",
+                "",
+                "*Generated by Agency Test Optimizer*",
+            ]
+        )
 
-        return '\n'.join(lines)
+        return "\n".join(lines)
 
 
 # CLI Interface
 def main() -> int:
     """Command-line interface for test optimization."""
     import argparse
-    import sys
 
     parser = argparse.ArgumentParser(
         description="Analyze test suite and identify optimization opportunities"
     )
     parser.add_argument(
-        "--test-dir",
-        default="tests/",
-        help="Directory containing tests (default: tests/)"
+        "--test-dir", default="tests/", help="Directory containing tests (default: tests/)"
     )
     parser.add_argument(
         "--output",
         type=Path,
         default=Path("docs/testing/TEST_OPTIMIZATION.md"),
-        help="Output path for report"
+        help="Output path for report",
     )
 
     args = parser.parse_args()
@@ -519,10 +535,10 @@ def main() -> int:
     # Save report
     try:
         args.output.parent.mkdir(parents=True, exist_ok=True)
-        with open(args.output, 'w') as f:
+        with open(args.output, "w") as f:
             f.write(report)
 
-        print(f"\n✅ Optimization analysis complete!")
+        print("\n✅ Optimization analysis complete!")
         print(f"📊 Found {len(plan.parallelizable_tests)} parallelizable tests")
         print(f"🔧 Found {len(plan.expensive_fixtures)} expensive fixtures")
         print(f"🎯 Found {len(plan.mock_candidates)} mocking opportunities")
@@ -538,4 +554,5 @@ def main() -> int:
 
 if __name__ == "__main__":
     import sys
+
     sys.exit(main())

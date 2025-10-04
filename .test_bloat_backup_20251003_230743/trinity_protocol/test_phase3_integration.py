@@ -15,18 +15,21 @@ Constitutional Compliance:
 - NECESSARY pattern throughout
 """
 
-import pytest
 from datetime import datetime, timedelta
-from unittest.mock import Mock, AsyncMock, patch
-from shared.type_definitions.result import Result, Ok, Err
+from unittest.mock import AsyncMock, Mock
+
+import pytest
+
+from shared.type_definitions.result import Err, Ok
 
 try:
+    from trinity_protocol.core.models.patterns import DetectedPattern
+    from trinity_protocol.core.models.project import Project, ProjectState
+    from trinity_protocol.daily_checkin import DailyCheckinCoordinator
+    from trinity_protocol.project_executor import ProjectExecutor
     from trinity_protocol.project_initializer import ProjectInitializer
     from trinity_protocol.spec_from_conversation import SpecFromConversation
-    from trinity_protocol.project_executor import ProjectExecutor
-    from trinity_protocol.daily_checkin import DailyCheckinCoordinator
-    from trinity_protocol.core.models.project import Project, ProjectState
-    from trinity_protocol.core.models.patterns import DetectedPattern
+
     IMPLEMENTATION_AVAILABLE = True
 except ImportError:
     IMPLEMENTATION_AVAILABLE = False
@@ -52,7 +55,7 @@ class TestCompleteProjectLifecycle:
             description="User wants to write coaching book",
             confidence=0.90,
             evidence=["coaching book", "entrepreneurs"],
-            detected_at=datetime.now()
+            detected_at=datetime.now(),
         )
 
         initializer = create_project_initializer()
@@ -106,7 +109,7 @@ class TestCompleteProjectLifecycle:
             description="Improve onboarding process",
             confidence=0.85,
             evidence=["slow onboarding"],
-            detected_at=datetime.now()
+            detected_at=datetime.now(),
         )
 
         # Full workflow: Init → Q&A → Spec → Execution → Complete
@@ -153,7 +156,7 @@ class TestCompleteProjectLifecycle:
             description="Book",
             confidence=0.90,
             evidence=["book"],
-            detected_at=datetime.now()
+            detected_at=datetime.now(),
         )
 
         result1 = await initializer.initialize_project(pattern1, "YES")
@@ -166,7 +169,7 @@ class TestCompleteProjectLifecycle:
             description="Workflow",
             confidence=0.85,
             evidence=["workflow"],
-            detected_at=datetime.now()
+            detected_at=datetime.now(),
         )
 
         result2 = await initializer.initialize_project(pattern2, "YES")
@@ -213,7 +216,7 @@ class TestPhase12Compatibility:
         question_result = await hitl.ask_question(
             question_id="q_test",
             question_text="Want help with your coaching book?",
-            question_type="high_value"
+            question_type="high_value",
         )
 
         assert question_result.is_ok()
@@ -228,6 +231,7 @@ class TestPhase12Compatibility:
 
         # Simulate recording response
         from trinity_protocol.core.models.preferences import ResponseRecord
+
         record = ResponseRecord(
             response_id="resp_test",
             question_id="q_test",
@@ -238,7 +242,7 @@ class TestPhase12Compatibility:
             timestamp=datetime.now(),
             response_time_seconds=3.5,
             day_of_week="tuesday",
-            time_of_day="morning"
+            time_of_day="morning",
         )
 
         learner.record_response(record)
@@ -394,11 +398,7 @@ class TestErrorRecovery:
         mock_tools = Mock()
         mock_tools.web_research = AsyncMock(return_value=Err("Network error"))
 
-        executor = ProjectExecutor(
-            llm_client=Mock(),
-            state_store=Mock(),
-            tools=mock_tools
-        )
+        executor = ProjectExecutor(llm_client=Mock(), state_store=Mock(), tools=mock_tools)
 
         task = create_mock_task()
         result = await executor.execute_task(task)
@@ -477,7 +477,7 @@ def create_mock_pattern():
         description="Test pattern",
         confidence=0.85,
         evidence=["test"],
-        detected_at=datetime.now()
+        detected_at=datetime.now(),
     )
 
 
@@ -494,7 +494,7 @@ def create_mock_project_in_progress():
         total_tasks=20,
         completed_tasks=4,
         progress_percentage=20,
-        blockers=[]
+        blockers=[],
     )
 
     return Project(
@@ -509,7 +509,7 @@ def create_mock_project_in_progress():
         state=state,
         checkins=[],
         created_at=datetime.now(),
-        status="active"
+        status="active",
     )
 
 
@@ -549,7 +549,7 @@ def create_mock_task(estimated_cost=0.5):
         dependencies=[],
         acceptance_criteria=["Done"],
         assigned_to="system",
-        status="pending"
+        status="pending",
     )
 
 

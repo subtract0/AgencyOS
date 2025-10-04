@@ -8,16 +8,16 @@ Untracked learning ingestion: discover useful notes from allowlisted paths.
 - Denylist directories: .git, .venv, venv, env, node_modules, secrets, secret
 - Privacy: redacts likely secrets from summaries
 """
+
 from __future__ import annotations
 
 import glob
-import hashlib
 import os
 from pathlib import Path
-from typing import Any, Dict, List
+
 from shared.type_definitions.json import JSONValue
 
-from .adapters import _redact, _shorten, _iso_now, Card, _stable_id
+from .adapters import Card, _iso_now, _redact, _shorten, _stable_id
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 DENY_DIRS = {".git", ".venv", "venv", "env", "node_modules", "secrets", "secret"}
@@ -40,6 +40,7 @@ def _read_snippet(fp: Path) -> str:
             text = str(raw[:200])
         # Use first 200 chars as summary (redacted)
         from json import dumps
+
         red = _redact(text)
         if isinstance(red, (dict, list)):
             text = dumps(red)[:200]
@@ -50,16 +51,18 @@ def _read_snippet(fp: Path) -> str:
         return ""
 
 
-def discover_untracked_cards() -> List[Dict[str, JSONValue]]:
+def discover_untracked_cards() -> list[dict[str, JSONValue]]:
     # Check flag
     if os.getenv("LEARNING_UNTRACKED", "false").lower() != "true":
         return []
 
     # Globs
     globs_env = os.getenv("LEARNING_UNTRACKED_GLOBS")
-    patterns = [g.strip() for g in globs_env.split(",") if g.strip()] if globs_env else DEFAULT_ALLOWLIST
+    patterns = (
+        [g.strip() for g in globs_env.split(",") if g.strip()] if globs_env else DEFAULT_ALLOWLIST
+    )
 
-    cards: List[Card] = []
+    cards: list[Card] = []
 
     for pattern in patterns:
         # Absolute pattern rooted at repo

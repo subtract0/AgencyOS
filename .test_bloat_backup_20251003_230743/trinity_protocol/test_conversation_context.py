@@ -8,18 +8,18 @@ Constitutional Compliance:
 - TDD approach
 """
 
-import pytest
 from datetime import datetime, timedelta
-from trinity_protocol.experimental.conversation_context import ConversationContext, TranscriptEntry
+
+import pytest
+
+from trinity_protocol.experimental.conversation_context import ConversationContext
 
 
 @pytest.fixture
 def context():
     """Create conversation context for testing."""
     return ConversationContext(
-        window_minutes=10.0,
-        max_entries=100,
-        silence_threshold_seconds=120.0
+        window_minutes=10.0, max_entries=100, silence_threshold_seconds=120.0
     )
 
 
@@ -60,7 +60,7 @@ class TestTranscriptionManagement:
         context_small = ConversationContext(
             window_minutes=10.0,
             max_entries=5,  # Small limit
-            silence_threshold_seconds=120.0
+            silence_threshold_seconds=120.0,
         )
 
         now = datetime.now()

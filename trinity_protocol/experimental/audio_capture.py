@@ -53,35 +53,35 @@ Required steps:
 """
 
 import asyncio
-import wave
-import io
 import struct
-from pathlib import Path
-from typing import Optional, AsyncGenerator
-from datetime import datetime
+import wave
 from collections import deque
+from collections.abc import AsyncGenerator
+from datetime import datetime
+from pathlib import Path
 
 # Optional numpy import for faster RMS calculation
 try:
     import numpy as np
+
     HAS_NUMPY = True
 except ImportError:
     HAS_NUMPY = False
 
 from trinity_protocol.experimental.models.audio import (
+    AudioCaptureStats,
     AudioConfig,
     AudioSegment,
     VADResult,
-    AudioCaptureStats,
 )
 
 # Type alias for Result pattern
 try:
-    from shared.type_definitions.result import Result, Ok, Err
+    from shared.type_definitions.result import Err, Ok, Result
 except ImportError:
     # Fallback for testing
-    from typing import Union
     from dataclasses import dataclass
+    from typing import Union
 
     @dataclass
     class Ok:
@@ -102,11 +102,7 @@ class AudioCaptureModule:
     applies RMS-based VAD, and yields AudioSegment objects.
     """
 
-    def __init__(
-        self,
-        config: Optional[AudioConfig] = None,
-        device_index: Optional[int] = None
-    ):
+    def __init__(self, config: AudioConfig | None = None, device_index: int | None = None):
         """
         Initialize audio capture.
 
@@ -119,9 +115,7 @@ class AudioCaptureModule:
         self.is_running = False
         self._audio_stream = None
         self._pyaudio = None
-        self._buffer = deque(maxlen=int(
-            self.config.sample_rate * self.config.buffer_seconds
-        ))
+        self._buffer = deque(maxlen=int(self.config.sample_rate * self.config.buffer_seconds))
         self.stats = AudioCaptureStats()
 
     async def start(self) -> Result[None, str]:
@@ -208,18 +202,14 @@ class AudioCaptureModule:
             sum_squares = 0.0
             for i in range(num_samples):
                 # Unpack 16-bit signed int (little-endian)
-                sample = struct.unpack_from('<h', audio_data, i * 2)[0]
-                sum_squares += sample ** 2
+                sample = struct.unpack_from("<h", audio_data, i * 2)[0]
+                sum_squares += sample**2
 
             mean_square = sum_squares / num_samples
-            rms = (mean_square ** 0.5)
+            rms = mean_square**0.5
             return rms
 
-    def _detect_speech(
-        self,
-        audio_data: bytes,
-        threshold: float = 15.0
-    ) -> VADResult:
+    def _detect_speech(self, audio_data: bytes, threshold: float = 15.0) -> VADResult:
         """
         Detect speech using RMS-based Voice Activity Detection.
 
@@ -239,16 +229,9 @@ class AudioCaptureModule:
         else:
             confidence = max(0.0, 1.0 - (rms / threshold))
 
-        return VADResult(
-            has_speech=has_speech,
-            confidence=confidence,
-            rms_level=rms
-        )
+        return VADResult(has_speech=has_speech, confidence=confidence, rms_level=rms)
 
-    async def capture_chunk(
-        self,
-        duration_seconds: float = 1.0
-    ) -> Result[AudioSegment, str]:
+    async def capture_chunk(self, duration_seconds: float = 1.0) -> Result[AudioSegment, str]:
         """
         Capture a single audio chunk.
 
@@ -266,10 +249,7 @@ class AudioCaptureModule:
             num_frames = int(self.config.sample_rate * duration_seconds)
 
             # Read audio data
-            audio_data = self._audio_stream.read(
-                num_frames,
-                exception_on_overflow=False
-            )
+            audio_data = self._audio_stream.read(num_frames, exception_on_overflow=False)
 
             # Detect speech
             vad_result = self._detect_speech(audio_data)
@@ -281,7 +261,7 @@ class AudioCaptureModule:
                 channels=self.config.channels,
                 duration_seconds=duration_seconds,
                 timestamp=datetime.now(),
-                has_speech=vad_result.has_speech
+                has_speech=vad_result.has_speech,
             )
 
             # Update stats
@@ -298,8 +278,7 @@ class AudioCaptureModule:
             return Err(f"Failed to capture audio: {str(e)}")
 
     async def capture_stream(
-        self,
-        chunk_duration: float = 1.0
+        self, chunk_duration: float = 1.0
     ) -> AsyncGenerator[AudioSegment, None]:
         """
         Stream audio chunks continuously.
@@ -321,9 +300,7 @@ class AudioCaptureModule:
                 await asyncio.sleep(0.1)
 
     async def save_segment_to_wav(
-        self,
-        segment: AudioSegment,
-        output_path: Path
+        self, segment: AudioSegment, output_path: Path
     ) -> Result[None, str]:
         """
         Save audio segment to WAV file (for testing/debugging).
@@ -338,7 +315,7 @@ class AudioCaptureModule:
             Result with None on success, error message on failure
         """
         try:
-            with wave.open(str(output_path), 'wb') as wav_file:
+            with wave.open(str(output_path), "wb") as wav_file:
                 wav_file.setnchannels(segment.channels)
                 wav_file.setsampwidth(2)  # 16-bit = 2 bytes
                 wav_file.setframerate(segment.sample_rate)

@@ -13,30 +13,26 @@ that the existing tests in test_bash_tool.py don't cover.
 """
 
 import os
+import subprocess
 import tempfile
 import threading
 import time
 from datetime import datetime, timedelta
 from pathlib import Path
-from unittest.mock import Mock, patch, MagicMock
-import subprocess
+from unittest.mock import Mock, patch
 
 import pytest
-
 from pydantic import ValidationError as PydanticValidationError
 
 from tools.bash import (
-    Bash,
-    CommandValidationError,
-    extract_file_paths,
-    get_resource_lock,
-    cleanup_expired_locks,
-    _resource_locks,
-    _locks_mutex,
     _LOCK_TTL,
     _MAX_LOCKS,
-    DANGEROUS_COMMANDS,
-    DANGEROUS_PATTERNS,
+    Bash,
+    _locks_mutex,
+    _resource_locks,
+    cleanup_expired_locks,
+    extract_file_paths,
+    get_resource_lock,
 )
 
 
@@ -121,7 +117,7 @@ class TestCommandValidationSecurity:
         tool = Bash(command="echo 'hack' > /etc/hosts")
         result = tool.run()
         # Either blocked by validation OR by OS permission denied
-        assert ("Security validation failed" in result or "Operation not permitted" in result)
+        assert "Security validation failed" in result or "Operation not permitted" in result
         assert "Exit code: 0" not in result  # Should fail
 
     def test_write_to_bin_directory_blocked(self):
@@ -380,19 +376,23 @@ class TestResourceLocking:
 class TestConstitutionalTimeoutPattern:
     """Test constitutional timeout pattern (NECESSARY: A - Async, Article I compliance)"""
 
-    @pytest.mark.skip(reason="Method _run_with_constitutional_timeout not yet implemented in bash.py")
+    @pytest.mark.skip(
+        reason="Method _run_with_constitutional_timeout not yet implemented in bash.py"
+    )
     def test_timeout_retry_with_2x_multiplier(self):
         """Test that timeout retries with 2x multiplier"""
         tool = Bash(command="echo test", timeout=5000)
 
-        with patch.object(tool, '_run_with_constitutional_timeout') as mock_run:
+        with patch.object(tool, "_run_with_constitutional_timeout") as mock_run:
             mock_run.return_value = Mock(returncode=0, stdout="test", stderr="")
             tool.run()
 
             # Should have called the constitutional timeout method
             assert mock_run.called
 
-    @pytest.mark.skip(reason="Method _run_with_constitutional_timeout not yet implemented in bash.py")
+    @pytest.mark.skip(
+        reason="Method _run_with_constitutional_timeout not yet implemented in bash.py"
+    )
     def test_timeout_retry_multipliers(self):
         """Test that timeout multipliers follow constitutional pattern (1x, 2x, 3x, 5x, 10x)"""
         tool = Bash(command="sleep 10", timeout=5000)
@@ -404,9 +404,11 @@ class TestConstitutionalTimeoutPattern:
             timeout_values.append(timeout)
             raise subprocess.TimeoutExpired(cmd=args[0], timeout=timeout)
 
-        with patch('subprocess.run', side_effect=mock_subprocess_run):
+        with patch("subprocess.run", side_effect=mock_subprocess_run):
             try:
-                tool._run_with_constitutional_timeout("sleep 10", initial_timeout_ms=5000, max_retries=5)
+                tool._run_with_constitutional_timeout(
+                    "sleep 10", initial_timeout_ms=5000, max_retries=5
+                )
             except subprocess.TimeoutExpired:
                 pass
 
@@ -414,16 +416,18 @@ class TestConstitutionalTimeoutPattern:
         assert len(timeout_values) > 0
         # Check multipliers: 1, 2, 3, 5, 10
         expected_multipliers = [1, 2, 3, 5, 10]
-        for i, expected_mult in enumerate(expected_multipliers[:len(timeout_values)]):
+        for i, expected_mult in enumerate(expected_multipliers[: len(timeout_values)]):
             expected_timeout = (5000 * expected_mult) / 1000.0
-            assert abs(timeout_values[i] - expected_timeout) < 0.01, f"Expected {expected_timeout}, got {timeout_values[i]}"
+            assert abs(timeout_values[i] - expected_timeout) < 0.01, (
+                f"Expected {expected_timeout}, got {timeout_values[i]}"
+            )
 
     def test_timeout_article_i_compliance_never_proceed_incomplete(self):
         """Test Article I: Never proceed with incomplete data"""
         tool = Bash(command="sleep 10", timeout=5000)
 
         # Mock timeout on all attempts
-        with patch('subprocess.run') as mock_run:
+        with patch("subprocess.run") as mock_run:
             mock_run.side_effect = subprocess.TimeoutExpired(cmd="sleep 10", timeout=1.0)
 
             result = tool.run()
@@ -432,7 +436,9 @@ class TestConstitutionalTimeoutPattern:
             assert "timed out" in result.lower()
             assert "Exit code: 124" in result or "Exit code: 1" in result
 
-    @pytest.mark.skip(reason="Method _run_with_constitutional_timeout not yet implemented in bash.py")
+    @pytest.mark.skip(
+        reason="Method _run_with_constitutional_timeout not yet implemented in bash.py"
+    )
     def test_timeout_success_on_retry(self):
         """Test that command succeeds on retry after initial timeout"""
         tool = Bash(command="echo success", timeout=5000)
@@ -448,12 +454,16 @@ class TestConstitutionalTimeoutPattern:
                 # Second call succeeds
                 return Mock(returncode=0, stdout="success", stderr="")
 
-        with patch('subprocess.run', side_effect=mock_subprocess_run):
-            result = tool._run_with_constitutional_timeout("echo success", initial_timeout_ms=1000, max_retries=3)
+        with patch("subprocess.run", side_effect=mock_subprocess_run):
+            result = tool._run_with_constitutional_timeout(
+                "echo success", initial_timeout_ms=1000, max_retries=3
+            )
             assert result.returncode == 0
             assert result.stdout == "success"
 
-    @pytest.mark.skip(reason="Methods _run_with_constitutional_timeout and _is_output_complete not yet implemented in bash.py")
+    @pytest.mark.skip(
+        reason="Methods _run_with_constitutional_timeout and _is_output_complete not yet implemented in bash.py"
+    )
     def test_incomplete_output_triggers_retry(self):
         """Test that incomplete output indicators trigger retry"""
         tool = Bash(command="test", timeout=5000)
@@ -461,11 +471,13 @@ class TestConstitutionalTimeoutPattern:
         # Mock output with incomplete indicator
         mock_result = Mock(returncode=0, stdout="Output... (truncated)", stderr="")
 
-        with patch('subprocess.run', return_value=mock_result):
-            with patch.object(tool, '_is_output_complete', return_value=False) as mock_complete:
+        with patch("subprocess.run", return_value=mock_result):
+            with patch.object(tool, "_is_output_complete", return_value=False) as mock_complete:
                 try:
                     # Should retry when output is incomplete
-                    tool._run_with_constitutional_timeout("test", initial_timeout_ms=1000, max_retries=2)
+                    tool._run_with_constitutional_timeout(
+                        "test", initial_timeout_ms=1000, max_retries=2
+                    )
                 except Exception:
                     pass
 
@@ -474,7 +486,6 @@ class TestConstitutionalTimeoutPattern:
 
 
 @pytest.mark.skip(reason="Method _is_output_complete not yet implemented in bash.py")
-
 class TestOutputCompletenessValidation:
     """Test output completeness validation (NECESSARY: S - State validation)"""
 
@@ -529,42 +540,45 @@ class TestSecureEnvironment:
         tool = Bash(command="test")
 
         # Set some dangerous env vars
-        with patch.dict(os.environ, {
-            'LD_PRELOAD': '/malicious/lib.so',
-            'LD_LIBRARY_PATH': '/malicious/libs',
-            'DYLD_INSERT_LIBRARIES': '/malicious/dylib',
-            'PATH': '/usr/bin:/bin'
-        }):
+        with patch.dict(
+            os.environ,
+            {
+                "LD_PRELOAD": "/malicious/lib.so",
+                "LD_LIBRARY_PATH": "/malicious/libs",
+                "DYLD_INSERT_LIBRARIES": "/malicious/dylib",
+                "PATH": "/usr/bin:/bin",
+            },
+        ):
             env = tool._get_secure_environment()
 
-            assert 'LD_PRELOAD' not in env
-            assert 'LD_LIBRARY_PATH' not in env
-            assert 'DYLD_INSERT_LIBRARIES' not in env
+            assert "LD_PRELOAD" not in env
+            assert "LD_LIBRARY_PATH" not in env
+            assert "DYLD_INSERT_LIBRARIES" not in env
 
     def test_preserves_safe_paths(self):
         """Test that safe paths are preserved"""
         tool = Bash(command="test")
         env = tool._get_secure_environment()
 
-        assert 'PATH' in env
-        assert '/usr/bin' in env['PATH'] or '/bin' in env['PATH']
+        assert "PATH" in env
+        assert "/usr/bin" in env["PATH"] or "/bin" in env["PATH"]
 
     def test_sets_shell_to_bash(self):
         """Test that SHELL is set to /bin/bash"""
         tool = Bash(command="test")
         env = tool._get_secure_environment()
 
-        assert env['SHELL'] == '/bin/bash'
+        assert env["SHELL"] == "/bin/bash"
 
     def test_filters_unsafe_paths(self):
         """Test that only safe paths are included"""
         tool = Bash(command="test")
 
-        with patch.dict(os.environ, {'PATH': '/usr/bin:/malicious/path:/bin'}):
+        with patch.dict(os.environ, {"PATH": "/usr/bin:/malicious/path:/bin"}):
             env = tool._get_secure_environment()
 
             # Should filter out unsafe paths
-            assert '/malicious/path' not in env['PATH']
+            assert "/malicious/path" not in env["PATH"]
 
 
 class TestSecureExecutionCommand:
@@ -581,7 +595,7 @@ class TestSecureExecutionCommand:
 
     @pytest.mark.skipif(
         not (os.uname().sysname == "Darwin" and os.path.exists("/usr/bin/sandbox-exec")),
-        reason="Sandbox only available on macOS"
+        reason="Sandbox only available on macOS",
     )
     def test_builds_sandboxed_command_on_macos(self):
         """Test that sandbox-exec is used on macOS"""
@@ -617,7 +631,7 @@ class TestSecureExecutionCommand:
         tool = Bash(command="echo test")
 
         # Mock sandbox detection to fail
-        with patch('os.uname', side_effect=Exception("Mock error")):
+        with patch("os.uname", side_effect=Exception("Mock error")):
             cmd = tool._build_secure_execution_command("echo test")
 
             # Should fall back to normal bash
@@ -632,7 +646,7 @@ class TestInteractiveCommandModification:
         """Test that npx create-next-app gets --yes flag"""
         tool = Bash(command="npx create-next-app my-app", timeout=5000)
 
-        with patch('subprocess.run') as mock_run:
+        with patch("subprocess.run") as mock_run:
             mock_run.return_value = Mock(returncode=0, stdout="", stderr="")
             tool.run()
 
@@ -645,7 +659,7 @@ class TestInteractiveCommandModification:
         """Test that npm init gets -y flag"""
         tool = Bash(command="npm init", timeout=5000)
 
-        with patch('subprocess.run') as mock_run:
+        with patch("subprocess.run") as mock_run:
             mock_run.return_value = Mock(returncode=0, stdout="", stderr="")
             tool.run()
 
@@ -657,7 +671,7 @@ class TestInteractiveCommandModification:
         """Test that yarn create gets --yes flag"""
         tool = Bash(command="yarn create react-app myapp", timeout=5000)
 
-        with patch('subprocess.run') as mock_run:
+        with patch("subprocess.run") as mock_run:
             mock_run.return_value = Mock(returncode=0, stdout="", stderr="")
             tool.run()
 
@@ -669,7 +683,7 @@ class TestInteractiveCommandModification:
         """Test that flags aren't duplicated if already present"""
         tool = Bash(command="npm init -y", timeout=5000)
 
-        with patch('subprocess.run') as mock_run:
+        with patch("subprocess.run") as mock_run:
             mock_run.return_value = Mock(returncode=0, stdout="", stderr="")
             tool.run()
 
@@ -686,7 +700,7 @@ class TestPythonCommandReplacement:
         """Test that 'python' is replaced with 'python3'"""
         tool = Bash(command="python --version", timeout=5000)
 
-        with patch('subprocess.run') as mock_run:
+        with patch("subprocess.run") as mock_run:
             mock_run.return_value = Mock(returncode=0, stdout="Python 3.x", stderr="")
             tool.run()
 
@@ -700,7 +714,7 @@ class TestPythonCommandReplacement:
         """Test that 'python' isn't replaced when part of a word"""
         tool = Bash(command="echo pythonic", timeout=5000)
 
-        with patch('subprocess.run') as mock_run:
+        with patch("subprocess.run") as mock_run:
             mock_run.return_value = Mock(returncode=0, stdout="pythonic", stderr="")
             tool.run()
 
@@ -717,18 +731,24 @@ class TestErrorHandling:
         """Test handling of subprocess exceptions"""
         tool = Bash(command="test")
 
-        with patch('subprocess.run', side_effect=Exception("Mock error")):
+        with patch("subprocess.run", side_effect=Exception("Mock error")):
             result = tool.run()
 
             assert "Exit code: 1" in result
             # Accept multiple error formats (new timeout format or old error format)
-            assert "Exit code: 124" in result or "timed out" in result.lower() or "Error executing command" in result
+            assert (
+                "Exit code: 124" in result
+                or "timed out" in result.lower()
+                or "Error executing command" in result
+            )
 
     def test_handles_timeout_expired(self):
         """Test handling of TimeoutExpired exception"""
         tool = Bash(command="sleep 10", timeout=5000)
 
-        with patch('subprocess.run', side_effect=subprocess.TimeoutExpired(cmd="sleep 10", timeout=1.0)):
+        with patch(
+            "subprocess.run", side_effect=subprocess.TimeoutExpired(cmd="sleep 10", timeout=1.0)
+        ):
             result = tool.run()
 
             assert "timed out" in result.lower()
@@ -744,7 +764,7 @@ class TestErrorHandling:
     def test_handles_permission_denied(self):
         """Test handling of permission denied errors"""
         # Create a file without execute permission
-        with tempfile.NamedTemporaryFile(mode='w', delete=False, dir="/tmp") as f:
+        with tempfile.NamedTemporaryFile(mode="w", delete=False, dir="/tmp") as f:
             f.write("#!/bin/bash\necho test")
             temp_script = f.name
 
@@ -784,7 +804,7 @@ class TestConcurrentExecution:
 
             threads = [
                 threading.Thread(target=run_command, args=(file1,)),
-                threading.Thread(target=run_command, args=(file2,))
+                threading.Thread(target=run_command, args=(file2,)),
             ]
 
             start_time = time.time()
@@ -809,10 +829,7 @@ class TestConcurrentExecution:
             result = tool.run()
             results.append((time.time(), thread_id, result))
 
-        threads = [
-            threading.Thread(target=run_command, args=(i,))
-            for i in range(3)
-        ]
+        threads = [threading.Thread(target=run_command, args=(i,)) for i in range(3)]
 
         for t in threads:
             t.start()
@@ -830,7 +847,7 @@ class TestConcurrentExecution:
 
         # Both commands should complete without deadlock
         # (This is a smoke test - actual deadlock would hang)
-        with patch('subprocess.run') as mock_run:
+        with patch("subprocess.run") as mock_run:
             mock_run.return_value = Mock(returncode=0, stdout="", stderr="")
 
             def run_tool1():
@@ -900,7 +917,9 @@ class TestConstitutionalCompliance:
         # Timeout handling should retry, not proceed with incomplete data
         tool = Bash(command="sleep 5", timeout=5000)
 
-        with patch('subprocess.run', side_effect=subprocess.TimeoutExpired(cmd="sleep", timeout=1.0)):
+        with patch(
+            "subprocess.run", side_effect=subprocess.TimeoutExpired(cmd="sleep", timeout=1.0)
+        ):
             result = tool.run()
 
             # Should not proceed with incomplete data
@@ -915,7 +934,7 @@ class TestConstitutionalCompliance:
 
     def test_security_validation_before_execution(self):
         """Test that security validation happens at Pydantic level before any execution"""
-        with patch('subprocess.run') as mock_run:
+        with patch("subprocess.run") as mock_run:
             # Should fail at instantiation, subprocess.run should never be called
             with pytest.raises(PydanticValidationError) as exc_info:
                 tool = Bash(command="sudo malicious_command")
@@ -930,16 +949,20 @@ class TestConstitutionalCompliance:
         """Test that resources are cleaned up even on error"""
         tool = Bash(command="echo test > /tmp/test_cleanup.txt", timeout=5000)
 
-        with patch('subprocess.run', side_effect=Exception("Mock error")):
+        with patch("subprocess.run", side_effect=Exception("Mock error")):
             result = tool.run()
 
             # Should handle error gracefully
             # Accept multiple error formats (new timeout format or old error format)
-            assert "Exit code: 124" in result or "timed out" in result.lower() or "Error executing command" in result
+            assert (
+                "Exit code: 124" in result
+                or "timed out" in result.lower()
+                or "Error executing command" in result
+            )
 
             # Locks should be released (no deadlock on next call)
             tool2 = Bash(command="echo test2 > /tmp/test_cleanup.txt", timeout=5000)
-            with patch('subprocess.run') as mock_run2:
+            with patch("subprocess.run") as mock_run2:
                 mock_run2.return_value = Mock(returncode=0, stdout="test2", stderr="")
                 result2 = tool2.run()
                 # Should succeed (locks were released)

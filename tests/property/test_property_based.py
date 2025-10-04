@@ -11,28 +11,30 @@ Each property test runs 100-1000 examples by default.
 Hypothesis will automatically shrink failing cases to minimal examples.
 """
 
-import pytest
 import json
-from hypothesis import given, settings, strategies as st, assume
+
+import pytest
+from hypothesis import given, settings
+from hypothesis import strategies as st
 from hypothesis.stateful import run_state_machine_as_test
 
+from agency_memory.vector_store import VectorStore
+from shared.type_definitions.json_value import JSONValue
+from shared.type_definitions.result import Err, Ok, Result
 from tools.property_testing import (
-    result_strategy,
-    json_value_strategy,
-    memory_record_strategy,
-    ResultPatternProperties,
     JSONValueProperties,
+    ResultPatternProperties,
     VectorStoreProperties,
     VectorStoreStateMachine,
+    json_value_strategy,
+    memory_record_strategy,
+    result_strategy,
 )
-from shared.type_definitions.result import Result, Ok, Err
-from shared.type_definitions.json_value import JSONValue
-from agency_memory.vector_store import VectorStore
-
 
 # ============================================================================
 # RESULT PATTERN PROPERTIES
 # ============================================================================
+
 
 class TestResultPatternProperties:
     """
@@ -97,6 +99,7 @@ class TestResultPatternProperties:
     @given(result_strategy(st.lists(st.integers())))
     def test_map_composition(self, result: Result):
         """PROPERTY: map() is composable: r.map(f).map(g) == r.map(lambda x: g(f(x)))."""
+
         def f(x):
             return len(x) if isinstance(x, list) else 0
 
@@ -115,6 +118,7 @@ class TestResultPatternProperties:
     @given(result_strategy(st.integers()))
     def test_and_then_chaining(self, result: Result):
         """PROPERTY: and_then() chains operations correctly."""
+
         def safe_divide(x):
             if x == 0:
                 return Err("division by zero")
@@ -136,6 +140,7 @@ class TestResultPatternProperties:
 # ============================================================================
 # JSON VALUE PROPERTIES
 # ============================================================================
+
 
 class TestJSONValueProperties:
     """
@@ -190,6 +195,7 @@ class TestJSONValueProperties:
 # ============================================================================
 # VECTOR STORE PROPERTIES
 # ============================================================================
+
 
 class TestVectorStoreProperties:
     """
@@ -287,6 +293,7 @@ class TestVectorStoreProperties:
 # STATEFUL TESTING
 # ============================================================================
 
+
 class TestVectorStoreStateful:
     """
     Stateful property testing for VectorStore.
@@ -303,7 +310,7 @@ class TestVectorStoreStateful:
         """
         run_state_machine_as_test(
             VectorStoreStateMachine,
-            settings=settings(max_examples=50, stateful_step_count=20, deadline=2000)
+            settings=settings(max_examples=50, stateful_step_count=20, deadline=2000),
         )
 
 
@@ -311,15 +318,13 @@ class TestVectorStoreStateful:
 # INTEGRATION PROPERTIES
 # ============================================================================
 
+
 class TestIntegrationProperties:
     """
     Property tests for integration between components.
     """
 
-    @given(
-        result_strategy(json_value_strategy()),
-        st.text(min_size=1)
-    )
+    @given(result_strategy(json_value_strategy()), st.text(min_size=1))
     def test_result_with_json_value(self, result: Result, error_msg: str):
         """PROPERTY: Result works correctly with JSONValue payloads."""
         if result.is_ok():
@@ -339,10 +344,7 @@ class TestIntegrationProperties:
         # Should account for all results
         assert len(ok_values) + len(err_values) == len(results)
 
-    @given(
-        st.lists(memory_record_strategy(), min_size=1, max_size=5),
-        st.text(min_size=1)
-    )
+    @given(st.lists(memory_record_strategy(), min_size=1, max_size=5), st.text(min_size=1))
     def test_memory_search_consistency(self, records: list, query: str):
         """PROPERTY: Search results are consistent across calls."""
         store = VectorStore()
@@ -364,6 +366,7 @@ class TestIntegrationProperties:
 # ============================================================================
 # PERFORMANCE PROPERTIES
 # ============================================================================
+
 
 class TestPerformanceProperties:
     """

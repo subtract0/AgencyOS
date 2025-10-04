@@ -5,36 +5,37 @@ This script runs tests with coverage analysis, generates reports, and identifies
 modules with low coverage. Supports multiple output formats including HTML reports.
 """
 
+import argparse
+import json
 import subprocess
 import sys
-import json
-import argparse
-from pathlib import Path
-from typing import Dict, List, Optional, Tuple
 import xml.etree.ElementTree as ET
+from pathlib import Path
 
 
 class TestCoverageRunner:
     """Comprehensive test coverage runner and analyzer."""
 
-    def __init__(self, project_root: Optional[Path] = None):
+    def __init__(self, project_root: Path | None = None):
         self.project_root = project_root or Path(__file__).parent.parent
         self.coverage_dir = self.project_root / "coverage"
         self.coverage_dir.mkdir(exist_ok=True)
 
     def run_tests_with_coverage(
         self,
-        test_pattern: Optional[str] = None,
+        test_pattern: str | None = None,
         min_coverage: float = 80.0,
         include_slow: bool = False,
-        parallel: bool = True
-    ) -> Tuple[bool, Dict]:
+        parallel: bool = True,
+    ) -> tuple[bool, dict]:
         """Run tests with coverage collection."""
         print("🧪 Running tests with coverage analysis...")
 
         # Build pytest command
         cmd = [
-            sys.executable, "-m", "pytest",
+            sys.executable,
+            "-m",
+            "pytest",
             "--cov=.",
             "--cov-report=term-missing",
             "--cov-report=xml:coverage/coverage.xml",
@@ -42,7 +43,7 @@ class TestCoverageRunner:
             "--cov-report=json:coverage/coverage.json",
             f"--cov-fail-under={min_coverage}",
             "--tb=short",
-            "-v"
+            "-v",
         ]
 
         # Add test selection options
@@ -55,8 +56,11 @@ class TestCoverageRunner:
         if parallel:
             try:
                 # Try to use pytest-xdist for parallel execution
-                subprocess.run([sys.executable, "-c", "import xdist"], check=True, capture_output=True)
+                subprocess.run(
+                    [sys.executable, "-c", "import xdist"], check=True, capture_output=True
+                )
                 import multiprocessing
+
                 cpu_count = multiprocessing.cpu_count()
                 cmd.extend(["-n", str(min(cpu_count, 4))])  # Limit to 4 workers max
             except (subprocess.CalledProcessError, ImportError):
@@ -68,7 +72,7 @@ class TestCoverageRunner:
                 cwd=self.project_root,
                 capture_output=True,
                 text=True,
-                timeout=600  # 10 minute timeout
+                timeout=600,  # 10 minute timeout
             )
 
             # Parse coverage data
@@ -79,7 +83,7 @@ class TestCoverageRunner:
                 "coverage_data": coverage_data,
                 "stdout": result.stdout,
                 "stderr": result.stderr,
-                "returncode": result.returncode
+                "returncode": result.returncode,
             }
 
         except subprocess.TimeoutExpired:
@@ -89,22 +93,20 @@ class TestCoverageRunner:
             print(f"❌ Failed to run tests: {str(e)}")
             return False, {"error": str(e)}
 
-    def _parse_coverage_results(self) -> Dict:
+    def _parse_coverage_results(self) -> dict:
         """Parse coverage results from generated files."""
-        coverage_data = {
-            "total_coverage": 0.0,
-            "files": {},
-            "summary": {}
-        }
+        coverage_data = {"total_coverage": 0.0, "files": {}, "summary": {}}
 
         # Try to parse JSON coverage report
         json_file = self.coverage_dir / "coverage.json"
         if json_file.exists():
             try:
-                with open(json_file, 'r') as f:
+                with open(json_file) as f:
                     json_data = json.load(f)
 
-                coverage_data["total_coverage"] = json_data.get("totals", {}).get("percent_covered", 0.0)
+                coverage_data["total_coverage"] = json_data.get("totals", {}).get(
+                    "percent_covered", 0.0
+                )
 
                 # Extract file-level coverage
                 for filepath, file_data in json_data.get("files", {}).items():
@@ -112,7 +114,7 @@ class TestCoverageRunner:
                         "coverage": file_data.get("summary", {}).get("percent_covered", 0.0),
                         "lines_covered": file_data.get("summary", {}).get("covered_lines", 0),
                         "lines_total": file_data.get("summary", {}).get("num_statements", 0),
-                        "missing_lines": file_data.get("missing_lines", [])
+                        "missing_lines": file_data.get("missing_lines", []),
                     }
 
                 coverage_data["summary"] = json_data.get("totals", {})
@@ -129,17 +131,13 @@ class TestCoverageRunner:
 
         return coverage_data
 
-    def _parse_xml_coverage(self) -> Dict:
+    def _parse_xml_coverage(self) -> dict:
         """Parse coverage from XML report."""
         xml_file = self.coverage_dir / "coverage.xml"
         tree = ET.parse(xml_file)
         root = tree.getroot()
 
-        coverage_data = {
-            "total_coverage": 0.0,
-            "files": {},
-            "summary": {}
-        }
+        coverage_data = {"total_coverage": 0.0, "files": {}, "summary": {}}
 
         # Get overall coverage
         if root.attrib.get("line-rate"):
@@ -159,12 +157,12 @@ class TestCoverageRunner:
                         "coverage": line_rate,
                         "lines_covered": covered_lines,
                         "lines_total": total_lines,
-                        "missing_lines": []
+                        "missing_lines": [],
                     }
 
         return coverage_data
 
-    def identify_low_coverage_modules(self, threshold: float = 80.0) -> List[Dict]:
+    def identify_low_coverage_modules(self, threshold: float = 80.0) -> list[dict]:
         """Identify modules with coverage below threshold."""
         coverage_data = self._parse_coverage_results()
         low_coverage = []
@@ -172,13 +170,15 @@ class TestCoverageRunner:
         for filepath, file_data in coverage_data.get("files", {}).items():
             coverage = file_data.get("coverage", 0.0)
             if coverage < threshold:
-                low_coverage.append({
-                    "file": filepath,
-                    "coverage": coverage,
-                    "lines_covered": file_data.get("lines_covered", 0),
-                    "lines_total": file_data.get("lines_total", 0),
-                    "missing_lines": file_data.get("missing_lines", [])
-                })
+                low_coverage.append(
+                    {
+                        "file": filepath,
+                        "coverage": coverage,
+                        "lines_covered": file_data.get("lines_covered", 0),
+                        "lines_total": file_data.get("lines_total", 0),
+                        "missing_lines": file_data.get("missing_lines", []),
+                    }
+                )
 
         # Sort by coverage percentage (lowest first)
         low_coverage.sort(key=lambda x: x["coverage"])
@@ -209,7 +209,7 @@ class TestCoverageRunner:
         # Summary statistics
         summary = coverage_data.get("summary", {})
         if summary:
-            report.append(f"\n📈 STATISTICS:")
+            report.append("\n📈 STATISTICS:")
             report.append(f"- Total statements: {summary.get('num_statements', 'N/A')}")
             report.append(f"- Covered statements: {summary.get('covered_lines', 'N/A')}")
             report.append(f"- Missing statements: {summary.get('missing_lines', 'N/A')}")
@@ -220,7 +220,7 @@ class TestCoverageRunner:
         if include_low_coverage:
             low_coverage = self.identify_low_coverage_modules()
             if low_coverage:
-                report.append(f"\n❌ MODULES WITH LOW COVERAGE (<80%):")
+                report.append("\n❌ MODULES WITH LOW COVERAGE (<80%):")
                 report.append("-" * 40)
                 for module in low_coverage[:10]:  # Show top 10
                     file_path = Path(module["file"]).name
@@ -235,7 +235,7 @@ class TestCoverageRunner:
                 report.append("\n✅ All modules have good coverage (≥80%)")
 
         # File locations
-        report.append(f"\n📁 REPORT FILES:")
+        report.append("\n📁 REPORT FILES:")
         if (self.coverage_dir / "html" / "index.html").exists():
             report.append(f"- HTML report: {self.coverage_dir}/html/index.html")
         if (self.coverage_dir / "coverage.xml").exists():
@@ -248,6 +248,7 @@ class TestCoverageRunner:
     def cleanup_coverage_files(self):
         """Clean up old coverage files."""
         import shutil
+
         if self.coverage_dir.exists():
             shutil.rmtree(self.coverage_dir)
             self.coverage_dir.mkdir()
@@ -257,6 +258,7 @@ class TestCoverageRunner:
         html_file = self.coverage_dir / "html" / "index.html"
         if html_file.exists():
             import webbrowser
+
             webbrowser.open(f"file://{html_file.absolute()}")
             print(f"🌐 Opened coverage report in browser: {html_file}")
         else:
@@ -270,37 +272,27 @@ def main():
         "--min-coverage",
         type=float,
         default=80.0,
-        help="Minimum coverage percentage required (default: 80.0)"
+        help="Minimum coverage percentage required (default: 80.0)",
     )
     parser.add_argument(
-        "--test-pattern",
-        type=str,
-        help="Pattern to select specific tests (pytest -k pattern)"
+        "--test-pattern", type=str, help="Pattern to select specific tests (pytest -k pattern)"
     )
     parser.add_argument(
-        "--include-slow",
-        action="store_true",
-        help="Include slow tests in coverage run"
+        "--include-slow", action="store_true", help="Include slow tests in coverage run"
     )
     parser.add_argument(
-        "--no-parallel",
-        action="store_true",
-        help="Disable parallel test execution"
+        "--no-parallel", action="store_true", help="Disable parallel test execution"
     )
     parser.add_argument(
-        "--html",
-        action="store_true",
-        help="Open HTML coverage report in browser after completion"
+        "--html", action="store_true", help="Open HTML coverage report in browser after completion"
     )
     parser.add_argument(
-        "--clean",
-        action="store_true",
-        help="Clean up old coverage files before running"
+        "--clean", action="store_true", help="Clean up old coverage files before running"
     )
     parser.add_argument(
         "--report-only",
         action="store_true",
-        help="Only generate report from existing coverage data"
+        help="Only generate report from existing coverage data",
     )
 
     args = parser.parse_args()
@@ -318,7 +310,7 @@ def main():
                 test_pattern=args.test_pattern,
                 min_coverage=args.min_coverage,
                 include_slow=args.include_slow,
-                parallel=not args.no_parallel
+                parallel=not args.no_parallel,
             )
 
             if not success:
@@ -337,7 +329,7 @@ def main():
 
         # Save report to file
         report_file = runner.coverage_dir / "coverage_report.txt"
-        with open(report_file, 'w') as f:
+        with open(report_file, "w") as f:
             f.write(report)
         print(f"\n📄 Report saved to: {report_file}")
 

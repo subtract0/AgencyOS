@@ -3,12 +3,11 @@ Test Agency for Agency Code Agent
 Tests the agent with 5 diverse queries to validate functionality
 """
 
+from unittest.mock import MagicMock, patch
 
 import pytest
-from unittest.mock import MagicMock, patch
 from agency_swarm import Agency
 from dotenv import load_dotenv
-
 
 # Load environment variables
 load_dotenv()
@@ -22,7 +21,7 @@ def mock_agency():
     mock_agent.model = "gpt-5-mini"
     mock_agent.tools = []
 
-    with patch.object(Agency, '__init__', lambda self, *args, **kwargs: None):
+    with patch.object(Agency, "__init__", lambda self, *args, **kwargs: None):
         agency = Agency.__new__(Agency)
         agency.agents = [mock_agent]
         agency.shared_instructions = "Test instructions"
@@ -69,7 +68,7 @@ def test_queries():
 @pytest.mark.asyncio
 async def test_file_operations(mock_agency, test_queries):
     """Test file operations functionality with mocks"""
-    with patch.object(Agency, 'get_response') as mock_get_response:
+    with patch.object(Agency, "get_response") as mock_get_response:
         mock_response = MagicMock()
         mock_response.text = test_queries[0]["expected_response"]
         mock_get_response.return_value = mock_response
@@ -85,7 +84,7 @@ async def test_file_operations(mock_agency, test_queries):
 @pytest.mark.asyncio
 async def test_code_search(mock_agency, test_queries):
     """Test code search functionality with mocks"""
-    with patch.object(Agency, 'get_response') as mock_get_response:
+    with patch.object(Agency, "get_response") as mock_get_response:
         mock_response = MagicMock()
         mock_response.text = test_queries[1]["expected_response"]
         mock_get_response.return_value = mock_response
@@ -101,7 +100,7 @@ async def test_code_search(mock_agency, test_queries):
 @pytest.mark.asyncio
 async def test_complex_task(mock_agency, test_queries):
     """Test complex task with todo tracking using mocks"""
-    with patch.object(Agency, 'get_response') as mock_get_response:
+    with patch.object(Agency, "get_response") as mock_get_response:
         mock_response = MagicMock()
         mock_response.text = test_queries[2]["expected_response"]
         mock_get_response.return_value = mock_response
@@ -117,7 +116,7 @@ async def test_complex_task(mock_agency, test_queries):
 @pytest.mark.asyncio
 async def test_web_research(mock_agency, test_queries):
     """Test web research functionality with mocked responses"""
-    with patch.object(Agency, 'get_response') as mock_get_response:
+    with patch.object(Agency, "get_response") as mock_get_response:
         mock_response = MagicMock()
         mock_response.text = test_queries[3]["expected_response"]
         mock_get_response.return_value = mock_response
@@ -133,7 +132,7 @@ async def test_web_research(mock_agency, test_queries):
 @pytest.mark.asyncio
 async def test_development_workflow(mock_agency, test_queries):
     """Test development workflow functionality with mocks"""
-    with patch.object(Agency, 'get_response') as mock_get_response:
+    with patch.object(Agency, "get_response") as mock_get_response:
         mock_response = MagicMock()
         mock_response.text = test_queries[4]["expected_response"]
         mock_get_response.return_value = mock_response
@@ -149,14 +148,14 @@ async def test_development_workflow(mock_agency, test_queries):
 @pytest.mark.asyncio
 async def test_error_handling():
     """Test that the agency handles errors gracefully"""
-    with patch.object(Agency, 'get_response') as mock_get_response:
+    with patch.object(Agency, "get_response") as mock_get_response:
         # Simulate an error scenario
         mock_get_response.side_effect = Exception("Simulated error")
 
         mock_agent = MagicMock()
         mock_agent.name = "AgencyCodeAgent"
 
-        with patch.object(Agency, '__init__', lambda self, *args, **kwargs: None):
+        with patch.object(Agency, "__init__", lambda self, *args, **kwargs: None):
             agency = Agency.__new__(Agency)
             agency.agents = [mock_agent]
 

@@ -58,10 +58,9 @@ Required steps:
 """
 
 from datetime import datetime, timedelta
-from typing import Optional
 
-from shared.message_bus import MessageBus
 from shared.hitl_protocol import HITLProtocol  # Fixed: was HumanReviewQueue
+from shared.message_bus import MessageBus
 from trinity_protocol.core.models.hitl import HumanResponse
 
 
@@ -78,7 +77,7 @@ class ResponseHandler:
         review_queue: HITLProtocol,  # Fixed: was HumanReviewQueue
         execution_queue_name: str = "execution_queue",
         telemetry_queue_name: str = "telemetry_stream",
-        later_delay_hours: int = 4
+        later_delay_hours: int = 4,
     ):
         """
         Initialize response handler.
@@ -96,11 +95,7 @@ class ResponseHandler:
         self.telemetry_queue_name = telemetry_queue_name
         self.later_delay_hours = later_delay_hours
 
-    async def process_response(
-        self,
-        question_id: int,
-        response: HumanResponse
-    ) -> None:
+    async def process_response(self, question_id: int, response: HumanResponse) -> None:
         """
         Process a user response.
 
@@ -132,7 +127,7 @@ class ResponseHandler:
                 response_type=response.response_type,
                 comment=response.comment,
                 responded_at=response.responded_at,
-                response_time_seconds=response_time
+                response_time_seconds=response_time,
             )
 
         # Mark question as answered
@@ -148,11 +143,7 @@ class ResponseHandler:
         else:
             raise ValueError(f"Unknown response type: {response.response_type}")
 
-    async def _handle_yes_response(
-        self,
-        question,
-        response: HumanResponse
-    ) -> None:
+    async def _handle_yes_response(self, question, response: HumanResponse) -> None:
         """
         Handle YES response: route to EXECUTOR.
 
@@ -161,7 +152,7 @@ class ResponseHandler:
             response: HumanResponse with YES decision
         """
         # Prepare task for EXECUTOR (all values must be JSON serializable)
-        pattern_dict = question.pattern_context.model_dump(mode='json')
+        pattern_dict = question.pattern_context.model_dump(mode="json")
 
         task_spec = {
             "correlation_id": question.correlation_id,
@@ -171,7 +162,7 @@ class ResponseHandler:
             "pattern_context": pattern_dict,
             "user_comment": response.comment,
             "response_time_seconds": response.response_time_seconds,
-            "approved_at": response.responded_at.isoformat()
+            "approved_at": response.responded_at.isoformat(),
         }
 
         # Publish to execution queue
@@ -179,7 +170,7 @@ class ResponseHandler:
             queue_name=self.execution_queue_name,
             message=task_spec,
             priority=question.priority,
-            correlation_id=question.correlation_id
+            correlation_id=question.correlation_id,
         )
 
         # Also publish to telemetry for learning (acceptance signal)
@@ -187,14 +178,10 @@ class ResponseHandler:
             correlation_id=question.correlation_id,
             event_type="response_yes",
             question=question,
-            response=response
+            response=response,
         )
 
-    async def _handle_no_response(
-        self,
-        question,
-        response: HumanResponse
-    ) -> None:
+    async def _handle_no_response(self, question, response: HumanResponse) -> None:
         """
         Handle NO response: store for learning, do not execute.
 
@@ -210,18 +197,14 @@ class ResponseHandler:
             response=response,
             additional_data={
                 "reason": response.comment or "No reason provided",
-                "learn_from_rejection": True
-            }
+                "learn_from_rejection": True,
+            },
         )
 
         # NOTE: Intentionally do NOT publish to execution_queue
         # This respects the user's NO decision
 
-    async def _handle_later_response(
-        self,
-        question,
-        response: HumanResponse
-    ) -> None:
+    async def _handle_later_response(self, question, response: HumanResponse) -> None:
         """
         Handle LATER response: schedule reminder, do not execute immediately.
 
@@ -240,8 +223,8 @@ class ResponseHandler:
             additional_data={
                 "reminder_scheduled_for": reminder_time.isoformat(),
                 "delay_hours": self.later_delay_hours,
-                "reason": response.comment or "Ask again later"
-            }
+                "reason": response.comment or "Ask again later",
+            },
         )
 
         # NOTE: In full implementation, would also publish to a reminders queue
@@ -253,7 +236,7 @@ class ResponseHandler:
         event_type: str,
         question,
         response: HumanResponse,
-        additional_data: Optional[dict] = None
+        additional_data: dict | None = None,
     ) -> None:
         """
         Publish learning signal to telemetry stream.
@@ -274,7 +257,7 @@ class ResponseHandler:
             "pattern_topic": question.pattern_context.topic,
             "response_type": response.response_type,
             "response_time_seconds": response.response_time_seconds,
-            "timestamp": response.responded_at.isoformat()
+            "timestamp": response.responded_at.isoformat(),
         }
 
         if additional_data:
@@ -284,7 +267,7 @@ class ResponseHandler:
             queue_name=self.telemetry_queue_name,
             message=learning_signal,
             priority=5,  # Medium priority for learning signals
-            correlation_id=correlation_id
+            correlation_id=correlation_id,
         )
 
     async def _get_question(self, question_id: int):
@@ -302,11 +285,14 @@ class ResponseHandler:
             raise RuntimeError("Review queue database not initialized")
 
         cursor = self.review_queue.conn.cursor()
-        cursor.execute("""
+        cursor.execute(
+            """
             SELECT *
             FROM questions
             WHERE id = ?
-        """, (question_id,))
+        """,
+            (question_id,),
+        )
 
         row = cursor.fetchone()
         if not row:
@@ -315,19 +301,19 @@ class ResponseHandler:
         # Convert to HumanReviewRequest
         from trinity_protocol.core.models.patterns import DetectedPattern
 
-        pattern_context = DetectedPattern.model_validate_json(row['pattern_context'])
+        pattern_context = DetectedPattern.model_validate_json(row["pattern_context"])
 
         from trinity_protocol.core.models.hitl import HumanReviewRequest
 
         question = HumanReviewRequest(
-            correlation_id=row['correlation_id'],
-            question_text=row['question_text'],
-            question_type=row['question_type'],
+            correlation_id=row["correlation_id"],
+            question_text=row["question_text"],
+            question_type=row["question_type"],
             pattern_context=pattern_context,
-            priority=row['priority'],
-            expires_at=datetime.fromisoformat(row['expires_at']),
-            created_at=datetime.fromisoformat(row['created_at']),
-            suggested_action=row['suggested_action']
+            priority=row["priority"],
+            expires_at=datetime.fromisoformat(row["expires_at"]),
+            created_at=datetime.fromisoformat(row["created_at"]),
+            suggested_action=row["suggested_action"],
         )
 
         return question

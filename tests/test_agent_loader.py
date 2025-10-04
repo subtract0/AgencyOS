@@ -12,20 +12,20 @@ Tests cover:
 - All 5 DSPy-migrated agents
 """
 
-import pytest
 from pathlib import Path
-from unittest.mock import Mock, patch, MagicMock
-from typing import Dict, Any
+from unittest.mock import Mock, patch
+
+import pytest
 
 # Import will fail initially - this is expected for TDD
 try:
     from src.agency.agents.loader import (
-        AgentLoader,
         AgentFrontmatter,
+        AgentLoader,
         ImplementationConfig,
-        RolloutConfig,
         LoaderError,
-        TelemetryWrapper
+        RolloutConfig,
+        TelemetryWrapper,
     )
 except ImportError:
     # Expected during TDD - tests should fail
@@ -131,18 +131,18 @@ class TestDSPyAvailabilityChecking:
 
     def test_check_dspy_available_when_installed(self, loader):
         """Should return True when DSPy is available."""
-        with patch('src.agency.agents.loader.DSPY_AVAILABLE', True):
+        with patch("src.agency.agents.loader.DSPY_AVAILABLE", True):
             assert loader._check_dspy_available() is True
 
     def test_check_dspy_unavailable(self, loader):
         """Should return False when DSPy not available."""
-        with patch('src.agency.agents.loader.DSPY_AVAILABLE', False):
+        with patch("src.agency.agents.loader.DSPY_AVAILABLE", False):
             assert loader._check_dspy_available() is False
 
     def test_check_dspy_import_error(self, loader):
         """Should handle import errors gracefully."""
         # The loader checks the global DSPY_AVAILABLE flag, not importlib directly
-        with patch('src.agency.agents.loader.DSPY_AVAILABLE', False):
+        with patch("src.agency.agents.loader.DSPY_AVAILABLE", False):
             assert loader._check_dspy_available() is False
 
 
@@ -163,19 +163,15 @@ class TestAgentLoading:
                 traditional="src/agency/agents/test.py",
                 dspy="src/agency/agents/dspy/test.py",
                 preferred="dspy",
-                features={"dspy": ["Feature 1"], "traditional": ["Basic"]}
+                features={"dspy": ["Feature 1"], "traditional": ["Basic"]},
             ),
-            rollout=RolloutConfig(
-                status="gradual",
-                fallback="traditional",
-                comparison=True
-            )
+            rollout=RolloutConfig(status="gradual", fallback="traditional", comparison=True),
         )
 
     def test_load_dspy_agent_when_available(self, loader, mock_frontmatter):
         """Should load DSPy agent when available and preferred."""
-        with patch.object(loader, '_check_dspy_available', return_value=True):
-            with patch.object(loader, '_load_dspy_agent') as mock_load:
+        with patch.object(loader, "_check_dspy_available", return_value=True):
+            with patch.object(loader, "_load_dspy_agent") as mock_load:
                 mock_agent = Mock()
                 mock_load.return_value = mock_agent
 
@@ -186,8 +182,8 @@ class TestAgentLoading:
 
     def test_load_traditional_when_dspy_unavailable(self, loader, mock_frontmatter):
         """Should fallback to traditional when DSPy unavailable."""
-        with patch.object(loader, '_check_dspy_available', return_value=False):
-            with patch.object(loader, '_load_traditional_agent') as mock_load:
+        with patch.object(loader, "_check_dspy_available", return_value=False):
+            with patch.object(loader, "_load_traditional_agent") as mock_load:
                 mock_agent = Mock()
                 mock_load.return_value = mock_agent
 
@@ -198,9 +194,9 @@ class TestAgentLoading:
 
     def test_fallback_on_dspy_load_error(self, loader, mock_frontmatter):
         """Should fallback to traditional when DSPy load fails."""
-        with patch.object(loader, '_check_dspy_available', return_value=True):
-            with patch.object(loader, '_load_dspy_agent', side_effect=Exception("Load failed")):
-                with patch.object(loader, '_load_traditional_agent') as mock_fallback:
+        with patch.object(loader, "_check_dspy_available", return_value=True):
+            with patch.object(loader, "_load_dspy_agent", side_effect=Exception("Load failed")):
+                with patch.object(loader, "_load_traditional_agent") as mock_fallback:
                     mock_agent = Mock()
                     mock_fallback.return_value = mock_agent
 
@@ -211,16 +207,14 @@ class TestAgentLoading:
 
     def test_force_implementation_override(self, loader, mock_frontmatter):
         """Should respect force_implementation parameter."""
-        with patch.object(loader, '_check_dspy_available', return_value=True):
-            with patch.object(loader, '_load_traditional_agent') as mock_load:
+        with patch.object(loader, "_check_dspy_available", return_value=True):
+            with patch.object(loader, "_load_traditional_agent") as mock_load:
                 mock_agent = Mock()
                 mock_load.return_value = mock_agent
 
                 # Force traditional even though DSPy is preferred
                 agent = loader.load_agent_from_frontmatter(
-                    mock_frontmatter, 
-                    "body",
-                    force_implementation="traditional"
+                    mock_frontmatter, "body", force_implementation="traditional"
                 )
 
                 mock_load.assert_called_once()
@@ -249,7 +243,7 @@ class TestTelemetryWrapper:
 
         wrapper.execute("test")
 
-        assert hasattr(wrapper, 'last_latency_ms')
+        assert hasattr(wrapper, "last_latency_ms")
         assert wrapper.last_latency_ms >= 0
 
     def test_telemetry_wrapper_tracks_errors(self):
@@ -289,13 +283,9 @@ class TestRealAgentLoading:
         """Return path to actual agent definitions."""
         return Path(__file__).parent.parent / ".claude" / "agents"
 
-    @pytest.mark.parametrize("agent_name", [
-        "auditor",
-        "code_agent",
-        "learning_agent",
-        "planner",
-        "toolsmith"
-    ])
+    @pytest.mark.parametrize(
+        "agent_name", ["auditor", "code_agent", "learning_agent", "planner", "toolsmith"]
+    )
     def test_load_dspy_migrated_agents(self, loader, agents_dir, agent_name):
         """Should successfully load all 5 DSPy-migrated agents."""
         agent_path = agents_dir / f"{agent_name}.md"
@@ -333,7 +323,7 @@ class TestConstitutionalCompliance:
     def test_article_i_complete_context(self, loader):
         """Article I: Must verify DSPy availability before loading."""
         # Loader should NEVER proceed without checking DSPy availability
-        with patch.object(loader, '_check_dspy_available') as mock_check:
+        with patch.object(loader, "_check_dspy_available") as mock_check:
             mock_check.return_value = True
 
             frontmatter = Mock()
@@ -341,7 +331,7 @@ class TestConstitutionalCompliance:
             frontmatter.implementation.dspy = "path"
             frontmatter.rollout.fallback = "traditional"
 
-            with patch.object(loader, '_load_dspy_agent', return_value=Mock()):
+            with patch.object(loader, "_load_dspy_agent", return_value=Mock()):
                 loader.load_agent_from_frontmatter(frontmatter, "body")
 
                 # MUST have checked availability
@@ -354,9 +344,9 @@ class TestConstitutionalCompliance:
         frontmatter.implementation.preferred = "dspy"
         frontmatter.rollout.fallback = "traditional"
 
-        with patch.object(loader, '_check_dspy_available', return_value=True):
-            with patch.object(loader, '_load_dspy_agent', side_effect=Exception("DSPy failed")):
-                with patch.object(loader, '_load_traditional_agent', return_value=Mock()):
+        with patch.object(loader, "_check_dspy_available", return_value=True):
+            with patch.object(loader, "_load_dspy_agent", side_effect=Exception("DSPy failed")):
+                with patch.object(loader, "_load_traditional_agent", return_value=Mock()):
                     # Should NOT raise exception - must fallback
                     agent = loader.load_agent_from_frontmatter(frontmatter, "body")
                     assert agent is not None
@@ -367,11 +357,11 @@ class TestConstitutionalCompliance:
         frontmatter.rollout.comparison = True
         frontmatter.implementation.preferred = "traditional"
 
-        with patch.object(loader, '_load_traditional_agent', return_value=Mock()) as mock_load:
+        with patch.object(loader, "_load_traditional_agent", return_value=Mock()) as mock_load:
             agent = loader.load_agent_from_frontmatter(frontmatter, "body")
 
             # Should be wrapped with telemetry
-            assert isinstance(agent, TelemetryWrapper) or hasattr(agent, 'telemetry')
+            assert isinstance(agent, TelemetryWrapper) or hasattr(agent, "telemetry")
 
     def test_article_v_markdown_remains_source_of_truth(self, loader):
         """Article V: Markdown spec must always be parsed and preserved."""
@@ -381,7 +371,7 @@ class TestConstitutionalCompliance:
 
         markdown_body = "# Agent Specification\n\nThis is the source of truth."
 
-        with patch.object(loader, '_load_traditional_agent') as mock_load:
+        with patch.object(loader, "_load_traditional_agent") as mock_load:
             mock_agent = Mock()
             mock_load.return_value = mock_agent
 

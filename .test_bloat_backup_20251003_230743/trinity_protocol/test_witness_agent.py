@@ -13,18 +13,17 @@ NECESSARY Pattern Compliance:
 - Yield fast: <1s per async test
 """
 
-import pytest
 import asyncio
 import tempfile
-from pathlib import Path
 from datetime import datetime
-from unittest.mock import AsyncMock, Mock, MagicMock, patch
-from typing import Dict, Any, List
+from pathlib import Path
 
-from trinity_protocol.core.witness import WitnessAgent, Signal
-from shared.pattern_detector import PatternMatch
+import pytest
+
 from shared.message_bus import MessageBus
+from shared.pattern_detector import PatternMatch
 from shared.persistent_store import PersistentStore
+from trinity_protocol.core.witness import Signal, WitnessAgent
 
 
 # Test fixtures
@@ -34,7 +33,7 @@ def temp_db_paths():
     with tempfile.TemporaryDirectory() as tmpdir:
         yield {
             "message_bus": Path(tmpdir) / "test_messages.db",
-            "pattern_store": Path(tmpdir) / "test_patterns.db"
+            "pattern_store": Path(tmpdir) / "test_patterns.db",
         }
 
 
@@ -49,9 +48,7 @@ def message_bus(temp_db_paths):
 @pytest.fixture
 def pattern_store(temp_db_paths):
     """Provide test pattern store."""
-    store = PersistentStore(
-        db_path=str(temp_db_paths["pattern_store"])
-    )
+    store = PersistentStore(db_path=str(temp_db_paths["pattern_store"]))
     yield store
     store.close()
 
@@ -59,11 +56,7 @@ def pattern_store(temp_db_paths):
 @pytest.fixture
 def witness_agent(message_bus, pattern_store):
     """Provide initialized WitnessAgent."""
-    return WitnessAgent(
-        message_bus=message_bus,
-        pattern_store=pattern_store,
-        min_confidence=0.7
-    )
+    return WitnessAgent(message_bus=message_bus, pattern_store=pattern_store, min_confidence=0.7)
 
 
 # Signal dataclass tests
@@ -80,7 +73,7 @@ class TestSignalDataclass:
             data={"error_type": "fatal"},
             summary="Critical Error: Fatal exception occurred",
             timestamp="2025-10-01T10:00:00",
-            source_id="event-123"
+            source_id="event-123",
         )
 
         assert signal.priority == "HIGH"
@@ -100,7 +93,7 @@ class TestSignalDataclass:
             summary="Feature Request: User wants dark mode",
             timestamp="2025-10-01T10:00:00",
             source_id="ctx-456",
-            correlation_id="corr-789"
+            correlation_id="corr-789",
         )
 
         assert signal.correlation_id == "corr-789"
@@ -115,7 +108,7 @@ class TestSignalDataclass:
             data={"keywords": ["fatal", "crash"]},
             summary="Critical Error: System crash detected",
             timestamp="2025-10-01T10:00:00",
-            source_id="evt-001"
+            source_id="evt-001",
         )
 
         signal_dict = signal.to_dict()
@@ -135,7 +128,7 @@ class TestSignalDataclass:
             data={"duration_s": 15.5},
             summary="Performance Regression: Timeout exceeded",
             timestamp="2025-10-01T10:00:00",
-            source_id="perf-123"
+            source_id="perf-123",
         )
 
         json_str = signal.to_json()
@@ -151,10 +144,7 @@ class TestWitnessAgentInitialization:
 
     def test_initializes_with_message_bus_and_store(self, message_bus, pattern_store):
         """Agent initializes with required dependencies."""
-        agent = WitnessAgent(
-            message_bus=message_bus,
-            pattern_store=pattern_store
-        )
+        agent = WitnessAgent(message_bus=message_bus, pattern_store=pattern_store)
 
         assert agent.message_bus is message_bus
         assert agent.pattern_store is pattern_store
@@ -162,10 +152,7 @@ class TestWitnessAgentInitialization:
 
     def test_sets_default_queue_names(self, message_bus, pattern_store):
         """Agent uses default queue names when not specified."""
-        agent = WitnessAgent(
-            message_bus=message_bus,
-            pattern_store=pattern_store
-        )
+        agent = WitnessAgent(message_bus=message_bus, pattern_store=pattern_store)
 
         assert agent.telemetry_queue == "telemetry_stream"
         assert agent.context_queue == "personal_context_stream"
@@ -178,7 +165,7 @@ class TestWitnessAgentInitialization:
             pattern_store=pattern_store,
             telemetry_queue="custom_telemetry",
             context_queue="custom_context",
-            output_queue="custom_output"
+            output_queue="custom_output",
         )
 
         assert agent.telemetry_queue == "custom_telemetry"
@@ -188,9 +175,7 @@ class TestWitnessAgentInitialization:
     def test_configures_pattern_detector_with_min_confidence(self, message_bus, pattern_store):
         """Agent configures PatternDetector with min_confidence."""
         agent = WitnessAgent(
-            message_bus=message_bus,
-            pattern_store=pattern_store,
-            min_confidence=0.8
+            message_bus=message_bus, pattern_store=pattern_store, min_confidence=0.8
         )
 
         assert agent.detector.min_confidence == 0.8
@@ -211,10 +196,7 @@ class TestEventStreamMonitoring:
         # Publish test event
         await witness_agent.message_bus.publish(
             "telemetry_stream",
-            {
-                "message": "fatal error occurred",
-                "error_type": "ModuleNotFoundError"
-            }
+            {"message": "fatal error occurred", "error_type": "ModuleNotFoundError"},
         )
 
         # Track received events
@@ -247,10 +229,7 @@ class TestEventStreamMonitoring:
         """Agent monitors personal_context_stream for user signals."""
         # Publish user context event
         await witness_agent.message_bus.publish(
-            "personal_context_stream",
-            {
-                "message": "i need a new feature for authentication"
-            }
+            "personal_context_stream", {"message": "i need a new feature for authentication"}
         )
 
         processed_events = []
@@ -280,12 +259,10 @@ class TestEventStreamMonitoring:
         """Agent monitors telemetry and context streams simultaneously."""
         # Publish to both streams
         await witness_agent.message_bus.publish(
-            "telemetry_stream",
-            {"message": "timeout exceeded limit"}
+            "telemetry_stream", {"message": "timeout exceeded limit"}
         )
         await witness_agent.message_bus.publish(
-            "personal_context_stream",
-            {"message": "this is tedious and repetitive"}
+            "personal_context_stream", {"message": "this is tedious and repetitive"}
         )
 
         source_types_seen = []
@@ -367,13 +344,7 @@ class TestEightStepProcessingLoop:
     @pytest.mark.asyncio
     async def test_step_4_enrich_creates_signal_with_metadata(self, witness_agent):
         """Step 4 (ENRICH): Agent enriches pattern with event metadata."""
-        event = {
-            "message": "fatal crash in module",
-            "metadata": {
-                "file": "test.py",
-                "line": 42
-            }
-        }
+        event = {"message": "fatal crash in module", "metadata": {"file": "test.py", "line": 42}}
 
         # Create pattern match manually
         pattern_match = PatternMatch(
@@ -382,7 +353,7 @@ class TestEightStepProcessingLoop:
             confidence=0.9,
             keywords_matched=["fatal", "crash"],
             base_score=0.7,
-            keyword_score=0.2
+            keyword_score=0.2,
         )
 
         signal = witness_agent._create_signal(pattern_match, "telemetry", event)
@@ -405,7 +376,7 @@ class TestEightStepProcessingLoop:
             data={"error": "fatal"},
             summary="Critical Error: Fatal",
             timestamp=datetime.now().isoformat(),
-            source_id="test-123"
+            source_id="test-123",
         )
 
         assert witness_agent._verify_signal(valid_signal) is True
@@ -419,7 +390,7 @@ class TestEightStepProcessingLoop:
             data={"error": "fatal"},
             summary="Critical Error: Fatal",
             timestamp=datetime.now().isoformat(),
-            source_id="test-123"
+            source_id="test-123",
         )
 
         assert witness_agent._verify_signal(invalid_signal) is False
@@ -483,7 +454,7 @@ class TestSignalCreationAndEnrichment:
             confidence=0.85,
             keywords_matched=["fatal", "crash"],
             base_score=0.7,
-            keyword_score=0.15
+            keyword_score=0.15,
         )
 
         event = {"message": "fatal crash", "id": "evt-123"}
@@ -536,16 +507,10 @@ class TestSignalCreationAndEnrichment:
             confidence=0.85,
             keywords_matched=["fatal"],
             base_score=0.7,
-            keyword_score=0.15
+            keyword_score=0.15,
         )
 
-        event = {
-            "message": "fatal error",
-            "metadata": {
-                "file": "app.py",
-                "function": "main"
-            }
-        }
+        event = {"message": "fatal error", "metadata": {"file": "app.py", "function": "main"}}
 
         signal = witness_agent._create_signal(pattern_match, "telemetry", event)
 
@@ -561,7 +526,7 @@ class TestSignalCreationAndEnrichment:
             confidence=0.85,
             keywords_matched=["fatal"],
             base_score=0.7,
-            keyword_score=0.15
+            keyword_score=0.15,
         )
 
         event = {"message": "fatal error", "_message_id": 42}
@@ -579,13 +544,10 @@ class TestSignalCreationAndEnrichment:
             confidence=0.85,
             keywords_matched=["fatal"],
             base_score=0.7,
-            keyword_score=0.15
+            keyword_score=0.15,
         )
 
-        event = {
-            "message": "fatal error",
-            "correlation_id": "corr-abc-123"
-        }
+        event = {"message": "fatal error", "correlation_id": "corr-abc-123"}
 
         signal = witness_agent._create_signal(pattern_match, "telemetry", event)
 
@@ -604,7 +566,7 @@ class TestPriorityDetermination:
             confidence=0.95,
             keywords_matched=["fatal"],
             base_score=0.7,
-            keyword_score=0.25
+            keyword_score=0.25,
         )
 
         priority = witness_agent._determine_priority(pattern_match)
@@ -619,7 +581,7 @@ class TestPriorityDetermination:
             confidence=0.85,
             keywords_matched=["error"],
             base_score=0.7,
-            keyword_score=0.15
+            keyword_score=0.15,
         )
 
         priority = witness_agent._determine_priority(pattern_match)
@@ -634,7 +596,7 @@ class TestPriorityDetermination:
             confidence=0.75,
             keywords_matched=["error"],
             base_score=0.7,
-            keyword_score=0.05
+            keyword_score=0.05,
         )
 
         priority = witness_agent._determine_priority(pattern_match)
@@ -649,7 +611,7 @@ class TestPriorityDetermination:
             confidence=0.80,
             keywords_matched=["dict[any"],
             base_score=0.6,
-            keyword_score=0.20
+            keyword_score=0.20,
         )
 
         priority = witness_agent._determine_priority(pattern_match)
@@ -664,7 +626,7 @@ class TestPriorityDetermination:
             confidence=0.80,
             keywords_matched=["duplicate"],
             base_score=0.6,
-            keyword_score=0.20
+            keyword_score=0.20,
         )
 
         priority = witness_agent._determine_priority(pattern_match)
@@ -679,7 +641,7 @@ class TestPriorityDetermination:
             confidence=0.80,
             keywords_matched=["i need"],
             base_score=0.5,
-            keyword_score=0.30
+            keyword_score=0.30,
         )
 
         priority = witness_agent._determine_priority(pattern_match)
@@ -699,7 +661,7 @@ class TestSummaryGeneration:
             confidence=0.85,
             keywords_matched=["fatal"],
             base_score=0.7,
-            keyword_score=0.15
+            keyword_score=0.15,
         )
 
         event = {"message": "fatal crash occurred"}
@@ -716,7 +678,7 @@ class TestSummaryGeneration:
             confidence=0.80,
             keywords_matched=["timeout"],
             base_score=0.7,
-            keyword_score=0.10
+            keyword_score=0.10,
         )
 
         event = {"message": "timeout exceeded 30 seconds"}
@@ -733,7 +695,7 @@ class TestSummaryGeneration:
             confidence=0.85,
             keywords_matched=["fatal"],
             base_score=0.7,
-            keyword_score=0.15
+            keyword_score=0.15,
         )
 
         long_message = "fatal error " + ("x" * 200)
@@ -751,7 +713,7 @@ class TestSummaryGeneration:
             confidence=0.85,
             keywords_matched=["fatal"],
             base_score=0.7,
-            keyword_score=0.15
+            keyword_score=0.15,
         )
 
         long_message = "fatal error occurred in the system during processing " + ("x" * 100)
@@ -777,7 +739,7 @@ class TestSignalVerification:
             data={},
             summary="Test",
             timestamp=datetime.now().isoformat(),
-            source_id="test-1"
+            source_id="test-1",
         )
 
         assert witness_agent._verify_signal(valid_signal) is True
@@ -790,7 +752,7 @@ class TestSignalVerification:
             data={},
             summary="Test",
             timestamp=datetime.now().isoformat(),
-            source_id="test-1"
+            source_id="test-1",
         )
 
         assert witness_agent._verify_signal(invalid_signal) is False
@@ -805,7 +767,7 @@ class TestSignalVerification:
             data={},
             summary="Test",
             timestamp=datetime.now().isoformat(),
-            source_id="test-1"
+            source_id="test-1",
         )
 
         assert witness_agent._verify_signal(valid_signal) is True
@@ -818,7 +780,7 @@ class TestSignalVerification:
             data={},
             summary="Test",
             timestamp=datetime.now().isoformat(),
-            source_id="test-1"
+            source_id="test-1",
         )
 
         assert witness_agent._verify_signal(invalid_signal) is False
@@ -833,7 +795,7 @@ class TestSignalVerification:
             data={},
             summary="Test",
             timestamp=datetime.now().isoformat(),
-            source_id="test-1"
+            source_id="test-1",
         )
 
         assert witness_agent._verify_signal(valid_signal) is True
@@ -847,7 +809,7 @@ class TestSignalVerification:
             data={},
             summary="Test",
             timestamp=datetime.now().isoformat(),
-            source_id="test-1"
+            source_id="test-1",
         )
 
         assert witness_agent._verify_signal(invalid_low) is False
@@ -861,7 +823,7 @@ class TestSignalVerification:
             data={},
             summary="Test",
             timestamp=datetime.now().isoformat(),
-            source_id="test-1"
+            source_id="test-1",
         )
 
         assert witness_agent._verify_signal(invalid_high) is False
@@ -876,7 +838,7 @@ class TestSignalVerification:
             data={},
             summary="Short summary",
             timestamp=datetime.now().isoformat(),
-            source_id="test-1"
+            source_id="test-1",
         )
 
         assert witness_agent._verify_signal(valid_signal) is True
@@ -889,7 +851,7 @@ class TestSignalVerification:
             data={},
             summary="x" * 121,  # Too long
             timestamp=datetime.now().isoformat(),
-            source_id="test-1"
+            source_id="test-1",
         )
 
         assert witness_agent._verify_signal(invalid_signal) is False
@@ -904,7 +866,7 @@ class TestSignalVerification:
             data={"key": "value"},
             summary="Test",
             timestamp=datetime.now().isoformat(),
-            source_id="test-1"
+            source_id="test-1",
         )
 
         assert witness_agent._verify_signal(valid_signal) is True
@@ -920,7 +882,7 @@ class TestSignalVerification:
             data={},
             summary="Test",
             timestamp=datetime.now().isoformat(),
-            source_id=123  # Integer is now accepted
+            source_id=123,  # Integer is now accepted
         )
 
         # Should accept integer source_id
@@ -940,6 +902,7 @@ class TestSignalPublishing:
 
         # Verify signal in queue
         messages = []
+
         async def collect_messages():
             async for msg in witness_agent.message_bus.subscribe("improvement_queue"):
                 messages.append(msg)
@@ -947,7 +910,7 @@ class TestSignalPublishing:
 
         try:
             await asyncio.wait_for(collect_messages(), timeout=1.0)
-        except asyncio.TimeoutError:
+        except TimeoutError:
             pass
 
         assert len(messages) >= 1
@@ -978,15 +941,13 @@ class TestSignalPublishing:
     @pytest.mark.asyncio
     async def test_publishes_with_correlation_id_if_present(self, witness_agent):
         """Agent preserves correlation_id when publishing."""
-        event = {
-            "message": "fatal crash occurred",
-            "correlation_id": "test-correlation-xyz"
-        }
+        event = {"message": "fatal crash occurred", "correlation_id": "test-correlation-xyz"}
 
         await witness_agent._process_event(event, "telemetry")
 
         # Check published message
         messages = []
+
         async def collect_messages():
             async for msg in witness_agent.message_bus.subscribe("improvement_queue"):
                 messages.append(msg)
@@ -994,7 +955,7 @@ class TestSignalPublishing:
 
         try:
             await asyncio.wait_for(collect_messages(), timeout=1.0)
-        except asyncio.TimeoutError:
+        except TimeoutError:
             pass
 
         if len(messages) > 0:
@@ -1035,10 +996,11 @@ class TestPatternPersistence:
 
         # Search for failure patterns (unwrap Result)
         patterns_result = witness_agent.pattern_store.search_patterns(
-            pattern_type="failure",
-            min_confidence=0.0
+            pattern_type="failure", min_confidence=0.0
         )
-        patterns = patterns_result.unwrap() if hasattr(patterns_result, 'unwrap') else patterns_result
+        patterns = (
+            patterns_result.unwrap() if hasattr(patterns_result, "unwrap") else patterns_result
+        )
 
         assert len(patterns) >= 1
 
@@ -1051,13 +1013,17 @@ class TestPatternPersistence:
 
         # Search patterns (unwrap Result)
         patterns_result = witness_agent.pattern_store.search_patterns(
-            query="fatal crash",
-            min_confidence=0.0
+            query="fatal crash", min_confidence=0.0
         )
-        patterns = patterns_result.unwrap() if hasattr(patterns_result, 'unwrap') else patterns_result
+        patterns = (
+            patterns_result.unwrap() if hasattr(patterns_result, "unwrap") else patterns_result
+        )
 
         if len(patterns) > 0:
-            assert "fatal" in patterns[0]["content"].lower() or "crash" in patterns[0]["content"].lower()
+            assert (
+                "fatal" in patterns[0]["content"].lower()
+                or "crash" in patterns[0]["content"].lower()
+            )
 
 
 # Error handling tests
@@ -1068,9 +1034,15 @@ class TestErrorHandlingAndResilience:
     async def test_continues_processing_after_error(self, witness_agent):
         """Agent continues processing events after encountering error."""
         # Publish events including one that will cause an error
-        await witness_agent.message_bus.publish("telemetry_stream", {"message": "timeout exceeded 1"})
-        await witness_agent.message_bus.publish("telemetry_stream", {"message": None})  # Problematic
-        await witness_agent.message_bus.publish("telemetry_stream", {"message": "timeout exceeded 2"})
+        await witness_agent.message_bus.publish(
+            "telemetry_stream", {"message": "timeout exceeded 1"}
+        )
+        await witness_agent.message_bus.publish(
+            "telemetry_stream", {"message": None}
+        )  # Problematic
+        await witness_agent.message_bus.publish(
+            "telemetry_stream", {"message": "timeout exceeded 2"}
+        )
 
         processed_count = []
 
@@ -1262,7 +1234,10 @@ class TestAgentStatistics:
         final_stats = witness_agent.get_stats()
 
         # Detector should show detections
-        assert final_stats["detector"]["total_detections"] >= initial_stats["detector"]["total_detections"]
+        assert (
+            final_stats["detector"]["total_detections"]
+            >= initial_stats["detector"]["total_detections"]
+        )
 
 
 # Integration tests
@@ -1282,11 +1257,8 @@ class TestEndToEndIntegration:
             {
                 "message": "timeout exceeded in authentication module",
                 "id": "evt-test-123",  # Use string id field instead of _message_id
-                "metadata": {
-                    "file": "auth.py",
-                    "line": 123
-                }
-            }
+                "metadata": {"file": "auth.py", "line": 123},
+            },
         )
 
         # Start agent
@@ -1301,6 +1273,7 @@ class TestEndToEndIntegration:
 
         # Verify signal published
         signals = []
+
         async def collect_signals():
             async for msg in witness_agent.message_bus.subscribe("improvement_queue"):
                 signals.append(msg)
@@ -1308,7 +1281,7 @@ class TestEndToEndIntegration:
 
         try:
             await asyncio.wait_for(collect_signals(), timeout=1.0)
-        except asyncio.TimeoutError:
+        except TimeoutError:
             pass
 
         # With string id field, signal should pass validation
@@ -1328,10 +1301,7 @@ class TestEndToEndIntegration:
         # Publish user context event
         await witness_agent.message_bus.publish(
             "personal_context_stream",
-            {
-                "message": "i need a new feature for dark mode support",
-                "user_id": "user-123"
-            }
+            {"message": "i need a new feature for dark mode support", "user_id": "user-123"},
         )
 
         # Start agent
@@ -1346,6 +1316,7 @@ class TestEndToEndIntegration:
 
         # Verify signal published
         signals = []
+
         async def collect_signals():
             async for msg in witness_agent.message_bus.subscribe("improvement_queue"):
                 signals.append(msg)
@@ -1354,7 +1325,7 @@ class TestEndToEndIntegration:
 
         try:
             await asyncio.wait_for(collect_signals(), timeout=1.0)
-        except asyncio.TimeoutError:
+        except TimeoutError:
             pass
 
         if len(signals) > 0:
@@ -1366,16 +1337,13 @@ class TestEndToEndIntegration:
         """Agent processes multiple events as independent signals."""
         # Publish multiple events with string IDs to pass validation
         await witness_agent.message_bus.publish(
-            "telemetry_stream",
-            {"message": "timeout error in processing", "id": "evt-1"}
+            "telemetry_stream", {"message": "timeout error in processing", "id": "evt-1"}
         )
         await witness_agent.message_bus.publish(
-            "telemetry_stream",
-            {"message": "slow performance detected", "id": "evt-2"}
+            "telemetry_stream", {"message": "slow performance detected", "id": "evt-2"}
         )
         await witness_agent.message_bus.publish(
-            "personal_context_stream",
-            {"message": "can we add automated testing", "id": "ctx-1"}
+            "personal_context_stream", {"message": "can we add automated testing", "id": "ctx-1"}
         )
 
         # Start agent
@@ -1404,6 +1372,7 @@ class TestEndToEndIntegration:
 
         # Collect signals
         signals = []
+
         async def collect_signals():
             async for msg in witness_agent.message_bus.subscribe("improvement_queue"):
                 signals.append(msg)
@@ -1412,7 +1381,7 @@ class TestEndToEndIntegration:
 
         try:
             await asyncio.wait_for(collect_signals(), timeout=1.0)
-        except asyncio.TimeoutError:
+        except TimeoutError:
             pass
 
         if len(signals) >= 2:

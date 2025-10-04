@@ -6,13 +6,14 @@ Implements MCP-compatible patterns for standardized memory integration.
 See MCP_INTEGRATION_STANDARDS.md for detailed specifications.
 """
 
-from datetime import datetime
-from typing import Dict, List, Optional, cast, Union
-from shared.type_definitions.json import JSONValue
-from abc import ABC, abstractmethod
-import os
 import logging
-from shared.models.memory import MemoryRecord, MemoryPriority, MemoryMetadata, MemorySearchResult
+import os
+from abc import ABC, abstractmethod
+from datetime import datetime
+from typing import cast
+
+from shared.models.memory import MemoryMetadata, MemoryPriority, MemoryRecord, MemorySearchResult
+from shared.type_definitions.json import JSONValue
 
 logger = logging.getLogger(__name__)
 
@@ -26,7 +27,7 @@ class MemoryStore(ABC):
     """
 
     @abstractmethod
-    def store(self, key: str, content: JSONValue, tags: List[str]) -> None:
+    def store(self, key: str, content: JSONValue, tags: list[str]) -> None:
         """Store content with key, tags, and automatic timestamp.
 
         Implements MCP tool pattern for memory operations.
@@ -35,7 +36,7 @@ class MemoryStore(ABC):
         pass
 
     @abstractmethod
-    def search(self, tags: List[str]) -> MemorySearchResult:
+    def search(self, tags: list[str]) -> MemorySearchResult:
         """Retrieve memories matching any of the provided tags.
 
         Implements semantic search pattern recommended in MCP standards.
@@ -58,12 +59,10 @@ class InMemoryStore(MemoryStore):
     """
 
     def __init__(self):
-        self._memories: Dict[str, MemoryRecord] = {}
-        logger.info(
-            "InMemoryStore initialized - data will not persist between sessions"
-        )
+        self._memories: dict[str, MemoryRecord] = {}
+        logger.info("InMemoryStore initialized - data will not persist between sessions")
 
-    def store(self, key: str, content: JSONValue, tags: List[str]) -> None:
+    def store(self, key: str, content: JSONValue, tags: list[str]) -> None:
         """Store content with timestamp and tags.
 
         Implements MCP-compatible memory storage with structured metadata.
@@ -77,27 +76,24 @@ class InMemoryStore(MemoryStore):
             priority=MemoryPriority.MEDIUM,
             metadata=MemoryMetadata(),
             ttl_seconds=None,
-            embedding=None
+            embedding=None,
         )
         self._memories[key] = memory_record
         logger.debug(f"Stored memory with key: {key}, tags: {tags}")
 
-    def search(self, tags: List[str]) -> MemorySearchResult:
+    def search(self, tags: list[str]) -> MemorySearchResult:
         """Return memories that have any of the specified tags.
 
         Implements tag-based retrieval pattern from MCP standards.
         Returns sorted results with newest memories first for optimal context.
         """
         if not tags:
-            search_query: Dict[str, JSONValue] = {"tags": cast(JSONValue, tags)}
+            search_query: dict[str, JSONValue] = {"tags": cast(JSONValue, tags)}
             return MemorySearchResult(
-                records=[],
-                total_count=0,
-                search_query=search_query,
-                execution_time_ms=0
+                records=[], total_count=0, search_query=search_query, execution_time_ms=0
             )
 
-        matches: List[MemoryRecord] = []
+        matches: list[MemoryRecord] = []
         tag_set = set(tags)
 
         for memory in self._memories.values():
@@ -109,15 +105,15 @@ class InMemoryStore(MemoryStore):
         matches.sort(key=lambda x: x.timestamp, reverse=True)
         logger.debug(f"Found {len(matches)} memories matching tags: {tags}")
 
-        final_search_query: Dict[str, JSONValue] = {"tags": cast(JSONValue, tags)}
+        final_search_query: dict[str, JSONValue] = {"tags": cast(JSONValue, tags)}
         return MemorySearchResult(
             records=matches,
             total_count=len(matches),
             search_query=final_search_query,
-            execution_time_ms=0
+            execution_time_ms=0,
         )
 
-    def get(self, key: str) -> Optional[MemoryRecord]:
+    def get(self, key: str) -> MemoryRecord | None:
         """Get a specific memory by key."""
         return self._memories.get(key)
 
@@ -131,7 +127,7 @@ class InMemoryStore(MemoryStore):
             records=all_memories,
             total_count=len(all_memories),
             search_query={},
-            execution_time_ms=0
+            execution_time_ms=0,
         )
 
 
@@ -143,49 +139,49 @@ class Memory:
     Compatible with MCP server resources and tools.
     """
 
-    def __init__(self, store: Optional[MemoryStore] = None):
+    def __init__(self, store: MemoryStore | None = None):
         """Initialize with store backend. Defaults to InMemoryStore."""
         self._store = store or InMemoryStore()
 
-    def store(self, key: str, content: JSONValue, tags: Optional[List[str]] = None) -> None:
+    def store(self, key: str, content: JSONValue, tags: list[str] | None = None) -> None:
         """Store content with key and optional tags."""
         tags = tags or []  # Default to empty list if not provided
         self._store.store(key, content, tags)
 
-    def search(self, tags: List[str]) -> List[Dict[str, JSONValue]]:
+    def search(self, tags: list[str]) -> list[dict[str, JSONValue]]:
         """Search memories by tags."""
         result = self._store.search(tags)
         # Handle both MemorySearchResult and direct list returns
-        if hasattr(result, 'records'):
+        if hasattr(result, "records"):
             return [record.to_dict() for record in result.records]
         else:
             # Already a list of dictionaries
-            return cast(List[Dict[str, JSONValue]], result)
+            return cast(list[dict[str, JSONValue]], result)
 
-    def get(self, key: str) -> Optional[Dict[str, JSONValue]]:
+    def get(self, key: str) -> dict[str, JSONValue] | None:
         """Get a specific memory by key."""
-        if hasattr(self._store, 'get'):
+        if hasattr(self._store, "get"):
             record = self._store.get(key)
             return record.to_dict() if record else None
         # Fallback: search all and find by key
         all_memories = self.get_all()
         for memory in all_memories:
-            if memory.get('key') == key:
+            if memory.get("key") == key:
                 return memory
         return None
 
-    def get_all(self) -> List[Dict[str, JSONValue]]:
+    def get_all(self) -> list[dict[str, JSONValue]]:
         """Get all memories."""
         result = self._store.get_all()
         # Handle both MemorySearchResult and direct list returns
-        if hasattr(result, 'records'):
+        if hasattr(result, "records"):
             return [record.to_dict() for record in result.records]
         else:
             # Already a list of dictionaries
-            return cast(List[Dict[str, JSONValue]], result)
+            return cast(list[dict[str, JSONValue]], result)
 
 
-def create_session_transcript(memories: List[Dict[str, JSONValue]], session_id: str) -> str:
+def create_session_transcript(memories: list[dict[str, JSONValue]], session_id: str) -> str:
     """
     Create a markdown session transcript from memories.
 
@@ -221,7 +217,7 @@ def create_session_transcript(memories: List[Dict[str, JSONValue]], session_id: 
         for i, memory in enumerate(memories, 1):
             content += f"### {i}. {memory.get('key', 'Unnamed')}\n\n"
             content += f"**Timestamp:** {memory.get('timestamp', 'Unknown')}\n"
-            tags = memory.get('tags', [])
+            tags = memory.get("tags", [])
             if isinstance(tags, list):
                 tag_strings = [str(tag) for tag in tags if isinstance(tag, str)]
                 content += f"**Tags:** {', '.join(tag_strings)}\n\n"

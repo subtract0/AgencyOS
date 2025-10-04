@@ -10,25 +10,23 @@ Tests cover:
 - Error handling with Result pattern
 """
 
-import pytest
-from datetime import datetime, timedelta
-from pathlib import Path
 import json
 import tempfile
+from datetime import datetime, timedelta
+from pathlib import Path
+
+import pytest
 
 from shared.cost_tracker import (
-    CostTracker,
     CostEntry,
-    CostSummary,
-    BudgetStatus,
-    BudgetAlert,
-    ModelTier,
-    StorageBackend,
-    SQLiteStorage,
-    MemoryStorage,
+    CostTracker,
     CostTrackerError,
+    MemoryStorage,
+    ModelTier,
+    SQLiteStorage,
+    StorageBackend,
 )
-from shared.type_definitions.result import Ok, Err
+from shared.type_definitions.result import Err, Ok
 
 
 class TestCostEntry:
@@ -46,7 +44,7 @@ class TestCostEntry:
             cost_usd=0.015,
             duration_seconds=1.5,
             success=True,
-            metadata={"agent": "test_agent"}
+            metadata={"agent": "test_agent"},
         )
 
         assert entry.operation == "test_op"
@@ -67,7 +65,7 @@ class TestCostEntry:
                 tokens_out=200,
                 cost_usd=0.01,
                 duration_seconds=1.0,
-                success=True
+                success=True,
             )
 
     def test_validates_positive_cost(self):
@@ -82,7 +80,7 @@ class TestCostEntry:
                 tokens_out=200,
                 cost_usd=-0.01,
                 duration_seconds=1.0,
-                success=True
+                success=True,
             )
 
 
@@ -101,7 +99,7 @@ class TestMemoryStorage:
             tokens_out=200,
             cost_usd=0.015,
             duration_seconds=1.0,
-            success=True
+            success=True,
         )
 
         result = storage.store(entry)
@@ -115,29 +113,33 @@ class TestMemoryStorage:
         """Should filter entries by operation."""
         storage = MemoryStorage()
 
-        storage.store(CostEntry(
-            timestamp=datetime.now().isoformat(),
-            operation="op1",
-            model="gpt-4",
-            model_tier=ModelTier.CLOUD_STANDARD,
-            tokens_in=100,
-            tokens_out=200,
-            cost_usd=0.01,
-            duration_seconds=1.0,
-            success=True
-        ))
+        storage.store(
+            CostEntry(
+                timestamp=datetime.now().isoformat(),
+                operation="op1",
+                model="gpt-4",
+                model_tier=ModelTier.CLOUD_STANDARD,
+                tokens_in=100,
+                tokens_out=200,
+                cost_usd=0.01,
+                duration_seconds=1.0,
+                success=True,
+            )
+        )
 
-        storage.store(CostEntry(
-            timestamp=datetime.now().isoformat(),
-            operation="op2",
-            model="gpt-4",
-            model_tier=ModelTier.CLOUD_STANDARD,
-            tokens_in=100,
-            tokens_out=200,
-            cost_usd=0.02,
-            duration_seconds=1.0,
-            success=True
-        ))
+        storage.store(
+            CostEntry(
+                timestamp=datetime.now().isoformat(),
+                operation="op2",
+                model="gpt-4",
+                model_tier=ModelTier.CLOUD_STANDARD,
+                tokens_in=100,
+                tokens_out=200,
+                cost_usd=0.02,
+                duration_seconds=1.0,
+                success=True,
+            )
+        )
 
         entries = storage.get_by_operation("op1")
         assert len(entries) == 1
@@ -149,30 +151,34 @@ class TestMemoryStorage:
         now = datetime.now()
 
         # Old entry
-        storage.store(CostEntry(
-            timestamp=(now - timedelta(days=2)).isoformat(),
-            operation="old",
-            model="gpt-4",
-            model_tier=ModelTier.CLOUD_STANDARD,
-            tokens_in=100,
-            tokens_out=200,
-            cost_usd=0.01,
-            duration_seconds=1.0,
-            success=True
-        ))
+        storage.store(
+            CostEntry(
+                timestamp=(now - timedelta(days=2)).isoformat(),
+                operation="old",
+                model="gpt-4",
+                model_tier=ModelTier.CLOUD_STANDARD,
+                tokens_in=100,
+                tokens_out=200,
+                cost_usd=0.01,
+                duration_seconds=1.0,
+                success=True,
+            )
+        )
 
         # Recent entry
-        storage.store(CostEntry(
-            timestamp=now.isoformat(),
-            operation="recent",
-            model="gpt-4",
-            model_tier=ModelTier.CLOUD_STANDARD,
-            tokens_in=100,
-            tokens_out=200,
-            cost_usd=0.02,
-            duration_seconds=1.0,
-            success=True
-        ))
+        storage.store(
+            CostEntry(
+                timestamp=now.isoformat(),
+                operation="recent",
+                model="gpt-4",
+                model_tier=ModelTier.CLOUD_STANDARD,
+                tokens_in=100,
+                tokens_out=200,
+                cost_usd=0.02,
+                duration_seconds=1.0,
+                success=True,
+            )
+        )
 
         start = now - timedelta(days=1)
         entries = storage.get_by_date_range(start, now)
@@ -182,17 +188,19 @@ class TestMemoryStorage:
     def test_clears_all_entries(self):
         """Should clear all stored entries."""
         storage = MemoryStorage()
-        storage.store(CostEntry(
-            timestamp=datetime.now().isoformat(),
-            operation="test",
-            model="gpt-4",
-            model_tier=ModelTier.CLOUD_STANDARD,
-            tokens_in=100,
-            tokens_out=200,
-            cost_usd=0.01,
-            duration_seconds=1.0,
-            success=True
-        ))
+        storage.store(
+            CostEntry(
+                timestamp=datetime.now().isoformat(),
+                operation="test",
+                model="gpt-4",
+                model_tier=ModelTier.CLOUD_STANDARD,
+                tokens_in=100,
+                tokens_out=200,
+                cost_usd=0.01,
+                duration_seconds=1.0,
+                success=True,
+            )
+        )
 
         assert len(storage.get_all()) == 1
         storage.clear()
@@ -227,7 +235,7 @@ class TestSQLiteStorage:
                 cost_usd=0.015,
                 duration_seconds=1.0,
                 success=True,
-                metadata={"key": "value"}
+                metadata={"key": "value"},
             )
 
             result = storage.store(entry)
@@ -253,7 +261,7 @@ class TestSQLiteStorage:
             tokens_out=200,
             cost_usd=0.01,
             duration_seconds=1.0,
-            success=True
+            success=True,
         )
 
         storage.store(entry)
@@ -268,31 +276,35 @@ class TestSQLiteStorage:
             db_path = Path(tmpdir) / "test.db"
             storage = SQLiteStorage(str(db_path))
 
-            storage.store(CostEntry(
-                timestamp=datetime.now().isoformat(),
-                operation="op1",
-                model="gpt-4",
-                model_tier=ModelTier.CLOUD_STANDARD,
-                tokens_in=100,
-                tokens_out=200,
-                cost_usd=0.01,
-                duration_seconds=1.0,
-                success=True,
-                metadata={"agent": "agent1"}
-            ))
+            storage.store(
+                CostEntry(
+                    timestamp=datetime.now().isoformat(),
+                    operation="op1",
+                    model="gpt-4",
+                    model_tier=ModelTier.CLOUD_STANDARD,
+                    tokens_in=100,
+                    tokens_out=200,
+                    cost_usd=0.01,
+                    duration_seconds=1.0,
+                    success=True,
+                    metadata={"agent": "agent1"},
+                )
+            )
 
-            storage.store(CostEntry(
-                timestamp=datetime.now().isoformat(),
-                operation="op2",
-                model="gpt-4",
-                model_tier=ModelTier.CLOUD_STANDARD,
-                tokens_in=100,
-                tokens_out=200,
-                cost_usd=0.02,
-                duration_seconds=1.0,
-                success=True,
-                metadata={"agent": "agent2"}
-            ))
+            storage.store(
+                CostEntry(
+                    timestamp=datetime.now().isoformat(),
+                    operation="op2",
+                    model="gpt-4",
+                    model_tier=ModelTier.CLOUD_STANDARD,
+                    tokens_in=100,
+                    tokens_out=200,
+                    cost_usd=0.02,
+                    duration_seconds=1.0,
+                    success=True,
+                    metadata={"agent": "agent2"},
+                )
+            )
 
             entries = storage.get_by_metadata({"agent": "agent1"})
             assert len(entries) == 1
@@ -315,7 +327,7 @@ class TestCostTracker:
             tokens_in=1000,
             tokens_out=2000,
             duration_seconds=2.5,
-            success=True
+            success=True,
         )
 
         assert result.is_ok()
@@ -337,7 +349,7 @@ class TestCostTracker:
             tokens_in=1000,
             tokens_out=1000,
             duration_seconds=1.0,
-            success=True
+            success=True,
         )
 
         entry = result.unwrap()
@@ -356,7 +368,7 @@ class TestCostTracker:
             tokens_out=200,
             duration_seconds=1.0,
             success=True,
-            metadata={"agent": "test_agent", "task_id": "123"}
+            metadata={"agent": "test_agent", "task_id": "123"},
         )
 
         entry = result.unwrap()
@@ -374,7 +386,7 @@ class TestCostTracker:
             tokens_in=-100,
             tokens_out=200,
             duration_seconds=1.0,
-            success=True
+            success=True,
         )
 
         assert result.is_err()
@@ -438,7 +450,7 @@ class TestCostTracker:
             tokens_out=1000,
             cost_usd=0.0125,
             duration_seconds=1.0,
-            success=True
+            success=True,
         )
         tracker.storage.store(old_entry)
 
@@ -460,7 +472,7 @@ class TestCostTracker:
         tracker.track("op", "gpt-4", ModelTier.CLOUD_STANDARD, 1000, 1000, 1.0, False)
 
         summary = tracker.get_summary().unwrap()
-        assert summary.success_rate == pytest.approx(2/3)
+        assert summary.success_rate == pytest.approx(2 / 3)
 
 
 class TestBudgetManagement:
@@ -543,7 +555,7 @@ class TestTrendCalculations:
         # Add entries in last hour
         for i in range(3):
             entry = CostEntry(
-                timestamp=(now - timedelta(minutes=i*10)).isoformat(),
+                timestamp=(now - timedelta(minutes=i * 10)).isoformat(),
                 operation="op",
                 model="gpt-4",
                 model_tier=ModelTier.CLOUD_STANDARD,
@@ -551,7 +563,7 @@ class TestTrendCalculations:
                 tokens_out=1000,
                 cost_usd=0.0125,
                 duration_seconds=1.0,
-                success=True
+                success=True,
             )
             tracker.storage.store(entry)
 
@@ -567,7 +579,7 @@ class TestTrendCalculations:
         # Simulate $1/hour rate
         for i in range(4):
             entry = CostEntry(
-                timestamp=(now - timedelta(minutes=i*15)).isoformat(),
+                timestamp=(now - timedelta(minutes=i * 15)).isoformat(),
                 operation="op",
                 model="gpt-4",
                 model_tier=ModelTier.CLOUD_STANDARD,
@@ -575,7 +587,7 @@ class TestTrendCalculations:
                 tokens_out=1000,
                 cost_usd=0.25,
                 duration_seconds=1.0,
-                success=True
+                success=True,
             )
             tracker.storage.store(entry)
 
@@ -618,7 +630,7 @@ class TestExportFunctionality:
             tokens_out=1000,
             cost_usd=0.0125,
             duration_seconds=1.0,
-            success=True
+            success=True,
         )
         tracker.storage.store(old_entry)
 
@@ -647,7 +659,7 @@ class TestEdgeCases:
             tokens_in=0,
             tokens_out=0,
             duration_seconds=0.1,
-            success=True
+            success=True,
         )
 
         assert result.is_ok()
@@ -664,7 +676,7 @@ class TestEdgeCases:
             tokens_in=1000,
             tokens_out=1000,
             duration_seconds=2.0,
-            success=True
+            success=True,
         )
 
         assert result.is_ok()
@@ -684,19 +696,26 @@ class TestEdgeCases:
 
     def test_handles_storage_backend_errors(self):
         """Should propagate storage backend errors."""
+
         class FailingStorage(StorageBackend):
             def store(self, entry):
                 return Err(CostTrackerError("Storage failed"))
+
             def get_all(self):
                 return []
+
             def get_by_operation(self, operation):
                 return []
+
             def get_by_date_range(self, start, end):
                 return []
+
             def get_by_metadata(self, filters):
                 return []
+
             def clear(self):
                 pass
+
             def close(self):
                 pass
 
@@ -712,6 +731,7 @@ class TestPluggableBackends:
 
     def test_uses_custom_storage_backend(self):
         """Should work with custom storage backend implementation."""
+
         # Custom in-memory backend for testing
         class CustomStorage(StorageBackend):
             def __init__(self):
@@ -729,8 +749,7 @@ class TestPluggableBackends:
 
             def get_by_date_range(self, start, end):
                 return [
-                    e for e in self.entries
-                    if start <= datetime.fromisoformat(e.timestamp) <= end
+                    e for e in self.entries if start <= datetime.fromisoformat(e.timestamp) <= end
                 ]
 
             def get_by_metadata(self, filters):

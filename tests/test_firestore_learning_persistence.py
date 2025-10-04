@@ -8,10 +8,10 @@ IMPORTANT: These are REAL integration tests - no mocks, actual Firestore connect
 """
 
 import os
-import pytest
 import time
 from datetime import datetime
-from typing import Dict, Any
+
+import pytest
 
 from agency_memory import FirestoreStore
 from shared.models.learning import ExtractedInsight
@@ -27,7 +27,9 @@ class TestFirestoreLearningPersistence:
     def firestore_credentials(self):
         """Verify Firestore credentials exist and are configured."""
         # Path to the service account credentials
-        creds_path = "/Users/am/Code/Agency/gothic-point-390410-firebase-adminsdk-fbsvc-505b6b6075.json"
+        creds_path = (
+            "/Users/am/Code/Agency/gothic-point-390410-firebase-adminsdk-fbsvc-505b6b6075.json"
+        )
 
         # Verify the file exists
         assert os.path.exists(creds_path), f"Firestore credentials not found at {creds_path}"
@@ -47,7 +49,9 @@ class TestFirestoreLearningPersistence:
         store = FirestoreStore(collection_name=collection_name)
 
         # Verify we're NOT using the fallback (must be real Firestore)
-        assert store._fallback_store is None, "Test requires REAL Firestore, not InMemoryStore fallback"
+        assert store._fallback_store is None, (
+            "Test requires REAL Firestore, not InMemoryStore fallback"
+        )
         assert store._client is not None, "Firestore client must be initialized"
         assert store._collection is not None, "Firestore collection must be initialized"
 
@@ -76,7 +80,9 @@ class TestFirestoreLearningPersistence:
         assert firestore_store._fallback_store is None, "Must use real Firestore, not fallback"
 
         # Verify project configuration
-        assert firestore_store._client.project == "gothic-point-390410", "Project ID must match credentials"
+        assert firestore_store._client.project == "gothic-point-390410", (
+            "Project ID must match credentials"
+        )
 
         # Verify collection is accessible
         assert firestore_store._collection is not None, "Collection must be initialized"
@@ -110,9 +116,9 @@ class TestFirestoreLearningPersistence:
             "data": {
                 "evidence_count": 15,
                 "avg_time_saved_ms": 450,
-                "test_timestamp": datetime.now().isoformat()
+                "test_timestamp": datetime.now().isoformat(),
             },
-            "keywords": ["parallel", "batching", "performance"]
+            "keywords": ["parallel", "batching", "performance"],
         }
         test_tags = ["learning", "insight", "tool_pattern", "test"]
 
@@ -174,9 +180,9 @@ class TestFirestoreLearningPersistence:
                 "session_id": "session_1",
                 "stored_at": datetime.now().isoformat(),
                 "evidence_files": ["auto_fix_nonetype.py", "quality_enforcer.py"],
-                "fix_success_rate": 0.95
+                "fix_success_rate": 0.95,
             },
-            "keywords": ["nonetype", "auto-fix", "type-safety"]
+            "keywords": ["nonetype", "auto-fix", "type-safety"],
         }
         session_1_tags = ["learning", "cross_session_test", "error_resolution", "persistence_proof"]
 
@@ -247,7 +253,9 @@ class TestFirestoreLearningPersistence:
         production_store = FirestoreStore(collection_name="agency_insights")
 
         # Verify we're using real Firestore for production
-        assert production_store._fallback_store is None, "Must use real Firestore for production check"
+        assert production_store._fallback_store is None, (
+            "Must use real Firestore for production check"
+        )
 
         # Get current insights
         all_insights = production_store.get_all()
@@ -263,9 +271,9 @@ class TestFirestoreLearningPersistence:
                         "type": "tool_pattern",
                         "title": "Parallel Tool Orchestration",
                         "description": "Batching independent Read/Grep calls reduces latency by 60%",
-                        "confidence": 0.92
+                        "confidence": 0.92,
                     },
-                    "tags": ["learning", "parallel_orchestration", "performance"]
+                    "tags": ["learning", "parallel_orchestration", "performance"],
                 },
                 {
                     "key": "wrapper_pattern_001",
@@ -273,9 +281,9 @@ class TestFirestoreLearningPersistence:
                         "type": "code_pattern",
                         "title": "Result Wrapper Pattern",
                         "description": "Using Result<T,E> for error handling improves type safety",
-                        "confidence": 0.88
+                        "confidence": 0.88,
                     },
-                    "tags": ["learning", "wrapper_pattern", "type_safety"]
+                    "tags": ["learning", "wrapper_pattern", "type_safety"],
                 },
                 {
                     "key": "proactive_descriptions_001",
@@ -283,9 +291,9 @@ class TestFirestoreLearningPersistence:
                         "type": "communication",
                         "title": "Proactive Command Descriptions",
                         "description": "Adding descriptions to bash commands improves observability",
-                        "confidence": 0.85
+                        "confidence": 0.85,
                     },
-                    "tags": ["learning", "proactive_descriptions", "observability"]
+                    "tags": ["learning", "proactive_descriptions", "observability"],
                 },
                 {
                     "key": "error_resolution_001",
@@ -293,9 +301,9 @@ class TestFirestoreLearningPersistence:
                         "type": "error_resolution",
                         "title": "NoneType Auto-Fix Pattern",
                         "description": "Automatic type guards reduce NoneType errors by 95%",
-                        "confidence": 0.90
+                        "confidence": 0.90,
                     },
-                    "tags": ["learning", "error_resolution", "quality"]
+                    "tags": ["learning", "error_resolution", "quality"],
                 },
                 {
                     "key": "optimization_001",
@@ -303,10 +311,10 @@ class TestFirestoreLearningPersistence:
                         "type": "optimization",
                         "title": "Test Consolidation Strategy",
                         "description": "Merging similar tests reduces execution time by 40%",
-                        "confidence": 0.87
+                        "confidence": 0.87,
                     },
-                    "tags": ["learning", "optimization", "testing"]
-                }
+                    "tags": ["learning", "optimization", "testing"],
+                },
             ]
 
             # Store sample insights
@@ -326,11 +334,7 @@ class TestFirestoreLearningPersistence:
         )
 
         # Expected patterns from production usage
-        expected_patterns = [
-            "parallel_orchestration",
-            "wrapper_pattern",
-            "proactive_descriptions"
-        ]
+        expected_patterns = ["parallel_orchestration", "wrapper_pattern", "proactive_descriptions"]
 
         # Search for each expected pattern
         found_patterns = {}
@@ -364,7 +368,9 @@ class TestFirestoreLearningPersistence:
 
         assert sample_count >= 5, "Should validate at least 5 production insights"
 
-        print(f"\n✓ Production insights validated: {total_insights} total, {patterns_found} patterns found")
+        print(
+            f"\n✓ Production insights validated: {total_insights} total, {patterns_found} patterns found"
+        )
 
     def test_learning_insight_model_validation(self, firestore_store):
         """
@@ -383,19 +389,14 @@ class TestFirestoreLearningPersistence:
             description="Testing Pydantic model validation for persisted insights",
             actionable_insight="Use Pydantic models to ensure type safety in learning data",
             confidence=0.85,
-            data={
-                "test_field": "test_value",
-                "validation_timestamp": datetime.now().isoformat()
-            },
-            keywords=["pydantic", "validation", "type-safety"]
+            data={"test_field": "test_value", "validation_timestamp": datetime.now().isoformat()},
+            keywords=["pydantic", "validation", "type-safety"],
         )
 
         # Store the model as a dictionary
         test_key = f"model_validation_{int(time.time() * 1000)}"
         firestore_store.store(
-            test_key,
-            insight_model.model_dump(),
-            ["learning", "model_test", "pydantic"]
+            test_key, insight_model.model_dump(), ["learning", "model_test", "pydantic"]
         )
 
         # Give Firestore time to persist
@@ -436,7 +437,7 @@ class TestFirestoreLearningPersistence:
         test_content = {
             "type": "optimization",
             "title": "Concurrent Read Test",
-            "description": "Testing concurrent access to learning insights"
+            "description": "Testing concurrent access to learning insights",
         }
         firestore_store.store(test_key, test_content, ["concurrent_test"])
 

@@ -5,41 +5,47 @@ Implements strategic planning and task orchestration using DSPy,
 following the spec-kit methodology and constitutional requirements.
 """
 
-import os
 import logging
-from typing import Dict, List, Any, Optional, Tuple
-from shared.type_definitions.json import JSONValue
-from pathlib import Path
-import json
 from datetime import datetime
-from pydantic import BaseModel, Field, field_validator, ConfigDict
+from pathlib import Path
+from typing import Any
+
+from pydantic import BaseModel, ConfigDict, Field
+
+from shared.type_definitions.json import JSONValue
 
 # Conditional DSPy import with fallback
 try:
     import dspy
+
     DSPY_AVAILABLE = True
 except ImportError:
     DSPY_AVAILABLE = False
+
     # Provide fallback implementations
     class dspy:
         class Module:
             pass
+
         class ChainOfThought:
             def __init__(self, signature):
                 self.signature = signature
+
             def __call__(self, **kwargs):
-                return type('Result', (), kwargs)()
+                return type("Result", (), kwargs)()
+
         class Predict:
             def __init__(self, signature):
                 self.signature = signature
+
             def __call__(self, **kwargs):
-                return type('Result', (), kwargs)()
+                return type("Result", (), kwargs)()
+
 
 from dspy_agents.signatures.base import (
-    UnderstandingSignature,
     StrategySignature,
     TaskBreakdownSignature,
-    TaskPlan,
+    UnderstandingSignature,
 )
 
 logger = logging.getLogger(__name__)
@@ -49,8 +55,10 @@ logger = logging.getLogger(__name__)
 # Data Models
 # ===========================
 
+
 class RequirementType(BaseModel):
     """Type of requirement for classification."""
+
     model_config = ConfigDict(extra="forbid")
 
     category: str = Field(..., description="Category: feature, bugfix, refactor, docs, test")
@@ -61,68 +69,85 @@ class RequirementType(BaseModel):
 
 class Specification(BaseModel):
     """Formal specification following spec-kit methodology."""
+
     model_config = ConfigDict(extra="forbid")
 
     spec_id: str = Field(..., description="Unique specification ID")
     title: str = Field(..., description="Clear, descriptive title")
-    goals: List[str] = Field(..., description="Specific, measurable objectives")
-    non_goals: List[str] = Field(..., description="Explicit scope boundaries")
-    personas: Dict[str, str] = Field(..., description="User personas and their needs")
-    user_journeys: List[Dict[str, JSONValue]] = Field(..., description="Detailed use cases")
-    acceptance_criteria: List[str] = Field(..., description="Testable success conditions")
-    constraints: List[str] = Field(default_factory=list, description="Technical or business constraints")
-    assumptions: List[str] = Field(default_factory=list, description="Planning assumptions")
+    goals: list[str] = Field(..., description="Specific, measurable objectives")
+    non_goals: list[str] = Field(..., description="Explicit scope boundaries")
+    personas: dict[str, str] = Field(..., description="User personas and their needs")
+    user_journeys: list[dict[str, JSONValue]] = Field(..., description="Detailed use cases")
+    acceptance_criteria: list[str] = Field(..., description="Testable success conditions")
+    constraints: list[str] = Field(
+        default_factory=list, description="Technical or business constraints"
+    )
+    assumptions: list[str] = Field(default_factory=list, description="Planning assumptions")
     created_at: datetime = Field(default_factory=datetime.utcnow)
     status: str = Field("draft", description="Status: draft, approved, implemented")
 
 
 class TechnicalPlan(BaseModel):
     """Technical implementation plan."""
+
     model_config = ConfigDict(extra="forbid")
 
     plan_id: str = Field(..., description="Unique plan ID")
     spec_id: str = Field(..., description="Reference to specification")
-    architecture: Dict[str, JSONValue] = Field(..., description="System design and components")
-    agent_assignments: Dict[str, List[str]] = Field(..., description="Agent to task mapping")
-    tool_requirements: List[str] = Field(..., description="Required tools")
-    contracts: Dict[str, JSONValue] = Field(..., description="APIs and interfaces")
-    quality_strategy: Dict[str, JSONValue] = Field(..., description="Testing and validation approach")
-    risk_assessment: List[Dict[str, JSONValue]] = Field(..., description="Risks and mitigations")
-    milestones: List[Dict[str, JSONValue]] = Field(..., description="Key milestones")
+    architecture: dict[str, JSONValue] = Field(..., description="System design and components")
+    agent_assignments: dict[str, list[str]] = Field(..., description="Agent to task mapping")
+    tool_requirements: list[str] = Field(..., description="Required tools")
+    contracts: dict[str, JSONValue] = Field(..., description="APIs and interfaces")
+    quality_strategy: dict[str, JSONValue] = Field(
+        ..., description="Testing and validation approach"
+    )
+    risk_assessment: list[dict[str, JSONValue]] = Field(..., description="Risks and mitigations")
+    milestones: list[dict[str, JSONValue]] = Field(..., description="Key milestones")
     estimated_duration: str = Field(..., description="Total estimated time")
-    dependencies: List[str] = Field(default_factory=list, description="External dependencies")
+    dependencies: list[str] = Field(default_factory=list, description="External dependencies")
 
 
 class PlanningContext(BaseModel):
     """Context for planning operations."""
+
     model_config = ConfigDict(extra="forbid")
 
     request: str = Field(..., description="User request or requirement")
     mode: str = Field("full", description="Planning mode: full, simple, guidance")
-    existing_specs: List[str] = Field(default_factory=list, description="Existing specifications")
-    existing_plans: List[str] = Field(default_factory=list, description="Existing plans")
-    codebase_context: Dict[str, JSONValue] = Field(default_factory=dict, description="Current codebase state")
-    constitutional_requirements: List[str] = Field(default_factory=list, description="Constitution articles to follow")
-    learning_patterns: List[Dict[str, JSONValue]] = Field(default_factory=list, description="Relevant historical patterns")
+    existing_specs: list[str] = Field(default_factory=list, description="Existing specifications")
+    existing_plans: list[str] = Field(default_factory=list, description="Existing plans")
+    codebase_context: dict[str, JSONValue] = Field(
+        default_factory=dict, description="Current codebase state"
+    )
+    constitutional_requirements: list[str] = Field(
+        default_factory=list, description="Constitution articles to follow"
+    )
+    learning_patterns: list[dict[str, JSONValue]] = Field(
+        default_factory=list, description="Relevant historical patterns"
+    )
 
 
 class PlanningResult(BaseModel):
     """Complete planning result."""
+
     model_config = ConfigDict(extra="forbid")
 
     success: bool = Field(..., description="Whether planning succeeded")
     requirement_type: RequirementType = Field(..., description="Classified requirement")
-    specification: Optional[Specification] = Field(None, description="Generated specification if needed")
-    technical_plan: Optional[TechnicalPlan] = Field(None, description="Generated technical plan")
-    tasks: List[Dict[str, JSONValue]] = Field(default_factory=list, description="Task breakdown")
-    guidance: Optional[str] = Field(None, description="Direct guidance for simple tasks")
-    recommendations: List[str] = Field(default_factory=list, description="Planning recommendations")
+    specification: Specification | None = Field(
+        None, description="Generated specification if needed"
+    )
+    technical_plan: TechnicalPlan | None = Field(None, description="Generated technical plan")
+    tasks: list[dict[str, JSONValue]] = Field(default_factory=list, description="Task breakdown")
+    guidance: str | None = Field(None, description="Direct guidance for simple tasks")
+    recommendations: list[str] = Field(default_factory=list, description="Planning recommendations")
     timestamp: datetime = Field(default_factory=datetime.utcnow)
 
 
 # ===========================
 # DSPy Planner Agent
 # ===========================
+
 
 class DSPyPlannerAgent(dspy.Module if DSPY_AVAILABLE else object):
     """
@@ -142,7 +167,7 @@ class DSPyPlannerAgent(dspy.Module if DSPY_AVAILABLE else object):
         reasoning_effort: str = "high",
         enable_learning: bool = True,
         specs_dir: str = "specs",
-        plans_dir: str = "plans"
+        plans_dir: str = "plans",
     ):
         """
         Initialize the DSPy Planner Agent.
@@ -179,9 +204,11 @@ class DSPyPlannerAgent(dspy.Module if DSPY_AVAILABLE else object):
             self.breakdown = self._fallback_breakdown
 
         # Planning history for learning
-        self.planning_history: List[Dict[str, JSONValue]] = []
+        self.planning_history: list[dict[str, JSONValue]] = []
 
-        logger.info(f"DSPyPlannerAgent initialized with model={model}, DSPy available: {DSPY_AVAILABLE}")
+        logger.info(
+            f"DSPyPlannerAgent initialized with model={model}, DSPy available: {DSPY_AVAILABLE}"
+        )
 
     def forward(self, request: str, mode: str = "full", **kwargs) -> PlanningResult:
         """
@@ -209,7 +236,7 @@ class DSPyPlannerAgent(dspy.Module if DSPY_AVAILABLE else object):
                 success=True,
                 requirement_type=requirement_type,
                 guidance=guidance,
-                recommendations=["Simple task - no formal specification needed"]
+                recommendations=["Simple task - no formal specification needed"],
             )
         else:
             # Complex task - follow spec-kit process
@@ -233,7 +260,7 @@ class DSPyPlannerAgent(dspy.Module if DSPY_AVAILABLE else object):
             "Article II: 100% Verification and Stability",
             "Article III: Automated Merge Enforcement",
             "Article IV: Continuous Learning and Improvement",
-            "Article V: Spec-Driven Development"
+            "Article V: Spec-Driven Development",
         ]
 
         return PlanningContext(
@@ -243,7 +270,7 @@ class DSPyPlannerAgent(dspy.Module if DSPY_AVAILABLE else object):
             existing_plans=existing_plans,
             codebase_context=kwargs.get("codebase_context", {}),
             constitutional_requirements=constitutional_requirements,
-            learning_patterns=kwargs.get("learning_patterns", [])
+            learning_patterns=kwargs.get("learning_patterns", []),
         )
 
     def _classify_requirement(self, context: PlanningContext) -> RequirementType:
@@ -252,7 +279,9 @@ class DSPyPlannerAgent(dspy.Module if DSPY_AVAILABLE else object):
         request_lower = context.request.lower()
 
         # Determine category (check test first as it's more specific)
-        if any(word in request_lower for word in ["test", "tests", "testing", "coverage", "unit test"]):
+        if any(
+            word in request_lower for word in ["test", "tests", "testing", "coverage", "unit test"]
+        ):
             category = "test"
         elif any(word in request_lower for word in ["bug", "fix", "issue", "error"]):
             category = "bugfix"
@@ -288,10 +317,12 @@ class DSPyPlannerAgent(dspy.Module if DSPY_AVAILABLE else object):
             category=category,
             complexity=complexity,
             requires_spec=requires_spec,
-            estimated_effort=estimated_effort
+            estimated_effort=estimated_effort,
         )
 
-    def _generate_guidance(self, context: PlanningContext, requirement_type: RequirementType) -> str:
+    def _generate_guidance(
+        self, context: PlanningContext, requirement_type: RequirementType
+    ) -> str:
         """Generate direct guidance for simple tasks."""
         guidance_parts = []
 
@@ -335,9 +366,7 @@ class DSPyPlannerAgent(dspy.Module if DSPY_AVAILABLE else object):
         return "\n".join(guidance_parts)
 
     def _execute_spec_kit_process(
-        self,
-        context: PlanningContext,
-        requirement_type: RequirementType
+        self, context: PlanningContext, requirement_type: RequirementType
     ) -> PlanningResult:
         """Execute full spec-kit process for complex tasks."""
         try:
@@ -359,7 +388,7 @@ class DSPyPlannerAgent(dspy.Module if DSPY_AVAILABLE else object):
                 specification=specification,
                 technical_plan=technical_plan,
                 tasks=tasks,
-                recommendations=recommendations
+                recommendations=recommendations,
             )
 
         except Exception as e:
@@ -367,25 +396,23 @@ class DSPyPlannerAgent(dspy.Module if DSPY_AVAILABLE else object):
             return PlanningResult(
                 success=False,
                 requirement_type=requirement_type,
-                recommendations=[f"Planning failed: {str(e)}"]
+                recommendations=[f"Planning failed: {str(e)}"],
             )
 
     def _generate_specification(
-        self,
-        context: PlanningContext,
-        requirement_type: RequirementType
+        self, context: PlanningContext, requirement_type: RequirementType
     ) -> Specification:
         """Generate formal specification."""
         # Generate unique spec ID
         spec_id = f"spec-{len(context.existing_specs) + 1:03d}-{requirement_type.category}"
 
         # Use DSPy or fallback to understand requirements
-        if DSPY_AVAILABLE and hasattr(self.understand, '__call__'):
+        if DSPY_AVAILABLE and hasattr(self.understand, "__call__"):
             try:
                 result = self.understand(
                     request=context.request,
                     existing_context=context.codebase_context,
-                    clarifying_questions=[]
+                    clarifying_questions=[],
                 )
 
                 understanding = result.understanding
@@ -425,25 +452,23 @@ class DSPyPlannerAgent(dspy.Module if DSPY_AVAILABLE else object):
             user_journeys=user_journeys,
             acceptance_criteria=acceptance_criteria,
             constraints=risks,
-            assumptions=assumptions
+            assumptions=assumptions,
         )
 
     def _generate_technical_plan(
-        self,
-        context: PlanningContext,
-        specification: Specification
+        self, context: PlanningContext, specification: Specification
     ) -> TechnicalPlan:
         """Generate technical implementation plan."""
         # Generate unique plan ID
         plan_id = f"plan-{specification.spec_id}"
 
         # Use DSPy or fallback to create strategy
-        if DSPY_AVAILABLE and hasattr(self.strategize, '__call__'):
+        if DSPY_AVAILABLE and hasattr(self.strategize, "__call__"):
             try:
                 result = self.strategize(
                     understanding="\n".join(specification.goals),
                     constraints=specification.constraints,
-                    available_resources={"agents": ["code", "auditor", "test_generator"]}
+                    available_resources={"agents": ["code", "auditor", "test_generator"]},
                 )
 
                 strategy = result.strategy
@@ -452,11 +477,15 @@ class DSPyPlannerAgent(dspy.Module if DSPY_AVAILABLE else object):
             except Exception as e:
                 logger.warning(f"DSPy strategy failed: {e}, using fallback")
                 strategy = "Implement features according to specification"
-                milestones = [{"name": "Implementation Complete", "description": "All features implemented"}]
+                milestones = [
+                    {"name": "Implementation Complete", "description": "All features implemented"}
+                ]
                 success_criteria = specification.acceptance_criteria
         else:
             strategy = "Implement features according to specification"
-            milestones = [{"name": "Implementation Complete", "description": "All features implemented"}]
+            milestones = [
+                {"name": "Implementation Complete", "description": "All features implemented"}
+            ]
             success_criteria = specification.acceptance_criteria
 
         # Design architecture
@@ -464,7 +493,7 @@ class DSPyPlannerAgent(dspy.Module if DSPY_AVAILABLE else object):
             "overview": strategy,
             "components": self._identify_components(specification),
             "data_flow": "Request -> Processing -> Response",
-            "integration_points": []
+            "integration_points": [],
         }
 
         # Assign agents
@@ -474,17 +503,13 @@ class DSPyPlannerAgent(dspy.Module if DSPY_AVAILABLE else object):
         tool_requirements = self._identify_tools(specification)
 
         # Define contracts
-        contracts = {
-            "interfaces": [],
-            "apis": [],
-            "data_models": []
-        }
+        contracts = {"interfaces": [], "apis": [], "data_models": []}
 
         # Create quality strategy
         quality_strategy = {
             "testing_approach": "TDD with NECESSARY pattern",
             "coverage_target": "100%",
-            "validation_steps": success_criteria
+            "validation_steps": success_criteria,
         }
 
         # Assess risks
@@ -501,27 +526,25 @@ class DSPyPlannerAgent(dspy.Module if DSPY_AVAILABLE else object):
             risk_assessment=risk_assessment,
             milestones=milestones,
             estimated_duration=self._estimate_duration(specification),
-            dependencies=[]
+            dependencies=[],
         )
 
     def _generate_task_breakdown(
-        self,
-        technical_plan: TechnicalPlan,
-        specification: Specification
-    ) -> List[Dict[str, JSONValue]]:
+        self, technical_plan: TechnicalPlan, specification: Specification
+    ) -> list[dict[str, JSONValue]]:
         """Break down plan into executable tasks."""
         tasks = []
 
         # Use DSPy or fallback for task breakdown
-        if DSPY_AVAILABLE and hasattr(self.breakdown, '__call__'):
+        if DSPY_AVAILABLE and hasattr(self.breakdown, "__call__"):
             try:
                 result = self.breakdown(
                     strategy=technical_plan.architecture["overview"],
                     agent_capabilities=technical_plan.agent_assignments,
-                    dependencies=[]
+                    dependencies=[],
                 )
 
-                if hasattr(result, 'tasks'):
+                if hasattr(result, "tasks"):
                     tasks = result.tasks
             except Exception as e:
                 logger.warning(f"DSPy breakdown failed: {e}, using fallback")
@@ -530,23 +553,25 @@ class DSPyPlannerAgent(dspy.Module if DSPY_AVAILABLE else object):
         if not tasks:
             # Create tasks for each acceptance criterion
             for idx, criterion in enumerate(specification.acceptance_criteria):
-                tasks.append({
-                    "task_id": f"{technical_plan.plan_id}-task-{idx + 1}",
-                    "title": f"Implement: {criterion[:50]}...",
-                    "description": criterion,
-                    "assigned_to": list(technical_plan.agent_assignments.keys())[0] if technical_plan.agent_assignments else "code",
-                    "dependencies": [f"{technical_plan.plan_id}-task-{idx}"] if idx > 0 else [],
-                    "estimated_hours": 4,
-                    "status": "pending"
-                })
+                tasks.append(
+                    {
+                        "task_id": f"{technical_plan.plan_id}-task-{idx + 1}",
+                        "title": f"Implement: {criterion[:50]}...",
+                        "description": criterion,
+                        "assigned_to": list(technical_plan.agent_assignments.keys())[0]
+                        if technical_plan.agent_assignments
+                        else "code",
+                        "dependencies": [f"{technical_plan.plan_id}-task-{idx}"] if idx > 0 else [],
+                        "estimated_hours": 4,
+                        "status": "pending",
+                    }
+                )
 
         return tasks
 
     def _generate_recommendations(
-        self,
-        specification: Specification,
-        technical_plan: TechnicalPlan
-    ) -> List[str]:
+        self, specification: Specification, technical_plan: TechnicalPlan
+    ) -> list[str]:
         """Generate planning recommendations."""
         recommendations = []
 
@@ -575,19 +600,19 @@ class DSPyPlannerAgent(dspy.Module if DSPY_AVAILABLE else object):
     # Helper Methods
     # ===========================
 
-    def _list_existing_specs(self) -> List[str]:
+    def _list_existing_specs(self) -> list[str]:
         """List existing specifications."""
         if self.specs_dir.exists():
             return [f.name for f in self.specs_dir.glob("spec-*.md")]
         return []
 
-    def _list_existing_plans(self) -> List[str]:
+    def _list_existing_plans(self) -> list[str]:
         """List existing plans."""
         if self.plans_dir.exists():
             return [f.name for f in self.plans_dir.glob("plan-*.md")]
         return []
 
-    def _extract_goals(self, understanding: str) -> List[str]:
+    def _extract_goals(self, understanding: str) -> list[str]:
         """Extract goals from understanding."""
         # Simple extraction - in practice, use NLP
         goals = []
@@ -607,7 +632,7 @@ class DSPyPlannerAgent(dspy.Module if DSPY_AVAILABLE else object):
 
         return goals
 
-    def _define_non_goals(self, requirement_type: RequirementType) -> List[str]:
+    def _define_non_goals(self, requirement_type: RequirementType) -> list[str]:
         """Define what's out of scope."""
         non_goals = []
 
@@ -623,11 +648,11 @@ class DSPyPlannerAgent(dspy.Module if DSPY_AVAILABLE else object):
 
         return non_goals
 
-    def _create_personas(self, requirement_type: RequirementType) -> Dict[str, str]:
+    def _create_personas(self, requirement_type: RequirementType) -> dict[str, str]:
         """Create user personas."""
         personas = {
             "developer": "Software developer using the system",
-            "end_user": "Final user of the application"
+            "end_user": "Final user of the application",
         }
 
         if requirement_type.category == "test":
@@ -636,34 +661,32 @@ class DSPyPlannerAgent(dspy.Module if DSPY_AVAILABLE else object):
         return personas
 
     def _create_user_journeys(
-        self,
-        requirement_type: RequirementType,
-        personas: Dict[str, str]
-    ) -> List[Dict[str, JSONValue]]:
+        self, requirement_type: RequirementType, personas: dict[str, str]
+    ) -> list[dict[str, JSONValue]]:
         """Create user journey maps."""
         journeys = []
 
         for persona_id, persona_desc in personas.items():
-            journeys.append({
-                "persona": persona_id,
-                "description": persona_desc,
-                "steps": [
-                    "Initiate the action",
-                    "Perform the main task",
-                    "Verify the outcome"
-                ],
-                "expected_outcome": "Task completed successfully"
-            })
+            journeys.append(
+                {
+                    "persona": persona_id,
+                    "description": persona_desc,
+                    "steps": ["Initiate the action", "Perform the main task", "Verify the outcome"],
+                    "expected_outcome": "Task completed successfully",
+                }
+            )
 
         return journeys
 
-    def _generate_acceptance_criteria(self, goals: List[str]) -> List[str]:
+    def _generate_acceptance_criteria(self, goals: list[str]) -> list[str]:
         """Generate testable acceptance criteria."""
         criteria = []
 
         for goal in goals:
             # Create testable criterion for each goal
-            criteria.append(f"GIVEN the system is ready WHEN {goal.lower()} THEN it completes successfully")
+            criteria.append(
+                f"GIVEN the system is ready WHEN {goal.lower()} THEN it completes successfully"
+            )
 
         # Add standard criteria
         criteria.append("All tests pass with 100% success rate")
@@ -672,31 +695,33 @@ class DSPyPlannerAgent(dspy.Module if DSPY_AVAILABLE else object):
 
         return criteria
 
-    def _identify_components(self, specification: Specification) -> List[Dict[str, str]]:
+    def _identify_components(self, specification: Specification) -> list[dict[str, str]]:
         """Identify system components needed."""
         components = []
 
         # Basic components based on goals
         for goal in specification.goals:
-            components.append({
-                "name": f"Component for: {goal[:30]}...",
-                "responsibility": goal,
-                "type": "implementation"
-            })
+            components.append(
+                {
+                    "name": f"Component for: {goal[:30]}...",
+                    "responsibility": goal,
+                    "type": "implementation",
+                }
+            )
 
         return components
 
-    def _assign_agents(self, specification: Specification) -> Dict[str, List[str]]:
+    def _assign_agents(self, specification: Specification) -> dict[str, list[str]]:
         """Assign agents to tasks."""
         assignments = {
             "code": ["Implementation", "Integration"],
             "auditor": ["Quality assurance", "Compliance checking"],
-            "test_generator": ["Test creation", "Coverage validation"]
+            "test_generator": ["Test creation", "Coverage validation"],
         }
 
         return assignments
 
-    def _identify_tools(self, specification: Specification) -> List[str]:
+    def _identify_tools(self, specification: Specification) -> list[str]:
         """Identify required tools."""
         tools = ["Read", "Write", "Edit", "Grep", "Glob"]
 
@@ -709,23 +734,27 @@ class DSPyPlannerAgent(dspy.Module if DSPY_AVAILABLE else object):
 
         return list(set(tools))
 
-    def _assess_risks(self, specification: Specification) -> List[Dict[str, JSONValue]]:
+    def _assess_risks(self, specification: Specification) -> list[dict[str, JSONValue]]:
         """Assess project risks."""
         risks = []
 
         if len(specification.goals) > 5:
-            risks.append({
-                "risk": "Scope creep",
-                "impact": "high",
-                "mitigation": "Strict adherence to specification"
-            })
+            risks.append(
+                {
+                    "risk": "Scope creep",
+                    "impact": "high",
+                    "mitigation": "Strict adherence to specification",
+                }
+            )
 
         if specification.constraints:
-            risks.append({
-                "risk": "Constraint violations",
-                "impact": "medium",
-                "mitigation": "Regular constraint validation"
-            })
+            risks.append(
+                {
+                    "risk": "Constraint violations",
+                    "impact": "medium",
+                    "mitigation": "Regular constraint validation",
+                }
+            )
 
         return risks
 
@@ -750,7 +779,7 @@ class DSPyPlannerAgent(dspy.Module if DSPY_AVAILABLE else object):
             "success": result.success,
             "had_spec": result.specification is not None,
             "num_tasks": len(result.tasks),
-            "estimated_effort": result.requirement_type.estimated_effort
+            "estimated_effort": result.requirement_type.estimated_effort,
         }
 
         self.planning_history.append(learning_entry)
@@ -759,7 +788,9 @@ class DSPyPlannerAgent(dspy.Module if DSPY_AVAILABLE else object):
         if len(self.planning_history) > 100:
             self.planning_history = self.planning_history[-100:]
 
-        logger.info(f"Learned from planning: category={result.requirement_type.category}, success={result.success}")
+        logger.info(
+            f"Learned from planning: category={result.requirement_type.category}, success={result.success}"
+        )
 
     # ===========================
     # Fallback Methods
@@ -768,48 +799,56 @@ class DSPyPlannerAgent(dspy.Module if DSPY_AVAILABLE else object):
     def _fallback_understand(self, **kwargs) -> Any:
         """Fallback understanding when DSPy is not available."""
         logger.info("Using fallback understanding (DSPy not available)")
-        return type('Result', (), {
-            'understanding': kwargs.get('request', ''),
-            'assumptions': ["Requirements understood"],
-            'risks': ["May need clarification"]
-        })()
+        return type(
+            "Result",
+            (),
+            {
+                "understanding": kwargs.get("request", ""),
+                "assumptions": ["Requirements understood"],
+                "risks": ["May need clarification"],
+            },
+        )()
 
     def _fallback_strategize(self, **kwargs) -> Any:
         """Fallback strategy when DSPy is not available."""
-        return type('Result', (), {
-            'strategy': "Implement according to requirements",
-            'milestones': ["Planning", "Implementation", "Testing"],
-            'success_criteria': ["All requirements met"]
-        })()
+        return type(
+            "Result",
+            (),
+            {
+                "strategy": "Implement according to requirements",
+                "milestones": ["Planning", "Implementation", "Testing"],
+                "success_criteria": ["All requirements met"],
+            },
+        )()
 
     def _fallback_breakdown(self, **kwargs) -> Any:
         """Fallback task breakdown when DSPy is not available."""
-        return type('Result', (), {
-            'tasks': [],
-            'task_dependencies': {},
-            'estimated_duration': 100
-        })()
+        return type(
+            "Result", (), {"tasks": [], "task_dependencies": {}, "estimated_duration": 100}
+        )()
 
-    def get_planning_summary(self) -> Dict[str, JSONValue]:
+    def get_planning_summary(self) -> dict[str, JSONValue]:
         """Get summary of planning history."""
         if not self.planning_history:
             return {"message": "No planning sessions yet"}
 
         # Calculate statistics
         total_sessions = len(self.planning_history)
-        successful = sum(1 for h in self.planning_history if h['success'])
+        successful = sum(1 for h in self.planning_history if h["success"])
 
         category_counts = {}
         for h in self.planning_history:
-            cat = h['category']
+            cat = h["category"]
             category_counts[cat] = category_counts.get(cat, 0) + 1
 
         return {
             "total_sessions": total_sessions,
             "success_rate": successful / total_sessions if total_sessions > 0 else 0,
             "category_distribution": category_counts,
-            "average_tasks": sum(h['num_tasks'] for h in self.planning_history) / total_sessions if total_sessions > 0 else 0,
-            "recent_trend": self._calculate_planning_trend()
+            "average_tasks": sum(h["num_tasks"] for h in self.planning_history) / total_sessions
+            if total_sessions > 0
+            else 0,
+            "recent_trend": self._calculate_planning_trend(),
         }
 
     def _calculate_planning_trend(self) -> str:
@@ -818,13 +857,17 @@ class DSPyPlannerAgent(dspy.Module if DSPY_AVAILABLE else object):
             return "insufficient_data"
 
         recent = self.planning_history[-5:]
-        recent_success = sum(1 for h in recent if h['success']) / len(recent)
+        recent_success = sum(1 for h in recent if h["success"]) / len(recent)
 
-        older = self.planning_history[-10:-5] if len(self.planning_history) >= 10 else self.planning_history[:len(self.planning_history)//2]
+        older = (
+            self.planning_history[-10:-5]
+            if len(self.planning_history) >= 10
+            else self.planning_history[: len(self.planning_history) // 2]
+        )
         if not older:
             return "insufficient_data"
 
-        older_success = sum(1 for h in older if h['success']) / len(older)
+        older_success = sum(1 for h in older if h["success"]) / len(older)
 
         if recent_success > older_success:
             return "improving"
@@ -838,11 +881,12 @@ class DSPyPlannerAgent(dspy.Module if DSPY_AVAILABLE else object):
 # Factory Function
 # ===========================
 
+
 def create_dspy_planner_agent(
     model: str = "gpt-4o-mini",
     reasoning_effort: str = "high",
     enable_learning: bool = True,
-    **kwargs
+    **kwargs,
 ) -> DSPyPlannerAgent:
     """
     Factory function to create a DSPy Planner Agent.
@@ -857,8 +901,5 @@ def create_dspy_planner_agent(
         Configured DSPyPlannerAgent instance
     """
     return DSPyPlannerAgent(
-        model=model,
-        reasoning_effort=reasoning_effort,
-        enable_learning=enable_learning,
-        **kwargs
+        model=model, reasoning_effort=reasoning_effort, enable_learning=enable_learning, **kwargs
     )

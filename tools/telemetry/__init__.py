@@ -25,12 +25,13 @@ Usage:
     events = list_events(since="15m", grep="error")
 """
 
-from .sanitize import redact_event
 from .aggregator import aggregate, list_events
+from .sanitize import redact_event
 
 # Import enterprise aggregator as well for advanced features
 try:
     from .aggregator_enterprise import aggregate as aggregate_enterprise
+
     __all__ = ["redact_event", "aggregate", "list_events", "aggregate_enterprise"]
 except ImportError:
     __all__ = ["redact_event", "aggregate", "list_events"]

@@ -39,12 +39,12 @@ Usage by agents:
 """
 
 import os
-from typing import List, Optional, Literal
+from typing import Literal
 
 from agency_swarm.tools import BaseTool
 from pydantic import Field
 
-from tools.git_workflow import GitWorkflowTool, GitWorkflowProtocol
+from tools.git_workflow import GitWorkflowProtocol, GitWorkflowTool
 
 
 class GitWorkflowToolAgency(BaseTool):  # type: ignore[misc]
@@ -65,7 +65,7 @@ class GitWorkflowToolAgency(BaseTool):  # type: ignore[misc]
         "create_pr",
         "get_status",
         "start_feature",
-        "cleanup_after_merge"
+        "cleanup_after_merge",
     ] = Field(
         ...,
         description=(
@@ -80,48 +80,34 @@ class GitWorkflowToolAgency(BaseTool):  # type: ignore[misc]
             "- get_status: Get git status\n"
             "- start_feature: High-level feature workflow start\n"
             "- cleanup_after_merge: Clean up after PR merge"
-        )
+        ),
     )
 
-    branch_name: Optional[str] = Field(
-        None,
-        description="Branch name (required for create_branch, switch_branch, delete_branch)"
+    branch_name: str | None = Field(
+        None, description="Branch name (required for create_branch, switch_branch, delete_branch)"
     )
 
-    message: Optional[str] = Field(
-        None,
-        description="Commit message (required for commit operation)"
+    message: str | None = Field(
+        None, description="Commit message (required for commit operation)"
     )
 
-    files: Optional[List[str]] = Field(
-        None,
-        description="Files to commit (optional, commits all if not specified)"
+    files: list[str] | None = Field(
+        None, description="Files to commit (optional, commits all if not specified)"
     )
 
-    pr_title: Optional[str] = Field(
-        None,
-        description="Pull Request title (required for create_pr)"
+    pr_title: str | None = Field(None, description="Pull Request title (required for create_pr)")
+
+    pr_body: str | None = Field(
+        None, description="Pull Request description (required for create_pr)"
     )
 
-    pr_body: Optional[str] = Field(
-        None,
-        description="Pull Request description (required for create_pr)"
+    reviewers: list[str] | None = Field(None, description="PR reviewer usernames (optional)")
+
+    base_branch: str | None = Field(
+        "main", description="Base branch for operations (default: main)"
     )
 
-    reviewers: Optional[List[str]] = Field(
-        None,
-        description="PR reviewer usernames (optional)"
-    )
-
-    base_branch: Optional[str] = Field(
-        "main",
-        description="Base branch for operations (default: main)"
-    )
-
-    force: bool = Field(
-        False,
-        description="Force operation (e.g., force delete branch)"
-    )
+    force: bool = Field(False, description="Force operation (e.g., force delete branch)")
 
     def run(self) -> str:
         """
@@ -131,19 +117,27 @@ class GitWorkflowToolAgency(BaseTool):  # type: ignore[misc]
             str: Operation result or error message
         """
         import warnings
+
         warnings.warn(
             "GitWorkflowToolAgency is deprecated. Use GitUnified instead. "
             "This tool will be removed after 2025-11-02.",
             DeprecationWarning,
-            stacklevel=2
+            stacklevel=2,
         )
         try:
             # Get repository root
             repo_path = os.getcwd()
 
             # Operations using low-level GitWorkflowTool
-            if self.operation in ["create_branch", "switch_branch", "delete_branch",
-                                 "get_current_branch", "commit", "push", "get_status"]:
+            if self.operation in [
+                "create_branch",
+                "switch_branch",
+                "delete_branch",
+                "get_current_branch",
+                "commit",
+                "push",
+                "get_status",
+            ]:
                 tool = GitWorkflowTool(repo_path=repo_path)
                 return self._execute_low_level(tool)
 
@@ -169,10 +163,7 @@ class GitWorkflowToolAgency(BaseTool):  # type: ignore[misc]
             if not self.branch_name:
                 return "Error: branch_name required for create_branch"
 
-            result = tool.create_branch(
-                self.branch_name,
-                base=self.base_branch or "main"
-            )
+            result = tool.create_branch(self.branch_name, base=self.base_branch or "main")
 
             if result.is_ok():
                 branch_info = result.unwrap()
@@ -275,10 +266,7 @@ class GitWorkflowToolAgency(BaseTool):  # type: ignore[misc]
             if not self.branch_name:
                 return "Error: branch_name required for start_feature"
 
-            result = protocol.start_feature(
-                self.branch_name,
-                base=self.base_branch or "main"
-            )
+            result = protocol.start_feature(self.branch_name, base=self.base_branch or "main")
 
             if result.is_ok():
                 workflow = result.unwrap()
@@ -315,7 +303,7 @@ class GitWorkflowToolAgency(BaseTool):  # type: ignore[misc]
             title=self.pr_title,
             body=self.pr_body,
             base=self.base_branch or "main",
-            reviewers=self.reviewers
+            reviewers=self.reviewers,
         )
 
         if result.is_ok():

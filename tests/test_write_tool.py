@@ -3,7 +3,7 @@ from pathlib import Path
 
 import pytest
 
-from tools import Write, Read
+from tools import Read, Write
 
 
 def test_write_existing_file_requires_prior_read():
@@ -24,7 +24,7 @@ def test_write_existing_file_requires_prior_read():
         assert "must use Read tool" in result or "read the file first" in result.lower()
 
         # File should remain unchanged
-        with open(tmp_path, "r") as f:
+        with open(tmp_path) as f:
             assert "Existing content" in f.read()
 
     finally:
@@ -52,7 +52,7 @@ def test_write_existing_file_works_after_read():
         assert "Successfully" in result
 
         # File should be changed
-        with open(tmp_path, "r") as f:
+        with open(tmp_path) as f:
             assert "New content" in f.read()
 
     finally:
@@ -75,7 +75,7 @@ def test_write_new_file_does_not_require_read():
         assert "Successfully" in result
 
         # File should be created with correct content
-        with open(new_file_path, "r") as f:
+        with open(new_file_path) as f:
             assert "New file content" in f.read()
 
     finally:
@@ -98,7 +98,7 @@ def test_write_new_file(tmp_path: Path):
 
     # Verify file was created with correct content
     assert Path(file_path).exists()
-    with open(file_path, "r", encoding="utf-8") as f:
+    with open(file_path, encoding="utf-8") as f:
         written_content = f.read()
     assert written_content == content
 
@@ -125,7 +125,7 @@ def test_write_overwrite_existing_file(tmp_path: Path):
     assert file_path in result
 
     # Verify file was overwritten
-    with open(file_path, "r", encoding="utf-8") as f:
+    with open(file_path, encoding="utf-8") as f:
         written_content = f.read()
     assert written_content == new_content
 
@@ -142,7 +142,7 @@ def test_write_creates_directory(tmp_path: Path):
     assert Path(file_path).exists()
     assert Path(file_path).parent.exists()
 
-    with open(file_path, "r", encoding="utf-8") as f:
+    with open(file_path, encoding="utf-8") as f:
         written_content = f.read()
     assert written_content == content
 
@@ -160,7 +160,7 @@ def test_write_empty_file(tmp_path: Path):
 
     # Verify empty file was created
     assert Path(file_path).exists()
-    with open(file_path, "r", encoding="utf-8") as f:
+    with open(file_path, encoding="utf-8") as f:
         written_content = f.read()
     assert written_content == ""
 
@@ -178,7 +178,7 @@ def test_write_large_file(tmp_path: Path):
     assert "Lines: 100" in result
 
     # Verify content
-    with open(file_path, "r", encoding="utf-8") as f:
+    with open(file_path, encoding="utf-8") as f:
         written_content = f.read()
     assert written_content == content
     assert len(written_content.split("\n")) == 100
@@ -213,7 +213,7 @@ if __name__ == "__main__":
     assert "test_script.py" in result
 
     # Verify Python file content
-    with open(file_path, "r", encoding="utf-8") as f:
+    with open(file_path, encoding="utf-8") as f:
         written_content = f.read()
     assert written_content == content
     assert "def fibonacci" in written_content
@@ -243,7 +243,7 @@ def test_write_json_file(tmp_path: Path):
     assert "config.json" in result
 
     # Verify JSON content
-    with open(file_path, "r", encoding="utf-8") as f:
+    with open(file_path, encoding="utf-8") as f:
         written_content = f.read()
     assert written_content == content
 
@@ -290,7 +290,7 @@ def test_write_unicode_content(tmp_path: Path):
     assert "Successfully created file" in result
 
     # Verify Unicode content
-    with open(file_path, "r", encoding="utf-8") as f:
+    with open(file_path, encoding="utf-8") as f:
         written_content = f.read()
     assert written_content == content
     assert "🌍" in written_content
@@ -367,12 +367,12 @@ def test_write_file_size_reporting(tmp_path: Path):
 
 def test_write_permission_error_handling():
     """Test PermissionError handling during file writing"""
-    from unittest.mock import patch, mock_open
+    from unittest.mock import mock_open, patch
 
     file_path = "/tmp/test_permission_error.txt"
 
     # Mock open to raise PermissionError when writing
-    with patch('builtins.open', mock_open()) as mock_file:
+    with patch("builtins.open", mock_open()) as mock_file:
         mock_file.side_effect = PermissionError("Permission denied")
 
         tool = Write(file_path=file_path, content="test content")
@@ -384,12 +384,12 @@ def test_write_permission_error_handling():
 
 def test_write_general_exception_handling():
     """Test general exception handling during file writing"""
-    from unittest.mock import patch, mock_open
+    from unittest.mock import mock_open, patch
 
     file_path = "/tmp/test_general_error.txt"
 
     # Mock open to raise a general exception when writing
-    with patch('builtins.open', mock_open()) as mock_file:
+    with patch("builtins.open", mock_open()) as mock_file:
         mock_file.side_effect = Exception("Disk full")
 
         tool = Write(file_path=file_path, content="test content")
@@ -405,7 +405,7 @@ def test_write_operation_general_exception():
     file_path = "/tmp/test_operation_error.txt"
 
     # Mock os.path.exists to raise an exception
-    with patch('os.path.exists', side_effect=Exception("Filesystem error")):
+    with patch("os.path.exists", side_effect=Exception("Filesystem error")):
         tool = Write(file_path=file_path, content="test content")
         result = tool.run()
 

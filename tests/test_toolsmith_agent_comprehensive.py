@@ -1,6 +1,7 @@
-import pytest
 import os
-from unittest.mock import Mock, patch, MagicMock
+from unittest.mock import Mock, patch
+
+import pytest
 
 from shared.agent_context import create_agent_context
 from toolsmith_agent import create_toolsmith_agent
@@ -42,7 +43,7 @@ class TestToolSmithAgentFactoryFunction:
 
     def test_agent_context_none_creates_new(self):
         """Test that None agent_context creates a new one."""
-        with patch('toolsmith_agent.toolsmith_agent.create_agent_context') as mock_create:
+        with patch("toolsmith_agent.toolsmith_agent.create_agent_context") as mock_create:
             mock_ctx = Mock()
             mock_ctx.session_id = "test_session"
             mock_create.return_value = mock_ctx
@@ -52,9 +53,9 @@ class TestToolSmithAgentFactoryFunction:
             mock_create.assert_called_once()
             assert agent is not None
 
-    @patch('toolsmith_agent.toolsmith_agent.select_instructions_file')
-    @patch('toolsmith_agent.toolsmith_agent.get_model_instance')
-    @patch('toolsmith_agent.toolsmith_agent.create_model_settings')
+    @patch("toolsmith_agent.toolsmith_agent.select_instructions_file")
+    @patch("toolsmith_agent.toolsmith_agent.get_model_instance")
+    @patch("toolsmith_agent.toolsmith_agent.create_model_settings")
     def test_agent_configuration_calls(self, mock_settings, mock_model, mock_instructions):
         """Test that agent configuration functions are called correctly."""
         from agents.model_settings import ModelSettings
@@ -73,7 +74,7 @@ class TestToolSmithAgentFactoryFunction:
         """Test that agent creation is logged to memory."""
         ctx = create_agent_context()
 
-        with patch.object(ctx, 'store_memory') as mock_store:
+        with patch.object(ctx, "store_memory") as mock_store:
             agent = create_toolsmith_agent(agent_context=ctx)
 
             mock_store.assert_called_once()
@@ -97,7 +98,7 @@ class TestToolSmithAgentFactoryFunction:
         """Test that agent hooks are properly configured."""
         agent = create_toolsmith_agent()
 
-        assert hasattr(agent, 'hooks')
+        assert hasattr(agent, "hooks")
         assert agent.hooks is not None
 
     def test_current_directory_detection(self):
@@ -157,7 +158,7 @@ class TestToolSmithAgentIntegration:
         for tool in agent.tools:
             assert tool is not None
             # Tools should have some identifying attribute
-            assert hasattr(tool, '__name__') or hasattr(tool, 'name') or str(tool)
+            assert hasattr(tool, "__name__") or hasattr(tool, "name") or str(tool)
 
     def test_agent_hooks_system_integration(self):
         """Test that agent integrates properly with the hooks system."""
@@ -170,7 +171,7 @@ class TestToolSmithAgentIntegration:
         # Test that hooks system is properly wired
         try:
             # Basic integration test - hooks should be callable
-            if hasattr(agent.hooks, '__call__'):
+            if hasattr(agent.hooks, "__call__"):
                 pass  # Hooks are callable
         except Exception as e:
             pytest.fail(f"Agent hooks integration failed: {e}")
@@ -179,7 +180,7 @@ class TestToolSmithAgentIntegration:
         """Test that agent has the tools needed for scaffolding."""
         agent = create_toolsmith_agent()
 
-        tool_names = [getattr(t, 'name', getattr(t, '__name__', str(t))) for t in agent.tools]
+        tool_names = [getattr(t, "name", getattr(t, "__name__", str(t))) for t in agent.tools]
 
         # File operations
         assert any("Read" in name for name in tool_names)
@@ -244,7 +245,9 @@ class TestToolSmithAgentErrorHandling:
         except Exception:
             pass
 
-    @patch('toolsmith_agent.toolsmith_agent.select_instructions_file', side_effect=FileNotFoundError())
+    @patch(
+        "toolsmith_agent.toolsmith_agent.select_instructions_file", side_effect=FileNotFoundError()
+    )
     def test_missing_instructions_handling(self, mock_select):
         """Test handling when instructions file is missing."""
         try:
@@ -254,7 +257,10 @@ class TestToolSmithAgentErrorHandling:
             # Or fail appropriately
             pass
 
-    @patch('toolsmith_agent.toolsmith_agent.create_agent_context', side_effect=Exception("Context creation failed"))
+    @patch(
+        "toolsmith_agent.toolsmith_agent.create_agent_context",
+        side_effect=Exception("Context creation failed"),
+    )
     def test_context_creation_failure_handling(self, mock_create_context):
         """Test handling when agent context creation fails."""
         ctx = create_agent_context()  # Create a working context
@@ -268,7 +274,7 @@ class TestToolSmithAgentErrorHandling:
         ctx = create_agent_context()
 
         # Mock memory to fail
-        with patch.object(ctx, 'store_memory', side_effect=Exception("Memory storage failed")):
+        with patch.object(ctx, "store_memory", side_effect=Exception("Memory storage failed")):
             try:
                 agent = create_toolsmith_agent(agent_context=ctx)
                 # Should still create agent even if memory storage fails
@@ -279,7 +285,10 @@ class TestToolSmithAgentErrorHandling:
 
     def test_hook_creation_failure_handling(self):
         """Test handling when hook creation fails."""
-        with patch('toolsmith_agent.toolsmith_agent.create_message_filter_hook', side_effect=Exception("Hook creation failed")):
+        with patch(
+            "toolsmith_agent.toolsmith_agent.create_message_filter_hook",
+            side_effect=Exception("Hook creation failed"),
+        ):
             try:
                 agent = create_toolsmith_agent()
                 # Should handle hook creation failures
@@ -296,17 +305,17 @@ class TestToolSmithAgentConstitutionalCompliance:
         """Test that agent is equipped for TDD workflows."""
         agent = create_toolsmith_agent()
 
-        tool_names = [getattr(t, 'name', getattr(t, '__name__', str(t))) for t in agent.tools]
+        tool_names = [getattr(t, "name", getattr(t, "__name__", str(t))) for t in agent.tools]
 
         # Should have tools for writing tests before implementation
         assert any("Write" in name for name in tool_names)  # For creating test files
-        assert any("Bash" in name for name in tool_names)   # For running tests
+        assert any("Bash" in name for name in tool_names)  # For running tests
 
     def test_agent_supports_strict_typing(self):
         """Test that agent can support strict typing workflows."""
         agent = create_toolsmith_agent()
 
-        tool_names = [getattr(t, 'name', getattr(t, '__name__', str(t))) for t in agent.tools]
+        tool_names = [getattr(t, "name", getattr(t, "__name__", str(t))) for t in agent.tools]
 
         # Should have tools for editing and validating typed code
         assert any("Edit" in name for name in tool_names)
@@ -326,7 +335,7 @@ class TestToolSmithAgentConstitutionalCompliance:
         """Test that agent can work with repository patterns."""
         agent = create_toolsmith_agent()
 
-        tool_names = [getattr(t, 'name', getattr(t, '__name__', str(t))) for t in agent.tools]
+        tool_names = [getattr(t, "name", getattr(t, "__name__", str(t))) for t in agent.tools]
 
         # Should have tools for reading and understanding existing patterns
         assert any("Read" in name for name in tool_names)
@@ -336,7 +345,7 @@ class TestToolSmithAgentConstitutionalCompliance:
         """Test that agent can support functional error handling patterns."""
         agent = create_toolsmith_agent()
 
-        tool_names = [getattr(t, 'name', getattr(t, '__name__', str(t))) for t in agent.tools]
+        tool_names = [getattr(t, "name", getattr(t, "__name__", str(t))) for t in agent.tools]
 
         # Should have tools for implementing Result<T, E> patterns
         assert any("Read" in name for name in tool_names)  # For reading existing patterns
@@ -346,7 +355,7 @@ class TestToolSmithAgentConstitutionalCompliance:
         """Test that agent can support API standardization."""
         agent = create_toolsmith_agent()
 
-        tool_names = [getattr(t, 'name', getattr(t, '__name__', str(t))) for t in agent.tools]
+        tool_names = [getattr(t, "name", getattr(t, "__name__", str(t))) for t in agent.tools]
 
         # Should have tools for API development
         assert any("Write" in name for name in tool_names)
@@ -357,17 +366,15 @@ class TestToolSmithAgentConstitutionalCompliance:
 class TestToolSmithAgentModelSettings:
     """Test suite for model settings and configuration."""
 
-    @patch('toolsmith_agent.toolsmith_agent.create_model_settings')
+    @patch("toolsmith_agent.toolsmith_agent.create_model_settings")
     def test_model_settings_integration(self, mock_create_settings):
         """Test that model settings are properly integrated."""
         from agents.model_settings import ModelSettings
+
         mock_settings = ModelSettings(temperature=0.1, max_tokens=4000)
         mock_create_settings.return_value = mock_settings
 
-        agent = create_toolsmith_agent(
-            model="gpt-5",
-            reasoning_effort="high"
-        )
+        agent = create_toolsmith_agent(model="gpt-5", reasoning_effort="high")
 
         mock_create_settings.assert_called_once_with("gpt-5", "high")
         assert agent.model_settings == mock_settings
@@ -383,7 +390,7 @@ class TestToolSmithAgentModelSettings:
 
     def test_custom_model_instance(self):
         """Test that custom model instances are used."""
-        with patch('toolsmith_agent.toolsmith_agent.get_model_instance') as mock_get_model:
+        with patch("toolsmith_agent.toolsmith_agent.get_model_instance") as mock_get_model:
             mock_get_model.return_value = "custom-model"  # Return string instead of Mock
 
             agent = create_toolsmith_agent(model="custom-model")

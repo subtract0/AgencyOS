@@ -6,10 +6,9 @@ enabling gradual migration and A/B testing capabilities.
 """
 
 import logging
-from typing import Dict, Optional, Type, Callable, List
+from collections.abc import Callable
 from enum import Enum
-import importlib
-import os
+
 from shared.type_definitions.json import JSONValue
 
 logger = logging.getLogger(__name__)
@@ -17,6 +16,7 @@ logger = logging.getLogger(__name__)
 
 class AgentType(Enum):
     """Types of agents available in the system."""
+
     CODE = "code"
     AUDITOR = "auditor"
     PLANNER = "planner"
@@ -39,9 +39,9 @@ class AgentRegistry:
 
     def __init__(self):
         """Initialize the agent registry."""
-        self._dspy_agents: Dict[str, Type] = {}
-        self._legacy_agents: Dict[str, Callable] = {}
-        self._agent_metadata: Dict[str, Dict[str, JSONValue]] = {}
+        self._dspy_agents: dict[str, type] = {}
+        self._legacy_agents: dict[str, Callable] = {}
+        self._agent_metadata: dict[str, dict[str, JSONValue]] = {}
         self._initialized = False
         self._fallback_enabled = True
 
@@ -61,16 +61,18 @@ class AgentRegistry:
         self._register_legacy_agents()
 
         self._initialized = True
-        logger.info(f"Registry initialized with {len(self._dspy_agents)} DSPy agents and {len(self._legacy_agents)} legacy agents")
+        logger.info(
+            f"Registry initialized with {len(self._dspy_agents)} DSPy agents and {len(self._legacy_agents)} legacy agents"
+        )
 
     def _register_dspy_agents(self) -> None:
         """Register all available DSPy agents."""
         try:
             # Import DSPy agents
-            from dspy_agents.modules.code_agent import DSPyCodeAgent
             from dspy_agents.modules.auditor_agent import DSPyAuditorAgent
-            from dspy_agents.modules.planner_agent import DSPyPlannerAgent
+            from dspy_agents.modules.code_agent import DSPyCodeAgent
             from dspy_agents.modules.learning_agent import DSPyLearningAgent
+            from dspy_agents.modules.planner_agent import DSPyPlannerAgent
             from dspy_agents.modules.toolsmith_agent import DSPyToolsmithAgent
 
             self._dspy_agents["code"] = DSPyCodeAgent
@@ -85,7 +87,12 @@ class AgentRegistry:
             self._agent_metadata["auditor"] = {
                 "type": "dspy",
                 "version": "0.1.0",
-                "capabilities": ["quality_assurance", "necessary_analysis", "coverage_analysis", "compliance_checking"],
+                "capabilities": [
+                    "quality_assurance",
+                    "necessary_analysis",
+                    "coverage_analysis",
+                    "compliance_checking",
+                ],
                 "performance_score": 0.88,
             }
 
@@ -93,7 +100,12 @@ class AgentRegistry:
             self._agent_metadata["planner"] = {
                 "type": "dspy",
                 "version": "0.1.0",
-                "capabilities": ["strategic_planning", "spec_generation", "task_orchestration", "architecture_design"],
+                "capabilities": [
+                    "strategic_planning",
+                    "spec_generation",
+                    "task_orchestration",
+                    "architecture_design",
+                ],
                 "performance_score": 0.90,
             }
 
@@ -101,7 +113,12 @@ class AgentRegistry:
             self._agent_metadata["learning"] = {
                 "type": "dspy",
                 "version": "0.1.0",
-                "capabilities": ["pattern_extraction", "knowledge_consolidation", "insight_generation", "cross_session_learning"],
+                "capabilities": [
+                    "pattern_extraction",
+                    "knowledge_consolidation",
+                    "insight_generation",
+                    "cross_session_learning",
+                ],
                 "performance_score": 0.92,
             }
 
@@ -109,7 +126,12 @@ class AgentRegistry:
             self._agent_metadata["toolsmith"] = {
                 "type": "dspy",
                 "version": "0.1.0",
-                "capabilities": ["tool_creation", "test_generation", "scaffolding", "artifact_handoff"],
+                "capabilities": [
+                    "tool_creation",
+                    "test_generation",
+                    "scaffolding",
+                    "artifact_handoff",
+                ],
                 "performance_score": 0.87,
             }
 
@@ -122,26 +144,28 @@ class AgentRegistry:
             # Import legacy agent creators
             from agency_code_agent.agency_code_agent import create_agency_code_agent
             from auditor_agent import create_auditor_agent
-            from planner_agent.planner_agent import create_planner_agent
-            from learning_agent import create_learning_agent
             from chief_architect_agent import create_chief_architect_agent
+            from learning_agent import create_learning_agent
             from merger_agent.merger_agent import create_merger_agent
+            from planner_agent.planner_agent import create_planner_agent
             from test_generator_agent import create_test_generator_agent
-            from work_completion_summary_agent import create_work_completion_summary_agent
             from toolsmith_agent import create_toolsmith_agent
+            from work_completion_summary_agent import create_work_completion_summary_agent
 
             # Register legacy agents
-            self._legacy_agents.update({
-                "code": create_agency_code_agent,
-                "auditor": create_auditor_agent,
-                "planner": create_planner_agent,
-                "learning": create_learning_agent,
-                "chief_architect": create_chief_architect_agent,
-                "merger": create_merger_agent,
-                "test_generator": create_test_generator_agent,
-                "work_completion": create_work_completion_summary_agent,
-                "toolsmith": create_toolsmith_agent,
-            })
+            self._legacy_agents.update(
+                {
+                    "code": create_agency_code_agent,
+                    "auditor": create_auditor_agent,
+                    "planner": create_planner_agent,
+                    "learning": create_learning_agent,
+                    "chief_architect": create_chief_architect_agent,
+                    "merger": create_merger_agent,
+                    "test_generator": create_test_generator_agent,
+                    "work_completion": create_work_completion_summary_agent,
+                    "toolsmith": create_toolsmith_agent,
+                }
+            )
 
             # Add metadata for legacy agents
             for agent_name in self._legacy_agents:
@@ -157,11 +181,7 @@ class AgentRegistry:
             logger.error(f"Could not import legacy agents: {e}")
 
     def get_agent(
-        self,
-        name: str,
-        prefer_dspy: bool = True,
-        legacy_fallback: bool = True,
-        **kwargs
+        self, name: str, prefer_dspy: bool = True, legacy_fallback: bool = True, **kwargs
     ) -> object:
         """
         Get an agent instance by name.
@@ -222,9 +242,7 @@ class AgentRegistry:
 
         # Create agent with configuration
         agent = agent_class(
-            model=model,
-            reasoning_effort=reasoning_effort,
-            enable_learning=enable_learning
+            model=model, reasoning_effort=reasoning_effort, enable_learning=enable_learning
         )
 
         return agent
@@ -250,7 +268,7 @@ class AgentRegistry:
 
         return creator_func(**kwargs)
 
-    def list_agents(self, agent_type: Optional[str] = None) -> List[Dict[str, JSONValue]]:
+    def list_agents(self, agent_type: str | None = None) -> list[dict[str, JSONValue]]:
         """
         List available agents with their metadata.
 
@@ -288,7 +306,7 @@ class AgentRegistry:
 
         return agents
 
-    def get_agent_metadata(self, name: str) -> Dict[str, JSONValue]:
+    def get_agent_metadata(self, name: str) -> dict[str, JSONValue]:
         """
         Get metadata for a specific agent.
 
@@ -312,10 +330,7 @@ class AgentRegistry:
         raise ValueError(f"No metadata found for agent: {name}")
 
     def update_agent_metadata(
-        self,
-        name: str,
-        metadata: Dict[str, JSONValue],
-        merge: bool = True
+        self, name: str, metadata: dict[str, JSONValue], merge: bool = True
     ) -> None:
         """
         Update metadata for an agent.
@@ -333,10 +348,7 @@ class AgentRegistry:
             self._agent_metadata[agent_name] = metadata
 
     def register_dspy_agent(
-        self,
-        name: str,
-        agent_class: Type,
-        metadata: Optional[Dict[str, JSONValue]] = None
+        self, name: str, agent_class: type, metadata: dict[str, JSONValue] | None = None
     ) -> None:
         """
         Register a new DSPy agent.
@@ -362,10 +374,7 @@ class AgentRegistry:
         logger.info(f"Registered DSPy agent: {agent_name}")
 
     def register_legacy_agent(
-        self,
-        name: str,
-        creator_func: Callable,
-        metadata: Optional[Dict[str, JSONValue]] = None
+        self, name: str, creator_func: Callable, metadata: dict[str, JSONValue] | None = None
     ) -> None:
         """
         Register a new legacy agent.
@@ -390,7 +399,7 @@ class AgentRegistry:
 
         logger.info(f"Registered legacy agent: {agent_name}")
 
-    def get_performance_metrics(self) -> Dict[str, JSONValue]:
+    def get_performance_metrics(self) -> dict[str, JSONValue]:
         """
         Get performance metrics for all agents.
 
@@ -404,7 +413,7 @@ class AgentRegistry:
             "total_agents": len(self._agent_metadata),
             "dspy_agents": len(self._dspy_agents),
             "legacy_agents": len(self._legacy_agents),
-            "agents": {}
+            "agents": {},
         }
 
         for agent_name, metadata in self._agent_metadata.items():
@@ -425,7 +434,7 @@ class AgentRegistry:
 
 
 # Global registry instance
-_global_registry: Optional[AgentRegistry] = None
+_global_registry: AgentRegistry | None = None
 
 
 def get_global_registry() -> AgentRegistry:
@@ -457,7 +466,7 @@ def create_agent(name: str, **kwargs) -> object:
     return registry.get_agent(name, **kwargs)
 
 
-def list_available_agents() -> List[Dict[str, JSONValue]]:
+def list_available_agents() -> list[dict[str, JSONValue]]:
     """
     List all available agents in the system.
 

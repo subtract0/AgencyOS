@@ -27,32 +27,24 @@ Usage:
     result = protocol.create_pr("Title", "Body", reviewers=["user"])
 """
 
-import os
-import subprocess
 import re
+import subprocess
 from dataclasses import dataclass
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
-from typing import List, Optional, Dict, Any
+from typing import Any
 
-from pydantic import BaseModel, Field
-from shared.type_definitions.result import Result, Ok, Err
-
+from shared.type_definitions.result import Err, Ok, Result
 
 # ============================================================================
 # DATA MODELS
 # ============================================================================
 
+
 class GitOperationError(Exception):
     """Git operation error with details."""
 
-    def __init__(
-        self,
-        operation: str,
-        message: str,
-        return_code: int = 1,
-        stderr: str = ""
-    ):
+    def __init__(self, operation: str, message: str, return_code: int = 1, stderr: str = ""):
         self.operation = operation
         self.message = message
         self.return_code = return_code
@@ -63,26 +55,29 @@ class GitOperationError(Exception):
 @dataclass
 class BranchInfo:
     """Information about a Git branch."""
+
     name: str
     created: bool
-    base_branch: Optional[str] = None
-    created_at: Optional[datetime] = None
+    base_branch: str | None = None
+    created_at: datetime | None = None
 
 
 @dataclass
 class CommitInfo:
     """Information about a Git commit."""
+
     sha: str
     message: str
     author: str
     timestamp: datetime
-    files_changed: List[str]
+    files_changed: list[str]
 
 
 @dataclass
 class PullRequestInfo:
     """Information about a Pull Request."""
-    number: Optional[int]
+
+    number: int | None
     url: str
     title: str
     body: str
@@ -94,6 +89,7 @@ class PullRequestInfo:
 # ============================================================================
 # GIT WORKFLOW TOOL
 # ============================================================================
+
 
 class GitWorkflowTool:
     """
@@ -112,12 +108,13 @@ class GitWorkflowTool:
             skip_validation: Skip .git validation (for testing)
         """
         import warnings
+
         warnings.warn(
             "GitWorkflowTool is deprecated. Use GitUnified instead. "
             "Migration guide: FEATURE_INVENTORY_GIT_UNIFIED.md. "
             "This tool will be removed after 2025-11-02.",
             DeprecationWarning,
-            stacklevel=2
+            stacklevel=2,
         )
         self.repo_path = Path(repo_path).resolve()
 
@@ -129,7 +126,9 @@ class GitWorkflowTool:
     # BRANCH OPERATIONS
     # ========================================================================
 
-    def create_branch(self, branch_name: str, base: str = "main") -> Result[BranchInfo, GitOperationError]:
+    def create_branch(
+        self, branch_name: str, base: str = "main"
+    ) -> Result[BranchInfo, GitOperationError]:
         """
         Create a new branch from base.
 
@@ -144,37 +143,39 @@ class GitWorkflowTool:
             # Ensure we're on base branch first
             checkout_base = self._run_git_command(["checkout", base])
             if checkout_base.returncode != 0:
-                return Err(GitOperationError(
-                    operation="checkout_base",
-                    message=f"Failed to checkout base branch {base}",
-                    return_code=checkout_base.returncode,
-                    stderr=checkout_base.stderr
-                ))
+                return Err(
+                    GitOperationError(
+                        operation="checkout_base",
+                        message=f"Failed to checkout base branch {base}",
+                        return_code=checkout_base.returncode,
+                        stderr=checkout_base.stderr,
+                    )
+                )
 
             # Create and switch to new branch
             result = self._run_git_command(["checkout", "-b", branch_name])
 
             if result.returncode == 0:
-                return Ok(BranchInfo(
-                    name=branch_name,
-                    created=True,
-                    base_branch=base,
-                    created_at=datetime.now(timezone.utc)
-                ))
+                return Ok(
+                    BranchInfo(
+                        name=branch_name,
+                        created=True,
+                        base_branch=base,
+                        created_at=datetime.now(UTC),
+                    )
+                )
             else:
-                return Err(GitOperationError(
-                    operation="create_branch",
-                    message=f"Failed to create branch {branch_name}",
-                    return_code=result.returncode,
-                    stderr=result.stderr
-                ))
+                return Err(
+                    GitOperationError(
+                        operation="create_branch",
+                        message=f"Failed to create branch {branch_name}",
+                        return_code=result.returncode,
+                        stderr=result.stderr,
+                    )
+                )
 
         except Exception as e:
-            return Err(GitOperationError(
-                operation="create_branch",
-                message=str(e),
-                return_code=-1
-            ))
+            return Err(GitOperationError(operation="create_branch", message=str(e), return_code=-1))
 
     def switch_branch(self, branch_name: str) -> Result[None, GitOperationError]:
         """
@@ -192,21 +193,21 @@ class GitWorkflowTool:
             if result.returncode == 0:
                 return Ok(None)
             else:
-                return Err(GitOperationError(
-                    operation="switch_branch",
-                    message=f"Failed to switch to {branch_name}",
-                    return_code=result.returncode,
-                    stderr=result.stderr
-                ))
+                return Err(
+                    GitOperationError(
+                        operation="switch_branch",
+                        message=f"Failed to switch to {branch_name}",
+                        return_code=result.returncode,
+                        stderr=result.stderr,
+                    )
+                )
 
         except Exception as e:
-            return Err(GitOperationError(
-                operation="switch_branch",
-                message=str(e),
-                return_code=-1
-            ))
+            return Err(GitOperationError(operation="switch_branch", message=str(e), return_code=-1))
 
-    def delete_branch(self, branch_name: str, force: bool = False) -> Result[None, GitOperationError]:
+    def delete_branch(
+        self, branch_name: str, force: bool = False
+    ) -> Result[None, GitOperationError]:
         """
         Delete a branch.
 
@@ -224,19 +225,17 @@ class GitWorkflowTool:
             if result.returncode == 0:
                 return Ok(None)
             else:
-                return Err(GitOperationError(
-                    operation="delete_branch",
-                    message=f"Failed to delete {branch_name}",
-                    return_code=result.returncode,
-                    stderr=result.stderr
-                ))
+                return Err(
+                    GitOperationError(
+                        operation="delete_branch",
+                        message=f"Failed to delete {branch_name}",
+                        return_code=result.returncode,
+                        stderr=result.stderr,
+                    )
+                )
 
         except Exception as e:
-            return Err(GitOperationError(
-                operation="delete_branch",
-                message=str(e),
-                return_code=-1
-            ))
+            return Err(GitOperationError(operation="delete_branch", message=str(e), return_code=-1))
 
     def get_current_branch(self) -> Result[str, GitOperationError]:
         """
@@ -251,25 +250,25 @@ class GitWorkflowTool:
             if result.returncode == 0:
                 return Ok(result.stdout.strip())
             else:
-                return Err(GitOperationError(
-                    operation="get_current_branch",
-                    message="Failed to get current branch",
-                    return_code=result.returncode,
-                    stderr=result.stderr
-                ))
+                return Err(
+                    GitOperationError(
+                        operation="get_current_branch",
+                        message="Failed to get current branch",
+                        return_code=result.returncode,
+                        stderr=result.stderr,
+                    )
+                )
 
         except Exception as e:
-            return Err(GitOperationError(
-                operation="get_current_branch",
-                message=str(e),
-                return_code=-1
-            ))
+            return Err(
+                GitOperationError(operation="get_current_branch", message=str(e), return_code=-1)
+            )
 
     # ========================================================================
     # COMMIT OPERATIONS
     # ========================================================================
 
-    def stage_files(self, files: List[str]) -> Result[None, GitOperationError]:
+    def stage_files(self, files: list[str]) -> Result[None, GitOperationError]:
         """
         Stage specific files for commit.
 
@@ -285,19 +284,17 @@ class GitWorkflowTool:
             if result.returncode == 0:
                 return Ok(None)
             else:
-                return Err(GitOperationError(
-                    operation="stage_files",
-                    message=f"Failed to stage files: {files}",
-                    return_code=result.returncode,
-                    stderr=result.stderr
-                ))
+                return Err(
+                    GitOperationError(
+                        operation="stage_files",
+                        message=f"Failed to stage files: {files}",
+                        return_code=result.returncode,
+                        stderr=result.stderr,
+                    )
+                )
 
         except Exception as e:
-            return Err(GitOperationError(
-                operation="stage_files",
-                message=str(e),
-                return_code=-1
-            ))
+            return Err(GitOperationError(operation="stage_files", message=str(e), return_code=-1))
 
     def stage_all(self) -> Result[None, GitOperationError]:
         """
@@ -312,19 +309,17 @@ class GitWorkflowTool:
             if result.returncode == 0:
                 return Ok(None)
             else:
-                return Err(GitOperationError(
-                    operation="stage_all",
-                    message="Failed to stage all files",
-                    return_code=result.returncode,
-                    stderr=result.stderr
-                ))
+                return Err(
+                    GitOperationError(
+                        operation="stage_all",
+                        message="Failed to stage all files",
+                        return_code=result.returncode,
+                        stderr=result.stderr,
+                    )
+                )
 
         except Exception as e:
-            return Err(GitOperationError(
-                operation="stage_all",
-                message=str(e),
-                return_code=-1
-            ))
+            return Err(GitOperationError(operation="stage_all", message=str(e), return_code=-1))
 
     def commit(self, message: str) -> Result[CommitInfo, GitOperationError]:
         """
@@ -338,58 +333,62 @@ class GitWorkflowTool:
         """
         # Validate message
         if not message or not message.strip():
-            return Err(GitOperationError(
-                operation="commit",
-                message="Commit message cannot be empty",
-                return_code=-1
-            ))
+            return Err(
+                GitOperationError(
+                    operation="commit", message="Commit message cannot be empty", return_code=-1
+                )
+            )
 
         try:
             # Create commit
             result = self._run_git_command(["commit", "-m", message])
 
             if result.returncode != 0:
-                return Err(GitOperationError(
-                    operation="commit",
-                    message="Commit failed",
-                    return_code=result.returncode,
-                    stderr=result.stderr
-                ))
+                return Err(
+                    GitOperationError(
+                        operation="commit",
+                        message="Commit failed",
+                        return_code=result.returncode,
+                        stderr=result.stderr,
+                    )
+                )
 
             # Get commit info
             sha_result = self._run_git_command(["rev-parse", "HEAD"])
             if sha_result.returncode != 0:
                 # Commit succeeded but couldn't get SHA
-                return Ok(CommitInfo(
-                    sha="unknown",
-                    message=message,
-                    author="unknown",
-                    timestamp=datetime.now(timezone.utc),
-                    files_changed=[]
-                ))
+                return Ok(
+                    CommitInfo(
+                        sha="unknown",
+                        message=message,
+                        author="unknown",
+                        timestamp=datetime.now(UTC),
+                        files_changed=[],
+                    )
+                )
 
             sha = sha_result.stdout.strip()
 
-            return Ok(CommitInfo(
-                sha=sha,
-                message=message,
-                author="current_user",
-                timestamp=datetime.now(timezone.utc),
-                files_changed=[]
-            ))
+            return Ok(
+                CommitInfo(
+                    sha=sha,
+                    message=message,
+                    author="current_user",
+                    timestamp=datetime.now(UTC),
+                    files_changed=[],
+                )
+            )
 
         except Exception as e:
-            return Err(GitOperationError(
-                operation="commit",
-                message=str(e),
-                return_code=-1
-            ))
+            return Err(GitOperationError(operation="commit", message=str(e), return_code=-1))
 
     # ========================================================================
     # PUSH OPERATIONS
     # ========================================================================
 
-    def push_branch(self, branch_name: str, set_upstream: bool = False) -> Result[None, GitOperationError]:
+    def push_branch(
+        self, branch_name: str, set_upstream: bool = False
+    ) -> Result[None, GitOperationError]:
         """
         Push branch to remote.
 
@@ -412,30 +411,24 @@ class GitWorkflowTool:
             if result.returncode == 0:
                 return Ok(None)
             else:
-                return Err(GitOperationError(
-                    operation="push_branch",
-                    message=f"Failed to push {branch_name}",
-                    return_code=result.returncode,
-                    stderr=result.stderr
-                ))
+                return Err(
+                    GitOperationError(
+                        operation="push_branch",
+                        message=f"Failed to push {branch_name}",
+                        return_code=result.returncode,
+                        stderr=result.stderr,
+                    )
+                )
 
         except Exception as e:
-            return Err(GitOperationError(
-                operation="push_branch",
-                message=str(e),
-                return_code=-1
-            ))
+            return Err(GitOperationError(operation="push_branch", message=str(e), return_code=-1))
 
     # ========================================================================
     # PULL REQUEST OPERATIONS
     # ========================================================================
 
     def create_pull_request(
-        self,
-        title: str,
-        body: str,
-        base: str = "main",
-        reviewers: Optional[List[str]] = None
+        self, title: str, body: str, base: str = "main", reviewers: list[str] | None = None
     ) -> Result[PullRequestInfo, GitOperationError]:
         """
         Create a pull request using GitHub CLI.
@@ -458,12 +451,7 @@ class GitWorkflowTool:
             current_branch = current_branch_result.unwrap()
 
             # Build gh pr create command
-            cmd = [
-                "gh", "pr", "create",
-                "--title", title,
-                "--body", body,
-                "--base", base
-            ]
+            cmd = ["gh", "pr", "create", "--title", title, "--body", body, "--base", base]
 
             if reviewers:
                 for reviewer in reviewers:
@@ -471,11 +459,7 @@ class GitWorkflowTool:
 
             # Create PR
             result = subprocess.run(
-                cmd,
-                cwd=str(self.repo_path),
-                capture_output=True,
-                text=True,
-                timeout=30
+                cmd, cwd=str(self.repo_path), capture_output=True, text=True, timeout=30
             )
 
             if result.returncode == 0:
@@ -484,45 +468,49 @@ class GitWorkflowTool:
 
                 # Extract PR number if possible
                 pr_number = None
-                match = re.search(r'/pull/(\d+)', url)
+                match = re.search(r"/pull/(\d+)", url)
                 if match:
                     pr_number = int(match.group(1))
 
-                return Ok(PullRequestInfo(
-                    number=pr_number,
-                    url=url,
-                    title=title,
-                    body=body,
-                    base=base,
-                    head=current_branch,
-                    state="open"
-                ))
+                return Ok(
+                    PullRequestInfo(
+                        number=pr_number,
+                        url=url,
+                        title=title,
+                        body=body,
+                        base=base,
+                        head=current_branch,
+                        state="open",
+                    )
+                )
             else:
-                return Err(GitOperationError(
-                    operation="create_pull_request",
-                    message="Failed to create PR",
-                    return_code=result.returncode,
-                    stderr=result.stderr
-                ))
+                return Err(
+                    GitOperationError(
+                        operation="create_pull_request",
+                        message="Failed to create PR",
+                        return_code=result.returncode,
+                        stderr=result.stderr,
+                    )
+                )
 
         except subprocess.TimeoutExpired:
-            return Err(GitOperationError(
-                operation="create_pull_request",
-                message="PR creation timed out",
-                return_code=-1
-            ))
+            return Err(
+                GitOperationError(
+                    operation="create_pull_request", message="PR creation timed out", return_code=-1
+                )
+            )
         except FileNotFoundError:
-            return Err(GitOperationError(
-                operation="create_pull_request",
-                message="GitHub CLI (gh) not found. Install from: https://cli.github.com/",
-                return_code=127
-            ))
+            return Err(
+                GitOperationError(
+                    operation="create_pull_request",
+                    message="GitHub CLI (gh) not found. Install from: https://cli.github.com/",
+                    return_code=127,
+                )
+            )
         except Exception as e:
-            return Err(GitOperationError(
-                operation="create_pull_request",
-                message=str(e),
-                return_code=-1
-            ))
+            return Err(
+                GitOperationError(operation="create_pull_request", message=str(e), return_code=-1)
+            )
 
     # ========================================================================
     # STATUS AND INFO
@@ -541,19 +529,17 @@ class GitWorkflowTool:
             if result.returncode == 0:
                 return Ok(result.stdout)
             else:
-                return Err(GitOperationError(
-                    operation="get_status",
-                    message="Failed to get status",
-                    return_code=result.returncode,
-                    stderr=result.stderr
-                ))
+                return Err(
+                    GitOperationError(
+                        operation="get_status",
+                        message="Failed to get status",
+                        return_code=result.returncode,
+                        stderr=result.stderr,
+                    )
+                )
 
         except Exception as e:
-            return Err(GitOperationError(
-                operation="get_status",
-                message=str(e),
-                return_code=-1
-            ))
+            return Err(GitOperationError(operation="get_status", message=str(e), return_code=-1))
 
     def has_uncommitted_changes(self) -> Result[bool, GitOperationError]:
         """
@@ -573,7 +559,7 @@ class GitWorkflowTool:
     # VALIDATION
     # ========================================================================
 
-    def validate_commit_message(self, message: str) -> Result[Dict[str, Any], GitOperationError]:
+    def validate_commit_message(self, message: str) -> Result[dict[str, Any], GitOperationError]:
         """
         Validate commit message follows conventions.
 
@@ -591,7 +577,9 @@ class GitWorkflowTool:
         warnings = []
 
         # Check conventional commit format
-        conventional_pattern = r'^(feat|fix|docs|style|refactor|perf|test|chore|build|ci)(\(.+\))?: .+'
+        conventional_pattern = (
+            r"^(feat|fix|docs|style|refactor|perf|test|chore|build|ci)(\(.+\))?: .+"
+        )
         if not re.match(conventional_pattern, message, re.MULTILINE):
             warnings.append("Message doesn't follow conventional commit format")
 
@@ -603,16 +591,13 @@ class GitWorkflowTool:
         if message.startswith("feat:") and "spec" not in message.lower():
             warnings.append("Feature commit should reference specification")
 
-        return Ok({
-            "valid": len(warnings) == 0,
-            "warnings": warnings
-        })
+        return Ok({"valid": len(warnings) == 0, "warnings": warnings})
 
     # ========================================================================
     # INTERNAL HELPERS
     # ========================================================================
 
-    def _run_git_command(self, args: List[str], timeout: int = 30) -> subprocess.CompletedProcess:
+    def _run_git_command(self, args: list[str], timeout: int = 30) -> subprocess.CompletedProcess:
         """
         Run a git command.
 
@@ -624,17 +609,14 @@ class GitWorkflowTool:
             CompletedProcess result
         """
         return subprocess.run(
-            ["git"] + args,
-            cwd=str(self.repo_path),
-            capture_output=True,
-            text=True,
-            timeout=timeout
+            ["git"] + args, cwd=str(self.repo_path), capture_output=True, text=True, timeout=timeout
         )
 
 
 # ============================================================================
 # GIT WORKFLOW PROTOCOL
 # ============================================================================
+
 
 class GitWorkflowProtocol:
     """
@@ -652,7 +634,9 @@ class GitWorkflowProtocol:
     - Article III: Requires PR (no direct main commits)
     """
 
-    def __init__(self, repo_path: str = ".", test_command: str = "pytest", skip_validation: bool = False):
+    def __init__(
+        self, repo_path: str = ".", test_command: str = "pytest", skip_validation: bool = False
+    ):
         """
         Initialize Git workflow protocol.
 
@@ -669,7 +653,9 @@ class GitWorkflowProtocol:
     # WORKFLOW STEPS
     # ========================================================================
 
-    def start_feature(self, feature_name: str, base: str = "main") -> Result[Dict[str, Any], GitOperationError]:
+    def start_feature(
+        self, feature_name: str, base: str = "main"
+    ) -> Result[dict[str, Any], GitOperationError]:
         """
         Start a new feature workflow.
 
@@ -691,17 +677,18 @@ class GitWorkflowProtocol:
 
         branch_info = result.unwrap()
 
-        return Ok({
-            "branch_name": branch_info.name,
-            "base_branch": base,
-            "started_at": branch_info.created_at.isoformat() if branch_info.created_at else None
-        })
+        return Ok(
+            {
+                "branch_name": branch_info.name,
+                "base_branch": base,
+                "started_at": branch_info.created_at.isoformat()
+                if branch_info.created_at
+                else None,
+            }
+        )
 
     def commit_changes(
-        self,
-        message: str,
-        files: Optional[List[str]] = None,
-        allow_untracked: bool = True
+        self, message: str, files: list[str] | None = None, allow_untracked: bool = True
     ) -> Result[CommitInfo, GitOperationError]:
         """
         Commit changes with validation.
@@ -753,11 +740,7 @@ class GitWorkflowProtocol:
         return self.tool.push_branch(branch, set_upstream=set_upstream)
 
     def create_pr(
-        self,
-        title: str,
-        body: str,
-        base: str = "main",
-        reviewers: Optional[List[str]] = None
+        self, title: str, body: str, base: str = "main", reviewers: list[str] | None = None
     ) -> Result[PullRequestInfo, GitOperationError]:
         """
         Create pull request.
@@ -777,20 +760,15 @@ class GitWorkflowProtocol:
             return Err(push_result.unwrap_err())
 
         # Create PR
-        return self.tool.create_pull_request(
-            title=title,
-            body=body,
-            base=base,
-            reviewers=reviewers
-        )
+        return self.tool.create_pull_request(title=title, body=body, base=base, reviewers=reviewers)
 
     def create_pr_with_validation(
         self,
         title: str,
         body: str,
-        test_command: Optional[str] = None,
+        test_command: str | None = None,
         base: str = "main",
-        reviewers: Optional[List[str]] = None
+        reviewers: list[str] | None = None,
     ) -> Result[PullRequestInfo, GitOperationError]:
         """
         Create PR with test validation (Article II: Green Main).
@@ -808,20 +786,18 @@ class GitWorkflowProtocol:
         # Run tests
         cmd = test_command or self.test_command
         result = subprocess.run(
-            cmd.split(),
-            cwd=str(self.repo_path),
-            capture_output=True,
-            text=True,
-            timeout=300
+            cmd.split(), cwd=str(self.repo_path), capture_output=True, text=True, timeout=300
         )
 
         if result.returncode != 0:
-            return Err(GitOperationError(
-                operation="test_validation",
-                message=f"Tests failed. Cannot create PR (Article II: Green Main).\n{result.stderr}",
-                return_code=result.returncode,
-                stderr=result.stderr
-            ))
+            return Err(
+                GitOperationError(
+                    operation="test_validation",
+                    message=f"Tests failed. Cannot create PR (Article II: Green Main).\n{result.stderr}",
+                    return_code=result.returncode,
+                    stderr=result.stderr,
+                )
+            )
 
         # Tests passed, create PR
         return self.create_pr(title, body, base, reviewers)
@@ -848,12 +824,14 @@ class GitWorkflowProtocol:
         # Pull latest
         pull_result = self.tool._run_git_command(["pull"])
         if pull_result.returncode != 0:
-            return Err(GitOperationError(
-                operation="pull",
-                message="Failed to pull latest from main",
-                return_code=pull_result.returncode,
-                stderr=pull_result.stderr
-            ))
+            return Err(
+                GitOperationError(
+                    operation="pull",
+                    message="Failed to pull latest from main",
+                    return_code=pull_result.returncode,
+                    stderr=pull_result.stderr,
+                )
+            )
 
         # Delete feature branch
         return self.tool.delete_branch(feature_branch)
@@ -862,7 +840,9 @@ class GitWorkflowProtocol:
     # VALIDATION HELPERS
     # ========================================================================
 
-    def validate_commit_atomicity(self, files: List[str]) -> Result[Dict[str, Any], GitOperationError]:
+    def validate_commit_atomicity(
+        self, files: list[str]
+    ) -> Result[dict[str, Any], GitOperationError]:
         """
         Validate that commit is atomic (single logical change).
 
@@ -882,10 +862,8 @@ class GitWorkflowProtocol:
                 dirs.add(parts[0])
 
         if len(dirs) > 2:
-            warning = f"Commit spans {len(dirs)} directories. Consider splitting into atomic commits."
+            warning = (
+                f"Commit spans {len(dirs)} directories. Consider splitting into atomic commits."
+            )
 
-        return Ok({
-            "atomic": len(dirs) <= 2,
-            "warning": warning,
-            "directories": list(dirs)
-        })
+        return Ok({"atomic": len(dirs) <= 2, "warning": warning, "directories": list(dirs)})

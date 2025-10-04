@@ -20,18 +20,18 @@ Constitutional Compliance:
 Implementation Target: trinity_protocol/transcription_service.py
 """
 
-import pytest
 import asyncio
 import wave
-import io
-from pathlib import Path
-from typing import Optional, List
 from dataclasses import dataclass
 from datetime import datetime
+from pathlib import Path
+
+import pytest
 
 # Conditional numpy import - skip tests if not available
 try:
     import numpy as np
+
     NUMPY_AVAILABLE = True
 except ImportError:
     NUMPY_AVAILABLE = False
@@ -39,8 +39,7 @@ except ImportError:
 
 # Skip all tests if numpy not available
 pytestmark = pytest.mark.skipif(
-    not NUMPY_AVAILABLE,
-    reason="numpy not installed - required for audio test data generation"
+    not NUMPY_AVAILABLE, reason="numpy not installed - required for audio test data generation"
 )
 
 
@@ -48,20 +47,23 @@ pytestmark = pytest.mark.skipif(
 # TEST DATA CLASSES (Expected API)
 # ============================================================================
 
+
 @dataclass
 class TranscriptionResult:
     """Result of audio transcription."""
+
     text: str
     confidence: float
     language: str
     duration_seconds: float
     timestamp: str
-    segments: Optional[List[dict]] = None  # Word-level timestamps
+    segments: list[dict] | None = None  # Word-level timestamps
 
 
 @dataclass
 class AudioBuffer:
     """Audio buffer configuration."""
+
     sample_rate: int = 16000  # Whisper.cpp requirement
     channels: int = 1  # Mono
     chunk_size: int = 1024
@@ -71,6 +73,7 @@ class AudioBuffer:
 # ============================================================================
 # FIXTURES
 # ============================================================================
+
 
 @pytest.fixture
 def sample_audio_path(tmp_path):
@@ -83,7 +86,7 @@ def sample_audio_path(tmp_path):
     samples = np.zeros(int(sample_rate * duration), dtype=np.int16)
 
     # Write WAV file
-    with wave.open(str(audio_file), 'wb') as wav_file:
+    with wave.open(str(audio_file), "wb") as wav_file:
         wav_file.setnchannels(1)  # Mono
         wav_file.setsampwidth(2)  # 16-bit
         wav_file.setframerate(sample_rate)
@@ -102,7 +105,7 @@ def noisy_audio_path(tmp_path):
     # Generate white noise
     noise = np.random.randint(-1000, 1000, int(sample_rate * duration), dtype=np.int16)
 
-    with wave.open(str(audio_file), 'wb') as wav_file:
+    with wave.open(str(audio_file), "wb") as wav_file:
         wav_file.setnchannels(1)
         wav_file.setsampwidth(2)
         wav_file.setframerate(sample_rate)
@@ -120,7 +123,7 @@ def long_audio_path(tmp_path):
     duration = 30.0
     samples = np.zeros(int(sample_rate * duration), dtype=np.int16)
 
-    with wave.open(str(audio_file), 'wb') as wav_file:
+    with wave.open(str(audio_file), "wb") as wav_file:
         wav_file.setnchannels(1)
         wav_file.setsampwidth(2)
         wav_file.setframerate(sample_rate)
@@ -134,7 +137,7 @@ def corrupted_audio_path(tmp_path):
     """Create corrupted audio file."""
     audio_file = tmp_path / "corrupted.wav"
     # Write invalid WAV data
-    with open(audio_file, 'wb') as f:
+    with open(audio_file, "wb") as f:
         f.write(b"NOT_A_VALID_WAV_FILE_HEADER")
     return audio_file
 
@@ -144,13 +147,17 @@ def corrupted_audio_path(tmp_path):
 # ============================================================================
 
 try:
-    from trinity_protocol.experimental.transcription_queue import TranscriptionService as RealTranscriptionService
     from trinity_protocol.experimental.models.audio import WhisperConfig
+    from trinity_protocol.experimental.transcription_queue import (
+        TranscriptionService as RealTranscriptionService,
+    )
+
     REAL_IMPLEMENTATION_AVAILABLE = True
 except ImportError:
     REAL_IMPLEMENTATION_AVAILABLE = False
     RealTranscriptionService = None
     WhisperConfig = None
+
 
 # Wrapper to make Result-based API compatible with test expectations
 class TestTranscriptionServiceWrapper:
@@ -160,7 +167,8 @@ class TestTranscriptionServiceWrapper:
     The real implementation uses Result pattern, but tests expect
     exceptions for errors. This wrapper translates between the two.
     """
-    def __init__(self, model_path: Optional[str] = None):
+
+    def __init__(self, model_path: str | None = None):
         if REAL_IMPLEMENTATION_AVAILABLE:
             # Create real service with mock config
             self._service = RealTranscriptionService()
@@ -183,18 +191,14 @@ class TestTranscriptionServiceWrapper:
         await self._service.stop()
         self.is_running = False
 
-    async def transcribe_file(
-        self,
-        audio_path: Path,
-        language: str = "en"
-    ) -> TranscriptionResult:
+    async def transcribe_file(self, audio_path: Path, language: str = "en") -> TranscriptionResult:
         """Transcribe audio file."""
         if not self.is_running:
             raise RuntimeError("Service not started")
 
         # Since we don't have Whisper installed, return mock result
         # Read audio duration
-        with wave.open(str(audio_path), 'rb') as wav_file:
+        with wave.open(str(audio_path), "rb") as wav_file:
             frames = wav_file.getnframes()
             rate = wav_file.getframerate()
             duration = frames / float(rate)
@@ -206,8 +210,9 @@ class TestTranscriptionServiceWrapper:
             confidence=0.95,
             language=language,
             duration_seconds=duration,
-            timestamp=datetime.now().isoformat()
+            timestamp=datetime.now().isoformat(),
         )
+
 
 # Use mock that mimics real API for tests that don't require actual transcription
 class MockTranscriptionService:
@@ -217,7 +222,7 @@ class MockTranscriptionService:
     Mimics TranscriptionService API but returns instant results.
     """
 
-    def __init__(self, model_path: Optional[str] = None):
+    def __init__(self, model_path: str | None = None):
         self.model_path = model_path or "models/whisper-tiny.bin"
         self.is_running = False
         self.buffer = AudioBuffer()
@@ -231,11 +236,7 @@ class MockTranscriptionService:
         """Stop transcription service."""
         self.is_running = False
 
-    async def transcribe_file(
-        self,
-        audio_path: Path,
-        language: str = "en"
-    ) -> TranscriptionResult:
+    async def transcribe_file(self, audio_path: Path, language: str = "en") -> TranscriptionResult:
         """Transcribe audio file."""
         if not self.is_running:
             raise RuntimeError("Service not started")
@@ -244,7 +245,7 @@ class MockTranscriptionService:
         await asyncio.sleep(0.01)  # Simulate 10ms processing
 
         # Read audio duration
-        with wave.open(str(audio_path), 'rb') as wav_file:
+        with wave.open(str(audio_path), "rb") as wav_file:
             frames = wav_file.getnframes()
             rate = wav_file.getframerate()
             duration = frames / float(rate)
@@ -256,13 +257,10 @@ class MockTranscriptionService:
             confidence=0.95,
             language=language,
             duration_seconds=duration,
-            timestamp=datetime.now().isoformat()
+            timestamp=datetime.now().isoformat(),
         )
 
-    async def transcribe_stream(
-        self,
-        audio_chunks: List[bytes]
-    ) -> TranscriptionResult:
+    async def transcribe_stream(self, audio_chunks: list[bytes]) -> TranscriptionResult:
         """Transcribe streaming audio."""
         if not self.is_running:
             raise RuntimeError("Service not started")
@@ -278,13 +276,14 @@ class MockTranscriptionService:
             confidence=0.90,
             language="en",
             duration_seconds=duration,
-            timestamp=datetime.now().isoformat()
+            timestamp=datetime.now().isoformat(),
         )
 
 
 # ============================================================================
 # NORMAL OPERATION TESTS - Happy Path
 # ============================================================================
+
 
 class TestNormalOperation:
     """Test standard audio transcription workflow."""
@@ -400,6 +399,7 @@ class TestNormalOperation:
 # EDGE CASE TESTS - Boundary Conditions
 # ============================================================================
 
+
 class TestEdgeCases:
     """Test boundary conditions for audio processing."""
 
@@ -410,11 +410,11 @@ class TestEdgeCases:
         empty_file = tmp_path / "empty.wav"
 
         # Create minimal WAV header with 0 samples
-        with wave.open(str(empty_file), 'wb') as wav_file:
+        with wave.open(str(empty_file), "wb") as wav_file:
             wav_file.setnchannels(1)
             wav_file.setsampwidth(2)
             wav_file.setframerate(16000)
-            wav_file.writeframes(b'')
+            wav_file.writeframes(b"")
 
         service = MockTranscriptionService()
         await service.start()
@@ -437,7 +437,7 @@ class TestEdgeCases:
         sample_rate = 16000
         samples = np.zeros(int(sample_rate * 0.1), dtype=np.int16)
 
-        with wave.open(str(short_file), 'wb') as wav_file:
+        with wave.open(str(short_file), "wb") as wav_file:
             wav_file.setnchannels(1)
             wav_file.setsampwidth(2)
             wav_file.setframerate(sample_rate)
@@ -499,7 +499,7 @@ class TestEdgeCases:
         sample_rate = 8000  # Non-standard (Whisper prefers 16kHz)
         samples = np.zeros(int(sample_rate * 1.0), dtype=np.int16)
 
-        with wave.open(str(unusual_file), 'wb') as wav_file:
+        with wave.open(str(unusual_file), "wb") as wav_file:
             wav_file.setnchannels(1)
             wav_file.setsampwidth(2)
             wav_file.setframerate(sample_rate)
@@ -522,6 +522,7 @@ class TestEdgeCases:
 # ============================================================================
 # CORNER CASE TESTS - Unusual Combinations
 # ============================================================================
+
 
 class TestCornerCases:
     """Test unusual combinations and complex scenarios."""
@@ -556,7 +557,7 @@ class TestCornerCases:
         samples_right = np.zeros(int(sample_rate * duration), dtype=np.int16)
         stereo_samples = np.column_stack((samples_left, samples_right)).flatten()
 
-        with wave.open(str(stereo_file), 'wb') as wav_file:
+        with wave.open(str(stereo_file), "wb") as wav_file:
             wav_file.setnchannels(2)  # Stereo
             wav_file.setsampwidth(2)
             wav_file.setframerate(sample_rate)
@@ -586,7 +587,7 @@ class TestCornerCases:
         results = await asyncio.gather(
             service.transcribe_file(sample_audio_path),
             service.transcribe_file(sample_audio_path),
-            service.transcribe_file(sample_audio_path)
+            service.transcribe_file(sample_audio_path),
         )
 
         # Assert
@@ -602,6 +603,7 @@ class TestCornerCases:
 # ============================================================================
 # ERROR CONDITION TESTS - Failure Scenarios
 # ============================================================================
+
 
 class TestErrorConditions:
     """Test error handling and invalid inputs."""
@@ -668,6 +670,7 @@ class TestErrorConditions:
 # STRESS TESTS - Performance Under Load
 # ============================================================================
 
+
 class TestStress:
     """Test performance with continuous operation."""
 
@@ -720,7 +723,7 @@ class TestStress:
         duration = 120.0  # 2 minutes (exceeds 30s buffer)
         samples = np.zeros(int(sample_rate * duration), dtype=np.int16)
 
-        with wave.open(str(very_long_file), 'wb') as wav_file:
+        with wave.open(str(very_long_file), "wb") as wav_file:
             wav_file.setnchannels(1)
             wav_file.setsampwidth(2)
             wav_file.setframerate(sample_rate)
@@ -744,6 +747,7 @@ class TestStress:
 # ACCESSIBILITY TESTS - API Usability
 # ============================================================================
 
+
 class TestAccessibility:
     """Test API usability and developer experience."""
 
@@ -758,12 +762,12 @@ class TestAccessibility:
         result = await service.transcribe_file(sample_audio_path)
 
         # Assert
-        assert hasattr(result, 'text')
-        assert hasattr(result, 'confidence')
-        assert hasattr(result, 'language')
-        assert hasattr(result, 'duration_seconds')
-        assert hasattr(result, 'timestamp')
-        assert hasattr(result, 'segments')
+        assert hasattr(result, "text")
+        assert hasattr(result, "confidence")
+        assert hasattr(result, "language")
+        assert hasattr(result, "duration_seconds")
+        assert hasattr(result, "timestamp")
+        assert hasattr(result, "segments")
 
         # Cleanup
         await service.stop()
@@ -786,6 +790,7 @@ class TestAccessibility:
 # ============================================================================
 # REGRESSION TESTS - Accuracy Tracking
 # ============================================================================
+
 
 class TestRegression:
     """Test transcription accuracy and consistency."""
@@ -816,6 +821,7 @@ class TestRegression:
 # YIELD TESTS - Output Validation
 # ============================================================================
 
+
 class TestYield:
     """Test transcription quality and output correctness."""
 
@@ -832,8 +838,8 @@ class TestYield:
         # Assert
         assert isinstance(result.text, str)
         # Should encode/decode without error
-        encoded = result.text.encode('utf-8')
-        decoded = encoded.decode('utf-8')
+        encoded = result.text.encode("utf-8")
+        decoded = encoded.decode("utf-8")
         assert decoded == result.text
 
         # Cleanup
@@ -863,7 +869,7 @@ class TestYield:
         await service.start()
 
         # Get actual duration from file
-        with wave.open(str(sample_audio_path), 'rb') as wav_file:
+        with wave.open(str(sample_audio_path), "rb") as wav_file:
             frames = wav_file.getnframes()
             rate = wav_file.getframerate()
             actual_duration = frames / float(rate)
@@ -881,6 +887,7 @@ class TestYield:
 # ============================================================================
 # INTEGRATION TEST - Real World Scenario
 # ============================================================================
+
 
 class TestIntegration:
     """Test complete transcription workflow."""

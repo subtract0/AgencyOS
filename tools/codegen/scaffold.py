@@ -1,18 +1,20 @@
 """
 Module and file scaffolding from templates.
 """
+
 from __future__ import annotations
 
 import dataclasses
 import os
 import re
-from typing import Dict, List, Optional
+
 from shared.type_definitions.json import JSONValue
 
 
 @dataclasses.dataclass
 class CreatedFile:
     """A scaffolded file."""
+
     path: str
     template: str
     status: str  # "created", "skipped", "error"
@@ -104,11 +106,11 @@ def main() -> int:
 
 if __name__ == "__main__":
     sys.exit(main())
-'''
+''',
 }
 
 TESTS_MODULE_TEMPLATE = {
-    "__init__.py": '# Test module for {{name}}\n',
+    "__init__.py": "# Test module for {{name}}\n",
     "test_{{name}}_basic.py": '''"""
 Basic tests for {{name}}.
 """
@@ -145,7 +147,7 @@ def {{name}}_instance():
 
 # TODO: Add integration tests if needed
 # TODO: Add property-based tests if applicable
-'''
+''',
 }
 
 TEMPLATES = {
@@ -154,7 +156,9 @@ TEMPLATES = {
 }
 
 
-def scaffold_module(template: str, name: str, out_dir: str, params: Optional[Dict[str, JSONValue]] = None) -> List[CreatedFile]:
+def scaffold_module(
+    template: str, name: str, out_dir: str, params: dict[str, JSONValue] | None = None
+) -> list[CreatedFile]:
     """
     Create module scaffold from template.
 
@@ -168,11 +172,9 @@ def scaffold_module(template: str, name: str, out_dir: str, params: Optional[Dic
         List of created files
     """
     if template not in TEMPLATES:
-        return [CreatedFile(
-            path="",
-            template=template,
-            status=f"error: Unknown template '{template}'"
-        )]
+        return [
+            CreatedFile(path="", template=template, status=f"error: Unknown template '{template}'")
+        ]
 
     if params is None:
         params = {}
@@ -182,21 +184,21 @@ def scaffold_module(template: str, name: str, out_dir: str, params: Optional[Dic
         "name": name,
         "class_name": _to_class_name(name),
         "module_path": params.get("module_path", f"tools.{name}"),
-        **params
+        **params,
     }
 
-    results: List[CreatedFile] = []
+    results: list[CreatedFile] = []
     template_files = TEMPLATES[template]
 
     # Create output directory
     try:
         os.makedirs(out_dir, exist_ok=True)
     except OSError as e:
-        return [CreatedFile(
-            path=out_dir,
-            template=template,
-            status=f"error: Could not create directory: {e}"
-        )]
+        return [
+            CreatedFile(
+                path=out_dir, template=template, status=f"error: Could not create directory: {e}"
+            )
+        ]
 
     # Generate each file from template
     for file_pattern, content_template in template_files.items():
@@ -211,32 +213,24 @@ def scaffold_module(template: str, name: str, out_dir: str, params: Optional[Dic
             # Create parent directories if needed
             os.makedirs(os.path.dirname(filepath), exist_ok=True)
 
-            with open(filepath, 'w', encoding='utf-8') as f:
+            with open(filepath, "w", encoding="utf-8") as f:
                 f.write(content)
 
-            results.append(CreatedFile(
-                path=filepath,
-                template=template,
-                status="created"
-            ))
+            results.append(CreatedFile(path=filepath, template=template, status="created"))
 
         except OSError as e:
-            results.append(CreatedFile(
-                path=filepath,
-                template=template,
-                status=f"error: {e}"
-            ))
+            results.append(CreatedFile(path=filepath, template=template, status=f"error: {e}"))
 
     return results
 
 
 def _to_class_name(name: str) -> str:
     """Convert module name to class name (PascalCase)."""
-    words = re.split(r'[_\s-]+', name)
-    return ''.join(word.capitalize() for word in words if word)
+    words = re.split(r"[_\s-]+", name)
+    return "".join(word.capitalize() for word in words if word)
 
 
-def _render_template(template: str, variables: Dict[str, JSONValue]) -> str:
+def _render_template(template: str, variables: dict[str, JSONValue]) -> str:
     """Simple template rendering with {{var}} placeholders."""
     result = template
     for key, value in variables.items():

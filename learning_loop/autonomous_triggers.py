@@ -13,32 +13,32 @@ Constitutional Compliance:
 - Article V: Spec-driven implementation per SPEC-LEARNING-001
 """
 
-import asyncio
-import re
 import json
+import re
+from dataclasses import asdict, dataclass
 from datetime import datetime, timedelta
-from typing import Dict, List, Optional, Any, Callable, Union
-from shared.type_definitions.json import JSONValue
-from dataclasses import dataclass, asdict
-from pathlib import Path
+from typing import Any
 
-from learning_loop.event_detection import Event, ErrorEvent, FileEvent
+from core.self_healing import Finding, SelfHealingCore
+from core.telemetry import emit, get_telemetry
+from learning_loop.event_detection import ErrorEvent, Event, FileEvent
 from learning_loop.pattern_extraction import EnhancedPattern
-from core.self_healing import SelfHealingCore, Finding
-from pattern_intelligence import PatternStore, CodingPattern as Pattern
-from core.telemetry import get_telemetry, emit
+from pattern_intelligence import CodingPattern as Pattern
+from pattern_intelligence import PatternStore
+from shared.type_definitions.json import JSONValue
 
 
 @dataclass
 class HealingResult:
     """Result of an autonomous healing attempt."""
+
     success: bool
     skipped: bool = False
-    reason: Optional[str] = None
-    pattern_used: Optional[str] = None
-    error_details: Optional[str] = None
+    reason: str | None = None
+    pattern_used: str | None = None
+    error_details: str | None = None
 
-    def to_dict(self) -> Dict[str, JSONValue]:
+    def to_dict(self) -> dict[str, JSONValue]:
         """Convert result to dictionary for telemetry."""
         return asdict(self)
 
@@ -46,27 +46,29 @@ class HealingResult:
 @dataclass
 class PatternMatch:
     """Represents a pattern match with confidence scoring."""
+
     pattern: EnhancedPattern
     score: float
     confidence: float
 
-    def to_dict(self) -> Dict[str, JSONValue]:
+    def to_dict(self) -> dict[str, JSONValue]:
         """Convert match to dictionary for logging."""
         return {
             "pattern_id": self.pattern.id,
             "score": self.score,
             "confidence": self.confidence,
-            "pattern_type": self.pattern.trigger.type
+            "pattern_type": self.pattern.trigger.type,
         }
 
 
 @dataclass
 class Response:
     """Response from event handling."""
+
     success: bool
     handler_name: str
     result: Any = None
-    error: Optional[str] = None
+    error: str | None = None
 
 
 class EventHandler:
@@ -92,44 +94,36 @@ class ErrorHandler(EventHandler):
         """Handle error event by triggering healing."""
         if not isinstance(event, ErrorEvent):
             return Response(
-                success=False,
-                handler_name=self.name,
-                error="Event is not an ErrorEvent"
+                success=False, handler_name=self.name, error="Event is not an ErrorEvent"
             )
         if not self.healing_trigger:
             return Response(
-                success=False,
-                handler_name=self.name,
-                error="HealingTrigger not initialized"
+                success=False, handler_name=self.name, error="HealingTrigger not initialized"
             )
 
         try:
             result = await self.healing_trigger.handle_error(event)
 
-            emit("error_handler_completed", {
-                "event_type": event.error_type,
-                "success": result.success,
-                "skipped": result.skipped,
-                "reason": result.reason
-            })
-
-            return Response(
-                success=result.success,
-                handler_name=self.name,
-                result=result
+            emit(
+                "error_handler_completed",
+                {
+                    "event_type": event.error_type,
+                    "success": result.success,
+                    "skipped": result.skipped,
+                    "reason": result.reason,
+                },
             )
+
+            return Response(success=result.success, handler_name=self.name, result=result)
 
         except Exception as e:
-            emit("error_handler_failed", {
-                "error": str(e),
-                "event_type": getattr(event, 'error_type', 'unknown')
-            }, level="error")
-
-            return Response(
-                success=False,
-                handler_name=self.name,
-                error=str(e)
+            emit(
+                "error_handler_failed",
+                {"error": str(e), "event_type": getattr(event, "error_type", "unknown")},
+                level="error",
             )
+
+            return Response(success=False, handler_name=self.name, error=str(e))
 
 
 class FailureEventHandler(EventHandler):
@@ -140,19 +134,17 @@ class FailureEventHandler(EventHandler):
 
     async def handle(self, event: Event) -> Response:
         """Handle test failure by analyzing and fixing."""
-        emit("test_failure_handler_triggered", {
-            "event_metadata": event.metadata
-        })
+        emit("test_failure_handler_triggered", {"event_metadata": event.metadata})
 
         # For now, delegate to error handling if it looks like an error
-        if hasattr(event, 'error_type'):
+        if hasattr(event, "error_type"):
             error_event = ErrorEvent(
                 type="test_failure",
                 timestamp=event.timestamp,
-                error_type=getattr(event, 'error_type', 'TestFailure'),
-                message=getattr(event, 'message', 'Test failed'),
-                context=getattr(event, 'context', ''),
-                metadata=event.metadata
+                error_type=getattr(event, "error_type", "TestFailure"),
+                message=getattr(event, "message", "Test failed"),
+                context=getattr(event, "context", ""),
+                metadata=event.metadata,
             )
             # Would redirect to ErrorHandler in real implementation
             return Response(success=True, handler_name=self.name, result="analyzed")
@@ -169,16 +161,11 @@ class ChangeHandler(EventHandler):
     async def handle(self, event: Event, *args, **kwargs) -> Response:
         """Handle file change event to check for improvement opportunities."""
         if not isinstance(event, FileEvent):
-            return Response(
-                success=False,
-                handler_name=self.name,
-                error="Event is not a FileEvent"
-            )
-        emit("change_handler_triggered", {
-            "path": event.path,
-            "file_type": event.file_type,
-            "change_type": event.change_type
-        })
+            return Response(success=False, handler_name=self.name, error="Event is not a FileEvent")
+        emit(
+            "change_handler_triggered",
+            {"path": event.path, "file_type": event.file_type, "change_type": event.change_type},
+        )
 
         # Check for improvement opportunities
         # For now, just log the event
@@ -191,7 +178,7 @@ class PatternApplicationHandler(EventHandler):
     def __init__(self):
         super().__init__("PatternApplicationHandler")
 
-    async def handle(self, event: Event, patterns: List[PatternMatch]) -> Response:
+    async def handle(self, event: Event, patterns: list[PatternMatch]) -> Response:
         """Handle event by applying the best matching pattern."""
         if not patterns:
             return Response(success=False, handler_name=self.name, error="No patterns provided")
@@ -199,24 +186,25 @@ class PatternApplicationHandler(EventHandler):
         # Use the highest scoring pattern
         best_match = patterns[0]
 
-        emit("pattern_application_started", {
-            "pattern_id": best_match.pattern.id,
-            "score": best_match.score,
-            "confidence": best_match.confidence
-        })
+        emit(
+            "pattern_application_started",
+            {
+                "pattern_id": best_match.pattern.id,
+                "score": best_match.score,
+                "confidence": best_match.confidence,
+            },
+        )
 
         # Apply the pattern (simplified for now)
         # In full implementation, would execute the pattern's actions
         result = HealingResult(
-            success=True,
-            pattern_used=best_match.pattern.id,
-            reason="Pattern applied successfully"
+            success=True, pattern_used=best_match.pattern.id, reason="Pattern applied successfully"
         )
 
-        emit("pattern_application_completed", {
-            "success": result.success,
-            "pattern_id": best_match.pattern.id
-        })
+        emit(
+            "pattern_application_completed",
+            {"success": result.success, "pattern_id": best_match.pattern.id},
+        )
 
         return Response(success=True, handler_name=self.name, result=result)
 
@@ -232,7 +220,7 @@ class EventRouter:
     4. Does this match a known pattern? → Apply pattern
     """
 
-    def __init__(self, pattern_store: Optional[PatternStore] = None):
+    def __init__(self, pattern_store: PatternStore | None = None):
         """
         Initialize event router with handlers and pattern matching.
 
@@ -254,7 +242,7 @@ class EventRouter:
             "test_failure": self.test_failure_handler,
             "file_modified": self.change_handler,
             "file_created": self.change_handler,
-            "pattern_matched": self.pattern_application_handler
+            "pattern_matched": self.pattern_application_handler,
         }
 
         # Initialize healing trigger and wire to error handler
@@ -277,27 +265,30 @@ class EventRouter:
             Response from the appropriate handler
         """
 
-        emit("event_routing_started", {
-            "event_type": event.type,
-            "timestamp": event.timestamp.isoformat()
-        })
+        emit(
+            "event_routing_started",
+            {"event_type": event.type, "timestamp": event.timestamp.isoformat()},
+        )
 
         try:
             # Step 1: Check for pattern matches first per spec
             patterns = self.pattern_matcher.find_matches(event)
             if patterns:
-                emit("pattern_matches_found", {
-                    "count": len(patterns),
-                    "best_score": patterns[0].score if patterns else 0.0,
-                    "event_type": event.type
-                })
+                emit(
+                    "pattern_matches_found",
+                    {
+                        "count": len(patterns),
+                        "best_score": patterns[0].score if patterns else 0.0,
+                        "event_type": event.type,
+                    },
+                )
 
                 response = await self.handlers["pattern_matched"].handle(event, patterns)
 
-                emit("event_routing_completed", {
-                    "handler": "pattern_matched",
-                    "success": response.success
-                })
+                emit(
+                    "event_routing_completed",
+                    {"handler": "pattern_matched", "success": response.success},
+                )
 
                 return response
 
@@ -306,37 +297,34 @@ class EventRouter:
             if handler:
                 response = await handler.handle(event)
 
-                emit("event_routing_completed", {
-                    "handler": handler.name,
-                    "success": response.success,
-                    "event_type": event.type
-                })
+                emit(
+                    "event_routing_completed",
+                    {
+                        "handler": handler.name,
+                        "success": response.success,
+                        "event_type": event.type,
+                    },
+                )
 
                 return response
 
             # Step 3: Log unhandled event for future learning per spec
-            emit("unhandled_event", {
-                "event_type": event.type,
-                "metadata": event.metadata
-            }, level="warning")
+            emit(
+                "unhandled_event",
+                {"event_type": event.type, "metadata": event.metadata},
+                level="warning",
+            )
 
             return Response(
                 success=False,
                 handler_name="NoHandler",
-                error=f"No handler found for event type: {event.type}"
+                error=f"No handler found for event type: {event.type}",
             )
 
         except Exception as e:
-            emit("event_routing_error", {
-                "event_type": event.type,
-                "error": str(e)
-            }, level="error")
+            emit("event_routing_error", {"event_type": event.type, "error": str(e)}, level="error")
 
-            return Response(
-                success=False,
-                handler_name="RouterError",
-                error=str(e)
-            )
+            return Response(success=False, handler_name="RouterError", error=str(e))
 
 
 class HealingTrigger:
@@ -349,7 +337,7 @@ class HealingTrigger:
     - Integration with SelfHealingCore
     """
 
-    def __init__(self, pattern_store: Optional[PatternStore] = None):
+    def __init__(self, pattern_store: PatternStore | None = None):
         """
         Initialize healing trigger with pattern store and cooldown tracking.
 
@@ -361,7 +349,7 @@ class HealingTrigger:
         self.telemetry = get_telemetry()
 
         # Cooldown tracking per spec - prevent healing loops
-        self.cooldown: Dict[str, datetime] = {}
+        self.cooldown: dict[str, datetime] = {}
         self.cooldown_minutes = 5  # Default 5 minute cooldown per spec
 
         # Pattern application tracking
@@ -384,24 +372,23 @@ class HealingTrigger:
             HealingResult with success status and details
         """
 
-        emit("healing_attempt_started", {
-            "error_type": error.error_type,
-            "source_file": error.source_file,
-            "message": error.message[:200]  # Truncate long messages
-        })
+        emit(
+            "healing_attempt_started",
+            {
+                "error_type": error.error_type,
+                "source_file": error.source_file,
+                "message": error.message[:200],  # Truncate long messages
+            },
+        )
 
         # Step 1: Check cooldown per spec
         if self._in_cooldown(error):
-            result = HealingResult(
-                success=False,
-                skipped=True,
-                reason="cooldown"
-            )
+            result = HealingResult(success=False, skipped=True, reason="cooldown")
 
-            emit("healing_skipped_cooldown", {
-                "error_type": error.error_type,
-                "source_file": error.source_file
-            })
+            emit(
+                "healing_skipped_cooldown",
+                {"error_type": error.error_type, "source_file": error.source_file},
+            )
 
             return result
 
@@ -411,57 +398,62 @@ class HealingTrigger:
 
             if pattern:
                 result = await self._apply_pattern(pattern, error)
-                emit("healing_pattern_applied", {
-                    "pattern_id": pattern.id,
-                    "success": result.success,
-                    "error_type": error.error_type
-                })
+                emit(
+                    "healing_pattern_applied",
+                    {
+                        "pattern_id": pattern.id,
+                        "success": result.success,
+                        "error_type": error.error_type,
+                    },
+                )
             else:
                 # Step 3: Attempt generic healing per spec
                 result = await self._attempt_generic_healing(error)
-                emit("healing_generic_attempted", {
-                    "success": result.success,
-                    "error_type": error.error_type
-                })
+                emit(
+                    "healing_generic_attempted",
+                    {"success": result.success, "error_type": error.error_type},
+                )
 
             # Step 4: Learn from result per spec
             if result.success:
                 self._record_success(error, result)
-                emit("healing_success_recorded", {
-                    "error_type": error.error_type,
-                    "pattern_used": result.pattern_used
-                })
+                emit(
+                    "healing_success_recorded",
+                    {"error_type": error.error_type, "pattern_used": result.pattern_used},
+                )
             else:
                 self._record_failure(error, result)
                 self._add_cooldown(error)  # Add cooldown on failure
-                emit("healing_failure_recorded", {
-                    "error_type": error.error_type,
-                    "reason": result.reason
-                })
+                emit(
+                    "healing_failure_recorded",
+                    {"error_type": error.error_type, "reason": result.reason},
+                )
 
-            emit("healing_attempt_completed", {
-                "success": result.success,
-                "error_type": error.error_type,
-                "skipped": result.skipped
-            })
+            emit(
+                "healing_attempt_completed",
+                {
+                    "success": result.success,
+                    "error_type": error.error_type,
+                    "skipped": result.skipped,
+                },
+            )
 
             return result
 
         except Exception as e:
             # Record failure and add cooldown
             result = HealingResult(
-                success=False,
-                reason=f"Exception during healing: {str(e)}",
-                error_details=str(e)
+                success=False, reason=f"Exception during healing: {str(e)}", error_details=str(e)
             )
 
             self._record_failure(error, result)
             self._add_cooldown(error)
 
-            emit("healing_attempt_error", {
-                "error_type": error.error_type,
-                "exception": str(e)
-            }, level="error")
+            emit(
+                "healing_attempt_error",
+                {"error_type": error.error_type, "exception": str(e)},
+                level="error",
+            )
 
             return result
 
@@ -476,13 +468,10 @@ class HealingTrigger:
 
         return False
 
-    def _find_pattern_for_error(self, error: ErrorEvent) -> Optional[Pattern]:
+    def _find_pattern_for_error(self, error: ErrorEvent) -> Pattern | None:
         """Find pattern that could handle this error."""
         # Search patterns by error type and tags
-        patterns = self.pattern_store.find(
-            pattern_type="error_fix",
-            tags=[error.error_type]
-        )
+        patterns = self.pattern_store.find(pattern_type="error_fix", tags=[error.error_type])
 
         # Return the highest success rate pattern
         if patterns:
@@ -498,7 +487,7 @@ class HealingTrigger:
                 file=error.source_file or "unknown",
                 line=error.line_number or 0,
                 error_type=error.error_type,
-                snippet=error.message
+                snippet=error.message,
             )
 
             # Apply the fix
@@ -507,7 +496,7 @@ class HealingTrigger:
             result = HealingResult(
                 success=success,
                 pattern_used=pattern.id,
-                reason="Pattern applied successfully" if success else "Pattern application failed"
+                reason="Pattern applied successfully" if success else "Pattern application failed",
             )
 
             # Update pattern success rate
@@ -521,7 +510,7 @@ class HealingTrigger:
                 success=False,
                 pattern_used=pattern.id,
                 reason=f"Pattern application error: {str(e)}",
-                error_details=str(e)
+                error_details=str(e),
             )
 
     async def _attempt_generic_healing(self, error: ErrorEvent) -> HealingResult:
@@ -532,7 +521,7 @@ class HealingTrigger:
                 file=error.source_file or "unknown",
                 line=error.line_number or 0,
                 error_type=error.error_type,
-                snippet=error.message
+                snippet=error.message,
             )
 
             # Apply generic fix
@@ -540,43 +529,46 @@ class HealingTrigger:
 
             return HealingResult(
                 success=success,
-                reason="Generic healing applied" if success else "Generic healing failed"
+                reason="Generic healing applied" if success else "Generic healing failed",
             )
 
         except Exception as e:
             return HealingResult(
-                success=False,
-                reason=f"Generic healing error: {str(e)}",
-                error_details=str(e)
+                success=False, reason=f"Generic healing error: {str(e)}", error_details=str(e)
             )
 
     def _record_success(self, error: ErrorEvent, result: HealingResult):
         """Record successful healing for learning."""
-        emit("healing_success", {
-            "error_type": error.error_type,
-            "source_file": error.source_file,
-            "pattern_used": result.pattern_used,
-            "healing_method": "pattern" if result.pattern_used else "generic"
-        })
+        emit(
+            "healing_success",
+            {
+                "error_type": error.error_type,
+                "source_file": error.source_file,
+                "pattern_used": result.pattern_used,
+                "healing_method": "pattern" if result.pattern_used else "generic",
+            },
+        )
 
     def _record_failure(self, error: ErrorEvent, result: HealingResult):
         """Record failed healing for learning."""
-        emit("healing_failure", {
-            "error_type": error.error_type,
-            "source_file": error.source_file,
-            "reason": result.reason,
-            "error_details": result.error_details
-        })
+        emit(
+            "healing_failure",
+            {
+                "error_type": error.error_type,
+                "source_file": error.source_file,
+                "reason": result.reason,
+                "error_details": result.error_details,
+            },
+        )
 
     def _add_cooldown(self, error: ErrorEvent):
         """Add error to cooldown to prevent loops."""
         key = f"{error.error_type}:{error.source_file or 'unknown'}"
         self.cooldown[key] = datetime.now()
 
-        emit("healing_cooldown_added", {
-            "error_key": key,
-            "cooldown_minutes": self.cooldown_minutes
-        })
+        emit(
+            "healing_cooldown_added", {"error_key": key, "cooldown_minutes": self.cooldown_minutes}
+        )
 
 
 class PatternMatcher:
@@ -591,7 +583,7 @@ class PatternMatcher:
     - Historical success: 0.2
     """
 
-    def __init__(self, pattern_store: Optional[PatternStore] = None):
+    def __init__(self, pattern_store: PatternStore | None = None):
         """
         Initialize pattern matcher with pattern store.
 
@@ -602,7 +594,7 @@ class PatternMatcher:
         self.telemetry = get_telemetry()
         self.min_threshold = 0.3  # Minimum confidence threshold per spec
 
-    def find_matches(self, event: Event) -> List[PatternMatch]:
+    def find_matches(self, event: Event) -> list[PatternMatch]:
         """
         Find patterns that could handle this event.
 
@@ -619,10 +611,9 @@ class PatternMatcher:
             List of PatternMatch objects, sorted by score
         """
 
-        emit("pattern_matching_started", {
-            "event_type": event.type,
-            "event_metadata": event.metadata
-        })
+        emit(
+            "pattern_matching_started", {"event_type": event.type, "event_metadata": event.metadata}
+        )
 
         candidates = []
 
@@ -644,26 +635,30 @@ class PatternMatcher:
                 if weighted_score > self.min_threshold:
                     confidence = self._calculate_confidence(pattern, event)
 
-                    candidates.append(PatternMatch(
-                        pattern=enhanced_pattern,
-                        score=weighted_score,
-                        confidence=confidence
-                    ))
+                    candidates.append(
+                        PatternMatch(
+                            pattern=enhanced_pattern, score=weighted_score, confidence=confidence
+                        )
+                    )
 
             except Exception as e:
-                emit("pattern_matching_error", {
-                    "pattern_id": pattern.id,
-                    "error": str(e)
-                }, level="warning")
+                emit(
+                    "pattern_matching_error",
+                    {"pattern_id": pattern.id, "error": str(e)},
+                    level="warning",
+                )
 
         # Sort by score per spec
         candidates.sort(key=lambda x: x.score, reverse=True)
 
-        emit("pattern_matching_completed", {
-            "event_type": event.type,
-            "matches_found": len(candidates),
-            "best_score": candidates[0].score if candidates else 0.0
-        })
+        emit(
+            "pattern_matching_completed",
+            {
+                "event_type": event.type,
+                "matches_found": len(candidates),
+                "best_score": candidates[0].score if candidates else 0.0,
+            },
+        )
 
         return candidates
 
@@ -688,8 +683,7 @@ class PatternMatcher:
         score = 0.0
 
         # Error type matching (0.4 weight) per spec
-        if (hasattr(event, 'error_type') and
-            hasattr(pattern.trigger, 'error_type')):
+        if hasattr(event, "error_type") and hasattr(pattern.trigger, "error_type"):
             if event.error_type == pattern.trigger.error_type:
                 score += 0.4
 
@@ -711,7 +705,7 @@ class PatternMatcher:
 
     def _similar_file_context(self, event: Event, pattern: EnhancedPattern) -> bool:
         """Check if event and pattern have similar file context."""
-        event_file = getattr(event, 'source_file', '') or getattr(event, 'path', '')
+        event_file = getattr(event, "source_file", "") or getattr(event, "path", "")
 
         if not event_file:
             return False
@@ -720,23 +714,23 @@ class PatternMatcher:
         pattern_context = pattern.metadata.tags
 
         # Look for file type similarities
-        if 'test' in event_file.lower():
-            return 'test' in pattern_context or 'uses_test' in pattern_context
-        elif event_file.endswith('.py'):
-            return 'python' in pattern_context or 'uses_edit' in pattern_context
-        elif event_file.endswith('.md'):
-            return 'markdown' in pattern_context or 'documentation' in pattern_context
+        if "test" in event_file.lower():
+            return "test" in pattern_context or "uses_test" in pattern_context
+        elif event_file.endswith(".py"):
+            return "python" in pattern_context or "uses_edit" in pattern_context
+        elif event_file.endswith(".md"):
+            return "markdown" in pattern_context or "documentation" in pattern_context
 
         return False
 
     def _semantic_similarity(self, event: Event, pattern: EnhancedPattern) -> float:
         """Calculate semantic similarity between event and pattern contexts."""
         # Simple keyword-based similarity for now
-        event_text = str(getattr(event, 'message', '')) + str(event.metadata)
-        pattern_text = json.dumps(pattern.trigger.metadata) + ' '.join(pattern.metadata.tags)
+        event_text = str(getattr(event, "message", "")) + str(event.metadata)
+        pattern_text = json.dumps(pattern.trigger.metadata) + " ".join(pattern.metadata.tags)
 
-        event_words = set(re.findall(r'\w+', event_text.lower()))
-        pattern_words = set(re.findall(r'\w+', pattern_text.lower()))
+        event_words = set(re.findall(r"\w+", event_text.lower()))
+        pattern_words = set(re.findall(r"\w+", pattern_text.lower()))
 
         if not event_words or not pattern_words:
             return 0.0
@@ -778,7 +772,11 @@ class PatternMatcher:
         """Convert PatternStore Pattern to EnhancedPattern for scoring."""
         # Import here to avoid circular imports
         from learning_loop.pattern_extraction import (
-            EnhancedPattern, PatternMetadata, Trigger, ErrorTrigger, TaskTrigger
+            EnhancedPattern,
+            ErrorTrigger,
+            PatternMetadata,
+            TaskTrigger,
+            Trigger,
         )
 
         # Create trigger from pattern context
@@ -787,13 +785,14 @@ class PatternMatcher:
             error_type = pattern.context.get("error_type", "Unknown")
             if not isinstance(error_type, str):
                 error_type = str(error_type)
-            trigger = ErrorTrigger(
-                error_type=error_type,
-                error_pattern=f"{error_type}.*"
-            )
+            trigger = ErrorTrigger(error_type=error_type, error_pattern=f"{error_type}.*")
         else:
             # Ensure tags are strings
-            keywords = [str(tag) for tag in pattern.tags if tag is not None] if pattern.tags else ["general"]
+            keywords = (
+                [str(tag) for tag in pattern.tags if tag is not None]
+                if pattern.tags
+                else ["general"]
+            )
             trigger = TaskTrigger(keywords=keywords)
 
         # Create metadata
@@ -805,14 +804,14 @@ class PatternMatcher:
             last_used=datetime.fromisoformat(pattern.last_used),
             created_at=datetime.fromisoformat(pattern.created_at),
             source="learned",
-            tags=pattern.tags
+            tags=pattern.tags,
         )
 
         return EnhancedPattern(
             id=pattern.id,
             trigger=trigger,
             preconditions=[],  # Simplified for pattern matching
-            actions=[],        # Simplified for pattern matching
-            postconditions=[], # Simplified for pattern matching
-            metadata=metadata
+            actions=[],  # Simplified for pattern matching
+            postconditions=[],  # Simplified for pattern matching
+            metadata=metadata,
         )

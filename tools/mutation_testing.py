@@ -20,19 +20,21 @@ Mars Rover Standard Compliance:
 """
 
 import ast
+import shlex
 import subprocess
 import time
-from pathlib import Path
-from typing import List, Optional, Callable, Dict, Any
-from enum import Enum
 from dataclasses import dataclass
+from enum import Enum
+from pathlib import Path
+
 from pydantic import BaseModel, Field, field_validator
-from shared.type_definitions.result import Result, Ok, Err
-from shared.type_definitions.json import JSONValue
+
+from shared.type_definitions.result import Err, Ok, Result
 
 
 class MutationType(str, Enum):
     """Types of mutations that can be applied."""
+
     ARITHMETIC = "arithmetic"
     COMPARISON = "comparison"
     BOOLEAN = "boolean"
@@ -43,6 +45,7 @@ class MutationType(str, Enum):
 @dataclass
 class Mutation:
     """Represents a single code mutation."""
+
     mutation_id: str
     mutation_type: MutationType
     file_path: str
@@ -56,21 +59,22 @@ class Mutation:
 
 class MutationConfig(BaseModel):
     """Configuration for mutation testing."""
-    target_files: List[str] = Field(..., min_length=1)
+
+    target_files: list[str] = Field(..., min_length=1)
     test_command: str = Field(..., min_length=1)
-    mutation_types: List[str] = Field(..., min_length=1)
+    mutation_types: list[str] = Field(..., min_length=1)
     timeout_seconds: int = Field(default=60, ge=1)
     parallel: bool = Field(default=True)
 
-    @field_validator('target_files')
+    @field_validator("target_files")
     @classmethod
-    def validate_target_files(cls, v: List[str]) -> List[str]:
+    def validate_target_files(cls, v: list[str]) -> list[str]:
         """Ensure target files list is not empty."""
         if not v:
             raise ValueError("target_files cannot be empty")
         return v
 
-    @field_validator('test_command')
+    @field_validator("test_command")
     @classmethod
     def validate_test_command(cls, v: str) -> str:
         """Ensure test command is not empty."""
@@ -81,6 +85,7 @@ class MutationConfig(BaseModel):
 
 class MutationResult(BaseModel):
     """Result of a single mutation test."""
+
     mutation_id: str
     file_path: str
     line_number: int
@@ -93,17 +98,18 @@ class MutationResult(BaseModel):
 
 class MutationScore(BaseModel):
     """Overall mutation testing score."""
+
     total_mutations: int
     mutations_caught: int
     mutations_survived: int
     mutation_score: float = Field(ge=0.0, le=1.0)
-    surviving_mutations: List[MutationResult]
+    surviving_mutations: list[MutationResult]
 
 
 class BaseMutator:
     """Base class for mutation generators."""
 
-    def generate_mutations(self, code: str, file_path: str) -> List[Mutation]:
+    def generate_mutations(self, code: str, file_path: str) -> list[Mutation]:
         """Generate mutations for given code. Override in subclasses."""
         raise NotImplementedError
 
@@ -111,7 +117,7 @@ class BaseMutator:
 class ArithmeticMutator(BaseMutator):
     """Mutates arithmetic operators (+, -, *, /, %)."""
 
-    OPERATOR_MUTATIONS: Dict[type, List[type]] = {
+    OPERATOR_MUTATIONS: dict[type, list[type]] = {
         ast.Add: [ast.Sub, ast.Mult],
         ast.Sub: [ast.Add, ast.Div],
         ast.Mult: [ast.Div, ast.Add],
@@ -120,14 +126,14 @@ class ArithmeticMutator(BaseMutator):
         ast.FloorDiv: [ast.Div, ast.Mult],
     }
 
-    def generate_mutations(self, code: str, file_path: str) -> List[Mutation]:
+    def generate_mutations(self, code: str, file_path: str) -> list[Mutation]:
         """Generate arithmetic operator mutations."""
         try:
             tree = ast.parse(code)
         except SyntaxError:
             return []
 
-        mutations: List[Mutation] = []
+        mutations: list[Mutation] = []
         mutation_counter = 0
 
         class ArithmeticVisitor(ast.NodeVisitor):
@@ -141,24 +147,22 @@ class ArithmeticMutator(BaseMutator):
                         original_code = ast.unparse(node)
 
                         # Create mutated node
-                        mutated_node = ast.BinOp(
-                            left=node.left,
-                            op=new_op_type(),
-                            right=node.right
-                        )
+                        mutated_node = ast.BinOp(left=node.left, op=new_op_type(), right=node.right)
                         mutated_code = ast.unparse(mutated_node)
 
-                        mutations.append(Mutation(
-                            mutation_id=f"arith_{mutation_counter:04d}",
-                            mutation_type=MutationType.ARITHMETIC,
-                            file_path=file_path,
-                            line_number=node.lineno,
-                            column_offset=node.col_offset,
-                            original_code=original_code,
-                            mutated_code=mutated_code,
-                            original_node=f"BinOp({op_type.__name__})",
-                            mutated_node=f"BinOp({new_op_type.__name__})"
-                        ))
+                        mutations.append(
+                            Mutation(
+                                mutation_id=f"arith_{mutation_counter:04d}",
+                                mutation_type=MutationType.ARITHMETIC,
+                                file_path=file_path,
+                                line_number=node.lineno,
+                                column_offset=node.col_offset,
+                                original_code=original_code,
+                                mutated_code=mutated_code,
+                                original_node=f"BinOp({op_type.__name__})",
+                                mutated_node=f"BinOp({new_op_type.__name__})",
+                            )
+                        )
 
                 self.generic_visit(node)
 
@@ -170,7 +174,7 @@ class ArithmeticMutator(BaseMutator):
 class ComparisonMutator(BaseMutator):
     """Mutates comparison operators (==, !=, <, >, <=, >=)."""
 
-    OPERATOR_MUTATIONS: Dict[type, List[type]] = {
+    OPERATOR_MUTATIONS: dict[type, list[type]] = {
         ast.Eq: [ast.NotEq, ast.Lt],
         ast.NotEq: [ast.Eq, ast.Gt],
         ast.Lt: [ast.Gt, ast.LtE, ast.Eq],
@@ -179,14 +183,14 @@ class ComparisonMutator(BaseMutator):
         ast.GtE: [ast.LtE, ast.Gt],
     }
 
-    def generate_mutations(self, code: str, file_path: str) -> List[Mutation]:
+    def generate_mutations(self, code: str, file_path: str) -> list[Mutation]:
         """Generate comparison operator mutations."""
         try:
             tree = ast.parse(code)
         except SyntaxError:
             return []
 
-        mutations: List[Mutation] = []
+        mutations: list[Mutation] = []
         mutation_counter = 0
 
         class ComparisonVisitor(ast.NodeVisitor):
@@ -205,23 +209,23 @@ class ComparisonMutator(BaseMutator):
                             mutated_ops[i] = new_op_type()
 
                             mutated_node = ast.Compare(
-                                left=node.left,
-                                ops=mutated_ops,
-                                comparators=node.comparators
+                                left=node.left, ops=mutated_ops, comparators=node.comparators
                             )
                             mutated_code = ast.unparse(mutated_node)
 
-                            mutations.append(Mutation(
-                                mutation_id=f"comp_{mutation_counter:04d}",
-                                mutation_type=MutationType.COMPARISON,
-                                file_path=file_path,
-                                line_number=node.lineno,
-                                column_offset=node.col_offset,
-                                original_code=original_code,
-                                mutated_code=mutated_code,
-                                original_node=f"Compare({op_type.__name__})",
-                                mutated_node=f"Compare({new_op_type.__name__})"
-                            ))
+                            mutations.append(
+                                Mutation(
+                                    mutation_id=f"comp_{mutation_counter:04d}",
+                                    mutation_type=MutationType.COMPARISON,
+                                    file_path=file_path,
+                                    line_number=node.lineno,
+                                    column_offset=node.col_offset,
+                                    original_code=original_code,
+                                    mutated_code=mutated_code,
+                                    original_node=f"Compare({op_type.__name__})",
+                                    mutated_node=f"Compare({new_op_type.__name__})",
+                                )
+                            )
 
                 self.generic_visit(node)
 
@@ -233,14 +237,14 @@ class ComparisonMutator(BaseMutator):
 class BooleanMutator(BaseMutator):
     """Mutates boolean operators (and, or, not)."""
 
-    def generate_mutations(self, code: str, file_path: str) -> List[Mutation]:
+    def generate_mutations(self, code: str, file_path: str) -> list[Mutation]:
         """Generate boolean operator mutations."""
         try:
             tree = ast.parse(code)
         except SyntaxError:
             return []
 
-        mutations: List[Mutation] = []
+        mutations: list[Mutation] = []
         mutation_counter = 0
 
         class BooleanVisitor(ast.NodeVisitor):
@@ -253,23 +257,22 @@ class BooleanMutator(BaseMutator):
                 new_op_type = ast.Or if op_type == ast.And else ast.And
                 mutation_counter += 1
 
-                mutated_node = ast.BoolOp(
-                    op=new_op_type(),
-                    values=node.values
-                )
+                mutated_node = ast.BoolOp(op=new_op_type(), values=node.values)
                 mutated_code = ast.unparse(mutated_node)
 
-                mutations.append(Mutation(
-                    mutation_id=f"bool_{mutation_counter:04d}",
-                    mutation_type=MutationType.BOOLEAN,
-                    file_path=file_path,
-                    line_number=node.lineno,
-                    column_offset=node.col_offset,
-                    original_code=original_code,
-                    mutated_code=mutated_code,
-                    original_node=f"BoolOp({op_type.__name__})",
-                    mutated_node=f"BoolOp({new_op_type.__name__})"
-                ))
+                mutations.append(
+                    Mutation(
+                        mutation_id=f"bool_{mutation_counter:04d}",
+                        mutation_type=MutationType.BOOLEAN,
+                        file_path=file_path,
+                        line_number=node.lineno,
+                        column_offset=node.col_offset,
+                        original_code=original_code,
+                        mutated_code=mutated_code,
+                        original_node=f"BoolOp({op_type.__name__})",
+                        mutated_node=f"BoolOp({new_op_type.__name__})",
+                    )
+                )
 
                 self.generic_visit(node)
 
@@ -282,17 +285,19 @@ class BooleanMutator(BaseMutator):
                     original_code = ast.unparse(node)
                     mutated_code = ast.unparse(node.operand)
 
-                    mutations.append(Mutation(
-                        mutation_id=f"bool_{mutation_counter:04d}",
-                        mutation_type=MutationType.BOOLEAN,
-                        file_path=file_path,
-                        line_number=node.lineno,
-                        column_offset=node.col_offset,
-                        original_code=original_code,
-                        mutated_code=mutated_code,
-                        original_node="UnaryOp(Not)",
-                        mutated_node="Identity"
-                    ))
+                    mutations.append(
+                        Mutation(
+                            mutation_id=f"bool_{mutation_counter:04d}",
+                            mutation_type=MutationType.BOOLEAN,
+                            file_path=file_path,
+                            line_number=node.lineno,
+                            column_offset=node.col_offset,
+                            original_code=original_code,
+                            mutated_code=mutated_code,
+                            original_node="UnaryOp(Not)",
+                            mutated_node="Identity",
+                        )
+                    )
 
                 self.generic_visit(node)
 
@@ -304,14 +309,14 @@ class BooleanMutator(BaseMutator):
 class ConstantMutator(BaseMutator):
     """Mutates constant values (True, False, numbers, strings)."""
 
-    def generate_mutations(self, code: str, file_path: str) -> List[Mutation]:
+    def generate_mutations(self, code: str, file_path: str) -> list[Mutation]:
         """Generate constant value mutations."""
         try:
             tree = ast.parse(code)
         except SyntaxError:
             return []
 
-        mutations: List[Mutation] = []
+        mutations: list[Mutation] = []
         mutation_counter = 0
 
         class ConstantVisitor(ast.NodeVisitor):
@@ -340,17 +345,19 @@ class ConstantMutator(BaseMutator):
                     mutated_node = ast.Constant(value=mutated_value)
                     mutated_code = ast.unparse(mutated_node)
 
-                    mutations.append(Mutation(
-                        mutation_id=f"const_{mutation_counter:04d}",
-                        mutation_type=MutationType.CONSTANT,
-                        file_path=file_path,
-                        line_number=node.lineno,
-                        column_offset=node.col_offset,
-                        original_code=original_code,
-                        mutated_code=mutated_code,
-                        original_node=f"Constant({node.value})",
-                        mutated_node=f"Constant({mutated_value})"
-                    ))
+                    mutations.append(
+                        Mutation(
+                            mutation_id=f"const_{mutation_counter:04d}",
+                            mutation_type=MutationType.CONSTANT,
+                            file_path=file_path,
+                            line_number=node.lineno,
+                            column_offset=node.col_offset,
+                            original_code=original_code,
+                            mutated_code=mutated_code,
+                            original_node=f"Constant({node.value})",
+                            mutated_node=f"Constant({mutated_value})",
+                        )
+                    )
 
                 self.generic_visit(node)
 
@@ -362,14 +369,14 @@ class ConstantMutator(BaseMutator):
 class ReturnMutator(BaseMutator):
     """Mutates return statements."""
 
-    def generate_mutations(self, code: str, file_path: str) -> List[Mutation]:
+    def generate_mutations(self, code: str, file_path: str) -> list[Mutation]:
         """Generate return statement mutations."""
         try:
             tree = ast.parse(code)
         except SyntaxError:
             return []
 
-        mutations: List[Mutation] = []
+        mutations: list[Mutation] = []
         mutation_counter = 0
 
         class ReturnVisitor(ast.NodeVisitor):
@@ -384,17 +391,19 @@ class ReturnMutator(BaseMutator):
                     mutated_node = ast.Return(value=ast.Constant(value=None))
                     mutated_code = ast.unparse(mutated_node)
 
-                    mutations.append(Mutation(
-                        mutation_id=f"ret_{mutation_counter:04d}",
-                        mutation_type=MutationType.RETURN,
-                        file_path=file_path,
-                        line_number=node.lineno,
-                        column_offset=node.col_offset,
-                        original_code=original_code,
-                        mutated_code=mutated_code,
-                        original_node="Return(value)",
-                        mutated_node="Return(None)"
-                    ))
+                    mutations.append(
+                        Mutation(
+                            mutation_id=f"ret_{mutation_counter:04d}",
+                            mutation_type=MutationType.RETURN,
+                            file_path=file_path,
+                            line_number=node.lineno,
+                            column_offset=node.col_offset,
+                            original_code=original_code,
+                            mutated_code=mutated_code,
+                            original_node="Return(value)",
+                            mutated_node="Return(None)",
+                        )
+                    )
 
                 self.generic_visit(node)
 
@@ -406,7 +415,7 @@ class ReturnMutator(BaseMutator):
 class MutationTester:
     """Mutation testing framework."""
 
-    MUTATOR_REGISTRY: Dict[str, type] = {
+    MUTATOR_REGISTRY: dict[str, type] = {
         "arithmetic": ArithmeticMutator,
         "comparison": ComparisonMutator,
         "boolean": BooleanMutator,
@@ -417,7 +426,7 @@ class MutationTester:
     def __init__(self, config: MutationConfig):
         """Initialize mutation tester with configuration."""
         self.config = config
-        self.mutators: List[BaseMutator] = []
+        self.mutators: list[BaseMutator] = []
 
         # Initialize requested mutators
         for mutation_type in config.mutation_types:
@@ -425,7 +434,7 @@ class MutationTester:
                 mutator_class = self.MUTATOR_REGISTRY[mutation_type]
                 self.mutators.append(mutator_class())
 
-    def generate_mutations(self, file_path: str) -> List[Mutation]:
+    def generate_mutations(self, file_path: str) -> list[Mutation]:
         """Generate all possible mutations for a file."""
         try:
             code = Path(file_path).read_text()
@@ -434,7 +443,7 @@ class MutationTester:
         except Exception:
             return []
 
-        all_mutations: List[Mutation] = []
+        all_mutations: list[Mutation] = []
 
         for mutator in self.mutators:
             mutations = mutator.generate_mutations(code, file_path)
@@ -476,18 +485,20 @@ class MutationTester:
                 self.applied = False
 
             def visit(self, node: ast.AST) -> ast.AST:
-                if (hasattr(node, 'lineno') and
-                    hasattr(node, 'col_offset') and
-                    node.lineno == mutation.line_number and
-                    node.col_offset == mutation.column_offset and
-                    not self.applied):
-
+                if (
+                    hasattr(node, "lineno")
+                    and hasattr(node, "col_offset")
+                    and node.lineno == mutation.line_number
+                    and node.col_offset == mutation.column_offset
+                    and not self.applied
+                ):
                     # Parse mutated code as expression
                     try:
-                        mutated_node = ast.parse(mutation.mutated_code, mode='eval').body
+                        mutated_node = ast.parse(mutation.mutated_code, mode="eval").body
                         self.applied = True
                         return mutated_node
-                    except:
+                    except (SyntaxError, ValueError):
+                        # Skip mutations that can't be parsed
                         pass
 
                 return self.generic_visit(node)
@@ -509,13 +520,20 @@ class MutationTester:
             return Err(f"Failed to restore original: {e}")
 
     def run_tests(self) -> Result[bool, str]:
-        """Run test suite, return True if tests pass."""
+        """Run test suite, return True if tests pass.
+
+        Security: Uses shlex.split() to prevent shell injection attacks.
+        The test_command is split into arguments without invoking a shell.
+        """
         try:
+            # Security: Use shlex.split() to safely parse command without shell=True
+            cmd_parts = shlex.split(self.config.test_command)
             result = subprocess.run(
-                self.config.test_command,
-                shell=True,
+                cmd_parts,
+                shell=False,
                 capture_output=True,
-                timeout=self.config.timeout_seconds
+                timeout=self.config.timeout_seconds,
+                text=True,
             )
             return Ok(result.returncode == 0)
 
@@ -526,7 +544,7 @@ class MutationTester:
 
     def run(self) -> Result[MutationScore, str]:
         """Execute mutation testing workflow."""
-        all_mutations: List[Mutation] = []
+        all_mutations: list[Mutation] = []
 
         # Generate mutations for all target files
         for file_path in self.config.target_files:
@@ -534,15 +552,17 @@ class MutationTester:
             all_mutations.extend(mutations)
 
         if not all_mutations:
-            return Ok(MutationScore(
-                total_mutations=0,
-                mutations_caught=0,
-                mutations_survived=0,
-                mutation_score=1.0,
-                surviving_mutations=[]
-            ))
+            return Ok(
+                MutationScore(
+                    total_mutations=0,
+                    mutations_caught=0,
+                    mutations_survived=0,
+                    mutation_score=1.0,
+                    surviving_mutations=[],
+                )
+            )
 
-        mutation_results: List[MutationResult] = []
+        mutation_results: list[MutationResult] = []
         mutations_caught = 0
         mutations_survived = 0
 
@@ -584,7 +604,7 @@ class MutationTester:
                     mutated_code=mutation.mutated_code,
                     tests_passed=tests_passed,
                     tests_failed=tests_failed,
-                    execution_time=execution_time
+                    execution_time=execution_time,
                 )
                 mutation_results.append(result)
 
@@ -592,17 +612,17 @@ class MutationTester:
         total = len(all_mutations)
         score = mutations_caught / total if total > 0 else 1.0
 
-        surviving_mutations = [
-            r for r in mutation_results if r.tests_passed
-        ]
+        surviving_mutations = [r for r in mutation_results if r.tests_passed]
 
-        return Ok(MutationScore(
-            total_mutations=total,
-            mutations_caught=mutations_caught,
-            mutations_survived=mutations_survived,
-            mutation_score=score,
-            surviving_mutations=surviving_mutations
-        ))
+        return Ok(
+            MutationScore(
+                total_mutations=total,
+                mutations_caught=mutations_caught,
+                mutations_survived=mutations_survived,
+                mutation_score=score,
+                surviving_mutations=surviving_mutations,
+            )
+        )
 
     def generate_report(self, score: MutationScore) -> str:
         """Generate human-readable mutation testing report."""

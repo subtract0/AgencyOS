@@ -21,7 +21,9 @@ This module is no longer part of the production codebase.
 
 import pytest
 
-pytestmark = pytest.mark.skip(reason="Module deleted in Trinity clean break - spec_from_conversation removed from codebase")
+pytestmark = pytest.mark.skip(
+    reason="Module deleted in Trinity clean break - spec_from_conversation removed from codebase"
+)
 
 # Imports commented out - module deleted
 # from datetime import datetime
@@ -45,14 +47,14 @@ class TestRequirementExtraction:
                 question_id="q_1",
                 answer_text="I want to write a 150-page coaching book for entrepreneurs",
                 answered_at=datetime.now(),
-                confidence="certain"
+                confidence="certain",
             ),
             QAAnswer(
                 question_id="q_2",
                 answer_text="The goal is to establish thought leadership and generate passive income",
                 answered_at=datetime.now(),
-                confidence="certain"
-            )
+                confidence="certain",
+            ),
         ]
 
         qa_session = create_mock_session(answers)
@@ -72,7 +74,7 @@ class TestRequirementExtraction:
                 question_id="q_1",
                 answer_text="This is NOT a memoir or academic research paper",
                 answered_at=datetime.now(),
-                confidence="certain"
+                confidence="certain",
             )
         ]
 
@@ -93,7 +95,7 @@ class TestRequirementExtraction:
                 question_id="q_2",
                 answer_text="Target audience is solo entrepreneurs launching coaching practices and corporate professionals transitioning to coaching",
                 answered_at=datetime.now(),
-                confidence="certain"
+                confidence="certain",
             )
         ]
 
@@ -114,7 +116,7 @@ class TestRequirementExtraction:
                 question_id="q_5",
                 answer_text="I have 4 weeks to finish, budget max $500, and 2 hours per day",
                 answered_at=datetime.now(),
-                confidence="certain"
+                confidence="certain",
             )
         ]
 
@@ -135,7 +137,7 @@ class TestRequirementExtraction:
                 question_id="q_1",
                 answer_text="Goal is to write 150-page book and publish on Amazon KDP",
                 answered_at=datetime.now(),
-                confidence="certain"
+                confidence="certain",
             )
         ]
 
@@ -160,15 +162,12 @@ class TestRequirementExtraction:
             pattern_type="book_project",
             questions=[
                 QAQuestion(
-                    question_id="q_1",
-                    question_text="Question 1",
-                    question_number=1,
-                    required=True
+                    question_id="q_1", question_text="Question 1", question_number=1, required=True
                 )
             ],
             answers=[],  # No answers - incomplete
             started_at=datetime.now(),
-            status="in_progress"
+            status="in_progress",
         )
 
         result = await extract_requirements(incomplete_session)
@@ -193,20 +192,20 @@ class TestSpecGeneration:
                 question_id="q_1",
                 answer_text="Write a 150-page coaching book for entrepreneurs",
                 answered_at=datetime.now(),
-                confidence="certain"
+                confidence="certain",
             ),
             QAAnswer(
                 question_id="q_2",
                 answer_text="Target audience: solo entrepreneurs and corporate transitioners",
                 answered_at=datetime.now(),
-                confidence="certain"
+                confidence="certain",
             ),
             QAAnswer(
                 question_id="q_3",
                 answer_text="Timeline: 4 weeks, budget $500",
                 answered_at=datetime.now(),
-                confidence="certain"
-            )
+                confidence="certain",
+            ),
         ]
 
         qa_session = create_mock_session(answers, status="completed")
@@ -267,7 +266,7 @@ class TestSpecGeneration:
                 question_id="q_1",
                 answer_text="I want to help coaches build thriving practices through tactical frameworks",
                 answered_at=datetime.now(),
-                confidence="certain"
+                confidence="certain",
             )
         ]
 
@@ -436,7 +435,7 @@ class TestSpecQuality:
                 question_id="q_1",
                 answer_text="A book",
                 answered_at=datetime.now(),
-                confidence="not_sure"
+                confidence="not_sure",
             )
         ]
 
@@ -448,7 +447,7 @@ class TestSpecQuality:
         # Should either return error or spec with missing_information flag
         if result.is_ok():
             spec = result.value
-            assert hasattr(spec, 'missing_information') and spec.missing_information
+            assert hasattr(spec, "missing_information") and spec.missing_information
         else:
             assert "missing" in result.error.lower() or "incomplete" in result.error.lower()
 
@@ -507,10 +506,7 @@ class TestSpecGenerationIntegration:
         mock_store = Mock()
         mock_store.store_spec = AsyncMock(return_value=Ok("spec_id"))
 
-        spec_generator = SpecFromConversation(
-            llm_client=Mock(),
-            state_store=mock_store
-        )
+        spec_generator = SpecFromConversation(llm_client=Mock(), state_store=mock_store)
 
         result = await spec_generator.generate_spec(qa_session)
 
@@ -552,13 +548,13 @@ def create_mock_session(answers, status="in_progress"):
                 question_id=f"q_{i}",
                 question_text=f"Question {i}",
                 question_number=i,
-                required=True
+                required=True,
             )
             for i in range(1, 6)
         ],
         answers=answers,
         started_at=datetime.now(),
-        status=status
+        status=status,
     )
 
 
@@ -569,7 +565,7 @@ def create_complete_qa_session():
             question_id=f"q_{i}",
             answer_text=f"Complete answer {i}",
             answered_at=datetime.now(),
-            confidence="certain"
+            confidence="certain",
         )
         for i in range(1, 6)
     ]
@@ -590,7 +586,7 @@ def create_mock_spec():
         constraints=["Constraint 1"],
         spec_markdown="# Test Spec\n\nContent",
         created_at=datetime.now(),
-        approval_status="pending"
+        approval_status="pending",
     )
 
 

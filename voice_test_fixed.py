@@ -6,15 +6,15 @@ FIXED Voice Capture - Optimized for Accuracy
 - Higher VAD threshold
 - Real confidence scores
 """
+
 import os
 import sys
-import time
 from datetime import datetime
 
 try:
-    import whisper
-    import pyaudio
     import numpy as np
+    import pyaudio
+    import whisper
 except ImportError as e:
     print(f"❌ Missing dependency: {e}")
     print("Install with: pip3 install openai-whisper pyaudio numpy")
@@ -29,6 +29,7 @@ OUTPUT_FILE = "logs/trinity_ambient/voice_transcriptions_fixed.txt"
 
 os.makedirs(os.path.dirname(OUTPUT_FILE), exist_ok=True)
 
+
 def calculate_rms(audio_data):
     """Calculate RMS level of audio"""
     samples = np.frombuffer(audio_data, dtype=np.int16)
@@ -36,12 +37,14 @@ def calculate_rms(audio_data):
         return 0.0
     return float(np.sqrt(np.mean(samples.astype(np.float32) ** 2)))
 
+
 def append_transcription(text, confidence, rms_level):
     """Append transcription to file with timestamp"""
     timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     with open(OUTPUT_FILE, "a") as f:
         f.write(f"[{timestamp}] RMS:{rms_level:.1f} Conf:{confidence:.2f} | {text}\n")
     print(f"✅ Saved: {text[:80]}...")
+
 
 def main():
     print("🎤 FIXED Voice Capture Starting...")
@@ -66,16 +69,16 @@ def main():
             channels=1,
             rate=SAMPLE_RATE,
             input=True,
-            frames_per_buffer=CHUNK_SIZE
+            frames_per_buffer=CHUNK_SIZE,
         )
 
-        print(f"\n🎙️  Listening... (Press Ctrl+C to stop)")
+        print("\n🎙️  Listening... (Press Ctrl+C to stop)")
         print(f"💡 SPEAK LOUDLY - RMS must be >{VAD_THRESHOLD} to trigger\n")
 
         cycle = 0
         while True:
             cycle += 1
-            timestamp = datetime.now().strftime('%H:%M:%S')
+            timestamp = datetime.now().strftime("%H:%M:%S")
             print(f"[{timestamp}] Cycle {cycle}: Capturing {CHUNK_DURATION}s...")
 
             # Read audio chunk
@@ -86,7 +89,7 @@ def main():
             print(f"  RMS level: {rms:.1f} (threshold: {VAD_THRESHOLD})")
 
             if rms > VAD_THRESHOLD:
-                print(f"  🗣️  Speech detected! Transcribing...")
+                print("  🗣️  Speech detected! Transcribing...")
 
                 # Convert to float32 for Whisper
                 samples = np.frombuffer(audio_data, dtype=np.int16).astype(np.float32) / 32768.0
@@ -107,7 +110,9 @@ def main():
                 # Calculate REAL confidence from segments
                 segments = result.get("segments", [])
                 if segments:
-                    confidence = 1.0 - sum(s.get("no_speech_prob", 0.5) for s in segments) / len(segments)
+                    confidence = 1.0 - sum(s.get("no_speech_prob", 0.5) for s in segments) / len(
+                        segments
+                    )
                 else:
                     confidence = 0.0
 
@@ -116,9 +121,9 @@ def main():
                     print(f"  🎯 Confidence: {confidence:.2f}")
                     append_transcription(text, confidence, rms)
                 else:
-                    print(f"  ⚠️  Empty transcription")
+                    print("  ⚠️  Empty transcription")
             else:
-                print(f"  💤 Silence (below threshold)")
+                print("  💤 Silence (below threshold)")
 
             print()  # Blank line
 
@@ -127,12 +132,14 @@ def main():
     except Exception as e:
         print(f"\n❌ Error: {e}")
         import traceback
+
         traceback.print_exc()
     finally:
         stream.stop_stream()
         stream.close()
         audio.terminate()
         print(f"\n📄 All transcriptions saved to: {OUTPUT_FILE}")
+
 
 if __name__ == "__main__":
     main()

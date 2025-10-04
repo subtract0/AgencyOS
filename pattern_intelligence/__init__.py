@@ -12,8 +12,8 @@ This module provides:
 - MetaLearning: Recursive self-improvement
 """
 
-from .coding_pattern import CodingPattern, ProblemContext, SolutionApproach, EffectivenessMetric
-from .pattern_store import PatternStore, PatternSearchResult
+from .coding_pattern import CodingPattern, EffectivenessMetric, ProblemContext, SolutionApproach
+from .pattern_store import PatternSearchResult, PatternStore
 
 __version__ = "1.0.0"
 

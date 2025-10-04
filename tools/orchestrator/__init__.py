@@ -23,15 +23,15 @@ Usage:
 """
 
 from .scheduler import (
-    run_parallel,
+    BackoffType,
+    CancellationType,
+    FairnessType,
     OrchestrationPolicy,
     OrchestrationResult,
     RetryPolicy,
-    TaskSpec,
     TaskResult,
-    BackoffType,
-    FairnessType,
-    CancellationType,
+    TaskSpec,
+    run_parallel,
 )
 
 __all__ = [

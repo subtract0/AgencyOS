@@ -28,34 +28,35 @@ Integration Points:
 5. WITNESS → Action (ARCHITECT/EXECUTOR trigger)
 """
 
-import pytest
 import asyncio
-from pathlib import Path
-from datetime import datetime, timedelta
-from typing import List, Optional, Dict, Any
-from dataclasses import dataclass
 import wave
-import numpy as np
+from dataclasses import dataclass
+from pathlib import Path
 
+import numpy as np
+import pytest
 
 # ============================================================================
 # TEST DATA STRUCTURES
 # ============================================================================
 
+
 @dataclass
 class AmbientEvent:
     """Ambient intelligence event."""
+
     timestamp: str
     audio_duration_seconds: float
     transcription_text: str
     transcription_confidence: float
-    patterns_detected: List[str]
-    action_triggered: Optional[str] = None
+    patterns_detected: list[str]
+    action_triggered: str | None = None
 
 
 @dataclass
 class SystemMetrics:
     """System performance metrics."""
+
     total_audio_processed_seconds: float
     total_transcriptions: int
     total_patterns_detected: int
@@ -68,6 +69,7 @@ class SystemMetrics:
 # ============================================================================
 # NORMAL OPERATION TESTS - Happy Path
 # ============================================================================
+
 
 class TestNormalOperation:
     """Test standard ambient intelligence workflow."""
@@ -94,8 +96,8 @@ class TestNormalOperation:
 
         # Simulate full stack
         from tests.trinity_protocol.test_transcription_service import MockTranscriptionService
-        from trinity_protocol.pattern_detector import PatternDetector
         from trinity_protocol.message_bus import MessageBus
+        from trinity_protocol.pattern_detector import PatternDetector
 
         # Initialize components
         transcription_service = MockTranscriptionService()
@@ -130,8 +132,8 @@ class TestNormalOperation:
                     "pattern_name": pattern.pattern_name,
                     "confidence": pattern.confidence,
                     "source": "ambient_intelligence",
-                    "transcription": transcription.text
-                }
+                    "transcription": transcription.text,
+                },
             )
 
         # Step 4: WITNESS receives (simulated)
@@ -195,6 +197,7 @@ class TestNormalOperation:
 # EDGE CASE TESTS - Boundary Conditions
 # ============================================================================
 
+
 class TestEdgeCases:
     """Test boundary conditions in ambient flow."""
 
@@ -257,6 +260,7 @@ class TestEdgeCases:
 # STRESS TESTS - Performance Under Load
 # ============================================================================
 
+
 class TestStress:
     """Test performance with sustained operation."""
 
@@ -271,8 +275,8 @@ class TestStress:
         """
         # Arrange
         from tests.trinity_protocol.test_transcription_service import MockTranscriptionService
-        from trinity_protocol.pattern_detector import PatternDetector
         from trinity_protocol.message_bus import MessageBus
+        from trinity_protocol.pattern_detector import PatternDetector
 
         transcription_service = MockTranscriptionService()
         pattern_detector = PatternDetector(min_confidence=0.7)
@@ -283,12 +287,7 @@ class TestStress:
         audio_file = tmp_path / "chunk.wav"
         self._create_test_audio(audio_file, "System status normal")
 
-        metrics = {
-            "transcriptions": 0,
-            "patterns": 0,
-            "messages": 0,
-            "errors": 0
-        }
+        metrics = {"transcriptions": 0, "patterns": 0, "messages": 0, "errors": 0}
 
         # Act - Process 120 chunks (simulating 1 hour)
         # Reduced to 10 chunks for test performance
@@ -306,12 +305,11 @@ class TestStress:
 
                     # Publish
                     await message_bus.publish(
-                        "improvement_stream",
-                        {"pattern": pattern.pattern_name, "chunk": i}
+                        "improvement_stream", {"pattern": pattern.pattern_name, "chunk": i}
                     )
                     metrics["messages"] += 1
 
-            except Exception as e:
+            except Exception:
                 metrics["errors"] += 1
 
         # Assert
@@ -349,6 +347,7 @@ class TestStress:
 # INTEGRATION TEST - 24-Hour Stability
 # ============================================================================
 
+
 class Test24HourStability:
     """Test 24-hour continuous operation (simulated)."""
 
@@ -364,13 +363,10 @@ class Test24HourStability:
         Events: ~100 events representing 24 hours of activity
         """
         # Arrange
+        from tests.trinity_protocol.test_budget_enforcer import BudgetConfig, MockBudgetEnforcer
         from tests.trinity_protocol.test_transcription_service import MockTranscriptionService
-        from trinity_protocol.pattern_detector import PatternDetector
         from trinity_protocol.message_bus import MessageBus
-        from tests.trinity_protocol.test_budget_enforcer import (
-            MockBudgetEnforcer,
-            BudgetConfig
-        )
+        from trinity_protocol.pattern_detector import PatternDetector
 
         # Initialize full stack
         transcription_service = MockTranscriptionService()
@@ -390,7 +386,7 @@ class Test24HourStability:
             total_actions_triggered=0,
             average_latency_ms=0.0,
             cost_usd=0.0,
-            uptime_hours=24.0
+            uptime_hours=24.0,
         )
 
         # Simulate 24 hours of events (compressed)
@@ -424,8 +420,8 @@ class Test24HourStability:
                             "pattern_type": pattern.pattern_type,
                             "pattern_name": pattern.pattern_name,
                             "confidence": pattern.confidence,
-                            "event_num": event_num
-                        }
+                            "event_num": event_num,
+                        },
                     )
 
                     # 4. Track cost (simulated)
@@ -434,7 +430,7 @@ class Test24HourStability:
                         await budget_enforcer.track_cost(
                             agent="AMBIENT_INTELLIGENCE",
                             cost_usd=cost,
-                            task_id=f"event_{event_num}"
+                            task_id=f"event_{event_num}",
                         )
                         metrics.cost_usd += cost
                     except Exception:
@@ -486,10 +482,9 @@ class Test24HourStability:
         print(f"Budget Remaining: ${budget_status.remaining_usd:.2f}")
         print("=" * 40)
 
-
-# ============================================================================
-# HELPER METHODS
-# ============================================================================
+    # ============================================================================
+    # HELPER METHODS
+    # ============================================================================
 
     def _create_test_audio(self, path: Path, text_content: str) -> None:
         """Create test audio file."""
@@ -497,7 +492,7 @@ class Test24HourStability:
         duration = 1.0
         samples = np.zeros(int(sample_rate * duration), dtype=np.int16)
 
-        with wave.open(str(path), 'wb') as wav_file:
+        with wave.open(str(path), "wb") as wav_file:
             wav_file.setnchannels(1)
             wav_file.setsampwidth(2)
             wav_file.setframerate(sample_rate)
@@ -508,7 +503,7 @@ class Test24HourStability:
         sample_rate = 16000
         samples = np.zeros(int(sample_rate * duration), dtype=np.int16)
 
-        with wave.open(str(path), 'wb') as wav_file:
+        with wave.open(str(path), "wb") as wav_file:
             wav_file.setnchannels(1)
             wav_file.setsampwidth(2)
             wav_file.setframerate(sample_rate)
@@ -519,7 +514,7 @@ class Test24HourStability:
         sample_rate = 16000
         noise = np.random.randint(-1000, 1000, int(sample_rate * duration), dtype=np.int16)
 
-        with wave.open(str(path), 'wb') as wav_file:
+        with wave.open(str(path), "wb") as wav_file:
             wav_file.setnchannels(1)
             wav_file.setsampwidth(2)
             wav_file.setframerate(sample_rate)
@@ -537,7 +532,7 @@ class Test24HourStability:
             "I need a new feature for exports",
             "This process is very tedious",
             "Similar code found in three files",
-            "Module has no test coverage"
+            "Module has no test coverage",
         ]
         return events[event_num % len(events)]
 

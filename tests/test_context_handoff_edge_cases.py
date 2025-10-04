@@ -1,9 +1,5 @@
-import os
-import json
-from pathlib import Path
 import builtins
-
-import pytest
+import os
 
 from tools.context_handoff import ContextMessageHandoff
 
@@ -11,7 +7,7 @@ from tools.context_handoff import ContextMessageHandoff
 def test_context_handoff_permission_error_on_persist(monkeypatch):
     original_open = builtins.open
 
-    def guarded_open(path, mode='r', *args, **kwargs):
+    def guarded_open(path, mode="r", *args, **kwargs):
         if isinstance(path, (str, os.PathLike)) and "logs/handoffs/" in str(path) and "w" in mode:
             raise PermissionError("permission denied")
         return original_open(path, mode, *args, **kwargs)

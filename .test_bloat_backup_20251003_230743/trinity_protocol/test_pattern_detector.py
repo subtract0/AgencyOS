@@ -17,20 +17,18 @@ Constitutional Compliance:
 - Article IV: Learning pattern tracking verified
 """
 
-import pytest
-from typing import Dict, Any, Optional
-from shared.pattern_detector import (
-    PatternDetector,
-    PatternMatch,
-    PATTERN_HEURISTICS,
-    BASE_CONFIDENCE,
-    ADAPTIVE_THRESHOLDS
-)
 
+import pytest
+
+from shared.pattern_detector import (
+    BASE_CONFIDENCE,
+    PatternDetector,
+)
 
 # ============================================================================
 # FIXTURES
 # ============================================================================
+
 
 @pytest.fixture
 def detector():
@@ -53,6 +51,7 @@ def high_threshold_detector():
 # ============================================================================
 # NORMAL OPERATION TESTS - Happy Path
 # ============================================================================
+
 
 class TestNormalOperation:
     """Test standard pattern detection for all pattern types."""
@@ -258,6 +257,7 @@ class TestNormalOperation:
 # EDGE CASE TESTS - Boundary Conditions
 # ============================================================================
 
+
 class TestEdgeCases:
     """Test boundary conditions and edge cases."""
 
@@ -368,6 +368,7 @@ class TestEdgeCases:
 # CORNER CASE TESTS - Unusual Combinations
 # ============================================================================
 
+
 class TestCornerCases:
     """Test unusual combinations and complex scenarios."""
 
@@ -418,7 +419,7 @@ class TestCornerCases:
         metadata = {
             "error_type": "ModuleNotFoundError",
             "file": "agency/core/module.py",
-            "priority": "CRITICAL"
+            "priority": "CRITICAL",
         }
 
         # Act
@@ -448,6 +449,7 @@ class TestCornerCases:
 # ============================================================================
 # ERROR CONDITION TESTS - Failure Scenarios
 # ============================================================================
+
 
 class TestErrorConditions:
     """Test error handling and invalid inputs."""
@@ -484,7 +486,7 @@ class TestErrorConditions:
         metadata = {
             "error_type": None,
             "file": 123,  # Wrong type
-            "priority": "INVALID"
+            "priority": "INVALID",
         }
 
         # Act
@@ -520,6 +522,7 @@ class TestErrorConditions:
 # ============================================================================
 # SECURITY TESTS - Input Validation
 # ============================================================================
+
 
 class TestSecurity:
     """Test security and input validation."""
@@ -579,6 +582,7 @@ class TestSecurity:
 # STRESS TESTS - Performance Under Load
 # ============================================================================
 
+
 class TestStress:
     """Test performance with large inputs."""
 
@@ -617,7 +621,7 @@ class TestStress:
             ("Dict[Any, Any]", "constitutional_violation"),
             ("similar code duplicate", "code_duplication"),
             ("no tests untested", "missing_tests"),
-            ("Any type missing type hints", "type_safety")
+            ("Any type missing type hints", "type_safety"),
         ]
 
         # Act & Assert
@@ -630,6 +634,7 @@ class TestStress:
 # ============================================================================
 # ACCESSIBILITY TESTS - API Usability
 # ============================================================================
+
 
 class TestAccessibility:
     """Test API usability and developer experience."""
@@ -690,6 +695,7 @@ class TestAccessibility:
 # ============================================================================
 # REGRESSION TESTS - Pattern History Tracking
 # ============================================================================
+
 
 class TestRegression:
     """Test pattern history tracking and adaptive thresholds."""
@@ -797,6 +803,7 @@ class TestRegression:
 # ============================================================================
 # YIELD TESTS - Output Validation
 # ============================================================================
+
 
 class TestYield:
     """Test confidence scoring accuracy and output correctness."""
@@ -910,6 +917,7 @@ class TestYield:
 # ============================================================================
 # COMPREHENSIVE INTEGRATION TEST
 # ============================================================================
+
 
 class TestComprehensiveIntegration:
     """End-to-end integration test covering full workflow."""

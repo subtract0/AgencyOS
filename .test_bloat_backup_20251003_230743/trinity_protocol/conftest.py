@@ -4,20 +4,18 @@ Shared fixtures for Trinity Protocol tests.
 Provides mock dependencies for ARCHITECT and EXECUTOR agents.
 """
 
-import asyncio
 import tempfile
 from pathlib import Path
-from typing import Any, Dict, List, AsyncIterator
-from shared.type_definitions import JSONValue
-from unittest.mock import AsyncMock, Mock, MagicMock
+from unittest.mock import AsyncMock, Mock
 
 import pytest
 
-from trinity_protocol.core import ArchitectAgent, ExecutorAgent
+from shared.agent_context import AgentContext
+from shared.cost_tracker import CostTracker
 from shared.message_bus import MessageBus
 from shared.persistent_store import PersistentStore
-from shared.cost_tracker import CostTracker
-from shared.agent_context import AgentContext
+from shared.type_definitions import JSONValue
+from trinity_protocol.core import ArchitectAgent, ExecutorAgent
 
 
 @pytest.fixture
@@ -51,12 +49,13 @@ def message_bus() -> MessageBus:
         results = []
         for queue_msgs in queues.values():
             for msg in queue_msgs:
-                if msg.get('correlation_id') == correlation_id:
+                if msg.get("correlation_id") == correlation_id:
                     # Convert dict to object with attributes
                     class TaskMessage:
                         def __init__(self, data):
                             for k, v in data.items():
                                 setattr(self, k, v)
+
                     results.append(TaskMessage(msg))
         return results
 
@@ -104,7 +103,7 @@ def architect_agent(message_bus, pattern_store, temp_workspace) -> ArchitectAgen
         message_bus=message_bus,
         pattern_store=pattern_store,
         workspace_dir=str(temp_workspace / "plan_workspace"),
-        min_complexity=0.7
+        min_complexity=0.7,
     )
     return agent
 
@@ -127,7 +126,7 @@ def executor_agent(message_bus, cost_tracker, mock_agent_context, temp_workspace
         cost_tracker=cost_tracker,
         agent_context=mock_agent_context,
         plans_dir=str(temp_workspace / "executor_plans"),
-        verification_timeout=60
+        verification_timeout=60,
     )
     return agent
 
@@ -139,13 +138,10 @@ def sample_improvement_signal() -> JSONValue:
         "correlation_id": "test-correlation-123",
         "priority": "HIGH",
         "pattern": "type_error",
-        "data": {
-            "keywords": ["Dict[Any, Any]", "type_violation"],
-            "files": ["shared/models.py"]
-        },
+        "data": {"keywords": ["Dict[Any, Any]", "type_violation"], "files": ["shared/models.py"]},
         "evidence_count": 3,
         "confidence": 0.85,
-        "timestamp": "2025-10-01T12:00:00Z"
+        "timestamp": "2025-10-01T12:00:00Z",
     }
 
 
@@ -161,44 +157,44 @@ def sample_execution_task() -> JSONValue:
         "spec": {
             "description": "Fix type error in shared/models.py",
             "files": ["shared/models.py"],
-            "requirements": ["Replace Dict[Any, Any] with Pydantic models"]
+            "requirements": ["Replace Dict[Any, Any] with Pydantic models"],
         },
         "dependencies": [],
-        "timestamp": "2025-10-01T12:00:00Z"
+        "timestamp": "2025-10-01T12:00:00Z",
     }
 
 
 @pytest.fixture
-def sample_pattern_results() -> List[JSONValue]:
+def sample_pattern_results() -> list[JSONValue]:
     """Sample historical pattern results."""
     return [
         {
             "pattern": "type_violation",
             "solution": "Use Pydantic models",
             "confidence": 0.9,
-            "evidence_count": 10
+            "evidence_count": 10,
         },
         {
             "pattern": "constitutional_violation",
             "solution": "Apply Article I principles",
             "confidence": 0.85,
-            "evidence_count": 5
-        }
+            "evidence_count": 5,
+        },
     ]
 
 
 @pytest.fixture
-def sample_adr_results() -> List[JSONValue]:
+def sample_adr_results() -> list[JSONValue]:
     """Sample ADR query results."""
     return [
         {
             "adr_number": "001",
             "title": "Complete Context Before Action",
-            "content": "All agents must gather complete context before proceeding."
+            "content": "All agents must gather complete context before proceeding.",
         },
         {
             "adr_number": "002",
             "title": "100% Test Success Requirement",
-            "content": "Main branch must maintain 100% test pass rate."
-        }
+            "content": "Main branch must maintain 100% test pass rate.",
+        },
     ]

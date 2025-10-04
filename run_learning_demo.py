@@ -3,12 +3,17 @@
 Run Learning Demo - See Intelligence Amplification in Action
 """
 
-import sys
 import os
+import sys
+
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 
 # Import the demo function without the interactive prompt
-from demo_learning_in_action import demonstrate_real_time_learning, demonstrate_learning_mechanics, explain_learning_visualization
+from demo_learning_in_action import (
+    demonstrate_learning_mechanics,
+    demonstrate_real_time_learning,
+    explain_learning_visualization,
+)
 
 if __name__ == "__main__":
     print("🧠 LEARNING IN ACTION - Real-Time Intelligence Amplification")

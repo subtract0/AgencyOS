@@ -5,15 +5,17 @@ Tests error propagation, type safety, and improved error handling
 in the agency_memory module.
 """
 
-import pytest
 from unittest.mock import Mock, patch
-from datetime import datetime
+
+import pytest
+
 from agency_memory.enhanced_memory_store_result import (
-    EnhancedMemoryStoreResult, MemoryStoreError,
-    create_enhanced_memory_store_result
+    EnhancedMemoryStoreResult,
+    MemoryStoreError,
+    create_enhanced_memory_store_result,
 )
-from shared.type_definitions.result import Ok, Err
 from shared.models.memory import MemorySearchResult
+from shared.type_definitions.result import Err, Ok
 
 
 class TestEnhancedMemoryStoreResultBasics:
@@ -26,8 +28,8 @@ class TestEnhancedMemoryStoreResultBasics:
     def test_initialization(self):
         """Test store initialization."""
         assert self.store is not None
-        assert hasattr(self.store, '_memories')
-        assert hasattr(self.store, 'vector_store')
+        assert hasattr(self.store, "_memories")
+        assert hasattr(self.store, "vector_store")
 
     def test_factory_function(self):
         """Test factory function."""
@@ -73,7 +75,7 @@ class TestStoreResultMethod:
         assert result.is_err()
         assert MemoryStoreError.INVALID_CONTENT in result.unwrap_err()
 
-    @patch('agency_memory.enhanced_memory_store_result.logger')
+    @patch("agency_memory.enhanced_memory_store_result.logger")
     def test_store_result_vector_store_failure_logs_warning(self, mock_logger):
         """Test that vector store failures are logged but don't fail the operation."""
         # Mock vector store to raise exception
@@ -147,7 +149,7 @@ class TestSemanticSearchResultMethod:
 
     def test_semantic_search_result_success(self):
         """Test successful semantic search."""
-        with patch.object(self.store, '_perform_vector_search') as mock_search:
+        with patch.object(self.store, "_perform_vector_search") as mock_search:
             mock_search.return_value = Ok([{"key": "key1", "content": "cats"}])
 
             result = self.store.semantic_search_result("pets", top_k=5)
@@ -199,7 +201,7 @@ class TestSemanticSearchResultMethod:
 
     def test_semantic_search_result_vector_search_failure(self):
         """Test semantic search when vector search fails."""
-        with patch.object(self.store, '_perform_vector_search') as mock_search:
+        with patch.object(self.store, "_perform_vector_search") as mock_search:
             mock_search.return_value = Err("Vector search failed")
 
             result = self.store.semantic_search_result("test")
@@ -238,7 +240,7 @@ class TestCombinedSearchResultMethod:
 
     def test_combined_search_result_query_only(self):
         """Test combined search with query only."""
-        with patch.object(self.store, 'semantic_search_result') as mock_search:
+        with patch.object(self.store, "semantic_search_result") as mock_search:
             mock_search.return_value = Ok([{"key": "key1"}])
 
             result = self.store.combined_search_result(query="pets")
@@ -247,7 +249,7 @@ class TestCombinedSearchResultMethod:
 
     def test_combined_search_result_tags_and_query(self):
         """Test combined search with both tags and query."""
-        with patch.object(self.store, '_perform_vector_search_on_subset') as mock_search:
+        with patch.object(self.store, "_perform_vector_search_on_subset") as mock_search:
             mock_search.return_value = Ok([{"key": "key1"}])
 
             result = self.store.combined_search_result(tags=["animal"], query="cats")
@@ -256,7 +258,7 @@ class TestCombinedSearchResultMethod:
 
     def test_combined_search_result_tags_search_failure(self):
         """Test combined search when tag search fails."""
-        with patch.object(self.store, 'search_result') as mock_search:
+        with patch.object(self.store, "search_result") as mock_search:
             mock_search.return_value = Err("Tag search failed")
 
             result = self.store.combined_search_result(tags=["animal"], query="cats")
@@ -271,21 +273,21 @@ class TestLegacyInterfaceCompatibility:
         """Set up test fixtures."""
         self.store = EnhancedMemoryStoreResult()
 
-    @patch('agency_memory.enhanced_memory_store_result.logger')
+    @patch("agency_memory.enhanced_memory_store_result.logger")
     def test_legacy_store_success(self, mock_logger):
         """Test legacy store method with success."""
         self.store.store("test_key", "content", ["tag1"])
         assert "test_key" in self.store._memories
         mock_logger.error.assert_not_called()
 
-    @patch('agency_memory.enhanced_memory_store_result.logger')
+    @patch("agency_memory.enhanced_memory_store_result.logger")
     def test_legacy_store_failure(self, mock_logger):
         """Test legacy store method with failure."""
         self.store.store("", "content", ["tag1"])  # Invalid key
         mock_logger.error.assert_called_once()
         assert "Store operation failed" in str(mock_logger.error.call_args)
 
-    @patch('agency_memory.enhanced_memory_store_result.logger')
+    @patch("agency_memory.enhanced_memory_store_result.logger")
     def test_legacy_search_success(self, mock_logger):
         """Test legacy search method with success."""
         self.store.store("key1", "content", ["tag1"])
@@ -294,7 +296,7 @@ class TestLegacyInterfaceCompatibility:
         assert result.total_count == 1
         mock_logger.error.assert_not_called()
 
-    @patch('agency_memory.enhanced_memory_store_result.logger')
+    @patch("agency_memory.enhanced_memory_store_result.logger")
     def test_legacy_search_failure(self, mock_logger):
         """Test legacy search method with failure."""
         result = self.store.search([])  # Empty tags
@@ -304,7 +306,7 @@ class TestLegacyInterfaceCompatibility:
 
     def test_legacy_semantic_search_success(self):
         """Test legacy semantic search method with success."""
-        with patch.object(self.store, 'semantic_search_result') as mock_search:
+        with patch.object(self.store, "semantic_search_result") as mock_search:
             mock_search.return_value = Ok([{"key": "key1"}])
 
             result = self.store.semantic_search("test")
@@ -312,7 +314,7 @@ class TestLegacyInterfaceCompatibility:
 
     def test_legacy_semantic_search_failure(self):
         """Test legacy semantic search method with failure."""
-        with patch.object(self.store, 'semantic_search_result') as mock_search:
+        with patch.object(self.store, "semantic_search_result") as mock_search:
             mock_search.return_value = Err("Search failed")
 
             result = self.store.semantic_search("test")
@@ -339,7 +341,7 @@ class TestPrivateHelperMethods:
         """Test successful vector store addition."""
         memory_record = {"key": "test", "content": "test"}
 
-        with patch.object(self.store.vector_store, 'add_memory') as mock_add:
+        with patch.object(self.store.vector_store, "add_memory") as mock_add:
             result = self.store._add_to_vector_store("key", memory_record)
             assert result.is_ok()
             mock_add.assert_called_once_with("key", memory_record)
@@ -348,7 +350,7 @@ class TestPrivateHelperMethods:
         """Test vector store addition failure."""
         memory_record = {"key": "test", "content": "test"}
 
-        with patch.object(self.store.vector_store, 'add_memory') as mock_add:
+        with patch.object(self.store.vector_store, "add_memory") as mock_add:
             mock_add.side_effect = Exception("Vector store error")
 
             result = self.store._add_to_vector_store("key", memory_record)

@@ -13,8 +13,9 @@ NECESSARY Pattern Coverage:
 - Yield: Fast execution (<100ms per test)
 """
 
+from unittest.mock import MagicMock, patch
+
 import pytest
-from unittest.mock import Mock, patch, MagicMock
 from pydantic import ValidationError
 
 from tools.git import Git
@@ -224,17 +225,13 @@ class TestPathTraversalBlocked:
 class TestSafeCommandConstruction:
     """Test that commands are constructed safely (NECESSARY: Comprehensive)."""
 
-    @patch('dulwich.porcelain.open_repo')
-    @patch('dulwich.porcelain.status')
+    @patch("dulwich.porcelain.open_repo")
+    @patch("dulwich.porcelain.status")
     def test_status_command_uses_dulwich_safely(self, mock_status, mock_open_repo):
         # Arrange
         mock_repo = MagicMock()
         mock_open_repo.return_value = mock_repo
-        mock_status.return_value = MagicMock(
-            untracked=[],
-            unstaged=[],
-            staged={}
-        )
+        mock_status.return_value = MagicMock(untracked=[], unstaged=[], staged={})
 
         tool = Git(cmd="status")
 
@@ -246,8 +243,8 @@ class TestSafeCommandConstruction:
         mock_status.assert_called_once_with(mock_repo)
         assert "(clean)" in result
 
-    @patch('dulwich.porcelain.open_repo')
-    @patch('dulwich.porcelain.log')
+    @patch("dulwich.porcelain.open_repo")
+    @patch("dulwich.porcelain.log")
     def test_log_command_uses_dulwich_safely(self, mock_log, mock_open_repo):
         # Arrange
         mock_repo = MagicMock()
@@ -474,7 +471,7 @@ class TestUnsafeCharactersInRefBlocked:
 class TestValidationIntegrationWithRun:
     """Test that validation integrates correctly with run() method (NECESSARY: Integration)."""
 
-    @patch('dulwich.porcelain.open_repo')
+    @patch("dulwich.porcelain.open_repo")
     def test_invalid_command_never_reaches_dulwich(self, mock_open_repo):
         # Arrange & Act & Assert
         with pytest.raises(ValidationError):
@@ -483,7 +480,7 @@ class TestValidationIntegrationWithRun:
         # dulwich should never be called
         mock_open_repo.assert_not_called()
 
-    @patch('dulwich.porcelain.open_repo')
+    @patch("dulwich.porcelain.open_repo")
     def test_injection_attempt_never_reaches_dulwich(self, mock_open_repo):
         # Arrange & Act & Assert
         with pytest.raises(ValidationError):
@@ -492,17 +489,13 @@ class TestValidationIntegrationWithRun:
         # dulwich should never be called
         mock_open_repo.assert_not_called()
 
-    @patch('dulwich.porcelain.open_repo')
-    @patch('dulwich.porcelain.status')
+    @patch("dulwich.porcelain.open_repo")
+    @patch("dulwich.porcelain.status")
     def test_valid_command_reaches_dulwich(self, mock_status, mock_open_repo):
         # Arrange
         mock_repo = MagicMock()
         mock_open_repo.return_value = mock_repo
-        mock_status.return_value = MagicMock(
-            untracked=[],
-            unstaged=[],
-            staged={}
-        )
+        mock_status.return_value = MagicMock(untracked=[], unstaged=[], staged={})
 
         tool = Git(cmd="status")
 
@@ -532,6 +525,7 @@ class TestPerformanceRequirements:
     def test_multiple_validations_are_fast(self):
         # Arrange
         import time
+
         refs = [
             "main",
             "develop",
@@ -583,14 +577,15 @@ class TestDulwichLibraryNotAvailable:
 
         # Act - Mock the import to raise an exception (but allow warnings import)
         import warnings as real_warnings
+
         def mock_import(name, *args, **kwargs):
-            if name == 'warnings':
+            if name == "warnings":
                 return real_warnings
-            if name == 'dulwich' or name.startswith('dulwich.'):
+            if name == "dulwich" or name.startswith("dulwich."):
                 raise ImportError("No module named 'dulwich'")
             return __import__(name, *args, **kwargs)
 
-        with patch('builtins.__import__', side_effect=mock_import):
+        with patch("builtins.__import__", side_effect=mock_import):
             result = tool.run()
 
         # Assert - Should return helpful error message
@@ -601,8 +596,8 @@ class TestDulwichLibraryNotAvailable:
 class TestOutputTruncation:
     """Test that large outputs are properly truncated (NECESSARY: Comprehensive)."""
 
-    @patch('dulwich.porcelain.open_repo')
-    @patch('dulwich.porcelain.log')
+    @patch("dulwich.porcelain.open_repo")
+    @patch("dulwich.porcelain.log")
     def test_output_truncated_at_max_lines(self, mock_log, mock_open_repo):
         # Arrange
         mock_repo = MagicMock()
@@ -623,7 +618,7 @@ class TestOutputTruncation:
         result = tool.run()
 
         # Assert
-        lines = result.split('\n')
+        lines = result.split("\n")
         # Should be truncated to 10 lines + "(truncated)" marker
         assert len(lines) <= 11  # 10 lines + truncation marker
         assert "(truncated)" in result or len(lines) <= 10

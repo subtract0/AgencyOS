@@ -118,9 +118,7 @@ def load_audit_training_data() -> list[dict[str, Any]]:
                 "qt_score": 0.0,
                 "recommendations": ["Add comprehensive test coverage"],
             },
-            "known_violations": [
-                {"severity": "constitutional", "type": "missing_tests"}
-            ],
+            "known_violations": [{"severity": "constitutional", "type": "missing_tests"}],
         }
     ]
 
@@ -348,9 +346,7 @@ def compare_modules(
         if key != "total_examples" and key != "successful_runs":
             if original_results[key] > 0:
                 improvement = (
-                    (optimized_results[key] - original_results[key])
-                    / original_results[key]
-                    * 100
+                    (optimized_results[key] - original_results[key]) / original_results[key] * 100
                 )
                 improvements[f"{key}_improvement_pct"] = improvement
 

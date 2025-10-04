@@ -14,10 +14,11 @@ Constitutional Compliance:
 
 import random
 import time
+from collections.abc import Callable
 from contextlib import contextmanager
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from enum import Enum
-from typing import Any, Callable, Dict, List, Optional, TypeVar
+from typing import Any, TypeVar
 
 from pydantic import BaseModel, Field
 
@@ -39,11 +40,11 @@ class ChaosType(str, Enum):
 class ChaosConfig(BaseModel):
     """Configuration for chaos testing."""
 
-    chaos_types: List[ChaosType]
+    chaos_types: list[ChaosType]
     failure_rate: float = Field(default=0.2, ge=0.0, le=1.0)
-    seed: Optional[int] = None
+    seed: int | None = None
     duration_seconds: int = Field(default=60, gt=0)
-    target_functions: List[str] = Field(default_factory=list)
+    target_functions: list[str] = Field(default_factory=list)
     enabled: bool = True
 
 
@@ -55,7 +56,7 @@ class ChaosInjection(BaseModel):
     target_function: str
     failure_injected: str
     system_recovered: bool
-    error_message: Optional[str] = None
+    error_message: str | None = None
 
 
 class ChaosResult(BaseModel):
@@ -66,7 +67,7 @@ class ChaosResult(BaseModel):
     failed_recoveries: int
     crash_count: int
     recovery_rate: float
-    injections: List[ChaosInjection]
+    injections: list[ChaosInjection]
     duration_seconds: float
 
 
@@ -76,8 +77,8 @@ class ChaosEngine:
     def __init__(self, config: ChaosConfig):
         """Initialize chaos engine with configuration."""
         self.config = config
-        self.injections: List[ChaosInjection] = []
-        self.original_functions: Dict[str, Any] = {}
+        self.injections: list[ChaosInjection] = []
+        self.original_functions: dict[str, Any] = {}
         self.crash_count = 0
 
         if config.seed is not None:
@@ -95,12 +96,12 @@ class ChaosEngine:
         target: str,
         failure: str,
         recovered: bool,
-        error: Optional[str] = None,
+        error: str | None = None,
     ) -> None:
         """Record a chaos injection event."""
         injection = ChaosInjection(
             chaos_type=chaos_type,
-            timestamp=datetime.now(timezone.utc).isoformat(),
+            timestamp=datetime.now(UTC).isoformat(),
             target_function=target,
             failure_injected=failure,
             system_recovered=recovered,
@@ -121,18 +122,14 @@ class ChaosEngine:
             def chaotic_get(*args: Any, **kwargs: Any) -> Any:
                 if self.should_inject_failure():
                     error = "Chaos: Network connection failed"
-                    self.record_injection(
-                        ChaosType.NETWORK, "requests.get", error, True
-                    )
+                    self.record_injection(ChaosType.NETWORK, "requests.get", error, True)
                     raise requests.ConnectionError(error)
                 return original_get(*args, **kwargs)
 
             def chaotic_post(*args: Any, **kwargs: Any) -> Any:
                 if self.should_inject_failure():
                     error = "Chaos: Network timeout"
-                    self.record_injection(
-                        ChaosType.NETWORK, "requests.post", error, True
-                    )
+                    self.record_injection(ChaosType.NETWORK, "requests.post", error, True)
                     raise requests.Timeout(error)
                 return original_post(*args, **kwargs)
 
@@ -153,10 +150,8 @@ class ChaosEngine:
         def chaotic_open(file: Any, mode: str = "r", *args: Any, **kwargs: Any) -> Any:
             if self.should_inject_failure() and "w" in mode:
                 error = "Chaos: Disk write failure"
-                self.record_injection(
-                    ChaosType.DISK_IO, "builtins.open", error, True
-                )
-                raise IOError(error)
+                self.record_injection(ChaosType.DISK_IO, "builtins.open", error, True)
+                raise OSError(error)
             return original_open(file, mode, *args, **kwargs)
 
         builtins.open = chaotic_open  # type: ignore
@@ -193,9 +188,7 @@ class ChaosEngine:
         def chaotic_list(*args: Any, **kwargs: Any) -> Any:
             if self.should_inject_failure():
                 error = "Chaos: Memory allocation failed"
-                self.record_injection(
-                    ChaosType.MEMORY, "builtins.list", error, True
-                )
+                self.record_injection(ChaosType.MEMORY, "builtins.list", error, True)
                 raise MemoryError(error)
             return original_list(*args, **kwargs)
 
@@ -211,9 +204,7 @@ class ChaosEngine:
         def chaotic_run(*args: Any, **kwargs: Any) -> Any:
             if self.should_inject_failure():
                 error = "Chaos: Process execution failed"
-                self.record_injection(
-                    ChaosType.PROCESS, "subprocess.run", error, True
-                )
+                self.record_injection(ChaosType.PROCESS, "subprocess.run", error, True)
                 raise subprocess.CalledProcessError(1, args[0], error.encode())
             return original_run(*args, **kwargs)
 
@@ -259,9 +250,7 @@ class ChaosEngine:
 
         self.original_functions.clear()
 
-    def run_chaos_test(
-        self, test_function: Callable[[], T]
-    ) -> Result[ChaosResult, str]:
+    def run_chaos_test(self, test_function: Callable[[], T]) -> Result[ChaosResult, str]:
         """Run test with chaos injections enabled."""
         start_time = time.time()
 
@@ -320,7 +309,7 @@ def chaos_context(config: ChaosConfig):
         engine.cleanup_patches()
 
 
-def chaos(chaos_types: List[ChaosType], failure_rate: float = 0.2):
+def chaos(chaos_types: list[ChaosType], failure_rate: float = 0.2):
     """Decorator to run test with chaos injections."""
 
     def decorator(test_func: Callable) -> Callable:

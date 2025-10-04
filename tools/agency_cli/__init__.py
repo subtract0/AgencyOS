@@ -28,12 +28,16 @@ Usage:
 """
 
 from .dashboard import main as dashboard_main
-from .tail import main as tail_main
 from .nav import (
-    list_dir, print_tree, grep_search,
-    find_files, extract_symbols, find_references,
-    open_file_segment
+    extract_symbols,
+    find_files,
+    find_references,
+    grep_search,
+    list_dir,
+    open_file_segment,
+    print_tree,
 )
+from .tail import main as tail_main
 
 __all__ = [
     "dashboard_main",
@@ -44,5 +48,5 @@ __all__ = [
     "find_files",
     "extract_symbols",
     "find_references",
-    "open_file_segment"
+    "open_file_segment",
 ]

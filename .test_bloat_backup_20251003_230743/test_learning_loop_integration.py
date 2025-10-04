@@ -13,47 +13,40 @@ Constitutional Compliance:
 - Article V: Spec-driven test implementation
 """
 
-import pytest
-import asyncio
-import tempfile
-import shutil
 import os
-from datetime import datetime, timedelta
-from pathlib import Path
-from typing import Dict, Any, List, cast
-from shared.type_definitions.json import JSONValue
-from shared.models.core import ToolCall
-from unittest.mock import Mock, patch, AsyncMock
+import shutil
+import tempfile
+from datetime import datetime
+from typing import cast
 
-# Test framework imports
-from tests.conftest import temp_workspace
+import pytest
 
 # Core integration imports
 from core import (
-    get_core,
-    UnifiedCore,
+    ENABLE_UNIFIED_CORE,
     LEARNING_LOOP_AVAILABLE,
+    get_core,
     get_learning_loop,
-    ENABLE_UNIFIED_CORE
 )
+from shared.models.core import ToolCall
+from shared.type_definitions.json import JSONValue
+
+# Test framework imports
 
 # Learning loop imports (conditional)
 if LEARNING_LOOP_AVAILABLE:
     from learning_loop import (
         LearningLoop,
-        EventDetectionSystem,
-        PatternExtractor,
-        FailureLearner,
-        EventRouter,
-        HealingTrigger,
-        PatternMatcher
     )
     from learning_loop.event_detection import ErrorEvent, FileEvent
     from learning_loop.pattern_extraction import Operation
 
 
 @pytest.mark.integration
-@pytest.mark.skipif(not LEARNING_LOOP_AVAILABLE and os.getenv("FORCE_RUN_ALL_TESTS", "") != "1", reason="Learning loop not available")
+@pytest.mark.skipif(
+    not LEARNING_LOOP_AVAILABLE and os.getenv("FORCE_RUN_ALL_TESTS", "") != "1",
+    reason="Learning loop not available",
+)
 class TestLearningLoopIntegration:
     """Integration tests for learning loop system."""
 
@@ -107,10 +100,10 @@ learning:
         # Verify learning loop is available and integrated
         if LEARNING_LOOP_AVAILABLE:
             assert core.learning_loop is not None
-            assert hasattr(core, 'start_learning_loop')
-            assert hasattr(core, 'stop_learning_loop')
-            assert hasattr(core, 'get_learning_metrics')
-            assert hasattr(core, 'learn_from_operation_result')
+            assert hasattr(core, "start_learning_loop")
+            assert hasattr(core, "stop_learning_loop")
+            assert hasattr(core, "get_learning_metrics")
+            assert hasattr(core, "learn_from_operation_result")
         else:
             assert core.learning_loop is None
 
@@ -129,10 +122,10 @@ learning:
         assert learning_loop.pattern_matcher is not None
 
         # Verify configuration loaded
-        config = cast(Dict[str, JSONValue], learning_loop.config)
-        learning_config = cast(Dict[str, JSONValue], config["learning"])
+        config = cast(dict[str, JSONValue], learning_loop.config)
+        learning_config = cast(dict[str, JSONValue], config["learning"])
         assert cast(bool, learning_config["enabled"]) is True
-        storage_config = cast(Dict[str, JSONValue], learning_config["storage"])
+        storage_config = cast(dict[str, JSONValue], learning_config["storage"])
         assert cast(str, storage_config["backend"]) == "memory"
 
     def test_learning_loop_start_stop_cycle(self) -> None:
@@ -193,16 +186,20 @@ learning:
             tool_calls=[
                 ToolCall(
                     tool_name="Edit",
-                    parameters={"file_path": "test_file.py", "old_string": "old", "new_string": "new"},
+                    parameters={
+                        "file_path": "test_file.py",
+                        "old_string": "old",
+                        "new_string": "new",
+                    },
                     result=None,
                     success=True,
                     error=None,
-                    duration_ms=None
+                    duration_ms=None,
                 )
             ],
             initial_error="ImportError: Module not found",
-            final_state=cast(Dict[str, JSONValue], {"test_results": {"passed": True}}),
-            duration_seconds=5.0
+            final_state=cast(dict[str, JSONValue], {"test_results": {"passed": True}}),
+            duration_seconds=5.0,
         )
 
         # Verify operation was learned
@@ -217,16 +214,23 @@ learning:
             tool_calls=[
                 ToolCall(
                     tool_name="Edit",
-                    parameters={"file_path": "test_file.py", "old_string": "bad", "new_string": "worse"},
+                    parameters={
+                        "file_path": "test_file.py",
+                        "old_string": "bad",
+                        "new_string": "worse",
+                    },
                     result=None,
                     success=True,
                     error=None,
-                    duration_ms=None
+                    duration_ms=None,
                 )
             ],
             initial_error="SyntaxError: Invalid syntax",
-            final_state=cast(Dict[str, JSONValue], {"test_results": {"passed": False, "failures": ["test_something"]}}),
-            duration_seconds=3.0
+            final_state=cast(
+                dict[str, JSONValue],
+                {"test_results": {"passed": False, "failures": ["test_something"]}},
+            ),
+            duration_seconds=3.0,
         )
 
         # Verify failed operation was learned
@@ -249,7 +253,7 @@ learning:
             context="test context",
             source_file="test_file.py",
             line_number=42,
-            metadata={}
+            metadata={},
         )
 
         # Test event handling (this would normally be async)
@@ -276,7 +280,7 @@ learning:
             path="test_file.py",
             change_type="modified",
             file_type="python",
-            metadata={}
+            metadata={},
         )
 
         # Test event handling
@@ -304,22 +308,22 @@ learning:
                 {
                     "tool": "Read",
                     "parameters": {"file_path": "test_file.py"},
-                    "output": "File contents..."
+                    "output": "File contents...",
                 },
                 {
                     "tool": "Edit",
                     "parameters": {
                         "file_path": "test_file.py",
                         "old_string": "# Missing import",
-                        "new_string": "from module import missing_func"
+                        "new_string": "from module import missing_func",
                     },
-                    "output": "File updated successfully"
-                }
+                    "output": "File updated successfully",
+                },
             ],
             final_state={"test_results": {"passed": True}},
             success=True,
             duration_seconds=8.0,
-            timestamp=datetime.now()
+            timestamp=datetime.now(),
         )
 
         # Learn from operation
@@ -350,20 +354,15 @@ learning:
                     "parameters": {
                         "file_path": "test_file.py",
                         "old_string": "x + y",
-                        "new_string": "str(x) + str(y)"  # Wrong fix
+                        "new_string": "str(x) + str(y)",  # Wrong fix
                     },
-                    "output": "File updated"
+                    "output": "File updated",
                 }
             ],
-            final_state={
-                "test_results": {
-                    "passed": False,
-                    "failures": ["test_math_operations"]
-                }
-            },
+            final_state={"test_results": {"passed": False, "failures": ["test_math_operations"]}},
             success=False,
             duration_seconds=4.0,
-            timestamp=datetime.now()
+            timestamp=datetime.now(),
         )
 
         # Learn from failed operation
@@ -433,14 +432,14 @@ learning:
         assert "components" in metrics
 
         # Verify operations metrics structure
-        ops_metrics = cast(Dict[str, JSONValue], metrics["operations"])
+        ops_metrics = cast(dict[str, JSONValue], metrics["operations"])
         assert "total" in ops_metrics
         assert "successful" in ops_metrics
         assert "failed" in ops_metrics
         assert "success_rate" in ops_metrics
 
         # Verify components status
-        components = cast(Dict[str, JSONValue], metrics["components"])
+        components = cast(dict[str, JSONValue], metrics["components"])
         assert "event_detection" in components
         assert "pattern_extraction" in components
         assert "autonomous_triggers" in components
@@ -462,7 +461,7 @@ learning:
             message="Test error message",
             context="test context",
             source_file="test_file.py",
-            metadata={}
+            metadata={},
         )
 
         # First attempt should not be in cooldown
@@ -491,14 +490,14 @@ learning:
                     "parameters": {
                         "file_path": "test.py",
                         "old_string": "import missing",
-                        "new_string": "from package import missing"
-                    }
+                        "new_string": "from package import missing",
+                    },
                 }
             ],
             final_state={"test_results": {"passed": True}},
             success=True,
             duration_seconds=5.0,
-            timestamp=datetime.now()
+            timestamp=datetime.now(),
         )
 
         learning_loop.learn_from_operation(success_operation)
@@ -511,7 +510,7 @@ learning:
             message="No module named 'another_missing'",
             context="import another_missing",
             source_file="another_test.py",
-            metadata={}
+            metadata={},
         )
 
         # Test pattern matching
@@ -539,16 +538,25 @@ learning:
                 operation_id="integration_test",
                 success=True,
                 task_description="Integration test operation",
-                tool_calls=[ToolCall(tool_name="Test", parameters={}, result=None, success=True, error=None, duration_ms=None)],
+                tool_calls=[
+                    ToolCall(
+                        tool_name="Test",
+                        parameters={},
+                        result=None,
+                        success=True,
+                        error=None,
+                        duration_ms=None,
+                    )
+                ],
                 initial_error="IntegrationError: Test error",
-                final_state=cast(Dict[str, JSONValue], {"tests_passing": True}),
-                duration_seconds=1.0
+                final_state=cast(dict[str, JSONValue], {"tests_passing": True}),
+                duration_seconds=1.0,
             )
 
             # Verify learning occurred
             final_metrics = core.get_learning_metrics()
-            final_ops = cast(Dict[str, JSONValue], final_metrics["operations"])
-            initial_ops = cast(Dict[str, JSONValue], initial_metrics["operations"])
+            final_ops = cast(dict[str, JSONValue], final_metrics["operations"])
+            initial_ops = cast(dict[str, JSONValue], initial_metrics["operations"])
             assert cast(int, final_ops["total"]) == cast(int, initial_ops["total"]) + 1
 
         finally:
@@ -563,9 +571,9 @@ learning:
         config = learning_loop.config
 
         # Verify configuration was loaded correctly
-        learning_config = cast(Dict[str, JSONValue], config["learning"])
-        storage_config = cast(Dict[str, JSONValue], learning_config["storage"])
-        thresholds_config = cast(Dict[str, JSONValue], learning_config["thresholds"])
+        learning_config = cast(dict[str, JSONValue], config["learning"])
+        storage_config = cast(dict[str, JSONValue], learning_config["storage"])
+        thresholds_config = cast(dict[str, JSONValue], learning_config["thresholds"])
         assert learning_config["enabled"] is True
         assert storage_config["backend"] == "memory"
         assert thresholds_config["cooldown_minutes"] == 0.1
@@ -575,8 +583,8 @@ learning:
         default_config = learning_loop_default.config
 
         # Should have default values
-        default_learning = cast(Dict[str, JSONValue], default_config["learning"])
-        default_thresholds = cast(Dict[str, JSONValue], default_learning["thresholds"])
+        default_learning = cast(dict[str, JSONValue], default_config["learning"])
+        default_thresholds = cast(dict[str, JSONValue], default_learning["thresholds"])
         assert default_learning["enabled"] is True
         assert default_thresholds["min_pattern_confidence"] == 0.3
 
@@ -607,13 +615,13 @@ learning:
             error_type="TestError",
             message="Test error",
             context="test context",
-            metadata={}
+            metadata={},
         )
 
         response = await event_router.route_event(error_event)
         assert response is not None
-        assert hasattr(response, 'success')
-        assert hasattr(response, 'handler_name')
+        assert hasattr(response, "success")
+        assert hasattr(response, "handler_name")
 
         # Test file event routing
         file_event = FileEvent(
@@ -622,7 +630,7 @@ learning:
             path="test.py",
             change_type="modified",
             file_type="python",
-            metadata={}
+            metadata={},
         )
 
         response = await event_router.route_event(file_event)
@@ -630,7 +638,10 @@ learning:
 
 
 @pytest.mark.integration
-@pytest.mark.skipif(LEARNING_LOOP_AVAILABLE and os.getenv("FORCE_RUN_ALL_TESTS", "") != "1", reason="Testing when learning loop is not available")
+@pytest.mark.skipif(
+    LEARNING_LOOP_AVAILABLE and os.getenv("FORCE_RUN_ALL_TESTS", "") != "1",
+    reason="Testing when learning loop is not available",
+)
 class TestLearningLoopUnavailable:
     """Test behavior when learning loop is not available."""
 
@@ -642,7 +653,7 @@ class TestLearningLoopUnavailable:
 
             # Methods should handle unavailable learning loop gracefully
             core.start_learning_loop()  # Should not crash
-            core.stop_learning_loop()   # Should not crash
+            core.stop_learning_loop()  # Should not crash
 
             metrics = core.get_learning_metrics()
             assert metrics == {}
@@ -681,17 +692,17 @@ class TestConstitutionalCompliance:
         if LEARNING_LOOP_AVAILABLE:
             learning_loop = LearningLoop("learning_config.yaml")
             # Verify autonomous capabilities exist
-            assert hasattr(learning_loop, 'run_autonomous')
-            assert hasattr(learning_loop.healing_trigger, 'handle_error')
+            assert hasattr(learning_loop, "run_autonomous")
+            assert hasattr(learning_loop.healing_trigger, "handle_error")
 
     def test_article_iv_continuous_learning(self) -> None:
         """Test Article IV: Continuous learning."""
         # Learning loop should implement continuous learning
         if LEARNING_LOOP_AVAILABLE:
             learning_loop = LearningLoop("learning_config.yaml")
-            assert hasattr(learning_loop, 'learn_from_operation')
-            assert hasattr(learning_loop, 'pattern_extractor')
-            assert hasattr(learning_loop, 'failure_learner')
+            assert hasattr(learning_loop, "learn_from_operation")
+            assert hasattr(learning_loop, "pattern_extractor")
+            assert hasattr(learning_loop, "failure_learner")
 
     def test_article_v_spec_driven(self) -> None:
         """Test Article V: Spec-driven development."""

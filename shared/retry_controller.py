@@ -8,13 +8,14 @@ thread-safety, and multiple backoff strategies for handling transient failures.
 import asyncio
 import logging
 import random
-import signal
 import threading
 import time
 from abc import ABC, abstractmethod
-from typing import Any, Callable, Optional, Dict, Union
-from shared.type_definitions.json import JSONValue
+from collections.abc import Callable
 from functools import wraps
+from typing import Any
+
+from shared.type_definitions.json import JSONValue
 
 
 class RetryStrategy(ABC):
@@ -63,7 +64,7 @@ class ExponentialBackoffStrategy(RetryStrategy):
         multiplier: float = 2.0,
         jitter: bool = True,
         max_attempts: int = 3,
-        should_retry_callback: Optional[Callable[[int, Exception], bool]] = None
+        should_retry_callback: Callable[[int, Exception], bool] | None = None,
     ):
         """
         Initialize exponential backoff strategy.
@@ -98,7 +99,7 @@ class ExponentialBackoffStrategy(RetryStrategy):
         if self.initial_delay == 0:
             return 0.0
 
-        delay = self.initial_delay * (self.multiplier ** attempt)
+        delay = self.initial_delay * (self.multiplier**attempt)
         delay = min(delay, self.max_delay)
 
         if self.jitter and delay > 0:
@@ -138,7 +139,7 @@ class LinearBackoffStrategy(RetryStrategy):
         initial_delay: float = 1.0,
         increment: float = 1.0,
         max_delay: float = 60.0,
-        max_attempts: int = 3
+        max_attempts: int = 3,
     ):
         """
         Initialize linear backoff strategy.
@@ -180,7 +181,7 @@ class CircuitBreaker:
         self.recovery_timeout = float(recovery_timeout)
         self.state = "closed"
         self.failure_count = 0
-        self.opened_at: Optional[float] = None
+        self.opened_at: float | None = None
         self._logger = logging.getLogger("shared.retry_controller")
 
     def allow_request(self) -> bool:
@@ -188,13 +189,19 @@ class CircuitBreaker:
             return True
         if self.state == "open":
             # Stay open until timeout expires
-            if self.opened_at is not None and (time.time() - self.opened_at) >= self.recovery_timeout:
+            if (
+                self.opened_at is not None
+                and (time.time() - self.opened_at) >= self.recovery_timeout
+            ):
                 # Move to half-open (allow a probe)
                 self.state = "half_open"
-                self._logger.info("circuit_half_open", extra={
-                    "failure_threshold": self.failure_threshold,
-                    "recovery_timeout": self.recovery_timeout,
-                })
+                self._logger.info(
+                    "circuit_half_open",
+                    extra={
+                        "failure_threshold": self.failure_threshold,
+                        "recovery_timeout": self.recovery_timeout,
+                    },
+                )
                 return True
             return False
         if self.state == "half_open":
@@ -217,10 +224,13 @@ class CircuitBreaker:
         if self.failure_count >= self.failure_threshold:
             self.state = "open"
             self.opened_at = time.time()
-            self._logger.warning("circuit_open", extra={
-                "failure_threshold": self.failure_threshold,
-                "recovery_timeout": self.recovery_timeout,
-            })
+            self._logger.warning(
+                "circuit_open",
+                extra={
+                    "failure_threshold": self.failure_threshold,
+                    "recovery_timeout": self.recovery_timeout,
+                },
+            )
 
 
 class RetryController:
@@ -234,9 +244,9 @@ class RetryController:
     def __init__(
         self,
         strategy: RetryStrategy,
-        agent_context: Optional[Any] = None,
-        timeout: Optional[float] = None,
-        circuit_breaker: Optional[CircuitBreaker] = None,
+        agent_context: Any | None = None,
+        timeout: float | None = None,
+        circuit_breaker: CircuitBreaker | None = None,
     ):
         """
         Initialize retry controller.
@@ -258,7 +268,7 @@ class RetryController:
             "total_executions": 0,
             "total_retries": 0,
             "successful_recoveries": 0,
-            "failed_exhaustions": 0
+            "failed_exhaustions": 0,
         }
 
     def execute_with_retry(self, func: Callable, *args, **kwargs) -> Any:
@@ -284,17 +294,22 @@ class RetryController:
         # Circuit breaker guard
         if self.circuit_breaker and not self.circuit_breaker.allow_request():
             logging.getLogger("shared.retry_controller").warning("circuit_blocked_request")
-            self._record_memory_event("circuit_open", {"timeout": self.circuit_breaker.recovery_timeout})
+            self._record_memory_event(
+                "circuit_open", {"timeout": self.circuit_breaker.recovery_timeout}
+            )
             raise CircuitBreakerOpenError("Circuit breaker open. Try later.")
 
         with self._stats_lock:
             self._stats["total_executions"] += 1
 
         # Record start event in memory
-        self._record_memory_event("retry_start", {
-            "function": func.__name__ if hasattr(func, '__name__') else str(func),
-            "timestamp": start_time
-        })
+        self._record_memory_event(
+            "retry_start",
+            {
+                "function": func.__name__ if hasattr(func, "__name__") else str(func),
+                "timestamp": start_time,
+            },
+        )
 
         while True:
             # Check timeout before each attempt
@@ -319,10 +334,9 @@ class RetryController:
                 if attempt > 0:
                     with self._stats_lock:
                         self._stats["successful_recoveries"] += 1
-                    self._record_memory_event("retry_success", {
-                        "attempt": attempt,
-                        "total_attempts": attempt + 1
-                    })
+                    self._record_memory_event(
+                        "retry_success", {"attempt": attempt, "total_attempts": attempt + 1}
+                    )
                 # Reset breaker on any success
                 if self.circuit_breaker:
                     self.circuit_breaker.record_success()
@@ -345,21 +359,23 @@ class RetryController:
                     # Record failure
                     with self._stats_lock:
                         self._stats["failed_exhaustions"] += 1
-                    self._record_memory_event("retry_exhausted", {
-                        "final_attempt": attempt,
-                        "exception": str(e)
-                    })
+                    self._record_memory_event(
+                        "retry_exhausted", {"final_attempt": attempt, "exception": str(e)}
+                    )
                     raise e
 
                 # Record retry attempt
                 with self._stats_lock:
                     self._stats["total_retries"] += 1
 
-                self._record_memory_event("retry_attempt", {
-                    "attempt": attempt,
-                    "exception": str(e),
-                    "delay": self.strategy.calculate_delay(attempt)
-                })
+                self._record_memory_event(
+                    "retry_attempt",
+                    {
+                        "attempt": attempt,
+                        "exception": str(e),
+                        "delay": self.strategy.calculate_delay(attempt),
+                    },
+                )
 
                 # Calculate and apply delay
                 delay = self.strategy.calculate_delay(attempt)
@@ -392,10 +408,15 @@ class RetryController:
         with self._stats_lock:
             self._stats["total_executions"] += 1
 
-        self._record_memory_event("async_retry_start", {
-            "function": async_func.__name__ if hasattr(async_func, '__name__') else str(async_func),
-            "timestamp": start_time
-        })
+        self._record_memory_event(
+            "async_retry_start",
+            {
+                "function": async_func.__name__
+                if hasattr(async_func, "__name__")
+                else str(async_func),
+                "timestamp": start_time,
+            },
+        )
 
         while True:
             try:
@@ -405,10 +426,9 @@ class RetryController:
                 if attempt > 0:
                     with self._stats_lock:
                         self._stats["successful_recoveries"] += 1
-                    self._record_memory_event("async_retry_success", {
-                        "attempt": attempt,
-                        "total_attempts": attempt + 1
-                    })
+                    self._record_memory_event(
+                        "async_retry_success", {"attempt": attempt, "total_attempts": attempt + 1}
+                    )
 
                 return result
 
@@ -417,21 +437,23 @@ class RetryController:
                 if not self.strategy.should_retry(attempt, e):
                     with self._stats_lock:
                         self._stats["failed_exhaustions"] += 1
-                    self._record_memory_event("async_retry_exhausted", {
-                        "final_attempt": attempt,
-                        "exception": str(e)
-                    })
+                    self._record_memory_event(
+                        "async_retry_exhausted", {"final_attempt": attempt, "exception": str(e)}
+                    )
                     raise e
 
                 # Record retry attempt
                 with self._stats_lock:
                     self._stats["total_retries"] += 1
 
-                self._record_memory_event("async_retry_attempt", {
-                    "attempt": attempt,
-                    "exception": str(e),
-                    "delay": self.strategy.calculate_delay(attempt)
-                })
+                self._record_memory_event(
+                    "async_retry_attempt",
+                    {
+                        "attempt": attempt,
+                        "exception": str(e),
+                        "delay": self.strategy.calculate_delay(attempt),
+                    },
+                )
 
                 # Calculate and apply delay
                 delay = self.strategy.calculate_delay(attempt)
@@ -450,6 +472,7 @@ class RetryController:
         Returns:
             Wrapped tool with retry capability
         """
+
         class WrappedTool:
             def __init__(self, original_tool, retry_controller):
                 self._original_tool = original_tool
@@ -457,7 +480,7 @@ class RetryController:
 
                 # Copy all attributes from original tool
                 for attr_name in dir(original_tool):
-                    if not attr_name.startswith('_'):
+                    if not attr_name.startswith("_"):
                         attr_value = getattr(original_tool, attr_name)
                         if callable(attr_value):
                             # Wrap callable methods with retry
@@ -470,11 +493,12 @@ class RetryController:
                 @wraps(method)
                 def wrapper(*args, **kwargs):
                     return self._retry_controller.execute_with_retry(method, *args, **kwargs)
+
                 return wrapper
 
         return WrappedTool(tool, self)
 
-    def get_statistics(self) -> Dict[str, int]:
+    def get_statistics(self) -> dict[str, int]:
         """
         Get retry statistics.
 
@@ -509,17 +533,13 @@ class RetryController:
 
         return result[0]
 
-    def _record_memory_event(self, event_type: str, data: Dict[str, JSONValue]) -> None:
+    def _record_memory_event(self, event_type: str, data: dict[str, JSONValue]) -> None:
         """Record retry event in agent memory if context is available."""
-        if self.agent_context and hasattr(self.agent_context, 'add_memory'):
+        if self.agent_context and hasattr(self.agent_context, "add_memory"):
             try:
                 self.agent_context.add_memory(
                     content=f"retry_{event_type}",
-                    metadata={
-                        "event_type": event_type,
-                        "timestamp": time.time(),
-                        **data
-                    }
+                    metadata={"event_type": event_type, "timestamp": time.time(), **data},
                 )
             except Exception:
                 # Silently fail if memory recording fails

@@ -3,13 +3,9 @@ Test suite for RetryController implementing NECESSARY pattern.
 Following ADR-002: Test-First Development - tests written before implementation.
 """
 
-import asyncio
 import threading
 import time
-import unittest
-from abc import ABC, abstractmethod
-from typing import Any, Callable, Optional
-from unittest.mock import AsyncMock, MagicMock, Mock, patch
+from unittest.mock import AsyncMock, MagicMock
 
 import pytest
 
@@ -66,10 +62,7 @@ class TestExponentialBackoffStrategy:
         from shared.retry_controller import ExponentialBackoffStrategy
 
         strategy = ExponentialBackoffStrategy(
-            initial_delay=0.5,
-            max_delay=10.0,
-            multiplier=3.0,
-            jitter=False
+            initial_delay=0.5, max_delay=10.0, multiplier=3.0, jitter=False
         )
 
         assert strategy.calculate_delay(0) == 0.5
@@ -149,11 +142,7 @@ class TestLinearBackoffStrategy:
         """Test that delays are capped at max_delay."""
         from shared.retry_controller import LinearBackoffStrategy
 
-        strategy = LinearBackoffStrategy(
-            initial_delay=1.0,
-            increment=2.0,
-            max_delay=5.0
-        )
+        strategy = LinearBackoffStrategy(initial_delay=1.0, increment=2.0, max_delay=5.0)
 
         assert strategy.calculate_delay(0) == 1.0
         assert strategy.calculate_delay(1) == 3.0
@@ -184,11 +173,11 @@ class TestRetryController:
     @pytest.fixture
     def controller(self, mock_context):
         """Create RetryController instance with mock context."""
-        from shared.retry_controller import RetryController, ExponentialBackoffStrategy
+        from shared.retry_controller import ExponentialBackoffStrategy, RetryController
 
         return RetryController(
             strategy=ExponentialBackoffStrategy(initial_delay=0.01, jitter=False),
-            agent_context=mock_context
+            agent_context=mock_context,
         )
 
     def test_successful_execution_no_retry(self, controller):
@@ -204,11 +193,7 @@ class TestRetryController:
     def test_transient_failure_recovery(self, controller):
         """R: Regression Prevention - Test recovery from transient failures."""
         mock_func = MagicMock()
-        mock_func.side_effect = [
-            Exception("Network error"),
-            Exception("Timeout"),
-            "success"
-        ]
+        mock_func.side_effect = [Exception("Network error"), Exception("Timeout"), "success"]
 
         result = controller.execute_with_retry(mock_func)
 
@@ -315,12 +300,12 @@ class TestRetryController:
 
     def test_timeout_handling(self, controller):
         """E: Error Conditions - Test timeout during retry."""
-        from shared.retry_controller import RetryController, LinearBackoffStrategy
+        from shared.retry_controller import LinearBackoffStrategy, RetryController
 
         # Controller with very short timeout
         controller = RetryController(
             strategy=LinearBackoffStrategy(initial_delay=2.0),  # 2 second delay
-            timeout=1.0  # 1 second timeout
+            timeout=1.0,  # 1 second timeout
         )
 
         def slow_function():
@@ -342,15 +327,14 @@ class TestRetryController:
 
     def test_custom_retry_condition(self, controller):
         """Test custom retry condition callback."""
-        from shared.retry_controller import RetryController, ExponentialBackoffStrategy
+        from shared.retry_controller import ExponentialBackoffStrategy, RetryController
 
         def custom_should_retry(attempt: int, exception: Exception) -> bool:
             # Only retry on specific error messages
             return "retry_me" in str(exception)
 
         strategy = ExponentialBackoffStrategy(
-            initial_delay=0.01,
-            should_retry_callback=custom_should_retry
+            initial_delay=0.01, should_retry_callback=custom_should_retry
         )
         controller = RetryController(strategy=strategy)
 
@@ -369,18 +353,14 @@ class TestRetryController:
 
     def test_retry_with_backoff_timing(self, controller):
         """S: State Validation - Test that backoff delays are applied."""
-        from shared.retry_controller import RetryController, LinearBackoffStrategy
+        from shared.retry_controller import LinearBackoffStrategy, RetryController
 
         controller = RetryController(
             strategy=LinearBackoffStrategy(initial_delay=0.1, increment=0.1)
         )
 
         mock_func = MagicMock()
-        mock_func.side_effect = [
-            Exception("Error 1"),
-            Exception("Error 2"),
-            "success"
-        ]
+        mock_func.side_effect = [Exception("Error 1"), Exception("Error 2"), "success"]
 
         start_time = time.time()
         result = controller.execute_with_retry(mock_func)
@@ -401,21 +381,14 @@ class TestRetryController:
                 raise Exception("First attempt fails")
             return kwargs
 
-        result = controller.execute_with_retry(
-            context_aware_function,
-            **context_data
-        )
+        result = controller.execute_with_retry(context_aware_function, **context_data)
 
         assert result == context_data
 
     def test_statistics_tracking(self, controller, mock_context):
         """S: State Validation - Test retry statistics tracking."""
         mock_func = MagicMock()
-        mock_func.side_effect = [
-            Exception("Error 1"),
-            Exception("Error 2"),
-            "success"
-        ]
+        mock_func.side_effect = [Exception("Error 1"), Exception("Error 2"), "success"]
 
         result = controller.execute_with_retry(mock_func)
 
@@ -428,18 +401,16 @@ class TestRetryController:
     def test_retry_with_different_strategies(self):
         """C: Comprehensive - Test switching between different strategies."""
         from shared.retry_controller import (
-            RetryController,
             ExponentialBackoffStrategy,
-            LinearBackoffStrategy
+            LinearBackoffStrategy,
+            RetryController,
         )
 
         mock_func = MagicMock()
         mock_func.side_effect = [Exception("Error"), "success"]
 
         # Test with exponential strategy
-        exp_controller = RetryController(
-            strategy=ExponentialBackoffStrategy(initial_delay=0.01)
-        )
+        exp_controller = RetryController(strategy=ExponentialBackoffStrategy(initial_delay=0.01))
         result = exp_controller.execute_with_retry(mock_func)
         assert result == "success"
 
@@ -448,9 +419,7 @@ class TestRetryController:
         mock_func.side_effect = [Exception("Error"), "success"]
 
         # Test with linear strategy
-        lin_controller = RetryController(
-            strategy=LinearBackoffStrategy(initial_delay=0.01)
-        )
+        lin_controller = RetryController(strategy=LinearBackoffStrategy(initial_delay=0.01))
         result = lin_controller.execute_with_retry(mock_func)
         assert result == "success"
 
@@ -461,11 +430,9 @@ class TestIntegrationWithTools:
     @pytest.mark.integration
     def test_bash_tool_with_retry(self, tmp_path):
         """Test RetryController integration with mock Bash-like tool."""
-        from shared.retry_controller import RetryController, ExponentialBackoffStrategy
+        from shared.retry_controller import ExponentialBackoffStrategy, RetryController
 
-        controller = RetryController(
-            strategy=ExponentialBackoffStrategy(initial_delay=0.01)
-        )
+        controller = RetryController(strategy=ExponentialBackoffStrategy(initial_delay=0.01))
 
         # Create a mock tool that simulates Bash behavior
         mock_bash = MagicMock()
@@ -480,11 +447,9 @@ class TestIntegrationWithTools:
     @pytest.mark.integration
     def test_edit_tool_with_retry(self, tmp_path):
         """Test RetryController integration with mock Edit-like tool."""
-        from shared.retry_controller import RetryController, ExponentialBackoffStrategy
+        from shared.retry_controller import ExponentialBackoffStrategy, RetryController
 
-        controller = RetryController(
-            strategy=ExponentialBackoffStrategy(initial_delay=0.01)
-        )
+        controller = RetryController(strategy=ExponentialBackoffStrategy(initial_delay=0.01))
 
         # Create a test file
         test_file = tmp_path / "test.txt"
@@ -492,9 +457,10 @@ class TestIntegrationWithTools:
 
         # Create a mock tool that simulates Edit behavior
         mock_edit = MagicMock()
+
         def mock_run(**kwargs):
             # Simulate successful edit
-            if kwargs.get('old_string') == "original" and kwargs.get('new_string') == "modified":
+            if kwargs.get("old_string") == "original" and kwargs.get("new_string") == "modified":
                 test_file.write_text("modified content")
                 return "File edited successfully"
             return "Edit failed"
@@ -503,9 +469,7 @@ class TestIntegrationWithTools:
         wrapped_edit = controller.wrap_tool(mock_edit)
 
         result = wrapped_edit.run(
-            file_path=str(test_file),
-            old_string="original",
-            new_string="modified"
+            file_path=str(test_file), old_string="original", new_string="modified"
         )
 
         assert "successfully" in result.lower()
@@ -514,15 +478,14 @@ class TestIntegrationWithTools:
     @pytest.mark.integration
     def test_memory_persistence_across_retries(self):
         """S: Side Effects - Test that memory persists retry patterns."""
-        from shared.retry_controller import RetryController, ExponentialBackoffStrategy
+        from shared.retry_controller import ExponentialBackoffStrategy, RetryController
 
         # Create mock context for this test
         mock_context = MagicMock()
         mock_context.add_memory = MagicMock()
 
         controller = RetryController(
-            strategy=ExponentialBackoffStrategy(initial_delay=0.01),
-            agent_context=mock_context
+            strategy=ExponentialBackoffStrategy(initial_delay=0.01), agent_context=mock_context
         )
 
         # Simulate multiple retry scenarios
@@ -537,7 +500,7 @@ class TestIntegrationWithTools:
 
             try:
                 controller.execute_with_retry(mock_func)
-            except Exception as e:
+            except Exception:
                 pass  # Expected to fail on last iteration
 
         # Verify the end result - statistics are correct

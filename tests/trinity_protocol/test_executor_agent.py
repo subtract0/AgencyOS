@@ -13,15 +13,17 @@ NECESSARY Pattern Compliance:
 - Yield fast: <1s per test (mocked LLM and subprocess calls)
 """
 
-import pytest
 import asyncio
-import tempfile
 import json
 import subprocess
-from pathlib import Path
+import tempfile
 from datetime import datetime
-from unittest.mock import AsyncMock, Mock, MagicMock, patch, call, mock_open
-from typing import Dict, Any, List
+from pathlib import Path
+from typing import Any
+from unittest.mock import AsyncMock, Mock, patch
+
+import pytest
+
 from shared.type_definitions import JSONValue
 
 # NOTE: EXECUTOR agent implementation will be created in trinity_protocol.executor_agent
@@ -40,7 +42,7 @@ class ExecutorAgent:
         self.output_queue = "telemetry_stream"
         self.plans_dir = Path("/tmp/executor_plans")
         self._running = False
-        self._tasks: List[asyncio.Task] = []
+        self._tasks: list[asyncio.Task] = []
 
         # Sub-agent registry
         self.sub_agents = {
@@ -49,7 +51,7 @@ class ExecutorAgent:
             "ToolDeveloper": None,
             "ImmunityEnforcer": None,
             "ReleaseManager": None,
-            "TaskSummarizer": None
+            "TaskSummarizer": None,
         }
 
     async def run(self):
@@ -106,7 +108,7 @@ class ExecutorAgent:
                 status="success",
                 details="Task completed and verified",
                 sub_agent_reports=sub_agent_results,
-                verification_result=verification_result
+                verification_result=verification_result,
             )
 
             await self.message_bus.publish(self.output_queue, report)
@@ -127,11 +129,7 @@ class ExecutorAgent:
         """Break down task into sub-agent delegations."""
         task_type = task.get("type", "feature")
 
-        plan = {
-            "task_id": task.get("id"),
-            "sub_agents": [],
-            "parallel_groups": []
-        }
+        plan = {"task_id": task.get("id"), "sub_agents": [], "parallel_groups": []}
 
         # Determine required sub-agents based on task type
         if task_type == "feature":
@@ -168,7 +166,7 @@ class ExecutorAgent:
 
         return str(plan_path)
 
-    async def _orchestrate_parallel(self, plan: JSONValue) -> List[JSONValue]:
+    async def _orchestrate_parallel(self, plan: JSONValue) -> list[JSONValue]:
         """Orchestrate parallel sub-agent execution."""
         results = []
 
@@ -202,10 +200,10 @@ class ExecutorAgent:
         return {
             "agent": name,
             "status": result.get("status", "success"),
-            "summary": result.get("summary", "")
+            "summary": result.get("summary", ""),
         }
 
-    async def _delegate_merge(self, results: List[JSONValue]) -> JSONValue:
+    async def _delegate_merge(self, results: list[JSONValue]) -> JSONValue:
         """Delegate to ReleaseManager for integration and commit."""
         release_manager = self.sub_agents.get("ReleaseManager")
 
@@ -225,7 +223,7 @@ class ExecutorAgent:
             ["python", "run_tests.py", "--run-all"],
             capture_output=True,
             text=True,
-            timeout=600  # 10 min max
+            timeout=600,  # 10 min max
         )
 
         if result.returncode != 0:
@@ -238,10 +236,7 @@ class ExecutorAgent:
         error_log = self.plans_dir / f"{task_id}_error.log"
 
         self.plans_dir.mkdir(parents=True, exist_ok=True)
-        error_log.write_text(
-            f"Error: {error}\n"
-            f"Timestamp: {datetime.now().isoformat()}\n"
-        )
+        error_log.write_text(f"Error: {error}\nTimestamp: {datetime.now().isoformat()}\n")
 
         return self._create_telemetry_report(
             task_id=task_id,
@@ -249,7 +244,7 @@ class ExecutorAgent:
             status="failure",
             details=f"Task failed: {error}",
             sub_agent_reports=[],
-            verification_result="N/A - Task failure"
+            verification_result="N/A - Task failure",
         )
 
     def _create_telemetry_report(
@@ -258,8 +253,8 @@ class ExecutorAgent:
         correlation_id: str,
         status: str,
         details: str,
-        sub_agent_reports: List[JSONValue],
-        verification_result: str
+        sub_agent_reports: list[JSONValue],
+        verification_result: str,
     ) -> JSONValue:
         """Create minified JSON telemetry report."""
         return {
@@ -269,7 +264,7 @@ class ExecutorAgent:
             "details": details,
             "sub_agent_reports": sub_agent_reports,
             "verification_result": verification_result,
-            "timestamp": datetime.now().isoformat()
+            "timestamp": datetime.now().isoformat(),
         }
 
     def _cleanup_temp_files(self, task_id: str):
@@ -286,7 +281,7 @@ def temp_db_paths():
     with tempfile.TemporaryDirectory() as tmpdir:
         yield {
             "message_bus": Path(tmpdir) / "test_messages.db",
-            "executor_plans": Path(tmpdir) / "executor_plans"
+            "executor_plans": Path(tmpdir) / "executor_plans",
         }
 
 
@@ -311,10 +306,7 @@ def cost_tracker():
 @pytest.fixture
 def executor_agent(message_bus, cost_tracker, temp_db_paths):
     """Provide initialized ExecutorAgent."""
-    agent = ExecutorAgent(
-        message_bus=message_bus,
-        cost_tracker=cost_tracker
-    )
+    agent = ExecutorAgent(message_bus=message_bus, cost_tracker=cost_tracker)
     agent.plans_dir = temp_db_paths["executor_plans"]
     agent.plans_dir.mkdir(parents=True, exist_ok=True)
     return agent
@@ -324,12 +316,26 @@ def executor_agent(message_bus, cost_tracker, temp_db_paths):
 def mock_sub_agents():
     """Provide mock sub-agent implementations."""
     return {
-        "CodeWriter": Mock(execute=AsyncMock(return_value={"status": "success", "summary": "Code written"})),
-        "TestArchitect": Mock(execute=AsyncMock(return_value={"status": "success", "summary": "Tests created"})),
-        "ToolDeveloper": Mock(execute=AsyncMock(return_value={"status": "success", "summary": "Tool developed"})),
-        "ImmunityEnforcer": Mock(execute=AsyncMock(return_value={"status": "success", "summary": "Constitutional check passed"})),
-        "ReleaseManager": Mock(merge=AsyncMock(return_value={"status": "success", "summary": "Merged successfully"})),
-        "TaskSummarizer": Mock(execute=AsyncMock(return_value={"status": "success", "summary": "Summary generated"}))
+        "CodeWriter": Mock(
+            execute=AsyncMock(return_value={"status": "success", "summary": "Code written"})
+        ),
+        "TestArchitect": Mock(
+            execute=AsyncMock(return_value={"status": "success", "summary": "Tests created"})
+        ),
+        "ToolDeveloper": Mock(
+            execute=AsyncMock(return_value={"status": "success", "summary": "Tool developed"})
+        ),
+        "ImmunityEnforcer": Mock(
+            execute=AsyncMock(
+                return_value={"status": "success", "summary": "Constitutional check passed"}
+            )
+        ),
+        "ReleaseManager": Mock(
+            merge=AsyncMock(return_value={"status": "success", "summary": "Merged successfully"})
+        ),
+        "TaskSummarizer": Mock(
+            execute=AsyncMock(return_value={"status": "success", "summary": "Summary generated"})
+        ),
     }
 
 
@@ -341,7 +347,7 @@ def sample_task():
         "correlation_id": "corr_456",
         "type": "feature",
         "description": "Implement user authentication",
-        "timestamp": datetime.now().isoformat()
+        "timestamp": datetime.now().isoformat(),
     }
 
 
@@ -351,10 +357,7 @@ class TestExecutorAgentInitialization:
 
     def test_initializes_with_message_bus_and_cost_tracker(self, message_bus, cost_tracker):
         """Agent initializes with required dependencies."""
-        agent = ExecutorAgent(
-            message_bus=message_bus,
-            cost_tracker=cost_tracker
-        )
+        agent = ExecutorAgent(message_bus=message_bus, cost_tracker=cost_tracker)
 
         assert agent.message_bus is message_bus
         assert agent.cost_tracker is cost_tracker
@@ -444,7 +447,7 @@ class TestPlanExternalization:
         task_id = "task_123"
         plan = {
             "sub_agents": ["CodeWriter", "TestArchitect"],
-            "parallel_groups": [["CodeWriter", "TestArchitect"]]
+            "parallel_groups": [["CodeWriter", "TestArchitect"]],
         }
 
         plan_path = executor_agent._externalize_plan(task_id, plan)
@@ -458,7 +461,7 @@ class TestPlanExternalization:
         task_id = "task_124"
         plan = {
             "sub_agents": ["CodeWriter", "TestArchitect", "ImmunityEnforcer"],
-            "parallel_groups": []
+            "parallel_groups": [],
         }
 
         plan_path = executor_agent._externalize_plan(task_id, plan)
@@ -473,7 +476,7 @@ class TestPlanExternalization:
         task_id = "task_125"
         plan = {
             "sub_agents": ["CodeWriter", "TestArchitect"],
-            "parallel_groups": [["CodeWriter", "TestArchitect"]]
+            "parallel_groups": [["CodeWriter", "TestArchitect"]],
         }
 
         plan_path = executor_agent._externalize_plan(task_id, plan)
@@ -512,9 +515,7 @@ class TestParallelOrchestration:
     async def test_executes_parallel_group_concurrently(self, executor_agent, mock_sub_agents):
         """Sub-agents in same group execute in parallel."""
         executor_agent.sub_agents = mock_sub_agents
-        plan = {
-            "parallel_groups": [["CodeWriter", "TestArchitect"]]
-        }
+        plan = {"parallel_groups": [["CodeWriter", "TestArchitect"]]}
 
         results = await executor_agent._orchestrate_parallel(plan)
 
@@ -526,9 +527,7 @@ class TestParallelOrchestration:
     async def test_returns_results_from_all_sub_agents(self, executor_agent, mock_sub_agents):
         """Orchestration returns results from all sub-agents."""
         executor_agent.sub_agents = mock_sub_agents
-        plan = {
-            "parallel_groups": [["CodeWriter", "TestArchitect"]]
-        }
+        plan = {"parallel_groups": [["CodeWriter", "TestArchitect"]]}
 
         results = await executor_agent._orchestrate_parallel(plan)
 
@@ -539,25 +538,22 @@ class TestParallelOrchestration:
     @pytest.mark.asyncio
     async def test_raises_exception_on_sub_agent_failure(self, executor_agent, mock_sub_agents):
         """Orchestration raises exception if sub-agent fails."""
-        mock_sub_agents["CodeWriter"].execute = AsyncMock(side_effect=Exception("CodeWriter failed"))
+        mock_sub_agents["CodeWriter"].execute = AsyncMock(
+            side_effect=Exception("CodeWriter failed")
+        )
         executor_agent.sub_agents = mock_sub_agents
-        plan = {
-            "parallel_groups": [["CodeWriter"]]
-        }
+        plan = {"parallel_groups": [["CodeWriter"]]}
 
         with pytest.raises(Exception, match="CodeWriter failed"):
             await executor_agent._orchestrate_parallel(plan)
 
     @pytest.mark.asyncio
-    async def test_executes_multiple_parallel_groups_sequentially(self, executor_agent, mock_sub_agents):
+    async def test_executes_multiple_parallel_groups_sequentially(
+        self, executor_agent, mock_sub_agents
+    ):
         """Multiple parallel groups execute sequentially."""
         executor_agent.sub_agents = mock_sub_agents
-        plan = {
-            "parallel_groups": [
-                ["CodeWriter"],
-                ["TestArchitect"]
-            ]
-        }
+        plan = {"parallel_groups": [["CodeWriter"], ["TestArchitect"]]}
 
         results = await executor_agent._orchestrate_parallel(plan)
 
@@ -639,7 +635,7 @@ class TestMergeDelegation:
         executor_agent.sub_agents = mock_sub_agents
         results = [
             {"agent": "CodeWriter", "status": "success"},
-            {"agent": "TestArchitect", "status": "success"}
+            {"agent": "TestArchitect", "status": "success"},
         ]
 
         merge_result = await executor_agent._delegate_merge(results)
@@ -732,7 +728,7 @@ class TestTelemetryReportGeneration:
             status="success",
             details="Completed",
             sub_agent_reports=[],
-            verification_result="1843 passed"
+            verification_result="1843 passed",
         )
 
         # Verify it's a dict (JSON-serializable)
@@ -749,7 +745,7 @@ class TestTelemetryReportGeneration:
             status="success",
             details="",
             sub_agent_reports=[],
-            verification_result=""
+            verification_result="",
         )
 
         assert report["status"] == "success"
@@ -762,7 +758,7 @@ class TestTelemetryReportGeneration:
             status="success",
             details="",
             sub_agent_reports=[],
-            verification_result=""
+            verification_result="",
         )
 
         assert report["task_id"] == "task_123"
@@ -775,7 +771,7 @@ class TestTelemetryReportGeneration:
             status="success",
             details="",
             sub_agent_reports=[],
-            verification_result=""
+            verification_result="",
         )
 
         assert report["correlation_id"] == "corr_456"
@@ -788,7 +784,7 @@ class TestTelemetryReportGeneration:
             status="success",
             details="Task completed successfully",
             sub_agent_reports=[],
-            verification_result=""
+            verification_result="",
         )
 
         assert report["details"] == "Task completed successfully"
@@ -797,7 +793,7 @@ class TestTelemetryReportGeneration:
         """Report includes all sub-agent reports."""
         sub_reports = [
             {"agent": "CodeWriter", "status": "success", "summary": "Code written"},
-            {"agent": "TestArchitect", "status": "success", "summary": "Tests added"}
+            {"agent": "TestArchitect", "status": "success", "summary": "Tests added"},
         ]
 
         report = executor_agent._create_telemetry_report(
@@ -806,7 +802,7 @@ class TestTelemetryReportGeneration:
             status="success",
             details="",
             sub_agent_reports=sub_reports,
-            verification_result=""
+            verification_result="",
         )
 
         assert len(report["sub_agent_reports"]) == 2
@@ -820,7 +816,7 @@ class TestTelemetryReportGeneration:
             status="success",
             details="",
             sub_agent_reports=[],
-            verification_result="1843 tests passed"
+            verification_result="1843 tests passed",
         )
 
         assert report["verification_result"] == "1843 tests passed"
@@ -833,7 +829,7 @@ class TestTelemetryReportGeneration:
             status="success",
             details="",
             sub_agent_reports=[],
-            verification_result=""
+            verification_result="",
         )
 
         # Verify timestamp exists and is ISO8601 format
@@ -908,7 +904,9 @@ class TestCompleteProcessingCycle:
 
     @pytest.mark.asyncio
     @patch("subprocess.run")
-    async def test_processes_task_through_all_steps(self, mock_run, executor_agent, mock_sub_agents, sample_task):
+    async def test_processes_task_through_all_steps(
+        self, mock_run, executor_agent, mock_sub_agents, sample_task
+    ):
         """Task flows through all 9 steps successfully."""
         executor_agent.sub_agents = mock_sub_agents
         mock_run.return_value = Mock(returncode=0, stdout="1843 passed")
@@ -920,7 +918,9 @@ class TestCompleteProcessingCycle:
 
     @pytest.mark.asyncio
     @patch("subprocess.run")
-    async def test_publishes_report_to_telemetry_stream(self, mock_run, executor_agent, mock_sub_agents, sample_task):
+    async def test_publishes_report_to_telemetry_stream(
+        self, mock_run, executor_agent, mock_sub_agents, sample_task
+    ):
         """Successful task publishes report to telemetry_stream."""
         executor_agent.sub_agents = mock_sub_agents
         mock_run.return_value = Mock(returncode=0, stdout="1843 passed")
@@ -933,7 +933,9 @@ class TestCompleteProcessingCycle:
 
     @pytest.mark.asyncio
     @patch("subprocess.run")
-    async def test_cleanup_occurs_even_on_failure(self, mock_run, executor_agent, mock_sub_agents, sample_task):
+    async def test_cleanup_occurs_even_on_failure(
+        self, mock_run, executor_agent, mock_sub_agents, sample_task
+    ):
         """Cleanup (Step 9) occurs even if task fails."""
         executor_agent.sub_agents = mock_sub_agents
         mock_run.return_value = Mock(returncode=1, stdout="Tests failed")
@@ -950,7 +952,9 @@ class TestCompleteProcessingCycle:
 
     @pytest.mark.asyncio
     @patch("subprocess.run")
-    async def test_failure_publishes_failure_report(self, mock_run, executor_agent, mock_sub_agents, sample_task):
+    async def test_failure_publishes_failure_report(
+        self, mock_run, executor_agent, mock_sub_agents, sample_task
+    ):
         """Failed task publishes failure report."""
         executor_agent.sub_agents = mock_sub_agents
         mock_run.return_value = Mock(returncode=1, stdout="2 failed")
@@ -961,7 +965,9 @@ class TestCompleteProcessingCycle:
 
     @pytest.mark.asyncio
     @patch("subprocess.run")
-    async def test_includes_all_sub_agent_reports_in_success(self, mock_run, executor_agent, mock_sub_agents, sample_task):
+    async def test_includes_all_sub_agent_reports_in_success(
+        self, mock_run, executor_agent, mock_sub_agents, sample_task
+    ):
         """Success report includes all sub-agent results."""
         executor_agent.sub_agents = mock_sub_agents
         mock_run.return_value = Mock(returncode=0, stdout="1843 passed")
@@ -977,7 +983,9 @@ class TestCostTracking:
 
     @pytest.mark.asyncio
     @patch("subprocess.run")
-    async def test_tracks_cost_for_task_processing(self, mock_run, executor_agent, mock_sub_agents, sample_task):
+    async def test_tracks_cost_for_task_processing(
+        self, mock_run, executor_agent, mock_sub_agents, sample_task
+    ):
         """Cost tracker records task processing costs."""
         executor_agent.sub_agents = mock_sub_agents
         mock_run.return_value = Mock(returncode=0, stdout="Tests passed")
@@ -1014,7 +1022,9 @@ class TestStatelessOperation:
 
     @pytest.mark.asyncio
     @patch("subprocess.run")
-    async def test_temp_files_cleared_between_tasks(self, mock_run, executor_agent, mock_sub_agents):
+    async def test_temp_files_cleared_between_tasks(
+        self, mock_run, executor_agent, mock_sub_agents
+    ):
         """Temporary files are cleared between tasks."""
         executor_agent.sub_agents = mock_sub_agents
         mock_run.return_value = Mock(returncode=0, stdout="Tests passed")
@@ -1043,6 +1053,7 @@ class TestAgentLifecycle:
     @pytest.mark.asyncio
     async def test_run_sets_running_to_true(self, executor_agent):
         """run() method sets _running=True."""
+
         # Mock message bus to immediately stop
         async def mock_subscribe(queue):
             yield {"id": "task_1", "type": "feature"}
@@ -1050,7 +1061,7 @@ class TestAgentLifecycle:
 
         executor_agent.message_bus.subscribe = mock_subscribe
 
-        with patch.object(executor_agent, '_process_task', new_callable=AsyncMock):
+        with patch.object(executor_agent, "_process_task", new_callable=AsyncMock):
             await executor_agent.run()
 
         # _running was set to True during execution
@@ -1068,6 +1079,7 @@ class TestAgentLifecycle:
     @pytest.mark.asyncio
     async def test_stop_cancels_pending_tasks(self, executor_agent):
         """stop() cancels all pending tasks."""
+
         # Create a real asyncio task for testing
         async def dummy_task():
             await asyncio.sleep(10)
@@ -1086,7 +1098,9 @@ class TestAgentStatistics:
 
     @pytest.mark.asyncio
     @patch("subprocess.run")
-    async def test_cost_tracker_records_total_cost(self, mock_run, executor_agent, mock_sub_agents, sample_task):
+    async def test_cost_tracker_records_total_cost(
+        self, mock_run, executor_agent, mock_sub_agents, sample_task
+    ):
         """Cost tracker accumulates total costs."""
         executor_agent.sub_agents = mock_sub_agents
         mock_run.return_value = Mock(returncode=0, stdout="Tests passed")

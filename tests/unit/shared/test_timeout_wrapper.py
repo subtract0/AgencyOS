@@ -14,21 +14,20 @@ Covers:
 - Completeness validation (Article I)
 """
 
+from unittest.mock import patch
+
 import pytest
-import time
-from datetime import datetime
-from unittest.mock import MagicMock, patch
+from pydantic import ValidationError
 
 from shared.timeout_wrapper import (
+    IncompleteContextError,
     TimeoutConfig,
     TimeoutError,
     TimeoutExhaustedError,
-    IncompleteContextError,
+    _validate_completeness,
     run_with_constitutional_timeout,
     with_constitutional_timeout,
-    _validate_completeness,
 )
-
 
 # ========== NECESSARY Pattern: Normal Operation Tests ==========
 
@@ -64,25 +63,25 @@ class TestTimeoutConfig:
 
     def test_timeout_config_validates_min_timeout(self):
         """E: Error - base_timeout_ms must be >= 5000"""
-        with pytest.raises(Exception):  # Pydantic ValidationError
+        with pytest.raises(ValidationError):
             TimeoutConfig(base_timeout_ms=1000)  # Too low
 
     def test_timeout_config_validates_max_timeout(self):
         """E: Error - base_timeout_ms must be <= 600000"""
-        with pytest.raises(Exception):  # Pydantic ValidationError
+        with pytest.raises(ValidationError):
             TimeoutConfig(base_timeout_ms=700000)
 
     def test_timeout_config_validates_max_retries(self):
         """E: Error - max_retries must be >= 1"""
-        with pytest.raises(Exception):  # Pydantic ValidationError
+        with pytest.raises(ValidationError):
             TimeoutConfig(max_retries=0)
 
     def test_timeout_config_validates_pause_range(self):
         """E: Error - pause must be in valid range"""
-        with pytest.raises(Exception):  # Pydantic ValidationError
+        with pytest.raises(ValidationError):
             TimeoutConfig(pause_between_retries_sec=-1.0)
 
-        with pytest.raises(Exception):  # Pydantic ValidationError
+        with pytest.raises(ValidationError):
             TimeoutConfig(pause_between_retries_sec=20.0)
 
 
@@ -168,9 +167,7 @@ class TestRunWithConstitutionalTimeout:
                 raise TimeoutError("retry")
             return "success"
 
-        config = TimeoutConfig(
-            base_timeout_ms=5000, multipliers=[1, 2, 3, 5, 10], max_retries=5
-        )
+        config = TimeoutConfig(base_timeout_ms=5000, multipliers=[1, 2, 3, 5, 10], max_retries=5)
         result = run_with_constitutional_timeout(operation, config=config)
 
         assert result == "success"
@@ -214,7 +211,7 @@ class TestRunWithConstitutionalTimeout:
             pause_between_retries_sec=0.01,
         )
 
-        result = run_with_constitutional_timeout(operation_with_incomplete, config=config)
+        _result = run_with_constitutional_timeout(operation_with_incomplete, config=config)
         # Should retry until complete output
         assert attempt_count[0] >= 2
 
@@ -225,7 +222,8 @@ class TestRunWithConstitutionalTimeout:
             return "Output Terminated"  # Would normally fail
 
         config = TimeoutConfig(
-            base_timeout_ms=5000, completeness_check=False  # Disabled
+            base_timeout_ms=5000,
+            completeness_check=False,  # Disabled
         )
 
         result = run_with_constitutional_timeout(operation, config=config)
@@ -242,9 +240,7 @@ class TestRunWithConstitutionalTimeout:
                 raise TimeoutError("retry")
             return "ok"
 
-        config = TimeoutConfig(
-            base_timeout_ms=5000, pause_between_retries_sec=2.5, max_retries=5
-        )
+        config = TimeoutConfig(base_timeout_ms=5000, pause_between_retries_sec=2.5, max_retries=5)
 
         # Just test that configuration is accepted and retries happen
         result = run_with_constitutional_timeout(operation, config=config)
@@ -269,7 +265,7 @@ class TestRunWithConstitutionalTimeout:
             pause_between_retries_sec=0.01,
         )
 
-        result = run_with_constitutional_timeout(operation, config=config)
+        _result = run_with_constitutional_timeout(operation, config=config)
 
         # Attempts 6 and 7 should use 10x cap
         assert attempt_timeouts[5] == 50000  # 6th attempt: 10x (5000 * 10)
@@ -282,9 +278,7 @@ class TestRunWithConstitutionalTimeout:
             return "ok"
 
         with patch("shared.timeout_wrapper.logging") as mock_logging:
-            run_with_constitutional_timeout(
-                operation, telemetry_prefix="test_operation"
-            )
+            run_with_constitutional_timeout(operation, telemetry_prefix="test_operation")
 
             # Should have logged attempt and success
             mock_logging.info.assert_called()
@@ -295,9 +289,7 @@ class TestRunWithConstitutionalTimeout:
         def operation(timeout_ms):
             raise ValueError("not a timeout")
 
-        config = TimeoutConfig(
-            base_timeout_ms=5000, max_retries=3, pause_between_retries_sec=0.01
-        )
+        config = TimeoutConfig(base_timeout_ms=5000, max_retries=3, pause_between_retries_sec=0.01)
 
         with pytest.raises(TimeoutExhaustedError) as exc_info:
             run_with_constitutional_timeout(operation, config=config)
@@ -457,7 +449,8 @@ class TestEdgeCases:
             return "ok"
 
         config = TimeoutConfig(
-            base_timeout_ms=5000, pause_between_retries_sec=0.0  # No pause
+            base_timeout_ms=5000,
+            pause_between_retries_sec=0.0,  # No pause
         )
 
         result = run_with_constitutional_timeout(operation, config=config)
@@ -470,7 +463,8 @@ class TestEdgeCases:
             return "ok"
 
         config = TimeoutConfig(
-            base_timeout_ms=5000, pause_between_retries_sec=10.0  # Max pause
+            base_timeout_ms=5000,
+            pause_between_retries_sec=10.0,  # Max pause
         )
 
         result = run_with_constitutional_timeout(operation, config=config)
@@ -486,9 +480,7 @@ class TestEdgeCases:
                 raise TimeoutError("retry")
             return "ok"
 
-        config = TimeoutConfig(
-            base_timeout_ms=5000, max_retries=2, pause_between_retries_sec=0.01
-        )
+        config = TimeoutConfig(base_timeout_ms=5000, max_retries=2, pause_between_retries_sec=0.01)
 
         result = run_with_constitutional_timeout(operation, config=config)
         assert result == "ok"
@@ -511,7 +503,7 @@ class TestEdgeCases:
             pause_between_retries_sec=0.01,
         )
 
-        result = run_with_constitutional_timeout(operation, config=config)
+        _result = run_with_constitutional_timeout(operation, config=config)
 
         # Should default to 10x for all attempts
         assert attempt_timeouts[0] == 50000  # 5000 * 10

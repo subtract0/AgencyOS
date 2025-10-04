@@ -18,18 +18,19 @@ Constitutional Compliance:
 
 import ast
 import subprocess
-from pathlib import Path
-from typing import List, Dict, Set, Optional, Tuple
-from dataclasses import dataclass
 from collections import defaultdict
+from dataclasses import dataclass
+from pathlib import Path
 
 from pydantic import BaseModel, Field
-from shared.type_definitions.result import Result, Ok, Err
+
+from shared.type_definitions.result import Err, Ok, Result
 
 
 @dataclass
 class FileChange:
     """Represents a changed file in git."""
+
     path: str
     change_type: str  # M (modified), A (added), D (deleted)
     is_test: bool
@@ -38,16 +39,18 @@ class FileChange:
 @dataclass
 class DependencyNode:
     """Node in the dependency graph."""
+
     file_path: str
-    imports: Set[str]
-    imported_by: Set[str]
-    related_tests: Set[str]
+    imports: set[str]
+    imported_by: set[str]
+    related_tests: set[str]
 
 
 class TestSelectionReport(BaseModel):
     """Report of smart test selection results."""
-    changed_files: List[str] = Field(..., description="Files changed in git diff")
-    affected_tests: List[str] = Field(..., description="Tests that need to run")
+
+    changed_files: list[str] = Field(..., description="Files changed in git diff")
+    affected_tests: list[str] = Field(..., description="Tests that need to run")
     total_tests: int = Field(..., description="Total number of tests in suite")
     estimated_time_saved: float = Field(..., description="Estimated time saved in seconds")
     selection_ratio: float = Field(..., description="Ratio of selected to total tests")
@@ -59,7 +62,7 @@ class TestSelectionReport(BaseModel):
                 "affected_tests": ["tests/test_coder.py::test_generate_code"],
                 "total_tests": 2438,
                 "estimated_time_saved": 180.0,
-                "selection_ratio": 0.05
+                "selection_ratio": 0.05,
             }
         }
 
@@ -69,10 +72,10 @@ class SmartTestSelector:
 
     def __init__(self, project_root: Path):
         self.project_root = project_root
-        self.dependency_graph: Dict[str, DependencyNode] = {}
-        self.test_to_files: Dict[str, Set[str]] = defaultdict(set)
+        self.dependency_graph: dict[str, DependencyNode] = {}
+        self.test_to_files: dict[str, set[str]] = defaultdict(set)
 
-    def get_changed_files(self, since: str = "HEAD~1") -> Result[List[FileChange], str]:
+    def get_changed_files(self, since: str = "HEAD~1") -> Result[list[FileChange], str]:
         """
         Get files changed since specified commit.
 
@@ -89,28 +92,26 @@ class SmartTestSelector:
                 cwd=str(self.project_root),
                 capture_output=True,
                 text=True,
-                check=True
+                check=True,
             )
 
             changes = []
-            for line in result.stdout.strip().split('\n'):
+            for line in result.stdout.strip().split("\n"):
                 if not line:
                     continue
 
-                parts = line.split('\t')
+                parts = line.split("\t")
                 if len(parts) >= 2:
                     change_type = parts[0]
                     file_path = parts[1]
 
                     # Check if it's a Python file
-                    if file_path.endswith('.py'):
-                        is_test = 'test_' in file_path or file_path.startswith('tests/')
+                    if file_path.endswith(".py"):
+                        is_test = "test_" in file_path or file_path.startswith("tests/")
 
-                        changes.append(FileChange(
-                            path=file_path,
-                            change_type=change_type,
-                            is_test=is_test
-                        ))
+                        changes.append(
+                            FileChange(path=file_path, change_type=change_type, is_test=is_test)
+                        )
 
             return Ok(changes)
 
@@ -126,7 +127,7 @@ class SmartTestSelector:
             py_files = list(self.project_root.rglob("*.py"))
 
             # Exclude certain directories
-            exclude_dirs = {'.venv', 'venv', 'node_modules', '__pycache__', '.git'}
+            exclude_dirs = {".venv", "venv", "node_modules", "__pycache__", ".git"}
 
             for py_file in py_files:
                 # Skip excluded directories
@@ -141,10 +142,7 @@ class SmartTestSelector:
 
                 # Create dependency node
                 self.dependency_graph[rel_path] = DependencyNode(
-                    file_path=rel_path,
-                    imports=imports,
-                    imported_by=set(),
-                    related_tests=set()
+                    file_path=rel_path, imports=imports, imported_by=set(), related_tests=set()
                 )
 
             # Build reverse dependencies (imported_by)
@@ -157,7 +155,7 @@ class SmartTestSelector:
 
             # Map tests to source files
             for file_path, node in self.dependency_graph.items():
-                if 'test_' in file_path or file_path.startswith('tests/'):
+                if "test_" in file_path or file_path.startswith("tests/"):
                     # This is a test file, find what it tests
                     for imported in node.imports:
                         actual_file = self._resolve_import_to_file(imported)
@@ -173,12 +171,12 @@ class SmartTestSelector:
         except Exception as e:
             return Err(f"Failed to build dependency graph: {str(e)}")
 
-    def _extract_imports(self, file_path: Path) -> Set[str]:
+    def _extract_imports(self, file_path: Path) -> set[str]:
         """Extract all imports from a Python file."""
         imports = set()
 
         try:
-            with open(file_path, 'r') as f:
+            with open(file_path) as f:
                 source = f.read()
 
             tree = ast.parse(source)
@@ -197,15 +195,15 @@ class SmartTestSelector:
 
         return imports
 
-    def _resolve_import_to_file(self, import_name: str) -> Optional[str]:
+    def _resolve_import_to_file(self, import_name: str) -> str | None:
         """Resolve an import statement to an actual file path."""
         # Convert import to file path
         # e.g., "agency_code_agent.coder" -> "agency_code_agent/coder.py"
 
-        parts = import_name.split('.')
+        parts = import_name.split(".")
         potential_paths = [
-            '/'.join(parts) + '.py',
-            '/'.join(parts) + '/__init__.py',
+            "/".join(parts) + ".py",
+            "/".join(parts) + "/__init__.py",
         ]
 
         for path in potential_paths:
@@ -214,7 +212,7 @@ class SmartTestSelector:
 
         return None
 
-    def find_affected_tests(self, changed_files: List[FileChange]) -> Result[List[str], str]:
+    def find_affected_tests(self, changed_files: list[FileChange]) -> Result[list[str], str]:
         """
         Find tests affected by changed files.
 
@@ -256,9 +254,9 @@ class SmartTestSelector:
 
     def estimate_time_saved(
         self,
-        selected_tests: List[str],
-        all_tests: Optional[List[str]] = None,
-        avg_test_time: float = 0.09
+        selected_tests: list[str],
+        all_tests: list[str] | None = None,
+        avg_test_time: float = 0.09,
     ) -> float:
         """
         Estimate time saved by smart selection.
@@ -288,10 +286,10 @@ class SmartTestSelector:
 
     def generate_selection_report(
         self,
-        changed_files: List[FileChange],
-        affected_tests: List[str],
+        changed_files: list[FileChange],
+        affected_tests: list[str],
         total_tests: int = 2438,
-        avg_test_time: float = 0.09
+        avg_test_time: float = 0.09,
     ) -> TestSelectionReport:
         """Generate test selection report."""
 
@@ -303,7 +301,7 @@ class SmartTestSelector:
             affected_tests=affected_tests,
             total_tests=total_tests,
             estimated_time_saved=round(time_saved, 1),
-            selection_ratio=round(selection_ratio, 3)
+            selection_ratio=round(selection_ratio, 3),
         )
 
     def select_tests_for_commit(self, since: str = "HEAD~1") -> Result[TestSelectionReport, str]:
@@ -337,12 +335,7 @@ class SmartTestSelector:
 
     def format_report(self, report: TestSelectionReport) -> str:
         """Format selection report as human-readable text."""
-        lines = [
-            "# Smart Test Selection Report",
-            "",
-            "## Changed Files",
-            ""
-        ]
+        lines = ["# Smart Test Selection Report", "", "## Changed Files", ""]
 
         if report.changed_files:
             for file_path in report.changed_files:
@@ -350,13 +343,15 @@ class SmartTestSelector:
         else:
             lines.append("*No files changed*")
 
-        lines.extend([
-            "",
-            "## Affected Tests",
-            "",
-            f"**{len(report.affected_tests)} of {report.total_tests} tests need to run** ({report.selection_ratio:.1%})",
-            ""
-        ])
+        lines.extend(
+            [
+                "",
+                "## Affected Tests",
+                "",
+                f"**{len(report.affected_tests)} of {report.total_tests} tests need to run** ({report.selection_ratio:.1%})",
+                "",
+            ]
+        )
 
         if report.affected_tests:
             for test_path in report.affected_tests[:20]:
@@ -367,22 +362,24 @@ class SmartTestSelector:
         else:
             lines.append("*No tests affected*")
 
-        lines.extend([
-            "",
-            "## Performance Impact",
-            "",
-            f"- **Tests to run:** {len(report.affected_tests)}",
-            f"- **Tests skipped:** {report.total_tests - len(report.affected_tests)}",
-            f"- **Estimated time saved:** {report.estimated_time_saved:.1f} seconds",
-            f"- **Speedup:** {(report.total_tests / max(len(report.affected_tests), 1)):.1f}x faster",
-            "",
-            "## Command to Run Selected Tests",
-            "",
-            "```bash"
-        ])
+        lines.extend(
+            [
+                "",
+                "## Performance Impact",
+                "",
+                f"- **Tests to run:** {len(report.affected_tests)}",
+                f"- **Tests skipped:** {report.total_tests - len(report.affected_tests)}",
+                f"- **Estimated time saved:** {report.estimated_time_saved:.1f} seconds",
+                f"- **Speedup:** {(report.total_tests / max(len(report.affected_tests), 1)):.1f}x faster",
+                "",
+                "## Command to Run Selected Tests",
+                "",
+                "```bash",
+            ]
+        )
 
         if report.affected_tests:
-            test_args = ' '.join(f'"{t}"' for t in report.affected_tests[:10])
+            test_args = " ".join(f'"{t}"' for t in report.affected_tests[:10])
             if len(report.affected_tests) <= 10:
                 lines.append(f"pytest {test_args}")
             else:
@@ -392,41 +389,26 @@ class SmartTestSelector:
         else:
             lines.append("# No tests to run")
 
-        lines.extend([
-            "```",
-            "",
-            "---",
-            "",
-            "*Generated by Agency Smart Test Selection*"
-        ])
+        lines.extend(["```", "", "---", "", "*Generated by Agency Smart Test Selection*"])
 
-        return '\n'.join(lines)
+        return "\n".join(lines)
 
 
 # CLI Interface
 def main() -> int:
     """Command-line interface for smart test selection."""
     import argparse
-    import sys
 
-    parser = argparse.ArgumentParser(
-        description="Smart test selection based on git changes"
-    )
+    parser = argparse.ArgumentParser(description="Smart test selection based on git changes")
     parser.add_argument(
-        "--since",
-        default="HEAD~1",
-        help="Git reference to compare against (default: HEAD~1)"
+        "--since", default="HEAD~1", help="Git reference to compare against (default: HEAD~1)"
     )
-    parser.add_argument(
-        "--output",
-        type=Path,
-        help="Output file for selected tests (one per line)"
-    )
+    parser.add_argument("--output", type=Path, help="Output file for selected tests (one per line)")
     parser.add_argument(
         "--report",
         type=Path,
         default=Path("docs/testing/SMART_SELECTION.md"),
-        help="Output path for report"
+        help="Output path for report",
     )
 
     args = parser.parse_args()
@@ -454,7 +436,7 @@ def main() -> int:
     report = result.unwrap()
 
     # Print summary
-    print(f"\n✅ Smart test selection complete!")
+    print("\n✅ Smart test selection complete!")
     print(f"📁 Changed files: {len(report.changed_files)}")
     print(f"🧪 Affected tests: {len(report.affected_tests)} of {report.total_tests}")
     print(f"⚡ Estimated time saved: {report.estimated_time_saved:.1f}s")
@@ -464,7 +446,7 @@ def main() -> int:
     if args.output:
         try:
             args.output.parent.mkdir(parents=True, exist_ok=True)
-            with open(args.output, 'w') as f:
+            with open(args.output, "w") as f:
                 for test in report.affected_tests:
                     f.write(f"{test}\n")
             print(f"💾 Selected tests saved to: {args.output}")
@@ -476,7 +458,7 @@ def main() -> int:
     try:
         args.report.parent.mkdir(parents=True, exist_ok=True)
         report_text = selector.format_report(report)
-        with open(args.report, 'w') as f:
+        with open(args.report, "w") as f:
             f.write(report_text)
         print(f"📝 Report saved to: {args.report}")
     except Exception as e:
@@ -488,4 +470,5 @@ def main() -> int:
 
 if __name__ == "__main__":
     import sys
+
     sys.exit(main())

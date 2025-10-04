@@ -30,27 +30,27 @@ Total: 70 test cases covering:
 """
 
 import os
-import json
 import tempfile
 from pathlib import Path
-from unittest.mock import Mock, patch, MagicMock, call
-from typing import Dict, List, Any, Optional
+from unittest.mock import Mock, patch
+
 import pytest
 
 # Conditional DSPy import handling
 try:
     import dspy
+
     DSPY_AVAILABLE = True
 except ImportError:
     DSPY_AVAILABLE = False
 
 from dspy_agents.modules.auditor_agent import (
-    DSPyAuditorAgent,
-    NECESSARYScore,
-    CodebaseAnalysis,
     AuditContext,
     AuditResult,
-    create_dspy_auditor_agent
+    CodebaseAnalysis,
+    DSPyAuditorAgent,
+    NECESSARYScore,
+    create_dspy_auditor_agent,
 )
 from dspy_agents.signatures.base import AuditFinding
 
@@ -70,9 +70,7 @@ class TestDSPyAuditorAgentInitialization:
     def test_agent_initialization_with_custom_params(self):
         """Named: Test agent initialization with custom parameters."""
         agent = DSPyAuditorAgent(
-            model="gpt-3.5-turbo",
-            reasoning_effort="high",
-            enable_learning=False
+            model="gpt-3.5-turbo", reasoning_effort="high", enable_learning=False
         )
 
         assert agent.model == "gpt-3.5-turbo"
@@ -88,7 +86,7 @@ class TestDSPyAuditorAgentInitialization:
 
     def test_agent_initialization_without_ast_analyzer(self):
         """Named: Test agent initialization falls back gracefully without AST analyzer."""
-        with patch('auditor_agent.ast_analyzer.ASTAnalyzer', side_effect=ImportError):
+        with patch("auditor_agent.ast_analyzer.ASTAnalyzer", side_effect=ImportError):
             agent = DSPyAuditorAgent()
             # Should not crash and should handle gracefully
 
@@ -96,13 +94,13 @@ class TestDSPyAuditorAgentInitialization:
         """Named: Test agent components when DSPy is available."""
         if DSPY_AVAILABLE:
             agent = DSPyAuditorAgent()
-            assert hasattr(agent, 'analyze')
-            assert hasattr(agent, 'prioritize')
-            assert hasattr(agent, 'report')
+            assert hasattr(agent, "analyze")
+            assert hasattr(agent, "prioritize")
+            assert hasattr(agent, "report")
 
     def test_agent_initialization_without_dspy(self):
         """Named: Test agent fallback components when DSPy is not available."""
-        with patch('dspy_agents.modules.auditor_agent.DSPY_AVAILABLE', False):
+        with patch("dspy_agents.modules.auditor_agent.DSPY_AVAILABLE", False):
             agent = DSPyAuditorAgent()
             assert agent.analyze == agent._fallback_analyze
             assert agent.prioritize == agent._fallback_prioritize
@@ -136,7 +134,7 @@ class TestDSPyAuditorAgentForwardMethod:
             total_test_functions=15,
             total_behaviors=25,
             coverage_percentage=60.0,
-            complexity_score=5.2
+            complexity_score=5.2,
         )
 
     @pytest.fixture
@@ -153,7 +151,9 @@ class TestDSPyAuditorAgentForwardMethod:
             NECESSARYScore(property="R", score=0.8, violations=[]),
         ]
 
-    def test_forward_method_complete_execution(self, mock_agent, sample_analysis, sample_necessary_scores):
+    def test_forward_method_complete_execution(
+        self, mock_agent, sample_analysis, sample_necessary_scores
+    ):
         """Executable: Test complete forward method execution."""
         # Setup mocks
         mock_agent._analyze_codebase.return_value = sample_analysis
@@ -165,7 +165,7 @@ class TestDSPyAuditorAgentForwardMethod:
                 severity="high",
                 category="Coverage",
                 description="Low test coverage",
-                recommendation="Add more tests"
+                recommendation="Add more tests",
             )
         ]
         mock_agent._generate_findings.return_value = mock_findings
@@ -206,7 +206,7 @@ class TestDSPyAuditorAgentForwardMethod:
             "/test/path",
             focus_areas=["testing", "performance"],
             thresholds={"critical": 0.3, "high": 0.5, "medium": 0.7},
-            max_violations=25
+            max_violations=25,
         )
 
         assert result.audit_context.focus_areas == ["testing", "performance"]
@@ -259,15 +259,12 @@ class TestNECESSARYScoreCalculations:
             total_test_functions=30,
             total_behaviors=50,
             coverage_percentage=60.0,
-            complexity_score=7.5
+            complexity_score=7.5,
         )
 
     def test_calculate_n_score_good_coverage(self, agent):
         """Comprehensive: Test N score calculation with good coverage."""
-        analysis = CodebaseAnalysis(
-            total_behaviors=50,
-            total_test_functions=45
-        )
+        analysis = CodebaseAnalysis(total_behaviors=50, total_test_functions=45)
 
         score = agent._calculate_n_score(analysis)
 
@@ -277,10 +274,7 @@ class TestNECESSARYScoreCalculations:
 
     def test_calculate_n_score_poor_coverage(self, agent):
         """Comprehensive: Test N score calculation with poor coverage."""
-        analysis = CodebaseAnalysis(
-            total_behaviors=50,
-            total_test_functions=20
-        )
+        analysis = CodebaseAnalysis(total_behaviors=50, total_test_functions=20)
 
         score = agent._calculate_n_score(analysis)
 
@@ -365,7 +359,7 @@ class TestNECESSARYScoreCalculations:
         other_scores = [
             NECESSARYScore(property="N", score=0.8, violations=[]),
             NECESSARYScore(property="E", score=0.7, violations=[]),
-            NECESSARYScore(property="C", score=0.6, violations=[])
+            NECESSARYScore(property="C", score=0.6, violations=[]),
         ]
 
         score = agent._calculate_y_score(sample_analysis, other_scores)
@@ -390,7 +384,7 @@ class TestQTScoreCalculation:
         scores = [
             NECESSARYScore(property="N", score=0.8, violations=[]),
             NECESSARYScore(property="E", score=0.7, violations=[]),
-            NECESSARYScore(property="C", score=0.9, violations=[])
+            NECESSARYScore(property="C", score=0.9, violations=[]),
         ]
 
         qt_score = agent._calculate_qt_score(scores)
@@ -411,7 +405,7 @@ class TestQTScoreCalculation:
         agent = DSPyAuditorAgent()
         scores = [
             NECESSARYScore(property="N", score=0.0, violations=["test"]),
-            NECESSARYScore(property="E", score=0.0, violations=["test"])
+            NECESSARYScore(property="E", score=0.0, violations=["test"]),
         ]
 
         qt_score = agent._calculate_qt_score(scores)
@@ -423,7 +417,7 @@ class TestQTScoreCalculation:
         agent = DSPyAuditorAgent()
         scores = [
             NECESSARYScore(property="N", score=1.0, violations=[]),
-            NECESSARYScore(property="E", score=1.0, violations=[])
+            NECESSARYScore(property="E", score=1.0, violations=[]),
         ]
 
         qt_score = agent._calculate_qt_score(scores)
@@ -443,8 +437,7 @@ class TestFindingGenerationAndPrioritization:
     def context(self):
         """Stateful: Audit context for testing."""
         return AuditContext(
-            target_path="/test/path",
-            thresholds={"critical": 0.4, "high": 0.6, "medium": 0.7}
+            target_path="/test/path", thresholds={"critical": 0.4, "high": 0.6, "medium": 0.7}
         )
 
     def test_generate_findings_from_violations(self, agent, context):
@@ -452,7 +445,7 @@ class TestFindingGenerationAndPrioritization:
         analysis = CodebaseAnalysis(coverage_percentage=70.0)
         scores = [
             NECESSARYScore(property="N", score=0.3, violations=["Low coverage", "No tests"]),
-            NECESSARYScore(property="C", score=0.5, violations=["Coverage below 80%"])
+            NECESSARYScore(property="C", score=0.5, violations=["Coverage below 80%"]),
         ]
 
         findings = agent._generate_findings(scores, analysis, context)
@@ -487,12 +480,27 @@ class TestFindingGenerationAndPrioritization:
     def test_prioritize_findings_fallback_sorting(self, agent):
         """Stateful: Test finding prioritization with fallback sorting."""
         findings = [
-            AuditFinding(file_path="/test", severity="medium", category="test",
-                        description="Medium issue", recommendation="Fix it"),
-            AuditFinding(file_path="/test", severity="critical", category="test",
-                        description="Critical issue", recommendation="Fix now"),
-            AuditFinding(file_path="/test", severity="high", category="test",
-                        description="High issue", recommendation="Fix soon")
+            AuditFinding(
+                file_path="/test",
+                severity="medium",
+                category="test",
+                description="Medium issue",
+                recommendation="Fix it",
+            ),
+            AuditFinding(
+                file_path="/test",
+                severity="critical",
+                category="test",
+                description="Critical issue",
+                recommendation="Fix now",
+            ),
+            AuditFinding(
+                file_path="/test",
+                severity="high",
+                category="test",
+                description="High issue",
+                recommendation="Fix soon",
+            ),
         ]
         context = AuditContext(target_path="/test")
 
@@ -503,20 +511,30 @@ class TestFindingGenerationAndPrioritization:
         assert prioritized[1].severity == "high"
         assert prioritized[2].severity == "medium"
 
-    @patch('dspy_agents.modules.auditor_agent.DSPY_AVAILABLE', True)
+    @patch("dspy_agents.modules.auditor_agent.DSPY_AVAILABLE", True)
     def test_prioritize_findings_with_dspy(self, agent):
         """Stateful: Test finding prioritization using DSPy when available."""
         # Mock DSPy prioritization
         mock_result = Mock()
         mock_result.prioritized_items = [
-            {"file_path": "/test", "severity": "critical", "category": "test",
-             "description": "Critical", "recommendation": "Fix"}
+            {
+                "file_path": "/test",
+                "severity": "critical",
+                "category": "test",
+                "description": "Critical",
+                "recommendation": "Fix",
+            }
         ]
         agent.prioritize = Mock(return_value=mock_result)
 
         findings = [
-            AuditFinding(file_path="/test", severity="critical", category="test",
-                        description="Critical", recommendation="Fix")
+            AuditFinding(
+                file_path="/test",
+                severity="critical",
+                category="test",
+                description="Critical",
+                recommendation="Fix",
+            )
         ]
         context = AuditContext(target_path="/test")
 
@@ -567,10 +585,20 @@ class TestRecommendationGeneration:
         agent = DSPyAuditorAgent()
         qt_score = 0.8
         findings = [
-            AuditFinding(file_path="/test", severity="critical", category="test",
-                        description="Critical issue", recommendation="Fix now"),
-            AuditFinding(file_path="/test", severity="critical", category="test2",
-                        description="Another critical", recommendation="Fix also")
+            AuditFinding(
+                file_path="/test",
+                severity="critical",
+                category="test",
+                description="Critical issue",
+                recommendation="Fix now",
+            ),
+            AuditFinding(
+                file_path="/test",
+                severity="critical",
+                category="test2",
+                description="Another critical",
+                recommendation="Fix also",
+            ),
         ]
         scores = []
 
@@ -585,7 +613,7 @@ class TestRecommendationGeneration:
         findings = []
         scores = [
             NECESSARYScore(property="N", score=0.6, violations=["Low coverage"]),
-            NECESSARYScore(property="E2", score=0.5, violations=["No edge cases"])
+            NECESSARYScore(property="E2", score=0.5, violations=["No edge cases"]),
         ]
 
         recommendations = agent._generate_recommendations(qt_score, findings, scores)
@@ -634,11 +662,16 @@ class TestLearningSystemFunctionality:
             qt_score=0.75,
             necessary_scores=[],
             findings=[
-                AuditFinding(file_path="/test", severity="high", category="test",
-                           description="Issue", recommendation="Fix")
+                AuditFinding(
+                    file_path="/test",
+                    severity="high",
+                    category="test",
+                    description="Issue",
+                    recommendation="Fix",
+                )
             ],
             analysis=CodebaseAnalysis(),
-            audit_context=AuditContext(target_path="/test/path", mode="full")
+            audit_context=AuditContext(target_path="/test/path", mode="full"),
         )
 
         agent._learn_from_audit(result)
@@ -662,7 +695,7 @@ class TestLearningSystemFunctionality:
             necessary_scores=[],
             findings=[],
             analysis=CodebaseAnalysis(),
-            audit_context=AuditContext(target_path="/test")
+            audit_context=AuditContext(target_path="/test"),
         )
 
         agent._learn_from_audit(result)
@@ -683,7 +716,7 @@ class TestLearningSystemFunctionality:
         agent.audit_history = [
             {"qt_score": 0.8, "total_findings": 5, "critical_findings": 1, "lowest_score": 0.6},
             {"qt_score": 0.7, "total_findings": 8, "critical_findings": 2, "lowest_score": 0.5},
-            {"qt_score": 0.9, "total_findings": 2, "critical_findings": 0, "lowest_score": 0.8}
+            {"qt_score": 0.9, "total_findings": 2, "critical_findings": 0, "lowest_score": 0.8},
         ]
 
         summary = agent.get_audit_summary()
@@ -743,7 +776,7 @@ class TestLearningSystemFunctionality:
         agent.audit_history = [
             {"critical_findings": 2, "lowest_score": 0.4, "qt_score": 0.5, "total_findings": 5},
             {"critical_findings": 3, "lowest_score": 0.3, "qt_score": 0.4, "total_findings": 8},
-            {"critical_findings": 1, "lowest_score": 0.45, "qt_score": 0.6, "total_findings": 3}
+            {"critical_findings": 1, "lowest_score": 0.45, "qt_score": 0.6, "total_findings": 3},
         ]
 
         issues = agent._identify_common_issues()
@@ -761,9 +794,9 @@ class TestFallbackModeWithoutDSPy:
 
         result = agent._fallback_analyze(test_input="sample")
 
-        assert hasattr(result, 'findings')
-        assert hasattr(result, 'compliance_score')
-        assert hasattr(result, 'summary')
+        assert hasattr(result, "findings")
+        assert hasattr(result, "compliance_score")
+        assert hasattr(result, "summary")
         assert result.compliance_score == 0.75
 
     def test_fallback_prioritize_method(self):
@@ -772,13 +805,13 @@ class TestFallbackModeWithoutDSPy:
         items = [
             {"severity": "high", "description": "High issue"},
             {"severity": "critical", "description": "Critical issue"},
-            {"severity": "medium", "description": "Medium issue"}
+            {"severity": "medium", "description": "Medium issue"},
         ]
 
         result = agent._fallback_prioritize(items=items)
 
-        assert hasattr(result, 'prioritized_items')
-        assert hasattr(result, 'prioritization_rationale')
+        assert hasattr(result, "prioritized_items")
+        assert hasattr(result, "prioritization_rationale")
         assert len(result.prioritized_items) == 3
 
     def test_fallback_report_method(self):
@@ -788,12 +821,12 @@ class TestFallbackModeWithoutDSPy:
 
         result = agent._fallback_report(findings=findings)
 
-        assert hasattr(result, 'report')
-        assert hasattr(result, 'key_metrics')
-        assert hasattr(result, 'recommendations')
+        assert hasattr(result, "report")
+        assert hasattr(result, "key_metrics")
+        assert hasattr(result, "recommendations")
         assert "1 findings" in result.report
 
-    @patch('dspy_agents.modules.auditor_agent.DSPY_AVAILABLE', False)
+    @patch("dspy_agents.modules.auditor_agent.DSPY_AVAILABLE", False)
     def test_agent_works_without_dspy(self):
         """Regression: Test agent works completely without DSPy."""
         agent = DSPyAuditorAgent()
@@ -817,7 +850,7 @@ class TestIntegrationWithASTAnalyzer:
             "test_files": ["test1.py", "test2.py"],
             "total_test_functions": 25,
             "total_behaviors": 45,
-            "average_complexity": 6.2
+            "average_complexity": 6.2,
         }
 
         agent = DSPyAuditorAgent(ast_analyzer=mock_analyzer)
@@ -854,7 +887,7 @@ class TestIntegrationWithASTAnalyzer:
         """Yielding: Test basic analysis with single file."""
         agent = DSPyAuditorAgent()
 
-        with tempfile.NamedTemporaryFile(mode='w', suffix='.py', delete=False) as f:
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".py", delete=False) as f:
             f.write("""
 def sample_function():
     pass
@@ -904,7 +937,7 @@ def test_sample():
             bad_file.write_text("def test(): pass")
 
             # Mock file reading to raise an exception
-            with patch('pathlib.Path.read_text', side_effect=Exception("Read error")):
+            with patch("pathlib.Path.read_text", side_effect=Exception("Read error")):
                 analysis = agent._basic_codebase_analysis(tmpdir)
 
                 # Should complete without crashing
@@ -923,7 +956,7 @@ class TestExternalDependencyMocking:
         # Should return empty analysis without crashing
         assert analysis.total_files == 0
 
-    @patch('os.path.exists')
+    @patch("os.path.exists")
     def test_path_exists_check_mocked(self, mock_exists):
         """Yielding: Test path existence check with mocking."""
         mock_exists.return_value = False
@@ -944,7 +977,7 @@ class TestExternalDependencyMocking:
             focus_areas=["testing"],
             thresholds={"critical": 0.3},
             include_recommendations=False,
-            max_violations=25
+            max_violations=25,
         )
 
         assert context.target_path == "/test/path"
@@ -987,7 +1020,7 @@ class TestFactoryFunction:
             model="gpt-3.5-turbo",
             reasoning_effort="high",
             enable_learning=False,
-            ast_analyzer=mock_analyzer
+            ast_analyzer=mock_analyzer,
         )
 
         assert isinstance(agent, DSPyAuditorAgent)
@@ -1046,10 +1079,7 @@ class TestDataModelValidation:
         scores = [NECESSARYScore(property="N", score=0.8, violations=[])]
 
         result = AuditResult(
-            qt_score=0.75,
-            necessary_scores=scores,
-            analysis=analysis,
-            audit_context=context
+            qt_score=0.75, necessary_scores=scores, analysis=analysis, audit_context=context
         )
 
         assert result.qt_score == 0.75
@@ -1115,7 +1145,7 @@ def test_multiply():
             result = agent.forward(
                 tmpdir,
                 focus_areas=["testing", "coverage"],
-                thresholds={"critical": 0.3, "high": 0.5, "medium": 0.8}
+                thresholds={"critical": 0.3, "high": 0.5, "medium": 0.8},
             )
 
             assert result.audit_context.focus_areas == ["testing", "coverage"]

@@ -22,12 +22,14 @@ This module is no longer part of the production codebase.
 
 import pytest
 
-pytestmark = pytest.mark.skip(reason="Module deleted in Trinity clean break - foundation_verifier removed from codebase")
+pytestmark = pytest.mark.skip(
+    reason="Module deleted in Trinity clean break - foundation_verifier removed from codebase"
+)
 
 # Minimal imports for decorators (tests won't execute due to skip)
 import subprocess
-from unittest.mock import Mock, patch, MagicMock
 from datetime import datetime
+from unittest.mock import Mock, patch
 
 # Module imports commented out - module deleted
 # from trinity_protocol.foundation_verifier import (
@@ -66,14 +68,12 @@ class TestFoundationVerifierInitialization:
 class TestFoundationVerification:
     """Test foundation verification operations."""
 
-    @patch('subprocess.run')
+    @patch("subprocess.run")
     def test_verifies_healthy_foundation(self, mock_run):
         """Verifier returns healthy status when all tests pass."""
         # Mock successful test run
         mock_run.return_value = Mock(
-            returncode=0,
-            stdout="All tests passed\n1562 tests passed",
-            stderr=""
+            returncode=0, stdout="All tests passed\n1562 tests passed", stderr=""
         )
 
         verifier = FoundationVerifier()
@@ -85,14 +85,14 @@ class TestFoundationVerification:
         assert "1562 tests passed" in result.output
         assert result.error is None
 
-    @patch('subprocess.run')
+    @patch("subprocess.run")
     def test_detects_broken_foundation_with_test_failures(self, mock_run):
         """Verifier detects broken foundation when tests fail."""
         # Mock failed test run
         mock_run.return_value = Mock(
             returncode=1,
             stdout="Tests failed\n10 tests failed, 1552 passed",
-            stderr="FAILED tests/example.py::test_something"
+            stderr="FAILED tests/example.py::test_something",
         )
 
         verifier = FoundationVerifier()
@@ -104,13 +104,12 @@ class TestFoundationVerification:
         assert "failed" in result.output.lower()
         assert result.error is not None
 
-    @patch('subprocess.run')
+    @patch("subprocess.run")
     def test_handles_test_timeout(self, mock_run):
         """Verifier handles test suite timeout (Article I violation)."""
         # Mock timeout
         mock_run.side_effect = subprocess.TimeoutExpired(
-            cmd=["python", "run_tests.py"],
-            timeout=600
+            cmd=["python", "run_tests.py"], timeout=600
         )
 
         verifier = FoundationVerifier()
@@ -121,7 +120,7 @@ class TestFoundationVerification:
         assert "timeout" in result.error.lower()
         assert result.duration_seconds >= 600
 
-    @patch('subprocess.run')
+    @patch("subprocess.run")
     def test_handles_test_command_errors(self, mock_run):
         """Verifier handles errors executing test command."""
         # Mock command error
@@ -134,14 +133,10 @@ class TestFoundationVerification:
         assert result.all_tests_passed is False
         assert "not found" in result.error.lower()
 
-    @patch('subprocess.run')
+    @patch("subprocess.run")
     def test_measures_verification_duration(self, mock_run):
         """Verifier tracks duration of test suite execution."""
-        mock_run.return_value = Mock(
-            returncode=0,
-            stdout="All tests passed",
-            stderr=""
-        )
+        mock_run.return_value = Mock(returncode=0, stdout="All tests passed", stderr="")
 
         verifier = FoundationVerifier()
         result = verifier.verify()
@@ -149,14 +144,10 @@ class TestFoundationVerification:
         assert result.duration_seconds > 0
         assert isinstance(result.duration_seconds, float)
 
-    @patch('subprocess.run')
+    @patch("subprocess.run")
     def test_includes_timestamp_in_result(self, mock_run):
         """Verifier includes timestamp in verification result."""
-        mock_run.return_value = Mock(
-            returncode=0,
-            stdout="All tests passed",
-            stderr=""
-        )
+        mock_run.return_value = Mock(returncode=0, stdout="All tests passed", stderr="")
 
         verifier = FoundationVerifier()
         result = verifier.verify()
@@ -172,14 +163,14 @@ class TestFoundationVerification:
 class TestConstitutionalViolationDetection:
     """Test detection of constitutional violations."""
 
-    @patch('subprocess.run')
+    @patch("subprocess.run")
     def test_detects_incomplete_test_run(self, mock_run):
         """Verifier detects incomplete test runs (Article I violation)."""
         # Mock incomplete output (missing final summary)
         mock_run.return_value = Mock(
             returncode=0,
             stdout="Running tests...\n",  # No completion message
-            stderr=""
+            stderr="",
         )
 
         verifier = FoundationVerifier()
@@ -190,14 +181,10 @@ class TestConstitutionalViolationDetection:
         assert result.constitutional_violations is not None
         assert "incomplete" in result.error.lower() or result.status == FoundationStatus.HEALTHY
 
-    @patch('subprocess.run')
+    @patch("subprocess.run")
     def test_detects_skipped_tests(self, mock_run):
         """Verifier flags skipped tests as potential violation."""
-        mock_run.return_value = Mock(
-            returncode=0,
-            stdout="1560 passed, 2 skipped",
-            stderr=""
-        )
+        mock_run.return_value = Mock(returncode=0, stdout="1560 passed, 2 skipped", stderr="")
 
         verifier = FoundationVerifier()
         result = verifier.verify()
@@ -211,15 +198,11 @@ class TestConstitutionalViolationDetection:
 class TestEnforcementMode:
     """Test enforcement mode behavior."""
 
-    @patch('subprocess.run')
+    @patch("subprocess.run")
     def test_raises_exception_in_enforce_mode_when_broken(self, mock_run):
         """Verifier raises BrokenFoundationError in enforce mode."""
         # Mock failed tests
-        mock_run.return_value = Mock(
-            returncode=1,
-            stdout="Tests failed",
-            stderr="FAILED"
-        )
+        mock_run.return_value = Mock(returncode=1, stdout="Tests failed", stderr="FAILED")
 
         verifier = FoundationVerifier()
 
@@ -229,13 +212,11 @@ class TestEnforcementMode:
         assert "foundation is broken" in str(exc_info.value).lower()
         assert "article ii" in str(exc_info.value).lower()
 
-    @patch('subprocess.run')
+    @patch("subprocess.run")
     def test_does_not_raise_when_healthy(self, mock_run):
         """Verifier does not raise exception when foundation healthy."""
         mock_run.return_value = Mock(
-            returncode=0,
-            stdout="All tests passed\n1562 tests passed",
-            stderr=""
+            returncode=0, stdout="All tests passed\n1562 tests passed", stderr=""
         )
 
         verifier = FoundationVerifier()
@@ -243,12 +224,11 @@ class TestEnforcementMode:
 
         assert result.status == FoundationStatus.HEALTHY
 
-    @patch('subprocess.run')
+    @patch("subprocess.run")
     def test_raises_on_timeout_in_enforce_mode(self, mock_run):
         """Verifier raises exception on timeout in enforce mode."""
         mock_run.side_effect = subprocess.TimeoutExpired(
-            cmd=["python", "run_tests.py"],
-            timeout=600
+            cmd=["python", "run_tests.py"], timeout=600
         )
 
         verifier = FoundationVerifier()
@@ -263,13 +243,11 @@ class TestEnforcementMode:
 class TestExecutorIntegration:
     """Test integration with EXECUTOR agent."""
 
-    @patch('subprocess.run')
+    @patch("subprocess.run")
     def test_executor_startup_verification(self, mock_run):
         """EXECUTOR should verify foundation before starting work."""
         mock_run.return_value = Mock(
-            returncode=0,
-            stdout="All tests passed\n1562 tests passed",
-            stderr=""
+            returncode=0, stdout="All tests passed\n1562 tests passed", stderr=""
         )
 
         verifier = FoundationVerifier()
@@ -280,14 +258,10 @@ class TestExecutorIntegration:
         assert result.status == FoundationStatus.HEALTHY
         # EXECUTOR can proceed with work
 
-    @patch('subprocess.run')
+    @patch("subprocess.run")
     def test_executor_blocked_on_broken_foundation(self, mock_run):
         """EXECUTOR is blocked from starting if foundation broken."""
-        mock_run.return_value = Mock(
-            returncode=1,
-            stdout="10 tests failed",
-            stderr="FAILED"
-        )
+        mock_run.return_value = Mock(returncode=1, stdout="10 tests failed", stderr="FAILED")
 
         verifier = FoundationVerifier()
 
@@ -301,14 +275,10 @@ class TestExecutorIntegration:
 class TestVerificationCaching:
     """Test verification result caching for performance."""
 
-    @patch('subprocess.run')
+    @patch("subprocess.run")
     def test_caches_recent_verification(self, mock_run):
         """Verifier can cache recent results to avoid redundant checks."""
-        mock_run.return_value = Mock(
-            returncode=0,
-            stdout="All tests passed",
-            stderr=""
-        )
+        mock_run.return_value = Mock(returncode=0, stdout="All tests passed", stderr="")
 
         verifier = FoundationVerifier()
         result1 = verifier.verify()
@@ -319,14 +289,10 @@ class TestVerificationCaching:
         # Should use cached result (mock only called once if caching works)
         assert result1.timestamp == result2.timestamp
 
-    @patch('subprocess.run')
+    @patch("subprocess.run")
     def test_bypasses_cache_when_disabled(self, mock_run):
         """Verifier bypasses cache when explicitly disabled."""
-        mock_run.return_value = Mock(
-            returncode=0,
-            stdout="All tests passed",
-            stderr=""
-        )
+        mock_run.return_value = Mock(returncode=0, stdout="All tests passed", stderr="")
 
         verifier = FoundationVerifier()
         result1 = verifier.verify()
@@ -341,13 +307,11 @@ class TestVerificationCaching:
 class TestConstitutionalComplianceReport:
     """Test constitutional compliance reporting."""
 
-    @patch('subprocess.run')
+    @patch("subprocess.run")
     def test_generates_compliance_report(self, mock_run):
         """Verifier generates compliance report for auditing."""
         mock_run.return_value = Mock(
-            returncode=0,
-            stdout="All tests passed\n1562 tests passed",
-            stderr=""
+            returncode=0, stdout="All tests passed\n1562 tests passed", stderr=""
         )
 
         verifier = FoundationVerifier()
@@ -360,14 +324,10 @@ class TestConstitutionalComplianceReport:
         assert "test_success_rate" in report
         assert report["test_success_rate"] == 1.0
 
-    @patch('subprocess.run')
+    @patch("subprocess.run")
     def test_compliance_report_shows_violations(self, mock_run):
         """Compliance report includes violation details."""
-        mock_run.return_value = Mock(
-            returncode=1,
-            stdout="10 tests failed",
-            stderr="FAILED"
-        )
+        mock_run.return_value = Mock(returncode=1, stdout="10 tests failed", stderr="FAILED")
 
         verifier = FoundationVerifier()
         result = verifier.verify()

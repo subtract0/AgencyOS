@@ -1,8 +1,7 @@
-import json
 import os
 from pathlib import Path
 
-from tools.undo_snapshot import WorkspaceSnapshot, WorkspaceUndo
+from tools.undo_snapshot import WorkspaceUndo
 
 
 def test_workspace_undo_missing_snapshot_id():

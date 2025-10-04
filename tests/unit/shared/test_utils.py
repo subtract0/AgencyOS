@@ -15,12 +15,9 @@ Covers:
 
 import logging
 import warnings
-import pytest
-from unittest.mock import patch, MagicMock
-from io import StringIO
+from unittest.mock import patch
 
 from shared.utils import silence_warnings_and_logs
-
 
 # ========== NECESSARY Pattern: Normal Operation Tests ==========
 

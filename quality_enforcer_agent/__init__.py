@@ -1,11 +1,11 @@
 """QualityEnforcerAgent - Constitutional compliance and automatic quality enforcement agent."""
 
 from .quality_enforcer_agent import (
-    create_quality_enforcer_agent,
+    AutoFixSuggestion,
     ConstitutionalCheck,
     QualityAnalysis,
     ValidatorTool,
-    AutoFixSuggestion
+    create_quality_enforcer_agent,
 )
 
 __all__ = [
@@ -13,5 +13,5 @@ __all__ = [
     "ConstitutionalCheck",
     "QualityAnalysis",
     "ValidatorTool",
-    "AutoFixSuggestion"
+    "AutoFixSuggestion",
 ]

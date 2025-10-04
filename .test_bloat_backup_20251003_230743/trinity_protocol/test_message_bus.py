@@ -13,10 +13,12 @@ NECESSARY Pattern Compliance:
 - Yield fast: <1s per async test
 """
 
-import pytest
-import tempfile
 import asyncio
+import tempfile
 from pathlib import Path
+
+import pytest
+
 from shared.message_bus import MessageBus, async_message_bus
 
 
@@ -80,10 +82,7 @@ class TestMessagePublishing:
             db_path = Path(tmpdir) / "test.db"
             bus = MessageBus(db_path=str(db_path))
 
-            message_id = await bus.publish(
-                queue_name="test_queue",
-                message={"data": "test_value"}
-            )
+            message_id = await bus.publish(queue_name="test_queue", message={"data": "test_value"})
 
             assert isinstance(message_id, int)
             assert message_id > 0
@@ -94,9 +93,9 @@ class TestMessagePublishing:
             row = cursor.fetchone()
 
             assert row is not None
-            assert row['queue_name'] == "test_queue"
-            assert '"data": "test_value"' in row['message_data']
-            assert row['status'] == "pending"
+            assert row["queue_name"] == "test_queue"
+            assert '"data": "test_value"' in row["message_data"]
+            assert row["status"] == "pending"
 
             bus.close()
 
@@ -108,14 +107,12 @@ class TestMessagePublishing:
             bus = MessageBus(db_path=str(db_path))
 
             message_id = await bus.publish(
-                queue_name="test_queue",
-                message={"data": "urgent"},
-                priority=10
+                queue_name="test_queue", message={"data": "urgent"}, priority=10
             )
 
             cursor = bus.conn.cursor()
             cursor.execute("SELECT priority FROM messages WHERE id = ?", (message_id,))
-            priority = cursor.fetchone()['priority']
+            priority = cursor.fetchone()["priority"]
 
             assert priority == 10
 
@@ -130,17 +127,12 @@ class TestMessagePublishing:
 
             correlation_id = "test-correlation-123"
             message_id = await bus.publish(
-                queue_name="test_queue",
-                message={"data": "linked"},
-                correlation_id=correlation_id
+                queue_name="test_queue", message={"data": "linked"}, correlation_id=correlation_id
             )
 
             cursor = bus.conn.cursor()
-            cursor.execute(
-                "SELECT correlation_id FROM messages WHERE id = ?",
-                (message_id,)
-            )
-            stored_corr_id = cursor.fetchone()['correlation_id']
+            cursor.execute("SELECT correlation_id FROM messages WHERE id = ?", (message_id,))
+            stored_corr_id = cursor.fetchone()["correlation_id"]
 
             assert stored_corr_id == correlation_id
 
@@ -155,27 +147,21 @@ class TestMessagePublishing:
 
             complex_message = {
                 "pattern": "failure",
-                "data": {
-                    "file": "test.py",
-                    "keywords": ["error", "critical"]
-                },
-                "confidence": 0.85
+                "data": {"file": "test.py", "keywords": ["error", "critical"]},
+                "confidence": 0.85,
             }
 
-            message_id = await bus.publish(
-                queue_name="test_queue",
-                message=complex_message
-            )
+            message_id = await bus.publish(queue_name="test_queue", message=complex_message)
 
             cursor = bus.conn.cursor()
-            cursor.execute(
-                "SELECT message_data FROM messages WHERE id = ?",
-                (message_id,)
-            )
-            stored_data = cursor.fetchone()['message_data']
+            cursor.execute("SELECT message_data FROM messages WHERE id = ?", (message_id,))
+            stored_data = cursor.fetchone()["message_data"]
 
             assert "pattern" in stored_data
-            assert '"keywords": ["error", "critical"]' in stored_data or '"keywords":["error","critical"]' in stored_data
+            assert (
+                '"keywords": ["error", "critical"]' in stored_data
+                or '"keywords":["error","critical"]' in stored_data
+            )
 
             bus.close()
 
@@ -191,13 +177,11 @@ class TestMessageSubscription:
             bus = MessageBus(db_path=str(db_path))
 
             # Publish message first
-            await bus.publish(
-                queue_name="test_queue",
-                message={"data": "test"}
-            )
+            await bus.publish(queue_name="test_queue", message={"data": "test"})
 
             # Subscribe and receive
             messages_received = []
+
             async def consume():
                 async for message in bus.subscribe("test_queue"):
                     messages_received.append(message)
@@ -207,11 +191,11 @@ class TestMessageSubscription:
             # Run with timeout
             try:
                 await asyncio.wait_for(consume(), timeout=1.0)
-            except asyncio.TimeoutError:
+            except TimeoutError:
                 pass
 
             assert len(messages_received) == 1
-            assert messages_received[0]['data'] == "test"
+            assert messages_received[0]["data"] == "test"
 
             bus.close()
 
@@ -229,6 +213,7 @@ class TestMessageSubscription:
 
             # Subscribe and receive
             messages_received = []
+
             async def consume():
                 async for message in bus.subscribe("test_queue", batch_size=10):
                     messages_received.append(message)
@@ -237,11 +222,11 @@ class TestMessageSubscription:
 
             try:
                 await asyncio.wait_for(consume(), timeout=1.0)
-            except asyncio.TimeoutError:
+            except TimeoutError:
                 pass
 
             assert len(messages_received) == 3
-            orders = [msg['order'] for msg in messages_received]
+            orders = [msg["order"] for msg in messages_received]
             assert orders == [1, 2, 3]
 
             bus.close()
@@ -280,18 +265,15 @@ class TestMessageSubscription:
 
             # Wait for subscribers to receive
             try:
-                await asyncio.wait_for(
-                    asyncio.gather(task1, task2),
-                    timeout=1.0
-                )
-            except asyncio.TimeoutError:
+                await asyncio.wait_for(asyncio.gather(task1, task2), timeout=1.0)
+            except TimeoutError:
                 pass
 
             # Both should have received the message
             assert len(received_1) >= 1
             assert len(received_2) >= 1
-            assert received_1[0]['shared'] == "data"
-            assert received_2[0]['shared'] == "data"
+            assert received_1[0]["shared"] == "data"
+            assert received_2[0]["shared"] == "data"
 
             bus.close()
 
@@ -309,6 +291,7 @@ class TestMessageSubscription:
 
             # Subscribe and receive
             messages_received = []
+
             async def consume():
                 async for message in bus.subscribe("test_queue", batch_size=10):
                     messages_received.append(message)
@@ -317,11 +300,11 @@ class TestMessageSubscription:
 
             try:
                 await asyncio.wait_for(consume(), timeout=1.0)
-            except asyncio.TimeoutError:
+            except TimeoutError:
                 pass
 
             # Should receive in priority order: high, medium, low
-            names = [msg['name'] for msg in messages_received]
+            names = [msg["name"] for msg in messages_received]
             assert names == ["high", "medium", "low"]
 
             bus.close()
@@ -337,22 +320,16 @@ class TestMessageAcknowledgment:
             db_path = Path(tmpdir) / "test.db"
             bus = MessageBus(db_path=str(db_path))
 
-            message_id = await bus.publish(
-                "test_queue",
-                {"data": "test"}
-            )
+            message_id = await bus.publish("test_queue", {"data": "test"})
 
             await bus.ack(message_id)
 
             cursor = bus.conn.cursor()
-            cursor.execute(
-                "SELECT status, processed_at FROM messages WHERE id = ?",
-                (message_id,)
-            )
+            cursor.execute("SELECT status, processed_at FROM messages WHERE id = ?", (message_id,))
             row = cursor.fetchone()
 
-            assert row['status'] == "processed"
-            assert row['processed_at'] is not None
+            assert row["status"] == "processed"
+            assert row["processed_at"] is not None
 
             bus.close()
 
@@ -372,6 +349,7 @@ class TestMessageAcknowledgment:
 
             # Subscribe should only get pending
             messages_received = []
+
             async def consume():
                 async for message in bus.subscribe("test_queue", batch_size=10):
                     messages_received.append(message)
@@ -380,11 +358,11 @@ class TestMessageAcknowledgment:
 
             try:
                 await asyncio.wait_for(consume(), timeout=1.0)
-            except asyncio.TimeoutError:
+            except TimeoutError:
                 pass
 
             assert len(messages_received) == 1
-            assert messages_received[0]['data'] == "pending"
+            assert messages_received[0]["data"] == "pending"
 
             bus.close()
 
@@ -413,7 +391,7 @@ class TestCorrelationTracking:
             related = await bus.get_by_correlation(corr_id)
 
             assert len(related) == 3
-            steps = [msg['message_data']['step'] for msg in related]
+            steps = [msg["message_data"]["step"] for msg in related]
             assert steps == [1, 2, 3]
 
             bus.close()
@@ -436,7 +414,7 @@ class TestCorrelationTracking:
 
             related = await bus.get_by_correlation(corr_id)
 
-            orders = [msg['message_data']['order'] for msg in related]
+            orders = [msg["message_data"]["order"] for msg in related]
             assert orders == ["first", "second", "third"]
 
             bus.close()
@@ -458,7 +436,7 @@ class TestStatistics:
 
             stats = bus.get_stats()
 
-            assert stats['total_messages'] == 3
+            assert stats["total_messages"] == 3
 
             bus.close()
 
@@ -475,9 +453,9 @@ class TestStatistics:
 
             stats = bus.get_stats()
 
-            assert 'by_status' in stats
-            assert stats['by_status'].get('processed', 0) == 1
-            assert stats['by_status'].get('pending', 0) == 1
+            assert "by_status" in stats
+            assert stats["by_status"].get("processed", 0) == 1
+            assert stats["by_status"].get("pending", 0) == 1
 
             bus.close()
 
@@ -494,9 +472,9 @@ class TestStatistics:
 
             stats = bus.get_stats()
 
-            assert 'by_queue' in stats
-            assert 'improvement_queue' in stats['by_queue']
-            assert 'execution_queue' in stats['by_queue']
+            assert "by_queue" in stats
+            assert "improvement_queue" in stats["by_queue"]
+            assert "execution_queue" in stats["by_queue"]
 
             bus.close()
 
@@ -521,9 +499,9 @@ class TestStatistics:
 
             stats = bus.get_stats()
 
-            assert 'active_subscribers' in stats
-            assert stats['active_subscribers'].get('q1', 0) == 2
-            assert stats['active_subscribers'].get('q2', 0) == 1
+            assert "active_subscribers" in stats
+            assert stats["active_subscribers"].get("q1", 0) == 2
+            assert stats["active_subscribers"].get("q2", 0) == 1
 
             # Cleanup
             task1.cancel()
@@ -590,7 +568,7 @@ class TestErrorHandling:
 
             try:
                 await asyncio.wait_for(consume_with_timeout(), timeout=0.5)
-            except asyncio.TimeoutError:
+            except TimeoutError:
                 pass  # Expected - no messages available
 
             # Should not have raised any exceptions

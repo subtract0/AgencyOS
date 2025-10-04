@@ -4,31 +4,37 @@ Test Runner for Agency Code Agency
 Runs all tests using pytest framework
 """
 
+import argparse
+import atexit
+import json
 import os
+import signal
 import subprocess
 import sys
-import signal
 import tempfile
-import atexit
 import time
-import argparse
-import json
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
-from typing import Dict, Optional, Any
 from types import FrameType
+from typing import Any
 
 # Defer pydantic import to avoid module errors in pre-commit hook
 JSONValue = Any  # Type hint placeholder
 
 
-def _record_timing(duration_s: float, test_mode: str, specific: Optional[str], exit_code: int, extra: Optional[Dict[str, JSONValue]] = None) -> None:
+def _record_timing(
+    duration_s: float,
+    test_mode: str,
+    specific: str | None,
+    exit_code: int,
+    extra: dict[str, JSONValue] | None = None,
+) -> None:
     try:
         root = Path(__file__).resolve().parent
         out_dir = root / "logs" / "benchmarks"
         out_dir.mkdir(parents=True, exist_ok=True)
         payload = {
-"ts": datetime.now(timezone.utc).isoformat(),
+            "ts": datetime.now(UTC).isoformat(),
             "mode": test_mode,
             "specific": specific,
             "duration_s": round(float(duration_s), 3),
@@ -57,7 +63,7 @@ def main(test_mode: str = "unit", fast_only: bool = False, timed: bool = False) 
 
     if pid_file.exists():
         try:
-            with open(pid_file, 'r') as f:
+            with open(pid_file) as f:
                 old_pid = int(f.read().strip())
             # Check if process is still running
             os.kill(old_pid, 0)  # Will raise OSError if process doesn't exist
@@ -69,7 +75,7 @@ def main(test_mode: str = "unit", fast_only: bool = False, timed: bool = False) 
             pid_file.unlink(missing_ok=True)
 
     # Create PID file for this run
-    with open(pid_file, 'w') as f:
+    with open(pid_file, "w") as f:
         f.write(str(os.getpid()))
 
     # Clean up PID file on exit
@@ -79,7 +85,7 @@ def main(test_mode: str = "unit", fast_only: bool = False, timed: bool = False) 
     atexit.register(cleanup_pid_file)
 
     # SIGNAL HANDLING: Clean shutdown on interruption
-    def signal_handler(sig: int, frame: Optional[FrameType]) -> None:
+    def signal_handler(sig: int, frame: FrameType | None) -> None:
         print(f"\n⚠️  Received signal {sig}, cleaning up...")
         cleanup_pid_file()
         sys.exit(1)
@@ -106,7 +112,7 @@ def main(test_mode: str = "unit", fast_only: bool = False, timed: bool = False) 
         "slow": "Slow Tests Only",
         "benchmark": "Benchmark Tests Only",
         "github": "GitHub Integration Tests Only",
-        "integration-only": "Integration Tests Only (same as integration)"
+        "integration-only": "Integration Tests Only (same as integration)",
     }
     print(f"\n🎯 Test Mode: {mode_descriptions.get(test_mode, test_mode)}")
     print("-" * 40)
@@ -116,16 +122,16 @@ def main(test_mode: str = "unit", fast_only: bool = False, timed: bool = False) 
     os.chdir(project_root)
 
     # VIRTUAL ENVIRONMENT CHECK AND ACTIVATION
-    venv_path = os.environ.get('VIRTUAL_ENV')
+    venv_path = os.environ.get("VIRTUAL_ENV")
     if not venv_path:
         # Try to find and use the .venv in the project
-        potential_venv = project_root / '.venv'
+        potential_venv = project_root / ".venv"
         if potential_venv.exists():
             # Use the Python from the virtual environment
-            venv_python = potential_venv / 'bin' / 'python'
+            venv_python = potential_venv / "bin" / "python"
             if not venv_python.exists():
                 # Windows path
-                venv_python = potential_venv / 'Scripts' / 'python.exe'
+                venv_python = potential_venv / "Scripts" / "python.exe"
 
             if venv_python.exists():
                 print(f"✅ Using virtual environment: {potential_venv}")
@@ -234,13 +240,13 @@ def main(test_mode: str = "unit", fast_only: bool = False, timed: bool = False) 
         # Add timeout for safety (600 seconds for all test modes to prevent timeouts)
         # Allow override from environment for CI environments
         default_timeout = 600  # 10 minutes for all test modes
-        timeout_seconds = int(os.environ.get('AGENCY_TEST_TIMEOUT_OVERRIDE', str(default_timeout)))
+        timeout_seconds = int(os.environ.get("AGENCY_TEST_TIMEOUT_OVERRIDE", str(default_timeout)))
         result = subprocess.run(
             pytest_args,
             check=False,
             env=env,
             timeout=timeout_seconds,
-            start_new_session=True  # Create process group for clean shutdown
+            start_new_session=True,  # Create process group for clean shutdown
         )
 
         # Calculate execution time
@@ -331,11 +337,7 @@ def run_specific_test(test_name: str, timed: bool = False) -> int:
         # Add timeout for safety (5 minutes for specific tests)
         t0 = time.time()
         result = subprocess.run(
-            pytest_args,
-            check=False,
-            env=env,
-            timeout=300,
-            start_new_session=True
+            pytest_args, check=False, env=env, timeout=300, start_new_session=True
         )
         duration = time.time() - t0
 
@@ -344,7 +346,9 @@ def run_specific_test(test_name: str, timed: bool = False) -> int:
         print("=" * 60)
 
         if timed:
-            _record_timing(duration, test_mode="specific", specific=test_name, exit_code=result.returncode)
+            _record_timing(
+                duration, test_mode="specific", specific=test_name, exit_code=result.returncode
+            )
 
         if result.returncode == 0:
             print("✅ Specific test passed!")
@@ -377,7 +381,7 @@ def create_parser() -> argparse.ArgumentParser:
   python run_tests.py --integration-only # Run integration tests only
   python run_tests.py --run-integration  # Run integration tests only (legacy)
   python run_tests.py --run-all          # Run all tests
-  python run_tests.py test_specific.py   # Run specific test file"""
+  python run_tests.py test_specific.py   # Run specific test file""",
     )
 
     # Test suite options (mutually exclusive)
@@ -385,51 +389,33 @@ def create_parser() -> argparse.ArgumentParser:
     test_group.add_argument(
         "--fast",
         action="store_true",
-        help="Run only fast unit tests (exclude slow, benchmark, integration)"
+        help="Run only fast unit tests (exclude slow, benchmark, integration)",
     )
+    test_group.add_argument("--slow", action="store_true", help="Run only slow tests")
+    test_group.add_argument("--benchmark", action="store_true", help="Run only benchmark tests")
     test_group.add_argument(
-        "--slow",
-        action="store_true",
-        help="Run only slow tests"
-    )
-    test_group.add_argument(
-        "--benchmark",
-        action="store_true",
-        help="Run only benchmark tests"
-    )
-    test_group.add_argument(
-        "--github",
-        action="store_true",
-        help="Run only GitHub integration tests"
+        "--github", action="store_true", help="Run only GitHub integration tests"
     )
     test_group.add_argument(
         "--integration-only",
         action="store_true",
-        help="Run ONLY integration tests (what we normally skip)"
+        help="Run ONLY integration tests (what we normally skip)",
     )
     test_group.add_argument(
-        "--run-integration",
-        action="store_true",
-        help="Run ONLY integration tests (legacy option)"
+        "--run-integration", action="store_true", help="Run ONLY integration tests (legacy option)"
     )
     test_group.add_argument(
-        "--run-all",
-        action="store_true",
-        help="Run ALL tests (unit + integration)"
+        "--run-all", action="store_true", help="Run ALL tests (unit + integration)"
     )
 
     # Specific test file
-    parser.add_argument(
-        "specific_test",
-        nargs="?",
-        help="Run specific test file"
-    )
+    parser.add_argument("specific_test", nargs="?", help="Run specific test file")
 
     # Optional timing record
     parser.add_argument(
         "--timed",
         action="store_true",
-        help="Record run duration to logs/benchmarks/test_timings.jsonl and print it"
+        help="Record run duration to logs/benchmarks/test_timings.jsonl and print it",
     )
 
     return parser

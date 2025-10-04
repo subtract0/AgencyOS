@@ -6,10 +6,11 @@ Provides lightweight context management for injecting shared services
 like Memory without using global state.
 """
 
-from typing import Optional, Any, Dict
-from shared.type_definitions.json_value import JSONValue
-from agency_memory import Memory
 import logging
+from typing import Any
+
+from agency_memory import Memory
+from shared.type_definitions.json_value import JSONValue
 
 logger = logging.getLogger(__name__)
 
@@ -22,7 +23,7 @@ class AgentContext:
     global state. Each agent session can have its own context instance.
     """
 
-    def __init__(self, memory: Optional[Memory] = None, session_id: Optional[str] = None):
+    def __init__(self, memory: Memory | None = None, session_id: str | None = None):
         """
         Initialize agent context.
 
@@ -32,15 +33,16 @@ class AgentContext:
         """
         self.memory = memory or Memory()
         self.session_id = session_id or self._generate_session_id()
-        self._metadata: Dict[str, JSONValue] = {}
+        self._metadata: dict[str, JSONValue] = {}
 
         logger.debug(f"AgentContext initialized with session_id: {self.session_id}")
 
     def _generate_session_id(self) -> str:
         """Generate a unique session identifier."""
-        from datetime import datetime
         import uuid
-        timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+        from datetime import datetime
+
+        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
         unique_suffix = str(uuid.uuid4())[:8]
         return f"session_{timestamp}_{unique_suffix}"
 
@@ -48,7 +50,7 @@ class AgentContext:
         """Set metadata for this context."""
         self._metadata[key] = value
 
-    def get_metadata(self, key: str, default: Optional[JSONValue] = None) -> Optional[JSONValue]:
+    def get_metadata(self, key: str, default: JSONValue | None = None) -> JSONValue | None:
         """Get metadata from this context."""
         return self._metadata.get(key, default)
 
@@ -65,7 +67,9 @@ class AgentContext:
         all_tags = tags + [f"session:{self.session_id}"]
         self.memory.store(key, content, all_tags)
 
-    def search_memories(self, tags: list[str], include_session: bool = True) -> list[dict[str, JSONValue]]:
+    def search_memories(
+        self, tags: list[str], include_session: bool = True
+    ) -> list[dict[str, JSONValue]]:
         """
         Search memories with optional session filtering.
 
@@ -99,7 +103,9 @@ class AgentContext:
         return self.memory.search([f"session:{self.session_id}"])
 
 
-def create_agent_context(memory: Optional[Memory] = None, session_id: Optional[str] = None) -> AgentContext:
+def create_agent_context(
+    memory: Memory | None = None, session_id: str | None = None
+) -> AgentContext:
     """
     Factory function to create an AgentContext instance.
 

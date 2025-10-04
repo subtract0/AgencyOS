@@ -20,13 +20,14 @@ Tests should be updated for new HITLProtocol API.
 
 import pytest
 
-pytestmark = pytest.mark.skip(reason="Test depends on HumanReviewQueue (now HITLProtocol) - needs update")
+pytestmark = pytest.mark.skip(
+    reason="Test depends on HumanReviewQueue (now HITLProtocol) - needs update"
+)
 
 # Minimal imports for decorators (tests won't execute due to skip)
 import tempfile
-import asyncio
-from pathlib import Path
 from datetime import datetime, timedelta
+from pathlib import Path
 
 # Module imports commented out - API refactored
 # from shared.message_bus import MessageBus
@@ -72,7 +73,7 @@ def sample_pattern():
         context_summary="User wants better question handling",
         keywords=["hitl", "questions"],
         sentiment="positive",
-        urgency="medium"
+        urgency="medium",
     )
 
 
@@ -86,7 +87,7 @@ def sample_review_request(sample_pattern):
         pattern_context=sample_pattern,
         priority=7,
         expires_at=datetime.now() + timedelta(hours=24),
-        suggested_action="Build response routing system"
+        suggested_action="Build response routing system",
     )
 
 
@@ -97,10 +98,7 @@ class TestResponseHandlerInitialization:
     async def test_initializes_with_dependencies(self, message_bus, temp_queue_db):
         """Handler initializes with message bus and queue."""
         queue = HumanReviewQueue(message_bus=message_bus, db_path=str(temp_queue_db))
-        handler = ResponseHandler(
-            message_bus=message_bus,
-            review_queue=queue
-        )
+        handler = ResponseHandler(message_bus=message_bus, review_queue=queue)
 
         assert handler.message_bus is message_bus
         assert handler.review_queue is queue
@@ -114,10 +112,7 @@ class TestYESResponseRouting:
 
     @pytest.mark.asyncio
     async def test_routes_yes_to_execution_queue(
-        self,
-        message_bus,
-        temp_queue_db,
-        sample_review_request
+        self, message_bus, temp_queue_db, sample_review_request
     ):
         """YES responses publish task to execution_queue."""
         queue = HumanReviewQueue(message_bus=message_bus, db_path=str(temp_queue_db))
@@ -128,9 +123,7 @@ class TestYESResponseRouting:
 
         # Respond YES
         response = HumanResponse(
-            correlation_id="test-corr-456",
-            response_type="YES",
-            comment="Sounds great!"
+            correlation_id="test-corr-456", response_type="YES", comment="Sounds great!"
         )
 
         await handler.process_response(question_id, response)
@@ -141,16 +134,13 @@ class TestYESResponseRouting:
 
         # Verify question marked as answered
         stats = queue.get_stats()
-        assert stats['by_response'].get('YES', 0) == 1
+        assert stats["by_response"].get("YES", 0) == 1
 
         queue.close()
 
     @pytest.mark.asyncio
     async def test_yes_response_includes_context(
-        self,
-        message_bus,
-        temp_queue_db,
-        sample_review_request
+        self, message_bus, temp_queue_db, sample_review_request
     ):
         """YES responses include pattern context for EXECUTOR."""
         queue = HumanReviewQueue(message_bus=message_bus, db_path=str(temp_queue_db))
@@ -158,29 +148,23 @@ class TestYESResponseRouting:
 
         question_id = await queue.submit_question(sample_review_request)
 
-        response = HumanResponse(
-            correlation_id="test-corr-456",
-            response_type="YES"
-        )
+        response = HumanResponse(correlation_id="test-corr-456", response_type="YES")
 
         await handler.process_response(question_id, response)
 
         # Get published task from execution_queue
         async for msg in message_bus.subscribe("execution_queue"):
             # Verify it has pattern context
-            assert 'pattern_context' in msg
-            assert msg['correlation_id'] == "test-corr-456"
-            assert msg['approved'] is True
+            assert "pattern_context" in msg
+            assert msg["correlation_id"] == "test-corr-456"
+            assert msg["approved"] is True
             break
 
         queue.close()
 
     @pytest.mark.asyncio
     async def test_yes_response_calculates_time(
-        self,
-        message_bus,
-        temp_queue_db,
-        sample_review_request
+        self, message_bus, temp_queue_db, sample_review_request
     ):
         """YES responses calculate response time for learning."""
         queue = HumanReviewQueue(message_bus=message_bus, db_path=str(temp_queue_db))
@@ -190,16 +174,14 @@ class TestYESResponseRouting:
 
         # Simulate user took 60 seconds to respond
         response = HumanResponse(
-            correlation_id="test-corr-456",
-            response_type="YES",
-            response_time_seconds=60.0
+            correlation_id="test-corr-456", response_type="YES", response_time_seconds=60.0
         )
 
         await handler.process_response(question_id, response)
 
         # Verify response time stored
         stats = queue.get_stats()
-        assert stats['avg_response_time_seconds'] == 60.0
+        assert stats["avg_response_time_seconds"] == 60.0
 
         queue.close()
 
@@ -209,10 +191,7 @@ class TestNOResponseHandling:
 
     @pytest.mark.asyncio
     async def test_no_response_does_not_execute(
-        self,
-        message_bus,
-        temp_queue_db,
-        sample_review_request
+        self, message_bus, temp_queue_db, sample_review_request
     ):
         """NO responses do NOT publish to execution_queue."""
         queue = HumanReviewQueue(message_bus=message_bus, db_path=str(temp_queue_db))
@@ -221,9 +200,7 @@ class TestNOResponseHandling:
         question_id = await queue.submit_question(sample_review_request)
 
         response = HumanResponse(
-            correlation_id="test-corr-456",
-            response_type="NO",
-            comment="Not now, too busy"
+            correlation_id="test-corr-456", response_type="NO", comment="Not now, too busy"
         )
 
         await handler.process_response(question_id, response)
@@ -234,16 +211,13 @@ class TestNOResponseHandling:
 
         # Verify question marked as answered with NO
         stats = queue.get_stats()
-        assert stats['by_response'].get('NO', 0) == 1
+        assert stats["by_response"].get("NO", 0) == 1
 
         queue.close()
 
     @pytest.mark.asyncio
     async def test_no_response_stores_for_learning(
-        self,
-        message_bus,
-        temp_queue_db,
-        sample_review_request
+        self, message_bus, temp_queue_db, sample_review_request
     ):
         """NO responses publish to learning telemetry."""
         queue = HumanReviewQueue(message_bus=message_bus, db_path=str(temp_queue_db))
@@ -252,9 +226,7 @@ class TestNOResponseHandling:
         question_id = await queue.submit_question(sample_review_request)
 
         response = HumanResponse(
-            correlation_id="test-corr-456",
-            response_type="NO",
-            comment="Wrong timing"
+            correlation_id="test-corr-456", response_type="NO", comment="Wrong timing"
         )
 
         await handler.process_response(question_id, response)
@@ -271,10 +243,7 @@ class TestLATERResponseHandling:
 
     @pytest.mark.asyncio
     async def test_later_response_does_not_execute_immediately(
-        self,
-        message_bus,
-        temp_queue_db,
-        sample_review_request
+        self, message_bus, temp_queue_db, sample_review_request
     ):
         """LATER responses do NOT execute immediately."""
         queue = HumanReviewQueue(message_bus=message_bus, db_path=str(temp_queue_db))
@@ -283,9 +252,7 @@ class TestLATERResponseHandling:
         question_id = await queue.submit_question(sample_review_request)
 
         response = HumanResponse(
-            correlation_id="test-corr-456",
-            response_type="LATER",
-            comment="Ask me tomorrow"
+            correlation_id="test-corr-456", response_type="LATER", comment="Ask me tomorrow"
         )
 
         await handler.process_response(question_id, response)
@@ -296,31 +263,25 @@ class TestLATERResponseHandling:
 
         # Marked as LATER
         stats = queue.get_stats()
-        assert stats['by_response'].get('LATER', 0) == 1
+        assert stats["by_response"].get("LATER", 0) == 1
 
         queue.close()
 
     @pytest.mark.asyncio
     async def test_later_response_schedules_reminder(
-        self,
-        message_bus,
-        temp_queue_db,
-        sample_review_request
+        self, message_bus, temp_queue_db, sample_review_request
     ):
         """LATER responses schedule question resubmission."""
         queue = HumanReviewQueue(message_bus=message_bus, db_path=str(temp_queue_db))
         handler = ResponseHandler(
             message_bus=message_bus,
             review_queue=queue,
-            later_delay_hours=4  # Configurable delay
+            later_delay_hours=4,  # Configurable delay
         )
 
         question_id = await queue.submit_question(sample_review_request)
 
-        response = HumanResponse(
-            correlation_id="test-corr-456",
-            response_type="LATER"
-        )
+        response = HumanResponse(correlation_id="test-corr-456", response_type="LATER")
 
         await handler.process_response(question_id, response)
 
@@ -336,19 +297,12 @@ class TestErrorHandling:
     """Test error conditions and edge cases."""
 
     @pytest.mark.asyncio
-    async def test_handles_nonexistent_question_id(
-        self,
-        message_bus,
-        temp_queue_db
-    ):
+    async def test_handles_nonexistent_question_id(self, message_bus, temp_queue_db):
         """Handler raises error for non-existent question ID."""
         queue = HumanReviewQueue(message_bus=message_bus, db_path=str(temp_queue_db))
         handler = ResponseHandler(message_bus=message_bus, review_queue=queue)
 
-        response = HumanResponse(
-            correlation_id="nonexistent",
-            response_type="YES"
-        )
+        response = HumanResponse(correlation_id="nonexistent", response_type="YES")
 
         with pytest.raises(ValueError, match="Question.*not found"):
             await handler.process_response(99999, response)
@@ -357,10 +311,7 @@ class TestErrorHandling:
 
     @pytest.mark.asyncio
     async def test_handles_mismatched_correlation_id(
-        self,
-        message_bus,
-        temp_queue_db,
-        sample_review_request
+        self, message_bus, temp_queue_db, sample_review_request
     ):
         """Handler validates correlation ID matches question."""
         queue = HumanReviewQueue(message_bus=message_bus, db_path=str(temp_queue_db))
@@ -369,10 +320,7 @@ class TestErrorHandling:
         question_id = await queue.submit_question(sample_review_request)
 
         # Response with wrong correlation ID
-        response = HumanResponse(
-            correlation_id="wrong-correlation",
-            response_type="YES"
-        )
+        response = HumanResponse(correlation_id="wrong-correlation", response_type="YES")
 
         with pytest.raises(ValueError, match="Correlation ID mismatch"):
             await handler.process_response(question_id, response)
@@ -385,10 +333,7 @@ class TestResponseStatistics:
 
     @pytest.mark.asyncio
     async def test_tracks_response_time_distribution(
-        self,
-        message_bus,
-        temp_queue_db,
-        sample_pattern
+        self, message_bus, temp_queue_db, sample_pattern
     ):
         """Handler tracks response time distribution."""
         queue = HumanReviewQueue(message_bus=message_bus, db_path=str(temp_queue_db))
@@ -403,20 +348,18 @@ class TestResponseStatistics:
                 question_type="low_stakes",
                 pattern_context=sample_pattern,
                 priority=5,
-                expires_at=datetime.now() + timedelta(hours=24)
+                expires_at=datetime.now() + timedelta(hours=24),
             )
             q_id = await queue.submit_question(request)
 
             response = HumanResponse(
-                correlation_id=f"q{i}",
-                response_type="YES",
-                response_time_seconds=rt
+                correlation_id=f"q{i}", response_type="YES", response_time_seconds=rt
             )
             await handler.process_response(q_id, response)
 
         stats = queue.get_stats()
 
         # Average should be (10 + 30 + 60) / 3 = 33.33
-        assert 33.0 <= stats['avg_response_time_seconds'] <= 34.0
+        assert 33.0 <= stats["avg_response_time_seconds"] <= 34.0
 
         queue.close()

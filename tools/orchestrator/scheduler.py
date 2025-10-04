@@ -1,19 +1,18 @@
 from __future__ import annotations
 
 import asyncio
+import contextlib
 import dataclasses
 import json
 import os
 import time
-import contextlib
-import uuid
-from datetime import datetime, timezone
-from typing import Any, Callable, Dict, List, Literal, Optional, cast
-from shared.type_definitions.json import JSONValue
-from shared.models.orchestrator import ExecutionMetrics
+from collections.abc import Callable
+from datetime import UTC, datetime
+from typing import Any, Literal, cast
 
 from shared.agent_context import AgentContext  # type: ignore
-
+from shared.models.orchestrator import ExecutionMetrics
+from shared.type_definitions.json import JSONValue
 
 BackoffType = Literal["fixed", "exp"]
 FairnessType = Literal["round_robin", "shortest_first"]
@@ -25,7 +24,7 @@ def _telemetry_enabled() -> bool:
     return v not in {"0", "false", "no"}
 
 
-def _telemetry_emit(event: Dict[str, JSONValue]) -> None:
+def _telemetry_emit(event: dict[str, JSONValue]) -> None:
     """Append a JSONL telemetry event. Fail-safe and non-blocking best-effort.
 
     Event schema (subset):
@@ -39,32 +38,37 @@ def _telemetry_emit(event: Dict[str, JSONValue]) -> None:
         # Compute path logs/telemetry/events-YYYYMMDD.jsonl relative to CWD
         base = os.path.join(os.getcwd(), "logs", "telemetry")
         os.makedirs(base, exist_ok=True)
-        ts = datetime.now(timezone.utc)
+        ts = datetime.now(UTC)
         fname = os.path.join(base, f"events-{ts:%Y%m%d}.jsonl")
         event = dict(event)
         # Sanitize before writing
         try:
             from tools.telemetry.sanitize import redact_event  # type: ignore
+
             event = redact_event(event)
         except ImportError as e:
             import logging
+
             logger = logging.getLogger(__name__)
             logger.warning(f"Failed to import telemetry sanitization: {e}")
         except Exception as e:
             import logging
+
             logger = logging.getLogger(__name__)
             logger.error(f"Error during telemetry sanitization: {e}")
         event["ts"] = ts.isoformat(timespec="milliseconds").replace("+00:00", "Z")
         with open(fname, "a", encoding="utf-8") as f:
             f.write(json.dumps(event, ensure_ascii=False) + "\n")
-    except (OSError, IOError) as e:
+    except OSError as e:
         import logging
+
         logger = logging.getLogger(__name__)
         logger.error(f"Failed to write telemetry event to {fname}: {e}")
         # Swallow I/O errors per spec but log them
         return
     except Exception as e:
         import logging
+
         logger = logging.getLogger(__name__)
         logger.critical(f"Unexpected error in telemetry logging: {e}")
         return
@@ -82,8 +86,8 @@ class RetryPolicy:
 class OrchestrationPolicy:
     max_concurrency: int = 4
     retry: RetryPolicy = dataclasses.field(default_factory=RetryPolicy)
-    timeout_s: Optional[float] = None
-    cost_budget: Optional[float] = None
+    timeout_s: float | None = None
+    cost_budget: float | None = None
     fairness: FairnessType = "round_robin"
     cancellation: CancellationType = "isolated"
 
@@ -92,8 +96,8 @@ class OrchestrationPolicy:
 class TaskSpec:
     agent_factory: Callable[[AgentContext], Any]
     prompt: str
-    params: Optional[Dict[str, JSONValue]] = None
-    id: Optional[str] = None
+    params: dict[str, JSONValue] | None = None
+    id: str | None = None
 
 
 @dataclasses.dataclass
@@ -105,23 +109,25 @@ class TaskResult:
     finished_at: float
     attempts: int
     artifacts: JSONValue | None
-    errors: Optional[List[str]]
+    errors: list[str] | None
 
 
 @dataclasses.dataclass
 class OrchestrationResult:
-    tasks: List[TaskResult]
+    tasks: list[TaskResult]
     metrics: ExecutionMetrics
-    merged: Dict[str, JSONValue]
+    merged: dict[str, JSONValue]
 
 
 class _Scheduler:
     def __init__(self, policy: OrchestrationPolicy) -> None:
         self._policy = policy
         self._sem = asyncio.Semaphore(policy.max_concurrency)
-        self._run_id: Optional[str] = None
+        self._run_id: str | None = None
 
-    async def _create_heartbeat_task(self, task_id: str, agent_name: str, started: float, attempts: int) -> tuple[asyncio.Task, asyncio.Event]:
+    async def _create_heartbeat_task(
+        self, task_id: str, agent_name: str, started: float, attempts: int
+    ) -> tuple[asyncio.Task, asyncio.Event]:
         """Create and start a heartbeat task for telemetry."""
         stop_hb = asyncio.Event()
         hb_interval = float(os.environ.get("AGENCY_HEARTBEAT_INTERVAL_S", "5.0"))
@@ -143,7 +149,7 @@ class _Scheduler:
                     try:
                         await asyncio.wait_for(stop_hb.wait(), timeout=hb_interval)
                         break  # Stop event was set, exit loop
-                    except asyncio.TimeoutError:
+                    except TimeoutError:
                         continue  # Timeout is expected, emit another heartbeat
             except (asyncio.CancelledError, Exception):
                 # Handle cancellation and any other errors gracefully
@@ -152,29 +158,34 @@ class _Scheduler:
         hb_task = asyncio.create_task(_heartbeat_loop())
         return hb_task, stop_hb
 
-    def _create_agent_safely(self, spec: TaskSpec, ctx: AgentContext, task_id: str, agent_name: str, started: float) -> Any:
+    def _create_agent_safely(
+        self, spec: TaskSpec, ctx: AgentContext, task_id: str, agent_name: str, started: float
+    ) -> Any:
         """Create agent with error handling, returning None if creation fails."""
         try:
             return spec.agent_factory(ctx)
         except Exception as e:
             # If agent creation fails, emit telemetry and raise
             finished = time.time()
-            _telemetry_emit({
-                "type": "task_finished",
-                "id": task_id,
-                "agent": agent_name,
-                "attempt": 1,
-                "status": "failed",
-                "started_at": started,
-                "finished_at": finished,
-                "duration_s": max(0.0, finished - started),
-                "errors": [f"Agent factory failed: {str(e)}"],
-            })
+            _telemetry_emit(
+                {
+                    "type": "task_finished",
+                    "id": task_id,
+                    "agent": agent_name,
+                    "attempt": 1,
+                    "status": "failed",
+                    "started_at": started,
+                    "finished_at": finished,
+                    "duration_s": max(0.0, finished - started),
+                    "errors": [f"Agent factory failed: {str(e)}"],
+                }
+            )
             raise RuntimeError(f"Agent factory failed: {str(e)}") from e
 
-    async def _execute_agent_attempt(self, agent: Any, spec: TaskSpec) -> Dict[str, JSONValue]:
+    async def _execute_agent_attempt(self, agent: Any, spec: TaskSpec) -> dict[str, JSONValue]:
         """Execute a single agent attempt, handling both sync and async agents."""
         import inspect
+
         params = spec.params or {}
         try:
             call = agent.run(spec.prompt, **params)
@@ -185,7 +196,9 @@ class _Scheduler:
         # If sync, defer to thread to avoid blocking loop
         return await asyncio.to_thread(lambda: call)
 
-    def _extract_usage_and_model(self, artifacts: Dict[str, JSONValue]) -> tuple[Optional[JSONValue], Optional[str]]:
+    def _extract_usage_and_model(
+        self, artifacts: dict[str, JSONValue]
+    ) -> tuple[JSONValue | None, str | None]:
         """Extract usage and model information from agent artifacts."""
         usage = artifacts.get("usage")
         model = artifacts.get("model")
@@ -203,9 +216,18 @@ class _Scheduler:
 
         return usage, model
 
-    def _emit_success_telemetry(self, task_id: str, agent_name: str, attempts: int, started: float, finished: float, usage: Optional[JSONValue], model: Optional[str]) -> None:
+    def _emit_success_telemetry(
+        self,
+        task_id: str,
+        agent_name: str,
+        attempts: int,
+        started: float,
+        finished: float,
+        usage: JSONValue | None,
+        model: str | None,
+    ) -> None:
         """Emit telemetry for successful task completion."""
-        ev: Dict[str, JSONValue] = {
+        ev: dict[str, JSONValue] = {
             "type": "task_finished",
             "id": task_id,
             "agent": agent_name,
@@ -222,7 +244,15 @@ class _Scheduler:
             ev["model"] = model
         _telemetry_emit(ev)
 
-    def _create_success_result(self, task_id: str, agent_name: str, started: float, finished: float, attempts: int, artifacts: Dict[str, JSONValue]) -> TaskResult:
+    def _create_success_result(
+        self,
+        task_id: str,
+        agent_name: str,
+        started: float,
+        finished: float,
+        attempts: int,
+        artifacts: dict[str, JSONValue],
+    ) -> TaskResult:
         """Create a successful TaskResult."""
         return TaskResult(
             id=task_id,
@@ -235,7 +265,9 @@ class _Scheduler:
             errors=None,
         )
 
-    def _handle_timeout(self, task_id: str, agent_name: str, attempts: int, started: float, errors: List[str]) -> TaskResult:
+    def _handle_timeout(
+        self, task_id: str, agent_name: str, attempts: int, started: float, errors: list[str]
+    ) -> TaskResult:
         """Handle timeout exception and create appropriate result."""
         finished = time.time()
         _telemetry_emit(
@@ -262,7 +294,9 @@ class _Scheduler:
             errors=errors or ["timeout"],
         )
 
-    def _handle_failure(self, task_id: str, agent_name: str, attempts: int, started: float, errors: List[str]) -> TaskResult:
+    def _handle_failure(
+        self, task_id: str, agent_name: str, attempts: int, started: float, errors: list[str]
+    ) -> TaskResult:
         """Handle final failure and create appropriate result."""
         finished = time.time()
         _telemetry_emit(
@@ -300,6 +334,7 @@ class _Scheduler:
                     pass
         except Exception as e:
             import logging
+
             logger = logging.getLogger(__name__)
             logger.warning(f"Failed to cleanup heartbeat task: {e}")
 
@@ -307,8 +342,8 @@ class _Scheduler:
         """Execute a task with retry logic, telemetry, and heartbeat monitoring."""
         started = time.time()
         attempts = 0
-        errors: List[str] = []
-        task_id = spec.id or f"task-{int(started*1000)}"
+        errors: list[str] = []
+        task_id = spec.id or f"task-{int(started * 1000)}"
         agent_name = getattr(spec.agent_factory, "__name__", "agent")
 
         # Create heartbeat task
@@ -346,7 +381,9 @@ class _Scheduler:
                 )
                 try:
                     if self._policy.timeout_s is not None:
-                        coro = asyncio.wait_for(self._execute_agent_attempt(agent, spec), timeout=self._policy.timeout_s)
+                        coro = asyncio.wait_for(
+                            self._execute_agent_attempt(agent, spec), timeout=self._policy.timeout_s
+                        )
                     else:
                         coro = self._execute_agent_attempt(agent, spec)
                     artifacts = await coro
@@ -357,10 +394,14 @@ class _Scheduler:
                     if isinstance(artifacts, dict):
                         usage, model = self._extract_usage_and_model(artifacts)
 
-                    self._emit_success_telemetry(task_id, agent_name, attempts, started, finished, usage, model)
-                    return self._create_success_result(task_id, agent_name, started, finished, attempts, artifacts)
+                    self._emit_success_telemetry(
+                        task_id, agent_name, attempts, started, finished, usage, model
+                    )
+                    return self._create_success_result(
+                        task_id, agent_name, started, finished, attempts, artifacts
+                    )
 
-                except asyncio.TimeoutError:
+                except TimeoutError:
                     return self._handle_timeout(task_id, agent_name, attempts, started, errors)
                 except Exception as e:  # noqa: BLE001
                     errors.append(str(e))
@@ -379,17 +420,21 @@ class _Scheduler:
         return self._policy.retry.base_delay_s * (2 ** (attempt - 1))
 
 
-async def run_parallel(ctx: AgentContext, specs: List[TaskSpec], policy: OrchestrationPolicy) -> OrchestrationResult:
+async def run_parallel(
+    ctx: AgentContext, specs: list[TaskSpec], policy: OrchestrationPolicy
+) -> OrchestrationResult:
     sched = _Scheduler(policy)
     started = time.time()
 
     # Emit an orchestration window marker with policy for resource utilization
-    _telemetry_emit({
-        "type": "orchestrator_started",
-        "max_concurrency": policy.max_concurrency,
-        "tasks": len(specs),
-        "started_at": started,
-    })
+    _telemetry_emit(
+        {
+            "type": "orchestrator_started",
+            "max_concurrency": policy.max_concurrency,
+            "tasks": len(specs),
+            "started_at": started,
+        }
+    )
 
     async def _wrapped(spec: TaskSpec) -> TaskResult:
         async with sched._sem:
@@ -403,10 +448,14 @@ async def run_parallel(ctx: AgentContext, specs: List[TaskSpec], policy: Orchest
         additional={},
     )
 
-    _telemetry_emit({
-        "type": "orchestrator_finished",
-        "finished_at": finished,
-        "tasks": len(results),
-    })
+    _telemetry_emit(
+        {
+            "type": "orchestrator_finished",
+            "finished_at": finished,
+            "tasks": len(results),
+        }
+    )
 
-    return OrchestrationResult(tasks=results, metrics=metrics, merged={"summary": "not_merged_in_mvp"})
+    return OrchestrationResult(
+        tasks=results, metrics=metrics, merged={"summary": "not_merged_in_mvp"}
+    )

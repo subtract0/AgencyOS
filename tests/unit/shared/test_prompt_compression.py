@@ -14,14 +14,13 @@ Constitutional Compliance:
 """
 
 import pytest
+
 from shared.prompt_compression import (
     create_compressed_prompt,
     estimate_tokens,
     get_compression_stats,
-    load_agent_role,
     load_agent_instructions,
-    CONSTITUTION_CORE,
-    QUALITY_STANDARDS,
+    load_agent_role,
 )
 
 
@@ -32,11 +31,7 @@ class TestPromptCompression:
     @pytest.mark.unit
     def test_create_compressed_prompt_structure(self):
         """Test compressed prompt has correct structure."""
-        prompts = create_compressed_prompt(
-            agent_name="planner",
-            task="Create a plan",
-            context={}
-        )
+        prompts = create_compressed_prompt(agent_name="planner", task="Create a plan", context={})
 
         # Verify structure
         assert "system" in prompts
@@ -77,10 +72,7 @@ class TestPromptCompression:
     @pytest.mark.unit
     def test_context_included_in_task_prompt(self):
         """Test context is included in task prompt."""
-        context = {
-            "files": ["spec.md", "plan.md"],
-            "data": "Focus on security"
-        }
+        context = {"files": ["spec.md", "plan.md"], "data": "Focus on security"}
         prompts = create_compressed_prompt("planner", "Create plan", context)
 
         # Files should be in task prompt
@@ -122,15 +114,12 @@ class TestPromptCompression:
         assert "savings_percent" in stats
 
         # Verify calculations
-        assert stats["first_call_tokens"] == (
-            stats["system_tokens"] + stats["task_tokens"]
-        )
+        assert stats["first_call_tokens"] == (stats["system_tokens"] + stats["task_tokens"])
         assert stats["cached_call_tokens"] == stats["task_tokens"]
 
         # Verify savings percentage
         expected_savings = round(
-            (1 - stats["cached_call_tokens"] / stats["first_call_tokens"]) * 100,
-            1
+            (1 - stats["cached_call_tokens"] / stats["first_call_tokens"]) * 100, 1
         )
         assert stats["savings_percent"] == expected_savings
 
@@ -140,7 +129,7 @@ class TestPromptCompression:
         prompts = create_compressed_prompt(
             agent_name="planner",
             task="Create implementation plan for user authentication",
-            context={"files": ["spec.md"]}
+            context={"files": ["spec.md"]},
         )
         stats = get_compression_stats(prompts)
 
@@ -151,9 +140,7 @@ class TestPromptCompression:
         )
 
         # Task tokens should be minimal
-        assert stats["task_tokens"] < 500, (
-            f"Task prompt too large: {stats['task_tokens']} tokens"
-        )
+        assert stats["task_tokens"] < 500, f"Task prompt too large: {stats['task_tokens']} tokens"
 
         # First call should be <5,000 tokens total
         assert stats["first_call_tokens"] < 5500, (
@@ -247,10 +234,7 @@ class TestPromptCompression:
     @pytest.mark.unit
     def test_large_context_handling(self):
         """Test handling of large context (many files)."""
-        context = {
-            "files": [f"file{i}.py" for i in range(50)],
-            "data": "Large dataset" * 100
-        }
+        context = {"files": [f"file{i}.py" for i in range(50)], "data": "Large dataset" * 100}
         prompts = create_compressed_prompt("planner", "Test", context)
 
         # Should not error
@@ -327,8 +311,8 @@ class TestRealWorldScenarios:
             task="Create implementation plan for user authentication feature",
             context={
                 "files": ["specs/user_auth.md", "plans/authentication.md"],
-                "data": "Focus on security, type safety, and testing"
-            }
+                "data": "Focus on security, type safety, and testing",
+            },
         )
 
         stats = get_compression_stats(prompts)
@@ -346,8 +330,8 @@ class TestRealWorldScenarios:
             task="Implement user registration with email validation",
             context={
                 "files": ["src/auth/register.py", "tests/test_register.py"],
-                "data": "Use Result pattern for error handling"
-            }
+                "data": "Use Result pattern for error handling",
+            },
         )
 
         stats = get_compression_stats(prompts)
@@ -362,9 +346,7 @@ class TestRealWorldScenarios:
 
         for agent_name in agents:
             prompts = create_compressed_prompt(
-                agent_name=agent_name,
-                task=f"Perform {agent_name} tasks",
-                context={}
+                agent_name=agent_name, task=f"Perform {agent_name} tasks", context={}
             )
 
             stats = get_compression_stats(prompts)

@@ -5,8 +5,9 @@ Provides proper DSPy initialization for tests and mock setups.
 """
 
 import os
+from unittest.mock import Mock, patch
+
 import pytest
-from unittest.mock import Mock, MagicMock, patch
 
 # Set test environment
 # Use test key if not in CI (CI will provide real key but we still mock)
@@ -19,7 +20,9 @@ os.environ["AUTO_INIT_DSPY"] = "false"  # Disable auto-init for tests
 
 try:
     import dspy
+
     from dspy_agents.config import DSPyConfig
+
     DSPY_AVAILABLE = True
 except ImportError:
     DSPY_AVAILABLE = False
@@ -56,23 +59,23 @@ def mock_dspy_for_tests():
             parameters=[],
             test_cases=["test1"],
             implementation_plan=["step1"],
-            design_rationale="Mock rationale"
+            design_rationale="Mock rationale",
         )
 
     mock_lm.__call__ = mock_lm_call
 
     # Mock DSPy's LM class
-    with patch('dspy.LM') as MockLM:
+    with patch("dspy.LM") as MockLM:
         MockLM.return_value = mock_lm
 
         # Configure DSPy with the mock
         dspy.configure(lm=mock_lm)
 
         # Also patch DSPyConfig to use the mock
-        with patch.object(DSPyConfig, 'initialize', return_value=True):
-            with patch.object(DSPyConfig, 'get_lm', return_value=mock_lm):
+        with patch.object(DSPyConfig, "initialize", return_value=True):
+            with patch.object(DSPyConfig, "get_lm", return_value=mock_lm):
                 DSPyConfig._initialized = True
-                DSPyConfig._lm_cache['test-model'] = mock_lm
+                DSPyConfig._lm_cache["test-model"] = mock_lm
                 yield
                 DSPyConfig.reset()
 
@@ -115,6 +118,7 @@ def initialized_dspy():
 
     try:
         import dspy
+
         dspy.configure(lm=mock_lm)
         return True
     except Exception as e:
@@ -133,6 +137,6 @@ def dspy_test_context():
             "Article II - 100% Verification",
             "Article III - Automated Enforcement",
             "Article IV - Continuous Learning",
-            "Article V - Spec-Driven Development"
-        ]
+            "Article V - Spec-Driven Development",
+        ],
     }

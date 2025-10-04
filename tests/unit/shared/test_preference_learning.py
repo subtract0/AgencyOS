@@ -21,27 +21,22 @@ Test Coverage:
 Total: 30+ tests
 """
 
-import pytest
 import tempfile
-import sqlite3
 from datetime import datetime, timedelta
 from pathlib import Path
-from typing import List
 
-from shared.preference_learning import (
-    PreferenceLearner,
-    PreferenceStore,
-    UserPreference,
-    ResponseRecord,
-    UserPreferences,
-    ResponseType,
-    QuestionType,
-    TopicCategory,
-    TimeOfDay,
-    DayOfWeek,
-)
+import pytest
+
 from shared.message_bus import MessageBus
-
+from shared.preference_learning import (
+    DayOfWeek,
+    PreferenceLearner,
+    QuestionType,
+    ResponseRecord,
+    ResponseType,
+    TimeOfDay,
+    TopicCategory,
+)
 
 # ============================================================================
 # FIXTURES
@@ -70,10 +65,7 @@ def alice_learner(message_bus, temp_db):
     """Create preference learner for Alice."""
     db_path = str(Path(temp_db).parent / "alice_prefs.db")
     learner = PreferenceLearner(
-        user_id="alice",
-        message_bus=message_bus,
-        db_path=db_path,
-        min_confidence=0.6
+        user_id="alice", message_bus=message_bus, db_path=db_path, min_confidence=0.6
     )
     yield learner
     Path(db_path).unlink(missing_ok=True)
@@ -84,17 +76,14 @@ def bob_learner(message_bus, temp_db):
     """Create preference learner for Bob."""
     db_path = str(Path(temp_db).parent / "bob_prefs.db")
     learner = PreferenceLearner(
-        user_id="bob",
-        message_bus=message_bus,
-        db_path=db_path,
-        min_confidence=0.6
+        user_id="bob", message_bus=message_bus, db_path=db_path, min_confidence=0.6
     )
     yield learner
     Path(db_path).unlink(missing_ok=True)
 
 
 @pytest.fixture
-def sample_responses_alice() -> List[ResponseRecord]:
+def sample_responses_alice() -> list[ResponseRecord]:
     """Sample responses for Alice."""
     base_time = datetime.now()
     return [
@@ -109,7 +98,7 @@ def sample_responses_alice() -> List[ResponseRecord]:
             response_time_seconds=5.0,
             context_before="Working on client project",
             day_of_week=DayOfWeek.MONDAY,
-            time_of_day=TimeOfDay.MORNING
+            time_of_day=TimeOfDay.MORNING,
         ),
         ResponseRecord(
             response_id="r2",
@@ -122,7 +111,7 @@ def sample_responses_alice() -> List[ResponseRecord]:
             response_time_seconds=2.0,
             context_before="In a meeting",
             day_of_week=DayOfWeek.MONDAY,
-            time_of_day=TimeOfDay.MORNING
+            time_of_day=TimeOfDay.MORNING,
         ),
         ResponseRecord(
             response_id="r3",
@@ -135,13 +124,13 @@ def sample_responses_alice() -> List[ResponseRecord]:
             response_time_seconds=8.0,
             context_before="Code review session",
             day_of_week=DayOfWeek.MONDAY,
-            time_of_day=TimeOfDay.AFTERNOON
+            time_of_day=TimeOfDay.AFTERNOON,
         ),
     ]
 
 
 @pytest.fixture
-def sample_responses_bob() -> List[ResponseRecord]:
+def sample_responses_bob() -> list[ResponseRecord]:
     """Sample responses for Bob."""
     base_time = datetime.now()
     return [
@@ -156,7 +145,7 @@ def sample_responses_bob() -> List[ResponseRecord]:
             response_time_seconds=3.0,
             context_before="Free time",
             day_of_week=DayOfWeek.FRIDAY,
-            time_of_day=TimeOfDay.EVENING
+            time_of_day=TimeOfDay.EVENING,
         ),
         ResponseRecord(
             response_id="r11",
@@ -169,7 +158,7 @@ def sample_responses_bob() -> List[ResponseRecord]:
             response_time_seconds=4.0,
             context_before="Relaxing at home",
             day_of_week=DayOfWeek.FRIDAY,
-            time_of_day=TimeOfDay.EVENING
+            time_of_day=TimeOfDay.EVENING,
         ),
     ]
 
@@ -185,21 +174,9 @@ class TestInitialization:
     def test_initialization_with_different_user_ids(self, message_bus, temp_db):
         """Should create learner with any user ID."""
         # Arrange & Act
-        alice = PreferenceLearner(
-            user_id="alice",
-            message_bus=message_bus,
-            db_path=temp_db
-        )
-        bob = PreferenceLearner(
-            user_id="bob",
-            message_bus=message_bus,
-            db_path=temp_db
-        )
-        charlie = PreferenceLearner(
-            user_id="charlie_123",
-            message_bus=message_bus,
-            db_path=temp_db
-        )
+        alice = PreferenceLearner(user_id="alice", message_bus=message_bus, db_path=temp_db)
+        bob = PreferenceLearner(user_id="bob", message_bus=message_bus, db_path=temp_db)
+        charlie = PreferenceLearner(user_id="charlie_123", message_bus=message_bus, db_path=temp_db)
 
         # Assert
         assert alice.user_id == "alice"
@@ -216,7 +193,7 @@ class TestInitialization:
             user_id="test_user",
             message_bus=message_bus,
             db_path=temp_db,
-            context_keywords=custom_keywords
+            context_keywords=custom_keywords,
         )
 
         # Assert
@@ -226,9 +203,7 @@ class TestInitialization:
         """Should use sensible defaults when not specified."""
         # Act
         learner = PreferenceLearner(
-            user_id="default_user",
-            message_bus=message_bus,
-            db_path=temp_db
+            user_id="default_user", message_bus=message_bus, db_path=temp_db
         )
 
         # Assert
@@ -259,7 +234,7 @@ class TestResponseRecording:
             response_time_seconds=5.0,
             context_before="Test context",
             day_of_week=DayOfWeek.MONDAY,
-            time_of_day=TimeOfDay.MORNING
+            time_of_day=TimeOfDay.MORNING,
         )
 
         # Act
@@ -287,7 +262,7 @@ class TestResponseRecording:
             response_time_seconds=3.0,
             context_before="Busy context",
             day_of_week=DayOfWeek.TUESDAY,
-            time_of_day=TimeOfDay.AFTERNOON
+            time_of_day=TimeOfDay.AFTERNOON,
         )
 
         # Act
@@ -313,7 +288,7 @@ class TestResponseRecording:
             response_time_seconds=2.0,
             context_before="",
             day_of_week=DayOfWeek.WEDNESDAY,
-            time_of_day=TimeOfDay.EVENING
+            time_of_day=TimeOfDay.EVENING,
         )
 
         # Act
@@ -336,7 +311,7 @@ class TestResponseRecording:
             response_time_seconds=None,  # No response time for ignored
             context_before="Offline",
             day_of_week=DayOfWeek.THURSDAY,
-            time_of_day=TimeOfDay.NIGHT
+            time_of_day=TimeOfDay.NIGHT,
         )
 
         # Act
@@ -446,7 +421,7 @@ class TestPreferenceAnalysis:
                 response_time_seconds=5.0,
                 context_before="project meeting code",  # Common keywords
                 day_of_week=DayOfWeek.MONDAY,
-                time_of_day=TimeOfDay.MORNING
+                time_of_day=TimeOfDay.MORNING,
             )
             alice_learner.observe(response)
 
@@ -457,7 +432,9 @@ class TestPreferenceAnalysis:
         assert preferences.is_ok()
         prefs = preferences.unwrap()
         # Should detect pattern in context
-        assert len(prefs.contextual_patterns) >= 0  # May or may not detect depending on min_sample_size
+        assert (
+            len(prefs.contextual_patterns) >= 0
+        )  # May or may not detect depending on min_sample_size
 
     def test_confidence_scoring(self, alice_learner):
         """Should calculate confidence based on sample size."""
@@ -474,7 +451,7 @@ class TestPreferenceAnalysis:
                 response_time_seconds=5.0,
                 context_before="",
                 day_of_week=DayOfWeek.MONDAY,
-                time_of_day=TimeOfDay.MORNING
+                time_of_day=TimeOfDay.MORNING,
             )
             alice_learner.observe(response)
 
@@ -503,7 +480,7 @@ class TestPreferenceAnalysis:
                 response_time_seconds=5.0,
                 context_before="",
                 day_of_week=DayOfWeek.MONDAY,
-                time_of_day=TimeOfDay.MORNING
+                time_of_day=TimeOfDay.MORNING,
             )
             alice_learner.observe(response)
 
@@ -636,12 +613,12 @@ class TestMultiUserIsolation:
         user1 = PreferenceLearner(
             user_id="user_1",
             message_bus=message_bus,
-            db_path=str(Path(temp_db).parent / "user1.db")
+            db_path=str(Path(temp_db).parent / "user1.db"),
         )
         user2 = PreferenceLearner(
             user_id="user_2",
             message_bus=message_bus,
-            db_path=str(Path(temp_db).parent / "user2.db")
+            db_path=str(Path(temp_db).parent / "user2.db"),
         )
 
         # Act - User 1 has 100 responses
@@ -657,7 +634,7 @@ class TestMultiUserIsolation:
                 response_time_seconds=5.0,
                 context_before="",
                 day_of_week=DayOfWeek.MONDAY,
-                time_of_day=TimeOfDay.MORNING
+                time_of_day=TimeOfDay.MORNING,
             )
             user1.observe(response)
 
@@ -700,9 +677,7 @@ class TestStorage:
         # Arrange
         db_path = tempfile.NamedTemporaryFile(suffix=".db", delete=False).name
         learner = PreferenceLearner(
-            user_id="persistent_user",
-            message_bus=message_bus,
-            db_path=db_path
+            user_id="persistent_user", message_bus=message_bus, db_path=db_path
         )
 
         response = ResponseRecord(
@@ -716,15 +691,13 @@ class TestStorage:
             response_time_seconds=5.0,
             context_before="",
             day_of_week=DayOfWeek.MONDAY,
-            time_of_day=TimeOfDay.MORNING
+            time_of_day=TimeOfDay.MORNING,
         )
         learner.observe(response)
 
         # Act - Create new learner with same DB
         learner2 = PreferenceLearner(
-            user_id="persistent_user",
-            message_bus=message_bus,
-            db_path=db_path
+            user_id="persistent_user", message_bus=message_bus, db_path=db_path
         )
         preferences = learner2.get_preferences()
 
@@ -739,7 +712,7 @@ class TestStorage:
         """Should support Firestore storage (mocked for testing)."""
         # This test would require Firestore mock/emulator
         # For now, verify the interface exists
-        assert hasattr(alice_learner.store, 'use_firestore')
+        assert hasattr(alice_learner.store, "use_firestore")
 
     def test_preference_snapshot_versioning(self, alice_learner, sample_responses_alice):
         """Should support versioned preference snapshots."""
@@ -781,7 +754,7 @@ class TestRecommendations:
                 response_time_seconds=5.0,
                 context_before="",
                 day_of_week=DayOfWeek.MONDAY,
-                time_of_day=TimeOfDay.MORNING
+                time_of_day=TimeOfDay.MORNING,
             )
             alice_learner.observe(response)
 
@@ -808,7 +781,7 @@ class TestRecommendations:
                 response_time_seconds=2.0,
                 context_before="",
                 day_of_week=DayOfWeek.MONDAY,
-                time_of_day=TimeOfDay.MORNING
+                time_of_day=TimeOfDay.MORNING,
             )
             alice_learner.observe(response)
 
@@ -836,15 +809,14 @@ class TestRecommendations:
                 response_time_seconds=5.0,
                 context_before="project meeting discussion",
                 day_of_week=DayOfWeek.MONDAY,
-                time_of_day=TimeOfDay.MORNING
+                time_of_day=TimeOfDay.MORNING,
             )
             alice_learner.observe(response)
 
         # Act
-        recommendation = alice_learner.recommend({
-            "question_type": "task_suggestion",
-            "context": "project meeting"
-        })
+        recommendation = alice_learner.recommend(
+            {"question_type": "task_suggestion", "context": "project meeting"}
+        )
 
         # Assert
         assert recommendation.is_ok()
@@ -882,9 +854,7 @@ class TestIntegration:
         """Should integrate with message bus for telemetry."""
         # Arrange
         learner = PreferenceLearner(
-            user_id="telemetry_user",
-            message_bus=message_bus,
-            db_path=temp_db
+            user_id="telemetry_user", message_bus=message_bus, db_path=temp_db
         )
 
         response = ResponseRecord(
@@ -898,7 +868,7 @@ class TestIntegration:
             response_time_seconds=5.0,
             context_before="",
             day_of_week=DayOfWeek.MONDAY,
-            time_of_day=TimeOfDay.MORNING
+            time_of_day=TimeOfDay.MORNING,
         )
 
         # Act
@@ -934,7 +904,7 @@ class TestEdgeCases:
             response_time_seconds=5.0,
             context_before="",
             day_of_week=DayOfWeek.MONDAY,
-            time_of_day=TimeOfDay.MORNING
+            time_of_day=TimeOfDay.MORNING,
         )
 
         # Act
@@ -959,7 +929,7 @@ class TestEdgeCases:
             response_time_seconds=None,  # Missing (None for IGNORED)
             context_before="",  # Empty context
             day_of_week=DayOfWeek.MONDAY,
-            time_of_day=TimeOfDay.MORNING
+            time_of_day=TimeOfDay.MORNING,
         )
 
         # Act
@@ -983,7 +953,7 @@ class TestEdgeCases:
             response_time_seconds=5.0,
             context_before=large_context,
             day_of_week=DayOfWeek.MONDAY,
-            time_of_day=TimeOfDay.MORNING
+            time_of_day=TimeOfDay.MORNING,
         )
 
         # Act

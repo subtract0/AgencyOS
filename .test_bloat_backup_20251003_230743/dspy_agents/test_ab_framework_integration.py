@@ -4,23 +4,19 @@ Integration tests for A/B testing framework with DSPy agents.
 Tests the A/B testing controller with multiple agent variants.
 """
 
-import pytest
 import json
 import tempfile
 from pathlib import Path
-from unittest.mock import Mock, patch, MagicMock
-from datetime import datetime, timedelta
+from unittest.mock import patch
+
+import pytest
 
 from dspy_agents.ab_testing import (
     ABTestController,
-    ExperimentConfig,
-    ExperimentStatus,
-    AgentVariant,
-    get_ab_controller
+    get_ab_controller,
 )
-from dspy_agents.registry import AgentRegistry, get_global_registry
 from dspy_agents.modules.code_agent import DSPyCodeAgent
-from dspy_agents.modules.auditor_agent import DSPyAuditorAgent
+from dspy_agents.registry import AgentRegistry, get_global_registry
 
 
 class TestABFrameworkIntegration:
@@ -37,10 +33,7 @@ class TestABFrameworkIntegration:
         """Create test controller with temp paths."""
         config_path = temp_dir / "ab_tests.json"
         metrics_path = temp_dir / "metrics.jsonl"
-        return ABTestController(
-            config_path=str(config_path),
-            metrics_path=str(metrics_path)
-        )
+        return ABTestController(config_path=str(config_path), metrics_path=str(metrics_path))
 
     @pytest.fixture
     def registry(self):
@@ -54,16 +47,18 @@ class TestABFrameworkIntegration:
         agents = registry.list_agents()
 
         # Check we have both DSPy and legacy agents
-        dspy_agents = [a for a in agents if a['type'] == 'dspy']
-        legacy_agents = [a for a in agents if a['type'] == 'legacy']
+        dspy_agents = [a for a in agents if a["type"] == "dspy"]
+        legacy_agents = [a for a in agents if a["type"] == "legacy"]
 
         assert len(dspy_agents) >= 2  # Code, Auditor, Planner, Learning
-        assert len(legacy_agents) >= 4  # Remaining legacy agents (chief_architect, merger, test_generator, work_completion)
+        assert (
+            len(legacy_agents) >= 4
+        )  # Remaining legacy agents (chief_architect, merger, test_generator, work_completion)
 
         # Verify specific agents
-        agent_names = [a['name'] for a in agents]
-        assert 'code' in agent_names
-        assert 'auditor' in agent_names
+        agent_names = [a["name"] for a in agents]
+        assert "code" in agent_names
+        assert "auditor" in agent_names
 
     def test_create_experiment_for_code_agent(self, controller):
         """Test creating an A/B experiment for CodeAgent."""
@@ -71,7 +66,7 @@ class TestABFrameworkIntegration:
             name="code_agent_dspy_migration",
             agent_name="code",
             rollout_percentage=0.2,
-            duration_days=7
+            duration_days=7,
         )
 
         assert experiment.name == "code_agent_dspy_migration"
@@ -86,7 +81,7 @@ class TestABFrameworkIntegration:
             agent_name="auditor",
             rollout_percentage=0.15,
             duration_days=5,
-            min_samples=50
+            min_samples=50,
         )
 
         assert experiment.name == "auditor_agent_dspy_migration"
@@ -97,11 +92,7 @@ class TestABFrameworkIntegration:
     def test_traffic_splitting_logic(self, controller):
         """Test that traffic splitting works correctly."""
         # Create experiment with 30% rollout
-        controller.create_experiment(
-            name="test_split",
-            agent_name="code",
-            rollout_percentage=0.3
-        )
+        controller.create_experiment(name="test_split", agent_name="code", rollout_percentage=0.3)
 
         # Test multiple decisions
         dspy_count = 0
@@ -122,9 +113,7 @@ class TestABFrameworkIntegration:
     def test_consistent_user_assignment(self, controller):
         """Test that same user gets consistent variant assignment."""
         controller.create_experiment(
-            name="test_consistent",
-            agent_name="code",
-            rollout_percentage=0.5
+            name="test_consistent", agent_name="code", rollout_percentage=0.5
         )
 
         # Same user should always get same variant
@@ -137,47 +126,34 @@ class TestABFrameworkIntegration:
 
     def test_metric_recording(self, controller, temp_dir):
         """Test recording metrics for experiments."""
-        controller.create_experiment(
-            name="test_metrics",
-            agent_name="auditor"
-        )
+        controller.create_experiment(name="test_metrics", agent_name="auditor")
 
         # Record some metrics
         controller.record_metric(
-            experiment_name="test_metrics",
-            variant="legacy",
-            metric_name="qt_score",
-            value=0.75
+            experiment_name="test_metrics", variant="legacy", metric_name="qt_score", value=0.75
         )
 
         controller.record_metric(
-            experiment_name="test_metrics",
-            variant="dspy",
-            metric_name="qt_score",
-            value=0.82
+            experiment_name="test_metrics", variant="dspy", metric_name="qt_score", value=0.82
         )
 
         # Check metrics were recorded
         metrics_file = temp_dir / "metrics.jsonl"
         assert metrics_file.exists()
 
-        lines = metrics_file.read_text().strip().split('\n')
+        lines = metrics_file.read_text().strip().split("\n")
         assert len(lines) >= 2  # At least our 2 metrics
 
         # Parse and verify metrics
         for line in lines:
             if line:
                 metric = json.loads(line)
-                if metric.get('metric') == 'qt_score':
-                    assert metric['value'] in [0.75, 0.82]
+                if metric.get("metric") == "qt_score":
+                    assert metric["value"] in [0.75, 0.82]
 
     def test_experiment_analysis_insufficient_data(self, controller):
         """Test analysis with insufficient data."""
-        controller.create_experiment(
-            name="test_analysis",
-            agent_name="code",
-            min_samples=10
-        )
+        controller.create_experiment(name="test_analysis", agent_name="code", min_samples=10)
 
         # Add only a few metrics
         for i in range(3):
@@ -185,7 +161,7 @@ class TestABFrameworkIntegration:
                 experiment_name="test_analysis",
                 variant="legacy",
                 metric_name="success_rate",
-                value=0.8
+                value=0.8,
             )
 
         # Analysis should return None due to insufficient data
@@ -194,11 +170,7 @@ class TestABFrameworkIntegration:
 
     def test_experiment_analysis_with_sufficient_data(self, controller):
         """Test analysis with sufficient data."""
-        controller.create_experiment(
-            name="test_full_analysis",
-            agent_name="auditor",
-            min_samples=5
-        )
+        controller.create_experiment(name="test_full_analysis", agent_name="auditor", min_samples=5)
 
         # Add sufficient metrics for both variants
         for i in range(6):
@@ -206,13 +178,13 @@ class TestABFrameworkIntegration:
                 experiment_name="test_full_analysis",
                 variant="legacy",
                 metric_name="success_rate",
-                value=0.7 + (i * 0.01)
+                value=0.7 + (i * 0.01),
             )
             controller.record_metric(
                 experiment_name="test_full_analysis",
                 variant="dspy",
                 metric_name="success_rate",
-                value=0.8 + (i * 0.01)
+                value=0.8 + (i * 0.01),
             )
 
         # Analysis should work
@@ -220,7 +192,7 @@ class TestABFrameworkIntegration:
         assert result is not None
         assert result.control_samples >= 5
         assert result.treatment_samples >= 5
-        assert result.treatment_metrics['success_rate'] > result.control_metrics['success_rate']
+        assert result.treatment_metrics["success_rate"] > result.control_metrics["success_rate"]
 
     def test_agent_selection_with_ab_testing(self, registry, controller):
         """Test agent selection respects A/B testing decisions."""
@@ -228,11 +200,11 @@ class TestABFrameworkIntegration:
         controller.create_experiment(
             name="test_selection",
             agent_name="code",
-            rollout_percentage=1.0  # 100% DSPy
+            rollout_percentage=1.0,  # 100% DSPy
         )
 
         # Mock the controller in registry
-        with patch('dspy_agents.ab_testing.get_ab_controller', return_value=controller):
+        with patch("dspy_agents.ab_testing.get_ab_controller", return_value=controller):
             # When we request code agent, should get DSPy version
             use_dspy, _ = controller.should_use_dspy("code")
             assert use_dspy is True
@@ -242,10 +214,7 @@ class TestABFrameworkIntegration:
 
     def test_pause_resume_experiment(self, controller):
         """Test pausing and resuming experiments."""
-        controller.create_experiment(
-            name="test_pause",
-            agent_name="auditor"
-        )
+        controller.create_experiment(name="test_pause", agent_name="auditor")
 
         # Initially should be active
         use_dspy1, exp1 = controller.should_use_dspy("auditor")
@@ -270,7 +239,7 @@ class TestABFrameworkIntegration:
         controller.create_experiment(
             name="test_force",
             agent_name="code",
-            rollout_percentage=0.0  # Would normally be all legacy
+            rollout_percentage=0.0,  # Would normally be all legacy
         )
 
         # Update to force DSPy
@@ -287,7 +256,7 @@ class TestABFrameworkIntegration:
         controller.create_experiment(
             name="test_env",
             agent_name="auditor",
-            rollout_percentage=0.0  # Would normally be all legacy
+            rollout_percentage=0.0,  # Would normally be all legacy
         )
 
         # Set environment override
@@ -300,11 +269,7 @@ class TestABFrameworkIntegration:
 
     def test_experiment_status_tracking(self, controller):
         """Test getting experiment status."""
-        controller.create_experiment(
-            name="test_status",
-            agent_name="code",
-            min_samples=10
-        )
+        controller.create_experiment(name="test_status", agent_name="code", min_samples=10)
 
         # Add some metrics
         for i in range(3):
@@ -312,17 +277,17 @@ class TestABFrameworkIntegration:
                 experiment_name="test_status",
                 variant="legacy" if i % 2 == 0 else "dspy",
                 metric_name="latency",
-                value=100 + i
+                value=100 + i,
             )
 
         # Get status
         status = controller.get_experiment_status("test_status")
         assert status is not None
-        assert status['name'] == "test_status"
-        assert status['agent'] == "code"
-        assert status['control_samples'] >= 0
-        assert status['treatment_samples'] >= 0
-        assert 0 <= status['progress'] <= 100
+        assert status["name"] == "test_status"
+        assert status["agent"] == "code"
+        assert status["control_samples"] >= 0
+        assert status["treatment_samples"] >= 0
+        assert 0 <= status["progress"] <= 100
 
     def test_list_all_experiments(self, controller):
         """Test listing all experiments."""
@@ -334,18 +299,14 @@ class TestABFrameworkIntegration:
         experiments = controller.list_experiments()
         assert len(experiments) == 3
 
-        names = [exp['name'] for exp in experiments]
+        names = [exp["name"] for exp in experiments]
         assert "exp1" in names
         assert "exp2" in names
         assert "exp3" in names
 
     def test_recommendation_generation(self, controller):
         """Test recommendation generation based on results."""
-        controller.create_experiment(
-            name="test_recommend",
-            agent_name="auditor",
-            min_samples=3
-        )
+        controller.create_experiment(name="test_recommend", agent_name="auditor", min_samples=3)
 
         # Add metrics showing DSPy improvement
         for i in range(5):
@@ -353,13 +314,13 @@ class TestABFrameworkIntegration:
                 experiment_name="test_recommend",
                 variant="legacy",
                 metric_name="quality_score",
-                value=0.6
+                value=0.6,
             )
             controller.record_metric(
                 experiment_name="test_recommend",
                 variant="dspy",
                 metric_name="quality_score",
-                value=0.85
+                value=0.85,
             )
 
         result = controller.analyze_experiment("test_recommend")

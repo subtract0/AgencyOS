@@ -10,30 +10,30 @@ Tests critical systems with thousands of auto-generated inputs:
 Each property generates 100-1000 test cases automatically.
 """
 
-import pytest
 import time
-from hypothesis import given, settings, strategies as st, assume, example
-from hypothesis.stateful import RuleBasedStateMachine, rule, invariant
 
+import pytest
+from hypothesis import assume, given, settings
+from hypothesis import strategies as st
+from hypothesis.stateful import RuleBasedStateMachine, invariant, rule
+
+from agency_memory import consolidate_learnings
 from shared.retry_controller import (
-    RetryController,
+    CircuitBreaker,
     ExponentialBackoffStrategy,
     LinearBackoffStrategy,
-    CircuitBreaker,
-    CircuitBreakerOpenError,
+    RetryController,
 )
-from shared.type_definitions.result import Result, Ok, Err
-from agency_memory import Memory, consolidate_learnings
+from shared.type_definitions.result import Ok, Result
 from tools.property_testing import (
-    result_strategy,
-    json_value_strategy,
     memory_record_strategy,
+    result_strategy,
 )
-
 
 # ============================================================================
 # RETRY CONTROLLER PROPERTIES
 # ============================================================================
+
 
 class TestRetryControllerProperties:
     """
@@ -85,9 +85,7 @@ class TestRetryControllerProperties:
         st.floats(min_value=0.1, max_value=5.0),
         st.floats(min_value=0.1, max_value=5.0),
     )
-    def test_linear_backoff_increases_linearly(
-        self, initial_delay: float, increment: float
-    ):
+    def test_linear_backoff_increases_linearly(self, initial_delay: float, increment: float):
         """PROPERTY: Linear backoff increases by constant increment."""
         strategy = LinearBackoffStrategy(
             initial_delay=initial_delay,
@@ -96,10 +94,7 @@ class TestRetryControllerProperties:
         )
 
         for attempt in range(5):
-            expected_delay = min(
-                initial_delay + (increment * attempt),
-                strategy.max_delay
-            )
+            expected_delay = min(initial_delay + (increment * attempt), strategy.max_delay)
             actual_delay = strategy.calculate_delay(attempt)
 
             # Allow small floating point errors
@@ -230,6 +225,7 @@ class TestRetryControllerProperties:
 # MEMORY CONSOLIDATION PROPERTIES
 # ============================================================================
 
+
 class TestMemoryConsolidationProperties:
     """
     Property-based tests for memory consolidation.
@@ -274,6 +270,7 @@ class TestMemoryConsolidationProperties:
 # RESULT CHAINING PROPERTIES
 # ============================================================================
 
+
 class TestResultChainingProperties:
     """
     Property-based tests for Result pattern chaining operations.
@@ -284,6 +281,7 @@ class TestResultChainingProperties:
     @given(st.integers())  # Use plain integers, not results
     def test_result_left_identity(self, value: int):
         """PROPERTY: Result satisfies left identity monad law."""
+
         # return a >>= f === f a
         def f(x):
             return Ok(x * 2)
@@ -308,6 +306,7 @@ class TestResultChainingProperties:
     @given(result_strategy(st.integers()))
     def test_result_associativity(self, m: Result):
         """PROPERTY: Result satisfies associativity monad law."""
+
         # (m >>= f) >>= g === m >>= (\\x -> f x >>= g)
         def f(x):
             return Ok(x + 1)
@@ -343,6 +342,7 @@ class TestResultChainingProperties:
     @given(result_strategy(st.lists(st.integers())))
     def test_result_map_functor_composition(self, r: Result):
         """PROPERTY: map preserves composition: r.map(f).map(g) === r.map(g . f)."""
+
         def f(x):
             return len(x) if isinstance(x, list) else 0
 
@@ -359,6 +359,7 @@ class TestResultChainingProperties:
 # ============================================================================
 # STATEFUL RETRY TESTING
 # ============================================================================
+
 
 class RetryControllerStateMachine(RuleBasedStateMachine):
     """
@@ -402,6 +403,7 @@ class RetryControllerStateMachine(RuleBasedStateMachine):
     @rule()
     def execute_failing_function(self):
         """Execute function that always fails."""
+
         def always_fails():
             raise ValueError("Always fails")
 
@@ -429,15 +431,17 @@ class TestRetryStateful:
     def test_retry_controller_state_machine(self):
         """Run stateful tests on RetryController."""
         from hypothesis.stateful import run_state_machine_as_test
+
         run_state_machine_as_test(
             RetryControllerStateMachine,
-            settings=settings(max_examples=20, stateful_step_count=10, deadline=2000)
+            settings=settings(max_examples=20, stateful_step_count=10, deadline=2000),
         )
 
 
 # ============================================================================
 # PERFORMANCE PROPERTIES
 # ============================================================================
+
 
 class TestPerformanceProperties:
     """
@@ -454,9 +458,7 @@ class TestPerformanceProperties:
             jitter=False,
         )
 
-        total_delay = sum(
-            strategy.calculate_delay(i) for i in range(max_attempts)
-        )
+        total_delay = sum(strategy.calculate_delay(i) for i in range(max_attempts))
 
         # Total delay should be bounded
         # Geometric series: a(1 - r^n) / (1 - r) where a=0.1, r=2

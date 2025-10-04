@@ -6,7 +6,6 @@ Constitutional compliance: TDD, Result pattern, Pydantic models.
 """
 
 import time
-from typing import Any
 
 import pytest
 
@@ -69,17 +68,13 @@ class TestChaosEngine:
 
     def test_should_inject_failure_respects_rate(self) -> None:
         """Should inject failures at configured rate."""
-        config = ChaosConfig(
-            chaos_types=[ChaosType.NETWORK], failure_rate=1.0, seed=42
-        )
+        config = ChaosConfig(chaos_types=[ChaosType.NETWORK], failure_rate=1.0, seed=42)
         engine = ChaosEngine(config)
 
         # With rate=1.0, should always inject
         assert engine.should_inject_failure() is True
 
-        config2 = ChaosConfig(
-            chaos_types=[ChaosType.NETWORK], failure_rate=0.0, seed=42
-        )
+        config2 = ChaosConfig(chaos_types=[ChaosType.NETWORK], failure_rate=0.0, seed=42)
         engine2 = ChaosEngine(config2)
 
         # With rate=0.0, should never inject
@@ -87,9 +82,7 @@ class TestChaosEngine:
 
     def test_should_inject_failure_respects_disabled(self) -> None:
         """Should not inject when disabled."""
-        config = ChaosConfig(
-            chaos_types=[ChaosType.NETWORK], failure_rate=1.0, enabled=False
-        )
+        config = ChaosConfig(chaos_types=[ChaosType.NETWORK], failure_rate=1.0, enabled=False)
         engine = ChaosEngine(config)
 
         assert engine.should_inject_failure() is False
@@ -99,9 +92,7 @@ class TestChaosEngine:
         config = ChaosConfig(chaos_types=[ChaosType.NETWORK])
         engine = ChaosEngine(config)
 
-        engine.record_injection(
-            ChaosType.NETWORK, "test_func", "connection failed", True
-        )
+        engine.record_injection(ChaosType.NETWORK, "test_func", "connection failed", True)
 
         assert len(engine.injections) == 1
         injection = engine.injections[0]
@@ -117,9 +108,7 @@ class TestChaosEngine:
         except ImportError:
             pytest.skip("requests not installed")
 
-        config = ChaosConfig(
-            chaos_types=[ChaosType.NETWORK], failure_rate=1.0, seed=42
-        )
+        config = ChaosConfig(chaos_types=[ChaosType.NETWORK], failure_rate=1.0, seed=42)
         engine = ChaosEngine(config)
 
         engine.inject_network_chaos()
@@ -252,9 +241,7 @@ class TestChaosEngine:
 
     def test_runs_chaos_test_successfully(self) -> None:
         """Should run test with chaos injections."""
-        config = ChaosConfig(
-            chaos_types=[ChaosType.TIMEOUT], failure_rate=0.5, seed=42
-        )
+        config = ChaosConfig(chaos_types=[ChaosType.TIMEOUT], failure_rate=0.5, seed=42)
         engine = ChaosEngine(config)
 
         def test_function() -> None:

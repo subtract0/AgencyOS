@@ -10,8 +10,6 @@ Constitutional compliance: Tests written first, Result pattern validation.
 import time
 from pathlib import Path
 
-import pytest
-
 from tools.chaos_testing import ChaosConfig, ChaosEngine, ChaosType, chaos
 
 
@@ -53,7 +51,7 @@ class TestAgentDiskChaos:
                     # Would be: agent.write_code() or agent.save_state()
                     with open(temp_file, "w") as f:
                         f.write(f"state_{i}")
-                except IOError:
+                except OSError:
                     # Agent should retry or log error gracefully
                     pass
 
@@ -76,7 +74,7 @@ class TestAgentDiskChaos:
                         content = f"valid_state_{i}"
                         f.write(content)
                         successful_writes.append(content)
-                except IOError:
+                except OSError:
                     # Chaos injection - skip this write
                     pass
 
@@ -197,7 +195,7 @@ class TestAgentFullChaos:
             try:
                 with open("/tmp/chaos_full.txt", "w") as f:
                     f.write("test")
-            except IOError:
+            except OSError:
                 pass
 
             # Memory operations
@@ -232,7 +230,7 @@ class TestAgentFullChaos:
                     time.sleep(0.01)
                     with open(f"/tmp/chaos_recovery_{i}.txt", "w") as f:
                         f.write("data")
-                except (IOError, Exception):
+                except (OSError, Exception):
                     # Graceful handling - log and continue
                     continue
 
@@ -270,7 +268,7 @@ class TestAgentGracefulDegradation:
                     with open(f"/tmp/degrade_test_{i}.txt", "w") as f:
                         f.write("data")
                     successful_operations.append(i)
-                except IOError:
+                except OSError:
                     # Graceful degradation - log and continue
                     failed_operations.append(i)
                     continue

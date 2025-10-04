@@ -21,7 +21,9 @@ This module is no longer part of the production codebase.
 
 import pytest
 
-pytestmark = pytest.mark.skip(reason="Module deleted in Trinity clean break - project_executor removed from codebase")
+pytestmark = pytest.mark.skip(
+    reason="Module deleted in Trinity clean break - project_executor removed from codebase"
+)
 
 # Imports commented out - module deleted
 # from datetime import datetime, timedelta
@@ -91,7 +93,7 @@ class TestDailyTaskPlanning:
             state=None,
             checkins=[],
             created_at=datetime.now(),
-            status="active"
+            status="active",
         )
 
         executor = ProjectExecutor(llm_client=Mock(), state_store=Mock())
@@ -135,17 +137,13 @@ class TestTaskExecution:
             dependencies=[],
             acceptance_criteria=["Research complete"],
             assigned_to="system",
-            status="pending"
+            status="pending",
         )
 
         mock_tools = Mock()
         mock_tools.web_research = AsyncMock(return_value=Ok(["Result 1", "Result 2"]))
 
-        executor = ProjectExecutor(
-            llm_client=Mock(),
-            state_store=Mock(),
-            tools=mock_tools
-        )
+        executor = ProjectExecutor(llm_client=Mock(), state_store=Mock(), tools=mock_tools)
 
         result = await executor.execute_task(task)
 
@@ -164,7 +162,7 @@ class TestTaskExecution:
             dependencies=[],
             acceptance_criteria=["Decision made"],
             assigned_to="user",
-            status="pending"
+            status="pending",
         )
 
         executor = ProjectExecutor(llm_client=Mock(), state_store=Mock())
@@ -183,10 +181,7 @@ class TestTaskExecution:
         mock_store = Mock()
         mock_store.update_project_state = AsyncMock(return_value=Ok(project.state))
 
-        executor = ProjectExecutor(
-            llm_client=Mock(),
-            state_store=mock_store
-        )
+        executor = ProjectExecutor(llm_client=Mock(), state_store=mock_store)
 
         await executor.execute_task(task)
 
@@ -205,17 +200,13 @@ class TestTaskExecution:
             dependencies=[],
             acceptance_criteria=["Outline created"],
             assigned_to="system",
-            status="pending"
+            status="pending",
         )
 
         mock_tools = Mock()
         mock_tools.document_generator = AsyncMock(return_value=Ok("Generated outline"))
 
-        executor = ProjectExecutor(
-            llm_client=Mock(),
-            state_store=Mock(),
-            tools=mock_tools
-        )
+        executor = ProjectExecutor(llm_client=Mock(), state_store=Mock(), tools=mock_tools)
 
         result = await executor.execute_task(task)
 
@@ -234,17 +225,13 @@ class TestTaskExecution:
             dependencies=[],
             acceptance_criteria=["Research done"],
             assigned_to="system",
-            status="pending"
+            status="pending",
         )
 
         mock_tools = Mock()
         mock_tools.web_research = AsyncMock(return_value=Err("Network error"))
 
-        executor = ProjectExecutor(
-            llm_client=Mock(),
-            state_store=Mock(),
-            tools=mock_tools
-        )
+        executor = ProjectExecutor(llm_client=Mock(), state_store=Mock(), tools=mock_tools)
 
         result = await executor.execute_task(task)
 
@@ -297,11 +284,7 @@ class TestCompletionDetection:
         mock_tools = Mock()
         mock_tools.generate_deliverable = AsyncMock(return_value=Ok("Final book"))
 
-        executor = ProjectExecutor(
-            llm_client=Mock(),
-            state_store=Mock(),
-            tools=mock_tools
-        )
+        executor = ProjectExecutor(llm_client=Mock(), state_store=Mock(), tools=mock_tools)
 
         is_complete = await executor.detect_completion(project)
         if is_complete.value:
@@ -397,16 +380,14 @@ class TestBudgetEnforcement:
             dependencies=[],
             acceptance_criteria=["Research done"],
             assigned_to="system",
-            status="pending"
+            status="pending",
         )
 
         mock_budget = Mock()
         mock_budget.check_available = Mock(return_value=False)  # Budget exceeded
 
         executor = ProjectExecutor(
-            llm_client=Mock(),
-            state_store=Mock(),
-            budget_enforcer=mock_budget
+            llm_client=Mock(), state_store=Mock(), budget_enforcer=mock_budget
         )
 
         result = await executor.execute_task(task)
@@ -427,7 +408,7 @@ class TestBudgetEnforcement:
             dependencies=[],
             acceptance_criteria=["Done"],
             assigned_to="system",
-            status="pending"
+            status="pending",
         )
 
         mock_budget = Mock()
@@ -438,10 +419,7 @@ class TestBudgetEnforcement:
         mock_tools.web_research = AsyncMock(return_value=Ok(["Result"]))
 
         executor = ProjectExecutor(
-            llm_client=Mock(),
-            state_store=Mock(),
-            budget_enforcer=mock_budget,
-            tools=mock_tools
+            llm_client=Mock(), state_store=Mock(), budget_enforcer=mock_budget, tools=mock_tools
         )
 
         await executor.execute_task(task)
@@ -467,10 +445,7 @@ class TestFirestorePersistence:
         mock_store = Mock()
         mock_store.store_project_state = AsyncMock(return_value=Ok("state_id"))
 
-        executor = ProjectExecutor(
-            llm_client=Mock(),
-            state_store=mock_store
-        )
+        executor = ProjectExecutor(llm_client=Mock(), state_store=mock_store)
 
         await executor.execute_task(task)
 
@@ -480,14 +455,9 @@ class TestFirestorePersistence:
     async def test_project_loads_from_firestore_on_restart(self):
         """Test project state recovers from Firestore."""
         mock_store = Mock()
-        mock_store.load_project = AsyncMock(
-            return_value=Ok(create_mock_project(phase="execution"))
-        )
+        mock_store.load_project = AsyncMock(return_value=Ok(create_mock_project(phase="execution")))
 
-        executor = ProjectExecutor(
-            llm_client=Mock(),
-            state_store=mock_store
-        )
+        executor = ProjectExecutor(llm_client=Mock(), state_store=mock_store)
 
         result = await executor.load_project("proj_001")
 
@@ -503,10 +473,7 @@ class TestFirestorePersistence:
         mock_store = Mock()
         mock_store.store_project_state = AsyncMock(return_value=Err("Write failed"))
 
-        executor = ProjectExecutor(
-            llm_client=Mock(),
-            state_store=mock_store
-        )
+        executor = ProjectExecutor(llm_client=Mock(), state_store=mock_store)
 
         result = await executor.execute_task(task)
 
@@ -522,8 +489,10 @@ class TestFirestorePersistence:
 def create_mock_project(phase="execution"):
     """Create mock project for testing."""
     from trinity_protocol.core.models.project import (
-        Project, ProjectState, ProjectPlan, ProjectTask,
-        ProjectSpec, QASession
+        Project,
+        ProjectPlan,
+        ProjectState,
+        ProjectTask,
     )
 
     tasks = [
@@ -536,7 +505,7 @@ def create_mock_project(phase="execution"):
             dependencies=[],
             acceptance_criteria=[f"Criteria {i}"],
             assigned_to="system",
-            status="pending"
+            status="pending",
         )
         for i in range(1, 11)
     ]
@@ -551,7 +520,7 @@ def create_mock_project(phase="execution"):
         timeline_start=datetime.now(),
         timeline_end_estimate=datetime.now() + timedelta(days=14),
         plan_markdown="Plan",
-        created_at=datetime.now()
+        created_at=datetime.now(),
     )
 
     state = ProjectState(
@@ -563,7 +532,7 @@ def create_mock_project(phase="execution"):
         total_tasks=10,
         completed_tasks=0,
         progress_percentage=0,
-        blockers=[]
+        blockers=[],
     )
 
     return Project(
@@ -578,7 +547,7 @@ def create_mock_project(phase="execution"):
         state=state,
         checkins=[],
         created_at=datetime.now(),
-        status="active"
+        status="active",
     )
 
 

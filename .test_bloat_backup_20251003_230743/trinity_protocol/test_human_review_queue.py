@@ -19,13 +19,14 @@ Tests should be updated to test HITLProtocol instead.
 
 import pytest
 
-pytestmark = pytest.mark.skip(reason="Module refactored - HumanReviewQueue replaced by HITLProtocol in shared/")
+pytestmark = pytest.mark.skip(
+    reason="Module refactored - HumanReviewQueue replaced by HITLProtocol in shared/"
+)
 
 # Minimal imports for decorators (tests won't execute due to skip)
 import tempfile
-import asyncio
-from pathlib import Path
 from datetime import datetime, timedelta
+from pathlib import Path
 
 # Module imports commented out - module refactored
 # from shared.message_bus import MessageBus
@@ -70,7 +71,7 @@ def sample_pattern():
         context_summary="Alex mentioned improving HITL system multiple times",
         keywords=["hitl", "questions", "proactive"],
         sentiment="positive",
-        urgency="medium"
+        urgency="medium",
     )
 
 
@@ -84,7 +85,7 @@ def sample_review_request(sample_pattern):
         pattern_context=sample_pattern,
         priority=7,
         expires_at=datetime.now() + timedelta(hours=24),
-        suggested_action="Implement question delivery and response capture"
+        suggested_action="Implement question delivery and response capture",
     )
 
 
@@ -140,10 +141,7 @@ class TestQuestionSubmission:
 
     @pytest.mark.asyncio
     async def test_stores_question_metadata_in_database(
-        self,
-        message_bus,
-        temp_db,
-        sample_review_request
+        self, message_bus, temp_db, sample_review_request
     ):
         """Queue stores question metadata for tracking."""
         queue = HumanReviewQueue(message_bus=message_bus, db_path=str(temp_db))
@@ -152,17 +150,20 @@ class TestQuestionSubmission:
 
         # Verify in SQLite
         cursor = queue.conn.cursor()
-        cursor.execute("""
+        cursor.execute(
+            """
             SELECT correlation_id, question_text, status, priority
             FROM questions WHERE id = ?
-        """, (question_id,))
+        """,
+            (question_id,),
+        )
         row = cursor.fetchone()
 
         assert row is not None
-        assert row['correlation_id'] == "corr-test-456"
-        assert "HITL question system" in row['question_text']
-        assert row['status'] == "pending"
-        assert row['priority'] == 7
+        assert row["correlation_id"] == "corr-test-456"
+        assert "HITL question system" in row["question_text"]
+        assert row["status"] == "pending"
+        assert row["priority"] == 7
 
         queue.close()
 
@@ -178,7 +179,7 @@ class TestQuestionSubmission:
             question_type="low_stakes",
             pattern_context=sample_pattern,
             priority=2,
-            expires_at=datetime.now() + timedelta(hours=24)
+            expires_at=datetime.now() + timedelta(hours=24),
         )
         await queue.submit_question(low_priority)
 
@@ -189,7 +190,7 @@ class TestQuestionSubmission:
             question_type="high_value",
             pattern_context=sample_pattern,
             priority=9,
-            expires_at=datetime.now() + timedelta(hours=24)
+            expires_at=datetime.now() + timedelta(hours=24),
         )
         await queue.submit_question(high_priority)
 
@@ -203,12 +204,7 @@ class TestQuestionSubmission:
         queue.close()
 
     @pytest.mark.asyncio
-    async def test_sets_expiry_time_correctly(
-        self,
-        message_bus,
-        temp_db,
-        sample_review_request
-    ):
+    async def test_sets_expiry_time_correctly(self, message_bus, temp_db, sample_review_request):
         """Queue stores expiry time for timeout handling."""
         queue = HumanReviewQueue(message_bus=message_bus, db_path=str(temp_db))
 
@@ -216,7 +212,7 @@ class TestQuestionSubmission:
 
         cursor = queue.conn.cursor()
         cursor.execute("SELECT expires_at FROM questions WHERE id = ?", (question_id,))
-        expires_at_str = cursor.fetchone()['expires_at']
+        expires_at_str = cursor.fetchone()["expires_at"]
 
         expires_at = datetime.fromisoformat(expires_at_str)
         time_diff = (expires_at - datetime.now()).total_seconds()
@@ -258,7 +254,7 @@ class TestQuestionRetrieval:
                 question_type="low_stakes",
                 pattern_context=sample_pattern,
                 priority=i + 1,  # Priority 1-5
-                expires_at=datetime.now() + timedelta(hours=24)
+                expires_at=datetime.now() + timedelta(hours=24),
             )
             await queue.submit_question(request)
 
@@ -281,7 +277,7 @@ class TestQuestionRetrieval:
             question_type="low_stakes",
             pattern_context=sample_pattern,
             priority=5,
-            expires_at=datetime.now() - timedelta(hours=1)  # Expired 1 hour ago
+            expires_at=datetime.now() - timedelta(hours=1),  # Expired 1 hour ago
         )
         await queue.submit_question(expired_request)
 
@@ -292,7 +288,7 @@ class TestQuestionRetrieval:
             question_type="low_stakes",
             pattern_context=sample_pattern,
             priority=5,
-            expires_at=datetime.now() + timedelta(hours=24)
+            expires_at=datetime.now() + timedelta(hours=24),
         )
         await queue.submit_question(valid_request)
 
@@ -305,11 +301,7 @@ class TestQuestionRetrieval:
         queue.close()
 
     @pytest.mark.asyncio
-    async def test_retrieves_question_by_correlation_id(
-        self,
-        message_bus,
-        sample_review_request
-    ):
+    async def test_retrieves_question_by_correlation_id(self, message_bus, sample_review_request):
         """Queue retrieves specific question by correlation ID."""
         queue = HumanReviewQueue(message_bus=message_bus)
 
@@ -339,12 +331,7 @@ class TestQuestionStatusUpdates:
     """Test updating question status."""
 
     @pytest.mark.asyncio
-    async def test_marks_question_as_answered(
-        self,
-        message_bus,
-        temp_db,
-        sample_review_request
-    ):
+    async def test_marks_question_as_answered(self, message_bus, temp_db, sample_review_request):
         """Queue updates status to answered when response received."""
         queue = HumanReviewQueue(message_bus=message_bus, db_path=str(temp_db))
 
@@ -354,32 +341,30 @@ class TestQuestionStatusUpdates:
             correlation_id="corr-test-456",
             response_type="YES",
             comment="Sounds great!",
-            response_time_seconds=120.5
+            response_time_seconds=120.5,
         )
 
         await queue.mark_answered(question_id, response)
 
         # Verify status updated
         cursor = queue.conn.cursor()
-        cursor.execute("""
+        cursor.execute(
+            """
             SELECT status, response_type, answered_at
             FROM questions WHERE id = ?
-        """, (question_id,))
+        """,
+            (question_id,),
+        )
         row = cursor.fetchone()
 
-        assert row['status'] == "answered"
-        assert row['response_type'] == "YES"
-        assert row['answered_at'] is not None
+        assert row["status"] == "answered"
+        assert row["response_type"] == "YES"
+        assert row["answered_at"] is not None
 
         queue.close()
 
     @pytest.mark.asyncio
-    async def test_marks_question_as_expired(
-        self,
-        message_bus,
-        temp_db,
-        sample_review_request
-    ):
+    async def test_marks_question_as_expired(self, message_bus, temp_db, sample_review_request):
         """Queue marks expired questions automatically."""
         queue = HumanReviewQueue(message_bus=message_bus, db_path=str(temp_db))
 
@@ -388,9 +373,12 @@ class TestQuestionStatusUpdates:
         # Manually set expiry to past
         cursor = queue.conn.cursor()
         past_time = (datetime.now() - timedelta(hours=1)).isoformat()
-        cursor.execute("""
+        cursor.execute(
+            """
             UPDATE questions SET expires_at = ? WHERE id = ?
-        """, (past_time, question_id))
+        """,
+            (past_time, question_id),
+        )
         queue.conn.commit()
 
         # Run expiry check
@@ -400,7 +388,7 @@ class TestQuestionStatusUpdates:
 
         # Verify status
         cursor.execute("SELECT status FROM questions WHERE id = ?", (question_id,))
-        status = cursor.fetchone()['status']
+        status = cursor.fetchone()["status"]
 
         assert status == "expired"
 
@@ -408,10 +396,7 @@ class TestQuestionStatusUpdates:
 
     @pytest.mark.asyncio
     async def test_does_not_expire_answered_questions(
-        self,
-        message_bus,
-        temp_db,
-        sample_review_request
+        self, message_bus, temp_db, sample_review_request
     ):
         """Queue does not mark answered questions as expired."""
         queue = HumanReviewQueue(message_bus=message_bus, db_path=str(temp_db))
@@ -419,18 +404,18 @@ class TestQuestionStatusUpdates:
         question_id = await queue.submit_question(sample_review_request)
 
         # Answer the question
-        response = HumanResponse(
-            correlation_id="corr-test-456",
-            response_type="YES"
-        )
+        response = HumanResponse(correlation_id="corr-test-456", response_type="YES")
         await queue.mark_answered(question_id, response)
 
         # Set expiry to past
         cursor = queue.conn.cursor()
         past_time = (datetime.now() - timedelta(hours=1)).isoformat()
-        cursor.execute("""
+        cursor.execute(
+            """
             UPDATE questions SET expires_at = ? WHERE id = ?
-        """, (past_time, question_id))
+        """,
+            (past_time, question_id),
+        )
         queue.conn.commit()
 
         # Run expiry check
@@ -438,7 +423,7 @@ class TestQuestionStatusUpdates:
 
         # Should not expire answered questions
         cursor.execute("SELECT status FROM questions WHERE id = ?", (question_id,))
-        status = cursor.fetchone()['status']
+        status = cursor.fetchone()["status"]
 
         assert status == "answered"  # Still answered, not expired
 
@@ -449,12 +434,7 @@ class TestQueueStatistics:
     """Test queue statistics and monitoring."""
 
     @pytest.mark.asyncio
-    async def test_returns_total_question_count(
-        self,
-        message_bus,
-        temp_db,
-        sample_pattern
-    ):
+    async def test_returns_total_question_count(self, message_bus, temp_db, sample_pattern):
         """Queue returns total number of questions."""
         queue = HumanReviewQueue(message_bus=message_bus, db_path=str(temp_db))
 
@@ -466,22 +446,18 @@ class TestQueueStatistics:
                 question_type="low_stakes",
                 pattern_context=sample_pattern,
                 priority=5,
-                expires_at=datetime.now() + timedelta(hours=24)
+                expires_at=datetime.now() + timedelta(hours=24),
             )
             await queue.submit_question(request)
 
         stats = queue.get_stats()
 
-        assert stats['total_questions'] == 3
+        assert stats["total_questions"] == 3
 
         queue.close()
 
     @pytest.mark.asyncio
-    async def test_groups_questions_by_status(
-        self,
-        message_bus,
-        sample_pattern
-    ):
+    async def test_groups_questions_by_status(self, message_bus, sample_pattern):
         """Queue groups questions by status."""
         queue = HumanReviewQueue(message_bus=message_bus)
 
@@ -492,7 +468,7 @@ class TestQueueStatistics:
             question_type="low_stakes",
             pattern_context=sample_pattern,
             priority=5,
-            expires_at=datetime.now() + timedelta(hours=24)
+            expires_at=datetime.now() + timedelta(hours=24),
         )
         q1_id = await queue.submit_question(request1)
 
@@ -506,25 +482,20 @@ class TestQueueStatistics:
             question_type="low_stakes",
             pattern_context=sample_pattern,
             priority=5,
-            expires_at=datetime.now() + timedelta(hours=24)
+            expires_at=datetime.now() + timedelta(hours=24),
         )
         await queue.submit_question(request2)
 
         stats = queue.get_stats()
 
-        assert 'by_status' in stats
-        assert stats['by_status'].get('answered', 0) >= 1
-        assert stats['by_status'].get('pending', 0) >= 1
+        assert "by_status" in stats
+        assert stats["by_status"].get("answered", 0) >= 1
+        assert stats["by_status"].get("pending", 0) >= 1
 
         queue.close()
 
     @pytest.mark.asyncio
-    async def test_calculates_acceptance_rate(
-        self,
-        message_bus,
-        temp_db,
-        sample_pattern
-    ):
+    async def test_calculates_acceptance_rate(self, message_bus, temp_db, sample_pattern):
         """Queue calculates YES acceptance rate."""
         queue = HumanReviewQueue(message_bus=message_bus, db_path=str(temp_db))
 
@@ -536,23 +507,20 @@ class TestQueueStatistics:
                 question_type="low_stakes",
                 pattern_context=sample_pattern,
                 priority=5,
-                expires_at=datetime.now() + timedelta(hours=24)
+                expires_at=datetime.now() + timedelta(hours=24),
             )
             q_id = await queue.submit_question(request)
 
             # Answer: YES, NO, YES
             response_type = "YES" if i != 1 else "NO"
-            response = HumanResponse(
-                correlation_id=f"q{i}",
-                response_type=response_type
-            )
+            response = HumanResponse(correlation_id=f"q{i}", response_type=response_type)
             await queue.mark_answered(q_id, response)
 
         stats = queue.get_stats()
 
         # 2 YES out of 3 answered = 66.7%
-        assert 'acceptance_rate' in stats
-        assert 0.66 <= stats['acceptance_rate'] <= 0.67
+        assert "acceptance_rate" in stats
+        assert 0.66 <= stats["acceptance_rate"] <= 0.67
 
         queue.close()
 
@@ -562,10 +530,7 @@ class TestErrorHandling:
 
     @pytest.mark.asyncio
     async def test_handles_duplicate_correlation_ids(
-        self,
-        message_bus,
-        temp_db,
-        sample_review_request
+        self, message_bus, temp_db, sample_review_request
     ):
         """Queue allows duplicate correlation IDs (resubmissions)."""
         queue = HumanReviewQueue(message_bus=message_bus, db_path=str(temp_db))
@@ -606,7 +571,7 @@ class TestErrorHandling:
                 question_type="low_stakes",
                 pattern_context=sample_pattern,
                 priority=5,
-                expires_at=datetime.now() + timedelta(hours=24)
+                expires_at=datetime.now() + timedelta(hours=24),
             )
 
         # Too long (> 500 chars)
@@ -617,7 +582,7 @@ class TestErrorHandling:
                 question_type="low_stakes",
                 pattern_context=sample_pattern,
                 priority=5,
-                expires_at=datetime.now() + timedelta(hours=24)
+                expires_at=datetime.now() + timedelta(hours=24),
             )
 
         queue.close()

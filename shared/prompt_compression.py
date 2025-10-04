@@ -38,8 +38,7 @@ Example Usage:
     )
 """
 
-from typing import TypedDict, Optional
-from pathlib import Path
+from typing import TypedDict
 
 
 class CompressedPrompt(TypedDict):
@@ -50,6 +49,7 @@ class CompressedPrompt(TypedDict):
         system: Cacheable system prompt (constitution, standards, role)
         task: Variable task prompt (user request, context)
     """
+
     system: str
     task: str
 
@@ -117,12 +117,13 @@ def load_agent_role(agent_name: str) -> str:
     """
     try:
         from shared.instruction_loader import load_agent_instruction
+
         instruction = load_agent_instruction(agent_name)
 
         # Extract first paragraph (role summary)
-        lines = instruction.split('\n')
+        lines = instruction.split("\n")
         for line in lines:
-            if line.strip() and not line.startswith('#'):
+            if line.strip() and not line.startswith("#"):
                 return line.strip()
 
         return f"specialized agent for {agent_name} tasks"
@@ -145,15 +146,14 @@ def load_agent_instructions(agent_name: str) -> str:
     """
     try:
         from shared.instruction_loader import load_agent_instruction
+
         return load_agent_instruction(agent_name)
     except Exception:
         return f"No specific instructions for {agent_name}"
 
 
 def create_compressed_prompt(
-    agent_name: str,
-    task: str,
-    context: Optional[dict] = None
+    agent_name: str, task: str, context: dict | None = None
 ) -> CompressedPrompt:
     """
     Create compressed prompt with caching support.
@@ -197,7 +197,7 @@ def create_compressed_prompt(
         agent_role=agent_role,
         constitution=CONSTITUTION_CORE,
         quality_standards=QUALITY_STANDARDS,
-        agent_instructions=agent_instructions
+        agent_instructions=agent_instructions,
     )
 
     # Build task prompt (variable)
@@ -208,15 +208,10 @@ def create_compressed_prompt(
     context_content = context.get("data", "") or ""
 
     task_prompt = TASK_PROMPT_TEMPLATE.format(
-        user_request=task,
-        context=context_content,
-        files=files_content or "(none)"
+        user_request=task, context=context_content, files=files_content or "(none)"
     )
 
-    return CompressedPrompt(
-        system=system_prompt.strip(),
-        task=task_prompt.strip()
-    )
+    return CompressedPrompt(system=system_prompt.strip(), task=task_prompt.strip())
 
 
 def estimate_tokens(text: str) -> int:

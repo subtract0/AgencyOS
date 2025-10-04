@@ -18,18 +18,18 @@ Usage:
 import re
 import sys
 from pathlib import Path
-from typing import List, Tuple
 
 # Import JSONValue type if it exists
 try:
     from shared.type_definitions import JSONValue
+
     HAS_JSON_VALUE = True
 except ImportError:
     HAS_JSON_VALUE = False
     print("⚠️  JSONValue type not found - will create it")
 
 
-DICT_ANY_PATTERN = re.compile(r'Dict\[str,\s*Any\]|dict\[str,\s*Any\]')
+DICT_ANY_PATTERN = re.compile(r"Dict\[str,\s*Any\]|dict\[str,\s*Any\]")
 
 
 def create_json_value_type():
@@ -78,7 +78,7 @@ __all__ = ["JSONValue"]
             print(f"✅ Updated {init_file}")
 
 
-def fix_file(file_path: Path) -> Tuple[int, List[str]]:
+def fix_file(file_path: Path) -> tuple[int, list[str]]:
     """
     Fix Dict[str, Any] violations in a file.
 
@@ -94,24 +94,22 @@ def fix_file(file_path: Path) -> Tuple[int, List[str]]:
         if "from shared.type_definitions import" in content and "JSONValue" not in content:
             # Add to existing import
             content = re.sub(
-                r'(from shared\.type_definitions import [^)]+)',
-                r'\1, JSONValue',
-                content
+                r"(from shared\.type_definitions import [^)]+)", r"\1, JSONValue", content
             )
             changes.append("Added JSONValue to existing import")
         elif "from shared.type_definitions" not in content and "from typing import" in content:
             # Add new import after typing imports
             content = re.sub(
-                r'(from typing import [^\n]+\n)',
-                r'\1from shared.type_definitions import JSONValue\n',
+                r"(from typing import [^\n]+\n)",
+                r"\1from shared.type_definitions import JSONValue\n",
                 content,
-                count=1
+                count=1,
             )
             changes.append("Added JSONValue import")
 
     # Replace Dict[str, Any] with JSONValue
     violations_before = len(DICT_ANY_PATTERN.findall(content))
-    content = DICT_ANY_PATTERN.sub('JSONValue', content)
+    content = DICT_ANY_PATTERN.sub("JSONValue", content)
     violations_after = len(DICT_ANY_PATTERN.findall(content))
     violations_fixed = violations_before - violations_after
 
@@ -138,7 +136,7 @@ def main():
         print("❌ Run no_dict_any_check.py first to generate violations list")
         return 1
 
-    violations = violations_output.read_text().strip().split('\n')
+    violations = violations_output.read_text().strip().split("\n")
     files_to_fix = set()
 
     for line in violations:

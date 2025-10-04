@@ -12,17 +12,15 @@ Tests the DSPy-powered Toolsmith Agent implementation including:
 
 import os
 import sys
-import json
-import pytest
-import tempfile
 from pathlib import Path
-from unittest.mock import Mock, MagicMock, patch, call
-from typing import Dict, List, Any
+from unittest.mock import Mock, patch
+
+import pytest
 
 # CI skip marker for tests requiring advanced DSPy features
 ci_skip = pytest.mark.skipif(
     os.environ.get("CI") == "true",
-    reason="Requires advanced DSPy features not fully configured in CI"
+    reason="Requires advanced DSPy features not fully configured in CI",
 )
 
 # Skip tests when DSPy is not available
@@ -32,8 +30,7 @@ except ImportError:
     DSPY_AVAILABLE = False
 
 dspy_skip = pytest.mark.skipif(
-    not DSPY_AVAILABLE,
-    reason="DSPy not available - tests require full DSPy installation"
+    not DSPY_AVAILABLE, reason="DSPy not available - tests require full DSPy installation"
 )
 
 # Add parent directory to path for imports
@@ -41,14 +38,11 @@ sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 
 from dspy_agents.modules.toolsmith_agent import (
     DSPyToolsmithAgent,
-    create_dspy_toolsmith_agent,
-    ToolCreationContext,
     ToolArtifact,
+    ToolCreationContext,
+    create_dspy_toolsmith_agent,
 )
 from dspy_agents.signatures.base import (
-    FileChange,
-    TestSpecification,
-    VerificationResult,
     AgentResult,
 )
 
@@ -70,10 +64,7 @@ class TestDSPyToolsmithAgentInitialization:
     def test_initialization_with_custom_params(self):
         """Test initialization with custom parameters."""
         agent = DSPyToolsmithAgent(
-            model="gpt-5",
-            reasoning_effort="high",
-            enable_learning=False,
-            quality_threshold=0.95
+            model="gpt-5", reasoning_effort="high", enable_learning=False, quality_threshold=0.95
         )
 
         assert agent.model == "gpt-5"
@@ -81,7 +72,7 @@ class TestDSPyToolsmithAgentInitialization:
         assert agent.enable_learning is False
         assert agent.quality_threshold == 0.95
 
-    @patch('dspy_agents.modules.toolsmith_agent.DSPY_AVAILABLE', False)
+    @patch("dspy_agents.modules.toolsmith_agent.DSPY_AVAILABLE", False)
     def test_initialization_without_dspy(self):
         """Test initialization when DSPy is not available."""
         agent = DSPyToolsmithAgent()
@@ -94,10 +85,7 @@ class TestDSPyToolsmithAgentInitialization:
 
     def test_factory_function(self):
         """Test the factory function creates correct instance."""
-        agent = create_dspy_toolsmith_agent(
-            model="gpt-5",
-            reasoning_effort="high"
-        )
+        agent = create_dspy_toolsmith_agent(model="gpt-5", reasoning_effort="high")
 
         assert isinstance(agent, DSPyToolsmithAgent)
         assert agent.model == "gpt-5"
@@ -111,13 +99,13 @@ class TestToolDirectiveParsing:
     def agent(self):
         """Create an agent instance for testing."""
         # Prevent real DSPy initialization
-        with patch('dspy_agents.modules.toolsmith_agent.DSPyConfig.initialize', return_value=False):
+        with patch("dspy_agents.modules.toolsmith_agent.DSPyConfig.initialize", return_value=False):
             return DSPyToolsmithAgent()
 
     def test_parse_directive_success(self):
         """Test successful directive parsing."""
         # Create agent with mocked directive parser
-        with patch('dspy_agents.modules.toolsmith_agent.DSPyConfig.initialize', return_value=False):
+        with patch("dspy_agents.modules.toolsmith_agent.DSPyConfig.initialize", return_value=False):
             agent = DSPyToolsmithAgent()
 
         # Mock the DSPy directive parser
@@ -126,7 +114,7 @@ class TestToolDirectiveParsing:
         mock_result.tool_description = "A handoff tool with context"
         mock_result.parameters = [
             {"name": "mission", "type": "str", "required": True},
-            {"name": "context", "type": "dict", "required": False}
+            {"name": "context", "type": "dict", "required": False},
         ]
         mock_result.test_cases = ["Test basic functionality", "Test error handling"]
         mock_result.implementation_plan = ["Parse inputs", "Create tool", "Test"]
@@ -138,7 +126,7 @@ class TestToolDirectiveParsing:
         result = agent.parse_directive(
             "Create ContextMessageHandoff tool",
             ["ExistingTool1", "ExistingTool2"],
-            ["Constitutional requirement 1"]
+            ["Constitutional requirement 1"],
         )
 
         assert result["tool_name"] == "ContextMessageHandoff"
@@ -150,16 +138,14 @@ class TestToolDirectiveParsing:
     def test_parse_directive_fallback(self):
         """Test fallback directive parsing when DSPy unavailable."""
         # Patch DSPY_AVAILABLE and DSPyConfig to simulate no DSPy
-        with patch('dspy_agents.modules.toolsmith_agent.DSPY_AVAILABLE', False):
-            with patch('dspy_agents.modules.toolsmith_agent.DSPyConfig.initialize', return_value=False):
+        with patch("dspy_agents.modules.toolsmith_agent.DSPY_AVAILABLE", False):
+            with patch(
+                "dspy_agents.modules.toolsmith_agent.DSPyConfig.initialize", return_value=False
+            ):
                 # Create agent with patched DSPY_AVAILABLE=False
                 agent = DSPyToolsmithAgent()
 
-                result = agent.parse_directive(
-                    "Create TestTool tool for testing",
-                    [],
-                    []
-                )
+                result = agent.parse_directive("Create TestTool tool for testing", [], [])
 
                 assert result["tool_name"] == "TestTool"
                 assert "Tool created from directive:" in result["tool_description"]
@@ -187,45 +173,39 @@ class TestToolScaffolding:
     def agent(self):
         """Create an agent instance for testing."""
         # Prevent real DSPy initialization
-        with patch('dspy_agents.modules.toolsmith_agent.DSPyConfig.initialize', return_value=False):
+        with patch("dspy_agents.modules.toolsmith_agent.DSPyConfig.initialize", return_value=False):
             return DSPyToolsmithAgent()
 
-    @patch('dspy_agents.modules.toolsmith_agent.DSPY_AVAILABLE', True)
+    @patch("dspy_agents.modules.toolsmith_agent.DSPY_AVAILABLE", True)
     def test_scaffold_tool_success(self, agent):
         """Test successful tool scaffolding."""
         mock_result = Mock()
-        mock_result.tool_code = '''
+        mock_result.tool_code = """
 from pydantic import BaseModel
 
 class TestTool(BaseModel):
     def run(self):
         return {"success": True}
-'''
+"""
         mock_result.imports = ["from pydantic import BaseModel"]
 
         agent.scaffolder = Mock(return_value=mock_result)
 
         code, imports, rationale = agent.scaffold_tool(
-            "TestTool",
-            "A test tool",
-            [{"name": "param1", "type": "str"}],
-            {}
+            "TestTool", "A test tool", [{"name": "param1", "type": "str"}], {}
         )
 
         assert "class TestTool" in code
         assert "def run" in code
         assert len(imports) > 0
 
-    @pytest.mark.skip(reason="TODO: Fix DSPy Mock - requires proper dspy.BaseLM mock instead of unittest.mock.Mock")
-    @patch('dspy_agents.modules.toolsmith_agent.DSPY_AVAILABLE', False)
+    @pytest.mark.skip(
+        reason="TODO: Fix DSPy Mock - requires proper dspy.BaseLM mock instead of unittest.mock.Mock"
+    )
+    @patch("dspy_agents.modules.toolsmith_agent.DSPY_AVAILABLE", False)
     def test_scaffold_tool_fallback(self, agent):
         """Test fallback tool scaffolding."""
-        code, imports, rationale = agent.scaffold_tool(
-            "FallbackTool",
-            "A fallback tool",
-            [],
-            {}
-        )
+        code, imports, rationale = agent.scaffold_tool("FallbackTool", "A fallback tool", [], {})
 
         assert "class FallbackTool" in code
         assert "def run" in code
@@ -249,16 +229,16 @@ class TestTestGeneration:
     def agent(self):
         """Create an agent instance for testing."""
         # Prevent real DSPy initialization
-        with patch('dspy_agents.modules.toolsmith_agent.DSPyConfig.initialize', return_value=False):
+        with patch("dspy_agents.modules.toolsmith_agent.DSPyConfig.initialize", return_value=False):
             return DSPyToolsmithAgent()
 
     @ci_skip
-    @patch('dspy_agents.modules.toolsmith_agent.DSPY_AVAILABLE', True)
+    @patch("dspy_agents.modules.toolsmith_agent.DSPY_AVAILABLE", True)
     @dspy_skip
     def test_generate_tests_success(self, agent):
         """Test successful test generation."""
         mock_result = Mock()
-        mock_result.test_code = '''
+        mock_result.test_code = """
 import pytest
 from tools.test_tool import TestTool
 
@@ -270,7 +250,7 @@ def test_run_method():
     tool = TestTool()
     result = tool.run()
     assert result["success"] is True
-'''
+"""
 
         agent.test_generator = Mock(return_value=mock_result)
 
@@ -278,22 +258,21 @@ def test_run_method():
             "TestTool",
             "class TestTool...",
             ["Test initialization", "Test run method"],
-            follow_necessary=True
+            follow_necessary=True,
         )
 
         assert "def test_initialization" in test_code
         assert "def test_run_method" in test_code
         assert "import pytest" in test_code
 
-    @pytest.mark.skip(reason="TODO: Fix DSPy Mock - requires proper dspy.BaseLM mock instead of unittest.mock.Mock")
-    @patch('dspy_agents.modules.toolsmith_agent.DSPY_AVAILABLE', False)
+    @pytest.mark.skip(
+        reason="TODO: Fix DSPy Mock - requires proper dspy.BaseLM mock instead of unittest.mock.Mock"
+    )
+    @patch("dspy_agents.modules.toolsmith_agent.DSPY_AVAILABLE", False)
     def test_generate_tests_fallback(self, agent):
         """Test fallback test generation."""
         test_code = agent.generate_tests(
-            "FallbackTool",
-            "class FallbackTool...",
-            [],
-            follow_necessary=False
+            "FallbackTool", "class FallbackTool...", [], follow_necessary=False
         )
 
         assert "def test_fallbacktool_initialization" in test_code
@@ -325,12 +304,12 @@ class TestMainForwardMethod:
             "repository_root": "/test/repo",
             "tools_directory": "tools",
             "tests_directory": "tests",
-            "session_id": "test_session_123"
+            "session_id": "test_session_123",
         }
 
     @ci_skip
-    @patch('dspy_agents.modules.toolsmith_agent.DSPY_AVAILABLE', True)
-    @patch('dspy_agents.modules.toolsmith_agent.subprocess.run')
+    @patch("dspy_agents.modules.toolsmith_agent.DSPY_AVAILABLE", True)
+    @patch("dspy_agents.modules.toolsmith_agent.subprocess.run")
     @dspy_skip
     def test_forward_success(self, mock_subprocess, agent, mock_context):
         """Test successful tool creation flow."""
@@ -354,21 +333,14 @@ class TestMainForwardMethod:
         agent.test_generator = Mock(return_value=mock_test)
 
         # Mock test execution
-        mock_subprocess.return_value = Mock(
-            returncode=0,
-            stdout="Tests passed",
-            stderr=""
-        )
+        mock_subprocess.return_value = Mock(returncode=0, stdout="Tests passed", stderr="")
 
         # Mock handoff preparation
         mock_handoff = Mock()
         mock_handoff.handoff_package = {"ready": True}
         agent.handoff_preparer = Mock(return_value=mock_handoff)
 
-        result = agent.forward(
-            "Create TestTool for testing",
-            mock_context
-        )
+        result = agent.forward("Create TestTool for testing", mock_context)
 
         assert result.success is True
         assert "TestTool" in result.message
@@ -376,17 +348,16 @@ class TestMainForwardMethod:
         assert len(result.tests) == 1
         assert result.verification.all_tests_pass is True
 
-    @pytest.mark.skip(reason="TODO: Fix DSPy Mock - requires proper dspy.BaseLM mock instead of unittest.mock.Mock")
-    @patch('dspy_agents.modules.toolsmith_agent.DSPY_AVAILABLE', False)
+    @pytest.mark.skip(
+        reason="TODO: Fix DSPy Mock - requires proper dspy.BaseLM mock instead of unittest.mock.Mock"
+    )
+    @patch("dspy_agents.modules.toolsmith_agent.DSPY_AVAILABLE", False)
     def test_forward_fallback(self, agent, mock_context):
         """Test fallback behavior when DSPy not available."""
-        result = agent.forward(
-            "Create TestTool",
-            mock_context
-        )
+        result = agent.forward("Create TestTool", mock_context)
 
         assert result.success is False
-        assert ("DSPy not available" in result.message or "CONSTITUTIONAL" in result.message)
+        assert "DSPy not available" in result.message or "CONSTITUTIONAL" in result.message
         assert len(result.changes) >= 0  # May have fallback changes
         assert len(result.tests) >= 0  # May have fallback tests
 
@@ -395,10 +366,7 @@ class TestMainForwardMethod:
         agent.directive_parser = Mock(side_effect=Exception("Fatal error"))
         agent.dspy_available = True  # Force error path instead of fallback
 
-        result = agent.forward(
-            "Create ErrorTool",
-            mock_context
-        )
+        result = agent.forward("Create ErrorTool", mock_context)
 
         assert result.success is False
         assert "Fatal error" in result.message
@@ -415,17 +383,9 @@ class TestLearningCapabilities:
 
     def test_learn_from_success(self, agent):
         """Test learning from successful tool creation."""
-        context = ToolCreationContext(
-            repository_root="/test",
-            session_id="test_123"
-        )
+        context = ToolCreationContext(repository_root="/test", session_id="test_123")
 
-        agent._learn_from_creation(
-            "Create TestTool",
-            "TestTool",
-            success=True,
-            context=context
-        )
+        agent._learn_from_creation("Create TestTool", "TestTool", success=True, context=context)
 
         assert len(agent.successful_tools) == 1
         assert agent.successful_tools[0]["tool_name"] == "TestTool"
@@ -433,17 +393,9 @@ class TestLearningCapabilities:
 
     def test_learn_from_failure(self, agent):
         """Test learning from failed tool creation."""
-        context = ToolCreationContext(
-            repository_root="/test",
-            session_id="test_123"
-        )
+        context = ToolCreationContext(repository_root="/test", session_id="test_123")
 
-        agent._learn_from_creation(
-            "Create FailTool",
-            "FailTool",
-            success=False,
-            context=context
-        )
+        agent._learn_from_creation("Create FailTool", "FailTool", success=False, context=context)
 
         assert len(agent.failed_attempts) == 1
         assert agent.failed_attempts[0]["tool_name"] == "FailTool"
@@ -451,19 +403,11 @@ class TestLearningCapabilities:
 
     def test_learning_storage_limits(self, agent):
         """Test that learning storage respects limits."""
-        context = ToolCreationContext(
-            repository_root="/test",
-            session_id="test_123"
-        )
+        context = ToolCreationContext(repository_root="/test", session_id="test_123")
 
         # Add many successful patterns
         for i in range(60):
-            agent._learn_from_creation(
-                f"Create Tool{i}",
-                f"Tool{i}",
-                success=True,
-                context=context
-            )
+            agent._learn_from_creation(f"Create Tool{i}", f"Tool{i}", success=True, context=context)
 
         # Should be limited to 50
         assert len(agent.successful_tools) == 50
@@ -471,10 +415,7 @@ class TestLearningCapabilities:
         # Add many failed patterns
         for i in range(30):
             agent._learn_from_creation(
-                f"Create FailTool{i}",
-                f"FailTool{i}",
-                success=False,
-                context=context
+                f"Create FailTool{i}", f"FailTool{i}", success=False, context=context
             )
 
         # Should be limited to 25
@@ -482,10 +423,7 @@ class TestLearningCapabilities:
 
     def test_get_learning_summary(self, agent):
         """Test getting learning summary."""
-        context = ToolCreationContext(
-            repository_root="/test",
-            session_id="test_123"
-        )
+        context = ToolCreationContext(repository_root="/test", session_id="test_123")
 
         # Add some patterns
         for i in range(3):
@@ -502,10 +440,7 @@ class TestLearningCapabilities:
 
     def test_reset_learning(self, agent):
         """Test resetting learned patterns."""
-        context = ToolCreationContext(
-            repository_root="/test",
-            session_id="test_123"
-        )
+        context = ToolCreationContext(repository_root="/test", session_id="test_123")
 
         # Add some patterns
         agent._learn_from_creation("Tool1", "Tool1", True, context)
@@ -531,13 +466,13 @@ class TestContextPreparation:
 
     def test_prepare_context_with_defaults(self, agent):
         """Test context preparation with default values."""
-        with patch('os.getcwd', return_value='/test/repo'):
+        with patch("os.getcwd", return_value="/test/repo"):
             context = agent._prepare_context({})
 
-        assert context.repository_root == '/test/repo'
-        assert context.tools_directory == 'tools'
-        assert context.tests_directory == 'tests'
-        assert 'session_' in context.session_id
+        assert context.repository_root == "/test/repo"
+        assert context.tools_directory == "tools"
+        assert context.tests_directory == "tests"
+        assert "session_" in context.session_id
 
     def test_prepare_context_with_custom_values(self, agent):
         """Test context preparation with custom values."""
@@ -545,7 +480,7 @@ class TestContextPreparation:
             "repository_root": "/custom/repo",
             "tools_directory": "custom_tools",
             "tests_directory": "custom_tests",
-            "session_id": "custom_session"
+            "session_id": "custom_session",
         }
 
         context = agent._prepare_context(custom_context)
@@ -555,15 +490,15 @@ class TestContextPreparation:
         assert context.tests_directory == "custom_tests"
         assert context.session_id == "custom_session"
 
-    @patch('pathlib.Path.exists', return_value=True)
-    @patch('pathlib.Path.glob')
+    @patch("pathlib.Path.exists", return_value=True)
+    @patch("pathlib.Path.glob")
     def test_prepare_context_with_existing_tools(self, mock_glob, mock_exists, agent):
         """Test context preparation discovers existing tools."""
         # Mock existing tool files
         mock_glob.return_value = [
             Path("tool1.py"),
             Path("tool2.py"),
-            Path("__init__.py")  # Should be excluded
+            Path("__init__.py"),  # Should be excluded
         ]
 
         context = agent._prepare_context({"repository_root": "/test"})
@@ -580,12 +515,12 @@ class TestContextPreparation:
             "repository_root": None,  # None value should be replaced with getcwd()
         }
 
-        with patch('os.getcwd', return_value='/fallback'):
+        with patch("os.getcwd", return_value="/fallback"):
             context = agent._prepare_context(invalid_context)
 
         # Should handle None gracefully and use getcwd()
-        assert context.repository_root == '/fallback'
-        assert 'session_' in context.session_id  # Regular session ID, not fallback
+        assert context.repository_root == "/fallback"
+        assert "session_" in context.session_id  # Regular session ID, not fallback
 
 
 class TestTestExecution:
@@ -596,14 +531,10 @@ class TestTestExecution:
         """Create an agent instance."""
         return DSPyToolsmithAgent()
 
-    @patch('subprocess.run')
+    @patch("subprocess.run")
     def test_run_tests_success(self, mock_run, agent):
         """Test successful test execution."""
-        mock_run.return_value = Mock(
-            returncode=0,
-            stdout="All tests passed",
-            stderr=""
-        )
+        mock_run.return_value = Mock(returncode=0, stdout="All tests passed", stderr="")
 
         result = agent._run_tests("test_file.py")
 
@@ -611,14 +542,10 @@ class TestTestExecution:
         assert "All tests passed" in result["stdout"]
         assert result["errors"] == []
 
-    @patch('subprocess.run')
+    @patch("subprocess.run")
     def test_run_tests_failure(self, mock_run, agent):
         """Test failed test execution."""
-        mock_run.return_value = Mock(
-            returncode=1,
-            stdout="",
-            stderr="Test failed: assertion error"
-        )
+        mock_run.return_value = Mock(returncode=1, stdout="", stderr="Test failed: assertion error")
 
         result = agent._run_tests("test_file.py")
 
@@ -626,14 +553,12 @@ class TestTestExecution:
         assert "Test failed" in result["stderr"]
         assert len(result["errors"]) > 0
 
-    @patch('subprocess.run')
+    @patch("subprocess.run")
     def test_run_tests_timeout(self, mock_run, agent):
         """Test test execution timeout."""
         import subprocess
-        mock_run.side_effect = subprocess.TimeoutExpired(
-            cmd="pytest",
-            timeout=30
-        )
+
+        mock_run.side_effect = subprocess.TimeoutExpired(cmd="pytest", timeout=30)
 
         result = agent._run_tests("test_file.py")
 
@@ -641,7 +566,7 @@ class TestTestExecution:
         assert "timed out" in result["stderr"]
         assert "30 seconds" in result["errors"][0]
 
-    @patch('subprocess.run')
+    @patch("subprocess.run")
     def test_run_tests_exception(self, mock_run, agent):
         """Test test execution with exception."""
         mock_run.side_effect = Exception("Unexpected error")
@@ -669,24 +594,24 @@ class TestHandoffPreparation:
                 artifact_type="tool",
                 file_path="tools/test_tool.py",
                 content="class TestTool: pass",
-                status="created"
+                status="created",
             ),
             ToolArtifact(
                 artifact_type="test",
                 file_path="tests/test_tool.py",
                 content="def test(): pass",
-                status="created"
-            )
+                status="created",
+            ),
         ]
 
-    @patch('dspy_agents.modules.toolsmith_agent.DSPY_AVAILABLE', True)
+    @patch("dspy_agents.modules.toolsmith_agent.DSPY_AVAILABLE", True)
     def test_prepare_handoff_success(self, agent, sample_artifacts):
         """Test successful handoff preparation."""
         mock_result = Mock()
         mock_result.handoff_package = {
             "artifacts": [a.model_dump() for a in sample_artifacts],
             "ready": True,
-            "summary": "2 artifacts ready"
+            "summary": "2 artifacts ready",
         }
 
         agent.handoff_preparer = Mock(return_value=mock_result)
@@ -701,7 +626,7 @@ class TestHandoffPreparation:
         assert len(handoff["artifacts"]) == 2
         assert "2 artifacts ready" in handoff["summary"]
 
-    @patch('dspy_agents.modules.toolsmith_agent.DSPY_AVAILABLE', False)
+    @patch("dspy_agents.modules.toolsmith_agent.DSPY_AVAILABLE", False)
     def test_prepare_handoff_fallback(self, agent, sample_artifacts):
         """Test fallback handoff preparation."""
         test_results = {"success": True, "stdout": "Tests passed"}
@@ -779,12 +704,12 @@ class TestIntegration:
             model="gpt-4o-mini",
             reasoning_effort="high",
             enable_learning=True,
-            quality_threshold=0.9
+            quality_threshold=0.9,
         )
 
     @ci_skip
-    @patch('dspy_agents.modules.toolsmith_agent.DSPY_AVAILABLE', True)
-    @patch('subprocess.run')
+    @patch("dspy_agents.modules.toolsmith_agent.DSPY_AVAILABLE", True)
+    @patch("subprocess.run")
     @dspy_skip
     def test_end_to_end_tool_creation(self, mock_subprocess, agent):
         """Test complete tool creation workflow."""
@@ -805,11 +730,7 @@ class TestIntegration:
         mock_test.test_code = "def test_integration(): assert True"
         agent.test_generator = Mock(return_value=mock_test)
 
-        mock_subprocess.return_value = Mock(
-            returncode=0,
-            stdout="1 passed",
-            stderr=""
-        )
+        mock_subprocess.return_value = Mock(returncode=0, stdout="1 passed", stderr="")
 
         mock_handoff = Mock()
         mock_handoff.handoff_package = {"status": "ready"}
@@ -817,8 +738,7 @@ class TestIntegration:
 
         # Execute
         result = agent.forward(
-            "Create IntegrationTool for testing integration",
-            {"repository_root": "/test"}
+            "Create IntegrationTool for testing integration", {"repository_root": "/test"}
         )
 
         # Verify
@@ -841,23 +761,19 @@ class TestIntegration:
         assert isinstance(agent1, DSPyToolsmithAgent)
 
         # Test with kwargs
-        agent2 = create_dspy_toolsmith_agent(
-            model="custom-model",
-            extra_param="ignored"
-        )
+        agent2 = create_dspy_toolsmith_agent(model="custom-model", extra_param="ignored")
         assert agent2.model == "custom-model"
 
-    @pytest.mark.skip(reason="TODO: Fix DSPy Mock - requires proper dspy.BaseLM mock instead of unittest.mock.Mock")
-    @patch('dspy_agents.modules.toolsmith_agent.DSPY_AVAILABLE', False)
+    @pytest.mark.skip(
+        reason="TODO: Fix DSPy Mock - requires proper dspy.BaseLM mock instead of unittest.mock.Mock"
+    )
+    @patch("dspy_agents.modules.toolsmith_agent.DSPY_AVAILABLE", False)
     def test_graceful_degradation_without_dspy(self, agent):
         """Test agent degrades gracefully when DSPy unavailable."""
-        result = agent.forward(
-            "Create tool without DSPy",
-            {"repository_root": "/test"}
-        )
+        result = agent.forward("Create tool without DSPy", {"repository_root": "/test"})
 
         assert result.success is False
-        assert ("DSPy not available" in result.message or "CONSTITUTIONAL" in result.message)
+        assert "DSPy not available" in result.message or "CONSTITUTIONAL" in result.message
         assert result.verification.all_tests_pass is False
 
         # Should still return valid AgentResult
@@ -873,11 +789,11 @@ class TestRationaleGeneration:
     def agent(self):
         """Create an agent instance for testing."""
         # Prevent real DSPy initialization
-        with patch('dspy_agents.modules.toolsmith_agent.DSPyConfig.initialize', return_value=False):
+        with patch("dspy_agents.modules.toolsmith_agent.DSPyConfig.initialize", return_value=False):
             return DSPyToolsmithAgent()
 
     @ci_skip
-    @patch('dspy_agents.modules.toolsmith_agent.DSPY_AVAILABLE', True)
+    @patch("dspy_agents.modules.toolsmith_agent.DSPY_AVAILABLE", True)
     @dspy_skip
     def test_directive_parsing_generates_rationale(self, agent):
         """Test that directive parsing generates design rationale."""
@@ -894,7 +810,7 @@ class TestRationaleGeneration:
         result = agent.parse_directive(
             directive="Create a test tool",
             existing_tools=["tool1", "tool2"],
-            constitutional_requirements=["requirement1"]
+            constitutional_requirements=["requirement1"],
         )
 
         # Verify rationale was generated
@@ -903,7 +819,7 @@ class TestRationaleGeneration:
         assert len(mock_result.design_rationale) > 0
 
     @ci_skip
-    @patch('dspy_agents.modules.toolsmith_agent.DSPY_AVAILABLE', True)
+    @patch("dspy_agents.modules.toolsmith_agent.DSPY_AVAILABLE", True)
     @dspy_skip
     def test_scaffolding_generates_rationale(self, agent):
         """Test that scaffolding generates scaffolding rationale."""
@@ -915,10 +831,7 @@ class TestRationaleGeneration:
         agent.scaffolder = Mock(return_value=mock_result)
 
         code, imports, rationale = agent.scaffold_tool(
-            tool_name="TestTool",
-            tool_description="Test tool",
-            parameters=[],
-            base_patterns={}
+            tool_name="TestTool", tool_description="Test tool", parameters=[], base_patterns={}
         )
 
         assert rationale is not None
@@ -926,11 +839,12 @@ class TestRationaleGeneration:
         assert len(rationale) > 0
 
     @ci_skip
-    @patch('dspy_agents.modules.toolsmith_agent.DSPY_AVAILABLE', True)
+    @patch("dspy_agents.modules.toolsmith_agent.DSPY_AVAILABLE", True)
     @dspy_skip
     def test_rationale_logged_during_execution(self, agent, caplog):
         """Test that rationales are logged during execution for debugging."""
         import logging
+
         caplog.set_level(logging.INFO)
 
         # Mock the directive parser to return a result with rationale
@@ -967,10 +881,9 @@ class TestRationaleGeneration:
         agent.handoff_preparer = Mock(return_value=mock_handoff)
 
         # Execute forward (will fail on test run but should log rationales)
-        with patch.object(agent, '_run_tests', return_value={"success": True, "errors": []}):
+        with patch.object(agent, "_run_tests", return_value={"success": True, "errors": []}):
             result = agent.forward(
-                directive="Create a logging test tool",
-                context={"repository_root": "/tmp"}
+                directive="Create a logging test tool", context={"repository_root": "/tmp"}
             )
 
         # Check that rationales were logged

@@ -6,10 +6,9 @@ Runs for up to 8 hours or until completion.
 
 import os
 import sys
-import signal
 import time
 from datetime import datetime, timedelta
-from pathlib import Path
+
 
 def main() -> int:
     """Launch the autonomous type safety migration."""
@@ -88,18 +87,19 @@ Work autonomously. Begin immediately."""
 
         # Write mission to temp file
         import tempfile
-        with tempfile.NamedTemporaryFile(mode='w', suffix='.txt', delete=False) as f:
+
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".txt", delete=False) as f:
             f.write(mission)
             mission_file = f.name
 
         # Launch agency as subprocess
         process = subprocess.Popen(
-            [sys.executable, 'agency.py'],
-            stdin=open(mission_file, 'r'),
+            [sys.executable, "agency.py"],
+            stdin=open(mission_file),
             stdout=subprocess.PIPE,
             stderr=subprocess.STDOUT,
             text=True,
-            bufsize=1
+            bufsize=1,
         )
 
         print(f"✅ Agency launched with PID: {process.pid}")
@@ -121,7 +121,7 @@ Work autonomously. Begin immediately."""
         print()
 
         # Write output to log file and console
-        with open(log_file, 'w') as log:
+        with open(log_file, "w") as log:
             log.write(f"Agency Autonomous Migration Started: {start_time}\n")
             log.write(f"Mission:\n{mission}\n")
             log.write("=" * 60 + "\n")
@@ -174,8 +174,10 @@ Work autonomously. Begin immediately."""
     except Exception as e:
         print(f"❌ Error: {e}")
         import traceback
+
         traceback.print_exc()
         return 1
+
 
 if __name__ == "__main__":
     sys.exit(main())

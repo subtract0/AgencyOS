@@ -1,14 +1,14 @@
 # Import everything from learning_agent module that might need to be mocked
 from .learning_agent import (
-    create_learning_agent,
     Agent,
     create_agent_context,
-    select_instructions_file,
+    create_composite_hook,
+    create_learning_agent,
+    create_memory_integration_hook,
+    create_message_filter_hook,
     create_model_settings,
     get_model_instance,
-    create_message_filter_hook,
-    create_memory_integration_hook,
-    create_composite_hook
+    select_instructions_file,
 )
 
 __all__ = [
@@ -20,5 +20,5 @@ __all__ = [
     "get_model_instance",
     "create_message_filter_hook",
     "create_memory_integration_hook",
-    "create_composite_hook"
+    "create_composite_hook",
 ]

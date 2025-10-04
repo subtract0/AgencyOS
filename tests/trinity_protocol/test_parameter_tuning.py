@@ -11,22 +11,21 @@ Tests the three critical improvements:
 3. Duration validation fallback (prevent Pydantic errors)
 """
 
-import pytest
 from datetime import datetime
-from unittest.mock import Mock, AsyncMock, patch
-from pathlib import Path
+from unittest.mock import AsyncMock, Mock
 
+import pytest
+
+from shared.type_definitions.result import Ok
 from trinity_protocol.ambient_listener_service import (
-    AmbientListenerService,
     AmbientListenerConfig,
+    AmbientListenerService,
 )
 from trinity_protocol.experimental.models.audio import (
     AudioSegment,
     TranscriptionResult,
-    VADResult,
     WhisperConfig,
 )
-from shared.type_definitions.result import Ok, Err
 
 
 class TestWhisperParameterTuning:
@@ -93,9 +92,7 @@ class TestWhisperParameterTuning:
             no_speech_threshold=0.6,
         )
 
-        whisper_config = AmbientListenerService._create_whisper_config(
-            service_config
-        )
+        whisper_config = AmbientListenerService._create_whisper_config(service_config)
 
         assert whisper_config.temperature == 0.0
         assert whisper_config.compression_ratio_threshold == 2.4
@@ -125,11 +122,9 @@ class TestWhisperParameterTuning:
 
         # Mock the Whisper model
         mock_model = Mock()
-        mock_model.transcribe = Mock(return_value={
-            "text": "Test transcription",
-            "language": "en",
-            "segments": []
-        })
+        mock_model.transcribe = Mock(
+            return_value={"text": "Test transcription", "language": "en", "segments": []}
+        )
 
         transcriber._model = mock_model
         transcriber._backend = "openai-whisper"
@@ -157,7 +152,9 @@ class TestWhisperParameterTuning:
         assert call_kwargs.get("no_speech_threshold") == 0.6
 
 
-@pytest.mark.skip(reason="Trinity experimental feature - min_text_length filter not yet implemented")
+@pytest.mark.skip(
+    reason="Trinity experimental feature - min_text_length filter not yet implemented"
+)
 class TestEmptyTranscriptionReduction:
     """Test suite for reducing empty transcription rate (Improvement #2)."""
 
@@ -210,6 +207,7 @@ class TestEmptyTranscriptionReduction:
 
         # Create audio config with increased RMS threshold
         from trinity_protocol.experimental.models.audio import AudioConfig
+
         audio_config = AudioConfig()
 
         capture = AudioCaptureModule(config=audio_config)
@@ -219,7 +217,7 @@ class TestEmptyTranscriptionReduction:
         audio_data = b"\x00\x00" * 1000  # Silence (RMS = 0.0)
         vad_result = capture._detect_speech(
             audio_data,
-            threshold=15.0  # Standard RMS threshold for 16-bit PCM
+            threshold=15.0,  # Standard RMS threshold for 16-bit PCM
         )
 
         # Should NOT detect speech (silence)
@@ -228,7 +226,6 @@ class TestEmptyTranscriptionReduction:
 
     def test_min_text_length_validation_filters_empty_results(self):
         """Test transcriptions below min_text_length are filtered."""
-        from trinity_protocol.experimental.transcription import WhisperTranscriber
 
         # Mock a transcription result with very short text
         short_text = "ab"  # Only 2 characters (< min_text_length=3)
@@ -289,7 +286,9 @@ class TestEmptyTranscriptionReduction:
         mock_context.add_transcription.assert_not_called()
 
 
-@pytest.mark.skip(reason="Trinity experimental feature - zero duration validation not yet implemented")
+@pytest.mark.skip(
+    reason="Trinity experimental feature - zero duration validation not yet implemented"
+)
 class TestDurationValidationFallback:
     """Test suite for duration validation fallback (Improvement #3)."""
 
@@ -325,11 +324,13 @@ class TestDurationValidationFallback:
 
         # Mock model that returns duration=0.0
         mock_model = Mock()
-        mock_model.transcribe = Mock(return_value={
-            "text": "Test",
-            "language": "en",
-            "segments": [],
-        })
+        mock_model.transcribe = Mock(
+            return_value={
+                "text": "Test",
+                "language": "en",
+                "segments": [],
+            }
+        )
 
         transcriber._model = mock_model
         transcriber._backend = "openai-whisper"
@@ -368,11 +369,13 @@ class TestDurationValidationFallback:
         transcriber = WhisperTranscriber(config=whisper_config)
 
         mock_model = Mock()
-        mock_model.transcribe = Mock(return_value={
-            "text": "Test",
-            "language": "en",
-            "segments": [],
-        })
+        mock_model.transcribe = Mock(
+            return_value={
+                "text": "Test",
+                "language": "en",
+                "segments": [],
+            }
+        )
 
         transcriber._model = mock_model
         transcriber._backend = "openai-whisper"
@@ -463,16 +466,25 @@ class TestIntegratedParameterTuning:
         """Test CLI accepts new tuning parameters."""
         from trinity_protocol.ambient_listener_service import parse_args
 
-        args = parse_args([
-            "--model", "base",
-            "--temperature", "0.0",
-            "--compression-ratio-threshold", "2.4",
-            "--logprob-threshold", "-1.0",
-            "--no-speech-threshold", "0.6",
-            "--rms-threshold", "0.015",
-            "--min-text-length", "3",
-            "--vad-aggressive",
-        ])
+        args = parse_args(
+            [
+                "--model",
+                "base",
+                "--temperature",
+                "0.0",
+                "--compression-ratio-threshold",
+                "2.4",
+                "--logprob-threshold",
+                "-1.0",
+                "--no-speech-threshold",
+                "0.6",
+                "--rms-threshold",
+                "0.015",
+                "--min-text-length",
+                "3",
+                "--vad-aggressive",
+            ]
+        )
 
         assert args.model == "base"
         assert args.temperature == 0.0

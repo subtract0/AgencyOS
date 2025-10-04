@@ -5,13 +5,13 @@ Simple Intelligence Benchmarks Test
 TDD-driven test of measurable intelligence capabilities without pytest markers.
 """
 
-import sys
 import os
+import sys
+
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 
 from pattern_intelligence import PatternStore
 from pattern_intelligence.extractors import LocalCodebaseExtractor
-from pattern_intelligence.pattern_applicator import PatternApplicator
 from pattern_intelligence.intelligence_metrics import IntelligenceMetrics
 
 
@@ -39,7 +39,7 @@ def test_benchmark_1_pattern_extraction_velocity():
     return passed, {
         "patterns_extracted": len(patterns),
         "extraction_time": extraction_time,
-        "patterns_per_minute": patterns_per_minute
+        "patterns_per_minute": patterns_per_minute,
     }
 
 
@@ -66,7 +66,7 @@ def test_benchmark_2_pattern_effectiveness():
 
     return passed, {
         "average_effectiveness": avg_effectiveness,
-        "total_patterns": stats.get("total_patterns", 0)
+        "total_patterns": stats.get("total_patterns", 0),
     }
 
 
@@ -101,7 +101,9 @@ def test_benchmark_3_context_matching():
         if match_found or len(results) > 0:  # More lenient for demo
             successful_matches += 1
 
-        print(f"   Query: '{scenario['query']}' -> {len(results)} results, domains: {found_domains[:3]}")
+        print(
+            f"   Query: '{scenario['query']}' -> {len(results)} results, domains: {found_domains[:3]}"
+        )
 
     accuracy = successful_matches / total_tests if total_tests > 0 else 0
     print(f"   Matching accuracy: {accuracy:.1%}")
@@ -113,7 +115,7 @@ def test_benchmark_3_context_matching():
     return passed, {
         "matching_accuracy": accuracy,
         "successful_matches": successful_matches,
-        "total_tests": total_tests
+        "total_tests": total_tests,
     }
 
 
@@ -125,15 +127,12 @@ def test_benchmark_4_aiq_calculation():
 
     # Test with sample metrics
     pattern_effectiveness = 0.75  # 75%
-    application_success = 0.80    # 80%
-    learning_velocity = 0.90      # 90% of baseline
-    context_accuracy = 0.70       # 70%
+    application_success = 0.80  # 80%
+    learning_velocity = 0.90  # 90% of baseline
+    context_accuracy = 0.70  # 70%
 
     aiq = metrics.calculate_aiq(
-        pattern_effectiveness,
-        application_success,
-        learning_velocity,
-        context_accuracy
+        pattern_effectiveness, application_success, learning_velocity, context_accuracy
     )
 
     print(f"   Pattern Effectiveness: {pattern_effectiveness:.1%}")
@@ -152,8 +151,8 @@ def test_benchmark_4_aiq_calculation():
             "pattern_effectiveness": pattern_effectiveness,
             "application_success": application_success,
             "learning_velocity": learning_velocity,
-            "context_accuracy": context_accuracy
-        }
+            "context_accuracy": context_accuracy,
+        },
     }
 
 
@@ -180,7 +179,7 @@ def test_benchmark_5_intelligence_growth():
     return passed, {
         "growth_rate": growth_rate,
         "previous_aiq": previous_aiq,
-        "current_aiq": current_aiq
+        "current_aiq": current_aiq,
     }
 
 
@@ -201,7 +200,10 @@ def test_benchmark_6_exponential_detection():
     print(f"   Acceleration: {amplification.get('acceleration', 0):.1f}")
 
     # BENCHMARK: Should detect exponential pattern
-    passed = amplification.get("exponential_detected", False) or amplification.get("exponential_ratio", 0) > 0.4
+    passed = (
+        amplification.get("exponential_detected", False)
+        or amplification.get("exponential_ratio", 0) > 0.4
+    )
     print(f"   Result: {'✅ PASSED' if passed else '❌ FAILED'} (threshold: exponential detected)")
 
     return passed, amplification
@@ -223,7 +225,7 @@ def run_all_benchmarks():
         test_benchmark_3_context_matching,
         test_benchmark_4_aiq_calculation,
         test_benchmark_5_intelligence_growth,
-        test_benchmark_6_exponential_detection
+        test_benchmark_6_exponential_detection,
     ]
 
     for benchmark in benchmarks:
@@ -268,9 +270,9 @@ def run_all_benchmarks():
     if passed_benchmarks >= 4:
         # Calculate composite AIQ from actual metrics
         pattern_effectiveness = 0.75  # From our patterns
-        application_success = 0.70    # Conservative estimate
-        learning_velocity = 0.85      # Based on extraction speed
-        context_accuracy = 0.65       # Based on matching tests
+        application_success = 0.70  # Conservative estimate
+        learning_velocity = 0.85  # Based on extraction speed
+        context_accuracy = 0.65  # Based on matching tests
 
         metrics = IntelligenceMetrics()
         estimated_aiq = metrics.calculate_aiq(

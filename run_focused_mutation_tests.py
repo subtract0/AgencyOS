@@ -11,7 +11,6 @@ This is a pragmatic approach that achieves Mars Rover validation in reasonable t
 """
 
 import sys
-import os
 from pathlib import Path
 
 # Add project root to path
@@ -23,7 +22,7 @@ from tools.mutation_testing import MutationConfig, MutationTester
 def extract_function_to_temp_file(source_file: str, function_name: str, temp_file: str) -> bool:
     """Extract a specific function to a temporary file for targeted mutation testing."""
     try:
-        with open(source_file, 'r') as f:
+        with open(source_file) as f:
             lines = f.readlines()
 
         # Find function definition
@@ -39,8 +38,12 @@ def extract_function_to_temp_file(source_file: str, function_name: str, temp_fil
             elif in_function:
                 current_indent = len(line) - len(line.lstrip())
                 # Check if we've exited the function (dedent or new def at same level)
-                if line.strip() and current_indent <= indent_level and not line.strip().startswith('#'):
-                    if line.strip().startswith('def ') or line.strip().startswith('class '):
+                if (
+                    line.strip()
+                    and current_indent <= indent_level
+                    and not line.strip().startswith("#")
+                ):
+                    if line.strip().startswith("def ") or line.strip().startswith("class "):
                         break
                 function_lines.append(line)
 
@@ -48,16 +51,16 @@ def extract_function_to_temp_file(source_file: str, function_name: str, temp_fil
             # Add necessary imports at the top
             import_lines = []
             for line in lines:
-                if line.startswith('import ') or line.startswith('from '):
+                if line.startswith("import ") or line.startswith("from "):
                     import_lines.append(line)
-                elif not line.strip() or line.strip().startswith('#'):
+                elif not line.strip() or line.strip().startswith("#"):
                     continue
                 else:
                     break  # Stop at first non-import
 
-            with open(temp_file, 'w') as f:
+            with open(temp_file, "w") as f:
                 f.writelines(import_lines)
-                f.write('\n')
+                f.write("\n")
                 f.writelines(function_lines)
 
             return True
@@ -68,10 +71,7 @@ def extract_function_to_temp_file(source_file: str, function_name: str, temp_fil
 
 
 def run_focused_mutation_test(
-    source_file: str,
-    function_name: str,
-    test_command: str,
-    mutation_types: list = None
+    source_file: str, function_name: str, test_command: str, mutation_types: list = None
 ) -> dict:
     """Run mutation test on a specific function."""
 
@@ -88,7 +88,7 @@ def run_focused_mutation_test(
         test_command=test_command,
         mutation_types=mutation_types,
         timeout_seconds=60,
-        parallel=False
+        parallel=False,
     )
 
     tester = MutationTester(config)
@@ -99,7 +99,7 @@ def run_focused_mutation_test(
     # Filter mutations to only those in the target function
     # (Check line numbers by parsing source)
     try:
-        with open(source_file, 'r') as f:
+        with open(source_file) as f:
             lines = f.readlines()
 
         # Find function line range
@@ -113,7 +113,9 @@ def run_focused_mutation_test(
                 indent_level = len(line) - len(line.lstrip())
             elif start_line and line.strip():
                 current_indent = len(line) - len(line.lstrip())
-                if current_indent <= indent_level and (line.strip().startswith('def ') or line.strip().startswith('class ')):
+                if current_indent <= indent_level and (
+                    line.strip().startswith("def ") or line.strip().startswith("class ")
+                ):
                     end_line = i - 1
                     break
 
@@ -121,23 +123,22 @@ def run_focused_mutation_test(
             end_line = len(lines)
 
         # Filter mutations to function range
-        function_mutations = [
-            m for m in all_mutations
-            if start_line <= m.line_number <= end_line
-        ]
+        function_mutations = [m for m in all_mutations if start_line <= m.line_number <= end_line]
 
         print(f"Total mutations in file: {len(all_mutations)}")
-        print(f"Mutations in {function_name} (lines {start_line}-{end_line}): {len(function_mutations)}")
+        print(
+            f"Mutations in {function_name} (lines {start_line}-{end_line}): {len(function_mutations)}"
+        )
 
         if not function_mutations:
             print("No mutations generated for this function.")
             return {
-                'function': function_name,
-                'total_mutations': 0,
-                'mutations_caught': 0,
-                'mutations_survived': 0,
-                'mutation_score': 1.0,
-                'surviving_mutations': []
+                "function": function_name,
+                "total_mutations": 0,
+                "mutations_caught": 0,
+                "mutations_survived": 0,
+                "mutation_score": 1.0,
+                "surviving_mutations": [],
             }
 
         # For focused testing, we'll test a sample of mutations (max 10)
@@ -151,7 +152,9 @@ def run_focused_mutation_test(
         surviving_mutations = []
 
         for i, mutation in enumerate(sampled_mutations, 1):
-            print(f"[{i}/{sample_size}] Testing mutation {mutation.mutation_id} at line {mutation.line_number}")
+            print(
+                f"[{i}/{sample_size}] Testing mutation {mutation.mutation_id} at line {mutation.line_number}"
+            )
             print(f"  Original: {mutation.original_code}")
             print(f"  Mutated:  {mutation.mutated_code}")
 
@@ -172,16 +175,18 @@ def run_focused_mutation_test(
                 tests_passed = test_result.unwrap()
 
                 if tests_passed:
-                    print(f"  ❌ SURVIVED - Tests passed despite mutation (bug not caught!)")
+                    print("  ❌ SURVIVED - Tests passed despite mutation (bug not caught!)")
                     mutations_survived += 1
-                    surviving_mutations.append({
-                        'mutation_id': mutation.mutation_id,
-                        'line': mutation.line_number,
-                        'original': mutation.original_code,
-                        'mutated': mutation.mutated_code
-                    })
+                    surviving_mutations.append(
+                        {
+                            "mutation_id": mutation.mutation_id,
+                            "line": mutation.line_number,
+                            "original": mutation.original_code,
+                            "mutated": mutation.mutated_code,
+                        }
+                    )
                 else:
-                    print(f"  ✅ CAUGHT - Tests failed as expected")
+                    print("  ✅ CAUGHT - Tests failed as expected")
                     mutations_caught += 1
             else:
                 print(f"  ⚠ Test execution error: {test_result.unwrap_err()}")
@@ -197,25 +202,25 @@ def run_focused_mutation_test(
         print(f"{'=' * 80}\n")
 
         return {
-            'function': function_name,
-            'total_mutations': len(function_mutations),
-            'sample_size': sample_size,
-            'mutations_caught': mutations_caught,
-            'mutations_survived': mutations_survived,
-            'mutation_score': mutation_score,
-            'surviving_mutations': surviving_mutations
+            "function": function_name,
+            "total_mutations": len(function_mutations),
+            "sample_size": sample_size,
+            "mutations_caught": mutations_caught,
+            "mutations_survived": mutations_survived,
+            "mutation_score": mutation_score,
+            "surviving_mutations": surviving_mutations,
         }
 
     except Exception as e:
         print(f"Error during mutation testing: {e}")
         return {
-            'function': function_name,
-            'error': str(e),
-            'total_mutations': 0,
-            'mutations_caught': 0,
-            'mutations_survived': 0,
-            'mutation_score': 0.0,
-            'surviving_mutations': []
+            "function": function_name,
+            "error": str(e),
+            "total_mutations": 0,
+            "mutations_caught": 0,
+            "mutations_survived": 0,
+            "mutation_score": 0.0,
+            "surviving_mutations": [],
         }
 
 
@@ -228,7 +233,7 @@ def main():
     result1 = run_focused_mutation_test(
         source_file="agency.py",
         function_name="_cli_event_scope",
-        test_command="pytest tests/test_agency_cli_commands.py::TestCliEventScope -v --tb=short -x"
+        test_command="pytest tests/test_agency_cli_commands.py::TestCliEventScope -v --tb=short -x",
     )
     results.append(result1)
 
@@ -236,7 +241,7 @@ def main():
     result2 = run_focused_mutation_test(
         source_file="agency_memory/enhanced_memory_store.py",
         function_name="_check_learning_triggers",
-        test_command="pytest tests/test_enhanced_memory_learning.py::TestCheckLearningTriggers -v --tb=short -x"
+        test_command="pytest tests/test_enhanced_memory_learning.py::TestCheckLearningTriggers -v --tb=short -x",
     )
     results.append(result2)
 
@@ -244,7 +249,7 @@ def main():
     result3 = run_focused_mutation_test(
         source_file="agency_memory/vector_store.py",
         function_name="add_memory",
-        test_command="pytest tests/test_vector_store_lifecycle.py::TestAddMemory -v --tb=short -x"
+        test_command="pytest tests/test_vector_store_lifecycle.py::TestAddMemory -v --tb=short -x",
     )
     results.append(result3)
 
@@ -260,17 +265,21 @@ def main():
     total_survived = 0
 
     for result in results:
-        if 'error' not in result:
-            print(f"{result['function']:40s} | Score: {result['mutation_score']:.2%} | Tested: {result.get('sample_size', 0)} | Caught: {result['mutations_caught']} | Survived: {result['mutations_survived']}")
-            total_tested += result.get('sample_size', 0)
-            total_caught += result['mutations_caught']
-            total_survived += result['mutations_survived']
+        if "error" not in result:
+            print(
+                f"{result['function']:40s} | Score: {result['mutation_score']:.2%} | Tested: {result.get('sample_size', 0)} | Caught: {result['mutations_caught']} | Survived: {result['mutations_survived']}"
+            )
+            total_tested += result.get("sample_size", 0)
+            total_caught += result["mutations_caught"]
+            total_survived += result["mutations_survived"]
         else:
             print(f"{result['function']:40s} | ERROR: {result['error']}")
 
     print()
     overall_score = total_caught / total_tested if total_tested > 0 else 0.0
-    print(f"{'OVERALL':40s} | Score: {overall_score:.2%} | Tested: {total_tested} | Caught: {total_caught} | Survived: {total_survived}")
+    print(
+        f"{'OVERALL':40s} | Score: {overall_score:.2%} | Tested: {total_tested} | Caught: {total_caught} | Survived: {total_survived}"
+    )
     print()
 
     if overall_score >= 0.95:

@@ -20,29 +20,29 @@ Example:
         assert result.is_ok() != result.is_err()
 """
 
-from typing import Any, List, Dict, Optional, TypeVar, Callable
-from hypothesis import strategies as st
-from hypothesis.stateful import RuleBasedStateMachine, rule, invariant
-from shared.type_definitions.result import Result, Ok, Err
-from shared.type_definitions.json_value import JSONValue
 import logging
+from collections.abc import Callable
+from typing import Any, TypeVar
+
+from hypothesis import strategies as st
+from hypothesis.stateful import RuleBasedStateMachine, invariant, rule
+
+from shared.type_definitions.json_value import JSONValue
+from shared.type_definitions.result import Err, Ok, Result
 
 logger = logging.getLogger(__name__)
 
-T = TypeVar('T')
-E = TypeVar('E')
+T = TypeVar("T")
+E = TypeVar("E")
 
 
 # ============================================================================
 # CUSTOM STRATEGIES FOR AGENCY TYPES
 # ============================================================================
 
+
 @st.composite
-def result_strategy(
-    draw,
-    value_strategy=st.integers(),
-    error_strategy=st.text(min_size=1)
-):
+def result_strategy(draw, value_strategy=st.integers(), error_strategy=st.text(min_size=1)):
     """
     Generate Result<T, E> values for property testing.
 
@@ -96,13 +96,10 @@ def json_value_strategy(draw, max_leaves=10):
                 st.booleans(),
                 st.integers(),
                 st.floats(allow_nan=False, allow_infinity=False),
-                st.text()
+                st.text(),
             ),
-            lambda children: st.one_of(
-                st.lists(children),
-                st.dictionaries(st.text(), children)
-            ),
-            max_leaves=max_leaves
+            lambda children: st.one_of(st.lists(children), st.dictionaries(st.text(), children)),
+            max_leaves=max_leaves,
         )
     )
 
@@ -119,11 +116,9 @@ def memory_record_strategy(draw):
         "key": draw(st.text(min_size=1, max_size=50)),
         "content": draw(st.text(min_size=0, max_size=500)),
         "tags": draw(st.lists(st.text(min_size=1, max_size=20), max_size=10)),
-        "metadata": draw(st.dictionaries(
-            st.text(min_size=1, max_size=20),
-            st.text(max_size=100),
-            max_size=5
-        ))
+        "metadata": draw(
+            st.dictionaries(st.text(min_size=1, max_size=20), st.text(max_size=100), max_size=5)
+        ),
     }
 
 
@@ -137,17 +132,14 @@ def agent_context_strategy(draw):
     """
     return {
         "session_id": draw(st.text(min_size=10, max_size=100)),
-        "metadata": draw(st.dictionaries(
-            st.text(min_size=1),
-            json_value_strategy(),
-            max_size=10
-        ))
+        "metadata": draw(st.dictionaries(st.text(min_size=1), json_value_strategy(), max_size=10)),
     }
 
 
 # ============================================================================
 # PROPERTY TEST COLLECTIONS
 # ============================================================================
+
 
 class ResultPatternProperties:
     """
@@ -248,6 +240,7 @@ class JSONValueProperties:
     def test_json_serializable(value: JSONValue) -> bool:
         """All JSONValue instances must be JSON-serializable."""
         import json
+
         try:
             serialized = json.dumps(value)
             deserialized = json.loads(serialized)
@@ -259,6 +252,7 @@ class JSONValueProperties:
     def test_json_roundtrip_preserves_type(value: JSONValue) -> bool:
         """JSON roundtrip preserves primitive types."""
         import json
+
         try:
             serialized = json.dumps(value)
             deserialized = json.loads(serialized)
@@ -284,7 +278,7 @@ class VectorStoreProperties:
     """
 
     @staticmethod
-    def test_add_increases_count(store, key: str, content: Dict) -> bool:
+    def test_add_increases_count(store, key: str, content: dict) -> bool:
         """Adding memory increases total count."""
         initial_stats = store.get_stats()
         initial_count = initial_stats.get("total_memories", 0)
@@ -297,7 +291,7 @@ class VectorStoreProperties:
         return final_count == initial_count + 1
 
     @staticmethod
-    def test_remove_decreases_count(store, key: str, content: Dict) -> bool:
+    def test_remove_decreases_count(store, key: str, content: dict) -> bool:
         """Removing memory decreases total count."""
         store.add_memory(key, content)
 
@@ -312,7 +306,7 @@ class VectorStoreProperties:
         return count_after == count_before - 1
 
     @staticmethod
-    def test_search_returns_added_content(store, key: str, content: Dict) -> bool:
+    def test_search_returns_added_content(store, key: str, content: dict) -> bool:
         """Search can find recently added content."""
         # Ensure content has the key for searchability
         searchable_content = {**content, "key": key}
@@ -331,6 +325,7 @@ class VectorStoreProperties:
 # STATEFUL TESTING
 # ============================================================================
 
+
 class VectorStoreStateMachine(RuleBasedStateMachine):
     """
     Stateful property testing for VectorStore.
@@ -342,6 +337,7 @@ class VectorStoreStateMachine(RuleBasedStateMachine):
     def __init__(self):
         super().__init__()
         from agency_memory.vector_store import VectorStore
+
         self.store = VectorStore()
         self.added_keys = set()
         self.removed_keys = set()
@@ -349,12 +345,7 @@ class VectorStoreStateMachine(RuleBasedStateMachine):
     @rule(key=st.text(min_size=1, max_size=50), content=st.text())
     def add_memory(self, key, content):
         """Add memory - should always succeed for valid inputs."""
-        memory_record = {
-            "key": key,
-            "content": content,
-            "tags": [],
-            "metadata": {}
-        }
+        memory_record = {"key": key, "content": content, "tags": [], "metadata": {}}
 
         self.store.add_memory(key, memory_record)
         self.added_keys.add(key)
@@ -402,6 +393,7 @@ class VectorStoreStateMachine(RuleBasedStateMachine):
 # SHRINKING HELPERS
 # ============================================================================
 
+
 class MinimalFailureReporter:
     """
     Helper to analyze and report minimal failing cases from Hypothesis.
@@ -438,12 +430,8 @@ class MinimalFailureReporter:
 # CONVENIENCE FUNCTIONS
 # ============================================================================
 
-def run_property_test(
-    test_func: Callable,
-    strategy,
-    examples: int = 100,
-    max_examples: int = 1000
-):
+
+def run_property_test(test_func: Callable, strategy, examples: int = 100, max_examples: int = 1000):
     """
     Run a property test with custom configuration.
 
@@ -464,7 +452,7 @@ def run_property_test(
     decorated_test = given(strategy)(test_func)
     configured_test = settings(
         max_examples=max_examples,
-        deadline=None  # No timeout for complex operations
+        deadline=None,  # No timeout for complex operations
     )(decorated_test)
 
     configured_test()
@@ -487,7 +475,7 @@ def verify_all_properties(properties_class, strategy, examples: int = 100):
     results = {}
 
     for method_name in dir(properties_class):
-        if method_name.startswith('test_'):
+        if method_name.startswith("test_"):
             method = getattr(properties_class, method_name)
 
             try:
@@ -512,15 +500,12 @@ __all__ = [
     "json_value_strategy",
     "memory_record_strategy",
     "agent_context_strategy",
-
     # Property test classes
     "ResultPatternProperties",
     "JSONValueProperties",
     "VectorStoreProperties",
-
     # Stateful testing
     "VectorStoreStateMachine",
-
     # Helpers
     "MinimalFailureReporter",
     "run_property_test",

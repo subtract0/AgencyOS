@@ -10,13 +10,14 @@ Tests focus on:
 - Transaction rollback scenarios
 """
 
-import pytest
-import asyncio
-from unittest.mock import Mock, patch, MagicMock
 from threading import Thread
-from agency_memory.memory import InMemoryStore, Memory
+from unittest.mock import MagicMock, Mock, patch
+
+import pytest
+
 from agency_memory.enhanced_memory_store import EnhancedMemoryStore
-from shared.models.memory import MemoryRecord, MemoryPriority, MemoryMetadata
+from agency_memory.memory import InMemoryStore, Memory
+from shared.models.memory import MemoryMetadata, MemoryPriority, MemoryRecord
 
 
 class TestMemoryAsyncErrorConditions:
@@ -37,6 +38,7 @@ class TestMemoryAsyncErrorConditions:
     def test_store_with_none_key(self):
         """Test that storing with None key raises appropriate error."""
         from pydantic_core import ValidationError
+
         store = InMemoryStore()
 
         # None key should cause a validation error (Pydantic validates the MemoryRecord)
@@ -46,6 +48,7 @@ class TestMemoryAsyncErrorConditions:
     def test_store_with_none_tags(self):
         """Test that storing with None tags is handled."""
         from pydantic_core import ValidationError
+
         store = InMemoryStore()
 
         # Should handle None tags gracefully (likely converts to empty list)
@@ -85,10 +88,7 @@ class TestMemoryAsyncErrorConditions:
                 errors.append(e)
 
         # Create multiple threads writing simultaneously
-        threads = [
-            Thread(target=store_data, args=(f"thread{i}", 50))
-            for i in range(5)
-        ]
+        threads = [Thread(target=store_data, args=(f"thread{i}", 50)) for i in range(5)]
 
         for thread in threads:
             thread.start()
@@ -162,7 +162,7 @@ class TestMemoryAsyncErrorConditions:
 
     def test_enhanced_memory_vector_store_failure(self):
         """Test enhanced memory when VectorStore operations fail."""
-        with patch('agency_memory.enhanced_memory_store.VectorStore') as mock_vector:
+        with patch("agency_memory.enhanced_memory_store.VectorStore") as mock_vector:
             # Make VectorStore.add_memory raise exception
             mock_vector_instance = MagicMock()
             mock_vector_instance.add_memory.side_effect = RuntimeError("VectorStore failure")
@@ -260,14 +260,14 @@ class TestMemoryTransactionErrors:
             # Missing 'content' field
             "key": "bad1",
             "tags": ["error"],
-            "timestamp": "2024-01-01T00:00:00"
+            "timestamp": "2024-01-01T00:00:00",
         }
 
         store._memories["bad2"] = {
             "key": "bad2",
             "content": None,
             "tags": None,  # Invalid tags
-            "timestamp": None
+            "timestamp": None,
         }
 
         # Should handle corrupted data gracefully
@@ -381,11 +381,11 @@ class TestMemoryEdgeCaseErrors:
 
         # All timestamps should be valid datetime objects
         from datetime import datetime
+
         assert all(isinstance(ts, datetime) for ts in timestamps)
 
     def test_memory_with_invalid_priority(self):
         """Test memory record with invalid priority values."""
-        from shared.models.memory import MemoryRecord, MemoryPriority
         from datetime import datetime
 
         # Valid priorities should work
@@ -398,17 +398,18 @@ class TestMemoryEdgeCaseErrors:
                 priority=priority,
                 metadata=MemoryMetadata(),
                 ttl_seconds=None,
-                embedding=None
+                embedding=None,
             )
             assert record.priority == priority
 
     def test_enhanced_memory_optimize_with_failures(self):
         """Test VectorStore optimization when some memories fail."""
-        with patch('agency_memory.enhanced_memory_store.VectorStore') as mock_vector:
+        with patch("agency_memory.enhanced_memory_store.VectorStore") as mock_vector:
             mock_vector_instance = MagicMock()
 
             # Make add_memory fail intermittently
             call_count = [0]
+
             def add_memory_side_effect(key, memory):
                 call_count[0] += 1
                 if call_count[0] % 3 == 0:

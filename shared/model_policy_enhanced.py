@@ -15,30 +15,32 @@ Constitutional Compliance:
 """
 
 import os
-from typing import Optional, Dict, Any, Literal
 from enum import Enum
+from typing import Literal
 
 
 class ModelTier(str, Enum):
     """Model tier for routing decisions."""
-    LOCAL_FAST = "local_fast"          # qwen2.5-coder:1.5b (detection)
+
+    LOCAL_FAST = "local_fast"  # qwen2.5-coder:1.5b (detection)
     LOCAL_STANDARD = "local_standard"  # qwen2.5-coder:7b (execution)
     LOCAL_ADVANCED = "local_advanced"  # codestral-22b (planning)
     CLOUD_STANDARD = "cloud_standard"  # gpt-5
-    CLOUD_PREMIUM = "cloud_premium"    # claude-4.1, o3
+    CLOUD_PREMIUM = "cloud_premium"  # claude-4.1, o3
 
 
 class ComplexityLevel(str, Enum):
     """Task complexity classification."""
-    TRIVIAL = "trivial"      # 0.0-0.3: Pattern detection, simple classification
-    SIMPLE = "simple"        # 0.3-0.5: Single-file changes, bug fixes
-    MODERATE = "moderate"    # 0.5-0.7: Multi-file refactors, feature additions
-    COMPLEX = "complex"      # 0.7-0.9: Architectural changes, system-wide refactors
-    CRITICAL = "critical"    # 0.9-1.0: Critical failures, security issues
+
+    TRIVIAL = "trivial"  # 0.0-0.3: Pattern detection, simple classification
+    SIMPLE = "simple"  # 0.3-0.5: Single-file changes, bug fixes
+    MODERATE = "moderate"  # 0.5-0.7: Multi-file refactors, feature additions
+    COMPLEX = "complex"  # 0.7-0.9: Architectural changes, system-wide refactors
+    CRITICAL = "critical"  # 0.9-1.0: Critical failures, security issues
 
 
 # Model mapping per tier
-TIER_MODELS: Dict[ModelTier, str] = {
+TIER_MODELS: dict[ModelTier, str] = {
     ModelTier.LOCAL_FAST: "qwen2.5-coder:1.5b",
     ModelTier.LOCAL_STANDARD: "qwen2.5-coder:7b",
     ModelTier.LOCAL_ADVANCED: "codestral-22b",
@@ -48,18 +50,18 @@ TIER_MODELS: Dict[ModelTier, str] = {
 
 
 # Trinity agent to default tier mapping
-TRINITY_AGENT_TIERS: Dict[str, ModelTier] = {
-    "witness": ModelTier.LOCAL_FAST,       # High-frequency detection
-    "auditlearn": ModelTier.LOCAL_FAST,    # Pattern classification
-    "architect": ModelTier.LOCAL_ADVANCED, # Strategic planning (escalates on complexity)
-    "plan": ModelTier.LOCAL_ADVANCED,      # Same as architect
+TRINITY_AGENT_TIERS: dict[str, ModelTier] = {
+    "witness": ModelTier.LOCAL_FAST,  # High-frequency detection
+    "auditlearn": ModelTier.LOCAL_FAST,  # Pattern classification
+    "architect": ModelTier.LOCAL_ADVANCED,  # Strategic planning (escalates on complexity)
+    "plan": ModelTier.LOCAL_ADVANCED,  # Same as architect
     "executor": ModelTier.CLOUD_STANDARD,  # Meta-orchestration (Claude Sonnet preferred)
-    "execute": ModelTier.CLOUD_STANDARD,   # Same as executor
+    "execute": ModelTier.CLOUD_STANDARD,  # Same as executor
 }
 
 
 # Existing Agency agents (from original model_policy.py)
-AGENCY_AGENT_MODELS: Dict[str, str] = {
+AGENCY_AGENT_MODELS: dict[str, str] = {
     "planner": os.getenv("PLANNER_MODEL", "gpt-5"),
     "chief_architect": os.getenv("CHIEF_ARCHITECT_MODEL", "gpt-5"),
     "coder": os.getenv("CODER_MODEL", "gpt-5"),
@@ -75,10 +77,10 @@ AGENCY_AGENT_MODELS: Dict[str, str] = {
 
 def assess_complexity(
     task_description: str,
-    keywords: Optional[list[str]] = None,
+    keywords: list[str] | None = None,
     scope: Literal["single-file", "multi-file", "architecture", "system-wide"] = "single-file",
     priority: Literal["NORMAL", "HIGH", "CRITICAL"] = "NORMAL",
-    evidence_count: int = 1
+    evidence_count: int = 1,
 ) -> float:
     """
     Assess task complexity for routing decisions.
@@ -102,12 +104,7 @@ def assess_complexity(
         score += 0.3
 
     # Scope determines base complexity
-    scope_scores = {
-        "single-file": 0.1,
-        "multi-file": 0.3,
-        "architecture": 0.5,
-        "system-wide": 0.7
-    }
+    scope_scores = {"single-file": 0.1, "multi-file": 0.3, "architecture": 0.5, "system-wide": 0.7}
     score += scope_scores.get(scope, 0.1)
 
     # Keywords indicate specific complexity types
@@ -160,9 +157,9 @@ def classify_complexity(score: float) -> ComplexityLevel:
 
 def select_model_tier(
     agent_key: str,
-    complexity: Optional[float] = None,
+    complexity: float | None = None,
     force_local: bool = False,
-    force_cloud: bool = False
+    force_cloud: bool = False,
 ) -> ModelTier:
     """
     Select appropriate model tier for agent and task.
@@ -212,10 +209,10 @@ def select_model_tier(
 
 def get_model_for_agent(
     agent_key: str,
-    complexity: Optional[float] = None,
+    complexity: float | None = None,
     force_local: bool = False,
     force_cloud: bool = False,
-    use_env_override: bool = True
+    use_env_override: bool = True,
 ) -> str:
     """
     Get model name for agent with complexity-based routing.
@@ -243,16 +240,13 @@ def get_model_for_agent(
 
     # Select tier based on complexity
     tier = select_model_tier(
-        agent_key=agent_key,
-        complexity=complexity,
-        force_local=force_local,
-        force_cloud=force_cloud
+        agent_key=agent_key, complexity=complexity, force_local=force_local, force_cloud=force_cloud
     )
 
     return TIER_MODELS[tier]
 
 
-def should_use_local(agent_key: str, complexity: Optional[float] = None) -> bool:
+def should_use_local(agent_key: str, complexity: float | None = None) -> bool:
     """
     Determine if local model should be used.
 
@@ -274,7 +268,4 @@ def agent_model(agent_key: str) -> str:
 
     Returns model name for agent using original policy.
     """
-    return AGENCY_AGENT_MODELS.get(
-        agent_key,
-        os.getenv("AGENCY_MODEL", "gpt-5")
-    )
+    return AGENCY_AGENT_MODELS.get(agent_key, os.getenv("AGENCY_MODEL", "gpt-5"))

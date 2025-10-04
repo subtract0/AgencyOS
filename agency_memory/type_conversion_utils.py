@@ -6,16 +6,17 @@ by reducing repeated isinstance() calls.
 """
 
 from datetime import datetime
-from typing import Any, Dict, List, Optional, cast
+from typing import Any, cast
+
+from shared.models.memory import MemoryMetadata, MemoryPriority, MemoryRecord
 from shared.type_definitions.json import JSONValue
-from shared.models.memory import MemoryRecord, MemoryPriority, MemoryMetadata
 
 
 class TypeConversionCache:
     """Cache for type check results to minimize repeated isinstance() calls."""
 
     def __init__(self):
-        self._type_cache: Dict[int, Dict[str, bool]] = {}
+        self._type_cache: dict[int, dict[str, bool]] = {}
 
     def is_list(self, value: Any) -> bool:
         """Check if value is a list with caching."""
@@ -23,10 +24,10 @@ class TypeConversionCache:
         if obj_id not in self._type_cache:
             self._type_cache[obj_id] = {}
 
-        if 'is_list' not in self._type_cache[obj_id]:
-            self._type_cache[obj_id]['is_list'] = isinstance(value, list)
+        if "is_list" not in self._type_cache[obj_id]:
+            self._type_cache[obj_id]["is_list"] = isinstance(value, list)
 
-        return self._type_cache[obj_id]['is_list']
+        return self._type_cache[obj_id]["is_list"]
 
     def is_string(self, value: Any) -> bool:
         """Check if value is a string with caching."""
@@ -34,10 +35,10 @@ class TypeConversionCache:
         if obj_id not in self._type_cache:
             self._type_cache[obj_id] = {}
 
-        if 'is_string' not in self._type_cache[obj_id]:
-            self._type_cache[obj_id]['is_string'] = isinstance(value, str)
+        if "is_string" not in self._type_cache[obj_id]:
+            self._type_cache[obj_id]["is_string"] = isinstance(value, str)
 
-        return self._type_cache[obj_id]['is_string']
+        return self._type_cache[obj_id]["is_string"]
 
     def is_number(self, value: Any) -> bool:
         """Check if value is a number (int or float) with caching."""
@@ -45,10 +46,10 @@ class TypeConversionCache:
         if obj_id not in self._type_cache:
             self._type_cache[obj_id] = {}
 
-        if 'is_number' not in self._type_cache[obj_id]:
-            self._type_cache[obj_id]['is_number'] = isinstance(value, (int, float))
+        if "is_number" not in self._type_cache[obj_id]:
+            self._type_cache[obj_id]["is_number"] = isinstance(value, (int, float))
 
-        return self._type_cache[obj_id]['is_number']
+        return self._type_cache[obj_id]["is_number"]
 
     def clear(self) -> None:
         """Clear the type cache."""
@@ -58,10 +59,10 @@ class TypeConversionCache:
 class MemoryConverter:
     """Utility class for converting memory data between different formats."""
 
-    def __init__(self, type_cache: Optional[TypeConversionCache] = None):
+    def __init__(self, type_cache: TypeConversionCache | None = None):
         self.type_cache = type_cache or TypeConversionCache()
 
-    def extract_tags_list(self, tags_value: Any) -> List[str]:
+    def extract_tags_list(self, tags_value: Any) -> list[str]:
         """
         Extract tags as string list with type safety.
 
@@ -74,10 +75,7 @@ class MemoryConverter:
         if not self.type_cache.is_list(tags_value):
             return []
 
-        return [
-            str(tag) for tag in tags_value
-            if self.type_cache.is_string(tag)
-        ]
+        return [str(tag) for tag in tags_value if self.type_cache.is_string(tag)]
 
     def safe_string_conversion(self, value: Any, default: str = "") -> str:
         """
@@ -111,7 +109,7 @@ class MemoryConverter:
         except (ValueError, TypeError):
             return datetime.now()
 
-    def memory_dict_to_record(self, memory_dict: Dict[str, JSONValue]) -> Optional[MemoryRecord]:
+    def memory_dict_to_record(self, memory_dict: dict[str, JSONValue]) -> MemoryRecord | None:
         """
         Convert memory dictionary to MemoryRecord with type safety.
 
@@ -139,12 +137,12 @@ class MemoryConverter:
                 priority=MemoryPriority.LOW,
                 metadata=MemoryMetadata(),
                 ttl_seconds=None,
-                embedding=None
+                embedding=None,
             )
         except Exception:
             return None
 
-    def record_to_dict(self, record: MemoryRecord) -> Dict[str, JSONValue]:
+    def record_to_dict(self, record: MemoryRecord) -> dict[str, JSONValue]:
         """
         Convert MemoryRecord to dictionary format.
 
@@ -162,8 +160,9 @@ class MemoryConverter:
             "priority": record.priority.value,
         }
 
-    def add_relevance_score(self, memory_dict: Dict[str, JSONValue],
-                           score: float, search_type: str) -> Dict[str, JSONValue]:
+    def add_relevance_score(
+        self, memory_dict: dict[str, JSONValue], score: float, search_type: str
+    ) -> dict[str, JSONValue]:
         """
         Add relevance score and search type to memory dictionary.
 
@@ -176,8 +175,8 @@ class MemoryConverter:
             Enhanced dictionary with score and search type
         """
         enhanced_dict = memory_dict.copy()
-        enhanced_dict['relevance_score'] = score
-        enhanced_dict['search_type'] = search_type
+        enhanced_dict["relevance_score"] = score
+        enhanced_dict["search_type"] = search_type
         return enhanced_dict
 
 

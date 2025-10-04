@@ -17,37 +17,37 @@ Constitutional Compliance:
   Side effects, Assertions, Repeatable, Yield fast
 """
 
-import pytest
 from datetime import datetime, timedelta
-from typing import List, Optional
-from pydantic import ValidationError
 
+import pytest
+from pydantic import ValidationError
 
 # These imports will exist after implementation
 # Using try/except to make tests runnable before implementation
 try:
     from trinity_protocol.core.models.project import (
-        Project,
-        ProjectState,
-        ProjectOutcome,
-        ProjectTask,
-        ProjectPlan,
-        ProjectSpec,
-        QASession,
-        QAQuestion,
-        QAAnswer,
-        DailyCheckin,
+        ApprovalStatus,
         CheckinQuestion,
         CheckinResponse,
+        CheckinStatus,
+        DailyCheckin,
+        Project,
+        ProjectOutcome,
+        ProjectPlan,
+        ProjectSpec,
+        ProjectState,
+        ProjectStatus,
+        ProjectTask,
+        QAAnswer,
+        QAQuestion,
+        QASession,
+        QASessionStatus,
+        TaskStatus,
     )
     from trinity_protocol.core.models.project import (
-        ProjectStatus,
-        TaskStatus,
-        QASessionStatus,
-        ApprovalStatus,
-        CheckinStatus,
         QuestionType as CheckinQuestionType,
     )
+
     MODELS_AVAILABLE = True
 except ImportError:
     MODELS_AVAILABLE = False
@@ -69,7 +69,7 @@ class TestQAQuestion:
             question_text="What is the book's core message?",
             question_number=1,
             required=True,
-            context="Establishing book's foundation"
+            context="Establishing book's foundation",
         )
 
         assert question.question_id == "q_001"
@@ -81,10 +81,7 @@ class TestQAQuestion:
     def test_qa_question_optional_context(self):
         """Test QAQuestion with optional context field."""
         question = QAQuestion(
-            question_id="q_002",
-            question_text="Target audience?",
-            question_number=2,
-            required=True
+            question_id="q_002", question_text="Target audience?", question_number=2, required=True
         )
 
         assert question.context is None
@@ -92,10 +89,7 @@ class TestQAQuestion:
     def test_qa_question_missing_required_fields_raises_error(self):
         """Test QAQuestion validation fails without required fields."""
         with pytest.raises(ValidationError) as exc_info:
-            QAQuestion(
-                question_text="Incomplete question",
-                question_number=1
-            )
+            QAQuestion(question_text="Incomplete question", question_number=1)
 
         error = exc_info.value
         assert "question_id" in str(error)
@@ -107,7 +101,7 @@ class TestQAQuestion:
             question_text="How many chapters?",
             question_number=3,
             required=True,
-            context="Planning structure"
+            context="Planning structure",
         )
 
         data = question.dict()
@@ -124,7 +118,7 @@ class TestQAAnswer:
             question_id="q_001",
             answer_text="The book teaches entrepreneurs to build coaching practices",
             answered_at=datetime(2025, 10, 1, 10, 30),
-            confidence="certain"
+            confidence="certain",
         )
 
         assert answer.question_id == "q_001"
@@ -138,7 +132,7 @@ class TestQAAnswer:
                 question_id="q_002",
                 answer_text="Some answer",
                 answered_at=datetime.now(),
-                confidence=confidence
+                confidence=confidence,
             )
             assert answer.confidence == confidence
 
@@ -149,17 +143,14 @@ class TestQAAnswer:
                 question_id="q_003",
                 answer_text="Answer",
                 answered_at=datetime.now(),
-                confidence="maybe"  # Invalid value
+                confidence="maybe",  # Invalid value
             )
 
     def test_qa_answer_timestamp_serialization(self):
         """Test QAAnswer datetime serialization for Firestore."""
         now = datetime.now()
         answer = QAAnswer(
-            question_id="q_004",
-            answer_text="Answer text",
-            answered_at=now,
-            confidence="certain"
+            question_id="q_004", answer_text="Answer text", answered_at=now, confidence="certain"
         )
 
         data = answer.dict()
@@ -173,17 +164,14 @@ class TestQASession:
         """Test creating complete QASession."""
         questions = [
             QAQuestion(
-                question_id="q_001",
-                question_text="Core message?",
-                question_number=1,
-                required=True
+                question_id="q_001", question_text="Core message?", question_number=1, required=True
             ),
             QAQuestion(
                 question_id="q_002",
                 question_text="Target audience?",
                 question_number=2,
-                required=True
-            )
+                required=True,
+            ),
         ]
 
         answers = [
@@ -191,7 +179,7 @@ class TestQASession:
                 question_id="q_001",
                 answer_text="Coaching for entrepreneurs",
                 answered_at=datetime.now(),
-                confidence="certain"
+                confidence="certain",
             )
         ]
 
@@ -205,7 +193,7 @@ class TestQASession:
             started_at=datetime(2025, 10, 1, 10, 0),
             completed_at=None,
             status="in_progress",
-            total_time_minutes=None
+            total_time_minutes=None,
         )
 
         assert session.session_id == "session_001"
@@ -225,7 +213,7 @@ class TestQASession:
                 questions=[],
                 answers=[],
                 started_at=datetime.now(),
-                status=status
+                status=status,
             )
             assert session.status == status
 
@@ -233,17 +221,11 @@ class TestQASession:
         """Test detecting incomplete QASession (missing answers)."""
         questions = [
             QAQuestion(
-                question_id="q_001",
-                question_text="Question 1",
-                question_number=1,
-                required=True
+                question_id="q_001", question_text="Question 1", question_number=1, required=True
             ),
             QAQuestion(
-                question_id="q_002",
-                question_text="Question 2",
-                question_number=2,
-                required=True
-            )
+                question_id="q_002", question_text="Question 2", question_number=2, required=True
+            ),
         ]
 
         session = QASession(
@@ -254,7 +236,7 @@ class TestQASession:
             questions=questions,
             answers=[],  # No answers yet
             started_at=datetime.now(),
-            status="in_progress"
+            status="in_progress",
         )
 
         # Helper method to check completeness (implementation will define this)
@@ -279,7 +261,7 @@ class TestQASession:
             started_at=start,
             completed_at=end,
             status="completed",
-            total_time_minutes=7
+            total_time_minutes=7,
         )
 
         assert session.total_time_minutes == 7
@@ -303,30 +285,23 @@ class TestProjectSpec:
             goals=[
                 "Create 150-page coaching book",
                 "Establish thought leadership",
-                "Generate passive income"
+                "Generate passive income",
             ],
-            non_goals=[
-                "Not a memoir",
-                "Not academic research"
-            ],
+            non_goals=["Not a memoir", "Not academic research"],
             user_personas=[
                 "Solo entrepreneur launching coaching practice",
-                "Corporate professional transitioning to coaching"
+                "Corporate professional transitioning to coaching",
             ],
             acceptance_criteria=[
                 "150 pages of content",
                 "Published on Amazon KDP",
-                "10 beta reader reviews"
+                "10 beta reader reviews",
             ],
-            constraints=[
-                "Complete in 4 weeks",
-                "Budget: $500 max",
-                "Daily time: 2 hours max"
-            ],
+            constraints=["Complete in 4 weeks", "Budget: $500 max", "Daily time: 2 hours max"],
             spec_markdown="# Full spec content...",
             created_at=datetime.now(),
             approved_at=None,
-            approval_status="pending"
+            approval_status="pending",
         )
 
         assert spec.title == "Coaching Book for Entrepreneurs"
@@ -349,7 +324,7 @@ class TestProjectSpec:
                 constraints=[],
                 spec_markdown="Spec content",
                 created_at=datetime.now(),
-                approval_status=status
+                approval_status=status,
             )
             assert spec.approval_status == status
 
@@ -369,7 +344,7 @@ class TestProjectSpec:
             spec_markdown="Content",
             created_at=datetime.now() - timedelta(hours=1),
             approved_at=approval_time,
-            approval_status="approved"
+            approval_status="approved",
         )
 
         assert spec.approved_at == approval_time
@@ -389,7 +364,7 @@ class TestProjectSpec:
             constraints=[],  # Empty OK
             spec_markdown="Content",
             created_at=datetime.now(),
-            approval_status="pending"
+            approval_status="pending",
         )
 
         assert spec.non_goals == []
@@ -413,13 +388,10 @@ class TestProjectTask:
             description="Create detailed outline for Chapter 1 including key points",
             estimated_minutes=45,
             dependencies=[],
-            acceptance_criteria=[
-                "Outline has 5-7 main points",
-                "Each point has 2-3 sub-points"
-            ],
+            acceptance_criteria=["Outline has 5-7 main points", "Each point has 2-3 sub-points"],
             assigned_to="system",
             status="pending",
-            completed_at=None
+            completed_at=None,
         )
 
         assert task.title == "Draft Chapter 1 outline"
@@ -439,7 +411,7 @@ class TestProjectTask:
                 dependencies=[],
                 acceptance_criteria=[],
                 assigned_to="user",
-                status=status
+                status=status,
             )
             assert task.status == status
 
@@ -454,7 +426,7 @@ class TestProjectTask:
             dependencies=[],
             acceptance_criteria=[],
             assigned_to="user",
-            status="pending"
+            status="pending",
         )
 
         system_task = ProjectTask(
@@ -466,7 +438,7 @@ class TestProjectTask:
             dependencies=[],
             acceptance_criteria=[],
             assigned_to="system",
-            status="pending"
+            status="pending",
         )
 
         assert user_task.assigned_to == "user"
@@ -483,7 +455,7 @@ class TestProjectTask:
             dependencies=["task_001", "task_002"],  # Must complete first
             acceptance_criteria=["Chapter draft complete"],
             assigned_to="system",
-            status="blocked"  # Blocked by dependencies
+            status="blocked",  # Blocked by dependencies
         )
 
         assert len(task.dependencies) == 2
@@ -503,7 +475,7 @@ class TestProjectTask:
             acceptance_criteria=["Done"],
             assigned_to="system",
             status="completed",
-            completed_at=completion_time
+            completed_at=completion_time,
         )
 
         assert task.completed_at == completion_time
@@ -525,7 +497,7 @@ class TestProjectPlan:
                 dependencies=[],
                 acceptance_criteria=[],
                 assigned_to="system",
-                status="pending"
+                status="pending",
             )
             for i in range(5)
         ]
@@ -540,7 +512,7 @@ class TestProjectPlan:
             timeline_start=datetime(2025, 10, 1),
             timeline_end_estimate=datetime(2025, 10, 15),
             plan_markdown="# Plan content",
-            created_at=datetime.now()
+            created_at=datetime.now(),
         )
 
         assert len(plan.tasks) == 5
@@ -562,7 +534,7 @@ class TestProjectPlan:
             timeline_start=start,
             timeline_end_estimate=end,
             plan_markdown="Plan",
-            created_at=datetime.now()
+            created_at=datetime.now(),
         )
 
         duration = (plan.timeline_end_estimate - plan.timeline_start).days
@@ -590,7 +562,7 @@ class TestProjectState:
             progress_percentage=20,
             last_checkin_at=datetime.now() - timedelta(hours=22),
             next_checkin_at=datetime.now() + timedelta(hours=2),
-            blockers=[]
+            blockers=[],
         )
 
         assert state.current_phase == "execution"
@@ -609,7 +581,7 @@ class TestProjectState:
                 total_tasks=10,
                 completed_tasks=0,
                 progress_percentage=0,
-                blockers=[]
+                blockers=[],
             )
             assert state.current_phase == phase
 
@@ -624,7 +596,7 @@ class TestProjectState:
             total_tasks=20,
             completed_tasks=7,
             progress_percentage=35,
-            blockers=[]
+            blockers=[],
         )
 
         # Verify progress calculation
@@ -645,8 +617,8 @@ class TestProjectState:
             progress_percentage=60,
             blockers=[
                 "Waiting for user decision on chapter structure",
-                "Need budget approval for web research"
-            ]
+                "Need budget approval for web research",
+            ],
         )
 
         assert len(state.blockers) == 2
@@ -668,7 +640,7 @@ class TestProjectState:
             progress_percentage=50,
             last_checkin_at=last_checkin,
             next_checkin_at=next_checkin,
-            blockers=[]
+            blockers=[],
         )
 
         assert state.last_checkin_at == last_checkin
@@ -692,7 +664,7 @@ class TestCheckinQuestion:
             task_id="task_010",
             question_text="Should Chapter 2 focus on tactics or mindset?",
             question_type="decision",
-            asked_at=datetime.now()
+            asked_at=datetime.now(),
         )
 
         assert question.question_text == "Should Chapter 2 focus on tactics or mindset?"
@@ -709,7 +681,7 @@ class TestCheckinQuestion:
                 task_id=None,
                 question_text="Question text",
                 question_type=q_type,
-                asked_at=datetime.now()
+                asked_at=datetime.now(),
             )
             assert question.question_type == q_type
 
@@ -725,7 +697,7 @@ class TestCheckinResponse:
             response_text="Focus on tactics first, mindset in later chapters",
             responded_at=datetime.now(),
             sentiment="positive",
-            action_needed=True
+            action_needed=True,
         )
 
         assert "tactics" in response.response_text
@@ -741,7 +713,7 @@ class TestCheckinResponse:
                 response_text="Response",
                 responded_at=datetime.now(),
                 sentiment=sentiment,
-                action_needed=False
+                action_needed=False,
             )
             assert response.sentiment == sentiment
 
@@ -759,7 +731,7 @@ class TestDailyCheckin:
                 task_id=None,
                 question_text=f"Question {i}",
                 question_type="feedback",
-                asked_at=datetime.now()
+                asked_at=datetime.now(),
             )
             for i in range(3)
         ]
@@ -771,7 +743,7 @@ class TestDailyCheckin:
                 response_text=f"Response {i}",
                 responded_at=datetime.now(),
                 sentiment="positive",
-                action_needed=False
+                action_needed=False,
             )
             for i in range(3)
         ]
@@ -784,7 +756,7 @@ class TestDailyCheckin:
             responses=responses,
             total_time_minutes=8,
             next_steps="Continue with Chapter 2 draft",
-            status="completed"
+            status="completed",
         )
 
         assert len(checkin.questions) == 3
@@ -803,7 +775,7 @@ class TestDailyCheckin:
                 responses=[],
                 total_time_minutes=0,
                 next_steps="Steps",
-                status=status
+                status=status,
             )
             assert checkin.status == status
 
@@ -819,7 +791,7 @@ class TestDailyCheckin:
                 task_id=None,
                 question_text=f"Question {i}",
                 question_type="progress",
-                asked_at=datetime.now()
+                asked_at=datetime.now(),
             )
             for i in range(3)
         ]
@@ -832,7 +804,7 @@ class TestDailyCheckin:
             responses=[],
             total_time_minutes=0,
             next_steps="Next steps",
-            status="pending"
+            status="pending",
         )
 
         # Design requires 1-3 questions max
@@ -857,7 +829,7 @@ class TestProject:
             questions=[],
             answers=[],
             started_at=datetime.now(),
-            status="completed"
+            status="completed",
         )
 
         spec = ProjectSpec(
@@ -872,7 +844,7 @@ class TestProject:
             constraints=[],
             spec_markdown="Spec",
             created_at=datetime.now(),
-            approval_status="approved"
+            approval_status="approved",
         )
 
         plan = ProjectPlan(
@@ -885,7 +857,7 @@ class TestProject:
             timeline_start=datetime.now(),
             timeline_end_estimate=datetime.now() + timedelta(days=14),
             plan_markdown="Plan",
-            created_at=datetime.now()
+            created_at=datetime.now(),
         )
 
         state = ProjectState(
@@ -897,7 +869,7 @@ class TestProject:
             total_tasks=20,
             completed_tasks=0,
             progress_percentage=0,
-            blockers=[]
+            blockers=[],
         )
 
         project = Project(
@@ -914,7 +886,7 @@ class TestProject:
             created_at=datetime.now(),
             started_at=datetime.now(),
             completed_at=None,
-            status="active"
+            status="active",
         )
 
         assert project.project_id == "proj_001"
@@ -938,7 +910,7 @@ class TestProject:
                 state=None,
                 checkins=[],
                 created_at=datetime.now(),
-                status=status
+                status=status,
             )
             assert project.status == status
 
@@ -957,7 +929,7 @@ class TestProject:
                 state=None,
                 checkins=[],
                 created_at=datetime.now(),
-                status="initializing"
+                status="initializing",
             )
             assert project.project_type == proj_type
 
@@ -975,15 +947,12 @@ class TestProjectOutcome:
             total_checkins=14,
             user_satisfaction=4,
             deliverable_quality=5,
-            blockers_encountered=[
-                "Budget limit reached on Day 7",
-                "User unavailable for 2 days"
-            ],
+            blockers_encountered=["Budget limit reached on Day 7", "User unavailable for 2 days"],
             learnings=[
                 "Book projects require 2-3 research questions per chapter",
-                "Users prefer morning check-ins for creative projects"
+                "Users prefer morning check-ins for creative projects",
             ],
-            would_recommend=True
+            would_recommend=True,
         )
 
         assert outcome.completed is True
@@ -1003,7 +972,7 @@ class TestProjectOutcome:
             deliverable_quality=None,
             blockers_encountered=["User lost interest", "Project too ambitious"],
             learnings=["Need better initial scoping"],
-            would_recommend=False
+            would_recommend=False,
         )
 
         assert outcome.completed is False
@@ -1033,7 +1002,7 @@ class TestModelEdgeCases:
             constraints=[],  # Empty
             spec_markdown="Content",
             created_at=datetime.now(),
-            approval_status="pending"
+            approval_status="pending",
         )
 
         assert spec.non_goals == []
@@ -1051,7 +1020,7 @@ class TestModelEdgeCases:
             acceptance_criteria=[],
             assigned_to="system",
             status="pending",
-            completed_at=None  # Optional field
+            completed_at=None,  # Optional field
         )
 
         assert task.completed_at is None
@@ -1064,7 +1033,7 @@ class TestModelEdgeCases:
             question_id="q_edge_001",
             answer_text=long_answer,
             answered_at=datetime.now(),
-            confidence="certain"
+            confidence="certain",
         )
 
         assert len(answer.answer_text) == 5000
@@ -1084,7 +1053,7 @@ class TestModelEdgeCases:
             timeline_start=datetime.now(),
             timeline_end_estimate=future_date,
             plan_markdown="Plan",
-            created_at=datetime.now()
+            created_at=datetime.now(),
         )
 
         assert plan.timeline_end_estimate == future_date
@@ -1112,7 +1081,7 @@ class TestModelSerialization:
             state=None,
             checkins=[],
             created_at=datetime(2025, 10, 1, 10, 0),
-            status="initializing"
+            status="initializing",
         )
 
         data = project.dict()
@@ -1131,7 +1100,7 @@ class TestModelSerialization:
             questions=[],
             answers=[],
             started_at=datetime.now(),
-            status="in_progress"
+            status="in_progress",
         )
 
         spec = ProjectSpec(
@@ -1146,7 +1115,7 @@ class TestModelSerialization:
             constraints=[],
             spec_markdown="Content",
             created_at=datetime.now(),
-            approval_status="pending"
+            approval_status="pending",
         )
 
         project = Project(
@@ -1161,7 +1130,7 @@ class TestModelSerialization:
             state=None,
             checkins=[],
             created_at=datetime.now(),
-            status="initializing"
+            status="initializing",
         )
 
         data = project.dict()

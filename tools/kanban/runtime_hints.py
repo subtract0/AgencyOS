@@ -6,16 +6,18 @@ Applies environment-level hint actions from LearningHintRegistry in a conservati
 - Hints with action.env are applied; others are ignored here
 - Confidence threshold via RUNTIME_HINTS_MIN_CONF (default 0.5)
 """
+
 from __future__ import annotations
 
 import os
-from typing import Any, Dict, List, Tuple, MutableMapping
+from collections.abc import MutableMapping
+
 from shared.type_definitions.json import JSONValue
 
-from .hints import LearningHintRegistry, Hint
+from .hints import LearningHintRegistry
 
 
-def _apply_env(env: MutableMapping[str, str], key: str, value: str) -> Tuple[str, str, str]:
+def _apply_env(env: MutableMapping[str, str], key: str, value: str) -> tuple[str, str, str]:
     """Apply env var with support for *_APPEND convention."""
     if key.endswith("_APPEND"):
         base = key[:-7]
@@ -30,10 +32,12 @@ def _apply_env(env: MutableMapping[str, str], key: str, value: str) -> Tuple[str
         return (key, "kept", env[key])
 
 
-def apply_env_hints_from_registry(registry: LearningHintRegistry, env: MutableMapping[str, str] | None = None) -> List[Dict[str, JSONValue]]:
+def apply_env_hints_from_registry(
+    registry: LearningHintRegistry, env: MutableMapping[str, str] | None = None
+) -> list[dict[str, JSONValue]]:
     env = env if env is not None else os.environ
     min_conf = float(os.getenv("RUNTIME_HINTS_MIN_CONF", "0.5"))
-    applied: List[dict[str, JSONValue]] = []
+    applied: list[dict[str, JSONValue]] = []
 
     for h in registry.all():
         try:

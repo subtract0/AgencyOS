@@ -17,20 +17,23 @@ Constitutional Requirements:
 - Learning integration
 """
 
-import pytest
-from datetime import datetime, timezone
 import ast
 import inspect
+from datetime import UTC, datetime
 from pathlib import Path
 from unittest.mock import Mock
-from shared.type_definitions.result import Result, Ok, Err
+
+import pytest
+
+from shared.type_definitions.result import Result
 
 try:
+    import trinity_protocol.daily_checkin as checkin_module
+    import trinity_protocol.project_executor as executor_module
     import trinity_protocol.project_initializer as project_initializer_module
     import trinity_protocol.spec_from_conversation as spec_generator_module
-    import trinity_protocol.project_executor as executor_module
-    import trinity_protocol.daily_checkin as checkin_module
     from trinity_protocol.models import project as project_models
+
     IMPLEMENTATION_AVAILABLE = True
 except ImportError:
     IMPLEMENTATION_AVAILABLE = False
@@ -48,9 +51,9 @@ class TestArticleICompliance:
     @pytest.mark.asyncio
     async def test_incomplete_qa_session_blocks_spec_generation(self):
         """Test spec generation blocked without complete Q&A."""
-        from trinity_protocol.spec_from_conversation import SpecFromConversation
-        from trinity_protocol.core.models.project import QASession, QAQuestion
         from trinity_protocol.core.models.patterns import DetectedPattern, PatternType
+        from trinity_protocol.core.models.project import QAQuestion, QASession
+        from trinity_protocol.spec_from_conversation import SpecFromConversation
 
         # Create at least 5 questions (required minimum)
         questions = [
@@ -58,7 +61,7 @@ class TestArticleICompliance:
                 question_id=f"q{i}",
                 question_text=f"Test question {i} text goes here?",
                 question_number=i,
-                required=True
+                required=True,
             )
             for i in range(1, 6)
         ]
@@ -71,8 +74,8 @@ class TestArticleICompliance:
             pattern_type="book_project",
             questions=questions,
             answers=[],  # No answers provided
-            started_at=datetime.now(timezone.utc),
-            status="in_progress"  # Not completed
+            started_at=datetime.now(UTC),
+            status="in_progress",  # Not completed
         )
 
         mock_pattern = DetectedPattern(
@@ -81,9 +84,9 @@ class TestArticleICompliance:
             topic="test",
             confidence=0.8,
             mention_count=3,
-            first_mention=datetime.now(timezone.utc),
-            last_mention=datetime.now(timezone.utc),
-            context_summary="Test context"
+            first_mention=datetime.now(UTC),
+            last_mention=datetime.now(UTC),
+            context_summary="Test context",
         )
 
         spec_gen = SpecFromConversation(llm_client=Mock())
@@ -91,14 +94,17 @@ class TestArticleICompliance:
 
         # Article I: Must return error when context incomplete
         assert result.is_err()
-        error_msg = result._error if hasattr(result, '_error') else str(result)
-        assert "incomplete" in error_msg.lower() or "context" in error_msg.lower() or "answer" in error_msg.lower()
+        error_msg = result._error if hasattr(result, "_error") else str(result)
+        assert (
+            "incomplete" in error_msg.lower()
+            or "context" in error_msg.lower()
+            or "answer" in error_msg.lower()
+        )
 
     @pytest.mark.asyncio
     async def test_daily_planning_requires_complete_project_state(self):
         """Test daily planning blocked without complete context."""
-        from trinity_protocol.project_executor import ProjectExecutor
-        from trinity_protocol.core.models.project import Project, ProjectState, ProjectMetadata
+        from trinity_protocol.core.models.project import Project, ProjectMetadata, ProjectState
 
         # Project with missing context (state is INITIALIZING without spec/plan)
         incomplete_project = Project(
@@ -107,19 +113,20 @@ class TestArticleICompliance:
             title="Incomplete Project Test",
             description="This is an incomplete project for testing purposes and validation",
             state=ProjectState.INITIALIZING,
-            created_at=datetime.now(timezone.utc),
-            updated_at=datetime.now(timezone.utc),
+            created_at=datetime.now(UTC),
+            updated_at=datetime.now(UTC),
             metadata=ProjectMetadata(
                 topic="test",
-                estimated_completion=datetime.now(timezone.utc),
-                daily_time_commitment_minutes=30
-            )
+                estimated_completion=datetime.now(UTC),
+                daily_time_commitment_minutes=30,
+            ),
         )
 
         # Test that incomplete plans cannot be created (Article I enforcement at model level)
-        from trinity_protocol.core.models.project import ProjectPlan, ProjectTask, TaskStatus
         import pytest as pytest_module
         from pydantic import ValidationError
+
+        from trinity_protocol.core.models.project import ProjectPlan
 
         # Try to create a plan with no tasks - should fail Pydantic validation
         with pytest_module.raises(ValidationError) as exc_info:
@@ -130,13 +137,16 @@ class TestArticleICompliance:
                 tasks=[],  # Empty task list - triggers validation error
                 total_estimated_days=30,
                 daily_questions_avg=2,
-                timeline_end_estimate=datetime.now(timezone.utc),
-                plan_markdown="# Test Plan\n\n## Tasks\n- Task 1: Complete first task\n- Task 2: Complete second task\n\n## Timeline\n30 days estimated\n\n(100+ characters required for validation)"
+                timeline_end_estimate=datetime.now(UTC),
+                plan_markdown="# Test Plan\n\n## Tasks\n- Task 1: Complete first task\n- Task 2: Complete second task\n\n## Timeline\n30 days estimated\n\n(100+ characters required for validation)",
             )
 
         # Article I: Complete context enforced at model level
         # Pydantic min_items=1 validation blocks incomplete plans
-        assert "at least 1 item" in str(exc_info.value).lower() or "min_items" in str(exc_info.value).lower()
+        assert (
+            "at least 1 item" in str(exc_info.value).lower()
+            or "min_items" in str(exc_info.value).lower()
+        )
 
     def test_retry_on_timeout_pattern_exists(self):
         """Test timeout handling with retry logic exists."""
@@ -178,7 +188,7 @@ class TestArticleIICompliance:
             project_initializer_module,
             spec_generator_module,
             executor_module,
-            checkin_module
+            checkin_module,
         ]
 
         violations = []
@@ -215,7 +225,7 @@ class TestArticleIICompliance:
             project_initializer_module,
             spec_generator_module,
             executor_module,
-            checkin_module
+            checkin_module,
         ]
 
         for module in modules:
@@ -256,20 +266,18 @@ class TestArticleIIICompliance:
     @pytest.mark.asyncio
     async def test_budget_enforcer_blocks_expensive_operations(self):
         """Test budget enforcer automatically blocks operations."""
-        from trinity_protocol.budget_enforcer import BudgetEnforcer, BudgetExceededError
         from shared.cost_tracker import CostTracker
+        from trinity_protocol.budget_enforcer import BudgetEnforcer, BudgetExceededError
 
         # Create cost tracker with high spending
         cost_tracker = CostTracker()
 
         # Budget near limit - use actual API
-        budget = BudgetEnforcer(
-            cost_tracker=cost_tracker,
-            daily_limit_usd=30.0
-        )
+        budget = BudgetEnforcer(cost_tracker=cost_tracker, daily_limit_usd=30.0)
 
         # Record high usage to trigger limit
         from shared.cost_tracker import ModelTier
+
         for _ in range(15):
             cost_tracker.track_call(
                 agent="test_agent",
@@ -278,7 +286,7 @@ class TestArticleIIICompliance:
                 input_tokens=5000,
                 output_tokens=2000,
                 duration_seconds=1.0,
-                success=True
+                success=True,
             )
 
         # Article III: Must be blocked automatically
@@ -290,13 +298,13 @@ class TestArticleIIICompliance:
             assert "budget" in str(exc_info.value).lower()
         else:
             # If budget not yet exceeded, verify enforcement logic exists
-            assert hasattr(budget, 'enforce')
+            assert hasattr(budget, "enforce")
             assert callable(budget.enforce)
 
     @pytest.mark.asyncio
     async def test_foundation_verifier_blocks_broken_main(self):
         """Test foundation verifier blocks work on broken main."""
-        from trinity_protocol.foundation_verifier import FoundationVerifier, FoundationStatus
+        from trinity_protocol.foundation_verifier import FoundationStatus, FoundationVerifier
 
         verifier = FoundationVerifier()
 
@@ -308,7 +316,7 @@ class TestArticleIIICompliance:
             FoundationStatus.HEALTHY,
             FoundationStatus.BROKEN,
             FoundationStatus.TIMEOUT,
-            FoundationStatus.ERROR
+            FoundationStatus.ERROR,
         ]
 
         # If status is healthy, verify test counts are positive
@@ -319,8 +327,8 @@ class TestArticleIIICompliance:
     def test_no_manual_override_capabilities(self):
         """Test no bypass mechanisms exist."""
         # Verify budget enforcer has no override/bypass methods
-        from trinity_protocol.budget_enforcer import BudgetEnforcer
         from shared.cost_tracker import CostTracker
+        from trinity_protocol.budget_enforcer import BudgetEnforcer
 
         cost_tracker = CostTracker()
         budget = BudgetEnforcer(cost_tracker=cost_tracker, daily_limit_usd=30.0)
@@ -329,9 +337,21 @@ class TestArticleIIICompliance:
         # Should not have methods like "override", "bypass", "disable", "ignore"
         # Note: "enforce" enforces the limit (not a bypass), "force" would be a bypass
         # Valid methods: enforce, check_alerts, get_status
-        dangerous_methods = [m for m in methods if any(
-            word in m.lower() for word in ["override", "bypass", "disable", "ignore", "skip_check", "manual_override"]
-        )]
+        dangerous_methods = [
+            m
+            for m in methods
+            if any(
+                word in m.lower()
+                for word in [
+                    "override",
+                    "bypass",
+                    "disable",
+                    "ignore",
+                    "skip_check",
+                    "manual_override",
+                ]
+            )
+        ]
 
         assert len(dangerous_methods) == 0, f"Found bypass methods: {dangerous_methods}"
 
@@ -351,9 +371,7 @@ class TestArticleIVCompliance:
 
         mock_learner = Mock()
 
-        coordinator = DailyCheckin(
-            preference_learner=mock_learner
-        )
+        coordinator = DailyCheckin(preference_learner=mock_learner)
 
         project = create_mock_project()
 
@@ -378,7 +396,7 @@ class TestArticleIVCompliance:
             deliverable_quality=5,
             blockers_encountered=[],
             learnings=["Users prefer morning check-ins for book projects"],
-            would_recommend=True
+            would_recommend=True,
         )
 
         # Verify outcome data structure is complete (Article IV: Learning integration)
@@ -407,8 +425,8 @@ class TestArticleVCompliance:
     @pytest.mark.asyncio
     async def test_project_initialization_creates_spec(self):
         """Test all projects begin with formal spec."""
-        from trinity_protocol.project_initializer import ProjectInitializer
         from trinity_protocol.core.models.patterns import DetectedPattern, PatternType
+        from trinity_protocol.project_initializer import ProjectInitializer
 
         pattern = DetectedPattern(
             pattern_id="pattern_test",
@@ -416,16 +434,13 @@ class TestArticleVCompliance:
             topic="coaching book",
             confidence=0.85,
             mention_count=5,
-            first_mention=datetime.now(timezone.utc),
-            last_mention=datetime.now(timezone.utc),
-            context_summary="User mentioned coaching book project multiple times"
+            first_mention=datetime.now(UTC),
+            last_mention=datetime.now(UTC),
+            context_summary="User mentioned coaching book project multiple times",
         )
 
         mock_message_bus = Mock()
-        initializer = ProjectInitializer(
-            message_bus=mock_message_bus,
-            llm_client=Mock()
-        )
+        initializer = ProjectInitializer(message_bus=mock_message_bus, llm_client=Mock())
 
         result = await initializer.initialize_project(pattern, "YES")
 
@@ -436,7 +451,7 @@ class TestArticleVCompliance:
 
     def test_spec_template_compliance(self):
         """Test specs follow Agency template."""
-        from trinity_protocol.core.models.project import ProjectSpec, AcceptanceCriterion
+        from trinity_protocol.core.models.project import AcceptanceCriterion, ProjectSpec
 
         spec = ProjectSpec(
             spec_id="spec_test",
@@ -451,13 +466,13 @@ class TestArticleVCompliance:
                 AcceptanceCriterion(
                     criterion_id="crit_1",
                     description="Criteria one is met with proper verification",
-                    verification_method="Manual review"
+                    verification_method="Manual review",
                 )
             ],
             constraints=["Constraint 1"],
             spec_markdown="# Complete Test Spec\n\n## Goals\n- Goal 1\n\n## Personas\n- Persona 1\n\n## Acceptance Criteria\n- Criteria 1 with verification\n\n(100+ characters)",
-            created_at=datetime.now(timezone.utc),
-            approval_status="pending"
+            created_at=datetime.now(UTC),
+            approval_status="pending",
         )
 
         # Verify required sections exist
@@ -469,11 +484,17 @@ class TestArticleVCompliance:
     @pytest.mark.asyncio
     async def test_execution_blocked_without_approved_spec(self):
         """Test execution cannot start without approved spec."""
-        from trinity_protocol.project_executor import ProjectExecutor
         from trinity_protocol.core.models.project import (
-            Project, ProjectSpec, ProjectState, ProjectMetadata, AcceptanceCriterion,
-            ProjectPlan, ProjectTask, TaskStatus
+            AcceptanceCriterion,
+            Project,
+            ProjectMetadata,
+            ProjectPlan,
+            ProjectSpec,
+            ProjectState,
+            ProjectTask,
+            TaskStatus,
         )
+        from trinity_protocol.project_executor import ProjectExecutor
 
         # Spec not approved
         unapproved_spec = ProjectSpec(
@@ -489,13 +510,13 @@ class TestArticleVCompliance:
                 AcceptanceCriterion(
                     criterion_id="crit_1",
                     description="Acceptance criteria description that meets requirements",
-                    verification_method="Manual review"
+                    verification_method="Manual review",
                 )
             ],
             constraints=[],
             spec_markdown="# Content\n\n## Goals\n- Goal\n\n## Acceptance\n- Criteria\n\n(Additional content to meet 100+ character requirement)",
-            created_at=datetime.now(timezone.utc),
-            approval_status="pending"  # Not approved!
+            created_at=datetime.now(UTC),
+            approval_status="pending",  # Not approved!
         )
 
         project = Project(
@@ -504,13 +525,13 @@ class TestArticleVCompliance:
             title="Test Project Title",
             description="Test project description with adequate content for validation",
             state=ProjectState.SPEC_REVIEW,
-            created_at=datetime.now(timezone.utc),
-            updated_at=datetime.now(timezone.utc),
+            created_at=datetime.now(UTC),
+            updated_at=datetime.now(UTC),
             metadata=ProjectMetadata(
                 topic="test",
-                estimated_completion=datetime.now(timezone.utc),
-                daily_time_commitment_minutes=30
-            )
+                estimated_completion=datetime.now(UTC),
+                daily_time_commitment_minutes=30,
+            ),
         )
 
         # Create a plan (required for start_execution)
@@ -526,13 +547,13 @@ class TestArticleVCompliance:
                     description="Test task description",
                     estimated_minutes=30,
                     assigned_to="user",
-                    status=TaskStatus.PENDING
+                    status=TaskStatus.PENDING,
                 )
             ],
             total_estimated_days=30,
             daily_questions_avg=2,
-            timeline_end_estimate=datetime.now(timezone.utc),
-            plan_markdown="# Test Plan\n\n## Tasks\n- Task 1: Complete task\n\n## Timeline\n30 days\n\n(100+ characters required for validation)"
+            timeline_end_estimate=datetime.now(UTC),
+            plan_markdown="# Test Plan\n\n## Tasks\n- Task 1: Complete task\n\n## Timeline\n30 days\n\n(100+ characters required for validation)",
         )
 
         executor = ProjectExecutor(llm_client=Mock())
@@ -558,8 +579,8 @@ class TestCrossArticleCompliance:
     @pytest.mark.asyncio
     async def test_complete_constitutional_workflow(self):
         """Test full workflow validates all 5 articles."""
-        from trinity_protocol.project_initializer import ProjectInitializer
         from trinity_protocol.core.models.patterns import DetectedPattern, PatternType
+        from trinity_protocol.project_initializer import ProjectInitializer
 
         # Article I: Complete context (pattern with evidence)
         pattern = DetectedPattern(
@@ -568,16 +589,13 @@ class TestCrossArticleCompliance:
             topic="coaching book for entrepreneurs",
             confidence=0.90,
             mention_count=10,
-            first_mention=datetime.now(timezone.utc),
-            last_mention=datetime.now(timezone.utc),
-            context_summary="User mentioned book, coaching, and entrepreneurs multiple times"
+            first_mention=datetime.now(UTC),
+            last_mention=datetime.now(UTC),
+            context_summary="User mentioned book, coaching, and entrepreneurs multiple times",
         )
 
         mock_message_bus = Mock()
-        initializer = ProjectInitializer(
-            message_bus=mock_message_bus,
-            llm_client=Mock()
-        )
+        initializer = ProjectInitializer(message_bus=mock_message_bus, llm_client=Mock())
 
         # Article V: Spec-driven (creates formal spec)
         result = await initializer.initialize_project(pattern, "YES")
@@ -643,7 +661,6 @@ class TestQualityMetrics:
 
     def test_firestore_serialization_compatible(self):
         """Test models serialize to Firestore format."""
-        from trinity_protocol.core.models.project import Project
 
         project = create_mock_project()
 
@@ -663,7 +680,7 @@ class TestQualityMetrics:
 
 def create_mock_project():
     """Create mock project for testing."""
-    from trinity_protocol.core.models.project import Project, ProjectState, ProjectMetadata
+    from trinity_protocol.core.models.project import Project, ProjectMetadata, ProjectState
 
     return Project(
         project_id="proj_test",
@@ -671,13 +688,13 @@ def create_mock_project():
         title="Test Project Title",
         description="Test project description with adequate content for validation",
         state=ProjectState.EXECUTING,
-        created_at=datetime.now(timezone.utc),
-        updated_at=datetime.now(timezone.utc),
+        created_at=datetime.now(UTC),
+        updated_at=datetime.now(UTC),
         metadata=ProjectMetadata(
             topic="test",
-            estimated_completion=datetime.now(timezone.utc),
-            daily_time_commitment_minutes=30
-        )
+            estimated_completion=datetime.now(UTC),
+            daily_time_commitment_minutes=30,
+        ),
     )
 
 
@@ -688,10 +705,7 @@ def create_completed_project():
     project = create_mock_project()
     # Update to completed state (use model_copy for frozen models)
     return project.model_copy(
-        update={
-            "state": ProjectState.COMPLETED,
-            "completion_date": datetime.now(timezone.utc)
-        }
+        update={"state": ProjectState.COMPLETED, "completion_date": datetime.now(UTC)}
     )
 
 

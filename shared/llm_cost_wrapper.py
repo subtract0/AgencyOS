@@ -12,9 +12,10 @@ Usage:
     wrap_openai_client(tracker, agent_name="AgencyCodeAgent")
 """
 
-import time
 import functools
-from typing import Optional, Any
+import time
+from typing import Any
+
 from shared.cost_tracker import CostTracker, ModelTier
 
 
@@ -49,8 +50,8 @@ def determine_model_tier(model: str) -> ModelTier:
 def wrap_openai_client(
     cost_tracker: CostTracker,
     agent_name: str,
-    task_id: Optional[str] = None,
-    correlation_id: Optional[str] = None
+    task_id: str | None = None,
+    correlation_id: str | None = None,
 ) -> None:
     """
     Monkey-patch OpenAI client to track costs automatically.
@@ -69,7 +70,6 @@ def wrap_openai_client(
         >>> wrap_openai_client(tracker, "AgencyCodeAgent")
         >>> # All subsequent OpenAI calls will be tracked
     """
-    from openai import OpenAI
     from openai.resources.chat import Completions
 
     # Get the original method from the Completions class
@@ -79,7 +79,7 @@ def wrap_openai_client(
     def wrapped_create(self: Any, *args: Any, **kwargs: Any) -> Any:
         """Wrapped completion method with cost tracking."""
         start_time = time.time()
-        error_msg: Optional[str] = None
+        error_msg: str | None = None
         success = True
 
         try:
@@ -87,12 +87,12 @@ def wrap_openai_client(
             response = original_create(self, *args, **kwargs)
 
             # Extract token counts from response
-            usage = getattr(response, 'usage', None)
-            model = getattr(response, 'model', 'unknown')
+            usage = getattr(response, "usage", None)
+            model = getattr(response, "model", "unknown")
 
             if usage:
-                input_tokens = getattr(usage, 'prompt_tokens', 0)
-                output_tokens = getattr(usage, 'completion_tokens', 0)
+                input_tokens = getattr(usage, "prompt_tokens", 0)
+                output_tokens = getattr(usage, "completion_tokens", 0)
 
                 # Determine pricing tier
                 tier = determine_model_tier(model)
@@ -108,7 +108,7 @@ def wrap_openai_client(
                     duration_seconds=duration,
                     success=True,
                     task_id=task_id,
-                    correlation_id=correlation_id
+                    correlation_id=correlation_id,
                 )
 
             return response
@@ -119,7 +119,7 @@ def wrap_openai_client(
 
             # Track failed call
             duration = time.time() - start_time
-            model = kwargs.get('model', 'unknown')
+            model = kwargs.get("model", "unknown")
             tier = determine_model_tier(model)
 
             cost_tracker.track_call(
@@ -132,7 +132,7 @@ def wrap_openai_client(
                 success=False,
                 task_id=task_id,
                 correlation_id=correlation_id,
-                error=error_msg
+                error=error_msg,
             )
 
             raise
@@ -144,8 +144,8 @@ def wrap_openai_client(
 def wrap_agent_with_cost_tracking(
     agent: Any,
     cost_tracker: CostTracker,
-    task_id: Optional[str] = None,
-    correlation_id: Optional[str] = None
+    task_id: str | None = None,
+    correlation_id: str | None = None,
 ) -> None:
     """
     Wrap an Agency Swarm agent to track all LLM costs.
@@ -164,15 +164,15 @@ def wrap_agent_with_cost_tracking(
         >>> agent = create_agency_code_agent()
         >>> wrap_agent_with_cost_tracking(agent, tracker)
     """
-    agent_name = getattr(agent, 'name', agent.__class__.__name__)
+    agent_name = getattr(agent, "name", agent.__class__.__name__)
     wrap_openai_client(cost_tracker, agent_name, task_id, correlation_id)
 
 
 def create_cost_tracking_context(
     cost_tracker: CostTracker,
     agent_name: str,
-    task_id: Optional[str] = None,
-    correlation_id: Optional[str] = None
+    task_id: str | None = None,
+    correlation_id: str | None = None,
 ):
     """
     Context manager for temporary cost tracking.
@@ -193,8 +193,9 @@ def create_cost_tracking_context(
         ...     client = OpenAI()
         ...     response = client.chat.completions.create(...)
     """
-    from openai.resources.chat import Completions
     import contextlib
+
+    from openai.resources.chat import Completions
 
     @contextlib.contextmanager
     def _context():

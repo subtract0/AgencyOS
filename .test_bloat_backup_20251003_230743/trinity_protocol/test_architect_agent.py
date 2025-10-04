@@ -13,19 +13,16 @@ NECESSARY Pattern Compliance:
 - Yield fast: <1s per test (mocked LLM calls)
 """
 
-import pytest
 import asyncio
-import tempfile
-import json
 from pathlib import Path
-from datetime import datetime
-from unittest.mock import AsyncMock, Mock, MagicMock, patch, call
-from typing import Dict, Any, List
 
-from shared.message_bus import MessageBus
-from shared.persistent_store import PersistentStore
-from trinity_protocol.core.architect import ArchitectAgent, Strategy, TaskSpec  # Import optimized implementation
+import pytest
 
+from trinity_protocol.core.architect import (
+    ArchitectAgent,
+    Strategy,
+    TaskSpec,
+)  # Import optimized implementation
 
 # NOTE: Using real ArchitectAgent implementation (not mock)
 # Mock implementation removed - using real ArchitectAgent from trinity_protocol.architect_agent
@@ -37,10 +34,7 @@ class TestArchitectAgentInitialization:
 
     def test_initializes_with_message_bus_and_store(self, message_bus, pattern_store):
         """Agent initializes with required dependencies."""
-        agent = ArchitectAgent(
-            message_bus=message_bus,
-            pattern_store=pattern_store
-        )
+        agent = ArchitectAgent(message_bus=message_bus, pattern_store=pattern_store)
 
         assert agent.message_bus is message_bus
         assert agent.pattern_store is pattern_store
@@ -71,9 +65,9 @@ class TestComplexityAssessment:
     def test_scores_simple_bug_fix_as_low_complexity(self, architect_agent):
         """Agent scores single-file bug fix as < 0.3 (simple)."""
         signal = {
-            'pattern': 'type_error',
-            'data': {'keywords': ['bug', 'fix']},
-            'evidence_count': 1
+            "pattern": "type_error",
+            "data": {"keywords": ["bug", "fix"]},
+            "evidence_count": 1,
         }
 
         complexity = architect_agent._assess_complexity(signal)
@@ -83,9 +77,9 @@ class TestComplexityAssessment:
     def test_scores_constitutional_violation_as_moderate(self, architect_agent):
         """Agent scores constitutional violation as >= 0.3 (moderate)."""
         signal = {
-            'pattern': 'constitutional_violation',
-            'data': {'keywords': ['dict[any]']},
-            'evidence_count': 2
+            "pattern": "constitutional_violation",
+            "data": {"keywords": ["dict[any]"]},
+            "evidence_count": 2,
         }
 
         complexity = architect_agent._assess_complexity(signal)
@@ -95,9 +89,9 @@ class TestComplexityAssessment:
     def test_scores_architecture_change_as_high_complexity(self, architect_agent):
         """Agent scores architecture changes as > 0.7 (complex)."""
         signal = {
-            'pattern': 'architectural_improvement',
-            'data': {'keywords': ['architecture', 'refactor']},
-            'evidence_count': 5
+            "pattern": "architectural_improvement",
+            "data": {"keywords": ["architecture", "refactor"]},
+            "evidence_count": 5,
         }
 
         complexity = architect_agent._assess_complexity(signal)
@@ -107,15 +101,15 @@ class TestComplexityAssessment:
     def test_increases_complexity_for_multi_file_scope(self, architect_agent):
         """Agent increases complexity score for multi-file changes."""
         signal_single = {
-            'pattern': 'code_duplication',
-            'data': {'keywords': []},
-            'evidence_count': 1
+            "pattern": "code_duplication",
+            "data": {"keywords": []},
+            "evidence_count": 1,
         }
 
         signal_multi = {
-            'pattern': 'code_duplication',
-            'data': {'keywords': ['multi-file']},
-            'evidence_count': 1
+            "pattern": "code_duplication",
+            "data": {"keywords": ["multi-file"]},
+            "evidence_count": 1,
         }
 
         complexity_single = architect_agent._assess_complexity(signal_single)
@@ -125,16 +119,12 @@ class TestComplexityAssessment:
 
     def test_increases_complexity_for_high_evidence_count(self, architect_agent):
         """Agent increases complexity for high evidence count (>= 5)."""
-        signal_low = {
-            'pattern': 'performance_issue',
-            'data': {'keywords': []},
-            'evidence_count': 1
-        }
+        signal_low = {"pattern": "performance_issue", "data": {"keywords": []}, "evidence_count": 1}
 
         signal_high = {
-            'pattern': 'performance_issue',
-            'data': {'keywords': []},
-            'evidence_count': 5
+            "pattern": "performance_issue",
+            "data": {"keywords": []},
+            "evidence_count": 5,
         }
 
         complexity_low = architect_agent._assess_complexity(signal_low)
@@ -145,9 +135,9 @@ class TestComplexityAssessment:
     def test_caps_complexity_at_1_0(self, architect_agent):
         """Agent caps complexity score at 1.0 maximum."""
         signal = {
-            'pattern': 'constitutional_violation',
-            'data': {'keywords': ['architecture', 'refactor', 'multi-file']},
-            'evidence_count': 10
+            "pattern": "constitutional_violation",
+            "data": {"keywords": ["architecture", "refactor", "multi-file"]},
+            "evidence_count": 10,
         }
 
         complexity = architect_agent._assess_complexity(signal)
@@ -161,61 +151,57 @@ class TestReasoningEngineSelection:
 
     def test_selects_gpt5_for_critical_priority(self, architect_agent):
         """Agent uses GPT-5 (Level 5) for CRITICAL priority signals."""
-        signal = {
-            'priority': 'CRITICAL',
-            'pattern': 'system_failure',
-            'data': {'keywords': []}
-        }
+        signal = {"priority": "CRITICAL", "pattern": "system_failure", "data": {"keywords": []}}
 
         complexity = architect_agent._assess_complexity(signal)
         engine = architect_agent._select_reasoning_engine(signal, complexity)
 
-        assert engine == 'gpt-5'
+        assert engine == "gpt-5"
 
     def test_selects_claude_for_high_priority_complex_signal(self, architect_agent):
         """Agent uses Claude 4.1 (Level 5) for HIGH priority + complexity > 0.7."""
         signal = {
-            'priority': 'HIGH',
-            'pattern': 'architectural_improvement',
-            'data': {'keywords': ['architecture', 'refactor']},
-            'evidence_count': 5
+            "priority": "HIGH",
+            "pattern": "architectural_improvement",
+            "data": {"keywords": ["architecture", "refactor"]},
+            "evidence_count": 5,
         }
 
         complexity = architect_agent._assess_complexity(signal)
         engine = architect_agent._select_reasoning_engine(signal, complexity)
 
         assert complexity > 0.7
-        assert engine == 'claude-4.1'
+        assert engine == "claude-4.1"
 
     def test_selects_codestral_for_simple_signal(self, architect_agent):
         """Agent uses Codestral-22B (local) for simple signals."""
         signal = {
-            'priority': 'NORMAL',
-            'pattern': 'type_error',
-            'data': {'keywords': ['bug']},
-            'evidence_count': 1
+            "priority": "NORMAL",
+            "pattern": "type_error",
+            "data": {"keywords": ["bug"]},
+            "evidence_count": 1,
         }
 
         complexity = architect_agent._assess_complexity(signal)
         engine = architect_agent._select_reasoning_engine(signal, complexity)
 
         assert complexity < 0.3
-        assert engine == 'codestral-22b'
+        assert engine == "codestral-22b"
 
     def test_selects_codestral_for_high_priority_low_complexity(self, architect_agent):
         """Agent uses local model for HIGH priority if complexity <= 0.7."""
         signal = {
-            'priority': 'HIGH',
-            'pattern': 'code_duplication',
-            'data': {'keywords': []},
-            'evidence_count': 1
+            "priority": "HIGH",
+            "pattern": "code_duplication",
+            "data": {"keywords": []},
+            "evidence_count": 1,
         }
 
         complexity = architect_agent._assess_complexity(signal)
         engine = architect_agent._select_reasoning_engine(signal, complexity)
 
         assert complexity <= 0.7
-        assert engine == 'codestral-22b'
+        assert engine == "codestral-22b"
 
     def test_documents_escalation_decision(self, architect_agent):
         """Agent documents reasoning engine selection in strategy."""
@@ -229,61 +215,50 @@ class TestContextGathering:
     @pytest.mark.asyncio
     async def test_queries_pattern_store_for_historical_patterns(self, architect_agent):
         """Agent queries pattern_store for similar historical patterns."""
+
         # Mock pattern store response (search_patterns is synchronous, not async)
         def mock_search_patterns(*args, **kwargs):
-            return [
-                {"pattern": "critical_error", "confidence": 0.85}
-            ]
+            return [{"pattern": "critical_error", "confidence": 0.85}]
 
         architect_agent.pattern_store.search_patterns = mock_search_patterns
 
-        signal = {
-            'pattern': 'critical_error',
-            'data': {'keywords': ['fatal']}
-        }
+        signal = {"pattern": "critical_error", "data": {"keywords": ["fatal"]}}
 
         context = await architect_agent._gather_context(signal)
 
-        assert 'historical_patterns' in context
-        assert len(context['historical_patterns']) >= 0  # May or may not find matches
+        assert "historical_patterns" in context
+        assert len(context["historical_patterns"]) >= 0  # May or may not find matches
 
     @pytest.mark.asyncio
     async def test_limits_historical_patterns_to_top_5(self, architect_agent):
         """Agent returns maximum 5 historical patterns."""
         # Mock pattern store to return 10 patterns (search_patterns is synchronous)
         patterns = [
-            {"pattern": f"test_pattern_{i}", "confidence": 0.7 + i * 0.01}
-            for i in range(10)
+            {"pattern": f"test_pattern_{i}", "confidence": 0.7 + i * 0.01} for i in range(10)
         ]
 
         def mock_search_patterns(*args, **kwargs):
             # Respect the limit parameter like the real implementation
-            limit = kwargs.get('limit', 10)
+            limit = kwargs.get("limit", 10)
             return patterns[:limit]
 
         architect_agent.pattern_store.search_patterns = mock_search_patterns
 
-        signal = {
-            'pattern': 'test_pattern',
-            'data': {'keywords': []}
-        }
+        signal = {"pattern": "test_pattern", "data": {"keywords": []}}
 
         context = await architect_agent._gather_context(signal)
 
-        assert len(context['historical_patterns']) <= 5
+        assert len(context["historical_patterns"]) <= 5
 
     @pytest.mark.asyncio
     async def test_includes_relevant_adrs_in_context(self, architect_agent):
         """Agent includes relevant ADRs in gathered context."""
-        signal = {
-            'pattern': 'architectural_improvement',
-            'data': {'keywords': ['architecture']}
-        }
+        signal = {"pattern": "architectural_improvement", "data": {"keywords": ["architecture"]}}
 
         context = await architect_agent._gather_context(signal)
 
-        assert 'relevant_adrs' in context
-        assert isinstance(context['relevant_adrs'], list)
+        assert "relevant_adrs" in context
+        assert isinstance(context["relevant_adrs"], list)
 
 
 # Spec generation tests (Step 5)
@@ -293,26 +268,26 @@ class TestSpecGeneration:
     def test_generates_spec_for_complex_signal(self, architect_agent):
         """Agent generates spec markdown for complexity > 0.7."""
         signal = {
-            'summary': 'Add authentication system',
-            'pattern': 'feature_request',
-            'data': {'keywords': ['architecture'], 'message': 'Need auth'}
+            "summary": "Add authentication system",
+            "pattern": "feature_request",
+            "data": {"keywords": ["architecture"], "message": "Need auth"},
         }
 
-        context = {'historical_patterns': []}
+        context = {"historical_patterns": []}
         correlation_id = "test-spec-123"
 
         spec = architect_agent._generate_spec(signal, context, correlation_id)
 
         assert isinstance(spec, str)
         assert len(spec) > 0
-        assert 'feature_request' in spec.lower() or 'feature request' in spec.lower()
+        assert "feature_request" in spec.lower() or "feature request" in spec.lower()
 
     def test_generates_adr_for_architectural_signal(self, architect_agent):
         """Agent generates ADR markdown for architectural signals."""
         signal = {
-            'summary': 'Migrate to microservices',
-            'pattern': 'architectural_improvement',
-            'data': {'keywords': ['architecture'], 'message': 'Migrate to microservices'}
+            "summary": "Migrate to microservices",
+            "pattern": "architectural_improvement",
+            "data": {"keywords": ["architecture"], "message": "Migrate to microservices"},
         }
 
         correlation_id = "test-adr-456"
@@ -320,20 +295,20 @@ class TestSpecGeneration:
 
         assert isinstance(adr, str)
         assert len(adr) > 0
-        assert 'ADR-' in adr
+        assert "ADR-" in adr
 
     def test_identifies_architectural_signals(self, architect_agent):
         """Agent correctly identifies signals requiring ADR."""
         arch_signal = {
-            'pattern': 'architectural_improvement',
-            'data': {'keywords': ['architecture']},
-            'summary': 'Refactor core architecture'
+            "pattern": "architectural_improvement",
+            "data": {"keywords": ["architecture"]},
+            "summary": "Refactor core architecture",
         }
 
         non_arch_signal = {
-            'pattern': 'bug_fix',
-            'data': {'keywords': ['fix']},
-            'summary': 'Fix null pointer'
+            "pattern": "bug_fix",
+            "data": {"keywords": ["fix"]},
+            "summary": "Fix null pointer",
         }
 
         assert architect_agent._is_architectural(arch_signal) is True
@@ -347,32 +322,26 @@ class TestTaskGraphGeneration:
     def test_generates_task_graph_with_code_and_test_tasks(self, architect_agent):
         """Agent generates task graph with code and test tasks in parallel."""
         strategy = Strategy(
-            priority='HIGH',
-            complexity=0.5,
-            engine='codestral-22b',
-            decision='Implement feature'
+            priority="HIGH", complexity=0.5, engine="codestral-22b", decision="Implement feature"
         )
 
         tasks = architect_agent._generate_task_graph(strategy, "test-corr-123")
 
         assert len(tasks) >= 2
         task_types = {t.task_type for t in tasks}
-        assert 'code_generation' in task_types
-        assert 'test_generation' in task_types
+        assert "code_generation" in task_types
+        assert "test_generation" in task_types
 
     def test_code_and_test_tasks_have_no_dependencies(self, architect_agent):
         """Agent creates code and test tasks as parallel (no dependencies)."""
         strategy = Strategy(
-            priority='NORMAL',
-            complexity=0.3,
-            engine='codestral-22b',
-            decision='Fix bug'
+            priority="NORMAL", complexity=0.3, engine="codestral-22b", decision="Fix bug"
         )
 
         tasks = architect_agent._generate_task_graph(strategy, "test-corr-456")
 
-        code_task = next(t for t in tasks if t.task_type == 'code_generation')
-        test_task = next(t for t in tasks if t.task_type == 'test_generation')
+        code_task = next(t for t in tasks if t.task_type == "code_generation")
+        test_task = next(t for t in tasks if t.task_type == "test_generation")
 
         assert code_task.dependencies == []
         assert test_task.dependencies == []
@@ -380,27 +349,21 @@ class TestTaskGraphGeneration:
     def test_generates_merge_task_with_dependencies(self, architect_agent):
         """Agent generates merge task depending on code + test completion."""
         strategy = Strategy(
-            priority='HIGH',
-            complexity=0.6,
-            engine='codestral-22b',
-            decision='Implement'
+            priority="HIGH", complexity=0.6, engine="codestral-22b", decision="Implement"
         )
 
         tasks = architect_agent._generate_task_graph(strategy, "test-corr-789")
 
-        merge_task = next(t for t in tasks if t.task_type == 'merge')
+        merge_task = next(t for t in tasks if t.task_type == "merge")
 
         assert len(merge_task.dependencies) == 2
-        assert any('_code' in dep for dep in merge_task.dependencies)
-        assert any('_test' in dep for dep in merge_task.dependencies)
+        assert any("_code" in dep for dep in merge_task.dependencies)
+        assert any("_test" in dep for dep in merge_task.dependencies)
 
     def test_task_graph_forms_valid_dag(self, architect_agent):
         """Agent generates task graph as valid DAG (no cycles)."""
         strategy = Strategy(
-            priority='CRITICAL',
-            complexity=0.8,
-            engine='gpt-5',
-            decision='Critical fix'
+            priority="CRITICAL", complexity=0.8, engine="gpt-5", decision="Critical fix"
         )
 
         tasks = architect_agent._generate_task_graph(strategy, "test-dag")
@@ -414,29 +377,23 @@ class TestTaskGraphGeneration:
     def test_assigns_sub_agents_to_each_task(self, architect_agent):
         """Agent assigns appropriate sub-agent to each task."""
         strategy = Strategy(
-            priority='NORMAL',
-            complexity=0.3,
-            engine='codestral-22b',
-            decision='Task execution'
+            priority="NORMAL", complexity=0.3, engine="codestral-22b", decision="Task execution"
         )
 
         tasks = architect_agent._generate_task_graph(strategy, "test-agents")
 
-        code_task = next(t for t in tasks if t.task_type == 'code_generation')
-        test_task = next(t for t in tasks if t.task_type == 'test_generation')
-        merge_task = next(t for t in tasks if t.task_type == 'merge')
+        code_task = next(t for t in tasks if t.task_type == "code_generation")
+        test_task = next(t for t in tasks if t.task_type == "test_generation")
+        merge_task = next(t for t in tasks if t.task_type == "merge")
 
-        assert code_task.sub_agent == 'CodeWriter'
-        assert test_task.sub_agent == 'TestArchitect'
-        assert merge_task.sub_agent == 'ReleaseManager'
+        assert code_task.sub_agent == "CodeWriter"
+        assert test_task.sub_agent == "TestArchitect"
+        assert merge_task.sub_agent == "ReleaseManager"
 
     def test_includes_correlation_id_in_all_tasks(self, architect_agent):
         """Agent includes correlation_id in all generated tasks."""
         strategy = Strategy(
-            priority='HIGH',
-            complexity=0.6,
-            engine='codestral-22b',
-            decision='Task execution'
+            priority="HIGH", complexity=0.6, engine="codestral-22b", decision="Task execution"
         )
 
         correlation_id = "test-corr-xyz"
@@ -448,16 +405,13 @@ class TestTaskGraphGeneration:
     def test_preserves_priority_in_all_tasks(self, architect_agent):
         """Agent preserves signal priority in all generated tasks."""
         strategy = Strategy(
-            priority='CRITICAL',
-            complexity=0.8,
-            engine='codestral-22b',
-            decision='Task execution'
+            priority="CRITICAL", complexity=0.8, engine="codestral-22b", decision="Task execution"
         )
 
         tasks = architect_agent._generate_task_graph(strategy, "test-priority")
 
         for task in tasks:
-            assert task.priority == 'CRITICAL'
+            assert task.priority == "CRITICAL"
 
 
 # Self-verification tests (Step 8)
@@ -469,45 +423,45 @@ class TestSelfVerification:
         # Valid tasks must include both code and test (Article II compliance)
         valid_tasks = [
             TaskSpec(
-                task_id='task-1',
-                correlation_id='test-corr',
-                priority='NORMAL',
-                task_type='code_generation',
-                sub_agent='CodeWriter',
+                task_id="task-1",
+                correlation_id="test-corr",
+                priority="NORMAL",
+                task_type="code_generation",
+                sub_agent="CodeWriter",
                 spec={},
-                dependencies=[]
+                dependencies=[],
             ),
             TaskSpec(
-                task_id='task-1-test',
-                correlation_id='test-corr',
-                priority='NORMAL',
-                task_type='test_generation',
-                sub_agent='TestArchitect',
+                task_id="task-1-test",
+                correlation_id="test-corr",
+                priority="NORMAL",
+                task_type="test_generation",
+                sub_agent="TestArchitect",
                 spec={},
-                dependencies=[]
-            )
+                dependencies=[],
+            ),
         ]
 
         # Invalid tasks: empty sub_agent (also needs test task for Article II)
         invalid_tasks = [
             TaskSpec(
-                task_id='task-2',
-                correlation_id='test-corr',
-                priority='NORMAL',
-                task_type='code_generation',
-                sub_agent='',  # Empty sub_agent
+                task_id="task-2",
+                correlation_id="test-corr",
+                priority="NORMAL",
+                task_type="code_generation",
+                sub_agent="",  # Empty sub_agent
                 spec={},
-                dependencies=[]
+                dependencies=[],
             ),
             TaskSpec(
-                task_id='task-2-test',
-                correlation_id='test-corr',
-                priority='NORMAL',
-                task_type='test_generation',
-                sub_agent='TestArchitect',
+                task_id="task-2-test",
+                correlation_id="test-corr",
+                priority="NORMAL",
+                task_type="test_generation",
+                sub_agent="TestArchitect",
                 spec={},
-                dependencies=[]
-            )
+                dependencies=[],
+            ),
         ]
 
         assert architect_agent._self_verify_plan(valid_tasks) is True
@@ -520,13 +474,13 @@ class TestSelfVerification:
         # Code without tests - Article II violation
         invalid_tasks = [
             TaskSpec(
-                task_id='code-1',
-                correlation_id='test-corr',
-                priority='NORMAL',
-                task_type='code_generation',
-                sub_agent='CodeWriter',
+                task_id="code-1",
+                correlation_id="test-corr",
+                priority="NORMAL",
+                task_type="code_generation",
+                sub_agent="CodeWriter",
                 spec={},
-                dependencies=[]
+                dependencies=[],
             )
         ]
 
@@ -538,23 +492,23 @@ class TestSelfVerification:
         # Invalid tasks: nonexistent dependency (also needs test task for Article II)
         invalid_tasks = [
             TaskSpec(
-                task_id='task-1',
-                correlation_id='test-corr',
-                priority='NORMAL',
-                task_type='code_generation',
-                sub_agent='CodeWriter',
+                task_id="task-1",
+                correlation_id="test-corr",
+                priority="NORMAL",
+                task_type="code_generation",
+                sub_agent="CodeWriter",
                 spec={},
-                dependencies=['nonexistent-task']
+                dependencies=["nonexistent-task"],
             ),
             TaskSpec(
-                task_id='task-1-test',
-                correlation_id='test-corr',
-                priority='NORMAL',
-                task_type='test_generation',
-                sub_agent='TestArchitect',
+                task_id="task-1-test",
+                correlation_id="test-corr",
+                priority="NORMAL",
+                task_type="test_generation",
+                sub_agent="TestArchitect",
                 spec={},
-                dependencies=[]
-            )
+                dependencies=[],
+            ),
         ]
 
         with pytest.raises(ValueError, match="invalid dependency|has invalid dependency"):
@@ -564,32 +518,32 @@ class TestSelfVerification:
         """Agent accepts valid task graph with code + tests + merge."""
         valid_tasks = [
             TaskSpec(
-                task_id='code-1',
-                correlation_id='test-corr',
-                priority='NORMAL',
-                task_type='code_generation',
-                sub_agent='CodeWriter',
+                task_id="code-1",
+                correlation_id="test-corr",
+                priority="NORMAL",
+                task_type="code_generation",
+                sub_agent="CodeWriter",
                 spec={},
-                dependencies=[]
+                dependencies=[],
             ),
             TaskSpec(
-                task_id='test-1',
-                correlation_id='test-corr',
-                priority='NORMAL',
-                task_type='test_generation',
-                sub_agent='TestArchitect',
+                task_id="test-1",
+                correlation_id="test-corr",
+                priority="NORMAL",
+                task_type="test_generation",
+                sub_agent="TestArchitect",
                 spec={},
-                dependencies=[]
+                dependencies=[],
             ),
             TaskSpec(
-                task_id='merge-1',
-                correlation_id='test-corr',
-                priority='NORMAL',
-                task_type='merge',
-                sub_agent='ReleaseManager',
+                task_id="merge-1",
+                correlation_id="test-corr",
+                priority="NORMAL",
+                task_type="merge",
+                sub_agent="ReleaseManager",
                 spec={},
-                dependencies=['code-1', 'test-1']
-            )
+                dependencies=["code-1", "test-1"],
+            ),
         ]
 
         assert architect_agent._self_verify_plan(valid_tasks) is True
@@ -603,10 +557,7 @@ class TestStrategyExternalization:
         """Agent writes strategy to workspace file."""
         correlation_id = "test-extern-123"
         strategy = Strategy(
-            priority='NORMAL',
-            complexity=0.5,
-            engine='codestral-22b',
-            decision='Simple task'
+            priority="NORMAL", complexity=0.5, engine="codestral-22b", decision="Simple task"
         )
 
         architect_agent._externalize_strategy(correlation_id, strategy)
@@ -618,10 +569,7 @@ class TestStrategyExternalization:
         """Agent includes reasoning engine in externalized strategy."""
         correlation_id = "test-engine"
         strategy = Strategy(
-            priority='CRITICAL',
-            complexity=0.9,
-            engine='gpt-5',
-            decision='Complex task'
+            priority="CRITICAL", complexity=0.9, engine="gpt-5", decision="Complex task"
         )
 
         architect_agent._externalize_strategy(correlation_id, strategy)
@@ -629,16 +577,16 @@ class TestStrategyExternalization:
         workspace_file = architect_agent.workspace_dir / f"{correlation_id}_strategy.md"
         content = workspace_file.read_text()
 
-        assert 'gpt-5' in content
+        assert "gpt-5" in content
 
     def test_strategy_file_contains_complexity_score(self, architect_agent):
         """Agent includes complexity score in externalized strategy."""
         correlation_id = "test-complexity"
         strategy = Strategy(
-            priority='HIGH',
+            priority="HIGH",
             complexity=0.85,
-            engine='claude-4.1',
-            decision='Complex architectural task'
+            engine="claude-4.1",
+            decision="Complex architectural task",
         )
 
         architect_agent._externalize_strategy(correlation_id, strategy)
@@ -646,7 +594,7 @@ class TestStrategyExternalization:
         workspace_file = architect_agent.workspace_dir / f"{correlation_id}_strategy.md"
         content = workspace_file.read_text()
 
-        assert '0.85' in content
+        assert "0.85" in content
 
 
 # Signal processing cycle tests (Complete 10-step)
@@ -657,10 +605,10 @@ class TestCompleteProcessingCycle:
     async def test_processes_simple_signal_through_all_steps(self, architect_agent):
         """Agent processes simple signal through complete 10-step cycle."""
         signal = {
-            'priority': 'NORMAL',
-            'pattern': 'type_error',
-            'summary': 'Fix type error in auth module',
-            'data': {'keywords': ['bug']}
+            "priority": "NORMAL",
+            "pattern": "type_error",
+            "summary": "Fix type error in auth module",
+            "data": {"keywords": ["bug"]},
         }
 
         await architect_agent._process_signal(signal, signal.get("correlation_id", "test-corr"))
@@ -673,11 +621,11 @@ class TestCompleteProcessingCycle:
     async def test_processes_complex_signal_with_spec_generation(self, architect_agent):
         """Agent processes complex signal with spec + ADR generation."""
         signal = {
-            'priority': 'HIGH',
-            'pattern': 'architectural_improvement',
-            'summary': 'Migrate to event-driven architecture',
-            'data': {'keywords': ['architecture', 'refactor']},
-            'evidence_count': 5
+            "priority": "HIGH",
+            "pattern": "architectural_improvement",
+            "summary": "Migrate to event-driven architecture",
+            "data": {"keywords": ["architecture", "refactor"]},
+            "evidence_count": 5,
         }
 
         await architect_agent._process_signal(signal, signal.get("correlation_id", "test-corr"))
@@ -689,16 +637,17 @@ class TestCompleteProcessingCycle:
     async def test_publishes_tasks_to_execution_queue(self, architect_agent):
         """Agent publishes validated tasks to execution_queue."""
         signal = {
-            'priority': 'HIGH',
-            'pattern': 'critical_error',
-            'summary': 'Fix critical security vulnerability',
-            'data': {'keywords': ['security']}
+            "priority": "HIGH",
+            "pattern": "critical_error",
+            "summary": "Fix critical security vulnerability",
+            "data": {"keywords": ["security"]},
         }
 
         await architect_agent._process_signal(signal, signal.get("correlation_id", "test-corr"))
 
         # Collect published tasks
         tasks = []
+
         async def collect_tasks():
             async for msg in architect_agent.message_bus.subscribe("execution_queue"):
                 tasks.append(msg)
@@ -707,21 +656,21 @@ class TestCompleteProcessingCycle:
 
         try:
             await asyncio.wait_for(collect_tasks(), timeout=1.0)
-        except asyncio.TimeoutError:
+        except TimeoutError:
             pass
 
         assert len(tasks) >= 2
-        assert all('task_id' in task for task in tasks)
-        assert all('sub_agent' in task for task in tasks)
+        assert all("task_id" in task for task in tasks)
+        assert all("sub_agent" in task for task in tasks)
 
     @pytest.mark.asyncio
     async def test_cleans_workspace_after_processing(self, architect_agent):
         """Agent cleans workspace in RESET step."""
         signal = {
-            'priority': 'NORMAL',
-            'pattern': 'code_duplication',
-            'summary': 'Refactor duplicated code',
-            'data': {'keywords': []}
+            "priority": "NORMAL",
+            "pattern": "code_duplication",
+            "summary": "Refactor duplicated code",
+            "data": {"keywords": []},
         }
 
         correlation_id = signal.get("correlation_id", "test-corr")
@@ -744,16 +693,17 @@ class TestPriorityHandling:
     async def test_escalates_critical_signals_to_level_5(self, architect_agent):
         """Agent uses Level 5 model for CRITICAL priority signals."""
         signal = {
-            'priority': 'CRITICAL',
-            'pattern': 'system_failure',
-            'summary': 'Production system down',
-            'data': {'keywords': ['fatal']}
+            "priority": "CRITICAL",
+            "pattern": "system_failure",
+            "summary": "Production system down",
+            "data": {"keywords": ["fatal"]},
         }
 
         await architect_agent._process_signal(signal, signal.get("correlation_id", "test-corr"))
 
         # Verify execution queue has tasks with CRITICAL priority
         tasks = []
+
         async def collect_tasks():
             async for msg in architect_agent.message_bus.subscribe("execution_queue"):
                 tasks.append(msg)
@@ -762,25 +712,26 @@ class TestPriorityHandling:
 
         try:
             await asyncio.wait_for(collect_tasks(), timeout=1.0)
-        except asyncio.TimeoutError:
+        except TimeoutError:
             pass
 
         if tasks:
-            assert tasks[0]['priority'] == 'CRITICAL'
+            assert tasks[0]["priority"] == "CRITICAL"
 
     @pytest.mark.asyncio
     async def test_preserves_priority_in_published_tasks(self, architect_agent):
         """Agent preserves signal priority in all published tasks."""
         signal = {
-            'priority': 'HIGH',
-            'pattern': 'security_vulnerability',
-            'summary': 'SQL injection risk',
-            'data': {'keywords': ['security']}
+            "priority": "HIGH",
+            "pattern": "security_vulnerability",
+            "summary": "SQL injection risk",
+            "data": {"keywords": ["security"]},
         }
 
         await architect_agent._process_signal(signal, signal.get("correlation_id", "test-corr"))
 
         tasks = []
+
         async def collect_tasks():
             async for msg in architect_agent.message_bus.subscribe("execution_queue"):
                 tasks.append(msg)
@@ -789,17 +740,17 @@ class TestPriorityHandling:
 
         try:
             await asyncio.wait_for(collect_tasks(), timeout=1.0)
-        except asyncio.TimeoutError:
+        except TimeoutError:
             pass
 
         for task in tasks:
-            assert task['priority'] == 'HIGH'
+            assert task["priority"] == "HIGH"
 
     def test_converts_priority_to_message_bus_integer(self, architect_agent):
         """Agent converts priority strings to message bus integers."""
-        assert architect_agent._priority_to_int('CRITICAL') == 10
-        assert architect_agent._priority_to_int('HIGH') == 5
-        assert architect_agent._priority_to_int('NORMAL') == 0
+        assert architect_agent._priority_to_int("CRITICAL") == 10
+        assert architect_agent._priority_to_int("HIGH") == 5
+        assert architect_agent._priority_to_int("NORMAL") == 0
 
 
 # Stateless operation tests
@@ -810,17 +761,17 @@ class TestStatelessOperation:
     async def test_processes_multiple_signals_independently(self, architect_agent):
         """Agent processes signals independently with no state leakage."""
         signal_1 = {
-            'priority': 'HIGH',
-            'pattern': 'bug_fix',
-            'summary': 'Fix bug A',
-            'data': {'keywords': []}
+            "priority": "HIGH",
+            "pattern": "bug_fix",
+            "summary": "Fix bug A",
+            "data": {"keywords": []},
         }
 
         signal_2 = {
-            'priority': 'NORMAL',
-            'pattern': 'refactor',
-            'summary': 'Refactor module B',
-            'data': {'keywords': []}
+            "priority": "NORMAL",
+            "pattern": "refactor",
+            "summary": "Refactor module B",
+            "data": {"keywords": []},
         }
 
         # _process_signal requires correlation_id parameter
@@ -835,17 +786,17 @@ class TestStatelessOperation:
     async def test_workspace_cleaned_between_signals(self, architect_agent):
         """Agent cleans workspace between signal processing."""
         signal_1 = {
-            'priority': 'NORMAL',
-            'pattern': 'improvement',
-            'summary': 'First signal',
-            'data': {'keywords': []}
+            "priority": "NORMAL",
+            "pattern": "improvement",
+            "summary": "First signal",
+            "data": {"keywords": []},
         }
 
         signal_2 = {
-            'priority': 'NORMAL',
-            'pattern': 'improvement',
-            'summary': 'Second signal',
-            'data': {'keywords': []}
+            "priority": "NORMAL",
+            "pattern": "improvement",
+            "summary": "Second signal",
+            "data": {"keywords": []},
         }
 
         # Process first signal and cleanup (requires correlation_id)
@@ -879,10 +830,10 @@ class TestErrorHandlingAndResilience:
     async def test_handles_missing_correlation_id(self, architect_agent):
         """Agent generates correlation_id if not present in signal."""
         signal = {
-            'priority': 'NORMAL',
-            'pattern': 'improvement',
-            'summary': 'No correlation ID',
-            'data': {'keywords': []}
+            "priority": "NORMAL",
+            "pattern": "improvement",
+            "summary": "No correlation ID",
+            "data": {"keywords": []},
         }
 
         await architect_agent._process_signal(signal, signal.get("correlation_id", "test-corr"))
@@ -894,6 +845,7 @@ class TestErrorHandlingAndResilience:
     @pytest.mark.asyncio
     async def test_handles_processing_failure_gracefully(self, architect_agent):
         """Agent handles processing failures gracefully."""
+
         # Test with invalid pattern store to trigger error
         # Mock search_patterns (synchronous method used by _gather_context)
         def mock_search_error(*args, **kwargs):
@@ -902,16 +854,16 @@ class TestErrorHandlingAndResilience:
         architect_agent.pattern_store.search_patterns = mock_search_error
 
         signal = {
-            'priority': 'HIGH',
-            'pattern': 'improvement',
-            'summary': 'Task that will fail',
-            'data': {'keywords': []},
-            'correlation_id': 'test-fail-123'
+            "priority": "HIGH",
+            "pattern": "improvement",
+            "summary": "Task that will fail",
+            "data": {"keywords": []},
+            "correlation_id": "test-fail-123",
         }
 
         # Should raise but not crash agent completely
         with pytest.raises(Exception, match="Store unavailable"):
-            await architect_agent._process_signal(signal, signal['correlation_id'])
+            await architect_agent._process_signal(signal, signal["correlation_id"])
 
 
 # Integration tests
@@ -925,12 +877,12 @@ class TestEndToEndIntegration:
         await architect_agent.message_bus.publish(
             "improvement_queue",
             {
-                'priority': 'HIGH',
-                'pattern': 'critical_error',
-                'summary': 'Fix critical bug in payment processing',
-                'data': {'keywords': ['bug', 'critical']},
-                'correlation_id': 'test-e2e-123'
-            }
+                "priority": "HIGH",
+                "pattern": "critical_error",
+                "summary": "Fix critical bug in payment processing",
+                "data": {"keywords": ["bug", "critical"]},
+                "correlation_id": "test-e2e-123",
+            },
         )
 
         # Start agent briefly
@@ -955,12 +907,12 @@ class TestEndToEndIntegration:
         await architect_agent.message_bus.publish(
             "improvement_queue",
             {
-                'priority': 'NORMAL',
-                'pattern': 'refactor',
-                'summary': 'Refactor auth module',
-                'data': {'keywords': []},
-                'correlation_id': correlation_id
-            }
+                "priority": "NORMAL",
+                "pattern": "refactor",
+                "summary": "Refactor auth module",
+                "data": {"keywords": []},
+                "correlation_id": correlation_id,
+            },
         )
 
         run_task = asyncio.create_task(architect_agent.run())
@@ -994,6 +946,6 @@ class TestAgentStatistics:
         stats = architect_agent.get_stats()
 
         # Check expected stat counters exist
-        assert 'signals_processed' in stats
-        assert 'tasks_created' in stats
-        assert stats['signals_processed'] == 0  # Freshly initialized
+        assert "signals_processed" in stats
+        assert "tasks_created" in stats
+        assert stats["signals_processed"] == 0  # Freshly initialized

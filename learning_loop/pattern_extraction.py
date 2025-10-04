@@ -12,17 +12,17 @@ Constitutional Compliance:
 - Article V: Spec-driven implementation following SPEC-LEARNING-001
 """
 
-import re
 import json
+import re
 import uuid
+from dataclasses import dataclass
 from datetime import datetime
-from typing import Dict, List, Optional, Any, Union, cast
-from shared.type_definitions.json import JSONValue
-from dataclasses import dataclass, asdict
 from pathlib import Path
+from typing import Any, cast
 
-from pattern_intelligence import PatternStore, CodingPattern
-from core.telemetry import get_telemetry, emit
+from core.telemetry import emit, get_telemetry
+from pattern_intelligence import CodingPattern, PatternStore
+from shared.type_definitions.json import JSONValue
 
 
 def _safe_get_str(data: JSONValue, key: str, default: str = "") -> str:
@@ -34,7 +34,7 @@ def _safe_get_str(data: JSONValue, key: str, default: str = "") -> str:
     return default
 
 
-def _safe_get_list(data: JSONValue, key: str, default: Optional[List[str]] = None) -> List[str]:
+def _safe_get_list(data: JSONValue, key: str, default: list[str] | None = None) -> list[str]:
     """Safely extract list of strings from JSONValue dict with type checking."""
     if default is None:
         default = []
@@ -74,7 +74,9 @@ def _safe_get_bool(data: JSONValue, key: str, default: bool = False) -> bool:
     return default
 
 
-def _safe_get_dict(data: JSONValue, key: str, default: Optional[Dict[str, JSONValue]] = None) -> Dict[str, JSONValue]:
+def _safe_get_dict(
+    data: JSONValue, key: str, default: dict[str, JSONValue] | None = None
+) -> dict[str, JSONValue]:
     """Safely extract dict from JSONValue dict with type checking."""
     if default is None:
         default = {}
@@ -88,28 +90,24 @@ def _safe_get_dict(data: JSONValue, key: str, default: Optional[Dict[str, JSONVa
 @dataclass
 class Trigger:
     """Base class for pattern triggers."""
-    type: str
-    metadata: Dict[str, JSONValue]
 
-    def to_dict(self) -> Dict[str, JSONValue]:
+    type: str
+    metadata: dict[str, JSONValue]
+
+    def to_dict(self) -> dict[str, JSONValue]:
         """Convert trigger to dictionary for serialization."""
-        return {
-            "type": self.type,
-            "metadata": self.metadata
-        }
+        return {"type": self.type, "metadata": self.metadata}
 
     @classmethod
-    def from_dict(cls, data: Dict[str, JSONValue]) -> "Trigger":
+    def from_dict(cls, data: dict[str, JSONValue]) -> "Trigger":
         """Create trigger from dictionary."""
-        return cls(
-            type=_safe_get_str(data, "type"),
-            metadata=_safe_get_dict(data, "metadata")
-        )
+        return cls(type=_safe_get_str(data, "type"), metadata=_safe_get_dict(data, "metadata"))
 
 
 @dataclass
 class ErrorTrigger(Trigger):
     """Trigger based on specific error patterns."""
+
     error_type: str
     error_pattern: str
 
@@ -117,38 +115,31 @@ class ErrorTrigger(Trigger):
         self.error_type = error_type
         self.error_pattern = error_pattern
         super().__init__(
-            type="error",
-            metadata={
-                "error_type": error_type,
-                "error_pattern": error_pattern
-            }
+            type="error", metadata={"error_type": error_type, "error_pattern": error_pattern}
         )
 
 
 @dataclass
 class TaskTrigger(Trigger):
     """Trigger based on task description keywords."""
-    keywords: List[str]
 
-    def __init__(self, keywords: List[str]):
+    keywords: list[str]
+
+    def __init__(self, keywords: list[str]):
         self.keywords = keywords
-        super().__init__(
-            type="task",
-            metadata={
-                "keywords": cast(JSONValue, keywords)
-            }
-        )
+        super().__init__(type="task", metadata={"keywords": cast(JSONValue, keywords)})
 
 
 @dataclass
 class Condition:
     """Represents a precondition or postcondition."""
+
     type: str  # "file_exists", "test_passes", "error_absent", etc.
     target: str  # file path, test name, etc.
     value: Any  # expected value or condition details
     operator: str = "equals"  # "equals", "contains", "matches", etc.
 
-    def evaluate(self, context: Dict[str, JSONValue]) -> bool:
+    def evaluate(self, context: dict[str, JSONValue]) -> bool:
         """Evaluate this condition against a context."""
         if self.type == "file_exists":
             return Path(self.target).exists()
@@ -176,34 +167,40 @@ class Condition:
 @dataclass
 class Action:
     """Represents a single action in a pattern."""
-    tool: str
-    parameters: Dict[str, JSONValue]
-    output_pattern: Optional[str] = None
-    timeout_seconds: Optional[int] = None
 
-    def to_dict(self) -> Dict[str, JSONValue]:
+    tool: str
+    parameters: dict[str, JSONValue]
+    output_pattern: str | None = None
+    timeout_seconds: int | None = None
+
+    def to_dict(self) -> dict[str, JSONValue]:
         """Convert action to dictionary for serialization."""
         return {
             "tool": self.tool,
             "parameters": self.parameters,
             "output_pattern": self.output_pattern,
-            "timeout_seconds": self.timeout_seconds
+            "timeout_seconds": self.timeout_seconds,
         }
 
     @classmethod
-    def from_dict(cls, data: Dict[str, JSONValue]) -> "Action":
+    def from_dict(cls, data: dict[str, JSONValue]) -> "Action":
         """Create action from dictionary."""
         return cls(
             tool=_safe_get_str(data, "tool"),
             parameters=_safe_get_dict(data, "parameters"),
-            output_pattern=_safe_get_str(data, "output_pattern") if "output_pattern" in data else None,
-            timeout_seconds=_safe_get_int(data, "timeout_seconds") if "timeout_seconds" in data else None
+            output_pattern=_safe_get_str(data, "output_pattern")
+            if "output_pattern" in data
+            else None,
+            timeout_seconds=_safe_get_int(data, "timeout_seconds")
+            if "timeout_seconds" in data
+            else None,
         )
 
 
 @dataclass
 class PatternMetadata:
     """Enhanced metadata for patterns per spec."""
+
     confidence: float  # 0.0 to 1.0
     usage_count: int
     success_count: int
@@ -211,9 +208,9 @@ class PatternMetadata:
     last_used: datetime
     created_at: datetime
     source: str  # "learned", "manual", "imported"
-    tags: List[str]
+    tags: list[str]
 
-    def to_dict(self) -> Dict[str, JSONValue]:
+    def to_dict(self) -> dict[str, JSONValue]:
         """Convert metadata to dictionary."""
         return {
             "confidence": self.confidence,
@@ -223,11 +220,11 @@ class PatternMetadata:
             "last_used": self.last_used.isoformat(),
             "created_at": self.created_at.isoformat(),
             "source": self.source,
-            "tags": cast(JSONValue, self.tags)
+            "tags": cast(JSONValue, self.tags),
         }
 
     @classmethod
-    def from_dict(cls, data: Dict[str, JSONValue]) -> "PatternMetadata":
+    def from_dict(cls, data: dict[str, JSONValue]) -> "PatternMetadata":
         """Create metadata from dictionary."""
         return cls(
             confidence=_safe_get_float(data, "confidence"),
@@ -237,23 +234,31 @@ class PatternMetadata:
             last_used=datetime.fromisoformat(_safe_get_str(data, "last_used")),
             created_at=datetime.fromisoformat(_safe_get_str(data, "created_at")),
             source=_safe_get_str(data, "source"),
-            tags=_safe_get_list(data, "tags")
+            tags=_safe_get_list(data, "tags"),
         )
 
 
 @dataclass
 class EnhancedPattern:
     """Enhanced pattern structure per SPEC-LEARNING-001."""
+
     id: str
     trigger: Trigger
-    preconditions: List[Condition]
-    actions: List[Action]
-    postconditions: List[Condition]
+    preconditions: list[Condition]
+    actions: list[Action]
+    postconditions: list[Condition]
     metadata: PatternMetadata
 
     def to_coding_pattern(self) -> CodingPattern:
         """Convert to CodingPattern format."""
-        from pattern_intelligence.coding_pattern import ProblemContext, SolutionApproach, EffectivenessMetric, PatternMetadata as CPMetadata
+        from pattern_intelligence.coding_pattern import (
+            EffectivenessMetric,
+            ProblemContext,
+            SolutionApproach,
+        )
+        from pattern_intelligence.coding_pattern import (
+            PatternMetadata as CPMetadata,
+        )
 
         # Get pattern representation based on trigger type
         trigger_pattern = self._get_trigger_pattern()
@@ -265,13 +270,16 @@ class EnhancedPattern:
             constraints=[self._condition_to_string(pc) for pc in self.preconditions],
             symptoms=[],
             scale=None,
-            urgency="medium"
+            urgency="medium",
         )
 
         # Build SolutionApproach
         import json
+
         # Extract tools from actions
-        tools_list = [action.tool for action in self.actions if hasattr(action, 'tool') and action.tool]
+        tools_list = [
+            action.tool for action in self.actions if hasattr(action, "tool") and action.tool
+        ]
         solution = SolutionApproach(
             approach=f"Enhanced pattern for {self.trigger.type}",
             implementation=json.dumps([action.to_dict() for action in self.actions]),
@@ -279,7 +287,7 @@ class EnhancedPattern:
             reasoning="Enhanced pattern extracted from learning loop",
             code_examples=[],
             dependencies=[],
-            alternatives=[]
+            alternatives=[],
         )
 
         # Build EffectivenessMetric
@@ -291,7 +299,7 @@ class EnhancedPattern:
             technical_debt=None,
             adoption_rate=self.metadata.usage_count,
             longevity=None,
-            confidence=self.metadata.confidence
+            confidence=self.metadata.confidence,
         )
 
         # Build PatternMetadata
@@ -304,15 +312,10 @@ class EnhancedPattern:
             application_count=self.metadata.usage_count,
             validation_status="validated",
             tags=self.metadata.tags,
-            related_patterns=[]
+            related_patterns=[],
         )
 
-        return CodingPattern(
-            context=context,
-            solution=solution,
-            outcome=outcome,
-            metadata=metadata
-        )
+        return CodingPattern(context=context, solution=solution, outcome=outcome, metadata=metadata)
 
     def _get_trigger_pattern(self) -> str:
         """Get pattern representation based on trigger type."""
@@ -320,10 +323,10 @@ class EnhancedPattern:
             return self.trigger.error_pattern
         elif isinstance(self.trigger, TaskTrigger):
             return ", ".join(self.trigger.keywords)
-        elif hasattr(self.trigger, 'pattern'):
+        elif hasattr(self.trigger, "pattern"):
             return self.trigger.pattern  # type: ignore
         else:
-            return str(self.trigger.metadata.get('pattern', ''))
+            return str(self.trigger.metadata.get("pattern", ""))
 
     def _condition_to_string(self, condition: Condition) -> str:
         """Convert a Condition object to a string description."""
@@ -335,8 +338,7 @@ class EnhancedPattern:
         # Simple conversion - create basic trigger from domain
         if pattern.context.domain == "error":
             trigger = ErrorTrigger(
-                error_type=pattern.context.description,
-                error_pattern=pattern.context.description
+                error_type=pattern.context.description, error_pattern=pattern.context.description
             )
         else:
             trigger = TaskTrigger(keywords=[pattern.context.domain])
@@ -344,12 +346,9 @@ class EnhancedPattern:
         # Convert constraints to preconditions
         preconditions = []
         for constraint in pattern.context.constraints:
-            preconditions.append(Condition(
-                type="constraint",
-                target="system",
-                value=constraint,
-                operator="equals"
-            ))
+            preconditions.append(
+                Condition(type="constraint", target="system", value=constraint, operator="equals")
+            )
 
         # Convert postconditions (empty for now)
         postconditions = []
@@ -364,22 +363,33 @@ class EnhancedPattern:
                         actions.append(Action.from_dict(action_data))
         except (json.JSONDecodeError, TypeError):
             # Fallback - create a simple action
-            actions = [Action(
-                type="implementation",
-                parameters={"approach": pattern.solution.approach},
-                description=pattern.solution.reasoning
-            )]
+            actions = [
+                Action(
+                    type="implementation",
+                    parameters={"approach": pattern.solution.approach},
+                    description=pattern.solution.reasoning,
+                )
+            ]
 
         # Reconstruct metadata
         pattern_metadata = PatternMetadata(
             confidence=pattern.outcome.confidence or pattern.outcome.success_rate,
             usage_count=pattern.outcome.adoption_rate or 0,
-            success_count=int((pattern.outcome.confidence or pattern.outcome.success_rate) * (pattern.outcome.adoption_rate or 0)),
-            failure_count=(pattern.outcome.adoption_rate or 0) - int((pattern.outcome.confidence or pattern.outcome.success_rate) * (pattern.outcome.adoption_rate or 0)),
-            last_used=datetime.fromisoformat(pattern.metadata.last_applied) if pattern.metadata.last_applied else datetime.fromisoformat(pattern.metadata.discovered_timestamp),
+            success_count=int(
+                (pattern.outcome.confidence or pattern.outcome.success_rate)
+                * (pattern.outcome.adoption_rate or 0)
+            ),
+            failure_count=(pattern.outcome.adoption_rate or 0)
+            - int(
+                (pattern.outcome.confidence or pattern.outcome.success_rate)
+                * (pattern.outcome.adoption_rate or 0)
+            ),
+            last_used=datetime.fromisoformat(pattern.metadata.last_applied)
+            if pattern.metadata.last_applied
+            else datetime.fromisoformat(pattern.metadata.discovered_timestamp),
             created_at=datetime.fromisoformat(pattern.metadata.discovered_timestamp),
             source="pattern_intelligence",
-            tags=pattern.metadata.tags
+            tags=pattern.metadata.tags,
         )
 
         return cls(
@@ -388,18 +398,19 @@ class EnhancedPattern:
             preconditions=preconditions,
             actions=actions,
             postconditions=postconditions,
-            metadata=pattern_metadata
+            metadata=pattern_metadata,
         )
 
 
 @dataclass
 class Operation:
     """Represents an operation that can be learned from."""
+
     id: str
-    task_description: Optional[str]
-    initial_error: Optional[Dict[str, JSONValue]]
-    tool_calls: List[Dict[str, JSONValue]]
-    final_state: Dict[str, JSONValue]
+    task_description: str | None
+    initial_error: dict[str, JSONValue] | None
+    tool_calls: list[dict[str, JSONValue]]
+    final_state: dict[str, JSONValue]
     success: bool
     duration_seconds: float
     timestamp: datetime
@@ -418,24 +429,22 @@ class Operation:
 @dataclass
 class FailureReason:
     """Base class for failure analysis."""
+
     type: str
     description: str
-    details: Dict[str, JSONValue]
+    details: dict[str, JSONValue]
 
 
 class FailureAnalysisWithTests(FailureReason):
     """Failure due to test failures."""
 
-    def __init__(self, failed_tests: List[str], root_cause: str):
+    def __init__(self, failed_tests: list[str], root_cause: str):
         self.failed_tests = failed_tests
         self.root_cause = root_cause
         super().__init__(
             type="test_failure",
             description=f"Tests failed: {', '.join(failed_tests[:3])}",
-            details={
-                "failed_tests": cast(JSONValue, failed_tests),
-                "root_cause": root_cause
-            }
+            details={"failed_tests": cast(JSONValue, failed_tests), "root_cause": root_cause},
         )
 
 
@@ -448,21 +457,19 @@ class ExecutionError(FailureReason):
         super().__init__(
             type="execution_error",
             description=f"{error_type}: {error_message}",
-            details={
-                "error_type": error_type,
-                "error_message": error_message
-            }
+            details={"error_type": error_type, "error_message": error_message},
         )
 
 
 @dataclass
 class AntiPattern:
     """Represents a learned anti-pattern from failures."""
+
     id: str
     trigger: Trigger
-    failed_approach: List[Action]
+    failed_approach: list[Action]
     failure_reason: FailureReason
-    alternative_approaches: List[str]
+    alternative_approaches: list[str]
     severity: str  # "low", "medium", "high"
 
 
@@ -473,7 +480,7 @@ class PatternExtractor:
     Implements SPEC-LEARNING-001 Section 2.1: Success Pattern Extraction.
     """
 
-    def __init__(self, pattern_store: Optional[PatternStore] = None):
+    def __init__(self, pattern_store: PatternStore | None = None):
         """
         Initialize pattern extractor.
 
@@ -524,7 +531,7 @@ class PatternExtractor:
             last_used=datetime.now(),
             created_at=datetime.now(),
             source="learned",
-            tags=self._generate_tags(operation, trigger)
+            tags=self._generate_tags(operation, trigger),
         )
 
         pattern = EnhancedPattern(
@@ -533,7 +540,7 @@ class PatternExtractor:
             preconditions=preconditions,
             actions=actions,
             postconditions=postconditions,
-            metadata=metadata
+            metadata=metadata,
         )
 
         # Store in pattern store
@@ -541,12 +548,15 @@ class PatternExtractor:
         self.pattern_store.store_pattern(existing_pattern)
 
         # Emit telemetry
-        emit("pattern_extracted", {
-            "pattern_id": pattern_id,
-            "trigger_type": trigger.type,
-            "action_count": len(actions),
-            "confidence": metadata.confidence
-        })
+        emit(
+            "pattern_extracted",
+            {
+                "pattern_id": pattern_id,
+                "trigger_type": trigger.type,
+                "action_count": len(actions),
+                "confidence": metadata.confidence,
+            },
+        )
 
         return pattern
 
@@ -566,10 +576,7 @@ class PatternExtractor:
             else:
                 error_pattern = f"{error_type}.*"
 
-            return ErrorTrigger(
-                error_type=error_type,
-                error_pattern=error_pattern
-            )
+            return ErrorTrigger(error_type=error_type, error_pattern=error_pattern)
 
         elif operation.task_description:
             keywords = self._extract_keywords(operation.task_description)
@@ -579,7 +586,7 @@ class PatternExtractor:
             # Default trigger
             return TaskTrigger(keywords=["general"])
 
-    def _extract_keywords(self, text: str) -> List[str]:
+    def _extract_keywords(self, text: str) -> list[str]:
         """Extract meaningful keywords from task description."""
         # Common programming keywords and patterns
         keywords = []
@@ -592,7 +599,16 @@ class PatternExtractor:
                 keywords.append(keyword)
 
         # Action keywords
-        action_keywords = ["fix", "add", "remove", "update", "create", "delete", "modify", "refactor"]
+        action_keywords = [
+            "fix",
+            "add",
+            "remove",
+            "update",
+            "create",
+            "delete",
+            "modify",
+            "refactor",
+        ]
         for keyword in action_keywords:
             if keyword in text_lower:
                 keywords.append(keyword)
@@ -605,19 +621,21 @@ class PatternExtractor:
 
         return keywords if keywords else ["general"]
 
-    def _extract_preconditions(self, operation: Operation) -> List[Condition]:
+    def _extract_preconditions(self, operation: Operation) -> list[Condition]:
         """Extract preconditions that must be true before applying pattern."""
         conditions = []
 
         # If there was an error, add condition to check for its presence
         if operation.initial_error:
             error_type = _safe_get_str(operation.initial_error, "type")
-            conditions.append(Condition(
-                type="error_present",
-                target="current_error_type",
-                value=error_type,
-                operator="equals"
-            ))
+            conditions.append(
+                Condition(
+                    type="error_present",
+                    target="current_error_type",
+                    value=error_type,
+                    operator="equals",
+                )
+            )
 
         # Extract file existence preconditions from tool calls
         for tool_call in operation.tool_calls:
@@ -626,16 +644,15 @@ class PatternExtractor:
                 parameters = _safe_get_dict(tool_call, "parameters")
                 file_path = _safe_get_str(parameters, "file_path")
                 if file_path:
-                    conditions.append(Condition(
-                        type="file_exists",
-                        target=file_path,
-                        value=True,
-                        operator="equals"
-                    ))
+                    conditions.append(
+                        Condition(
+                            type="file_exists", target=file_path, value=True, operator="equals"
+                        )
+                    )
 
         return conditions
 
-    def _extract_action_sequence(self, operation: Operation) -> List[Action]:
+    def _extract_action_sequence(self, operation: Operation) -> list[Action]:
         """Extract the sequence of actions that led to success."""
         actions = []
 
@@ -654,16 +671,18 @@ class PatternExtractor:
                 tool=tool_name,
                 parameters=generalized_params,
                 output_pattern=output_pattern,
-                timeout_seconds=_safe_get_int(tool_call, "timeout") if "timeout" in tool_call else None
+                timeout_seconds=_safe_get_int(tool_call, "timeout")
+                if "timeout" in tool_call
+                else None,
             )
 
             actions.append(action)
 
         return actions
 
-    def _generalize_parameters(self, parameters: Dict[str, JSONValue]) -> Dict[str, JSONValue]:
+    def _generalize_parameters(self, parameters: dict[str, JSONValue]) -> dict[str, JSONValue]:
         """Generalize parameters to make them reusable."""
-        generalized: Dict[str, JSONValue] = {}
+        generalized: dict[str, JSONValue] = {}
 
         for key, value in parameters.items():
             if key == "file_path" and isinstance(value, str):
@@ -691,7 +710,7 @@ class PatternExtractor:
 
         return generalized
 
-    def _extract_output_pattern(self, output: str) -> Optional[str]:
+    def _extract_output_pattern(self, output: str) -> str | None:
         """Extract pattern from tool output for validation."""
         if not output:
             return None
@@ -703,7 +722,7 @@ class PatternExtractor:
             (r"All tests passed", "all_tests_passed"),
             (r"File written successfully", "file_written"),
             (r"\d+ passed", "test_passed"),
-            (r"✓|✅|\bSUCCESS\b|\bPASS\b|\bOK\b", "success_indicator")
+            (r"✓|✅|\bSUCCESS\b|\bPASS\b|\bOK\b", "success_indicator"),
         ]
 
         for pattern, pattern_type in success_patterns:
@@ -712,53 +731,48 @@ class PatternExtractor:
 
         return None
 
-    def _extract_postconditions(self, operation: Operation) -> List[Condition]:
+    def _extract_postconditions(self, operation: Operation) -> list[Condition]:
         """Extract postconditions that should be true after applying pattern."""
         conditions = []
 
         # Success condition
-        conditions.append(Condition(
-            type="operation_success",
-            target="result",
-            value=True,
-            operator="equals"
-        ))
+        conditions.append(
+            Condition(type="operation_success", target="result", value=True, operator="equals")
+        )
 
         # Test passing condition if tests were involved (check both tool names and command content)
-        test_involved = (
-            any("test" in _safe_get_str(tool_call, "tool").lower() for tool_call in operation.tool_calls) or
-            any("pytest" in str(_safe_get_dict(tool_call, "parameters")).lower() for tool_call in operation.tool_calls)
+        test_involved = any(
+            "test" in _safe_get_str(tool_call, "tool").lower() for tool_call in operation.tool_calls
+        ) or any(
+            "pytest" in str(_safe_get_dict(tool_call, "parameters")).lower()
+            for tool_call in operation.tool_calls
         )
 
         if test_involved:
-            conditions.append(Condition(
-                type="test_passes",
-                target="test_results",
-                value=True,
-                operator="equals"
-            ))
+            conditions.append(
+                Condition(type="test_passes", target="test_results", value=True, operator="equals")
+            )
 
         # Error absence condition if we started with an error
         if operation.initial_error:
             error_type = _safe_get_str(operation.initial_error, "type")
-            conditions.append(Condition(
-                type="error_absent",
-                target="errors",
-                value=error_type,
-                operator="not_contains"
-            ))
+            conditions.append(
+                Condition(
+                    type="error_absent", target="errors", value=error_type, operator="not_contains"
+                )
+            )
 
         return conditions
 
-    def _generate_tags(self, operation: Operation, trigger: Trigger) -> List[str]:
+    def _generate_tags(self, operation: Operation, trigger: Trigger) -> list[str]:
         """Generate tags for pattern categorization."""
         tags = ["auto_learned", "pattern_extraction"]
 
         # Add trigger-based tags
         tags.append(trigger.type)
-        if hasattr(trigger, 'error_type'):
+        if hasattr(trigger, "error_type"):
             tags.append(f"error_{trigger.error_type.lower()}")
-        elif hasattr(trigger, 'keywords'):
+        elif hasattr(trigger, "keywords"):
             tags.extend(trigger.keywords)
 
         # Add tool-based tags
@@ -783,7 +797,7 @@ class FailureLearner:
     Implements SPEC-LEARNING-001 Section 2.2: Failure Pattern Learning.
     """
 
-    def __init__(self, pattern_store: Optional[PatternStore] = None):
+    def __init__(self, pattern_store: PatternStore | None = None):
         """
         Initialize failure learner.
 
@@ -822,11 +836,18 @@ class FailureLearner:
             failed_approach=failed_approach,
             failure_reason=failure_reason,
             alternative_approaches=alternatives,
-            severity=severity
+            severity=severity,
         )
 
         # Store as negative pattern in pattern store
-        from pattern_intelligence.coding_pattern import ProblemContext, SolutionApproach, EffectivenessMetric, PatternMetadata as CPMetadata
+        from pattern_intelligence.coding_pattern import (
+            EffectivenessMetric,
+            ProblemContext,
+            SolutionApproach,
+        )
+        from pattern_intelligence.coding_pattern import (
+            PatternMetadata as CPMetadata,
+        )
 
         # Build anti-pattern as CodingPattern
         context = ProblemContext(
@@ -835,7 +856,7 @@ class FailureLearner:
             constraints=[],
             symptoms=[str(failure_reason.details)],
             scale=None,
-            urgency=severity
+            urgency=severity,
         )
 
         solution = SolutionApproach(
@@ -845,7 +866,7 @@ class FailureLearner:
             reasoning=f"Failed approach leads to: {failure_reason.details}",
             code_examples=[],
             dependencies=[],
-            alternatives=alternatives
+            alternatives=alternatives,
         )
 
         outcome = EffectivenessMetric(
@@ -856,7 +877,7 @@ class FailureLearner:
             technical_debt="high",
             adoption_rate=0,
             longevity=None,
-            confidence=1.0  # High confidence it's bad
+            confidence=1.0,  # High confidence it's bad
         )
 
         metadata = CPMetadata(
@@ -868,25 +889,25 @@ class FailureLearner:
             application_count=0,
             validation_status="validated",
             tags=self._generate_failure_tags(operation, failure_reason),
-            related_patterns=[]
+            related_patterns=[],
         )
 
         negative_pattern = CodingPattern(
-            context=context,
-            solution=solution,
-            outcome=outcome,
-            metadata=metadata
+            context=context, solution=solution, outcome=outcome, metadata=metadata
         )
 
         self.pattern_store.store_pattern(negative_pattern)
 
         # Emit telemetry
-        emit("antipattern_learned", {
-            "antipattern_id": antipattern_id,
-            "trigger_type": trigger.type,
-            "failure_type": failure_reason.type,
-            "severity": severity
-        })
+        emit(
+            "antipattern_learned",
+            {
+                "antipattern_id": antipattern_id,
+                "trigger_type": trigger.type,
+                "failure_type": failure_reason.type,
+                "severity": severity,
+            },
+        )
 
         return antipattern
 
@@ -896,7 +917,7 @@ class FailureLearner:
         extractor = PatternExtractor(self.pattern_store)
         return extractor._identify_trigger(operation)
 
-    def _extract_failed_actions(self, operation: Operation) -> List[Action]:
+    def _extract_failed_actions(self, operation: Operation) -> list[Action]:
         """Extract the sequence of actions that led to failure."""
         actions = []
 
@@ -905,7 +926,9 @@ class FailureLearner:
                 tool=_safe_get_str(tool_call, "tool", "unknown"),
                 parameters=_safe_get_dict(tool_call, "parameters"),
                 output_pattern=None,  # Don't generalize for anti-patterns
-                timeout_seconds=_safe_get_int(tool_call, "timeout") if "timeout" in tool_call else None
+                timeout_seconds=_safe_get_int(tool_call, "timeout")
+                if "timeout" in tool_call
+                else None,
             )
             actions.append(action)
 
@@ -921,27 +944,24 @@ class FailureLearner:
             failed_tests = _safe_get_list(test_results, "failures")
             root_cause = self._analyze_test_failures(test_results)
 
-            return FailureAnalysisWithTests(
-                failed_tests=failed_tests,
-                root_cause=root_cause
-            )
+            return FailureAnalysisWithTests(failed_tests=failed_tests, root_cause=root_cause)
 
         # Check for execution errors
         error = _safe_get_dict(final_state, "error")
         if error:
             return ExecutionError(
                 error_type=_safe_get_str(error, "type", "Unknown"),
-                error_message=_safe_get_str(error, "message")
+                error_message=_safe_get_str(error, "message"),
             )
 
         # Generic failure reason
         return FailureReason(
             type="unknown_failure",
             description="Operation failed for unknown reasons",
-            details=final_state
+            details=final_state,
         )
 
-    def _analyze_test_failures(self, test_results: Dict[str, JSONValue]) -> str:
+    def _analyze_test_failures(self, test_results: dict[str, JSONValue]) -> str:
         """Analyze test failures to determine root cause."""
         failures = _safe_get_list(test_results, "failures")
 
@@ -964,47 +984,57 @@ class FailureLearner:
         else:
             return f"Multiple test failures: {len(failures)} tests failed"
 
-    def _suggest_alternatives(self, operation: Operation) -> List[str]:
+    def _suggest_alternatives(self, operation: Operation) -> list[str]:
         """Suggest alternative approaches that might work better."""
         alternatives = []
 
         failure_reason = self._analyze_failure(operation)
 
         if failure_reason.type == "test_failure":
-            alternatives.extend([
-                "Add comprehensive null checks before attribute access",
-                "Validate input parameters at function entry",
-                "Use defensive programming patterns",
-                "Add proper error handling with try-catch blocks"
-            ])
+            alternatives.extend(
+                [
+                    "Add comprehensive null checks before attribute access",
+                    "Validate input parameters at function entry",
+                    "Use defensive programming patterns",
+                    "Add proper error handling with try-catch blocks",
+                ]
+            )
         elif failure_reason.type == "execution_error":
-            alternatives.extend([
-                "Check file permissions and accessibility",
-                "Validate tool parameters before execution",
-                "Use more robust error handling",
-                "Add timeout and retry mechanisms"
-            ])
+            alternatives.extend(
+                [
+                    "Check file permissions and accessibility",
+                    "Validate tool parameters before execution",
+                    "Use more robust error handling",
+                    "Add timeout and retry mechanisms",
+                ]
+            )
 
         # Add tool-specific alternatives
         tools_used = {_safe_get_str(tool_call, "tool") for tool_call in operation.tool_calls}
 
         if "Edit" in tools_used:
-            alternatives.extend([
-                "Use MultiEdit for multiple related changes",
-                "Validate file content before editing",
-                "Create backup before making changes"
-            ])
+            alternatives.extend(
+                [
+                    "Use MultiEdit for multiple related changes",
+                    "Validate file content before editing",
+                    "Create backup before making changes",
+                ]
+            )
 
         if "Bash" in tools_used:
-            alternatives.extend([
-                "Use background execution for long-running commands",
-                "Add proper timeout handling",
-                "Check command exit codes"
-            ])
+            alternatives.extend(
+                [
+                    "Use background execution for long-running commands",
+                    "Add proper timeout handling",
+                    "Check command exit codes",
+                ]
+            )
 
         return alternatives
 
-    def _generate_failure_tags(self, operation: Operation, failure_reason: FailureReason) -> List[str]:
+    def _generate_failure_tags(
+        self, operation: Operation, failure_reason: FailureReason
+    ) -> list[str]:
         """Generate tags for anti-pattern categorization."""
         tags = ["anti_pattern", "failure_learning", failure_reason.type]
 

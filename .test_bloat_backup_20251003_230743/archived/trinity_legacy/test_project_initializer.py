@@ -20,7 +20,9 @@ This module is no longer part of the production codebase.
 
 import pytest
 
-pytestmark = pytest.mark.skip(reason="Module deleted in Trinity clean break - project_initializer removed from codebase")
+pytestmark = pytest.mark.skip(
+    reason="Module deleted in Trinity clean break - project_initializer removed from codebase"
+)
 
 # Imports commented out - module deleted
 # from datetime import datetime
@@ -45,7 +47,7 @@ class TestQuestionGeneration:
             description="User mentioned writing coaching book",
             confidence=0.85,
             evidence=["coaching book", "entrepreneurs"],
-            detected_at=datetime.now()
+            detected_at=datetime.now(),
         )
 
         questions = await generate_questions_for_pattern(pattern)
@@ -64,7 +66,7 @@ class TestQuestionGeneration:
             description="Workflow improvement opportunity",
             confidence=0.75,
             evidence=["slow process"],
-            detected_at=datetime.now()
+            detected_at=datetime.now(),
         )
 
         questions = await generate_questions_for_pattern(pattern)
@@ -85,7 +87,7 @@ class TestQuestionGeneration:
             description="Decision needed",
             confidence=0.80,
             evidence=["which approach"],
-            detected_at=datetime.now()
+            detected_at=datetime.now(),
         )
 
         questions = await generate_questions_for_pattern(pattern)
@@ -103,7 +105,7 @@ class TestQuestionGeneration:
             description="Book writing project",
             confidence=0.90,
             evidence=["write a book"],
-            detected_at=datetime.now()
+            detected_at=datetime.now(),
         )
 
         questions = await generate_questions_for_pattern(pattern)
@@ -122,7 +124,7 @@ class TestQuestionGeneration:
             description="Unknown pattern",
             confidence=0.50,
             evidence=[],
-            detected_at=datetime.now()
+            detected_at=datetime.now(),
         )
 
         questions = await generate_questions_for_pattern(pattern)
@@ -159,7 +161,7 @@ class TestProjectInitialization:
             description="Book project",
             confidence=0.85,
             evidence=["book"],
-            detected_at=datetime.now()
+            detected_at=datetime.now(),
         )
 
         user_response = "YES!"
@@ -182,7 +184,7 @@ class TestProjectInitialization:
             description="Workflow",
             confidence=0.75,
             evidence=[],
-            detected_at=datetime.now()
+            detected_at=datetime.now(),
         )
 
         result = await initializer.initialize_project(pattern, "YES")
@@ -203,7 +205,7 @@ class TestProjectInitialization:
             description="Book",
             confidence=0.90,
             evidence=["book"],
-            detected_at=datetime.now()
+            detected_at=datetime.now(),
         )
 
         result = await initializer.initialize_project(pattern, "YES")
@@ -227,7 +229,7 @@ class TestProjectInitialization:
             description="Decision",
             confidence=0.80,
             evidence=[],
-            detected_at=datetime.now()
+            detected_at=datetime.now(),
         )
 
         await initializer.initialize_project(pattern, "YES")
@@ -249,7 +251,7 @@ class TestProjectInitialization:
             description="Book",
             confidence=0.85,
             evidence=[],
-            detected_at=datetime.now()
+            detected_at=datetime.now(),
         )
 
         result = await initializer.initialize_project(pattern, "YES")
@@ -274,7 +276,7 @@ class TestQASessionConductor:
                 question_id=f"q_{i}",
                 question_text=f"Question {i}",
                 question_number=i,
-                required=True
+                required=True,
             )
             for i in range(1, 6)
         ]
@@ -287,7 +289,7 @@ class TestQASessionConductor:
             questions=questions,
             answers=[],
             started_at=datetime.now(),
-            status="in_progress"
+            status="in_progress",
         )
 
         mock_hitl = Mock()
@@ -306,7 +308,7 @@ class TestQASessionConductor:
                 question_id=f"q_{i}",
                 question_text=f"Question {i}",
                 question_number=i,
-                required=True
+                required=True,
             )
             for i in range(1, 4)
         ]
@@ -319,7 +321,7 @@ class TestQASessionConductor:
             questions=questions,
             answers=[],
             started_at=datetime.now(),
-            status="in_progress"
+            status="in_progress",
         )
 
         mock_hitl = Mock()
@@ -336,10 +338,7 @@ class TestQASessionConductor:
         """Test Q&A session handles user not responding."""
         questions = [
             QAQuestion(
-                question_id="q_1",
-                question_text="Question 1",
-                question_number=1,
-                required=True
+                question_id="q_1", question_text="Question 1", question_number=1, required=True
             )
         ]
 
@@ -351,7 +350,7 @@ class TestQASessionConductor:
             questions=questions,
             answers=[],
             started_at=datetime.now(),
-            status="in_progress"
+            status="in_progress",
         )
 
         mock_hitl = Mock()
@@ -367,10 +366,7 @@ class TestQASessionConductor:
         """Test Q&A session status changes to completed."""
         questions = [
             QAQuestion(
-                question_id="q_1",
-                question_text="Question",
-                question_number=1,
-                required=True
+                question_id="q_1", question_text="Question", question_number=1, required=True
             )
         ]
 
@@ -382,7 +378,7 @@ class TestQASessionConductor:
             questions=questions,
             answers=[],
             started_at=datetime.now(),
-            status="in_progress"
+            status="in_progress",
         )
 
         mock_hitl = Mock()
@@ -400,10 +396,7 @@ class TestQASessionConductor:
         """Test Q&A session calculates total_time_minutes."""
         questions = [
             QAQuestion(
-                question_id="q_1",
-                question_text="Question",
-                question_number=1,
-                required=True
+                question_id="q_1", question_text="Question", question_number=1, required=True
             )
         ]
 
@@ -416,13 +409,13 @@ class TestQASessionConductor:
             questions=questions,
             answers=[],
             started_at=start_time,
-            status="in_progress"
+            status="in_progress",
         )
 
         mock_hitl = Mock()
         mock_hitl.ask_question = AsyncMock(return_value=Ok("Answer"))
 
-        with patch('trinity_protocol.project_initializer.datetime') as mock_dt:
+        with patch("trinity_protocol.project_initializer.datetime") as mock_dt:
             mock_dt.now.return_value = datetime(2025, 10, 1, 10, 7)  # 7 minutes later
             result = await conduct_qa_session(session, mock_hitl)
 
@@ -446,7 +439,7 @@ class TestAnswerValidation:
                 question_id=f"q_{i}",
                 question_text=f"Question {i}",
                 question_number=i,
-                required=True
+                required=True,
             )
             for i in range(1, 4)
         ]
@@ -456,7 +449,7 @@ class TestAnswerValidation:
                 question_id=f"q_{i}",
                 answer_text=f"Answer {i}",
                 answered_at=datetime.now(),
-                confidence="certain"
+                confidence="certain",
             )
             for i in range(1, 4)
         ]
@@ -469,7 +462,7 @@ class TestAnswerValidation:
             questions=questions,
             answers=answers,
             started_at=datetime.now(),
-            status="completed"
+            status="completed",
         )
 
         result = validate_qa_completeness(session)
@@ -481,17 +474,11 @@ class TestAnswerValidation:
         """Test completeness validation fails when required answer missing."""
         questions = [
             QAQuestion(
-                question_id="q_1",
-                question_text="Question 1",
-                question_number=1,
-                required=True
+                question_id="q_1", question_text="Question 1", question_number=1, required=True
             ),
             QAQuestion(
-                question_id="q_2",
-                question_text="Question 2",
-                question_number=2,
-                required=True
-            )
+                question_id="q_2", question_text="Question 2", question_number=2, required=True
+            ),
         ]
 
         answers = [
@@ -499,7 +486,7 @@ class TestAnswerValidation:
                 question_id="q_1",
                 answer_text="Answer 1",
                 answered_at=datetime.now(),
-                confidence="certain"
+                confidence="certain",
             )
             # Missing q_2
         ]
@@ -512,7 +499,7 @@ class TestAnswerValidation:
             questions=questions,
             answers=answers,
             started_at=datetime.now(),
-            status="in_progress"
+            status="in_progress",
         )
 
         result = validate_qa_completeness(session)
@@ -527,14 +514,14 @@ class TestAnswerValidation:
                 question_id="q_1",
                 question_text="Required question",
                 question_number=1,
-                required=True
+                required=True,
             ),
             QAQuestion(
                 question_id="q_2",
                 question_text="Optional question",
                 question_number=2,
-                required=False
-            )
+                required=False,
+            ),
         ]
 
         answers = [
@@ -542,7 +529,7 @@ class TestAnswerValidation:
                 question_id="q_1",
                 answer_text="Answer 1",
                 answered_at=datetime.now(),
-                confidence="certain"
+                confidence="certain",
             )
             # q_2 skipped (optional)
         ]
@@ -555,7 +542,7 @@ class TestAnswerValidation:
             questions=questions,
             answers=answers,
             started_at=datetime.now(),
-            status="completed"
+            status="completed",
         )
 
         result = validate_qa_completeness(session)
@@ -567,10 +554,7 @@ class TestAnswerValidation:
         """Test validation fails on empty answer text."""
         questions = [
             QAQuestion(
-                question_id="q_1",
-                question_text="Question",
-                question_number=1,
-                required=True
+                question_id="q_1", question_text="Question", question_number=1, required=True
             )
         ]
 
@@ -579,7 +563,7 @@ class TestAnswerValidation:
                 question_id="q_1",
                 answer_text="",  # Empty answer
                 answered_at=datetime.now(),
-                confidence="certain"
+                confidence="certain",
             )
         ]
 
@@ -591,7 +575,7 @@ class TestAnswerValidation:
             questions=questions,
             answers=answers,
             started_at=datetime.now(),
-            status="in_progress"
+            status="in_progress",
         )
 
         result = validate_qa_completeness(session)
@@ -616,9 +600,7 @@ class TestHITLIntegration:
         mock_hitl.get_pending_approvals = AsyncMock(return_value=Ok([]))
 
         initializer = ProjectInitializer(
-            human_review_queue=mock_hitl,
-            state_store=Mock(),
-            llm_client=Mock()
+            human_review_queue=mock_hitl, state_store=Mock(), llm_client=Mock()
         )
 
         pattern = DetectedPattern(
@@ -627,7 +609,7 @@ class TestHITLIntegration:
             description="Book",
             confidence=0.85,
             evidence=[],
-            detected_at=datetime.now()
+            detected_at=datetime.now(),
         )
 
         result = await initializer.initialize_project(pattern, "YES")
@@ -642,10 +624,7 @@ class TestHITLIntegration:
 
         questions = [
             QAQuestion(
-                question_id="q_1",
-                question_text="Question 1",
-                question_number=1,
-                required=True
+                question_id="q_1", question_text="Question 1", question_number=1, required=True
             )
         ]
 
@@ -657,7 +636,7 @@ class TestHITLIntegration:
             questions=questions,
             answers=[],
             started_at=datetime.now(),
-            status="in_progress"
+            status="in_progress",
         )
 
         await conduct_qa_session(session, mock_hitl)
@@ -672,10 +651,7 @@ class TestHITLIntegration:
 
         questions = [
             QAQuestion(
-                question_id="q_1",
-                question_text="Question",
-                question_number=1,
-                required=True
+                question_id="q_1", question_text="Question", question_number=1, required=True
             )
         ]
 
@@ -687,7 +663,7 @@ class TestHITLIntegration:
             questions=questions,
             answers=[],
             started_at=datetime.now(),
-            status="in_progress"
+            status="in_progress",
         )
 
         result = await conduct_qa_session(session, mock_hitl)
@@ -716,10 +692,10 @@ class TestErrorHandling:
             description="Book",
             confidence=0.85,
             evidence=[],
-            detected_at=datetime.now()
+            detected_at=datetime.now(),
         )
 
-        with patch('trinity_protocol.project_initializer.llm_client', mock_llm):
+        with patch("trinity_protocol.project_initializer.llm_client", mock_llm):
             result = await generate_questions_for_pattern(pattern)
 
         assert result.is_err()
@@ -729,17 +705,11 @@ class TestErrorHandling:
         """Test incomplete Q&A session blocks spec generation (Article I)."""
         questions = [
             QAQuestion(
-                question_id="q_1",
-                question_text="Question 1",
-                question_number=1,
-                required=True
+                question_id="q_1", question_text="Question 1", question_number=1, required=True
             ),
             QAQuestion(
-                question_id="q_2",
-                question_text="Question 2",
-                question_number=2,
-                required=True
-            )
+                question_id="q_2", question_text="Question 2", question_number=2, required=True
+            ),
         ]
 
         answers = [
@@ -747,7 +717,7 @@ class TestErrorHandling:
                 question_id="q_1",
                 answer_text="Answer 1",
                 answered_at=datetime.now(),
-                confidence="certain"
+                confidence="certain",
             )
             # Missing q_2 - incomplete
         ]
@@ -760,7 +730,7 @@ class TestErrorHandling:
             questions=questions,
             answers=answers,
             started_at=datetime.now(),
-            status="in_progress"
+            status="in_progress",
         )
 
         # Attempting to proceed with incomplete session should fail
@@ -775,9 +745,7 @@ class TestErrorHandling:
         mock_store.store_qa_session = AsyncMock(return_value=Err("Write failed"))
 
         initializer = ProjectInitializer(
-            human_review_queue=Mock(),
-            state_store=mock_store,
-            llm_client=Mock()
+            human_review_queue=Mock(), state_store=mock_store, llm_client=Mock()
         )
 
         pattern = DetectedPattern(
@@ -786,7 +754,7 @@ class TestErrorHandling:
             description="Workflow",
             confidence=0.75,
             evidence=[],
-            detected_at=datetime.now()
+            detected_at=datetime.now(),
         )
 
         result = await initializer.initialize_project(pattern, "YES")

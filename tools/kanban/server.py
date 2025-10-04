@@ -4,13 +4,13 @@ Minimal stdlib HTTP server to serve Kanban UI and cards.json feed.
 Usage: python -m tools.kanban.server
 Respects: ENABLE_KANBAN_UI, KANBAN_PORT
 """
+
 from __future__ import annotations
 
 import http.server
 import json
 import os
 from pathlib import Path
-from typing import Tuple
 
 from .adapters import build_feed
 
@@ -24,7 +24,11 @@ class KanbanHandler(http.server.SimpleHTTPRequestHandler):
             if self.path.startswith("/kanban/cards.json"):
                 self._serve_cards()
                 return
-            if self.path == "/kanban" or self.path == "/kanban/" or self.path == "/kanban/index.html":
+            if (
+                self.path == "/kanban"
+                or self.path == "/kanban/"
+                or self.path == "/kanban/index.html"
+            ):
                 self._serve_index()
                 return
             # Fallback to static files within STATIC_DIR
@@ -71,7 +75,9 @@ class KanbanHandler(http.server.SimpleHTTPRequestHandler):
         self.wfile.write(data)
 
 
-def run_server(server_class=http.server.ThreadingHTTPServer, handler_class=KanbanHandler) -> Tuple[str, int]:
+def run_server(
+    server_class=http.server.ThreadingHTTPServer, handler_class=KanbanHandler
+) -> tuple[str, int]:
     host = os.getenv("KANBAN_HOST", "127.0.0.1")
     port = int(os.getenv("KANBAN_PORT", "8765"))
     httpd = server_class((host, port), handler_class)

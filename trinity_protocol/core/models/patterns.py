@@ -10,15 +10,18 @@ Constitutional Compliance:
 - Article VII: Clear, descriptive naming
 """
 
-from pydantic import BaseModel, Field
-from typing import Optional, List, Dict, Any, Literal
-from shared.type_definitions import JSONValue
 from datetime import datetime
 from enum import Enum
+from typing import Literal
+
+from pydantic import BaseModel, Field
+
+from shared.type_definitions import JSONValue
 
 
 class PatternType(str, Enum):
     """Types of patterns detected from ambient transcriptions."""
+
     RECURRING_TOPIC = "recurring_topic"
     PROJECT_MENTION = "project_mention"
     FRUSTRATION = "frustration"
@@ -35,48 +38,30 @@ class DetectedPattern(BaseModel):
     Represents a meaningful insight extracted from conversation
     that may warrant proactive assistance.
     """
+
     pattern_id: str = Field(..., description="Unique pattern identifier")
     pattern_type: PatternType = Field(..., description="Type of pattern detected")
     topic: str = Field(..., min_length=1, description="Main topic or theme")
-    confidence: float = Field(
-        ...,
-        ge=0.0,
-        le=1.0,
-        description="Detection confidence score"
-    )
-    mention_count: int = Field(
-        ...,
-        ge=1,
-        description="Number of times topic mentioned"
-    )
-    first_mention: datetime = Field(
-        ...,
-        description="Timestamp of first mention"
-    )
-    last_mention: datetime = Field(
-        ...,
-        description="Timestamp of most recent mention"
-    )
+    confidence: float = Field(..., ge=0.0, le=1.0, description="Detection confidence score")
+    mention_count: int = Field(..., ge=1, description="Number of times topic mentioned")
+    first_mention: datetime = Field(..., description="Timestamp of first mention")
+    last_mention: datetime = Field(..., description="Timestamp of most recent mention")
     context_summary: str = Field(
-        ...,
-        max_length=500,
-        description="Summary of context around mentions"
+        ..., max_length=500, description="Summary of context around mentions"
     )
-    keywords: List[str] = Field(
-        default_factory=list,
-        description="Keywords associated with pattern"
+    keywords: list[str] = Field(
+        default_factory=list, description="Keywords associated with pattern"
     )
-    sentiment: Optional[str] = Field(
-        default=None,
-        description="Detected sentiment (positive, negative, neutral)"
+    sentiment: str | None = Field(
+        default=None, description="Detected sentiment (positive, negative, neutral)"
     )
-    urgency: Optional[str] = Field(
-        default=None,
-        description="Urgency level (low, medium, high, critical)"
+    urgency: str | None = Field(
+        default=None, description="Urgency level (low, medium, high, critical)"
     )
 
     class Config:
         """Pydantic config."""
+
         use_enum_values = True
 
 
@@ -87,36 +72,19 @@ class PatternContext(BaseModel):
     Provides additional metadata for ARCHITECT to formulate
     better questions and suggestions.
     """
-    conversation_id: str = Field(
-        ...,
-        description="ID of conversation where pattern detected"
+
+    conversation_id: str = Field(..., description="ID of conversation where pattern detected")
+    speaker_count: int = Field(default=1, ge=1, description="Number of distinct speakers")
+    duration_minutes: float = Field(..., gt=0.0, description="Duration of conversation in minutes")
+    related_patterns: list[str] = Field(default_factory=list, description="IDs of related patterns")
+    transcript_excerpts: list[str] = Field(
+        default_factory=list, max_items=5, description="Key transcript excerpts (max 5)"
     )
-    speaker_count: int = Field(
-        default=1,
-        ge=1,
-        description="Number of distinct speakers"
-    )
-    duration_minutes: float = Field(
-        ...,
-        gt=0.0,
-        description="Duration of conversation in minutes"
-    )
-    related_patterns: List[str] = Field(
-        default_factory=list,
-        description="IDs of related patterns"
-    )
-    transcript_excerpts: List[str] = Field(
-        default_factory=list,
-        max_items=5,
-        description="Key transcript excerpts (max 5)"
-    )
-    metadata: JSONValue = Field(
-        default_factory=dict,
-        description="Additional metadata"
-    )
+    metadata: JSONValue = Field(default_factory=dict, description="Additional metadata")
 
     class Config:
         """Pydantic config."""
+
         validate_assignment = True
 
 
@@ -126,44 +94,21 @@ class AmbientEvent(BaseModel):
 
     Represents a transcription with metadata for WITNESS consumption.
     """
-    event_type: str = Field(
-        default="ambient_transcription",
-        description="Event type identifier"
-    )
+
+    event_type: str = Field(default="ambient_transcription", description="Event type identifier")
     source: Literal["ambient_listener"] = Field(
-        default="ambient_listener",
-        description="Event source"
+        default="ambient_listener", description="Event source"
     )
-    content: str = Field(
-        ...,
-        min_length=1,
-        description="Transcribed text"
-    )
-    timestamp: str = Field(
-        ...,
-        description="ISO8601 timestamp"
-    )
-    confidence: float = Field(
-        ...,
-        ge=0.0,
-        le=1.0,
-        description="Whisper transcription confidence"
-    )
-    session_id: str = Field(
-        ...,
-        description="Ambient listening session ID"
-    )
-    conversation_id: Optional[str] = Field(
-        default=None,
-        description="Conversation segment ID"
-    )
-    metadata: JSONValue = Field(
-        default_factory=dict,
-        description="Additional metadata"
-    )
+    content: str = Field(..., min_length=1, description="Transcribed text")
+    timestamp: str = Field(..., description="ISO8601 timestamp")
+    confidence: float = Field(..., ge=0.0, le=1.0, description="Whisper transcription confidence")
+    session_id: str = Field(..., description="Ambient listening session ID")
+    conversation_id: str | None = Field(default=None, description="Conversation segment ID")
+    metadata: JSONValue = Field(default_factory=dict, description="Additional metadata")
 
     class Config:
         """Pydantic config."""
+
         frozen = True
 
 
@@ -173,28 +118,18 @@ class TopicCluster(BaseModel):
 
     Used for recurrence detection and pattern analysis.
     """
+
     cluster_id: str = Field(..., description="Cluster identifier")
     central_topic: str = Field(..., description="Central theme of cluster")
-    related_keywords: List[str] = Field(
-        ...,
-        min_items=1,
-        description="Keywords in cluster"
-    )
-    mention_timestamps: List[datetime] = Field(
-        ...,
-        min_items=1,
-        description="Timestamps of all mentions"
+    related_keywords: list[str] = Field(..., min_items=1, description="Keywords in cluster")
+    mention_timestamps: list[datetime] = Field(
+        ..., min_items=1, description="Timestamps of all mentions"
     )
     recurrence_score: float = Field(
-        ...,
-        ge=0.0,
-        le=1.0,
-        description="Score indicating recurrence strength"
+        ..., ge=0.0, le=1.0, description="Score indicating recurrence strength"
     )
     time_window_hours: float = Field(
-        ...,
-        gt=0.0,
-        description="Time window for recurrence calculation"
+        ..., gt=0.0, description="Time window for recurrence calculation"
     )
 
     @property
@@ -219,6 +154,7 @@ class TopicCluster(BaseModel):
 
     class Config:
         """Pydantic config."""
+
         validate_assignment = True
 
 
@@ -228,33 +164,19 @@ class IntentClassification(BaseModel):
 
     Used by WITNESS to determine if pattern warrants ARCHITECT attention.
     """
+
     intent_type: str = Field(..., description="Type of intent detected")
-    confidence: float = Field(
-        ...,
-        ge=0.0,
-        le=1.0,
-        description="Classification confidence"
+    confidence: float = Field(..., ge=0.0, le=1.0, description="Classification confidence")
+    action_required: bool = Field(..., description="Whether action is required")
+    priority: str = Field(..., description="Priority level (LOW, NORMAL, HIGH, CRITICAL)")
+    suggested_action: str | None = Field(
+        default=None, description="Suggested action for ARCHITECT"
     )
-    action_required: bool = Field(
-        ...,
-        description="Whether action is required"
-    )
-    priority: str = Field(
-        ...,
-        description="Priority level (LOW, NORMAL, HIGH, CRITICAL)"
-    )
-    suggested_action: Optional[str] = Field(
-        default=None,
-        description="Suggested action for ARCHITECT"
-    )
-    rationale: str = Field(
-        ...,
-        max_length=500,
-        description="Explanation of classification"
-    )
+    rationale: str = Field(..., max_length=500, description="Explanation of classification")
 
     class Config:
         """Pydantic config."""
+
         frozen = True
 
 
@@ -264,28 +186,16 @@ class RecurrenceMetrics(BaseModel):
 
     Tracks frequency, timing, and patterns of topic mentions.
     """
+
     topic: str = Field(..., description="Topic being tracked")
     total_mentions: int = Field(..., ge=0, description="Total mention count")
     unique_days: int = Field(..., ge=0, description="Days with mentions")
-    avg_mentions_per_day: float = Field(
-        ...,
-        ge=0.0,
-        description="Average mentions per day"
-    )
-    peak_mentions_in_day: int = Field(
-        ...,
-        ge=0,
-        description="Highest mentions in single day"
-    )
-    trend: str = Field(
-        ...,
-        description="Trend direction (increasing, stable, decreasing)"
-    )
-    last_updated: datetime = Field(
-        default_factory=datetime.now,
-        description="Last metrics update"
-    )
+    avg_mentions_per_day: float = Field(..., ge=0.0, description="Average mentions per day")
+    peak_mentions_in_day: int = Field(..., ge=0, description="Highest mentions in single day")
+    trend: str = Field(..., description="Trend direction (increasing, stable, decreasing)")
+    last_updated: datetime = Field(default_factory=datetime.now, description="Last metrics update")
 
     class Config:
         """Pydantic config."""
+
         validate_assignment = True

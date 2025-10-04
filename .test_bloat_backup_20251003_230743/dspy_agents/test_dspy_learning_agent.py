@@ -5,23 +5,20 @@ Tests the DSPy-powered Learning Agent implementation for pattern extraction,
 knowledge consolidation, and learning capabilities.
 """
 
-import pytest
 import json
-import os
-import tempfile
 from datetime import datetime
-from pathlib import Path
-from unittest.mock import Mock, patch, MagicMock, call
-from typing import Dict, List, Any
+from unittest.mock import MagicMock, patch
+
+import pytest
 
 # Import the DSPyLearningAgent and related classes
 from dspy_agents.modules.learning_agent import (
-    DSPyLearningAgent,
-    create_dspy_learning_agent,
-    LearningContext,
-    ExtractedPattern,
     ConsolidatedLearning,
+    DSPyLearningAgent,
+    ExtractedPattern,
+    LearningContext,
     LearningResult,
+    create_dspy_learning_agent,
 )
 
 
@@ -32,10 +29,7 @@ class TestDSPyLearningAgent:
     def agent(self):
         """Create a DSPyLearningAgent instance for testing."""
         return DSPyLearningAgent(
-            model="gpt-4o-mini",
-            reasoning_effort="high",
-            enable_learning=True,
-            min_confidence=0.7
+            model="gpt-4o-mini", reasoning_effort="high", enable_learning=True, min_confidence=0.7
         )
 
     @pytest.fixture
@@ -58,7 +52,7 @@ class TestDSPyLearningAgent:
             ],
             "task_completions": [
                 {"task": "implement feature X", "success": True, "duration": 120},
-            ]
+            ],
         }
 
     @pytest.fixture
@@ -71,7 +65,7 @@ class TestDSPyLearningAgent:
                 confidence=0.85,
                 occurrences=5,
                 context={"tools": ["Read", "Write", "Test"]},
-                keywords=["tool_sequence", "read_write_test"]
+                keywords=["tool_sequence", "read_write_test"],
             ),
             ExtractedPattern(
                 pattern_type="error_resolution",
@@ -79,7 +73,7 @@ class TestDSPyLearningAgent:
                 confidence=0.75,
                 occurrences=3,
                 context={"error_type": "FileNotFoundError"},
-                keywords=["error_handling", "file_errors"]
+                keywords=["error_handling", "file_errors"],
             ),
         ]
 
@@ -93,10 +87,10 @@ class TestDSPyLearningAgent:
                 patterns=[],
                 actionable_insights=[
                     "Continue using this sequence for file modifications",
-                    "Consider creating a composite tool for this pattern"
+                    "Consider creating a composite tool for this pattern",
                 ],
                 confidence=0.85,
-                tags=["tool_usage", "best_practice"]
+                tags=["tool_usage", "best_practice"],
             )
         ]
 
@@ -106,7 +100,7 @@ class TestDSPyLearningAgent:
             model="gpt-4o-mini",
             reasoning_effort="medium",
             enable_learning=False,
-            min_confidence=0.8
+            min_confidence=0.8,
         )
 
         assert agent.model == "gpt-4o-mini"
@@ -119,10 +113,7 @@ class TestDSPyLearningAgent:
     def test_factory_function(self):
         """Test the factory function creates agents correctly."""
         agent = create_dspy_learning_agent(
-            model="gpt-5",
-            reasoning_effort="low",
-            enable_learning=True,
-            min_confidence=0.6
+            model="gpt-5", reasoning_effort="low", enable_learning=True, min_confidence=0.6
         )
 
         assert isinstance(agent, DSPyLearningAgent)
@@ -131,12 +122,10 @@ class TestDSPyLearningAgent:
         assert agent.enable_learning is True
         assert agent.min_confidence == 0.6
 
-    @patch('dspy_agents.modules.learning_agent.DSPY_AVAILABLE', False)
+    @patch("dspy_agents.modules.learning_agent.DSPY_AVAILABLE", False)
     def test_fallback_mode(self, agent):
         """Test fallback behavior when DSPy is not available."""
-        result = agent.forward(
-            session_data={"tool_calls": [1, 2, 3], "errors": [1]}
-        )
+        result = agent.forward(session_data={"tool_calls": [1, 2, 3], "errors": [1]})
 
         assert result.success is False
         assert "DSPy not available" in result.message
@@ -146,16 +135,16 @@ class TestDSPyLearningAgent:
         """Test analyzing a session from file."""
         # Create a temporary session file
         session_file = tmp_path / "test_session.json"
-        with open(session_file, 'w') as f:
+        with open(session_file, "w") as f:
             json.dump(sample_session_data, f)
 
-        with patch.object(agent, 'forward') as mock_forward:
+        with patch.object(agent, "forward") as mock_forward:
             mock_forward.return_value = LearningResult(
                 success=True,
                 patterns_extracted=5,
                 learnings_consolidated=2,
                 knowledge_stored=True,
-                message="Analysis complete"
+                message="Analysis complete",
             )
 
             result = agent.analyze_session(str(session_file))
@@ -185,14 +174,16 @@ class TestDSPyLearningAgent:
                 "frequency": 3,
                 "avg_confidence": 0.82,
                 "description": "Recurring tool pattern",
-                "patterns": []
+                "patterns": [],
             }
         ]
 
         learnings = agent.consolidate_learning(insights)
 
         assert len(learnings) == 1
-        assert learnings[0].title == "Tool Usage Pattern"  # Note: underscores are replaced with spaces
+        assert (
+            learnings[0].title == "Tool Usage Pattern"
+        )  # Note: underscores are replaced with spaces
         assert learnings[0].confidence == 0.82
         assert "tool_usage" in learnings[0].tags
 
@@ -204,7 +195,7 @@ class TestDSPyLearningAgent:
                 "frequency": 2,
                 "avg_confidence": 0.78,
                 "description": "Similar tool pattern",
-                "patterns": []
+                "patterns": [],
             }
         ]
 
@@ -250,7 +241,7 @@ class TestDSPyLearningAgent:
             logs_directory="custom/logs",
             memory_store="database",
             pattern_types=["custom_pattern"],
-            confidence_threshold=0.9
+            confidence_threshold=0.9,
         )
 
         assert context.session_id == "test_001"
@@ -259,20 +250,19 @@ class TestDSPyLearningAgent:
         assert context.pattern_types == ["custom_pattern"]
         assert context.confidence_threshold == 0.9
 
-    @patch('dspy_agents.modules.learning_agent.DSPY_AVAILABLE', True)
+    @patch("dspy_agents.modules.learning_agent.DSPY_AVAILABLE", True)
     def test_forward_with_dspy(self, agent, sample_session_data):
         """Test forward method with DSPy available."""
         # Mock DSPy modules
-        with patch.object(agent, 'pattern_extractor') as mock_extractor, \
-             patch.object(agent, 'consolidator') as mock_consolidator, \
-             patch.object(agent, 'storage') as mock_storage:
-
+        with (
+            patch.object(agent, "pattern_extractor") as mock_extractor,
+            patch.object(agent, "consolidator") as mock_consolidator,
+            patch.object(agent, "storage") as mock_storage,
+        ):
             # Configure mock returns
             mock_extractor.return_value = MagicMock(
-                patterns=[
-                    {"pattern_type": "tool_usage", "confidence": 0.8}
-                ],
-                confidence_scores={"tool_usage": 0.8}
+                patterns=[{"pattern_type": "tool_usage", "confidence": 0.8}],
+                confidence_scores={"tool_usage": 0.8},
             )
 
             mock_consolidator.return_value = MagicMock(
@@ -283,20 +273,16 @@ class TestDSPyLearningAgent:
                         "patterns": [],
                         "actionable_insights": ["Test insight"],
                         "confidence": 0.85,
-                        "tags": ["test"]
+                        "tags": ["test"],
                     }
                 ]
             )
 
             mock_storage.return_value = MagicMock(
-                storage_confirmation=True,
-                storage_ids=["id1", "id2"]
+                storage_confirmation=True, storage_ids=["id1", "id2"]
             )
 
-            result = agent.forward(
-                session_data=sample_session_data,
-                pattern_types=["tool_usage"]
-            )
+            result = agent.forward(session_data=sample_session_data, pattern_types=["tool_usage"])
 
             assert result.success is True
             assert result.patterns_extracted == 1
@@ -328,14 +314,11 @@ class TestDSPyLearningAgent:
     def test_load_session_data(self, agent, sample_session_data, tmp_path):
         """Test loading session data from file."""
         # Create test context
-        context = LearningContext(
-            session_id="test_session",
-            logs_directory=str(tmp_path)
-        )
+        context = LearningContext(session_id="test_session", logs_directory=str(tmp_path))
 
         # Create session file
         session_file = tmp_path / "test_session.json"
-        with open(session_file, 'w') as f:
+        with open(session_file, "w") as f:
             json.dump(sample_session_data, f)
 
         # Load data
@@ -346,10 +329,7 @@ class TestDSPyLearningAgent:
 
     def test_load_missing_session_data(self, agent, tmp_path):
         """Test loading when session file doesn't exist."""
-        context = LearningContext(
-            session_id="missing_session",
-            logs_directory=str(tmp_path)
-        )
+        context = LearningContext(session_id="missing_session", logs_directory=str(tmp_path))
 
         data = agent._load_session_data(context)
 
@@ -392,11 +372,10 @@ class TestDSPyLearningAgent:
                 patterns=[],
                 actionable_insights=[],
                 confidence=0.8,
-                tags=["test_category"]
+                tags=["test_category"],
             )
             agent._update_knowledge_base(
-                [learning.model_dump()],
-                LearningContext(session_id="test")
+                [learning.model_dump()], LearningContext(session_id="test")
             )
 
         # Check that size is limited
@@ -408,16 +387,13 @@ class TestDSPyLearningAgent:
             "tool_calls": [1, 2, 3],
             "errors": [1, 2],
             "workflows": [1],
-            "optimizations": [1, 2, 3, 4]
+            "optimizations": [1, 2, 3, 4],
         }
 
         # Test fallback extraction with different pattern types
         result = agent._fallback_execution(
-            LearningContext(
-                session_id="test",
-                pattern_types=["tool_usage", "error_resolution"]
-            ),
-            session_data
+            LearningContext(session_id="test", pattern_types=["tool_usage", "error_resolution"]),
+            session_data,
         )
 
         assert result.patterns_extracted >= 2
@@ -432,35 +408,37 @@ class TestDSPyLearningAgent:
                 pattern_type="high_conf",
                 description="High confidence pattern",
                 confidence=0.9,
-                occurrences=5
+                occurrences=5,
             ),
             ExtractedPattern(
                 pattern_type="low_conf",
                 description="Low confidence pattern",
                 confidence=0.5,
-                occurrences=5
+                occurrences=5,
             ),
         ]
 
         # Store as learnings with different confidence
-        agent.store_knowledge([
-            ConsolidatedLearning(
-                title="High Conf",
-                summary="High",
-                patterns=[patterns[0]],
-                actionable_insights=[],
-                confidence=0.9,
-                tags=["test"]
-            ),
-            ConsolidatedLearning(
-                title="Low Conf",
-                summary="Low",
-                patterns=[patterns[1]],
-                actionable_insights=[],
-                confidence=0.5,
-                tags=["test"]
-            )
-        ])
+        agent.store_knowledge(
+            [
+                ConsolidatedLearning(
+                    title="High Conf",
+                    summary="High",
+                    patterns=[patterns[0]],
+                    actionable_insights=[],
+                    confidence=0.9,
+                    tags=["test"],
+                ),
+                ConsolidatedLearning(
+                    title="Low Conf",
+                    summary="Low",
+                    patterns=[patterns[1]],
+                    actionable_insights=[],
+                    confidence=0.5,
+                    tags=["test"],
+                ),
+            ]
+        )
 
         # Query with high confidence threshold
         results = agent.query_knowledge("", min_confidence=0.8)
@@ -484,7 +462,7 @@ class TestLearningIntegration:
                 patterns=[],
                 actionable_insights=["Write tests first"],
                 confidence=0.9,
-                tags=["testing", "best_practice"]
+                tags=["testing", "best_practice"],
             ),
             ConsolidatedLearning(
                 title="Error Handling",
@@ -492,7 +470,7 @@ class TestLearningIntegration:
                 patterns=[],
                 actionable_insights=["Use try-except blocks"],
                 confidence=0.85,
-                tags=["error_handling", "reliability"]
+                tags=["error_handling", "reliability"],
             ),
         ]
 
@@ -525,7 +503,7 @@ class TestLearningIntegration:
     def test_end_to_end_learning_flow(self, tmp_path):
         """Test complete learning flow from session to stored knowledge."""
         # Patch DSPY_AVAILABLE to ensure we can test properly
-        with patch('dspy_agents.modules.learning_agent.DSPY_AVAILABLE', True):
+        with patch("dspy_agents.modules.learning_agent.DSPY_AVAILABLE", True):
             agent = DSPyLearningAgent(enable_learning=True)
 
             # Create session data
@@ -539,39 +517,40 @@ class TestLearningIntegration:
             logs_dir = tmp_path / "logs"
             logs_dir.mkdir()
             session_file = logs_dir / "e2e_test.json"
-            with open(session_file, 'w') as f:
+            with open(session_file, "w") as f:
                 json.dump(session_data, f)
 
             # Mock DSPy components for consistent testing
-            with patch.object(agent, 'pattern_extractor') as mock_extractor, \
-                 patch.object(agent, 'consolidator') as mock_consolidator, \
-                 patch.object(agent, 'storage') as mock_storage:
-
+            with (
+                patch.object(agent, "pattern_extractor") as mock_extractor,
+                patch.object(agent, "consolidator") as mock_consolidator,
+                patch.object(agent, "storage") as mock_storage,
+            ):
                 mock_extractor.return_value = MagicMock(
                     patterns=[{"pattern_type": "test", "confidence": 0.8}],
-                    confidence_scores={"test": 0.8}
+                    confidence_scores={"test": 0.8},
                 )
 
                 mock_consolidator.return_value = MagicMock(
-                    consolidated_learnings=[{
-                        "title": "E2E Learning",
-                        "summary": "End-to-end test",
-                        "patterns": [],
-                        "actionable_insights": ["Test insight"],
-                        "confidence": 0.85,
-                        "tags": ["e2e"]
-                    }]
+                    consolidated_learnings=[
+                        {
+                            "title": "E2E Learning",
+                            "summary": "End-to-end test",
+                            "patterns": [],
+                            "actionable_insights": ["Test insight"],
+                            "confidence": 0.85,
+                            "tags": ["e2e"],
+                        }
+                    ]
                 )
 
                 mock_storage.return_value = MagicMock(
-                    storage_confirmation=True,
-                    storage_ids=["e2e_001"]
+                    storage_confirmation=True, storage_ids=["e2e_001"]
                 )
 
                 # Execute learning
                 result = agent.forward(
-                    session_id="e2e_test",
-                    context={"logs_directory": str(logs_dir)}
+                    session_id="e2e_test", context={"logs_directory": str(logs_dir)}
                 )
 
                 assert result.success is True

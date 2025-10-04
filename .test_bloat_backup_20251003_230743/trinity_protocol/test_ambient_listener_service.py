@@ -6,25 +6,25 @@ Constitutional Compliance:
 - TDD: Tests written before implementation
 """
 
-import pytest
 import asyncio
 from datetime import datetime
-from unittest.mock import Mock, AsyncMock, patch, MagicMock
-from pathlib import Path
+from unittest.mock import AsyncMock, Mock, patch
 
+import pytest
+
+from shared.type_definitions.result import Err, Ok
 from trinity_protocol.ambient_listener_service import (
-    AmbientListenerService,
     AmbientListenerConfig,
+    AmbientListenerService,
     ServiceStatus,
 )
+from trinity_protocol.core.models.patterns import DetectedPattern, PatternType
 from trinity_protocol.experimental.models.audio import (
     AudioConfig,
     AudioSegment,
     TranscriptionResult,
     WhisperConfig,
 )
-from trinity_protocol.core.models.patterns import DetectedPattern, PatternType
-from shared.type_definitions.result import Result, Ok, Err
 
 
 class TestAmbientListenerConfig:
@@ -144,9 +144,7 @@ class TestAmbientListenerService:
         assert service.config.min_confidence == 0.6
 
     @pytest.mark.asyncio
-    async def test_start_service_success(
-        self, service, mock_audio_capture, mock_transcriber
-    ):
+    async def test_start_service_success(self, service, mock_audio_capture, mock_transcriber):
         """Test successful service startup."""
         result = await service.start()
 
@@ -166,13 +164,9 @@ class TestAmbientListenerService:
         assert "already running" in result.unwrap_err().lower()
 
     @pytest.mark.asyncio
-    async def test_start_service_audio_capture_failure(
-        self, service, mock_audio_capture
-    ):
+    async def test_start_service_audio_capture_failure(self, service, mock_audio_capture):
         """Test service startup when audio capture fails."""
-        mock_audio_capture.start = AsyncMock(
-            return_value=Err("PyAudio not installed")
-        )
+        mock_audio_capture.start = AsyncMock(return_value=Err("PyAudio not installed"))
 
         result = await service.start()
 
@@ -181,13 +175,9 @@ class TestAmbientListenerService:
         assert service.status == ServiceStatus.ERROR
 
     @pytest.mark.asyncio
-    async def test_start_service_transcriber_failure(
-        self, service, mock_transcriber
-    ):
+    async def test_start_service_transcriber_failure(self, service, mock_transcriber):
         """Test service startup when transcriber fails."""
-        mock_transcriber.start = AsyncMock(
-            return_value=Err("Whisper model not found")
-        )
+        mock_transcriber.start = AsyncMock(return_value=Err("Whisper model not found"))
 
         result = await service.start()
 
@@ -196,9 +186,7 @@ class TestAmbientListenerService:
         assert service.status == ServiceStatus.ERROR
 
     @pytest.mark.asyncio
-    async def test_stop_service(
-        self, service, mock_audio_capture, mock_transcriber
-    ):
+    async def test_stop_service(self, service, mock_audio_capture, mock_transcriber):
         """Test service shutdown."""
         service.status = ServiceStatus.RUNNING
         service._running = True
@@ -247,9 +235,7 @@ class TestAmbientListenerService:
             duration_seconds=3.0,
             timestamp=datetime.now().isoformat(),
         )
-        mock_transcriber.transcribe_segment = AsyncMock(
-            return_value=Ok(transcription)
-        )
+        mock_transcriber.transcribe_segment = AsyncMock(return_value=Ok(transcription))
 
         # Mock pattern detection
         pattern = DetectedPattern(
@@ -269,9 +255,7 @@ class TestAmbientListenerService:
         result = await service._process_audio_chunk(audio_segment)
 
         assert isinstance(result, Ok)
-        mock_transcriber.transcribe_segment.assert_called_once_with(
-            audio_segment
-        )
+        mock_transcriber.transcribe_segment.assert_called_once_with(audio_segment)
         mock_conversation_context.add_transcription.assert_called_once()
         mock_pattern_detector.detect_patterns.assert_called_once()
 
@@ -314,9 +298,7 @@ class TestAmbientListenerService:
             duration_seconds=3.0,
             timestamp=datetime.now().isoformat(),
         )
-        mock_transcriber.transcribe_segment = AsyncMock(
-            return_value=Ok(transcription)
-        )
+        mock_transcriber.transcribe_segment = AsyncMock(return_value=Ok(transcription))
 
         result = await service._process_audio_chunk(audio_segment)
 
@@ -325,9 +307,7 @@ class TestAmbientListenerService:
         mock_conversation_context.add_transcription.assert_not_called()
 
     @pytest.mark.asyncio
-    async def test_process_audio_chunk_transcription_failure(
-        self, service, mock_transcriber
-    ):
+    async def test_process_audio_chunk_transcription_failure(self, service, mock_transcriber):
         """Test handling transcription failure."""
         audio_segment = AudioSegment(
             data=b"audio",
@@ -338,9 +318,7 @@ class TestAmbientListenerService:
             has_speech=True,
         )
 
-        mock_transcriber.transcribe_segment = AsyncMock(
-            return_value=Err("Transcription failed")
-        )
+        mock_transcriber.transcribe_segment = AsyncMock(return_value=Err("Transcription failed"))
 
         result = await service._process_audio_chunk(audio_segment)
 
@@ -397,9 +375,7 @@ class TestAmbientListenerService:
         """Test creating AudioConfig from service config."""
         service_config = AmbientListenerConfig(silence_threshold=400.0)
 
-        audio_config = AmbientListenerService._create_audio_config(
-            service_config
-        )
+        audio_config = AmbientListenerService._create_audio_config(service_config)
 
         assert isinstance(audio_config, AudioConfig)
         assert audio_config.sample_rate == 16000
@@ -409,9 +385,7 @@ class TestAmbientListenerService:
         """Test creating WhisperConfig from service config."""
         service_config = AmbientListenerConfig(model_name="tiny.en")
 
-        whisper_config = AmbientListenerService._create_whisper_config(
-            service_config
-        )
+        whisper_config = AmbientListenerService._create_whisper_config(service_config)
 
         assert isinstance(whisper_config, WhisperConfig)
         assert whisper_config.model_name == "tiny.en"
@@ -507,12 +481,18 @@ class TestCLIArgumentParsing:
         """Test custom CLI arguments."""
         from trinity_protocol.ambient_listener_service import parse_args
 
-        args = parse_args([
-            "--model", "tiny.en",
-            "--min-confidence", "0.7",
-            "--chunk-duration", "5.0",
-            "--silence-threshold", "400.0",
-        ])
+        args = parse_args(
+            [
+                "--model",
+                "tiny.en",
+                "--min-confidence",
+                "0.7",
+                "--chunk-duration",
+                "5.0",
+                "--silence-threshold",
+                "400.0",
+            ]
+        )
 
         assert args.model == "tiny.en"
         assert args.min_confidence == 0.7

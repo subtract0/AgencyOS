@@ -9,8 +9,8 @@ Extractors discover patterns from:
 """
 
 from .base_extractor import BasePatternExtractor
-from .local_codebase import LocalCodebaseExtractor
 from .github_extractor import GitHubPatternExtractor
+from .local_codebase import LocalCodebaseExtractor
 from .session_extractor import SessionPatternExtractor
 
 __all__ = [

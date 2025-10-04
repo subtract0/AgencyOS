@@ -3,16 +3,15 @@
 Cloud-based Voice Transcription using OpenAI Whisper API
 Same technology as Blabby.ai - MUCH better accuracy than local models
 """
+
 import os
 import sys
-import time
-from datetime import datetime
-from pathlib import Path
 import tempfile
+from datetime import datetime
 
 try:
-    import pyaudio
     import numpy as np
+    import pyaudio
     from openai import OpenAI
 except ImportError as e:
     print(f"❌ Missing dependency: {e}")
@@ -37,12 +36,14 @@ os.makedirs(os.path.dirname(OUTPUT_FILE), exist_ok=True)
 # Initialize OpenAI client
 client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
+
 def calculate_rms(audio_data):
     """Calculate RMS level of audio"""
     samples = np.frombuffer(audio_data, dtype=np.int16)
     if len(samples) == 0:
         return 0.0
     return float(np.sqrt(np.mean(samples.astype(np.float32) ** 2)))
+
 
 def append_transcription(text, language, rms_level):
     """Append transcription to file with timestamp"""
@@ -51,12 +52,13 @@ def append_transcription(text, language, rms_level):
         f.write(f"[{timestamp}] Lang:{language} RMS:{rms_level:.1f} | {text}\n")
     print(f"✅ Saved: [{language}] {text[:80]}...")
 
+
 def main():
     print("🎤 Cloud-based Voice Capture (OpenAI Whisper API)")
     print(f"📝 Saving to: {OUTPUT_FILE}")
     print(f"🔊 VAD Threshold: {VAD_THRESHOLD}")
     print(f"⏱️  Chunk Duration: {CHUNK_DURATION}s")
-    print(f"🌐 Using: OpenAI Whisper API (same as Blabby.ai)")
+    print("🌐 Using: OpenAI Whisper API (same as Blabby.ai)")
     print("=" * 60)
 
     # Initialize PyAudio
@@ -68,16 +70,16 @@ def main():
             channels=1,
             rate=SAMPLE_RATE,
             input=True,
-            frames_per_buffer=CHUNK_SIZE
+            frames_per_buffer=CHUNK_SIZE,
         )
 
-        print(f"\n🎙️  Listening... (Press Ctrl+C to stop)")
-        print(f"💡 Speak in ANY language - auto-detected\n")
+        print("\n🎙️  Listening... (Press Ctrl+C to stop)")
+        print("💡 Speak in ANY language - auto-detected\n")
 
         cycle = 0
         while True:
             cycle += 1
-            timestamp = datetime.now().strftime('%H:%M:%S')
+            timestamp = datetime.now().strftime("%H:%M:%S")
             print(f"[{timestamp}] Cycle {cycle}: Capturing {CHUNK_DURATION}s...")
 
             # Read audio chunk
@@ -88,12 +90,13 @@ def main():
             print(f"  RMS level: {rms:.1f} (threshold: {VAD_THRESHOLD})")
 
             if rms > VAD_THRESHOLD:
-                print(f"  🗣️  Speech detected! Transcribing via OpenAI API...")
+                print("  🗣️  Speech detected! Transcribing via OpenAI API...")
 
                 # Save to temporary WAV file
                 with tempfile.NamedTemporaryFile(suffix=".wav", delete=False) as temp_wav:
                     import wave
-                    with wave.open(temp_wav.name, 'wb') as wav_file:
+
+                    with wave.open(temp_wav.name, "wb") as wav_file:
                         wav_file.setnchannels(1)
                         wav_file.setsampwidth(2)  # 16-bit
                         wav_file.setframerate(SAMPLE_RATE)
@@ -119,7 +122,7 @@ def main():
                         print(f"  🌍 Language: {language}")
                         append_transcription(text, language, rms)
                     else:
-                        print(f"  ⚠️  Empty transcription")
+                        print("  ⚠️  Empty transcription")
 
                 except Exception as e:
                     print(f"  ❌ API Error: {e}")
@@ -129,7 +132,7 @@ def main():
                     os.unlink(temp_path)
 
             else:
-                print(f"  💤 Silence (below threshold)")
+                print("  💤 Silence (below threshold)")
 
             print()  # Blank line
 
@@ -138,12 +141,14 @@ def main():
     except Exception as e:
         print(f"\n❌ Error: {e}")
         import traceback
+
         traceback.print_exc()
     finally:
         stream.stop_stream()
         stream.close()
         audio.terminate()
         print(f"\n📄 All transcriptions saved to: {OUTPUT_FILE}")
+
 
 if __name__ == "__main__":
     main()

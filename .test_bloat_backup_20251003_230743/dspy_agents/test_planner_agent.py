@@ -4,27 +4,23 @@ Comprehensive tests for DSPyPlannerAgent.
 Tests follow the NECESSARY pattern and work with or without DSPy.
 """
 
-import pytest
-from unittest.mock import Mock, patch, MagicMock
-from datetime import datetime
 from pathlib import Path
-import tempfile
-import json
+from unittest.mock import patch
 
 from dspy_agents.modules.planner_agent import (
     DSPyPlannerAgent,
+    PlanningContext,
+    PlanningResult,
     RequirementType,
     Specification,
     TechnicalPlan,
-    PlanningContext,
-    PlanningResult,
-    create_dspy_planner_agent
+    create_dspy_planner_agent,
 )
-
 
 # ===========================
 # N - Named: Agent Initialization Tests
 # ===========================
+
 
 class TestDSPyPlannerAgentInitialization:
     """Test agent creation and initialization."""
@@ -46,7 +42,7 @@ class TestDSPyPlannerAgentInitialization:
             reasoning_effort="low",
             enable_learning=False,
             specs_dir="custom_specs",
-            plans_dir="custom_plans"
+            plans_dir="custom_plans",
         )
 
         assert agent.model == "gpt-4"
@@ -60,20 +56,14 @@ class TestDSPyPlannerAgentInitialization:
         specs_dir = tmp_path / "test_specs"
         plans_dir = tmp_path / "test_plans"
 
-        agent = DSPyPlannerAgent(
-            specs_dir=str(specs_dir),
-            plans_dir=str(plans_dir)
-        )
+        agent = DSPyPlannerAgent(specs_dir=str(specs_dir), plans_dir=str(plans_dir))
 
         assert specs_dir.exists()
         assert plans_dir.exists()
 
     def test_factory_function_creates_agent(self):
         """Test the factory function creates agent properly."""
-        agent = create_dspy_planner_agent(
-            model="claude",
-            reasoning_effort="medium"
-        )
+        agent = create_dspy_planner_agent(model="claude", reasoning_effort="medium")
 
         assert isinstance(agent, DSPyPlannerAgent)
         assert agent.model == "claude"
@@ -84,6 +74,7 @@ class TestDSPyPlannerAgentInitialization:
 # E - Executable: Forward Method Tests
 # ===========================
 
+
 class TestForwardMethod:
     """Test main execution method."""
 
@@ -91,10 +82,7 @@ class TestForwardMethod:
         """Test forward method with simple task."""
         agent = DSPyPlannerAgent()
 
-        result = agent.forward(
-            "Fix a typo in the README",
-            mode="simple"
-        )
+        result = agent.forward("Fix a typo in the README", mode="simple")
 
         assert isinstance(result, PlanningResult)
         assert result.success is True
@@ -107,7 +95,7 @@ class TestForwardMethod:
 
         result = agent.forward(
             "Implement a comprehensive user authentication system with OAuth2, JWT tokens, role-based access control, and audit logging",
-            mode="full"
+            mode="full",
         )
 
         assert isinstance(result, PlanningResult)
@@ -146,14 +134,16 @@ class TestForwardMethod:
                 category="feature",
                 complexity="complex",
                 requires_spec=True,
-                estimated_effort="weeks"
+                estimated_effort="weeks",
             ),
-            recommendations=["Planning failed: Test error"]
+            recommendations=["Planning failed: Test error"],
         )
 
-        with patch.object(agent, '_execute_spec_kit_process', return_value=failed_result):
+        with patch.object(agent, "_execute_spec_kit_process", return_value=failed_result):
             # Use a complex task that requires spec
-            result = agent.forward("Implement a comprehensive user authentication system with OAuth2")
+            result = agent.forward(
+                "Implement a comprehensive user authentication system with OAuth2"
+            )
 
             # Should return the failed result
             assert isinstance(result, PlanningResult)
@@ -164,6 +154,7 @@ class TestForwardMethod:
 # ===========================
 # C - Comprehensive: Classification Tests
 # ===========================
+
 
 class TestRequirementClassification:
     """Test requirement classification functionality."""
@@ -237,6 +228,7 @@ class TestRequirementClassification:
 # E - Edge Cases: Specification Generation Tests
 # ===========================
 
+
 class TestSpecificationGeneration:
     """Test specification generation."""
 
@@ -245,10 +237,7 @@ class TestSpecificationGeneration:
         agent = DSPyPlannerAgent()
         context = PlanningContext(request="Create user management system")
         req_type = RequirementType(
-            category="feature",
-            complexity="complex",
-            requires_spec=True,
-            estimated_effort="weeks"
+            category="feature", complexity="complex", requires_spec=True, estimated_effort="weeks"
         )
 
         spec = agent._generate_specification(context, req_type)
@@ -263,10 +252,7 @@ class TestSpecificationGeneration:
         agent = DSPyPlannerAgent()
         context = PlanningContext(request="Build dashboard")
         req_type = RequirementType(
-            category="feature",
-            complexity="complex",
-            requires_spec=True,
-            estimated_effort="weeks"
+            category="feature", complexity="complex", requires_spec=True, estimated_effort="weeks"
         )
 
         spec = agent._generate_specification(context, req_type)
@@ -278,14 +264,10 @@ class TestSpecificationGeneration:
         """Test spec generation considers existing specs."""
         agent = DSPyPlannerAgent()
         context = PlanningContext(
-            request="Add feature",
-            existing_specs=["spec-001-feature.md", "spec-002-bugfix.md"]
+            request="Add feature", existing_specs=["spec-001-feature.md", "spec-002-bugfix.md"]
         )
         req_type = RequirementType(
-            category="feature",
-            complexity="complex",
-            requires_spec=True,
-            estimated_effort="days"
+            category="feature", complexity="complex", requires_spec=True, estimated_effort="days"
         )
 
         spec = agent._generate_specification(context, req_type)
@@ -296,14 +278,9 @@ class TestSpecificationGeneration:
     def test_specification_with_constraints(self):
         """Test spec generation with constraints."""
         agent = DSPyPlannerAgent()
-        context = PlanningContext(
-            request="Add feature with performance requirements"
-        )
+        context = PlanningContext(request="Add feature with performance requirements")
         req_type = RequirementType(
-            category="feature",
-            complexity="complex",
-            requires_spec=True,
-            estimated_effort="weeks"
+            category="feature", complexity="complex", requires_spec=True, estimated_effort="weeks"
         )
 
         spec = agent._generate_specification(context, req_type)
@@ -315,6 +292,7 @@ class TestSpecificationGeneration:
 # ===========================
 # S - Stateful: Technical Plan Generation Tests
 # ===========================
+
 
 class TestTechnicalPlanGeneration:
     """Test technical plan generation."""
@@ -331,7 +309,7 @@ class TestTechnicalPlanGeneration:
             non_goals=["Don't break existing"],
             personas={"dev": "Developer"},
             user_journeys=[],
-            acceptance_criteria=["Feature works", "Tests pass"]
+            acceptance_criteria=["Feature works", "Tests pass"],
         )
 
         context = PlanningContext(request="Test")
@@ -352,7 +330,7 @@ class TestTechnicalPlanGeneration:
             non_goals=[],
             personas={},
             user_journeys=[],
-            acceptance_criteria=[]
+            acceptance_criteria=[],
         )
 
         context = PlanningContext(request="Test")
@@ -372,7 +350,7 @@ class TestTechnicalPlanGeneration:
             non_goals=[],
             personas={},
             user_journeys=[],
-            acceptance_criteria=[]
+            acceptance_criteria=[],
         )
 
         context = PlanningContext(request="Test")
@@ -393,7 +371,7 @@ class TestTechnicalPlanGeneration:
             non_goals=[],
             personas={},
             user_journeys=[],
-            acceptance_criteria=["100% test coverage"]
+            acceptance_criteria=["100% test coverage"],
         )
 
         context = PlanningContext(request="Test")
@@ -406,6 +384,7 @@ class TestTechnicalPlanGeneration:
 # ===========================
 # S - Side Effects: Task Breakdown Tests
 # ===========================
+
 
 class TestTaskBreakdown:
     """Test task breakdown generation."""
@@ -421,7 +400,7 @@ class TestTaskBreakdown:
             non_goals=[],
             personas={},
             user_journeys=[],
-            acceptance_criteria=["Criterion 1", "Criterion 2"]
+            acceptance_criteria=["Criterion 1", "Criterion 2"],
         )
 
         plan = TechnicalPlan(
@@ -434,7 +413,7 @@ class TestTaskBreakdown:
             quality_strategy={},
             risk_assessment=[],
             milestones=[],
-            estimated_duration="1 week"
+            estimated_duration="1 week",
         )
 
         tasks = agent._generate_task_breakdown(plan, spec)
@@ -454,7 +433,7 @@ class TestTaskBreakdown:
             non_goals=[],
             personas={},
             user_journeys=[],
-            acceptance_criteria=["A", "B", "C"]
+            acceptance_criteria=["A", "B", "C"],
         )
 
         plan = TechnicalPlan(
@@ -467,7 +446,7 @@ class TestTaskBreakdown:
             quality_strategy={},
             risk_assessment=[],
             milestones=[],
-            estimated_duration="3 days"
+            estimated_duration="3 days",
         )
 
         tasks = agent._generate_task_breakdown(plan, spec)
@@ -484,6 +463,7 @@ class TestTaskBreakdown:
 # A - Async-style: Guidance Generation Tests
 # ===========================
 
+
 class TestGuidanceGeneration:
     """Test guidance generation for simple tasks."""
 
@@ -492,10 +472,7 @@ class TestGuidanceGeneration:
         agent = DSPyPlannerAgent()
         context = PlanningContext(request="Fix login bug")
         req_type = RequirementType(
-            category="bugfix",
-            complexity="simple",
-            requires_spec=False,
-            estimated_effort="hours"
+            category="bugfix", complexity="simple", requires_spec=False, estimated_effort="hours"
         )
 
         guidance = agent._generate_guidance(context, req_type)
@@ -508,10 +485,7 @@ class TestGuidanceGeneration:
         agent = DSPyPlannerAgent()
         context = PlanningContext(request="Document API")
         req_type = RequirementType(
-            category="docs",
-            complexity="simple",
-            requires_spec=False,
-            estimated_effort="hours"
+            category="docs", complexity="simple", requires_spec=False, estimated_effort="hours"
         )
 
         guidance = agent._generate_guidance(context, req_type)
@@ -523,10 +497,7 @@ class TestGuidanceGeneration:
         agent = DSPyPlannerAgent()
         context = PlanningContext(request="Add unit tests")
         req_type = RequirementType(
-            category="test",
-            complexity="simple",
-            requires_spec=False,
-            estimated_effort="hours"
+            category="test", complexity="simple", requires_spec=False, estimated_effort="hours"
         )
 
         guidance = agent._generate_guidance(context, req_type)
@@ -539,10 +510,7 @@ class TestGuidanceGeneration:
         agent = DSPyPlannerAgent()
         context = PlanningContext(request="Simple task")
         req_type = RequirementType(
-            category="feature",
-            complexity="simple",
-            requires_spec=False,
-            estimated_effort="hours"
+            category="feature", complexity="simple", requires_spec=False, estimated_effort="hours"
         )
 
         guidance = agent._generate_guidance(context, req_type)
@@ -556,6 +524,7 @@ class TestGuidanceGeneration:
 # R - Regression: Spec-Kit Process Tests
 # ===========================
 
+
 class TestSpecKitProcess:
     """Test the complete spec-kit process."""
 
@@ -564,10 +533,7 @@ class TestSpecKitProcess:
         agent = DSPyPlannerAgent()
         context = PlanningContext(request="Build complex feature")
         req_type = RequirementType(
-            category="feature",
-            complexity="complex",
-            requires_spec=True,
-            estimated_effort="weeks"
+            category="feature", complexity="complex", requires_spec=True, estimated_effort="weeks"
         )
 
         result = agent._execute_spec_kit_process(context, req_type)
@@ -582,14 +548,11 @@ class TestSpecKitProcess:
         agent = DSPyPlannerAgent()
         context = PlanningContext(request="Test")
         req_type = RequirementType(
-            category="feature",
-            complexity="complex",
-            requires_spec=True,
-            estimated_effort="weeks"
+            category="feature", complexity="complex", requires_spec=True, estimated_effort="weeks"
         )
 
         # Mock to raise error
-        with patch.object(agent, '_generate_specification', side_effect=Exception("Test error")):
+        with patch.object(agent, "_generate_specification", side_effect=Exception("Test error")):
             result = agent._execute_spec_kit_process(context, req_type)
 
             assert result.success is False
@@ -600,10 +563,7 @@ class TestSpecKitProcess:
         agent = DSPyPlannerAgent()
         context = PlanningContext(request="Create feature")
         req_type = RequirementType(
-            category="feature",
-            complexity="complex",
-            requires_spec=True,
-            estimated_effort="weeks"
+            category="feature", complexity="complex", requires_spec=True, estimated_effort="weeks"
         )
 
         result = agent._execute_spec_kit_process(context, req_type)
@@ -616,6 +576,7 @@ class TestSpecKitProcess:
 # ===========================
 # Y - Yielding: Learning System Tests
 # ===========================
+
 
 class TestLearningSystem:
     """Test learning functionality."""
@@ -630,9 +591,9 @@ class TestLearningSystem:
                 category="feature",
                 complexity="complex",
                 requires_spec=True,
-                estimated_effort="days"
+                estimated_effort="days",
             ),
-            tasks=[{"task": "Test"}]
+            tasks=[{"task": "Test"}],
         )
 
         agent._learn_from_planning(result)
@@ -653,9 +614,9 @@ class TestLearningSystem:
                     category="feature",
                     complexity="simple",
                     requires_spec=False,
-                    estimated_effort="hours"
+                    estimated_effort="hours",
                 ),
-                tasks=[]
+                tasks=[],
             )
             agent._learn_from_planning(result)
 
@@ -674,9 +635,9 @@ class TestLearningSystem:
                     category="feature" if i < 5 else "bugfix",
                     complexity="simple",
                     requires_spec=False,
-                    estimated_effort="hours"
+                    estimated_effort="hours",
                 ),
-                tasks=[{"task": f"Task {i}"}]
+                tasks=[{"task": f"Task {i}"}],
             )
             agent._learn_from_planning(result)
 
@@ -699,9 +660,9 @@ class TestLearningSystem:
                     category="feature",
                     complexity="simple",
                     requires_spec=False,
-                    estimated_effort="hours"
+                    estimated_effort="hours",
                 ),
-                tasks=[]
+                tasks=[],
             )
             agent._learn_from_planning(result)
 
@@ -713,10 +674,11 @@ class TestLearningSystem:
 # Fallback Mode Tests
 # ===========================
 
+
 class TestFallbackMode:
     """Test behavior when DSPy is not available."""
 
-    @patch('dspy_agents.modules.planner_agent.DSPY_AVAILABLE', False)
+    @patch("dspy_agents.modules.planner_agent.DSPY_AVAILABLE", False)
     def test_agent_works_without_dspy(self):
         """Test agent functions without DSPy."""
         agent = DSPyPlannerAgent()
@@ -731,9 +693,9 @@ class TestFallbackMode:
 
         result = agent._fallback_understand(request="Test request")
 
-        assert hasattr(result, 'understanding')
-        assert hasattr(result, 'assumptions')
-        assert hasattr(result, 'risks')
+        assert hasattr(result, "understanding")
+        assert hasattr(result, "assumptions")
+        assert hasattr(result, "risks")
 
     def test_fallback_strategize(self):
         """Test fallback strategy method."""
@@ -741,9 +703,9 @@ class TestFallbackMode:
 
         result = agent._fallback_strategize()
 
-        assert hasattr(result, 'strategy')
-        assert hasattr(result, 'milestones')
-        assert hasattr(result, 'success_criteria')
+        assert hasattr(result, "strategy")
+        assert hasattr(result, "milestones")
+        assert hasattr(result, "success_criteria")
 
     def test_fallback_breakdown(self):
         """Test fallback breakdown method."""
@@ -751,14 +713,15 @@ class TestFallbackMode:
 
         result = agent._fallback_breakdown()
 
-        assert hasattr(result, 'tasks')
-        assert hasattr(result, 'task_dependencies')
-        assert hasattr(result, 'estimated_duration')
+        assert hasattr(result, "tasks")
+        assert hasattr(result, "task_dependencies")
+        assert hasattr(result, "estimated_duration")
 
 
 # ===========================
 # Helper Methods Tests
 # ===========================
+
 
 class TestHelperMethods:
     """Test helper methods."""
@@ -777,10 +740,7 @@ class TestHelperMethods:
         agent = DSPyPlannerAgent()
 
         req_type = RequirementType(
-            category="bugfix",
-            complexity="simple",
-            requires_spec=False,
-            estimated_effort="hours"
+            category="bugfix", complexity="simple", requires_spec=False, estimated_effort="hours"
         )
 
         non_goals = agent._define_non_goals(req_type)
@@ -793,10 +753,7 @@ class TestHelperMethods:
         agent = DSPyPlannerAgent()
 
         req_type = RequirementType(
-            category="test",
-            complexity="simple",
-            requires_spec=False,
-            estimated_effort="hours"
+            category="test", complexity="simple", requires_spec=False, estimated_effort="hours"
         )
 
         personas = agent._create_personas(req_type)
@@ -816,7 +773,7 @@ class TestHelperMethods:
             non_goals=[],
             personas={},
             user_journeys=[],
-            acceptance_criteria=[]
+            acceptance_criteria=[],
         )
 
         tools = agent._identify_tools(spec)
@@ -836,7 +793,7 @@ class TestHelperMethods:
             non_goals=[],
             personas={},
             user_journeys=[],
-            acceptance_criteria=[]
+            acceptance_criteria=[],
         )
 
         duration1 = agent._estimate_duration(spec1)
@@ -850,7 +807,7 @@ class TestHelperMethods:
             non_goals=[],
             personas={},
             user_journeys=[],
-            acceptance_criteria=[]
+            acceptance_criteria=[],
         )
 
         duration2 = agent._estimate_duration(spec2)
@@ -868,7 +825,7 @@ class TestHelperMethods:
             personas={},
             user_journeys=[],
             acceptance_criteria=[],
-            constraints=["Time constraint", "Budget constraint"]
+            constraints=["Time constraint", "Budget constraint"],
         )
 
         risks = agent._assess_risks(spec)
@@ -882,6 +839,7 @@ class TestHelperMethods:
 # Integration Tests
 # ===========================
 
+
 class TestIntegration:
     """Test integration scenarios."""
 
@@ -890,15 +848,9 @@ class TestIntegration:
         specs_dir = tmp_path / "specs"
         plans_dir = tmp_path / "plans"
 
-        agent = DSPyPlannerAgent(
-            specs_dir=str(specs_dir),
-            plans_dir=str(plans_dir)
-        )
+        agent = DSPyPlannerAgent(specs_dir=str(specs_dir), plans_dir=str(plans_dir))
 
-        result = agent.forward(
-            "Build a user authentication system with OAuth support",
-            mode="full"
-        )
+        result = agent.forward("Build a user authentication system with OAuth support", mode="full")
 
         assert result.success is True
         assert result.requirement_type.category == "feature"
@@ -913,10 +865,7 @@ class TestIntegration:
         """Test simple task flow without spec generation."""
         agent = DSPyPlannerAgent()
 
-        result = agent.forward(
-            "Fix typo in README",
-            mode="simple"
-        )
+        result = agent.forward("Fix typo in README", mode="simple")
 
         assert result.success is True
         assert result.requirement_type.requires_spec is False
@@ -932,7 +881,7 @@ class TestIntegration:
             "Test request",
             "full",
             codebase_context={"files": 100},
-            learning_patterns=[{"pattern": "test"}]
+            learning_patterns=[{"pattern": "test"}],
         )
 
         assert context.request == "Test request"

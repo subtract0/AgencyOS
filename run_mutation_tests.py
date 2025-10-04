@@ -11,7 +11,6 @@ Target: 95%+ mutation score (Mars Rover standard)
 """
 
 import sys
-import os
 from pathlib import Path
 
 # Add project root to path
@@ -35,7 +34,7 @@ def run_mutation_tests():
         test_command="pytest tests/test_agency_cli_commands.py -v --tb=short -x",
         mutation_types=["arithmetic", "comparison", "boolean", "constant", "return"],
         timeout_seconds=120,
-        parallel=False
+        parallel=False,
     )
 
     tester_agency = MutationTester(config_agency)
@@ -60,7 +59,7 @@ def run_mutation_tests():
         test_command="pytest tests/test_enhanced_memory_learning.py -v --tb=short -x",
         mutation_types=["arithmetic", "comparison", "boolean", "constant", "return"],
         timeout_seconds=120,
-        parallel=False
+        parallel=False,
     )
 
     tester_memory = MutationTester(config_memory)
@@ -85,7 +84,7 @@ def run_mutation_tests():
         test_command="pytest tests/test_vector_store_lifecycle.py -v --tb=short -x",
         mutation_types=["arithmetic", "comparison", "boolean", "constant", "return"],
         timeout_seconds=120,
-        parallel=False
+        parallel=False,
     )
 
     tester_vector = MutationTester(config_vector)
@@ -112,7 +111,9 @@ def run_mutation_tests():
 
     for module, score in results.items():
         if score:
-            print(f"{module:40s} | Score: {score.mutation_score:.2%} | Mutations: {score.total_mutations} | Caught: {score.mutations_caught} | Survived: {score.mutations_survived}")
+            print(
+                f"{module:40s} | Score: {score.mutation_score:.2%} | Mutations: {score.total_mutations} | Caught: {score.mutations_caught} | Survived: {score.mutations_survived}"
+            )
             total_mutations += score.total_mutations
             total_caught += score.mutations_caught
             total_survived += score.mutations_survived
@@ -120,7 +121,9 @@ def run_mutation_tests():
             print(f"{module:40s} | ERROR: Failed to run mutation tests")
 
     print()
-    print(f"{'TOTAL':40s} | Score: {total_caught/total_mutations:.2%} | Mutations: {total_mutations} | Caught: {total_caught} | Survived: {total_survived}")
+    print(
+        f"{'TOTAL':40s} | Score: {total_caught / total_mutations:.2%} | Mutations: {total_mutations} | Caught: {total_caught} | Survived: {total_survived}"
+    )
     print()
 
     overall_score = total_caught / total_mutations if total_mutations > 0 else 0.0

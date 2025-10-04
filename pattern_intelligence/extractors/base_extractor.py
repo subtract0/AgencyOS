@@ -3,13 +3,20 @@
 Base pattern extractor interface and common functionality.
 """
 
-from abc import ABC, abstractmethod
-from typing import List, Optional, Dict, Any, cast
-from shared.type_definitions.json import JSONValue
 import logging
+from abc import ABC, abstractmethod
 from datetime import datetime
+from typing import cast
 
-from ..coding_pattern import CodingPattern, ProblemContext, SolutionApproach, EffectivenessMetric, PatternMetadata
+from shared.type_definitions.json import JSONValue
+
+from ..coding_pattern import (
+    CodingPattern,
+    EffectivenessMetric,
+    PatternMetadata,
+    ProblemContext,
+    SolutionApproach,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -27,10 +34,10 @@ class BasePatternExtractor(ABC):
         """
         self.source_name = source_name
         self.confidence_threshold = confidence_threshold
-        self.extracted_patterns: List[CodingPattern] = []
+        self.extracted_patterns: list[CodingPattern] = []
 
     @abstractmethod
-    def extract_patterns(self, **kwargs) -> List[CodingPattern]:
+    def extract_patterns(self, **kwargs) -> list[CodingPattern]:
         """
         Extract patterns from the source.
 
@@ -45,7 +52,7 @@ class BasePatternExtractor(ABC):
         solution: SolutionApproach,
         outcome: EffectivenessMetric,
         source_reference: str,
-        tags: Optional[List[str]] = None
+        tags: list[str] | None = None,
     ) -> CodingPattern:
         """
         Create a standardized CodingPattern.
@@ -71,12 +78,7 @@ class BasePatternExtractor(ABC):
             tags=tags,
         )
 
-        return CodingPattern(
-            context=context,
-            solution=solution,
-            outcome=outcome,
-            metadata=metadata
-        )
+        return CodingPattern(context=context, solution=solution, outcome=outcome, metadata=metadata)
 
     def validate_pattern(self, pattern: CodingPattern) -> bool:
         """
@@ -109,7 +111,7 @@ class BasePatternExtractor(ABC):
 
         return True
 
-    def extract_and_validate(self, **kwargs) -> List[CodingPattern]:
+    def extract_and_validate(self, **kwargs) -> list[CodingPattern]:
         """
         Extract patterns and validate them.
 
@@ -139,7 +141,7 @@ class BasePatternExtractor(ABC):
             logger.error(f"{self.source_name}: Pattern extraction failed: {e}")
             return []
 
-    def get_extraction_stats(self) -> Dict[str, JSONValue]:
+    def get_extraction_stats(self) -> dict[str, JSONValue]:
         """Get statistics about extracted patterns."""
         if not self.extracted_patterns:
             return {"total_patterns": 0, "message": "No patterns extracted yet"}
@@ -148,7 +150,7 @@ class BasePatternExtractor(ABC):
 
         # Calculate statistics
         domains = [p.context.domain for p in patterns]
-        domain_counts: Dict[str, int] = {}
+        domain_counts: dict[str, int] = {}
         for domain in domains:
             domain_counts[domain] = domain_counts.get(domain, 0) + 1
 
@@ -167,10 +169,10 @@ class BasePatternExtractor(ABC):
 
     def filter_patterns(
         self,
-        domain: Optional[str] = None,
-        min_effectiveness: Optional[float] = None,
-        tags: Optional[List[str]] = None
-    ) -> List[CodingPattern]:
+        domain: str | None = None,
+        min_effectiveness: float | None = None,
+        tags: list[str] | None = None,
+    ) -> list[CodingPattern]:
         """
         Filter extracted patterns by criteria.
 
@@ -188,17 +190,19 @@ class BasePatternExtractor(ABC):
             filtered_patterns = [p for p in filtered_patterns if p.context.domain == domain]
 
         if min_effectiveness is not None:
-            filtered_patterns = [p for p in filtered_patterns
-                               if p.outcome.effectiveness_score() >= min_effectiveness]
+            filtered_patterns = [
+                p for p in filtered_patterns if p.outcome.effectiveness_score() >= min_effectiveness
+            ]
 
         if tags:
             tag_set = set(tags)
-            filtered_patterns = [p for p in filtered_patterns
-                               if tag_set.intersection(set(p.metadata.tags))]
+            filtered_patterns = [
+                p for p in filtered_patterns if tag_set.intersection(set(p.metadata.tags))
+            ]
 
         return filtered_patterns
 
-    def analyze_success_factors(self) -> Dict[str, JSONValue]:
+    def analyze_success_factors(self) -> dict[str, JSONValue]:
         """Analyze what makes patterns successful."""
         if not self.extracted_patterns:
             return {"message": "No patterns to analyze"}
@@ -215,7 +219,7 @@ class BasePatternExtractor(ABC):
         for pattern in patterns:
             all_tools.extend(pattern.solution.tools)
 
-        tool_counts: Dict[str, int] = {}
+        tool_counts: dict[str, int] = {}
         for tool in all_tools:
             tool_counts[tool] = tool_counts.get(tool, 0) + 1
 
@@ -224,7 +228,7 @@ class BasePatternExtractor(ABC):
         for pattern in high_effectiveness:
             high_eff_tools.extend(pattern.solution.tools)
 
-        high_eff_tool_counts: Dict[str, int] = {}
+        high_eff_tool_counts: dict[str, int] = {}
         for tool in high_eff_tools:
             high_eff_tool_counts[tool] = high_eff_tool_counts.get(tool, 0) + 1
 
@@ -235,14 +239,21 @@ class BasePatternExtractor(ABC):
                 "medium": len(medium_effectiveness),
                 "low": len(low_effectiveness),
             },
-            "most_common_tools": cast(JSONValue, sorted(tool_counts.items(), key=lambda x: x[1], reverse=True)[:10]),
-            "high_effectiveness_tools": cast(JSONValue, sorted(high_eff_tool_counts.items(), key=lambda x: x[1], reverse=True)[:5]),
-            "success_indicators": cast(JSONValue, self._identify_success_indicators(high_effectiveness)),
+            "most_common_tools": cast(
+                JSONValue, sorted(tool_counts.items(), key=lambda x: x[1], reverse=True)[:10]
+            ),
+            "high_effectiveness_tools": cast(
+                JSONValue,
+                sorted(high_eff_tool_counts.items(), key=lambda x: x[1], reverse=True)[:5],
+            ),
+            "success_indicators": cast(
+                JSONValue, self._identify_success_indicators(high_effectiveness)
+            ),
         }
 
-    def _identify_success_indicators(self, successful_patterns: List[CodingPattern]) -> List[str]:
+    def _identify_success_indicators(self, successful_patterns: list[CodingPattern]) -> list[str]:
         """Identify common characteristics of successful patterns."""
-        indicators: List[str] = []
+        indicators: list[str] = []
 
         if not successful_patterns:
             return indicators
@@ -269,10 +280,14 @@ class BasePatternExtractor(ABC):
 
         if all_constraints:
             most_common_constraint = max(set(all_constraints), key=all_constraints.count)
-            indicators.append(f"Constraint '{most_common_constraint}' common in successful patterns")
+            indicators.append(
+                f"Constraint '{most_common_constraint}' common in successful patterns"
+            )
 
         # Success rate patterns
-        high_success_rate_patterns = [p for p in successful_patterns if p.outcome.success_rate >= 0.9]
+        high_success_rate_patterns = [
+            p for p in successful_patterns if p.outcome.success_rate >= 0.9
+        ]
         if len(high_success_rate_patterns) >= len(successful_patterns) * 0.5:
             indicators.append("High success rate (>90%) correlates with effectiveness")
 

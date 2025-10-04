@@ -17,12 +17,9 @@ NECESSARY Framework (Score 0-9, need ≥4 to keep):
 """
 
 import ast
-import json
-import os
 import re
 from collections import defaultdict
 from pathlib import Path
-from typing import Dict, List, Tuple
 
 
 class TestAnalyzer:
@@ -48,18 +45,18 @@ class TestAnalyzer:
                 "archived": [],
             },
             "scores": {},
-            "execution_plan": {}
+            "execution_plan": {},
         }
 
     def count_test_functions(self, file_path: Path) -> int:
         """Count test functions in a file."""
         try:
-            with open(file_path, 'r') as f:
+            with open(file_path) as f:
                 content = f.read()
             tree = ast.parse(content)
             count = 0
             for node in ast.walk(tree):
-                if isinstance(node, ast.FunctionDef) and node.name.startswith('test_'):
+                if isinstance(node, ast.FunctionDef) and node.name.startswith("test_"):
                     count += 1
             return count
         except Exception:
@@ -68,7 +65,7 @@ class TestAnalyzer:
     def count_lines(self, file_path: Path) -> int:
         """Count lines in file."""
         try:
-            with open(file_path, 'r') as f:
+            with open(file_path) as f:
                 return len(f.readlines())
         except Exception:
             return 0
@@ -91,7 +88,7 @@ class TestAnalyzer:
 
         # Check for experimental markers
         try:
-            with open(file_path, 'r') as f:
+            with open(file_path) as f:
                 content = f.read()
                 if "experimental" in content.lower():
                     return True
@@ -103,7 +100,7 @@ class TestAnalyzer:
 
         return False
 
-    def is_obsolete(self, file_path: Path) -> Tuple[bool, str]:
+    def is_obsolete(self, file_path: Path) -> tuple[bool, str]:
         """Check if test is for removed/obsolete code."""
         path_str = str(file_path)
         name = file_path.stem
@@ -124,7 +121,7 @@ class TestAnalyzer:
 
         return False, ""
 
-    def analyze_duplicates(self) -> List[Tuple[str, str]]:
+    def analyze_duplicates(self) -> list[tuple[str, str]]:
         """Find potential duplicate test coverage."""
         duplicates = []
         test_files = list(self.tests_dir.rglob("test_*.py"))
@@ -133,7 +130,7 @@ class TestAnalyzer:
         name_groups = defaultdict(list)
         for f in test_files:
             base_name = f.stem.replace("test_", "").replace("_test", "")
-            base_name = re.sub(r'_(additional|refactor|fixed|simple|comprehensive)$', '', base_name)
+            base_name = re.sub(r"_(additional|refactor|fixed|simple|comprehensive)$", "", base_name)
             name_groups[base_name].append(str(f))
 
         for base, files in name_groups.items():
@@ -142,22 +139,22 @@ class TestAnalyzer:
 
         return duplicates
 
-    def score_necessary(self, file_path: Path) -> Dict[str, int]:
+    def score_necessary(self, file_path: Path) -> dict[str, int]:
         """Score test file on NECESSARY criteria (0-9)."""
         scores = {
             "N": 0,  # Necessary
             "E": 0,  # Explicit
             "C": 0,  # Complete
-            "E2": 0, # Efficient
+            "E2": 0,  # Efficient
             "S": 0,  # Stable
-            "S2": 0, # Scoped
+            "S2": 0,  # Scoped
             "A": 0,  # Actionable
             "R": 0,  # Relevant
             "Y": 0,  # Yieldful
         }
 
         try:
-            with open(file_path, 'r') as f:
+            with open(file_path) as f:
                 content = f.read()
 
             # N: Necessary (not experimental)
@@ -184,7 +181,7 @@ class TestAnalyzer:
             tree = ast.parse(content)
             avg_lines = []
             for node in ast.walk(tree):
-                if isinstance(node, ast.FunctionDef) and node.name.startswith('test_'):
+                if isinstance(node, ast.FunctionDef) and node.name.startswith("test_"):
                     func_lines = node.end_lineno - node.lineno
                     avg_lines.append(func_lines)
             if avg_lines and sum(avg_lines) / len(avg_lines) < 30:
@@ -229,24 +226,23 @@ class TestAnalyzer:
 
             # Check categories
             if self.is_experimental(test_file):
-                self.results["categories"]["experimental"].append({
-                    "file": rel_path,
-                    "tests": num_tests,
-                    "lines": num_lines,
-                    "reason": "Experimental/Trinity/DSPy/Archived"
-                })
+                self.results["categories"]["experimental"].append(
+                    {
+                        "file": rel_path,
+                        "tests": num_tests,
+                        "lines": num_lines,
+                        "reason": "Experimental/Trinity/DSPy/Archived",
+                    }
+                )
                 self.results["summary"]["bloat_files"] += 1
                 self.results["summary"]["bloat_tests"] += num_tests
                 self.results["summary"]["bloat_lines"] += num_lines
 
             is_obs, reason = self.is_obsolete(test_file)
             if is_obs:
-                self.results["categories"]["obsolete"].append({
-                    "file": rel_path,
-                    "tests": num_tests,
-                    "lines": num_lines,
-                    "reason": reason
-                })
+                self.results["categories"]["obsolete"].append(
+                    {"file": rel_path, "tests": num_tests, "lines": num_lines, "reason": reason}
+                )
 
             # Score NECESSARY
             scores = self.score_necessary(test_file)
@@ -254,7 +250,7 @@ class TestAnalyzer:
             self.results["scores"][rel_path] = {
                 "scores": scores,
                 "total": total_score,
-                "verdict": "KEEP" if total_score >= 4 else "REMOVE"
+                "verdict": "KEEP" if total_score >= 4 else "REMOVE",
             }
 
             if total_score < 4:
@@ -263,11 +259,9 @@ class TestAnalyzer:
         # Analyze duplicates
         duplicates = self.analyze_duplicates()
         for base, files in duplicates:
-            self.results["categories"]["duplicates"].append({
-                "base_name": base,
-                "files": files,
-                "count": len(files)
-            })
+            self.results["categories"]["duplicates"].append(
+                {"base_name": base, "files": files, "count": len(files)}
+            )
 
         return self.results
 
@@ -283,7 +277,11 @@ class TestAnalyzer:
         summary = results["summary"]
 
         # Calculate percentages
-        bloat_pct = (summary["bloat_tests"] / summary["total_tests"] * 100) if summary["total_tests"] > 0 else 0
+        bloat_pct = (
+            (summary["bloat_tests"] / summary["total_tests"] * 100)
+            if summary["total_tests"] > 0
+            else 0
+        )
         estimated_removal = summary["bloat_tests"]
         estimated_kept = summary["total_tests"] - estimated_removal
 
@@ -314,7 +312,9 @@ class TestAnalyzer:
 """
 
         # Experimental files
-        for item in sorted(results["categories"]["experimental"], key=lambda x: x["tests"], reverse=True)[:20]:
+        for item in sorted(
+            results["categories"]["experimental"], key=lambda x: x["tests"], reverse=True
+        )[:20]:
             report += f"- `{item['file']}` ({item['tests']} tests, {item['lines']} lines) - {item['reason']}\n"
 
         if len(results["categories"]["experimental"]) > 20:
@@ -358,7 +358,7 @@ class TestAnalyzer:
             "7-9": "KEEP - Excellent",
             "4-6": "KEEP - Good",
             "2-3": "REFACTOR",
-            "0-1": "DELETE"
+            "0-1": "DELETE",
         }
 
         score_counts = defaultdict(int)
@@ -375,7 +375,9 @@ class TestAnalyzer:
 
         for range_key, verdict in score_ranges.items():
             count = score_counts[range_key]
-            action = "Keep" if "KEEP" in verdict else ("Refactor" if "REFACTOR" in verdict else "Delete")
+            action = (
+                "Keep" if "KEEP" in verdict else ("Refactor" if "REFACTOR" in verdict else "Delete")
+            )
             report += f"| {range_key} | {verdict} | {count} | {action} |\n"
 
         # Execution Plan
@@ -417,18 +419,22 @@ class TestAnalyzer:
         # Top bloat files
         bloat_files = []
         for file_path, score_data in results["scores"].items():
-            if score_data["verdict"] == "REMOVE" or any(file_path in x["file"] for x in results["categories"]["experimental"]):
+            if score_data["verdict"] == "REMOVE" or any(
+                file_path in x["file"] for x in results["categories"]["experimental"]
+            ):
                 # Find file stats
                 for exp_file in results["categories"]["experimental"]:
                     if exp_file["file"] == file_path:
-                        bloat_files.append({
-                            "file": file_path,
-                            "tests": exp_file["tests"],
-                            "lines": exp_file["lines"],
-                            "score": score_data["total"],
-                            "verdict": score_data["verdict"],
-                            "reason": exp_file["reason"]
-                        })
+                        bloat_files.append(
+                            {
+                                "file": file_path,
+                                "tests": exp_file["tests"],
+                                "lines": exp_file["lines"],
+                                "score": score_data["total"],
+                                "verdict": score_data["verdict"],
+                                "reason": exp_file["reason"],
+                            }
+                        )
                         break
 
         for item in sorted(bloat_files, key=lambda x: x["tests"], reverse=True)[:50]:
@@ -449,7 +455,7 @@ class TestAnalyzer:
 """
 
         # Write report
-        with open(output_path, 'w') as f:
+        with open(output_path, "w") as f:
             f.write(report)
 
         print(f"✅ Report generated: {output_path}")
@@ -463,13 +469,15 @@ if __name__ == "__main__":
     results = analyzer.analyze()
 
     # Print summary
-    print("\n" + "="*60)
+    print("\n" + "=" * 60)
     print("BLOAT ANALYSIS SUMMARY")
-    print("="*60)
+    print("=" * 60)
     print(f"Total tests: {results['summary']['total_tests']:,}")
     print(f"Bloat identified: {results['summary']['bloat_tests']:,} tests")
-    print(f"Bloat percentage: {results['summary']['bloat_tests'] / results['summary']['total_tests'] * 100:.1f}%")
-    print("="*60 + "\n")
+    print(
+        f"Bloat percentage: {results['summary']['bloat_tests'] / results['summary']['total_tests'] * 100:.1f}%"
+    )
+    print("=" * 60 + "\n")
 
     # Generate report
     report_path = analyzer.generate_report()

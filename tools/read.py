@@ -1,6 +1,5 @@
 import mimetypes
 import os
-from typing import Optional
 
 from agency_swarm.tools import BaseTool
 from pydantic import Field
@@ -30,11 +29,11 @@ def _read_file_lines_cached(file_path: str) -> list[str]:
         UnicodeDecodeError: If file cannot be decoded
     """
     try:
-        with open(file_path, "r", encoding="utf-8") as file:
+        with open(file_path, encoding="utf-8") as file:
             return file.readlines()
     except UnicodeDecodeError:
         # Try with different encoding
-        with open(file_path, "r", encoding="latin-1") as file:
+        with open(file_path, encoding="latin-1") as file:
             return file.readlines()
 
 
@@ -56,11 +55,11 @@ class Read(BaseTool):  # type: ignore[misc]
     """
 
     file_path: str = Field(..., description="The absolute path to the file to read")
-    offset: Optional[int] = Field(
+    offset: int | None = Field(
         None,
         description="The line number to start reading from. Only provide if the file is too large to read at once",
     )
-    limit: Optional[int] = Field(
+    limit: int | None = Field(
         None,
         description="The number of lines to read. Only provide if the file is too large to read at once.",
     )
@@ -106,9 +105,7 @@ class Read(BaseTool):  # type: ignore[misc]
                 return f"Warning: File exists but has empty contents: {self.file_path}"
 
             # Apply offset and limit
-            start_line = (
-                (self.offset - 1) if self.offset else 0
-            )  # Convert to 0-based index
+            start_line = (self.offset - 1) if self.offset else 0  # Convert to 0-based index
             start_line = max(0, start_line)  # Ensure non-negative
 
             if self.limit:
@@ -136,7 +133,9 @@ class Read(BaseTool):  # type: ignore[misc]
                 if self.offset or self.limit:
                     result += f"\n[Truncated: showing lines {start_line + 1}-{start_line + lines_shown} of {total_lines} total lines]"
                 else:
-                    result += f"\n[Truncated: showing first {lines_shown} of {total_lines} total lines]"
+                    result += (
+                        f"\n[Truncated: showing first {lines_shown} of {total_lines} total lines]"
+                    )
 
             return result.rstrip()
 

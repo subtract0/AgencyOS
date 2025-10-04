@@ -13,21 +13,21 @@ Constitutional Compliance:
 - TDD approach (tests first)
 """
 
-import pytest
 from datetime import datetime, timedelta
-from trinity_protocol.experimental.ambient_patterns import AmbientPatternDetector
-from trinity_protocol.experimental.conversation_context import ConversationContext
+
+import pytest
+
 from shared.persistent_store import PersistentStore
 from trinity_protocol.core.models.patterns import PatternType
+from trinity_protocol.experimental.ambient_patterns import AmbientPatternDetector
+from trinity_protocol.experimental.conversation_context import ConversationContext
 
 
 @pytest.fixture
 def conversation_context():
     """Create conversation context for testing."""
     return ConversationContext(
-        window_minutes=10.0,
-        max_entries=100,
-        silence_threshold_seconds=120.0
+        window_minutes=10.0, max_entries=100, silence_threshold_seconds=120.0
     )
 
 
@@ -45,7 +45,7 @@ def detector(conversation_context, pattern_store):
         conversation_context=conversation_context,
         pattern_store=pattern_store,
         recurrence_threshold=3,
-        min_confidence=0.7
+        min_confidence=0.7,
     )
 
 
@@ -84,7 +84,9 @@ class TestTopicExtraction:
         assert all(len(topic) > 3 for topic in topics)
 
 
-@pytest.mark.skip(reason="Trinity experimental feature - RECURRING_TOPIC pattern detection not yet implemented")
+@pytest.mark.skip(
+    reason="Trinity experimental feature - RECURRING_TOPIC pattern detection not yet implemented"
+)
 class TestRecurringTopicDetection:
     """Test recurring topic pattern detection."""
 
@@ -157,7 +159,7 @@ class TestFrustrationDetection:
             "The build is taking forever.",
             "Why doesn't this work?",
             "This code is broken.",
-            "I'm stuck on this bug."
+            "I'm stuck on this bug.",
         ]
 
         now = datetime.now()
@@ -192,7 +194,7 @@ class TestActionItemDetection:
             "I need to finish this report by Friday.",
             "Don't forget to deploy the update.",
             "Make sure to test the API.",
-            "Todo: review the pull request."
+            "Todo: review the pull request.",
         ]
 
         now = datetime.now()
@@ -236,7 +238,7 @@ class TestProjectMentionDetection:
             "Building a new feature for the API.",
             "Need to finish the authentication module.",
             "Creating a dashboard for cost tracking.",
-            "Developing the ambient intelligence system."
+            "Developing the ambient intelligence system.",
         ]
 
         now = datetime.now()
@@ -259,7 +261,7 @@ class TestFeatureRequestDetection:
             "Can we add support for multiple users?",
             "Would be nice to have auto-save.",
             "Please implement dark mode.",
-            "Wish I could export the data."
+            "Wish I could export the data.",
         ]
 
         now = datetime.now()
@@ -283,7 +285,7 @@ class TestWorkflowBottleneckDetection:
             "This process is so tedious.",
             "Every time I need to do this repetitive task.",
             "The deployment process is time-consuming.",
-            "This workflow is inefficient."
+            "This workflow is inefficient.",
         ]
 
         now = datetime.now()
@@ -313,7 +315,7 @@ class TestIntentClassification:
             first_mention=datetime.now() - timedelta(hours=2),
             last_mention=datetime.now(),
             context_summary="User mentioned book multiple times",
-            keywords=["book", "coaches"]
+            keywords=["book", "coaches"],
         )
 
         intent = detector.classify_intent(pattern)
@@ -337,7 +339,7 @@ class TestIntentClassification:
             context_summary="User frustrated with build",
             keywords=["frustrating", "broken"],
             sentiment="negative",
-            urgency="MEDIUM"
+            urgency="MEDIUM",
         )
 
         intent = detector.classify_intent(pattern)
@@ -360,7 +362,7 @@ class TestIntentClassification:
             last_mention=datetime.now(),
             context_summary="User needs to call Sarah",
             keywords=["remind me", "call"],
-            urgency="MEDIUM"
+            urgency="MEDIUM",
         )
 
         intent = detector.classify_intent(pattern)
@@ -386,7 +388,7 @@ class TestPatternPersistence:
             last_mention=datetime.now(),
             context_summary="Test pattern for persistence",
             keywords=["test", "topic"],
-            urgency="LOW"
+            urgency="LOW",
         )
 
         # Persist pattern
@@ -436,7 +438,9 @@ class TestRecurrenceMetrics:
         assert metrics.trend in ["increasing", "stable"]
 
 
-@pytest.mark.skip(reason="Trinity experimental feature - End-to-end pattern detection for RECURRING_TOPIC not implemented")
+@pytest.mark.skip(
+    reason="Trinity experimental feature - End-to-end pattern detection for RECURRING_TOPIC not implemented"
+)
 class TestEndToEndPatternDetection:
     """Integration tests for end-to-end pattern detection."""
 
@@ -450,7 +454,7 @@ class TestEndToEndPatternDetection:
             ("The book is taking longer than expected.", 2),
             ("This is frustrating - the book should be done by now.", 5),
             ("I really need to finish the book this week.", 8),
-            ("Remind me to work on the book tomorrow.", 10)
+            ("Remind me to work on the book tomorrow.", 10),
         ]
 
         all_patterns = []

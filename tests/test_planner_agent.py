@@ -17,8 +17,7 @@ load_dotenv()
 
 # CI skip marker for tests requiring OpenAI API
 ci_skip = pytest.mark.skipif(
-    os.environ.get("CI") == "true",
-    reason="Requires OpenAI API access not available in CI"
+    os.environ.get("CI") == "true", reason="Requires OpenAI API access not available in CI"
 )
 
 
@@ -131,12 +130,8 @@ async def test_planner_asks_clarifying_questions_vague_auth(planner_agency):
         "constraints",
     ]
 
-    has_questions = any(
-        indicator.lower() in response.lower() for indicator in question_indicators
-    )
-    assert has_questions, (
-        f"Response should ask clarifying questions. Got: {response[:500]}..."
-    )
+    has_questions = any(indicator.lower() in response.lower() for indicator in question_indicators)
+    assert has_questions, f"Response should ask clarifying questions. Got: {response[:500]}..."
 
     # Should not immediately jump into detailed planning without asking questions first
     planning_indicators = [
@@ -154,18 +149,10 @@ async def test_planner_asks_clarifying_questions_vague_auth(planner_agency):
         # If both planning and questions exist, make sure questions come first
         response_lower = response.lower()
         first_question = min(
-            [
-                response_lower.find(ind)
-                for ind in question_indicators
-                if ind in response_lower
-            ]
+            [response_lower.find(ind) for ind in question_indicators if ind in response_lower]
         )
         first_planning = min(
-            [
-                response_lower.find(ind)
-                for ind in planning_indicators
-                if ind in response_lower
-            ]
+            [response_lower.find(ind) for ind in planning_indicators if ind in response_lower]
         )
         assert first_question < first_planning, "Questions should come before planning"
     elif has_premature_planning and not has_questions:
@@ -235,20 +222,14 @@ async def test_planner_asks_about_incomplete_requirements(planner_agency):
         "which",
     ]
 
-    asks_requirements = any(
-        q.lower() in response.lower() for q in requirement_questions
-    )
-    assert asks_requirements, (
-        f"Should ask for database requirements. Got: {response[:500]}..."
-    )
+    asks_requirements = any(q.lower() in response.lower() for q in requirement_questions)
+    assert asks_requirements, f"Should ask for database requirements. Got: {response[:500]}..."
 
 
 @ci_skip
 @pytest.mark.timeout(30)  # 30 second timeout for API calls
 @pytest.mark.asyncio
-async def test_planner_comprehensive_question_behavior(
-    planner_agency, ambiguous_queries
-):
+async def test_planner_comprehensive_question_behavior(planner_agency, ambiguous_queries):
     """Test planner's question-asking behavior across multiple ambiguous queries"""
     results = []
 
@@ -281,8 +262,7 @@ async def test_planner_comprehensive_question_behavior(
 
             # Check if it asks for any expected information
             asks_expected = any(
-                expected.lower() in response.lower()
-                for expected in test_case["expected_questions"]
+                expected.lower() in response.lower() for expected in test_case["expected_questions"]
             )
 
             asks_questions = has_questions or has_clarifying_language or asks_expected
@@ -292,9 +272,7 @@ async def test_planner_comprehensive_question_behavior(
                 "category": test_case["category"],
                 "query": test_case["query"],
                 "asks_questions": asks_questions,
-                "response_preview": response[:300] + "..."
-                if len(response) > 300
-                else response,
+                "response_preview": response[:300] + "..." if len(response) > 300 else response,
             }
             results.append(result)
 

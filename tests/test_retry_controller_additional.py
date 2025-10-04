@@ -1,18 +1,18 @@
 import pytest
 
-from shared.retry_controller import RetryController, ExponentialBackoffStrategy
+from shared.retry_controller import ExponentialBackoffStrategy, RetryController
 
 
 def test_non_retryable_exception_does_not_retry():
-    attempts = {
-        "count": 0
-    }
+    attempts = {"count": 0}
 
     def should_retry_callback(attempt, exc):
         # Never retry on TypeError
         return not isinstance(exc, TypeError)
 
-    strat = ExponentialBackoffStrategy(initial_delay=0.0, jitter=False, max_attempts=5, should_retry_callback=should_retry_callback)
+    strat = ExponentialBackoffStrategy(
+        initial_delay=0.0, jitter=False, max_attempts=5, should_retry_callback=should_retry_callback
+    )
     controller = RetryController(strategy=strat)
 
     def func():

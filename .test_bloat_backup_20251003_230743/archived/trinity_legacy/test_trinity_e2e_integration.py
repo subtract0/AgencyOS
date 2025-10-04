@@ -16,17 +16,17 @@ Test Philosophy:
 - NECESSARY pattern compliance (Normal, Edge, Error, etc.)
 """
 
-import asyncio
-import pytest
 import uuid
 from datetime import datetime, timedelta
-from typing import List, Optional
-from unittest.mock import AsyncMock, Mock, patch
+from unittest.mock import AsyncMock
 
+import pytest
+
+from shared.hitl_protocol import HITLProtocol
 from shared.message_bus import MessageBus
 from shared.persistent_store import PersistentStore
-from shared.hitl_protocol import HITLProtocol
-from trinity_protocol.experimental.response_handler import ResponseHandler
+from trinity_protocol.core.models.hitl import HumanResponse, HumanReviewRequest
+
 # DELETED in Trinity clean break - utilities removed (see TRINITY_CLEAN_BREAK_SUMMARY.md)
 # from trinity_protocol.project_initializer import ProjectInitializer
 # from trinity_protocol.spec_from_conversation import SpecFromConversation
@@ -34,25 +34,22 @@ from trinity_protocol.experimental.response_handler import ResponseHandler
 # from trinity_protocol.daily_checkin import DailyCheckin
 # from trinity_protocol.budget_enforcer import BudgetEnforcer
 # from trinity_protocol.foundation_verifier import FoundationVerifier
-
 from trinity_protocol.core.models.patterns import DetectedPattern
-from trinity_protocol.core.models.hitl import HumanReviewRequest, HumanResponse
 from trinity_protocol.core.models.project import (
-    Project,
-    ProjectState,
-    ProjectMetadata,
-    QASession,
-    QAQuestion,
-    QAAnswer,
-    QuestionConfidence,
-    ProjectSpec,
-    ProjectPlan,
-    ProjectTask,
-    TaskStatus,
-    AcceptanceCriterion,
     ApprovalStatus,
+    Project,
+    ProjectMetadata,
+    ProjectPlan,
+    ProjectSpec,
+    ProjectState,
+    ProjectTask,
+    QAAnswer,
+    QAQuestion,
+    QASession,
+    QuestionConfidence,
+    TaskStatus,
 )
-
+from trinity_protocol.experimental.response_handler import ResponseHandler
 
 # ============================================================================
 # FIXTURES
@@ -78,10 +75,7 @@ def persistent_store():
 @pytest.fixture
 def review_queue(message_bus):
     """Create human review queue."""
-    queue = HITLProtocol(
-        message_bus=message_bus,
-        db_path=":memory:"
-    )
+    queue = HITLProtocol(message_bus=message_bus, db_path=":memory:")
     yield queue
     queue.close()
 
@@ -101,7 +95,7 @@ def response_handler(message_bus, review_queue):
         message_bus=message_bus,
         review_queue=review_queue,
         execution_queue_name="execution_queue",
-        telemetry_queue_name="telemetry_stream"
+        telemetry_queue_name="telemetry_stream",
     )
 
 
@@ -157,7 +151,7 @@ def sample_pattern():
         context_summary="User mentioned writing coaching book 5 times in conversation",
         first_mention=datetime.now() - timedelta(days=7),
         last_mention=datetime.now(),
-        confidence=0.85  # Fixed: was confidence_score
+        confidence=0.85,  # Fixed: was confidence_score
     )
 
 
@@ -171,35 +165,35 @@ def sample_qa_session(sample_pattern):
             question_text="What's the core goal or outcome?",
             question_number=1,
             required=True,
-            context="Helps define project scope"
+            context="Helps define project scope",
         ),
         QAQuestion(
             question_id=str(uuid.uuid4()),
             question_text="Who is the target audience?",
             question_number=2,
             required=True,
-            context="Clarifies who benefits"
+            context="Clarifies who benefits",
         ),
         QAQuestion(
             question_id=str(uuid.uuid4()),
             question_text="What's already done vs needs doing?",
             question_number=3,
             required=True,
-            context="Establishes starting point"
+            context="Establishes starting point",
         ),
         QAQuestion(
             question_id=str(uuid.uuid4()),
             question_text="What's your ideal timeline?",
             question_number=4,
             required=True,
-            context="Sets time expectations"
+            context="Sets time expectations",
         ),
         QAQuestion(
             question_id=str(uuid.uuid4()),
             question_text="What's your daily time commitment?",
             question_number=5,
             required=True,
-            context="Plans daily scope"
+            context="Plans daily scope",
         ),
     ]
 
@@ -208,31 +202,31 @@ def sample_qa_session(sample_pattern):
             question_id=questions[0].question_id,
             answer_text="Publish a comprehensive coaching book on leadership transformation",
             answered_at=datetime.now(),
-            confidence=QuestionConfidence.CERTAIN
+            confidence=QuestionConfidence.CERTAIN,
         ),
         QAAnswer(
             question_id=questions[1].question_id,
             answer_text="Mid-level managers transitioning to senior leadership roles",
             answered_at=datetime.now(),
-            confidence=QuestionConfidence.CERTAIN
+            confidence=QuestionConfidence.CERTAIN,
         ),
         QAAnswer(
             question_id=questions[2].question_id,
             answer_text="Outline complete, 3/10 chapters drafted, need 7 more chapters",
             answered_at=datetime.now(),
-            confidence=QuestionConfidence.CERTAIN
+            confidence=QuestionConfidence.CERTAIN,
         ),
         QAAnswer(
             question_id=questions[3].question_id,
             answer_text="Complete in 14 days",
             answered_at=datetime.now(),
-            confidence=QuestionConfidence.CERTAIN
+            confidence=QuestionConfidence.CERTAIN,
         ),
         QAAnswer(
             question_id=questions[4].question_id,
             answer_text="30 minutes per day",
             answered_at=datetime.now(),
-            confidence=QuestionConfidence.CERTAIN
+            confidence=QuestionConfidence.CERTAIN,
         ),
     ]
 
@@ -246,7 +240,7 @@ def sample_qa_session(sample_pattern):
         started_at=datetime.now() - timedelta(minutes=10),
         completed_at=datetime.now(),
         status="completed",
-        total_time_minutes=10
+        total_time_minutes=10,
     )
 
 
@@ -265,8 +259,8 @@ def sample_project(sample_pattern):
             topic="coaching_book",
             estimated_completion=datetime.now() + timedelta(days=14),
             daily_time_commitment_minutes=30,
-            priority=8
-        )
+            priority=8,
+        ),
     )
 
 
@@ -275,7 +269,9 @@ def sample_project(sample_pattern):
 # ============================================================================
 
 
-@pytest.mark.skip(reason="Module deleted in Trinity clean break - utility modules (ProjectInitializer, SpecFromConversation, ProjectExecutor) removed")
+@pytest.mark.skip(
+    reason="Module deleted in Trinity clean break - utility modules (ProjectInitializer, SpecFromConversation, ProjectExecutor) removed"
+)
 @pytest.mark.asyncio
 @pytest.mark.e2e
 async def test_complete_book_project_workflow(
@@ -286,7 +282,7 @@ async def test_complete_book_project_workflow(
     spec_generator,
     project_executor,
     sample_pattern,
-    sample_project
+    sample_project,
 ):
     """
     Test: Complete workflow from ambient detection to project execution.
@@ -313,7 +309,7 @@ async def test_complete_book_project_workflow(
         priority=1,
         created_at=datetime.now(),
         expires_at=datetime.now() + timedelta(hours=24),
-        suggested_action="Initialize project"
+        suggested_action="Initialize project",
     )
 
     question_id = await review_queue.submit_question(review_request)
@@ -325,7 +321,7 @@ async def test_complete_book_project_workflow(
         response_type="YES",
         comment="Yes! Need help staying accountable",
         responded_at=datetime.now(),
-        response_time_seconds=120.0
+        response_time_seconds=120.0,
     )
 
     # Process response (routes to execution queue)
@@ -338,8 +334,7 @@ async def test_complete_book_project_workflow(
 
     # Phase 3: Initialize project with Q&A
     init_result = await project_initializer.initialize_project(
-        pattern=sample_pattern,
-        user_id="alex_miller"
+        pattern=sample_pattern, user_id="alex_miller"
     )
     assert init_result.is_ok()
     qa_session = init_result.unwrap()
@@ -352,7 +347,7 @@ async def test_complete_book_project_workflow(
             session=qa_session,
             question_id=question.question_id,
             answer_text=f"Answer to: {question.question_text}",
-            confidence=QuestionConfidence.CERTAIN
+            confidence=QuestionConfidence.CERTAIN,
         )
         assert answer_result.is_ok()
         qa_session = answer_result.unwrap()
@@ -362,10 +357,7 @@ async def test_complete_book_project_workflow(
     assert qa_session.status == "completed"
 
     # Phase 4: Generate spec from Q&A
-    spec_result = await spec_generator.generate_spec(
-        qa_session=qa_session,
-        pattern=sample_pattern
-    )
+    spec_result = await spec_generator.generate_spec(qa_session=qa_session, pattern=sample_pattern)
     assert spec_result.is_ok()
     spec = spec_result.unwrap()
     assert spec.title != ""
@@ -387,7 +379,7 @@ async def test_complete_book_project_workflow(
                 dependencies=[],
                 acceptance_criteria=["Chapter reaches 2000 words"],
                 assigned_to="user",
-                status=TaskStatus.PENDING
+                status=TaskStatus.PENDING,
             )
         ],
         total_estimated_days=14,
@@ -400,35 +392,27 @@ async def test_complete_book_project_workflow(
 Complete leadership coaching book in 14 days with daily 30-minute sessions.
 
 ## Tasks
-Structured task execution with chapter drafts and reviews."""
+Structured task execution with chapter drafts and reviews.""",
     )
 
     # Phase 6: Start execution
-    execution_result = await project_executor.start_execution(
-        project=sample_project,
-        plan=plan
-    )
+    execution_result = await project_executor.start_execution(project=sample_project, plan=plan)
     assert execution_result.is_ok()
 
     # Phase 7: Get next task
-    task_result = await project_executor.get_next_task(
-        project=sample_project,
-        plan=plan
-    )
+    task_result = await project_executor.get_next_task(project=sample_project, plan=plan)
     assert task_result.is_ok()
     next_task = task_result.unwrap()
     assert next_task is not None
     assert next_task.status == TaskStatus.PENDING
 
 
-@pytest.mark.skip(reason="Module deleted in Trinity clean break - ProjectInitializer utility removed")
+@pytest.mark.skip(
+    reason="Module deleted in Trinity clean break - ProjectInitializer utility removed"
+)
 @pytest.mark.asyncio
 @pytest.mark.e2e
-async def test_multiple_projects_concurrent(
-    message_bus,
-    review_queue,
-    project_initializer
-):
+async def test_multiple_projects_concurrent(message_bus, review_queue, project_initializer):
     """
     Test: System handles multiple projects simultaneously.
 
@@ -447,7 +431,7 @@ async def test_multiple_projects_concurrent(
             context_summary="Coaching book project",
             first_mention=datetime.now() - timedelta(days=7),
             last_mention=datetime.now(),
-            confidence=0.85
+            confidence=0.85,
         ),
         DetectedPattern(
             pattern_id=str(uuid.uuid4()),
@@ -457,7 +441,7 @@ async def test_multiple_projects_concurrent(
             context_summary="New coaching program development",
             first_mention=datetime.now() - timedelta(days=14),
             last_mention=datetime.now(),
-            confidence=0.90
+            confidence=0.90,
         ),
         DetectedPattern(
             pattern_id=str(uuid.uuid4()),
@@ -467,16 +451,15 @@ async def test_multiple_projects_concurrent(
             context_summary="Online course creation",
             first_mention=datetime.now() - timedelta(days=3),
             last_mention=datetime.now(),
-            confidence=0.75
-        )
+            confidence=0.75,
+        ),
     ]
 
     # Initialize all 3 projects
     sessions = []
     for pattern in patterns:
         result = await project_initializer.initialize_project(
-            pattern=pattern,
-            user_id="alex_miller"
+            pattern=pattern, user_id="alex_miller"
         )
         assert result.is_ok()
         sessions.append(result.unwrap())
@@ -518,7 +501,7 @@ async def test_project_pause_and_resume(sample_project, project_executor):
                 dependencies=[],
                 assigned_to="user",
                 status=TaskStatus.COMPLETED,
-                completed_at=datetime.now() - timedelta(hours=2)
+                completed_at=datetime.now() - timedelta(hours=2),
             ),
             ProjectTask(
                 task_id=str(uuid.uuid4()),
@@ -528,8 +511,8 @@ async def test_project_pause_and_resume(sample_project, project_executor):
                 estimated_minutes=30,
                 dependencies=[],
                 assigned_to="user",
-                status=TaskStatus.PENDING
-            )
+                status=TaskStatus.PENDING,
+            ),
         ],
         total_estimated_days=14,
         daily_questions_avg=2,
@@ -541,7 +524,7 @@ async def test_project_pause_and_resume(sample_project, project_executor):
 Detailed project plan with task breakdown and timeline.
 
 ## Tasks
-Structured task execution."""
+Structured task execution.""",
     )
 
     # Start execution
@@ -557,7 +540,7 @@ Structured task execution."""
         state=ProjectState.PAUSED,
         created_at=sample_project.created_at,
         updated_at=datetime.now(),
-        metadata=sample_project.metadata
+        metadata=sample_project.metadata,
     )
 
     # Simulate session restart - verify can resume
@@ -570,7 +553,7 @@ Structured task execution."""
         state=ProjectState.EXECUTING,
         created_at=paused_project.created_at,
         updated_at=datetime.now(),
-        metadata=paused_project.metadata
+        metadata=paused_project.metadata,
     )
 
     # Get next task after resume
@@ -586,7 +569,9 @@ Structured task execution."""
 # ============================================================================
 
 
-@pytest.mark.skip(reason="API changed in Trinity clean break - HumanReviewQueue methods (submit_question, get_question_by_correlation) removed from HITLProtocol")
+@pytest.mark.skip(
+    reason="API changed in Trinity clean break - HumanReviewQueue methods (submit_question, get_question_by_correlation) removed from HITLProtocol"
+)
 @pytest.mark.asyncio
 @pytest.mark.integration
 async def test_pattern_to_question_integration(message_bus, review_queue, sample_pattern):
@@ -604,7 +589,7 @@ async def test_pattern_to_question_integration(message_bus, review_queue, sample
         priority=1,
         created_at=datetime.now(),
         expires_at=datetime.now() + timedelta(hours=24),
-        suggested_action="Initialize project"
+        suggested_action="Initialize project",
     )
 
     # Submit to queue
@@ -618,15 +603,13 @@ async def test_pattern_to_question_integration(message_bus, review_queue, sample
     assert retrieved.question_type == "high_value"
 
 
-@pytest.mark.skip(reason="Module deleted in Trinity clean break - ProjectInitializer utility removed")
+@pytest.mark.skip(
+    reason="Module deleted in Trinity clean break - ProjectInitializer utility removed"
+)
 @pytest.mark.asyncio
 @pytest.mark.integration
 async def test_yes_response_triggers_project_init(
-    message_bus,
-    review_queue,
-    response_handler,
-    project_initializer,
-    sample_pattern
+    message_bus, review_queue, response_handler, project_initializer, sample_pattern
 ):
     """
     Test: YES response starts project initialization.
@@ -641,7 +624,7 @@ async def test_yes_response_triggers_project_init(
         pattern_context=sample_pattern,
         priority=1,
         created_at=datetime.now(),
-        expires_at=datetime.now() + timedelta(hours=24)
+        expires_at=datetime.now() + timedelta(hours=24),
     )
     question_id = await review_queue.submit_question(review_request)
 
@@ -651,7 +634,7 @@ async def test_yes_response_triggers_project_init(
         response_type="YES",
         comment="Yes, let's do it",
         responded_at=datetime.now(),
-        response_time_seconds=60.0
+        response_time_seconds=60.0,
     )
 
     # Process response
@@ -659,8 +642,7 @@ async def test_yes_response_triggers_project_init(
 
     # Initialize project
     init_result = await project_initializer.initialize_project(
-        pattern=sample_pattern,
-        user_id="alex_miller"
+        pattern=sample_pattern, user_id="alex_miller"
     )
 
     assert init_result.is_ok()
@@ -669,14 +651,13 @@ async def test_yes_response_triggers_project_init(
     assert len(qa_session.questions) >= 5
 
 
-@pytest.mark.skip(reason="Module deleted in Trinity clean break - SpecFromConversation utility removed")
+@pytest.mark.skip(
+    reason="Module deleted in Trinity clean break - SpecFromConversation utility removed"
+)
 @pytest.mark.asyncio
 @pytest.mark.integration
 async def test_qa_completion_generates_spec(
-    project_initializer,
-    spec_generator,
-    sample_pattern,
-    sample_qa_session
+    project_initializer, spec_generator, sample_pattern, sample_qa_session
 ):
     """
     Test: Completed Q&A triggers spec generation.
@@ -688,8 +669,7 @@ async def test_qa_completion_generates_spec(
 
     # Generate spec
     spec_result = await spec_generator.generate_spec(
-        qa_session=sample_qa_session,
-        pattern=sample_pattern
+        qa_session=sample_qa_session, pattern=sample_pattern
     )
 
     assert spec_result.is_ok()
@@ -701,7 +681,9 @@ async def test_qa_completion_generates_spec(
     assert spec.approval_status == ApprovalStatus.PENDING
 
 
-@pytest.mark.skip(reason="Module deleted in Trinity clean break - SpecFromConversation utility removed")
+@pytest.mark.skip(
+    reason="Module deleted in Trinity clean break - SpecFromConversation utility removed"
+)
 @pytest.mark.asyncio
 @pytest.mark.integration
 async def test_spec_approval_triggers_planning(spec_generator, sample_pattern, sample_qa_session):
@@ -712,8 +694,7 @@ async def test_spec_approval_triggers_planning(spec_generator, sample_pattern, s
     """
     # Generate spec
     spec_result = await spec_generator.generate_spec(
-        qa_session=sample_qa_session,
-        pattern=sample_pattern
+        qa_session=sample_qa_session, pattern=sample_pattern
     )
     assert spec_result.is_ok()
     spec = spec_result.unwrap()
@@ -730,7 +711,7 @@ async def test_spec_approval_triggers_planning(spec_generator, sample_pattern, s
         spec_markdown=spec.spec_markdown,
         created_at=spec.created_at,
         approved_at=datetime.now(),
-        approval_status=ApprovalStatus.APPROVED
+        approval_status=ApprovalStatus.APPROVED,
     )
 
     assert approved_spec.approval_status == ApprovalStatus.APPROVED
@@ -759,7 +740,7 @@ async def test_plan_approval_starts_execution(sample_project, project_executor):
                 description="Description",
                 estimated_minutes=30,
                 dependencies=[],
-                assigned_to="user"
+                assigned_to="user",
             )
         ],
         total_estimated_days=14,
@@ -772,7 +753,7 @@ async def test_plan_approval_starts_execution(sample_project, project_executor):
 Detailed project plan with task breakdown and timeline.
 
 ## Tasks
-Structured task execution."""
+Structured task execution.""",
     )
 
     # Start execution
@@ -829,7 +810,9 @@ async def test_budget_enforcer_blocks_execution():
     pass  # Test skipped - BudgetEnforcer module removed
 
 
-@pytest.mark.skip(reason="Module deleted in Trinity clean break - FoundationVerifier utility removed")
+@pytest.mark.skip(
+    reason="Module deleted in Trinity clean break - FoundationVerifier utility removed"
+)
 @pytest.mark.asyncio
 @pytest.mark.integration
 async def test_foundation_verifier_gates_execution():
@@ -841,14 +824,13 @@ async def test_foundation_verifier_gates_execution():
     pass  # Test skipped - FoundationVerifier module removed
 
 
-@pytest.mark.skip(reason="API changed in Trinity clean break - HumanReviewQueue methods (submit_question) removed from HITLProtocol")
+@pytest.mark.skip(
+    reason="API changed in Trinity clean break - HumanReviewQueue methods (submit_question) removed from HITLProtocol"
+)
 @pytest.mark.asyncio
 @pytest.mark.integration
 async def test_no_response_stores_learning(
-    message_bus,
-    review_queue,
-    response_handler,
-    sample_pattern
+    message_bus, review_queue, response_handler, sample_pattern
 ):
     """
     Test: NO responses stored for preference learning.
@@ -863,7 +845,7 @@ async def test_no_response_stores_learning(
         pattern_context=sample_pattern,
         priority=1,
         created_at=datetime.now(),
-        expires_at=datetime.now() + timedelta(hours=24)
+        expires_at=datetime.now() + timedelta(hours=24),
     )
     question_id = await review_queue.submit_question(review_request)
 
@@ -873,7 +855,7 @@ async def test_no_response_stores_learning(
         response_type="NO",
         comment="Not interested right now",
         responded_at=datetime.now(),
-        response_time_seconds=30.0
+        response_time_seconds=30.0,
     )
 
     # Process response
@@ -909,7 +891,7 @@ async def test_executor_uses_document_generator(project_executor, sample_project
                 dependencies=[],
                 assigned_to="user",
                 status=TaskStatus.COMPLETED,
-                completed_at=datetime.now()
+                completed_at=datetime.now(),
             )
         ],
         total_estimated_days=14,
@@ -922,7 +904,7 @@ async def test_executor_uses_document_generator(project_executor, sample_project
 Detailed project plan with task breakdown and timeline.
 
 ## Tasks
-Structured task execution."""
+Structured task execution.""",
     )
 
     # Generate deliverable
@@ -957,7 +939,7 @@ async def test_error_recovery_rolls_back_state(project_executor, sample_project)
                 estimated_minutes=30,
                 dependencies=[],
                 assigned_to="user",
-                status=TaskStatus.BLOCKED
+                status=TaskStatus.BLOCKED,
             )
         ],
         total_estimated_days=14,
@@ -970,7 +952,7 @@ async def test_error_recovery_rolls_back_state(project_executor, sample_project)
 Detailed project plan with task breakdown and timeline.
 
 ## Tasks
-Structured task execution."""
+Structured task execution.""",
     )
 
     # Try to get next task (should fail gracefully)
@@ -989,12 +971,11 @@ Structured task execution."""
 # ============================================================================
 
 
-@pytest.mark.skip(reason="Module deleted in Trinity clean break - SpecFromConversation utility removed")
+@pytest.mark.skip(
+    reason="Module deleted in Trinity clean break - SpecFromConversation utility removed"
+)
 @pytest.mark.asyncio
-async def test_incomplete_qa_session_blocks_spec_generation(
-    spec_generator,
-    sample_pattern
-):
+async def test_incomplete_qa_session_blocks_spec_generation(spec_generator, sample_pattern):
     """
     Edge Case: Incomplete Q&A session cannot generate spec.
 
@@ -1012,53 +993,54 @@ async def test_incomplete_qa_session_blocks_spec_generation(
                 question_text="Question 1?",
                 question_number=1,
                 required=True,
-                context="Context"
+                context="Context",
             ),
             QAQuestion(
                 question_id=str(uuid.uuid4()),
                 question_text="Question 2?",
                 question_number=2,
                 required=True,
-                context="Context"
+                context="Context",
             ),
             QAQuestion(
                 question_id=str(uuid.uuid4()),
                 question_text="Question 3?",
                 question_number=3,
                 required=True,
-                context="Context"
+                context="Context",
             ),
             QAQuestion(
                 question_id=str(uuid.uuid4()),
                 question_text="Question 4?",
                 question_number=4,
                 required=True,
-                context="Context"
+                context="Context",
             ),
             QAQuestion(
                 question_id=str(uuid.uuid4()),
                 question_text="Question 5?",
                 question_number=5,
                 required=True,
-                context="Context"
-            )
+                context="Context",
+            ),
         ],
         answers=[],  # No answers
         started_at=datetime.now(),
-        status="in_progress"
+        status="in_progress",
     )
 
     # Attempt spec generation
     result = await spec_generator.generate_spec(
-        qa_session=incomplete_session,
-        pattern=sample_pattern
+        qa_session=incomplete_session, pattern=sample_pattern
     )
 
     assert result.is_err()
     assert "incomplete" in result.unwrap_err().lower() or "article i" in result.unwrap_err().lower()
 
 
-@pytest.mark.skip(reason="API changed in Trinity clean break - HumanReviewQueue methods (submit_question, get_pending_questions) removed from HITLProtocol")
+@pytest.mark.skip(
+    reason="API changed in Trinity clean break - HumanReviewQueue methods (submit_question, get_pending_questions) removed from HITLProtocol"
+)
 @pytest.mark.asyncio
 async def test_expired_question_not_retrieved(message_bus, review_queue, sample_pattern):
     """
@@ -1072,7 +1054,7 @@ async def test_expired_question_not_retrieved(message_bus, review_queue, sample_
         pattern_context=sample_pattern,
         priority=1,
         created_at=datetime.now() - timedelta(hours=25),
-        expires_at=datetime.now() - timedelta(hours=1)  # Already expired
+        expires_at=datetime.now() - timedelta(hours=1),  # Already expired
     )
 
     question_id = await review_queue.submit_question(review_request)
@@ -1110,7 +1092,7 @@ async def test_task_dependencies_respected(project_executor, sample_project):
                 estimated_minutes=30,
                 dependencies=[],
                 assigned_to="user",
-                status=TaskStatus.PENDING
+                status=TaskStatus.PENDING,
             ),
             ProjectTask(
                 task_id=task2_id,
@@ -1120,8 +1102,8 @@ async def test_task_dependencies_respected(project_executor, sample_project):
                 estimated_minutes=30,
                 dependencies=[task1_id],
                 assigned_to="user",
-                status=TaskStatus.PENDING
-            )
+                status=TaskStatus.PENDING,
+            ),
         ],
         total_estimated_days=14,
         daily_questions_avg=2,
@@ -1133,7 +1115,7 @@ async def test_task_dependencies_respected(project_executor, sample_project):
 Detailed project plan with task breakdown and timeline.
 
 ## Tasks
-Structured task execution."""
+Structured task execution.""",
     )
 
     # Get next task (should be task1, not task2)
@@ -1167,7 +1149,7 @@ async def test_circular_dependencies_detected(project_executor, sample_project):
                 estimated_minutes=30,
                 dependencies=[task2_id],
                 assigned_to="user",
-                status=TaskStatus.PENDING
+                status=TaskStatus.PENDING,
             ),
             ProjectTask(
                 task_id=task2_id,
@@ -1177,8 +1159,8 @@ async def test_circular_dependencies_detected(project_executor, sample_project):
                 estimated_minutes=30,
                 dependencies=[task1_id],
                 assigned_to="user",
-                status=TaskStatus.PENDING
-            )
+                status=TaskStatus.PENDING,
+            ),
         ],
         total_estimated_days=14,
         daily_questions_avg=2,
@@ -1190,7 +1172,7 @@ async def test_circular_dependencies_detected(project_executor, sample_project):
 Detailed project plan with task breakdown and timeline.
 
 ## Tasks
-Structured task execution."""
+Structured task execution.""",
     )
 
     # Attempt to get next task (should fail)
@@ -1204,13 +1186,12 @@ Structured task execution."""
 # ============================================================================
 
 
-@pytest.mark.skip(reason="API changed in Trinity clean break - HumanReviewQueue methods (submit_question) removed from HITLProtocol")
+@pytest.mark.skip(
+    reason="API changed in Trinity clean break - HumanReviewQueue methods (submit_question) removed from HITLProtocol"
+)
 @pytest.mark.asyncio
 async def test_invalid_correlation_id_rejected(
-    message_bus,
-    review_queue,
-    response_handler,
-    sample_pattern
+    message_bus, review_queue, response_handler, sample_pattern
 ):
     """
     Error Case: Response with wrong correlation ID rejected.
@@ -1223,7 +1204,7 @@ async def test_invalid_correlation_id_rejected(
         pattern_context=sample_pattern,
         priority=1,
         created_at=datetime.now(),
-        expires_at=datetime.now() + timedelta(hours=24)
+        expires_at=datetime.now() + timedelta(hours=24),
     )
     question_id = await review_queue.submit_question(review_request)
 
@@ -1233,7 +1214,7 @@ async def test_invalid_correlation_id_rejected(
         response_type="YES",
         comment="Yes",
         responded_at=datetime.now(),
-        response_time_seconds=60.0
+        response_time_seconds=60.0,
     )
 
     # Attempt to process (should fail)
@@ -1241,7 +1222,9 @@ async def test_invalid_correlation_id_rejected(
         await response_handler.process_response(question_id, wrong_response)
 
 
-@pytest.mark.skip(reason="API changed in Trinity clean break - ResponseHandler uses old HumanReviewQueue table structure")
+@pytest.mark.skip(
+    reason="API changed in Trinity clean break - ResponseHandler uses old HumanReviewQueue table structure"
+)
 @pytest.mark.asyncio
 async def test_nonexistent_question_id_rejected(response_handler):
     """
@@ -1252,7 +1235,7 @@ async def test_nonexistent_question_id_rejected(response_handler):
         response_type="YES",
         comment="Yes",
         responded_at=datetime.now(),
-        response_time_seconds=60.0
+        response_time_seconds=60.0,
     )
 
     # Attempt to process non-existent question
@@ -1275,7 +1258,7 @@ async def test_execution_from_wrong_state_rejected(project_executor, sample_proj
         state=ProjectState.COMPLETED,
         created_at=sample_project.created_at,
         updated_at=datetime.now(),
-        metadata=sample_project.metadata
+        metadata=sample_project.metadata,
     )
 
     plan = ProjectPlan(
@@ -1290,7 +1273,7 @@ async def test_execution_from_wrong_state_rejected(project_executor, sample_proj
                 description="Placeholder task",
                 estimated_minutes=30,
                 dependencies=[],
-                assigned_to="user"
+                assigned_to="user",
             )
         ],
         total_estimated_days=14,
@@ -1303,7 +1286,7 @@ async def test_execution_from_wrong_state_rejected(project_executor, sample_proj
 Detailed project plan with task breakdown and timeline.
 
 ## Tasks
-Structured task execution."""
+Structured task execution.""",
     )
 
     # Attempt to start execution on completed project
@@ -1327,7 +1310,7 @@ async def test_task_completion_idempotent(project_executor):
         dependencies=[],
         assigned_to="user",
         status=TaskStatus.COMPLETED,
-        completed_at=datetime.now() - timedelta(hours=1)
+        completed_at=datetime.now() - timedelta(hours=1),
     )
 
     # Attempt to complete again

@@ -25,21 +25,22 @@ This module is no longer part of the production codebase.
 
 import pytest
 
-pytestmark = pytest.mark.skip(reason="Module deleted in Trinity clean break - budget_enforcer removed from codebase")
+pytestmark = pytest.mark.skip(
+    reason="Module deleted in Trinity clean break - budget_enforcer removed from codebase"
+)
 import asyncio
-from datetime import datetime, timedelta
-from typing import Optional, List
 from dataclasses import dataclass
-from unittest.mock import Mock, AsyncMock, patch
-
+from datetime import datetime
 
 # ============================================================================
 # TEST DATA CLASSES (Expected API)
 # ============================================================================
 
+
 @dataclass
 class BudgetConfig:
     """Budget configuration."""
+
     daily_limit_usd: float
     alert_threshold: float = 0.8  # 80% of budget
     auto_shutdown: bool = True
@@ -49,16 +50,18 @@ class BudgetConfig:
 @dataclass
 class CostEvent:
     """Single cost event."""
+
     timestamp: str
     agent: str
     cost_usd: float
-    task_id: Optional[str] = None
-    correlation_id: Optional[str] = None
+    task_id: str | None = None
+    correlation_id: str | None = None
 
 
 @dataclass
 class BudgetStatus:
     """Current budget status."""
+
     daily_spent_usd: float
     daily_limit_usd: float
     remaining_usd: float
@@ -70,12 +73,14 @@ class BudgetStatus:
 
 class BudgetExceededError(Exception):
     """Raised when budget limit is exceeded."""
+
     pass
 
 
 # ============================================================================
 # MOCK BUDGET ENFORCER (to be replaced with real implementation)
 # ============================================================================
+
 
 class MockBudgetEnforcer:
     """
@@ -95,16 +100,16 @@ class MockBudgetEnforcer:
         self.daily_spent = 0.0
         self.is_shutdown = False
         self.alert_triggered = False
-        self.cost_history: List[CostEvent] = []
-        self.shutdown_callbacks: List[callable] = []
+        self.cost_history: list[CostEvent] = []
+        self.shutdown_callbacks: list[callable] = []
         self.current_day = datetime.now().date()
 
     async def track_cost(
         self,
         agent: str,
         cost_usd: float,
-        task_id: Optional[str] = None,
-        correlation_id: Optional[str] = None
+        task_id: str | None = None,
+        correlation_id: str | None = None,
     ) -> BudgetStatus:
         """
         Track a cost event and enforce budget.
@@ -137,7 +142,7 @@ class MockBudgetEnforcer:
             agent=agent,
             cost_usd=cost_usd,
             task_id=task_id,
-            correlation_id=correlation_id
+            correlation_id=correlation_id,
         )
         self.cost_history.append(event)
 
@@ -175,7 +180,7 @@ class MockBudgetEnforcer:
             percent_used=percent_used,
             is_at_limit=self.daily_spent >= self.config.daily_limit_usd,
             is_shutdown=self.is_shutdown,
-            alert_triggered=self.alert_triggered
+            alert_triggered=self.alert_triggered,
         )
 
     async def _reset_daily_budget(self) -> None:
@@ -212,6 +217,7 @@ class MockBudgetEnforcer:
 # NORMAL OPERATION TESTS - Happy Path
 # ============================================================================
 
+
 class TestNormalOperation:
     """Test standard budget enforcement workflow."""
 
@@ -238,11 +244,7 @@ class TestNormalOperation:
         enforcer = MockBudgetEnforcer(config)
 
         # Act
-        status = await enforcer.track_cost(
-            agent="ARCHITECT",
-            cost_usd=2.50,
-            task_id="task_123"
-        )
+        status = await enforcer.track_cost(agent="ARCHITECT", cost_usd=2.50, task_id="task_123")
 
         # Assert
         assert status.daily_spent_usd == 2.50

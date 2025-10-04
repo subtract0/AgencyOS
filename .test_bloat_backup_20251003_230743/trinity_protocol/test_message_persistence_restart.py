@@ -17,10 +17,12 @@ Constitutional Compliance:
 - Article I: Complete context (no data loss on restart)
 """
 
-import pytest
 import asyncio
 import tempfile
 from pathlib import Path
+
+import pytest
+
 from shared.message_bus import MessageBus
 
 
@@ -54,14 +56,12 @@ class TestMessagePersistenceAcrossRestarts:
 
             # Session 1: Publish messages
             bus1 = MessageBus(db_path=str(db_path))
-            msg_id1 = await bus1.publish("execution_queue", {
-                "task_id": "task-001",
-                "spec": {"details": "important task"}
-            })
-            msg_id2 = await bus1.publish("execution_queue", {
-                "task_id": "task-002",
-                "spec": {"details": "critical task"}
-            })
+            msg_id1 = await bus1.publish(
+                "execution_queue", {"task_id": "task-001", "spec": {"details": "important task"}}
+            )
+            msg_id2 = await bus1.publish(
+                "execution_queue", {"task_id": "task-002", "spec": {"details": "critical task"}}
+            )
 
             # Simulate crash (no clean close)
             # Do NOT call bus1.close()
@@ -76,6 +76,7 @@ class TestMessagePersistenceAcrossRestarts:
 
             # Verify message data intact
             messages_received = []
+
             async def consume():
                 async for msg in bus2.subscribe("execution_queue", batch_size=10):
                     messages_received.append(msg)
@@ -84,11 +85,11 @@ class TestMessagePersistenceAcrossRestarts:
 
             try:
                 await asyncio.wait_for(consume(), timeout=1.0)
-            except asyncio.TimeoutError:
+            except TimeoutError:
                 pass
 
             assert len(messages_received) == 2
-            task_ids = {msg['task_id'] for msg in messages_received}
+            task_ids = {msg["task_id"] for msg in messages_received}
             assert task_ids == {"task-001", "task-002"}
 
             bus2.close()
@@ -130,7 +131,7 @@ class TestMessagePersistenceAcrossRestarts:
             related = await bus2.get_by_correlation(corr_id)
 
             assert len(related) == 2
-            steps = [msg['message_data']['step'] for msg in related]
+            steps = [msg["message_data"]["step"] for msg in related]
             assert set(steps) == {1, 2}
 
             bus2.close()
@@ -156,6 +157,7 @@ class TestRestartRecovery:
             bus2 = MessageBus(db_path=str(db_path))
 
             messages_received = []
+
             async def consume():
                 async for msg in bus2.subscribe("recovery_queue", batch_size=10):
                     messages_received.append(msg)
@@ -164,11 +166,11 @@ class TestRestartRecovery:
 
             try:
                 await asyncio.wait_for(consume(), timeout=1.0)
-            except asyncio.TimeoutError:
+            except TimeoutError:
                 pass
 
             assert len(messages_received) == 3
-            orders = [msg['order'] for msg in messages_received]
+            orders = [msg["order"] for msg in messages_received]
             assert orders == [1, 2, 3]
 
             bus2.close()
@@ -222,7 +224,7 @@ class TestTimeoutHandling:
 
             try:
                 await asyncio.wait_for(consume_and_timeout(), timeout=0.5)
-            except asyncio.TimeoutError:
+            except TimeoutError:
                 pass
 
             bus1.close()
@@ -275,22 +277,29 @@ class TestContinuousOperation:
 
             # ARCHITECT publishes tasks
             bus_architect = MessageBus(db_path=str(db_path))
-            await bus_architect.publish("execution_queue", {
-                "task_id": "task-1",
-                "correlation_id": "work-batch-001",
-                "task_type": "code_generation"
-            })
-            await bus_architect.publish("execution_queue", {
-                "task_id": "task-2",
-                "correlation_id": "work-batch-001",
-                "task_type": "test_generation"
-            })
+            await bus_architect.publish(
+                "execution_queue",
+                {
+                    "task_id": "task-1",
+                    "correlation_id": "work-batch-001",
+                    "task_type": "code_generation",
+                },
+            )
+            await bus_architect.publish(
+                "execution_queue",
+                {
+                    "task_id": "task-2",
+                    "correlation_id": "work-batch-001",
+                    "task_type": "test_generation",
+                },
+            )
             bus_architect.close()
 
             # EXECUTOR starts, processes task-1, then crashes before task-2
             bus_executor_1 = MessageBus(db_path=str(db_path))
 
             messages_processed = []
+
             async def executor_consume():
                 async for msg in bus_executor_1.subscribe("execution_queue"):
                     messages_processed.append(msg)
@@ -303,7 +312,7 @@ class TestContinuousOperation:
 
             try:
                 await asyncio.wait_for(executor_consume(), timeout=1.0)
-            except asyncio.TimeoutError:
+            except TimeoutError:
                 pass
 
             # Simulate crash
@@ -319,6 +328,7 @@ class TestContinuousOperation:
 
             # Verify it's task-2
             remaining_messages = []
+
             async def consume_remaining():
                 async for msg in bus_executor_2.subscribe("execution_queue", batch_size=10):
                     remaining_messages.append(msg)
@@ -326,11 +336,11 @@ class TestContinuousOperation:
 
             try:
                 await asyncio.wait_for(consume_remaining(), timeout=1.0)
-            except asyncio.TimeoutError:
+            except TimeoutError:
                 pass
 
             assert len(remaining_messages) == 1
-            assert remaining_messages[0]['task_id'] == "task-2"
+            assert remaining_messages[0]["task_id"] == "task-2"
 
             bus_executor_2.close()
 
@@ -350,12 +360,15 @@ class TestArticleIVCompliance:
 
             # EXECUTOR publishes telemetry
             bus_executor = MessageBus(db_path=str(db_path))
-            await bus_executor.publish("telemetry_stream", {
-                "status": "success",
-                "task_id": "task-001",
-                "duration_seconds": 45.2,
-                "cost_usd": 0.15
-            })
+            await bus_executor.publish(
+                "telemetry_stream",
+                {
+                    "status": "success",
+                    "task_id": "task-001",
+                    "duration_seconds": 45.2,
+                    "cost_usd": 0.15,
+                },
+            )
             bus_executor.close()
 
             # System restarts
@@ -380,12 +393,15 @@ class TestArticleIVCompliance:
 
             # WITNESS publishes improvement signal
             bus_witness = MessageBus(db_path=str(db_path))
-            await bus_witness.publish("improvement_queue", {
-                "pattern": "type_violation",
-                "confidence": 0.85,
-                "evidence_count": 5,
-                "priority": "HIGH"
-            })
+            await bus_witness.publish(
+                "improvement_queue",
+                {
+                    "pattern": "type_violation",
+                    "confidence": 0.85,
+                    "evidence_count": 5,
+                    "priority": "HIGH",
+                },
+            )
             bus_witness.close()
 
             # System restarts overnight
@@ -398,6 +414,7 @@ class TestArticleIVCompliance:
 
             # ARCHITECT can process it
             signals_received = []
+
             async def consume():
                 async for msg in bus_architect.subscribe("improvement_queue"):
                     signals_received.append(msg)
@@ -405,10 +422,10 @@ class TestArticleIVCompliance:
 
             try:
                 await asyncio.wait_for(consume(), timeout=1.0)
-            except asyncio.TimeoutError:
+            except TimeoutError:
                 pass
 
             assert len(signals_received) == 1
-            assert signals_received[0]['pattern'] == "type_violation"
+            assert signals_received[0]["pattern"] == "type_violation"
 
             bus_architect.close()

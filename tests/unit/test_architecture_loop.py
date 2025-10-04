@@ -3,11 +3,13 @@ Unit tests for RunArchitectureLoop tool.
 Tests audit analysis, VectorStore integration, and target selection logic.
 """
 
-import pytest
 import json
 import os
-from unittest.mock import Mock, patch, MagicMock, mock_open
 from datetime import datetime
+from unittest.mock import Mock, mock_open, patch
+
+import pytest
+
 from chief_architect_agent.tools.architecture_loop import RunArchitectureLoop
 
 
@@ -17,10 +19,7 @@ class TestRunArchitectureLoop:
     @pytest.fixture
     def tool_instance(self):
         """Create a RunArchitectureLoop instance."""
-        return RunArchitectureLoop(
-            target_path="/test/path",
-            objective="test objective"
-        )
+        return RunArchitectureLoop(target_path="/test/path", objective="test objective")
 
     def test_initialization(self):
         """Test tool initialization with default and custom parameters."""
@@ -30,43 +29,37 @@ class TestRunArchitectureLoop:
         assert tool.objective == "auto"
 
         # Test with custom parameters
-        tool = RunArchitectureLoop(
-            target_path="/custom/path",
-            objective="custom objective"
-        )
+        tool = RunArchitectureLoop(target_path="/custom/path", objective="custom objective")
         assert tool.target_path == "/custom/path"
         assert tool.objective == "custom objective"
 
     def test_run_basic_flow(self, tool_instance):
         """Test basic run flow with mocked dependencies."""
-        with patch('chief_architect_agent.tools.architecture_loop.ASTAnalyzer') as mock_analyzer_class, \
-             patch('chief_architect_agent.tools.architecture_loop.VectorStore') as mock_vs_class, \
-             patch('os.makedirs') as mock_makedirs, \
-             patch('builtins.open', mock_open()) as mock_file, \
-             patch.object(tool_instance, '_detect_vectorstore_api_mismatches') as mock_detect, \
-             patch.object(tool_instance, '_choose_high_impact_target') as mock_choose:
-
+        with (
+            patch(
+                "chief_architect_agent.tools.architecture_loop.ASTAnalyzer"
+            ) as mock_analyzer_class,
+            patch("chief_architect_agent.tools.architecture_loop.VectorStore") as mock_vs_class,
+            patch("os.makedirs") as mock_makedirs,
+            patch("builtins.open", mock_open()) as mock_file,
+            patch.object(tool_instance, "_detect_vectorstore_api_mismatches") as mock_detect,
+            patch.object(tool_instance, "_choose_high_impact_target") as mock_choose,
+        ):
             # Setup mocks
             mock_analyzer = Mock()
             mock_analyzer.analyze_directory.return_value = {
                 "total_behaviors": 100,
                 "total_test_functions": 80,
-                "coverage_ratio": 0.8
+                "coverage_ratio": 0.8,
             }
             mock_analyzer_class.return_value = mock_analyzer
 
             mock_vs = Mock()
-            mock_vs.get_stats.return_value = {
-                "total_memories": 50,
-                "total_embeddings": 200
-            }
+            mock_vs.get_stats.return_value = {"total_memories": 50, "total_embeddings": 200}
             mock_vs_class.return_value = mock_vs
 
             mock_detect.return_value = {"issues": []}
-            mock_choose.return_value = {
-                "title": "Test target",
-                "reason": "Test reason"
-            }
+            mock_choose.return_value = {"title": "Test target", "reason": "Test reason"}
 
             # Run the tool
             result = tool_instance.run()
@@ -92,13 +85,14 @@ class TestRunArchitectureLoop:
     def test_detect_vectorstore_api_mismatches(self, tool_instance):
         """Test VectorStore API mismatch detection."""
         # Test when VectorStore has search method
-        with patch('inspect.getmembers') as mock_getmembers, \
-             patch('chief_architect_agent.tools.architecture_loop.VectorStore'):
-
+        with (
+            patch("inspect.getmembers") as mock_getmembers,
+            patch("chief_architect_agent.tools.architecture_loop.VectorStore"),
+        ):
             mock_getmembers.return_value = [
-                ('search', Mock()),
-                ('store', Mock()),
-                ('get_stats', Mock())
+                ("search", Mock()),
+                ("store", Mock()),
+                ("get_stats", Mock()),
             ]
 
             result = tool_instance._detect_vectorstore_api_mismatches()
@@ -107,13 +101,11 @@ class TestRunArchitectureLoop:
             assert len(result["issues"]) == 0
 
         # Test when VectorStore missing search method
-        with patch('inspect.getmembers') as mock_getmembers, \
-             patch('chief_architect_agent.tools.architecture_loop.VectorStore'):
-
-            mock_getmembers.return_value = [
-                ('store', Mock()),
-                ('get_stats', Mock())
-            ]
+        with (
+            patch("inspect.getmembers") as mock_getmembers,
+            patch("chief_architect_agent.tools.architecture_loop.VectorStore"),
+        ):
+            mock_getmembers.return_value = [("store", Mock()), ("get_stats", Mock())]
 
             result = tool_instance._detect_vectorstore_api_mismatches()
 
@@ -123,7 +115,7 @@ class TestRunArchitectureLoop:
 
     def test_detect_vectorstore_api_mismatches_error_handling(self, tool_instance):
         """Test error handling in API mismatch detection."""
-        with patch('inspect.getmembers') as mock_getmembers:
+        with patch("inspect.getmembers") as mock_getmembers:
             mock_getmembers.side_effect = Exception("Import error")
 
             result = tool_instance._detect_vectorstore_api_mismatches()
@@ -134,9 +126,7 @@ class TestRunArchitectureLoop:
     def test_choose_high_impact_target_vectorstore_issues(self, tool_instance):
         """Test target selection when VectorStore issues exist."""
         findings = {
-            "api_mismatches": {
-                "issues": ["VectorStore missing .search API used by LearningAgent"]
-            }
+            "api_mismatches": {"issues": ["VectorStore missing .search API used by LearningAgent"]}
         }
 
         result = tool_instance._choose_high_impact_target(findings)
@@ -146,11 +136,7 @@ class TestRunArchitectureLoop:
 
     def test_choose_high_impact_target_no_issues(self, tool_instance):
         """Test target selection with no specific issues."""
-        findings = {
-            "api_mismatches": {
-                "issues": []
-            }
-        }
+        findings = {"api_mismatches": {"issues": []}}
 
         result = tool_instance._choose_high_impact_target(findings)
 
@@ -159,18 +145,21 @@ class TestRunArchitectureLoop:
 
     def test_file_output_creation(self, tool_instance):
         """Test that findings are written to log file."""
-        with patch('chief_architect_agent.tools.architecture_loop.ASTAnalyzer') as mock_analyzer_class, \
-             patch('chief_architect_agent.tools.architecture_loop.VectorStore') as mock_vs_class, \
-             patch('os.makedirs') as mock_makedirs, \
-             patch('builtins.open', mock_open()) as mock_file, \
-             patch.object(tool_instance, '_detect_vectorstore_api_mismatches') as mock_detect, \
-             patch.object(tool_instance, '_choose_high_impact_target') as mock_choose:
-
+        with (
+            patch(
+                "chief_architect_agent.tools.architecture_loop.ASTAnalyzer"
+            ) as mock_analyzer_class,
+            patch("chief_architect_agent.tools.architecture_loop.VectorStore") as mock_vs_class,
+            patch("os.makedirs") as mock_makedirs,
+            patch("builtins.open", mock_open()) as mock_file,
+            patch.object(tool_instance, "_detect_vectorstore_api_mismatches") as mock_detect,
+            patch.object(tool_instance, "_choose_high_impact_target") as mock_choose,
+        ):
             # Setup minimal mocks
             mock_analyzer = Mock()
             mock_analyzer.analyze_directory.return_value = {
                 "total_behaviors": 10,
-                "total_test_functions": 5
+                "total_test_functions": 5,
             }
             mock_analyzer_class.return_value = mock_analyzer
 
@@ -186,24 +175,25 @@ class TestRunArchitectureLoop:
 
             # Verify file operations
             mock_makedirs.assert_called_with("logs", exist_ok=True)
-            mock_file.assert_called_with(
-                os.path.join("logs", "chief_architect_findings.json"), "w"
-            )
+            mock_file.assert_called_with(os.path.join("logs", "chief_architect_findings.json"), "w")
 
     def test_file_output_error_handling(self, tool_instance):
         """Test graceful handling of file write errors."""
-        with patch('chief_architect_agent.tools.architecture_loop.ASTAnalyzer') as mock_analyzer_class, \
-             patch('chief_architect_agent.tools.architecture_loop.VectorStore') as mock_vs_class, \
-             patch('os.makedirs') as mock_makedirs, \
-             patch('builtins.open') as mock_file_open, \
-             patch.object(tool_instance, '_detect_vectorstore_api_mismatches') as mock_detect, \
-             patch.object(tool_instance, '_choose_high_impact_target') as mock_choose:
-
+        with (
+            patch(
+                "chief_architect_agent.tools.architecture_loop.ASTAnalyzer"
+            ) as mock_analyzer_class,
+            patch("chief_architect_agent.tools.architecture_loop.VectorStore") as mock_vs_class,
+            patch("os.makedirs") as mock_makedirs,
+            patch("builtins.open") as mock_file_open,
+            patch.object(tool_instance, "_detect_vectorstore_api_mismatches") as mock_detect,
+            patch.object(tool_instance, "_choose_high_impact_target") as mock_choose,
+        ):
             # Setup mocks
             mock_analyzer = Mock()
             mock_analyzer.analyze_directory.return_value = {
                 "total_behaviors": 10,
-                "total_test_functions": 5
+                "total_test_functions": 5,
             }
             mock_analyzer_class.return_value = mock_analyzer
 
@@ -215,7 +205,7 @@ class TestRunArchitectureLoop:
             mock_choose.return_value = {"title": "Test", "reason": "Test"}
 
             # Simulate file write error
-            mock_file_open.side_effect = IOError("Permission denied")
+            mock_file_open.side_effect = OSError("Permission denied")
 
             # Run should not raise exception
             result = tool_instance.run()
@@ -227,13 +217,16 @@ class TestRunArchitectureLoop:
 
     def test_comprehensive_findings_structure(self, tool_instance):
         """Test that all expected fields are in findings output."""
-        with patch('chief_architect_agent.tools.architecture_loop.ASTAnalyzer') as mock_analyzer_class, \
-             patch('chief_architect_agent.tools.architecture_loop.VectorStore') as mock_vs_class, \
-             patch('os.makedirs'), \
-             patch('builtins.open', mock_open()), \
-             patch.object(tool_instance, '_detect_vectorstore_api_mismatches') as mock_detect, \
-             patch.object(tool_instance, '_choose_high_impact_target') as mock_choose:
-
+        with (
+            patch(
+                "chief_architect_agent.tools.architecture_loop.ASTAnalyzer"
+            ) as mock_analyzer_class,
+            patch("chief_architect_agent.tools.architecture_loop.VectorStore") as mock_vs_class,
+            patch("os.makedirs"),
+            patch("builtins.open", mock_open()),
+            patch.object(tool_instance, "_detect_vectorstore_api_mismatches") as mock_detect,
+            patch.object(tool_instance, "_choose_high_impact_target") as mock_choose,
+        ):
             # Setup comprehensive mocks
             mock_analyzer = Mock()
             mock_analyzer.analyze_directory.return_value = {
@@ -241,7 +234,7 @@ class TestRunArchitectureLoop:
                 "total_test_functions": 120,
                 "coverage_ratio": 0.8,
                 "source_files": ["file1.py", "file2.py"],
-                "test_files": ["test_file1.py", "test_file2.py"]
+                "test_files": ["test_file1.py", "test_file2.py"],
             }
             mock_analyzer_class.return_value = mock_analyzer
 
@@ -249,18 +242,18 @@ class TestRunArchitectureLoop:
             mock_vs.get_stats.return_value = {
                 "total_memories": 100,
                 "total_embeddings": 500,
-                "dimensions": 768
+                "dimensions": 768,
             }
             mock_vs_class.return_value = mock_vs
 
             mock_detect.return_value = {
                 "issues": ["Issue 1", "Issue 2"],
-                "learning_uses_search": True
+                "learning_uses_search": True,
             }
 
             mock_choose.return_value = {
                 "title": "Critical improvement",
-                "reason": "High impact on system"
+                "reason": "High impact on system",
             }
 
             # Run the tool
@@ -287,15 +280,16 @@ class TestRunArchitectureLoop:
     def test_learning_agent_import_check(self, tool_instance):
         """Test checking for LearningAgent StoreKnowledge import."""
         # Test when import exists
-        with patch('inspect.getmembers'), \
-             patch('chief_architect_agent.tools.architecture_loop.VectorStore'), \
-             patch('learning_agent.tools.store_knowledge.StoreKnowledge'):
-
+        with (
+            patch("inspect.getmembers"),
+            patch("chief_architect_agent.tools.architecture_loop.VectorStore"),
+            patch("learning_agent.tools.store_knowledge.StoreKnowledge"),
+        ):
             result = tool_instance._detect_vectorstore_api_mismatches()
             assert result.get("learning_uses_search") == True
 
         # Test when import fails - simplified version
-        with patch('inspect.getmembers') as mock_getmembers:
+        with patch("inspect.getmembers") as mock_getmembers:
             mock_getmembers.side_effect = Exception("Module not found")
 
             result = tool_instance._detect_vectorstore_api_mismatches()
@@ -306,13 +300,11 @@ class TestRunArchitectureLoop:
         """Test that target selection follows correct priority."""
         # VectorStore issues should take priority
         findings_with_vs_issues = {
-            "api_mismatches": {
-                "issues": ["VectorStore problem"]
-            },
+            "api_mismatches": {"issues": ["VectorStore problem"]},
             "audit": {
                 "total_behaviors": 100,
-                "total_tests": 10  # Low coverage
-            }
+                "total_tests": 10,  # Low coverage
+            },
         }
 
         result = tool_instance._choose_high_impact_target(findings_with_vs_issues)
@@ -320,13 +312,8 @@ class TestRunArchitectureLoop:
 
         # No VectorStore issues, fallback to coverage
         findings_no_vs_issues = {
-            "api_mismatches": {
-                "issues": []
-            },
-            "audit": {
-                "total_behaviors": 100,
-                "total_tests": 10
-            }
+            "api_mismatches": {"issues": []},
+            "audit": {"total_behaviors": 100, "total_tests": 10},
         }
 
         result = tool_instance._choose_high_impact_target(findings_no_vs_issues)
@@ -344,36 +331,37 @@ class TestRunArchitectureLoop:
 
         # Though the current implementation doesn't use objective in logic,
         # verify it's stored for future use
-        with patch('chief_architect_agent.tools.architecture_loop.ASTAnalyzer'), \
-             patch('chief_architect_agent.tools.architecture_loop.VectorStore'), \
-             patch('os.makedirs'), \
-             patch('builtins.open', mock_open()):
-
+        with (
+            patch("chief_architect_agent.tools.architecture_loop.ASTAnalyzer"),
+            patch("chief_architect_agent.tools.architecture_loop.VectorStore"),
+            patch("os.makedirs"),
+            patch("builtins.open", mock_open()),
+        ):
             # The objective should be available for future enhancements
-            assert hasattr(tool_custom, 'objective')
+            assert hasattr(tool_custom, "objective")
 
     def test_concurrent_execution_safety(self):
         """Test that multiple instances can run safely."""
         tool1 = RunArchitectureLoop(target_path="/path1")
         tool2 = RunArchitectureLoop(target_path="/path2")
 
-        with patch('chief_architect_agent.tools.architecture_loop.ASTAnalyzer') as mock_analyzer_class, \
-             patch('chief_architect_agent.tools.architecture_loop.VectorStore') as mock_vs_class, \
-             patch('os.makedirs'), \
-             patch('builtins.open', mock_open()):
-
+        with (
+            patch(
+                "chief_architect_agent.tools.architecture_loop.ASTAnalyzer"
+            ) as mock_analyzer_class,
+            patch("chief_architect_agent.tools.architecture_loop.VectorStore") as mock_vs_class,
+            patch("os.makedirs"),
+            patch("builtins.open", mock_open()),
+        ):
             mock_analyzer = Mock()
             mock_analyzer.analyze_directory.return_value = {
                 "total_behaviors": 10,
-                "total_test_functions": 5
+                "total_test_functions": 5,
             }
             mock_analyzer_class.return_value = mock_analyzer
 
             mock_vs = Mock()
-            mock_vs.get_stats.return_value = {
-                "total_memories": 10,
-                "total_embeddings": 20
-            }
+            mock_vs.get_stats.return_value = {"total_memories": 10, "total_embeddings": 20}
             mock_vs_class.return_value = mock_vs
 
             # Both should work independently

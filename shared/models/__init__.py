@@ -3,72 +3,72 @@ Shared Pydantic Models for Agency OS
 Constitutional Law #2: Strict typing enforcement
 """
 
-from .memory import (
-    MemoryRecord,
-    MemoryPriority,
-    MemoryMetadata,
-    MemorySearchResult,
+from .context import (
+    AgentContextData,
+    AgentState,
+    SessionMetadata,
+)
+from .dashboard import (
+    AgentActivity,
+    DashboardSummary,
+    SessionSummary,
+)
+from .kanban import (
+    CardStatus,
+    CardType,
+    KanbanCard,
+    KanbanFeed,
 )
 from .learning import (
+    ContentTypeBreakdown,
     LearningConsolidation,
     LearningInsight,
     LearningMetric,
     PatternAnalysis,
-    ContentTypeBreakdown,
     TimeDistribution,
 )
-from .telemetry import (
-    TelemetryEvent,
-    TelemetryMetrics,
-    AgentMetrics,
-    SystemHealth,
-)
-from .dashboard import (
-    DashboardSummary,
-    SessionSummary,
-    AgentActivity,
-)
-from .context import (
-    AgentContextData,
-    SessionMetadata,
-    AgentState,
-)
-from .patterns import (
-    SessionInsight,
-    HealingPattern,
-    CrossSessionData,
-    PatternExtraction,
-    ToolExecutionResult,
-    ValidationOutcome,
-    TemporalPattern,
-    ContextFeatures,
-    PatternMatch,
-    LearningRecommendation,
-    ApplicationRecord,
-    LearningEffectiveness,
-    SelfHealingEvent,
-    DataCollectionSummary,
-    LearningObject,
-    PatternMatchSummary,
-    PatternType,
-    ValidationStatus,
-    ApplicationPriority,
-    EventStatus,
+from .memory import (
+    MemoryMetadata,
+    MemoryPriority,
+    MemoryRecord,
+    MemorySearchResult,
 )
 from .message import MessageEnvelope
 from .orchestrator import (
-    ExecutionMetrics,
-    TaskResultModel,
-    OrchestrationResultModel,
     BackoffType,
-    FairnessType,
     CancellationType,
+    ExecutionMetrics,
+    FairnessType,
+    OrchestrationResultModel,
+    TaskResultModel,
 )
-from .kanban import (
-    KanbanCard,
-    KanbanFeed,
-    CardType,
-    CardStatus,
+from .patterns import (
+    ApplicationPriority,
+    ApplicationRecord,
+    ContextFeatures,
+    CrossSessionData,
+    DataCollectionSummary,
+    EventStatus,
+    HealingPattern,
+    LearningEffectiveness,
+    LearningObject,
+    LearningRecommendation,
+    PatternExtraction,
+    PatternMatch,
+    PatternMatchSummary,
+    PatternType,
+    SelfHealingEvent,
+    SessionInsight,
+    TemporalPattern,
+    ToolExecutionResult,
+    ValidationOutcome,
+    ValidationStatus,
+)
+from .telemetry import (
+    AgentMetrics,
+    SystemHealth,
+    TelemetryEvent,
+    TelemetryMetrics,
 )
 
 __all__ = [

@@ -1,6 +1,5 @@
 import fnmatch
 import os
-from typing import List, Optional
 
 from agency_swarm.tools import BaseTool
 from pydantic import Field
@@ -9,7 +8,7 @@ from shared.tool_cache import with_cache
 
 
 @with_cache(ttl_seconds=30)
-def _find_files_cached(search_dir: str, pattern: str) -> List[str]:
+def _find_files_cached(search_dir: str, pattern: str) -> list[str]:
     """
     Cached file pattern matching helper.
 
@@ -35,13 +34,13 @@ def _find_files_cached(search_dir: str, pattern: str) -> List[str]:
     return [os.path.abspath(match) for match in matches]
 
 
-def _load_gitignore_patterns_helper(root_dir: str) -> List[str]:
+def _load_gitignore_patterns_helper(root_dir: str) -> list[str]:
     """Load gitignore patterns from root directory."""
-    patterns: List[str] = []
+    patterns: list[str] = []
     try:
         gi = os.path.join(root_dir, ".gitignore")
         if os.path.isfile(gi):
-            with open(gi, "r", encoding="utf-8") as f:
+            with open(gi, encoding="utf-8") as f:
                 for line in f:
                     s = line.strip()
                     if not s or s.startswith("#"):
@@ -52,7 +51,7 @@ def _load_gitignore_patterns_helper(root_dir: str) -> List[str]:
     return patterns
 
 
-def _is_ignored_helper(root_dir: str, path: str, patterns: List[str]) -> bool:
+def _is_ignored_helper(root_dir: str, path: str, patterns: list[str]) -> bool:
     """Check if path should be ignored based on gitignore patterns."""
     if not patterns:
         return False
@@ -68,9 +67,7 @@ def _is_ignored_helper(root_dir: str, path: str, patterns: List[str]) -> bool:
             base = pat_norm[:-1]
             # Anchored directory
             if pat_norm.startswith("/"):
-                if ("/" + rel_norm == pat_norm[:-1]) or ("/" + rel_norm).startswith(
-                    pat_norm
-                ):
+                if ("/" + rel_norm == pat_norm[:-1]) or ("/" + rel_norm).startswith(pat_norm):
                     return True
             else:
                 if (rel_norm == base) or rel_norm.startswith(pat_norm):
@@ -89,9 +86,7 @@ def _is_ignored_helper(root_dir: str, path: str, patterns: List[str]) -> bool:
     return False
 
 
-def _recursive_glob_helper(
-    root_dir: str, pattern: str, gitignore_patterns: List[str]
-):
+def _recursive_glob_helper(root_dir: str, pattern: str, gitignore_patterns: list[str]):
     """Handle recursive patterns with **."""
     matches = []
 
@@ -125,17 +120,15 @@ def _recursive_glob_helper(
     return matches
 
 
-def _simple_glob_helper(root_dir: str, pattern: str, gitignore_patterns: List[str]):
+def _simple_glob_helper(root_dir: str, pattern: str, gitignore_patterns: list[str]):
     """Handle simple patterns without **."""
-    matches: List[str] = []
+    matches: list[str] = []
 
     # If pattern contains path separators, handle directory structure
     if "/" in pattern or "\\" in pattern:
         # Split pattern into directory and file parts
         pattern_parts = pattern.replace("\\", "/").split("/")
-        _match_path_pattern_helper(
-            root_dir, pattern_parts, "", matches, gitignore_patterns
-        )
+        _match_path_pattern_helper(root_dir, pattern_parts, "", matches, gitignore_patterns)
     else:
         # Simple filename pattern
         try:
@@ -153,17 +146,15 @@ def _simple_glob_helper(root_dir: str, pattern: str, gitignore_patterns: List[st
 
 def _match_path_pattern_helper(
     base_dir: str,
-    pattern_parts: List[str],
+    pattern_parts: list[str],
     current_path: str,
-    matches: List[str],
-    gitignore_patterns: List[str],
+    matches: list[str],
+    gitignore_patterns: list[str],
 ):
     """Recursively match path patterns."""
     if not pattern_parts:
         # End of pattern, check if it's a file
-        full_path = (
-            os.path.join(base_dir, current_path) if current_path else base_dir
-        )
+        full_path = os.path.join(base_dir, current_path) if current_path else base_dir
         if os.path.isfile(full_path) and not _is_ignored_helper(
             base_dir, full_path, gitignore_patterns
         ):
@@ -184,9 +175,7 @@ def _match_path_pattern_helper(
             if _is_ignored_helper(base_dir, full_item, gitignore_patterns):
                 continue
             if fnmatch.fnmatch(item, current_pattern):
-                new_path = (
-                    os.path.join(current_path, item) if current_path else item
-                )
+                new_path = os.path.join(current_path, item) if current_path else item
                 _match_path_pattern_helper(
                     base_dir,
                     remaining_patterns,
@@ -209,7 +198,7 @@ class Glob(BaseTool):  # type: ignore[misc]
     """
 
     pattern: str = Field(..., description="The glob pattern to match files against")
-    path: Optional[str] = Field(
+    path: str | None = Field(
         None,
         description="The directory to search in. If not specified, the current working directory will be used. IMPORTANT: Omit this field to use the default directory. DO NOT enter 'undefined' or 'null' - simply omit it for the default behavior. Must be a valid directory path if provided.",
     )
@@ -232,7 +221,7 @@ class Glob(BaseTool):  # type: ignore[misc]
             # Sort by modification time (newest first)
             try:
                 matches.sort(key=lambda x: os.path.getmtime(x), reverse=True)
-            except (OSError, IOError):
+            except OSError:
                 # If we can't get modification times, just sort alphabetically
                 matches.sort()
 
@@ -247,7 +236,7 @@ class Glob(BaseTool):  # type: ignore[misc]
             return f"Error during glob search: {str(e)}"
 
     def _find_files_matching_pattern(
-        self, root_dir: str, pattern: str, gitignore_patterns: List[str]
+        self, root_dir: str, pattern: str, gitignore_patterns: list[str]
     ):
         """Custom implementation to find files matching a glob pattern."""
         matches = []
@@ -262,9 +251,7 @@ class Glob(BaseTool):  # type: ignore[misc]
 
         return [os.path.abspath(match) for match in matches]
 
-    def _recursive_glob(
-        self, root_dir: str, pattern: str, gitignore_patterns: List[str]
-    ):
+    def _recursive_glob(self, root_dir: str, pattern: str, gitignore_patterns: list[str]):
         """Handle recursive patterns with **."""
         matches = []
 
@@ -297,17 +284,15 @@ class Glob(BaseTool):  # type: ignore[misc]
 
         return matches
 
-    def _simple_glob(self, root_dir: str, pattern: str, gitignore_patterns: List[str]):
+    def _simple_glob(self, root_dir: str, pattern: str, gitignore_patterns: list[str]):
         """Handle simple patterns without **."""
-        matches: List[str] = []
+        matches: list[str] = []
 
         # If pattern contains path separators, handle directory structure
         if "/" in pattern or "\\\\" in pattern:
             # Split pattern into directory and file parts
             pattern_parts = pattern.replace("\\\\", "/").split("/")
-            self._match_path_pattern(
-                root_dir, pattern_parts, "", matches, gitignore_patterns
-            )
+            self._match_path_pattern(root_dir, pattern_parts, "", matches, gitignore_patterns)
         else:
             # Simple filename pattern
             try:
@@ -325,17 +310,15 @@ class Glob(BaseTool):  # type: ignore[misc]
     def _match_path_pattern(
         self,
         base_dir: str,
-        pattern_parts: List[str],
+        pattern_parts: list[str],
         current_path: str,
-        matches: List[str],
-        gitignore_patterns: List[str],
+        matches: list[str],
+        gitignore_patterns: list[str],
     ):
         """Recursively match path patterns."""
         if not pattern_parts:
             # End of pattern, check if it's a file
-            full_path = (
-                os.path.join(base_dir, current_path) if current_path else base_dir
-            )
+            full_path = os.path.join(base_dir, current_path) if current_path else base_dir
             if os.path.isfile(full_path) and not self._is_ignored(
                 base_dir, full_path, gitignore_patterns
             ):
@@ -356,9 +339,7 @@ class Glob(BaseTool):  # type: ignore[misc]
                 if self._is_ignored(base_dir, full_item, gitignore_patterns):
                     continue
                 if fnmatch.fnmatch(item, current_pattern):
-                    new_path = (
-                        os.path.join(current_path, item) if current_path else item
-                    )
+                    new_path = os.path.join(current_path, item) if current_path else item
                     self._match_path_pattern(
                         base_dir,
                         remaining_patterns,
@@ -369,12 +350,12 @@ class Glob(BaseTool):  # type: ignore[misc]
         except PermissionError:
             pass
 
-    def _load_gitignore_patterns(self, root_dir: str) -> List[str]:
-        patterns: List[str] = []
+    def _load_gitignore_patterns(self, root_dir: str) -> list[str]:
+        patterns: list[str] = []
         try:
             gi = os.path.join(root_dir, ".gitignore")
             if os.path.isfile(gi):
-                with open(gi, "r", encoding="utf-8") as f:
+                with open(gi, encoding="utf-8") as f:
                     for line in f:
                         s = line.strip()
                         if not s or s.startswith("#"):
@@ -384,7 +365,7 @@ class Glob(BaseTool):  # type: ignore[misc]
             pass
         return patterns
 
-    def _is_ignored(self, root_dir: str, path: str, patterns: List[str]) -> bool:
+    def _is_ignored(self, root_dir: str, path: str, patterns: list[str]) -> bool:
         if not patterns:
             return False
         try:
@@ -399,9 +380,7 @@ class Glob(BaseTool):  # type: ignore[misc]
                 base = pat_norm[:-1]
                 # Anchored directory
                 if pat_norm.startswith("/"):
-                    if ("/" + rel_norm == pat_norm[:-1]) or ("/" + rel_norm).startswith(
-                        pat_norm
-                    ):
+                    if ("/" + rel_norm == pat_norm[:-1]) or ("/" + rel_norm).startswith(pat_norm):
                         return True
                 else:
                     if (rel_norm == base) or rel_norm.startswith(pat_norm):

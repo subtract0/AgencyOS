@@ -4,19 +4,17 @@ Simple, focused self-healing for a specific error class.
 Feature-flagged to use unified core when ENABLE_UNIFIED_CORE=true.
 """
 
+import json
 import os
 import re
-import json
-from typing import Optional, Dict, Any
-from datetime import datetime
 import warnings
+from datetime import datetime
+from typing import Optional
 
 from agency_swarm.tools import BaseTool as Tool
 from pydantic import Field
 
-from .edit import Edit
 from .read import Read
-from .bash import Bash
 
 # Check for unified core feature flag
 ENABLE_UNIFIED_CORE = os.getenv("ENABLE_UNIFIED_CORE", "true").lower() == "true"
@@ -25,7 +23,8 @@ _unified_core: Optional["SelfHealingCore"] = None
 
 if ENABLE_UNIFIED_CORE:
     try:
-        from core.self_healing import SelfHealingCore, Finding
+        from core.self_healing import Finding, SelfHealingCore
+
         _unified_core = SelfHealingCore()
     except ImportError:
         ENABLE_UNIFIED_CORE = False
@@ -44,7 +43,9 @@ class NoneTypeErrorDetector(Tool):
 
         # Use unified core if enabled
         if ENABLE_UNIFIED_CORE and _unified_core:
-            warnings.warn("Using unified SelfHealingCore for detection", DeprecationWarning, stacklevel=2)
+            warnings.warn(
+                "Using unified SelfHealingCore for detection", DeprecationWarning, stacklevel=2
+            )
             findings = _unified_core.detect_errors(self.log_content)
 
             if findings:
@@ -57,24 +58,31 @@ class NoneTypeErrorDetector(Tool):
                         if attr_match:
                             attribute = attr_match.group(1)
 
-                    errors_found.append({
-                        "error_type": finding.error_type,
-                        "pattern": finding.snippet,
-                        "file_path": finding.file,
-                        "line_number": str(finding.line) if finding.line > 0 else "unknown",
-                        "attribute": attribute
-                    })
+                    errors_found.append(
+                        {
+                            "error_type": finding.error_type,
+                            "pattern": finding.snippet,
+                            "file_path": finding.file,
+                            "line_number": str(finding.line) if finding.line > 0 else "unknown",
+                            "attribute": attribute,
+                        }
+                    )
 
-                return json.dumps({
-                    "status": "errors_detected",
-                    "count": len(errors_found),
-                    "errors": errors_found
-                }, indent=2)
+                return json.dumps(
+                    {
+                        "status": "errors_detected",
+                        "count": len(errors_found),
+                        "errors": errors_found,
+                    },
+                    indent=2,
+                )
             else:
-                return json.dumps({
-                    "status": "no_nonetype_errors",
-                    "message": "No NoneType errors detected in provided content"
-                })
+                return json.dumps(
+                    {
+                        "status": "no_nonetype_errors",
+                        "message": "No NoneType errors detected in provided content",
+                    }
+                )
 
         # Legacy implementation (when feature flag is false)
         patterns = [
@@ -90,32 +98,35 @@ class NoneTypeErrorDetector(Tool):
             matches = re.finditer(pattern, self.log_content, re.MULTILINE)
             for match in matches:
                 # Extract line number if present
-                line_match = re.search(r'line (\d+)', self.log_content)
+                line_match = re.search(r"line (\d+)", self.log_content)
                 line_number = line_match.group(1) if line_match else "unknown"
 
                 # Extract file path if present
                 file_match = re.search(r'File "([^"]+)"', self.log_content)
                 file_path = file_match.group(1) if file_match else "unknown"
 
-                errors_found.append({
-                    "error_type": "NoneType",
-                    "pattern": match.group(0),
-                    "file_path": file_path,
-                    "line_number": line_number,
-                    "attribute": match.group(1) if match.groups() else None
-                })
+                errors_found.append(
+                    {
+                        "error_type": "NoneType",
+                        "pattern": match.group(0),
+                        "file_path": file_path,
+                        "line_number": line_number,
+                        "attribute": match.group(1) if match.groups() else None,
+                    }
+                )
 
         if errors_found:
-            return json.dumps({
-                "status": "errors_detected",
-                "count": len(errors_found),
-                "errors": errors_found
-            }, indent=2)
+            return json.dumps(
+                {"status": "errors_detected", "count": len(errors_found), "errors": errors_found},
+                indent=2,
+            )
         else:
-            return json.dumps({
-                "status": "no_nonetype_errors",
-                "message": "No NoneType errors detected in provided content"
-            })
+            return json.dumps(
+                {
+                    "status": "no_nonetype_errors",
+                    "message": "No NoneType errors detected in provided content",
+                }
+            )
 
 
 class LLMNoneTypeFixer(Tool):
@@ -195,23 +206,28 @@ Code context: {self.code_context[:300]}
 Provide the complete fixed code with explanations."
 """
 
-            fixes.append({
-                "error": pattern,
-                "file": error["file_path"],
-                "line": error["line_number"],
-                "fix_suggestion": fix_suggestion
-            })
+            fixes.append(
+                {
+                    "error": pattern,
+                    "file": error["file_path"],
+                    "line": error["line_number"],
+                    "fix_suggestion": fix_suggestion,
+                }
+            )
 
-        return json.dumps({
-            "status": "fixes_generated",
-            "fixes": fixes,
-            "next_steps": [
-                "1. Use the GPT-5 prompts to get detailed fixes",
-                "2. Apply fixes using Edit tool",
-                "3. Run tests to verify fixes",
-                "4. Commit if tests pass"
-            ]
-        }, indent=2)
+        return json.dumps(
+            {
+                "status": "fixes_generated",
+                "fixes": fixes,
+                "next_steps": [
+                    "1. Use the GPT-5 prompts to get detailed fixes",
+                    "2. Apply fixes using Edit tool",
+                    "3. Run tests to verify fixes",
+                    "4. Commit if tests pass",
+                ],
+            },
+            indent=2,
+        )
 
 
 class AutoNoneTypeFixer(Tool):
@@ -239,13 +255,13 @@ class AutoNoneTypeFixer(Tool):
         try:
             read_tool = Read(file_path=self.file_path)
             file_content = read_tool.run()
-        except (FileNotFoundError, IOError, PermissionError) as e:
+        except (OSError, FileNotFoundError, PermissionError) as e:
             return f"Failed to read file: {self.file_path} - {e}"
 
         # Step 3: Generate LLM-based fixes
         fixer = LLMNoneTypeFixer(
             error_info=error_info,
-            code_context=file_content[:1000]  # First 1000 chars for context
+            code_context=file_content[:1000],  # First 1000 chars for context
         )
         fix_suggestions = fixer.run()
 
@@ -257,7 +273,7 @@ class AutoNoneTypeFixer(Tool):
             "error": self.error_message,
             "detection_result": error_data,
             "fix_suggestions": fix_suggestions,
-            "status": "awaiting_human_review"
+            "status": "awaiting_human_review",
         }
 
         # Create logs directory if it doesn't exist
@@ -270,7 +286,7 @@ class AutoNoneTypeFixer(Tool):
         return f"""
 AUTO-FIX ANALYSIS COMPLETE for {self.file_path}
 
-ERROR DETECTED: {error_data['count']} NoneType error(s)
+ERROR DETECTED: {error_data["count"]} NoneType error(s)
 
 FIXES GENERATED:
 {fix_suggestions}
@@ -304,7 +320,7 @@ class SimpleNoneTypeMonitor(Tool):
             try:
                 # Check recent log files
                 for filename in os.listdir(log_dir):
-                    if filename.endswith(('.log', '.jsonl', '.md')):
+                    if filename.endswith((".log", ".jsonl", ".md")):
                         file_path = os.path.join(log_dir, filename)
 
                         # Only check recent files (last 24 hours)
@@ -312,7 +328,7 @@ class SimpleNoneTypeMonitor(Tool):
                             continue
 
                         try:
-                            with open(file_path, 'r') as f:
+                            with open(file_path) as f:
                                 content = f.read()
 
                             detector = NoneTypeErrorDetector(log_content=content)
@@ -322,10 +338,10 @@ class SimpleNoneTypeMonitor(Tool):
                             if result_data["status"] == "errors_detected":
                                 errors_found.extend(result_data["errors"])
 
-                        except Exception as e:
+                        except Exception:
                             continue  # Skip files we can't read
 
-            except Exception as e:
+            except Exception:
                 continue  # Skip directories we can't access
 
         if errors_found:

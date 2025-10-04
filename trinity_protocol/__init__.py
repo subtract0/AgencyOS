@@ -47,16 +47,16 @@ __version__ = "0.2.0"
 
 # Direct exports from core for convenience
 from trinity_protocol.core import (
-    ExecutorAgent,
     ArchitectAgent,
-    WitnessAgent,
-    TrinityOrchestrator,
-    Signal,
-    SubAgentType,
-    SubAgentResult,
     ExecutionPlan,
+    ExecutorAgent,
+    Signal,
+    SubAgentResult,
+    SubAgentType,
     TrinityBus,
     TrinityMessage,
+    TrinityOrchestrator,
+    WitnessAgent,
     initialize_trinity,
 )
 

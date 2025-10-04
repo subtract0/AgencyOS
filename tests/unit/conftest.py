@@ -7,6 +7,7 @@ import os
 import sys
 from pathlib import Path
 from unittest.mock import Mock, patch
+
 import pytest
 
 # Add project root to path
@@ -59,7 +60,7 @@ def mock_openai_client():
 @pytest.fixture
 def mock_agency_swarm_agent():
     """Mock Agency Swarm Agent to avoid actual LLM calls."""
-    with patch('agency_swarm.Agent') as mock_agent_class:
+    with patch("agency_swarm.Agent") as mock_agent_class:
         mock_agent = Mock()
         mock_agent.get_response = Mock()
         mock_agent.name = "TestAgent"
@@ -78,7 +79,7 @@ def mock_agency_swarm_agent():
 @pytest.fixture
 def mock_agency():
     """Mock Agency for testing without actual LLM calls."""
-    with patch('agency_swarm.Agency') as mock_agency_class:
+    with patch("agency_swarm.Agency") as mock_agency_class:
         mock_agency = Mock()
         mock_agency.get_response = Mock()
 
@@ -95,14 +96,19 @@ def mock_agency():
 def mock_tool_calls():
     """Mock tool calls and responses."""
     return {
-        'bash': Mock(return_value={"stdout": "mocked bash output", "stderr": "", "return_code": 0}),
-        'read': Mock(return_value="mocked file content"),
-        'write': Mock(return_value="File written successfully"),
-        'grep': Mock(return_value=["file1.py:10:    # TODO: implement this", "file2.py:25:    # TODO: fix bug"]),
-        'ls': Mock(return_value=["file1.py", "file2.py", "test.py"]),
-        'glob': Mock(return_value=["src/main.py", "tests/test_main.py"]),
-        'git': Mock(return_value="On branch main\nnothing to commit, working tree clean"),
-        'web_search': Mock(return_value="Mock search results about Agency Swarm framework"),
+        "bash": Mock(return_value={"stdout": "mocked bash output", "stderr": "", "return_code": 0}),
+        "read": Mock(return_value="mocked file content"),
+        "write": Mock(return_value="File written successfully"),
+        "grep": Mock(
+            return_value=[
+                "file1.py:10:    # TODO: implement this",
+                "file2.py:25:    # TODO: fix bug",
+            ]
+        ),
+        "ls": Mock(return_value=["file1.py", "file2.py", "test.py"]),
+        "glob": Mock(return_value=["src/main.py", "tests/test_main.py"]),
+        "git": Mock(return_value="On branch main\nnothing to commit, working tree clean"),
+        "web_search": Mock(return_value="Mock search results about Agency Swarm framework"),
     }
 
 
@@ -117,20 +123,20 @@ def mock_system_hooks():
     memory_hook.pre_call = Mock()
     memory_hook.post_call = Mock()
 
-    return {
-        'reminder_hook': reminder_hook,
-        'memory_hook': memory_hook
-    }
+    return {"reminder_hook": reminder_hook, "memory_hook": memory_hook}
 
 
 @pytest.fixture
 def mock_environment_vars():
     """Mock environment variables for tests."""
-    with patch.dict(os.environ, {
-        'OPENAI_API_KEY': 'test_key_123',
-        'ANTHROPIC_API_KEY': 'test_anthropic_key_123',
-        'TEST_MODE': 'true'
-    }):
+    with patch.dict(
+        os.environ,
+        {
+            "OPENAI_API_KEY": "test_key_123",
+            "ANTHROPIC_API_KEY": "test_anthropic_key_123",
+            "TEST_MODE": "true",
+        },
+    ):
         yield
 
 
@@ -138,11 +144,12 @@ def mock_environment_vars():
 def fast_test_setup(mock_environment_vars):
     """Auto-applied fixture to ensure all unit tests run fast."""
     # Mock time-consuming operations
-    with patch('time.sleep'), \
-         patch('asyncio.sleep'), \
-         patch('requests.get') as mock_get, \
-         patch('httpx.AsyncClient') as mock_httpx:
-
+    with (
+        patch("time.sleep"),
+        patch("asyncio.sleep"),
+        patch("requests.get") as mock_get,
+        patch("httpx.AsyncClient") as mock_httpx,
+    ):
         # Mock HTTP responses
         mock_response = Mock()
         mock_response.text = "Mock HTTP response"
@@ -168,22 +175,22 @@ def sample_test_queries():
             "category": "File Operations",
             "query": "List files in the current directory",
             "expected_tools": ["ls"],
-            "mock_response": "Found 5 Python files in current directory"
+            "mock_response": "Found 5 Python files in current directory",
         },
         {
             "id": 2,
             "category": "Code Search",
             "query": "Search for TODO comments",
             "expected_tools": ["grep"],
-            "mock_response": "Found 3 TODO comments in 2 files"
+            "mock_response": "Found 3 TODO comments in 2 files",
         },
         {
             "id": 3,
             "category": "File Creation",
             "query": "Create a simple script",
             "expected_tools": ["write", "todo_write"],
-            "mock_response": "Successfully created script.py with basic functionality"
-        }
+            "mock_response": "Successfully created script.py with basic functionality",
+        },
     ]
 
 

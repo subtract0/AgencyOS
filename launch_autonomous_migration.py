@@ -4,13 +4,14 @@ Launch the Agency in autonomous mode to complete type safety migration.
 This will run overnight and complete the Constitutional Law #2 enforcement.
 """
 
+import asyncio
 import os
 import sys
-import asyncio
 from pathlib import Path
 
 # Add project root to path
 sys.path.insert(0, str(Path(__file__).parent))
+
 
 async def main():
     """Launch autonomous type safety migration."""
@@ -39,7 +40,7 @@ async def main():
         print("❌ Mission file not found: autonomous_type_safety_mission.md")
         return 1
 
-    with open(mission_file, "r") as f:
+    with open(mission_file) as f:
         mission_prompt = f.read()
 
     print("📋 Mission loaded:")
@@ -122,8 +123,10 @@ async def main():
     except Exception as e:
         print(f"❌ Error during autonomous execution: {e}")
         import traceback
+
         traceback.print_exc()
         return 1
+
 
 if __name__ == "__main__":
     # Run with asyncio if needed

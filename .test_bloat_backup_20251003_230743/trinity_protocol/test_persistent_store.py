@@ -19,11 +19,12 @@ Tests should be rewritten for new shared.persistent_store API.
 
 import pytest
 
-pytestmark = pytest.mark.skip(reason="Module refactored - old PersistentStore API replaced in shared/")
+pytestmark = pytest.mark.skip(
+    reason="Module refactored - old PersistentStore API replaced in shared/"
+)
 
 # Minimal imports for decorators (tests won't execute due to skip)
 import tempfile
-import os
 from pathlib import Path
 
 # Dummy variable for test code that won't execute
@@ -106,7 +107,7 @@ class TestPatternStorage:
                 content="Test pattern content",
                 confidence=0.85,
                 metadata={"source": "test"},
-                evidence_count=3
+                evidence_count=3,
             )
 
             assert isinstance(pattern_id, int)
@@ -118,12 +119,12 @@ class TestPatternStorage:
             row = cursor.fetchone()
 
             assert row is not None
-            assert row['pattern_type'] == "failure"
-            assert row['pattern_name'] == "critical_error"
-            assert row['content'] == "Test pattern content"
-            assert row['confidence'] == 0.85
-            assert row['evidence_count'] == 3
-            assert row['times_seen'] == 1
+            assert row["pattern_type"] == "failure"
+            assert row["pattern_name"] == "critical_error"
+            assert row["content"] == "Test pattern content"
+            assert row["confidence"] == 0.85
+            assert row["evidence_count"] == 3
+            assert row["times_seen"] == 1
 
             store.close()
 
@@ -138,14 +139,14 @@ class TestPatternStorage:
                 pattern_type="opportunity",
                 pattern_name="code_duplication",
                 content="Duplicate code found",
-                confidence=0.9
+                confidence=0.9,
             )
 
             id2 = store.store_pattern(
                 pattern_type="opportunity",
                 pattern_name="code_duplication",
                 content="Duplicate code found",
-                confidence=0.9
+                confidence=0.9,
             )
 
             # Should be same ID
@@ -154,7 +155,7 @@ class TestPatternStorage:
             # Check times_seen
             cursor = store.conn.cursor()
             cursor.execute("SELECT times_seen FROM patterns WHERE id = ?", (id1,))
-            times_seen = cursor.fetchone()['times_seen']
+            times_seen = cursor.fetchone()["times_seen"]
 
             assert times_seen == 2
 
@@ -166,23 +167,19 @@ class TestPatternStorage:
             db_path = Path(tmpdir) / "test.db"
             store = PersistentStore(db_path=str(db_path))
 
-            metadata = {
-                "file": "test.py",
-                "line": 42,
-                "keywords": ["error", "critical"]
-            }
+            metadata = {"file": "test.py", "line": 42, "keywords": ["error", "critical"]}
 
             pattern_id = store.store_pattern(
                 pattern_type="failure",
                 pattern_name="test_error",
                 content="Test error",
                 confidence=0.8,
-                metadata=metadata
+                metadata=metadata,
             )
 
             cursor = store.conn.cursor()
             cursor.execute("SELECT metadata FROM patterns WHERE id = ?", (pattern_id,))
-            stored_metadata = cursor.fetchone()['metadata']
+            stored_metadata = cursor.fetchone()["metadata"]
 
             assert stored_metadata is not None
             assert '"file": "test.py"' in stored_metadata
@@ -203,7 +200,7 @@ class TestPatternStorage:
                 pattern_type="user_intent",
                 pattern_name="feature_request",
                 content="User wants dark mode feature",
-                confidence=0.75
+                confidence=0.75,
             )
 
             # FAISS index should have one more vector
@@ -226,20 +223,20 @@ class TestPatternSearch:
                 pattern_type="failure",
                 pattern_name="low_conf",
                 content="Low confidence pattern",
-                confidence=0.6
+                confidence=0.6,
             )
             store.store_pattern(
                 pattern_type="failure",
                 pattern_name="high_conf",
                 content="High confidence pattern",
-                confidence=0.9
+                confidence=0.9,
             )
 
             # Search with min_confidence=0.7
             results = store.search_patterns(min_confidence=0.7)
 
             assert len(results) == 1
-            assert results[0]['pattern_name'] == "high_conf"
+            assert results[0]["pattern_name"] == "high_conf"
 
             store.close()
 
@@ -253,22 +250,19 @@ class TestPatternSearch:
                 pattern_type="failure",
                 pattern_name="error_1",
                 content="Error pattern",
-                confidence=0.8
+                confidence=0.8,
             )
             store.store_pattern(
                 pattern_type="opportunity",
                 pattern_name="improve_1",
                 content="Improvement pattern",
-                confidence=0.8
+                confidence=0.8,
             )
 
-            results = store.search_patterns(
-                pattern_type="failure",
-                min_confidence=0.7
-            )
+            results = store.search_patterns(pattern_type="failure", min_confidence=0.7)
 
             assert len(results) == 1
-            assert results[0]['pattern_type'] == "failure"
+            assert results[0]["pattern_type"] == "failure"
 
             store.close()
 
@@ -284,7 +278,7 @@ class TestPatternSearch:
                     pattern_type="failure",
                     pattern_name=f"pattern_{i}",
                     content=f"Pattern {i}",
-                    confidence=0.8
+                    confidence=0.8,
                 )
 
             results = store.search_patterns(min_confidence=0.7, limit=3)
@@ -305,15 +299,15 @@ class TestPatternSearch:
                 pattern_name="test",
                 content="Test pattern",
                 confidence=0.8,
-                metadata=metadata
+                metadata=metadata,
             )
 
             results = store.search_patterns(min_confidence=0.7)
 
             assert len(results) == 1
-            assert isinstance(results[0]['metadata'], dict)
-            assert results[0]['metadata']['key'] == "value"
-            assert results[0]['metadata']['number'] == 42
+            assert isinstance(results[0]["metadata"], dict)
+            assert results[0]["metadata"]["key"] == "value"
+            assert results[0]["metadata"]["number"] == 42
 
             store.close()
 
@@ -329,26 +323,27 @@ class TestPatternSearch:
                 pattern_type="failure",
                 pattern_name="import_error",
                 content="ModuleNotFoundError when importing library",
-                confidence=0.8
+                confidence=0.8,
             )
             store.store_pattern(
                 pattern_type="opportunity",
                 pattern_name="ui_improvement",
                 content="Add dark mode to user interface",
-                confidence=0.8
+                confidence=0.8,
             )
 
             # Search for import-related patterns
             results = store.search_patterns(
-                query="missing module error",
-                min_confidence=0.7,
-                semantic_search=True
+                query="missing module error", min_confidence=0.7, semantic_search=True
             )
 
             # Should find import_error as more relevant
             assert len(results) > 0
             # First result should be semantically closer
-            assert "import" in results[0]['content'].lower() or "module" in results[0]['content'].lower()
+            assert (
+                "import" in results[0]["content"].lower()
+                or "module" in results[0]["content"].lower()
+            )
 
             store.close()
 
@@ -366,20 +361,23 @@ class TestSuccessTracking:
                 pattern_type="opportunity",
                 pattern_name="refactor",
                 content="Refactor suggestion",
-                confidence=0.8
+                confidence=0.8,
             )
 
             store.update_success(pattern_id, success=True)
 
             cursor = store.conn.cursor()
-            cursor.execute("""
+            cursor.execute(
+                """
                 SELECT times_successful, success_rate
                 FROM patterns WHERE id = ?
-            """, (pattern_id,))
+            """,
+                (pattern_id,),
+            )
             row = cursor.fetchone()
 
-            assert row['times_successful'] == 1
-            assert row['success_rate'] == 1.0
+            assert row["times_successful"] == 1
+            assert row["success_rate"] == 1.0
 
             store.close()
 
@@ -393,7 +391,7 @@ class TestSuccessTracking:
                 pattern_type="opportunity",
                 pattern_name="test_pattern",
                 content="Test",
-                confidence=0.8
+                confidence=0.8,
             )
 
             # 2 successes, 1 failure out of 3 total applications
@@ -402,16 +400,19 @@ class TestSuccessTracking:
             store.update_success(pattern_id, success=False)
 
             cursor = store.conn.cursor()
-            cursor.execute("""
+            cursor.execute(
+                """
                 SELECT times_successful, success_rate
                 FROM patterns WHERE id = ?
-            """, (pattern_id,))
+            """,
+                (pattern_id,),
+            )
             row = cursor.fetchone()
 
             # Note: times_seen is 1 initially, success tracking doesn't increment it
             # So success_rate = 2/1 = 2.0 (or implementation may differ)
             # Let's check the actual implementation behavior
-            assert row['times_successful'] == 2
+            assert row["times_successful"] == 2
             # Success rate calculation depends on implementation
 
             store.close()
@@ -443,12 +444,12 @@ class TestStatistics:
                     pattern_type="failure",
                     pattern_name=f"pattern_{i}",
                     content=f"Content {i}",
-                    confidence=0.8
+                    confidence=0.8,
                 )
 
             stats = store.get_stats()
 
-            assert stats['total_patterns'] == 3
+            assert stats["total_patterns"] == 3
 
             store.close()
 
@@ -459,29 +460,23 @@ class TestStatistics:
             store = PersistentStore(db_path=str(db_path))
 
             store.store_pattern(
-                pattern_type="failure",
-                pattern_name="error",
-                content="Error",
-                confidence=0.8
+                pattern_type="failure", pattern_name="error", content="Error", confidence=0.8
             )
             store.store_pattern(
-                pattern_type="failure",
-                pattern_name="error2",
-                content="Error2",
-                confidence=0.8
+                pattern_type="failure", pattern_name="error2", content="Error2", confidence=0.8
             )
             store.store_pattern(
                 pattern_type="opportunity",
                 pattern_name="improve",
                 content="Improvement",
-                confidence=0.8
+                confidence=0.8,
             )
 
             stats = store.get_stats()
 
-            assert 'by_type' in stats
-            assert stats['by_type']['failure'] == 2
-            assert stats['by_type']['opportunity'] == 1
+            assert "by_type" in stats
+            assert stats["by_type"]["failure"] == 2
+            assert stats["by_type"]["opportunity"] == 1
 
             store.close()
 
@@ -492,23 +487,17 @@ class TestStatistics:
             store = PersistentStore(db_path=str(db_path))
 
             store.store_pattern(
-                pattern_type="failure",
-                pattern_name="p1",
-                content="Pattern 1",
-                confidence=0.8
+                pattern_type="failure", pattern_name="p1", content="Pattern 1", confidence=0.8
             )
             store.store_pattern(
-                pattern_type="failure",
-                pattern_name="p2",
-                content="Pattern 2",
-                confidence=0.6
+                pattern_type="failure", pattern_name="p2", content="Pattern 2", confidence=0.6
             )
 
             stats = store.get_stats()
 
-            assert 'average_confidence' in stats
+            assert "average_confidence" in stats
             # Average of 0.8 and 0.6 = 0.7
-            assert stats['average_confidence'] == 0.7
+            assert stats["average_confidence"] == 0.7
 
             store.close()
 
@@ -520,8 +509,8 @@ class TestStatistics:
 
             stats = store.get_stats()
 
-            assert 'faiss_available' in stats
-            assert stats['faiss_available'] == FAISS_AVAILABLE
+            assert "faiss_available" in stats
+            assert stats["faiss_available"] == FAISS_AVAILABLE
 
             store.close()
 
@@ -541,10 +530,7 @@ class TestErrorHandling:
 
             with pytest.raises(RuntimeError, match="Database not initialized"):
                 store.store_pattern(
-                    pattern_type="failure",
-                    pattern_name="test",
-                    content="Test",
-                    confidence=0.8
+                    pattern_type="failure", pattern_name="test", content="Test", confidence=0.8
                 )
 
     def test_handles_empty_database_search(self):
@@ -571,12 +557,12 @@ class TestErrorHandling:
                 pattern_name="test",
                 content="Test",
                 confidence=0.8,
-                metadata=None
+                metadata=None,
             )
 
             assert isinstance(pattern_id, int)
 
             results = store.search_patterns(min_confidence=0.7)
-            assert results[0]['metadata'] is None
+            assert results[0]["metadata"] is None
 
             store.close()

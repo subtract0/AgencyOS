@@ -1,6 +1,5 @@
 import json
 import os
-from typing import Optional
 
 from agency_swarm.tools import BaseTool
 from pydantic import Field
@@ -17,7 +16,7 @@ class NotebookRead(BaseTool):  # type: ignore[misc]
         ...,
         description="The absolute path to the Jupyter notebook file to read (must be absolute, not relative)",
     )
-    cell_id: Optional[str] = Field(
+    cell_id: str | None = Field(
         None,
         description="The ID of a specific cell to read. If not provided, all cells will be read.",
     )
@@ -42,7 +41,7 @@ class NotebookRead(BaseTool):  # type: ignore[misc]
 
             # Read and parse the notebook
             try:
-                with open(self.notebook_path, "r", encoding="utf-8") as f:
+                with open(self.notebook_path, encoding="utf-8") as f:
                     notebook_data = json.load(f)
             except json.JSONDecodeError as e:
                 return f"Error: Invalid JSON in notebook file: {str(e)}"
@@ -132,9 +131,7 @@ class NotebookRead(BaseTool):  # type: ignore[misc]
                         # Note other data types
                         other_types = [k for k in data.keys() if k != "text/plain"]
                         if other_types:
-                            result += (
-                                f"\\n    [Also contains: {', '.join(other_types)}]"
-                            )
+                            result += f"\\n    [Also contains: {', '.join(other_types)}]"
 
                     elif output_type == "error":
                         ename = output.get("ename", "Error")

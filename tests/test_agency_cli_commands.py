@@ -26,15 +26,13 @@ NECESSARY Criteria:
 - Y: Yieldful - catches real bugs
 """
 
-import pytest
-import sys
-import os
 import argparse
-from unittest.mock import Mock, patch, MagicMock, call
+import os
+import sys
 from contextlib import contextmanager
-from typing import Dict, Optional
-from shared.type_definitions.json import JSONValue
+from unittest.mock import MagicMock, Mock, patch
 
+import pytest
 
 # Import the functions we're testing
 # Note: We need to patch these at module level before import
@@ -48,13 +46,14 @@ class TestCliEventScope:
         """Should emit start and finish telemetry events on success."""
         # Arrange
         from agency import _cli_event_scope
+
         emitted_events = []
 
         def mock_emit(event):
             emitted_events.append(event)
 
         # Act
-        with patch('agency._tel_emit', side_effect=mock_emit):
+        with patch("agency._tel_emit", side_effect=mock_emit):
             with _cli_event_scope("test_command", {"arg1": "value1"}):
                 pass
 
@@ -71,13 +70,14 @@ class TestCliEventScope:
         """Should emit failed status when exception occurs."""
         # Arrange
         from agency import _cli_event_scope
+
         emitted_events = []
 
         def mock_emit(event):
             emitted_events.append(event)
 
         # Act & Assert
-        with patch('agency._tel_emit', side_effect=mock_emit):
+        with patch("agency._tel_emit", side_effect=mock_emit):
             with pytest.raises(ValueError):
                 with _cli_event_scope("test_command", {}):
                     raise ValueError("Test error")
@@ -97,7 +97,7 @@ class TestCliEventScope:
             raise RuntimeError("Telemetry system unavailable")
 
         # Act & Assert - should not raise
-        with patch('agency._tel_emit', side_effect=mock_emit_fail):
+        with patch("agency._tel_emit", side_effect=mock_emit_fail):
             with _cli_event_scope("test_command", {}):
                 pass  # Should complete successfully despite telemetry failure
 
@@ -105,13 +105,14 @@ class TestCliEventScope:
         """Should handle None command and args gracefully."""
         # Arrange
         from agency import _cli_event_scope
+
         emitted_events = []
 
         def mock_emit(event):
             emitted_events.append(event)
 
         # Act
-        with patch('agency._tel_emit', side_effect=mock_emit):
+        with patch("agency._tel_emit", side_effect=mock_emit):
             with _cli_event_scope(None, None):
                 pass
 
@@ -128,49 +129,58 @@ class TestCmdRun:
         """Should execute terminal demo with correct reasoning flag."""
         # Arrange
         from agency import _cmd_run
+
         mock_args = argparse.Namespace()
         mock_agency = Mock()
 
         # Act
-        with patch('agency.agency', mock_agency):
-            with patch('agency.model', 'gpt-5'):
-                with patch('agency._cli_event_scope', lambda cmd, args: contextmanager(lambda: (yield))()) :
+        with patch("agency.agency", mock_agency):
+            with patch("agency.model", "gpt-5"):
+                with patch(
+                    "agency._cli_event_scope", lambda cmd, args: contextmanager(lambda: (yield))()
+                ):
                     _cmd_run(mock_args)
 
         # Assert
         mock_agency.terminal_demo.assert_called_once()
         call_kwargs = mock_agency.terminal_demo.call_args[1]
-        assert 'show_reasoning' in call_kwargs
+        assert "show_reasoning" in call_kwargs
 
     def test_cmd_run_uses_correct_reasoning_for_anthropic(self):
         """Should disable reasoning for Anthropic models."""
         # Arrange
         from agency import _cmd_run
+
         mock_args = argparse.Namespace()
         mock_agency = Mock()
 
         # Act
-        with patch('agency.agency', mock_agency):
-            with patch('agency.model', 'anthropic/claude-sonnet-4'):
-                with patch('agency._cli_event_scope', lambda cmd, args: contextmanager(lambda: (yield))()):
+        with patch("agency.agency", mock_agency):
+            with patch("agency.model", "anthropic/claude-sonnet-4"):
+                with patch(
+                    "agency._cli_event_scope", lambda cmd, args: contextmanager(lambda: (yield))()
+                ):
                     _cmd_run(mock_args)
 
         # Assert
         call_kwargs = mock_agency.terminal_demo.call_args[1]
-        assert call_kwargs['show_reasoning'] is False
+        assert call_kwargs["show_reasoning"] is False
 
     def test_cmd_run_handles_agency_failure(self):
         """Should propagate exceptions from agency.terminal_demo()."""
         # Arrange
         from agency import _cmd_run
+
         mock_args = argparse.Namespace()
         mock_agency = Mock()
         mock_agency.terminal_demo.side_effect = RuntimeError("Agency failed")
 
         # Act & Assert
-        with patch('agency.agency', mock_agency):
-            with patch('agency.model', 'gpt-5'):
-                with patch('agency._cli_event_scope', lambda cmd, args: contextmanager(lambda: (yield))()):
+        with patch("agency.agency", mock_agency):
+            with patch("agency.model", "gpt-5"):
+                with patch(
+                    "agency._cli_event_scope", lambda cmd, args: contextmanager(lambda: (yield))()
+                ):
                     with pytest.raises(RuntimeError, match="Agency failed"):
                         _cmd_run(mock_args)
 
@@ -178,6 +188,7 @@ class TestCmdRun:
         """Should emit CLI telemetry event."""
         # Arrange
         from agency import _cmd_run
+
         mock_args = argparse.Namespace()
         mock_agency = Mock()
 
@@ -187,9 +198,9 @@ class TestCmdRun:
         mock_cli_event_scope.return_value.__exit__ = Mock(return_value=False)
 
         # Act
-        with patch('agency.agency', mock_agency):
-            with patch('agency.model', 'gpt-5'):
-                with patch('agency._cli_event_scope', mock_cli_event_scope):
+        with patch("agency.agency", mock_agency):
+            with patch("agency.model", "gpt-5"):
+                with patch("agency._cli_event_scope", mock_cli_event_scope):
                     _cmd_run(mock_args)
 
         # Assert
@@ -204,51 +215,56 @@ class TestCheckTestStatus:
         """Should report success when tests pass."""
         # Arrange
         from agency import _check_test_status
+
         mock_result = Mock(returncode=0)
 
         # Act
-        with patch('subprocess.run', return_value=mock_result) as mock_run:
-            with patch('builtins.print') as mock_print:
+        with patch("subprocess.run", return_value=mock_result) as mock_run:
+            with patch("builtins.print") as mock_print:
                 _check_test_status()
 
         # Assert
         mock_run.assert_called_once()
         # Check pytest was called correctly
         call_args = mock_run.call_args[0][0]
-        assert 'pytest' in call_args or '-m' in call_args
+        assert "pytest" in call_args or "-m" in call_args
         # Check success message printed
         print_calls = [str(call) for call in mock_print.call_args_list]
-        assert any('All tests passing' in str(call) for call in print_calls)
+        assert any("All tests passing" in str(call) for call in print_calls)
 
     def test_check_test_status_tests_failing(self):
         """Should report failure when tests fail."""
         # Arrange
         from agency import _check_test_status
+
         mock_result = Mock(returncode=1)
 
         # Act
-        with patch('subprocess.run', return_value=mock_result) as mock_run:
-            with patch('builtins.print') as mock_print:
+        with patch("subprocess.run", return_value=mock_result) as mock_run:
+            with patch("builtins.print") as mock_print:
                 _check_test_status()
 
         # Assert
         print_calls = [str(call) for call in mock_print.call_args_list]
-        assert any('tests failing' in str(call).lower() for call in print_calls)
+        assert any("tests failing" in str(call).lower() for call in print_calls)
 
     def test_check_test_status_timeout_handled(self):
         """Should handle test timeout gracefully."""
         # Arrange
-        from agency import _check_test_status
         import subprocess
 
+        from agency import _check_test_status
+
         # Act
-        with patch('subprocess.run', side_effect=subprocess.TimeoutExpired('pytest', 25)) as mock_run:
-            with patch('builtins.print') as mock_print:
+        with patch(
+            "subprocess.run", side_effect=subprocess.TimeoutExpired("pytest", 25)
+        ) as mock_run:
+            with patch("builtins.print") as mock_print:
                 _check_test_status()
 
         # Assert - should not raise, should print timeout message
         print_calls = [str(call) for call in mock_print.call_args_list]
-        assert any('timed out' in str(call).lower() for call in print_calls)
+        assert any("timed out" in str(call).lower() for call in print_calls)
 
     def test_check_test_status_exception_handled(self):
         """Should handle subprocess exceptions gracefully."""
@@ -256,13 +272,13 @@ class TestCheckTestStatus:
         from agency import _check_test_status
 
         # Act
-        with patch('subprocess.run', side_effect=OSError("Command not found")) as mock_run:
-            with patch('builtins.print') as mock_print:
+        with patch("subprocess.run", side_effect=OSError("Command not found")) as mock_run:
+            with patch("builtins.print") as mock_print:
                 _check_test_status()
 
         # Assert - should not raise, should print error message
         print_calls = [str(call) for call in mock_print.call_args_list]
-        assert any('error' in str(call).lower() for call in print_calls)
+        assert any("error" in str(call).lower() for call in print_calls)
 
 
 class TestCmdHealth:
@@ -272,16 +288,17 @@ class TestCmdHealth:
         """Should execute all health check subsystems."""
         # Arrange
         from agency import _cmd_health
+
         mock_args = argparse.Namespace()
 
         # Act
-        with patch('agency._cli_event_scope', lambda cmd, args: contextmanager(lambda: (yield))()):
-            with patch('agency._check_test_status') as mock_test:
-                with patch('agency._check_environment_status') as mock_env:
-                    with patch('agency._check_dependencies_status') as mock_deps:
-                        with patch('agency._check_healing_tools_status') as mock_healing:
-                            with patch('agency._check_recent_activity') as mock_activity:
-                                with patch('builtins.print'):
+        with patch("agency._cli_event_scope", lambda cmd, args: contextmanager(lambda: (yield))()):
+            with patch("agency._check_test_status") as mock_test:
+                with patch("agency._check_environment_status") as mock_env:
+                    with patch("agency._check_dependencies_status") as mock_deps:
+                        with patch("agency._check_healing_tools_status") as mock_healing:
+                            with patch("agency._check_recent_activity") as mock_activity:
+                                with patch("builtins.print"):
                                     _cmd_health(mock_args)
 
         # Assert all checks were called
@@ -295,26 +312,28 @@ class TestCmdHealth:
         """Should print health check status header."""
         # Arrange
         from agency import _cmd_health
+
         mock_args = argparse.Namespace()
 
         # Act
-        with patch('agency._cli_event_scope', lambda cmd, args: contextmanager(lambda: (yield))()):
-            with patch('agency._check_test_status'):
-                with patch('agency._check_environment_status'):
-                    with patch('agency._check_dependencies_status'):
-                        with patch('agency._check_healing_tools_status'):
-                            with patch('agency._check_recent_activity'):
-                                with patch('builtins.print') as mock_print:
+        with patch("agency._cli_event_scope", lambda cmd, args: contextmanager(lambda: (yield))()):
+            with patch("agency._check_test_status"):
+                with patch("agency._check_environment_status"):
+                    with patch("agency._check_dependencies_status"):
+                        with patch("agency._check_healing_tools_status"):
+                            with patch("agency._check_recent_activity"):
+                                with patch("builtins.print") as mock_print:
                                     _cmd_health(mock_args)
 
         # Assert
         print_calls = [str(call) for call in mock_print.call_args_list]
-        assert any('health' in str(call).lower() for call in print_calls)
+        assert any("health" in str(call).lower() for call in print_calls)
 
     def test_cmd_health_emits_telemetry_event(self):
         """Should emit health check telemetry event."""
         # Arrange
         from agency import _cmd_health
+
         mock_args = argparse.Namespace()
 
         # Create a context manager mock
@@ -323,13 +342,13 @@ class TestCmdHealth:
         mock_cli_event_scope.return_value.__exit__ = Mock(return_value=False)
 
         # Act
-        with patch('agency._cli_event_scope', mock_cli_event_scope):
-            with patch('agency._check_test_status'):
-                with patch('agency._check_environment_status'):
-                    with patch('agency._check_dependencies_status'):
-                        with patch('agency._check_healing_tools_status'):
-                            with patch('agency._check_recent_activity'):
-                                with patch('builtins.print'):
+        with patch("agency._cli_event_scope", mock_cli_event_scope):
+            with patch("agency._check_test_status"):
+                with patch("agency._check_environment_status"):
+                    with patch("agency._check_dependencies_status"):
+                        with patch("agency._check_healing_tools_status"):
+                            with patch("agency._check_recent_activity"):
+                                with patch("builtins.print"):
                                     _cmd_health(mock_args)
 
         # Assert
@@ -340,16 +359,17 @@ class TestCmdHealth:
         """Should continue health check even if one subsystem fails."""
         # Arrange
         from agency import _cmd_health
+
         mock_args = argparse.Namespace()
 
         # Act - should not raise even though test check fails
-        with patch('agency._cli_event_scope', lambda cmd, args: contextmanager(lambda: (yield))()):
-            with patch('agency._check_test_status', side_effect=RuntimeError("Test check failed")):
-                with patch('agency._check_environment_status') as mock_env:
-                    with patch('agency._check_dependencies_status') as mock_deps:
-                        with patch('agency._check_healing_tools_status') as mock_healing:
-                            with patch('agency._check_recent_activity') as mock_activity:
-                                with patch('builtins.print'):
+        with patch("agency._cli_event_scope", lambda cmd, args: contextmanager(lambda: (yield))()):
+            with patch("agency._check_test_status", side_effect=RuntimeError("Test check failed")):
+                with patch("agency._check_environment_status") as mock_env:
+                    with patch("agency._check_dependencies_status") as mock_deps:
+                        with patch("agency._check_healing_tools_status") as mock_healing:
+                            with patch("agency._check_recent_activity") as mock_activity:
+                                with patch("builtins.print"):
                                     with pytest.raises(RuntimeError):
                                         _cmd_health(mock_args)
 
@@ -364,22 +384,23 @@ class TestCmdDashboard:
         """Should render dashboard in text format."""
         # Arrange
         from agency import _cmd_dashboard
-        mock_args = argparse.Namespace(since='1h', format='text')
+
+        mock_args = argparse.Namespace(since="1h", format="text")
         mock_summary = {
-            'metrics': {'total_events': 100},
-            'agents_active': ['planner', 'coder'],
-            'running_tasks': [],
-            'recent_results': {},
-            'window': {},
-            'resources': {},
-            'costs': {}
+            "metrics": {"total_events": 100},
+            "agents_active": ["planner", "coder"],
+            "running_tasks": [],
+            "recent_results": {},
+            "window": {},
+            "resources": {},
+            "costs": {},
         }
 
         # Act
-        with patch('agency._cli_event_scope', lambda cmd, args: contextmanager(lambda: (yield))()):
-            with patch('agency.aggregate', return_value=mock_summary):
-                with patch('agency._render_dashboard_text') as mock_render:
-                    with patch('builtins.print'):
+        with patch("agency._cli_event_scope", lambda cmd, args: contextmanager(lambda: (yield))()):
+            with patch("agency.aggregate", return_value=mock_summary):
+                with patch("agency._render_dashboard_text") as mock_render:
+                    with patch("builtins.print"):
                         _cmd_dashboard(mock_args)
 
         # Assert
@@ -389,62 +410,65 @@ class TestCmdDashboard:
         """Should render dashboard in JSON format."""
         # Arrange
         from agency import _cmd_dashboard
-        mock_args = argparse.Namespace(since='1h', format='json')
-        mock_summary = {'metrics': {'total_events': 100}}
+
+        mock_args = argparse.Namespace(since="1h", format="json")
+        mock_summary = {"metrics": {"total_events": 100}}
 
         # Act
-        with patch('agency._cli_event_scope', lambda cmd, args: contextmanager(lambda: (yield))()):
-            with patch('agency.aggregate', return_value=mock_summary):
-                with patch('builtins.print') as mock_print:
+        with patch("agency._cli_event_scope", lambda cmd, args: contextmanager(lambda: (yield))()):
+            with patch("agency.aggregate", return_value=mock_summary):
+                with patch("builtins.print") as mock_print:
                     _cmd_dashboard(mock_args)
 
         # Assert
         # Verify JSON output was printed
         assert mock_print.called
         output = str(mock_print.call_args[0][0])
-        assert 'metrics' in output or '{' in output
+        assert "metrics" in output or "{" in output
 
     def test_cmd_dashboard_fails_when_aggregator_unavailable(self):
         """Should exit when telemetry aggregator is not available."""
         # Arrange
         from agency import _cmd_dashboard
-        mock_args = argparse.Namespace(since='1h', format='text')
+
+        mock_args = argparse.Namespace(since="1h", format="text")
 
         # Act
-        with patch('agency._cli_event_scope', lambda cmd, args: contextmanager(lambda: (yield))()):
-            with patch('agency.aggregate', None):
-                with patch('builtins.print') as mock_print:
+        with patch("agency._cli_event_scope", lambda cmd, args: contextmanager(lambda: (yield))()):
+            with patch("agency.aggregate", None):
+                with patch("builtins.print") as mock_print:
                     with pytest.raises(SystemExit):
                         _cmd_dashboard(mock_args)
 
         # Assert
         print_calls = [str(call) for call in mock_print.call_args_list]
-        assert any('not available' in str(call).lower() for call in print_calls)
+        assert any("not available" in str(call).lower() for call in print_calls)
 
     def test_cmd_dashboard_passes_since_parameter(self):
         """Should pass 'since' parameter to aggregator."""
         # Arrange
         from agency import _cmd_dashboard
-        mock_args = argparse.Namespace(since='24h', format='text')
+
+        mock_args = argparse.Namespace(since="24h", format="text")
         mock_summary = {
-            'metrics': {'total_events': 0},
-            'agents_active': [],
-            'running_tasks': [],
-            'recent_results': {},
-            'window': {},
-            'resources': {},
-            'costs': {}
+            "metrics": {"total_events": 0},
+            "agents_active": [],
+            "running_tasks": [],
+            "recent_results": {},
+            "window": {},
+            "resources": {},
+            "costs": {},
         }
 
         # Act
-        with patch('agency._cli_event_scope', lambda cmd, args: contextmanager(lambda: (yield))()):
-            with patch('agency.aggregate', return_value=mock_summary) as mock_agg:
-                with patch('agency._render_dashboard_text'):
-                    with patch('builtins.print'):
+        with patch("agency._cli_event_scope", lambda cmd, args: contextmanager(lambda: (yield))()):
+            with patch("agency.aggregate", return_value=mock_summary) as mock_agg:
+                with patch("agency._render_dashboard_text"):
+                    with patch("builtins.print"):
                         _cmd_dashboard(mock_args)
 
         # Assert
-        mock_agg.assert_called_once_with(since='24h')
+        mock_agg.assert_called_once_with(since="24h")
 
 
 class TestCmdKanban:
@@ -454,13 +478,14 @@ class TestCmdKanban:
         """Should start Kanban server when ENABLE_KANBAN_UI=true."""
         # Arrange
         from agency import _cmd_kanban
+
         mock_args = argparse.Namespace()
         mock_run_server = Mock()
 
         # Act
-        with patch('agency._cli_event_scope', lambda cmd, args: contextmanager(lambda: (yield))()):
-            with patch.dict(os.environ, {'ENABLE_KANBAN_UI': 'true'}):
-                with patch('tools.kanban.server.run_server', mock_run_server):
+        with patch("agency._cli_event_scope", lambda cmd, args: contextmanager(lambda: (yield))()):
+            with patch.dict(os.environ, {"ENABLE_KANBAN_UI": "true"}):
+                with patch("tools.kanban.server.run_server", mock_run_server):
                     _cmd_kanban(mock_args)
 
         # Assert
@@ -470,22 +495,26 @@ class TestCmdKanban:
         """Should print disabled message when ENABLE_KANBAN_UI=false."""
         # Arrange
         from agency import _cmd_kanban
+
         mock_args = argparse.Namespace()
 
         # Act
-        with patch('agency._cli_event_scope', lambda cmd, args: contextmanager(lambda: (yield))()):
-            with patch.dict(os.environ, {'ENABLE_KANBAN_UI': 'false'}):
-                with patch('builtins.print') as mock_print:
+        with patch("agency._cli_event_scope", lambda cmd, args: contextmanager(lambda: (yield))()):
+            with patch.dict(os.environ, {"ENABLE_KANBAN_UI": "false"}):
+                with patch("builtins.print") as mock_print:
                     _cmd_kanban(mock_args)
 
         # Assert
         print_calls = [str(call) for call in mock_print.call_args_list]
-        assert any('false' in str(call).lower() or 'enable' in str(call).lower() for call in print_calls)
+        assert any(
+            "false" in str(call).lower() or "enable" in str(call).lower() for call in print_calls
+        )
 
     def test_cmd_kanban_emits_telemetry_event(self):
         """Should emit Kanban telemetry event."""
         # Arrange
         from agency import _cmd_kanban
+
         mock_args = argparse.Namespace()
 
         # Create a context manager mock
@@ -494,9 +523,9 @@ class TestCmdKanban:
         mock_cli_event_scope.return_value.__exit__ = Mock(return_value=False)
 
         # Act
-        with patch('agency._cli_event_scope', mock_cli_event_scope):
-            with patch.dict(os.environ, {'ENABLE_KANBAN_UI': 'false'}):
-                with patch('builtins.print'):
+        with patch("agency._cli_event_scope", mock_cli_event_scope):
+            with patch.dict(os.environ, {"ENABLE_KANBAN_UI": "false"}):
+                with patch("builtins.print"):
                     _cmd_kanban(mock_args)
 
         # Assert
@@ -507,12 +536,13 @@ class TestCmdKanban:
         """Should propagate server startup failures."""
         # Arrange
         from agency import _cmd_kanban
+
         mock_args = argparse.Namespace()
         mock_run_server = Mock(side_effect=RuntimeError("Server failed"))
 
         # Act & Assert
-        with patch('agency._cli_event_scope', lambda cmd, args: contextmanager(lambda: (yield))()):
-            with patch.dict(os.environ, {'ENABLE_KANBAN_UI': 'true'}):
-                with patch('tools.kanban.server.run_server', mock_run_server):
+        with patch("agency._cli_event_scope", lambda cmd, args: contextmanager(lambda: (yield))()):
+            with patch.dict(os.environ, {"ENABLE_KANBAN_UI": "true"}):
+                with patch("tools.kanban.server.run_server", mock_run_server):
                     with pytest.raises(RuntimeError, match="Server failed"):
                         _cmd_kanban(mock_args)

@@ -4,10 +4,11 @@ Shared test fixtures for Agency test suite.
 Provides common fixtures used across unit, integration, and e2e tests.
 """
 
-import pytest
 import tempfile
+from collections.abc import Generator
 from pathlib import Path
-from typing import Generator
+
+import pytest
 
 
 @pytest.fixture
@@ -67,7 +68,7 @@ def validate_email(email: str) -> bool:
 @pytest.fixture
 def sample_test_code():
     """Provide sample test code for testing."""
-    return '''
+    return """
 import pytest
 
 @pytest.mark.unit
@@ -79,7 +80,7 @@ def test_calculate_total():
 def test_validate_email():
     assert validate_email('test@example.com')
     assert not validate_email('invalid-email')
-'''
+"""
 
 
 # Performance measurement helpers

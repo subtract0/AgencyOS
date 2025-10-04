@@ -15,21 +15,19 @@ Covers:
 - Thread safety
 """
 
-import asyncio
-import pytest
 import threading
 import time
-from unittest.mock import MagicMock, Mock, patch
+from unittest.mock import MagicMock
+
+import pytest
 
 from shared.retry_controller import (
-    ExponentialBackoffStrategy,
-    LinearBackoffStrategy,
     CircuitBreaker,
     CircuitBreakerOpenError,
+    ExponentialBackoffStrategy,
+    LinearBackoffStrategy,
     RetryController,
-    RetryStrategy,
 )
-
 
 # ========== NECESSARY Pattern: Normal Operation Tests ==========
 
@@ -39,9 +37,7 @@ class TestExponentialBackoffStrategy:
 
     def test_exponential_backoff_initial_delay(self):
         """N: Normal - first attempt uses initial delay"""
-        strategy = ExponentialBackoffStrategy(
-            initial_delay=1.0, multiplier=2.0, jitter=False
-        )
+        strategy = ExponentialBackoffStrategy(initial_delay=1.0, multiplier=2.0, jitter=False)
         delay = strategy.calculate_delay(0)
         assert delay == 1.0
 
@@ -84,9 +80,7 @@ class TestExponentialBackoffStrategy:
 
     def test_exponential_backoff_zero_initial_delay(self):
         """E: Edge - zero initial delay returns zero"""
-        strategy = ExponentialBackoffStrategy(
-            initial_delay=0.0, multiplier=2.0, max_delay=100.0
-        )
+        strategy = ExponentialBackoffStrategy(initial_delay=0.0, multiplier=2.0, max_delay=100.0)
 
         delay = strategy.calculate_delay(5)
         assert delay == 0.0
@@ -121,9 +115,7 @@ class TestExponentialBackoffStrategy:
             # Only retry ValueError
             return isinstance(exception, ValueError)
 
-        strategy = ExponentialBackoffStrategy(
-            max_attempts=5, should_retry_callback=custom_callback
-        )
+        strategy = ExponentialBackoffStrategy(max_attempts=5, should_retry_callback=custom_callback)
 
         # Should retry ValueError
         assert strategy.should_retry(0, ValueError("test")) is True
@@ -158,9 +150,7 @@ class TestLinearBackoffStrategy:
 
     def test_linear_backoff_progression(self):
         """N: Normal - delay increases linearly"""
-        strategy = LinearBackoffStrategy(
-            initial_delay=2.0, increment=3.0, max_delay=100.0
-        )
+        strategy = LinearBackoffStrategy(initial_delay=2.0, increment=3.0, max_delay=100.0)
 
         assert strategy.calculate_delay(0) == 2.0  # 2 + 3*0
         assert strategy.calculate_delay(1) == 5.0  # 2 + 3*1
@@ -169,9 +159,7 @@ class TestLinearBackoffStrategy:
 
     def test_linear_backoff_max_delay_cap(self):
         """E: Edge - delay capped at max_delay"""
-        strategy = LinearBackoffStrategy(
-            initial_delay=1.0, increment=5.0, max_delay=10.0
-        )
+        strategy = LinearBackoffStrategy(initial_delay=1.0, increment=5.0, max_delay=10.0)
 
         # After a few attempts, should hit max_delay
         delay = strategy.calculate_delay(10)
@@ -242,7 +230,7 @@ class TestCircuitBreaker:
         assert breaker.state == "open"
 
         # Manually set opened_at to a time in the past to simulate timeout passing
-        import time
+
         breaker.opened_at = time.time() - 0.1  # 100ms ago
 
         # Should transition to half-open on next request (timeout has passed)
@@ -299,9 +287,7 @@ class TestRetryController:
 
     def test_retry_controller_success_after_retries(self):
         """N: Normal - function succeeds after retries"""
-        strategy = ExponentialBackoffStrategy(
-            initial_delay=0.01, max_attempts=3, jitter=False
-        )
+        strategy = ExponentialBackoffStrategy(initial_delay=0.01, max_attempts=3, jitter=False)
         controller = RetryController(strategy)
 
         attempt_count = [0]
@@ -323,9 +309,7 @@ class TestRetryController:
 
     def test_retry_controller_failure_exhausted(self):
         """E: Error - raises exception after max retries"""
-        strategy = ExponentialBackoffStrategy(
-            initial_delay=0.01, max_attempts=3, jitter=False
-        )
+        strategy = ExponentialBackoffStrategy(initial_delay=0.01, max_attempts=3, jitter=False)
         controller = RetryController(strategy)
 
         def always_fail():
@@ -340,9 +324,7 @@ class TestRetryController:
 
     def test_retry_controller_with_timeout(self):
         """C: Comprehensive - timeout raises TimeoutError when overall timeout exceeded"""
-        strategy = ExponentialBackoffStrategy(
-            initial_delay=0.5, max_attempts=10, jitter=False
-        )
+        strategy = ExponentialBackoffStrategy(initial_delay=0.5, max_attempts=10, jitter=False)
         controller = RetryController(strategy, timeout=0.05)
 
         attempt_count = [0]
@@ -358,9 +340,7 @@ class TestRetryController:
 
     def test_retry_controller_circuit_breaker_integration(self):
         """C: Comprehensive - circuit breaker blocks after failures"""
-        strategy = ExponentialBackoffStrategy(
-            initial_delay=0.01, max_attempts=3, jitter=False
-        )
+        strategy = ExponentialBackoffStrategy(initial_delay=0.01, max_attempts=3, jitter=False)
         breaker = CircuitBreaker(failure_threshold=2, recovery_timeout=10.0)
         controller = RetryController(strategy, circuit_breaker=breaker)
 
@@ -380,9 +360,7 @@ class TestRetryController:
 
     def test_retry_controller_circuit_breaker_resets_on_success(self):
         """S: State - circuit breaker resets on successful call"""
-        strategy = ExponentialBackoffStrategy(
-            initial_delay=0.01, max_attempts=3, jitter=False
-        )
+        strategy = ExponentialBackoffStrategy(initial_delay=0.01, max_attempts=3, jitter=False)
         breaker = CircuitBreaker(failure_threshold=3)
         controller = RetryController(strategy, circuit_breaker=breaker)
 
@@ -403,9 +381,7 @@ class TestRetryController:
     @pytest.mark.asyncio
     async def test_retry_controller_async_success(self):
         """N: Normal - async retry works"""
-        strategy = ExponentialBackoffStrategy(
-            initial_delay=0.01, max_attempts=3, jitter=False
-        )
+        strategy = ExponentialBackoffStrategy(initial_delay=0.01, max_attempts=3, jitter=False)
         controller = RetryController(strategy)
 
         async def async_success():
@@ -417,9 +393,7 @@ class TestRetryController:
     @pytest.mark.asyncio
     async def test_retry_controller_async_retry_after_failures(self):
         """N: Normal - async retry recovers after failures"""
-        strategy = ExponentialBackoffStrategy(
-            initial_delay=0.01, max_attempts=3, jitter=False
-        )
+        strategy = ExponentialBackoffStrategy(initial_delay=0.01, max_attempts=3, jitter=False)
         controller = RetryController(strategy)
 
         attempt_count = [0]
@@ -437,9 +411,7 @@ class TestRetryController:
     @pytest.mark.asyncio
     async def test_retry_controller_async_exhausted(self):
         """E: Error - async raises after exhausted retries"""
-        strategy = ExponentialBackoffStrategy(
-            initial_delay=0.01, max_attempts=2, jitter=False
-        )
+        strategy = ExponentialBackoffStrategy(initial_delay=0.01, max_attempts=2, jitter=False)
         controller = RetryController(strategy)
 
         async def always_fail_async():
@@ -450,9 +422,7 @@ class TestRetryController:
 
     def test_retry_controller_memory_integration(self):
         """S: State - memory events recorded when context available"""
-        strategy = ExponentialBackoffStrategy(
-            initial_delay=0.01, max_attempts=3, jitter=False
-        )
+        strategy = ExponentialBackoffStrategy(initial_delay=0.01, max_attempts=3, jitter=False)
 
         # Mock agent context with memory
         mock_context = MagicMock()
@@ -471,9 +441,7 @@ class TestRetryController:
 
     def test_retry_controller_thread_safety(self):
         """C: Comprehensive - statistics thread-safe"""
-        strategy = ExponentialBackoffStrategy(
-            initial_delay=0.001, max_attempts=3, jitter=False
-        )
+        strategy = ExponentialBackoffStrategy(initial_delay=0.001, max_attempts=3, jitter=False)
         controller = RetryController(strategy)
 
         results = []
@@ -501,9 +469,7 @@ class TestRetryController:
 
     def test_retry_controller_wrap_tool(self):
         """C: Comprehensive - wrap_tool adds retry to tool methods"""
-        strategy = ExponentialBackoffStrategy(
-            initial_delay=0.01, max_attempts=3, jitter=False
-        )
+        strategy = ExponentialBackoffStrategy(initial_delay=0.01, max_attempts=3, jitter=False)
         controller = RetryController(strategy)
 
         # Create a mock tool

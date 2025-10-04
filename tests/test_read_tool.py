@@ -1,6 +1,6 @@
-from pathlib import Path
 import os
 import stat
+from pathlib import Path
 
 from tools import Read
 
@@ -28,6 +28,7 @@ def test_read_with_offset_and_limit(tmp_path: Path):
 
 
 # ========== NECESSARY Pattern: Error Conditions ==========
+
 
 def test_read_nonexistent_file():
     """E: Error condition - file does not exist"""
@@ -69,6 +70,7 @@ def test_read_empty_file(tmp_path: Path):
 
 # ========== NECESSARY Pattern: Edge Cases ==========
 
+
 def test_read_binary_file_detection(tmp_path: Path):
     """E: Edge case - binary file should fail with decode error"""
     p = tmp_path / "binary.dat"
@@ -108,7 +110,7 @@ def test_read_image_file_detection(tmp_path: Path):
     """E: Edge case - image file detection"""
     p = tmp_path / "test.png"
     # Create minimal PNG header
-    p.write_bytes(b'\x89PNG\r\n\x1a\n\x00\x00\x00\rIHDR')
+    p.write_bytes(b"\x89PNG\r\n\x1a\n\x00\x00\x00\rIHDR")
     tool = Read(file_path=str(p))
     out = tool.run()
     assert "[IMAGE FILE:" in out
@@ -155,6 +157,7 @@ def test_read_zero_and_negative_offset(tmp_path: Path):
 
 # ========== NECESSARY Pattern: State Validation ==========
 
+
 def test_read_tracking_in_global_registry(tmp_path: Path):
     """S: State validation - read files tracked in global registry"""
     from tools.read import _global_read_files
@@ -183,7 +186,7 @@ def test_read_tracking_with_context(tmp_path: Path):
     mock_context.get.return_value = read_files_set
 
     # Patch the context property since it's read-only
-    with patch.object(Read, 'context', new_callable=lambda: property(lambda self: mock_context)):
+    with patch.object(Read, "context", new_callable=lambda: property(lambda self: mock_context)):
         tool = Read(file_path=str(p))
         tool.run()
 
@@ -194,12 +197,13 @@ def test_read_tracking_with_context(tmp_path: Path):
 
 # ========== NECESSARY Pattern: Comprehensive Coverage ==========
 
+
 def test_read_with_various_line_endings(tmp_path: Path):
     """C: Comprehensive - handle different line endings"""
     p = tmp_path / "line_endings.txt"
     # Mix of Unix (\n), Windows (\r\n), and Mac (\r) line endings
     content = "line1\nline2\r\nline3\rline4"
-    p.write_bytes(content.encode('utf-8'))
+    p.write_bytes(content.encode("utf-8"))
 
     tool = Read(file_path=str(p))
     out = tool.run()
@@ -240,9 +244,11 @@ def test_read_very_large_file_with_default_limit(tmp_path: Path):
 
 # ========== NECESSARY Pattern: Additional Failure Modes ==========
 
+
 def test_read_symlink_file(tmp_path: Path):
     """E: Edge case - reading through symbolic link"""
     import os
+
     p = tmp_path / "original.txt"
     p.write_text("original content")
 
@@ -266,6 +272,7 @@ def test_read_cache_invalidation_on_file_change(tmp_path: Path):
 
     # Modify file
     import time
+
     time.sleep(0.1)  # Ensure mtime changes
     p.write_text("version 2")
 
@@ -284,6 +291,7 @@ def test_read_absolute_path_conversion(tmp_path: Path):
     tool.run()
 
     from tools.read import _global_read_files
+
     # Should track absolute path, not relative
     assert str(p.absolute()) in _global_read_files
 
@@ -340,7 +348,7 @@ def test_read_line_number_formatting_alignment(tmp_path: Path):
     out = tool.run()
 
     # Check cat -n format: 6-width right-aligned line numbers
-    lines = out.split('\n')
+    lines = out.split("\n")
     assert len(lines) >= 3
     # Line 1 should have right-aligned number and tab
     assert lines[0].startswith("     1\t") or lines[0].startswith("    1\t")
