@@ -47,7 +47,7 @@ class TestRegenerateWithGpt5:
 
         assert result == "Improved summary content"
         mock_exists.assert_called_once_with("/path/to/bundle.txt")
-        mock_file.assert_called_once_with("/path/to/bundle.txt", "r", encoding="utf-8")
+        mock_file.assert_called_once_with("/path/to/bundle.txt", encoding="utf-8")
         mock_completion.assert_called_once()
 
     @patch("work_completion_summary_agent.work_completion_summary_agent.litellm.completion")

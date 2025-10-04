@@ -301,6 +301,32 @@ This index catalogs all Architecture Decision Records for the Agency multi-agent
 
 ---
 
+### ADR-021: Test Isolation Exception - The Mock/Real Boundary
+**Status:** Proposed
+**Date:** 2025-10-04
+**File:** `docs/adr/ADR-021-test-isolation-exception.md`
+
+**Decision:** Amend Constitution Article II with Section 2.4 to establish clear, enforceable boundaries for mock usage based on test categorization (unit/integration/e2e).
+
+**Key Components:**
+- **Unit Tests** (`tests/unit/`): Mocks permitted for external dependencies (<2s timeout)
+- **Integration Tests** (`tests/integration/`): Mocks prohibited for Agency components (<10s timeout)
+- **E2E Tests** (`tests/e2e/`): Zero mocks, absolute Article II compliance (<30s timeout)
+- Automated enforcement via pre-commit hooks and pytest fixtures
+- Migration path for 128 existing `create_mock_agent` usages
+
+**Impact:**
+- Resolves constitutional tension between "real behavior verification" and "fast TDD feedback"
+- Preserves unit test speed (<2s) while guaranteeing integration/e2e real verification
+- Clear decision criteria: Test tier determines mock legality
+- 7-week phased implementation (ratification → enforcement → migration → documentation)
+
+**Constitutional Compliance:** Articles I (Complete Context), II (100% Verification - PRIMARY), III (Automated Enforcement), XII (TDD)
+
+**Amendment Authority:** Requires @am approval for constitutional amendment
+
+---
+
 ## Review Schedule
 
 - **Weekly:** Review new ADR proposals
@@ -318,5 +344,5 @@ This index catalogs all Architecture Decision Records for the Agency multi-agent
 
 ---
 
-*Last Updated: 2025-10-02*
+*Last Updated: 2025-10-04*
 *Next Review: 2025-11-01*
