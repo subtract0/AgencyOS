@@ -1,0 +1,3 @@
+# Ruff ignore patterns
+# Exclude archived test bloat from linting
+.test_bloat_backup_*/
