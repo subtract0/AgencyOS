@@ -33,6 +33,7 @@ jobs:
   test-verification:
     name: "ADR-002 Test Verification"
     runs-on: ubuntu-latest
+    timeout-minutes: 15
 
     # Required permissions for comprehensive reporting
     permissions:

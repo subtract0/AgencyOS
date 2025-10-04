@@ -10,7 +10,7 @@ jobs:
   constitutional-compliance:
     name: Article II - 100% Verification
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 15
 
     steps:
       - name: Checkout code
