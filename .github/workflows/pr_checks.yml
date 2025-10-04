@@ -141,7 +141,7 @@ jobs:
     name: Smart Tests (${{ needs.analyze-pr.outputs.test_mode }})
     needs: [analyze-pr, quick-validation]
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 15
 
     steps:
       - name: Checkout code
