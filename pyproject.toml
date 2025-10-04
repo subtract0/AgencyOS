@@ -70,6 +70,8 @@ log_cli_date_format = "%Y-%m-%d %H:%M:%S"
 [tool.ruff]
 target-version = "py311"
 line-length = 100
+
+[tool.ruff.lint]
 select = [
     "E",   # pycodestyle errors
     "W",   # pycodestyle warnings
@@ -86,7 +88,7 @@ ignore = [
 ]
 unfixable = ["B"]
 
-[tool.ruff.per-file-ignores]
+[tool.ruff.lint.per-file-ignores]
 "tests/**/*.py" = [
     "S101",  # Use of assert in tests is OK
     "ARG",   # Unused function arguments in tests are OK
@@ -209,7 +211,7 @@ unfixable = ["B"]
     "F821",  # Undefined names (dynamic/generated code)
 ]
 
-[tool.ruff.isort]
+[tool.ruff.lint.isort]
 known-first-party = ["agency", "shared", "tools"]
 
 [tool.ruff.format]

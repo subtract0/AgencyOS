@@ -39,7 +39,7 @@ from datetime import datetime, timedelta
 from enum import Enum
 from pathlib import Path
 
-from pydantic import BaseModel, Field, validator
+from pydantic import BaseModel, Field, field_validator
 
 from shared.type_definitions.json_value import JSONValue
 from shared.type_definitions.result import Err, Ok, Result
@@ -84,13 +84,15 @@ class CostEntry(BaseModel):
     metadata: JSONValue = Field(default_factory=dict)
     error: str | None = None
 
-    @validator("tokens_in", "tokens_out")
+    @field_validator("tokens_in", "tokens_out")
+    @classmethod
     def validate_positive(cls, v):
         if v < 0:
             raise ValueError("Token counts must be non-negative")
         return v
 
-    @validator("cost_usd")
+    @field_validator("cost_usd")
+    @classmethod
     def validate_cost(cls, v):
         if v < 0:
             raise ValueError("Cost must be non-negative")
