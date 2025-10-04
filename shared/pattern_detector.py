@@ -23,7 +23,7 @@ from collections.abc import Callable
 from dataclasses import dataclass
 from typing import Literal
 
-from pydantic import BaseModel, Field, validator
+from pydantic import BaseModel, Field, field_validator
 
 from shared.type_definitions.json_value import JSONValue
 
@@ -44,7 +44,8 @@ class Pattern(BaseModel):
     examples: list[JSONValue] = Field(default_factory=list, description="Example instances")
     metadata: JSONValue = Field(default_factory=dict, description="Additional metadata")
 
-    @validator("confidence")
+    @field_validator("confidence")
+    @classmethod
     def confidence_in_range(cls, v: float) -> float:
         """Ensure confidence is between 0 and 1."""
         if not 0.0 <= v <= 1.0:
