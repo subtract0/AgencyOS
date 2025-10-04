@@ -284,6 +284,26 @@ copy_trinity_code() {
     cp -r "${source_dir}/trinity_protocol" "${TRINITY_DIR}/"
     cp -r "${source_dir}/shared" "${TRINITY_DIR}/"
 
+    # Copy all agent modules (required by Trinity)
+    log_info "Copying agent modules..."
+    cp -r "${source_dir}/agency_code_agent" "${TRINITY_DIR}/" || true
+    cp -r "${source_dir}/planner_agent" "${TRINITY_DIR}/" || true
+    cp -r "${source_dir}/auditor_agent" "${TRINITY_DIR}/" || true
+    cp -r "${source_dir}/quality_enforcer_agent" "${TRINITY_DIR}/" || true
+    cp -r "${source_dir}/chief_architect_agent" "${TRINITY_DIR}/" || true
+    cp -r "${source_dir}/test_generator_agent" "${TRINITY_DIR}/" || true
+    cp -r "${source_dir}/learning_agent" "${TRINITY_DIR}/" || true
+    cp -r "${source_dir}/merger_agent" "${TRINITY_DIR}/" || true
+    cp -r "${source_dir}/toolsmith_agent" "${TRINITY_DIR}/" || true
+    cp -r "${source_dir}/work_completion_summary_agent" "${TRINITY_DIR}/" || true
+
+    # Copy tools directory
+    cp -r "${source_dir}/tools" "${TRINITY_DIR}/" || true
+
+    # Copy core utilities
+    cp -r "${source_dir}/core" "${TRINITY_DIR}/" || true
+    cp -r "${source_dir}/agency_memory" "${TRINITY_DIR}/" || true
+
     # Copy scripts
     cp "${source_dir}/deploy/trinity-local-m4/start_trinity.sh" "${TRINITY_DIR}/" || true
     cp "${source_dir}/deploy/trinity-local-m4/stop_trinity.sh" "${TRINITY_DIR}/" || true

@@ -167,3 +167,7 @@
 {"timestamp": "2025-10-04T04:06:28.040681+00:00", "violation_type": "ConstitutionalCompliance", "function": "create_mock_agent", "error": "Article II: Quality standards not met", "severity": "BLOCKER"}
 {"timestamp": "2025-10-04T04:08:35.647036+00:00", "violation_type": "ConstitutionalCompliance", "function": "create_mock_agent", "error": "Article I: Incomplete context", "severity": "BLOCKER"}
 {"timestamp": "2025-10-04T04:08:35.651906+00:00", "violation_type": "ConstitutionalCompliance", "function": "create_mock_agent", "error": "Article II: Quality standards not met", "severity": "BLOCKER"}
+{"timestamp": "2025-10-04T04:26:50.123929+00:00", "violation_type": "ConstitutionalCompliance", "function": "create_mock_agent", "error": "Article I: Incomplete context", "severity": "BLOCKER"}
+{"timestamp": "2025-10-04T04:26:50.126292+00:00", "violation_type": "ConstitutionalCompliance", "function": "create_mock_agent", "error": "Article II: Quality standards not met", "severity": "BLOCKER"}
+{"timestamp": "2025-10-04T04:28:25.436132+00:00", "violation_type": "ConstitutionalCompliance", "function": "create_mock_agent", "error": "Article I: Incomplete context", "severity": "BLOCKER"}
+{"timestamp": "2025-10-04T04:28:25.439111+00:00", "violation_type": "ConstitutionalCompliance", "function": "create_mock_agent", "error": "Article II: Quality standards not met", "severity": "BLOCKER"}
