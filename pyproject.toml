@@ -114,6 +114,7 @@ unfixable = ["B"]
     "B007",  # Loop variable not used (intentional iteration)
     "E722",  # Bare except (legacy compatibility)
     "C401",  # Generator patterns (readability preference)
+    "C414",  # Unnecessary list() in sorted()
     "E741",  # Ambiguous variable names (legacy code)
 ]
 "shared/**/*.py" = [
