@@ -13,12 +13,12 @@ NECESSARY Pattern Coverage:
 - Yield: Fast execution (<100ms per test)
 """
 
+from unittest.mock import MagicMock, patch
+
 import pytest
-from unittest.mock import Mock, patch, MagicMock
-import subprocess
 from pydantic import ValidationError
 
-from tools.bash import Bash, CommandValidationError, DANGEROUS_COMMANDS, DANGEROUS_PATTERNS
+from tools.bash import Bash, CommandValidationError
 
 
 class TestValidCommandsPassValidation:
@@ -177,7 +177,7 @@ class TestCommandInjectionBlocked:
 
         # Can be caught by either backtick or rm -rf pattern
         error_msg = str(exc_info.value)
-        assert ("Dangerous backtick" in error_msg or "Dangerous pattern" in error_msg)
+        assert "Dangerous backtick" in error_msg or "Dangerous pattern" in error_msg
 
     def test_safe_backtick_execution_allowed(self):
         # Arrange & Act - Should not raise exception
@@ -193,7 +193,7 @@ class TestCommandInjectionBlocked:
 
         # Can be caught by either substitution or curl|sh pattern
         error_msg = str(exc_info.value)
-        assert ("command substitution" in error_msg.lower() or "Dangerous pattern" in error_msg)
+        assert "command substitution" in error_msg.lower() or "Dangerous pattern" in error_msg
 
     def test_safe_command_substitution_allowed(self):
         # Arrange & Act - Should not raise exception
@@ -209,7 +209,7 @@ class TestCommandInjectionBlocked:
 
         # Can be caught by either chaining or rm -rf pattern
         error_msg = str(exc_info.value)
-        assert ("chaining" in error_msg.lower() or "Dangerous pattern" in error_msg)
+        assert "chaining" in error_msg.lower() or "Dangerous pattern" in error_msg
 
 
 class TestEmptyAndInvalidCommands:
@@ -258,7 +258,11 @@ class TestSystemDirectoryProtection:
         result = tool.run()
 
         # Should be blocked by sandbox or runtime validation
-        assert "Exit code: 0" not in result or "Operation not permitted" in result or "No such file" in result
+        assert (
+            "Exit code: 0" not in result
+            or "Operation not permitted" in result
+            or "No such file" in result
+        )
 
     def test_read_from_system_directory_allowed(self):
         # Arrange
@@ -328,7 +332,11 @@ class TestErrorMessageClarity:
         result = tool.run()
 
         # Assert - Should be blocked and error should mention the issue
-        assert ("Exit code: 0" not in result or "Operation not permitted" in result or "Permission denied" in result)
+        assert (
+            "Exit code: 0" not in result
+            or "Operation not permitted" in result
+            or "Permission denied" in result
+        )
 
 
 class TestTimeoutValidation:
@@ -355,7 +363,7 @@ class TestTimeoutValidation:
 class TestValidationIntegrationWithRun:
     """Test that validation integrates correctly with run() method (NECESSARY: Integration)."""
 
-    @patch('subprocess.run')
+    @patch("subprocess.run")
     def test_validation_blocks_dangerous_command_in_run(self, mock_run):
         # Arrange & Act & Assert - Dangerous command blocked at Pydantic initialization
         with pytest.raises(ValidationError):
@@ -364,14 +372,10 @@ class TestValidationIntegrationWithRun:
         # subprocess.run should NOT have been called
         mock_run.assert_not_called()
 
-    @patch('subprocess.run')
+    @patch("subprocess.run")
     def test_safe_command_passes_validation_and_executes(self, mock_run):
         # Arrange
-        mock_run.return_value = MagicMock(
-            returncode=0,
-            stdout="Hello World",
-            stderr=""
-        )
+        mock_run.return_value = MagicMock(returncode=0, stdout="Hello World", stderr="")
         tool = Bash(command="echo 'Hello World'")
 
         # Act
@@ -408,6 +412,7 @@ class TestPerformanceRequirements:
     def test_validation_completes_quickly(self):
         # Arrange
         import time
+
         tool = Bash(command="echo 'test' | grep test | wc -l")
 
         # Act
@@ -421,6 +426,7 @@ class TestPerformanceRequirements:
     def test_multiple_validations_are_fast(self):
         # Arrange
         import time
+
         commands = [
             "echo test",
             "ls /tmp",

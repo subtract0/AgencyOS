@@ -3,19 +3,15 @@ Comprehensive test coverage for tools.feature_inventory module.
 Tests feature extraction, inventory generation, and file parsing functionality.
 """
 
+import os
 import re
 import tempfile
-import os
 from pathlib import Path
-from unittest.mock import Mock, patch, mock_open, MagicMock
+from unittest.mock import patch
 
 import pytest
 
-from tools.feature_inventory import (
-    extract_features_from_md,
-    check_test_files,
-    main
-)
+from tools.feature_inventory import check_test_files, extract_features_from_md, main
 
 
 class TestExtractFeaturesFromMd:
@@ -24,7 +20,7 @@ class TestExtractFeaturesFromMd:
     @pytest.fixture
     def sample_features_md(self):
         """Create a sample FEATURES.md file for testing."""
-        content = '''# Features Documentation
+        content = """# Features Documentation
 
 ## Core Authentication
 User authentication and authorization system.
@@ -53,9 +49,9 @@ Generate comprehensive reports.
 Export data in multiple formats.
 
 **Test Coverage**: `tests/test_export.py`
-'''
+"""
 
-        with tempfile.NamedTemporaryFile(mode='w', suffix='.md', delete=False) as f:
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".md", delete=False) as f:
             f.write(content)
             temp_file_path = f.name
 
@@ -75,7 +71,7 @@ Export data in multiple formats.
             "Reporting",
             "Login System",
             "Batch Processing",
-            "Export Features"
+            "Export Features",
         ]
 
         assert len(features) == len(expected_features)
@@ -88,7 +84,7 @@ Export data in multiple formats.
             "tests/test_login.py",
             "tests/test_data_processing.py",
             "tests/test_reporting.py",
-            "tests/test_export.py"
+            "tests/test_export.py",
         ]
 
         assert len(test_files) == len(expected_test_files)
@@ -97,7 +93,7 @@ Export data in multiple formats.
 
     def test_extract_features_empty_file(self):
         """Test extraction from empty FEATURES.md file."""
-        with tempfile.NamedTemporaryFile(mode='w', suffix='.md', delete=False) as f:
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".md", delete=False) as f:
             f.write("")
             temp_file_path = f.name
 
@@ -110,16 +106,16 @@ Export data in multiple formats.
 
     def test_extract_features_no_test_coverage(self):
         """Test extraction from file without test coverage sections."""
-        content = '''# Features
+        content = """# Features
 
 ## Feature One
 Description without test coverage.
 
 ## Feature Two
 Another feature without tests.
-'''
+"""
 
-        with tempfile.NamedTemporaryFile(mode='w', suffix='.md', delete=False) as f:
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".md", delete=False) as f:
             f.write(content)
             temp_file_path = f.name
 
@@ -134,7 +130,7 @@ Another feature without tests.
 
     def test_extract_features_various_heading_levels(self):
         """Test extraction with various heading levels."""
-        content = '''# Main Title
+        content = """# Main Title
 
 ## Level 2 Feature
 Description
@@ -153,9 +149,9 @@ Description
 
 ### Another Level 3
 Description
-'''
+"""
 
-        with tempfile.NamedTemporaryFile(mode='w', suffix='.md', delete=False) as f:
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".md", delete=False) as f:
             f.write(content)
             temp_file_path = f.name
 
@@ -167,7 +163,7 @@ Description
                 "Level 2 Feature",
                 "Level 3 Feature",
                 "Another Level 2",
-                "Another Level 3"
+                "Another Level 3",
             ]
 
             assert len(features) == len(expected_features)
@@ -182,7 +178,7 @@ Description
 
     def test_extract_features_test_coverage_variations(self):
         """Test extraction with various test coverage format variations."""
-        content = '''# Features
+        content = """# Features
 
 ## Feature 1
 **Test Coverage**: `tests/test_feature1.py`
@@ -201,9 +197,9 @@ Description
 
 ## Feature 6
 No test coverage mentioned.
-'''
+"""
 
-        with tempfile.NamedTemporaryFile(mode='w', suffix='.md', delete=False) as f:
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".md", delete=False) as f:
             f.write(content)
             temp_file_path = f.name
 
@@ -218,7 +214,7 @@ No test coverage mentioned.
                 "tests/test_feature1.py",
                 "tests/test_feature2.py",
                 "tests/test_feature3.py",
-                "tests/test_feature4.py"
+                "tests/test_feature4.py",
             ]
 
             assert len(test_files) == len(expected_test_files)
@@ -232,7 +228,7 @@ No test coverage mentioned.
 
     def test_extract_features_special_characters(self):
         """Test extraction with special characters in headings."""
-        content = '''# Features
+        content = """# Features
 
 ## Feature with (Parentheses)
 Description
@@ -247,9 +243,9 @@ Description
 Description
 
 **Test Coverage**: `tests/test_special.py`
-'''
+"""
 
-        with tempfile.NamedTemporaryFile(mode='w', suffix='.md', delete=False) as f:
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".md", delete=False) as f:
             f.write(content)
             temp_file_path = f.name
 
@@ -257,10 +253,10 @@ Description
             features, test_files = extract_features_from_md(Path(temp_file_path))
 
             expected_features = [
-                'Feature with (Parentheses)',
+                "Feature with (Parentheses)",
                 'Feature with "Quotes"',
-                'Feature with *Asterisks*',
-                'Feature with `Code`'
+                "Feature with *Asterisks*",
+                "Feature with `Code`",
             ]
 
             assert len(features) == len(expected_features)
@@ -273,7 +269,7 @@ Description
 
     def test_extract_features_multiline_sections(self):
         """Test extraction from file with multiline feature sections."""
-        content = '''# Features
+        content = """# Features
 
 ## Multi-line Feature
 This feature has
@@ -287,9 +283,9 @@ With more content
 and line breaks.
 
 **Test Coverage**: `tests/test_another.py`
-'''
+"""
 
-        with tempfile.NamedTemporaryFile(mode='w', suffix='.md', delete=False) as f:
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".md", delete=False) as f:
             f.write(content)
             temp_file_path = f.name
 
@@ -310,13 +306,13 @@ and line breaks.
 
     def test_extract_features_permission_error(self):
         """Test extraction when file cannot be read due to permissions."""
-        with tempfile.NamedTemporaryFile(mode='w', suffix='.md', delete=False) as f:
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".md", delete=False) as f:
             f.write("# Test")
             temp_file_path = f.name
 
         try:
             # Mock permission error
-            with patch('builtins.open', side_effect=PermissionError("Permission denied")):
+            with patch("builtins.open", side_effect=PermissionError("Permission denied")):
                 with pytest.raises(PermissionError):
                     extract_features_from_md(Path(temp_file_path))
         finally:
@@ -337,7 +333,7 @@ class TestCheckTestFiles:
         tests_dir.mkdir()
 
         # Create some test files
-        (tests_dir / "test_existing.py").write_text('''
+        (tests_dir / "test_existing.py").write_text("""
 def test_function_one():
     assert True
 
@@ -349,17 +345,17 @@ def helper_function():
 
 def test_function_three():
     pass
-''')
+""")
 
-        (tests_dir / "test_empty.py").write_text('')
+        (tests_dir / "test_empty.py").write_text("")
 
-        (tests_dir / "test_no_tests.py").write_text('''
+        (tests_dir / "test_no_tests.py").write_text("""
 def helper_function():
     pass
 
 class HelperClass:
     pass
-''')
+""")
 
         return project_root
 
@@ -369,7 +365,7 @@ class HelperClass:
             "tests/test_existing.py",
             "tests/test_missing.py",
             "tests/test_empty.py",
-            "tests/test_no_tests.py"
+            "tests/test_no_tests.py",
         ]
 
         coverage_report = check_test_files(test_files, temp_project_structure)
@@ -468,11 +464,13 @@ def test_complex_function():
         test_files = ["tests/test_problematic.py"]
 
         # Mock file reading to raise an exception
-        with patch('builtins.open', side_effect=UnicodeDecodeError("utf-8", b'', 0, 1, "invalid")):
+        with patch("builtins.open", side_effect=UnicodeDecodeError("utf-8", b"", 0, 1, "invalid")):
             coverage_report = check_test_files(test_files, temp_project_structure)
 
             assert coverage_report["tests/test_problematic.py"]["exists"] is True
-            assert coverage_report["tests/test_problematic.py"]["test_count"] == -1  # Error indicator
+            assert (
+                coverage_report["tests/test_problematic.py"]["test_count"] == -1
+            )  # Error indicator
 
     def test_check_test_files_nested_directories(self, temp_project_structure):
         """Test checking test files in nested directories."""
@@ -493,13 +491,15 @@ def test_complex_function():
         """Test handling binary files mistaken for test files."""
         # Create a binary file with .py extension
         binary_file = temp_project_structure / "tests" / "test_binary.py"
-        binary_file.write_bytes(b'\x00\x01\x02\x03\x04')
+        binary_file.write_bytes(b"\x00\x01\x02\x03\x04")
 
         test_files = ["tests/test_binary.py"]
         coverage_report = check_test_files(test_files, temp_project_structure)
 
         assert coverage_report["tests/test_binary.py"]["exists"] is True
-        assert coverage_report["tests/test_binary.py"]["test_count"] == -1  # Error due to binary content
+        assert (
+            coverage_report["tests/test_binary.py"]["test_count"] == -1
+        )  # Error due to binary content
 
 
 class TestMainFunction:
@@ -513,7 +513,7 @@ class TestMainFunction:
 
         # Create FEATURES.md
         features_md = project_root / "FEATURES.md"
-        features_md.write_text('''# Project Features
+        features_md.write_text("""# Project Features
 
 ## Authentication System
 User login and registration functionality.
@@ -534,14 +534,14 @@ Export data in various formats.
 Generate comprehensive reports.
 
 **Test Coverage**: `tests/test_reports.py`
-''')
+""")
 
         # Create tests directory
         tests_dir = project_root / "tests"
         tests_dir.mkdir()
 
         # Create some test files
-        (tests_dir / "test_auth.py").write_text('''
+        (tests_dir / "test_auth.py").write_text("""
 def test_login():
     pass
 
@@ -550,23 +550,26 @@ def test_register():
 
 def test_logout():
     pass
-''')
+""")
 
-        (tests_dir / "test_data.py").write_text('''
+        (tests_dir / "test_data.py").write_text("""
 def test_process_data():
     pass
-''')
+""")
 
         # test_export.py is missing
         # test_reports.py exists but empty
-        (tests_dir / "test_reports.py").write_text('')
+        (tests_dir / "test_reports.py").write_text("")
 
         return project_root
 
     def test_main_function_success(self, mock_project_with_features, capsys):
         """Test main function with successful execution."""
         # Patch the project root calculation by patching __file__
-        with patch('tools.feature_inventory.__file__', str(mock_project_with_features / 'tools' / 'feature_inventory.py')):
+        with patch(
+            "tools.feature_inventory.__file__",
+            str(mock_project_with_features / "tools" / "feature_inventory.py"),
+        ):
             main()
 
         captured = capsys.readouterr()
@@ -586,7 +589,10 @@ def test_process_data():
         assert "✅ tests/test_auth.py (3 tests)" in output
         assert "✅ tests/test_data.py (1 tests)" in output
         assert "❌ tests/test_export.py" in output
-        assert "✅ tests/test_reports.py ()" in output or "✅ tests/test_reports.py (0 tests)" in output
+        assert (
+            "✅ tests/test_reports.py ()" in output
+            or "✅ tests/test_reports.py (0 tests)" in output
+        )
 
     def test_main_function_missing_features_md(self, tmp_path, capsys):
         """Test main function when FEATURES.md is missing."""
@@ -595,7 +601,10 @@ def test_process_data():
         empty_project.mkdir()
 
         # Patch the project root calculation by patching __file__
-        with patch('tools.feature_inventory.__file__', str(empty_project / 'tools' / 'feature_inventory.py')):
+        with patch(
+            "tools.feature_inventory.__file__",
+            str(empty_project / "tools" / "feature_inventory.py"),
+        ):
             main()
 
         captured = capsys.readouterr()
@@ -603,7 +612,7 @@ def test_process_data():
 
         assert "❌ FEATURES.md not found" in output
 
-    @patch('tools.feature_inventory.extract_features_from_md')
+    @patch("tools.feature_inventory.extract_features_from_md")
     def test_main_function_extraction_error(self, mock_extract, tmp_path, capsys):
         """Test main function when feature extraction fails."""
         # Create project with FEATURES.md
@@ -614,7 +623,9 @@ def test_process_data():
         mock_extract.side_effect = Exception("Extraction failed")
 
         # Patch the project root calculation by patching __file__
-        with patch('tools.feature_inventory.__file__', str(project_root / 'tools' / 'feature_inventory.py')):
+        with patch(
+            "tools.feature_inventory.__file__", str(project_root / "tools" / "feature_inventory.py")
+        ):
             with pytest.raises(Exception, match="Extraction failed"):
                 main()
 
@@ -625,7 +636,7 @@ def test_process_data():
         project_root.mkdir()
 
         features_md = project_root / "FEATURES.md"
-        features_md.write_text('''# Features
+        features_md.write_text("""# Features
 
 ## Feature One
 Description
@@ -636,10 +647,12 @@ Description
 Description
 
 **Test Coverage**: `tests/test_two.py`
-''')
+""")
 
         # Patch the project root calculation by patching __file__
-        with patch('tools.feature_inventory.__file__', str(project_root / 'tools' / 'feature_inventory.py')):
+        with patch(
+            "tools.feature_inventory.__file__", str(project_root / "tools" / "feature_inventory.py")
+        ):
             main()
 
         captured = capsys.readouterr()
@@ -658,14 +671,14 @@ Description
         project_root.mkdir()
 
         features_md = project_root / "FEATURES.md"
-        features_md.write_text('''# Features
+        features_md.write_text("""# Features
 
 ## Feature One
 **Test Coverage**: `tests/test_one.py`
 
 ## Feature Two
 **Test Coverage**: `tests/test_two.py`
-''')
+""")
 
         tests_dir = project_root / "tests"
         tests_dir.mkdir()
@@ -674,7 +687,9 @@ Description
         (tests_dir / "test_two.py").write_text("def test_two(): pass")
 
         # Patch the project root calculation by patching __file__
-        with patch('tools.feature_inventory.__file__', str(project_root / 'tools' / 'feature_inventory.py')):
+        with patch(
+            "tools.feature_inventory.__file__", str(project_root / "tools" / "feature_inventory.py")
+        ):
             main()
 
         captured = capsys.readouterr()
@@ -689,7 +704,7 @@ class TestRegexPatterns:
 
     def test_test_pattern_regex(self):
         """Test the test coverage regex pattern."""
-        pattern = r'\*\*Test Coverage\*\*:\s*`([^`]+)`'
+        pattern = r"\*\*Test Coverage\*\*:\s*`([^`]+)`"
 
         # Valid patterns
         valid_cases = [
@@ -707,9 +722,9 @@ class TestRegexPatterns:
         # Invalid patterns
         invalid_cases = [
             "**test coverage**: `tests/test_file.py`",  # lowercase
-            "**Test Coverage** `tests/test_file.py`",   # missing colon
-            "**Test Coverage**: tests/test_file.py",    # missing backticks
-            "Test Coverage: `tests/test_file.py`",      # missing bold formatting
+            "**Test Coverage** `tests/test_file.py`",  # missing colon
+            "**Test Coverage**: tests/test_file.py",  # missing backticks
+            "Test Coverage: `tests/test_file.py`",  # missing bold formatting
         ]
 
         for case in invalid_cases:
@@ -718,7 +733,7 @@ class TestRegexPatterns:
 
     def test_feature_pattern_regex(self):
         """Test the feature heading regex pattern."""
-        pattern = r'^#{2,3}\s+(.+)$'
+        pattern = r"^#{2,3}\s+(.+)$"
 
         # Valid patterns
         valid_cases = [
@@ -736,11 +751,11 @@ class TestRegexPatterns:
 
         # Invalid patterns
         invalid_cases = [
-            "# Single Hash",          # Only one hash
-            "#### Four Hashes",       # More than 3 hashes
-            " ## Indented",           # Leading space
-            "##No Space",             # No space after hashes
-            "Normal text",            # No hashes
+            "# Single Hash",  # Only one hash
+            "#### Four Hashes",  # More than 3 hashes
+            " ## Indented",  # Leading space
+            "##No Space",  # No space after hashes
+            "Normal text",  # No hashes
         ]
 
         for case in invalid_cases:
@@ -753,7 +768,7 @@ class TestEdgeCases:
 
     def test_extract_features_unicode_content(self):
         """Test extraction with unicode content."""
-        content = '''# Features 🚀
+        content = """# Features 🚀
 
 ## Internationalization 🌍
 Support for múltiple languages and émojis.
@@ -764,9 +779,11 @@ Support for múltiple languages and émojis.
 Handle UTF-8, UTF-16, and other encodings.
 
 **Test Coverage**: `tests/tëst_encoding.py`
-'''
+"""
 
-        with tempfile.NamedTemporaryFile(mode='w', suffix='.md', delete=False, encoding='utf-8') as f:
+        with tempfile.NamedTemporaryFile(
+            mode="w", suffix=".md", delete=False, encoding="utf-8"
+        ) as f:
             f.write(content)
             temp_file_path = f.name
 
@@ -802,13 +819,15 @@ Handle UTF-8, UTF-16, and other encodings.
     def test_main_function_path_handling(self, tmp_path):
         """Test main function path handling edge cases."""
         # Test with symbolic links, if supported by the OS
-        if hasattr(os, 'symlink'):
+        if hasattr(os, "symlink"):
             project_root = tmp_path / "symlink_project"
             project_root.mkdir()
 
             # Create FEATURES.md
             features_md = project_root / "FEATURES.md"
-            features_md.write_text("# Features\n## Test Feature\n**Test Coverage**: `tests/test.py`")
+            features_md.write_text(
+                "# Features\n## Test Feature\n**Test Coverage**: `tests/test.py`"
+            )
 
             # Create tests directory and file
             tests_dir = project_root / "tests"
@@ -816,7 +835,10 @@ Handle UTF-8, UTF-16, and other encodings.
             (tests_dir / "test.py").write_text("def test_function(): pass")
 
             # Test that main function works with the real path
-            with patch('tools.feature_inventory.__file__', str(project_root / 'tools' / 'feature_inventory.py')):
+            with patch(
+                "tools.feature_inventory.__file__",
+                str(project_root / "tools" / "feature_inventory.py"),
+            ):
                 # This should not raise an exception
                 main()
 

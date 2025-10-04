@@ -10,10 +10,20 @@ All modules in this directory meet production criteria:
 - Comprehensive documentation
 """
 
-from trinity_protocol.core.executor import ExecutorAgent, SubAgentType, SubAgentResult, ExecutionPlan
 from trinity_protocol.core.architect import ArchitectAgent
-from trinity_protocol.core.witness import WitnessAgent, Signal
-from trinity_protocol.core.orchestrator import TrinityOrchestrator, TrinityBus, TrinityMessage, initialize_trinity
+from trinity_protocol.core.executor import (
+    ExecutionPlan,
+    ExecutorAgent,
+    SubAgentResult,
+    SubAgentType,
+)
+from trinity_protocol.core.orchestrator import (
+    TrinityBus,
+    TrinityMessage,
+    TrinityOrchestrator,
+    initialize_trinity,
+)
+from trinity_protocol.core.witness import Signal, WitnessAgent
 
 __all__ = [
     # Executor

@@ -5,81 +5,88 @@ This module provides type-safe definitions to replace Dict[str, Any] usage
 in compliance with Agency's constitutional requirement to avoid Any types.
 """
 
-from typing import TypedDict, Union, List, Optional, Literal, Dict
-from pydantic import BaseModel
+from typing import Literal, TypedDict, Union
+
 from shared.type_definitions.json import JSONValue
 
 
 class DSPyContext(TypedDict, total=False):
     """Type-safe context for DSPy operations."""
+
     repository_root: str
     current_task: str
     agent_name: str
-    memory_store: Optional[object]
-    vector_store: Optional[object]
-    historical_patterns: List[Dict[str, JSONValue]]
-    quality_standards: List[str]
-    constitutional_requirements: List[str]
-    test_results: Dict[str, JSONValue]
+    memory_store: object | None
+    vector_store: object | None
+    historical_patterns: list[dict[str, JSONValue]]
+    quality_standards: list[str]
+    constitutional_requirements: list[str]
+    test_results: dict[str, JSONValue]
     implementation_notes: str
-    error_details: Optional[List[str]]
-    metadata: Dict[str, JSONValue]
+    error_details: list[str] | None
+    metadata: dict[str, JSONValue]
 
 
 class AgentContext(TypedDict, total=False):
     """Type-safe agent context."""
+
     agent_id: str
     agent_type: str
-    capabilities: List[str]
-    memory: Optional[object]
-    vector_store: Optional[object]
-    session_id: Optional[str]
+    capabilities: list[str]
+    memory: object | None
+    vector_store: object | None
+    session_id: str | None
 
 
 class TestResults(TypedDict, total=False):
     """Type-safe test results."""
+
     passed: int
     failed: int
     skipped: int
-    errors: List[str]
+    errors: list[str]
     duration: float
-    coverage: Optional[float]
+    coverage: float | None
 
 
 class ImplementationContext(TypedDict, total=False):
     """Type-safe implementation context."""
-    files_modified: List[str]
-    tests_added: List[str]
-    dependencies_added: List[str]
+
+    files_modified: list[str]
+    tests_added: list[str]
+    dependencies_added: list[str]
     breaking_changes: bool
-    migration_notes: Optional[str]
+    migration_notes: str | None
 
 
 class PlannerContext(TypedDict, total=False):
     """Type-safe planner context."""
-    specification_path: Optional[str]
+
+    specification_path: str | None
     plan_type: Literal["feature", "bugfix", "refactor", "test"]
     priority: Literal["low", "medium", "high", "critical"]
-    estimated_effort: Optional[str]
-    dependencies: List[str]
-    risks: List[str]
+    estimated_effort: str | None
+    dependencies: list[str]
+    risks: list[str]
 
 
 class AuditContext(TypedDict, total=False):
     """Type-safe audit context."""
-    target_paths: List[str]
+
+    target_paths: list[str]
     audit_type: Literal["security", "performance", "quality", "compliance"]
     severity_threshold: Literal["low", "medium", "high", "critical"]
-    findings: List[Dict[str, JSONValue]]
-    recommendations: List[str]
+    findings: list[dict[str, JSONValue]]
+    recommendations: list[str]
 
 
 class LearningContext(TypedDict, total=False):
     """Type-safe learning context."""
-    patterns_learned: List[Dict[str, JSONValue]]
+
+    patterns_learned: list[dict[str, JSONValue]]
     success_rate: float
-    failure_reasons: List[str]
-    improvements_suggested: List[str]
+    failure_reasons: list[str]
+    improvements_suggested: list[str]
     knowledge_base_updated: bool
 
 
@@ -92,7 +99,7 @@ Context = Union[
     PlannerContext,
     AuditContext,
     LearningContext,
-    Dict[str, JSONValue]  # Fallback for compatibility (typed)
+    dict[str, JSONValue],  # Fallback for compatibility (typed)
 ]
 
 

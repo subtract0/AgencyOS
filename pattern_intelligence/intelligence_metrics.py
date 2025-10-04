@@ -6,12 +6,12 @@ Provides concrete, measurable benchmarks for AI intelligence amplification.
 Implements the AIQ (AI Intelligence Quotient) and growth tracking systems.
 """
 
-import logging
-from typing import Dict, List, Any, Optional, Tuple, cast
-from shared.type_definitions.json import JSONValue
-from datetime import datetime, timedelta
 import json
-import math
+import logging
+from datetime import datetime
+from typing import Any, cast
+
+from shared.type_definitions.json import JSONValue
 
 logger = logging.getLogger(__name__)
 
@@ -25,15 +25,15 @@ class IntelligenceMetrics:
 
     def __init__(self):
         """Initialize intelligence metrics tracker."""
-        self.measurement_history: List[Dict[str, JSONValue]] = []
-        self.baseline_metrics: Optional[Dict[str, float]] = None
+        self.measurement_history: list[dict[str, JSONValue]] = []
+        self.baseline_metrics: dict[str, float] | None = None
 
     def calculate_aiq(
         self,
         pattern_effectiveness: float,
         application_success_rate: float,
         learning_velocity: float,
-        context_accuracy: float = 1.0
+        context_accuracy: float = 1.0,
     ) -> float:
         """
         Calculate AI Intelligence Quotient (AIQ).
@@ -51,17 +51,30 @@ class IntelligenceMetrics:
         """
         try:
             # Validate inputs
-            metrics = [pattern_effectiveness, application_success_rate, learning_velocity, context_accuracy]
+            metrics = [
+                pattern_effectiveness,
+                application_success_rate,
+                learning_velocity,
+                context_accuracy,
+            ]
             for metric in metrics:
                 if not isinstance(metric, (int, float)) or metric < 0:
                     raise ValueError(f"Invalid metric value: {metric}")
 
             # Calculate composite intelligence score
-            aiq = pattern_effectiveness * application_success_rate * learning_velocity * context_accuracy * 100
+            aiq = (
+                pattern_effectiveness
+                * application_success_rate
+                * learning_velocity
+                * context_accuracy
+                * 100
+            )
 
-            logger.info(f"AIQ calculated: {aiq:.1f} (PE:{pattern_effectiveness:.2f}, "
-                       f"AS:{application_success_rate:.2f}, LV:{learning_velocity:.2f}, "
-                       f"CA:{context_accuracy:.2f})")
+            logger.info(
+                f"AIQ calculated: {aiq:.1f} (PE:{pattern_effectiveness:.2f}, "
+                f"AS:{application_success_rate:.2f}, LV:{learning_velocity:.2f}, "
+                f"CA:{context_accuracy:.2f})"
+            )
 
             return round(aiq, 1)
 
@@ -69,11 +82,7 @@ class IntelligenceMetrics:
             logger.error(f"AIQ calculation failed: {e}")
             return 0.0
 
-    def measure_intelligence_growth_rate(
-        self,
-        current_aiq: float,
-        previous_aiq: float
-    ) -> float:
+    def measure_intelligence_growth_rate(self, current_aiq: float, previous_aiq: float) -> float:
         """
         Calculate intelligence growth rate.
 
@@ -98,10 +107,8 @@ class IntelligenceMetrics:
             return 0.0
 
     def detect_exponential_amplification(
-        self,
-        aiq_history: List[float],
-        min_periods: int = 4
-    ) -> Dict[str, JSONValue]:
+        self, aiq_history: list[float], min_periods: int = 4
+    ) -> dict[str, JSONValue]:
         """
         Detect exponential intelligence amplification patterns.
 
@@ -116,14 +123,14 @@ class IntelligenceMetrics:
             if len(aiq_history) < min_periods:
                 return {
                     "exponential_detected": False,
-                    "reason": f"Insufficient data points: {len(aiq_history)} < {min_periods}"
+                    "reason": f"Insufficient data points: {len(aiq_history)} < {min_periods}",
                 }
 
             # Calculate growth rates
             growth_rates = []
             for i in range(1, len(aiq_history)):
-                if aiq_history[i-1] > 0:
-                    growth_rate = ((aiq_history[i] - aiq_history[i-1]) / aiq_history[i-1]) * 100
+                if aiq_history[i - 1] > 0:
+                    growth_rate = ((aiq_history[i] - aiq_history[i - 1]) / aiq_history[i - 1]) * 100
                     growth_rates.append(growth_rate)
 
             if len(growth_rates) < 3:
@@ -132,14 +139,15 @@ class IntelligenceMetrics:
             # Detect increasing growth rates (exponential pattern)
             increasing_periods = 0
             for i in range(1, len(growth_rates)):
-                if growth_rates[i] > growth_rates[i-1]:
+                if growth_rates[i] > growth_rates[i - 1]:
                     increasing_periods += 1
 
             exponential_ratio = increasing_periods / (len(growth_rates) - 1)
 
             # Calculate acceleration coefficient
-            acceleration = sum(growth_rates[i] - growth_rates[i-1]
-                             for i in range(1, len(growth_rates))) / (len(growth_rates) - 1)
+            acceleration = sum(
+                growth_rates[i] - growth_rates[i - 1] for i in range(1, len(growth_rates))
+            ) / (len(growth_rates) - 1)
 
             exponential_detected = exponential_ratio >= 0.6 and acceleration > 2.0
 
@@ -148,7 +156,7 @@ class IntelligenceMetrics:
                 "exponential_ratio": exponential_ratio,
                 "acceleration": acceleration,
                 "growth_rates": cast(JSONValue, growth_rates),
-                "confidence": min(1.0, exponential_ratio * (acceleration / 10))
+                "confidence": min(1.0, exponential_ratio * (acceleration / 10)),
             }
 
         except Exception as e:
@@ -156,18 +164,15 @@ class IntelligenceMetrics:
             return {"exponential_detected": False, "error": str(e)}
 
     def benchmark_intelligence_capabilities(
-        self,
-        pattern_store: Any,
-        pattern_applicator: Any,
-        meta_learning_engine: Any
-    ) -> Dict[str, JSONValue]:
+        self, pattern_store: Any, pattern_applicator: Any, meta_learning_engine: Any
+    ) -> dict[str, JSONValue]:
         """
         Run comprehensive intelligence benchmarks.
 
         Returns:
             Complete benchmark results with pass/fail status
         """
-        benchmarks: Dict[str, JSONValue] = {}
+        benchmarks: dict[str, JSONValue] = {}
 
         try:
             # Benchmark 1: Pattern Quality
@@ -177,7 +182,7 @@ class IntelligenceMetrics:
                 "value": pattern_effectiveness,
                 "threshold": 0.70,
                 "passed": pattern_effectiveness >= 0.70,
-                "unit": "effectiveness_ratio"
+                "unit": "effectiveness_ratio",
             }
 
             # Benchmark 2: Application Success
@@ -187,19 +192,23 @@ class IntelligenceMetrics:
                 "value": app_success_rate,
                 "threshold": 0.75,
                 "passed": app_success_rate >= 0.75,
-                "unit": "success_ratio"
+                "unit": "success_ratio",
             }
 
             # Benchmark 3: Learning Velocity
             learning_analysis = meta_learning_engine.analyze_learning_effectiveness()
-            learning_velocity = learning_analysis.get("learning_trends", {}).get("learning_velocity", 0)
+            learning_velocity = learning_analysis.get("learning_trends", {}).get(
+                "learning_velocity", 0
+            )
             # Normalize to 0-2 scale (1.0 = baseline)
-            normalized_velocity = min(2.0, learning_velocity / 5.0) if learning_velocity > 0 else 0.0
+            normalized_velocity = (
+                min(2.0, learning_velocity / 5.0) if learning_velocity > 0 else 0.0
+            )
             benchmarks["learning_velocity"] = {
                 "value": normalized_velocity,
                 "threshold": 0.8,
                 "passed": normalized_velocity >= 0.8,
-                "unit": "velocity_ratio"
+                "unit": "velocity_ratio",
             }
 
             # Benchmark 4: Context Accuracy (simulated based on domain coverage)
@@ -210,27 +219,26 @@ class IntelligenceMetrics:
                 "value": context_accuracy,
                 "threshold": 0.6,
                 "passed": context_accuracy >= 0.6,
-                "unit": "accuracy_ratio"
+                "unit": "accuracy_ratio",
             }
 
             # Calculate overall AIQ
             aiq = self.calculate_aiq(
-                pattern_effectiveness,
-                app_success_rate,
-                normalized_velocity,
-                context_accuracy
+                pattern_effectiveness, app_success_rate, normalized_velocity, context_accuracy
             )
 
             benchmarks["overall_aiq"] = {
                 "value": aiq,
                 "threshold": 50.0,
                 "passed": aiq >= 50.0,
-                "unit": "aiq_score"
+                "unit": "aiq_score",
             }
 
             # Summary
             total_benchmarks = len(benchmarks)
-            passed_benchmarks = sum(1 for b in benchmarks.values() if isinstance(b, dict) and b.get("passed", False))
+            passed_benchmarks = sum(
+                1 for b in benchmarks.values() if isinstance(b, dict) and b.get("passed", False)
+            )
             overall_pass_rate = passed_benchmarks / total_benchmarks
 
             benchmarks["summary"] = {
@@ -238,7 +246,7 @@ class IntelligenceMetrics:
                 "passed_benchmarks": passed_benchmarks,
                 "overall_pass_rate": overall_pass_rate,
                 "intelligence_grade": self._calculate_intelligence_grade(overall_pass_rate),
-                "timestamp": datetime.now().isoformat()
+                "timestamp": datetime.now().isoformat(),
             }
 
             return benchmarks
@@ -250,18 +258,18 @@ class IntelligenceMetrics:
     def record_measurement(
         self,
         aiq: float,
-        component_metrics: Dict[str, float],
-        context: Optional[Dict[str, JSONValue]] = None
+        component_metrics: dict[str, float],
+        context: dict[str, JSONValue] | None = None,
     ) -> None:
         """Record intelligence measurement for historical tracking."""
         measurement = {
             "timestamp": datetime.now().isoformat(),
             "aiq": aiq,
             "metrics": component_metrics,
-            "context": context or {}
+            "context": context or {},
         }
 
-        self.measurement_history.append(cast(Dict[str, JSONValue], measurement))
+        self.measurement_history.append(cast(dict[str, JSONValue], measurement))
 
         # Keep only last 100 measurements
         if len(self.measurement_history) > 100:
@@ -271,11 +279,14 @@ class IntelligenceMetrics:
         if self.baseline_metrics is None:
             self.baseline_metrics = component_metrics.copy()
 
-    def get_intelligence_trajectory(self) -> Dict[str, JSONValue]:
+    def get_intelligence_trajectory(self) -> dict[str, JSONValue]:
         """Get intelligence development trajectory over time."""
         try:
             if len(self.measurement_history) < 2:
-                return {"trajectory": "insufficient_data", "measurements": len(self.measurement_history)}
+                return {
+                    "trajectory": "insufficient_data",
+                    "measurements": len(self.measurement_history),
+                }
 
             # Extract AIQ history
             aiq_history = []
@@ -290,7 +301,9 @@ class IntelligenceMetrics:
             if len(aiq_history) >= 2:
                 initial_aiq = aiq_history[0]
                 current_aiq = aiq_history[-1]
-                overall_growth = self.measure_intelligence_growth_rate(float(current_aiq), float(initial_aiq))
+                overall_growth = self.measure_intelligence_growth_rate(
+                    float(current_aiq), float(initial_aiq)
+                )
             else:
                 overall_growth = 0.0
 
@@ -301,21 +314,29 @@ class IntelligenceMetrics:
             if len(aiq_history) >= 2:
                 recent_measurements = aiq_history[-5:]  # Last 5 measurements
                 if len(recent_measurements) >= 2:
-                    velocity = (recent_measurements[-1] - recent_measurements[0]) / (len(recent_measurements) - 1)
+                    velocity = (recent_measurements[-1] - recent_measurements[0]) / (
+                        len(recent_measurements) - 1
+                    )
                 else:
                     velocity = 0.0
             else:
                 velocity = 0.0
 
             return {
-                "trajectory": "improving" if overall_growth > 0 else "stable" if overall_growth == 0 else "declining",
+                "trajectory": "improving"
+                if overall_growth > 0
+                else "stable"
+                if overall_growth == 0
+                else "declining",
                 "overall_growth_rate": overall_growth,
                 "current_aiq": aiq_history[-1],
                 "baseline_aiq": aiq_history[0],
                 "measurement_count": len(aiq_history),
                 "recent_velocity": velocity,
                 "exponential_amplification": amplification_analysis,
-                "intelligence_status": self._assess_intelligence_status(float(aiq_history[-1]), overall_growth)
+                "intelligence_status": self._assess_intelligence_status(
+                    float(aiq_history[-1]), overall_growth
+                ),
             }
 
         except Exception as e:
@@ -367,31 +388,31 @@ class IntelligenceMetrics:
                     "measurement_period": {
                         "start": self.measurement_history[0]["timestamp"],
                         "end": self.measurement_history[-1]["timestamp"],
-                        "total_measurements": len(self.measurement_history)
+                        "total_measurements": len(self.measurement_history),
                     },
                     "current_intelligence": {
                         "aiq": latest_measurement["aiq"],
                         "status": trajectory.get("intelligence_status", "Unknown"),
                         "grade": self._calculate_intelligence_grade(
                             float(latest_measurement.get("aiq", 0)) / 100
-                        )
+                        ),
                     },
                     "growth_analysis": {
                         "overall_growth_rate": trajectory.get("overall_growth_rate", 0),
                         "trajectory": trajectory.get("trajectory", "unknown"),
                         "recent_velocity": trajectory.get("recent_velocity", 0),
-                        "exponential_amplification": trajectory.get("exponential_amplification", {})
+                        "exponential_amplification": trajectory.get(
+                            "exponential_amplification", {}
+                        ),
                     },
                     "benchmark_history": [
-                        {
-                            "timestamp": m["timestamp"],
-                            "aiq": m["aiq"],
-                            "metrics": m["metrics"]
-                        }
+                        {"timestamp": m["timestamp"], "aiq": m["aiq"], "metrics": m["metrics"]}
                         for m in self.measurement_history[-10:]  # Last 10 measurements
                     ],
-                    "intelligence_classification": self._classify_intelligence_level(float(latest_measurement.get("aiq", 0))),
-                    "recommendations": self._generate_intelligence_recommendations(trajectory)
+                    "intelligence_classification": self._classify_intelligence_level(
+                        float(latest_measurement.get("aiq", 0))
+                    ),
+                    "recommendations": self._generate_intelligence_recommendations(trajectory),
                 }
             }
 
@@ -401,40 +422,49 @@ class IntelligenceMetrics:
             logger.error(f"Intelligence report export failed: {e}")
             return json.dumps({"error": str(e)}, indent=2)
 
-    def _classify_intelligence_level(self, aiq: float) -> Dict[str, JSONValue]:
+    def _classify_intelligence_level(self, aiq: float) -> dict[str, JSONValue]:
         """Classify intelligence level based on AIQ score."""
         if aiq >= 100:
             return {
                 "level": "Superintelligent",
                 "description": "Exceeds human-level performance across all domains",
-                "capabilities": cast(JSONValue, ["Self-improvement", "Novel pattern creation", "Meta-learning mastery"])
+                "capabilities": cast(
+                    JSONValue,
+                    ["Self-improvement", "Novel pattern creation", "Meta-learning mastery"],
+                ),
             }
         elif aiq >= 80:
             return {
                 "level": "Highly Intelligent",
                 "description": "Advanced pattern recognition and application",
-                "capabilities": cast(JSONValue, ["Complex problem solving", "Pattern synthesis", "Rapid learning"])
+                "capabilities": cast(
+                    JSONValue, ["Complex problem solving", "Pattern synthesis", "Rapid learning"]
+                ),
             }
         elif aiq >= 60:
             return {
                 "level": "Intelligent",
                 "description": "Good pattern matching and moderate learning ability",
-                "capabilities": cast(JSONValue, ["Pattern recognition", "Context understanding", "Basic learning"])
+                "capabilities": cast(
+                    JSONValue, ["Pattern recognition", "Context understanding", "Basic learning"]
+                ),
             }
         elif aiq >= 40:
             return {
                 "level": "Functional",
                 "description": "Basic pattern storage and retrieval",
-                "capabilities": cast(JSONValue, ["Simple pattern matching", "Limited context awareness"])
+                "capabilities": cast(
+                    JSONValue, ["Simple pattern matching", "Limited context awareness"]
+                ),
             }
         else:
             return {
                 "level": "Developing",
                 "description": "Early stage intelligence development",
-                "capabilities": cast(JSONValue, ["Basic pattern storage", "Simple operations"])
+                "capabilities": cast(JSONValue, ["Basic pattern storage", "Simple operations"]),
             }
 
-    def _generate_intelligence_recommendations(self, trajectory: Dict[str, JSONValue]) -> List[str]:
+    def _generate_intelligence_recommendations(self, trajectory: dict[str, JSONValue]) -> list[str]:
         """Generate recommendations for intelligence improvement."""
         recommendations = []
 

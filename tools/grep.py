@@ -1,6 +1,6 @@
 import os
 import subprocess
-from typing import Literal, Optional
+from typing import Literal
 
 from agency_swarm.tools import BaseTool
 from pydantic import Field
@@ -22,50 +22,48 @@ class Grep(BaseTool):  # type: ignore[misc]
     pattern: str = Field(
         ..., description="The regular expression pattern to search for in file contents"
     )
-    path: Optional[str] = Field(
+    path: str | None = Field(
         None,
         description="File or directory to search in (rg PATH). Defaults to current working directory.",
     )
-    glob: Optional[str] = Field(
+    glob: str | None = Field(
         None,
         description="Glob pattern to filter files (e.g. '*.js', '*.{ts,tsx}') - maps to rg --glob",
     )
-    output_mode: Optional[Literal["content", "files_with_matches", "count"]] = Field(
+    output_mode: Literal["content", "files_with_matches", "count"] | None = Field(
         "files_with_matches",
         description="Output mode: 'content' shows matching lines (supports -A/-B/-C context, -n line numbers, head_limit), 'files_with_matches' shows file paths (supports head_limit), 'count' shows match counts (supports head_limit). Defaults to 'files_with_matches'.",
     )
-    B: Optional[int] = Field(
+    B: int | None = Field(
         None,
         description="Number of lines to show before each match (rg -B). Requires output_mode: 'content', ignored otherwise.",
         alias="-B",
     )
-    A: Optional[int] = Field(
+    A: int | None = Field(
         None,
         description="Number of lines to show after each match (rg -A). Requires output_mode: 'content', ignored otherwise.",
         alias="-A",
     )
-    C: Optional[int] = Field(
+    C: int | None = Field(
         None,
         description="Number of lines to show before and after each match (rg -C). Requires output_mode: 'content', ignored otherwise.",
         alias="-C",
     )
-    n: Optional[bool] = Field(
+    n: bool | None = Field(
         None,
         description="Show line numbers in output (rg -n). Requires output_mode: 'content', ignored otherwise.",
         alias="-n",
     )
-    i: Optional[bool] = Field(
-        None, description="Case insensitive search (rg -i)", alias="-i"
-    )
-    type: Optional[str] = Field(
+    i: bool | None = Field(None, description="Case insensitive search (rg -i)", alias="-i")
+    type: str | None = Field(
         None,
         description="File type to search (rg --type). Common types: js, py, rust, go, java, etc. More efficient than include for standard file types.",
     )
-    head_limit: Optional[int] = Field(
+    head_limit: int | None = Field(
         None,
         description="Limit output to first N lines/entries, equivalent to '| head -N'. Works across all output modes: content (limits output lines), files_with_matches (limits file paths), count (limits count entries). When unspecified, shows all results from ripgrep.",
     )
-    multiline: Optional[bool] = Field(
+    multiline: bool | None = Field(
         False,
         description="Enable multiline mode where . matches newlines and patterns can span lines (rg -U --multiline-dotall). Default: false.",
     )
@@ -159,9 +157,7 @@ class Grep(BaseTool):  # type: ignore[misc]
                     lines = output.split("\n")
                     if len(lines) > self.head_limit:
                         output = "\n".join(lines[: self.head_limit])
-                        output += (
-                            f"\n... (output limited to first {self.head_limit} lines)"
-                        )
+                        output += f"\n... (output limited to first {self.head_limit} lines)"
 
                 # Truncate very large outputs to 30000 characters
                 truncated = False

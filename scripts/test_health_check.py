@@ -6,42 +6,34 @@ collection failures and improve reliability. It validates test files, checks
 dependencies, and reports any issues found.
 """
 
-import subprocess
-import sys
 import ast
 import importlib.util
+import subprocess
+import sys
 from pathlib import Path
-from typing import List, Dict, Tuple, Optional
-import json
-import re
 
 
 class TestHealthChecker:
     """Comprehensive test health checker for the Agency OS test suite."""
 
-    def __init__(self, project_root: Optional[Path] = None):
+    def __init__(self, project_root: Path | None = None):
         self.project_root = project_root or Path(__file__).parent.parent
         self.test_paths = [
             self.project_root / "tests",
         ]
-        self.issues: List[Dict[str, str]] = []
-        self.warnings: List[Dict[str, str]] = []
+        self.issues: list[dict[str, str]] = []
+        self.warnings: list[dict[str, str]] = []
 
     def add_issue(self, file_path: str, issue_type: str, message: str, severity: str = "error"):
         """Add an issue to the tracking lists."""
-        issue = {
-            "file": file_path,
-            "type": issue_type,
-            "message": message,
-            "severity": severity
-        }
+        issue = {"file": file_path, "type": issue_type, "message": message, "severity": severity}
 
         if severity == "error":
             self.issues.append(issue)
         else:
             self.warnings.append(issue)
 
-    def find_test_files(self) -> List[Path]:
+    def find_test_files(self) -> list[Path]:
         """Find all test files in the project."""
         test_files = []
 
@@ -56,7 +48,7 @@ class TestHealthChecker:
     def check_syntax(self, file_path: Path) -> bool:
         """Check if a Python file has valid syntax."""
         try:
-            with open(file_path, 'r', encoding='utf-8') as f:
+            with open(file_path, encoding="utf-8") as f:
                 source = f.read()
 
             ast.parse(source, filename=str(file_path))
@@ -64,23 +56,17 @@ class TestHealthChecker:
 
         except SyntaxError as e:
             self.add_issue(
-                str(file_path),
-                "syntax_error",
-                f"Syntax error at line {e.lineno}: {e.msg}"
+                str(file_path), "syntax_error", f"Syntax error at line {e.lineno}: {e.msg}"
             )
             return False
         except Exception as e:
-            self.add_issue(
-                str(file_path),
-                "parsing_error",
-                f"Failed to parse file: {str(e)}"
-            )
+            self.add_issue(str(file_path), "parsing_error", f"Failed to parse file: {str(e)}")
             return False
 
     def check_imports(self, file_path: Path) -> bool:
         """Check if all imports in a test file are available."""
         try:
-            with open(file_path, 'r', encoding='utf-8') as f:
+            with open(file_path, encoding="utf-8") as f:
                 source = f.read()
 
             tree = ast.parse(source)
@@ -94,7 +80,7 @@ class TestHealthChecker:
                                 str(file_path),
                                 "import_error",
                                 f"Cannot import module: {alias.name}",
-                                "warning"
+                                "warning",
                             )
                             has_issues = True
 
@@ -105,7 +91,7 @@ class TestHealthChecker:
                                 str(file_path),
                                 "import_error",
                                 f"Cannot import from module: {node.module}",
-                                "warning"
+                                "warning",
                             )
                             has_issues = True
 
@@ -116,7 +102,7 @@ class TestHealthChecker:
                 str(file_path),
                 "import_check_error",
                 f"Failed to check imports: {str(e)}",
-                "warning"
+                "warning",
             )
             return False
 
@@ -124,7 +110,7 @@ class TestHealthChecker:
         """Check if a module can be imported."""
         try:
             # Skip relative imports and special modules
-            if module_name.startswith('.') or module_name in ['__future__']:
+            if module_name.startswith(".") or module_name in ["__future__"]:
                 return True
 
             spec = importlib.util.find_spec(module_name)
@@ -141,7 +127,7 @@ class TestHealthChecker:
                 cwd=self.project_root,
                 capture_output=True,
                 text=True,
-                timeout=60
+                timeout=60,
             )
 
             if result.returncode != 0:
@@ -150,7 +136,7 @@ class TestHealthChecker:
                 self.add_issue(
                     "pytest_collection",
                     "collection_failure",
-                    f"Pytest collection failed:\n{error_lines}"
+                    f"Pytest collection failed:\n{error_lines}",
                 )
                 return False
 
@@ -160,7 +146,7 @@ class TestHealthChecker:
                     "pytest_collection",
                     "collection_warning",
                     f"Pytest collection has warnings:\n{result.stdout}",
-                    "warning"
+                    "warning",
                 )
 
             return True
@@ -169,31 +155,26 @@ class TestHealthChecker:
             self.add_issue(
                 "pytest_collection",
                 "collection_timeout",
-                "Pytest collection timed out after 60 seconds"
+                "Pytest collection timed out after 60 seconds",
             )
             return False
         except Exception as e:
             self.add_issue(
                 "pytest_collection",
                 "collection_error",
-                f"Failed to run pytest collection: {str(e)}"
+                f"Failed to run pytest collection: {str(e)}",
             )
             return False
 
     def check_test_dependencies(self) -> bool:
         """Check if test dependencies are available."""
-        required_packages = [
-            "pytest",
-            "pytest-asyncio",
-            "pytest-cov",
-            "pytest-mock"
-        ]
+        required_packages = ["pytest", "pytest-asyncio", "pytest-cov", "pytest-mock"]
 
         missing_packages = []
 
         for package in required_packages:
             try:
-                spec = importlib.util.find_spec(package.replace('-', '_'))
+                spec = importlib.util.find_spec(package.replace("-", "_"))
                 if spec is None:
                     missing_packages.append(package)
             except (ImportError, ModuleNotFoundError):
@@ -203,7 +184,7 @@ class TestHealthChecker:
             self.add_issue(
                 "dependencies",
                 "missing_packages",
-                f"Missing test dependencies: {', '.join(missing_packages)}"
+                f"Missing test dependencies: {', '.join(missing_packages)}",
             )
             return False
 
@@ -218,12 +199,12 @@ class TestHealthChecker:
                 "configuration",
                 "missing_config",
                 "pytest.ini configuration file not found",
-                "warning"
+                "warning",
             )
             return False
 
         try:
-            with open(pytest_ini, 'r') as f:
+            with open(pytest_ini) as f:
                 config_content = f.read()
 
             # Check for required markers
@@ -232,17 +213,14 @@ class TestHealthChecker:
                     str(pytest_ini),
                     "missing_markers",
                     "No test markers defined in pytest.ini",
-                    "warning"
+                    "warning",
                 )
 
             return True
 
         except Exception as e:
             self.add_issue(
-                str(pytest_ini),
-                "config_error",
-                f"Failed to read pytest.ini: {str(e)}",
-                "warning"
+                str(pytest_ini), "config_error", f"Failed to read pytest.ini: {str(e)}", "warning"
             )
             return False
 
@@ -258,19 +236,14 @@ class TestHealthChecker:
                     str(test_file),
                     "naming_convention",
                     "Test file doesn't follow naming convention (test_*.py or *_test.py)",
-                    "warning"
+                    "warning",
                 )
                 has_issues = True
 
             # Check if file is empty
             try:
                 if test_file.stat().st_size == 0:
-                    self.add_issue(
-                        str(test_file),
-                        "empty_file",
-                        "Test file is empty",
-                        "warning"
-                    )
+                    self.add_issue(str(test_file), "empty_file", "Test file is empty", "warning")
                     has_issues = True
             except Exception:
                 pass
@@ -286,11 +259,7 @@ class TestHealthChecker:
         print(f"📁 Found {len(test_files)} test files")
 
         if not test_files:
-            self.add_issue(
-                "test_discovery",
-                "no_tests",
-                "No test files found in the project"
-            )
+            self.add_issue("test_discovery", "no_tests", "No test files found in the project")
             return False
 
         # Check dependencies first
@@ -323,9 +292,7 @@ class TestHealthChecker:
             self.check_pytest_collection()
         else:
             self.add_issue(
-                "pytest_collection",
-                "skipped",
-                "Skipped collection check due to syntax errors"
+                "pytest_collection", "skipped", "Skipped collection check due to syntax errors"
             )
 
         return len(self.issues) == 0
@@ -386,7 +353,7 @@ def main() -> int:
         # Save report to file
         report_file = checker.project_root / "logs" / "test_health_report.txt"
         report_file.parent.mkdir(exist_ok=True)
-        with open(report_file, 'w') as f:
+        with open(report_file, "w") as f:
             f.write(report)
 
         print(f"\n📄 Report saved to: {report_file}")

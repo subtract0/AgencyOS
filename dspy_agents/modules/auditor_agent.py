@@ -5,41 +5,49 @@ Implements quality assurance and test coverage analysis using DSPy,
 focusing on NECESSARY pattern compliance and Q(T) scoring.
 """
 
-import os
 import logging
-from typing import Dict, List, Any, Optional, Tuple
-from pathlib import Path
-import json
+import os
 from datetime import datetime
-from pydantic import BaseModel, Field, field_validator
+from pathlib import Path
+from typing import Any
+
+from pydantic import BaseModel, Field
+
 from shared.type_definitions.json import JSONValue
 
 # Conditional DSPy import with fallback
 try:
     import dspy
+
     DSPY_AVAILABLE = True
 except ImportError:
     DSPY_AVAILABLE = False
+
     # Provide fallback implementations
     class dspy:
         class Module:
             pass
+
         class ChainOfThought:
             def __init__(self, signature):
                 self.signature = signature
+
             def __call__(self, **kwargs):
-                return type('Result', (), kwargs)()
+                return type("Result", (), kwargs)()
+
         class Predict:
             def __init__(self, signature):
                 self.signature = signature
+
             def __call__(self, **kwargs):
-                return type('Result', (), kwargs)()
+                return type("Result", (), kwargs)()
+
 
 from dspy_agents.signatures.base import (
+    AuditFinding,
     AuditSignature,
     PrioritizationSignature,
     ReportSignature,
-    AuditFinding,
 )
 
 logger = logging.getLogger(__name__)
@@ -49,16 +57,19 @@ logger = logging.getLogger(__name__)
 # Data Models
 # ===========================
 
+
 class NECESSARYScore(BaseModel):
     """Score for a NECESSARY property."""
+
     property: str = Field(..., description="NECESSARY property letter")
     score: float = Field(..., ge=0.0, le=1.0, description="Score between 0 and 1")
-    violations: List[str] = Field(default_factory=list, description="List of violations")
-    details: Optional[str] = Field(None, description="Additional details")
+    violations: list[str] = Field(default_factory=list, description="List of violations")
+    details: str | None = Field(None, description="Additional details")
 
 
 class CodebaseAnalysis(BaseModel):
     """Results from codebase analysis."""
+
     total_files: int = Field(0, description="Total files analyzed")
     total_functions: int = Field(0, description="Total functions found")
     total_classes: int = Field(0, description="Total classes found")
@@ -71,12 +82,13 @@ class CodebaseAnalysis(BaseModel):
 
 class AuditContext(BaseModel):
     """Context for an audit operation."""
+
     target_path: str = Field(..., description="Path to audit")
     mode: str = Field("full", description="Audit mode: full or verification")
-    focus_areas: List[str] = Field(default_factory=list, description="Specific areas to focus on")
-    thresholds: Dict[str, float] = Field(
+    focus_areas: list[str] = Field(default_factory=list, description="Specific areas to focus on")
+    thresholds: dict[str, float] = Field(
         default_factory=lambda: {"critical": 0.4, "high": 0.6, "medium": 0.7},
-        description="Severity thresholds"
+        description="Severity thresholds",
     )
     include_recommendations: bool = Field(True, description="Include recommendations")
     max_violations: int = Field(50, description="Maximum violations to report")
@@ -84,11 +96,12 @@ class AuditContext(BaseModel):
 
 class AuditResult(BaseModel):
     """Complete audit result."""
+
     qt_score: float = Field(..., description="Overall Q(T) score")
-    necessary_scores: List[NECESSARYScore] = Field(..., description="Individual NECESSARY scores")
-    findings: List[AuditFinding] = Field(default_factory=list, description="Audit findings")
+    necessary_scores: list[NECESSARYScore] = Field(..., description="Individual NECESSARY scores")
+    findings: list[AuditFinding] = Field(default_factory=list, description="Audit findings")
     analysis: CodebaseAnalysis = Field(..., description="Codebase analysis")
-    recommendations: List[str] = Field(default_factory=list, description="Recommendations")
+    recommendations: list[str] = Field(default_factory=list, description="Recommendations")
     timestamp: str = Field(default_factory=lambda: datetime.utcnow().isoformat())
     audit_context: AuditContext = Field(..., description="Audit context")
 
@@ -96,6 +109,7 @@ class AuditResult(BaseModel):
 # ===========================
 # DSPy Auditor Agent
 # ===========================
+
 
 class DSPyAuditorAgent(dspy.Module if DSPY_AVAILABLE else object):
     """
@@ -114,7 +128,7 @@ class DSPyAuditorAgent(dspy.Module if DSPY_AVAILABLE else object):
         model: str = "gpt-4o-mini",
         reasoning_effort: str = "medium",
         enable_learning: bool = True,
-        ast_analyzer: Optional[Any] = None
+        ast_analyzer: Any | None = None,
     ):
         """
         Initialize the DSPy Auditor Agent.
@@ -137,6 +151,7 @@ class DSPyAuditorAgent(dspy.Module if DSPY_AVAILABLE else object):
         if self.ast_analyzer is None:
             try:
                 from auditor_agent.ast_analyzer import ASTAnalyzer
+
                 self.ast_analyzer = ASTAnalyzer()
             except ImportError:
                 logger.warning("AST analyzer not available, using fallback analysis")
@@ -153,9 +168,11 @@ class DSPyAuditorAgent(dspy.Module if DSPY_AVAILABLE else object):
             self.report = self._fallback_report
 
         # Audit history for learning
-        self.audit_history: List[Dict[str, JSONValue]] = []
+        self.audit_history: list[dict[str, JSONValue]] = []
 
-        logger.info(f"DSPyAuditorAgent initialized with model={model}, DSPy available: {DSPY_AVAILABLE}")
+        logger.info(
+            f"DSPyAuditorAgent initialized with model={model}, DSPy available: {DSPY_AVAILABLE}"
+        )
 
     def forward(self, target_path: str, mode: str = "full", **kwargs) -> AuditResult:
         """
@@ -197,10 +214,10 @@ class DSPyAuditorAgent(dspy.Module if DSPY_AVAILABLE else object):
         result = AuditResult(
             qt_score=qt_score,
             necessary_scores=necessary_scores,
-            findings=findings[:context.max_violations],
+            findings=findings[: context.max_violations],
             analysis=analysis,
             recommendations=recommendations,
-            audit_context=context
+            audit_context=context,
         )
 
         # Learn from this audit
@@ -217,7 +234,7 @@ class DSPyAuditorAgent(dspy.Module if DSPY_AVAILABLE else object):
             focus_areas=kwargs.get("focus_areas", []),
             thresholds=kwargs.get("thresholds", {"critical": 0.4, "high": 0.6, "medium": 0.7}),
             include_recommendations=kwargs.get("include_recommendations", True),
-            max_violations=kwargs.get("max_violations", 50)
+            max_violations=kwargs.get("max_violations", 50),
         )
 
     def _analyze_codebase(self, target_path: str) -> CodebaseAnalysis:
@@ -243,8 +260,9 @@ class DSPyAuditorAgent(dspy.Module if DSPY_AVAILABLE else object):
 
                 # Calculate coverage
                 if analysis.total_behaviors > 0:
-                    analysis.coverage_percentage = min(100.0,
-                        (analysis.total_test_functions / analysis.total_behaviors) * 100)
+                    analysis.coverage_percentage = min(
+                        100.0, (analysis.total_test_functions / analysis.total_behaviors) * 100
+                    )
 
                 # Calculate complexity (simplified)
                 analysis.complexity_score = ast_analysis.get("average_complexity", 5.0)
@@ -296,12 +314,13 @@ class DSPyAuditorAgent(dspy.Module if DSPY_AVAILABLE else object):
         # Estimate behaviors and coverage
         analysis.total_behaviors = analysis.total_functions
         if analysis.total_behaviors > 0:
-            analysis.coverage_percentage = min(100.0,
-                (analysis.total_test_functions / analysis.total_behaviors) * 100)
+            analysis.coverage_percentage = min(
+                100.0, (analysis.total_test_functions / analysis.total_behaviors) * 100
+            )
 
         return analysis
 
-    def _calculate_necessary_scores(self, analysis: CodebaseAnalysis) -> List[NECESSARYScore]:
+    def _calculate_necessary_scores(self, analysis: CodebaseAnalysis) -> list[NECESSARYScore]:
         """Calculate NECESSARY pattern compliance scores."""
         scores = []
 
@@ -347,9 +366,7 @@ class DSPyAuditorAgent(dspy.Module if DSPY_AVAILABLE else object):
         """Calculate Named score based on test coverage."""
         if analysis.total_behaviors == 0:
             return NECESSARYScore(
-                property="N",
-                score=0.0,
-                violations=["No behaviors found to test"]
+                property="N", score=0.0, violations=["No behaviors found to test"]
             )
 
         score = min(1.0, analysis.total_test_functions / analysis.total_behaviors)
@@ -364,7 +381,7 @@ class DSPyAuditorAgent(dspy.Module if DSPY_AVAILABLE else object):
             property="N",
             score=score,
             violations=violations,
-            details=f"Found {analysis.total_test_functions} tests for {analysis.total_behaviors} behaviors"
+            details=f"Found {analysis.total_test_functions} tests for {analysis.total_behaviors} behaviors",
         )
 
     def _calculate_e_score(self, analysis: CodebaseAnalysis) -> NECESSARYScore:
@@ -380,11 +397,7 @@ class DSPyAuditorAgent(dspy.Module if DSPY_AVAILABLE else object):
         if score < 0.7:
             violations.append("Tests may have dependencies or lack independence")
 
-        return NECESSARYScore(
-            property="E",
-            score=score,
-            violations=violations
-        )
+        return NECESSARYScore(property="E", score=score, violations=violations)
 
     def _calculate_c_score(self, analysis: CodebaseAnalysis) -> NECESSARYScore:
         """Calculate Comprehensive score for coverage breadth."""
@@ -396,11 +409,7 @@ class DSPyAuditorAgent(dspy.Module if DSPY_AVAILABLE else object):
         if score < 0.5:
             violations.append("Critical: Less than half of code is tested")
 
-        return NECESSARYScore(
-            property="C",
-            score=score,
-            violations=violations
-        )
+        return NECESSARYScore(property="C", score=score, violations=violations)
 
     def _calculate_e2_score(self, analysis: CodebaseAnalysis) -> NECESSARYScore:
         """Calculate Edge cases score."""
@@ -417,7 +426,7 @@ class DSPyAuditorAgent(dspy.Module if DSPY_AVAILABLE else object):
             property="E2",
             score=score,
             violations=violations,
-            details="Edge case testing estimated from patterns"
+            details="Edge case testing estimated from patterns",
         )
 
     def _calculate_s_score(self, analysis: CodebaseAnalysis) -> NECESSARYScore:
@@ -429,11 +438,7 @@ class DSPyAuditorAgent(dspy.Module if DSPY_AVAILABLE else object):
         if score < 0.6:
             violations.append("State validation could be improved")
 
-        return NECESSARYScore(
-            property="S",
-            score=score,
-            violations=violations
-        )
+        return NECESSARYScore(property="S", score=score, violations=violations)
 
     def _calculate_s2_score(self, analysis: CodebaseAnalysis) -> NECESSARYScore:
         """Calculate Side effects score."""
@@ -444,11 +449,7 @@ class DSPyAuditorAgent(dspy.Module if DSPY_AVAILABLE else object):
         if score < 0.5:
             violations.append("Side effect testing needs improvement")
 
-        return NECESSARYScore(
-            property="S2",
-            score=score,
-            violations=violations
-        )
+        return NECESSARYScore(property="S2", score=score, violations=violations)
 
     def _calculate_a_score(self, analysis: CodebaseAnalysis) -> NECESSARYScore:
         """Calculate Async score for async operations."""
@@ -459,11 +460,7 @@ class DSPyAuditorAgent(dspy.Module if DSPY_AVAILABLE else object):
         if score < 0.7:
             violations.append("Async operation testing needs attention")
 
-        return NECESSARYScore(
-            property="A",
-            score=score,
-            violations=violations
-        )
+        return NECESSARYScore(property="A", score=score, violations=violations)
 
     def _calculate_r_score(self, analysis: CodebaseAnalysis) -> NECESSARYScore:
         """Calculate Regression score."""
@@ -474,13 +471,11 @@ class DSPyAuditorAgent(dspy.Module if DSPY_AVAILABLE else object):
         if score < 0.7:
             violations.append("Regression testing could be strengthened")
 
-        return NECESSARYScore(
-            property="R",
-            score=score,
-            violations=violations
-        )
+        return NECESSARYScore(property="R", score=score, violations=violations)
 
-    def _calculate_y_score(self, analysis: CodebaseAnalysis, other_scores: List[NECESSARYScore]) -> NECESSARYScore:
+    def _calculate_y_score(
+        self, analysis: CodebaseAnalysis, other_scores: list[NECESSARYScore]
+    ) -> NECESSARYScore:
         """Calculate Yielding (confidence) score based on other scores."""
         if not other_scores:
             score = 0.0
@@ -497,10 +492,10 @@ class DSPyAuditorAgent(dspy.Module if DSPY_AVAILABLE else object):
             property="Y",
             score=score,
             violations=violations,
-            details=f"Confidence score based on {len(other_scores)} metrics"
+            details=f"Confidence score based on {len(other_scores)} metrics",
         )
 
-    def _calculate_qt_score(self, necessary_scores: List[NECESSARYScore]) -> float:
+    def _calculate_qt_score(self, necessary_scores: list[NECESSARYScore]) -> float:
         """Calculate overall Q(T) score from NECESSARY scores."""
         if not necessary_scores:
             return 0.0
@@ -510,10 +505,10 @@ class DSPyAuditorAgent(dspy.Module if DSPY_AVAILABLE else object):
 
     def _generate_findings(
         self,
-        necessary_scores: List[NECESSARYScore],
+        necessary_scores: list[NECESSARYScore],
         analysis: CodebaseAnalysis,
-        context: AuditContext
-    ) -> List[AuditFinding]:
+        context: AuditContext,
+    ) -> list[AuditFinding]:
         """Generate audit findings from scores."""
         findings = []
 
@@ -528,23 +523,25 @@ class DSPyAuditorAgent(dspy.Module if DSPY_AVAILABLE else object):
                         severity=severity,
                         category=f"NECESSARY-{score.property}",
                         description=violation,
-                        recommendation=self._get_recommendation_for_property(score.property)
+                        recommendation=self._get_recommendation_for_property(score.property),
                     )
                     findings.append(finding)
 
         # Add findings for low coverage
         if analysis.coverage_percentage < 60:
-            findings.append(AuditFinding(
-                file_path=context.target_path,
-                severity="critical",
-                category="Coverage",
-                description=f"Test coverage critically low: {analysis.coverage_percentage:.1f}%",
-                recommendation="Increase test coverage to at least 80%"
-            ))
+            findings.append(
+                AuditFinding(
+                    file_path=context.target_path,
+                    severity="critical",
+                    category="Coverage",
+                    description=f"Test coverage critically low: {analysis.coverage_percentage:.1f}%",
+                    recommendation="Increase test coverage to at least 80%",
+                )
+            )
 
         return findings
 
-    def _determine_severity(self, score: float, thresholds: Dict[str, float]) -> str:
+    def _determine_severity(self, score: float, thresholds: dict[str, float]) -> str:
         """Determine severity based on score and thresholds."""
         if score < thresholds["critical"]:
             return "critical"
@@ -556,23 +553,19 @@ class DSPyAuditorAgent(dspy.Module if DSPY_AVAILABLE else object):
             return "low"
 
     def _prioritize_findings(
-        self,
-        findings: List[AuditFinding],
-        context: AuditContext
-    ) -> List[AuditFinding]:
+        self, findings: list[AuditFinding], context: AuditContext
+    ) -> list[AuditFinding]:
         """Prioritize findings based on severity and impact."""
-        if DSPY_AVAILABLE and hasattr(self.prioritize, '__call__'):
+        if DSPY_AVAILABLE and hasattr(self.prioritize, "__call__"):
             # Use DSPy prioritization
             try:
                 items = [f.__dict__ for f in findings]
                 result = self.prioritize(
-                    items=items,
-                    criteria=["severity", "impact", "effort"],
-                    context=context.__dict__
+                    items=items, criteria=["severity", "impact", "effort"], context=context.__dict__
                 )
 
                 # Reconstruct prioritized findings
-                if hasattr(result, 'prioritized_items'):
+                if hasattr(result, "prioritized_items"):
                     findings = [AuditFinding(**item) for item in result.prioritized_items]
             except Exception as e:
                 logger.warning(f"DSPy prioritization failed: {e}, using fallback")
@@ -584,11 +577,8 @@ class DSPyAuditorAgent(dspy.Module if DSPY_AVAILABLE else object):
         return findings
 
     def _generate_recommendations(
-        self,
-        qt_score: float,
-        findings: List[AuditFinding],
-        necessary_scores: List[NECESSARYScore]
-    ) -> List[str]:
+        self, qt_score: float, findings: list[AuditFinding], necessary_scores: list[NECESSARYScore]
+    ) -> list[str]:
         """Generate actionable recommendations."""
         recommendations = []
 
@@ -610,7 +600,9 @@ class DSPyAuditorAgent(dspy.Module if DSPY_AVAILABLE else object):
         # Critical findings recommendations
         critical_findings = [f for f in findings if f.severity == "critical"]
         if critical_findings:
-            recommendations.append(f"Address {len(critical_findings)} critical findings immediately")
+            recommendations.append(
+                f"Address {len(critical_findings)} critical findings immediately"
+            )
 
         return recommendations[:10]  # Limit to top 10
 
@@ -625,7 +617,7 @@ class DSPyAuditorAgent(dspy.Module if DSPY_AVAILABLE else object):
             "S2": "🔄 Add tests for side effects and external interactions",
             "A": "⚡ Add async operation testing with proper patterns",
             "R": "🔒 Implement regression tests for known issues",
-            "Y": "⭐ Enhance overall test quality and readability"
+            "Y": "⭐ Enhance overall test quality and readability",
         }
         return recommendations.get(property, "Review and improve test implementation")
 
@@ -638,7 +630,7 @@ class DSPyAuditorAgent(dspy.Module if DSPY_AVAILABLE else object):
             "critical_findings": len([f for f in result.findings if f.severity == "critical"]),
             "total_findings": len(result.findings),
             "lowest_score": min((s.score for s in result.necessary_scores), default=0.0),
-            "mode": result.audit_context.mode
+            "mode": result.audit_context.mode,
         }
 
         self.audit_history.append(learning_entry)
@@ -647,7 +639,9 @@ class DSPyAuditorAgent(dspy.Module if DSPY_AVAILABLE else object):
         if len(self.audit_history) > 100:
             self.audit_history = self.audit_history[-100:]
 
-        logger.info(f"Learned from audit: Q(T)={result.qt_score:.2f}, findings={len(result.findings)}")
+        logger.info(
+            f"Learned from audit: Q(T)={result.qt_score:.2f}, findings={len(result.findings)}"
+        )
 
     # ===========================
     # Fallback Methods
@@ -657,44 +651,52 @@ class DSPyAuditorAgent(dspy.Module if DSPY_AVAILABLE else object):
         """Fallback analysis when DSPy is not available."""
         logger.info("Using fallback analysis (DSPy not available)")
         # Return a simple object with expected attributes
-        return type('Result', (), {
-            'findings': [],
-            'compliance_score': 0.75,
-            'summary': "Basic analysis completed"
-        })()
+        return type(
+            "Result",
+            (),
+            {"findings": [], "compliance_score": 0.75, "summary": "Basic analysis completed"},
+        )()
 
     def _fallback_prioritize(self, **kwargs) -> Any:
         """Fallback prioritization when DSPy is not available."""
-        items = kwargs.get('items', [])
+        items = kwargs.get("items", [])
         # Simple severity-based sorting
-        return type('Result', (), {
-            'prioritized_items': sorted(items, key=lambda x: x.get('severity', 'low')),
-            'prioritization_rationale': "Sorted by severity"
-        })()
+        return type(
+            "Result",
+            (),
+            {
+                "prioritized_items": sorted(items, key=lambda x: x.get("severity", "low")),
+                "prioritization_rationale": "Sorted by severity",
+            },
+        )()
 
     def _fallback_report(self, **kwargs) -> Any:
         """Fallback reporting when DSPy is not available."""
-        findings = kwargs.get('findings', [])
-        return type('Result', (), {
-            'report': f"Audit Report: {len(findings)} findings",
-            'key_metrics': {'total_findings': len(findings)},
-            'recommendations': ["Review and address findings"]
-        })()
+        findings = kwargs.get("findings", [])
+        return type(
+            "Result",
+            (),
+            {
+                "report": f"Audit Report: {len(findings)} findings",
+                "key_metrics": {"total_findings": len(findings)},
+                "recommendations": ["Review and address findings"],
+            },
+        )()
 
-    def get_audit_summary(self) -> Dict[str, JSONValue]:
+    def get_audit_summary(self) -> dict[str, JSONValue]:
         """Get summary of audit history and patterns."""
         if not self.audit_history:
             return {"message": "No audits performed yet"}
 
-        avg_qt = sum(h['qt_score'] for h in self.audit_history) / len(self.audit_history)
-        total_findings = sum(h['total_findings'] for h in self.audit_history)
+        avg_qt = sum(h["qt_score"] for h in self.audit_history) / len(self.audit_history)
+        total_findings = sum(h["total_findings"] for h in self.audit_history)
 
         return {
             "total_audits": len(self.audit_history),
             "average_qt_score": avg_qt,
             "total_findings": total_findings,
             "improvement_trend": self._calculate_improvement_trend(),
-            "common_issues": self._identify_common_issues()
+            "common_issues": self._identify_common_issues(),
         }
 
     def _calculate_improvement_trend(self) -> str:
@@ -703,13 +705,17 @@ class DSPyAuditorAgent(dspy.Module if DSPY_AVAILABLE else object):
             return "insufficient_data"
 
         recent = self.audit_history[-5:]
-        older = self.audit_history[-10:-5] if len(self.audit_history) >= 10 else self.audit_history[:len(self.audit_history)//2]
+        older = (
+            self.audit_history[-10:-5]
+            if len(self.audit_history) >= 10
+            else self.audit_history[: len(self.audit_history) // 2]
+        )
 
         if not older:
             return "insufficient_data"
 
-        recent_avg = sum(h['qt_score'] for h in recent) / len(recent)
-        older_avg = sum(h['qt_score'] for h in older) / len(older)
+        recent_avg = sum(h["qt_score"] for h in recent) / len(recent)
+        older_avg = sum(h["qt_score"] for h in older) / len(older)
 
         if recent_avg > older_avg * 1.05:
             return "improving"
@@ -718,16 +724,18 @@ class DSPyAuditorAgent(dspy.Module if DSPY_AVAILABLE else object):
         else:
             return "stable"
 
-    def _identify_common_issues(self) -> List[str]:
+    def _identify_common_issues(self) -> list[str]:
         """Identify common issues from audit history."""
         issues = []
 
         if self.audit_history:
-            avg_critical = sum(h['critical_findings'] for h in self.audit_history) / len(self.audit_history)
+            avg_critical = sum(h["critical_findings"] for h in self.audit_history) / len(
+                self.audit_history
+            )
             if avg_critical > 1:
                 issues.append("Frequent critical findings")
 
-            avg_score = sum(h['lowest_score'] for h in self.audit_history) / len(self.audit_history)
+            avg_score = sum(h["lowest_score"] for h in self.audit_history) / len(self.audit_history)
             if avg_score < 0.5:
                 issues.append("Consistently low NECESSARY scores")
 
@@ -738,11 +746,12 @@ class DSPyAuditorAgent(dspy.Module if DSPY_AVAILABLE else object):
 # Factory Function
 # ===========================
 
+
 def create_dspy_auditor_agent(
     model: str = "gpt-4o-mini",
     reasoning_effort: str = "medium",
     enable_learning: bool = True,
-    **kwargs
+    **kwargs,
 ) -> DSPyAuditorAgent:
     """
     Factory function to create a DSPy Auditor Agent.
@@ -757,8 +766,5 @@ def create_dspy_auditor_agent(
         Configured DSPyAuditorAgent instance
     """
     return DSPyAuditorAgent(
-        model=model,
-        reasoning_effort=reasoning_effort,
-        enable_learning=enable_learning,
-        **kwargs
+        model=model, reasoning_effort=reasoning_effort, enable_learning=enable_learning, **kwargs
     )

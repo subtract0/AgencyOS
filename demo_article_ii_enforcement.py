@@ -134,7 +134,7 @@ def demo_verification_logging():
         print(f"❌ Log file not found: {log_file}")
         return False
 
-    lines = log_file.read_text().strip().split('\n')
+    lines = log_file.read_text().strip().split("\n")
     print(f"✅ Verification log exists: {log_file}")
     print(f"   Total entries: {len(lines)}")
 
@@ -143,11 +143,12 @@ def demo_verification_logging():
     print("-" * 80)
 
     import json
+
     for i, line in enumerate(lines[-3:], 1):
         entry = json.loads(line)
-        timestamp = entry['timestamp'][:19]  # Trim microseconds
-        compliance = "✅ PASS" if entry['constitutional_compliance'] else "❌ FAIL"
-        result = entry['result']
+        timestamp = entry["timestamp"][:19]  # Trim microseconds
+        compliance = "✅ PASS" if entry["constitutional_compliance"] else "❌ FAIL"
+        result = entry["result"]
 
         print(f"\n{i}. {timestamp} - {compliance}")
         print(f"   Tests: {result['tests_passed']} passed, {result['tests_failed']} failed")
@@ -165,20 +166,26 @@ def demo_constitutional_compliance_summary():
     print("=" * 80)
 
     compliance = [
-        ("Article I: Complete Context Before Action",
-         "✅ Exponential backoff timeout (10m → 20m → 40m)"),
-
-        ("Article II: 100% Verification and Stability",
-         "✅ ENFORCES 100% test success - raises RuntimeError on failure"),
-
-        ("Article III: Automated Merge Enforcement",
-         "✅ No manual override - exception blocks all downstream actions"),
-
-        ("Article IV: Continuous Learning",
-         "✅ Logs all verifications to autonomous_healing/ for analysis"),
-
-        ("Article V: Spec-Driven Development",
-         "✅ Implementation follows VALIDATOR_TOOL specification"),
+        (
+            "Article I: Complete Context Before Action",
+            "✅ Exponential backoff timeout (10m → 20m → 40m)",
+        ),
+        (
+            "Article II: 100% Verification and Stability",
+            "✅ ENFORCES 100% test success - raises RuntimeError on failure",
+        ),
+        (
+            "Article III: Automated Merge Enforcement",
+            "✅ No manual override - exception blocks all downstream actions",
+        ),
+        (
+            "Article IV: Continuous Learning",
+            "✅ Logs all verifications to autonomous_healing/ for analysis",
+        ),
+        (
+            "Article V: Spec-Driven Development",
+            "✅ Implementation follows VALIDATOR_TOOL specification",
+        ),
     ]
 
     for article, status in compliance:

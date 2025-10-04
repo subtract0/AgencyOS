@@ -12,6 +12,7 @@ Usage:
 import os
 import time
 from datetime import datetime
+
 from agency_memory import FirestoreStore
 
 
@@ -62,12 +63,9 @@ def main():
                 "title": "Parallel Tool Call Optimization",
                 "description": "Batching Read/Grep calls reduces latency by 60%",
                 "confidence": 0.92,
-                "evidence": {
-                    "sessions_analyzed": 50,
-                    "avg_time_saved_ms": 450
-                }
+                "evidence": {"sessions_analyzed": 50, "avg_time_saved_ms": 450},
             },
-            "tags": ["learning", "performance", "parallel_orchestration"]
+            "tags": ["learning", "performance", "parallel_orchestration"],
         },
         {
             "key": "error_auto_fix_001",
@@ -76,12 +74,9 @@ def main():
                 "title": "NoneType Auto-Fix Pattern",
                 "description": "Automatic type guards prevent 95% of NoneType errors",
                 "confidence": 0.88,
-                "evidence": {
-                    "fixes_applied": 120,
-                    "success_rate": 0.95
-                }
+                "evidence": {"fixes_applied": 120, "success_rate": 0.95},
             },
-            "tags": ["learning", "quality", "auto_fix"]
+            "tags": ["learning", "quality", "auto_fix"],
         },
         {
             "key": "test_consolidation_001",
@@ -90,23 +85,16 @@ def main():
                 "title": "Test Consolidation Strategy",
                 "description": "Merging similar tests reduces execution time by 40%",
                 "confidence": 0.85,
-                "evidence": {
-                    "tests_merged": 25,
-                    "time_saved_seconds": 180
-                }
+                "evidence": {"tests_merged": 25, "time_saved_seconds": 180},
             },
-            "tags": ["learning", "testing", "optimization"]
-        }
+            "tags": ["learning", "testing", "optimization"],
+        },
     ]
 
     # Store all insights
     print("\nStoring insights to Firestore...")
     for insight in insights:
-        session_1_store.store(
-            insight["key"],
-            insight["content"],
-            insight["tags"]
-        )
+        session_1_store.store(insight["key"], insight["content"], insight["tags"])
         print(f"  ✓ Stored: {insight['content']['title']}")
 
     # Wait for Firestore to persist

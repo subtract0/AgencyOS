@@ -18,34 +18,34 @@ Usage:
     --verbose: Show detailed output for each check
 """
 
-import os
-import sys
-import subprocess
 import json
 import re
-from pathlib import Path
-from typing import Dict, List, Tuple, Optional, Any
+import subprocess
+import sys
 from dataclasses import dataclass
 from datetime import datetime
+from pathlib import Path
 
 
 @dataclass
 class ViolationReport:
     """Represents a constitutional violation."""
+
     article: str
     severity: str  # 'critical', 'high', 'medium', 'low'
     description: str
-    file_path: Optional[str] = None
-    line_number: Optional[int] = None
-    suggested_fix: Optional[str] = None
+    file_path: str | None = None
+    line_number: int | None = None
+    suggested_fix: str | None = None
 
 
 @dataclass
 class ComplianceReport:
     """Overall constitutional compliance report."""
+
     timestamp: datetime
-    articles_checked: Dict[str, bool]
-    violations: List[ViolationReport]
+    articles_checked: dict[str, bool]
+    violations: list[ViolationReport]
     overall_compliance: bool
     compliance_percentage: float
 
@@ -53,11 +53,11 @@ class ComplianceReport:
 class ConstitutionalEnforcer:
     """Enforces the Five Articles of the Agency Constitution."""
 
-    def __init__(self, project_root: Optional[Path] = None, verbose: bool = False):
+    def __init__(self, project_root: Path | None = None, verbose: bool = False):
         """Initialize the enforcer."""
         self.project_root = project_root or Path.cwd()
         self.verbose = verbose
-        self.violations: List[ViolationReport] = []
+        self.violations: list[ViolationReport] = []
 
     def check_article_i_complete_context(self) -> bool:
         """
@@ -78,7 +78,7 @@ class ConstitutionalEnforcer:
                 continue
 
             try:
-                with open(py_file, 'r') as f:
+                with open(py_file) as f:
                     content = f.read()
 
                 # Simple regex to find functions without docstrings
@@ -87,16 +87,18 @@ class ConstitutionalEnforcer:
 
                 for match in matches:
                     func_name = match.group(2)
-                    if not func_name.startswith('_'):  # Skip private functions
-                        line_num = content[:match.start()].count('\n') + 1
-                        self.violations.append(ViolationReport(
-                            article="Article I",
-                            severity="medium",
-                            description=f"Function '{func_name}' lacks docstring",
-                            file_path=str(py_file),
-                            line_number=line_num,
-                            suggested_fix="Add a docstring explaining the function's purpose"
-                        ))
+                    if not func_name.startswith("_"):  # Skip private functions
+                        line_num = content[: match.start()].count("\n") + 1
+                        self.violations.append(
+                            ViolationReport(
+                                article="Article I",
+                                severity="medium",
+                                description=f"Function '{func_name}' lacks docstring",
+                                file_path=str(py_file),
+                                line_number=line_num,
+                                suggested_fix="Add a docstring explaining the function's purpose",
+                            )
+                        )
                         compliant = False
 
             except Exception as e:
@@ -106,12 +108,14 @@ class ConstitutionalEnforcer:
         # Check for README.md
         readme_path = self.project_root / "README.md"
         if not readme_path.exists():
-            self.violations.append(ViolationReport(
-                article="Article I",
-                severity="high",
-                description="README.md is missing",
-                suggested_fix="Create a comprehensive README.md file"
-            ))
+            self.violations.append(
+                ViolationReport(
+                    article="Article I",
+                    severity="high",
+                    description="README.md is missing",
+                    suggested_fix="Create a comprehensive README.md file",
+                )
+            )
             compliant = False
 
         return compliant
@@ -126,60 +130,77 @@ class ConstitutionalEnforcer:
         - Verify no skipped tests
         """
         import tempfile
+
         compliant = True
 
         try:
             # Create secure temporary file for pytest report
-            with tempfile.NamedTemporaryFile(mode='w+', suffix='.json', prefix='pytest_report_', delete=False) as temp_file:
+            with tempfile.NamedTemporaryFile(
+                mode="w+", suffix=".json", prefix="pytest_report_", delete=False
+            ) as temp_file:
                 temp_path = temp_file.name
 
             try:
                 # Run pytest with JSON output
                 result = subprocess.run(
-                    ["python", "-m", "pytest", "--json-report", f"--json-report-file={temp_path}", "-q"],
+                    [
+                        "python",
+                        "-m",
+                        "pytest",
+                        "--json-report",
+                        f"--json-report-file={temp_path}",
+                        "-q",
+                    ],
                     capture_output=True,
                     text=True,
-                    cwd=self.project_root
+                    cwd=self.project_root,
                 )
 
                 # Check if any tests failed
                 if result.returncode != 0:
                     # Parse JSON report if available
                     try:
-                        with open(temp_path, 'r') as f:
+                        with open(temp_path) as f:
                             report = json.load(f)
-                        failed = report.get('summary', {}).get('failed', 0)
-                        total = report.get('summary', {}).get('total', 0)
+                        failed = report.get("summary", {}).get("failed", 0)
+                        total = report.get("summary", {}).get("total", 0)
 
-                        self.violations.append(ViolationReport(
-                            article="Article II",
-                            severity="critical",
-                            description=f"{failed} out of {total} tests are failing",
-                            suggested_fix="Fix all failing tests before proceeding"
-                        ))
+                        self.violations.append(
+                            ViolationReport(
+                                article="Article II",
+                                severity="critical",
+                                description=f"{failed} out of {total} tests are failing",
+                                suggested_fix="Fix all failing tests before proceeding",
+                            )
+                        )
                     except:
-                        self.violations.append(ViolationReport(
-                            article="Article II",
-                            severity="critical",
-                            description="Tests are failing",
-                            suggested_fix="Run 'pytest -v' to see failures and fix them"
-                        ))
+                        self.violations.append(
+                            ViolationReport(
+                                article="Article II",
+                                severity="critical",
+                                description="Tests are failing",
+                                suggested_fix="Run 'pytest -v' to see failures and fix them",
+                            )
+                        )
 
                     compliant = False
 
             finally:
                 # Clean up temporary file
                 import os
-                if 'temp_path' in locals() and os.path.exists(temp_path):
+
+                if "temp_path" in locals() and os.path.exists(temp_path):
                     os.unlink(temp_path)
 
         except FileNotFoundError:
-            self.violations.append(ViolationReport(
-                article="Article II",
-                severity="critical",
-                description="pytest is not installed",
-                suggested_fix="Install pytest: pip install pytest"
-            ))
+            self.violations.append(
+                ViolationReport(
+                    article="Article II",
+                    severity="critical",
+                    description="pytest is not installed",
+                    suggested_fix="Install pytest: pip install pytest",
+                )
+            )
             compliant = False
 
         return compliant
@@ -198,13 +219,15 @@ class ConstitutionalEnforcer:
         # Check for pre-commit configuration
         precommit_path = self.project_root / ".pre-commit-config.yaml"
         if not precommit_path.exists():
-            self.violations.append(ViolationReport(
-                article="Article III",
-                severity="high",
-                description="Pre-commit hooks not configured",
-                file_path=".pre-commit-config.yaml",
-                suggested_fix="Create .pre-commit-config.yaml with quality checks"
-            ))
+            self.violations.append(
+                ViolationReport(
+                    article="Article III",
+                    severity="high",
+                    description="Pre-commit hooks not configured",
+                    file_path=".pre-commit-config.yaml",
+                    suggested_fix="Create .pre-commit-config.yaml with quality checks",
+                )
+            )
             compliant = False
 
         # Check for CI configuration
@@ -216,12 +239,14 @@ class ConstitutionalEnforcer:
 
         has_ci = any(path.exists() for path in ci_paths)
         if not has_ci:
-            self.violations.append(ViolationReport(
-                article="Article III",
-                severity="medium",
-                description="No CI/CD pipeline configuration found",
-                suggested_fix="Set up GitHub Actions, GitLab CI, or similar"
-            ))
+            self.violations.append(
+                ViolationReport(
+                    article="Article III",
+                    severity="medium",
+                    description="No CI/CD pipeline configuration found",
+                    suggested_fix="Set up GitHub Actions, GitLab CI, or similar",
+                )
+            )
             compliant = False
 
         # Check for linting configuration
@@ -234,12 +259,14 @@ class ConstitutionalEnforcer:
 
         has_linting = any(path.exists() for path in lint_configs)
         if not has_linting:
-            self.violations.append(ViolationReport(
-                article="Article III",
-                severity="medium",
-                description="No linting configuration found",
-                suggested_fix="Configure pylint, ruff, or similar linting tool"
-            ))
+            self.violations.append(
+                ViolationReport(
+                    article="Article III",
+                    severity="medium",
+                    description="No linting configuration found",
+                    suggested_fix="Configure pylint, ruff, or similar linting tool",
+                )
+            )
             compliant = False
 
         return compliant
@@ -258,34 +285,40 @@ class ConstitutionalEnforcer:
         # Check for learning loop
         learning_path = self.project_root / "learning_loop"
         if not learning_path.exists():
-            self.violations.append(ViolationReport(
-                article="Article IV",
-                severity="high",
-                description="Learning loop module not found",
-                suggested_fix="Implement learning_loop module for continuous improvement"
-            ))
+            self.violations.append(
+                ViolationReport(
+                    article="Article IV",
+                    severity="high",
+                    description="Learning loop module not found",
+                    suggested_fix="Implement learning_loop module for continuous improvement",
+                )
+            )
             compliant = False
 
         # Check for pattern storage
         patterns_path = self.project_root / "pattern_intelligence"
         if not patterns_path.exists():
-            self.violations.append(ViolationReport(
-                article="Article IV",
-                severity="medium",
-                description="Pattern intelligence module not found",
-                suggested_fix="Implement pattern_intelligence for pattern learning"
-            ))
+            self.violations.append(
+                ViolationReport(
+                    article="Article IV",
+                    severity="medium",
+                    description="Pattern intelligence module not found",
+                    suggested_fix="Implement pattern_intelligence for pattern learning",
+                )
+            )
             compliant = False
 
         # Check for memory systems
         memory_path = self.project_root / "agency_memory"
         if not memory_path.exists():
-            self.violations.append(ViolationReport(
-                article="Article IV",
-                severity="medium",
-                description="Memory system not found",
-                suggested_fix="Implement agency_memory for persistent learning"
-            ))
+            self.violations.append(
+                ViolationReport(
+                    article="Article IV",
+                    severity="medium",
+                    description="Memory system not found",
+                    suggested_fix="Implement agency_memory for persistent learning",
+                )
+            )
             compliant = False
 
         return compliant
@@ -304,34 +337,40 @@ class ConstitutionalEnforcer:
         # Check for specs directory
         specs_path = self.project_root / "specs"
         if not specs_path.exists():
-            self.violations.append(ViolationReport(
-                article="Article V",
-                severity="critical",
-                description="Specs directory not found",
-                suggested_fix="Create specs/ directory with formal specifications"
-            ))
+            self.violations.append(
+                ViolationReport(
+                    article="Article V",
+                    severity="critical",
+                    description="Specs directory not found",
+                    suggested_fix="Create specs/ directory with formal specifications",
+                )
+            )
             compliant = False
         else:
             # Check if specs exist
             spec_files = list(specs_path.glob("*.md"))
             if len(spec_files) < 3:  # Arbitrary minimum
-                self.violations.append(ViolationReport(
-                    article="Article V",
-                    severity="high",
-                    description=f"Only {len(spec_files)} specifications found",
-                    suggested_fix="Create formal specifications for all major features"
-                ))
+                self.violations.append(
+                    ViolationReport(
+                        article="Article V",
+                        severity="high",
+                        description=f"Only {len(spec_files)} specifications found",
+                        suggested_fix="Create formal specifications for all major features",
+                    )
+                )
                 compliant = False
 
         # Check for plans directory
         plans_path = self.project_root / "plans"
         if not plans_path.exists():
-            self.violations.append(ViolationReport(
-                article="Article V",
-                severity="high",
-                description="Plans directory not found",
-                suggested_fix="Create plans/ directory with implementation plans"
-            ))
+            self.violations.append(
+                ViolationReport(
+                    article="Article V",
+                    severity="high",
+                    description="Plans directory not found",
+                    suggested_fix="Create plans/ directory with implementation plans",
+                )
+            )
             compliant = False
 
         return compliant
@@ -356,14 +395,14 @@ class ConstitutionalEnforcer:
             articles_checked=articles_checked,
             violations=self.violations,
             overall_compliance=overall_compliance,
-            compliance_percentage=compliance_percentage
+            compliance_percentage=compliance_percentage,
         )
 
     def print_report(self, report: ComplianceReport) -> None:
         """Print a formatted compliance report."""
-        print("\n" + "="*60)
+        print("\n" + "=" * 60)
         print("CONSTITUTIONAL COMPLIANCE REPORT")
-        print("="*60)
+        print("=" * 60)
         print(f"Timestamp: {report.timestamp.strftime('%Y-%m-%d %H:%M:%S')}")
         print(f"Overall Compliance: {'✅ PASS' if report.overall_compliance else '❌ FAIL'}")
         print(f"Compliance Score: {report.compliance_percentage:.1f}%")
@@ -377,7 +416,7 @@ class ConstitutionalEnforcer:
 
         if report.violations:
             print(f"Violations Found ({len(report.violations)} total):")
-            print("-"*60)
+            print("-" * 60)
 
             # Group by severity
             critical = [v for v in report.violations if v.severity == "critical"]
@@ -385,14 +424,20 @@ class ConstitutionalEnforcer:
             medium = [v for v in report.violations if v.severity == "medium"]
             low = [v for v in report.violations if v.severity == "low"]
 
-            for severity, violations in [("CRITICAL", critical), ("HIGH", high),
-                                        ("MEDIUM", medium), ("LOW", low)]:
+            for severity, violations in [
+                ("CRITICAL", critical),
+                ("HIGH", high),
+                ("MEDIUM", medium),
+                ("LOW", low),
+            ]:
                 if violations:
                     print(f"\n{severity} Severity:")
                     for v in violations[:5]:  # Show first 5 of each severity
                         print(f"  • {v.article}: {v.description}")
                         if v.file_path:
-                            print(f"    File: {v.file_path}:{v.line_number if v.line_number else ''}")
+                            print(
+                                f"    File: {v.file_path}:{v.line_number if v.line_number else ''}"
+                            )
                         if v.suggested_fix:
                             print(f"    Fix: {v.suggested_fix}")
 
@@ -401,7 +446,7 @@ class ConstitutionalEnforcer:
         else:
             print("🎉 No violations found! Full constitutional compliance achieved.")
 
-        print("\n" + "="*60)
+        print("\n" + "=" * 60)
 
     def check_compliance(self) -> ComplianceReport:
         """Alias for run_full_check for backward compatibility."""
@@ -410,16 +455,16 @@ class ConstitutionalEnforcer:
     def _fix_missing_docstring(self, file_path: str, line_number: int, func_name: str) -> bool:
         """Attempt to fix missing docstring for a function."""
         try:
-            with open(file_path, 'r') as f:
+            with open(file_path) as f:
                 lines = f.readlines()
 
             # Insert a basic docstring after the function definition
             if line_number <= len(lines):
-                indent = '    '  # Basic indentation
+                indent = "    "  # Basic indentation
                 docstring = f'{indent}"""TODO: Add docstring for {func_name}."""\n'
                 lines.insert(line_number, docstring)
 
-                with open(file_path, 'w') as f:
+                with open(file_path, "w") as f:
                     f.writelines(lines)
 
                 if self.verbose:
@@ -454,23 +499,27 @@ class ConstitutionalEnforcer:
 
         elif format == "json":
             import json
-            return json.dumps({
-                "timestamp": report.timestamp.isoformat(),
-                "overall_compliance": report.overall_compliance,
-                "compliance_percentage": report.compliance_percentage,
-                "articles_checked": report.articles_checked,
-                "violations": [
-                    {
-                        "article": v.article,
-                        "severity": v.severity,
-                        "description": v.description,
-                        "file_path": v.file_path,
-                        "line_number": v.line_number,
-                        "suggested_fix": v.suggested_fix
-                    }
-                    for v in report.violations
-                ]
-            }, indent=2)
+
+            return json.dumps(
+                {
+                    "timestamp": report.timestamp.isoformat(),
+                    "overall_compliance": report.overall_compliance,
+                    "compliance_percentage": report.compliance_percentage,
+                    "articles_checked": report.articles_checked,
+                    "violations": [
+                        {
+                            "article": v.article,
+                            "severity": v.severity,
+                            "description": v.description,
+                            "file_path": v.file_path,
+                            "line_number": v.line_number,
+                            "suggested_fix": v.suggested_fix,
+                        }
+                        for v in report.violations
+                    ],
+                },
+                indent=2,
+            )
 
         else:
             raise ValueError(f"Unsupported format: {format}")
@@ -487,7 +536,11 @@ class ConstitutionalEnforcer:
                 continue  # Don't auto-fix critical issues
 
             # Fix missing docstrings
-            if "docstring" in violation.description.lower() and violation.file_path and violation.line_number:
+            if (
+                "docstring" in violation.description.lower()
+                and violation.file_path
+                and violation.line_number
+            ):
                 # Extract function name from description
                 func_name = "unknown_function"
                 if "'" in violation.description:
@@ -495,7 +548,9 @@ class ConstitutionalEnforcer:
                     if len(parts) >= 2:
                         func_name = parts[1]
 
-                if self._fix_missing_docstring(violation.file_path, violation.line_number, func_name):
+                if self._fix_missing_docstring(
+                    violation.file_path, violation.line_number, func_name
+                ):
                     fixed_count += 1
 
             # Example: Auto-create missing directories
@@ -539,10 +594,10 @@ def main():
                     "description": v.description,
                     "file_path": v.file_path,
                     "line_number": v.line_number,
-                    "suggested_fix": v.suggested_fix
+                    "suggested_fix": v.suggested_fix,
                 }
                 for v in report.violations
-            ]
+            ],
         }
         print(json.dumps(json_report, indent=2))
     else:

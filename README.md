@@ -1,8 +1,15 @@
 # 🏥 Agency OS - Autonomous Software Engineering Platform
 
-**Version 0.9.5** - DSPy Integration & Professional Git Workflow
+**Version 0.9.5** - Documentation Optimization & Token Efficiency Release
 
-Elite autonomous software engineering system with **proven self-healing capabilities**, **100% constitutional compliance**, and **professional Git workflow automation**. Built with [Agency Swarm](https://agency-swarm.ai/welcome/overview) framework, now enhanced with DSPy integration for advanced chain-of-thought reasoning and autonomous healing.
+Elite autonomous software engineering system with **proven self-healing capabilities**, **100% constitutional compliance**, and **93% token-optimized documentation**. Built with [Agency Swarm](https://agency-swarm.ai/welcome/overview) framework with tier-based navigation for autonomous agents.
+
+## 🚀 Quick Start
+
+**New to Agency?** Start here:
+1. **Installation**: See `docs/getting-started/README.md`
+2. **Architecture**: See `docs/architecture/overview.md`
+3. **For Agents**: Use `/primecc` command + `.claude/quick-ref/city-map.md`
 
 ### 🔄 Professional Development Workflow
 - **GitWorkflowTool**: Complete branch → commit → push → PR automation

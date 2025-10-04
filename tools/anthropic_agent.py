@@ -15,10 +15,12 @@ Environment variables:
 Secrets:
 - Uses ANTHROPIC_API_KEY from the environment; do not print or echo it.
 """
+
 from __future__ import annotations
 
 import os
-from typing import Any, Dict, Optional
+from typing import Any
+
 from shared.type_definitions.json import JSONValue
 
 try:
@@ -43,13 +45,13 @@ def _parse_setting_sources(raw: str) -> list[str]:
     return [part.strip() for part in raw.split(",") if part.strip()]
 
 
-def get_options_config() -> Dict[str, JSONValue]:
+def get_options_config() -> dict[str, JSONValue]:
     """Build a plain dict of options for the Claude Agent SDK.
 
     We avoid relying on the SDK's typed classes here so this function
     remains importable even if the SDK isn't installed yet.
     """
-    cfg: Dict[str, JSONValue] = {}
+    cfg: dict[str, JSONValue] = {}
 
     # Model
     cfg["model"] = os.getenv("CLAUDE_AGENT_MODEL", "claude-sonnet-4-5")
@@ -70,7 +72,7 @@ def get_options_config() -> Dict[str, JSONValue]:
     return cfg
 
 
-def query_agent(prompt: str, extra_options: Optional[Dict[str, JSONValue]] = None) -> Any:
+def query_agent(prompt: str, extra_options: dict[str, JSONValue] | None = None) -> Any:
     """Execute a simple query via the Claude Agent SDK when enabled.
 
     - Respects agent_enabled() flag
@@ -78,16 +80,12 @@ def query_agent(prompt: str, extra_options: Optional[Dict[str, JSONValue]] = Non
     - Raises helpful errors when the SDK isn't installed or when disabled
     """
     if not agent_enabled():
-        raise RuntimeError(
-            "Claude Agent SDK is disabled. Set CLAUDE_AGENT_ENABLE=1 to enable."
-        )
+        raise RuntimeError("Claude Agent SDK is disabled. Set CLAUDE_AGENT_ENABLE=1 to enable.")
 
     if query is None:  # SDK not importable
-        raise ImportError(
-            "claude-agent-sdk is not installed. Ensure requirements are installed."
-        )
+        raise ImportError("claude-agent-sdk is not installed. Ensure requirements are installed.")
 
-    options: Dict[str, JSONValue] = get_options_config()
+    options: dict[str, JSONValue] = get_options_config()
     if extra_options:
         options.update(extra_options)
 

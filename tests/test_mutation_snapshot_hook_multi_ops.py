@@ -1,7 +1,7 @@
-import os
-import json
-from pathlib import Path
 import asyncio
+import json
+import os
+from pathlib import Path
 
 from shared.system_hooks import create_mutation_snapshot_hook
 
@@ -10,8 +10,10 @@ class DummyContext:
     def __init__(self):
         self._data = {}
         self.thread_manager = None
+
     def get(self, k, d=None):
         return self._data.get(k, d)
+
     def set(self, k, v):
         self._data[k] = v
 
@@ -33,15 +35,20 @@ def test_snapshot_hook_multi_operations(tmp_path):
 
         class MultiEditLike:
             name = "MultiEdit"
+
             def __init__(self, ops):
                 self.operations = ops
 
-        tool = MultiEditLike([
-            {"file_path": str(f1)},
-            {"file_path": str(f2)},
-        ])
+        tool = MultiEditLike(
+            [
+                {"file_path": str(f1)},
+                {"file_path": str(f2)},
+            ]
+        )
         wrapper = DummyWrapper()
-        asyncio.get_event_loop().run_until_complete(hook.on_tool_start(wrapper, agent=None, tool=tool))
+        asyncio.get_event_loop().run_until_complete(
+            hook.on_tool_start(wrapper, agent=None, tool=tool)
+        )
 
         snaps_dir = root / "logs" / "snapshots"
         assert snaps_dir.exists()

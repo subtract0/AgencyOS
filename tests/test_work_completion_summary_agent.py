@@ -1,15 +1,11 @@
-import pytest
-import os
 import json
-import tempfile
-from unittest.mock import Mock, patch, MagicMock, mock_open
-from datetime import datetime, timezone
+from unittest.mock import Mock, mock_open, patch
 
+from shared.agent_context import create_agent_context
 from work_completion_summary_agent.work_completion_summary_agent import (
     RegenerateWithGpt5,
-    create_work_completion_summary_agent
+    create_work_completion_summary_agent,
 )
-from shared.agent_context import AgentContext, create_agent_context
 
 
 class TestRegenerateWithGpt5:
@@ -25,17 +21,15 @@ class TestRegenerateWithGpt5:
     def test_tool_initialization_with_optional_fields(self):
         """Test tool initialization with all fields."""
         tool = RegenerateWithGpt5(
-            draft="Test summary",
-            bundle_path="/path/to/bundle.txt",
-            guidance="Extra instructions"
+            draft="Test summary", bundle_path="/path/to/bundle.txt", guidance="Extra instructions"
         )
         assert tool.draft == "Test summary"
         assert tool.bundle_path == "/path/to/bundle.txt"
         assert tool.guidance == "Extra instructions"
 
-    @patch('work_completion_summary_agent.work_completion_summary_agent.litellm.completion')
-    @patch('builtins.open', new_callable=mock_open, read_data="bundle content")
-    @patch('os.path.exists')
+    @patch("work_completion_summary_agent.work_completion_summary_agent.litellm.completion")
+    @patch("builtins.open", new_callable=mock_open, read_data="bundle content")
+    @patch("os.path.exists")
     def test_run_success_with_bundle(self, mock_exists, mock_file, mock_completion):
         """Test successful execution with bundle file."""
         # Setup mocks
@@ -46,12 +40,9 @@ class TestRegenerateWithGpt5:
         mock_response.choices[0].message.content = "Improved summary content"
         mock_completion.return_value = mock_response
 
-        tool = RegenerateWithGpt5(
-            draft="Original draft",
-            bundle_path="/path/to/bundle.txt"
-        )
+        tool = RegenerateWithGpt5(draft="Original draft", bundle_path="/path/to/bundle.txt")
 
-        with patch.object(tool, '_emit_telemetry_event'):
+        with patch.object(tool, "_emit_telemetry_event"):
             result = tool.run()
 
         assert result == "Improved summary content"
@@ -59,7 +50,7 @@ class TestRegenerateWithGpt5:
         mock_file.assert_called_once_with("/path/to/bundle.txt", "r", encoding="utf-8")
         mock_completion.assert_called_once()
 
-    @patch('work_completion_summary_agent.work_completion_summary_agent.litellm.completion')
+    @patch("work_completion_summary_agent.work_completion_summary_agent.litellm.completion")
     def test_run_success_without_bundle(self, mock_completion):
         """Test successful execution without bundle file."""
         mock_response = Mock()
@@ -70,13 +61,13 @@ class TestRegenerateWithGpt5:
 
         tool = RegenerateWithGpt5(draft="Original draft")
 
-        with patch.object(tool, '_emit_telemetry_event'):
+        with patch.object(tool, "_emit_telemetry_event"):
             result = tool.run()
 
         assert result == "Improved summary content"
         mock_completion.assert_called_once()
 
-    @patch('work_completion_summary_agent.work_completion_summary_agent.litellm.completion')
+    @patch("work_completion_summary_agent.work_completion_summary_agent.litellm.completion")
     def test_run_handles_api_error(self, mock_completion):
         """Test error handling when API call fails."""
         mock_completion.side_effect = Exception("API Error")
@@ -90,7 +81,7 @@ class TestRegenerateWithGpt5:
         """Test bundle loading when file doesn't exist."""
         tool = RegenerateWithGpt5(draft="Test", bundle_path="/nonexistent/path.txt")
 
-        with patch('os.path.exists', return_value=False):
+        with patch("os.path.exists", return_value=False):
             result = tool._load_bundle_content()
 
         assert result == ""
@@ -101,8 +92,8 @@ class TestRegenerateWithGpt5:
         result = tool._load_bundle_content()
         assert result == ""
 
-    @patch('builtins.open', new_callable=mock_open, read_data="A" * 150000)
-    @patch('os.path.exists', return_value=True)
+    @patch("builtins.open", new_callable=mock_open, read_data="A" * 150000)
+    @patch("os.path.exists", return_value=True)
     def test_load_bundle_content_size_limit(self, mock_exists, mock_file):
         """Test bundle content is limited to 120000 characters."""
         tool = RegenerateWithGpt5(draft="Test", bundle_path="/path/to/large.txt")
@@ -111,8 +102,8 @@ class TestRegenerateWithGpt5:
         assert len(result) == 120000
         assert result == "A" * 120000
 
-    @patch('builtins.open', side_effect=IOError("File read error"))
-    @patch('os.path.exists', return_value=True)
+    @patch("builtins.open", side_effect=OSError("File read error"))
+    @patch("os.path.exists", return_value=True)
     def test_load_bundle_content_read_error(self, mock_exists, mock_file):
         """Test bundle loading handles file read errors."""
         tool = RegenerateWithGpt5(draft="Test", bundle_path="/path/to/bundle.txt")
@@ -124,10 +115,7 @@ class TestRegenerateWithGpt5:
 
     def test_prepare_gpt5_messages_with_bundle(self):
         """Test message preparation with bundle content."""
-        tool = RegenerateWithGpt5(
-            draft="Test summary",
-            guidance="Extra guidance"
-        )
+        tool = RegenerateWithGpt5(draft="Test summary", guidance="Extra guidance")
         bundle_text = "Bundle content here"
 
         messages = tool._prepare_gpt5_messages(bundle_text)
@@ -159,13 +147,13 @@ class TestRegenerateWithGpt5:
         tool = RegenerateWithGpt5(draft="Test")
         messages = [{"role": "user", "content": "test"}]
 
-        with patch('work_completion_summary_agent.work_completion_summary_agent.litellm.completion') as mock_completion:
+        with patch(
+            "work_completion_summary_agent.work_completion_summary_agent.litellm.completion"
+        ) as mock_completion:
             tool._call_gpt5_with_reasoning(messages)
 
             mock_completion.assert_called_once_with(
-                model="gpt-5",
-                messages=messages,
-                extra_body={"reasoning": {"effort": "high"}}
+                model="gpt-5", messages=messages, extra_body={"reasoning": {"effort": "high"}}
             )
 
     def test_extract_response_content_with_choices(self):
@@ -184,11 +172,7 @@ class TestRegenerateWithGpt5:
         """Test response content extraction from dict format."""
         tool = RegenerateWithGpt5(draft="Test")
 
-        mock_response = {
-            "choices": [
-                {"message": {"content": "Dict extracted content"}}
-            ]
-        }
+        mock_response = {"choices": [{"message": {"content": "Dict extracted content"}}]}
 
         result = tool._extract_response_content(mock_response)
         assert result == "Dict extracted content"
@@ -210,26 +194,30 @@ class TestRegenerateWithGpt5:
         result = tool._extract_response_content(mock_response)
         assert result == str(mock_response)
 
-    @patch('tools.orchestrator.scheduler._telemetry_emit')
+    @patch("tools.orchestrator.scheduler._telemetry_emit")
     def test_emit_telemetry_event_success(self, mock_emit):
         """Test successful telemetry emission."""
         tool = RegenerateWithGpt5(draft="Test", bundle_path="/path/to/bundle.txt")
 
         tool._emit_telemetry_event()
 
-        mock_emit.assert_called_once_with({
-            "type": "escalation_used",
-            "agent": "WorkCompletionSummaryAgent",
-            "tool": "RegenerateWithGpt5",
-            "bundle_present": True,
-        })
+        mock_emit.assert_called_once_with(
+            {
+                "type": "escalation_used",
+                "agent": "WorkCompletionSummaryAgent",
+                "tool": "RegenerateWithGpt5",
+                "bundle_present": True,
+            }
+        )
 
-    @patch('tools.orchestrator.scheduler._telemetry_emit', side_effect=ImportError())
-    @patch('builtins.open', new_callable=mock_open)
-    @patch('os.makedirs')
-    @patch('os.path.join')
-    @patch('os.getcwd', return_value='/test/cwd')
-    def test_emit_telemetry_fallback(self, mock_getcwd, mock_join, mock_makedirs, mock_file, mock_emit):
+    @patch("tools.orchestrator.scheduler._telemetry_emit", side_effect=ImportError())
+    @patch("builtins.open", new_callable=mock_open)
+    @patch("os.makedirs")
+    @patch("os.path.join")
+    @patch("os.getcwd", return_value="/test/cwd")
+    def test_emit_telemetry_fallback(
+        self, mock_getcwd, mock_join, mock_makedirs, mock_file, mock_emit
+    ):
         """Test fallback telemetry writing when main telemetry fails."""
         mock_join.side_effect = lambda *args: "/".join(args)
 
@@ -238,11 +226,14 @@ class TestRegenerateWithGpt5:
         # Just test that the fallback doesn't crash
         tool._emit_telemetry_event()
 
-        mock_makedirs.assert_called_once_with('/test/cwd/logs/telemetry', exist_ok=True)
+        mock_makedirs.assert_called_once_with("/test/cwd/logs/telemetry", exist_ok=True)
         mock_file.assert_called_once()
 
-    @patch('tools.orchestrator.scheduler._telemetry_emit', side_effect=ImportError())
-    @patch('work_completion_summary_agent.work_completion_summary_agent.os.makedirs', side_effect=OSError())
+    @patch("tools.orchestrator.scheduler._telemetry_emit", side_effect=ImportError())
+    @patch(
+        "work_completion_summary_agent.work_completion_summary_agent.os.makedirs",
+        side_effect=OSError(),
+    )
     def test_fallback_telemetry_write_error_handling(self, mock_makedirs, mock_emit):
         """Test fallback telemetry handles errors gracefully."""
         tool = RegenerateWithGpt5(draft="Test")
@@ -263,16 +254,16 @@ class TestWorkCompletionSummaryAgentCreation:
         assert "audio summaries" in agent.description
 
         # Check tools
-        tool_names = [getattr(t, 'name', getattr(t, '__name__', str(t))) for t in agent.tools]
-        assert "RegenerateWithGpt5" in tool_names or any("RegenerateWithGpt5" in str(t) for t in agent.tools)
+        tool_names = [getattr(t, "name", getattr(t, "__name__", str(t))) for t in agent.tools]
+        assert "RegenerateWithGpt5" in tool_names or any(
+            "RegenerateWithGpt5" in str(t) for t in agent.tools
+        )
 
     def test_agent_creation_custom_params(self):
         """Test agent creation with custom parameters."""
         ctx = create_agent_context()
         agent = create_work_completion_summary_agent(
-            model="gpt-5",
-            reasoning_effort="high",
-            agent_context=ctx
+            model="gpt-5", reasoning_effort="high", agent_context=ctx
         )
 
         assert agent.name == "WorkCompletionSummaryAgent"
@@ -287,25 +278,22 @@ class TestWorkCompletionSummaryAgentCreation:
 
         assert agent is not None
         # The context should be used
-        assert hasattr(agent, 'hooks')
+        assert hasattr(agent, "hooks")
         assert agent.hooks is not None
 
     def test_agent_hooks_integration(self):
         """Test that agent has proper hooks configured."""
         agent = create_work_completion_summary_agent()
 
-        assert hasattr(agent, 'hooks')
+        assert hasattr(agent, "hooks")
         assert agent.hooks is not None
         # Should have composite hook with filter, memory, and bundle hooks
 
     def test_agent_model_settings(self):
         """Test that agent has proper model settings."""
-        agent = create_work_completion_summary_agent(
-            model="gpt-5-nano",
-            reasoning_effort="low"
-        )
+        agent = create_work_completion_summary_agent(model="gpt-5-nano", reasoning_effort="low")
 
-        assert hasattr(agent, 'model_settings')
+        assert hasattr(agent, "model_settings")
         # The agent should have model settings configured
 
     def test_agent_instructions_and_model(self):
@@ -315,14 +303,14 @@ class TestWorkCompletionSummaryAgentCreation:
         # Agent should be created successfully
         assert agent is not None
         assert agent.name == "WorkCompletionSummaryAgent"
-        assert hasattr(agent, 'model')
-        assert hasattr(agent, 'instructions')
+        assert hasattr(agent, "model")
+        assert hasattr(agent, "instructions")
 
     def test_agent_memory_integration(self):
         """Test that agent creation logs to memory."""
         ctx = create_agent_context()
 
-        with patch.object(ctx, 'store_memory') as mock_store:
+        with patch.object(ctx, "store_memory") as mock_store:
             agent = create_work_completion_summary_agent(agent_context=ctx)
 
             mock_store.assert_called_once()
@@ -351,10 +339,10 @@ class TestWorkCompletionSummaryAgentIntegration:
         # Find the RegenerateWithGpt5 tool
         regen_tool = None
         for tool in agent.tools:
-            if hasattr(tool, '__name__') and tool.__name__ == 'RegenerateWithGpt5':
+            if hasattr(tool, "__name__") and tool.__name__ == "RegenerateWithGpt5":
                 regen_tool = tool
                 break
-            elif 'RegenerateWithGpt5' in str(tool):
+            elif "RegenerateWithGpt5" in str(tool):
                 regen_tool = tool
                 break
 

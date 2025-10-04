@@ -10,8 +10,8 @@ from typing import TYPE_CHECKING
 __version__ = "0.1.0"
 
 if TYPE_CHECKING:
-    from .registry import AgentRegistry
     from .modules.code_agent import DSPyCodeAgent
+    from .registry import AgentRegistry
 
 __all__ = [
     "AgentRegistry",

@@ -5,11 +5,9 @@ Implements key validations from constitution.md without running full test suite.
 """
 
 import os
-import sys
 import subprocess
-import json
+import sys
 from pathlib import Path
-from typing import List, Tuple
 
 
 class ConstitutionalChecker:
@@ -18,8 +16,8 @@ class ConstitutionalChecker:
     def __init__(self) -> None:
         self.project_root = Path(__file__).parent.parent
         self.constitution_path = self.project_root / "constitution.md"
-        self.errors: List[str] = []
-        self.warnings: List[str] = []
+        self.errors: list[str] = []
+        self.warnings: list[str] = []
 
     def check_article_i_context(self) -> bool:
         """Article I: Complete Context Before Action - Check for TODO/FIXME markers."""
@@ -31,25 +29,29 @@ class ConstitutionalChecker:
                 ["grep", "-rn", "--include=*.py", "-E", "TODO|FIXME|XXX", str(self.project_root)],
                 capture_output=True,
                 text=True,
-                timeout=5
+                timeout=5,
             )
 
             if result.returncode == 0:
-                lines = result.stdout.strip().split('\n')
+                lines = result.stdout.strip().split("\n")
                 # Filter out acceptable TODOs (in comments, docs, tests)
                 problematic_todos = []
                 for line in lines:
                     # Only flag TODOs in implementation files that look unfinished
-                    if line and all([
-                        "test_" not in line,
-                        "examples/" not in line,
-                        "archive/" not in line,
-                        "TODO: Implement" in line or "FIXME: Critical" in line
-                    ]):
+                    if line and all(
+                        [
+                            "test_" not in line,
+                            "examples/" not in line,
+                            "archive/" not in line,
+                            "TODO: Implement" in line or "FIXME: Critical" in line,
+                        ]
+                    ):
                         problematic_todos.append(line)
 
                 if problematic_todos:
-                    self.warnings.append(f"Found {len(problematic_todos)} critical TODO/FIXME markers")
+                    self.warnings.append(
+                        f"Found {len(problematic_todos)} critical TODO/FIXME markers"
+                    )
                     # Don't fail for TODOs, just warn
                     return True
             return True
@@ -64,7 +66,7 @@ class ConstitutionalChecker:
 
         # Quick Python syntax check on changed files
         changed_files = self.get_changed_files()
-        python_files = [f for f in changed_files if f.endswith('.py')]
+        python_files = [f for f in changed_files if f.endswith(".py")]
 
         if not python_files:
             return True
@@ -83,7 +85,7 @@ class ConstitutionalChecker:
         required_files = [
             ".github/workflows/ci.yml",
             ".github/workflows/merge-guardian.yml",
-            ".pre-commit-config.yaml"
+            ".pre-commit-config.yaml",
         ]
 
         for req_file in required_files:
@@ -107,7 +109,7 @@ class ConstitutionalChecker:
         # Check unified core is enabled
         core_init = self.project_root / "core" / "__init__.py"
         if core_init.exists():
-            with open(core_init, 'r') as f:
+            with open(core_init) as f:
                 content = f.read()
                 if 'ENABLE_UNIFIED_CORE = os.getenv("ENABLE_UNIFIED_CORE", "false")' in content:
                     self.warnings.append("Unified core not enabled by default")
@@ -130,18 +132,18 @@ class ConstitutionalChecker:
 
         return True
 
-    def get_changed_files(self) -> List[str]:
+    def get_changed_files(self) -> list[str]:
         """Get list of changed files in current commit."""
         try:
             result = subprocess.run(
                 ["git", "diff", "--cached", "--name-only"],
                 capture_output=True,
                 text=True,
-                timeout=5
+                timeout=5,
             )
 
             if result.returncode == 0:
-                return [f for f in result.stdout.strip().split('\n') if f]
+                return [f for f in result.stdout.strip().split("\n") if f]
 
         except (subprocess.TimeoutExpired, subprocess.SubprocessError):
             pass
@@ -155,10 +157,10 @@ class ConstitutionalChecker:
             if not full_path.exists():
                 return True  # File deleted, skip
 
-            with open(full_path, 'r') as f:
+            with open(full_path) as f:
                 code = f.read()
 
-            compile(code, file_path, 'exec')
+            compile(code, file_path, "exec")
             return True
 
         except SyntaxError as e:
@@ -168,7 +170,7 @@ class ConstitutionalChecker:
             # Other errors - let CI handle them
             return True
 
-    def run_checks(self) -> Tuple[bool, str]:
+    def run_checks(self) -> tuple[bool, str]:
         """Run all constitutional checks."""
         print("\n" + "=" * 60)
         print("🏛️  CONSTITUTIONAL COMPLIANCE CHECK")

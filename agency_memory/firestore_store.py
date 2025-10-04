@@ -3,10 +3,11 @@ FirestoreStore implementation with verbose fallback to InMemoryStore.
 Only activates when FRESH_USE_FIRESTORE=true and gracefully degrades.
 """
 
-import os
 import logging
+import os
 from datetime import datetime
-from typing import Any, Dict, List, cast
+from typing import Any, cast
+
 from shared.type_definitions.json import JSONValue
 
 # Expose firestore at module scope for test patching
@@ -15,8 +16,9 @@ try:  # pragma: no cover
 except Exception:  # pragma: no cover
     firestore = None
 
-from .memory import MemoryStore, InMemoryStore
-from shared.models.memory import MemorySearchResult, MemoryRecord, MemoryPriority, MemoryMetadata
+from shared.models.memory import MemoryPriority, MemoryRecord, MemorySearchResult
+
+from .memory import InMemoryStore, MemoryStore
 
 logger = logging.getLogger(__name__)
 
@@ -70,6 +72,7 @@ class FirestoreStore(MemoryStore):
             global firestore
             if firestore is None:
                 from google.cloud import firestore as _fs  # type: ignore
+
                 firestore = _fs
 
             # Check for emulator
@@ -96,8 +99,7 @@ class FirestoreStore(MemoryStore):
 
             except Exception as e:
                 logger.warning(
-                    f"FirestoreStore: Connection test failed: {e}. "
-                    "Falling back to InMemoryStore"
+                    f"FirestoreStore: Connection test failed: {e}. Falling back to InMemoryStore"
                 )
                 return False
 
@@ -111,8 +113,7 @@ class FirestoreStore(MemoryStore):
 
         except Exception as e:
             logger.warning(
-                f"FirestoreStore: Initialization failed: {e}. "
-                "Falling back to InMemoryStore"
+                f"FirestoreStore: Initialization failed: {e}. Falling back to InMemoryStore"
             )
             return False
 
@@ -120,11 +121,10 @@ class FirestoreStore(MemoryStore):
         """Initialize fallback InMemoryStore."""
         self._fallback_store = InMemoryStore()
         logger.info(
-            "FirestoreStore: Using InMemoryStore fallback - "
-            "data will not persist between sessions"
+            "FirestoreStore: Using InMemoryStore fallback - data will not persist between sessions"
         )
 
-    def store(self, key: str, content: Any, tags: List[str]) -> None:
+    def store(self, key: str, content: Any, tags: list[str]) -> None:
         """Store content with timestamp and tags."""
         if self._fallback_store:
             return self._fallback_store.store(key, content, tags)
@@ -148,7 +148,7 @@ class FirestoreStore(MemoryStore):
                 self._initialize_fallback()
             self._fallback_store.store(key, content, tags)  # type: ignore
 
-    def search(self, tags: List[str]) -> MemorySearchResult:
+    def search(self, tags: list[str]) -> MemorySearchResult:
         """Search memories by tags using Firestore array-contains-any."""
         if self._fallback_store:
             return self._fallback_store.search(tags)
@@ -158,7 +158,7 @@ class FirestoreStore(MemoryStore):
                 records=[],
                 total_count=0,
                 search_query={"tags": cast(JSONValue, [])},
-                execution_time_ms=0
+                execution_time_ms=0,
             )
 
         try:
@@ -175,8 +175,10 @@ class FirestoreStore(MemoryStore):
                         key=memory_dict.get("key", ""),
                         content=memory_dict.get("content", ""),
                         tags=memory_dict.get("tags", []),
-                        timestamp=datetime.fromisoformat(memory_dict.get("timestamp", datetime.now().isoformat())),
-                        priority=MemoryPriority(memory_dict.get("priority", "medium"))
+                        timestamp=datetime.fromisoformat(
+                            memory_dict.get("timestamp", datetime.now().isoformat())
+                        ),
+                        priority=MemoryPriority(memory_dict.get("priority", "medium")),
                     )
                     memory_records.append(record)
                 except Exception as e:
@@ -185,15 +187,13 @@ class FirestoreStore(MemoryStore):
 
             # Sort by timestamp (newest first)
             memory_records.sort(key=lambda x: x.timestamp, reverse=True)
-            logger.debug(
-                f"FirestoreStore: Found {len(memory_records)} memories for tags: {tags}"
-            )
+            logger.debug(f"FirestoreStore: Found {len(memory_records)} memories for tags: {tags}")
 
             return MemorySearchResult(
                 records=memory_records,
                 total_count=len(memory_records),
                 search_query={"tags": cast(JSONValue, tags)},
-                execution_time_ms=0
+                execution_time_ms=0,
             )
 
         except Exception as e:
@@ -203,7 +203,7 @@ class FirestoreStore(MemoryStore):
                 records=[],
                 total_count=0,
                 search_query={"tags": cast(JSONValue, tags)},
-                execution_time_ms=0
+                execution_time_ms=0,
             )
 
     def get_all(self) -> MemorySearchResult:
@@ -223,8 +223,10 @@ class FirestoreStore(MemoryStore):
                         key=memory_dict.get("key", ""),
                         content=memory_dict.get("content", ""),
                         tags=memory_dict.get("tags", []),
-                        timestamp=datetime.fromisoformat(memory_dict.get("timestamp", datetime.now().isoformat())),
-                        priority=MemoryPriority(memory_dict.get("priority", "medium"))
+                        timestamp=datetime.fromisoformat(
+                            memory_dict.get("timestamp", datetime.now().isoformat())
+                        ),
+                        priority=MemoryPriority(memory_dict.get("priority", "medium")),
                     )
                     memory_records.append(record)
                 except Exception as e:
@@ -239,16 +241,13 @@ class FirestoreStore(MemoryStore):
                 records=memory_records,
                 total_count=len(memory_records),
                 search_query={},
-                execution_time_ms=0
+                execution_time_ms=0,
             )
 
         except Exception as e:
             logger.error(f"FirestoreStore: Failed to retrieve all memories: {e}")
             return MemorySearchResult(
-                records=[],
-                total_count=0,
-                search_query={},
-                execution_time_ms=0
+                records=[], total_count=0, search_query={}, execution_time_ms=0
             )
 
 

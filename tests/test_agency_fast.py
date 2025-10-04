@@ -4,8 +4,10 @@ Replaces the slow test_agency.py with quick unit tests using mocks.
 All tests run in <100ms and avoid actual LLM calls.
 """
 
+from unittest.mock import AsyncMock, Mock, patch
+
 import pytest
-from unittest.mock import Mock, patch, AsyncMock
+
 from agency_code_agent.agency_code_agent import create_agency_code_agent
 
 
@@ -15,7 +17,7 @@ class TestAgencyFast:
     @pytest.fixture
     def mock_agency_fast(self):
         """Create a fast mocked agency for testing."""
-        with patch('agency_swarm.Agency') as mock_agency_class:
+        with patch("agency_swarm.Agency") as mock_agency_class:
             mock_agency = Mock()
             mock_agency.get_response = AsyncMock()
             mock_agency_class.return_value = mock_agency
@@ -30,36 +32,36 @@ class TestAgencyFast:
                 "category": "File Operations",
                 "query": "List files in the current directory and read the contents of the first Python file you find",
                 "expected_response": "Listed 5 files in current directory. Read main.py: import os\nprint('Hello World')",
-                "expected_tools": ["ls", "read"]
+                "expected_tools": ["ls", "read"],
             },
             {
                 "id": 2,
                 "category": "Code Search",
                 "query": "Search for any TODO comments in Python files and show me the results with line numbers",
                 "expected_response": "Found 3 TODO comments:\nfile1.py:10: # TODO: implement feature\nfile2.py:25: # TODO: fix bug",
-                "expected_tools": ["grep"]
+                "expected_tools": ["grep"],
             },
             {
                 "id": 3,
                 "category": "Complex Task",
                 "query": "Help me create a simple Python script that calculates fibonacci numbers and save it to fib.py. Use the TodoWrite tool to track your progress",
                 "expected_response": "Created fibonacci calculator in fib.py with recursive implementation. Tracked progress with TodoWrite tool.",
-                "expected_tools": ["todo_write", "write"]
+                "expected_tools": ["todo_write", "write"],
             },
             {
                 "id": 4,
                 "category": "Web Research",
                 "query": "Search for information about Agency Swarm framework and fetch content from the official documentation",
                 "expected_response": "Found Agency Swarm documentation. It's a multi-agent collaboration framework for building AI systems.",
-                "expected_tools": ["web_search"]
+                "expected_tools": ["web_search"],
             },
             {
                 "id": 5,
                 "category": "Development Workflow",
                 "query": "Show me the git status and create a sample test file, then stage it for commit",
                 "expected_response": "Git status: clean working tree. Created test_sample.py and staged for commit.",
-                "expected_tools": ["bash", "write"]
-            }
+                "expected_tools": ["bash", "write"],
+            },
         ]
 
     @pytest.mark.asyncio
@@ -195,7 +197,9 @@ class TestAgencyFast:
 
         # Assert that all tests passed (should be 5/5 with mocks)
         passed_tests = sum(1 for r in results if r["success"])
-        assert passed_tests == 5, f"All 5 tests should pass with mocks, but only {passed_tests} passed"
+        assert passed_tests == 5, (
+            f"All 5 tests should pass with mocks, but only {passed_tests} passed"
+        )
 
         # Verify quality scores
         total_quality = sum(r["quality_score"] for r in results)
@@ -236,14 +240,17 @@ class TestAgencyFast:
         # Verify all queries executed successfully
         assert len(results) == 3
         for result in results:
-            assert hasattr(result, 'text')
+            assert hasattr(result, "text")
             assert len(result.text) > 0
 
     def test_agency_creation_fast(self):
         """Test fast agency creation with mocked components."""
-        with patch('agency_swarm.Agency') as mock_agency_class, \
-             patch('agency_code_agent.agency_code_agent.create_agency_code_agent') as mock_create_agent:
-
+        with (
+            patch("agency_swarm.Agency") as mock_agency_class,
+            patch(
+                "agency_code_agent.agency_code_agent.create_agency_code_agent"
+            ) as mock_create_agent,
+        ):
             # Setup mocks
             mock_agent = Mock()
             mock_agent.name = "TestAgent"
@@ -254,10 +261,11 @@ class TestAgencyFast:
 
             # Create agency (mocked)
             from agency_swarm import Agency
+
             _ = Agency(
                 mock_create_agent(model="gpt-5-mini", reasoning_effort="low"),
                 communication_flows=[],
-                shared_instructions="Test agency for fast testing"
+                shared_instructions="Test agency for fast testing",
             )
 
             # Verify creation
@@ -267,7 +275,7 @@ class TestAgencyFast:
     @pytest.mark.asyncio
     async def test_response_format_validation_fast(self, mock_agency_fast):
         """Test that responses have correct format."""
-        expected_attributes = ['text']
+        expected_attributes = ["text"]
 
         # Setup mock response with required attributes
         mock_response = Mock()
@@ -303,16 +311,19 @@ class TestAgencyFast:
             execution_time = (end_time - start_time) * 1000  # Convert to milliseconds
 
             # Verify performance requirement (<100ms)
-            assert execution_time < 100, f"Test {test_case['id']} took {execution_time:.2f}ms, should be <100ms"
+            assert execution_time < 100, (
+                f"Test {test_case['id']} took {execution_time:.2f}ms, should be <100ms"
+            )
             assert result.text == test_case["expected_response"]
 
     def test_tool_integration_mocking_fast(self):
         """Test that tools are properly mocked for fast execution."""
-        with patch('agency_code_agent.agency_code_agent.Agent') as mock_agent_class, \
-             patch('agency_code_agent.agency_code_agent.get_model_instance') as mock_model, \
-             patch('agency_code_agent.agency_code_agent.render_instructions') as mock_render, \
-             patch('agency_code_agent.agency_code_agent.create_agent_context') as mock_context:
-
+        with (
+            patch("agency_code_agent.agency_code_agent.Agent") as mock_agent_class,
+            patch("agency_code_agent.agency_code_agent.get_model_instance") as mock_model,
+            patch("agency_code_agent.agency_code_agent.render_instructions") as mock_render,
+            patch("agency_code_agent.agency_code_agent.create_agent_context") as mock_context,
+        ):
             mock_model.return_value = "gpt-5-mini"
             mock_render.return_value = "Test instructions"
             mock_agent_context = Mock()
@@ -321,18 +332,15 @@ class TestAgencyFast:
             mock_context.return_value = mock_agent_context
 
             # Create agent with mocked tools
-            _ = create_agency_code_agent(
-                model="gpt-5-mini",
-                reasoning_effort="low"
-            )
+            _ = create_agency_code_agent(model="gpt-5-mini", reasoning_effort="low")
 
             # Verify agent creation (tools should be mocked)
             assert mock_agent_class.called
 
             # Tools should be integrated but mocked for fast execution
             call_kwargs = mock_agent_class.call_args[1]
-            assert 'tools' in call_kwargs
-            assert len(call_kwargs['tools']) > 0
+            assert "tools" in call_kwargs
+            assert len(call_kwargs["tools"]) > 0
 
     @pytest.mark.asyncio
     async def test_no_side_effects_fast(self, mock_agency_fast, test_queries_fast):
@@ -340,7 +348,7 @@ class TestAgencyFast:
         import os
 
         # Record initial file state
-        initial_files = set(os.listdir('.'))
+        initial_files = set(os.listdir("."))
 
         # Execute all test queries
         for test_case in test_queries_fast:
@@ -351,10 +359,14 @@ class TestAgencyFast:
             await mock_agency_fast.get_response(test_case["query"])
 
         # Verify no files were created
-        final_files = set(os.listdir('.'))
+        final_files = set(os.listdir("."))
         new_files = final_files - initial_files
 
         # Filter out acceptable test artifacts (like .pyc files or pytest cache)
-        unacceptable_files = [f for f in new_files if not f.startswith('.') and not f.endswith('.pyc')]
+        unacceptable_files = [
+            f for f in new_files if not f.startswith(".") and not f.endswith(".pyc")
+        ]
 
-        assert len(unacceptable_files) == 0, f"Fast tests should not create files, but created: {unacceptable_files}"
+        assert len(unacceptable_files) == 0, (
+            f"Fast tests should not create files, but created: {unacceptable_files}"
+        )

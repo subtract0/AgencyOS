@@ -2,7 +2,6 @@ import json
 import os
 from datetime import datetime
 from pathlib import Path
-from typing import Optional, List
 
 from agency_swarm.tools import BaseTool
 from pydantic import Field
@@ -16,7 +15,7 @@ class HandoffContextRead(BaseTool):  # type: ignore[misc]
 
     target_agent: str = Field(..., description="Target agent label used when persisting handoff")
     limit: int = Field(1, description="Number of recent records to return")
-    since: Optional[str] = Field(
+    since: str | None = Field(
         None,
         description="Optional ISO timestamp filter: only records created after this time are returned",
     )
@@ -36,7 +35,7 @@ class HandoffContextRead(BaseTool):  # type: ignore[misc]
             return "Exit code: 1\nError: since must be ISO 8601 timestamp"
 
         sanitized = self._sanitize(target)
-        files: List[Path] = sorted(
+        files: list[Path] = sorted(
             [p for p in base.glob(f"handoff_*_{sanitized}.json") if p.is_file()],
             key=lambda p: p.stat().st_mtime,
             reverse=True,
@@ -47,7 +46,7 @@ class HandoffContextRead(BaseTool):  # type: ignore[misc]
         results = []
         for p in files:
             try:
-                with open(p, "r", encoding="utf-8") as f:
+                with open(p, encoding="utf-8") as f:
                     data = json.load(f)
                 created_at = data.get("created_at")
                 if since_dt and created_at:

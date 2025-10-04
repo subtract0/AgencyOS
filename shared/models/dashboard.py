@@ -4,9 +4,10 @@ Replaces Dict[str, Any] in dashboard and reporting functions.
 """
 
 from datetime import datetime
-from typing import Dict, List, Optional
+
+from pydantic import BaseModel, ConfigDict, Field, field_validator
+
 from shared.type_definitions.json import JSONValue
-from pydantic import BaseModel, Field, field_validator, ConfigDict
 
 
 class SessionSummary(BaseModel):
@@ -14,21 +15,21 @@ class SessionSummary(BaseModel):
     """Summary of a single session."""
     session_id: str
     start_time: datetime
-    end_time: Optional[datetime] = None
-    duration_seconds: Optional[float] = None
+    end_time: datetime | None = None
+    duration_seconds: float | None = None
     total_memories: int = 0
     total_events: int = 0
-    agents_involved: List[str] = Field(default_factory=list)
-    tools_used: List[str] = Field(default_factory=list)
+    agents_involved: list[str] = Field(default_factory=list)
+    tools_used: list[str] = Field(default_factory=list)
     errors_encountered: int = 0
     success_rate: float = Field(1.0, ge=0.0, le=1.0)
-    key_achievements: List[str] = Field(default_factory=list)
+    key_achievements: list[str] = Field(default_factory=list)
 
-    @field_validator('duration_seconds')
-    def validate_duration(cls, v: Optional[float]) -> Optional[float]:
+    @field_validator("duration_seconds")
+    def validate_duration(cls, v: float | None) -> float | None:
         """Ensure duration is positive if set."""
         if v is not None and v < 0:
-            raise ValueError('duration_seconds must be non-negative')
+            raise ValueError("duration_seconds must be non-negative")
         return v
 
     def calculate_duration(self) -> None:
@@ -50,11 +51,11 @@ class AgentActivity(BaseModel):
     success_count: int = 0
     failure_count: int = 0
     average_response_time_ms: float = 0.0
-    tools_used: Dict[str, int] = Field(default_factory=dict)
+    tools_used: dict[str, int] = Field(default_factory=dict)
     handoffs_sent: int = 0
     handoffs_received: int = 0
     memory_operations: int = 0
-    last_active: Optional[datetime] = None
+    last_active: datetime | None = None
     status: str = Field(default="idle", pattern="^(idle|active|error|disabled)$")
 
     def get_success_rate(self) -> float:
@@ -106,14 +107,14 @@ class DashboardSummary(BaseModel):
     Replaces Dict[str, Any] returned from dashboard functions.
     """
     metrics: DashboardMetrics = Field(default_factory=lambda: DashboardMetrics())
-    active_sessions: List[SessionSummary] = Field(default_factory=list)
-    agent_activities: Dict[str, AgentActivity] = Field(default_factory=dict)
-    recent_errors: List[Dict[str, JSONValue]] = Field(default_factory=list)
-    performance_trends: Dict[str, List[float]] = Field(default_factory=dict)
-    alerts: List[str] = Field(default_factory=list)
+    active_sessions: list[SessionSummary] = Field(default_factory=list)
+    agent_activities: dict[str, AgentActivity] = Field(default_factory=dict)
+    recent_errors: list[dict[str, JSONValue]] = Field(default_factory=list)
+    performance_trends: dict[str, list[float]] = Field(default_factory=dict)
+    alerts: list[str] = Field(default_factory=list)
     generated_at: datetime = Field(default_factory=datetime.now)
-    period_start: Optional[datetime] = None
-    period_end: Optional[datetime] = None
+    period_start: datetime | None = None
+    period_end: datetime | None = None
 
     def add_session(self, session: SessionSummary) -> None:
         """Add a session to the dashboard."""
@@ -128,14 +129,14 @@ class DashboardSummary(BaseModel):
         self.agent_activities[activity.agent_id] = activity
         self.metrics.total_agents = len(self.agent_activities)
         self.metrics.active_agents = sum(
-            1 for a in self.agent_activities.values()
-            if a.status == "active"
+            1 for a in self.agent_activities.values() if a.status == "active"
         )
 
-    def get_active_agents(self) -> List[str]:
+    def get_active_agents(self) -> list[str]:
         """Get list of active agent IDs."""
         return [
-            agent_id for agent_id, activity in self.agent_activities.items()
+            agent_id
+            for agent_id, activity in self.agent_activities.items()
             if activity.status == "active"
         ]
 
@@ -143,9 +144,9 @@ class DashboardSummary(BaseModel):
         """Check if there are any alerts."""
         return len(self.alerts) > 0
 
-    def to_dict(self) -> Dict[str, JSONValue]:
+    def to_dict(self) -> dict[str, JSONValue]:
         """Convert to dictionary for backward compatibility."""
-        return self.model_dump(mode='json')
+        return self.model_dump(mode="json")
 
     def generate_summary_text(self) -> str:
         """Generate a human-readable summary."""

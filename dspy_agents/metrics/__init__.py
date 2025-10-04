@@ -6,11 +6,11 @@ measuring performance, quality, and constitutional compliance.
 """
 
 from .code_quality import (
-    code_agent_metric,
     auditor_agent_metric,
-    planner_agent_metric,
-    learning_agent_metric,
+    code_agent_metric,
     get_agent_metric,
+    learning_agent_metric,
+    planner_agent_metric,
 )
 
 __all__ = [

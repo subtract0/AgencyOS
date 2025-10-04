@@ -38,15 +38,16 @@ from abc import ABC, abstractmethod
 from datetime import datetime, timedelta
 from enum import Enum
 from pathlib import Path
-from typing import Dict, List, Optional, Any
 
 from pydantic import BaseModel, Field, validator
-from shared.type_definitions.result import Result, Ok, Err
+
 from shared.type_definitions.json_value import JSONValue
+from shared.type_definitions.result import Err, Ok, Result
 
 
 class ModelTier(str, Enum):
     """Model pricing tiers."""
+
     LOCAL = "local"
     CLOUD_MINI = "cloud_mini"
     CLOUD_STANDARD = "cloud_standard"
@@ -64,6 +65,7 @@ PRICING = {
 
 class CostTrackerError(Exception):
     """Base exception for cost tracker errors."""
+
     pass
 
 
@@ -80,15 +82,15 @@ class CostEntry(BaseModel):
     duration_seconds: float = Field(ge=0)
     success: bool
     metadata: JSONValue = Field(default_factory=dict)
-    error: Optional[str] = None
+    error: str | None = None
 
-    @validator('tokens_in', 'tokens_out')
+    @validator("tokens_in", "tokens_out")
     def validate_positive(cls, v):
         if v < 0:
             raise ValueError("Token counts must be non-negative")
         return v
 
-    @validator('cost_usd')
+    @validator("cost_usd")
     def validate_cost(cls, v):
         if v < 0:
             raise ValueError("Cost must be non-negative")
@@ -103,16 +105,16 @@ class CostSummary(BaseModel):
     total_tokens_in: int
     total_tokens_out: int
     success_rate: float
-    by_operation: Dict[str, float] = Field(default_factory=dict)
-    by_model: Dict[str, float] = Field(default_factory=dict)
-    by_metadata: Dict[str, Dict[str, float]] = Field(default_factory=dict)
+    by_operation: dict[str, float] = Field(default_factory=dict)
+    by_model: dict[str, float] = Field(default_factory=dict)
+    by_metadata: dict[str, dict[str, float]] = Field(default_factory=dict)
 
 
 class BudgetStatus(BaseModel):
     """Budget status information."""
 
-    limit_usd: Optional[float]
-    alert_threshold_pct: Optional[float]
+    limit_usd: float | None
+    alert_threshold_pct: float | None
     spent_usd: float
     remaining_usd: float
     percent_used: float
@@ -140,29 +142,22 @@ class StorageBackend(ABC):
         pass
 
     @abstractmethod
-    def get_all(self) -> List[CostEntry]:
+    def get_all(self) -> list[CostEntry]:
         """Get all cost entries."""
         pass
 
     @abstractmethod
-    def get_by_operation(self, operation: str) -> List[CostEntry]:
+    def get_by_operation(self, operation: str) -> list[CostEntry]:
         """Get entries for specific operation."""
         pass
 
     @abstractmethod
-    def get_by_date_range(
-        self,
-        start: datetime,
-        end: datetime
-    ) -> List[CostEntry]:
+    def get_by_date_range(self, start: datetime, end: datetime) -> list[CostEntry]:
         """Get entries within date range."""
         pass
 
     @abstractmethod
-    def get_by_metadata(
-        self,
-        filters: Dict[str, str]
-    ) -> List[CostEntry]:
+    def get_by_metadata(self, filters: dict[str, str]) -> list[CostEntry]:
         """Get entries matching metadata filters."""
         pass
 
@@ -181,7 +176,7 @@ class MemoryStorage(StorageBackend):
     """In-memory storage backend."""
 
     def __init__(self):
-        self._entries: List[CostEntry] = []
+        self._entries: list[CostEntry] = []
 
     def store(self, entry: CostEntry) -> Result[None, CostTrackerError]:
         """Store entry in memory."""
@@ -191,36 +186,23 @@ class MemoryStorage(StorageBackend):
         except Exception as e:
             return Err(CostTrackerError(f"Failed to store entry: {e}"))
 
-    def get_all(self) -> List[CostEntry]:
+    def get_all(self) -> list[CostEntry]:
         """Get all entries."""
         return self._entries.copy()
 
-    def get_by_operation(self, operation: str) -> List[CostEntry]:
+    def get_by_operation(self, operation: str) -> list[CostEntry]:
         """Filter by operation."""
         return [e for e in self._entries if e.operation == operation]
 
-    def get_by_date_range(
-        self,
-        start: datetime,
-        end: datetime
-    ) -> List[CostEntry]:
+    def get_by_date_range(self, start: datetime, end: datetime) -> list[CostEntry]:
         """Filter by date range."""
-        return [
-            e for e in self._entries
-            if start <= datetime.fromisoformat(e.timestamp) <= end
-        ]
+        return [e for e in self._entries if start <= datetime.fromisoformat(e.timestamp) <= end]
 
-    def get_by_metadata(
-        self,
-        filters: Dict[str, str]
-    ) -> List[CostEntry]:
+    def get_by_metadata(self, filters: dict[str, str]) -> list[CostEntry]:
         """Filter by metadata."""
         result = []
         for entry in self._entries:
-            match = all(
-                entry.metadata.get(k) == v
-                for k, v in filters.items()
-            )
+            match = all(entry.metadata.get(k) == v for k, v in filters.items())
             if match:
                 result.append(entry)
         return result
@@ -297,25 +279,28 @@ class SQLiteStorage(StorageBackend):
             conn = self._get_connection()
             cursor = conn.cursor()
 
-            cursor.execute("""
+            cursor.execute(
+                """
                 INSERT INTO cost_entries (
                     timestamp, operation, model, model_tier,
                     tokens_in, tokens_out, cost_usd,
                     duration_seconds, success, metadata, error
                 ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-            """, (
-                entry.timestamp,
-                entry.operation,
-                entry.model,
-                entry.model_tier.value,
-                entry.tokens_in,
-                entry.tokens_out,
-                entry.cost_usd,
-                entry.duration_seconds,
-                1 if entry.success else 0,
-                json.dumps(entry.metadata) if entry.metadata else None,
-                entry.error
-            ))
+            """,
+                (
+                    entry.timestamp,
+                    entry.operation,
+                    entry.model,
+                    entry.model_tier.value,
+                    entry.tokens_in,
+                    entry.tokens_out,
+                    entry.cost_usd,
+                    entry.duration_seconds,
+                    1 if entry.success else 0,
+                    json.dumps(entry.metadata) if entry.metadata else None,
+                    entry.error,
+                ),
+            )
 
             conn.commit()
             if not self.is_memory:
@@ -325,7 +310,7 @@ class SQLiteStorage(StorageBackend):
         except Exception as e:
             return Err(CostTrackerError(f"Storage error: {e}"))
 
-    def get_all(self) -> List[CostEntry]:
+    def get_all(self) -> list[CostEntry]:
         """Get all entries."""
         conn = self._get_connection()
         cursor = conn.cursor()
@@ -343,61 +328,57 @@ class SQLiteStorage(StorageBackend):
             conn.close()
         return entries
 
-    def get_by_operation(self, operation: str) -> List[CostEntry]:
+    def get_by_operation(self, operation: str) -> list[CostEntry]:
         """Get entries by operation."""
         conn = self._get_connection()
         cursor = conn.cursor()
 
-        cursor.execute("""
+        cursor.execute(
+            """
             SELECT timestamp, operation, model, model_tier,
                    tokens_in, tokens_out, cost_usd,
                    duration_seconds, success, metadata, error
             FROM cost_entries
             WHERE operation = ?
             ORDER BY timestamp
-        """, (operation,))
+        """,
+            (operation,),
+        )
 
         entries = self._rows_to_entries(cursor.fetchall())
         if not self.is_memory:
             conn.close()
         return entries
 
-    def get_by_date_range(
-        self,
-        start: datetime,
-        end: datetime
-    ) -> List[CostEntry]:
+    def get_by_date_range(self, start: datetime, end: datetime) -> list[CostEntry]:
         """Get entries in date range."""
         conn = self._get_connection()
         cursor = conn.cursor()
 
-        cursor.execute("""
+        cursor.execute(
+            """
             SELECT timestamp, operation, model, model_tier,
                    tokens_in, tokens_out, cost_usd,
                    duration_seconds, success, metadata, error
             FROM cost_entries
             WHERE timestamp >= ? AND timestamp <= ?
             ORDER BY timestamp
-        """, (start.isoformat(), end.isoformat()))
+        """,
+            (start.isoformat(), end.isoformat()),
+        )
 
         entries = self._rows_to_entries(cursor.fetchall())
         if not self.is_memory:
             conn.close()
         return entries
 
-    def get_by_metadata(
-        self,
-        filters: Dict[str, str]
-    ) -> List[CostEntry]:
+    def get_by_metadata(self, filters: dict[str, str]) -> list[CostEntry]:
         """Get entries by metadata filters."""
         all_entries = self.get_all()
         result = []
 
         for entry in all_entries:
-            match = all(
-                entry.metadata.get(k) == v
-                for k, v in filters.items()
-            )
+            match = all(entry.metadata.get(k) == v for k, v in filters.items())
             if match:
                 result.append(entry)
 
@@ -417,24 +398,26 @@ class SQLiteStorage(StorageBackend):
         if self.is_memory and self.conn:
             self.conn.close()
 
-    def _rows_to_entries(self, rows) -> List[CostEntry]:
+    def _rows_to_entries(self, rows) -> list[CostEntry]:
         """Convert database rows to CostEntry objects."""
         entries = []
         for row in rows:
             metadata = json.loads(row[9]) if row[9] else {}
-            entries.append(CostEntry(
-                timestamp=row[0],
-                operation=row[1],
-                model=row[2],
-                model_tier=ModelTier(row[3]),
-                tokens_in=row[4],
-                tokens_out=row[5],
-                cost_usd=row[6],
-                duration_seconds=row[7],
-                success=bool(row[8]),
-                metadata=metadata,
-                error=row[10]
-            ))
+            entries.append(
+                CostEntry(
+                    timestamp=row[0],
+                    operation=row[1],
+                    model=row[2],
+                    model_tier=ModelTier(row[3]),
+                    tokens_in=row[4],
+                    tokens_out=row[5],
+                    cost_usd=row[6],
+                    duration_seconds=row[7],
+                    success=bool(row[8]),
+                    metadata=metadata,
+                    error=row[10],
+                )
+            )
         return entries
 
 
@@ -448,8 +431,8 @@ class CostTracker:
     def __init__(self, storage: StorageBackend):
         """Initialize cost tracker with storage backend."""
         self.storage = storage
-        self.budget_limit: Optional[float] = None
-        self.budget_threshold: Optional[float] = None
+        self.budget_limit: float | None = None
+        self.budget_threshold: float | None = None
 
     def track(
         self,
@@ -460,23 +443,17 @@ class CostTracker:
         tokens_out: int,
         duration_seconds: float,
         success: bool,
-        metadata: Optional[JSONValue] = None,
-        error: Optional[str] = None
+        metadata: JSONValue | None = None,
+        error: str | None = None,
     ) -> Result[CostEntry, CostTrackerError]:
         """Track a single operation cost."""
         try:
             # Validate inputs
             if tokens_in < 0 or tokens_out < 0:
-                return Err(
-                    CostTrackerError("Token counts must be non-negative")
-                )
+                return Err(CostTrackerError("Token counts must be non-negative"))
 
             # Calculate cost
-            cost_usd = self._calculate_cost(
-                model_tier,
-                tokens_in,
-                tokens_out
-            )
+            cost_usd = self._calculate_cost(model_tier, tokens_in, tokens_out)
 
             # Create entry
             entry = CostEntry(
@@ -490,7 +467,7 @@ class CostTracker:
                 duration_seconds=duration_seconds,
                 success=success,
                 metadata=metadata or {},
-                error=error
+                error=error,
             )
 
             # Store entry
@@ -505,10 +482,10 @@ class CostTracker:
 
     def get_summary(
         self,
-        operation: Optional[str] = None,
-        start_date: Optional[datetime] = None,
-        end_date: Optional[datetime] = None,
-        metadata_filters: Optional[Dict[str, str]] = None
+        operation: str | None = None,
+        start_date: datetime | None = None,
+        end_date: datetime | None = None,
+        metadata_filters: dict[str, str] | None = None,
     ) -> Result[CostSummary, CostTrackerError]:
         """Get cost summary with optional filters."""
         try:
@@ -518,15 +495,9 @@ class CostTracker:
             elif operation:
                 entries = self.storage.get_by_operation(operation)
             elif start_date and end_date:
-                entries = self.storage.get_by_date_range(
-                    start_date,
-                    end_date
-                )
+                entries = self.storage.get_by_date_range(start_date, end_date)
             elif start_date:
-                entries = self.storage.get_by_date_range(
-                    start_date,
-                    datetime.now()
-                )
+                entries = self.storage.get_by_date_range(start_date, datetime.now())
             else:
                 entries = self.storage.get_all()
 
@@ -537,23 +508,19 @@ class CostTracker:
             total_tokens_out = sum(e.tokens_out for e in entries)
 
             success_count = sum(1 for e in entries if e.success)
-            success_rate = (
-                success_count / total_calls if total_calls > 0 else 1.0
-            )
+            success_rate = success_count / total_calls if total_calls > 0 else 1.0
 
             # Group by operation
-            by_operation: Dict[str, float] = {}
+            by_operation: dict[str, float] = {}
             for entry in entries:
                 by_operation[entry.operation] = (
                     by_operation.get(entry.operation, 0.0) + entry.cost_usd
                 )
 
             # Group by model
-            by_model: Dict[str, float] = {}
+            by_model: dict[str, float] = {}
             for entry in entries:
-                by_model[entry.model] = (
-                    by_model.get(entry.model, 0.0) + entry.cost_usd
-                )
+                by_model[entry.model] = by_model.get(entry.model, 0.0) + entry.cost_usd
 
             summary = CostSummary(
                 total_cost_usd=total_cost,
@@ -562,7 +529,7 @@ class CostTracker:
                 total_tokens_out=total_tokens_out,
                 success_rate=success_rate,
                 by_operation=by_operation,
-                by_model=by_model
+                by_model=by_model,
             )
 
             return Ok(summary)
@@ -571,17 +538,13 @@ class CostTracker:
             return Err(CostTrackerError(f"Summary failed: {e}"))
 
     def set_budget(
-        self,
-        limit_usd: float,
-        alert_threshold_pct: float
+        self, limit_usd: float, alert_threshold_pct: float
     ) -> Result[None, CostTrackerError]:
         """Set budget limit and alert threshold."""
         if limit_usd < 0:
             return Err(CostTrackerError("Budget limit must be positive"))
         if alert_threshold_pct < 0 or alert_threshold_pct > 100:
-            return Err(
-                CostTrackerError("Threshold must be between 0 and 100")
-            )
+            return Err(CostTrackerError("Threshold must be between 0 and 100"))
 
         self.budget_limit = limit_usd
         self.budget_threshold = alert_threshold_pct
@@ -598,35 +561,38 @@ class CostTracker:
             spent = summary.total_cost_usd
 
             if self.budget_limit is None:
-                return Ok(BudgetStatus(
-                    limit_usd=None,
-                    alert_threshold_pct=None,
-                    spent_usd=spent,
-                    remaining_usd=0.0,
-                    percent_used=0.0,
-                    alert_triggered=False,
-                    limit_exceeded=False
-                ))
+                return Ok(
+                    BudgetStatus(
+                        limit_usd=None,
+                        alert_threshold_pct=None,
+                        spent_usd=spent,
+                        remaining_usd=0.0,
+                        percent_used=0.0,
+                        alert_triggered=False,
+                        limit_exceeded=False,
+                    )
+                )
 
             remaining = self.budget_limit - spent
             percent_used = (spent / self.budget_limit) * 100
 
             alert_triggered = (
-                self.budget_threshold is not None and
-                percent_used >= self.budget_threshold
+                self.budget_threshold is not None and percent_used >= self.budget_threshold
             )
 
             limit_exceeded = spent > self.budget_limit
 
-            return Ok(BudgetStatus(
-                limit_usd=self.budget_limit,
-                alert_threshold_pct=self.budget_threshold,
-                spent_usd=spent,
-                remaining_usd=remaining,
-                percent_used=percent_used,
-                alert_triggered=alert_triggered,
-                limit_exceeded=limit_exceeded
-            ))
+            return Ok(
+                BudgetStatus(
+                    limit_usd=self.budget_limit,
+                    alert_threshold_pct=self.budget_threshold,
+                    spent_usd=spent,
+                    remaining_usd=remaining,
+                    percent_used=percent_used,
+                    alert_triggered=alert_triggered,
+                    limit_exceeded=limit_exceeded,
+                )
+            )
 
         except Exception as e:
             return Err(CostTrackerError(f"Budget status failed: {e}"))
@@ -650,16 +616,11 @@ class CostTracker:
         return Ok(daily_projection)
 
     def export_json(
-        self,
-        start_date: Optional[datetime] = None,
-        end_date: Optional[datetime] = None
+        self, start_date: datetime | None = None, end_date: datetime | None = None
     ) -> Result[str, CostTrackerError]:
         """Export cost data to JSON."""
         try:
-            summary_result = self.get_summary(
-                start_date=start_date,
-                end_date=end_date
-            )
+            summary_result = self.get_summary(start_date=start_date, end_date=end_date)
             if summary_result.is_err():
                 return Err(summary_result.unwrap_err())
 
@@ -667,34 +628,20 @@ class CostTracker:
 
             # Get entries for export
             if start_date and end_date:
-                entries = self.storage.get_by_date_range(
-                    start_date,
-                    end_date
-                )
+                entries = self.storage.get_by_date_range(start_date, end_date)
             elif start_date:
-                entries = self.storage.get_by_date_range(
-                    start_date,
-                    datetime.now()
-                )
+                entries = self.storage.get_by_date_range(start_date, datetime.now())
             else:
                 entries = self.storage.get_all()
 
-            data = {
-                "summary": summary.dict(),
-                "entries": [e.dict() for e in entries]
-            }
+            data = {"summary": summary.dict(), "entries": [e.dict() for e in entries]}
 
             return Ok(json.dumps(data, indent=2))
 
         except Exception as e:
             return Err(CostTrackerError(f"Export failed: {e}"))
 
-    def _calculate_cost(
-        self,
-        tier: ModelTier,
-        tokens_in: int,
-        tokens_out: int
-    ) -> float:
+    def _calculate_cost(self, tier: ModelTier, tokens_in: int, tokens_out: int) -> float:
         """Calculate cost based on model tier and tokens."""
         pricing = PRICING[tier]
         input_cost = (tokens_in / 1000.0) * pricing["input"]

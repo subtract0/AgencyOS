@@ -1,6 +1,6 @@
-import pytest
-from unittest.mock import MagicMock, patch, create_autospec
+from unittest.mock import MagicMock, create_autospec, patch
 
+import pytest
 from agency_swarm import Agency, Agent
 from agency_swarm.tools import SendMessageHandoff
 
@@ -27,10 +27,12 @@ async def test_coder_handoff_to_planner_minimal():
     mock_planner = create_mock_agent("PlannerAgent")
 
     # Mock the get_response method at Agency level
-    with patch.object(Agency, 'get_response') as mock_get_response:
+    with patch.object(Agency, "get_response") as mock_get_response:
         # Create a mock response that simulates successful handoff
         mock_response = MagicMock()
-        mock_response.text = "Successfully handed off to PlannerAgent with message: 'Task delegated'"
+        mock_response.text = (
+            "Successfully handed off to PlannerAgent with message: 'Task delegated'"
+        )
         mock_get_response.return_value = mock_response
 
         # Initialize agency with mocked agents
@@ -54,9 +56,7 @@ async def test_coder_handoff_to_planner_minimal():
         assert mock_get_response.called
 
         # Verify no error indicators in response
-        error_indicators = [
-            "Traceback", "invalid_request_error", "Error", "Failed"
-        ]
+        error_indicators = ["Traceback", "invalid_request_error", "Error", "Failed"]
         assert not any(err.lower() in response.lower() for err in error_indicators)
 
 
@@ -68,10 +68,12 @@ async def test_planner_reports_its_name_minimal():
     mock_planner = create_mock_agent("PlannerAgent")
 
     # Mock the get_response method
-    with patch.object(Agency, 'get_response') as mock_get_response:
+    with patch.object(Agency, "get_response") as mock_get_response:
         # Simulate the planner responding with its name after handoff
         mock_response = MagicMock()
-        mock_response.text = "I am the PlannerAgent. I help with strategic planning and task breakdown."
+        mock_response.text = (
+            "I am the PlannerAgent. I help with strategic planning and task breakdown."
+        )
         mock_get_response.return_value = mock_response
 
         # Initialize agency
@@ -95,9 +97,7 @@ async def test_planner_reports_its_name_minimal():
         assert mock_get_response.called
 
         # Ensure no errors in response
-        error_indicators = [
-            "Traceback", "invalid_request_error", "Error", "Failed"
-        ]
+        error_indicators = ["Traceback", "invalid_request_error", "Error", "Failed"]
         assert not any(err.lower() in response.lower() for err in error_indicators)
 
 
@@ -107,7 +107,7 @@ async def test_bidirectional_handoff():
     mock_coder = create_mock_agent("AgencyCodeAgent")
     mock_planner = create_mock_agent("PlannerAgent")
 
-    with patch.object(Agency, 'get_response') as mock_get_response:
+    with patch.object(Agency, "get_response") as mock_get_response:
         # Simulate a back-and-forth handoff
         mock_response = MagicMock()
         mock_response.text = (
@@ -140,7 +140,7 @@ async def test_handoff_error_handling():
     mock_coder = create_mock_agent("AgencyCodeAgent", with_handoff=True)
     mock_planner = create_mock_agent("PlannerAgent", with_handoff=False)
 
-    with patch.object(Agency, 'get_response') as mock_get_response:
+    with patch.object(Agency, "get_response") as mock_get_response:
         # Simulate successful handling despite missing tool
         mock_response = MagicMock()
         mock_response.text = "Handoff successful despite missing tool in target agent"
@@ -168,7 +168,7 @@ async def test_handoff_with_context():
     mock_coder = create_mock_agent("AgencyCodeAgent")
     mock_planner = create_mock_agent("PlannerAgent")
 
-    with patch.object(Agency, 'get_response') as mock_get_response:
+    with patch.object(Agency, "get_response") as mock_get_response:
         # Simulate context preservation in handoff
         mock_response = MagicMock()
         mock_response.text = (

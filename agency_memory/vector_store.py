@@ -6,12 +6,14 @@ Provides semantic search capabilities alongside tag-based search.
 Lightweight implementation with optional embeddings support.
 """
 
-import logging
 import json
-from typing import Any, Dict, List, Optional, Callable, cast
-from shared.type_definitions.json import JSONValue
+import logging
+from collections.abc import Callable
 from dataclasses import dataclass
 from datetime import datetime
+from typing import Any, cast
+
+from shared.type_definitions.json import JSONValue
 
 logger = logging.getLogger(__name__)
 
@@ -20,7 +22,7 @@ logger = logging.getLogger(__name__)
 class SimilarityResult:
     """Result from similarity search with score and metadata."""
 
-    memory: Dict[str, JSONValue]
+    memory: dict[str, JSONValue]
     similarity_score: float
     search_type: str  # 'semantic', 'keyword', or 'hybrid'
 
@@ -36,18 +38,18 @@ class VectorStore:
     - Optional external embedding provider support
     """
 
-    def __init__(self, embedding_provider: Optional[str] = None):
+    def __init__(self, embedding_provider: str | None = None):
         """
         Initialize VectorStore.
 
         Args:
             embedding_provider: Optional embedding provider ('openai', 'sentence-transformers', etc.)
         """
-        self._embeddings: Dict[str, List[float]] = {}
-        self._memory_texts: Dict[str, str] = {}
-        self._memory_records: Dict[str, Dict[str, JSONValue]] = {}
+        self._embeddings: dict[str, list[float]] = {}
+        self._memory_texts: dict[str, str] = {}
+        self._memory_records: dict[str, dict[str, JSONValue]] = {}
         self._embedding_provider = embedding_provider
-        self._embedding_function: Optional[Callable[[List[str]], List[List[float]]]] = None
+        self._embedding_function: Callable[[list[str]], list[list[float]]] | None = None
 
         # Try to initialize embedding function
         self._initialize_embeddings()
@@ -68,9 +70,7 @@ class VectorStore:
             elif self._embedding_provider == "openai":
                 self._init_openai_embeddings()
             else:
-                logger.warning(
-                    f"Unknown embedding provider: {self._embedding_provider}"
-                )
+                logger.warning(f"Unknown embedding provider: {self._embedding_provider}")
 
         except ImportError as e:
             logger.warning(f"Failed to initialize {self._embedding_provider}: {e}")
@@ -85,10 +85,8 @@ class VectorStore:
             model_name = "all-MiniLM-L6-v2"  # 22MB, fast, good quality
             self._embedding_model = SentenceTransformer(model_name)
 
-            def embed_texts(texts: List[str]) -> List[List[float]]:
-                embeddings = self._embedding_model.encode(
-                    texts, convert_to_tensor=False
-                )
+            def embed_texts(texts: list[str]) -> list[list[float]]:
+                embeddings = self._embedding_model.encode(texts, convert_to_tensor=False)
                 return embeddings.tolist()
 
             self._embedding_function = embed_texts
@@ -102,15 +100,16 @@ class VectorStore:
     def _init_openai_embeddings(self) -> None:
         """Initialize OpenAI embeddings."""
         try:
-            import openai
             import os
+
+            import openai
 
             # Check for API key
             api_key = os.getenv("OPENAI_API_KEY")
             if not api_key:
                 raise ValueError("OPENAI_API_KEY environment variable not set")
 
-            def embed_texts(texts: List[str]) -> List[List[float]]:
+            def embed_texts(texts: list[str]) -> list[list[float]]:
                 """Embed texts using OpenAI API."""
                 client = openai.OpenAI(api_key=api_key)
                 response = client.embeddings.create(
@@ -125,7 +124,7 @@ class VectorStore:
         except ImportError:
             raise ImportError("openai not available. Install with: pip install openai")
 
-    def add_memory(self, memory_key: str, memory_content: Dict[str, JSONValue]) -> None:
+    def add_memory(self, memory_key: str, memory_content: dict[str, JSONValue]) -> None:
         """
         Add memory to vector store for search.
 
@@ -149,7 +148,7 @@ class VectorStore:
             except Exception as e:
                 logger.warning(f"Failed to generate embedding for {memory_key}: {e}")
 
-    def _extract_searchable_text(self, memory: Dict[str, JSONValue]) -> str:
+    def _extract_searchable_text(self, memory: dict[str, JSONValue]) -> str:
         """
         Extract searchable text from memory record.
 
@@ -186,8 +185,8 @@ class VectorStore:
         return " ".join(string_parts)
 
     def semantic_search(
-        self, query: str, memories: List[dict[str, JSONValue]], top_k: int = 10
-    ) -> List[SimilarityResult]:
+        self, query: str, memories: list[dict[str, JSONValue]], top_k: int = 10
+    ) -> list[SimilarityResult]:
         """
         Perform semantic similarity search.
 
@@ -200,9 +199,7 @@ class VectorStore:
             List of similarity results ordered by relevance
         """
         if not self._embedding_function:
-            logger.warning(
-                "No embedding function available - falling back to keyword search"
-            )
+            logger.warning("No embedding function available - falling back to keyword search")
             return self.keyword_search(query, memories, top_k)
 
         try:
@@ -218,7 +215,7 @@ class VectorStore:
                 # Ensure memory is in vector store
                 if memory_key not in self._embeddings:
                     if isinstance(memory, dict) and isinstance(memory_key, str):
-                        self.add_memory(memory_key, cast(Dict[str, JSONValue], memory))
+                        self.add_memory(memory_key, cast(dict[str, JSONValue], memory))
                     else:
                         continue
 
@@ -251,8 +248,8 @@ class VectorStore:
             return self.keyword_search(query, memories, top_k)
 
     def keyword_search(
-        self, query: str, memories: List[dict[str, JSONValue]], top_k: int = 10
-    ) -> List[SimilarityResult]:
+        self, query: str, memories: list[dict[str, JSONValue]], top_k: int = 10
+    ) -> list[SimilarityResult]:
         """
         Perform keyword-based search as fallback.
 
@@ -293,9 +290,7 @@ class VectorStore:
                     score *= 1.5
 
                 results.append(
-                    SimilarityResult(
-                        memory=memory, similarity_score=score, search_type="keyword"
-                    )
+                    SimilarityResult(memory=memory, similarity_score=score, search_type="keyword")
                 )
 
         # Sort by similarity score (descending)
@@ -306,10 +301,10 @@ class VectorStore:
     def hybrid_search(
         self,
         query: str,
-        memories: List[dict[str, JSONValue]],
+        memories: list[dict[str, JSONValue]],
         top_k: int = 10,
         semantic_weight: float = 0.7,
-    ) -> List[SimilarityResult]:
+    ) -> list[SimilarityResult]:
         """
         Perform hybrid search combining semantic and keyword approaches.
 
@@ -335,18 +330,14 @@ class VectorStore:
 
         # Process semantic results
         for result in semantic_results:
-            memory_key = result.memory.get(
-                "namespaced_key", result.memory.get("key", "")
-            )
+            memory_key = result.memory.get("namespaced_key", result.memory.get("key", ""))
             combined_scores[memory_key] = semantic_weight * result.similarity_score
             memory_map[memory_key] = result.memory
 
         # Add keyword results
         keyword_weight = 1.0 - semantic_weight
         for result in keyword_results:
-            memory_key = result.memory.get(
-                "namespaced_key", result.memory.get("key", "")
-            )
+            memory_key = result.memory.get("namespaced_key", result.memory.get("key", ""))
 
             if memory_key in combined_scores:
                 combined_scores[memory_key] += keyword_weight * result.similarity_score
@@ -371,7 +362,7 @@ class VectorStore:
 
         return final_results[:top_k]
 
-    def _cosine_similarity(self, vec1: List[float], vec2: List[float]) -> float:
+    def _cosine_similarity(self, vec1: list[float], vec2: list[float]) -> float:
         """
         Calculate cosine similarity between two vectors.
 
@@ -398,7 +389,9 @@ class VectorStore:
 
         return dot_product / (magnitude1 * magnitude2)
 
-    def search(self, query: str, namespace: Optional[str] = None, limit: int = 10) -> List[Dict[str, JSONValue]]:
+    def search(
+        self, query: str, namespace: str | None = None, limit: int = 10
+    ) -> list[dict[str, JSONValue]]:
         try:
             memories = list(self._memory_records.values())
             if namespace:
@@ -420,11 +413,13 @@ class VectorStore:
             ]
         except (ValueError, KeyError) as e:
             import logging
+
             logger = logging.getLogger(__name__)
             logger.error(f"Memory search failed for query '{query}': {e}")
             return []
         except Exception as e:
             import logging
+
             logger = logging.getLogger(__name__)
             logger.critical(f"Unexpected error in memory search for query '{query}': {e}")
             return []
@@ -440,7 +435,7 @@ class VectorStore:
         self._memory_texts.pop(memory_key, None)
         self._memory_records.pop(memory_key, None)
 
-    def get_stats(self) -> Dict[str, JSONValue]:
+    def get_stats(self) -> dict[str, JSONValue]:
         """
         Get vector store statistics.
 
@@ -464,7 +459,7 @@ class EnhancedSwarmMemoryStore:
     Combines the swarm features with semantic search capabilities.
     """
 
-    def __init__(self, swarm_store, vector_store: Optional[VectorStore] = None):
+    def __init__(self, swarm_store, vector_store: VectorStore | None = None):
         """
         Initialize enhanced store.
 
@@ -475,7 +470,7 @@ class EnhancedSwarmMemoryStore:
         self.swarm_store = swarm_store
         self.vector_store = vector_store or VectorStore()
 
-    def store(self, key: str, content: Any, tags: List[str], **kwargs) -> None:
+    def store(self, key: str, content: Any, tags: list[str], **kwargs) -> None:
         """Store memory in both swarm and vector stores."""
         # Store in swarm store
         self.swarm_store.store(key, content, tags, **kwargs)
@@ -500,7 +495,7 @@ class EnhancedSwarmMemoryStore:
         agent_id: str = "default",
         include_shared: bool = True,
         top_k: int = 10,
-    ) -> List[SimilarityResult]:
+    ) -> list[SimilarityResult]:
         """
         Perform semantic search across agent memories.
 
@@ -527,12 +522,12 @@ class EnhancedSwarmMemoryStore:
 
     def combined_search(
         self,
-        tags: List[str] = None,
+        tags: list[str] = None,
         query: str = None,
         agent_id: str = "default",
         include_shared: bool = True,
         top_k: int = 10,
-    ) -> List[Dict[str, JSONValue]]:
+    ) -> list[dict[str, JSONValue]]:
         """
         Combine tag-based and semantic search.
 
@@ -550,9 +545,7 @@ class EnhancedSwarmMemoryStore:
             # First filter by tags, then semantic search
             tag_filtered_result = self.swarm_store.search(tags, agent_id, include_shared)
             tag_filtered = [record.to_dict() for record in tag_filtered_result.records]
-            semantic_results = self.vector_store.hybrid_search(
-                query, tag_filtered, top_k
-            )
+            semantic_results = self.vector_store.hybrid_search(query, tag_filtered, top_k)
 
             # Convert to memory records with scores
             return [
@@ -572,9 +565,7 @@ class EnhancedSwarmMemoryStore:
 
         elif query:
             # Semantic search only
-            semantic_results = self.semantic_search(
-                query, agent_id, include_shared, top_k
-            )
+            semantic_results = self.semantic_search(query, agent_id, include_shared, top_k)
             return [
                 {
                     **result.memory,

@@ -2,7 +2,6 @@
 import glob as glob_module
 import os
 from datetime import datetime
-from typing import List, Optional
 
 from agency_swarm.tools import BaseTool
 from pydantic import Field
@@ -19,9 +18,7 @@ class LS(BaseTool):  # type: ignore[misc]
         ...,
         description="The absolute path to the directory to list (must be absolute, not relative)",
     )
-    ignore: Optional[List[str]] = Field(
-        None, description="List of glob patterns to ignore"
-    )
+    ignore: list[str] | None = Field(None, description="List of glob patterns to ignore")
 
     def run(self):
         try:
@@ -119,7 +116,7 @@ class LS(BaseTool):  # type: ignore[misc]
                         }
                     )
 
-                except (OSError, IOError):
+                except OSError:
                     detailed_items.append(
                         {
                             "name": item,

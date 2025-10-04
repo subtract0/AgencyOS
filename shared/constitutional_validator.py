@@ -12,17 +12,20 @@ This module provides a decorator to validate constitutional compliance
 before agent creation and operation.
 """
 
-import os
 import logging
+import os
+from collections.abc import Callable
+from datetime import UTC
 from functools import wraps
-from typing import Callable, Any, Optional
 from pathlib import Path
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
 
 class ConstitutionalViolation(Exception):
     """Exception raised when constitutional compliance is violated."""
+
     pass
 
 
@@ -38,11 +41,12 @@ def constitutional_compliance(func: Callable) -> Callable:
         def create_my_agent(model: str, agent_context: AgentContext = None):
             return Agent(...)
     """
+
     @wraps(func)
     def wrapper(*args: Any, **kwargs: Any) -> Any:
         try:
             # Extract agent_context from kwargs if available
-            agent_context = kwargs.get('agent_context')
+            agent_context = kwargs.get("agent_context")
 
             # Run pre-checks for all 5 articles
             validate_article_i(agent_context=agent_context)
@@ -56,9 +60,7 @@ def constitutional_compliance(func: Callable) -> Callable:
 
             # Post-validation: verify result is valid
             if result is None:
-                raise ConstitutionalViolation(
-                    "Agent creation returned None - invalid result"
-                )
+                raise ConstitutionalViolation("Agent creation returned None - invalid result")
 
             logger.info(f"Constitutional compliance validated for {func.__name__}")
             return result
@@ -72,7 +74,7 @@ def constitutional_compliance(func: Callable) -> Callable:
     return wrapper
 
 
-def validate_article_i(agent_context: Optional[Any] = None) -> None:
+def validate_article_i(agent_context: Any | None = None) -> None:
     """
     Validate Article I: Complete Context Before Action.
 
@@ -94,13 +96,13 @@ def validate_article_i(agent_context: Optional[Any] = None) -> None:
         return
 
     # Validate session ID exists
-    if not hasattr(agent_context, 'session_id') or agent_context.session_id is None:
+    if not hasattr(agent_context, "session_id") or agent_context.session_id is None:
         raise ConstitutionalViolation(
             "Article I violated: AgentContext missing session_id for complete context tracking"
         )
 
     # Validate memory system is available
-    if not hasattr(agent_context, 'memory') or agent_context.memory is None:
+    if not hasattr(agent_context, "memory") or agent_context.memory is None:
         raise ConstitutionalViolation(
             "Article I violated: AgentContext missing memory system for context storage"
         )
@@ -132,7 +134,7 @@ def validate_article_ii() -> None:
         )
 
     # Check for test bypass flags (constitutional violation)
-    if _get_env_flag('SKIP_TESTS') or _get_env_flag('BYPASS_VERIFICATION'):
+    if _get_env_flag("SKIP_TESTS") or _get_env_flag("BYPASS_VERIFICATION"):
         raise ConstitutionalViolation(
             "Article II violated: Test bypass flag detected - 100% verification required"
         )
@@ -163,13 +165,13 @@ def validate_article_iii() -> None:
         logger.warning("Article III: Git hooks directory missing - enforcement may be incomplete")
 
     # Check for bypass flags (strict prohibition)
-    if _get_env_flag('FORCE_BYPASS') or _get_env_flag('SKIP_ENFORCEMENT'):
+    if _get_env_flag("FORCE_BYPASS") or _get_env_flag("SKIP_ENFORCEMENT"):
         raise ConstitutionalViolation(
             "Article III violated: Bypass flag detected - no manual overrides permitted"
         )
 
     # Check for NO_VERIFY environment variable (git commit --no-verify)
-    if _get_env_flag('NO_VERIFY'):
+    if _get_env_flag("NO_VERIFY"):
         raise ConstitutionalViolation(
             "Article III violated: NO_VERIFY flag detected - automated enforcement required"
         )
@@ -177,7 +179,7 @@ def validate_article_iii() -> None:
     logger.debug("Article III validated: Enforcement mechanisms in place")
 
 
-def validate_article_iv(agent_context: Optional[Any] = None) -> None:
+def validate_article_iv(agent_context: Any | None = None) -> None:
     """
     Validate Article IV: Continuous Learning and Improvement.
 
@@ -194,7 +196,7 @@ def validate_article_iv(agent_context: Optional[Any] = None) -> None:
         ConstitutionalViolation: If learning infrastructure missing or disabled
     """
     # Check if learning is explicitly disabled (CONSTITUTIONAL VIOLATION)
-    if _get_env_flag('DISABLE_LEARNING'):
+    if _get_env_flag("DISABLE_LEARNING"):
         raise ConstitutionalViolation(
             "Article IV violated: DISABLE_LEARNING flag detected. "
             "Learning is constitutionally mandatory."
@@ -210,7 +212,7 @@ def validate_article_iv(agent_context: Optional[Any] = None) -> None:
 
     # If context provided, verify memory system
     if agent_context is not None:
-        if not hasattr(agent_context, 'memory') or agent_context.memory is None:
+        if not hasattr(agent_context, "memory") or agent_context.memory is None:
             raise ConstitutionalViolation(
                 "Article IV violated: AgentContext missing memory system for learning integration"
             )
@@ -263,7 +265,7 @@ def validate_article_v() -> None:
     # Validate spec traceability (skip during fast tests)
     # NOTE: Spec traceability is now advisory-only due to overly strict enforcement
     # blocking normal operations. Directory structure checks above are sufficient.
-    if not _get_env_flag('SKIP_SPEC_TRACEABILITY'):
+    if not _get_env_flag("SKIP_SPEC_TRACEABILITY"):
         from tools.spec_traceability import SpecTraceabilityValidator
 
         validator = SpecTraceabilityValidator(min_coverage=0.60)  # Start at 60%
@@ -290,6 +292,7 @@ def validate_article_v() -> None:
 
 # Helper functions
 
+
 def _check_file_exists(file_path: str) -> bool:
     """Check if a file exists relative to current working directory."""
     return Path(file_path).exists()
@@ -310,8 +313,8 @@ def _get_env_flag(flag_name: str) -> bool:
     Returns:
         True if flag is set to 'true', '1', or 'yes' (case-insensitive)
     """
-    value = os.getenv(flag_name, '').lower()
-    return value in ('true', '1', 'yes')
+    value = os.getenv(flag_name, "").lower()
+    return value in ("true", "1", "yes")
 
 
 def _log_violation(function_name: str, error_message: str) -> None:
@@ -324,7 +327,7 @@ def _log_violation(function_name: str, error_message: str) -> None:
     """
     try:
         import json
-        from datetime import datetime, timezone
+        from datetime import datetime
 
         # Create logs/autonomous_healing directory if it doesn't exist
         log_dir = Path("logs/autonomous_healing")
@@ -332,7 +335,7 @@ def _log_violation(function_name: str, error_message: str) -> None:
 
         # Create violation log entry
         violation_entry = {
-            "timestamp": datetime.now(timezone.utc).isoformat(),
+            "timestamp": datetime.now(UTC).isoformat(),
             "violation_type": "ConstitutionalCompliance",
             "function": function_name,
             "error": error_message,

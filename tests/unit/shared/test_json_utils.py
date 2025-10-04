@@ -2,15 +2,29 @@
 """
 Test cases for the json_utils module.
 """
-import pytest
-from typing import Dict, List
+
 from learning_agent.json_utils import (
-    is_dict, is_list, is_str, is_int, is_float, is_number, is_none,
-    safe_get, safe_get_dict, safe_get_list, safe_get_str,
-    safe_get_int, safe_get_float, safe_get_number,
-    ensure_dict, ensure_list, ensure_str,
-    json_to_any_dict, any_to_json_dict,
-    extract_numeric_list, safe_len
+    any_to_json_dict,
+    ensure_dict,
+    ensure_list,
+    ensure_str,
+    extract_numeric_list,
+    is_dict,
+    is_float,
+    is_int,
+    is_list,
+    is_none,
+    is_number,
+    is_str,
+    json_to_any_dict,
+    safe_get,
+    safe_get_dict,
+    safe_get_float,
+    safe_get_int,
+    safe_get_list,
+    safe_get_number,
+    safe_get_str,
+    safe_len,
 )
 from shared.type_definitions.json import JSONValue
 
@@ -164,7 +178,7 @@ class TestConversionFunctions:
         assert result == {"key": "value", "num": 42}
 
     def test_extract_numeric_list(self):
-        data: List[JSONValue] = [1, 2.5, "3", None, "abc", 4]
+        data: list[JSONValue] = [1, 2.5, "3", None, "abc", 4]
         result = extract_numeric_list(data)
         assert result == [1.0, 2.5, 4.0]
         assert extract_numeric_list([]) == []

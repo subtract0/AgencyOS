@@ -1,23 +1,24 @@
-import os
-
-from agency_swarm import Agent
-from shared.agent_context import AgentContext, create_agent_context
-from shared.constitutional_validator import constitutional_compliance
-from shared.agent_utils import (
-    select_instructions_file,
-    create_model_settings,
-    get_model_instance,
-)
-from agency_swarm.tools import BaseTool as Tool
-from pydantic import Field
-import litellm
 import json
 import os
+from datetime import UTC
+
+import litellm
+from agency_swarm import Agent
+from agency_swarm.tools import BaseTool as Tool
+from pydantic import Field
+
+from shared.agent_context import AgentContext, create_agent_context
+from shared.agent_utils import (
+    create_model_settings,
+    get_model_instance,
+    select_instructions_file,
+)
+from shared.constitutional_validator import constitutional_compliance
 from shared.system_hooks import (
-    create_message_filter_hook,
-    create_memory_integration_hook,
-    create_composite_hook,
     create_code_bundle_attachment_hook,
+    create_composite_hook,
+    create_memory_integration_hook,
+    create_message_filter_hook,
 )
 
 current_dir = os.path.dirname(os.path.abspath(__file__))
@@ -31,8 +32,12 @@ class RegenerateWithGpt5(Tool):
     """
 
     draft: str = Field(..., description="The initial draft summary to improve")
-    bundle_path: str | None = Field(default=None, description="Path to the code bundle file with prior context")
-    guidance: str | None = Field(default=None, description="Optional extra instructions or constraints")
+    bundle_path: str | None = Field(
+        default=None, description="Path to the code bundle file with prior context"
+    )
+    guidance: str | None = Field(
+        default=None, description="Optional extra instructions or constraints"
+    )
 
     def run(self) -> str:
         try:
@@ -51,16 +56,14 @@ class RegenerateWithGpt5(Tool):
             return ""
 
         try:
-            with open(self.bundle_path, "r", encoding="utf-8") as f:
+            with open(self.bundle_path, encoding="utf-8") as f:
                 return f.read(120000)  # Limit read to avoid token blowup
         except Exception as e:
             return f"(failed to read bundle at {self.bundle_path}: {e})"
 
     def _prepare_gpt5_messages(self, bundle_text: str) -> list:
         """Prepare messages for GPT-5 API call."""
-        sys_prompt = (
-            "You are generating a concise, listener-friendly audio summary for TTS. Include what was done, why it matters, and 1–3 next steps."
-        )
+        sys_prompt = "You are generating a concise, listener-friendly audio summary for TTS. Include what was done, why it matters, and 1–3 next steps."
         user_payload = {
             "task": "Regenerate audio summary at high quality",
             "draft_summary": self.draft,
@@ -99,23 +102,27 @@ class RegenerateWithGpt5(Tool):
         """Emit telemetry event for escalation usage."""
         try:
             from tools.orchestrator.scheduler import _telemetry_emit  # type: ignore
-            _telemetry_emit({
-                "type": "escalation_used",
-                "agent": "WorkCompletionSummaryAgent",
-                "tool": "RegenerateWithGpt5",
-                "bundle_present": bool(self.bundle_path),
-            })
+
+            _telemetry_emit(
+                {
+                    "type": "escalation_used",
+                    "agent": "WorkCompletionSummaryAgent",
+                    "tool": "RegenerateWithGpt5",
+                    "bundle_present": bool(self.bundle_path),
+                }
+            )
         except Exception:
             self._fallback_telemetry_write()
 
     def _fallback_telemetry_write(self) -> None:
         """Fallback telemetry writing when main telemetry fails."""
         try:
-            import json as _json, os as _os
-            from datetime import datetime, timezone
+            import json as _json
+            from datetime import datetime
+
             base = os.path.join(os.getcwd(), "logs", "telemetry")
             os.makedirs(base, exist_ok=True)
-            ts = datetime.now(timezone.utc)
+            ts = datetime.now(UTC)
             fname = os.path.join(base, f"events-{ts:%Y%m%d}.jsonl")
             ev = {
                 "ts": ts.isoformat(timespec="milliseconds").replace("+00:00", "Z"),
@@ -135,7 +142,7 @@ def create_work_completion_summary_agent(
     model: str = "gpt-5-nano",
     reasoning_effort: str = "low",
     agent_context: AgentContext | None = None,
-    cost_tracker = None
+    cost_tracker=None,
 ) -> Agent:
     """Factory to create the WorkCompletionSummaryAgent.
 
@@ -167,7 +174,7 @@ def create_work_completion_summary_agent(
             "model": model,
             "reasoning_effort": reasoning_effort,
             "session_id": agent_context.session_id,
-            "cost_tracker_enabled": cost_tracker is not None
+            "cost_tracker_enabled": cost_tracker is not None,
         },
         ["agency", "summary", "creation"],
     )
@@ -200,6 +207,7 @@ def create_work_completion_summary_agent(
     # Enable cost tracking if provided
     if cost_tracker is not None:
         from shared.llm_cost_wrapper import wrap_agent_with_cost_tracking
+
         wrap_agent_with_cost_tracking(agent, cost_tracker)
 
     return agent

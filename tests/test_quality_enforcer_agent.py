@@ -13,26 +13,24 @@ Tests following the NECESSARY pattern:
 - **Y**ield fast execution
 """
 
-import os
 import pytest
 
 # Skip infrastructure-dependent tests in CI
 pytestmark = pytest.mark.skipif(
     True,  # TODO: Fix infrastructure issues
-    reason="Infrastructure dependencies not available in CI"
+    reason="Infrastructure dependencies not available in CI",
 )
 
-import tempfile
 import subprocess
-from unittest.mock import Mock, patch, MagicMock
+from unittest.mock import Mock, patch
+
 from quality_enforcer_agent import (
-    create_quality_enforcer_agent,
+    AutoFixSuggestion,
     ConstitutionalCheck,
     QualityAnalysis,
     ValidatorTool,
-    AutoFixSuggestion
+    create_quality_enforcer_agent,
 )
-from shared.agent_context import create_agent_context
 
 
 @pytest.fixture
@@ -87,9 +85,12 @@ class TestQualityEnforcerAgentInitialization:
 
     def test_agent_creation_with_defaults(self):
         """Test agent creation with default parameters."""
-        with patch('quality_enforcer_agent.quality_enforcer_agent.Agent') as mock_agent_class, \
-             patch('quality_enforcer_agent.quality_enforcer_agent.create_agent_context') as mock_create_context:
-
+        with (
+            patch("quality_enforcer_agent.quality_enforcer_agent.Agent") as mock_agent_class,
+            patch(
+                "quality_enforcer_agent.quality_enforcer_agent.create_agent_context"
+            ) as mock_create_context,
+        ):
             mock_context = Mock()
             mock_context.session_id = "test_session"
             mock_context.store_memory = Mock()
@@ -107,22 +108,20 @@ class TestQualityEnforcerAgentInitialization:
             # Check agent parameters
             assert mock_agent_class.call_args is not None
             call_kwargs = mock_agent_class.call_args[1]
-            assert call_kwargs['name'] == "QualityEnforcerAgent"
-            assert "constitutional compliance" in call_kwargs['description']
-            assert call_kwargs['temperature'] == 0.1
-            assert call_kwargs['max_prompt_tokens'] == 128000
-            assert call_kwargs['max_completion_tokens'] == 16384
+            assert call_kwargs["name"] == "QualityEnforcerAgent"
+            assert "constitutional compliance" in call_kwargs["description"]
+            assert call_kwargs["temperature"] == 0.1
+            assert call_kwargs["max_prompt_tokens"] == 128000
+            assert call_kwargs["max_completion_tokens"] == 16384
 
     def test_agent_creation_with_custom_parameters(self, mock_agent_context):
         """Test agent creation with custom parameters."""
-        with patch('quality_enforcer_agent.quality_enforcer_agent.Agent') as mock_agent_class:
+        with patch("quality_enforcer_agent.quality_enforcer_agent.Agent") as mock_agent_class:
             mock_agent = Mock()
             mock_agent_class.return_value = mock_agent
 
             agent = create_quality_enforcer_agent(
-                model="gpt-4o",
-                reasoning_effort="low",
-                agent_context=mock_agent_context
+                model="gpt-4o", reasoning_effort="low", agent_context=mock_agent_context
             )
 
             # Verify agent creation with custom context
@@ -134,7 +133,7 @@ class TestQualityEnforcerAgentInitialization:
 
     def test_agent_tools_configuration(self, mock_agent_context):
         """Test that agent has all required tools configured."""
-        with patch('quality_enforcer_agent.quality_enforcer_agent.Agent') as mock_agent_class:
+        with patch("quality_enforcer_agent.quality_enforcer_agent.Agent") as mock_agent_class:
             mock_agent = Mock()
             mock_agent_class.return_value = mock_agent
 
@@ -143,15 +142,17 @@ class TestQualityEnforcerAgentInitialization:
             # Check tools were provided
             assert mock_agent_class.call_args is not None
             call_kwargs = mock_agent_class.call_args[1]
-            tools = call_kwargs['tools']
+            tools = call_kwargs["tools"]
 
             # Verify core tools are present
-            tool_classes = [tool.__name__ if hasattr(tool, '__name__') else str(tool) for tool in tools]
+            tool_classes = [
+                tool.__name__ if hasattr(tool, "__name__") else str(tool) for tool in tools
+            ]
             expected_tools = [
-                'ConstitutionalCheck',
-                'QualityAnalysis',
-                'ValidatorTool',
-                'AutoFixSuggestion'
+                "ConstitutionalCheck",
+                "QualityAnalysis",
+                "ValidatorTool",
+                "AutoFixSuggestion",
             ]
 
             for expected_tool in expected_tools:
@@ -159,9 +160,10 @@ class TestQualityEnforcerAgentInitialization:
 
     def test_instructions_loading(self, mock_agent_context):
         """Test that instructions are properly loaded."""
-        with patch('quality_enforcer_agent.quality_enforcer_agent.Agent') as mock_agent_class, \
-             patch('builtins.open', create=True) as mock_open:
-
+        with (
+            patch("quality_enforcer_agent.quality_enforcer_agent.Agent") as mock_agent_class,
+            patch("builtins.open", create=True) as mock_open,
+        ):
             mock_open.return_value.__enter__.return_value.read.return_value = "Test instructions"
             mock_agent = Mock()
             mock_agent_class.return_value = mock_agent
@@ -170,16 +172,23 @@ class TestQualityEnforcerAgentInitialization:
 
             assert mock_agent_class.call_args is not None
             call_kwargs = mock_agent_class.call_args[1]
-            assert 'instructions' in call_kwargs
-            assert call_kwargs['instructions'] is not None
+            assert "instructions" in call_kwargs
+            assert call_kwargs["instructions"] is not None
 
     def test_hooks_integration(self, mock_agent_context):
         """Test that system hooks are properly integrated."""
-        with patch('quality_enforcer_agent.quality_enforcer_agent.create_system_reminder_hook') as mock_reminder, \
-             patch('quality_enforcer_agent.quality_enforcer_agent.create_memory_integration_hook') as mock_memory, \
-             patch('quality_enforcer_agent.quality_enforcer_agent.create_composite_hook') as mock_composite, \
-             patch('quality_enforcer_agent.quality_enforcer_agent.Agent') as mock_agent_class:
-
+        with (
+            patch(
+                "quality_enforcer_agent.quality_enforcer_agent.create_system_reminder_hook"
+            ) as mock_reminder,
+            patch(
+                "quality_enforcer_agent.quality_enforcer_agent.create_memory_integration_hook"
+            ) as mock_memory,
+            patch(
+                "quality_enforcer_agent.quality_enforcer_agent.create_composite_hook"
+            ) as mock_composite,
+            patch("quality_enforcer_agent.quality_enforcer_agent.Agent") as mock_agent_class,
+        ):
             mock_reminder_hook = Mock()
             mock_memory_hook = Mock()
             mock_composite_hook = Mock()
@@ -201,7 +210,7 @@ class TestQualityEnforcerAgentInitialization:
             # Verify hooks were passed to agent
             assert mock_agent_class.call_args is not None
             call_kwargs = mock_agent_class.call_args[1]
-            assert call_kwargs['hooks'] == mock_composite_hook
+            assert call_kwargs["hooks"] == mock_composite_hook
 
 
 class TestConstitutionalCheck:
@@ -235,7 +244,7 @@ class TestConstitutionalCheck:
             "Article II (100% Verification)",
             "Article III (Automated Enforcement)",
             "Article IV (Continuous Learning)",
-            "Article V (Spec-Driven)"
+            "Article V (Spec-Driven)",
         ]
 
         for article in expected_articles:
@@ -296,7 +305,7 @@ class TestValidatorTool:
 
     def test_test_validator_with_valid_command(self):
         """Test validator with valid test command."""
-        with patch('subprocess.run') as mock_run:
+        with patch("subprocess.run") as mock_run:
             mock_result = Mock()
             mock_result.returncode = 0
             mock_result.stderr = ""
@@ -310,7 +319,7 @@ class TestValidatorTool:
 
     def test_test_validator_with_failing_tests(self):
         """Test validator with failing tests."""
-        with patch('subprocess.run') as mock_run:
+        with patch("subprocess.run") as mock_run:
             mock_result = Mock()
             mock_result.returncode = 1
             mock_result.stderr = "FAILED test_example.py::test_function"
@@ -332,13 +341,11 @@ class TestValidatorTool:
             result = tool.run()
 
             assert "✗" in result
-            assert ("Invalid" in result or "Unsafe" in result or "empty" in result)
+            assert "Invalid" in result or "Unsafe" in result or "empty" in result
 
     def test_test_validator_with_venv_python(self):
         """Test that virtual environment python is used when available."""
-        with patch('os.path.exists') as mock_exists, \
-             patch('subprocess.run') as mock_run:
-
+        with patch("os.path.exists") as mock_exists, patch("subprocess.run") as mock_run:
             mock_exists.return_value = True  # venv exists
             mock_result = Mock()
             mock_result.returncode = 0
@@ -354,7 +361,7 @@ class TestValidatorTool:
 
     def test_test_validator_timeout_handling(self):
         """Test that test command timeout is handled."""
-        with patch('subprocess.run') as mock_run:
+        with patch("subprocess.run") as mock_run:
             mock_run.side_effect = subprocess.TimeoutExpired("cmd", 30)
 
             tool = ValidatorTool(test_command="python -m pytest")
@@ -364,7 +371,7 @@ class TestValidatorTool:
 
     def test_test_validator_security_shell_disabled(self):
         """Test that shell execution is disabled for security."""
-        with patch('subprocess.run') as mock_run:
+        with patch("subprocess.run") as mock_run:
             mock_result = Mock()
             mock_result.returncode = 0
             mock_run.return_value = mock_result
@@ -374,7 +381,7 @@ class TestValidatorTool:
 
             # Verify shell=False was used
             call_kwargs = mock_run.call_args[1]
-            assert call_kwargs['shell'] is False
+            assert call_kwargs["shell"] is False
 
     def test_test_validator_invalid_command_syntax(self):
         """Test handling of invalid command syntax."""
@@ -444,7 +451,7 @@ class TestQualityEnforcerAgentIntegration:
 
     def test_agent_constitutional_compliance_workflow(self, mock_agent_context):
         """Test complete constitutional compliance workflow."""
-        with patch('quality_enforcer_agent.quality_enforcer_agent.Agent') as mock_agent_class:
+        with patch("quality_enforcer_agent.quality_enforcer_agent.Agent") as mock_agent_class:
             mock_agent = Mock()
             mock_agent_class.return_value = mock_agent
 
@@ -453,14 +460,16 @@ class TestQualityEnforcerAgentIntegration:
             # Verify agent was created with compliance tools
             assert mock_agent_class.call_args is not None
             call_kwargs = mock_agent_class.call_args[1]
-            tools = call_kwargs['tools']
+            tools = call_kwargs["tools"]
 
             # Should have constitutional check capability
-            assert any(hasattr(tool, '__name__') and 'Constitutional' in tool.__name__ for tool in tools)
+            assert any(
+                hasattr(tool, "__name__") and "Constitutional" in tool.__name__ for tool in tools
+            )
 
     def test_agent_quality_analysis_workflow(self, mock_agent_context):
         """Test complete quality analysis workflow."""
-        with patch('quality_enforcer_agent.quality_enforcer_agent.Agent') as mock_agent_class:
+        with patch("quality_enforcer_agent.quality_enforcer_agent.Agent") as mock_agent_class:
             mock_agent = Mock()
             mock_agent_class.return_value = mock_agent
 
@@ -469,13 +478,13 @@ class TestQualityEnforcerAgentIntegration:
             # Verify agent has quality analysis tools
             assert mock_agent_class.call_args is not None
             call_kwargs = mock_agent_class.call_args[1]
-            tools = call_kwargs['tools']
+            tools = call_kwargs["tools"]
 
-            assert any(hasattr(tool, '__name__') and 'Quality' in tool.__name__ for tool in tools)
+            assert any(hasattr(tool, "__name__") and "Quality" in tool.__name__ for tool in tools)
 
     def test_agent_test_validation_workflow(self, mock_agent_context):
         """Test complete test validation workflow."""
-        with patch('quality_enforcer_agent.quality_enforcer_agent.Agent') as mock_agent_class:
+        with patch("quality_enforcer_agent.quality_enforcer_agent.Agent") as mock_agent_class:
             mock_agent = Mock()
             mock_agent_class.return_value = mock_agent
 
@@ -484,13 +493,13 @@ class TestQualityEnforcerAgentIntegration:
             # Verify agent has test validation capability
             assert mock_agent_class.call_args is not None
             call_kwargs = mock_agent_class.call_args[1]
-            tools = call_kwargs['tools']
+            tools = call_kwargs["tools"]
 
-            assert any(hasattr(tool, '__name__') and 'Validator' in tool.__name__ for tool in tools)
+            assert any(hasattr(tool, "__name__") and "Validator" in tool.__name__ for tool in tools)
 
     def test_agent_auto_fix_workflow(self, mock_agent_context):
         """Test complete auto-fix suggestion workflow."""
-        with patch('quality_enforcer_agent.quality_enforcer_agent.Agent') as mock_agent_class:
+        with patch("quality_enforcer_agent.quality_enforcer_agent.Agent") as mock_agent_class:
             mock_agent = Mock()
             mock_agent_class.return_value = mock_agent
 
@@ -499,13 +508,13 @@ class TestQualityEnforcerAgentIntegration:
             # Verify agent has auto-fix capability
             assert mock_agent_class.call_args is not None
             call_kwargs = mock_agent_class.call_args[1]
-            tools = call_kwargs['tools']
+            tools = call_kwargs["tools"]
 
-            assert any(hasattr(tool, '__name__') and 'AutoFix' in tool.__name__ for tool in tools)
+            assert any(hasattr(tool, "__name__") and "AutoFix" in tool.__name__ for tool in tools)
 
     def test_agent_memory_integration(self, mock_agent_context):
         """Test that agent properly integrates with memory system."""
-        with patch('quality_enforcer_agent.quality_enforcer_agent.Agent'):
+        with patch("quality_enforcer_agent.quality_enforcer_agent.Agent"):
             create_quality_enforcer_agent(agent_context=mock_agent_context)
 
             # Verify agent was created successfully with context
@@ -514,17 +523,18 @@ class TestQualityEnforcerAgentIntegration:
 
     def test_agent_unified_core_integration(self, mock_agent_context):
         """Test unified core integration when available."""
-        with patch('quality_enforcer_agent.quality_enforcer_agent.Agent'), \
-             patch.dict('os.environ', {'ENABLE_UNIFIED_CORE': 'true'}), \
-             patch('quality_enforcer_agent.quality_enforcer_agent.SelfHealingCore', create=True), \
-             patch('quality_enforcer_agent.quality_enforcer_agent.emit', create=True):
-
+        with (
+            patch("quality_enforcer_agent.quality_enforcer_agent.Agent"),
+            patch.dict("os.environ", {"ENABLE_UNIFIED_CORE": "true"}),
+            patch("quality_enforcer_agent.quality_enforcer_agent.SelfHealingCore", create=True),
+            patch("quality_enforcer_agent.quality_enforcer_agent.emit", create=True),
+        ):
             agent = create_quality_enforcer_agent(agent_context=mock_agent_context)
             assert agent is not None
 
     def test_agent_error_handling_during_creation(self):
         """Test error handling during agent creation."""
-        with patch('quality_enforcer_agent.quality_enforcer_agent.Agent') as mock_agent_class:
+        with patch("quality_enforcer_agent.quality_enforcer_agent.Agent") as mock_agent_class:
             mock_agent_class.side_effect = Exception("Agent creation failed")
 
             with pytest.raises(Exception):
@@ -563,11 +573,11 @@ class TestQualityEnforcerAgentEdgeCases:
         safe_complex_commands = [
             "python -m pytest tests/ -v --tb=short",
             "python -m pytest --cov=src",
-            "python -m unittest discover"
+            "python -m unittest discover",
         ]
 
         for cmd in safe_complex_commands:
-            with patch('subprocess.run') as mock_run:
+            with patch("subprocess.run") as mock_run:
                 mock_result = Mock()
                 mock_result.returncode = 0
                 mock_result.stderr = ""
@@ -580,9 +590,10 @@ class TestQualityEnforcerAgentEdgeCases:
 
     def test_agent_with_missing_instructions_file(self, mock_agent_context):
         """Test agent creation when instructions file is missing."""
-        with patch('quality_enforcer_agent.quality_enforcer_agent.Agent') as mock_agent_class, \
-             patch('builtins.open', side_effect=FileNotFoundError):
-
+        with (
+            patch("quality_enforcer_agent.quality_enforcer_agent.Agent") as mock_agent_class,
+            patch("builtins.open", side_effect=FileNotFoundError),
+        ):
             mock_agent = Mock()
             mock_agent_class.return_value = mock_agent
 
@@ -592,8 +603,8 @@ class TestQualityEnforcerAgentEdgeCases:
 
             assert mock_agent_class.call_args is not None
             call_kwargs = mock_agent_class.call_args[1]
-            assert 'instructions' in call_kwargs
-            assert "QualityEnforcerAgent" in call_kwargs['instructions']
+            assert "instructions" in call_kwargs
+            assert "QualityEnforcerAgent" in call_kwargs["instructions"]
 
 
 class TestConstitutionalCompliance:
@@ -601,7 +612,7 @@ class TestConstitutionalCompliance:
 
     def test_article_ii_test_validation_enforcement(self):
         """Test Article II (100% Verification) enforcement through test validation."""
-        with patch('subprocess.run') as mock_run:
+        with patch("subprocess.run") as mock_run:
             # Test failing scenario
             mock_result = Mock()
             mock_result.returncode = 1

@@ -12,14 +12,14 @@ Tests include:
 """
 
 import os
-import pytest
 import time
 from datetime import datetime
 
+import pytest
+
 # CI skip marker for tests requiring external API keys
 ci_skip = pytest.mark.skipif(
-    os.environ.get("CI") == "true",
-    reason="Requires external API keys not available in CI"
+    os.environ.get("CI") == "true", reason="Requires external API keys not available in CI"
 )
 
 # Test OpenAI integration only if available
@@ -84,9 +84,7 @@ class TestFirestoreIntegration:
         store = FirestoreStore(collection_name)
 
         # Verify Firestore is actually being used (not fallback)
-        assert store._client is not None, (
-            "FirestoreStore should use real Firestore client"
-        )
+        assert store._client is not None, "FirestoreStore should use real Firestore client"
         assert store._fallback_store is None, "FirestoreStore should not use fallback"
 
         # Test CREATE operation
@@ -105,9 +103,7 @@ class TestFirestoreIntegration:
 
         # Test READ operation via search
         search_results = store.search(["integration"])
-        assert len(search_results) >= 1, (
-            "Should find at least one integration test record"
-        )
+        assert len(search_results) >= 1, "Should find at least one integration test record"
 
         found_record = None
         for record in search_results:
@@ -195,9 +191,7 @@ class TestFirestoreIntegration:
         store = FirestoreStore("connection_test")
 
         # Should not use fallback when properly configured
-        assert store._fallback_store is None, (
-            "Should not use fallback with proper configuration"
-        )
+        assert store._fallback_store is None, "Should not use fallback with proper configuration"
         assert store._client is not None, "Should have Firestore client"
         assert store._collection is not None, "Should have collection reference"
 
@@ -272,9 +266,7 @@ class TestOpenAIIntegration:
         # Basic validation of API key format
         assert isinstance(api_key, str), "API key should be a string"
         assert len(api_key) > 10, "API key should be reasonably long"
-        assert api_key.startswith(("sk-", "sk-proj-")), (
-            "API key should start with expected prefix"
-        )
+        assert api_key.startswith(("sk-", "sk-proj-")), "API key should start with expected prefix"
 
         # Test that client can be created
         client = openai.OpenAI(api_key=api_key)

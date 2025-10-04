@@ -13,20 +13,21 @@ Exit codes:
 Optional environment variables:
 - NO_DICT_ANY_ALLOWLIST: comma-separated file globs to ignore (rare, temporary)
 """
+
 from __future__ import annotations
 
 import ast
 import os
 import sys
-from pathlib import Path
+from collections.abc import Iterable
 from fnmatch import fnmatch
-from typing import Iterable, List, Tuple
+from pathlib import Path
 
 # Patterns to scan
 DEFAULT_INCLUDE = "**/*.py"
 DEFAULT_EXCLUDE_DIRS = {".git", ".venv", "venv", "build", "dist", "node_modules", "__pycache__"}
 
-AllowList = Tuple[str, ...]
+AllowList = tuple[str, ...]
 
 
 def _iter_files(root: Path, allowlist: AllowList) -> Iterable[Path]:
@@ -78,8 +79,8 @@ def _match_dict_str_any(sub: ast.Subscript) -> bool:
     return _is_str_name(key_node) and _is_any(val_node)
 
 
-def _collect_violations(tree: ast.AST, filename: str) -> List[Tuple[int, int, str]]:
-    violations: List[Tuple[int, int, str]] = []
+def _collect_violations(tree: ast.AST, filename: str) -> list[tuple[int, int, str]]:
+    violations: list[tuple[int, int, str]] = []
 
     class Visitor(ast.NodeVisitor):
         def visit_AnnAssign(self, node: ast.AnnAssign) -> None:
@@ -115,7 +116,7 @@ def main() -> int:
 
     total = 0
     files_with = 0
-    entries: List[str] = []
+    entries: list[str] = []
 
     for py in _iter_files(repo_root, allowlist):
         try:

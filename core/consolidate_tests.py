@@ -4,7 +4,6 @@ Consolidate duplicate test files by merging healed versions into main files.
 This reduces test maintenance burden while preserving all test coverage.
 """
 
-import os
 import shutil
 from pathlib import Path
 
@@ -38,7 +37,7 @@ def consolidate_test_files() -> tuple[int, int]:
                 print(f"✓ Backed up {main_file_name}")
 
             # Read healed content
-            with open(healed_file, 'r') as f:
+            with open(healed_file) as f:
                 content = f.read()
 
             # Update content to remove _healed references
@@ -47,18 +46,20 @@ def consolidate_test_files() -> tuple[int, int]:
 
             # Add consolidation marker
             if "# CONSOLIDATED FROM HEALED VERSION" not in content:
-                lines = content.split('\n')
+                lines = content.split("\n")
                 # Insert after imports
                 for i, line in enumerate(lines):
                     if line.startswith("import ") or line.startswith("from "):
                         continue
                     elif line.strip() and not line.startswith("#"):
-                        lines.insert(i, "\n# CONSOLIDATED FROM HEALED VERSION - More comprehensive tests")
+                        lines.insert(
+                            i, "\n# CONSOLIDATED FROM HEALED VERSION - More comprehensive tests"
+                        )
                         break
-                content = '\n'.join(lines)
+                content = "\n".join(lines)
 
             # Write consolidated content
-            with open(main_file, 'w') as f:
+            with open(main_file, "w") as f:
                 f.write(content)
 
             # Remove healed file

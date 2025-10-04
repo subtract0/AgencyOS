@@ -13,13 +13,11 @@ NECESSARY Pattern Coverage:
 - Yield: Fast execution with mocked subprocess calls
 """
 
-import pytest
 import os
 import tempfile
-from unittest.mock import Mock, patch, MagicMock, mock_open
-from pathlib import Path
+from unittest.mock import MagicMock, Mock, mock_open, patch
 
-from core.self_healing import SelfHealingCore, Finding, Patch
+from core.self_healing import Finding, SelfHealingCore
 
 
 class TestErrorDetection:
@@ -67,7 +65,7 @@ TypeError: 'NoneType' object is not iterable
         log_content = "AttributeError: 'NoneType' object has no attribute 'test'"
 
         # Act
-        with tempfile.NamedTemporaryFile(mode='w', suffix='.log', delete=False, dir='/tmp') as f:
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".log", delete=False, dir="/tmp") as f:
             f.write(log_content)
             temp_path = f.name
 
@@ -163,7 +161,7 @@ class TestApplyFixSafely:
         fixed_content = "fixed code"
 
         # Act
-        with tempfile.NamedTemporaryFile(mode='w', suffix='.py', delete=False, dir='/tmp') as f:
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".py", delete=False, dir="/tmp") as f:
             temp_path = f.name
 
         try:
@@ -171,7 +169,7 @@ class TestApplyFixSafely:
 
             # Assert
             assert result is True
-            with open(temp_path, 'r') as f:
+            with open(temp_path) as f:
                 assert f.read() == fixed_content
         finally:
             os.unlink(temp_path)
@@ -181,8 +179,8 @@ class TestApplyFixSafely:
         core = SelfHealingCore(dry_run=False)
 
         # Act
-        with patch('builtins.open', side_effect=PermissionError("Access denied")):
-            result = core._apply_fix_to_file('/tmp/test.py', "content")
+        with patch("builtins.open", side_effect=PermissionError("Access denied")):
+            result = core._apply_fix_to_file("/tmp/test.py", "content")
 
         # Assert
         assert result is False
@@ -196,11 +194,9 @@ class TestVerifyFixWithTests:
         core = SelfHealingCore(dry_run=True)
 
         # Act
-        with patch('subprocess.run') as mock_run:
+        with patch("subprocess.run") as mock_run:
             mock_run.return_value = MagicMock(
-                returncode=0,
-                stdout="✅ All tests passed!",
-                stderr=""
+                returncode=0, stdout="✅ All tests passed!", stderr=""
             )
             result = core.verify()
 
@@ -215,11 +211,9 @@ class TestVerifyFixWithTests:
         core = SelfHealingCore(dry_run=True)
 
         # Act
-        with patch('subprocess.run') as mock_run:
+        with patch("subprocess.run") as mock_run:
             mock_run.return_value = MagicMock(
-                returncode=1,
-                stdout="FAILED tests/test_example.py",
-                stderr=""
+                returncode=1, stdout="FAILED tests/test_example.py", stderr=""
             )
             result = core.verify()
 
@@ -231,8 +225,9 @@ class TestVerifyFixWithTests:
         core = SelfHealingCore(dry_run=True)
 
         # Act
-        with patch('subprocess.run') as mock_run:
+        with patch("subprocess.run") as mock_run:
             import subprocess
+
             mock_run.side_effect = subprocess.TimeoutExpired(cmd="run_tests.py", timeout=120)
             result = core.verify()
 
@@ -249,7 +244,7 @@ class TestRollbackOnFailure:
         original_content = "original code"
 
         # Act
-        with tempfile.NamedTemporaryFile(mode='w', suffix='.py', delete=False, dir='/tmp') as f:
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".py", delete=False, dir="/tmp") as f:
             temp_path = f.name
             f.write("bad fix")
 
@@ -257,7 +252,7 @@ class TestRollbackOnFailure:
             core._rollback_on_failure(temp_path, original_content)
 
             # Assert
-            with open(temp_path, 'r') as f:
+            with open(temp_path) as f:
                 assert f.read() == original_content
         finally:
             os.unlink(temp_path)
@@ -267,9 +262,9 @@ class TestRollbackOnFailure:
         core = SelfHealingCore(dry_run=False)
 
         # Act
-        with patch('builtins.open', side_effect=IOError("Write failed")):
+        with patch("builtins.open", side_effect=OSError("Write failed")):
             # Should not raise, just log error
-            core._rollback_on_failure('/tmp/test.py', "original")
+            core._rollback_on_failure("/tmp/test.py", "original")
 
         # Assert - If we get here, error was handled gracefully
         assert True
@@ -284,7 +279,7 @@ class TestCommitFix:
         error = Finding(file="test.py", line=10, error_type="NoneType", snippet="test")
 
         # Act
-        with patch('subprocess.run') as mock_run:
+        with patch("subprocess.run") as mock_run:
             core._commit_fix(error)
 
         # Assert
@@ -296,8 +291,8 @@ class TestCommitFix:
         error = Finding(file="test.py", line=10, error_type="NoneType", snippet="test")
 
         # Act
-        with patch.dict('os.environ', {}, clear=True):
-            with patch('subprocess.run') as mock_run:
+        with patch.dict("os.environ", {}, clear=True):
+            with patch("subprocess.run") as mock_run:
                 core._commit_fix(error)
 
         # Assert
@@ -309,8 +304,8 @@ class TestCommitFix:
         error = Finding(file="test.py", line=10, error_type="NoneType", snippet="test error")
 
         # Act
-        with patch.dict('os.environ', {'SELF_HEALING_AUTO_COMMIT': 'true'}):
-            with patch('subprocess.run') as mock_run:
+        with patch.dict("os.environ", {"SELF_HEALING_AUTO_COMMIT": "true"}):
+            with patch("subprocess.run") as mock_run:
                 mock_run.return_value = MagicMock(returncode=0, stdout="abc123\n")
                 core._commit_fix(error)
 
@@ -328,7 +323,7 @@ class TestFixErrorEndToEnd:
         error = Finding(file="test.py", line=2, error_type="NoneType", snippet="obj.method()")
 
         # Act
-        with tempfile.NamedTemporaryFile(mode='w', suffix='.py', delete=False, dir='/tmp') as f:
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".py", delete=False, dir="/tmp") as f:
             f.write("def test():\n    result = obj.method()\n    return result\n")
             temp_path = f.name
 
@@ -348,20 +343,20 @@ class TestFixErrorEndToEnd:
         error = Finding(file="test.py", line=2, error_type="NoneType", snippet="obj.method()")
 
         # Act
-        with tempfile.NamedTemporaryFile(mode='w', suffix='.py', delete=False, dir='/tmp') as f:
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".py", delete=False, dir="/tmp") as f:
             f.write(original_content)
             temp_path = f.name
 
         try:
             error.file = temp_path
 
-            with patch.object(core, 'verify', return_value=False):
+            with patch.object(core, "verify", return_value=False):
                 result = core.fix_error(error)
 
             # Assert
             assert result is False
             # File should be rolled back to original
-            with open(temp_path, 'r') as f:
+            with open(temp_path) as f:
                 assert f.read() == original_content
         finally:
             os.unlink(temp_path)
@@ -380,7 +375,9 @@ class TestFixErrorEndToEnd:
     def test_fix_error_skips_nonexistent_file(self):
         # Arrange
         core = SelfHealingCore(dry_run=True)
-        error = Finding(file="/tmp/does_not_exist.py", line=10, error_type="NoneType", snippet="test")
+        error = Finding(
+            file="/tmp/does_not_exist.py", line=10, error_type="NoneType", snippet="test"
+        )
 
         # Act
         result = core.fix_error(error)
@@ -436,7 +433,9 @@ class TestTelemetryIntegration:
         core._emit_event("test_event", {"key": "value"})
 
         # Assert
-        mock_telemetry.log.assert_called_once_with("self_healing.test_event", {"key": "value"}, "info")
+        mock_telemetry.log.assert_called_once_with(
+            "self_healing.test_event", {"key": "value"}, "info"
+        )
 
     def test_emit_event_falls_back_to_file_when_no_telemetry(self):
         # Arrange
@@ -444,7 +443,7 @@ class TestTelemetryIntegration:
         core.telemetry = None
 
         # Act
-        with patch('builtins.open', mock_open()) as mock_file:
+        with patch("builtins.open", mock_open()) as mock_file:
             core._emit_event("test_event", {"key": "value"})
 
         # Assert
@@ -461,7 +460,7 @@ class TestDryRunSafety:
         error = Finding(file="test.py", line=2, error_type="NoneType", snippet="test")
 
         # Act
-        with tempfile.NamedTemporaryFile(mode='w', suffix='.py', delete=False, dir='/tmp') as f:
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".py", delete=False, dir="/tmp") as f:
             f.write("original content")
             temp_path = f.name
 
@@ -469,7 +468,7 @@ class TestDryRunSafety:
             error.file = temp_path
             original_content = open(temp_path).read()
 
-            with patch.object(core, 'verify', return_value=True):
+            with patch.object(core, "verify", return_value=True):
                 core.fix_error(error)
 
             # Assert
@@ -484,7 +483,7 @@ class TestDryRunSafety:
         error = Finding(file="test.py", line=10, error_type="NoneType", snippet="test")
 
         # Act
-        with patch('subprocess.run') as mock_run:
+        with patch("subprocess.run") as mock_run:
             core._commit_fix(error)
 
         # Assert
@@ -503,7 +502,7 @@ class TestFeatureFlagIntegration:
 
     def test_enabled_flag_defaults_to_true(self):
         # Arrange & Act
-        with patch.dict('os.environ', {}, clear=True):
+        with patch.dict("os.environ", {}, clear=True):
             core = SelfHealingCore()
 
         # Assert
@@ -511,7 +510,7 @@ class TestFeatureFlagIntegration:
 
     def test_enabled_flag_respects_environment(self):
         # Arrange & Act
-        with patch.dict('os.environ', {'ENABLE_UNIFIED_CORE': 'false'}):
+        with patch.dict("os.environ", {"ENABLE_UNIFIED_CORE": "false"}):
             core = SelfHealingCore()
 
         # Assert
@@ -525,6 +524,7 @@ class TestErrorPatternExtraction:
         # Arrange
         core = SelfHealingCore(dry_run=True)
         import re
+
         content = 'File "test.py", line 42, in function\n'
         pattern = r"AttributeError: 'NoneType' object has no attribute '(\w+)'"
         match = re.search(pattern, "AttributeError: 'NoneType' object has no attribute 'method'")
@@ -539,6 +539,7 @@ class TestErrorPatternExtraction:
         # Arrange
         core = SelfHealingCore(dry_run=True)
         import re
+
         content = 'File "app/models.py", line 10, in process\n'
         pattern = r"TypeError: 'NoneType' object is not (\w+)"
         match = re.search(pattern, "TypeError: 'NoneType' object is not iterable")
@@ -556,6 +557,7 @@ class TestPerformanceRequirements:
     def test_detect_errors_completes_quickly(self):
         # Arrange
         import time
+
         core = SelfHealingCore(dry_run=True)
         log_content = "AttributeError: 'NoneType' object has no attribute 'test'"
 
@@ -570,6 +572,7 @@ class TestPerformanceRequirements:
     def test_generate_fix_completes_quickly(self):
         # Arrange
         import time
+
         core = SelfHealingCore(dry_run=True)
         content = "def test():\n    obj.method()\n"
         error = Finding(file="test.py", line=2, error_type="NoneType", snippet="obj.method()")

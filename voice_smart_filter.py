@@ -9,18 +9,18 @@ Features:
 - Hybrid local+cloud transcription
 - Cost tracking and statistics
 """
+
+import json
 import os
 import sys
-import time
-import wave
 import tempfile
+import wave
 from datetime import datetime
 from pathlib import Path
-import json
 
 try:
-    import pyaudio
     import numpy as np
+    import pyaudio
     import torch
 except ImportError as e:
     print(f"❌ Missing dependency: {e}")
@@ -46,10 +46,7 @@ OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
 print("Loading Silero VAD model...")
 try:
     model, utils = torch.hub.load(
-        repo_or_dir='snakers4/silero-vad',
-        model='silero_vad',
-        force_reload=False,
-        onnx=False
+        repo_or_dir="snakers4/silero-vad", model="silero_vad", force_reload=False, onnx=False
     )
     (get_speech_timestamps, save_audio, read_audio, VADIterator, collect_chunks) = utils
     print("✅ Silero VAD loaded")
@@ -68,7 +65,7 @@ class FilteringStats:
 
     def load_stats(self):
         if self.stats_file.exists():
-            with open(self.stats_file, 'r') as f:
+            with open(self.stats_file) as f:
                 return json.load(f)
         return {
             "total_chunks": 0,
@@ -83,7 +80,7 @@ class FilteringStats:
         }
 
     def save_stats(self):
-        with open(self.stats_file, 'w') as f:
+        with open(self.stats_file, "w") as f:
             json.dump(self.stats, f, indent=2)
 
     def update(self, chunk_seconds, stage_passed, transcribed=False):
@@ -105,10 +102,7 @@ class FilteringStats:
             self.stats["estimated_cost_spent"] += cost
 
         # Calculate saved cost (what we would have spent without filtering)
-        rejected_seconds = (
-            self.stats["total_audio_seconds"] -
-            self.stats["transcribed_seconds"]
-        )
+        rejected_seconds = self.stats["total_audio_seconds"] - self.stats["transcribed_seconds"]
         self.stats["estimated_cost_saved"] = (rejected_seconds / 60) * 0.006
 
         self.save_stats()
@@ -123,21 +117,31 @@ class FilteringStats:
         print("📊 FILTERING STATISTICS")
         print("=" * 60)
         print(f"Total chunks analyzed: {total}")
-        print(f"  ❌ RMS rejected: {self.stats['rms_rejected']} ({self.stats['rms_rejected']*100//total}%)")
-        print(f"  ❌ VAD rejected: {self.stats['vad_rejected']} ({self.stats['vad_rejected']*100//total}%)")
-        print(f"  ❌ Speaker rejected: {self.stats['speaker_rejected']} ({self.stats['speaker_rejected']*100//total}%)")
-        print(f"  ✅ Transcribed: {self.stats['transcribed']} ({self.stats['transcribed']*100//total}%)")
+        print(
+            f"  ❌ RMS rejected: {self.stats['rms_rejected']} ({self.stats['rms_rejected'] * 100 // total}%)"
+        )
+        print(
+            f"  ❌ VAD rejected: {self.stats['vad_rejected']} ({self.stats['vad_rejected'] * 100 // total}%)"
+        )
+        print(
+            f"  ❌ Speaker rejected: {self.stats['speaker_rejected']} ({self.stats['speaker_rejected'] * 100 // total}%)"
+        )
+        print(
+            f"  ✅ Transcribed: {self.stats['transcribed']} ({self.stats['transcribed'] * 100 // total}%)"
+        )
         print()
         print(f"Audio processed: {self.stats['total_audio_seconds']:.1f}s")
         print(f"Actually transcribed: {self.stats['transcribed_seconds']:.1f}s")
-        print(f"Filtered out: {self.stats['total_audio_seconds'] - self.stats['transcribed_seconds']:.1f}s")
+        print(
+            f"Filtered out: {self.stats['total_audio_seconds'] - self.stats['transcribed_seconds']:.1f}s"
+        )
         print()
         print(f"💰 Estimated cost saved: ${self.stats['estimated_cost_saved']:.4f}")
         print(f"💳 Estimated cost spent: ${self.stats['estimated_cost_spent']:.4f}")
 
-        if self.stats['total_audio_seconds'] > 0:
-            hours = self.stats['total_audio_seconds'] / 3600
-            monthly_cost = (self.stats['estimated_cost_spent'] / hours) * 24 * 30
+        if self.stats["total_audio_seconds"] > 0:
+            hours = self.stats["total_audio_seconds"] / 3600
+            monthly_cost = (self.stats["estimated_cost_spent"] / hours) * 24 * 30
             print(f"📈 Projected monthly cost (24/7): ${monthly_cost:.2f}")
         print("=" * 60)
 
@@ -235,6 +239,7 @@ def transcribe_local(audio_data):
     """Transcribe using local Whisper model (fallback)"""
     try:
         import whisper
+
         model = whisper.load_model("base")
         samples = np.frombuffer(audio_data, dtype=np.int16).astype(np.float32) / 32768.0
         result = model.transcribe(samples, language=None)
@@ -251,11 +256,12 @@ def transcribe_cloud(audio_data):
 
     try:
         from openai import OpenAI
+
         client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
         # Save to temp WAV
         with tempfile.NamedTemporaryFile(suffix=".wav", delete=False) as temp_wav:
-            with wave.open(temp_wav.name, 'wb') as wav_file:
+            with wave.open(temp_wav.name, "wb") as wav_file:
                 wav_file.setnchannels(1)
                 wav_file.setsampwidth(2)
                 wav_file.setframerate(SAMPLE_RATE)
@@ -324,10 +330,10 @@ def main():
             channels=1,
             rate=SAMPLE_RATE,
             input=True,
-            frames_per_buffer=CHUNK_SIZE
+            frames_per_buffer=CHUNK_SIZE,
         )
 
-        print(f"\n🎙️  Listening... (Press Ctrl+C to stop)")
+        print("\n🎙️  Listening... (Press Ctrl+C to stop)")
         print("💡 Multi-stage filtering: RMS → VAD → Speaker → Transcribe\n")
 
         # Collect samples for speaker profile if needed
@@ -337,7 +343,7 @@ def main():
         cycle = 0
         while True:
             cycle += 1
-            timestamp = datetime.now().strftime('%H:%M:%S')
+            timestamp = datetime.now().strftime("%H:%M:%S")
 
             # Read audio chunk
             audio_data = stream.read(CHUNK_SIZE, exception_on_overflow=False)
@@ -365,7 +371,7 @@ def main():
 
             # Stage 3: Speaker identification (your voice vs others)
             if need_profile and len(profile_samples) < 5:
-                print(f"  📝 Recording sample {len(profile_samples)+1}/5 for speaker profile...")
+                print(f"  📝 Recording sample {len(profile_samples) + 1}/5 for speaker profile...")
                 profile_samples.append(audio_data)
 
                 if len(profile_samples) == 5:
@@ -378,14 +384,16 @@ def main():
             is_your_voice, speaker_similarity = check_speaker_match(audio_data, speaker_profile)
 
             if not is_your_voice:
-                print(f"  ❌ Not your voice (similarity:{speaker_similarity:.2f}) - YouTube/other speaker")
+                print(
+                    f"  ❌ Not your voice (similarity:{speaker_similarity:.2f}) - YouTube/other speaker"
+                )
                 stats.update(CHUNK_DURATION, "speaker_rejected")
                 continue
 
             print(f"  ✅ Your voice detected (similarity:{speaker_similarity:.2f})")
 
             # Stage 4: Transcribe (hybrid: cloud if API key, else local)
-            print(f"  🌐 Transcribing...")
+            print("  🌐 Transcribing...")
             text, language = transcribe_cloud(audio_data)
 
             if text:
@@ -393,7 +401,7 @@ def main():
                 append_transcription(text, language, rms, vad_confidence, speaker_similarity)
                 stats.update(CHUNK_DURATION, "transcribed", transcribed=True)
             else:
-                print(f"  ⚠️  Empty transcription")
+                print("  ⚠️  Empty transcription")
                 stats.update(CHUNK_DURATION, "transcribed", transcribed=False)
 
             print()
@@ -403,6 +411,7 @@ def main():
     except Exception as e:
         print(f"\n❌ Error: {e}")
         import traceback
+
         traceback.print_exc()
     finally:
         stream.stop_stream()

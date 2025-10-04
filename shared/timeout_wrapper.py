@@ -5,16 +5,21 @@ Provides Article I compliant timeout handling with exponential retry (1x→2x→
 Reference: ADR-018, bash.py:535-599 (proven implementation)
 Constitutional Authority: Article I Section 1.2 (Timeout Handling)
 """
+
+from __future__ import annotations
+
 import functools
 import logging
 import time
+from collections.abc import Callable
 from datetime import datetime
-from typing import TypeVar, Callable, Optional, Tuple, Any, List
+from typing import Any, TypeVar
+
 from pydantic import BaseModel, Field
 
 # Type variables
-T = TypeVar('T')
-E = TypeVar('E', bound=Exception)
+T = TypeVar("T")
+E = TypeVar("E", bound=Exception)
 
 
 class TimeoutConfig(BaseModel):
@@ -24,53 +29,41 @@ class TimeoutConfig(BaseModel):
         default=120000,
         description="Base timeout in milliseconds (default: 2 minutes)",
         ge=5000,  # Minimum 5 seconds
-        le=600000  # Maximum 10 minutes base
+        le=600000,  # Maximum 10 minutes base
     )
 
     max_retries: int = Field(
-        default=5,
-        description="Maximum retry attempts (default: 5 per Article I)",
-        ge=1,
-        le=10
+        default=5, description="Maximum retry attempts (default: 5 per Article I)", ge=1, le=10
     )
 
-    multipliers: List[int] = Field(
+    multipliers: list[int] = Field(
         default=[1, 2, 3, 5, 10],
-        description="Timeout multipliers for each retry (Article I: up to 10x)"
+        description="Timeout multipliers for each retry (Article I: up to 10x)",
     )
 
     completeness_check: bool = Field(
-        default=True,
-        description="Validate output completeness (Article I)"
+        default=True, description="Validate output completeness (Article I)"
     )
 
     telemetry_enabled: bool = Field(
-        default=True,
-        description="Enable telemetry events for learning (Article IV)"
+        default=True, description="Enable telemetry events for learning (Article IV)"
     )
 
     pause_between_retries_sec: float = Field(
-        default=2.0,
-        description="Pause duration between retries (Article I)",
-        ge=0.0,
-        le=10.0
+        default=2.0, description="Pause duration between retries (Article I)", ge=0.0, le=10.0
     )
 
 
 class TimeoutError(Exception):
     """Base class for timeout-related errors."""
+
     pass
 
 
 class TimeoutExhaustedError(TimeoutError):
     """Raised when all retry attempts exhausted."""
 
-    def __init__(
-        self,
-        attempts: int,
-        total_time_ms: int,
-        last_error: Optional[Exception]
-    ):
+    def __init__(self, attempts: int, total_time_ms: int, last_error: Exception | None):
         self.attempts = attempts
         self.total_time_ms = total_time_ms
         self.last_error = last_error
@@ -91,7 +84,7 @@ class IncompleteContextError(TimeoutError):
         )
 
 
-def _validate_completeness(result: Any) -> Tuple[bool, Optional[str]]:
+def _validate_completeness(result: Any) -> tuple[bool, str | None]:
     """
     Validate if operation result appears complete.
 
@@ -105,13 +98,13 @@ def _validate_completeness(result: Any) -> Tuple[bool, Optional[str]]:
 
     # Common incomplete output indicators (from bash.py)
     incomplete_indicators = [
-        'Terminated',
-        'Killed',
-        '... (truncated)',
-        'Connection timed out',
-        'Resource temporarily unavailable',
-        'Signal received',
-        'Process interrupted'
+        "Terminated",
+        "Killed",
+        "... (truncated)",
+        "Connection timed out",
+        "Resource temporarily unavailable",
+        "Signal received",
+        "Process interrupted",
     ]
 
     for indicator in incomplete_indicators:
@@ -123,8 +116,8 @@ def _validate_completeness(result: Any) -> Tuple[bool, Optional[str]]:
 
 def run_with_constitutional_timeout(
     operation: Callable[[int], T],
-    config: Optional[TimeoutConfig] = None,
-    telemetry_prefix: str = "operation"
+    config: TimeoutConfig | None = None,
+    telemetry_prefix: str = "operation",
 ) -> T:
     """
     Execute operation with constitutional timeout retry logic.
@@ -152,7 +145,6 @@ def run_with_constitutional_timeout(
         config = TimeoutConfig()
 
     start_time = datetime.now()
-    last_result = None
     last_exception = None
 
     for attempt in range(config.max_retries):
@@ -180,14 +172,12 @@ def run_with_constitutional_timeout(
                         f"{telemetry_prefix}: Incomplete output detected "
                         f"(indicator: {indicator}), retrying..."
                     )
-                    last_result = result
                     continue  # Retry with next timeout
 
             # Success
             elapsed_ms = int((datetime.now() - start_time).total_seconds() * 1000)
             logging.info(
-                f"{telemetry_prefix}: Success on attempt {attempt + 1}, "
-                f"elapsed: {elapsed_ms}ms"
+                f"{telemetry_prefix}: Success on attempt {attempt + 1}, elapsed: {elapsed_ms}ms"
             )
 
             return result
@@ -213,23 +203,18 @@ def run_with_constitutional_timeout(
                 )
 
                 raise TimeoutExhaustedError(
-                    attempts=config.max_retries,
-                    total_time_ms=elapsed_ms,
-                    last_error=e
-                )
+                    attempts=config.max_retries, total_time_ms=elapsed_ms, last_error=e
+                ) from e
 
     # Should never reach here
     elapsed_ms = int((datetime.now() - start_time).total_seconds() * 1000)
     raise TimeoutExhaustedError(
-        attempts=config.max_retries,
-        total_time_ms=elapsed_ms,
-        last_error=last_exception
+        attempts=config.max_retries, total_time_ms=elapsed_ms, last_error=last_exception
     )
 
 
 def with_constitutional_timeout(
-    config: Optional[TimeoutConfig] = None,
-    telemetry_prefix: str = "tool"
+    config: TimeoutConfig | None = None, telemetry_prefix: str = "tool"
 ) -> Callable[[Callable[..., T]], Callable[..., T]]:
     """
     Decorator for constitutional timeout compliance.
@@ -255,30 +240,28 @@ def with_constitutional_timeout(
         def wrapper(*args, **kwargs) -> T:
             # Get config from tool instance if available
             actual_config = config
-            if actual_config is None and args and hasattr(args[0], 'timeout_config'):
+            if actual_config is None and args and hasattr(args[0], "timeout_config"):
                 actual_config = args[0].timeout_config
             if actual_config is None:
                 actual_config = TimeoutConfig()  # Use defaults
 
             # Extract tool name for telemetry
             tool_name = telemetry_prefix
-            if args and hasattr(args[0], '__class__'):
+            if args and hasattr(args[0], "__class__"):
                 tool_name = args[0].__class__.__name__.lower()
 
             # Wrap the original function in timeout retry logic
             def operation_wrapper(timeout_ms: int) -> T:
                 # Inject timeout into function if it accepts it
-                if 'timeout' in func.__code__.co_varnames:
-                    kwargs['timeout'] = timeout_ms
-                elif 'timeout_ms' in func.__code__.co_varnames:
-                    kwargs['timeout_ms'] = timeout_ms
+                if "timeout" in func.__code__.co_varnames:
+                    kwargs["timeout"] = timeout_ms
+                elif "timeout_ms" in func.__code__.co_varnames:
+                    kwargs["timeout_ms"] = timeout_ms
                 return func(*args, **kwargs)
 
             # Execute with constitutional timeout pattern
             return run_with_constitutional_timeout(
-                operation=operation_wrapper,
-                config=actual_config,
-                telemetry_prefix=tool_name
+                operation=operation_wrapper, config=actual_config, telemetry_prefix=tool_name
             )
 
         return wrapper
@@ -288,10 +271,10 @@ def with_constitutional_timeout(
 
 # Export public API
 __all__ = [
-    'TimeoutConfig',
-    'TimeoutError',
-    'TimeoutExhaustedError',
-    'IncompleteContextError',
-    'run_with_constitutional_timeout',
-    'with_constitutional_timeout',
+    "TimeoutConfig",
+    "TimeoutError",
+    "TimeoutExhaustedError",
+    "IncompleteContextError",
+    "run_with_constitutional_timeout",
+    "with_constitutional_timeout",
 ]

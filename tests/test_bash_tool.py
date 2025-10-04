@@ -17,7 +17,6 @@ def test_bash_timeout_trigger():
     # Use a sleep longer than timeout to reliably force timeout
     # The command will timeout, but the bash tool has retry logic
     import logging
-    import sys
 
     # Capture log output to see timeout warnings
     log_stream = []
@@ -175,9 +174,7 @@ def test_bash_git_operations():
 
 def test_bash_system_info():
     """Test gathering system information"""
-    tool = Bash(
-        command="uname -a && echo '---' && python --version && echo '---' && pwd"
-    )
+    tool = Bash(command="uname -a && echo '---' && python --version && echo '---' && pwd")
     out = tool.run()
     assert "Exit code: 0" in out
     assert "Python" in out
@@ -448,7 +445,7 @@ def test_bash_general_exception_handling():
     """Test general exception handling in run method"""
     from unittest.mock import patch
 
-    with patch.object(Bash, '_execute_bash_command') as mock_execute:
+    with patch.object(Bash, "_execute_bash_command") as mock_execute:
         mock_execute.side_effect = Exception("Mocked execution error")
 
         tool = Bash(command="echo 'test'")
@@ -461,9 +458,8 @@ def test_bash_general_exception_handling():
 def test_bash_subprocess_exception_handling():
     """Test exception handling in _execute_bash_command"""
     from unittest.mock import patch
-    import subprocess
 
-    with patch('subprocess.run') as mock_run:
+    with patch("subprocess.run") as mock_run:
         mock_run.side_effect = Exception("Subprocess error")
 
         tool = Bash(command="echo 'test'")
@@ -493,7 +489,7 @@ def test_bash_npm_init_interactive_modification():
     tool = Bash(command="npm init")
 
     # Mock subprocess.run to avoid actually running npm
-    with patch('subprocess.run') as mock_run:
+    with patch("subprocess.run") as mock_run:
         mock_run.return_value.returncode = 0
         mock_run.return_value.stdout = "npm init mock output"
         mock_run.return_value.stderr = ""
@@ -518,7 +514,7 @@ def test_bash_yarn_create_interactive_modification():
     tool = Bash(command="yarn create react-app myapp")
 
     # Mock subprocess.run to avoid actually running yarn
-    with patch('subprocess.run') as mock_run:
+    with patch("subprocess.run") as mock_run:
         mock_run.return_value.returncode = 0
         mock_run.return_value.stdout = "yarn create mock output"
         mock_run.return_value.stderr = ""

@@ -1,8 +1,3 @@
-import pytest
-import json
-import tempfile
-import os
-from unittest.mock import Mock, patch, MagicMock
 
 from shared.agent_context import create_agent_context
 from toolsmith_agent import create_toolsmith_agent
@@ -19,13 +14,13 @@ class TestToolSmithAgentCreation:
         assert "scaffold" in agent.description.lower()
 
         # Tools present
-        tool_names = [getattr(t, 'name', getattr(t, '__name__', str(t))) for t in agent.tools]
+        tool_names = [getattr(t, "name", getattr(t, "__name__", str(t))) for t in agent.tools]
         for required in ["Read", "Write", "Edit", "MultiEdit", "Grep", "Glob", "Bash", "TodoWrite"]:
             assert required in tool_names, f"Missing required tool: {required}"
 
         # Hooks / memory integration sanity
-        assert hasattr(agent, 'hooks') and agent.hooks is not None
-        assert hasattr(ctx, 'session_id') and ctx.session_id
+        assert hasattr(agent, "hooks") and agent.hooks is not None
+        assert hasattr(ctx, "session_id") and ctx.session_id
 
 
 class TestToolSmithDirectiveParsing:
@@ -40,12 +35,14 @@ class TestToolSmithDirectiveParsing:
             "description": "A test tool for verification",
             "parameters": [
                 {"name": "input_text", "type": "str", "description": "Text to process"},
-                {"name": "count", "type": "int", "description": "Number of iterations", "default": 1}
+                {
+                    "name": "count",
+                    "type": "int",
+                    "description": "Number of iterations",
+                    "default": 1,
+                },
             ],
-            "tests": [
-                "test_example_tool_basic_functionality",
-                "test_example_tool_edge_cases"
-            ]
+            "tests": ["test_example_tool_basic_functionality", "test_example_tool_edge_cases"],
         }
 
         ctx = create_agent_context()
@@ -74,7 +71,7 @@ class TestToolSmithDirectiveParsing:
         # Each malformed directive should be identifiable as invalid
         for directive in malformed_directives:
             # The agent has the tools needed to validate directives
-            tool_names = [getattr(t, 'name', getattr(t, '__name__', str(t))) for t in agent.tools]
+            tool_names = [getattr(t, "name", getattr(t, "__name__", str(t))) for t in agent.tools]
             assert "Read" in tool_names  # For reading directive files
             assert "Write" in tool_names  # For writing scaffolded tools
 
@@ -83,14 +80,14 @@ class TestToolSmithDirectiveParsing:
         valid_parameters = [
             {"name": "text", "type": "str", "description": "Input text"},
             {"name": "count", "type": "int", "description": "Count", "default": 5},
-            {"name": "enabled", "type": "bool", "description": "Enable feature", "default": False}
+            {"name": "enabled", "type": "bool", "description": "Enable feature", "default": False},
         ]
 
         invalid_parameters = [
             {"name": "", "type": "str"},  # Empty name
             {"type": "str", "description": "Missing name"},  # Missing name
             {"name": "test", "description": "Missing type"},  # Missing type
-            {"name": "test", "type": "invalid_type", "description": "Bad type"}  # Invalid type
+            {"name": "test", "type": "invalid_type", "description": "Bad type"},  # Invalid type
         ]
 
         ctx = create_agent_context()
@@ -110,16 +107,16 @@ class TestToolSmithDirectiveParsing:
         agent = create_toolsmith_agent(agent_context=ctx)
 
         # Agent should have tools needed for scaffolding
-        tool_names = [getattr(t, 'name', getattr(t, '__name__', str(t))) for t in agent.tools]
+        tool_names = [getattr(t, "name", getattr(t, "__name__", str(t))) for t in agent.tools]
 
         required_scaffolding_tools = [
-            "Read",      # Reading existing patterns
-            "Write",     # Creating new files
-            "Edit",      # Modifying existing files
-            "MultiEdit", # Batch modifications
-            "Grep",      # Searching for patterns
-            "Bash",      # Running tests
-            "TodoWrite"  # Task tracking
+            "Read",  # Reading existing patterns
+            "Write",  # Creating new files
+            "Edit",  # Modifying existing files
+            "MultiEdit",  # Batch modifications
+            "Grep",  # Searching for patterns
+            "Bash",  # Running tests
+            "TodoWrite",  # Task tracking
         ]
 
         for tool in required_scaffolding_tools:
@@ -129,11 +126,7 @@ class TestToolSmithDirectiveParsing:
         """Test that agent can handle test generation requirements."""
         test_spec = {
             "tool_name": "TestTool",
-            "test_cases": [
-                "test_basic_functionality",
-                "test_error_handling",
-                "test_edge_cases"
-            ]
+            "test_cases": ["test_basic_functionality", "test_error_handling", "test_edge_cases"],
         }
 
         ctx = create_agent_context()
@@ -143,7 +136,7 @@ class TestToolSmithDirectiveParsing:
         assert agent is not None
 
         # Verify agent has constitutional compliance awareness
-        instructions_check = hasattr(agent, 'instructions')
+        instructions_check = hasattr(agent, "instructions")
         assert instructions_check, "Agent should have constitutional instructions"
 
     def test_constitutional_compliance_integration(self):
@@ -152,10 +145,10 @@ class TestToolSmithDirectiveParsing:
         agent = create_toolsmith_agent(agent_context=ctx)
 
         # Agent should have memory integration for learning
-        assert hasattr(agent, 'hooks'), "Agent should have hooks for constitutional compliance"
+        assert hasattr(agent, "hooks"), "Agent should have hooks for constitutional compliance"
         assert agent.hooks is not None
 
         # Agent should have tools for constitutional validation
-        tool_names = [getattr(t, 'name', getattr(t, '__name__', str(t))) for t in agent.tools]
+        tool_names = [getattr(t, "name", getattr(t, "__name__", str(t))) for t in agent.tools]
         assert "Bash" in tool_names, "Agent needs Bash tool for running tests (Article II)"
         assert "Read" in tool_names, "Agent needs Read tool for context gathering (Article I)"

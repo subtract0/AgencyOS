@@ -81,9 +81,7 @@ def test_ls_with_ignore_patterns(tmp_path: Path):
     item_lines = [
         line
         for line in all_lines
-        if ("DIR" in line or "FILE" in line)
-        and "TYPE" not in line
-        and "Total:" not in line
+        if ("DIR" in line or "FILE" in line) and "TYPE" not in line and "Total:" not in line
     ]
     assert not any("__pycache__" in line for line in item_lines)
 
@@ -295,9 +293,7 @@ def test_ls_ignore_multiple_patterns(tmp_path: Path):
     item_lines = [
         line
         for line in all_lines
-        if ("DIR" in line or "FILE" in line)
-        and "TYPE" not in line
-        and "Total:" not in line
+        if ("DIR" in line or "FILE" in line) and "TYPE" not in line and "Total:" not in line
     ]
     assert not any("__pycache__" in line for line in item_lines)
     assert not any(".git" in line for line in item_lines)

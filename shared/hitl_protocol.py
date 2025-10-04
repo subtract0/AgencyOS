@@ -38,29 +38,29 @@ Usage:
             print("Approved!")
 """
 
-import sqlite3
 import asyncio
 import json
+import sqlite3
 import uuid
-from pathlib import Path
 from datetime import datetime, timedelta
-from typing import Optional, List, Dict, Any
-from contextlib import asynccontextmanager
+from pathlib import Path
 
 from pydantic import BaseModel, Field, field_validator
 
-from shared.type_definitions.result import Result, Ok, Err
-from shared.type_definitions.json_value import JSONValue
 from shared.message_bus import MessageBus
+from shared.type_definitions.json_value import JSONValue
+from shared.type_definitions.result import Err, Ok, Result
 
 
 class HITLError(Exception):
     """Base exception for HITL protocol errors."""
+
     pass
 
 
 class HITLTimeoutError(HITLError):
     """Exception for timeout errors."""
+
     pass
 
 
@@ -79,18 +79,10 @@ class HITLQuestion(BaseModel):
 
     question_id: str = Field(..., description="Unique question identifier")
     question: str = Field(..., min_length=1, description="Question text")
-    context: Dict[str, str] = Field(
-        default_factory=dict, description="Additional context"
-    )
-    options: List[str] = Field(
-        default_factory=list, description="Valid response options"
-    )
-    timeout_seconds: int = Field(
-        default=300, ge=1, description="Timeout in seconds"
-    )
-    created_at: datetime = Field(
-        default_factory=datetime.now, description="Creation timestamp"
-    )
+    context: dict[str, str] = Field(default_factory=dict, description="Additional context")
+    options: list[str] = Field(default_factory=list, description="Valid response options")
+    timeout_seconds: int = Field(default=300, ge=1, description="Timeout in seconds")
+    created_at: datetime = Field(default_factory=datetime.now, description="Creation timestamp")
 
     @field_validator("question_id")
     @classmethod
@@ -121,9 +113,7 @@ class HITLResponse(BaseModel):
 
     question_id: str = Field(..., description="Question being answered")
     answer: str = Field(..., description="User's answer")
-    timestamp: datetime = Field(
-        default_factory=datetime.now, description="Response timestamp"
-    )
+    timestamp: datetime = Field(default_factory=datetime.now, description="Response timestamp")
 
 
 class HITLConfig(BaseModel):
@@ -138,19 +128,13 @@ class HITLConfig(BaseModel):
         quiet_hours_end: Hour to resume asking (0-23)
     """
 
-    queue_name: str = Field(
-        default="hitl_questions", description="Message bus queue name"
-    )
-    default_timeout_seconds: int = Field(
-        default=300, ge=1, description="Default timeout"
-    )
-    max_questions_per_hour: int = Field(
-        default=10, ge=1, description="Max questions per hour"
-    )
-    quiet_hours_start: Optional[int] = Field(
+    queue_name: str = Field(default="hitl_questions", description="Message bus queue name")
+    default_timeout_seconds: int = Field(default=300, ge=1, description="Default timeout")
+    max_questions_per_hour: int = Field(default=10, ge=1, description="Max questions per hour")
+    quiet_hours_start: int | None = Field(
         default=None, ge=0, le=23, description="Quiet hours start (24h)"
     )
-    quiet_hours_end: Optional[int] = Field(
+    quiet_hours_end: int | None = Field(
         default=None, ge=0, le=23, description="Quiet hours end (24h)"
     )
 
@@ -166,7 +150,7 @@ class HITLProtocol:
     def __init__(
         self,
         message_bus: MessageBus,
-        config: Optional[HITLConfig] = None,
+        config: HITLConfig | None = None,
         db_path: str = "hitl_protocol.db",
     ):
         """
@@ -180,16 +164,14 @@ class HITLProtocol:
         self.message_bus = message_bus
         self.config = config or HITLConfig()
         self.db_path = Path(db_path)
-        self.conn: Optional[sqlite3.Connection] = None
-        self._response_waiters: Dict[str, asyncio.Future] = {}
+        self.conn: sqlite3.Connection | None = None
+        self._response_waiters: dict[str, asyncio.Future] = {}
 
         self._init_db()
 
     def _init_db(self) -> None:
         """Initialize SQLite database schema."""
-        self.conn = sqlite3.connect(
-            str(self.db_path), check_same_thread=False
-        )
+        self.conn = sqlite3.connect(str(self.db_path), check_same_thread=False)
         self.conn.row_factory = sqlite3.Row
 
         cursor = self.conn.cursor()
@@ -228,9 +210,9 @@ class HITLProtocol:
     def ask(
         self,
         question: str,
-        context: Optional[Dict[str, str]] = None,
-        options: Optional[List[str]] = None,
-        timeout_seconds: Optional[int] = None,
+        context: dict[str, str] | None = None,
+        options: list[str] | None = None,
+        timeout_seconds: int | None = None,
     ) -> Result[str, str]:
         """
         Ask synchronous question (blocking).
@@ -246,16 +228,14 @@ class HITLProtocol:
         Returns:
             Result with answer on success, error on failure
         """
-        return Err(
-            "Synchronous ask() not implemented - use ask_async() instead"
-        )
+        return Err("Synchronous ask() not implemented - use ask_async() instead")
 
     async def ask_async(
         self,
         question: str,
-        context: Optional[Dict[str, str]] = None,
-        options: Optional[List[str]] = None,
-        timeout_seconds: Optional[int] = None,
+        context: dict[str, str] | None = None,
+        options: list[str] | None = None,
+        timeout_seconds: int | None = None,
     ) -> Result[str, str]:
         """
         Ask asynchronous question (returns question_id immediately).
@@ -337,9 +317,7 @@ class HITLProtocol:
         except Exception as e:
             return Err(f"Failed to create question: {str(e)}")
 
-    async def wait_response(
-        self, question_id: str, timeout: int
-    ) -> Result[HITLResponse, str]:
+    async def wait_response(self, question_id: str, timeout: int) -> Result[HITLResponse, str]:
         """
         Wait for response to a question.
 
@@ -388,7 +366,7 @@ class HITLProtocol:
             response = await asyncio.wait_for(future, timeout=timeout)
             return Ok(response)
 
-        except asyncio.TimeoutError:
+        except TimeoutError:
             return Err(f"Timeout waiting for response to '{question_id}'")
 
         finally:
@@ -399,8 +377,8 @@ class HITLProtocol:
     async def approve(
         self,
         action: str,
-        details: Optional[JSONValue] = None,
-        timeout_seconds: Optional[int] = None,
+        details: JSONValue | None = None,
+        timeout_seconds: int | None = None,
     ) -> Result[bool, str]:
         """
         Request approval for an action.
@@ -432,9 +410,7 @@ class HITLProtocol:
         }
 
         # Convert all values to strings
-        context = {
-            k: str(v) for k, v in context_dict.items()
-        }
+        context = {k: str(v) for k, v in context_dict.items()}
 
         result = await self.ask_async(
             question=question,
@@ -450,9 +426,7 @@ class HITLProtocol:
         timeout = timeout_seconds or self.config.default_timeout_seconds
 
         # Wait for response
-        response_result = await self.wait_response(
-            question_id, timeout=timeout
-        )
+        response_result = await self.wait_response(question_id, timeout=timeout)
 
         if response_result.is_err():
             return Err(response_result.unwrap_err())
@@ -462,9 +436,7 @@ class HITLProtocol:
 
         return Ok(approved)
 
-    async def get_pending(
-        self, limit: int = 100
-    ) -> Result[List[HITLQuestion], str]:
+    async def get_pending(self, limit: int = 100) -> Result[list[HITLQuestion], str]:
         """
         Get pending questions from queue.
 
@@ -516,9 +488,7 @@ class HITLProtocol:
         except Exception as e:
             return Err(f"Failed to get pending questions: {str(e)}")
 
-    async def submit_response(
-        self, question_id: str, answer: str
-    ) -> Result[None, str]:
+    async def submit_response(self, question_id: str, answer: str) -> Result[None, str]:
         """
         Submit response to a question.
 
@@ -663,9 +633,7 @@ class HITLProtocol:
             if answer.lower() in ["yes", "y", "true", "1"]
         )
         total_answered = sum(responses.values())
-        acceptance_rate = (
-            yes_count / total_answered if total_answered > 0 else 0.0
-        )
+        acceptance_rate = yes_count / total_answered if total_answered > 0 else 0.0
 
         return {
             "total_questions": total,

@@ -7,8 +7,10 @@ class DummyContext:
     def __init__(self):
         self._data = {}
         self.thread_manager = None
+
     def get(self, k, d=None):
         return self._data.get(k, d)
+
     def set(self, k, v):
         self._data[k] = v
 

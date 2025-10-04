@@ -2,16 +2,17 @@ from __future__ import annotations
 
 import copy
 import re
-from typing import Any, Dict, cast
-from shared.type_definitions.json import JSONValue
+from typing import Any, cast
+
 from shared.models.telemetry import TelemetryEvent
+from shared.type_definitions.json import JSONValue
 
 # Patterns for secret-like values
 _SECRET_VALUE_PATTERNS = [
-    re.compile(r"sk-[A-Za-z0-9]{10,}"),        # OpenAI-style keys
-    re.compile(r"ghp_[A-Za-z0-9]{20,}"),       # GitHub PAT (min 20 chars)
-    re.compile(r"xox[baprs]-[A-Za-z0-9-]{10,}"), # Slack tokens
-    re.compile(r"AIza[0-9A-Za-z\-_]{15,}"),    # Google API key
+    re.compile(r"sk-[A-Za-z0-9]{10,}"),  # OpenAI-style keys
+    re.compile(r"ghp_[A-Za-z0-9]{20,}"),  # GitHub PAT (min 20 chars)
+    re.compile(r"xox[baprs]-[A-Za-z0-9-]{10,}"),  # Slack tokens
+    re.compile(r"AIza[0-9A-Za-z\-_]{15,}"),  # Google API key
 ]
 
 # Keys that should always be redacted when present
@@ -49,7 +50,7 @@ def _redact_any(val: Any) -> Any:
     return val
 
 
-def redact_event(event: Dict[str, JSONValue]) -> Dict[str, JSONValue]:
+def redact_event(event: dict[str, JSONValue]) -> dict[str, JSONValue]:
     """Redact sensitive material from a telemetry event.
 
     Rules:
@@ -65,7 +66,7 @@ def redact_event(event: Dict[str, JSONValue]) -> Dict[str, JSONValue]:
 
     def _walk(obj: Any) -> Any:
         if isinstance(obj, dict):
-            new: Dict[str, JSONValue] = {}
+            new: dict[str, JSONValue] = {}
             for k, v in obj.items():
                 if k.lower() in _SENSITIVE_KEYS:
                     new[k] = _REPLACEMENT
@@ -105,7 +106,11 @@ def redact_telemetry_event(event: TelemetryEvent) -> TelemetryEvent:
         tool_name=event.tool_name,
         duration_ms=event.duration_ms,
         success=event.success,
-        error_message=cast(str, redacted_dict.get('error_message')) if isinstance(redacted_dict.get('error_message'), str) else None,
-        metadata=cast(Dict[str, JSONValue], redacted_dict.get('metadata')) if isinstance(redacted_dict.get('metadata'), dict) else {},
-        tags=event.tags
+        error_message=cast(str, redacted_dict.get("error_message"))
+        if isinstance(redacted_dict.get("error_message"), str)
+        else None,
+        metadata=cast(dict[str, JSONValue], redacted_dict.get("metadata"))
+        if isinstance(redacted_dict.get("metadata"), dict)
+        else {},
+        tags=event.tags,
     )

@@ -1,0 +1,415 @@
+name: Optimized CI Pipeline
+
+# Optimized CI/CD with 4x faster feedback time
+# Architecture: docs/architecture/CICD_OPTIMIZATION.md
+# ADR: docs/adr/ADR-016-CICD-OPTIMIZATION.md
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+  schedule:
+    # Full test suite nightly (constitutional requirement)
+    - cron: '0 2 * * *'
+
+env:
+  PYTHON_VERSION: '3.12'
+  CACHE_VERSION: v1
+
+jobs:
+  # ============================================================================
+  # STAGE 1: QUICK CHECKS (30s) - FAIL FAST
+  # ============================================================================
+  quick-checks:
+    name: Stage 1 - Quick Checks
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+
+    outputs:
+      passed: ${{ steps.check-result.outputs.passed }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Cache pip packages
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-pip-quick-${{ hashFiles('requirements.txt') }}
+          restore-keys: |
+            ${{ runner.os }}-pip-quick-
+            ${{ runner.os }}-pip-
+
+      - name: Install linting dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install ruff mypy
+
+      - name: Run ruff linting
+        id: lint
+        run: |
+          echo "Running ruff linter..."
+          ruff check . --output-format=github
+        continue-on-error: false
+
+      - name: Run type checking
+        id: typecheck
+        run: |
+          echo "Running mypy type checker..."
+          python -m pip install -r requirements.txt --quiet
+          python -m mypy . --config-file mypy.ini || echo "::warning::Type errors detected"
+
+      - name: Check Dict[Any] ban
+        id: dict-any
+        run: |
+          echo "Checking for Dict[Any, Any] violations..."
+          python tools/quality/no_dict_any_check.py
+
+      - name: Set check result
+        id: check-result
+        if: always()
+        run: |
+          if [ "${{ steps.lint.outcome }}" == "success" ] && \
+             [ "${{ steps.dict-any.outcome }}" == "success" ]; then
+            echo "passed=true" >> $GITHUB_OUTPUT
+          else
+            echo "passed=false" >> $GITHUB_OUTPUT
+            echo "❌ Quick checks failed - fix linting/type errors before running tests"
+            exit 1
+          fi
+
+  # ============================================================================
+  # STAGE 2: CRITICAL TESTS (60s) - PARALLEL SHARDING
+  # ============================================================================
+  critical-tests:
+    name: Stage 2 - Critical Tests (Shard ${{ matrix.shard }})
+    needs: quick-checks
+    if: needs.quick-checks.outputs.passed == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: [1, 2, 3, 4]
+
+    outputs:
+      passed: ${{ steps.test-result.outputs.passed }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Cache dependencies
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cache/pip
+            .pytest_cache
+            .hypothesis
+          key: ${{ runner.os }}-py${{ env.PYTHON_VERSION }}-${{ env.CACHE_VERSION }}-${{ hashFiles('requirements.txt') }}
+          restore-keys: |
+            ${{ runner.os }}-py${{ env.PYTHON_VERSION }}-${{ env.CACHE_VERSION }}-
+            ${{ runner.os }}-py${{ env.PYTHON_VERSION }}-
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip setuptools wheel
+          pip install -r requirements.txt
+          pip install -e . --no-deps
+          pip install pytest-xdist pytest-split
+
+      - name: Run critical tests (parallel shard)
+        run: |
+          python run_tests.py --fast --shard=${{ matrix.shard }}/4
+        env:
+          SKIP_SPEC_TRACEABILITY: "true"
+          USE_MOCK_LLM: "true"
+          CI: "true"
+
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: critical-test-results-shard-${{ matrix.shard }}
+          path: |
+            .pytest_cache
+            test-results-*.xml
+          retention-days: 7
+
+      - name: Set test result
+        id: test-result
+        if: always()
+        run: |
+          if [ "${{ job.status }}" == "success" ]; then
+            echo "passed=true" >> $GITHUB_OUTPUT
+          else
+            echo "passed=false" >> $GITHUB_OUTPUT
+          fi
+
+  # ============================================================================
+  # STAGE 3: FULL SUITE (120s) - COMPREHENSIVE TESTING
+  # ============================================================================
+  full-suite:
+    name: Stage 3 - Full Test Suite
+    needs: [quick-checks, critical-tests]
+    if: |
+      needs.quick-checks.outputs.passed == 'true' &&
+      needs.critical-tests.result == 'success' &&
+      (github.ref == 'refs/heads/main' || github.event_name == 'schedule')
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # Full history for comprehensive analysis
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Cache dependencies
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cache/pip
+            .pytest_cache
+            .hypothesis
+            .agency_ast_cache
+          key: ${{ runner.os }}-py${{ env.PYTHON_VERSION }}-${{ env.CACHE_VERSION }}-full-${{ hashFiles('requirements.txt') }}
+          restore-keys: |
+            ${{ runner.os }}-py${{ env.PYTHON_VERSION }}-${{ env.CACHE_VERSION }}-full-
+            ${{ runner.os }}-py${{ env.PYTHON_VERSION }}-${{ env.CACHE_VERSION }}-
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip setuptools wheel
+          pip install -r requirements.txt
+          pip install -r requirements-dspy.txt
+          pip install -e . --no-deps
+
+      - name: Run full test suite
+        run: |
+          python run_tests.py --run-all
+        env:
+          SKIP_SPEC_TRACEABILITY: "true"
+          FORCE_RUN_ALL_TESTS: "1"
+          USE_MOCK_LLM: "true"
+          CI: "true"
+
+      - name: Verify 100% pass rate (Article II)
+        if: failure()
+        run: |
+          echo "❌ BLOCKED by Constitution Article II"
+          echo "100% test success required on main branch - no exceptions"
+          exit 1
+
+      - name: Upload comprehensive test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: full-test-results
+          path: |
+            .pytest_cache
+            .hypothesis
+            test-results-*.xml
+            coverage.xml
+          retention-days: 30
+
+  # ============================================================================
+  # SMART TEST SELECTION (PRs ONLY)
+  # ============================================================================
+  smart-tests:
+    name: Smart Test Selection (PR)
+    needs: [quick-checks, critical-tests]
+    if: |
+      needs.quick-checks.outputs.passed == 'true' &&
+      needs.critical-tests.result == 'success' &&
+      github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # Need history for change detection
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Cache dependencies
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cache/pip
+            .pytest_cache
+            .hypothesis
+            .agency_ast_cache
+          key: ${{ runner.os }}-py${{ env.PYTHON_VERSION }}-${{ env.CACHE_VERSION }}-smart-${{ hashFiles('requirements.txt') }}
+          restore-keys: |
+            ${{ runner.os }}-py${{ env.PYTHON_VERSION }}-${{ env.CACHE_VERSION }}-smart-
+            ${{ runner.os }}-py${{ env.PYTHON_VERSION }}-${{ env.CACHE_VERSION }}-
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip setuptools wheel
+          pip install -r requirements.txt
+          pip install -e . --no-deps
+
+      - name: Detect changed files
+        id: changes
+        run: |
+          # Get changed Python files
+          CHANGED_FILES=$(git diff --name-only ${{ github.event.pull_request.base.sha }}...${{ github.sha }} | grep '\.py$' || echo "")
+          echo "changed_files=$CHANGED_FILES" >> $GITHUB_OUTPUT
+          echo "Changed files:"
+          echo "$CHANGED_FILES"
+
+      - name: Select tests to run
+        id: select-tests
+        run: |
+          # TODO: Implement smart test selector in Week 3
+          # For now, run all tests on PRs (conservative approach)
+          echo "Running all tests (smart selection in Week 3)"
+          python run_tests.py
+        env:
+          SKIP_SPEC_TRACEABILITY: "true"
+          USE_MOCK_LLM: "true"
+          CI: "true"
+
+      - name: Upload smart test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: smart-test-results
+          path: |
+            .pytest_cache
+            test-results-*.xml
+          retention-days: 7
+
+  # ============================================================================
+  # CI GATE - FINAL VALIDATION
+  # ============================================================================
+  ci-gate:
+    name: CI Gate - Final Validation
+    needs: [quick-checks, critical-tests, smart-tests, full-suite]
+    if: always()
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check all job results
+        run: |
+          echo "## CI Pipeline Results" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "- Quick Checks: ${{ needs.quick-checks.result }}" >> $GITHUB_STEP_SUMMARY
+          echo "- Critical Tests: ${{ needs.critical-tests.result }}" >> $GITHUB_STEP_SUMMARY
+
+          if [ "${{ github.event_name }}" == "pull_request" ]; then
+            echo "- Smart Tests (PR): ${{ needs.smart-tests.result }}" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "- Full Suite (Main): ${{ needs.full-suite.result }}" >> $GITHUB_STEP_SUMMARY
+          fi
+
+          # Validate results
+          if [ "${{ needs.quick-checks.result }}" != "success" ]; then
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "❌ CI Failed: Quick checks did not pass" >> $GITHUB_STEP_SUMMARY
+            exit 1
+          fi
+
+          if [ "${{ needs.critical-tests.result }}" != "success" ]; then
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "❌ CI Failed: Critical tests did not pass" >> $GITHUB_STEP_SUMMARY
+            exit 1
+          fi
+
+          # On main branch, require full suite
+          if [ "${{ github.ref }}" == "refs/heads/main" ]; then
+            if [ "${{ needs.full-suite.result }}" != "success" ]; then
+              echo "" >> $GITHUB_STEP_SUMMARY
+              echo "❌ CI Failed: Full suite required on main branch (Article II)" >> $GITHUB_STEP_SUMMARY
+              exit 1
+            fi
+          fi
+
+          # On PRs, require smart tests
+          if [ "${{ github.event_name }}" == "pull_request" ]; then
+            if [ "${{ needs.smart-tests.result }}" != "success" ]; then
+              echo "" >> $GITHUB_STEP_SUMMARY
+              echo "❌ CI Failed: Smart tests did not pass" >> $GITHUB_STEP_SUMMARY
+              exit 1
+            fi
+          fi
+
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "✅ CI Passed: All checks successful!" >> $GITHUB_STEP_SUMMARY
+          echo "🎯 Ready to merge - Constitutional compliance maintained" >> $GITHUB_STEP_SUMMARY
+
+  # ============================================================================
+  # METRICS COLLECTION
+  # ============================================================================
+  collect-metrics:
+    name: Collect CI Metrics
+    needs: ci-gate
+    if: always()
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Record pipeline metrics
+        run: |
+          echo "Recording CI metrics..."
+          mkdir -p logs/ci_metrics
+
+          # Calculate total pipeline duration
+          PIPELINE_DURATION=$((SECONDS))
+
+          # Create metrics JSON
+          cat > logs/ci_metrics/run_${{ github.run_id }}.json << EOF
+          {
+            "run_id": "${{ github.run_id }}",
+            "timestamp": "$(date -u +%Y-%m-%dT%H:%M:%SZ)",
+            "event": "${{ github.event_name }}",
+            "branch": "${{ github.ref }}",
+            "quick_checks_result": "${{ needs.quick-checks.result }}",
+            "critical_tests_result": "${{ needs.critical-tests.result }}",
+            "smart_tests_result": "${{ needs.smart-tests.result }}",
+            "full_suite_result": "${{ needs.full-suite.result }}",
+            "ci_gate_result": "${{ needs.ci-gate.result }}",
+            "pipeline_duration_seconds": $PIPELINE_DURATION
+          }
+          EOF
+
+          echo "Metrics recorded to logs/ci_metrics/run_${{ github.run_id }}.json"
+
+      - name: Upload metrics
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ci-metrics
+          path: logs/ci_metrics/
+          retention-days: 90

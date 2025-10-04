@@ -20,20 +20,20 @@ INTEGRATION:
 - Supports iterative revision based on user feedback
 """
 
-from typing import Optional, Dict, List, Any
 from enum import Enum
-from datetime import datetime
 
 from agency_swarm.tools import BaseTool
 from pydantic import BaseModel, Field, field_validator
-from shared.type_definitions import Result, Ok, Err
-from shared.type_definitions.json_value import JSONValue
 
+from shared.type_definitions import Err, Ok, Result
+from shared.type_definitions.json_value import JSONValue
 
 # === Data Models ===
 
+
 class DocumentType(str, Enum):
     """Types of documents that can be generated."""
+
     CHAPTER = "chapter"
     OUTLINE = "outline"
     SUMMARY = "summary"
@@ -43,13 +43,14 @@ class DocumentType(str, Enum):
 
 class ChapterRequest(BaseModel):
     """Request for chapter generation."""
+
     chapter_number: int = Field(..., description="Chapter number (1-indexed)")
     title: str = Field(..., description="Chapter title")
     context: str = Field(..., description="Book context and background")
-    requirements: List[str] = Field(..., description="Requirements (word count, style, etc)")
+    requirements: list[str] = Field(..., description="Requirements (word count, style, etc)")
     style: str = Field(..., description="Writing style (e.g., 'Professional, conversational')")
 
-    @field_validator('chapter_number')
+    @field_validator("chapter_number")
     @classmethod
     def validate_chapter_number(cls, v):
         """Validate chapter number is positive."""
@@ -60,13 +61,14 @@ class ChapterRequest(BaseModel):
 
 class OutlineRequest(BaseModel):
     """Request for outline generation."""
+
     document_type: DocumentType = Field(..., description="Type of document")
     title: str = Field(..., description="Document title")
     context: str = Field(..., description="Context and target audience")
     num_sections: int = Field(..., description="Number of sections to generate")
-    requirements: List[str] = Field(..., description="Specific requirements")
+    requirements: list[str] = Field(..., description="Specific requirements")
 
-    @field_validator('num_sections')
+    @field_validator("num_sections")
     @classmethod
     def validate_num_sections(cls, v):
         """Validate number of sections is positive."""
@@ -77,6 +79,7 @@ class OutlineRequest(BaseModel):
 
 class Chapter(BaseModel):
     """Generated chapter."""
+
     chapter_number: int = Field(..., description="Chapter number")
     title: str = Field(..., description="Chapter title")
     content: str = Field(..., description="Chapter content")
@@ -86,14 +89,16 @@ class Chapter(BaseModel):
 
 class Outline(BaseModel):
     """Generated outline."""
+
     title: str = Field(..., description="Outline title")
     document_type: DocumentType = Field(..., description="Document type")
-    sections: List[JSONValue] = Field(..., description="Outline sections")
+    sections: list[JSONValue] = Field(..., description="Outline sections")
     metadata: JSONValue = Field(default_factory=dict, description="Additional metadata")
 
 
 class GeneratedDocument(BaseModel):
     """Generic generated document."""
+
     document_type: DocumentType = Field(..., description="Document type")
     title: str = Field(..., description="Document title")
     content: str = Field(..., description="Document content")
@@ -103,12 +108,14 @@ class GeneratedDocument(BaseModel):
 
 class GenerationError(BaseModel):
     """Error during document generation."""
+
     error_type: str = Field(..., description="Error type")
     message: str = Field(..., description="Error message")
-    details: Optional[str] = Field(None, description="Additional error details")
+    details: str | None = Field(None, description="Additional error details")
 
 
 # === Core Document Generator ===
+
 
 class DocumentGenerator:
     """
@@ -127,9 +134,7 @@ class DocumentGenerator:
         """
         self.llm = llm_client
 
-    def generate_chapter(
-        self, request: ChapterRequest
-    ) -> Result[Chapter, GenerationError]:
+    def generate_chapter(self, request: ChapterRequest) -> Result[Chapter, GenerationError]:
         """
         Generate a book chapter from request.
 
@@ -142,10 +147,11 @@ class DocumentGenerator:
         try:
             # Validate request
             if request.chapter_number <= 0:
-                return Err(GenerationError(
-                    error_type="ValidationError",
-                    message="Chapter number must be positive"
-                ))
+                return Err(
+                    GenerationError(
+                        error_type="ValidationError", message="Chapter number must be positive"
+                    )
+                )
 
             # Build prompt from template
             prompt = self._build_chapter_prompt(request)
@@ -155,27 +161,22 @@ class DocumentGenerator:
 
             # Validate response
             if not chapter:
-                return Err(GenerationError(
-                    error_type="GenerationError",
-                    message="LLM returned empty response"
-                ))
+                return Err(
+                    GenerationError(
+                        error_type="GenerationError", message="LLM returned empty response"
+                    )
+                )
 
             return Ok(chapter)
 
         except TimeoutError as e:
-            return Err(GenerationError(
-                error_type="TimeoutError",
-                message=f"Generation timeout: {str(e)}"
-            ))
+            return Err(
+                GenerationError(error_type="TimeoutError", message=f"Generation timeout: {str(e)}")
+            )
         except Exception as e:
-            return Err(GenerationError(
-                error_type="UnexpectedError",
-                message=str(e)
-            ))
+            return Err(GenerationError(error_type="UnexpectedError", message=str(e)))
 
-    def generate_outline(
-        self, request: OutlineRequest
-    ) -> Result[Outline, GenerationError]:
+    def generate_outline(self, request: OutlineRequest) -> Result[Outline, GenerationError]:
         """
         Generate document outline from request.
 
@@ -193,18 +194,16 @@ class DocumentGenerator:
             outline = self.llm.generate(prompt)
 
             if not outline:
-                return Err(GenerationError(
-                    error_type="GenerationError",
-                    message="LLM returned empty response"
-                ))
+                return Err(
+                    GenerationError(
+                        error_type="GenerationError", message="LLM returned empty response"
+                    )
+                )
 
             return Ok(outline)
 
         except Exception as e:
-            return Err(GenerationError(
-                error_type="UnexpectedError",
-                message=str(e)
-            ))
+            return Err(GenerationError(error_type="UnexpectedError", message=str(e)))
 
     def revise_document(
         self, document: GeneratedDocument, feedback: str
@@ -239,10 +238,11 @@ class DocumentGenerator:
             revised = self.llm.generate(prompt)
 
             if not revised:
-                return Err(GenerationError(
-                    error_type="GenerationError",
-                    message="LLM returned empty response"
-                ))
+                return Err(
+                    GenerationError(
+                        error_type="GenerationError", message="LLM returned empty response"
+                    )
+                )
 
             # Increment version
             revised.version = document.version + 1
@@ -250,10 +250,7 @@ class DocumentGenerator:
             return Ok(revised)
 
         except Exception as e:
-            return Err(GenerationError(
-                error_type="UnexpectedError",
-                message=str(e)
-            ))
+            return Err(GenerationError(error_type="UnexpectedError", message=str(e)))
 
     def _build_chapter_prompt(self, request: ChapterRequest) -> str:
         """
@@ -310,6 +307,7 @@ class DocumentGenerator:
 
 # === Agency Swarm Tool Wrappers ===
 
+
 class GenerateChapter(BaseTool):  # type: ignore[misc]
     """
     Generate a book chapter using LLM.
@@ -323,7 +321,7 @@ class GenerateChapter(BaseTool):  # type: ignore[misc]
     chapter_number: int = Field(..., description="Chapter number (1-indexed)")
     title: str = Field(..., description="Chapter title")
     book_context: str = Field(..., description="Book context and background")
-    requirements: List[str] = Field(..., description="Requirements list")
+    requirements: list[str] = Field(..., description="Requirements list")
     style: str = Field(..., description="Writing style")
 
     def run(self):
@@ -334,7 +332,7 @@ class GenerateChapter(BaseTool):  # type: ignore[misc]
             title=self.title,
             context=self.book_context,
             requirements=self.requirements,
-            style=self.style
+            style=self.style,
         )
 
         # Generate (placeholder - requires real LLM integration)
@@ -362,7 +360,7 @@ class GenerateOutline(BaseTool):  # type: ignore[misc]
     title: str = Field(..., description="Document title")
     doc_context: str = Field(..., description="Context and target audience")
     num_sections: int = Field(..., description="Number of sections")
-    requirements: List[str] = Field(..., description="Requirements list")
+    requirements: list[str] = Field(..., description="Requirements list")
 
     def run(self):
         """Execute outline generation."""
@@ -372,7 +370,7 @@ class GenerateOutline(BaseTool):  # type: ignore[misc]
             title=self.title,
             context=self.doc_context,
             num_sections=self.num_sections,
-            requirements=self.requirements
+            requirements=self.requirements,
         )
 
         # Generate (placeholder)

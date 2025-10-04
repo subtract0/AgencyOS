@@ -14,11 +14,10 @@ import uuid
 from dataclasses import dataclass, field
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Dict, List, Optional
-from shared.type_definitions import JSONValue
 
 from shared.message_bus import MessageBus
 from shared.persistent_store import PersistentStore
+from shared.type_definitions import JSONValue
 
 
 @dataclass
@@ -31,7 +30,7 @@ class TaskSpec:
     task_type: str
     sub_agent: str
     spec: JSONValue
-    dependencies: List[str] = field(default_factory=list)
+    dependencies: list[str] = field(default_factory=list)
     timestamp: str = field(default_factory=lambda: datetime.now().isoformat())
 
     def to_dict(self) -> JSONValue:
@@ -44,7 +43,7 @@ class TaskSpec:
             "sub_agent": self.sub_agent,
             "spec": self.spec,
             "dependencies": self.dependencies,
-            "timestamp": self.timestamp
+            "timestamp": self.timestamp,
         }
 
 
@@ -56,9 +55,9 @@ class Strategy:
     complexity: float
     engine: str
     decision: str
-    spec_content: Optional[str] = None
-    adr_content: Optional[str] = None
-    tasks: List[TaskSpec] = field(default_factory=list)
+    spec_content: str | None = None
+    adr_content: str | None = None
+    tasks: list[TaskSpec] = field(default_factory=list)
 
 
 class ArchitectAgent:
@@ -76,7 +75,7 @@ class ArchitectAgent:
         message_bus: MessageBus,
         pattern_store: PersistentStore,
         workspace_dir: str = "/tmp/plan_workspace",
-        min_complexity: float = 0.7
+        min_complexity: float = 0.7,
     ):
         self.message_bus = message_bus
         self.pattern_store = pattern_store
@@ -88,7 +87,7 @@ class ArchitectAgent:
             "specs_generated": 0,
             "adrs_generated": 0,
             "tasks_created": 0,
-            "escalations": 0
+            "escalations": 0,
         }
         self.workspace_dir.mkdir(parents=True, exist_ok=True)
 
@@ -141,21 +140,16 @@ class ArchitectAgent:
                 "execution_queue",
                 task.to_dict(),
                 priority=self._priority_to_int(task.priority),
-                correlation_id=correlation_id
+                correlation_id=correlation_id,
             )
 
     async def _gather_context(self, signal: JSONValue) -> JSONValue:
         """Step 3: Gather historical context (Article I)."""
         pattern_name = signal.get("pattern", "")
         historical_patterns = self.pattern_store.search_patterns(
-            query=pattern_name if pattern_name else "general",
-            min_confidence=0.6,
-            limit=5
+            query=pattern_name if pattern_name else "general", min_confidence=0.6, limit=5
         )
-        return {
-            "historical_patterns": historical_patterns,
-            "relevant_adrs": []
-        }
+        return {"historical_patterns": historical_patterns, "relevant_adrs": []}
 
     def _assess_complexity(self, signal: JSONValue) -> float:
         """Step 4a: Assess task complexity (0.0-1.0)."""
@@ -205,7 +199,7 @@ class ArchitectAgent:
         context: JSONValue,
         complexity: float,
         engine: str,
-        correlation_id: str
+        correlation_id: str,
     ) -> Strategy:
         """Step 5: Formulate strategy (complex or simple)."""
         if complexity >= self.min_complexity:
@@ -216,7 +210,7 @@ class ArchitectAgent:
             priority=signal.get("priority", "NORMAL"),
             complexity=complexity,
             engine=engine,
-            decision=f"Simple task, direct implementation (complexity={complexity:.2f})"
+            decision=f"Simple task, direct implementation (complexity={complexity:.2f})",
         )
 
     async def _formulate_complex_strategy(
@@ -225,7 +219,7 @@ class ArchitectAgent:
         context: JSONValue,
         complexity: float,
         engine: str,
-        correlation_id: str
+        correlation_id: str,
     ) -> Strategy:
         """Step 5a: Formulate complex strategy (Article V)."""
         spec_content = self._generate_spec(signal, context, correlation_id)
@@ -242,31 +236,26 @@ class ArchitectAgent:
             engine=engine,
             decision=f"Complex task requiring formal specification (complexity={complexity:.2f})",
             spec_content=spec_content,
-            adr_content=adr_content
+            adr_content=adr_content,
         )
 
-    def _generate_spec(
-        self,
-        signal: JSONValue,
-        context: JSONValue,
-        correlation_id: str
-    ) -> str:
+    def _generate_spec(self, signal: JSONValue, context: JSONValue, correlation_id: str) -> str:
         """Generate formal specification document."""
         pattern = signal.get("pattern", "unknown")
         data = signal.get("data", {})
-        historical = self._format_historical_patterns(context.get('historical_patterns', []))
+        historical = self._format_historical_patterns(context.get("historical_patterns", []))
 
-        return f"""# Spec: {pattern.replace('_', ' ').title()}
+        return f"""# Spec: {pattern.replace("_", " ").title()}
 
 **ID**: spec-{correlation_id}
 **Status**: Draft
-**Created**: {datetime.now().strftime('%Y-%m-%d')}
+**Created**: {datetime.now().strftime("%Y-%m-%d")}
 
 ## Goal
 Address {pattern} pattern detected in the system.
 
 ## Context
-{data.get('message', 'No additional context')}
+{data.get("message", "No additional context")}
 
 ## Non-Goals
 - This spec does not cover unrelated patterns
@@ -284,7 +273,7 @@ Based on historical patterns:
 
 ## Related
 - Pattern: {pattern}
-- Signal ID: {signal.get('source_id', 'N/A')}
+- Signal ID: {signal.get("source_id", "N/A")}
 """
 
     def _generate_adr(self, signal: JSONValue, correlation_id: str) -> str:
@@ -292,11 +281,11 @@ Based on historical patterns:
         pattern = signal.get("pattern", "unknown")
         data = signal.get("data", {})
 
-        return f"""# ADR-999: {pattern.replace('_', ' ').title()}
+        return f"""# ADR-999: {pattern.replace("_", " ").title()}
 
 **Status**: Proposed
-**Date**: {datetime.now().strftime('%Y-%m-%d')}
-**Context**: {data.get('message', 'Architectural decision required')}
+**Date**: {datetime.now().strftime("%Y-%m-%d")}
+**Context**: {data.get("message", "Architectural decision required")}
 
 ## Decision
 Implement solution for {pattern} pattern.
@@ -322,7 +311,7 @@ Implement solution for {pattern} pattern.
 3. Comprehensive solution - **selected**
 """
 
-    def _generate_task_graph(self, strategy: Strategy, correlation_id: str) -> List[TaskSpec]:
+    def _generate_task_graph(self, strategy: Strategy, correlation_id: str) -> list[TaskSpec]:
         """Step 7: Generate DAG of executable tasks (Article II)."""
         code_task = self._create_code_task(strategy, correlation_id)
         test_task = self._create_test_task(strategy, correlation_id)
@@ -340,8 +329,8 @@ Implement solution for {pattern} pattern.
             spec={
                 "details": strategy.decision,
                 "spec_content": strategy.spec_content,
-                "complexity": strategy.complexity
-            }
+                "complexity": strategy.complexity,
+            },
         )
 
     def _create_test_task(self, strategy: Strategy, correlation_id: str) -> TaskSpec:
@@ -355,16 +344,12 @@ Implement solution for {pattern} pattern.
             spec={
                 "details": f"Tests for {strategy.decision}",
                 "spec_content": strategy.spec_content,
-                "complexity": strategy.complexity
-            }
+                "complexity": strategy.complexity,
+            },
         )
 
     def _create_merge_task(
-        self,
-        strategy: Strategy,
-        correlation_id: str,
-        code_task: TaskSpec,
-        test_task: TaskSpec
+        self, strategy: Strategy, correlation_id: str, code_task: TaskSpec, test_task: TaskSpec
     ) -> TaskSpec:
         """Create merge task (depends on code + test)."""
         return TaskSpec(
@@ -374,10 +359,10 @@ Implement solution for {pattern} pattern.
             task_type="merge",
             sub_agent="ReleaseManager",
             spec={"details": "Integrate code and tests, commit with constitutional compliance"},
-            dependencies=[code_task.task_id, test_task.task_id]
+            dependencies=[code_task.task_id, test_task.task_id],
         )
 
-    def _self_verify_plan(self, tasks: List[TaskSpec]) -> bool:
+    def _self_verify_plan(self, tasks: list[TaskSpec]) -> bool:
         """Step 8: Verify constitutional compliance."""
         if not tasks:
             raise ValueError("Task graph is empty")
@@ -442,10 +427,7 @@ Implement solution for {pattern} pattern.
             strategy_file.unlink()
 
     async def _handle_planning_failure(
-        self,
-        correlation_id: str,
-        signal: JSONValue,
-        error: Exception
+        self, correlation_id: str, signal: JSONValue, error: Exception
     ) -> None:
         """Handle planning failures."""
         error_report = {
@@ -453,13 +435,10 @@ Implement solution for {pattern} pattern.
             "correlation_id": correlation_id,
             "signal": signal,
             "error": str(error),
-            "timestamp": datetime.now().isoformat()
+            "timestamp": datetime.now().isoformat(),
         }
         await self.message_bus.publish(
-            "telemetry_stream",
-            error_report,
-            priority=10,
-            correlation_id=correlation_id
+            "telemetry_stream", error_report, priority=10, correlation_id=correlation_id
         )
 
     def get_stats(self) -> JSONValue:
@@ -471,15 +450,17 @@ Implement solution for {pattern} pattern.
         keywords = signal.get("data", {}).get("keywords", [])
         return "architecture" in keywords or signal.get("pattern") == "constitutional_violation"
 
-    def _format_historical_patterns(self, patterns: List[JSONValue]) -> str:
+    def _format_historical_patterns(self, patterns: list[JSONValue]) -> str:
         """Format historical patterns for spec."""
         if not patterns:
             return "No historical patterns found."
-        return "\n".join([
-            f"- {p.get('pattern_name')}: confidence={p.get('confidence', 0):.2f}, "
-            f"seen={p.get('times_seen', 0)} times"
-            for p in patterns[:3]
-        ])
+        return "\n".join(
+            [
+                f"- {p.get('pattern_name')}: confidence={p.get('confidence', 0):.2f}, "
+                f"seen={p.get('times_seen', 0)} times"
+                for p in patterns[:3]
+            ]
+        )
 
     def _infer_article(self, pattern: str) -> str:
         """Infer constitutional article from pattern."""

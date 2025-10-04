@@ -7,18 +7,19 @@ Part of Constitutional Law #2 enforcement.
 
 import ast
 import json
-import os
 from collections import defaultdict
 from pathlib import Path
-from typing import Dict, List, Set, Any, Optional, cast
+from typing import cast
+
 from shared.type_definitions.json import JSONValue
+
 
 class DictPatternAnalyzer(ast.NodeVisitor):
     """AST visitor to analyze Dict usage patterns."""
 
     def __init__(self, filename: str):
         self.filename = filename
-        self.dict_patterns: List[dict[str, JSONValue]] = []
+        self.dict_patterns: list[dict[str, JSONValue]] = []
         self.current_function: str | None = None
         self.current_class: str | None = None
 
@@ -64,30 +65,32 @@ class DictPatternAnalyzer(ast.NodeVisitor):
         """Extract the structure of a Dict annotation."""
         try:
             return ast.unparse(node)
-        except (AttributeError, ValueError, TypeError) as e:
+        except (AttributeError, ValueError, TypeError):
             return "Dict"
 
     def _record_pattern(self, node: ast.AST, pattern_type: str) -> None:
         """Record a Dict usage pattern."""
         pattern = {
             "file": self.filename,
-            "line": node.lineno if hasattr(node, 'lineno') else 0,
+            "line": node.lineno if hasattr(node, "lineno") else 0,
             "class": self.current_class,
             "function": self.current_function,
             "type": pattern_type,
             "structure": self._extract_dict_structure(
-                node.annotation if hasattr(node, 'annotation')
-                else node.returns if hasattr(node, 'returns')
+                node.annotation
+                if hasattr(node, "annotation")
+                else node.returns
+                if hasattr(node, "returns")
                 else node
-            )
+            ),
         }
         self.dict_patterns.append(pattern)
 
 
-def analyze_file(filepath: Path) -> List[dict[str, JSONValue]]:
+def analyze_file(filepath: Path) -> list[dict[str, JSONValue]]:
     """Analyze a single Python file for Dict patterns."""
     try:
-        with open(filepath, 'r') as f:
+        with open(filepath) as f:
             tree = ast.parse(f.read(), filename=str(filepath))
 
         analyzer = DictPatternAnalyzer(str(filepath))
@@ -98,12 +101,12 @@ def analyze_file(filepath: Path) -> List[dict[str, JSONValue]]:
         return []
 
 
-def analyze_actual_data_shapes() -> Dict[str, JSONValue]:
+def analyze_actual_data_shapes() -> dict[str, JSONValue]:
     """Analyze actual data shapes from runtime logs and test fixtures."""
-    shapes: defaultdict[str, List[JSONValue]] = defaultdict(list)
+    shapes: defaultdict[str, list[JSONValue]] = defaultdict(list)
 
     # Analyze memory patterns from tests
-    test_patterns: List[Dict[str, JSONValue]] = [
+    test_patterns: list[dict[str, JSONValue]] = [
         # Common memory record shape
         {
             "type": "MemoryRecord",
@@ -113,8 +116,8 @@ def analyze_actual_data_shapes() -> Dict[str, JSONValue]:
                 "tags": ["session", "task"],
                 "timestamp": "2024-01-01T00:00:00",
                 "priority": "high",
-                "metadata": {"agent": "code_agent"}
-            }
+                "metadata": {"agent": "code_agent"},
+            },
         },
         # Learning consolidation shape
         {
@@ -128,9 +131,9 @@ def analyze_actual_data_shapes() -> Dict[str, JSONValue]:
                 "patterns": {
                     "content_types": {"text": 80, "error": 20},
                     "peak_hour": 14,
-                    "peak_day": "Monday"
-                }
-            }
+                    "peak_day": "Monday",
+                },
+            },
         },
         # Dashboard summary shape
         {
@@ -139,12 +142,12 @@ def analyze_actual_data_shapes() -> Dict[str, JSONValue]:
                 "metrics": {
                     "sessions_analyzed": 10,
                     "total_memories": 500,
-                    "avg_memories_per_session": 50
+                    "avg_memories_per_session": 50,
                 },
                 "active_agents": ["code_agent", "auditor"],
-                "generated_at": "2024-01-01T00:00:00"
-            }
-        }
+                "generated_at": "2024-01-01T00:00:00",
+            },
+        },
     ]
 
     for pattern in test_patterns:
@@ -152,7 +155,7 @@ def analyze_actual_data_shapes() -> Dict[str, JSONValue]:
             pattern_type = str(pattern["type"])
             shapes[pattern_type].append(pattern["example"])
 
-    return cast(Dict[str, JSONValue], dict(shapes))
+    return cast(dict[str, JSONValue], dict(shapes))
 
 
 def main():
@@ -177,7 +180,7 @@ def main():
             all_patterns.extend(patterns)
             files_analyzed += 1
 
-    print(f"\n📊 Analysis Results:")
+    print("\n📊 Analysis Results:")
     print(f"  - Files analyzed: {files_analyzed}")
     print(f"  - Dict patterns found: {len(all_patterns)}")
 
@@ -186,7 +189,7 @@ def main():
     for pattern in all_patterns:
         by_type[pattern["type"]].append(pattern)
 
-    print(f"\n📈 Pattern Distribution:")
+    print("\n📈 Pattern Distribution:")
     for pattern_type, instances in by_type.items():
         print(f"  - {pattern_type}: {len(instances)} instances")
 
@@ -195,12 +198,12 @@ def main():
     for pattern in all_patterns:
         structures[pattern["structure"]] += 1
 
-    print(f"\n🔝 Top Dict Structures:")
+    print("\n🔝 Top Dict Structures:")
     for structure, count in sorted(structures.items(), key=lambda x: x[1], reverse=True)[:10]:
         print(f"  - {structure}: {count} uses")
 
     # Analyze actual data shapes
-    print(f"\n🎯 Actual Data Shapes Identified:")
+    print("\n🎯 Actual Data Shapes Identified:")
     data_shapes = analyze_actual_data_shapes()
     for shape_type, examples in data_shapes.items():
         print(f"  - {shape_type}: {len(examples)} examples")
@@ -211,16 +214,16 @@ def main():
             "files_analyzed": files_analyzed,
             "patterns_found": len(all_patterns),
             "pattern_types": list(by_type.keys()),
-            "top_structures": dict(list(structures.items())[:10])
+            "top_structures": dict(list(structures.items())[:10]),
         },
         "patterns": all_patterns[:100],  # Sample of patterns
-        "data_shapes": data_shapes
+        "data_shapes": data_shapes,
     }
 
     with open("type_analysis_report.json", "w") as f:
         json.dump(output, f, indent=2, default=str)
 
-    print(f"\n✅ Analysis complete! Report saved to type_analysis_report.json")
+    print("\n✅ Analysis complete! Report saved to type_analysis_report.json")
     print("\n🎯 Recommended Pydantic Models to Create:")
     print("  1. MemoryRecord - Core memory storage")
     print("  2. LearningConsolidation - Learning analysis results")

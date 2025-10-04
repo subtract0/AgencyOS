@@ -2,7 +2,7 @@ import os
 import sys
 import time
 from pathlib import Path
-from unittest.mock import Mock, patch, MagicMock
+from unittest.mock import MagicMock, Mock, patch
 
 import pytest
 from dotenv import load_dotenv
@@ -70,7 +70,9 @@ def pytest_collection_modifyitems(items):
         else:
             # Tests not in categorized directories default to unit with timeout
             # This ensures uncategorized tests don't hang the suite
-            if not any(m.name in ("unit", "integration", "e2e", "benchmark") for m in item.iter_markers()):
+            if not any(
+                m.name in ("unit", "integration", "e2e", "benchmark") for m in item.iter_markers()
+            ):
                 item.add_marker(pytest.mark.unit)
             if not any(m.name == "timeout" for m in item.iter_markers()):
                 item.add_marker(pytest.mark.timeout(5))
@@ -115,7 +117,9 @@ def cleanup_test_artifacts():
                 file_path = os.path.join(handoff_logs_dir, filename)
                 # Only clean up recent test files (avoid cleaning user's actual handoffs)
                 try:
-                    if os.path.exists(file_path) and os.path.getmtime(file_path) > (time.time() - 300):  # 5 minutes
+                    if os.path.exists(file_path) and os.path.getmtime(file_path) > (
+                        time.time() - 300
+                    ):  # 5 minutes
                         os.unlink(file_path)
                 except OSError:
                     pass  # File might be in use or doesn't exist, skip cleanup
@@ -128,7 +132,9 @@ def cleanup_test_artifacts():
                 file_path = os.path.join(snapshot_logs_dir, filename)
                 # Only clean up recent test files
                 try:
-                    if os.path.exists(file_path) and os.path.getmtime(file_path) > (time.time() - 300):  # 5 minutes
+                    if os.path.exists(file_path) and os.path.getmtime(file_path) > (
+                        time.time() - 300
+                    ):  # 5 minutes
                         os.unlink(file_path)
                 except OSError:
                     pass  # File might be in use or doesn't exist, skip cleanup
@@ -153,11 +159,11 @@ def temp_file_with_content(tmp_path):
 @pytest.fixture
 def mock_agent_context():
     """Mock AgentContext for integration tests."""
-    from datetime import datetime
     import uuid
+    from datetime import datetime
 
     context = Mock()
-    timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
     unique_suffix = str(uuid.uuid4())[:8]
     context.session_id = f"test_session_{timestamp}_{unique_suffix}"
     context.store_memory = Mock()
@@ -199,16 +205,9 @@ def mock_expensive_external_apis(request):
     # Mock OpenAI API
     mock_openai_response = MagicMock()
     mock_openai_response.choices = [
-        MagicMock(
-            message=MagicMock(content="Mocked response"),
-            finish_reason="stop"
-        )
+        MagicMock(message=MagicMock(content="Mocked response"), finish_reason="stop")
     ]
-    mock_openai_response.usage = MagicMock(
-        prompt_tokens=10,
-        completion_tokens=20,
-        total_tokens=30
-    )
+    mock_openai_response.usage = MagicMock(prompt_tokens=10, completion_tokens=20, total_tokens=30)
     mock_openai_response.model = "gpt-5-mini"
 
     # Mock Firestore
@@ -227,18 +226,19 @@ def mock_expensive_external_apis(request):
 
     patches = [
         # OpenAI API
-        patch("openai.OpenAI", return_value=MagicMock(
-            chat=MagicMock(
-                completions=MagicMock(
-                    create=MagicMock(return_value=mock_openai_response)
-                )
+        patch(
+            "openai.OpenAI",
+            return_value=MagicMock(
+                chat=MagicMock(
+                    completions=MagicMock(create=MagicMock(return_value=mock_openai_response))
+                ),
+                embeddings=MagicMock(
+                    create=MagicMock(
+                        return_value=MagicMock(data=[MagicMock(embedding=[0.1] * 1536)])
+                    )
+                ),
             ),
-            embeddings=MagicMock(
-                create=MagicMock(return_value=MagicMock(
-                    data=[MagicMock(embedding=[0.1] * 1536)]
-                ))
-            )
-        )),
+        ),
         # Firestore
         patch("google.cloud.firestore.Client", return_value=mock_firestore_client),
         # Requests library
@@ -297,6 +297,7 @@ def performance_tracker():
                 # ... expensive operation
             # Metrics auto-logged to logs/performance.log
     """
+
     class PerformanceTracker:
         def __init__(self):
             self.metrics = {}

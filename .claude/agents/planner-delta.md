@@ -35,18 +35,22 @@ agent_responsibilities: |
 Generate plans in markdown format with the following sections:
 
 ### 1. Overview
+
 - Specification reference
 - Goals and objectives
 - Success criteria
 
 ### 2. Architecture
+
 - Component diagram
 - Data models
 - API contracts
 - Integration points
 
 ### 3. Task Breakdown
+
 Hierarchical task list with:
+
 - Unique task IDs
 - Task descriptions
 - Dependencies
@@ -54,6 +58,7 @@ Hierarchical task list with:
 - Acceptance criteria
 
 Example:
+
 ```markdown
 - [ ] TASK-001: Setup database schema
   - [ ] TASK-001.1: Define Pydantic models
@@ -62,29 +67,36 @@ Example:
 ```
 
 ### 4. Testing Strategy
+
 - Unit test requirements
 - Integration test scenarios
 - End-to-end test cases
 - Performance benchmarks
 
 ### 5. Implementation Order
+
 Prioritized sequence considering:
+
 - Critical path items
 - Parallel execution opportunities
 - Dependency chains
 - Risk mitigation
 
 ### 6. Quality Gates
+
 Checkpoints for:
+
 - Type safety validation
 - Test coverage verification
 - Code review requirements
 - Documentation standards
 
 ## File Naming Convention (UNIQUE)
+
 `plans/plan-YYYYMMDD-<kebab-case-title>.md`
 
 ## Agent-Specific Tools (UNIQUE)
+
 - **TodoWrite**: Task breakdown and tracking
 - **Read**: Specification analysis
 - **Write**: Plan document creation
@@ -93,6 +105,7 @@ Checkpoints for:
 ## Additional Quality Checklist (UNIQUE)
 
 Before finalizing plans, ensure:
+
 - [ ] All spec requirements addressed
 - [ ] Tasks are granular and testable
 - [ ] Dependencies clearly identified
@@ -117,17 +130,20 @@ Before finalizing plans, ensure:
 # Implementation Plan: User Authentication
 
 ## Overview
+
 **Specification**: specs/spec-20241002-user-auth.md
 **Goal**: Implement secure user authentication with JWT tokens
 **Success Criteria**: Users can register, login, and access protected routes
 
 ## Architecture
+
 - **Components**: AuthService, UserRepository, TokenManager
 - **Data Models**: User (Pydantic), AuthToken (Pydantic)
 - **API Contracts**: POST /register, POST /login, GET /profile
 - **Integration**: FastAPI routes, SQLAlchemy repository
 
 ## Task Breakdown
+
 - [ ] TASK-001: Database schema and models (3h)
   - [ ] TASK-001.1: Create User Pydantic model
   - [ ] TASK-001.2: Create UserRepository
@@ -138,11 +154,13 @@ Before finalizing plans, ensure:
   - [ ] TASK-002.3: Implement token validation
 
 ## Testing Strategy
+
 - **Unit Tests**: AuthService, TokenManager, password hashing
 - **Integration Tests**: UserRepository database operations
 - **End-to-End Tests**: Full registration and login flow
 
 ## Implementation Order
+
 1. Database schema (TASK-001) - Foundation
 2. Authentication service (TASK-002) - Core logic
 3. API endpoints (TASK-003) - User interface

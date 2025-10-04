@@ -1,6 +1,6 @@
 import json
 import os
-from typing import Literal, Optional
+from typing import Literal
 
 from agency_swarm.tools import BaseTool
 from pydantic import Field
@@ -25,16 +25,16 @@ class NotebookEdit(BaseTool):  # type: ignore[misc]
         ...,
         description="The absolute path to the Jupyter notebook file to edit (must be absolute, not relative)",
     )
-    cell_id: Optional[str] = Field(
+    cell_id: str | None = Field(
         None,
         description="The ID of the cell to edit. When inserting a new cell, the new cell will be inserted after the cell with this ID, or at the beginning if not specified.",
     )
     new_source: str = Field(..., description="The new source for the cell")
-    cell_type: Optional[Literal["code", "markdown"]] = Field(
+    cell_type: Literal["code", "markdown"] | None = Field(
         None,
         description="The type of the cell (code or markdown). If not specified, it defaults to the current cell type. If using edit_mode=insert, this is required.",
     )
-    edit_mode: Optional[Literal["replace", "insert", "delete"]] = Field(
+    edit_mode: Literal["replace", "insert", "delete"] | None = Field(
         "replace",
         description="The type of edit to make (replace, insert, delete). Defaults to replace.",
     )
@@ -59,7 +59,7 @@ class NotebookEdit(BaseTool):  # type: ignore[misc]
 
             # Read and parse the notebook
             try:
-                with open(self.notebook_path, "r", encoding="utf-8") as f:
+                with open(self.notebook_path, encoding="utf-8") as f:
                     notebook_data = json.load(f)
             except json.JSONDecodeError as e:
                 return f"Error: Invalid JSON in notebook file: {str(e)}"
@@ -152,7 +152,9 @@ class NotebookEdit(BaseTool):  # type: ignore[misc]
             return f"Error: Cell with ID '{self.cell_id}' not found in notebook"
 
         if cell_index >= len(cells):
-            return f"Error: Cell index {cell_index} is out of range (notebook has {len(cells)} cells)"
+            return (
+                f"Error: Cell index {cell_index} is out of range (notebook has {len(cells)} cells)"
+            )
 
         # Get cell info before deletion
         deleted_cell = cells[cell_index]
@@ -177,7 +179,9 @@ class NotebookEdit(BaseTool):  # type: ignore[misc]
             return f"Error: Cell with ID '{self.cell_id}' not found in notebook"
 
         if cell_index >= len(cells):
-            return f"Error: Cell index {cell_index} is out of range (notebook has {len(cells)} cells)"
+            return (
+                f"Error: Cell index {cell_index} is out of range (notebook has {len(cells)} cells)"
+            )
 
         # Get the cell to modify
         cell = cells[cell_index]
@@ -313,7 +317,7 @@ if __name__ == "__main__":
     print(result3)
 
     # Verify final notebook
-    with open(test_notebook_path, "r") as f:
+    with open(test_notebook_path) as f:
         final_notebook = json.load(f)
 
     print(f"\\nFinal notebook has {len(final_notebook['cells'])} cells:")

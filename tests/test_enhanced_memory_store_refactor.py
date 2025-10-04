@@ -5,15 +5,18 @@ Ensures that the refactored code maintains all existing functionality
 while providing improved performance and maintainability.
 """
 
-import pytest
 from datetime import datetime
 from unittest.mock import Mock, patch
-from typing import Dict, List, Any
+
+import pytest
 
 from agency_memory.enhanced_memory_store import EnhancedMemoryStore
-from agency_memory.type_conversion_utils import MemoryConverter, TypeConversionCache, create_memory_converter
-from shared.models.memory import MemoryRecord, MemoryPriority, MemoryMetadata
-from shared.type_definitions.json import JSONValue
+from agency_memory.type_conversion_utils import (
+    MemoryConverter,
+    TypeConversionCache,
+    create_memory_converter,
+)
+from shared.models.memory import MemoryMetadata, MemoryPriority, MemoryRecord
 
 
 class TestTypeConversionCache:
@@ -138,7 +141,7 @@ class TestMemoryConverter:
             "key": "test_key",
             "content": "test content",
             "tags": ["tag1", "tag2"],
-            "timestamp": "2024-01-01T12:00:00"
+            "timestamp": "2024-01-01T12:00:00",
         }
 
         record = converter.memory_dict_to_record(memory_dict)
@@ -170,7 +173,7 @@ class TestMemoryConverter:
             priority=MemoryPriority.LOW,
             metadata=MemoryMetadata(),
             ttl_seconds=None,
-            embedding=None
+            embedding=None,
         )
 
         result = converter.record_to_dict(record)
@@ -210,7 +213,7 @@ class TestEnhancedMemoryStoreRefactor:
 
     def test_initialization_with_converter(self, enhanced_store):
         """Test that store initializes with memory converter."""
-        assert hasattr(enhanced_store, 'memory_converter')
+        assert hasattr(enhanced_store, "memory_converter")
         assert isinstance(enhanced_store.memory_converter, MemoryConverter)
 
     def test_filter_memories_by_tags(self, enhanced_store):
@@ -306,7 +309,7 @@ class TestEnhancedMemoryStoreRefactor:
         """Test refactored combined_search with query only."""
         enhanced_store.store("key1", "content1", ["tag1"])
 
-        with patch.object(enhanced_store, 'semantic_search') as mock_semantic:
+        with patch.object(enhanced_store, "semantic_search") as mock_semantic:
             mock_semantic.return_value = [{"key": "key1", "content": "content1"}]
 
             result = enhanced_store.combined_search(query="test query", top_k=10)
@@ -327,8 +330,15 @@ class TestEnhancedMemoryStoreRefactor:
     def test_combined_search_function_length(self):
         """Test that combined_search function is under 50 lines."""
         import inspect
+
         source_lines = inspect.getsource(EnhancedMemoryStore.combined_search)
-        line_count = len([line for line in source_lines.split('\n') if line.strip() and not line.strip().startswith('#')])
+        line_count = len(
+            [
+                line
+                for line in source_lines.split("\n")
+                if line.strip() and not line.strip().startswith("#")
+            ]
+        )
         assert line_count <= 50, f"combined_search has {line_count} lines, should be <= 50"
 
     def test_optimized_search_performance(self, enhanced_store):
@@ -388,7 +398,7 @@ class TestRegressionPrevention:
     @pytest.fixture
     def enhanced_store(self):
         """Create enhanced store for regression testing."""
-        with patch('agency_memory.enhanced_memory_store.VectorStore'):
+        with patch("agency_memory.enhanced_memory_store.VectorStore"):
             return EnhancedMemoryStore()
 
     def test_store_functionality_unchanged(self, enhanced_store):

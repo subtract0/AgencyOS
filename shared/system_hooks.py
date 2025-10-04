@@ -1,15 +1,22 @@
-from typing import Optional, List, Protocol, runtime_checkable
 import logging
 import os
 from datetime import datetime
 
 from agents import AgentHooks, RunContextWrapper
+
 from agency_memory import create_session_transcript
+
 from .agent_context import AgentContext, create_agent_context
 from .models.core import (
-    AgentInfo, ToolInfo, HookParameters, SessionEvent, HandoffEvent,
-    ToolEvent, ToolResultEvent, ToolErrorEvent, CodeBundleInfo,
-    FileSnapshot, SnapshotManifest, ToolProtocol, AgentProtocol
+    AgentInfo,
+    HandoffEvent,
+    HookParameters,
+    SessionEvent,
+    ToolErrorEvent,
+    ToolEvent,
+    ToolInfo,
+    ToolProtocol,
+    ToolResultEvent,
 )
 
 logger = logging.getLogger(__name__)
@@ -22,7 +29,7 @@ class CompositeHook(AgentHooks):
     Allows multiple hooks to be used together by delegating calls to all hooks.
     """
 
-    def __init__(self, hooks: List[AgentHooks]):
+    def __init__(self, hooks: list[AgentHooks]):
         """Initialize with a list of hooks to delegate to."""
         self.hooks = hooks
 
@@ -66,7 +73,9 @@ class CompositeHook(AgentHooks):
             except Exception as e:
                 logger.warning(f"Hook {type(hook).__name__}.on_tool_end failed: {e}")
 
-    async def on_llm_start(self, context: RunContextWrapper, agent, system_prompt: Optional[str], input_items: list) -> None:
+    async def on_llm_start(
+        self, context: RunContextWrapper, agent, system_prompt: str | None, input_items: list
+    ) -> None:
         """Call on_llm_start for all hooks."""
         for hook in self.hooks:
             try:
@@ -94,7 +103,7 @@ class MemoryIntegrationHook(AgentHooks):
     - Session transcripts
     """
 
-    def __init__(self, agent_context: Optional[AgentContext] = None):
+    def __init__(self, agent_context: AgentContext | None = None):
         """
         Initialize with optional agent context.
 
@@ -102,8 +111,10 @@ class MemoryIntegrationHook(AgentHooks):
             agent_context: AgentContext instance. Creates default if None.
         """
         self.agent_context = agent_context or create_agent_context()
-        self.session_start_time: Optional[str] = None
-        logger.debug(f"MemoryIntegrationHook initialized for session: {self.agent_context.session_id}")
+        self.session_start_time: str | None = None
+        logger.debug(
+            f"MemoryIntegrationHook initialized for session: {self.agent_context.session_id}"
+        )
 
     async def on_start(self, context: RunContextWrapper, agent) -> None:
         """Called when agent starts processing a user message or is activated."""
@@ -114,12 +125,12 @@ class MemoryIntegrationHook(AgentHooks):
             # Store session start event
             agent_info = AgentInfo(
                 agent_type=type(agent).__name__ if agent else "unknown",
-                agent_name=getattr(agent, 'name', None)
+                agent_name=getattr(agent, "name", None),
             )
             metadata = SessionEvent(
                 timestamp=timestamp,
                 agent_info=agent_info,
-                context_id=getattr(context, 'id', 'unknown') if context else 'unknown'
+                context_id=getattr(context, "id", "unknown") if context else "unknown",
             ).model_dump()
 
             # Add top-level fields for backward compatibility with tests
@@ -140,14 +151,14 @@ class MemoryIntegrationHook(AgentHooks):
             # Store session end event
             agent_info = AgentInfo(
                 agent_type=type(agent).__name__ if agent else "unknown",
-                agent_name=getattr(agent, 'name', None)
+                agent_name=getattr(agent, "name", None),
             )
             metadata = SessionEvent(
                 timestamp=timestamp,
                 agent_info=agent_info,
                 context_id="unknown",
                 session_duration=self._calculate_session_duration(),
-                output_summary=self._truncate_content(str(output) if output else "no output", 200)
+                output_summary=self._truncate_content(str(output) if output else "no output", 200),
             ).model_dump()
 
             # Add top-level fields for backward compatibility with tests
@@ -189,9 +200,7 @@ class MemoryIntegrationHook(AgentHooks):
                 source_label = "SourceAgent"
 
             metadata = HandoffEvent(
-                timestamp=timestamp,
-                target_agent=target_label,
-                source_agent=source_label
+                timestamp=timestamp, target_agent=target_label, source_agent=source_label
             ).model_dump()
 
             key = f"handoff_{timestamp}"
@@ -205,21 +214,16 @@ class MemoryIntegrationHook(AgentHooks):
         """Called before each tool execution."""
         try:
             timestamp = datetime.now().isoformat()
-            tool_name = getattr(tool, 'name', 'unknown_tool')
+            tool_name = getattr(tool, "name", "unknown_tool")
 
             agent_info = AgentInfo(
                 agent_type=type(agent).__name__ if agent else "unknown",
-                agent_name=getattr(agent, 'name', None)
+                agent_name=getattr(agent, "name", None),
             )
             tool_params = self._safe_extract_tool_params(tool)
-            tool_info = ToolInfo(
-                tool_name=tool_name,
-                parameters=tool_params
-            )
+            tool_info = ToolInfo(tool_name=tool_name, parameters=tool_params)
             metadata = ToolEvent(
-                timestamp=timestamp,
-                agent_info=agent_info,
-                tool_info=tool_info
+                timestamp=timestamp, agent_info=agent_info, tool_info=tool_info
             ).model_dump()
 
             # Add top-level fields for backward compatibility with tests
@@ -238,25 +242,22 @@ class MemoryIntegrationHook(AgentHooks):
         """Called after each tool execution."""
         try:
             timestamp = datetime.now().isoformat()
-            tool_name = getattr(tool, 'name', 'unknown_tool')
+            tool_name = getattr(tool, "name", "unknown_tool")
 
             # Truncate large results
             truncated_result = self._truncate_content(result, 1000)
 
             agent_info = AgentInfo(
                 agent_type=type(agent).__name__ if agent else "unknown",
-                agent_name=getattr(agent, 'name', None)
+                agent_name=getattr(agent, "name", None),
             )
             result_size = len(result) if result else 0
-            tool_info = ToolInfo(
-                tool_name=tool_name,
-                result_size=result_size
-            )
+            tool_info = ToolInfo(tool_name=tool_name, result_size=result_size)
             metadata = ToolResultEvent(
                 timestamp=timestamp,
                 agent_info=agent_info,
                 tool_info=tool_info,
-                result=truncated_result
+                result=truncated_result,
             ).model_dump()
 
             # Add top-level fields for backward compatibility with tests
@@ -275,14 +276,11 @@ class MemoryIntegrationHook(AgentHooks):
             try:
                 agent_info = AgentInfo(
                     agent_type=type(agent).__name__ if agent else "unknown",
-                    agent_name=getattr(agent, 'name', None)
+                    agent_name=getattr(agent, "name", None),
                 )
                 tool_info = ToolInfo(tool_name=tool_name)
                 error_metadata = ToolErrorEvent(
-                    timestamp=timestamp,
-                    agent_info=agent_info,
-                    tool_info=tool_info,
-                    error=str(e)
+                    timestamp=timestamp, agent_info=agent_info, tool_info=tool_info, error=str(e)
                 ).model_dump()
 
                 error_key = f"tool_error_{tool_name}_{timestamp}"
@@ -291,7 +289,9 @@ class MemoryIntegrationHook(AgentHooks):
             except Exception as nested_e:
                 logger.error(f"Failed to store error memory: {nested_e}")
 
-    async def on_llm_start(self, context: RunContextWrapper, agent, system_prompt: Optional[str], input_items: list) -> None:
+    async def on_llm_start(
+        self, context: RunContextWrapper, agent, system_prompt: str | None, input_items: list
+    ) -> None:
         """Called before LLM invocation."""
         # Memory integration hook doesn't need to modify LLM calls
         pass
@@ -305,14 +305,24 @@ class MemoryIntegrationHook(AgentHooks):
         """Safely extract tool parameters without exposing sensitive data."""
         try:
             # Try to get parameters in a safe way
-            if hasattr(tool, 'parameters'):
+            if hasattr(tool, "parameters"):
                 params = tool.parameters
                 if isinstance(params, dict):
                     # Filter out potentially sensitive information
                     safe_params = {}
                     redacted_keys = []
                     for key, value in params.items():
-                        if any(sensitive in key.lower() for sensitive in ['password', 'token', 'key', 'secret', 'auth', 'api_key']):
+                        if any(
+                            sensitive in key.lower()
+                            for sensitive in [
+                                "password",
+                                "token",
+                                "key",
+                                "secret",
+                                "auth",
+                                "api_key",
+                            ]
+                        ):
                             safe_params[key] = "[REDACTED]"
                             redacted_keys.append(key)
                         else:
@@ -320,16 +330,15 @@ class MemoryIntegrationHook(AgentHooks):
                     return HookParameters(
                         parameters=safe_params,
                         sensitive_keys_redacted=redacted_keys,
-                        extraction_status="success"
+                        extraction_status="success",
                     )
             return HookParameters(
-                parameters={"parameters": "not_available"},
-                extraction_status="not_available"
+                parameters={"parameters": "not_available"}, extraction_status="not_available"
             )
         except Exception:
             return HookParameters(
                 parameters={"parameters": "extraction_failed"},
-                extraction_status="extraction_failed"
+                extraction_status="extraction_failed",
             )
 
     def _truncate_content(self, content: str, max_length: int) -> str:
@@ -358,7 +367,7 @@ class MemoryIntegrationHook(AgentHooks):
             prefix = prefix[:-1]
         return prefix + truncation_suffix
 
-    def _calculate_session_duration(self) -> Optional[str]:
+    def _calculate_session_duration(self) -> str | None:
         """Calculate session duration if start time is available."""
         if not self.session_start_time:
             return None
@@ -386,7 +395,9 @@ class MemoryIntegrationHook(AgentHooks):
             os.makedirs(transcript_dir, exist_ok=True)
 
             # Create transcript
-            transcript_path = create_session_transcript(session_memories, self.agent_context.session_id)
+            transcript_path = create_session_transcript(
+                session_memories, self.agent_context.session_id
+            )
             logger.info(f"Session transcript created: {transcript_path}")
 
         except Exception as e:
@@ -401,11 +412,13 @@ class CodeBundleAttachmentHook(AgentHooks):
     for others.
     """
 
-    def __init__(self, bundles_dir: Optional[str] = None):
+    def __init__(self, bundles_dir: str | None = None):
         self.bundles_dir = bundles_dir or os.path.join(os.getcwd(), ".claude", "code_bundles")
         os.makedirs(self.bundles_dir, exist_ok=True)
 
-    async def on_llm_start(self, context: RunContextWrapper, agent, system_prompt: Optional[str], input_items: list) -> None:
+    async def on_llm_start(
+        self, context: RunContextWrapper, agent, system_prompt: str | None, input_items: list
+    ) -> None:
         try:
             # Only target the summary agent
             agent_name = getattr(agent, "name", "")
@@ -413,7 +426,11 @@ class CodeBundleAttachmentHook(AgentHooks):
                 return
 
             ts = datetime.now().strftime("%Y%m%d-%H%M%S")
-            session_id = getattr(getattr(context, "context", {}), "get", lambda *_: None)("session_id") if hasattr(context, "context") else None
+            session_id = (
+                getattr(getattr(context, "context", {}), "get", lambda *_: None)("session_id")
+                if hasattr(context, "context")
+                else None
+            )
             base_name = f"summary_bundle_{session_id or 'session'}_{ts}.md"
             bundle_path = os.path.join(self.bundles_dir, base_name)
 
@@ -433,11 +450,13 @@ class CodeBundleAttachmentHook(AgentHooks):
                             parts.append(s)
             except (AttributeError, TypeError) as e:
                 import logging
+
                 logger = logging.getLogger(__name__)
                 logger.warning(f"Failed to process input items for bundle creation: {e}")
                 # Continue with empty parts list
             except Exception as e:
                 import logging
+
                 logger = logging.getLogger(__name__)
                 logger.error(f"Unexpected error processing input items: {e}")
                 # Continue with empty parts list
@@ -497,9 +516,7 @@ class SystemReminderHook(AgentHooks):
         """Called before each tool execution."""
         return None
 
-    async def on_tool_end(
-        self, context: RunContextWrapper, agent, tool, result: str
-    ) -> None:
+    async def on_tool_end(self, context: RunContextWrapper, agent, tool, result: str) -> None:
         """Called after each tool execution."""
         self.tool_call_count += 1
 
@@ -512,7 +529,7 @@ class SystemReminderHook(AgentHooks):
         self,
         context: RunContextWrapper,
         agent,
-        system_prompt: Optional[str],
+        system_prompt: str | None,
         input_items: list,
     ) -> None:
         """Inject pending system reminder as a system message before the LLM call."""
@@ -552,9 +569,7 @@ class SystemReminderHook(AgentHooks):
             current_todos = self._get_current_todos(ctx)
 
             # Create the reminder message
-            reminder_message = self._create_reminder_message(
-                trigger_type, current_todos
-            )
+            reminder_message = self._create_reminder_message(trigger_type, current_todos)
 
             # Inject the reminder into the conversation history
             self._add_system_reminder_to_thread(ctx, reminder_message)
@@ -563,7 +578,7 @@ class SystemReminderHook(AgentHooks):
             # Graceful degradation - don't break the flow if reminder injection fails
             print(f"Warning: Failed to inject system reminder: {e}")
 
-    def _get_current_todos(self, ctx: RunContextWrapper) -> Optional[list]:
+    def _get_current_todos(self, ctx: RunContextWrapper) -> list | None:
         """Get current todos from shared context."""
         try:
             if hasattr(ctx, "context"):
@@ -573,7 +588,7 @@ class SystemReminderHook(AgentHooks):
             pass
         return None
 
-    def _create_reminder_message(self, trigger_type: str, todos: Optional[list]) -> str:
+    def _create_reminder_message(self, trigger_type: str, todos: list | None) -> str:
         """Create the system reminder message."""
         reminder = """<system-reminder>
 # important-instruction-reminders
@@ -588,12 +603,8 @@ NEVER proactively create documentation files (*.md) or README files. Only create
         if todos:
             reminder += "# Current TODO List Status\n"
             pending_count = sum(1 for todo in todos if todo.get("status") == "pending")
-            in_progress_count = sum(
-                1 for todo in todos if todo.get("status") == "in_progress"
-            )
-            completed_count = sum(
-                1 for todo in todos if todo.get("status") == "completed"
-            )
+            in_progress_count = sum(1 for todo in todos if todo.get("status") == "in_progress")
+            completed_count = sum(1 for todo in todos if todo.get("status") == "completed")
 
             reminder += f"- {pending_count} pending tasks\n"
             reminder += f"- {in_progress_count} in-progress tasks\n"
@@ -605,7 +616,9 @@ NEVER proactively create documentation files (*.md) or README files. Only create
                     if todo.get("status") == "in_progress":
                         reminder += f"- {todo.get('task', 'Unknown task')}\n"
         else:
-            reminder += "# TODO List\nConsider using the TodoWrite tool to plan and track your tasks.\n"
+            reminder += (
+                "# TODO List\nConsider using the TodoWrite tool to plan and track your tasks.\n"
+            )
 
         reminder += (
             "\nIMPORTANT: this context may or may not be relevant to your tasks. You should not respond to this context or otherwise consider it in your response unless it is highly relevant to your task. Most of the time, it is not relevant.\n</system-reminder>"
@@ -614,9 +627,7 @@ NEVER proactively create documentation files (*.md) or README files. Only create
 
         return reminder
 
-    def _add_system_reminder_to_thread(
-        self, ctx: RunContextWrapper, reminder_message: str
-    ) -> None:
+    def _add_system_reminder_to_thread(self, ctx: RunContextWrapper, reminder_message: str) -> None:
         """
         Add system reminder message to the conversation thread.
 
@@ -696,11 +707,7 @@ def filter_duplicates(context) -> None:
         call_id = message.get("call_id")
 
         # If it's a function output, add the corresponding call before it
-        if (
-            msg_type == "function_call_output"
-            and call_id
-            and call_id not in processed_call_ids
-        ):
+        if msg_type == "function_call_output" and call_id and call_id not in processed_call_ids:
             processed_call_ids.add(call_id)
 
             if call_id in function_calls:
@@ -718,18 +725,14 @@ def filter_duplicates(context) -> None:
             else:
                 print(f"[WARNING] No function_call found for call_id: {call_id}")
 
-            reordered_messages.append(
-                message
-            )  # Keep function_call_output in its position
+            reordered_messages.append(message)  # Keep function_call_output in its position
 
         # If it's not a function call or output, add it as-is
         elif msg_type not in ["function_call", "function_call_output"]:
             reordered_messages.append(message)
 
         # Preserve standalone function_call (no matching output or missing call_id)
-        elif msg_type == "function_call" and (
-            not call_id or call_id not in function_outputs
-        ):
+        elif msg_type == "function_call" and (not call_id or call_id not in function_outputs):
             reordered_messages.append(message)
 
         # Function calls with matching outputs are handled when we process their corresponding outputs
@@ -742,7 +745,7 @@ def filter_duplicates(context) -> None:
 
 
 # Factory functions to create hooks
-def create_memory_integration_hook(agent_context: Optional[AgentContext] = None):
+def create_memory_integration_hook(agent_context: AgentContext | None = None):
     """Create and return a MemoryIntegrationHook instance."""
     return MemoryIntegrationHook(agent_context=agent_context)
 
@@ -780,10 +783,9 @@ def create_code_bundle_attachment_hook() -> AgentHooks:
 
 
 # ============ New Hooks: Intent Router, Tool Wrapper (Retry), Mutation Snapshot ============
-from .retry_controller import RetryController, ExponentialBackoffStrategy, CircuitBreaker
-import os
 import shutil
-from typing import Union
+
+from .retry_controller import CircuitBreaker, ExponentialBackoffStrategy, RetryController
 
 
 class IntentRouterHook(AgentHooks):
@@ -824,9 +826,19 @@ class IntentRouterHook(AgentHooks):
 class ToolWrapperHook(AgentHooks):
     """Wrap tool.run with RetryController to handle transient errors."""
 
-    def __init__(self, initial_delay: float = 0.01, max_attempts: int = 2, breaker_threshold: int = 3, breaker_timeout: float = 5.0):
-        strategy = ExponentialBackoffStrategy(initial_delay=initial_delay, jitter=False, max_attempts=max_attempts)
-        breaker = CircuitBreaker(failure_threshold=breaker_threshold, recovery_timeout=breaker_timeout)
+    def __init__(
+        self,
+        initial_delay: float = 0.01,
+        max_attempts: int = 2,
+        breaker_threshold: int = 3,
+        breaker_timeout: float = 5.0,
+    ):
+        strategy = ExponentialBackoffStrategy(
+            initial_delay=initial_delay, jitter=False, max_attempts=max_attempts
+        )
+        breaker = CircuitBreaker(
+            failure_threshold=breaker_threshold, recovery_timeout=breaker_timeout
+        )
         self.controller = RetryController(strategy=strategy, circuit_breaker=breaker)
 
     async def on_tool_start(self, context: RunContextWrapper, agent, tool) -> None:
@@ -835,8 +847,10 @@ class ToolWrapperHook(AgentHooks):
                 return
             run = getattr(tool, "run", None)
             if callable(run):
+
                 def wrapped_run(*args, **kwargs):
                     return self.controller.execute_with_retry(run, *args, **kwargs)
+
                 setattr(tool, "run", wrapped_run)
                 setattr(tool, "_wrapped_by_retry", True)
         except Exception:
@@ -859,7 +873,7 @@ class MutationSnapshotHook(AgentHooks):
         except Exception:
             return
 
-    def _extract_target_files(self, tool: Union[ToolProtocol, object, dict]) -> List[str]:
+    def _extract_target_files(self, tool: ToolProtocol | object | dict) -> list[str]:
         paths = []
         # Common field
         fp = getattr(tool, "file_path", None)
@@ -870,7 +884,9 @@ class MutationSnapshotHook(AgentHooks):
         try:
             if ops:
                 for op in ops:
-                    p = getattr(op, "file_path", None) or (op.get("file_path") if isinstance(op, dict) else None)
+                    p = getattr(op, "file_path", None) or (
+                        op.get("file_path") if isinstance(op, dict) else None
+                    )
                     if isinstance(p, str):
                         paths.append(p)
         except Exception:
@@ -889,10 +905,13 @@ class MutationSnapshotHook(AgentHooks):
                 continue
         return uniq
 
-    def _snapshot_files(self, files: List[str]) -> None:
+    def _snapshot_files(self, files: list[str]) -> None:
         from datetime import datetime
+
         root = os.getcwd()
-        base = os.path.join(root, "logs", "snapshots", datetime.utcnow().strftime("%Y%m%d_%H%M%S_%f"))
+        base = os.path.join(
+            root, "logs", "snapshots", datetime.utcnow().strftime("%Y%m%d_%H%M%S_%f")
+        )
         files_dir = os.path.join(base, "files")
         os.makedirs(files_dir, exist_ok=True)
         manifest: dict = {"files": []}
@@ -908,12 +927,14 @@ class MutationSnapshotHook(AgentHooks):
         try:
             with open(os.path.join(base, "manifest.json"), "w", encoding="utf-8") as out:
                 import json
+
                 json.dump(manifest, out, indent=2)
         except Exception:
             pass
 
 
 # Factories for new hooks
+
 
 def create_intent_router_hook():
     return IntentRouterHook()
@@ -924,7 +945,9 @@ def create_tool_wrapper_hook():
     threshold = int(os.getenv("AGENCY_BREAKER_THRESHOLD", "3"))
     timeout = float(os.getenv("AGENCY_BREAKER_TIMEOUT", "5.0"))
     max_attempts = int(os.getenv("AGENCY_RETRY_MAX_ATTEMPTS", "2"))
-    return ToolWrapperHook(max_attempts=max_attempts, breaker_threshold=threshold, breaker_timeout=timeout)
+    return ToolWrapperHook(
+        max_attempts=max_attempts, breaker_threshold=threshold, breaker_timeout=timeout
+    )
 
 
 def create_mutation_snapshot_hook():
@@ -937,7 +960,9 @@ if __name__ == "__main__":
 
     # Test memory integration hook
     memory_hook = create_memory_integration_hook()
-    print(f"MemoryIntegrationHook created successfully for session: {memory_hook.agent_context.session_id}")
+    print(
+        f"MemoryIntegrationHook created successfully for session: {memory_hook.agent_context.session_id}"
+    )
 
     # Test system reminder hook
     reminder_hook = create_system_reminder_hook()

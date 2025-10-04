@@ -5,17 +5,17 @@ Enables gradual rollout and performance comparison between
 DSPy and legacy agent implementations.
 """
 
+import hashlib
+import json
+import logging
 import os
 import random
-import logging
-import json
-import time
-from typing import Dict, Optional, Tuple, List
 from datetime import datetime, timedelta
-from pathlib import Path
 from enum import Enum
+from pathlib import Path
+
 from pydantic import BaseModel, Field
-import hashlib
+
 from shared.type_definitions.json import JSONValue
 
 logger = logging.getLogger(__name__)
@@ -23,6 +23,7 @@ logger = logging.getLogger(__name__)
 
 class ExperimentStatus(Enum):
     """Status of an A/B test experiment."""
+
     DRAFT = "draft"
     RUNNING = "running"
     PAUSED = "paused"
@@ -32,6 +33,7 @@ class ExperimentStatus(Enum):
 
 class AgentVariant(Enum):
     """Agent implementation variant."""
+
     LEGACY = "legacy"
     DSPY = "dspy"
     CONTROL = "control"  # Usually legacy
@@ -40,31 +42,33 @@ class AgentVariant(Enum):
 
 class ExperimentConfig(BaseModel):
     """Configuration for an A/B test experiment."""
+
     name: str = Field(..., description="Experiment name")
     agent_name: str = Field(..., description="Agent being tested")
     rollout_percentage: float = Field(0.1, description="Percentage of traffic for DSPy (0.0-1.0)")
-    start_date: Optional[datetime] = Field(None, description="Experiment start date")
-    end_date: Optional[datetime] = Field(None, description="Experiment end date")
+    start_date: datetime | None = Field(None, description="Experiment start date")
+    end_date: datetime | None = Field(None, description="Experiment end date")
     min_samples: int = Field(100, description="Minimum samples needed per variant")
     confidence_level: float = Field(0.95, description="Statistical confidence level")
-    metrics_to_track: List[str] = Field(
+    metrics_to_track: list[str] = Field(
         default_factory=lambda: ["success_rate", "latency", "quality_score"],
-        description="Metrics to track"
+        description="Metrics to track",
     )
     enabled: bool = Field(True, description="Whether experiment is enabled")
-    force_variant: Optional[str] = Field(None, description="Force a specific variant for testing")
+    force_variant: str | None = Field(None, description="Force a specific variant for testing")
 
 
 class ExperimentResult(BaseModel):
     """Results from an A/B test experiment."""
+
     experiment_name: str
     agent_name: str
     control_samples: int
     treatment_samples: int
-    control_metrics: Dict[str, float]
-    treatment_metrics: Dict[str, float]
-    improvement: Dict[str, float]
-    statistical_significance: Dict[str, bool]
+    control_metrics: dict[str, float]
+    treatment_metrics: dict[str, float]
+    improvement: dict[str, float]
+    statistical_significance: dict[str, bool]
     recommendation: str
     confidence: float
 
@@ -77,11 +81,7 @@ class ABTestController:
     for comparing DSPy and legacy agent implementations.
     """
 
-    def __init__(
-        self,
-        config_path: Optional[str] = None,
-        metrics_path: Optional[str] = None
-    ):
+    def __init__(self, config_path: str | None = None, metrics_path: str | None = None):
         """
         Initialize the A/B test controller.
 
@@ -96,8 +96,8 @@ class ABTestController:
         self.config_path.parent.mkdir(parents=True, exist_ok=True)
         self.metrics_path.parent.mkdir(parents=True, exist_ok=True)
 
-        self.experiments: Dict[str, ExperimentConfig] = {}
-        self.metrics: List[Dict[str, JSONValue]] = []
+        self.experiments: dict[str, ExperimentConfig] = {}
+        self.metrics: list[dict[str, JSONValue]] = []
 
         self._load_experiments()
 
@@ -105,7 +105,7 @@ class ABTestController:
         """Load experiment configurations from file."""
         if self.config_path.exists():
             try:
-                with open(self.config_path, 'r') as f:
+                with open(self.config_path) as f:
                     data = json.load(f)
                     for exp_data in data.get("experiments", []):
                         config = ExperimentConfig(**exp_data)
@@ -118,22 +118,17 @@ class ABTestController:
         """Save experiment configurations to file."""
         try:
             data = {
-                "experiments": [
-                    config.model_dump() for config in self.experiments.values()
-                ],
-                "last_updated": datetime.utcnow().isoformat()
+                "experiments": [config.model_dump() for config in self.experiments.values()],
+                "last_updated": datetime.utcnow().isoformat(),
             }
-            with open(self.config_path, 'w') as f:
+            with open(self.config_path, "w") as f:
                 json.dump(data, f, indent=2, default=str)
         except Exception as e:
             logger.error(f"Failed to save experiments: {e}")
 
     def should_use_dspy(
-        self,
-        agent_name: str,
-        user_id: Optional[str] = None,
-        session_id: Optional[str] = None
-    ) -> Tuple[bool, str]:
+        self, agent_name: str, user_id: str | None = None, session_id: str | None = None
+    ) -> tuple[bool, str]:
         """
         Determine whether to use DSPy variant for a request.
 
@@ -154,9 +149,11 @@ class ABTestController:
         # Find active experiment for this agent
         active_experiment = None
         for exp_name, config in self.experiments.items():
-            if (config.agent_name == agent_name and
-                config.enabled and
-                self._is_experiment_active(config)):
+            if (
+                config.agent_name == agent_name
+                and config.enabled
+                and self._is_experiment_active(config)
+            ):
                 active_experiment = config
                 break
 
@@ -186,7 +183,7 @@ class ABTestController:
             agent_name=agent_name,
             variant="dspy" if use_dspy else "legacy",
             user_id=user_id,
-            session_id=session_id
+            session_id=session_id,
         )
 
         return use_dspy, active_experiment.name
@@ -208,8 +205,8 @@ class ABTestController:
         experiment_name: str,
         agent_name: str,
         variant: str,
-        user_id: Optional[str] = None,
-        session_id: Optional[str] = None
+        user_id: str | None = None,
+        session_id: str | None = None,
     ) -> None:
         """Log variant assignment for analysis."""
         try:
@@ -219,10 +216,10 @@ class ABTestController:
                 "agent": agent_name,
                 "variant": variant,
                 "user_id": user_id,
-                "session_id": session_id
+                "session_id": session_id,
             }
 
-            with open(self.metrics_path, 'a') as f:
+            with open(self.metrics_path, "a") as f:
                 f.write(json.dumps(log_entry) + "\n")
 
         except Exception as e:
@@ -234,7 +231,7 @@ class ABTestController:
         variant: str,
         metric_name: str,
         value: float,
-        metadata: Optional[Dict[str, JSONValue]] = None
+        metadata: dict[str, JSONValue] | None = None,
     ) -> None:
         """
         Record a metric for an experiment.
@@ -253,10 +250,10 @@ class ABTestController:
                 "variant": variant,
                 "metric": metric_name,
                 "value": value,
-                "metadata": metadata or {}
+                "metadata": metadata or {},
             }
 
-            with open(self.metrics_path, 'a') as f:
+            with open(self.metrics_path, "a") as f:
                 f.write(json.dumps(metric_entry) + "\n")
 
             self.metrics.append(metric_entry)
@@ -270,7 +267,7 @@ class ABTestController:
         agent_name: str,
         rollout_percentage: float = 0.1,
         duration_days: int = 7,
-        **kwargs
+        **kwargs,
     ) -> ExperimentConfig:
         """
         Create a new A/B test experiment.
@@ -291,7 +288,7 @@ class ABTestController:
             rollout_percentage=rollout_percentage,
             start_date=datetime.utcnow(),
             end_date=datetime.utcnow() + timedelta(days=duration_days),
-            **kwargs
+            **kwargs,
         )
 
         self.experiments[name] = config
@@ -314,7 +311,7 @@ class ABTestController:
             self._save_experiments()
             logger.info(f"Resumed experiment: {name}")
 
-    def analyze_experiment(self, name: str) -> Optional[ExperimentResult]:
+    def analyze_experiment(self, name: str) -> ExperimentResult | None:
         """
         Analyze results from an experiment.
 
@@ -354,8 +351,9 @@ class ABTestController:
         improvement = {}
         for metric in control_agg:
             if metric in treatment_agg and control_agg[metric] > 0:
-                improvement[metric] = ((treatment_agg[metric] - control_agg[metric]) /
-                                       control_agg[metric]) * 100
+                improvement[metric] = (
+                    (treatment_agg[metric] - control_agg[metric]) / control_agg[metric]
+                ) * 100
 
         # Statistical significance (simplified)
         significance = self._calculate_significance(control_metrics, treatment_metrics)
@@ -373,16 +371,16 @@ class ABTestController:
             improvement=improvement,
             statistical_significance=significance,
             recommendation=recommendation,
-            confidence=config.confidence_level
+            confidence=config.confidence_level,
         )
 
-    def _load_experiment_metrics(self, experiment_name: str) -> List[Dict[str, JSONValue]]:
+    def _load_experiment_metrics(self, experiment_name: str) -> list[dict[str, JSONValue]]:
         """Load metrics for a specific experiment."""
         metrics = []
 
         if self.metrics_path.exists():
             try:
-                with open(self.metrics_path, 'r') as f:
+                with open(self.metrics_path) as f:
                     for line in f:
                         entry = json.loads(line)
                         if entry.get("experiment") == experiment_name:
@@ -392,10 +390,10 @@ class ABTestController:
 
         return metrics
 
-    def _aggregate_metrics(self, metrics: List[Dict[str, JSONValue]]) -> Dict[str, float]:
+    def _aggregate_metrics(self, metrics: list[dict[str, JSONValue]]) -> dict[str, float]:
         """Aggregate metrics by type."""
         aggregated = {}
-        metric_values: Dict[str, List[float]] = {}
+        metric_values: dict[str, list[float]] = {}
 
         for entry in metrics:
             if "metric" in entry and "value" in entry:
@@ -412,10 +410,8 @@ class ABTestController:
         return aggregated
 
     def _calculate_significance(
-        self,
-        control: List[Dict[str, JSONValue]],
-        treatment: List[Dict[str, JSONValue]]
-    ) -> Dict[str, bool]:
+        self, control: list[dict[str, JSONValue]], treatment: list[dict[str, JSONValue]]
+    ) -> dict[str, bool]:
         """
         Calculate statistical significance (simplified).
 
@@ -465,9 +461,7 @@ class ABTestController:
         return significance
 
     def _generate_recommendation(
-        self,
-        improvement: Dict[str, float],
-        significance: Dict[str, bool]
+        self, improvement: dict[str, float], significance: dict[str, bool]
     ) -> str:
         """Generate recommendation based on results."""
         # Check for significant positive improvements
@@ -490,7 +484,7 @@ class ABTestController:
         else:
             return "CONTINUE: Continue monitoring, no clear winner yet"
 
-    def get_experiment_status(self, name: str) -> Optional[Dict[str, JSONValue]]:
+    def get_experiment_status(self, name: str) -> dict[str, JSONValue] | None:
         """Get current status of an experiment."""
         if name not in self.experiments:
             return None
@@ -508,13 +502,11 @@ class ABTestController:
             "rollout_percentage": config.rollout_percentage,
             "control_samples": control_count,
             "treatment_samples": treatment_count,
-            "progress": min(
-                (control_count + treatment_count) / (config.min_samples * 2),
-                1.0
-            ) * 100
+            "progress": min((control_count + treatment_count) / (config.min_samples * 2), 1.0)
+            * 100,
         }
 
-    def list_experiments(self) -> List[Dict[str, JSONValue]]:
+    def list_experiments(self) -> list[dict[str, JSONValue]]:
         """List all experiments with their status."""
         experiments = []
 
@@ -527,7 +519,7 @@ class ABTestController:
 
 
 # Global controller instance
-_global_controller: Optional[ABTestController] = None
+_global_controller: ABTestController | None = None
 
 
 def get_ab_controller() -> ABTestController:

@@ -88,16 +88,19 @@ async def execute_workflow(intent: str):
 ## Quality Gates (UNIQUE)
 
 ### Pre-Step Validation
+
 - Verify previous step completion
 - Check constitutional compliance
 - Ensure all parallel tasks finished
 
 ### Post-Step Validation
+
 - All acceptance criteria met
 - No partial completions
 - Documentation updated
 
 ### Final Gate (before commit)
+
 - 100% test coverage
 - Zero mypy errors
 - Zero broken windows
@@ -106,6 +109,7 @@ async def execute_workflow(intent: str):
 ## Error Handling (UNIQUE)
 
 ### Failure Recovery
+
 1. **Spec Failure**: Re-analyze intent, clarify requirements
 2. **Test Failure**: Review spec, ensure test correctness
 3. **Plan Failure**: Re-evaluate approach
@@ -113,6 +117,7 @@ async def execute_workflow(intent: str):
 5. **Verify Failure**: Fix issues, re-run verification
 
 ### Rollback Strategy
+
 - Git stash changes if verification fails
 - Revert to last known good state
 - Log failure for analysis
@@ -121,12 +126,14 @@ async def execute_workflow(intent: str):
 ## Success Metrics (UNIQUE)
 
 ### Workflow Metrics
+
 - Completion Rate: % workflows successfully completed
 - First-Time Success: % passing without retry
 - Time to Delivery: Intent to commit duration
 - Quality Score: Test coverage, type safety
 
 ### Code Metrics
+
 - Test Coverage: Must be 100%
 - Type Coverage: Must be 100%
 - Defect Rate: Post-deployment issues
@@ -138,6 +145,7 @@ async def execute_workflow(intent: str):
 USER: "Create function that validates email addresses"
 
 AGENT:
+
 1. SPECIFY: Creating spec for email validation...
 2. TEST: Writing 15 NECESSARY tests...
 3. PLAN: Designing regex pattern approach...
@@ -150,6 +158,7 @@ COMPLETE: Email validation function delivered
 ## Constitutional Alignment (UNIQUE)
 
 This workflow ensures full compliance:
+
 1. **Complete Context**: Each step requires full understanding
 2. **100% Verification**: All tests must pass
 3. **Automated Enforcement**: Quality gates technically enforced
@@ -159,6 +168,7 @@ This workflow ensures full compliance:
 ## Activation (UNIQUE)
 
 To activate this workflow:
+
 ```
 "Execute e2e workflow: [your verbal intent here]"
 ```

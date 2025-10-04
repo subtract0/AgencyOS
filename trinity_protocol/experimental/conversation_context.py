@@ -45,23 +45,23 @@ Required steps:
 - Article IV: Persist context for cross-session learning ⚠️ (privacy concerns)
 """
 
-from typing import List, Optional, Dict, Any
-from shared.type_definitions import JSONValue
-from datetime import datetime, timedelta
+import hashlib
 from collections import deque
 from dataclasses import dataclass
-import hashlib
+from datetime import datetime, timedelta
 
+from shared.type_definitions import JSONValue
 from trinity_protocol.core.models.patterns import TopicCluster
 
 
 @dataclass
 class TranscriptEntry:
     """Single transcript entry in conversation."""
+
     text: str
     timestamp: datetime
     confidence: float
-    speaker_id: Optional[str] = None
+    speaker_id: str | None = None
 
 
 class ConversationContext:
@@ -76,7 +76,7 @@ class ConversationContext:
         self,
         window_minutes: float = 10.0,
         max_entries: int = 100,
-        silence_threshold_seconds: float = 120.0
+        silence_threshold_seconds: float = 120.0,
     ):
         """
         Initialize conversation context manager.
@@ -94,19 +94,15 @@ class ConversationContext:
         self._entries: deque[TranscriptEntry] = deque(maxlen=max_entries)
 
         # Current conversation metadata
-        self.conversation_id: Optional[str] = None
-        self.conversation_start: Optional[datetime] = None
-        self.last_activity: Optional[datetime] = None
+        self.conversation_id: str | None = None
+        self.conversation_start: datetime | None = None
+        self.last_activity: datetime | None = None
 
         # Topic tracking
-        self._topic_mentions: Dict[str, List[datetime]] = {}
+        self._topic_mentions: dict[str, list[datetime]] = {}
 
     def add_transcription(
-        self,
-        text: str,
-        timestamp: datetime,
-        confidence: float,
-        speaker_id: Optional[str] = None
+        self, text: str, timestamp: datetime, confidence: float, speaker_id: str | None = None
     ) -> None:
         """
         Add transcription to conversation context.
@@ -126,10 +122,7 @@ class ConversationContext:
 
         # Add entry
         entry = TranscriptEntry(
-            text=text,
-            timestamp=timestamp,
-            confidence=confidence,
-            speaker_id=speaker_id
+            text=text, timestamp=timestamp, confidence=confidence, speaker_id=speaker_id
         )
         self._entries.append(entry)
 
@@ -171,7 +164,7 @@ class ConversationContext:
         while self._entries and self._entries[0].timestamp < cutoff_time:
             self._entries.popleft()
 
-    def get_recent_text(self, last_n_minutes: Optional[float] = None) -> str:
+    def get_recent_text(self, last_n_minutes: float | None = None) -> str:
         """
         Get recent conversation text.
 
@@ -190,18 +183,11 @@ class ConversationContext:
         else:
             # Filter by specific time window
             cutoff = datetime.now() - timedelta(minutes=last_n_minutes)
-            texts = [
-                entry.text
-                for entry in self._entries
-                if entry.timestamp >= cutoff
-            ]
+            texts = [entry.text for entry in self._entries if entry.timestamp >= cutoff]
 
         return " ".join(texts)
 
-    def get_recent_entries(
-        self,
-        last_n_minutes: Optional[float] = None
-    ) -> List[TranscriptEntry]:
+    def get_recent_entries(self, last_n_minutes: float | None = None) -> list[TranscriptEntry]:
         """
         Get recent transcript entries.
 
@@ -218,11 +204,7 @@ class ConversationContext:
             return list(self._entries)
 
         cutoff = datetime.now() - timedelta(minutes=last_n_minutes)
-        return [
-            entry
-            for entry in self._entries
-            if entry.timestamp >= cutoff
-        ]
+        return [entry for entry in self._entries if entry.timestamp >= cutoff]
 
     def track_topic_mention(self, topic: str, timestamp: datetime) -> None:
         """
@@ -240,9 +222,7 @@ class ConversationContext:
         self._topic_mentions[topic_key].append(timestamp)
 
     def get_topic_mention_count(
-        self,
-        topic: str,
-        time_window_minutes: Optional[float] = None
+        self, topic: str, time_window_minutes: float | None = None
     ) -> int:
         """
         Get mention count for topic.
@@ -268,10 +248,8 @@ class ConversationContext:
         return sum(1 for ts in mentions if ts >= cutoff)
 
     def get_topic_cluster(
-        self,
-        topic: str,
-        time_window_hours: float = 24.0
-    ) -> Optional[TopicCluster]:
+        self, topic: str, time_window_hours: float = 24.0
+    ) -> TopicCluster | None:
         """
         Get topic cluster for recurrence analysis.
 
@@ -288,10 +266,7 @@ class ConversationContext:
             return None
 
         cutoff = datetime.now() - timedelta(hours=time_window_hours)
-        recent_mentions = [
-            ts for ts in self._topic_mentions[topic_key]
-            if ts >= cutoff
-        ]
+        recent_mentions = [ts for ts in self._topic_mentions[topic_key] if ts >= cutoff]
 
         if not recent_mentions:
             return None
@@ -306,7 +281,7 @@ class ConversationContext:
             related_keywords=[topic_key],
             mention_timestamps=recent_mentions,
             recurrence_score=recurrence_score,
-            time_window_hours=time_window_hours
+            time_window_hours=time_window_hours,
         )
 
     def get_conversation_duration(self) -> float:
@@ -329,11 +304,7 @@ class ConversationContext:
         Returns:
             Number of unique speaker IDs (1 if no speaker IDs)
         """
-        speaker_ids = {
-            entry.speaker_id
-            for entry in self._entries
-            if entry.speaker_id is not None
-        }
+        speaker_ids = {entry.speaker_id for entry in self._entries if entry.speaker_id is not None}
 
         return len(speaker_ids) if speaker_ids else 1
 
@@ -366,7 +337,7 @@ class ConversationContext:
             return full_text
 
         # Truncate and add ellipsis
-        return full_text[:max_length - 3] + "..."
+        return full_text[: max_length - 3] + "..."
 
     def reset(self) -> None:
         """Reset conversation context (start fresh)."""
@@ -385,7 +356,9 @@ class ConversationContext:
         """
         return {
             "conversation_id": self.conversation_id,
-            "conversation_start": self.conversation_start.isoformat() if self.conversation_start else None,
+            "conversation_start": self.conversation_start.isoformat()
+            if self.conversation_start
+            else None,
             "last_activity": self.last_activity.isoformat() if self.last_activity else None,
             "duration_minutes": self.get_conversation_duration(),
             "entry_count": len(self._entries),
@@ -393,5 +366,5 @@ class ConversationContext:
             "average_confidence": self.get_average_confidence(),
             "tracked_topics": len(self._topic_mentions),
             "window_minutes": self.window_minutes,
-            "max_entries": self.max_entries
+            "max_entries": self.max_entries,
         }

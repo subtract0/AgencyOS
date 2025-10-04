@@ -18,12 +18,9 @@ Constitutional Compliance:
 """
 
 import os
-import time
-import tempfile
 import subprocess
-from pathlib import Path
 from datetime import datetime
-import json
+from pathlib import Path
 
 # Set up the unified core
 os.environ["ENABLE_UNIFIED_CORE"] = "true"
@@ -89,21 +86,21 @@ def demonstrate_autonomous_healing():
     print("\n📍 Step 2: Triggering error by running test...")
     try:
         result = subprocess.run(
-            ["python", str(error_file)],
-            capture_output=True,
-            text=True,
-            timeout=5
+            ["python", str(error_file)], capture_output=True, text=True, timeout=5
         )
         print(f"   Exit code: {result.returncode}")
         if "AttributeError" in result.stderr:
             print("   ✅ Error triggered successfully")
 
             # Log the error for detection
-            telemetry.log("test_failure", {
-                "file": str(error_file),
-                "error": result.stderr,
-                "timestamp": datetime.now().isoformat()
-            })
+            telemetry.log(
+                "test_failure",
+                {
+                    "file": str(error_file),
+                    "error": result.stderr,
+                    "timestamp": datetime.now().isoformat(),
+                },
+            )
     except subprocess.TimeoutExpired:
         print("   ⏱️  Test timed out")
 
@@ -118,8 +115,8 @@ def demonstrate_autonomous_healing():
         print(f"   Fixes applied: {heal_result['fixes_applied']}")
         print(f"   Success: {heal_result['success']}")
 
-        if heal_result['details']:
-            for detail in heal_result['details']:
+        if heal_result["details"]:
+            for detail in heal_result["details"]:
                 print(f"   - {detail['error']}: {detail['status']}")
     else:
         print("   ⚠️  Healing not available")
@@ -139,7 +136,7 @@ def demonstrate_autonomous_healing():
         # Show the fixed code
         print("\n📝 Fixed code:")
         print("-" * 40)
-        for i, line in enumerate(fixed_code.split('\n')[:15], 1):
+        for i, line in enumerate(fixed_code.split("\n")[:15], 1):
             print(f"{i:3}: {line}")
         print("-" * 40)
 
@@ -153,19 +150,13 @@ def demonstrate_autonomous_healing():
             "initial_error": {
                 "type": "AttributeError",
                 "message": "'NoneType' object has no attribute 'upper'",
-                "file": str(error_file)
+                "file": str(error_file),
             },
             "actions": [
-                {
-                    "tool": "detect_error",
-                    "result": "Found NoneType error"
-                },
-                {
-                    "tool": "apply_fix",
-                    "result": "Added None check"
-                }
+                {"tool": "detect_error", "result": "Found NoneType error"},
+                {"tool": "apply_fix", "result": "Added None check"},
             ],
-            "success": True
+            "success": True,
         }
 
         # Learn from this operation
@@ -173,7 +164,7 @@ def demonstrate_autonomous_healing():
             error_type="NoneType",
             original="result.upper()",
             fixed="result.upper() if result is not None else ''",
-            success=True
+            success=True,
         )
 
         print("   ✅ Pattern learned and stored")

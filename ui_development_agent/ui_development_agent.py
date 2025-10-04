@@ -21,25 +21,22 @@ Make it functional. Make it Apple."
 """
 
 import os
-from typing import Optional
 
 from agency_swarm import Agent
 from agency_swarm.tools import BaseTool as Tool
 from pydantic import Field
 
 from shared.agent_context import AgentContext, create_agent_context
-from shared.constitutional_validator import constitutional_compliance
 from shared.agent_utils import (
-    detect_model_type,
-    select_instructions_file,
-    render_instructions,
     create_model_settings,
+    detect_model_type,
     get_model_instance,
 )
+from shared.constitutional_validator import constitutional_compliance
 from shared.system_hooks import (
-    create_system_reminder_hook,
-    create_memory_integration_hook,
     create_composite_hook,
+    create_memory_integration_hook,
+    create_system_reminder_hook,
 )
 from tools import (
     Bash,
@@ -48,15 +45,17 @@ from tools import (
     Grep,
     MultiEdit,
     Read,
-    Write,
     TodoWrite,
+    Write,
 )
 
 
 class DesignUIComponent(Tool):
     """Design a UI component following Apple's design principles."""
 
-    component_name: str = Field(..., description="Name of the UI component (e.g., 'CostTracker', 'AgentStatus')")
+    component_name: str = Field(
+        ..., description="Name of the UI component (e.g., 'CostTracker', 'AgentStatus')"
+    )
     component_type: str = Field(..., description="Type: 'widget', 'panel', 'view', 'modal'")
     design_requirements: str = Field(..., description="Design requirements and context")
 
@@ -397,8 +396,8 @@ ws.addEventListener('message', (event) => {{
 def create_ui_development_agent(
     model: str = "claude-sonnet-4-20250514",
     reasoning_effort: str = "high",
-    agent_context: Optional[AgentContext] = None,
-    cost_tracker = None
+    agent_context: AgentContext | None = None,
+    cost_tracker=None,
 ) -> Agent:
     """
     Factory that returns THE BLESSED UIDevelo pmentAgent.
@@ -436,9 +435,9 @@ def create_ui_development_agent(
             "session_id": agent_context.session_id,
             "blessed": True,
             "magic": "integrated_design",
-            "inspiration": "apple_philosophy"
+            "inspiration": "apple_philosophy",
         },
-        ["agency", "ui", "blessed", "creation"]
+        ["agency", "ui", "blessed", "creation"],
     )
 
     # Store cost_tracker
@@ -715,6 +714,7 @@ beautiful to behold, powerful in capability. Make Agency OS feel like an Apple p
     # Enable cost tracking
     if cost_tracker is not None:
         from shared.llm_cost_wrapper import wrap_agent_with_cost_tracking
+
         wrap_agent_with_cost_tracking(agent, cost_tracker)
 
     return agent

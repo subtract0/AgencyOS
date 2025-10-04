@@ -10,22 +10,20 @@ Constitutional Requirements:
 - Zero Dict[Any, Any] usage
 """
 
+from unittest.mock import Mock
+
 import pytest
-from unittest.mock import Mock, patch, MagicMock
+
+from shared.type_definitions import Result
 from tools.document_generator import (
-    DocumentGenerator,
-    GenerateChapter,
-    GenerateOutline,
-    ReviseDocument,
-    ChapterRequest,
-    OutlineRequest,
     Chapter,
-    Outline,
-    GeneratedDocument,
-    GenerationError,
+    ChapterRequest,
+    DocumentGenerator,
     DocumentType,
+    GeneratedDocument,
+    Outline,
+    OutlineRequest,
 )
-from shared.type_definitions import Result, Ok, Err
 
 
 # Test Fixtures
@@ -51,7 +49,7 @@ def sample_chapter_request():
         title="Introduction to Coaching",
         context="Book on coaching methodologies",
         requirements=["1500 words", "Include case studies"],
-        style="Professional, conversational"
+        style="Professional, conversational",
     )
 
 
@@ -63,11 +61,12 @@ def sample_outline_request():
         title="Coaching for Entrepreneurs",
         context="Target audience: startup founders",
         num_sections=5,
-        requirements=["Action-oriented", "Include exercises"]
+        requirements=["Action-oriented", "Include exercises"],
     )
 
 
 # === Happy Path Tests ===
+
 
 class TestGenerateChapter:
     """Tests for chapter generation (happy path)."""
@@ -82,7 +81,7 @@ class TestGenerateChapter:
             title="Introduction to Coaching",
             content="Chapter content here...",
             word_count=1500,
-            metadata={"style": "Professional"}
+            metadata={"style": "Professional"},
         )
 
         # Act
@@ -101,11 +100,7 @@ class TestGenerateChapter:
         """Should include provided context in LLM prompt."""
         # Arrange
         mock_llm_client.generate.return_value = Chapter(
-            chapter_number=1,
-            title="Test",
-            content="Content",
-            word_count=100,
-            metadata={}
+            chapter_number=1, title="Test", content="Content", word_count=100, metadata={}
         )
 
         # Act
@@ -122,11 +117,7 @@ class TestGenerateChapter:
         """Should include style requirements in prompt."""
         # Arrange
         mock_llm_client.generate.return_value = Chapter(
-            chapter_number=1,
-            title="Test",
-            content="Content",
-            word_count=100,
-            metadata={}
+            chapter_number=1, title="Test", content="Content", word_count=100, metadata={}
         )
 
         # Act
@@ -151,9 +142,9 @@ class TestGenerateOutline:
             document_type=DocumentType.BOOK,
             sections=[
                 {"number": 1, "title": "Introduction", "summary": "Overview"},
-                {"number": 2, "title": "Chapter 1", "summary": "Details"}
+                {"number": 2, "title": "Chapter 1", "summary": "Details"},
             ],
-            metadata={"total_sections": 2}
+            metadata={"total_sections": 2},
         )
 
         # Act
@@ -173,9 +164,10 @@ class TestGenerateOutline:
         mock_llm_client.generate.return_value = Outline(
             title="Test",
             document_type=DocumentType.BOOK,
-            sections=[{"number": i, "title": f"Section {i}", "summary": "Test"}
-                     for i in range(1, 6)],
-            metadata={}
+            sections=[
+                {"number": i, "title": f"Section {i}", "summary": "Test"} for i in range(1, 6)
+            ],
+            metadata={},
         )
 
         # Act
@@ -190,9 +182,7 @@ class TestGenerateOutline:
 class TestReviseDocument:
     """Tests for document revision (happy path)."""
 
-    def test_revises_document_with_feedback(
-        self, document_generator, mock_llm_client
-    ):
+    def test_revises_document_with_feedback(self, document_generator, mock_llm_client):
         """Should revise document based on feedback."""
         # Arrange
         original_doc = GeneratedDocument(
@@ -200,7 +190,7 @@ class TestReviseDocument:
             title="Original Title",
             content="Original content",
             version=1,
-            metadata={}
+            metadata={},
         )
         feedback = "Add more examples"
 
@@ -209,7 +199,7 @@ class TestReviseDocument:
             title="Original Title",
             content="Revised content with examples",
             version=2,
-            metadata={"revised": True}
+            metadata={"revised": True},
         )
 
         # Act
@@ -223,6 +213,7 @@ class TestReviseDocument:
 
 
 # === Error Handling Tests ===
+
 
 class TestErrorConditions:
     """Tests for error conditions and edge cases."""
@@ -255,24 +246,14 @@ class TestErrorConditions:
         # Assert
         assert result.is_err()
 
-    def test_handles_empty_context_gracefully(
-        self, document_generator, mock_llm_client
-    ):
+    def test_handles_empty_context_gracefully(self, document_generator, mock_llm_client):
         """Should handle empty context without crashing."""
         # Arrange
         request = ChapterRequest(
-            chapter_number=1,
-            title="Test",
-            context="",
-            requirements=[],
-            style=""
+            chapter_number=1, title="Test", context="", requirements=[], style=""
         )
         mock_llm_client.generate.return_value = Chapter(
-            chapter_number=1,
-            title="Test",
-            content="Content",
-            word_count=100,
-            metadata={}
+            chapter_number=1, title="Test", content="Content", word_count=100, metadata={}
         )
 
         # Act
@@ -281,9 +262,7 @@ class TestErrorConditions:
         # Assert
         assert result.is_ok()
 
-    def test_validates_chapter_number_positive(
-        self, document_generator, mock_llm_client
-    ):
+    def test_validates_chapter_number_positive(self, document_generator, mock_llm_client):
         """Should validate chapter number is positive."""
         # Arrange
         from pydantic import ValidationError
@@ -291,11 +270,7 @@ class TestErrorConditions:
         # Act & Assert
         with pytest.raises(ValidationError):
             request = ChapterRequest(
-                chapter_number=0,
-                title="Test",
-                context="Context",
-                requirements=[],
-                style="Style"
+                chapter_number=0, title="Test", context="Context", requirements=[], style="Style"
             )
 
     def test_handles_network_timeout(
@@ -316,6 +291,7 @@ class TestErrorConditions:
 
 # === Integration Tests ===
 
+
 class TestDocumentTemplates:
     """Tests for document templates and formatting."""
 
@@ -325,11 +301,7 @@ class TestDocumentTemplates:
         """Should include all required sections in chapter template."""
         # Arrange
         mock_llm_client.generate.return_value = Chapter(
-            chapter_number=1,
-            title="Test",
-            content="Content",
-            word_count=100,
-            metadata={}
+            chapter_number=1, title="Test", content="Content", word_count=100, metadata={}
         )
 
         # Act
@@ -347,10 +319,7 @@ class TestDocumentTemplates:
         """Should structure outline sections properly."""
         # Arrange
         mock_llm_client.generate.return_value = Outline(
-            title="Test",
-            document_type=DocumentType.BOOK,
-            sections=[],
-            metadata={}
+            title="Test", document_type=DocumentType.BOOK, sections=[], metadata={}
         )
 
         # Act
@@ -363,6 +332,7 @@ class TestDocumentTemplates:
 
 
 # === Version Tracking Tests ===
+
 
 class TestVersionTracking:
     """Tests for document version tracking."""
@@ -377,7 +347,7 @@ class TestVersionTracking:
             title="Test",
             content="Content",
             word_count=100,
-            metadata={"version": 1}
+            metadata={"version": 1},
         )
 
         # Act
@@ -388,9 +358,7 @@ class TestVersionTracking:
         chapter = result.unwrap()
         assert chapter.metadata.get("version", 1) == 1
 
-    def test_revision_increments_version(
-        self, document_generator, mock_llm_client
-    ):
+    def test_revision_increments_version(self, document_generator, mock_llm_client):
         """Should increment version on revision."""
         # Arrange
         original = GeneratedDocument(
@@ -398,14 +366,14 @@ class TestVersionTracking:
             title="Test",
             content="Original",
             version=1,
-            metadata={}
+            metadata={},
         )
         mock_llm_client.generate.return_value = GeneratedDocument(
             document_type=DocumentType.CHAPTER,
             title="Test",
             content="Revised",
             version=2,
-            metadata={}
+            metadata={},
         )
 
         # Act
@@ -419,21 +387,17 @@ class TestVersionTracking:
 
 # === Constitutional Compliance Tests ===
 
+
 class TestConstitutionalCompliance:
     """Tests for constitutional requirements compliance."""
 
     def test_all_functions_return_result_type(
-        self, document_generator, sample_chapter_request,
-        sample_outline_request, mock_llm_client
+        self, document_generator, sample_chapter_request, sample_outline_request, mock_llm_client
     ):
         """Should use Result<T,E> pattern for all operations."""
         # Arrange
         mock_llm_client.generate.return_value = Chapter(
-            chapter_number=1,
-            title="Test",
-            content="Content",
-            word_count=100,
-            metadata={}
+            chapter_number=1, title="Test", content="Content", word_count=100, metadata={}
         )
 
         # Act
@@ -446,9 +410,9 @@ class TestConstitutionalCompliance:
         """Should not use Dict[Any, Any] in data models."""
         # This test verifies Pydantic models have typed fields
         # Check model fields exist via model_fields
-        assert 'chapter_number' in ChapterRequest.model_fields
-        assert 'title' in ChapterRequest.model_fields
-        assert 'context' in ChapterRequest.model_fields
+        assert "chapter_number" in ChapterRequest.model_fields
+        assert "title" in ChapterRequest.model_fields
+        assert "context" in ChapterRequest.model_fields
 
     def test_all_public_apis_have_docstrings(self):
         """Should document all public APIs."""
@@ -459,28 +423,19 @@ class TestConstitutionalCompliance:
 
 # === Edge Cases Tests ===
 
+
 class TestEdgeCases:
     """Tests for edge cases and boundary conditions."""
 
-    def test_handles_very_long_context(
-        self, document_generator, mock_llm_client
-    ):
+    def test_handles_very_long_context(self, document_generator, mock_llm_client):
         """Should handle very long context strings."""
         # Arrange
         long_context = "A" * 10000
         request = ChapterRequest(
-            chapter_number=1,
-            title="Test",
-            context=long_context,
-            requirements=[],
-            style="Style"
+            chapter_number=1, title="Test", context=long_context, requirements=[], style="Style"
         )
         mock_llm_client.generate.return_value = Chapter(
-            chapter_number=1,
-            title="Test",
-            content="Content",
-            word_count=100,
-            metadata={}
+            chapter_number=1, title="Test", content="Content", word_count=100, metadata={}
         )
 
         # Act
@@ -489,9 +444,7 @@ class TestEdgeCases:
         # Assert
         assert result.is_ok()
 
-    def test_handles_special_characters_in_title(
-        self, document_generator, mock_llm_client
-    ):
+    def test_handles_special_characters_in_title(self, document_generator, mock_llm_client):
         """Should handle special characters in titles."""
         # Arrange
         request = ChapterRequest(
@@ -499,14 +452,10 @@ class TestEdgeCases:
             title="Test: Chapter #1 (Introduction)",
             context="Context",
             requirements=[],
-            style="Style"
+            style="Style",
         )
         mock_llm_client.generate.return_value = Chapter(
-            chapter_number=1,
-            title=request.title,
-            content="Content",
-            word_count=100,
-            metadata={}
+            chapter_number=1, title=request.title, content="Content", word_count=100, metadata={}
         )
 
         # Act
@@ -515,24 +464,14 @@ class TestEdgeCases:
         # Assert
         assert result.is_ok()
 
-    def test_handles_empty_requirements_list(
-        self, document_generator, mock_llm_client
-    ):
+    def test_handles_empty_requirements_list(self, document_generator, mock_llm_client):
         """Should handle empty requirements list."""
         # Arrange
         request = ChapterRequest(
-            chapter_number=1,
-            title="Test",
-            context="Context",
-            requirements=[],
-            style="Style"
+            chapter_number=1, title="Test", context="Context", requirements=[], style="Style"
         )
         mock_llm_client.generate.return_value = Chapter(
-            chapter_number=1,
-            title="Test",
-            content="Content",
-            word_count=100,
-            metadata={}
+            chapter_number=1, title="Test", content="Content", word_count=100, metadata={}
         )
 
         # Act
@@ -543,6 +482,7 @@ class TestEdgeCases:
 
 
 # === Budget Integration Tests ===
+
 
 class TestBudgetIntegration:
     """Tests for budget enforcer integration."""
@@ -555,11 +495,7 @@ class TestBudgetIntegration:
         # would be tested with real BudgetEnforcer
         # Arrange
         mock_llm_client.generate.return_value = Chapter(
-            chapter_number=1,
-            title="Test",
-            content="Content",
-            word_count=100,
-            metadata={}
+            chapter_number=1, title="Test", content="Content", word_count=100, metadata={}
         )
 
         # Act

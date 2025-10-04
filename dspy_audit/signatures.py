@@ -77,9 +77,7 @@ class AuditSignature(dspy.Signature):
     """Analyze code for quality issues and constitutional violations."""
 
     # Inputs
-    code_path: str = dspy.InputField(
-        desc="Path to the code file or directory to analyze"
-    )
+    code_path: str = dspy.InputField(desc="Path to the code file or directory to analyze")
     constitution_rules: list[str] = dspy.InputField(
         desc="List of constitutional articles and requirements"
     )
@@ -120,9 +118,7 @@ class PrioritizationSignature(dspy.Signature):
 
     # Inputs
     issues: list[Issue] = dspy.InputField(desc="All identified issues from audit")
-    max_fixes: int = dspy.InputField(
-        desc="Maximum number of fixes to attempt", default=3
-    )
+    max_fixes: int = dspy.InputField(desc="Maximum number of fixes to attempt", default=3)
     priority_weights: dict[str, float] = dspy.InputField(
         desc="Weights for different issue categories",
         default_factory=lambda: {
@@ -132,15 +128,11 @@ class PrioritizationSignature(dspy.Signature):
             "complexity": 0.05,
         },
     )
-    available_time: int = dspy.InputField(
-        desc="Available time in minutes for fixes", default=30
-    )
+    available_time: int = dspy.InputField(desc="Available time in minutes for fixes", default=30)
 
     # Outputs
     prioritized_issues: list[Issue] = dspy.OutputField(desc="Issues sorted by priority")
-    selected_issues: list[Issue] = dspy.OutputField(
-        desc="Top issues selected for fixing"
-    )
+    selected_issues: list[Issue] = dspy.OutputField(desc="Top issues selected for fixing")
     rationale: str = dspy.OutputField(desc="Explanation of prioritization logic")
 
 
@@ -149,9 +141,7 @@ class RefactorSignature(dspy.Signature):
 
     # Inputs
     issue: Issue = dspy.InputField(desc="Single issue to fix")
-    codebase_context: dict = dspy.InputField(
-        desc="AST analysis and dependency information"
-    )
+    codebase_context: dict = dspy.InputField(desc="AST analysis and dependency information")
     historical_fixes: list[dict] = dspy.InputField(
         desc="Similar successful fixes from history", default_factory=list
     )
@@ -165,9 +155,7 @@ class RefactorSignature(dspy.Signature):
     )
 
     # Outputs
-    refactoring_plan: RefactoringPlan = dspy.OutputField(
-        desc="Detailed plan for fixing the issue"
-    )
+    refactoring_plan: RefactoringPlan = dspy.OutputField(desc="Detailed plan for fixing the issue")
     alternative_approaches: list[str] = dspy.OutputField(
         desc="Alternative fix strategies if primary fails"
     )
@@ -181,9 +169,7 @@ class VerificationSignature(dspy.Signature):
 
     # Inputs
     original_state: dict = dspy.InputField(desc="Codebase state before fixes")
-    applied_fixes: list[RefactoringPlan] = dspy.InputField(
-        desc="Fixes that were applied"
-    )
+    applied_fixes: list[RefactoringPlan] = dspy.InputField(desc="Fixes that were applied")
     test_results: dict[str, bool] = dspy.InputField(desc="Test execution results")
     performance_metrics: dict[str, float] = dspy.InputField(
         desc="Performance impact measurements", default_factory=dict
@@ -191,13 +177,9 @@ class VerificationSignature(dspy.Signature):
 
     # Outputs
     success: bool = dspy.OutputField(desc="Whether all fixes were successful")
-    failed_fixes: list[str] = dspy.OutputField(
-        desc="List of fixes that failed verification"
-    )
+    failed_fixes: list[str] = dspy.OutputField(desc="List of fixes that failed verification")
     rollback_needed: bool = dspy.OutputField(desc="Whether rollback is required")
-    learned_patterns: list[dict] = dspy.OutputField(
-        desc="Patterns to store for future learning"
-    )
+    learned_patterns: list[dict] = dspy.OutputField(desc="Patterns to store for future learning")
     final_qt_score: float = dspy.OutputField(desc="Q(T) score after all fixes")
 
 
@@ -210,9 +192,7 @@ class LearningSignature(dspy.Signature):
     execution_metrics: dict = dspy.InputField(desc="Performance and timing metrics")
 
     # Outputs
-    success_patterns: list[dict] = dspy.OutputField(
-        desc="Patterns that led to successful fixes"
-    )
+    success_patterns: list[dict] = dspy.OutputField(desc="Patterns that led to successful fixes")
     failure_patterns: list[dict] = dspy.OutputField(desc="Anti-patterns to avoid")
     optimization_suggestions: list[str] = dspy.OutputField(
         desc="Suggestions for improving the audit process"

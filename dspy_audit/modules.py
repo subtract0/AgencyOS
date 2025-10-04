@@ -6,7 +6,7 @@ Implements the core logic using DSPy's modular architecture.
 
 import json
 from pathlib import Path
-from typing import Any
+
 from shared.type_definitions.json import JSONValue
 
 # Conditional DSPy import for gradual migration
@@ -142,9 +142,7 @@ class AuditRefactorModule(dspy.Module):
             )
 
             # Apply and verify fix
-            fix_result = self.apply_and_verify_fix(
-                refactor_plan, auto_rollback=auto_rollback
-            )
+            fix_result = self.apply_and_verify_fix(refactor_plan, auto_rollback=auto_rollback)
 
             if fix_result["success"]:
                 applied_fixes.append(fix_result)
@@ -163,9 +161,7 @@ class AuditRefactorModule(dspy.Module):
         if self.use_learning and self.learn:
             learning_result = self.learn(
                 audit_result=(
-                    audit_result.__dict__
-                    if hasattr(audit_result, "__dict__")
-                    else audit_result
+                    audit_result.__dict__ if hasattr(audit_result, "__dict__") else audit_result
                 ),
                 fix_results=applied_fixes + failed_fixes,
                 execution_metrics=self.get_execution_metrics(),
@@ -299,9 +295,7 @@ class AuditRefactorModule(dspy.Module):
     def get_execution_metrics(self) -> dict:
         """Get execution metrics for learning."""
         return {
-            "total_issues": (
-                len(self.audit_history[-1].issues) if self.audit_history else 0
-            ),
+            "total_issues": (len(self.audit_history[-1].issues) if self.audit_history else 0),
             "fixes_attempted": len(self.fix_history),
             "success_rate": 0.8,
         }
@@ -351,12 +345,8 @@ class MultiAgentAuditModule(dspy.Module):
 
         # Individual agent modules
         self.auditor = AuditRefactorModule(use_learning=True)
-        self.test_generator = (
-            dspy.Predict(TestGenerationSignature) if DSPY_AVAILABLE else None
-        )
-        self.code_fixer = (
-            dspy.ChainOfThought(CodeFixSignature) if DSPY_AVAILABLE else None
-        )
+        self.test_generator = dspy.Predict(TestGenerationSignature) if DSPY_AVAILABLE else None
+        self.code_fixer = dspy.ChainOfThought(CodeFixSignature) if DSPY_AVAILABLE else None
 
     def forward(self, target: str) -> dict:
         """
@@ -387,9 +377,7 @@ class MultiAgentAuditModule(dspy.Module):
             "audit": audit_results,
             "generated_tests": test_results,
             "code_fixes": fix_results,
-            "final_qt_score": self.calculate_final_score(
-                audit_results, test_results, fix_results
-            ),
+            "final_qt_score": self.calculate_final_score(audit_results, test_results, fix_results),
         }
 
     def generate_missing_tests(self, audit_results: dict) -> dict:
@@ -404,9 +392,7 @@ class MultiAgentAuditModule(dspy.Module):
 
     def calculate_final_score(self, audit: dict, tests: dict, fixes: dict) -> float:
         """Calculate final Q(T) score after all improvements."""
-        base_score = (
-            audit["audit"].qt_score if hasattr(audit["audit"], "qt_score") else 0.5
-        )
+        base_score = audit["audit"].qt_score if hasattr(audit["audit"], "qt_score") else 0.5
         test_improvement = 0.1 if tests else 0.0
         fix_improvement = 0.1 if fixes else 0.0
         return min(1.0, base_score + test_improvement + fix_improvement)
@@ -414,11 +400,11 @@ class MultiAgentAuditModule(dspy.Module):
 
 # Placeholder signatures for features not yet implemented
 if DSPY_AVAILABLE:
+
     class TestGenerationSignature(dspy.Signature):
         """Generate tests for missing coverage."""
 
         pass
-
 
     class CodeFixSignature(dspy.Signature):
         """Apply code fixes."""
@@ -430,7 +416,6 @@ else:
         """Generate tests for missing coverage."""
 
         pass
-
 
     class CodeFixSignature:
         """Apply code fixes."""

@@ -1,6 +1,4 @@
-import os
-from pathlib import Path
-from tools.kanban.untracked import discover_untracked_cards, REPO_ROOT
+from tools.kanban.untracked import REPO_ROOT, discover_untracked_cards
 
 
 def test_untracked_ingestion_respects_flags_and_globs(tmp_path, monkeypatch):
@@ -12,7 +10,7 @@ def test_untracked_ingestion_respects_flags_and_globs(tmp_path, monkeypatch):
         p = test_dir / "note.txt"
         p.write_text("This is a test note with no secrets.")
         monkeypatch.setenv("LEARNING_UNTRACKED", "true")
-        monkeypatch.setenv("LEARNING_UNTRACKED_GLOBS", f"scratch/_tmp_untracked_test_/note.txt")
+        monkeypatch.setenv("LEARNING_UNTRACKED_GLOBS", "scratch/_tmp_untracked_test_/note.txt")
         cards = discover_untracked_cards()
         assert any(c.get("source_ref", "").endswith("note.txt") for c in cards)
     finally:
@@ -25,6 +23,6 @@ def test_untracked_ingestion_respects_flags_and_globs(tmp_path, monkeypatch):
 
 def test_untracked_ingestion_denies_dotgit(tmp_path, monkeypatch):
     monkeypatch.setenv("LEARNING_UNTRACKED", "true")
-    monkeypatch.setenv("LEARNING_UNTRACKED_GLOBS", f".git/**/*")
+    monkeypatch.setenv("LEARNING_UNTRACKED_GLOBS", ".git/**/*")
     cards = discover_untracked_cards()
     assert cards == []

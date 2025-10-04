@@ -11,9 +11,8 @@ saves 60% tokens per agent invocation (only delta loaded, core cached).
 Constitutional Compliance: Article V (Spec-Driven Development)
 """
 
-from pathlib import Path
-from typing import Dict, Optional
 import re
+from pathlib import Path
 
 
 class InstructionLoadError(Exception):
@@ -66,21 +65,29 @@ def load_agent_instruction(agent_name: str, use_cache: bool = True) -> str:
 
     # Substitute variables in core template
     instruction = core_template
-    instruction = instruction.replace("{{AGENT_NAME}}", variables.get("agent_name", agent_name.title()))
+    instruction = instruction.replace(
+        "{{AGENT_NAME}}", variables.get("agent_name", agent_name.title())
+    )
     instruction = instruction.replace("{{AGENT_ROLE}}", variables.get("agent_role", ""))
-    instruction = instruction.replace("{{AGENT_COMPETENCIES}}", variables.get("agent_competencies", ""))
-    instruction = instruction.replace("{{AGENT_RESPONSIBILITIES}}", variables.get("agent_responsibilities", ""))
+    instruction = instruction.replace(
+        "{{AGENT_COMPETENCIES}}", variables.get("agent_competencies", "")
+    )
+    instruction = instruction.replace(
+        "{{AGENT_RESPONSIBILITIES}}", variables.get("agent_responsibilities", "")
+    )
     instruction = instruction.replace("{{AGENT_SPECIFIC_CONTENT}}", agent_specific)
 
     # Replace optional placeholders with empty string if not provided
-    instruction = instruction.replace("{{AGENT_SPECIFIC_PROTOCOL}}", variables.get("agent_specific_protocol", ""))
+    instruction = instruction.replace(
+        "{{AGENT_SPECIFIC_PROTOCOL}}", variables.get("agent_specific_protocol", "")
+    )
     instruction = instruction.replace("{{AGENT_SPECIFIC_ANTIPATTERNS}}", "")
     instruction = instruction.replace("{{AGENT_SPECIFIC_CHECKLIST}}", "")
 
     return instruction
 
 
-def parse_delta_frontmatter(delta_content: str) -> Dict[str, str]:
+def parse_delta_frontmatter(delta_content: str) -> dict[str, str]:
     """
     Extract YAML frontmatter variables from delta file.
 
@@ -165,7 +172,7 @@ def extract_agent_specific_content(delta_content: str) -> str:
 
 
 # Cache loaded instructions to avoid re-parsing
-_instruction_cache: Dict[str, str] = {}
+_instruction_cache: dict[str, str] = {}
 
 
 def get_cached_instruction(agent_name: str) -> str:
@@ -223,7 +230,7 @@ def get_available_agents() -> list[str]:
     return [f.stem.replace("-delta", "") for f in delta_files]
 
 
-def validate_all_agents() -> Dict[str, bool]:
+def validate_all_agents() -> dict[str, bool]:
     """
     Validate that all agent deltas can be loaded successfully.
 

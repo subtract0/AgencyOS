@@ -10,21 +10,22 @@ Tests the automated verification of all 5 constitutional articles:
 - Article V: Spec-Driven Development
 """
 
-import pytest
-import os
-import tempfile
 import shutil
-from pathlib import Path
-from unittest.mock import MagicMock, patch, mock_open
-from datetime import datetime
 
 # Import the module under test
 import sys
+import tempfile
+from datetime import datetime
+from pathlib import Path
+from unittest.mock import MagicMock, mock_open, patch
+
+import pytest
+
 sys.path.append(str(Path(__file__).parent.parent))
 from tools.constitution_check import (
+    ComplianceReport,
     ConstitutionalEnforcer,
     ViolationReport,
-    ComplianceReport,
 )
 
 
@@ -64,7 +65,7 @@ class TestConstitutionalEnforcer:
             description="Missing complete context",
             file_path="/test/file.py",
             line_number=42,
-            suggested_fix="Add proper documentation"
+            suggested_fix="Add proper documentation",
         )
 
         assert violation.article == "Article I"
@@ -78,11 +79,7 @@ class TestConstitutionalEnforcer:
         """Test creation of compliance reports."""
         timestamp = datetime.now()
         violations = [
-            ViolationReport(
-                article="Article I",
-                severity="high",
-                description="Test violation"
-            )
+            ViolationReport(article="Article I", severity="high", description="Test violation")
         ]
 
         report = ComplianceReport(
@@ -90,7 +87,7 @@ class TestConstitutionalEnforcer:
             articles_checked={"Article I": False, "Article II": True},
             violations=violations,
             overall_compliance=False,
-            compliance_percentage=50.0
+            compliance_percentage=50.0,
         )
 
         assert report.timestamp == timestamp
@@ -121,7 +118,7 @@ class TestClass:
 
         # Create README.md to satisfy Article I requirements
         readme_file = temp_project / "README.md"
-        readme_file.write_text('''
+        readme_file.write_text("""
 # Test Project
 
 This is a test project for constitutional compliance testing.
@@ -130,7 +127,7 @@ This is a test project for constitutional compliance testing.
 
 - Test functionality
 - Constitutional compliance
-''')
+""")
 
         # Check Article I compliance
         result = enforcer.check_article_i_complete_context()
@@ -142,14 +139,14 @@ This is a test project for constitutional compliance testing.
         """Test Article I check with non-compliant code."""
         # Create a Python file without docstrings
         test_file = temp_project / "bad_module.py"
-        test_file.write_text('''
+        test_file.write_text("""
 def function_without_docstring():
     pass
 
 class ClassWithoutDocstring:
     def method_without_docstring(self):
         pass
-''')
+""")
 
         # Check Article I compliance
         result = enforcer.check_article_i_complete_context()
@@ -158,18 +155,16 @@ class ClassWithoutDocstring:
         assert len(enforcer.violations) > 0
 
         # Check that violations include missing docstrings
-        docstring_violations = [v for v in enforcer.violations if "docstring" in v.description.lower()]
+        docstring_violations = [
+            v for v in enforcer.violations if "docstring" in v.description.lower()
+        ]
         assert len(docstring_violations) > 0
 
-    @patch('tools.constitution_check.subprocess.run')
+    @patch("tools.constitution_check.subprocess.run")
     def test_article_ii_verification_all_tests_pass(self, mock_run, enforcer):
         """Test Article II check when all tests pass."""
         # Mock successful test run
-        mock_run.return_value = MagicMock(
-            returncode=0,
-            stdout="All tests passed",
-            stderr=""
-        )
+        mock_run.return_value = MagicMock(returncode=0, stdout="All tests passed", stderr="")
 
         result = enforcer.check_article_ii_verification()
 
@@ -177,14 +172,12 @@ class ClassWithoutDocstring:
         assert len(enforcer.violations) == 0
         mock_run.assert_called_once()
 
-    @patch('tools.constitution_check.subprocess.run')
+    @patch("tools.constitution_check.subprocess.run")
     def test_article_ii_verification_tests_fail(self, mock_run, enforcer):
         """Test Article II check when tests fail."""
         # Mock failed test run
         mock_run.return_value = MagicMock(
-            returncode=1,
-            stdout="1 test failed",
-            stderr="Error in test"
+            returncode=1, stdout="1 test failed", stderr="Error in test"
         )
 
         result = enforcer.check_article_ii_verification()
@@ -221,8 +214,10 @@ class ClassWithoutDocstring:
 
         assert result is False
         assert len(enforcer.violations) > 0
-        assert any("pre-commit" in v.description.lower() or "ci" in v.description.lower()
-                  for v in enforcer.violations)
+        assert any(
+            "pre-commit" in v.description.lower() or "ci" in v.description.lower()
+            for v in enforcer.violations
+        )
 
     def test_article_iv_continuous_learning_present(self, temp_project, enforcer):
         """Test Article IV check with learning infrastructure."""
@@ -262,7 +257,7 @@ class ClassWithoutDocstring:
         # Create multiple spec files (need at least 3)
         for i in range(1, 4):
             spec_file = specs_dir / f"spec-{i:03d}.md"
-            spec_file.write_text(f'''
+            spec_file.write_text(f"""
 # Spec {i:03d}
 
 ## Goals
@@ -276,7 +271,7 @@ class ClassWithoutDocstring:
 
 ## Acceptance Criteria
 - Criteria {i}
-''')
+""")
 
         # Create plans directory
         plans_dir = temp_project / "plans"
@@ -303,12 +298,13 @@ class ClassWithoutDocstring:
         """Test full compliance check across all articles."""
         enforcer = ConstitutionalEnforcer(project_root=temp_project)
 
-        with patch.object(enforcer, 'check_article_i_complete_context', return_value=True), \
-             patch.object(enforcer, 'check_article_ii_verification', return_value=True), \
-             patch.object(enforcer, 'check_article_iii_automated_enforcement', return_value=True), \
-             patch.object(enforcer, 'check_article_iv_continuous_learning', return_value=True), \
-             patch.object(enforcer, 'check_article_v_spec_driven', return_value=True):
-
+        with (
+            patch.object(enforcer, "check_article_i_complete_context", return_value=True),
+            patch.object(enforcer, "check_article_ii_verification", return_value=True),
+            patch.object(enforcer, "check_article_iii_automated_enforcement", return_value=True),
+            patch.object(enforcer, "check_article_iv_continuous_learning", return_value=True),
+            patch.object(enforcer, "check_article_v_spec_driven", return_value=True),
+        ):
             report = enforcer.check_compliance()
 
             assert report.overall_compliance is True
@@ -323,9 +319,7 @@ class ClassWithoutDocstring:
         def mock_article_ii_fail():
             enforcer.violations.append(
                 ViolationReport(
-                    article="Article II",
-                    severity="critical",
-                    description="Tests failing"
+                    article="Article II", severity="critical", description="Tests failing"
                 )
             )
             return False
@@ -335,17 +329,22 @@ class ClassWithoutDocstring:
                 ViolationReport(
                     article="Article IV",
                     severity="high",
-                    description="Learning infrastructure missing"
+                    description="Learning infrastructure missing",
                 )
             )
             return False
 
-        with patch.object(enforcer, 'check_article_i_complete_context', return_value=True), \
-             patch.object(enforcer, 'check_article_ii_verification', side_effect=mock_article_ii_fail), \
-             patch.object(enforcer, 'check_article_iii_automated_enforcement', return_value=True), \
-             patch.object(enforcer, 'check_article_iv_continuous_learning', side_effect=mock_article_iv_fail), \
-             patch.object(enforcer, 'check_article_v_spec_driven', return_value=True):
-
+        with (
+            patch.object(enforcer, "check_article_i_complete_context", return_value=True),
+            patch.object(
+                enforcer, "check_article_ii_verification", side_effect=mock_article_ii_fail
+            ),
+            patch.object(enforcer, "check_article_iii_automated_enforcement", return_value=True),
+            patch.object(
+                enforcer, "check_article_iv_continuous_learning", side_effect=mock_article_iv_fail
+            ),
+            patch.object(enforcer, "check_article_v_spec_driven", return_value=True),
+        ):
             report = enforcer.check_compliance()
 
             assert report.overall_compliance is False
@@ -360,7 +359,7 @@ class ClassWithoutDocstring:
         test_file = temp_project / "needs_fix.py"
         test_file.write_text("def function_without_docstring():\n    pass")
 
-        with patch.object(enforcer, '_fix_missing_docstring') as mock_fix:
+        with patch.object(enforcer, "_fix_missing_docstring") as mock_fix:
             enforcer.violations.append(
                 ViolationReport(
                     article="Article I",
@@ -368,7 +367,7 @@ class ClassWithoutDocstring:
                     description="Missing docstring",
                     file_path=str(test_file),
                     line_number=1,
-                    suggested_fix="Add docstring"
+                    suggested_fix="Add docstring",
                 )
             )
 
@@ -381,21 +380,18 @@ class ClassWithoutDocstring:
         """Test report generation in different formats."""
         # Add some violations manually
         violations = [
-            ViolationReport(
-                article="Article I",
-                severity="high",
-                description="Test violation"
-            )
+            ViolationReport(article="Article I", severity="high", description="Test violation")
         ]
 
         # Create a manual report without running full check
         from datetime import datetime
+
         report = ComplianceReport(
             timestamp=datetime.now(),
             articles_checked={"Article I": False, "Article II": True},
             violations=violations,
             overall_compliance=False,
-            compliance_percentage=50.0
+            compliance_percentage=50.0,
         )
 
         # Test text report
@@ -407,6 +403,7 @@ class ClassWithoutDocstring:
         # Test JSON report
         json_report = enforcer.generate_report(report, format="json")
         import json
+
         data = json.loads(json_report)
         assert "violations" in data
         assert len(data["violations"]) == 1
@@ -420,7 +417,8 @@ class ClassWithoutDocstring:
         bad_file.write_text("def test():\n    pass")
 
         # Mock open to raise an exception to trigger verbose output
-        from unittest.mock import patch, mock_open
+        from unittest.mock import patch
+
         with patch("builtins.open", mock_open()) as mock_file:
             mock_file.side_effect = Exception("Test error")
             enforcer.check_article_i_complete_context()
@@ -435,9 +433,7 @@ class ClassWithoutDocstring:
 
         for severity in severities:
             violation = ViolationReport(
-                article="Article I",
-                severity=severity,
-                description=f"{severity} violation"
+                article="Article I", severity=severity, description=f"{severity} violation"
             )
             assert violation.severity == severity
 

@@ -3,45 +3,42 @@ Test suite for new Pydantic models.
 Validates Constitutional Law #2 compliance.
 """
 
-import pytest
 from datetime import datetime, timedelta
-from typing import Dict, Any
 
-from shared.models.memory import (
-    MemoryRecord,
-    MemoryPriority,
-    MemoryMetadata,
-    MemorySearchResult,
-)
-from shared.models.learning import (
-    LearningConsolidation,
-    LearningInsight,
-    LearningMetric,
-    PatternAnalysis,
-    ContentTypeBreakdown,
-    TimeDistribution,
-)
-from shared.models.telemetry import (
-    TelemetryEvent,
-    TelemetryMetrics,
-    AgentMetrics,
-    SystemHealth,
-    EventType,
-    EventSeverity,
-)
-from shared.models.dashboard import (
-    DashboardSummary,
-    SessionSummary,
-    AgentActivity,
-    DashboardMetrics,
-)
+import pytest
+
 from shared.models.context import (
     AgentContextData,
-    SessionMetadata,
     AgentState,
-    TaskContext,
     AgentStatus,
+    SessionMetadata,
+    TaskContext,
     TaskStatus,
+)
+from shared.models.dashboard import (
+    AgentActivity,
+    DashboardSummary,
+    SessionSummary,
+)
+from shared.models.learning import (
+    ContentTypeBreakdown,
+    LearningConsolidation,
+    LearningInsight,
+    PatternAnalysis,
+)
+from shared.models.memory import (
+    MemoryMetadata,
+    MemoryPriority,
+    MemoryRecord,
+    MemorySearchResult,
+)
+from shared.models.telemetry import (
+    AgentMetrics,
+    EventSeverity,
+    EventType,
+    SystemHealth,
+    TelemetryEvent,
+    TelemetryMetrics,
 )
 
 
@@ -56,7 +53,7 @@ class TestMemoryModels:
             tags=["test", "unit"],
             priority=MemoryPriority.HIGH,
             ttl_seconds=3600,
-            embedding=None
+            embedding=None,
         )
         assert record.key == "test_key"
         assert record.priority == MemoryPriority.HIGH
@@ -65,10 +62,7 @@ class TestMemoryModels:
 
     def test_memory_metadata_validation(self) -> None:
         """Test metadata field validation."""
-        metadata = MemoryMetadata(
-            agent_id="agent_1",
-            success_rate=0.95
-        )
+        metadata = MemoryMetadata(agent_id="agent_1", success_rate=0.95)
         assert metadata.success_rate == 0.95
 
         # Test invalid success rate
@@ -77,13 +71,23 @@ class TestMemoryModels:
 
     def test_memory_search_result(self) -> None:
         """Test memory search result functionality."""
-        record1 = MemoryRecord(key="key1", content="content1", priority=MemoryPriority.HIGH, embedding=None, ttl_seconds=None)
-        record2 = MemoryRecord(key="key2", content="content2", priority=MemoryPriority.LOW, embedding=None, ttl_seconds=None)
+        record1 = MemoryRecord(
+            key="key1",
+            content="content1",
+            priority=MemoryPriority.HIGH,
+            embedding=None,
+            ttl_seconds=None,
+        )
+        record2 = MemoryRecord(
+            key="key2",
+            content="content2",
+            priority=MemoryPriority.LOW,
+            embedding=None,
+            ttl_seconds=None,
+        )
 
         result = MemorySearchResult(
-            records=[record1, record2],
-            total_count=2,
-            execution_time_ms=0.0
+            records=[record1, record2], total_count=2, execution_time_ms=0.0
         )
 
         assert result.get_by_key("key1") == record1
@@ -106,27 +110,20 @@ class TestLearningModels:
             summary="Test summary",
             total_memories=100,
             unique_tags=10,
-            tag_frequencies={"error": 5, "success": 20}
+            tag_frequencies={"error": 5, "success": 20},
         )
         assert consolidation.total_memories == 100
         assert consolidation.get_top_tags(1)[0] == ("success", 20)
 
     def test_content_type_breakdown(self) -> None:
         """Test content type analysis."""
-        breakdown = ContentTypeBreakdown(
-            text=50,
-            error=10,
-            success=30
-        )
+        breakdown = ContentTypeBreakdown(text=50, error=10, success=30)
         assert breakdown.total() == 90
         assert breakdown.get_dominant_type() == "text"
 
     def test_pattern_analysis(self) -> None:
         """Test pattern analysis model."""
-        analysis = PatternAnalysis(
-            confidence_score=0.85,
-            anomalies_detected=3
-        )
+        analysis = PatternAnalysis(confidence_score=0.85, anomalies_detected=3)
         assert analysis.confidence_score == 0.85
         assert not analysis.has_patterns()  # No actual patterns yet
 
@@ -136,17 +133,13 @@ class TestLearningModels:
             category="performance",
             description="High error rate detected",
             importance="critical",
-            confidence=0.9
+            confidence=0.9,
         )
         assert insight.importance == "critical"
 
         # Test invalid importance level
         with pytest.raises(ValueError):
-            LearningInsight(
-                category="test",
-                description="test",
-                importance="invalid"
-            )
+            LearningInsight(category="test", description="test", importance="invalid")
 
 
 class TestTelemetryModels:
@@ -159,7 +152,7 @@ class TestTelemetryModels:
             event_type=EventType.TOOL_INVOCATION,
             agent_id="agent_1",
             tool_name="bash",
-            duration_ms=150.5
+            duration_ms=150.5,
         )
         assert event.event_type == EventType.TOOL_INVOCATION
         assert not event.is_error()
@@ -173,7 +166,7 @@ class TestTelemetryModels:
             event_type=EventType.TOOL_INVOCATION,
             agent_id="agent_1",
             success=True,
-            duration_ms=100
+            duration_ms=100,
         )
 
         metrics.update_from_event(event)
@@ -183,25 +176,21 @@ class TestTelemetryModels:
 
     def test_system_health_status(self) -> None:
         """Test system health status updates."""
-        health = SystemHealth(
-            total_events=100,
-            error_count=15
-        )
+        health = SystemHealth(total_events=100, error_count=15)
         health.update_status()
         assert health.status == "critical"  # >10% error rate
 
     def test_telemetry_metrics_aggregation(self) -> None:
         """Test telemetry metrics aggregation."""
         metrics = TelemetryMetrics(
-            period_start=datetime.now(),
-            period_end=datetime.now() + timedelta(hours=1)
+            period_start=datetime.now(), period_end=datetime.now() + timedelta(hours=1)
         )
 
         event = TelemetryEvent(
             event_id="evt_1",
             event_type=EventType.ERROR,
             severity=EventSeverity.ERROR,
-            agent_id="agent_1"
+            agent_id="agent_1",
         )
 
         metrics.add_event(event)
@@ -219,7 +208,7 @@ class TestDashboardModels:
             start_time=datetime.now(),
             total_memories=50,
             agents_involved=["agent_1", "agent_2"],
-            success_rate=0.8
+            success_rate=0.8,
         )
         assert session.is_active()
         assert len(session.agents_involved) == 2
@@ -227,10 +216,7 @@ class TestDashboardModels:
     def test_agent_activity(self) -> None:
         """Test agent activity tracking."""
         activity = AgentActivity(
-            agent_id="agent_1",
-            agent_type="code_agent",
-            invocation_count=10,
-            success_count=9
+            agent_id="agent_1", agent_type="code_agent", invocation_count=10, success_count=9
         )
         assert activity.get_success_rate() == 0.9
 
@@ -246,7 +232,7 @@ class TestDashboardModels:
             start_time=datetime.now(),
             total_memories=100,
             total_events=50,
-            success_rate=0.9
+            success_rate=0.9,
         )
 
         dashboard.add_session(session)
@@ -275,10 +261,7 @@ class TestContextModels:
 
     def test_task_context_lifecycle(self) -> None:
         """Test task context lifecycle."""
-        task = TaskContext(
-            task_id="task_1",
-            task_type="analysis"
-        )
+        task = TaskContext(task_id="task_1", task_type="analysis")
         assert task.status == TaskStatus.PENDING
 
         task.mark_started()
@@ -290,11 +273,7 @@ class TestContextModels:
 
     def test_agent_state_management(self) -> None:
         """Test agent state management."""
-        state = AgentState(
-            agent_id="agent_1",
-            agent_type="code_agent",
-            status=AgentStatus.READY
-        )
+        state = AgentState(agent_id="agent_1", agent_type="code_agent", status=AgentStatus.READY)
 
         task = TaskContext(task_id="t1", task_type="code")
         state.add_task(task)
@@ -309,11 +288,7 @@ class TestContextModels:
         session = SessionMetadata(session_id="s1")
         context = AgentContextData(session=session)
 
-        agent = AgentState(
-            agent_id="agent_1",
-            agent_type="test",
-            status=AgentStatus.READY
-        )
+        agent = AgentState(agent_id="agent_1", agent_type="test", status=AgentStatus.READY)
 
         context.add_agent(agent)
         assert context.get_agent("agent_1") == agent
@@ -327,7 +302,13 @@ class TestModelIntegration:
         """Test flow from memory records to learning consolidation."""
         # Create memory records
         records = [
-            MemoryRecord(key=f"key_{i}", content=f"content_{i}", tags=["test"], embedding=None, ttl_seconds=None)
+            MemoryRecord(
+                key=f"key_{i}",
+                content=f"content_{i}",
+                tags=["test"],
+                embedding=None,
+                ttl_seconds=None,
+            )
             for i in range(5)
         ]
 
@@ -336,7 +317,7 @@ class TestModelIntegration:
             summary=f"Analyzed {len(records)} memories",
             total_memories=len(records),
             unique_tags=1,
-            tag_frequencies={"test": len(records)}
+            tag_frequencies={"test": len(records)},
         )
 
         assert consolidation.total_memories == 5
@@ -347,9 +328,7 @@ class TestModelIntegration:
         # Create telemetry events
         events = [
             TelemetryEvent(
-                event_id=f"evt_{i}",
-                event_type=EventType.TOOL_INVOCATION,
-                agent_id="agent_1"
+                event_id=f"evt_{i}", event_type=EventType.TOOL_INVOCATION, agent_id="agent_1"
             )
             for i in range(3)
         ]

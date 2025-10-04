@@ -4,11 +4,18 @@ Comprehensive tests for the Result<T, E> pattern implementation.
 Tests all Result methods, error propagation, type safety, and usage patterns.
 """
 
+
 import pytest
-from typing import List
+
 from shared.type_definitions.result import (
-    Result, Ok, Err, ok, err, try_result,
-    ResultStr, ResultException
+    Err,
+    Ok,
+    Result,
+    ResultException,
+    ResultStr,
+    err,
+    ok,
+    try_result,
 )
 
 
@@ -126,6 +133,7 @@ class TestResultAndThen:
 
     def test_and_then_ok(self):
         """Test and_then() with Ok value."""
+
         def safe_divide(x: int) -> Result[int, str]:
             if x == 0:
                 return Err("Division by zero")
@@ -138,6 +146,7 @@ class TestResultAndThen:
 
     def test_and_then_ok_to_err(self):
         """Test and_then() with Ok value that produces Err."""
+
         def safe_divide(x: int) -> Result[int, str]:
             if x == 0:
                 return Err("Division by zero")
@@ -150,6 +159,7 @@ class TestResultAndThen:
 
     def test_and_then_err(self):
         """Test and_then() with Err value."""
+
         def safe_divide(x: int) -> Result[int, str]:
             return Ok(10 // x)
 
@@ -160,6 +170,7 @@ class TestResultAndThen:
 
     def test_and_then_chaining(self):
         """Test chaining multiple and_then operations."""
+
         def add_one(x: int) -> Result[int, str]:
             return Ok(x + 1)
 
@@ -176,6 +187,7 @@ class TestResultOrElse:
 
     def test_or_else_ok(self):
         """Test or_else() with Ok value."""
+
         def recovery(e: str) -> Result[int, str]:
             return Ok(0)
 
@@ -186,6 +198,7 @@ class TestResultOrElse:
 
     def test_or_else_err(self):
         """Test or_else() with Err value."""
+
         def recovery(e: str) -> Result[int, str]:
             return Ok(0)
 
@@ -196,6 +209,7 @@ class TestResultOrElse:
 
     def test_or_else_err_to_err(self):
         """Test or_else() with Err value that produces another Err."""
+
         def recovery(e: str) -> Result[int, int]:
             return Err(404)
 
@@ -250,6 +264,7 @@ class TestTryResult:
 
     def test_try_result_success(self):
         """Test try_result with successful function."""
+
         def success_func():
             return 42
 
@@ -259,6 +274,7 @@ class TestTryResult:
 
     def test_try_result_failure(self):
         """Test try_result with failing function."""
+
         def failing_func():
             raise ValueError("Something went wrong")
 
@@ -268,6 +284,7 @@ class TestTryResult:
 
     def test_try_result_specific_exception(self):
         """Test try_result with specific exception type."""
+
         def failing_func():
             raise ValueError("Specific error")
 
@@ -277,6 +294,7 @@ class TestTryResult:
 
     def test_try_result_unhandled_exception(self):
         """Test try_result with unhandled exception type."""
+
         def failing_func():
             raise KeyError("Key not found")
 
@@ -318,6 +336,7 @@ class TestRealWorldUsage:
 
     def test_divide_function(self):
         """Test divide function with Result pattern."""
+
         def safe_divide(a: float, b: float) -> Result[float, str]:
             if b == 0:
                 return Err("Division by zero")
@@ -335,10 +354,11 @@ class TestRealWorldUsage:
 
     def test_parse_int_function(self):
         """Test integer parsing with Result pattern."""
+
         def safe_parse_int(s: str) -> Result[int, str]:
             try:
                 return Ok(int(s))
-            except ValueError as e:
+            except ValueError:
                 return Err(f"Invalid integer: {s}")
 
         # Test successful parsing
@@ -353,6 +373,7 @@ class TestRealWorldUsage:
 
     def test_chained_operations(self):
         """Test chaining multiple Result operations."""
+
         def safe_parse_int(s: str) -> Result[int, str]:
             try:
                 return Ok(int(s))
@@ -365,28 +386,29 @@ class TestRealWorldUsage:
             return Ok(a / b)
 
         # Test successful chain
-        result = (safe_parse_int("10")
-                 .and_then(lambda x: safe_parse_int("2")
-                          .and_then(lambda y: safe_divide(x, y))))
+        result = safe_parse_int("10").and_then(
+            lambda x: safe_parse_int("2").and_then(lambda y: safe_divide(x, y))
+        )
         assert result.is_ok()
         assert result.unwrap() == 5.0
 
         # Test failed chain (invalid first number)
-        result = (safe_parse_int("not_a_number")
-                 .and_then(lambda x: safe_parse_int("2")
-                          .and_then(lambda y: safe_divide(x, y))))
+        result = safe_parse_int("not_a_number").and_then(
+            lambda x: safe_parse_int("2").and_then(lambda y: safe_divide(x, y))
+        )
         assert result.is_err()
         assert "Invalid integer" in result.unwrap_err()
 
         # Test failed chain (division by zero)
-        result = (safe_parse_int("10")
-                 .and_then(lambda x: safe_parse_int("0")
-                          .and_then(lambda y: safe_divide(x, y))))
+        result = safe_parse_int("10").and_then(
+            lambda x: safe_parse_int("0").and_then(lambda y: safe_divide(x, y))
+        )
         assert result.is_err()
         assert "Division by zero" in result.unwrap_err()
 
     def test_error_recovery(self):
         """Test error recovery patterns."""
+
         def risky_operation(value: int) -> Result[str, str]:
             if value < 0:
                 return Err("Negative value")
@@ -409,6 +431,7 @@ class TestRealWorldUsage:
 
     def test_multiple_error_types(self):
         """Test handling multiple error types."""
+
         def complex_operation(x: int) -> Result[str, str]:
             if x < 0:
                 return Err("NEGATIVE_ERROR")

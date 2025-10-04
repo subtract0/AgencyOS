@@ -16,25 +16,20 @@ Constitutional Compliance:
 """
 
 import subprocess
-from pathlib import Path
-from unittest.mock import Mock, patch, MagicMock
-from datetime import datetime, timezone
+from unittest.mock import Mock, patch
 
 import pytest
 
 from tools.git_unified import (
-    GitCore,
-    GitUnified,
-    GitOperation,
     BranchInfo,
     CommitInfo,
-    PRInfo,
-    GitError,
-    PushInfo,
+    GitCore,
+    GitOperation,
+    GitUnified,
     LogInfo,
+    PRInfo,
+    PushInfo,
 )
-from shared.type_definitions.result import Result, Ok, Err
-
 
 # ============================================================================
 # FIXTURES

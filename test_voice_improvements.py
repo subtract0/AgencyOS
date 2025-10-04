@@ -3,6 +3,7 @@
 Quick Voice Transcription Test Script
 Tests the improvements made to ambient listener configuration.
 """
+
 import sys
 from pathlib import Path
 
@@ -69,9 +70,13 @@ def test_config_improvements():
     whisper_cfg = AmbientListenerService._create_whisper_config(config)
 
     assert whisper_cfg.temperature == config.temperature, "Temperature not wired"
-    assert whisper_cfg.compression_ratio_threshold == config.compression_ratio_threshold, "Compression threshold not wired"
+    assert whisper_cfg.compression_ratio_threshold == config.compression_ratio_threshold, (
+        "Compression threshold not wired"
+    )
     assert whisper_cfg.logprob_threshold == config.logprob_threshold, "Logprob threshold not wired"
-    assert whisper_cfg.no_speech_threshold == config.no_speech_threshold, "No speech threshold not wired"
+    assert whisper_cfg.no_speech_threshold == config.no_speech_threshold, (
+        "No speech threshold not wired"
+    )
 
     print("  ✓ Temperature wired correctly")
     print("  ✓ Compression ratio threshold wired correctly")
@@ -123,5 +128,6 @@ if __name__ == "__main__":
     except Exception as e:
         print(f"\n❌ Test failed: {e}")
         import traceback
+
         traceback.print_exc()
         sys.exit(1)

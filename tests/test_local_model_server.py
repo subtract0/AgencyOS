@@ -13,14 +13,16 @@ NECESSARY Pattern Compliance:
 - Yield fast: <1s per test
 """
 
-import pytest
-import httpx
 from unittest.mock import AsyncMock, MagicMock, patch
+
+import httpx
+import pytest
+
 from shared.local_model_server import (
-    OllamaClient,
     LocalModelServer,
+    OllamaClient,
     OllamaConnectionError,
-    OllamaGenerationError
+    OllamaGenerationError,
 )
 
 
@@ -60,17 +62,14 @@ class TestOllamaGeneration:
         mock_response.json.return_value = {
             "response": "Test generated response",
             "model": "qwen2.5-coder:1.5b",
-            "done": True
+            "done": True,
         }
         mock_response.raise_for_status = MagicMock()
 
-        with patch.object(httpx.AsyncClient, 'post', new_callable=AsyncMock) as mock_post:
+        with patch.object(httpx.AsyncClient, "post", new_callable=AsyncMock) as mock_post:
             mock_post.return_value = mock_response
 
-            result = await client.generate(
-                model="qwen2.5-coder:1.5b",
-                prompt="Test prompt"
-            )
+            result = await client.generate(model="qwen2.5-coder:1.5b", prompt="Test prompt")
 
             assert result["response"] == "Test generated response"
             assert result["model"] == "qwen2.5-coder:1.5b"
@@ -87,19 +86,17 @@ class TestOllamaGeneration:
         mock_response.json.return_value = {"response": "test", "done": True}
         mock_response.raise_for_status = MagicMock()
 
-        with patch.object(httpx.AsyncClient, 'post', new_callable=AsyncMock) as mock_post:
+        with patch.object(httpx.AsyncClient, "post", new_callable=AsyncMock) as mock_post:
             mock_post.return_value = mock_response
 
             await client.generate(
-                model="qwen2.5-coder:1.5b",
-                prompt="Test",
-                system="You are a helpful assistant"
+                model="qwen2.5-coder:1.5b", prompt="Test", system="You are a helpful assistant"
             )
 
             # Verify system prompt in request
             call_args = mock_post.call_args
-            payload = call_args.kwargs['json']
-            assert payload['system'] == "You are a helpful assistant"
+            payload = call_args.kwargs["json"]
+            assert payload["system"] == "You are a helpful assistant"
 
         await client.close()
 
@@ -112,18 +109,14 @@ class TestOllamaGeneration:
         mock_response.json.return_value = {"response": "test", "done": True}
         mock_response.raise_for_status = MagicMock()
 
-        with patch.object(httpx.AsyncClient, 'post', new_callable=AsyncMock) as mock_post:
+        with patch.object(httpx.AsyncClient, "post", new_callable=AsyncMock) as mock_post:
             mock_post.return_value = mock_response
 
-            await client.generate(
-                model="qwen2.5-coder:1.5b",
-                prompt="Test",
-                temperature=0.7
-            )
+            await client.generate(model="qwen2.5-coder:1.5b", prompt="Test", temperature=0.7)
 
             call_args = mock_post.call_args
-            payload = call_args.kwargs['json']
-            assert payload['options']['temperature'] == 0.7
+            payload = call_args.kwargs["json"]
+            assert payload["options"]["temperature"] == 0.7
 
         await client.close()
 
@@ -136,18 +129,14 @@ class TestOllamaGeneration:
         mock_response.json.return_value = {"response": "test", "done": True}
         mock_response.raise_for_status = MagicMock()
 
-        with patch.object(httpx.AsyncClient, 'post', new_callable=AsyncMock) as mock_post:
+        with patch.object(httpx.AsyncClient, "post", new_callable=AsyncMock) as mock_post:
             mock_post.return_value = mock_response
 
-            await client.generate(
-                model="qwen2.5-coder:1.5b",
-                prompt="Test",
-                max_tokens=256
-            )
+            await client.generate(model="qwen2.5-coder:1.5b", prompt="Test", max_tokens=256)
 
             call_args = mock_post.call_args
-            payload = call_args.kwargs['json']
-            assert payload['options']['num_predict'] == 256
+            payload = call_args.kwargs["json"]
+            assert payload["options"]["num_predict"] == 256
 
         await client.close()
 
@@ -160,21 +149,15 @@ class TestOllamaRetryLogic:
         """Client retries on connection failures."""
         client = OllamaClient(max_retries=2)
 
-        with patch.object(httpx.AsyncClient, 'post', new_callable=AsyncMock) as mock_post:
+        with patch.object(httpx.AsyncClient, "post", new_callable=AsyncMock) as mock_post:
             # First call fails, second succeeds
             mock_response = MagicMock()
             mock_response.json.return_value = {"response": "success", "done": True}
             mock_response.raise_for_status = MagicMock()
 
-            mock_post.side_effect = [
-                httpx.ConnectError("Connection failed"),
-                mock_response
-            ]
+            mock_post.side_effect = [httpx.ConnectError("Connection failed"), mock_response]
 
-            result = await client.generate(
-                model="qwen2.5-coder:1.5b",
-                prompt="Test"
-            )
+            result = await client.generate(model="qwen2.5-coder:1.5b", prompt="Test")
 
             assert result["response"] == "success"
             assert mock_post.call_count == 2
@@ -186,14 +169,11 @@ class TestOllamaRetryLogic:
         """Client raises error after exhausting retries."""
         client = OllamaClient(max_retries=2)
 
-        with patch.object(httpx.AsyncClient, 'post', new_callable=AsyncMock) as mock_post:
+        with patch.object(httpx.AsyncClient, "post", new_callable=AsyncMock) as mock_post:
             mock_post.side_effect = httpx.ConnectError("Connection failed")
 
             with pytest.raises(OllamaConnectionError, match="Cannot connect to Ollama"):
-                await client.generate(
-                    model="qwen2.5-coder:1.5b",
-                    prompt="Test"
-                )
+                await client.generate(model="qwen2.5-coder:1.5b", prompt="Test")
 
             # Should have tried max_retries times
             assert mock_post.call_count == 2
@@ -205,7 +185,7 @@ class TestOllamaRetryLogic:
         """Client raises OllamaGenerationError on HTTP errors."""
         client = OllamaClient(max_retries=1)
 
-        with patch.object(httpx.AsyncClient, 'post', new_callable=AsyncMock) as mock_post:
+        with patch.object(httpx.AsyncClient, "post", new_callable=AsyncMock) as mock_post:
             mock_response = MagicMock()
             mock_response.raise_for_status.side_effect = httpx.HTTPStatusError(
                 "Bad request", request=MagicMock(), response=mock_response
@@ -215,10 +195,7 @@ class TestOllamaRetryLogic:
             mock_post.return_value = mock_response
 
             with pytest.raises(OllamaGenerationError, match="Generation failed"):
-                await client.generate(
-                    model="invalid-model",
-                    prompt="Test"
-                )
+                await client.generate(model="invalid-model", prompt="Test")
 
         await client.close()
 
@@ -242,14 +219,11 @@ class TestOllamaStreaming:
 
         mock_response.aiter_lines = mock_aiter_lines
 
-        with patch.object(httpx.AsyncClient, 'post', new_callable=AsyncMock) as mock_post:
+        with patch.object(httpx.AsyncClient, "post", new_callable=AsyncMock) as mock_post:
             mock_post.return_value = mock_response
 
             chunks = []
-            async for chunk in client.generate_stream(
-                model="qwen2.5-coder:1.5b",
-                prompt="Test"
-            ):
+            async for chunk in client.generate_stream(model="qwen2.5-coder:1.5b", prompt="Test"):
                 chunks.append(chunk)
 
             assert chunks == ["First", " chunk"]
@@ -269,12 +243,12 @@ class TestOllamaModelListing:
         mock_response.json.return_value = {
             "models": [
                 {"name": "qwen2.5-coder:1.5b", "size": 986000000},
-                {"name": "qwen2.5-coder:7b", "size": 4700000000}
+                {"name": "qwen2.5-coder:7b", "size": 4700000000},
             ]
         }
         mock_response.raise_for_status = MagicMock()
 
-        with patch.object(httpx.AsyncClient, 'get', new_callable=AsyncMock) as mock_get:
+        with patch.object(httpx.AsyncClient, "get", new_callable=AsyncMock) as mock_get:
             mock_get.return_value = mock_response
 
             models = await client.list_models()
@@ -294,7 +268,7 @@ class TestOllamaModelListing:
         mock_response.json.return_value = {"models": []}
         mock_response.raise_for_status = MagicMock()
 
-        with patch.object(httpx.AsyncClient, 'get', new_callable=AsyncMock) as mock_get:
+        with patch.object(httpx.AsyncClient, "get", new_callable=AsyncMock) as mock_get:
             mock_get.return_value = mock_response
 
             is_healthy = await client.health_check()
@@ -308,7 +282,7 @@ class TestOllamaModelListing:
         """Health check returns False when server unavailable."""
         client = OllamaClient()
 
-        with patch.object(httpx.AsyncClient, 'get', new_callable=AsyncMock) as mock_get:
+        with patch.object(httpx.AsyncClient, "get", new_callable=AsyncMock) as mock_get:
             mock_get.side_effect = httpx.ConnectError("Connection failed")
 
             is_healthy = await client.health_check()
@@ -324,7 +298,7 @@ class TestOllamaContextManager:
     @pytest.mark.asyncio
     async def test_supports_async_context_manager(self):
         """Client supports async context manager."""
-        with patch.object(httpx.AsyncClient, 'post', new_callable=AsyncMock):
+        with patch.object(httpx.AsyncClient, "post", new_callable=AsyncMock):
             async with OllamaClient() as client:
                 assert client is not None
 
@@ -340,26 +314,20 @@ class TestLocalModelServer:
         server = LocalModelServer()
 
         mock_response = MagicMock()
-        mock_response.json.return_value = {
-            "response": "Local response",
-            "done": True
-        }
+        mock_response.json.return_value = {"response": "Local response", "done": True}
         mock_response.raise_for_status = MagicMock()
 
-        with patch.object(httpx.AsyncClient, 'get', new_callable=AsyncMock) as mock_get:
+        with patch.object(httpx.AsyncClient, "get", new_callable=AsyncMock) as mock_get:
             # Health check succeeds
             health_response = MagicMock()
             health_response.json.return_value = {"models": []}
             health_response.raise_for_status = MagicMock()
             mock_get.return_value = health_response
 
-            with patch.object(httpx.AsyncClient, 'post', new_callable=AsyncMock) as mock_post:
+            with patch.object(httpx.AsyncClient, "post", new_callable=AsyncMock) as mock_post:
                 mock_post.return_value = mock_response
 
-                result = await server.generate(
-                    prompt="Test",
-                    model="qwen2.5-coder:1.5b"
-                )
+                result = await server.generate(prompt="Test", model="qwen2.5-coder:1.5b")
 
                 assert result == "Local response"
 
@@ -370,7 +338,7 @@ class TestLocalModelServer:
         """Server caches local availability check."""
         server = LocalModelServer()
 
-        with patch.object(httpx.AsyncClient, 'get', new_callable=AsyncMock) as mock_get:
+        with patch.object(httpx.AsyncClient, "get", new_callable=AsyncMock) as mock_get:
             health_response = MagicMock()
             health_response.json.return_value = {"models": []}
             health_response.raise_for_status = MagicMock()
@@ -394,14 +362,11 @@ class TestLocalModelServer:
 
         mock_response = MagicMock()
         mock_response.json.return_value = {
-            "models": [
-                {"name": "qwen2.5-coder:1.5b"},
-                {"name": "qwen2.5-coder:7b"}
-            ]
+            "models": [{"name": "qwen2.5-coder:1.5b"}, {"name": "qwen2.5-coder:7b"}]
         }
         mock_response.raise_for_status = MagicMock()
 
-        with patch.object(httpx.AsyncClient, 'get', new_callable=AsyncMock) as mock_get:
+        with patch.object(httpx.AsyncClient, "get", new_callable=AsyncMock) as mock_get:
             mock_get.return_value = mock_response
 
             models = await server.get_available_models()
@@ -415,7 +380,7 @@ class TestLocalModelServer:
         """Server returns empty list when Ollama unavailable."""
         server = LocalModelServer()
 
-        with patch.object(httpx.AsyncClient, 'get', new_callable=AsyncMock) as mock_get:
+        with patch.object(httpx.AsyncClient, "get", new_callable=AsyncMock) as mock_get:
             mock_get.side_effect = httpx.ConnectError("Connection failed")
 
             models = await server.get_available_models()
@@ -433,14 +398,11 @@ class TestLocalModelServerFallback:
         """Server raises NotImplementedError for cloud fallback."""
         server = LocalModelServer(enable_cloud_fallback=True)
 
-        with patch.object(httpx.AsyncClient, 'get', new_callable=AsyncMock) as mock_get:
+        with patch.object(httpx.AsyncClient, "get", new_callable=AsyncMock) as mock_get:
             mock_get.side_effect = httpx.ConnectError("Connection failed")
 
             with pytest.raises(NotImplementedError, match="Cloud fallback not yet implemented"):
-                await server.generate(
-                    prompt="Test",
-                    prefer_local=True
-                )
+                await server.generate(prompt="Test", prefer_local=True)
 
         await server.close()
 
@@ -449,16 +411,13 @@ class TestLocalModelServerFallback:
         """Server raises error when fallback disabled."""
         server = LocalModelServer(enable_cloud_fallback=False)
 
-        with patch.object(httpx.AsyncClient, 'get', new_callable=AsyncMock) as mock_get:
+        with patch.object(httpx.AsyncClient, "get", new_callable=AsyncMock) as mock_get:
             mock_get.side_effect = httpx.ConnectError("Connection failed")
 
-            with patch.object(httpx.AsyncClient, 'post', new_callable=AsyncMock) as mock_post:
+            with patch.object(httpx.AsyncClient, "post", new_callable=AsyncMock) as mock_post:
                 mock_post.side_effect = OllamaConnectionError("Cannot connect")
 
                 with pytest.raises(OllamaConnectionError):
-                    await server.generate(
-                        prompt="Test",
-                        prefer_local=True
-                    )
+                    await server.generate(prompt="Test", prefer_local=True)
 
         await server.close()

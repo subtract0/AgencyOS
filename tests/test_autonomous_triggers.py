@@ -12,29 +12,27 @@ Constitutional Compliance:
 - Article V: Spec-driven test implementation per SPEC-LEARNING-001
 """
 
-import pytest
 import asyncio
-import json
-from unittest.mock import Mock, AsyncMock, MagicMock, patch, call
 from datetime import datetime, timedelta
-from typing import Dict, Any, List
+from unittest.mock import AsyncMock, Mock, patch
+
+import pytest
 
 from learning_loop.autonomous_triggers import (
     EventRouter,
-    HealingTrigger,
-    PatternMatcher,
     HealingResult,
+    HealingTrigger,
     PatternMatch,
+    PatternMatcher,
     Response,
-    ErrorHandler,
-    FailureEventHandler,
-    ChangeHandler,
-    PatternApplicationHandler
 )
-from learning_loop.event_detection import Event, ErrorEvent, FileEvent
-from learning_loop.pattern_extraction import EnhancedPattern, PatternMetadata, ErrorTrigger, TaskTrigger
-from pattern_intelligence import CodingPattern as Pattern, PatternStore
-from core.self_healing import Finding
+from learning_loop.event_detection import ErrorEvent, Event, FileEvent
+from learning_loop.pattern_extraction import (
+    EnhancedPattern,
+    ErrorTrigger,
+    PatternMetadata,
+    TaskTrigger,
+)
 
 
 class TestEventRouter:
@@ -53,8 +51,10 @@ class TestEventRouter:
     @pytest.fixture
     def event_router(self, mock_pattern_store):
         """Create EventRouter instance for testing."""
-        with patch('learning_loop.autonomous_triggers.PatternStore', return_value=mock_pattern_store):
-            with patch('learning_loop.autonomous_triggers.get_telemetry') as mock_telemetry:
+        with patch(
+            "learning_loop.autonomous_triggers.PatternStore", return_value=mock_pattern_store
+        ):
+            with patch("learning_loop.autonomous_triggers.get_telemetry") as mock_telemetry:
                 mock_telemetry.return_value = Mock()
                 router = EventRouter(mock_pattern_store)
                 return router
@@ -70,7 +70,7 @@ class TestEventRouter:
             context="test context",
             source_file="test_file.py",
             line_number=42,
-            metadata={}
+            metadata={},
         )
 
     @pytest.fixture
@@ -82,7 +82,7 @@ class TestEventRouter:
             path="/test/file.py",
             change_type="modified",
             file_type="python",
-            metadata={}
+            metadata={},
         )
 
     # N - No Missing Behaviors
@@ -126,11 +126,7 @@ class TestEventRouter:
     @pytest.mark.asyncio
     async def test_route_event_unhandled_type(self, event_router):
         """Test routing event with unhandled type."""
-        unknown_event = Event(
-            type="unknown_type",
-            timestamp=datetime.now(),
-            metadata={}
-        )
+        unknown_event = Event(type="unknown_type", timestamp=datetime.now(), metadata={})
 
         event_router.pattern_matcher.find_matches = Mock(return_value=[])
 
@@ -146,7 +142,9 @@ class TestEventRouter:
     async def test_route_event_handler_exception(self, event_router, sample_error_event):
         """Test routing when handler raises exception."""
         event_router.pattern_matcher.find_matches = Mock(return_value=[])
-        event_router.handlers["error_detected"].handle = AsyncMock(side_effect=Exception("Handler error"))
+        event_router.handlers["error_detected"].handle = AsyncMock(
+            side_effect=Exception("Handler error")
+        )
 
         result = await event_router.route_event(sample_error_event)
 
@@ -208,7 +206,9 @@ class TestEventRouter:
         assert event_router.pattern_store == mock_pattern_store
         assert event_router.pattern_matcher is not None
         assert event_router.healing_trigger is not None
-        assert len(event_router.handlers) == 5  # error_detected, test_failure, file_modified, file_created, pattern_matched
+        assert (
+            len(event_router.handlers) == 5
+        )  # error_detected, test_failure, file_modified, file_created, pattern_matched
 
     # S - Side Effects
     @pytest.mark.unit
@@ -249,9 +249,13 @@ class TestHealingTrigger:
     @pytest.fixture
     def healing_trigger(self, mock_pattern_store, mock_healing_core):
         """Create HealingTrigger instance for testing."""
-        with patch('learning_loop.autonomous_triggers.PatternStore', return_value=mock_pattern_store):
-            with patch('learning_loop.autonomous_triggers.SelfHealingCore', return_value=mock_healing_core):
-                with patch('learning_loop.autonomous_triggers.get_telemetry') as mock_telemetry:
+        with patch(
+            "learning_loop.autonomous_triggers.PatternStore", return_value=mock_pattern_store
+        ):
+            with patch(
+                "learning_loop.autonomous_triggers.SelfHealingCore", return_value=mock_healing_core
+            ):
+                with patch("learning_loop.autonomous_triggers.get_telemetry") as mock_telemetry:
                     mock_telemetry.return_value = Mock()
                     trigger = HealingTrigger(mock_pattern_store)
                     return trigger
@@ -267,13 +271,15 @@ class TestHealingTrigger:
             context="test context",
             source_file="test_file.py",
             line_number=42,
-            metadata={}
+            metadata={},
         )
 
     # N - No Missing Behaviors
     @pytest.mark.unit
     @pytest.mark.asyncio
-    async def test_handle_error_successful_generic_healing(self, healing_trigger, sample_error_event):
+    async def test_handle_error_successful_generic_healing(
+        self, healing_trigger, sample_error_event
+    ):
         """Test successful generic healing when no patterns match."""
         healing_trigger._find_pattern_for_error = Mock(return_value=None)
         healing_trigger.healing_core.fix_error.return_value = True
@@ -337,7 +343,7 @@ class TestHealingTrigger:
             message="Error message",
             context="context",
             source_file=None,
-            metadata={}
+            metadata={},
         )
 
         healing_trigger._find_pattern_for_error = Mock(return_value=None)
@@ -376,7 +382,7 @@ class TestHealingTrigger:
         """Test finding patterns for specific error types."""
         mock_patterns = [
             Mock(id="pattern1", success_rate=0.9),
-            Mock(id="pattern2", success_rate=0.7)
+            Mock(id="pattern2", success_rate=0.7),
         ]
         healing_trigger.pattern_store.find.return_value = mock_patterns
 
@@ -384,8 +390,7 @@ class TestHealingTrigger:
 
         assert result == mock_patterns[0]  # Highest success rate
         healing_trigger.pattern_store.find.assert_called_once_with(
-            pattern_type="error_fix",
-            tags=[sample_error_event.error_type]
+            pattern_type="error_fix", tags=[sample_error_event.error_type]
         )
 
     # E - Error Conditions
@@ -451,10 +456,7 @@ class TestHealingTrigger:
         healing_trigger.healing_core.fix_error.return_value = True
 
         # Create multiple concurrent healing attempts
-        tasks = [
-            healing_trigger.handle_error(sample_error_event)
-            for _ in range(3)
-        ]
+        tasks = [healing_trigger.handle_error(sample_error_event) for _ in range(3)]
 
         results = await asyncio.gather(*tasks)
 
@@ -533,8 +535,10 @@ class TestPatternMatcher:
     @pytest.fixture
     def pattern_matcher(self, mock_pattern_store):
         """Create PatternMatcher instance for testing."""
-        with patch('learning_loop.autonomous_triggers.PatternStore', return_value=mock_pattern_store):
-            with patch('learning_loop.autonomous_triggers.get_telemetry') as mock_telemetry:
+        with patch(
+            "learning_loop.autonomous_triggers.PatternStore", return_value=mock_pattern_store
+        ):
+            with patch("learning_loop.autonomous_triggers.get_telemetry") as mock_telemetry:
                 mock_telemetry.return_value = Mock()
                 matcher = PatternMatcher(mock_pattern_store)
                 return matcher
@@ -550,7 +554,7 @@ class TestPatternMatcher:
             context="test context",
             source_file="test_file.py",
             line_number=42,
-            metadata={}
+            metadata={},
         )
 
     # N - No Missing Behaviors
@@ -578,19 +582,25 @@ class TestPatternMatcher:
     def test_calculate_similarity_error_type_match(self, pattern_matcher, sample_error_event):
         """Test similarity calculation with exact error type match."""
         # Create enhanced pattern with matching error type
-        from learning_loop.pattern_extraction import (
-            EnhancedPattern, PatternMetadata, ErrorTrigger
-        )
 
         trigger = ErrorTrigger("NoneType", "AttributeError.*NoneType.*")
         metadata = PatternMetadata(
-            confidence=0.9, usage_count=5, success_count=4, failure_count=1,
-            last_used=datetime.now(), created_at=datetime.now(),
-            source="learned", tags=["NoneType"]
+            confidence=0.9,
+            usage_count=5,
+            success_count=4,
+            failure_count=1,
+            last_used=datetime.now(),
+            created_at=datetime.now(),
+            source="learned",
+            tags=["NoneType"],
         )
         pattern = EnhancedPattern(
-            id="test", trigger=trigger, preconditions=[], actions=[],
-            postconditions=[], metadata=metadata
+            id="test",
+            trigger=trigger,
+            preconditions=[],
+            actions=[],
+            postconditions=[],
+            metadata=metadata,
         )
 
         similarity = pattern_matcher._calculate_similarity(sample_error_event, pattern)
@@ -634,20 +644,26 @@ class TestPatternMatcher:
     @pytest.mark.unit
     def test_similarity_factors_comprehensive(self, pattern_matcher, sample_error_event):
         """Test all similarity factors are considered."""
-        from learning_loop.pattern_extraction import (
-            EnhancedPattern, PatternMetadata, ErrorTrigger
-        )
 
         # Create pattern that should match on multiple factors
         trigger = ErrorTrigger("NoneType", "AttributeError.*NoneType.*")
         metadata = PatternMetadata(
-            confidence=0.9, usage_count=10, success_count=9, failure_count=1,
-            last_used=datetime.now(), created_at=datetime.now(),
-            source="learned", tags=["NoneType", "python", "test"]
+            confidence=0.9,
+            usage_count=10,
+            success_count=9,
+            failure_count=1,
+            last_used=datetime.now(),
+            created_at=datetime.now(),
+            source="learned",
+            tags=["NoneType", "python", "test"],
         )
         pattern = EnhancedPattern(
-            id="comprehensive_test", trigger=trigger, preconditions=[], actions=[],
-            postconditions=[], metadata=metadata
+            id="comprehensive_test",
+            trigger=trigger,
+            preconditions=[],
+            actions=[],
+            postconditions=[],
+            metadata=metadata,
         )
 
         similarity = pattern_matcher._calculate_similarity(sample_error_event, pattern)
@@ -658,20 +674,26 @@ class TestPatternMatcher:
     @pytest.mark.unit
     def test_semantic_similarity_calculation(self, pattern_matcher, sample_error_event):
         """Test semantic similarity calculation."""
-        from learning_loop.pattern_extraction import (
-            EnhancedPattern, PatternMetadata, TaskTrigger
-        )
 
         # Create pattern with overlapping keywords
         trigger = TaskTrigger(["test", "attribute", "error"])
         metadata = PatternMetadata(
-            confidence=0.8, usage_count=3, success_count=2, failure_count=1,
-            last_used=datetime.now(), created_at=datetime.now(),
-            source="learned", tags=["test", "attribute"]
+            confidence=0.8,
+            usage_count=3,
+            success_count=2,
+            failure_count=1,
+            last_used=datetime.now(),
+            created_at=datetime.now(),
+            source="learned",
+            tags=["test", "attribute"],
         )
         pattern = EnhancedPattern(
-            id="semantic_test", trigger=trigger, preconditions=[], actions=[],
-            postconditions=[], metadata=metadata
+            id="semantic_test",
+            trigger=trigger,
+            preconditions=[],
+            actions=[],
+            postconditions=[],
+            metadata=metadata,
         )
 
         similarity = pattern_matcher._semantic_similarity(sample_error_event, pattern)
@@ -745,23 +767,29 @@ class TestPatternMatcher:
             message="Error in test",
             context="context",
             source_file="test_something.py",
-            metadata={}
+            metadata={},
         )
 
-        from learning_loop.pattern_extraction import (
-            EnhancedPattern, PatternMetadata, ErrorTrigger
-        )
 
         # Pattern with test-related tags
         trigger = ErrorTrigger("NoneType", ".*")
         metadata = PatternMetadata(
-            confidence=0.8, usage_count=1, success_count=1, failure_count=0,
-            last_used=datetime.now(), created_at=datetime.now(),
-            source="learned", tags=["test", "uses_test"]
+            confidence=0.8,
+            usage_count=1,
+            success_count=1,
+            failure_count=0,
+            last_used=datetime.now(),
+            created_at=datetime.now(),
+            source="learned",
+            tags=["test", "uses_test"],
         )
         pattern = EnhancedPattern(
-            id="test_pattern", trigger=trigger, preconditions=[], actions=[],
-            postconditions=[], metadata=metadata
+            id="test_pattern",
+            trigger=trigger,
+            preconditions=[],
+            actions=[],
+            postconditions=[],
+            metadata=metadata,
         )
 
         has_similar_context = pattern_matcher._similar_file_context(test_event, pattern)
@@ -803,12 +831,16 @@ class TestAutonomousTriggersIntegration:
             context="test context",
             source_file="test_file.py",
             line_number=42,
-            metadata={}
+            metadata={},
         )
 
-        with patch('learning_loop.autonomous_triggers.PatternStore', return_value=mock_pattern_store):
-            with patch('learning_loop.autonomous_triggers.SelfHealingCore', return_value=mock_healing_core):
-                with patch('learning_loop.autonomous_triggers.get_telemetry') as mock_telemetry:
+        with patch(
+            "learning_loop.autonomous_triggers.PatternStore", return_value=mock_pattern_store
+        ):
+            with patch(
+                "learning_loop.autonomous_triggers.SelfHealingCore", return_value=mock_healing_core
+            ):
+                with patch("learning_loop.autonomous_triggers.get_telemetry") as mock_telemetry:
                     mock_telemetry.return_value = Mock()
 
                     # Create router
@@ -830,8 +862,10 @@ class TestAutonomousTriggersIntegration:
         mock_pattern_store = Mock()  # Removed UnifiedPatternStore spec
         mock_pattern_store.find.return_value = []
 
-        with patch('learning_loop.autonomous_triggers.PatternStore', return_value=mock_pattern_store):
-            with patch('learning_loop.autonomous_triggers.get_telemetry') as mock_telemetry:
+        with patch(
+            "learning_loop.autonomous_triggers.PatternStore", return_value=mock_pattern_store
+        ):
+            with patch("learning_loop.autonomous_triggers.get_telemetry") as mock_telemetry:
                 mock_telemetry.return_value = Mock()
 
                 # Should initialize without errors

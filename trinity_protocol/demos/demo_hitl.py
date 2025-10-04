@@ -27,13 +27,15 @@ from pathlib import Path
 # Add parent directory to path
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 
-from shared.message_bus import MessageBus
 from shared.hitl_protocol import HumanReviewQueue
+from shared.message_bus import MessageBus
+from trinity_protocol.core.models import (
+    DetectedPattern,
+    HumanResponse,
+    HumanReviewRequest,
+    PatternType,
+)
 from trinity_protocol.experimental.response_handler import ResponseHandler
-from shared.hitl_protocol import QuestionDelivery
-from shared.preference_learning import PreferenceLearning
-from trinity_protocol.core.models import HumanReviewRequest, HumanResponse
-from trinity_protocol.core.models import DetectedPattern, PatternType
 
 
 async def demo_hitl_flow():
@@ -53,13 +55,9 @@ async def demo_hitl_flow():
 
     message_bus = MessageBus(db_path=str(temp_dir / "demo_bus.db"))
     review_queue = HumanReviewQueue(
-        message_bus=message_bus,
-        db_path=str(temp_dir / "demo_queue.db")
+        message_bus=message_bus, db_path=str(temp_dir / "demo_queue.db")
     )
-    response_handler = ResponseHandler(
-        message_bus=message_bus,
-        review_queue=review_queue
-    )
+    response_handler = ResponseHandler(message_bus=message_bus, review_queue=review_queue)
 
     # Create sample pattern (simulating WITNESS detection)
     pattern = DetectedPattern(
@@ -76,7 +74,7 @@ async def demo_hitl_flow():
         ),
         keywords=["hitl", "questions", "proactive", "assistance"],
         sentiment="positive",
-        urgency="high"
+        urgency="high",
     )
 
     # Create question (simulating ARCHITECT formulation)
@@ -90,9 +88,7 @@ async def demo_hitl_flow():
         pattern_context=pattern,
         priority=8,
         expires_at=datetime.now() + timedelta(hours=24),
-        suggested_action=(
-            "Build terminal delivery, response handler, and preference learning"
-        )
+        suggested_action=("Build terminal delivery, response handler, and preference learning"),
     )
 
     # Submit question to queue
@@ -116,7 +112,7 @@ async def demo_hitl_flow():
     print(f"Priority: {question_obj.priority}/10")
     print(f"\nQuestion: {question_obj.question_text}")
     print(f"\nSuggested Action: {question_obj.suggested_action}")
-    print(f"\nPattern Context:")
+    print("\nPattern Context:")
     print(f"  Topic: {question_obj.pattern_context.topic}")
     print(f"  Confidence: {question_obj.pattern_context.confidence:.2f}")
     print(f"  Mentions: {question_obj.pattern_context.mention_count}")
@@ -141,7 +137,7 @@ async def demo_hitl_flow():
         correlation_id="demo-corr-001",
         response_type=response_type,
         comment=comment,
-        response_time_seconds=response_time
+        response_time_seconds=response_time,
     )
 
     # Process response
@@ -218,13 +214,9 @@ async def demo_automated_flow():
 
     message_bus = MessageBus(db_path=str(temp_dir / "auto_bus.db"))
     review_queue = HumanReviewQueue(
-        message_bus=message_bus,
-        db_path=str(temp_dir / "auto_queue.db")
+        message_bus=message_bus, db_path=str(temp_dir / "auto_queue.db")
     )
-    response_handler = ResponseHandler(
-        message_bus=message_bus,
-        review_queue=review_queue
-    )
+    response_handler = ResponseHandler(message_bus=message_bus, review_queue=review_queue)
 
     # Create multiple test scenarios
     scenarios = [
@@ -233,22 +225,22 @@ async def demo_automated_flow():
             "type": "high_value",
             "priority": 8,
             "response": "YES",
-            "comment": "Great idea!"
+            "comment": "Great idea!",
         },
         {
             "question": "Refactor module Y?",
             "type": "low_stakes",
             "priority": 4,
             "response": "NO",
-            "comment": "Not now, too busy"
+            "comment": "Not now, too busy",
         },
         {
             "question": "Add integration Z?",
             "type": "high_value",
             "priority": 7,
             "response": "LATER",
-            "comment": "Ask me tomorrow"
-        }
+            "comment": "Ask me tomorrow",
+        },
     ]
 
     for i, scenario in enumerate(scenarios, 1):
@@ -264,7 +256,7 @@ async def demo_automated_flow():
             first_mention=datetime.now() - timedelta(hours=2),
             last_mention=datetime.now(),
             context_summary=f"Context for feature {i}",
-            keywords=["feature", "improvement"]
+            keywords=["feature", "improvement"],
         )
 
         # Create question
@@ -274,7 +266,7 @@ async def demo_automated_flow():
             question_type=scenario["type"],
             pattern_context=pattern,
             priority=scenario["priority"],
-            expires_at=datetime.now() + timedelta(hours=24)
+            expires_at=datetime.now() + timedelta(hours=24),
         )
 
         # Submit
@@ -286,7 +278,7 @@ async def demo_automated_flow():
             correlation_id=f"auto-corr-{i:03d}",
             response_type=scenario["response"],
             comment=scenario["comment"],
-            response_time_seconds=30.0 + (i * 10)
+            response_time_seconds=30.0 + (i * 10),
         )
 
         await response_handler.process_response(question_id, response)
@@ -300,10 +292,10 @@ async def demo_automated_flow():
     stats = review_queue.get_stats()
     print(f"\nTotal Questions: {stats['total_questions']}")
     print(f"Acceptance Rate: {stats['acceptance_rate']:.1%}")
-    print(f"Response Rate: 100% (all answered)")
+    print("Response Rate: 100% (all answered)")
     print(f"Avg Response Time: {stats['avg_response_time_seconds']:.1f}s")
 
-    print(f"\nBreakdown:")
+    print("\nBreakdown:")
     print(f"  YES: {stats['by_response'].get('YES', 0)}")
     print(f"  NO: {stats['by_response'].get('NO', 0)}")
     print(f"  LATER: {stats['by_response'].get('LATER', 0)}")
@@ -312,7 +304,7 @@ async def demo_automated_flow():
     exec_pending = await message_bus.get_pending_count("execution_queue")
     telem_pending = await message_bus.get_pending_count("telemetry_stream")
 
-    print(f"\nRouting:")
+    print("\nRouting:")
     print(f"  Execution Queue: {exec_pending} tasks")
     print(f"  Telemetry Stream: {telem_pending} learning signals")
 

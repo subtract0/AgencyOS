@@ -5,10 +5,11 @@ Constitutional requirement: Tests must execute within defined time bounds.
 These benchmarks prevent performance regressions.
 """
 
-import pytest
-import time
 import subprocess
+import time
 from pathlib import Path
+
+import pytest
 
 
 @pytest.mark.benchmark
@@ -22,7 +23,7 @@ class TestPerformanceBenchmarks:
         result = subprocess.run(
             ["bash", "-c", "SKIP_SPEC_TRACEABILITY=true ./scripts/health_check.sh"],
             capture_output=True,
-            cwd=Path(__file__).parent.parent.parent
+            cwd=Path(__file__).parent.parent.parent,
         )
 
         duration = time.time() - start
@@ -37,7 +38,7 @@ class TestPerformanceBenchmarks:
         result = subprocess.run(
             ["python", "-m", "pytest", "tests/test_constitutional_validator.py", "-q"],
             capture_output=True,
-            cwd=Path(__file__).parent.parent.parent
+            cwd=Path(__file__).parent.parent.parent,
         )
 
         duration = time.time() - start
@@ -52,7 +53,7 @@ class TestPerformanceBenchmarks:
         result = subprocess.run(
             ["python", "-m", "pytest", "-m", "fast", "-q"],
             capture_output=True,
-            cwd=Path(__file__).parent.parent.parent
+            cwd=Path(__file__).parent.parent.parent,
         )
 
         duration = time.time() - start
@@ -70,7 +71,7 @@ class TestPerformanceBenchmarks:
             ["python", "run_tests.py"],
             capture_output=True,
             cwd=Path(__file__).parent.parent.parent,
-            timeout=300  # 5 minute safety
+            timeout=300,  # 5 minute safety
         )
 
         duration = time.time() - start
@@ -97,7 +98,7 @@ class TestMemoryPerformance:
         duration = time.time() - start
 
         assert context is not None
-        assert duration < 0.1, f"Context creation took {duration*1000:.2f}ms, must be <100ms"
+        assert duration < 0.1, f"Context creation took {duration * 1000:.2f}ms, must be <100ms"
 
     def test_memory_store_performance(self):
         """Memory storage operations must be fast (<50ms)."""
@@ -109,7 +110,7 @@ class TestMemoryPerformance:
         context.store_memory("test_key", "test_content", tags=["benchmark"])
         duration = time.time() - start
 
-        assert duration < 0.05, f"Memory store took {duration*1000:.2f}ms, must be <50ms"
+        assert duration < 0.05, f"Memory store took {duration * 1000:.2f}ms, must be <50ms"
 
     def test_memory_search_performance(self):
         """Memory search must be fast (<100ms for small datasets)."""
@@ -126,7 +127,7 @@ class TestMemoryPerformance:
         duration = time.time() - start
 
         assert len(results) > 0
-        assert duration < 0.1, f"Memory search took {duration*1000:.2f}ms, must be <100ms"
+        assert duration < 0.1, f"Memory search took {duration * 1000:.2f}ms, must be <100ms"
 
 
 @pytest.mark.benchmark
@@ -135,8 +136,9 @@ class TestToolPerformance:
 
     def test_spec_traceability_performance(self):
         """Spec traceability check performance baseline."""
-        from tools.spec_traceability import SpecTraceabilityValidator
         from pathlib import Path
+
+        from tools.spec_traceability import SpecTraceabilityValidator
 
         validator = SpecTraceabilityValidator(min_coverage=0.60)
 

@@ -5,6 +5,7 @@ Defines metrics for evaluating and optimizing the audit modules.
 """
 
 from typing import Any
+
 from shared.type_definitions.json import JSONValue
 
 
@@ -33,9 +34,7 @@ def audit_effectiveness_metric(
     # Check if all constitutional violations were detected (40% weight)
     if "known_violations" in example and "issues" in prediction:
         known_constitutional = [
-            v
-            for v in example["known_violations"]
-            if v.get("severity") == "constitutional"
+            v for v in example["known_violations"] if v.get("severity") == "constitutional"
         ]
         detected_constitutional = [
             i for i in prediction["issues"] if i.severity.value == "constitutional"
@@ -51,23 +50,16 @@ def audit_effectiveness_metric(
     if "issues" in prediction and len(prediction["issues"]) > 0:
         # Constitutional issues should be prioritized first
         first_issue = prediction["issues"][0]
-        if (
-            hasattr(first_issue, "severity")
-            and first_issue.severity.value == "constitutional"
-        ):
+        if hasattr(first_issue, "severity") and first_issue.severity.value == "constitutional":
             score += 0.3
-        elif not any(
-            i.severity.value == "constitutional" for i in prediction["issues"]
-        ):
+        elif not any(i.severity.value == "constitutional" for i in prediction["issues"]):
             score += 0.3  # No constitutional issues, any prioritization is acceptable
 
     # Check if fixes passed tests (30% weight)
     if "verification" in prediction:
         if prediction["verification"].get("success", False):
             score += 0.3
-        elif (
-            prediction["verification"].get("tests_passed", {}).get("unit_tests", False)
-        ):
+        elif prediction["verification"].get("tests_passed", {}).get("unit_tests", False):
             score += 0.15  # Partial credit for passing some tests
 
     return score
@@ -110,9 +102,7 @@ def refactoring_success_metric(
         if all(test_results.values()):
             score += 0.3
         elif len(test_results) > 0:
-            passing_rate = sum(1 for v in test_results.values() if v) / len(
-                test_results
-            )
+            passing_rate = sum(1 for v in test_results.values() if v) / len(test_results)
             score += 0.3 * passing_rate
 
     # No regressions (20% weight)
@@ -159,10 +149,7 @@ def constitutional_compliance_metric(
         if hasattr(audit, "historical_patterns"):
             if len(audit.historical_patterns) > 0:
                 score += weights[0]  # Used historical context
-        elif (
-            "historical_patterns" in audit
-            and len(audit.get("historical_patterns", [])) > 0
-        ):
+        elif "historical_patterns" in audit and len(audit.get("historical_patterns", [])) > 0:
             score += weights[0]
 
     # Article II: 100% Verification (30% weight)
@@ -172,18 +159,14 @@ def constitutional_compliance_metric(
         if all(test_results.values()):
             score += weights[1]  # All tests passed
         elif len(test_results) > 0:
-            passing_rate = sum(1 for v in test_results.values() if v) / len(
-                test_results
-            )
+            passing_rate = sum(1 for v in test_results.values() if v) / len(test_results)
             if passing_rate >= 0.95:  # 95% is close enough to 100%
                 score += weights[1] * 0.8
 
     # Article III: Automated Enforcement (15% weight)
     if "applied_fixes" in prediction:
         # Check if fixes were automatically verified
-        all_verified = all(
-            fix.get("tests_passed", False) for fix in prediction["applied_fixes"]
-        )
+        all_verified = all(fix.get("tests_passed", False) for fix in prediction["applied_fixes"])
         if all_verified:
             score += weights[2]
 
@@ -193,10 +176,7 @@ def constitutional_compliance_metric(
         if hasattr(learning, "success_patterns"):
             if len(learning.success_patterns) > 0:
                 score += weights[3]
-        elif (
-            "success_patterns" in learning
-            and len(learning.get("success_patterns", [])) > 0
-        ):
+        elif "success_patterns" in learning and len(learning.get("success_patterns", [])) > 0:
             score += weights[3]
 
     # Article V: Spec-Driven Development (15% weight)
@@ -254,9 +234,7 @@ def learning_effectiveness_metric(
         else learning.get("failure_patterns", [])
     )
     if len(failure_patterns) > 0:
-        score += 0.3 * min(
-            1.0, len(failure_patterns) / 2
-        )  # 2+ anti-patterns = full credit
+        score += 0.3 * min(1.0, len(failure_patterns) / 2)  # 2+ anti-patterns = full credit
 
     # Pattern reusability (20% weight)
     if "metrics" in prediction:
@@ -335,9 +313,7 @@ def calculate_improvement_delta(
             improvements[f"{key}_delta"] = after_metrics[key] - before_metrics[key]
             if before_metrics[key] > 0:
                 improvements[f"{key}_pct_change"] = (
-                    (after_metrics[key] - before_metrics[key])
-                    / before_metrics[key]
-                    * 100
+                    (after_metrics[key] - before_metrics[key]) / before_metrics[key] * 100
                 )
 
     return improvements

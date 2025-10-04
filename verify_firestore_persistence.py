@@ -8,16 +8,14 @@ import os
 import sys
 from datetime import datetime
 
+
 def verify_firestore_configuration():
     """Step 1: Verify Firestore configuration."""
     print("=" * 80)
     print("FIRESTORE CONFIGURATION AUDIT")
     print("=" * 80)
 
-    results = {
-        "config_valid": True,
-        "issues": []
-    }
+    results = {"config_valid": True, "issues": []}
 
     # Check environment variables
     fresh_use_firestore = os.getenv("FRESH_USE_FIRESTORE", "").lower()
@@ -25,7 +23,7 @@ def verify_firestore_configuration():
     credentials_path = os.getenv("GOOGLE_APPLICATION_CREDENTIALS", "")
     project_id = os.getenv("GOOGLE_CLOUD_PROJECT", "")
 
-    print(f"\n1. Environment Variables:")
+    print("\n1. Environment Variables:")
     print(f"   FRESH_USE_FIRESTORE: {fresh_use_firestore}")
     print(f"   USE_ENHANCED_MEMORY: {use_enhanced_memory}")
     print(f"   GOOGLE_APPLICATION_CREDENTIALS: {credentials_path}")
@@ -66,14 +64,11 @@ def test_firestore_connection():
     print("FIRESTORE CONNECTION TEST")
     print("=" * 80)
 
-    results = {
-        "connected": False,
-        "client_type": None,
-        "error": None
-    }
+    results = {"connected": False, "client_type": None, "error": None}
 
     try:
         from google.cloud import firestore
+
         print("\n✓ google-cloud-firestore package imported successfully")
 
         # Attempt to create client
@@ -112,7 +107,7 @@ def audit_firestore_data(client):
         "collection_exists": False,
         "document_count": 0,
         "sample_documents": [],
-        "error": None
+        "error": None,
     }
 
     if not client:
@@ -131,20 +126,17 @@ def audit_firestore_data(client):
         results["document_count"] = len(docs)
         results["collection_exists"] = True
 
-        print(f"   ✓ Collection exists")
+        print("   ✓ Collection exists")
         print(f"   ✓ Found {len(docs)} documents")
 
         # Get sample documents
         if docs:
-            print(f"\n2. Sample Documents (showing up to 3):")
+            print("\n2. Sample Documents (showing up to 3):")
             for i, doc in enumerate(docs[:3]):
                 doc_data = doc.to_dict()
-                results["sample_documents"].append({
-                    "id": doc.id,
-                    "data": doc_data
-                })
+                results["sample_documents"].append({"id": doc.id, "data": doc_data})
 
-                print(f"\n   Document {i+1} (ID: {doc.id}):")
+                print(f"\n   Document {i + 1} (ID: {doc.id}):")
                 print(f"      Key: {doc_data.get('key', 'N/A')}")
                 print(f"      Tags: {doc_data.get('tags', [])}")
                 print(f"      Timestamp: {doc_data.get('timestamp', 'N/A')}")
@@ -166,11 +158,7 @@ def check_firestore_store_implementation():
     print("FIRESTORESTORE IMPLEMENTATION CHECK")
     print("=" * 80)
 
-    results = {
-        "will_use_firestore": False,
-        "fallback_conditions": [],
-        "error": None
-    }
+    results = {"will_use_firestore": False, "fallback_conditions": [], "error": None}
 
     try:
         from agency_memory.firestore_store import FirestoreStore
@@ -208,9 +196,9 @@ def generate_audit_report(config_results, connection_results, data_results, impl
 
     # Overall status
     all_checks_passed = (
-        config_results["config_valid"] and
-        connection_results["connected"] and
-        implementation_results["will_use_firestore"]
+        config_results["config_valid"]
+        and connection_results["connected"]
+        and implementation_results["will_use_firestore"]
     )
 
     print(f"\nOVERALL STATUS: {'✓ PASS' if all_checks_passed else '✗ FAIL'}")
@@ -237,10 +225,12 @@ def generate_audit_report(config_results, connection_results, data_results, impl
     # Data
     print("\n3. DATA PERSISTENCE:")
     if data_results.get("collection_exists"):
-        print(f"   ✓ Collection 'agency_memories' exists")
+        print("   ✓ Collection 'agency_memories' exists")
         print(f"   ✓ Document count: {data_results['document_count']}")
         if data_results["document_count"] > 0:
-            print(f"   ✓ REAL DATA CONFIRMED - {data_results['document_count']} documents in Firestore")
+            print(
+                f"   ✓ REAL DATA CONFIRMED - {data_results['document_count']} documents in Firestore"
+            )
         else:
             print("   ℹ️  Collection is empty (no documents yet)")
     else:
@@ -294,10 +284,7 @@ def main():
 
     # Step 5: Generate report
     success = generate_audit_report(
-        config_results,
-        connection_results,
-        data_results,
-        implementation_results
+        config_results, connection_results, data_results, implementation_results
     )
 
     return 0 if success else 1

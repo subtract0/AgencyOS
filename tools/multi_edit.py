@@ -1,5 +1,4 @@
 import os
-from typing import List, Optional
 
 from agency_swarm.tools import BaseTool
 from pydantic import BaseModel, Field
@@ -62,7 +61,7 @@ class MultiEdit(BaseTool):  # type: ignore[misc]
     """
 
     file_path: str = Field(..., description="The absolute path to the file to modify")
-    edits: List[EditOperation] = Field(
+    edits: list[EditOperation] = Field(
         ...,
         min_length=1,
         description="Array of edit operations to perform sequentially on the file",
@@ -89,9 +88,7 @@ class MultiEdit(BaseTool):  # type: ignore[misc]
 
                 # Start with initial content from first edit (in memory only)
                 content = self.edits[0].new_string
-                remaining_edits = self.edits[
-                    1:
-                ]  # Skip first edit since it's file creation
+                remaining_edits = self.edits[1:]  # Skip first edit since it's file creation
             else:
                 # Working with existing file
                 if not os.path.exists(self.file_path):
@@ -113,10 +110,12 @@ class MultiEdit(BaseTool):  # type: ignore[misc]
 
                 # Read the existing file
                 try:
-                    with open(self.file_path, "r", encoding="utf-8") as file:
+                    with open(self.file_path, encoding="utf-8") as file:
                         content = file.read()
                 except UnicodeDecodeError:
-                    return f"Error: Unable to decode file {self.file_path}. It may be a binary file."
+                    return (
+                        f"Error: Unable to decode file {self.file_path}. It may be a binary file."
+                    )
 
                 remaining_edits = self.edits
 
@@ -195,7 +194,9 @@ def another_function():
 
     # Test multiple edits
     edits = [
-        EditOperation(old_string="old_function_name", new_string="new_function_name", replace_all=False),
+        EditOperation(
+            old_string="old_function_name", new_string="new_function_name", replace_all=False
+        ),
         EditOperation(old_string="Old message", new_string="New message", replace_all=False),
         EditOperation(old_string="old_value", new_string="new_value", replace_all=True),
     ]
@@ -206,7 +207,7 @@ def another_function():
     print(result)
 
     # Read and show the modified content
-    with open(test_file_path, "r") as f:
+    with open(test_file_path) as f:
         modified_content = f.read()
     print("\\nModified content:")
     print(modified_content)
@@ -215,7 +216,9 @@ def another_function():
     new_file_path = "/tmp/test_new_file.txt"
     new_file_edits = [
         EditOperation(
-            old_string="", new_string="# New File\\nThis is a new file.\\nLine 2.", replace_all=False
+            old_string="",
+            new_string="# New File\\nThis is a new file.\\nLine 2.",
+            replace_all=False,
         ),
         EditOperation(old_string="Line 2", new_string="Modified Line 2", replace_all=False),
     ]
@@ -227,7 +230,7 @@ def another_function():
     print(result2)
 
     # Read and show the new file content
-    with open(new_file_path, "r") as f:
+    with open(new_file_path) as f:
         new_content = f.read()
     print("\\nNew file content:")
     print(new_content)

@@ -13,38 +13,44 @@ Safe by default:
 from __future__ import annotations
 
 import json
-import os
+from collections.abc import Iterable
 from dataclasses import dataclass
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 from pathlib import Path
-from typing import Any, Dict, Iterable, List, Optional, Tuple, cast
-from shared.type_definitions.json import JSONValue
-from shared.models.telemetry import (
-    TelemetryEvent, TelemetryMetrics, AgentMetrics,
-    SystemHealth, EventType, EventSeverity, DashboardSummary,
-    TaskInfo, ResourceInfo, CostInfo, WindowInfo, MetricsInfo
-)
 
+from shared.models.telemetry import (
+    AgentMetrics,
+    CostInfo,
+    DashboardSummary,
+    MetricsInfo,
+    ResourceInfo,
+    SystemHealth,
+    TaskInfo,
+    TelemetryMetrics,
+    WindowInfo,
+)
+from shared.type_definitions.json import JSONValue
 
 # ------------------------
 # Helpers (also used by enhanced_aggregator)
 # ------------------------
 
+
 def _project_root() -> Path:
     return Path(__file__).resolve().parents[2]
 
 
-def _telemetry_dir(telemetry_dir: Optional[str] = None) -> Path:
+def _telemetry_dir(telemetry_dir: str | None = None) -> Path:
     if telemetry_dir:
         return Path(telemetry_dir)
     return _project_root() / "logs" / "telemetry"
 
 
 def _iso_now() -> datetime:
-    return datetime.now(timezone.utc)
+    return datetime.now(UTC)
 
 
-def _parse_iso(ts: str) -> Optional[datetime]:
+def _parse_iso(ts: str) -> datetime | None:
     try:
         # Support 'Z' suffix (UTC)
         if ts.endswith("Z"):
@@ -52,11 +58,13 @@ def _parse_iso(ts: str) -> Optional[datetime]:
         return datetime.fromisoformat(ts)
     except (ValueError, TypeError) as e:
         import logging
+
         logger = logging.getLogger(__name__)
         logger.warning(f"Failed to parse ISO timestamp '{ts}': {e}")
         return None
     except Exception as e:
         import logging
+
         logger = logging.getLogger(__name__)
         logger.error(f"Unexpected error parsing timestamp '{ts}': {e}")
         return None
@@ -87,6 +95,7 @@ def _parse_since(since: str) -> datetime:
 # Event ingestion
 # ------------------------
 
+
 def _iter_event_files(base_dir: Path) -> Iterable[Path]:
     if not base_dir.exists():
         return []
@@ -95,9 +104,11 @@ def _iter_event_files(base_dir: Path) -> Iterable[Path]:
     return files
 
 
-def _load_events(since_dt: datetime, telemetry_dir: Optional[str] = None, limit: Optional[int] = None) -> List[Dict[str, JSONValue]]:
+def _load_events(
+    since_dt: datetime, telemetry_dir: str | None = None, limit: int | None = None
+) -> list[dict[str, JSONValue]]:
     base = _telemetry_dir(telemetry_dir)
-    events: List[Dict[str, JSONValue]] = []
+    events: list[dict[str, JSONValue]] = []
 
     for fp in _iter_event_files(base):
         try:
@@ -118,7 +129,7 @@ def _load_events(since_dt: datetime, telemetry_dir: Optional[str] = None, limit:
                         continue
                     if dt.tzinfo is None:
                         # Assume UTC if missing tz
-                        dt = dt.replace(tzinfo=timezone.utc)
+                        dt = dt.replace(tzinfo=UTC)
                     if dt < since_dt:
                         continue
                     ev["_dt"] = dt
@@ -128,9 +139,10 @@ def _load_events(since_dt: datetime, telemetry_dir: Optional[str] = None, limit:
             continue
 
     # Sort by timestamp ascending
-    def get_dt(e: Dict[str, JSONValue]) -> datetime:
+    def get_dt(e: dict[str, JSONValue]) -> datetime:
         dt_val = e.get("_dt", _iso_now())
         return dt_val if isinstance(dt_val, datetime) else _iso_now()
+
     events.sort(key=get_dt)
 
     if limit is not None and len(events) > limit:
@@ -142,7 +154,13 @@ def _load_events(since_dt: datetime, telemetry_dir: Optional[str] = None, limit:
 # Public API
 # ------------------------
 
-def list_events(since: str = "1h", grep: Optional[str] = None, limit: int = 200, telemetry_dir: Optional[str] = None) -> List[Dict[str, JSONValue]]:
+
+def list_events(
+    since: str = "1h",
+    grep: str | None = None,
+    limit: int = 200,
+    telemetry_dir: str | None = None,
+) -> list[dict[str, JSONValue]]:
     """Return recent events within window.
 
     Args:
@@ -156,7 +174,7 @@ def list_events(since: str = "1h", grep: Optional[str] = None, limit: int = 200,
 
     if grep:
         g = grep.lower()
-        filtered: List[Dict[str, JSONValue]] = []
+        filtered: list[dict[str, JSONValue]] = []
         for ev in events:
             try:
                 s = json.dumps(ev, default=str).lower()
@@ -178,15 +196,16 @@ def list_events(since: str = "1h", grep: Optional[str] = None, limit: int = 200,
 @dataclass
 class _EventProcessingContext:
     """Context object to hold state during event processing."""
+
     total_events: int
     tasks_started: int = 0
     tasks_finished: int = 0
-    recent_results: Dict[str, int] = None
-    agents_active: List[str] = None
+    recent_results: dict[str, int] = None
+    agents_active: list[str] = None
     escalations_used: int = 0
-    tasks: Dict[str, Dict[str, JSONValue]] = None
-    max_concurrency: Optional[int] = None
-    latest_orchestrator_ts: Optional[datetime] = None
+    tasks: dict[str, dict[str, JSONValue]] = None
+    max_concurrency: int | None = None
+    latest_orchestrator_ts: datetime | None = None
     total_tokens: int = 0
     total_usd: float = 0.0
 
@@ -199,17 +218,21 @@ class _EventProcessingContext:
             self.tasks = {}
 
 
-def _process_orchestrator_event(ev: Dict[str, JSONValue], ctx: _EventProcessingContext) -> None:
+def _process_orchestrator_event(ev: dict[str, JSONValue], ctx: _EventProcessingContext) -> None:
     """Process orchestrator_started event to track max concurrency."""
     ts = ev.get("ts")
     dt = _parse_iso(ts) if isinstance(ts, str) else None
     if dt and (ctx.latest_orchestrator_ts is None or dt > ctx.latest_orchestrator_ts):
         ctx.latest_orchestrator_ts = dt
         mc_val = ev.get("max_concurrency", ctx.max_concurrency or 0)
-        ctx.max_concurrency = int(mc_val) if isinstance(mc_val, (int, float)) else ctx.max_concurrency
+        ctx.max_concurrency = (
+            int(mc_val) if isinstance(mc_val, (int, float)) else ctx.max_concurrency
+        )
 
 
-def _process_task_started_event(ev: Dict[str, JSONValue], ctx: _EventProcessingContext, now: datetime) -> None:
+def _process_task_started_event(
+    ev: dict[str, JSONValue], ctx: _EventProcessingContext, now: datetime
+) -> None:
     """Process task_started event to track running tasks."""
     ctx.tasks_started += 1
     tid = str(ev.get("id")) if ev.get("id") is not None else None
@@ -221,7 +244,7 @@ def _process_task_started_event(ev: Dict[str, JSONValue], ctx: _EventProcessingC
     dt = None
     if isinstance(started_at, (int, float)):
         try:
-            dt = datetime.fromtimestamp(float(started_at), tz=timezone.utc)
+            dt = datetime.fromtimestamp(float(started_at), tz=UTC)
         except Exception:
             dt = None
     if dt is None:
@@ -237,7 +260,9 @@ def _process_task_started_event(ev: Dict[str, JSONValue], ctx: _EventProcessingC
     }
 
 
-def _process_heartbeat_event(ev: Dict[str, JSONValue], ctx: _EventProcessingContext, now: datetime) -> None:
+def _process_heartbeat_event(
+    ev: dict[str, JSONValue], ctx: _EventProcessingContext, now: datetime
+) -> None:
     """Process heartbeat event to update task heartbeat timestamps."""
     tid = str(ev.get("id")) if ev.get("id") is not None else None
     if tid and tid in ctx.tasks:
@@ -246,7 +271,7 @@ def _process_heartbeat_event(ev: Dict[str, JSONValue], ctx: _EventProcessingCont
         ctx.tasks[tid]["last_hb_dt"] = hb_dt or now
 
 
-def _process_task_finished_event(ev: Dict[str, JSONValue], ctx: _EventProcessingContext) -> None:
+def _process_task_finished_event(ev: dict[str, JSONValue], ctx: _EventProcessingContext) -> None:
     """Process task_finished event and accumulate costs."""
     ctx.tasks_finished += 1
     status = str(ev.get("status", "")).lower()
@@ -266,6 +291,7 @@ def _process_task_finished_event(ev: Dict[str, JSONValue], ctx: _EventProcessing
                 ctx.total_tokens += int(tokens)
         except (ValueError, OverflowError) as e:
             import logging
+
             logger = logging.getLogger(__name__)
             logger.warning(f"Invalid token count in usage data: {tokens}, error: {e}")
         # If cost provided, accumulate
@@ -275,11 +301,12 @@ def _process_task_finished_event(ev: Dict[str, JSONValue], ctx: _EventProcessing
                 ctx.total_usd += float(cost)
         except (ValueError, OverflowError) as e:
             import logging
+
             logger = logging.getLogger(__name__)
             logger.warning(f"Invalid cost value in usage data: {cost}, error: {e}")
 
 
-def _process_events(events: List[Dict[str, JSONValue]]) -> _EventProcessingContext:
+def _process_events(events: list[dict[str, JSONValue]]) -> _EventProcessingContext:
     """Process all events and return aggregated context."""
     ctx = _EventProcessingContext(total_events=len(events))
     now = _iso_now()
@@ -304,9 +331,9 @@ def _process_events(events: List[Dict[str, JSONValue]]) -> _EventProcessingConte
     return ctx
 
 
-def _build_running_tasks(tasks: Dict[str, Dict[str, JSONValue]], now: datetime) -> List[TaskInfo]:
+def _build_running_tasks(tasks: dict[str, dict[str, JSONValue]], now: datetime) -> list[TaskInfo]:
     """Build list of running tasks with age and heartbeat information."""
-    running_tasks: List[TaskInfo] = []
+    running_tasks: list[TaskInfo] = []
 
     for t in tasks.values():
         if t.get("finished"):
@@ -315,24 +342,30 @@ def _build_running_tasks(tasks: Dict[str, Dict[str, JSONValue]], now: datetime) 
         started_dt_val = t.get("started_dt", now)
         started_dt: datetime = started_dt_val if isinstance(started_dt_val, datetime) else now
         last_hb_dt_val = t.get("last_hb_dt")
-        last_hb_dt: Optional[datetime] = last_hb_dt_val if isinstance(last_hb_dt_val, datetime) else None
+        last_hb_dt: datetime | None = (
+            last_hb_dt_val if isinstance(last_hb_dt_val, datetime) else None
+        )
 
         age_s = max(0.0, (now - started_dt).total_seconds())
         hb_age_s = (now - last_hb_dt).total_seconds() if isinstance(last_hb_dt, datetime) else None
 
-        running_tasks.append(TaskInfo(
-            id=str(t.get("id", "-")),
-            agent=str(t.get("agent", "-")),
-            age_s=age_s,
-            last_heartbeat_age_s=hb_age_s,
-        ))
+        running_tasks.append(
+            TaskInfo(
+                id=str(t.get("id", "-")),
+                agent=str(t.get("agent", "-")),
+                age_s=age_s,
+                last_heartbeat_age_s=hb_age_s,
+            )
+        )
 
     # Sort by age (oldest first) and cap at 10
     running_tasks.sort(key=lambda r: r.age_s, reverse=True)
     return running_tasks[:10]
 
 
-def _calculate_resource_utilization(running_count: int, max_concurrency: Optional[int]) -> Optional[float]:
+def _calculate_resource_utilization(
+    running_count: int, max_concurrency: int | None
+) -> float | None:
     """Calculate resource utilization percentage."""
     try:
         if max_concurrency and max_concurrency > 0:
@@ -342,33 +375,43 @@ def _calculate_resource_utilization(running_count: int, max_concurrency: Optiona
     return None
 
 
-def _build_system_health(ctx: _EventProcessingContext, since_dt: datetime, now: datetime) -> SystemHealth:
+def _build_system_health(
+    ctx: _EventProcessingContext, since_dt: datetime, now: datetime
+) -> SystemHealth:
     """Build SystemHealth object from processing context."""
-    status = "healthy" if ctx.recent_results.get("failed", 0) < ctx.recent_results.get("success", 0) else "degraded"
+    status = (
+        "healthy"
+        if ctx.recent_results.get("failed", 0) < ctx.recent_results.get("success", 0)
+        else "degraded"
+    )
     return SystemHealth(
         status=status,
         total_events=ctx.total_events,
         error_count=ctx.recent_results.get("failed", 0),
         active_agents=ctx.agents_active,
-        uptime_seconds=(now - since_dt).total_seconds()
+        uptime_seconds=(now - since_dt).total_seconds(),
     )
 
 
-def _build_agent_metrics(agents_active: List[str]) -> Dict[str, AgentMetrics]:
+def _build_agent_metrics(agents_active: list[str]) -> dict[str, AgentMetrics]:
     """Build agent metrics dictionary for active agents."""
-    agent_metrics_dict: Dict[str, AgentMetrics] = {}
+    agent_metrics_dict: dict[str, AgentMetrics] = {}
     for agent in agents_active:
         agent_metrics_dict[agent] = AgentMetrics(
             agent_id=agent,
             total_invocations=0,  # Would need event tracking
             successful_invocations=0,
-            failed_invocations=0
+            failed_invocations=0,
         )
     return agent_metrics_dict
 
 
-def _build_dashboard_summary(telemetry_metrics: TelemetryMetrics, ctx: _EventProcessingContext,
-                           running_tasks: List[TaskInfo], since: str) -> DashboardSummary:
+def _build_dashboard_summary(
+    telemetry_metrics: TelemetryMetrics,
+    ctx: _EventProcessingContext,
+    running_tasks: list[TaskInfo],
+    since: str,
+) -> DashboardSummary:
     """Build dashboard summary with proper Pydantic models."""
     running_count = len(running_tasks)
     util = _calculate_resource_utilization(running_count, ctx.max_concurrency)
@@ -408,11 +451,11 @@ def _build_dashboard_summary(telemetry_metrics: TelemetryMetrics, ctx: _EventPro
             tasks_started=ctx.tasks_started,
             tasks_finished=ctx.tasks_finished,
             escalations_used=ctx.escalations_used,
-        )
+        ),
     )
 
 
-def aggregate(since: str = "1h", telemetry_dir: Optional[str] = None) -> DashboardSummary:
+def aggregate(since: str = "1h", telemetry_dir: str | None = None) -> DashboardSummary:
     """Aggregate telemetry for dashboard.
 
     Returns a summary dict with keys consumed by agency._render_dashboard_text:
@@ -445,7 +488,7 @@ def aggregate(since: str = "1h", telemetry_dir: Optional[str] = None) -> Dashboa
         total_events=ctx.total_events,
         events_by_type={"tasks_started": ctx.tasks_started, "tasks_finished": ctx.tasks_finished},
         agent_metrics=agent_metrics_dict,
-        system_health=system_health
+        system_health=system_health,
     )
 
     # Build dashboard summary

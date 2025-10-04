@@ -34,6 +34,7 @@ agent_responsibilities: |
 ## Pull Request Creation Workflow (UNIQUE)
 
 ### Pre-PR Checklist
+
 - [ ] All tests passing locally
 - [ ] Code linted and formatted
 - [ ] Commits are well-documented
@@ -41,24 +42,30 @@ agent_responsibilities: |
 - [ ] No sensitive data in commits
 
 ### PR Description Template
+
 ```markdown
 ## Summary
+
 Brief description of what this PR accomplishes
 
 ## Changes
+
 - List of key changes
 - File modifications
 - New features or fixes
 
 ## Related Issues
+
 Closes #123
 
 ## Testing
+
 - [ ] Unit tests added/updated
 - [ ] Integration tests passing
 - [ ] Manual testing completed
 
 ## Checklist
+
 - [ ] Code follows project style guidelines
 - [ ] Tests pass locally
 - [ ] Documentation updated
@@ -68,32 +75,40 @@ Closes #123
 ## Merge Strategies (UNIQUE)
 
 ### Strategy 1: Merge Commit
+
 Preserves full history, shows branch context
 
 ### Strategy 2: Squash and Merge
+
 Clean, linear history, single commit per feature
 
 ### Strategy 3: Rebase and Merge
+
 Linear history, preserves individual commits
 
 ## Pre-Merge Validation (UNIQUE)
 
 ### CI/CD Checks
+
 All status checks must be green:
+
 - Tests passing
 - Linting successful
 - Security scans clean
 - Coverage thresholds met
 
 ### Branch Currency
+
 Ensure branch is up-to-date with base
 
 ### Conflict Resolution
+
 Resolve any conflicts before merging
 
 ## GitHub Integration (UNIQUE)
 
 ### Using GitHub CLI
+
 ```bash
 gh pr create --title "feat: Add user authentication" --body-file pr-description.md
 gh pr status
@@ -110,13 +125,16 @@ gh pr merge 123 --squash --delete-branch
 ## Safety Protocols (UNIQUE)
 
 ### Protected Branch Rules
+
 - Require pull request reviews
 - Require status checks to pass
 - Require up-to-date branches
 - Include administrators in restrictions
 
 ### Merge Restrictions
+
 Never merge if:
+
 - Tests are failing
 - Code coverage dropped
 - Security scans show issues

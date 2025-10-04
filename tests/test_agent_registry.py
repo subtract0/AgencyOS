@@ -4,16 +4,13 @@ Tests for Agent Registry - ensuring 100% coverage and robust behavior.
 Every test adds value by verifying critical functionality.
 """
 
-import json
 import os
 import tempfile
-import pytest
 from datetime import datetime
-from pathlib import Path
 
-from meta_learning.agent_registry import (
-    AgentRegistry, Agent, AgentInstance, AIQEvent, AgentStatus
-)
+import pytest
+
+from meta_learning.agent_registry import AgentRegistry, AgentStatus
 
 
 class TestAgentRegistryCore:
@@ -21,7 +18,7 @@ class TestAgentRegistryCore:
 
     def setup_method(self):
         """Setup with temporary storage."""
-        self.temp_file = tempfile.NamedTemporaryFile(delete=False, suffix='.json')
+        self.temp_file = tempfile.NamedTemporaryFile(delete=False, suffix=".json")
         self.registry = AgentRegistry(storage_path=self.temp_file.name)
 
     def teardown_method(self):
@@ -111,7 +108,7 @@ class TestAgentRegistryQueries:
 
     def setup_method(self):
         """Setup with temporary storage and test data."""
-        self.temp_file = tempfile.NamedTemporaryFile(delete=False, suffix='.json')
+        self.temp_file = tempfile.NamedTemporaryFile(delete=False, suffix=".json")
         self.registry = AgentRegistry(storage_path=self.temp_file.name)
 
         # Create test data
@@ -185,7 +182,7 @@ class TestAgentRegistryPersistence:
 
     def setup_method(self):
         """Setup with temporary storage."""
-        self.temp_file = tempfile.NamedTemporaryFile(delete=False, suffix='.json')
+        self.temp_file = tempfile.NamedTemporaryFile(delete=False, suffix=".json")
 
     def teardown_method(self):
         """Cleanup."""
@@ -225,7 +222,7 @@ class TestAgentRegistryPersistence:
     def test_persistence_corrupted_file(self):
         """Test handling of corrupted storage file."""
         # Write invalid JSON
-        with open(self.temp_file.name, 'w') as f:
+        with open(self.temp_file.name, "w") as f:
             f.write("invalid json content")
 
         # Should handle gracefully
@@ -267,7 +264,7 @@ class TestAgentRegistryEdgeCases:
 
     def setup_method(self):
         """Setup."""
-        self.temp_file = tempfile.NamedTemporaryFile(delete=False, suffix='.json')
+        self.temp_file = tempfile.NamedTemporaryFile(delete=False, suffix=".json")
         self.registry = AgentRegistry(storage_path=self.temp_file.name)
 
     def teardown_method(self):
@@ -331,5 +328,6 @@ class TestAgentRegistryEdgeCases:
 if __name__ == "__main__":
     # Skip nested pytest execution to prevent recursion
     import os
+
     if os.environ.get("AGENCY_NESTED_TEST") != "1":
         pytest.main([__file__, "-v"])

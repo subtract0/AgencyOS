@@ -30,13 +30,14 @@ Example usage:
     value = divide(10, 0).unwrap_or(0.0)
 """
 
-from typing import TypeVar, Generic, Callable, Union, Any, Optional
 from abc import ABC, abstractmethod
+from collections.abc import Callable
+from typing import Any, Generic, TypeVar
 
-T = TypeVar('T')
-E = TypeVar('E')
-U = TypeVar('U')
-F = TypeVar('F')
+T = TypeVar("T")
+E = TypeVar("E")
+U = TypeVar("U")
+F = TypeVar("F")
 
 
 class Result(Generic[T, E], ABC):
@@ -88,17 +89,17 @@ class Result(Generic[T, E], ABC):
         pass
 
     @abstractmethod
-    def map(self, func: Callable[[T], U]) -> 'Result[U, E]':
+    def map(self, func: Callable[[T], U]) -> "Result[U, E]":
         """Maps a Result<T, E> to Result<U, E> by applying a function to Ok value."""
         pass
 
     @abstractmethod
-    def map_err(self, func: Callable[[E], F]) -> 'Result[T, F]':
+    def map_err(self, func: Callable[[E], F]) -> "Result[T, F]":
         """Maps a Result<T, E> to Result<T, F> by applying a function to Err value."""
         pass
 
     @abstractmethod
-    def and_then(self, func: Callable[[T], 'Result[U, E]']) -> 'Result[U, E]':
+    def and_then(self, func: Callable[[T], "Result[U, E]"]) -> "Result[U, E]":
         """
         Calls func if the result is Ok, otherwise returns the Err value.
         This is useful for chaining operations that may fail.
@@ -106,7 +107,7 @@ class Result(Generic[T, E], ABC):
         pass
 
     @abstractmethod
-    def or_else(self, func: Callable[[E], 'Result[T, F]']) -> 'Result[T, F]':
+    def or_else(self, func: Callable[[E], "Result[T, F]"]) -> "Result[T, F]":
         """
         Calls func if the result is Err, otherwise returns the Ok value.
         This is useful for providing fallback operations.
@@ -138,16 +139,16 @@ class Ok(Result[T, E]):
     def unwrap_or_else(self, func: Callable[[E], T]) -> T:
         return self._value
 
-    def map(self, func: Callable[[T], U]) -> 'Result[U, E]':
+    def map(self, func: Callable[[T], U]) -> "Result[U, E]":
         return Ok(func(self._value))
 
-    def map_err(self, func: Callable[[E], F]) -> 'Result[T, F]':
+    def map_err(self, func: Callable[[E], F]) -> "Result[T, F]":
         return Ok(self._value)
 
-    def and_then(self, func: Callable[[T], 'Result[U, E]']) -> 'Result[U, E]':
+    def and_then(self, func: Callable[[T], "Result[U, E]"]) -> "Result[U, E]":
         return func(self._value)
 
-    def or_else(self, func: Callable[[E], 'Result[T, F]']) -> 'Result[T, F]':
+    def or_else(self, func: Callable[[E], "Result[T, F]"]) -> "Result[T, F]":
         return Ok(self._value)
 
     def __eq__(self, other: Any) -> bool:
@@ -181,16 +182,16 @@ class Err(Result[T, E]):
     def unwrap_or_else(self, func: Callable[[E], T]) -> T:
         return func(self._error)
 
-    def map(self, func: Callable[[T], U]) -> 'Result[U, E]':
+    def map(self, func: Callable[[T], U]) -> "Result[U, E]":
         return Err(self._error)
 
-    def map_err(self, func: Callable[[E], F]) -> 'Result[T, F]':
+    def map_err(self, func: Callable[[E], F]) -> "Result[T, F]":
         return Err(func(self._error))
 
-    def and_then(self, func: Callable[[T], 'Result[U, E]']) -> 'Result[U, E]':
+    def and_then(self, func: Callable[[T], "Result[U, E]"]) -> "Result[U, E]":
         return Err(self._error)
 
-    def or_else(self, func: Callable[[E], 'Result[T, F]']) -> 'Result[T, F]':
+    def or_else(self, func: Callable[[E], "Result[T, F]"]) -> "Result[T, F]":
         return func(self._error)
 
     def __eq__(self, other: Any) -> bool:

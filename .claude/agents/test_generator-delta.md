@@ -34,10 +34,12 @@ agent_responsibilities: |
 ## Testing Standards (UNIQUE)
 
 ### Test File Naming
+
 - Python: `tests/test_<module_name>.py`
 - TypeScript: `<module_name>.test.ts`
 
 ### Test Function Naming
+
 Use descriptive names:
 
 ```python
@@ -67,6 +69,7 @@ Ensure comprehensive coverage using:
 ## Testing Tools (UNIQUE)
 
 ### Python (Backend)
+
 - **pytest**: Test framework
 - **pytest-cov**: Coverage reporting
 - **pytest-mock**: Mocking framework
@@ -74,6 +77,7 @@ Ensure comprehensive coverage using:
 - **faker**: Test data generation
 
 ### TypeScript (Frontend)
+
 - **vitest**: Test framework
 - **@testing-library**: React testing
 - **msw**: API mocking
@@ -82,6 +86,7 @@ Ensure comprehensive coverage using:
 ## Mock and Fixture Guidelines (UNIQUE)
 
 ### When to Mock
+
 - External API calls
 - Database operations (when testing business logic)
 - File system operations
@@ -89,6 +94,7 @@ Ensure comprehensive coverage using:
 - Random number generation
 
 ### When NOT to Mock
+
 - Simple data structures
 - Pure functions
 - Repository layer (in integration tests)
@@ -97,6 +103,7 @@ Ensure comprehensive coverage using:
 ### Example Mocking
 
 **Python**:
+
 ```python
 from unittest.mock import Mock, patch
 
@@ -111,14 +118,15 @@ def test_fetch_user_calls_api(mocker):
 ```
 
 **TypeScript**:
-```typescript
-import { vi } from 'vitest';
 
-test('fetchUser calls API', async () => {
-  const mockApi = vi.fn().mockResolvedValue({ id: 1, name: 'Test' });
+```typescript
+import { vi } from "vitest";
+
+test("fetchUser calls API", async () => {
+  const mockApi = vi.fn().mockResolvedValue({ id: 1, name: "Test" });
   const result = await fetchUser(1, mockApi);
 
-  expect(result.name).toBe('Test');
+  expect(result.name).toBe("Test");
   expect(mockApi).toHaveBeenCalledWith(1);
 });
 ```

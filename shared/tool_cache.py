@@ -21,15 +21,16 @@ Usage:
         return execute_git_status()
 """
 
-from typing import Any, Optional, Callable, TypeVar, ParamSpec
-from functools import wraps
-from dataclasses import dataclass, field
 import hashlib
 import time
+from collections.abc import Callable
+from dataclasses import dataclass
+from functools import wraps
 from pathlib import Path
+from typing import Any, ParamSpec, TypeVar
 
-T = TypeVar('T')
-P = ParamSpec('P')
+T = TypeVar("T")
+P = ParamSpec("P")
 
 
 @dataclass
@@ -42,9 +43,10 @@ class CacheEntry:
         timestamp: Unix timestamp when cached
         file_dependencies: Optional list of file paths to monitor for invalidation
     """
+
     result: Any
     timestamp: float
-    file_dependencies: Optional[list[str]] = None
+    file_dependencies: list[str] | None = None
 
 
 class ToolCache:
@@ -99,7 +101,7 @@ class ToolCache:
         key_str = f"{func_name}:{args_str}:{kwargs_str}"
         return hashlib.sha256(key_str.encode()).hexdigest()
 
-    def get(self, key: str, ttl_seconds: Optional[int] = None) -> Optional[Any]:
+    def get(self, key: str, ttl_seconds: int | None = None) -> Any | None:
         """
         Get cached result if fresh.
 
@@ -135,7 +137,7 @@ class ToolCache:
 
         return entry.result
 
-    def set(self, key: str, result: Any, file_dependencies: Optional[list[str]] = None):
+    def set(self, key: str, result: Any, file_dependencies: list[str] | None = None):
         """
         Cache result with optional file dependencies.
 
@@ -153,9 +155,7 @@ class ToolCache:
             del self.cache[oldest_key]
 
         self.cache[key] = CacheEntry(
-            result=result,
-            timestamp=time.time(),
-            file_dependencies=file_dependencies or []
+            result=result, timestamp=time.time(), file_dependencies=file_dependencies or []
         )
 
     def invalidate_file(self, file_path: str):
@@ -186,6 +186,7 @@ class ToolCache:
             pattern: Glob pattern (e.g., 'git_*', 'read_*')
         """
         import fnmatch
+
         keys_to_delete = [k for k in self.cache if fnmatch.fnmatch(k, pattern)]
         for key in keys_to_delete:
             del self.cache[key]
@@ -218,7 +219,7 @@ class ToolCache:
 _tool_cache = ToolCache()
 
 
-def with_cache(ttl_seconds: int = 300, file_dependencies: Optional[Callable] = None):
+def with_cache(ttl_seconds: int = 300, file_dependencies: Callable | None = None):
     """
     Decorator for caching tool operations.
 
@@ -245,6 +246,7 @@ def with_cache(ttl_seconds: int = 300, file_dependencies: Optional[Callable] = N
         def read_file(file_path: str) -> str:
             return Path(file_path).read_text()
     """
+
     def decorator(func: Callable[P, T]) -> Callable[P, T]:
         @wraps(func)
         def wrapper(*args: P.args, **kwargs: P.kwargs) -> T:
@@ -268,7 +270,9 @@ def with_cache(ttl_seconds: int = 300, file_dependencies: Optional[Callable] = N
             _tool_cache.set(cache_key, result, file_dependencies=files)
 
             return result
+
         return wrapper
+
     return decorator
 
 
@@ -311,5 +315,5 @@ def get_cache_stats() -> dict:
     return {
         "size": len(_tool_cache.cache),
         "max_size": _tool_cache.max_size,
-        "entries": list(_tool_cache.cache.keys())[:10]  # First 10 keys
+        "entries": list(_tool_cache.cache.keys())[:10],  # First 10 keys
     }

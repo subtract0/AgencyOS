@@ -17,34 +17,32 @@ Flow:
 No mocks, no simulations - REAL microphone capture only.
 """
 
-import asyncio
 import argparse
-import sys
+import asyncio
 import logging
-from typing import Optional, List
-from datetime import datetime
-from pathlib import Path
+import sys
 from enum import Enum
+from pathlib import Path
 
 from pydantic import BaseModel, Field
 
-from trinity_protocol.experimental.audio_capture import AudioCaptureModule
-from trinity_protocol.experimental.transcription import WhisperTranscriber
+from shared.persistent_store import PersistentStore
+from shared.type_definitions.result import Err, Ok, Result
+from trinity_protocol.core.models.patterns import DetectedPattern
 from trinity_protocol.experimental.ambient_patterns import (
     AmbientPatternDetector,
 )
+from trinity_protocol.experimental.audio_capture import AudioCaptureModule
 from trinity_protocol.experimental.conversation_context import (
     ConversationContext,
 )
 from trinity_protocol.experimental.models.audio import (
     AudioConfig,
     AudioSegment,
-    WhisperConfig,
     TranscriptionResult,
+    WhisperConfig,
 )
-from trinity_protocol.core.models.patterns import DetectedPattern
-from shared.persistent_store import PersistentStore
-from shared.type_definitions.result import Result, Ok, Err
+from trinity_protocol.experimental.transcription import WhisperTranscriber
 
 # Configure logging for stdout (nohup capture)
 logging.basicConfig(
@@ -68,7 +66,8 @@ class AmbientListenerConfig(BaseModel):
     """Configuration for ambient listener service."""
 
     model_name: str = Field(
-        default="small.en", description="Whisper model name (small.en = best accuracy/speed balance)"
+        default="small.en",
+        description="Whisper model name (small.en = best accuracy/speed balance)",
     )
     min_confidence: float = Field(
         default=0.6,
@@ -76,9 +75,7 @@ class AmbientListenerConfig(BaseModel):
         le=1.0,
         description="Minimum transcription confidence",
     )
-    chunk_duration: float = Field(
-        default=3.0, gt=0.0, description="Audio chunk duration (seconds)"
-    )
+    chunk_duration: float = Field(default=3.0, gt=0.0, description="Audio chunk duration (seconds)")
     silence_threshold: float = Field(
         default=500.0,
         gt=0.0,
@@ -146,11 +143,11 @@ class AmbientListenerService:
 
     def __init__(
         self,
-        audio_capture: Optional[AudioCaptureModule] = None,
-        transcriber: Optional[WhisperTranscriber] = None,
-        pattern_detector: Optional[AmbientPatternDetector] = None,
-        conversation_context: Optional[ConversationContext] = None,
-        config: Optional[AmbientListenerConfig] = None,
+        audio_capture: AudioCaptureModule | None = None,
+        transcriber: WhisperTranscriber | None = None,
+        pattern_detector: AmbientPatternDetector | None = None,
+        conversation_context: ConversationContext | None = None,
+        config: AmbientListenerConfig | None = None,
     ):
         """
         Initialize ambient listener service.
@@ -211,12 +208,7 @@ class AmbientListenerService:
         config: AmbientListenerConfig,
     ) -> WhisperConfig:
         """Create WhisperConfig from service config."""
-        model_path = (
-            Path.home()
-            / ".cache"
-            / "whisper"
-            / f"{config.model_name}.pt"
-        )
+        model_path = Path.home() / ".cache" / "whisper" / f"{config.model_name}.pt"
 
         return WhisperConfig(
             model_path=str(model_path),
@@ -297,9 +289,7 @@ class AmbientListenerService:
                 result = await self._process_audio_chunk(audio_segment)
 
                 if isinstance(result, Err):
-                    logger.error(
-                        f"Audio processing error: {result._error}"
-                    )
+                    logger.error(f"Audio processing error: {result._error}")
                     continue
 
         except Exception as e:
@@ -310,7 +300,7 @@ class AmbientListenerService:
 
     async def _process_audio_chunk(
         self, segment: AudioSegment
-    ) -> Result[Optional[TranscriptionResult], str]:
+    ) -> Result[TranscriptionResult | None, str]:
         """
         Process single audio chunk.
 
@@ -325,9 +315,7 @@ class AmbientListenerService:
             return Ok(None)
 
         # Transcribe audio
-        transcription_result = await self.transcriber.transcribe_segment(
-            segment
-        )
+        transcription_result = await self.transcriber.transcribe_segment(segment)
 
         if isinstance(transcription_result, Err):
             return Err(transcription_result._error)
@@ -342,10 +330,7 @@ class AmbientListenerService:
             )
             return Ok(None)
 
-        logger.info(
-            f"Transcription ({transcription.confidence:.2f}): "
-            f"'{transcription.text}'"
-        )
+        logger.info(f"Transcription ({transcription.confidence:.2f}): '{transcription.text}'")
 
         # Add to conversation context
         self.conversation_context.add_transcription(
@@ -365,9 +350,7 @@ class AmbientListenerService:
 
         return Ok(transcription)
 
-    async def _handle_detected_patterns(
-        self, patterns: List[DetectedPattern]
-    ) -> None:
+    async def _handle_detected_patterns(self, patterns: list[DetectedPattern]) -> None:
         """
         Handle detected patterns.
 
@@ -408,7 +391,7 @@ class AmbientListenerService:
         }
 
 
-def parse_args(args: Optional[List[str]] = None) -> argparse.Namespace:
+def parse_args(args: list[str] | None = None) -> argparse.Namespace:
     """
     Parse CLI arguments.
 
@@ -418,9 +401,7 @@ def parse_args(args: Optional[List[str]] = None) -> argparse.Namespace:
     Returns:
         Parsed arguments namespace
     """
-    parser = argparse.ArgumentParser(
-        description="Trinity Ambient Listener Service"
-    )
+    parser = argparse.ArgumentParser(description="Trinity Ambient Listener Service")
 
     parser.add_argument(
         "--model",

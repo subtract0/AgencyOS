@@ -1,6 +1,11 @@
 import pytest
 
-from shared.retry_controller import RetryController, ExponentialBackoffStrategy, CircuitBreaker, CircuitBreakerOpenError
+from shared.retry_controller import (
+    CircuitBreaker,
+    CircuitBreakerOpenError,
+    ExponentialBackoffStrategy,
+    RetryController,
+)
 
 
 def test_circuit_breaker_opens_and_blocks_subsequent_calls():

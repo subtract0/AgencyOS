@@ -10,15 +10,14 @@ Constitutional Compliance:
 - TDD Mandate: Tests written before implementation
 """
 
+
 import pytest
-from typing import Dict, Any, List, Optional
+
 from shared.pattern_detector import (
-    PatternDetector,
-    Pattern,
-    PatternMatch,
-    PatternType,
-    PATTERN_HEURISTICS,
     BASE_CONFIDENCE,
+    Pattern,
+    PatternDetector,
+    PatternMatch,
 )
 
 
@@ -550,7 +549,7 @@ class TestPydanticPattern:
             confidence=0.85,
             occurrences=3,
             examples=[{"event": "Fatal crash"}],
-            metadata={"source": "test"}
+            metadata={"source": "test"},
         )
 
         # Assert
@@ -568,7 +567,7 @@ class TestPydanticPattern:
                 pattern_type="failure",
                 pattern_name="error",
                 description="test",
-                confidence=1.5  # Invalid
+                confidence=1.5,  # Invalid
             )
 
 
@@ -580,7 +579,7 @@ class TestCustomDetectors:
         # Arrange
         detector = PatternDetector(min_confidence=0.7)
 
-        def custom_detector(text: str, metadata: Optional[Dict]) -> Optional[PatternMatch]:
+        def custom_detector(text: str, metadata: dict | None) -> PatternMatch | None:
             if "custom_pattern" in text:
                 return PatternMatch(
                     pattern_type="failure",
@@ -588,7 +587,7 @@ class TestCustomDetectors:
                     confidence=0.9,
                     keywords_matched=["custom_pattern"],
                     base_score=0.7,
-                    keyword_score=0.2
+                    keyword_score=0.2,
                 )
             return None
 
@@ -603,7 +602,7 @@ class TestCustomDetectors:
         # Arrange
         detector = PatternDetector(min_confidence=0.7)
 
-        def custom_detector(text: str, metadata: Optional[Dict]) -> Optional[PatternMatch]:
+        def custom_detector(text: str, metadata: dict | None) -> PatternMatch | None:
             if "special_keyword" in text.lower():
                 return PatternMatch(
                     pattern_type="failure",
@@ -611,7 +610,7 @@ class TestCustomDetectors:
                     confidence=0.95,
                     keywords_matched=["special_keyword"],
                     base_score=0.8,
-                    keyword_score=0.15
+                    keyword_score=0.15,
                 )
             return None
 
@@ -631,14 +630,14 @@ class TestCustomDetectors:
         # Arrange
         detector = PatternDetector(min_confidence=0.7)
 
-        def high_confidence_custom(text: str, metadata: Optional[Dict]) -> Optional[PatternMatch]:
+        def high_confidence_custom(text: str, metadata: dict | None) -> PatternMatch | None:
             return PatternMatch(
                 pattern_type="opportunity",
                 pattern_name="custom_high",
                 confidence=0.99,
                 keywords_matched=["fatal"],
                 base_score=0.9,
-                keyword_score=0.09
+                keyword_score=0.09,
             )
 
         detector.register_detector("high_custom", high_confidence_custom)

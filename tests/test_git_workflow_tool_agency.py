@@ -18,34 +18,31 @@ NECESSARY Pattern:
 - Yield fast: Uses mocks
 """
 
+from unittest.mock import Mock, patch
+
 import pytest
-from unittest.mock import Mock, MagicMock, patch
 
+from shared.type_definitions.result import Err, Ok
+from tools.git_workflow import BranchInfo, CommitInfo, GitOperationError, PullRequestInfo
 from tools.git_workflow_tool import GitWorkflowToolAgency
-from shared.type_definitions.result import Ok, Err
-from tools.git_workflow import GitOperationError, BranchInfo, CommitInfo, PullRequestInfo
-
 
 # ============================================================================
 # TEST: BRANCH OPERATIONS
 # ============================================================================
 
+
 @pytest.mark.unit
 def test_create_branch_operation():
     """Test create_branch operation via Agency tool."""
     tool = GitWorkflowToolAgency(
-        operation="create_branch",
-        branch_name="feature/test",
-        base_branch="main"
+        operation="create_branch", branch_name="feature/test", base_branch="main"
     )
 
     with patch("tools.git_workflow_tool.GitWorkflowTool") as MockTool:
         mock_instance = MockTool.return_value
-        mock_instance.create_branch.return_value = Ok(BranchInfo(
-            name="feature/test",
-            created=True,
-            base_branch="main"
-        ))
+        mock_instance.create_branch.return_value = Ok(
+            BranchInfo(name="feature/test", created=True, base_branch="main")
+        )
 
         result = tool.run()
 
@@ -57,9 +54,7 @@ def test_create_branch_operation():
 @pytest.mark.unit
 def test_create_branch_missing_name():
     """Test create_branch fails without branch name."""
-    tool = GitWorkflowToolAgency(
-        operation="create_branch"
-    )
+    tool = GitWorkflowToolAgency(operation="create_branch")
 
     with patch("tools.git_workflow_tool.GitWorkflowTool"):
         result = tool.run()
@@ -71,10 +66,7 @@ def test_create_branch_missing_name():
 @pytest.mark.unit
 def test_switch_branch_operation():
     """Test switch_branch operation."""
-    tool = GitWorkflowToolAgency(
-        operation="switch_branch",
-        branch_name="main"
-    )
+    tool = GitWorkflowToolAgency(operation="switch_branch", branch_name="main")
 
     with patch("tools.git_workflow_tool.GitWorkflowTool") as MockTool:
         mock_instance = MockTool.return_value
@@ -89,9 +81,7 @@ def test_switch_branch_operation():
 @pytest.mark.unit
 def test_get_current_branch_operation():
     """Test get_current_branch operation."""
-    tool = GitWorkflowToolAgency(
-        operation="get_current_branch"
-    )
+    tool = GitWorkflowToolAgency(operation="get_current_branch")
 
     with patch("tools.git_workflow_tool.GitWorkflowTool") as MockTool:
         mock_instance = MockTool.return_value
@@ -106,25 +96,26 @@ def test_get_current_branch_operation():
 # TEST: COMMIT OPERATIONS
 # ============================================================================
 
+
 @pytest.mark.unit
 def test_commit_operation_with_files():
     """Test commit operation with specific files."""
     tool = GitWorkflowToolAgency(
-        operation="commit",
-        message="feat: Add feature",
-        files=["file1.py", "file2.py"]
+        operation="commit", message="feat: Add feature", files=["file1.py", "file2.py"]
     )
 
     with patch("tools.git_workflow_tool.GitWorkflowTool") as MockTool:
         mock_instance = MockTool.return_value
         mock_instance.stage_files.return_value = Ok(None)
-        mock_instance.commit.return_value = Ok(CommitInfo(
-            sha="abc123def456",
-            message="feat: Add feature",
-            author="test",
-            timestamp=Mock(),
-            files_changed=["file1.py", "file2.py"]
-        ))
+        mock_instance.commit.return_value = Ok(
+            CommitInfo(
+                sha="abc123def456",
+                message="feat: Add feature",
+                author="test",
+                timestamp=Mock(),
+                files_changed=["file1.py", "file2.py"],
+            )
+        )
 
         result = tool.run()
 
@@ -137,21 +128,20 @@ def test_commit_operation_with_files():
 @pytest.mark.unit
 def test_commit_operation_all_files():
     """Test commit operation staging all files."""
-    tool = GitWorkflowToolAgency(
-        operation="commit",
-        message="feat: Add feature"
-    )
+    tool = GitWorkflowToolAgency(operation="commit", message="feat: Add feature")
 
     with patch("tools.git_workflow_tool.GitWorkflowTool") as MockTool:
         mock_instance = MockTool.return_value
         mock_instance.stage_all.return_value = Ok(None)
-        mock_instance.commit.return_value = Ok(CommitInfo(
-            sha="abc123",
-            message="feat: Add feature",
-            author="test",
-            timestamp=Mock(),
-            files_changed=[]
-        ))
+        mock_instance.commit.return_value = Ok(
+            CommitInfo(
+                sha="abc123",
+                message="feat: Add feature",
+                author="test",
+                timestamp=Mock(),
+                files_changed=[],
+            )
+        )
 
         result = tool.run()
 
@@ -162,9 +152,7 @@ def test_commit_operation_all_files():
 @pytest.mark.unit
 def test_commit_missing_message():
     """Test commit fails without message."""
-    tool = GitWorkflowToolAgency(
-        operation="commit"
-    )
+    tool = GitWorkflowToolAgency(operation="commit")
 
     with patch("tools.git_workflow_tool.GitWorkflowTool"):
         result = tool.run()
@@ -177,12 +165,11 @@ def test_commit_missing_message():
 # TEST: PUSH OPERATIONS
 # ============================================================================
 
+
 @pytest.mark.unit
 def test_push_operation():
     """Test push operation."""
-    tool = GitWorkflowToolAgency(
-        operation="push"
-    )
+    tool = GitWorkflowToolAgency(operation="push")
 
     with patch("tools.git_workflow_tool.GitWorkflowTool") as MockTool:
         mock_instance = MockTool.return_value
@@ -200,6 +187,7 @@ def test_push_operation():
 # TEST: PULL REQUEST OPERATIONS
 # ============================================================================
 
+
 @pytest.mark.unit
 def test_create_pr_operation():
     """Test create_pr operation."""
@@ -207,19 +195,21 @@ def test_create_pr_operation():
         operation="create_pr",
         pr_title="feat: New feature",
         pr_body="Complete implementation",
-        reviewers=["reviewer1"]
+        reviewers=["reviewer1"],
     )
 
     with patch("tools.git_workflow_tool.GitWorkflowProtocol") as MockProtocol:
         mock_instance = MockProtocol.return_value
-        mock_instance.create_pr.return_value = Ok(PullRequestInfo(
-            number=123,
-            url="https://github.com/user/repo/pull/123",
-            title="feat: New feature",
-            body="Complete implementation",
-            base="main",
-            head="feature/test"
-        ))
+        mock_instance.create_pr.return_value = Ok(
+            PullRequestInfo(
+                number=123,
+                url="https://github.com/user/repo/pull/123",
+                title="feat: New feature",
+                body="Complete implementation",
+                base="main",
+                head="feature/test",
+            )
+        )
 
         result = tool.run()
 
@@ -232,10 +222,7 @@ def test_create_pr_operation():
 @pytest.mark.unit
 def test_create_pr_missing_fields():
     """Test create_pr fails without required fields."""
-    tool = GitWorkflowToolAgency(
-        operation="create_pr",
-        pr_title="Title only"
-    )
+    tool = GitWorkflowToolAgency(operation="create_pr", pr_title="Title only")
 
     with patch("tools.git_workflow_tool.GitWorkflowProtocol"):
         result = tool.run()
@@ -248,21 +235,21 @@ def test_create_pr_missing_fields():
 # TEST: HIGH-LEVEL WORKFLOW OPERATIONS
 # ============================================================================
 
+
 @pytest.mark.unit
 def test_start_feature_operation():
     """Test start_feature high-level operation."""
-    tool = GitWorkflowToolAgency(
-        operation="start_feature",
-        branch_name="new-feature"
-    )
+    tool = GitWorkflowToolAgency(operation="start_feature", branch_name="new-feature")
 
     with patch("tools.git_workflow_tool.GitWorkflowProtocol") as MockProtocol:
         mock_instance = MockProtocol.return_value
-        mock_instance.start_feature.return_value = Ok({
-            "branch_name": "feature/new-feature",
-            "base_branch": "main",
-            "started_at": "2025-10-01T12:00:00"
-        })
+        mock_instance.start_feature.return_value = Ok(
+            {
+                "branch_name": "feature/new-feature",
+                "base_branch": "main",
+                "started_at": "2025-10-01T12:00:00",
+            }
+        )
 
         result = tool.run()
 
@@ -274,10 +261,7 @@ def test_start_feature_operation():
 @pytest.mark.unit
 def test_cleanup_after_merge_operation():
     """Test cleanup_after_merge operation."""
-    tool = GitWorkflowToolAgency(
-        operation="cleanup_after_merge",
-        branch_name="feature/old-feature"
-    )
+    tool = GitWorkflowToolAgency(operation="cleanup_after_merge", branch_name="feature/old-feature")
 
     with patch("tools.git_workflow_tool.GitWorkflowProtocol") as MockProtocol:
         mock_instance = MockProtocol.return_value
@@ -294,12 +278,11 @@ def test_cleanup_after_merge_operation():
 # TEST: STATUS OPERATIONS
 # ============================================================================
 
+
 @pytest.mark.unit
 def test_get_status_clean():
     """Test get_status with clean working tree."""
-    tool = GitWorkflowToolAgency(
-        operation="get_status"
-    )
+    tool = GitWorkflowToolAgency(operation="get_status")
 
     with patch("tools.git_workflow_tool.GitWorkflowTool") as MockTool:
         mock_instance = MockTool.return_value
@@ -314,9 +297,7 @@ def test_get_status_clean():
 @pytest.mark.unit
 def test_get_status_with_changes():
     """Test get_status with uncommitted changes."""
-    tool = GitWorkflowToolAgency(
-        operation="get_status"
-    )
+    tool = GitWorkflowToolAgency(operation="get_status")
 
     with patch("tools.git_workflow_tool.GitWorkflowTool") as MockTool:
         mock_instance = MockTool.return_value
@@ -333,21 +314,19 @@ def test_get_status_with_changes():
 # TEST: ERROR HANDLING
 # ============================================================================
 
+
 @pytest.mark.unit
 def test_operation_error_handling():
     """Test error handling for failed operations."""
-    tool = GitWorkflowToolAgency(
-        operation="create_branch",
-        branch_name="test"
-    )
+    tool = GitWorkflowToolAgency(operation="create_branch", branch_name="test")
 
     with patch("tools.git_workflow_tool.GitWorkflowTool") as MockTool:
         mock_instance = MockTool.return_value
-        mock_instance.create_branch.return_value = Err(GitOperationError(
-            operation="create_branch",
-            message="Branch already exists",
-            return_code=128
-        ))
+        mock_instance.create_branch.return_value = Err(
+            GitOperationError(
+                operation="create_branch", message="Branch already exists", return_code=128
+            )
+        )
 
         result = tool.run()
 
@@ -358,10 +337,7 @@ def test_operation_error_handling():
 @pytest.mark.unit
 def test_exception_handling():
     """Test handling of unexpected exceptions."""
-    tool = GitWorkflowToolAgency(
-        operation="create_branch",
-        branch_name="test"
-    )
+    tool = GitWorkflowToolAgency(operation="create_branch", branch_name="test")
 
     with patch("tools.git_workflow_tool.GitWorkflowTool") as MockTool:
         MockTool.side_effect = Exception("Unexpected error")
@@ -376,6 +352,7 @@ def test_exception_handling():
 # TEST: INTEGRATION WITH MERGER AGENT
 # ============================================================================
 
+
 @pytest.mark.integration
 def test_merger_agent_has_git_workflow_tool():
     """Test that MergerAgent has GitUnified in toolset (migrated from GitWorkflowToolAgency)."""
@@ -389,9 +366,7 @@ def test_merger_agent_has_git_workflow_tool():
     assert len(agent.tools) >= 6  # Bash, GitUnified, Read, Grep, Glob, TodoWrite
 
     # Verify we can import and instantiate the tool
-    tool = GitUnified(
-        operation="status"
-    )
+    tool = GitUnified(operation="status")
     assert tool is not None
 
 
@@ -408,6 +383,7 @@ def test_tool_import_from_tools_package():
 # TEST: CONSTITUTIONAL COMPLIANCE
 # ============================================================================
 
+
 @pytest.mark.unit
 def test_article_ii_green_main_enforcement():
     """
@@ -417,23 +393,21 @@ def test_article_ii_green_main_enforcement():
     """
     # The GitWorkflowProtocol.create_pr_with_validation method enforces this
     # This test validates the integration supports it
-    tool = GitWorkflowToolAgency(
-        operation="create_pr",
-        pr_title="test",
-        pr_body="test"
-    )
+    tool = GitWorkflowToolAgency(operation="create_pr", pr_title="test", pr_body="test")
 
     # Tool should successfully create PR when tests pass
     with patch("tools.git_workflow_tool.GitWorkflowProtocol") as MockProtocol:
         mock_instance = MockProtocol.return_value
-        mock_instance.create_pr.return_value = Ok(PullRequestInfo(
-            number=1,
-            url="https://github.com/test/repo/pull/1",
-            title="test",
-            body="test",
-            base="main",
-            head="feature/test"
-        ))
+        mock_instance.create_pr.return_value = Ok(
+            PullRequestInfo(
+                number=1,
+                url="https://github.com/test/repo/pull/1",
+                title="test",
+                body="test",
+                base="main",
+                head="feature/test",
+            )
+        )
 
         result = tool.run()
 
@@ -450,14 +424,19 @@ def test_article_iii_automated_enforcement():
     # Tool enforces PR workflow by providing create_pr operation
     # No direct merge capabilities exist
     tool = GitWorkflowToolAgency(
-        operation="create_pr",
-        pr_title="feat: Change",
-        pr_body="Description"
+        operation="create_pr", pr_title="feat: Change", pr_body="Description"
     )
 
     assert tool.operation == "create_pr"
     assert "merge" not in [
-        "create_branch", "switch_branch", "delete_branch",
-        "get_current_branch", "commit", "push", "create_pr",
-        "get_status", "start_feature", "cleanup_after_merge"
+        "create_branch",
+        "switch_branch",
+        "delete_branch",
+        "get_current_branch",
+        "commit",
+        "push",
+        "create_pr",
+        "get_status",
+        "start_feature",
+        "cleanup_after_merge",
     ]

@@ -1,25 +1,30 @@
 import os
-from typing import Optional
 
 from agency_swarm import Agent
+
 from shared.agent_context import AgentContext, create_agent_context
-from shared.constitutional_validator import constitutional_compliance
 from shared.agent_utils import (
-    select_instructions_file,
     create_model_settings,
     get_model_instance,
+    select_instructions_file,
 )
+from shared.constitutional_validator import constitutional_compliance
 from shared.system_hooks import (
-    create_message_filter_hook,
-    create_memory_integration_hook,
     create_composite_hook,
+    create_memory_integration_hook,
+    create_message_filter_hook,
 )
 
 # Get the absolute path to the current file's directory
 current_dir = os.path.dirname(os.path.abspath(__file__))
 
+
 @constitutional_compliance
-def create_planner_agent(model: str = "gpt-5", reasoning_effort: str = "high", agent_context: Optional[AgentContext] = None) -> Agent:
+def create_planner_agent(
+    model: str = "gpt-5",
+    reasoning_effort: str = "high",
+    agent_context: AgentContext | None = None,
+) -> Agent:
     """Factory that returns a fresh PlannerAgent instance.
     Use this in tests to avoid reusing a singleton across multiple agencies.
 
@@ -35,10 +40,12 @@ def create_planner_agent(model: str = "gpt-5", reasoning_effort: str = "high", a
     # Create hooks with memory integration
     filter_hook = create_message_filter_hook()
     memory_hook = create_memory_integration_hook(agent_context)
-    combined_hook = create_composite_hook([
-        filter_hook,
-        memory_hook,
-    ])
+    combined_hook = create_composite_hook(
+        [
+            filter_hook,
+            memory_hook,
+        ]
+    )
 
     # Log agent creation
     agent_context.store_memory(
@@ -47,9 +54,9 @@ def create_planner_agent(model: str = "gpt-5", reasoning_effort: str = "high", a
             "agent_type": "PlannerAgent",
             "model": model,
             "reasoning_effort": reasoning_effort,
-            "session_id": agent_context.session_id
+            "session_id": agent_context.session_id,
         },
-        ["agency", "planner", "creation"]
+        ["agency", "planner", "creation"],
     )
 
     return Agent(

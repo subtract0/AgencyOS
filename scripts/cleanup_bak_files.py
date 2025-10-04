@@ -9,9 +9,8 @@ Usage:
     python scripts/cleanup_bak_files.py [--dry-run]
 """
 
-import os
-import sys
 import argparse
+import os
 from pathlib import Path
 
 
@@ -20,10 +19,10 @@ def find_bak_files(root_dir: Path) -> list[Path]:
     bak_files = []
     for root, dirs, files in os.walk(root_dir):
         # Skip hidden directories and common build directories
-        dirs[:] = [d for d in dirs if not d.startswith('.') and d not in ['venv', 'build', 'dist']]
+        dirs[:] = [d for d in dirs if not d.startswith(".") and d not in ["venv", "build", "dist"]]
 
         for file in files:
-            if file.endswith('.bak'):
+            if file.endswith(".bak"):
                 bak_files.append(Path(root) / file)
 
     return bak_files
@@ -61,13 +60,11 @@ def cleanup_bak_files(dry_run: bool = False) -> None:
 
 
 def main():
-    parser = argparse.ArgumentParser(
-        description="Clean up .bak files created by automated tools"
-    )
+    parser = argparse.ArgumentParser(description="Clean up .bak files created by automated tools")
     parser.add_argument(
         "--dry-run",
         action="store_true",
-        help="Show what would be deleted without actually deleting"
+        help="Show what would be deleted without actually deleting",
     )
 
     args = parser.parse_args()

@@ -34,12 +34,14 @@ agent_responsibilities: |
 ## Tool Development Workflow (UNIQUE)
 
 ### 1. Analyze Specification
+
 - Read and understand tool requirements
 - Identify inputs, outputs, and behavior
 - Note constraints and edge cases
 - Review integration requirements
 
 ### 2. Design API
+
 - Define function signatures
 - Design data models (Pydantic/TypeScript interfaces)
 - Plan error handling strategy
@@ -47,6 +49,7 @@ agent_responsibilities: |
 - Keep API minimal and focused
 
 ### 3. Write Tests First (TDD)
+
 - Create test file structure
 - Write tests for normal operation
 - Add edge case tests
@@ -54,6 +57,7 @@ agent_responsibilities: |
 - Ensure tests fail initially
 
 ### 4. Implement Tool
+
 - Write minimal code to pass tests
 - Follow type safety requirements
 - Use Result pattern for errors
@@ -61,6 +65,7 @@ agent_responsibilities: |
 - Add inline documentation
 
 ### 5. Refactor
+
 - Eliminate duplication
 - Improve naming
 - Extract helper functions
@@ -68,6 +73,7 @@ agent_responsibilities: |
 - Maintain test coverage
 
 ### 6. Document
+
 - Write API documentation
 - Add usage examples
 - Create README if needed
@@ -77,6 +83,7 @@ agent_responsibilities: |
 ## Tool File Structure (UNIQUE)
 
 ### Python
+
 ```
 tools/
 ├── __init__.py
@@ -85,6 +92,7 @@ tools/
 ```
 
 ### TypeScript
+
 ```
 tools/
 ├── index.ts
@@ -95,31 +103,38 @@ tools/
 ## Tool Design Principles (UNIQUE)
 
 ### 1. Single Responsibility
+
 Each tool does one thing well
 
 ### 2. Composability
+
 Tools work together with standard interfaces
 
 ### 3. Type Safety
+
 Strict typing always, no `any` or `Dict[Any, Any]`
 
 ### 4. Error Handling
+
 Robust error management with Result pattern
 
 ### 5. Testability
+
 Easy to test with dependency injection
 
 ## Documentation Template (UNIQUE)
 
-```markdown
+````markdown
 # Tool Name
 
 ## Purpose
+
 What the tool does and why it exists
 
 ## Usage
 
 ### Basic Example
+
 ```python
 from tools.my_tool import process_data, ToolInput
 
@@ -129,6 +144,7 @@ result = process_data(input_data)
 if result.is_ok():
     print(result.value.result)
 ```
+````
 
 ## API Reference
 
@@ -139,6 +155,7 @@ if result.is_ok():
 ## Performance
 
 ## Contributing
+
 ```
 
 ## Agent-Specific Protocol (UNIQUE)
@@ -177,3 +194,4 @@ if result.is_ok():
 - Global state
 
 You craft tools that are reliable, well-tested, and a joy to use.
+```

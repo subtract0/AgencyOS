@@ -7,18 +7,20 @@ of agent instructions using template composition.
 Constitutional Compliance: Article I (TDD is Mandatory)
 """
 
-import pytest
 from pathlib import Path
+
+import pytest
+
 from shared.instruction_loader import (
-    load_agent_instruction,
-    parse_delta_frontmatter,
-    extract_agent_specific_content,
-    get_cached_instruction,
-    clear_instruction_cache,
-    get_available_agents,
-    validate_all_agents,
-    normalize_agent_name,
     InstructionLoadError,
+    clear_instruction_cache,
+    extract_agent_specific_content,
+    get_available_agents,
+    get_cached_instruction,
+    load_agent_instruction,
+    normalize_agent_name,
+    parse_delta_frontmatter,
+    validate_all_agents,
 )
 
 
@@ -338,7 +340,9 @@ class TestTokenSavings:
             delta_lines = len(delta_content.split("\n"))
 
             # Delta should be much smaller (< 60% of original)
-            assert delta_lines < original_lines * 0.6, f"Delta ({delta_lines}) should be <60% of original ({original_lines})"
+            assert delta_lines < original_lines * 0.6, (
+                f"Delta ({delta_lines}) should be <60% of original ({original_lines})"
+            )
 
     def test_core_template_reusable(self):
         """Should have single core template shared by all agents."""

@@ -10,18 +10,15 @@ Analyzes:
 - Testing patterns and quality approaches
 """
 
-import os
-import re
 import ast
-import json
-import subprocess
-from typing import List, Dict, Any, Optional
-from shared.type_definitions.json import JSONValue
-from datetime import datetime, timedelta
 import logging
+import os
+import subprocess
 
+from shared.type_definitions.json import JSONValue
+
+from ..coding_pattern import CodingPattern, EffectivenessMetric, ProblemContext, SolutionApproach
 from .base_extractor import BasePatternExtractor
-from ..coding_pattern import CodingPattern, ProblemContext, SolutionApproach, EffectivenessMetric
 
 logger = logging.getLogger(__name__)
 
@@ -40,7 +37,7 @@ class LocalCodebaseExtractor(BasePatternExtractor):
         super().__init__("local_codebase", confidence_threshold)
         self.repo_path = os.path.abspath(repo_path)
 
-    def extract_patterns(self, **kwargs) -> List[CodingPattern]:
+    def extract_patterns(self, **kwargs) -> list[CodingPattern]:
         """Extract patterns from the local codebase."""
         patterns = []
 
@@ -59,7 +56,7 @@ class LocalCodebaseExtractor(BasePatternExtractor):
             logger.error(f"Failed to extract patterns from local codebase: {e}")
             return []
 
-    def _extract_error_handling_patterns(self) -> List[CodingPattern]:
+    def _extract_error_handling_patterns(self) -> list[CodingPattern]:
         """Extract error handling patterns from Python files."""
         patterns = []
 
@@ -68,7 +65,7 @@ class LocalCodebaseExtractor(BasePatternExtractor):
 
             for file_path in python_files:
                 try:
-                    with open(file_path, 'r', encoding='utf-8') as f:
+                    with open(file_path, encoding="utf-8") as f:
                         content = f.read()
 
                     # Parse AST to find try-except patterns
@@ -85,22 +82,33 @@ class LocalCodebaseExtractor(BasePatternExtractor):
 
         return patterns
 
-    def _extract_architecture_patterns(self) -> List[CodingPattern]:
+    def _extract_architecture_patterns(self) -> list[CodingPattern]:
         """Extract architectural patterns from agent implementations."""
         patterns = []
 
         try:
             # Analyze agent structure
-            agent_dirs = [d for d in os.listdir(self.repo_path)
-                         if os.path.isdir(os.path.join(self.repo_path, d)) and d.endswith('_agent')]
+            agent_dirs = [
+                d
+                for d in os.listdir(self.repo_path)
+                if os.path.isdir(os.path.join(self.repo_path, d)) and d.endswith("_agent")
+            ]
 
             if len(agent_dirs) >= 5:  # Multi-agent architecture pattern
                 context = ProblemContext(
                     description="Managing complex software engineering tasks with multiple specialized capabilities",
                     domain="architecture",
-                    constraints=["Single codebase", "Coordinated execution", "Specialized responsibilities"],
-                    symptoms=["Task complexity", "Need for specialization", "Coordination overhead"],
-                    scale="10+ agents"
+                    constraints=[
+                        "Single codebase",
+                        "Coordinated execution",
+                        "Specialized responsibilities",
+                    ],
+                    symptoms=[
+                        "Task complexity",
+                        "Need for specialization",
+                        "Coordination overhead",
+                    ],
+                    scale="10+ agents",
                 )
 
                 solution = SolutionApproach(
@@ -108,7 +116,9 @@ class LocalCodebaseExtractor(BasePatternExtractor):
                     implementation="Separate agent directories with specific responsibilities and tool sets",
                     tools=["agency_swarm", "agent_communication", "tool_specialization"],
                     reasoning="Divide complex tasks among specialized agents for better focus and maintainability",
-                    code_examples=[f"Found {len(agent_dirs)} specialized agents: {', '.join(agent_dirs[:5])}"]
+                    code_examples=[
+                        f"Found {len(agent_dirs)} specialized agents: {', '.join(agent_dirs[:5])}"
+                    ],
                 )
 
                 outcome = EffectivenessMetric(
@@ -116,10 +126,16 @@ class LocalCodebaseExtractor(BasePatternExtractor):
                     maintainability_impact="Improved separation of concerns and focused responsibilities",
                     user_impact="Faster development through specialized expertise",
                     adoption_rate=1,  # This codebase
-                    confidence=0.9
+                    confidence=0.9,
                 )
 
-                pattern = self.create_pattern(context, solution, outcome, "agent_architecture", ["architecture", "multi_agent"])
+                pattern = self.create_pattern(
+                    context,
+                    solution,
+                    outcome,
+                    "agent_architecture",
+                    ["architecture", "multi_agent"],
+                )
                 patterns.append(pattern)
 
             # Analyze constitutional governance pattern
@@ -135,9 +151,9 @@ class LocalCodebaseExtractor(BasePatternExtractor):
 
         return patterns
 
-    def _extract_tool_patterns(self) -> List[CodingPattern]:
+    def _extract_tool_patterns(self) -> list[CodingPattern]:
         """Extract tool usage patterns from agents."""
-        patterns: List[CodingPattern] = []
+        patterns: list[CodingPattern] = []
 
         try:
             tools_dir = os.path.join(self.repo_path, "tools")
@@ -145,15 +161,21 @@ class LocalCodebaseExtractor(BasePatternExtractor):
                 return patterns
 
             # Analyze tool structure
-            tool_files = [f for f in os.listdir(tools_dir) if f.endswith('.py') and f != '__init__.py']
+            tool_files = [
+                f for f in os.listdir(tools_dir) if f.endswith(".py") and f != "__init__.py"
+            ]
 
             if len(tool_files) >= 10:  # Rich tool ecosystem
                 context = ProblemContext(
                     description="Need comprehensive toolset for AI agents to perform file operations, search, and system tasks",
                     domain="tool_design",
                     constraints=["Type safety", "Error handling", "Consistent interfaces"],
-                    symptoms=["Repeated operations", "Need for validation", "Cross-platform compatibility"],
-                    scale=f"{len(tool_files)} tools"
+                    symptoms=[
+                        "Repeated operations",
+                        "Need for validation",
+                        "Cross-platform compatibility",
+                    ],
+                    scale=f"{len(tool_files)} tools",
                 )
 
                 # Analyze common patterns in tools
@@ -164,7 +186,7 @@ class LocalCodebaseExtractor(BasePatternExtractor):
                     implementation="BaseTool inheritance with Pydantic validation and run() methods",
                     tools=["pydantic", "BaseTool", "type_hints"],
                     reasoning="Ensure consistency, type safety, and error handling across all tools",
-                    code_examples=tool_patterns.get("examples", [])
+                    code_examples=tool_patterns.get("examples", []),
                 )
 
                 outcome = EffectivenessMetric(
@@ -172,10 +194,12 @@ class LocalCodebaseExtractor(BasePatternExtractor):
                     maintainability_impact="Consistent interfaces reduce learning curve",
                     user_impact="Reliable tool execution with predictable error handling",
                     adoption_rate=len(tool_files),
-                    confidence=0.8
+                    confidence=0.8,
                 )
 
-                pattern = self.create_pattern(context, solution, outcome, "tool_ecosystem", ["tools", "consistency"])
+                pattern = self.create_pattern(
+                    context, solution, outcome, "tool_ecosystem", ["tools", "consistency"]
+                )
                 patterns.append(pattern)
 
         except Exception as e:
@@ -183,9 +207,9 @@ class LocalCodebaseExtractor(BasePatternExtractor):
 
         return patterns
 
-    def _extract_testing_patterns(self) -> List[CodingPattern]:
+    def _extract_testing_patterns(self) -> list[CodingPattern]:
         """Extract testing patterns and quality approaches."""
-        patterns: List[CodingPattern] = []
+        patterns: list[CodingPattern] = []
 
         try:
             tests_dir = os.path.join(self.repo_path, "tests")
@@ -196,7 +220,7 @@ class LocalCodebaseExtractor(BasePatternExtractor):
             test_files = []
             for root, dirs, files in os.walk(tests_dir):
                 for file in files:
-                    if file.startswith('test_') and file.endswith('.py'):
+                    if file.startswith("test_") and file.endswith(".py"):
                         test_files.append(os.path.join(root, file))
 
             if len(test_files) >= 20:  # Comprehensive testing
@@ -206,9 +230,17 @@ class LocalCodebaseExtractor(BasePatternExtractor):
                 context = ProblemContext(
                     description="Ensure high code quality and prevent regressions in complex AI system",
                     domain="testing",
-                    constraints=["100% test success rate", "Constitutional compliance", "Fast execution"],
-                    symptoms=["Complex interactions", "Integration challenges", "Quality requirements"],
-                    scale=f"{len(test_files)} test files"
+                    constraints=[
+                        "100% test success rate",
+                        "Constitutional compliance",
+                        "Fast execution",
+                    ],
+                    symptoms=[
+                        "Complex interactions",
+                        "Integration challenges",
+                        "Quality requirements",
+                    ],
+                    scale=f"{len(test_files)} test files",
                 )
 
                 solution = SolutionApproach(
@@ -216,7 +248,7 @@ class LocalCodebaseExtractor(BasePatternExtractor):
                     implementation="Pytest-based testing with fixtures, markers, and quality gates",
                     tools=["pytest", "fixtures", "markers", "constitutional_enforcement"],
                     reasoning="Maintain high quality through automated testing and constitutional compliance",
-                    code_examples=test_analysis.get("patterns", [])
+                    code_examples=test_analysis.get("patterns", []),
                 )
 
                 outcome = EffectivenessMetric(
@@ -224,10 +256,12 @@ class LocalCodebaseExtractor(BasePatternExtractor):
                     maintainability_impact="Prevents regressions and ensures quality",
                     user_impact="Reliable software with high confidence in changes",
                     adoption_rate=len(test_files),
-                    confidence=0.95
+                    confidence=0.95,
                 )
 
-                pattern = self.create_pattern(context, solution, outcome, "comprehensive_testing", ["testing", "quality"])
+                pattern = self.create_pattern(
+                    context, solution, outcome, "comprehensive_testing", ["testing", "quality"]
+                )
                 patterns.append(pattern)
 
         except Exception as e:
@@ -235,9 +269,9 @@ class LocalCodebaseExtractor(BasePatternExtractor):
 
         return patterns
 
-    def _extract_git_history_patterns(self) -> List[CodingPattern]:
+    def _extract_git_history_patterns(self) -> list[CodingPattern]:
         """Extract patterns from git commit history."""
-        patterns: List[CodingPattern] = []
+        patterns: list[CodingPattern] = []
 
         try:
             # Get recent successful commits
@@ -247,20 +281,24 @@ class LocalCodebaseExtractor(BasePatternExtractor):
             if result.returncode != 0:
                 return patterns
 
-            commits = result.stdout.strip().split('\n')
+            commits = result.stdout.strip().split("\n")
 
             # Look for patterns in commit messages
-            fix_commits = [c for c in commits if 'fix' in c.lower()]
-            feat_commits = [c for c in commits if 'feat' in c.lower()]
-            test_commits = [c for c in commits if 'test' in c.lower()]
+            fix_commits = [c for c in commits if "fix" in c.lower()]
+            feat_commits = [c for c in commits if "feat" in c.lower()]
+            test_commits = [c for c in commits if "test" in c.lower()]
 
             if len(fix_commits) >= 3:  # Bug fixing pattern
                 context = ProblemContext(
                     description="Need systematic approach to identifying and fixing software bugs",
                     domain="debugging",
-                    constraints=["Maintain functionality", "No breaking changes", "Test validation"],
+                    constraints=[
+                        "Maintain functionality",
+                        "No breaking changes",
+                        "Test validation",
+                    ],
                     symptoms=["Bug reports", "Test failures", "Production issues"],
-                    scale=f"{len(fix_commits)} fixes in 30 days"
+                    scale=f"{len(fix_commits)} fixes in 30 days",
                 )
 
                 solution = SolutionApproach(
@@ -268,7 +306,7 @@ class LocalCodebaseExtractor(BasePatternExtractor):
                     implementation="Identify issue, create test, fix code, validate",
                     tools=["git", "pytest", "debugging_tools"],
                     reasoning="Ensure fixes are correct and don't introduce regressions",
-                    code_examples=[f"Recent fixes: {', '.join(fix_commits[:3])}"]
+                    code_examples=[f"Recent fixes: {', '.join(fix_commits[:3])}"],
                 )
 
                 outcome = EffectivenessMetric(
@@ -276,10 +314,12 @@ class LocalCodebaseExtractor(BasePatternExtractor):
                     maintainability_impact="Systematic approach reduces future issues",
                     user_impact="Faster bug resolution and higher reliability",
                     adoption_rate=len(fix_commits),
-                    confidence=0.7
+                    confidence=0.7,
                 )
 
-                pattern = self.create_pattern(context, solution, outcome, "bug_fixing", ["debugging", "fixes"])
+                pattern = self.create_pattern(
+                    context, solution, outcome, "bug_fixing", ["debugging", "fixes"]
+                )
                 patterns.append(pattern)
 
         except Exception as e:
@@ -287,21 +327,25 @@ class LocalCodebaseExtractor(BasePatternExtractor):
 
         return patterns
 
-    def _find_python_files(self) -> List[str]:
+    def _find_python_files(self) -> list[str]:
         """Find all Python files in the repository."""
         python_files = []
 
         for root, dirs, files in os.walk(self.repo_path):
             # Skip hidden directories and common ignores
-            dirs[:] = [d for d in dirs if not d.startswith('.') and d not in ['__pycache__', 'node_modules', '.venv']]
+            dirs[:] = [
+                d
+                for d in dirs
+                if not d.startswith(".") and d not in ["__pycache__", "node_modules", ".venv"]
+            ]
 
             for file in files:
-                if file.endswith('.py'):
+                if file.endswith(".py"):
                     python_files.append(os.path.join(root, file))
 
         return python_files
 
-    def _analyze_error_handling_ast(self, tree: ast.AST, file_path: str) -> List[CodingPattern]:
+    def _analyze_error_handling_ast(self, tree: ast.AST, file_path: str) -> list[CodingPattern]:
         """Analyze error handling patterns in AST."""
         patterns = []
 
@@ -325,27 +369,29 @@ class LocalCodebaseExtractor(BasePatternExtractor):
                             description=f"Handle {', '.join(exception_types)} exceptions gracefully",
                             domain="error_handling",
                             constraints=["No crashes", "User-friendly messages"],
-                            symptoms=["Exception risks", "Unreliable operations"]
+                            symptoms=["Exception risks", "Unreliable operations"],
                         )
 
                         solution = SolutionApproach(
                             approach="Try-except with specific exception handling",
                             implementation=f"Catch {', '.join(exception_types)} and handle appropriately",
                             tools=["try_except", "logging"],
-                            reasoning="Prevent crashes and provide meaningful error handling"
+                            reasoning="Prevent crashes and provide meaningful error handling",
                         )
 
                         outcome = EffectivenessMetric(
                             success_rate=0.85,
                             maintainability_impact="Improved error resilience",
                             adoption_rate=1,
-                            confidence=0.6
+                            confidence=0.6,
                         )
 
                         pattern_obj = self.create_pattern(
-                            context, solution, outcome,
+                            context,
+                            solution,
+                            outcome,
                             f"{os.path.basename(file_path)}:try_except",
-                            ["error_handling"] + exception_types
+                            ["error_handling"] + exception_types,
                         )
                         patterns.append(pattern_obj)
 
@@ -362,14 +408,14 @@ class LocalCodebaseExtractor(BasePatternExtractor):
             domain="governance",
             constraints=["Automated enforcement", "No manual overrides", "100% compliance"],
             symptoms=["Quality variance", "Manual interventions", "Inconsistent standards"],
-            scale="Entire development process"
+            scale="Entire development process",
         )
 
         solution = SolutionApproach(
             approach="Constitutional governance with automated enforcement",
             implementation="Define principles in constitution.md and enforce through technical mechanisms",
             tools=["constitutional_articles", "automated_testing", "quality_gates"],
-            reasoning="Ensure consistent quality without human intervention points"
+            reasoning="Ensure consistent quality without human intervention points",
         )
 
         outcome = EffectivenessMetric(
@@ -377,10 +423,12 @@ class LocalCodebaseExtractor(BasePatternExtractor):
             maintainability_impact="Consistent quality standards maintained automatically",
             user_impact="Reliable software with predictable quality",
             adoption_rate=1,
-            confidence=0.95
+            confidence=0.95,
         )
 
-        return self.create_pattern(context, solution, outcome, "constitutional_governance", ["governance", "quality"])
+        return self.create_pattern(
+            context, solution, outcome, "constitutional_governance", ["governance", "quality"]
+        )
 
     def _extract_memory_architecture_pattern(self) -> CodingPattern:
         """Extract memory system architecture pattern."""
@@ -388,15 +436,19 @@ class LocalCodebaseExtractor(BasePatternExtractor):
             description="Provide persistent memory and learning capabilities for AI agents",
             domain="architecture",
             constraints=["Multiple backends", "Semantic search", "Performance"],
-            symptoms=["Need for context persistence", "Learning requirements", "Search capabilities"],
-            scale="Multi-agent system"
+            symptoms=[
+                "Need for context persistence",
+                "Learning requirements",
+                "Search capabilities",
+            ],
+            scale="Multi-agent system",
         )
 
         solution = SolutionApproach(
             approach="Pluggable memory architecture with VectorStore and multiple backends",
             implementation="Abstract MemoryStore interface with InMemory, Firestore, and Vector implementations",
             tools=["abstract_interfaces", "vector_store", "firestore", "semantic_search"],
-            reasoning="Enable flexible memory solutions while maintaining consistent interface"
+            reasoning="Enable flexible memory solutions while maintaining consistent interface",
         )
 
         outcome = EffectivenessMetric(
@@ -404,28 +456,30 @@ class LocalCodebaseExtractor(BasePatternExtractor):
             maintainability_impact="Flexible architecture allows different memory strategies",
             user_impact="Persistent context and learning capabilities",
             adoption_rate=1,
-            confidence=0.8
+            confidence=0.8,
         )
 
-        return self.create_pattern(context, solution, outcome, "memory_architecture", ["architecture", "memory"])
+        return self.create_pattern(
+            context, solution, outcome, "memory_architecture", ["architecture", "memory"]
+        )
 
-    def _analyze_tool_implementations(self, tools_dir: str) -> Dict[str, JSONValue]:
+    def _analyze_tool_implementations(self, tools_dir: str) -> dict[str, JSONValue]:
         """Analyze patterns in tool implementations."""
-        patterns: Dict[str, JSONValue] = {"examples": [], "common_patterns": []}
+        patterns: dict[str, JSONValue] = {"examples": [], "common_patterns": []}
 
         try:
             for file_name in os.listdir(tools_dir):
-                if file_name.endswith('.py') and file_name != '__init__.py':
+                if file_name.endswith(".py") and file_name != "__init__.py":
                     file_path = os.path.join(tools_dir, file_name)
-                    with open(file_path, 'r', encoding='utf-8') as f:
+                    with open(file_path, encoding="utf-8") as f:
                         content = f.read()
 
                     # Look for BaseTool usage
-                    if 'BaseTool' in content and 'def run(' in content:
+                    if "BaseTool" in content and "def run(" in content:
                         patterns["examples"].append(f"{file_name}: BaseTool with run() method")
 
                     # Look for Pydantic fields
-                    if 'Field(' in content:
+                    if "Field(" in content:
                         patterns["common_patterns"].append("Pydantic Field validation")
 
         except Exception as e:
@@ -433,26 +487,26 @@ class LocalCodebaseExtractor(BasePatternExtractor):
 
         return patterns
 
-    def _analyze_test_patterns(self, test_files: List[str]) -> Dict[str, JSONValue]:
+    def _analyze_test_patterns(self, test_files: list[str]) -> dict[str, JSONValue]:
         """Analyze patterns in test files."""
-        patterns: Dict[str, JSONValue] = {"patterns": [], "coverage": []}
+        patterns: dict[str, JSONValue] = {"patterns": [], "coverage": []}
 
         try:
             for test_file in test_files[:5]:  # Sample first 5 files
-                with open(test_file, 'r', encoding='utf-8') as f:
+                with open(test_file, encoding="utf-8") as f:
                     content = f.read()
 
                 file_name = os.path.basename(test_file)
 
                 # Look for common test patterns
-                if '@pytest.mark.' in content:
+                if "@pytest.mark." in content:
                     patterns["patterns"].append(f"{file_name}: Uses pytest markers")
 
-                if 'def test_' in content:
-                    test_count = content.count('def test_')
+                if "def test_" in content:
+                    test_count = content.count("def test_")
                     patterns["patterns"].append(f"{file_name}: {test_count} test functions")
 
-                if 'assert ' in content:
+                if "assert " in content:
                     patterns["patterns"].append(f"{file_name}: Uses assertions")
 
         except Exception as e:

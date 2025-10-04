@@ -18,24 +18,23 @@ import random
 import sys
 from datetime import datetime, timedelta
 from pathlib import Path
-from typing import List
 
 # Add parent directory to path
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 
+from shared.preference_learning import (
+    AlexPreferenceLearner,
+    PreferenceStore,
+    create_response_record,
+)
 from trinity_protocol.core.models import (
     QuestionType,
     ResponseType,
     TopicCategory,
 )
-from shared.preference_learning import (
-    AlexPreferenceLearner,
-    create_response_record,
-    PreferenceStore
-)
 
 
-def generate_realistic_response_data() -> List:
+def generate_realistic_response_data() -> list:
     """
     Generate realistic response data simulating 2 weeks of Trinity asking Alex questions.
 
@@ -68,7 +67,7 @@ def generate_realistic_response_data() -> List:
                     response_type=response_type,
                     timestamp=timestamp,
                     response_time_seconds=random.uniform(3.0, 8.0),
-                    context_before="Alex mentioned coaching in recent conversation"
+                    context_before="Alex mentioned coaching in recent conversation",
                 )
             )
 
@@ -89,7 +88,7 @@ def generate_realistic_response_data() -> List:
                     response_type=response_type,
                     timestamp=timestamp,
                     response_time_seconds=random.uniform(4.0, 10.0),
-                    context_before="Alex working on book project"
+                    context_before="Alex working on book project",
                 )
             )
 
@@ -110,7 +109,7 @@ def generate_realistic_response_data() -> List:
                     response_type=response_type,
                     timestamp=timestamp,
                     response_time_seconds=random.uniform(5.0, 12.0),
-                    context_before="Alex has client meeting scheduled"
+                    context_before="Alex has client meeting scheduled",
                 )
             )
 
@@ -132,7 +131,7 @@ def generate_realistic_response_data() -> List:
                     response_type=response_type,
                     timestamp=timestamp,
                     response_time_seconds=random.uniform(1.0, 3.0),
-                    context_before="Lunchtime"
+                    context_before="Lunchtime",
                 )
             )
 
@@ -153,7 +152,7 @@ def generate_realistic_response_data() -> List:
                     response_type=response_type,
                     timestamp=timestamp,
                     response_time_seconds=random.uniform(4.0, 9.0),
-                    context_before="Trinity observed bottleneck in system"
+                    context_before="Trinity observed bottleneck in system",
                 )
             )
 
@@ -173,8 +172,10 @@ def generate_realistic_response_data() -> List:
                     topic_category=TopicCategory.ENTERTAINMENT,
                     response_type=response_type,
                     timestamp=timestamp,
-                    response_time_seconds=None if response_type == ResponseType.IGNORED else random.uniform(1.0, 5.0),
-                    context_before="End of day"
+                    response_time_seconds=None
+                    if response_type == ResponseType.IGNORED
+                    else random.uniform(1.0, 5.0),
+                    context_before="End of day",
                 )
             )
 
@@ -203,8 +204,10 @@ def demo_preference_learning():
     # Show sample responses
     print("\nSample responses:")
     for i, r in enumerate(responses[:5]):
-        response_type_str = r.response_type if isinstance(r.response_type, str) else r.response_type.value
-        print(f"  {i+1}. [{response_type_str}] {r.question_text[:60]}...")
+        response_type_str = (
+            r.response_type if isinstance(r.response_type, str) else r.response_type.value
+        )
+        print(f"  {i + 1}. [{response_type_str}] {r.question_text[:60]}...")
 
     # Step 2: Store responses
     print_section("Step 2: Storing Responses")
@@ -219,9 +222,7 @@ def demo_preference_learning():
     # Step 3: Learn preferences
     print_section("Step 3: Analyzing Response Patterns")
     learner = AlexPreferenceLearner(
-        min_confidence_threshold=0.6,
-        min_sample_size=5,
-        trend_window_days=7
+        min_confidence_threshold=0.6, min_sample_size=5, trend_window_days=7
     )
 
     preferences = learner.analyze_responses(responses)
@@ -234,15 +235,17 @@ def demo_preference_learning():
 
     print("📊 QUESTION TYPE PREFERENCES:\n")
     for q_type_key, pref in sorted(
-        preferences.question_preferences.items(),
-        key=lambda x: x[1].acceptance_rate,
-        reverse=True
+        preferences.question_preferences.items(), key=lambda x: x[1].acceptance_rate, reverse=True
     ):
-        q_type_str = pref.question_type if isinstance(pref.question_type, str) else pref.question_type.value
+        q_type_str = (
+            pref.question_type if isinstance(pref.question_type, str) else pref.question_type.value
+        )
         print(f"  {q_type_str.upper().replace('_', ' ')}:")
         print(f"    Acceptance Rate: {pref.acceptance_rate:.1%}")
         print(f"    Total Asked: {pref.total_asked}")
-        print(f"    YES: {pref.yes_count}, NO: {pref.no_count}, LATER: {pref.later_count}, IGNORED: {pref.ignored_count}")
+        print(
+            f"    YES: {pref.yes_count}, NO: {pref.no_count}, LATER: {pref.later_count}, IGNORED: {pref.ignored_count}"
+        )
         print(f"    Confidence: {pref.confidence:.1%}")
         if pref.avg_response_time_seconds:
             print(f"    Avg Response Time: {pref.avg_response_time_seconds:.1f}s")
@@ -253,7 +256,9 @@ def demo_preference_learning():
     for time_key in time_order:
         if time_key in preferences.timing_preferences:
             pref = preferences.timing_preferences[time_key]
-            time_str = pref.time_of_day if isinstance(pref.time_of_day, str) else pref.time_of_day.value
+            time_str = (
+                pref.time_of_day if isinstance(pref.time_of_day, str) else pref.time_of_day.value
+            )
             print(f"  {time_str.upper().replace('_', ' ')}:")
             print(f"    Acceptance Rate: {pref.acceptance_rate:.1%}")
             print(f"    Questions Asked: {pref.total_asked}")
@@ -262,11 +267,13 @@ def demo_preference_learning():
 
     print("📚 TOPIC PREFERENCES:\n")
     for topic_key, pref in sorted(
-        preferences.topic_preferences.items(),
-        key=lambda x: x[1].acceptance_rate,
-        reverse=True
+        preferences.topic_preferences.items(), key=lambda x: x[1].acceptance_rate, reverse=True
     ):
-        topic_str = pref.topic_category if isinstance(pref.topic_category, str) else pref.topic_category.value
+        topic_str = (
+            pref.topic_category
+            if isinstance(pref.topic_category, str)
+            else pref.topic_category.value
+        )
         print(f"  {topic_str.upper().replace('_', ' ')}:")
         print(f"    Acceptance Rate: {pref.acceptance_rate:.1%}")
         print(f"    Total Asked: {pref.total_asked}")
@@ -281,18 +288,13 @@ def demo_preference_learning():
         print(f"Generated {len(preferences.recommendations)} recommendations:\n")
 
         for i, rec in enumerate(preferences.recommendations[:10], 1):
-            priority_emoji = {
-                "critical": "🔴",
-                "high": "🟠",
-                "medium": "🟡",
-                "low": "🟢"
-            }
+            priority_emoji = {"critical": "🔴", "high": "🟠", "medium": "🟡", "low": "🟢"}
             emoji = priority_emoji.get(rec.priority, "⚪")
 
             print(f"{i}. {emoji} [{rec.priority.upper()}] {rec.title}")
             print(f"   Type: {rec.recommendation_type.replace('_', ' ').title()}")
             print(f"   {rec.description}")
-            print(f"   Evidence:")
+            print("   Evidence:")
             for evidence in rec.evidence:
                 print(f"     • {evidence}")
             print(f"   Confidence: {rec.confidence:.1%}\n")
@@ -301,16 +303,13 @@ def demo_preference_learning():
 
     # Step 6: Store learned preferences
     print_section("Step 6: Persisting Learned Preferences")
-    snapshot_id = store.store_preferences(
-        preferences,
-        snapshot_reason="demo_learning_session"
-    )
+    snapshot_id = store.store_preferences(preferences, snapshot_reason="demo_learning_session")
     print(f"Stored preference snapshot: {snapshot_id}")
 
     # Retrieve and verify
     current = store.get_current_preferences()
     if current:
-        print(f"\n✓ Verified: Current preferences loaded")
+        print("\n✓ Verified: Current preferences loaded")
         print(f"  Total responses: {current.total_responses}")
         print(f"  Overall acceptance: {current.overall_acceptance_rate:.1%}")
         print(f"  Recommendations: {len(current.recommendations)}")
@@ -343,17 +342,19 @@ def demo_preference_learning():
         if pref.trend == "increasing"
     ]
     for topic, pref in increasing_topics:
-        print(f"  • {topic.replace('_', ' ').title()}: Increasing interest ({pref.acceptance_rate:.0%} recent)")
+        print(
+            f"  • {topic.replace('_', ' ').title()}: Increasing interest ({pref.acceptance_rate:.0%} recent)"
+        )
 
     print("\n⏰ BEST TIMES TO ASK:")
     best_times = sorted(
-        preferences.timing_preferences.items(),
-        key=lambda x: x[1].acceptance_rate,
-        reverse=True
+        preferences.timing_preferences.items(), key=lambda x: x[1].acceptance_rate, reverse=True
     )[:3]
     for time_key, pref in best_times:
         if pref.confidence >= 0.5:
-            print(f"  • {time_key.replace('_', ' ').title()}: {pref.acceptance_rate:.0%} acceptance")
+            print(
+                f"  • {time_key.replace('_', ' ').title()}: {pref.acceptance_rate:.0%} acceptance"
+            )
 
     print_section("Demo Complete")
     print("The preference learning system is ready to help Trinity understand")

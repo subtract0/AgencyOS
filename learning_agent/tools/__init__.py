@@ -12,16 +12,11 @@ Tools:
 """
 
 from .analyze_session import AnalyzeSession
-from .extract_insights import ExtractInsights
 from .consolidate_learning import ConsolidateLearning
+from .extract_insights import ExtractInsights
 from .store_knowledge import StoreKnowledge
 
-__all__ = [
-    "AnalyzeSession",
-    "ExtractInsights",
-    "ConsolidateLearning",
-    "StoreKnowledge"
-]
+__all__ = ["AnalyzeSession", "ExtractInsights", "ConsolidateLearning", "StoreKnowledge"]
 
 # Tool workflow documentation
 WORKFLOW_DESCRIPTION = """

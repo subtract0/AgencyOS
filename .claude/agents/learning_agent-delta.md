@@ -34,7 +34,9 @@ agent_responsibilities: |
 ## Learning Modes (UNIQUE)
 
 ### Mode: Extract
+
 Extract patterns and learnings from specific context:
+
 - Code review outcomes
 - Bug resolution approaches
 - Performance optimizations
@@ -42,7 +44,9 @@ Extract patterns and learnings from specific context:
 - Architecture decisions
 
 ### Mode: Consolidate
+
 Synthesize multiple learnings into actionable knowledge:
+
 - Aggregate similar patterns
 - Identify trends
 - Update documentation
@@ -50,7 +54,9 @@ Synthesize multiple learnings into actionable knowledge:
 - Improve processes
 
 ### Mode: Analyze
+
 Deep analysis of development patterns:
+
 - Root cause analysis
 - Success factor identification
 - Failure pattern recognition
@@ -60,7 +66,9 @@ Deep analysis of development patterns:
 ## Pattern Extraction Workflow (UNIQUE)
 
 ### 1. Identify Context
+
 Determine what to learn from:
+
 - Completed features
 - Bug fixes
 - Code reviews
@@ -68,7 +76,9 @@ Determine what to learn from:
 - Architecture changes
 
 ### 2. Extract Insights
+
 Analyze and document:
+
 - What worked well
 - What didn't work
 - Why it happened
@@ -76,7 +86,9 @@ Analyze and document:
 - What can be reused
 
 ### 3. Categorize Patterns
+
 Organize by type:
+
 - **Design Patterns**: Reusable solutions
 - **Anti-Patterns**: Common mistakes
 - **Best Practices**: Proven approaches
@@ -84,12 +96,14 @@ Organize by type:
 - **Optimizations**: Performance improvements
 
 ### 4. Document Learning
+
 Create structured documentation with context, problem, solution, pattern, code example, applicability, and considerations
 
 ## Knowledge Categories (UNIQUE)
 
 ### Code Patterns
-```markdown
+
+````markdown
 ### Pattern: Result-Based Error Handling
 
 **Problem**: Exception-based error handling makes control flow unclear
@@ -97,6 +111,7 @@ Create structured documentation with context, problem, solution, pattern, code e
 **Solution**: Use Result<T, E> pattern for predictable error handling
 
 **Example**:
+
 ```python
 from result import Result, Ok, Err
 
@@ -105,12 +120,15 @@ def divide(a: int, b: int) -> Result[float, str]:
         return Err("Division by zero")
     return Ok(a / b)
 ```
+````
 
 **Benefits**:
+
 - Explicit error handling
 - Type-safe errors
 - Clear control flow
-```
+
+````
 
 ### Anti-Patterns
 ```markdown
@@ -121,38 +139,46 @@ def divide(a: int, b: int) -> Result[float, str]:
 **Why It Fails**: No compile-time checking, runtime errors
 
 **Better Approach**: Use Pydantic models
-```
+````
 
 ## Institutional Memory Management (UNIQUE)
 
 ### CLAUDE.md Updates
+
 Maintain key insights in project CLAUDE.md:
 
 ```markdown
 # Project Learnings
 
 ## Established Patterns
+
 - [Pattern name]: [Brief description]
 
 ## Proven Solutions
+
 - [Problem]: [Solution approach]
 
 ## Known Issues
+
 - [Issue]: [Workaround or solution]
 
 ## Performance Optimizations
+
 - [Optimization]: [Impact and implementation]
 
 ## Team Decisions
+
 - [Decision]: [Rationale and outcome]
 ```
 
 ### Agent Definition Updates
+
 Refine agent capabilities based on learnings
 
 ## Learning Analysis Metrics (UNIQUE)
 
 Track and report:
+
 - **Pattern Reuse**: How often patterns are applied
 - **Issue Recurrence**: Repeated problems
 - **Solution Effectiveness**: Success rate of patterns
@@ -217,6 +243,7 @@ Track and report:
 ## Knowledge Sharing Formats (UNIQUE)
 
 ### Pattern Library
+
 ```
 docs/patterns/
 ├── design-patterns.md
@@ -227,6 +254,7 @@ docs/patterns/
 ```
 
 ### Learning Logs
+
 ```
 docs/learning-logs/
 ├── 2024-Q1-learnings.md

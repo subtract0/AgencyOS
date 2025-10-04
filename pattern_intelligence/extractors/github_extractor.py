@@ -8,17 +8,17 @@ Uses existing Git and Bash tools to:
 - Mine issue resolution strategies
 """
 
+import logging
 import os
 import re
-import json
 import subprocess
-from typing import List, Dict, Any, Optional, cast
-from shared.type_definitions.json import JSONValue
 from datetime import datetime, timedelta
-import logging
+from typing import Any, cast
 
+from shared.type_definitions.json import JSONValue
+
+from ..coding_pattern import CodingPattern, EffectivenessMetric, ProblemContext, SolutionApproach
 from .base_extractor import BasePatternExtractor
-from ..coding_pattern import CodingPattern, ProblemContext, SolutionApproach, EffectivenessMetric
 
 logger = logging.getLogger(__name__)
 
@@ -37,7 +37,7 @@ class GitHubPatternExtractor(BasePatternExtractor):
         super().__init__("github", confidence_threshold)
         self.repo_path = os.path.abspath(repo_path)
 
-    def extract_patterns(self, days_back: int = 90, **kwargs: Any) -> List[CodingPattern]:
+    def extract_patterns(self, days_back: int = 90, **kwargs: Any) -> list[CodingPattern]:
         """
         Extract patterns from GitHub repository history.
 
@@ -47,7 +47,7 @@ class GitHubPatternExtractor(BasePatternExtractor):
         Returns:
             List of discovered patterns
         """
-        patterns: List[CodingPattern] = []
+        patterns: list[CodingPattern] = []
 
         try:
             # Verify we're in a git repository
@@ -75,25 +75,26 @@ class GitHubPatternExtractor(BasePatternExtractor):
                 ["git", "rev-parse", "--git-dir"],
                 cwd=self.repo_path,
                 capture_output=True,
-                text=True
+                text=True,
             )
             return result.returncode == 0
         except Exception:
             return False
 
-    def _extract_commit_patterns(self, days_back: int) -> List[CodingPattern]:
+    def _extract_commit_patterns(self, days_back: int) -> list[CodingPattern]:
         """Extract patterns from commit messages and changes."""
-        patterns: List[CodingPattern] = []
+        patterns: list[CodingPattern] = []
 
         try:
             # Get commits with their stats
             since_date = (datetime.now() - timedelta(days=days_back)).strftime("%Y-%m-%d")
             cmd = [
-                "git", "log",
+                "git",
+                "log",
                 f"--since={since_date}",
                 "--pretty=format:%H|%s|%an|%ad",
                 "--date=iso",
-                "--numstat"
+                "--numstat",
             ]
 
             result = subprocess.run(cmd, cwd=self.repo_path, capture_output=True, text=True)
@@ -112,15 +113,16 @@ class GitHubPatternExtractor(BasePatternExtractor):
 
         return patterns
 
-    def _extract_fix_patterns(self, days_back: int) -> List[CodingPattern]:
+    def _extract_fix_patterns(self, days_back: int) -> list[CodingPattern]:
         """Extract patterns from bug fix commits."""
-        patterns: List[CodingPattern] = []
+        patterns: list[CodingPattern] = []
 
         try:
             # Get commits that mention fixes
             since_date = (datetime.now() - timedelta(days=days_back)).strftime("%Y-%m-%d")
             cmd = [
-                "git", "log",
+                "git",
+                "log",
                 f"--since={since_date}",
                 "--grep=fix",
                 "--grep=bug",
@@ -128,23 +130,23 @@ class GitHubPatternExtractor(BasePatternExtractor):
                 "--grep=solve",
                 "-i",  # case insensitive
                 "--pretty=format:%H|%s|%an|%ad",
-                "--date=iso"
+                "--date=iso",
             ]
 
             result = subprocess.run(cmd, cwd=self.repo_path, capture_output=True, text=True)
             if result.returncode != 0:
                 return patterns
 
-            fix_commits = result.stdout.strip().split('\n')
-            if not fix_commits or fix_commits == ['']:
+            fix_commits = result.stdout.strip().split("\n")
+            if not fix_commits or fix_commits == [""]:
                 return patterns
 
             # Analyze fix patterns
             for commit_line in fix_commits[:10]:  # Analyze top 10 fix commits
-                if '|' not in commit_line:
+                if "|" not in commit_line:
                     continue
 
-                parts = commit_line.split('|')
+                parts = commit_line.split("|")
                 if len(parts) < 4:
                     continue
 
@@ -160,15 +162,16 @@ class GitHubPatternExtractor(BasePatternExtractor):
 
         return patterns
 
-    def _extract_refactoring_patterns(self, days_back: int) -> List[CodingPattern]:
+    def _extract_refactoring_patterns(self, days_back: int) -> list[CodingPattern]:
         """Extract patterns from refactoring commits."""
-        patterns: List[CodingPattern] = []
+        patterns: list[CodingPattern] = []
 
         try:
             # Get commits that mention refactoring
             since_date = (datetime.now() - timedelta(days=days_back)).strftime("%Y-%m-%d")
             cmd = [
-                "git", "log",
+                "git",
+                "log",
                 f"--since={since_date}",
                 "--grep=refactor",
                 "--grep=cleanup",
@@ -176,23 +179,23 @@ class GitHubPatternExtractor(BasePatternExtractor):
                 "--grep=optimize",
                 "-i",
                 "--pretty=format:%H|%s|%an|%ad",
-                "--date=iso"
+                "--date=iso",
             ]
 
             result = subprocess.run(cmd, cwd=self.repo_path, capture_output=True, text=True)
             if result.returncode != 0:
                 return patterns
 
-            refactor_commits = result.stdout.strip().split('\n')
-            if not refactor_commits or refactor_commits == ['']:
+            refactor_commits = result.stdout.strip().split("\n")
+            if not refactor_commits or refactor_commits == [""]:
                 return patterns
 
             # Analyze refactoring patterns
             for commit_line in refactor_commits[:5]:  # Analyze top 5 refactoring commits
-                if '|' not in commit_line:
+                if "|" not in commit_line:
                     continue
 
-                parts = commit_line.split('|')
+                parts = commit_line.split("|")
                 if len(parts) < 4:
                     continue
 
@@ -207,15 +210,16 @@ class GitHubPatternExtractor(BasePatternExtractor):
 
         return patterns
 
-    def _extract_feature_patterns(self, days_back: int) -> List[CodingPattern]:
+    def _extract_feature_patterns(self, days_back: int) -> list[CodingPattern]:
         """Extract patterns from feature implementation commits."""
-        patterns: List[CodingPattern] = []
+        patterns: list[CodingPattern] = []
 
         try:
             # Get commits that mention features
             since_date = (datetime.now() - timedelta(days=days_back)).strftime("%Y-%m-%d")
             cmd = [
-                "git", "log",
+                "git",
+                "log",
                 f"--since={since_date}",
                 "--grep=feat",
                 "--grep=add",
@@ -223,23 +227,23 @@ class GitHubPatternExtractor(BasePatternExtractor):
                 "--grep=create",
                 "-i",
                 "--pretty=format:%H|%s|%an|%ad",
-                "--date=iso"
+                "--date=iso",
             ]
 
             result = subprocess.run(cmd, cwd=self.repo_path, capture_output=True, text=True)
             if result.returncode != 0:
                 return patterns
 
-            feature_commits = result.stdout.strip().split('\n')
-            if not feature_commits or feature_commits == ['']:
+            feature_commits = result.stdout.strip().split("\n")
+            if not feature_commits or feature_commits == [""]:
                 return patterns
 
             # Analyze feature patterns
             for commit_line in feature_commits[:5]:  # Analyze top 5 feature commits
-                if '|' not in commit_line:
+                if "|" not in commit_line:
                     continue
 
-                parts = commit_line.split('|')
+                parts = commit_line.split("|")
                 if len(parts) < 4:
                     continue
 
@@ -254,60 +258,72 @@ class GitHubPatternExtractor(BasePatternExtractor):
 
         return patterns
 
-    def _parse_git_log_output(self, output: str) -> List[Dict[str, JSONValue]]:
+    def _parse_git_log_output(self, output: str) -> list[dict[str, JSONValue]]:
         """Parse git log output into structured data."""
-        commits: List[Dict[str, JSONValue]] = []
-        current_commit: Optional[Dict[str, JSONValue]] = None
+        commits: list[dict[str, JSONValue]] = []
+        current_commit: dict[str, JSONValue] | None = None
 
-        for line in output.split('\n'):
-            if '|' in line and len(line.split('|')) == 4:
+        for line in output.split("\n"):
+            if "|" in line and len(line.split("|")) == 4:
                 # New commit line
                 if current_commit:
                     commits.append(current_commit)
 
-                parts = line.split('|')
+                parts = line.split("|")
                 current_commit = {
-                    'hash': parts[0],
-                    'message': parts[1],
-                    'author': parts[2],
-                    'date': parts[3],
-                    'files_changed': cast(JSONValue, []),
-                    'total_insertions': 0,
-                    'total_deletions': 0
+                    "hash": parts[0],
+                    "message": parts[1],
+                    "author": parts[2],
+                    "date": parts[3],
+                    "files_changed": cast(JSONValue, []),
+                    "total_insertions": 0,
+                    "total_deletions": 0,
                 }
             elif line.strip() and current_commit:
                 # File change line (insertions/deletions/filename)
-                parts = line.strip().split('\t')
+                parts = line.strip().split("\t")
                 if len(parts) == 3:
                     insertions = int(parts[0]) if parts[0].isdigit() else 0
                     deletions = int(parts[1]) if parts[1].isdigit() else 0
                     filename = parts[2]
 
-                    if isinstance(current_commit['files_changed'], list):
-                        current_commit['files_changed'].append(cast(JSONValue, {
-                            'filename': filename,
-                            'insertions': insertions,
-                            'deletions': deletions
-                        }))
-                    if isinstance(current_commit['total_insertions'], int) and isinstance(current_commit['total_deletions'], int):
-                        current_commit['total_insertions'] += insertions
-                        current_commit['total_deletions'] += deletions
+                    if isinstance(current_commit["files_changed"], list):
+                        current_commit["files_changed"].append(
+                            cast(
+                                JSONValue,
+                                {
+                                    "filename": filename,
+                                    "insertions": insertions,
+                                    "deletions": deletions,
+                                },
+                            )
+                        )
+                    if isinstance(current_commit["total_insertions"], int) and isinstance(
+                        current_commit["total_deletions"], int
+                    ):
+                        current_commit["total_insertions"] += insertions
+                        current_commit["total_deletions"] += deletions
 
         if current_commit:
             commits.append(current_commit)
 
         return commits
 
-    def _analyze_commit_frequency_patterns(self, commits: List[Dict[str, JSONValue]]) -> List[CodingPattern]:
+    def _analyze_commit_frequency_patterns(
+        self, commits: list[dict[str, JSONValue]]
+    ) -> list[CodingPattern]:
         """Analyze commit frequency patterns."""
-        patterns: List[CodingPattern] = []
+        patterns: list[CodingPattern] = []
 
         if len(commits) < 10:
             return patterns
 
         # Calculate average commits per day
         if commits:
-            dates = [str(commit['date'])[:10] if isinstance(commit['date'], str) else "" for commit in commits]  # Extract date part
+            dates = [
+                str(commit["date"])[:10] if isinstance(commit["date"], str) else ""
+                for commit in commits
+            ]  # Extract date part
             unique_dates = set(dates)
             avg_commits_per_day = len(commits) / len(unique_dates)
 
@@ -315,16 +331,24 @@ class GitHubPatternExtractor(BasePatternExtractor):
                 context = ProblemContext(
                     description="Maintain consistent development velocity with frequent commits",
                     domain="development_workflow",
-                    constraints=["Quality maintenance", "Integration stability", "Team coordination"],
-                    symptoms=["Complex features", "Need for incremental progress", "Team collaboration"],
-                    scale=f"{len(commits)} commits over {len(unique_dates)} days"
+                    constraints=[
+                        "Quality maintenance",
+                        "Integration stability",
+                        "Team coordination",
+                    ],
+                    symptoms=[
+                        "Complex features",
+                        "Need for incremental progress",
+                        "Team collaboration",
+                    ],
+                    scale=f"{len(commits)} commits over {len(unique_dates)} days",
                 )
 
                 solution = SolutionApproach(
                     approach="Frequent, small commits with clear messages",
                     implementation="Break work into small, atomic changes with descriptive commit messages",
                     tools=["git", "conventional_commits", "continuous_integration"],
-                    reasoning="Enable better tracking, easier rollbacks, and improved collaboration"
+                    reasoning="Enable better tracking, easier rollbacks, and improved collaboration",
                 )
 
                 outcome = EffectivenessMetric(
@@ -332,21 +356,25 @@ class GitHubPatternExtractor(BasePatternExtractor):
                     maintainability_impact="Easier to track changes and debug issues",
                     user_impact="Faster delivery and reduced risk",
                     adoption_rate=len(commits),
-                    confidence=0.7
+                    confidence=0.7,
                 )
 
                 pattern = self.create_pattern(
-                    context, solution, outcome,
+                    context,
+                    solution,
+                    outcome,
                     f"frequent_commits_{len(commits)}",
-                    ["workflow", "commits", "velocity"]
+                    ["workflow", "commits", "velocity"],
                 )
                 patterns.append(pattern)
 
         return patterns
 
-    def _analyze_commit_size_patterns(self, commits: List[Dict[str, JSONValue]]) -> List[CodingPattern]:
+    def _analyze_commit_size_patterns(
+        self, commits: list[dict[str, JSONValue]]
+    ) -> list[CodingPattern]:
         """Analyze commit size patterns."""
-        patterns: List[CodingPattern] = []
+        patterns: list[CodingPattern] = []
 
         if not commits:
             return patterns
@@ -354,8 +382,8 @@ class GitHubPatternExtractor(BasePatternExtractor):
         # Calculate commit sizes
         commit_sizes = []
         for commit in commits:
-            insertions = commit.get('total_insertions', 0)
-            deletions = commit.get('total_deletions', 0)
+            insertions = commit.get("total_insertions", 0)
+            deletions = commit.get("total_deletions", 0)
             if isinstance(insertions, (int, float)) and isinstance(deletions, (int, float)):
                 commit_sizes.append(int(insertions) + int(deletions))
             else:
@@ -372,14 +400,14 @@ class GitHubPatternExtractor(BasePatternExtractor):
                 domain="development_workflow",
                 constraints=["Atomic changes", "Clear scope", "Easy review"],
                 symptoms=["Large, complex changes", "Difficult reviews", "Integration issues"],
-                scale=f"Average {avg_size:.0f} lines per commit"
+                scale=f"Average {avg_size:.0f} lines per commit",
             )
 
             solution = SolutionApproach(
                 approach="Small, atomic commits with single responsibility",
                 implementation="Limit commits to single logical change, break large features into smaller parts",
                 tools=["git", "code_review", "feature_flags"],
-                reasoning="Easier code review, better git history, reduced merge conflicts"
+                reasoning="Easier code review, better git history, reduced merge conflicts",
             )
 
             outcome = EffectivenessMetric(
@@ -387,19 +415,21 @@ class GitHubPatternExtractor(BasePatternExtractor):
                 maintainability_impact="Cleaner git history and easier debugging",
                 user_impact="More stable releases with faster issue resolution",
                 adoption_rate=len(commits),
-                confidence=0.75
+                confidence=0.75,
             )
 
             pattern = self.create_pattern(
-                context, solution, outcome,
+                context,
+                solution,
+                outcome,
                 f"small_commits_avg_{avg_size:.0f}",
-                ["workflow", "commits", "size"]
+                ["workflow", "commits", "size"],
             )
             patterns.append(pattern)
 
         return patterns
 
-    def _analyze_fix_commit(self, commit_hash: str, message: str) -> Optional[CodingPattern]:
+    def _analyze_fix_commit(self, commit_hash: str, message: str) -> CodingPattern | None:
         """Analyze a specific fix commit for patterns."""
         try:
             # Get the diff for this commit
@@ -423,14 +453,16 @@ class GitHubPatternExtractor(BasePatternExtractor):
                 description=problem_description,
                 domain="debugging",
                 constraints=["No breaking changes", "Maintain functionality", "Test validation"],
-                symptoms=["Bug reports", "Test failures", "Unexpected behavior"]
+                symptoms=["Bug reports", "Test failures", "Unexpected behavior"],
             )
 
             solution = SolutionApproach(
                 approach=str(fix_approach.get("approach", "Code fix with testing")),
-                implementation=str(fix_approach.get("implementation", "Identify issue, implement fix, validate")),
-                tools=cast(List[str], fix_approach.get("tools", ["git", "testing"])),
-                reasoning="Resolve issue while maintaining system stability"
+                implementation=str(
+                    fix_approach.get("implementation", "Identify issue, implement fix, validate")
+                ),
+                tools=cast(list[str], fix_approach.get("tools", ["git", "testing"])),
+                reasoning="Resolve issue while maintaining system stability",
             )
 
             outcome = EffectivenessMetric(
@@ -438,20 +470,24 @@ class GitHubPatternExtractor(BasePatternExtractor):
                 maintainability_impact="Improved system stability",
                 user_impact="Bug resolved",
                 adoption_rate=1,
-                confidence=0.6
+                confidence=0.6,
             )
 
             return self.create_pattern(
-                context, solution, outcome,
+                context,
+                solution,
+                outcome,
                 f"fix_{commit_hash[:8]}",
-                ["debugging", "fixes", "bug_resolution"]
+                ["debugging", "fixes", "bug_resolution"],
             )
 
         except Exception as e:
             logger.debug(f"Failed to analyze fix commit {commit_hash}: {e}")
             return None
 
-    def _analyze_refactoring_commit(self, commit_hash: str, message: str) -> Optional[CodingPattern]:
+    def _analyze_refactoring_commit(
+        self, commit_hash: str, message: str
+    ) -> CodingPattern | None:
         """Analyze a refactoring commit for patterns."""
         try:
             # Get commit stats
@@ -467,15 +503,19 @@ class GitHubPatternExtractor(BasePatternExtractor):
             context = ProblemContext(
                 description=refactor_reason,
                 domain="refactoring",
-                constraints=["Maintain functionality", "Improve code quality", "No breaking changes"],
-                symptoms=["Code complexity", "Maintainability issues", "Performance concerns"]
+                constraints=[
+                    "Maintain functionality",
+                    "Improve code quality",
+                    "No breaking changes",
+                ],
+                symptoms=["Code complexity", "Maintainability issues", "Performance concerns"],
             )
 
             solution = SolutionApproach(
                 approach="Code refactoring with behavior preservation",
                 implementation="Restructure code while maintaining existing functionality",
                 tools=["refactoring_tools", "testing", "code_analysis"],
-                reasoning="Improve code quality and maintainability"
+                reasoning="Improve code quality and maintainability",
             )
 
             outcome = EffectivenessMetric(
@@ -483,20 +523,22 @@ class GitHubPatternExtractor(BasePatternExtractor):
                 maintainability_impact="Improved code structure and readability",
                 user_impact="Better long-term maintainability",
                 adoption_rate=1,
-                confidence=0.7
+                confidence=0.7,
             )
 
             return self.create_pattern(
-                context, solution, outcome,
+                context,
+                solution,
+                outcome,
                 f"refactor_{commit_hash[:8]}",
-                ["refactoring", "code_quality", "maintenance"]
+                ["refactoring", "code_quality", "maintenance"],
             )
 
         except Exception as e:
             logger.debug(f"Failed to analyze refactoring commit {commit_hash}: {e}")
             return None
 
-    def _analyze_feature_commit(self, commit_hash: str, message: str) -> Optional[CodingPattern]:
+    def _analyze_feature_commit(self, commit_hash: str, message: str) -> CodingPattern | None:
         """Analyze a feature implementation commit."""
         try:
             # Extract feature description
@@ -506,14 +548,14 @@ class GitHubPatternExtractor(BasePatternExtractor):
                 description=feature_description,
                 domain="feature_development",
                 constraints=["Requirements compliance", "Integration compatibility", "Performance"],
-                symptoms=["User needs", "Business requirements", "System gaps"]
+                symptoms=["User needs", "Business requirements", "System gaps"],
             )
 
             solution = SolutionApproach(
                 approach="Incremental feature implementation",
                 implementation="Design, implement, test, and integrate new functionality",
                 tools=["development_tools", "testing", "integration"],
-                reasoning="Add new capabilities while maintaining system stability"
+                reasoning="Add new capabilities while maintaining system stability",
             )
 
             outcome = EffectivenessMetric(
@@ -521,20 +563,22 @@ class GitHubPatternExtractor(BasePatternExtractor):
                 maintainability_impact="Extended system capabilities",
                 user_impact="New functionality available",
                 adoption_rate=1,
-                confidence=0.6
+                confidence=0.6,
             )
 
             return self.create_pattern(
-                context, solution, outcome,
+                context,
+                solution,
+                outcome,
                 f"feature_{commit_hash[:8]}",
-                ["feature_development", "implementation", "enhancement"]
+                ["feature_development", "implementation", "enhancement"],
             )
 
         except Exception as e:
             logger.debug(f"Failed to analyze feature commit {commit_hash}: {e}")
             return None
 
-    def _extract_problem_from_message(self, message: str) -> Optional[str]:
+    def _extract_problem_from_message(self, message: str) -> str | None:
         """Extract problem description from commit message."""
         # Look for common fix patterns
         fix_patterns = [
@@ -584,13 +628,13 @@ class GitHubPatternExtractor(BasePatternExtractor):
 
         return "New feature implementation"
 
-    def _analyze_fix_approach(self, diff_output: str, message: str) -> Dict[str, JSONValue]:
+    def _analyze_fix_approach(self, diff_output: str, message: str) -> dict[str, JSONValue]:
         """Analyze the approach used in a fix."""
         tools_list = ["git", "editor"]
         approach_data = {
             "approach": "Code modification to resolve issue",
             "implementation": "Direct code changes",
-            "tools": cast(JSONValue, tools_list)
+            "tools": cast(JSONValue, tools_list),
         }
 
         # Look for test-related changes

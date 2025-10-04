@@ -1,8 +1,7 @@
 import os
 from pathlib import Path
 
-from tools import Edit
-from tools import Read
+from tools import Edit, Read
 
 
 def test_edit_requires_prior_read():
@@ -23,7 +22,7 @@ def test_edit_requires_prior_read():
         assert "must use Read tool" in result or "read the file first" in result.lower()
 
         # File should remain unchanged
-        with open(tmp_path, "r") as f:
+        with open(tmp_path) as f:
             assert "Hello world" in f.read()
 
     finally:
@@ -51,7 +50,7 @@ def test_edit_works_after_read():
         assert "Successfully replaced" in result
 
         # File should be changed
-        with open(tmp_path, "r") as f:
+        with open(tmp_path) as f:
             assert "Hello universe" in f.read()
 
     finally:
@@ -64,9 +63,7 @@ def test_edit_unique_replacement_and_preview(tmp_path: Path):
     # Read the file first (required precondition)
     read_tool = Read(file_path=str(p))
     read_tool.run()
-    tool = Edit(
-        file_path=str(p), old_string="hello", new_string="hi", replace_all=False
-    )
+    tool = Edit(file_path=str(p), old_string="hello", new_string="hi", replace_all=False)
     out = tool.run()
     assert "Successfully replaced 1 occurrence" in out
     assert "Preview:" in out
@@ -109,7 +106,6 @@ def test_edit_nonexistent_file():
 
 def test_edit_nonexistent_file_after_mock_read():
     """Test error when file doesn't exist after bypassing read check"""
-    from unittest.mock import patch
     from tools.edit import _global_read_files
 
     nonexistent_path = "/nonexistent/path/file.txt"
@@ -149,7 +145,7 @@ def test_edit_binary_file_error(tmp_path: Path):
     binary_file = tmp_path / "binary.bin"
     # Create a binary file with non-UTF-8 content
     with open(binary_file, "wb") as f:
-        f.write(b'\x80\x81\x82\x83')  # Invalid UTF-8 bytes
+        f.write(b"\x80\x81\x82\x83")  # Invalid UTF-8 bytes
 
     # Read the file first (required precondition)
     read_tool = Read(file_path=str(binary_file))
@@ -212,11 +208,11 @@ def test_edit_replace_all_with_multiple_preview(tmp_path: Path):
 
 def test_edit_permission_error():
     """Test handling of permission denied when writing"""
-    from unittest.mock import patch, mock_open
-
     # Create a temporary file first
     import tempfile
-    with tempfile.NamedTemporaryFile(mode='w', delete=False, suffix='.txt') as tmp:
+    from unittest.mock import mock_open, patch
+
+    with tempfile.NamedTemporaryFile(mode="w", delete=False, suffix=".txt") as tmp:
         tmp.write("test content")
         tmp_path = tmp.name
 
@@ -226,16 +222,20 @@ def test_edit_permission_error():
         read_tool.run()
 
         # Mock open to raise PermissionError when writing
-        with patch('builtins.open', side_effect=[
-            mock_open(read_data="test content").return_value,  # For reading
-            PermissionError("Permission denied")  # For writing
-        ]):
+        with patch(
+            "builtins.open",
+            side_effect=[
+                mock_open(read_data="test content").return_value,  # For reading
+                PermissionError("Permission denied"),  # For writing
+            ],
+        ):
             tool = Edit(file_path=tmp_path, old_string="test", new_string="replacement")
             out = tool.run()
             assert "Error: Permission denied writing to file" in out
 
     finally:
         import os
+
         try:
             os.unlink(tmp_path)
         except Exception:
@@ -244,11 +244,11 @@ def test_edit_permission_error():
 
 def test_edit_general_write_exception():
     """Test handling of general exceptions during file writing"""
-    from unittest.mock import patch, mock_open
-
     # Create a temporary file first
     import tempfile
-    with tempfile.NamedTemporaryFile(mode='w', delete=False, suffix='.txt') as tmp:
+    from unittest.mock import mock_open, patch
+
+    with tempfile.NamedTemporaryFile(mode="w", delete=False, suffix=".txt") as tmp:
         tmp.write("test content")
         tmp_path = tmp.name
 
@@ -258,16 +258,20 @@ def test_edit_general_write_exception():
         read_tool.run()
 
         # Mock open to raise a general exception when writing
-        with patch('builtins.open', side_effect=[
-            mock_open(read_data="test content").return_value,  # For reading
-            Exception("Disk full")  # For writing
-        ]):
+        with patch(
+            "builtins.open",
+            side_effect=[
+                mock_open(read_data="test content").return_value,  # For reading
+                Exception("Disk full"),  # For writing
+            ],
+        ):
             tool = Edit(file_path=tmp_path, old_string="test", new_string="replacement")
             out = tool.run()
             assert "Error writing to file: Disk full" in out
 
     finally:
         import os
+
         try:
             os.unlink(tmp_path)
         except Exception:
@@ -488,7 +492,7 @@ def test_edit_state_unchanged_on_read_error(tmp_path: Path):
     p.write_text(original_content, encoding="utf-8")
 
     # Mock the file to fail on read after passing precondition check
-    from unittest.mock import patch, mock_open
+    from unittest.mock import patch
 
     read_tool = Read(file_path=str(p))
     read_tool.run()
@@ -496,7 +500,7 @@ def test_edit_state_unchanged_on_read_error(tmp_path: Path):
     # Create tool but mock reading to fail
     tool = Edit(file_path=str(p), old_string="original", new_string="modified")
 
-    with patch('builtins.open', side_effect=UnicodeDecodeError('utf-8', b'', 0, 1, 'invalid')):
+    with patch("builtins.open", side_effect=UnicodeDecodeError("utf-8", b"", 0, 1, "invalid")):
         out = tool.run()
         assert "Error: Unable to decode file" in out
 
@@ -514,14 +518,17 @@ def test_edit_atomic_operation(tmp_path: Path):
     read_tool.run()
 
     # Simulate a write failure
-    from unittest.mock import patch, mock_open
+    from unittest.mock import mock_open, patch
 
     tool = Edit(file_path=str(p), old_string="test", new_string="modified")
 
-    with patch('builtins.open', side_effect=[
-        mock_open(read_data=original_content).return_value,  # Read succeeds
-        IOError("Disk error")  # Write fails
-    ]):
+    with patch(
+        "builtins.open",
+        side_effect=[
+            mock_open(read_data=original_content).return_value,  # Read succeeds
+            OSError("Disk error"),  # Write fails
+        ],
+    ):
         out = tool.run()
         assert "Error writing to file" in out
 
@@ -619,7 +626,6 @@ def test_edit_overlapping_replacements(tmp_path: Path):
 
 def test_edit_preserves_file_permissions(tmp_path: Path):
     """Test that file permissions are preserved after edit"""
-    import stat
 
     p = tmp_path / "permissions.txt"
     p.write_text("original content", encoding="utf-8")

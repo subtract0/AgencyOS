@@ -2,7 +2,7 @@ import json
 import os
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Optional, List
+from typing import Any
 
 from agency_swarm.tools import BaseTool
 from pydantic import Field
@@ -17,9 +17,11 @@ class ContextMessageHandoff(BaseTool):  # type: ignore[misc]
     target_agent: str = Field(..., description="Target agent label (e.g., PlannerAgent)")
     prompt: str = Field(..., description="Mission prompt or instruction for the recipient")
     payload: Any = Field(
-        None, alias="context", description="Structured context (dict) or raw string to accompany the prompt"
+        None,
+        alias="context",
+        description="Structured context (dict) or raw string to accompany the prompt",
     )
-    tags: Optional[List[str]] = Field(
+    tags: list[str] | None = Field(
         default=None, description="Optional tags for the handoff payload"
     )
     persist: bool = Field(
@@ -43,14 +45,12 @@ class ContextMessageHandoff(BaseTool):  # type: ignore[misc]
             "created_at": datetime.utcnow().isoformat(),
         }
 
-        saved_path: Optional[str] = None
+        saved_path: str | None = None
         if self.persist:
             try:
                 base = Path(os.getcwd()) / "logs" / "handoffs"
                 base.mkdir(parents=True, exist_ok=True)
-                filename = (
-                    f"handoff_{datetime.utcnow().strftime('%Y%m%d_%H%M%S_%f')}_{self._sanitize(target)}.json"
-                )
+                filename = f"handoff_{datetime.utcnow().strftime('%Y%m%d_%H%M%S_%f')}_{self._sanitize(target)}.json"
                 path = base / filename
                 with open(path, "w", encoding="utf-8") as f:
                     json.dump(payload, f, ensure_ascii=False, indent=2)
@@ -60,7 +60,9 @@ class ContextMessageHandoff(BaseTool):  # type: ignore[misc]
 
         prompt_snippet = prompt[:80] + ("…" if len(prompt) > 80 else "")
         context_keys = (
-            ",".join(list(payload["context"].keys())[:5]) if isinstance(payload["context"], dict) else "raw"
+            ",".join(list(payload["context"].keys())[:5])
+            if isinstance(payload["context"], dict)
+            else "raw"
         )
 
         if saved_path:

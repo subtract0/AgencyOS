@@ -7,12 +7,13 @@ for the Infinite Intelligence Amplifier.
 
 import json
 import logging
-from typing import Dict, List, Optional, Any, cast
-from shared.type_definitions.json import JSONValue
 from dataclasses import dataclass
 from datetime import datetime
+from typing import cast
 
-from agency_memory.vector_store import VectorStore, SimilarityResult
+from agency_memory.vector_store import VectorStore
+from shared.type_definitions.json import JSONValue
+
 from .coding_pattern import CodingPattern, ProblemContext
 
 logger = logging.getLogger(__name__)
@@ -39,7 +40,7 @@ class PatternStore:
     - Usage analytics and optimization
     """
 
-    def __init__(self, embedding_provider: Optional[str] = None, namespace: str = "patterns"):
+    def __init__(self, embedding_provider: str | None = None, namespace: str = "patterns"):
         """
         Initialize PatternStore.
 
@@ -49,7 +50,7 @@ class PatternStore:
         """
         self.vector_store = VectorStore(embedding_provider=embedding_provider)
         self.namespace = namespace
-        self._patterns_cache: Dict[str, CodingPattern] = {}
+        self._patterns_cache: dict[str, CodingPattern] = {}
 
         logger.info(f"PatternStore initialized with namespace: {namespace}")
 
@@ -72,7 +73,8 @@ class PatternStore:
                     "coding_pattern",
                     pattern.context.domain,
                     f"effectiveness_{pattern.outcome.effectiveness_score():.1f}",
-                ] + pattern.metadata.tags,
+                ]
+                + pattern.metadata.tags,
                 "timestamp": pattern.metadata.discovered_timestamp,
                 "metadata": {
                     "namespace": self.namespace,
@@ -86,7 +88,9 @@ class PatternStore:
             }
 
             # Add to vector store
-            self.vector_store.add_memory(pattern.metadata.pattern_id, cast(Dict[str, JSONValue], memory_record))
+            self.vector_store.add_memory(
+                pattern.metadata.pattern_id, cast(dict[str, JSONValue], memory_record)
+            )
 
             # Cache the pattern
             self._patterns_cache[pattern.metadata.pattern_id] = pattern
@@ -100,12 +104,12 @@ class PatternStore:
 
     def find_patterns(
         self,
-        query: Optional[str] = None,
-        context: Optional[ProblemContext] = None,
-        domain: Optional[str] = None,
+        query: str | None = None,
+        context: ProblemContext | None = None,
+        domain: str | None = None,
         min_effectiveness: float = 0.5,
-        max_results: int = 10
-    ) -> List[PatternSearchResult]:
+        max_results: int = 10,
+    ) -> list[PatternSearchResult]:
         """
         Find patterns matching search criteria.
 
@@ -143,7 +147,7 @@ class PatternStore:
                 pattern_memories = self.vector_store.search(
                     query=search_query,
                     namespace=self.namespace,
-                    limit=max_results * 2  # Get more for filtering
+                    limit=max_results * 2,  # Get more for filtering
                 )
 
             # Convert to PatternSearchResult objects
@@ -164,7 +168,11 @@ class PatternStore:
 
                     # Calculate relevance score
                     relevance_score_raw = memory.get("relevance_score", 0.5)
-                    relevance_score = float(relevance_score_raw) if isinstance(relevance_score_raw, (int, float)) else 0.5
+                    relevance_score = (
+                        float(relevance_score_raw)
+                        if isinstance(relevance_score_raw, (int, float))
+                        else 0.5
+                    )
 
                     # Boost score based on effectiveness
                     effectiveness_boost = pattern.outcome.effectiveness_score() * 0.3
@@ -173,12 +181,14 @@ class PatternStore:
                     # Determine match reason
                     match_reason = self._determine_match_reason(pattern, query, context, domain)
 
-                    search_results.append(PatternSearchResult(
-                        pattern=pattern,
-                        relevance_score=final_score,
-                        search_type=str(memory.get("search_type", "hybrid")),
-                        match_reason=match_reason
-                    ))
+                    search_results.append(
+                        PatternSearchResult(
+                            pattern=pattern,
+                            relevance_score=final_score,
+                            search_type=str(memory.get("search_type", "hybrid")),
+                            match_reason=match_reason,
+                        )
+                    )
 
                 except Exception as e:
                     logger.warning(f"Failed to process pattern memory: {e}")
@@ -197,7 +207,7 @@ class PatternStore:
             logger.error(f"Pattern search failed: {e}")
             return []
 
-    def get_pattern(self, pattern_id: str) -> Optional[CodingPattern]:
+    def get_pattern(self, pattern_id: str) -> CodingPattern | None:
         """Get a specific pattern by ID."""
         try:
             # Check cache first
@@ -260,12 +270,12 @@ class PatternStore:
             logger.error(f"Failed to update pattern usage {pattern_id}: {e}")
             return False
 
-    def get_patterns_by_domain(self, domain: str, limit: int = 20) -> List[CodingPattern]:
+    def get_patterns_by_domain(self, domain: str, limit: int = 20) -> list[CodingPattern]:
         """Get all patterns for a specific domain."""
         results = self.find_patterns(domain=domain, max_results=limit)
         return [result.pattern for result in results]
 
-    def get_top_patterns(self, limit: int = 10) -> List[CodingPattern]:
+    def get_top_patterns(self, limit: int = 10) -> list[CodingPattern]:
         """Get top patterns by effectiveness score."""
         try:
             all_patterns = []
@@ -291,7 +301,7 @@ class PatternStore:
             logger.error(f"Failed to get top patterns: {e}")
             return []
 
-    def find_related_patterns(self, pattern_id: str, limit: int = 5) -> List[PatternSearchResult]:
+    def find_related_patterns(self, pattern_id: str, limit: int = 5) -> list[PatternSearchResult]:
         """Find patterns related to the given pattern."""
         try:
             base_pattern = self.get_pattern(pattern_id)
@@ -312,7 +322,7 @@ class PatternStore:
             logger.error(f"Failed to find related patterns for {pattern_id}: {e}")
             return []
 
-    def get_stats(self) -> Dict[str, JSONValue]:
+    def get_stats(self) -> dict[str, JSONValue]:
         """Get pattern store statistics."""
         try:
             all_patterns = []
@@ -337,8 +347,12 @@ class PatternStore:
 
             # Calculate statistics
             if all_patterns:
-                avg_effectiveness = sum(p.outcome.effectiveness_score() for p in all_patterns) / len(all_patterns)
-                avg_success_rate = sum(p.outcome.success_rate for p in all_patterns) / len(all_patterns)
+                avg_effectiveness = sum(
+                    p.outcome.effectiveness_score() for p in all_patterns
+                ) / len(all_patterns)
+                avg_success_rate = sum(p.outcome.success_rate for p in all_patterns) / len(
+                    all_patterns
+                )
                 avg_confidence = sum(p.outcome.confidence for p in all_patterns) / len(all_patterns)
             else:
                 avg_effectiveness = avg_success_rate = avg_confidence = 0.0
@@ -363,9 +377,9 @@ class PatternStore:
     def _determine_match_reason(
         self,
         pattern: CodingPattern,
-        query: Optional[str] = None,
-        context: Optional[ProblemContext] = None,
-        domain: Optional[str] = None
+        query: str | None = None,
+        context: ProblemContext | None = None,
+        domain: str | None = None,
     ) -> str:
         """Determine why this pattern was matched."""
         reasons = []
@@ -411,11 +425,14 @@ class PatternStore:
                         continue
 
             if format == "json":
-                return json.dumps({
-                    "patterns": all_patterns,
-                    "export_timestamp": datetime.now().isoformat(),
-                    "total_count": len(all_patterns)
-                }, indent=2)
+                return json.dumps(
+                    {
+                        "patterns": all_patterns,
+                        "export_timestamp": datetime.now().isoformat(),
+                        "total_count": len(all_patterns),
+                    },
+                    indent=2,
+                )
             else:
                 raise ValueError(f"Unsupported export format: {format}")
 
@@ -447,7 +464,7 @@ class PatternStore:
             logger.error(f"Failed to clear patterns: {e}")
             return False
 
-    def search_patterns(self, query: str, limit: int = 10) -> List[CodingPattern]:
+    def search_patterns(self, query: str, limit: int = 10) -> list[CodingPattern]:
         """
         Search patterns using text query (facade compatibility).
 

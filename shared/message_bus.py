@@ -38,18 +38,20 @@ Usage:
     bus.close()
 """
 
-import sqlite3
 import asyncio
-from pathlib import Path
-from datetime import datetime
-from typing import Optional, Dict, List, Any, AsyncIterator
-from shared.type_definitions.json_value import JSONValue
-from contextlib import asynccontextmanager
 import json
+import sqlite3
+from collections.abc import AsyncIterator
+from contextlib import asynccontextmanager
+from datetime import datetime
+from pathlib import Path
+
+from shared.type_definitions.json_value import JSONValue
 
 
 class MessageBusError(Exception):
     """Base exception for message bus errors."""
+
     pass
 
 
@@ -66,15 +68,16 @@ class Message:
         processed_at: Processing completion timestamp (None if pending)
         status: Message status ('pending' or 'processed')
     """
+
     def __init__(
         self,
         queue_name: str,
         message_data: JSONValue,
         priority: int = 0,
-        correlation_id: Optional[str] = None,
-        created_at: Optional[str] = None,
-        processed_at: Optional[str] = None,
-        status: str = 'pending'
+        correlation_id: str | None = None,
+        created_at: str | None = None,
+        processed_at: str | None = None,
+        status: str = "pending",
     ):
         self.queue_name = queue_name
         self.message_data = message_data
@@ -108,16 +111,13 @@ class MessageBus:
             db_path: Path to SQLite database for message storage
         """
         self.db_path = Path(db_path)
-        self.conn: Optional[sqlite3.Connection] = None
-        self.subscribers: Dict[str, List[asyncio.Queue]] = {}
+        self.conn: sqlite3.Connection | None = None
+        self.subscribers: dict[str, list[asyncio.Queue]] = {}
         self._init_db()
 
     def _init_db(self) -> None:
         """Initialize SQLite database with message schema."""
-        self.conn = sqlite3.connect(
-            str(self.db_path),
-            check_same_thread=False
-        )
+        self.conn = sqlite3.connect(str(self.db_path), check_same_thread=False)
         self.conn.row_factory = sqlite3.Row
 
         cursor = self.conn.cursor()
@@ -153,7 +153,7 @@ class MessageBus:
         queue_name: str,
         message: JSONValue,
         priority: int = 0,
-        correlation_id: Optional[str] = None
+        correlation_id: str | None = None,
     ) -> int:
         """
         Publish message to queue.
@@ -177,13 +177,16 @@ class MessageBus:
         now = datetime.now().isoformat()
 
         cursor = self.conn.cursor()
-        cursor.execute("""
+        cursor.execute(
+            """
             INSERT INTO messages (
                 queue_name, message_data, priority, correlation_id,
                 created_at, status
             )
             VALUES (?, ?, ?, ?, ?, 'pending')
-        """, (queue_name, message_json, priority, correlation_id, now))
+        """,
+            (queue_name, message_json, priority, correlation_id, now),
+        )
 
         message_id = cursor.lastrowid
         self.conn.commit()
@@ -193,11 +196,7 @@ class MessageBus:
 
         return message_id
 
-    async def subscribe(
-        self,
-        queue_name: str,
-        batch_size: int = 1000
-    ) -> AsyncIterator[JSONValue]:
+    async def subscribe(self, queue_name: str, batch_size: int = 1000) -> AsyncIterator[JSONValue]:
         """
         Subscribe to queue and yield messages as they arrive.
 
@@ -242,10 +241,7 @@ class MessageBus:
                     del self.subscribers[queue_name]
 
     async def _notify_subscribers(
-        self,
-        queue_name: str,
-        message_id: int,
-        message: JSONValue
+        self, queue_name: str, message_id: int, message: JSONValue
     ) -> None:
         """Notify all subscribers of new message."""
         if queue_name in self.subscribers:
@@ -258,11 +254,7 @@ class MessageBus:
                     # Skip if subscriber queue is full (slow consumer)
                     pass
 
-    async def _fetch_pending(
-        self,
-        queue_name: str,
-        limit: int
-    ) -> List[JSONValue]:
+    async def _fetch_pending(self, queue_name: str, limit: int) -> list[JSONValue]:
         """
         Fetch pending messages from database.
 
@@ -277,20 +269,23 @@ class MessageBus:
             return []
 
         cursor = self.conn.cursor()
-        cursor.execute("""
+        cursor.execute(
+            """
             SELECT id, message_data
             FROM messages
             WHERE queue_name = ? AND status = 'pending'
             ORDER BY priority DESC, created_at ASC
             LIMIT ?
-        """, (queue_name, limit))
+        """,
+            (queue_name, limit),
+        )
 
         rows = cursor.fetchall()
         messages = []
 
         for row in rows:
-            message_data = json.loads(row['message_data'])
-            message_data['_message_id'] = row['id']
+            message_data = json.loads(row["message_data"])
+            message_data["_message_id"] = row["id"]
             messages.append(message_data)
 
         return messages
@@ -313,11 +308,14 @@ class MessageBus:
 
         now = datetime.now().isoformat()
         cursor = self.conn.cursor()
-        cursor.execute("""
+        cursor.execute(
+            """
             UPDATE messages
             SET status = 'processed', processed_at = ?
             WHERE id = ?
-        """, (now, message_id))
+        """,
+            (now, message_id),
+        )
 
         self.conn.commit()
 
@@ -338,18 +336,18 @@ class MessageBus:
             raise RuntimeError("Message bus not initialized")
 
         cursor = self.conn.cursor()
-        cursor.execute("""
+        cursor.execute(
+            """
             SELECT COUNT(*) as count
             FROM messages
             WHERE queue_name = ? AND status = 'pending'
-        """, (queue_name,))
+        """,
+            (queue_name,),
+        )
 
-        return cursor.fetchone()['count']
+        return cursor.fetchone()["count"]
 
-    async def get_by_correlation(
-        self,
-        correlation_id: str
-    ) -> List[JSONValue]:
+    async def get_by_correlation(self, correlation_id: str) -> list[JSONValue]:
         """
         Get all messages with given correlation ID.
 
@@ -369,19 +367,22 @@ class MessageBus:
             raise RuntimeError("Message bus not initialized")
 
         cursor = self.conn.cursor()
-        cursor.execute("""
+        cursor.execute(
+            """
             SELECT id, queue_name, message_data, status, created_at, processed_at
             FROM messages
             WHERE correlation_id = ?
             ORDER BY created_at ASC
-        """, (correlation_id,))
+        """,
+            (correlation_id,),
+        )
 
         rows = cursor.fetchall()
         messages = []
 
         for row in rows:
             msg = dict(row)
-            msg['message_data'] = json.loads(msg['message_data'])
+            msg["message_data"] = json.loads(msg["message_data"])
             messages.append(msg)
 
         return messages
@@ -407,7 +408,7 @@ class MessageBus:
 
         # Total messages
         cursor.execute("SELECT COUNT(*) as count FROM messages")
-        total = cursor.fetchone()['count']
+        total = cursor.fetchone()["count"]
 
         # By status
         cursor.execute("""
@@ -415,7 +416,7 @@ class MessageBus:
             FROM messages
             GROUP BY status
         """)
-        by_status = {row['status']: row['count'] for row in cursor.fetchall()}
+        by_status = {row["status"]: row["count"] for row in cursor.fetchall()}
 
         # By queue
         cursor.execute("""
@@ -423,24 +424,21 @@ class MessageBus:
             FROM messages
             GROUP BY queue_name, status
         """)
-        by_queue: Dict[str, Dict[str, int]] = {}
+        by_queue: dict[str, dict[str, int]] = {}
         for row in cursor.fetchall():
-            queue = row['queue_name']
+            queue = row["queue_name"]
             if queue not in by_queue:
                 by_queue[queue] = {}
-            by_queue[queue][row['status']] = row['count']
+            by_queue[queue][row["status"]] = row["count"]
 
         # Active subscribers
-        active_subscribers = {
-            queue: len(subs)
-            for queue, subs in self.subscribers.items()
-        }
+        active_subscribers = {queue: len(subs) for queue, subs in self.subscribers.items()}
 
         return {
             "total_messages": total,
             "by_status": by_status,
             "by_queue": by_queue,
-            "active_subscribers": active_subscribers
+            "active_subscribers": active_subscribers,
         }
 
     def close(self) -> None:

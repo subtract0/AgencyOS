@@ -4,12 +4,14 @@ Learning Hint Registry: simple JSON-backed mapping from observed patterns to saf
 - Kept conservative and opt-in
 - Stored under logs/learning/hints.json
 """
+
 from __future__ import annotations
 
 import json
 import os
-from dataclasses import dataclass, asdict
-from typing import Any, Dict, List, Optional, cast
+from dataclasses import asdict, dataclass
+from typing import cast
+
 from shared.type_definitions.json import JSONValue
 
 DEFAULT_PATH = os.path.join(os.getcwd(), "logs", "learning", "hints.json")
@@ -17,18 +19,18 @@ DEFAULT_PATH = os.path.join(os.getcwd(), "logs", "learning", "hints.json")
 
 @dataclass
 class Hint:
-    match: Dict[str, JSONValue]
-    action: Dict[str, JSONValue]
+    match: dict[str, JSONValue]
+    action: dict[str, JSONValue]
     confidence: float = 0.5
 
-    def to_dict(self) -> Dict[str, JSONValue]:
+    def to_dict(self) -> dict[str, JSONValue]:
         return asdict(self)
 
 
 class LearningHintRegistry:
-    def __init__(self, path: Optional[str] = None):
+    def __init__(self, path: str | None = None):
         self.path = path or DEFAULT_PATH
-        self.data: Dict[str, JSONValue] = {"version": 1, "hints": []}
+        self.data: dict[str, JSONValue] = {"version": 1, "hints": []}
         # Auto-load if exists
         self._load()
 
@@ -38,7 +40,7 @@ class LearningHintRegistry:
     def _load(self):
         try:
             if os.path.isfile(self.path):
-                with open(self.path, "r", encoding="utf-8") as f:
+                with open(self.path, encoding="utf-8") as f:
                     data = json.load(f)
                     if isinstance(data, dict) and "hints" in data:
                         self.data = data
@@ -60,13 +62,15 @@ class LearningHintRegistry:
             hints_raw.append(hint.to_dict())
         self._save()
 
-    def all(self) -> List[Hint]:
+    def all(self) -> list[Hint]:
         hints_raw = self.data.get("hints", [])
         if not isinstance(hints_raw, list):
             return []
-        return [Hint(**cast(Dict[str, JSONValue], h)) for h in hints_raw if isinstance(h, dict)]
+        return [Hint(**cast(dict[str, JSONValue], h)) for h in hints_raw if isinstance(h, dict)]
 
-    def match_for_error(self, error_type: Optional[str], error_message: Optional[str]) -> Optional[Hint]:
+    def match_for_error(
+        self, error_type: str | None, error_message: str | None
+    ) -> Hint | None:
         """Find a hint matching error type or error pattern."""
         if not self.data.get("hints"):
             return None
@@ -86,9 +90,9 @@ class LearningHintRegistry:
                 mt = (str(error_type_raw) or "").lower() if isinstance(error_type_raw, str) else ""
                 mp = m.get("error_pattern")
                 if mt and mt == et:
-                    return Hint(**cast(Dict[str, JSONValue], h))
+                    return Hint(**cast(dict[str, JSONValue], h))
                 if mp and isinstance(mp, str) and mp in em:
-                    return Hint(**cast(Dict[str, JSONValue], h))
+                    return Hint(**cast(dict[str, JSONValue], h))
             except Exception:
                 continue
         return None
@@ -98,8 +102,16 @@ class LearningHintRegistry:
         if self.data.get("hints"):
             return
         defaults = [
-            Hint(match={"error_type": "modulenotfounderror"}, action={"note": "Consider ensuring dependency is installed or extras enabled."}, confidence=0.4),
-            Hint(match={"error_pattern": "AttributeError: 'NoneType'"}, action={"note": "Add null check before attribute access."}, confidence=0.3),
+            Hint(
+                match={"error_type": "modulenotfounderror"},
+                action={"note": "Consider ensuring dependency is installed or extras enabled."},
+                confidence=0.4,
+            ),
+            Hint(
+                match={"error_pattern": "AttributeError: 'NoneType'"},
+                action={"note": "Add null check before attribute access."},
+                confidence=0.3,
+            ),
         ]
         for d in defaults:
             self.register(d)

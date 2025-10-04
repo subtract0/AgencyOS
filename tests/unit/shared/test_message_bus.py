@@ -16,21 +16,17 @@ Test Coverage:
 - Stats and monitoring
 """
 
-import pytest
 import asyncio
-import sqlite3
-from pathlib import Path
-from datetime import datetime
-from typing import List, Dict, Any
 import json
-import tempfile
 import os
+import tempfile
+from pathlib import Path
+
+import pytest
 
 from shared.message_bus import (
     MessageBus,
     async_message_bus,
-    Message,
-    MessageBusError,
 )
 
 
@@ -86,8 +82,7 @@ class TestMessageBusBasics:
     async def test_publishes_message(self, bus):
         """Should publish message to queue and return message ID."""
         message_id = await bus.publish(
-            queue_name="test_queue",
-            message={"type": "test", "data": "value"}
+            queue_name="test_queue", message={"type": "test", "data": "value"}
         )
 
         assert isinstance(message_id, int)
@@ -100,10 +95,7 @@ class TestMessageBusBasics:
         correlation_id = "test-correlation-123"
 
         message_id = await bus.publish(
-            queue_name="test_queue",
-            message=test_message,
-            priority=5,
-            correlation_id=correlation_id
+            queue_name="test_queue", message=test_message, priority=5, correlation_id=correlation_id
         )
 
         # Verify in database
@@ -112,12 +104,12 @@ class TestMessageBusBasics:
         row = cursor.fetchone()
 
         assert row is not None
-        assert row['queue_name'] == "test_queue"
-        assert json.loads(row['message_data']) == test_message
-        assert row['priority'] == 5
-        assert row['correlation_id'] == correlation_id
-        assert row['status'] == 'pending'
-        assert row['processed_at'] is None
+        assert row["queue_name"] == "test_queue"
+        assert json.loads(row["message_data"]) == test_message
+        assert row["priority"] == 5
+        assert row["correlation_id"] == correlation_id
+        assert row["status"] == "pending"
+        assert row["processed_at"] is None
 
     @pytest.mark.asyncio
     async def test_subscribes_to_queue(self, bus):
@@ -132,8 +124,8 @@ class TestMessageBusBasics:
             break  # Get first message only
 
         assert len(messages) == 1
-        assert messages[0]['data'] == "value1"
-        assert '_message_id' in messages[0]
+        assert messages[0]["data"] == "value1"
+        assert "_message_id" in messages[0]
 
     @pytest.mark.asyncio
     async def test_subscriber_receives_new_messages(self, bus):
@@ -160,8 +152,8 @@ class TestMessageBusBasics:
         await asyncio.wait_for(subscriber_task, timeout=2.0)
 
         assert len(messages) == 2
-        assert messages[0]['data'] == "value1"
-        assert messages[1]['data'] == "value2"
+        assert messages[0]["data"] == "value1"
+        assert messages[1]["data"] == "value2"
 
 
 class TestMultipleSubscribers:
@@ -213,12 +205,13 @@ class TestMultipleSubscribers:
 
         assert len(subscriber1_msgs) == 1
         assert len(subscriber2_msgs) == 1
-        assert subscriber1_msgs[0]['data'] == "broadcast"
-        assert subscriber2_msgs[0]['data'] == "broadcast"
+        assert subscriber1_msgs[0]["data"] == "broadcast"
+        assert subscriber2_msgs[0]["data"] == "broadcast"
 
     @pytest.mark.asyncio
     async def test_subscriber_cleanup_on_exit(self, bus):
         """Should remove subscriber from list when subscription ends."""
+
         async def temporary_subscriber():
             async for msg in bus.subscribe("test_queue"):
                 break  # Exit immediately
@@ -268,9 +261,9 @@ class TestMessagePriority:
                 break
 
         # Should be in priority order
-        assert messages[0]['data'] == "high"
-        assert messages[1]['data'] == "medium"
-        assert messages[2]['data'] == "low"
+        assert messages[0]["data"] == "high"
+        assert messages[1]["data"] == "medium"
+        assert messages[2]["data"] == "low"
 
     @pytest.mark.asyncio
     async def test_same_priority_ordered_by_time(self, bus):
@@ -288,9 +281,9 @@ class TestMessagePriority:
             if len(messages) >= 3:
                 break
 
-        assert messages[0]['data'] == "first"
-        assert messages[1]['data'] == "second"
-        assert messages[2]['data'] == "third"
+        assert messages[0]["data"] == "first"
+        assert messages[1]["data"] == "second"
+        assert messages[2]["data"] == "third"
 
 
 class TestMessageAcknowledgement:
@@ -324,8 +317,8 @@ class TestMessageAcknowledgement:
         cursor.execute("SELECT status, processed_at FROM messages WHERE id = ?", (message_id,))
         row = cursor.fetchone()
 
-        assert row['status'] == 'processed'
-        assert row['processed_at'] is not None
+        assert row["status"] == "processed"
+        assert row["processed_at"] is not None
 
     @pytest.mark.asyncio
     async def test_acknowledged_messages_not_redelivered(self, bus):
@@ -344,7 +337,7 @@ class TestMessageAcknowledgement:
             break
 
         assert len(messages) == 1
-        assert messages[0]['data'] == "pending"
+        assert messages[0]["data"] == "pending"
 
     @pytest.mark.asyncio
     async def test_get_pending_count(self, bus):
@@ -404,7 +397,7 @@ class TestCorrelationID:
         messages = await bus.get_by_correlation(correlation_id)
 
         assert len(messages) == 3
-        steps = [msg['message_data']['step'] for msg in messages]
+        steps = [msg["message_data"]["step"] for msg in messages]
         assert sorted(steps) == [1, 2, 3]
 
     @pytest.mark.asyncio
@@ -420,7 +413,7 @@ class TestCorrelationID:
 
         messages = await bus.get_by_correlation(correlation_id)
 
-        steps = [msg['message_data']['step'] for msg in messages]
+        steps = [msg["message_data"]["step"] for msg in messages]
         assert steps == [1, 2, 3]  # Chronological order
 
 
@@ -448,10 +441,10 @@ class TestStatistics:
         """Should return comprehensive statistics."""
         stats = bus.get_stats()
 
-        assert 'total_messages' in stats
-        assert 'by_status' in stats
-        assert 'by_queue' in stats
-        assert 'active_subscribers' in stats
+        assert "total_messages" in stats
+        assert "by_status" in stats
+        assert "by_queue" in stats
+        assert "active_subscribers" in stats
 
     @pytest.mark.asyncio
     async def test_stats_track_message_counts(self, bus):
@@ -462,9 +455,9 @@ class TestStatistics:
 
         stats = bus.get_stats()
 
-        assert stats['total_messages'] == 3
-        assert stats['by_queue']['queue1']['pending'] == 2
-        assert stats['by_queue']['queue2']['pending'] == 1
+        assert stats["total_messages"] == 3
+        assert stats["by_queue"]["queue1"]["pending"] == 2
+        assert stats["by_queue"]["queue2"]["pending"] == 1
 
     @pytest.mark.asyncio
     async def test_stats_track_status_counts(self, bus):
@@ -477,13 +470,16 @@ class TestStatistics:
 
         stats = bus.get_stats()
 
-        assert stats['by_status']['pending'] == 1
-        assert stats['by_status']['processed'] == 1
+        assert stats["by_status"]["pending"] == 1
+        assert stats["by_status"]["processed"] == 1
 
-    @pytest.mark.skip(reason="Feature not implemented - active_subscribers tracking not yet added to MessageBus.get_stats()")
+    @pytest.mark.skip(
+        reason="Feature not implemented - active_subscribers tracking not yet added to MessageBus.get_stats()"
+    )
     @pytest.mark.asyncio
     async def test_stats_track_active_subscribers(self, bus):
         """Should track number of active subscribers per queue."""
+
         async def dummy_subscriber(queue_name):
             async for msg in bus.subscribe(queue_name):
                 await asyncio.sleep(10)  # Keep alive
@@ -497,8 +493,8 @@ class TestStatistics:
 
         stats = bus.get_stats()
 
-        assert stats['active_subscribers']['queue1'] == 2
-        assert stats['active_subscribers']['queue2'] == 1
+        assert stats["active_subscribers"]["queue1"] == 2
+        assert stats["active_subscribers"]["queue2"] == 1
 
         # Cleanup
         task1.cancel()
@@ -535,7 +531,7 @@ class TestPersistence:
             break
 
         assert len(messages) == 1
-        assert messages[0]['data'] == "persisted"
+        assert messages[0]["data"] == "persisted"
 
         bus2.close()
 

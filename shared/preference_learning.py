@@ -30,36 +30,35 @@ Consolidation:
 Total: 1,259 lines → 600 lines (52% reduction)
 """
 
-import uuid
 import sqlite3
+import uuid
 from collections import defaultdict
 from datetime import datetime, timedelta
 from pathlib import Path
-from typing import Dict, List, Optional, Tuple, Any
+from typing import Any
 
 from pydantic import BaseModel, Field
 
-from shared.type_definitions.result import Result, Ok, Err
-from shared.type_definitions.json_value import JSONValue
 from shared.message_bus import MessageBus
+from shared.type_definitions.json_value import JSONValue
+from shared.type_definitions.result import Err, Ok, Result
 
 # Re-export models from trinity for compatibility
 from trinity_protocol.core.models.preferences import (
+    ContextualPattern,
+    DayOfWeek,
+    DayOfWeekPreference,
+    PreferenceRecommendation,
+    QuestionPreference,
+    QuestionType,
     ResponseRecord,
     ResponseType,
-    QuestionType,
-    TopicCategory,
     TimeOfDay,
-    DayOfWeek,
-    QuestionPreference,
     TimingPreference,
-    DayOfWeekPreference,
+    TopicCategory,
     TopicPreference,
-    ContextualPattern,
-    PreferenceRecommendation,
     calculate_confidence,
 )
-
 
 # ============================================================================
 # GENERIC MODELS (User-agnostic)
@@ -72,6 +71,7 @@ class UserPreference(BaseModel):
 
     Generic model for any user's preference.
     """
+
     category: str = Field(..., description="Preference category")
     key: str = Field(..., description="Preference key")
     value: Any = Field(..., description="Preference value")
@@ -81,6 +81,7 @@ class UserPreference(BaseModel):
 
     class Config:
         """Pydantic config."""
+
         validate_assignment = True
 
 
@@ -90,50 +91,39 @@ class UserPreferences(BaseModel):
 
     Replaces AlexPreferences with generic user support.
     """
+
     version: str = Field(default="1.0.0", description="Schema version")
     user_id: str = Field(..., description="User identifier (GENERIC)")
     last_updated: datetime = Field(
-        default_factory=datetime.now,
-        description="Last update timestamp"
+        default_factory=datetime.now, description="Last update timestamp"
     )
     total_responses: int = Field(default=0, ge=0, description="Total responses")
     overall_acceptance_rate: float = Field(
-        default=0.0,
-        ge=0.0,
-        le=1.0,
-        description="Overall YES / total"
+        default=0.0, ge=0.0, le=1.0, description="Overall YES / total"
     )
-    question_preferences: Dict[str, QuestionPreference] = Field(
-        default_factory=dict,
-        description="Preferences by question type"
+    question_preferences: dict[str, QuestionPreference] = Field(
+        default_factory=dict, description="Preferences by question type"
     )
-    timing_preferences: Dict[str, TimingPreference] = Field(
-        default_factory=dict,
-        description="Preferences by time of day"
+    timing_preferences: dict[str, TimingPreference] = Field(
+        default_factory=dict, description="Preferences by time of day"
     )
-    day_preferences: Dict[str, DayOfWeekPreference] = Field(
-        default_factory=dict,
-        description="Preferences by day of week"
+    day_preferences: dict[str, DayOfWeekPreference] = Field(
+        default_factory=dict, description="Preferences by day of week"
     )
-    topic_preferences: Dict[str, TopicPreference] = Field(
-        default_factory=dict,
-        description="Preferences by topic category"
+    topic_preferences: dict[str, TopicPreference] = Field(
+        default_factory=dict, description="Preferences by topic category"
     )
-    contextual_patterns: List[ContextualPattern] = Field(
-        default_factory=list,
-        description="Learned contextual patterns"
+    contextual_patterns: list[ContextualPattern] = Field(
+        default_factory=list, description="Learned contextual patterns"
     )
-    recommendations: List[PreferenceRecommendation] = Field(
-        default_factory=list,
-        description="Active recommendations"
+    recommendations: list[PreferenceRecommendation] = Field(
+        default_factory=list, description="Active recommendations"
     )
-    metadata: Dict[str, str] = Field(
-        default_factory=dict,
-        description="Additional metadata"
-    )
+    metadata: dict[str, str] = Field(default_factory=dict, description="Additional metadata")
 
     class Config:
         """Pydantic config."""
+
         validate_assignment = True
 
 
@@ -143,17 +133,16 @@ class PreferenceSnapshot(BaseModel):
 
     For version history and trend analysis.
     """
+
     snapshot_id: str = Field(..., description="Snapshot identifier")
-    snapshot_date: datetime = Field(
-        default_factory=datetime.now,
-        description="Snapshot timestamp"
-    )
+    snapshot_date: datetime = Field(default_factory=datetime.now, description="Snapshot timestamp")
     user_id: str = Field(..., description="User identifier")
     preferences: UserPreferences = Field(..., description="Preference state")
     snapshot_reason: str = Field(..., description="Snapshot reason")
 
     class Config:
         """Pydantic config."""
+
         frozen = True
 
 
@@ -163,14 +152,16 @@ class RecommendationResult(BaseModel):
 
     Generic result for any user.
     """
+
     should_ask: bool = Field(..., description="Should ask question")
     confidence: float = Field(..., ge=0.0, le=1.0, description="Confidence")
     reason: str = Field(..., description="Reasoning")
-    acceptance_rate: Optional[float] = Field(default=None, description="Historical rate")
+    acceptance_rate: float | None = Field(default=None, description="Historical rate")
     sample_size: int = Field(default=0, description="Sample size")
 
     class Config:
         """Pydantic config."""
+
         frozen = True
 
 
@@ -192,7 +183,7 @@ class PreferenceStore:
         user_id: str,
         db_path: str,
         use_firestore: bool = False,
-        firestore_client: Optional[Any] = None
+        firestore_client: Any | None = None,
     ):
         """
         Initialize preference store for specific user.
@@ -212,11 +203,7 @@ class PreferenceStore:
         self._init_sqlite()
 
         # In-memory cache
-        self._cache: JSONValue = {
-            "responses": [],
-            "current_preferences": None,
-            "snapshots": []
-        }
+        self._cache: JSONValue = {"responses": [], "current_preferences": None, "snapshots": []}
 
     def _init_sqlite(self) -> None:
         """Initialize SQLite database with user-specific table."""
@@ -259,10 +246,7 @@ class PreferenceStore:
         conn.commit()
         conn.close()
 
-    def store_response(
-        self,
-        response: ResponseRecord
-    ) -> Result[str, str]:
+    def store_response(self, response: ResponseRecord) -> Result[str, str]:
         """
         Store response record.
 
@@ -278,26 +262,39 @@ class PreferenceStore:
 
             table_name = f"responses_{self.user_id}"
 
-            cursor.execute(f"""
+            cursor.execute(
+                f"""
                 INSERT OR REPLACE INTO {table_name} (
                     response_id, question_id, question_text, question_type,
                     topic_category, response_type, timestamp, response_time_seconds,
                     context_before, day_of_week, time_of_day, metadata
                 ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-            """, (
-                response.response_id,
-                response.question_id,
-                response.question_text,
-                response.question_type.value if hasattr(response.question_type, 'value') else str(response.question_type),
-                response.topic_category.value if hasattr(response.topic_category, 'value') else str(response.topic_category),
-                response.response_type.value if hasattr(response.response_type, 'value') else str(response.response_type),
-                response.timestamp.isoformat(),
-                response.response_time_seconds,
-                response.context_before,
-                response.day_of_week.value if hasattr(response.day_of_week, 'value') else str(response.day_of_week),
-                response.time_of_day.value if hasattr(response.time_of_day, 'value') else str(response.time_of_day),
-                ""  # metadata placeholder
-            ))
+            """,
+                (
+                    response.response_id,
+                    response.question_id,
+                    response.question_text,
+                    response.question_type.value
+                    if hasattr(response.question_type, "value")
+                    else str(response.question_type),
+                    response.topic_category.value
+                    if hasattr(response.topic_category, "value")
+                    else str(response.topic_category),
+                    response.response_type.value
+                    if hasattr(response.response_type, "value")
+                    else str(response.response_type),
+                    response.timestamp.isoformat(),
+                    response.response_time_seconds,
+                    response.context_before,
+                    response.day_of_week.value
+                    if hasattr(response.day_of_week, "value")
+                    else str(response.day_of_week),
+                    response.time_of_day.value
+                    if hasattr(response.time_of_day, "value")
+                    else str(response.time_of_day),
+                    "",  # metadata placeholder
+                ),
+            )
 
             conn.commit()
             conn.close()
@@ -310,7 +307,7 @@ class PreferenceStore:
         except Exception as e:
             return Err(f"Failed to store response: {str(e)}")
 
-    def get_all_responses(self) -> Result[List[ResponseRecord], str]:
+    def get_all_responses(self) -> Result[list[ResponseRecord], str]:
         """
         Get all responses for user.
 
@@ -335,17 +332,17 @@ class PreferenceStore:
             responses = []
             for row in rows:
                 response = ResponseRecord(
-                    response_id=row['response_id'],
-                    question_id=row['question_id'],
-                    question_text=row['question_text'],
-                    question_type=QuestionType(row['question_type']),
-                    topic_category=TopicCategory(row['topic_category']),
-                    response_type=ResponseType(row['response_type']),
-                    timestamp=datetime.fromisoformat(row['timestamp']),
-                    response_time_seconds=row['response_time_seconds'],
-                    context_before=row['context_before'] or "",
-                    day_of_week=DayOfWeek(row['day_of_week']),
-                    time_of_day=TimeOfDay(row['time_of_day'])
+                    response_id=row["response_id"],
+                    question_id=row["question_id"],
+                    question_text=row["question_text"],
+                    question_type=QuestionType(row["question_type"]),
+                    topic_category=TopicCategory(row["topic_category"]),
+                    response_type=ResponseType(row["response_type"]),
+                    timestamp=datetime.fromisoformat(row["timestamp"]),
+                    response_time_seconds=row["response_time_seconds"],
+                    context_before=row["context_before"] or "",
+                    day_of_week=DayOfWeek(row["day_of_week"]),
+                    time_of_day=TimeOfDay(row["time_of_day"]),
                 )
                 responses.append(response)
 
@@ -354,10 +351,7 @@ class PreferenceStore:
         except Exception as e:
             return Err(f"Failed to get responses: {str(e)}")
 
-    def create_snapshot(
-        self,
-        snapshot_reason: str
-    ) -> Result[PreferenceSnapshot, str]:
+    def create_snapshot(self, snapshot_reason: str) -> Result[PreferenceSnapshot, str]:
         """
         Create preference snapshot.
 
@@ -378,7 +372,7 @@ class PreferenceStore:
                 snapshot_date=datetime.now(),
                 user_id=self.user_id,
                 preferences=self._cache["current_preferences"],
-                snapshot_reason=snapshot_reason
+                snapshot_reason=snapshot_reason,
             )
 
             # Store in SQLite
@@ -387,16 +381,19 @@ class PreferenceStore:
 
             table_name = f"snapshots_{self.user_id}"
 
-            cursor.execute(f"""
+            cursor.execute(
+                f"""
                 INSERT INTO {table_name} (
                     snapshot_id, snapshot_date, preferences_json, snapshot_reason
                 ) VALUES (?, ?, ?, ?)
-            """, (
-                snapshot.snapshot_id,
-                snapshot.snapshot_date.isoformat(),
-                snapshot.preferences.json(),
-                snapshot.snapshot_reason
-            ))
+            """,
+                (
+                    snapshot.snapshot_id,
+                    snapshot.snapshot_date.isoformat(),
+                    snapshot.preferences.json(),
+                    snapshot.snapshot_reason,
+                ),
+            )
 
             conn.commit()
             conn.close()
@@ -430,8 +427,16 @@ class PreferenceLearner:
     """
 
     DEFAULT_CONTEXT_KEYWORDS = [
-        "meeting", "call", "email", "code", "system",
-        "project", "client", "work", "urgent", "important"
+        "meeting",
+        "call",
+        "email",
+        "code",
+        "system",
+        "project",
+        "client",
+        "work",
+        "urgent",
+        "important",
     ]
 
     def __init__(
@@ -442,7 +447,7 @@ class PreferenceLearner:
         min_confidence: float = 0.7,
         min_sample_size: int = 10,
         trend_window_days: int = 7,
-        context_keywords: Optional[List[str]] = None
+        context_keywords: list[str] | None = None,
     ):
         """
         Initialize preference learner for user.
@@ -536,38 +541,41 @@ class PreferenceLearner:
 
         if not type_pref:
             # No data yet
-            return Ok(RecommendationResult(
-                should_ask=True,
-                confidence=0.5,
-                reason="Insufficient data for this question type",
-                sample_size=0
-            ))
+            return Ok(
+                RecommendationResult(
+                    should_ask=True,
+                    confidence=0.5,
+                    reason="Insufficient data for this question type",
+                    sample_size=0,
+                )
+            )
 
         # Check confidence
         if type_pref.confidence < self.min_confidence:
-            return Ok(RecommendationResult(
-                should_ask=True,
-                confidence=type_pref.confidence,
-                reason=f"Low confidence ({type_pref.confidence:.1%}), need more data",
-                acceptance_rate=type_pref.acceptance_rate,
-                sample_size=type_pref.total_asked
-            ))
+            return Ok(
+                RecommendationResult(
+                    should_ask=True,
+                    confidence=type_pref.confidence,
+                    reason=f"Low confidence ({type_pref.confidence:.1%}), need more data",
+                    acceptance_rate=type_pref.acceptance_rate,
+                    sample_size=type_pref.total_asked,
+                )
+            )
 
         # Recommend based on acceptance rate
         should_ask = type_pref.acceptance_rate >= 0.5
 
-        return Ok(RecommendationResult(
-            should_ask=should_ask,
-            confidence=type_pref.confidence,
-            reason=f"Based on {type_pref.total_asked} samples, {type_pref.acceptance_rate:.1%} acceptance rate",
-            acceptance_rate=type_pref.acceptance_rate,
-            sample_size=type_pref.total_asked
-        ))
+        return Ok(
+            RecommendationResult(
+                should_ask=should_ask,
+                confidence=type_pref.confidence,
+                reason=f"Based on {type_pref.total_asked} samples, {type_pref.acceptance_rate:.1%} acceptance rate",
+                acceptance_rate=type_pref.acceptance_rate,
+                sample_size=type_pref.total_asked,
+            )
+        )
 
-    def _analyze_responses(
-        self,
-        responses: List[ResponseRecord]
-    ) -> UserPreferences:
+    def _analyze_responses(self, responses: list[ResponseRecord]) -> UserPreferences:
         """Analyze responses and generate preferences."""
         if not responses:
             return UserPreferences(user_id=self.user_id)
@@ -594,15 +602,14 @@ class PreferenceLearner:
             day_preferences=day_prefs,
             topic_preferences=topic_prefs,
             contextual_patterns=contextual,
-            recommendations=[]
+            recommendations=[],
         )
 
     def _analyze_question_types(
-        self,
-        responses: List[ResponseRecord]
-    ) -> Dict[str, QuestionPreference]:
+        self, responses: list[ResponseRecord]
+    ) -> dict[str, QuestionPreference]:
         """Analyze by question type."""
-        by_type: Dict[str, List[ResponseRecord]] = defaultdict(list)
+        by_type: dict[str, list[ResponseRecord]] = defaultdict(list)
         for r in responses:
             q_type = r.question_type if isinstance(r.question_type, str) else r.question_type.value
             by_type[q_type].append(r)
@@ -613,7 +620,9 @@ class PreferenceLearner:
             yes_count = sum(1 for r in type_responses if r.response_type == ResponseType.YES)
             no_count = sum(1 for r in type_responses if r.response_type == ResponseType.NO)
             later_count = sum(1 for r in type_responses if r.response_type == ResponseType.LATER)
-            ignored_count = sum(1 for r in type_responses if r.response_type == ResponseType.IGNORED)
+            ignored_count = sum(
+                1 for r in type_responses if r.response_type == ResponseType.IGNORED
+            )
 
             rate = yes_count / total if total > 0 else 0.0
             conf = calculate_confidence(total, self.min_sample_size)
@@ -627,17 +636,14 @@ class PreferenceLearner:
                 ignored_count=ignored_count,
                 acceptance_rate=rate,
                 confidence=conf,
-                last_updated=datetime.now()
+                last_updated=datetime.now(),
             )
 
         return prefs
 
-    def _analyze_timing(
-        self,
-        responses: List[ResponseRecord]
-    ) -> Dict[str, TimingPreference]:
+    def _analyze_timing(self, responses: list[ResponseRecord]) -> dict[str, TimingPreference]:
         """Analyze by time of day."""
-        by_time: Dict[str, List[ResponseRecord]] = defaultdict(list)
+        by_time: dict[str, list[ResponseRecord]] = defaultdict(list)
         for r in responses:
             time_str = r.time_of_day if isinstance(r.time_of_day, str) else r.time_of_day.value
             by_time[time_str].append(r)
@@ -654,17 +660,14 @@ class PreferenceLearner:
                 total_asked=total,
                 yes_count=yes_count,
                 acceptance_rate=rate,
-                confidence=conf
+                confidence=conf,
             )
 
         return prefs
 
-    def _analyze_days(
-        self,
-        responses: List[ResponseRecord]
-    ) -> Dict[str, DayOfWeekPreference]:
+    def _analyze_days(self, responses: list[ResponseRecord]) -> dict[str, DayOfWeekPreference]:
         """Analyze by day of week."""
-        by_day: Dict[str, List[ResponseRecord]] = defaultdict(list)
+        by_day: dict[str, list[ResponseRecord]] = defaultdict(list)
         for r in responses:
             day_str = r.day_of_week if isinstance(r.day_of_week, str) else r.day_of_week.value
             by_day[day_str].append(r)
@@ -681,19 +684,18 @@ class PreferenceLearner:
                 total_asked=total,
                 yes_count=yes_count,
                 acceptance_rate=rate,
-                confidence=conf
+                confidence=conf,
             )
 
         return prefs
 
-    def _analyze_topics(
-        self,
-        responses: List[ResponseRecord]
-    ) -> Dict[str, TopicPreference]:
+    def _analyze_topics(self, responses: list[ResponseRecord]) -> dict[str, TopicPreference]:
         """Analyze by topic."""
-        by_topic: Dict[str, List[ResponseRecord]] = defaultdict(list)
+        by_topic: dict[str, list[ResponseRecord]] = defaultdict(list)
         for r in responses:
-            topic_str = r.topic_category if isinstance(r.topic_category, str) else r.topic_category.value
+            topic_str = (
+                r.topic_category if isinstance(r.topic_category, str) else r.topic_category.value
+            )
             by_topic[topic_str].append(r)
 
         prefs = {}
@@ -712,29 +714,24 @@ class PreferenceLearner:
                 no_count=no_count,
                 acceptance_rate=rate,
                 confidence=conf,
-                trend=trend
+                trend=trend,
             )
 
         return prefs
 
-    def _analyze_context(
-        self,
-        responses: List[ResponseRecord]
-    ) -> List[ContextualPattern]:
+    def _analyze_context(self, responses: list[ResponseRecord]) -> list[ContextualPattern]:
         """Analyze contextual patterns."""
-        patterns: Dict[Tuple[str, ...], Tuple[int, int]] = defaultdict(lambda: (0, 0))
+        patterns: dict[tuple[str, ...], tuple[int, int]] = defaultdict(lambda: (0, 0))
 
         for response in responses:
             context = response.context_before.lower()
-            found_keywords = tuple(
-                sorted([kw for kw in self.context_keywords if kw in context])
-            )
+            found_keywords = tuple(sorted([kw for kw in self.context_keywords if kw in context]))
 
             if found_keywords:
                 occurrence, yes_count = patterns[found_keywords]
                 patterns[found_keywords] = (
                     occurrence + 1,
-                    yes_count + (1 if response.response_type == ResponseType.YES else 0)
+                    yes_count + (1 if response.response_type == ResponseType.YES else 0),
                 )
 
         result = []
@@ -754,16 +751,13 @@ class PreferenceLearner:
                     yes_count=yes_count,
                     acceptance_rate=rate,
                     confidence=conf,
-                    examples=[]
+                    examples=[],
                 )
                 result.append(pattern)
 
         return result
 
-    def _detect_trend(
-        self,
-        responses: List[ResponseRecord]
-    ) -> str:
+    def _detect_trend(self, responses: list[ResponseRecord]) -> str:
         """Detect trend (increasing/stable/decreasing)."""
         if len(responses) < 4:
             return "stable"
@@ -793,24 +787,35 @@ class PreferenceLearner:
     def _publish_telemetry(self, response: ResponseRecord) -> None:
         """Publish telemetry event."""
         # Extract enum values safely
-        response_type_str = response.response_type if isinstance(response.response_type, str) else response.response_type.value
-        question_type_str = response.question_type if isinstance(response.question_type, str) else response.question_type.value
+        response_type_str = (
+            response.response_type
+            if isinstance(response.response_type, str)
+            else response.response_type.value
+        )
+        question_type_str = (
+            response.question_type
+            if isinstance(response.question_type, str)
+            else response.question_type.value
+        )
 
         # Async publish (fire and forget)
         import asyncio
+
         try:
             loop = asyncio.get_event_loop()
-            loop.create_task(self.message_bus.publish(
-                "telemetry_stream",
-                {
-                    "event_type": f"response_{response_type_str.lower()}",
-                    "user_id": self.user_id,
-                    "question_type": question_type_str,
-                    "response_type": response_type_str,
-                    "response_time_seconds": response.response_time_seconds,
-                    "timestamp": response.timestamp.isoformat()
-                }
-            ))
+            loop.create_task(
+                self.message_bus.publish(
+                    "telemetry_stream",
+                    {
+                        "event_type": f"response_{response_type_str.lower()}",
+                        "user_id": self.user_id,
+                        "question_type": question_type_str,
+                        "response_type": response_type_str,
+                        "response_time_seconds": response.response_time_seconds,
+                        "timestamp": response.timestamp.isoformat(),
+                    },
+                )
+            )
         except RuntimeError:
             # No event loop - skip telemetry
             pass

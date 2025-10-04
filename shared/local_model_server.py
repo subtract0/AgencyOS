@@ -14,12 +14,13 @@ Constitutional Compliance:
 - Hybrid Doctrine: Local default, cloud escalation for critical tasks
 """
 
-import httpx
-from typing import Optional, Dict, Any, List, AsyncIterator
-from shared.type_definitions import JSONValue
-import json
 import asyncio
-from datetime import datetime
+import json
+from collections.abc import AsyncIterator
+
+import httpx
+
+from shared.type_definitions import JSONValue
 
 
 class OllamaClient:
@@ -30,10 +31,7 @@ class OllamaClient:
     """
 
     def __init__(
-        self,
-        base_url: str = "http://localhost:11434",
-        timeout: float = 120.0,
-        max_retries: int = 3
+        self, base_url: str = "http://localhost:11434", timeout: float = 120.0, max_retries: int = 3
     ):
         """
         Initialize Ollama client.
@@ -46,7 +44,7 @@ class OllamaClient:
         self.base_url = base_url.rstrip("/")
         self.timeout = timeout
         self.max_retries = max_retries
-        self._client: Optional[httpx.AsyncClient] = None
+        self._client: httpx.AsyncClient | None = None
 
     async def _get_client(self) -> httpx.AsyncClient:
         """Get or create async HTTP client."""
@@ -58,10 +56,10 @@ class OllamaClient:
         self,
         model: str,
         prompt: str,
-        system: Optional[str] = None,
+        system: str | None = None,
         temperature: float = 0.3,
-        max_tokens: Optional[int] = None,
-        stream: bool = False
+        max_tokens: int | None = None,
+        stream: bool = False,
     ) -> JSONValue:
         """
         Generate completion from local model.
@@ -89,7 +87,7 @@ class OllamaClient:
             "stream": stream,
             "options": {
                 "temperature": temperature,
-            }
+            },
         }
 
         if system:
@@ -100,10 +98,7 @@ class OllamaClient:
 
         for attempt in range(self.max_retries):
             try:
-                response = await client.post(
-                    f"{self.base_url}/api/generate",
-                    json=payload
-                )
+                response = await client.post(f"{self.base_url}/api/generate", json=payload)
                 response.raise_for_status()
 
                 if stream:
@@ -115,7 +110,7 @@ class OllamaClient:
                         "response": result.get("response", ""),
                         "model": result.get("model", model),
                         "created_at": result.get("created_at"),
-                        "done": result.get("done", True)
+                        "done": result.get("done", True),
                     }
 
             except httpx.ConnectError as e:
@@ -123,19 +118,17 @@ class OllamaClient:
                     raise OllamaConnectionError(
                         f"Cannot connect to Ollama at {self.base_url}"
                     ) from e
-                await asyncio.sleep(2 ** attempt)  # Exponential backoff
+                await asyncio.sleep(2**attempt)  # Exponential backoff
 
             except httpx.HTTPStatusError as e:
                 if attempt == self.max_retries - 1:
-                    raise OllamaGenerationError(
-                        f"Generation failed: {e.response.text}"
-                    ) from e
-                await asyncio.sleep(2 ** attempt)
+                    raise OllamaGenerationError(f"Generation failed: {e.response.text}") from e
+                await asyncio.sleep(2**attempt)
 
             except Exception as e:
                 if attempt == self.max_retries - 1:
                     raise OllamaGenerationError(f"Unexpected error: {str(e)}") from e
-                await asyncio.sleep(2 ** attempt)
+                await asyncio.sleep(2**attempt)
 
         # Should never reach here due to raises in loop
         raise OllamaGenerationError("Max retries exceeded")
@@ -144,9 +137,9 @@ class OllamaClient:
         self,
         model: str,
         prompt: str,
-        system: Optional[str] = None,
+        system: str | None = None,
         temperature: float = 0.3,
-        max_tokens: Optional[int] = None
+        max_tokens: int | None = None,
     ) -> AsyncIterator[str]:
         """
         Generate streaming completion from local model.
@@ -167,7 +160,7 @@ class OllamaClient:
             system=system,
             temperature=temperature,
             max_tokens=max_tokens,
-            stream=True
+            stream=True,
         )
 
         response_obj = result["response_obj"]
@@ -183,7 +176,7 @@ class OllamaClient:
                 except json.JSONDecodeError:
                     continue
 
-    async def list_models(self) -> List[JSONValue]:
+    async def list_models(self) -> list[JSONValue]:
         """
         List available models on Ollama server.
 
@@ -237,9 +230,7 @@ class LocalModelServer:
     """
 
     def __init__(
-        self,
-        ollama_url: str = "http://localhost:11434",
-        enable_cloud_fallback: bool = True
+        self, ollama_url: str = "http://localhost:11434", enable_cloud_fallback: bool = True
     ):
         """
         Initialize local model server.
@@ -250,7 +241,7 @@ class LocalModelServer:
         """
         self.ollama = OllamaClient(base_url=ollama_url)
         self.enable_cloud_fallback = enable_cloud_fallback
-        self._local_available: Optional[bool] = None
+        self._local_available: bool | None = None
 
     async def is_local_available(self) -> bool:
         """
@@ -267,10 +258,10 @@ class LocalModelServer:
         self,
         prompt: str,
         model: str = "qwen2.5-coder:1.5b",
-        system: Optional[str] = None,
+        system: str | None = None,
         temperature: float = 0.3,
-        max_tokens: Optional[int] = 512,
-        prefer_local: bool = True
+        max_tokens: int | None = 512,
+        prefer_local: bool = True,
     ) -> str:
         """
         Generate completion with automatic local/cloud routing.
@@ -295,7 +286,7 @@ class LocalModelServer:
                         prompt=prompt,
                         system=system,
                         temperature=temperature,
-                        max_tokens=max_tokens
+                        max_tokens=max_tokens,
                     )
                     return result["response"]
 
@@ -306,20 +297,20 @@ class LocalModelServer:
             else:
                 # Local not available - check if we should try cloud
                 if not self.enable_cloud_fallback:
-                    raise OllamaConnectionError("Local models not available and cloud fallback is disabled")
+                    raise OllamaConnectionError(
+                        "Local models not available and cloud fallback is disabled"
+                    )
 
         # Cloud fallback (to be implemented with actual API clients)
-        raise NotImplementedError(
-            "Cloud fallback not yet implemented. Ensure Ollama is running."
-        )
+        raise NotImplementedError("Cloud fallback not yet implemented. Ensure Ollama is running.")
 
     async def generate_stream(
         self,
         prompt: str,
         model: str = "qwen2.5-coder:1.5b",
-        system: Optional[str] = None,
+        system: str | None = None,
         temperature: float = 0.3,
-        max_tokens: Optional[int] = 512
+        max_tokens: int | None = 512,
     ) -> AsyncIterator[str]:
         """
         Generate streaming completion.
@@ -342,11 +333,11 @@ class LocalModelServer:
             prompt=prompt,
             system=system,
             temperature=temperature,
-            max_tokens=max_tokens
+            max_tokens=max_tokens,
         ):
             yield chunk
 
-    async def get_available_models(self) -> List[str]:
+    async def get_available_models(self) -> list[str]:
         """
         Get list of available model names.
 
@@ -374,9 +365,11 @@ class LocalModelServer:
 
 class OllamaConnectionError(Exception):
     """Raised when cannot connect to Ollama server."""
+
     pass
 
 
 class OllamaGenerationError(Exception):
     """Raised when generation fails."""
+
     pass

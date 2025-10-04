@@ -6,13 +6,15 @@ Tests multi-agent memory sharing, prioritization, pruning,
 and cross-agent retrieval capabilities.
 """
 
-import pytest
 from datetime import datetime, timedelta
-from agency_memory.swarm_memory import SwarmMemory, SwarmMemoryStore, MemoryPriority
+
+import pytest
+
+from agency_memory.swarm_memory import MemoryPriority, SwarmMemory, SwarmMemoryStore
 from agency_memory.vector_store import (
-    VectorStore,
-    SimilarityResult,
     EnhancedSwarmMemoryStore,
+    SimilarityResult,
+    VectorStore,
 )
 
 
@@ -47,15 +49,9 @@ class TestSwarmMemoryStore:
         store = SwarmMemoryStore()
 
         # Store memories with different priorities
-        store.store(
-            "critical", "Critical task", ["urgent"], priority=MemoryPriority.CRITICAL
-        )
-        store.store(
-            "normal", "Normal task", ["routine"], priority=MemoryPriority.NORMAL
-        )
-        store.store(
-            "low", "Low priority task", ["optional"], priority=MemoryPriority.LOW
-        )
+        store.store("critical", "Critical task", ["urgent"], priority=MemoryPriority.CRITICAL)
+        store.store("normal", "Normal task", ["routine"], priority=MemoryPriority.NORMAL)
+        store.store("low", "Low priority task", ["optional"], priority=MemoryPriority.LOW)
 
         # Search with minimum priority filter
         high_priority = store.search(
@@ -87,16 +83,12 @@ class TestSwarmMemoryStore:
         )
 
         # Agent B should see shared memory
-        agent_b_results = store.search(
-            ["shared"], agent_id="agent_b", include_shared=True
-        )
+        agent_b_results = store.search(["shared"], agent_id="agent_b", include_shared=True)
         assert agent_b_results.total_count == 1
         assert agent_b_results.records[0].key == "shared_knowledge"
 
         # Agent B should not see private memory
-        agent_b_private = store.search(
-            ["private"], agent_id="agent_b", include_shared=True
-        )
+        agent_b_private = store.search(["private"], agent_id="agent_b", include_shared=True)
         assert agent_b_private.total_count == 0
 
     def test_memory_access_tracking(self):
@@ -191,9 +183,7 @@ class TestSwarmMemoryStore:
         store = SwarmMemoryStore()
 
         # Add memories for multiple agents
-        store.store(
-            "task1", "Agent A task", ["work"], agent_id="agent_a", is_shared=True
-        )
+        store.store("task1", "Agent A task", ["work"], agent_id="agent_a", is_shared=True)
         store.store("task2", "Agent B task", ["work"], agent_id="agent_b")
 
         overview = store.get_swarm_overview()
@@ -259,9 +249,7 @@ class TestSwarmMemory:
         memory = SwarmMemory(agent_id="agent_a")
 
         # Store shared memory as different agent
-        memory.store(
-            "shared", "Shared info", ["knowledge"], is_shared=True, agent_id="agent_b"
-        )
+        memory.store("shared", "Shared info", ["knowledge"], is_shared=True, agent_id="agent_b")
 
         # Store private memory
         memory.store("private", "Private info", ["knowledge"])
@@ -440,16 +428,12 @@ class TestEnhancedSwarmMemoryStore:
         )
 
         # Test tag-only search
-        tag_results = enhanced_store.combined_search(
-            tags=["python"], agent_id="agent_a"
-        )
+        tag_results = enhanced_store.combined_search(tags=["python"], agent_id="agent_a")
         assert len(tag_results) == 1
         assert tag_results[0]["key"] == "task1"
 
         # Test query-only search (falls back to keyword search)
-        query_results = enhanced_store.combined_search(
-            query="programming", agent_id="agent_a"
-        )
+        query_results = enhanced_store.combined_search(query="programming", agent_id="agent_a")
         assert len(query_results) > 0
 
     def test_delegation_to_swarm_store(self):
@@ -559,9 +543,7 @@ class TestIntegrationScenarios:
 
             # Should have created a summary
             memories_after = memory.get_all()
-            summary_memories = [
-                m for m in memories_after if "summary" in m.get("tags", [])
-            ]
+            summary_memories = [m for m in memories_after if "summary" in m.get("tags", [])]
             assert len(summary_memories) > 0
 
     def test_priority_based_search(self):
@@ -596,9 +578,7 @@ class TestIntegrationScenarios:
         assert urgent_items[0]["key"] == "urgent_bug"
 
         # Search for all items
-        all_items = memory.search(
-            ["bug", "feature", "cleanup"], min_priority=MemoryPriority.LOW
-        )
+        all_items = memory.search(["bug", "feature", "cleanup"], min_priority=MemoryPriority.LOW)
         assert len(all_items) == 3
 
     def test_cross_agent_knowledge_sharing(self):

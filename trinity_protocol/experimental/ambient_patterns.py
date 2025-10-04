@@ -48,19 +48,17 @@ Required steps:
 - Article IV: Persist patterns to Firestore for learning ⚠️ (privacy concerns)
 """
 
-from typing import Optional, Dict, Any, List
-from datetime import datetime, timedelta
 import re
+from datetime import datetime
 
-from trinity_protocol.experimental.conversation_context import ConversationContext
+from shared.persistent_store import PersistentStore
 from trinity_protocol.core.models.patterns import (
     DetectedPattern,
-    PatternType,
-    PatternContext,
     IntentClassification,
-    RecurrenceMetrics
+    PatternType,
+    RecurrenceMetrics,
 )
-from shared.persistent_store import PersistentStore
+from trinity_protocol.experimental.conversation_context import ConversationContext
 
 
 class AmbientPatternDetector:
@@ -79,7 +77,7 @@ class AmbientPatternDetector:
         conversation_context: ConversationContext,
         pattern_store: PersistentStore,
         recurrence_threshold: int = 3,
-        min_confidence: float = 0.7
+        min_confidence: float = 0.7,
     ):
         """
         Initialize ambient pattern detector.
@@ -103,51 +101,83 @@ class AmbientPatternDetector:
         self.pattern_keywords = {
             PatternType.FRUSTRATION: {
                 "keywords": [
-                    "frustrat", "annoying", "taking forever", "not working",
-                    "broken", "confusing", "waste of time", "stuck",
-                    "why doesn't", "this should work", "unclear"
+                    "frustrat",
+                    "annoying",
+                    "taking forever",
+                    "not working",
+                    "broken",
+                    "confusing",
+                    "waste of time",
+                    "stuck",
+                    "why doesn't",
+                    "this should work",
+                    "unclear",
                 ],
-                "weight": 0.3
+                "weight": 0.3,
             },
             PatternType.ACTION_ITEM: {
                 "keywords": [
-                    "remind me", "need to", "have to", "must",
-                    "todo", "task", "action item", "make sure",
-                    "don't forget", "remember to"
+                    "remind me",
+                    "need to",
+                    "have to",
+                    "must",
+                    "todo",
+                    "task",
+                    "action item",
+                    "make sure",
+                    "don't forget",
+                    "remember to",
                 ],
-                "weight": 0.35
+                "weight": 0.35,
             },
             PatternType.PROJECT_MENTION: {
                 "keywords": [
-                    "working on", "project", "building", "implementing",
-                    "developing", "creating", "need to finish", "deadline",
-                    "completing", "wrapping up"
+                    "working on",
+                    "project",
+                    "building",
+                    "implementing",
+                    "developing",
+                    "creating",
+                    "need to finish",
+                    "deadline",
+                    "completing",
+                    "wrapping up",
                 ],
-                "weight": 0.3
+                "weight": 0.3,
             },
             PatternType.FEATURE_REQUEST: {
                 "keywords": [
-                    "i need", "can we add", "would be nice", "feature",
-                    "please implement", "wish i could", "automate",
-                    "make it easier", "improve"
+                    "i need",
+                    "can we add",
+                    "would be nice",
+                    "feature",
+                    "please implement",
+                    "wish i could",
+                    "automate",
+                    "make it easier",
+                    "improve",
                 ],
-                "weight": 0.35
+                "weight": 0.35,
             },
             PatternType.WORKFLOW_BOTTLENECK: {
                 "keywords": [
-                    "manually", "repetitive", "tedious", "time-consuming",
-                    "slow process", "keeps happening", "every time",
-                    "always have to", "inefficient"
+                    "manually",
+                    "repetitive",
+                    "tedious",
+                    "time-consuming",
+                    "slow process",
+                    "keeps happening",
+                    "every time",
+                    "always have to",
+                    "inefficient",
                 ],
-                "weight": 0.3
-            }
+                "weight": 0.3,
+            },
         }
 
     def detect_patterns(
-        self,
-        transcription_text: str,
-        timestamp: datetime
-    ) -> List[DetectedPattern]:
+        self, transcription_text: str, timestamp: datetime
+    ) -> list[DetectedPattern]:
         """
         Detect patterns from new transcription.
 
@@ -161,7 +191,7 @@ class AmbientPatternDetector:
         Returns:
             List of detected patterns above confidence threshold
         """
-        detected_patterns: List[DetectedPattern] = []
+        detected_patterns: list[DetectedPattern] = []
 
         # Extract topics from transcription
         topics = self._extract_topics(transcription_text)
@@ -176,21 +206,14 @@ class AmbientPatternDetector:
 
         # Check for specific pattern types
         for pattern_type in self.pattern_keywords:
-            pattern = self._detect_pattern_type(
-                pattern_type,
-                transcription_text,
-                timestamp
-            )
+            pattern = self._detect_pattern_type(pattern_type, transcription_text, timestamp)
             if pattern:
                 detected_patterns.append(pattern)
 
         # Filter by confidence threshold
-        return [
-            p for p in detected_patterns
-            if p.confidence >= self.min_confidence
-        ]
+        return [p for p in detected_patterns if p.confidence >= self.min_confidence]
 
-    def _extract_topics(self, text: str) -> List[str]:
+    def _extract_topics(self, text: str) -> list[str]:
         """
         Extract topics from transcription text.
 
@@ -210,30 +233,24 @@ class AmbientPatternDetector:
         topics.extend(quotes)
 
         # Extract capitalized phrases (likely proper nouns/topics)
-        capitalized_pattern = r'\b[A-Z][a-z]+(?:\s+[A-Z][a-z]+)*\b'
+        capitalized_pattern = r"\b[A-Z][a-z]+(?:\s+[A-Z][a-z]+)*\b"
         capitalized = re.findall(capitalized_pattern, text)
         topics.extend(capitalized)
 
         # Extract key noun phrases (simple pattern)
         # "the X", "my X", "our X"
-        noun_phrase_pattern = r'\b(?:the|my|our|this|that)\s+([a-z]+(?:\s+[a-z]+){0,2})\b'
+        noun_phrase_pattern = r"\b(?:the|my|our|this|that)\s+([a-z]+(?:\s+[a-z]+){0,2})\b"
         noun_phrases = re.findall(noun_phrase_pattern, text.lower())
         topics.extend(noun_phrases)
 
         # Deduplicate and filter short topics
-        unique_topics = list(set(
-            topic.strip()
-            for topic in topics
-            if len(topic.strip()) > 3
-        ))
+        unique_topics = list(set(topic.strip() for topic in topics if len(topic.strip()) > 3))
 
         return unique_topics
 
     def _detect_recurring_topics(
-        self,
-        topics: List[str],
-        timestamp: datetime
-    ) -> List[DetectedPattern]:
+        self, topics: list[str], timestamp: datetime
+    ) -> list[DetectedPattern]:
         """
         Detect recurring topics (mentioned multiple times).
 
@@ -248,26 +265,20 @@ class AmbientPatternDetector:
 
         for topic in topics:
             mention_count = self.conversation_context.get_topic_mention_count(
-                topic,
-                time_window_minutes=self.conversation_context.window_minutes
+                topic, time_window_minutes=self.conversation_context.window_minutes
             )
 
             # Check if meets recurrence threshold
             if mention_count >= self.recurrence_threshold:
                 # Get topic cluster for details
-                cluster = self.conversation_context.get_topic_cluster(
-                    topic,
-                    time_window_hours=24.0
-                )
+                cluster = self.conversation_context.get_topic_cluster(topic, time_window_hours=24.0)
 
                 if cluster:
                     # Calculate confidence based on recurrence
                     confidence = min(1.0, 0.6 + (mention_count / 10.0))
 
                     # Generate context summary
-                    context_summary = self.conversation_context.get_context_summary(
-                        max_length=500
-                    )
+                    context_summary = self.conversation_context.get_context_summary(max_length=500)
 
                     pattern = DetectedPattern(
                         pattern_id=f"recurring_{topic}_{int(timestamp.timestamp())}",
@@ -279,7 +290,7 @@ class AmbientPatternDetector:
                         last_mention=timestamp,
                         context_summary=context_summary,
                         keywords=[topic],
-                        urgency="MEDIUM" if mention_count >= 5 else "LOW"
+                        urgency="MEDIUM" if mention_count >= 5 else "LOW",
                     )
 
                     patterns.append(pattern)
@@ -287,11 +298,8 @@ class AmbientPatternDetector:
         return patterns
 
     def _detect_pattern_type(
-        self,
-        pattern_type: PatternType,
-        text: str,
-        timestamp: datetime
-    ) -> Optional[DetectedPattern]:
+        self, pattern_type: PatternType, text: str, timestamp: datetime
+    ) -> DetectedPattern | None:
         """
         Detect specific pattern type in transcription.
 
@@ -329,9 +337,7 @@ class AmbientPatternDetector:
         urgency = self._determine_urgency(pattern_type, matched_keywords)
 
         # Get context summary
-        context_summary = self.conversation_context.get_context_summary(
-            max_length=500
-        )
+        context_summary = self.conversation_context.get_context_summary(max_length=500)
 
         return DetectedPattern(
             pattern_id=f"{pattern_type.value}_{int(timestamp.timestamp())}",
@@ -344,14 +350,10 @@ class AmbientPatternDetector:
             context_summary=context_summary,
             keywords=matched_keywords,
             sentiment=self._detect_sentiment(pattern_type),
-            urgency=urgency
+            urgency=urgency,
         )
 
-    def _determine_urgency(
-        self,
-        pattern_type: PatternType,
-        keywords: List[str]
-    ) -> str:
+    def _determine_urgency(self, pattern_type: PatternType, keywords: list[str]) -> str:
         """
         Determine urgency level based on pattern type and keywords.
 
@@ -375,7 +377,7 @@ class AmbientPatternDetector:
             PatternType.PROJECT_MENTION: "MEDIUM",
             PatternType.FEATURE_REQUEST: "LOW",
             PatternType.WORKFLOW_BOTTLENECK: "MEDIUM",
-            PatternType.RECURRING_TOPIC: "LOW"
+            PatternType.RECURRING_TOPIC: "LOW",
         }
 
         return urgency_map.get(pattern_type, "LOW")
@@ -396,15 +398,12 @@ class AmbientPatternDetector:
             PatternType.PROJECT_MENTION: "neutral",
             PatternType.FEATURE_REQUEST: "positive",
             PatternType.WORKFLOW_BOTTLENECK: "negative",
-            PatternType.RECURRING_TOPIC: "neutral"
+            PatternType.RECURRING_TOPIC: "neutral",
         }
 
         return sentiment_map.get(pattern_type, "neutral")
 
-    def classify_intent(
-        self,
-        pattern: DetectedPattern
-    ) -> IntentClassification:
+    def classify_intent(self, pattern: DetectedPattern) -> IntentClassification:
         """
         Classify user intent from detected pattern.
 
@@ -415,11 +414,11 @@ class AmbientPatternDetector:
             IntentClassification for ARCHITECT
         """
         # Determine if action required
-        action_required = pattern.pattern_type in [
-            PatternType.ACTION_ITEM,
-            PatternType.FRUSTRATION,
-            PatternType.WORKFLOW_BOTTLENECK
-        ] or pattern.mention_count >= 5
+        action_required = (
+            pattern.pattern_type
+            in [PatternType.ACTION_ITEM, PatternType.FRUSTRATION, PatternType.WORKFLOW_BOTTLENECK]
+            or pattern.mention_count >= 5
+        )
 
         # Map pattern type to intent type
         intent_type_map = {
@@ -428,21 +427,13 @@ class AmbientPatternDetector:
             PatternType.FRUSTRATION: "user_intent/pain_point",
             PatternType.ACTION_ITEM: "user_intent/task",
             PatternType.FEATURE_REQUEST: "user_intent/feature_request",
-            PatternType.WORKFLOW_BOTTLENECK: "user_intent/workflow_bottleneck"
+            PatternType.WORKFLOW_BOTTLENECK: "user_intent/workflow_bottleneck",
         }
 
-        intent_type = intent_type_map.get(
-            pattern.pattern_type,
-            "user_intent/unknown"
-        )
+        intent_type = intent_type_map.get(pattern.pattern_type, "user_intent/unknown")
 
         # Map urgency to priority
-        priority_map = {
-            "CRITICAL": "CRITICAL",
-            "HIGH": "HIGH",
-            "MEDIUM": "NORMAL",
-            "LOW": "NORMAL"
-        }
+        priority_map = {"CRITICAL": "CRITICAL", "HIGH": "HIGH", "MEDIUM": "NORMAL", "LOW": "NORMAL"}
         priority = priority_map.get(pattern.urgency, "NORMAL")
 
         # Generate suggested action
@@ -457,7 +448,7 @@ class AmbientPatternDetector:
             action_required=action_required,
             priority=priority,
             suggested_action=suggested_action,
-            rationale=rationale
+            rationale=rationale,
         )
 
     def _generate_suggested_action(self, pattern: DetectedPattern) -> str:
@@ -468,18 +459,19 @@ class AmbientPatternDetector:
             PatternType.FRUSTRATION: f"Address frustration: {pattern.topic}",
             PatternType.ACTION_ITEM: f"Create task: {pattern.topic}",
             PatternType.FEATURE_REQUEST: f"Implement feature: {pattern.topic}",
-            PatternType.WORKFLOW_BOTTLENECK: f"Automate workflow: {pattern.topic}"
+            PatternType.WORKFLOW_BOTTLENECK: f"Automate workflow: {pattern.topic}",
         }
 
-        return action_templates.get(
-            pattern.pattern_type,
-            f"Investigate: {pattern.topic}"
-        )
+        return action_templates.get(pattern.pattern_type, f"Investigate: {pattern.topic}")
 
     def _generate_rationale(self, pattern: DetectedPattern) -> str:
         """Generate classification rationale."""
         # pattern_type is already a string due to use_enum_values=True
-        pattern_type_str = pattern.pattern_type if isinstance(pattern.pattern_type, str) else pattern.pattern_type.value
+        pattern_type_str = (
+            pattern.pattern_type
+            if isinstance(pattern.pattern_type, str)
+            else pattern.pattern_type.value
+        )
         return (
             f"Detected {pattern_type_str} with {pattern.confidence:.2f} confidence. "
             f"Topic '{pattern.topic}' mentioned {pattern.mention_count} time(s). "
@@ -494,7 +486,11 @@ class AmbientPatternDetector:
             pattern: Detected pattern to persist
         """
         # pattern_type is already a string due to use_enum_values=True
-        pattern_type_str = pattern.pattern_type if isinstance(pattern.pattern_type, str) else pattern.pattern_type.value
+        pattern_type_str = (
+            pattern.pattern_type
+            if isinstance(pattern.pattern_type, str)
+            else pattern.pattern_type.value
+        )
 
         # Store using PersistentStore.store_pattern() method
         result = self.pattern_store.store_pattern(
@@ -509,9 +505,9 @@ class AmbientPatternDetector:
                 "last_mention": pattern.last_mention.isoformat(),
                 "keywords": pattern.keywords,
                 "sentiment": pattern.sentiment,
-                "urgency": pattern.urgency
+                "urgency": pattern.urgency,
             },
-            evidence_count=pattern.mention_count
+            evidence_count=pattern.mention_count,
         )
 
         # Log if storage fails
@@ -520,7 +516,7 @@ class AmbientPatternDetector:
             # Note: Using print instead of logger since logger might not be configured
             print(f"Warning: Failed to persist pattern: {error}")
 
-    def get_recurrence_metrics(self, topic: str) -> Optional[RecurrenceMetrics]:
+    def get_recurrence_metrics(self, topic: str) -> RecurrenceMetrics | None:
         """
         Get recurrence metrics for a topic.
 
@@ -532,7 +528,7 @@ class AmbientPatternDetector:
         """
         cluster = self.conversation_context.get_topic_cluster(
             topic,
-            time_window_hours=168.0  # 7 days
+            time_window_hours=168.0,  # 7 days
         )
 
         if not cluster:
@@ -540,9 +536,7 @@ class AmbientPatternDetector:
 
         # Calculate metrics
         total_mentions = cluster.mention_count
-        unique_days = len(set(
-            ts.date() for ts in cluster.mention_timestamps
-        ))
+        unique_days = len(set(ts.date() for ts in cluster.mention_timestamps))
 
         avg_mentions_per_day = total_mentions / max(1, unique_days)
 
@@ -576,5 +570,5 @@ class AmbientPatternDetector:
             avg_mentions_per_day=avg_mentions_per_day,
             peak_mentions_in_day=peak_mentions,
             trend=trend,
-            last_updated=datetime.now()
+            last_updated=datetime.now(),
         )

@@ -34,11 +34,13 @@ agent_responsibilities: |
 ## Implementation Workflow (UNIQUE)
 
 ### 1. Analyze Task
+
 - Understand requirements
 - Identify affected files
 - Review existing code patterns
 
 ### 2. Write Tests First
+
 - Create failing tests for new functionality
 - Cover normal cases
 - Cover edge cases
@@ -46,24 +48,28 @@ agent_responsibilities: |
 - Run tests to confirm they fail
 
 ### 3. Implement Solution
+
 - Write minimal code to pass tests
 - Follow type safety requirements
 - Use established patterns
 - Keep functions small and focused
 
 ### 4. Refactor
+
 - Eliminate duplication
 - Improve naming
 - Extract reusable logic
 - Maintain test coverage
 
 ### 5. Verify
+
 - All tests pass
 - Type checking passes (mypy/tsc)
 - Linter passes
 - No broken windows
 
 ### 6. Document Changes
+
 - Show git diff
 - Summarize changes
 - Highlight important decisions
@@ -71,12 +77,14 @@ agent_responsibilities: |
 ## Testing Requirements (UNIQUE)
 
 ### Unit Tests
+
 - Test all public functions
 - Mock external dependencies
 - Assert expected behavior
 - Test error paths
 
 ### Integration Tests
+
 - Test component interactions
 - Use real dependencies where safe
 - Validate data flow
@@ -85,6 +93,7 @@ agent_responsibilities: |
 ## Git Workflow (UNIQUE)
 
 After successful implementation:
+
 1. Review changes with `git diff`
 2. Stage relevant files
 3. Write descriptive commit message

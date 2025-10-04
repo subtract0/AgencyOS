@@ -4,9 +4,10 @@ Extracts functions, classes, and behavioral coverage metrics.
 """
 
 import ast
-from typing import Dict, List, Optional, cast
-from shared.type_definitions.json import JSONValue
 from pathlib import Path
+from typing import cast
+
+from shared.type_definitions.json import JSONValue
 
 
 class ASTAnalyzer:
@@ -23,10 +24,10 @@ class ASTAnalyzer:
         self.behaviors = []
         self.complexity_metrics = {}
 
-    def analyze_file(self, file_path: str) -> Dict[str, JSONValue]:
+    def analyze_file(self, file_path: str) -> dict[str, JSONValue]:
         """Analyze a single Python file."""
         try:
-            with open(file_path, 'r', encoding='utf-8') as f:
+            with open(file_path, encoding="utf-8") as f:
                 content = f.read()
 
             tree = ast.parse(content, filename=file_path)
@@ -47,19 +48,19 @@ class ASTAnalyzer:
                 "complexity": visitor.calculate_complexity(),
                 "lines_of_code": len(content.splitlines()),
                 "has_docstrings": visitor.has_docstrings(),
-                "imports": cast(JSONValue, visitor.imports)
+                "imports": cast(JSONValue, visitor.imports),
             }
         except Exception as e:
             return {"error": str(e), "file_path": file_path}
 
-    def analyze_directory(self, dir_path: str) -> Dict[str, JSONValue]:
+    def analyze_directory(self, dir_path: str) -> dict[str, JSONValue]:
         """Analyze all Python files in directory."""
-        results: Dict[str, JSONValue] = {
+        results: dict[str, JSONValue] = {
             "source_files": [],
             "test_files": [],
             "total_behaviors": 0,
             "total_test_functions": 0,
-            "coverage_ratio": 0.0
+            "coverage_ratio": 0.0,
         }
 
         for py_file in Path(dir_path).rglob("*.py"):
@@ -75,20 +76,30 @@ class ASTAnalyzer:
                 if isinstance(test_files, list):
                     test_files.append(analysis)
                 test_functions = analysis["test_functions"]
-                if isinstance(test_functions, list) and isinstance(results["total_test_functions"], (int, float)):
-                    results["total_test_functions"] = results["total_test_functions"] + len(test_functions)
+                if isinstance(test_functions, list) and isinstance(
+                    results["total_test_functions"], (int, float)
+                ):
+                    results["total_test_functions"] = results["total_test_functions"] + len(
+                        test_functions
+                    )
             else:
                 source_files = results["source_files"]
                 if isinstance(source_files, list):
                     source_files.append(analysis)
                 behaviors = analysis["behaviors"]
-                if isinstance(behaviors, (int, float)) and isinstance(results["total_behaviors"], (int, float)):
+                if isinstance(behaviors, (int, float)) and isinstance(
+                    results["total_behaviors"], (int, float)
+                ):
                     results["total_behaviors"] = results["total_behaviors"] + behaviors
 
         # Calculate basic coverage ratio
         total_behaviors = results["total_behaviors"]
         total_test_functions = results["total_test_functions"]
-        if isinstance(total_behaviors, (int, float)) and isinstance(total_test_functions, (int, float)) and total_behaviors > 0:
+        if (
+            isinstance(total_behaviors, (int, float))
+            and isinstance(total_test_functions, (int, float))
+            and total_behaviors > 0
+        ):
             results["coverage_ratio"] = total_test_functions / total_behaviors
 
         return results
@@ -109,11 +120,11 @@ class CodeVisitor(ast.NodeVisitor):
 
     def __init__(self, file_path: str):
         self.file_path = file_path
-        self.functions: List[Dict[str, JSONValue]] = []
-        self.classes: List[Dict[str, JSONValue]] = []
-        self.test_functions: List[Dict[str, JSONValue]] = []
-        self.imports: List[str] = []
-        self.current_class: Optional[str] = None
+        self.functions: list[dict[str, JSONValue]] = []
+        self.classes: list[dict[str, JSONValue]] = []
+        self.test_functions: list[dict[str, JSONValue]] = []
+        self.imports: list[str] = []
+        self.current_class: str | None = None
         self.complexity_count: int = 0
 
     def visit_FunctionDef(self, node: ast.FunctionDef):
@@ -125,7 +136,7 @@ class CodeVisitor(ast.NodeVisitor):
             "is_method": self.current_class is not None,
             "parent_class": self.current_class,
             "is_async": False,
-            "has_docstring": ast.get_docstring(node) is not None
+            "has_docstring": ast.get_docstring(node) is not None,
         }
 
         self.functions.append(func_info)
@@ -145,7 +156,7 @@ class CodeVisitor(ast.NodeVisitor):
             "is_method": self.current_class is not None,
             "parent_class": self.current_class,
             "is_async": True,
-            "has_docstring": ast.get_docstring(node) is not None
+            "has_docstring": ast.get_docstring(node) is not None,
         }
 
         self.functions.append(func_info)
@@ -161,7 +172,7 @@ class CodeVisitor(ast.NodeVisitor):
             "name": node.name,
             "lineno": node.lineno,
             "bases": [self._get_name(base) for base in node.bases],
-            "has_docstring": ast.get_docstring(node) is not None
+            "has_docstring": ast.get_docstring(node) is not None,
         }
 
         self.classes.append(class_info)

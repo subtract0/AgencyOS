@@ -2,28 +2,31 @@
 TestGeneratorAgent - Generates NECESSARY-compliant tests to address quality violations.
 """
 
-import os
-import json
 import ast
-from typing import Dict, List, Any, Optional
+import json
+import os
 from pathlib import Path
 from textwrap import dedent
 
 from agency_swarm import Agent
 from agency_swarm.tools import BaseTool as Tool
-from pydantic import Field, BaseModel
-from shared.type_definitions.json import JSONValue
+from pydantic import BaseModel, Field
 
 from shared.agent_context import AgentContext, create_agent_context
-from shared.constitutional_validator import constitutional_compliance
 from shared.agent_utils import (
-    detect_model_type,
-    select_instructions_file,
-    render_instructions,
     create_model_settings,
+    detect_model_type,
     get_model_instance,
+    render_instructions,
+    select_instructions_file,
 )
-from shared.system_hooks import create_system_reminder_hook, create_memory_integration_hook, create_composite_hook
+from shared.constitutional_validator import constitutional_compliance
+from shared.system_hooks import (
+    create_composite_hook,
+    create_memory_integration_hook,
+    create_system_reminder_hook,
+)
+from shared.type_definitions.json import JSONValue
 from tools import (
     Bash,
     Edit,
@@ -38,44 +41,49 @@ from tools import (
 # Pydantic models for type safety
 class FunctionInfo(BaseModel):
     """Information about a function in source code analysis."""
+
     name: str
-    args: List[str]
+    args: list[str]
     has_return: bool
     is_async: bool
-    docstring: Optional[str]
+    docstring: str | None
 
 
 class MethodInfo(BaseModel):
     """Information about a method in source code analysis."""
+
     name: str
-    args: List[str]
+    args: list[str]
     is_async: bool
 
 
 class ClassInfo(BaseModel):
     """Information about a class in source code analysis."""
+
     name: str
-    methods: List[MethodInfo]
-    docstring: Optional[str]
+    methods: list[MethodInfo]
+    docstring: str | None
 
 
 class SourceAnalysis(BaseModel):
     """Analysis data for a source file."""
-    functions: List[FunctionInfo]
-    classes: List[ClassInfo]
-    imports: List[str]
+
+    functions: list[FunctionInfo]
+    classes: list[ClassInfo]
+    imports: list[str]
     module_name: str
-    error: Optional[str] = None
+    error: str | None = None
 
 
 class TestInfo(BaseModel):
     """Information about a generated test."""
+
     name: str
     code: str
     type: str
-    function: Optional[str] = None
-    class_name: Optional[str] = Field(None, alias="class")
-    method: Optional[str] = None
+    function: str | None = None
+    class_name: str | None = Field(None, alias="class")
+    method: str | None = None
 
 
 class GenerateTests(Tool):
@@ -113,87 +121,85 @@ class GenerateTests(Tool):
         test_content = self._create_test_file_content(generated_tests, source_analysis)
         self._write_test_file(test_file_path, test_content)
 
-        return json.dumps({
-            "status": "success",
-            "target_file": self.target_file,
-            "test_file": test_file_path,
-            "violations_addressed": len([v for v in violations if v.get("severity") in ["critical", "high"]]),
-            "tests_generated": len(generated_tests),
-            "test_names": [t.name for t in generated_tests]
-        }, indent=2)
+        return json.dumps(
+            {
+                "status": "success",
+                "target_file": self.target_file,
+                "test_file": test_file_path,
+                "violations_addressed": len(
+                    [v for v in violations if v.get("severity") in ["critical", "high"]]
+                ),
+                "tests_generated": len(generated_tests),
+                "test_names": [t.name for t in generated_tests],
+            },
+            indent=2,
+        )
 
     def _analyze_source_file(self, file_path: str) -> SourceAnalysis:
         """Analyze source file to understand testable behaviors."""
-        functions: List[FunctionInfo] = []
-        classes: List[ClassInfo] = []
-        imports: List[str] = []
+        functions: list[FunctionInfo] = []
+        classes: list[ClassInfo] = []
+        imports: list[str] = []
         module_name = Path(file_path).stem
 
         try:
-            with open(file_path, 'r', encoding='utf-8') as f:
+            with open(file_path, encoding="utf-8") as f:
                 content = f.read()
                 tree = ast.parse(content)
 
             for node in ast.walk(tree):
                 if isinstance(node, ast.FunctionDef):
-                    if not node.name.startswith('_'):  # Public functions only
+                    if not node.name.startswith("_"):  # Public functions only
                         func_info = FunctionInfo(
                             name=node.name,
                             args=[arg.arg for arg in node.args.args],
                             has_return=self._has_return_statement(node),
                             is_async=False,
-                            docstring=ast.get_docstring(node)
+                            docstring=ast.get_docstring(node),
                         )
                         functions.append(func_info)
 
                 elif isinstance(node, ast.AsyncFunctionDef):
-                    if not node.name.startswith('_'):
+                    if not node.name.startswith("_"):
                         func_info = FunctionInfo(
                             name=node.name,
                             args=[arg.arg for arg in node.args.args],
                             has_return=self._has_return_statement(node),
                             is_async=True,
-                            docstring=ast.get_docstring(node)
+                            docstring=ast.get_docstring(node),
                         )
                         functions.append(func_info)
 
                 elif isinstance(node, ast.ClassDef):
-                    methods: List[MethodInfo] = []
+                    methods: list[MethodInfo] = []
 
                     for item in node.body:
                         if isinstance(item, (ast.FunctionDef, ast.AsyncFunctionDef)):
-                            if not item.name.startswith('_') or item.name == '__init__':
+                            if not item.name.startswith("_") or item.name == "__init__":
                                 method_info = MethodInfo(
                                     name=item.name,
                                     args=[arg.arg for arg in item.args.args],
-                                    is_async=isinstance(item, ast.AsyncFunctionDef)
+                                    is_async=isinstance(item, ast.AsyncFunctionDef),
                                 )
                                 methods.append(method_info)
 
                     class_info = ClassInfo(
-                        name=node.name,
-                        methods=methods,
-                        docstring=ast.get_docstring(node)
+                        name=node.name, methods=methods, docstring=ast.get_docstring(node)
                     )
                     classes.append(class_info)
 
         except Exception as e:
             return SourceAnalysis(
-                functions=[],
-                classes=[],
-                imports=[],
-                module_name=module_name,
-                error=str(e)
+                functions=[], classes=[], imports=[], module_name=module_name, error=str(e)
             )
 
         return SourceAnalysis(
-            functions=functions,
-            classes=classes,
-            imports=imports,
-            module_name=module_name
+            functions=functions, classes=classes, imports=imports, module_name=module_name
         )
 
-    def _generate_tests_for_violation(self, violation: JSONValue, source_analysis: SourceAnalysis) -> List[TestInfo]:
+    def _generate_tests_for_violation(
+        self, violation: JSONValue, source_analysis: SourceAnalysis
+    ) -> list[TestInfo]:
         """Generate specific tests for a NECESSARY violation."""
         if not isinstance(violation, dict):
             return []
@@ -215,7 +221,7 @@ class GenerateTests(Tool):
 
         return tests
 
-    def _generate_basic_tests(self, analysis: SourceAnalysis) -> List[TestInfo]:
+    def _generate_basic_tests(self, analysis: SourceAnalysis) -> list[TestInfo]:
         """Generate basic happy path tests."""
         tests = []
 
@@ -223,29 +229,26 @@ class GenerateTests(Tool):
             test_name = f"test_{func.name}_basic"
             test_code = self._create_basic_test_code(func, analysis.module_name)
 
-            tests.append(TestInfo(
-                name=test_name,
-                code=test_code,
-                type="basic",
-                function=func.name
-            ))
+            tests.append(TestInfo(name=test_name, code=test_code, type="basic", function=func.name))
 
         for cls in analysis.classes:
             for method in cls.methods:
                 test_name = f"test_{cls.name.lower()}_{method.name}_basic"
                 test_code = self._create_basic_method_test_code(cls, method, analysis.module_name)
 
-                tests.append(TestInfo(
-                    name=test_name,
-                    code=test_code,
-                    type="basic",
-                    class_name=cls.name,
-                    method=method.name
-                ))
+                tests.append(
+                    TestInfo(
+                        name=test_name,
+                        code=test_code,
+                        type="basic",
+                        class_name=cls.name,
+                        method=method.name,
+                    )
+                )
 
         return tests
 
-    def _generate_edge_case_tests(self, analysis: SourceAnalysis) -> List[TestInfo]:
+    def _generate_edge_case_tests(self, analysis: SourceAnalysis) -> list[TestInfo]:
         """Generate edge case tests."""
         tests = []
 
@@ -254,16 +257,13 @@ class GenerateTests(Tool):
                 test_name = f"test_{func.name}_edge_cases"
                 test_code = self._create_edge_case_test_code(func, analysis.module_name)
 
-                tests.append(TestInfo(
-                    name=test_name,
-                    code=test_code,
-                    type="edge_case",
-                    function=func.name
-                ))
+                tests.append(
+                    TestInfo(name=test_name, code=test_code, type="edge_case", function=func.name)
+                )
 
         return tests
 
-    def _generate_comprehensive_tests(self, analysis: SourceAnalysis) -> List[TestInfo]:
+    def _generate_comprehensive_tests(self, analysis: SourceAnalysis) -> list[TestInfo]:
         """Generate comprehensive test coverage."""
         tests = []
 
@@ -272,16 +272,15 @@ class GenerateTests(Tool):
                 test_name = f"test_{func.name}_comprehensive"
                 test_code = self._create_comprehensive_test_code(func, analysis.module_name)
 
-                tests.append(TestInfo(
-                    name=test_name,
-                    code=test_code,
-                    type="comprehensive",
-                    function=func.name
-                ))
+                tests.append(
+                    TestInfo(
+                        name=test_name, code=test_code, type="comprehensive", function=func.name
+                    )
+                )
 
         return tests
 
-    def _generate_error_tests(self, analysis: SourceAnalysis) -> List[TestInfo]:
+    def _generate_error_tests(self, analysis: SourceAnalysis) -> list[TestInfo]:
         """Generate error condition tests."""
         tests = []
 
@@ -289,16 +288,11 @@ class GenerateTests(Tool):
             test_name = f"test_{func.name}_error_conditions"
             test_code = self._create_error_test_code(func, analysis.module_name)
 
-            tests.append(TestInfo(
-                name=test_name,
-                code=test_code,
-                type="error",
-                function=func.name
-            ))
+            tests.append(TestInfo(name=test_name, code=test_code, type="error", function=func.name))
 
         return tests
 
-    def _generate_state_tests(self, analysis: SourceAnalysis) -> List[TestInfo]:
+    def _generate_state_tests(self, analysis: SourceAnalysis) -> list[TestInfo]:
         """Generate state validation tests."""
         tests = []
 
@@ -306,16 +300,13 @@ class GenerateTests(Tool):
             test_name = f"test_{cls.name.lower()}_state_validation"
             test_code = self._create_state_test_code(cls, analysis.module_name)
 
-            tests.append(TestInfo(
-                name=test_name,
-                code=test_code,
-                type="state",
-                class_name=cls.name
-            ))
+            tests.append(
+                TestInfo(name=test_name, code=test_code, type="state", class_name=cls.name)
+            )
 
         return tests
 
-    def _generate_async_tests(self, analysis: SourceAnalysis) -> List[TestInfo]:
+    def _generate_async_tests(self, analysis: SourceAnalysis) -> list[TestInfo]:
         """Generate async operation tests."""
         tests = []
 
@@ -324,12 +315,9 @@ class GenerateTests(Tool):
                 test_name = f"test_{func.name}_async"
                 test_code = self._create_async_test_code(func, analysis.module_name)
 
-                tests.append(TestInfo(
-                    name=test_name,
-                    code=test_code,
-                    type="async",
-                    function=func.name
-                ))
+                tests.append(
+                    TestInfo(name=test_name, code=test_code, type="async", function=func.name)
+                )
 
         return tests
 
@@ -360,7 +348,9 @@ class GenerateTests(Tool):
             {assertion}
         ''').strip()
 
-    def _create_basic_method_test_code(self, cls: ClassInfo, method: MethodInfo, module_name: str) -> str:
+    def _create_basic_method_test_code(
+        self, cls: ClassInfo, method: MethodInfo, module_name: str
+    ) -> str:
         """Create basic test code for a class method."""
         if method.name == "__init__":
             return dedent(f'''
@@ -376,7 +366,9 @@ class GenerateTests(Tool):
             ''').strip()
 
         args_str = ", ".join(f"mock_{arg}" for arg in method.args[1:])  # Skip 'self'
-        call_str = f"instance.{method.name}({args_str})" if args_str else f"instance.{method.name}()"
+        call_str = (
+            f"instance.{method.name}({args_str})" if args_str else f"instance.{method.name}()"
+        )
 
         return dedent(f'''
         def test_{cls.name.lower()}_{method.name}_basic():
@@ -494,7 +486,7 @@ class GenerateTests(Tool):
             assert result is not None
         ''').strip()
 
-    def _generate_mock_args(self, args: List[str]) -> str:
+    def _generate_mock_args(self, args: list[str]) -> str:
         """Generate mock arguments for test functions."""
         if not args:
             return "# No arguments needed"
@@ -505,24 +497,24 @@ class GenerateTests(Tool):
                 continue
             # Simple heuristic for mock values
             if "id" in arg.lower():
-                mock_assignments.append(f'mock_{arg} = 1')
+                mock_assignments.append(f"mock_{arg} = 1")
             elif "name" in arg.lower() or "str" in arg.lower():
                 mock_assignments.append(f'mock_{arg} = "test_{arg}"')
             elif "count" in arg.lower() or "num" in arg.lower():
-                mock_assignments.append(f'mock_{arg} = 5')
+                mock_assignments.append(f"mock_{arg} = 5")
             elif "flag" in arg.lower() or "bool" in arg.lower():
-                mock_assignments.append(f'mock_{arg} = True')
+                mock_assignments.append(f"mock_{arg} = True")
             elif "list" in arg.lower() or "items" in arg.lower():
-                mock_assignments.append(f'mock_{arg} = []')
+                mock_assignments.append(f"mock_{arg} = []")
             elif "dict" in arg.lower() or "map" in arg.lower():
-                mock_assignments.append(f'mock_{arg} = {{}}')
+                mock_assignments.append(f"mock_{arg} = {{}}")
             else:
                 # Provide sensible default: empty string for unknown types
                 mock_assignments.append(f'mock_{arg} = ""  # Generic test value')
 
         return "\n    ".join(mock_assignments)
 
-    def _create_test_file_content(self, tests: List[TestInfo], analysis: SourceAnalysis) -> str:
+    def _create_test_file_content(self, tests: list[TestInfo], analysis: SourceAnalysis) -> str:
         """Create complete test file content."""
         header = dedent(f'''
         """
@@ -548,7 +540,7 @@ class GenerateTests(Tool):
 
     def _write_test_file(self, test_file_path: str, content: str):
         """Write test content to file."""
-        with open(test_file_path, 'w', encoding='utf-8') as f:
+        with open(test_file_path, "w", encoding="utf-8") as f:
             f.write(content)
 
     def _has_return_statement(self, node) -> bool:
@@ -564,7 +556,7 @@ def create_test_generator_agent(
     model: str = "gpt-5",
     reasoning_effort: str = "medium",
     agent_context: AgentContext = None,
-    cost_tracker = None
+    cost_tracker=None,
 ) -> Agent:
     """Factory that returns a fresh TestGeneratorAgent instance.
 
@@ -598,9 +590,9 @@ def create_test_generator_agent(
             "model": model,
             "reasoning_effort": reasoning_effort,
             "session_id": agent_context.session_id,
-            "cost_tracker_enabled": cost_tracker is not None
+            "cost_tracker_enabled": cost_tracker is not None,
         },
-        ["agency", "test_generator", "creation"]
+        ["agency", "test_generator", "creation"],
     )
 
     # Store cost_tracker in agent context for later use
@@ -642,6 +634,7 @@ def create_test_generator_agent(
     # Enable cost tracking if provided
     if cost_tracker is not None:
         from shared.llm_cost_wrapper import wrap_agent_with_cost_tracking
+
         wrap_agent_with_cost_tracking(agent, cost_tracker)
 
     return agent

@@ -4,7 +4,7 @@ import ast
 import fnmatch
 import os
 import re
-from typing import Iterable, List
+from collections.abc import Iterable
 
 
 def _iter_files(root: str, pattern: str) -> Iterable[str]:
@@ -15,7 +15,7 @@ def _iter_files(root: str, pattern: str) -> Iterable[str]:
                 yield os.path.join(root, rel)
 
 
-def list_dir(path: str) -> List[str]:
+def list_dir(path: str) -> list[str]:
     if not os.path.isdir(path):
         return [path]
     entries = sorted(os.listdir(path))
@@ -35,22 +35,22 @@ def print_tree(path: str, depth: int = 2) -> None:
 
 
 def open_file_segment(path: str, start: int = 1, end: int | None = None) -> str:
-    with open(path, "r", encoding="utf-8") as fh:
+    with open(path, encoding="utf-8") as fh:
         lines = fh.readlines()
     s = max(start - 1, 0)
     e = len(lines) if end is None else min(end, len(lines))
     out = []
     for i in range(s, e):
-        out.append(f"{i+1:5d}: {lines[i].rstrip()}\n")
+        out.append(f"{i + 1:5d}: {lines[i].rstrip()}\n")
     return "".join(out)
 
 
-def grep_search(root: str, pattern: str, glob: str = "**/*.py") -> List[str]:
+def grep_search(root: str, pattern: str, glob: str = "**/*.py") -> list[str]:
     rx = re.compile(pattern)
-    matches: List[str] = []
+    matches: list[str] = []
     for path in _iter_files(root, glob):
         try:
-            with open(path, "r", encoding="utf-8", errors="ignore") as fh:
+            with open(path, encoding="utf-8", errors="ignore") as fh:
                 for i, line in enumerate(fh, start=1):
                     if rx.search(line):
                         rel = os.path.relpath(path, root)
@@ -60,21 +60,24 @@ def grep_search(root: str, pattern: str, glob: str = "**/*.py") -> List[str]:
     return matches
 
 
-def find_files(root: str, pattern: str) -> List[str]:
+def find_files(root: str, pattern: str) -> list[str]:
     files = [os.path.relpath(p, root) for p in _iter_files(root, pattern)]
     return sorted(files)
 
 
-def extract_symbols(path: str) -> List[str]:
+def extract_symbols(path: str) -> list[str]:
     """Extract Python symbols (classes and functions) under path (file or directory)."""
-    results: List[str] = []
+    results: list[str] = []
+
     def _extract_file(pyfile: str) -> None:
         try:
-            with open(pyfile, "r", encoding="utf-8") as fh:
+            with open(pyfile, encoding="utf-8") as fh:
                 tree = ast.parse(fh.read(), filename=pyfile)
             for node in ast.walk(tree):
                 if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef)):
-                    results.append(f"{pyfile}:{getattr(node, 'lineno', 1)}:{node.__class__.__name__} {node.name}")
+                    results.append(
+                        f"{pyfile}:{getattr(node, 'lineno', 1)}:{node.__class__.__name__} {node.name}"
+                    )
         except Exception:
             pass
 
@@ -96,13 +99,13 @@ def extract_symbols(path: str) -> List[str]:
     return sorted(rels)
 
 
-def find_references(root: str, name: str, glob: str = "**/*.py") -> List[str]:
+def find_references(root: str, name: str, glob: str = "**/*.py") -> list[str]:
     # Simple word-boundary search
     rx = re.compile(rf"\b{re.escape(name)}\b")
-    matches: List[str] = []
+    matches: list[str] = []
     for path in _iter_files(root, glob):
         try:
-            with open(path, "r", encoding="utf-8", errors="ignore") as fh:
+            with open(path, encoding="utf-8", errors="ignore") as fh:
                 for i, line in enumerate(fh, start=1):
                     if rx.search(line):
                         rel = os.path.relpath(path, root)

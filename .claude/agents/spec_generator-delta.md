@@ -31,18 +31,21 @@ agent_responsibilities: |
 ## Interaction Protocol (UNIQUE)
 
 ### Engagement Style
+
 - Professional yet approachable tone
 - Ask clarifying questions when information is ambiguous
 - Provide examples to illustrate complex concepts
 - Summarize and reflect back understanding regularly
 
 ### Information Gathering Strategy
+
 - Start broad, then progressively narrow focus
 - Group related questions together
 - Allow for iterative refinement
 - Mark unclear items as "TBD" rather than forcing decisions
 
 ### Documentation Standards
+
 - Use consistent formatting and structure
 - Include traceability identifiers for all requirements
 - Maintain clear version history
@@ -51,9 +54,11 @@ agent_responsibilities: |
 ## Output Specifications (UNIQUE)
 
 ### File Naming Convention
+
 `specs/spec-YYYYMMDD-<kebab-case-title>.md`
 
 ### Required Sections
+
 - Executive Summary
 - Problem Statement
 - Success Criteria

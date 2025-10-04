@@ -10,10 +10,9 @@ This module provides centralized configuration for DSPy Language Models,
 ensuring all agents use consistent model settings and proper initialization.
 """
 
-import os
 import logging
-from typing import Optional, Dict, Any
-from functools import lru_cache
+import os
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
@@ -21,6 +20,7 @@ logger = logging.getLogger(__name__)
 try:
     import dspy
     from dspy import LM
+
     DSPY_AVAILABLE = True
 except ImportError:
     DSPY_AVAILABLE = False
@@ -31,7 +31,7 @@ class DSPyConfig:
     """Centralized DSPy configuration management."""
 
     _initialized = False
-    _lm_cache: Dict[str, object] = {}
+    _lm_cache: dict[str, object] = {}
 
     @classmethod
     def initialize(cls, force: bool = False) -> bool:
@@ -82,7 +82,7 @@ class DSPyConfig:
                 "gpt-5-mini": "openai/gpt-4o-mini",
                 "gpt-4": "openai/gpt-4",
                 "claude-sonnet": "anthropic/claude-3-sonnet",
-                "claude-opus": "anthropic/claude-3-opus"
+                "claude-opus": "anthropic/claude-3-opus",
             }
 
             # Apply mapping if needed
@@ -103,7 +103,7 @@ class DSPyConfig:
                 api_key=api_key,
                 max_tokens=4096,
                 temperature=temperature,
-                cache=True  # Enable caching for efficiency
+                cache=True,  # Enable caching for efficiency
             )
 
             # Configure DSPy globally
@@ -122,7 +122,7 @@ class DSPyConfig:
             return False
 
     @classmethod
-    def get_lm(cls, model_name: Optional[str] = None) -> Optional[Any]:
+    def get_lm(cls, model_name: str | None = None) -> Any | None:
         """
         Get a configured Language Model instance.
 
@@ -180,7 +180,7 @@ def configure_dspy_for_agent(agent_type: str = "default") -> bool:
         "auditor": os.getenv("AUDITOR_MODEL", "openai/gpt-4o-mini"),
         "toolsmith": os.getenv("TOOLSMITH_MODEL", "openai/gpt-4o-mini"),
         "learning": os.getenv("LEARNING_MODEL", "openai/gpt-4o-mini"),
-        "default": os.getenv("DSPY_MODEL", "openai/gpt-4o-mini")
+        "default": os.getenv("DSPY_MODEL", "openai/gpt-4o-mini"),
     }
 
     model = agent_model_map.get(agent_type, agent_model_map["default"])
@@ -211,8 +211,4 @@ auto_initialize()
 
 
 # Export main components
-__all__ = [
-    "DSPyConfig",
-    "configure_dspy_for_agent",
-    "DSPY_AVAILABLE"
-]
+__all__ = ["DSPyConfig", "configure_dspy_for_agent", "DSPY_AVAILABLE"]

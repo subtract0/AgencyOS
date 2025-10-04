@@ -40,8 +40,8 @@ def test_git_log_with_max_lines():
 
 def test_git_unknown_command():
     """Test that invalid commands are rejected at validation time."""
-    from pydantic import ValidationError
     import pytest
+    from pydantic import ValidationError
 
     with pytest.raises(ValidationError) as exc_info:
         Git(cmd="invalid_command")
@@ -83,7 +83,7 @@ def test_git_diff_exception_handling():
     def mock_diff_tree(*args, **kwargs):
         raise Exception("Diff error")
 
-    with patch('dulwich.porcelain.diff_tree', side_effect=mock_diff_tree):
+    with patch("dulwich.porcelain.diff_tree", side_effect=mock_diff_tree):
         tool = Git(cmd="diff")
         out = tool.run()
         assert "Exit code: 1" in out
@@ -116,7 +116,7 @@ def test_git_show_exception_handling():
     def mock_show(*args, **kwargs):
         raise Exception("Show error")
 
-    with patch('dulwich.porcelain.show', side_effect=mock_show):
+    with patch("dulwich.porcelain.show", side_effect=mock_show):
         tool = Git(cmd="show", ref="HEAD")
         out = tool.run()
         assert "Exit code: 1" in out
@@ -125,7 +125,7 @@ def test_git_show_exception_handling():
 
 def test_git_general_exception_handling():
     """Test general exception handling in the main try block"""
-    from unittest.mock import patch, MagicMock
+    from unittest.mock import MagicMock, patch
 
     # Create a mock repo that will pass open_repo but fail during status
     mock_repo = MagicMock()
@@ -133,8 +133,8 @@ def test_git_general_exception_handling():
     def mock_status(*args, **kwargs):
         raise Exception("Unexpected error in main block")
 
-    with patch('dulwich.porcelain.open_repo', return_value=mock_repo):
-        with patch('dulwich.porcelain.status', side_effect=mock_status):
+    with patch("dulwich.porcelain.open_repo", return_value=mock_repo):
+        with patch("dulwich.porcelain.status", side_effect=mock_status):
             tool = Git(cmd="status")
             out = tool.run()
             assert "Exit code: 1" in out

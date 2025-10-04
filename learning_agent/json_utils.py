@@ -2,16 +2,18 @@
 Type-safe utilities for working with JSONValue types in learning_agent module.
 Provides type guards, safe accessors, and conversion utilities.
 """
-from typing import Any, Dict, List, Optional, Union, TypeGuard, cast
+
+from typing import TypeGuard, cast
+
 from shared.type_definitions.json import JSONValue
 
 
-def is_dict(value: JSONValue) -> TypeGuard[Dict[str, JSONValue]]:
+def is_dict(value: JSONValue) -> TypeGuard[dict[str, JSONValue]]:
     """Type guard for dict JSONValue."""
     return isinstance(value, dict)
 
 
-def is_list(value: JSONValue) -> TypeGuard[List[JSONValue]]:
+def is_list(value: JSONValue) -> TypeGuard[list[JSONValue]]:
     """Type guard for list JSONValue."""
     return isinstance(value, list)
 
@@ -31,7 +33,7 @@ def is_float(value: JSONValue) -> TypeGuard[float]:
     return isinstance(value, float)
 
 
-def is_number(value: JSONValue) -> TypeGuard[Union[int, float]]:
+def is_number(value: JSONValue) -> TypeGuard[int | float]:
     """Type guard for numeric JSONValue."""
     return isinstance(value, (int, float))
 
@@ -41,14 +43,14 @@ def is_none(value: JSONValue) -> TypeGuard[None]:
     return value is None
 
 
-def safe_get(data: JSONValue, key: str, default: Optional[JSONValue] = None) -> JSONValue:
+def safe_get(data: JSONValue, key: str, default: JSONValue | None = None) -> JSONValue:
     """Safely get a value from a JSONValue dict."""
     if is_dict(data):
         return data.get(key, default)
     return default
 
 
-def safe_get_dict(data: JSONValue, key: str) -> Dict[str, JSONValue]:
+def safe_get_dict(data: JSONValue, key: str) -> dict[str, JSONValue]:
     """Safely get a dict value from a JSONValue dict."""
     result = safe_get(data, key, {})
     if is_dict(result):
@@ -56,7 +58,7 @@ def safe_get_dict(data: JSONValue, key: str) -> Dict[str, JSONValue]:
     return {}
 
 
-def safe_get_list(data: JSONValue, key: str) -> List[JSONValue]:
+def safe_get_list(data: JSONValue, key: str) -> list[JSONValue]:
     """Safely get a list value from a JSONValue dict."""
     result = safe_get(data, key, [])
     if is_list(result):
@@ -109,14 +111,14 @@ def safe_get_number(data: JSONValue, key: str, default: float = 0.0) -> float:
     return safe_get_float(data, key, default)
 
 
-def ensure_dict(value: JSONValue) -> Dict[str, JSONValue]:
+def ensure_dict(value: JSONValue) -> dict[str, JSONValue]:
     """Ensure value is a dict, return empty dict if not."""
     if is_dict(value):
         return value
     return {}
 
 
-def ensure_list(value: JSONValue) -> List[JSONValue]:
+def ensure_list(value: JSONValue) -> list[JSONValue]:
     """Ensure value is a list, return empty list if not."""
     if is_list(value):
         return value
@@ -132,21 +134,21 @@ def ensure_str(value: JSONValue) -> str:
     return ""
 
 
-def json_to_any_dict(data: JSONValue) -> Dict[str, JSONValue]:
+def json_to_any_dict(data: JSONValue) -> dict[str, JSONValue]:
     """Convert JSONValue dict to Dict[str, JSONValue] for compatibility."""
     if is_dict(data):
-        return cast(Dict[str, JSONValue], data)
+        return cast(dict[str, JSONValue], data)
     return {}
 
 
-def any_to_json_dict(data: Dict[str, JSONValue]) -> Dict[str, JSONValue]:
+def any_to_json_dict(data: dict[str, JSONValue]) -> dict[str, JSONValue]:
     """Convert Dict[str, JSONValue] to JSONValue dict."""
-    return cast(Dict[str, JSONValue], data)
+    return cast(dict[str, JSONValue], data)
 
 
-def extract_numeric_list(data: List[JSONValue]) -> List[float]:
+def extract_numeric_list(data: list[JSONValue]) -> list[float]:
     """Extract numeric values from a JSONValue list."""
-    result: List[float] = []
+    result: list[float] = []
     for item in data:
         if is_number(item):
             result.append(float(item))

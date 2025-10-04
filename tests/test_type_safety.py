@@ -4,25 +4,27 @@ Tests all Pydantic models and type guards introduced in the type safety sweep.
 Ensures Constitutional Law #1 (TDD) compliance.
 """
 
-import pytest
-from datetime import datetime
-from typing import Dict, List, Optional, Any, Union
-from pydantic import ValidationError
 import json
+from datetime import datetime
+from typing import Any
+
+import pytest
+from pydantic import ValidationError
+
+from shared.models.core import HealthStatus
 
 # Import all the Pydantic models
 from shared.models.memory import (
-    MemoryPriority,
     MemoryMetadata,
+    MemoryPriority,
     MemoryRecord,
     MemorySearchResult,
 )
 from shared.models.telemetry import (
-    TelemetryEvent,
-    EventType,
     EventSeverity,
+    EventType,
+    TelemetryEvent,
 )
-from shared.models.core import HealthStatus
 from shared.type_definitions.json import JSONValue
 
 
@@ -40,9 +42,7 @@ class TestMemoryModels:
         """Test MemoryMetadata field validation."""
         # Valid metadata
         metadata = MemoryMetadata(
-            agent_id="test_agent",
-            session_id="session_123",
-            success_rate=0.85
+            agent_id="test_agent", session_id="session_123", success_rate=0.85
         )
         assert metadata.agent_id == "test_agent"
         assert metadata.success_rate == 0.85
@@ -64,7 +64,7 @@ class TestMemoryModels:
             content="test content",
             tags=["tag1", "tag2", "tag1"],  # Duplicate tags
             priority=MemoryPriority.HIGH,
-            ttl_seconds=3600
+            ttl_seconds=3600,
         )
 
         # Tags should be deduplicated
@@ -72,11 +72,11 @@ class TestMemoryModels:
         assert record.priority == MemoryPriority.HIGH
 
         # Test is_expired method if it exists
-        if hasattr(record, 'is_expired'):
+        if hasattr(record, "is_expired"):
             assert not record.is_expired()
 
         # Test to_dict method if it exists
-        if hasattr(record, 'to_dict'):
+        if hasattr(record, "to_dict"):
             record_dict = record.to_dict()
             assert isinstance(record_dict, dict)
             assert record_dict["key"] == "test_key"
@@ -90,7 +90,7 @@ class TestMemoryModels:
             records=[record1, record2],
             total_count=2,
             search_query={"tags": ["test"]},
-            execution_time_ms=15.5
+            execution_time_ms=15.5,
         )
 
         assert result.total_count == 2
@@ -120,7 +120,7 @@ class TestTelemetryModels:
             severity=EventSeverity.INFO,
             timestamp=datetime.now(),
             agent_id="agent_1",
-            metadata={"tool": "search", "status": "success"}
+            metadata={"tool": "search", "status": "success"},
         )
 
         assert event.event_type == EventType.TOOL_INVOCATION
@@ -141,7 +141,7 @@ class TestTelemetryModels:
             healing_enabled=True,
             patterns_loaded=100,
             telemetry_active=True,
-            learning_loop_active=True
+            learning_loop_active=True,
         )
 
         assert health.status == "healthy"
@@ -175,7 +175,7 @@ class TestTypeGuards:
 
     def test_type_guard_for_optional_values(self):
         """Test type guards for Optional types."""
-        optional_value: Optional[Dict[str, JSONValue]] = {"key": "value"}
+        optional_value: dict[str, JSONValue] | None = {"key": "value"}
 
         if optional_value is not None:
             # After the guard, optional_value is Dict[str, JSONValue]
@@ -207,10 +207,7 @@ class TestTypeGuards:
         metadata = MemoryMetadata()  # Uses default_factory
         assert metadata.additional == {}
 
-        record = MemoryRecord(
-            key="test",
-            content="content"
-        )
+        record = MemoryRecord(key="test", content="content")
         assert record.tags == []  # default_factory=list
         assert record.priority == MemoryPriority.MEDIUM  # default value
 
@@ -226,7 +223,7 @@ class TestBackwardCompatibility:
             "content": "test content",
             "tags": ["tag1", "tag2"],
             "timestamp": datetime.now().isoformat(),
-            "priority": "high"
+            "priority": "high",
         }
 
         # Should be convertible to MemoryRecord
@@ -235,7 +232,7 @@ class TestBackwardCompatibility:
             content=old_format["content"],
             tags=old_format["tags"],
             timestamp=datetime.fromisoformat(old_format["timestamp"]),
-            priority=MemoryPriority(old_format["priority"])
+            priority=MemoryPriority(old_format["priority"]),
         )
 
         assert record.key == "test_key"
@@ -244,10 +241,7 @@ class TestBackwardCompatibility:
     def test_model_to_dict_conversion(self):
         """Test converting models back to dicts for compatibility."""
         record = MemoryRecord(
-            key="test",
-            content={"data": "value"},
-            tags=["tag1"],
-            priority=MemoryPriority.CRITICAL
+            key="test", content={"data": "value"}, tags=["tag1"], priority=MemoryPriority.CRITICAL
         )
 
         # Convert to dict using model_dump
@@ -267,7 +261,7 @@ class TestErrorHandling:
         with pytest.raises(ValidationError) as exc_info:
             MemoryMetadata(
                 agent_id="test",
-                unknown_field="should_fail"  # This should be rejected
+                unknown_field="should_fail",  # This should be rejected
             )
         assert "Extra inputs are not permitted" in str(exc_info.value)
 
@@ -285,7 +279,7 @@ class TestErrorHandling:
         with pytest.raises(ValidationError) as exc_info:
             MemoryRecord(
                 key=123,  # Should be string
-                content="test"
+                content="test",
             )
         assert "Input should be a valid string" in str(exc_info.value)
 
@@ -299,15 +293,7 @@ class TestJSONValueTypeHandling:
         from shared.type_definitions.json import JSONValue
 
         # Should handle basic JSON types
-        values: List[JSONValue] = [
-            None,
-            True,
-            42,
-            3.14,
-            "string",
-            [1, 2, 3],
-            {"key": "value"}
-        ]
+        values: list[JSONValue] = [None, True, 42, 3.14, "string", [1, 2, 3], {"key": "value"}]
 
         for value in values:
             # These should all be valid JSONValue instances
@@ -321,18 +307,15 @@ class TestJSONValueTypeHandling:
             123,
             {"complex": {"nested": [1, 2, 3]}},
             [1, "two", 3.0],
-            None
+            None,
         ]
 
         for input_val in test_cases:
-            record = MemoryRecord(
-                key="test",
-                content=input_val
-            )
+            record = MemoryRecord(key="test", content=input_val)
             assert record.content == input_val
 
             # Should be JSON serializable (with mode='json' for datetime handling)
-            json_dict = record.model_dump(mode='json')
+            json_dict = record.model_dump(mode="json")
             json_str = json.dumps(json_dict)
             assert json_str  # Just verify it doesn't raise
 
@@ -347,17 +330,14 @@ class TestEnhancedMemoryStorePatterns:
             # Sets are not JSON serializable
             invalid_record = MemoryRecord(
                 key="invalid",
-                content={1, 2, 3}  # This should fail
+                content={1, 2, 3},  # This should fail
             )
 
     def test_memory_search_result_usage_pattern(self):
         """Test the correct usage pattern for MemorySearchResult."""
         result = MemorySearchResult(
-            records=[
-                MemoryRecord(key="1", content="a"),
-                MemoryRecord(key="2", content="b")
-            ],
-            total_count=2
+            records=[MemoryRecord(key="1", content="a"), MemoryRecord(key="2", content="b")],
+            total_count=2,
         )
 
         # Correct patterns - use total_count or len(records)
@@ -376,11 +356,7 @@ class TestDictToTypedModelMigration:
     def test_memory_metadata_typed_additional(self):
         """Test that MemoryMetadata.additional is properly typed."""
         metadata = MemoryMetadata(
-            additional={
-                "string": "value",
-                "number": 123,
-                "nested": {"data": [1, 2, 3]}
-            }
+            additional={"string": "value", "number": 123, "nested": {"data": [1, 2, 3]}}
         )
 
         # Should be Dict[str, JSONValue]
@@ -391,11 +367,7 @@ class TestDictToTypedModelMigration:
     def test_memory_search_result_typed_query(self):
         """Test that MemorySearchResult.search_query is properly typed."""
         result = MemorySearchResult(
-            search_query={
-                "tags": ["test", "demo"],
-                "priority": "high",
-                "limit": 10
-            }
+            search_query={"tags": ["test", "demo"], "priority": "high", "limit": 10}
         )
 
         # Should be Dict[str, JSONValue]
@@ -422,6 +394,7 @@ class TestPerformanceOptimizations:
 
     def test_type_guard_caching_pattern(self):
         """Test caching pattern for type guards."""
+
         # Simulate a hot path with multiple type checks
         def process_value(value: Any) -> str:
             # Cache type check results

@@ -21,15 +21,16 @@ Constitutional Compliance:
 - Article V: Spec-driven test implementation following SPEC-LEARNING-001
 """
 
-import os
-import sys
 import json
-import pytest
+import sys
 from datetime import datetime, timedelta
-from unittest.mock import Mock, patch, MagicMock
-from typing import List, Dict, Any, cast
-from shared.type_definitions.json import JSONValue
 from pathlib import Path
+from typing import cast
+from unittest.mock import Mock, patch
+
+import pytest
+
+from shared.type_definitions.json import JSONValue
 
 # Add project root to path for imports
 project_root = Path(__file__).resolve().parents[1]
@@ -37,9 +38,19 @@ if str(project_root) not in sys.path:
     sys.path.insert(0, str(project_root))
 
 from learning_loop.pattern_extraction import (
-    Trigger, ErrorTrigger, TaskTrigger, Condition, Action, PatternMetadata,
-    EnhancedPattern, Operation, FailureReason, FailureAnalysisWithTests, ExecutionError,
-    AntiPattern, PatternExtractor, FailureLearner
+    Action,
+    AntiPattern,
+    Condition,
+    EnhancedPattern,
+    ErrorTrigger,
+    ExecutionError,
+    FailureAnalysisWithTests,
+    FailureLearner,
+    Operation,
+    PatternExtractor,
+    PatternMetadata,
+    TaskTrigger,
+    Trigger,
 )
 from pattern_intelligence import CodingPattern
 
@@ -51,23 +62,17 @@ class TestTrigger:
         """Test basic trigger creation with required fields."""
         metadata = {"source": "test", "priority": 5}
 
-        trigger = Trigger(
-            type="test_trigger",
-            metadata=cast(Dict[str, JSONValue], metadata)
-        )
+        trigger = Trigger(type="test_trigger", metadata=cast(dict[str, JSONValue], metadata))
 
         assert trigger.type == "test_trigger"
         assert trigger.metadata == metadata
 
     def test_trigger_to_dict(self) -> None:
         """Test trigger serialization to dictionary."""
-        trigger = Trigger(
-            type="error",
-            metadata={"error_type": "NoneType", "severity": "high"}
-        )
+        trigger = Trigger(type="error", metadata={"error_type": "NoneType", "severity": "high"})
 
         result = trigger.to_dict()
-        metadata_result = cast(Dict[str, JSONValue], result["metadata"])
+        metadata_result = cast(dict[str, JSONValue], result["metadata"])
 
         assert result["type"] == "error"
         assert metadata_result["error_type"] == "NoneType"
@@ -75,10 +80,10 @@ class TestTrigger:
 
     def test_trigger_from_dict(self) -> None:
         """Test trigger deserialization from dictionary."""
-        data = cast(Dict[str, JSONValue], {
-            "type": "task",
-            "metadata": {"keywords": ["fix", "error"], "complexity": "medium"}
-        })
+        data = cast(
+            dict[str, JSONValue],
+            {"type": "task", "metadata": {"keywords": ["fix", "error"], "complexity": "medium"}},
+        )
 
         trigger = Trigger.from_dict(data)
 
@@ -89,8 +94,7 @@ class TestTrigger:
     def test_trigger_round_trip_serialization(self) -> None:
         """Test that trigger serialization is reversible."""
         original = Trigger(
-            type="complex_trigger",
-            metadata={"nested": {"data": [1, 2, 3]}, "simple": "value"}
+            type="complex_trigger", metadata={"nested": {"data": [1, 2, 3]}, "simple": "value"}
         )
 
         serialized = original.to_dict()
@@ -106,8 +110,7 @@ class TestErrorTrigger:
     def test_error_trigger_creation(self):
         """Test ErrorTrigger creation with all fields."""
         error_trigger = ErrorTrigger(
-            error_type="NoneType",
-            error_pattern=r"AttributeError.*'NoneType'.*has no attribute.*"
+            error_type="NoneType", error_pattern=r"AttributeError.*'NoneType'.*has no attribute.*"
         )
 
         assert error_trigger.type == "error"
@@ -119,8 +122,7 @@ class TestErrorTrigger:
     def test_error_trigger_post_init_metadata_population(self):
         """Test that ErrorTrigger auto-populates metadata in __post_init__."""
         error_trigger = ErrorTrigger(
-            error_type="ImportError",
-            error_pattern=r"ImportError|ModuleNotFoundError"
+            error_type="ImportError", error_pattern=r"ImportError|ModuleNotFoundError"
         )
 
         # Verify metadata is populated
@@ -130,8 +132,7 @@ class TestErrorTrigger:
     def test_error_trigger_existing_metadata_preserved(self):
         """Test that metadata is properly populated during construction."""
         error_trigger = ErrorTrigger(
-            error_type="SyntaxError",
-            error_pattern=r"SyntaxError.*line\s+\d+"
+            error_type="SyntaxError", error_pattern=r"SyntaxError.*line\s+\d+"
         )
 
         # Auto-populated metadata should be present
@@ -145,9 +146,7 @@ class TestTaskTrigger:
 
     def test_task_trigger_creation(self):
         """Test TaskTrigger creation with keywords."""
-        task_trigger = TaskTrigger(
-            keywords=["fix", "import", "error"]
-        )
+        task_trigger = TaskTrigger(keywords=["fix", "import", "error"])
 
         assert task_trigger.type == "task"
         assert task_trigger.keywords == ["fix", "import", "error"]
@@ -175,10 +174,7 @@ class TestCondition:
     def test_condition_creation(self):
         """Test Condition creation with all fields."""
         condition = Condition(
-            type="file_exists",
-            target="/path/to/file.py",
-            value=True,
-            operator="equals"
+            type="file_exists", target="/path/to/file.py", value=True, operator="equals"
         )
 
         assert condition.type == "file_exists"
@@ -188,40 +184,28 @@ class TestCondition:
 
     def test_condition_default_operator(self):
         """Test Condition with default operator."""
-        condition = Condition(
-            type="test_passes",
-            target="test_module",
-            value=True
-        )
+        condition = Condition(type="test_passes", target="test_module", value=True)
 
         assert condition.operator == "equals"
 
-    @patch('pathlib.Path.exists')
+    @patch("pathlib.Path.exists")
     def test_evaluate_file_exists_true(self, mock_exists):
         """Test evaluating file_exists condition when file exists."""
         mock_exists.return_value = True
 
-        condition = Condition(
-            type="file_exists",
-            target="/test/file.py",
-            value=True
-        )
+        condition = Condition(type="file_exists", target="/test/file.py", value=True)
 
         result = condition.evaluate({})
 
         assert result is True
         mock_exists.assert_called_once()
 
-    @patch('pathlib.Path.exists')
+    @patch("pathlib.Path.exists")
     def test_evaluate_file_exists_false(self, mock_exists):
         """Test evaluating file_exists condition when file doesn't exist."""
         mock_exists.return_value = False
 
-        condition = Condition(
-            type="file_exists",
-            target="/nonexistent/file.py",
-            value=True
-        )
+        condition = Condition(type="file_exists", target="/nonexistent/file.py", value=True)
 
         result = condition.evaluate({})
 
@@ -229,11 +213,7 @@ class TestCondition:
 
     def test_evaluate_test_passes_true(self):
         """Test evaluating test_passes condition when tests pass."""
-        condition = Condition(
-            type="test_passes",
-            target="test_results",
-            value=True
-        )
+        condition = Condition(type="test_passes", target="test_results", value=True)
 
         context = {"tests_passing": True}
         result = condition.evaluate(context)
@@ -242,11 +222,7 @@ class TestCondition:
 
     def test_evaluate_test_passes_false(self):
         """Test evaluating test_passes condition when tests fail."""
-        condition = Condition(
-            type="test_passes",
-            target="test_results",
-            value=True
-        )
+        condition = Condition(type="test_passes", target="test_results", value=True)
 
         context = {"tests_passing": False}
         result = condition.evaluate(context)
@@ -255,11 +231,7 @@ class TestCondition:
 
     def test_evaluate_error_absent_true(self):
         """Test evaluating error_absent condition when error is not present."""
-        condition = Condition(
-            type="error_absent",
-            target="ImportError",
-            value="ImportError"
-        )
+        condition = Condition(type="error_absent", target="ImportError", value="ImportError")
 
         context = {"errors": ["SyntaxError", "NameError"]}
         result = condition.evaluate(context)
@@ -268,11 +240,7 @@ class TestCondition:
 
     def test_evaluate_error_absent_false(self):
         """Test evaluating error_absent condition when error is present."""
-        condition = Condition(
-            type="error_absent",
-            target="ImportError",
-            value="ImportError"
-        )
+        condition = Condition(type="error_absent", target="ImportError", value="ImportError")
 
         context = {"errors": ["ImportError", "SyntaxError"]}
         result = condition.evaluate(context)
@@ -281,12 +249,7 @@ class TestCondition:
 
     def test_evaluate_generic_equals_true(self):
         """Test evaluating generic condition with equals operator (true)."""
-        condition = Condition(
-            type="generic",
-            target="status",
-            value="success",
-            operator="equals"
-        )
+        condition = Condition(type="generic", target="status", value="success", operator="equals")
 
         context = {"status": "success"}
         result = condition.evaluate(context)
@@ -295,12 +258,7 @@ class TestCondition:
 
     def test_evaluate_generic_equals_false(self):
         """Test evaluating generic condition with equals operator (false)."""
-        condition = Condition(
-            type="generic",
-            target="status",
-            value="success",
-            operator="equals"
-        )
+        condition = Condition(type="generic", target="status", value="success", operator="equals")
 
         context = {"status": "failed"}
         result = condition.evaluate(context)
@@ -309,12 +267,7 @@ class TestCondition:
 
     def test_evaluate_generic_contains_true(self):
         """Test evaluating generic condition with contains operator (true)."""
-        condition = Condition(
-            type="generic",
-            target="message",
-            value="error",
-            operator="contains"
-        )
+        condition = Condition(type="generic", target="message", value="error", operator="contains")
 
         context = {"message": "This is an error message"}
         result = condition.evaluate(context)
@@ -324,10 +277,7 @@ class TestCondition:
     def test_evaluate_generic_contains_false(self):
         """Test evaluating generic condition with contains operator (false)."""
         condition = Condition(
-            type="generic",
-            target="message",
-            value="success",
-            operator="contains"
+            type="generic", target="message", value="success", operator="contains"
         )
 
         context = {"message": "This is an error message"}
@@ -338,10 +288,7 @@ class TestCondition:
     def test_evaluate_generic_matches_true(self):
         """Test evaluating generic condition with matches operator (true)."""
         condition = Condition(
-            type="generic",
-            target="log",
-            value=r"ERROR.*line\s+\d+",
-            operator="matches"
+            type="generic", target="log", value=r"ERROR.*line\s+\d+", operator="matches"
         )
 
         context = {"log": "ERROR: Syntax error at line 42"}
@@ -352,10 +299,7 @@ class TestCondition:
     def test_evaluate_generic_matches_false(self):
         """Test evaluating generic condition with matches operator (false)."""
         condition = Condition(
-            type="generic",
-            target="log",
-            value=r"SUCCESS.*\d+",
-            operator="matches"
+            type="generic", target="log", value=r"SUCCESS.*\d+", operator="matches"
         )
 
         context = {"log": "ERROR: Something went wrong"}
@@ -366,10 +310,7 @@ class TestCondition:
     def test_evaluate_unknown_operator(self):
         """Test evaluating condition with unknown operator returns False."""
         condition = Condition(
-            type="generic",
-            target="value",
-            value="test",
-            operator="unknown_operator"
+            type="generic", target="value", value="test", operator="unknown_operator"
         )
 
         context = {"value": "test"}
@@ -387,7 +328,7 @@ class TestAction:
             tool="Edit",
             parameters={"file_path": "/test.py", "old_string": "old", "new_string": "new"},
             output_pattern=r"✓|SUCCESS",
-            timeout_seconds=30
+            timeout_seconds=30,
         )
 
         assert action.tool == "Edit"
@@ -397,10 +338,7 @@ class TestAction:
 
     def test_action_minimal_creation(self):
         """Test Action creation with minimal required fields."""
-        action = Action(
-            tool="Read",
-            parameters={"file_path": "/test.py"}
-        )
+        action = Action(tool="Read", parameters={"file_path": "/test.py"})
 
         assert action.tool == "Read"
         assert action.parameters == {"file_path": "/test.py"}
@@ -413,7 +351,7 @@ class TestAction:
             tool="Bash",
             parameters={"command": "pytest"},
             output_pattern=r"\d+ passed",
-            timeout_seconds=60
+            timeout_seconds=60,
         )
 
         result = action.to_dict()
@@ -429,7 +367,7 @@ class TestAction:
             "tool": "MultiEdit",
             "parameters": {"file_path": "/test.py", "edits": []},
             "output_pattern": "SUCCESS",
-            "timeout_seconds": 120
+            "timeout_seconds": 120,
         }
 
         action = Action.from_dict(data)
@@ -441,10 +379,7 @@ class TestAction:
 
     def test_action_from_dict_minimal(self):
         """Test Action deserialization with minimal data."""
-        data = {
-            "tool": "Grep",
-            "parameters": {"pattern": "test"}
-        }
+        data = {"tool": "Grep", "parameters": {"pattern": "test"}}
 
         action = Action.from_dict(data)
 
@@ -459,7 +394,7 @@ class TestAction:
             tool="ComplexTool",
             parameters={"nested": {"data": [1, 2, 3]}, "simple": "value"},
             output_pattern=r"COMPLEX.*PATTERN",
-            timeout_seconds=300
+            timeout_seconds=300,
         )
 
         serialized = original.to_dict()
@@ -487,7 +422,7 @@ class TestPatternMetadata:
             last_used=last_used,
             created_at=created_at,
             source="learned",
-            tags=["error_fix", "import", "auto_learned"]
+            tags=["error_fix", "import", "auto_learned"],
         )
 
         assert metadata.confidence == 0.85
@@ -512,7 +447,7 @@ class TestPatternMetadata:
             last_used=last_used,
             created_at=created_at,
             source="manual",
-            tags=["test", "validation"]
+            tags=["test", "validation"],
         )
 
         result = metadata.to_dict()
@@ -539,7 +474,7 @@ class TestPatternMetadata:
             "last_used": last_used.isoformat(),
             "created_at": created_at.isoformat(),
             "source": "imported",
-            "tags": ["high_confidence", "tested"]
+            "tags": ["high_confidence", "tested"],
         }
 
         metadata = PatternMetadata.from_dict(data)
@@ -563,7 +498,7 @@ class TestPatternMetadata:
             last_used=datetime.now(),
             created_at=datetime.now() - timedelta(days=1),
             source="learned",
-            tags=["complex", "multi_step", "error_handling"]
+            tags=["complex", "multi_step", "error_handling"],
         )
 
         serialized = original.to_dict()
@@ -584,23 +519,16 @@ class TestEnhancedPattern:
 
     def create_test_pattern(self) -> EnhancedPattern:
         """Create a test pattern for use in multiple tests."""
-        trigger = ErrorTrigger(
-            error_type="NoneType",
-            error_pattern=r"AttributeError.*'NoneType'"
-        )
+        trigger = ErrorTrigger(error_type="NoneType", error_pattern=r"AttributeError.*'NoneType'")
 
-        preconditions = [
-            Condition(type="file_exists", target="/test.py", value=True)
-        ]
+        preconditions = [Condition(type="file_exists", target="/test.py", value=True)]
 
         actions = [
             Action(tool="Read", parameters={"file_path": "/test.py"}),
-            Action(tool="Edit", parameters={"old_string": "old", "new_string": "new"})
+            Action(tool="Edit", parameters={"old_string": "old", "new_string": "new"}),
         ]
 
-        postconditions = [
-            Condition(type="test_passes", target="test_results", value=True)
-        ]
+        postconditions = [Condition(type="test_passes", target="test_results", value=True)]
 
         metadata = PatternMetadata(
             confidence=0.8,
@@ -610,7 +538,7 @@ class TestEnhancedPattern:
             last_used=datetime.now(),
             created_at=datetime.now() - timedelta(hours=1),
             source="learned",
-            tags=["error_fix", "nonetype"]
+            tags=["error_fix", "nonetype"],
         )
 
         return EnhancedPattern(
@@ -619,7 +547,7 @@ class TestEnhancedPattern:
             preconditions=preconditions,
             actions=actions,
             postconditions=postconditions,
-            metadata=metadata
+            metadata=metadata,
         )
 
     def test_enhanced_pattern_creation(self):
@@ -658,7 +586,10 @@ class TestEnhancedPattern:
     def test_from_coding_pattern_conversion(self):
         """Test conversion from CodingPattern format."""
         from pattern_intelligence.coding_pattern import (
-            ProblemContext, SolutionApproach, EffectivenessMetric, PatternMetadata
+            EffectivenessMetric,
+            PatternMetadata,
+            ProblemContext,
+            SolutionApproach,
         )
 
         # Create a CodingPattern
@@ -668,19 +599,26 @@ class TestEnhancedPattern:
             constraints=["file_exists:/src.py"],
             symptoms=["ImportError.*"],
             scale=None,
-            urgency="medium"
+            urgency="medium",
         )
 
         solution = SolutionApproach(
             approach="Fix import error",
-            implementation=json.dumps([
-                {"tool": "Edit", "parameters": {"file_path": "/src.py"}, "output_pattern": None, "timeout_seconds": None}
-            ]),
+            implementation=json.dumps(
+                [
+                    {
+                        "tool": "Edit",
+                        "parameters": {"file_path": "/src.py"},
+                        "output_pattern": None,
+                        "timeout_seconds": None,
+                    }
+                ]
+            ),
             tools=["Edit"],
             reasoning="Fix import by editing source file",
             code_examples=[],
             dependencies=[],
-            alternatives=[]
+            alternatives=[],
         )
 
         outcome = EffectivenessMetric(
@@ -691,7 +629,7 @@ class TestEnhancedPattern:
             technical_debt=None,
             adoption_rate=5,
             longevity=None,
-            confidence=0.9
+            confidence=0.9,
         )
 
         metadata = PatternMetadata(
@@ -703,7 +641,7 @@ class TestEnhancedPattern:
             application_count=5,
             validation_status="validated",
             tags=["import_fix", "learned"],
-            related_patterns=[]
+            related_patterns=[],
         )
 
         coding_pattern = CodingPattern(context, solution, outcome, metadata)
@@ -737,19 +675,16 @@ class TestEnhancedPattern:
             id="legacy_001",
             pattern_type="task",
             context={
-                "trigger": {
-                    "type": "task",
-                    "metadata": {"keywords": ["fix", "bug"]}
-                },
+                "trigger": {"type": "task", "metadata": {"keywords": ["fix", "bug"]}},
                 "preconditions": [],
-                "postconditions": []
+                "postconditions": [],
             },
             solution="Legacy solution text, not JSON",
             success_rate=0.7,
             usage_count=2,
             created_at="2023-01-01T10:00:00",
             last_used="2023-01-01T11:00:00",
-            tags=["legacy"]
+            tags=["legacy"],
         )
 
         enhanced = EnhancedPattern.from_existing_pattern(legacy_pattern)
@@ -766,7 +701,7 @@ class TestOperation:
         timestamp = datetime.now()
         tool_calls = [
             {"tool": "Read", "parameters": {"file_path": "/test.py"}},
-            {"tool": "Edit", "parameters": {"old_string": "old", "new_string": "new"}}
+            {"tool": "Edit", "parameters": {"old_string": "old", "new_string": "new"}},
         ]
 
         operation = Operation(
@@ -777,7 +712,7 @@ class TestOperation:
             final_state={"success": True, "tests_passing": True},
             success=True,
             duration_seconds=12.5,
-            timestamp=timestamp
+            timestamp=timestamp,
         )
 
         assert operation.id == "op_001"
@@ -797,7 +732,7 @@ class TestOperation:
             final_state={"test_results": {"regressions": 2}},
             success=False,
             duration_seconds=5.0,
-            timestamp=datetime.now()
+            timestamp=datetime.now(),
         )
 
         assert operation.caused_regression is True
@@ -812,7 +747,7 @@ class TestOperation:
             final_state={"test_results": {"regressions": 0}},
             success=True,
             duration_seconds=3.0,
-            timestamp=datetime.now()
+            timestamp=datetime.now(),
         )
 
         assert operation.caused_regression is False
@@ -827,7 +762,7 @@ class TestOperation:
             final_state={"other_data": "value"},
             success=True,
             duration_seconds=1.0,
-            timestamp=datetime.now()
+            timestamp=datetime.now(),
         )
 
         assert operation.caused_regression is False
@@ -840,7 +775,7 @@ class TestFailureReasonClass:
         """Test FailureAnalysisWithTests creation and auto-population."""
         test_failure = FailureAnalysisWithTests(
             failed_tests=["test_func1", "test_func2", "test_func3"],
-            root_cause="Assertion errors in business logic"
+            root_cause="Assertion errors in business logic",
         )
 
         assert test_failure.type == "test_failure"
@@ -853,8 +788,7 @@ class TestFailureReasonClass:
         """Test FailureAnalysisWithTests description truncates long lists."""
         failed_tests = [f"test_func{i}" for i in range(10)]
         test_failure = FailureAnalysisWithTests(
-            failed_tests=failed_tests,
-            root_cause="Multiple assertion failures"
+            failed_tests=failed_tests, root_cause="Multiple assertion failures"
         )
 
         # Should only show first 3 tests in description
@@ -864,8 +798,7 @@ class TestFailureReasonClass:
     def test_execution_error_creation(self):
         """Test ExecutionError creation and auto-population."""
         exec_error = ExecutionError(
-            error_type="PermissionError",
-            error_message="Access denied to file /protected.txt"
+            error_type="PermissionError", error_message="Access denied to file /protected.txt"
         )
 
         assert exec_error.type == "execution_error"
@@ -890,32 +823,32 @@ class TestPatternExtractor:
             task_description="Fix NoneType error in validation function",
             initial_error={
                 "type": "AttributeError",
-                "message": "AttributeError: 'NoneType' object has no attribute 'validate'"
+                "message": "AttributeError: 'NoneType' object has no attribute 'validate'",
             },
             tool_calls=[
                 {
                     "tool": "Read",
                     "parameters": {"file_path": "/src/validator.py"},
-                    "output": "File content read successfully"
+                    "output": "File content read successfully",
                 },
                 {
                     "tool": "Edit",
                     "parameters": {
                         "old_string": "result.validate()",
-                        "new_string": "if result: result.validate()"
+                        "new_string": "if result: result.validate()",
                     },
-                    "output": "✓ Edit completed successfully"
+                    "output": "✓ Edit completed successfully",
                 },
                 {
                     "tool": "Bash",
                     "parameters": {"command": "pytest tests/test_validator.py"},
-                    "output": "5 passed, 0 failed"
-                }
+                    "output": "5 passed, 0 failed",
+                },
             ],
             final_state={"tests_passing": True, "error_resolved": True},
             success=True,
             duration_seconds=15.2,
-            timestamp=datetime.now()
+            timestamp=datetime.now(),
         )
 
     def test_extractor_initialization_default_store(self):
@@ -923,7 +856,7 @@ class TestPatternExtractor:
         extractor = PatternExtractor()
 
         assert extractor.pattern_store is not None
-        assert hasattr(extractor, 'telemetry')
+        assert hasattr(extractor, "telemetry")
 
     def test_extractor_initialization_custom_store(self):
         """Test PatternExtractor initialization with custom store."""
@@ -932,7 +865,7 @@ class TestPatternExtractor:
 
         assert extractor.pattern_store == custom_store
 
-    @patch('learning_loop.pattern_extraction.emit')
+    @patch("learning_loop.pattern_extraction.emit")
     def test_extract_from_success(self, mock_emit):
         """Test successful pattern extraction from operation."""
         operation = self.create_success_operation()
@@ -964,10 +897,12 @@ class TestPatternExtractor:
             final_state={},
             success=False,
             duration_seconds=1.0,
-            timestamp=datetime.now()
+            timestamp=datetime.now(),
         )
 
-        with pytest.raises(ValueError, match="Cannot extract success pattern from failed operation"):
+        with pytest.raises(
+            ValueError, match="Cannot extract success pattern from failed operation"
+        ):
             self.extractor.extract_from_success(failed_operation)
 
     def test_identify_trigger_error_trigger(self):
@@ -987,13 +922,13 @@ class TestPatternExtractor:
             task_description=None,
             initial_error={
                 "type": "ImportError",
-                "message": "ImportError: No module named 'missing_module'"
+                "message": "ImportError: No module named 'missing_module'",
             },
             tool_calls=[],
             final_state={},
             success=True,
             duration_seconds=1.0,
-            timestamp=datetime.now()
+            timestamp=datetime.now(),
         )
 
         trigger = self.extractor._identify_trigger(operation)
@@ -1012,7 +947,7 @@ class TestPatternExtractor:
             final_state={},
             success=True,
             duration_seconds=1.0,
-            timestamp=datetime.now()
+            timestamp=datetime.now(),
         )
 
         trigger = self.extractor._identify_trigger(operation)
@@ -1032,7 +967,7 @@ class TestPatternExtractor:
             final_state={},
             success=True,
             duration_seconds=1.0,
-            timestamp=datetime.now()
+            timestamp=datetime.now(),
         )
 
         trigger = self.extractor._identify_trigger(operation)
@@ -1047,7 +982,7 @@ class TestPatternExtractor:
             ("Add null check to prevent crashes", ["add", "null", "crash"]),
             ("Refactor function to handle exceptions", ["refactor", "function", "exception"]),
             ("Create new test for validation", ["create", "test"]),
-            ("Random task description", ["general"])
+            ("Random task description", ["general"]),
         ]
 
         for description, expected_keywords in test_cases:
@@ -1108,7 +1043,7 @@ class TestPatternExtractor:
             ({"old_string": "import missing_module"}, {"old_string": "{import_statement}"}),
             ({"new_string": "def new_function():"}, {"new_string": "{function_definition}"}),
             ({"pattern": "error.*"}, {"pattern": "{pattern: error.*}"}),
-            ({"other_param": "value"}, {"other_param": "value"})
+            ({"other_param": "value"}, {"other_param": "value"}),
         ]
 
         for input_params, expected_output in test_cases:
@@ -1125,7 +1060,7 @@ class TestPatternExtractor:
             ("All tests passed", r"All tests passed"),
             ("File written successfully", r"File written successfully"),
             ("No recognizable outcome here", None),
-            ("", None)
+            ("", None),
         ]
 
         for output, expected_pattern in test_cases:
@@ -1192,28 +1127,25 @@ class TestFailureLearner:
             task_description="Attempt to fix validation without null check",
             initial_error={
                 "type": "AttributeError",
-                "message": "AttributeError: 'NoneType' object has no attribute 'validate'"
+                "message": "AttributeError: 'NoneType' object has no attribute 'validate'",
             },
             tool_calls=[
-                {
-                    "tool": "Read",
-                    "parameters": {"file_path": "/src/validator.py"}
-                },
+                {"tool": "Read", "parameters": {"file_path": "/src/validator.py"}},
                 {
                     "tool": "Edit",
                     "parameters": {
                         "old_string": "result.validate()",
-                        "new_string": "result.validate_all()"  # Wrong fix
-                    }
-                }
+                        "new_string": "result.validate_all()",  # Wrong fix
+                    },
+                },
             ],
             final_state={
                 "error": {"type": "AttributeError", "message": "validate_all not found"},
-                "test_results": {"passed": False, "failures": ["test_validate_user"]}
+                "test_results": {"passed": False, "failures": ["test_validate_user"]},
             },
             success=False,
             duration_seconds=8.1,
-            timestamp=datetime.now()
+            timestamp=datetime.now(),
         )
 
     def test_learner_initialization_default_store(self):
@@ -1221,7 +1153,7 @@ class TestFailureLearner:
         learner = FailureLearner()
 
         assert learner.pattern_store is not None
-        assert hasattr(learner, 'telemetry')
+        assert hasattr(learner, "telemetry")
 
     def test_learner_initialization_custom_store(self):
         """Test FailureLearner initialization with custom store."""
@@ -1230,7 +1162,7 @@ class TestFailureLearner:
 
         assert learner.pattern_store == custom_store
 
-    @patch('learning_loop.pattern_extraction.emit')
+    @patch("learning_loop.pattern_extraction.emit")
     def test_learn_from_failure(self, mock_emit):
         """Test anti-pattern learning from failed operation."""
         operation = self.create_failed_operation()
@@ -1261,10 +1193,12 @@ class TestFailureLearner:
             final_state={},
             success=True,
             duration_seconds=1.0,
-            timestamp=datetime.now()
+            timestamp=datetime.now(),
         )
 
-        with pytest.raises(ValueError, match="Cannot extract failure pattern from successful operation"):
+        with pytest.raises(
+            ValueError, match="Cannot extract failure pattern from successful operation"
+        ):
             self.learner.learn_from_failure(success_operation)
 
     def test_analyze_failure_test_failure(self):
@@ -1275,14 +1209,11 @@ class TestFailureLearner:
             initial_error=None,
             tool_calls=[],
             final_state={
-                "test_results": {
-                    "passed": False,
-                    "failures": ["test_func1", "test_func2"]
-                }
+                "test_results": {"passed": False, "failures": ["test_func1", "test_func2"]}
             },
             success=False,
             duration_seconds=1.0,
-            timestamp=datetime.now()
+            timestamp=datetime.now(),
         )
 
         failure_reason = self.learner._analyze_failure(operation)
@@ -1297,15 +1228,10 @@ class TestFailureLearner:
             task_description=None,
             initial_error=None,
             tool_calls=[],
-            final_state={
-                "error": {
-                    "type": "PermissionError",
-                    "message": "Access denied"
-                }
-            },
+            final_state={"error": {"type": "PermissionError", "message": "Access denied"}},
             success=False,
             duration_seconds=1.0,
-            timestamp=datetime.now()
+            timestamp=datetime.now(),
         )
 
         failure_reason = self.learner._analyze_failure(operation)
@@ -1324,7 +1250,7 @@ class TestFailureLearner:
             final_state={"some_data": "value"},
             success=False,
             duration_seconds=1.0,
-            timestamp=datetime.now()
+            timestamp=datetime.now(),
         )
 
         failure_reason = self.learner._analyze_failure(operation)
@@ -1340,8 +1266,11 @@ class TestFailureLearner:
             ({"failures": ["SyntaxError: invalid syntax"]}, "Syntax errors"),
             ({"failures": ["AttributeError: NoneType has no attribute"]}, "NoneType errors"),
             ({"failures": ["TimeoutError: operation timed out"]}, "Timeout errors"),
-            ({"failures": ["Error1", "Error2", "Error3"]}, "Multiple test failures: 3 tests failed"),
-            ({}, "Unknown test failure")
+            (
+                {"failures": ["Error1", "Error2", "Error3"]},
+                "Multiple test failures: 3 tests failed",
+            ),
+            ({}, "Unknown test failure"),
         ]
 
         for test_results, expected_root_cause in test_cases:
@@ -1388,32 +1317,32 @@ class TestIntegration:
             task_description="Fix import error by adding missing import",
             initial_error={
                 "type": "ImportError",
-                "message": "ImportError: cannot import name 'utils' from 'mymodule'"
+                "message": "ImportError: cannot import name 'utils' from 'mymodule'",
             },
             tool_calls=[
                 {
                     "tool": "Read",
                     "parameters": {"file_path": "/src/mymodule.py"},
-                    "output": "File read successfully"
+                    "output": "File read successfully",
                 },
                 {
                     "tool": "Edit",
                     "parameters": {
                         "old_string": "# imports",
-                        "new_string": "# imports\nfrom . import utils"
+                        "new_string": "# imports\nfrom . import utils",
                     },
-                    "output": "✓ Edit completed"
+                    "output": "✓ Edit completed",
                 },
                 {
                     "tool": "Bash",
                     "parameters": {"command": "python -m pytest tests/"},
-                    "output": "3 passed, 0 failed"
-                }
+                    "output": "3 passed, 0 failed",
+                },
             ],
             final_state={"tests_passing": True, "import_resolved": True},
             success=True,
             duration_seconds=22.7,
-            timestamp=datetime.now()
+            timestamp=datetime.now(),
         )
 
         extractor = PatternExtractor(pattern_store=mock_store)
@@ -1443,24 +1372,24 @@ class TestIntegration:
             task_description="Attempted to fix validation error incorrectly",
             initial_error={
                 "type": "AttributeError",
-                "message": "AttributeError: 'NoneType' object has no attribute 'is_valid'"
+                "message": "AttributeError: 'NoneType' object has no attribute 'is_valid'",
             },
             tool_calls=[
                 {
                     "tool": "Edit",
                     "parameters": {
                         "old_string": "user.is_valid()",
-                        "new_string": "user.validate()"  # Wrong method
-                    }
+                        "new_string": "user.validate()",  # Wrong method
+                    },
                 }
             ],
             final_state={
                 "error": {"type": "AttributeError", "message": "validate method not found"},
-                "test_results": {"passed": False, "failures": ["test_user_validation"]}
+                "test_results": {"passed": False, "failures": ["test_user_validation"]},
             },
             success=False,
             duration_seconds=3.2,
-            timestamp=datetime.now()
+            timestamp=datetime.now(),
         )
 
         learner = FailureLearner(pattern_store=mock_store)
@@ -1497,8 +1426,8 @@ class TestIntegration:
                 last_used=datetime.now(),
                 created_at=datetime.now(),
                 source="test",
-                tags=["test"]
-            )
+                tags=["test"],
+            ),
         )
 
         # Convert to CodingPattern format

@@ -34,6 +34,7 @@ agent_responsibilities: |
 ## Analysis Focus Areas (UNIQUE)
 
 ### Python Code
+
 - Type safety (mypy compliance)
 - PEP 8 style violations
 - Security issues (SQL injection, XSS, etc.)
@@ -42,6 +43,7 @@ agent_responsibilities: |
 - Test coverage
 
 ### TypeScript Code
+
 - Type safety (strict mode compliance)
 - ESLint rule violations
 - Security vulnerabilities
@@ -87,6 +89,7 @@ Generate a JSON audit report with this structure:
 ## Constitutional Compliance Checks (UNIQUE)
 
 Ensure audits check for:
+
 - TDD compliance (test presence)
 - Strict typing enforcement
 - Repository pattern usage

@@ -1,7 +1,7 @@
 import os
 
-from typing import Optional
 from agency_swarm import Agent as _Agent
+
 from shared.agent_context import AgentContext, create_agent_context
 from shared.constitutional_validator import constitutional_compliance
 
@@ -9,31 +9,41 @@ from shared.constitutional_validator import constitutional_compliance
 # When tests patch 'learning_agent.Agent', this will be the target
 Agent = _Agent
 from shared.agent_utils import (
-    select_instructions_file,
     create_model_settings,
     get_model_instance,
+    select_instructions_file,
 )
-from shared.system_hooks import create_message_filter_hook, create_memory_integration_hook, create_composite_hook
+from shared.system_hooks import (
+    create_composite_hook,
+    create_memory_integration_hook,
+    create_message_filter_hook,
+)
 from tools import (
     LS,
-    Read,
-    Grep,
     Glob,
+    Grep,
+    Read,
     TodoWrite,
 )
+
 from .tools.analyze_session import AnalyzeSession
-from .tools.extract_insights import ExtractInsights
 from .tools.consolidate_learning import ConsolidateLearning
+from .tools.cross_session_learner import CrossSessionLearner
+from .tools.extract_insights import ExtractInsights
+from .tools.self_healing_pattern_extractor import SelfHealingPatternExtractor
 from .tools.store_knowledge import StoreKnowledge
 from .tools.telemetry_pattern_analyzer import TelemetryPatternAnalyzer
-from .tools.self_healing_pattern_extractor import SelfHealingPatternExtractor
-from .tools.cross_session_learner import CrossSessionLearner
 
 # Get the absolute path to the current file's directory
 current_dir = os.path.dirname(os.path.abspath(__file__))
 
+
 @constitutional_compliance
-def create_learning_agent(model: str = "gpt-5", reasoning_effort: str = "high", agent_context: Optional[AgentContext] = None) -> Agent:
+def create_learning_agent(
+    model: str = "gpt-5",
+    reasoning_effort: str = "high",
+    agent_context: AgentContext | None = None,
+) -> Agent:
     """Factory that returns a fresh LearningAgent instance.
     Use this in tests to avoid reusing a singleton across multiple agencies.
 
@@ -84,9 +94,9 @@ def _log_agent_creation(agent_context: AgentContext, model: str, reasoning_effor
             "agent_type": "LearningAgent",
             "model": model,
             "reasoning_effort": reasoning_effort,
-            "session_id": agent_context.session_id
+            "session_id": agent_context.session_id,
         },
-        ["agency", "learning", "creation"]
+        ["agency", "learning", "creation"],
     )
 
 
@@ -165,15 +175,15 @@ def _get_agent_tools() -> list:
 
 # Export classes and functions for testing/mocking
 __all__ = [
-    'create_learning_agent',
-    'Agent',
-    'create_agent_context',
-    'select_instructions_file',
-    'create_model_settings',
-    'get_model_instance',
-    'create_message_filter_hook',
-    'create_memory_integration_hook',
-    'create_composite_hook'
+    "create_learning_agent",
+    "Agent",
+    "create_agent_context",
+    "select_instructions_file",
+    "create_model_settings",
+    "get_model_instance",
+    "create_message_filter_hook",
+    "create_memory_integration_hook",
+    "create_composite_hook",
 ]
 
 # Note: We don't create a singleton at module level to avoid circular imports.

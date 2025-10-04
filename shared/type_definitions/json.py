@@ -12,6 +12,7 @@ Usage patterns:
 """
 
 from typing import Union
+
 from pydantic import JsonValue as _PydanticJsonValue
 
 JSONScalar = Union[str, int, float, bool, None]

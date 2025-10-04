@@ -12,23 +12,25 @@ import pytest
 # Skip infrastructure-dependent tests in CI
 pytestmark = pytest.mark.skipif(
     True,  # TODO: Fix infrastructure issues
-    reason="Infrastructure dependencies not available in CI"
+    reason="Infrastructure dependencies not available in CI",
 )
 
 import os
 from pathlib import Path
+
 from openai import OpenAI
 
-from shared.cost_tracker import CostTracker, ModelTier
-from shared.llm_cost_wrapper import wrap_openai_client, create_cost_tracking_context
-from shared.agent_context import create_agent_context
-
 from agency_code_agent.agency_code_agent import create_agency_code_agent
+from merger_agent.merger_agent import create_merger_agent
+from quality_enforcer_agent.quality_enforcer_agent import create_quality_enforcer_agent
+from shared.agent_context import create_agent_context
+from shared.cost_tracker import CostTracker, ModelTier
+from shared.llm_cost_wrapper import create_cost_tracking_context, wrap_openai_client
 from test_generator_agent.test_generator_agent import create_test_generator_agent
 from toolsmith_agent.toolsmith_agent import create_toolsmith_agent
-from quality_enforcer_agent.quality_enforcer_agent import create_quality_enforcer_agent
-from merger_agent.merger_agent import create_merger_agent
-from work_completion_summary_agent.work_completion_summary_agent import create_work_completion_summary_agent
+from work_completion_summary_agent.work_completion_summary_agent import (
+    create_work_completion_summary_agent,
+)
 
 
 @pytest.fixture
@@ -62,10 +64,8 @@ def test_openai_client_wrapper_with_real_call(cost_tracker):
     client = OpenAI()
     response = client.chat.completions.create(
         model="gpt-4o-mini",  # Use mini model for low cost
-        messages=[
-            {"role": "user", "content": "Say 'test' and nothing else."}
-        ],
-        max_tokens=5
+        messages=[{"role": "user", "content": "Say 'test' and nothing else."}],
+        max_tokens=5,
     )
 
     # Verify response
@@ -86,7 +86,7 @@ def test_openai_client_wrapper_with_real_call(cost_tracker):
     assert len(summary.by_model) == 1
     assert "gpt-4o-mini" in list(summary.by_model.keys())[0]
 
-    print(f"\nReal API call tracked:")
+    print("\nReal API call tracked:")
     print(f"  Input tokens: {summary.total_input_tokens}")
     print(f"  Output tokens: {summary.total_output_tokens}")
     print(f"  Cost: ${summary.total_cost_usd:.6f}")
@@ -101,9 +101,7 @@ def test_cost_tracking_context_manager(cost_tracker):
     with create_cost_tracking_context(cost_tracker, "ContextAgent"):
         client = OpenAI()
         response = client.chat.completions.create(
-            model="gpt-4o-mini",
-            messages=[{"role": "user", "content": "Hi"}],
-            max_tokens=3
+            model="gpt-4o-mini", messages=[{"role": "user", "content": "Hi"}], max_tokens=3
         )
         assert response is not None
 
@@ -120,9 +118,7 @@ def test_agency_code_agent_cost_tracking(cost_tracker, agent_context):
 
     # Create agent with cost tracking
     agent = create_agency_code_agent(
-        model="gpt-4o-mini",
-        agent_context=agent_context,
-        cost_tracker=cost_tracker
+        model="gpt-4o-mini", agent_context=agent_context, cost_tracker=cost_tracker
     )
 
     # Verify agent was created
@@ -130,7 +126,7 @@ def test_agency_code_agent_cost_tracking(cost_tracker, agent_context):
     assert agent.name == "AgencyCodeAgent"
 
     # Check that cost tracker was attached to context
-    assert hasattr(agent_context, 'cost_tracker')
+    assert hasattr(agent_context, "cost_tracker")
     assert agent_context.cost_tracker is cost_tracker
 
     # Initial summary should be empty
@@ -152,18 +148,14 @@ def test_all_agents_have_cost_tracking_support(cost_tracker, agent_context):
 
     for expected_name, factory, model in agents:
         # Create agent with cost tracker
-        agent = factory(
-            model=model,
-            agent_context=agent_context,
-            cost_tracker=cost_tracker
-        )
+        agent = factory(model=model, agent_context=agent_context, cost_tracker=cost_tracker)
 
         # Verify agent creation
         assert agent is not None
         assert agent.name == expected_name
 
         # Verify cost tracker was stored in context
-        assert hasattr(agent_context, 'cost_tracker')
+        assert hasattr(agent_context, "cost_tracker")
         assert agent_context.cost_tracker is cost_tracker
 
 
@@ -198,9 +190,7 @@ def test_cost_tracker_database_persistence(cost_tracker):
     # Make a call
     client = OpenAI()
     client.chat.completions.create(
-        model="gpt-4o-mini",
-        messages=[{"role": "user", "content": "Test"}],
-        max_tokens=3
+        model="gpt-4o-mini", messages=[{"role": "user", "content": "Test"}], max_tokens=3
     )
 
     # Verify data was persisted
@@ -225,8 +215,7 @@ def test_failed_call_tracking(cost_tracker):
     # This should fail
     with pytest.raises(Exception):
         client.chat.completions.create(
-            model="gpt-4o-mini",
-            messages=[{"role": "user", "content": "Test"}]
+            model="gpt-4o-mini", messages=[{"role": "user", "content": "Test"}]
         )
 
     # Verify failure was tracked
@@ -241,8 +230,7 @@ def test_failed_call_tracking(cost_tracker):
 
 
 @pytest.mark.skipif(
-    not os.getenv("OPENAI_API_KEY"),
-    reason="Requires OPENAI_API_KEY for real API test"
+    not os.getenv("OPENAI_API_KEY"), reason="Requires OPENAI_API_KEY for real API test"
 )
 def test_end_to_end_cost_tracking_with_gpt5():
     """
@@ -260,11 +248,9 @@ def test_end_to_end_cost_tracking_with_gpt5():
     client = OpenAI()
     response = client.chat.completions.create(
         model="gpt-5",
-        messages=[
-            {"role": "user", "content": "Reply with just 'OK'"}
-        ],
+        messages=[{"role": "user", "content": "Reply with just 'OK'"}],
         max_completion_tokens=10,
-        reasoning_effort="low"  # Minimize cost
+        reasoning_effort="low",  # Minimize cost
     )
 
     # Verify response

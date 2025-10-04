@@ -1,8 +1,6 @@
+import json
 import os
 from pathlib import Path
-import re
-import json
-import pytest
 
 from core.telemetry import SimpleTelemetry
 

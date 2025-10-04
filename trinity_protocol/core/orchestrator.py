@@ -4,20 +4,23 @@ Synchronous coordination via JSONL message bus + Claude Code Task tool.
 
 NO background processes. NO context pollution. Maximum value.
 """
+
 import json
-from pathlib import Path
 from datetime import datetime
-from typing import Dict, List, Optional, Literal
+from pathlib import Path
+from typing import Literal
+
 from pydantic import BaseModel, Field
 
 
 # Message Bus Protocol (Token-Efficient JSONL)
 class TrinityMessage(BaseModel):
     """Single message in Trinity coordination bus."""
+
     ts: str = Field(description="ISO timestamp (19 chars)")
     agent: Literal["ARCHITECT", "EXECUTOR", "WITNESS", "ORCHESTRATOR"]
     type: str = Field(description="Message type (DECISION, READY, COMPLETE, etc.)")
-    data: Dict = Field(default_factory=dict, description="Minimal payload")
+    data: dict = Field(default_factory=dict, description="Minimal payload")
 
 
 class TrinityBus:
@@ -27,18 +30,20 @@ class TrinityBus:
         self.path = Path(bus_path)
         self.path.parent.mkdir(parents=True, exist_ok=True)
 
-    def publish(self, agent: str, msg_type: str, data: Dict) -> None:
+    def publish(self, agent: str, msg_type: str, data: dict) -> None:
         """Append message to bus (atomic, thread-safe)."""
         msg = TrinityMessage(
             ts=datetime.now().isoformat()[:19],
             agent=agent,  # type: ignore
             type=msg_type,
-            data=data
+            data=data,
         )
         with open(self.path, "a") as f:
             f.write(msg.model_dump_json() + "\n")
 
-    def read(self, msg_type: Optional[str] = None, from_agent: Optional[str] = None) -> List[TrinityMessage]:
+    def read(
+        self, msg_type: str | None = None, from_agent: str | None = None
+    ) -> list[TrinityMessage]:
         """Read messages from bus (filter by type/agent)."""
         if not self.path.exists():
             return []
@@ -169,7 +174,7 @@ class TrinityOrchestrator:
     def __init__(self):
         self.bus = TrinityBus()
 
-    def start_mission(self, user_goal: str) -> Dict:
+    def start_mission(self, user_goal: str) -> dict:
         """
         Coordinate ARCHITECT → EXECUTOR → WITNESS flow.
 
@@ -190,15 +195,15 @@ class TrinityOrchestrator:
             "specs": {
                 "architect": ARCHITECT_SPEC,
                 "executor": EXECUTOR_SPEC,
-                "witness": WITNESS_SPEC
+                "witness": WITNESS_SPEC,
             },
             "bus_path": str(self.bus.path),
-            "next_action": "Spawn ARCHITECT agent via Task tool with ARCHITECT_SPEC"
+            "next_action": "Spawn ARCHITECT agent via Task tool with ARCHITECT_SPEC",
         }
 
 
 # Production API
-def initialize_trinity(goal: str) -> Dict:
+def initialize_trinity(goal: str) -> dict:
     """Initialize Trinity protocol for a mission."""
     orchestrator = TrinityOrchestrator()
     return orchestrator.start_mission(goal)

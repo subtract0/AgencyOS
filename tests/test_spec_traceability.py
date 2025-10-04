@@ -4,13 +4,15 @@ Tests for Spec Traceability Validation Tool
 Constitutional Compliance: Article V - Spec-Driven Development
 """
 
-import pytest
-from pathlib import Path
-import tempfile
 import shutil
+import tempfile
+from pathlib import Path
+
+import pytest
+
 from tools.spec_traceability import (
-    SpecTraceabilityValidator,
     SpecTraceabilityReport,
+    SpecTraceabilityValidator,
 )
 
 
@@ -196,7 +198,7 @@ def my_feature():
 
         for i in range(2, 4):
             file_path = temp_codebase / f"feature_{i}.py"
-            file_path.write_text(f"def feature():\n    pass\n")
+            file_path.write_text("def feature():\n    pass\n")
 
         # Act
         result = validator.validate_codebase(temp_codebase)
@@ -268,12 +270,8 @@ def my_feature():
         subdir = temp_codebase / "module"
         subdir.mkdir()
 
-        (temp_codebase / "root.py").write_text(
-            "# Spec: specs/root.md\n\ndef root():\n    pass\n"
-        )
-        (subdir / "feature.py").write_text(
-            "# Spec: specs/feature.md\n\ndef feature():\n    pass\n"
-        )
+        (temp_codebase / "root.py").write_text("# Spec: specs/root.md\n\ndef root():\n    pass\n")
+        (subdir / "feature.py").write_text("# Spec: specs/feature.md\n\ndef feature():\n    pass\n")
 
         # Act
         result = validator.validate_codebase(temp_codebase)
@@ -352,7 +350,7 @@ class TestSpecTraceabilityReport:
             files_without_spec_refs=2,
             spec_coverage=80.0,
             violations=["file1.py", "file2.py"],
-            compliant=True
+            compliant=True,
         )
 
         # Assert
@@ -371,7 +369,7 @@ class TestSpecTraceabilityReport:
             files_with_spec_refs=5,
             files_without_spec_refs=0,
             spec_coverage=100.0,
-            compliant=True
+            compliant=True,
         )
 
         # Assert

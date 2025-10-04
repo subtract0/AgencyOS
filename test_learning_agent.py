@@ -14,11 +14,11 @@ This script tests the complete learning pipeline:
 Tests with real session data from /logs/sessions/
 """
 
-import os
-import sys
-import json
-import re
 import ast
+import json
+import os
+import re
+import sys
 from datetime import datetime
 from pathlib import Path
 
@@ -27,9 +27,9 @@ project_root = Path(__file__).resolve().parent
 if str(project_root) not in sys.path:
     sys.path.insert(0, str(project_root))
 
+from agency_memory import VectorStore
 from learning_agent.learning_agent import create_learning_agent
 from shared.agent_context import create_agent_context
-from agency_memory import VectorStore
 
 
 def convert_markdown_session_to_json(markdown_path: str) -> dict:
@@ -39,41 +39,41 @@ def convert_markdown_session_to_json(markdown_path: str) -> dict:
     Parses the Markdown format session logs and creates a JSON structure
     that the AnalyzeSession tool can process.
     """
-    with open(markdown_path, 'r', encoding='utf-8') as f:
+    with open(markdown_path, encoding="utf-8") as f:
         content = f.read()
 
     # Extract session metadata from the header
-    session_id_match = re.search(r'Session Transcript: (.+)', content)
+    session_id_match = re.search(r"Session Transcript: (.+)", content)
     session_id = session_id_match.group(1) if session_id_match else "unknown"
 
-    generated_match = re.search(r'\*\*Generated:\*\* (.+)', content)
+    generated_match = re.search(r"\*\*Generated:\*\* (.+)", content)
     generated_time = generated_match.group(1) if generated_match else datetime.now().isoformat()
 
-    total_memories_match = re.search(r'\*\*Total Memories:\*\* (\d+)', content)
+    total_memories_match = re.search(r"\*\*Total Memories:\*\* (\d+)", content)
     total_memories = int(total_memories_match.group(1)) if total_memories_match else 0
 
     # Parse memory records
     entries = []
-    memory_sections = re.split(r'\n---\n', content)
+    memory_sections = re.split(r"\n---\n", content)
 
     for section in memory_sections:
-        if not section.strip() or '## Memory Records' in section:
+        if not section.strip() or "## Memory Records" in section:
             continue
 
         # Extract memory data
-        timestamp_match = re.search(r'\*\*Timestamp:\*\* (.+)', section)
-        tags_match = re.search(r'\*\*Tags:\*\* (.+)', section)
-        content_match = re.search(r'\*\*Content:\*\* (.+)', section, re.DOTALL)
+        timestamp_match = re.search(r"\*\*Timestamp:\*\* (.+)", section)
+        tags_match = re.search(r"\*\*Tags:\*\* (.+)", section)
+        content_match = re.search(r"\*\*Content:\*\* (.+)", section, re.DOTALL)
 
         if timestamp_match and tags_match:
             timestamp = timestamp_match.group(1)
-            tags = [tag.strip() for tag in tags_match.group(1).split(',')]
+            tags = [tag.strip() for tag in tags_match.group(1).split(",")]
 
             # Parse content (it's usually a dictionary representation)
             content_str = content_match.group(1).strip() if content_match else "{}"
             try:
                 # Safely parse as literal (no code execution)
-                if content_str.startswith('{') and content_str.endswith('}'):
+                if content_str.startswith("{") and content_str.endswith("}"):
                     content_data = ast.literal_eval(content_str)
                 else:
                     # Try JSON parsing first
@@ -84,11 +84,7 @@ def convert_markdown_session_to_json(markdown_path: str) -> dict:
             except (ValueError, SyntaxError):
                 content_data = {"raw": content_str}
 
-            entry = {
-                "timestamp": timestamp,
-                "tags": tags,
-                "content": content_data
-            }
+            entry = {"timestamp": timestamp, "tags": tags, "content": content_data}
             entries.append(entry)
 
     # Create JSON session structure
@@ -97,7 +93,7 @@ def convert_markdown_session_to_json(markdown_path: str) -> dict:
         "start_time": generated_time,
         "end_time": generated_time,  # Use same time for simplicity
         "total_memories": total_memories,
-        "entries": entries
+        "entries": entries,
     }
 
     return session_data
@@ -114,7 +110,9 @@ def test_learning_agent_pipeline():
     print("\n1. Creating LearningAgent instance...")
     try:
         agent_context = create_agent_context()
-        learning_agent = create_learning_agent(model="gpt-4o", reasoning_effort="high", agent_context=agent_context)
+        learning_agent = create_learning_agent(
+            model="gpt-4o", reasoning_effort="high", agent_context=agent_context
+        )
         print("✅ LearningAgent created successfully")
         print(f"   - Agent name: {learning_agent.name}")
         print(f"   - Number of tools: {len(learning_agent.tools)}")
@@ -149,7 +147,7 @@ def test_learning_agent_pipeline():
 
         # Save temporary JSON file for the tool
         temp_json_path = "/tmp/test_session.json"
-        with open(temp_json_path, 'w') as f:
+        with open(temp_json_path, "w") as f:
             json.dump(session_json, f, indent=2)
         print(f"   - Saved temporary JSON to {temp_json_path}")
 
@@ -162,10 +160,7 @@ def test_learning_agent_pipeline():
     try:
         from learning_agent.tools.analyze_session import AnalyzeSession
 
-        analyze_tool = AnalyzeSession(
-            session_file=temp_json_path,
-            analysis_depth="standard"
-        )
+        analyze_tool = AnalyzeSession(session_file=temp_json_path, analysis_depth="standard")
         analysis_result = analyze_tool.run()
 
         if "Error" in analysis_result:
@@ -174,11 +169,15 @@ def test_learning_agent_pipeline():
 
         analysis_data = json.loads(analysis_result)
         print("✅ Session analysis completed successfully")
-        print(f"   - Session ID: {analysis_data.get('session_metadata', {}).get('session_id', 'unknown')}")
-        print(f"   - Total entries: {analysis_data.get('session_metadata', {}).get('total_entries', 0)}")
+        print(
+            f"   - Session ID: {analysis_data.get('session_metadata', {}).get('session_id', 'unknown')}"
+        )
+        print(
+            f"   - Total entries: {analysis_data.get('session_metadata', {}).get('total_entries', 0)}"
+        )
 
-        if 'tool_analysis' in analysis_data:
-            tool_count = len(analysis_data['tool_analysis'].get('tool_usage_counts', {}))
+        if "tool_analysis" in analysis_data:
+            tool_count = len(analysis_data["tool_analysis"].get("tool_usage_counts", {}))
             print(f"   - Tools analyzed: {tool_count}")
 
     except Exception as e:
@@ -191,9 +190,7 @@ def test_learning_agent_pipeline():
         from learning_agent.tools.extract_insights import ExtractInsights
 
         insights_tool = ExtractInsights(
-            session_analysis=analysis_result,
-            insight_type="auto",
-            confidence_threshold=0.6
+            session_analysis=analysis_result, insight_type="auto", confidence_threshold=0.6
         )
         insights_result = insights_tool.run()
 
@@ -207,8 +204,8 @@ def test_learning_agent_pipeline():
         print(f"   - Confidence threshold: {insights_data.get('confidence_threshold', 0)}")
 
         # Display first insight as example
-        if insights_data.get('insights'):
-            first_insight = insights_data['insights'][0]
+        if insights_data.get("insights"):
+            first_insight = insights_data["insights"][0]
             print(f"   - Example insight: {first_insight.get('title', 'Untitled')}")
 
     except Exception as e:
@@ -223,7 +220,7 @@ def test_learning_agent_pipeline():
         consolidate_tool = ConsolidateLearning(
             insights=insights_result,
             learning_type="auto",
-            session_context=f"Test session analysis from {test_session.name}"
+            session_context=f"Test session analysis from {test_session.name}",
         )
         learning_result = consolidate_tool.run()
 
@@ -244,8 +241,8 @@ def test_learning_agent_pipeline():
         print(f"   - Learning type: {learning_data.get('learning_type', 'unknown')}")
 
         # Display first learning object as example
-        if learning_data.get('learning_objects'):
-            first_learning = learning_data['learning_objects'][0]
+        if learning_data.get("learning_objects"):
+            first_learning = learning_data["learning_objects"][0]
             print(f"   - Example learning: {first_learning.get('title', 'Untitled')}")
             print(f"   - Learning ID: {first_learning.get('learning_id', 'unknown')}")
 
@@ -259,9 +256,7 @@ def test_learning_agent_pipeline():
         from learning_agent.tools.store_knowledge import StoreKnowledge
 
         store_tool = StoreKnowledge(
-            learning=learning_result,
-            storage_mode="standard",
-            namespace="test_learnings"
+            learning=learning_result, storage_mode="standard", namespace="test_learnings"
         )
         store_result = store_tool.run()
 
@@ -300,7 +295,7 @@ def test_learning_agent_pipeline():
         print(f"   - Embedding provider: {stats.get('embedding_provider', 'none')}")
 
         # Basic check that something was stored
-        if stats.get('total_memories', 0) > 0:
+        if stats.get("total_memories", 0) > 0:
             print("   - ✅ Learnings successfully stored in VectorStore")
         else:
             print("   - ⚠️  No memories found in VectorStore")
@@ -312,8 +307,8 @@ def test_learning_agent_pipeline():
     print("\n8. Example Learning Output:")
     print("-" * 40)
     try:
-        if learning_data.get('learning_objects'):
-            example_learning = learning_data['learning_objects'][0]
+        if learning_data.get("learning_objects"):
+            example_learning = learning_data["learning_objects"][0]
             print(json.dumps(example_learning, indent=2))
         else:
             print("No learning objects to display")
@@ -347,6 +342,7 @@ def main():
     except Exception as e:
         print(f"\n💥 Test runner failed with exception: {e}")
         import traceback
+
         traceback.print_exc()
         sys.exit(1)
 

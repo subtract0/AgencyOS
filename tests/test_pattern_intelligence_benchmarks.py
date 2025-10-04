@@ -5,15 +5,15 @@ Defines measurable benchmarks for "smart" using Test-Driven Development.
 These tests establish concrete metrics for intelligence amplification.
 """
 
+from datetime import datetime
+
 import pytest
-from datetime import datetime, timedelta
-from typing import Dict, List, Any
 
 # Import pattern intelligence components
-from pattern_intelligence import CodingPattern, PatternStore
+from pattern_intelligence import PatternStore
 from pattern_intelligence.extractors import LocalCodebaseExtractor
-from pattern_intelligence.pattern_applicator import PatternApplicator
 from pattern_intelligence.meta_learning import MetaLearningEngine
+from pattern_intelligence.pattern_applicator import PatternApplicator
 
 
 class TestIntelligenceAmplificationBenchmarks:
@@ -29,7 +29,7 @@ class TestIntelligenceAmplificationBenchmarks:
         return {
             "store": pattern_store,
             "applicator": pattern_applicator,
-            "meta_learning": meta_learning
+            "meta_learning": meta_learning,
         }
 
     def test_benchmark_1_pattern_extraction_velocity(self, intelligence_system):
@@ -49,7 +49,9 @@ class TestIntelligenceAmplificationBenchmarks:
         patterns_per_minute = len(patterns) / (extraction_time / 60)
 
         # BENCHMARK: Must extract at least 5 patterns per minute
-        assert patterns_per_minute >= 5.0, f"Pattern extraction too slow: {patterns_per_minute:.1f} patterns/min"
+        assert patterns_per_minute >= 5.0, (
+            f"Pattern extraction too slow: {patterns_per_minute:.1f} patterns/min"
+        )
         assert len(patterns) >= 3, f"Too few patterns extracted: {len(patterns)}"
 
     def test_benchmark_2_pattern_effectiveness_quality(self, intelligence_system):
@@ -99,8 +101,7 @@ class TestIntelligenceAmplificationBenchmarks:
 
         for scenario in test_scenarios:
             results = intelligence_system["store"].find_patterns(
-                query=scenario["query"],
-                max_results=3
+                query=scenario["query"], max_results=3
             )
 
             # Check if any result matches expected domain
@@ -136,7 +137,7 @@ class TestIntelligenceAmplificationBenchmarks:
             application_result = intelligence_system["applicator"].auto_apply_pattern(
                 pattern_id=pattern.metadata.pattern_id,
                 context_data={"description": "test context"},
-                dry_run=True
+                dry_run=True,
             )
 
             if application_result.get("success", False):
@@ -157,24 +158,26 @@ class TestIntelligenceAmplificationBenchmarks:
         # Baseline learning velocity
         baseline_analysis = intelligence_system["meta_learning"].analyze_learning_effectiveness()
         # Handle both dict and Pydantic model returns
-        if hasattr(baseline_analysis, 'learning_trends'):
-            baseline_velocity = getattr(baseline_analysis.learning_trends, 'learning_velocity', 0)
+        if hasattr(baseline_analysis, "learning_trends"):
+            baseline_velocity = getattr(baseline_analysis.learning_trends, "learning_velocity", 0)
         else:
-            baseline_velocity = baseline_analysis.get("learning_trends", {}).get("learning_velocity", 0)
+            baseline_velocity = baseline_analysis.get("learning_trends", {}).get(
+                "learning_velocity", 0
+            )
 
         # Optimize learning strategy
         optimization = intelligence_system["meta_learning"].optimize_learning_strategy()
 
         # Simulate improved velocity (in real system, this would be measured over time)
         # Handle both dict and Pydantic model returns
-        if hasattr(optimization, 'expected_improvements'):
+        if hasattr(optimization, "expected_improvements"):
             expected_improvements = optimization.expected_improvements or []
         else:
             expected_improvements = optimization.get("expected_improvements", [])
         velocity_improvements = []
         for imp in expected_improvements:
             # Handle both dict and Pydantic model
-            if hasattr(imp, 'metric'):
+            if hasattr(imp, "metric"):
                 metric = imp.metric or ""
             else:
                 metric = imp.get("metric", "")
@@ -184,7 +187,7 @@ class TestIntelligenceAmplificationBenchmarks:
         if velocity_improvements:
             imp = velocity_improvements[0]
             # Handle both dict and Pydantic model
-            if hasattr(imp, 'predicted_improvement'):
+            if hasattr(imp, "predicted_improvement"):
                 improvement = imp.predicted_improvement or 0
             else:
                 improvement = imp.get("predicted_improvement", 0)
@@ -213,7 +216,7 @@ class TestIntelligenceAmplificationBenchmarks:
         synergies = intelligence_system["meta_learning"].discover_pattern_synergies()
 
         # Handle both dict and Pydantic model returns
-        if hasattr(synergies, 'discovered_combinations'):
+        if hasattr(synergies, "discovered_combinations"):
             discovered_combinations = synergies.discovered_combinations or []
         else:
             discovered_combinations = synergies.get("discovered_combinations", [])
@@ -221,7 +224,7 @@ class TestIntelligenceAmplificationBenchmarks:
         high_synergy_combinations = []
         for combo in discovered_combinations:
             # Handle both dict and Pydantic model
-            if hasattr(combo, 'synergy_potential'):
+            if hasattr(combo, "synergy_potential"):
                 synergy = combo.synergy_potential or 0
             else:
                 synergy = combo.get("synergy_potential", 0)
@@ -229,8 +232,9 @@ class TestIntelligenceAmplificationBenchmarks:
                 high_synergy_combinations.append(combo)
 
         # BENCHMARK: Must discover ≥3 high-synergy combinations
-        assert len(high_synergy_combinations) >= 3, \
+        assert len(high_synergy_combinations) >= 3, (
             f"Too few high-synergy combinations: {len(high_synergy_combinations)}"
+        )
 
     def test_benchmark_7_meta_pattern_generation(self, intelligence_system):
         """
@@ -248,8 +252,9 @@ class TestIntelligenceAmplificationBenchmarks:
         # BENCHMARK: Must generate valid meta-pattern
         assert meta_pattern is not None, "Failed to generate meta-pattern"
         assert meta_pattern.context.domain == "meta_learning", "Meta-pattern has wrong domain"
-        assert meta_pattern.outcome.effectiveness_score() >= 0.80, \
+        assert meta_pattern.outcome.effectiveness_score() >= 0.80, (
             f"Meta-pattern effectiveness too low: {meta_pattern.outcome.effectiveness_score():.1%}"
+        )
 
     def test_benchmark_8_knowledge_retention(self, intelligence_system):
         """
@@ -306,14 +311,13 @@ class TestIntelligenceAmplificationBenchmarks:
         updated_stats = intelligence_system["store"].get_stats()
 
         # BENCHMARK: Must provide measurable intelligence metrics
-        required_metrics = [
-            "total_patterns", "average_effectiveness", "unique_domains"
-        ]
+        required_metrics = ["total_patterns", "average_effectiveness", "unique_domains"]
 
         for metric in required_metrics:
             assert metric in updated_stats, f"Missing intelligence metric: {metric}"
-            assert isinstance(updated_stats[metric], (int, float)), \
+            assert isinstance(updated_stats[metric], (int, float)), (
                 f"Metric {metric} is not measurable: {type(updated_stats[metric])}"
+            )
 
         # BENCHMARK: Intelligence must be quantifiably improving
         pattern_growth = updated_stats["total_patterns"] - baseline_stats.get("total_patterns", 0)
@@ -336,16 +340,14 @@ class TestIntelligenceAmplificationBenchmarks:
                 intelligence_system["store"].store_pattern(pattern)
 
             # Test pattern retrieval
-            results = intelligence_system["store"].find_patterns(
-                query="test query", max_results=3
-            )
+            results = intelligence_system["store"].find_patterns(query="test query", max_results=3)
 
             # Test pattern application
             if results:
                 intelligence_system["applicator"].auto_apply_pattern(
                     pattern_id=results[0].pattern.metadata.pattern_id,
                     context_data={"test": "context"},
-                    dry_run=True
+                    dry_run=True,
                 )
 
             # Test meta-learning
@@ -369,15 +371,17 @@ class TestIntelligenceMetrics:
         """
         # Sample metrics
         pattern_effectiveness = 0.80  # 80%
-        application_success = 0.75    # 75%
-        learning_velocity = 0.85      # 85% of target velocity
+        application_success = 0.75  # 75%
+        learning_velocity = 0.85  # 85% of target velocity
 
         # Calculate AIQ
         aiq = (pattern_effectiveness * application_success * learning_velocity) * 100
 
         # BENCHMARK: AIQ should be meaningful and comparable
         assert 0 <= aiq <= 100, f"AIQ out of range: {aiq}"
-        assert aiq >= 50, f"AIQ too low for functional system: {aiq}"  # Minimum functional threshold
+        assert aiq >= 50, (
+            f"AIQ too low for functional system: {aiq}"
+        )  # Minimum functional threshold
 
         # Example: 80% × 75% × 85% × 100 = 51 AIQ
         expected_aiq = 0.80 * 0.75 * 0.85 * 100
@@ -390,13 +394,15 @@ class TestIntelligenceMetrics:
         Growth Rate = (Current AIQ - Previous AIQ) / Previous AIQ × 100%
         """
         previous_aiq = 51.0  # Baseline
-        current_aiq = 58.0   # After learning
+        current_aiq = 58.0  # After learning
 
         growth_rate = ((current_aiq - previous_aiq) / previous_aiq) * 100
 
         # BENCHMARK: Positive growth rate indicates learning
         assert growth_rate > 0, f"No intelligence growth detected: {growth_rate}%"
-        assert growth_rate >= 10, f"Intelligence growth too slow: {growth_rate}%"  # Minimum 10% improvement
+        assert growth_rate >= 10, (
+            f"Intelligence growth too slow: {growth_rate}%"
+        )  # Minimum 10% improvement
 
         # Example: (58 - 51) / 51 × 100% = 13.7% growth
         expected_growth = ((58.0 - 51.0) / 51.0) * 100
@@ -413,20 +419,21 @@ class TestIntelligenceMetrics:
 
         growth_rates = []
         for i in range(1, len(aiq_history)):
-            growth_rate = ((aiq_history[i] - aiq_history[i-1]) / aiq_history[i-1]) * 100
+            growth_rate = ((aiq_history[i] - aiq_history[i - 1]) / aiq_history[i - 1]) * 100
             growth_rates.append(growth_rate)
 
         # BENCHMARK: Growth rates should be increasing (exponential pattern)
         increasing_periods = 0
         for i in range(1, len(growth_rates)):
-            if growth_rates[i] > growth_rates[i-1]:
+            if growth_rates[i] > growth_rates[i - 1]:
                 increasing_periods += 1
 
         exponential_ratio = increasing_periods / (len(growth_rates) - 1)
 
         # BENCHMARK: ≥70% of periods should show increasing growth (exponential amplification)
-        assert exponential_ratio >= 0.70, \
+        assert exponential_ratio >= 0.70, (
             f"No exponential amplification detected: {exponential_ratio:.1%} increasing periods"
+        )
 
 
 # Integration with existing test patterns
@@ -446,18 +453,20 @@ class TestPatternIntelligenceBenchmarksUnit:
             "meta_pattern_effectiveness": {"unit": "percentage", "threshold": 0.80},
             "knowledge_retention": {"unit": "percentage", "threshold": 1.00},
             "intelligence_growth_rate": {"unit": "percentage", "threshold": 10.0},
-            "system_stability": {"unit": "boolean", "threshold": True}
+            "system_stability": {"unit": "boolean", "threshold": True},
         }
 
         for benchmark_name, criteria in benchmarks.items():
             assert "unit" in criteria, f"Benchmark {benchmark_name} missing measurement unit"
             assert "threshold" in criteria, f"Benchmark {benchmark_name} missing success threshold"
-            assert isinstance(criteria["threshold"], (int, float, bool)), \
+            assert isinstance(criteria["threshold"], (int, float, bool)), (
                 f"Benchmark {benchmark_name} threshold not measurable"
+            )
 
 
 if __name__ == "__main__":
     # Skip nested pytest execution to prevent recursion
     import os
+
     if os.environ.get("AGENCY_NESTED_TEST") != "1":
         pytest.main([__file__, "-v"])

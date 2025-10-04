@@ -5,19 +5,19 @@ These tests verify that the MemoryIntegrationHook properly stores
 memory records during agent lifecycle events and tool invocations.
 """
 
-import pytest
-import tempfile
-from unittest.mock import MagicMock, patch
-from datetime import datetime
-
 # Import the modules we're testing
 import sys
+import tempfile
+from datetime import datetime
+from unittest.mock import MagicMock, patch
+
+import pytest
 
 sys.path.append("/Users/am/Code/Agency")
 
-from shared.system_hooks import MemoryIntegrationHook, create_memory_integration_hook
+from agency_memory import InMemoryStore, Memory
 from shared.agent_context import AgentContext, create_agent_context
-from agency_memory import Memory, InMemoryStore
+from shared.system_hooks import MemoryIntegrationHook, create_memory_integration_hook
 
 
 class MockTool:
@@ -105,9 +105,7 @@ class TestMemoryIntegrationHook:
         assert hook.agent_context.session_id.startswith("session_")
 
     @pytest.mark.asyncio
-    async def test_on_start_stores_session_start(
-        self, memory_hook, mock_agent, mock_context
-    ):
+    async def test_on_start_stores_session_start(self, memory_hook, mock_agent, mock_context):
         """Test that on_start stores session start memory."""
         # Call the hook
         await memory_hook.on_start(mock_context, mock_agent)
@@ -130,17 +128,13 @@ class TestMemoryIntegrationHook:
         assert memory_hook.session_start_time is not None
 
     @pytest.mark.asyncio
-    async def test_on_end_stores_session_end(
-        self, memory_hook, mock_agent, mock_context
-    ):
+    async def test_on_end_stores_session_end(self, memory_hook, mock_agent, mock_context):
         """Test that on_end stores session end memory."""
         # Set up a start time first
         memory_hook.session_start_time = datetime.now().isoformat()
 
         # Mock the transcript generation to avoid file system operations
-        with patch.object(
-            memory_hook, "_generate_session_transcript"
-        ) as mock_transcript:
+        with patch.object(memory_hook, "_generate_session_transcript") as mock_transcript:
             mock_transcript.return_value = None
 
             # Call the hook
@@ -172,9 +166,7 @@ class TestMemoryIntegrationHook:
         await memory_hook.on_tool_start(mock_context, mock_agent, mock_tool)
 
         # Verify memory was stored
-        memories = memory_hook.agent_context.search_memories(
-            ["tool", "TestTool", "call"]
-        )
+        memories = memory_hook.agent_context.search_memories(["tool", "TestTool", "call"])
         assert len(memories) == 1
 
         memory = memories[0]
@@ -199,9 +191,7 @@ class TestMemoryIntegrationHook:
         await memory_hook.on_tool_end(mock_context, mock_agent, mock_tool, result)
 
         # Verify memory was stored
-        memories = memory_hook.agent_context.search_memories(
-            ["tool", "TestTool", "result"]
-        )
+        memories = memory_hook.agent_context.search_memories(["tool", "TestTool", "result"])
         assert len(memories) == 1
 
         memory = memories[0]
@@ -217,9 +207,7 @@ class TestMemoryIntegrationHook:
         assert content["result_size"] == len(result)
 
     @pytest.mark.asyncio
-    async def test_tool_result_truncation(
-        self, memory_hook, mock_agent, mock_context, mock_tool
-    ):
+    async def test_tool_result_truncation(self, memory_hook, mock_agent, mock_context, mock_tool):
         """Test that large tool results are properly truncated."""
         # Create a large result (> 1000 chars)
         large_result = "x" * 1500
@@ -227,9 +215,7 @@ class TestMemoryIntegrationHook:
         await memory_hook.on_tool_end(mock_context, mock_agent, mock_tool, large_result)
 
         # Verify truncation occurred
-        memories = memory_hook.agent_context.search_memories(
-            ["tool", "TestTool", "result"]
-        )
+        memories = memory_hook.agent_context.search_memories(["tool", "TestTool", "result"])
         memory = memories[0]
 
         content = memory["content"]
@@ -238,9 +224,7 @@ class TestMemoryIntegrationHook:
         assert content["result_size"] == 1500  # Original size is preserved
 
     @pytest.mark.asyncio
-    async def test_tool_parameter_sanitization(
-        self, memory_hook, mock_agent, mock_context
-    ):
+    async def test_tool_parameter_sanitization(self, memory_hook, mock_agent, mock_context):
         """Test that sensitive tool parameters are redacted."""
         sensitive_tool = MockTool(
             "SensitiveTool",
@@ -254,9 +238,7 @@ class TestMemoryIntegrationHook:
 
         await memory_hook.on_tool_start(mock_context, mock_agent, sensitive_tool)
 
-        memories = memory_hook.agent_context.search_memories(
-            ["tool", "SensitiveTool", "call"]
-        )
+        memories = memory_hook.agent_context.search_memories(["tool", "SensitiveTool", "call"])
         memory = memories[0]
 
         params = memory["content"]["tool_parameters"]
@@ -275,9 +257,7 @@ class TestMemoryIntegrationHook:
         memory_hook.agent_context = None
 
         # This should not raise an exception
-        await memory_hook.on_tool_end(
-            mock_context, mock_agent, mock_tool, "test result"
-        )
+        await memory_hook.on_tool_end(mock_context, mock_agent, mock_tool, "test result")
 
         # Restore context
         memory_hook.agent_context = original_context
@@ -351,9 +331,7 @@ class TestIntegrationScenarios:
     """Test complete agent/tool flow scenarios."""
 
     @pytest.mark.asyncio
-    async def test_complete_session_flow(
-        self, memory_hook, mock_agent, mock_context, mock_tool
-    ):
+    async def test_complete_session_flow(self, memory_hook, mock_agent, mock_context, mock_tool):
         """Test a complete session with multiple tool calls."""
         # Session start
         await memory_hook.on_start(mock_context, mock_agent)
@@ -418,17 +396,15 @@ class TestIntegrationScenarios:
                     assert len(session_memories) >= 2  # Our test memories
                 else:
                     # In CI environments, the method may fail silently due to filesystem restrictions
-                    pytest.skip("Transcript generation skipped - likely due to filesystem restrictions in CI")
+                    pytest.skip(
+                        "Transcript generation skipped - likely due to filesystem restrictions in CI"
+                    )
 
     def test_memory_search_functionality(self, memory_hook):
         """Test that memory search works correctly with session tags."""
         # Store some memories
-        memory_hook.agent_context.store_memory(
-            "tool1", {"tool": "test"}, ["tool", "call"]
-        )
-        memory_hook.agent_context.store_memory(
-            "error1", {"error": "failed"}, ["error", "tool"]
-        )
+        memory_hook.agent_context.store_memory("tool1", {"tool": "test"}, ["tool", "call"])
+        memory_hook.agent_context.store_memory("error1", {"error": "failed"}, ["error", "tool"])
 
         # Search for tool memories
         tool_memories = memory_hook.agent_context.search_memories(["tool"])

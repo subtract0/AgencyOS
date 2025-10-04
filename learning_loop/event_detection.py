@@ -7,21 +7,21 @@ autonomous learning and healing responses, as specified in SPEC-LEARNING-001.
 
 import os
 import re
-import json
-import asyncio
 import threading
+from collections.abc import Callable
+from dataclasses import dataclass
 from datetime import datetime
 from pathlib import Path
-from typing import Dict, List, Optional, Any, Set, Callable
-from shared.type_definitions.json import JSONValue
-from dataclasses import dataclass, asdict
+
+from watchdog.events import FileSystemEventHandler
 from watchdog.observers import Observer
-from watchdog.events import FileSystemEventHandler, FileModifiedEvent, FileCreatedEvent
+
+from shared.type_definitions.json import JSONValue
 
 # Global registry to prevent background monitor leakage across tests/runs
 _ERROR_MONITOR_REGISTRY: "set[ErrorMonitor]"  # forward-declared; assigned below
 
-from core.telemetry import get_telemetry, emit
+from core.telemetry import emit, get_telemetry
 
 # Initialize the global registry for error monitors
 try:
@@ -33,20 +33,21 @@ except Exception:
 @dataclass
 class Event:
     """Base event class for all detected events."""
+
     type: str
     timestamp: datetime
-    metadata: Dict[str, JSONValue]
+    metadata: dict[str, JSONValue]
 
-    def to_dict(self) -> Dict[str, JSONValue]:
+    def to_dict(self) -> dict[str, JSONValue]:
         """Convert event to dictionary for serialization."""
         return {
             "type": self.type,
             "timestamp": self.timestamp.isoformat(),
-            "metadata": self.metadata
+            "metadata": self.metadata,
         }
 
     @classmethod
-    def from_dict(cls, data: Dict[str, JSONValue]) -> "Event":
+    def from_dict(cls, data: dict[str, JSONValue]) -> "Event":
         """Create event from dictionary."""
         if not isinstance(data["type"], str):
             raise TypeError("Event type must be a string")
@@ -58,46 +59,48 @@ class Event:
         return cls(
             type=data["type"],
             timestamp=datetime.fromisoformat(data["timestamp"]),
-            metadata=data["metadata"]
+            metadata=data["metadata"],
         )
 
 
 @dataclass
 class FileEvent(Event):
     """Event triggered by file system changes."""
+
     path: str
     change_type: str  # 'modified', 'created', 'deleted'
-    file_type: str    # 'python', 'markdown', 'test', 'config'
+    file_type: str  # 'python', 'markdown', 'test', 'config'
 
     def __post_init__(self):
-        if not hasattr(self, 'metadata'):
+        if not hasattr(self, "metadata"):
             self.metadata = {}
-        self.metadata.update({
-            "path": self.path,
-            "change_type": self.change_type,
-            "file_type": self.file_type
-        })
+        self.metadata.update(
+            {"path": self.path, "change_type": self.change_type, "file_type": self.file_type}
+        )
 
 
 @dataclass
 class ErrorEvent(Event):
     """Event triggered by error detection in logs."""
+
     error_type: str
     message: str
     context: str
-    source_file: Optional[str] = None
-    line_number: Optional[int] = None
+    source_file: str | None = None
+    line_number: int | None = None
 
     def __post_init__(self):
-        if not hasattr(self, 'metadata'):
+        if not hasattr(self, "metadata"):
             self.metadata = {}
-        self.metadata.update({
-            "error_type": self.error_type,
-            "message": self.message,
-            "context": self.context,
-            "source_file": self.source_file,
-            "line_number": self.line_number
-        })
+        self.metadata.update(
+            {
+                "error_type": self.error_type,
+                "message": self.message,
+                "context": self.context,
+                "source_file": self.source_file,
+                "line_number": self.line_number,
+            }
+        )
 
 
 class FileWatchHandler(FileSystemEventHandler):
@@ -115,7 +118,7 @@ class FileWatchHandler(FileSystemEventHandler):
             ".pyc",
             ".pyo",
             ".DS_Store",
-            ".pytest_cache"
+            ".pytest_cache",
         }
 
     def _should_ignore(self, path: str) -> bool:
@@ -156,15 +159,14 @@ class FileWatchHandler(FileSystemEventHandler):
             path=event.src_path,
             change_type="modified",
             file_type=file_type,
-            metadata={}
+            metadata={},
         )
 
         # Log to telemetry
-        self.telemetry.log("file_watcher_event", {
-            "path": event.src_path,
-            "file_type": file_type,
-            "change_type": "modified"
-        })
+        self.telemetry.log(
+            "file_watcher_event",
+            {"path": event.src_path, "file_type": file_type, "change_type": "modified"},
+        )
 
         self.callback(file_event)
 
@@ -183,15 +185,14 @@ class FileWatchHandler(FileSystemEventHandler):
             path=event.src_path,
             change_type="created",
             file_type=file_type,
-            metadata={}
+            metadata={},
         )
 
         # Log to telemetry
-        self.telemetry.log("file_watcher_event", {
-            "path": event.src_path,
-            "file_type": file_type,
-            "change_type": "created"
-        })
+        self.telemetry.log(
+            "file_watcher_event",
+            {"path": event.src_path, "file_type": file_type, "change_type": "created"},
+        )
 
         self.callback(file_event)
 
@@ -207,7 +208,7 @@ class FileWatcher:
     - .github/**/*.yml (CI/CD configs)
     """
 
-    def __init__(self, callback: Optional[Callable[[FileEvent], None]] = None):
+    def __init__(self, callback: Callable[[FileEvent], None] | None = None):
         self.callback = callback or self._default_callback
         self.observer = Observer()
         self.handler = FileWatchHandler(self.callback)
@@ -216,10 +217,10 @@ class FileWatcher:
 
         # Watch patterns from spec
         self.watch_patterns = [
-            "**/*.py",           # Python source files
-            "**/*.md",           # Documentation
-            "**/tests/*.py",     # Test files
-            ".github/**/*.yml"   # CI/CD configs
+            "**/*.py",  # Python source files
+            "**/*.md",  # Documentation
+            "**/tests/*.py",  # Test files
+            ".github/**/*.yml",  # CI/CD configs
         ]
 
         # Root directory to watch
@@ -227,11 +228,10 @@ class FileWatcher:
 
     def _default_callback(self, event: FileEvent):
         """Default callback that just logs events."""
-        emit("file_change_detected", {
-            "path": event.path,
-            "file_type": event.file_type,
-            "change_type": event.change_type
-        })
+        emit(
+            "file_change_detected",
+            {"path": event.path, "file_type": event.file_type, "change_type": event.change_type},
+        )
 
     def start(self):
         """Start monitoring filesystem changes."""
@@ -240,24 +240,17 @@ class FileWatcher:
 
         try:
             # Watch the root directory recursively
-            self.observer.schedule(
-                self.handler,
-                str(self.watch_root),
-                recursive=True
-            )
+            self.observer.schedule(self.handler, str(self.watch_root), recursive=True)
             self.observer.start()
             self.is_running = True
 
-            emit("file_watcher_started", {
-                "watch_root": str(self.watch_root),
-                "patterns": self.watch_patterns
-            })
+            emit(
+                "file_watcher_started",
+                {"watch_root": str(self.watch_root), "patterns": self.watch_patterns},
+            )
 
         except Exception as e:
-            emit("file_watcher_error", {
-                "error": str(e),
-                "operation": "start"
-            }, level="error")
+            emit("file_watcher_error", {"error": str(e), "operation": "start"}, level="error")
             raise
 
     def stop(self):
@@ -273,10 +266,7 @@ class FileWatcher:
             emit("file_watcher_stopped", {})
 
         except Exception as e:
-            emit("file_watcher_error", {
-                "error": str(e),
-                "operation": "stop"
-            }, level="error")
+            emit("file_watcher_error", {"error": str(e), "operation": "stop"}, level="error")
             raise
 
     def __enter__(self):
@@ -299,7 +289,7 @@ class ErrorMonitor:
     - .git/hooks/pre-commit.log (Commit failures)
     """
 
-    def __init__(self, callback: Optional[Callable[[ErrorEvent], None]] = None):
+    def __init__(self, callback: Callable[[ErrorEvent], None] | None = None):
         self.callback = callback or self._default_callback
         self.telemetry = get_telemetry()
         self.is_monitoring = False
@@ -308,9 +298,9 @@ class ErrorMonitor:
 
         # Error sources from spec
         self.error_sources = [
-            "logs/events/*.jsonl",     # Telemetry events
-            "pytest_output.log",       # Test failures
-            ".git/hooks/pre-commit.log"  # Commit failures
+            "logs/events/*.jsonl",  # Telemetry events
+            "pytest_output.log",  # Test failures
+            ".git/hooks/pre-commit.log",  # Commit failures
         ]
 
         # Error patterns from spec
@@ -319,23 +309,23 @@ class ErrorMonitor:
             "ImportError": r"(?:ImportError|ModuleNotFoundError).*",
             "TestFailure": r"FAILED.*test_.*",
             "SyntaxError": r"SyntaxError.*line\s+(\d+)",
-            "TypeError": r"TypeError.*(?:arguments?|positional|keyword)"
+            "TypeError": r"TypeError.*(?:arguments?|positional|keyword)",
         }
 
         # Track last read positions for efficient monitoring
-        self._file_positions: Dict[str, int] = {}
+        self._file_positions: dict[str, int] = {}
 
     def _default_callback(self, event: ErrorEvent):
         """Default callback that just logs errors."""
-        emit("error_detected", {
-            "error_type": event.error_type,
-            "message": event.message,
-            "source": event.source_file
-        }, level="warning")
+        emit(
+            "error_detected",
+            {"error_type": event.error_type, "message": event.message, "source": event.source_file},
+            level="warning",
+        )
 
     def _extract_context(self, content: str, match: re.Match, lines_context: int = 3) -> str:
         """Extract context around a matched error."""
-        lines = content.split('\n')
+        lines = content.split("\n")
 
         # Find the line with the match
         match_line_idx = None
@@ -354,9 +344,9 @@ class ErrorMonitor:
         end_idx = min(len(lines), match_line_idx + lines_context + 1)
 
         context_lines = lines[start_idx:end_idx]
-        return '\n'.join(context_lines)
+        return "\n".join(context_lines)
 
-    def _extract_line_number(self, match: re.Match, error_type: str) -> Optional[int]:
+    def _extract_line_number(self, match: re.Match, error_type: str) -> int | None:
         """Extract line number from error match if available."""
         if error_type == "SyntaxError" and len(match.groups()) > 0:
             try:
@@ -365,7 +355,7 @@ class ErrorMonitor:
                 pass
         return None
 
-    def detect_error(self, content: str, source_file: str) -> List[ErrorEvent]:
+    def detect_error(self, content: str, source_file: str) -> list[ErrorEvent]:
         """Extract error information from log content."""
         events = []
 
@@ -385,29 +375,33 @@ class ErrorMonitor:
                         context=context,
                         source_file=source_file,
                         line_number=line_number,
-                        metadata={}
+                        metadata={},
                     )
 
                     events.append(error_event)
 
                     # Log to telemetry
-                    emit("error_pattern_matched", {
-                        "error_type": error_type,
-                        "source_file": source_file,
-                        "message": match.group(0)[:200]  # Truncate long messages
-                    })
+                    emit(
+                        "error_pattern_matched",
+                        {
+                            "error_type": error_type,
+                            "source_file": source_file,
+                            "message": match.group(0)[:200],  # Truncate long messages
+                        },
+                    )
 
             except re.error as e:
-                emit("error_monitor_regex_error", {
-                    "pattern": pattern,
-                    "error": str(e)
-                }, level="error")
+                emit(
+                    "error_monitor_regex_error",
+                    {"pattern": pattern, "error": str(e)},
+                    level="error",
+                )
 
         return events
 
-    def _monitor_file(self, file_path: Path) -> List[ErrorEvent]:
+    def _monitor_file(self, file_path: Path) -> list[ErrorEvent]:
         """Monitor a single file for new errors."""
-        events: List[ErrorEvent] = []
+        events: list[ErrorEvent] = []
 
         try:
             if not file_path.exists():
@@ -421,7 +415,7 @@ class ErrorMonitor:
             if current_size <= last_position:
                 return events
 
-            with open(file_path, 'r', encoding='utf-8', errors='ignore') as f:
+            with open(file_path, encoding="utf-8", errors="ignore") as f:
                 f.seek(last_position)
                 new_content = f.read()
 
@@ -432,10 +426,11 @@ class ErrorMonitor:
                 self._file_positions[str(file_path)] = f.tell()
 
         except Exception as e:
-            emit("error_monitor_file_error", {
-                "file": str(file_path),
-                "error": str(e)
-            }, level="warning")
+            emit(
+                "error_monitor_file_error",
+                {"file": str(file_path), "error": str(e)},
+                level="warning",
+            )
 
         return events
 
@@ -448,6 +443,7 @@ class ErrorMonitor:
                     if "*" in source_pattern:
                         # Handle glob patterns
                         import glob
+
                         files = glob.glob(source_pattern, recursive=True)
                     else:
                         # Handle single files
@@ -461,18 +457,17 @@ class ErrorMonitor:
                             try:
                                 self.callback(event)
                             except Exception as e:
-                                emit("error_monitor_callback_error", {
-                                    "error": str(e),
-                                    "event": event.to_dict()
-                                }, level="error")
+                                emit(
+                                    "error_monitor_callback_error",
+                                    {"error": str(e), "event": event.to_dict()},
+                                    level="error",
+                                )
 
                 # Sleep before next monitoring cycle
                 self._stop_event.wait(5.0)  # 5 second monitoring interval
 
             except Exception as e:
-                emit("error_monitor_cycle_error", {
-                    "error": str(e)
-                }, level="error")
+                emit("error_monitor_cycle_error", {"error": str(e)}, level="error")
                 self._stop_event.wait(10.0)  # Longer sleep on error
 
     @classmethod
@@ -488,7 +483,6 @@ class ErrorMonitor:
         except Exception:
             pass
 
-
     def start(self):
         """Start monitoring log files for errors."""
         if self.is_monitoring:
@@ -496,9 +490,7 @@ class ErrorMonitor:
 
         self._stop_event.clear()
         self._monitor_thread = threading.Thread(
-            target=self._monitor_sources,
-            name="ErrorMonitor",
-            daemon=True
+            target=self._monitor_sources, name="ErrorMonitor", daemon=True
         )
         self._monitor_thread.start()
         self.is_monitoring = True
@@ -509,10 +501,10 @@ class ErrorMonitor:
         except Exception:
             pass
 
-        emit("error_monitor_started", {
-            "sources": self.error_sources,
-            "patterns": list(self.error_patterns.keys())
-        })
+        emit(
+            "error_monitor_started",
+            {"sources": self.error_sources, "patterns": list(self.error_patterns.keys())},
+        )
 
     def stop(self):
         """Stop monitoring log files."""
@@ -551,9 +543,11 @@ class EventDetectionSystem:
     and routing events to appropriate handlers.
     """
 
-    def __init__(self,
-                 file_callback: Optional[Callable[[FileEvent], None]] = None,
-                 error_callback: Optional[Callable[[ErrorEvent], None]] = None):
+    def __init__(
+        self,
+        file_callback: Callable[[FileEvent], None] | None = None,
+        error_callback: Callable[[ErrorEvent], None] | None = None,
+    ):
         # Safety: stop any previously running error monitors to avoid cross-test leakage
         try:
             ErrorMonitor.stop_all()
@@ -575,16 +569,12 @@ class EventDetectionSystem:
             self.error_monitor.start()
             self.is_running = True
 
-            emit("event_detection_started", {
-                "components": ["FileWatcher", "ErrorMonitor"]
-            })
+            emit("event_detection_started", {"components": ["FileWatcher", "ErrorMonitor"]})
 
         except Exception as e:
             # Cleanup on failure
             self.stop()
-            emit("event_detection_start_error", {
-                "error": str(e)
-            }, level="error")
+            emit("event_detection_start_error", {"error": str(e)}, level="error")
             raise
 
     def stop(self):
@@ -601,9 +591,7 @@ class EventDetectionSystem:
 
         except Exception as e:
             self.is_running = False  # Always set to False even on error
-            emit("event_detection_stop_error", {
-                "error": str(e)
-            }, level="error")
+            emit("event_detection_stop_error", {"error": str(e)}, level="error")
 
     def __enter__(self):
         """Context manager entry."""

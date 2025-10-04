@@ -42,9 +42,7 @@ def create_sample_notebook(file_path: str, cells_data: list = None):
                     "data = np.array([1, 2, 3, 4, 5])\n",
                     "print(f'Mean: {data.mean()}')",
                 ],
-                "outputs": [
-                    {"name": "stdout", "output_type": "stream", "text": ["Mean: 3.0\n"]}
-                ],
+                "outputs": [{"name": "stdout", "output_type": "stream", "text": ["Mean: 3.0\n"]}],
             },
         ]
 

@@ -16,25 +16,25 @@ from shared.prompt_compression import (
 
 def demo_agent_compression(agent_name: str, task: str, context: dict = None):
     """Demonstrate compression for a specific agent."""
-    print(f"\n{'='*70}")
+    print(f"\n{'=' * 70}")
     print(f"Agent: {agent_name.upper()}")
     print(f"Task: {task}")
-    print(f"{'='*70}")
+    print(f"{'=' * 70}")
 
     prompts = create_compressed_prompt(agent_name, task, context or {})
     stats = get_compression_stats(prompts)
 
-    print(f"\nSystem Prompt (CACHED):")
+    print("\nSystem Prompt (CACHED):")
     print(f"  - Length: {len(prompts['system'])} chars")
     print(f"  - Tokens: {stats['system_tokens']}")
-    print(f"  - Contains: Constitution, Standards, Agent Instructions")
+    print("  - Contains: Constitution, Standards, Agent Instructions")
 
-    print(f"\nTask Prompt (VARIABLE):")
+    print("\nTask Prompt (VARIABLE):")
     print(f"  - Length: {len(prompts['task'])} chars")
     print(f"  - Tokens: {stats['task_tokens']}")
-    print(f"  - Contains: User request, Context, Files")
+    print("  - Contains: User request, Context, Files")
 
-    print(f"\nToken Usage:")
+    print("\nToken Usage:")
     print(f"  First call:  {stats['first_call_tokens']:,} tokens")
     print(f"  Cached call: {stats['cached_call_tokens']:,} tokens")
     print(f"  Savings:     {stats['savings_percent']}%")
@@ -59,8 +59,8 @@ def main():
         task="Create implementation plan for user authentication feature",
         context={
             "files": ["specs/user_auth.md", "plans/security.md"],
-            "data": "Focus on type safety and test coverage"
-        }
+            "data": "Focus on type safety and test coverage",
+        },
     )
     all_stats.append(("Planner", stats))
 
@@ -70,8 +70,8 @@ def main():
         task="Implement user registration with email validation",
         context={
             "files": ["src/auth/register.py", "tests/test_register.py"],
-            "data": "Use Result pattern for error handling"
-        }
+            "data": "Use Result pattern for error handling",
+        },
     )
     all_stats.append(("Coder", stats))
 
@@ -81,8 +81,8 @@ def main():
         task="Review code quality and constitutional compliance",
         context={
             "files": ["src/auth/*.py"],
-            "data": "Check for NECESSARY patterns and type safety"
-        }
+            "data": "Check for NECESSARY patterns and type safety",
+        },
     )
     all_stats.append(("Auditor", stats))
 
@@ -90,10 +90,7 @@ def main():
     stats = demo_agent_compression(
         agent_name="quality_enforcer",
         task="Validate constitutional compliance of new feature",
-        context={
-            "files": ["src/auth/register.py"],
-            "data": "Verify all 5 articles are satisfied"
-        }
+        context={"files": ["src/auth/register.py"], "data": "Verify all 5 articles are satisfied"},
     )
     all_stats.append(("Quality Enforcer", stats))
 
@@ -109,9 +106,9 @@ def main():
     total_cached = 0
 
     for agent_name, stats in all_stats:
-        first = stats['first_call_tokens']
-        cached = stats['cached_call_tokens']
-        savings = stats['savings_percent']
+        first = stats["first_call_tokens"]
+        cached = stats["cached_call_tokens"]
+        savings = stats["savings_percent"]
         total_first += first
         total_cached += cached
 

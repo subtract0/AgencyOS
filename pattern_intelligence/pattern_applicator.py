@@ -10,13 +10,12 @@ The core intelligence engine that:
 """
 
 import logging
-from typing import List, Dict, Any, Optional, Tuple, cast
-from shared.type_definitions.json import JSONValue
 from datetime import datetime
-import json
 
-from .pattern_store import PatternStore, PatternSearchResult
+from shared.type_definitions.json import JSONValue
+
 from .coding_pattern import CodingPattern, ProblemContext
+from .pattern_store import PatternSearchResult, PatternStore
 
 logger = logging.getLogger(__name__)
 
@@ -42,18 +41,20 @@ class PatternApplicator:
         """
         self.pattern_store = pattern_store
         self.confidence_threshold = confidence_threshold
-        self.application_history: List[Dict[str, JSONValue]] = []
+        self.application_history: list[dict[str, JSONValue]] = []
 
-        logger.info(f"PatternApplicator initialized with confidence threshold: {confidence_threshold}")
+        logger.info(
+            f"PatternApplicator initialized with confidence threshold: {confidence_threshold}"
+        )
 
     def analyze_context(
         self,
         description: str,
-        domain: Optional[str] = None,
-        constraints: Optional[List[str]] = None,
-        symptoms: Optional[List[str]] = None,
-        current_tools: Optional[List[str]] = None
-    ) -> List[PatternSearchResult]:
+        domain: str | None = None,
+        constraints: list[str] | None = None,
+        symptoms: list[str] | None = None,
+        current_tools: list[str] | None = None,
+    ) -> list[PatternSearchResult]:
         """
         Analyze current context and find matching patterns.
 
@@ -73,15 +74,12 @@ class PatternApplicator:
                 description=description,
                 domain=domain or "general",
                 constraints=constraints or [],
-                symptoms=symptoms or []
+                symptoms=symptoms or [],
             )
 
             # Search for relevant patterns
             search_results = self.pattern_store.find_patterns(
-                context=context,
-                domain=domain,
-                min_effectiveness=0.5,
-                max_results=10
+                context=context, domain=domain, min_effectiveness=0.5, max_results=10
             )
 
             # Filter by relevance and applicability
@@ -93,10 +91,12 @@ class PatternApplicator:
             # Sort by combined relevance and effectiveness
             applicable_patterns.sort(
                 key=lambda r: r.relevance_score * r.pattern.outcome.effectiveness_score(),
-                reverse=True
+                reverse=True,
             )
 
-            logger.info(f"Found {len(applicable_patterns)} applicable patterns for context: {description[:50]}...")
+            logger.info(
+                f"Found {len(applicable_patterns)} applicable patterns for context: {description[:50]}..."
+            )
             return applicable_patterns
 
         except Exception as e:
@@ -104,11 +104,8 @@ class PatternApplicator:
             return []
 
     def get_pattern_recommendations(
-        self,
-        context_description: str,
-        domain: Optional[str] = None,
-        max_recommendations: int = 3
-    ) -> List[Dict[str, JSONValue]]:
+        self, context_description: str, domain: str | None = None, max_recommendations: int = 3
+    ) -> list[dict[str, JSONValue]]:
         """
         Get actionable pattern recommendations for current context.
 
@@ -125,11 +122,13 @@ class PatternApplicator:
             pattern_results = self.analyze_context(context_description, domain)
 
             if not pattern_results:
-                return [{
-                    "message": "No relevant patterns found",
-                    "suggestion": "This might be a novel situation. Consider documenting the approach for future use.",
-                    "confidence": 0.0
-                }]
+                return [
+                    {
+                        "message": "No relevant patterns found",
+                        "suggestion": "This might be a novel situation. Consider documenting the approach for future use.",
+                        "confidence": 0.0,
+                    }
+                ]
 
             recommendations = []
 
@@ -151,16 +150,20 @@ class PatternApplicator:
                     "reasoning": f"Pattern matches current context ({result.match_reason}) with {result.relevance_score:.1%} relevance",
                     "dependencies": pattern.solution.dependencies,
                     "code_examples": pattern.solution.code_examples,
-                    "alternatives": pattern.solution.alternatives
+                    "alternatives": pattern.solution.alternatives,
                 }
 
                 # Add warning if pattern has low effectiveness
                 if pattern.outcome.effectiveness_score() < 0.6:
-                    recommendation["warning"] = "This pattern has moderate effectiveness. Consider careful evaluation."
+                    recommendation["warning"] = (
+                        "This pattern has moderate effectiveness. Consider careful evaluation."
+                    )
 
                 # Add boost if pattern has high adoption
                 if pattern.outcome.adoption_rate >= 5:
-                    recommendation["boost"] = f"Widely adopted pattern ({pattern.outcome.adoption_rate} uses)"
+                    recommendation["boost"] = (
+                        f"Widely adopted pattern ({pattern.outcome.adoption_rate} uses)"
+                    )
 
                 recommendations.append(recommendation)
 
@@ -171,11 +174,8 @@ class PatternApplicator:
             return [{"error": f"Recommendation generation failed: {str(e)}"}]
 
     def auto_apply_pattern(
-        self,
-        pattern_id: str,
-        context_data: Dict[str, JSONValue],
-        dry_run: bool = True
-    ) -> Dict[str, JSONValue]:
+        self, pattern_id: str, context_data: dict[str, JSONValue], dry_run: bool = True
+    ) -> dict[str, JSONValue]:
         """
         Automatically apply a pattern (or simulate if dry_run=True).
 
@@ -199,7 +199,7 @@ class PatternApplicator:
                 return {
                     "success": False,
                     "error": f"Pattern cannot be applied: {validation_result['reason']}",
-                    "pattern_id": pattern_id
+                    "pattern_id": pattern_id,
                 }
 
             # Generate application plan
@@ -213,7 +213,7 @@ class PatternApplicator:
                     "application_plan": application_plan,
                     "estimated_success_rate": pattern.outcome.success_rate,
                     "tools_required": pattern.solution.tools,
-                    "steps": application_plan.get("steps", [])
+                    "steps": application_plan.get("steps", []),
                 }
 
             # Actually apply the pattern
@@ -224,8 +224,7 @@ class PatternApplicator:
 
             # Update pattern usage statistics
             self.pattern_store.update_pattern_usage(
-                pattern_id,
-                success=application_result.get("success", False)
+                pattern_id, success=application_result.get("success", False)
             )
 
             return application_result
@@ -235,14 +234,12 @@ class PatternApplicator:
             return {
                 "success": False,
                 "error": f"Application failed: {str(e)}",
-                "pattern_id": pattern_id
+                "pattern_id": pattern_id,
             }
 
     def suggest_pattern_combinations(
-        self,
-        context_description: str,
-        domain: Optional[str] = None
-    ) -> List[Dict[str, JSONValue]]:
+        self, context_description: str, domain: str | None = None
+    ) -> list[dict[str, JSONValue]]:
         """
         Suggest combinations of patterns that work well together.
 
@@ -264,16 +261,26 @@ class PatternApplicator:
 
             # Look for complementary patterns
             for i, pattern1 in enumerate(individual_patterns[:3]):
-                for pattern2 in individual_patterns[i+1:4]:
+                for pattern2 in individual_patterns[i + 1 : 4]:
                     if self._are_patterns_complementary(pattern1.pattern, pattern2.pattern):
                         combination = {
-                            "patterns": [pattern1.pattern.metadata.pattern_id, pattern2.pattern.metadata.pattern_id],
+                            "patterns": [
+                                pattern1.pattern.metadata.pattern_id,
+                                pattern2.pattern.metadata.pattern_id,
+                            ],
                             "description": f"Combine {pattern1.pattern.context.domain} and {pattern2.pattern.context.domain} approaches",
-                            "synergy_score": self._calculate_synergy_score(pattern1.pattern, pattern2.pattern),
-                            "combined_effectiveness": (pattern1.pattern.outcome.effectiveness_score() +
-                                                    pattern2.pattern.outcome.effectiveness_score()) / 2,
-                            "application_order": self._determine_application_order(pattern1.pattern, pattern2.pattern),
-                            "reasoning": f"These patterns address complementary aspects of the problem"
+                            "synergy_score": self._calculate_synergy_score(
+                                pattern1.pattern, pattern2.pattern
+                            ),
+                            "combined_effectiveness": (
+                                pattern1.pattern.outcome.effectiveness_score()
+                                + pattern2.pattern.outcome.effectiveness_score()
+                            )
+                            / 2,
+                            "application_order": self._determine_application_order(
+                                pattern1.pattern, pattern2.pattern
+                            ),
+                            "reasoning": "These patterns address complementary aspects of the problem",
                         }
 
                         if combination["synergy_score"] > 0.6:
@@ -288,13 +295,15 @@ class PatternApplicator:
             logger.error(f"Pattern combination suggestion failed: {e}")
             return []
 
-    def get_application_stats(self) -> Dict[str, JSONValue]:
+    def get_application_stats(self) -> dict[str, JSONValue]:
         """Get statistics about pattern applications."""
         if not self.application_history:
             return {"total_applications": 0, "message": "No applications recorded yet"}
 
         total_applications = len(self.application_history)
-        successful_applications = len([a for a in self.application_history if a.get("success", False)])
+        successful_applications = len(
+            [a for a in self.application_history if a.get("success", False)]
+        )
 
         success_rate = successful_applications / total_applications
 
@@ -313,14 +322,14 @@ class PatternApplicator:
             "success_rate": success_rate,
             "most_applied_patterns": most_applied,
             "confidence_threshold": self.confidence_threshold,
-            "last_updated": datetime.now().isoformat()
+            "last_updated": datetime.now().isoformat(),
         }
 
     def _is_pattern_applicable(
         self,
         pattern: CodingPattern,
         context: ProblemContext,
-        available_tools: Optional[List[str]] = None
+        available_tools: list[str] | None = None,
     ) -> bool:
         """Check if a pattern can be applied in the current context."""
         try:
@@ -338,7 +347,10 @@ class PatternApplicator:
                 available_tools_set = set(available_tools)
 
                 # Must have at least 50% of required tools
-                if len(required_tools.intersection(available_tools_set)) < len(required_tools) * 0.5:
+                if (
+                    len(required_tools.intersection(available_tools_set))
+                    < len(required_tools) * 0.5
+                ):
                     return False
 
             # Check domain compatibility
@@ -355,10 +367,8 @@ class PatternApplicator:
             return False
 
     def _validate_pattern_application(
-        self,
-        pattern: CodingPattern,
-        context_data: Dict[str, JSONValue]
-    ) -> Dict[str, JSONValue]:
+        self, pattern: CodingPattern, context_data: dict[str, JSONValue]
+    ) -> dict[str, JSONValue]:
         """Validate that a pattern can be safely applied."""
         validation = {"can_apply": True, "reason": ""}
 
@@ -385,7 +395,10 @@ class PatternApplicator:
             # Look for conflicting constraints
             conflicts = self._find_constraint_conflicts(current_constraints, pattern_constraints)
             if conflicts:
-                return {"can_apply": False, "reason": f"Constraint conflicts: {', '.join(conflicts)}"}
+                return {
+                    "can_apply": False,
+                    "reason": f"Constraint conflicts: {', '.join(conflicts)}",
+                }
 
             return validation
 
@@ -393,10 +406,8 @@ class PatternApplicator:
             return {"can_apply": False, "reason": f"Validation failed: {str(e)}"}
 
     def _generate_application_plan(
-        self,
-        pattern: CodingPattern,
-        context_data: Dict[str, JSONValue]
-    ) -> Dict[str, JSONValue]:
+        self, pattern: CodingPattern, context_data: dict[str, JSONValue]
+    ) -> dict[str, JSONValue]:
         """Generate a detailed plan for applying the pattern."""
         plan = {
             "pattern_id": pattern.metadata.pattern_id,
@@ -406,13 +417,13 @@ class PatternApplicator:
             "dependencies": pattern.solution.dependencies,
             "expected_outcome": pattern.outcome.effectiveness_score(),
             "risks": [],
-            "validation_criteria": []
+            "validation_criteria": [],
         }
 
         try:
             # Generate implementation steps
             if pattern.solution.implementation:
-                steps = pattern.solution.implementation.split(',')
+                steps = pattern.solution.implementation.split(",")
                 plan["steps"] = [step.strip() for step in steps if step.strip()]
 
             # Add tool-specific steps
@@ -423,7 +434,7 @@ class PatternApplicator:
             plan["validation_criteria"] = [
                 "Verify implementation matches pattern requirements",
                 "Test functionality and performance",
-                "Validate against success metrics"
+                "Validate against success metrics",
             ]
 
             # Identify risks
@@ -441,10 +452,8 @@ class PatternApplicator:
             return plan
 
     def _execute_application_plan(
-        self,
-        plan: Dict[str, JSONValue],
-        pattern: CodingPattern
-    ) -> Dict[str, JSONValue]:
+        self, plan: dict[str, JSONValue], pattern: CodingPattern
+    ) -> dict[str, JSONValue]:
         """Execute the application plan (simulation for now)."""
         # In a real implementation, this would:
         # 1. Execute the actual steps
@@ -459,11 +468,12 @@ class PatternApplicator:
             "execution_time": datetime.now().isoformat(),
             "steps_completed": len(plan.get("steps", [])),
             "simulation": True,
-            "message": "Pattern application simulated successfully"
+            "message": "Pattern application simulated successfully",
         }
 
         # Simulate success based on pattern's historical success rate
         import random
+
         success_probability = pattern.outcome.success_rate
         simulated_success = random.random() < success_probability
 
@@ -476,10 +486,7 @@ class PatternApplicator:
         return result
 
     def _record_application(
-        self,
-        pattern_id: str,
-        context_data: Dict[str, JSONValue],
-        result: Dict[str, JSONValue]
+        self, pattern_id: str, context_data: dict[str, JSONValue], result: dict[str, JSONValue]
     ) -> None:
         """Record a pattern application attempt."""
         application_record = {
@@ -487,7 +494,7 @@ class PatternApplicator:
             "timestamp": datetime.now().isoformat(),
             "context": context_data,
             "result": result,
-            "success": result.get("success", False)
+            "success": result.get("success", False),
         }
 
         self.application_history.append(application_record)
@@ -496,11 +503,7 @@ class PatternApplicator:
         if len(self.application_history) > 100:
             self.application_history = self.application_history[-100:]
 
-    def _are_patterns_complementary(
-        self,
-        pattern1: CodingPattern,
-        pattern2: CodingPattern
-    ) -> bool:
+    def _are_patterns_complementary(self, pattern1: CodingPattern, pattern2: CodingPattern) -> bool:
         """Check if two patterns are complementary and can work together."""
         try:
             # Different domains often complement each other
@@ -526,17 +529,17 @@ class PatternApplicator:
         except Exception:
             return False
 
-    def _calculate_synergy_score(
-        self,
-        pattern1: CodingPattern,
-        pattern2: CodingPattern
-    ) -> float:
+    def _calculate_synergy_score(self, pattern1: CodingPattern, pattern2: CodingPattern) -> float:
         """Calculate synergy score for pattern combination."""
         try:
             score = 0.0
 
             # Base score from individual effectiveness
-            score += (pattern1.outcome.effectiveness_score() + pattern2.outcome.effectiveness_score()) / 2 * 0.4
+            score += (
+                (pattern1.outcome.effectiveness_score() + pattern2.outcome.effectiveness_score())
+                / 2
+                * 0.4
+            )
 
             # Bonus for complementary domains
             if pattern1.context.domain != pattern2.context.domain:
@@ -558,10 +561,8 @@ class PatternApplicator:
             return 0.0
 
     def _determine_application_order(
-        self,
-        pattern1: CodingPattern,
-        pattern2: CodingPattern
-    ) -> List[str]:
+        self, pattern1: CodingPattern, pattern2: CodingPattern
+    ) -> list[str]:
         """Determine optimal order for applying patterns."""
         # Simple heuristic: apply architectural patterns first, then implementation patterns
         architectural_domains = ["architecture", "design", "structure"]
@@ -579,10 +580,8 @@ class PatternApplicator:
                 return [pattern2.metadata.pattern_id, pattern1.metadata.pattern_id]
 
     def _find_constraint_conflicts(
-        self,
-        current_constraints: List[str],
-        pattern_constraints: List[str]
-    ) -> List[str]:
+        self, current_constraints: list[str], pattern_constraints: list[str]
+    ) -> list[str]:
         """Find conflicts between current and pattern constraints."""
         conflicts = []
 
@@ -591,7 +590,7 @@ class PatternApplicator:
             ("fast", "comprehensive"),
             ("simple", "feature_rich"),
             ("secure", "convenient"),
-            ("lightweight", "full_featured")
+            ("lightweight", "full_featured"),
         ]
 
         current_set = set(c.lower() for c in current_constraints)
@@ -600,8 +599,9 @@ class PatternApplicator:
         for curr_constraint in current_set:
             for pattern_constraint in pattern_set:
                 for pair in conflict_pairs:
-                    if (curr_constraint in pair[0] and pattern_constraint in pair[1]) or \
-                       (curr_constraint in pair[1] and pattern_constraint in pair[0]):
+                    if (curr_constraint in pair[0] and pattern_constraint in pair[1]) or (
+                        curr_constraint in pair[1] and pattern_constraint in pair[0]
+                    ):
                         conflicts.append(f"{curr_constraint} vs {pattern_constraint}")
 
         return conflicts

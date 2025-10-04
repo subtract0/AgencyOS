@@ -1,8 +1,5 @@
 import json
 import os
-from pathlib import Path
-
-import pytest
 
 from tools.context_handoff import ContextMessageHandoff
 
@@ -28,7 +25,7 @@ class TestContextMessageHandoff:
         assert os.path.exists(path)
 
         # Validate file content minimally
-        with open(path, "r", encoding="utf-8") as f:
+        with open(path, encoding="utf-8") as f:
             data = json.load(f)
         assert data["target_agent"] == "PlannerAgent"
         assert data["prompt"].startswith("Plan feature X")

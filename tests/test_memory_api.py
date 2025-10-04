@@ -3,16 +3,17 @@ Test suite for Memory API implementation.
 Tests in-memory store, tag search, timestamps, and fallback behavior.
 """
 
-import pytest
-import tempfile
 import os
+import tempfile
 from datetime import datetime
-from unittest.mock import patch, MagicMock
+from unittest.mock import MagicMock, patch
+
+import pytest
 
 from agency_memory import (
-    Memory,
-    InMemoryStore,
     FirestoreStore,
+    InMemoryStore,
+    Memory,
     consolidate_learnings,
     create_session_transcript,
     generate_learning_report,
@@ -166,14 +167,15 @@ class TestFirestoreStore:
         """Test fallback when google-cloud-firestore is not available."""
         with patch.dict(os.environ, {"FRESH_USE_FIRESTORE": "true"}):
             # Patch the import at the method level to properly trigger ImportError
-            with patch(
-                "agency_memory.firestore_store.firestore", None
-            ), patch(
-                "builtins.__import__",
-                side_effect=lambda name, *args, **kwargs: (
-                    (_ for _ in ()).throw(ImportError("Mocked import error"))
-                    if "google.cloud" in name
-                    else __import__(name, *args, **kwargs)
+            with (
+                patch("agency_memory.firestore_store.firestore", None),
+                patch(
+                    "builtins.__import__",
+                    side_effect=lambda name, *args, **kwargs: (
+                        (_ for _ in ()).throw(ImportError("Mocked import error"))
+                        if "google.cloud" in name
+                        else __import__(name, *args, **kwargs)
+                    ),
                 ),
             ):
                 store = FirestoreStore()
@@ -323,7 +325,7 @@ class TestSessionTranscript:
                 assert os.path.exists(filepath)
 
                 # Check content
-                with open(filepath, "r") as f:
+                with open(filepath) as f:
                     content = f.read()
 
                 assert "Session Transcript: test_session" in content
@@ -339,7 +341,7 @@ class TestSessionTranscript:
 
                 filepath = create_session_transcript([], "empty_session")
 
-                with open(filepath, "r") as f:
+                with open(filepath) as f:
                     content = f.read()
 
                 assert "No memories recorded for this session" in content
@@ -432,16 +434,14 @@ class TestIntegration:
             transcript_file = os.path.join(temp_dir, "empty_test.md")
 
             # Use a fixed file path instead of mocking
-            with patch(
-                "agency_memory.memory.os.path.join", return_value=transcript_file
-            ):
+            with patch("agency_memory.memory.os.path.join", return_value=transcript_file):
                 _ = create_session_transcript([], "empty_session")
 
                 # File should be created
                 assert os.path.exists(transcript_file)
 
                 # Check content
-                with open(transcript_file, "r") as f:
+                with open(transcript_file) as f:
                     content = f.read()
 
                 assert "No memories recorded" in content
@@ -474,12 +474,8 @@ class TestIntegration:
         with tempfile.TemporaryDirectory() as temp_dir:
             transcript_file = os.path.join(temp_dir, "integration_test.md")
 
-            with patch(
-                "agency_memory.memory.os.path.join", return_value=transcript_file
-            ):
-                _ = create_session_transcript(
-                    all_memories, "integration_test"
-                )
+            with patch("agency_memory.memory.os.path.join", return_value=transcript_file):
+                _ = create_session_transcript(all_memories, "integration_test")
                 assert os.path.exists(transcript_file)
 
     def test_fallback_messages_logged(self, caplog):
@@ -496,7 +492,8 @@ class TestIntegration:
 
             # Check that fallback message was logged
             fallback_messages = [
-                record.message for record in caplog.records
+                record.message
+                for record in caplog.records
                 if "falling back to inmemorystore" in record.message.lower()
             ]
 
@@ -506,7 +503,9 @@ class TestIntegration:
                 for i, record in enumerate(caplog.records):
                     print(f"  {i}: {record.levelname} - {record.name} - {record.message}")
 
-            assert len(fallback_messages) > 0, f"Expected fallback message not found. Captured {len(caplog.records)} records."
+            assert len(fallback_messages) > 0, (
+                f"Expected fallback message not found. Captured {len(caplog.records)} records."
+            )
 
 
 if __name__ == "__main__":

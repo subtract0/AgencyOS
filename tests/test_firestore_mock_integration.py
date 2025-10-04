@@ -6,10 +6,11 @@ when the actual Firestore emulator is not available (e.g., no Java installed).
 """
 
 import os
-import pytest
 import time
 from datetime import datetime
-from unittest.mock import MagicMock, patch, PropertyMock
+from unittest.mock import MagicMock, patch
+
+import pytest
 
 from agency_memory import FirestoreStore
 
@@ -21,7 +22,7 @@ class TestFirestoreMockIntegration:
     @pytest.fixture
     def mock_firestore_client(self):
         """Create a mock Firestore client that behaves like the real one."""
-        with patch('agency_memory.firestore_store.firestore') as mock_firestore:
+        with patch("agency_memory.firestore_store.firestore") as mock_firestore:
             # Create mock client
             mock_client = MagicMock()
             mock_firestore.Client.return_value = mock_client
@@ -131,11 +132,14 @@ class TestFirestoreMockIntegration:
             mock_collection.limit = mock_limit
 
             # Set environment variables
-            with patch.dict(os.environ, {
-                "FRESH_USE_FIRESTORE": "true",
-                "FIRESTORE_EMULATOR_HOST": "localhost:8080",
-                "GOOGLE_CLOUD_PROJECT": "agency-test"
-            }):
+            with patch.dict(
+                os.environ,
+                {
+                    "FRESH_USE_FIRESTORE": "true",
+                    "FIRESTORE_EMULATOR_HOST": "localhost:8080",
+                    "GOOGLE_CLOUD_PROJECT": "agency-test",
+                },
+            ):
                 yield mock_client, mock_storage
 
     def test_firestore_crud_operations(self, mock_firestore_client):

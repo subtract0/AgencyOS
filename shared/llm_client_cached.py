@@ -26,16 +26,15 @@ Constitutional Compliance:
 - Article IV: Learning from cache hit rates
 """
 
-from typing import Optional
 import os
 
 
 def call_with_caching(
     agent_name: str,
     task: str,
-    context: Optional[dict] = None,
+    context: dict | None = None,
     model: str = "claude-sonnet-4-5-20250929",
-    max_tokens: int = 4000
+    max_tokens: int = 4000,
 ) -> str:
     """
     Call LLM with prompt caching for token savings.
@@ -76,14 +75,10 @@ def call_with_caching(
         from anthropic import Anthropic
     except ImportError:
         raise ImportError(
-            "anthropic package required for caching. "
-            "Install with: pip install anthropic"
+            "anthropic package required for caching. Install with: pip install anthropic"
         )
 
-    from shared.prompt_compression import (
-        create_compressed_prompt,
-        get_compression_stats
-    )
+    from shared.prompt_compression import create_compressed_prompt, get_compression_stats
 
     # Create compressed prompts
     prompts = create_compressed_prompt(agent_name, task, context)
@@ -108,15 +103,14 @@ def call_with_caching(
     response = client.messages.create(
         model=model,
         max_tokens=max_tokens,
-        system=[{
-            "type": "text",
-            "text": prompts["system"],
-            "cache_control": {"type": "ephemeral"}  # Cache for 5 min
-        }],
-        messages=[{
-            "role": "user",
-            "content": prompts["task"]
-        }]
+        system=[
+            {
+                "type": "text",
+                "text": prompts["system"],
+                "cache_control": {"type": "ephemeral"},  # Cache for 5 min
+            }
+        ],
+        messages=[{"role": "user", "content": prompts["task"]}],
     )
 
     # Extract text from response
@@ -129,9 +123,9 @@ def call_with_caching(
 def call_without_caching(
     agent_name: str,
     task: str,
-    context: Optional[dict] = None,
+    context: dict | None = None,
     model: str = "claude-sonnet-4-5-20250929",
-    max_tokens: int = 4000
+    max_tokens: int = 4000,
 ) -> str:
     """
     Call LLM WITHOUT caching (baseline comparison).
@@ -152,10 +146,7 @@ def call_without_caching(
     try:
         from anthropic import Anthropic
     except ImportError:
-        raise ImportError(
-            "anthropic package required. "
-            "Install with: pip install anthropic"
-        )
+        raise ImportError("anthropic package required. Install with: pip install anthropic")
 
     from shared.prompt_compression import create_compressed_prompt
 
@@ -177,10 +168,7 @@ def call_without_caching(
         model=model,
         max_tokens=max_tokens,
         system=full_prompt,  # No cache_control
-        messages=[{
-            "role": "user",
-            "content": task
-        }]
+        messages=[{"role": "user", "content": task}],
     )
 
     # Extract text
@@ -200,14 +188,11 @@ if __name__ == "__main__":
     task = "Create implementation plan for user authentication feature"
     context = {
         "files": ["specs/user_auth.md", "plans/authentication.md"],
-        "data": "Focus on security and type safety"
+        "data": "Focus on security and type safety",
     }
 
     print("\nCompression stats:")
-    from shared.prompt_compression import (
-        create_compressed_prompt,
-        get_compression_stats
-    )
+    from shared.prompt_compression import create_compressed_prompt, get_compression_stats
 
     prompts = create_compressed_prompt("planner", task, context)
     stats = get_compression_stats(prompts)

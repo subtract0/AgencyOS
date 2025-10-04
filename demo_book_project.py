@@ -21,26 +21,28 @@ Constitutional Compliance:
 
 import asyncio
 import sys
-from datetime import datetime, timezone, timedelta
-from typing import Optional
+from datetime import UTC, datetime, timedelta
+
 from rich.console import Console
 from rich.panel import Panel
 from rich.progress import Progress, SpinnerColumn, TextColumn
+from rich.prompt import Confirm
 from rich.table import Table
-from rich import print as rprint
-from rich.prompt import Prompt, Confirm
 
 # Trinity Protocol imports
 from trinity_protocol.core.models.patterns import DetectedPattern, PatternType
 from trinity_protocol.core.models.project import (
-    Project, ProjectState, QASession, QAQuestion, QAAnswer,
-    ProjectSpec, ProjectPlan, ProjectTask, TaskStatus, ProjectMetadata
+    Project,
+    ProjectMetadata,
+    ProjectPlan,
+    ProjectSpec,
+    ProjectState,
+    ProjectTask,
+    QAAnswer,
+    QAQuestion,
+    QASession,
+    TaskStatus,
 )
-from trinity_protocol.project_initializer import ProjectInitializer
-from trinity_protocol.spec_from_conversation import SpecFromConversation
-from trinity_protocol.project_executor import ProjectExecutor
-from trinity_protocol.daily_checkin import DailyCheckin
-from shared.type_definitions.result import Result, Ok, Err
 
 console = Console()
 
@@ -52,11 +54,11 @@ class BookProjectDemo:
         """Initialize demo with mock components."""
         self.user_name = "Alex"
         self.console = Console()
-        self.pattern: Optional[DetectedPattern] = None
-        self.qa_session: Optional[QASession] = None
-        self.spec: Optional[ProjectSpec] = None
-        self.plan: Optional[ProjectPlan] = None
-        self.project: Optional[Project] = None
+        self.pattern: DetectedPattern | None = None
+        self.qa_session: QASession | None = None
+        self.spec: ProjectSpec | None = None
+        self.plan: ProjectPlan | None = None
+        self.project: Project | None = None
         self.day_count = 0
 
     async def run(self):
@@ -138,9 +140,9 @@ Press Enter to begin the demo...
             topic="coaching book",
             confidence=0.92,
             mention_count=5,
-            first_mention=datetime.now(timezone.utc) - timedelta(hours=8),
-            last_mention=datetime.now(timezone.utc),
-            context_summary="User mentioned coaching book project 5 times today with emotional weight (weighing on me, wish I could finish)"
+            first_mention=datetime.now(UTC) - timedelta(hours=8),
+            last_mention=datetime.now(UTC),
+            context_summary="User mentioned coaching book project 5 times today with emotional weight (weighing on me, wish I could finish)",
         )
 
         console.print("\n[bold green]✅ Pattern Detected![/bold green]")
@@ -189,7 +191,9 @@ Want to hear more about the plan?
         response = Confirm.ask("\n[bold]Your response (YES/NO/LATER)[/bold]", default=True)
 
         if not response:
-            console.print("\n[yellow]📝 Understood! I've noted you're not interested in this right now.[/yellow]")
+            console.print(
+                "\n[yellow]📝 Understood! I've noted you're not interested in this right now.[/yellow]"
+            )
             console.print("[dim]This helps Trinity learn what you value.[/dim]")
             sys.exit(0)
 
@@ -207,31 +211,31 @@ Want to hear more about the plan?
         questions_and_answers = [
             (
                 "What's the core message or theme of your coaching book?",
-                "Helping coaches build sustainable 6-figure practices without burnout"
+                "Helping coaches build sustainable 6-figure practices without burnout",
             ),
             (
                 "Who is your target audience?",
-                "New and intermediate coaches (1-5 years experience) who struggle with client acquisition and pricing"
+                "New and intermediate coaches (1-5 years experience) who struggle with client acquisition and pricing",
             ),
             (
                 "How many chapters are you envisioning?",
-                "8 chapters: Mindset, Positioning, Pricing, Marketing, Sales, Delivery, Systems, Scale"
+                "8 chapters: Mindset, Positioning, Pricing, Marketing, Sales, Delivery, Systems, Scale",
             ),
             (
                 "What's already written vs. needs to be written?",
-                "I have rough outlines for 3 chapters, nothing fully drafted. Need everything written from scratch."
+                "I have rough outlines for 3 chapters, nothing fully drafted. Need everything written from scratch.",
             ),
             (
                 "What's your preferred writing style?",
-                "Conversational, practical, lots of real examples. Like 'Company of One' meets 'The Coaching Habit'"
+                "Conversational, practical, lots of real examples. Like 'Company of One' meets 'The Coaching Habit'",
             ),
             (
                 "Any specific case studies or stories to include?",
-                "Yes - my journey from $30k to $300k, 3 client success stories, common pricing mistakes"
+                "Yes - my journey from $30k to $300k, 3 client success stories, common pricing mistakes",
             ),
             (
                 "What's your ideal completion timeline?",
-                "2 weeks would be amazing. Need it done before my course launch in 3 weeks."
+                "2 weeks would be amazing. Need it done before my course launch in 3 weeks.",
             ),
         ]
 
@@ -243,9 +247,7 @@ Want to hear more about the plan?
 
             # Simulate user thinking
             with Progress(
-                SpinnerColumn(),
-                TextColumn("[dim]Waiting for your answer...[/dim]"),
-                transient=True
+                SpinnerColumn(), TextColumn("[dim]Waiting for your answer...[/dim]"), transient=True
             ) as progress:
                 progress.add_task("thinking", total=None)
                 await asyncio.sleep(0.8)
@@ -253,18 +255,19 @@ Want to hear more about the plan?
             console.print(f"[green]You:[/green] {answer}\n")
 
             # Store Q&A
-            qa_questions.append(QAQuestion(
-                question_id=f"q{i}",
-                question_text=question,
-                question_number=i,
-                required=True
-            ))
-            qa_answers.append(QAAnswer(
-                answer_id=f"a{i}",
-                question_id=f"q{i}",
-                answer_text=answer,
-                answered_at=datetime.now(timezone.utc)
-            ))
+            qa_questions.append(
+                QAQuestion(
+                    question_id=f"q{i}", question_text=question, question_number=i, required=True
+                )
+            )
+            qa_answers.append(
+                QAAnswer(
+                    answer_id=f"a{i}",
+                    question_id=f"q{i}",
+                    answer_text=answer,
+                    answered_at=datetime.now(UTC),
+                )
+            )
 
             await asyncio.sleep(0.3)
 
@@ -276,9 +279,9 @@ Want to hear more about the plan?
             pattern_type=self.pattern.pattern_type,
             questions=qa_questions,
             answers=qa_answers,
-            started_at=datetime.now(timezone.utc) - timedelta(minutes=10),
-            completed_at=datetime.now(timezone.utc),
-            status="completed"
+            started_at=datetime.now(UTC) - timedelta(minutes=10),
+            completed_at=datetime.now(UTC),
+            status="completed",
         )
 
         # Generate spec
@@ -314,78 +317,138 @@ Want to hear more about the plan?
     async def demo_daily_execution(self):
         """Demo Phase 3: Daily execution with check-ins."""
         console.print("\n[bold]═══ Phase 3: Daily Execution (14 Days) ═══[/bold]\n")
-        console.print("[dim]Simulating daily check-ins... (press Enter to advance through days)[/dim]\n")
+        console.print(
+            "[dim]Simulating daily check-ins... (press Enter to advance through days)[/dim]\n"
+        )
 
         daily_checkins = [
             # Days 1-2: Chapter 1 (Mindset)
-            (1, "Morning! Ready to start?", [
-                ("Should Chapter 1 focus more on mindset shifts or tactical exercises?", "60/40 mindset to tactical"),
-                ("Any specific limiting beliefs coaches struggle with?", "Charging enough, imposter syndrome")
-            ]),
-            (2, "Chapter 1 progress check", [
-                ("How's the opening story landing?", "Great! More vulnerable than I expected"),
-                ("Ready for Chapter 2 outline review?", "Yes, let's see it")
-            ]),
-
+            (
+                1,
+                "Morning! Ready to start?",
+                [
+                    (
+                        "Should Chapter 1 focus more on mindset shifts or tactical exercises?",
+                        "60/40 mindset to tactical",
+                    ),
+                    (
+                        "Any specific limiting beliefs coaches struggle with?",
+                        "Charging enough, imposter syndrome",
+                    ),
+                ],
+            ),
+            (
+                2,
+                "Chapter 1 progress check",
+                [
+                    ("How's the opening story landing?", "Great! More vulnerable than I expected"),
+                    ("Ready for Chapter 2 outline review?", "Yes, let's see it"),
+                ],
+            ),
             # Days 3-4: Chapter 2 (Positioning)
-            (3, "Chapter 2 begins", [
-                ("What differentiates elite coaches from beginners?", "Specialization and confident pricing"),
-            ]),
-            (4, "Positioning refinement", [
-                ("Should we include your positioning framework diagram?", "Absolutely, that's valuable"),
-                ("Any client examples for this chapter?", "Sarah's rebrand story")
-            ]),
-
+            (
+                3,
+                "Chapter 2 begins",
+                [
+                    (
+                        "What differentiates elite coaches from beginners?",
+                        "Specialization and confident pricing",
+                    ),
+                ],
+            ),
+            (
+                4,
+                "Positioning refinement",
+                [
+                    (
+                        "Should we include your positioning framework diagram?",
+                        "Absolutely, that's valuable",
+                    ),
+                    ("Any client examples for this chapter?", "Sarah's rebrand story"),
+                ],
+            ),
             # Days 5-6: Chapter 3 (Pricing)
-            (5, "The pricing chapter", [
-                ("What's your strongest pricing argument?", "Value-based vs. hourly - coaches leave money on table"),
-                ("Include the $10k package case study?", "Yes, that converts well")
-            ]),
-            (6, "Pricing examples", [
-                ("How many pricing tiers to recommend?", "3 tiers: starter, signature, premium")
-            ]),
-
+            (
+                5,
+                "The pricing chapter",
+                [
+                    (
+                        "What's your strongest pricing argument?",
+                        "Value-based vs. hourly - coaches leave money on table",
+                    ),
+                    ("Include the $10k package case study?", "Yes, that converts well"),
+                ],
+            ),
+            (
+                6,
+                "Pricing examples",
+                [("How many pricing tiers to recommend?", "3 tiers: starter, signature, premium")],
+            ),
             # Days 7-8: Chapters 4-5 (Marketing & Sales)
-            (7, "Marketing chapter", [
-                ("Inbound vs outbound focus?", "80% inbound (content), 20% outbound (partnerships)"),
-                ("Top 3 marketing channels?", "LinkedIn, podcast guesting, referrals")
-            ]),
-            (8, "Sales process", [
-                ("Include your discovery call script?", "Yes! That's gold")
-            ]),
-
+            (
+                7,
+                "Marketing chapter",
+                [
+                    (
+                        "Inbound vs outbound focus?",
+                        "80% inbound (content), 20% outbound (partnerships)",
+                    ),
+                    ("Top 3 marketing channels?", "LinkedIn, podcast guesting, referrals"),
+                ],
+            ),
+            (8, "Sales process", [("Include your discovery call script?", "Yes! That's gold")]),
             # Days 9-10: Chapters 6-7 (Delivery & Systems)
-            (9, "Delivery chapter", [
-                ("Group vs 1-on-1 coaching balance?", "Start 1-on-1, add group at $50k+"),
-            ]),
-            (10, "Systems & automation", [
-                ("Which tools to recommend?", "Keep it simple: Calendly, Stripe, Notion")
-            ]),
-
+            (
+                9,
+                "Delivery chapter",
+                [
+                    ("Group vs 1-on-1 coaching balance?", "Start 1-on-1, add group at $50k+"),
+                ],
+            ),
+            (
+                10,
+                "Systems & automation",
+                [("Which tools to recommend?", "Keep it simple: Calendly, Stripe, Notion")],
+            ),
             # Days 11-12: Chapter 8 (Scale)
-            (11, "Scaling strategies", [
-                ("When to hire first team member?", "$150k revenue, 80%+ capacity"),
-                ("Passive income products?", "Course after proven 1-on-1 success")
-            ]),
-            (12, "Final chapter polish", [
-                ("How to end the book?", "Your journey + invitation to implement")
-            ]),
-
+            (
+                11,
+                "Scaling strategies",
+                [
+                    ("When to hire first team member?", "$150k revenue, 80%+ capacity"),
+                    ("Passive income products?", "Course after proven 1-on-1 success"),
+                ],
+            ),
+            (
+                12,
+                "Final chapter polish",
+                [("How to end the book?", "Your journey + invitation to implement")],
+            ),
             # Days 13-14: Polish & Completion
-            (13, "Final review", [
-                ("Any sections need expansion?", "Chapter 5 - add more objection handling"),
-            ]),
-            (14, "Ready to ship?", [
-                ("Book feels complete?", "Yes! Better than I imagined"),
-                ("Ready for Amazon KDP formatting?", "Absolutely")
-            ]),
+            (
+                13,
+                "Final review",
+                [
+                    ("Any sections need expansion?", "Chapter 5 - add more objection handling"),
+                ],
+            ),
+            (
+                14,
+                "Ready to ship?",
+                [
+                    ("Book feels complete?", "Yes! Better than I imagined"),
+                    ("Ready for Amazon KDP formatting?", "Absolutely"),
+                ],
+            ),
         ]
 
         for day_num, greeting, questions in daily_checkins:
             self.day_count = day_num
 
             # Daily check-in header
-            console.print(f"\n[bold cyan]═══ Day {day_num}/14 - {datetime.now().strftime('%A, %B %d')} ═══[/bold cyan]")
+            console.print(
+                f"\n[bold cyan]═══ Day {day_num}/14 - {datetime.now().strftime('%A, %B %d')} ═══[/bold cyan]"
+            )
             console.print(f"[cyan]Trinity:[/cyan] {greeting}\n")
 
             # Questions for the day
@@ -400,7 +463,9 @@ Want to hear more about the plan?
 
             # Progress update
             progress_pct = (day_num / 14) * 100
-            console.print(f"[dim]📊 Progress: {progress_pct:.0f}% complete ({day_num}/14 days)[/dim]")
+            console.print(
+                f"[dim]📊 Progress: {progress_pct:.0f}% complete ({day_num}/14 days)[/dim]"
+            )
 
             # Simulate work being done
             if day_num % 2 == 0:
@@ -579,47 +644,47 @@ Want to hear more about the plan?
                 "Complete 8-chapter book on coaching business building",
                 "Include real case studies and practical examples",
                 "Ready for Amazon KDP publishing",
-                "Finished in 14 days with minimal time investment"
+                "Finished in 14 days with minimal time investment",
             ],
             non_goals=[
                 "Not a certification program",
                 "Not focused on life coaching techniques",
-                "Not about personal development"
+                "Not about personal development",
             ],
             user_personas=[
                 "Alex: Experienced coach wanting to share knowledge",
-                "Reader: New coach struggling with business side"
+                "Reader: New coach struggling with business side",
             ],
             acceptance_criteria=[
                 AcceptanceCriterion(
                     criterion_id="ac_1",
                     description="8 chapters completed with 50,000+ words total",
-                    verification_method="Word count verification"
+                    verification_method="Word count verification",
                 ),
                 AcceptanceCriterion(
                     criterion_id="ac_2",
                     description="5+ real case studies included throughout",
-                    verification_method="Manual review"
+                    verification_method="Manual review",
                 ),
                 AcceptanceCriterion(
                     criterion_id="ac_3",
                     description="Professional formatting ready for KDP upload",
-                    verification_method="KDP compliance check"
+                    verification_method="KDP compliance check",
                 ),
                 AcceptanceCriterion(
                     criterion_id="ac_4",
                     description="User approval of final manuscript",
-                    verification_method="User approval"
-                )
+                    verification_method="User approval",
+                ),
             ],
             constraints=[
                 "14-day timeline (hard deadline for course launch)",
                 "User has max 10 minutes per day available",
-                "Must maintain conversational, practical tone"
+                "Must maintain conversational, practical tone",
             ],
             spec_markdown="# Coaching Book Specification\n\n## Goals\n...\n## Personas\n...\n## Acceptance Criteria\n...\n(Full spec content would be here, 100+ characters)",
-            created_at=datetime.now(timezone.utc),
-            approval_status="approved"
+            created_at=datetime.now(UTC),
+            approval_status="approved",
         )
 
     def create_mock_plan(self) -> ProjectPlan:
@@ -628,11 +693,11 @@ Want to hear more about the plan?
             ProjectTask(
                 task_id=f"task_{i}",
                 project_id="proj_book_001",
-                title=f"Chapter {(i//2)+1} - {'Draft' if i%2==0 else 'Polish'}",
-                description=f"Complete chapter {(i//2)+1}",
+                title=f"Chapter {(i // 2) + 1} - {'Draft' if i % 2 == 0 else 'Polish'}",
+                description=f"Complete chapter {(i // 2) + 1}",
                 estimated_minutes=30,
                 assigned_to="system",
-                status=TaskStatus.PENDING
+                status=TaskStatus.PENDING,
             )
             for i in range(14)
         ]
@@ -644,8 +709,8 @@ Want to hear more about the plan?
             tasks=tasks,
             total_estimated_days=14,
             daily_questions_avg=2,
-            timeline_end_estimate=datetime.now(timezone.utc) + timedelta(days=14),
-            plan_markdown="# 14-Day Implementation Plan\n\n## Overview\n...\n## Daily Breakdown\n...\n(Full plan content here, 100+ characters)"
+            timeline_end_estimate=datetime.now(UTC) + timedelta(days=14),
+            plan_markdown="# 14-Day Implementation Plan\n\n## Overview\n...\n## Daily Breakdown\n...\n(Full plan content here, 100+ characters)",
         )
 
     def create_mock_project(self) -> Project:
@@ -656,13 +721,13 @@ Want to hear more about the plan?
             title="Coaching Business Book",
             description="Complete practical guide for building sustainable 6-figure coaching practice",
             state=ProjectState.EXECUTING,
-            created_at=datetime.now(timezone.utc),
-            updated_at=datetime.now(timezone.utc),
+            created_at=datetime.now(UTC),
+            updated_at=datetime.now(UTC),
             metadata=ProjectMetadata(
                 topic="coaching book",
-                estimated_completion=datetime.now(timezone.utc) + timedelta(days=14),
-                daily_time_commitment_minutes=10
-            )
+                estimated_completion=datetime.now(UTC) + timedelta(days=14),
+                daily_time_commitment_minutes=10,
+            ),
         )
 
 

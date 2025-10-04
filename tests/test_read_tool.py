@@ -1,6 +1,6 @@
-from pathlib import Path
 import os
 import stat
+from pathlib import Path
 
 from tools import Read
 
@@ -28,6 +28,7 @@ def test_read_with_offset_and_limit(tmp_path: Path):
 
 
 # ========== NECESSARY Pattern: Error Conditions ==========
+
 
 def test_read_nonexistent_file():
     """E: Error condition - file does not exist"""
@@ -69,6 +70,7 @@ def test_read_empty_file(tmp_path: Path):
 
 # ========== NECESSARY Pattern: Edge Cases ==========
 
+
 def test_read_binary_file_detection(tmp_path: Path):
     """E: Edge case - binary file should fail with decode error"""
     p = tmp_path / "binary.dat"
@@ -108,7 +110,7 @@ def test_read_image_file_detection(tmp_path: Path):
     """E: Edge case - image file detection"""
     p = tmp_path / "test.png"
     # Create minimal PNG header
-    p.write_bytes(b'\x89PNG\r\n\x1a\n\x00\x00\x00\rIHDR')
+    p.write_bytes(b"\x89PNG\r\n\x1a\n\x00\x00\x00\rIHDR")
     tool = Read(file_path=str(p))
     out = tool.run()
     assert "[IMAGE FILE:" in out
@@ -155,6 +157,7 @@ def test_read_zero_and_negative_offset(tmp_path: Path):
 
 # ========== NECESSARY Pattern: State Validation ==========
 
+
 def test_read_tracking_in_global_registry(tmp_path: Path):
     """S: State validation - read files tracked in global registry"""
     from tools.read import _global_read_files
@@ -183,7 +186,7 @@ def test_read_tracking_with_context(tmp_path: Path):
     mock_context.get.return_value = read_files_set
 
     # Patch the context property since it's read-only
-    with patch.object(Read, 'context', new_callable=lambda: property(lambda self: mock_context)):
+    with patch.object(Read, "context", new_callable=lambda: property(lambda self: mock_context)):
         tool = Read(file_path=str(p))
         tool.run()
 
@@ -194,12 +197,13 @@ def test_read_tracking_with_context(tmp_path: Path):
 
 # ========== NECESSARY Pattern: Comprehensive Coverage ==========
 
+
 def test_read_with_various_line_endings(tmp_path: Path):
     """C: Comprehensive - handle different line endings"""
     p = tmp_path / "line_endings.txt"
     # Mix of Unix (\n), Windows (\r\n), and Mac (\r) line endings
     content = "line1\nline2\r\nline3\rline4"
-    p.write_bytes(content.encode('utf-8'))
+    p.write_bytes(content.encode("utf-8"))
 
     tool = Read(file_path=str(p))
     out = tool.run()
@@ -236,3 +240,176 @@ def test_read_very_large_file_with_default_limit(tmp_path: Path):
     assert "line 2000" in out or "line 1999" in out
     # Should not show line 2001
     assert "line 2001" not in out
+
+
+# ========== NECESSARY Pattern: Additional Failure Modes ==========
+
+
+def test_read_symlink_file(tmp_path: Path):
+    """E: Edge case - reading through symbolic link"""
+    import os
+
+    p = tmp_path / "original.txt"
+    p.write_text("original content")
+
+    symlink_path = tmp_path / "symlink.txt"
+    os.symlink(str(p), str(symlink_path))
+
+    tool = Read(file_path=str(symlink_path))
+    out = tool.run()
+    assert "original content" in out
+
+
+def test_read_cache_invalidation_on_file_change(tmp_path: Path):
+    """S: State validation - cache invalidates when file changes"""
+    p = tmp_path / "cached.txt"
+    p.write_text("version 1")
+
+    # First read (populate cache)
+    tool1 = Read(file_path=str(p))
+    out1 = tool1.run()
+    assert "version 1" in out1
+
+    # Modify file
+    import time
+
+    time.sleep(0.1)  # Ensure mtime changes
+    p.write_text("version 2")
+
+    # Second read (should get new content, not cached)
+    tool2 = Read(file_path=str(p))
+    out2 = tool2.run()
+    assert "version 2" in out2
+
+
+def test_read_absolute_path_conversion(tmp_path: Path):
+    """S: State validation - converts to absolute path for tracking"""
+    p = tmp_path / "relative_test.txt"
+    p.write_text("test")
+
+    tool = Read(file_path=str(p))
+    tool.run()
+
+    from tools.read import _global_read_files
+
+    # Should track absolute path, not relative
+    assert str(p.absolute()) in _global_read_files
+
+
+def test_read_handles_file_with_null_bytes(tmp_path: Path):
+    """E: Edge case - file containing null bytes"""
+    p = tmp_path / "nullbytes.txt"
+    p.write_bytes(b"before\x00after\n")
+
+    tool = Read(file_path=str(p))
+    out = tool.run()
+    # Should read successfully (null bytes handled by encoding)
+    assert isinstance(out, str)
+
+
+def test_read_concurrent_access(tmp_path: Path):
+    """C: Comprehensive - concurrent reads don't interfere"""
+    import threading
+
+    p = tmp_path / "concurrent.txt"
+    p.write_text("shared content\n" * 100)
+
+    results = []
+    errors = []
+
+    def read_file():
+        try:
+            tool = Read(file_path=str(p))
+            result = tool.run()
+            results.append(result)
+        except Exception as e:
+            errors.append(e)
+
+    # Create multiple concurrent readers
+    threads = [threading.Thread(target=read_file) for _ in range(5)]
+    for t in threads:
+        t.start()
+    for t in threads:
+        t.join()
+
+    # All should succeed
+    assert len(errors) == 0
+    assert len(results) == 5
+    # All should have same content
+    assert all("shared content" in r for r in results)
+
+
+def test_read_line_number_formatting_alignment(tmp_path: Path):
+    """Y: Yield validation - cat -n format with right-aligned numbers"""
+    p = tmp_path / "numbering.txt"
+    p.write_text("line1\nline2\nline3\n")
+
+    tool = Read(file_path=str(p))
+    out = tool.run()
+
+    # Check cat -n format: 6-width right-aligned line numbers
+    lines = out.split("\n")
+    assert len(lines) >= 3
+    # Line 1 should have right-aligned number and tab
+    assert lines[0].startswith("     1\t") or lines[0].startswith("    1\t")
+
+
+def test_read_special_filenames(tmp_path: Path):
+    """E: Edge case - files with special characters in name"""
+    special_name = "file with spaces & special!chars.txt"
+    p = tmp_path / special_name
+    p.write_text("special file content")
+
+    tool = Read(file_path=str(p))
+    out = tool.run()
+    assert "special file content" in out
+
+
+def test_read_hidden_file(tmp_path: Path):
+    """E: Edge case - hidden file (starts with dot)"""
+    p = tmp_path / ".hidden_file"
+    p.write_text("hidden content")
+
+    tool = Read(file_path=str(p))
+    out = tool.run()
+    assert "hidden content" in out
+
+
+def test_read_file_with_only_whitespace(tmp_path: Path):
+    """E: Edge case - file with only whitespace"""
+    p = tmp_path / "whitespace.txt"
+    p.write_text("   \n\t\t\n   \n")
+
+    tool = Read(file_path=str(p))
+    out = tool.run()
+    # Should read successfully
+    assert "\t" in out or "   " in out
+
+
+def test_read_custom_limit_respected(tmp_path: Path):
+    """C: Comprehensive - custom limit parameter works"""
+    p = tmp_path / "custom_limit.txt"
+    p.write_text("".join(f"line {i}\n" for i in range(1, 101)))
+
+    tool = Read(file_path=str(p), limit=10)
+    out = tool.run()
+
+    assert "line 1" in out
+    assert "line 10" in out or "line 9" in out
+    assert "line 11" not in out
+    assert "Truncated: showing" in out or "lines" in out
+
+
+def test_read_offset_plus_limit_combination(tmp_path: Path):
+    """C: Comprehensive - offset and limit work together"""
+    p = tmp_path / "offset_limit.txt"
+    p.write_text("".join(f"line {i}\n" for i in range(1, 101)))
+
+    # Read lines 50-60
+    tool = Read(file_path=str(p), offset=50, limit=10)
+    out = tool.run()
+
+    assert "line 50" in out or "line 49" in out
+    # Should not contain early lines
+    assert "line 1" not in out
+    assert "line 10" not in out

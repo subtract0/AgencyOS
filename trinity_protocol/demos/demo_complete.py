@@ -23,20 +23,15 @@ Usage:
 import asyncio
 import sys
 from pathlib import Path
-from datetime import datetime
 
 # Add parent directory to path
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 
-from trinity_protocol.core import (
-    WitnessAgent,
-    ArchitectAgent,
-    ExecutorAgent
-)
+from shared.agent_context import create_agent_context
+from shared.cost_tracker import CostTracker, ModelTier, SQLiteStorage
 from shared.message_bus import MessageBus
 from shared.persistent_store import PersistentStore
-from shared.cost_tracker import CostTracker, ModelTier, SQLiteStorage
-from shared.agent_context import create_agent_context
+from trinity_protocol.core import ArchitectAgent, ExecutorAgent, WitnessAgent
 
 
 class TrinityCompleteDemo:
@@ -70,16 +65,14 @@ class TrinityCompleteDemo:
 
         self.agent_context = create_agent_context()
 
-        print(f"   ✓ Message Bus (3 queues: telemetry, improvement, execution)")
-        print(f"   ✓ Pattern Store (cross-session learning)")
+        print("   ✓ Message Bus (3 queues: telemetry, improvement, execution)")
+        print("   ✓ Pattern Store (cross-session learning)")
         print(f"   ✓ Cost Tracker (budget: ${budget_usd:.2f})")
 
         # PERCEPTION: WITNESS Agent
         print("\n[2/6] Starting PERCEPTION layer (WITNESS)...")
         self.witness = WitnessAgent(
-            message_bus=self.message_bus,
-            pattern_store=self.pattern_store,
-            min_confidence=0.6
+            message_bus=self.message_bus, pattern_store=self.pattern_store, min_confidence=0.6
         )
         print("   ✓ WITNESS agent ready (8-step cycle)")
         print("   ✓ Monitoring: telemetry_stream + personal_context_stream")
@@ -87,9 +80,7 @@ class TrinityCompleteDemo:
         # COGNITION: ARCHITECT Agent
         print("\n[3/6] Starting COGNITION layer (ARCHITECT)...")
         self.architect = ArchitectAgent(
-            message_bus=self.message_bus,
-            pattern_store=self.pattern_store,
-            min_complexity=0.7
+            message_bus=self.message_bus, pattern_store=self.pattern_store, min_complexity=0.7
         )
         print("   ✓ ARCHITECT agent ready (10-step cycle)")
         print("   ✓ Hybrid intelligence: local Codestral / cloud GPT-5")
@@ -99,7 +90,7 @@ class TrinityCompleteDemo:
         self.executor = ExecutorAgent(
             message_bus=self.message_bus,
             cost_tracker=self.cost_tracker,
-            agent_context=self.agent_context
+            agent_context=self.agent_context,
         )
         print("   ✓ EXECUTOR agent ready (9-step cycle)")
         print("   ✓ Sub-agents: CodeWriter, TestArchitect, ReleaseManager")
@@ -149,7 +140,7 @@ class TrinityCompleteDemo:
         for task in self.running_tasks:
             try:
                 await asyncio.wait_for(task, timeout=2.0)
-            except (asyncio.TimeoutError, asyncio.CancelledError):
+            except (TimeoutError, asyncio.CancelledError):
                 pass
 
         # Show results
@@ -189,7 +180,7 @@ class TrinityCompleteDemo:
             if budget_result.is_ok():
                 budget = budget_result.unwrap()
                 if budget.limit_usd:
-                    print(f"\nBudget Status:")
+                    print("\nBudget Status:")
                     print(f"  Limit: ${budget.limit_usd:.2f}")
                     print(f"  Spent: ${budget.spent_usd:.4f}")
                     print(f"  Remaining: ${budget.remaining_usd:.4f}")
@@ -219,31 +210,31 @@ class TrinityCompleteDemo:
                 "severity": "critical",
                 "file": "payments/stripe.py",
                 "error_type": "AttributeError",
-                "keywords": ["NoneType", "critical", "payment"]
+                "keywords": ["NoneType", "critical", "payment"],
             },
             {
                 "message": "Dict[Any, Any] detected in user model - constitutional violation",
                 "file": "models/user.py",
                 "severity": "high",
-                "keywords": ["type_safety", "constitution", "violation"]
+                "keywords": ["type_safety", "constitution", "violation"],
             },
             {
                 "message": "Test test_concurrent_transactions fails 40% of the time",
                 "test_file": "tests/test_payments.py",
                 "failure_rate": "40%",
-                "keywords": ["flaky", "test", "concurrency"]
+                "keywords": ["flaky", "test", "concurrency"],
             },
             {
                 "message": "Duplicate validation logic found in 3 files",
                 "files": ["auth.py", "api.py", "utils.py"],
                 "pattern": "code_duplication",
-                "keywords": ["duplication", "refactor"]
+                "keywords": ["duplication", "refactor"],
             },
             {
                 "message": "User requests: Dark mode support across entire application",
                 "scope": "multi-file",
                 "priority": "NORMAL",
-                "keywords": ["ui", "feature_request", "dark_mode"]
+                "keywords": ["ui", "feature_request", "dark_mode"],
             },
         ]
 
@@ -258,7 +249,7 @@ class TrinityCompleteDemo:
 
         # WITNESS results
         witness_stats = self.witness.get_stats()
-        detector_stats = witness_stats.get('detector', {})
+        detector_stats = witness_stats.get("detector", {})
         print("\n🔍 PERCEPTION Layer (WITNESS):")
         print(f"   Patterns detected: {detector_stats.get('total_detections', 0)}")
 
@@ -267,7 +258,7 @@ class TrinityCompleteDemo:
 
         # ARCHITECT results
         architect_stats = self.architect.get_stats()
-        print(f"\n🧠 COGNITION Layer (ARCHITECT):")
+        print("\n🧠 COGNITION Layer (ARCHITECT):")
         print(f"   Signals processed: {architect_stats['signals_processed']}")
         print(f"   Tasks created: {architect_stats['tasks_created']}")
         print(f"   Specs generated: {architect_stats['specs_generated']}")
@@ -278,7 +269,7 @@ class TrinityCompleteDemo:
 
         # EXECUTOR results
         executor_stats = self.executor.get_stats()
-        print(f"\n⚡ ACTION Layer (EXECUTOR):")
+        print("\n⚡ ACTION Layer (EXECUTOR):")
         print(f"   Tasks executed: {executor_stats['tasks_processed']}")
         print(f"   Tasks succeeded: {executor_stats['tasks_succeeded']}")
         print(f"   Tasks failed: {executor_stats['tasks_failed']}")
@@ -287,15 +278,15 @@ class TrinityCompleteDemo:
         print(f"   Telemetry reports: {telemetry_count} → telemetry_stream")
 
         # Overall pipeline
-        print(f"\n🔄 Pipeline Integrity:")
-        if architect_stats['signals_processed'] > 0 and executor_stats['tasks_processed'] > 0:
-            print(f"   ✅ Complete cycle operational (WITNESS → ARCHITECT → EXECUTOR)")
+        print("\n🔄 Pipeline Integrity:")
+        if architect_stats["signals_processed"] > 0 and executor_stats["tasks_processed"] > 0:
+            print("   ✅ Complete cycle operational (WITNESS → ARCHITECT → EXECUTOR)")
         else:
-            print(f"   ⚠️  Pipeline still warming up (normal for short demo)")
+            print("   ⚠️  Pipeline still warming up (normal for short demo)")
 
         # Learning
         pattern_stats = self.pattern_store.get_stats()
-        print(f"\n📚 Learning (Cross-Session):")
+        print("\n📚 Learning (Cross-Session):")
         print(f"   Patterns stored: {pattern_stats['total_patterns']}")
         print(f"   FAISS available: {pattern_stats['faiss_available']}")
 
@@ -317,16 +308,10 @@ async def demo_architect():
     message_bus = MessageBus(":memory:")
     pattern_store = PersistentStore(":memory:")
 
-    witness = WitnessAgent(
-        message_bus=message_bus,
-        pattern_store=pattern_store,
-        min_confidence=0.6
-    )
+    witness = WitnessAgent(message_bus=message_bus, pattern_store=pattern_store, min_confidence=0.6)
 
     architect = ArchitectAgent(
-        message_bus=message_bus,
-        pattern_store=pattern_store,
-        min_complexity=0.7
+        message_bus=message_bus, pattern_store=pattern_store, min_complexity=0.7
     )
 
     print("\n[1/3] Starting WITNESS and ARCHITECT agents...")
@@ -335,12 +320,15 @@ async def demo_architect():
     await asyncio.sleep(0.5)
 
     print("\n[2/3] Publishing architectural challenge...")
-    await message_bus.publish("telemetry_stream", {
-        "message": "Dict[Any, Any] usage detected in core models - violates Article II type safety",
-        "file": "models/user.py",
-        "severity": "critical",
-        "keywords": ["architecture", "constitutional_violation"]
-    })
+    await message_bus.publish(
+        "telemetry_stream",
+        {
+            "message": "Dict[Any, Any] usage detected in core models - violates Article II type safety",
+            "file": "models/user.py",
+            "severity": "critical",
+            "keywords": ["architecture", "constitutional_violation"],
+        },
+    )
 
     await asyncio.sleep(2.0)
 
@@ -356,7 +344,7 @@ async def demo_architect():
     for task in [witness_task, architect_task]:
         try:
             await asyncio.wait_for(task, timeout=2.0)
-        except (asyncio.TimeoutError, asyncio.CancelledError):
+        except (TimeoutError, asyncio.CancelledError):
             pass
 
     message_bus.close()
@@ -403,7 +391,7 @@ async def demo_cost_tracking():
             tokens_out=output_tokens,
             duration_seconds=2.5,
             success=True,
-            metadata={"agent": agent}
+            metadata={"agent": agent},
         )
         if result.is_ok():
             print(f"   ✓ {agent}: {model} ({input_tokens} → {output_tokens} tokens)")
@@ -432,7 +420,9 @@ async def demo_cost_tracking():
         budget_result = tracker.get_budget_status()
         if budget_result.is_ok():
             budget = budget_result.unwrap()
-            print(f"\n  Budget: ${budget.spent_usd:.4f} / ${budget.limit_usd:.2f} ({budget.percent_used:.1f}%)")
+            print(
+                f"\n  Budget: ${budget.spent_usd:.4f} / ${budget.limit_usd:.2f} ({budget.percent_used:.1f}%)"
+            )
 
     tracker.storage.close()
     print("\n✅ Cost tracking demo complete\n")
@@ -444,8 +434,12 @@ async def main():
 
     parser = argparse.ArgumentParser(description="Trinity Protocol Complete Demo")
     parser.add_argument("--budget", type=float, default=10.0, help="Budget in USD")
-    parser.add_argument("--demo", choices=["complete", "architect", "cost", "all"],
-                        default="all", help="Which demo to run")
+    parser.add_argument(
+        "--demo",
+        choices=["complete", "architect", "cost", "all"],
+        default="all",
+        help="Which demo to run",
+    )
 
     args = parser.parse_args()
 

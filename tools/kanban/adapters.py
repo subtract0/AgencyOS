@@ -5,14 +5,16 @@ Kanban adapters: build Card records from telemetry and learning sources.
 - Defensive by default: ignore malformed events, redact sensitive data
 - No external dependencies; stdlib only
 """
+
 from __future__ import annotations
 
 import hashlib
 import json
 import os
-from dataclasses import dataclass, asdict
-from datetime import datetime, timezone
-from typing import Any, Dict, List, Optional, cast
+from dataclasses import asdict, dataclass
+from datetime import UTC, datetime
+from typing import Any, cast
+
 from shared.type_definitions.json import JSONValue
 
 # Local telemetry aggregator (safe, stdlib)
@@ -24,6 +26,7 @@ except Exception:  # pragma: no cover
 # Pattern store (optional)
 try:
     from pattern_intelligence import PatternStore
+
     def get_pattern_store():
         return PatternStore()
 except Exception:  # pragma: no cover
@@ -41,15 +44,15 @@ class Card:
     source_ref: str
     status: str  # To Investigate | In Progress | Learned | Resolved
     created_at: str
-    links: List[str]
-    tags: List[str]
+    links: list[str]
+    tags: list[str]
 
-    def to_dict(self) -> Dict[str, JSONValue]:
+    def to_dict(self) -> dict[str, JSONValue]:
         return asdict(self)
 
 
 def _iso_now() -> str:
-    return datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")
+    return datetime.now(UTC).isoformat().replace("+00:00", "Z")
 
 
 def _redact(obj: Any) -> Any:
@@ -87,7 +90,7 @@ def _stable_id(*parts: str) -> str:
     return h.hexdigest()[:16]
 
 
-def _event_to_card(ev: Dict[str, JSONValue]) -> Optional[Card]:
+def _event_to_card(ev: dict[str, JSONValue]) -> Card | None:
     typ = str(ev.get("type", "")).lower()
     ts = ev.get("ts") or _iso_now()
     agent = ev.get("agent") or "-"
@@ -95,7 +98,7 @@ def _event_to_card(ev: Dict[str, JSONValue]) -> Optional[Card]:
     card_type = None
     title = None
     summary = ""
-    tags: List[str] = []
+    tags: list[str] = []
 
     # Derive status and type
     if typ == "task_started":
@@ -118,14 +121,14 @@ def _event_to_card(ev: Dict[str, JSONValue]) -> Optional[Card]:
     elif typ in ("pattern_extracted", "pattern_store.pattern_added"):
         card_type = "pattern"
         status = "Learned"
-        title = f"Pattern learned"
+        title = "Pattern learned"
         ctx = ev.get("context") or {}
         summary = _shorten(json.dumps(_redact(ctx)) if ctx else "New reusable pattern")
         tags.append("pattern")
     elif typ == "antipattern_learned":
         card_type = "antipattern"
         status = "Learned"
-        title = f"Anti-pattern learned"
+        title = "Anti-pattern learned"
         ctx = ev.get("context") or {}
         summary = _shorten(json.dumps(_redact(ctx)) if ctx else "Avoid this approach")
         tags.append("antipattern")
@@ -143,7 +146,7 @@ def _event_to_card(ev: Dict[str, JSONValue]) -> Optional[Card]:
 
     source_ref = str(ev.get("id") or ev.get("run_id") or typ)
     created_at = ts if isinstance(ts, str) else _iso_now()
-    links: List[str] = []
+    links: list[str] = []
 
     cid = _stable_id(source_ref, typ, created_at)
     return Card(
@@ -159,8 +162,8 @@ def _event_to_card(ev: Dict[str, JSONValue]) -> Optional[Card]:
     )
 
 
-def _patterns_to_cards() -> List[Card]:
-    cards: List[Card] = []
+def _patterns_to_cards() -> list[Card]:
+    cards: list[Card] = []
     try:
         if get_pattern_store is None:
             return cards
@@ -173,13 +176,16 @@ def _patterns_to_cards() -> List[Card]:
                 ctx = {
                     "description": p.context.description,
                     "domain": p.context.domain,
-                    "approach": p.solution.approach
+                    "approach": p.solution.approach,
                 }
                 summary = _shorten(json.dumps(_redact(ctx)))
             except (TypeError, ValueError) as e:
                 import logging
+
                 logger = logging.getLogger(__name__)
-                logger.warning(f"Failed to serialize pattern context for {p.metadata.pattern_id}: {e}")
+                logger.warning(
+                    f"Failed to serialize pattern context for {p.metadata.pattern_id}: {e}"
+                )
                 summary = "Learned pattern"
             cid = _stable_id("pattern", p.metadata.pattern_id, created)
             cards.append(
@@ -197,6 +203,7 @@ def _patterns_to_cards() -> List[Card]:
             )
     except (AttributeError, TypeError) as e:
         import logging
+
         logger = logging.getLogger(__name__)
         logger.error(f"Failed to create pattern cards: {e}")
         # Return empty list on failure
@@ -204,7 +211,9 @@ def _patterns_to_cards() -> List[Card]:
     return cards
 
 
-def build_cards(window: str = "4h", telemetry_dir: Optional[str] = None, include_patterns: bool = True) -> List[Dict[str, JSONValue]]:
+def build_cards(
+    window: str = "4h", telemetry_dir: str | None = None, include_patterns: bool = True
+) -> list[dict[str, JSONValue]]:
     """Build cards from recent telemetry, optional pattern store, and optional untracked files.
 
     Args:
@@ -212,7 +221,7 @@ def build_cards(window: str = "4h", telemetry_dir: Optional[str] = None, include
         telemetry_dir: optional override path
         include_patterns: whether to also include learned patterns
     """
-    cards: List[Card] = []
+    cards: list[Card] = []
 
     # Telemetry events -> cards
     if list_events is not None:
@@ -233,26 +242,33 @@ def build_cards(window: str = "4h", telemetry_dir: Optional[str] = None, include
     try:
         if os.getenv("LEARNING_UNTRACKED", "false").lower() == "true":
             from .untracked import discover_untracked_cards
+
             untracked_dicts = discover_untracked_cards()
             for card_dict in untracked_dicts:
                 try:
                     # Convert JSONValue fields back to expected types
                     card = Card(
-                        id=str(card_dict.get('id', '')),
-                        type=str(card_dict.get('type', 'discovery')),
-                        title=str(card_dict.get('title', '')),
-                        summary=str(card_dict.get('summary', '')),
-                        source_ref=str(card_dict.get('source_ref', '')),
-                        status=str(card_dict.get('status', 'Learned')),
-                        created_at=str(card_dict.get('created_at', '')),
+                        id=str(card_dict.get("id", "")),
+                        type=str(card_dict.get("type", "discovery")),
+                        title=str(card_dict.get("title", "")),
+                        summary=str(card_dict.get("summary", "")),
+                        source_ref=str(card_dict.get("source_ref", "")),
+                        status=str(card_dict.get("status", "Learned")),
+                        created_at=str(card_dict.get("created_at", "")),
                         links=[
-                            str(l) for l in cast(List[JSONValue], card_dict.get('links', []))
+                            str(l)
+                            for l in cast(list[JSONValue], card_dict.get("links", []))
                             if isinstance(l, str)
-                        ] if isinstance(card_dict.get('links'), list) else [],
+                        ]
+                        if isinstance(card_dict.get("links"), list)
+                        else [],
                         tags=[
-                            str(t) for t in cast(List[JSONValue], card_dict.get('tags', []))
+                            str(t)
+                            for t in cast(list[JSONValue], card_dict.get("tags", []))
                             if isinstance(t, str)
-                        ] if isinstance(card_dict.get('tags'), list) else [],
+                        ]
+                        if isinstance(card_dict.get("tags"), list)
+                        else [],
                     )
                     cards.append(card)
                 except Exception:
@@ -269,8 +285,15 @@ def build_cards(window: str = "4h", telemetry_dir: Optional[str] = None, include
     return [c.to_dict() for c in cards]
 
 
-def build_feed(window: str = "4h", telemetry_dir: Optional[str] = None, include_patterns: bool = True) -> Dict[str, JSONValue]:
+def build_feed(
+    window: str = "4h", telemetry_dir: str | None = None, include_patterns: bool = True
+) -> dict[str, JSONValue]:
     return {
         "generated_at": _iso_now(),
-        "cards": cast(JSONValue, build_cards(window=window, telemetry_dir=telemetry_dir, include_patterns=include_patterns)),
+        "cards": cast(
+            JSONValue,
+            build_cards(
+                window=window, telemetry_dir=telemetry_dir, include_patterns=include_patterns
+            ),
+        ),
     }

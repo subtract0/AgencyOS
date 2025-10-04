@@ -5,6 +5,7 @@ import pytest
 from tools import MultiEdit, Read
 from tools.multi_edit import EditOperation
 
+
 def test_multi_edit_requires_prior_read():
     """Test that MultiEdit tool requires using Read tool first"""
     import os
@@ -24,7 +25,7 @@ def test_multi_edit_requires_prior_read():
         assert "must use Read tool" in result or "read the file first" in result.lower()
 
         # File should remain unchanged
-        with open(tmp_path, "r") as f:
+        with open(tmp_path) as f:
             assert "Hello world" in f.read()
 
     finally:
@@ -40,10 +41,7 @@ def test_multi_edit_read_first_required_for_all_extensions(tmp_path: Path):
     edits_txt = [EditOperation(old_string="beta", new_string="BETA")]
     tool_txt = MultiEdit(file_path=str(txt_file), edits=edits_txt)
     result_txt = tool_txt.run()
-    assert (
-        "must use Read tool" in result_txt
-        or "read the file first" in result_txt.lower()
-    )
+    assert "must use Read tool" in result_txt or "read the file first" in result_txt.lower()
 
     # .py also requires read first now
     py_file = tmp_path / "sample.py"
@@ -52,9 +50,7 @@ def test_multi_edit_read_first_required_for_all_extensions(tmp_path: Path):
     edits_py = [EditOperation(old_string="value = 1", new_string="value = 2")]
     tool_py = MultiEdit(file_path=str(py_file), edits=edits_py)
     result_py = tool_py.run()
-    assert (
-        "must use Read tool" in result_py or "read the file first" in result_py.lower()
-    )
+    assert "must use Read tool" in result_py or "read the file first" in result_py.lower()
 
 
 def test_multi_edit_works_after_read():
@@ -79,7 +75,7 @@ def test_multi_edit_works_after_read():
         assert "Successfully applied" in result
 
         # File should be changed
-        with open(tmp_path, "r") as f:
+        with open(tmp_path) as f:
             assert "Hello universe" in f.read()
 
     finally:
@@ -303,15 +299,9 @@ result = instance.old_method(10)
     # Comprehensive refactoring
     edits = [
         EditOperation(old_string="OldClass", new_string="NewClass", replace_all=True),
-        EditOperation(
-            old_string="old_attribute", new_string="new_attribute", replace_all=True
-        ),
-        EditOperation(
-            old_string="another_old", new_string="another_new", replace_all=True
-        ),
-        EditOperation(
-            old_string="old_method", new_string="new_method", replace_all=True
-        ),
+        EditOperation(old_string="old_attribute", new_string="new_attribute", replace_all=True),
+        EditOperation(old_string="another_old", new_string="another_new", replace_all=True),
+        EditOperation(old_string="old_method", new_string="new_method", replace_all=True),
         EditOperation(
             old_string="Old method implementation.",
             new_string="Updated method implementation.",
@@ -548,9 +538,7 @@ def test_multi_edit_whitespace_preservation(tmp_path: Path):
     test_file.write_text(content)
 
     edits = [
-        EditOperation(
-            old_string="    if condition:", new_string="    if new_condition:"
-        ),
+        EditOperation(old_string="    if condition:", new_string="    if new_condition:"),
         EditOperation(
             old_string="        # Comment with    spaces",
             new_string="        # Updated comment    with spaces",
@@ -629,12 +617,8 @@ def test_multi_edit_large_file(tmp_path: Path):
 
     # Perform multiple replacements
     edits = [
-        EditOperation(
-            old_string="old_function_", new_string="new_function_", replace_all=True
-        ),
-        EditOperation(
-            old_string="Old function", new_string="New function", replace_all=True
-        ),
+        EditOperation(old_string="old_function_", new_string="new_function_", replace_all=True),
+        EditOperation(old_string="Old function", new_string="New function", replace_all=True),
         EditOperation(old_string="old_value", new_string="new_value", replace_all=True),
     ]
 

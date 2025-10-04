@@ -14,62 +14,61 @@ Constitutional Compliance:
 """
 
 # Project models (Phase 3)
-from trinity_protocol.core.models.project import (
-    ProjectState,
-    TaskStatus,
-    QuestionConfidence,
-    ApprovalStatus,
-    QAQuestion,
-    QAAnswer,
-    QASession,
-    AcceptanceCriterion,
-    ProjectSpec,
-    ProjectTask,
-    ProjectPlan,
-    CheckinQuestion,
-    CheckinResponse,
-    DailyCheckin,
-    ProjectMetadata,
-    Project,
-    ProjectOutcome,
+# Human-in-the-loop models
+from trinity_protocol.core.models.hitl import (
+    HumanResponse,
+    HumanReviewRequest,
+    PreferencePattern,
+    QuestionDeliveryConfig,
+    QuestionStats,
 )
 
 # Pattern detection models
 from trinity_protocol.core.models.patterns import (
-    PatternType,
-    DetectedPattern,
-    PatternContext,
     AmbientEvent,
-    TopicCluster,
+    DetectedPattern,
     IntentClassification,
+    PatternContext,
+    PatternType,
     RecurrenceMetrics,
-)
-
-# Human-in-the-loop models
-from trinity_protocol.core.models.hitl import (
-    HumanReviewRequest,
-    HumanResponse,
-    QuestionStats,
-    PreferencePattern,
-    QuestionDeliveryConfig,
+    TopicCluster,
 )
 
 # Preference learning models
 from trinity_protocol.core.models.preferences import (
-    ResponseType,
-    QuestionType,
-    TopicCategory,
-    DayOfWeek,
-    TimeOfDay,
-    ResponseRecord,
-    QuestionPreference,
-    TimingPreference,
-    DayOfWeekPreference,
-    TopicPreference,
-    ContextualPattern,
-    PreferenceRecommendation,
     AlexPreferences,
+    ContextualPattern,
+    DayOfWeek,
+    DayOfWeekPreference,
+    PreferenceRecommendation,
     PreferenceSnapshot,
+    QuestionPreference,
+    QuestionType,
+    ResponseRecord,
+    ResponseType,
+    TimeOfDay,
+    TimingPreference,
+    TopicCategory,
+    TopicPreference,
+)
+from trinity_protocol.core.models.project import (
+    AcceptanceCriterion,
+    ApprovalStatus,
+    CheckinQuestion,
+    CheckinResponse,
+    DailyCheckin,
+    Project,
+    ProjectMetadata,
+    ProjectOutcome,
+    ProjectPlan,
+    ProjectSpec,
+    ProjectState,
+    ProjectTask,
+    QAAnswer,
+    QAQuestion,
+    QASession,
+    QuestionConfidence,
+    TaskStatus,
 )
 
 __all__ = [

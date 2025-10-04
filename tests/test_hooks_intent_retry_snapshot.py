@@ -1,10 +1,12 @@
-import os
 import json
+import os
 from pathlib import Path
 
-import pytest
-
-from shared.system_hooks import create_intent_router_hook, create_tool_wrapper_hook, create_mutation_snapshot_hook
+from shared.system_hooks import (
+    create_intent_router_hook,
+    create_mutation_snapshot_hook,
+    create_tool_wrapper_hook,
+)
 
 
 class DummyContext:
@@ -31,6 +33,7 @@ def test_intent_router_sets_route_flag():
 
     # on_start should set route_to_agent
     import asyncio
+
     asyncio.get_event_loop().run_until_complete(hook.on_start(wrapper, agent=None))
 
     assert wrapper.context.get("route_to_agent") == "WorkCompletionSummaryAgent"
@@ -42,8 +45,10 @@ def test_tool_wrapper_retries_on_failure():
 
     class FlakyTool:
         name = "Read"
+
         def __init__(self):
             self.calls = 0
+
         def run(self, *args, **kwargs):
             self.calls += 1
             if self.calls == 1:
@@ -53,6 +58,7 @@ def test_tool_wrapper_retries_on_failure():
     tool = FlakyTool()
 
     import asyncio
+
     asyncio.get_event_loop().run_until_complete(hook.on_tool_start(wrapper, agent=None, tool=tool))
 
     # First call will be retried by wrapper, resulting in success
@@ -73,13 +79,17 @@ def test_mutation_snapshot_hook_creates_snapshot(tmp_path, monkeypatch):
 
         class WriteLike:
             name = "Write"
+
             def __init__(self, file_path):
                 self.file_path = file_path
 
         tool = WriteLike(str(test_file))
 
         import asyncio
-        asyncio.get_event_loop().run_until_complete(hook.on_tool_start(wrapper, agent=None, tool=tool))
+
+        asyncio.get_event_loop().run_until_complete(
+            hook.on_tool_start(wrapper, agent=None, tool=tool)
+        )
 
         # Verify a snapshot was created
         snaps_dir = repo_root / "logs" / "snapshots"
