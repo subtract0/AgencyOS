@@ -61,10 +61,21 @@ class MemoryRecord(BaseModel):
 
     @field_validator("content", mode="before")
     def validate_json_compatible(cls, v: JSONValue) -> JSONValue:
-        """Ensure content is JSON-compatible (not sets, custom objects, etc)."""
-        if isinstance(v, set):
-            raise TypeError("Content must be JSON-compatible. Sets are not allowed.")
-        return v
+        """Ensure content is JSON-compatible (strict validation).
+
+        Validates against all non-JSON types: sets, bytes, custom classes,
+        functions, lambdas, circular references, etc.
+        """
+        import json
+        try:
+            # Comprehensive JSON compatibility test
+            json.dumps(v)
+            return v
+        except (TypeError, ValueError, OverflowError) as e:
+            raise TypeError(
+                f"Content must be JSON-compatible. "
+                f"Invalid type: {type(v).__name__}. Error: {e}"
+            )
 
     @field_validator("tags")
     def validate_tags(cls, v: list[str]) -> list[str]:
