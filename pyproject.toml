@@ -144,10 +144,6 @@ unfixable = ["B"]
     "E741",  # Variable naming in DSPy learning patterns
     "UP007", # Union syntax for DSPy compatibility
 ]
-"trinity_protocol/**/*.py" = [
-    "F401",  # Trinity optional imports
-    "E402",  # Trinity conditional initialization
-]
 "learning_agent/**/*.py" = [
     "E402",  # Conditional imports for learning modules
     "F401",  # Optional learning dependencies
