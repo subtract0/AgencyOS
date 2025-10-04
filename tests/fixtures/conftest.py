@@ -39,6 +39,9 @@ def mock_agent_context():
     """
     Provide a mock AgentContext for unit tests.
 
+    DEPRECATED: Use create_test_agent_context() for constitutional compliance.
+    This fixture violates Article II (Mocks ≠ Green amendment).
+
     Avoids loading real memory stores and configuration.
     """
     from unittest.mock import Mock
@@ -49,6 +52,38 @@ def mock_agent_context():
     context.get_session_id = Mock(return_value="test-session-123")
 
     return context
+
+
+@pytest.fixture
+def constitutional_test_agent():
+    """
+    Provide a REAL Agent instance for testing (constitutional compliance).
+
+    Replaces mock_agent fixtures which violate Article II.
+    See tests/fixtures/constitutional_test_agents.py for details.
+    """
+    from tests.fixtures.constitutional_test_agents import create_constitutional_test_agent
+
+    def _create_agent(name: str = "TestAgent", **kwargs):
+        return create_constitutional_test_agent(name, **kwargs)
+
+    return _create_agent
+
+
+@pytest.fixture
+def constitutional_agent_context():
+    """
+    Provide a REAL AgentContext for testing (constitutional compliance).
+
+    Uses InMemoryStore for fast, isolated testing.
+    Replaces mock_agent_context which violates Article II.
+    """
+    from tests.fixtures.constitutional_test_agents import create_test_agent_context
+
+    def _create_context(session_id: str | None = None):
+        return create_test_agent_context(session_id)
+
+    return _create_context
 
 
 @pytest.fixture
