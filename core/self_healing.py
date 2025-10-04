@@ -90,7 +90,7 @@ class SelfHealingCore:
         # 3. Emit telemetry
         self._emit_event(
             "errors_detected",
-            {"count": len(findings), "types": {f.error_type for f in findings}},
+            {"count": len(findings), "types": [f.error_type for f in findings]},
         )
 
         return findings
