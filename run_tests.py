@@ -181,12 +181,14 @@ def main(test_mode: str = "unit", fast_only: bool = False, timed: bool = False) 
         ]
     else:
         # Local development - use uv run pytest for better dependency management
+        # Use -q (quiet) for fast mode to reduce output overhead
+        verbosity_flag = "-q" if test_mode == "fast" else "-v"
         pytest_args = [
             "uv",
             "run",
             "pytest",
             "tests/",  # Test directory
-            "-v",  # Verbose output
+            verbosity_flag,  # Quiet for fast mode, verbose otherwise
             "--tb=short",  # Short traceback format
             "--strict-markers",  # Strict marker checking
             "--durations=10",  # Show 10 slowest tests
@@ -209,6 +211,7 @@ def main(test_mode: str = "unit", fast_only: bool = False, timed: bool = False) 
     # Prepare environment variables
     env = os.environ.copy()
     env["AGENCY_NESTED_TEST"] = "1"
+    env["PYTHONUNBUFFERED"] = "1"  # Disable output buffering for immediate feedback
 
     # Add marker selection based on test mode
     if test_mode == "unit":
@@ -241,12 +244,17 @@ def main(test_mode: str = "unit", fast_only: bool = False, timed: bool = False) 
         # Allow override from environment for CI environments
         default_timeout = 600  # 10 minutes for all test modes
         timeout_seconds = int(os.environ.get("AGENCY_TEST_TIMEOUT_OVERRIDE", str(default_timeout)))
+
+        # Debug: Print the exact command being run
+        print(f"🔍 Running command: {' '.join(pytest_args)}\n")
+
         result = subprocess.run(
             pytest_args,
             check=False,
             env=env,
             timeout=timeout_seconds,
-            start_new_session=True,  # Create process group for clean shutdown
+            # Remove start_new_session to allow proper stdout/stderr inheritance
+            # This was causing the subprocess to appear hung
         )
 
         # Calculate execution time
@@ -337,7 +345,8 @@ def run_specific_test(test_name: str, timed: bool = False) -> int:
         # Add timeout for safety (5 minutes for specific tests)
         t0 = time.time()
         result = subprocess.run(
-            pytest_args, check=False, env=env, timeout=300, start_new_session=True
+            pytest_args, check=False, env=env, timeout=300
+            # Removed start_new_session to allow proper stdout/stderr inheritance
         )
         duration = time.time() - t0
 

@@ -59,6 +59,13 @@ class MemoryRecord(BaseModel):
         None, description="Vector embedding for semantic search"
     )
 
+    @field_validator("content", mode="before")
+    def validate_json_compatible(cls, v: JSONValue) -> JSONValue:
+        """Ensure content is JSON-compatible (not sets, custom objects, etc)."""
+        if isinstance(v, set):
+            raise TypeError("Content must be JSON-compatible. Sets are not allowed.")
+        return v
+
     @field_validator("tags")
     def validate_tags(cls, v: list[str]) -> list[str]:
         """Ensure tags are unique and non-empty while preserving order."""
