@@ -90,7 +90,7 @@ class SelfHealingCore:
         # 3. Emit telemetry
         self._emit_event(
             "errors_detected",
-            {"count": len(findings), "types": list(set(f.error_type for f in findings))},
+            {"count": len(findings), "types": {f.error_type for f in findings}},
         )
 
         return findings
@@ -457,7 +457,7 @@ class SelfHealingCore:
             match = re.search(r"(\w+)\.(\w+)", problematic_line)
             if match:
                 var_name = match.group(1)
-                attribute = match.group(2)
+                _attribute = match.group(2)
 
                 # Generate null-check fix
                 indent = len(problematic_line) - len(problematic_line.lstrip())

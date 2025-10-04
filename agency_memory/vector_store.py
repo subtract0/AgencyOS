@@ -92,10 +92,10 @@ class VectorStore:
             self._embedding_function = embed_texts
             logger.info(f"Initialized sentence-transformers with model: {model_name}")
 
-        except ImportError:
+        except ImportError as e:
             raise ImportError(
                 "sentence-transformers not available. Install with: pip install sentence-transformers"
-            )
+            ) from e
 
     def _init_openai_embeddings(self) -> None:
         """Initialize OpenAI embeddings."""
@@ -121,8 +121,8 @@ class VectorStore:
             self._embedding_function = embed_texts
             logger.info("Initialized OpenAI embeddings")
 
-        except ImportError:
-            raise ImportError("openai not available. Install with: pip install openai")
+        except ImportError as e:
+            raise ImportError("openai not available. Install with: pip install openai") from e
 
     def add_memory(self, memory_key: str, memory_content: dict[str, JSONValue]) -> None:
         """
@@ -377,7 +377,7 @@ class VectorStore:
             return 0.0
 
         # Calculate dot product
-        dot_product = sum(a * b for a, b in zip(vec1, vec2))
+        dot_product = sum(a * b for a, b in zip(vec1, vec2, strict=False))
 
         # Calculate magnitudes
         magnitude1 = sum(a * a for a in vec1) ** 0.5
