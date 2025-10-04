@@ -17,11 +17,11 @@ Constitutional Reference:
 import sys
 from pathlib import Path
 
+from quality_enforcer_agent.quality_enforcer_agent import ValidatorTool
+
 # Add project root to path
 project_root = Path(__file__).parent
 sys.path.insert(0, str(project_root))
-
-from quality_enforcer_agent.quality_enforcer_agent import ValidatorTool
 
 
 def demo_successful_verification():
@@ -92,7 +92,7 @@ def test_article_ii_enforcement():
 
         try:
             # This SHOULD raise RuntimeError
-            result = validator.run()
+            _result = validator.run()
 
             print("❌ ERROR: ValidatorTool did NOT raise exception!")
             print("   This is a CONSTITUTIONAL VIOLATION")

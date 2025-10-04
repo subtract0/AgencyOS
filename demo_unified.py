@@ -150,7 +150,7 @@ def demo_error_detection_and_fix():
         # Emit telemetry about detection
         emit(
             "errors_detected",
-            {"count": len(findings), "types": list(set(f.error_type for f in findings))},
+            {"count": len(findings), "types": {f.error_type for f in findings}},
         )
     else:
         print("ℹ️  No errors detected")

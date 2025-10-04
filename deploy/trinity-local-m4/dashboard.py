@@ -4,21 +4,20 @@ Trinity Local M4 - Visual Dashboard
 Real-time TUI for monitoring autonomous 3-LLM loop
 """
 
-import os
 import json
+import os
 import time
-from pathlib import Path
-from datetime import datetime, timedelta
 from collections import deque
-from typing import Optional
+from datetime import datetime
+from pathlib import Path
 
+from rich import box
 from rich.console import Console
 from rich.layout import Layout
+from rich.live import Live
 from rich.panel import Panel
 from rich.table import Table
-from rich.live import Live
 from rich.text import Text
-from rich import box
 
 console = Console()
 
@@ -129,7 +128,7 @@ class TrinityDashboard:
         header_text.append(f"[{status}]", style="bold green" if self.state.is_running() else "bold red")
         header_text.append(f"\n⏱️  Uptime: {uptime}  |  ", style="white")
         header_text.append(f"💾 Memory: {memory}  |  ", style="white")
-        header_text.append(f"🔧 Models: 3/3", style="white")
+        header_text.append("🔧 Models: 3/3", style="white")
 
         return Panel(header_text, box=box.DOUBLE, border_style="cyan")
 

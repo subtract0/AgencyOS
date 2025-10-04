@@ -106,13 +106,13 @@ class Grep(BaseTool):  # type: ignore[misc]
                     cmd.append("-n")
 
                 # Add context lines
-                if getattr(self, "C", None):
-                    cmd.extend(["-C", str(getattr(self, "C"))])
-                elif getattr(self, "A", None) or getattr(self, "B", None):
-                    if getattr(self, "A", None):
-                        cmd.extend(["-A", str(getattr(self, "A"))])
-                    if getattr(self, "B", None):
-                        cmd.extend(["-B", str(getattr(self, "B"))])
+                if self.C:
+                    cmd.extend(["-C", str(self.C)])
+                elif self.A or self.B:
+                    if self.A:
+                        cmd.extend(["-A", str(self.A)])
+                    if self.B:
+                        cmd.extend(["-B", str(self.B)])
 
             # Add pattern
             cmd.append(self.pattern)

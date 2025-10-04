@@ -1,38 +1,104 @@
+#!/usr/bin/env python
+"""Agency OS orchestration and CLI entry point."""
+
+# Standard library imports
+import argparse
+import json as _json
+import logging
 import os
+import runpy
+import subprocess
+import sys
 import time
 from contextlib import contextmanager
+from datetime import UTC, datetime
+from typing import cast
 
-from shared.type_definitions.json import JSONValue
-from shared.utils import silence_warnings_and_logs
-
-silence_warnings_and_logs()
-try:
-    from dspy_agents.config import DSPY_AVAILABLE, DSPyConfig
-
-    if DSPY_AVAILABLE:
-        if DSPyConfig.initialize():
-            import logging
-
-            logger = logging.getLogger(__name__)
-            logger.info("DSPy configuration initialized for Agency agents")
-except ImportError:
-    pass
-from datetime import UTC
-
+# Third-party imports
 import litellm
 from agency_swarm import Agency
 from agency_swarm.tools import SendMessageHandoff
 from dotenv import load_dotenv
 
+# Agency imports - specialized agents
+from agency_code_agent.agency_code_agent import create_agency_code_agent
+
+# Agency imports - memory subsystem
+from agency_memory import (
+    Memory,
+    create_enhanced_memory_store,
+    create_firestore_store,
+)
+from auditor_agent import create_auditor_agent
+from chief_architect_agent import create_chief_architect_agent
+from learning_agent import create_learning_agent
+from merger_agent.merger_agent import create_merger_agent
+from planner_agent.planner_agent import create_planner_agent
+from quality_enforcer_agent import create_quality_enforcer_agent
+
+# Agency imports - shared infrastructure
+from shared.agent_context import create_agent_context
+from shared.cost_tracker import CostTracker, SQLiteStorage
+from shared.llm_cost_wrapper import wrap_openai_client
+from shared.model_policy import agent_model
+from shared.type_definitions.json import JSONValue
+from shared.utils import silence_warnings_and_logs
+from test_generator_agent import create_test_generator_agent
+from toolsmith_agent import create_toolsmith_agent
+from work_completion_summary_agent import create_work_completion_summary_agent
+
+# Optional imports - conditional on environment/config
+try:
+    from dspy_agents.config import DSPY_AVAILABLE, DSPyConfig
+except ImportError:
+    DSPY_AVAILABLE = False
+    DSPyConfig = None
+
 try:
     from tools.orchestrator.scheduler import _telemetry_emit as _tel_emit
 except Exception:
+    _tel_emit = None  # Fallback defined below
+
+try:
+    from tools.telemetry.aggregator import aggregate, list_events
+except Exception:
+    aggregate = None
+    list_events = None
+
+# Trinity protocol imports (used in cost commands)
+try:
+    from trinity_protocol.cost_alerts import (
+        AlertConfig,
+        CostAlertSystem,
+        run_continuous_monitoring,
+    )
+    from trinity_protocol.cost_dashboard import CostDashboard
+    from trinity_protocol.cost_dashboard_web import CostDashboardWeb
+except ImportError:
+    CostDashboard = None
+    CostDashboardWeb = None
+    AlertConfig = None
+    CostAlertSystem = None
+    run_continuous_monitoring = None
+
+# Kanban UI server
+try:
+    from tools.kanban.server import run_server
+except ImportError:
+    run_server = None
+
+# Initialize silence and DSPy configuration
+silence_warnings_and_logs()
+if DSPY_AVAILABLE and DSPyConfig:
+    if DSPyConfig.initialize():
+        logger = logging.getLogger(__name__)
+        logger.info("DSPy configuration initialized for Agency agents")
+
+# Fallback telemetry emit function if import failed
+if _tel_emit is None:
 
     def _tel_emit(event: dict) -> None:
         try:
-            import json as _json
-            from datetime import datetime
-
             base = os.path.join(os.getcwd(), "logs", "telemetry")
             os.makedirs(base, exist_ok=True)
             ts = datetime.now(UTC)
@@ -42,13 +108,9 @@ except Exception:
             with open(fname, "a", encoding="utf-8") as f:
                 f.write(_json.dumps(event) + "\n")
         except OSError as e:
-            import logging
-
             logger = logging.getLogger(__name__)
             logger.error(f"Failed to write telemetry event to {fname}: {e}")
         except (TypeError, ValueError) as e:
-            import logging
-
             logger = logging.getLogger(__name__)
             logger.warning(f"Invalid event data format: {e}")
 
@@ -68,8 +130,6 @@ def _cli_event_scope(
             }
         )
     except Exception as e:
-        import logging
-
         logger = logging.getLogger(__name__)
         logger.warning(f"Failed to emit CLI command start event: {e}")
     try:
@@ -86,8 +146,6 @@ def _cli_event_scope(
                 }
             )
         except Exception as e:
-            import logging
-
             logger = logging.getLogger(__name__)
             logger.warning(f"Failed to emit CLI command success event: {e}")
     except Exception as e:
@@ -104,30 +162,12 @@ def _cli_event_scope(
                 }
             )
         except Exception as nested_e:
-            import logging
-
             logger = logging.getLogger(__name__)
             logger.error(f"Failed to emit CLI command failure event: {nested_e}")
         raise
 
 
-from agency_code_agent.agency_code_agent import create_agency_code_agent
-from agency_memory import (
-    Memory,
-    create_enhanced_memory_store,
-    create_firestore_store,
-)
-from auditor_agent import create_auditor_agent
-from chief_architect_agent import create_chief_architect_agent
-from learning_agent import create_learning_agent
-from merger_agent.merger_agent import create_merger_agent
-from planner_agent.planner_agent import create_planner_agent
-from quality_enforcer_agent import create_quality_enforcer_agent
-from shared.agent_context import create_agent_context
-from test_generator_agent import create_test_generator_agent
-from toolsmith_agent import create_toolsmith_agent
-from work_completion_summary_agent import create_work_completion_summary_agent
-
+# Initialize environment and configuration
 load_dotenv()
 current_dir = os.path.dirname(os.path.abspath(__file__))
 litellm.modify_params = True
@@ -138,8 +178,6 @@ if use_firestore:
     firestore_store = create_firestore_store()
     enhanced_store = create_enhanced_memory_store(embedding_provider="sentence-transformers")
     shared_memory = Memory(store=firestore_store)
-    import logging
-
     logger = logging.getLogger(__name__)
     logger.info(
         "🔥 Firestore + VectorStore enabled: Production persistence with semantic search (Article IV compliant)"
@@ -147,17 +185,12 @@ if use_firestore:
 else:
     enhanced_store = create_enhanced_memory_store(embedding_provider="sentence-transformers")
     shared_memory = Memory(store=enhanced_store)
-    import logging
-
     logger = logging.getLogger(__name__)
     logger.info("💾 In-memory + VectorStore: Development mode (Article IV compliant)")
 shared_context = create_agent_context(memory=shared_memory)
 cost_tracker_enabled = os.getenv("ENABLE_COST_TRACKING", "true").lower() == "true"
 cost_budget = float(os.getenv("COST_BUDGET_USD", "100.0"))
 if cost_tracker_enabled:
-    from shared.cost_tracker import CostTracker, SQLiteStorage
-    from shared.llm_cost_wrapper import wrap_openai_client
-
     storage = SQLiteStorage(os.path.join(current_dir, "trinity_costs.db"))
     shared_cost_tracker = CostTracker(storage=storage)
     shared_cost_tracker.set_budget(limit_usd=cost_budget, alert_threshold_pct=80.0)
@@ -167,7 +200,6 @@ if cost_tracker_enabled:
     logger.info(f"💰 Cost tracking enabled: budget=${cost_budget:.2f} USD, db=trinity_costs.db")
 else:
     shared_cost_tracker = None
-from shared.model_policy import agent_model
 
 planner = create_planner_agent(
     model=agent_model("planner"), reasoning_effort="high", agent_context=shared_context
@@ -233,17 +265,6 @@ agency = Agency(
     ],
     shared_instructions="./project-overview.md",
 )
-import argparse
-import sys
-from typing import cast
-
-from shared.type_definitions.json import JSONValue
-
-try:
-    from tools.telemetry.aggregator import aggregate, list_events
-except Exception:
-    aggregate = None
-    list_events = None
 
 
 def _render_dashboard_text(summary: dict[str, JSONValue]) -> None:
@@ -306,8 +327,6 @@ def _cmd_dashboard(args: argparse.Namespace) -> None:
             sys.exit(1)
         summary = aggregate(since=args.since)
         if args.format == "json":
-            import json as _json
-
             print(_json.dumps(summary, indent=2))
             return
         _render_dashboard_text(cast(dict[str, JSONValue], summary))
@@ -322,8 +341,6 @@ def _cmd_tail(args: argparse.Namespace) -> None:
             sys.exit(1)
         events = list_events(since=args.since, grep=args.grep, limit=args.limit)
         if args.format == "json":
-            import json as _json
-
             print(_json.dumps(events, indent=2))
             return
         if not events:
@@ -347,8 +364,6 @@ def _list_recent_files(directory: str, description: str, limit: int = 5) -> None
         description: Description for output header
         limit: Maximum number of files to show
     """
-    import os
-
     print(f"\n{description}:" if not description.startswith("Recent") else f"{description}:")
     if os.path.isdir(directory):
         try:
@@ -371,8 +386,6 @@ def _list_recent_files(directory: str, description: str, limit: int = 5) -> None
 def _cmd_logs(args: argparse.Namespace) -> None:
     """Show recent logs from various subsystems."""
     with _cli_event_scope("logs", {}):
-        import os
-
         base = os.path.join(current_dir, "logs")
         _list_recent_files(os.path.join(base, "sessions"), "Recent Session Logs", 5)
         _list_recent_files(os.path.join(base, "autonomous_healing"), "Autonomous Healing Logs", 5)
@@ -380,8 +393,6 @@ def _cmd_logs(args: argparse.Namespace) -> None:
 
 
 def _cmd_demo(args: argparse.Namespace) -> None:
-    import runpy
-
     with _cli_event_scope("demo", {}):
         demo_unified = os.path.join(current_dir, "demo_unified.py")
         if os.path.exists(demo_unified):
@@ -391,8 +402,6 @@ def _cmd_demo(args: argparse.Namespace) -> None:
 
 
 def _cmd_test(args: argparse.Namespace) -> None:
-    import subprocess
-
     with _cli_event_scope("test", {}):
         cmd = [sys.executable, os.path.join(current_dir, "run_tests.py")]
         subprocess.run(cmd, check=False)
@@ -400,14 +409,12 @@ def _cmd_test(args: argparse.Namespace) -> None:
 
 def _check_test_status() -> None:
     """Check test execution status."""
-    import subprocess
 
     print("  Test Status:")
     try:
         result = subprocess.run(
             [sys.executable, "-m", "pytest", "tests/test_memory_api.py", "-q"],
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE,
+            capture_output=True,
             text=True,
             timeout=25,
         )
@@ -452,8 +459,6 @@ def _check_healing_tools_status() -> None:
 
 def _check_recent_activity() -> None:
     """Check recent autonomous healing activity."""
-    import time
-
     print("  Recent Activity:")
     try:
         logs_dir = os.path.join(current_dir, "logs", "autonomous_healing")
@@ -488,12 +493,13 @@ def _cmd_health(args: argparse.Namespace) -> None:
 
 
 def _cmd_kanban(args: argparse.Namespace) -> None:
-    from tools.kanban.server import run_server
-
     enabled = os.getenv("ENABLE_KANBAN_UI", "false").lower() == "true"
     with _cli_event_scope("kanban", {"enabled": enabled}):
         if not enabled:
             print("ENABLE_KANBAN_UI=false; set it to 'true' to enable the Kanban UI.")
+            return
+        if run_server is None:
+            print("❌ Kanban UI not available: tools.kanban.server not importable")
             return
         run_server()
 
@@ -501,10 +507,9 @@ def _cmd_kanban(args: argparse.Namespace) -> None:
 def _cmd_cost_dashboard(args: argparse.Namespace) -> None:
     """Launch CLI cost monitoring dashboard."""
     with _cli_event_scope("cost_dashboard", {"live": args.live}):
-        from trinity_protocol.cost_dashboard import CostDashboard
-
-        from shared.cost_tracker import CostTracker
-
+        if CostDashboard is None:
+            print("❌ Cost dashboard not available: trinity_protocol.cost_dashboard not importable")
+            return
         tracker = CostTracker(db_path=args.db, budget_usd=args.budget)
         dashboard = CostDashboard(
             cost_tracker=tracker,
@@ -513,8 +518,6 @@ def _cmd_cost_dashboard(args: argparse.Namespace) -> None:
         )
         if args.live:
             print("Starting live cost dashboard... (Press Q to quit)")
-            import time
-
             time.sleep(1)
             dashboard.run_terminal_dashboard()
         else:
@@ -524,10 +527,9 @@ def _cmd_cost_dashboard(args: argparse.Namespace) -> None:
 def _cmd_cost_web(args: argparse.Namespace) -> None:
     """Launch web-based cost monitoring dashboard."""
     with _cli_event_scope("cost_web", {"port": args.port}):
-        from trinity_protocol.cost_dashboard_web import CostDashboardWeb
-
-        from shared.cost_tracker import CostTracker
-
+        if CostDashboardWeb is None:
+            print("❌ Web dashboard not available: trinity_protocol.cost_dashboard_web not importable")
+            return
         tracker = CostTracker(db_path=args.db, budget_usd=args.budget)
         dashboard = CostDashboardWeb(cost_tracker=tracker, refresh_interval=args.interval)
         dashboard.run(host=args.host, port=args.port, debug=args.debug)
@@ -536,17 +538,15 @@ def _cmd_cost_web(args: argparse.Namespace) -> None:
 def _cmd_cost_alerts(args: argparse.Namespace) -> None:
     """Check cost alerts or run continuous monitoring."""
     with _cli_event_scope("cost_alerts", {"continuous": args.continuous}):
-        from trinity_protocol.cost_alerts import (
-            AlertConfig,
-            CostAlertSystem,
-            run_continuous_monitoring,
-        )
-
-        from shared.cost_tracker import CostTracker
-
+        if AlertConfig is None or CostAlertSystem is None:
+            print("❌ Cost alerts not available: trinity_protocol.cost_alerts not importable")
+            return
         tracker = CostTracker(db_path=args.db, budget_usd=args.budget)
         config = AlertConfig(hourly_rate_max=args.hourly_max, daily_budget_max=args.daily_max)
         if args.continuous:
+            if run_continuous_monitoring is None:
+                print("❌ Continuous monitoring not available")
+                return
             run_continuous_monitoring(tracker, config, args.interval)
         else:
             alert_system = CostAlertSystem(tracker, config)

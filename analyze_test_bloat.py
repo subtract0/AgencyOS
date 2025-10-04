@@ -114,7 +114,7 @@ class TestAnalyzer:
             return True, "Old/legacy/deprecated in name"
 
         # Check if tested code exists
-        potential_code_paths = [
+        _potential_code_paths = [
             self.root_dir / name.replace("test_", "").replace("_test", "") / "__init__.py",
             self.root_dir / f"{name.replace('test_', '')}.py",
         ]

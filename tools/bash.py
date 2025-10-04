@@ -75,7 +75,7 @@ def cleanup_expired_locks():
                 try:
                     lock.release()
                     expired_keys.append(path)
-                except:
+                except Exception:
                     pass
 
     for key in expired_keys:
@@ -306,7 +306,7 @@ class Bash(BaseTool):  # type: ignore[misc]
         try:
             tokens = shlex.split(v)
         except ValueError as e:
-            raise ValueError(f"Command parsing failed: {e}")
+            raise ValueError(f"Command parsing failed: {e}") from e
 
         if not tokens:
             raise ValueError("No valid command tokens found")
@@ -401,7 +401,7 @@ class Bash(BaseTool):  # type: ignore[misc]
         try:
             tokens = shlex.split(command)
         except ValueError as e:
-            raise CommandValidationError(f"Command parsing failed: {e}")
+            raise CommandValidationError(f"Command parsing failed: {e}") from e
 
         if not tokens:
             raise CommandValidationError("No valid command tokens found")
@@ -473,7 +473,7 @@ class Bash(BaseTool):  # type: ignore[misc]
                     if i > 0 and tokens[i - 1] in [">", ">>", "tee", "cp", "mv", "rm", "rmdir"]:
                         raise CommandValidationError(
                             f"Write/delete operation to system directory not allowed: {token}"
-                        )
+                        ) from None
 
     def _validate_injection_patterns(self, command: str) -> None:
         """
@@ -485,7 +485,7 @@ class Bash(BaseTool):  # type: ignore[misc]
         try:
             self._validate_injection_patterns_static(command)
         except ValueError as e:
-            raise CommandValidationError(str(e))
+            raise CommandValidationError(str(e)) from e
 
     def run(self):
         """Execute the bash command with security validation."""

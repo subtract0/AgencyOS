@@ -175,7 +175,7 @@ class SwarmMemoryStore(MemoryStore):
                 if isinstance(priority_val, (int, float)) and priority_val >= min_priority.value:
                     tags_value = memory.get("tags", [])
                     if isinstance(tags_value, list):
-                        memory_tags = set(str(tag) for tag in tags_value if isinstance(tag, str))
+                        memory_tags = {str(tag) for tag in tags_value if isinstance(tag, str)}
                     else:
                         memory_tags = set()
                     if tag_set.intersection(memory_tags):
@@ -199,7 +199,7 @@ class SwarmMemoryStore(MemoryStore):
                 ):
                     tags_value = shared_memory.get("tags", [])
                     if isinstance(tags_value, list):
-                        memory_tags = set(str(tag) for tag in tags_value if isinstance(tag, str))
+                        memory_tags = {str(tag) for tag in tags_value if isinstance(tag, str)}
                     else:
                         memory_tags = set()
                     if tag_set.intersection(memory_tags):

@@ -4,26 +4,22 @@ Simplifies imports and provides a clean API for autonomous agents.
 """
 
 import os
-from typing import Dict, List, Optional, Union
+from typing import Optional
 
+from pattern_intelligence import CodingPattern, PatternStore
+from shared.models.core import (
+    ErrorDetectionResult,
+    HealthStatus,
+    ToolCall,
+)
 from shared.type_definitions.json import JSONValue
+
+from .self_healing import Finding, Patch, SelfHealingCore
+from .telemetry import SimpleTelemetry, emit, get_telemetry
 
 # Feature flags
 ENABLE_UNIFIED_CORE = os.getenv("ENABLE_UNIFIED_CORE", "true").lower() == "true"
 PERSIST_PATTERNS = os.getenv("PERSIST_PATTERNS", "false").lower() == "true"
-
-# Core imports
-from pattern_intelligence import CodingPattern, PatternStore
-from shared.models.core import (
-    ErrorDetectionResult,
-    HealingAttempt,
-    HealthStatus,
-    TelemetryEvent,
-    ToolCall,
-)
-
-from .self_healing import Finding, Patch, SelfHealingCore
-from .telemetry import SimpleTelemetry, emit, get_telemetry
 
 # Learning loop imports (conditionally imported to avoid circular dependencies)
 try:

@@ -61,9 +61,13 @@ def check_env_file() -> tuple[bool, str]:
 def check_dependencies() -> tuple[bool, str]:
     """Check if key dependencies are installed"""
     try:
-        import agency_swarm
-        import pytest
-        import ruff
+        import importlib.util
+
+        # Check key dependencies without importing
+        required = ["agency_swarm", "pytest", "ruff"]
+        for dep in required:
+            if importlib.util.find_spec(dep) is None:
+                return False, f"Missing dependency: {dep}"
 
         return True, "Core dependencies installed"
     except ImportError as e:

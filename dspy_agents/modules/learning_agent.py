@@ -259,7 +259,7 @@ class DSPyLearningAgent(dspy.Module if DSPY_AVAILABLE else object):
                 message=f"Extracted {len(patterns)} patterns and consolidated {len(learnings)} learnings",
                 details={
                     "pattern_types": [p["pattern_type"] for p in patterns],
-                    "learning_titles": [l["title"] for l in learnings],
+                    "learning_titles": [learning["title"] for learning in learnings],
                     "storage_ids": storage_result.storage_ids,
                 },
             )
@@ -414,7 +414,7 @@ class DSPyLearningAgent(dspy.Module if DSPY_AVAILABLE else object):
                         if isinstance(p, dict):
                             try:
                                 patterns_to_add.append(ExtractedPattern(**p))
-                            except:
+                            except Exception:
                                 pass
                     existing.patterns.extend(patterns_to_add)
                     existing.confidence = (
@@ -432,7 +432,7 @@ class DSPyLearningAgent(dspy.Module if DSPY_AVAILABLE else object):
                     if isinstance(p, dict):
                         try:
                             patterns_list.append(ExtractedPattern(**p))
-                        except:
+                        except Exception:
                             pass
 
                 learning = ConsolidatedLearning(
@@ -575,7 +575,7 @@ class DSPyLearningAgent(dspy.Module if DSPY_AVAILABLE else object):
         }
 
         # Include recent learnings
-        for category, learnings in self.knowledge_base.items():
+        for _category, learnings in self.knowledge_base.items():
             for learning in learnings[-context.historical_limit :]:
                 knowledge["learnings"].append(learning.model_dump())
 
@@ -659,7 +659,7 @@ class DSPyLearningAgent(dspy.Module if DSPY_AVAILABLE else object):
             },
             "pattern_history_size": len(self.pattern_history),
             "avg_confidence": sum(
-                l.confidence for learnings in self.knowledge_base.values() for l in learnings
+                learning.confidence for learnings in self.knowledge_base.values() for learning in learnings
             )
             / max(1, sum(len(learnings) for learnings in self.knowledge_base.values())),
         }
