@@ -28,18 +28,17 @@ from dataclasses import dataclass
 from datetime import datetime
 from enum import Enum
 from pathlib import Path
-from typing import Any, Dict, List, Optional
-from shared.type_definitions import JSONValue
-
-from shared.agent_context import AgentContext
-from shared.cost_tracker import CostTracker, ModelTier
-from shared.model_policy import agent_model
-from shared.message_bus import MessageBus
+from typing import Any
 
 # Import Agency sub-agent factories
 from agency_code_agent import create_agency_code_agent
 from merger_agent import create_merger_agent
 from quality_enforcer_agent import create_quality_enforcer_agent
+from shared.agent_context import AgentContext
+from shared.cost_tracker import CostTracker, ModelTier
+from shared.message_bus import MessageBus
+from shared.model_policy import agent_model
+from shared.type_definitions import JSONValue
 from test_generator_agent import create_test_generator_agent
 from toolsmith_agent import create_toolsmith_agent
 from work_completion_summary_agent import create_work_completion_summary_agent
@@ -67,7 +66,7 @@ class SubAgentResult:
     summary: str
     duration_seconds: float
     cost_usd: float = 0.0
-    error: Optional[str] = None
+    error: str | None = None
 
 
 @dataclass
@@ -76,8 +75,8 @@ class ExecutionPlan:
 
     task_id: str
     correlation_id: str
-    sub_agents: List[JSONValue]
-    parallel_groups: List[List[str]]
+    sub_agents: list[JSONValue]
+    parallel_groups: list[list[str]]
     verification_command: str = "python run_tests.py --run-all"
 
 
@@ -155,7 +154,7 @@ class ExecutorAgent:
         self.plans_dir.mkdir(parents=True, exist_ok=True)
         self.sub_agents = self._initialize_sub_agents()
 
-    def _initialize_sub_agents(self) -> Dict[SubAgentType, Any]:
+    def _initialize_sub_agents(self) -> dict[SubAgentType, Any]:
         """Initialize all sub-agents with cost tracking."""
         return {
             SubAgentType.CODE_WRITER: create_agency_code_agent(
@@ -254,10 +253,13 @@ class ExecutorAgent:
         task_id = task.get("task_id", str(uuid.uuid4()))
         task_type = task.get("task_type", "code_generation")
 
-        config = TASK_TYPE_AGENTS.get(task_type, {
-            "agents": [SubAgentType.CODE_WRITER, SubAgentType.TEST_ARCHITECT],
-            "parallel": [[SubAgentType.CODE_WRITER.value, SubAgentType.TEST_ARCHITECT.value]],
-        })
+        config = TASK_TYPE_AGENTS.get(
+            task_type,
+            {
+                "agents": [SubAgentType.CODE_WRITER, SubAgentType.TEST_ARCHITECT],
+                "parallel": [[SubAgentType.CODE_WRITER.value, SubAgentType.TEST_ARCHITECT.value]],
+            },
+        )
 
         return ExecutionPlan(
             task_id=task_id,
@@ -270,8 +272,15 @@ class ExecutorAgent:
         """Step 3: Write execution plan to observable file."""
         plan_path = self.plans_dir / f"{plan.task_id}_plan.md"
 
-        agents_list = "\n".join([f"{i}. **{a['type']}** - {a['spec'].get('details', 'N/A')}" for i, a in enumerate(plan.sub_agents, 1)])
-        groups_list = "\n".join([f"{i}. {', '.join(g)}" for i, g in enumerate(plan.parallel_groups, 1)])
+        agents_list = "\n".join(
+            [
+                f"{i}. **{a['type']}** - {a['spec'].get('details', 'N/A')}"
+                for i, a in enumerate(plan.sub_agents, 1)
+            ]
+        )
+        groups_list = "\n".join(
+            [f"{i}. {', '.join(g)}" for i, g in enumerate(plan.parallel_groups, 1)]
+        )
 
         content = f"""# Execution Plan: {plan.task_id}
 
@@ -294,13 +303,16 @@ Timeout: {self.verification_timeout}s
         plan_path.write_text(content)
         return str(plan_path)
 
-    async def _orchestrate_parallel(self, plan: ExecutionPlan) -> List[SubAgentResult]:
+    async def _orchestrate_parallel(self, plan: ExecutionPlan) -> list[SubAgentResult]:
         """Step 4: Orchestrate parallel sub-agent execution."""
         all_results = []
 
         for group in plan.parallel_groups:
-            tasks = [self._execute_sub_agent(name, plan.sub_agents, plan.task_id, plan.correlation_id)
-                    for name in group if self._find_agent_spec(name, plan.sub_agents)]
+            tasks = [
+                self._execute_sub_agent(name, plan.sub_agents, plan.task_id, plan.correlation_id)
+                for name in group
+                if self._find_agent_spec(name, plan.sub_agents)
+            ]
 
             if tasks:
                 results = await asyncio.gather(*tasks, return_exceptions=True)
@@ -311,12 +323,12 @@ Timeout: {self.verification_timeout}s
 
         return all_results
 
-    def _find_agent_spec(self, agent_name: str, sub_agents: List[JSONValue]) -> Optional[JSONValue]:
+    def _find_agent_spec(self, agent_name: str, sub_agents: list[JSONValue]) -> JSONValue | None:
         """Find agent spec by name."""
         return next((a for a in sub_agents if a["type"] == agent_name), None)
 
     async def _execute_sub_agent(
-        self, agent_name: str, sub_agents: List[JSONValue], task_id: str, correlation_id: str
+        self, agent_name: str, sub_agents: list[JSONValue], task_id: str, correlation_id: str
     ) -> SubAgentResult:
         """Execute a single sub-agent with real Agency agent."""
         start_time = datetime.now()
@@ -333,14 +345,36 @@ Timeout: {self.verification_timeout}s
         try:
             response = await self._run_agent_async(agent, agent_name, agent_spec["spec"])
             duration = (datetime.now() - start_time).total_seconds()
-            cost = self._track_cost(agent_name, agent_type, duration, task_id, correlation_id, success=True, response=response)
+            cost = self._track_cost(
+                agent_name,
+                agent_type,
+                duration,
+                task_id,
+                correlation_id,
+                success=True,
+                response=response,
+            )
 
-            return SubAgentResult(agent=agent_name, status="success", summary=response[:200], duration_seconds=duration, cost_usd=cost)
+            return SubAgentResult(
+                agent=agent_name,
+                status="success",
+                summary=response[:200],
+                duration_seconds=duration,
+                cost_usd=cost,
+            )
 
         except Exception as e:
             duration = (datetime.now() - start_time).total_seconds()
-            self._track_cost(agent_name, agent_type, duration, task_id, correlation_id, success=False)
-            return SubAgentResult(agent=agent_name, status="failure", summary=f"Agent execution failed: {str(e)}", duration_seconds=duration, error=str(e))
+            self._track_cost(
+                agent_name, agent_type, duration, task_id, correlation_id, success=False
+            )
+            return SubAgentResult(
+                agent=agent_name,
+                status="failure",
+                summary=f"Agent execution failed: {str(e)}",
+                duration_seconds=duration,
+                error=str(e),
+            )
 
     async def _run_agent_async(self, agent: Any, agent_name: str, spec: JSONValue) -> str:
         """Run agent in thread pool (Agency Swarm agents are synchronous)."""
@@ -373,10 +407,23 @@ Timeout: {self.verification_timeout}s
 
         return "\n\n".join(parts) if parts else json.dumps(spec, indent=2)
 
-    def _track_cost(self, agent_name: str, agent_type: SubAgentType, duration: float, task_id: str, correlation_id: str, success: bool = True, response: str = "") -> float:
+    def _track_cost(
+        self,
+        agent_name: str,
+        agent_type: SubAgentType,
+        duration: float,
+        task_id: str,
+        correlation_id: str,
+        success: bool = True,
+        response: str = "",
+    ) -> float:
         """Track agent execution cost (success or failure)."""
         tokens = len(response) // 4 if success else 0
-        tier = ModelTier.CLOUD_MINI if agent_type == SubAgentType.TASK_SUMMARIZER else ModelTier.CLOUD_STANDARD
+        tier = (
+            ModelTier.CLOUD_MINI
+            if agent_type == SubAgentType.TASK_SUMMARIZER
+            else ModelTier.CLOUD_STANDARD
+        )
 
         call = self.cost_tracker.track_call(
             agent=agent_name,
@@ -391,7 +438,9 @@ Timeout: {self.verification_timeout}s
         )
         return call.cost_usd if success else 0.0
 
-    async def _delegate_merge(self, sub_agent_results: List[SubAgentResult], task_id: str) -> SubAgentResult:
+    async def _delegate_merge(
+        self, sub_agent_results: list[SubAgentResult], task_id: str
+    ) -> SubAgentResult:
         """Step 6: Delegate to ReleaseManager for integration and commit."""
         if not self.sub_agents.get(SubAgentType.RELEASE_MANAGER):
             raise RuntimeError("MergerAgent not initialized")
@@ -401,21 +450,36 @@ Timeout: {self.verification_timeout}s
                 "goal": "Integrate changes from sub-agents",
                 "details": f"Merge results from {len(sub_agent_results)} sub-agents",
                 "task_id": task_id,
-                "sub_agent_results": [{"agent": r.agent, "status": r.status, "summary": r.summary} for r in sub_agent_results],
+                "sub_agent_results": [
+                    {"agent": r.agent, "status": r.status, "summary": r.summary}
+                    for r in sub_agent_results
+                ],
             }
 
             return await self._execute_sub_agent(
-                SubAgentType.RELEASE_MANAGER.value, [{"type": SubAgentType.RELEASE_MANAGER.value, "spec": merge_spec}], task_id, task_id
+                SubAgentType.RELEASE_MANAGER.value,
+                [{"type": SubAgentType.RELEASE_MANAGER.value, "spec": merge_spec}],
+                task_id,
+                task_id,
             )
 
         except Exception as e:
-            return SubAgentResult(SubAgentType.RELEASE_MANAGER.value, "failure", f"Merge failed: {str(e)}", 0.0, 0.0, str(e))
+            return SubAgentResult(
+                SubAgentType.RELEASE_MANAGER.value,
+                "failure",
+                f"Merge failed: {str(e)}",
+                0.0,
+                0.0,
+                str(e),
+            )
 
     def _run_absolute_verification(self) -> str:
         """Step 7: Run ABSOLUTE verification (Article II: 100% tests pass)."""
         try:
             logger.info("Starting absolute verification (Article II enforcement)")
-            logger.info(f"Running: python run_tests.py --run-all (timeout: {self.verification_timeout}s)")
+            logger.info(
+                f"Running: python run_tests.py --run-all (timeout: {self.verification_timeout}s)"
+            )
 
             result = subprocess.run(
                 ["python", "run_tests.py", "--run-all"],
@@ -426,22 +490,26 @@ Timeout: {self.verification_timeout}s
 
             if result.returncode != 0:
                 logger.error(f"Verification FAILED (exit code: {result.returncode})")
-                raise Exception(f"Verification failed. Test suite not clean.\nSTDOUT:\n{result.stdout}\nSTDERR:\n{result.stderr}")
+                raise Exception(
+                    f"Verification failed. Test suite not clean.\nSTDOUT:\n{result.stdout}\nSTDERR:\n{result.stderr}"
+                )
 
             logger.info("Verification PASSED - All tests successful")
             return result.stdout
 
         except subprocess.TimeoutExpired:
             logger.error(f"Verification TIMEOUT after {self.verification_timeout}s")
-            raise Exception(f"Verification timed out after {self.verification_timeout}s. Test suite must complete within timeout.")
+            raise Exception(
+                f"Verification timed out after {self.verification_timeout}s. Test suite must complete within timeout."
+            )
 
     def _create_report(
         self,
         status: str,
         task_id: str,
-        correlation_id: Optional[str],
+        correlation_id: str | None,
         details: str,
-        sub_agent_results: List[SubAgentResult],
+        sub_agent_results: list[SubAgentResult],
         verification_result: str,
     ) -> JSONValue:
         """Step 8: Create minified JSON telemetry report."""
@@ -451,7 +519,8 @@ Timeout: {self.verification_timeout}s
             "correlation_id": correlation_id,
             "details": details,
             "sub_agent_reports": [
-                {"agent": r.agent, "status": r.status, "summary": r.summary, "cost_usd": r.cost_usd} for r in sub_agent_results
+                {"agent": r.agent, "status": r.status, "summary": r.summary, "cost_usd": r.cost_usd}
+                for r in sub_agent_results
             ],
             "verification_result": verification_result,
             "timestamp": datetime.now().isoformat(),
@@ -460,7 +529,9 @@ Timeout: {self.verification_timeout}s
     async def _handle_task_failure(self, task_id: str, task: JSONValue, error: Exception) -> None:
         """Step 5: Handle task failure by logging and reporting."""
         error_log = self.plans_dir / f"{task_id}_error.log"
-        error_log.write_text(f"Task Failure: {task_id}\n\nTimestamp: {datetime.now().isoformat()}\nError: {str(error)}\nTask: {json.dumps(task, indent=2)}")
+        error_log.write_text(
+            f"Task Failure: {task_id}\n\nTimestamp: {datetime.now().isoformat()}\nError: {str(error)}\nTask: {json.dumps(task, indent=2)}"
+        )
 
         report = self._create_report(
             status="failure",
@@ -471,7 +542,9 @@ Timeout: {self.verification_timeout}s
             verification_result="N/A - Task failure",
         )
 
-        await self.message_bus.publish("telemetry_stream", report, priority=10, correlation_id=task.get("correlation_id"))
+        await self.message_bus.publish(
+            "telemetry_stream", report, priority=10, correlation_id=task.get("correlation_id")
+        )
 
     def _cleanup_workspace(self, task_id: str) -> None:
         """Step 9: Clean workspace for stateless operation."""

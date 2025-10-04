@@ -2,17 +2,17 @@
 Tests for focused NoneType auto-fix functionality.
 """
 
-import os
 import json
-import tempfile
+import os
+from unittest.mock import mock_open, patch
+
 import pytest
-from unittest.mock import patch, mock_open
 
 from tools.auto_fix_nonetype import (
-    NoneTypeErrorDetector,
-    LLMNoneTypeFixer,
     AutoNoneTypeFixer,
-    SimpleNoneTypeMonitor
+    LLMNoneTypeFixer,
+    NoneTypeErrorDetector,
+    SimpleNoneTypeMonitor,
 )
 
 
@@ -81,21 +81,24 @@ class TestLLMNoneTypeFixer:
 
     def test_generates_attribute_fix(self):
         """Should generate appropriate fix for attribute access."""
-        error_info = json.dumps({
-            "status": "errors_detected",
-            "count": 1,
-            "errors": [{
-                "error_type": "NoneType",
-                "pattern": "AttributeError: 'NoneType' object has no attribute 'value'",
-                "file_path": "test.py",
-                "line_number": "10",
-                "attribute": "value"
-            }]
-        })
+        error_info = json.dumps(
+            {
+                "status": "errors_detected",
+                "count": 1,
+                "errors": [
+                    {
+                        "error_type": "NoneType",
+                        "pattern": "AttributeError: 'NoneType' object has no attribute 'value'",
+                        "file_path": "test.py",
+                        "line_number": "10",
+                        "attribute": "value",
+                    }
+                ],
+            }
+        )
 
         fixer = LLMNoneTypeFixer(
-            error_info=error_info,
-            code_context="variable = get_data()\nresult = variable.value"
+            error_info=error_info, code_context="variable = get_data()\nresult = variable.value"
         )
         result = fixer.run()
 
@@ -107,17 +110,21 @@ class TestLLMNoneTypeFixer:
 
     def test_generates_iteration_fix(self):
         """Should generate appropriate fix for iteration errors."""
-        error_info = json.dumps({
-            "status": "errors_detected",
-            "count": 1,
-            "errors": [{
-                "error_type": "NoneType",
-                "pattern": "TypeError: argument of type 'NoneType' is not iterable",
-                "file_path": "test.py",
-                "line_number": "15",
-                "attribute": None
-            }]
-        })
+        error_info = json.dumps(
+            {
+                "status": "errors_detected",
+                "count": 1,
+                "errors": [
+                    {
+                        "error_type": "NoneType",
+                        "pattern": "TypeError: argument of type 'NoneType' is not iterable",
+                        "file_path": "test.py",
+                        "line_number": "15",
+                        "attribute": None,
+                    }
+                ],
+            }
+        )
 
         fixer = LLMNoneTypeFixer(error_info=error_info)
         result = fixer.run()
@@ -139,9 +146,9 @@ class TestLLMNoneTypeFixer:
 class TestAutoNoneTypeFixer:
     """Test complete auto-fix workflow."""
 
-    @patch('tools.auto_fix_nonetype.Read')
-    @patch('builtins.open', new_callable=mock_open)
-    @patch('os.makedirs')
+    @patch("tools.auto_fix_nonetype.Read")
+    @patch("builtins.open", new_callable=mock_open)
+    @patch("os.makedirs")
     def test_complete_workflow(self, mock_makedirs, mock_file, mock_read):
         """Should complete full auto-fix workflow."""
         # Mock file reading
@@ -149,10 +156,7 @@ class TestAutoNoneTypeFixer:
 
         error_message = "AttributeError: 'NoneType' object has no attribute 'value'"
 
-        fixer = AutoNoneTypeFixer(
-            file_path="/test/file.py",
-            error_message=error_message
-        )
+        fixer = AutoNoneTypeFixer(file_path="/test/file.py", error_message=error_message)
         result = fixer.run()
 
         assert "AUTO-FIX ANALYSIS COMPLETE" in result
@@ -160,7 +164,7 @@ class TestAutoNoneTypeFixer:
         assert "GPT-5 prompts" in result
         mock_makedirs.assert_called_with("logs/auto_fixes", exist_ok=True)
 
-    @patch('tools.auto_fix_nonetype.Read')
+    @patch("tools.auto_fix_nonetype.Read")
     def test_handles_file_read_error(self, mock_read):
         """Should handle file reading errors gracefully."""
         mock_read.return_value.run.side_effect = FileNotFoundError("File not found")
@@ -168,10 +172,7 @@ class TestAutoNoneTypeFixer:
         # Use an error message that will be detected
         error_message = "AttributeError: 'NoneType' object has no attribute 'value'"
 
-        fixer = AutoNoneTypeFixer(
-            file_path="/nonexistent/file.py",
-            error_message=error_message
-        )
+        fixer = AutoNoneTypeFixer(file_path="/nonexistent/file.py", error_message=error_message)
         result = fixer.run()
 
         assert "Failed to read file" in result
@@ -180,8 +181,8 @@ class TestAutoNoneTypeFixer:
 class TestSimpleNoneTypeMonitor:
     """Test simple monitoring functionality."""
 
-    @patch('os.path.exists')
-    @patch('os.listdir')
+    @patch("os.path.exists")
+    @patch("os.listdir")
     def test_no_logs_directory(self, mock_listdir, mock_exists):
         """Should handle missing log directories."""
         mock_exists.return_value = False
@@ -191,26 +192,28 @@ class TestSimpleNoneTypeMonitor:
 
         assert "No NoneType errors detected" in result
 
-    @patch('os.path.exists')
-    @patch('os.listdir')
-    @patch('os.path.getmtime')
-    @patch('builtins.open', new_callable=mock_open)
+    @patch("os.path.exists")
+    @patch("os.listdir")
+    @patch("os.path.getmtime")
+    @patch("builtins.open", new_callable=mock_open)
     def test_finds_errors_in_logs(self, mock_file, mock_getmtime, mock_listdir, mock_exists):
         """Should find errors in log files."""
         mock_exists.return_value = True
         mock_listdir.return_value = ["test.log"]
         mock_getmtime.return_value = 9999999999  # Recent timestamp
-        mock_file.return_value.read.return_value = "AttributeError: 'NoneType' object has no attribute 'test'"
+        mock_file.return_value.read.return_value = (
+            "AttributeError: 'NoneType' object has no attribute 'test'"
+        )
 
         monitor = SimpleNoneTypeMonitor()
         result = monitor.run()
 
         assert "NONETYPE ERRORS DETECTED" in result
 
-    @patch('os.path.exists')
-    @patch('os.listdir')
-    @patch('os.path.getmtime')
-    @patch('builtins.open', new_callable=mock_open)
+    @patch("os.path.exists")
+    @patch("os.listdir")
+    @patch("os.path.getmtime")
+    @patch("builtins.open", new_callable=mock_open)
     def test_skips_old_files(self, mock_file, mock_getmtime, mock_listdir, mock_exists):
         """Should skip old log files."""
         mock_exists.return_value = True
@@ -245,7 +248,7 @@ class TestIntegration:
         # Step 2: Generate fix
         fixer = LLMNoneTypeFixer(
             error_info=detection_result,
-            code_context="def process_data(data):\n    return data.value"
+            code_context="def process_data(data):\n    return data.value",
         )
         fix_result = fixer.run()
 
@@ -263,5 +266,6 @@ class TestIntegration:
 if __name__ == "__main__":
     # Skip nested pytest execution to prevent recursion
     import os
+
     if os.environ.get("AGENCY_NESTED_TEST") != "1":
         pytest.main([__file__])

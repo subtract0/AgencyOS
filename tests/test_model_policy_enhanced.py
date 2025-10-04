@@ -17,22 +17,22 @@ NECESSARY Pattern Compliance:
 """
 
 import os
-import pytest
 from unittest.mock import patch
-from typing import Optional
+
+import pytest
 
 from shared.model_policy_enhanced import (
-    ModelTier,
-    ComplexityLevel,
-    assess_complexity,
-    classify_complexity,
-    select_model_tier,
-    get_model_for_agent,
-    should_use_local,
-    agent_model,
+    AGENCY_AGENT_MODELS,
     TIER_MODELS,
     TRINITY_AGENT_TIERS,
-    AGENCY_AGENT_MODELS,
+    ComplexityLevel,
+    ModelTier,
+    agent_model,
+    assess_complexity,
+    classify_complexity,
+    get_model_for_agent,
+    select_model_tier,
+    should_use_local,
 )
 
 
@@ -44,7 +44,7 @@ class TestComplexityAssessment:
         score = assess_complexity(
             task_description="Fix typo in function docstring",
             scope="single-file",
-            priority="NORMAL"
+            priority="NORMAL",
         )
         assert 0.0 <= score <= 1.0
         assert score == 0.1  # Only scope contributes
@@ -52,9 +52,7 @@ class TestComplexityAssessment:
     def test_assess_complexity_high_priority_multi_file(self):
         """Test complexity assessment for high priority multi-file task."""
         score = assess_complexity(
-            task_description="Refactor authentication module",
-            scope="multi-file",
-            priority="HIGH"
+            task_description="Refactor authentication module", scope="multi-file", priority="HIGH"
         )
         assert score == 0.6  # 0.3 (HIGH) + 0.3 (multi-file)
 
@@ -63,7 +61,7 @@ class TestComplexityAssessment:
         score = assess_complexity(
             task_description="Fix security vulnerability in auth system",
             scope="system-wide",
-            priority="CRITICAL"
+            priority="CRITICAL",
         )
         assert score == 1.0  # 0.5 (CRITICAL) + 0.7 (system-wide), capped at 1.0
 
@@ -73,7 +71,7 @@ class TestComplexityAssessment:
             task_description="Implement new architecture pattern",
             keywords=["architecture"],
             scope="single-file",
-            priority="NORMAL"
+            priority="NORMAL",
         )
         assert abs(score - 0.3) < 0.001  # 0.1 (single-file) + 0.2 (architecture keyword)
 
@@ -83,7 +81,7 @@ class TestComplexityAssessment:
             task_description="Fix critical security issue",
             keywords=["security", "critical"],
             scope="multi-file",
-            priority="CRITICAL"
+            priority="CRITICAL",
         )
         # 0.5 (CRITICAL) + 0.3 (multi-file) + 0.2 (security) + 0.2 (critical) = 1.2, capped at 1.0
         assert score == 1.0
@@ -94,7 +92,7 @@ class TestComplexityAssessment:
             task_description="Refactor legacy code module",
             keywords=["refactor"],
             scope="multi-file",
-            priority="NORMAL"
+            priority="NORMAL",
         )
         assert abs(score - 0.45) < 0.001  # 0.3 (multi-file) + 0.15 (refactor keyword)
 
@@ -104,7 +102,7 @@ class TestComplexityAssessment:
             task_description="Optimize database query performance",
             keywords=["performance"],
             scope="single-file",
-            priority="NORMAL"
+            priority="NORMAL",
         )
         assert score == 0.2  # 0.1 (single-file) + 0.1 (performance keyword)
 
@@ -114,7 +112,7 @@ class TestComplexityAssessment:
             task_description="Fix constitutional_violation in type checking",
             keywords=["constitutional_violation"],
             scope="architecture",
-            priority="HIGH"
+            priority="HIGH",
         )
         # 0.3 (HIGH) + 0.5 (architecture) + 0.15 (constitutional_violation) = 0.95
         assert abs(score - 0.95) < 0.001
@@ -125,7 +123,7 @@ class TestComplexityAssessment:
             task_description="Coordinate multi-agent workflow",
             keywords=["multi-agent"],
             scope="system-wide",
-            priority="NORMAL"
+            priority="NORMAL",
         )
         assert score == 0.85  # 0.7 (system-wide) + 0.15 (multi-agent keyword)
 
@@ -135,7 +133,7 @@ class TestComplexityAssessment:
             task_description="Update configuration file",
             keywords=["config"],
             scope="single-file",
-            priority="NORMAL"
+            priority="NORMAL",
         )
         assert abs(score - 0.15) < 0.001  # 0.1 (single-file) + 0.05 (unknown keyword default)
 
@@ -145,7 +143,7 @@ class TestComplexityAssessment:
             task_description="Fix common pattern error",
             scope="single-file",
             priority="NORMAL",
-            evidence_count=5
+            evidence_count=5,
         )
         assert abs(score - 0.15) < 0.001  # 0.1 (single-file) + 0.05 (evidence bonus)
 
@@ -155,7 +153,7 @@ class TestComplexityAssessment:
             task_description="Fix rare error",
             scope="single-file",
             priority="NORMAL",
-            evidence_count=2
+            evidence_count=2,
         )
         assert score == 0.1  # 0.1 (single-file), no evidence bonus
 
@@ -166,16 +164,14 @@ class TestComplexityAssessment:
             keywords=["security", "critical", "architecture", "system-wide", "refactor"],
             scope="system-wide",
             priority="CRITICAL",
-            evidence_count=10
+            evidence_count=10,
         )
         assert score == 1.0
 
     def test_assess_complexity_minimum_zero(self):
         """Test complexity score has minimum of 0.0."""
         score = assess_complexity(
-            task_description="Simple change",
-            scope="single-file",
-            priority="NORMAL"
+            task_description="Simple change", scope="single-file", priority="NORMAL"
         )
         assert score >= 0.0
 
@@ -185,13 +181,13 @@ class TestComplexityAssessment:
             task_description="ARCHITECTURE changes needed",
             keywords=["architecture"],
             scope="single-file",
-            priority="NORMAL"
+            priority="NORMAL",
         )
         score2 = assess_complexity(
             task_description="architecture changes needed",
             keywords=["ARCHITECTURE"],
             scope="single-file",
-            priority="NORMAL"
+            priority="NORMAL",
         )
         assert abs(score1 - score2) < 0.001
         assert abs(score1 - 0.3) < 0.001  # Both match keyword
@@ -547,9 +543,12 @@ class TestBackwardCompatibility:
         with patch.dict(os.environ, {"CODER_MODEL": "custom-coder-model"}, clear=False):
             # Re-import to pick up env var at module load time
             import importlib
+
             import shared.model_policy_enhanced
+
             importlib.reload(shared.model_policy_enhanced)
             from shared.model_policy_enhanced import agent_model as reloaded_agent_model
+
             model = reloaded_agent_model("coder")
             assert model == "custom-coder-model"
             # Reload again to restore original state
@@ -595,8 +594,16 @@ class TestConstants:
     def test_agency_agent_models_contains_all_agents(self):
         """Test AGENCY_AGENT_MODELS contains all legacy agents."""
         expected_agents = {
-            "planner", "chief_architect", "coder", "auditor", "quality_enforcer",
-            "merger", "learning", "test_generator", "summary", "toolsmith"
+            "planner",
+            "chief_architect",
+            "coder",
+            "auditor",
+            "quality_enforcer",
+            "merger",
+            "learning",
+            "test_generator",
+            "summary",
+            "toolsmith",
         }
         assert set(AGENCY_AGENT_MODELS.keys()) == expected_agents
 
@@ -615,30 +622,21 @@ class TestEdgeCases:
     def test_assess_complexity_with_empty_keywords_list(self):
         """Test complexity assessment with empty keywords list."""
         score = assess_complexity(
-            task_description="Simple task",
-            keywords=[],
-            scope="single-file",
-            priority="NORMAL"
+            task_description="Simple task", keywords=[], scope="single-file", priority="NORMAL"
         )
         assert score == 0.1
 
     def test_assess_complexity_with_none_keywords(self):
         """Test complexity assessment with None keywords."""
         score = assess_complexity(
-            task_description="Simple task",
-            keywords=None,
-            scope="single-file",
-            priority="NORMAL"
+            task_description="Simple task", keywords=None, scope="single-file", priority="NORMAL"
         )
         assert score == 0.1
 
     def test_assess_complexity_with_empty_task_description(self):
         """Test complexity assessment with empty task description."""
         score = assess_complexity(
-            task_description="",
-            keywords=["architecture"],
-            scope="single-file",
-            priority="NORMAL"
+            task_description="", keywords=["architecture"], scope="single-file", priority="NORMAL"
         )
         # Keywords won't match empty description
         assert score == 0.1
@@ -650,7 +648,7 @@ class TestEdgeCases:
             task_description=long_description,
             keywords=["architecture"],
             scope="single-file",
-            priority="NORMAL"
+            priority="NORMAL",
         )
         # Should match keyword once and add weight once
         assert abs(score - 0.3) < 0.001

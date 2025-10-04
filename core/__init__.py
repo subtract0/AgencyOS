@@ -4,7 +4,8 @@ Simplifies imports and provides a clean API for autonomous agents.
 """
 
 import os
-from typing import Optional, List, Union, Dict
+from typing import Dict, List, Optional, Union
+
 from shared.type_definitions.json import JSONValue
 
 # Feature flags
@@ -12,27 +13,32 @@ ENABLE_UNIFIED_CORE = os.getenv("ENABLE_UNIFIED_CORE", "true").lower() == "true"
 PERSIST_PATTERNS = os.getenv("PERSIST_PATTERNS", "false").lower() == "true"
 
 # Core imports
-from .self_healing import SelfHealingCore, Finding, Patch
-from .telemetry import SimpleTelemetry, get_telemetry, emit
-from pattern_intelligence import PatternStore, CodingPattern
+from pattern_intelligence import CodingPattern, PatternStore
 from shared.models.core import (
-    ErrorDetectionResult, HealthStatus,
-    HealingAttempt, ToolCall, TelemetryEvent
+    ErrorDetectionResult,
+    HealingAttempt,
+    HealthStatus,
+    TelemetryEvent,
+    ToolCall,
 )
+
+from .self_healing import Finding, Patch, SelfHealingCore
+from .telemetry import SimpleTelemetry, emit, get_telemetry
 
 # Learning loop imports (conditionally imported to avoid circular dependencies)
 try:
     from learning_loop import LearningLoop
+
     LEARNING_LOOP_AVAILABLE = True
 except ImportError:
     LearningLoop = None  # type: ignore[misc,assignment]
     LEARNING_LOOP_AVAILABLE = False
 
 # Singleton instances
-_healing_core: Optional[SelfHealingCore] = None
-_telemetry: Optional[SimpleTelemetry] = None
-_pattern_store: Optional[PatternStore] = None
-_learning_loop: Optional['LearningLoop'] = None
+_healing_core: SelfHealingCore | None = None
+_telemetry: SimpleTelemetry | None = None
+_pattern_store: PatternStore | None = None
+_learning_loop: Optional["LearningLoop"] = None
 
 
 def get_healing_core() -> SelfHealingCore:
@@ -56,7 +62,7 @@ def get_unified_patterns() -> PatternStore:
     return _pattern_store
 
 
-def get_learning_loop() -> Optional['LearningLoop']:
+def get_learning_loop() -> Optional["LearningLoop"]:
     """
     Get the global learning loop instance.
 
@@ -97,17 +103,12 @@ class UnifiedCore:
         Returns:
             Dictionary with results including errors found, fixes applied, and success status
         """
-        results = ErrorDetectionResult(
-            errors_found=0,
-            fixes_applied=0,
-            success=True,
-            details=[]
-        )
+        results = ErrorDetectionResult(errors_found=0, fixes_applied=0, success=True, details=[])
 
         if not self.healing:
-            self.telemetry.log("core.healing_disabled", {
-                "reason": "ENABLE_UNIFIED_CORE not set"
-            }, level="warning")
+            self.telemetry.log(
+                "core.healing_disabled", {"reason": "ENABLE_UNIFIED_CORE not set"}, level="warning"
+            )
             return results
 
         # Detect errors
@@ -121,25 +122,21 @@ class UnifiedCore:
 
             if fix_success:
                 results.fixes_applied += 1
-                results.details.append(
-                    f"Fixed: {finding.snippet} in {finding.file}"
-                )
+                results.details.append(f"Fixed: {finding.snippet} in {finding.file}")
 
                 # Learn from successful fix
                 # Note: PatternStore doesn't have update_success_rate method
                 # Learning happens in self_healing.py directly now
             else:
                 results.success = False
-                results.details.append(
-                    f"Failed to fix: {finding.snippet} in {finding.file}"
-                )
+                results.details.append(f"Failed to fix: {finding.snippet} in {finding.file}")
 
         # Log results
         self.telemetry.log("core.healing_complete", results.model_dump())
 
         return results
 
-    def detect_errors(self, path: str) -> List[Finding]:
+    def detect_errors(self, path: str) -> list[Finding]:
         """
         Detect errors in file or log content (backward compatibility).
 
@@ -153,7 +150,7 @@ class UnifiedCore:
             return self.healing.detect_errors(path)
         return []
 
-    def fix_errors(self, errors: List[Finding]) -> List[Patch]:
+    def fix_errors(self, errors: list[Finding]) -> list[Patch]:
         """
         Generate fixes for detected errors (backward compatibility).
 
@@ -205,10 +202,12 @@ class UnifiedCore:
             telemetry_active=self.telemetry is not None,
             learning_loop_active=self.learning_loop is not None,
             errors=metrics.get("recent_errors", []),
-            warnings=metrics.get("recent_warnings", [])
+            warnings=metrics.get("recent_warnings", []),
         )
 
-    def emit_event(self, event: str, data: Optional[Dict[str, JSONValue]] = None, level: str = "info"):
+    def emit_event(
+        self, event: str, data: dict[str, JSONValue] | None = None, level: str = "info"
+    ):
         """
         Emit a telemetry event.
 
@@ -240,11 +239,15 @@ class UnifiedCore:
             )
 
         # Create a CodingPattern from the error fix
-        from pattern_intelligence.coding_pattern import (
-            ProblemContext, SolutionApproach, EffectivenessMetric, PatternMetadata
-        )
-        from datetime import datetime
         import uuid
+        from datetime import datetime
+
+        from pattern_intelligence.coding_pattern import (
+            EffectivenessMetric,
+            PatternMetadata,
+            ProblemContext,
+            SolutionApproach,
+        )
 
         pattern = CodingPattern(
             context=ProblemContext(
@@ -253,16 +256,16 @@ class UnifiedCore:
                 constraints=[],
                 symptoms=[error_type],
                 scale=None,
-                urgency="medium"
+                urgency="medium",
             ),
             solution=SolutionApproach(
-                approach=f"Replace problematic code with fixed version",
+                approach="Replace problematic code with fixed version",
                 implementation=fixed,
                 tools=["Edit"],
                 reasoning=f"Automated fix for {error_type}",
                 code_examples=[{"before": original, "after": fixed}],
                 dependencies=[],
-                alternatives=[]
+                alternatives=[],
             ),
             outcome=EffectivenessMetric(
                 success_rate=1.0 if success else 0.0,
@@ -272,7 +275,7 @@ class UnifiedCore:
                 technical_debt=None,
                 adoption_rate=1,
                 longevity=None,
-                confidence=0.8 if success else 0.2
+                confidence=0.8 if success else 0.2,
             ),
             metadata=PatternMetadata(
                 pattern_id=f"fix_{error_type}_{uuid.uuid4().hex[:8]}",
@@ -283,20 +286,25 @@ class UnifiedCore:
                 application_count=1 if success else 0,
                 validation_status="validated" if success else "failed",
                 tags=["error_fix", error_type.lower()],
-                related_patterns=[]
-            )
+                related_patterns=[],
+            ),
         )
 
         # Store the pattern
         self.pattern_store.store_pattern(pattern)
 
-        self.emit_event("pattern_learned", {
-            "pattern_id": pattern.metadata.pattern_id,
-            "error_type": error_type,
-            "success": success
-        })
+        self.emit_event(
+            "pattern_learned",
+            {
+                "pattern_id": pattern.metadata.pattern_id,
+                "error_type": error_type,
+                "success": success,
+            },
+        )
 
-    def find_patterns(self, query: Optional[str] = None, pattern_type: Optional[str] = None) -> List[CodingPattern]:
+    def find_patterns(
+        self, query: str | None = None, pattern_type: str | None = None
+    ) -> list[CodingPattern]:
         """
         Find patterns matching criteria.
 
@@ -327,13 +335,20 @@ class UnifiedCore:
         """
         if self.learning_loop:
             self.learning_loop.start()
-            self.emit_event("learning_loop_started", {
-                "timestamp": self.learning_loop.start_time.isoformat() if self.learning_loop.start_time else None
-            })
+            self.emit_event(
+                "learning_loop_started",
+                {
+                    "timestamp": self.learning_loop.start_time.isoformat()
+                    if self.learning_loop.start_time
+                    else None
+                },
+            )
         else:
-            self.emit_event("learning_loop_unavailable", {
-                "reason": "LearningLoop not available or ENABLE_UNIFIED_CORE disabled"
-            }, level="warning")
+            self.emit_event(
+                "learning_loop_unavailable",
+                {"reason": "LearningLoop not available or ENABLE_UNIFIED_CORE disabled"},
+                level="warning",
+            )
 
     def stop_learning_loop(self):
         """
@@ -357,11 +372,13 @@ class UnifiedCore:
         if self.learning_loop:
             await self.learning_loop.run_autonomous(duration_hours)
         else:
-            self.emit_event("autonomous_learning_unavailable", {
-                "reason": "LearningLoop not available"
-            }, level="warning")
+            self.emit_event(
+                "autonomous_learning_unavailable",
+                {"reason": "LearningLoop not available"},
+                level="warning",
+            )
 
-    def get_learning_metrics(self) -> Dict[str, JSONValue]:
+    def get_learning_metrics(self) -> dict[str, JSONValue]:
         """
         Get learning loop operational metrics.
 
@@ -374,12 +391,16 @@ class UnifiedCore:
             return metrics if isinstance(metrics, dict) else {}
         return {}
 
-    def learn_from_operation_result(self, operation_id: str, success: bool,
-                                  task_description: Optional[str] = None,
-                                  tool_calls: Optional[List[ToolCall]] = None,
-                                  initial_error: Optional[str] = None,
-                                  final_state: Optional[Union[str, Dict[str, JSONValue]]] = None,
-                                  duration_seconds: float = 0.0):
+    def learn_from_operation_result(
+        self,
+        operation_id: str,
+        success: bool,
+        task_description: str | None = None,
+        tool_calls: list[ToolCall] | None = None,
+        initial_error: str | None = None,
+        final_state: str | dict[str, JSONValue] | None = None,
+        duration_seconds: float = 0.0,
+    ):
         """
         Learn patterns from an operation result.
 
@@ -398,27 +419,30 @@ class UnifiedCore:
         if not self.learning_loop:
             return
 
-        from learning_loop.pattern_extraction import Operation
         from datetime import datetime
 
+        from learning_loop.pattern_extraction import Operation
+
         # Convert types to match Operation model expectations
-        initial_error_dict: Optional[Dict[str, JSONValue]] = None
+        initial_error_dict: dict[str, JSONValue] | None = None
         if initial_error is not None:
             initial_error_dict = {"error": initial_error}
 
-        tool_calls_dict: List[Dict[str, JSONValue]] = []
+        tool_calls_dict: list[dict[str, JSONValue]] = []
         if tool_calls:
             for tool_call in tool_calls:
                 # Convert ToolCall to Dict[str, JSONValue]
-                if hasattr(tool_call, 'model_dump'):
+                if hasattr(tool_call, "model_dump"):
                     tool_calls_dict.append(tool_call.model_dump())
                 else:
-                    tool_calls_dict.append({
-                        "name": getattr(tool_call, "name", "unknown"),
-                        "args": getattr(tool_call, "args", {})
-                    })
+                    tool_calls_dict.append(
+                        {
+                            "name": getattr(tool_call, "name", "unknown"),
+                            "args": getattr(tool_call, "args", {}),
+                        }
+                    )
 
-        final_state_dict: Dict[str, JSONValue] = {}
+        final_state_dict: dict[str, JSONValue] = {}
         if isinstance(final_state, dict):
             final_state_dict = final_state
         elif isinstance(final_state, str):
@@ -432,14 +456,14 @@ class UnifiedCore:
             final_state=final_state_dict,
             success=success,
             duration_seconds=duration_seconds,
-            timestamp=datetime.now()
+            timestamp=datetime.now(),
         )
 
         self.learning_loop.learn_from_operation(operation)
 
 
 # Global unified core instance
-_unified_core: Optional[UnifiedCore] = None
+_unified_core: UnifiedCore | None = None
 
 
 def get_core() -> UnifiedCore:
@@ -461,24 +485,20 @@ __all__ = [
     # Main interface
     "get_core",
     "UnifiedCore",
-
     # Core components
     "SelfHealingCore",
     "SimpleTelemetry",
     "PatternStore",
-
     # Data classes
     "Finding",
     "Patch",
     "CodingPattern",
-
     # Convenience functions
     "emit",
     "get_healing_core",
     "get_unified_telemetry",
     "get_unified_patterns",
     "get_learning_loop",
-
     # Feature flags
     "ENABLE_UNIFIED_CORE",
     "PERSIST_PATTERNS",

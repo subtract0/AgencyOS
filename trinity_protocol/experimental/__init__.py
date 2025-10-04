@@ -36,7 +36,7 @@ __all__ = [
     "WhisperTranscriber",
     "ConversationContext",
     "TranscriptionService",
-    "ResponseHandler"
+    "ResponseHandler",
 ]
 
 # Note: Imports are deferred to avoid import errors from missing dependencies

@@ -1,11 +1,10 @@
 import json
 from pathlib import Path
-from typing import Optional
 
 from tools import NotebookEdit
 
 
-def create_sample_notebook(file_path: str, cells_data: Optional[list] = None):
+def create_sample_notebook(file_path: str, cells_data: list | None = None):
     """Helper function to create a sample Jupyter notebook"""
     if cells_data is None:
         cells_data = [
@@ -56,14 +55,11 @@ def test_notebook_edit_replace_cell(tmp_path: Path):
     )
     result = tool.run()
 
-    assert (
-        "Successfully replaced cell" in result
-        or "Successfully replaced content" in result
-    )
+    assert "Successfully replaced cell" in result or "Successfully replaced content" in result
     assert "cell-1" in result
 
     # Verify the change
-    with open(notebook_file, "r") as f:
+    with open(notebook_file) as f:
         updated_notebook = json.load(f)
 
     updated_cell = updated_notebook["cells"][0]
@@ -92,13 +88,10 @@ print(data.head())"""
     )
     result = tool.run()
 
-    assert (
-        "Successfully replaced cell" in result
-        or "Successfully replaced content" in result
-    )
+    assert "Successfully replaced cell" in result or "Successfully replaced content" in result
 
     # Verify the change
-    with open(notebook_file, "r") as f:
+    with open(notebook_file) as f:
         updated_notebook = json.load(f)
 
     updated_cell = updated_notebook["cells"][1]
@@ -123,13 +116,10 @@ def test_notebook_edit_insert_cell(tmp_path: Path):
     )
     result = tool.run()
 
-    assert (
-        "Successfully inserted new cell" in result
-        or "Successfully inserted new" in result
-    )
+    assert "Successfully inserted new cell" in result or "Successfully inserted new" in result
 
     # Verify the insertion
-    with open(notebook_file, "r") as f:
+    with open(notebook_file) as f:
         updated_notebook = json.load(f)
 
     # Should now have 3 cells
@@ -163,13 +153,10 @@ plt.style.use('seaborn')"""
     )
     result = tool.run()
 
-    assert (
-        "Successfully inserted new cell" in result
-        or "Successfully inserted new" in result
-    )
+    assert "Successfully inserted new cell" in result or "Successfully inserted new" in result
 
     # Verify the insertion
-    with open(notebook_file, "r") as f:
+    with open(notebook_file) as f:
         updated_notebook = json.load(f)
 
     # Should now have 3 cells
@@ -218,7 +205,7 @@ def test_notebook_edit_delete_cell(tmp_path: Path):
     assert "Successfully deleted cell" in result or "Successfully deleted" in result
 
     # Verify the deletion
-    with open(notebook_file, "r") as f:
+    with open(notebook_file) as f:
         updated_notebook = json.load(f)
 
     # Should now have 2 cells
@@ -274,9 +261,7 @@ def test_notebook_edit_wrong_extension(tmp_path: Path):
     text_file = tmp_path / "not_notebook.txt"
     text_file.write_text("Not a notebook")
 
-    tool = NotebookEdit(
-        notebook_path=str(text_file), cell_id="cell-1", new_source="New content"
-    )
+    tool = NotebookEdit(notebook_path=str(text_file), cell_id="cell-1", new_source="New content")
     result = tool.run()
 
     assert "Error: File is not a Jupyter notebook (.ipynb)" in result
@@ -327,13 +312,10 @@ def test_notebook_edit_numeric_cell_id(tmp_path: Path):
     )
     result = tool.run()
 
-    assert (
-        "Successfully replaced cell" in result
-        or "Successfully replaced content" in result
-    )
+    assert "Successfully replaced cell" in result or "Successfully replaced content" in result
 
     # Verify the change
-    with open(notebook_file, "r") as f:
+    with open(notebook_file) as f:
         updated_notebook = json.load(f)
 
     updated_cell = updated_notebook["cells"][0]
@@ -382,13 +364,10 @@ df = pd.read_csv('customer_data.csv')
     )
     result = tool.run()
 
-    assert (
-        "Successfully replaced cell" in result
-        or "Successfully replaced content" in result
-    )
+    assert "Successfully replaced cell" in result or "Successfully replaced content" in result
 
     # Verify complex markdown was preserved
-    with open(notebook_file, "r") as f:
+    with open(notebook_file) as f:
         updated_notebook = json.load(f)
 
     updated_cell = updated_notebook["cells"][0]
@@ -426,13 +405,10 @@ def test_notebook_edit_preserve_metadata(tmp_path: Path):
     )
     result = tool.run()
 
-    assert (
-        "Successfully replaced cell" in result
-        or "Successfully replaced content" in result
-    )
+    assert "Successfully replaced cell" in result or "Successfully replaced content" in result
 
     # Verify metadata was preserved
-    with open(notebook_file, "r") as f:
+    with open(notebook_file) as f:
         updated_notebook = json.load(f)
 
     updated_cell = updated_notebook["cells"][0]
@@ -461,13 +437,10 @@ def test_notebook_edit_empty_notebook(tmp_path: Path):
     )
     result = tool.run()
 
-    assert (
-        "Successfully inserted new cell" in result
-        or "Successfully inserted new" in result
-    )
+    assert "Successfully inserted new cell" in result or "Successfully inserted new" in result
 
     # Verify the insertion
-    with open(notebook_file, "r") as f:
+    with open(notebook_file) as f:
         updated_notebook = json.load(f)
 
     assert len(updated_notebook["cells"]) == 1
@@ -516,13 +489,10 @@ print(process_data(sample_data))'''
     )
     result = tool.run()
 
-    assert (
-        "Successfully replaced cell" in result
-        or "Successfully replaced content" in result
-    )
+    assert "Successfully replaced cell" in result or "Successfully replaced content" in result
 
     # Verify complex code was preserved
-    with open(notebook_file, "r") as f:
+    with open(notebook_file) as f:
         updated_notebook = json.load(f)
 
     updated_cell = updated_notebook["cells"][1]
@@ -530,9 +500,5 @@ print(process_data(sample_data))'''
     assert "🐍 Python 📊 Data" in source_content
     assert "def process_data" in source_content
     # The regex pattern might be escaped differently - check for the core pattern
-    assert (
-        "d{4}-" in source_content
-        and "d{2}-" in source_content
-        and "d{2}" in source_content
-    )
+    assert "d{4}-" in source_content and "d{2}-" in source_content and "d{2}" in source_content
     assert "json.dumps(result, indent=2)" in source_content

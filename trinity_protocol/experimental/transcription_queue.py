@@ -54,28 +54,26 @@ Required steps:
 - Article VII: Functions <50 lines, clear naming ✅
 """
 
-import asyncio
+from collections.abc import AsyncGenerator
 from pathlib import Path
-from typing import Optional, AsyncGenerator
-from datetime import datetime
 
 from trinity_protocol.experimental.audio_capture import AudioCaptureModule
-from trinity_protocol.experimental.transcription import WhisperTranscriber
 from trinity_protocol.experimental.models.audio import (
+    AudioCaptureStats,
     AudioConfig,
-    WhisperConfig,
     AudioSegment,
     TranscriptionResult,
-    AudioCaptureStats,
+    WhisperConfig,
 )
+from trinity_protocol.experimental.transcription import WhisperTranscriber
 
 # Type alias for Result pattern
 try:
-    from shared.type_definitions.result import Result, Ok, Err
+    from shared.type_definitions.result import Err, Ok, Result
 except ImportError:
     # Fallback for testing
-    from typing import Union
     from dataclasses import dataclass
+    from typing import Union
 
     @dataclass
     class Ok:
@@ -98,9 +96,9 @@ class TranscriptionService:
 
     def __init__(
         self,
-        audio_config: Optional[AudioConfig] = None,
-        whisper_config: Optional[WhisperConfig] = None,
-        device_index: Optional[int] = None,
+        audio_config: AudioConfig | None = None,
+        whisper_config: WhisperConfig | None = None,
+        device_index: int | None = None,
     ):
         """
         Initialize transcription service.
@@ -114,10 +112,7 @@ class TranscriptionService:
         self.whisper_config = whisper_config
         self.device_index = device_index
 
-        self.audio_capture = AudioCaptureModule(
-            config=self.audio_config,
-            device_index=device_index
-        )
+        self.audio_capture = AudioCaptureModule(config=self.audio_config, device_index=device_index)
         self.transcriber = WhisperTranscriber(config=whisper_config)
 
         self.is_running = False
@@ -161,9 +156,7 @@ class TranscriptionService:
         await self.transcriber.stop()
 
     async def transcribe_file(
-        self,
-        audio_path: Path,
-        language: str = "en"
+        self, audio_path: Path, language: str = "en"
     ) -> Result[TranscriptionResult, str]:
         """
         Transcribe audio file.
@@ -179,20 +172,14 @@ class TranscriptionService:
             return Err("Service not started")
 
         # Delegate to transcriber
-        result = await self.transcriber.transcribe_file(
-            audio_path,
-            language
-        )
+        result = await self.transcriber.transcribe_file(audio_path, language)
 
         if isinstance(result, Ok):
             self._total_processed += result._value.duration_seconds
 
         return result
 
-    async def transcribe_segment(
-        self,
-        segment: AudioSegment
-    ) -> Result[TranscriptionResult, str]:
+    async def transcribe_segment(self, segment: AudioSegment) -> Result[TranscriptionResult, str]:
         """
         Transcribe audio segment.
 
@@ -216,9 +203,7 @@ class TranscriptionService:
         return result
 
     async def transcribe_stream(
-        self,
-        chunk_duration: float = 1.0,
-        skip_silence: bool = True
+        self, chunk_duration: float = 1.0, skip_silence: bool = True
     ) -> AsyncGenerator[TranscriptionResult, None]:
         """
         Stream transcriptions from continuous audio capture.
@@ -233,9 +218,7 @@ class TranscriptionService:
         if not self.is_running:
             raise RuntimeError("Service not started")
 
-        async for segment in self.audio_capture.capture_stream(
-            chunk_duration
-        ):
+        async for segment in self.audio_capture.capture_stream(chunk_duration):
             # Skip silent segments if requested
             if skip_silence and not segment.has_speech:
                 continue
@@ -283,7 +266,7 @@ class TranscriptionService:
         """
         return self.audio_config
 
-    def get_backend(self) -> Optional[str]:
+    def get_backend(self) -> str | None:
         """
         Get current Whisper backend.
 

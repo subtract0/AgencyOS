@@ -9,14 +9,14 @@ They may lack comprehensive validation or documentation.
 """
 
 from trinity_protocol.experimental.models.audio import (
-    AudioFormat,
-    AudioConfig,
-    AudioSegment,
-    WhisperConfig,
-    TranscriptionSegment,
-    TranscriptionResult,
-    VADResult,
     AudioCaptureStats,
+    AudioConfig,
+    AudioFormat,
+    AudioSegment,
+    TranscriptionResult,
+    TranscriptionSegment,
+    VADResult,
+    WhisperConfig,
 )
 
 __all__ = [

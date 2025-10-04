@@ -55,26 +55,25 @@ Required steps:
 """
 
 import asyncio
-import wave
 import tempfile
-from pathlib import Path
-from typing import Optional
+import wave
 from datetime import datetime
+from pathlib import Path
 
 from trinity_protocol.experimental.models.audio import (
-    WhisperConfig,
     AudioSegment,
     TranscriptionResult,
     TranscriptionSegment,
+    WhisperConfig,
 )
 
 # Type alias for Result pattern
 try:
-    from shared.type_definitions.result import Result, Ok, Err
+    from shared.type_definitions.result import Err, Ok, Result
 except ImportError:
     # Fallback for testing
-    from typing import Union
     from dataclasses import dataclass
+    from typing import Union
 
     @dataclass
     class Ok:
@@ -95,7 +94,7 @@ class WhisperTranscriber:
     falls back to openai-whisper Python library if unavailable.
     """
 
-    def __init__(self, config: Optional[WhisperConfig] = None):
+    def __init__(self, config: WhisperConfig | None = None):
         """
         Initialize Whisper transcriber.
 
@@ -152,8 +151,7 @@ class WhisperTranscriber:
 
             # Load model
             self._model = Whisper.from_pretrained(
-                self.config.model_name,
-                basedir=str(Path(self.config.model_path).parent)
+                self.config.model_name, basedir=str(Path(self.config.model_path).parent)
             )
 
             return Ok(None)
@@ -173,9 +171,7 @@ class WhisperTranscriber:
             import whisper
 
             # Use smaller model if not specified
-            model_name = (
-                self.config.model_name if self.config else "base.en"
-            )
+            model_name = self.config.model_name if self.config else "base.en"
 
             # Load model (blocks, but fast for small models)
             self._model = whisper.load_model(model_name)
@@ -195,10 +191,7 @@ class WhisperTranscriber:
         self._model = None
         self._backend = None
 
-    async def transcribe_segment(
-        self,
-        segment: AudioSegment
-    ) -> Result[TranscriptionResult, str]:
+    async def transcribe_segment(self, segment: AudioSegment) -> Result[TranscriptionResult, str]:
         """
         Transcribe audio segment to text.
 
@@ -213,12 +206,9 @@ class WhisperTranscriber:
 
         try:
             # Create temporary WAV file (Whisper requires file input)
-            with tempfile.NamedTemporaryFile(
-                suffix=".wav",
-                delete=True
-            ) as temp_file:
+            with tempfile.NamedTemporaryFile(suffix=".wav", delete=True) as temp_file:
                 # Write segment to temp WAV
-                with wave.open(temp_file.name, 'wb') as wav_file:
+                with wave.open(temp_file.name, "wb") as wav_file:
                     wav_file.setnchannels(segment.channels)
                     wav_file.setsampwidth(2)  # 16-bit
                     wav_file.setframerate(segment.sample_rate)
@@ -227,13 +217,11 @@ class WhisperTranscriber:
                 # Transcribe based on backend (pass segment duration)
                 if self._backend == "whisper.cpp":
                     result = await self._transcribe_with_cpp(
-                        Path(temp_file.name),
-                        segment.duration_seconds
+                        Path(temp_file.name), segment.duration_seconds
                     )
                 else:
                     result = await self._transcribe_with_python(
-                        Path(temp_file.name),
-                        segment.duration_seconds
+                        Path(temp_file.name), segment.duration_seconds
                     )
 
                 return result
@@ -242,9 +230,7 @@ class WhisperTranscriber:
             return Err(f"Transcription failed: {str(e)}")
 
     async def _transcribe_with_cpp(
-        self,
-        audio_path: Path,
-        duration_seconds: float
+        self, audio_path: Path, duration_seconds: float
     ) -> Result[TranscriptionResult, str]:
         """
         Transcribe using whisper.cpp backend.
@@ -260,8 +246,7 @@ class WhisperTranscriber:
             # Run in thread pool to avoid blocking
             loop = asyncio.get_event_loop()
             output = await loop.run_in_executor(
-                None,
-                lambda: self._model.transcribe(str(audio_path))
+                None, lambda: self._model.transcribe(str(audio_path))
             )
 
             # Parse whisper.cpp output
@@ -272,7 +257,7 @@ class WhisperTranscriber:
                 confidence=0.90,  # whisper.cpp doesn't provide confidence
                 language=self.config.language if self.config else "en",
                 duration_seconds=duration_seconds,
-                timestamp=datetime.now().isoformat()
+                timestamp=datetime.now().isoformat(),
             )
 
             return Ok(result)
@@ -281,9 +266,7 @@ class WhisperTranscriber:
             return Err(f"whisper.cpp transcription failed: {str(e)}")
 
     async def _transcribe_with_python(
-        self,
-        audio_path: Path,
-        duration_seconds: float
+        self, audio_path: Path, duration_seconds: float
     ) -> Result[TranscriptionResult, str]:
         """
         Transcribe using openai-whisper backend.
@@ -306,20 +289,21 @@ class WhisperTranscriber:
 
             # Add accuracy parameters if config exists
             if self.config:
-                transcribe_params.update({
-                    "temperature": self.config.temperature,
-                    "compression_ratio_threshold": self.config.compression_ratio_threshold,
-                    "logprob_threshold": self.config.logprob_threshold,
-                    "no_speech_threshold": self.config.no_speech_threshold,
-                    "beam_size": self.config.beam_size,
-                })
+                transcribe_params.update(
+                    {
+                        "temperature": self.config.temperature,
+                        "compression_ratio_threshold": self.config.compression_ratio_threshold,
+                        "logprob_threshold": self.config.logprob_threshold,
+                        "no_speech_threshold": self.config.no_speech_threshold,
+                        "beam_size": self.config.beam_size,
+                    }
+                )
 
                 if self.config.language:
                     transcribe_params["language"] = self.config.language
 
             result_dict = await loop.run_in_executor(
-                None,
-                lambda: self._model.transcribe(str(audio_path), **transcribe_params)
+                None, lambda: self._model.transcribe(str(audio_path), **transcribe_params)
             )
 
             # Parse openai-whisper output
@@ -329,10 +313,9 @@ class WhisperTranscriber:
             # Calculate average confidence from segments
             segments_data = result_dict.get("segments", [])
             if segments_data:
-                avg_confidence = sum(
-                    s.get("no_speech_prob", 0.0)
-                    for s in segments_data
-                ) / len(segments_data)
+                avg_confidence = sum(s.get("no_speech_prob", 0.0) for s in segments_data) / len(
+                    segments_data
+                )
                 # Invert no_speech_prob to get speech confidence
                 confidence = 1.0 - avg_confidence
             else:
@@ -344,14 +327,16 @@ class WhisperTranscriber:
                     text=s["text"].strip(),
                     start_time=s["start"],
                     end_time=s["end"],
-                    confidence=1.0 - s.get("no_speech_prob", 0.15)
+                    confidence=1.0 - s.get("no_speech_prob", 0.15),
                 )
                 for s in segments_data
                 if s.get("text", "").strip()
             ]
 
             # Improvement #3: Duration fallback for validation errors
-            final_duration = duration_seconds if duration_seconds > 0 else result_dict.get("duration", 1.0)
+            final_duration = (
+                duration_seconds if duration_seconds > 0 else result_dict.get("duration", 1.0)
+            )
 
             result = TranscriptionResult(
                 text=text,
@@ -359,7 +344,7 @@ class WhisperTranscriber:
                 language=language,
                 duration_seconds=final_duration,
                 timestamp=datetime.now().isoformat(),
-                segments=segments if segments else None
+                segments=segments if segments else None,
             )
 
             return Ok(result)
@@ -368,9 +353,7 @@ class WhisperTranscriber:
             return Err(f"openai-whisper transcription failed: {str(e)}")
 
     async def transcribe_file(
-        self,
-        audio_path: Path,
-        language: Optional[str] = None
+        self, audio_path: Path, language: str | None = None
     ) -> Result[TranscriptionResult, str]:
         """
         Transcribe audio file directly.
@@ -404,7 +387,7 @@ class WhisperTranscriber:
             if original_language and self.config:
                 self.config.language = original_language
 
-    def get_backend(self) -> Optional[str]:
+    def get_backend(self) -> str | None:
         """
         Get current transcription backend.
 

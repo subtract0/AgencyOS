@@ -5,23 +5,23 @@ Tests signatures, modules, metrics, and adapter functionality.
 """
 
 import os
-import pytest
-from unittest.mock import Mock, patch, MagicMock
-from pathlib import Path
 import tempfile
-import json
+from unittest.mock import Mock, patch
+
+import pytest
+
+from dspy_audit.adapter import AuditAdapter
 
 # Import components to test
-from dspy_audit.config import AuditConfig, get_config, get_flags, should_use_dspy
+from dspy_audit.config import AuditConfig
 from dspy_audit.metrics import (
     audit_effectiveness_metric,
-    refactoring_success_metric,
+    calculate_improvement_delta,
+    composite_audit_metric,
     constitutional_compliance_metric,
     learning_effectiveness_metric,
-    composite_audit_metric,
-    calculate_improvement_delta,
+    refactoring_success_metric,
 )
-from dspy_audit.adapter import AuditAdapter
 
 
 class TestConfig:
@@ -91,20 +91,13 @@ class TestMetrics:
 
     def test_audit_effectiveness_constitutional_detected(self):
         """Test metric when constitutional violations are detected."""
-        example = {
-            "known_violations": [
-                {"severity": "constitutional", "type": "missing_tests"}
-            ]
-        }
+        example = {"known_violations": [{"severity": "constitutional", "type": "missing_tests"}]}
 
         # Create mock issue with severity attribute
         mock_issue = Mock()
         mock_issue.severity.value = "constitutional"
 
-        prediction = {
-            "issues": [mock_issue],
-            "verification": {"success": True}
-        }
+        prediction = {"issues": [mock_issue], "verification": {"success": True}}
 
         score = audit_effectiveness_metric(example, prediction)
         assert score >= 0.7  # Should score well for detecting constitutional issue
@@ -117,9 +110,9 @@ class TestMetrics:
             "failed_fixes": [],
             "verification": {
                 "test_results": {"unit": True, "integration": True},
-                "rollback_needed": False
+                "rollback_needed": False,
             },
-            "metrics": {"qt_score_improvement": 0.1}
+            "metrics": {"qt_score_improvement": 0.1},
         }
 
         score = refactoring_success_metric(example, prediction)
@@ -143,12 +136,10 @@ class TestMetrics:
 
         prediction = {
             "audit": mock_audit,
-            "verification": {
-                "test_results": {"test1": True, "test2": True}
-            },
+            "verification": {"test_results": {"test1": True, "test2": True}},
             "applied_fixes": [{"tests_passed": True}],
             "learning": mock_learning,
-            "prioritization": mock_prioritization
+            "prioritization": mock_prioritization,
         }
 
         score = constitutional_compliance_metric(example, prediction)
@@ -163,10 +154,7 @@ class TestMetrics:
         mock_learning.failure_patterns = [{"anti": 1}]
         mock_learning.optimization_suggestions = ["suggestion1"]
 
-        prediction = {
-            "learning": mock_learning,
-            "metrics": {"learning_pattern_reuse": 0.5}
-        }
+        prediction = {"learning": mock_learning, "metrics": {"learning_pattern_reuse": 0.5}}
 
         score = learning_effectiveness_metric(example, prediction)
         assert score >= 0.5  # Should score well with patterns
@@ -179,7 +167,7 @@ class TestMetrics:
             "verification": {"success": True},
             "applied_fixes": [],
             "failed_fixes": [],
-            "learning": None
+            "learning": None,
         }
 
         score = composite_audit_metric(example, prediction)
@@ -213,12 +201,8 @@ class TestAdapter:
         adapter.legacy_auditor = Mock()
 
         # Mock the legacy audit method
-        with patch.object(adapter, '_run_legacy_audit') as mock_legacy:
-            mock_legacy.return_value = {
-                "system": "legacy",
-                "qt_score": 0.5,
-                "issues": []
-            }
+        with patch.object(adapter, "_run_legacy_audit") as mock_legacy:
+            mock_legacy.return_value = {"system": "legacy", "qt_score": 0.5, "issues": []}
 
             result = adapter.run_audit("test/path", force_legacy=True)
             assert result["system"] == "legacy"
@@ -228,10 +212,7 @@ class TestAdapter:
         """Test NECESSARY score calculation."""
         adapter = AuditAdapter()
 
-        analysis = {
-            "total_behaviors": 100,
-            "total_test_functions": 80
-        }
+        analysis = {"total_behaviors": 100, "total_test_functions": 80}
 
         scores = adapter._calculate_necessary_scores(analysis)
         assert "N" in scores
@@ -251,7 +232,7 @@ class TestAdapter:
             "S2": 0.9,
             "A": 0.3,
             "R": 0.8,
-            "Y": 0.5
+            "Y": 0.5,
         }
 
         qt_score = adapter._calculate_qt_score(necessary_scores)
@@ -264,9 +245,7 @@ class TestAdapter:
 
         analysis = {
             "total_test_functions": 0,
-            "functions": [
-                {"file": "test.py", "line": 10, "complexity": 15}
-            ]
+            "functions": [{"file": "test.py", "line": 10, "complexity": 15}],
         }
 
         issues = adapter._extract_issues_from_analysis(analysis)
@@ -278,10 +257,7 @@ class TestAdapter:
         """Test recommendation generation."""
         adapter = AuditAdapter()
 
-        analysis = {
-            "total_test_functions": 0,
-            "total_behaviors": 10
-        }
+        analysis = {"total_test_functions": 0, "total_behaviors": 10}
 
         recommendations = adapter._generate_recommendations(analysis)
         assert len(recommendations) > 0
@@ -311,7 +287,7 @@ class TestModulesIntegration:
 
     def test_module_fallback_imports(self):
         """Test that modules can be imported without DSPy."""
-        from dspy_audit.modules import AuditRefactorModule, MultiAgentAuditModule
+        from dspy_audit.modules import AuditRefactorModule
 
         # Should create dummy modules without DSPy
         module = AuditRefactorModule()
@@ -320,11 +296,8 @@ class TestModulesIntegration:
     def test_signatures_fallback_imports(self):
         """Test that signatures can be imported without DSPy."""
         from dspy_audit.signatures import (
-            AuditSignature,
             Issue,
             IssueSeverity,
-            RefactoringPlan,
-            RefactoringStep,
         )
 
         # Test enum
@@ -336,7 +309,7 @@ class TestModulesIntegration:
             line_number=10,
             severity=IssueSeverity.SECURITY,
             category="test",
-            description="Test issue"
+            description="Test issue",
         )
         assert issue.file_path == "test.py"
 
@@ -344,7 +317,7 @@ class TestModulesIntegration:
 class TestOptimization:
     """Test optimization utilities."""
 
-    @patch('dspy_audit.optimize.Path')
+    @patch("dspy_audit.optimize.Path")
     def test_load_audit_training_data_empty(self, mock_path):
         """Test loading training data when no data exists."""
         from dspy_audit.optimize import load_audit_training_data
@@ -357,7 +330,7 @@ class TestOptimization:
 
     def test_save_and_load_module_mock(self):
         """Test save/load module with a simple object."""
-        from dspy_audit.optimize import save_optimized_module, load_optimized_module
+        from dspy_audit.optimize import load_optimized_module, save_optimized_module
 
         with tempfile.TemporaryDirectory() as tmpdir:
             path = os.path.join(tmpdir, "test_model.pkl")
@@ -384,18 +357,14 @@ class TestEndToEnd:
         adapter = AuditAdapter()
 
         # Mock both audit methods
-        with patch.object(adapter, '_run_legacy_audit') as mock_legacy:
-            with patch.object(adapter, '_run_dspy_audit') as mock_dspy:
+        with patch.object(adapter, "_run_legacy_audit") as mock_legacy:
+            with patch.object(adapter, "_run_dspy_audit") as mock_dspy:
                 mock_legacy.return_value = {
                     "system": "legacy",
                     "qt_score": 0.5,
-                    "issues": [{"id": 1}]
+                    "issues": [{"id": 1}],
                 }
-                mock_dspy.return_value = {
-                    "system": "dspy",
-                    "qt_score": 0.6,
-                    "issues": [{"id": 2}]
-                }
+                mock_dspy.return_value = {"system": "dspy", "qt_score": 0.6, "issues": [{"id": 2}]}
 
                 # Force module availability
                 adapter.dspy_module = Mock()

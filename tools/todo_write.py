@@ -1,5 +1,5 @@
 from datetime import datetime
-from typing import List, Literal
+from typing import Literal
 
 from agency_swarm.tools import BaseTool
 from pydantic import BaseModel, Field
@@ -77,14 +77,12 @@ class TodoWrite(BaseTool):  # type: ignore[misc]
     When in doubt, use this tool. Being proactive with task management demonstrates attentiveness and ensures you complete all requirements successfully.
     """
 
-    todos: List[TodoItem] = Field(..., description="The updated todo list")
+    todos: list[TodoItem] = Field(..., description="The updated todo list")
 
     def run(self):
         try:
             # Validate that only one task is in_progress
-            in_progress_tasks = [
-                todo for todo in self.todos if todo.status == "in_progress"
-            ]
+            in_progress_tasks = [todo for todo in self.todos if todo.status == "in_progress"]
             if len(in_progress_tasks) > 1:
                 return f"Error: Only one task can be 'in_progress' at a time. Found {len(in_progress_tasks)} tasks in progress."
 
@@ -109,7 +107,11 @@ class TodoWrite(BaseTool):  # type: ignore[misc]
             result += f"Summary: total={total_tasks}, done={completed_tasks}, in_progress={in_progress_tasks}, pending={pending_tasks}\n"
 
             # Group tasks by status
-            status_groups: dict[str, list[TodoItem]] = {"in_progress": [], "pending": [], "completed": []}
+            status_groups: dict[str, list[TodoItem]] = {
+                "in_progress": [],
+                "pending": [],
+                "completed": [],
+            }
 
             for todo in self.todos:
                 status_groups[todo.status].append(todo)
@@ -130,15 +132,15 @@ class TodoWrite(BaseTool):  # type: ignore[misc]
 
             # Display completed tasks (limit to last 5 to avoid clutter)
             if status_groups["completed"]:
-                completed_to_show = status_groups["completed"][
-                    -5:
-                ]  # Show last 5 completed
+                completed_to_show = status_groups["completed"][-5:]  # Show last 5 completed
                 result += f"COMPLETED (showing last {len(completed_to_show)}):\n"
                 for todo in completed_to_show:
                     result += f"  [{todo.priority.upper()}] {todo.task}\n"
 
                 if len(status_groups["completed"]) > 5:
-                    result += f"  ... and {len(status_groups['completed']) - 5} more completed tasks\n"
+                    result += (
+                        f"  ... and {len(status_groups['completed']) - 5} more completed tasks\n"
+                    )
                 result += "\n"
 
             # Add usage tips

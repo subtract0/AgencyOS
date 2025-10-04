@@ -5,9 +5,10 @@ Following TDD principles: write tests first, then implementation.
 Tests all 5 constitutional articles and decorator functionality.
 """
 
+from unittest.mock import Mock, patch
+
 import pytest
-from unittest.mock import Mock, patch, MagicMock
-from typing import Any, Callable
+
 from shared.agent_context import AgentContext, create_agent_context
 
 
@@ -21,12 +22,12 @@ def mock_agent_context():
 @pytest.fixture
 def mock_create_agent_func():
     """Create a mock agent creation function."""
+
     def create_mock_agent(
-        model: str = "gpt-5",
-        reasoning_effort: str = "medium",
-        agent_context: AgentContext = None
+        model: str = "gpt-5", reasoning_effort: str = "medium", agent_context: AgentContext = None
     ):
         return Mock(name="MockAgent", model=model)
+
     return create_mock_agent
 
 
@@ -36,6 +37,7 @@ class TestConstitutionalComplianceDecorator:
     def test_decorator_exists(self):
         """Test that the decorator can be imported."""
         from shared.constitutional_validator import constitutional_compliance
+
         assert callable(constitutional_compliance)
 
     def test_decorator_preserves_function_metadata(self, mock_create_agent_func):
@@ -51,12 +53,13 @@ class TestConstitutionalComplianceDecorator:
         """Test that decorator invokes all 5 article validation functions."""
         from shared.constitutional_validator import constitutional_compliance
 
-        with patch('shared.constitutional_validator.validate_article_i') as mock_i, \
-             patch('shared.constitutional_validator.validate_article_ii') as mock_ii, \
-             patch('shared.constitutional_validator.validate_article_iii') as mock_iii, \
-             patch('shared.constitutional_validator.validate_article_iv') as mock_iv, \
-             patch('shared.constitutional_validator.validate_article_v') as mock_v:
-
+        with (
+            patch("shared.constitutional_validator.validate_article_i") as mock_i,
+            patch("shared.constitutional_validator.validate_article_ii") as mock_ii,
+            patch("shared.constitutional_validator.validate_article_iii") as mock_iii,
+            patch("shared.constitutional_validator.validate_article_iv") as mock_iv,
+            patch("shared.constitutional_validator.validate_article_v") as mock_v,
+        ):
             decorated_func = constitutional_compliance(mock_create_agent_func)
             result = decorated_func(agent_context=mock_agent_context)
 
@@ -72,9 +75,15 @@ class TestConstitutionalComplianceDecorator:
 
     def test_decorator_blocks_on_article_i_violation(self, mock_create_agent_func):
         """Test that Article I violation prevents agent creation."""
-        from shared.constitutional_validator import constitutional_compliance, ConstitutionalViolation
+        from shared.constitutional_validator import (
+            ConstitutionalViolation,
+            constitutional_compliance,
+        )
 
-        with patch('shared.constitutional_validator.validate_article_i', side_effect=ConstitutionalViolation("Article I: Incomplete context")):
+        with patch(
+            "shared.constitutional_validator.validate_article_i",
+            side_effect=ConstitutionalViolation("Article I: Incomplete context"),
+        ):
             decorated_func = constitutional_compliance(mock_create_agent_func)
 
             with pytest.raises(ConstitutionalViolation, match="Article I"):
@@ -82,11 +91,18 @@ class TestConstitutionalComplianceDecorator:
 
     def test_decorator_blocks_on_article_ii_violation(self, mock_create_agent_func):
         """Test that Article II violation prevents agent creation."""
-        from shared.constitutional_validator import constitutional_compliance, ConstitutionalViolation
+        from shared.constitutional_validator import (
+            ConstitutionalViolation,
+            constitutional_compliance,
+        )
 
-        with patch('shared.constitutional_validator.validate_article_i'), \
-             patch('shared.constitutional_validator.validate_article_ii', side_effect=ConstitutionalViolation("Article II: Quality standards not met")):
-
+        with (
+            patch("shared.constitutional_validator.validate_article_i"),
+            patch(
+                "shared.constitutional_validator.validate_article_ii",
+                side_effect=ConstitutionalViolation("Article II: Quality standards not met"),
+            ),
+        ):
             decorated_func = constitutional_compliance(mock_create_agent_func)
 
             with pytest.raises(ConstitutionalViolation, match="Article II"):
@@ -96,12 +112,13 @@ class TestConstitutionalComplianceDecorator:
         """Test that decorator passes all arguments to wrapped function."""
         from shared.constitutional_validator import constitutional_compliance
 
-        with patch('shared.constitutional_validator.validate_article_i'), \
-             patch('shared.constitutional_validator.validate_article_ii'), \
-             patch('shared.constitutional_validator.validate_article_iii'), \
-             patch('shared.constitutional_validator.validate_article_iv'), \
-             patch('shared.constitutional_validator.validate_article_v'):
-
+        with (
+            patch("shared.constitutional_validator.validate_article_i"),
+            patch("shared.constitutional_validator.validate_article_ii"),
+            patch("shared.constitutional_validator.validate_article_iii"),
+            patch("shared.constitutional_validator.validate_article_iv"),
+            patch("shared.constitutional_validator.validate_article_v"),
+        ):
             decorated_func = constitutional_compliance(mock_create_agent_func)
             result = decorated_func(model="gpt-5-mini", reasoning_effort="high")
 
@@ -114,6 +131,7 @@ class TestArticleIValidation:
     def test_validate_article_i_exists(self):
         """Test that Article I validation function exists."""
         from shared.constitutional_validator import validate_article_i
+
         assert callable(validate_article_i)
 
     def test_validate_article_i_checks_agent_context(self):
@@ -147,6 +165,7 @@ class TestArticleIIValidation:
     def test_validate_article_ii_exists(self):
         """Test that Article II validation function exists."""
         from shared.constitutional_validator import validate_article_ii
+
         assert callable(validate_article_ii)
 
     def test_validate_article_ii_checks_test_availability(self):
@@ -158,10 +177,11 @@ class TestArticleIIValidation:
 
     def test_validate_article_ii_does_not_run_tests(self):
         """Test that Article II validation does NOT execute tests (performance)."""
-        from shared.constitutional_validator import validate_article_ii
-
         # Validation should be fast and not run full test suite
         import time
+
+        from shared.constitutional_validator import validate_article_ii
+
         start = time.time()
         validate_article_ii()
         duration = time.time() - start
@@ -176,6 +196,7 @@ class TestArticleIIIValidation:
     def test_validate_article_iii_exists(self):
         """Test that Article III validation function exists."""
         from shared.constitutional_validator import validate_article_iii
+
         assert callable(validate_article_iii)
 
     def test_validate_article_iii_checks_git_hooks(self):
@@ -190,7 +211,7 @@ class TestArticleIIIValidation:
         from shared.constitutional_validator import validate_article_iii
 
         # Should check that FORCE_BYPASS or similar flags are not set
-        with patch.dict('os.environ', {'FORCE_BYPASS': 'true'}):
+        with patch.dict("os.environ", {"FORCE_BYPASS": "true"}):
             from shared.constitutional_validator import ConstitutionalViolation
 
             with pytest.raises(ConstitutionalViolation, match="Article III"):
@@ -203,6 +224,7 @@ class TestArticleIVValidation:
     def test_validate_article_iv_exists(self):
         """Test that Article IV validation function exists."""
         from shared.constitutional_validator import validate_article_iv
+
         assert callable(validate_article_iv)
 
     def test_validate_article_iv_checks_learning_integration(self):
@@ -223,18 +245,18 @@ class TestArticleIVValidation:
 
     def test_validate_article_iv_rejects_disabled_learning(self):
         """Test that Article IV rejects DISABLE_LEARNING flag."""
-        from shared.constitutional_validator import validate_article_iv, ConstitutionalViolation
+        from shared.constitutional_validator import ConstitutionalViolation, validate_article_iv
 
-        with patch.dict('os.environ', {'DISABLE_LEARNING': 'true'}):
+        with patch.dict("os.environ", {"DISABLE_LEARNING": "true"}):
             with pytest.raises(ConstitutionalViolation, match="Article IV.*DISABLE_LEARNING"):
                 validate_article_iv()
 
     def test_validate_article_iv_requires_enhanced_memory_enabled(self):
         """Test that Article IV requires USE_ENHANCED_MEMORY to be true."""
-        from shared.constitutional_validator import validate_article_iv, ConstitutionalViolation
+        from shared.constitutional_validator import ConstitutionalViolation, validate_article_iv
 
         # Test with explicit false
-        with patch.dict('os.environ', {'USE_ENHANCED_MEMORY': 'false'}):
+        with patch.dict("os.environ", {"USE_ENHANCED_MEMORY": "false"}):
             with pytest.raises(ConstitutionalViolation, match="Article IV.*USE_ENHANCED_MEMORY"):
                 validate_article_iv()
 
@@ -242,7 +264,7 @@ class TestArticleIVValidation:
         """Test that Article IV passes when USE_ENHANCED_MEMORY is true."""
         from shared.constitutional_validator import validate_article_iv
 
-        with patch.dict('os.environ', {'USE_ENHANCED_MEMORY': 'true'}):
+        with patch.dict("os.environ", {"USE_ENHANCED_MEMORY": "true"}):
             # Should not raise
             validate_article_iv()
 
@@ -253,6 +275,7 @@ class TestArticleVValidation:
     def test_validate_article_v_exists(self):
         """Test that Article V validation function exists."""
         from shared.constitutional_validator import validate_article_v
+
         assert callable(validate_article_v)
 
     def test_validate_article_v_checks_specs_directory(self):
@@ -283,6 +306,7 @@ class TestConstitutionalViolationException:
     def test_constitutional_violation_exists(self):
         """Test that ConstitutionalViolation exception exists."""
         from shared.constitutional_validator import ConstitutionalViolation
+
         assert issubclass(ConstitutionalViolation, Exception)
 
     def test_constitutional_violation_has_message(self):
@@ -327,11 +351,11 @@ class TestValidationHelpers:
         """Test helper function to check environment flags."""
         from shared.constitutional_validator import _get_env_flag
 
-        with patch.dict('os.environ', {'TEST_FLAG': 'true'}):
-            assert _get_env_flag('TEST_FLAG') is True
+        with patch.dict("os.environ", {"TEST_FLAG": "true"}):
+            assert _get_env_flag("TEST_FLAG") is True
 
-        with patch.dict('os.environ', {'TEST_FLAG': 'false'}):
-            assert _get_env_flag('TEST_FLAG') is False
+        with patch.dict("os.environ", {"TEST_FLAG": "false"}):
+            assert _get_env_flag("TEST_FLAG") is False
 
 
 class TestIntegrationScenarios:
@@ -342,10 +366,7 @@ class TestIntegrationScenarios:
         from shared.constitutional_validator import constitutional_compliance
 
         @constitutional_compliance
-        def create_test_agent(
-            model: str = "gpt-5",
-            agent_context: AgentContext = None
-        ):
+        def create_test_agent(model: str = "gpt-5", agent_context: AgentContext = None):
             return Mock(name="TestAgent", model=model)
 
         # Should succeed without errors
@@ -354,11 +375,18 @@ class TestIntegrationScenarios:
 
     def test_failed_agent_creation_logs_violation(self, mock_agent_context):
         """Test that violations are logged for debugging."""
-        from shared.constitutional_validator import constitutional_compliance, ConstitutionalViolation
+        from shared.constitutional_validator import (
+            ConstitutionalViolation,
+            constitutional_compliance,
+        )
 
-        with patch('shared.constitutional_validator.validate_article_ii',
-                   side_effect=ConstitutionalViolation("Article II: Tests failing")), \
-             patch('shared.constitutional_validator._log_violation') as mock_log:
+        with (
+            patch(
+                "shared.constitutional_validator.validate_article_ii",
+                side_effect=ConstitutionalViolation("Article II: Tests failing"),
+            ),
+            patch("shared.constitutional_validator._log_violation") as mock_log,
+        ):
 
             @constitutional_compliance
             def create_test_agent(agent_context: AgentContext = None):
@@ -372,8 +400,9 @@ class TestIntegrationScenarios:
 
     def test_decorator_performance_overhead(self, mock_create_agent_func, mock_agent_context):
         """Test that decorator adds minimal performance overhead."""
-        from shared.constitutional_validator import constitutional_compliance
         import time
+
+        from shared.constitutional_validator import constitutional_compliance
 
         decorated_func = constitutional_compliance(mock_create_agent_func)
 
@@ -394,10 +423,7 @@ class TestBackwardCompatibility:
         from shared.constitutional_validator import constitutional_compliance
 
         @constitutional_compliance
-        def create_test_agent(
-            model: str = "gpt-5",
-            agent_context: AgentContext = None
-        ):
+        def create_test_agent(model: str = "gpt-5", agent_context: AgentContext = None):
             if agent_context is None:
                 agent_context = create_agent_context()
             return Mock(name="TestAgent", agent_context=agent_context)
@@ -412,9 +438,7 @@ class TestBackwardCompatibility:
 
         @constitutional_compliance
         def create_test_agent(
-            model: str = "gpt-5",
-            agent_context: AgentContext = None,
-            cost_tracker = None
+            model: str = "gpt-5", agent_context: AgentContext = None, cost_tracker=None
         ):
             return Mock(name="TestAgent", cost_tracker=cost_tracker)
 

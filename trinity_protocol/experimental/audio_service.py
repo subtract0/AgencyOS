@@ -51,26 +51,24 @@ Required steps:
 
 import asyncio
 import uuid
-from typing import Optional
 from datetime import datetime
-from pathlib import Path
 
-from trinity_protocol.experimental.transcription_queue import TranscriptionService
 from shared.message_bus import MessageBus
+from trinity_protocol.core.models.patterns import AmbientEvent
 from trinity_protocol.experimental.conversation_context import ConversationContext
 from trinity_protocol.experimental.models.audio import (
     AudioConfig,
+    TranscriptionResult,
     WhisperConfig,
-    TranscriptionResult
 )
-from trinity_protocol.core.models.patterns import AmbientEvent
+from trinity_protocol.experimental.transcription_queue import TranscriptionService
 
 # Result pattern
 try:
-    from shared.type_definitions.result import Result, Ok, Err
+    from shared.type_definitions.result import Err, Ok, Result
 except ImportError:
-    from typing import Union
     from dataclasses import dataclass
+    from typing import Union
 
     @dataclass
     class Ok:
@@ -94,11 +92,11 @@ class AmbientListenerService:
     def __init__(
         self,
         message_bus: MessageBus,
-        audio_config: Optional[AudioConfig] = None,
-        whisper_config: Optional[WhisperConfig] = None,
-        device_index: Optional[int] = None,
+        audio_config: AudioConfig | None = None,
+        whisper_config: WhisperConfig | None = None,
+        device_index: int | None = None,
         queue_name: str = "personal_context_stream",
-        min_confidence: float = 0.6
+        min_confidence: float = 0.6,
     ):
         """
         Initialize ambient listener service.
@@ -117,20 +115,16 @@ class AmbientListenerService:
 
         # Initialize transcription service
         self.transcription_service = TranscriptionService(
-            audio_config=audio_config,
-            whisper_config=whisper_config,
-            device_index=device_index
+            audio_config=audio_config, whisper_config=whisper_config, device_index=device_index
         )
 
         # Initialize conversation context
         self.conversation_context = ConversationContext(
-            window_minutes=10.0,
-            max_entries=100,
-            silence_threshold_seconds=120.0
+            window_minutes=10.0, max_entries=100, silence_threshold_seconds=120.0
         )
 
         # Session tracking
-        self.session_id: Optional[str] = None
+        self.session_id: str | None = None
         self.is_running = False
         self._transcription_count = 0
         self._publish_count = 0
@@ -171,11 +165,7 @@ class AmbientListenerService:
         # Reset state
         self.session_id = None
 
-    async def run(
-        self,
-        chunk_duration: float = 1.0,
-        skip_silence: bool = True
-    ) -> None:
+    async def run(self, chunk_duration: float = 1.0, skip_silence: bool = True) -> None:
         """
         Run continuous ambient listening loop.
 
@@ -194,8 +184,7 @@ class AmbientListenerService:
 
         try:
             async for transcription in self.transcription_service.transcribe_stream(
-                chunk_duration=chunk_duration,
-                skip_silence=skip_silence
+                chunk_duration=chunk_duration, skip_silence=skip_silence
             ):
                 if not self.is_running:
                     break
@@ -208,10 +197,7 @@ class AmbientListenerService:
             await self.stop()
             raise
 
-    async def _process_transcription(
-        self,
-        transcription: TranscriptionResult
-    ) -> None:
+    async def _process_transcription(self, transcription: TranscriptionResult) -> None:
         """
         Process transcription: update context and publish to message bus.
 
@@ -229,9 +215,7 @@ class AmbientListenerService:
 
         # Update conversation context
         self.conversation_context.add_transcription(
-            text=transcription.text,
-            timestamp=timestamp,
-            confidence=transcription.confidence
+            text=transcription.text, timestamp=timestamp, confidence=transcription.confidence
         )
 
         # Create ambient event
@@ -243,9 +227,7 @@ class AmbientListenerService:
         self._publish_count += 1
 
     def _create_ambient_event(
-        self,
-        transcription: TranscriptionResult,
-        timestamp: datetime
+        self, transcription: TranscriptionResult, timestamp: datetime
     ) -> AmbientEvent:
         """
         Create ambient event from transcription.
@@ -268,7 +250,7 @@ class AmbientListenerService:
             "session_id": self.session_id,
             "conversation_duration_minutes": self.conversation_context.get_conversation_duration(),
             "speaker_count": self.conversation_context.get_speaker_count(),
-            "transcription_number": self._transcription_count
+            "transcription_number": self._transcription_count,
         }
 
         # Add segment timestamps if available
@@ -284,7 +266,7 @@ class AmbientListenerService:
             confidence=transcription.confidence,
             session_id=self.session_id,
             conversation_id=conversation_id,
-            metadata=metadata
+            metadata=metadata,
         )
 
     async def _publish_event(self, event: AmbientEvent) -> None:
@@ -299,7 +281,7 @@ class AmbientListenerService:
                 queue_name=self.queue_name,
                 message=event.dict(),
                 priority=0,  # NORMAL priority
-                correlation_id=event.conversation_id
+                correlation_id=event.conversation_id,
             )
         except Exception as e:
             # Log error but continue processing
@@ -335,9 +317,9 @@ class AmbientListenerService:
             "queue_name": self.queue_name,
             "transcription_service": {
                 "total_processed_seconds": self.transcription_service.total_processed,
-                "audio_stats": transcription_stats.dict()
+                "audio_stats": transcription_stats.dict(),
             },
-            "conversation_context": conversation_stats
+            "conversation_context": conversation_stats,
         }
 
     def reset_stats(self) -> None:
@@ -365,10 +347,7 @@ async def main():
     bus = MessageBus(db_path="test_ambient.db")
 
     # Create ambient listener (will use default configs)
-    service = AmbientListenerService(
-        message_bus=bus,
-        min_confidence=0.6
-    )
+    service = AmbientListenerService(message_bus=bus, min_confidence=0.6)
 
     print("Starting ambient listener service...")
 
@@ -383,18 +362,15 @@ async def main():
 
     try:
         # Run for 60 seconds or until interrupted
-        await asyncio.wait_for(
-            service.run(chunk_duration=1.0, skip_silence=True),
-            timeout=60.0
-        )
-    except asyncio.TimeoutError:
+        await asyncio.wait_for(service.run(chunk_duration=1.0, skip_silence=True), timeout=60.0)
+    except TimeoutError:
         print("\nDemo timeout reached.")
     except KeyboardInterrupt:
         print("\nStopping service...")
     finally:
         await service.stop()
         stats = service.get_stats()
-        print(f"\nFinal stats:")
+        print("\nFinal stats:")
         print(f"  Transcriptions: {stats['transcription_count']}")
         print(f"  Published: {stats['publish_count']}")
         print(f"  Total audio: {stats['transcription_service']['total_processed_seconds']:.1f}s")

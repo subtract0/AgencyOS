@@ -2,27 +2,28 @@
 import os
 
 from agency_swarm import Agent
-
 from agents import (
     WebSearchTool,
 )
+
 from shared.agent_context import AgentContext, create_agent_context
-from shared.constitutional_validator import constitutional_compliance
 from shared.agent_utils import (
-    detect_model_type,
-    select_instructions_file,
-    render_instructions,
     create_model_settings,
+    detect_model_type,
     get_model_instance,
+    render_instructions,
+    select_instructions_file,
 )
+from shared.constitutional_validator import constitutional_compliance
 from shared.system_hooks import (
-    create_system_reminder_hook,
-    create_memory_integration_hook,
     create_composite_hook,
+    create_memory_integration_hook,
+    create_system_reminder_hook,
 )
 from tools import (
     LS,
     Bash,
+    ClaudeWebSearch,
     Edit,
     ExitPlanMode,
     Git,
@@ -34,12 +35,10 @@ from tools import (
     Read,
     TodoWrite,
     Write,
-    ClaudeWebSearch,
 )
 
 # Get the absolute path to the current file's directory
 current_dir = os.path.dirname(os.path.abspath(__file__))
-
 
 
 @constitutional_compliance
@@ -47,7 +46,7 @@ def create_agency_code_agent(
     model: str = "gpt-5-mini",
     reasoning_effort: str = "medium",
     agent_context: AgentContext = None,
-    cost_tracker = None
+    cost_tracker=None,
 ) -> Agent:
     """Factory that returns a fresh AgencyCodeAgent instance.
     Use this in tests to avoid reusing a singleton across multiple agencies.
@@ -70,10 +69,12 @@ def create_agency_code_agent(
     # Create hooks with memory integration
     reminder_hook = create_system_reminder_hook()
     memory_hook = create_memory_integration_hook(agent_context)
-    combined_hook = create_composite_hook([
-        reminder_hook,
-        memory_hook,
-    ])
+    combined_hook = create_composite_hook(
+        [
+            reminder_hook,
+            memory_hook,
+        ]
+    )
 
     # Log agent creation
     agent_context.store_memory(
@@ -83,9 +84,9 @@ def create_agency_code_agent(
             "model": model,
             "reasoning_effort": reasoning_effort,
             "session_id": agent_context.session_id,
-            "cost_tracker_enabled": cost_tracker is not None
+            "cost_tracker_enabled": cost_tracker is not None,
         },
-        ["agency", "coder", "creation"]
+        ["agency", "coder", "creation"],
     )
 
     # Store cost_tracker in agent context for later use
@@ -134,6 +135,7 @@ def create_agency_code_agent(
     # Enable cost tracking if provided
     if cost_tracker is not None:
         from shared.llm_cost_wrapper import wrap_agent_with_cost_tracking
+
         wrap_agent_with_cost_tracking(agent, cost_tracker)
 
     return agent

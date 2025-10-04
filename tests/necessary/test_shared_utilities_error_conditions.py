@@ -9,19 +9,21 @@ Tests focus on:
 - Retry controller failures
 """
 
-import pytest
 import os
-from unittest.mock import Mock, patch, MagicMock, AsyncMock
+from unittest.mock import AsyncMock, Mock, patch
+
+import pytest
+
+from shared.model_policy import DEFAULTS, agent_model
+from shared.retry_controller import CircuitBreaker, ExponentialBackoffStrategy, RetryController
 from shared.system_hooks import (
     CompositeHook,
     MemoryIntegrationHook,
+    MutationSnapshotHook,
     SystemReminderHook,
     ToolWrapperHook,
-    MutationSnapshotHook,
     create_composite_hook,
 )
-from shared.model_policy import agent_model, DEFAULTS
-from shared.retry_controller import RetryController, ExponentialBackoffStrategy, CircuitBreaker
 
 
 class TestHookCompositionErrors:
@@ -195,7 +197,9 @@ class TestModelConfigurationErrors:
         with patch.dict(os.environ, {"PLANNER_MODEL": ""}):
             # Reload to pick up env change
             from importlib import reload
+
             import shared.model_policy
+
             reload(shared.model_policy)
 
             model = shared.model_policy.agent_model("planner")
@@ -204,7 +208,6 @@ class TestModelConfigurationErrors:
 
     def test_model_policy_defaults_integrity(self):
         """Test that DEFAULTS dict has expected structure."""
-        from shared.model_policy import DEFAULTS
 
         # All keys should map to strings
         assert isinstance(DEFAULTS, dict)
@@ -348,7 +351,8 @@ class TestMutationSnapshotHookErrors:
 
         # Create a temp file in repo
         import tempfile
-        with tempfile.NamedTemporaryFile(mode='w', delete=False, dir=os.getcwd()) as f:
+
+        with tempfile.NamedTemporaryFile(mode="w", delete=False, dir=os.getcwd()) as f:
             f.write("test content")
             temp_path = f.name
 
@@ -356,7 +360,7 @@ class TestMutationSnapshotHookErrors:
             mock_tool.file_path = temp_path
 
             # Mock os.makedirs to raise PermissionError
-            with patch('os.makedirs', side_effect=PermissionError("Permission denied")):
+            with patch("os.makedirs", side_effect=PermissionError("Permission denied")):
                 # Should handle permission error gracefully
                 await hook.on_tool_start(mock_context, mock_agent, mock_tool)
         finally:

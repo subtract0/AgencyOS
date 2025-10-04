@@ -2,35 +2,38 @@
 QualityEnforcerAgent - Simplified constitutional compliance and quality enforcement agent.
 """
 
-import os
-import time
 import logging
+import os
 import subprocess
+import time
+from datetime import UTC
 from subprocess import TimeoutExpired
-from typing import Dict, List, Optional, Any
 
 from agency_swarm import Agent
 from agency_swarm.tools import BaseTool as Tool
-from pydantic import BaseModel, Field
+from pydantic import Field
 
 from shared.agent_context import AgentContext, create_agent_context
 from shared.constitutional_validator import constitutional_compliance
-from shared.agent_utils import (
-    detect_model_type,
-    select_instructions_file,
-    render_instructions,
-    create_model_settings,
-    get_model_instance,
+from shared.system_hooks import (
+    create_composite_hook,
+    create_memory_integration_hook,
+    create_system_reminder_hook,
 )
-from shared.system_hooks import create_system_reminder_hook, create_memory_integration_hook, create_composite_hook
-from tools.auto_fix_nonetype import NoneTypeErrorDetector, LLMNoneTypeFixer, AutoNoneTypeFixer, SimpleNoneTypeMonitor
 from tools.apply_and_verify_patch import ApplyAndVerifyPatch, AutonomousHealingOrchestrator
+from tools.auto_fix_nonetype import (
+    AutoNoneTypeFixer,
+    LLMNoneTypeFixer,
+    NoneTypeErrorDetector,
+    SimpleNoneTypeMonitor,
+)
 
 # Try to import unified core if available
 try:
     if os.getenv("ENABLE_UNIFIED_CORE", "true").lower() == "true":
         from core.self_healing import SelfHealingCore
         from core.telemetry import emit
+
         _unified_core_available = True
     else:
         _unified_core_available = False
@@ -49,14 +52,14 @@ class ConstitutionalCheck(Tool):
         return f"""Constitutional compliance check for provided code:
 
 ANALYSIS:
-- Article I (Complete Context): {'✓' if len(self.code) > 10 else '✗'} Context appears {'complete' if self.code_context else 'incomplete'}
+- Article I (Complete Context): {"✓" if len(self.code) > 10 else "✗"} Context appears {"complete" if self.code_context else "incomplete"}
 - Article II (100% Verification): Requires test validation
 - Article III (Automated Enforcement): This check is automated
 - Article IV (Continuous Learning): Pattern should be stored for learning
 - Article V (Spec-Driven): Verify specifications exist
 
 RECOMMENDATION:
-{'Code appears constitutionally compliant' if len(self.code) > 10 else 'Code needs more context and verification'}
+{"Code appears constitutionally compliant" if len(self.code) > 10 else "Code needs more context and verification"}
 """
 
 
@@ -77,16 +80,16 @@ class QualityAnalysis(Tool):
         if "pass  # " in self.code or "pass\n" in self.code:
             issues.append("Contains placeholder implementations")
 
-        if len(self.code.split('\n')) > 100:
+        if len(self.code.split("\n")) > 100:
             issues.append("Function/file may be too long")
 
-        return f"""Quality Analysis for {self.file_path or 'provided code'}:
+        return f"""Quality Analysis for {self.file_path or "provided code"}:
 
 ISSUES FOUND:
-{chr(10).join(f'- {issue}' for issue in issues) if issues else '- No obvious quality issues detected'}
+{chr(10).join(f"- {issue}" for issue in issues) if issues else "- No obvious quality issues detected"}
 
 RECOMMENDATION:
-{'Address the issues above before proceeding' if issues else 'Code quality appears acceptable'}
+{"Address the issues above before proceeding" if issues else "Code quality appears acceptable"}
 
 NOTE: For comprehensive analysis, consider using GPT-5 with the prompt:
 "Please review this code for style, clarity, bugs, and improvements: {self.code[:200]}..."
@@ -96,20 +99,21 @@ NOTE: For comprehensive analysis, consider using GPT-5 with the prompt:
 class ValidatorTool(Tool):
     """Validate test coverage and success rate - ENFORCES Article II: 100% test pass requirement."""
 
-    test_command: str = Field(default="python run_tests.py --run-all", description="Command to run tests (MUST use --run-all for Article II compliance)")
+    test_command: str = Field(
+        default="python run_tests.py --run-all",
+        description="Command to run tests (MUST use --run-all for Article II compliance)",
+    )
 
     def run(self) -> str:
         """Check test status with REAL test execution and HARD failure enforcement."""
-        import subprocess
         import shlex
-        import json
-        from datetime import datetime, timezone
-        from pathlib import Path
 
         try:
             # Validate and sanitize the test command
             if not self.test_command or not isinstance(self.test_command, str):
-                raise ValueError("Invalid test command provided - Article II requires valid test execution")
+                raise ValueError(
+                    "Invalid test command provided - Article II requires valid test execution"
+                )
 
             # Split command safely and validate
             try:
@@ -118,19 +122,29 @@ class ValidatorTool(Tool):
                 raise ValueError(f"Invalid command syntax: {e}")
 
             # Basic validation - ensure it's a safe command
-            if not command_parts or command_parts[0] in ['rm', 'del', 'format', 'sudo', 'su']:
+            if not command_parts or command_parts[0] in ["rm", "del", "format", "sudo", "su"]:
                 raise ValueError("Unsafe or empty command detected")
 
             # ENFORCE --run-all flag for Article II compliance (100% verification requirement)
             # Only add if not present AND no other test mode flags are set
-            test_mode_flags = ["--run-all", "--fast", "--slow", "--benchmark", "--github", "--integration-only", "--run-integration"]
+            test_mode_flags = [
+                "--run-all",
+                "--fast",
+                "--slow",
+                "--benchmark",
+                "--github",
+                "--integration-only",
+                "--run-integration",
+            ]
             has_mode_flag = any(flag in command_parts for flag in test_mode_flags)
 
             if not has_mode_flag:
                 logging.warning("Adding --run-all flag to enforce Article II (100% verification)")
                 command_parts.append("--run-all")
             elif "--run-all" not in command_parts:
-                logging.info(f"Using existing test mode flag for verification: {[f for f in test_mode_flags if f in command_parts]}")
+                logging.info(
+                    f"Using existing test mode flag for verification: {[f for f in test_mode_flags if f in command_parts]}"
+                )
 
             # Run in activated virtual environment safely
             # Use explicit path to python and avoid shell interpretation
@@ -146,7 +160,7 @@ class ValidatorTool(Tool):
             result = self._run_with_constitutional_timeout(
                 command_parts,
                 initial_timeout_ms=600000,  # 10 minutes for full test suite
-                max_retries=3
+                max_retries=3,
             )
 
             # Parse test output for verification
@@ -160,15 +174,15 @@ class ValidatorTool(Tool):
                 error_msg = f"""CONSTITUTIONAL VIOLATION - Article II: 100% Test Success Required
 
 Exit Code: {result.returncode}
-Tests Passed: {verification_result['tests_passed']}
-Tests Failed: {verification_result['tests_failed']}
-Pass Rate: {verification_result['pass_rate']:.1f}%
+Tests Passed: {verification_result["tests_passed"]}
+Tests Failed: {verification_result["tests_failed"]}
+Pass Rate: {verification_result["pass_rate"]:.1f}%
 
 STDERR:
-{result.stderr[:1000] if result.stderr else 'No error output'}
+{result.stderr[:1000] if result.stderr else "No error output"}
 
 STDOUT:
-{result.stdout[-2000:] if result.stdout else 'No output'}
+{result.stdout[-2000:] if result.stdout else "No output"}
 
 Article II requires 100% test success before any merge or deployment.
 Fix all failing tests before proceeding.
@@ -181,10 +195,10 @@ Fix all failing tests before proceeding.
             # All tests passed - return success message
             success_msg = f"""✓ Article II Compliance VERIFIED - 100% Test Success
 
-Tests Passed: {verification_result['tests_passed']}
-Tests Failed: {verification_result['tests_failed']}
-Pass Rate: {verification_result['pass_rate']:.1f}%
-Execution Time: {verification_result['execution_time']:.2f}s
+Tests Passed: {verification_result["tests_passed"]}
+Tests Failed: {verification_result["tests_failed"]}
+Pass Rate: {verification_result["pass_rate"]:.1f}%
+Execution Time: {verification_result["execution_time"]:.2f}s
 
 Constitutional compliance maintained across all 5 articles.
 """
@@ -195,9 +209,11 @@ Constitutional compliance maintained across all 5 articles.
             # Log exception to healing directory
             self._log_verification_failure(str(e))
             # Re-raise to ensure hard failure
-            raise RuntimeError(f"Test validation failed - Article II enforcement blocked: {e}") from e
+            raise RuntimeError(
+                f"Test validation failed - Article II enforcement blocked: {e}"
+            ) from e
 
-    def _parse_test_output(self, result) -> Dict:
+    def _parse_test_output(self, result) -> dict:
         """Parse pytest output to extract test results."""
         import re
 
@@ -207,9 +223,9 @@ Constitutional compliance maintained across all 5 articles.
 
         # Extract test counts from pytest output
         # Look for patterns like "1562 passed" or "5 failed, 1557 passed"
-        passed_match = re.search(r'(\d+)\s+passed', combined_output)
-        failed_match = re.search(r'(\d+)\s+failed', combined_output)
-        error_match = re.search(r'(\d+)\s+error', combined_output)
+        passed_match = re.search(r"(\d+)\s+passed", combined_output)
+        failed_match = re.search(r"(\d+)\s+failed", combined_output)
+        error_match = re.search(r"(\d+)\s+error", combined_output)
 
         tests_passed = int(passed_match.group(1)) if passed_match else 0
         tests_failed = int(failed_match.group(1)) if failed_match else 0
@@ -219,7 +235,7 @@ Constitutional compliance maintained across all 5 articles.
         pass_rate = (tests_passed / total_tests * 100) if total_tests > 0 else 0.0
 
         # Extract execution time if available
-        time_match = re.search(r'(\d+\.?\d*)\s*seconds?', combined_output)
+        time_match = re.search(r"(\d+\.?\d*)\s*seconds?", combined_output)
         execution_time = float(time_match.group(1)) if time_match else 0.0
 
         return {
@@ -232,10 +248,10 @@ Constitutional compliance maintained across all 5 articles.
             "exit_code": result.returncode,
         }
 
-    def _log_verification(self, verification_result: Dict) -> None:
+    def _log_verification(self, verification_result: dict) -> None:
         """Log verification results to autonomous healing directory."""
         import json
-        from datetime import datetime, timezone
+        from datetime import datetime
         from pathlib import Path
 
         try:
@@ -245,7 +261,7 @@ Constitutional compliance maintained across all 5 articles.
 
             # Create verification log entry
             log_entry = {
-                "timestamp": datetime.now(timezone.utc).isoformat(),
+                "timestamp": datetime.now(UTC).isoformat(),
                 "agent": "QualityEnforcerAgent",
                 "verification_type": "Article_II_Test_Validation",
                 "result": verification_result,
@@ -265,7 +281,7 @@ Constitutional compliance maintained across all 5 articles.
     def _log_verification_failure(self, error_msg: str) -> None:
         """Log verification failure to autonomous healing directory."""
         import json
-        from datetime import datetime, timezone
+        from datetime import datetime
         from pathlib import Path
 
         try:
@@ -273,7 +289,7 @@ Constitutional compliance maintained across all 5 articles.
             log_dir.mkdir(parents=True, exist_ok=True)
 
             failure_entry = {
-                "timestamp": datetime.now(timezone.utc).isoformat(),
+                "timestamp": datetime.now(UTC).isoformat(),
                 "agent": "QualityEnforcerAgent",
                 "failure_type": "Verification_Exception",
                 "error": error_msg,
@@ -287,14 +303,18 @@ Constitutional compliance maintained across all 5 articles.
         except Exception as e:
             logging.warning(f"Failed to log verification failure: {e}")
 
-    def _run_with_constitutional_timeout(self, command_parts, initial_timeout_ms=120000, max_retries=3):
+    def _run_with_constitutional_timeout(
+        self, command_parts, initial_timeout_ms=120000, max_retries=3
+    ):
         """Run subprocess with constitutional timeout pattern: exponential backoff retries."""
         timeout_ms = initial_timeout_ms
 
         for attempt in range(max_retries):
             timeout_sec = timeout_ms / 1000.0
             try:
-                logging.info(f"Executing command (attempt {attempt + 1}/{max_retries}, timeout: {timeout_sec}s): {' '.join(command_parts[:3])}...")
+                logging.info(
+                    f"Executing command (attempt {attempt + 1}/{max_retries}, timeout: {timeout_sec}s): {' '.join(command_parts[:3])}..."
+                )
 
                 result = subprocess.run(
                     command_parts,
@@ -302,13 +322,13 @@ Constitutional compliance maintained across all 5 articles.
                     capture_output=True,
                     text=True,
                     timeout=timeout_sec,
-                    cwd=os.getcwd()  # Explicit working directory
+                    cwd=os.getcwd(),  # Explicit working directory
                 )
 
                 # Successful execution - return result
                 return result
 
-            except TimeoutExpired as e:
+            except TimeoutExpired:
                 logging.warning(f"Command timed out after {timeout_sec}s on attempt {attempt + 1}")
 
                 if attempt < max_retries - 1:
@@ -317,7 +337,9 @@ Constitutional compliance maintained across all 5 articles.
                     continue
                 else:
                     # Final attempt failed - re-raise
-                    logging.error(f"Command failed after {max_retries} attempts with exponential timeout")
+                    logging.error(
+                        f"Command failed after {max_retries} attempts with exponential timeout"
+                    )
                     raise
 
         # Should never reach here, but just in case
@@ -364,8 +386,8 @@ Use GPT-5 with prompt: "Analyze and fix this error: {self.error_message} in code
 def create_quality_enforcer_agent(
     model: str = "gpt-5",
     reasoning_effort: str = "high",
-    agent_context: Optional[AgentContext] = None,
-    cost_tracker = None
+    agent_context: AgentContext | None = None,
+    cost_tracker=None,
 ) -> Agent:
     """Factory that returns a simplified QualityEnforcerAgent instance.
 
@@ -380,9 +402,9 @@ def create_quality_enforcer_agent(
     instructions_file = os.path.join(current_dir, "instructions.md")
 
     try:
-        with open(instructions_file, "r") as f:
+        with open(instructions_file) as f:
             instructions = f.read()
-    except (FileNotFoundError, IOError, PermissionError) as e:
+    except (OSError, FileNotFoundError, PermissionError):
         instructions = """
 # QualityEnforcerAgent - Simplified Quality and Constitutional Enforcement
 
@@ -439,9 +461,18 @@ Use these tools to maintain quality while delegating complex analysis to LLM pro
             "constitutional-compliant alternatives and coordinates multi-agent remediation workflows."
         ),
         instructions=instructions,
-        tools=[ConstitutionalCheck, QualityAnalysis, ValidatorTool, AutoFixSuggestion,
-               NoneTypeErrorDetector, LLMNoneTypeFixer, AutoNoneTypeFixer, SimpleNoneTypeMonitor,
-               ApplyAndVerifyPatch, AutonomousHealingOrchestrator],
+        tools=[
+            ConstitutionalCheck,
+            QualityAnalysis,
+            ValidatorTool,
+            AutoFixSuggestion,
+            NoneTypeErrorDetector,
+            LLMNoneTypeFixer,
+            AutoNoneTypeFixer,
+            SimpleNoneTypeMonitor,
+            ApplyAndVerifyPatch,
+            AutonomousHealingOrchestrator,
+        ],
         model=model,
         hooks=combined_hook,
         temperature=0.1,
@@ -452,6 +483,7 @@ Use these tools to maintain quality while delegating complex analysis to LLM pro
     # Enable cost tracking if provided
     if cost_tracker is not None:
         from shared.llm_cost_wrapper import wrap_agent_with_cost_tracking
+
         wrap_agent_with_cost_tracking(agent, cost_tracker)
 
     return agent

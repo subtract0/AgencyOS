@@ -7,14 +7,14 @@ This test validates every claim made in the release and identifies gaps
 between advertised features and actual implementation.
 """
 
-import pytest
 import os
-import tempfile
 import subprocess
-import json
 import sys
+import tempfile
 from pathlib import Path
-from unittest.mock import patch, MagicMock
+from unittest.mock import patch
+
+import pytest
 
 
 @pytest.mark.e2e
@@ -32,6 +32,7 @@ class TestMasterE2E:
         yield
         # Cleanup
         import shutil
+
         try:
             shutil.rmtree(self.test_dir)
         except Exception:
@@ -75,8 +76,10 @@ result = process_data(None)
 """
 
             # Mock the LLM call to avoid API dependency
-            with patch.object(LLMNoneTypeFixer, 'run') as mock_run:
-                mock_run.return_value = "if data is not None:\n    return data.get('key')\nelse:\n    return None"
+            with patch.object(LLMNoneTypeFixer, "run") as mock_run:
+                mock_run.return_value = (
+                    "if data is not None:\n    return data.get('key')\nelse:\n    return None"
+                )
 
                 fixer = LLMNoneTypeFixer(error_info=error_info, code_context=code_context)
                 fix = fixer.run()
@@ -98,7 +101,7 @@ result = process_data(None)
                 file_path="test.py",
                 original_code="test code",
                 fixed_code="fixed code",
-                error_description="test error"
+                error_description="test error",
             )
             assert patcher is not None
             print("✅ Autonomous healing: ApplyAndVerifyPatch available")
@@ -143,6 +146,7 @@ result = process_data(None)
         # Test each agent
         try:
             from chief_architect_agent import create_chief_architect_agent
+
             agent = create_chief_architect_agent(model="gpt-4", reasoning_effort="low")
             agents_status["ChiefArchitectAgent"] = True
             print("✅ ChiefArchitectAgent")
@@ -152,6 +156,7 @@ result = process_data(None)
 
         try:
             from agency_code_agent.agency_code_agent import create_agency_code_agent
+
             agent = create_agency_code_agent(model="gpt-4", reasoning_effort="low")
             agents_status["AgencyCodeAgent"] = True
             print("✅ AgencyCodeAgent")
@@ -161,6 +166,7 @@ result = process_data(None)
 
         try:
             from planner_agent.planner_agent import create_planner_agent
+
             agent = create_planner_agent(model="gpt-4", reasoning_effort="low")
             agents_status["PlannerAgent"] = True
             print("✅ PlannerAgent")
@@ -170,6 +176,7 @@ result = process_data(None)
 
         try:
             from auditor_agent import create_auditor_agent
+
             agent = create_auditor_agent(model="gpt-4", reasoning_effort="low")
             agents_status["AuditorAgent"] = True
             print("✅ AuditorAgent")
@@ -179,6 +186,7 @@ result = process_data(None)
 
         try:
             from test_generator_agent import create_test_generator_agent
+
             agent = create_test_generator_agent(model="gpt-4", reasoning_effort="low")
             agents_status["TestGeneratorAgent"] = True
             print("✅ TestGeneratorAgent")
@@ -188,6 +196,7 @@ result = process_data(None)
 
         try:
             from learning_agent import create_learning_agent
+
             agent = create_learning_agent(model="gpt-4", reasoning_effort="low")
             agents_status["LearningAgent"] = True
             print("✅ LearningAgent")
@@ -197,6 +206,7 @@ result = process_data(None)
 
         try:
             from merger_agent.merger_agent import create_merger_agent
+
             agent = create_merger_agent(model="gpt-4", reasoning_effort="low")
             agents_status["MergerAgent"] = True
             print("✅ MergerAgent")
@@ -206,6 +216,7 @@ result = process_data(None)
 
         try:
             from toolsmith_agent import create_toolsmith_agent
+
             agent = create_toolsmith_agent(model="gpt-4", reasoning_effort="low")
             agents_status["ToolsmithAgent"] = True
             print("✅ ToolsmithAgent")
@@ -215,6 +226,7 @@ result = process_data(None)
 
         try:
             from work_completion_summary_agent import create_work_completion_summary_agent
+
             agent = create_work_completion_summary_agent(model="gpt-4", reasoning_effort="low")
             agents_status["WorkCompletionSummaryAgent"] = True
             print("✅ WorkCompletionSummaryAgent")
@@ -224,6 +236,7 @@ result = process_data(None)
 
         try:
             from quality_enforcer_agent import create_quality_enforcer_agent
+
             agent = create_quality_enforcer_agent(model="gpt-4", reasoning_effort="low")
             agents_status["QualityEnforcerAgent"] = True
             print("✅ QualityEnforcerAgent")
@@ -272,7 +285,7 @@ result = process_data(None)
     def test_memory_store_and_retrieve(self):
         """Test memory storage and retrieval."""
         try:
-            from agency_memory import Memory, InMemoryStore
+            from agency_memory import InMemoryStore, Memory
 
             memory = Memory(store=InMemoryStore())
 
@@ -291,7 +304,7 @@ result = process_data(None)
     def test_memory_tagging_and_search(self):
         """Test memory tagging system."""
         try:
-            from agency_memory import Memory, InMemoryStore
+            from agency_memory import InMemoryStore, Memory
 
             memory = Memory(store=InMemoryStore())
 
@@ -322,7 +335,7 @@ result = process_data(None)
     def test_learning_consolidation(self):
         """Test learning consolidation."""
         try:
-            from agency_memory import consolidate_learnings, Memory, InMemoryStore
+            from agency_memory import InMemoryStore, Memory, consolidate_learnings
 
             memory = Memory(store=InMemoryStore())
 
@@ -341,7 +354,7 @@ result = process_data(None)
     def test_enhanced_memory_store(self):
         """Test enhanced memory store with VectorStore."""
         try:
-            from agency_memory import EnhancedMemoryStore, create_enhanced_memory_store
+            from agency_memory import create_enhanced_memory_store
 
             # Test creation (may fail due to missing dependencies)
             store = create_enhanced_memory_store()
@@ -384,7 +397,7 @@ result = process_data(None)
                 capture_output=True,
                 text=True,
                 timeout=60,
-                env=env
+                env=env,
             )
 
             # Don't assert pass rate, just that tests can run
@@ -401,10 +414,7 @@ result = process_data(None)
         """Test health check command."""
         try:
             result = subprocess.run(
-                [sys.executable, "agency.py", "health"],
-                capture_output=True,
-                text=True,
-                timeout=30
+                [sys.executable, "agency.py", "health"], capture_output=True, text=True, timeout=30
             )
 
             # Should run without crashing
@@ -418,10 +428,7 @@ result = process_data(None)
         """Test logs command."""
         try:
             result = subprocess.run(
-                [sys.executable, "agency.py", "logs"],
-                capture_output=True,
-                text=True,
-                timeout=30
+                [sys.executable, "agency.py", "logs"], capture_output=True, text=True, timeout=30
             )
 
             assert result.returncode == 0 or "logs" in result.stdout.lower()
@@ -434,10 +441,7 @@ result = process_data(None)
         """Test test command."""
         try:
             result = subprocess.run(
-                [sys.executable, "agency.py", "test"],
-                capture_output=True,
-                text=True,
-                timeout=60
+                [sys.executable, "agency.py", "test"], capture_output=True, text=True, timeout=60
             )
 
             # Should delegate to run_tests.py
@@ -453,10 +457,7 @@ result = process_data(None)
         try:
             # Just test that it doesn't crash immediately
             result = subprocess.run(
-                [sys.executable, "agency.py", "demo"],
-                capture_output=True,
-                text=True,
-                timeout=10
+                [sys.executable, "agency.py", "demo"], capture_output=True, text=True, timeout=10
             )
 
             # Demo might run indefinitely, so timeout is expected
@@ -480,7 +481,7 @@ result = process_data(None)
     def test_core_file_tools(self):
         """Test file operation tools."""
         try:
-            from tools import Read, Write, Edit
+            from tools import Edit, Read, Write
 
             # Test file path
             test_file = os.path.join(self.test_dir, "test.txt")
@@ -495,11 +496,7 @@ result = process_data(None)
             assert "Hello World" in content
 
             # Edit
-            edit_tool = Edit(
-                file_path=test_file,
-                old_string="Hello",
-                new_string="Hi"
-            )
+            edit_tool = Edit(file_path=test_file, old_string="Hello", new_string="Hi")
             edit_tool.run()
 
             # Verify edit
@@ -526,7 +523,7 @@ result = process_data(None)
     def test_search_tools(self):
         """Test search tools."""
         try:
-            from tools import Grep, Glob
+            from tools import Glob, Grep
 
             assert Grep is not None
             assert Glob is not None
@@ -553,9 +550,7 @@ result = process_data(None)
         try:
             from tools import TodoWrite
 
-            todos = [
-                {"task": "Test task", "status": "pending", "priority": "medium"}
-            ]
+            todos = [{"task": "Test task", "status": "pending", "priority": "medium"}]
             todo_tool = TodoWrite(todos=todos)
             result = todo_tool.run()
             assert result is not None
@@ -578,7 +573,7 @@ result = process_data(None)
     def test_notebook_tools(self):
         """Test Jupyter notebook tools."""
         try:
-            from tools import NotebookRead, NotebookEdit
+            from tools import NotebookEdit, NotebookRead
 
             assert NotebookRead is not None
             assert NotebookEdit is not None
@@ -597,13 +592,14 @@ result = process_data(None)
             "memory_system": False,
             "constitutional_compliance": False,
             "cli_commands": False,
-            "development_tools": False
+            "development_tools": False,
         }
 
         # Check autonomous healing
         try:
-            from tools.auto_fix_nonetype import AutoNoneTypeFixer
             from tools.apply_and_verify_patch import ApplyAndVerifyPatch
+            from tools.auto_fix_nonetype import AutoNoneTypeFixer
+
             validations["autonomous_healing"] = True
         except ImportError:
             pass
@@ -611,8 +607,9 @@ result = process_data(None)
         # Check agents (at least core ones)
         try:
             from agency_code_agent.agency_code_agent import create_agency_code_agent
-            from planner_agent.planner_agent import create_planner_agent
             from chief_architect_agent import create_chief_architect_agent
+            from planner_agent.planner_agent import create_planner_agent
+
             validations["multi_agent"] = True
         except ImportError:
             pass
@@ -620,6 +617,7 @@ result = process_data(None)
         # Check memory
         try:
             from agency_memory import Memory, consolidate_learnings
+
             validations["memory_system"] = True
         except ImportError:
             pass
@@ -634,22 +632,25 @@ result = process_data(None)
 
         # Check tools
         try:
-            from tools import Read, Write, Edit, Bash, TodoWrite
+            from tools import Bash, Edit, Read, TodoWrite, Write
+
             validations["development_tools"] = True
         except ImportError:
             pass
 
         # Report
-        print("\n" + "="*60)
+        print("\n" + "=" * 60)
         print("🎯 MASTER VALIDATION RESULTS")
-        print("="*60)
+        print("=" * 60)
         for feature, status in validations.items():
             emoji = "✅" if status else "❌"
-            print(f"{emoji} {feature.replace('_', ' ').title()}: {'PASSED' if status else 'FAILED'}")
+            print(
+                f"{emoji} {feature.replace('_', ' ').title()}: {'PASSED' if status else 'FAILED'}"
+            )
 
         passed = sum(validations.values())
         total = len(validations)
-        print(f"\n📊 Overall Score: {passed}/{total} ({passed/total*100:.1f}%)")
+        print(f"\n📊 Overall Score: {passed}/{total} ({passed / total * 100:.1f}%)")
 
         # Success criteria: At least 5/6 features should work
         if passed >= 5:
@@ -663,9 +664,9 @@ result = process_data(None)
 
 def run_manual_verification():
     """Print manual verification instructions."""
-    print("\n" + "="*80)
+    print("\n" + "=" * 80)
     print("📋 MANUAL VERIFICATION INSTRUCTIONS")
-    print("="*80)
+    print("=" * 80)
 
     print("""
 Before running automated tests, perform these manual checks:
@@ -701,7 +702,7 @@ Run these checks BEFORE executing the MasterTest!
 
 if __name__ == "__main__":
     print("🏥 MONASTERY MASTER TEST SUITE")
-    print("="*50)
+    print("=" * 50)
 
     # Show manual verification instructions
     run_manual_verification()

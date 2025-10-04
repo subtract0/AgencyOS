@@ -3,15 +3,14 @@ SimpleTelemetry: Unified telemetry system with automatic retention.
 Consolidates multiple telemetry systems into a single JSONL sink.
 """
 
-import os
 import json
-import glob
+import os
 import shutil
 from datetime import datetime, timedelta
-from typing import List, Optional
-from shared.type_definitions.json import JSONValue
-from shared.models.telemetry import TelemetryEvent, EventType, EventSeverity
 from pathlib import Path
+
+from shared.models.telemetry import EventSeverity, EventType, TelemetryEvent
+from shared.type_definitions.json import JSONValue
 
 
 class SimpleTelemetry:
@@ -76,7 +75,7 @@ class SimpleTelemetry:
             "info": EventSeverity.INFO,
             "warning": EventSeverity.WARNING,
             "error": EventSeverity.ERROR,
-            "critical": EventSeverity.CRITICAL
+            "critical": EventSeverity.CRITICAL,
         }
 
         # Create Pydantic model for validation
@@ -84,7 +83,7 @@ class SimpleTelemetry:
             event_id=f"{self.run_id}_{datetime.now().timestamp()}",
             event_type=EventType.INFO,  # Default type, can be enhanced
             severity=severity_map.get(level, EventSeverity.INFO),
-            metadata={"event_name": event, "run_id": self.run_id, **data}
+            metadata={"event_name": event, "run_id": self.run_id, **data},
         )
 
         # Convert to dict for backward compatibility
@@ -93,7 +92,7 @@ class SimpleTelemetry:
             "run_id": self.run_id,
             "level": level,
             "event": event,
-            "data": data or {}
+            "data": data or {},
         }
 
         try:
@@ -105,6 +104,7 @@ class SimpleTelemetry:
 
             # Secure open with 0600 perms
             import os as _os
+
             fd = _os.open(str(self.current_file), _os.O_CREAT | _os.O_APPEND | _os.O_WRONLY, 0o600)
             try:
                 with _os.fdopen(fd, "a", encoding="utf-8") as f:
@@ -114,6 +114,7 @@ class SimpleTelemetry:
                     _os.chmod(self.current_file, 0o600)
                 except OSError as e:
                     import logging
+
                     logger = logging.getLogger(__name__)
                     logger.warning(f"Failed to set file permissions for telemetry: {e}")
             except Exception:
@@ -122,6 +123,7 @@ class SimpleTelemetry:
                     _os.close(fd)
                 except OSError as e:
                     import logging
+
                     logger = logging.getLogger(__name__)
                     logger.error(f"Failed to close file descriptor during telemetry error: {e}")
                     # Re-raise original exception, not the cleanup failure
@@ -130,12 +132,12 @@ class SimpleTelemetry:
         except Exception as e:
             # Fallback to stderr if file logging fails
             import sys
+
             print(f"Telemetry error: {e}", file=sys.stderr)
 
-    def query(self,
-              event_filter: Optional[str] = None,
-              since: Optional[datetime] = None,
-              limit: int = 100) -> List[dict[str, JSONValue]]:
+    def query(
+        self, event_filter: str | None = None, since: datetime | None = None, limit: int = 100
+    ) -> list[dict[str, JSONValue]]:
         """
         Query recent telemetry events.
 
@@ -154,7 +156,7 @@ class SimpleTelemetry:
 
         for file_path in files:
             try:
-                with open(file_path, 'r') as f:
+                with open(file_path) as f:
                     for line in f:
                         if not line.strip():
                             continue
@@ -197,7 +199,7 @@ class SimpleTelemetry:
             "warnings": 0,
             "event_types": {},
             "recent_errors": [],
-            "health_score": 100.0
+            "health_score": 100.0,
         }
 
         # Analyze last hour of events
@@ -228,11 +230,9 @@ class SimpleTelemetry:
                         error_val = data.get("error", "Unknown error")
                         error_message = str(error_val) if error_val is not None else "Unknown error"
 
-                    recent_errors.append({
-                        "time": event["ts"],
-                        "event": event["event"],
-                        "message": error_message
-                    })
+                    recent_errors.append(
+                        {"time": event["ts"], "event": event["event"], "message": error_message}
+                    )
 
             elif level == "warning":
                 # Safely increment warnings
@@ -279,16 +279,19 @@ class SimpleTelemetry:
 
             if len(run_files) > self.retention_runs:
                 # Archive older files
-                files_to_archive = run_files[:-self.retention_runs]
+                files_to_archive = run_files[: -self.retention_runs]
 
                 for file_path in files_to_archive:
                     archive_path = self.archive_dir / file_path.name
                     shutil.move(str(file_path), str(archive_path))
 
-                self.log("retention_applied", {
-                    "archived_count": len(files_to_archive),
-                    "remaining_runs": self.retention_runs
-                })
+                self.log(
+                    "retention_applied",
+                    {
+                        "archived_count": len(files_to_archive),
+                        "remaining_runs": self.retention_runs,
+                    },
+                )
 
         except Exception as e:
             # Don't fail if retention fails
@@ -303,7 +306,7 @@ class SimpleTelemetry:
             "logs/sessions",
             "logs/telemetry",
             "logs/auto_fixes",
-            "logs/autonomous_healing"
+            "logs/autonomous_healing",
         ]
 
         consolidated_count = 0
@@ -314,18 +317,21 @@ class SimpleTelemetry:
 
             # Process each legacy file
             for file_path in Path(dir_path).glob("*"):
-                if file_path.suffix in ['.log', '.jsonl', '.json']:
+                if file_path.suffix in [".log", ".jsonl", ".json"]:
                     try:
                         # Read and convert to unified format
-                        with open(file_path, 'r') as f:
+                        with open(file_path) as f:
                             content = f.read()
 
                         # Log as legacy import event
-                        self.log("legacy_import", {
-                            "source": str(file_path),
-                            "size": len(content),
-                            "type": file_path.suffix
-                        })
+                        self.log(
+                            "legacy_import",
+                            {
+                                "source": str(file_path),
+                                "size": len(content),
+                                "type": file_path.suffix,
+                            },
+                        )
 
                         consolidated_count += 1
 
@@ -335,16 +341,17 @@ class SimpleTelemetry:
                         shutil.move(str(file_path), str(archive_path / file_path.name))
 
                     except Exception as e:
-                        self.log("consolidation_error", {
-                            "file": str(file_path),
-                            "error": str(e)
-                        }, level="warning")
+                        self.log(
+                            "consolidation_error",
+                            {"file": str(file_path), "error": str(e)},
+                            level="warning",
+                        )
 
         if consolidated_count > 0:
-            self.log("consolidation_complete", {
-                "files_processed": consolidated_count,
-                "directories": legacy_dirs
-            })
+            self.log(
+                "consolidation_complete",
+                {"files_processed": consolidated_count, "directories": legacy_dirs},
+            )
 
         return consolidated_count
 
@@ -366,7 +373,7 @@ def get_telemetry() -> SimpleTelemetry:
     return _telemetry_instance
 
 
-def emit(event: str, data: Optional[dict[str, JSONValue]] = None, level: str = "info"):
+def emit(event: str, data: dict[str, JSONValue] | None = None, level: str = "info"):
     """
     Convenience function to emit telemetry events.
 

@@ -2,19 +2,27 @@
 """
 Consolidate insights into structured learning format.
 """
+
+import hashlib
+import json
+import uuid
+from datetime import datetime
+
 from agency_swarm.tools import BaseTool
 from pydantic import Field
-import json
-import hashlib
-from datetime import datetime
-from typing import Dict, Any, List, Optional, cast
-from shared.type_definitions.json import JSONValue
-import uuid
+
 from learning_agent.json_utils import (
-    is_dict, is_list, is_str, is_int, is_float, is_number, is_none,
-    safe_get, safe_get_dict, safe_get_list, safe_get_str, safe_get_int, safe_get_float,
-    ensure_dict, ensure_list, ensure_str
+    ensure_dict,
+    ensure_str,
+    is_list,
+    safe_get,
+    safe_get_dict,
+    safe_get_float,
+    safe_get_int,
+    safe_get_list,
+    safe_get_str,
 )
+from shared.type_definitions.json import JSONValue
 
 
 class ConsolidateLearning(BaseTool):  # mypy: disable-error-code="misc"
@@ -26,17 +34,13 @@ class ConsolidateLearning(BaseTool):  # mypy: disable-error-code="misc"
     for future retrieval and application.
     """
 
-    insights: str = Field(
-        ...,
-        description="JSON string of extracted insights from ExtractInsights"
-    )
+    insights: str = Field(..., description="JSON string of extracted insights from ExtractInsights")
     learning_type: str = Field(
         ...,
-        description="Type: 'successful_pattern', 'error_resolution', 'optimization', 'interaction_pattern', or 'auto' to detect automatically"
+        description="Type: 'successful_pattern', 'error_resolution', 'optimization', 'interaction_pattern', or 'auto' to detect automatically",
     )
     session_context: str = Field(
-        default="",
-        description="Optional context about the session (task description, goals, etc.)"
+        default="", description="Optional context about the session (task description, goals, etc.)"
     )
 
     def run(self) -> str:
@@ -50,7 +54,7 @@ class ConsolidateLearning(BaseTool):  # mypy: disable-error-code="misc"
                 return json.dumps({"error": "No insights found to consolidate"}, indent=2)
 
             # Consolidate insights into learning objects
-            learning_objects: List[Dict[str, JSONValue]] = []
+            learning_objects: list[dict[str, JSONValue]] = []
 
             for insight_value in insights_list:
                 insight = ensure_dict(insight_value)
@@ -59,12 +63,12 @@ class ConsolidateLearning(BaseTool):  # mypy: disable-error-code="misc"
                     learning_objects.append(learning_obj)
 
             # Create consolidated result
-            result: Dict[str, JSONValue] = {
+            result: dict[str, JSONValue] = {
                 "consolidation_timestamp": datetime.now().isoformat(),
                 "total_learning_objects": len(learning_objects),
                 "learning_type": self.learning_type,
                 "session_context": self.session_context,
-                "learning_objects": learning_objects
+                "learning_objects": learning_objects,
             }
 
             return json.dumps(result, indent=2)
@@ -72,7 +76,9 @@ class ConsolidateLearning(BaseTool):  # mypy: disable-error-code="misc"
         except Exception as e:
             return f"Error consolidating learning: {str(e)}"
 
-    def _create_learning_object(self, insight: Dict[str, JSONValue], context: Dict[str, JSONValue]) -> Optional[Dict[str, JSONValue]]:
+    def _create_learning_object(
+        self, insight: dict[str, JSONValue], context: dict[str, JSONValue]
+    ) -> dict[str, JSONValue] | None:
         """Create a standardized learning object from an insight."""
         try:
             # Generate unique learning ID based on content
@@ -80,14 +86,16 @@ class ConsolidateLearning(BaseTool):  # mypy: disable-error-code="misc"
             description = safe_get_str(insight, "description")
             actionable = safe_get_str(insight, "actionable_insight")
 
-            content_hash = hashlib.md5(
-                f"{title}{description}{actionable}".encode()
-            ).hexdigest()[:8]
+            content_hash = hashlib.md5(f"{title}{description}{actionable}".encode()).hexdigest()[:8]
 
             learning_id = f"learning_{content_hash}_{int(datetime.now().timestamp())}"
 
             # Determine learning type if auto
-            determined_type = self._determine_learning_type(insight) if self.learning_type == "auto" else self.learning_type
+            determined_type = (
+                self._determine_learning_type(insight)
+                if self.learning_type == "auto"
+                else self.learning_type
+            )
 
             # Extract patterns based on insight type
             patterns = self._extract_patterns(insight)
@@ -95,7 +103,7 @@ class ConsolidateLearning(BaseTool):  # mypy: disable-error-code="misc"
             # Create the standardized learning object
             session_metadata = safe_get_dict(context, "session_metadata")
 
-            learning_object: Dict[str, JSONValue] = {
+            learning_object: dict[str, JSONValue] = {
                 "learning_id": learning_id,
                 "type": determined_type,
                 "category": safe_get_str(insight, "category", "general"),
@@ -110,28 +118,30 @@ class ConsolidateLearning(BaseTool):  # mypy: disable-error-code="misc"
                     "source_session": safe_get_str(session_metadata, "session_id", "unknown"),
                     "insight_type": safe_get_str(insight, "type", "unknown"),
                     "original_data": safe_get_dict(insight, "data"),
-                    "context": self.session_context
+                    "context": self.session_context,
                 },
-                "application_criteria": self._generate_application_criteria(insight, determined_type),
-                "success_metrics": self._generate_success_metrics(insight, determined_type)
+                "application_criteria": self._generate_application_criteria(
+                    insight, determined_type
+                ),
+                "success_metrics": self._generate_success_metrics(insight, determined_type),
             }
 
             return learning_object
 
         except Exception as e:
             # Return a basic learning object if there's an error
-            error_object: Dict[str, JSONValue] = {
+            error_object: dict[str, JSONValue] = {
                 "learning_id": f"error_learning_{uuid.uuid4().hex[:8]}",
                 "type": "error",
                 "title": "Error Processing Insight",
                 "description": f"Failed to process insight: {str(e)}",
                 "confidence": 0.1,
                 "keywords": ["error", "processing"],
-                "metadata": {"error": str(e)}
+                "metadata": {"error": str(e)},
             }
             return error_object
 
-    def _determine_learning_type(self, insight: Dict[str, JSONValue]) -> str:
+    def _determine_learning_type(self, insight: dict[str, JSONValue]) -> str:
         """Automatically determine the learning type from insight characteristics."""
         insight_type = safe_get_str(insight, "type")
         category = safe_get_str(insight, "category")
@@ -164,13 +174,13 @@ class ConsolidateLearning(BaseTool):  # mypy: disable-error-code="misc"
         else:
             return "optimization"
 
-    def _extract_patterns(self, insight: Dict[str, JSONValue]) -> Dict[str, JSONValue]:
+    def _extract_patterns(self, insight: dict[str, JSONValue]) -> dict[str, JSONValue]:
         """Extract reusable patterns from the insight."""
-        patterns: Dict[str, JSONValue] = {
+        patterns: dict[str, JSONValue] = {
             "triggers": [],
             "actions": [],
             "conditions": [],
-            "outcomes": []
+            "outcomes": [],
         }
 
         insight_type = safe_get_str(insight, "type")
@@ -183,7 +193,7 @@ class ConsolidateLearning(BaseTool):  # mypy: disable-error-code="misc"
             tools_data = safe_get_list(data, "tools")
             if tools_data:
                 patterns["triggers"] = ["high_frequency_tool_usage"]
-                tool_names: List[str] = []
+                tool_names: list[str] = []
                 for tool_item in tools_data[:2]:
                     if is_list(tool_item) and tool_item:
                         tool_names.append(ensure_str(tool_item[0]))
@@ -193,7 +203,7 @@ class ConsolidateLearning(BaseTool):  # mypy: disable-error-code="misc"
             if low_success_tools:
                 patterns["triggers"] = ["low_tool_success_rate"]
                 patterns["actions"] = ["improve_error_handling", "add_validation"]
-                tool_conditions: List[str] = []
+                tool_conditions: list[str] = []
                 for tool_item in low_success_tools[:2]:
                     if is_list(tool_item) and tool_item:
                         tool_name = ensure_str(tool_item[0])
@@ -222,16 +232,25 @@ class ConsolidateLearning(BaseTool):  # mypy: disable-error-code="misc"
                 patterns["outcomes"] = ["high_success_workflow"]
 
         # Extract action patterns from actionable insights
-        action_keywords = ["optimize", "improve", "consider", "implement", "document", "investigate"]
+        action_keywords = [
+            "optimize",
+            "improve",
+            "consider",
+            "implement",
+            "document",
+            "investigate",
+        ]
         for keyword in action_keywords:
             if keyword in actionable.lower():
                 patterns["actions"].append(f"{keyword}_based_on_insight")
 
         return patterns
 
-    def _generate_application_criteria(self, insight: Dict[str, JSONValue], learning_type: str) -> List[str]:
+    def _generate_application_criteria(
+        self, insight: dict[str, JSONValue], learning_type: str
+    ) -> list[str]:
         """Generate criteria for when this learning should be applied."""
-        criteria: List[str] = []
+        criteria: list[str] = []
 
         insight_type = safe_get_str(insight, "type")
         category = safe_get_str(insight, "category")
@@ -239,34 +258,42 @@ class ConsolidateLearning(BaseTool):  # mypy: disable-error-code="misc"
 
         # Base criteria on learning type
         if learning_type == "successful_pattern":
-            criteria.extend([
-                "Similar task context detected",
-                f"Confidence level >= {confidence:.2f}",
-                "No conflicting patterns present"
-            ])
+            criteria.extend(
+                [
+                    "Similar task context detected",
+                    f"Confidence level >= {confidence:.2f}",
+                    "No conflicting patterns present",
+                ]
+            )
 
         elif learning_type == "error_resolution":
             data = safe_get_dict(insight, "data")
             error_type = safe_get_str(data, "error_type", "any")
-            criteria.extend([
-                f"Error type matches: {error_type}",
-                "Error count exceeds threshold",
-                "Resolution pattern applicable"
-            ])
+            criteria.extend(
+                [
+                    f"Error type matches: {error_type}",
+                    "Error count exceeds threshold",
+                    "Resolution pattern applicable",
+                ]
+            )
 
         elif learning_type == "optimization":
-            criteria.extend([
-                "Performance metrics below target",
-                "Optimization opportunity detected",
-                "Resource usage can be improved"
-            ])
+            criteria.extend(
+                [
+                    "Performance metrics below target",
+                    "Optimization opportunity detected",
+                    "Resource usage can be improved",
+                ]
+            )
 
         elif learning_type == "interaction_pattern":
-            criteria.extend([
-                "Multi-agent workflow detected",
-                "Communication overhead identified",
-                "Coordination improvement possible"
-            ])
+            criteria.extend(
+                [
+                    "Multi-agent workflow detected",
+                    "Communication overhead identified",
+                    "Coordination improvement possible",
+                ]
+            )
 
         # Add specific criteria based on insight category
         if category == "high_frequency_tools":
@@ -278,34 +305,42 @@ class ConsolidateLearning(BaseTool):  # mypy: disable-error-code="misc"
 
         return criteria
 
-    def _generate_success_metrics(self, insight: Dict[str, JSONValue], learning_type: str) -> List[str]:
+    def _generate_success_metrics(
+        self, insight: dict[str, JSONValue], learning_type: str
+    ) -> list[str]:
         """Generate metrics to measure the success of applying this learning."""
-        metrics: List[str] = []
+        metrics: list[str] = []
 
         insight_type = safe_get_str(insight, "type")
         data = safe_get_dict(insight, "data")
 
         # Base metrics on learning type
         if learning_type == "successful_pattern":
-            metrics.extend([
-                "Pattern application success rate",
-                "Task completion time improvement",
-                "Error reduction rate"
-            ])
+            metrics.extend(
+                [
+                    "Pattern application success rate",
+                    "Task completion time improvement",
+                    "Error reduction rate",
+                ]
+            )
 
         elif learning_type == "error_resolution":
-            metrics.extend([
-                "Error recurrence rate",
-                "Resolution time improvement",
-                "User satisfaction increase"
-            ])
+            metrics.extend(
+                [
+                    "Error recurrence rate",
+                    "Resolution time improvement",
+                    "User satisfaction increase",
+                ]
+            )
 
         elif learning_type == "optimization":
-            metrics.extend([
-                "Performance improvement percentage",
-                "Resource usage reduction",
-                "Efficiency gain measurement"
-            ])
+            metrics.extend(
+                [
+                    "Performance improvement percentage",
+                    "Resource usage reduction",
+                    "Efficiency gain measurement",
+                ]
+            )
 
         # Add specific metrics based on insight data
         success_rate = safe_get_float(data, "success_rate")
@@ -325,7 +360,7 @@ class ConsolidateLearning(BaseTool):  # mypy: disable-error-code="misc"
             metrics = [
                 "Objective improvement measured",
                 "User feedback positive",
-                "No negative side effects"
+                "No negative side effects",
             ]
 
         return metrics

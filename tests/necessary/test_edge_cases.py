@@ -9,14 +9,15 @@ Tests focus on:
 - Concurrent operations
 """
 
-import pytest
-import os
 from unittest.mock import Mock, patch
-from agency_memory.memory import InMemoryStore, Memory
-from agency_memory.enhanced_memory_store import EnhancedMemoryStore
-from shared.agent_context import AgentContext, create_agent_context
-from shared.model_policy import agent_model
+
+import pytest
+
 from agency_code_agent.agency_code_agent import create_agency_code_agent
+from agency_memory.enhanced_memory_store import EnhancedMemoryStore
+from agency_memory.memory import InMemoryStore
+from shared.agent_context import create_agent_context
+from shared.model_policy import agent_model
 
 
 class TestMemoryEdgeCases:
@@ -310,9 +311,10 @@ class TestAgentCreationEdgeCases:
 
     def test_agent_creation_with_minimum_parameters(self):
         """Test creating agent with minimal parameters."""
-        with patch('agency_code_agent.agency_code_agent.Agent'), \
-             patch('agency_code_agent.agency_code_agent.get_model_instance') as mock_model:
-
+        with (
+            patch("agency_code_agent.agency_code_agent.Agent"),
+            patch("agency_code_agent.agency_code_agent.get_model_instance") as mock_model,
+        ):
             mock_model.return_value = "gpt-5-mini"
 
             # Should work with defaults
@@ -321,36 +323,33 @@ class TestAgentCreationEdgeCases:
 
     def test_agent_creation_with_all_parameters(self):
         """Test creating agent with all parameters specified."""
-        with patch('agency_code_agent.agency_code_agent.Agent'), \
-             patch('agency_code_agent.agency_code_agent.get_model_instance') as mock_model:
-
+        with (
+            patch("agency_code_agent.agency_code_agent.Agent"),
+            patch("agency_code_agent.agency_code_agent.get_model_instance") as mock_model,
+        ):
             mock_model.return_value = "gpt-5"
             mock_context = Mock()
             mock_context.session_id = "test_session"
             mock_context.store_memory = Mock()
 
             agent = create_agency_code_agent(
-                model="gpt-5",
-                reasoning_effort="high",
-                agent_context=mock_context
+                model="gpt-5", reasoning_effort="high", agent_context=mock_context
             )
             assert agent is not None
 
     def test_agent_creation_with_invalid_reasoning_effort(self):
         """Test creating agent with invalid reasoning effort."""
-        with patch('agency_code_agent.agency_code_agent.Agent'), \
-             patch('agency_code_agent.agency_code_agent.get_model_instance') as mock_model, \
-             patch('agency_code_agent.agency_code_agent.create_model_settings') as mock_settings:
-
+        with (
+            patch("agency_code_agent.agency_code_agent.Agent"),
+            patch("agency_code_agent.agency_code_agent.get_model_instance") as mock_model,
+            patch("agency_code_agent.agency_code_agent.create_model_settings") as mock_settings,
+        ):
             mock_model.return_value = "gpt-5-mini"
             mock_settings.return_value = Mock()
 
             # Should handle invalid value (might default or raise)
             try:
-                agent = create_agency_code_agent(
-                    model="gpt-5-mini",
-                    reasoning_effort="invalid"
-                )
+                agent = create_agency_code_agent(model="gpt-5-mini", reasoning_effort="invalid")
                 # If it doesn't raise, that's valid behavior
                 assert agent is not None
             except (ValueError, KeyError):
@@ -359,10 +358,11 @@ class TestAgentCreationEdgeCases:
 
     def test_agent_creation_reasoning_effort_boundary_values(self):
         """Test reasoning effort with boundary string values."""
-        with patch('agency_code_agent.agency_code_agent.Agent'), \
-             patch('agency_code_agent.agency_code_agent.get_model_instance') as mock_model, \
-             patch('agency_code_agent.agency_code_agent.create_model_settings') as mock_settings:
-
+        with (
+            patch("agency_code_agent.agency_code_agent.Agent"),
+            patch("agency_code_agent.agency_code_agent.get_model_instance") as mock_model,
+            patch("agency_code_agent.agency_code_agent.create_model_settings") as mock_settings,
+        ):
             mock_model.return_value = "gpt-5-mini"
             mock_settings.return_value = Mock()
 
@@ -371,10 +371,7 @@ class TestAgentCreationEdgeCases:
 
             for effort in edge_cases:
                 try:
-                    agent = create_agency_code_agent(
-                        model="gpt-5-mini",
-                        reasoning_effort=effort
-                    )
+                    agent = create_agency_code_agent(model="gpt-5-mini", reasoning_effort=effort)
                     # If it succeeds, that's fine
                 except (ValueError, KeyError, AttributeError):
                     # Raising errors for invalid input is also fine
@@ -387,6 +384,7 @@ class TestConcurrentEdgeCases:
     def test_concurrent_memory_reads_same_key(self):
         """Test multiple threads reading the same key simultaneously."""
         from threading import Thread
+
         store = InMemoryStore()
 
         store.store("shared_key", {"data": "shared"}, ["shared"])
@@ -418,6 +416,7 @@ class TestConcurrentEdgeCases:
     def test_concurrent_memory_overwrites(self):
         """Test multiple threads overwriting the same key."""
         from threading import Thread
+
         store = InMemoryStore()
 
         store.store("overwrite_key", {"version": 0}, ["test"])
@@ -450,6 +449,7 @@ class TestConcurrentEdgeCases:
     def test_concurrent_searches_different_tags(self):
         """Test multiple threads searching different tags simultaneously."""
         from threading import Thread
+
         store = InMemoryStore()
 
         # Pre-populate with tagged data
@@ -491,6 +491,7 @@ class TestBoundaryValueEdgeCases:
         store = InMemoryStore()
 
         import sys
+
         max_int = sys.maxsize
 
         store.store("max_int", {"value": max_int}, ["numbers"])
@@ -503,6 +504,7 @@ class TestBoundaryValueEdgeCases:
         store = InMemoryStore()
 
         import sys
+
         min_int = -sys.maxsize - 1
 
         store.store("min_int", {"value": min_int}, ["numbers"])
@@ -515,8 +517,8 @@ class TestBoundaryValueEdgeCases:
         store = InMemoryStore()
 
         special_values = {
-            "positive_inf": float('inf'),
-            "negative_inf": float('-inf'),
+            "positive_inf": float("inf"),
+            "negative_inf": float("-inf"),
             "zero": 0.0,
             "negative_zero": -0.0,
         }
@@ -524,8 +526,8 @@ class TestBoundaryValueEdgeCases:
         store.store("special_floats", special_values, ["floats"])
 
         record = store.get("special_floats")
-        assert record.content["positive_inf"] == float('inf')
-        assert record.content["negative_inf"] == float('-inf')
+        assert record.content["positive_inf"] == float("inf")
+        assert record.content["negative_inf"] == float("-inf")
 
     def test_memory_search_with_single_tag(self):
         """Test searching with exactly one tag."""

@@ -29,9 +29,7 @@ def test_grep_files_with_matches(tmp_path: Path):
 def test_grep_no_matches(tmp_path: Path):
     f = tmp_path / "a.txt"
     f.write_text("nothing here\n", encoding="utf-8")
-    tool = Grep(
-        pattern="doesnotmatch", path=str(tmp_path), output_mode="files_with_matches"
-    )
+    tool = Grep(pattern="doesnotmatch", path=str(tmp_path), output_mode="files_with_matches")
     out = tool.run()
     if "ripgrep (rg) is not installed" in out:
         return
@@ -45,9 +43,7 @@ def test_grep_regex_wildcard_pattern(tmp_path: Path):
     """Test regex pattern with wildcards (log.*Error)"""
     f = tmp_path / "app.log"
     f.write_text("logError: critical\nlogWarning: info\nnoMatch\n", encoding="utf-8")
-    tool = Grep(
-        pattern="log.*Error", path=str(tmp_path), output_mode="files_with_matches"
-    )
+    tool = Grep(pattern="log.*Error", path=str(tmp_path), output_mode="files_with_matches")
     out = tool.run()
     skip_if_no_rg(out)
     assert "Exit code: 0" in out
@@ -61,9 +57,7 @@ def test_grep_regex_word_boundary(tmp_path: Path):
         "function process() {}\nfunction_name = 'test'\nmy function here\n",
         encoding="utf-8",
     )
-    tool = Grep(
-        pattern=r"function\s+\w+", path=str(tmp_path), output_mode="content", n=True
-    )
+    tool = Grep(pattern=r"function\s+\w+", path=str(tmp_path), output_mode="content", n=True)
     out = tool.run()
     skip_if_no_rg(out)
     assert "Exit code: 0" in out
@@ -200,9 +194,7 @@ def test_grep_type_filter_python(tmp_path: Path):
     txt_file = tmp_path / "notes.txt"
     txt_file.write_text("def test(): pass\n", encoding="utf-8")
 
-    tool = Grep(
-        pattern="def", path=str(tmp_path), type="py", output_mode="files_with_matches"
-    )
+    tool = Grep(pattern="def", path=str(tmp_path), type="py", output_mode="files_with_matches")
     out = tool.run()
     skip_if_no_rg(out)
     assert "Exit code: 0" in out
@@ -274,9 +266,7 @@ def test_grep_head_limit_truncates_output(tmp_path: Path):
     """Test head_limit truncates results to N lines"""
     f = tmp_path / "many.txt"
     f.write_text("\n".join([f"line{i}" for i in range(100)]), encoding="utf-8")
-    tool = Grep(
-        pattern="line", path=str(tmp_path), output_mode="content", head_limit=5
-    )
+    tool = Grep(pattern="line", path=str(tmp_path), output_mode="content", head_limit=5)
     out = tool.run()
     skip_if_no_rg(out)
     assert "Exit code: 0" in out
@@ -307,9 +297,7 @@ def test_grep_head_limit_count_mode(tmp_path: Path):
     for i in range(10):
         (tmp_path / f"file{i}.txt").write_text("match\n", encoding="utf-8")
 
-    tool = Grep(
-        pattern="match", path=str(tmp_path), output_mode="count", head_limit=3
-    )
+    tool = Grep(pattern="match", path=str(tmp_path), output_mode="count", head_limit=3)
     out = tool.run()
     skip_if_no_rg(out)
     assert "Exit code: 0" in out

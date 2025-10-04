@@ -23,49 +23,52 @@ Main Exports:
 - PatternMatcher: Pattern matching engine
 """
 
-import os
 import asyncio
-import threading
 import logging
+import os
+import threading
+from collections.abc import Callable
 from datetime import datetime, timedelta
-from typing import Dict, List, Optional, Any, Callable, cast
-from shared.type_definitions.json import JSONValue
-from shared.models.learning import OperationInfo
 from pathlib import Path
+from typing import Any, Dict, List, Optional, cast
+
 import yaml  # type: ignore[import-untyped]
+
+from core import get_healing_core
 
 # Core imports
 from core.self_healing import SelfHealingCore
-from pattern_intelligence import PatternStore
-from core.telemetry import get_telemetry, emit
-from core import get_healing_core
+from core.telemetry import emit, get_telemetry
+from learning_loop.autonomous_triggers import (
+    EventRouter,
+    HealingResult,
+    HealingTrigger,
+    PatternMatch,
+    PatternMatcher,
+)
 
 # Learning loop component imports
 from learning_loop.event_detection import (
-    EventDetectionSystem,
-    FileWatcher,
+    ErrorEvent,
     ErrorMonitor,
     Event,
+    EventDetectionSystem,
     FileEvent,
-    ErrorEvent
+    FileWatcher,
 )
 from learning_loop.pattern_extraction import (
-    PatternExtractor,
-    FailureLearner,
-    EnhancedPattern,
     AntiPattern,
-    Operation
+    EnhancedPattern,
+    FailureLearner,
+    Operation,
+    PatternExtractor,
 )
-from learning_loop.autonomous_triggers import (
-    EventRouter,
-    HealingTrigger,
-    PatternMatcher,
-    HealingResult,
-    PatternMatch
-)
+from pattern_intelligence import PatternStore
+from shared.models.learning import OperationInfo
+from shared.type_definitions.json import JSONValue
 
 # Configure logging for learning loop
-logger = logging.getLogger('learning_loop')
+logger = logging.getLogger("learning_loop")
 
 
 class LearningLoop:
@@ -86,7 +89,7 @@ class LearningLoop:
     - Comprehensive telemetry and logging
     """
 
-    def __init__(self, config_path: Optional[str] = None):
+    def __init__(self, config_path: str | None = None):
         """
         Initialize learning loop with configuration and components.
 
@@ -105,8 +108,7 @@ class LearningLoop:
 
         # Initialize learning loop components
         self.event_detection = EventDetectionSystem(
-            file_callback=self._handle_file_event,
-            error_callback=self._handle_error_event
+            file_callback=self._handle_file_event, error_callback=self._handle_error_event
         )
 
         self.pattern_extractor = PatternExtractor(self.pattern_store)
@@ -123,26 +125,29 @@ class LearningLoop:
         self.failure_count = 0
 
         # Operation tracking for learning
-        self._current_operations: Dict[str, OperationInfo] = {}
-        self._completed_operations: List[OperationInfo] = []
+        self._current_operations: dict[str, OperationInfo] = {}
+        self._completed_operations: list[OperationInfo] = []
 
         # Background task management
-        self._tasks: List[asyncio.Task[Any]] = []
+        self._tasks: list[asyncio.Task[Any]] = []
         self._stop_event = asyncio.Event() if asyncio._get_running_loop() is None else None
 
-        emit("learning_loop_initialized", {
-            "config": self.config,
-            "components": [
-                "EventDetectionSystem",
-                "PatternExtractor",
-                "FailureLearner",
-                "EventRouter",
-                "HealingTrigger",
-                "PatternMatcher"
-            ]
-        })
+        emit(
+            "learning_loop_initialized",
+            {
+                "config": self.config,
+                "components": [
+                    "EventDetectionSystem",
+                    "PatternExtractor",
+                    "FailureLearner",
+                    "EventRouter",
+                    "HealingTrigger",
+                    "PatternMatcher",
+                ],
+            },
+        )
 
-    def _load_config(self, config_path: Optional[str] = None) -> Dict[str, JSONValue]:
+    def _load_config(self, config_path: str | None = None) -> dict[str, JSONValue]:
         """Load learning loop configuration from YAML file."""
         if config_path is None:
             config_path = "learning_config.yaml"
@@ -150,60 +155,61 @@ class LearningLoop:
         config_file = Path(config_path)
 
         # Default configuration per SPEC-LEARNING-001
-        default_config: Dict[str, JSONValue] = {
+        default_config: dict[str, JSONValue] = {
             "learning": {
                 "enabled": True,
                 "triggers": {
                     "file_watch": True,
                     "error_monitor": True,
                     "test_monitor": True,
-                    "git_hooks": True
+                    "git_hooks": True,
                 },
                 "thresholds": {
                     "min_pattern_confidence": 0.3,
                     "min_match_score": 0.5,
                     "cooldown_minutes": 5,
-                    "max_retries": 3
+                    "max_retries": 3,
                 },
                 "storage": {
                     "backend": "sqlite",
                     "persist_patterns": True,
                     "max_patterns": 1000,
-                    "cleanup_days": 30
+                    "cleanup_days": 30,
                 },
                 "monitoring": {
                     "metrics_enabled": True,
                     "dashboard_port": 8080,
-                    "alert_on_failure": True
-                }
+                    "alert_on_failure": True,
+                },
             }
         }
 
         if config_file.exists():
             try:
-                with open(config_file, 'r') as f:
+                with open(config_file) as f:
                     file_config = yaml.safe_load(f)
                     # Merge with defaults
                     default_config.update(file_config)
 
-                emit("learning_config_loaded", {
-                    "config_path": str(config_file),
-                    "config": default_config
-                })
+                emit(
+                    "learning_config_loaded",
+                    {"config_path": str(config_file), "config": default_config},
+                )
 
             except Exception as e:
-                emit("learning_config_load_error", {
-                    "config_path": str(config_file),
-                    "error": str(e)
-                }, level="warning")
+                emit(
+                    "learning_config_load_error",
+                    {"config_path": str(config_file), "error": str(e)},
+                    level="warning",
+                )
 
                 # Use defaults on error
                 pass
         else:
-            emit("learning_config_default", {
-                "reason": "config_file_not_found",
-                "config_path": str(config_file)
-            })
+            emit(
+                "learning_config_default",
+                {"reason": "config_file_not_found", "config_path": str(config_file)},
+            )
 
         return default_config
 
@@ -225,14 +231,14 @@ class LearningLoop:
             # Article I: Complete context before action
             self._validate_prerequisites()
 
-            emit("learning_loop_starting", {
-                "config": self.config,
-                "timestamp": datetime.now().isoformat()
-            })
+            emit(
+                "learning_loop_starting",
+                {"config": self.config, "timestamp": datetime.now().isoformat()},
+            )
 
             # Start event detection systems
-            learning_config = cast(Dict[str, JSONValue], self.config.get("learning", {}))
-            triggers_config = cast(Dict[str, JSONValue], learning_config.get("triggers", {}))
+            learning_config = cast(dict[str, JSONValue], self.config.get("learning", {}))
+            triggers_config = cast(dict[str, JSONValue], learning_config.get("triggers", {}))
             if cast(bool, triggers_config.get("file_watch", False)):
                 self.event_detection.start()
                 emit("event_detection_started", {})
@@ -244,15 +250,16 @@ class LearningLoop:
             self.is_running = True
             self.start_time = datetime.now()
 
-            emit("learning_loop_started", {
-                "start_time": self.start_time.isoformat() if self.start_time else "unknown",
-                "enabled_triggers": triggers_config
-            })
+            emit(
+                "learning_loop_started",
+                {
+                    "start_time": self.start_time.isoformat() if self.start_time else "unknown",
+                    "enabled_triggers": triggers_config,
+                },
+            )
 
         except Exception as e:
-            emit("learning_loop_start_error", {
-                "error": str(e)
-            }, level="error")
+            emit("learning_loop_start_error", {"error": str(e)}, level="error")
 
             # Cleanup on failure
             self.stop()
@@ -273,10 +280,15 @@ class LearningLoop:
             return
 
         try:
-            emit("learning_loop_stopping", {
-                "runtime_seconds": (datetime.now() - self.start_time).total_seconds() if self.start_time else 0,
-                "operations_completed": self.operation_count
-            })
+            emit(
+                "learning_loop_stopping",
+                {
+                    "runtime_seconds": (datetime.now() - self.start_time).total_seconds()
+                    if self.start_time
+                    else 0,
+                    "operations_completed": self.operation_count,
+                },
+            )
 
             # Stop event detection
             if self.event_detection.is_running:
@@ -296,20 +308,18 @@ class LearningLoop:
             # Mark as stopped
             self.is_running = False
 
-            emit("learning_loop_stopped", {
-                "stop_time": datetime.now().isoformat(),
-                "final_metrics": self.get_metrics()
-            })
+            emit(
+                "learning_loop_stopped",
+                {"stop_time": datetime.now().isoformat(), "final_metrics": self.get_metrics()},
+            )
 
         except Exception as e:
-            emit("learning_loop_stop_error", {
-                "error": str(e)
-            }, level="error")
+            emit("learning_loop_stop_error", {"error": str(e)}, level="error")
 
             # Force stop
             self.is_running = False
 
-    def get_metrics(self) -> Dict[str, JSONValue]:
+    def get_metrics(self) -> dict[str, JSONValue]:
         """
         Get comprehensive learning loop metrics.
 
@@ -318,24 +328,24 @@ class LearningLoop:
         """
         runtime = (datetime.now() - self.start_time).total_seconds() if self.start_time else 0
 
-        metrics: Dict[str, JSONValue] = {
+        metrics: dict[str, JSONValue] = {
             "runtime_seconds": runtime,
             "is_running": self.is_running,
             "operations": {
                 "total": self.operation_count,
                 "successful": self.success_count,
                 "failed": self.failure_count,
-                "success_rate": self.success_count / max(self.operation_count, 1)
+                "success_rate": self.success_count / max(self.operation_count, 1),
             },
             "patterns": {
                 "total_learned": len(self._completed_operations),
-                "active_patterns": len(self.pattern_store.find()) if self.pattern_store else 0
+                "active_patterns": len(self.pattern_store.find()) if self.pattern_store else 0,
             },
             "components": {
                 "event_detection": self.event_detection.is_running,
                 "pattern_extraction": True,  # Always available
-                "autonomous_triggers": True  # Always available
-            }
+                "autonomous_triggers": True,  # Always available
+            },
         }
 
         # Add pattern store statistics if available
@@ -361,11 +371,14 @@ class LearningLoop:
             operation: Completed operation to learn from
         """
         try:
-            emit("operation_learning_started", {
-                "operation_id": operation.id,
-                "success": operation.success,
-                "duration": operation.duration_seconds
-            })
+            emit(
+                "operation_learning_started",
+                {
+                    "operation_id": operation.id,
+                    "success": operation.success,
+                    "duration": operation.duration_seconds,
+                },
+            )
 
             if operation.success:
                 # Extract success pattern
@@ -373,11 +386,14 @@ class LearningLoop:
 
                 self.success_count += 1
 
-                emit("success_pattern_learned", {
-                    "pattern_id": pattern.id,
-                    "operation_id": operation.id,
-                    "trigger_type": pattern.trigger.type
-                })
+                emit(
+                    "success_pattern_learned",
+                    {
+                        "pattern_id": pattern.id,
+                        "operation_id": operation.id,
+                        "trigger_type": pattern.trigger.type,
+                    },
+                )
 
             else:
                 # Extract anti-pattern from failure
@@ -385,27 +401,34 @@ class LearningLoop:
 
                 self.failure_count += 1
 
-                emit("failure_pattern_learned", {
-                    "antipattern_id": anti_pattern.id,
-                    "operation_id": operation.id,
-                    "failure_type": anti_pattern.failure_reason.type
-                })
+                emit(
+                    "failure_pattern_learned",
+                    {
+                        "antipattern_id": anti_pattern.id,
+                        "operation_id": operation.id,
+                        "failure_type": anti_pattern.failure_reason.type,
+                    },
+                )
 
             # Track completed operation
             self._completed_operations.append(operation)
             self.operation_count += 1
 
-            emit("operation_learning_completed", {
-                "operation_id": operation.id,
-                "success": operation.success,
-                "total_operations": self.operation_count
-            })
+            emit(
+                "operation_learning_completed",
+                {
+                    "operation_id": operation.id,
+                    "success": operation.success,
+                    "total_operations": self.operation_count,
+                },
+            )
 
         except Exception as e:
-            emit("operation_learning_error", {
-                "operation_id": operation.id,
-                "error": str(e)
-            }, level="error")
+            emit(
+                "operation_learning_error",
+                {"operation_id": operation.id, "error": str(e)},
+                level="error",
+            )
 
     async def run_autonomous(self, duration_hours: float = 24.0):
         """
@@ -423,10 +446,10 @@ class LearningLoop:
         duration_seconds = duration_hours * 3600
         end_time = datetime.now() + timedelta(seconds=duration_seconds)
 
-        emit("autonomous_operation_started", {
-            "duration_hours": duration_hours,
-            "end_time": end_time.isoformat()
-        })
+        emit(
+            "autonomous_operation_started",
+            {"duration_hours": duration_hours, "end_time": end_time.isoformat()},
+        )
 
         try:
             while datetime.now() < end_time and self.is_running:
@@ -443,15 +466,26 @@ class LearningLoop:
                 await asyncio.sleep(60)  # 1 minute monitoring cycle
 
         except Exception as e:
-            emit("autonomous_operation_error", {
-                "error": str(e),
-                "runtime_hours": (datetime.now() - self.start_time).total_seconds() / 3600 if self.start_time else 0
-            }, level="error")
+            emit(
+                "autonomous_operation_error",
+                {
+                    "error": str(e),
+                    "runtime_hours": (datetime.now() - self.start_time).total_seconds() / 3600
+                    if self.start_time
+                    else 0,
+                },
+                level="error",
+            )
 
-        emit("autonomous_operation_completed", {
-            "actual_runtime_hours": (datetime.now() - self.start_time).total_seconds() / 3600 if self.start_time else 0,
-            "final_metrics": self.get_metrics()
-        })
+        emit(
+            "autonomous_operation_completed",
+            {
+                "actual_runtime_hours": (datetime.now() - self.start_time).total_seconds() / 3600
+                if self.start_time
+                else 0,
+                "final_metrics": self.get_metrics(),
+            },
+        )
 
     def _handle_file_event(self, event: FileEvent):
         """Handle file change events from the event detection system."""
@@ -460,10 +494,11 @@ class LearningLoop:
             asyncio.create_task(self.event_router.route_event(event))
 
         except Exception as e:
-            emit("file_event_handling_error", {
-                "file_path": event.path,
-                "error": str(e)
-            }, level="error")
+            emit(
+                "file_event_handling_error",
+                {"file_path": event.path, "error": str(e)},
+                level="error",
+            )
 
     def _handle_error_event(self, event: ErrorEvent):
         """Handle error events from the error monitoring system."""
@@ -472,10 +507,11 @@ class LearningLoop:
             asyncio.create_task(self.event_router.route_event(event))
 
         except Exception as e:
-            emit("error_event_handling_error", {
-                "error_type": event.error_type,
-                "error": str(e)
-            }, level="error")
+            emit(
+                "error_event_handling_error",
+                {"error_type": event.error_type, "error": str(e)},
+                level="error",
+            )
 
     def _validate_prerequisites(self):
         """Validate all prerequisites are met before starting (Article I compliance)."""
@@ -508,19 +544,20 @@ class LearningLoop:
         # Load existing patterns
         existing_patterns = self.pattern_store.find()
 
-        emit("pattern_matching_initialized", {
-            "existing_patterns": len(existing_patterns),
-            "min_confidence": self.config["learning"]["thresholds"]["min_pattern_confidence"]
-        })
+        emit(
+            "pattern_matching_initialized",
+            {
+                "existing_patterns": len(existing_patterns),
+                "min_confidence": self.config["learning"]["thresholds"]["min_pattern_confidence"],
+            },
+        )
 
     def _complete_pending_operations(self):
         """Complete any pending operations before shutdown."""
         if not self._current_operations:
             return
 
-        emit("completing_pending_operations", {
-            "pending_count": len(self._current_operations)
-        })
+        emit("completing_pending_operations", {"pending_count": len(self._current_operations)})
 
         # For each pending operation, create a minimal completion record
         for op_id, op_data in self._current_operations.items():
@@ -533,17 +570,18 @@ class LearningLoop:
                     final_state=op_data.get("final_state", {}),
                     success=False,  # Incomplete operations are considered failures
                     duration_seconds=op_data.get("duration", 0),
-                    timestamp=datetime.now()
+                    timestamp=datetime.now(),
                 )
 
                 # Learn from the incomplete operation
                 self.learn_from_operation(operation)
 
             except Exception as e:
-                emit("pending_operation_completion_error", {
-                    "operation_id": op_id,
-                    "error": str(e)
-                }, level="warning")
+                emit(
+                    "pending_operation_completion_error",
+                    {"operation_id": op_id, "error": str(e)},
+                    level="warning",
+                )
 
         self._current_operations.clear()
 
@@ -551,11 +589,16 @@ class LearningLoop:
         """Generate and log final operational metrics."""
         metrics = self.get_metrics()
 
-        emit("learning_loop_final_metrics", {
-            "metrics": metrics,
-            "patterns_learned": len(self._completed_operations),
-            "autonomous_healing_events": self.healing_trigger.cooldown if hasattr(self.healing_trigger, 'cooldown') else {}
-        })
+        emit(
+            "learning_loop_final_metrics",
+            {
+                "metrics": metrics,
+                "patterns_learned": len(self._completed_operations),
+                "autonomous_healing_events": self.healing_trigger.cooldown
+                if hasattr(self.healing_trigger, "cooldown")
+                else {},
+            },
+        )
 
     async def _autonomous_health_check(self):
         """Perform autonomous system health monitoring."""
@@ -565,35 +608,37 @@ class LearningLoop:
                 "event_detection": self.event_detection.is_running,
                 "pattern_store": self.pattern_store is not None,
                 "healing_core": self.healing_core is not None,
-                "learning_loop": self.is_running
+                "learning_loop": self.is_running,
             }
 
             # Check for any failing components
             failing_components = [k for k, v in health_status.items() if not v]
 
             if failing_components:
-                emit("autonomous_health_check_warning", {
-                    "failing_components": failing_components,
-                    "health_status": health_status
-                }, level="warning")
+                emit(
+                    "autonomous_health_check_warning",
+                    {"failing_components": failing_components, "health_status": health_status},
+                    level="warning",
+                )
 
             # Check memory usage and cleanup if needed
             if len(self._completed_operations) > self.config["learning"]["storage"]["max_patterns"]:
                 await self._cleanup_old_operations()
 
         except Exception as e:
-            emit("autonomous_health_check_error", {
-                "error": str(e)
-            }, level="error")
+            emit("autonomous_health_check_error", {"error": str(e)}, level="error")
 
     async def _process_pending_learning(self):
         """Process any pending learning opportunities."""
         # This would integrate with session transcripts, test results, etc.
         # For now, just emit a heartbeat
-        emit("autonomous_learning_heartbeat", {
-            "timestamp": datetime.now().isoformat(),
-            "operations_learned": len(self._completed_operations)
-        })
+        emit(
+            "autonomous_learning_heartbeat",
+            {
+                "timestamp": datetime.now().isoformat(),
+                "operations_learned": len(self._completed_operations),
+            },
+        )
 
     async def _cleanup_old_patterns(self):
         """Clean up old patterns based on configuration."""
@@ -604,10 +649,10 @@ class LearningLoop:
         cutoff_date = datetime.now() - timedelta(days=cleanup_days)
 
         # This would be implemented in the pattern store
-        emit("pattern_cleanup_check", {
-            "cleanup_days": cleanup_days,
-            "cutoff_date": cutoff_date.isoformat()
-        })
+        emit(
+            "pattern_cleanup_check",
+            {"cleanup_days": cleanup_days, "cutoff_date": cutoff_date.isoformat()},
+        )
 
     async def _cleanup_old_operations(self):
         """Clean up old completed operations to manage memory."""
@@ -617,10 +662,13 @@ class LearningLoop:
             # Keep the most recent operations
             self._completed_operations = self._completed_operations[-max_operations:]
 
-            emit("operation_history_cleaned", {
-                "kept_operations": len(self._completed_operations),
-                "max_operations": max_operations
-            })
+            emit(
+                "operation_history_cleaned",
+                {
+                    "kept_operations": len(self._completed_operations),
+                    "max_operations": max_operations,
+                },
+            )
 
     def __enter__(self):
         """Context manager entry."""
@@ -636,7 +684,6 @@ class LearningLoop:
 __all__ = [
     # Main orchestrator
     "LearningLoop",
-
     # Event detection
     "EventDetectionSystem",
     "FileWatcher",
@@ -644,14 +691,12 @@ __all__ = [
     "Event",
     "FileEvent",
     "ErrorEvent",
-
     # Pattern extraction
     "PatternExtractor",
     "FailureLearner",
     "EnhancedPattern",
     "AntiPattern",
     "Operation",
-
     # Autonomous triggers
     "EventRouter",
     "HealingTrigger",

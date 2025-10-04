@@ -1,20 +1,20 @@
 import os
 
 from agency_swarm import Agent
+
 from shared.agent_context import AgentContext, create_agent_context
-from shared.constitutional_validator import constitutional_compliance
 from shared.agent_utils import (
-    select_instructions_file,
     create_model_settings,
     get_model_instance,
+    select_instructions_file,
 )
+from shared.constitutional_validator import constitutional_compliance
 from shared.system_hooks import (
-    create_message_filter_hook,
-    create_memory_integration_hook,
     create_composite_hook,
+    create_memory_integration_hook,
+    create_message_filter_hook,
 )
-from tools import Read, Write, Edit, MultiEdit, Grep, Glob, Bash, TodoWrite
-
+from tools import Bash, Edit, Glob, Grep, MultiEdit, Read, TodoWrite, Write
 
 current_dir = os.path.dirname(os.path.abspath(__file__))
 
@@ -24,7 +24,7 @@ def create_toolsmith_agent(
     model: str = "gpt-5",
     reasoning_effort: str = "high",
     agent_context: AgentContext | None = None,
-    cost_tracker = None
+    cost_tracker=None,
 ) -> Agent:
     """Factory that returns a fresh ToolSmithAgent instance.
 
@@ -44,10 +44,12 @@ def create_toolsmith_agent(
     # Hooks: message filter + memory integration
     filter_hook = create_message_filter_hook()
     memory_hook = create_memory_integration_hook(agent_context)
-    combined_hook = create_composite_hook([
-        filter_hook,
-        memory_hook,
-    ])
+    combined_hook = create_composite_hook(
+        [
+            filter_hook,
+            memory_hook,
+        ]
+    )
 
     # Log agent creation in memory for learning
     agent_context.store_memory(
@@ -57,7 +59,7 @@ def create_toolsmith_agent(
             "model": model,
             "reasoning_effort": reasoning_effort,
             "session_id": agent_context.session_id,
-            "cost_tracker_enabled": cost_tracker is not None
+            "cost_tracker_enabled": cost_tracker is not None,
         },
         ["agency", "toolsmith", "creation"],
     )
@@ -91,6 +93,7 @@ def create_toolsmith_agent(
     # Enable cost tracking if provided
     if cost_tracker is not None:
         from shared.llm_cost_wrapper import wrap_agent_with_cost_tracking
+
         wrap_agent_with_cost_tracking(agent, cost_tracker)
 
     return agent

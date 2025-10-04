@@ -5,16 +5,15 @@ Demonstrates the simplified core with telemetry and pattern learning.
 """
 
 import os
-import sys
-from datetime import datetime, timedelta
+from datetime import datetime
 
 # Enable unified core for this demo
 os.environ["ENABLE_UNIFIED_CORE"] = "true"
 os.environ["PERSIST_PATTERNS"] = "true"  # Enable pattern persistence
 
-from core.self_healing import SelfHealingCore, Finding
-from core.telemetry import get_telemetry, emit
-from pattern_intelligence import PatternStore, CodingPattern
+from core.self_healing import SelfHealingCore
+from core.telemetry import emit, get_telemetry
+from pattern_intelligence import CodingPattern, PatternStore
 
 
 def demo_unified_architecture():
@@ -30,7 +29,7 @@ def demo_unified_architecture():
     print("✅ Unified Components Initialized:")
     print(f"   • Self-Healing Core: {healer.enabled}")
     print(f"   • SimpleTelemetry: Active with {telemetry.retention_runs} run retention")
-    print(f"   • PatternStore: VectorStore-backed pattern intelligence")
+    print("   • PatternStore: VectorStore-backed pattern intelligence")
 
     # Demonstrate telemetry
     print("\n📊 TELEMETRY DEMONSTRATION")
@@ -54,7 +53,10 @@ def demo_unified_architecture():
 
     # Create a sample pattern
     from pattern_intelligence.coding_pattern import (
-        ProblemContext, SolutionApproach, EffectivenessMetric, PatternMetadata
+        EffectivenessMetric,
+        PatternMetadata,
+        ProblemContext,
+        SolutionApproach,
     )
 
     context = ProblemContext(
@@ -63,7 +65,7 @@ def demo_unified_architecture():
         constraints=[],
         symptoms=["NoneType error in demo_file.py:42"],
         scale=None,
-        urgency="medium"
+        urgency="medium",
     )
 
     solution = SolutionApproach(
@@ -73,7 +75,7 @@ def demo_unified_architecture():
         reasoning="Prevent NoneType errors by checking for None before access",
         code_examples=["if obj is not None:\n    obj.method()"],
         dependencies=[],
-        alternatives=["use getattr with default", "try/except block"]
+        alternatives=["use getattr with default", "try/except block"],
     )
 
     outcome = EffectivenessMetric(
@@ -84,7 +86,7 @@ def demo_unified_architecture():
         technical_debt="reduced",
         adoption_rate=10,
         longevity="high",
-        confidence=0.9
+        confidence=0.9,
     )
 
     metadata = PatternMetadata(
@@ -96,7 +98,7 @@ def demo_unified_architecture():
         application_count=10,
         validation_status="validated",
         tags=["NoneType", "null_check", "demo"],
-        related_patterns=[]
+        related_patterns=[],
     )
 
     sample_pattern = CodingPattern(context, solution, outcome, metadata)
@@ -109,10 +111,12 @@ def demo_unified_architecture():
 
     # Get statistics
     top_patterns = patterns.get_top_patterns(limit=10)
-    print(f"Pattern Statistics:")
+    print("Pattern Statistics:")
     print(f"   • Total Top Patterns: {len(top_patterns)}")
     if top_patterns:
-        avg_effectiveness = sum(p.outcome.effectiveness_score() for p in top_patterns) / len(top_patterns)
+        avg_effectiveness = sum(p.outcome.effectiveness_score() for p in top_patterns) / len(
+            top_patterns
+        )
         print(f"   • Average Effectiveness Score: {avg_effectiveness:.2f}")
 
 
@@ -144,10 +148,10 @@ def demo_error_detection_and_fix():
             print(f"     {finding.snippet}")
 
         # Emit telemetry about detection
-        emit("errors_detected", {
-            "count": len(findings),
-            "types": list(set(f.error_type for f in findings))
-        })
+        emit(
+            "errors_detected",
+            {"count": len(findings), "types": list(set(f.error_type for f in findings))},
+        )
     else:
         print("ℹ️  No errors detected")
 
@@ -161,12 +165,7 @@ def demo_telemetry_consolidation():
 
     # Show before state
     print("Legacy log directories:")
-    legacy_dirs = [
-        "logs/sessions",
-        "logs/telemetry",
-        "logs/auto_fixes",
-        "logs/autonomous_healing"
-    ]
+    legacy_dirs = ["logs/sessions", "logs/telemetry", "logs/auto_fixes", "logs/autonomous_healing"]
 
     for dir_path in legacy_dirs:
         if os.path.exists(dir_path):
@@ -239,13 +238,13 @@ def demo_autonomous_maintainability():
     telemetry = get_telemetry()
     metrics = telemetry.get_metrics()
 
-    if metrics['health_score'] < 80:
+    if metrics["health_score"] < 80:
         print("   ⚠️  Health degradation detected")
         print("   🔄 Triggering self-healing...")
-        emit("autonomous_healing_triggered", {
-            "reason": "low_health_score",
-            "score": metrics['health_score']
-        })
+        emit(
+            "autonomous_healing_triggered",
+            {"reason": "low_health_score", "score": metrics["health_score"]},
+        )
     else:
         print("   ✅ System healthy - no intervention needed")
         print(f"   📊 Health Score: {metrics['health_score']:.1f}%")

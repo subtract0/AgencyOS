@@ -1,0 +1,257 @@
+{
+  "metadata": {
+    "analysis_date": "2025-10-03",
+    "framework": "NECESSARY (9-criteria scoring)",
+    "analyzer_version": "1.0",
+    "total_test_files_analyzed": 153
+  },
+  "summary": {
+    "total_tests": 2965,
+    "total_lines": 72209,
+    "bloat_tests": 731,
+    "bloat_percentage": 24.7,
+    "estimated_removal": 731,
+    "remaining_tests": 2234,
+    "runtime_before_seconds": 296,
+    "runtime_after_seconds": 223,
+    "speedup_factor": 1.33
+  },
+  "bloat_categories": {
+    "experimental": {
+      "description": "Trinity Protocol and DSPy experimental features not in production",
+      "file_count": 35,
+      "test_count": 731,
+      "line_count": 22847,
+      "action": "DELETE",
+      "priority": "HIGH",
+      "subcategories": {
+        "trinity_protocol": {
+          "file_count": 19,
+          "test_count": 139,
+          "notable_files": [
+            "test_pattern_detector.py (59 tests)",
+            "test_project_models.py (46 tests)",
+            "test_executor_agent.py (38 tests)",
+            "test_witness_agent.py (38 tests)",
+            "test_architect_agent.py (35 tests)"
+          ]
+        },
+        "dspy_agents": {
+          "file_count": 6,
+          "test_count": 248,
+          "notable_files": [
+            "test_auditor_agent.py (70 tests)",
+            "test_planner_agent.py (49 tests)",
+            "test_code_agent.py (48 tests)",
+            "test_toolsmith_agent.py (41 tests)",
+            "test_dspy_learning_agent.py (23 tests)"
+          ]
+        },
+        "archived": {
+          "file_count": 7,
+          "test_count": 24,
+          "notable_files": [
+            "test_foundation_verifier.py (20 tests)",
+            "test_project_initializer.py (4 tests)"
+          ]
+        },
+        "other_experimental": {
+          "file_count": 3,
+          "test_count": 320,
+          "notable_files": [
+            "test_bash_tool_infrastructure.py (79 tests)",
+            "test_learning_loop_integration.py (23 tests)",
+            "test_git_error_paths.py (4 tests)"
+          ]
+        }
+      }
+    },
+    "duplicates": {
+      "description": "Multiple test files covering same functionality",
+      "group_count": 10,
+      "estimated_duplicate_tests": 200,
+      "action": "CONSOLIDATE",
+      "priority": "MEDIUM",
+      "groups": [
+        {
+          "name": "toolsmith_agent",
+          "files": [
+            "tests/test_toolsmith_agent_comprehensive.py",
+            "tests/dspy_agents/test_toolsmith_agent.py"
+          ],
+          "recommendation": "Keep comprehensive, delete DSPy version (experimental)"
+        },
+        {
+          "name": "agency_code_agent",
+          "files": [
+            "tests/test_agency_code_agent.py",
+            "tests/test_agency_code_agent_fixed.py"
+          ],
+          "recommendation": "Merge into single test_agency_code_agent.py"
+        },
+        {
+          "name": "chief_architect_agent",
+          "files": [
+            "tests/test_chief_architect_agent.py",
+            "tests/test_chief_architect_agent_simple.py",
+            "tests/unit/test_chief_architect_agent.py"
+          ],
+          "recommendation": "Consolidate into tests/test_chief_architect_agent.py"
+        },
+        {
+          "name": "retry_controller",
+          "files": [
+            "tests/test_retry_controller.py",
+            "tests/test_retry_controller_additional.py"
+          ],
+          "recommendation": "Merge additional tests into main file"
+        }
+      ]
+    },
+    "obsolete": {
+      "description": "Tests for removed or deprecated functionality",
+      "file_count": 7,
+      "test_count": 24,
+      "action": "DELETE",
+      "priority": "HIGH",
+      "files": [
+        "tests/archived/trinity_legacy/test_project_executor.py",
+        "tests/archived/trinity_legacy/test_trinity_e2e_integration.py",
+        "tests/archived/trinity_legacy/test_foundation_verifier.py",
+        "tests/archived/trinity_legacy/test_daily_checkin.py",
+        "tests/archived/trinity_legacy/test_budget_enforcer.py",
+        "tests/archived/trinity_legacy/test_spec_from_conversation.py",
+        "tests/archived/trinity_legacy/test_project_initializer.py"
+      ]
+    }
+  },
+  "necessary_scores": {
+    "excellent": {
+      "range": "7-9",
+      "count": 140,
+      "verdict": "KEEP",
+      "percentage": 91.5
+    },
+    "good": {
+      "range": "4-6",
+      "count": 13,
+      "verdict": "KEEP",
+      "percentage": 8.5
+    },
+    "needs_refactor": {
+      "range": "2-3",
+      "count": 0,
+      "verdict": "REFACTOR",
+      "percentage": 0
+    },
+    "delete": {
+      "range": "0-1",
+      "count": 0,
+      "verdict": "DELETE",
+      "percentage": 0
+    }
+  },
+  "execution_plan": {
+    "phase_2a_1_delete_experimental": {
+      "description": "Delete Trinity Protocol, DSPy A/B testing, and archived tests",
+      "files_to_delete": 35,
+      "tests_removed": 731,
+      "lines_removed": 22847,
+      "runtime_savings_seconds": 73,
+      "effort_hours": 1,
+      "risk": "LOW - All experimental/not in production"
+    },
+    "phase_2a_2_consolidate_duplicates": {
+      "description": "Merge duplicate test coverage into single authoritative files",
+      "duplicate_groups": 10,
+      "estimated_tests_removed": 100,
+      "estimated_lines_removed": 2000,
+      "runtime_savings_seconds": 10,
+      "effort_hours": 3,
+      "risk": "MEDIUM - Requires careful review to preserve coverage"
+    },
+    "phase_2a_3_remove_obsolete": {
+      "description": "Delete archived legacy tests",
+      "files_to_delete": 7,
+      "tests_removed": 24,
+      "lines_removed": 4514,
+      "runtime_savings_seconds": 2,
+      "effort_hours": 0.5,
+      "risk": "LOW - Already archived"
+    }
+  },
+  "top_bloat_files": [
+    {
+      "file": "tests/test_bash_tool_infrastructure.py",
+      "tests": 79,
+      "lines": 946,
+      "necessary_score": 7,
+      "category": "experimental",
+      "reason": "Experimental infrastructure tests",
+      "action": "DELETE"
+    },
+    {
+      "file": "tests/dspy_agents/test_auditor_agent.py",
+      "tests": 70,
+      "lines": 1139,
+      "necessary_score": 8,
+      "category": "experimental",
+      "reason": "DSPy experimental agent",
+      "action": "DELETE"
+    },
+    {
+      "file": "tests/trinity_protocol/test_pattern_detector.py",
+      "tests": 59,
+      "lines": 955,
+      "necessary_score": 8,
+      "category": "experimental",
+      "reason": "Trinity experimental feature",
+      "action": "DELETE"
+    },
+    {
+      "file": "tests/dspy_agents/test_planner_agent.py",
+      "tests": 49,
+      "lines": 942,
+      "necessary_score": 8,
+      "category": "experimental",
+      "reason": "DSPy experimental agent",
+      "action": "DELETE"
+    },
+    {
+      "file": "tests/dspy_agents/test_code_agent.py",
+      "tests": 48,
+      "lines": 1297,
+      "necessary_score": 8,
+      "category": "experimental",
+      "reason": "DSPy experimental agent",
+      "action": "DELETE"
+    }
+  ],
+  "recommendations": {
+    "immediate_actions": [
+      "Delete all 35 experimental test files (Trinity, DSPy, Archived) - 731 tests",
+      "This is safe because these features are not in production use",
+      "Removes 24.7% of test suite bloat immediately",
+      "Run full CI after deletion to verify 100% pass rate on remaining 2,234 tests"
+    ],
+    "follow_up_actions": [
+      "Consolidate 10 duplicate test groups to reduce redundancy",
+      "Review test_bash_tool_infrastructure.py - 79 tests may be useful if refactored",
+      "Document decision to archive Trinity and DSPy experiments in ADR"
+    ],
+    "expected_outcomes": [
+      "Test suite: 2,965 → 2,234 tests (-24.7%)",
+      "Runtime: ~296s → ~223s (1.33x faster)",
+      "Maintainability: Improved focus on production code",
+      "CI speed: Faster feedback loop for developers"
+    ]
+  },
+  "notes": [
+    "Analysis found that most experimental tests have high NECESSARY scores (7-8/9)",
+    "This indicates they are well-written tests for experimental features",
+    "The issue is not test quality but feature scope - features aren't production-ready",
+    "Trinity Protocol has only 3 production files but 19 test files",
+    "DSPy agents are in A/B testing phase, not production deployment",
+    "All archived/ tests should be deleted as features were removed"
+  ]
+}

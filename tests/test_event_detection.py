@@ -14,21 +14,16 @@ Tests follow the NECESSARY pattern:
 - Y: Yielding Confidence - Overall quality assurance
 """
 
-import os
 import sys
-import re
-import time
-import json
 import tempfile
-import threading
-from pathlib import Path
 from datetime import datetime
-from unittest.mock import Mock, patch, MagicMock, call
-from typing import List, Dict, Any, cast
-from shared.type_definitions.json import JSONValue
+from pathlib import Path
+from typing import cast
+from unittest.mock import Mock, patch
 
 import pytest
-from watchdog.events import FileModifiedEvent, FileCreatedEvent
+
+from shared.type_definitions.json import JSONValue
 
 # Add project root to path for imports
 project_root = Path(__file__).resolve().parents[1]
@@ -36,8 +31,13 @@ if str(project_root) not in sys.path:
     sys.path.insert(0, str(project_root))
 
 from learning_loop.event_detection import (
-    Event, FileEvent, ErrorEvent, FileWatcher, ErrorMonitor, EventDetectionSystem,
-    FileWatchHandler
+    ErrorEvent,
+    ErrorMonitor,
+    Event,
+    EventDetectionSystem,
+    FileEvent,
+    FileWatcher,
+    FileWatchHandler,
 )
 
 
@@ -50,9 +50,7 @@ class TestEvent:
         metadata = {"key": "value", "count": 42}
 
         event = Event(
-            type="test_event",
-            timestamp=timestamp,
-            metadata=cast(Dict[str, JSONValue], metadata)
+            type="test_event", timestamp=timestamp, metadata=cast(dict[str, JSONValue], metadata)
         )
 
         assert event.type == "test_event"
@@ -64,11 +62,7 @@ class TestEvent:
         timestamp = datetime.now()
         metadata = {"operation": "test", "success": True}
 
-        event = Event(
-            type="operation_complete",
-            timestamp=timestamp,
-            metadata=metadata
-        )
+        event = Event(type="operation_complete", timestamp=timestamp, metadata=metadata)
 
         result = event.to_dict()
 
@@ -82,7 +76,7 @@ class TestEvent:
         data = {
             "type": "parsed_event",
             "timestamp": timestamp.isoformat(),
-            "metadata": {"source": "unittest"}
+            "metadata": {"source": "unittest"},
         }
 
         event = Event.from_dict(data)
@@ -94,9 +88,7 @@ class TestEvent:
     def test_event_round_trip_serialization(self) -> None:
         """Test that event serialization is reversible."""
         original = Event(
-            type="round_trip",
-            timestamp=datetime.now(),
-            metadata={"test": "data", "number": 123}
+            type="round_trip", timestamp=datetime.now(), metadata={"test": "data", "number": 123}
         )
 
         # Serialize and deserialize
@@ -121,7 +113,7 @@ class TestFileEvent:
             path="/test/path.py",
             change_type="modified",
             file_type="python",
-            metadata={"size": 1024}
+            metadata={"size": 1024},
         )
 
         assert file_event.type == "file_modified"
@@ -138,7 +130,7 @@ class TestFileEvent:
             path="/src/module.py",
             change_type="created",
             file_type="python",
-            metadata={}
+            metadata={},
         )
 
         # Verify metadata is populated
@@ -156,7 +148,7 @@ class TestFileEvent:
             path="/docs/readme.md",
             change_type="modified",
             file_type="markdown",
-            metadata=existing_metadata.copy()
+            metadata=existing_metadata.copy(),
         )
 
         # Custom metadata should be preserved
@@ -182,7 +174,7 @@ class TestErrorEvent:
             context="Line 42: result.value",
             source_file="/src/module.py",
             line_number=42,
-            metadata={}
+            metadata={},
         )
 
         assert error_event.type == "error_detected"
@@ -200,7 +192,7 @@ class TestErrorEvent:
             error_type="ImportError",
             message="Module not found",
             context="import missing_module",
-            metadata={}
+            metadata={},
         )
 
         assert error_event.source_file is None
@@ -216,7 +208,7 @@ class TestErrorEvent:
             context="def func(:",
             source_file="/src/bad.py",
             line_number=15,
-            metadata={}
+            metadata={},
         )
 
         # Verify metadata population
@@ -314,11 +306,7 @@ class TestFileWatchHandler:
         # Verify telemetry logging
         mock_telemetry.log.assert_called_once_with(
             "file_watcher_event",
-            {
-                "path": "/project/src/module.py",
-                "file_type": "python",
-                "change_type": "modified"
-            }
+            {"path": "/project/src/module.py", "file_type": "python", "change_type": "modified"},
         )
 
     def test_on_created_test_file(self):
@@ -399,8 +387,8 @@ class TestFileWatcher:
 
         assert watcher.callback == self.callback
 
-    @patch('learning_loop.event_detection.get_telemetry')
-    @patch('learning_loop.event_detection.emit')
+    @patch("learning_loop.event_detection.get_telemetry")
+    @patch("learning_loop.event_detection.emit")
     def test_default_callback(self, mock_emit, mock_get_telemetry):
         """Test the default callback logs events to telemetry."""
         watcher = FileWatcher()
@@ -412,7 +400,7 @@ class TestFileWatcher:
             path="/test.py",
             change_type="modified",
             file_type="python",
-            metadata={}
+            metadata={},
         )
 
         watcher._default_callback(file_event)
@@ -420,15 +408,11 @@ class TestFileWatcher:
         # Verify emit was called with correct parameters
         mock_emit.assert_called_once_with(
             "file_change_detected",
-            {
-                "path": "/test.py",
-                "file_type": "python",
-                "change_type": "modified"
-            }
+            {"path": "/test.py", "file_type": "python", "change_type": "modified"},
         )
 
-    @patch('learning_loop.event_detection.Observer')
-    @patch('learning_loop.event_detection.emit')
+    @patch("learning_loop.event_detection.Observer")
+    @patch("learning_loop.event_detection.emit")
     def test_start_success(self, mock_emit, mock_observer_class):
         """Test successful FileWatcher start."""
         mock_observer = Mock()
@@ -444,14 +428,11 @@ class TestFileWatcher:
         # Verify telemetry logging
         mock_emit.assert_called_once_with(
             "file_watcher_started",
-            {
-                "watch_root": str(Path.cwd()),
-                "patterns": watcher.watch_patterns
-            }
+            {"watch_root": str(Path.cwd()), "patterns": watcher.watch_patterns},
         )
 
-    @patch('learning_loop.event_detection.Observer')
-    @patch('learning_loop.event_detection.emit')
+    @patch("learning_loop.event_detection.Observer")
+    @patch("learning_loop.event_detection.emit")
     def test_start_already_running(self, mock_emit, mock_observer_class):
         """Test that start() is idempotent when already running."""
         mock_observer = Mock()
@@ -466,8 +447,8 @@ class TestFileWatcher:
         mock_observer.schedule.assert_not_called()
         mock_observer.start.assert_not_called()
 
-    @patch('learning_loop.event_detection.Observer')
-    @patch('learning_loop.event_detection.emit')
+    @patch("learning_loop.event_detection.Observer")
+    @patch("learning_loop.event_detection.emit")
     def test_start_failure(self, mock_emit, mock_observer_class):
         """Test FileWatcher start failure handling."""
         mock_observer = Mock()
@@ -482,15 +463,12 @@ class TestFileWatcher:
         # Error should be logged
         mock_emit.assert_called_with(
             "file_watcher_error",
-            {
-                "error": "Permission denied",
-                "operation": "start"
-            },
-            level="error"
+            {"error": "Permission denied", "operation": "start"},
+            level="error",
         )
 
-    @patch('learning_loop.event_detection.Observer')
-    @patch('learning_loop.event_detection.emit')
+    @patch("learning_loop.event_detection.Observer")
+    @patch("learning_loop.event_detection.emit")
     def test_stop_success(self, mock_emit, mock_observer_class):
         """Test successful FileWatcher stop."""
         mock_observer = Mock()
@@ -508,7 +486,7 @@ class TestFileWatcher:
         # Verify telemetry logging
         mock_emit.assert_called_once_with("file_watcher_stopped", {})
 
-    @patch('learning_loop.event_detection.Observer')
+    @patch("learning_loop.event_detection.Observer")
     def test_stop_not_running(self, mock_observer_class):
         """Test that stop() is idempotent when not running."""
         mock_observer = Mock()
@@ -521,8 +499,8 @@ class TestFileWatcher:
         mock_observer.stop.assert_not_called()
         mock_observer.join.assert_not_called()
 
-    @patch('learning_loop.event_detection.Observer')
-    @patch('learning_loop.event_detection.emit')
+    @patch("learning_loop.event_detection.Observer")
+    @patch("learning_loop.event_detection.emit")
     def test_context_manager(self, mock_emit, mock_observer_class):
         """Test FileWatcher as context manager."""
         mock_observer = Mock()
@@ -560,7 +538,7 @@ class TestErrorMonitor:
 
         assert monitor.callback == self.callback
 
-    @patch('learning_loop.event_detection.emit')
+    @patch("learning_loop.event_detection.emit")
     def test_default_callback(self, mock_emit):
         """Test the default callback logs errors to telemetry."""
         monitor = ErrorMonitor()
@@ -572,7 +550,7 @@ class TestErrorMonitor:
             message="AttributeError: 'NoneType' object has no attribute 'value'",
             context="Line context",
             source_file="/src/module.py",
-            metadata={}
+            metadata={},
         )
 
         monitor._default_callback(error_event)
@@ -582,9 +560,9 @@ class TestErrorMonitor:
             {
                 "error_type": "NoneType",
                 "message": "AttributeError: 'NoneType' object has no attribute 'value'",
-                "source": "/src/module.py"
+                "source": "/src/module.py",
             },
-            level="warning"
+            level="warning",
         )
 
     def test_extract_context(self):
@@ -633,7 +611,7 @@ Line 6"""
 
         assert line_num is None
 
-    @patch('learning_loop.event_detection.emit')
+    @patch("learning_loop.event_detection.emit")
     def test_detect_error_nonetype(self, mock_emit):
         """Test NoneType error detection."""
         monitor = ErrorMonitor(callback=self.callback)
@@ -659,11 +637,11 @@ INFO: Process continued
             {
                 "error_type": "NoneType",
                 "source_file": "/test/log.txt",
-                "message": "AttributeError: 'NoneType' object has no attribute 'value'"
-            }
+                "message": "AttributeError: 'NoneType' object has no attribute 'value'",
+            },
         )
 
-    @patch('learning_loop.event_detection.emit')
+    @patch("learning_loop.event_detection.emit")
     def test_detect_error_import_error(self, mock_emit):
         """Test ImportError detection."""
         monitor = ErrorMonitor(callback=self.callback)
@@ -678,7 +656,7 @@ INFO: Process continued
         assert event.error_type == "ImportError"
         assert "ModuleNotFoundError" in event.message
 
-    @patch('learning_loop.event_detection.emit')
+    @patch("learning_loop.event_detection.emit")
     def test_detect_error_test_failure(self, mock_emit):
         """Test test failure detection."""
         monitor = ErrorMonitor(callback=self.callback)
@@ -693,7 +671,7 @@ INFO: Process continued
         assert event.error_type == "TestFailure"
         assert "FAILED tests/test_module.py::test_function" in event.message
 
-    @patch('learning_loop.event_detection.emit')
+    @patch("learning_loop.event_detection.emit")
     def test_detect_error_syntax_error_with_line(self, mock_emit):
         """Test SyntaxError detection with line number extraction."""
         monitor = ErrorMonitor(callback=self.callback)
@@ -708,7 +686,7 @@ INFO: Process continued
         assert event.error_type == "SyntaxError"
         assert event.line_number == 15
 
-    @patch('learning_loop.event_detection.emit')
+    @patch("learning_loop.event_detection.emit")
     def test_detect_error_multiple_patterns(self, mock_emit):
         """Test detection of multiple error types in same content."""
         monitor = ErrorMonitor(callback=self.callback)
@@ -728,7 +706,7 @@ FAILED tests/test.py::test_func
         assert "NoneType" in error_types
         assert "TestFailure" in error_types
 
-    @patch('learning_loop.event_detection.emit')
+    @patch("learning_loop.event_detection.emit")
     def test_detect_error_regex_error_handling(self, mock_emit):
         """Test handling of regex compilation errors."""
         monitor = ErrorMonitor(callback=self.callback)
@@ -745,11 +723,8 @@ FAILED tests/test.py::test_func
         # Error should be logged
         mock_emit.assert_any_call(
             "error_monitor_regex_error",
-            {
-                "pattern": "[",
-                "error": mock_emit.call_args_list[-1][0][1]["error"]
-            },
-            level="error"
+            {"pattern": "[", "error": mock_emit.call_args_list[-1][0][1]["error"]},
+            level="error",
         )
 
     def test_monitor_file_nonexistent(self):
@@ -765,7 +740,7 @@ FAILED tests/test.py::test_func
         """Test monitoring file with no new content."""
         monitor = ErrorMonitor(callback=self.callback)
 
-        with tempfile.NamedTemporaryFile(mode='w', delete=False, suffix='.log') as f:
+        with tempfile.NamedTemporaryFile(mode="w", delete=False, suffix=".log") as f:
             f.write("Initial content")
             f.flush()
             temp_path = Path(f.name)
@@ -780,12 +755,12 @@ FAILED tests/test.py::test_func
         finally:
             temp_path.unlink()
 
-    @patch('learning_loop.event_detection.emit')
+    @patch("learning_loop.event_detection.emit")
     def test_monitor_file_with_new_content(self, mock_emit):
         """Test monitoring file with new error content."""
         monitor = ErrorMonitor(callback=self.callback)
 
-        with tempfile.NamedTemporaryFile(mode='w', delete=False, suffix='.log') as f:
+        with tempfile.NamedTemporaryFile(mode="w", delete=False, suffix=".log") as f:
             f.write("Initial content\n")
             f.flush()
             temp_path = Path(f.name)
@@ -795,7 +770,7 @@ FAILED tests/test.py::test_func
             monitor._file_positions[str(temp_path)] = 0
 
             # Append error content
-            with open(temp_path, 'a') as f:
+            with open(temp_path, "a") as f:
                 f.write("AttributeError: 'NoneType' object has no attribute 'test'\n")
 
             events = monitor._monitor_file(temp_path)
@@ -806,16 +781,17 @@ FAILED tests/test.py::test_func
         finally:
             temp_path.unlink()
 
-    @patch('learning_loop.event_detection.emit')
+    @patch("learning_loop.event_detection.emit")
     def test_monitor_file_read_error(self, mock_emit):
         """Test handling of file read errors."""
         monitor = ErrorMonitor(callback=self.callback)
 
         # Mock a file that exists but can't be read
-        with patch('pathlib.Path.exists', return_value=True), \
-             patch('pathlib.Path.stat') as mock_stat, \
-             patch('builtins.open', side_effect=PermissionError("Permission denied")):
-
+        with (
+            patch("pathlib.Path.exists", return_value=True),
+            patch("pathlib.Path.stat") as mock_stat,
+            patch("builtins.open", side_effect=PermissionError("Permission denied")),
+        ):
             mock_stat.return_value.st_size = 100
             fake_path = Path("/fake/path.log")
 
@@ -826,14 +802,11 @@ FAILED tests/test.py::test_func
             # Error should be logged
             mock_emit.assert_called_with(
                 "error_monitor_file_error",
-                {
-                    "file": "/fake/path.log",
-                    "error": "Permission denied"
-                },
-                level="warning"
+                {"file": "/fake/path.log", "error": "Permission denied"},
+                level="warning",
             )
 
-    @patch('learning_loop.event_detection.emit')
+    @patch("learning_loop.event_detection.emit")
     def test_start_and_stop(self, mock_emit):
         """Test starting and stopping error monitoring."""
         monitor = ErrorMonitor(callback=self.callback)
@@ -846,10 +819,7 @@ FAILED tests/test.py::test_func
         # Verify start logging
         mock_emit.assert_called_with(
             "error_monitor_started",
-            {
-                "sources": monitor.error_sources,
-                "patterns": list(monitor.error_patterns.keys())
-            }
+            {"sources": monitor.error_sources, "patterns": list(monitor.error_patterns.keys())},
         )
 
         # Test stop
@@ -898,8 +868,7 @@ class TestEventDetectionSystem:
     def test_initialization(self):
         """Test EventDetectionSystem initialization."""
         system = EventDetectionSystem(
-            file_callback=self.file_callback,
-            error_callback=self.error_callback
+            file_callback=self.file_callback, error_callback=self.error_callback
         )
 
         assert system.file_watcher is not None
@@ -913,12 +882,11 @@ class TestEventDetectionSystem:
         assert system.file_watcher.callback is not None
         assert system.error_monitor.callback is not None
 
-    @patch('learning_loop.event_detection.emit')
+    @patch("learning_loop.event_detection.emit")
     def test_start_success(self, mock_emit):
         """Test successful system start."""
         system = EventDetectionSystem(
-            file_callback=self.file_callback,
-            error_callback=self.error_callback
+            file_callback=self.file_callback, error_callback=self.error_callback
         )
 
         # Mock the individual components to prevent real file operations
@@ -937,16 +905,15 @@ class TestEventDetectionSystem:
         # (ignoring any other telemetry from real file operations)
         calls = mock_emit.call_args_list
         assert any(
-            call[0][0] == "event_detection_started" and
-            call[0][1] == {"components": ["FileWatcher", "ErrorMonitor"]}
+            call[0][0] == "event_detection_started"
+            and call[0][1] == {"components": ["FileWatcher", "ErrorMonitor"]}
             for call in calls
         )
 
     def test_start_idempotent(self):
         """Test that start is idempotent."""
         system = EventDetectionSystem(
-            file_callback=self.file_callback,
-            error_callback=self.error_callback
+            file_callback=self.file_callback, error_callback=self.error_callback
         )
 
         system.file_watcher.start = Mock()
@@ -958,12 +925,11 @@ class TestEventDetectionSystem:
         system.file_watcher.start.assert_not_called()
         system.error_monitor.start.assert_not_called()
 
-    @patch('learning_loop.event_detection.emit')
+    @patch("learning_loop.event_detection.emit")
     def test_start_failure_cleanup(self, mock_emit):
         """Test cleanup on start failure."""
         system = EventDetectionSystem(
-            file_callback=self.file_callback,
-            error_callback=self.error_callback
+            file_callback=self.file_callback, error_callback=self.error_callback
         )
 
         system.file_watcher.start = Mock()
@@ -977,19 +943,14 @@ class TestEventDetectionSystem:
         system.stop.assert_called_once()
 
         mock_emit.assert_called_with(
-            "event_detection_start_error",
-            {
-                "error": "Start failed"
-            },
-            level="error"
+            "event_detection_start_error", {"error": "Start failed"}, level="error"
         )
 
-    @patch('learning_loop.event_detection.emit')
+    @patch("learning_loop.event_detection.emit")
     def test_stop_success(self, mock_emit):
         """Test successful system stop."""
         system = EventDetectionSystem(
-            file_callback=self.file_callback,
-            error_callback=self.error_callback
+            file_callback=self.file_callback, error_callback=self.error_callback
         )
 
         system.file_watcher.stop = Mock()
@@ -1011,8 +972,7 @@ class TestEventDetectionSystem:
     def test_stop_idempotent(self):
         """Test that stop is idempotent."""
         system = EventDetectionSystem(
-            file_callback=self.file_callback,
-            error_callback=self.error_callback
+            file_callback=self.file_callback, error_callback=self.error_callback
         )
 
         system.file_watcher.stop = Mock()
@@ -1023,12 +983,11 @@ class TestEventDetectionSystem:
         system.file_watcher.stop.assert_not_called()
         system.error_monitor.stop.assert_not_called()
 
-    @patch('learning_loop.event_detection.emit')
+    @patch("learning_loop.event_detection.emit")
     def test_stop_with_error(self, mock_emit):
         """Test stop with error handling."""
         system = EventDetectionSystem(
-            file_callback=self.file_callback,
-            error_callback=self.error_callback
+            file_callback=self.file_callback, error_callback=self.error_callback
         )
 
         system.file_watcher.stop = Mock(side_effect=Exception("Stop failed"))
@@ -1041,18 +1000,13 @@ class TestEventDetectionSystem:
         assert system.is_running is False
 
         mock_emit.assert_called_with(
-            "event_detection_stop_error",
-            {
-                "error": "Stop failed"
-            },
-            level="error"
+            "event_detection_stop_error", {"error": "Stop failed"}, level="error"
         )
 
     def test_context_manager(self):
         """Test EventDetectionSystem as context manager."""
         system = EventDetectionSystem(
-            file_callback=self.file_callback,
-            error_callback=self.error_callback
+            file_callback=self.file_callback, error_callback=self.error_callback
         )
 
         system.start = Mock()
@@ -1079,7 +1033,7 @@ class TestIntegration:
         system = EventDetectionSystem(file_callback=event_handler)
 
         # Mock the watchdog components to avoid actual file system monitoring
-        with patch('learning_loop.event_detection.Observer'):
+        with patch("learning_loop.event_detection.Observer"):
             system.start()
 
             try:
@@ -1090,7 +1044,7 @@ class TestIntegration:
                     path="/test/module.py",
                     change_type="modified",
                     file_type="python",
-                    metadata={}
+                    metadata={},
                 )
 
                 # Call the handler directly to simulate watchdog callback
@@ -1120,7 +1074,7 @@ class TestIntegration:
         assert events[0].error_type == "NoneType"
         assert "'NoneType' object has no attribute 'value'" in events[0].message
 
-    @patch('learning_loop.event_detection.emit')
+    @patch("learning_loop.event_detection.emit")
     def test_telemetry_integration(self, mock_emit):
         """Test that all components properly integrate with telemetry."""
         system = EventDetectionSystem()
@@ -1133,10 +1087,7 @@ class TestIntegration:
 
         # Verify telemetry was called
         mock_emit.assert_called_with(
-            "event_detection_started",
-            {
-                "components": ["FileWatcher", "ErrorMonitor"]
-            }
+            "event_detection_started", {"components": ["FileWatcher", "ErrorMonitor"]}
         )
 
     def test_error_resilience(self):

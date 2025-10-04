@@ -1,5 +1,4 @@
-import os
-from tools.kanban.hints import LearningHintRegistry, Hint
+from tools.kanban.hints import Hint, LearningHintRegistry
 from tools.kanban.runtime_hints import apply_env_hints_from_registry
 
 
@@ -7,7 +6,11 @@ def test_apply_env_hints_sets_and_appends(monkeypatch, tmp_path):
     path = tmp_path / "hints.json"
     reg = LearningHintRegistry(path=str(path))
     reg.register(Hint(match={"error_type": "X"}, action={"env": {"FOO": "bar"}}, confidence=0.9))
-    reg.register(Hint(match={"error_type": "Y"}, action={"env": {"PYTHONPATH_APPEND": "src"}}, confidence=0.9))
+    reg.register(
+        Hint(
+            match={"error_type": "Y"}, action={"env": {"PYTHONPATH_APPEND": "src"}}, confidence=0.9
+        )
+    )
 
     env: dict[str, str] = {}
     applied = apply_env_hints_from_registry(reg, env)

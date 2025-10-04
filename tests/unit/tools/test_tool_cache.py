@@ -10,17 +10,19 @@ Constitutional Compliance:
 - Law #1: TDD is mandatory
 """
 
-import time
 import tempfile
+import time
 from pathlib import Path
+
 import pytest
+
 from shared.tool_cache import (
-    ToolCache,
     CacheEntry,
-    with_cache,
+    ToolCache,
     clear_cache,
-    invalidate_file,
     get_cache_stats,
+    invalidate_file,
+    with_cache,
 )
 
 
@@ -32,9 +34,7 @@ class TestCacheEntry:
     def test_cache_entry_creation(self):
         """Test basic cache entry creation."""
         entry = CacheEntry(
-            result="test_value",
-            timestamp=time.time(),
-            file_dependencies=["file1.py"]
+            result="test_value", timestamp=time.time(), file_dependencies=["file1.py"]
         )
         assert entry.result == "test_value"
         assert isinstance(entry.timestamp, float)
@@ -42,11 +42,7 @@ class TestCacheEntry:
 
     def test_cache_entry_no_dependencies(self):
         """Test cache entry without file dependencies."""
-        entry = CacheEntry(
-            result=42,
-            timestamp=time.time(),
-            file_dependencies=None
-        )
+        entry = CacheEntry(result=42, timestamp=time.time(), file_dependencies=None)
         assert entry.result == 42
         assert entry.file_dependencies is None
 
@@ -135,7 +131,7 @@ class TestToolCache:
 
     def test_cache_file_dependency_invalidation(self):
         """Test cache invalidation when file is modified."""
-        with tempfile.NamedTemporaryFile(mode='w', delete=False) as f:
+        with tempfile.NamedTemporaryFile(mode="w", delete=False) as f:
             temp_file = f.name
             f.write("initial content")
 
@@ -173,11 +169,11 @@ class TestToolCache:
 
     def test_invalidate_file_explicit(self):
         """Test explicit file invalidation."""
-        with tempfile.NamedTemporaryFile(mode='w', delete=False) as f1:
+        with tempfile.NamedTemporaryFile(mode="w", delete=False) as f1:
             file_path = f1.name
             f1.write("content1")
 
-        with tempfile.NamedTemporaryFile(mode='w', delete=False) as f2:
+        with tempfile.NamedTemporaryFile(mode="w", delete=False) as f2:
             other_file = f2.name
             f2.write("content2")
 
@@ -313,16 +309,13 @@ class TestCacheDecorator:
 
     def test_cache_decorator_with_file_dependencies(self):
         """Test cache decorator with file dependency tracking."""
-        with tempfile.NamedTemporaryFile(mode='w', delete=False) as f:
+        with tempfile.NamedTemporaryFile(mode="w", delete=False) as f:
             temp_file = f.name
             f.write("initial")
 
         try:
 
-            @with_cache(
-                ttl_seconds=300,
-                file_dependencies=lambda file_path: [file_path]
-            )
+            @with_cache(ttl_seconds=300, file_dependencies=lambda file_path: [file_path])
             def read_file(file_path: str) -> str:
                 self.call_count += 1
                 return Path(file_path).read_text()
@@ -400,16 +393,13 @@ class TestGlobalCacheAPI:
 
     def test_invalidate_file_global(self):
         """Test global file invalidation function."""
-        with tempfile.NamedTemporaryFile(mode='w', delete=False) as f:
+        with tempfile.NamedTemporaryFile(mode="w", delete=False) as f:
             temp_file = f.name
             f.write("content")
 
         try:
 
-            @with_cache(
-                ttl_seconds=300,
-                file_dependencies=lambda fp: [fp]
-            )
+            @with_cache(ttl_seconds=300, file_dependencies=lambda fp: [fp])
             def read_cached(file_path: str) -> str:
                 return Path(file_path).read_text()
 
@@ -470,11 +460,7 @@ class TestCacheEdgeCases:
         """Test caching complex objects."""
         cache = ToolCache()
 
-        complex_obj = {
-            "nested": {"data": [1, 2, 3]},
-            "tuple": (1, 2, 3),
-            "set": {1, 2, 3}
-        }
+        complex_obj = {"nested": {"data": [1, 2, 3]}, "tuple": (1, 2, 3), "set": {1, 2, 3}}
 
         cache.set("complex_key", complex_obj)
         result = cache.get("complex_key")

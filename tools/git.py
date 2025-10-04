@@ -16,21 +16,14 @@ class Git(BaseTool):  # type: ignore[misc]
     """
 
     cmd: Literal["status", "diff", "log", "show"] = Field(
-        ...,
-        description="Git command: status, diff, log, show (read-only operations only)"
+        ..., description="Git command: status, diff, log, show (read-only operations only)"
     )
     ref: str = Field(
-        "HEAD",
-        description="Git reference for diff/show operations (branch, tag, or commit hash)"
+        "HEAD", description="Git reference for diff/show operations (branch, tag, or commit hash)"
     )
-    max_lines: int = Field(
-        20000,
-        description="Max output lines (1-1000000)",
-        gt=0,
-        le=1000000
-    )
+    max_lines: int = Field(20000, description="Max output lines (1-1000000)", gt=0, le=1000000)
 
-    @field_validator('cmd')
+    @field_validator("cmd")
     @classmethod
     def validate_cmd(cls, v: str) -> str:
         """Validate command is whitelisted and not empty."""
@@ -42,7 +35,7 @@ class Git(BaseTool):  # type: ignore[misc]
             raise ValueError(f"Command '{v}' not in whitelist: {allowed}")
         return v
 
-    @field_validator('ref')
+    @field_validator("ref")
     @classmethod
     def validate_ref(cls, v: str) -> str:
         """Validate git reference doesn't contain injection patterns.
@@ -54,7 +47,7 @@ class Git(BaseTool):  # type: ignore[misc]
             raise ValueError("Reference cannot be empty or whitespace-only")
 
         # Check for injection characters
-        dangerous_chars = {';', '|', '&', '$', '`', '\x00', '\n', '\r', '\t'}
+        dangerous_chars = {";", "|", "&", "$", "`", "\x00", "\n", "\r", "\t"}
         for char in dangerous_chars:
             if char in v:
                 raise ValueError(
@@ -63,12 +56,14 @@ class Git(BaseTool):  # type: ignore[misc]
                 )
 
         # Check for path traversal attempts
-        if '..' in v:
-            raise ValueError("Reference contains path traversal pattern '..' - blocked for security")
+        if ".." in v:
+            raise ValueError(
+                "Reference contains path traversal pattern '..' - blocked for security"
+            )
 
         # Validate against safe pattern: git refs are alphanumeric with limited special chars
         # Allow: a-z A-Z 0-9 - _ . / ^ ~ (common in git refs)
-        safe_pattern = re.compile(r'^[a-zA-Z0-9\-_./^~]+$')
+        safe_pattern = re.compile(r"^[a-zA-Z0-9\-_./^~]+$")
         if not safe_pattern.match(v):
             raise ValueError(
                 f"Reference '{v}' contains invalid characters. "
@@ -79,12 +74,13 @@ class Git(BaseTool):  # type: ignore[misc]
 
     def run(self):
         import warnings
+
         warnings.warn(
             "Git tool is deprecated. Use GitUnified instead: "
             "from tools.git_unified import GitUnified. "
             "This tool will be removed after 2025-11-02 (30 days).",
             DeprecationWarning,
-            stacklevel=2
+            stacklevel=2,
         )
         try:
             from io import StringIO

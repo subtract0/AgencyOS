@@ -16,22 +16,23 @@ Constitutional Compliance:
 - Article IV: Continuous learning with pattern-specific routing
 """
 
-from typing import Optional, List, Union, Dict
-from shared.type_definitions.json_value import JSONValue
-from pydantic import BaseModel, Field
-from datetime import datetime
 import threading
+from datetime import datetime
+
+from pydantic import BaseModel, Field
 
 # Import the different memory systems
-from agency_memory import Memory, EnhancedMemoryStore, create_enhanced_memory_store
-from pattern_intelligence import PatternStore, CodingPattern
+from agency_memory import Memory, create_enhanced_memory_store
+from pattern_intelligence import CodingPattern, PatternStore
+from shared.type_definitions.json_value import JSONValue
 
 
 class MemoryQuery(BaseModel):
     """Unified query structure for memory operations."""
+
     query: str
-    category: Optional[str] = None
-    tags: Optional[List[str]] = Field(default=None)
+    category: str | None = None
+    tags: list[str] | None = Field(default=None)
     limit: int = 10
     include_patterns: bool = True
     include_memories: bool = True
@@ -39,13 +40,15 @@ class MemoryQuery(BaseModel):
 
 class SearchResults(BaseModel):
     """Results from searching across memory systems."""
-    patterns: List[JSONValue] = Field(default_factory=list)
-    memories: List[JSONValue] = Field(default_factory=list)
-    legacy: List[JSONValue] = Field(default_factory=list)
+
+    patterns: list[JSONValue] = Field(default_factory=list)
+    memories: list[JSONValue] = Field(default_factory=list)
+    legacy: list[JSONValue] = Field(default_factory=list)
 
 
 class MemoryStats(BaseModel):
     """Statistics about memory usage."""
+
     pattern_count: int
     memory_count: int
     backends_active: JSONValue
@@ -54,6 +57,7 @@ class MemoryStats(BaseModel):
 
 class MigrationStats(BaseModel):
     """Statistics about migrated items."""
+
     patterns: int = 0
     memories: int = 0
 
@@ -84,7 +88,7 @@ class UnifiedMemory:
         # Legacy memory for backward compatibility
         self.legacy_memory = Memory()
 
-    def store_pattern(self, pattern: Union[Dict[str, JSONValue], CodingPattern]) -> str:
+    def store_pattern(self, pattern: dict[str, JSONValue] | CodingPattern) -> str:
         """Store a coding pattern in the pattern store."""
         with self._lock:
             if isinstance(pattern, dict):
@@ -92,18 +96,20 @@ class UnifiedMemory:
                 pattern = CodingPattern(**pattern)
             return self.pattern_store.store_pattern(pattern)
 
-    def store_memory(self,
-                    key: str,
-                    value: JSONValue,
-                    tags: Optional[List[str]] = None,
-                    category: Optional[str] = None) -> None:
+    def store_memory(
+        self,
+        key: str,
+        value: JSONValue,
+        tags: list[str] | None = None,
+        category: str | None = None,
+    ) -> None:
         """Store general memory in the enhanced memory store."""
         with self._lock:
             self.memory_store.store_memory(
                 key=key,
                 value=value,
                 tags=tags or [],
-                metadata={"category": category} if category else {}
+                metadata={"category": category} if category else {},
             )
 
     def search(self, query: MemoryQuery) -> SearchResults:
@@ -120,36 +126,31 @@ class UnifiedMemory:
 
             # Search patterns if requested
             if query.include_patterns:
-                pattern_results = self.pattern_store.search_patterns(
-                    query.query,
-                    limit=query.limit
-                )
+                pattern_results = self.pattern_store.search_patterns(query.query, limit=query.limit)
                 results.patterns = pattern_results
 
             # Search general memories if requested
             if query.include_memories:
                 memory_results = self.memory_store.search_memories(
-                    query.query,
-                    tags=query.tags,
-                    limit=query.limit
+                    query.query, tags=query.tags, limit=query.limit
                 )
                 results.memories = memory_results
 
             return results
 
-    def get_pattern(self, pattern_id: str) -> Optional[CodingPattern]:
+    def get_pattern(self, pattern_id: str) -> CodingPattern | None:
         """Retrieve a specific pattern by ID."""
         with self._lock:
             return self.pattern_store.get_pattern(pattern_id)
 
-    def get_memory(self, key: str) -> Optional[JSONValue]:
+    def get_memory(self, key: str) -> JSONValue | None:
         """Retrieve a specific memory by key."""
         with self._lock:
             return self.memory_store.get_memory(key)
 
-    def list_patterns(self,
-                     category: Optional[str] = None,
-                     limit: int = 100) -> List[CodingPattern]:
+    def list_patterns(
+        self, category: str | None = None, limit: int = 100
+    ) -> list[CodingPattern]:
         """List all patterns, optionally filtered by category."""
         with self._lock:
             # Use search with empty query to get all patterns
@@ -157,8 +158,9 @@ class UnifiedMemory:
 
             if category:
                 # Filter by category if specified
-                return [p for p in all_patterns
-                       if hasattr(p, 'category') and p.category == category]
+                return [
+                    p for p in all_patterns if hasattr(p, "category") and p.category == category
+                ]
 
             return all_patterns
 
@@ -172,13 +174,15 @@ class UnifiedMemory:
         with self._lock:
             return MemoryStats(
                 pattern_count=len(self.list_patterns()),
-                memory_count=self.memory_store.get_memory_count() if hasattr(self.memory_store, 'get_memory_count') else 0,
+                memory_count=self.memory_store.get_memory_count()
+                if hasattr(self.memory_store, "get_memory_count")
+                else 0,
                 backends_active={
                     "pattern_store": True,
                     "enhanced_memory": True,
-                    "legacy_memory": True
+                    "legacy_memory": True,
                 },
-                last_updated=datetime.now().isoformat()
+                last_updated=datetime.now().isoformat(),
             )
 
     def migrate_legacy_data(self) -> MigrationStats:
@@ -217,12 +221,12 @@ def get_unified_memory() -> UnifiedMemory:
 
 
 # Convenience functions for common operations
-def store_pattern(pattern: Union[Dict[str, JSONValue], CodingPattern]) -> str:
+def store_pattern(pattern: dict[str, JSONValue] | CodingPattern) -> str:
     """Store a pattern using the unified memory facade."""
     return get_unified_memory().store_pattern(pattern)
 
 
-def store_memory(key: str, value: JSONValue, tags: Optional[List[str]] = None) -> None:
+def store_memory(key: str, value: JSONValue, tags: list[str] | None = None) -> None:
     """Store general memory using the unified memory facade."""
     get_unified_memory().store_memory(key, value, tags)
 

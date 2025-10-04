@@ -11,9 +11,10 @@ Constitutional Compliance:
 - Privacy: Respect user focus time
 """
 
-from pydantic import BaseModel, Field
-from typing import Optional, Literal
 from datetime import datetime
+from typing import Literal
+
+from pydantic import BaseModel, Field
 
 from trinity_protocol.core.models.patterns import DetectedPattern
 
@@ -27,45 +28,36 @@ class HumanReviewRequest(BaseModel):
     """
 
     correlation_id: str = Field(
-        ...,
-        description="Unique ID linking this question to pattern and potential tasks"
+        ..., description="Unique ID linking this question to pattern and potential tasks"
     )
     question_text: str = Field(
         ...,
         min_length=10,
         max_length=500,
-        description="Clear, concise question for Alex (10-500 chars)"
+        description="Clear, concise question for Alex (10-500 chars)",
     )
     question_type: Literal["low_stakes", "high_value"] = Field(
-        ...,
-        description="Stakes level: low_stakes = quick wins, high_value = major impact"
+        ..., description="Stakes level: low_stakes = quick wins, high_value = major impact"
     )
     pattern_context: DetectedPattern = Field(
-        ...,
-        description="Pattern that triggered this question"
+        ..., description="Pattern that triggered this question"
     )
     priority: int = Field(
-        ...,
-        ge=1,
-        le=10,
-        description="Priority level (1-10, higher = more urgent)"
+        ..., ge=1, le=10, description="Priority level (1-10, higher = more urgent)"
     )
     expires_at: datetime = Field(
-        ...,
-        description="Question expires after this time (defaults to 24h)"
+        ..., description="Question expires after this time (defaults to 24h)"
     )
     created_at: datetime = Field(
-        default_factory=datetime.now,
-        description="When question was created"
+        default_factory=datetime.now, description="When question was created"
     )
-    suggested_action: Optional[str] = Field(
-        default=None,
-        max_length=200,
-        description="Brief description of what would happen if YES"
+    suggested_action: str | None = Field(
+        default=None, max_length=200, description="Brief description of what would happen if YES"
     )
 
     class Config:
         """Pydantic config."""
+
         validate_assignment = True
         frozen = False  # Allow updates during lifecycle
 
@@ -77,31 +69,21 @@ class HumanResponse(BaseModel):
     Captures YES (proceed), NO (don't do this), or LATER (ask again).
     """
 
-    correlation_id: str = Field(
-        ...,
-        description="Links response to original question"
-    )
+    correlation_id: str = Field(..., description="Links response to original question")
     response_type: Literal["YES", "NO", "LATER"] = Field(
-        ...,
-        description="User decision: YES (execute), NO (don't execute), LATER (remind me)"
+        ..., description="User decision: YES (execute), NO (don't execute), LATER (remind me)"
     )
-    comment: Optional[str] = Field(
-        default=None,
-        max_length=500,
-        description="Optional user comment explaining the decision"
+    comment: str | None = Field(
+        default=None, max_length=500, description="Optional user comment explaining the decision"
     )
-    responded_at: datetime = Field(
-        default_factory=datetime.now,
-        description="When user responded"
-    )
-    response_time_seconds: Optional[float] = Field(
-        default=None,
-        ge=0.0,
-        description="Time from question creation to response (for learning)"
+    responded_at: datetime = Field(default_factory=datetime.now, description="When user responded")
+    response_time_seconds: float | None = Field(
+        default=None, ge=0.0, description="Time from question creation to response (for learning)"
     )
 
     class Config:
         """Pydantic config."""
+
         frozen = True  # Responses are immutable once created
 
 
@@ -112,35 +94,15 @@ class QuestionStats(BaseModel):
     Used by PreferenceLearning to optimize when/what to ask.
     """
 
-    total_questions_asked: int = Field(
-        default=0,
-        ge=0,
-        description="Total questions asked"
-    )
-    yes_responses: int = Field(
-        default=0,
-        ge=0,
-        description="Number of YES responses"
-    )
-    no_responses: int = Field(
-        default=0,
-        ge=0,
-        description="Number of NO responses"
-    )
-    later_responses: int = Field(
-        default=0,
-        ge=0,
-        description="Number of LATER responses"
-    )
+    total_questions_asked: int = Field(default=0, ge=0, description="Total questions asked")
+    yes_responses: int = Field(default=0, ge=0, description="Number of YES responses")
+    no_responses: int = Field(default=0, ge=0, description="Number of NO responses")
+    later_responses: int = Field(default=0, ge=0, description="Number of LATER responses")
     expired_questions: int = Field(
-        default=0,
-        ge=0,
-        description="Questions that expired without response"
+        default=0, ge=0, description="Questions that expired without response"
     )
     avg_response_time_seconds: float = Field(
-        default=0.0,
-        ge=0.0,
-        description="Average response time"
+        default=0.0, ge=0.0, description="Average response time"
     )
 
     @property
@@ -161,6 +123,7 @@ class QuestionStats(BaseModel):
 
     class Config:
         """Pydantic config."""
+
         validate_assignment = True
 
 
@@ -175,37 +138,25 @@ class PreferencePattern(BaseModel):
     question_type: str = Field(..., description="Type of question")
     pattern_topic: str = Field(..., description="Topic/theme of questions")
     acceptance_rate: float = Field(
-        ...,
-        ge=0.0,
-        le=1.0,
-        description="Percentage of YES responses for this pattern"
+        ..., ge=0.0, le=1.0, description="Percentage of YES responses for this pattern"
     )
-    sample_size: int = Field(
-        ...,
-        ge=1,
-        description="Number of questions in this pattern"
-    )
-    preferred_time_of_day: Optional[str] = Field(
-        default=None,
-        description="Best time to ask (e.g., 'morning', 'afternoon', 'evening')"
+    sample_size: int = Field(..., ge=1, description="Number of questions in this pattern")
+    preferred_time_of_day: str | None = Field(
+        default=None, description="Best time to ask (e.g., 'morning', 'afternoon', 'evening')"
     )
     context_keywords: list[str] = Field(
-        default_factory=list,
-        description="Keywords associated with YES responses"
+        default_factory=list, description="Keywords associated with YES responses"
     )
     confidence: float = Field(
-        ...,
-        ge=0.0,
-        le=1.0,
-        description="Confidence in this preference pattern"
+        ..., ge=0.0, le=1.0, description="Confidence in this preference pattern"
     )
     last_updated: datetime = Field(
-        default_factory=datetime.now,
-        description="Last time pattern was updated"
+        default_factory=datetime.now, description="Last time pattern was updated"
     )
 
     class Config:
         """Pydantic config."""
+
         validate_assignment = True
 
 
@@ -217,38 +168,25 @@ class QuestionDeliveryConfig(BaseModel):
     """
 
     delivery_method: Literal["terminal", "web", "voice"] = Field(
-        default="terminal",
-        description="How to deliver questions (terminal for MVP)"
+        default="terminal", description="How to deliver questions (terminal for MVP)"
     )
     max_questions_per_hour: int = Field(
-        default=3,
-        ge=1,
-        le=10,
-        description="Rate limit: max questions per hour"
+        default=3, ge=1, le=10, description="Rate limit: max questions per hour"
     )
-    quiet_hours_start: Optional[int] = Field(
-        default=22,
-        ge=0,
-        le=23,
-        description="Hour to stop asking questions (24h format)"
+    quiet_hours_start: int | None = Field(
+        default=22, ge=0, le=23, description="Hour to stop asking questions (24h format)"
     )
-    quiet_hours_end: Optional[int] = Field(
-        default=8,
-        ge=0,
-        le=23,
-        description="Hour to resume asking questions (24h format)"
+    quiet_hours_end: int | None = Field(
+        default=8, ge=0, le=23, description="Hour to resume asking questions (24h format)"
     )
     require_confirmation: bool = Field(
-        default=True,
-        description="Require explicit confirmation before executing"
+        default=True, description="Require explicit confirmation before executing"
     )
     default_expiry_hours: int = Field(
-        default=24,
-        ge=1,
-        le=168,
-        description="Default question expiry time in hours (1-168)"
+        default=24, ge=1, le=168, description="Default question expiry time in hours (1-168)"
     )
 
     class Config:
         """Pydantic config."""
+
         validate_assignment = True

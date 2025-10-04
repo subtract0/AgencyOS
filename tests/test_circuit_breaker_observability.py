@@ -1,5 +1,6 @@
-import logging
 import asyncio
+import logging
+
 import pytest
 
 from shared.system_hooks import create_tool_wrapper_hook
@@ -13,8 +14,10 @@ class DummyContext:
 
 class AlwaysFailTool:
     name = "Read"
+
     def __init__(self):
         self.calls = 0
+
     def run(self, *args, **kwargs):
         self.calls += 1
         raise ValueError("boom")
@@ -44,7 +47,9 @@ def test_breaker_logs_and_env_tuning(monkeypatch):
 
     try:
         # Wrap the tool
-        asyncio.get_event_loop().run_until_complete(hook.on_tool_start(wrapper, agent=None, tool=tool))
+        asyncio.get_event_loop().run_until_complete(
+            hook.on_tool_start(wrapper, agent=None, tool=tool)
+        )
 
         # First execution should fail and open the circuit (threshold=1)
         with pytest.raises(ValueError):
@@ -59,6 +64,10 @@ def test_breaker_logs_and_env_tuning(monkeypatch):
 
         # Verify logs contain circuit events
         messages = "\n".join(r.getMessage() for r in records)
-        assert "circuit_open" in messages or "circuit_failure" in messages or "circuit_blocked_request" in messages
+        assert (
+            "circuit_open" in messages
+            or "circuit_failure" in messages
+            or "circuit_blocked_request" in messages
+        )
     finally:
         logger.removeHandler(handler)

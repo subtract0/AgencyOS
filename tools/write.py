@@ -6,7 +6,6 @@ from pydantic import Field
 # Import the global read files registry
 from tools.read import _global_read_files
 
-
 # Global registry for tracking written files when context is not available
 _global_written_files = set()
 
@@ -138,7 +137,7 @@ if __name__ == "__main__":
     # Verify the file was created
     if os.path.exists(test_file_path):
         print("\\nFile created successfully!")
-        with open(test_file_path, "r") as f:
+        with open(test_file_path) as f:
             created_content = f.read()
         print("First few lines of created file:")
         print("\\n".join(created_content.split("\\n")[:10]))
@@ -152,7 +151,7 @@ if __name__ == "__main__":
     print(result2)
 
     # Verify the file was overwritten
-    with open(test_file_path, "r") as f:
+    with open(test_file_path) as f:
         overwritten_content = f.read()
     print("\\nOverwritten content:")
     print(overwritten_content)

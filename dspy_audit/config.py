@@ -5,7 +5,7 @@ Allows gradual migration from legacy to DSPy-based system.
 """
 
 import os
-from typing import Any
+
 from shared.type_definitions.json import JSONValue
 
 
@@ -23,39 +23,25 @@ class AuditConfig:
         return {
             # DSPy Integration
             "use_dspy_audit": os.getenv("USE_DSPY_AUDIT", "false").lower() == "true",
-            "use_dspy_optimization": os.getenv("USE_DSPY_OPTIMIZATION", "false").lower()
-            == "true",
-            "use_dspy_learning": os.getenv("USE_DSPY_LEARNING", "false").lower()
-            == "true",
+            "use_dspy_optimization": os.getenv("USE_DSPY_OPTIMIZATION", "false").lower() == "true",
+            "use_dspy_learning": os.getenv("USE_DSPY_LEARNING", "false").lower() == "true",
             # Parallel Execution
-            "parallel_audit_execution": os.getenv("PARALLEL_AUDIT", "true").lower()
-            == "true",
+            "parallel_audit_execution": os.getenv("PARALLEL_AUDIT", "true").lower() == "true",
             "max_parallel_audits": int(os.getenv("MAX_PARALLEL_AUDITS", "3")),
             # Learning Integration
-            "enable_vectorstore_learning": os.getenv(
-                "ENABLE_VECTORSTORE_LEARNING", "true"
-            ).lower()
+            "enable_vectorstore_learning": os.getenv("ENABLE_VECTORSTORE_LEARNING", "true").lower()
             == "true",
-            "store_audit_patterns": os.getenv("STORE_AUDIT_PATTERNS", "true").lower()
-            == "true",
+            "store_audit_patterns": os.getenv("STORE_AUDIT_PATTERNS", "true").lower() == "true",
             # Verification and Rollback
-            "auto_rollback_on_failure": os.getenv("AUTO_ROLLBACK", "true").lower()
-            == "true",
-            "require_test_verification": os.getenv(
-                "REQUIRE_TEST_VERIFICATION", "true"
-            ).lower()
+            "auto_rollback_on_failure": os.getenv("AUTO_ROLLBACK", "true").lower() == "true",
+            "require_test_verification": os.getenv("REQUIRE_TEST_VERIFICATION", "true").lower()
             == "true",
             "min_test_coverage": float(os.getenv("MIN_TEST_COVERAGE", "0.8")),
             # Constitutional Compliance
-            "enforce_constitutional": os.getenv(
-                "ENFORCE_CONSTITUTIONAL", "true"
-            ).lower()
-            == "true",
-            "block_on_violation": os.getenv("BLOCK_ON_VIOLATION", "true").lower()
-            == "true",
+            "enforce_constitutional": os.getenv("ENFORCE_CONSTITUTIONAL", "true").lower() == "true",
+            "block_on_violation": os.getenv("BLOCK_ON_VIOLATION", "true").lower() == "true",
             # Monitoring and Metrics
-            "enable_metrics_tracking": os.getenv("ENABLE_METRICS", "true").lower()
-            == "true",
+            "enable_metrics_tracking": os.getenv("ENABLE_METRICS", "true").lower() == "true",
             "enable_telemetry": os.getenv("ENABLE_TELEMETRY", "true").lower() == "true",
             # A/B Testing
             "ab_test_enabled": os.getenv("AB_TEST_AUDIT", "false").lower() == "true",
@@ -197,9 +183,7 @@ class AuditConfig:
 
         # Check necessary thresholds
         thresholds = config["necessary_thresholds"]
-        validations["thresholds_valid"] = all(
-            0.0 <= v <= 1.0 for v in thresholds.values()
-        )
+        validations["thresholds_valid"] = all(0.0 <= v <= 1.0 for v in thresholds.values())
 
         # Check paths
         from pathlib import Path

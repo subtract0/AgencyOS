@@ -3,7 +3,7 @@ Comprehensive test coverage for tools.exit_plan_mode module.
 Tests tool functionality, plan mode transitions, and error conditions.
 """
 
-from unittest.mock import Mock, patch
+from unittest.mock import patch
 
 import pytest
 
@@ -155,7 +155,7 @@ Step 3: Final action"""
         # Result should not start or end with whitespace
         assert result == result.strip()
 
-    @patch('tools.exit_plan_mode.ExitPlanMode.run', side_effect=Exception("Test error"))
+    @patch("tools.exit_plan_mode.ExitPlanMode.run", side_effect=Exception("Test error"))
     def test_run_exception_handling(self, mock_run):
         """Test run method exception handling."""
         test_plan = "Test plan"
@@ -168,14 +168,14 @@ Step 3: Final action"""
             real_tool.plan = test_plan
 
             # Simulate an exception in the formatting process
-            with patch('builtins.str', side_effect=Exception("String conversion error")):
+            with patch("builtins.str", side_effect=Exception("String conversion error")):
                 result = real_tool.run()
                 assert "Error formatting plan:" in result
                 assert "String conversion error" in result
 
         except Exception:
             # If we can't simulate the error properly, create the expected error response
-            result = f"Error formatting plan: Test error"
+            result = "Error formatting plan: Test error"
             assert "Error formatting plan:" in result
 
     def test_run_error_handling_integration(self):
@@ -242,7 +242,7 @@ class TestExitPlanModeValidation:
     def test_plan_field_description(self):
         """Test plan field has correct description."""
         # This tests the Pydantic field configuration
-        field_info = ExitPlanMode.model_fields['plan']
+        field_info = ExitPlanMode.model_fields["plan"]
         assert "plan you came up with" in field_info.description
         assert "markdown" in field_info.description.lower()
         assert "concise" in field_info.description
@@ -251,11 +251,10 @@ class TestExitPlanModeValidation:
 class TestMainExecution:
     """Test the main execution block."""
 
-    @patch('builtins.print')
+    @patch("builtins.print")
     def test_main_block_execution(self, mock_print):
         """Test the if __name__ == '__main__' block."""
         # Import and execute the main block
-        import tools.exit_plan_mode
 
         # Since the main block creates a tool and prints its output,
         # we can test that it doesn't raise any exceptions
@@ -356,7 +355,7 @@ class TestExitPlanModeFormatting:
         tool = ExitPlanMode(plan=test_plan)
 
         result = tool.run()
-        lines = result.split('\n')
+        lines = result.split("\n")
 
         # Check that specific sections exist
         implementation_section = False
@@ -404,7 +403,7 @@ class TestExitPlanModeFormatting:
         result = tool.run()
 
         # Result should not have trailing whitespace on lines
-        lines = result.split('\n')
+        lines = result.split("\n")
         for line in lines:
             if line:  # Skip empty lines
                 assert line == line.rstrip(), f"Line has trailing whitespace: '{line}'"
@@ -422,7 +421,7 @@ class TestExitPlanModeDocumentation:
 
     def test_field_metadata(self):
         """Test that fields have proper metadata."""
-        plan_field = ExitPlanMode.model_fields['plan']
+        plan_field = ExitPlanMode.model_fields["plan"]
         assert plan_field.description is not None
         assert len(plan_field.description) > 10  # Should have meaningful description
 
@@ -430,10 +429,11 @@ class TestExitPlanModeDocumentation:
         """Test proper inheritance from BaseTool."""
         # ExitPlanMode should inherit from agency_swarm.tools.BaseTool
         from agency_swarm.tools import BaseTool
+
         assert issubclass(ExitPlanMode, BaseTool)
 
     def test_type_annotations(self):
         """Test that proper type annotations exist."""
-        assert hasattr(ExitPlanMode, '__annotations__')
+        assert hasattr(ExitPlanMode, "__annotations__")
         annotations = ExitPlanMode.__annotations__
-        assert 'plan' in annotations
+        assert "plan" in annotations

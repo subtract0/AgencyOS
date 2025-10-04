@@ -8,6 +8,7 @@ Tests comprehensive Pydantic validation to ensure:
 
 import pytest
 from pydantic import ValidationError
+
 from tools.git import Git
 
 

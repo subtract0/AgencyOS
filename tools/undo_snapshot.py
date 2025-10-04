@@ -1,24 +1,24 @@
-import os
 import json
+import os
 import shutil
 from pathlib import Path
-from typing import List, Optional, Dict, Any
-from shared.type_definitions.json import JSONValue
 
 from agency_swarm.tools import BaseTool
-from pydantic import Field, BaseModel
+from pydantic import BaseModel, Field
 
 
 class FileEntry(BaseModel):
     """Represents a file entry in the snapshot manifest."""
+
     path: str
 
 
 class SnapshotManifest(BaseModel):
     """Represents the snapshot manifest structure."""
+
     snapshot_id: str
     repo_root: str
-    files: List[FileEntry]
+    files: list[FileEntry]
     note: str
 
 
@@ -28,10 +28,10 @@ class WorkspaceSnapshot(BaseTool):  # type: ignore[misc]
     Stores copies under logs/snapshots/<snapshot_id>/ with a manifest for undo.
     """
 
-    files: List[str] = Field(
+    files: list[str] = Field(
         ..., description="Absolute paths of files to snapshot (must reside under repo root)"
     )
-    note: Optional[str] = Field(None, description="Optional note to include in manifest")
+    note: str | None = Field(None, description="Optional note to include in manifest")
 
     def run(self) -> str:
         repo_root = Path(os.getcwd())
@@ -39,7 +39,7 @@ class WorkspaceSnapshot(BaseTool):  # type: ignore[misc]
         snapshot_dir.mkdir(parents=True, exist_ok=True)
 
         # Validate and normalize files
-        norm_files: List[Path] = []
+        norm_files: list[Path] = []
         for file_path in self.files:
             p = Path(file_path).resolve()
             try:
@@ -59,10 +59,7 @@ class WorkspaceSnapshot(BaseTool):  # type: ignore[misc]
         files_dir.mkdir(parents=True, exist_ok=True)
 
         manifest = SnapshotManifest(
-            snapshot_id=snapshot_id,
-            repo_root=str(repo_root),
-            files=[],
-            note=self.note or ""
+            snapshot_id=snapshot_id, repo_root=str(repo_root), files=[], note=self.note or ""
         )
 
         for p in norm_files:
@@ -96,12 +93,12 @@ class WorkspaceUndo(BaseTool):  # type: ignore[misc]
             return f"Exit code: 1\nError: Snapshot not found: {self.snapshot_id}"
 
         try:
-            with open(manifest_path, "r", encoding="utf-8") as f:
+            with open(manifest_path, encoding="utf-8") as f:
                 manifest = json.load(f)
         except Exception as e:
             return f"Exit code: 1\nError: Corrupted manifest: {e}"
 
-        restored: List[str] = []
+        restored: list[str] = []
         for entry in manifest.get("files", []):
             rel = Path(entry.get("path", ""))
             src = files_dir / rel
@@ -117,8 +114,11 @@ class WorkspaceUndo(BaseTool):  # type: ignore[misc]
             restored.append(str(rel))
 
         action = "Planned restore" if self.dry_run else "Restored"
-        return f"{action} {len(restored)} file(s) from snapshot {self.snapshot_id}: " + \
-               ", ".join(restored[:10]) + ("..." if len(restored) > 10 else "")
+        return (
+            f"{action} {len(restored)} file(s) from snapshot {self.snapshot_id}: "
+            + ", ".join(restored[:10])
+            + ("..." if len(restored) > 10 else "")
+        )
 
 
 workspace_snapshot = WorkspaceSnapshot

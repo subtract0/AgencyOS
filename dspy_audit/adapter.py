@@ -5,7 +5,7 @@ Provides seamless transition and fallback mechanisms.
 """
 
 import traceback
-from typing import Any
+
 from shared.type_definitions.json import JSONValue
 
 from .config import get_config, get_flags, should_use_dspy
@@ -113,8 +113,7 @@ class AuditAdapter:
             result = self.dspy_module.forward(
                 code_path=code_path,
                 max_fixes=max_fixes,
-                available_time=self.config["prioritization"]["max_time_per_fix"]
-                * max_fixes,
+                available_time=self.config["prioritization"]["max_time_per_fix"] * max_fixes,
                 auto_rollback=self.flags["auto_rollback_on_failure"],
             )
 
@@ -200,12 +199,8 @@ class AuditAdapter:
                 standard_result["verification_success"] = verification.success
                 standard_result["final_qt_score"] = verification.final_qt_score
             else:
-                standard_result["verification_success"] = verification.get(
-                    "success", False
-                )
-                standard_result["final_qt_score"] = verification.get(
-                    "final_qt_score", 0.5
-                )
+                standard_result["verification_success"] = verification.get("success", False)
+                standard_result["final_qt_score"] = verification.get("final_qt_score", 0.5)
 
         # Extract learning
         if "learning" in dspy_result and dspy_result["learning"]:
@@ -329,8 +324,7 @@ class AuditAdapter:
         if "legacy" in results and "dspy" in results:
             results["comparison"] = {
                 "qt_score_delta": (
-                    results["dspy"].get("qt_score", 0)
-                    - results["legacy"].get("qt_score", 0)
+                    results["dspy"].get("qt_score", 0) - results["legacy"].get("qt_score", 0)
                 ),
                 "issues_delta": (
                     len(results["dspy"].get("issues", []))

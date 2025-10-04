@@ -11,20 +11,18 @@ Constitutional Compliance:
 - Article V: TDD - tests written before implementation
 """
 
-import pytest
 import asyncio
-import tempfile
 import os
+import tempfile
 from datetime import datetime, timedelta
-from pathlib import Path
+
+import pytest
 
 from shared.hitl_protocol import (
+    HITLConfig,
     HITLProtocol,
     HITLQuestion,
     HITLResponse,
-    HITLConfig,
-    HITLError,
-    HITLTimeoutError,
 )
 from shared.message_bus import MessageBus
 
@@ -281,9 +279,7 @@ class TestHITLProtocolAskAsync:
         assert result.is_ok()
 
         # Check message bus
-        pending_count = await hitl_protocol.message_bus.get_pending_count(
-            "hitl_questions"
-        )
+        pending_count = await hitl_protocol.message_bus.get_pending_count("hitl_questions")
         assert pending_count == 1
 
     @pytest.mark.asyncio
@@ -365,9 +361,7 @@ class TestHITLProtocolWaitResponse:
         assert "timeout" in str(result.unwrap_err()).lower()
 
     @pytest.mark.asyncio
-    async def test_wait_response_returns_error_for_invalid_question_id(
-        self, hitl_protocol
-    ):
+    async def test_wait_response_returns_error_for_invalid_question_id(self, hitl_protocol):
         """Should return error for invalid question_id."""
         result = await hitl_protocol.wait_response("invalid_id", timeout=1)
 
@@ -381,6 +375,7 @@ class TestHITLProtocolApprove:
     @pytest.mark.asyncio
     async def test_approve_creates_approval_question(self, hitl_protocol):
         """Should create approval question and wait for response."""
+
         # Submit response in background
         async def submit_approval():
             await asyncio.sleep(0.1)
@@ -406,6 +401,7 @@ class TestHITLProtocolApprove:
     @pytest.mark.asyncio
     async def test_approve_returns_false_for_no_response(self, hitl_protocol):
         """Should return False if user responds with 'no'."""
+
         # Submit rejection in background
         async def submit_rejection():
             await asyncio.sleep(0.1)
@@ -524,9 +520,7 @@ class TestHITLProtocolSubmitResponse:
         assert row["response"] == "yes"
 
     @pytest.mark.asyncio
-    async def test_submit_response_returns_error_for_invalid_question_id(
-        self, hitl_protocol
-    ):
+    async def test_submit_response_returns_error_for_invalid_question_id(self, hitl_protocol):
         """Should return error for invalid question_id."""
         result = await hitl_protocol.submit_response("invalid_id", "yes")
 
@@ -555,9 +549,9 @@ class TestHITLProtocolExpireOld:
         """Should mark expired questions as expired."""
         # Manually insert question with past expiration time
         # (can't use asyncio.sleep as pytest-asyncio doesn't actually sleep)
-        from datetime import datetime, timedelta
-        import uuid
         import json
+        import uuid
+        from datetime import datetime
 
         question_id = str(uuid.uuid4())
         now = datetime.now()

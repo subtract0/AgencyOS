@@ -7,10 +7,9 @@ Runs all memory-related tests and provides a summary report.
 
 import subprocess
 import sys
-from typing import Tuple, List
 
 
-def run_test_file(test_file: str) -> Tuple[bool, str]:
+def run_test_file(test_file: str) -> tuple[bool, str]:
     """Run a single test file and return results."""
     print(f"\n{'=' * 50}")
     print(f"Running {test_file}")
@@ -56,24 +55,14 @@ def main() -> int:
         # Extract pass/fail counts from pytest output
         if "passed" in output:
             for line in output.split("\n"):
-                if "passed" in line and (
-                    "failed" in line or line.strip().endswith("passed")
-                ):
+                if "passed" in line and ("failed" in line or line.strip().endswith("passed")):
                     parts = line.split()
                     for i, part in enumerate(parts):
                         if "passed" in part:
-                            passed = (
-                                int(parts[i - 1])
-                                if i > 0 and parts[i - 1].isdigit()
-                                else 0
-                            )
+                            passed = int(parts[i - 1]) if i > 0 and parts[i - 1].isdigit() else 0
                             total_passed += passed
                         if "failed" in part:
-                            failed = (
-                                int(parts[i - 1])
-                                if i > 0 and parts[i - 1].isdigit()
-                                else 0
-                            )
+                            failed = int(parts[i - 1]) if i > 0 and parts[i - 1].isdigit() else 0
                             total_failed += failed
                     break
 

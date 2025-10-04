@@ -7,20 +7,24 @@ and that all complex features have formal specs.
 Constitutional Compliance: Article V - Spec-Driven Development
 """
 
-from pydantic import BaseModel, Field
-from pathlib import Path
-from typing import Optional
 import re
-from shared.type_definitions.result import Result, Ok, Err
+from pathlib import Path
+
+from pydantic import BaseModel, Field
+
+from shared.type_definitions.result import Err, Ok, Result
 
 
 class SpecTraceabilityReport(BaseModel):
     """Report on spec traceability compliance."""
+
     total_files: int = Field(description="Total Python files checked")
     files_with_spec_refs: int = Field(description="Files with spec references")
     files_without_spec_refs: int = Field(description="Files without spec references")
     spec_coverage: float = Field(description="Percentage of files with spec refs")
-    violations: list[str] = Field(default_factory=list, description="Files violating spec requirement")
+    violations: list[str] = Field(
+        default_factory=list, description="Files violating spec requirement"
+    )
     compliant: bool = Field(description="Whether spec coverage meets threshold")
 
 
@@ -30,7 +34,7 @@ class SpecTraceabilityValidator(BaseModel):
     min_coverage: float = Field(default=0.80, description="Minimum spec coverage required")
     exclude_patterns: list[str] = Field(
         default_factory=lambda: ["test_*.py", "*_test.py", "__init__.py"],
-        description="File patterns to exclude from validation"
+        description="File patterns to exclude from validation",
     )
 
     def validate_file(self, file_path: Path) -> bool:
@@ -46,7 +50,7 @@ class SpecTraceabilityValidator(BaseModel):
             content = file_path.read_text()
 
             # Pattern 1: Comment-based spec reference
-            comment_pattern = r'#\s*(Spec|Specification|See):\s*specs/[\w\-]+\.md'
+            comment_pattern = r"#\s*(Spec|Specification|See):\s*specs/[\w\-]+\.md"
             if re.search(comment_pattern, content, re.IGNORECASE):
                 return True
 
@@ -94,7 +98,7 @@ class SpecTraceabilityValidator(BaseModel):
                 files_without_spec_refs=total - with_refs,
                 spec_coverage=coverage,
                 violations=violations,
-                compliant=compliant
+                compliant=compliant,
             )
 
             return Ok(report)
@@ -114,8 +118,8 @@ def main():
         sys.exit(1)
 
     report = result.unwrap()
-    print(f"\n📊 Spec Traceability Report")
-    print(f"━" * 50)
+    print("\n📊 Spec Traceability Report")
+    print("━" * 50)
     print(f"Total files:        {report.total_files}")
     print(f"With spec refs:     {report.files_with_spec_refs}")
     print(f"Without spec refs:  {report.files_without_spec_refs}")
@@ -124,7 +128,7 @@ def main():
     print(f"Status:             {'✅ PASS' if report.compliant else '❌ FAIL'}")
 
     if not report.compliant and report.violations:
-        print(f"\n⚠️  Files missing spec references (showing first 10):")
+        print("\n⚠️  Files missing spec references (showing first 10):")
         for violation in report.violations[:10]:
             print(f"  - {violation}")
 

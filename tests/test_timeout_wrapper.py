@@ -2,17 +2,16 @@
 Tests for Constitutional Timeout Wrapper (ADR-018)
 Reference: bash.py:535-599 (proven implementation pattern)
 """
+
 import pytest
-import time
-from unittest.mock import Mock
+
 from shared.timeout_wrapper import (
-    TimeoutConfig,
-    TimeoutError,
-    TimeoutExhaustedError,
     IncompleteContextError,
+    TimeoutConfig,
+    TimeoutExhaustedError,
+    _validate_completeness,
     run_with_constitutional_timeout,
     with_constitutional_timeout,
-    _validate_completeness,
 )
 
 
@@ -31,11 +30,7 @@ class TestTimeoutConfig:
 
     def test_custom_config(self):
         """Test custom configuration."""
-        config = TimeoutConfig(
-            base_timeout_ms=60000,
-            max_retries=3,
-            multipliers=[1, 2, 3]
-        )
+        config = TimeoutConfig(base_timeout_ms=60000, max_retries=3, multipliers=[1, 2, 3])
         assert config.base_timeout_ms == 60000
         assert config.max_retries == 3
         assert config.multipliers == [1, 2, 3]
@@ -71,6 +66,7 @@ class TestRunWithConstitutionalTimeout:
 
     def test_success_first_attempt(self):
         """Test operation succeeds on first attempt."""
+
         def operation(timeout_ms):
             return "success"
 
@@ -111,6 +107,7 @@ class TestRunWithConstitutionalTimeout:
 
     def test_exhausted_timeout(self):
         """Test timeout exhausted after max retries."""
+
         def operation(timeout_ms):
             raise Exception("Always fails")
 
@@ -127,6 +124,7 @@ class TestWithConstitutionalTimeoutDecorator:
 
     def test_decorator_basic_success(self):
         """Test decorator with successful operation."""
+
         @with_constitutional_timeout()
         def my_operation():
             return "decorated_success"
@@ -171,11 +169,7 @@ class TestErrorTypes:
 
     def test_timeout_exhausted_error(self):
         """Test TimeoutExhaustedError contains attempt info."""
-        error = TimeoutExhaustedError(
-            attempts=5,
-            total_time_ms=10000,
-            last_error=Exception("test")
-        )
+        error = TimeoutExhaustedError(attempts=5, total_time_ms=10000, last_error=Exception("test"))
 
         assert error.attempts == 5
         assert error.total_time_ms == 10000
@@ -224,9 +218,7 @@ class TestIntegration:
             return "Complete output"  # Complete
 
         config = TimeoutConfig(
-            base_timeout_ms=5000,
-            completeness_check=True,
-            pause_between_retries_sec=0.1
+            base_timeout_ms=5000, completeness_check=True, pause_between_retries_sec=0.1
         )
         result = run_with_constitutional_timeout(operation_with_incomplete_output, config=config)
 

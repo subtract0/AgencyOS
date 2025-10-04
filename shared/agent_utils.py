@@ -1,7 +1,7 @@
 import os
 import platform
 from datetime import datetime
-from typing import Optional, cast
+from typing import cast
 
 from agents import ModelSettings
 from agents.extensions.models.litellm_model import LitellmModel
@@ -28,14 +28,14 @@ def select_instructions_file(base_dir: str, model: str) -> str:
     return os.path.join(base_dir, filename)
 
 
-def render_instructions(template_path: str, model: str, base_path: Optional[str] = None) -> str:
+def render_instructions(template_path: str, model: str, base_path: str | None = None) -> str:
     """Render instructions template with placeholders replaced."""
     if base_path:
         full_path = os.path.join(base_path, template_path)
     else:
         full_path = template_path
 
-    with open(full_path, "r") as f:
+    with open(full_path) as f:
         content = f.read()
     placeholders = {
         "{cwd}": os.getcwd(),
@@ -61,19 +61,14 @@ def create_model_settings(
 
     return ModelSettings(
         reasoning=(
-            Reasoning(
-                effort=cast(None, reasoning_effort),
-                summary=cast(None, reasoning_summary)
-            )
+            Reasoning(effort=cast(None, reasoning_effort), summary=cast(None, reasoning_summary))
             if is_openai or is_claude
             else None
         ),
         truncation="auto",
         max_tokens=max_tokens,
         extra_body=(
-            {"search_parameters": {"mode": "on", "returnCitations": True}}
-            if is_grok
-            else None
+            {"search_parameters": {"mode": "on", "returnCitations": True}} if is_grok else None
         ),
     )
 

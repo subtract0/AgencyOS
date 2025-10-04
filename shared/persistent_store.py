@@ -19,30 +19,35 @@ Architecture:
 - Pydantic models for type safety
 """
 
-import sqlite3
 import json
+import sqlite3
 import threading
-from pathlib import Path
+from collections.abc import Callable
 from datetime import datetime
-from typing import Optional, Dict, List, Any, Callable
+from pathlib import Path
+from typing import Any
+
 from pydantic import BaseModel, field_validator
 
-from shared.type_definitions.result import Result, Ok, Err
 from shared.type_definitions.json_value import JSONValue
+from shared.type_definitions.result import Err, Ok, Result
 
 
 class StoreError(Exception):
     """Base exception for persistent store errors."""
+
     pass
 
 
 class NotFoundError(StoreError):
     """Exception raised when key not found."""
+
     pass
 
 
 class ValidationError(StoreError):
     """Exception raised for validation failures."""
+
     pass
 
 
@@ -57,13 +62,14 @@ class StoreEntry(BaseModel):
         updated_at: Timestamp when entry was last modified
         metadata: Optional metadata dict for tagging/filtering
     """
+
     key: str
     value: JSONValue
     created_at: datetime
     updated_at: datetime
-    metadata: Dict[str, str] = {}
+    metadata: dict[str, str] = {}
 
-    @field_validator('value')
+    @field_validator("value")
     @classmethod
     def validate_value_is_dict(cls, v: Any) -> JSONValue:
         """Ensure value is a dictionary."""
@@ -87,11 +93,7 @@ class PersistentStore:
         ...     print(result.unwrap()["color"])  # "dark"
     """
 
-    def __init__(
-        self,
-        db_path: str = ":memory:",
-        table_name: str = "store"
-    ):
+    def __init__(self, db_path: str = ":memory:", table_name: str = "store"):
         """
         Initialize persistent store.
 
@@ -101,7 +103,7 @@ class PersistentStore:
         """
         self.db_path = Path(db_path) if db_path != ":memory:" else db_path
         self.table_name = table_name
-        self.conn: Optional[sqlite3.Connection] = None
+        self.conn: sqlite3.Connection | None = None
         self._lock = threading.Lock()
 
         self._init_db()
@@ -109,10 +111,7 @@ class PersistentStore:
     def _init_db(self) -> None:
         """Initialize SQLite database with generic schema."""
         with self._lock:
-            self.conn = sqlite3.connect(
-                str(self.db_path),
-                check_same_thread=False
-            )
+            self.conn = sqlite3.connect(str(self.db_path), check_same_thread=False)
             self.conn.row_factory = sqlite3.Row
 
             cursor = self.conn.cursor()
@@ -134,11 +133,7 @@ class PersistentStore:
 
             self.conn.commit()
 
-    def _validate_set_inputs(
-        self,
-        key: str,
-        value: JSONValue
-    ) -> Optional[StoreError]:
+    def _validate_set_inputs(self, key: str, value: JSONValue) -> StoreError | None:
         """Validate inputs for set operation. Returns error if invalid."""
         if not key or not isinstance(key, str):
             return ValidationError("Key must be a non-empty string")
@@ -153,34 +148,34 @@ class PersistentStore:
         cursor: sqlite3.Cursor,
         key: str,
         value_json: str,
-        metadata_json: Optional[str],
-        now: str
+        metadata_json: str | None,
+        now: str,
     ) -> None:
         """Insert or update entry in database."""
-        cursor.execute(
-            f"SELECT created_at FROM {self.table_name} WHERE key = ?",
-            (key,)
-        )
+        cursor.execute(f"SELECT created_at FROM {self.table_name} WHERE key = ?", (key,))
         existing = cursor.fetchone()
 
         if existing:
-            cursor.execute(f"""
+            cursor.execute(
+                f"""
                 UPDATE {self.table_name}
                 SET value = ?, updated_at = ?, metadata = ?
                 WHERE key = ?
-            """, (value_json, now, metadata_json, key))
+            """,
+                (value_json, now, metadata_json, key),
+            )
         else:
-            cursor.execute(f"""
+            cursor.execute(
+                f"""
                 INSERT INTO {self.table_name}
                 (key, value, created_at, updated_at, metadata)
                 VALUES (?, ?, ?, ?, ?)
-            """, (key, value_json, now, now, metadata_json))
+            """,
+                (key, value_json, now, now, metadata_json),
+            )
 
     def set(
-        self,
-        key: str,
-        value: JSONValue,
-        metadata: Optional[Dict[str, str]] = None
+        self, key: str, value: JSONValue, metadata: dict[str, str] | None = None
     ) -> Result[None, StoreError]:
         """
         Store or update a key-value entry.
@@ -211,7 +206,7 @@ class PersistentStore:
         except Exception as e:
             return Err(StoreError(f"Failed to store entry: {e}"))
 
-    def get(self, key: str) -> Result[Optional[JSONValue], StoreError]:
+    def get(self, key: str) -> Result[JSONValue | None, StoreError]:
         """
         Retrieve value for a key.
 
@@ -228,16 +223,13 @@ class PersistentStore:
         try:
             with self._lock:
                 cursor = self.conn.cursor()
-                cursor.execute(
-                    f"SELECT value FROM {self.table_name} WHERE key = ?",
-                    (key,)
-                )
+                cursor.execute(f"SELECT value FROM {self.table_name} WHERE key = ?", (key,))
                 row = cursor.fetchone()
 
                 if row is None:
                     return Ok(None)
 
-                value = json.loads(row['value'])
+                value = json.loads(row["value"])
                 return Ok(value)
 
         except Exception as e:
@@ -259,17 +251,14 @@ class PersistentStore:
         try:
             with self._lock:
                 cursor = self.conn.cursor()
-                cursor.execute(
-                    f"DELETE FROM {self.table_name} WHERE key = ?",
-                    (key,)
-                )
+                cursor.execute(f"DELETE FROM {self.table_name} WHERE key = ?", (key,))
                 self.conn.commit()
                 return Ok(None)
 
         except Exception as e:
             return Err(StoreError(f"Failed to delete entry: {e}"))
 
-    def list_keys(self, prefix: str = "") -> Result[List[str], StoreError]:
+    def list_keys(self, prefix: str = "") -> Result[list[str], StoreError]:
         """
         List all keys, optionally filtered by prefix.
 
@@ -288,20 +277,19 @@ class PersistentStore:
 
                 if prefix:
                     cursor.execute(
-                        f"SELECT key FROM {self.table_name} WHERE key LIKE ?",
-                        (f"{prefix}%",)
+                        f"SELECT key FROM {self.table_name} WHERE key LIKE ?", (f"{prefix}%",)
                     )
                 else:
                     cursor.execute(f"SELECT key FROM {self.table_name}")
 
                 rows = cursor.fetchall()
-                keys = [row['key'] for row in rows]
+                keys = [row["key"] for row in rows]
                 return Ok(keys)
 
         except Exception as e:
             return Err(StoreError(f"Failed to list keys: {e}"))
 
-    def list_all(self) -> Result[List[StoreEntry], StoreError]:
+    def list_all(self) -> Result[list[StoreEntry], StoreError]:
         """
         Retrieve all entries with full data.
 
@@ -321,11 +309,11 @@ class PersistentStore:
                 entries = []
                 for row in rows:
                     entry = StoreEntry(
-                        key=row['key'],
-                        value=json.loads(row['value']),
-                        created_at=datetime.fromisoformat(row['created_at']),
-                        updated_at=datetime.fromisoformat(row['updated_at']),
-                        metadata=json.loads(row['metadata']) if row['metadata'] else {}
+                        key=row["key"],
+                        value=json.loads(row["value"]),
+                        created_at=datetime.fromisoformat(row["created_at"]),
+                        updated_at=datetime.fromisoformat(row["updated_at"]),
+                        metadata=json.loads(row["metadata"]) if row["metadata"] else {},
                     )
                     entries.append(entry)
 
@@ -335,9 +323,8 @@ class PersistentStore:
             return Err(StoreError(f"Failed to list entries: {e}"))
 
     def query(
-        self,
-        filter_func: Callable[[StoreEntry], bool]
-    ) -> Result[List[StoreEntry], StoreError]:
+        self, filter_func: Callable[[StoreEntry], bool]
+    ) -> Result[list[StoreEntry], StoreError]:
         """
         Query entries using a custom filter function.
 
@@ -370,8 +357,8 @@ class PersistentStore:
         pattern_name: str,
         content: str,
         confidence: float,
-        metadata: Optional[JSONValue] = None,
-        evidence_count: int = 1
+        metadata: JSONValue | None = None,
+        evidence_count: int = 1,
     ) -> Result[str, StoreError]:
         """
         Store a pattern with a standardized structure.
@@ -415,7 +402,7 @@ class PersistentStore:
             metadata={
                 "pattern_type": pattern_type,
                 "pattern_name": pattern_name,
-            }
+            },
         )
 
         if result.is_err():
@@ -425,11 +412,11 @@ class PersistentStore:
 
     def search_patterns(
         self,
-        pattern_type: Optional[str] = None,
-        pattern_name: Optional[str] = None,
-        query: Optional[str] = None,
-        min_confidence: Optional[float] = None
-    ) -> Result[List[JSONValue], StoreError]:
+        pattern_type: str | None = None,
+        pattern_name: str | None = None,
+        query: str | None = None,
+        min_confidence: float | None = None,
+    ) -> Result[list[JSONValue], StoreError]:
         """
         Search for patterns by type, name, query text, and/or confidence.
 
@@ -490,11 +477,7 @@ class PersistentStore:
             Dictionary with store statistics
         """
         if not self.conn:
-            return {
-                "total_patterns": 0,
-                "total_entries": 0,
-                "database_connected": False
-            }
+            return {"total_patterns": 0, "total_entries": 0, "database_connected": False}
 
         try:
             with self._lock:
@@ -502,20 +485,20 @@ class PersistentStore:
 
                 # Get total entry count
                 cursor.execute(f"SELECT COUNT(*) as count FROM {self.table_name}")
-                total_entries = cursor.fetchone()['count']
+                total_entries = cursor.fetchone()["count"]
 
                 # Get pattern count (entries with pattern_type metadata)
                 cursor.execute(
                     f"SELECT COUNT(*) as count FROM {self.table_name} "
                     f"WHERE value LIKE '%pattern_type%'"
                 )
-                pattern_count = cursor.fetchone()['count']
+                pattern_count = cursor.fetchone()["count"]
 
                 return {
                     "total_patterns": pattern_count,
                     "total_entries": total_entries,
                     "database_connected": True,
-                    "table_name": self.table_name
+                    "table_name": self.table_name,
                 }
 
         except Exception as e:
@@ -523,7 +506,7 @@ class PersistentStore:
                 "total_patterns": 0,
                 "total_entries": 0,
                 "database_connected": False,
-                "error": str(e)
+                "error": str(e),
             }
 
     def close(self) -> None:

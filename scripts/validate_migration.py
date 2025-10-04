@@ -4,15 +4,15 @@ Migration validation script for PR #28: SpaceX-style De-bloating
 Ensures all removed modules are properly replaced with their new counterparts.
 """
 
-import sys
 import os
+import sys
 from pathlib import Path
-from typing import List, Tuple
 
 # Add the project root to sys.path so we can import modules
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-def check_memory_migration() -> Tuple[bool, List[str]]:
+
+def check_memory_migration() -> tuple[bool, list[str]]:
     """Verify all memory operations use enhanced_memory_store."""
     issues = []
 
@@ -23,6 +23,7 @@ def check_memory_migration() -> Tuple[bool, List[str]]:
     # Verify enhanced_memory_store is importable
     try:
         from agency_memory.enhanced_memory_store import EnhancedMemoryStore
+
         print("✅ EnhancedMemoryStore is accessible")
     except ImportError as e:
         issues.append(f"ERROR: Cannot import EnhancedMemoryStore: {e}")
@@ -30,6 +31,7 @@ def check_memory_migration() -> Tuple[bool, List[str]]:
     # Verify swarm_memory is preserved for agent features
     try:
         from agency_memory.swarm_memory import SwarmMemory
+
         print("✅ SwarmMemory preserved for agent features")
     except ImportError as e:
         issues.append(f"ERROR: Cannot import SwarmMemory: {e}")
@@ -37,7 +39,7 @@ def check_memory_migration() -> Tuple[bool, List[str]]:
     return len(issues) == 0, issues
 
 
-def check_pattern_migration() -> Tuple[bool, List[str]]:
+def check_pattern_migration() -> tuple[bool, list[str]]:
     """Verify pattern system migration to pattern_intelligence."""
     issues = []
 
@@ -49,6 +51,7 @@ def check_pattern_migration() -> Tuple[bool, List[str]]:
     try:
         from pattern_intelligence import CodingPattern
         from pattern_intelligence.pattern_store import PatternStore
+
         print("✅ Pattern Intelligence module is accessible")
     except ImportError as e:
         issues.append(f"ERROR: Cannot import from pattern_intelligence: {e}")
@@ -56,6 +59,7 @@ def check_pattern_migration() -> Tuple[bool, List[str]]:
     # Check for any remaining imports of old pattern system
     try:
         from core.patterns import Pattern  # This should fail
+
         issues.append("ERROR: core.patterns.Pattern is still importable")
     except ImportError:
         print("✅ Legacy Pattern class properly removed")
@@ -63,7 +67,7 @@ def check_pattern_migration() -> Tuple[bool, List[str]]:
     return len(issues) == 0, issues
 
 
-def check_removed_modules() -> Tuple[bool, List[str]]:
+def check_removed_modules() -> tuple[bool, list[str]]:
     """Verify all intended removals are complete."""
     removed_files = [
         "memory_v2.py",
@@ -72,11 +76,7 @@ def check_removed_modules() -> Tuple[bool, List[str]]:
         "pattern_intelligence/migration.py",
     ]
 
-    removed_dirs = [
-        "demos/archive",
-        "examples",
-        "subagent_example"
-    ]
+    removed_dirs = ["demos/archive", "examples", "subagent_example"]
 
     issues = []
 
@@ -95,7 +95,7 @@ def check_removed_modules() -> Tuple[bool, List[str]]:
     return len(issues) == 0, issues
 
 
-def check_imports_updated() -> Tuple[bool, List[str]]:
+def check_imports_updated() -> tuple[bool, list[str]]:
     """Verify all imports are updated to new modules."""
     issues = []
     python_files = Path(".").rglob("*.py")
@@ -106,20 +106,24 @@ def check_imports_updated() -> Tuple[bool, List[str]]:
         "from memory_v2 import",
         "import memory_v2",
         "from pattern_intelligence.migration import",
-        "import pattern_intelligence.migration"
+        "import pattern_intelligence.migration",
     ]
 
     for py_file in python_files:
         # Skip virtual env, cache, and this validation script itself
-        if ".venv" in str(py_file) or "__pycache__" in str(py_file) or "validate_migration.py" in str(py_file):
+        if (
+            ".venv" in str(py_file)
+            or "__pycache__" in str(py_file)
+            or "validate_migration.py" in str(py_file)
+        ):
             continue
 
         try:
             content = py_file.read_text()
             for deprecated in deprecated_imports:
                 # Check if it's an actual import, not a comment
-                for line in content.split('\n'):
-                    if deprecated in line and not line.strip().startswith('#'):
+                for line in content.split("\n"):
+                    if deprecated in line and not line.strip().startswith("#"):
                         issues.append(f"ERROR: {py_file} contains deprecated import: {deprecated}")
                         break  # Only report once per file/import combo
         except Exception:
@@ -146,7 +150,7 @@ def main():
         ("Memory System Migration", check_memory_migration),
         ("Pattern System Migration", check_pattern_migration),
         ("Module Removals", check_removed_modules),
-        ("Import Updates", check_imports_updated)
+        ("Import Updates", check_imports_updated),
     ]
 
     for check_name, check_func in checks:

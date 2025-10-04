@@ -5,13 +5,15 @@ Replaces Dict[str, Any] in agent context management.
 
 from datetime import datetime
 from enum import Enum
-from typing import Dict, List, Optional
+
+from pydantic import BaseModel, ConfigDict, Field, field_validator
+
 from shared.type_definitions.json import JSONValue
-from pydantic import BaseModel, Field, field_validator, ConfigDict
 
 
 class AgentStatus(str, Enum):
     """Status of an agent."""
+
     INITIALIZING = "initializing"
     READY = "ready"
     RUNNING = "running"
@@ -23,6 +25,7 @@ class AgentStatus(str, Enum):
 
 class TaskStatus(str, Enum):
     """Status of a task."""
+
     PENDING = "pending"
     IN_PROGRESS = "in_progress"
     COMPLETED = "completed"
@@ -35,18 +38,18 @@ class SessionMetadata(BaseModel):
     """Metadata for an agent session."""
     session_id: str
     start_time: datetime = Field(default_factory=datetime.now)
-    end_time: Optional[datetime] = None
-    parent_session_id: Optional[str] = None
-    user_id: Optional[str] = None
+    end_time: datetime | None = None
+    parent_session_id: str | None = None
+    user_id: str | None = None
     environment: str = Field(default="production")
-    tags: List[str] = Field(default_factory=list)
-    custom_data: Dict[str, JSONValue] = Field(default_factory=dict)
+    tags: list[str] = Field(default_factory=list)
+    custom_data: dict[str, JSONValue] = Field(default_factory=dict)
 
     def is_active(self) -> bool:
         """Check if session is active."""
         return self.end_time is None
 
-    def duration_seconds(self) -> Optional[float]:
+    def duration_seconds(self) -> float | None:
         """Calculate session duration in seconds."""
         if self.end_time:
             return (self.end_time - self.start_time).total_seconds()
@@ -64,23 +67,23 @@ class TaskContext(BaseModel):
     task_type: str
     status: TaskStatus = TaskStatus.PENDING
     created_at: datetime = Field(default_factory=datetime.now)
-    started_at: Optional[datetime] = None
-    completed_at: Optional[datetime] = None
-    input_data: Dict[str, JSONValue] = Field(default_factory=dict)
-    output_data: Dict[str, JSONValue] = Field(default_factory=dict)
-    error_message: Optional[str] = None
+    started_at: datetime | None = None
+    completed_at: datetime | None = None
+    input_data: dict[str, JSONValue] = Field(default_factory=dict)
+    output_data: dict[str, JSONValue] = Field(default_factory=dict)
+    error_message: str | None = None
     retry_count: int = 0
     max_retries: int = 3
-    dependencies: List[str] = Field(default_factory=list)
+    dependencies: list[str] = Field(default_factory=list)
 
-    @field_validator('retry_count')
+    @field_validator("retry_count")
     @classmethod
     def validate_retry_count(cls, v: int) -> int:
         """Ensure retry count doesn't exceed max."""
         # Note: In Pydantic v2, cross-field validation should be done with model_validator
         # For now, just validate that retry_count is non-negative
         if v < 0:
-            raise ValueError('retry_count must be non-negative')
+            raise ValueError("retry_count must be non-negative")
         return v
 
     def can_retry(self) -> bool:
@@ -92,7 +95,7 @@ class TaskContext(BaseModel):
         self.status = TaskStatus.IN_PROGRESS
         self.started_at = datetime.now()
 
-    def mark_completed(self, output: Dict[str, JSONValue]) -> None:
+    def mark_completed(self, output: dict[str, JSONValue]) -> None:
         """Mark task as completed with output."""
         self.status = TaskStatus.COMPLETED
         self.completed_at = datetime.now()
@@ -111,11 +114,11 @@ class AgentState(BaseModel):
     agent_id: str
     agent_type: str
     status: AgentStatus = AgentStatus.INITIALIZING
-    current_task: Optional[TaskContext] = None
-    task_queue: List[TaskContext] = Field(default_factory=list)
-    completed_tasks: List[str] = Field(default_factory=list)
-    capabilities: List[str] = Field(default_factory=list)
-    resource_usage: Dict[str, float] = Field(default_factory=dict)
+    current_task: TaskContext | None = None
+    task_queue: list[TaskContext] = Field(default_factory=list)
+    completed_tasks: list[str] = Field(default_factory=list)
+    capabilities: list[str] = Field(default_factory=list)
+    resource_usage: dict[str, float] = Field(default_factory=dict)
     last_heartbeat: datetime = Field(default_factory=datetime.now)
     error_count: int = 0
     success_count: int = 0
@@ -132,7 +135,7 @@ class AgentState(BaseModel):
         """Add task to queue."""
         self.task_queue.append(task)
 
-    def get_next_task(self) -> Optional[TaskContext]:
+    def get_next_task(self) -> TaskContext | None:
         """Get next task from queue."""
         if self.task_queue:
             task = self.task_queue.pop(0)
@@ -168,47 +171,42 @@ class AgentContextData(BaseModel):
     Replaces Dict[str, Any] for agent context management.
     """
     session: SessionMetadata
-    agent_states: Dict[str, AgentState] = Field(default_factory=dict)
-    shared_memory: Dict[str, JSONValue] = Field(default_factory=dict)
-    global_config: Dict[str, JSONValue] = Field(default_factory=dict)
-    active_handoffs: List[Dict[str, str]] = Field(default_factory=list)
-    message_queue: List[Dict[str, JSONValue]] = Field(default_factory=list)
-    performance_metrics: Dict[str, float] = Field(default_factory=dict)
+    agent_states: dict[str, AgentState] = Field(default_factory=dict)
+    shared_memory: dict[str, JSONValue] = Field(default_factory=dict)
+    global_config: dict[str, JSONValue] = Field(default_factory=dict)
+    active_handoffs: list[dict[str, str]] = Field(default_factory=list)
+    message_queue: list[dict[str, JSONValue]] = Field(default_factory=list)
+    performance_metrics: dict[str, float] = Field(default_factory=dict)
 
     def add_agent(self, agent: AgentState) -> None:
         """Add or update agent state."""
         self.agent_states[agent.agent_id] = agent
 
-    def get_agent(self, agent_id: str) -> Optional[AgentState]:
+    def get_agent(self, agent_id: str) -> AgentState | None:
         """Get agent state by ID."""
         return self.agent_states.get(agent_id)
 
-    def get_active_agents(self) -> List[str]:
+    def get_active_agents(self) -> list[str]:
         """Get list of active agent IDs."""
         return [
-            agent_id for agent_id, state in self.agent_states.items()
+            agent_id
+            for agent_id, state in self.agent_states.items()
             if state.status not in [AgentStatus.TERMINATED, AgentStatus.ERROR]
         ]
 
     def has_active_tasks(self) -> bool:
         """Check if any agents have active tasks."""
-        return any(
-            state.current_task is not None
-            for state in self.agent_states.values()
-        )
+        return any(state.current_task is not None for state in self.agent_states.values())
 
     def get_total_queued_tasks(self) -> int:
         """Get total number of queued tasks across all agents."""
-        return sum(
-            len(state.task_queue)
-            for state in self.agent_states.values()
-        )
+        return sum(len(state.task_queue) for state in self.agent_states.values())
 
-    def broadcast_message(self, message: Dict[str, JSONValue]) -> None:
+    def broadcast_message(self, message: dict[str, JSONValue]) -> None:
         """Add message to broadcast queue."""
-        message['timestamp'] = datetime.now().isoformat()
+        message["timestamp"] = datetime.now().isoformat()
         self.message_queue.append(message)
 
-    def to_dict(self) -> Dict[str, JSONValue]:
+    def to_dict(self) -> dict[str, JSONValue]:
         """Convert to dictionary for backward compatibility."""
-        return self.model_dump(mode='json')
+        return self.model_dump(mode="json")

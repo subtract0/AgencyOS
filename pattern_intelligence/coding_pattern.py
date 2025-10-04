@@ -7,12 +7,12 @@ A CodingPattern captures reusable problem-solving wisdom in a structured format
 that enables semantic search, application, and continuous improvement.
 """
 
-from dataclasses import dataclass, field
-from typing import Any, Dict, List, Optional, Union, cast
-from shared.type_definitions.json import JSONValue
-from datetime import datetime
 import hashlib
-import json
+from dataclasses import dataclass, field
+from datetime import datetime
+from typing import cast
+
+from shared.type_definitions.json import JSONValue
 
 
 def _safe_get_str(data: JSONValue, key: str, default: str = "") -> str:
@@ -24,7 +24,7 @@ def _safe_get_str(data: JSONValue, key: str, default: str = "") -> str:
     return default
 
 
-def _safe_get_list(data: JSONValue, key: str, default: Optional[List[str]] = None) -> List[str]:
+def _safe_get_list(data: JSONValue, key: str, default: list[str] | None = None) -> list[str]:
     """Safely extract list of strings from JSONValue dict with type checking."""
     if default is None:
         default = []
@@ -55,7 +55,7 @@ def _safe_get_int(data: JSONValue, key: str, default: int = 0) -> int:
     return default
 
 
-def _safe_get_optional_str(data: JSONValue, key: str) -> Optional[str]:
+def _safe_get_optional_str(data: JSONValue, key: str) -> str | None:
     """Safely extract optional string from JSONValue dict with type checking."""
     if isinstance(data, dict) and key in data:
         value = data[key]
@@ -70,10 +70,10 @@ class ProblemContext:
 
     description: str  # Clear problem description
     domain: str  # Problem domain (e.g., "error_handling", "performance", "architecture")
-    constraints: List[str] = field(default_factory=list)  # Constraints that shaped the solution
-    symptoms: List[str] = field(default_factory=list)  # Observable symptoms of the problem
-    scale: Optional[str] = None  # Scale/scope (e.g., "1000+ users", "10MB+ files")
-    urgency: Optional[str] = None  # Urgency level ("critical", "medium", "low")
+    constraints: list[str] = field(default_factory=list)  # Constraints that shaped the solution
+    symptoms: list[str] = field(default_factory=list)  # Observable symptoms of the problem
+    scale: str | None = None  # Scale/scope (e.g., "1000+ users", "10MB+ files")
+    urgency: str | None = None  # Urgency level ("critical", "medium", "low")
 
     def to_searchable_text(self) -> str:
         """Convert to text for semantic search."""
@@ -93,11 +93,11 @@ class SolutionApproach:
 
     approach: str  # High-level approach description
     implementation: str  # Specific implementation details
-    tools: List[str] = field(default_factory=list)  # Tools/technologies used
+    tools: list[str] = field(default_factory=list)  # Tools/technologies used
     reasoning: str = ""  # Reasoning behind this approach
-    code_examples: List[str] = field(default_factory=list)  # Code snippets
-    dependencies: List[str] = field(default_factory=list)  # External dependencies
-    alternatives: List[str] = field(default_factory=list)  # Alternative approaches considered
+    code_examples: list[str] = field(default_factory=list)  # Code snippets
+    dependencies: list[str] = field(default_factory=list)  # External dependencies
+    alternatives: list[str] = field(default_factory=list)  # Alternative approaches considered
 
     def to_searchable_text(self) -> str:
         """Convert to text for semantic search."""
@@ -112,12 +112,12 @@ class EffectivenessMetric:
     """Measured outcomes and effectiveness of the solution."""
 
     success_rate: float  # Success rate (0.0 to 1.0)
-    performance_impact: Optional[str] = None  # Performance improvement description
-    maintainability_impact: Optional[str] = None  # Impact on code maintainability
-    user_impact: Optional[str] = None  # Impact on users/stakeholders
-    technical_debt: Optional[str] = None  # Technical debt impact
+    performance_impact: str | None = None  # Performance improvement description
+    maintainability_impact: str | None = None  # Impact on code maintainability
+    user_impact: str | None = None  # Impact on users/stakeholders
+    technical_debt: str | None = None  # Technical debt impact
     adoption_rate: int = 0  # How many times this pattern has been seen/used
-    longevity: Optional[str] = None  # How long the pattern has remained effective
+    longevity: str | None = None  # How long the pattern has remained effective
     confidence: float = 0.5  # Confidence in these metrics (0.0 to 1.0)
 
     def effectiveness_score(self) -> float:
@@ -128,9 +128,11 @@ class EffectivenessMetric:
         adoption_boost = min(0.2, self.adoption_rate / 100)
 
         # Boost for measurable impacts
-        impact_boost = 0.1 if (self.performance_impact or
-                              self.maintainability_impact or
-                              self.user_impact) else 0.0
+        impact_boost = (
+            0.1
+            if (self.performance_impact or self.maintainability_impact or self.user_impact)
+            else 0.0
+        )
 
         return min(1.0, base_score + adoption_boost + impact_boost)
 
@@ -143,11 +145,11 @@ class PatternMetadata:
     discovered_timestamp: str
     source: str  # Where pattern was discovered (e.g., "github:repo/commit", "session:id")
     discoverer: str = "pattern_extractor"  # What extracted this pattern
-    last_applied: Optional[str] = None  # When last successfully applied
+    last_applied: str | None = None  # When last successfully applied
     application_count: int = 0  # How many times applied
     validation_status: str = "unvalidated"  # "validated", "unvalidated", "deprecated"
-    tags: List[str] = field(default_factory=list)  # Categorization tags
-    related_patterns: List[str] = field(default_factory=list)  # Related pattern IDs
+    tags: list[str] = field(default_factory=list)  # Categorization tags
+    related_patterns: list[str] = field(default_factory=list)  # Related pattern IDs
 
     @classmethod
     def generate_id(cls, context: ProblemContext, solution: SolutionApproach) -> str:
@@ -175,9 +177,7 @@ class CodingPattern:
     def __post_init__(self):
         """Generate pattern ID if not provided."""
         if not self.metadata.pattern_id:
-            self.metadata.pattern_id = PatternMetadata.generate_id(
-                self.context, self.solution
-            )
+            self.metadata.pattern_id = PatternMetadata.generate_id(self.context, self.solution)
 
     def to_searchable_text(self) -> str:
         """Convert entire pattern to searchable text."""
@@ -198,7 +198,7 @@ class CodingPattern:
 
         return f"{context_text} {solution_text} {' '.join(outcome_parts)} {tag_text}"
 
-    def to_dict(self) -> Dict[str, JSONValue]:
+    def to_dict(self) -> dict[str, JSONValue]:
         """Convert to dictionary for storage."""
         return {
             "pattern_id": self.metadata.pattern_id,
@@ -245,7 +245,7 @@ class CodingPattern:
         }
 
     @classmethod
-    def from_dict(cls, data: Dict[str, JSONValue]) -> "CodingPattern":
+    def from_dict(cls, data: dict[str, JSONValue]) -> "CodingPattern":
         """Create CodingPattern from dictionary."""
         # Safely extract nested dicts with type checking
         context_data = data.get("context", {})
@@ -297,7 +297,9 @@ class CodingPattern:
 
         return cls(context=context, solution=solution, outcome=outcome, metadata=metadata)
 
-    def matches_context(self, target_context: Union[str, ProblemContext], threshold: float = 0.7) -> bool:
+    def matches_context(
+        self, target_context: str | ProblemContext, threshold: float = 0.7
+    ) -> bool:
         """Check if this pattern matches a target context."""
         if isinstance(target_context, str):
             # Simple keyword matching for now
@@ -326,7 +328,7 @@ class CodingPattern:
 
         return False
 
-    def can_be_applied(self, current_constraints: List[str] = None) -> bool:
+    def can_be_applied(self, current_constraints: list[str] = None) -> bool:
         """Check if this pattern can be applied given current constraints."""
         current_constraints = current_constraints or []
 

@@ -8,19 +8,17 @@ policy and 100% test success rate requirement defined in ADR-002.
 """
 
 import os
-import sys
-import pytest
-import tempfile
 import subprocess
-from unittest.mock import patch, MagicMock
-from pathlib import Path
+import sys
+
+import pytest
 
 # Add project root to path for imports
 project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, project_root)
 
-from shared.agent_context import create_agent_context
 from merger_agent import create_merger_agent
+from shared.agent_context import create_agent_context
 
 
 class TestMergerAgentIntegration:
@@ -43,8 +41,10 @@ class TestMergerAgentIntegration:
         assert len(agent.tools) == 6
 
         # Verify required tools are present
-        expected_tools = ['Bash', 'GitUnified', 'Read', 'Grep', 'Glob', 'TodoWrite']
-        actual_tools = [getattr(tool, 'name', getattr(tool, '__name__', str(tool))) for tool in agent.tools]
+        expected_tools = ["Bash", "GitUnified", "Read", "Grep", "Glob", "TodoWrite"]
+        actual_tools = [
+            getattr(tool, "name", getattr(tool, "__name__", str(tool))) for tool in agent.tools
+        ]
 
         for expected_tool in expected_tools:
             assert expected_tool in actual_tools, f"Missing required tool: {expected_tool}"
@@ -56,14 +56,14 @@ class TestMergerAgentIntegration:
         agent = create_merger_agent(agent_context=context)
 
         # Verify memory integration through context
-        assert hasattr(agent, 'hooks')
+        assert hasattr(agent, "hooks")
         assert agent.hooks is not None
 
         # Check that memory was stored during agent creation
         # Note: Memory storage might be asynchronous or dependent on specific backend
         # For now, we just verify the context has a valid session ID which indicates
         # the memory system is properly initialized
-        assert hasattr(context, 'session_id')
+        assert hasattr(context, "session_id")
         assert context.session_id is not None
         assert len(context.session_id) > 0
 
@@ -75,14 +75,14 @@ class TestMergerAgentIntegration:
 
         # Test each tool has proper configuration
         for tool in agent.tools:
-            assert hasattr(tool, 'name'), f"Tool missing name attribute: {tool}"
-            assert hasattr(tool, 'description'), f"Tool missing description: {tool.name}"
+            assert hasattr(tool, "name"), f"Tool missing name attribute: {tool}"
+            assert hasattr(tool, "description"), f"Tool missing description: {tool.name}"
             assert tool.description, f"Tool has empty description: {tool.name}"
 
         # Verify tools include test verification capabilities
         tool_names = [tool.name for tool in agent.tools]
-        assert 'Bash' in tool_names, "Bash tool required for test execution"
-        assert 'GitUnified' in tool_names, "Git tool required for merge operations"
+        assert "Bash" in tool_names, "Bash tool required for test execution"
+        assert "GitUnified" in tool_names, "Git tool required for merge operations"
 
 
 class TestPreCommitHookIntegration:
@@ -90,7 +90,7 @@ class TestPreCommitHookIntegration:
 
     def test_pre_commit_hook_exists_and_executable(self):
         """Test that pre-commit hook exists and is executable."""
-        hook_path = os.path.join(project_root, '.git', 'hooks', 'pre-commit')
+        hook_path = os.path.join(project_root, ".git", "hooks", "pre-commit")
 
         if not os.path.exists(hook_path):
             pytest.skip("Pre-commit hook not installed - skipping in CI environment")
@@ -99,12 +99,12 @@ class TestPreCommitHookIntegration:
 
     def test_pre_commit_hook_content_validation(self):
         """Test that pre-commit hook contains required ADR-002 enforcement logic."""
-        hook_path = os.path.join(project_root, '.git', 'hooks', 'pre-commit')
+        hook_path = os.path.join(project_root, ".git", "hooks", "pre-commit")
 
         if not os.path.exists(hook_path):
             pytest.skip("Pre-commit hook not installed - skipping in CI environment")
 
-        with open(hook_path, 'r') as f:
+        with open(hook_path) as f:
             content = f.read()
 
         # Verify hook contains ADR-002 references
@@ -119,38 +119,47 @@ class TestPreCommitHookIntegration:
         # Verify hook checks test results
         assert "TEST_EXIT_CODE" in content, "Hook missing test exit code checking"
 
-    @pytest.mark.skipif(not os.path.exists(os.path.join(project_root, '.venv')) and os.getenv("FORCE_RUN_ALL_TESTS", "") != "1",
-                       reason="Virtual environment not available")
+    @pytest.mark.skipif(
+        not os.path.exists(os.path.join(project_root, ".venv"))
+        and os.getenv("FORCE_RUN_ALL_TESTS", "") != "1",
+        reason="Virtual environment not available",
+    )
     def test_pre_commit_hook_test_execution(self):
         """Test that pre-commit hook can execute tests (requires venv)."""
-        hook_path = os.path.join(project_root, '.git', 'hooks', 'pre-commit')
+        hook_path = os.path.join(project_root, ".git", "hooks", "pre-commit")
 
         if not os.path.exists(hook_path):
             pytest.skip("Pre-commit hook not installed - skipping in CI environment")
 
         # Run hook with timeout to prevent infinite loops during testing
         env = os.environ.copy()
-        env['PATH'] = f"{os.path.join(project_root, '.venv', 'bin')}:{env['PATH']}"
+        env["PATH"] = f"{os.path.join(project_root, '.venv', 'bin')}:{env['PATH']}"
 
         # Add environment variable to prevent recursive test execution
-        env['TESTING_PRE_COMMIT_HOOK'] = '1'
+        env["TESTING_PRE_COMMIT_HOOK"] = "1"
 
         # Run with a short timeout to prevent hanging
         try:
-            result = subprocess.run([hook_path], cwd=project_root, env=env,
-                                  capture_output=True, text=True, timeout=10)
+            result = subprocess.run(
+                [hook_path], cwd=project_root, env=env, capture_output=True, text=True, timeout=10
+            )
         except subprocess.TimeoutExpired:
             # If hook times out, that's acceptable for this test
             # It means the hook is functional but we're preventing infinite loops
-            pytest.skip("Pre-commit hook timed out (expected during testing to prevent infinite loops)")
+            pytest.skip(
+                "Pre-commit hook timed out (expected during testing to prevent infinite loops)"
+            )
 
         # Hook should execute (may pass or fail depending on current test state)
-        assert result.returncode in [0, 1, 124], "Hook should exit with 0 (success), 1 (failure), or 124 (timeout)"
+        assert result.returncode in [0, 1, 124], (
+            "Hook should exit with 0 (success), 1 (failure), or 124 (timeout)"
+        )
 
         # Verify hook produces expected output patterns
         output = result.stdout + result.stderr
-        assert any(phrase in output for phrase in ["ADR-002", "test", "verification", "Running test suite"]), \
-               "Hook output missing expected content"
+        assert any(
+            phrase in output for phrase in ["ADR-002", "test", "verification", "Running test suite"]
+        ), "Hook output missing expected content"
 
 
 class TestGitHubWorkflowIntegration:
@@ -158,26 +167,26 @@ class TestGitHubWorkflowIntegration:
 
     def test_github_workflow_exists(self):
         """Test that GitHub Actions workflow file exists."""
-        workflow_path = os.path.join(project_root, '.github', 'workflows', 'merge-guardian.yml')
+        workflow_path = os.path.join(project_root, ".github", "workflows", "merge-guardian.yml")
         assert os.path.exists(workflow_path), "GitHub workflow file missing"
 
     def test_github_workflow_yaml_structure(self):
         """Test that GitHub workflow has correct YAML structure."""
-        workflow_path = os.path.join(project_root, '.github', 'workflows', 'merge-guardian.yml')
+        workflow_path = os.path.join(project_root, ".github", "workflows", "merge-guardian.yml")
 
-        with open(workflow_path, 'r') as f:
+        with open(workflow_path) as f:
             content = f.read()
 
         # Basic YAML structure validation
-        required_elements = ['name:', 'on:', 'jobs:', 'runs-on:', 'steps:']
+        required_elements = ["name:", "on:", "jobs:", "runs-on:", "steps:"]
         for element in required_elements:
             assert element in content, f"Workflow missing required element: {element}"
 
     def test_github_workflow_adr_002_enforcement(self):
         """Test that GitHub workflow enforces ADR-002 requirements."""
-        workflow_path = os.path.join(project_root, '.github', 'workflows', 'merge-guardian.yml')
+        workflow_path = os.path.join(project_root, ".github", "workflows", "merge-guardian.yml")
 
-        with open(workflow_path, 'r') as f:
+        with open(workflow_path) as f:
             content = f.read()
 
         # Verify ADR-002 enforcement
@@ -195,9 +204,9 @@ class TestGitHubWorkflowIntegration:
 
     def test_github_workflow_python_setup(self):
         """Test that GitHub workflow properly sets up Python environment."""
-        workflow_path = os.path.join(project_root, '.github', 'workflows', 'merge-guardian.yml')
+        workflow_path = os.path.join(project_root, ".github", "workflows", "merge-guardian.yml")
 
-        with open(workflow_path, 'r') as f:
+        with open(workflow_path) as f:
             content = f.read()
 
         # Verify Python setup
@@ -207,13 +216,15 @@ class TestGitHubWorkflowIntegration:
 
     def test_github_workflow_test_execution_logic(self):
         """Test that GitHub workflow has proper test execution and result processing."""
-        workflow_path = os.path.join(project_root, '.github', 'workflows', 'merge-guardian.yml')
+        workflow_path = os.path.join(project_root, ".github", "workflows", "merge-guardian.yml")
 
-        with open(workflow_path, 'r') as f:
+        with open(workflow_path) as f:
             content = f.read()
 
         # Verify test execution (either run_tests.py or pytest directly)
-        assert ("python run_tests.py" in content or "python -m pytest" in content), "Workflow missing test execution command"
+        assert "python run_tests.py" in content or "python -m pytest" in content, (
+            "Workflow missing test execution command"
+        )
         assert "TEST_EXIT_CODE" in content, "Workflow missing exit code capture"
 
         # Verify result processing
@@ -231,17 +242,17 @@ class TestMergeVerificationWorkflow:
     def test_complete_integration_components_exist(self):
         """Test that all integration components exist and are properly configured."""
         # Verify MergerAgent exists
-        merger_agent_path = os.path.join(project_root, 'merger_agent', 'merger_agent.py')
+        merger_agent_path = os.path.join(project_root, "merger_agent", "merger_agent.py")
         assert os.path.exists(merger_agent_path), "MergerAgent file missing"
 
         # Verify pre-commit hook exists (skip in CI)
-        hook_path = os.path.join(project_root, '.git', 'hooks', 'pre-commit')
+        hook_path = os.path.join(project_root, ".git", "hooks", "pre-commit")
         if not os.path.exists(hook_path):
             pytest.skip("Pre-commit hook not installed - skipping in CI environment")
         assert os.path.exists(hook_path), "Pre-commit hook missing"
 
         # Verify GitHub workflow exists
-        workflow_path = os.path.join(project_root, '.github', 'workflows', 'merge-guardian.yml')
+        workflow_path = os.path.join(project_root, ".github", "workflows", "merge-guardian.yml")
         assert os.path.exists(workflow_path), "GitHub workflow missing"
 
         # Verify all are executable/readable
@@ -252,56 +263,64 @@ class TestMergeVerificationWorkflow:
     def test_adr_002_compliance_enforcement(self):
         """Test that ADR-002 compliance is enforced across all components."""
         # Check MergerAgent description
-        merger_agent_path = os.path.join(project_root, 'merger_agent', 'merger_agent.py')
-        with open(merger_agent_path, 'r') as f:
+        merger_agent_path = os.path.join(project_root, "merger_agent", "merger_agent.py")
+        with open(merger_agent_path) as f:
             merger_content = f.read()
         assert "ADR-002" in merger_content, "MergerAgent missing ADR-002 reference"
 
         # Check pre-commit hook (skip in CI)
-        hook_path = os.path.join(project_root, '.git', 'hooks', 'pre-commit')
+        hook_path = os.path.join(project_root, ".git", "hooks", "pre-commit")
         if not os.path.exists(hook_path):
             pytest.skip("Pre-commit hook not installed - skipping in CI environment")
-        with open(hook_path, 'r') as f:
+        with open(hook_path) as f:
             hook_content = f.read()
         assert "ADR-002" in hook_content, "Pre-commit hook missing ADR-002 reference"
 
         # Check GitHub workflow
-        workflow_path = os.path.join(project_root, '.github', 'workflows', 'merge-guardian.yml')
-        with open(workflow_path, 'r') as f:
+        workflow_path = os.path.join(project_root, ".github", "workflows", "merge-guardian.yml")
+        with open(workflow_path) as f:
             workflow_content = f.read()
         assert "ADR-002" in workflow_content, "GitHub workflow missing ADR-002 reference"
 
     def test_no_broken_windows_policy_enforcement(self):
         """Test that 'No Broken Windows' policy is enforced in all components."""
         # Check MergerAgent
-        merger_agent_path = os.path.join(project_root, 'merger_agent', 'merger_agent.py')
-        with open(merger_agent_path, 'r') as f:
+        merger_agent_path = os.path.join(project_root, "merger_agent", "merger_agent.py")
+        with open(merger_agent_path) as f:
             merger_content = f.read()
-        assert "non-negotiable" in merger_content or "veto power" in merger_content, "MergerAgent missing No Broken Windows policy"
+        assert "non-negotiable" in merger_content or "veto power" in merger_content, (
+            "MergerAgent missing No Broken Windows policy"
+        )
 
         # Check GitHub workflow
-        workflow_path = os.path.join(project_root, '.github', 'workflows', 'merge-guardian.yml')
-        with open(workflow_path, 'r') as f:
+        workflow_path = os.path.join(project_root, ".github", "workflows", "merge-guardian.yml")
+        with open(workflow_path) as f:
             workflow_content = f.read()
-        assert "No Broken Windows" in workflow_content, "GitHub workflow missing No Broken Windows policy"
+        assert "No Broken Windows" in workflow_content, (
+            "GitHub workflow missing No Broken Windows policy"
+        )
 
     def test_test_verification_consistency(self):
         """Test that all components use consistent test verification approach."""
         # All components should use 'python run_tests.py' for consistency
 
         # Check pre-commit hook (skip in CI)
-        hook_path = os.path.join(project_root, '.git', 'hooks', 'pre-commit')
+        hook_path = os.path.join(project_root, ".git", "hooks", "pre-commit")
         if not os.path.exists(hook_path):
             pytest.skip("Pre-commit hook not installed - skipping in CI environment")
-        with open(hook_path, 'r') as f:
+        with open(hook_path) as f:
             hook_content = f.read()
-        assert "python run_tests.py" in hook_content, "Pre-commit hook uses inconsistent test command"
+        assert "python run_tests.py" in hook_content, (
+            "Pre-commit hook uses inconsistent test command"
+        )
 
         # Check GitHub workflow
-        workflow_path = os.path.join(project_root, '.github', 'workflows', 'merge-guardian.yml')
-        with open(workflow_path, 'r') as f:
+        workflow_path = os.path.join(project_root, ".github", "workflows", "merge-guardian.yml")
+        with open(workflow_path) as f:
             workflow_content = f.read()
-        assert "python run_tests.py" in workflow_content, "GitHub workflow uses inconsistent test command"
+        assert "python run_tests.py" in workflow_content, (
+            "GitHub workflow uses inconsistent test command"
+        )
 
 
 class TestMergerAgentErrorScenarios:
@@ -331,5 +350,6 @@ class TestMergerAgentErrorScenarios:
 if __name__ == "__main__":
     # Allow running this test file directly, but prevent recursion
     import os
+
     if os.environ.get("AGENCY_NESTED_TEST") != "1":
         pytest.main([__file__, "-v"])

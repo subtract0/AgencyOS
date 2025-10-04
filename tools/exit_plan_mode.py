@@ -18,7 +18,7 @@ class ExitPlanMode(BaseTool):  # type: ignore[misc]
         description="The plan you came up with, that you want to run by the user for approval. Supports markdown. The plan should be pretty concise.",
     )
 
-    @field_validator('plan')
+    @field_validator("plan")
     @classmethod
     def validate_plan(cls, v):
         if not v or not v.strip():

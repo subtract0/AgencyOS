@@ -4,9 +4,10 @@ Replaces Dict[str, Any] in learning consolidation and pattern analysis.
 """
 
 from datetime import datetime
-from typing import Dict, List, Optional, Any
+
+from pydantic import BaseModel, ConfigDict, Field, field_validator
+
 from shared.type_definitions.json import JSONValue
-from pydantic import BaseModel, Field, field_validator, ConfigDict
 
 
 class LearningMetric(BaseModel):
@@ -14,8 +15,8 @@ class LearningMetric(BaseModel):
     """Individual learning metric."""
     name: str
     value: float
-    unit: Optional[str] = None
-    description: Optional[str] = None
+    unit: str | None = None
+    description: str | None = None
     timestamp: datetime = Field(default_factory=datetime.now)
 
 
@@ -45,17 +46,17 @@ class ContentTypeBreakdown(BaseModel):
 class TimeDistribution(BaseModel):
     model_config = ConfigDict(extra="forbid")
     """Time-based distribution patterns."""
-    hourly: Dict[int, int] = Field(default_factory=dict)
-    daily: Dict[str, int] = Field(default_factory=dict)
-    peak_hour: Optional[int] = None
-    peak_day: Optional[str] = None
+    hourly: dict[int, int] = Field(default_factory=dict)
+    daily: dict[str, int] = Field(default_factory=dict)
+    peak_hour: int | None = None
+    peak_day: str | None = None
 
-    @field_validator('hourly')
-    def validate_hourly(cls, v: Dict[int, int]) -> Dict[int, int]:
+    @field_validator("hourly")
+    def validate_hourly(cls, v: dict[int, int]) -> dict[int, int]:
         """Ensure hour keys are valid (0-23)."""
         for hour in v.keys():
             if not 0 <= hour <= 23:
-                raise ValueError(f'Invalid hour: {hour}')
+                raise ValueError(f"Invalid hour: {hour}")
         return v
 
 
@@ -64,16 +65,16 @@ class PatternAnalysis(BaseModel):
     """Pattern analysis results."""
     content_types: ContentTypeBreakdown = Field(default_factory=lambda: ContentTypeBreakdown())
     time_distribution: TimeDistribution = Field(default_factory=lambda: TimeDistribution())
-    common_sequences: List[List[str]] = Field(default_factory=list)
+    common_sequences: list[list[str]] = Field(default_factory=list)
     anomalies_detected: int = 0
     confidence_score: float = Field(default=0.0, ge=0.0, le=1.0)
 
     def has_patterns(self) -> bool:
         """Check if any patterns were detected."""
         return (
-            self.content_types.total() > 0 or
-            bool(self.time_distribution.hourly) or
-            bool(self.common_sequences)
+            self.content_types.total() > 0
+            or bool(self.time_distribution.hourly)
+            or bool(self.common_sequences)
         )
 
 
@@ -84,7 +85,7 @@ class LearningInsight(BaseModel):
     description: str
     importance: str = Field(default="medium", pattern="^(low|medium|high|critical)$")
     confidence: float = Field(default=0.8, ge=0.0, le=1.0)
-    supporting_data: Dict[str, JSONValue] = Field(default_factory=dict)
+    supporting_data: dict[str, JSONValue] = Field(default_factory=dict)
 
 
 class LearningConsolidation(BaseModel):
@@ -97,46 +98,43 @@ class LearningConsolidation(BaseModel):
     total_memories: int = Field(default=0, ge=0)
     unique_tags: int = Field(default=0, ge=0)
     avg_tags_per_memory: float = Field(default=0.0, ge=0.0)
-    tag_frequencies: Dict[str, int] = Field(default_factory=dict)
-    top_tags: List[Dict[str, JSONValue]] = Field(default_factory=list)
+    tag_frequencies: dict[str, int] = Field(default_factory=dict)
+    top_tags: list[dict[str, JSONValue]] = Field(default_factory=list)
     patterns: PatternAnalysis = Field(default_factory=lambda: PatternAnalysis())
-    insights: List[LearningInsight] = Field(default_factory=list)
-    metrics: Dict[str, LearningMetric] = Field(default_factory=dict)
+    insights: list[LearningInsight] = Field(default_factory=list)
+    metrics: dict[str, LearningMetric] = Field(default_factory=dict)
     generated_at: datetime = Field(default_factory=datetime.now)
-    session_id: Optional[str] = None
-    agent_id: Optional[str] = None
+    session_id: str | None = None
+    agent_id: str | None = None
 
-    @field_validator('tag_frequencies')
-    def validate_tag_frequencies(cls, v: Dict[str, int]) -> Dict[str, int]:
+    @field_validator("tag_frequencies")
+    def validate_tag_frequencies(cls, v: dict[str, int]) -> dict[str, int]:
         """Ensure all frequencies are non-negative."""
         for tag, freq in v.items():
             if freq < 0:
-                raise ValueError(f'Negative frequency for tag {tag}')
+                raise ValueError(f"Negative frequency for tag {tag}")
         return v
 
-    def get_top_tags(self, n: int = 10) -> List[tuple[str, int]]:
+    def get_top_tags(self, n: int = 10) -> list[tuple[str, int]]:
         """Get the N most frequent tags."""
-        return sorted(
-            self.tag_frequencies.items(),
-            key=lambda x: x[1],
-            reverse=True
-        )[:n]
+        return sorted(self.tag_frequencies.items(), key=lambda x: x[1], reverse=True)[:n]
 
-    def to_dict(self) -> Dict[str, JSONValue]:
+    def to_dict(self) -> dict[str, JSONValue]:
         """Convert to dictionary for backward compatibility."""
-        return self.model_dump(mode='json')
+        return self.model_dump(mode="json")
 
     def has_insights(self) -> bool:
         """Check if any insights were generated."""
         return len(self.insights) > 0
 
-    def get_critical_insights(self) -> List[LearningInsight]:
+    def get_critical_insights(self) -> list[LearningInsight]:
         """Get only critical importance insights."""
         return [i for i in self.insights if i.importance == "critical"]
 
 
 class ExtractedInsight(BaseModel):
     """Individual insight extracted from session analysis."""
+
     model_config = ConfigDict(extra="forbid")
 
     type: str  # tool_pattern, error_resolution, task_completion, optimization
@@ -145,30 +143,32 @@ class ExtractedInsight(BaseModel):
     description: str
     actionable_insight: str
     confidence: float = Field(ge=0.0, le=1.0)
-    data: Dict[str, JSONValue] = Field(default_factory=dict)
-    keywords: List[str] = Field(default_factory=list)
+    data: dict[str, JSONValue] = Field(default_factory=dict)
+    keywords: list[str] = Field(default_factory=list)
 
 
 class InsightExtractionResult(BaseModel):
     """Result of insight extraction process."""
+
     model_config = ConfigDict(extra="forbid")
 
     extraction_timestamp: str
     insight_type: str
     confidence_threshold: float = Field(ge=0.0, le=1.0)
-    insights: List[ExtractedInsight] = Field(default_factory=list)
+    insights: list[ExtractedInsight] = Field(default_factory=list)
     total_insights: int = Field(ge=0)
 
 
 class OperationInfo(BaseModel):
     """Information about a learning loop operation."""
+
     model_config = ConfigDict(extra="forbid")
 
     id: str
-    task_description: Optional[str] = None
-    initial_error: Optional[Dict[str, JSONValue]] = None
-    tool_calls: List[Dict[str, JSONValue]] = Field(default_factory=list)
-    final_state: Dict[str, JSONValue] = Field(default_factory=dict)
+    task_description: str | None = None
+    initial_error: dict[str, JSONValue] | None = None
+    tool_calls: list[dict[str, JSONValue]] = Field(default_factory=list)
+    final_state: dict[str, JSONValue] = Field(default_factory=dict)
     success: bool = False
     duration_seconds: float = 0.0
     timestamp: datetime = Field(default_factory=datetime.now)

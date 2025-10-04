@@ -6,11 +6,12 @@ Core principle: Every component adds measurable value to agent learning performa
 
 __version__ = "0.1.0"
 
-from .agent_registry import AgentRegistry, Agent, AgentInstance, AIQEvent
+from .agent_registry import Agent, AgentInstance, AgentRegistry, AIQEvent
 
 # Flask-dependent imports are optional
 try:
     from .registry_api import create_app
+
     __all__ = ["AgentRegistry", "Agent", "AgentInstance", "AIQEvent", "create_app"]
 except ImportError:
     # Flask not available - registry API won't be available

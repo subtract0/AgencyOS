@@ -17,35 +17,26 @@ NECESSARY Pattern:
 - Yield fast: Uses mocks for speed
 """
 
+from unittest.mock import MagicMock, patch
+
 import pytest
-from datetime import datetime, timezone
-from unittest.mock import Mock, MagicMock, patch, call
-from pathlib import Path
 
 from tools.git_workflow import (
-    GitWorkflowTool,
     GitOperationError,
-    BranchInfo,
-    CommitInfo,
-    PullRequestInfo,
     GitWorkflowProtocol,
+    GitWorkflowTool,
 )
-from shared.type_definitions.result import Result, Ok, Err
-
 
 # ============================================================================
 # FIXTURES
 # ============================================================================
 
+
 @pytest.fixture
 def mock_subprocess():
     """Mock subprocess for git command execution."""
     with patch("subprocess.run") as mock_run:
-        mock_run.return_value = MagicMock(
-            returncode=0,
-            stdout="success",
-            stderr=""
-        )
+        mock_run.return_value = MagicMock(returncode=0, stdout="success", stderr="")
         yield mock_run
 
 
@@ -64,6 +55,7 @@ def git_protocol():
 # ============================================================================
 # TEST: BRANCH OPERATIONS
 # ============================================================================
+
 
 @pytest.mark.unit
 def test_create_branch_success(git_tool, mock_subprocess):
@@ -86,7 +78,7 @@ def test_create_branch_already_exists(git_tool, mock_subprocess):
     # First call succeeds (checkout main), second call fails (create branch)
     mock_subprocess.side_effect = [
         MagicMock(returncode=0, stdout="", stderr=""),  # checkout main succeeds
-        MagicMock(returncode=128, stdout="", stderr="already exists")  # create branch fails
+        MagicMock(returncode=128, stdout="", stderr="already exists"),  # create branch fails
     ]
 
     result = git_tool.create_branch("feature/existing")
@@ -129,6 +121,7 @@ def test_get_current_branch(git_tool, mock_subprocess):
 # ============================================================================
 # TEST: COMMIT OPERATIONS
 # ============================================================================
+
 
 @pytest.mark.unit
 def test_stage_files_success(git_tool, mock_subprocess):
@@ -189,6 +182,7 @@ def test_commit_no_staged_changes(git_tool, mock_subprocess):
 # TEST: PUSH OPERATIONS
 # ============================================================================
 
+
 @pytest.mark.unit
 def test_push_branch_success(git_tool, mock_subprocess):
     """Test successful branch push."""
@@ -226,15 +220,14 @@ def test_push_fails_no_remote(git_tool, mock_subprocess):
 # TEST: PULL REQUEST OPERATIONS
 # ============================================================================
 
+
 @pytest.mark.unit
 def test_create_pr_success(git_tool, mock_subprocess):
     """Test successful PR creation."""
     mock_subprocess.return_value.stdout = "https://github.com/user/repo/pull/123"
 
     result = git_tool.create_pull_request(
-        title="feat: New feature",
-        body="Detailed description",
-        base="main"
+        title="feat: New feature", body="Detailed description", base="main"
     )
 
     assert result.is_ok()
@@ -252,7 +245,7 @@ def test_create_pr_with_reviewers(git_tool, mock_subprocess):
         title="fix: Bug fix",
         body="Fix description",
         base="main",
-        reviewers=["reviewer1", "reviewer2"]
+        reviewers=["reviewer1", "reviewer2"],
     )
 
     assert result.is_ok()
@@ -271,11 +264,7 @@ def test_create_pr_fails_no_gh_cli(mock_run, git_tool, mock_subprocess):
     # Mock gh command not found
     mock_run.side_effect = FileNotFoundError("gh: command not found")
 
-    result = git_tool.create_pull_request(
-        title="test",
-        body="test",
-        base="main"
-    )
+    result = git_tool.create_pull_request(title="test", body="test", base="main")
 
     assert not result.is_ok()
     error = result.unwrap_err()
@@ -285,6 +274,7 @@ def test_create_pr_fails_no_gh_cli(mock_run, git_tool, mock_subprocess):
 # ============================================================================
 # TEST: STATUS AND INFO
 # ============================================================================
+
 
 @pytest.mark.unit
 def test_get_status(git_tool, mock_subprocess):
@@ -325,6 +315,7 @@ def test_has_uncommitted_changes_false(git_tool, mock_subprocess):
 # TEST: GIT WORKFLOW PROTOCOL (HIGH-LEVEL)
 # ============================================================================
 
+
 @pytest.mark.unit
 def test_protocol_start_feature_workflow(git_protocol, mock_subprocess):
     """Test complete feature workflow initialization."""
@@ -341,10 +332,7 @@ def test_protocol_commit_with_validation(git_protocol, mock_subprocess):
     """Test commit with pre-commit validation."""
     mock_subprocess.return_value.stdout = ""  # Clean status
 
-    result = git_protocol.commit_changes(
-        message="feat: New feature",
-        files=["file1.py"]
-    )
+    result = git_protocol.commit_changes(message="feat: New feature", files=["file1.py"])
 
     assert result.is_ok()
 
@@ -356,13 +344,10 @@ def test_protocol_commit_fails_if_uncommitted_in_other_files(git_protocol, mock_
     mock_subprocess.side_effect = [
         MagicMock(returncode=0, stdout="", stderr=""),  # stage files
         MagicMock(returncode=0, stdout="", stderr=""),  # commit
-        MagicMock(returncode=0, stdout="abc123", stderr="")  # get sha
+        MagicMock(returncode=0, stdout="abc123", stderr=""),  # get sha
     ]
 
-    result = git_protocol.commit_changes(
-        message="test: Commit message",
-        files=["file1.py"]
-    )
+    result = git_protocol.commit_changes(message="test: Commit message", files=["file1.py"])
 
     # Should succeed (allow_untracked parameter removed from implementation)
     assert result.is_ok()
@@ -378,17 +363,12 @@ def test_protocol_complete_workflow(git_protocol, mock_subprocess):
     assert start_result.is_ok()
 
     # Commit changes
-    commit_result = git_protocol.commit_changes(
-        message="feat: Complete feature",
-        files=["file.py"]
-    )
+    commit_result = git_protocol.commit_changes(message="feat: Complete feature", files=["file.py"])
     assert commit_result.is_ok()
 
     # Create PR
     pr_result = git_protocol.create_pr(
-        title="feat: Complete feature",
-        body="Full implementation",
-        reviewers=["reviewer"]
+        title="feat: Complete feature", body="Full implementation", reviewers=["reviewer"]
     )
     assert pr_result.is_ok()
 
@@ -411,14 +391,12 @@ def test_protocol_cleanup_after_merge(git_protocol, mock_subprocess):
 # TEST: ERROR HANDLING
 # ============================================================================
 
+
 @pytest.mark.unit
 def test_git_operation_error_creation():
     """Test GitOperationError creation."""
     error = GitOperationError(
-        operation="commit",
-        message="Commit failed",
-        return_code=1,
-        stderr="error details"
+        operation="commit", message="Commit failed", return_code=1, stderr="error details"
     )
 
     assert error.operation == "commit"
@@ -445,6 +423,7 @@ def test_result_error_propagation(git_tool, mock_subprocess):
 # TEST: CONSTITUTIONAL COMPLIANCE
 # ============================================================================
 
+
 @pytest.mark.unit
 def test_article_ii_green_main_enforcement(git_protocol, mock_subprocess):
     """
@@ -457,9 +436,7 @@ def test_article_ii_green_main_enforcement(git_protocol, mock_subprocess):
     mock_subprocess.return_value.stderr = "Tests failed"
 
     result = git_protocol.create_pr_with_validation(
-        title="test",
-        body="test",
-        test_command="pytest"
+        title="test", body="test", test_command="pytest"
     )
 
     assert not result.is_ok()
@@ -486,11 +463,7 @@ def test_article_v_spec_driven_commit_messages(git_tool):
 def test_atomic_commit_enforcement(git_protocol):
     """Test enforcement of atomic commits (single logical change)."""
     # Multiple unrelated files should trigger warning
-    files = [
-        "feature_a/file1.py",
-        "feature_b/unrelated.py",
-        "docs/random.md"
-    ]
+    files = ["feature_a/file1.py", "feature_b/unrelated.py", "docs/random.md"]
 
     result = git_protocol.validate_commit_atomicity(files)
 
@@ -503,6 +476,7 @@ def test_atomic_commit_enforcement(git_protocol):
 # ============================================================================
 # TEST: INTEGRATION SCENARIOS
 # ============================================================================
+
 
 @pytest.mark.integration
 @pytest.mark.asyncio
@@ -519,15 +493,11 @@ async def test_full_feature_lifecycle(mock_subprocess):
     assert start.is_ok()
 
     # 2. Make commits
-    commit1 = protocol.commit_changes(
-        message="feat: Add component A",
-        files=["component_a.py"]
-    )
+    commit1 = protocol.commit_changes(message="feat: Add component A", files=["component_a.py"])
     assert commit1.is_ok()
 
     commit2 = protocol.commit_changes(
-        message="test: Add tests for component A",
-        files=["test_component_a.py"]
+        message="test: Add tests for component A", files=["test_component_a.py"]
     )
     assert commit2.is_ok()
 
@@ -541,7 +511,7 @@ async def test_full_feature_lifecycle(mock_subprocess):
     pr = protocol.create_pr(
         title="feat: Integration test feature",
         body="Complete implementation",
-        reviewers=["reviewer"]
+        reviewers=["reviewer"],
     )
     assert pr.is_ok()
 
@@ -560,11 +530,7 @@ def test_error_recovery_workflow(mock_subprocess):
         MagicMock(returncode=1, stderr="tests failed"),  # Test run
     ]
 
-    result = protocol.create_pr_with_validation(
-        title="test",
-        body="test",
-        test_command="pytest"
-    )
+    result = protocol.create_pr_with_validation(title="test", body="test", test_command="pytest")
 
     assert not result.is_ok()
     # User can fix tests and retry
@@ -573,6 +539,7 @@ def test_error_recovery_workflow(mock_subprocess):
 # ============================================================================
 # TEST: PERFORMANCE
 # ============================================================================
+
 
 @pytest.mark.unit
 def test_protocol_operations_yield_fast(git_protocol, mock_subprocess):

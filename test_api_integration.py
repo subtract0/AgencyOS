@@ -31,9 +31,13 @@ def run_api_tests():
     # Remove skip markers temporarily
     print("Removing skip markers from tests...")
     cmd = [
-        "python", "-m", "pytest",
-        "--override-ini", "markers=",  # Override markers
-        "-p", "no:warnings",  # Disable warnings
+        "python",
+        "-m",
+        "pytest",
+        "--override-ini",
+        "markers=",  # Override markers
+        "-p",
+        "no:warnings",  # Disable warnings
         "-v",  # Verbose output
         "--tb=short",  # Short traceback
     ] + tests_to_run

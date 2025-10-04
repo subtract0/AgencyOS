@@ -1,9 +1,10 @@
-import pytest
 import os
-from unittest.mock import Mock, patch, MagicMock
+from unittest.mock import Mock, patch
+
+import pytest
 
 from agency_code_agent.agency_code_agent import create_agency_code_agent
-from shared.agent_context import AgentContext, create_agent_context
+from shared.agent_context import create_agent_context
 
 
 class TestAgencyCodeAgentCreation:
@@ -21,11 +22,7 @@ class TestAgencyCodeAgentCreation:
     def test_agent_creation_custom_params(self):
         """Test agent creation with custom parameters."""
         ctx = create_agent_context()
-        agent = create_agency_code_agent(
-            model="gpt-5",
-            reasoning_effort="high",
-            agent_context=ctx
-        )
+        agent = create_agency_code_agent(model="gpt-5", reasoning_effort="high", agent_context=ctx)
 
         assert agent.name == "AgencyCodeAgent"
         assert agent is not None
@@ -36,12 +33,14 @@ class TestAgencyCodeAgentCreation:
         agent = create_agency_code_agent(agent_context=ctx)
 
         assert agent is not None
-        assert hasattr(agent, 'hooks')
+        assert hasattr(agent, "hooks")
         assert agent.hooks is not None
 
     def test_agent_creation_creates_context_when_none(self):
         """Test that agent creation creates context when none provided."""
-        with patch('agency_code_agent.agency_code_agent.create_agent_context') as mock_create_context:
+        with patch(
+            "agency_code_agent.agency_code_agent.create_agent_context"
+        ) as mock_create_context:
             mock_ctx = Mock()
             mock_ctx.session_id = "test_session"
             mock_create_context.return_value = mock_ctx
@@ -51,7 +50,7 @@ class TestAgencyCodeAgentCreation:
             mock_create_context.assert_called_once()
             assert agent is not None
 
-    @patch('agency_code_agent.agency_code_agent.detect_model_type')
+    @patch("agency_code_agent.agency_code_agent.detect_model_type")
     def test_model_type_detection(self, mock_detect):
         """Test that model type is detected correctly."""
         mock_detect.return_value = (True, False, False)  # is_openai, is_claude, is_other
@@ -61,8 +60,8 @@ class TestAgencyCodeAgentCreation:
         mock_detect.assert_called_once_with("gpt-4")
         assert agent is not None
 
-    @patch('agency_code_agent.agency_code_agent.select_instructions_file')
-    @patch('agency_code_agent.agency_code_agent.render_instructions')
+    @patch("agency_code_agent.agency_code_agent.select_instructions_file")
+    @patch("agency_code_agent.agency_code_agent.render_instructions")
     def test_instructions_handling(self, mock_render, mock_select):
         """Test that instructions are selected and rendered correctly."""
         mock_select.return_value = "/path/to/instructions.md"
@@ -73,48 +72,58 @@ class TestAgencyCodeAgentCreation:
         mock_select.assert_called_once()
         mock_render.assert_called_once_with("/path/to/instructions.md", "gpt-5")
         # Instructions should be set on the agent
-        assert hasattr(agent, 'instructions')
+        assert hasattr(agent, "instructions")
 
     def test_agent_tools_configuration(self):
         """Test that agent has proper tools configured."""
         agent = create_agency_code_agent()
 
         # Check that tools are present
-        assert hasattr(agent, 'tools')
+        assert hasattr(agent, "tools")
         assert agent.tools is not None
         assert len(agent.tools) > 0
 
-        tool_names = [getattr(t, 'name', getattr(t, '__name__', str(t))) for t in agent.tools]
+        tool_names = [getattr(t, "name", getattr(t, "__name__", str(t))) for t in agent.tools]
 
         # Core tools should be present
         expected_core_tools = [
-            "Bash", "Glob", "Grep", "LS", "ExitPlanMode",
-            "Read", "Edit", "MultiEdit", "Write",
-            "NotebookRead", "NotebookEdit", "TodoWrite", "Git"
+            "Bash",
+            "Glob",
+            "Grep",
+            "LS",
+            "ExitPlanMode",
+            "Read",
+            "Edit",
+            "MultiEdit",
+            "Write",
+            "NotebookRead",
+            "NotebookEdit",
+            "TodoWrite",
+            "Git",
         ]
 
         for tool in expected_core_tools:
             assert any(tool in name for name in tool_names), f"Missing core tool: {tool}"
 
-    @patch('agency_code_agent.agency_code_agent.detect_model_type')
+    @patch("agency_code_agent.agency_code_agent.detect_model_type")
     def test_openai_specific_tools(self, mock_detect):
         """Test that OpenAI-specific tools are added for OpenAI models."""
         mock_detect.return_value = (True, False, False)  # is_openai=True
 
         agent = create_agency_code_agent(model="gpt-4")
 
-        tool_names = [getattr(t, 'name', getattr(t, '__name__', str(t))) for t in agent.tools]
+        tool_names = [getattr(t, "name", getattr(t, "__name__", str(t))) for t in agent.tools]
         # Should include WebSearchTool for OpenAI models
         assert any("WebSearchTool" in str(tool) for tool in agent.tools)
 
-    @patch('agency_code_agent.agency_code_agent.detect_model_type')
+    @patch("agency_code_agent.agency_code_agent.detect_model_type")
     def test_claude_specific_tools(self, mock_detect):
         """Test that Claude-specific tools are added for Claude models."""
         mock_detect.return_value = (False, True, False)  # is_claude=True
 
         agent = create_agency_code_agent(model="claude-3")
 
-        tool_names = [getattr(t, 'name', getattr(t, '__name__', str(t))) for t in agent.tools]
+        tool_names = [getattr(t, "name", getattr(t, "__name__", str(t))) for t in agent.tools]
         # Should include ClaudeWebSearch for Claude models
         assert any("ClaudeWebSearch" in name for name in tool_names)
 
@@ -122,21 +131,18 @@ class TestAgencyCodeAgentCreation:
         """Test that agent has proper hooks configured."""
         agent = create_agency_code_agent()
 
-        assert hasattr(agent, 'hooks')
+        assert hasattr(agent, "hooks")
         assert agent.hooks is not None
         # Should have composite hook with reminder and memory hooks
 
     def test_agent_model_settings(self):
         """Test that agent has proper model settings."""
-        agent = create_agency_code_agent(
-            model="gpt-5-mini",
-            reasoning_effort="medium"
-        )
+        agent = create_agency_code_agent(model="gpt-5-mini", reasoning_effort="medium")
 
-        assert hasattr(agent, 'model_settings')
+        assert hasattr(agent, "model_settings")
         # The agent should have model settings configured
 
-    @patch('agency_code_agent.agency_code_agent.get_model_instance')
+    @patch("agency_code_agent.agency_code_agent.get_model_instance")
     def test_model_instance_creation(self, mock_get_model):
         """Test that model instance is created correctly."""
         mock_get_model.return_value = "gpt-5"  # Return string instead of Mock
@@ -150,7 +156,7 @@ class TestAgencyCodeAgentCreation:
         """Test that agent creation logs to memory."""
         ctx = create_agent_context()
 
-        with patch.object(ctx, 'store_memory') as mock_store:
+        with patch.object(ctx, "store_memory") as mock_store:
             agent = create_agency_code_agent(agent_context=ctx)
 
             mock_store.assert_called_once()
@@ -174,11 +180,11 @@ class TestAgencyCodeAgentCreation:
         """Test that tools folder is correctly configured."""
         agent = create_agency_code_agent()
 
-        assert hasattr(agent, 'tools_folder')
+        assert hasattr(agent, "tools_folder")
         # Should point to tools directory within agent directory
         expected_path = os.path.join(
-            os.path.dirname(os.path.abspath(__file__)).replace('/tests', '/agency_code_agent'),
-            "tools"
+            os.path.dirname(os.path.abspath(__file__)).replace("/tests", "/agency_code_agent"),
+            "tools",
         )
         # Just verify it's a string path for now
         assert isinstance(agent.tools_folder, str)
@@ -196,9 +202,17 @@ class TestAgencyCodeAgentDescription:
         # Should mention key responsibilities
         assert "software engineer" in description
         assert "implementation specialist" in description
-        assert "code changes" in description or "writing" in description or "implementation" in description
-        assert "file operations" in description or "tool access" in description  # Editing capability via tools
-        assert "debugging" in description or "testing" in description or "coordination" in description
+        assert (
+            "code changes" in description
+            or "writing" in description
+            or "implementation" in description
+        )
+        assert (
+            "file operations" in description or "tool access" in description
+        )  # Editing capability via tools
+        assert (
+            "debugging" in description or "testing" in description or "coordination" in description
+        )
 
     def test_agent_description_mentions_triggers(self):
         """Test that description mentions when agent should be triggered."""
@@ -244,23 +258,21 @@ class TestAgencyCodeAgentIntegration:
         # This tests that the hook system is properly wired up
         try:
             # Hooks should be callable
-            if hasattr(agent.hooks, '__call__'):
+            if hasattr(agent.hooks, "__call__"):
                 # Don't actually call with real data, just verify it's callable
                 pass
         except Exception as e:
             pytest.fail(f"Agent hooks integration failed: {e}")
 
-    @patch('agency_code_agent.agency_code_agent.create_model_settings')
+    @patch("agency_code_agent.agency_code_agent.create_model_settings")
     def test_model_settings_integration(self, mock_create_settings):
         """Test that model settings are properly integrated."""
         from agents.model_settings import ModelSettings
+
         mock_settings = ModelSettings(temperature=0.1, max_tokens=4000)
         mock_create_settings.return_value = mock_settings
 
-        agent = create_agency_code_agent(
-            model="gpt-5",
-            reasoning_effort="high"
-        )
+        agent = create_agency_code_agent(model="gpt-5", reasoning_effort="high")
 
         mock_create_settings.assert_called_once_with("gpt-5", "high")
         assert agent.model_settings == mock_settings
@@ -270,7 +282,7 @@ class TestAgencyCodeAgentIntegration:
         agent = create_agency_code_agent()
 
         # Test that core development tools are available
-        tool_names = [getattr(t, 'name', getattr(t, '__name__', str(t))) for t in agent.tools]
+        tool_names = [getattr(t, "name", getattr(t, "__name__", str(t))) for t in agent.tools]
 
         # File operation tools
         assert any("Read" in name for name in tool_names)
@@ -360,7 +372,10 @@ class TestAgencyCodeAgentErrorHandling:
         except Exception:
             pass
 
-    @patch('agency_code_agent.agency_code_agent.select_instructions_file', side_effect=FileNotFoundError())
+    @patch(
+        "agency_code_agent.agency_code_agent.select_instructions_file",
+        side_effect=FileNotFoundError(),
+    )
     def test_missing_instructions_handling(self, mock_select):
         """Test handling when instructions file is missing."""
         try:
@@ -370,7 +385,10 @@ class TestAgencyCodeAgentErrorHandling:
             # Or fail appropriately
             pass
 
-    @patch('agency_code_agent.agency_code_agent.create_agent_context', side_effect=Exception("Context creation failed"))
+    @patch(
+        "agency_code_agent.agency_code_agent.create_agent_context",
+        side_effect=Exception("Context creation failed"),
+    )
     def test_context_creation_failure_handling(self, mock_create_context):
         """Test handling when agent context creation fails."""
         ctx = create_agent_context()  # Create a working context
@@ -384,7 +402,7 @@ class TestAgencyCodeAgentErrorHandling:
         ctx = create_agent_context()
 
         # Mock memory to fail
-        with patch.object(ctx, 'store_memory', side_effect=Exception("Memory storage failed")):
+        with patch.object(ctx, "store_memory", side_effect=Exception("Memory storage failed")):
             try:
                 agent = create_agency_code_agent(agent_context=ctx)
                 # Should still create agent even if memory storage fails

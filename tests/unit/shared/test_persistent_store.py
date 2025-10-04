@@ -18,18 +18,19 @@ Constitutional Compliance:
 - TDD: Tests written BEFORE implementation
 """
 
-import pytest
 import tempfile
 import threading
 import time
-from pathlib import Path
 from datetime import datetime
+from pathlib import Path
+
+import pytest
+
 from shared.persistent_store import (
     PersistentStore,
     StoreEntry,
     StoreError,
-    NotFoundError,
-    ValidationError
+    ValidationError,
 )
 
 
@@ -179,14 +180,8 @@ class TestCRUDOperations:
         store = PersistentStore(db_path=":memory:")
 
         complex_data = {
-            "users": [
-                {"id": 1, "name": "Alice"},
-                {"id": 2, "name": "Bob"}
-            ],
-            "metadata": {
-                "version": "1.0",
-                "tags": ["prod", "critical"]
-            }
+            "users": [{"id": 1, "name": "Alice"}, {"id": 2, "name": "Bob"}],
+            "metadata": {"version": "1.0", "tags": ["prod", "critical"]},
         }
 
         store.set("app:state", complex_data)
@@ -204,11 +199,7 @@ class TestCRUDOperations:
         store = PersistentStore(db_path=":memory:")
 
         metadata = {"source": "api", "version": "2.0"}
-        result = store.set(
-            "data:123",
-            {"content": "test"},
-            metadata=metadata
-        )
+        result = store.set("data:123", {"content": "test"}, metadata=metadata)
 
         assert result.is_ok()
 
@@ -560,9 +551,7 @@ class TestEdgeCases:
         """Store handles large data values."""
         store = PersistentStore(db_path=":memory:")
 
-        large_data = {
-            "items": [{"id": i, "data": "x" * 100} for i in range(1000)]
-        }
+        large_data = {"items": [{"id": i, "data": "x" * 100} for i in range(1000)]}
 
         result = store.set("large", large_data)
         assert result.is_ok()
@@ -608,7 +597,7 @@ class TestStoreEntryModel:
             value={"data": "value"},
             created_at=datetime.now(),
             updated_at=datetime.now(),
-            metadata={"source": "test"}
+            metadata={"source": "test"},
         )
 
         assert entry.key == "test"
@@ -618,10 +607,7 @@ class TestStoreEntryModel:
     def test_defaults_empty_metadata(self):
         """StoreEntry defaults to empty dict for metadata."""
         entry = StoreEntry(
-            key="test",
-            value={},
-            created_at=datetime.now(),
-            updated_at=datetime.now()
+            key="test", value={}, created_at=datetime.now(), updated_at=datetime.now()
         )
 
         assert entry.metadata == {}
@@ -633,5 +619,5 @@ class TestStoreEntryModel:
                 key="test",
                 value="not a dict",  # type: ignore
                 created_at=datetime.now(),
-                updated_at=datetime.now()
+                updated_at=datetime.now(),
             )

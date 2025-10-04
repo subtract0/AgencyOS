@@ -15,20 +15,20 @@ Model: qwen2.5-coder:1.5b (local, fast, cost-free)
 """
 
 import asyncio
-from typing import Optional, Dict, Any, List
-from shared.type_definitions import JSONValue
-from datetime import datetime
 import json
-from dataclasses import dataclass, asdict
+from dataclasses import asdict, dataclass
+from datetime import datetime
 
-from shared.pattern_detector import PatternDetector, PatternMatch
 from shared.message_bus import MessageBus
+from shared.pattern_detector import PatternDetector, PatternMatch
 from shared.persistent_store import PersistentStore
+from shared.type_definitions import JSONValue
 
 
 @dataclass
 class Signal:
     """Output signal from WITNESS agent."""
+
     priority: str  # CRITICAL, HIGH, NORMAL
     source: str  # telemetry, personal_context
     pattern: str  # Pattern name
@@ -37,7 +37,7 @@ class Signal:
     summary: str  # Max 120 chars
     timestamp: str  # ISO8601
     source_id: str  # Event ID
-    correlation_id: Optional[str] = None  # Optional correlation
+    correlation_id: str | None = None  # Optional correlation
 
     def to_dict(self) -> JSONValue:
         """Convert to dict for JSON serialization."""
@@ -63,7 +63,7 @@ class WitnessAgent:
         min_confidence: float = 0.7,
         telemetry_queue: str = "telemetry_stream",
         context_queue: str = "personal_context_stream",
-        output_queue: str = "improvement_queue"
+        output_queue: str = "improvement_queue",
     ):
         """
         Initialize WITNESS agent.
@@ -83,7 +83,7 @@ class WitnessAgent:
         self.context_queue = context_queue
         self.output_queue = output_queue
         self._running = False
-        self._tasks: List[asyncio.Task] = []
+        self._tasks: list[asyncio.Task] = []
 
     async def run(self) -> None:
         """
@@ -152,8 +152,7 @@ class WitnessAgent:
 
         # Step 2: CLASSIFY
         pattern_match = self.detector.detect(
-            event_text=event_text,
-            metadata=event.get("metadata", {})
+            event_text=event_text, metadata=event.get("metadata", {})
         )
 
         # Step 3: VALIDATE
@@ -162,9 +161,7 @@ class WitnessAgent:
 
         # Step 4: ENRICH
         signal = self._create_signal(
-            pattern_match=pattern_match,
-            source_type=source_type,
-            event=event
+            pattern_match=pattern_match, source_type=source_type, event=event
         )
 
         # Step 5: SELF-VERIFY
@@ -177,7 +174,7 @@ class WitnessAgent:
             queue_name=self.output_queue,
             message=signal.to_dict(),
             priority=self._get_priority_value(signal.priority),
-            correlation_id=signal.correlation_id
+            correlation_id=signal.correlation_id,
         )
 
         # Step 7: PERSIST
@@ -187,12 +184,12 @@ class WitnessAgent:
             content=signal.summary,
             confidence=signal.confidence,
             metadata=signal.data,
-            evidence_count=1
+            evidence_count=1,
         )
 
         # Step 8: RESET (implicit - no state carried to next event)
 
-    def _extract_text(self, event: JSONValue) -> Optional[str]:
+    def _extract_text(self, event: JSONValue) -> str | None:
         """Extract text content from event."""
         # Try multiple common keys
         for key in ["message", "text", "content", "error", "description"]:
@@ -203,10 +200,7 @@ class WitnessAgent:
         return json.dumps(event)
 
     def _create_signal(
-        self,
-        pattern_match: PatternMatch,
-        source_type: str,
-        event: JSONValue
+        self, pattern_match: PatternMatch, source_type: str, event: JSONValue
     ) -> Signal:
         """Create Signal from pattern match."""
         # Determine priority
@@ -217,7 +211,7 @@ class WitnessAgent:
             "pattern_type": pattern_match.pattern_type,
             "keywords": pattern_match.keywords_matched,
             "base_score": pattern_match.base_score,
-            "keyword_score": pattern_match.keyword_score
+            "keyword_score": pattern_match.keyword_score,
         }
 
         # Add event metadata if present
@@ -236,7 +230,7 @@ class WitnessAgent:
             summary=summary,
             timestamp=datetime.now().isoformat(),
             source_id=event.get("_message_id", event.get("id", "unknown")),
-            correlation_id=event.get("correlation_id")
+            correlation_id=event.get("correlation_id"),
         )
 
     def _determine_priority(self, pattern_match: PatternMatch) -> str:
@@ -286,7 +280,7 @@ class WitnessAgent:
             json.dumps(signal.to_dict())
 
             return True
-        except (AssertionError, TypeError, ValueError) as e:
+        except (AssertionError, TypeError, ValueError):
             # Debug: print what failed
             print(f"Signal validation failed: {signal}")
             return False
@@ -315,5 +309,5 @@ class WitnessAgent:
             "detector": detector_stats,
             "store": store_stats,
             "running": self._running,
-            "monitored_queues": [self.telemetry_queue, self.context_queue]
+            "monitored_queues": [self.telemetry_queue, self.context_queue],
         }

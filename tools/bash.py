@@ -1,44 +1,65 @@
-import os
-import subprocess
-import threading
-import time
 import logging
+import os
 import re
 import shlex
-from typing import Optional, List, Set, Dict, Tuple
-from subprocess import TimeoutExpired
-from pathlib import Path
+import subprocess
+import threading
 from datetime import datetime, timedelta
 
 from agency_swarm.tools import BaseTool
-from pydantic import Field, field_validator, ValidationInfo
-from shared.timeout_wrapper import with_constitutional_timeout, TimeoutConfig
+from pydantic import Field, field_validator
+
+from shared.timeout_wrapper import TimeoutConfig, with_constitutional_timeout
 
 # Resource-based locking for file operations with TTL
 # Allows parallel execution except when accessing the same resources
-_resource_locks: Dict[str, Tuple[threading.RLock, datetime]] = {}
+_resource_locks: dict[str, tuple[threading.RLock, datetime]] = {}
 _locks_mutex = threading.Lock()
 _LOCK_TTL = timedelta(minutes=15)  # Locks expire after 15 minutes
 _MAX_LOCKS = 1000  # Maximum number of locks to prevent unbounded growth
 
 # Security configuration for command validation
 DANGEROUS_COMMANDS = {
-    'rm', 'rmdir', 'dd', 'mkfs', 'fdisk', 'format', 'shutdown', 'reboot', 'halt',
-    'sudo', 'su', 'chmod', 'chown', 'passwd', 'useradd', 'userdel', 'usermod',
-    'mount', 'umount', 'crontab', 'at', 'systemctl', 'service', 'kill', 'killall'
+    "rm",
+    "rmdir",
+    "dd",
+    "mkfs",
+    "fdisk",
+    "format",
+    "shutdown",
+    "reboot",
+    "halt",
+    "sudo",
+    "su",
+    "chmod",
+    "chown",
+    "passwd",
+    "useradd",
+    "userdel",
+    "usermod",
+    "mount",
+    "umount",
+    "crontab",
+    "at",
+    "systemctl",
+    "service",
+    "kill",
+    "killall",
 }
 
 DANGEROUS_PATTERNS = [
-    r'>\s*/dev/',  # Redirecting to device files
-    r'rm\s+-[rf]*[rf].*/',  # rm with recursive or force flags on directories
-    r'curl\s+.*\|\s*sh',  # Downloading and executing
-    r'wget\s+.*\|\s*sh',  # Downloading and executing
-    r'eval\s*\$\(',  # Dynamic evaluation with substitution
-    r'[;&|]+\s*rm\s+-[rf]',  # Chained dangerous rm commands
+    r">\s*/dev/",  # Redirecting to device files
+    r"rm\s+-[rf]*[rf].*/",  # rm with recursive or force flags on directories
+    r"curl\s+.*\|\s*sh",  # Downloading and executing
+    r"wget\s+.*\|\s*sh",  # Downloading and executing
+    r"eval\s*\$\(",  # Dynamic evaluation with substitution
+    r"[;&|]+\s*rm\s+-[rf]",  # Chained dangerous rm commands
 ]
+
 
 class CommandValidationError(Exception):
     """Raised when command validation fails."""
+
     pass
 
 
@@ -89,23 +110,23 @@ def get_resource_lock(resource_path: str) -> threading.RLock:
         return _resource_locks[resource_path][0]
 
 
-def extract_file_paths(command: str) -> Set[str]:
+def extract_file_paths(command: str) -> set[str]:
     """Extract potential file paths from a command for locking."""
     paths = set()
 
     # Common patterns for file operations
     file_ops = [
-        r'(?:cat|less|more|head|tail|nano|vi|vim|emacs)\s+([^\s;&|]+)',
-        r'(?:touch|mkdir|rmdir|rm)\s+([^\s;&|]+)',
-        r'(?:cp|mv)\s+([^\s;&|]+)\s+([^\s;&|]+)',
-        r'(?:echo|printf).*?>\s*([^\s;&|]+)',
-        r'([^\s;&|]+)\s*<\s*([^\s;&|]+)',
+        r"(?:cat|less|more|head|tail|nano|vi|vim|emacs)\s+([^\s;&|]+)",
+        r"(?:touch|mkdir|rmdir|rm)\s+([^\s;&|]+)",
+        r"(?:cp|mv)\s+([^\s;&|]+)\s+([^\s;&|]+)",
+        r"(?:echo|printf).*?>\s*([^\s;&|]+)",
+        r"([^\s;&|]+)\s*<\s*([^\s;&|]+)",
     ]
 
     for pattern in file_ops:
         for match in re.finditer(pattern, command):
             for group in match.groups():
-                if group and not group.startswith('-'):
+                if group and not group.startswith("-"):
                     # Resolve to canonical path using os.path.realpath
                     try:
                         # Expand user home and environment variables
@@ -245,19 +266,19 @@ class Bash(BaseTool):  # type: ignore[misc]
         le=60000,
     )
 
-    description: Optional[str] = Field(
+    description: str | None = Field(
         None,
         description="Clear, concise description of what this command does in 5-10 words. Examples:\nInput: ls\nOutput: Lists files in current directory\n\nInput: git status\nOutput: Shows working tree status\n\nInput: npm install\nOutput: Installs package dependencies\n\nInput: mkdir foo\nOutput: Creates directory 'foo'",
     )
 
     # Internal field for timeout configuration (set dynamically during execution)
-    timeout_config: Optional[TimeoutConfig] = Field(
+    timeout_config: TimeoutConfig | None = Field(
         default=None,
         description="Constitutional timeout configuration (internal use)",
-        exclude=True  # Don't include in tool schema
+        exclude=True,  # Don't include in tool schema
     )
 
-    @field_validator('command')
+    @field_validator("command")
     @classmethod
     def validate_command_pydantic(cls, v: str) -> str:
         """
@@ -294,7 +315,7 @@ class Bash(BaseTool):  # type: ignore[misc]
         main_command = tokens[0]
 
         # Handle full paths and resolve to canonical command
-        if '/' in main_command:
+        if "/" in main_command:
             try:
                 canonical_cmd = os.path.realpath(main_command)
                 main_command = os.path.basename(canonical_cmd)
@@ -310,7 +331,6 @@ class Bash(BaseTool):  # type: ignore[misc]
 
         return v
 
-
     @staticmethod
     def _validate_injection_patterns_static(command: str) -> None:
         """
@@ -321,30 +341,41 @@ class Bash(BaseTool):  # type: ignore[misc]
             ValueError: If dangerous injection patterns are detected
         """
         # Check for malicious backticks
-        backtick_pattern = r'`([^`]*)`'
+        backtick_pattern = r"`([^`]*)`"
         backtick_matches = re.findall(backtick_pattern, command)
         if backtick_matches:
-            dangerous_backticks = [match for match in backtick_matches
-                                 if any(danger in match.lower() for danger in ['rm', 'curl', 'wget', 'sudo', 'chmod'])]
+            dangerous_backticks = [
+                match
+                for match in backtick_matches
+                if any(
+                    danger in match.lower() for danger in ["rm", "curl", "wget", "sudo", "chmod"]
+                )
+            ]
             if dangerous_backticks:
                 raise ValueError(f"Dangerous backtick execution detected: {dangerous_backticks}")
 
         # Check for dangerous command substitution
-        substitution_pattern = r'\$\(([^)]*)\)'
+        substitution_pattern = r"\$\(([^)]*)\)"
         substitution_matches = re.findall(substitution_pattern, command)
         if substitution_matches:
-            safe_substitutions = ['pwd', 'date', 'whoami', 'basename', 'dirname', 'cat', 'echo']
+            safe_substitutions = ["pwd", "date", "whoami", "basename", "dirname", "cat", "echo"]
             dangerous_substitutions = []
             for match in substitution_matches:
                 match_lower = match.lower().strip()
                 is_safe = any(match_lower.startswith(safe) for safe in safe_substitutions)
-                if not is_safe and any(danger in match_lower for danger in ['rm', 'curl', 'wget', 'sudo', 'chmod']):
+                if not is_safe and any(
+                    danger in match_lower for danger in ["rm", "curl", "wget", "sudo", "chmod"]
+                ):
                     dangerous_substitutions.append(match)
             if dangerous_substitutions:
-                raise ValueError(f"Dangerous command substitution detected: {dangerous_substitutions}")
+                raise ValueError(
+                    f"Dangerous command substitution detected: {dangerous_substitutions}"
+                )
 
         # Check for suspicious command chaining
-        suspicious_chaining = re.findall(r'[;&|]+\s*(rm|sudo|chmod|curl.*\||wget.*\|)', command, re.IGNORECASE)
+        suspicious_chaining = re.findall(
+            r"[;&|]+\s*(rm|sudo|chmod|curl.*\||wget.*\|)", command, re.IGNORECASE
+        )
         if suspicious_chaining:
             raise ValueError(f"Suspicious command chaining detected: {suspicious_chaining}")
 
@@ -379,7 +410,7 @@ class Bash(BaseTool):  # type: ignore[misc]
         main_command = tokens[0]
 
         # Handle full paths and resolve to canonical command
-        if '/' in main_command:
+        if "/" in main_command:
             try:
                 # Resolve symlinks and get real command
                 canonical_cmd = os.path.realpath(main_command)
@@ -401,13 +432,22 @@ class Bash(BaseTool):  # type: ignore[misc]
         # Check for command injection attempts
         self._validate_injection_patterns(command)
 
-    def _validate_file_operations(self, tokens: List[str]) -> None:
+    def _validate_file_operations(self, tokens: list[str]) -> None:
         """Validate file operations for safety using canonical paths."""
-        dangerous_paths = {'/etc', '/bin', '/sbin', '/usr/bin', '/usr/sbin', '/boot', '/sys', '/proc'}
+        dangerous_paths = {
+            "/etc",
+            "/bin",
+            "/sbin",
+            "/usr/bin",
+            "/usr/sbin",
+            "/boot",
+            "/sys",
+            "/proc",
+        }
 
         for i, token in enumerate(tokens):
             # Skip non-path tokens
-            if not (token.startswith('/') or token.startswith('~') or token.startswith('.')):
+            if not (token.startswith("/") or token.startswith("~") or token.startswith(".")):
                 continue
 
             # Resolve to canonical path to prevent traversal attacks
@@ -421,13 +461,19 @@ class Bash(BaseTool):  # type: ignore[misc]
                 for danger_path in dangerous_paths:
                     if canonical_path.startswith(danger_path):
                         # Check if this is a write/delete operation
-                        if i > 0 and tokens[i-1] in ['>', '>>', 'tee', 'cp', 'mv', 'rm', 'rmdir']:
-                            raise CommandValidationError(f"Write/delete operation to system directory not allowed: {canonical_path} (from {token})")
+                        if i > 0 and tokens[i - 1] in [">", ">>", "tee", "cp", "mv", "rm", "rmdir"]:
+                            raise CommandValidationError(
+                                f"Write/delete operation to system directory not allowed: {canonical_path} (from {token})"
+                            )
             except (OSError, ValueError):
                 # If we can't resolve the path, be conservative and check the raw path
-                if token.startswith('/') and any(token.startswith(path) for path in dangerous_paths):
-                    if i > 0 and tokens[i-1] in ['>', '>>', 'tee', 'cp', 'mv', 'rm', 'rmdir']:
-                        raise CommandValidationError(f"Write/delete operation to system directory not allowed: {token}")
+                if token.startswith("/") and any(
+                    token.startswith(path) for path in dangerous_paths
+                ):
+                    if i > 0 and tokens[i - 1] in [">", ">>", "tee", "cp", "mv", "rm", "rmdir"]:
+                        raise CommandValidationError(
+                            f"Write/delete operation to system directory not allowed: {token}"
+                        )
 
     def _validate_injection_patterns(self, command: str) -> None:
         """
@@ -463,13 +509,11 @@ class Bash(BaseTool):  # type: ignore[misc]
 
             # Handle Python compatibility: replace 'python' with 'python3' throughout command
             # Use word boundaries to avoid replacing parts of words
-            command = re.sub(r'\bpython\b', 'python3', command)
+            command = re.sub(r"\bpython\b", "python3", command)
 
             # Add non-interactive flags for common commands that might hang
             interactive_commands = {
-                "npx create-next-app": lambda cmd: cmd
-                if "--yes" in cmd
-                else cmd + " --yes",
+                "npx create-next-app": lambda cmd: cmd if "--yes" in cmd else cmd + " --yes",
                 "npm init": lambda cmd: cmd if "-y" in cmd else cmd + " -y",
                 "yarn create": lambda cmd: cmd if "--yes" in cmd else cmd + " --yes",
             }
@@ -499,7 +543,7 @@ class Bash(BaseTool):  # type: ignore[misc]
                     max_retries=3,  # Reduced from 5 to match previous behavior
                     multipliers=[1, 2, 3, 5, 10],
                     completeness_check=True,
-                    pause_between_retries_sec=2.0
+                    pause_between_retries_sec=2.0,
                 )
                 return self._execute_bash_command(command)
             finally:
@@ -509,7 +553,7 @@ class Bash(BaseTool):  # type: ignore[misc]
 
         except Exception as e:
             # Handle timeout wrapper exceptions
-            from shared.timeout_wrapper import TimeoutExhaustedError, IncompleteContextError
+            from shared.timeout_wrapper import IncompleteContextError, TimeoutExhaustedError
 
             if isinstance(e, TimeoutExhaustedError):
                 return f"Exit code: 124\nCommand timed out after constitutional retry attempts ({e.attempts} attempts, {e.total_time_ms}ms total)\n--- OUTPUT ---\n{getattr(e.last_error, 'stdout', '') if hasattr(e, 'last_error') else ''}"
@@ -559,13 +603,11 @@ class Bash(BaseTool):  # type: ignore[misc]
 
             # Truncate if too long
             if len(output) > 30000:
-                output = (
-                    output[-30000:] + "\n (output truncated to last 30000 characters)"
-                )
+                output = output[-30000:] + "\n (output truncated to last 30000 characters)"
 
             return f"Exit code: {result.returncode}\n--- OUTPUT ---\n{output.strip()}"
 
-        except subprocess.TimeoutExpired as e:
+        except subprocess.TimeoutExpired:
             # Re-raise to let decorator handle retry logic
             logging.warning(f"Bash command timed out after {timeout_sec}s")
             raise
@@ -575,7 +617,7 @@ class Bash(BaseTool):  # type: ignore[misc]
                 logging.error(f"Error executing command: {str(e)}")
             raise
 
-    def _build_secure_execution_command(self, command: str) -> List[str]:
+    def _build_secure_execution_command(self, command: str) -> list[str]:
         """Build secure execution command with sandboxing."""
         exec_cmd = ["/bin/bash", "-c", command]
 
@@ -611,17 +653,17 @@ class Bash(BaseTool):  # type: ignore[misc]
         env = os.environ.copy()
 
         # Remove potentially dangerous environment variables
-        dangerous_env_vars = ['LD_PRELOAD', 'LD_LIBRARY_PATH', 'DYLD_INSERT_LIBRARIES']
+        dangerous_env_vars = ["LD_PRELOAD", "LD_LIBRARY_PATH", "DYLD_INSERT_LIBRARIES"]
         for var in dangerous_env_vars:
             env.pop(var, None)
 
         # Preserve original PATH to maintain python/python3 availability
         # but limit to safe directories
-        original_path = env.get('PATH', '')
-        safe_paths = ['/usr/bin', '/bin', '/usr/local/bin', '/opt/homebrew/bin']
+        original_path = env.get("PATH", "")
+        safe_paths = ["/usr/bin", "/bin", "/usr/local/bin", "/opt/homebrew/bin"]
 
         # Add paths from original PATH that are considered safe
-        for path in original_path.split(':'):
+        for path in original_path.split(":"):
             if path:
                 # Resolve symlinks to prevent path manipulation
                 try:
@@ -633,8 +675,8 @@ class Bash(BaseTool):  # type: ignore[misc]
                     # Skip paths that can't be resolved
                     continue
 
-        env['PATH'] = ':'.join(safe_paths)
-        env['SHELL'] = '/bin/bash'
+        env["PATH"] = ":".join(safe_paths)
+        env["SHELL"] = "/bin/bash"
 
         return env
 
@@ -652,11 +694,11 @@ class Bash(BaseTool):  # type: ignore[misc]
 
         # Check for common incomplete output indicators
         incomplete_indicators = [
-            'Terminated',
-            'Killed',
-            '... (truncated)',
-            'Connection timed out',
-            'Resource temporarily unavailable'
+            "Terminated",
+            "Killed",
+            "... (truncated)",
+            "Connection timed out",
+            "Resource temporarily unavailable",
         ]
 
         combined_output = stdout + stderr

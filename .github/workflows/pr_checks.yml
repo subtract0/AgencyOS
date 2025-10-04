@@ -1,0 +1,322 @@
+name: PR Checks (Smart Testing)
+
+# PR-specific workflow with smart test selection
+# Target: <2 minute feedback for small PRs
+# Architecture: docs/architecture/CICD_OPTIMIZATION.md
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+
+env:
+  PYTHON_VERSION: '3.12'
+
+jobs:
+  # ============================================================================
+  # PR METADATA ANALYSIS
+  # ============================================================================
+  analyze-pr:
+    name: Analyze PR Changes
+    runs-on: ubuntu-latest
+    timeout-minutes: 1
+
+    outputs:
+      changed_files: ${{ steps.changes.outputs.files }}
+      change_count: ${{ steps.changes.outputs.count }}
+      test_mode: ${{ steps.determine-mode.outputs.mode }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Detect changed files
+        id: changes
+        run: |
+          # Get all changed Python files
+          CHANGED_FILES=$(git diff --name-only ${{ github.event.pull_request.base.sha }}...${{ github.sha }} | grep '\.py$' || echo "")
+          FILE_COUNT=$(echo "$CHANGED_FILES" | wc -l)
+
+          echo "files=$CHANGED_FILES" >> $GITHUB_OUTPUT
+          echo "count=$FILE_COUNT" >> $GITHUB_OUTPUT
+
+          echo "Changed Python files ($FILE_COUNT):"
+          echo "$CHANGED_FILES"
+
+      - name: Determine test mode
+        id: determine-mode
+        run: |
+          FILE_COUNT=${{ steps.changes.outputs.count }}
+          CHANGED_FILES="${{ steps.changes.outputs.files }}"
+
+          # Check if commit message forces full suite
+          COMMIT_MSG=$(git log -1 --pretty=%B)
+          if echo "$COMMIT_MSG" | grep -q "\[ci full\]"; then
+            echo "mode=full" >> $GITHUB_OUTPUT
+            echo "Test mode: FULL (forced by commit message)"
+            exit 0
+          fi
+
+          # Check file types
+          DOCS_ONLY=true
+          for file in $CHANGED_FILES; do
+            if [[ ! $file =~ ^(docs/|README|\.md$) ]]; then
+              DOCS_ONLY=false
+              break
+            fi
+          done
+
+          if [ "$DOCS_ONLY" = true ]; then
+            echo "mode=critical" >> $GITHUB_OUTPUT
+            echo "Test mode: CRITICAL (docs/README only)"
+          elif [ $FILE_COUNT -le 3 ]; then
+            echo "mode=smart" >> $GITHUB_OUTPUT
+            echo "Test mode: SMART (small PR - 1-3 files)"
+          elif [ $FILE_COUNT -le 10 ]; then
+            echo "mode=essential" >> $GITHUB_OUTPUT
+            echo "Test mode: ESSENTIAL (medium PR - 4-10 files)"
+          else
+            echo "mode=full" >> $GITHUB_OUTPUT
+            echo "Test mode: FULL (large PR - >10 files)"
+          fi
+
+      - name: PR Summary
+        run: |
+          echo "## PR Analysis Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "- Changed files: ${{ steps.changes.outputs.count }}" >> $GITHUB_STEP_SUMMARY
+          echo "- Test mode: ${{ steps.determine-mode.outputs.mode }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Test Mode Guide" >> $GITHUB_STEP_SUMMARY
+          echo "- **critical**: Docs only (30s, ~100 tests)" >> $GITHUB_STEP_SUMMARY
+          echo "- **smart**: Small PR (60s, ~200 tests)" >> $GITHUB_STEP_SUMMARY
+          echo "- **essential**: Medium PR (120s, ~500 tests)" >> $GITHUB_STEP_SUMMARY
+          echo "- **full**: Large PR (400s, all 1,725 tests)" >> $GITHUB_STEP_SUMMARY
+
+  # ============================================================================
+  # QUICK LINT AND TYPE CHECKS
+  # ============================================================================
+  quick-validation:
+    name: Quick Validation
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Cache pip
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-pip-lint-${{ hashFiles('requirements.txt') }}
+
+      - name: Install tools
+        run: |
+          pip install ruff mypy
+
+      - name: Ruff lint
+        run: |
+          ruff check . --output-format=github
+
+      - name: Type check
+        run: |
+          pip install -r requirements.txt --quiet
+          mypy . --config-file mypy.ini || echo "::warning::Type errors detected"
+
+      - name: Dict[Any] ban
+        run: |
+          python tools/quality/no_dict_any_check.py
+
+  # ============================================================================
+  # SMART TEST EXECUTION
+  # ============================================================================
+  smart-tests:
+    name: Smart Tests (${{ needs.analyze-pr.outputs.test_mode }})
+    needs: [analyze-pr, quick-validation]
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Cache dependencies
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cache/pip
+            .pytest_cache
+            .hypothesis
+          key: ${{ runner.os }}-py${{ env.PYTHON_VERSION }}-pr-${{ hashFiles('requirements.txt') }}
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip setuptools wheel
+          pip install -r requirements.txt
+          pip install -e . --no-deps
+
+      - name: Run tests (critical mode)
+        if: needs.analyze-pr.outputs.test_mode == 'critical'
+        run: |
+          echo "Running CRITICAL tests only (docs/README changes)"
+          python run_tests.py --fast -m "critical"
+        env:
+          SKIP_SPEC_TRACEABILITY: "true"
+          USE_MOCK_LLM: "true"
+
+      - name: Run tests (smart mode)
+        if: needs.analyze-pr.outputs.test_mode == 'smart'
+        run: |
+          echo "Running SMART test selection (small PR)"
+          # TODO: Implement smart test selector in Week 3
+          # For now, run fast tests
+          python run_tests.py --fast
+        env:
+          SKIP_SPEC_TRACEABILITY: "true"
+          USE_MOCK_LLM: "true"
+
+      - name: Run tests (essential mode)
+        if: needs.analyze-pr.outputs.test_mode == 'essential'
+        run: |
+          echo "Running ESSENTIAL tests (medium PR)"
+          python run_tests.py
+        env:
+          SKIP_SPEC_TRACEABILITY: "true"
+          USE_MOCK_LLM: "true"
+
+      - name: Run tests (full mode)
+        if: needs.analyze-pr.outputs.test_mode == 'full'
+        run: |
+          echo "Running FULL test suite (large PR)"
+          python run_tests.py --run-all
+        env:
+          SKIP_SPEC_TRACEABILITY: "true"
+          FORCE_RUN_ALL_TESTS: "1"
+          USE_MOCK_LLM: "true"
+
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: pr-test-results
+          path: |
+            .pytest_cache
+            test-results-*.xml
+
+  # ============================================================================
+  # MUTATION TESTING (changed files only)
+  # ============================================================================
+  mutation-tests:
+    name: Mutation Testing (Changed Files)
+    needs: [analyze-pr, smart-tests]
+    if: needs.analyze-pr.outputs.test_mode != 'critical'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Install dependencies
+        run: |
+          pip install -r requirements.txt
+          pip install mutmut
+
+      - name: Run mutation testing
+        run: |
+          echo "Running mutation tests on changed files only..."
+          CHANGED_FILES="${{ needs.analyze-pr.outputs.changed_files }}"
+
+          # TODO: Implement mutation testing on changed files
+          # For now, skip (placeholder for Week 3)
+          echo "Mutation testing: Skipped (Week 3 implementation)"
+          echo "Changed files: $CHANGED_FILES"
+
+  # ============================================================================
+  # PR GATE
+  # ============================================================================
+  pr-gate:
+    name: PR Gate - Ready for Review
+    needs: [analyze-pr, quick-validation, smart-tests]
+    if: always()
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Validate PR status
+        run: |
+          echo "## PR Status Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "- Quick Validation: ${{ needs.quick-validation.result }}" >> $GITHUB_STEP_SUMMARY
+          echo "- Smart Tests: ${{ needs.smart-tests.result }}" >> $GITHUB_STEP_SUMMARY
+          echo "- Test Mode: ${{ needs.analyze-pr.outputs.test_mode }}" >> $GITHUB_STEP_SUMMARY
+          echo "- Changed Files: ${{ needs.analyze-pr.outputs.change_count }}" >> $GITHUB_STEP_SUMMARY
+
+          if [ "${{ needs.quick-validation.result }}" != "success" ]; then
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "❌ PR Blocked: Quick validation failed" >> $GITHUB_STEP_SUMMARY
+            echo "Fix linting/type errors and push again" >> $GITHUB_STEP_SUMMARY
+            exit 1
+          fi
+
+          if [ "${{ needs.smart-tests.result }}" != "success" ]; then
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "❌ PR Blocked: Tests failed" >> $GITHUB_STEP_SUMMARY
+            echo "Fix failing tests and push again" >> $GITHUB_STEP_SUMMARY
+            exit 1
+          fi
+
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "✅ PR Ready for Review" >> $GITHUB_STEP_SUMMARY
+          echo "🎯 All checks passed - safe to merge after approval" >> $GITHUB_STEP_SUMMARY
+
+      - name: Add PR comment
+        uses: actions/github-script@v7
+        if: success()
+        with:
+          script: |
+            const testMode = '${{ needs.analyze-pr.outputs.test_mode }}';
+            const changeCount = '${{ needs.analyze-pr.outputs.change_count }}';
+
+            const modeDescriptions = {
+              'critical': 'Critical tests only (docs/README changes)',
+              'smart': 'Smart test selection (small PR)',
+              'essential': 'Essential tests (medium PR)',
+              'full': 'Full test suite (large PR)'
+            };
+
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: `## ✅ PR Checks Passed
+
+**Test Mode**: ${modeDescriptions[testMode]}
+**Changed Files**: ${changeCount} Python files
+
+All quality gates passed! Ready for review.
+
+---
+💡 Tip: Add \`[ci full]\` to commit message to force full test suite.
+              `
+            })

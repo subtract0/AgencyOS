@@ -4,6 +4,7 @@ Tests that tools can be invoked directly via the agent
 """
 
 import os
+
 import pytest
 from agency_swarm import Agency
 from agency_swarm.tools import SendMessageHandoff
@@ -13,8 +14,7 @@ from planner_agent.planner_agent import create_planner_agent
 
 # CI skip marker for tests requiring OpenAI API
 ci_skip = pytest.mark.skipif(
-    os.environ.get("CI") == "true",
-    reason="Requires OpenAI API access not available in CI"
+    os.environ.get("CI") == "true", reason="Requires OpenAI API access not available in CI"
 )
 
 

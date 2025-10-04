@@ -5,15 +5,17 @@ Provides unified memory access with both tag-based and semantic search capabilit
 Automatically populates VectorStore during normal memory operations.
 """
 
+import json
 import logging
 from datetime import datetime
-from typing import Dict, List, Optional, cast
+from typing import cast
+
+from shared.models.memory import MemorySearchResult
 from shared.type_definitions.json import JSONValue
+
 from .memory import MemoryStore
-from shared.models.memory import MemorySearchResult, MemoryRecord, MemoryPriority, MemoryMetadata
-from .vector_store import VectorStore, SimilarityResult
-from .type_conversion_utils import MemoryConverter, create_memory_converter
-import json
+from .type_conversion_utils import create_memory_converter
+from .vector_store import VectorStore
 
 logger = logging.getLogger(__name__)
 
@@ -26,7 +28,11 @@ class EnhancedMemoryStore(MemoryStore):
     ensuring that all stored memories are available for both tag-based and semantic search.
     """
 
-    def __init__(self, vector_store: Optional[VectorStore] = None, embedding_provider: str = "sentence-transformers"):
+    def __init__(
+        self,
+        vector_store: VectorStore | None = None,
+        embedding_provider: str = "sentence-transformers",
+    ):
         """
         Initialize enhanced memory store.
 
@@ -34,14 +40,16 @@ class EnhancedMemoryStore(MemoryStore):
             vector_store: Optional VectorStore instance
             embedding_provider: Embedding provider for semantic search
         """
-        self._memories: Dict[str, Dict[str, JSONValue]] = {}
+        self._memories: dict[str, dict[str, JSONValue]] = {}
         self.vector_store = vector_store or VectorStore(embedding_provider=embedding_provider)
-        self._learning_triggers: List[str] = []
+        self._learning_triggers: list[str] = []
         self.memory_converter = create_memory_converter()
 
-        logger.info(f"EnhancedMemoryStore initialized with embedding provider: {embedding_provider}")
+        logger.info(
+            f"EnhancedMemoryStore initialized with embedding provider: {embedding_provider}"
+        )
 
-    def store(self, key: str, content: JSONValue, tags: List[str]) -> None:
+    def store(self, key: str, content: JSONValue, tags: list[str]) -> None:
         """
         Store content with automatic VectorStore integration.
 
@@ -71,7 +79,13 @@ class EnhancedMemoryStore(MemoryStore):
         # Check for learning trigger conditions
         self._check_learning_triggers(memory_record)
 
-    def store_memory(self, key: str, value: JSONValue, tags: List[str], metadata: Optional[Dict[str, JSONValue]] = None) -> None:
+    def store_memory(
+        self,
+        key: str,
+        value: JSONValue,
+        tags: list[str],
+        metadata: dict[str, JSONValue] | None = None,
+    ) -> None:
         """
         Store memory with unified interface (facade compatibility).
 
@@ -83,7 +97,7 @@ class EnhancedMemoryStore(MemoryStore):
         """
         self.store(key, value, tags)
 
-    def get_memory(self, key: str) -> Optional[JSONValue]:
+    def get_memory(self, key: str) -> JSONValue | None:
         """
         Get memory by key (facade compatibility).
 
@@ -107,7 +121,9 @@ class EnhancedMemoryStore(MemoryStore):
         """
         return len(self._memories)
 
-    def search_memories(self, query: str, tags: Optional[List[str]] = None, limit: int = 10) -> List[Dict[str, JSONValue]]:
+    def search_memories(
+        self, query: str, tags: list[str] | None = None, limit: int = 10
+    ) -> list[dict[str, JSONValue]]:
         """
         Search memories using text query and optional tags (facade compatibility).
 
@@ -129,7 +145,7 @@ class EnhancedMemoryStore(MemoryStore):
 
         return memories
 
-    def search(self, tags: List[str]) -> MemorySearchResult:
+    def search(self, tags: list[str]) -> MemorySearchResult:
         """
         Return memories that have any of the specified tags.
 
@@ -144,7 +160,7 @@ class EnhancedMemoryStore(MemoryStore):
                 records=[],
                 total_count=0,
                 search_query={"tags": cast(JSONValue, [])},
-                execution_time_ms=0
+                execution_time_ms=0,
             )
 
         matches = []
@@ -157,9 +173,10 @@ class EnhancedMemoryStore(MemoryStore):
                 matches.append(memory)
 
         # Sort by timestamp (newest first) with type guard
-        def sort_key(x: Dict[str, JSONValue]) -> str:
+        def sort_key(x: dict[str, JSONValue]) -> str:
             timestamp = x.get("timestamp")
             return self.memory_converter.safe_string_conversion(timestamp)
+
         matches.sort(key=sort_key, reverse=True)
         logger.debug(f"Found {len(matches)} memories matching tags: {tags}")
 
@@ -170,17 +187,21 @@ class EnhancedMemoryStore(MemoryStore):
             if record:
                 memory_records.append(record)
             else:
-                logger.warning(f"Failed to convert memory to MemoryRecord: {match.get('key', 'unknown')}")
+                logger.warning(
+                    f"Failed to convert memory to MemoryRecord: {match.get('key', 'unknown')}"
+                )
 
-        search_query: Dict[str, JSONValue] = {"tags": cast(JSONValue, tags)}
+        search_query: dict[str, JSONValue] = {"tags": cast(JSONValue, tags)}
         return MemorySearchResult(
             records=memory_records,
             total_count=len(memory_records),
             search_query=search_query,
-            execution_time_ms=0
+            execution_time_ms=0,
         )
 
-    def semantic_search(self, query: str, top_k: int = 10, min_similarity: float = 0.5) -> List[dict[str, JSONValue]]:
+    def semantic_search(
+        self, query: str, top_k: int = 10, min_similarity: float = 0.5
+    ) -> list[dict[str, JSONValue]]:
         """
         Perform semantic search using VectorStore.
 
@@ -207,8 +228,8 @@ class EnhancedMemoryStore(MemoryStore):
             for result in results:
                 if result.similarity_score >= min_similarity:
                     memory_with_score = result.memory.copy()
-                    memory_with_score['relevance_score'] = result.similarity_score
-                    memory_with_score['search_type'] = result.search_type
+                    memory_with_score["relevance_score"] = result.similarity_score
+                    memory_with_score["search_type"] = result.search_type
                     filtered_results.append(memory_with_score)
 
             logger.debug(f"Semantic search for '{query}' returned {len(filtered_results)} results")
@@ -218,7 +239,7 @@ class EnhancedMemoryStore(MemoryStore):
             logger.error(f"Semantic search failed: {e}")
             return []
 
-    def _filter_memories_by_tags(self, tags: List[str]) -> List[Dict[str, JSONValue]]:
+    def _filter_memories_by_tags(self, tags: list[str]) -> list[dict[str, JSONValue]]:
         """
         Filter memories by tags and return as list of dictionaries.
 
@@ -237,8 +258,9 @@ class EnhancedMemoryStore(MemoryStore):
 
         return filtered_memories
 
-    def _perform_semantic_search_on_memories(self, query: str, memories: List[Dict[str, JSONValue]],
-                                           top_k: int) -> List[Dict[str, JSONValue]]:
+    def _perform_semantic_search_on_memories(
+        self, query: str, memories: list[dict[str, JSONValue]], top_k: int
+    ) -> list[dict[str, JSONValue]]:
         """
         Perform semantic search on a list of memories.
 
@@ -265,8 +287,9 @@ class EnhancedMemoryStore(MemoryStore):
             logger.error(f"Semantic search failed: {e}")
             return []
 
-    def _format_tag_only_results(self, memories: List[Dict[str, JSONValue]],
-                                top_k: int) -> List[Dict[str, JSONValue]]:
+    def _format_tag_only_results(
+        self, memories: list[dict[str, JSONValue]], top_k: int
+    ) -> list[dict[str, JSONValue]]:
         """
         Format tag-based search results.
 
@@ -279,7 +302,7 @@ class EnhancedMemoryStore(MemoryStore):
         """
         return memories[:top_k]
 
-    def _format_all_memories_results(self, top_k: int) -> List[Dict[str, JSONValue]]:
+    def _format_all_memories_results(self, top_k: int) -> list[dict[str, JSONValue]]:
         """
         Format all memories results.
 
@@ -298,7 +321,9 @@ class EnhancedMemoryStore(MemoryStore):
 
         return result_list
 
-    def combined_search(self, tags: List[str] = None, query: str = None, top_k: int = 10) -> List[dict[str, JSONValue]]:
+    def combined_search(
+        self, tags: list[str] = None, query: str = None, top_k: int = 10
+    ) -> list[dict[str, JSONValue]]:
         """
         Perform combined tag-based and semantic search.
 
@@ -333,7 +358,7 @@ class EnhancedMemoryStore(MemoryStore):
         all_memories = list(self._memories.values())
 
         # Sort by timestamp with type guard
-        def sort_key(x: Dict[str, JSONValue]) -> str:
+        def sort_key(x: dict[str, JSONValue]) -> str:
             timestamp = x.get("timestamp")
             return self.memory_converter.safe_string_conversion(timestamp)
 
@@ -347,16 +372,18 @@ class EnhancedMemoryStore(MemoryStore):
             if record:
                 memory_records.append(record)
             else:
-                logger.warning(f"Failed to convert memory to MemoryRecord: {memory.get('key', 'unknown')}")
+                logger.warning(
+                    f"Failed to convert memory to MemoryRecord: {memory.get('key', 'unknown')}"
+                )
 
         return MemorySearchResult(
             records=memory_records,
             total_count=len(memory_records),
             search_query={},
-            execution_time_ms=0
+            execution_time_ms=0,
         )
 
-    def get_learning_patterns(self, min_confidence: float = 0.7) -> List[Dict[str, JSONValue]]:
+    def get_learning_patterns(self, min_confidence: float = 0.7) -> list[dict[str, JSONValue]]:
         """
         Extract learning patterns from stored memories.
 
@@ -370,33 +397,33 @@ class EnhancedMemoryStore(MemoryStore):
             all_result = self.get_all()
             all_memories = []
             for record in all_result.records:
-                memory_dict: Dict[str, JSONValue] = {
+                memory_dict: dict[str, JSONValue] = {
                     "key": record.key,
                     "content": record.content,
                     "tags": cast(JSONValue, record.tags),
                     "timestamp": record.timestamp.isoformat(),
                 }
                 all_memories.append(memory_dict)
-            patterns: List[Dict[str, JSONValue]] = []
+            patterns: list[dict[str, JSONValue]] = []
 
             # Pattern 1: Successful tool usage patterns
             tool_patterns = self._extract_tool_patterns(all_memories)
             for p in tool_patterns:
-                conf = p.get('confidence', 0)
+                conf = p.get("confidence", 0)
                 if isinstance(conf, (int, float)) and conf >= min_confidence:
                     patterns.append(p)
 
             # Pattern 2: Error resolution patterns
             error_patterns = self._extract_error_patterns(all_memories)
             for p in error_patterns:
-                conf = p.get('confidence', 0)
+                conf = p.get("confidence", 0)
                 if isinstance(conf, (int, float)) and conf >= min_confidence:
                     patterns.append(p)
 
             # Pattern 3: Agent interaction patterns
             interaction_patterns = self._extract_interaction_patterns(all_memories)
             for p in interaction_patterns:
-                conf = p.get('confidence', 0)
+                conf = p.get("confidence", 0)
                 if isinstance(conf, (int, float)) and conf >= min_confidence:
                     patterns.append(p)
 
@@ -407,28 +434,30 @@ class EnhancedMemoryStore(MemoryStore):
             logger.error(f"Error extracting learning patterns: {e}")
             return []
 
-    def _extract_tool_patterns(self, memories: List[Dict[str, JSONValue]]) -> List[Dict[str, JSONValue]]:
+    def _extract_tool_patterns(
+        self, memories: list[dict[str, JSONValue]]
+    ) -> list[dict[str, JSONValue]]:
         """Extract tool usage patterns from memories."""
-        patterns: List[Dict[str, JSONValue]] = []
+        patterns: list[dict[str, JSONValue]] = []
 
         # Find tool-related memories
         tool_memories = []
         for m in memories:
-            tags = m.get('tags', [])
+            tags = m.get("tags", [])
             tags_list = self.memory_converter.extract_tags_list(tags)
-            if any('tool' in tag for tag in tags_list):
+            if any("tool" in tag for tag in tags_list):
                 tool_memories.append(m)
 
         if len(tool_memories) < 3:
             return patterns
 
         # Group by tool type
-        tool_groups: Dict[str, List[Dict[str, JSONValue]]] = {}
+        tool_groups: dict[str, list[dict[str, JSONValue]]] = {}
         for memory in tool_memories:
-            content = str(memory.get('content', ''))
+            content = str(memory.get("content", ""))
 
             # Extract tool names (simplified pattern matching)
-            for tool in ['Read', 'Write', 'Edit', 'Grep', 'Bash', 'TodoWrite']:
+            for tool in ["Read", "Write", "Edit", "Grep", "Bash", "TodoWrite"]:
                 if tool in content:
                     if tool not in tool_groups:
                         tool_groups[tool] = []
@@ -442,51 +471,55 @@ class EnhancedMemoryStore(MemoryStore):
                 success_rate = len(successful) / len(tool_memories)
 
                 if success_rate > 0.7:
-                    patterns.append({
-                        'pattern_id': f'tool_success_{tool.lower()}',
-                        'type': 'tool_pattern',
-                        'tool': tool,
-                        'usage_count': len(tool_memories),
-                        'success_rate': success_rate,
-                        'confidence': min(0.9, len(tool_memories) / 10),
-                        'description': f'Tool {tool} shows high success rate ({success_rate:.1%})',
-                        'actionable_insight': f'Prioritize {tool} for similar tasks',
-                        'evidence': cast(JSONValue, tool_memories[:2])
-                    })
+                    patterns.append(
+                        {
+                            "pattern_id": f"tool_success_{tool.lower()}",
+                            "type": "tool_pattern",
+                            "tool": tool,
+                            "usage_count": len(tool_memories),
+                            "success_rate": success_rate,
+                            "confidence": min(0.9, len(tool_memories) / 10),
+                            "description": f"Tool {tool} shows high success rate ({success_rate:.1%})",
+                            "actionable_insight": f"Prioritize {tool} for similar tasks",
+                            "evidence": cast(JSONValue, tool_memories[:2]),
+                        }
+                    )
 
         return patterns
 
-    def _extract_error_patterns(self, memories: List[Dict[str, JSONValue]]) -> List[Dict[str, JSONValue]]:
+    def _extract_error_patterns(
+        self, memories: list[dict[str, JSONValue]]
+    ) -> list[dict[str, JSONValue]]:
         """Extract error resolution patterns from memories."""
-        patterns: List[Dict[str, JSONValue]] = []
+        patterns: list[dict[str, JSONValue]] = []
 
         # Find error-related memories
         error_memories = []
         for m in memories:
-            tags = m.get('tags', [])
+            tags = m.get("tags", [])
             tags_list = self.memory_converter.extract_tags_list(tags)
-            if any('error' in tag for tag in tags_list):
+            if any("error" in tag for tag in tags_list):
                 error_memories.append(m)
 
         if len(error_memories) < 2:
             return patterns
 
         # Group by error types (simplified)
-        error_groups: Dict[str, List[Dict[str, JSONValue]]] = {}
+        error_groups: dict[str, list[dict[str, JSONValue]]] = {}
         for memory in error_memories:
-            content = str(memory.get('content', '')).lower()
+            content = str(memory.get("content", "")).lower()
 
             # Simple error type detection
-            if 'permission' in content:
-                error_type = 'permission_error'
-            elif 'not found' in content or 'missing' in content:
-                error_type = 'file_not_found'
-            elif 'timeout' in content:
-                error_type = 'timeout_error'
-            elif 'connection' in content:
-                error_type = 'connection_error'
+            if "permission" in content:
+                error_type = "permission_error"
+            elif "not found" in content or "missing" in content:
+                error_type = "file_not_found"
+            elif "timeout" in content:
+                error_type = "timeout_error"
+            elif "connection" in content:
+                error_type = "connection_error"
             else:
-                error_type = 'general_error'
+                error_type = "general_error"
 
             if error_type not in error_groups:
                 error_groups[error_type] = []
@@ -499,30 +532,36 @@ class EnhancedMemoryStore(MemoryStore):
                 resolved = [m for m in error_memories if self._is_resolved_error(m)]
                 resolution_rate = len(resolved) / len(error_memories)
 
-                patterns.append({
-                    'pattern_id': f'error_resolution_{error_type}',
-                    'type': 'error_resolution',
-                    'error_type': error_type,
-                    'occurrence_count': len(error_memories),
-                    'resolution_rate': resolution_rate,
-                    'confidence': min(0.8, len(error_memories) / 5),
-                    'description': f'Error type {error_type} with {resolution_rate:.1%} resolution rate',
-                    'actionable_insight': f'Apply known resolution patterns for {error_type}',
-                    'evidence': cast(JSONValue, resolved[:2] if resolved else error_memories[:2])
-                })
+                patterns.append(
+                    {
+                        "pattern_id": f"error_resolution_{error_type}",
+                        "type": "error_resolution",
+                        "error_type": error_type,
+                        "occurrence_count": len(error_memories),
+                        "resolution_rate": resolution_rate,
+                        "confidence": min(0.8, len(error_memories) / 5),
+                        "description": f"Error type {error_type} with {resolution_rate:.1%} resolution rate",
+                        "actionable_insight": f"Apply known resolution patterns for {error_type}",
+                        "evidence": cast(
+                            JSONValue, resolved[:2] if resolved else error_memories[:2]
+                        ),
+                    }
+                )
 
         return patterns
 
-    def _extract_interaction_patterns(self, memories: List[Dict[str, JSONValue]]) -> List[Dict[str, JSONValue]]:
+    def _extract_interaction_patterns(
+        self, memories: list[dict[str, JSONValue]]
+    ) -> list[dict[str, JSONValue]]:
         """Extract agent interaction patterns from memories."""
-        patterns: List[Dict[str, JSONValue]] = []
+        patterns: list[dict[str, JSONValue]] = []
 
         # Find handoff-related memories
         handoff_memories = []
         for m in memories:
-            tags = m.get('tags', [])
+            tags = m.get("tags", [])
             tags_list = self.memory_converter.extract_tags_list(tags)
-            if any(keyword in tags_list for keyword in ['handoff', 'agent', 'communication']):
+            if any(keyword in tags_list for keyword in ["handoff", "agent", "communication"]):
                 handoff_memories.append(m)
 
         if len(handoff_memories) < 3:
@@ -533,67 +572,69 @@ class EnhancedMemoryStore(MemoryStore):
         success_rate = len(successful_handoffs) / len(handoff_memories)
 
         if success_rate > 0.6:
-            patterns.append({
-                'pattern_id': 'agent_interaction_success',
-                'type': 'interaction_pattern',
-                'interaction_type': 'handoff',
-                'total_interactions': len(handoff_memories),
-                'success_rate': success_rate,
-                'confidence': min(0.8, len(handoff_memories) / 8),
-                'description': f'Agent interactions have {success_rate:.1%} success rate',
-                'actionable_insight': 'Current handoff patterns are effective, maintain approach',
-                'evidence': cast(JSONValue, successful_handoffs[:2])
-            })
+            patterns.append(
+                {
+                    "pattern_id": "agent_interaction_success",
+                    "type": "interaction_pattern",
+                    "interaction_type": "handoff",
+                    "total_interactions": len(handoff_memories),
+                    "success_rate": success_rate,
+                    "confidence": min(0.8, len(handoff_memories) / 8),
+                    "description": f"Agent interactions have {success_rate:.1%} success rate",
+                    "actionable_insight": "Current handoff patterns are effective, maintain approach",
+                    "evidence": cast(JSONValue, successful_handoffs[:2]),
+                }
+            )
 
         return patterns
 
-    def _is_successful_memory(self, memory: Dict[str, JSONValue]) -> bool:
+    def _is_successful_memory(self, memory: dict[str, JSONValue]) -> bool:
         """Check if a memory indicates success."""
-        content = str(memory.get('content', '')).lower()
-        success_indicators = ['success', 'completed', 'resolved', 'fixed', 'working', 'done']
+        content = str(memory.get("content", "")).lower()
+        success_indicators = ["success", "completed", "resolved", "fixed", "working", "done"]
         return any(indicator in content for indicator in success_indicators)
 
-    def _is_resolved_error(self, memory: Dict[str, JSONValue]) -> bool:
+    def _is_resolved_error(self, memory: dict[str, JSONValue]) -> bool:
         """Check if an error memory indicates resolution."""
-        content = str(memory.get('content', '')).lower()
-        resolution_indicators = ['resolved', 'fixed', 'solved', 'recovered', 'retry succeeded']
+        content = str(memory.get("content", "")).lower()
+        resolution_indicators = ["resolved", "fixed", "solved", "recovered", "retry succeeded"]
         return any(indicator in content for indicator in resolution_indicators)
 
-    def _check_learning_triggers(self, memory_record: Dict[str, JSONValue]) -> None:
+    def _check_learning_triggers(self, memory_record: dict[str, JSONValue]) -> None:
         """Check if memory triggers learning consolidation."""
-        tags = memory_record.get('tags', [])
-        content = str(memory_record.get('content', '')).lower()
+        tags = memory_record.get("tags", [])
+        content = str(memory_record.get("content", "")).lower()
 
         # Trigger learning for certain types of memories
         tags_list = self.memory_converter.extract_tags_list(tags)
         learning_trigger_conditions = [
-            'success' in tags_list and 'task_completion' in tags_list,
-            'error' in tags_list and 'resolved' in content,
-            'optimization' in tags_list,
-            'pattern' in tags_list,
-            len(self._memories) % 50 == 0  # Every 50 memories
+            "success" in tags_list and "task_completion" in tags_list,
+            "error" in tags_list and "resolved" in content,
+            "optimization" in tags_list,
+            "pattern" in tags_list,
+            len(self._memories) % 50 == 0,  # Every 50 memories
         ]
 
         if any(learning_trigger_conditions):
             trigger_dict = {
-                'trigger_time': str(memory_record.get('timestamp', '')),
-                'trigger_key': str(memory_record.get('key', '')),
-                'trigger_reason': 'automatic_learning_consolidation',
-                'memory_count': len(self._memories)
+                "trigger_time": str(memory_record.get("timestamp", "")),
+                "trigger_key": str(memory_record.get("key", "")),
+                "trigger_reason": "automatic_learning_consolidation",
+                "memory_count": len(self._memories),
             }
             trigger_str = json.dumps(trigger_dict)  # Convert to string for the List[str] type
             self._learning_triggers.append(trigger_str)
 
             logger.info(f"Learning trigger activated for memory: {memory_record['key']}")
 
-    def get_learning_triggers(self) -> List[Dict[str, JSONValue]]:
+    def get_learning_triggers(self) -> list[dict[str, JSONValue]]:
         """Get pending learning triggers."""
         # Convert string triggers back to dicts
         result = []
         for trigger_str in self._learning_triggers:
             try:
                 trigger_dict = json.loads(trigger_str)
-                result.append(cast(Dict[str, JSONValue], trigger_dict))
+                result.append(cast(dict[str, JSONValue], trigger_dict))
             except (json.JSONDecodeError, TypeError):
                 pass
         return result
@@ -602,58 +643,58 @@ class EnhancedMemoryStore(MemoryStore):
         """Clear processed learning triggers."""
         self._learning_triggers.clear()
 
-    def get_vector_store_stats(self) -> Dict[str, JSONValue]:
+    def get_vector_store_stats(self) -> dict[str, JSONValue]:
         """Get VectorStore statistics."""
         try:
             return self.vector_store.get_stats()
         except Exception as e:
             logger.error(f"Error getting VectorStore stats: {e}")
-            return {'error': str(e)}
+            return {"error": str(e)}
 
-    def optimize_vector_store(self) -> Dict[str, JSONValue]:
+    def optimize_vector_store(self) -> dict[str, JSONValue]:
         """Optimize VectorStore by ensuring all memories have embeddings."""
         try:
-            optimization_stats: Dict[str, JSONValue] = {
-                'memories_processed': 0,
-                'embeddings_generated': 0,
-                'errors': 0
+            optimization_stats: dict[str, JSONValue] = {
+                "memories_processed": 0,
+                "embeddings_generated": 0,
+                "errors": 0,
             }
 
             for key, memory in self._memories.items():
                 # Type-safe increment
-                memories_processed = optimization_stats['memories_processed']
+                memories_processed = optimization_stats["memories_processed"]
                 if isinstance(memories_processed, int):
-                    optimization_stats['memories_processed'] = memories_processed + 1
+                    optimization_stats["memories_processed"] = memories_processed + 1
 
                 try:
                     # Check if memory exists in vector store
                     if key not in self.vector_store._embeddings:
                         self.vector_store.add_memory(key, memory)
-                        embeddings_generated = optimization_stats['embeddings_generated']
+                        embeddings_generated = optimization_stats["embeddings_generated"]
                         if isinstance(embeddings_generated, int):
-                            optimization_stats['embeddings_generated'] = embeddings_generated + 1
+                            optimization_stats["embeddings_generated"] = embeddings_generated + 1
 
                 except Exception as e:
-                    errors_count = optimization_stats['errors']
+                    errors_count = optimization_stats["errors"]
                     if isinstance(errors_count, int):
-                        optimization_stats['errors'] = errors_count + 1
+                        optimization_stats["errors"] = errors_count + 1
                     logger.warning(f"Error optimizing memory {key}: {e}")
 
             logger.info(f"VectorStore optimization completed: {optimization_stats}")
-            return cast(Dict[str, JSONValue], optimization_stats)
+            return cast(dict[str, JSONValue], optimization_stats)
 
         except Exception as e:
             logger.error(f"VectorStore optimization failed: {e}")
-            return {'error': str(e)}
+            return {"error": str(e)}
 
-    def export_for_learning(self, session_id: str = None) -> Dict[str, JSONValue]:
+    def export_for_learning(self, session_id: str = None) -> dict[str, JSONValue]:
         """Export memories in format suitable for learning analysis."""
         try:
             # Get memories for the session or all memories
             if session_id:
                 session_memories = []
                 for m in self._memories.values():
-                    tags = m.get('tags', [])
+                    tags = m.get("tags", [])
                     tags_list = self.memory_converter.extract_tags_list(tags)
                     if f"session:{session_id}" in tags_list:
                         session_memories.append(m)
@@ -667,24 +708,26 @@ class EnhancedMemoryStore(MemoryStore):
             vector_stats = self.get_vector_store_stats()
 
             export_data = {
-                'export_timestamp': datetime.now().isoformat(),
-                'session_id': session_id,
-                'total_memories': len(session_memories),
-                'memory_records': session_memories,
-                'extracted_patterns': patterns,
-                'vector_store_stats': vector_stats,
-                'learning_triggers': self.get_learning_triggers()
+                "export_timestamp": datetime.now().isoformat(),
+                "session_id": session_id,
+                "total_memories": len(session_memories),
+                "memory_records": session_memories,
+                "extracted_patterns": patterns,
+                "vector_store_stats": vector_stats,
+                "learning_triggers": self.get_learning_triggers(),
             }
 
             logger.info(f"Exported {len(session_memories)} memories for learning analysis")
-            return cast(Dict[str, JSONValue], export_data)
+            return cast(dict[str, JSONValue], export_data)
 
         except Exception as e:
             logger.error(f"Export for learning failed: {e}")
-            return {'error': str(e)}
+            return {"error": str(e)}
 
 
-def create_enhanced_memory_store(embedding_provider: str = "sentence-transformers") -> EnhancedMemoryStore:
+def create_enhanced_memory_store(
+    embedding_provider: str = "sentence-transformers",
+) -> EnhancedMemoryStore:
     """
     Factory function to create an EnhancedMemoryStore.
 

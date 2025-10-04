@@ -7,10 +7,12 @@ This script tests that memories persist across different Python sessions.
 
 import sys
 from datetime import datetime
+
 from agency_memory import create_firestore_store
 
 # Unique test ID for this run
 TEST_SESSION_ID = datetime.now().strftime("%Y%m%d_%H%M%S")
+
 
 def test_store_memories():
     """Phase 1: Store test memories"""
@@ -29,28 +31,28 @@ def test_store_memories():
                 "content": {
                     "type": "pattern",
                     "description": "Successful TDD implementation pattern",
-                    "context": "Test-first development approach"
+                    "context": "Test-first development approach",
                 },
-                "tags": ["pattern", "tdd", "success", TEST_SESSION_ID]
+                "tags": ["pattern", "tdd", "success", TEST_SESSION_ID],
             },
             {
                 "key": f"persistence_test_2_{TEST_SESSION_ID}",
                 "content": {
                     "type": "learning",
                     "description": "VectorStore semantic search improves pattern matching",
-                    "context": "Enhanced memory retrieval"
+                    "context": "Enhanced memory retrieval",
                 },
-                "tags": ["learning", "vectorstore", "semantic_search", TEST_SESSION_ID]
+                "tags": ["learning", "vectorstore", "semantic_search", TEST_SESSION_ID],
             },
             {
                 "key": f"persistence_test_3_{TEST_SESSION_ID}",
                 "content": {
                     "type": "error_resolution",
                     "description": "Fixed NoneType error with proper type guards",
-                    "context": "Autonomous healing success"
+                    "context": "Autonomous healing success",
                 },
-                "tags": ["error_resolution", "healing", "success", TEST_SESSION_ID]
-            }
+                "tags": ["error_resolution", "healing", "success", TEST_SESSION_ID],
+            },
         ]
 
         stored_keys = []
@@ -68,7 +70,7 @@ def test_store_memories():
         print(f"   Found {result.total_count} records with session tag")
 
         print("\n🎉 PHASE 1 COMPLETE: All memories stored successfully")
-        print(f"\n   To test persistence, run this command in a new terminal:")
+        print("\n   To test persistence, run this command in a new terminal:")
         print(f"   python test_memory_persistence.py retrieve {TEST_SESSION_ID}")
         print("=" * 60)
 
@@ -77,6 +79,7 @@ def test_store_memories():
     except Exception as e:
         print(f"\n❌ ERROR in Phase 1: {e}")
         import traceback
+
         traceback.print_exc()
         sys.exit(1)
 
@@ -95,7 +98,7 @@ def test_retrieve_memories(session_id):
         # Retrieve memories by session ID
         print(f"\n🔍 Retrieving memories with session tag: {session_id}")
         session_memories = store.search([session_id])
-        
+
         if session_memories.total_count == 0:
             print(f"❌ ERROR: No memories found for session {session_id}!")
             print("   Persistence may have failed, or session ID is incorrect.")
@@ -122,6 +125,7 @@ def test_retrieve_memories(session_id):
     except Exception as e:
         print(f"\n❌ ERROR in Phase 2: {e}")
         import traceback
+
         traceback.print_exc()
         sys.exit(1)
 
@@ -135,5 +139,5 @@ if __name__ == "__main__":
         test_retrieve_memories(session_id)
     else:
         test_store_memories()
-    
+
     print("\n✅ Firestore persistence test completed successfully!\n")

@@ -2,28 +2,27 @@ from __future__ import annotations
 
 import dataclasses
 from collections import defaultdict, deque
-from typing import Dict, List, Set, Tuple, cast
 
 from shared.agent_context import AgentContext  # type: ignore
-
-from .scheduler import OrchestrationPolicy, OrchestrationResult, TaskResult, TaskSpec
 from shared.models.orchestrator import ExecutionMetrics
 from shared.type_definitions.json import JSONValue
+
+from .scheduler import OrchestrationPolicy, OrchestrationResult, TaskResult, TaskSpec
 from .scheduler import run_parallel as _run_parallel
 
 
 @dataclasses.dataclass
 class TaskGraph:
-    nodes: Dict[str, TaskSpec]
-    edges: List[Tuple[str, str]]  # (upstream, downstream)
+    nodes: dict[str, TaskSpec]
+    edges: list[tuple[str, str]]  # (upstream, downstream)
 
-    def topo_order(self) -> List[str]:
-        indeg: Dict[str, int] = defaultdict(int)
+    def topo_order(self) -> list[str]:
+        indeg: dict[str, int] = defaultdict(int)
         for u, v in self.edges:
             indeg[v] += 1
             indeg.setdefault(u, 0)
         q = deque([n for n in self.nodes if indeg.get(n, 0) == 0])
-        order: List[str] = []
+        order: list[str] = []
         while q:
             u = q.popleft()
             order.append(u)
@@ -37,10 +36,12 @@ class TaskGraph:
         return order
 
 
-async def run_graph(ctx: AgentContext, graph: TaskGraph, policy: OrchestrationPolicy) -> OrchestrationResult:
+async def run_graph(
+    ctx: AgentContext, graph: TaskGraph, policy: OrchestrationPolicy
+) -> OrchestrationResult:
     # Level-by-level execution based on indegree (simple backpressure)
-    levels: List[List[str]] = _levels(graph)
-    all_results: Dict[str, TaskResult] = {}
+    levels: list[list[str]] = _levels(graph)
+    all_results: dict[str, TaskResult] = {}
     for level in levels:
         specs = [graph.nodes[n] for n in level]
         res = await _run_parallel(ctx, specs, policy)
@@ -50,26 +51,26 @@ async def run_graph(ctx: AgentContext, graph: TaskGraph, policy: OrchestrationPo
         # (MVP does not auto-skip; policy can extend this)
     # Aggregate metrics (MVP: wall_time approximated by sum of levels)
     # In practice, _run_parallel returns times; a richer aggregator can be added later.
-    merged: Dict[str, JSONValue] = {"summary": "dag_executed", "levels": len(levels)}
+    merged: dict[str, JSONValue] = {"summary": "dag_executed", "levels": len(levels)}
     metrics = ExecutionMetrics(wall_time=0.0, tasks=len(all_results), additional={})
     return OrchestrationResult(tasks=list(all_results.values()), metrics=metrics, merged=merged)
 
 
-def _levels(graph: TaskGraph) -> List[List[str]]:
-    indeg: Dict[str, int] = defaultdict(int)
-    adj: Dict[str, List[str]] = defaultdict(list)
+def _levels(graph: TaskGraph) -> list[list[str]]:
+    indeg: dict[str, int] = defaultdict(int)
+    adj: dict[str, list[str]] = defaultdict(list)
     for u, v in graph.edges:
         adj[u].append(v)
         indeg[v] += 1
         indeg.setdefault(u, 0)
     level0 = [n for n in graph.nodes if indeg.get(n, 0) == 0]
-    levels: List[List[str]] = []
+    levels: list[list[str]] = []
     frontier = level0
-    seen: Set[str] = set()
+    seen: set[str] = set()
     while frontier:
         levels.append(frontier)
         seen.update(frontier)
-        next_frontier: List[str] = []
+        next_frontier: list[str] = []
         for u in frontier:
             for v in adj.get(u, []):
                 indeg[v] -= 1
