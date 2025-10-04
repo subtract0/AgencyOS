@@ -246,18 +246,39 @@ EOF
 copy_trinity_code() {
     log_info "Copying Trinity Protocol code..."
 
-    # Determine source directory
-    if [[ -d "trinity_protocol" ]]; then
+    # Use environment variable if set (from install-simple.sh wrapper)
+    if [[ -n "${TRINITY_SOURCE_DIR:-}" ]]; then
+        source_dir="$TRINITY_SOURCE_DIR"
+        log_info "Using TRINITY_SOURCE_DIR: $source_dir"
+    # Otherwise try to detect source directory
+    elif [[ -d "trinity_protocol" ]]; then
         # Running from Agency repo root
         source_dir="."
     elif [[ -d "../trinity_protocol" ]]; then
         # Running from deploy/trinity-local-m4
         source_dir=".."
+    elif [[ -d "../../trinity_protocol" ]]; then
+        # Running from nested directory
+        source_dir="../.."
     else
         log_error "Cannot find Trinity Protocol source code"
         log_info "Please run from Agency repository root or deploy/trinity-local-m4/"
+        log_info "Or use install-simple.sh which auto-detects paths"
         exit 1
     fi
+
+    # Verify source directory contains required components
+    if [[ ! -d "${source_dir}/trinity_protocol" ]]; then
+        log_error "trinity_protocol not found at ${source_dir}/trinity_protocol"
+        exit 1
+    fi
+
+    if [[ ! -d "${source_dir}/shared" ]]; then
+        log_error "shared not found at ${source_dir}/shared"
+        exit 1
+    fi
+
+    log_info "Copying from: ${source_dir}"
 
     # Copy core Trinity modules
     cp -r "${source_dir}/trinity_protocol" "${TRINITY_DIR}/"
@@ -267,6 +288,7 @@ copy_trinity_code() {
     cp "${source_dir}/deploy/trinity-local-m4/start_trinity.sh" "${TRINITY_DIR}/" || true
     cp "${source_dir}/deploy/trinity-local-m4/stop_trinity.sh" "${TRINITY_DIR}/" || true
     cp "${source_dir}/deploy/trinity-local-m4/monitor_trinity.sh" "${TRINITY_DIR}/" || true
+    cp "${source_dir}/deploy/trinity-local-m4/dashboard.py" "${TRINITY_DIR}/" || true
 
     chmod +x "${TRINITY_DIR}"/*.sh || true
 
