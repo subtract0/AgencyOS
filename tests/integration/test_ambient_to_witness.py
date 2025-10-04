@@ -31,13 +31,13 @@ SKIP REASON: Trinity protocol dependencies archived - needs refactor.
 See Auditor report from 2025-10-04 for details.
 """
 
+import asyncio
+
 import pytest
 
 pytestmark = pytest.mark.skip(
     reason="Trinity protocol dependencies archived (.test_bloat_backup_20251003_230743/) - needs refactor to current architecture"
 )
-
-import asyncio
 import wave
 from dataclasses import dataclass
 from pathlib import Path

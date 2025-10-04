@@ -203,7 +203,7 @@ def main(test_mode: str = "unit", fast_only: bool = False, timed: bool = False) 
     # Add parallel execution if pytest-xdist is available
     # (Firestore tests excluded via --ignore flags, safe to parallelize)
     try:
-        import xdist  # noqa - pytest-xdist module is imported as 'xdist'
+        import xdist  # noqa: F401 - pytest-xdist module imported as 'xdist', checked for availability
         pytest_args.extend(["-n", "auto"])  # Parallel execution with auto-detected workers
     except ImportError:
         pass  # Run sequentially if xdist not available
