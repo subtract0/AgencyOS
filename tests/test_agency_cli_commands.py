@@ -485,7 +485,7 @@ class TestCmdKanban:
         # Act
         with patch("agency._cli_event_scope", lambda cmd, args: contextmanager(lambda: (yield))()):
             with patch.dict(os.environ, {"ENABLE_KANBAN_UI": "true"}):
-                with patch("tools.kanban.server.run_server", mock_run_server):
+                with patch("agency.run_server", mock_run_server):
                     _cmd_kanban(mock_args)
 
         # Assert
@@ -543,6 +543,6 @@ class TestCmdKanban:
         # Act & Assert
         with patch("agency._cli_event_scope", lambda cmd, args: contextmanager(lambda: (yield))()):
             with patch.dict(os.environ, {"ENABLE_KANBAN_UI": "true"}):
-                with patch("tools.kanban.server.run_server", mock_run_server):
+                with patch("agency.run_server", mock_run_server):
                     with pytest.raises(RuntimeError, match="Server failed"):
                         _cmd_kanban(mock_args)

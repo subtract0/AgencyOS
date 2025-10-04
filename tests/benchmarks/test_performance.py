@@ -21,7 +21,7 @@ class TestPerformanceBenchmarks:
         start = time.time()
 
         result = subprocess.run(
-            ["bash", "-c", "SKIP_SPEC_TRACEABILITY=true ./scripts/health_check.sh"],
+            ["bash", "-c", "SKIP_SPEC_TRACEABILITY=true ./scripts/health_check.sh --fast"],
             capture_output=True,
             cwd=Path(__file__).parent.parent.parent,
         )

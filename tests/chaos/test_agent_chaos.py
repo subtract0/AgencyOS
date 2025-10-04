@@ -10,6 +10,8 @@ Constitutional compliance: Tests written first, Result pattern validation.
 import time
 from pathlib import Path
 
+import pytest
+
 from tools.chaos_testing import ChaosConfig, ChaosEngine, ChaosType, chaos
 
 
@@ -214,8 +216,13 @@ class TestAgentFullChaos:
         result = agent_task()
         assert result is not None
 
+    @pytest.mark.timeout(30)  # Chaos testing legitimately takes longer due to injected delays
     def test_agent_recovery_rate_meets_threshold(self) -> None:
-        """Should maintain >80% recovery rate under chaos."""
+        """Should maintain >80% recovery rate under chaos.
+
+        Note: This test intentionally runs chaos injection which adds delays.
+        Increased timeout is legitimate for chaos testing, not a performance issue.
+        """
         config = ChaosConfig(
             chaos_types=[ChaosType.TIMEOUT, ChaosType.DISK_IO],
             failure_rate=0.3,

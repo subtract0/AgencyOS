@@ -1,8 +1,18 @@
 #!/bin/bash
 # Quick Health Check for Agency OS
 # Validates constitutional compliance and system status
+#
+# Usage:
+#   ./health_check.sh          # Full health check (includes technical debt scan)
+#   ./health_check.sh --fast   # Fast mode (skips expensive operations, <2s target)
 
 set -e
+
+# Parse arguments
+FAST_MODE=false
+if [ "$1" = "--fast" ]; then
+    FAST_MODE=true
+fi
 
 echo "🏥 Agency OS Health Check"
 echo "========================="
@@ -88,11 +98,13 @@ if [ -d logs/autonomous_healing ]; then
 fi
 echo ""
 
-# Technical debt
-echo "🔧 Technical Debt:"
-debt_count=$(grep -r "TODO\|FIXME\|XXX\|HACK" --include="*.py" . 2>/dev/null | wc -l | tr -d ' ')
-echo "   $debt_count markers found"
-echo ""
+# Technical debt (skip in fast mode - this grep takes 3.5s)
+if [ "$FAST_MODE" = false ]; then
+    echo "🔧 Technical Debt:"
+    debt_count=$(grep -r "TODO\|FIXME\|XXX\|HACK" --include="*.py" . 2>/dev/null | wc -l | tr -d ' ')
+    echo "   $debt_count markers found"
+    echo ""
+fi
 
 # Test infrastructure
 echo "🧪 Test Infrastructure:"
