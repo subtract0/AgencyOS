@@ -173,7 +173,7 @@ jobs:
         if: needs.analyze-pr.outputs.test_mode == 'critical'
         run: |
           echo "Running CRITICAL tests only (docs/README changes)"
-          uv run pytest tests/ -n 8 -q -m "not integration and not slow and not benchmark" --ignore=tests/e2e --ignore=tests/test_firestore_learning_persistence.py --ignore=tests/test_firestore_mock_integration.py
+          python -m pytest tests/ -n 8 -q -m "not integration and not slow and not benchmark" --ignore=tests/e2e --ignore=tests/test_firestore_learning_persistence.py --ignore=tests/test_firestore_mock_integration.py
         env:
           SKIP_SPEC_TRACEABILITY: "true"
           USE_MOCK_LLM: "true"
@@ -184,7 +184,7 @@ jobs:
           echo "Running SMART test selection (small PR)"
           # TODO: Implement smart test selector in Week 3
           # For now, run fast tests
-          uv run pytest tests/ -n 8 -q -m "not integration and not slow and not benchmark" --ignore=tests/e2e --ignore=tests/test_firestore_learning_persistence.py --ignore=tests/test_firestore_mock_integration.py
+          python -m pytest tests/ -n 8 -q -m "not integration and not slow and not benchmark" --ignore=tests/e2e --ignore=tests/test_firestore_learning_persistence.py --ignore=tests/test_firestore_mock_integration.py
         env:
           SKIP_SPEC_TRACEABILITY: "true"
           USE_MOCK_LLM: "true"
@@ -193,7 +193,7 @@ jobs:
         if: needs.analyze-pr.outputs.test_mode == 'essential'
         run: |
           echo "Running ESSENTIAL tests (medium PR)"
-          uv run pytest tests/ -n 8 -q -m "not integration and not slow and not benchmark" --ignore=tests/e2e --ignore=tests/test_firestore_learning_persistence.py --ignore=tests/test_firestore_mock_integration.py
+          python -m pytest tests/ -n 8 -q -m "not integration and not slow and not benchmark" --ignore=tests/e2e --ignore=tests/test_firestore_learning_persistence.py --ignore=tests/test_firestore_mock_integration.py
         env:
           SKIP_SPEC_TRACEABILITY: "true"
           USE_MOCK_LLM: "true"
@@ -202,7 +202,7 @@ jobs:
         if: needs.analyze-pr.outputs.test_mode == 'full'
         run: |
           echo "Running FULL test suite (large PR)"
-          uv run pytest tests/ -n 8 -q -m "not integration and not slow and not benchmark" --ignore=tests/e2e --ignore=tests/test_firestore_learning_persistence.py --ignore=tests/test_firestore_mock_integration.py
+          python -m pytest tests/ -n 8 -q -m "not integration and not slow and not benchmark" --ignore=tests/e2e --ignore=tests/test_firestore_learning_persistence.py --ignore=tests/test_firestore_mock_integration.py
         env:
           SKIP_SPEC_TRACEABILITY: "true"
           FORCE_RUN_ALL_TESTS: "1"
