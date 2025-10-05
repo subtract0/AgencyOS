@@ -437,6 +437,7 @@ class TestRetryStateful:
     def test_retry_controller_state_machine(self):
         """Run stateful tests on RetryController."""
         from unittest.mock import patch
+
         from hypothesis.stateful import run_state_machine_as_test
 
         # Mock time.sleep in retry_controller to make tests deterministic and fast

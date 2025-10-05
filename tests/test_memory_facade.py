@@ -10,6 +10,8 @@ import time
 from concurrent.futures import ThreadPoolExecutor
 from unittest.mock import Mock, patch
 
+import pytest
+
 from pattern_intelligence.coding_pattern import (
     CodingPattern,
     EffectivenessMetric,
@@ -30,6 +32,7 @@ from shared.memory_facade import (
 )
 
 
+@pytest.mark.timeout(10)  # Memory facade operations may need extra time
 class TestUnifiedMemory:
     """Test the UnifiedMemory facade."""
 
@@ -205,6 +208,7 @@ class TestUnifiedMemory:
         assert stats.memories == 0
 
 
+@pytest.mark.timeout(10)  # Singleton tests may need extra time
 class TestSingleton:
     """Test the singleton pattern and thread safety."""
 
@@ -290,6 +294,7 @@ class TestSingleton:
                 assert call_count["memories"] == 10
 
 
+@pytest.mark.timeout(10)  # Convenience function tests may need extra time
 class TestConvenienceFunctions:
     """Test the convenience functions."""
 

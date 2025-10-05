@@ -34,6 +34,7 @@ class AgentContext:
         self.memory = memory or Memory()
         self.session_id = session_id or self._generate_session_id()
         self._metadata: dict[str, JSONValue] = {}
+        self._anthropic_memory_tool: Any | None = None  # Lazy initialization
 
         logger.debug(f"AgentContext initialized with session_id: {self.session_id}")
 
@@ -101,6 +102,55 @@ class AgentContext:
     def get_session_memories(self) -> list[dict[str, JSONValue]]:
         """Get all memories for this session."""
         return self.memory.search([f"session:{self.session_id}"])
+
+    def enable_anthropic_memory(self, base_dir: str | None = None) -> None:
+        """
+        Enable Anthropic Memory Tool for this context.
+
+        Creates a file-based memory tool for Claude's beta memory feature.
+        Enables persistent cross-conversation memory via /memories directory.
+
+        Args:
+            base_dir: Optional custom base directory
+                     (default: ~/.agency/memories/{session_id})
+
+        Raises:
+            ImportError: If anthropic SDK not installed (need >=0.42.0)
+        """
+        try:
+            from tools.anthropic_memory_tool import create_memory_tool
+        except ImportError:
+            raise ImportError(
+                "Anthropic memory tool not available. "
+                "Install anthropic>=0.42.0: uv pip install 'anthropic>=0.42.0'"
+            )
+
+        self._anthropic_memory_tool = create_memory_tool(
+            session_id=self.session_id if base_dir is None else None,
+            base_dir=base_dir
+        )
+
+        logger.info(
+            f"Anthropic Memory Tool enabled: {self._anthropic_memory_tool.base_dir}"
+        )
+
+    def get_anthropic_memory_tool(self) -> Any:
+        """
+        Get the Anthropic Memory Tool instance.
+
+        Returns:
+            AgencyMemoryTool instance or None if not enabled
+
+        Example:
+            context.enable_anthropic_memory()
+            tool = context.get_anthropic_memory_tool()
+            tool.create("/memories/notes.txt", "Important info")
+        """
+        return self._anthropic_memory_tool
+
+    def is_anthropic_memory_enabled(self) -> bool:
+        """Check if Anthropic Memory Tool is enabled."""
+        return self._anthropic_memory_tool is not None
 
 
 def create_agent_context(

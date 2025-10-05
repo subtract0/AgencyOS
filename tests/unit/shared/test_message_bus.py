@@ -214,15 +214,19 @@ class TestMultipleSubscribers:
 
         async def temporary_subscriber():
             async for msg in bus.subscribe("test_queue"):
-                break  # Exit immediately
+                break  # Exit immediately after first message
 
         # Before subscription
         assert "test_queue" not in bus.subscribers
 
-        # During subscription
+        # Publish a message so subscriber can receive and exit
+        await bus.publish("test_queue", {"data": "test"})
+
+        # Subscribe and exit
         await temporary_subscriber()
 
-        # After subscription
+        # After subscription ends, cleanup should have removed subscriber
+        await asyncio.sleep(0.1)  # Brief delay for cleanup
         assert "test_queue" not in bus.subscribers or len(bus.subscribers["test_queue"]) == 0
 
 
