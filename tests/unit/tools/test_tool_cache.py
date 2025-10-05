@@ -10,6 +10,7 @@ Constitutional Compliance:
 - Law #1: TDD is mandatory
 """
 
+import os
 import tempfile
 import time
 from pathlib import Path
