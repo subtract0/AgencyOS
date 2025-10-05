@@ -484,7 +484,7 @@ class PreferenceLearner:
         # Store response
         store_result = self.store.store_response(response)
         if store_result.is_err():
-            return Err(store_result.error)
+            return Err(store_result._error)
 
         # Publish telemetry
         self._publish_telemetry(response)
@@ -501,7 +501,7 @@ class PreferenceLearner:
         # Get all responses
         responses_result = self.store.get_all_responses()
         if responses_result.is_err():
-            return Err(responses_result.error)
+            return Err(responses_result._error)
 
         responses = responses_result.unwrap()  # Use unwrap() instead of .value
 
@@ -526,7 +526,7 @@ class PreferenceLearner:
         # Get preferences
         prefs_result = self.get_preferences()
         if prefs_result.is_err():
-            return Err(prefs_result.error)
+            return Err(prefs_result._error)
 
         prefs = prefs_result.unwrap()
 

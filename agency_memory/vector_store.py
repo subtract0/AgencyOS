@@ -132,14 +132,18 @@ class VectorStore:
             memory_key: Unique memory identifier
             memory_content: Memory record with content and metadata
         """
+        # Ensure key is present in content
         if "key" not in memory_content:
             memory_content["key"] = memory_key
+
+        # Store memory record first
         self._memory_records[memory_key] = memory_content
 
+        # Extract and store searchable text
         searchable_text = self._extract_searchable_text(memory_content)
         self._memory_texts[memory_key] = searchable_text
 
-        # Generate embedding if provider is available
+        # Generate embedding if provider is available (best-effort)
         if self._embedding_function:
             try:
                 embeddings = self._embedding_function([searchable_text])
@@ -442,8 +446,19 @@ class VectorStore:
         Returns:
             Dictionary with store statistics
         """
+        # Consistency check: _memory_texts and _memory_records should have same keys
+        texts_count = len(self._memory_texts)
+        records_count = len(self._memory_records)
+
+        if texts_count != records_count:
+            logger.warning(
+                f"VectorStore inconsistency detected: "
+                f"_memory_texts has {texts_count} entries, "
+                f"_memory_records has {records_count} entries"
+            )
+
         return {
-            "total_memories": len(self._memory_texts),
+            "total_memories": texts_count,  # Use _memory_texts as primary count
             "memories_with_embeddings": len(self._embeddings),
             "embedding_provider": self._embedding_provider,
             "embedding_available": self._embedding_function is not None,

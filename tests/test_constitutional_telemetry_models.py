@@ -9,7 +9,7 @@ Tests Article VII Phase 1 models following NECESSARY framework:
 """
 
 import json
-from datetime import datetime, timedelta
+from datetime import UTC, datetime, timedelta
 
 import pytest
 from pydantic import ValidationError
@@ -102,7 +102,7 @@ class TestConstitutionalEvent:
 
     def test_create_full_event_with_all_fields(self):
         """NORMAL: Test creating event with all fields populated."""
-        now = datetime.utcnow()
+        now = datetime.now(UTC)
         event = ConstitutionalEvent(
             event_id="test-002",
             timestamp=now,
@@ -137,14 +137,14 @@ class TestConstitutionalEvent:
 
     def test_timestamp_defaults_to_utcnow(self):
         """NORMAL: Test that timestamp defaults to current UTC time."""
-        before = datetime.utcnow()
+        before = datetime.now(UTC)
         event = ConstitutionalEvent(
             event_id="test-003",
             article=Article.ARTICLE_I,
             rule_description="Complete context required",
             action=EnforcementAction.PASSED,
         )
-        after = datetime.utcnow()
+        after = datetime.now(UTC)
 
         assert before <= event.timestamp <= after
 
@@ -258,7 +258,7 @@ class TestConstitutionalEvent:
 
     def test_to_jsonl_serializes_datetime(self):
         """NORMAL: Test to_jsonl() serializes datetime properly."""
-        now = datetime.utcnow()
+        now = datetime.now(UTC)
         event = ConstitutionalEvent(
             event_id="test-012",
             timestamp=now,
@@ -408,8 +408,8 @@ class TestComplianceMetrics:
 
     def test_create_minimal_metrics(self):
         """NORMAL: Test creating metrics with minimal required fields."""
-        start = datetime.utcnow() - timedelta(days=7)
-        end = datetime.utcnow()
+        start = datetime.now(UTC) - timedelta(days=7)
+        end = datetime.now(UTC)
 
         metrics = ComplianceMetrics(period_start=start, period_end=end)
 
@@ -424,8 +424,8 @@ class TestComplianceMetrics:
 
     def test_create_metrics_with_event_counts(self):
         """NORMAL: Test creating metrics with event counts."""
-        start = datetime.utcnow() - timedelta(days=30)
-        end = datetime.utcnow()
+        start = datetime.now(UTC) - timedelta(days=30)
+        end = datetime.now(UTC)
 
         metrics = ComplianceMetrics(
             period_start=start,
@@ -442,8 +442,8 @@ class TestComplianceMetrics:
 
     def test_calculate_rates_with_zero_events(self):
         """EDGE: Test calculate_rates() with zero events."""
-        start = datetime.utcnow() - timedelta(days=7)
-        end = datetime.utcnow()
+        start = datetime.now(UTC) - timedelta(days=7)
+        end = datetime.now(UTC)
 
         metrics = ComplianceMetrics(
             period_start=start, period_end=end, total_events=0
@@ -456,8 +456,8 @@ class TestComplianceMetrics:
 
     def test_calculate_rates_with_all_success(self):
         """NORMAL: Test calculate_rates() with 100% success."""
-        start = datetime.utcnow() - timedelta(days=7)
-        end = datetime.utcnow()
+        start = datetime.now(UTC) - timedelta(days=7)
+        end = datetime.now(UTC)
 
         metrics = ComplianceMetrics(
             period_start=start,
@@ -473,8 +473,8 @@ class TestComplianceMetrics:
 
     def test_calculate_rates_with_mixed_outcomes(self):
         """NORMAL: Test calculate_rates() with mixed outcomes."""
-        start = datetime.utcnow() - timedelta(days=7)
-        end = datetime.utcnow()
+        start = datetime.now(UTC) - timedelta(days=7)
+        end = datetime.now(UTC)
 
         metrics = ComplianceMetrics(
             period_start=start,
@@ -490,8 +490,8 @@ class TestComplianceMetrics:
 
     def test_calculate_rates_with_all_false_positives(self):
         """EDGE: Test calculate_rates() with 100% false positives."""
-        start = datetime.utcnow() - timedelta(days=7)
-        end = datetime.utcnow()
+        start = datetime.now(UTC) - timedelta(days=7)
+        end = datetime.now(UTC)
 
         metrics = ComplianceMetrics(
             period_start=start,
@@ -507,8 +507,8 @@ class TestComplianceMetrics:
 
     def test_compliance_rate_validation_range(self):
         """ERROR: Test that compliance_rate must be between 0.0 and 1.0."""
-        start = datetime.utcnow() - timedelta(days=7)
-        end = datetime.utcnow()
+        start = datetime.now(UTC) - timedelta(days=7)
+        end = datetime.now(UTC)
 
         with pytest.raises(ValidationError) as exc_info:
             ComplianceMetrics(
@@ -520,8 +520,8 @@ class TestComplianceMetrics:
 
     def test_false_positive_rate_validation_range(self):
         """ERROR: Test that false_positive_rate must be between 0.0 and 1.0."""
-        start = datetime.utcnow() - timedelta(days=7)
-        end = datetime.utcnow()
+        start = datetime.now(UTC) - timedelta(days=7)
+        end = datetime.now(UTC)
 
         with pytest.raises(ValidationError) as exc_info:
             ComplianceMetrics(
@@ -535,8 +535,8 @@ class TestComplianceMetrics:
 
     def test_extra_fields_forbidden_in_metrics(self):
         """ERROR: Test that extra fields are forbidden in ComplianceMetrics."""
-        start = datetime.utcnow() - timedelta(days=7)
-        end = datetime.utcnow()
+        start = datetime.now(UTC) - timedelta(days=7)
+        end = datetime.now(UTC)
 
         with pytest.raises(ValidationError) as exc_info:
             ComplianceMetrics(
@@ -550,8 +550,8 @@ class TestComplianceMetrics:
 
     def test_period_start_before_end(self):
         """NORMAL: Test that period_start can be before period_end."""
-        start = datetime.utcnow() - timedelta(days=30)
-        end = datetime.utcnow()
+        start = datetime.now(UTC) - timedelta(days=30)
+        end = datetime.now(UTC)
 
         metrics = ComplianceMetrics(period_start=start, period_end=end)
 
@@ -559,8 +559,8 @@ class TestComplianceMetrics:
 
     def test_calculate_rates_idempotent(self):
         """EDGE: Test that calculate_rates() is idempotent."""
-        start = datetime.utcnow() - timedelta(days=7)
-        end = datetime.utcnow()
+        start = datetime.now(UTC) - timedelta(days=7)
+        end = datetime.now(UTC)
 
         metrics = ComplianceMetrics(
             period_start=start,
@@ -647,8 +647,8 @@ class TestConstitutionalEventIntegration:
 
     def test_metrics_aggregation_from_events(self):
         """INTEGRATION: Test building ComplianceMetrics from events."""
-        start = datetime.utcnow() - timedelta(days=7)
-        end = datetime.utcnow()
+        start = datetime.now(UTC) - timedelta(days=7)
+        end = datetime.now(UTC)
 
         # Create test events
         events = [

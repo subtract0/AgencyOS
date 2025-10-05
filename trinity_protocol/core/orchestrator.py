@@ -6,11 +6,21 @@ NO background processes. NO context pollution. Maximum value.
 """
 
 import json
+import logging
 from datetime import datetime
 from pathlib import Path
 from typing import Literal
 
 from pydantic import BaseModel, Field
+
+from shared.agent_context import AgentContext
+from shared.cost_tracker import CostTracker
+from shared.message_bus import MessageBus
+from trinity_protocol.core.agent_registry import create_agent_registry
+from trinity_protocol.core.escalation_rules import create_escalation_policy
+from trinity_protocol.core.hybrid_executor import create_hybrid_executor
+
+logger = logging.getLogger(__name__)
 
 
 # Message Bus Protocol (Token-Efficient JSONL)
@@ -173,6 +183,93 @@ class TrinityOrchestrator:
 
     def __init__(self):
         self.bus = TrinityBus()
+        self._running = False
+
+        # HybridExecutor initialization
+        # Initialize shared infrastructure for hybrid execution
+        try:
+            # Create shared context for all agents
+            self._agent_context = AgentContext()
+
+            # Create cost tracker with in-memory storage
+            from shared.cost_tracker import MemoryStorage
+            self._cost_tracker = CostTracker(storage=MemoryStorage())
+
+            # Create message bus (in-memory for now)
+            self._message_bus = MessageBus()
+
+            # Create agent registry with local-first default
+            self._agent_registry = create_agent_registry(
+                agent_context=self._agent_context,
+                cost_tracker=self._cost_tracker,
+                default_tier="local",
+            )
+
+            # Create escalation policy
+            self._escalation_policy = create_escalation_policy(
+                max_local_attempts=2,
+                max_local_plus_attempts=1,
+                test_failure_threshold=2,
+            )
+
+            # Create HybridExecutor
+            self.hybrid_executor = create_hybrid_executor(
+                message_bus=self._message_bus,
+                cost_tracker=self._cost_tracker,
+                agent_context=self._agent_context,
+                agent_registry=self._agent_registry,
+                escalation_policy=self._escalation_policy,
+            )
+
+            logger.info("✅ HybridExecutor initialized with local-first execution")
+
+        except Exception as e:
+            logger.error(
+                f"❌ Failed to initialize HybridExecutor: {e}. "
+                "Trinity will fall back to direct Ollama execution.",
+                exc_info=True
+            )
+            self.hybrid_executor = None
+
+    async def monitor_loop(self) -> None:
+        """
+        Main monitoring loop - runs HybridExecutor event loop.
+
+        This method starts the HybridExecutor's run() method which subscribes
+        to the execution_queue and processes tasks with local-first + cloud escalation.
+        """
+        import asyncio
+
+        self._running = True
+        logger.info("🚀 Trinity Orchestrator monitor loop started")
+
+        if self.hybrid_executor is not None:
+            logger.info("HybridExecutor event loop started")
+            # Start HybridExecutor's run loop in background
+            executor_task = asyncio.create_task(self.hybrid_executor.run())
+
+            # Monitor loop - keep running while _running is True
+            try:
+                while self._running:
+                    await asyncio.sleep(1.0)
+            except asyncio.CancelledError:
+                logger.info("Monitor loop cancelled, stopping executor...")
+                await self.hybrid_executor.stop()
+                executor_task.cancel()
+                try:
+                    await executor_task
+                except asyncio.CancelledError:
+                    pass
+        else:
+            logger.warning(
+                "⚠️  HybridExecutor not available, falling back to Ollama direct execution"
+            )
+            # Fallback loop without executor
+            try:
+                while self._running:
+                    await asyncio.sleep(1.0)
+            except asyncio.CancelledError:
+                pass
 
     def start_mission(self, user_goal: str) -> dict:
         """
