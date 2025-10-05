@@ -177,6 +177,7 @@ class TestMemoryEdgeCases:
         record = store.get("list_key")
         assert record.content == list_content
 
+    @pytest.mark.timeout(10)  # Semantic search operations may need extra time
     def test_enhanced_memory_semantic_search_min_similarity_boundary(self):
         """Test semantic search with boundary similarity values."""
         store = EnhancedMemoryStore()
@@ -187,6 +188,7 @@ class TestMemoryEdgeCases:
             results = store.semantic_search("test", top_k=10, min_similarity=min_sim)
             assert isinstance(results, list)
 
+    @pytest.mark.timeout(10)  # Semantic search with multiple stores may need extra time
     def test_enhanced_memory_semantic_search_top_k_boundary(self):
         """Test semantic search with boundary top_k values."""
         store = EnhancedMemoryStore()

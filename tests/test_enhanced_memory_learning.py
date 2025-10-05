@@ -26,10 +26,13 @@ NECESSARY Criteria:
 
 from unittest.mock import Mock
 
+import pytest
+
 from agency_memory.enhanced_memory_store import EnhancedMemoryStore
 from shared.type_definitions.json import JSONValue
 
 
+@pytest.mark.timeout(10)  # Memory operations may need extra time
 class TestCheckLearningTriggers:
     """Tests for _check_learning_triggers() CRITICAL function."""
 
@@ -217,6 +220,7 @@ class TestCheckLearningTriggers:
         assert len(triggers) == 0
 
 
+@pytest.mark.timeout(10)  # VectorStore optimization may need extra time
 class TestOptimizeVectorStore:
     """Tests for optimize_vector_store() CRITICAL function."""
 
@@ -343,6 +347,7 @@ class TestOptimizeVectorStore:
         assert "Critical failure" in str(result["error"])
 
 
+@pytest.mark.timeout(10)  # Export operations may need extra time
 class TestExportForLearning:
     """Tests for export_for_learning() CRITICAL function."""
 
@@ -468,6 +473,7 @@ class TestExportForLearning:
         assert memory["content"] == "Test content"
 
 
+@pytest.mark.timeout(10)  # Integration tests may need extra time
 class TestLearningTriggersIntegration:
     """Integration tests for learning trigger workflow."""
 

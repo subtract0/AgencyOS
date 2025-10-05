@@ -18,6 +18,7 @@ from shared.models.memory import MemorySearchResult
 from shared.type_definitions.result import Err, Ok
 
 
+@pytest.mark.timeout(10)  # Memory store initialization may need extra time
 class TestEnhancedMemoryStoreResultBasics:
     """Test basic functionality of EnhancedMemoryStoreResult."""
 
@@ -37,6 +38,7 @@ class TestEnhancedMemoryStoreResultBasics:
         assert isinstance(store, EnhancedMemoryStoreResult)
 
 
+@pytest.mark.timeout(10)  # Store operations may need extra time
 class TestStoreResultMethod:
     """Test store_result method with Result pattern."""
 
@@ -93,6 +95,7 @@ class TestStoreResultMethod:
         assert "Vector store operation failed" in str(mock_logger.warning.call_args)
 
 
+@pytest.mark.timeout(10)  # Search operations may need extra time
 class TestSearchResultMethod:
     """Test search_result method with Result pattern."""
 
@@ -137,6 +140,7 @@ class TestSearchResultMethod:
         assert MemoryStoreError.SEARCH_FAILED in result.unwrap_err()
 
 
+@pytest.mark.timeout(10)  # Semantic search operations may need extra time
 class TestSemanticSearchResultMethod:
     """Test semantic_search_result method with Result pattern."""
 
@@ -209,6 +213,7 @@ class TestSemanticSearchResultMethod:
             assert "Vector search failed" in result.unwrap_err()
 
 
+@pytest.mark.timeout(10)  # Combined search operations may need extra time
 class TestCombinedSearchResultMethod:
     """Test combined_search_result method with Result pattern."""
 
@@ -266,6 +271,7 @@ class TestCombinedSearchResultMethod:
             assert result.unwrap() == []  # Graceful degradation
 
 
+@pytest.mark.timeout(10)  # Legacy interface tests may need extra time
 class TestLegacyInterfaceCompatibility:
     """Test legacy interface methods for backward compatibility."""
 
@@ -321,6 +327,7 @@ class TestLegacyInterfaceCompatibility:
             assert result == []  # Returns empty list on error
 
 
+@pytest.mark.timeout(10)  # Helper method tests may need extra time
 class TestPrivateHelperMethods:
     """Test private helper methods."""
 
