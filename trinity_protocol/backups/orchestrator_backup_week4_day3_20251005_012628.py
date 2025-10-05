@@ -19,14 +19,9 @@ from typing import Literal
 import yaml
 from pydantic import BaseModel, Field
 
-from trinity_protocol.core.ollama_client import OllamaClient, OllamaError, OllamaTimeout
-# HybridExecutor imports (added by integration script)
-from trinity_protocol.core.hybrid_executor import (
-    HybridExecutor,
-    TaskType,
-    TaskResult,
-    create_hybrid_executor,
-)
+from shared.agent_context import AgentContext
+from shared.cost_tracker import CostTracker
+from shared.message_bus import MessageBus
 from trinity_protocol.core.agent_registry import (
     AgentRegistry,
     AgentType,
@@ -37,10 +32,15 @@ from trinity_protocol.core.escalation_rules import (
     EscalationPolicy,
     create_escalation_policy,
 )
-from shared.agent_context import AgentContext
-from shared.cost_tracker import CostTracker
-from shared.message_bus import MessageBus
 
+# HybridExecutor imports (added by integration script)
+from trinity_protocol.core.hybrid_executor import (
+    HybridExecutor,
+    TaskResult,
+    TaskType,
+    create_hybrid_executor,
+)
+from trinity_protocol.core.ollama_client import OllamaClient, OllamaError, OllamaTimeout
 
 # Setup logging
 logging.basicConfig(

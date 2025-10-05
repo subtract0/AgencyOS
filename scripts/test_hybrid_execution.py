@@ -20,12 +20,12 @@ from pathlib import Path
 # Add Agency to path
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-from trinity_protocol.core.agent_registry import create_agent_registry, AgentType, ModelTier
-from trinity_protocol.core.escalation_rules import create_escalation_policy
-from trinity_protocol.core.hybrid_executor import create_hybrid_executor, TaskType
 from shared.agent_context import AgentContext
 from shared.cost_tracker import CostTracker, MemoryStorage
 from shared.message_bus import MessageBus
+from trinity_protocol.core.agent_registry import AgentType, ModelTier, create_agent_registry
+from trinity_protocol.core.escalation_rules import create_escalation_policy
+from trinity_protocol.core.hybrid_executor import TaskType, create_hybrid_executor
 
 
 async def test_hybrid_execution():
@@ -62,7 +62,7 @@ async def test_hybrid_execution():
         test_failure_threshold=2,
         confidence_threshold=0.5,
     )
-    print(f"   ✅ Policy: max_local=2, max_local_plus=1, test_threshold=2")
+    print("   ✅ Policy: max_local=2, max_local_plus=1, test_threshold=2")
 
     # Step 4: Create HybridExecutor
     print("📋 Step 4: Creating HybridExecutor...")
@@ -73,7 +73,7 @@ async def test_hybrid_execution():
         agent_registry=agent_registry,
         escalation_policy=escalation_policy,
     )
-    print(f"   ✅ HybridExecutor created")
+    print("   ✅ HybridExecutor created")
 
     # Step 5: Create test task
     print()

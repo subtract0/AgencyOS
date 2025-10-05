@@ -35,7 +35,6 @@ from trinity_protocol.core.escalation_rules import (
     create_escalation_policy,
 )
 
-
 # ==================== NORMAL OPERATION TESTS (N) ====================
 
 

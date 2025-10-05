@@ -33,7 +33,8 @@ from unittest.mock import AsyncMock, Mock, patch
 import pytest
 
 from shared.agent_context import AgentContext
-from shared.cost_tracker import CostTracker, MemoryStorage, ModelTier as CostModelTier
+from shared.cost_tracker import CostTracker, MemoryStorage
+from shared.cost_tracker import ModelTier as CostModelTier
 from shared.message_bus import MessageBus
 from trinity_protocol.core.agent_registry import (
     AgentRegistry,
@@ -49,7 +50,6 @@ from trinity_protocol.core.escalation_rules import (
 )
 from trinity_protocol.core.hybrid_executor import HybridExecutor, TaskType
 from trinity_protocol.core.orchestrator import TrinityOrchestrator
-
 
 # =============================================================================
 # FIXTURES
@@ -738,7 +738,8 @@ def test_agent_registry_models_match_model_policy():
     AgentRegistry model map matches shared/model_policy.py TIER_MODEL_MAP.
     """
     # Arrange
-    from shared.model_policy import TIER_MODEL_MAP as POLICY_MAP, ModelTier as PolicyTier
+    from shared.model_policy import TIER_MODEL_MAP as POLICY_MAP
+    from shared.model_policy import ModelTier as PolicyTier
     from trinity_protocol.core.agent_registry import MODEL_MAP
 
     # Act & Assert

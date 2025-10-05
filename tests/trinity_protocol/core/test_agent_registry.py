@@ -27,7 +27,6 @@ from trinity_protocol.core.agent_registry import (
     create_agent_registry,
 )
 
-
 # ============================================================================
 # FIXTURES - Reusable test setup (AAA Pattern - Arrange)
 # ============================================================================

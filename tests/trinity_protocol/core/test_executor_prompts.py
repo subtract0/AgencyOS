@@ -7,11 +7,11 @@ instead of pseudocode or abstract plans.
 
 import pytest
 
-from trinity_protocol.core.executor import ExecutorAgent
-from trinity_protocol.core.hybrid_executor import HybridExecutor, TaskType
 from shared.agent_context import AgentContext
 from shared.cost_tracker import CostTracker, MemoryStorage
 from shared.message_bus import MessageBus
+from trinity_protocol.core.executor import ExecutorAgent
+from trinity_protocol.core.hybrid_executor import HybridExecutor, TaskType
 
 
 class TestExecutorPrompts:
