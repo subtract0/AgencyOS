@@ -119,10 +119,10 @@ class AgencyMemoryTool(BetaAbstractMemoryTool):
         # Ensure resolved path is within base_dir
         try:
             full_path.relative_to(self.base_dir)
-        except ValueError:
+        except ValueError as e:
             raise ValueError(
                 f"Path escapes memory directory: {path} -> {full_path}"
-            )
+            ) from e
 
         return full_path
 
@@ -160,7 +160,7 @@ class AgencyMemoryTool(BetaAbstractMemoryTool):
 
         # File contents
         try:
-            with open(full_path, "r", encoding="utf-8") as f:
+            with open(full_path, encoding="utf-8") as f:
                 lines = f.readlines()
 
             # Apply line range if specified
@@ -235,7 +235,7 @@ class AgencyMemoryTool(BetaAbstractMemoryTool):
 
         try:
             # Read file
-            with open(full_path, "r", encoding="utf-8") as f:
+            with open(full_path, encoding="utf-8") as f:
                 content = f.read()
 
             # Check if old_str exists
@@ -281,7 +281,7 @@ class AgencyMemoryTool(BetaAbstractMemoryTool):
 
         try:
             # Read file
-            with open(full_path, "r", encoding="utf-8") as f:
+            with open(full_path, encoding="utf-8") as f:
                 lines = f.readlines()
 
             # Convert to 0-indexed, clamp to valid range

@@ -29,10 +29,10 @@ sys.path.insert(0, str(project_root))
 
 from shared.agent_context import create_agent_context
 from tools.anthropic_agent_with_memory import (
+    ANTHROPIC_AVAILABLE,
     create_client_with_memory,
-    run_with_memory,
     get_memory_stats,
-    ANTHROPIC_AVAILABLE
+    run_with_memory,
 )
 
 

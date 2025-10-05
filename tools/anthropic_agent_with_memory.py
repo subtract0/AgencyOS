@@ -25,6 +25,7 @@ from typing import Any
 try:
     import anthropic
     from anthropic.types.beta import BetaMessageParam
+
     from tools.anthropic_memory_tool import AgencyMemoryTool, create_memory_tool
     ANTHROPIC_AVAILABLE = True
 except ImportError:
