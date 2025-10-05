@@ -23,12 +23,19 @@ Constitutional Compliance:
 """
 
 import asyncio
+import os
 import tempfile
 import uuid
 from pathlib import Path
 from unittest.mock import AsyncMock, Mock, patch
 
 import pytest
+
+# Mark ALL tests in this file as xfail in CI due to Ollama dependency
+pytestmark = pytest.mark.xfail(
+    condition=os.environ.get("CI") == "true",
+    reason="Ollama dependency - requires local infrastructure not available in CI"
+)
 
 from shared.agent_context import AgentContext, create_agent_context
 from shared.cost_tracker import CostTracker, MemoryStorage
