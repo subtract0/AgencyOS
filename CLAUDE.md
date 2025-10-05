@@ -100,10 +100,17 @@ logs/telemetry/             Metrics, events, performance data
 
 ### **Common Patterns**
 ```python
-# AgentContext memory access
+# AgentContext memory access (VectorStore)
 from shared.agent_context import AgentContext
 context.store_memory(key, content, tags=["agent", "pattern"])
 results = context.search_memories(["pattern"], include_session=True)
+
+# Anthropic Memory Tool (persistent cross-conversation memory)
+context.enable_anthropic_memory()  # Creates ~/.agency/memories/{session_id}/
+tool = context.get_anthropic_memory_tool()
+tool.create("/memories/notes.txt", "Important information")
+tool.view("/memories/notes.txt")
+tool.str_replace("/memories/notes.txt", "old", "new")
 
 # Model selection per agent
 from shared.model_policy import agent_model
@@ -280,6 +287,62 @@ options = ClaudeAgentOptions(
 - **`tools/anthropic_agent.py`** - SDK wrapper implementations
 - **`shared/agent_context.py`** - Context management for SDK agents
 - **`docs/reference/claude-agent-sdk-python.md`** - Full SDK API reference
+
+---
+
+## **💾 Anthropic Memory Tool Integration**
+
+Agency integrates Anthropic's **Memory Tool** (beta) for persistent cross-conversation memory.
+
+### **Key Features**
+- **File-based storage** in `~/.agency/memories/{session_id}/`
+- **Cross-conversation persistence** without context window bloat
+- **Security-hardened** with path traversal prevention
+- **Session isolation** for independent memory spaces
+- **6 memory commands**: view, create, str_replace, insert, delete, rename
+
+### **Quick Start**
+```python
+# Enable in AgentContext
+from shared.agent_context import create_agent_context
+
+context = create_agent_context(session_id="my_task")
+context.enable_anthropic_memory()
+
+# Use memory tool
+tool = context.get_anthropic_memory_tool()
+tool.create("/memories/project.txt", "Agency OS features...")
+tool.view("/memories/project.txt")
+tool.str_replace("/memories/project.txt", "features", "capabilities")
+```
+
+### **SDK Integration**
+```python
+# Create Claude client with memory
+from tools.anthropic_agent_with_memory import create_client_with_memory, run_with_memory
+
+client, memory_tool = create_client_with_memory(session_id="conversation_1")
+
+# Run conversation with memory enabled
+response = run_with_memory(
+    client=client,
+    memory_tool=memory_tool,
+    messages=[{"role": "user", "content": "Remember: I prefer Python"}],
+    model="claude-sonnet-4-5"
+)
+```
+
+### **Implementation Files**
+- **`tools/anthropic_memory_tool.py`** - Core memory tool with security validation
+- **`tools/anthropic_agent_with_memory.py`** - SDK integration helpers
+- **`tests/test_anthropic_memory_security.py`** - 30 security tests (100% pass)
+- **`scripts/test_anthropic_memory_beta.py`** - Beta access validation
+- **`demo_anthropic_memory.py`** - Full demo with 3 scenarios
+
+### **Requirements**
+- **anthropic>=0.42.0** (in requirements.txt)
+- **Beta header**: `context-management-2025-06-27`
+- **Supported models**: Claude Sonnet 4.5, Opus 4.1
 
 ---
 
