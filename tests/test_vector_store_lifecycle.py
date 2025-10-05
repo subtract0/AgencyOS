@@ -27,6 +27,8 @@ NECESSARY Criteria:
 
 from unittest.mock import Mock
 
+import pytest
+
 from agency_memory.vector_store import VectorStore
 from shared.type_definitions.json import JSONValue
 
