@@ -53,7 +53,6 @@ from trinity_protocol.core.hybrid_executor import (
     create_hybrid_executor,
 )
 
-
 # ============================================================================
 # FIXTURES - Reusable test setup (AAA Pattern - Arrange)
 # ============================================================================
@@ -102,7 +101,16 @@ def mock_agent_registry():
         mock_agent.tier = tier or ModelTier.LOCAL
         return mock_agent
 
+    def get_model_for_agent_mock(agent_type: AgentType, tier: ModelTier | None = None):
+        """Return proper model string for given agent and tier."""
+        tier = tier or ModelTier.LOCAL
+        if tier == ModelTier.LOCAL or tier == ModelTier.LOCAL_PLUS:
+            return "qwen2.5-coder:7b"
+        else:  # CLOUD
+            return "gpt-5"
+
     registry.create_agent = Mock(side_effect=create_agent_mock)
+    registry.get_model_for_agent = Mock(side_effect=get_model_for_agent_mock)
     registry.escalation_policy = EscalationPolicy()
     return registry
 
@@ -1218,6 +1226,7 @@ class TestIntegrationWorkflows:
         mock_registry.create_agent = Mock(
             return_value=Mock(name="MockAgent", tier=ModelTier.LOCAL)
         )
+        mock_registry.get_model_for_agent = Mock(return_value="qwen2.5-coder:7b")
         mock_registry.escalation_policy = EscalationPolicy()
         executor.agent_registry = mock_registry
 
@@ -1270,6 +1279,7 @@ class TestIntegrationWorkflows:
         mock_registry.create_agent = Mock(
             return_value=Mock(name="MockAgent", tier=ModelTier.LOCAL)
         )
+        mock_registry.get_model_for_agent = Mock(return_value="qwen2.5-coder:7b")
         mock_registry.escalation_policy = EscalationPolicy()
         executor.agent_registry = mock_registry
 
@@ -1323,6 +1333,7 @@ class TestIntegrationWorkflows:
         mock_registry.create_agent = Mock(
             return_value=Mock(name="MockAgent", tier=ModelTier.LOCAL)
         )
+        mock_registry.get_model_for_agent = Mock(return_value="qwen2.5-coder:7b")
         mock_registry.escalation_policy = EscalationPolicy()
         executor.agent_registry = mock_registry
 
