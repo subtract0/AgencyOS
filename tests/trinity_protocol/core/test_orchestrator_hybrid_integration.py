@@ -796,7 +796,9 @@ async def test_complete_integration_orchestrator_to_executor():
         }
 
         # Mock test execution to avoid actual pytest run
-        with patch.object(executor, "_run_verification", return_value="ALL TESTS PASSED"):
+        # Also mock Ollama to prevent actual network calls
+        with patch.object(executor, "_run_verification", return_value="ALL TESTS PASSED"), \
+             patch.object(executor.ollama, "chat", new=AsyncMock(return_value="# Generated code\nprint('hello')")):
             await executor._handle_message(task_message)
 
         # Assert
