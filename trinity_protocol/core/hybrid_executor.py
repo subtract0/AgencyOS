@@ -87,6 +87,36 @@ class ExecutionAttempt:
     error: str | None = None
 
 
+@dataclass
+class ExecutionStats:
+    """Execution statistics tracking."""
+
+    tasks_processed: int = 0
+    tasks_succeeded: int = 0
+    tasks_failed: int = 0
+    local_successes: int = 0
+    local_plus_successes: int = 0
+    cloud_successes: int = 0
+    total_cost_usd: float = 0.0
+    cost_saved_usd: float = 0.0  # vs. 100% cloud
+
+
+@dataclass
+class EnrichedStats:
+    """Execution statistics with computed rates."""
+
+    tasks_processed: int
+    tasks_succeeded: int
+    tasks_failed: int
+    local_successes: int
+    local_plus_successes: int
+    cloud_successes: int
+    total_cost_usd: float
+    cost_saved_usd: float
+    local_success_rate: str  # e.g., "75.0%"
+    cloud_usage_pct: str  # e.g., "25.0%"
+
+
 class HybridExecutor:
     """
     Enhanced EXECUTOR with hybrid local-first + cloud escalation.
@@ -148,16 +178,7 @@ class HybridExecutor:
         self.ollama = OllamaClient(base_url="http://localhost:11434")
 
         # Statistics tracking
-        self._stats = {
-            "tasks_processed": 0,
-            "tasks_succeeded": 0,
-            "tasks_failed": 0,
-            "local_successes": 0,
-            "local_plus_successes": 0,
-            "cloud_successes": 0,
-            "total_cost_usd": 0.0,
-            "cost_saved_usd": 0.0,  # vs. 100% cloud
-        }
+        self._stats = ExecutionStats()
 
         self.plans_dir.mkdir(parents=True, exist_ok=True)
         logger.info("HybridExecutor initialized with local-first + cloud escalation")
@@ -499,23 +520,27 @@ class HybridExecutor:
 
     def _update_stats(self, result: TaskResult) -> None:
         """Update execution statistics."""
-        self._stats["tasks_processed"] += 1
+        self._stats.tasks_processed += 1
 
         if result.status == "success":
-            self._stats["tasks_succeeded"] += 1
+            self._stats.tasks_succeeded += 1
 
             # Track which tier succeeded
-            tier_key = f"{result.model_tier.value}_successes"
-            self._stats[tier_key] = self._stats.get(tier_key, 0) + 1
+            if result.model_tier == ModelTier.LOCAL:
+                self._stats.local_successes += 1
+            elif result.model_tier == ModelTier.LOCAL_PLUS:
+                self._stats.local_plus_successes += 1
+            elif result.model_tier == ModelTier.CLOUD:
+                self._stats.cloud_successes += 1
         else:
-            self._stats["tasks_failed"] += 1
+            self._stats.tasks_failed += 1
 
-        self._stats["total_cost_usd"] += result.cost_usd
+        self._stats.total_cost_usd += result.cost_usd
 
         # Calculate cost savings (vs. 100% cloud)
         estimated_cloud_cost = self._estimate_cloud_cost(result.duration_seconds)
         if result.model_tier != ModelTier.CLOUD:
-            self._stats["cost_saved_usd"] += estimated_cloud_cost - result.cost_usd
+            self._stats.cost_saved_usd += estimated_cloud_cost - result.cost_usd
 
     async def _publish_result(self, result: TaskResult) -> None:
         """Publish successful result to message bus."""
@@ -550,21 +575,29 @@ class HybridExecutor:
         self._running = False
         logger.info("HybridExecutor stopped")
 
-    def get_stats(self) -> dict[str, Any]:
-        """Get execution statistics."""
-        total = self._stats["tasks_processed"]
-        if total == 0:
-            return self._stats
+    def get_stats(self) -> EnrichedStats:
+        """Get execution statistics with computed rates."""
+        total = self._stats.tasks_processed
 
         local_pct = (
-            self._stats.get("local_successes", 0) / total * 100 if total > 0 else 0
+            self._stats.local_successes / total * 100 if total > 0 else 0.0
+        )
+        cloud_pct = (
+            self._stats.cloud_successes / total * 100 if total > 0 else 0.0
         )
 
-        return {
-            **self._stats,
-            "local_success_rate": f"{local_pct:.1f}%",
-            "cloud_usage_pct": f"{(self._stats.get('cloud_successes', 0) / total * 100):.1f}%",
-        }
+        return EnrichedStats(
+            tasks_processed=self._stats.tasks_processed,
+            tasks_succeeded=self._stats.tasks_succeeded,
+            tasks_failed=self._stats.tasks_failed,
+            local_successes=self._stats.local_successes,
+            local_plus_successes=self._stats.local_plus_successes,
+            cloud_successes=self._stats.cloud_successes,
+            total_cost_usd=self._stats.total_cost_usd,
+            cost_saved_usd=self._stats.cost_saved_usd,
+            local_success_rate=f"{local_pct:.1f}%",
+            cloud_usage_pct=f"{cloud_pct:.1f}%",
+        )
 
 
 # Factory function
