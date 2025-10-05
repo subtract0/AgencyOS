@@ -232,14 +232,25 @@ class TestVectorStoreProperties:
         initial_count = initial_stats.get("total_memories", 0)
 
         # Add all records with unique keys
+        added_keys = []
         for i, record in enumerate(records):
             unique_key = f"key_{i}_{record['key']}"
             store.add_memory(unique_key, record)
+            added_keys.append(unique_key)
 
         final_stats = store.get_stats()
         final_count = final_stats.get("total_memories", 0)
 
-        assert final_count == initial_count + len(records)
+        # Diagnostic assertion with detailed error message
+        expected_count = initial_count + len(records)
+        assert final_count == expected_count, (
+            f"Count mismatch: expected {expected_count} "
+            f"(initial={initial_count} + added={len(records)}), "
+            f"but got {final_count}. "
+            f"Unique keys added: {len(set(added_keys))}, "
+            f"Store _memory_texts: {len(store._memory_texts)}, "
+            f"Store _memory_records: {len(store._memory_records)}"
+        )
 
     @given(st.text(min_size=1, max_size=50), memory_record_strategy())
     def test_add_remove_idempotent(self, key: str, content: dict):
