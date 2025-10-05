@@ -146,7 +146,7 @@ class TestToolCache:
             assert cached == "cached_result"
 
             # Modify file
-            time.sleep(0.1)  # Ensure mtime changes
+            time.sleep(1.1)  # CI filesystems may have 1-second mtime granularity
             Path(temp_file).write_text("modified content")
 
             # Should miss after file modification
@@ -331,7 +331,7 @@ class TestCacheDecorator:
             assert self.call_count == 1
 
             # Modify file
-            time.sleep(0.1)
+            time.sleep(1.1)  # CI filesystems may have 1-second mtime granularity
             Path(temp_file).write_text("modified")
 
             # Third call - cache miss (file changed)
@@ -411,7 +411,7 @@ class TestGlobalCacheAPI:
             invalidate_file(temp_file)
 
             # Should re-read after invalidation
-            time.sleep(0.1)
+            time.sleep(1.1)  # CI filesystems may have 1-second mtime granularity
             Path(temp_file).write_text("new_content")
             result2 = read_cached(temp_file)
             assert result2 == "new_content"
