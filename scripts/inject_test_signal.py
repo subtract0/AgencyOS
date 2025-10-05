@@ -18,11 +18,12 @@ This will trigger Trinity to:
 import sys
 from pathlib import Path
 
+from trinity_protocol.core.orchestrator import TrinityBus
+
 # Add project root to path
 project_root = Path(__file__).parent.parent
 sys.path.insert(0, str(project_root))
 
-from trinity_protocol.core.orchestrator import TrinityBus
 
 def inject_test_signal():
     """Inject IMPROVEMENT_SIGNAL for missing test file."""

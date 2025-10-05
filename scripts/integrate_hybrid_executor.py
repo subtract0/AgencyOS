@@ -508,7 +508,7 @@ from shared.message_bus import MessageBus
             logger.error(f"DEBUG: Check /tmp/orchestrator_debug.py around line {e.lineno}")
             raise IntegrationError(
                 f"Syntax error in modified file: {e}. Rolling back..."
-            )
+            ) from e
 
         # Check that all expected components are present
         expected_strings = [

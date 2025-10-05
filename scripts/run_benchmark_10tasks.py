@@ -20,17 +20,17 @@ Article V: Spec-Driven Development
 - Validates results documented for reproducibility
 """
 
+import json
 import sys
 import time
-import json
-from pathlib import Path
 from datetime import datetime
+from pathlib import Path
+
+from trinity_protocol.core.orchestrator import TrinityBus
 
 # Add project root to path
 project_root = Path(__file__).parent.parent
 sys.path.insert(0, str(project_root))
-
-from trinity_protocol.core.orchestrator import TrinityBus
 
 # 10 diverse benchmark tasks following TaskType enum
 BENCHMARK_TASKS = [
@@ -132,7 +132,7 @@ def inject_benchmark_tasks():
     # Read baseline message count
     baseline_count = 0
     if Path(bus.path).exists():
-        with open(bus.path, 'r') as f:
+        with open(bus.path) as f:
             baseline_count = sum(1 for _ in f)
 
     print(f"📊 Baseline Messages: {baseline_count}")
@@ -168,7 +168,7 @@ def inject_benchmark_tasks():
     print("ALL TASKS INJECTED - MONITORING PHASE")
     print("=" * 80)
     print(f"\n📊 Expected Messages: {baseline_count + 10} (baseline + 10 tasks)")
-    print(f"📝 Log File: /tmp/trinity.jsonl")
+    print("📝 Log File: /tmp/trinity.jsonl")
     print(f"🔍 Trinity Process: PID {get_trinity_pid()}")
 
     print("\n" + "=" * 80)
