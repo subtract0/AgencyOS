@@ -22,6 +22,18 @@ import os
 from pathlib import Path
 from typing import Any
 
+from pydantic import BaseModel
+
+
+class MemoryStats(BaseModel):
+    """Statistics about memory storage"""
+    file_count: int
+    total_size: int
+    total_size_mb: float
+    directory_count: int
+    base_dir: str
+
+
 try:
     import anthropic
     from anthropic.types.beta import BetaMessageParam
@@ -220,24 +232,25 @@ def handle_tool_calls(
     return message
 
 
-def get_memory_stats(memory_tool: Any) -> dict[str, Any]:
+def get_memory_stats(memory_tool: Any) -> MemoryStats:
     """Get statistics about memory storage
 
     Args:
         memory_tool: AgencyMemoryTool instance
 
     Returns:
-        Dict with file count, total size, directory count
+        MemoryStats with file count, total size, directory count
     """
     base_dir = Path(memory_tool.base_dir)
 
     if not base_dir.exists():
-        return {
-            "file_count": 0,
-            "total_size": 0,
-            "directory_count": 0,
-            "base_dir": str(base_dir)
-        }
+        return MemoryStats(
+            file_count=0,
+            total_size=0,
+            total_size_mb=0.0,
+            directory_count=0,
+            base_dir=str(base_dir)
+        )
 
     file_count = 0
     total_size = 0
@@ -250,13 +263,13 @@ def get_memory_stats(memory_tool: Any) -> dict[str, Any]:
         elif path.is_dir():
             directory_count += 1
 
-    return {
-        "file_count": file_count,
-        "total_size": total_size,
-        "total_size_mb": round(total_size / 1_000_000, 2),
-        "directory_count": directory_count,
-        "base_dir": str(base_dir)
-    }
+    return MemoryStats(
+        file_count=file_count,
+        total_size=total_size,
+        total_size_mb=round(total_size / 1_000_000, 2),
+        directory_count=directory_count,
+        base_dir=str(base_dir)
+    )
 
 
 # Convenience exports
