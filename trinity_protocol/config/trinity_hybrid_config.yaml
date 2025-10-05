@@ -1,0 +1,383 @@
+# Trinity Local Hybrid Configuration
+# Version: 2.0 - Local-First + Cloud Escalation Architecture
+# Date: 2025-10-04
+
+# ==========================================
+# Model Selection Strategy
+# ==========================================
+# Trinity uses a 3-tier hybrid approach:
+# - LOCAL: Free Ollama models (qwen2.5-coder, QwQ) running on M4 Pro
+# - LOCAL_PLUS: Same models with higher temp/context for retries
+# - CLOUD: OpenAI GPT-5 for complex reasoning (paid, fast)
+#
+# Goal: 99% local execution, 1% cloud escalation
+
+model_policy:
+  # Default tier for all agents (local = free + private)
+  default_tier: "local"
+
+  # Escalation strategy
+  escalation_strategy: "progressive"  # local → local_plus → cloud
+
+  # Model tiers configuration
+  tiers:
+    local:
+      provider: "ollama"
+      base_url: "http://localhost:11434"
+      models:
+        # WITNESS: Fast pattern detection
+        witness:
+          name: "qwen2.5-coder:1.5b"
+          context_length: 2048
+          temperature: 0.3
+          timeout: 30
+
+        # ARCHITECT: Strategic planning with reasoning model!
+        architect:
+          name: "qwq:32b"  # QwQ-32B reasoning model (NEW!)
+          context_length: 32768
+          temperature: 0.3
+          timeout: 180
+
+        # EXECUTOR: All 10 Agency agents available
+        # Uses agent_registry.py for agent selection
+        executor:
+          name: "qwen2.5-coder:32b"
+          context_length: 32768
+          temperature: 0.2
+          timeout: 420
+
+        # Individual agent models (for agent_registry)
+        agents:
+          coder: "qwen2.5-coder:32b"
+          planner: "qwen2.5-coder:14b"
+          auditor: "qwen2.5-coder:14b"
+          test_generator: "qwen2.5-coder:32b"
+          quality_enforcer: "qwen2.5-coder:14b"
+          learning: "qwen2.5-coder:14b"
+          chief_architect: "qwen2.5-coder:14b"
+          merger: "qwen2.5-coder:14b"
+          toolsmith: "qwen2.5-coder:32b"
+          summary: "qwen2.5-coder:1.5b"
+
+    local_plus:
+      provider: "ollama"
+      base_url: "http://localhost:11434"
+      # Same models as LOCAL but with higher temp/context
+      temperature_multiplier: 1.4  # 0.2 → 0.28, 0.3 → 0.42
+      context_multiplier: 1.0  # Use full context
+      models:
+        # Same model names as local tier
+        witness: "qwen2.5-coder:1.5b"
+        architect: "qwq:32b"
+        executor: "qwen2.5-coder:32b"
+
+    cloud:
+      provider: "openai"
+      models:
+        # All Trinity agents use GPT-5 in cloud tier
+        witness: "gpt-5"
+        architect: "gpt-5"
+        executor: "gpt-5"
+
+        # Individual Agency agents (for agent_registry)
+        agents:
+          coder: "gpt-5"
+          planner: "gpt-5"
+          auditor: "gpt-5"
+          test_generator: "gpt-5"
+          quality_enforcer: "gpt-5"
+          learning: "gpt-5"
+          chief_architect: "gpt-5"
+          merger: "gpt-5"
+          toolsmith: "gpt-5"
+          summary: "gpt-5-mini"  # Summaries can use mini
+
+# ==========================================
+# Escalation Policy
+# ==========================================
+escalation:
+  # Attempts at each tier before escalating
+  max_local_attempts: 2
+  max_local_plus_attempts: 1
+
+  # Quality thresholds that trigger escalation
+  test_failure_threshold: 2      # Escalate after 2 test failures
+  confidence_threshold: 0.5      # Escalate if confidence < 0.5
+
+  # Escalation triggers
+  triggers:
+    - name: "test_failures"
+      threshold: 2
+      action: "escalate_tier"
+
+    - name: "timeout"
+      action: "escalate_tier"
+
+    - name: "novel_problem"
+      action: "skip_to_cloud"  # No VectorStore match → CLOUD
+
+    - name: "constitutional_violation"
+      action: "escalate_tier"
+
+    - name: "user_high_complexity"
+      action: "skip_to_cloud"  # User flagged as complex
+
+    - name: "low_confidence"
+      threshold: 0.5
+      action: "escalate_tier"
+
+  # Pre-configured policies
+  policies:
+    aggressive:
+      max_local_attempts: 1
+      max_local_plus_attempts: 1
+      test_failure_threshold: 1
+
+    conservative:
+      max_local_attempts: 3
+      max_local_plus_attempts: 2
+      test_failure_threshold: 3
+
+    cost_optimized:
+      max_local_attempts: 5
+      max_local_plus_attempts: 3
+      test_failure_threshold: 5
+      confidence_threshold: 0.2
+
+# ==========================================
+# Agency Integration
+# ==========================================
+agency_integration:
+  # Enable all 10 Agency agents in EXECUTOR
+  use_agency_agents: true
+
+  # Agent registry configuration
+  agent_registry:
+    default_tier: "local"
+    cache_agents: true
+
+  # Tools available (45+ production tools)
+  tools_enabled:
+    - Read
+    - Write
+    - Edit
+    - MultiEdit
+    - Glob
+    - Grep
+    - Bash
+    - Git
+    - GitWorkflow
+    - TodoWrite
+    - ConstitutionCheck
+    - AnalyzeTypePatterns
+    - AutoFixNoneType
+    - ApplyAndVerifyPatch
+    - LearningDashboard
+    # ... all 45+ tools from Agency
+
+# ==========================================
+# Quality Enforcement (Constitutional)
+# ==========================================
+quality_enforcement:
+  # Article I: Complete Context Before Action
+  retry_on_timeout: true
+  max_timeout_retries: 3
+  timeout_backoff_multiplier: 2.0  # 2x, 4x, 8x
+
+  # Article II: 100% Verification and Stability
+  require_test_pass: true
+  test_pass_rate_threshold: 1.0  # 100% required
+  test_command: "python run_tests.py --run-all"
+  test_timeout: 600  # 10 minutes
+
+  # Article III: Automated Enforcement
+  enforce_quality_gates: true
+  allow_manual_override: false  # No bypasses permitted
+
+  # Article IV: Continuous Learning
+  enable_vector_store: true
+  learn_from_escalations: true
+  min_pattern_confidence: 0.6
+  min_pattern_evidence: 3
+
+  # Article V: Spec-Driven Development
+  require_spec_for_complex: true
+  complexity_threshold: "medium"  # low, medium, high, critical
+
+# ==========================================
+# Cost Tracking
+# ==========================================
+cost_tracking:
+  enabled: true
+
+  # Budget configuration
+  budget:
+    limit_usd: 100.0
+    alert_threshold_pct: 80.0  # Alert at 80% of budget
+    period: "monthly"
+
+  # Cost optimization
+  optimization:
+    track_local_savings: true  # Track cost savings vs 100% cloud
+    log_escalations: true      # Log all cloud escalations
+    alert_on_high_cloud_usage: true
+    cloud_usage_threshold_pct: 5.0  # Alert if >5% tasks use cloud
+
+  # Storage
+  database_path: "trinity_costs.db"
+
+  # Metrics
+  metrics:
+    - local_success_rate
+    - cloud_escalation_rate
+    - cost_per_task
+    - savings_vs_cloud
+    - escalation_reasons
+
+# ==========================================
+# Memory & Learning
+# ==========================================
+memory:
+  # VectorStore integration (Article IV compliance)
+  use_enhanced_memory: true
+  embedding_provider: "sentence-transformers"
+
+  # Memory limits
+  max_total_mb: 40000  # 40GB for M4 Pro (48GB total)
+
+  # Ollama configuration
+  ollama_num_ctx: 32768
+  sequential_execution: true  # Load models one at a time
+
+  # Learning configuration
+  learning:
+    enabled: true
+    store_successful_patterns: true
+    store_escalation_patterns: true
+    cross_session_learning: true
+    min_confidence: 0.6
+
+# ==========================================
+# Monitoring & Observability
+# ==========================================
+monitoring:
+  # Dashboard configuration
+  dashboard:
+    enabled: true
+    refresh_interval: 5  # seconds
+    port: 8080
+    show_local_cloud_split: true
+
+  # Logging
+  logging:
+    level: "INFO"
+    log_dir: "~/.trinity-local/logs"
+    rotate_logs: true
+    max_log_size_mb: 100
+
+  # Telemetry
+  telemetry:
+    enabled: true
+    bus_path: "/tmp/trinity.jsonl"
+    include_agent_timings: true
+    include_model_usage: true
+
+# ==========================================
+# Performance Tuning
+# ==========================================
+performance:
+  # Concurrency
+  max_concurrent_tasks: 3
+  max_concurrent_agents: 1  # Sequential for memory management
+
+  # Timeouts
+  default_timeout: 300  # 5 minutes
+
+  # Caching
+  cache_llm_responses: false  # Don't cache for now
+  cache_agent_instances: true
+
+  # Background operations
+  async_learning: true
+  async_telemetry: true
+
+# ==========================================
+# Development & Testing
+# ==========================================
+development:
+  # Force tier for testing (overrides escalation logic)
+  # Options: local, local_plus, cloud, null (disabled)
+  force_tier: null
+
+  # Debug mode
+  debug: false
+  verbose_escalation: true
+  log_all_llm_calls: false
+
+  # Testing
+  test_mode: false
+  mock_llm_calls: false  # NO MOCKS in production!
+
+# ==========================================
+# Success Metrics (Targets)
+# ==========================================
+success_metrics:
+  # Primary goals
+  local_success_rate_target: 0.99  # 99% tasks complete locally
+  cloud_escalation_target: 0.01    # <1% escalate to cloud
+  cost_savings_target: 0.95        # >95% savings vs 100% cloud
+
+  # Quality goals
+  test_pass_rate_target: 1.0       # 100% test pass rate
+  constitutional_compliance: 1.0    # 100% compliance
+
+  # Performance goals
+  avg_local_task_time_s: 90        # <90s average for local tasks
+  avg_cloud_task_time_s: 30        # <30s average for cloud tasks
+
+# ==========================================
+# Feature Flags
+# ==========================================
+features:
+  hybrid_executor: true              # Use hybrid executor (NEW!)
+  agent_registry: true               # Use agent registry (NEW!)
+  escalation_rules: true             # Use escalation policy (NEW!)
+  autonomous_healing: false          # Enable self-healing (Week 3)
+  cost_dashboard_web: false          # Web dashboard (Week 4)
+  qwq_reasoning_model: true          # Use QwQ-32B for ARCHITECT (NEW!)
+
+# ==========================================
+# Paths & Directories
+# ==========================================
+paths:
+  trinity_home: "~/.trinity-local"
+  logs_dir: "~/.trinity-local/logs"
+  plans_dir: "/tmp/executor_plans"
+  message_bus: "/tmp/trinity.jsonl"
+  pid_file: "~/.trinity-local/trinity.pid"
+  config_file: "~/.trinity-local/trinity_config.yaml"
+
+# ==========================================
+# Environment Variables (Override Priority)
+# ==========================================
+# These env vars override config file settings:
+#
+# Model selection:
+# - FORCE_TIER=cloud              # Force all agents to use cloud
+# - AGENCY_MODEL=gpt-5            # Global model override
+# - CODER_MODEL=custom-model      # Per-agent override
+#
+# Cost tracking:
+# - ENABLE_COST_TRACKING=true
+# - COST_BUDGET_USD=100.0
+#
+# Memory:
+# - USE_ENHANCED_MEMORY=true
+# - FRESH_USE_FIRESTORE=false
+#
+# OpenAI:
+# - OPENAI_API_KEY=sk-...
+#
+# Testing:
+# - FORCE_RUN_ALL_TESTS=1
