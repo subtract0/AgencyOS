@@ -223,7 +223,7 @@ class TestNormalOperation:
         assert executor.plans_dir == Path(temp_plans_dir)
         assert executor.max_total_attempts == 6
         assert executor._running is False
-        assert executor._stats["tasks_processed"] == 0
+        assert executor._stats.tasks_processed == 0
 
     def test_factory_function_creates_executor(
         self, real_message_bus, real_cost_tracker, real_agent_context
@@ -754,10 +754,10 @@ class TestSecurity:
         stats = hybrid_executor.get_stats()
 
         # Assert
-        assert stats["tasks_processed"] == 1
-        assert stats["tasks_succeeded"] == 1
-        assert stats["local_successes"] == 1
-        assert stats["total_cost_usd"] == 0.0
+        assert stats.tasks_processed == 1
+        assert stats.tasks_succeeded == 1
+        assert stats.local_successes == 1
+        assert stats.total_cost_usd == 0.0
 
     def test_update_stats_tracks_cloud_successes(self, hybrid_executor):
         """Test _update_stats correctly tracks CLOUD tier successes and cost."""
@@ -778,10 +778,10 @@ class TestSecurity:
         stats = hybrid_executor.get_stats()
 
         # Assert
-        assert stats["tasks_processed"] == 1
-        assert stats["tasks_succeeded"] == 1
-        assert stats["cloud_successes"] == 1
-        assert stats["total_cost_usd"] == 0.10
+        assert stats.tasks_processed == 1
+        assert stats.tasks_succeeded == 1
+        assert stats.cloud_successes == 1
+        assert stats.total_cost_usd == 0.10
 
     def test_update_stats_calculates_cost_savings(self, hybrid_executor):
         """Test cost savings calculation for LOCAL vs CLOUD."""
@@ -802,7 +802,7 @@ class TestSecurity:
         stats = hybrid_executor.get_stats()
 
         # Assert - should have saved $0.20 (2 minutes * $0.10)
-        assert stats["cost_saved_usd"] == 0.20
+        assert stats.cost_saved_usd == 0.20
 
 
 # ============================================================================
@@ -819,12 +819,12 @@ class TestStress:
         stats = hybrid_executor.get_stats()
 
         # Assert
-        assert stats["tasks_processed"] == 0
-        assert stats["tasks_succeeded"] == 0
-        assert stats["tasks_failed"] == 0
-        assert stats["local_successes"] == 0
-        assert stats["total_cost_usd"] == 0.0
-        assert stats["cost_saved_usd"] == 0.0
+        assert stats.tasks_processed == 0
+        assert stats.tasks_succeeded == 0
+        assert stats.tasks_failed == 0
+        assert stats.local_successes == 0
+        assert stats.total_cost_usd == 0.0
+        assert stats.cost_saved_usd == 0.0
 
     def test_get_stats_with_mixed_results(self, hybrid_executor):
         """Test statistics tracking with mix of successes and failures."""
@@ -870,14 +870,14 @@ class TestStress:
         stats = hybrid_executor.get_stats()
 
         # Assert
-        assert stats["tasks_processed"] == 3
-        assert stats["tasks_succeeded"] == 2
-        assert stats["tasks_failed"] == 1
-        assert stats["local_successes"] == 1
-        assert stats["cloud_successes"] == 1
-        assert stats["local_plus_successes"] == 0  # This one failed
+        assert stats.tasks_processed == 3
+        assert stats.tasks_succeeded == 2
+        assert stats.tasks_failed == 1
+        assert stats.local_successes == 1
+        assert stats.cloud_successes == 1
+        assert stats.local_plus_successes == 0  # This one failed
         # Allow for float precision issues
-        assert abs(stats["total_cost_usd"] - 0.15) < 0.0001
+        assert abs(stats.total_cost_usd - 0.15) < 0.0001
 
     def test_get_stats_includes_success_rate_percentage(self, hybrid_executor):
         """Test get_stats calculates local_success_rate percentage."""
@@ -912,8 +912,8 @@ class TestStress:
         stats = hybrid_executor.get_stats()
 
         # Assert - 1 local success out of 2 total = 50%
-        assert stats["local_success_rate"] == "50.0%"
-        assert stats["cloud_usage_pct"] == "50.0%"
+        assert stats.local_success_rate == "50.0%"
+        assert stats.cloud_usage_pct == "50.0%"
 
     def test_get_stats_handles_zero_tasks(self, hybrid_executor):
         """Test get_stats handles division by zero gracefully."""
@@ -921,9 +921,9 @@ class TestStress:
         stats = hybrid_executor.get_stats()
 
         # Assert - should not crash, return correct initial values
-        assert stats["tasks_processed"] == 0
-        assert stats["tasks_succeeded"] == 0
-        assert stats["total_cost_usd"] == 0.0
+        assert stats.tasks_processed == 0
+        assert stats.tasks_succeeded == 0
+        assert stats.total_cost_usd == 0.0
         # Note: local_success_rate and cloud_usage_pct are only added when tasks_processed > 0
 
 
@@ -1255,8 +1255,8 @@ class TestIntegrationWorkflows:
 
         # Verify stats updated
         stats = executor.get_stats()
-        assert stats["tasks_processed"] == 1
-        assert stats["tasks_succeeded"] == 1
+        assert stats.tasks_processed == 1
+        assert stats.tasks_succeeded == 1
 
     @pytest.mark.asyncio
     async def test_workflow_with_escalation_path(
@@ -1310,10 +1310,10 @@ class TestIntegrationWorkflows:
 
         # Assert
         stats = executor.get_stats()
-        assert stats["tasks_processed"] == 1
-        assert stats["tasks_succeeded"] == 1
+        assert stats.tasks_processed == 1
+        assert stats.tasks_succeeded == 1
         # Cost should be very low (local models are free, cloud has minimal cost)
-        assert stats["total_cost_usd"] < 0.01
+        assert stats.total_cost_usd < 0.01
 
     @pytest.mark.asyncio
     async def test_workflow_statistics_accumulation(
@@ -1364,10 +1364,10 @@ class TestIntegrationWorkflows:
 
         # Assert
         stats = executor.get_stats()
-        assert stats["tasks_processed"] == 3
-        assert stats["tasks_succeeded"] == 3
-        assert stats["local_successes"] == 3
-        assert stats["cost_saved_usd"] > 0.0  # Saved vs cloud
+        assert stats.tasks_processed == 3
+        assert stats.tasks_succeeded == 3
+        assert stats.local_successes == 3
+        assert stats.cost_saved_usd > 0.0  # Saved vs cloud
 
 
 # ============================================================================
