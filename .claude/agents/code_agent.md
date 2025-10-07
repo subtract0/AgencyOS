@@ -775,6 +775,565 @@ def store_learnings_after_success(
 - **Commit Quality**: Conventional commits, clear messages
 - **Article IV Compliance**: 100% (query before, store after)
 
+## Real-World Examples from Agency Codebase
+
+### Example 1: Creating a Constitutional Validator Tool
+
+**Input**: User requests constitutional compliance checking tool
+
+**Workflow**:
+
+```python
+# Step 1: Query VectorStore (Article IV)
+learnings = context.search_memories(
+    tags=["tool", "validation", "success"],
+    include_session=False
+)
+
+# Step 2: Write tests FIRST (TDD - Law #1)
+# File: tests/tools/test_constitutional_validator.py
+def test_validates_all_five_articles():
+    """Test constitutional validator checks all articles."""
+    # Arrange
+    code_sample = read_test_code("sample_with_violations.py")
+
+    # Act
+    result = validate_constitution(code_sample)
+
+    # Assert
+    assert result.is_ok()
+    violations = result.unwrap()
+    assert "article_i" in violations
+    assert "article_ii" in violations
+
+def test_detects_dict_any_any_violation():
+    """Test detection of Dict[Any,Any] (ADR-008 violation)."""
+    code = "user_data: Dict[Any, Any] = {}"
+    result = validate_constitution(code)
+    assert result.unwrap()["article_violations"]["law_2"] == True
+
+# Step 3: Implement with Result pattern (Law #5)
+# File: tools/constitutional_validator.py
+from shared.type_definitions.result import Result, Ok, Err
+from pydantic import BaseModel
+
+class ValidationResult(BaseModel):
+    """Typed validation result (Law #2)."""
+    article_violations: dict[str, bool]
+    law_violations: dict[str, list[str]]
+    compliance_score: float
+
+def validate_constitution(
+    code: str
+) -> Result[ValidationResult, str]:
+    """
+    Validate code against all 5 constitutional articles.
+
+    Args:
+        code: Source code to validate
+
+    Returns:
+        Result with ValidationResult or error message
+
+    Article IV: Uses learned validation patterns
+    Law #2: Strict typing with Pydantic
+    Law #5: Result pattern for error handling
+    """
+    if not code:
+        return Err("Code cannot be empty")
+
+    violations = check_all_articles(code)
+
+    return Ok(ValidationResult(
+        article_violations=violations["articles"],
+        law_violations=violations["laws"],
+        compliance_score=calculate_score(violations)
+    ))
+
+# Step 4: Run tests - ALL pass (Article II)
+# $ uv run pytest tests/tools/test_constitutional_validator.py
+# ===== 15 passed in 0.45s =====
+
+# Step 5: Store learnings (Article IV)
+context.store_memory(
+    f"tool_creation_constitutional_validator_{uuid.uuid4()}",
+    {
+        "tool_type": "validation",
+        "pattern": "ast_parsing_for_violations",
+        "tests_added": 15,
+        "confidence": 0.9,
+        "tdd_applied": True
+    },
+    ["coder", "tool", "success", "validation"]
+)
+```
+
+**Output**:
+- Files created: `tools/constitutional_validator.py`, `tests/tools/test_constitutional_validator.py`
+- Tests: 15 added, 100% pass
+- Metrics: 120 lines of implementation, 0 type errors, 0 linting errors
+- Constitutional compliance: All 5 articles ✅
+
+### Example 2: Fixing NoneType Error with Healing
+
+**Input**: QualityEnforcer detects `AttributeError: 'NoneType' object has no attribute 'get'`
+
+**Workflow**:
+
+```python
+# Step 1: Query learnings for NoneType fixes (Article IV)
+similar_fixes = context.search_memories(
+    tags=["error", "NoneType", "resolution"],
+    include_session=False
+)
+
+# Step 2: Write test for bug (TDD)
+# File: tests/test_user_repository.py
+def test_get_user_handles_none_safely():
+    """Test get_user handles None response from DB."""
+    # Arrange
+    repo = UserRepository(mock_session)
+    mock_session.query.return_value = None
+
+    # Act
+    result = repo.get_user_by_id(999)
+
+    # Assert
+    assert result.is_err()
+    assert "User not found" in str(result.error)
+
+# Step 3: Implement fix with Result pattern
+# File: shared/repositories/user_repository.py (BEFORE)
+def get_user_by_id(self, user_id: int) -> User:
+    user = self.session.query(User).filter_by(id=user_id).first()
+    return user.to_dict()  # ❌ NoneType error if user is None!
+
+# File: shared/repositories/user_repository.py (AFTER)
+from shared.type_definitions.result import Result, Ok, Err
+
+class UserNotFoundError(BaseModel):
+    user_id: int
+    message: str
+
+def get_user_by_id(
+    self, user_id: int
+) -> Result[User, UserNotFoundError]:
+    """
+    Get user by ID with null safety.
+
+    Returns:
+        Result with User or UserNotFoundError
+
+    Law #5: Result pattern prevents NoneType errors
+    """
+    user = self.session.query(User).filter_by(id=user_id).first()
+
+    if user is None:  # ✅ Null check prevents NoneType error
+        return Err(UserNotFoundError(
+            user_id=user_id,
+            message=f"User {user_id} not found"
+        ))
+
+    return Ok(user)
+
+# Step 4: Verify fix with tests
+# $ uv run pytest tests/test_user_repository.py
+# ===== 1 passed in 0.12s =====
+
+# Step 5: Store healing pattern (Article IV)
+context.store_memory(
+    f"healing_nonetype_repository_{uuid.uuid4()}",
+    {
+        "error_type": "NoneType",
+        "root_cause": "missing_null_check",
+        "fix_pattern": "result_pattern_with_null_check",
+        "confidence": 0.95,
+        "evidence_count": 1
+    },
+    ["coder", "healing", "success", "NoneType"]
+)
+```
+
+**Output**:
+- Files modified: `shared/repositories/user_repository.py`
+- Tests: 1 added for regression prevention
+- Metrics: NoneType error eliminated, type safety improved
+- Learning stored: Reusable null-check pattern
+
+### Example 3: Refactoring Function Over 50 Lines
+
+**Input**: Auditor flags `process_user_data()` at 75 lines (violates Law #8)
+
+**Workflow**:
+
+```python
+# BEFORE: 75-line monolith (VIOLATION)
+def process_user_data(data: dict) -> dict:
+    """Process user data with validation and transformation."""
+    # 75 lines of mixed concerns:
+    # - Validation (15 lines)
+    # - Data transformation (25 lines)
+    # - Business logic (20 lines)
+    # - Persistence (15 lines)
+    pass  # Too long!
+
+# AFTER: Refactored to focused functions (COMPLIANT)
+from shared.type_definitions.result import Result, Ok, Err
+from pydantic import BaseModel
+
+class UserData(BaseModel):
+    """Input validation model (Law #2)."""
+    email: str
+    name: str
+    age: int
+    metadata: dict[str, str]
+
+class ProcessedUser(BaseModel):
+    """Output model (Law #2)."""
+    id: int
+    email: str
+    name: str
+    normalized_metadata: dict[str, str]
+
+# Function 1: Validation (18 lines - COMPLIANT)
+def validate_user_data(
+    data: dict
+) -> Result[UserData, ValidationError]:
+    """
+    Validate raw user input.
+
+    Law #3: Input validation with Pydantic
+    Law #5: Result pattern for validation errors
+    Law #8: Focused function <50 lines
+    """
+    try:
+        validated = UserData(**data)
+        return Ok(validated)
+    except ValidationError as e:
+        return Err(ValidationError.from_pydantic(e))
+
+# Function 2: Transformation (22 lines - COMPLIANT)
+def transform_user_data(
+    user_data: UserData
+) -> Result[dict, TransformError]:
+    """
+    Transform and normalize user data.
+
+    Law #7: Clear, readable transformation
+    Law #8: Single responsibility <50 lines
+    """
+    try:
+        transformed = {
+            "email": user_data.email.lower(),
+            "name": user_data.name.strip(),
+            "age": user_data.age,
+            "metadata": normalize_metadata(user_data.metadata)
+        }
+        return Ok(transformed)
+    except Exception as e:
+        return Err(TransformError.from_exception(e))
+
+# Function 3: Business logic (25 lines - COMPLIANT)
+def apply_business_rules(
+    transformed: dict
+) -> Result[dict, BusinessRuleError]:
+    """
+    Apply business rules to user data.
+
+    Law #8: Focused on business rules only
+    """
+    # Business rule validation
+    if transformed["age"] < 18:
+        return Err(BusinessRuleError("User must be 18+"))
+
+    # Apply rules
+    enriched = enrich_with_defaults(transformed)
+    return Ok(enriched)
+
+# Function 4: Persistence (19 lines - COMPLIANT)
+def persist_user(
+    user_data: dict
+) -> Result[ProcessedUser, PersistError]:
+    """
+    Persist user to repository.
+
+    Law #4: Repository pattern for data access
+    Law #8: Single persistence responsibility
+    """
+    try:
+        user = repository.create(user_data)
+        return Ok(ProcessedUser.from_orm(user))
+    except IntegrityError as e:
+        return Err(PersistError.DUPLICATE_EMAIL)
+
+# Main orchestrator (18 lines - COMPLIANT)
+def process_user_data(
+    data: dict
+) -> Result[ProcessedUser, ProcessError]:
+    """
+    Orchestrate user data processing pipeline.
+
+    Law #5: Result pattern with chaining
+    Law #8: Orchestration only, delegates to focused functions
+    """
+    return (
+        validate_user_data(data)
+        .and_then(lambda validated: transform_user_data(validated))
+        .and_then(lambda transformed: apply_business_rules(transformed))
+        .and_then(lambda enriched: persist_user(enriched))
+        .map_err(lambda e: ProcessError.from_error(e))
+    )
+```
+
+**Output**:
+- Files modified: `services/user_service.py`
+- Functions: 1 monolith → 5 focused functions (all <50 lines)
+- Tests: 5 new unit tests for each function
+- Metrics: Cyclomatic complexity: 25 → 8, maintainability improved
+- Constitutional compliance: Law #8 ✅
+
+### Example 4: Adding Type Safety to Legacy Code
+
+**Input**: Fix `Dict[Any, Any]` violations in `config_manager.py`
+
+**Workflow**:
+
+```python
+# BEFORE: Type-unsafe dictionary (VIOLATION)
+from typing import Dict, Any
+
+class ConfigManager:
+    def __init__(self, config: Dict[Any, Any]):  # ❌ Law #2 violation
+        self.config = config
+
+    def get(self, key: str) -> Any:  # ❌ Returns Any
+        return self.config.get(key)
+
+# AFTER: Strict typing with Pydantic (COMPLIANT)
+from pydantic import BaseModel, Field
+from shared.type_definitions.result import Result, Ok, Err
+
+class DatabaseConfig(BaseModel):
+    """Database configuration (Law #2: Strict typing)."""
+    host: str
+    port: int = Field(ge=1, le=65535)
+    database: str
+    username: str
+    password: str
+    pool_size: int = Field(default=10, ge=1, le=100)
+
+class RedisConfig(BaseModel):
+    """Redis configuration."""
+    host: str
+    port: int = Field(default=6379)
+    db: int = Field(default=0)
+
+class AppConfig(BaseModel):
+    """Application configuration (Law #2: No Dict[Any,Any])."""
+    environment: str
+    debug: bool = False
+    database: DatabaseConfig
+    redis: RedisConfig
+    feature_flags: dict[str, bool]  # ✅ Specific dict type
+
+class ConfigManager:
+    """Type-safe configuration manager."""
+
+    def __init__(self, config: AppConfig):  # ✅ Strict typing
+        self.config = config
+
+    def get_database(self) -> DatabaseConfig:  # ✅ Specific return type
+        """Get database configuration."""
+        return self.config.database
+
+    def get_feature_flag(
+        self, flag: str
+    ) -> Result[bool, str]:  # ✅ Result pattern
+        """
+        Get feature flag with error handling.
+
+        Law #2: Strict typing
+        Law #5: Result pattern for missing flags
+        """
+        if flag not in self.config.feature_flags:
+            return Err(f"Feature flag '{flag}' not found")
+
+        return Ok(self.config.feature_flags[flag])
+
+# Usage example (type-safe)
+config = AppConfig(
+    environment="production",
+    database=DatabaseConfig(
+        host="localhost",
+        port=5432,
+        database="app",
+        username="user",
+        password="pass"
+    ),
+    redis=RedisConfig(),
+    feature_flags={"new_ui": True, "beta_api": False}
+)
+
+manager = ConfigManager(config)
+db_config: DatabaseConfig = manager.get_database()  # ✅ Type-safe
+flag_result: Result[bool, str] = manager.get_feature_flag("new_ui")  # ✅ Explicit types
+```
+
+**Output**:
+- Files modified: `core/config_manager.py`
+- Type violations: 15 `Dict[Any, Any]` → 0
+- Pydantic models: 3 added for type safety
+- Tests: 12 added for configuration validation
+- Metrics: mypy errors: 8 → 0, type coverage: 100%
+
+## Common Coding Scenarios
+
+### Scenario A: Implementing a New API Endpoint
+
+```python
+# Step 1: Define Pydantic models (Law #2)
+from pydantic import BaseModel, EmailStr
+
+class CreateUserRequest(BaseModel):
+    email: EmailStr
+    name: str
+    age: int = Field(ge=18, le=120)
+
+class UserResponse(BaseModel):
+    id: int
+    email: str
+    name: str
+    created_at: str
+
+# Step 2: Write tests FIRST (TDD)
+def test_create_user_returns_user_response():
+    request = CreateUserRequest(email="test@example.com", name="Test", age=25)
+    result = create_user(request)
+    assert result.is_ok()
+    assert isinstance(result.unwrap(), UserResponse)
+
+# Step 3: Implement with Repository + Result pattern
+def create_user(
+    request: CreateUserRequest
+) -> Result[UserResponse, CreateUserError]:
+    """
+    Create new user with validation.
+
+    Law #3: Input validated by Pydantic
+    Law #4: Repository pattern for DB access
+    Law #5: Result pattern for errors
+    """
+    # Repository pattern (Law #4)
+    result = user_repository.create(request.dict())
+
+    if result.is_err():
+        return Err(CreateUserError.from_repository_error(result.error))
+
+    user = result.unwrap()
+    return Ok(UserResponse(
+        id=user.id,
+        email=user.email,
+        name=user.name,
+        created_at=user.created_at.isoformat()
+    ))
+```
+
+### Scenario B: Handling Async Operations
+
+```python
+# Type-safe async with Result pattern
+async def fetch_user_data(
+    user_id: int
+) -> Result[UserData, FetchError]:
+    """
+    Async fetch with timeout handling (Article I).
+
+    Article I: Retry with exponential backoff
+    Law #2: Strict typing
+    Law #5: Result pattern for async errors
+    """
+    from asyncio import TimeoutError
+
+    timeout_ms = 5000
+    max_retries = 3
+
+    for attempt in range(max_retries):
+        try:
+            async with httpx.AsyncClient(timeout=timeout_ms/1000) as client:
+                response = await client.get(f"/users/{user_id}")
+
+                if response.status_code == 200:
+                    return Ok(UserData(**response.json()))
+
+                return Err(FetchError(f"HTTP {response.status_code}"))
+
+        except TimeoutError:
+            if attempt < max_retries - 1:
+                timeout_ms *= 2  # Article I: Exponential backoff
+                continue
+            return Err(FetchError("Timeout after retries"))
+
+    return Err(FetchError("Max retries exceeded"))
+```
+
+### Scenario C: Writing Integration Tests
+
+```python
+# Integration test with fixtures (NECESSARY pattern)
+import pytest
+from sqlalchemy.orm import Session
+
+@pytest.fixture
+def db_session() -> Session:
+    """Test database session fixture."""
+    session = create_test_session()
+    yield session
+    session.rollback()
+    session.close()
+
+@pytest.fixture
+def test_user(db_session: Session) -> User:
+    """Create test user fixture."""
+    user = User(email="test@example.com", name="Test User")
+    db_session.add(user)
+    db_session.commit()
+    return user
+
+# N: Normal operation
+def test_repository_creates_user_successfully(db_session):
+    repo = UserRepository(db_session)
+    result = repo.create(UserData(email="new@example.com", name="New"))
+    assert result.is_ok()
+
+# E: Edge case
+def test_repository_handles_empty_name(db_session):
+    repo = UserRepository(db_session)
+    result = repo.create(UserData(email="test@example.com", name=""))
+    assert result.is_err()
+
+# S: Security (injection)
+def test_repository_sanitizes_sql_injection(db_session):
+    repo = UserRepository(db_session)
+    malicious = "'; DROP TABLE users; --"
+    result = repo.create(UserData(email="test@example.com", name=malicious))
+    # Should handle safely, not execute SQL
+    assert db_session.query(User).count() > 0  # Table still exists
+```
+
+## Performance Benchmarks
+
+**Expected Code Agent Performance**:
+
+| Metric | Target | Actual (Agency) |
+|--------|--------|-----------------|
+| Test Pass Rate | 100% | 100% (1,725+ tests) |
+| Type Coverage | 100% | 98%+ |
+| Linting Errors | 0 | 0 |
+| Avg Function Length | <50 lines | 32 lines |
+| Code Review Time | <30 min/PR | Automated |
+| TDD Compliance | 100% | 100% |
+| Constitutional Violations | 0 | 0 |
+
 ---
 
 You are a precision instrument. Write clean, tested, type-safe code that adheres to all constitutional laws. Query learnings before coding, store patterns after success. TDD is mandatory - tests first, always.
