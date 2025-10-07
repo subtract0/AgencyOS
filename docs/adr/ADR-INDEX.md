@@ -327,6 +327,47 @@ This index catalogs all Architecture Decision Records for the Agency multi-agent
 
 ---
 
+### ADR-022: Autonomous-Development-Ready Auditor Architecture
+**Status:** Proposed
+**Date:** 2025-10-07
+**File:** `docs/adr/ADR-022-autonomous-auditor-architecture.md`
+
+**Decision:** Extend auditor recommendations with autonomous execution metadata to enable AgencyCodeAgent to apply fixes without human interpretation.
+
+**Key Components:**
+- **Enhanced Pydantic Model**: `EnhancedRecommendation` with auto-fixability classification, generated fix code, dependency analysis, risk quantification, validation strategies, and learning integration
+- **Auto-Fixability Classifier**: Algorithm for trivial/simple/moderate/complex classification with confidence scores
+- **Fix Code Generator**: LLM-powered (qwen2.5-coder:32b) fix generation with unified diff patches
+- **Dependency Analyzer**: AST-based import graph for safe fix ordering
+- **Risk Scorer**: Quantified risk assessment (0.0-1.0 scale) with rollback planning
+- **Learning Integration**: VectorStore queries for similar fix success patterns
+
+**Classification Rules:**
+- **Trivial** (auto_fixable=True, confidence=0.95+): Pure deletions, <5 lines, syntax-only validation
+- **Simple** (auto_fixable=True, confidence=0.80+): Single function edits, unit test validation
+- **Moderate** (auto_fixable=False, confidence=0.60+): Multi-function changes, integration test validation
+- **Complex** (auto_fixable=False, confidence=<0.60): Architectural changes, full suite validation
+
+**Autonomous Safety Thresholds:**
+- `auto_fixable = True`
+- `fix_confidence >= 0.80`
+- `risk_score < 0.30`
+- No constitutional blocking violations
+- Validation strategy defined (not manual review)
+
+**Impact:**
+- 60-70% of 328 recommendations auto-fixable without human intervention
+- 80% reduction in human fix time
+- >90% success rate for auto-fixes
+- <5% rollback rate
+- Graduated autonomy based on confidence/risk
+
+**Constitutional Compliance:** All 5 Articles (I: Complete Context, II: 100% Verification, III: Automated Enforcement, IV: Continuous Learning - PRIMARY, V: Spec-Driven Development)
+
+**Implementation:** 6 weeks (30 hours effort), production deployment week 9
+
+---
+
 ## Review Schedule
 
 - **Weekly:** Review new ADR proposals
