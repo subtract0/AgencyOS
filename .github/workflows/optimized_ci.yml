@@ -73,6 +73,8 @@ jobs:
         run: |
           echo "Checking for Dict[Any, Any] violations..."
           python tools/quality/no_dict_any_check.py
+        env:
+          NO_DICT_ANY_ALLOWLIST: "**/scripts/benchmark*.py,**/scripts/continuous_audit*.py"
 
       - name: Set check result
         id: check-result

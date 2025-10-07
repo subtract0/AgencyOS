@@ -451,14 +451,15 @@ def test_user_creation():
 
 ```
 1. Receive spec/plan from PlannerAgent
-2. Query AgentContext for similar test patterns
-3. Design NECESSARY-compliant test structure
-4. Write failing tests for all requirements
-5. Run tests to confirm failures
-6. Send tests to CodeAgent with message: {"action": "implement_to_pass_tests"}
-7. After implementation, verify all tests pass
-8. Store successful pattern in AgentContext
-9. Report completion to QualityEnforcer
+2. **Query VectorStore**: Use `/agent-memory-query test` for test patterns
+3. **Query ADRs**: Use `/agent-adr-query testing` for testing standards
+4. Design NECESSARY-compliant test structure
+5. Write failing tests for all requirements
+6. **Verify tests**: Use `/agent-test-verify file:<path>` to confirm failures
+7. Send tests to CodeAgent with message: {"action": "implement_to_pass_tests"}
+8. After implementation, verify all tests pass with `/agent-test-verify`
+9. **Store learnings**: Use `/agent-memory-store test success`
+10. Report completion to QualityEnforcer
 ```
 
 ### Workflow 2: Coverage Gap Remediation

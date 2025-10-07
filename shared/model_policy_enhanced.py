@@ -39,24 +39,27 @@ class ComplexityLevel(str, Enum):
     CRITICAL = "critical"  # 0.9-1.0: Critical failures, security issues
 
 
-# Model mapping per tier
+# Model mapping per tier (Gemini's Dual-Model Strategy)
 TIER_MODELS: dict[ModelTier, str] = {
-    ModelTier.LOCAL_FAST: "qwen2.5-coder:1.5b",
-    ModelTier.LOCAL_STANDARD: "qwen2.5-coder:7b",
-    ModelTier.LOCAL_ADVANCED: "codestral-22b",
+    ModelTier.LOCAL_FAST: "qwen2.5-coder:1.5b",  # Lightweight tasks
+    ModelTier.LOCAL_STANDARD: "deepseek-coder-v2:lite",  # FIXER: Code generation/repair (338 languages)
+    ModelTier.LOCAL_ADVANCED: "gpt-oss:20b",  # AUDITOR/LEARNER: Analysis/reasoning/patterns
     ModelTier.CLOUD_STANDARD: "gpt-5",
     ModelTier.CLOUD_PREMIUM: "claude-sonnet-4.5",
 }
 
 
-# Trinity agent to default tier mapping
+# Trinity agent to default tier mapping (Gemini's Dual-Model Strategy)
 TRINITY_AGENT_TIERS: dict[str, ModelTier] = {
-    "witness": ModelTier.LOCAL_FAST,  # High-frequency detection
-    "auditlearn": ModelTier.LOCAL_FAST,  # Pattern classification
-    "architect": ModelTier.LOCAL_ADVANCED,  # Strategic planning (escalates on complexity)
+    "witness": ModelTier.LOCAL_FAST,  # High-frequency detection (qwen2.5-coder:1.5b)
+    "auditlearn": ModelTier.LOCAL_ADVANCED,  # Pattern analysis (gpt-oss:20b)
+    "auditor": ModelTier.LOCAL_ADVANCED,  # Code analysis/auditing (gpt-oss:20b)
+    "learner": ModelTier.LOCAL_ADVANCED,  # Pattern extraction/synthesis (gpt-oss:20b)
+    "fixer": ModelTier.LOCAL_STANDARD,  # Code generation/repair (deepseek-coder-v2:lite)
+    "architect": ModelTier.LOCAL_ADVANCED,  # Strategic planning (gpt-oss:20b)
     "plan": ModelTier.LOCAL_ADVANCED,  # Same as architect
-    "executor": ModelTier.CLOUD_STANDARD,  # Meta-orchestration (Claude Sonnet preferred)
-    "execute": ModelTier.CLOUD_STANDARD,  # Same as executor
+    "executor": ModelTier.LOCAL_STANDARD,  # Code execution (deepseek-coder-v2:lite)
+    "execute": ModelTier.LOCAL_STANDARD,  # Same as executor
 }
 
 

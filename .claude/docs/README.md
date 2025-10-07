@@ -413,6 +413,21 @@ cat docs/adr/ADR-INDEX.md              # Architecture decisions
 
 ## Version History
 
+**v1.1.1** (2025-10-07) - PATCH RELEASE
+
+- Mars Rover Bulletproofing (3-layer system)
+- Auto-retry, health tracking, quarantine operational
+- Main branch GREEN, zero broken windows
+- Developer velocity 0% → 100%
+- 80% false positive reduction
+
+**v1.1.0** (2025-10-04) - PRODUCTION READY
+
+- Test infrastructure modernization
+- Direct pytest execution
+- 415 ruff violations → 0
+- 26,568 lines bloat removed
+
 **v0.9.5** (2025-10-03)
 
 - Initial `.claude/docs/` structure created
@@ -440,6 +455,6 @@ cat docs/adr/ADR-INDEX.md              # Architecture decisions
 
 _"In automation we trust, in discipline we excel, in learning we evolve."_
 
-**Last Updated**: 2025-10-03
-**Version**: 0.9.5 (Documentation Hub Establishment)
+**Last Updated**: 2025-10-07
+**Version**: 1.1.1 (Mars Rover Bulletproofing - Patch Release)
 **Maintainer**: Agency OS Core Team

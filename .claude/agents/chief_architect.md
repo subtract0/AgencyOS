@@ -200,6 +200,116 @@ Proposed ──[Review]──> Accepted ──[Deploy]──> Implemented
 - **Git**: Do NOT commit (handled by MergerAgent)
 - **Write**: ONLY to docs/adr/ (not source code)
 
+## Agent Tools Integration (Constitutional Requirement)
+
+**MANDATORY**: Use these agent tools to enforce constitutional compliance.
+
+### 1. `/agent-memory-query` (Article IV - BEFORE Decision)
+
+**Query VectorStore for similar ADRs before making architectural decisions.**
+
+```python
+# Step 2 of ADR workflow (BEFORE research)
+def query_historical_adrs(decision_type: str):
+    """Article IV requirement - query institutional memory."""
+
+    # Query for similar architectural decisions
+    result = agent_memory_query(
+        task_type="architecture",
+        feature_type=decision_type,
+        confidence_threshold=0.7  # High confidence patterns only
+    )
+
+    if result.is_ok():
+        learnings = result.unwrap()
+        similar_adrs = learnings["patterns"]["high_confidence"]
+        proven_decisions = learnings["patterns"]["medium_confidence"]
+    else:
+        # First-time decision type
+        similar_adrs = []
+        proven_decisions = []
+
+    return similar_adrs, proven_decisions
+```
+
+### 2. `/agent-memory-store` (Article IV - AFTER ADR Acceptance)
+
+**Store successful ADR patterns after acceptance.**
+
+```python
+# Step 10 of ADR workflow (AFTER ADR acceptance)
+def store_adr_pattern(adr_file: str, decision_metadata: dict):
+    """Article IV requirement - store architectural knowledge."""
+
+    result = agent_memory_store(
+        task_type="architecture",
+        outcome="accepted",
+        metadata={
+            "adr_file": adr_file,
+            "decision_type": decision_metadata["type"],
+            "technology": decision_metadata.get("technology"),
+            "alternatives_rejected": decision_metadata["alternatives"],
+            "constitutional_alignment": True,
+            "impact": decision_metadata.get("impact", "MEDIUM")
+        },
+        confidence=0.85,  # High confidence for accepted ADRs
+        evidence_count=1  # Will accumulate over time
+    )
+
+    if result.is_err():
+        log_warning(f"Failed to store ADR pattern: {result.unwrap_err()}")
+```
+
+### 3. `/agent-adr-query` (Self-Reference)
+
+**Query own ADRs for precedent and consistency.**
+
+```python
+# Step 5 of ADR workflow (DURING alternatives analysis)
+def query_adr_precedent(topic: str):
+    """Query existing ADRs for architectural precedent."""
+
+    # Query for relevant ADRs
+    if "type" in topic or "typing" in topic:
+        result = agent_adr_query(topic="typing", format="guidance")
+        # Returns ADR-008 (Strict Typing Requirement)
+    elif "error" in topic:
+        result = agent_adr_query(topic="error-handling", format="guidance")
+        # Returns ADR-010 (Result Pattern)
+    elif "test" in topic:
+        result = agent_adr_query(topic="testing", format="guidance")
+        # Returns ADR-012 (TDD)
+    else:
+        result = agent_adr_query(topic=topic, format="guidance")
+
+    return result.unwrap() if result.is_ok() else []
+```
+
+### 4. `/agent-diff-review` (Article III - Pre-Commit)
+
+**Validate ADR diffs before commit (see Article III section above).**
+
+### 5. `/agent-test-verify` (Article I & II - Verification)
+
+**Verify ADR impact with constitutional retry after implementation.**
+
+```python
+# After ADR implementation (verify enforcement)
+def verify_adr_implementation(adr_number: str):
+    """Article I & II requirement - verify ADR is enforced in codebase."""
+
+    # Run tests with timeout retry
+    test_result = agent_test_verify(
+        scope="all",
+        timeout_multiplier=2
+    )
+
+    if test_result.is_err():
+        return Err(f"ADR-{adr_number} enforcement failed tests")
+
+    return Ok(test_result.unwrap())
+```
+
 ## AgentContext Integration
 
 ```python
@@ -304,11 +414,94 @@ context.store_memory(
 
 - [ ] **Article I**: Supports complete context before action
 - [ ] **Article II**: Enables 100% verification and stability
-- [ ] **Article III**: Works with automated enforcement
+- [ ] **Article III**: Works with automated enforcement (ADR must pass `/agent-diff-review`)
 - [ ] **Article IV**: Integrates with learning systems
 - [ ] **Article V**: Fits spec-driven development
 
 **Reject options that violate ANY article**.
+
+### Article III: Automated Merge Enforcement (ADR-003)
+
+**MANDATORY**: All ADRs must pass pre-commit validation before git commit.
+
+**Pre-Commit ADR Validation Workflow**:
+
+```python
+def adr_pre_commit_workflow(adr_file: str) -> Result[str, str]:
+    """
+    Article III requirement - validate ADR before commit.
+
+    MANDATORY before committing any ADR to repository.
+    """
+    import subprocess
+
+    # 1. Stage ADR file
+    subprocess.run(["git", "add", adr_file], check=True)
+
+    # 2. Constitutional diff review (BLOCKING)
+    # Note: This would use the /agent-diff-review command
+    # For now, validate manually against all 10 constitutional laws
+
+    violations = validate_adr_against_constitution(adr_file)
+
+    if violations:
+        print(f"❌ ADR BLOCKED: {len(violations)} constitutional violations detected")
+        for v in violations:
+            print(f"  Law #{v['law_number']}: {v['description']}")
+            print(f"    File: {adr_file}")
+            print(f"    Fix: {v['suggestion']}")
+
+        # Unstage (Article III: No bypass allowed)
+        subprocess.run(["git", "restore", "--staged", adr_file])
+        return Err(f"ADR blocked: {len(violations)} violations")
+
+    # 3. Safe to commit
+    print("✅ ADR PRE-COMMIT VALIDATION PASSED")
+    return Ok("ADR ready for commit")
+
+def validate_adr_against_constitution(adr_file: str) -> list[dict]:
+    """Validate ADR content against all 10 constitutional laws."""
+    violations = []
+
+    with open(adr_file, 'r') as f:
+        content = f.read()
+
+    # Check for required sections
+    if "## Constitutional Alignment" not in content:
+        violations.append({
+            "law_number": "ALL",
+            "description": "Missing Constitutional Alignment section",
+            "suggestion": "Add Constitutional Alignment section with all 5 articles"
+        })
+
+    return violations
+```
+
+**Integration into ADR Workflow**:
+
+After creating ADR (Step 6), before git commit:
+
+```python
+# Step 6: Create ADR
+adr_file = create_adr(decision, alternatives, consequences)
+
+# Step 6a: PRE-COMMIT VALIDATION (Article III) - NEW
+validation_result = adr_pre_commit_workflow(adr_file)
+
+if validation_result.is_err():
+    raise ConstitutionalViolation(
+        f"Article III: {validation_result.unwrap_err()}"
+    )
+
+# Step 6b: Commit only if validation passes
+subprocess.run([
+    "git", "commit", "-m",
+    f"feat(architecture): Add {adr_file}\n\n"
+    f"✅ Constitutional validation passed (Article III)\n"
+    f"- All 10 development laws verified\n"
+    f"- Quality gates enforced"
+])
+```
 
 ### 5. Make Decision
 
@@ -497,25 +690,30 @@ Consider:
 
 ## Interaction Protocol
 
-**ADR Creation Workflow**:
+**ADR Creation Workflow** (Updated with Agent Tools):
 
 1. Receive architectural problem/decision need
-2. Query VectorStore for similar past ADRs (Article IV)
-3. Research and analyze the problem thoroughly (Article I)
-4. Identify potential solutions
-5. Evaluate alternatives against criteria AND constitutional alignment
-6. Verify constitutional compliance (MANDATORY)
-7. Make informed, constitutionally aligned decision
-8. Create comprehensive ADR with constitutional section
-9. Save ADR to `docs/adr/ADR-{number}-{title}.md`
-10. Store decision pattern in VectorStore (Article IV)
-11. Notify affected agents of new ADR
-12. Report ADR path and summary
+2. **`/agent-memory-query architecture`** - Query similar ADRs (Article IV)
+3. **`/agent-adr-query`** - Check existing ADR precedent
+4. Research and analyze the problem thoroughly (Article I)
+5. Identify potential solutions
+6. Evaluate alternatives against criteria AND constitutional alignment
+7. Verify constitutional compliance (MANDATORY)
+8. Make informed, constitutionally aligned decision
+9. Create comprehensive ADR with constitutional section
+10. Save ADR to `docs/adr/ADR-{number}-{title}.md`
+11. **`/agent-diff-review staged strict`** - Article III validation (NEW)
+12. Git commit only if validation passes
+13. **`/agent-memory-store architecture accepted`** - Store pattern (Article IV)
+14. Notify affected agents of new ADR
+15. **`/agent-test-verify all`** - Verify ADR enforcement (optional)
+16. Report ADR path and summary
 
 ## Quality Checklist
 
 Before finalizing ADR:
 
+- [ ] **PRE-COMMIT**: `/agent-diff-review staged strict` passed (Article III - NEW)
 - [ ] **Context**: Problem clearly stated with background
 - [ ] **Decision**: Explicit, actionable decision documented
 - [ ] **Rationale**: Thorough explanation of "why"

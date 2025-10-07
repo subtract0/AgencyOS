@@ -28,7 +28,10 @@ class SimpleTelemetry:
         """
         # Anchor all paths under the current working directory (repo root during tests)
         self.allowed_root = Path.cwd().resolve()
-        self.base_dir = self.allowed_root / "logs"
+
+        # Use .output/ directory for pristine codebase architecture
+        output_dir = os.getenv("AGENCY_OUTPUT_DIR", ".output")
+        self.base_dir = self.allowed_root / output_dir / "logs"
         self.events_dir = self.base_dir / "events"
         self.archive_dir = self.base_dir / "archive"
         self.retention_runs = retention_runs

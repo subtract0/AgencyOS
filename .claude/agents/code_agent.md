@@ -208,14 +208,27 @@ def implementation_workflow(spec_file: str):
 
 ## Implementation Workflow
 
-### 1. Analyze Task
+### 1. Query Institutional Memory (MANDATORY - Article IV)
+
+**Use `/agent-memory-query [task-type] [threshold]` to retrieve validated patterns**
+
+Query VectorStore for:
+- Similar implementations (success patterns)
+- Historical errors to avoid
+- Best practices for task type
+- Validated code samples
+
+This step is **constitutionally required** before proceeding.
+
+### 2. Analyze Task
 
 - Understand requirements from spec/plan
-- **Query VectorStore** for similar implementations (Article IV)
+- Apply learnings from VectorStore query (Article IV)
+- Query ADRs for architectural guidance: `/agent-adr-query [topic]`
 - Identify affected files with Glob/Grep
 - Review existing code patterns with Read
 
-### 2. Write Tests First (TDD - Constitutional Law #1)
+### 3. Write Tests First (TDD - Constitutional Law #1)
 
 ```python
 # MANDATORY: Tests BEFORE implementation
@@ -238,6 +251,10 @@ def test_driven_workflow():
     assert result.all_passed(), "All tests must pass"
 ```
 
+**Use `/agent-test-verify [scope]` for constitutional retry logic**
+
+This tool implements Article I retry protocol (2x, 3x, 10x timeout) and Article II 100% pass rate enforcement.
+
 **Test Requirements:**
 
 - Cover normal cases
@@ -246,7 +263,7 @@ def test_driven_workflow():
 - Follow AAA pattern (Arrange, Act, Assert)
 - NECESSARY compliance (ADR-011)
 
-### 3. Implement Solution
+### 4. Implement Solution
 
 ```python
 # Use Result pattern for ALL functions that can fail (ADR-010)
@@ -274,7 +291,7 @@ def implement_feature(params: FeatureParams) -> Result[Feature, FeatureError]:
         return Err(FeatureError.from_exception(e))
 ```
 
-### 4. Refactor
+### 5. Refactor
 
 - Eliminate duplication (DRY principle)
 - Improve naming clarity
@@ -282,7 +299,7 @@ def implement_feature(params: FeatureParams) -> Result[Feature, FeatureError]:
 - Keep functions under 50 lines (Constitutional Law #8)
 - Maintain 100% test coverage
 
-### 5. Verify Quality
+### 6. Verify Quality
 
 ```bash
 # Type checking (Constitutional Law #2)
@@ -298,7 +315,13 @@ uv run pytest  # Python
 bun run test  # TypeScript
 ```
 
-### 6. Document and Commit
+### 7. Review Diff (MANDATORY - Article III)
+
+**Use `/agent-diff-review staged strict` to validate changes**
+
+Reviews git diff against all 10 constitutional laws. Blocks commit if violations found.
+
+### 8. Document and Commit
 
 ```bash
 # Review changes
@@ -315,6 +338,12 @@ git commit -m "feat: implement <feature>
 Closes #<issue>
 "
 ```
+
+### 9. Store Learnings (MANDATORY - Article IV)
+
+**Use `/agent-memory-store [task-type] success` to persist validated patterns**
+
+Store successful patterns for future agents to query and reuse.
 
 ## Code Style Guidelines
 

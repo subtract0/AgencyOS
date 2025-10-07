@@ -1,0 +1,28 @@
+📋 NEW PROPOSAL: planner_constitutional_compliance_proposal_20251007.md - CRITICAL PRIORITY
+  Status: Pending Architect Review
+  Expected Impact: +13 points (80→93), Article III enforcement, 5/5 tools integrated
+  Implementation Time: 13.5 hours
+  Submitted: 2025-10-07
+
+📋 NEW PROPOSAL: chief_architect_critical_gaps_proposal_20251007.md - 🔴 CRITICAL PRIORITY
+  Status: Pending Architect Review
+  Score: 72→92 (+20 points) - LOWEST AGENT SCORE
+  Critical: Article III COMPLETELY MISSING (constitutional violation)
+  Expected Impact: Article III enforcement, 5/5 tools integrated, NECESSARY 67%→94%
+  Implementation: 11 hours
+  Submitted: 2025-10-07
+
+📋 NEW PROPOSAL: merger_tool_integration_proposal_20251007.md - CRITICAL PRIORITY
+  Status: Pending Architect Review
+  Score: 82→94 (+12 points)
+  Expected Impact: Article I timeout retry, Article III diff validation, 2/2 tools
+  Implementation: 6 hours
+  Submitted: 2025-10-07
+
+📋 NEW PROPOSAL: learning_agent_examples_proposal_20251007.md - HIGH PRIORITY
+  Status: Pending Architect Review
+  Score: 87→96 (+9 points)
+  Expected Impact: 3 concrete pattern examples (HIGH/MEDIUM/LOW), tool integration
+  Implementation: 4 hours
+  Submitted: 2025-10-07
+

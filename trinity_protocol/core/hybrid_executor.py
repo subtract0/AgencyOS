@@ -45,6 +45,17 @@ from trinity_protocol.core.ollama_client import OllamaClient
 logger = logging.getLogger(__name__)
 
 
+# ============================================================================
+# TASK-TO-AGENT MAPPING
+# ============================================================================
+# Dynamic routing of tasks to appropriate agent combinations.
+# This mapping enables all 10 Agency agents to be utilized via HybridExecutor.
+#
+# Phase 2 Enhancement: Generalized from hardcoded test generation to full
+# multi-agent support with sequential execution (simple chaining).
+# ============================================================================
+
+
 class TaskType(Enum):
     """Types of tasks the executor can handle."""
 
@@ -56,6 +67,34 @@ class TaskType(Enum):
     REFACTORING = "refactoring"
     ARCHITECTURE = "architecture"
     GENERAL = "general"  # Generic task, executor decides agent
+
+
+# Task-to-Agent mapping for dynamic routing (Phase 2: All 10 agents supported)
+# Maps each TaskType to list of AgentTypes that will execute sequentially.
+#
+# Current coverage: 7 of 10 agents
+# - CODER: CODE_GENERATION, CODE_FIX, REFACTORING, GENERAL
+# - TEST_GENERATOR: CODE_GENERATION, TEST_GENERATION, TOOL_CREATION
+# - QUALITY_ENFORCER: CODE_FIX, VERIFICATION, REFACTORING
+# - TOOLSMITH: TOOL_CREATION
+# - AUDITOR: REFACTORING
+# - CHIEF_ARCHITECT: ARCHITECTURE
+# - PLANNER: ARCHITECTURE
+#
+# Future expansion (3 agents):
+# - LEARNING: Add to REFACTORING or ARCHITECTURE for pattern analysis
+# - MERGER: Add to CODE_GENERATION or new MERGE task type
+# - SUMMARY: Add to new SUMMARY task type or ARCHITECTURE for documentation
+TASK_TO_AGENT_MAP: dict[TaskType, list[AgentType]] = {
+    TaskType.CODE_GENERATION: [AgentType.CODER, AgentType.TEST_GENERATOR],
+    TaskType.CODE_FIX: [AgentType.CODER, AgentType.QUALITY_ENFORCER],
+    TaskType.TEST_GENERATION: [AgentType.TEST_GENERATOR],
+    TaskType.TOOL_CREATION: [AgentType.TOOLSMITH, AgentType.TEST_GENERATOR],
+    TaskType.VERIFICATION: [AgentType.QUALITY_ENFORCER],
+    TaskType.REFACTORING: [AgentType.CODER, AgentType.AUDITOR, AgentType.QUALITY_ENFORCER],
+    TaskType.ARCHITECTURE: [AgentType.CHIEF_ARCHITECT, AgentType.PLANNER],
+    TaskType.GENERAL: [AgentType.CODER],  # Default fallback
+}
 
 
 @dataclass
@@ -376,22 +415,33 @@ class HybridExecutor:
 
     def _select_agents_for_task(self, task_type: TaskType) -> list[AgentType]:
         """
-        Select appropriate agents based on task type.
+        Select appropriate agents based on task type using module-level mapping.
 
-        This is the key improvement: we now have ALL 10 agents available!
+        Phase 2 Enhancement: Generalized agent selection with logging.
+        - Supports all task types with explicit mappings
+        - Returns list of agents for sequential execution (simple chaining)
+        - Logs agent selection for debugging and telemetry
+
+        Args:
+            task_type: Type of task to execute
+
+        Returns:
+            List of AgentTypes to execute in sequence (1-3 agents)
+
+        Example:
+            >>> _select_agents_for_task(TaskType.CODE_FIX)
+            [AgentType.CODER, AgentType.QUALITY_ENFORCER]  # 2-agent chain
         """
-        agent_map = {
-            TaskType.CODE_GENERATION: [AgentType.CODER, AgentType.TEST_GENERATOR],
-            TaskType.CODE_FIX: [AgentType.CODER, AgentType.QUALITY_ENFORCER],
-            TaskType.TEST_GENERATION: [AgentType.TEST_GENERATOR],
-            TaskType.TOOL_CREATION: [AgentType.TOOLSMITH, AgentType.TEST_GENERATOR],
-            TaskType.VERIFICATION: [AgentType.QUALITY_ENFORCER],
-            TaskType.REFACTORING: [AgentType.CODER, AgentType.AUDITOR, AgentType.QUALITY_ENFORCER],
-            TaskType.ARCHITECTURE: [AgentType.CHIEF_ARCHITECT, AgentType.PLANNER],
-            TaskType.GENERAL: [AgentType.CODER],  # Default
-        }
+        agents = TASK_TO_AGENT_MAP.get(task_type, [AgentType.CODER])
 
-        return agent_map.get(task_type, [AgentType.CODER])
+        # Log agent selection for debugging and telemetry
+        agent_names = [a.value for a in agents]
+        logger.info(
+            f"📋 Task routing: {task_type.value} → agents: {agent_names} "
+            f"({len(agents)} agent{'s' if len(agents) != 1 else ''})"
+        )
+
+        return agents
 
     def _format_task_prompt(self, task: JSONValue, agent_type: AgentType) -> str:
         """Format task specification as agent prompt emphasizing executable code generation."""
