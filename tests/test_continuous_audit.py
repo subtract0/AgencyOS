@@ -94,7 +94,6 @@ def sample_config_file(temp_audit_dir, sample_config):
 @pytest.fixture
 def sample_state():
     """Sample audit state."""
-    from datetime import datetime
     from scripts.continuous_audit_m4pro import AuditState
 
     return AuditState(
