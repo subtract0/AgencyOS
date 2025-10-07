@@ -1,0 +1,1 @@
+{"event_id": "const_20251007_181955_86c21270", "timestamp": "2025-10-07T18:19:55.891223Z", "article": "V", "section": null, "rule_description": "Spec-driven development", "context": {"spec_file": "feature.md"}, "action": "passed", "outcome": "success", "severity": "info", "error_message": null, "suggested_fix": null, "metadata": {}, "tags": []}

@@ -532,10 +532,11 @@ class SelfHealingCore:
             self.telemetry.log(f"self_healing.{event}", data, level)
         else:
             # Fallback to simple logging
+            output_dir = os.getenv("AGENCY_OUTPUT_DIR", ".output")
             event_data = {"ts": datetime.now().isoformat() + "Z", "event": event, "data": data}
             try:
-                os.makedirs("logs/events", exist_ok=True)
-                with open("logs/events/fallback.jsonl", "a") as f:
+                os.makedirs(f"{output_dir}/logs/events", exist_ok=True)
+                with open(f"{output_dir}/logs/events/fallback.jsonl", "a") as f:
                     f.write(json.dumps(event_data) + "\n")
             except Exception:
                 # Last resort logging failed, continue silently

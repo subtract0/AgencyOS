@@ -222,7 +222,10 @@ Thumbs.db
 *service-account*.json
 gothic-point-*.json
 
-# Agency session logs and runtime data
+# Agency output directory (pristine codebase architecture)
+.output/
+
+# Legacy log paths (keep for backwards compatibility during migration)
 logs/sessions/
 logs/handoffs/
 logs/snapshots/
