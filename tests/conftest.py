@@ -86,6 +86,41 @@ def pytest_runtest_setup(item):
     item.stash_start_time = time.time()
 
 
+@pytest.hookimpl(hookwrapper=True)
+def pytest_runtest_makereport(item, call):
+    """
+    Track test retries and log quarantine candidates.
+
+    Works with pytest-rerunfailures plugin to provide:
+    - Health tracking data for flaky tests
+    - Quarantine candidate identification
+    - Retry metrics for bulletproofing dashboard
+
+    Mars Rover Reliability: Auto-retry reduces false positives from
+    transient failures (network, timing, race conditions).
+    """
+    outcome = yield
+    rep = outcome.get_result()
+
+    # Track retries for health monitoring
+    if rep.when == "call" and hasattr(rep, "rerun") and rep.rerun > 0:
+        retry_log = Path("logs/test_retries.log")
+        retry_log.parent.mkdir(exist_ok=True)
+        with open(retry_log, "a") as f:
+            timestamp = time.strftime("%Y-%m-%d %H:%M:%S")
+            f.write(f"{timestamp} | Retry {rep.rerun}/3 | {item.nodeid}\n")
+
+    # Track final failures after all retries for quarantine consideration
+    if rep.when == "call" and rep.failed and hasattr(rep, "rerun"):
+        # Only log if this was the final retry
+        quarantine_log = Path("logs/quarantine_candidates.log")
+        quarantine_log.parent.mkdir(exist_ok=True)
+        with open(quarantine_log, "a") as f:
+            timestamp = time.strftime("%Y-%m-%d %H:%M:%S")
+            retry_info = f"after {rep.rerun} retries" if rep.rerun > 0 else "on first run"
+            f.write(f"{timestamp} | FAILED {retry_info} | {item.nodeid}\n")
+
+
 def pytest_runtest_teardown(item, nextitem):
     """Track slow tests for future optimization."""
     if item.stash_start_time:
