@@ -53,7 +53,11 @@ def health_check() -> dict[str, str | dict]:
 
 
 @app.route("/status", methods=["GET"])
+<<<<<<< HEAD
 def status() -> dict[str, str | dict]:
+=======
+def status() -> dict[str, Any]:
+>>>>>>> afc8956 (feat: Trinity GitHub App MVP - Complete AUDITOR→PR→COMMENT Flow)
     """Server status endpoint."""
     return jsonify(
         {
