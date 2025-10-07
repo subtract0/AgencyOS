@@ -233,6 +233,169 @@ def validate_constitutional_compliance(code_file: str) -> Result[bool, list[Viol
 - Bypassing enforcement
 - Committing untested code
 
+## Claude Agent SDK Integration (ADR-006)
+
+### When to Use SDK for Healing Workflows
+
+**Use `ClaudeSDKClient` for multi-step autonomous healing:**
+
+```python
+from claude_agent_sdk import ClaudeSDKClient, ClaudeAgentOptions
+
+async def autonomous_healing_session(violations: list[Violation]):
+    """
+    Multi-step healing session with conversation continuity.
+
+    SDK enables: detect → diagnose → fix → verify → rollback loop
+    """
+    options = ClaudeAgentOptions(
+        permission_mode='acceptEdits',  # Allow autonomous edits
+        allowed_tools=[
+            'Edit', 'MultiEdit', 'Bash',
+            'constitution_check', 'analyze_type_patterns'
+        ],
+        system_prompt="You are QualityEnforcer. Follow Article II & III absolutely.",
+        cwd="/Users/am/Code/Agency"
+    )
+
+    async with ClaudeSDKClient(options) as client:
+        # Step 1: Analyze violations
+        await client.query(
+            f"Analyze these {len(violations)} constitutional violations and propose fixes"
+        )
+
+        # Step 2: Apply fixes incrementally
+        async for message in client.receive_response():
+            if message.type == 'toolUse' and message.name == 'Edit':
+                # Checkpoint before each fix
+                checkpoint = create_checkpoint()
+
+        # Step 3: Verify with tests
+        await client.query("Run all tests to verify fixes")
+
+        # Step 4: Rollback if needed (via interrupt)
+        async for message in client.receive_response():
+            if 'FAIL' in message.text:
+                await client.interrupt()  # Stop execution
+                rollback_to_checkpoint(checkpoint)
+```
+
+### Permission Modes for Healing
+
+**Recommended**: `permission_mode='acceptEdits'`
+
+```python
+# Autonomous healing - accept all edits
+options = ClaudeAgentOptions(
+    permission_mode='acceptEdits',  # No confirmation needed
+    allowed_tools=['Edit', 'MultiEdit', 'Bash'],
+    max_thinking_tokens=8000
+)
+
+# Interactive healing - prompt for approval
+options = ClaudeAgentOptions(
+    permission_mode='confirm',  # Ask before each edit
+    allowed_tools=['Edit', 'MultiEdit']
+)
+```
+
+### Custom Healing Tools
+
+**Create custom healing strategies using `@tool` decorator:**
+
+```python
+from claude_agent_sdk import tool, create_sdk_mcp_server
+
+@tool("fix_dict_any", "Replace Dict[Any,Any] with Pydantic models", {
+    "file_path": str,
+    "line_number": int
+})
+async def fix_dict_any(args):
+    """Custom tool for ADR-008 violations."""
+    # Read file, detect Dict[Any, Any]
+    # Generate Pydantic model
+    # Apply fix with Edit tool
+    return {
+        "content": [{
+            "type": "text",
+            "text": f"Fixed Dict[Any,Any] at {args['file_path']}:{args['line_number']}"
+        }]
+    }
+
+@tool("verify_constitutional_compliance", "Check all 5 articles", {
+    "scope": str
+})
+async def verify_constitutional_compliance(args):
+    """Custom tool for Article validation."""
+    from tools.constitution_check import check_all_articles
+    result = check_all_articles(args['scope'])
+    return {
+        "content": [{
+            "type": "text",
+            "text": f"Constitutional compliance: {result}"
+        }]
+    }
+
+# Create MCP server with healing tools
+healing_server = create_sdk_mcp_server(
+    name="healing_tools",
+    version="1.0.0",
+    tools=[fix_dict_any, verify_constitutional_compliance]
+)
+
+# Use in healing sessions
+options = ClaudeAgentOptions(
+    mcp_servers={"healing": healing_server},
+    allowed_tools=[
+        "mcp__healing__fix_dict_any",
+        "mcp__healing__verify_constitutional_compliance"
+    ],
+    permission_mode='acceptEdits'
+)
+```
+
+### Session Continuity for Learning
+
+**Use `ClaudeSDKClient` to maintain healing context:**
+
+```python
+async def multi_violation_healing():
+    """
+    Heal multiple violations in same session.
+
+    SDK maintains context of previous fixes.
+    """
+    async with ClaudeSDKClient(options) as client:
+        # Fix 1: Type safety violations
+        await client.query("Fix all Dict[Any,Any] violations")
+        async for msg in client.receive_response():
+            process_healing(msg)
+
+        # Fix 2: Function complexity (Claude remembers context)
+        await client.query("Now fix functions over 50 lines")
+        async for msg in client.receive_response():
+            process_healing(msg)
+
+        # Fix 3: Test coverage (Claude knows what's been fixed)
+        await client.query("Add tests for the changes we just made")
+        async for msg in client.receive_response():
+            process_healing(msg)
+```
+
+### When NOT to Use SDK
+
+**Use traditional `query()` for:**
+- One-off constitutional checks
+- Single violation fixes
+- Independent healing operations
+- Read-only analysis (use Auditor instead)
+
+**Use `ClaudeSDKClient` for:**
+- Multi-step healing workflows (detect → fix → verify)
+- Interactive healing with rollback capability
+- Session-based learning (Article IV)
+- Complex violations requiring multiple fixes
+
 ## AgentContext Usage
 
 **Memory Storage Pattern:**

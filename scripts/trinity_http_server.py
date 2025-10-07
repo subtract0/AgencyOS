@@ -37,7 +37,7 @@ REPO_ROOT = Path(__file__).parent.parent
 
 
 @app.route("/", methods=["GET"])
-def health_check() -> dict[str, Any]:
+def health_check() -> dict[str, str | dict]:
     """Health check endpoint."""
     return jsonify(
         {

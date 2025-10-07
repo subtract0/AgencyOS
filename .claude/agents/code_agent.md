@@ -107,6 +107,193 @@ def validate_constitutional_compliance(action):
 - Force push to main/master
 - Committing without tests
 
+## Claude Agent SDK Integration (ADR-006)
+
+### When to Use SDK for TDD Workflows
+
+**Use `ClaudeSDKClient` for iterative TDD development:**
+
+```python
+from claude_agent_sdk import ClaudeSDKClient, ClaudeAgentOptions
+
+async def tdd_feature_development(spec_file: str):
+    """
+    Multi-step TDD workflow with conversation continuity.
+
+    SDK enables: Read Spec → Write Tests → Implement → Refactor loop
+    """
+    options = ClaudeAgentOptions(
+        permission_mode='acceptEdits',  # Allow autonomous coding
+        allowed_tools=[
+            'Read', 'Write', 'Edit', 'MultiEdit',
+            'Bash', 'Glob', 'Grep',
+            'constitution_check', 'analyze_type_patterns'
+        ],
+        system_prompt="You are CodeAgent. Follow TDD strictly (Law #1).",
+        cwd="/Users/am/Code/Agency",
+        max_thinking_tokens=8000
+    )
+
+    async with ClaudeSDKClient(options) as client:
+        # Phase 1: Understand specification
+        await client.query(
+            f"Read spec: {spec_file}. "
+            "Query VectorStore for similar implementations (Article IV)."
+        )
+
+        # Phase 2: Write failing tests (RED) - Claude remembers spec
+        await client.query(
+            "Write comprehensive tests FIRST. "
+            "They must FAIL initially (TDD red phase). "
+            "Follow NECESSARY pattern (ADR-011)."
+        )
+
+        # Phase 3: Implement to pass tests (GREEN) - Claude knows tests
+        await client.query(
+            "Implement minimal code to pass the tests you wrote. "
+            "Use Result pattern (ADR-010), strict typing (ADR-008)."
+        )
+
+        # Phase 4: Refactor (REFACTOR) - Claude knows implementation
+        await client.query(
+            "Refactor while keeping tests green. "
+            "Functions under 50 lines (Law #8). "
+            "Apply VectorStore learnings (Article IV)."
+        )
+
+        # Phase 5: Verify quality - Claude has full context
+        await client.query(
+            "Run constitutional compliance check. "
+            "Verify all 5 articles and 10 laws."
+        )
+```
+
+### Permission Modes for Coding
+
+**Recommended**: `permission_mode='acceptEdits'` for autonomous implementation
+
+```python
+# Autonomous coding - accept all edits
+options = ClaudeAgentOptions(
+    permission_mode='acceptEdits',  # No confirmation needed
+    allowed_tools=['Read', 'Write', 'Edit', 'Bash'],
+    max_thinking_tokens=8000
+)
+
+# Interactive coding - prompt for approval
+options = ClaudeAgentOptions(
+    permission_mode='confirm',  # Ask before each file change
+    allowed_tools=['Read', 'Write', 'Edit']
+)
+
+# Read-only mode - for analysis only
+options = ClaudeAgentOptions(
+    permission_mode='readonly',  # No edits allowed
+    allowed_tools=['Read', 'Grep', 'Glob']
+)
+```
+
+### Streaming Mode for Long-Running Operations
+
+**Use streaming for test execution and build processes:**
+
+```python
+async def run_tests_with_streaming():
+    """Stream test output for real-time feedback."""
+    async with ClaudeSDKClient(options) as client:
+        await client.query(
+            "Run all tests: uv run pytest --verbose"
+        )
+
+        # Stream test results as they arrive
+        async for message in client.receive_response():
+            if message.type == 'toolResult':
+                print(f"Test output: {message.content}")
+                # Can interrupt if failures detected
+                if 'FAILED' in str(message.content):
+                    await client.interrupt()
+                    break
+```
+
+### Multi-Feature Development with Session Continuity
+
+**Maintain context across related features:**
+
+```python
+async def multi_feature_implementation():
+    """
+    Implement multiple related features in same session.
+
+    SDK maintains knowledge of previous implementations.
+    """
+    async with ClaudeSDKClient(options) as client:
+        # Feature 1: User model
+        await client.query(
+            "Implement User Pydantic model with strict typing"
+        )
+        async for msg in client.receive_response():
+            process_response(msg)
+
+        # Feature 2: User repository (Claude remembers User model)
+        await client.query(
+            "Now implement UserRepository using the User model. "
+            "Follow repository pattern (Law #4)."
+        )
+        async for msg in client.receive_response():
+            process_response(msg)
+
+        # Feature 3: User service (Claude knows model + repository)
+        await client.query(
+            "Implement UserService using UserRepository. "
+            "Use Result pattern for all operations (Law #5)."
+        )
+        async for msg in client.receive_response():
+            process_response(msg)
+```
+
+### Interrupting Long Operations
+
+**Stop execution when issues detected:**
+
+```python
+async def implementation_with_safety_checks():
+    """Interrupt if constitutional violations detected."""
+    async with ClaudeSDKClient(options) as client:
+        await client.query("Implement feature X")
+
+        async for message in client.receive_response():
+            # Check for violations in real-time
+            if message.type == 'toolUse' and message.name == 'Edit':
+                content = message.arguments.get('new_string', '')
+
+                # Detect Dict[Any, Any] violation
+                if 'Dict[Any, Any]' in content:
+                    await client.interrupt()
+                    print("❌ STOPPED: Dict[Any,Any] violation (Law #2)")
+                    break
+
+                # Detect function over 50 lines
+                if content.count('\n') > 50:
+                    await client.interrupt()
+                    print("❌ STOPPED: Function >50 lines (Law #8)")
+                    break
+```
+
+### When NOT to Use SDK
+
+**Use traditional `query()` for:**
+- One-off file edits
+- Simple refactoring tasks
+- Independent bug fixes
+- Quick type annotations
+
+**Use `ClaudeSDKClient` for:**
+- TDD workflows (test → implement → refactor)
+- Multi-file feature implementations
+- Iterative refactoring with quality checks
+- Complex implementations requiring context
+- Interactive development sessions
+
 ## AgentContext Usage
 
 **Memory Storage Pattern:**
