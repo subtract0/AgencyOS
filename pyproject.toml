@@ -133,9 +133,6 @@ unfixable = ["B"]
 "scripts/phase1_local_smoke_test.py" = [
     "F541",  # f-strings without placeholders (logging templates)
 ]
-"scripts/trinity_http_server.py" = [
-    # This is experimental Trinity HTTP API code
-]
 "shared/agent_registry.py" = [
     "I001",  # Import ordering (legacy import structure)
 ]

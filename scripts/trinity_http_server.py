@@ -53,7 +53,7 @@ def health_check() -> dict[str, str | dict]:
 
 
 @app.route("/status", methods=["GET"])
-def status() -> dict[str, Any]:
+def status() -> dict[str, str | dict]:
     """Server status endpoint."""
     return jsonify(
         {
