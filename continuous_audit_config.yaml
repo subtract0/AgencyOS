@@ -1,0 +1,64 @@
+# Continuous Audit System Configuration
+# Defines behavior for Phase 4 autonomous monitoring and quality enforcement
+# Spec: .snapshots/PHASE_4_CONTINUOUS_AUDIT_MISSION.md
+
+audit:
+  # Operational mode: "continuous" enables autonomous background scanning
+  mode: "continuous"
+
+  # Maximum runtime before auto-shutdown (48 hours = 2 days)
+  max_runtime_hours: 48
+
+  # Interval between full codebase scans (10 minutes)
+  scan_interval_minutes: 10
+
+  # Target directories for audit scanning
+  # Covers all agent modules, core infrastructure, and governance files
+  targets:
+    - "agency_code_agent/"
+    - "planner_agent/"
+    - "auditor_agent/"
+    - "quality_enforcer_agent/"
+    - "test_generator_agent/"
+    - "learning_agent/"
+    - "chief_architect_agent/"
+    - "merger_agent/"
+    - "toolsmith_agent/"
+    - "work_completion_summary_agent/"
+    - "trinity_protocol/"
+    - "shared/"
+    - "tools/"
+    - "tests/"
+    - "docs/"
+    - "specs/"
+    - "plans/"
+    - "scripts/"
+
+  # Quality checks to perform during each scan
+  checks:
+    - consolidation   # Identify duplicate/redundant code
+    - linting         # Enforce code style and standards
+    - simplification  # Detect overly complex logic
+    - pruning         # Find unused/dead code
+    - architecture    # Validate structural patterns
+
+  # Output configuration for recommendations
+  output:
+    dir: "localaudit_recommendations"           # Storage directory
+    file_prefix: "localM4_recommends_"          # Filename prefix for reports
+    state_file: ".audit_state.json"             # Persistent state tracker
+
+  # Deduplication settings for repeated issues
+  deduplication:
+    similarity_threshold: 0.7          # 70% similarity = duplicate issue
+    elevate_priority_threshold: 3      # 3+ instances = escalate to HIGH priority
+
+  # Agent configuration for local execution
+  agents:
+    use_local: true                    # Enable local M4 Pro model
+    model_tier: "LOCAL"                # Force local-only execution
+    agents_used:
+      - AUDITOR                        # Pattern analysis and quality checks
+      - QUALITY_ENFORCER               # Constitutional compliance validation
+      - LEARNING                       # Pattern extraction and storage
+      - PLANNER                        # Recommendation planning
