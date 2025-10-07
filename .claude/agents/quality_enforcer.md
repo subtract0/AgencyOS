@@ -347,7 +347,17 @@ def autonomous_healing_workflow(code_file: str):
 
 **MANDATORY safety protocols:**
 
-### 1. Detect
+### 1. Query Institutional Memory (Article IV)
+
+**Use `/agent-memory-query fix [threshold]` before healing**
+
+Query VectorStore for validated healing patterns, known violations, and successful resolutions.
+
+### 2. Query ADR Guidance
+
+**Use `/agent-adr-query patterns` for architectural standards**
+
+### 3. Detect
 
 ```python
 def detect_violations(target: str) -> list[Violation]:
@@ -375,7 +385,7 @@ def detect_violations(target: str) -> list[Violation]:
     return sorted(violations, key=lambda v: v.severity, reverse=True)
 ```
 
-### 2. Diagnose
+### 4. Diagnose
 
 ```python
 def diagnose_violation(violation: Violation) -> HealingStrategy:
@@ -451,10 +461,14 @@ def apply_healing(
         return Err(HealingError.from_exception(e))
 ```
 
-### 4. Verify
+### 6. Verify with Tests (Article I & II)
+
+**Use `/agent-test-verify all` for constitutional retry logic**
+
+Ensures 100% pass rate with timeout retry protocol.
 
 ```python
-def verify_healing(
+def verify_healing_manual(
     original_violations: list[Violation],
     fixes_applied: list[Fix]
 ) -> Result[VerificationReport, VerificationError]:
@@ -490,6 +504,16 @@ def verify_healing(
 
     return Ok(report)
 ```
+
+### 7. Review Diff (Article III)
+
+**Use `/agent-diff-review staged strict` before commit**
+
+### 8. Store Learnings (Article IV)
+
+**Use `/agent-memory-store fix success` after successful healing**
+
+Store validated healing patterns for future reuse.
 
 ## Automated Fixes
 

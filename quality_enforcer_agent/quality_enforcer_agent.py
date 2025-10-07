@@ -28,7 +28,6 @@ from tools.auto_fix_nonetype import (
     SimpleNoneTypeMonitor,
 )
 
-# Try to import unified core if available
 try:
     if os.getenv("ENABLE_UNIFIED_CORE", "true").lower() == "true":
         from core.self_healing import SelfHealingCore
@@ -73,7 +72,6 @@ class QualityAnalysis(Tool):
         """Use LLM to analyze code quality."""
         issues = []
 
-        # Simple heuristic checks that could be LLM prompts
         if "TODO" in self.code or "FIXME" in self.code:
             issues.append("Contains TODO/FIXME comments")
 
@@ -109,24 +107,19 @@ class ValidatorTool(Tool):
         import shlex
 
         try:
-            # Validate and sanitize the test command
             if not self.test_command or not isinstance(self.test_command, str):
                 raise ValueError(
                     "Invalid test command provided - Article II requires valid test execution"
                 )
 
-            # Split command safely and validate
             try:
                 command_parts = shlex.split(self.test_command)
             except ValueError as e:
                 raise ValueError(f"Invalid command syntax: {e}")
 
-            # Basic validation - ensure it's a safe command
             if not command_parts or command_parts[0] in ["rm", "del", "format", "sudo", "su"]:
                 raise ValueError("Unsafe or empty command detected")
 
-            # ENFORCE --run-all flag for Article II compliance (100% verification requirement)
-            # Only add if not present AND no other test mode flags are set
             test_mode_flags = [
                 "--run-all",
                 "--fast",
@@ -146,30 +139,23 @@ class ValidatorTool(Tool):
                     f"Using existing test mode flag for verification: {[f for f in test_mode_flags if f in command_parts]}"
                 )
 
-            # Run in activated virtual environment safely
-            # Use explicit path to python and avoid shell interpretation
             venv_python = ".venv/bin/python"
             if os.path.exists(venv_python):
-                # If using python command, replace with venv python
                 if command_parts[0] == "python":
                     command_parts[0] = venv_python
                 elif command_parts[0].startswith("python"):
                     command_parts[0] = venv_python
 
-            # Constitutional timeout pattern implementation (Article I: Complete Context)
             result = self._run_with_constitutional_timeout(
                 command_parts,
                 initial_timeout_ms=600000,  # 10 minutes for full test suite
                 max_retries=3,
             )
 
-            # Parse test output for verification
             verification_result = self._parse_test_output(result)
 
-            # Log verification to autonomous healing directory (Article III: Automated Enforcement)
             self._log_verification(verification_result)
 
-            # FAIL HARD if any test fails (Article II: 100% verification requirement)
             if result.returncode != 0 or not verification_result["all_passed"]:
                 error_msg = f"""CONSTITUTIONAL VIOLATION - Article II: 100% Test Success Required
 
@@ -187,12 +173,9 @@ STDOUT:
 Article II requires 100% test success before any merge or deployment.
 Fix all failing tests before proceeding.
 """
-                # Log the failure
                 logging.error(error_msg)
-                # RAISE EXCEPTION to block any further action
                 raise RuntimeError(error_msg)
 
-            # All tests passed - return success message
             success_msg = f"""✓ Article II Compliance VERIFIED - 100% Test Success
 
 Tests Passed: {verification_result["tests_passed"]}
@@ -206,9 +189,7 @@ Constitutional compliance maintained across all 5 articles.
             return success_msg
 
         except Exception as e:
-            # Log exception to healing directory
             self._log_verification_failure(str(e))
-            # Re-raise to ensure hard failure
             raise RuntimeError(
                 f"Test validation failed - Article II enforcement blocked: {e}"
             ) from e
@@ -221,8 +202,6 @@ Constitutional compliance maintained across all 5 articles.
         stderr = result.stderr or ""
         combined_output = stdout + stderr
 
-        # Extract test counts from pytest output
-        # Look for patterns like "1562 passed" or "5 failed, 1557 passed"
         passed_match = re.search(r"(\d+)\s+passed", combined_output)
         failed_match = re.search(r"(\d+)\s+failed", combined_output)
         error_match = re.search(r"(\d+)\s+error", combined_output)
@@ -234,7 +213,6 @@ Constitutional compliance maintained across all 5 articles.
         total_tests = tests_passed + tests_failed
         pass_rate = (tests_passed / total_tests * 100) if total_tests > 0 else 0.0
 
-        # Extract execution time if available
         time_match = re.search(r"(\d+\.?\d*)\s*seconds?", combined_output)
         execution_time = float(time_match.group(1)) if time_match else 0.0
 
@@ -255,11 +233,9 @@ Constitutional compliance maintained across all 5 articles.
         from pathlib import Path
 
         try:
-            # Create logs/autonomous_healing directory if it doesn't exist
             log_dir = Path("logs/autonomous_healing")
             log_dir.mkdir(parents=True, exist_ok=True)
 
-            # Create verification log entry
             log_entry = {
                 "timestamp": datetime.now(UTC).isoformat(),
                 "agent": "QualityEnforcerAgent",
@@ -268,7 +244,6 @@ Constitutional compliance maintained across all 5 articles.
                 "constitutional_compliance": verification_result["all_passed"],
             }
 
-            # Append to verification log file (JSONL format)
             log_file = log_dir / "verification_log.jsonl"
             with open(log_file, "a") as f:
                 f.write(json.dumps(log_entry) + "\n")
@@ -325,7 +300,6 @@ Constitutional compliance maintained across all 5 articles.
                     cwd=os.getcwd(),  # Explicit working directory
                 )
 
-                # Successful execution - return result
                 return result
 
             except TimeoutExpired:
@@ -336,13 +310,11 @@ Constitutional compliance maintained across all 5 articles.
                     time.sleep(1)  # Brief pause before retry
                     continue
                 else:
-                    # Final attempt failed - re-raise
                     logging.error(
                         f"Command failed after {max_retries} attempts with exponential timeout"
                     )
                     raise
 
-        # Should never reach here, but just in case
         raise Exception("Unable to obtain complete context after retries")
 
 
@@ -406,24 +378,19 @@ def create_quality_enforcer_agent(
             instructions = f.read()
     except (OSError, FileNotFoundError, PermissionError):
         instructions = """
-# QualityEnforcerAgent - Simplified Quality and Constitutional Enforcement
 
-## Mission
 Maintain constitutional compliance and code quality through LLM-powered analysis and automated checks.
 
-## Core Responsibilities
 1. **Constitutional Monitoring** - Check all 5 articles using ConstitutionalCheck tool
 2. **Quality Analysis** - Use QualityAnalysis tool for code review
 3. **Test Validation** - Ensure 100% test success rate using ValidatorTool
 4. **Auto-Fix Suggestions** - Generate LLM-based fix recommendations using AutoFixSuggestion
 
-## Key Principles
 - Leverage LLM analysis instead of complex Python systems
 - Focus on constitutional compliance (especially Article II: 100% verification)
 - Provide actionable fix suggestions using GPT-5 prompts
 - Maintain simplicity while ensuring quality
 
-## Tools Available
 - ConstitutionalCheck: Verify constitutional compliance
 - QualityAnalysis: Analyze code quality
 - ValidatorTool: Check test status
@@ -432,20 +399,16 @@ Maintain constitutional compliance and code quality through LLM-powered analysis
 Use these tools to maintain quality while delegating complex analysis to LLM prompts.
 """
 
-    # Create agent context if not provided
     if agent_context is None:
         agent_context = create_agent_context()
 
-    # Create hooks with memory integration
     reminder_hook = create_system_reminder_hook()
     memory_hook = create_memory_integration_hook(agent_context)
     combined_hook = create_composite_hook([reminder_hook, memory_hook])
 
-    # Store cost_tracker in agent context for later use
     if cost_tracker is not None:
         agent_context.cost_tracker = cost_tracker
 
-    # Create agent with simplified toolset
     agent = Agent(
         name="QualityEnforcerAgent",
         description=(
@@ -480,7 +443,6 @@ Use these tools to maintain quality while delegating complex analysis to LLM pro
         max_completion_tokens=16384,
     )
 
-    # Enable cost tracking if provided
     if cost_tracker is not None:
         from shared.llm_cost_wrapper import wrap_agent_with_cost_tracking
 
