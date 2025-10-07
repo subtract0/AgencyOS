@@ -206,10 +206,14 @@ def Timer():
     timer_obj.duration = time.time() - start_time
 
 
-def get_memory_usage_mb() -> float:
+def get_memory_usage_mb() -> float | None:
     """Get current process memory usage in MB."""
-    process = psutil.Process(os.getpid())
-    return process.memory_info().rss / (1024 * 1024)
+    try:
+        process = psutil.Process(os.getpid())
+        return process.memory_info().rss / (1024 * 1024)
+    except (ImportError, NameError):
+        # psutil not available or Process not defined
+        return None
 
 
 def generate_stress_tasks() -> list[dict[str, Any]]:
@@ -615,7 +619,7 @@ def run_benchmark(
 
     # Initialize infrastructure
     context = create_agent_context(session_id=f"benchmark_stress_{int(time.time())}")
-    cost_tracker = CostTracker(storage=SQLiteStorage())
+    cost_tracker = CostTracker(storage=SQLiteStorage(db_path=":memory:"))
     registry = create_agent_registry(
         agent_context=context, cost_tracker=cost_tracker, default_tier="local"
     )
