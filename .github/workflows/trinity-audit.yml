@@ -1,0 +1,80 @@
+name: Trinity Auditor - PR Analysis
+
+on:
+  workflow_dispatch:
+    inputs:
+      pr_number:
+        description: 'Pull Request number'
+        required: true
+        type: number
+      scope:
+        description: 'Audit scope (full or pr-only)'
+        required: false
+        default: 'pr-only'
+        type: choice
+        options:
+          - pr-only
+          - full
+
+jobs:
+  trinity-audit:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write
+      issues: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Fetch PR branch
+        run: gh pr checkout ${{ inputs.pr_number }}
+        env:
+          GH_TOKEN: ${{ github.token }}
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+
+      - name: Install dependencies
+        run: pip install -q -r requirements.txt
+
+      - name: Run Trinity Auditor
+        id: audit
+        run: |
+          python scripts/continuous_audit_m4pro.py \
+            --mode once \
+            --dir . \
+            --output .trinity-audit.json
+        continue-on-error: true
+
+      - name: Generate audit summary
+        id: summary
+        run: python scripts/generate_review_dashboard.py > audit_summary.md
+        continue-on-error: true
+
+      - name: Upload audit artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: trinity-audit-pr-${{ inputs.pr_number }}
+          path: |
+            .trinity-audit.json
+            audit_summary.md
+            localaudit_recommendations/
+          retention-days: 30
+
+      - name: Post PR comment
+        if: always()
+        run: |
+          if [ -f audit_summary.md ]; then
+            gh pr comment ${{ inputs.pr_number }} --body-file audit_summary.md
+          else
+            gh pr comment ${{ inputs.pr_number }} --body "Trinity Audit completed. View artifacts for details."
+          fi
+        env:
+          GH_TOKEN: ${{ github.token }}
