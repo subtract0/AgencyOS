@@ -279,5 +279,5 @@ FRESH_USE_FIRESTORE=false    # Optional Firestore backend
 - **ADRs**: `docs/adr/ADR-INDEX.md`
 - **Tools**: `.claude/quick-ref/tool-index.md`
 
-**Version**: 0.9.5
-**Last Updated**: 2025-10-03
+**Version**: 1.1.1
+**Last Updated**: 2025-10-07

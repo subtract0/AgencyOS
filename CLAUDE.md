@@ -480,5 +480,5 @@ python run_tests.py --run-all         # Must show 100% pass rate
 
 *"In automation we trust, in discipline we excel, in learning we evolve."*
 
-**Version 0.9.5** - DSPy Integration & Constitutional Governance
-**Last Updated**: 2025-09-30
+**Version 1.1.1** - Mars Rover Bulletproofing & Production Ready
+**Last Updated**: 2025-10-07
