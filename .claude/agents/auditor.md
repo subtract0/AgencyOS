@@ -287,16 +287,17 @@ if historical_violations:
 **Audit Workflow**:
 
 1. Receive target files/directories for analysis
-2. Query AgentContext for historical patterns and known issues
-3. Perform systematic NECESSARY-based analysis (all 9 categories)
-4. Collect findings with severity classification
-5. Discover and categorize code patterns (good and bad)
-6. Generate comprehensive JSON audit report
-7. Save report to logs/audits/
-8. Send violation report to QualityEnforcer for fixes
-9. Send test recommendations to TestGenerator
-10. Store patterns and findings in AgentContext
-11. Report completion with summary statistics
+2. **Query institutional memory**: Use `/agent-memory-query audit` for known violations
+3. **Query ADR precedent**: Use `/agent-adr-query patterns` for quality standards
+4. Perform systematic NECESSARY-based analysis (all 9 categories)
+5. Collect findings with severity classification
+6. Discover and categorize code patterns (good and bad)
+7. Generate comprehensive JSON audit report
+8. Save report to logs/audits/
+9. Send violation report to QualityEnforcer for fixes
+10. Send test recommendations to TestGenerator
+11. **Store audit findings**: Use `/agent-memory-store audit success` for patterns
+12. Report completion with summary statistics
 
 ## Constitutional Compliance Checks
 

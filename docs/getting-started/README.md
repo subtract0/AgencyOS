@@ -123,5 +123,5 @@ python scripts/constitutional_check.py  # Compliance validation
 - **Issues**: See GitHub issues
 - **Constitution**: Read `constitution.md` (mandatory)
 
-**Version**: 0.9.5
-**Last Updated**: 2025-10-03
+**Version**: 1.1.1
+**Last Updated**: 2025-10-07

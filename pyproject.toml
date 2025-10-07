@@ -117,6 +117,53 @@ unfixable = ["B"]
     "E722",  # Bare except (legacy compatibility)
     "C401",  # Generator patterns (readability preference)
     "C414",  # Unnecessary list() in sorted()
+]
+"scripts/benchmark*.py" = [
+    "E402",  # Module imports not at top (sys.path manipulation required)
+    "F541",  # f-strings without placeholders (logging templates)
+]
+"scripts/continuous_audit*.py" = [
+    "UP015",  # Unnecessary mode arguments (explicit for clarity)
+    "E741",  # Ambiguous variable names (intentional short names)
+    "F541",  # f-strings without placeholders (logging templates)
+]
+"scripts/generate_review_dashboard.py" = [
+    "F541",  # f-strings without placeholders (logging templates)
+]
+"scripts/phase1_local_smoke_test.py" = [
+    "F541",  # f-strings without placeholders (logging templates)
+]
+"shared/agent_registry.py" = [
+    "I001",  # Import ordering (legacy import structure)
+]
+"shared/agent_telemetry.py" = [
+    "I001",  # Import ordering (legacy import structure)
+]
+"shared/constitutional_monitor.py" = [
+    "I001",  # Import ordering (legacy import structure)
+    "B007",  # Loop variable not used (intentional iteration)
+]
+"shared/self_healing_agents.py" = [
+    "I001",  # Import ordering (legacy import structure)
+    "F401",  # Unused imports (checked for availability)
+]
+"tests/test_continuous_audit.py" = [
+    "I001",  # Import ordering (test-specific imports)
+    "UP015",  # Explicit mode arguments in tests
+]
+"tests/test_benchmarks.py" = [
+    "C416",  # Explicit comprehensions for readability
+]
+"tests/trinity_protocol/core/test_hybrid_executor_generalized.py" = [
+    "I001",  # Import ordering (test-specific imports)
+    "F811",  # Intentional redefinition for test isolation
+]
+"tools/test_quarantine.py" = [
+    "UP035",  # Explicit typing imports for compatibility
+    "UP006",  # Explicit Dict/Set for backward compatibility
+    "F541",  # f-strings without placeholders (logging templates)
+]
+"tools/kanban/adapters.py" = [
     "E741",  # Ambiguous variable names (legacy code)
 ]
 "shared/**/*.py" = [

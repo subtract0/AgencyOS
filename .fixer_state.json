@@ -1,0 +1,75 @@
+{
+  "session_id": "20251008_000429",
+  "started_at": "2025-10-08T00:04:29.704797",
+  "last_updated": "2025-10-08T00:06:08.762109",
+  "total_recommendations": 194,
+  "processed": 3,
+  "applied": 0,
+  "failed": 3,
+  "skipped": 0,
+  "results": [
+    {
+      "recommendation": {
+        "file_path": ".output/audit_recommendations/localM4_recommends_004-excessive_commented_code.md",
+        "priority": "P3",
+        "category": "pruning",
+        "impact": "Low",
+        "effort_hours": 1.0,
+        "status": "New",
+        "instances": 1,
+        "summary": "File has 38 commented lines",
+        "details": "Large amounts of commented code reduce maintainability",
+        "affected_files": [
+          "quality_enforcer_agent/quality_enforcer_agent.py"
+        ],
+        "recommendation_steps": [
+          "Review commented code for relevance",
+          "Remove obsolete comments",
+          "Move useful comments to documentation"
+        ],
+        "constitutional_article": "II",
+        "compliance_status": "Advisory",
+        "example_code": null
+      },
+      "status": "failed",
+      "files_modified": [],
+      "tests_passed": false,
+      "commit_sha": null,
+      "error_message": "LLM invocation error: 'GitManager' object has no attribute '_run_git_command'",
+      "execution_time": 98.992208,
+      "cost_usd": 0.0
+    },
+    {
+      "recommendation": {
+        "file_path": ".output/audit_recommendations/localM4_recommends_006-excessive_commented_code.md",
+        "priority": "P3",
+        "category": "pruning",
+        "impact": "Low",
+        "effort_hours": 1.0,
+        "status": "New",
+        "instances": 1,
+        "summary": "File has 45 commented lines",
+        "details": "Large amounts of commented code reduce maintainability",
+        "affected_files": [
+          "test_generator_agent/test_generator_agent.py"
+        ],
+        "recommendation_steps": [
+          "Review commented code for relevance",
+          "Remove obsolete comments",
+          "Move useful comments to documentation"
+        ],
+        "constitutional_article": "II",
+        "compliance_status": "Advisory",
+        "example_code": null
+      },
+      "status": "failed",
+      "files_modified": [],
+      "tests_passed": false,
+      "commit_sha": null,
+      "error_message": "simple_comment_remover.py failed: /opt/homebrew/Cellar/python@3.12/3.12.11/Frameworks/Python.framework/Versions/3.12/Resources/Python.app/Contents/MacOS/Python: can't open file '/Users/am/Code/Agency/scripts/simple_comment_remover.py': [Errno 2] No such file or directory\n",
+      "execution_time": 0.043524,
+      "cost_usd": 0.0
+    }
+  ],
+  "current_branch": null
+}
