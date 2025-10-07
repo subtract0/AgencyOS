@@ -1,0 +1,182 @@
+name: Test Health Tracking
+
+# Mars Rover Bulletproofing: Track per-test pass rates and flakiness scores
+# Runs after any workflow to analyze test results and maintain health metrics
+
+on:
+  workflow_run:
+    workflows: ["CI Pipeline", "Optimized CI Pipeline", "Constitutional CI/CD"]
+    types: [completed]
+
+env:
+  PYTHON_VERSION: '3.12'
+
+jobs:
+  track-test-health:
+    name: Analyze Test Results
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Install dependencies
+        run: |
+          pip install pytest pytest-json-report
+
+      - name: Download test artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: test-results
+          path: test-results/
+        continue-on-error: true  # May not exist for all runs
+
+      - name: Parse test results
+        id: parse
+        run: |
+          # Create health tracking directory
+          mkdir -p .test-health
+
+          # Parse pytest JSON output if available
+          if [ -f "test-results/report.json" ]; then
+            echo "Parsing test results..."
+
+            # Extract test metrics using Python
+            python3 << 'EOF'
+          import json
+          import os
+          from pathlib import Path
+          from datetime import datetime
+
+          # Load test report
+          with open("test-results/report.json") as f:
+              report = json.load(f)
+
+          # Track per-test results
+          health_dir = Path(".test-health")
+          health_dir.mkdir(exist_ok=True)
+
+          for test in report.get("tests", []):
+              test_name = test["nodeid"]
+              outcome = test["outcome"]
+              duration = test.get("duration", 0)
+
+              # Update health tracking file for this test
+              health_file = health_dir / f"{test_name.replace('/', '_').replace('::', '_')}.json"
+
+              if health_file.exists():
+                  with open(health_file) as f:
+                      health = json.load(f)
+              else:
+                  health = {
+                      "test_name": test_name,
+                      "total_runs": 0,
+                      "passed": 0,
+                      "failed": 0,
+                      "skipped": 0,
+                      "durations": [],
+                      "last_10_outcomes": []
+                  }
+
+              # Update metrics
+              health["total_runs"] += 1
+              health[outcome] = health.get(outcome, 0) + 1
+              health["durations"].append(duration)
+              health["last_10_outcomes"].append({
+                  "outcome": outcome,
+                  "timestamp": datetime.now().isoformat(),
+                  "duration": duration
+              })
+
+              # Keep only last 10 outcomes
+              health["last_10_outcomes"] = health["last_10_outcomes"][-10:]
+
+              # Keep last 100 durations
+              health["durations"] = health["durations"][-100:]
+
+              # Calculate metrics
+              if health["total_runs"] > 0:
+                  health["pass_rate"] = health["passed"] / health["total_runs"]
+                  health["avg_duration"] = sum(health["durations"]) / len(health["durations"])
+
+              # Calculate flakiness score (0-1)
+              # Based on variance in last 10 outcomes
+              if len(health["last_10_outcomes"]) >= 3:
+                  outcomes = [o["outcome"] for o in health["last_10_outcomes"]]
+                  passed = outcomes.count("passed")
+                  failed = outcomes.count("failed")
+
+                  # Flaky if sometimes passes, sometimes fails
+                  if passed > 0 and failed > 0:
+                      health["flakiness_score"] = min(passed, failed) / len(outcomes)
+                  else:
+                      health["flakiness_score"] = 0.0
+              else:
+                  health["flakiness_score"] = 0.0
+
+              # Save updated health
+              with open(health_file, "w") as f:
+                  json.dump(health, f, indent=2)
+
+              # Detect flaky tests (pass rate between 40-95% over 10+ runs)
+              if health["total_runs"] >= 10:
+                  pass_rate = health["pass_rate"]
+                  if 0.4 <= pass_rate <= 0.95:
+                      print(f"⚠️  FLAKY TEST DETECTED: {test_name}")
+                      print(f"   Pass rate: {pass_rate:.1%} ({health['passed']}/{health['total_runs']})")
+                      print(f"   Flakiness score: {health['flakiness_score']:.2f}")
+
+                      # Log to quarantine candidates
+                      with open("logs/quarantine_candidates.log", "a") as log:
+                          log.write(f"{datetime.now().isoformat()} | FLAKY | {test_name} | pass_rate={pass_rate:.2%}\n")
+
+          print(f"\n✅ Health tracking updated for {len(report.get('tests', []))} tests")
+          EOF
+          else
+            echo "No test results found, skipping health tracking"
+          fi
+
+      - name: Commit health tracking data
+        continue-on-error: true  # Don't block if commit fails
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+          git add .test-health/
+
+          if git diff --staged --quiet; then
+            echo "No changes to commit"
+          else
+            git commit -m "chore: Update test health tracking metrics
+
+            Automated health tracking from CI run ${{ github.run_id }}
+
+            🤖 Generated by Test Health Tracking workflow"
+
+            # Push to a dedicated branch
+            git push origin HEAD:test-health-data --force
+          fi
+
+      - name: Generate health summary
+        run: |
+          echo "## 📊 Test Health Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          # Count health files
+          TEST_COUNT=$(find .test-health -name "*.json" -type f 2>/dev/null | wc -l || echo "0")
+          echo "- Tests tracked: $TEST_COUNT" >> $GITHUB_STEP_SUMMARY
+
+          # Find flaky tests
+          if [ -f "logs/quarantine_candidates.log" ]; then
+            FLAKY_COUNT=$(grep "FLAKY" logs/quarantine_candidates.log | wc -l || echo "0")
+            echo "- Flaky tests identified: $FLAKY_COUNT" >> $GITHUB_STEP_SUMMARY
+          fi
+
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "Health data committed to \`test-health-data\` branch" >> $GITHUB_STEP_SUMMARY
