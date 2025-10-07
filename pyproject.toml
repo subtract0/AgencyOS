@@ -163,6 +163,9 @@ unfixable = ["B"]
     "UP006",  # Explicit Dict/Set for backward compatibility
     "F541",  # f-strings without placeholders (logging templates)
 ]
+"tools/kanban/adapters.py" = [
+    "E741",  # Ambiguous variable names (legacy code)
+]
 "shared/**/*.py" = [
     "E402",  # Module imports not at top (conditional imports for optional deps)
     "F841",  # Unused variables (WIP/experimental features)
