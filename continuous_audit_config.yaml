@@ -44,7 +44,7 @@ audit:
 
   # Output configuration for recommendations
   output:
-    dir: "localaudit_recommendations"           # Storage directory
+    dir: ".output/audit_recommendations"        # Storage directory (untracked by git)
     file_prefix: "localM4_recommends_"          # Filename prefix for reports
     state_file: ".audit_state.json"             # Persistent state tracker
 

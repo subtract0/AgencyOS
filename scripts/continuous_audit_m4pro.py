@@ -710,13 +710,17 @@ def _scan_for_category(
     # For now, use basic heuristics as placeholder
 
     if category == IssueCategory.CONSOLIDATION:
-        # Check for duplicate code patterns
-        # Simplified: Check if file has repeated function definitions
+        # Check for duplicate code patterns with specific function names
         import re
+        from collections import Counter
 
         function_pattern = r"def (\w+)\("
         functions = re.findall(function_pattern, content)
-        if len(functions) != len(set(functions)):
+        function_counts = Counter(functions)
+        duplicates = [(name, count) for name, count in function_counts.items() if count > 1]
+
+        if duplicates:
+            duplicate_list = ", ".join(f"'{name}' ({count}x)" for name, count in duplicates)
             return Issue(
                 title="Duplicate function definitions detected",
                 category=category,
@@ -724,12 +728,13 @@ def _scan_for_category(
                 impact=Impact.MEDIUM,
                 effort_hours=2.0,
                 summary="File contains duplicate or very similar function definitions",
-                details=f"Found {len(functions) - len(set(functions))} potential duplicates",
+                details=f"Found {len(duplicates)} duplicate function names: {duplicate_list}",
                 locations=[FileLocation(file_path=file_path)],
                 recommendation_steps=[
-                    "Review duplicate functions",
-                    "Consolidate common logic",
-                    "Create shared utility functions",
+                    "Review duplicate functions listed above",
+                    "Consolidate common logic into shared utilities",
+                    "Remove redundant implementations",
+                    "Ensure single source of truth for each function",
                 ],
                 constitutional_article="II",
                 compliance_status="Advisory",
@@ -817,24 +822,56 @@ def _scan_for_category(
             )
 
     elif category == IssueCategory.ARCHITECTURE:
-        # Check for Dict[Any, Any] violations
-        if "Dict[Any, Any]" in content or "dict[Any, Any]" in content:
-            return Issue(
-                title="Dict[Any, Any] type violation",
-                category=category,
-                priority=Priority.P0,
-                impact=Impact.CRITICAL,
-                effort_hours=4.0,
-                summary="File uses Dict[Any, Any] which violates ADR-008",
-                details="Constitutional law #2 requires strict typing with Pydantic models",
-                locations=[FileLocation(file_path=file_path)],
-                recommendation_steps=[
-                    "Replace Dict[Any, Any] with Pydantic model",
-                    "Define explicit field types",
-                    "Update type hints throughout",
-                    "Run mypy to verify",
-                ],
-                example_code="""
+        # Check for Dict[Any, Any] violations using AST parsing (not regex)
+        # This prevents false positives from comments, docstrings, and string literals
+        import ast
+
+        try:
+            tree = ast.parse(content)
+            violations: list[tuple[int, str]] = []
+
+            class DictAnyVisitor(ast.NodeVisitor):
+                def visit_Subscript(self, node: ast.Subscript) -> None:
+                    # Check for Dict[Any, Any] or dict[Any, Any]
+                    if isinstance(node.value, ast.Name) and node.value.id in ("Dict", "dict"):
+                        # Check if subscript is [Any, Any]
+                        if isinstance(node.slice, ast.Tuple) and len(node.slice.elts) == 2:
+                            if all(
+                                isinstance(elt, ast.Name) and elt.id == "Any"
+                                for elt in node.slice.elts
+                            ):
+                                line_num = getattr(node, "lineno", 0)
+                                # Get the actual code snippet
+                                lines = content.split("\n")
+                                if 0 < line_num <= len(lines):
+                                    code_line = lines[line_num - 1].strip()
+                                    violations.append((line_num, code_line))
+                    self.generic_visit(node)
+
+            visitor = DictAnyVisitor()
+            visitor.visit(tree)
+
+            if violations:
+                # Found genuine Dict[Any, Any] in actual code
+                violation_details = "\n".join(
+                    f"  Line {line}: {code}" for line, code in violations
+                )
+                return Issue(
+                    title="Dict[Any, Any] type violation",
+                    category=category,
+                    priority=Priority.P0,
+                    impact=Impact.CRITICAL,
+                    effort_hours=4.0,
+                    summary="File uses Dict[Any, Any] which violates ADR-008",
+                    details=f"Constitutional law #2 requires strict typing with Pydantic models\n\nViolations found:\n{violation_details}",
+                    locations=[FileLocation(file_path=file_path, line_start=violations[0][0])],
+                    recommendation_steps=[
+                        "Replace Dict[Any, Any] with Pydantic model",
+                        "Define explicit field types",
+                        "Update type hints throughout",
+                        "Run mypy to verify",
+                    ],
+                    example_code="""
 # ❌ WRONG:
 user_data: Dict[Any, Any] = {}
 
@@ -846,9 +883,12 @@ class UserData(BaseModel):
     name: str
     age: int
 """,
-                constitutional_article="II",
-                compliance_status="Violation",
-            )
+                    constitutional_article="II",
+                    compliance_status="Violation",
+                )
+        except SyntaxError:
+            # File has syntax errors, skip AST parsing
+            pass
 
     return None
 
