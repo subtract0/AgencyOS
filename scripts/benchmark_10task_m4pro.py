@@ -247,7 +247,12 @@ def run_single_task(
     memory_after = get_memory_usage_mb()
 
     # Get cost (should be $0.00 for local)
-    cost = cost_tracker.get_session_cost() if cost_tracker else 0.0
+    # Get cost from tracker (use get_summary)
+    if cost_tracker:
+        summary_result = cost_tracker.get_summary()
+        cost = summary_result.unwrap().total_cost_usd if summary_result.is_ok() else 0.0
+    else:
+        cost = 0.0
 
     return BenchmarkResult(
         task_id=f"task_{task_num:03d}",

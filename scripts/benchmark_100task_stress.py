@@ -320,7 +320,12 @@ def run_single_task(
         result, retry_count = execute_task_with_retry(task, registry, max_retries=2)
 
     # Get cost
-    cost = cost_tracker.get_session_cost() if cost_tracker else 0.0
+    # Get cost from tracker (use get_summary)
+    if cost_tracker:
+        summary_result = cost_tracker.get_summary()
+        cost = summary_result.unwrap().total_cost_usd if summary_result.is_ok() else 0.0
+    else:
+        cost = 0.0
 
     return StressTestResult(
         task_id=task["task_id"],
