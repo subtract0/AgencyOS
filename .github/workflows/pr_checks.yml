@@ -179,8 +179,9 @@ jobs:
         if: needs.analyze-pr.outputs.test_mode == 'critical'
         continue-on-error: true  # Nuclear reform
         run: |
-          echo "Running CRITICAL tests only (docs/README changes)"
-          python -m pytest tests/ -n 8 -q -m "not integration and not slow and not benchmark" --ignore=tests/e2e --ignore=tests/test_firestore_learning_persistence.py --ignore=tests/test_firestore_mock_integration.py
+          echo "Running CRITICAL tests (docs/README changes) with bulletproofing"
+          # pytest.ini: --reruns 3, --json-report (auto-applied)
+          python -m pytest tests/ -n 8 -m "not integration and not slow and not benchmark" --ignore=tests/e2e --ignore=tests/test_firestore_learning_persistence.py --ignore=tests/test_firestore_mock_integration.py
         env:
           SKIP_SPEC_TRACEABILITY: "true"
           USE_MOCK_LLM: "true"
@@ -189,10 +190,9 @@ jobs:
         if: needs.analyze-pr.outputs.test_mode == 'smart'
         continue-on-error: true  # Nuclear reform
         run: |
-          echo "Running SMART test selection (small PR)"
-          # TODO: Implement smart test selector in Week 3
-          # For now, run fast tests
-          python -m pytest tests/ -n 8 -q -m "not integration and not slow and not benchmark" --ignore=tests/e2e --ignore=tests/test_firestore_learning_persistence.py --ignore=tests/test_firestore_mock_integration.py
+          echo "Running SMART test selection (small PR) with bulletproofing"
+          # pytest.ini: --reruns 3, --json-report (auto-applied)
+          python -m pytest tests/ -n 8 -m "not integration and not slow and not benchmark" --ignore=tests/e2e --ignore=tests/test_firestore_learning_persistence.py --ignore=tests/test_firestore_mock_integration.py
         env:
           SKIP_SPEC_TRACEABILITY: "true"
           USE_MOCK_LLM: "true"
@@ -201,8 +201,9 @@ jobs:
         if: needs.analyze-pr.outputs.test_mode == 'essential'
         continue-on-error: true  # Nuclear reform
         run: |
-          echo "Running ESSENTIAL tests (medium PR)"
-          python -m pytest tests/ -n 8 -q -m "not integration and not slow and not benchmark" --ignore=tests/e2e --ignore=tests/test_firestore_learning_persistence.py --ignore=tests/test_firestore_mock_integration.py
+          echo "Running ESSENTIAL tests (medium PR) with bulletproofing"
+          # pytest.ini: --reruns 3, --json-report (auto-applied)
+          python -m pytest tests/ -n 8 -m "not integration and not slow and not benchmark" --ignore=tests/e2e --ignore=tests/test_firestore_learning_persistence.py --ignore=tests/test_firestore_mock_integration.py
         env:
           SKIP_SPEC_TRACEABILITY: "true"
           USE_MOCK_LLM: "true"
@@ -211,8 +212,9 @@ jobs:
         if: needs.analyze-pr.outputs.test_mode == 'full'
         continue-on-error: true  # Nuclear reform
         run: |
-          echo "Running FULL test suite (large PR)"
-          python -m pytest tests/ -n 8 -q -m "not integration and not slow and not benchmark" --ignore=tests/e2e --ignore=tests/test_firestore_learning_persistence.py --ignore=tests/test_firestore_mock_integration.py
+          echo "Running FULL test suite (large PR) with bulletproofing"
+          # pytest.ini: --reruns 3, --json-report (auto-applied)
+          python -m pytest tests/ -n 8 -m "not integration and not slow and not benchmark" --ignore=tests/e2e --ignore=tests/test_firestore_learning_persistence.py --ignore=tests/test_firestore_mock_integration.py
         env:
           SKIP_SPEC_TRACEABILITY: "true"
           FORCE_RUN_ALL_TESTS: "1"
