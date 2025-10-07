@@ -38,8 +38,25 @@ def pytest_collection_modifyitems(items):
 
     Tests are automatically marked based on their location, with sensible
     timeout defaults to prevent test suite hangs.
+
+    Quarantined tests are marked as xfail to prevent blocking CI while
+    still running to detect if they become stable.
     """
     for item in items:
+        # Handle quarantined tests (mark as xfail)
+        if any(m.name == "quarantine" for m in item.iter_markers()):
+            # Get quarantine reason if provided
+            quarantine_marker = next(m for m in item.iter_markers() if m.name == "quarantine")
+            reason = quarantine_marker.kwargs.get("reason", "Flaky test quarantined by health tracking")
+
+            # Add xfail marker so test runs but doesn't block CI
+            item.add_marker(
+                pytest.mark.xfail(
+                    reason=f"⚠️  QUARANTINED: {reason}",
+                    strict=False,
+                    run=True,
+                )
+            )
         test_path = str(item.fspath)
 
         # Auto-categorize by path
