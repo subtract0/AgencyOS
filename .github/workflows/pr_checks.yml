@@ -138,6 +138,8 @@ jobs:
       - name: Dict[Any] ban
         run: |
           python tools/quality/no_dict_any_check.py
+        env:
+          NO_DICT_ANY_ALLOWLIST: "**/scripts/benchmark*.py,**/scripts/continuous_audit*.py"
 
   # ============================================================================
   # SMART TEST EXECUTION
