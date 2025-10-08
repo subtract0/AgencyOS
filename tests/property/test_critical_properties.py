@@ -13,9 +13,28 @@ Each property generates 100-1000 test cases automatically.
 import time
 
 import pytest
-from hypothesis import assume, given, settings
-from hypothesis import strategies as st
-from hypothesis.stateful import RuleBasedStateMachine, invariant, rule
+
+try:
+    from hypothesis import assume, given, settings
+    from hypothesis import strategies as st
+    from hypothesis.stateful import RuleBasedStateMachine, invariant, rule
+    HYPOTHESIS_AVAILABLE = True
+except ImportError:
+    HYPOTHESIS_AVAILABLE = False
+    pytestmark = pytest.mark.skip(reason="hypothesis not installed")
+    # Dummy decorators and objects to prevent errors during collection
+    given = lambda *args, **kwargs: lambda f: f
+    settings = lambda **kwargs: lambda f: f
+    assume = lambda x: None
+
+    class DummyStrategy:
+        def __call__(self, *args, **kwargs): return self
+        def __getattr__(self, name): return self
+
+    st = DummyStrategy()
+    RuleBasedStateMachine = object
+    invariant = lambda f: f
+    rule = lambda **kwargs: lambda f: f
 
 from agency_memory import consolidate_learnings
 from shared.retry_controller import (

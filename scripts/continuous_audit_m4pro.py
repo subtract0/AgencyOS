@@ -1158,6 +1158,284 @@ class ContinuousAuditSystem:
         save_state(self.state, state_path)
 
 
+# ============================================================================
+# Test Helper Functions (for test_continuous_audit.py)
+# ============================================================================
+
+
+def detect_consolidation_issues(files: list[dict[str, str]]) -> Result[list[dict], str]:
+    """
+    Detect consolidation issues (duplicate code patterns).
+
+    Test helper that wraps _scan_for_category for CONSOLIDATION checks.
+    """
+    try:
+        issues = []
+        for file_data in files:
+            content = file_data.get("content", "")
+            path = file_data.get("path", "unknown.py")
+
+            # Create mock auditor (not used in heuristic mode)
+            auditor = None
+            context = create_agent_context()
+
+            issue = _scan_for_category(path, content, IssueCategory.CONSOLIDATION, auditor, context)
+            if issue:
+                issues.append({
+                    "category": issue.category.value.capitalize(),
+                    "title": issue.title,
+                    "details": issue.details,
+                })
+
+        return Ok(issues)
+    except Exception as e:
+        return Err(f"Detection failed: {e}")
+
+
+def detect_linting_issues(files: list[dict[str, str]]) -> Result[list[dict], str]:
+    """
+    Detect linting issues (import order, type hints, etc.).
+
+    Test helper that wraps _scan_for_category for LINTING checks.
+    """
+    try:
+        issues = []
+        for file_data in files:
+            content = file_data.get("content", "")
+            path = file_data.get("path", "unknown.py")
+
+            auditor = None
+            context = create_agent_context()
+
+            issue = _scan_for_category(path, content, IssueCategory.LINTING, auditor, context)
+            if issue:
+                issues.append({
+                    "category": issue.category.value.capitalize(),
+                    "title": issue.title,
+                    "details": issue.details,
+                })
+
+        return Ok(issues)
+    except Exception as e:
+        return Err(f"Detection failed: {e}")
+
+
+def detect_simplification_issues(files: list[dict[str, str]]) -> Result[list[dict], str]:
+    """
+    Detect simplification issues (complex functions, high nesting).
+
+    Test helper that wraps _scan_for_category for SIMPLIFICATION checks.
+    """
+    try:
+        issues = []
+        for file_data in files:
+            content = file_data.get("content", "")
+            path = file_data.get("path", "unknown.py")
+
+            auditor = None
+            context = create_agent_context()
+
+            issue = _scan_for_category(path, content, IssueCategory.SIMPLIFICATION, auditor, context)
+            if issue:
+                issues.append({
+                    "category": issue.category.value.capitalize(),
+                    "title": issue.title,
+                    "details": issue.details,
+                })
+
+        return Ok(issues)
+    except Exception as e:
+        return Err(f"Detection failed: {e}")
+
+
+def detect_pruning_issues(files: list[dict[str, str]]) -> Result[list[dict], str]:
+    """
+    Detect pruning issues (dead code, unused functions).
+
+    Test helper that wraps _scan_for_category for PRUNING checks.
+    """
+    try:
+        issues = []
+        for file_data in files:
+            content = file_data.get("content", "")
+            path = file_data.get("path", "unknown.py")
+
+            auditor = None
+            context = create_agent_context()
+
+            issue = _scan_for_category(path, content, IssueCategory.PRUNING, auditor, context)
+            if issue:
+                issues.append({
+                    "category": issue.category.value.capitalize(),
+                    "title": issue.title,
+                    "details": issue.details,
+                })
+
+        return Ok(issues)
+    except Exception as e:
+        return Err(f"Detection failed: {e}")
+
+
+def detect_architecture_issues(files: list[dict[str, str]]) -> Result[list[dict], str]:
+    """
+    Detect architecture issues (Dict[Any, Any] violations, etc.).
+
+    Test helper that wraps _scan_for_category for ARCHITECTURE checks.
+    """
+    try:
+        issues = []
+        for file_data in files:
+            content = file_data.get("content", "")
+            path = file_data.get("path", "unknown.py")
+
+            auditor = None
+            context = create_agent_context()
+
+            issue = _scan_for_category(path, content, IssueCategory.ARCHITECTURE, auditor, context)
+            if issue:
+                issues.append({
+                    "category": issue.category.value.capitalize(),
+                    "title": issue.title,
+                    "details": issue.details,
+                })
+
+        return Ok(issues)
+    except Exception as e:
+        return Err(f"Detection failed: {e}")
+
+
+def sanitize_filename(title: str) -> str:
+    """
+    Sanitize filename to prevent path traversal attacks.
+
+    Removes directory separators and parent directory references.
+    """
+    # Remove path traversal attempts
+    safe_title = title.replace("..", "").replace("/", "_").replace("\\", "_")
+
+    # Keep only alphanumeric, dashes, and underscores
+    safe_title = "".join(c if c.isalnum() or c in "-_" else "_" for c in safe_title.lower())
+
+    # Limit length
+    return safe_title[:50]
+
+
+def validate_file_permissions(path: Path) -> Result[None, str]:
+    """
+    Validate file permissions are secure (not world-writable).
+
+    Returns Ok if permissions are acceptable, Err with warning otherwise.
+    """
+    try:
+        import stat
+
+        if not path.exists():
+            return Err(f"File not found: {path}")
+
+        mode = path.stat().st_mode
+
+        # Check if world-writable (0o002)
+        if mode & stat.S_IWOTH:
+            return Err(f"Warning: File {path} is world-writable (insecure permissions)")
+
+        # Check if group-writable and warn (advisory)
+        if mode & stat.S_IWGRP:
+            logger.warning(f"File {path} is group-writable (consider restricting)")
+
+        return Ok(None)
+
+    except Exception as e:
+        return Err(f"Permission check failed: {e}")
+
+
+def generate_recommendation_filename(number: int, title: str) -> str:
+    """
+    Generate recommendation filename with proper zero-padding.
+
+    Handles numbers > 999 with 4-digit padding.
+    """
+    safe_title = sanitize_filename(title)
+
+    # Use 4-digit padding to handle numbers > 999
+    if number > 999:
+        return f"localM4_recommends_{number:04d}-{safe_title}.md"
+    else:
+        return f"localM4_recommends_{number:03d}-{safe_title}.md"
+
+
+def run_continuous_audit(config: dict | AuditConfig, output_dir: str, max_cycles: int | None = None) -> Result[None, str]:
+    """
+    Run continuous audit system (wrapper for testing).
+
+    Args:
+        config: Audit configuration (dict or AuditConfig)
+        output_dir: Output directory path
+        max_cycles: Maximum number of cycles (for testing)
+
+    Returns:
+        Result indicating success or error
+    """
+    try:
+        # Convert dict to AuditConfig if needed
+        if isinstance(config, dict):
+            # Extract nested structure
+            audit_dict = config.get("audit", {})
+            output_dict = audit_dict.get("output", {})
+            dedup_dict = audit_dict.get("deduplication", {})
+            agents_dict = audit_dict.get("agents", {})
+
+            # Flatten to AuditConfig structure
+            flattened = {
+                "mode": audit_dict.get("mode", "continuous"),
+                "max_runtime_hours": audit_dict.get("max_runtime_hours", 48),
+                "scan_interval_minutes": audit_dict.get("scan_interval_minutes", 10),
+                "targets": audit_dict.get("targets", []),
+                "checks": audit_dict.get("checks", []),
+                "output_dir": output_dict.get("dir", output_dir),
+                "file_prefix": output_dict.get("file_prefix", "localM4_recommends_"),
+                "state_file": output_dict.get("state_file", ".audit_state.json"),
+                "similarity_threshold": dedup_dict.get("similarity_threshold", 0.7),
+                "elevate_priority_threshold": dedup_dict.get("elevate_priority_threshold", 3),
+                "use_local": agents_dict.get("use_local", True),
+                "model_tier": agents_dict.get("model_tier", "LOCAL"),
+            }
+
+            audit_config = AuditConfig(**flattened)
+        else:
+            audit_config = config
+
+        # Override output_dir (tests specify this separately)
+        audit_config.output_dir = output_dir
+
+        # Create output directory if it doesn't exist
+        import os
+        os.makedirs(output_dir, exist_ok=True)
+
+        # Create system
+        system = ContinuousAuditSystem(audit_config)
+
+        # Run limited cycles for testing
+        if max_cycles:
+            cycle_count = 0
+            while system.running and cycle_count < max_cycles:
+                result = run_scan_cycle(audit_config, system.state, system.registry, system.context)
+                if result.is_err():
+                    return Err(result.unwrap_err())
+                cycle_count += 1
+
+                # Check timeout
+                if system._check_timeout():
+                    break
+        else:
+            # Run full continuous mode
+            system.run_continuous()
+
+        return Ok(None)
+
+    except Exception as e:
+        return Err(f"Continuous audit failed: {e}")
+
+
 def main() -> None:
     """Main entry point."""
     parser = argparse.ArgumentParser(

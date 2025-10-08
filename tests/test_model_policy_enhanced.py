@@ -272,9 +272,9 @@ class TestModelTierSelection:
         assert tier == ModelTier.LOCAL_ADVANCED
 
     def test_select_model_tier_executor_default(self):
-        """Test default tier selection for executor agent."""
+        """Test default tier selection for executor agent (LOCAL-FIRST)."""
         tier = select_model_tier("executor")
-        assert tier == ModelTier.CLOUD_STANDARD
+        assert tier == ModelTier.LOCAL_STANDARD
 
     def test_select_model_tier_unknown_agent_default(self):
         """Test default tier for unknown agent falls back to cloud standard."""
@@ -297,16 +297,16 @@ class TestModelTierSelection:
         assert tier == ModelTier.LOCAL_ADVANCED
 
     def test_select_model_tier_moderate_complexity_keeps_cloud_agent(self):
-        """Test moderate complexity keeps cloud agent at default tier."""
+        """Test moderate complexity escalates local agent (LOCAL-FIRST)."""
         tier = select_model_tier("executor", complexity=0.6)
-        assert tier == ModelTier.CLOUD_STANDARD
+        assert tier == ModelTier.LOCAL_ADVANCED
 
     def test_select_model_tier_simple_complexity_keeps_default(self):
-        """Test simple complexity keeps default tier."""
+        """Test simple complexity keeps default tier (LOCAL-FIRST)."""
         witness_tier = select_model_tier("witness", complexity=0.4)
         executor_tier = select_model_tier("executor", complexity=0.4)
         assert witness_tier == ModelTier.LOCAL_FAST
-        assert executor_tier == ModelTier.CLOUD_STANDARD
+        assert executor_tier == ModelTier.LOCAL_STANDARD
 
     def test_select_model_tier_trivial_complexity_keeps_default(self):
         """Test trivial complexity keeps default tier."""
@@ -329,9 +329,9 @@ class TestModelTierSelection:
         assert tier == ModelTier.LOCAL_FAST
 
     def test_select_model_tier_force_local_downgrades_cloud_agent(self):
-        """Test force_local downgrades cloud agent to local advanced."""
+        """Test force_local keeps local agent at LOCAL-FIRST tier."""
         tier = select_model_tier("executor", force_local=True)
-        assert tier == ModelTier.LOCAL_ADVANCED
+        assert tier == ModelTier.LOCAL_STANDARD
 
     def test_select_model_tier_force_cloud_takes_precedence_over_local(self):
         """Test force_cloud takes precedence over force_local."""
@@ -355,12 +355,12 @@ class TestGetModelForAgent:
     def test_get_model_for_agent_architect_returns_local_advanced(self):
         """Test architect agent returns local advanced model."""
         model = get_model_for_agent("architect")
-        assert model == "codestral-22b"
+        assert model == "gpt-oss:20b"
 
     def test_get_model_for_agent_executor_returns_cloud_standard(self):
-        """Test executor agent returns cloud standard model."""
+        """Test executor agent returns local standard model (LOCAL-FIRST)."""
         model = get_model_for_agent("executor")
-        assert model == "gpt-5"
+        assert model == "deepseek-coder-v2:lite"
 
     def test_get_model_for_agent_with_critical_complexity(self):
         """Test agent with critical complexity returns cloud premium model."""
@@ -378,9 +378,9 @@ class TestGetModelForAgent:
         assert model == "gpt-5"
 
     def test_get_model_for_agent_force_local(self):
-        """Test force_local returns local model."""
+        """Test force_local returns local model (executor already local, stays LOCAL_STANDARD)."""
         model = get_model_for_agent("executor", force_local=True)
-        assert model == "codestral-22b"
+        assert model == "deepseek-coder-v2:lite"
 
     def test_get_model_for_agent_legacy_agency_agent_planner(self):
         """Test legacy agency agent (planner) returns correct model."""
@@ -419,17 +419,17 @@ class TestGetModelForAgent:
     def test_get_model_for_agent_trinity_plan_alias(self):
         """Test 'plan' alias for architect agent."""
         model = get_model_for_agent("plan")
-        assert model == "codestral-22b"
+        assert model == "gpt-oss:20b"
 
     def test_get_model_for_agent_trinity_execute_alias(self):
-        """Test 'execute' alias for executor agent."""
+        """Test 'execute' alias for executor agent (LOCAL-FIRST)."""
         model = get_model_for_agent("execute")
-        assert model == "gpt-5"
+        assert model == "deepseek-coder-v2:lite"
 
     def test_get_model_for_agent_trinity_auditlearn(self):
-        """Test auditlearn agent returns local fast model."""
+        """Test auditlearn agent returns local advanced model (gpt-oss:20b)."""
         model = get_model_for_agent("auditlearn")
-        assert model == "qwen2.5-coder:1.5b"
+        assert model == "gpt-oss:20b"
 
 
 class TestShouldUseLocal:
@@ -444,8 +444,8 @@ class TestShouldUseLocal:
         assert should_use_local("architect") is True
 
     def test_should_use_local_executor_agent(self):
-        """Test executor agent should not use local model."""
-        assert should_use_local("executor") is False
+        """Test executor agent should use local model (LOCAL-FIRST)."""
+        assert should_use_local("executor") is True
 
     def test_should_use_local_witness_with_critical_complexity(self):
         """Test witness with critical complexity should not use local model."""
@@ -464,8 +464,8 @@ class TestShouldUseLocal:
         assert should_use_local("witness", complexity=0.4) is True
 
     def test_should_use_local_executor_with_simple_complexity(self):
-        """Test executor with simple complexity still uses cloud model."""
-        assert should_use_local("executor", complexity=0.4) is False
+        """Test executor with simple complexity uses local model (LOCAL-FIRST)."""
+        assert should_use_local("executor", complexity=0.4) is True
 
     def test_should_use_local_unknown_agent_defaults_to_cloud(self):
         """Test unknown agent defaults to cloud model."""
@@ -572,24 +572,27 @@ class TestConstants:
     def test_tier_models_has_correct_values(self):
         """Test TIER_MODELS maps to correct model names."""
         assert TIER_MODELS[ModelTier.LOCAL_FAST] == "qwen2.5-coder:1.5b"
-        assert TIER_MODELS[ModelTier.LOCAL_STANDARD] == "qwen2.5-coder:7b"
-        assert TIER_MODELS[ModelTier.LOCAL_ADVANCED] == "codestral-22b"
+        assert TIER_MODELS[ModelTier.LOCAL_STANDARD] == "deepseek-coder-v2:lite"
+        assert TIER_MODELS[ModelTier.LOCAL_ADVANCED] == "gpt-oss:20b"
         assert TIER_MODELS[ModelTier.CLOUD_STANDARD] == "gpt-5"
         assert TIER_MODELS[ModelTier.CLOUD_PREMIUM] == "claude-sonnet-4.5"
 
     def test_trinity_agent_tiers_contains_all_agents(self):
         """Test TRINITY_AGENT_TIERS contains all Trinity agents."""
-        expected_agents = {"witness", "auditlearn", "architect", "plan", "executor", "execute"}
+        expected_agents = {"witness", "auditlearn", "auditor", "learner", "fixer", "architect", "plan", "executor", "execute"}
         assert set(TRINITY_AGENT_TIERS.keys()) == expected_agents
 
     def test_trinity_agent_tiers_has_correct_defaults(self):
-        """Test TRINITY_AGENT_TIERS maps to correct default tiers."""
+        """Test TRINITY_AGENT_TIERS maps to correct default tiers (LOCAL-FIRST)."""
         assert TRINITY_AGENT_TIERS["witness"] == ModelTier.LOCAL_FAST
-        assert TRINITY_AGENT_TIERS["auditlearn"] == ModelTier.LOCAL_FAST
+        assert TRINITY_AGENT_TIERS["auditlearn"] == ModelTier.LOCAL_ADVANCED
+        assert TRINITY_AGENT_TIERS["auditor"] == ModelTier.LOCAL_ADVANCED
+        assert TRINITY_AGENT_TIERS["learner"] == ModelTier.LOCAL_ADVANCED
+        assert TRINITY_AGENT_TIERS["fixer"] == ModelTier.LOCAL_STANDARD
         assert TRINITY_AGENT_TIERS["architect"] == ModelTier.LOCAL_ADVANCED
         assert TRINITY_AGENT_TIERS["plan"] == ModelTier.LOCAL_ADVANCED
-        assert TRINITY_AGENT_TIERS["executor"] == ModelTier.CLOUD_STANDARD
-        assert TRINITY_AGENT_TIERS["execute"] == ModelTier.CLOUD_STANDARD
+        assert TRINITY_AGENT_TIERS["executor"] == ModelTier.LOCAL_STANDARD
+        assert TRINITY_AGENT_TIERS["execute"] == ModelTier.LOCAL_STANDARD
 
     def test_agency_agent_models_contains_all_agents(self):
         """Test AGENCY_AGENT_MODELS contains all legacy agents."""
