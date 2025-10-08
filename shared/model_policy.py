@@ -6,14 +6,14 @@ import re
 # allow cost-saving agents to use gpt-5-mini.
 #
 # Multi-tier routing: 96% cost reduction by routing tasks by complexity
-# - P3 (simple): local model (qwen2.5-coder:32b) - $0/1M tokens - 60% of tasks
+# - P3 (simple): Qwen3-Coder-30B Q8_0 (local) - $0/1M tokens - 60% of tasks
 # - P2 (moderate): gpt-4o ($1.50/1M tokens) - 30% of tasks
 # - P1 (complex): gpt-5 ($4.00/1M tokens) - 10% of tasks
 #
 # Env variables (optional):
 # - AGENCY_MODEL: global fallback (default: gpt-5)
 # - USE_LOCAL_MODEL: enable local Ollama models for P3 tasks (default: true)
-# - LOCAL_MODEL_NAME: local model to use (default: qwen2.5-coder:32b)
+# - LOCAL_MODEL_NAME: local model (default: Qwen3-Coder-30B-A3B Q8_0 from HF)
 # - <AGENT>_MODEL per agent key below (e.g., CODER_MODEL, SUMMARY_MODEL, ...)
 #
 # Agent keys supported:
@@ -113,13 +113,14 @@ def get_optimal_model(complexity: str, agent_key: str = "coder") -> str:
         Model name optimized for complexity and cost
 
     Cost Savings:
-        - P3 → local (qwen2.5-coder:32b): $0/1M (FREE, 60% of tasks)
+        - P3 → Qwen3-Coder-30B Q8_0 (local): $0/1M (FREE, 60% of tasks)
         - P2 → gpt-4o: $1.50/1M (2.7x cheaper than gpt-5)
         - P1 → gpt-5: $4.00/1M (maximum quality)
 
     Local Model Integration:
         - Set USE_LOCAL_MODEL=false to use gpt-4o-mini for P3 instead
-        - Set LOCAL_MODEL_NAME to change local model (default: qwen2.5-coder:32b)
+        - Set LOCAL_MODEL_NAME to change local model
+        - Default: Qwen3-Coder-30B-A3B-Instruct Q8_0 (32GB, 8-bit quantization)
     """
     # Environment override takes precedence (check both DEFAULTS dict and direct env)
     agent_key_upper = agent_key.upper()
@@ -135,7 +136,10 @@ def get_optimal_model(complexity: str, agent_key: str = "coder") -> str:
         # Simple tasks: Try local model first (FREE), fallback to cloud
         use_local = os.getenv("USE_LOCAL_MODEL", "true").lower() == "true"
         if use_local:
-            local_model = os.getenv("LOCAL_MODEL_NAME", "qwen2.5-coder:32b")
+            local_model = os.getenv(
+                "LOCAL_MODEL_NAME",
+                "qwen3-coder:30b"  # Official Ollama model with Metal GPU optimization
+            )
             return f"ollama/{local_model}"  # Prefix for routing logic
         return "gpt-4o-mini"  # Cloud fallback
     elif complexity == "P1":

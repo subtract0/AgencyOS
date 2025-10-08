@@ -202,9 +202,22 @@ def main(test_mode: str = "unit", fast_only: bool = False, timed: bool = False) 
 
     # Add parallel execution if pytest-xdist is available
     # (Firestore tests excluded via --ignore flags, safe to parallelize)
+    # Memory-aware worker count: reduce parallelism when local Ollama model is active
     try:
         import xdist  # noqa: F401 - pytest-xdist module imported as 'xdist', checked for availability
-        pytest_args.extend(["-n", "auto"])  # Parallel execution with auto-detected workers
+
+        # Check if local model is active (Phase 3 cost optimization)
+        use_local = os.getenv("USE_LOCAL_MODEL", "true").lower() == "true"
+
+        if use_local:
+            # Reduce parallelism to prevent memory exhaustion with 32GB local model
+            # 48GB Mac: Qwen3-Coder Q8_0 (38GB) + 3 workers (9GB) = 47GB (safe)
+            worker_count = int(os.getenv("LOCAL_MODEL_TEST_WORKERS", "3"))
+            pytest_args.extend(["-n", str(worker_count)])
+            print(f"🧠 Local model active: using {worker_count} test workers (memory-safe)")
+        else:
+            # Full parallelism when no local model (cloud-only mode)
+            pytest_args.extend(["-n", "auto"])
     except ImportError:
         pass  # Run sequentially if xdist not available
 
