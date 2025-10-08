@@ -110,19 +110,23 @@ class TestToolCache:
         cached = self.cache.get(key, ttl_seconds=1)
         assert cached is None
 
+    @pytest.mark.serial  # Prevent parallel execution for deterministic LRU order
     def test_cache_lru_eviction(self):
         """Test LRU eviction when cache is full."""
         small_cache = ToolCache(max_size=3, default_ttl=300)
 
-        # Fill cache
+        # Clear cache before test to ensure clean state
+        small_cache.clear()
+
+        # Fill cache with deterministic insertion order
         small_cache.set("key1", "value1")
-        time.sleep(0.01)  # Ensure different timestamps
+        time.sleep(0.05)  # Increased delay to ensure different timestamps
         small_cache.set("key2", "value2")
-        time.sleep(0.01)
+        time.sleep(0.05)
         small_cache.set("key3", "value3")
+        time.sleep(0.05)
 
         # Add one more - should evict oldest (key1)
-        time.sleep(0.01)
         small_cache.set("key4", "value4")
 
         assert small_cache.get("key1") is None  # Evicted

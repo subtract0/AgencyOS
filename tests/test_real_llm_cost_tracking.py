@@ -229,6 +229,7 @@ def test_failed_call_tracking(cost_tracker):
     assert recent_calls[0].error is not None
 
 
+@pytest.mark.slow
 @pytest.mark.skipif(
     not os.getenv("OPENAI_API_KEY"), reason="Requires OPENAI_API_KEY for real API test"
 )

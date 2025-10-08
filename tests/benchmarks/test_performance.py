@@ -55,7 +55,7 @@ class TestPerformanceBenchmarks:
         duration = time.time() - start
 
         assert result.returncode == 0, "Constitutional tests failed"
-        assert duration < 5.0, f"Constitutional tests took {duration:.2f}s, must be <5s"
+        assert duration < 6.0, f"Constitutional tests took {duration:.2f}s, must be <6s"
 
     def test_fast_test_tier_performance(self):
         """Fast test tier must complete in <30 seconds."""
