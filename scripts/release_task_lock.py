@@ -15,7 +15,7 @@ def release_all_locks_for_session(session_id: str) -> int:
     released_count = 0
     for lock_file in LOCK_DIR.glob("*.lock"):
         try:
-            with open(lock_file, 'r') as f:
+            with lock_file.open() as f:
                 holder = f.readline().strip()
 
             if holder == session_id:
@@ -38,7 +38,7 @@ def release_specific_lock(task_id: str, session_id: str = None) -> bool:
 
     if session_id:
         # Verify ownership before releasing
-        with open(lock_file, 'r') as f:
+        with lock_file.open() as f:
             holder = f.readline().strip()
 
         if holder != session_id:
@@ -64,7 +64,7 @@ def list_active_locks() -> None:
 
     print(f"🔒 Active locks ({len(locks)}):")
     for lock_file in sorted(locks):
-        with open(lock_file, 'r') as f:
+        with lock_file.open() as f:
             session_id = f.readline().strip()
             timestamp = f.readline().strip()
 
