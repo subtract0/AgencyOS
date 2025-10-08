@@ -8,7 +8,7 @@ Constitutional compliance:
 - Constitutional Law #8: Focused functions under 50 lines
 """
 import re
-from typing import List, Literal, cast
+from typing import Literal, cast
 
 from shared.models.priority_task import BacklogError, PriorityTask
 from shared.type_definitions.result import Err, Ok, Result

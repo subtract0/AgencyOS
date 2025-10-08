@@ -241,7 +241,7 @@ class LockManager:
             return Err(
                 LockError(
                     error_type="AlreadyLocked",
-                    message=f"Race condition: lock created by another agent",
+                    message="Race condition: lock created by another agent",
                     task_id=task_id,
                 )
             )

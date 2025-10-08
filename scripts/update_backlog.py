@@ -13,7 +13,6 @@ import re
 import subprocess
 import sys
 from pathlib import Path
-from typing import List
 
 from shared.models.priority_task import BacklogError, PriorityTask
 from shared.type_definitions.result import Err, Ok, Result
