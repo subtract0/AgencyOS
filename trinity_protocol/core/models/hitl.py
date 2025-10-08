@@ -14,7 +14,7 @@ Constitutional Compliance:
 from datetime import datetime
 from typing import Literal
 
-from pydantic import BaseModel, Field, ConfigDict
+from pydantic import BaseModel, ConfigDict, Field
 
 from trinity_protocol.core.models.patterns import DetectedPattern
 

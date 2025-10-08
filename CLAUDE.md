@@ -198,7 +198,18 @@ Read **`constitution.md`** in full before any action. Summary:
 
 ### **Prime Commands** (MANDATORY START)
 
-* **`/primecc`**: Gain general understanding of codebase with focus on improvements (optimized for token efficiency)
+* **`/primeccc`**: 🚀 **RECOMMENDED** - Autonomous agent orchestration from strategic intent to production code (93% more efficient than /primecc)
+  - **Zero arguments:** `/primeccc` → Auto-select from TOP 5 PRIORITY QUEUE in backlog
+  - **With intent:** `/primeccc "Add JWT auth"` → Execute specific task
+  - You provide: Strategic WHAT/WHY (or let me auto-select)
+  - I handle: Tactical HOW/WHEN (plan → test → code → verify → memory update)
+  - Memory-optimized: 10k tokens vs 140k in /primecc
+  - Autonomous loop: Scout → Plan → Execute → Deliver
+  - Flags: `--plan-only` (review first), `--auto-pr` (auto create PR)
+  - Backlog: `~/.agency/memories/agency_backlog/test_suite_gaps.md`
+  - See: `docs/PRIMECCC_USAGE_GUIDE.md`
+
+* **`/primecc`**: Gain general understanding of codebase with focus on improvements (legacy, use /primeccc for execution)
 * **`/prime plan_and_execute`**: Full development cycle from spec to code (Spec → Plan → ADR → Implementation → Tests)
 * **`/prime audit_and_refactor`**: Analyze and improve code quality with learning-enhanced analysis
 * **`/prime create_tool`**: Develop a new agent tool via ToolsmithAgent

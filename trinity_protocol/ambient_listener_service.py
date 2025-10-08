@@ -24,7 +24,7 @@ import sys
 from enum import Enum
 from pathlib import Path
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
 
 from shared.persistent_store import PersistentStore
 from shared.type_definitions.result import Err, Ok, Result
@@ -127,10 +127,7 @@ class AmbientListenerConfig(BaseModel):
         description="Use aggressive VAD settings to reduce false positives",
     )
 
-    class Config:
-        """Pydantic config."""
-
-        use_enum_values = True
+    model_config = ConfigDict(use_enum_values=True)
 
 
 class AmbientListenerService:

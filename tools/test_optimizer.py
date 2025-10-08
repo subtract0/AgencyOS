@@ -18,7 +18,7 @@ from collections import defaultdict
 from dataclasses import dataclass
 from pathlib import Path
 
-from pydantic import BaseModel, Field, ConfigDict
+from pydantic import BaseModel, ConfigDict, Field
 
 from shared.type_definitions.result import Err, Ok, Result
 

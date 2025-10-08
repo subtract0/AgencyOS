@@ -99,15 +99,21 @@ def wrap_openai_client(
 
                 # Track the call
                 duration = time.time() - start_time
+                metadata: dict[str, str] = {}
+                if task_id:
+                    metadata["task_id"] = task_id
+                if correlation_id:
+                    metadata["correlation_id"] = correlation_id
+
                 cost_tracker.track(
                     operation=agent_name,
+                    model=model,
                     model_tier=tier,
                     tokens_in=input_tokens,
                     tokens_out=output_tokens,
                     duration_seconds=duration,
                     success=True,
-                    task_id=task_id,
-                    correlation_id=correlation_id,
+                    metadata=metadata if metadata else None,
                 )
 
             return response
@@ -121,15 +127,21 @@ def wrap_openai_client(
             model = kwargs.get("model", "unknown")
             tier = determine_model_tier(model)
 
+            metadata: dict[str, str] = {}
+            if task_id:
+                metadata["task_id"] = task_id
+            if correlation_id:
+                metadata["correlation_id"] = correlation_id
+
             cost_tracker.track(
                 operation=agent_name,
+                model=model,
                 model_tier=tier,
                 tokens_in=0,
                 tokens_out=0,
                 duration_seconds=duration,
                 success=False,
-                task_id=task_id,
-                correlation_id=correlation_id,
+                metadata=metadata if metadata else None,
                 error=error_msg,
             )
 
