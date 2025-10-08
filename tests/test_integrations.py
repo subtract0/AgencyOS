@@ -196,6 +196,7 @@ class TestFirestoreIntegration:
         assert store._collection is not None, "Should have collection reference"
 
 
+@pytest.mark.skip(reason="OpenAI integration tests require API key and may incur costs")
 @pytest.mark.integration
 class TestOpenAIIntegration:
     """Integration tests for OpenAI API."""
