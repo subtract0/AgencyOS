@@ -27,6 +27,11 @@ from .learning import (
     PatternAnalysis,
     TimeDistribution,
 )
+from .lock_metadata import (
+    LockError,
+    LockHandle,
+    LockMetadata,
+)
 from .memory import (
     MemoryMetadata,
     MemoryPriority,
@@ -64,6 +69,10 @@ from .patterns import (
     ValidationOutcome,
     ValidationStatus,
 )
+from .priority_task import (
+    BacklogError,
+    PriorityTask,
+)
 from .telemetry import (
     AgentMetrics,
     SystemHealth,
@@ -72,6 +81,13 @@ from .telemetry import (
 )
 
 __all__ = [
+    # Lock models
+    "LockMetadata",
+    "LockHandle",
+    "LockError",
+    # Priority task models
+    "PriorityTask",
+    "BacklogError",
     # Memory models
     "MemoryRecord",
     "MemoryPriority",

@@ -6,8 +6,6 @@ import pytest
 
 from core.telemetry import SimpleTelemetry
 
-pytestmark = pytest.mark.skip(reason="Telemetry tests require specific file system state - environment-dependent")
-
 
 def test_events_dir_auto_created(tmp_path, monkeypatch):
     # Run in isolated working dir
@@ -15,8 +13,8 @@ def test_events_dir_auto_created(tmp_path, monkeypatch):
 
     tel = SimpleTelemetry()
 
-    # Simulate mid-run cleanup of events dir
-    events_dir = tmp_path / "logs" / "events"
+    # Simulate mid-run cleanup of events dir (.output/logs/events)
+    events_dir = tmp_path / ".output" / "logs" / "events"
     if events_dir.exists():
         for p in events_dir.glob("*"):
             try:
@@ -30,7 +28,7 @@ def test_events_dir_auto_created(tmp_path, monkeypatch):
 
     # Should auto-recreate and write
     tel.log("test_event", {"k": "v"})
-    run_files = sorted((tmp_path / "logs" / "events").glob("run_*.jsonl"))
+    run_files = sorted((tmp_path / ".output" / "logs" / "events").glob("run_*.jsonl"))
     assert run_files, "expected telemetry run file to be created"
 
     # Validate entry is JSON line
@@ -44,7 +42,7 @@ def test_secure_permissions(tmp_path, monkeypatch):
     tel = SimpleTelemetry()
     tel.log("perm_test", {})
 
-    run_file = next((tmp_path / "logs" / "events").glob("run_*.jsonl"))
+    run_file = next((tmp_path / ".output" / "logs" / "events").glob("run_*.jsonl"))
     mode = os.stat(run_file).st_mode & 0o777
     assert mode == 0o600, f"expected 0600 perms, got {oct(mode)}"
 

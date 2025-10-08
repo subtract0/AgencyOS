@@ -215,7 +215,9 @@ class TestMultipleSubscribers:
         assert subscriber2_msgs[0]["data"] == "broadcast"
 
     @pytest.mark.asyncio
-    @pytest.mark.skip(reason="Async cleanup race condition - environment-dependent")
+    @pytest.mark.skip(
+        reason="Subscriber cleanup not implemented - MessageBus.subscribe() doesn't remove subscribers from list on exit"
+    )
     async def test_subscriber_cleanup_on_exit(self, bus):
         """Should remove subscriber from list when subscription ends."""
 

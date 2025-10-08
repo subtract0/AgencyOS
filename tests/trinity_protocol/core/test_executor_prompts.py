@@ -15,8 +15,12 @@ from shared.message_bus import MessageBus
 from trinity_protocol.core.executor import ExecutorAgent
 from trinity_protocol.core.hybrid_executor import HybridExecutor, TaskType
 
-# Mark ALL tests to skip - ExecutorAgent API changed
-pytestmark = pytest.mark.skip(reason="ExecutorAgent API changed - tests need refactoring")
+# ExecutorAgent API was refactored - these tests check old _format_task_prompt() method
+# that no longer exists. Tests need complete rewrite for new API.
+# TODO: Refactor tests for current ExecutorAgent interface
+pytestmark = pytest.mark.skip(
+    reason="ExecutorAgent API changed - tests check non-existent _format_task_prompt() and _validate_executable_code() methods"
+)
 
 
 class TestExecutorPrompts:

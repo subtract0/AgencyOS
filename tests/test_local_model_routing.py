@@ -22,7 +22,7 @@ class TestLocalModelRouting(unittest.TestCase):
         """Test that P3 simple tasks route to local Ollama model."""
         with patch.dict(os.environ, {
             "USE_LOCAL_MODEL": "true",
-            "LOCAL_MODEL_NAME": "qwen2.5-coder:32b",
+            "LOCAL_MODEL_NAME": "hf.co/abirhossen/Qwen3-Coder-30B-A3B-Instruct-Q8_0-GGUF:Q8_0",
             "QUALITY_ENFORCER_MODEL": "",  # Clear override
         }, clear=False):
             task = "Fix typo in docstring"
@@ -30,7 +30,7 @@ class TestLocalModelRouting(unittest.TestCase):
             model = get_optimal_model(complexity, agent_key="quality_enforcer")
 
             self.assertEqual(complexity, "P3")
-            self.assertEqual(model, "ollama/qwen2.5-coder:32b")
+            self.assertEqual(model, "ollama/hf.co/abirhossen/Qwen3-Coder-30B-A3B-Instruct-Q8_0-GGUF:Q8_0")
 
     def test_p3_cloud_fallback_when_disabled(self):
         """Test that P3 tasks use cloud when local disabled."""
@@ -85,9 +85,10 @@ class TestLocalModelRouting(unittest.TestCase):
 
     def test_multiple_p3_tasks_route_locally(self):
         """Test various P3 tasks all route to local model."""
+        expected_model = "ollama/hf.co/abirhossen/Qwen3-Coder-30B-A3B-Instruct-Q8_0-GGUF:Q8_0"
         with patch.dict(os.environ, {
             "USE_LOCAL_MODEL": "true",
-            "LOCAL_MODEL_NAME": "qwen2.5-coder:32b",
+            "LOCAL_MODEL_NAME": "hf.co/abirhossen/Qwen3-Coder-30B-A3B-Instruct-Q8_0-GGUF:Q8_0",
             "QUALITY_ENFORCER_MODEL": "",
         }, clear=False):
             p3_tasks = [
@@ -104,7 +105,7 @@ class TestLocalModelRouting(unittest.TestCase):
 
                 with self.subTest(task=task):
                     self.assertEqual(complexity, "P3", f"Task '{task}' should be P3")
-                    self.assertEqual(model, "ollama/qwen2.5-coder:32b",
+                    self.assertEqual(model, expected_model,
                                      f"Task '{task}' should route to local")
 
     def test_cost_savings_distribution(self):

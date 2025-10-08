@@ -5,6 +5,7 @@ Following TDD: Tests written FIRST before implementation.
 Constitutional compliance: Articles I-V satisfied.
 """
 
+import os
 import time
 
 import pytest
@@ -12,8 +13,6 @@ from agency_swarm import Agent
 
 from shared.agent_context import AgentContext
 from shared.type_definitions.result import Err, Ok, Result
-
-pytestmark = pytest.mark.skip(reason="Performance-sensitive tests - timing constraints too strict for CI/local")
 
 
 class TestConstitutionalTestAgent:
@@ -44,6 +43,11 @@ class TestConstitutionalTestAgent:
         # Note: temperature/max_prompt_tokens are deprecated in newer agency_swarm
         # but Agent still has core required attributes
 
+    @pytest.mark.benchmark
+    @pytest.mark.skipif(
+        os.getenv("CI") == "true",
+        reason="Performance benchmarks are environment-dependent - skip in CI"
+    )
     def test_agent_initialization_is_fast(self):
         """Verify agent initialization is fast enough for unit tests."""
         from tests.fixtures.constitutional_test_agents import create_constitutional_test_agent
@@ -138,6 +142,11 @@ class TestTestAgentContext:
 
         assert context.session_id == "test_session_123"
 
+    @pytest.mark.benchmark
+    @pytest.mark.skipif(
+        os.getenv("CI") == "true",
+        reason="Performance benchmarks are environment-dependent - skip in CI"
+    )
     def test_context_initialization_is_fast(self):
         """Verify context initialization is fast enough for unit tests."""
         from tests.fixtures.constitutional_test_agents import create_test_agent_context
@@ -215,6 +224,11 @@ class TestConstitutionalCompliance:
 
         assert len(learnings) > 0, "Supports learning storage"
 
+    @pytest.mark.benchmark
+    @pytest.mark.skipif(
+        os.getenv("CI") == "true",
+        reason="Performance benchmarks are environment-dependent - skip in CI"
+    )
     def test_performance_within_constraints(self):
         """Verify fixtures meet performance requirements for testing."""
         from tests.fixtures.constitutional_test_agents import (
