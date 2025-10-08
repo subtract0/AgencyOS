@@ -7,6 +7,8 @@ name: Optimized CI Pipeline
 on:
   pull_request:
     branches: [main]
+    branches-ignore:
+      - 'feat/memory-aware-execution'  # Temporarily disabled - conflicts with ci.yml
   push:
     branches: [main]
   schedule:
