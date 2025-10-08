@@ -31,8 +31,9 @@ class TestFirestoreLearningPersistence:
             "/Users/am/Code/Agency/gothic-point-390410-firebase-adminsdk-fbsvc-505b6b6075.json"
         )
 
-        # Verify the file exists
-        assert os.path.exists(creds_path), f"Firestore credentials not found at {creds_path}"
+        # Skip tests if credentials not available (optional feature)
+        if not os.path.exists(creds_path):
+            pytest.skip(f"Firestore credentials not found at {creds_path} - skipping integration tests")
 
         # Set environment variable for Firestore to use
         os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = creds_path
