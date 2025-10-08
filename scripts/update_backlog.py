@@ -14,7 +14,7 @@ import subprocess
 import sys
 from pathlib import Path
 
-from shared.models.priority_task import BacklogError, PriorityTask
+from shared.models.priority_task import PriorityTask
 from shared.type_definitions.result import Err, Ok, Result
 
 
