@@ -51,7 +51,7 @@ def release_specific_lock(task_id: str, session_id: str = None) -> bool:
 
 
 def list_active_locks() -> None:
-    """List all currently active locks."""
+    """List all currently active locks with rich metadata."""
     if not LOCK_DIR.exists():
         print("No locks directory found")
         return
@@ -65,12 +65,22 @@ def list_active_locks() -> None:
     print(f"🔒 Active locks ({len(locks)}):")
     for lock_file in sorted(locks):
         with lock_file.open() as f:
-            session_id = f.readline().strip()
-            timestamp = f.readline().strip()
+            lines = [line.strip() for line in f.readlines()]
 
-        print(f"  - {lock_file.stem}")
-        print(f"    Session: {session_id}")
-        print(f"    Since:   {timestamp}")
+        # Parse metadata (6-line format)
+        session_id = lines[0] if len(lines) > 0 else "unknown"
+        timestamp = lines[1] if len(lines) > 1 else "unknown"
+        heartbeat = lines[2] if len(lines) > 2 else "unknown"
+        terminal = lines[3] if len(lines) > 3 else "unknown"
+        user = lines[4] if len(lines) > 4 else "unknown"
+        task_desc = lines[5] if len(lines) > 5 else "unknown"
+
+        print(f"\n  📋 {lock_file.stem}")
+        print(f"    Session:     {session_id}")
+        print(f"    User:        {user}@{terminal}")
+        print(f"    Task:        {task_desc}")
+        print(f"    Since:       {timestamp}")
+        print(f"    Heartbeat:   {heartbeat}")
 
 
 if __name__ == "__main__":

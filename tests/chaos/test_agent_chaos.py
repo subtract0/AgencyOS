@@ -14,8 +14,6 @@ import pytest
 
 from tools.chaos_testing import ChaosConfig, ChaosEngine, ChaosType, chaos
 
-pytestmark = pytest.mark.skip(reason="Chaos tests require specialized infrastructure - failing in standard environment")
-
 
 class TestAgentNetworkChaos:
     """Test agents handle network failures gracefully."""
