@@ -205,7 +205,14 @@ jobs:
           echo "===================="
 
           # Exit with appropriate code for job status
-          exit $TEST_EXIT_CODE
+          # ADR-002 compliance: Exit 0 only if tests passed AND no failures
+          if [ $TEST_EXIT_CODE -eq 0 ] && [ $FAILED_TESTS -eq 0 ]; then
+            echo "✅ Job completing with success status"
+            exit 0
+          else
+            echo "❌ Job completing with failure status"
+            exit 1
+          fi
 
       - name: "📊 Generate Test Report Artifact"
         if: always()
