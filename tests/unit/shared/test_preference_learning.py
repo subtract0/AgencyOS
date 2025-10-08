@@ -28,7 +28,9 @@ from pathlib import Path
 
 import pytest
 
-# Note: Individual flaky tests are marked with skip markers throughout this file
+# Mark all tests to run in same xdist worker group due to shared SQLite database state
+# This prevents parallel execution race conditions while still allowing parallelism across other test files
+pytestmark = pytest.mark.xdist_group(name="preference_learning_db")
 
 from shared.message_bus import MessageBus
 from shared.preference_learning import (
@@ -561,7 +563,6 @@ class TestMultiUserIsolation:
         assert alice_prefs.unwrap().total_responses == 3
         assert bob_prefs.unwrap().total_responses == 0  # Bob should have ZERO
 
-    @pytest.mark.skip(reason="SQLite concurrent access race condition - environment-dependent")
     def test_concurrent_user_preference_storage(
         self, alice_learner, bob_learner, sample_responses_alice, sample_responses_bob
     ):
@@ -661,7 +662,6 @@ class TestMultiUserIsolation:
 # ============================================================================
 
 
-@pytest.mark.skip(reason="Storage tests have database permission issues - environment-dependent")
 class TestStorage:
     """Test preference storage backends."""
 
@@ -744,7 +744,6 @@ class TestStorage:
 class TestRecommendations:
     """Test recommendation generation."""
 
-    @pytest.mark.skip(reason="Recommendation test - environment-dependent")
     def test_high_acceptance_recommendations(self, alice_learner):
         """Should recommend increasing frequency for high-acceptance types."""
         # Arrange - Create 15 YES responses for HIGH_VALUE
@@ -896,7 +895,6 @@ class TestIntegration:
 class TestEdgeCases:
     """Test edge cases and error handling."""
 
-    @pytest.mark.skip(reason="Duplicate handling test - database behavior inconsistent")
     def test_handles_duplicate_response_ids(self, alice_learner):
         """Should handle duplicate response IDs gracefully."""
         # Arrange
@@ -945,7 +943,6 @@ class TestEdgeCases:
         # Assert
         assert result.is_ok()
 
-    @pytest.mark.skip(reason="Database constraint test - environment-dependent")
     def test_handles_very_large_context_strings(self, alice_learner):
         """Should handle context strings at maximum length."""
         # Arrange - Context max is 500 chars per ResponseRecord model
