@@ -115,7 +115,7 @@ if not HYPOTHESIS_AVAILABLE:
             return Err(error)
 
 
-@st.composite
+    @st.composite
 def json_value_strategy(draw, max_leaves=10):
     """
     Generate valid JSONValue instances for property testing.
