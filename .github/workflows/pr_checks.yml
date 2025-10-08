@@ -7,6 +7,8 @@ name: PR Checks (Smart Testing)
 on:
   pull_request:
     types: [opened, synchronize, reopened]
+    branches-ignore:
+      - 'feat/memory-aware-execution'  # Temporarily disabled - conflicts with ci.yml
 
 env:
   PYTHON_VERSION: '3.12'
