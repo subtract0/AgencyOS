@@ -112,9 +112,9 @@ class TopicCluster(BaseModel):
 
     cluster_id: str = Field(..., description="Cluster identifier")
     central_topic: str = Field(..., description="Central theme of cluster")
-    related_keywords: list[str] = Field(..., min_items=1, description="Keywords in cluster")
+    related_keywords: list[str] = Field(..., min_length=1, description="Keywords in cluster")
     mention_timestamps: list[datetime] = Field(
-        ..., min_items=1, description="Timestamps of all mentions"
+        ..., min_length=1, description="Timestamps of all mentions"
     )
     recurrence_score: float = Field(
         ..., ge=0.0, le=1.0, description="Score indicating recurrence strength"
@@ -143,10 +143,7 @@ class TopicCluster(BaseModel):
 
         return total_hours / (len(sorted_timestamps) - 1)
 
-    class Config:
-        """Pydantic config."""
-
-        validate_assignment = True
+    model_config = ConfigDict(validate_assignment=True)
 
 
 class IntentClassification(BaseModel):
@@ -165,10 +162,7 @@ class IntentClassification(BaseModel):
     )
     rationale: str = Field(..., max_length=500, description="Explanation of classification")
 
-    class Config:
-        """Pydantic config."""
-
-        frozen = True
+    model_config = ConfigDict(frozen=True)
 
 
 class RecurrenceMetrics(BaseModel):
@@ -186,7 +180,4 @@ class RecurrenceMetrics(BaseModel):
     trend: str = Field(..., description="Trend direction (increasing, stable, decreasing)")
     last_updated: datetime = Field(default_factory=datetime.now, description="Last metrics update")
 
-    class Config:
-        """Pydantic config."""
-
-        validate_assignment = True
+    model_config = ConfigDict(validate_assignment=True)

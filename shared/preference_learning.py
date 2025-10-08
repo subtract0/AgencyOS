@@ -37,7 +37,7 @@ from datetime import datetime, timedelta
 from pathlib import Path
 from typing import Any
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
 
 from shared.message_bus import MessageBus
 from shared.type_definitions.json_value import JSONValue
@@ -79,10 +79,7 @@ class UserPreference(BaseModel):
     evidence_count: int = Field(..., ge=0, description="Number of supporting observations")
     user_id: str = Field(..., description="User identifier (GENERIC)")
 
-    class Config:
-        """Pydantic config."""
-
-        validate_assignment = True
+    model_config = ConfigDict(validate_assignment=True)
 
 
 class UserPreferences(BaseModel):
@@ -121,10 +118,7 @@ class UserPreferences(BaseModel):
     )
     metadata: dict[str, str] = Field(default_factory=dict, description="Additional metadata")
 
-    class Config:
-        """Pydantic config."""
-
-        validate_assignment = True
+    model_config = ConfigDict(validate_assignment=True)
 
 
 class PreferenceSnapshot(BaseModel):
@@ -140,10 +134,7 @@ class PreferenceSnapshot(BaseModel):
     preferences: UserPreferences = Field(..., description="Preference state")
     snapshot_reason: str = Field(..., description="Snapshot reason")
 
-    class Config:
-        """Pydantic config."""
-
-        frozen = True
+    model_config = ConfigDict(frozen=True)
 
 
 class RecommendationResult(BaseModel):
@@ -159,10 +150,7 @@ class RecommendationResult(BaseModel):
     acceptance_rate: float | None = Field(default=None, description="Historical rate")
     sample_size: int = Field(default=0, description="Sample size")
 
-    class Config:
-        """Pydantic config."""
-
-        frozen = True
+    model_config = ConfigDict(frozen=True)
 
 
 # ============================================================================
