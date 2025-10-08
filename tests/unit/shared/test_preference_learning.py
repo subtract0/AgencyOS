@@ -28,11 +28,9 @@ from pathlib import Path
 
 import pytest
 
-# Mark ALL tests in this file as xfail in CI due to Ollama/SQLite race conditions
-pytestmark = pytest.mark.xfail(
-    condition=os.environ.get("CI") == "true",
-    reason="Ollama dependency and SQLite concurrent access issues in CI"
-)
+# Mark all tests to run in same xdist worker group due to shared SQLite database state
+# This prevents parallel execution race conditions while still allowing parallelism across other test files
+pytestmark = pytest.mark.xdist_group(name="preference_learning_db")
 
 from shared.message_bus import MessageBus
 from shared.preference_learning import (
@@ -565,7 +563,6 @@ class TestMultiUserIsolation:
         assert alice_prefs.unwrap().total_responses == 3
         assert bob_prefs.unwrap().total_responses == 0  # Bob should have ZERO
 
-    @pytest.mark.xfail(reason="SQLite concurrent access race condition in CI")
     def test_concurrent_user_preference_storage(
         self, alice_learner, bob_learner, sample_responses_alice, sample_responses_bob
     ):
@@ -747,7 +744,6 @@ class TestStorage:
 class TestRecommendations:
     """Test recommendation generation."""
 
-    @pytest.mark.xfail(reason="Ollama dependency in CI - requires local infrastructure")
     def test_high_acceptance_recommendations(self, alice_learner):
         """Should recommend increasing frequency for high-acceptance types."""
         # Arrange - Create 15 YES responses for HIGH_VALUE

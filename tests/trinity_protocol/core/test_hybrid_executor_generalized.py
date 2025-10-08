@@ -33,10 +33,7 @@ from unittest.mock import Mock, patch
 import pytest
 
 # Mark ALL tests in this file as xfail in CI due to Ollama dependency
-pytestmark = pytest.mark.xfail(
-    condition=os.environ.get("CI") == "true",
-    reason="Ollama dependency - requires local infrastructure not available in CI",
-)
+pytestmark = pytest.mark.skip(reason="Ollama dependency - requires local infrastructure")
 
 from trinity_protocol.core.agent_registry import AgentType, ModelTier
 from trinity_protocol.core.hybrid_executor import (
