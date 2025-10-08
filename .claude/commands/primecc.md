@@ -1,10 +1,20 @@
 ---
 description: Gain a general understanding of the Agency codebase with a focus on improvements
+settingSources: [project]
 ---
 
 # Prime Claude Code
 
 Execute the `Run`, `Read` and `Report` sections to understand the codebase then summarize your understanding.
+
+## SDK Configuration
+
+This command automatically loads:
+- **Project settings** from `.claude/settings.json` (agents, tools, MCP servers)
+- **Agent definitions** from `.claude/agents/`
+- **Command definitions** from `.claude/commands/`
+
+The `settingSources: [project]` frontmatter enables this automatic context loading.
 
 ## Run
 

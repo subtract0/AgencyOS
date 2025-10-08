@@ -186,6 +186,277 @@ Tools have specific permission levels based on operations:
 | Codegen | ✅ | ✅ | ✅ | ✅ |
 | Testing | ✅ | ❌ | ❌ | ✅ |
 
+## Claude Agent SDK Integration (ADR-006)
+
+### Creating Tools with SDK
+
+**Use `@tool` decorator for custom Agency tools:**
+
+```python
+from claude_agent_sdk import tool, create_sdk_mcp_server
+from typing import Any
+
+# Example: Email Validation Tool
+@tool(
+    "validate_email",
+    "Validate email addresses with RFC compliance",
+    {
+        "email": str,
+        "strict_mode": bool
+    }
+)
+async def validate_email(args: dict[str, Any]) -> dict[str, Any]:
+    """
+    Validate email using Result pattern.
+
+    Article IV: Store validation patterns in VectorStore.
+    Law #5: Result pattern for error handling.
+    """
+    from tools.email_validator import EmailValidator
+    from shared.type_definitions.result import Result
+
+    validator = EmailValidator(strict=args.get("strict_mode", False))
+    result: Result[str, str] = validator.validate(args["email"])
+
+    if result.is_ok():
+        return {
+            "content": [{
+                "type": "text",
+                "text": f"Valid email: {result.unwrap()}"
+            }]
+        }
+    else:
+        return {
+            "content": [{
+                "type": "text",
+                "text": f"Invalid email: {result.unwrap_err()}"
+            }],
+            "isError": True
+        }
+
+# Create MCP server for Agency tools
+agency_tools = create_sdk_mcp_server(
+    name="agency_tools",
+    version="1.0.0",
+    tools=[validate_email]
+)
+
+# Use in Claude sessions
+from claude_agent_sdk import ClaudeAgentOptions
+
+options = ClaudeAgentOptions(
+    mcp_servers={"agency": agency_tools},
+    allowed_tools=["mcp__agency__validate_email"]
+)
+```
+
+### TDD Workflow with SDK Session Continuity
+
+**Use `ClaudeSDKClient` for iterative TDD development:**
+
+```python
+from claude_agent_sdk import ClaudeSDKClient, ClaudeAgentOptions
+
+async def tdd_tool_development(tool_spec: str):
+    """
+    TDD workflow: Test → Implement → Refactor with session continuity.
+
+    SDK maintains context across TDD phases.
+    """
+    options = ClaudeAgentOptions(
+        permission_mode='acceptEdits',
+        allowed_tools=['Write', 'Edit', 'Bash', 'Read'],
+        system_prompt="You are Toolsmith. Follow TDD strictly (Law #1).",
+        cwd="/Users/am/Code/Agency"
+    )
+
+    async with ClaudeSDKClient(options) as client:
+        # Phase 1: Write failing tests (RED)
+        await client.query(
+            f"Write comprehensive tests for this tool:\n{tool_spec}\n"
+            "Tests must FAIL initially (TDD red phase)."
+        )
+        async for msg in client.receive_response():
+            if msg.type == 'toolResult' and 'test' in msg.name:
+                print(f"Tests created: {msg.content}")
+
+        # Phase 2: Implement tool (GREEN) - Claude remembers tests
+        await client.query(
+            "Now implement the tool to pass the tests you just wrote"
+        )
+        async for msg in client.receive_response():
+            if msg.type == 'toolResult' and 'pytest' in str(msg):
+                print(f"Tests passing: {msg.content}")
+
+        # Phase 3: Refactor (REFACTOR) - Claude knows implementation
+        await client.query(
+            "Refactor the tool while keeping tests green. "
+            "Keep functions under 50 lines (Law #8)."
+        )
+        async for msg in client.receive_response():
+            print(f"Refactored: {msg.content}")
+```
+
+### Custom Tool Input Schemas
+
+**Define strict input schemas for tools:**
+
+```python
+from claude_agent_sdk import tool
+
+# Simple schema (recommended)
+@tool(
+    "process_data",
+    "Process data with validation",
+    {
+        "data": str,
+        "max_length": int,
+        "options": dict  # Use specific dict types in implementation
+    }
+)
+async def process_data_simple(args):
+    # Validate with Pydantic inside tool
+    from pydantic import BaseModel
+
+    class ProcessDataInput(BaseModel):
+        data: str
+        max_length: int
+        options: dict[str, bool]  # Specific dict type (Law #2)
+
+    validated = ProcessDataInput(**args)
+    # Implementation...
+
+# JSON Schema format (for complex validation)
+@tool(
+    "advanced_validator",
+    "Advanced validation with constraints",
+    {
+        "type": "object",
+        "properties": {
+            "text": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 10000
+            },
+            "count": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 100
+            },
+            "metadata": {
+                "type": "object",
+                "additionalProperties": {"type": "string"}
+            }
+        },
+        "required": ["text", "count"]
+    }
+)
+async def advanced_validator(args):
+    # JSON Schema validation handled by SDK
+    return {
+        "content": [{
+            "type": "text",
+            "text": f"Validated: {args}"
+        }]
+    }
+```
+
+### Packaging Tools as MCP Server
+
+**Create reusable tool packages:**
+
+```python
+# tools/mcp_servers/agency_validators.py
+from claude_agent_sdk import tool, create_sdk_mcp_server
+
+@tool("validate_email", "Email validation", {"email": str})
+async def validate_email(args):
+    # Implementation...
+    pass
+
+@tool("validate_url", "URL validation", {"url": str})
+async def validate_url(args):
+    # Implementation...
+    pass
+
+@tool("validate_json", "JSON validation", {"json_str": str, "schema": dict})
+async def validate_json(args):
+    # Implementation...
+    pass
+
+# Package all validators
+validators_server = create_sdk_mcp_server(
+    name="agency_validators",
+    version="2.0.0",
+    tools=[validate_email, validate_url, validate_json]
+)
+
+# Use in any agent
+options = ClaudeAgentOptions(
+    mcp_servers={"validators": validators_server},
+    allowed_tools=[
+        "mcp__validators__validate_email",
+        "mcp__validators__validate_url",
+        "mcp__validators__validate_json"
+    ]
+)
+```
+
+### Tool Testing with SDK
+
+**Test tools in SDK environment:**
+
+```python
+# tests/test_sdk_tools.py
+import pytest
+from claude_agent_sdk import ClaudeSDKClient, ClaudeAgentOptions
+from tools.mcp_servers.agency_validators import validators_server
+
+@pytest.mark.asyncio
+async def test_email_validator_via_sdk():
+    """Test email validator through SDK (integration test)."""
+    options = ClaudeAgentOptions(
+        mcp_servers={"validators": validators_server},
+        allowed_tools=["mcp__validators__validate_email"]
+    )
+
+    async with ClaudeSDKClient(options) as client:
+        await client.query(
+            "Use the validate_email tool to check: test@example.com"
+        )
+
+        async for msg in client.receive_response():
+            if msg.type == 'toolResult':
+                assert 'Valid email' in msg.content[0]['text']
+```
+
+### When to Use SDK vs Traditional Tool Creation
+
+**Use SDK (`@tool` + MCP server) for:**
+- Tools that need session continuity (TDD workflows)
+- Tools shared across multiple agents
+- Tools with complex input validation
+- Tools requiring interactive sessions
+- Tools that benefit from streaming responses
+
+**Use traditional tool files for:**
+- Simple, stateless utilities
+- One-off helper functions
+- Tools tightly coupled to Agency internals
+- Tools that don't need SDK features
+
+**Decision Matrix:**
+
+| Feature                    | SDK Tool | Traditional Tool |
+|----------------------------|----------|------------------|
+| Session continuity         | ✅       | ❌               |
+| TDD workflow support       | ✅       | ⚠️               |
+| Cross-agent sharing        | ✅       | ⚠️               |
+| Type-safe input schemas    | ✅       | ⚠️               |
+| Streaming support          | ✅       | ❌               |
+| Simple implementation      | ⚠️       | ✅               |
+| Agency-specific integration| ⚠️       | ✅               |
+
 ## Code Quality Standards
 
 ### Type Safety (Constitutional Law #2)

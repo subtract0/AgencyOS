@@ -1,6 +1,40 @@
+---
+description: Initiate web scraping and research (requires MCP firecrawl)
+settingSources: [project]
+---
+
 ## Mission: Web Research & Data Extraction
 
 Your context is now focused on leveraging Firecrawl MCP for intelligent web research and data extraction.
+
+### SDK MCP Server Integration
+
+This mission requires Firecrawl MCP server. Configure via SDK:
+
+```python
+from claude_agent_sdk import ClaudeAgentOptions
+
+options = ClaudeAgentOptions(
+    # MCP servers loaded from .mcp.json or project settings
+    mcp_servers="auto",  # Automatically discovers Firecrawl
+    allowed_tools=[
+        "mcp__firecrawl__scrape",
+        "mcp__firecrawl__batch_scrape",
+        "mcp__firecrawl__crawl",
+        "mcp__firecrawl__search",
+        "mcp__firecrawl__deep_research"
+    ]
+)
+
+# Use with streaming for long research tasks
+async with ClaudeSDKClient(options) as client:
+    await client.query("Research Python async patterns from official docs")
+    async for message in client.receive_messages():
+        # Stream research progress
+        print(message)
+```
+
+**Note**: Ensure `@.mcp.json.firecrawl_6k` is in your context when using this command.
 
 ### When to Include @.mcp.json.firecrawl_6k
 Include this configuration when you need to:
