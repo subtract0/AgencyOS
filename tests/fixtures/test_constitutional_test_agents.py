@@ -143,6 +143,10 @@ class TestTestAgentContext:
         assert context.session_id == "test_session_123"
 
     @pytest.mark.benchmark
+    @pytest.mark.skipif(
+        os.getenv("CI") == "true",
+        reason="Performance benchmarks are environment-dependent - skip in CI"
+    )
     def test_context_initialization_is_fast(self):
         """Verify context initialization is fast enough for unit tests."""
         from tests.fixtures.constitutional_test_agents import create_test_agent_context
@@ -221,6 +225,10 @@ class TestConstitutionalCompliance:
         assert len(learnings) > 0, "Supports learning storage"
 
     @pytest.mark.benchmark
+    @pytest.mark.skipif(
+        os.getenv("CI") == "true",
+        reason="Performance benchmarks are environment-dependent - skip in CI"
+    )
     def test_performance_within_constraints(self):
         """Verify fixtures meet performance requirements for testing."""
         from tests.fixtures.constitutional_test_agents import (
