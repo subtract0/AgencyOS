@@ -272,9 +272,9 @@ class TestModelTierSelection:
         assert tier == ModelTier.LOCAL_ADVANCED
 
     def test_select_model_tier_executor_default(self):
-        """Test default tier selection for executor agent."""
+        """Test default tier selection for executor agent (LOCAL-FIRST)."""
         tier = select_model_tier("executor")
-        assert tier == ModelTier.CLOUD_STANDARD
+        assert tier == ModelTier.LOCAL_STANDARD
 
     def test_select_model_tier_unknown_agent_default(self):
         """Test default tier for unknown agent falls back to cloud standard."""
@@ -297,16 +297,16 @@ class TestModelTierSelection:
         assert tier == ModelTier.LOCAL_ADVANCED
 
     def test_select_model_tier_moderate_complexity_keeps_cloud_agent(self):
-        """Test moderate complexity keeps cloud agent at default tier."""
+        """Test moderate complexity escalates local agent (LOCAL-FIRST)."""
         tier = select_model_tier("executor", complexity=0.6)
-        assert tier == ModelTier.CLOUD_STANDARD
+        assert tier == ModelTier.LOCAL_ADVANCED
 
     def test_select_model_tier_simple_complexity_keeps_default(self):
-        """Test simple complexity keeps default tier."""
+        """Test simple complexity keeps default tier (LOCAL-FIRST)."""
         witness_tier = select_model_tier("witness", complexity=0.4)
         executor_tier = select_model_tier("executor", complexity=0.4)
         assert witness_tier == ModelTier.LOCAL_FAST
-        assert executor_tier == ModelTier.CLOUD_STANDARD
+        assert executor_tier == ModelTier.LOCAL_STANDARD
 
     def test_select_model_tier_trivial_complexity_keeps_default(self):
         """Test trivial complexity keeps default tier."""
@@ -329,9 +329,9 @@ class TestModelTierSelection:
         assert tier == ModelTier.LOCAL_FAST
 
     def test_select_model_tier_force_local_downgrades_cloud_agent(self):
-        """Test force_local downgrades cloud agent to local advanced."""
+        """Test force_local keeps local agent at LOCAL-FIRST tier."""
         tier = select_model_tier("executor", force_local=True)
-        assert tier == ModelTier.LOCAL_ADVANCED
+        assert tier == ModelTier.LOCAL_STANDARD
 
     def test_select_model_tier_force_cloud_takes_precedence_over_local(self):
         """Test force_cloud takes precedence over force_local."""

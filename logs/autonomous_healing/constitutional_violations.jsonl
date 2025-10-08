@@ -16,3 +16,11 @@
 {"timestamp": "2025-10-08T08:27:53.394102+00:00", "violation_type": "ConstitutionalCompliance", "function": "create_mock_agent", "error": "Article II: Quality standards not met", "severity": "BLOCKER"}
 {"timestamp": "2025-10-08T08:28:19.569006+00:00", "violation_type": "ConstitutionalCompliance", "function": "create_mock_agent", "error": "Article I: Incomplete context", "severity": "BLOCKER"}
 {"timestamp": "2025-10-08T08:28:19.571132+00:00", "violation_type": "ConstitutionalCompliance", "function": "create_mock_agent", "error": "Article II: Quality standards not met", "severity": "BLOCKER"}
+{"timestamp": "2025-10-08T09:02:43.480612+00:00", "violation_type": "ConstitutionalCompliance", "function": "create_mock_agent", "error": "Article I: Incomplete context", "severity": "BLOCKER"}
+{"timestamp": "2025-10-08T09:02:43.482453+00:00", "violation_type": "ConstitutionalCompliance", "function": "create_mock_agent", "error": "Article II: Quality standards not met", "severity": "BLOCKER"}
+{"timestamp": "2025-10-08T09:03:11.267512+00:00", "violation_type": "ConstitutionalCompliance", "function": "create_mock_agent", "error": "Article I: Incomplete context", "severity": "BLOCKER"}
+{"timestamp": "2025-10-08T09:03:11.269624+00:00", "violation_type": "ConstitutionalCompliance", "function": "create_mock_agent", "error": "Article II: Quality standards not met", "severity": "BLOCKER"}
+{"timestamp": "2025-10-08T09:11:12.688569+00:00", "violation_type": "ConstitutionalCompliance", "function": "create_mock_agent", "error": "Article I: Incomplete context", "severity": "BLOCKER"}
+{"timestamp": "2025-10-08T09:11:12.690438+00:00", "violation_type": "ConstitutionalCompliance", "function": "create_mock_agent", "error": "Article II: Quality standards not met", "severity": "BLOCKER"}
+{"timestamp": "2025-10-08T09:11:38.982516+00:00", "violation_type": "ConstitutionalCompliance", "function": "create_mock_agent", "error": "Article I: Incomplete context", "severity": "BLOCKER"}
+{"timestamp": "2025-10-08T09:11:38.984780+00:00", "violation_type": "ConstitutionalCompliance", "function": "create_mock_agent", "error": "Article II: Quality standards not met", "severity": "BLOCKER"}
