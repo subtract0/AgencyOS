@@ -15,8 +15,8 @@ jobs:
 
     strategy:
       matrix:
-        python-version: ['3.12', '3.13']
-      fail-fast: false
+        python-version: ['3.12']
+      fail-fast: true
 
     permissions:
       contents: read
@@ -52,9 +52,9 @@ jobs:
           python -m pip install git+https://github.com/openai/openai-agents-python.git@main
 
       - name: Run tests
-        continue-on-error: true  # Nuclear reform: Tests report but don't block
         run: |
           echo "Running test suite with Python ${{ matrix.python-version }}"
+          echo "Constitutional Article II: 100% Verification - Tests MUST pass"
           echo "Bulletproofing active: auto-retry (3x), health tracking (JSON reports)"
           # pytest.ini provides: --reruns 3, --reruns-delay 1, --json-report
           python -m pytest tests/ -n 8 -m "not integration and not slow and not benchmark" --ignore=tests/e2e --ignore=tests/test_firestore_learning_persistence.py --ignore=tests/test_firestore_mock_integration.py
@@ -82,9 +82,11 @@ jobs:
           echo "- Python Version: ${{ matrix.python-version }}" >> $GITHUB_STEP_SUMMARY
           echo "- Test Status: ${{ job.status }}" >> $GITHUB_STEP_SUMMARY
           if [ "${{ job.status }}" == "success" ]; then
-            echo "✅ All tests passed!" >> $GITHUB_STEP_SUMMARY
+            echo "✅ All tests passed - Constitutional Article II compliance!" >> $GITHUB_STEP_SUMMARY
           else
-            echo "❌ Tests failed - No Broken Windows policy violation!" >> $GITHUB_STEP_SUMMARY
+            echo "❌ Tests failed - BLOCKING merge per Article II: 100% Verification" >> $GITHUB_STEP_SUMMARY
+            echo "🚫 No Broken Windows - All tests MUST pass before merge!" >> $GITHUB_STEP_SUMMARY
+            exit 1
           fi
 
   lint:
@@ -114,13 +116,11 @@ jobs:
         run: |
           echo "Running ruff linter..."
           ruff check . --output-format=github
-        continue-on-error: true
 
       - name: Run ruff format check
         run: |
           echo "Checking code formatting..."
           ruff format . --check
-        continue-on-error: true
 
       - name: Linting Summary
         if: always()
