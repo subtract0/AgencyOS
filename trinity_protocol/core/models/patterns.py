@@ -14,7 +14,7 @@ from datetime import datetime
 from enum import Enum
 from typing import Literal
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
 
 from shared.type_definitions import JSONValue
 
@@ -59,10 +59,7 @@ class DetectedPattern(BaseModel):
         default=None, description="Urgency level (low, medium, high, critical)"
     )
 
-    class Config:
-        """Pydantic config."""
-
-        use_enum_values = True
+    model_config = ConfigDict(use_enum_values=True)
 
 
 class PatternContext(BaseModel):
@@ -78,14 +75,11 @@ class PatternContext(BaseModel):
     duration_minutes: float = Field(..., gt=0.0, description="Duration of conversation in minutes")
     related_patterns: list[str] = Field(default_factory=list, description="IDs of related patterns")
     transcript_excerpts: list[str] = Field(
-        default_factory=list, max_items=5, description="Key transcript excerpts (max 5)"
+        default_factory=list, max_length=5, description="Key transcript excerpts (max 5)"
     )
     metadata: JSONValue = Field(default_factory=dict, description="Additional metadata")
 
-    class Config:
-        """Pydantic config."""
-
-        validate_assignment = True
+    model_config = ConfigDict(validate_assignment=True)
 
 
 class AmbientEvent(BaseModel):
@@ -106,10 +100,7 @@ class AmbientEvent(BaseModel):
     conversation_id: str | None = Field(default=None, description="Conversation segment ID")
     metadata: JSONValue = Field(default_factory=dict, description="Additional metadata")
 
-    class Config:
-        """Pydantic config."""
-
-        frozen = True
+    model_config = ConfigDict(frozen=True)
 
 
 class TopicCluster(BaseModel):
