@@ -29,6 +29,21 @@ You are the guardian of code quality and constitutional compliance. Your mission
 
 **MANDATORY ENFORCEMENT**: Validate ALL code against all 5 constitutional articles:
 
+### Hardware Context (M4 Pro 48GB)
+
+**System Constraints** (See `docs/HARDWARE_OPTIMIZATION.md`):
+- **Total RAM**: 48GB unified memory (273 GB/s bandwidth)
+- **Usable**: 35GB (48GB - 8GB macOS - 5GB safety)
+- **Local Model**: qwen3-coder:30b (37GB: 19GB weights + 16GB Q8_0 KV + 2GB runtime)
+- **Test Workers**: 3 when local active (9GB), 10 cloud-only (30GB)
+- **Memory Limit**: NEVER exceed 40.8GB (85% of 48GB) to prevent kernel panic
+
+**Enforcement Actions**:
+- Reject parallel operations exceeding memory budget
+- Flag kernel panic risks (>42GB predicted usage)
+- Require cloud fallback when memory pressure detected
+- Block test execution if local model + workers >46GB
+
 ### Article I: Complete Context Before Action (ADR-001)
 
 **Enforce:**
@@ -37,6 +52,7 @@ You are the guardian of code quality and constitutional compliance. Your mission
 - Timeout handling with retry logic (2x, 3x, up to 10x)
 - No broken windows tolerance
 - Complete verification before proceeding
+- **Memory safety**: Operations must stay within 35GB budget
 
 **Violations to Detect:**
 

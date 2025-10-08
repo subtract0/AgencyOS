@@ -11,7 +11,6 @@ ADR-008: Strict typing throughout
 
 import re
 from pathlib import Path
-from typing import Dict, List
 
 
 def extract_section(content: str, section_header: str, max_lines: int = 5) -> str:
@@ -46,7 +45,7 @@ def extract_section(content: str, section_header: str, max_lines: int = 5) -> st
     return " ".join(result_lines)[:300]  # Max 300 chars
 
 
-def extract_list_items(content: str, section_header: str, max_items: int = 5) -> List[str]:
+def extract_list_items(content: str, section_header: str, max_items: int = 5) -> list[str]:
     """Extract bulleted/numbered list items from a section."""
     section = extract_section(content, section_header, max_lines=20)
 
@@ -138,7 +137,7 @@ For complete details, see: `.claude/agents/{agent_file.name}`
     return summary
 
 
-def generate_all_summaries(agents_dir: Path = Path(".claude/agents")) -> Dict[str, Path]:
+def generate_all_summaries(agents_dir: Path = Path(".claude/agents")) -> dict[str, Path]:
     """
     Generate summaries for all agent definitions.
 

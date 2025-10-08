@@ -1,0 +1,187 @@
+name: Performance Benchmarks
+
+on:
+  # Run on main branch pushes (track regression over time)
+  push:
+    branches: [main]
+  # Run on PR when benchmark files change
+  pull_request:
+    paths:
+      - 'tests/benchmarks/**'
+      - 'tests/**/benchmark*.py'
+      - '.github/workflows/benchmarks.yml'
+  # Allow manual trigger
+  workflow_dispatch:
+  # Scheduled runs (weekly, Sundays at 3 AM UTC)
+  schedule:
+    - cron: '0 3 * * 0'
+
+jobs:
+  benchmark:
+    name: Run Performance Benchmarks
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    permissions:
+      contents: read
+      pull-requests: write  # For posting results as PR comments
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # Full history for trend analysis
+
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Cache pip packages
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-benchmark-pip-${{ hashFiles('requirements.txt') }}
+          restore-keys: |
+            ${{ runner.os }}-benchmark-pip-
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -r requirements.txt
+          python -m pip install -r requirements-dspy.txt
+          # Fix for LiteLLM bug with Anthropic reasoning models
+          python -m pip install git+https://github.com/openai/openai-agents-python.git@main
+
+      - name: Run benchmark tests (single worker for isolation)
+        run: |
+          echo "🔬 Running performance benchmarks with single-worker isolation"
+          echo "Constitutional requirement: Timing tests must run without CPU contention"
+
+          # Single worker (-n 0 = no xdist) for stable timing measurements
+          python -m pytest tests/ -m benchmark -v \
+            --tb=short \
+            --ignore=tests/e2e \
+            --ignore=tests/test_firestore_learning_persistence.py \
+            --ignore=tests/test_firestore_mock_integration.py \
+            --json-report --json-report-file=benchmark-results.json \
+            --json-report-indent=2
+        env:
+          CI: true
+          PYTHONPATH: ${{ github.workspace }}
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          USE_MOCK_LLM: true
+
+      - name: Upload benchmark results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: benchmark-results-${{ github.sha }}
+          path: benchmark-results.json
+          retention-days: 90  # Keep for trend analysis
+
+      - name: Parse benchmark results
+        if: always()
+        id: parse_results
+        run: |
+          if [ -f benchmark-results.json ]; then
+            # Extract key metrics
+            TOTAL=$(jq -r '.summary.total' benchmark-results.json)
+            PASSED=$(jq -r '.summary.passed' benchmark-results.json)
+            FAILED=$(jq -r '.summary.failed' benchmark-results.json)
+            DURATION=$(jq -r '.duration' benchmark-results.json)
+
+            echo "total=$TOTAL" >> $GITHUB_OUTPUT
+            echo "passed=$PASSED" >> $GITHUB_OUTPUT
+            echo "failed=$FAILED" >> $GITHUB_OUTPUT
+            echo "duration=$DURATION" >> $GITHUB_OUTPUT
+
+            # Check for performance regressions
+            if [ "$FAILED" -gt 0 ]; then
+              echo "regression=true" >> $GITHUB_OUTPUT
+              echo "⚠️ Performance regression detected: $FAILED benchmark(s) failed"
+            else
+              echo "regression=false" >> $GITHUB_OUTPUT
+              echo "✅ All benchmarks passed"
+            fi
+          else
+            echo "⚠️ No benchmark results file found"
+            echo "regression=unknown" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Comment on PR (if applicable)
+        if: github.event_name == 'pull_request' && always()
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const results = JSON.parse(fs.readFileSync('benchmark-results.json', 'utf8'));
+
+            const passed = results.summary.passed || 0;
+            const failed = results.summary.failed || 0;
+            const total = results.summary.total || 0;
+            const duration = results.duration || 0;
+
+            const status = failed > 0 ? '⚠️ REGRESSION DETECTED' : '✅ PASSED';
+
+            const comment = `## 🔬 Performance Benchmark Results
+
+            **Status:** ${status}
+            **Total Tests:** ${total}
+            **Passed:** ${passed}
+            **Failed:** ${failed}
+            **Duration:** ${duration.toFixed(2)}s
+
+            ${failed > 0 ? '### ⚠️ Failed Benchmarks\n\nPerformance regressions detected. Review timing thresholds in failing tests.' : '### ✅ All Benchmarks Passed\n\nNo performance regressions detected.'}
+
+            <details>
+            <summary>View detailed results</summary>
+
+            \`\`\`json
+            ${JSON.stringify(results.tests.slice(0, 10), null, 2)}
+            \`\`\`
+
+            </details>
+
+            ---
+            *Benchmarks run with single-worker isolation for stable timing measurements.*
+            `;
+
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: comment
+            });
+
+      - name: Store baseline (main branch only)
+        if: github.ref == 'refs/heads/main' && success()
+        run: |
+          mkdir -p .benchmarks
+          cp benchmark-results.json .benchmarks/baseline-$(date +%Y%m%d-%H%M%S).json
+          echo "📊 Baseline stored for future comparisons"
+
+      - name: Fail on regression
+        if: steps.parse_results.outputs.regression == 'true'
+        run: |
+          echo "::error::Performance regression detected. Review failed benchmarks above."
+          exit 1
+
+      - name: Benchmark Summary
+        if: always()
+        run: |
+          echo "================================================"
+          echo "PERFORMANCE BENCHMARK SUMMARY"
+          echo "================================================"
+          if [ -f benchmark-results.json ]; then
+            echo "Total:    $(jq -r '.summary.total' benchmark-results.json)"
+            echo "Passed:   $(jq -r '.summary.passed' benchmark-results.json)"
+            echo "Failed:   $(jq -r '.summary.failed' benchmark-results.json)"
+            echo "Duration: $(jq -r '.duration' benchmark-results.json)s"
+            echo ""
+            echo "Isolation: ✅ Single worker (no CPU contention)"
+            echo "Retention: 90 days (for trend analysis)"
+          else
+            echo "❌ No results file generated"
+          fi
+          echo "================================================"

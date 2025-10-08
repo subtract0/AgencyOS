@@ -83,13 +83,18 @@ class TestOptimalModelSelection:
     """Test optimal model selection based on complexity."""
 
     def test_p3_tasks_use_mini_model(self):
-        """Test P3 tasks route to gpt-4o-mini for cost savings."""
-        # Clear env override for this test
-        with patch.dict(os.environ, {"CODER_MODEL": ""}, clear=False):
+        """Test P3 tasks route to gpt-4o-mini or local model for cost savings."""
+        # Test both local and cloud modes
+        # Cloud mode (USE_LOCAL_MODEL=false)
+        with patch.dict(os.environ, {"CODER_MODEL": "", "USE_LOCAL_MODEL": "false"}, clear=False):
             model = get_optimal_model("P3", agent_key="coder")
+            assert model == "gpt-4o-mini", f"P3 cloud mode should use gpt-4o-mini, got {model}"
+            assert model != "gpt-5", "P3 should not use expensive gpt-5"
 
-            # Should use mini model for cost efficiency
-            assert "mini" in model.lower() or "4o" in model.lower()
+        # Local mode (USE_LOCAL_MODEL=true)
+        with patch.dict(os.environ, {"CODER_MODEL": "", "USE_LOCAL_MODEL": "true"}, clear=False):
+            model = get_optimal_model("P3", agent_key="coder")
+            assert "ollama/" in model.lower(), f"P3 local mode should use ollama model, got {model}"
             assert model != "gpt-5", "P3 should not use expensive gpt-5"
 
     def test_p2_tasks_use_standard_model(self):

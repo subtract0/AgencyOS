@@ -123,6 +123,54 @@ if [ $TEST_EXIT_CODE -ne 0 ]; then
 fi
 ```
 
+### Section 2.4: Hardware-Aware Execution (Amendment 2025-10-08, ADR-023)
+
+**Context**: Agency OS runs on Apple M4 Pro with 48GB unified memory. Operations must respect hardware constraints to ensure stability and test completion.
+
+#### Hardware Constraints
+- **Target System**: MacBook Pro M4 Pro, 48GB RAM, 273 GB/s memory bandwidth
+- **macOS Reserved**: ~8GB (system, WindowServer, background services)
+- **Available RAM**: 40GB (48GB - 8GB)
+- **Safe Budget**: 35GB (with 5GB safety margin for peaks)
+
+#### Memory-Aware Requirements
+
+**Local Model Execution**:
+- Local models MUST use optimized quantization (Q4_K_M weights + Q8_0 KV cache)
+- Model memory footprint MUST NOT exceed 37GB (19GB + 16GB + 2GB)
+- KV cache MUST use Q8_0 or Q4_0 quantization (not F16)
+- Configuration: `OLLAMA_KV_CACHE_TYPE="q8_0"`, `OLLAMA_FLASH_ATTENTION=1`
+
+**Test Parallelism**:
+- Test workers MUST dynamically adjust based on local model state
+- With local model active: MAX 3 workers (9GB)
+- Without local model: MAX 10 workers (30GB)
+- Total memory usage MUST NOT exceed 40GB (85% of 48GB)
+
+**Memory Pressure Response**:
+- Operations MUST check available memory before spawning parallel processes
+- Memory exhaustion MUST trigger cloud API fallback for P3 tasks
+- Kernel panics constitute BLOCKING violations requiring immediate mitigation
+- Test execution incomplete due to OOM = Article I violation (incomplete context)
+
+#### Implementation Requirements
+```python
+# Required memory check pattern
+import psutil
+
+def verify_memory_safe(required_gb: int) -> bool:
+    mem = psutil.virtual_memory()
+    available_gb = mem.available / (1024 ** 3)
+    return available_gb >= required_gb + 5  # 5GB safety margin
+
+# Before parallel operations
+if not verify_memory_safe(required_gb=10):
+    # Fall back to cloud API or sequential execution
+    use_cloud_fallback()
+```
+
+**Reference**: `docs/HARDWARE_OPTIMIZATION.md` for complete memory budgets and optimization techniques.
+
 ---
 
 ## Article III: Automated Merge Enforcement (ADR-003)

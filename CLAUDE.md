@@ -346,6 +346,82 @@ response = run_with_memory(
 
 ---
 
+## **🧠 Three-Tier Memory Architecture** (State-of-the-Art)
+
+Agency employs a **unified memory system** for exponential autonomous growth:
+
+### **Memory Tiers**
+
+| Tier | System | Purpose | Persistence | Example Use |
+|------|--------|---------|-------------|-------------|
+| **1** | Memory Tool | Cross-conversation knowledge | Indefinite | Technical debt, ADRs, coding standards |
+| **2** | VectorStore | Institutional learning | Session + archive | Auto-extracted patterns, semantic search |
+| **3** | Session | Working context | Session only | Temp state, progress tracking |
+
+### **Quick Usage**
+
+```python
+from shared.agent_context import create_agent_context
+
+context = create_agent_context(session_id="feature_dev")
+
+# Tier 1: Cross-conversation persistence (file-based)
+context.enable_anthropic_memory()
+tool = context.get_anthropic_memory_tool()
+tool.create("/memories/agency_backlog/feature_x.md", "TODO: Implement...")
+
+# Tier 2: Institutional learning (auto-extracted, searchable)
+context.store_memory("pattern_result", {"type": "Result<T,E>"}, tags=["pattern"])
+learnings = context.search_memories(["pattern", "error_handling"])
+
+# Tier 3: Session context (temporary)
+context.set_metadata("tests_fixed", 47)
+```
+
+### **Memory Directory Structure**
+
+```
+~/.agency/memories/
+├── agency_backlog/         # Tech debt, TODOs (MANDATORY for gaps)
+│   ├── test_suite_gaps.md  # Track skipped tests, unimplemented features
+│   └── architecture_todo.md
+├── patterns/               # Reusable code patterns (Result<T,E>, Pydantic, etc.)
+├── institutional/          # Coding standards, git workflow, testing rules
+└── sessions/              # Session-specific progress (multi-day tasks)
+```
+
+### **Constitutional Requirement (Article IV)**
+
+```python
+# VectorStore integration is MANDATORY - no disable flags
+assert os.getenv("USE_ENHANCED_MEMORY") == "true"
+
+# Agents MUST:
+# 1. Query learnings before decisions
+# 2. Store successful patterns after operations
+# 3. Update backlog memories when gaps are found
+```
+
+### **Best Practices**
+
+**DO:**
+- ✅ Store technical debt in `/memories/agency_backlog/` (e.g., 191 skipped tests analysis)
+- ✅ Auto-extract patterns to VectorStore after successful fixes
+- ✅ Query VectorStore for similar past solutions before implementing
+- ✅ Use Result<T,E> pattern, store learnings for future agents
+
+**DON'T:**
+- ❌ Store temporary state in Memory Tool (use Session tier)
+- ❌ Manually document every pattern (VectorStore auto-extracts)
+- ❌ Ignore past learnings (query before action, constitutional law)
+
+### **Documentation**
+- Full architecture: `docs/MEMORY_ARCHITECTURE.md`
+- Memory Tool details: `docs/ANTHROPIC_MEMORY_TOOL.md`
+- VectorStore analysis: `agency_memory/MEMORY_ARCHITECTURE_ANALYSIS.md`
+
+---
+
 ## **IV. The Constitution: Unbreakable Laws**
 
 These directives are absolute. Adhere to them without exception.
@@ -413,12 +489,61 @@ AUDITOR_MODEL=gpt-5                   # Quality analysis
 QUALITY_ENFORCER_MODEL=gpt-5          # Constitutional compliance
 SUMMARY_MODEL=gpt-5-mini              # Cost-efficient summaries
 
+# Local Model Integration (Phase 3: 96% cost reduction)
+USE_LOCAL_MODEL=true                  # Enable local Ollama for P3 tasks (default: true)
+LOCAL_MODEL_NAME=qwen3-coder:30b      # Official Ollama model (Q4_K_M, 19GB, Metal optimized)
+LOCAL_MODEL_TEST_WORKERS=3            # Test workers when local model active (prevents memory exhaustion)
+# P3 (simple): Fix typos, format code → $0 (local) - 60% of tasks
+# P2 (moderate): Feature impl, bug fixes → gpt-4o ($1.50/1M) - 30%
+# P1 (complex): Architecture, ADRs → gpt-5 ($4.00/1M) - 10%
+#
+# Apple Silicon Optimization (2025): KV cache Q8_0 quantization
+# Memory: 19GB (model) + 16GB (KV Q8_0) + 9GB (3 workers) = 44GB (safe for 48GB Mac)
+# Setup: bash scripts/setup_local_model.sh (see docs/LOCAL_MODEL_OPTIMIZATION.md)
+
 # Memory & Learning (MANDATORY - Article IV)
 USE_ENHANCED_MEMORY=true              # REQUIRED: VectorStore integration (constitutional mandate)
 FRESH_USE_FIRESTORE=false             # Optional Firestore backend
 
 # Testing
 FORCE_RUN_ALL_TESTS=1                 # Full test suite (1,562 tests)
+```
+
+### **Local Model Setup (96% Cost Reduction)**
+```bash
+# Install Ollama
+brew install ollama  # macOS
+# OR: curl -fsSL https://ollama.com/install.sh | sh  # Linux
+
+# Pull Qwen3-Coder Q8_0 directly from HuggingFace (30B params, 32GB, 8-bit)
+ollama run hf.co/abirhossen/Qwen3-Coder-30B-A3B-Instruct-Q8_0-GGUF:Q8_0
+
+# Verify installation
+ollama list
+# NAME                                                              ID              SIZE
+# hf.co/abirhossen/Qwen3-Coder-30B-A3B-Instruct-Q8_0-GGUF:Q8_0     112536ee2004    32 GB
+
+# Test local model
+ollama run hf.co/abirhossen/Qwen3-Coder-30B-A3B-Instruct-Q8_0-GGUF:Q8_0 \
+  "Fix typo: def calcualte_total():"
+```
+
+**Cost Savings with Local Models:**
+- **Without local**: $40K/month @ 10K tasks (all gpt-5)
+- **Phase 1 (multi-tier)**: $9.4K/month (76.5% reduction)
+- **Phase 3 (local P3)**: $1.6K/month (96% reduction)
+- **60% of tasks FREE** (P3 simple tasks run locally)
+
+**Why Q8_0 Quantization?**
+- **Higher Quality**: 8-bit > 4-bit/5-bit (better code understanding)
+- **Size Trade-off**: 32GB vs ~18GB (Q4), but superior accuracy
+- **M4 Pro Compatible**: 32GB fits in unified memory
+
+**Memory Safety (Auto-Configured):**
+- Test runner automatically reduces parallelism when local model is active
+- 48GB Mac: Q8_0 (38GB) + 3 test workers (9GB) = 47GB (safe)
+- 32GB Mac: Consider Q4_0 (22GB) or disable local model during test runs
+- Set `LOCAL_MODEL_TEST_WORKERS=2` for tighter memory constraints
 ```
 
 ### **Running Commands**
