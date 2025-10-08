@@ -22,7 +22,7 @@ from dataclasses import asdict, dataclass
 from datetime import UTC, datetime
 from pathlib import Path
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, ConfigDict
 
 from shared.type_definitions.result import Err, Ok, Result
 
@@ -60,16 +60,15 @@ class PerformanceReport(BaseModel):
     recommendations: list[str] = Field(..., description="Actionable recommendations")
     timestamp: str = Field(default_factory=lambda: datetime.now(UTC).isoformat())
 
-    class Config:
-        json_schema_extra = {
-            "example": {
-                "total_duration": 226.5,
-                "test_count": 2438,
-                "slowest_tests": [{"test_name": "test_e2e", "duration": 15.2}],
-                "bottlenecks": [{"category": "e2e", "impact": "45s"}],
-                "recommendations": ["Enable parallel execution"],
-            }
+    model_config = ConfigDict(json_schema_extra={
+        "example": {
+            "total_duration": 226.5,
+            "test_count": 2438,
+            "slowest_tests": [{"test_name": "test_e2e", "duration": 15.2}],
+            "bottlenecks": [{"category": "e2e", "impact": "45s"}],
+            "recommendations": ["Enable parallel execution"],
         }
+    })
 
 
 class PerformanceProfiler:

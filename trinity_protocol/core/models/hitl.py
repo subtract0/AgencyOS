@@ -14,7 +14,7 @@ Constitutional Compliance:
 from datetime import datetime
 from typing import Literal
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, ConfigDict
 
 from trinity_protocol.core.models.patterns import DetectedPattern
 
@@ -55,11 +55,7 @@ class HumanReviewRequest(BaseModel):
         default=None, max_length=200, description="Brief description of what would happen if YES"
     )
 
-    class Config:
-        """Pydantic config."""
-
-        validate_assignment = True
-        frozen = False  # Allow updates during lifecycle
+    model_config = ConfigDict(validate_assignment=True, frozen=False)  # Allow updates during lifecycle
 
 
 class HumanResponse(BaseModel):
@@ -81,10 +77,7 @@ class HumanResponse(BaseModel):
         default=None, ge=0.0, description="Time from question creation to response (for learning)"
     )
 
-    class Config:
-        """Pydantic config."""
-
-        frozen = True  # Responses are immutable once created
+    model_config = ConfigDict(frozen=True)  # Responses are immutable once created
 
 
 class QuestionStats(BaseModel):
@@ -121,10 +114,7 @@ class QuestionStats(BaseModel):
         total_answered = self.yes_responses + self.no_responses + self.later_responses
         return total_answered / self.total_questions_asked
 
-    class Config:
-        """Pydantic config."""
-
-        validate_assignment = True
+    model_config = ConfigDict(validate_assignment=True)
 
 
 class PreferencePattern(BaseModel):
@@ -154,10 +144,7 @@ class PreferencePattern(BaseModel):
         default_factory=datetime.now, description="Last time pattern was updated"
     )
 
-    class Config:
-        """Pydantic config."""
-
-        validate_assignment = True
+    model_config = ConfigDict(validate_assignment=True)
 
 
 class QuestionDeliveryConfig(BaseModel):
@@ -186,7 +173,4 @@ class QuestionDeliveryConfig(BaseModel):
         default=24, ge=1, le=168, description="Default question expiry time in hours (1-168)"
     )
 
-    class Config:
-        """Pydantic config."""
-
-        validate_assignment = True
+    model_config = ConfigDict(validate_assignment=True)
