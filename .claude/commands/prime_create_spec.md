@@ -1,3 +1,8 @@
+---
+description: Collaborate with user to create comprehensive spec (spec-kit methodology)
+settingSources: [project]
+---
+
 ## Mission: Guided Specification Generation
 
 Your primary objective is to collaborate with the user to create a comprehensive, well-defined specification for a new task. You will guide them through a structured process to ensure all necessary details are captured before any planning or implementation begins.

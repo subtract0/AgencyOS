@@ -1,6 +1,38 @@
+---
+description: Analyze and improve code quality with learning-enhanced analysis
+settingSources: [project]
+---
+
 ## Mission: Code Audit & Refactoring with Learning Integration
 
 Your context is now focused on conducting a comprehensive, learning-enhanced code analysis with automated issue prioritization and verified fixing.
+
+### SDK Configuration
+
+This mission uses `settingSources: [project]` for automatic configuration loading. For parallel audit execution across modules, consider spawning multiple SDK clients:
+
+```python
+# Example: Parallel audits with streaming
+from claude_agent_sdk import query, ClaudeAgentOptions
+import asyncio
+
+async def audit_module(module_path):
+    """Audit single module with streaming output."""
+    options = ClaudeAgentOptions(
+        cwd="/Users/am/Code/Agency",
+        allowed_tools=["Read", "Grep", "Bash"]
+    )
+    async for message in query(
+        prompt=f"Audit {module_path} for quality issues",
+        options=options
+    ):
+        yield message
+
+# Run audits in parallel
+modules = ["agency.py", "tools/", "shared/"]
+audits = [audit_module(m) for m in modules]
+results = await asyncio.gather(*audits)
+```
 
 ### Enhanced Workflow
 
