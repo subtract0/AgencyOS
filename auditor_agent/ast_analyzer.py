@@ -63,7 +63,18 @@ class ASTAnalyzer:
             "coverage_ratio": 0.0,
         }
 
-        for py_file in Path(dir_path).rglob("*.py"):
+        try:
+            py_files = list(Path(dir_path).rglob("*.py"))
+        except OSError:
+            # Handle macOS AppTranslocation sandbox limitations
+            # Fall back to non-recursive glob
+            try:
+                py_files = list(Path(dir_path).glob("*.py"))
+            except OSError:
+                # If even that fails, return empty results
+                return results
+
+        for py_file in py_files:
             if self._should_skip_file(str(py_file)):
                 continue
 
