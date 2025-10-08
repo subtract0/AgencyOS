@@ -570,6 +570,7 @@ class TestMutationTesterFullRun:
         os.environ.get("CI") == "true",
         reason="Flaky in CI due to parallel execution and subprocess spawning"
     )
+    @pytest.mark.timeout(10)
     def test_full_mutation_test_run(self):
         """Test complete mutation testing process."""
         # Create a simple Python file

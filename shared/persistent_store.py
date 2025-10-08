@@ -100,7 +100,15 @@ class PersistentStore:
         Args:
             db_path: Path to SQLite database (or ":memory:" for in-memory)
             table_name: Name of the storage table
+
+        Raises:
+            ValueError: If table_name contains invalid characters
         """
+        # Validate table_name against SQL injection
+        import re
+        if not re.match(r'^[a-zA-Z0-9_]+$', table_name):
+            raise ValueError(f"Invalid table name: {table_name}. Only alphanumeric and underscore allowed.")
+
         self.db_path = Path(db_path) if db_path != ":memory:" else db_path
         self.table_name = table_name
         self.conn: sqlite3.Connection | None = None

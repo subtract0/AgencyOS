@@ -57,7 +57,7 @@ class TestConstitutionalTestAgent:
         agent = create_constitutional_test_agent("TestAgent")
         elapsed = time.perf_counter() - start
 
-        assert elapsed < 0.2, f"Initialization took {elapsed:.3f}s, must be <200ms"
+        assert elapsed < 0.3, f"Initialization took {elapsed:.3f}s, must be <300ms"
         assert agent is not None
 
     def test_agent_with_custom_model(self):

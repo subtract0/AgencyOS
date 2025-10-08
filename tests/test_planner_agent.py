@@ -227,7 +227,7 @@ async def test_planner_asks_about_incomplete_requirements(planner_agency):
 
 
 @ci_skip
-@pytest.mark.timeout(30)  # 30 second timeout for API calls
+@pytest.mark.timeout(120)  # Increase timeout to 120s for multiple LLM API calls (4 queries)
 @pytest.mark.asyncio
 async def test_planner_comprehensive_question_behavior(planner_agency, ambiguous_queries):
     """Test planner's question-asking behavior across multiple ambiguous queries"""
@@ -299,7 +299,7 @@ async def test_planner_comprehensive_question_behavior(planner_agency, ambiguous
     return results
 
 
-@pytest.mark.timeout(30)  # 30 second timeout for API calls
+@pytest.mark.timeout(60)  # 60 second timeout for API calls
 @pytest.mark.asyncio
 @ci_skip
 async def test_planner_with_clear_requirements_minimal_questions(planner_agency):

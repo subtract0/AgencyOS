@@ -21,6 +21,7 @@ from __future__ import annotations
 import os
 from typing import Any
 
+from shared.retry_controller import ExponentialBackoffStrategy, RetryController
 from shared.type_definitions.json import JSONValue
 
 try:
@@ -75,6 +76,9 @@ def get_options_config() -> dict[str, JSONValue]:
 def query_agent(prompt: str, extra_options: dict[str, JSONValue] | None = None) -> Any:
     """Execute a simple query via the Claude Agent SDK when enabled.
 
+    Article I Compliance: Implements retry with exponential backoff (2x, 3x, up to 10x).
+    Automatically retries on transient errors (rate limits, timeouts, network issues).
+
     - Respects agent_enabled() flag
     - Merges extra_options into base options
     - Raises helpful errors when the SDK isn't installed or when disabled
@@ -89,8 +93,23 @@ def query_agent(prompt: str, extra_options: dict[str, JSONValue] | None = None) 
     if extra_options:
         options.update(extra_options)
 
-    # Delegate to SDK. The SDK accepts options as a dict.
-    return query(prompt=prompt, options=options)
+    # Article I: Retry with exponential backoff (2x, 3x, up to 120s max)
+    # Initial delay: 2s, multiplier: 2x, max: 120s, max_attempts: 3
+    retry_strategy = ExponentialBackoffStrategy(
+        initial_delay=2.0,
+        max_delay=120.0,
+        multiplier=2.0,
+        jitter=True,
+        max_attempts=3
+    )
+    retry_controller = RetryController(strategy=retry_strategy)
+
+    # Define SDK query function
+    def make_sdk_query():
+        return query(prompt=prompt, options=options)
+
+    # Execute with retry logic (Article I compliance)
+    return retry_controller.execute_with_retry(make_sdk_query)
 
 
 __all__ = [

@@ -6,10 +6,11 @@ Handles compilation, optimization, and persistence of DSPy modules.
 
 import json
 import os
-import pickle
 from datetime import datetime
 from pathlib import Path
 from typing import Any
+
+import jsonpickle
 
 # Conditional DSPy import
 try:
@@ -211,9 +212,9 @@ def save_optimized_module(
         # Create directory if needed
         Path(path).parent.mkdir(parents=True, exist_ok=True)
 
-        # Save module
-        with open(path, "wb") as f:
-            pickle.dump(module, f)
+        # Save module using jsonpickle for security
+        with open(path, "w") as f:
+            f.write(jsonpickle.encode(module))
 
         # Save metadata if provided
         if metadata:
@@ -242,8 +243,8 @@ def load_optimized_module(
         Loaded module or None if failed
     """
     try:
-        with open(path, "rb") as f:
-            module = pickle.load(f)
+        with open(path, "r") as f:
+            module = jsonpickle.decode(f.read())
         print(f"Module loaded from {path}")
 
         # Load metadata if available

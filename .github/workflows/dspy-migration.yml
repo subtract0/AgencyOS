@@ -63,7 +63,6 @@ jobs:
         env:
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
           USE_MOCK_LLM: true
-        continue-on-error: true
 
       - name: Run integration tests
         run: |
@@ -72,7 +71,6 @@ jobs:
           CI: true
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
           USE_MOCK_LLM: true
-        continue-on-error: true
 
       - name: Generate performance report
         if: always()

@@ -1146,6 +1146,7 @@ class TestYieldValidation:
     """Test that outputs are correct and complete."""
 
     @pytest.mark.asyncio
+    @pytest.mark.timeout(20)  # Increase timeout to 20s to allow for LLM calls
     async def test_execute_at_tier_returns_complete_execution_attempt(
         self, hybrid_executor, sample_test_generation_task
     ):
@@ -1153,25 +1154,31 @@ class TestYieldValidation:
         # Arrange
         task_id = sample_test_generation_task["task_id"]
 
-        # Mock verification
-        with patch.object(
-            hybrid_executor, "_run_verification", return_value="All tests passed"
-        ):
-            # Act
-            result = await hybrid_executor._execute_at_tier(
-                sample_test_generation_task, task_id, ModelTier.LOCAL, attempt_num=2
-            )
+        # Mock ollama.chat to avoid real Ollama calls
+        async def mock_chat(model, messages, **kwargs):
+            return "Generated comprehensive test suite with 15 test cases."
 
-            # Assert
-            assert isinstance(result, ExecutionAttempt)
-            assert result.attempt_number == 2
-            assert result.tier == ModelTier.LOCAL
-            assert isinstance(result.agents_used, list)
-            assert result.duration_seconds >= 0.0
-            assert isinstance(result.success, bool)
-            assert result.test_failures >= 0
+        with patch.object(hybrid_executor.ollama, "chat", new=AsyncMock(side_effect=mock_chat)):
+            # Mock verification
+            with patch.object(
+                hybrid_executor, "_run_verification", return_value="All tests passed"
+            ):
+                # Act
+                result = await hybrid_executor._execute_at_tier(
+                    sample_test_generation_task, task_id, ModelTier.LOCAL, attempt_num=2
+                )
+
+                # Assert
+                assert isinstance(result, ExecutionAttempt)
+                assert result.attempt_number == 2
+                assert result.tier == ModelTier.LOCAL
+                assert isinstance(result.agents_used, list)
+                assert result.duration_seconds >= 0.0
+                assert isinstance(result.success, bool)
+                assert result.test_failures >= 0
 
     @pytest.mark.asyncio
+    @pytest.mark.timeout(15)
     @pytest.mark.xfail(reason="Ollama dependency in CI - requires local infrastructure")
     async def test_execute_task_with_escalation_returns_complete_task_result(
         self, hybrid_executor, sample_code_fix_task

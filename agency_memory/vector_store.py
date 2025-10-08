@@ -11,11 +11,23 @@ import logging
 from collections.abc import Callable
 from dataclasses import dataclass
 from datetime import datetime
+from functools import lru_cache
 from typing import Any, cast
 
 from shared.type_definitions.json import JSONValue
 
 logger = logging.getLogger(__name__)
+
+
+@lru_cache(maxsize=1)
+def _get_shared_embedding_model():
+    """Shared singleton to avoid duplicate 22MB model loads.
+
+    Returns:
+        SentenceTransformer: Cached model instance shared across all agents
+    """
+    from sentence_transformers import SentenceTransformer
+    return SentenceTransformer("all-MiniLM-L6-v2")
 
 
 @dataclass
@@ -77,20 +89,17 @@ class VectorStore:
             logger.info("Falling back to keyword search only")
 
     def _init_sentence_transformers(self) -> None:
-        """Initialize sentence-transformers embedding model."""
+        """Initialize sentence-transformers with shared model."""
         try:
-            from sentence_transformers import SentenceTransformer
-
-            # Use a lightweight model for efficiency
-            model_name = "all-MiniLM-L6-v2"  # 22MB, fast, good quality
-            self._embedding_model = SentenceTransformer(model_name)
+            # Use singleton to share model across all VectorStore instances
+            self._embedding_model = _get_shared_embedding_model()
 
             def embed_texts(texts: list[str]) -> list[list[float]]:
                 embeddings = self._embedding_model.encode(texts, convert_to_tensor=False)
                 return embeddings.tolist()
 
             self._embedding_function = embed_texts
-            logger.info(f"Initialized sentence-transformers with model: {model_name}")
+            logger.info("Initialized sentence-transformers with shared model (all-MiniLM-L6-v2)")
 
         except ImportError as e:
             raise ImportError(

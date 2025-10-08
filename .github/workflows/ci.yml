@@ -52,7 +52,6 @@ jobs:
           python -m pip install git+https://github.com/openai/openai-agents-python.git@main
 
       - name: Run tests
-        continue-on-error: true  # Nuclear reform: Tests report but don't block
         run: |
           echo "Running test suite with Python ${{ matrix.python-version }}"
           echo "Bulletproofing active: auto-retry (3x), health tracking (JSON reports)"
@@ -73,7 +72,6 @@ jobs:
           name: test-results-py${{ matrix.python-version }}
           path: test-results/report.json
           retention-days: 30
-        continue-on-error: true  # Don't fail if no report generated
 
       - name: Test Summary
         if: always()
@@ -114,13 +112,11 @@ jobs:
         run: |
           echo "Running ruff linter..."
           ruff check . --output-format=github
-        continue-on-error: true
 
       - name: Run ruff format check
         run: |
           echo "Checking code formatting..."
           ruff format . --check
-        continue-on-error: true
 
       - name: Linting Summary
         if: always()

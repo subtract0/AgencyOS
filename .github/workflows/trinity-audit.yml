@@ -51,12 +51,10 @@ jobs:
             --mode once \
             --dir . \
             --output .trinity-audit.json
-        continue-on-error: true
 
       - name: Generate audit summary
         id: summary
         run: python scripts/generate_review_dashboard.py > audit_summary.md
-        continue-on-error: true
 
       - name: Upload audit artifacts
         uses: actions/upload-artifact@v4

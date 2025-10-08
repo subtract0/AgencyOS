@@ -21,12 +21,14 @@ Token Savings Example:
     ... (cache valid for 5 minutes)
 
 Constitutional Compliance:
-- Article I: Complete context via cached system prompt
+- Article I: Complete context via cached system prompt + retry with exponential backoff
 - Article II: Verified response quality
 - Article IV: Learning from cache hit rates
 """
 
 import os
+
+from shared.retry_controller import ExponentialBackoffStrategy, RetryController
 
 
 def call_with_caching(
@@ -99,19 +101,34 @@ def call_with_caching(
 
     client = Anthropic(api_key=api_key)
 
-    # Make API call with caching
-    response = client.messages.create(
-        model=model,
-        max_tokens=max_tokens,
-        system=[
-            {
-                "type": "text",
-                "text": prompts["system"],
-                "cache_control": {"type": "ephemeral"},  # Cache for 5 min
-            }
-        ],
-        messages=[{"role": "user", "content": prompts["task"]}],
+    # Article I: Retry with exponential backoff (2x, 3x, up to 120s max)
+    # Initial delay: 2s, multiplier: 2x, max: 120s, max_attempts: 3
+    retry_strategy = ExponentialBackoffStrategy(
+        initial_delay=2.0,
+        max_delay=120.0,
+        multiplier=2.0,
+        jitter=True,
+        max_attempts=3
     )
+    retry_controller = RetryController(strategy=retry_strategy)
+
+    # Define API call function
+    def make_api_call():
+        return client.messages.create(
+            model=model,
+            max_tokens=max_tokens,
+            system=[
+                {
+                    "type": "text",
+                    "text": prompts["system"],
+                    "cache_control": {"type": "ephemeral"},  # Cache for 5 min
+                }
+            ],
+            messages=[{"role": "user", "content": prompts["task"]}],
+        )
+
+    # Execute with retry logic (Article I compliance)
+    response = retry_controller.execute_with_retry(make_api_call)
 
     # Extract text from response
     if response.content and len(response.content) > 0:

@@ -26,6 +26,7 @@ nbformat>=5.0.0
 # Data validation & models
 pydantic>=2.0.0
 pydantic-settings>=2.0.0
+jsonpickle>=4.0.0  # Secure serialization (replaces pickle)
 
 # Testing framework
 pytest>=8.0.0

@@ -21,6 +21,7 @@ from shared.agent_utils import (
     select_instructions_file,
 )
 from shared.constitutional_validator import constitutional_compliance
+from shared.retry_controller import ExponentialBackoffStrategy, RetryController
 from shared.system_hooks import (
     create_composite_hook,
     create_memory_integration_hook,
@@ -136,16 +137,32 @@ class GenerateTests(Tool):
         )
 
     def _analyze_source_file(self, file_path: str) -> SourceAnalysis:
-        """Analyze source file to understand testable behaviors."""
+        """Analyze source file to understand testable behaviors.
+
+        Article I Compliance: Uses retry with exponential backoff for file I/O operations.
+        """
         functions: list[FunctionInfo] = []
         classes: list[ClassInfo] = []
         imports: list[str] = []
         module_name = Path(file_path).stem
 
-        try:
+        # Article I: Retry strategy for file I/O (2x, 3x backoff)
+        retry_strategy = ExponentialBackoffStrategy(
+            initial_delay=1.0,
+            max_delay=10.0,
+            multiplier=2.0,
+            jitter=True,
+            max_attempts=3
+        )
+        retry_controller = RetryController(strategy=retry_strategy)
+
+        def read_and_parse():
             with open(file_path, encoding="utf-8") as f:
                 content = f.read()
-                tree = ast.parse(content)
+                return ast.parse(content)
+
+        try:
+            tree = retry_controller.execute_with_retry(read_and_parse)
 
             for node in ast.walk(tree):
                 if isinstance(node, ast.FunctionDef):
@@ -539,9 +556,25 @@ class GenerateTests(Tool):
         return str(test_dir / test_filename)
 
     def _write_test_file(self, test_file_path: str, content: str):
-        """Write test content to file."""
-        with open(test_file_path, "w", encoding="utf-8") as f:
-            f.write(content)
+        """Write test content to file.
+
+        Article I Compliance: Uses retry with exponential backoff for file I/O operations.
+        """
+        # Article I: Retry strategy for file I/O (2x, 3x backoff)
+        retry_strategy = ExponentialBackoffStrategy(
+            initial_delay=1.0,
+            max_delay=10.0,
+            multiplier=2.0,
+            jitter=True,
+            max_attempts=3
+        )
+        retry_controller = RetryController(strategy=retry_strategy)
+
+        def write_file():
+            with open(test_file_path, "w", encoding="utf-8") as f:
+                f.write(content)
+
+        retry_controller.execute_with_retry(write_file)
 
     def _has_return_statement(self, node) -> bool:
         """Check if function has return statement."""

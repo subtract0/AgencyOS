@@ -147,6 +147,9 @@ class TestGitCoreReadOperations:
 
     def test_status_handles_error(self, git_core, mock_subprocess_failure):
         """Should return error on git status failure."""
+        # Arrange
+        mock_subprocess_failure.return_value.stderr = "error: something went wrong"
+
         # Act
         result = git_core.status()
 
@@ -640,16 +643,22 @@ class TestGitUnifiedIntegration:
 
     def test_status_reflects_changes(self, temp_git_repo):
         """Should show uncommitted changes in status."""
+        import subprocess
+
         git = GitCore(repo_path=str(temp_git_repo))
 
         # Create uncommitted file
         new_file = temp_git_repo / "new.py"
         new_file.write_text("# New file\n")
 
+        # Refresh git index to ensure file is detected
+        subprocess.run(["git", "add", "-N", "new.py"], cwd=str(temp_git_repo), capture_output=True)
+
         # Check status
         status_result = git.status()
         assert status_result.is_ok()
-        assert "new.py" in status_result.unwrap()
+        status_output = status_result.unwrap()
+        assert "new.py" in status_output, f"Expected 'new.py' in status output, got: {status_output}"
 
 
 # ============================================================================

@@ -35,7 +35,6 @@ jobs:
         with:
           name: test-results
           path: test-results/
-        continue-on-error: true  # May not exist for all runs
 
       - name: Parse test results
         id: parse
@@ -143,7 +142,6 @@ jobs:
           fi
 
       - name: Commit health tracking data
-        continue-on-error: true  # Don't block if commit fails
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"

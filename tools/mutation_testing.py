@@ -522,8 +522,8 @@ class MutationTester:
     def run_tests(self) -> Result[bool, str]:
         """Run test suite, return True if tests pass.
 
-        Security: Uses shlex.split() for complex commands, but allows shell=True
-        for simple shell commands like 'exit 1' used in tests.
+        Security: Uses shlex.split() to safely parse commands without shell=True.
+        For shell builtins (exit, true, false), wraps them in portable shell commands.
         """
         try:
             # Check if command is a simple shell builtin (exit, true, false)
@@ -531,24 +531,19 @@ class MutationTester:
             first_word = self.config.test_command.strip().split()[0]
 
             if first_word in simple_shell_commands:
-                # Use shell=True for shell builtins
-                result = subprocess.run(
-                    self.config.test_command,
-                    shell=True,
-                    capture_output=True,
-                    timeout=self.config.timeout_seconds,
-                    text=True,
-                )
+                # Wrap shell builtins in portable sh -c command
+                cmd_parts = ["sh", "-c", self.config.test_command]
             else:
                 # Security: Use shlex.split() to safely parse command without shell=True
                 cmd_parts = shlex.split(self.config.test_command)
-                result = subprocess.run(
-                    cmd_parts,
-                    shell=False,
-                    capture_output=True,
-                    timeout=self.config.timeout_seconds,
-                    text=True,
-                )
+
+            result = subprocess.run(
+                cmd_parts,
+                shell=False,
+                capture_output=True,
+                timeout=self.config.timeout_seconds,
+                text=True,
+            )
             return Ok(result.returncode == 0)
 
         except subprocess.TimeoutExpired:

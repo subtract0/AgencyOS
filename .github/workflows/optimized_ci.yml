@@ -61,7 +61,6 @@ jobs:
         run: |
           echo "Running ruff linter..."
           ruff check . --output-format=github
-        continue-on-error: false
 
       - name: Run type checking
         id: typecheck
@@ -140,7 +139,6 @@ jobs:
           pip install -e . --no-deps
 
       - name: Run critical tests (parallel shard)
-        continue-on-error: true  # Nuclear reform: Tests report but don't block
         run: |
           python -m pytest tests/ -n 8 -m "not integration and not slow and not benchmark" --ignore=tests/e2e --ignore=tests/test_firestore_learning_persistence.py --ignore=tests/test_firestore_mock_integration.py
         env:
@@ -213,7 +211,6 @@ jobs:
           pip install -e . --no-deps
 
       - name: Run full test suite
-        continue-on-error: true  # Nuclear reform: Tests report but don't block
         run: |
           python -m pytest tests/ -n 8 -m "not integration and not slow and not benchmark" --ignore=tests/e2e --ignore=tests/test_firestore_learning_persistence.py --ignore=tests/test_firestore_mock_integration.py
         env:

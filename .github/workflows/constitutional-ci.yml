@@ -31,7 +31,6 @@ jobs:
           pip install -e . --no-deps
 
       - name: Run constitutional validation
-        continue-on-error: true  # Nuclear reform: Tests report but don't block
         run: |
           # Article I: Complete context - run ALL tests
           # pytest.ini provides: --reruns 3, --reruns-delay 1, --json-report
@@ -48,7 +47,6 @@ jobs:
           name: constitutional-test-results
           path: test-results/report.json
           retention-days: 30
-        continue-on-error: true
 
       - name: Verify 100% pass rate
         if: failure()

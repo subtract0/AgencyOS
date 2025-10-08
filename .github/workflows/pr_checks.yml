@@ -181,7 +181,6 @@ jobs:
 
       - name: Run tests (critical mode)
         if: needs.analyze-pr.outputs.test_mode == 'critical'
-        continue-on-error: true  # Nuclear reform
         run: |
           echo "Running CRITICAL tests (docs/README changes) with bulletproofing"
           # pytest.ini: --reruns 3, --json-report (auto-applied)
@@ -192,7 +191,6 @@ jobs:
 
       - name: Run tests (smart mode)
         if: needs.analyze-pr.outputs.test_mode == 'smart'
-        continue-on-error: true  # Nuclear reform
         run: |
           echo "Running SMART test selection (small PR) with bulletproofing"
           # pytest.ini: --reruns 3, --json-report (auto-applied)
@@ -203,7 +201,6 @@ jobs:
 
       - name: Run tests (essential mode)
         if: needs.analyze-pr.outputs.test_mode == 'essential'
-        continue-on-error: true  # Nuclear reform
         run: |
           echo "Running ESSENTIAL tests (medium PR) with bulletproofing"
           # pytest.ini: --reruns 3, --json-report (auto-applied)
@@ -214,7 +211,6 @@ jobs:
 
       - name: Run tests (full mode)
         if: needs.analyze-pr.outputs.test_mode == 'full'
-        continue-on-error: true  # Nuclear reform
         run: |
           echo "Running FULL test suite (large PR) with bulletproofing"
           # pytest.ini: --reruns 3, --json-report (auto-applied)
@@ -260,7 +256,6 @@ jobs:
           pip install mutmut
 
       - name: Run mutation testing
-        continue-on-error: true  # Nuclear reform
         run: |
           echo "Running mutation tests on changed files only..."
           CHANGED_FILES="${{ needs.analyze-pr.outputs.changed_files }}"
@@ -281,7 +276,6 @@ jobs:
 
     steps:
       - name: Validate PR status
-        continue-on-error: true  # Nuclear reform: Gate is advisory, not blocking
         run: |
           echo "## PR Status Summary" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
@@ -306,7 +300,6 @@ jobs:
           echo "🎯 All checks passed - safe to merge after approval" >> $GITHUB_STEP_SUMMARY
 
       - name: Add PR comment
-        continue-on-error: true  # Nuclear reform: Comment posting not essential
         uses: actions/github-script@v7
         if: success()
         with:

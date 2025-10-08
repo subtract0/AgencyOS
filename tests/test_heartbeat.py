@@ -147,6 +147,7 @@ class TestHeartbeatThread:
         assert not thread.is_alive()
 
     @pytest.mark.slow
+    @pytest.mark.timeout(15)
     def test_heartbeat_handles_filesystem_errors_gracefully(self, temp_lock_file):
         """Test that heartbeat continues after transient filesystem errors."""
         # Arrange

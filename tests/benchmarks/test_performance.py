@@ -42,6 +42,7 @@ class TestPerformanceBenchmarks:
         assert result.returncode == 0, "Health check failed"
         assert duration < 2.0, f"Health check took {duration:.2f}s, must be <2s"
 
+    @pytest.mark.timeout(15)
     def test_constitutional_validator_speed(self):
         """Constitutional validation must be fast (<1s per article)."""
         start = time.time()
@@ -57,6 +58,7 @@ class TestPerformanceBenchmarks:
         assert result.returncode == 0, "Constitutional tests failed"
         assert duration < 6.0, f"Constitutional tests took {duration:.2f}s, must be <6s"
 
+    @pytest.mark.timeout(30)
     def test_fast_test_tier_performance(self):
         """Fast test tier must complete in <30 seconds."""
         start = time.time()

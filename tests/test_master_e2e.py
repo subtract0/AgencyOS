@@ -410,6 +410,7 @@ result = process_data(None)
 
     # ========== CLI COMMAND TESTS ==========
 
+    @pytest.mark.timeout(15)
     def test_cli_health_command(self):
         """Test health check command."""
         try:
@@ -424,6 +425,7 @@ result = process_data(None)
         except Exception as e:
             pytest.fail(f"❌ CLI: Health command failed: {e}")
 
+    @pytest.mark.timeout(15)
     def test_cli_logs_command(self):
         """Test logs command."""
         try:
@@ -437,6 +439,7 @@ result = process_data(None)
         except Exception as e:
             pytest.fail(f"❌ CLI: Logs command failed: {e}")
 
+    @pytest.mark.timeout(75)
     def test_cli_test_command(self):
         """Test test command."""
         try:
@@ -452,6 +455,7 @@ result = process_data(None)
         except Exception as e:
             pytest.fail(f"❌ CLI: Test command failed: {e}")
 
+    @pytest.mark.timeout(15)
     def test_cli_demo_command(self):
         """Test demo command."""
         try:

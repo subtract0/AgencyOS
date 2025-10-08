@@ -24,6 +24,8 @@ from typing import Any
 
 from pydantic import BaseModel
 
+from shared.retry_controller import ExponentialBackoffStrategy, RetryController
+
 
 class MemoryStats(BaseModel):
     """Statistics about memory storage"""
@@ -109,6 +111,9 @@ def run_with_memory(
 ) -> Any:
     """Run Claude conversation with memory tool enabled
 
+    Article I Compliance: Implements retry with exponential backoff (2x, 3x, up to 10x).
+    Automatically retries on transient errors (rate limits, timeouts, network issues).
+
     Args:
         client: Anthropic client instance
         memory_tool: AgencyMemoryTool instance
@@ -124,7 +129,8 @@ def run_with_memory(
 
     Raises:
         ImportError: If anthropic SDK not installed
-        anthropic.BadRequestError: If beta access denied
+        anthropic.BadRequestError: If beta access denied (non-retryable)
+        Exception: If all retries are exhausted
     """
     if not ANTHROPIC_AVAILABLE:
         raise ImportError(
@@ -148,11 +154,36 @@ def run_with_memory(
     if system:
         request_params["system"] = system
 
-    # Make request
-    if stream:
-        return client.beta.messages.stream(**request_params)
-    else:
-        return client.beta.messages.create(**request_params)
+    # Article I: Retry with exponential backoff (2x, 3x, up to 120s max)
+    # Initial delay: 2s, multiplier: 2x, max: 120s, max_attempts: 3
+    def should_retry_anthropic(attempt: int, exception: Exception) -> bool:
+        """Determine if we should retry based on exception type."""
+        # Never retry certain errors
+        if ANTHROPIC_AVAILABLE and isinstance(exception, anthropic.BadRequestError):
+            # Don't retry permission/auth errors
+            return False
+        # Retry on rate limits, timeouts, network errors
+        return True
+
+    retry_strategy = ExponentialBackoffStrategy(
+        initial_delay=2.0,
+        max_delay=120.0,
+        multiplier=2.0,
+        jitter=True,
+        max_attempts=3,
+        should_retry_callback=should_retry_anthropic
+    )
+    retry_controller = RetryController(strategy=retry_strategy)
+
+    # Define API call function
+    def make_api_call():
+        if stream:
+            return client.beta.messages.stream(**request_params)
+        else:
+            return client.beta.messages.create(**request_params)
+
+    # Execute with retry logic (Article I compliance)
+    return retry_controller.execute_with_retry(make_api_call)
 
 
 def handle_tool_calls(

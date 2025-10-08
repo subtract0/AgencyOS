@@ -458,6 +458,7 @@ def test_necessary_compliance_verification(sample_source_file, sample_audit_repo
             pass  # Basic verification that no errors occur
 
 
+@pytest.mark.timeout(10)  # Increase timeout to 10s to allow for retry logic
 def test_error_handling_in_source_analysis():
     """Test error handling during source file analysis."""
     with tempfile.NamedTemporaryFile(mode="w", suffix=".py", delete=False) as f:

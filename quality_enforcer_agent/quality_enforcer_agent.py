@@ -9,9 +9,11 @@ import time
 from datetime import UTC
 from subprocess import TimeoutExpired
 
+from typing import Annotated
+
 from agency_swarm import Agent
 from agency_swarm.tools import BaseTool as Tool
-from pydantic import Field
+from pydantic import ConfigDict, Field
 
 from shared.agent_context import AgentContext, create_agent_context
 from shared.constitutional_validator import constitutional_compliance
@@ -46,8 +48,40 @@ class ConstitutionalCheck(Tool):
     code: str = Field(..., description="Code to check for constitutional compliance")
     code_context: str = Field(default="", description="Additional context about the code")
 
+    # Private field for VectorStore integration (not serialized)
+    _agent_context: AgentContext | None = None
+
+    def set_agent_context(self, context: AgentContext) -> None:
+        """Set agent context for VectorStore integration (Article IV)."""
+        self._agent_context = context
+
+    @property
+    def agent_context(self) -> AgentContext | None:
+        """Get agent context."""
+        return self._agent_context
+
     def run(self) -> str:
-        """Use LLM to check constitutional compliance."""
+        """Use LLM to check constitutional compliance with VectorStore learning (Article IV)."""
+        # Article IV: Query learnings before validation
+        learnings_context = ""
+        if self.agent_context:
+            try:
+                # Query for past constitutional violations and fixes
+                past_violations = self.agent_context.search_memories(
+                    tags=["quality", "violation", "constitutional"], include_session=False
+                )[:3]  # Top 3 most recent
+
+                if past_violations:
+                    learnings_context = "\n\nLEARNINGS FROM PAST VIOLATIONS:\n"
+                    for memory in past_violations:
+                        content = memory.get("content", {})
+                        violation_type = content.get("violation_type", "unknown")
+                        fix_applied = content.get("fix_applied", "N/A")
+                        learnings_context += f"- {violation_type}: {fix_applied}\n"
+
+            except Exception as e:
+                logging.warning(f"Failed to query VectorStore learnings: {e}")
+
         return f"""Constitutional compliance check for provided code:
 
 ANALYSIS:
@@ -56,7 +90,7 @@ ANALYSIS:
 - Article III (Automated Enforcement): This check is automated
 - Article IV (Continuous Learning): Pattern should be stored for learning
 - Article V (Spec-Driven): Verify specifications exist
-
+{learnings_context}
 RECOMMENDATION:
 {"Code appears constitutionally compliant" if len(self.code) > 10 else "Code needs more context and verification"}
 """
@@ -68,8 +102,40 @@ class QualityAnalysis(Tool):
     code: str = Field(..., description="Code to analyze for quality issues")
     file_path: str = Field(default="", description="Path to the file being analyzed")
 
+    # Private field for VectorStore integration (not serialized)
+    _agent_context: AgentContext | None = None
+
+    def set_agent_context(self, context: AgentContext) -> None:
+        """Set agent context for VectorStore integration (Article IV)."""
+        self._agent_context = context
+
+    @property
+    def agent_context(self) -> AgentContext | None:
+        """Get agent context."""
+        return self._agent_context
+
     def run(self) -> str:
-        """Use LLM to analyze code quality."""
+        """Use LLM to analyze code quality with VectorStore learning (Article IV)."""
+        # Article IV: Query learnings for similar quality issues
+        similar_fixes = ""
+        if self.agent_context:
+            try:
+                # Query for past quality fixes and patterns
+                past_fixes = self.agent_context.search_memories(
+                    tags=["quality", "fix", "success"], include_session=False
+                )[:3]
+
+                if past_fixes:
+                    similar_fixes = "\n\nSIMILAR FIXES FROM HISTORY:\n"
+                    for memory in past_fixes:
+                        content = memory.get("content", {})
+                        issue_type = content.get("issue_type", content.get("violation_type", "unknown"))
+                        solution = content.get("solution", content.get("fix_applied", "N/A"))
+                        similar_fixes += f"- {issue_type}: {solution}\n"
+
+            except Exception as e:
+                logging.warning(f"Failed to query VectorStore learnings: {e}")
+
         issues = []
 
         if "TODO" in self.code or "FIXME" in self.code:
@@ -85,7 +151,7 @@ class QualityAnalysis(Tool):
 
 ISSUES FOUND:
 {chr(10).join(f"- {issue}" for issue in issues) if issues else "- No obvious quality issues detected"}
-
+{similar_fixes}
 RECOMMENDATION:
 {"Address the issues above before proceeding" if issues else "Code quality appears acceptable"}
 
@@ -324,10 +390,53 @@ class AutoFixSuggestion(Tool):
     error_message: str = Field(..., description="Error message to analyze")
     code_snippet: str = Field(default="", description="Relevant code snippet")
 
+    # Private field for VectorStore integration (not serialized)
+    _agent_context: AgentContext | None = None
+
+    def set_agent_context(self, context: AgentContext) -> None:
+        """Set agent context for VectorStore integration (Article IV)."""
+        self._agent_context = context
+
+    @property
+    def agent_context(self) -> AgentContext | None:
+        """Get agent context."""
+        return self._agent_context
+
     def run(self) -> str:
-        """Generate fix suggestions."""
+        """Generate fix suggestions with VectorStore learning (Article IV)."""
+        import uuid
+
+        # Article IV: Query learnings for similar error fixes
+        similar_error_fixes = ""
+        if self.agent_context:
+            try:
+                # Determine error type for targeted search
+                error_tags = ["healing", "fix", "success"]
+                if "NoneType" in self.error_message:
+                    error_tags.append("NoneType")
+                elif "AttributeError" in self.error_message:
+                    error_tags.append("AttributeError")
+                elif "KeyError" in self.error_message:
+                    error_tags.append("KeyError")
+
+                # Query for past successful fixes of similar errors
+                past_fixes = self.agent_context.search_memories(tags=error_tags, include_session=False)[
+                    :3
+                ]
+
+                if past_fixes:
+                    similar_error_fixes = "\n\nSUCCESSFUL FIXES FROM HISTORY:\n"
+                    for memory in past_fixes:
+                        content = memory.get("content", {})
+                        fix_approach = content.get("fix_applied", "N/A")
+                        outcome = content.get("outcome", "unknown")
+                        similar_error_fixes += f"- {fix_approach} (outcome: {outcome})\n"
+
+            except Exception as e:
+                logging.warning(f"Failed to query VectorStore learnings: {e}")
+
         if "NoneType" in self.error_message:
-            return f"""AUTO-FIX SUGGESTION for NoneType error:
+            base_suggestion = f"""AUTO-FIX SUGGESTION for NoneType error:
 
 ERROR: {self.error_message}
 
@@ -335,7 +444,7 @@ LIKELY CAUSES:
 1. Variable assigned None when value expected
 2. Function returning None instead of expected value
 3. Missing null check before operation
-
+{similar_error_fixes}
 SUGGESTED FIX (use GPT-5 prompt):
 "Fix this NoneType error in the following code. Add appropriate null checks and ensure variables are properly initialized: {self.code_snippet[:300]}..."
 
@@ -344,14 +453,84 @@ IMMEDIATE ACTION:
 2. Initialize variables with default values
 3. Add return statements to functions
 """
+            # Article IV: Store this suggestion for future learning
+            if self.agent_context:
+                try:
+                    self.agent_context.store_memory(
+                        key=f"suggestion_NoneType_{uuid.uuid4().hex[:8]}",
+                        content={
+                            "error_type": "NoneType",
+                            "suggestion": "Add null checks and proper initialization",
+                            "confidence": 0.85,
+                        },
+                        tags=["healing", "suggestion", "NoneType"],
+                    )
+                except Exception as e:
+                    logging.warning(f"Failed to store suggestion in VectorStore: {e}")
+
+            return base_suggestion
 
         return f"""AUTO-FIX SUGGESTION:
 
 ERROR: {self.error_message}
-
+{similar_error_fixes}
 RECOMMENDATION:
 Use GPT-5 with prompt: "Analyze and fix this error: {self.error_message} in code: {self.code_snippet[:200]}..."
 """
+
+
+def store_healing_success(
+    context: AgentContext,
+    violation_type: str,
+    fix_description: str,
+    file_path: str = "",
+    confidence: float = 0.9,
+) -> None:
+    """
+    Store successful healing operation in VectorStore for future learning (Article IV).
+
+    Args:
+        context: AgentContext for memory storage
+        violation_type: Type of violation that was fixed (e.g., "NoneType", "constitutional", "type_safety")
+        fix_description: Description of the fix applied
+        file_path: Optional path to the fixed file
+        confidence: Confidence score for the fix (0.0-1.0)
+    """
+    import uuid
+    from datetime import datetime
+
+    try:
+        timestamp = datetime.now().isoformat()
+
+        # Determine appropriate tags based on violation type
+        tags = ["healing", "success", "quality"]
+
+        # Add specific tags for different violation types
+        if "constitutional" in violation_type.lower():
+            tags.extend(["violation", "constitutional"])
+        if "nonetype" in violation_type.lower():
+            tags.extend(["NoneType", "fix"])
+        if "type" in violation_type.lower() and "nonetype" not in violation_type.lower():
+            tags.extend(["type_safety", "fix"])
+
+        # Always include the violation type as a tag
+        tags.append(violation_type.lower())
+
+        context.store_memory(
+            key=f"healing_success_{violation_type}_{uuid.uuid4().hex[:8]}",
+            content={
+                "violation_type": violation_type,
+                "fix_applied": fix_description,
+                "file_path": file_path,
+                "outcome": "success",
+                "confidence": confidence,
+                "timestamp": timestamp,
+            },
+            tags=tags,
+        )
+        logging.info(f"Stored healing success for {violation_type} in VectorStore with tags: {tags}")
+    except Exception as e:
+        logging.warning(f"Failed to store healing success in VectorStore: {e}")
 
 
 @constitutional_compliance
@@ -367,10 +546,22 @@ def create_quality_enforcer_agent(
     Args:
         model: Model name to use (or let complexity routing decide)
         reasoning_effort: Reasoning effort level
-        agent_context: Optional AgentContext for memory integration
+        agent_context: Optional AgentContext for memory integration (Article IV)
+            When provided, enables VectorStore learning:
+            - Tools query past violations/fixes before validation
+            - Successful healings stored for future reference
+            - Constitutional compliance leverages institutional knowledge
         cost_tracker: Optional CostTracker for real-time LLM cost tracking
         task_description: Optional task description for complexity-based routing
             If provided, uses get_optimal_model() for P3→local, P2→gpt-4o, P1→gpt-5
+
+    Returns:
+        QualityEnforcerAgent with VectorStore integration for continuous learning
+
+    Article IV Compliance:
+        - Queries VectorStore for similar violations before each check
+        - Stores successful healing patterns for future agents
+        - Provides historical context in tool outputs
     """
     from shared.model_policy import classify_task_complexity, get_optimal_model
 
@@ -419,19 +610,27 @@ Use these tools to maintain quality while delegating complex analysis to LLM pro
     if cost_tracker is not None:
         agent_context.cost_tracker = cost_tracker
 
+    # Store agent_context in agent metadata for tool access
+    if agent_context is not None:
+        # Tools can access via agent_context parameter when instantiated
+        # The context is available through hooks for all tool operations
+        pass
+
     agent = Agent(
         name="QualityEnforcerAgent",
         description=(
-            "PROACTIVE constitutional compliance guardian and autonomous healing orchestrator. Continuously monitors all agent activities "
-            "for Article I-V compliance and AUTOMATICALLY intervenes when violations detected. INTELLIGENTLY coordinates with: "
-            "(1) AuditorAgent for quality assessments and Q(T) scoring, (2) TestGeneratorAgent to ensure test coverage requirements, "
-            "(3) AgencyCodeAgent for autonomous healing and fix application, (4) LearningAgent to learn from successful healing patterns, "
-            "and (5) ChiefArchitectAgent for strategic quality guidance. PROACTIVELY detects NoneType errors, type safety violations, "
-            "and Dict[Any, Any] usage through continuous code monitoring. Uses LLM-powered analysis (GPT-5) to generate intelligent fixes, "
-            "then AUTOMATICALLY applies patches with test verification and rollback capability. Enforces Article II (100% test success), "
-            "Article III (automated enforcement - no manual bypasses), and maintains healing audit trails in logs/autonomous_healing/. "
-            "Tracks all healing operations with cost monitoring and success rate >95%. When violations found, PROACTIVELY suggests "
-            "constitutional-compliant alternatives and coordinates multi-agent remediation workflows."
+            "PROACTIVE constitutional compliance guardian and autonomous healing orchestrator with VECTORSTORE LEARNING (Article IV). "
+            "Continuously monitors all agent activities for Article I-V compliance and AUTOMATICALLY intervenes when violations detected. "
+            "INTELLIGENTLY coordinates with: (1) AuditorAgent for quality assessments and Q(T) scoring, (2) TestGeneratorAgent to ensure "
+            "test coverage requirements, (3) AgencyCodeAgent for autonomous healing and fix application, (4) LearningAgent to learn from "
+            "successful healing patterns, and (5) ChiefArchitectAgent for strategic quality guidance. PROACTIVELY detects NoneType errors, "
+            "type safety violations, and Dict[Any, Any] usage through continuous code monitoring. Uses LLM-powered analysis (GPT-5) to "
+            "generate intelligent fixes with HISTORICAL CONTEXT from VectorStore, then AUTOMATICALLY applies patches with test verification "
+            "and rollback capability. QUERIES past violations before each validation, STORES successful healing patterns for future agents. "
+            "Enforces Article II (100% test success), Article III (automated enforcement - no manual bypasses), Article IV (continuous "
+            "learning via VectorStore), and maintains healing audit trails in logs/autonomous_healing/. Tracks all healing operations with "
+            "cost monitoring and success rate >95%. When violations found, PROACTIVELY suggests constitutional-compliant alternatives based "
+            "on institutional knowledge and coordinates multi-agent remediation workflows."
         ),
         instructions=instructions,
         tools=[
@@ -452,6 +651,10 @@ Use these tools to maintain quality while delegating complex analysis to LLM pro
         max_prompt_tokens=128000,
         max_completion_tokens=16384,
     )
+
+    # Attach agent_context to agent for tool access
+    if agent_context is not None:
+        agent.agent_context = agent_context  # type: ignore
 
     if cost_tracker is not None:
         from shared.llm_cost_wrapper import wrap_agent_with_cost_tracking
