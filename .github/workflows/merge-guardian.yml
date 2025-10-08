@@ -116,23 +116,15 @@ jobs:
           echo "📊 Analyzing test results..."
 
           # Extract test statistics from pytest output
-          if grep -q "passed" test-results/test-output.log; then
-            PASSED_TESTS=$(grep -o "[0-9]\+ passed" test-results/test-output.log | tail -1 | grep -o "[0-9]\+")
-          else
-            PASSED_TESTS=0
-          fi
+          # Use grep -o to extract numbers, default to 0 if not found
+          PASSED_TESTS=$(grep -o "[0-9]\+ passed" test-results/test-output.log | tail -1 | grep -o "[0-9]\+" || echo "0")
+          FAILED_TESTS=$(grep -o "[0-9]\+ failed" test-results/test-output.log | tail -1 | grep -o "[0-9]\+" || echo "0")
+          SKIPPED_TESTS=$(grep -o "[0-9]\+ skipped" test-results/test-output.log | tail -1 | grep -o "[0-9]\+" || echo "0")
 
-          if grep -q "failed" test-results/test-output.log; then
-            FAILED_TESTS=$(grep -o "[0-9]\+ failed" test-results/test-output.log | tail -1 | grep -o "[0-9]\+")
-          else
-            FAILED_TESTS=0
-          fi
-
-          if grep -q "skipped" test-results/test-output.log; then
-            SKIPPED_TESTS=$(grep -o "[0-9]\+ skipped" test-results/test-output.log | tail -1 | grep -o "[0-9]\+")
-          else
-            SKIPPED_TESTS=0
-          fi
+          # Ensure variables are set to 0 if empty
+          PASSED_TESTS=${PASSED_TESTS:-0}
+          FAILED_TESTS=${FAILED_TESTS:-0}
+          SKIPPED_TESTS=${SKIPPED_TESTS:-0}
 
           TOTAL_TESTS=$((PASSED_TESTS + FAILED_TESTS + SKIPPED_TESTS))
 
