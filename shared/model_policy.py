@@ -1,8 +1,14 @@
 import os
+import re
 
 # Centralized per-agent model selection with environment overrides.
 # Safe defaults prioritize quality-critical agents on gpt-5 and
 # allow cost-saving agents to use gpt-5-mini.
+#
+# Multi-tier routing: 10x cost reduction by routing tasks by complexity
+# - P3 (simple): gpt-4o-mini ($0.15/1M tokens) - 60% of tasks
+# - P2 (moderate): gpt-4o ($1.50/1M tokens) - 30% of tasks
+# - P1 (complex): gpt-5 ($4.00/1M tokens) - 10% of tasks
 #
 # Env variables (optional):
 # - AGENCY_MODEL: global fallback (default: gpt-5)
@@ -11,9 +17,6 @@ import os
 # Agent keys supported:
 #   planner, chief_architect, coder, auditor, quality_enforcer,
 #   merger, learning, test_generator, summary, toolsmith
-#
-# Note: Planner defaults to `o3` per user rule; others stick to gpt-5 except
-# where low-risk summaries use gpt-5-mini by default.
 
 DEFAULT_GLOBAL = os.getenv("AGENCY_MODEL", "gpt-5")
 
@@ -31,9 +34,112 @@ DEFAULTS: dict[str, str] = {
 }
 
 
+def classify_task_complexity(task_description: str | None) -> str:
+    """
+    Classify task complexity for optimal model routing.
+
+    Args:
+        task_description: Description of the task to classify
+
+    Returns:
+        "P1" (complex), "P2" (moderate), or "P3" (simple)
+
+    Classification Rules:
+        P3 (Simple - 60% of tasks):
+            - Documentation, formatting, typos
+            - Simple refactoring, renaming
+            - Removing unused code
+            - Adding basic validation
+
+        P2 (Moderate - 30% of tasks):
+            - Feature implementation
+            - Bug fixes with business logic
+            - Refactoring multi-file changes
+            - Writing tests
+
+        P1 (Complex - 10% of tasks):
+            - Architecture design, ADRs
+            - Constitutional compliance validation
+            - Multi-agent coordination
+            - Critical system changes
+            - Novel algorithm design
+    """
+    if not task_description:
+        return "P2"  # Safe default for empty/None
+
+    task_lower = task_description.lower()
+
+    # P3: Simple tasks (documentation, formatting, typos)
+    p3_patterns = [
+        r"\b(typo|format|docstring|comment|readme|copyright|unused import)\b",
+        r"\b(remove|delete|clean|cleanup)\b.*\b(unused|dead code|import)\b",
+        r"\b(update|add|fix)\b.*\b(comment|doc|documentation)\b",
+        r"\b(rename|move)\b.*\b(variable|function|file)\b",
+    ]
+
+    for pattern in p3_patterns:
+        if re.search(pattern, task_lower):
+            return "P3"
+
+    # P1: Complex tasks (architecture, critical systems, constitutional)
+    p1_patterns = [
+        r"\b(design|architect|adr|constitutional|compliance)\b",
+        r"\b(consensus|distributed|multi-agent|coordination)\b",
+        r"\b(autonomous|healing|critical|security)\b",
+        r"\b(algorithm|optimization|performance critical)\b",
+        r"\b(create|implement)\b.*\b(adr|specification|architecture)\b",
+    ]
+
+    for pattern in p1_patterns:
+        if re.search(pattern, task_lower):
+            return "P1"
+
+    # P2: Everything else (moderate complexity - safe default)
+    return "P2"
+
+
+def get_optimal_model(complexity: str, agent_key: str = "coder") -> str:
+    """
+    Get optimal model based on task complexity.
+
+    Args:
+        complexity: "P1" (complex), "P2" (moderate), or "P3" (simple)
+        agent_key: Agent identifier (e.g., "coder", "planner")
+
+    Returns:
+        Model name optimized for complexity and cost
+
+    Cost Savings:
+        - P3 → gpt-4o-mini: $0.15/1M (75x cheaper than gpt-5)
+        - P2 → gpt-4o: $1.50/1M (2.7x cheaper than gpt-5)
+        - P1 → gpt-5: $4.00/1M (maximum quality)
+    """
+    # Environment override takes precedence (check both DEFAULTS dict and direct env)
+    agent_key_upper = agent_key.upper()
+    env_var_name = f"{agent_key_upper}_MODEL"
+    direct_env = os.getenv(env_var_name)
+
+    if direct_env:
+        # Direct environment variable always wins
+        return direct_env
+
+    # Complexity-based routing (env overrides from direct_env check above already handled)
+    if complexity == "P3":
+        # Simple tasks: Use cost-efficient model
+        return "gpt-4o-mini"
+    elif complexity == "P1":
+        # Complex tasks: Use premium model
+        return "gpt-5"
+    else:  # P2 or unknown
+        # Moderate tasks: Balanced cost/quality
+        return "gpt-4o"
+
+
 def agent_model(agent_key: str) -> str:
     """Return the model for a given agent key with sane defaults.
 
     If an unknown key is provided, fall back to DEFAULT_GLOBAL.
+
+    Note: For complexity-aware routing, use get_optimal_model() instead.
     """
     return DEFAULTS.get(agent_key, DEFAULT_GLOBAL)

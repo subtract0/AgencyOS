@@ -15,9 +15,25 @@ import json
 import os
 
 import pytest
-from hypothesis import given, settings
-from hypothesis import strategies as st
-from hypothesis.stateful import run_state_machine_as_test
+
+try:
+    from hypothesis import given, settings
+    from hypothesis import strategies as st
+    from hypothesis.stateful import run_state_machine_as_test
+    HYPOTHESIS_AVAILABLE = True
+except ImportError:
+    HYPOTHESIS_AVAILABLE = False
+    pytestmark = pytest.mark.skip(reason="hypothesis not installed")
+    # Dummy decorators and objects to prevent errors during collection
+    given = lambda *args, **kwargs: lambda f: f
+    settings = lambda **kwargs: lambda f: f
+
+    class DummyStrategy:
+        def __call__(self, *args, **kwargs): return self
+        def __getattr__(self, name): return self
+
+    st = DummyStrategy()
+    run_state_machine_as_test = lambda x: None
 
 from agency_memory.vector_store import VectorStore
 from shared.type_definitions.json_value import JSONValue

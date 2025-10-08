@@ -99,12 +99,11 @@ def wrap_openai_client(
 
                 # Track the call
                 duration = time.time() - start_time
-                cost_tracker.track_call(
-                    agent=agent_name,
-                    model=model,
+                cost_tracker.track(
+                    operation=agent_name,
                     model_tier=tier,
-                    input_tokens=input_tokens,
-                    output_tokens=output_tokens,
+                    tokens_in=input_tokens,
+                    tokens_out=output_tokens,
                     duration_seconds=duration,
                     success=True,
                     task_id=task_id,
@@ -122,12 +121,11 @@ def wrap_openai_client(
             model = kwargs.get("model", "unknown")
             tier = determine_model_tier(model)
 
-            cost_tracker.track_call(
-                agent=agent_name,
-                model=model,
+            cost_tracker.track(
+                operation=agent_name,
                 model_tier=tier,
-                input_tokens=0,
-                output_tokens=0,
+                tokens_in=0,
+                tokens_out=0,
                 duration_seconds=duration,
                 success=False,
                 task_id=task_id,
