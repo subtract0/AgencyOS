@@ -8,7 +8,7 @@ Constitutional Compliance:
 """
 
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, ConfigDict
 
 
 class ConstitutionalPattern(BaseModel):
@@ -28,8 +28,7 @@ class ConstitutionalPattern(BaseModel):
     last_seen: str = Field(..., description="ISO timestamp of last occurrence")
     trend: str = Field(..., description="Trend: INCREASING, STABLE, DECREASING")
 
-    class Config:
-        frozen = True  # Immutable after creation
+    model_config = ConfigDict(frozen=True)  # Immutable after creation
 
 
 class ViolationPrediction(BaseModel):
@@ -42,8 +41,7 @@ class ViolationPrediction(BaseModel):
     recommended_action: str = Field(..., description="Recommended preventive action")
     confidence: float = Field(..., ge=0.0, le=1.0, description="Prediction confidence")
 
-    class Config:
-        frozen = True
+    model_config = ConfigDict(frozen=True)
 
 
 class CycleReport(BaseModel):
