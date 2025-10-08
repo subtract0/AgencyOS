@@ -13,6 +13,13 @@ settingSources: [project]
 
 **Stateless Design**: Works perfectly in fresh sessions (after context reset). All context loaded from memory files.
 
+**CRITICAL EXECUTION PRINCIPLES:**
+1. **Parallel Specialized Agents:** ALWAYS use Task tool with specialized subagents (planner, code-agent, test-generator, etc.) working in PARALLEL when possible
+2. **Clear Unneeded Context:** After Phase 1 (loading), clear large files from memory - use file paths only
+3. **Communicate via Sub-Agents:** Never do implementation directly - ALWAYS spawn code-agent, test-generator, quality-enforcer as separate Task calls
+4. **Batch Independent Work:** Use single message with MULTIPLE Task calls for parallel execution (e.g., spawn planner + scout + learnings query simultaneously)
+5. **Minimize Token Usage:** Load ONLY essential context (summaries, not full files). Agents will read full files as needed.
+
 ---
 
 ## Session Initialization (Always First)
@@ -277,16 +284,19 @@ def assess_complexity(intent: str) -> tuple[str, bool]:
 complexity, needs_architect = assess_complexity(STRATEGIC_INTENT)
 ```
 
-### 2.2 Spawn Chief Architect (If Needed)
+### 2.2 Spawn Architect + Planner IN PARALLEL
 ```python
-if needs_architect:
-    print("🏛️ Spawning Chief Architect for ADR creation...")
+# CRITICAL: Spawn multiple agents in SINGLE MESSAGE for parallel execution
+print(f"🚀 Spawning Chief Architect + Planner in parallel...")
 
-    # Use Task tool to spawn chief_architect agent
-    adr_result = Task(
-        subagent_type="chief-architect",
-        description="Create ADR for architectural decision",
-        prompt=f"""
+# Use SINGLE message with MULTIPLE Task calls
+if needs_architect:
+    # Parallel spawn: Architect + Planner work simultaneously
+    adr_result, planner_result = spawn_parallel_agents(
+        Task(
+            subagent_type="chief-architect",
+            description="Create ADR for architectural decision",
+            prompt=f"""
 Task: Evaluate architectural approaches for: {STRATEGIC_INTENT}
 
 Context from VectorStore:
@@ -303,21 +313,11 @@ Create an ADR following the standard format:
 
 Output: Save ADR to docs/adr/ADR-XXX.md
 """
-    )
-
-    adr_path = adr_result.adr_file
-    print(f"✅ ADR created: {adr_path}")
-```
-
-### 2.3 Spawn Planner
-```python
-# Always create implementation plan (even for simple tasks)
-print(f"📝 Spawning Planner ({complexity} task)...")
-
-planner_result = Task(
-    subagent_type="planner",
-    description="Create implementation plan",
-    prompt=f"""
+        ),
+        Task(
+            subagent_type="planner",
+            description="Create implementation plan",
+            prompt=f"""
 Task: Create detailed implementation plan for: {STRATEGIC_INTENT}
 
 Complexity: {complexity}
@@ -407,20 +407,29 @@ def autonomous_execution_loop(plan_path: str, tasks: list[Task]) -> ExecutionRes
         TodoWrite(todos=update_task_status(tasks, idx, "in_progress"))
 
         try:
-            # Step 1: Scout relevant files
-            if task.requires_file_discovery:
+            # CRITICAL: Spawn independent agents IN PARALLEL
+            # Scout and Test Generator can work simultaneously
+            if task.requires_file_discovery and task.requires_tests:
+                print(f"🚀 Spawning Scout + TestGenerator in parallel...")
+                # SINGLE message with MULTIPLE Task calls
+                files, test_result = spawn_parallel_agents(
+                    spawn_scout_task(task.description),
+                    spawn_test_generator_task(task, plan_path)
+                )
+                context.set_metadata(f"task_{idx}_files", files)
+            elif task.requires_file_discovery:
                 files = spawn_scout(task.description)
                 context.set_metadata(f"task_{idx}_files", files)
-
-            # Step 2: Generate tests FIRST (TDD - Constitutional Law #1)
-            if task.requires_tests:
+            elif task.requires_tests:
                 test_result = spawn_test_generator(task, plan_path)
 
-                # Verify tests fail appropriately (red phase)
+            # Verify tests fail appropriately (TDD red phase)
+            if task.requires_tests:
                 test_run = Bash("pytest {test_files} -xvs")
                 assert test_run.failed, "Tests should fail before implementation"
 
-            # Step 3: Implement code
+            # Step 3: Implement code (code-agent spawned as Task)
+            print(f"🤖 Spawning CodeAgent...")
             impl_result = spawn_code_agent(task, plan_path, context)
 
             # Step 4: Run tests (green phase)
