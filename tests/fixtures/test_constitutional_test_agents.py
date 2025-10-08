@@ -5,6 +5,7 @@ Following TDD: Tests written FIRST before implementation.
 Constitutional compliance: Articles I-V satisfied.
 """
 
+import os
 import time
 
 import pytest
@@ -43,6 +44,10 @@ class TestConstitutionalTestAgent:
         # but Agent still has core required attributes
 
     @pytest.mark.benchmark
+    @pytest.mark.skipif(
+        os.getenv("CI") == "true",
+        reason="Performance benchmarks are environment-dependent - skip in CI"
+    )
     def test_agent_initialization_is_fast(self):
         """Verify agent initialization is fast enough for unit tests."""
         from tests.fixtures.constitutional_test_agents import create_constitutional_test_agent

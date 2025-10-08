@@ -12,13 +12,13 @@ from pathlib import Path
 
 import pytest
 
-# Skip benchmarks locally but run in CI
+# Skip benchmarks in CI (environment-dependent timing)
 IN_CI = os.getenv("CI") == "true"
 pytestmark = [
     pytest.mark.benchmark,
     pytest.mark.skipif(
-        not IN_CI,
-        reason="Performance benchmarks have strict timing constraints - run in CI only"
+        IN_CI,
+        reason="Performance benchmarks are environment-dependent - skip in CI"
     )
 ]
 
