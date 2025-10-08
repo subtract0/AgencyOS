@@ -13,7 +13,7 @@ Constitutional Compliance:
 from datetime import datetime
 from enum import Enum
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
 
 
 class AudioFormat(str, Enum):
@@ -48,10 +48,7 @@ class AudioConfig(BaseModel):
     )
     format: AudioFormat = Field(default=AudioFormat.WAV, description="Audio format for processing")
 
-    class Config:
-        """Pydantic config."""
-
-        use_enum_values = True
+    model_config = ConfigDict(use_enum_values=True)
 
 
 class AudioSegment(BaseModel):
@@ -68,10 +65,7 @@ class AudioSegment(BaseModel):
     timestamp: datetime = Field(default_factory=datetime.now, description="Capture timestamp")
     has_speech: bool = Field(default=True, description="Voice Activity Detection result")
 
-    class Config:
-        """Pydantic config."""
-
-        arbitrary_types_allowed = True
+    model_config = ConfigDict(arbitrary_types_allowed=True)
 
 
 class WhisperConfig(BaseModel):
@@ -111,10 +105,7 @@ class WhisperConfig(BaseModel):
         default=0.6, ge=0.0, le=1.0, description="No-speech detection threshold"
     )
 
-    class Config:
-        """Pydantic config."""
-
-        frozen = True  # Immutable after creation
+    model_config = ConfigDict(frozen=True)  # Immutable after creation
 
 
 class TranscriptionSegment(BaseModel):
@@ -129,10 +120,7 @@ class TranscriptionSegment(BaseModel):
     end_time: float = Field(..., gt=0.0, description="End time in seconds")
     confidence: float = Field(..., ge=0.0, le=1.0, description="Confidence score from Whisper")
 
-    class Config:
-        """Pydantic config."""
-
-        frozen = True
+    model_config = ConfigDict(frozen=True)
 
 
 class TranscriptionResult(BaseModel):
@@ -152,10 +140,7 @@ class TranscriptionResult(BaseModel):
         default=None, description="Word-level timestamps (optional)"
     )
 
-    class Config:
-        """Pydantic config."""
-
-        frozen = True
+    model_config = ConfigDict(frozen=True)
 
 
 class VADResult(BaseModel):
@@ -169,10 +154,7 @@ class VADResult(BaseModel):
     confidence: float = Field(..., ge=0.0, le=1.0, description="VAD confidence")
     rms_level: float = Field(..., ge=0.0, description="RMS audio level (signal strength)")
 
-    class Config:
-        """Pydantic config."""
-
-        frozen = True
+    model_config = ConfigDict(frozen=True)
 
 
 class AudioCaptureStats(BaseModel):
@@ -195,7 +177,4 @@ class AudioCaptureStats(BaseModel):
         default=0.0, ge=0.0, le=1.0, description="Average transcription confidence"
     )
 
-    class Config:
-        """Pydantic config."""
-
-        validate_assignment = True
+    model_config = ConfigDict(validate_assignment=True)

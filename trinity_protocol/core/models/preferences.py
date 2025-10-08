@@ -15,7 +15,7 @@ from datetime import datetime
 from enum import Enum
 from typing import Literal
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
 
 
 class ResponseType(str, Enum):
@@ -98,11 +98,7 @@ class ResponseRecord(BaseModel):
     time_of_day: TimeOfDay = Field(..., description="Time period")
     metadata: dict[str, str] = Field(default_factory=dict, description="Additional metadata")
 
-    class Config:
-        """Pydantic config."""
-
-        use_enum_values = True
-        validate_assignment = True
+    model_config = ConfigDict(use_enum_values=True, validate_assignment=True)
 
 
 class QuestionPreference(BaseModel):
@@ -143,11 +139,7 @@ class QuestionPreference(BaseModel):
             return 0.0
         return self.later_count / self.total_asked
 
-    class Config:
-        """Pydantic config."""
-
-        use_enum_values = True
-        validate_assignment = True
+    model_config = ConfigDict(use_enum_values=True, validate_assignment=True)
 
 
 class TimingPreference(BaseModel):
@@ -163,10 +155,7 @@ class TimingPreference(BaseModel):
     acceptance_rate: float = Field(default=0.0, ge=0.0, le=1.0, description="YES / total")
     confidence: float = Field(default=0.0, ge=0.0, le=1.0, description="Confidence in pattern")
 
-    class Config:
-        """Pydantic config."""
-
-        use_enum_values = True
+    model_config = ConfigDict(use_enum_values=True)
 
 
 class DayOfWeekPreference(BaseModel):
@@ -182,10 +171,7 @@ class DayOfWeekPreference(BaseModel):
     acceptance_rate: float = Field(default=0.0, ge=0.0, le=1.0, description="YES / total")
     confidence: float = Field(default=0.0, ge=0.0, le=1.0, description="Confidence in pattern")
 
-    class Config:
-        """Pydantic config."""
-
-        use_enum_values = True
+    model_config = ConfigDict(use_enum_values=True)
 
 
 class TopicPreference(BaseModel):
@@ -208,10 +194,7 @@ class TopicPreference(BaseModel):
         default="stable", description="Trend over time"
     )
 
-    class Config:
-        """Pydantic config."""
-
-        use_enum_values = True
+    model_config = ConfigDict(use_enum_values=True)
 
 
 class ContextualPattern(BaseModel):
@@ -224,20 +207,17 @@ class ContextualPattern(BaseModel):
     pattern_id: str = Field(..., description="Pattern identifier")
     pattern_description: str = Field(..., max_length=200, description="Human-readable pattern")
     context_keywords: list[str] = Field(
-        ..., min_items=1, description="Keywords that trigger pattern"
+        ..., min_length=1, description="Keywords that trigger pattern"
     )
     occurrence_count: int = Field(default=0, ge=0, description="Times pattern observed")
     yes_count: int = Field(default=0, ge=0, description="YES responses")
     acceptance_rate: float = Field(default=0.0, ge=0.0, le=1.0, description="YES / occurrence")
     confidence: float = Field(default=0.0, ge=0.0, le=1.0, description="Confidence in pattern")
     examples: list[str] = Field(
-        default_factory=list, max_items=3, description="Example questions (max 3)"
+        default_factory=list, max_length=3, description="Example questions (max 3)"
     )
 
-    class Config:
-        """Pydantic config."""
-
-        validate_assignment = True
+    model_config = ConfigDict(validate_assignment=True)
 
 
 class PreferenceRecommendation(BaseModel):
@@ -257,17 +237,14 @@ class PreferenceRecommendation(BaseModel):
     ] = Field(..., description="Type of recommendation")
     title: str = Field(..., max_length=100, description="Recommendation title")
     description: str = Field(..., max_length=500, description="Detailed description")
-    evidence: list[str] = Field(..., min_items=1, description="Evidence supporting recommendation")
+    evidence: list[str] = Field(..., min_length=1, description="Evidence supporting recommendation")
     confidence: float = Field(..., ge=0.0, le=1.0, description="Confidence in recommendation")
     priority: Literal["low", "medium", "high", "critical"] = Field(
         ..., description="Priority level"
     )
     created_at: datetime = Field(default_factory=datetime.now, description="Creation timestamp")
 
-    class Config:
-        """Pydantic config."""
-
-        frozen = True
+    model_config = ConfigDict(frozen=True)
 
 
 class AlexPreferences(BaseModel):
@@ -305,10 +282,7 @@ class AlexPreferences(BaseModel):
     )
     metadata: dict[str, str] = Field(default_factory=dict, description="Additional metadata")
 
-    class Config:
-        """Pydantic config."""
-
-        validate_assignment = True
+    model_config = ConfigDict(validate_assignment=True)
 
 
 class PreferenceSnapshot(BaseModel):
@@ -323,10 +297,7 @@ class PreferenceSnapshot(BaseModel):
     preferences: AlexPreferences = Field(..., description="Preference state")
     snapshot_reason: str = Field(..., description="Why snapshot was taken")
 
-    class Config:
-        """Pydantic config."""
-
-        frozen = True
+    model_config = ConfigDict(frozen=True)
 
 
 # Utility functions
