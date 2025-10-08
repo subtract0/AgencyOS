@@ -360,15 +360,25 @@ def create_quality_enforcer_agent(
     reasoning_effort: str = "high",
     agent_context: AgentContext | None = None,
     cost_tracker=None,
+    task_description: str | None = None,
 ) -> Agent:
     """Factory that returns a simplified QualityEnforcerAgent instance.
 
     Args:
-        model: Model name to use
+        model: Model name to use (or let complexity routing decide)
         reasoning_effort: Reasoning effort level
         agent_context: Optional AgentContext for memory integration
         cost_tracker: Optional CostTracker for real-time LLM cost tracking
+        task_description: Optional task description for complexity-based routing
+            If provided, uses get_optimal_model() for P3→local, P2→gpt-4o, P1→gpt-5
     """
+    from shared.model_policy import classify_task_complexity, get_optimal_model
+
+    # If task_description provided, use complexity-based routing
+    if task_description is not None:
+        complexity = classify_task_complexity(task_description)
+        model = get_optimal_model(complexity, agent_key="quality_enforcer")
+        # Note: P3 simple tasks (60%) → ollama/qwen2.5-coder:32b (FREE)
 
     current_dir = os.path.dirname(os.path.abspath(__file__))
     instructions_file = os.path.join(current_dir, "instructions.md")

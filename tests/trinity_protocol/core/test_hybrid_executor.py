@@ -33,7 +33,6 @@ import pytest
 
 # Mark specific test classes to skip due to Ollama dependency
 # Note: Most tests use mocked agents, so only skip classes that actually need Ollama
-
 from shared.agent_context import AgentContext, create_agent_context
 from shared.cost_tracker import CostTracker, MemoryStorage
 from shared.message_bus import MessageBus
@@ -454,7 +453,9 @@ class TestEdgeCases:
 # ============================================================================
 
 
-@pytest.mark.skip(reason="Requires Ollama server for agent execution")
+@pytest.mark.skip(
+    reason="Requires Ollama server at localhost:11434 - integration test for real agent execution"
+)
 class TestCornerCases:
     """Test unusual combinations and extreme scenarios."""
 
@@ -544,7 +545,9 @@ class TestCornerCases:
 # ============================================================================
 
 
-@pytest.mark.skip(reason="Requires Ollama server - failing in local environment")
+@pytest.mark.skip(
+    reason="Requires Ollama server at localhost:11434 - integration test for real agent execution"
+)
 class TestErrorConditions:
     """Test failure scenarios and escalation triggers."""
 
@@ -1207,7 +1210,9 @@ class TestYieldValidation:
 # ============================================================================
 
 
-@pytest.mark.skip(reason="Requires Ollama server for agent execution")
+@pytest.mark.skip(
+    reason="Requires Ollama server at localhost:11434 - integration test for real agent execution"
+)
 class TestIntegrationWorkflows:
     """Test complete end-to-end workflows with real message bus."""
 

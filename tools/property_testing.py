@@ -37,8 +37,14 @@ except ImportError:
 
     st = DummyStrategy()
     RuleBasedStateMachine = object
-    invariant = lambda *args, **kwargs: (lambda f: f) if args else (lambda f: f)
-    rule = lambda **kwargs: lambda f: f
+
+    def invariant(*args, **kwargs):  # noqa: E731
+        """Dummy invariant decorator when hypothesis not available."""
+        return (lambda f: f) if args else (lambda f: f)
+
+    def rule(**kwargs):  # noqa: E731
+        """Dummy rule decorator when hypothesis not available."""
+        return lambda f: f
 
 from shared.type_definitions.json_value import JSONValue
 from shared.type_definitions.result import Err, Ok, Result
@@ -88,6 +94,7 @@ if not HYPOTHESIS_AVAILABLE:
     def verify_all_properties(*args, **kwargs):
         pass
 
+else:  # hypothesis IS available
     @st.composite
     def result_strategy(draw, value_strategy=st.integers(), error_strategy=st.text(min_size=1)):
         """
@@ -115,7 +122,7 @@ if not HYPOTHESIS_AVAILABLE:
             return Err(error)
 
 
-    @st.composite
+@st.composite
 def json_value_strategy(draw, max_leaves=10):
     """
     Generate valid JSONValue instances for property testing.
