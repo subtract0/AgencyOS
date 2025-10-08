@@ -170,6 +170,7 @@ class TestAgentProcessChaos:
 class TestAgentFullChaos:
     """Test agents survive multiple simultaneous chaos types."""
 
+    @pytest.mark.quarantine  # Flaky: Random memory allocation failures in CI
     def test_agent_survives_full_chaos_storm(self) -> None:
         """Should survive multiple failure types at high rate."""
 

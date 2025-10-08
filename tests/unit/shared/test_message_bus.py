@@ -134,6 +134,7 @@ class TestMessageBusBasics:
         assert "_message_id" in messages[0]
 
     @pytest.mark.asyncio
+    @pytest.mark.serial  # Prevent parallel execution to avoid race conditions
     async def test_subscriber_receives_new_messages(self, bus):
         """Should receive messages published after subscription."""
         messages = []
@@ -147,12 +148,14 @@ class TestMessageBusBasics:
         # Start subscriber
         subscriber_task = asyncio.create_task(subscriber())
 
-        # Give subscriber time to start
-        await asyncio.sleep(0.1)
+        # Give subscriber time to start (increased for stability)
+        await asyncio.sleep(0.5)
 
         # Publish messages
         await bus.publish("test_queue", {"data": "value1"})
+        await asyncio.sleep(0.1)  # Let async operations settle
         await bus.publish("test_queue", {"data": "value2"})
+        await asyncio.sleep(0.1)  # Let async operations settle
 
         # Wait for subscriber
         await asyncio.wait_for(subscriber_task, timeout=2.0)
@@ -182,6 +185,7 @@ class TestMultipleSubscribers:
         bus.close()
 
     @pytest.mark.asyncio
+    @pytest.mark.serial  # Prevent parallel execution to avoid race conditions
     async def test_multiple_subscribers_receive_same_message(self, bus):
         """Should deliver message to all subscribers."""
         subscriber1_msgs = []
@@ -201,10 +205,12 @@ class TestMultipleSubscribers:
         task1 = asyncio.create_task(subscriber1())
         task2 = asyncio.create_task(subscriber2())
 
-        await asyncio.sleep(0.1)
+        # Give subscribers time to start (increased for stability)
+        await asyncio.sleep(0.5)
 
         # Publish message
         await bus.publish("test_queue", {"data": "broadcast"})
+        await asyncio.sleep(0.1)  # Let async operations settle
 
         # Wait for both
         await asyncio.wait_for(asyncio.gather(task1, task2), timeout=2.0)
@@ -215,6 +221,7 @@ class TestMultipleSubscribers:
         assert subscriber2_msgs[0]["data"] == "broadcast"
 
     @pytest.mark.asyncio
+    @pytest.mark.serial  # Prevent parallel execution to avoid race conditions
     @pytest.mark.skip(
         reason="Subscriber cleanup not implemented - MessageBus.subscribe() doesn't remove subscribers from list on exit"
     )
@@ -230,12 +237,13 @@ class TestMultipleSubscribers:
 
         # Publish a message so subscriber can receive and exit
         await bus.publish("test_queue", {"data": "test"})
+        await asyncio.sleep(0.1)  # Let async operations settle
 
         # Subscribe and exit
         await temporary_subscriber()
 
         # After subscription ends, cleanup should have removed subscriber
-        await asyncio.sleep(0.1)  # Brief delay for cleanup
+        await asyncio.sleep(0.5)  # Increased delay for cleanup
         assert "test_queue" not in bus.subscribers or len(bus.subscribers["test_queue"]) == 0
 
 
@@ -279,14 +287,16 @@ class TestMessagePriority:
         assert messages[2]["data"] == "low"
 
     @pytest.mark.asyncio
+    @pytest.mark.serial  # Prevent parallel execution to avoid race conditions
     async def test_same_priority_ordered_by_time(self, bus):
         """Should order same-priority messages by creation time."""
-        # Publish messages with same priority
+        # Publish messages with same priority (increased delay for timing stability)
         await bus.publish("test_queue", {"data": "first"}, priority=1)
-        await asyncio.sleep(0.01)  # Ensure different timestamp
+        await asyncio.sleep(0.1)  # Ensure different timestamp (increased for stability)
         await bus.publish("test_queue", {"data": "second"}, priority=1)
-        await asyncio.sleep(0.01)
+        await asyncio.sleep(0.1)
         await bus.publish("test_queue", {"data": "third"}, priority=1)
+        await asyncio.sleep(0.1)  # Let async operations settle
 
         messages = []
         async for msg in bus.subscribe("test_queue"):
@@ -414,15 +424,17 @@ class TestCorrelationID:
         assert sorted(steps) == [1, 2, 3]
 
     @pytest.mark.asyncio
+    @pytest.mark.serial  # Prevent parallel execution to avoid race conditions
     async def test_correlation_messages_ordered_by_time(self, bus):
         """Should return correlated messages in chronological order."""
         correlation_id = "workflow-123"
 
         await bus.publish("queue1", {"step": 1}, correlation_id=correlation_id)
-        await asyncio.sleep(0.01)
+        await asyncio.sleep(0.1)  # Increased delay for timing stability
         await bus.publish("queue1", {"step": 2}, correlation_id=correlation_id)
-        await asyncio.sleep(0.01)
+        await asyncio.sleep(0.1)
         await bus.publish("queue1", {"step": 3}, correlation_id=correlation_id)
+        await asyncio.sleep(0.1)  # Let async operations settle
 
         messages = await bus.get_by_correlation(correlation_id)
 
@@ -486,6 +498,7 @@ class TestStatistics:
         assert stats["by_status"]["pending"] == 1
         assert stats["by_status"]["processed"] == 1
 
+    @pytest.mark.serial  # Prevent parallel execution to avoid race conditions
     @pytest.mark.skip(
         reason="Feature not implemented - active_subscribers tracking not yet added to MessageBus.get_stats()"
     )
@@ -502,7 +515,7 @@ class TestStatistics:
         task2 = asyncio.create_task(dummy_subscriber("queue1"))
         task3 = asyncio.create_task(dummy_subscriber("queue2"))
 
-        await asyncio.sleep(0.1)  # Let them start
+        await asyncio.sleep(0.5)  # Increased delay for subscribers to start
 
         stats = bus.get_stats()
 
@@ -513,6 +526,7 @@ class TestStatistics:
         task1.cancel()
         task2.cancel()
         task3.cancel()
+        await asyncio.sleep(0.1)  # Let cleanup settle
 
 
 class TestPersistence:

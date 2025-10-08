@@ -84,6 +84,7 @@ class TestTopicExtraction:
         assert all(len(topic) > 3 for topic in topics)
 
 
+@pytest.mark.experimental
 @pytest.mark.skip(
     reason="Trinity experimental feature - RECURRING_TOPIC pattern detection not yet implemented"
 )
@@ -302,18 +303,21 @@ class TestWorkflowBottleneckDetection:
 class TestIntentClassification:
     """Test intent classification from patterns."""
 
+    @pytest.mark.serial  # Prevent parallel execution for deterministic results
     def test_classify_recurring_topic_intent(self, detector):
         """Should classify recurring topic intent correctly."""
         from trinity_protocol.core.models.patterns import DetectedPattern
 
+        # Use deterministic timestamps for reproducibility
+        now = datetime.now()
         pattern = DetectedPattern(
             pattern_id="test_1",
             pattern_type=PatternType.RECURRING_TOPIC,
             topic="book for coaches",
             confidence=0.85,
             mention_count=5,
-            first_mention=datetime.now() - timedelta(hours=2),
-            last_mention=datetime.now(),
+            first_mention=now - timedelta(hours=2),
+            last_mention=now,
             context_summary="User mentioned book multiple times",
             keywords=["book", "coaches"],
         )
@@ -324,18 +328,21 @@ class TestIntentClassification:
         assert intent.confidence == pattern.confidence
         assert intent.action_required is True  # 5+ mentions
 
+    @pytest.mark.serial  # Prevent parallel execution for deterministic results
     def test_classify_frustration_intent(self, detector):
         """Should classify frustration as high priority."""
         from trinity_protocol.core.models.patterns import DetectedPattern
 
+        # Use deterministic timestamps for reproducibility
+        now = datetime.now()
         pattern = DetectedPattern(
             pattern_id="test_2",
             pattern_type=PatternType.FRUSTRATION,
             topic="broken build",
             confidence=0.9,
             mention_count=1,
-            first_mention=datetime.now(),
-            last_mention=datetime.now(),
+            first_mention=now,
+            last_mention=now,
             context_summary="User frustrated with build",
             keywords=["frustrating", "broken"],
             sentiment="negative",
@@ -348,18 +355,21 @@ class TestIntentClassification:
         assert intent.action_required is True
         assert intent.priority in ["HIGH", "NORMAL"]
 
+    @pytest.mark.serial  # Prevent parallel execution for deterministic results
     def test_suggested_action_generation(self, detector):
         """Should generate appropriate suggested actions."""
         from trinity_protocol.core.models.patterns import DetectedPattern
 
+        # Use deterministic timestamps for reproducibility
+        now = datetime.now()
         pattern = DetectedPattern(
             pattern_id="test_3",
             pattern_type=PatternType.ACTION_ITEM,
             topic="call Sarah",
             confidence=0.8,
             mention_count=1,
-            first_mention=datetime.now(),
-            last_mention=datetime.now(),
+            first_mention=now,
+            last_mention=now,
             context_summary="User needs to call Sarah",
             keywords=["remind me", "call"],
             urgency="MEDIUM",
@@ -438,6 +448,7 @@ class TestRecurrenceMetrics:
         assert metrics.trend in ["increasing", "stable"]
 
 
+@pytest.mark.experimental
 @pytest.mark.skip(
     reason="Trinity experimental feature - End-to-end pattern detection for RECURRING_TOPIC not implemented"
 )

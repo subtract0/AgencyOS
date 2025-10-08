@@ -30,9 +30,23 @@ from pathlib import Path
 from unittest.mock import AsyncMock, Mock, patch
 
 import pytest
+import requests
 
 # Mark specific test classes to skip due to Ollama dependency
 # Note: Most tests use mocked agents, so only skip classes that actually need Ollama
+
+
+def is_ollama_available() -> bool:
+    """Check if Ollama server is running at localhost:11434."""
+    try:
+        response = requests.get("http://localhost:11434/api/tags", timeout=1)
+        return response.status_code == 200
+    except Exception:
+        return False
+
+
+OLLAMA_AVAILABLE = is_ollama_available()
+
 from shared.agent_context import AgentContext, create_agent_context
 from shared.cost_tracker import CostTracker, MemoryStorage
 from shared.message_bus import MessageBus
@@ -453,9 +467,6 @@ class TestEdgeCases:
 # ============================================================================
 
 
-@pytest.mark.skip(
-    reason="Requires Ollama server at localhost:11434 - integration test for real agent execution"
-)
 class TestCornerCases:
     """Test unusual combinations and extreme scenarios."""
 
@@ -512,32 +523,38 @@ class TestCornerCases:
             assert plans_path.is_dir()
 
     @pytest.mark.asyncio
-    async def test_execute_at_tier_creates_agents_at_specified_tier(
-        self, hybrid_executor, sample_code_fix_task, mock_agent_registry
+    async def test_execute_at_tier_orchestration_logic(
+        self, hybrid_executor, sample_code_fix_task
     ):
-        """Test _execute_at_tier creates agents at the specified model tier."""
+        """Test _execute_at_tier orchestration without real agent execution."""
         # Arrange
         task_id = sample_code_fix_task["task_id"]
         tier = ModelTier.CLOUD
 
-        # Mock verification to return success
-        with patch.object(
-            hybrid_executor, "_run_verification", return_value="All tests passed"
-        ):
-            # Act
-            result = await hybrid_executor._execute_at_tier(
-                sample_code_fix_task, task_id, tier, attempt_num=1
-            )
+        # Mock ollama.chat to avoid real Ollama calls
+        async def mock_chat(model, messages, **kwargs):
+            """Mock Ollama chat to return success."""
+            return "Successfully fixed the code. All type errors resolved."
 
-            # Assert
-            # Verify agents were created at CLOUD tier
-            calls = mock_agent_registry.create_agent.call_args_list
-            for call in calls:
-                assert call[0][1] == tier  # Second arg is tier
+        with patch.object(hybrid_executor.ollama, "chat", new=AsyncMock(side_effect=mock_chat)):
+            # Mock verification to return success
+            with patch.object(
+                hybrid_executor, "_run_verification", return_value="All tests passed"
+            ):
+                # Act
+                result = await hybrid_executor._execute_at_tier(
+                    sample_code_fix_task, task_id, tier, attempt_num=1
+                )
 
-            assert result.tier == tier
-            assert result.success is True
-            assert result.test_failures == 0
+                # Assert - verify orchestration logic
+                assert result.tier == tier
+                assert result.success is True
+                assert result.test_failures == 0
+                assert result.attempt_number == 1
+                assert len(result.agents_used) == 2  # CODER + QUALITY_ENFORCER
+
+                # Verify Ollama was called (2 agents)
+                assert hybrid_executor.ollama.chat.call_count == 2
 
 
 # ============================================================================
@@ -545,9 +562,6 @@ class TestCornerCases:
 # ============================================================================
 
 
-@pytest.mark.skip(
-    reason="Requires Ollama server at localhost:11434 - integration test for real agent execution"
-)
 class TestErrorConditions:
     """Test failure scenarios and escalation triggers."""
 
@@ -559,20 +573,25 @@ class TestErrorConditions:
         # Arrange
         task_id = sample_code_fix_task["task_id"]
 
-        # Mock verification to return failures
-        with patch.object(
-            hybrid_executor,
-            "_run_verification",
-            return_value="FAILED tests/test_example.py::test_function",
-        ):
-            # Act
-            result = await hybrid_executor._execute_at_tier(
-                sample_code_fix_task, task_id, ModelTier.LOCAL, attempt_num=1
-            )
+        # Mock ollama.chat to avoid real Ollama calls
+        async def mock_chat(model, messages, **kwargs):
+            return "Code partially fixed, but some issues remain."
 
-            # Assert
-            assert result.success is False
-            assert result.test_failures > 0
+        with patch.object(hybrid_executor.ollama, "chat", new=AsyncMock(side_effect=mock_chat)):
+            # Mock verification to return failures
+            with patch.object(
+                hybrid_executor,
+                "_run_verification",
+                return_value="FAILED tests/test_example.py::test_function\n3 failed, 5 passed",
+            ):
+                # Act
+                result = await hybrid_executor._execute_at_tier(
+                    sample_code_fix_task, task_id, ModelTier.LOCAL, attempt_num=1
+                )
+
+                # Assert
+                assert result.success is False
+                assert result.test_failures == 3  # Exact count from output
 
     def test_count_test_failures_parses_pytest_output(self, hybrid_executor):
         """Test _count_test_failures extracts failure count from pytest output."""
@@ -617,54 +636,64 @@ class TestErrorConditions:
         # Arrange
         task_id = sample_test_generation_task["task_id"]
 
-        # Mock verification to succeed
-        with patch.object(
-            hybrid_executor, "_run_verification", return_value="All tests passed"
-        ):
-            # Act
-            result = await hybrid_executor._execute_task_with_escalation(
-                sample_test_generation_task, task_id
-            )
+        # Mock ollama.chat to avoid real Ollama calls
+        async def mock_chat(model, messages, **kwargs):
+            return "Generated comprehensive test suite with 15 test cases."
 
-            # Assert
-            assert result.status == "success"
-            assert result.model_tier == ModelTier.LOCAL
-            assert result.escalation_count == 0
-            assert result.test_pass_rate == 1.0
-            assert result.cost_usd == 0.0  # LOCAL is free
+        with patch.object(hybrid_executor.ollama, "chat", new=AsyncMock(side_effect=mock_chat)):
+            # Mock verification to succeed
+            with patch.object(
+                hybrid_executor, "_run_verification", return_value="All tests passed"
+            ):
+                # Act
+                result = await hybrid_executor._execute_task_with_escalation(
+                    sample_test_generation_task, task_id
+                )
+
+                # Assert
+                assert result.status == "success"
+                assert result.model_tier == ModelTier.LOCAL
+                assert result.escalation_count == 0
+                assert result.test_pass_rate == 1.0
+                assert result.cost_usd == 0.0  # LOCAL is free
 
     @pytest.mark.asyncio
     async def test_execute_task_with_escalation_escalates_on_failure(
-        self, hybrid_executor, sample_code_fix_task, mock_agent_registry
+        self, hybrid_executor, sample_code_fix_task
     ):
         """Test task escalates from LOCAL to higher tier on failure."""
         # Arrange
         task_id = sample_code_fix_task["task_id"]
 
-        # Mock verification to fail first, then succeed
-        call_count = 0
+        # Mock ollama.chat to avoid real Ollama calls
+        async def mock_chat(model, messages, **kwargs):
+            return "Code fixed successfully with improved type safety."
 
-        def mock_verification():
-            nonlocal call_count
-            call_count += 1
-            if call_count <= 2:  # First 2 attempts fail
-                return "FAILED - 3 failed"
-            return "All tests passed"  # Third attempt succeeds
+        with patch.object(hybrid_executor.ollama, "chat", new=AsyncMock(side_effect=mock_chat)):
+            # Mock verification to fail first, then succeed
+            call_count = 0
 
-        with patch.object(
-            hybrid_executor, "_run_verification", side_effect=mock_verification
-        ):
-            # Act
-            result = await hybrid_executor._execute_task_with_escalation(
-                sample_code_fix_task, task_id
-            )
+            def mock_verification():
+                nonlocal call_count
+                call_count += 1
+                if call_count <= 2:  # First 2 attempts fail
+                    return "FAILED - 3 failed"
+                return "All tests passed"  # Third attempt succeeds
 
-            # Assert
-            assert result.status == "success"
-            # Could be LOCAL_PLUS or CLOUD depending on test failure threshold
-            assert result.model_tier in [ModelTier.LOCAL_PLUS, ModelTier.CLOUD]
-            assert result.escalation_count >= 1  # At least 1 escalation
-            assert result.test_pass_rate == 1.0
+            with patch.object(
+                hybrid_executor, "_run_verification", side_effect=mock_verification
+            ):
+                # Act
+                result = await hybrid_executor._execute_task_with_escalation(
+                    sample_code_fix_task, task_id
+                )
+
+                # Assert
+                assert result.status == "success"
+                # Could be LOCAL_PLUS or CLOUD depending on test failure threshold
+                assert result.model_tier in [ModelTier.LOCAL_PLUS, ModelTier.CLOUD]
+                assert result.escalation_count >= 1  # At least 1 escalation
+                assert result.test_pass_rate == 1.0
 
     @pytest.mark.asyncio
     async def test_execute_task_with_escalation_reaches_cloud(
@@ -674,29 +703,34 @@ class TestErrorConditions:
         # Arrange
         task_id = sample_refactoring_task["task_id"]
 
-        # Mock verification to fail at LOCAL and LOCAL_PLUS, succeed at CLOUD
-        call_count = 0
+        # Mock ollama.chat to avoid real Ollama calls
+        async def mock_chat(model, messages, **kwargs):
+            return "Refactored code with improved maintainability and readability."
 
-        def mock_verification():
-            nonlocal call_count
-            call_count += 1
-            if call_count <= 3:  # LOCAL (2 attempts) + LOCAL_PLUS (1 attempt)
-                return "FAILED - 2 failed"
-            return "All tests passed"  # CLOUD succeeds
+        with patch.object(hybrid_executor.ollama, "chat", new=AsyncMock(side_effect=mock_chat)):
+            # Mock verification to fail at LOCAL and LOCAL_PLUS, succeed at CLOUD
+            call_count = 0
 
-        with patch.object(
-            hybrid_executor, "_run_verification", side_effect=mock_verification
-        ):
-            # Act
-            result = await hybrid_executor._execute_task_with_escalation(
-                sample_refactoring_task, task_id
-            )
+            def mock_verification():
+                nonlocal call_count
+                call_count += 1
+                if call_count <= 3:  # LOCAL (2 attempts) + LOCAL_PLUS (1 attempt)
+                    return "FAILED - 2 failed"
+                return "All tests passed"  # CLOUD succeeds
 
-            # Assert
-            assert result.status == "success"
-            assert result.model_tier == ModelTier.CLOUD
-            assert result.escalation_count >= 3
-            assert result.cost_usd > 0.0  # CLOUD costs money
+            with patch.object(
+                hybrid_executor, "_run_verification", side_effect=mock_verification
+            ):
+                # Act
+                result = await hybrid_executor._execute_task_with_escalation(
+                    sample_refactoring_task, task_id
+                )
+
+                # Assert
+                assert result.status == "success"
+                assert result.model_tier == ModelTier.CLOUD
+                assert result.escalation_count >= 3
+                assert result.cost_usd > 0.0  # CLOUD costs money
 
     @pytest.mark.asyncio
     async def test_execute_task_with_escalation_fails_after_max_attempts(
@@ -707,22 +741,27 @@ class TestErrorConditions:
         hybrid_executor.max_total_attempts = 3  # Limit for faster test
         task_id = sample_architecture_task["task_id"]
 
-        # Mock verification to always fail
-        with patch.object(
-            hybrid_executor,
-            "_run_verification",
-            return_value="FAILED - persistent error",
-        ):
-            # Act
-            result = await hybrid_executor._execute_task_with_escalation(
-                sample_architecture_task, task_id
-            )
+        # Mock ollama.chat to avoid real Ollama calls
+        async def mock_chat(model, messages, **kwargs):
+            return "Incomplete architecture design with some missing components."
 
-            # Assert
-            assert result.status == "failure"
-            assert result.escalation_count == 3
-            assert result.error == "Max attempts exhausted"
-            assert result.test_pass_rate == 0.0
+        with patch.object(hybrid_executor.ollama, "chat", new=AsyncMock(side_effect=mock_chat)):
+            # Mock verification to always fail
+            with patch.object(
+                hybrid_executor,
+                "_run_verification",
+                return_value="FAILED - persistent error",
+            ):
+                # Act
+                result = await hybrid_executor._execute_task_with_escalation(
+                    sample_architecture_task, task_id
+                )
+
+                # Assert
+                assert result.status == "failure"
+                assert result.escalation_count == 3
+                assert result.error == "Max attempts exhausted"
+                assert result.test_pass_rate == 0.0
 
 
 # ============================================================================
@@ -1210,9 +1249,6 @@ class TestYieldValidation:
 # ============================================================================
 
 
-@pytest.mark.skip(
-    reason="Requires Ollama server at localhost:11434 - integration test for real agent execution"
-)
 class TestIntegrationWorkflows:
     """Test complete end-to-end workflows with real message bus."""
 
@@ -1236,9 +1272,11 @@ class TestIntegrationWorkflows:
 
         # Mock agent creation and verification
         mock_registry = Mock(spec=AgentRegistry)
-        mock_registry.create_agent = Mock(
-            return_value=Mock(name="MockAgent", tier=ModelTier.LOCAL)
+        mock_agent = Mock(name="MockAgent", tier=ModelTier.LOCAL)
+        mock_agent.execute = AsyncMock(
+            return_value={"status": "success", "result": "Fixed"}
         )
+        mock_registry.create_agent = Mock(return_value=mock_agent)
         mock_registry.get_model_for_agent = Mock(return_value="qwen2.5-coder:7b")
         mock_registry.escalation_policy = EscalationPolicy()
         executor.agent_registry = mock_registry
@@ -1253,14 +1291,23 @@ class TestIntegrationWorkflows:
         # Publish task to execution_queue
         await real_message_bus.publish("execution_queue", task)
 
-        # Mock verification to succeed
-        with patch.object(
-            executor, "_run_verification", return_value="All tests passed"
-        ):
-            # Act - Process one message
-            async for message in real_message_bus.subscribe("execution_queue"):
-                await executor._handle_message(message)
-                break  # Process only first message
+        # Mock ollama.chat to avoid real Ollama calls
+        async def mock_chat(model, messages, **kwargs):
+            return """Fixed type error successfully. Changes made:
+            - Updated type annotations in shared/models.py
+            - Added proper Pydantic model for UserData
+            - Fixed return type signature in get_user() function
+            All type errors resolved."""
+
+        with patch.object(executor.ollama, "chat", new=AsyncMock(side_effect=mock_chat)):
+            # Mock verification to succeed
+            with patch.object(
+                executor, "_run_verification", return_value="All tests passed"
+            ):
+                # Act - Process one message
+                async for message in real_message_bus.subscribe("execution_queue"):
+                    await executor._handle_message(message)
+                    break  # Process only first message
 
         # Assert - Check telemetry was published
         telemetry_count = await real_message_bus.get_pending_count("telemetry_stream")
@@ -1289,9 +1336,17 @@ class TestIntegrationWorkflows:
 
         # Mock agent creation
         mock_registry = Mock(spec=AgentRegistry)
-        mock_registry.create_agent = Mock(
-            return_value=Mock(name="MockAgent", tier=ModelTier.LOCAL)
+        mock_agent = Mock(name="MockAgent")
+        mock_agent.execute = AsyncMock(
+            return_value={"status": "success", "result": "Refactored"}
         )
+
+        def mock_create_agent(agent_type, tier):
+            """Mock agent creation at different tiers."""
+            mock_agent.tier = tier
+            return mock_agent
+
+        mock_registry.create_agent = Mock(side_effect=mock_create_agent)
         mock_registry.get_model_for_agent = Mock(return_value="qwen2.5-coder:7b")
         mock_registry.escalation_policy = EscalationPolicy()
         executor.agent_registry = mock_registry
@@ -1305,21 +1360,31 @@ class TestIntegrationWorkflows:
 
         await real_message_bus.publish("execution_queue", task)
 
-        # Mock verification: fail twice at LOCAL, succeed at LOCAL_PLUS
-        call_count = 0
+        # Mock ollama.chat to avoid real Ollama calls
+        async def mock_chat(model, messages, **kwargs):
+            return """Refactored module successfully. Changes:
+            - Extracted helper functions for better organization
+            - Improved error handling with Result pattern
+            - Added comprehensive type annotations
+            - Enhanced code readability and maintainability
+            All tests passing after refactor."""
 
-        def mock_verification():
-            nonlocal call_count
-            call_count += 1
-            if call_count <= 2:
-                return "FAILED - 2 failed"
-            return "All tests passed"
+        with patch.object(executor.ollama, "chat", new=AsyncMock(side_effect=mock_chat)):
+            # Mock verification: fail twice at LOCAL, succeed at LOCAL_PLUS
+            call_count = 0
 
-        with patch.object(executor, "_run_verification", side_effect=mock_verification):
-            # Act
-            async for message in real_message_bus.subscribe("execution_queue"):
-                await executor._handle_message(message)
-                break
+            def mock_verification():
+                nonlocal call_count
+                call_count += 1
+                if call_count <= 2:
+                    return "FAILED - 2 failed"
+                return "All tests passed"
+
+            with patch.object(executor, "_run_verification", side_effect=mock_verification):
+                # Act
+                async for message in real_message_bus.subscribe("execution_queue"):
+                    await executor._handle_message(message)
+                    break
 
         # Assert
         stats = executor.get_stats()
@@ -1343,9 +1408,11 @@ class TestIntegrationWorkflows:
 
         # Mock agent creation
         mock_registry = Mock(spec=AgentRegistry)
-        mock_registry.create_agent = Mock(
-            return_value=Mock(name="MockAgent", tier=ModelTier.LOCAL)
+        mock_agent = Mock(name="MockAgent", tier=ModelTier.LOCAL)
+        mock_agent.execute = AsyncMock(
+            return_value={"status": "success", "result": "Tests generated"}
         )
+        mock_registry.create_agent = Mock(return_value=mock_agent)
         mock_registry.get_model_for_agent = Mock(return_value="qwen2.5-coder:7b")
         mock_registry.escalation_policy = EscalationPolicy()
         executor.agent_registry = mock_registry
@@ -1363,17 +1430,28 @@ class TestIntegrationWorkflows:
         for task in tasks:
             await real_message_bus.publish("execution_queue", task)
 
-        # Mock verification to succeed
-        with patch.object(
-            executor, "_run_verification", return_value="All tests passed"
-        ):
-            # Act - Process all 3 tasks
-            count = 0
-            async for message in real_message_bus.subscribe("execution_queue"):
-                await executor._handle_message(message)
-                count += 1
-                if count == 3:
-                    break
+        # Mock ollama.chat to avoid real Ollama calls
+        async def mock_chat(model, messages, **kwargs):
+            return """Generated comprehensive test suite. Includes:
+            - 15 unit tests covering all edge cases
+            - Integration tests for API endpoints
+            - Error handling validation tests
+            - Mock fixtures for database interactions
+            - AAA pattern (Arrange-Act-Assert) followed
+            All tests following NECESSARY framework."""
+
+        with patch.object(executor.ollama, "chat", new=AsyncMock(side_effect=mock_chat)):
+            # Mock verification to succeed
+            with patch.object(
+                executor, "_run_verification", return_value="All tests passed"
+            ):
+                # Act - Process all 3 tasks
+                count = 0
+                async for message in real_message_bus.subscribe("execution_queue"):
+                    await executor._handle_message(message)
+                    count += 1
+                    if count == 3:
+                        break
 
         # Assert
         stats = executor.get_stats()
