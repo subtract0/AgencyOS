@@ -13,8 +13,8 @@ Constitutional Compliance:
 - Article V: Spec-driven development (consciousness-launch.md is the spec)
 """
 
-from tools.constitutional_consciousness.feedback_loop import (
-    ConstitutionalFeedbackLoop,
+from tools.constitutional_consciousness.feedback_loop import ConstitutionalFeedbackLoop
+from tools.constitutional_consciousness.models import (
     ConstitutionalPattern,
     CycleReport,
     ViolationPrediction,

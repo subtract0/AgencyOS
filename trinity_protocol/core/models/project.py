@@ -15,7 +15,7 @@ from datetime import datetime
 from enum import Enum
 from typing import Literal
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
 
 
 class ProjectState(str, Enum):
@@ -73,10 +73,7 @@ class QAQuestion(BaseModel):
         default=None, max_length=200, description="Why we're asking this question"
     )
 
-    class Config:
-        """Pydantic configuration."""
-
-        frozen = True
+    model_config = ConfigDict(frozen=True)
 
 
 class QAAnswer(BaseModel):
@@ -93,10 +90,7 @@ class QAAnswer(BaseModel):
     answered_at: datetime = Field(default_factory=datetime.now, description="When user answered")
     confidence: QuestionConfidence = Field(..., description="User's confidence in answer")
 
-    class Config:
-        """Pydantic configuration."""
-
-        frozen = True
+    model_config = ConfigDict(frozen=True)
 
 
 class QASession(BaseModel):
@@ -111,7 +105,7 @@ class QASession(BaseModel):
     pattern_id: str = Field(..., description="Pattern that triggered initialization")
     pattern_type: str = Field(..., description="Type of pattern (book_project, workflow, etc.)")
     questions: list[QAQuestion] = Field(
-        ..., min_items=5, max_items=10, description="5-10 initialization questions"
+        ..., min_length=5, max_length=10, description="5-10 initialization questions"
     )
     answers: list[QAAnswer] = Field(default_factory=list, description="User's answers")
     started_at: datetime = Field(default_factory=datetime.now, description="Session start time")
@@ -130,10 +124,7 @@ class QASession(BaseModel):
         answered_ids = {a.question_id for a in self.answers}
         return required_ids.issubset(answered_ids)
 
-    class Config:
-        """Pydantic configuration."""
-
-        validate_assignment = True
+    model_config = ConfigDict(validate_assignment=True)
 
 
 class AcceptanceCriterion(BaseModel):
@@ -144,10 +135,7 @@ class AcceptanceCriterion(BaseModel):
     verification_method: str = Field(..., max_length=200, description="How to verify completion")
     met: bool = Field(default=False, description="Has criterion been met?")
 
-    class Config:
-        """Pydantic configuration."""
-
-        validate_assignment = True
+    model_config = ConfigDict(validate_assignment=True)
 
 
 class ProjectSpec(BaseModel):
@@ -162,16 +150,16 @@ class ProjectSpec(BaseModel):
     qa_session_id: str = Field(..., description="Source Q&A session")
     title: str = Field(..., min_length=10, max_length=200, description="Project title")
     description: str = Field(..., min_length=50, max_length=2000, description="Project description")
-    goals: list[str] = Field(..., min_items=1, max_items=10, description="Project goals (1-10)")
+    goals: list[str] = Field(..., min_length=1, max_length=10, description="Project goals (1-10)")
     non_goals: list[str] = Field(
-        default_factory=list, max_items=10, description="Explicit non-goals"
+        default_factory=list, max_length=10, description="Explicit non-goals"
     )
-    user_personas: list[str] = Field(default_factory=list, max_items=5, description="User personas")
+    user_personas: list[str] = Field(default_factory=list, max_length=5, description="User personas")
     acceptance_criteria: list[AcceptanceCriterion] = Field(
-        ..., min_items=1, max_items=20, description="Success criteria (1-20)"
+        ..., min_length=1, max_length=20, description="Success criteria (1-20)"
     )
     constraints: list[str] = Field(
-        default_factory=list, max_items=10, description="Constraints and limitations"
+        default_factory=list, max_length=10, description="Constraints and limitations"
     )
     spec_markdown: str = Field(..., min_length=100, description="Full spec.md content")
     created_at: datetime = Field(default_factory=datetime.now, description="Spec creation time")
@@ -180,11 +168,7 @@ class ProjectSpec(BaseModel):
         default=ApprovalStatus.PENDING, description="Approval status"
     )
 
-    class Config:
-        """Pydantic configuration."""
-
-        validate_assignment = True
-        use_enum_values = True
+    model_config = ConfigDict(validate_assignment=True, use_enum_values=True)
 
 
 class ProjectTask(BaseModel):
@@ -203,17 +187,13 @@ class ProjectTask(BaseModel):
         default_factory=list, description="Task IDs that must complete first"
     )
     acceptance_criteria: list[str] = Field(
-        default_factory=list, max_items=5, description="Task completion criteria"
+        default_factory=list, max_length=5, description="Task completion criteria"
     )
     assigned_to: Literal["user", "system"] = Field(..., description="Who executes this task")
     status: TaskStatus = Field(default=TaskStatus.PENDING, description="Current status")
     completed_at: datetime | None = Field(default=None, description="Completion timestamp")
 
-    class Config:
-        """Pydantic configuration."""
-
-        validate_assignment = True
-        use_enum_values = True
+    model_config = ConfigDict(validate_assignment=True, use_enum_values=True)
 
 
 class ProjectPlan(BaseModel):
@@ -227,7 +207,7 @@ class ProjectPlan(BaseModel):
     project_id: str = Field(..., description="Associated project")
     spec_id: str = Field(..., description="Source specification")
     tasks: list[ProjectTask] = Field(
-        ..., min_items=1, max_items=100, description="Project tasks (1-100)"
+        ..., min_length=1, max_length=100, description="Project tasks (1-100)"
     )
     total_estimated_days: int = Field(..., ge=1, le=60, description="Estimated duration in days")
     daily_questions_avg: int = Field(..., ge=1, le=3, description="Average questions per day")
@@ -236,10 +216,7 @@ class ProjectPlan(BaseModel):
     plan_markdown: str = Field(..., min_length=100, description="Full plan.md content")
     created_at: datetime = Field(default_factory=datetime.now, description="Plan creation time")
 
-    class Config:
-        """Pydantic configuration."""
-
-        validate_assignment = True
+    model_config = ConfigDict(validate_assignment=True)
 
 
 class CheckinQuestion(BaseModel):
@@ -255,10 +232,7 @@ class CheckinQuestion(BaseModel):
     )
     asked_at: datetime = Field(default_factory=datetime.now, description="When asked")
 
-    class Config:
-        """Pydantic configuration."""
-
-        frozen = True
+    model_config = ConfigDict(frozen=True)
 
 
 class CheckinResponse(BaseModel):
@@ -273,10 +247,7 @@ class CheckinResponse(BaseModel):
     )
     action_needed: bool = Field(default=False, description="Does response require action?")
 
-    class Config:
-        """Pydantic configuration."""
-
-        frozen = True
+    model_config = ConfigDict(frozen=True)
 
 
 class DailyCheckin(BaseModel):
@@ -286,7 +257,7 @@ class DailyCheckin(BaseModel):
     project_id: str = Field(..., description="Associated project")
     checkin_date: datetime = Field(default_factory=datetime.now, description="Check-in date")
     questions: list[CheckinQuestion] = Field(
-        ..., min_items=1, max_items=3, description="Check-in questions (1-3)"
+        ..., min_length=1, max_length=3, description="Check-in questions (1-3)"
     )
     responses: list[CheckinResponse] = Field(default_factory=list, description="User responses")
     total_time_minutes: int = Field(default=0, ge=0, le=30, description="Time spent (0-30 min)")
@@ -295,10 +266,7 @@ class DailyCheckin(BaseModel):
         default="pending", description="Check-in status"
     )
 
-    class Config:
-        """Pydantic configuration."""
-
-        validate_assignment = True
+    model_config = ConfigDict(validate_assignment=True)
 
 
 class ProjectMetadata(BaseModel):
@@ -311,10 +279,7 @@ class ProjectMetadata(BaseModel):
     )
     priority: int = Field(default=5, ge=1, le=10, description="Project priority (1-10)")
 
-    class Config:
-        """Pydantic configuration."""
-
-        validate_assignment = True
+    model_config = ConfigDict(validate_assignment=True)
 
 
 class Project(BaseModel):
@@ -339,11 +304,7 @@ class Project(BaseModel):
     completion_date: datetime | None = Field(default=None, description="Completion date if done")
     metadata: ProjectMetadata = Field(..., description="Project metadata")
 
-    class Config:
-        """Pydantic configuration."""
-
-        validate_assignment = True
-        use_enum_values = True
+    model_config = ConfigDict(validate_assignment=True, use_enum_values=True)
 
 
 class ProjectOutcome(BaseModel):
@@ -367,14 +328,11 @@ class ProjectOutcome(BaseModel):
         default=None, ge=1, le=5, description="Deliverable quality rating (1-5)"
     )
     blockers_encountered: list[str] = Field(
-        default_factory=list, max_items=20, description="Blockers encountered"
+        default_factory=list, max_length=20, description="Blockers encountered"
     )
-    learnings: list[str] = Field(default_factory=list, max_items=20, description="Lessons learned")
+    learnings: list[str] = Field(default_factory=list, max_length=20, description="Lessons learned")
     would_recommend: bool | None = Field(
         default=None, description="Would user recommend Trinity?"
     )
 
-    class Config:
-        """Pydantic configuration."""
-
-        frozen = True
+    model_config = ConfigDict(frozen=True)
