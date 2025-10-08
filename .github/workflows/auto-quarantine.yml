@@ -35,8 +35,9 @@ jobs:
         run: |
           python tools/test_quarantine.py --check
 
-          # Count candidates
+          # Count candidates (remove newlines from grep output)
           CANDIDATE_COUNT=$(python tools/test_quarantine.py --check 2>&1 | grep -c "•" || echo "0")
+          CANDIDATE_COUNT=$(echo "$CANDIDATE_COUNT" | tr -d '\n')
           echo "candidate_count=$CANDIDATE_COUNT" >> $GITHUB_OUTPUT
 
           if [ "$CANDIDATE_COUNT" -gt 0 ]; then
