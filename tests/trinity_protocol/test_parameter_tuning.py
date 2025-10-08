@@ -152,6 +152,7 @@ class TestWhisperParameterTuning:
         assert call_kwargs.get("no_speech_threshold") == 0.6
 
 
+@pytest.mark.experimental
 @pytest.mark.skip(
     reason="Trinity experimental feature - min_text_length filter not yet implemented"
 )
@@ -286,6 +287,7 @@ class TestEmptyTranscriptionReduction:
         mock_context.add_transcription.assert_not_called()
 
 
+@pytest.mark.experimental
 @pytest.mark.skip(
     reason="Trinity experimental feature - zero duration validation not yet implemented"
 )
@@ -395,6 +397,7 @@ class TestDurationValidationFallback:
         assert isinstance(result, Ok)
 
 
+@pytest.mark.experimental
 @pytest.mark.skip(reason="Trinity experimental feature - CLI parameters not yet added to parser")
 class TestIntegratedParameterTuning:
     """Integration tests for all three improvements working together."""

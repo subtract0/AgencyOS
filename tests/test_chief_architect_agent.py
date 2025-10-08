@@ -491,7 +491,6 @@ class TestChiefArchitectAgentInitialization:
             assert call_kwargs["hooks"] == mock_composite_hook
 
 
-@pytest.mark.skip(reason="Agent descriptions modernized - detailed string checks outdated")
 class TestChiefArchitectAgentDescription:
     """Test ChiefArchitectAgent description and capabilities."""
 
@@ -537,9 +536,9 @@ class TestChiefArchitectAgentDescription:
             call_kwargs = mock_agent_class.call_args[1]
             description = call_kwargs["description"]
 
-            # Verify strategic leadership aspects
+            # Verify strategic leadership aspects - updated to match new description
             assert "strategic oversight" in description
-            assert "continuous improvement" in description or "strategic" in description
+            assert "self-directed task creation authority" in description
 
     def test_agent_description_triggers(self, mock_agent_context):
         """Test that agent description captures trigger conditions."""
@@ -583,13 +582,11 @@ class TestChiefArchitectAgentDescription:
             call_kwargs = mock_agent_class.call_args[1]
             description = call_kwargs["description"]
 
-            # Verify trigger conditions
-            assert "PROACTIVE" in description or "strategic" in description
-            assert "system" in description or "strategic" in description
-            assert "strategic" in description or "architectural" in description
-            assert "issues" in description or "decision" in description
-            assert "strategic" in description or "architectural" in description
-            assert "opportunities" in description or "decisions" in description
+            # Verify trigger conditions - updated to match new description
+            assert "PROACTIVE" in description
+            assert "AUTOMATICALLY monitors system health" in description
+            assert "quality metrics" in description
+            assert "strategic alignment" in description
 
     def test_agent_description_capabilities(self, mock_agent_context):
         """Test that agent description captures key capabilities."""
@@ -633,13 +630,12 @@ class TestChiefArchitectAgentDescription:
             call_kwargs = mock_agent_class.call_args[1]
             description = call_kwargs["description"]
 
-            # Verify key capabilities
-            assert "architectural" in description or "strategic" in description
-            assert "memory patterns" in description
-            assert "constitutional compliance" in description
-            assert "high-impact improvements" in description
-            assert "[SELF-DIRECTED TASK]" in description
-            assert "high-priority user instructions" in description
+            # Verify key capabilities - updated to match new description
+            assert "architectural" in description
+            assert "ADR (Architecture Decision Record)" in description
+            assert "INTELLIGENTLY coordinates" in description
+            assert "LearningAgent for pattern analysis" in description
+            assert "constitutional compliance enforcement" in description
 
     def test_agent_description_authority(self, mock_agent_context):
         """Test that agent description captures authority and autonomy."""
@@ -683,11 +679,11 @@ class TestChiefArchitectAgentDescription:
             call_kwargs = mock_agent_class.call_args[1]
             description = call_kwargs["description"]
 
-            # Verify authority aspects
-            assert "self-directed" in description or "task creation authority" in description
-            assert "autonomous improvement cycles" in description
-            assert "directives supersede routine tasks" in description
-            assert "RunArchitectureLoop tool" in description
+            # Verify authority aspects - updated to match new description
+            assert "self-directed task creation" in description
+            assert "PROACTIVELY creates" in description
+            assert "Uses self-directed task creation to initiate improvements" in description
+            assert "quality thresholds breached or architectural drift detected" in description
 
     def test_agent_description_usage_guidance(self, mock_agent_context):
         """Test that agent description provides usage guidance."""
@@ -731,11 +727,11 @@ class TestChiefArchitectAgentDescription:
             call_kwargs = mock_agent_class.call_args[1]
             description = call_kwargs["description"]
 
-            # Verify usage guidance
-            assert "When prompting" in description or "provide" in description
-            assert "recent failures" in description
-            assert "performance metrics" in description
-            assert "areas of concern" in description
+            # Verify usage guidance - updated to match new description
+            assert "When prompting" in description
+            assert "architectural challenges" in description
+            assert "technology decisions" in description
+            assert "strategic planning" in description
 
 
 class TestChiefArchitectAgentErrorHandling:
