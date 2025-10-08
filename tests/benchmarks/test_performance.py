@@ -5,11 +5,22 @@ Constitutional requirement: Tests must execute within defined time bounds.
 These benchmarks prevent performance regressions.
 """
 
+import os
 import subprocess
 import time
 from pathlib import Path
 
 import pytest
+
+# Skip benchmarks locally but run in CI
+IN_CI = os.getenv("CI") == "true"
+pytestmark = [
+    pytest.mark.benchmark,
+    pytest.mark.skipif(
+        not IN_CI,
+        reason="Performance benchmarks have strict timing constraints - run in CI only"
+    )
+]
 
 
 @pytest.mark.benchmark
