@@ -413,12 +413,44 @@ AUDITOR_MODEL=gpt-5                   # Quality analysis
 QUALITY_ENFORCER_MODEL=gpt-5          # Constitutional compliance
 SUMMARY_MODEL=gpt-5-mini              # Cost-efficient summaries
 
+# Local Model Integration (Phase 3: 96% cost reduction)
+USE_LOCAL_MODEL=true                  # Enable local Ollama for P3 tasks (default: true)
+LOCAL_MODEL_NAME=qwen2.5-coder:32b    # Local model (default: qwen2.5-coder:32b)
+# P3 (simple): Fix typos, format code → $0 (local) - 60% of tasks
+# P2 (moderate): Feature impl, bug fixes → gpt-4o ($1.50/1M) - 30%
+# P1 (complex): Architecture, ADRs → gpt-5 ($4.00/1M) - 10%
+
 # Memory & Learning (MANDATORY - Article IV)
 USE_ENHANCED_MEMORY=true              # REQUIRED: VectorStore integration (constitutional mandate)
 FRESH_USE_FIRESTORE=false             # Optional Firestore backend
 
 # Testing
 FORCE_RUN_ALL_TESTS=1                 # Full test suite (1,562 tests)
+```
+
+### **Local Model Setup (96% Cost Reduction)**
+```bash
+# Install Ollama
+brew install ollama  # macOS
+# OR: curl -fsSL https://ollama.com/install.sh | sh  # Linux
+
+# Pull recommended model (32B params, 19GB)
+ollama pull qwen2.5-coder:32b
+
+# Verify
+ollama list
+# NAME                  ID              SIZE
+# qwen2.5-coder:32b     b92d6a0bd47e    19 GB
+
+# Test local model
+ollama run qwen2.5-coder:32b "def hello(): pass  # Fix typo in docstring"
+```
+
+**Cost Savings with Local Models:**
+- **Without local**: $40K/month @ 10K tasks (all gpt-5)
+- **Phase 1 (multi-tier)**: $9.4K/month (76.5% reduction)
+- **Phase 3 (local P3)**: $1.6K/month (96% reduction)
+- **60% of tasks FREE** (P3 simple tasks run locally)
 ```
 
 ### **Running Commands**
