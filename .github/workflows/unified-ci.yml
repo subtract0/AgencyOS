@@ -173,6 +173,10 @@ jobs:
     needs: [lint-and-type-check, test-verification]
     if: always()
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write
+      issues: write
 
     steps:
       - name: "📊 Evaluate Merge Readiness"
