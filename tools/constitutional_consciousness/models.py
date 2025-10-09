@@ -7,7 +7,6 @@ Constitutional Compliance:
 - Strict type safety throughout
 """
 
-
 from pydantic import BaseModel, ConfigDict, Field
 
 

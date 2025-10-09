@@ -68,9 +68,9 @@ class TestTenTaskBenchmark:
         task_agent_types = {task["agent_type"] for task in BENCHMARK_TASKS}
         expected_types = {agent_type for agent_type in AgentType}
 
-        assert (
-            task_agent_types == expected_types
-        ), f"Missing agent types: {expected_types - task_agent_types}"
+        assert task_agent_types == expected_types, (
+            f"Missing agent types: {expected_types - task_agent_types}"
+        )
 
     def test_each_task_has_required_fields(self):
         """Verify each task has required fields (agent_type, description, expected_tier)."""
@@ -80,9 +80,7 @@ class TestTenTaskBenchmark:
 
         for idx, task in enumerate(BENCHMARK_TASKS):
             missing_fields = required_fields - task.keys()
-            assert (
-                not missing_fields
-            ), f"Task {idx} missing fields: {missing_fields}"
+            assert not missing_fields, f"Task {idx} missing fields: {missing_fields}"
 
     def test_benchmark_results_schema(self, temp_results_dir):
         """Verify benchmark results JSON has correct schema."""
@@ -260,9 +258,9 @@ class TestHundredTaskBenchmark:
 
         # Should have 10 tasks per agent type (100 / 10)
         for agent_type in AgentType:
-            assert (
-                agent_counts.get(agent_type, 0) == 10
-            ), f"{agent_type.value} should have 10 tasks, got {agent_counts.get(agent_type, 0)}"
+            assert agent_counts.get(agent_type, 0) == 10, (
+                f"{agent_type.value} should have 10 tasks, got {agent_counts.get(agent_type, 0)}"
+            )
 
     def test_stress_benchmark_tracks_memory_stability(self):
         """Verify stress benchmark tracks memory growth over time."""
@@ -501,9 +499,9 @@ class TestBenchmarkConstitutionalCompliance:
         completion = verify_completion(results)
 
         assert completion["completion_rate"] < 1.0
-        assert (
-            completion["completed_tasks"] < completion["total_tasks"]
-        ), "Should detect incomplete execution"
+        assert completion["completed_tasks"] < completion["total_tasks"], (
+            "Should detect incomplete execution"
+        )
 
 
 # Test expected output format
@@ -562,9 +560,9 @@ class TestBenchmarkOutputFormat:
             "local_execution_rate",
         }
 
-        assert all(
-            key in summary for key in required_keys
-        ), f"Missing keys: {required_keys - summary.keys()}"
+        assert all(key in summary for key in required_keys), (
+            f"Missing keys: {required_keys - summary.keys()}"
+        )
 
     def test_benchmark_console_output_readable(self, capsys):
         """Verify benchmark console output is human-readable."""
@@ -609,9 +607,7 @@ class TestBenchmarkIntegration:
 
         # Mock agent execution
         mock_agent = Mock()
-        mock_agent.execute = Mock(
-            return_value={"status": "success", "output": "test"}
-        )
+        mock_agent.execute = Mock(return_value={"status": "success", "output": "test"})
         mock_registry = Mock()
         mock_registry.create_agent = Mock(return_value=mock_agent)
         mock_create_registry.return_value = mock_registry
@@ -631,9 +627,7 @@ class TestBenchmarkIntegration:
 
         # Mock agent execution
         mock_agent = Mock()
-        mock_agent.execute = Mock(
-            return_value={"status": "success", "output": "test"}
-        )
+        mock_agent.execute = Mock(return_value={"status": "success", "output": "test"})
         mock_registry = Mock()
         mock_registry.create_agent = Mock(return_value=mock_agent)
         mock_create_registry.return_value = mock_registry

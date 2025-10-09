@@ -76,9 +76,7 @@ class CodeTaskContext(BaseModel):
     current_directory: str = Field(..., description="Current working directory")
     git_branch: str = Field(default="main", description="Current git branch")
     session_id: str = Field(..., description="Unique session identifier")
-    agent_context: dict[str, JSONValue] | None = Field(
-        None, description="Agent context for memory"
-    )
+    agent_context: dict[str, JSONValue] | None = Field(None, description="Agent context for memory")
     constitutional_articles: list[str] = Field(
         default_factory=lambda: [
             "TDD is Mandatory - Write tests before implementation",

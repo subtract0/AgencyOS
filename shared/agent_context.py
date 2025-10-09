@@ -158,13 +158,10 @@ class AgentContext:
             )
 
         self._anthropic_memory_tool = create_memory_tool(
-            session_id=self.session_id if base_dir is None else None,
-            base_dir=base_dir
+            session_id=self.session_id if base_dir is None else None, base_dir=base_dir
         )
 
-        logger.info(
-            f"Anthropic Memory Tool enabled: {self._anthropic_memory_tool.base_dir}"
-        )
+        logger.info(f"Anthropic Memory Tool enabled: {self._anthropic_memory_tool.base_dir}")
 
     def get_anthropic_memory_tool(self) -> Any:
         """

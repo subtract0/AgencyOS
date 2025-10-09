@@ -446,15 +446,9 @@ class TestEdgeCases:
         ]
 
         # Act
-        local_count = hybrid_executor._count_attempts_at_tier(
-            attempts, ModelTier.LOCAL
-        )
-        local_plus_count = hybrid_executor._count_attempts_at_tier(
-            attempts, ModelTier.LOCAL_PLUS
-        )
-        cloud_count = hybrid_executor._count_attempts_at_tier(
-            attempts, ModelTier.CLOUD
-        )
+        local_count = hybrid_executor._count_attempts_at_tier(attempts, ModelTier.LOCAL)
+        local_plus_count = hybrid_executor._count_attempts_at_tier(attempts, ModelTier.LOCAL_PLUS)
+        cloud_count = hybrid_executor._count_attempts_at_tier(attempts, ModelTier.CLOUD)
 
         # Assert
         assert local_count == 2
@@ -523,9 +517,7 @@ class TestCornerCases:
             assert plans_path.is_dir()
 
     @pytest.mark.asyncio
-    async def test_execute_at_tier_orchestration_logic(
-        self, hybrid_executor, sample_code_fix_task
-    ):
+    async def test_execute_at_tier_orchestration_logic(self, hybrid_executor, sample_code_fix_task):
         """Test _execute_at_tier orchestration without real agent execution."""
         # Arrange
         task_id = sample_code_fix_task["task_id"]
@@ -615,9 +607,7 @@ class TestErrorConditions:
         # Assert
         assert count == 0
 
-    def test_count_test_failures_returns_one_for_generic_failure(
-        self, hybrid_executor
-    ):
+    def test_count_test_failures_returns_one_for_generic_failure(self, hybrid_executor):
         """Test _count_test_failures returns 1 for generic FAILED without count."""
         # Arrange
         test_output = "FAILED - some error occurred"
@@ -680,9 +670,7 @@ class TestErrorConditions:
                     return "FAILED - 3 failed"
                 return "All tests passed"  # Third attempt succeeds
 
-            with patch.object(
-                hybrid_executor, "_run_verification", side_effect=mock_verification
-            ):
+            with patch.object(hybrid_executor, "_run_verification", side_effect=mock_verification):
                 # Act
                 result = await hybrid_executor._execute_task_with_escalation(
                     sample_code_fix_task, task_id
@@ -718,9 +706,7 @@ class TestErrorConditions:
                     return "FAILED - 2 failed"
                 return "All tests passed"  # CLOUD succeeds
 
-            with patch.object(
-                hybrid_executor, "_run_verification", side_effect=mock_verification
-            ):
+            with patch.object(hybrid_executor, "_run_verification", side_effect=mock_verification):
                 # Act
                 result = await hybrid_executor._execute_task_with_escalation(
                     sample_refactoring_task, task_id
@@ -1154,9 +1140,7 @@ class TestYieldValidation:
         task_id = sample_test_generation_task["task_id"]
 
         # Mock verification
-        with patch.object(
-            hybrid_executor, "_run_verification", return_value="All tests passed"
-        ):
+        with patch.object(hybrid_executor, "_run_verification", return_value="All tests passed"):
             # Act
             result = await hybrid_executor._execute_at_tier(
                 sample_test_generation_task, task_id, ModelTier.LOCAL, attempt_num=2
@@ -1181,9 +1165,7 @@ class TestYieldValidation:
         task_id = sample_code_fix_task["task_id"]
 
         # Mock verification to succeed
-        with patch.object(
-            hybrid_executor, "_run_verification", return_value="All tests passed"
-        ):
+        with patch.object(hybrid_executor, "_run_verification", return_value="All tests passed"):
             # Act
             result = await hybrid_executor._execute_task_with_escalation(
                 sample_code_fix_task, task_id
@@ -1273,9 +1255,7 @@ class TestIntegrationWorkflows:
         # Mock agent creation and verification
         mock_registry = Mock(spec=AgentRegistry)
         mock_agent = Mock(name="MockAgent", tier=ModelTier.LOCAL)
-        mock_agent.execute = AsyncMock(
-            return_value={"status": "success", "result": "Fixed"}
-        )
+        mock_agent.execute = AsyncMock(return_value={"status": "success", "result": "Fixed"})
         mock_registry.create_agent = Mock(return_value=mock_agent)
         mock_registry.get_model_for_agent = Mock(return_value="qwen2.5-coder:7b")
         mock_registry.escalation_policy = EscalationPolicy()
@@ -1301,9 +1281,7 @@ class TestIntegrationWorkflows:
 
         with patch.object(executor.ollama, "chat", new=AsyncMock(side_effect=mock_chat)):
             # Mock verification to succeed
-            with patch.object(
-                executor, "_run_verification", return_value="All tests passed"
-            ):
+            with patch.object(executor, "_run_verification", return_value="All tests passed"):
                 # Act - Process one message
                 async for message in real_message_bus.subscribe("execution_queue"):
                     await executor._handle_message(message)
@@ -1337,9 +1315,7 @@ class TestIntegrationWorkflows:
         # Mock agent creation
         mock_registry = Mock(spec=AgentRegistry)
         mock_agent = Mock(name="MockAgent")
-        mock_agent.execute = AsyncMock(
-            return_value={"status": "success", "result": "Refactored"}
-        )
+        mock_agent.execute = AsyncMock(return_value={"status": "success", "result": "Refactored"})
 
         def mock_create_agent(agent_type, tier):
             """Mock agent creation at different tiers."""
@@ -1442,9 +1418,7 @@ class TestIntegrationWorkflows:
 
         with patch.object(executor.ollama, "chat", new=AsyncMock(side_effect=mock_chat)):
             # Mock verification to succeed
-            with patch.object(
-                executor, "_run_verification", return_value="All tests passed"
-            ):
+            with patch.object(executor, "_run_verification", return_value="All tests passed"):
                 # Act - Process all 3 tasks
                 count = 0
                 async for message in real_message_bus.subscribe("execution_queue"):

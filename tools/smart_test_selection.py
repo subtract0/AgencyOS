@@ -55,15 +55,17 @@ class TestSelectionReport(BaseModel):
     estimated_time_saved: float = Field(..., description="Estimated time saved in seconds")
     selection_ratio: float = Field(..., description="Ratio of selected to total tests")
 
-    model_config = ConfigDict(json_schema_extra={
-        "example": {
-            "changed_files": ["agency_code_agent/coder.py"],
-            "affected_tests": ["tests/test_coder.py::test_generate_code"],
-            "total_tests": 2438,
-            "estimated_time_saved": 180.0,
-            "selection_ratio": 0.05,
+    model_config = ConfigDict(
+        json_schema_extra={
+            "example": {
+                "changed_files": ["agency_code_agent/coder.py"],
+                "affected_tests": ["tests/test_coder.py::test_generate_code"],
+                "total_tests": 2438,
+                "estimated_time_saved": 180.0,
+                "selection_ratio": 0.05,
+            }
         }
-    })
+    )
 
 
 class SmartTestSelector:

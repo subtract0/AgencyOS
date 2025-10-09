@@ -51,12 +51,15 @@ def demo_direct_memory_operations():
 
     # Create a memory file
     print("[1] Creating memory file...")
-    result = tool.create("/memories/project_info.txt", """
+    result = tool.create(
+        "/memories/project_info.txt",
+        """
 Project: Agency OS
 Language: Python
 Framework: agency-swarm
 Key Feature: Multi-agent orchestration with constitutional governance
-""".strip())
+""".strip(),
+    )
     print(f"    {result}")
     print()
 
@@ -71,7 +74,7 @@ Key Feature: Multi-agent orchestration with constitutional governance
     result = tool.str_replace(
         "/memories/project_info.txt",
         "Multi-agent orchestration",
-        "Multi-agent orchestration with learning system"
+        "Multi-agent orchestration with learning system",
     )
     print(f"    {result}")
     print()
@@ -139,7 +142,7 @@ def demo_sdk_integration():
                 "for autonomous code generation with constitutional governance. "
                 "The main agents are: Planner, CodeAgent, Auditor, and QualityEnforcer. "
                 "Create a memory file to remember this."
-            )
+            ),
         }
     ]
 
@@ -149,37 +152,33 @@ def demo_sdk_integration():
             memory_tool=memory_tool,
             messages=messages,
             model="claude-sonnet-4-5",
-            max_tokens=1024
+            max_tokens=1024,
         )
 
         print("    Claude's response:")
         for block in response.content:
-            if hasattr(block, 'text'):
+            if hasattr(block, "text"):
                 print(f"    {block.text}")
         print()
 
         # Second conversation - testing recall
         print("[3] Testing Claude's memory...")
-        messages.append({
-            "role": "assistant",
-            "content": response.content
-        })
-        messages.append({
-            "role": "user",
-            "content": "What agents did I tell you about? Read from your memory."
-        })
+        messages.append({"role": "assistant", "content": response.content})
+        messages.append(
+            {"role": "user", "content": "What agents did I tell you about? Read from your memory."}
+        )
 
         response = run_with_memory(
             client=client,
             memory_tool=memory_tool,
             messages=messages,
             model="claude-sonnet-4-5",
-            max_tokens=512
+            max_tokens=512,
         )
 
         print("    Claude's response:")
         for block in response.content:
-            if hasattr(block, 'text'):
+            if hasattr(block, "text"):
                 print(f"    {block.text}")
         print()
 
@@ -232,7 +231,7 @@ def demo_agent_context_integration():
     context.store_memory(
         key="demo_task",
         content={"task": "Demonstrate memory integration", "status": "complete"},
-        tags=["demo", "anthropic"]
+        tags=["demo", "anthropic"],
     )
 
     memories = context.search_memories(["demo"])
@@ -271,6 +270,7 @@ def main():
     except Exception as e:
         print(f"❌ Demo failed: {e}")
         import traceback
+
         traceback.print_exc()
         return 1
 

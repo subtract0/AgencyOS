@@ -318,11 +318,14 @@ def test_escalate_agent_from_cloud_stays_at_cloud(registry_local: AgentRegistry)
     assert (agent_type, ModelTier.CLOUD) in registry_local._agent_cache
 
 
-@pytest.mark.parametrize("start_tier,expected_tier", [
-    (ModelTier.LOCAL, ModelTier.LOCAL_PLUS),
-    (ModelTier.LOCAL_PLUS, ModelTier.CLOUD),
-    (ModelTier.CLOUD, ModelTier.CLOUD),
-])
+@pytest.mark.parametrize(
+    "start_tier,expected_tier",
+    [
+        (ModelTier.LOCAL, ModelTier.LOCAL_PLUS),
+        (ModelTier.LOCAL_PLUS, ModelTier.CLOUD),
+        (ModelTier.CLOUD, ModelTier.CLOUD),
+    ],
+)
 def test_escalation_path_for_all_tiers(
     registry_local: AgentRegistry, start_tier: ModelTier, expected_tier: ModelTier
 ):
@@ -374,7 +377,9 @@ def test_local_tier_uses_ollama_models_only(registry_local: AgentRegistry):
     # Act & Assert
     for agent_type in AgentType:
         model = registry_local.get_model_for_tier(agent_type, ModelTier.LOCAL)
-        assert model.startswith("ollama/"), f"LOCAL tier {agent_type.value} must use Ollama: {model}"
+        assert model.startswith("ollama/"), (
+            f"LOCAL tier {agent_type.value} must use Ollama: {model}"
+        )
 
 
 def test_cloud_tier_uses_gpt_models_only(registry_local: AgentRegistry):
@@ -453,7 +458,7 @@ def test_cache_efficiency_after_clear_and_recreate(registry_local: AgentRegistry
 
     # Assert - new instance after clear, but cached on second creation
     assert agent1 is not agent2  # Different instance after clear
-    assert agent2 is agent3       # Same instance after re-caching
+    assert agent2 is agent3  # Same instance after re-caching
     assert len(registry_local._agent_cache) == 1
 
 
@@ -721,6 +726,12 @@ def test_mixed_tier_agent_creation(registry_local: AgentRegistry):
     assert len(registry_local._agent_cache) == 3
 
     # Verify correct models
-    assert registry_local.get_model_for_tier(AgentType.CODER, ModelTier.LOCAL) == "ollama/qwen2.5-coder:32b"
+    assert (
+        registry_local.get_model_for_tier(AgentType.CODER, ModelTier.LOCAL)
+        == "ollama/qwen2.5-coder:32b"
+    )
     assert registry_local.get_model_for_tier(AgentType.PLANNER, ModelTier.CLOUD) == "gpt-5"
-    assert registry_local.get_model_for_tier(AgentType.AUDITOR, ModelTier.LOCAL_PLUS) == "ollama/qwen2.5-coder:14b"
+    assert (
+        registry_local.get_model_for_tier(AgentType.AUDITOR, ModelTier.LOCAL_PLUS)
+        == "ollama/qwen2.5-coder:14b"
+    )

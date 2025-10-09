@@ -131,12 +131,8 @@ class Recommendation(BaseModel):
     summary: str = Field(..., description="Brief summary of issue")
     details: str = Field(..., description="Detailed description")
     affected_files: list[str] = Field(..., description="Files requiring changes")
-    recommendation_steps: list[str] = Field(
-        ..., description="Steps to implement fix"
-    )
-    constitutional_article: str = Field(
-        ..., description="Constitutional article affected"
-    )
+    recommendation_steps: list[str] = Field(..., description="Steps to implement fix")
+    constitutional_article: str = Field(..., description="Constitutional article affected")
     compliance_status: str = Field(..., description="Compliance status")
     example_code: str | None = Field(
         default=None, description="Optional example code from recommendation"
@@ -158,14 +154,10 @@ class FixResult(BaseModel):
 
     recommendation: Recommendation = Field(..., description="Original recommendation")
     status: FixStatus = Field(..., description="Fix status")
-    files_modified: list[str] = Field(
-        default_factory=list, description="Files that were modified"
-    )
+    files_modified: list[str] = Field(default_factory=list, description="Files that were modified")
     tests_passed: bool = Field(default=False, description="Whether tests passed")
     commit_sha: str | None = Field(default=None, description="Git commit SHA if applied")
-    error_message: str | None = Field(
-        default=None, description="Error message if failed"
-    )
+    error_message: str | None = Field(default=None, description="Error message if failed")
     execution_time: float = Field(default=0.0, ge=0.0, description="Time in seconds")
     cost_usd: float = Field(default=0.0, ge=0.0, description="Cost in USD")
 
@@ -183,12 +175,8 @@ class FixerState(BaseModel):
     applied: int = Field(default=0, ge=0, description="Successfully applied count")
     failed: int = Field(default=0, ge=0, description="Failed count")
     skipped: int = Field(default=0, ge=0, description="Skipped count")
-    results: list[FixResult] = Field(
-        default_factory=list, description="All fix results"
-    )
-    current_branch: str | None = Field(
-        default=None, description="Current working branch"
-    )
+    results: list[FixResult] = Field(default_factory=list, description="All fix results")
+    current_branch: str | None = Field(default=None, description="Current working branch")
 
 
 # ============================================================================
@@ -250,15 +238,9 @@ class RecommendationParser:
             recommendation_match = re.search(
                 r"## Recommendation\n(.+?)(?:\n\n|\n##)", content, re.DOTALL
             )
-            constitutional_match = re.search(
-                r"- Article affected:\s*(\w+)", content
-            )
-            compliance_match = re.search(
-                r"- Compliance status:\s*(\w+)", content
-            )
-            example_match = re.search(
-                r"## Example Code\n(.+?)(?:\n\n##|\Z)", content, re.DOTALL
-            )
+            constitutional_match = re.search(r"- Article affected:\s*(\w+)", content)
+            compliance_match = re.search(r"- Compliance status:\s*(\w+)", content)
+            example_match = re.search(r"## Example Code\n(.+?)(?:\n\n##|\Z)", content, re.DOTALL)
 
             # Parse affected files
             affected_files = []
@@ -297,9 +279,7 @@ class RecommendationParser:
                 constitutional_article=(
                     constitutional_match.group(1) if constitutional_match else "Unknown"
                 ),
-                compliance_status=(
-                    compliance_match.group(1) if compliance_match else "Unknown"
-                ),
+                compliance_status=(compliance_match.group(1) if compliance_match else "Unknown"),
                 example_code=example_match.group(1).strip() if example_match else None,
             )
 
@@ -335,8 +315,7 @@ class RecommendationParser:
             )
 
         logger.info(
-            f"Parsed {len(recommendations)} recommendations "
-            f"({len(errors)} files had errors)"
+            f"Parsed {len(recommendations)} recommendations ({len(errors)} files had errors)"
         )
         return Ok(recommendations)
 
@@ -401,9 +380,7 @@ class GitManager:
         except subprocess.CalledProcessError as e:
             return Err(f"Failed to create branch {branch_name}: {e.stderr}")
 
-    def commit_changes(
-        self, message: str, files: list[str] | None = None
-    ) -> Result[str, str]:
+    def commit_changes(self, message: str, files: list[str] | None = None) -> Result[str, str]:
         """
         Commit changes to git.
 
@@ -653,9 +630,7 @@ class RecommendationFixer:
         try:
             data = json.loads(self.state_file.read_text())
             state = FixerState(**data)
-            logger.info(
-                f"Loaded state: {state.processed}/{state.total_recommendations} processed"
-            )
+            logger.info(f"Loaded state: {state.processed}/{state.total_recommendations} processed")
             return Ok(state)
 
         except Exception as e:
@@ -695,9 +670,7 @@ class RecommendationFixer:
             Result containing FixResult or error message
         """
         start_time = datetime.now()
-        logger.info(
-            f"Applying fix: {recommendation.category.value} - {recommendation.summary}"
-        )
+        logger.info(f"Applying fix: {recommendation.category.value} - {recommendation.summary}")
 
         # MEMORY FEEDBACK LOOP: Query confidence before applying fix (Article IV)
         confidence_boost = self.learner.boost_confidence(
@@ -707,9 +680,7 @@ class RecommendationFixer:
 
         # Decision logic based on confidence
         if confidence_boost < 0.6:
-            logger.warning(
-                f"Low confidence ({confidence_boost:.2f}) - skipping for human review"
-            )
+            logger.warning(f"Low confidence ({confidence_boost:.2f}) - skipping for human review")
             return Ok(
                 FixResult(
                     recommendation=recommendation,
@@ -724,9 +695,7 @@ class RecommendationFixer:
             )
             # Continue with extra validation (implemented below)
         else:
-            logger.info(
-                f"High confidence ({confidence_boost:.2f}) - applying fix"
-            )
+            logger.info(f"High confidence ({confidence_boost:.2f}) - applying fix")
 
         if self.dry_run:
             logger.info("[DRY RUN] Would apply fix to files:")
@@ -742,7 +711,9 @@ class RecommendationFixer:
 
         try:
             # Create feature branch
-            branch_name = f"auto-fix/{recommendation.category.value}/{recommendation.file_path.stem}"
+            branch_name = (
+                f"auto-fix/{recommendation.category.value}/{recommendation.file_path.stem}"
+            )
             branch_result = self.git_manager.create_branch(branch_name)
             if branch_result.is_err():
                 return Err(branch_result.unwrap_err())
@@ -754,7 +725,9 @@ class RecommendationFixer:
             prompt = self._build_fix_prompt(recommendation)
 
             # Execute fix based on priority level
-            logger.info(f"Applying fix for {recommendation.priority.value}/{recommendation.category.value}...")
+            logger.info(
+                f"Applying fix for {recommendation.priority.value}/{recommendation.category.value}..."
+            )
 
             try:
                 # P3: Programmatic fixes (no LLM needed)
@@ -777,7 +750,9 @@ class RecommendationFixer:
                 # P2: Local LLM (DeepSeek-Coder-V2-Lite)
                 elif recommendation.priority == Priority.P2:
                     logger.info("Using local LLM (P2 - DeepSeek-Coder-V2-Lite)")
-                    result = self._apply_local_llm_fix(recommendation, model="ollama/deepseek-coder-v2:lite")
+                    result = self._apply_local_llm_fix(
+                        recommendation, model="ollama/deepseek-coder-v2:lite"
+                    )
                     if result.is_err():
                         raise Exception(result.unwrap_err())
                     files_modified = result.unwrap()
@@ -785,7 +760,9 @@ class RecommendationFixer:
                 # P1: Local LLM with VectorStore few-shot (Qwen2.5-Coder:32b)
                 elif recommendation.priority == Priority.P1:
                     logger.info("Using local LLM with few-shot learning (P1 - Qwen2.5-Coder:32b)")
-                    result = self._apply_few_shot_llm_fix(recommendation, model="ollama/qwen2.5-coder:32b")
+                    result = self._apply_few_shot_llm_fix(
+                        recommendation, model="ollama/qwen2.5-coder:32b"
+                    )
                     if result.is_err():
                         raise Exception(result.unwrap_err())
                     files_modified = result.unwrap()
@@ -816,6 +793,7 @@ class RecommendationFixer:
                 # Verify files were actually modified
                 try:
                     import subprocess
+
                     result = subprocess.run(
                         ["git", "status", "--short"],
                         cwd=self.repo_root,
@@ -873,9 +851,7 @@ class RecommendationFixer:
 
             # Tests passed, commit
             commit_message = self._build_commit_message(recommendation)
-            commit_result = self.git_manager.commit_changes(
-                commit_message, files_modified
-            )
+            commit_result = self.git_manager.commit_changes(commit_message, files_modified)
 
             if commit_result.is_err():
                 return Err(commit_result.unwrap_err())
@@ -899,9 +875,7 @@ class RecommendationFixer:
 
             # Extract patterns every 10 successful fixes (Article IV)
             if self.fix_count % 10 == 0:
-                logger.info(
-                    f"Extracting patterns after {self.fix_count} successful fixes..."
-                )
+                logger.info(f"Extracting patterns after {self.fix_count} successful fixes...")
                 patterns = self.learner.extract_patterns(self.learner.successful_fixes)
                 logger.info(f"Extracted {len(patterns)} patterns to VectorStore")
 
@@ -991,7 +965,7 @@ class RecommendationFixer:
                         cwd=self.repo_root,
                         capture_output=True,
                         text=True,
-                        timeout=30
+                        timeout=30,
                     )
 
                     if result.returncode != 0:
@@ -1006,7 +980,9 @@ class RecommendationFixer:
         except Exception as e:
             return Err(f"Programmatic fix failed: {e}")
 
-    def _apply_local_llm_fix(self, recommendation: Recommendation, model: str) -> Result[list[str], str]:
+    def _apply_local_llm_fix(
+        self, recommendation: Recommendation, model: str
+    ) -> Result[list[str], str]:
         """
         Apply fixes using local Ollama models via litellm.
 
@@ -1042,18 +1018,23 @@ class RecommendationFixer:
             response = litellm.completion(
                 model=model,
                 messages=[
-                    {"role": "system", "content": "You are an expert Python developer. Provide complete, working code fixes."},
-                    {"role": "user", "content": full_prompt}
+                    {
+                        "role": "system",
+                        "content": "You are an expert Python developer. Provide complete, working code fixes.",
+                    },
+                    {"role": "user", "content": full_prompt},
                 ],
                 temperature=0.2,  # Low temperature for consistent fixes
-                max_tokens=4000
+                max_tokens=4000,
             )
 
             fix_response = response.choices[0].message.content
             logger.debug(f"LLM response: {fix_response[:500]}...")
 
             # Parse code blocks from response and apply fixes
-            modified_files = self._parse_and_apply_fixes(fix_response, recommendation.affected_files)
+            modified_files = self._parse_and_apply_fixes(
+                fix_response, recommendation.affected_files
+            )
 
             if not modified_files:
                 return Err("LLM did not provide any code fixes")
@@ -1064,7 +1045,9 @@ class RecommendationFixer:
             logger.error(f"Local LLM fix failed: {e}")
             return Err(f"Local LLM invocation failed: {e}")
 
-    def _apply_few_shot_llm_fix(self, recommendation: Recommendation, model: str) -> Result[list[str], str]:
+    def _apply_few_shot_llm_fix(
+        self, recommendation: Recommendation, model: str
+    ) -> Result[list[str], str]:
         """
         Apply fixes using local LLM with VectorStore few-shot learning.
 
@@ -1079,7 +1062,7 @@ class RecommendationFixer:
             # Query VectorStore for similar successful fixes
             similar_fixes = self.agent_context.search_memories(
                 tags=["fix_success", recommendation.category.value],
-                include_session=False  # Search all sessions
+                include_session=False,  # Search all sessions
             )[:3]  # Take first 3 results
 
             # Build few-shot prompt with examples
@@ -1125,7 +1108,7 @@ class RecommendationFixer:
         modified_files = []
 
         # Pattern to match markdown code blocks with optional file paths
-        code_block_pattern = r'```(?:python)?\s*(?:#\s*(.+?))?\n(.*?)```'
+        code_block_pattern = r"```(?:python)?\s*(?:#\s*(.+?))?\n(.*?)```"
 
         matches = re.findall(code_block_pattern, llm_response, re.DOTALL)
 
@@ -1147,8 +1130,8 @@ class RecommendationFixer:
             if target_file:
                 try:
                     file_path = self.repo_root / target_file
-                    with open(file_path, 'w') as f:
-                        f.write(code.strip() + '\n')
+                    with open(file_path, "w") as f:
+                        f.write(code.strip() + "\n")
                     logger.info(f"Applied LLM fix to {target_file}")
                     modified_files.append(str(target_file))
                 except Exception as e:
@@ -1291,9 +1274,7 @@ class SummaryReporter:
             Result containing report file path or error
         """
         try:
-            report_path = (
-                self.output_dir / f"fix_summary_{state.session_id}.md"
-            )
+            report_path = self.output_dir / f"fix_summary_{state.session_id}.md"
 
             report_parts = [
                 f"# Autonomous Fix Summary - {state.session_id}",
@@ -1485,6 +1466,7 @@ def main() -> int:
     # Create agent context and registry
     context = create_agent_context(session_id=f"fixer_{datetime.now().strftime('%Y%m%d_%H%M%S')}")
     from shared.cost_tracker import SQLiteStorage
+
     storage = SQLiteStorage("trinity_costs.db")
     tracker = CostTracker(storage=storage)
     registry = create_agent_registry(
@@ -1518,16 +1500,16 @@ def main() -> int:
 
     # Filter by category/priority
     if args.category:
-        recommendations = [
-            r for r in recommendations if r.category.value == args.category
-        ]
-        logger.info(f"Filtered to {len(recommendations)} recommendations in category {args.category}")
+        recommendations = [r for r in recommendations if r.category.value == args.category]
+        logger.info(
+            f"Filtered to {len(recommendations)} recommendations in category {args.category}"
+        )
 
     if args.priority:
-        recommendations = [
-            r for r in recommendations if r.priority.value == args.priority
-        ]
-        logger.info(f"Filtered to {len(recommendations)} recommendations with priority {args.priority}")
+        recommendations = [r for r in recommendations if r.priority.value == args.priority]
+        logger.info(
+            f"Filtered to {len(recommendations)} recommendations with priority {args.priority}"
+        )
 
     # Sort by priority (P3 first - safest)
     priority_order = {Priority.P3: 0, Priority.P2: 1, Priority.P1: 2, Priority.P0: 3}

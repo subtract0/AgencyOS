@@ -197,9 +197,7 @@ class TrinityLearner:
         logger.info(f"Extracted {len(patterns)} patterns from {len(successful_fixes)} fixes")
         return patterns
 
-    def boost_confidence(
-        self, recommendation_category: str, recommendation_priority: str
-    ) -> float:
+    def boost_confidence(self, recommendation_category: str, recommendation_priority: str) -> float:
         """
         Query VectorStore for similar past successes and boost confidence.
 
@@ -303,9 +301,7 @@ class TrinityLearner:
         # For now, return None (implementation detail)
         return None
 
-    def _find_matching_pattern(
-        self, signature: str, existing_patterns: list[dict]
-    ) -> dict | None:
+    def _find_matching_pattern(self, signature: str, existing_patterns: list[dict]) -> dict | None:
         """Find existing pattern matching the signature."""
         for pattern in existing_patterns:
             if pattern.get("content", {}).get("problem_signature") == signature:
@@ -375,9 +371,7 @@ def main() -> int:
     logger.info("Starting Trinity Daemon...")
 
     # Initialize agent context with VectorStore (Article IV mandate)
-    context = create_agent_context(
-        session_id=f"trinity_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
-    )
+    context = create_agent_context(session_id=f"trinity_{datetime.now().strftime('%Y%m%d_%H%M%S')}")
 
     # Initialize learner
     learner = TrinityLearner(context)
@@ -414,8 +408,7 @@ def main() -> int:
     confidence = learner.boost_confidence("pruning", "P3")
 
     logger.info(
-        f"Trinity Learner Demo Complete: {len(patterns)} patterns, "
-        f"confidence: {confidence:.2f}"
+        f"Trinity Learner Demo Complete: {len(patterns)} patterns, confidence: {confidence:.2f}"
     )
 
     return 0

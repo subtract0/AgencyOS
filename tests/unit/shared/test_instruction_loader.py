@@ -74,8 +74,6 @@ This is content without frontmatter.
         assert "content without frontmatter" in extracted
 
 
-
-
 class TestAgentNameNormalization:
     """Test suite for agent name alias handling."""
 
@@ -103,7 +101,6 @@ class TestAgentNameNormalization:
         """Should handle case-insensitive normalization."""
         assert normalize_agent_name("CODER") == "code_agent"
         assert normalize_agent_name("Planner") == "planner"
-
 
 
 if __name__ == "__main__":

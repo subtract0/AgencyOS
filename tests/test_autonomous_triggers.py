@@ -770,7 +770,6 @@ class TestPatternMatcher:
             metadata={},
         )
 
-
         # Pattern with test-related tags
         trigger = ErrorTrigger("NoneType", ".*")
         metadata = PatternMetadata(

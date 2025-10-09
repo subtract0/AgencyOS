@@ -7,6 +7,7 @@ Constitutional compliance:
 - ADR-010: Result pattern for error handling
 - Constitutional Law #8: Focused functions under 50 lines
 """
+
 import re
 from typing import Literal, cast
 
@@ -110,10 +111,7 @@ class PriorityQueueManager:
         task_id = self._slugify(description)
 
         # Type-safe status casting (Pydantic validates at runtime)
-        status_typed = cast(
-            Literal["Ready", "Blocked", "In Progress", "Done"],
-            status_str
-        )
+        status_typed = cast(Literal["Ready", "Blocked", "In Progress", "Done"], status_str)
 
         # Create PriorityTask (Pydantic validates status field)
         task = PriorityTask(

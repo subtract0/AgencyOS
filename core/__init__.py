@@ -201,9 +201,7 @@ class UnifiedCore:
             warnings=metrics.get("recent_warnings", []),
         )
 
-    def emit_event(
-        self, event: str, data: dict[str, JSONValue] | None = None, level: str = "info"
-    ):
+    def emit_event(self, event: str, data: dict[str, JSONValue] | None = None, level: str = "info"):
         """
         Emit a telemetry event.
 

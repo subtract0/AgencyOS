@@ -31,8 +31,7 @@ from trinity_protocol.core.agent_registry import (
 )
 
 logging.basicConfig(
-    level=logging.INFO,
-    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+    level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
 )
 logger = logging.getLogger(__name__)
 
@@ -41,6 +40,7 @@ def get_memory_usage_mb():
     """Get current process memory usage in MB."""
     try:
         import psutil
+
         process = psutil.Process()
         return process.memory_info().rss / 1024 / 1024
     except ImportError:
@@ -51,9 +51,9 @@ def get_memory_usage_mb():
 async def test_single_agent_local():
     """Test single agent with local model."""
 
-    logger.info("="*80)
+    logger.info("=" * 80)
     logger.info("PHASE 1.1: Single-Agent Smoke Test")
-    logger.info("="*80)
+    logger.info("=" * 80)
 
     # Setup
     logger.info("\n🔧 Setting up test environment...")
@@ -87,7 +87,9 @@ async def test_single_agent_local():
         agent_created_memory = get_memory_usage_mb()
         if start_memory and agent_created_memory:
             memory_delta = agent_created_memory - start_memory
-            logger.info(f"💾 Memory after agent creation: {agent_created_memory:.2f} MB (+{memory_delta:.2f} MB)")
+            logger.info(
+                f"💾 Memory after agent creation: {agent_created_memory:.2f} MB (+{memory_delta:.2f} MB)"
+            )
 
         # Execute task
         logger.info("\n⏳ Executing task...")
@@ -115,9 +117,9 @@ async def test_single_agent_local():
                 logger.warning(f"⚠️  Memory usage HIGH: {end_memory:.2f} MB (threshold: 45000 MB)")
 
         # Metrics summary
-        logger.info("\n" + "="*80)
+        logger.info("\n" + "=" * 80)
         logger.info("PHASE 1.1 RESULTS:")
-        logger.info("="*80)
+        logger.info("=" * 80)
         logger.info(f"✅ Agent Creation: SUCCESS")
         logger.info(f"✅ Local Model: qwen2.5-coder:32b")
         logger.info(f"✅ Tier: LOCAL")
@@ -125,7 +127,7 @@ async def test_single_agent_local():
         if end_memory:
             logger.info(f"💾 Memory: {end_memory:.2f} MB")
         logger.info("\n📊 Next Step: Run actual task execution to test code generation quality")
-        logger.info("="*80)
+        logger.info("=" * 80)
 
         return True
 

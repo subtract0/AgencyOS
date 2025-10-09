@@ -196,7 +196,9 @@ class TestCostOptimization:
             total = sum(model_usage.values())
 
             efficiency_rate = efficient_usage / total if total > 0 else 0
-            assert efficiency_rate >= 0.5, f"Should route ≥50% to efficient models, got {efficiency_rate:.1%}"
+            assert efficiency_rate >= 0.5, (
+                f"Should route ≥50% to efficient models, got {efficiency_rate:.1%}"
+            )
 
     def test_cost_savings_calculation(self):
         """Test calculated cost savings from model routing."""
@@ -211,11 +213,7 @@ class TestCostOptimization:
         baseline_cost = 100 * prices["gpt-5"]  # 100 tasks
 
         # Optimized: 60% P3 (mini), 30% P2 (4o), 10% P1 (gpt-5)
-        optimized_cost = (
-            60 * prices["gpt-4o-mini"] +
-            30 * prices["gpt-4o"] +
-            10 * prices["gpt-5"]
-        )
+        optimized_cost = 60 * prices["gpt-4o-mini"] + 30 * prices["gpt-4o"] + 10 * prices["gpt-5"]
 
         savings = (baseline_cost - optimized_cost) / baseline_cost
 

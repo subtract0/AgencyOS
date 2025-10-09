@@ -9,6 +9,7 @@ import json
 @dataclass
 class AgentPerformanceMetrics:
     """Performance metrics for an agent (from AGENT_EXCELLENCE_TEMPLATE)."""
+
     agent_name: str
     time_to_completion_hours: float
     success_rate: float
@@ -46,21 +47,21 @@ class AgentTelemetry:
             "performance": {
                 "time_hours": metrics.time_to_completion_hours,
                 "success_rate": metrics.success_rate,
-                "error_rate": metrics.error_rate
+                "error_rate": metrics.error_rate,
             },
             "constitutional": {
                 "article_i": metrics.article_i_compliance,
                 "article_ii": metrics.article_ii_compliance,
                 "article_iii": metrics.article_iii_compliance,
                 "article_iv": metrics.article_iv_compliance,
-                "article_v": metrics.article_v_compliance
+                "article_v": metrics.article_v_compliance,
             },
             "learning": {
                 "queried": metrics.patterns_queried,
                 "applied": metrics.patterns_applied,
                 "stored": metrics.patterns_stored,
-                "application_rate": metrics.learning_application_rate
-            }
+                "application_rate": metrics.learning_application_rate,
+            },
         }
 
         with open(self.log_path, "a") as f:
@@ -75,7 +76,7 @@ class AgentTelemetry:
             "period_days": days,
             "avg_success_rate": 0.95,
             "avg_constitutional_compliance": 1.0,
-            "total_executions": 100
+            "total_executions": 100,
         }
 
     def generate_dashboard(self) -> str:

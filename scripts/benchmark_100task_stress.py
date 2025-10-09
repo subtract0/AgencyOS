@@ -259,9 +259,7 @@ def execute_task_with_retry(
 
     for attempt in range(max_retries + 1):
         try:
-            logger.debug(
-                f"Executing {agent_type.value} (attempt {attempt + 1}/{max_retries + 1})"
-            )
+            logger.debug(f"Executing {agent_type.value} (attempt {attempt + 1}/{max_retries + 1})")
 
             # Escalate tier on retry
             if attempt == 0:
@@ -283,9 +281,7 @@ def execute_task_with_retry(
             return result, attempt
 
         except TimeoutError as e:
-            logger.warning(
-                f"Timeout on attempt {attempt + 1} for {agent_type.value}: {e}"
-            )
+            logger.warning(f"Timeout on attempt {attempt + 1} for {agent_type.value}: {e}")
             if attempt == max_retries:
                 return {
                     "status": "failed",
@@ -293,9 +289,7 @@ def execute_task_with_retry(
                     "tier": ModelTier.CLOUD.value,
                 }, attempt
         except Exception as e:
-            logger.error(
-                f"Error on attempt {attempt + 1} for {agent_type.value}: {e}"
-            )
+            logger.error(f"Error on attempt {attempt + 1} for {agent_type.value}: {e}")
             if attempt == max_retries:
                 return {"status": "failed", "error": str(e), "tier": "unknown"}, attempt
 
@@ -389,9 +383,7 @@ def analyze_escalation_patterns(results: list[StressTestResult]) -> dict[str, An
     """
     total_tasks = len(results)
     escalated = [
-        r
-        for r in results
-        if r.expected_tier == "LOCAL" and r.actual_tier in ["cloud", "CLOUD"]
+        r for r in results if r.expected_tier == "LOCAL" and r.actual_tier in ["cloud", "CLOUD"]
     ]
     escalated_count = len(escalated)
     escalation_rate = escalated_count / total_tasks if total_tasks > 0 else 0.0
@@ -432,9 +424,7 @@ def calculate_stress_metrics(results: list[StressTestResult]) -> dict[str, Any]:
 
     # Tier distribution
     local_count = sum(
-        1
-        for r in results
-        if r.actual_tier in ["local", "LOCAL", "local_plus", "LOCAL_PLUS"]
+        1 for r in results if r.actual_tier in ["local", "LOCAL", "local_plus", "LOCAL_PLUS"]
     )
     cloud_count = sum(1 for r in results if r.actual_tier in ["cloud", "CLOUD"])
 
@@ -467,9 +457,7 @@ def store_stress_learnings(
     # Extract stress-specific patterns
     patterns = {
         "local_execution_rate": sum(
-            1
-            for r in successful_results
-            if r.actual_tier in ["local", "LOCAL", "local_plus"]
+            1 for r in successful_results if r.actual_tier in ["local", "LOCAL", "local_plus"]
         )
         / len(successful_results),
         "avg_duration": sum(r.duration_seconds for r in successful_results)
@@ -531,9 +519,7 @@ def print_progress(completed: int, total: int, current_agent: str) -> None:
     )
 
 
-def print_stress_summary(
-    metrics: dict[str, Any], escalation_patterns: dict[str, Any]
-) -> None:
+def print_stress_summary(metrics: dict[str, Any], escalation_patterns: dict[str, Any]) -> None:
     """Print human-readable stress test summary."""
     print("\n\n" + "=" * 80)
     print("STRESS TEST SUMMARY (100 TASKS)")
@@ -578,12 +564,8 @@ def print_stress_summary(
             print(f"   {agent}: {count} escalations")
 
     print(f"\n📊 Escalation Timeline:")
-    print(
-        f"   Early Tasks (1-50): {escalation_patterns['early_escalations']} escalations"
-    )
-    print(
-        f"   Late Tasks (51-100): {escalation_patterns['late_escalations']} escalations"
-    )
+    print(f"   Early Tasks (1-50): {escalation_patterns['early_escalations']} escalations")
+    print(f"   Late Tasks (51-100): {escalation_patterns['late_escalations']} escalations")
 
     print(f"\n🎯 Target Achievement (M4 Pro):")
     target_met = {
@@ -688,9 +670,7 @@ def run_benchmark(
 
 def main():
     """CLI entry point for stress test execution."""
-    parser = argparse.ArgumentParser(
-        description="100-Task Stress Test Benchmark for M4 Pro"
-    )
+    parser = argparse.ArgumentParser(description="100-Task Stress Test Benchmark for M4 Pro")
     parser.add_argument(
         "--output-dir",
         type=Path,
