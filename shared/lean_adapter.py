@@ -14,7 +14,7 @@ Version: 1.0.0
 Created: 2025-10-09
 """
 
-from typing import Any, Optional
+from typing import Any
 
 from shared.lean_agent import AgentConfig, LeanAgent, Tool
 

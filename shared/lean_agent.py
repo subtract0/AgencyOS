@@ -15,7 +15,7 @@ Created: 2025-10-09
 """
 
 import os
-from typing import Any, Callable, Optional
+from collections.abc import Callable
 
 from openai import OpenAI
 from pydantic import BaseModel, Field
@@ -63,7 +63,7 @@ class Tool(BaseModel):
     name: str
     description: str
     parameters: ToolParameter
-    function: Optional[Callable] = Field(default=None, exclude=True)
+    function: Callable | None = Field(default=None, exclude=True)
 
     def to_openai_format(self) -> OpenAIToolFormat:
         """Convert to OpenAI tool format."""
@@ -93,8 +93,8 @@ class Message(BaseModel):
 
     role: str  # "user", "assistant", "system", "tool"
     content: str
-    tool_calls: Optional[list[dict]] = None
-    tool_call_id: Optional[str] = None
+    tool_calls: list[dict] | None = None
+    tool_call_id: str | None = None
 
 
 class LeanAgent:
@@ -143,7 +143,7 @@ class LeanAgent:
         self.messages.append(Message(role="user", content=user_message))
 
         # Run agent loop with tool calling
-        for iteration in range(max_iterations):
+        for _ in range(max_iterations):
             # Call LLM
             response = self._call_llm()
 
