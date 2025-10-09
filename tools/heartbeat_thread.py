@@ -6,6 +6,7 @@ Constitutional compliance:
 - ADR-008: Strict typing
 - Constitutional Law #8: Focused functions under 50 lines
 """
+
 import threading
 import time
 from datetime import datetime
