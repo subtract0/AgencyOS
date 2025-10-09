@@ -25,9 +25,7 @@ These checks MUST pass for merge approval. Failures indicate constitutional viol
 | Check | Purpose | Blocks Merge | Timeout |
 |-------|---------|--------------|---------|
 | 📋 Lint & Type Safety | Enforce code quality standards | YES | 3 min |
-| 🧪 ADR-002 Test Verification (3.12) | Verify 100% test success rate | YES | 15 min |
-| 🧪 ADR-002 Test Verification (3.13) | Verify Python 3.13 compatibility | YES | 15 min |
-| 🛡️ Merge Guardian | Validate constitutional compliance | YES | 2 min |
+| 🧪 ADR-002 Test Verification (3.12) | Verify 100% test success rate (primary Python version) | YES | 15 min |
 | ❤️ System Health | Verify core systems operational | YES | 3 min |
 
 **Constitutional Alignment:**
@@ -35,21 +33,27 @@ These checks MUST pass for merge approval. Failures indicate constitutional viol
 - **Article II**: 100% verification (0 test failures)
 - **Article III**: Automated enforcement (no bypass allowed)
 
+**Note**: Python 3.12 is the primary/production version. Python 3.13 tests run as Tier 2 (informational).
+
 ### Tier 2: INFORMATIONAL (Non-Blocking)
 
 These checks provide valuable feedback but DON'T block merges. Failures should be addressed in follow-up PRs.
 
 | Check | Purpose | Blocks Merge | Timeout |
 |-------|---------|--------------|---------|
+| 🧪 ADR-002 Test Verification (3.13) | Verify Python 3.13 compatibility | NO | 15 min |
+| 🛡️ Merge Guardian (ADR-002) | Validate constitutional compliance (comment posting) | NO | 2 min |
 | 🐳 Ollama Docker Integration | Validate local model setup | NO | 5 min |
 | 📊 Benchmark Tests | Track performance regressions | NO | 10 min |
 | 🧬 Mutation Testing | Measure test quality | NO | 20 min |
 | 🔬 DSPy Compatibility | Verify DSPy agent compatibility | NO | 8 min |
 
 **Rationale:**
-- Infrastructure dependencies (Docker, Ollama) are environment-specific
-- Performance benchmarks are informational, not blocking
-- Test quality metrics guide improvements, don't gate merges
+- **Python 3.13**: Newer version for compatibility testing, not production requirement
+- **Merge Guardian**: Permissions fix needs verification before making required
+- **Infrastructure dependencies** (Docker, Ollama): Environment-specific
+- **Performance benchmarks**: Informational, not blocking
+- **Test quality metrics**: Guide improvements, don't gate merges
 
 ### Tier 3: ADVISORY (Optional)
 
@@ -73,16 +77,16 @@ required_status_checks:
   checks:
     - context: "📋 Lint & Type Safety"
     - context: "🧪 ADR-002 Test Verification (3.12)"
-    - context: "🧪 ADR-002 Test Verification (3.13)"
-    - context: "🛡️ Merge Guardian (ADR-002)"
     - context: "❤️ System Health"
 ```
 
 **NOT Required (Tier 2):**
-- `ollama-tests`
-- `benchmark`
-- `mutation-testing`
-- `dspy-compatibility`
+- `🧪 ADR-002 Test Verification (3.13)` (Python 3.13 compatibility - informational)
+- `🛡️ Merge Guardian (ADR-002)` (comment posting - needs permissions verification)
+- `ollama-tests` (Docker infrastructure)
+- `benchmark` (performance tracking)
+- `mutation-testing` (test quality)
+- `dspy-compatibility` (DSPy agent validation)
 
 ### Workflow Organization
 
