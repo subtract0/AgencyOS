@@ -45,6 +45,13 @@ Thumbs.db
 logs/
 *.log
 
+# Runtime databases (SQLite)
+*.db
+
+# Runtime outputs
+benchmark_results/
+.output/
+
 # Test coverage
 .coverage
 htmlcov/
@@ -53,12 +60,16 @@ htmlcov/
 # Node modules (if any)
 node_modules/
 
-# Documentation
-docs/
-*.md
-!README.md
+# Documentation (keep for reference in container)
+# docs/  # Commented out - keep docs in Docker image
+# *.md   # Commented out - keep docs in Docker image
+# !README.md
 
 # Temporary files
 tmp/
 temp/
 *.tmp
+
+# Git-specific files (don't need in Docker)
+.gitattributes
+.github/

@@ -1,1 +1,0 @@
-{"run_id": "bcc771a7-78b9-43c3-80c9-a8c199b490fe", "agent_id": "agent_v1", "task_id": "test_task_1", "scores": {"section_completeness": 0.5, "keyword_coverage": 0.5, "aggregate": 0.5}, "duration_s": 0.134, "cost_usd": 0.0013, "timestamp": "2025-10-09T00:18:36.126566", "repeat": 0, "metadata": {"agent_type": "planner", "metrics_used": ["section_completeness", "keyword_coverage"]}}
