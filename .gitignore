@@ -241,3 +241,13 @@ logs/telemetry/*.jsonl
 .test_bloat_backup_*/
 *_backup_*/
 *.backup
+
+# Archive directories (historical logs, not needed for production)
+.archive/
+
+# Output directories
+.output/
+
+# Benchmark results (already added earlier)
+# benchmark_results/ (already in .gitignore from cleanup agent)
+
