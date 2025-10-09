@@ -105,7 +105,7 @@ def print_banner(title: str, subtitle: str = ""):
         print(f"🚀 EPIC 4.2: {title}")
         if subtitle:
             print(f"   {subtitle}")
-        print('=' * 80 + '\n')
+        print("=" * 80 + "\n")
 
 
 def print_section(title: str):
@@ -115,7 +115,7 @@ def print_section(title: str):
     else:
         print(f"\n{'-' * 80}")
         print(f"  {title}")
-        print('-' * 80)
+        print("-" * 80)
 
 
 def print_metric_table(title: str, data: dict[str, Any], highlight_key: str = ""):
@@ -220,10 +220,10 @@ def print_adr_preview(adr_content: str, max_lines: int = 30):
         console.print(panel)
     else:
         print("\n--- ADR Preview ---")
-        lines = adr_content.split('\n')[:max_lines]
+        lines = adr_content.split("\n")[:max_lines]
         for i, line in enumerate(lines, 1):
             print(f"{i:3d} | {line}")
-        total_lines = len(adr_content.split('\n'))
+        total_lines = len(adr_content.split("\n"))
         if total_lines > max_lines:
             remaining_lines = total_lines - max_lines
             print(f"... ({remaining_lines} more lines)")
@@ -421,7 +421,9 @@ def demo_1_simple_evolution_cycle():
     else:
         print(f"Before (v1): Score = {report.incumbent.mean_score:.3f}")
         print(f"After (v2):  Score = {report.challenger.mean_score:.3f}")
-        print(f"Improvement: +{((report.challenger.mean_score - report.incumbent.mean_score) / report.incumbent.mean_score) * 100:.1f}%")
+        print(
+            f"Improvement: +{((report.challenger.mean_score - report.incumbent.mean_score) / report.incumbent.mean_score) * 100:.1f}%"
+        )
         print(f"Decision:    {report.recommendation}")
 
     # Cleanup
@@ -478,7 +480,7 @@ def demo_2_parallel_execution():
                 progress.update(task, advance=1)
     else:
         for i in range(6):
-            print(f"  Job {i+1}/6...", end="\r")
+            print(f"  Job {i + 1}/6...", end="\r")
             time.sleep(0.5)
         print()
 
@@ -565,7 +567,9 @@ def demo_3_statistical_analysis_deep_dive():
     - T-test visualization
     - Confidence interval explanation
     """
-    print_banner("Demo 3: Statistical Analysis Deep Dive", "Understanding the math behind decisions")
+    print_banner(
+        "Demo 3: Statistical Analysis Deep Dive", "Understanding the math behind decisions"
+    )
 
     print_section("Step 1: Raw Benchmark Data")
 
@@ -647,8 +651,8 @@ def demo_3_statistical_analysis_deep_dive():
     print_section("Step 4: 95% Confidence Intervals")
 
     # CI = mean ± 1.96 * SE
-    baseline_se = baseline_std / (n ** 0.5)
-    advanced_se = advanced_std / (n ** 0.5)
+    baseline_se = baseline_std / (n**0.5)
+    advanced_se = advanced_std / (n**0.5)
 
     baseline_ci_lower = baseline_mean - 1.96 * baseline_se
     baseline_ci_upper = baseline_mean + 1.96 * baseline_se
@@ -659,18 +663,24 @@ def demo_3_statistical_analysis_deep_dive():
         console.print(f"Baseline v1:  [{baseline_ci_lower:.3f}, {baseline_ci_upper:.3f}]")
         console.print(f"Advanced v2:  [{advanced_ci_lower:.3f}, {advanced_ci_upper:.3f}]")
         console.print(f"\nMean difference: {advanced_mean - baseline_mean:.3f}")
-        console.print(f"95% CI of diff:  [{(advanced_mean - baseline_mean) - 1.96 * se_diff:.3f}, "
-                     f"{(advanced_mean - baseline_mean) + 1.96 * se_diff:.3f}]")
+        console.print(
+            f"95% CI of diff:  [{(advanced_mean - baseline_mean) - 1.96 * se_diff:.3f}, "
+            f"{(advanced_mean - baseline_mean) + 1.96 * se_diff:.3f}]"
+        )
 
         if (advanced_mean - baseline_mean) - 1.96 * se_diff > 0:
             console.print("\n[bold green]✅ Improvement is statistically significant![/bold green]")
-            console.print("[dim]The 95% CI does not include zero, confirming a real difference.[/dim]\n")
+            console.print(
+                "[dim]The 95% CI does not include zero, confirming a real difference.[/dim]\n"
+            )
     else:
         print(f"Baseline v1:  [{baseline_ci_lower:.3f}, {baseline_ci_upper:.3f}]")
         print(f"Advanced v2:  [{advanced_ci_lower:.3f}, {advanced_ci_upper:.3f}]")
         print(f"\nMean difference: {advanced_mean - baseline_mean:.3f}")
-        print(f"95% CI of diff:  [{(advanced_mean - baseline_mean) - 1.96 * se_diff:.3f}, "
-              f"{(advanced_mean - baseline_mean) + 1.96 * se_diff:.3f}]")
+        print(
+            f"95% CI of diff:  [{(advanced_mean - baseline_mean) - 1.96 * se_diff:.3f}, "
+            f"{(advanced_mean - baseline_mean) + 1.96 * se_diff:.3f}]"
+        )
         print("\n✅ Improvement is statistically significant!")
 
 
@@ -689,8 +699,12 @@ def demo_4_promotion_decision():
     print_section("Scenario: Clear Winner Detected")
 
     # Create mock data for clear winner
-    baseline_data = create_mock_benchmark_data("baseline_v1", base_score=0.70, variance=0.08, num_trials=5)
-    advanced_data = create_mock_benchmark_data("advanced_v2", base_score=0.90, variance=0.04, num_trials=5)
+    baseline_data = create_mock_benchmark_data(
+        "baseline_v1", base_score=0.70, variance=0.08, num_trials=5
+    )
+    advanced_data = create_mock_benchmark_data(
+        "advanced_v2", base_score=0.90, variance=0.04, num_trials=5
+    )
 
     results_file = Path("benchmark_results/demo_decision.jsonl")
     results_file.parent.mkdir(parents=True, exist_ok=True)
@@ -717,7 +731,9 @@ def demo_4_promotion_decision():
 
     criteria = {
         "Score Improvement": f"{improvement_pct:.1f}% (need ≥5%)",
-        "P-value": f"{report.comparison.p_value:.4f} (need <0.05)" if report.comparison.p_value else "N/A",
+        "P-value": f"{report.comparison.p_value:.4f} (need <0.05)"
+        if report.comparison.p_value
+        else "N/A",
         "Sample Size": f"{report.challenger.sample_size} (need ≥3)",
         "Recommendation": report.recommendation,
     }
@@ -735,7 +751,7 @@ def demo_4_promotion_decision():
         adr_content = adr_path.read_text()
 
         # Extract key sections
-        lines = adr_content.split('\n')
+        lines = adr_content.split("\n")
         preview_lines = []
 
         # Get decision section
@@ -749,7 +765,7 @@ def demo_4_promotion_decision():
             if in_decision:
                 preview_lines.append(line)
 
-        preview = '\n'.join(preview_lines[:15])
+        preview = "\n".join(preview_lines[:15])
         print_adr_preview(preview, max_lines=15)
 
         # Promotion instructions
@@ -765,11 +781,13 @@ def demo_4_promotion_decision():
 5. Archive baseline_v1 as DEPRECATED
                 """
 
-                console.print(Panel(
-                    instructions.strip(),
-                    title="[bold green]Auto-Promotion Workflow[/bold green]",
-                    border_style="green",
-                ))
+                console.print(
+                    Panel(
+                        instructions.strip(),
+                        title="[bold green]Auto-Promotion Workflow[/bold green]",
+                        border_style="green",
+                    )
+                )
             else:
                 print("1. Update agent registry to mark advanced_v2 as ACTIVE")
                 print("2. Deploy to production environment")
@@ -808,7 +826,9 @@ def demo_5_complete_workflow():
     agent_v3 = registry.register_agent("agent_v3", version="3.0.0")
 
     if RICH_AVAILABLE and console:
-        console.print("✅ Registered 3 agents: [cyan]v1[/cyan], [yellow]v2[/yellow], [green]v3[/green]")
+        console.print(
+            "✅ Registered 3 agents: [cyan]v1[/cyan], [yellow]v2[/yellow], [green]v3[/green]"
+        )
     else:
         print("✅ Registered 3 agents: v1, v2, v3")
 
@@ -1036,9 +1056,9 @@ terminal formatting, statistical analysis, and ADR generation.[/dim]
 
                 if i < len(demos):
                     if RICH_AVAILABLE and console:
-                        console.input(f"\n[dim]Press Enter to continue to Demo {i+1}...[/dim]")
+                        console.input(f"\n[dim]Press Enter to continue to Demo {i + 1}...[/dim]")
                     else:
-                        input(f"\nPress Enter to continue to Demo {i+1}...")
+                        input(f"\nPress Enter to continue to Demo {i + 1}...")
             except KeyboardInterrupt:
                 print("\n\n⚠️  Demo interrupted by user")
                 break

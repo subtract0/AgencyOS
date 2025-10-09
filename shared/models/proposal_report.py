@@ -137,9 +137,7 @@ class ComparisonResult(BaseModel):
 
     model_config = ConfigDict(extra="forbid")
 
-    test_type: StatisticalTestType = Field(
-        ..., description="Statistical test used for comparison"
-    )
+    test_type: StatisticalTestType = Field(..., description="Statistical test used for comparison")
     p_value: float = Field(
         ..., ge=0.0, le=1.0, description="P-value from statistical test (0.0-1.0)"
     )
@@ -213,9 +211,7 @@ class EvidenceMetadata(BaseModel):
     total_trials: int = Field(..., ge=1, description="Total number of trials across all tasks")
     duration_seconds: float = Field(..., ge=0.0, description="Total duration of A/B test")
     total_cost_usd: float = Field(..., ge=0.0, description="Total cost of benchmark runs")
-    results_file: str | None = Field(
-        None, description="Path to JSONL results file for audit trail"
-    )
+    results_file: str | None = Field(None, description="Path to JSONL results file for audit trail")
     timestamp_start: datetime = Field(..., description="A/B test start timestamp")
     timestamp_end: datetime = Field(..., description="A/B test end timestamp")
     data_quality_score: float = Field(

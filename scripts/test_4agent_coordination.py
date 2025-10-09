@@ -28,7 +28,7 @@ def create_test_tasks():
             files_to_modify=[f"test_output_{i}.txt"],
             dependencies=[],
             priority=10 - i,
-            status="pending"
+            status="pending",
         )
         for i in range(1, 9)
     ]
@@ -51,9 +51,12 @@ def create_test_tasks():
     print("Watch your agent terminals - they should start claiming tasks!")
     print()
     print("Monitor progress:")
-    print("  python -c \"import sys; sys.path.insert(0, '/Users/am/Code/Agency'); from meta_learning.task_queue import TaskQueue; q = TaskQueue(); s = q.get_status(); print(f'Pending: {s[\\\"pending\\\"]}, In Progress: {s[\\\"in_progress\\\"]}, Completed: {s[\\\"completed\\\"]}')\"")
+    print(
+        '  python -c "import sys; sys.path.insert(0, \'/Users/am/Code/Agency\'); from meta_learning.task_queue import TaskQueue; q = TaskQueue(); s = q.get_status(); print(f\'Pending: {s[\\"pending\\"]}, In Progress: {s[\\"in_progress\\"]}, Completed: {s[\\"completed\\"]}\')"'
+    )
     print()
     print("=" * 60)
+
 
 if __name__ == "__main__":
     create_test_tasks()

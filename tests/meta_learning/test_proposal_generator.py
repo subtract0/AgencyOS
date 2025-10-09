@@ -144,23 +144,43 @@ class TestDataValidation:
         with tempfile.NamedTemporaryFile(mode="w", suffix=".jsonl", delete=False) as f:
             # Only 2 samples for agent_v1
             json.dump(
-                {"agent_id": "agent_v1", "scores": {"aggregate": 0.85}, "duration_s": 10, "cost_usd": 0.1},
+                {
+                    "agent_id": "agent_v1",
+                    "scores": {"aggregate": 0.85},
+                    "duration_s": 10,
+                    "cost_usd": 0.1,
+                },
                 f,
             )
             f.write("\n")
             json.dump(
-                {"agent_id": "agent_v1", "scores": {"aggregate": 0.90}, "duration_s": 11, "cost_usd": 0.11},
+                {
+                    "agent_id": "agent_v1",
+                    "scores": {"aggregate": 0.90},
+                    "duration_s": 11,
+                    "cost_usd": 0.11,
+                },
                 f,
             )
             f.write("\n")
             # Add agent_v2 with only 2 samples as well
             json.dump(
-                {"agent_id": "agent_v2", "scores": {"aggregate": 0.75}, "duration_s": 12, "cost_usd": 0.12},
+                {
+                    "agent_id": "agent_v2",
+                    "scores": {"aggregate": 0.75},
+                    "duration_s": 12,
+                    "cost_usd": 0.12,
+                },
                 f,
             )
             f.write("\n")
             json.dump(
-                {"agent_id": "agent_v2", "scores": {"aggregate": 0.78}, "duration_s": 11.5, "cost_usd": 0.115},
+                {
+                    "agent_id": "agent_v2",
+                    "scores": {"aggregate": 0.78},
+                    "duration_s": 11.5,
+                    "cost_usd": 0.115,
+                },
                 f,
             )
             f.write("\n")
@@ -171,7 +191,9 @@ class TestDataValidation:
 
         # Assert
         assert result.is_err()
-        assert "insufficient" in result.unwrap_err().lower() or "need" in result.unwrap_err().lower()
+        assert (
+            "insufficient" in result.unwrap_err().lower() or "need" in result.unwrap_err().lower()
+        )
         temp_path.unlink()
 
     def test_analyze_results_fails_on_missing_required_fields(self):

@@ -46,9 +46,7 @@ class OllamaHealthStatus(BaseModel):
     models_available: list[str] = Field(
         default_factory=list, description="List of available model names"
     )
-    inference_working: bool = Field(
-        description="Whether inference requests are working"
-    )
+    inference_working: bool = Field(description="Whether inference requests are working")
     error_message: str | None = Field(
         default=None, description="Error message if health check failed"
     )
@@ -82,9 +80,7 @@ def detect_docker_ollama() -> bool:
         return False
 
 
-async def check_inference(
-    endpoint: str, timeout: int = 10
-) -> Result[bool, OllamaHealthError]:
+async def check_inference(endpoint: str, timeout: int = 10) -> Result[bool, OllamaHealthError]:
     """
     Check if Ollama can perform inference.
 

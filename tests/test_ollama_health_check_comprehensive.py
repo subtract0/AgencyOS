@@ -58,9 +58,7 @@ class TestOllamaHealthCheckNormal:
             # Mock /api/tags response (service + model check)
             mock_tags_resp = AsyncMock()
             mock_tags_resp.status = 200
-            mock_tags_resp.json = AsyncMock(
-                return_value={"models": [{"name": "qwen3-coder:30b"}]}
-            )
+            mock_tags_resp.json = AsyncMock(return_value={"models": [{"name": "qwen3-coder:30b"}]})
             mock_tags_resp.raise_for_status = AsyncMock()
             mock_tags_resp.__aenter__ = AsyncMock(return_value=mock_tags_resp)
             mock_tags_resp.__aexit__ = AsyncMock()
@@ -131,9 +129,7 @@ class TestOllamaHealthCheckEdgeCases:
             # Service running, but model list doesn't contain our model
             mock_tags_resp = AsyncMock()
             mock_tags_resp.status = 200
-            mock_tags_resp.json = AsyncMock(
-                return_value={"models": [{"name": "other-model:7b"}]}
-            )
+            mock_tags_resp.json = AsyncMock(return_value={"models": [{"name": "other-model:7b"}]})
             mock_tags_resp.raise_for_status = AsyncMock()
             mock_tags_resp.__aenter__ = AsyncMock(return_value=mock_tags_resp)
             mock_tags_resp.__aexit__ = AsyncMock()
@@ -263,9 +259,7 @@ class TestOllamaHealthCheckCornerCases:
             # Tags endpoint succeeds
             mock_tags_resp = AsyncMock()
             mock_tags_resp.status = 200
-            mock_tags_resp.json = AsyncMock(
-                return_value={"models": [{"name": "qwen3-coder:30b"}]}
-            )
+            mock_tags_resp.json = AsyncMock(return_value={"models": [{"name": "qwen3-coder:30b"}]})
             mock_tags_resp.raise_for_status = AsyncMock()
             mock_tags_resp.__aenter__ = AsyncMock(return_value=mock_tags_resp)
             mock_tags_resp.__aexit__ = AsyncMock()
