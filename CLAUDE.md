@@ -779,7 +779,7 @@ python run_tests.py --run-all         # Must show 100% pass rate
 - **1,725+ tests** passing with 100% success rate (163 new constitutional compliance tests)
 - **Zero test failures** under constitutional enforcement
 - **<3 seconds** for constitutional test suite validation
-- **139 test files** total across codebase
+- **161 test files** total across codebase
 - **>95% healing success rate** for autonomous fixes
 - **100% constitutional compliance** across all agents (Articles I-V)
 - **36 production tools** with security hardening (bash.py, git.py validated)
