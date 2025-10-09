@@ -6,6 +6,7 @@ Constitutional compliance:
 - ADR-008: Strict typing
 - Constitutional Law #8: Focused functions under 50 lines
 """
+
 import threading
 import time
 from datetime import datetime
@@ -147,7 +148,7 @@ class HeartbeatThread(threading.Thread):
 
                 return True  # Success
 
-            except (IOError, OSError, PermissionError):
+            except (OSError, PermissionError):
                 # Temporary filesystem error, retry with backoff
                 if attempt < max_retries - 1:
                     time.sleep(2**attempt)  # Exponential backoff: 1s, 2s, 4s
