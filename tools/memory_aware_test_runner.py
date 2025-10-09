@@ -10,6 +10,7 @@ Constitutional Compliance:
 - Article III: Automated enforcement via dynamic configuration
 """
 
+import asyncio
 import os
 from pathlib import Path
 from typing import Literal
@@ -18,6 +19,7 @@ import psutil
 from pydantic import BaseModel, Field
 
 from shared.type_definitions.result import Err, Ok, Result
+from tools.ollama_health_check import check_ollama_health
 
 
 class TestExecutionConfig(BaseModel):
@@ -33,14 +35,31 @@ class TestExecutionConfig(BaseModel):
 def check_ollama_running() -> bool:
     """Check if Ollama (local model) is currently running.
 
-    Uses multiple detection methods for reliability:
-    1. Process detection (ollama serve)
-    2. Marker file (/tmp/ollama-running)
+    Uses comprehensive health check to detect both Docker and native Ollama:
+    1. Health check (async API validation)
+    2. Docker detection (container inspection)
+    3. Process detection (fallback for native)
+    4. Marker file (/tmp/ollama-running, fallback)
 
     Returns:
-        True if Ollama is running, False otherwise
+        True if Ollama is running (Docker or native), False otherwise
+
+    Constitutional Compliance:
+    - Article I: Health check uses timeout and retry logic
+    - ADR-023: Accurate detection for memory-aware worker adjustment
     """
-    # Method 1: Check for ollama process
+    # Method 1: Comprehensive health check (detects Docker + native)
+    try:
+        result = asyncio.run(check_ollama_health(timeout=5, max_retries=1))
+
+        if isinstance(result, Ok):
+            return result.value.is_running
+
+    except Exception:
+        # Fallback to process/marker detection if health check fails
+        pass
+
+    # Method 2: Check for ollama process (native only)
     for proc in psutil.process_iter(["name"]):
         try:
             if proc.info["name"] and "ollama" in proc.info["name"].lower():
@@ -48,7 +67,7 @@ def check_ollama_running() -> bool:
         except (psutil.NoSuchProcess, psutil.AccessDenied, TypeError):
             pass
 
-    # Method 2: Check marker file (if used)
+    # Method 3: Check marker file (if used)
     marker_path = Path("/tmp/ollama-running")
     if os.path.exists(str(marker_path)):
         return True

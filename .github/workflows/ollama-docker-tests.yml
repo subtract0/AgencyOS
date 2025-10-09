@@ -1,0 +1,157 @@
+name: Ollama Docker Integration Tests
+
+on:
+  pull_request:
+    paths:
+      - 'docker-compose.yml'
+      - 'scripts/verify_ollama_docker.sh'
+      - 'tests/test_ollama_health_check.py'
+      - 'tests/test_memory_aware_runner.py'
+      - 'tools/memory_aware_test_runner.py'
+      - '.github/workflows/ollama-docker-tests.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'docker-compose.yml'
+      - 'scripts/verify_ollama_docker.sh'
+      - 'tests/test_ollama_health_check.py'
+      - 'tests/test_memory_aware_runner.py'
+      - 'tools/memory_aware_test_runner.py'
+  workflow_dispatch:
+    inputs:
+      model_name:
+        description: 'Ollama model to use (default: qwen2.5-coder:1.5b for CI)'
+        required: false
+        default: 'qwen2.5-coder:1.5b'
+
+jobs:
+  ollama-tests:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    env:
+      # Use smaller model for CI (1.5B vs 30B) to reduce pull time
+      OLLAMA_MODEL: ${{ github.event.inputs.model_name || 'qwen2.5-coder:1.5b' }}
+      USE_LOCAL_MODEL: 'true'
+      LOCAL_MODEL_NAME: ${{ github.event.inputs.model_name || 'qwen2.5-coder:1.5b' }}
+      OLLAMA_HOST: 'http://localhost:11434'
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: 'pip'
+
+      - name: Cache Docker images
+        uses: actions/cache@v4
+        with:
+          path: /tmp/.docker-cache
+          key: ${{ runner.os }}-docker-ollama-${{ hashFiles('docker-compose.yml') }}
+          restore-keys: |
+            ${{ runner.os }}-docker-ollama-
+
+      - name: Install dependencies
+        run: |
+          pip install -e .
+          pip install pytest pytest-asyncio psutil requests
+
+      - name: Start Ollama service
+        run: |
+          echo "🚀 Starting Ollama service with model: ${OLLAMA_MODEL}"
+          docker compose up -d
+
+      - name: Wait for Ollama health check
+        run: |
+          echo "⏳ Waiting for Ollama to be healthy (max 180s)..."
+          timeout=180
+          elapsed=0
+          while [ $elapsed -lt $timeout ]; do
+            if docker inspect --format='{{.State.Health.Status}}' agency-ollama 2>/dev/null | grep -q "healthy"; then
+              echo "✅ Ollama service is healthy"
+              exit 0
+            fi
+            sleep 5
+            elapsed=$((elapsed + 5))
+            echo "  Waiting... ${elapsed}s/${timeout}s"
+          done
+
+          echo "❌ Ollama failed to become healthy within ${timeout}s"
+          echo "Container logs:"
+          docker compose logs ollama
+          exit 1
+
+      - name: Pull CI model
+        run: |
+          echo "📥 Pulling ${OLLAMA_MODEL} model..."
+          docker exec agency-ollama ollama pull ${OLLAMA_MODEL}
+          echo "✅ Model pull complete"
+
+          # Verify model is available
+          docker exec agency-ollama ollama list
+
+      - name: Test model inference
+        run: |
+          echo "🧪 Testing model inference with ${OLLAMA_MODEL}..."
+          response=$(docker exec agency-ollama ollama run ${OLLAMA_MODEL} "Fix typo: def calcualte_total():" 2>&1 | head -10)
+          if [ -n "$response" ]; then
+            echo "✅ Model inference working"
+            echo "Sample response:"
+            echo "$response"
+          else
+            echo "❌ Model inference failed"
+            exit 1
+          fi
+
+      - name: Check Ollama API health
+        run: |
+          echo "🔍 Checking Ollama API endpoints..."
+
+          # Check /api/tags
+          curl -f http://localhost:11434/api/tags || exit 1
+
+          # Check /api/version
+          curl -f http://localhost:11434/api/version || exit 1
+
+          echo "✅ Ollama API endpoints responding"
+
+      - name: Run Ollama health check tests
+        run: |
+          echo "🧪 Running Ollama health check tests..."
+          pytest tests/test_ollama_health_check.py -v --tb=short
+
+      - name: Run memory-aware runner tests
+        run: |
+          echo "🧪 Running memory-aware test runner tests..."
+          pytest tests/test_memory_aware_runner.py -v --tb=short
+
+      - name: Display container stats
+        if: always()
+        run: |
+          echo "📊 Docker container statistics:"
+          docker stats agency-ollama --no-stream --format "table {{.Name}}\t{{.CPUPerc}}\t{{.MemUsage}}\t{{.MemPerc}}"
+
+      - name: Show Ollama logs on failure
+        if: failure()
+        run: |
+          echo "📜 Ollama container logs:"
+          docker compose logs ollama
+
+      - name: Cleanup Docker containers
+        if: always()
+        run: |
+          echo "🧹 Cleaning up Docker containers..."
+          docker compose down -v
+          docker system prune -f
+
+      - name: Report test results
+        if: always()
+        uses: dorny/test-reporter@v1
+        with:
+          name: Ollama Docker Tests
+          path: 'test-results/*.xml'
+          reporter: java-junit
+          fail-on-error: true
