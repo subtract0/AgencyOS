@@ -25,9 +25,41 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any
 
+from pydantic import BaseModel
 from dspy_agents.ab_testing import EnhancedABOrchestrator
 
 logger = logging.getLogger(__name__)
+
+
+class JobResult(BaseModel):
+    """Result from a single agent job execution."""
+    run_id: str
+    agent_id: str
+    task_id: str
+    scores: dict[str, float]
+    duration_s: float
+    cost_usd: float
+    timestamp: str
+    repeat: int
+    metadata: dict[str, bool | str]
+
+
+class OrchestrationStats(BaseModel):
+    """Statistics from parallel orchestration."""
+    total_jobs: int
+    completed_jobs: int
+    total_cost: float
+    total_duration: float
+    avg_job_duration: float
+    parallelization_speedup: float | None = None
+
+
+class ComparisonResult(BaseModel):
+    """Comparison between sequential and parallel execution."""
+    sequential: OrchestrationStats
+    parallel: OrchestrationStats
+    speedup: float
+    cost_efficiency: float
 
 
 class ParallelABOrchestrator(EnhancedABOrchestrator):
@@ -221,7 +253,7 @@ class ParallelABOrchestrator(EnhancedABOrchestrator):
 
         return results_path
 
-    def _run_single_job(self, agent_id: str, task, repeat_idx: int) -> dict[str, Any]:
+    def _run_single_job(self, agent_id: str, task, repeat_idx: int) -> JobResult:
         """
         Run a single agent/task/repeat job (thread-safe).
 
@@ -251,28 +283,28 @@ class ParallelABOrchestrator(EnhancedABOrchestrator):
                     f"(repeat {repeat_idx})"
                 )
                 # Return placeholder result for skipped job
-                return {
-                    "run_id": "skipped",
-                    "agent_id": agent_id,
-                    "task_id": task.task_id,
-                    "scores": {"aggregate": 0.0},
-                    "duration_s": 0.0,
-                    "cost_usd": 0.0,
-                    "timestamp": datetime.utcnow().isoformat(),
-                    "repeat": repeat_idx,
-                    "metadata": {"skipped": True, "reason": "budget_limit"},
-                }
+                return JobResult(
+                    run_id="skipped",
+                    agent_id=agent_id,
+                    task_id=task.task_id,
+                    scores={"aggregate": 0.0},
+                    duration_s=0.0,
+                    cost_usd=0.0,
+                    timestamp=datetime.utcnow().isoformat(),
+                    repeat=repeat_idx,
+                    metadata={"skipped": True, "reason": "budget_limit"},
+                )
 
         # Execute agent on task (this is thread-safe because each worktree is isolated)
-        result = self._execute_agent_on_task(agent_id, task, repeat_idx)
+        result_dict = self._execute_agent_on_task(agent_id, task, repeat_idx)
 
         # Thread-safe cost update
         with self._budget_lock:
-            self.total_cost += result["cost_usd"]
+            self.total_cost += result_dict["cost_usd"]
 
-        return result
+        return JobResult(**result_dict)
 
-    def get_stats(self) -> dict[str, Any]:
+    def get_stats(self) -> OrchestrationStats:
         """
         Get current orchestration statistics.
 
@@ -289,18 +321,18 @@ class ParallelABOrchestrator(EnhancedABOrchestrator):
             cost = self.total_cost
             budget = self.budget_limit
 
-        progress = (completed / total * 100) if total > 0 else 0.0
-        budget_used = (cost / budget * 100) if budget > 0 else 0.0
+        # Calculate avg duration (simplified - assume 1s per job if no duration tracking)
+        avg_duration = 1.0  # Placeholder - would need tracking for real implementation
+        total_duration = avg_duration * completed if completed > 0 else 0.0
 
-        return {
-            "completed_jobs": completed,
-            "total_jobs": total,
-            "progress_pct": round(progress, 1),
-            "total_cost_usd": round(cost, 2),
-            "budget_limit_usd": round(budget, 2),
-            "budget_used_pct": round(budget_used, 1),
-            "max_workers": self.max_workers,
-        }
+        return OrchestrationStats(
+            total_jobs=total,
+            completed_jobs=completed,
+            total_cost=round(cost, 2),
+            total_duration=round(total_duration, 2),
+            avg_job_duration=round(avg_duration, 2),
+            parallelization_speedup=None,  # Would need sequential baseline to calculate
+        )
 
 
 def compare_sequential_vs_parallel(
@@ -308,7 +340,7 @@ def compare_sequential_vs_parallel(
     task_ids: list[str],
     repeats: int = 2,
     budget_limit: float = 5.0,
-) -> dict[str, Any]:
+) -> ComparisonResult:
     """
     Compare sequential vs parallel execution performance.
 
@@ -357,26 +389,31 @@ def compare_sequential_vs_parallel(
     par_results = par_orchestrator.run()
     par_duration = time.time() - par_start
 
-    # Calculate speedup
+    # Calculate speedup and cost efficiency
     speedup = seq_duration / par_duration if par_duration > 0 else 0.0
+    cost_efficiency = round((speedup / 3.0) * 100, 1)  # vs 3 workers
 
-    comparison = {
-        "sequential": {
-            "duration_s": round(seq_duration, 2),
-            "results_file": str(seq_results),
-            "total_jobs": seq_orchestrator._total_jobs,
-            "completed_jobs": seq_orchestrator._completed_jobs,
-        },
-        "parallel": {
-            "duration_s": round(par_duration, 2),
-            "results_file": str(par_results),
-            "total_jobs": par_orchestrator._total_jobs,
-            "completed_jobs": par_orchestrator._completed_jobs,
-        },
-        "speedup": round(speedup, 2),
-        "time_saved_s": round(seq_duration - par_duration, 2),
-        "efficiency_pct": round((speedup / 3.0) * 100, 1),  # vs 3 workers
-    }
+    # Create typed result
+    comparison = ComparisonResult(
+        sequential=OrchestrationStats(
+            total_jobs=seq_orchestrator._total_jobs,
+            completed_jobs=seq_orchestrator._completed_jobs,
+            total_cost=round(seq_orchestrator.total_cost, 2),
+            total_duration=round(seq_duration, 2),
+            avg_job_duration=round(seq_duration / seq_orchestrator._completed_jobs, 2) if seq_orchestrator._completed_jobs > 0 else 0.0,
+            parallelization_speedup=None,
+        ),
+        parallel=OrchestrationStats(
+            total_jobs=par_orchestrator._total_jobs,
+            completed_jobs=par_orchestrator._completed_jobs,
+            total_cost=round(par_orchestrator.total_cost, 2),
+            total_duration=round(par_duration, 2),
+            avg_job_duration=round(par_duration / par_orchestrator._completed_jobs, 2) if par_orchestrator._completed_jobs > 0 else 0.0,
+            parallelization_speedup=round(speedup, 2),
+        ),
+        speedup=round(speedup, 2),
+        cost_efficiency=cost_efficiency,
+    )
 
     # Print summary
     logger.info("\n" + "=" * 60)
@@ -385,8 +422,8 @@ def compare_sequential_vs_parallel(
     logger.info(f"Sequential: {seq_duration:.2f}s")
     logger.info(f"Parallel:   {par_duration:.2f}s")
     logger.info(f"Speedup:    {speedup:.2f}x")
-    logger.info(f"Time saved: {comparison['time_saved_s']:.2f}s")
-    logger.info(f"Efficiency: {comparison['efficiency_pct']:.1f}% (vs 3 workers)")
+    logger.info(f"Time saved: {round(seq_duration - par_duration, 2):.2f}s")
+    logger.info(f"Efficiency: {cost_efficiency:.1f}% (vs 3 workers)")
     logger.info("=" * 60)
 
     return comparison
