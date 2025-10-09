@@ -23,7 +23,19 @@ import subprocess
 import time
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Any, Optional
+from typing import Optional
+
+from pydantic import BaseModel
+
+
+class AgentExecutionResult(BaseModel):
+    """Result from agent execution in worktree (typed, no Dict[str, Any])."""
+
+    success: bool
+    output_file: str | None = None
+    stdout: str
+    stderr: str
+    execution_time: float
 
 
 @dataclass
@@ -178,7 +190,7 @@ class WorktreeManager:
 
     def invoke_agent(
         self, worktree_path: Path, mission: str, agent_id: str, timeout: int | None = None
-    ) -> dict[str, Any]:
+    ) -> AgentExecutionResult:
         """Invoke an agent in the worktree with a specific mission.
 
         This method:
@@ -235,43 +247,48 @@ class WorktreeManager:
         except subprocess.TimeoutExpired:
             execution_time = time.time() - start_time
             print(f"   ⏱️  Agent execution timed out after {execution_time:.2f}s")
-            return {
-                "success": False,
-                "error": "timeout",
-                "execution_time": execution_time,
-                "timeout_seconds": timeout,
-            }
+            return AgentExecutionResult(
+                success=False,
+                output_file=None,
+                stdout="",
+                stderr=f"timeout after {timeout}s",
+                execution_time=execution_time,
+            )
         except Exception as e:
             execution_time = time.time() - start_time
             print(f"   ❌ Agent execution failed: {e}")
-            return {"success": False, "error": str(e), "execution_time": execution_time}
+            return AgentExecutionResult(
+                success=False,
+                output_file=None,
+                stdout="",
+                stderr=str(e),
+                execution_time=execution_time,
+            )
 
         # Collect results
         output_file = worktree_path / "benchmark_output.json"
         if output_file.exists():
             try:
-                output_data = json.loads(output_file.read_text())
-                return {
-                    "success": True,
-                    "output_file": str(output_file),
-                    "data": output_data,
-                    "stdout": result.stdout,
-                    "stderr": result.stderr,
-                    "execution_time": execution_time,
-                    "return_code": result.returncode,
-                }
+                json.loads(output_file.read_text())  # Validate JSON
+                return AgentExecutionResult(
+                    success=True,
+                    output_file=str(output_file),
+                    stdout=result.stdout,
+                    stderr=result.stderr,
+                    execution_time=execution_time,
+                )
             except json.JSONDecodeError as e:
                 print(f"   ⚠️  Failed to parse output JSON: {e}")
                 # Fallback to raw output
 
         # Fallback: parse from stdout/stderr if no output file
-        return {
-            "success": result.returncode == 0,
-            "stdout": result.stdout,
-            "stderr": result.stderr,
-            "execution_time": execution_time,
-            "return_code": result.returncode,
-        }
+        return AgentExecutionResult(
+            success=result.returncode == 0,
+            output_file=None,
+            stdout=result.stdout,
+            stderr=result.stderr,
+            execution_time=execution_time,
+        )
 
     def _remove_worktree(self, branch_name: str) -> bool:
         """Remove a worktree and its branch.
