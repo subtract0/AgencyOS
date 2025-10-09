@@ -128,7 +128,7 @@ class TestMessage:
     def test_message_creation_assistant_with_tools(self):
         """Test assistant message with tool calls."""
         # Arrange
-        from shared.lean_agent import ToolCall, FunctionCall
+        from shared.lean_agent import FunctionCall, ToolCall
 
         tool_calls = [
             ToolCall(

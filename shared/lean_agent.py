@@ -23,7 +23,7 @@ import threading
 from collections.abc import Callable
 
 from openai import OpenAI
-from pydantic import BaseModel, Field, field_validator
+from pydantic import BaseModel, Field
 
 from shared.type_definitions.result import Err, Ok, Result
 
@@ -190,7 +190,7 @@ class LeanAgent:
             self.messages.append(Message(role="user", content=user_message))
 
             # Run agent loop with tool calling
-            for iteration in range(max_iterations):
+            for _ in range(max_iterations):
                 # Call LLM
                 response = self._call_llm()
 
