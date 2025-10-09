@@ -46,6 +46,7 @@ import pytest
 
 try:
     from dspy_agents.benchmarks.benchmark_registry import BenchmarkRegistry, BenchmarkTask
+
     from dspy_agents.parallel_orchestrator import ParallelABOrchestrator
     from meta_learning.agent_registry import AgentRegistry
     from meta_learning.proposal_generator import ProposalGenerator
