@@ -73,11 +73,17 @@ def generate_summary(agent_file: Path) -> str:
 
     # Extract core competencies
     competencies = extract_list_items(content, "## Core Competencies", max_items=3)
-    competencies_str = "\n".join(f"- {c}" for c in competencies) if competencies else "- Implementation and code generation"
+    competencies_str = (
+        "\n".join(f"- {c}" for c in competencies)
+        if competencies
+        else "- Implementation and code generation"
+    )
 
     # Extract tools
     tools_section = extract_section(content, "## Tool Permissions", max_lines=10)
-    allowed_tools_match = re.search(r"\*\*Allowed Tools:\*\*(.*?)(?:\*\*|$)", tools_section, re.DOTALL)
+    allowed_tools_match = re.search(
+        r"\*\*Allowed Tools:\*\*(.*?)(?:\*\*|$)", tools_section, re.DOTALL
+    )
     if allowed_tools_match:
         tools_text = allowed_tools_match.group(1)
         tools = re.findall(r"(?:^|\n)(?:-|\*)\s*\*?\*?([^\n:]+)", tools_text, re.MULTILINE)
@@ -95,7 +101,7 @@ def generate_summary(agent_file: Path) -> str:
     # Generate summary
     summary = f"""# {agent_name} (Summary)
 
-**Role**: {role if role else f'{agent_name} specialist for Agency OS'}
+**Role**: {role if role else f"{agent_name} specialist for Agency OS"}
 
 ## Core Competencies
 
@@ -170,7 +176,9 @@ def generate_all_summaries(agents_dir: Path = Path(".claude/agents")) -> dict[st
             summary_lines = len(summary.split("\n"))
             ratio = original_lines / summary_lines if summary_lines > 0 else 1
 
-            print(f"✅ {agent_file.stem}: {original_lines} → {summary_lines} lines ({ratio:.1f}x smaller)")
+            print(
+                f"✅ {agent_file.stem}: {original_lines} → {summary_lines} lines ({ratio:.1f}x smaller)"
+            )
 
         except Exception as e:
             print(f"❌ Failed to generate summary for {agent_file.stem}: {e}")
@@ -190,14 +198,13 @@ if __name__ == "__main__":
             len(Path(f".claude/agents/{name}.md").read_text().split("\n"))
             for name in summaries.keys()
         )
-        total_summary = sum(
-            len(path.read_text().split("\n"))
-            for path in summaries.values()
-        )
+        total_summary = sum(len(path.read_text().split("\n")) for path in summaries.values())
 
         avg_ratio = total_reduction / total_summary if total_summary > 0 else 1
 
-        print(f"\n📊 Total Reduction: {total_reduction} → {total_summary} lines ({avg_ratio:.1f}x average)")
+        print(
+            f"\n📊 Total Reduction: {total_reduction} → {total_summary} lines ({avg_ratio:.1f}x average)"
+        )
         print(f"💰 Token Savings: ~{avg_ratio:.1f}x cheaper agent spawns")
 
         sys.exit(0)

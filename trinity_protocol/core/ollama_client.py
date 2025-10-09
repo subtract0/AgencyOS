@@ -170,7 +170,7 @@ class OllamaClient:
             # Read response body before accessing it (fix for httpx streaming error)
             try:
                 error_body = await e.response.aread()
-                error_text = error_body.decode('utf-8') if error_body else str(e)
+                error_text = error_body.decode("utf-8") if error_body else str(e)
             except Exception:
                 error_text = str(e)
             logger.error(f"Ollama HTTP error: {e}")
@@ -227,9 +227,7 @@ class OllamaClient:
                 if attempt < retries - 1:
                     # Article I: Retry with 2x timeout
                     timeout_val *= 2
-                    logger.warning(
-                        f"⏱️  Retry {attempt + 1}/{retries} with {timeout_val}s timeout"
-                    )
+                    logger.warning(f"⏱️  Retry {attempt + 1}/{retries} with {timeout_val}s timeout")
                     await asyncio.sleep(1)  # Brief delay before retry
                 else:
                     logger.error(f"❌ {model} timeout after {retries} retries")
@@ -254,9 +252,7 @@ class OllamaClient:
         # Article I: Complete context check
         incomplete_markers = ["incomplete", "need more info", "unable to proceed"]
         if any(marker in response.lower() for marker in incomplete_markers):
-            raise ConstitutionalViolation(
-                "Article I: Response indicates incomplete context"
-            )
+            raise ConstitutionalViolation("Article I: Response indicates incomplete context")
 
         # Article II: Code without tests check (basic heuristic)
         has_code = "```python" in response or "def " in response

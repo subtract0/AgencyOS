@@ -269,10 +269,7 @@ class TrinityOrchestrator:
                 messages = self.bus.read()
 
                 # Process only messages newer than last processed timestamp
-                new_messages = [
-                    msg for msg in messages
-                    if msg.ts > self._last_processed_timestamp
-                ]
+                new_messages = [msg for msg in messages if msg.ts > self._last_processed_timestamp]
 
                 if new_messages:
                     self.logger.info(f"📨 Processing {len(new_messages)} new messages")
@@ -325,7 +322,11 @@ class TrinityOrchestrator:
 
             # Check if test exists
             relative_path = py_file.relative_to(trinity_dir.parent)
-            test_path = Path("/Users/am/.trinity-local/tests") / relative_path.parent / f"test_{py_file.name}"
+            test_path = (
+                Path("/Users/am/.trinity-local/tests")
+                / relative_path.parent
+                / f"test_{py_file.name}"
+            )
 
             if not test_path.exists():
                 missing_tests.append(str(relative_path))
@@ -334,13 +335,17 @@ class TrinityOrchestrator:
             self.logger.info(f"📊 Self-audit found {len(missing_tests)} files without tests")
 
             # Publish SUGGESTION (not IMPROVEMENT_SIGNAL - requires user approval)
-            self.bus.publish("ORCHESTRATOR", "SUGGESTION", {
-                "type": "missing_tests",
-                "priority": "NORMAL",
-                "files": missing_tests[:5],  # Top 5 most important
-                "reason": f"Self-audit detected {len(missing_tests)} files without test coverage",
-                "auto_execute": False  # Requires user approval
-            })
+            self.bus.publish(
+                "ORCHESTRATOR",
+                "SUGGESTION",
+                {
+                    "type": "missing_tests",
+                    "priority": "NORMAL",
+                    "files": missing_tests[:5],  # Top 5 most important
+                    "reason": f"Self-audit detected {len(missing_tests)} files without test coverage",
+                    "auto_execute": False,  # Requires user approval
+                },
+            )
 
             self.logger.info("💡 Suggestion published to dashboard - awaiting user approval")
         else:
@@ -368,7 +373,9 @@ class TrinityOrchestrator:
         self.logger.info("🏗️  Spawning ARCHITECT for strategic planning...")
 
         # Get model config
-        model_name = self._config.get("models", {}).get("architect", {}).get("name", "qwen2.5-coder:7b")
+        model_name = (
+            self._config.get("models", {}).get("architect", {}).get("name", "qwen2.5-coder:7b")
+        )
         timeout = self._config.get("models", {}).get("architect", {}).get("timeout", 120)
 
         # Prepare prompt
@@ -451,19 +458,16 @@ TEST_CODE:
         ]
 
         try:
-            response = await self.ollama.chat(
-                model=model_name, messages=messages, timeout=timeout
-            )
+            response = await self.ollama.chat(model=model_name, messages=messages, timeout=timeout)
 
             self.logger.info(f"✅ EXECUTOR generated code ({len(response)} chars)")
 
             # Parse response and write file
             file_written = await self._write_test_file(response)
 
-            self.bus.publish("EXECUTOR", "EXECUTOR_COMPLETE", {
-                "result": response,
-                "file_written": file_written
-            })
+            self.bus.publish(
+                "EXECUTOR", "EXECUTOR_COMPLETE", {"result": response, "file_written": file_written}
+            )
 
         except (OllamaTimeout, OllamaError) as e:
             self.logger.error(f"❌ EXECUTOR failed: {e}")
@@ -473,6 +477,7 @@ TEST_CODE:
         try:
             # Extract FILE_PATH
             import re
+
             file_match = re.search(r"FILE_PATH:\s*(.+)", response)
             if not file_match:
                 self.logger.error("No FILE_PATH found in response")
@@ -510,7 +515,9 @@ TEST_CODE:
         self.logger.info("🔍 Spawning WITNESS for verification...")
 
         # Get model config
-        model_name = self._config.get("models", {}).get("witness", {}).get("name", "qwen2.5-coder:1.5b")
+        model_name = (
+            self._config.get("models", {}).get("witness", {}).get("name", "qwen2.5-coder:1.5b")
+        )
         timeout = self._config.get("models", {}).get("witness", {}).get("timeout", 30)
 
         messages = [
@@ -522,9 +529,7 @@ TEST_CODE:
         ]
 
         try:
-            response = await self.ollama.chat(
-                model=model_name, messages=messages, timeout=timeout
-            )
+            response = await self.ollama.chat(model=model_name, messages=messages, timeout=timeout)
 
             self.logger.info(f"✅ WITNESS verification complete ({len(response)} chars)")
 

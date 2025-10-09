@@ -26,8 +26,7 @@ import pytest
 
 # Mark cleanup test as xfail in CI due to race condition
 xfail_in_ci = pytest.mark.xfail(
-    condition=os.environ.get("CI") == "true",
-    reason="Async cleanup race condition in CI"
+    condition=os.environ.get("CI") == "true", reason="Async cleanup race condition in CI"
 )
 
 from shared.message_bus import (

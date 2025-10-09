@@ -136,7 +136,7 @@ class TestToolCache:
 
     @pytest.mark.skipif(
         os.environ.get("CI") == "true",
-        reason="Flaky in CI due to 1-second filesystem mtime granularity"
+        reason="Flaky in CI due to 1-second filesystem mtime granularity",
     )
     def test_cache_file_dependency_invalidation(self):
         """Test cache invalidation when file is modified."""
@@ -318,7 +318,7 @@ class TestCacheDecorator:
 
     @pytest.mark.skipif(
         os.environ.get("CI") == "true",
-        reason="Flaky in CI due to 1-second filesystem mtime granularity"
+        reason="Flaky in CI due to 1-second filesystem mtime granularity",
     )
     def test_cache_decorator_with_file_dependencies(self):
         """Test cache decorator with file dependency tracking."""

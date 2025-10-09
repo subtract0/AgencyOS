@@ -22,6 +22,7 @@ from shared.type_definitions.result import Err, Ok, Result
 
 class TestExecutionConfig(BaseModel):
     """Configuration for memory-aware test execution."""
+
     worker_count: int = Field(ge=1, le=10)
     memory_budget_gb: int = Field(ge=0)
     local_model_active: bool
@@ -40,9 +41,9 @@ def check_ollama_running() -> bool:
         True if Ollama is running, False otherwise
     """
     # Method 1: Check for ollama process
-    for proc in psutil.process_iter(['name']):
+    for proc in psutil.process_iter(["name"]):
         try:
-            if proc.info['name'] and 'ollama' in proc.info['name'].lower():
+            if proc.info["name"] and "ollama" in proc.info["name"].lower():
                 return True
         except (psutil.NoSuchProcess, psutil.AccessDenied, TypeError):
             pass
@@ -67,7 +68,7 @@ def get_safe_worker_count() -> int:
         Safe number of pytest workers (1-10)
     """
     mem = psutil.virtual_memory()
-    available_gb = mem.available / (1024 ** 3)
+    available_gb = mem.available / (1024**3)
 
     local_model_active = check_ollama_running()
 
@@ -97,7 +98,7 @@ def verify_memory_safe(required_gb: int) -> bool:
         True if safe to proceed, False if memory insufficient
     """
     mem = psutil.virtual_memory()
-    available_gb = mem.available / (1024 ** 3)
+    available_gb = mem.available / (1024**3)
 
     # 5GB safety margin for system stability
     return available_gb >= (required_gb + 5)
@@ -114,7 +115,7 @@ def get_test_execution_config() -> Result[TestExecutionConfig, str]:
         local_model_active = check_ollama_running()
 
         mem = psutil.virtual_memory()
-        available_gb = int(mem.available / (1024 ** 3))
+        available_gb = int(mem.available / (1024**3))
 
         # Determine execution mode
         if worker_count == 1:
@@ -132,7 +133,7 @@ def get_test_execution_config() -> Result[TestExecutionConfig, str]:
             memory_budget_gb=available_gb,
             local_model_active=local_model_active,
             execution_mode=mode,
-            fallback_to_cloud=fallback
+            fallback_to_cloud=fallback,
         )
 
         return Ok(config)

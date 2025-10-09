@@ -4,7 +4,6 @@ Comprehensive tests for the Result<T, E> pattern implementation.
 Tests all Result methods, error propagation, type safety, and usage patterns.
 """
 
-
 import pytest
 
 from shared.type_definitions.result import (

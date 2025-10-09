@@ -148,9 +148,7 @@ class UnifiedMemory:
         with self._lock:
             return self.memory_store.get_memory(key)
 
-    def list_patterns(
-        self, category: str | None = None, limit: int = 100
-    ) -> list[CodingPattern]:
+    def list_patterns(self, category: str | None = None, limit: int = 100) -> list[CodingPattern]:
         """List all patterns, optionally filtered by category."""
         with self._lock:
             # Use search with empty query to get all patterns

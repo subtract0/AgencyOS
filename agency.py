@@ -116,9 +116,7 @@ if _tel_emit is None:
 
 
 @contextmanager
-def _cli_event_scope(
-    command: str | None = None, args_dict: dict[str, JSONValue] | None = None
-):
+def _cli_event_scope(command: str | None = None, args_dict: dict[str, JSONValue] | None = None):
     started = time.time()
     try:
         _tel_emit(
@@ -441,7 +439,6 @@ def _check_dependencies_status() -> None:
     """Check core dependencies availability."""
     print("  Dependencies:")
     try:
-
         print("    ✅ Core dependencies installed")
     except Exception:
         print("    ❌ Missing dependencies")
@@ -451,7 +448,6 @@ def _check_healing_tools_status() -> None:
     """Check autonomous healing tools availability."""
     print("  Autonomous Healing:")
     try:
-
         print("    ✅ Autonomous healing tools available")
     except Exception:
         print("    ❌ Autonomous healing tools not found")
@@ -528,7 +524,9 @@ def _cmd_cost_web(args: argparse.Namespace) -> None:
     """Launch web-based cost monitoring dashboard."""
     with _cli_event_scope("cost_web", {"port": args.port}):
         if CostDashboardWeb is None:
-            print("❌ Web dashboard not available: trinity_protocol.cost_dashboard_web not importable")
+            print(
+                "❌ Web dashboard not available: trinity_protocol.cost_dashboard_web not importable"
+            )
             return
         tracker = CostTracker(db_path=args.db, budget_usd=args.budget)
         dashboard = CostDashboardWeb(cost_tracker=tracker, refresh_interval=args.interval)

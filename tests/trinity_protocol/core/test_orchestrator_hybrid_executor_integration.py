@@ -100,11 +100,12 @@ async def test_orchestrator_routes_tasks_to_hybrid_executor(caplog):
 
     # Act - Publish test signal
     from trinity_protocol.core.orchestrator import TrinityMessage
+
     test_signal = TrinityMessage(
         ts="2025-10-05T00:00:00",
         agent="ORCHESTRATOR",
         type="IMPROVEMENT_SIGNAL",
-        data={"task": "test", "complexity": "low"}
+        data={"task": "test", "complexity": "low"},
     )
 
     orchestrator.bus.publish("ORCHESTRATOR", "IMPROVEMENT_SIGNAL", test_signal.data)

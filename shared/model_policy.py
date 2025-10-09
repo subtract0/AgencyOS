@@ -138,7 +138,7 @@ def get_optimal_model(complexity: str, agent_key: str = "coder") -> str:
         if use_local:
             local_model = os.getenv(
                 "LOCAL_MODEL_NAME",
-                "qwen3-coder:30b"  # Official Ollama model with Metal GPU optimization
+                "qwen3-coder:30b",  # Official Ollama model with Metal GPU optimization
             )
             return f"ollama/{local_model}"  # Prefix for routing logic
         return "gpt-4o-mini"  # Cloud fallback

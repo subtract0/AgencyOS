@@ -90,6 +90,8 @@ jobs:
 
       - name: "🧪 Execute ADR-002 Test Suite"
         id: test-execution
+        env:
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
         run: |
           echo "🎯 Starting ADR-002 compliance verification..."
           echo "📊 ADR-002 requires: 100% test success rate (0 failures)"

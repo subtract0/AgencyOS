@@ -297,9 +297,7 @@ class CodingPattern:
 
         return cls(context=context, solution=solution, outcome=outcome, metadata=metadata)
 
-    def matches_context(
-        self, target_context: str | ProblemContext, threshold: float = 0.7
-    ) -> bool:
+    def matches_context(self, target_context: str | ProblemContext, threshold: float = 0.7) -> bool:
         """Check if this pattern matches a target context."""
         if isinstance(target_context, str):
             # Simple keyword matching for now

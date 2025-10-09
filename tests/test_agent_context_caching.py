@@ -138,7 +138,9 @@ class TestAgentContextCaching:
         result3 = context.search_memories(["test"], include_session=True)
 
         # Assert
-        assert result1 == result2 == result3, "Identical queries should return identical cached results"
+        assert result1 == result2 == result3, (
+            "Identical queries should return identical cached results"
+        )
 
     def test_cache_handles_empty_results(self):
         """Test that cache correctly stores and retrieves empty result sets."""
@@ -169,7 +171,7 @@ class TestAgentContextCaching:
         for _ in range(10):
             context.search_memories(["benchmark"], include_session=True)
             # Clear cache between iterations for baseline
-            if hasattr(context.search_memories, 'cache_clear'):
+            if hasattr(context.search_memories, "cache_clear"):
                 context.search_memories.cache_clear()
         uncached_duration = time.perf_counter() - start
 
@@ -197,7 +199,7 @@ class TestAgentContextCaching:
         result1 = context.search_memories(["clearable"], include_session=True)
 
         # Clear cache if method exists
-        if hasattr(context.search_memories, 'cache_clear'):
+        if hasattr(context.search_memories, "cache_clear"):
             context.search_memories.cache_clear()
 
         result2 = context.search_memories(["clearable"], include_session=True)
@@ -240,7 +242,7 @@ class TestCachingIntegration:
         context.store_memory(
             "pattern_1",
             {"pattern": "tdd_workflow", "confidence": 0.8},
-            ["learning", "pattern", "tdd"]
+            ["learning", "pattern", "tdd"],
         )
 
         # Act - Query learnings multiple times (typical Article IV workflow)

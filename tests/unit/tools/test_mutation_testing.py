@@ -568,7 +568,7 @@ class TestMutationTesterFullRun:
 
     @pytest.mark.skipif(
         os.environ.get("CI") == "true",
-        reason="Flaky in CI due to parallel execution and subprocess spawning"
+        reason="Flaky in CI due to parallel execution and subprocess spawning",
     )
     def test_full_mutation_test_run(self):
         """Test complete mutation testing process."""

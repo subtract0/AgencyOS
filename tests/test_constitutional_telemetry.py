@@ -35,13 +35,9 @@ class TestConstitutionalEvent:
             article=Article.ARTICLE_III,
             section="2",
             rule_description="No direct main commits",
-            context={
-                "branch": "main",
-                "agent_id": "planner",
-                "operation": "commit"
-            },
+            context={"branch": "main", "agent_id": "planner", "operation": "commit"},
             action=EnforcementAction.BLOCKED,
-            outcome=EnforcementOutcome.SUCCESS
+            outcome=EnforcementOutcome.SUCCESS,
         )
 
         assert event.article == Article.ARTICLE_III
@@ -60,7 +56,7 @@ class TestConstitutionalEvent:
                 event_id="test-002",
                 article="INVALID",  # Should fail
                 rule_description="Test",
-                action=EnforcementAction.PASSED
+                action=EnforcementAction.PASSED,
             )
 
     def test_constitutional_event_to_jsonl(self):
@@ -70,7 +66,7 @@ class TestConstitutionalEvent:
             article=Article.ARTICLE_I,
             rule_description="Complete context check",
             action=EnforcementAction.PASSED,
-            context={"agent_id": "planner"}
+            context={"agent_id": "planner"},
         )
 
         jsonl = event.to_jsonl()
@@ -88,10 +84,7 @@ class TestConstitutionalEvent:
             rule_description="100% verification",
             action=EnforcementAction.BLOCKED,
             outcome=EnforcementOutcome.FRICTION,
-            context={
-                "agent_id": "coder",
-                "operation": "commit"
-            }
+            context={"agent_id": "coder", "operation": "commit"},
         )
 
         tags = event.generate_tags()
@@ -119,7 +112,7 @@ class TestConstitutionalTelemetry:
                 article=Article.ARTICLE_III,
                 rule_description="No main commits",
                 action=EnforcementAction.BLOCKED,
-                context={"branch": "main"}
+                context={"branch": "main"},
             )
 
             # Verify JSONL file created
@@ -146,13 +139,13 @@ class TestConstitutionalTelemetry:
             telemetry.emit_event(
                 article=Article.ARTICLE_I,
                 rule_description="Event 1",
-                action=EnforcementAction.PASSED
+                action=EnforcementAction.PASSED,
             )
 
             telemetry.emit_event(
                 article=Article.ARTICLE_II,
                 rule_description="Event 2",
-                action=EnforcementAction.WARNING
+                action=EnforcementAction.WARNING,
             )
 
             # Verify both events in same file
@@ -180,7 +173,7 @@ class TestConstitutionalTelemetry:
         event = telemetry.emit_event(
             article=Article.ARTICLE_I,
             rule_description="Complete context",
-            action=EnforcementAction.PASSED
+            action=EnforcementAction.PASSED,
         )
 
         # Event should still be created
@@ -197,18 +190,18 @@ class TestConstitutionalTelemetry:
             event1 = telemetry.emit_event(
                 article=Article.ARTICLE_I,
                 rule_description="Test 1",
-                action=EnforcementAction.PASSED
+                action=EnforcementAction.PASSED,
             )
 
             event2 = telemetry.emit_event(
                 article=Article.ARTICLE_I,
                 rule_description="Test 2",
-                action=EnforcementAction.PASSED
+                action=EnforcementAction.PASSED,
             )
 
             assert event1.event_id != event2.event_id
 
-    @patch('tools.constitutional_telemetry.get_telemetry')
+    @patch("tools.constitutional_telemetry.get_telemetry")
     def test_simple_telemetry_integration(self, mock_get_telemetry):
         """Test integration with SimpleTelemetry."""
         from tools.constitutional_telemetry import ConstitutionalTelemetry
@@ -225,7 +218,7 @@ class TestConstitutionalTelemetry:
                 rule_description="Test rule",
                 action=EnforcementAction.BLOCKED,
                 section="2",
-                error_message="Blocked for testing"
+                error_message="Blocked for testing",
             )
 
             # Verify SimpleTelemetry.log() was called
@@ -264,7 +257,7 @@ class TestConstitutionalTelemetry:
             telemetry.emit_event(
                 article=Article.ARTICLE_I,
                 rule_description="Performance test",
-                action=EnforcementAction.PASSED
+                action=EnforcementAction.PASSED,
             )
 
             duration_ms = (time.time() - start) * 1000
@@ -285,7 +278,7 @@ class TestConstitutionalTelemetry:
                 telemetry.emit_event(
                     article=Article.ARTICLE_I,
                     rule_description=f"Event {i}",
-                    action=EnforcementAction.PASSED
+                    action=EnforcementAction.PASSED,
                 )
 
             total_duration = time.time() - start
@@ -328,7 +321,7 @@ class TestGlobalTelemetryFunctions:
             article=Article.ARTICLE_V,
             rule_description="Spec-driven development",
             action=EnforcementAction.PASSED,
-            context={"spec_file": "feature.md"}
+            context={"spec_file": "feature.md"},
         )
 
         assert event is not None
@@ -353,9 +346,7 @@ class TestErrorHandling:
 
             # Should not raise
             event = telemetry.emit_event(
-                article=Article.ARTICLE_I,
-                rule_description="Test",
-                action=EnforcementAction.PASSED
+                article=Article.ARTICLE_I, rule_description="Test", action=EnforcementAction.PASSED
             )
 
             assert event is not None
@@ -371,12 +362,12 @@ class TestErrorHandling:
             telemetry = ConstitutionalTelemetry(log_dir=Path(tmpdir))
 
             # Mock the file write to raise OSError
-            with patch('builtins.open', side_effect=OSError("No space left on device")):
+            with patch("builtins.open", side_effect=OSError("No space left on device")):
                 # Should not raise
                 event = telemetry.emit_event(
                     article=Article.ARTICLE_I,
                     rule_description="Test",
-                    action=EnforcementAction.PASSED
+                    action=EnforcementAction.PASSED,
                 )
 
                 assert event is not None
@@ -390,7 +381,7 @@ class TestErrorHandling:
                 event_id="test",
                 article="INVALID_ARTICLE",
                 rule_description="Test",
-                action=EnforcementAction.PASSED
+                action=EnforcementAction.PASSED,
             )
 
 
@@ -409,7 +400,7 @@ class TestJSONLFormat:
                 telemetry.emit_event(
                     article=Article.ARTICLE_I,
                     rule_description=f"Event {i}",
-                    action=EnforcementAction.PASSED
+                    action=EnforcementAction.PASSED,
                 )
 
             # Read and validate each line
@@ -434,7 +425,7 @@ class TestJSONLFormat:
             telemetry.emit_event(
                 article=Article.ARTICLE_I,
                 rule_description="Timestamp test",
-                action=EnforcementAction.PASSED
+                action=EnforcementAction.PASSED,
             )
 
             date_str = datetime.now(UTC).strftime("%Y%m%d")
@@ -446,5 +437,5 @@ class TestJSONLFormat:
 
                 # Verify timestamp is ISO 8601
                 timestamp_str = parsed["timestamp"]
-                parsed_timestamp = datetime.fromisoformat(timestamp_str.replace('Z', '+00:00'))
+                parsed_timestamp = datetime.fromisoformat(timestamp_str.replace("Z", "+00:00"))
                 assert isinstance(parsed_timestamp, datetime)

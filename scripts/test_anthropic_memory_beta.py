@@ -24,8 +24,9 @@ def test_anthropic_version():
     """Verify anthropic SDK version meets minimum requirement"""
     try:
         import anthropic
+
         version = anthropic.__version__
-        major, minor = map(int, version.split('.')[:2])
+        major, minor = map(int, version.split(".")[:2])
 
         if major == 0 and minor >= 42:
             print(f"✅ anthropic version {version} meets requirement (>=0.42.0)")
@@ -62,15 +63,11 @@ def test_memory_beta_access():
         message = client.beta.messages.create(
             model="claude-sonnet-4-5",
             max_tokens=100,
-            messages=[{
-                "role": "user",
-                "content": "Reply with just 'OK' to confirm memory tool access"
-            }],
-            tools=[{
-                "type": "memory_20250818",
-                "name": "memory"
-            }],
-            betas=["context-management-2025-06-27"]
+            messages=[
+                {"role": "user", "content": "Reply with just 'OK' to confirm memory tool access"}
+            ],
+            tools=[{"type": "memory_20250818", "name": "memory"}],
+            betas=["context-management-2025-06-27"],
         )
 
         print("✅ Memory tool beta access confirmed")

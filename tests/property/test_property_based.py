@@ -20,6 +20,7 @@ try:
     from hypothesis import given, settings
     from hypothesis import strategies as st
     from hypothesis.stateful import run_state_machine_as_test
+
     HYPOTHESIS_AVAILABLE = True
 except ImportError:
     HYPOTHESIS_AVAILABLE = False
@@ -29,8 +30,11 @@ except ImportError:
     settings = lambda **kwargs: lambda f: f
 
     class DummyStrategy:
-        def __call__(self, *args, **kwargs): return self
-        def __getattr__(self, name): return self
+        def __call__(self, *args, **kwargs):
+            return self
+
+        def __getattr__(self, name):
+            return self
 
     st = DummyStrategy()
     run_state_machine_as_test = lambda x: None
@@ -273,7 +277,7 @@ class TestVectorStoreProperties:
 
     @pytest.mark.skipif(
         os.environ.get("CI") == "true",
-        reason="Flaky in CI due to database locking in parallel execution"
+        reason="Flaky in CI due to database locking in parallel execution",
     )
     @given(st.text(min_size=1, max_size=50), memory_record_strategy())
     def test_add_remove_idempotent(self, key: str, content: dict):
@@ -429,7 +433,7 @@ class TestPerformanceProperties:
 
     @pytest.mark.skipif(
         os.environ.get("CI") == "true",
-        reason="Flaky in CI due to database locking in parallel execution"
+        reason="Flaky in CI due to database locking in parallel execution",
     )
     @given(st.lists(memory_record_strategy(), min_size=10, max_size=50))
     def test_bulk_operations_efficient(self, records: list):
