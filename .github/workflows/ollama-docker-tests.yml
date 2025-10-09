@@ -62,7 +62,7 @@ jobs:
       - name: Start Ollama service
         run: |
           echo "🚀 Starting Ollama service with model: ${OLLAMA_MODEL}"
-          docker-compose up -d
+          docker compose up -d
 
       - name: Wait for Ollama health check
         run: |
@@ -81,7 +81,7 @@ jobs:
 
           echo "❌ Ollama failed to become healthy within ${timeout}s"
           echo "Container logs:"
-          docker-compose logs ollama
+          docker compose logs ollama
           exit 1
 
       - name: Pull CI model
@@ -138,13 +138,13 @@ jobs:
         if: failure()
         run: |
           echo "📜 Ollama container logs:"
-          docker-compose logs ollama
+          docker compose logs ollama
 
       - name: Cleanup Docker containers
         if: always()
         run: |
           echo "🧹 Cleaning up Docker containers..."
-          docker-compose down -v
+          docker compose down -v
           docker system prune -f
 
       - name: Report test results
