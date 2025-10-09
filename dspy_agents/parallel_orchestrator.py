@@ -26,6 +26,7 @@ from pathlib import Path
 from typing import Any
 
 from pydantic import BaseModel
+
 from dspy_agents.ab_testing import EnhancedABOrchestrator
 
 logger = logging.getLogger(__name__)
@@ -33,6 +34,7 @@ logger = logging.getLogger(__name__)
 
 class JobResult(BaseModel):
     """Result from a single agent job execution."""
+
     run_id: str
     agent_id: str
     task_id: str
@@ -46,6 +48,7 @@ class JobResult(BaseModel):
 
 class OrchestrationStats(BaseModel):
     """Statistics from parallel orchestration."""
+
     total_jobs: int
     completed_jobs: int
     total_cost: float
@@ -56,6 +59,7 @@ class OrchestrationStats(BaseModel):
 
 class ComparisonResult(BaseModel):
     """Comparison between sequential and parallel execution."""
+
     sequential: OrchestrationStats
     parallel: OrchestrationStats
     speedup: float
@@ -400,7 +404,9 @@ def compare_sequential_vs_parallel(
             completed_jobs=seq_orchestrator._completed_jobs,
             total_cost=round(seq_orchestrator.total_cost, 2),
             total_duration=round(seq_duration, 2),
-            avg_job_duration=round(seq_duration / seq_orchestrator._completed_jobs, 2) if seq_orchestrator._completed_jobs > 0 else 0.0,
+            avg_job_duration=round(seq_duration / seq_orchestrator._completed_jobs, 2)
+            if seq_orchestrator._completed_jobs > 0
+            else 0.0,
             parallelization_speedup=None,
         ),
         parallel=OrchestrationStats(
@@ -408,7 +414,9 @@ def compare_sequential_vs_parallel(
             completed_jobs=par_orchestrator._completed_jobs,
             total_cost=round(par_orchestrator.total_cost, 2),
             total_duration=round(par_duration, 2),
-            avg_job_duration=round(par_duration / par_orchestrator._completed_jobs, 2) if par_orchestrator._completed_jobs > 0 else 0.0,
+            avg_job_duration=round(par_duration / par_orchestrator._completed_jobs, 2)
+            if par_orchestrator._completed_jobs > 0
+            else 0.0,
             parallelization_speedup=round(speedup, 2),
         ),
         speedup=round(speedup, 2),
