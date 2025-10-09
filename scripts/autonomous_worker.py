@@ -390,67 +390,57 @@ Ensure constitutional compliance at all steps.
             # IMPORTANT: Use absolute path for worktree_path
             abs_worktree_path = worktree_path.absolute()
 
-            cmd = [
-                sys.executable,
-                "-c",
-                f"""
-import sys
-sys.path.insert(0, '/Users/am/Code/Agency')
-from agency_swarm import Agency
-from agency_code_agent.agency_code_agent import create_agency_code_agent
-from shared.agent_context import create_agent_context
-from shared.model_policy import agent_model
-import os
+            # Use lean agent system (no subprocess, no hang)
+            from shared.lean_adapter import Agent, Agency
+            from shared.model_policy import agent_model
 
-# Change to worktree directory (using absolute path)
-os.chdir('{abs_worktree_path}')
+            # Change to worktree directory
+            import os
 
-# Create agent context
-context = create_agent_context(session_id='{task.task_id}')
+            original_dir = os.getcwd()
+            os.chdir(str(abs_worktree_path))
 
-# Create coder agent
-coder = create_agency_code_agent(
-    model=agent_model('coder'),
-    reasoning_effort='medium',
-    agent_context=context
-)
+            try:
+                # Create simple Claude Code agent
+                print("🤖 Creating lean agent...")
+                agent = Agent(
+                    name="coder",
+                    instructions="""You are an expert software engineer working on autonomous tasks.
 
-# Create single-agent agency
-agency = Agency([coder], shared_instructions="./autonomous_mission.md")
+Follow these principles:
+- Write clean, tested, typed code
+- Use Pydantic models (never Dict[Any, Any])
+- Use Result<T,E> pattern for errors
+- Keep functions under 50 lines
+- Write tests before implementation (TDD)
 
-# Execute mission via agency
-mission = '''
-{mission_content}
-'''
+Constitutional Requirements:
+- Article I: Complete context before acting
+- Article II: 100% verification via tests
+- Article V: Follow specifications
+""",
+                    model=agent_model("coder"),
+                    temperature=0.3,
+                )
 
-print("🤖 Agent executing mission via Agency...")
-response = agency.get_completion(message=mission, recipient_agent=coder)
-print(f"✅ Agent completed")
-print(f"📄 Response: {{response}}")
-"""
-            ]
+                # Create agency wrapper
+                print("🏢 Creating agency...")
+                agency = Agency([agent], shared_instructions="./autonomous_mission.md")
 
-            # Execute with timeout
-            result = subprocess.run(
-                cmd,
-                cwd=str(worktree_path),
-                capture_output=True,
-                text=True,
-                timeout=1800  # 30 minute timeout per task
-            )
+                # Execute mission
+                print("🚀 Executing mission...")
+                response = agency.get_completion(mission_content)
 
-            # Check for success
-            if result.returncode == 0:
                 print("✅ Task executed successfully")
-                print(f"📄 Agent output:\n{result.stdout}")
+                print(f"📄 Response preview: {response[:200]}...")
                 return True
-            else:
-                print(f"❌ Task execution failed with code {result.returncode}")
-                print(f"📄 Error output:\n{result.stderr}")
-                return False
 
-        except subprocess.TimeoutExpired:
-            print("⏱️  Task execution timed out (30 minutes)")
+            finally:
+                # Restore directory
+                os.chdir(original_dir)
+
+        except KeyboardInterrupt:
+            print("⏹️  Task execution interrupted")
             return False
         except Exception as e:
             print(f"❌ Task execution error: {e}")
