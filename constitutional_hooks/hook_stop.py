@@ -65,9 +65,7 @@ def main() -> int:
             )
             sys.stderr.write(f"❌ Constitutional Violation: {error}\n")
             sys.stderr.write("\nIncomplete tasks:\n")
-            incomplete = set(session_state.tasks_total) - set(
-                session_state.tasks_completed
-            )
+            incomplete = set(session_state.tasks_total) - set(session_state.tasks_completed)
             for task in sorted(incomplete):
                 sys.stderr.write(f"  - {task}\n")
             return EXIT_BLOCK

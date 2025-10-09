@@ -2,6 +2,7 @@
 Gemini 2.5 Flash Helper for Agency OS
 Provides cost-effective codebase analysis and planning.
 """
+
 import os
 from pathlib import Path
 
@@ -11,15 +12,15 @@ import google.generativeai as genai
 def get_gemini_api_key() -> str:
     """Get Gemini API key from environment."""
     # Try both possible env var names
-    api_key = os.getenv('GEMINI_API_KEY') or os.getenv('GOOGLE_API_KEY')
+    api_key = os.getenv("GEMINI_API_KEY") or os.getenv("GOOGLE_API_KEY")
 
     if not api_key:
         # Try loading from .env file
-        env_file = Path(__file__).parent.parent / '.env'
+        env_file = Path(__file__).parent.parent / ".env"
         if env_file.exists():
             for line in env_file.read_text().splitlines():
-                if line.startswith('GOOGLE_API_KEY=') or line.startswith('GEMINI_API_KEY='):
-                    api_key = line.split('=', 1)[1].strip()
+                if line.startswith("GOOGLE_API_KEY=") or line.startswith("GEMINI_API_KEY="):
+                    api_key = line.split("=", 1)[1].strip()
                     break
 
     if not api_key:
@@ -29,9 +30,7 @@ def get_gemini_api_key() -> str:
 
 
 def plan_implementation(
-    feature_description: str,
-    context: str | None = None,
-    model: str = 'gemini-2.5-flash'
+    feature_description: str, context: str | None = None, model: str = "gemini-2.5-flash"
 ) -> str:
     """
     Use Gemini for implementation planning (saves Anthropic credits).

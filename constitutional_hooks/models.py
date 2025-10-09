@@ -44,9 +44,7 @@ class SessionState(BaseModel):
     tasks_completed: list[str] = Field(
         default_factory=list, description="List of completed task IDs"
     )
-    tasks_total: list[str] = Field(
-        default_factory=list, description="List of all task IDs"
-    )
+    tasks_total: list[str] = Field(default_factory=list, description="List of all task IDs")
     status: str = Field(..., description="Session status (active, stopping, etc.)")
 
 

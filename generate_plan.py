@@ -15,27 +15,29 @@ import google.generativeai as genai
 
 def get_gemini_api_key() -> str:
     """Get Gemini API key from environment."""
-    api_key = os.getenv('GEMINI_API_KEY') or os.getenv('GOOGLE_API_KEY')
+    api_key = os.getenv("GEMINI_API_KEY") or os.getenv("GOOGLE_API_KEY")
     if not api_key:
         # Try loading from .env file
         from pathlib import Path
-        env_file = Path(__file__).parent / '.env'
+
+        env_file = Path(__file__).parent / ".env"
         if not env_file.exists():
-            env_file = Path(__file__).parent.parent / 'Agency' / '.env'
+            env_file = Path(__file__).parent.parent / "Agency" / ".env"
         if env_file.exists():
             for line in env_file.read_text().splitlines():
-                if line.startswith('GOOGLE_API_KEY=') or line.startswith('GEMINI_API_KEY='):
-                    api_key = line.split('=', 1)[1].strip()
+                if line.startswith("GOOGLE_API_KEY=") or line.startswith("GEMINI_API_KEY="):
+                    api_key = line.split("=", 1)[1].strip()
                     break
     if not api_key:
         raise ValueError("GEMINI_API_KEY or GOOGLE_API_KEY not found")
     return api_key
 
+
 def main():
     api_key = get_gemini_api_key()
     genai.configure(api_key=api_key)
 
-    context = '''
+    context = """
 Agency OS Codebase Context:
 - 10 specialized Python agents (Planner, Coder, Auditor, QualityEnforcer, etc.)
 - Constitutional enforcement: 5 Articles (I: Complete Context, II: 100% Verification, III: Automated Merge, IV: Learning, V: Spec-Driven)
@@ -55,7 +57,7 @@ Implementation Requirements:
 - Result<T,E> pattern for error handling
 - Pydantic models for validation
 - Integration with existing shared/ infrastructure
-'''
+"""
 
     prompt = f"""
 You are a senior software architect planning an implementation for Agency OS.
@@ -78,10 +80,11 @@ Create a detailed implementation plan with:
 Format as markdown with clear sections.
 """
 
-    gemini = genai.GenerativeModel('gemini-2.5-flash')
+    gemini = genai.GenerativeModel("gemini-2.5-flash")
     response = gemini.generate_content(prompt)
 
     print(response.text)
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     main()
