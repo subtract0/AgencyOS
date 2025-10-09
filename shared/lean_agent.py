@@ -21,24 +21,60 @@ from openai import OpenAI
 from pydantic import BaseModel, Field
 
 
+class ToolParameter(BaseModel):
+    """Parameter definition for a tool."""
+
+    type: str
+    properties: dict[str, "ToolPropertySchema"] = Field(default_factory=dict)
+    required: list[str] = Field(default_factory=list)
+
+    class Config:
+        """Pydantic config."""
+
+        arbitrary_types_allowed = True
+
+
+class ToolPropertySchema(BaseModel):
+    """Schema for a single tool property."""
+
+    type: str
+    description: str | None = None
+    enum: list[str] | None = None
+
+
+class OpenAIToolFormat(BaseModel):
+    """OpenAI tool format schema."""
+
+    type: str
+    function: "FunctionDefinition"
+
+
+class FunctionDefinition(BaseModel):
+    """Function definition in OpenAI format."""
+
+    name: str
+    description: str
+    parameters: ToolParameter
+
+
 class Tool(BaseModel):
     """Tool definition for agent."""
 
     name: str
     description: str
-    parameters: dict[str, Any]
+    parameters: ToolParameter
     function: Optional[Callable] = Field(default=None, exclude=True)
 
-    def to_openai_format(self) -> dict[str, Any]:
+    def to_openai_format(self) -> OpenAIToolFormat:
         """Convert to OpenAI tool format."""
-        return {
-            "type": "function",
-            "function": {
-                "name": self.name,
-                "description": self.description,
-                "parameters": self.parameters,
-            },
-        }
+        return OpenAIToolFormat(
+            type="function",
+            function=FunctionDefinition(
+                name=self.name,
+                description=self.description,
+                parameters=self.parameters,
+            ),
+        )
 
 
 class AgentConfig(BaseModel):
@@ -164,7 +200,11 @@ class LeanAgent:
                 openai_messages.append({"role": msg.role, "content": msg.content})
 
         # Prepare tools
-        tools = [tool.to_openai_format() for tool in self.config.tools] if self.config.tools else None
+        tools = (
+            [tool.to_openai_format().model_dump() for tool in self.config.tools]
+            if self.config.tools
+            else None
+        )
 
         # Call API with model-specific parameters
         call_kwargs = {
@@ -231,19 +271,20 @@ class LeanAgent:
 
 
 # Helper function to create tool from Python function
-def tool(name: str, description: str, parameters: dict[str, Any]):
+def tool(name: str, description: str, parameters: ToolParameter):
     """
     Decorator to convert Python function to Tool.
 
     Example:
-        >>> @tool("add", "Add two numbers", {
-        ...     "type": "object",
-        ...     "properties": {
-        ...         "a": {"type": "number"},
-        ...         "b": {"type": "number"}
+        >>> param = ToolParameter(
+        ...     type="object",
+        ...     properties={
+        ...         "a": ToolPropertySchema(type="number"),
+        ...         "b": ToolPropertySchema(type="number")
         ...     },
-        ...     "required": ["a", "b"]
-        ... })
+        ...     required=["a", "b"]
+        ... )
+        >>> @tool("add", "Add two numbers", param)
         ... def add(a: float, b: float) -> float:
         ...     return a + b
     """
