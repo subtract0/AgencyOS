@@ -11,11 +11,13 @@ Constitutional Compliance:
 """
 
 import os
-import psutil
 from pathlib import Path
 from typing import Literal
+
+import psutil
 from pydantic import BaseModel, Field
-from shared.type_definitions.result import Result, Ok, Err
+
+from shared.type_definitions.result import Err, Ok, Result
 
 
 class TestExecutionConfig(BaseModel):
