@@ -28,7 +28,7 @@ from typing import Optional
 # Add project root to path
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-# Local imports
+# ruff: noqa: I001 - local imports after path manipulation
 from meta_learning.task_queue import Task, TaskQueue
 from scripts.worktree_manager import WorktreeConfig, WorktreeManager
 
