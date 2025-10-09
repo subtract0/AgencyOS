@@ -5,8 +5,6 @@ These models define the JSON structure for data passed between the
 Agent Orchestration Layer and hook scripts via stdin/stdout.
 """
 
-from typing import Any
-
 from pydantic import BaseModel, Field
 
 
@@ -16,11 +14,17 @@ class UserPrompt(BaseModel):
     prompt: str = Field(..., description="User's input prompt text")
 
 
+class ToolArgs(BaseModel):
+    """Tool arguments base class - can be extended for specific tools."""
+
+    model_config = {"extra": "allow"}  # Allow additional fields
+
+
 class ToolCall(BaseModel):
     """Tool call about to be executed."""
 
     tool_name: str = Field(..., description="Name of the tool being called")
-    args: dict[str, Any] = Field(default_factory=dict, description="Tool arguments")
+    args: ToolArgs = Field(default_factory=ToolArgs, description="Tool arguments")
 
 
 class GitCommitArgs(BaseModel):
