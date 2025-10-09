@@ -66,7 +66,10 @@ class TestCliEventScope:
         assert emitted_events[1]["status"] == "success"
         assert "duration_s" in emitted_events[1]
 
-    @pytest.mark.xfail(condition=os.environ.get("CI") == "true", reason="Flaky timeout in CI - RuntimeError: duplicate registrations for aten.linspace.Tensor_Tensor")
+    @pytest.mark.xfail(
+        condition=os.environ.get("CI") == "true",
+        reason="Flaky timeout in CI - RuntimeError: duplicate registrations for aten.linspace.Tensor_Tensor",
+    )
     def test_cli_event_scope_failure_emits_failed_status(self):
         """Should emit failed status when exception occurs."""
         # Arrange

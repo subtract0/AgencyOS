@@ -221,9 +221,7 @@ class ConversationContext:
 
         self._topic_mentions[topic_key].append(timestamp)
 
-    def get_topic_mention_count(
-        self, topic: str, time_window_minutes: float | None = None
-    ) -> int:
+    def get_topic_mention_count(self, topic: str, time_window_minutes: float | None = None) -> int:
         """
         Get mention count for topic.
 
@@ -247,9 +245,7 @@ class ConversationContext:
         cutoff = datetime.now() - timedelta(minutes=time_window_minutes)
         return sum(1 for ts in mentions if ts >= cutoff)
 
-    def get_topic_cluster(
-        self, topic: str, time_window_hours: float = 24.0
-    ) -> TopicCluster | None:
+    def get_topic_cluster(self, topic: str, time_window_hours: float = 24.0) -> TopicCluster | None:
         """
         Get topic cluster for recurrence analysis.
 

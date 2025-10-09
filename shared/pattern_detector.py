@@ -214,9 +214,7 @@ class PatternDetector:
         self.pattern_history: dict[str, int] = {}
         self.custom_detectors: dict[str, Callable] = {}
 
-    def detect(
-        self, event_text: str, metadata: JSONValue | None = None
-    ) -> PatternMatch | None:
+    def detect(self, event_text: str, metadata: JSONValue | None = None) -> PatternMatch | None:
         """
         Detect pattern in event text.
 
@@ -239,9 +237,7 @@ class PatternDetector:
 
         return None
 
-    def _find_best_match(
-        self, event_lower: str, metadata: JSONValue | None
-    ) -> PatternMatch | None:
+    def _find_best_match(self, event_lower: str, metadata: JSONValue | None) -> PatternMatch | None:
         """Find best matching pattern."""
         best_match: PatternMatch | None = None
         best_confidence = 0.0

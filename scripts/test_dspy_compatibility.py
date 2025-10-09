@@ -5,6 +5,7 @@ This script validates that DSPy dependencies are correctly installed
 and can be imported without errors. It's designed to be non-blocking
 for CI pipelines while providing visibility into DSPy availability.
 """
+
 import sys
 from pathlib import Path
 
@@ -13,6 +14,7 @@ def test_dspy_installation():
     """Validate DSPy core framework is installed."""
     try:
         import dspy
+
         print(f"✅ DSPy {dspy.__version__} installed successfully")
         return True
     except ImportError as e:
@@ -50,6 +52,7 @@ def test_dspy_agents_importable():
         sys.path.insert(0, str(project_root))
 
         from dspy_agents.modules.code_agent import DSPyCodeAgent
+
         print("✅ DSPy agents are importable")
         return True
     except ImportError as e:

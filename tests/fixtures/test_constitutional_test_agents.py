@@ -46,7 +46,7 @@ class TestConstitutionalTestAgent:
     @pytest.mark.benchmark
     @pytest.mark.skipif(
         os.getenv("CI") == "true",
-        reason="Performance benchmarks are environment-dependent - skip in CI"
+        reason="Performance benchmarks are environment-dependent - skip in CI",
     )
     def test_agent_initialization_is_fast(self):
         """Verify agent initialization is fast enough for unit tests."""
@@ -145,7 +145,7 @@ class TestTestAgentContext:
     @pytest.mark.benchmark
     @pytest.mark.skipif(
         os.getenv("CI") == "true",
-        reason="Performance benchmarks are environment-dependent - skip in CI"
+        reason="Performance benchmarks are environment-dependent - skip in CI",
     )
     def test_context_initialization_is_fast(self):
         """Verify context initialization is fast enough for unit tests."""
@@ -227,7 +227,7 @@ class TestConstitutionalCompliance:
     @pytest.mark.benchmark
     @pytest.mark.skipif(
         os.getenv("CI") == "true",
-        reason="Performance benchmarks are environment-dependent - skip in CI"
+        reason="Performance benchmarks are environment-dependent - skip in CI",
     )
     def test_performance_within_constraints(self):
         """Verify fixtures meet performance requirements for testing."""
@@ -307,7 +307,9 @@ class TestUsageExamples:
         planner = create_constitutional_test_agent("Planner")
 
         # Agents can share context
-        context.store_memory("collaboration", {"agents": [coder.name, planner.name]}, tags=["collab"])
+        context.store_memory(
+            "collaboration", {"agents": [coder.name, planner.name]}, tags=["collab"]
+        )
         results = context.search_memories(["collab"], include_session=True)
 
         assert len(results) == 1

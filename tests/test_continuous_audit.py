@@ -200,8 +200,14 @@ class TestConfigurationLoading:
         assert load_result.is_err()
         error_msg = str(load_result.unwrap_err()).lower()
         # Error message includes field name like 'output' or validation error
-        assert ("required" in error_msg or "missing" in error_msg or "field" in error_msg
-                or "output" in error_msg or "targets" in error_msg or "checks" in error_msg)
+        assert (
+            "required" in error_msg
+            or "missing" in error_msg
+            or "field" in error_msg
+            or "output" in error_msg
+            or "targets" in error_msg
+            or "checks" in error_msg
+        )
 
     def test_config_validation_invalid_mode(self, sample_config_file):
         """Test validation fails for invalid mode value."""
@@ -359,7 +365,9 @@ class TestDeduplication:
             effort_hours=3.0,
             summary="Duplicate init patterns",
             details=details_text,  # Same details for high similarity
-            locations=[FileLocation(file_path="agency_code_agent/agent.py", line_start=20, line_end=35)],
+            locations=[
+                FileLocation(file_path="agency_code_agent/agent.py", line_start=20, line_end=35)
+            ],
             recommendation_steps=["Create base class"],
         )
 
@@ -386,7 +394,9 @@ class TestDeduplication:
 
         # Use similar (but not identical) details
         existing_details = "Consolidate agent initialization patterns across the entire codebase to reduce duplication and improve maintainability"
-        new_details = "Consolidate agent initialization patterns across codebase for better code reuse"
+        new_details = (
+            "Consolidate agent initialization patterns across codebase for better code reuse"
+        )
 
         # Create existing recommendation
         existing_rec = temp_audit_dir / "localM4_recommends_001-consolidate_initialization.md"
@@ -406,7 +416,9 @@ class TestDeduplication:
             effort_hours=3.0,
             summary="Init patterns",
             details=new_details,
-            locations=[FileLocation(file_path="planner_agent/agent.py", line_start=15, line_end=30)],
+            locations=[
+                FileLocation(file_path="planner_agent/agent.py", line_start=15, line_end=30)
+            ],
             recommendation_steps=["Consolidate patterns"],
         )
 
@@ -490,7 +502,9 @@ class TestDeduplication:
             effort_hours=2.0,
             summary="Another instance",
             details="Found another instance of duplicate pattern",
-            locations=[FileLocation(file_path="test_generator_agent/agent.py", line_start=25, line_end=40)],
+            locations=[
+                FileLocation(file_path="test_generator_agent/agent.py", line_start=25, line_end=40)
+            ],
             recommendation_steps=["Consolidate"],
         )
 

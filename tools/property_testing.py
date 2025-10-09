@@ -27,13 +27,18 @@ from typing import Any, TypeVar
 try:
     from hypothesis import strategies as st
     from hypothesis.stateful import RuleBasedStateMachine, invariant, rule
+
     HYPOTHESIS_AVAILABLE = True
 except ImportError:
     HYPOTHESIS_AVAILABLE = False
+
     # Create dummy objects to prevent import errors when hypothesis not installed
     class DummyStrategy:
-        def composite(self, f): return f
-        def __getattr__(self, name): return lambda *args, **kwargs: DummyStrategy()
+        def composite(self, f):
+            return f
+
+        def __getattr__(self, name):
+            return lambda *args, **kwargs: DummyStrategy()
 
     st = DummyStrategy()
     RuleBasedStateMachine = object
@@ -45,6 +50,7 @@ except ImportError:
     def rule(**kwargs):  # noqa: E731
         """Dummy rule decorator when hypothesis not available."""
         return lambda f: f
+
 
 from shared.type_definitions.json_value import JSONValue
 from shared.type_definitions.result import Err, Ok, Result
@@ -61,9 +67,13 @@ E = TypeVar("E")
 
 # When hypothesis not available, strategies return dummy callable objects
 if not HYPOTHESIS_AVAILABLE:
+
     class DummyCallable:
-        def __call__(self, *args, **kwargs): return self
-        def __getattr__(self, name): return self
+        def __call__(self, *args, **kwargs):
+            return self
+
+        def __getattr__(self, name):
+            return self
 
     result_strategy = DummyCallable()
     json_value_strategy = DummyCallable()
@@ -95,6 +105,7 @@ if not HYPOTHESIS_AVAILABLE:
         pass
 
 else:  # hypothesis IS available
+
     @st.composite
     def result_strategy(draw, value_strategy=st.integers(), error_strategy=st.text(min_size=1)):
         """

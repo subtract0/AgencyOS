@@ -159,10 +159,10 @@ def authenticate_user(username: str, password: str) -> dict:
         )
 
         # Test invalid Python syntax
-        invalid_code = '''
+        invalid_code = """
 def broken_function(:
     return "missing parameter"
-'''
+"""
 
         is_valid, msg = executor._validate_executable_code(invalid_code)
         assert not is_valid, "Should detect syntax errors"

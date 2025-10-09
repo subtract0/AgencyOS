@@ -184,9 +184,9 @@ class Recommendation(BaseModel):
     def get_filename(self) -> str:
         """Generate filename for this recommendation."""
         # Sanitize title for filename
-        safe_title = "".join(
-            c if c.isalnum() or c in "-_" else "_" for c in self.title.lower()
-        )[:50]
+        safe_title = "".join(c if c.isalnum() or c in "-_" else "_" for c in self.title.lower())[
+            :50
+        ]
         return f"localM4_recommends_{self.number:03d}-{safe_title}.md"
 
 
@@ -260,9 +260,7 @@ def load_config(config_path: str = "continuous_audit_config.yaml") -> Result[Aud
             file_prefix=audit_config["output"]["file_prefix"],
             state_file=audit_config["output"]["state_file"],
             similarity_threshold=audit_config["deduplication"]["similarity_threshold"],
-            elevate_priority_threshold=audit_config["deduplication"][
-                "elevate_priority_threshold"
-            ],
+            elevate_priority_threshold=audit_config["deduplication"]["elevate_priority_threshold"],
             use_local=audit_config["agents"]["use_local"],
             model_tier=audit_config["agents"]["model_tier"],
         )
@@ -511,9 +509,7 @@ def append_to_recommendation(
                     f"**Priority**: {current_priority.value}",
                     f"**Priority**: {new_priority.value}",
                 )
-                logger.info(
-                    f"Priority elevated: {current_priority.value} → {new_priority.value}"
-                )
+                logger.info(f"Priority elevated: {current_priority.value} → {new_priority.value}")
 
         # Update timestamp and log
         timestamp = datetime.now().strftime("%Y-%m-%d %H:%M")
@@ -524,9 +520,7 @@ def append_to_recommendation(
         update_log_section = content.find("## Update Log")
         if update_log_section != -1:
             log_section_end = content.find("\n---", update_log_section)
-            content = (
-                content[:log_section_end] + f"{log_entry}\n" + content[log_section_end:]
-            )
+            content = content[:log_section_end] + f"{log_entry}\n" + content[log_section_end:]
 
         # Update Last Updated timestamp
         content = re.sub(
@@ -549,9 +543,7 @@ def append_to_recommendation(
         return Err(f"Failed to append to recommendation: {e}")
 
 
-def create_new_recommendation(
-    recommendation: Recommendation, output_dir: str
-) -> Result[str, str]:
+def create_new_recommendation(recommendation: Recommendation, output_dir: str) -> Result[str, str]:
     """
     Create new recommendation markdown file.
 
@@ -853,9 +845,7 @@ def _scan_for_category(
 
             if violations:
                 # Found genuine Dict[Any, Any] in actual code
-                violation_details = "\n".join(
-                    f"  Line {line}: {code}" for line, code in violations
-                )
+                violation_details = "\n".join(f"  Line {line}: {code}" for line, code in violations)
                 return Issue(
                     title="Dict[Any, Any] type violation",
                     category=category,
@@ -1050,6 +1040,7 @@ class ContinuousAuditSystem:
         self.context = create_agent_context()
         # Initialize cost tracker with SQLite storage
         from shared.cost_tracker import SQLiteStorage
+
         storage = SQLiteStorage("trinity_costs.db")
         self.cost_tracker = CostTracker(storage=storage)
         self.registry = create_agent_registry(
@@ -1118,9 +1109,9 @@ class ContinuousAuditSystem:
 
         while self.running:
             cycle_count += 1
-            logger.info(f"\n{'='*80}")
+            logger.info(f"\n{'=' * 80}")
             logger.info(f"Cycle {cycle_count}")
-            logger.info(f"{'='*80}\n")
+            logger.info(f"{'=' * 80}\n")
 
             # Run scan cycle
             result = run_scan_cycle(self.config, self.state, self.registry, self.context)
@@ -1181,11 +1172,13 @@ def detect_consolidation_issues(files: list[dict[str, str]]) -> Result[list[dict
 
             issue = _scan_for_category(path, content, IssueCategory.CONSOLIDATION, auditor, context)
             if issue:
-                issues.append({
-                    "category": issue.category.value.capitalize(),
-                    "title": issue.title,
-                    "details": issue.details,
-                })
+                issues.append(
+                    {
+                        "category": issue.category.value.capitalize(),
+                        "title": issue.title,
+                        "details": issue.details,
+                    }
+                )
 
         return Ok(issues)
     except Exception as e:
@@ -1209,11 +1202,13 @@ def detect_linting_issues(files: list[dict[str, str]]) -> Result[list[dict], str
 
             issue = _scan_for_category(path, content, IssueCategory.LINTING, auditor, context)
             if issue:
-                issues.append({
-                    "category": issue.category.value.capitalize(),
-                    "title": issue.title,
-                    "details": issue.details,
-                })
+                issues.append(
+                    {
+                        "category": issue.category.value.capitalize(),
+                        "title": issue.title,
+                        "details": issue.details,
+                    }
+                )
 
         return Ok(issues)
     except Exception as e:
@@ -1235,13 +1230,17 @@ def detect_simplification_issues(files: list[dict[str, str]]) -> Result[list[dic
             auditor = None
             context = create_agent_context()
 
-            issue = _scan_for_category(path, content, IssueCategory.SIMPLIFICATION, auditor, context)
+            issue = _scan_for_category(
+                path, content, IssueCategory.SIMPLIFICATION, auditor, context
+            )
             if issue:
-                issues.append({
-                    "category": issue.category.value.capitalize(),
-                    "title": issue.title,
-                    "details": issue.details,
-                })
+                issues.append(
+                    {
+                        "category": issue.category.value.capitalize(),
+                        "title": issue.title,
+                        "details": issue.details,
+                    }
+                )
 
         return Ok(issues)
     except Exception as e:
@@ -1265,11 +1264,13 @@ def detect_pruning_issues(files: list[dict[str, str]]) -> Result[list[dict], str
 
             issue = _scan_for_category(path, content, IssueCategory.PRUNING, auditor, context)
             if issue:
-                issues.append({
-                    "category": issue.category.value.capitalize(),
-                    "title": issue.title,
-                    "details": issue.details,
-                })
+                issues.append(
+                    {
+                        "category": issue.category.value.capitalize(),
+                        "title": issue.title,
+                        "details": issue.details,
+                    }
+                )
 
         return Ok(issues)
     except Exception as e:
@@ -1293,11 +1294,13 @@ def detect_architecture_issues(files: list[dict[str, str]]) -> Result[list[dict]
 
             issue = _scan_for_category(path, content, IssueCategory.ARCHITECTURE, auditor, context)
             if issue:
-                issues.append({
-                    "category": issue.category.value.capitalize(),
-                    "title": issue.title,
-                    "details": issue.details,
-                })
+                issues.append(
+                    {
+                        "category": issue.category.value.capitalize(),
+                        "title": issue.title,
+                        "details": issue.details,
+                    }
+                )
 
         return Ok(issues)
     except Exception as e:
@@ -1363,7 +1366,9 @@ def generate_recommendation_filename(number: int, title: str) -> str:
         return f"localM4_recommends_{number:03d}-{safe_title}.md"
 
 
-def run_continuous_audit(config: dict | AuditConfig, output_dir: str, max_cycles: int | None = None) -> Result[None, str]:
+def run_continuous_audit(
+    config: dict | AuditConfig, output_dir: str, max_cycles: int | None = None
+) -> Result[None, str]:
     """
     Run continuous audit system (wrapper for testing).
 
@@ -1409,6 +1414,7 @@ def run_continuous_audit(config: dict | AuditConfig, output_dir: str, max_cycles
 
         # Create output directory if it doesn't exist
         import os
+
         os.makedirs(output_dir, exist_ok=True)
 
         # Create system

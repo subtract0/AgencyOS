@@ -60,15 +60,17 @@ class OptimizationPlan(BaseModel):
     redundant_tests: list[dict[str, str]] = Field(..., description="Potentially redundant tests")
     estimated_savings_seconds: float = Field(..., description="Total estimated time savings")
 
-    model_config = ConfigDict(json_schema_extra={
-        "example": {
-            "parallelizable_tests": ["test_unit_calc", "test_parser"],
-            "expensive_fixtures": {"db_session": 500.0},
-            "mock_candidates": [{"test": "test_api_call", "target": "requests.get"}],
-            "redundant_tests": [],
-            "estimated_savings_seconds": 45.0,
+    model_config = ConfigDict(
+        json_schema_extra={
+            "example": {
+                "parallelizable_tests": ["test_unit_calc", "test_parser"],
+                "expensive_fixtures": {"db_session": 500.0},
+                "mock_candidates": [{"test": "test_api_call", "target": "requests.get"}],
+                "redundant_tests": [],
+                "estimated_savings_seconds": 45.0,
+            }
         }
-    })
+    )
 
 
 class TestOptimizer:

@@ -235,7 +235,6 @@ class TrinityOrchestrator:
         self._last_processed_timestamp = ""  # Track by timestamp instead of index
         self.ollama = OllamaClient(base_url="http://localhost:11434")
 
-
         # HybridExecutor initialization (added by integration script)
         # Initialize shared infrastructure for hybrid execution
         try:
@@ -259,12 +258,8 @@ class TrinityOrchestrator:
             escalation_config = self._config.get("escalation", {})
             self._escalation_policy = create_escalation_policy(
                 max_local_attempts=escalation_config.get("max_local_attempts", 2),
-                max_local_plus_attempts=escalation_config.get(
-                    "max_local_plus_attempts", 1
-                ),
-                test_failure_threshold=escalation_config.get(
-                    "test_failure_threshold", 2
-                ),
+                max_local_plus_attempts=escalation_config.get("max_local_plus_attempts", 1),
+                test_failure_threshold=escalation_config.get("test_failure_threshold", 2),
                 confidence_threshold=escalation_config.get("confidence_threshold", 0.5),
             )
 
@@ -277,15 +272,13 @@ class TrinityOrchestrator:
                 escalation_policy=self._escalation_policy,
             )
 
-            self.logger.info(
-                "✅ HybridExecutor initialized with local-first execution"
-            )
+            self.logger.info("✅ HybridExecutor initialized with local-first execution")
 
         except Exception as e:
             self.logger.error(
                 f"❌ Failed to initialize HybridExecutor: {e}. "
                 "Trinity will not be able to execute tasks until this is fixed.",
-                exc_info=True
+                exc_info=True,
             )
             self.hybrid_executor = None
 
@@ -344,10 +337,7 @@ class TrinityOrchestrator:
                 messages = self.bus.read()
 
                 # Process only messages newer than last processed timestamp
-                new_messages = [
-                    msg for msg in messages
-                    if msg.ts > self._last_processed_timestamp
-                ]
+                new_messages = [msg for msg in messages if msg.ts > self._last_processed_timestamp]
 
                 if new_messages:
                     self.logger.info(f"📨 Processing {len(new_messages)} new messages")
@@ -400,7 +390,11 @@ class TrinityOrchestrator:
 
             # Check if test exists
             relative_path = py_file.relative_to(trinity_dir.parent)
-            test_path = Path("/Users/am/.trinity-local/tests") / relative_path.parent / f"test_{py_file.name}"
+            test_path = (
+                Path("/Users/am/.trinity-local/tests")
+                / relative_path.parent
+                / f"test_{py_file.name}"
+            )
 
             if not test_path.exists():
                 missing_tests.append(str(relative_path))
@@ -409,13 +403,17 @@ class TrinityOrchestrator:
             self.logger.info(f"📊 Self-audit found {len(missing_tests)} files without tests")
 
             # Publish SUGGESTION (not IMPROVEMENT_SIGNAL - requires user approval)
-            self.bus.publish("ORCHESTRATOR", "SUGGESTION", {
-                "type": "missing_tests",
-                "priority": "NORMAL",
-                "files": missing_tests[:5],  # Top 5 most important
-                "reason": f"Self-audit detected {len(missing_tests)} files without test coverage",
-                "auto_execute": False  # Requires user approval
-            })
+            self.bus.publish(
+                "ORCHESTRATOR",
+                "SUGGESTION",
+                {
+                    "type": "missing_tests",
+                    "priority": "NORMAL",
+                    "files": missing_tests[:5],  # Top 5 most important
+                    "reason": f"Self-audit detected {len(missing_tests)} files without test coverage",
+                    "auto_execute": False,  # Requires user approval
+                },
+            )
 
             self.logger.info("💡 Suggestion published to dashboard - awaiting user approval")
         else:
@@ -481,7 +479,7 @@ class TrinityOrchestrator:
             except Exception as e:
                 self.logger.error(
                     f"❌ HybridExecutor architect failed: {e}. Falling back to direct Ollama.",
-                    exc_info=True
+                    exc_info=True,
                 )
                 # Fall through to Ollama fallback
 
@@ -489,7 +487,9 @@ class TrinityOrchestrator:
         self.logger.warning("⚠️  HybridExecutor not available - using direct Ollama fallback")
 
         # Get model config
-        model_name = self._config.get("models", {}).get("architect", {}).get("name", "qwen2.5-coder:7b")
+        model_name = (
+            self._config.get("models", {}).get("architect", {}).get("name", "qwen2.5-coder:7b")
+        )
         timeout = self._config.get("models", {}).get("architect", {}).get("timeout", 120)
 
         # Prepare prompt
@@ -584,9 +584,7 @@ class TrinityOrchestrator:
             # Execute via HybridExecutor (handles escalation internally)
             # In production, this would publish to execution_queue and let
             # HybridExecutor's event loop handle it. For now, simulate direct call.
-            self.logger.info(
-                f"📋 Task created: type={task_type}, complexity={complexity}"
-            )
+            self.logger.info(f"📋 Task created: type={task_type}, complexity={complexity}")
 
             # Publish to execution queue (HybridExecutor subscribes to this)
             await self._message_bus.publish("execution_queue", task)
@@ -661,7 +659,7 @@ class TrinityOrchestrator:
             except Exception as e:
                 self.logger.error(
                     f"❌ HybridExecutor witness failed: {e}. Falling back to direct Ollama.",
-                    exc_info=True
+                    exc_info=True,
                 )
                 # Fall through to Ollama fallback
 
@@ -669,7 +667,9 @@ class TrinityOrchestrator:
         self.logger.warning("⚠️  HybridExecutor not available - using direct Ollama fallback")
 
         # Get model config
-        model_name = self._config.get("models", {}).get("witness", {}).get("name", "qwen2.5-coder:7b")
+        model_name = (
+            self._config.get("models", {}).get("witness", {}).get("name", "qwen2.5-coder:7b")
+        )
         timeout = self._config.get("models", {}).get("witness", {}).get("timeout", 120)
 
         # Prepare prompt
@@ -694,17 +694,25 @@ class TrinityOrchestrator:
 
                 # Simple approval logic - if response contains "APPROVED", publish approval
                 if "APPROVED" in response.upper():
-                    self.bus.publish("WITNESS", "WITNESS_APPROVED", {
-                        "task_id": completion_msg.data.get("task_id", "unknown"),
-                        "verification": response,
-                    })
+                    self.bus.publish(
+                        "WITNESS",
+                        "WITNESS_APPROVED",
+                        {
+                            "task_id": completion_msg.data.get("task_id", "unknown"),
+                            "verification": response,
+                        },
+                    )
                     self.logger.info("✅ Quality gates passed")
                 else:
-                    self.bus.publish("WITNESS", "WITNESS_BLOCKED", {
-                        "task_id": completion_msg.data.get("task_id", "unknown"),
-                        "verification": response,
-                        "reason": "Quality gates not met",
-                    })
+                    self.bus.publish(
+                        "WITNESS",
+                        "WITNESS_BLOCKED",
+                        {
+                            "task_id": completion_msg.data.get("task_id", "unknown"),
+                            "verification": response,
+                            "reason": "Quality gates not met",
+                        },
+                    )
                     self.logger.warning("⚠️  Quality gates blocked")
 
                 return
@@ -728,18 +736,15 @@ class TrinityOrchestrator:
         try:
             # Try to extract JSON block
             import re
-            json_match = re.search(r'\{[\s\S]*\}', response)
+
+            json_match = re.search(r"\{[\s\S]*\}", response)
             if json_match:
                 return json.loads(json_match.group())
         except Exception:
             pass
 
         # Fallback: create basic plan structure
-        return {
-            "task_count": 1,
-            "raw_response": response,
-            "parsed": False
-        }
+        return {"task_count": 1, "raw_response": response, "parsed": False}
 
     def start_mission(self, user_goal: str) -> dict:
         """

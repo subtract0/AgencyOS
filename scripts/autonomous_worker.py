@@ -15,6 +15,7 @@ Constitutional Compliance:
 Version: 1.0.0
 Created: 2025-10-09
 """
+
 import json
 import signal
 import subprocess
@@ -77,10 +78,10 @@ class AutonomousWorker:
 
     def _shutdown(self, signum, frame):
         """Graceful shutdown on Ctrl+C or SIGTERM."""
-        print(f"\n{'='*60}")
+        print(f"\n{'=' * 60}")
         print(f"🛑 Agent {self.agent_id} shutting down gracefully...")
         print(f"   Tasks completed: {self.tasks_completed}")
-        print(f"{'='*60}\n")
+        print(f"{'=' * 60}\n")
         self.running = False
         sys.exit(0)
 
@@ -90,13 +91,13 @@ class AutonomousWorker:
 
         Continuously polls task queue and executes available tasks.
         """
-        print(f"\n{'='*60}")
+        print(f"\n{'=' * 60}")
         print("🤖 Autonomous Agent Started")
-        print(f"{'='*60}")
+        print(f"{'=' * 60}")
         print(f"Agent ID: {self.agent_id}")
         print(f"Poll interval: {self.poll_interval}s")
         print("Press Ctrl+C to stop")
-        print(f"{'='*60}\n")
+        print(f"{'=' * 60}\n")
 
         while self.running:
             try:
@@ -105,21 +106,23 @@ class AutonomousWorker:
 
                 if task is None:
                     # No tasks available, wait and retry
-                    timestamp = datetime.now().strftime('%H:%M:%S')
+                    timestamp = datetime.now().strftime("%H:%M:%S")
                     print(f"⏳ [{timestamp}] No tasks available, waiting {self.poll_interval}s...")
                     time.sleep(self.poll_interval)
                     continue
 
                 # Execute the task
-                print(f"\n{'='*60}")
+                print(f"\n{'=' * 60}")
                 print("🎯 Executing Task")
-                print(f"{'='*60}")
+                print(f"{'=' * 60}")
                 print(f"Task ID: {task.task_id}")
                 print(f"Type: {task.type}")
                 print(f"Description: {task.description}")
                 print(f"Files to modify: {len(task.files_to_modify)}")
-                print(f"Dependencies: {', '.join(task.dependencies) if task.dependencies else 'None'}")
-                print(f"{'='*60}\n")
+                print(
+                    f"Dependencies: {', '.join(task.dependencies) if task.dependencies else 'None'}"
+                )
+                print(f"{'=' * 60}\n")
 
                 success = self._execute_task(task)
 
@@ -167,11 +170,16 @@ class AutonomousWorker:
 
             # Also write task metadata
             meta_file = worktree_path / "task_metadata.json"
-            meta_file.write_text(json.dumps({
-                "agent_id": self.agent_id,
-                "task": asdict(task),
-                "started_at": datetime.utcnow().isoformat()
-            }, indent=2))
+            meta_file.write_text(
+                json.dumps(
+                    {
+                        "agent_id": self.agent_id,
+                        "task": asdict(task),
+                        "started_at": datetime.utcnow().isoformat(),
+                    },
+                    indent=2,
+                )
+            )
 
             print("📝 Mission file created: autonomous_mission.md")
             print("🚀 Executing task via Claude Code Agent...\n")
@@ -188,6 +196,7 @@ class AutonomousWorker:
         except Exception as e:
             print(f"❌ Task execution failed: {e}")
             import traceback
+
             traceback.print_exc()
             return False
 
@@ -214,15 +223,17 @@ class AutonomousWorker:
 ## Task Details
 - **Type**: {task.type}
 - **Description**: {task.description}
-- **Files to Modify**: {', '.join(task.files_to_modify) if task.files_to_modify else 'No specific files'}
-- **Dependencies**: {', '.join(task.dependencies) if task.dependencies else 'None'}
+- **Files to Modify**: {", ".join(task.files_to_modify) if task.files_to_modify else "No specific files"}
+- **Dependencies**: {", ".join(task.dependencies) if task.dependencies else "None"}
 
 ---
 
 """
 
         if task.type == "spec":
-            return base + """## Your Role: Specification Generator
+            return (
+                base
+                + """## Your Role: Specification Generator
 
 Create a detailed specification document for this feature.
 
@@ -255,9 +266,12 @@ Save specification to `docs/specs/{task_id}.md`
 ### Constitutional Compliance:
 - Article V: Spec-driven development (this is the spec!)
 """
+            )
 
         elif task.type == "code":
-            return base + """## Your Role: Code Implementation Agent
+            return (
+                base
+                + """## Your Role: Code Implementation Agent
 
 Implement the feature according to the specification.
 
@@ -286,9 +300,12 @@ Modify files as specified in task
 - Law #2: Strict typing (Pydantic, no Any)
 - Law #5: Result pattern for errors
 """
+            )
 
         elif task.type == "test":
-            return base + """## Your Role: Test Generator
+            return (
+                base
+                + """## Your Role: Test Generator
 
 Write comprehensive tests for the implemented feature.
 
@@ -318,9 +335,12 @@ Create test files in `tests/` directory
 - Article I: TDD - tests validate complete implementation
 - Article II: 100% verification
 """
+            )
 
         elif task.type == "integrate":
-            return base + """## Your Role: Integration Agent
+            return (
+                base
+                + """## Your Role: Integration Agent
 
 Review and integrate all completed work.
 
@@ -353,14 +373,18 @@ Review and integrate all completed work.
 - Article II: 100% test pass rate required
 - Article IV: Document learnings
 """
+            )
 
         else:
-            return base + f"""## Task Type: {task.type}
+            return (
+                base
+                + f"""## Task Type: {task.type}
 
 Execute the task as described above.
 
 Ensure constitutional compliance at all steps.
 """
+            )
 
     def _execute_task_real(self, task: Task, worktree_path: Path) -> bool:
         """
@@ -445,6 +469,7 @@ Constitutional Requirements:
         except Exception as e:
             print(f"❌ Task execution error: {e}")
             import traceback
+
             traceback.print_exc()
             return False
 
@@ -503,9 +528,9 @@ In production, this would be generated by the actual agent.
 
         try:
             # Add all changes
-            subprocess.run([
-                "git", "add", "."
-            ], cwd=str(worktree_path), check=True, capture_output=True)
+            subprocess.run(
+                ["git", "add", "."], cwd=str(worktree_path), check=True, capture_output=True
+            )
 
             # Commit
             commit_msg = f"""{task.type}: {task.description}
@@ -513,13 +538,16 @@ In production, this would be generated by the actual agent.
 Task ID: {task.task_id}
 Agent: {self.agent_id}
 Type: {task.type}
-Files: {', '.join(task.files_to_modify) if task.files_to_modify else 'multiple'}
+Files: {", ".join(task.files_to_modify) if task.files_to_modify else "multiple"}
 
 🤖 Generated with autonomous agent
 """
-            subprocess.run([
-                "git", "commit", "-m", commit_msg
-            ], cwd=str(worktree_path), check=True, capture_output=True)
+            subprocess.run(
+                ["git", "commit", "-m", commit_msg],
+                cwd=str(worktree_path),
+                check=True,
+                capture_output=True,
+            )
 
             print(f"✅ Changes committed to branch: {task.task_id}")
 
@@ -550,27 +578,19 @@ Examples:
 
   # Run on MacBook Air
   %(prog)s --agent-id mba-agent2
-        """
+        """,
     )
 
     parser.add_argument(
-        "--agent-id",
-        required=True,
-        help="Unique agent identifier (e.g., m4pro-agent1, mba-agent1)"
+        "--agent-id", required=True, help="Unique agent identifier (e.g., m4pro-agent1, mba-agent1)"
     )
     parser.add_argument(
-        "--poll-interval",
-        type=int,
-        default=5,
-        help="Seconds between queue polls (default: 5)"
+        "--poll-interval", type=int, default=5, help="Seconds between queue polls (default: 5)"
     )
 
     args = parser.parse_args()
 
-    worker = AutonomousWorker(
-        agent_id=args.agent_id,
-        poll_interval=args.poll_interval
-    )
+    worker = AutonomousWorker(agent_id=args.agent_id, poll_interval=args.poll_interval)
 
     worker.run()
 

@@ -176,9 +176,7 @@ def execute_task_with_retry(
 
     for attempt in range(max_retries + 1):
         try:
-            logger.info(
-                f"Executing {agent_type.value} (attempt {attempt + 1}/{max_retries + 1})"
-            )
+            logger.info(f"Executing {agent_type.value} (attempt {attempt + 1}/{max_retries + 1})")
 
             # Create agent at appropriate tier
             tier = ModelTier.LOCAL if attempt == 0 else ModelTier.LOCAL_PLUS
@@ -287,9 +285,7 @@ def calculate_metrics(results: list[BenchmarkResult]) -> dict[str, Any]:
     success_rate = success_count / len(results) if results else 0.0
 
     # Count local vs cloud
-    local_count = sum(
-        1 for r in results if r.actual_tier in ["local", "LOCAL", "local_plus"]
-    )
+    local_count = sum(1 for r in results if r.actual_tier in ["local", "LOCAL", "local_plus"])
     cloud_count = sum(1 for r in results if r.actual_tier in ["cloud", "CLOUD"])
 
     return {
@@ -306,9 +302,7 @@ def calculate_metrics(results: list[BenchmarkResult]) -> dict[str, Any]:
 
 def summarize_tier_usage(results: list[BenchmarkResult]) -> dict[str, Any]:
     """Summarize LOCAL vs CLOUD tier usage."""
-    local_count = sum(
-        1 for r in results if r.actual_tier in ["local", "LOCAL", "local_plus"]
-    )
+    local_count = sum(1 for r in results if r.actual_tier in ["local", "LOCAL", "local_plus"])
     cloud_count = sum(1 for r in results if r.actual_tier in ["cloud", "CLOUD"])
 
     escalation_count = sum(
@@ -361,9 +355,7 @@ def store_benchmark_learnings(results: list[BenchmarkResult], context: Any) -> N
 
     # Per-agent success rates
     for agent_type in AgentType:
-        agent_results = [
-            r for r in results if r.agent_type == agent_type.value
-        ]
+        agent_results = [r for r in results if r.agent_type == agent_type.value]
         if agent_results:
             patterns["agent_success_rates"][agent_type.value] = sum(
                 1 for r in agent_results if r.success
@@ -532,9 +524,7 @@ def run_benchmark(
 
 def main():
     """CLI entry point for benchmark execution."""
-    parser = argparse.ArgumentParser(
-        description="10-Task Agent Coverage Benchmark for M4 Pro"
-    )
+    parser = argparse.ArgumentParser(description="10-Task Agent Coverage Benchmark for M4 Pro")
     parser.add_argument(
         "--output-dir",
         type=Path,

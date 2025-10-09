@@ -75,9 +75,7 @@ class HybridExecutorIntegrator:
         self.dry_run = dry_run
 
         # Paths
-        self.orchestrator_path = (
-            self.trinity_home / "trinity_protocol" / "core" / "orchestrator.py"
-        )
+        self.orchestrator_path = self.trinity_home / "trinity_protocol" / "core" / "orchestrator.py"
         self.backup_dir = self.trinity_home / "backups"
         self.config_path = (
             self.agency_root / "trinity_protocol" / "config" / "trinity_hybrid_config.yaml"
@@ -151,8 +149,7 @@ class HybridExecutorIntegrator:
         # Check orchestrator exists
         if not self.orchestrator_path.exists():
             raise IntegrationError(
-                f"Orchestrator not found at {self.orchestrator_path}. "
-                "Is Trinity Local installed?"
+                f"Orchestrator not found at {self.orchestrator_path}. Is Trinity Local installed?"
             )
 
         # Check config exists
@@ -163,17 +160,11 @@ class HybridExecutorIntegrator:
             )
 
         # Check for required Agency components
-        hybrid_executor_path = (
-            self.agency_root / "trinity_protocol" / "core" / "hybrid_executor.py"
-        )
-        agent_registry_path = (
-            self.agency_root / "trinity_protocol" / "core" / "agent_registry.py"
-        )
+        hybrid_executor_path = self.agency_root / "trinity_protocol" / "core" / "hybrid_executor.py"
+        agent_registry_path = self.agency_root / "trinity_protocol" / "core" / "agent_registry.py"
 
         if not hybrid_executor_path.exists():
-            raise IntegrationError(
-                f"HybridExecutor not found at {hybrid_executor_path}"
-            )
+            raise IntegrationError(f"HybridExecutor not found at {hybrid_executor_path}")
 
         if not agent_registry_path.exists():
             raise IntegrationError(f"AgentRegistry not found at {agent_registry_path}")
@@ -201,9 +192,7 @@ class HybridExecutorIntegrator:
 
         # Check if already integrated
         if "from trinity_protocol.core.hybrid_executor import" in content:
-            logger.warning(
-                "⚠️  HybridExecutor imports already present. Skipping import update."
-            )
+            logger.warning("⚠️  HybridExecutor imports already present. Skipping import update.")
             return
 
         # Find the OllamaClient import line
@@ -239,9 +228,7 @@ from shared.message_bus import MessageBus
 """
 
         # Insert new imports after OllamaClient import
-        updated_content = content.replace(
-            import_line, import_line + new_imports
-        )
+        updated_content = content.replace(import_line, import_line + new_imports)
 
         if not self.dry_run:
             self.orchestrator_path.write_text(updated_content)
@@ -256,9 +243,7 @@ from shared.message_bus import MessageBus
 
         # Check if already using HybridExecutor
         if "self.hybrid_executor" in content:
-            logger.warning(
-                "⚠️  HybridExecutor spawning already present. Skipping executor update."
-            )
+            logger.warning("⚠️  HybridExecutor spawning already present. Skipping executor update.")
             return
 
         # Find the _spawn_executor method - need to find the LINE start, not just the text
@@ -371,11 +356,7 @@ from shared.message_bus import MessageBus
 
         # Construct new content
         updated_content = (
-            content[:executor_start]
-            + new_executor_method
-            + "\n\n"
-            + legacy_header
-            + original_body
+            content[:executor_start] + new_executor_method + "\n\n" + legacy_header + original_body
         )
 
         if not self.dry_run:
@@ -383,9 +364,7 @@ from shared.message_bus import MessageBus
             self.changes_made = True
             logger.info("✅ Executor spawning updated (legacy preserved as fallback)")
         else:
-            logger.info(
-                "✅ Would update executor spawning (legacy preserved as fallback)"
-            )
+            logger.info("✅ Would update executor spawning (legacy preserved as fallback)")
 
     def _add_config_loading(self) -> None:
         """Add HybridExecutor initialization to __init__ method."""
@@ -506,9 +485,7 @@ from shared.message_bus import MessageBus
         except SyntaxError as e:
             logger.error(f"❌ Syntax error at line {e.lineno}: {e.msg}")
             logger.error(f"DEBUG: Check /tmp/orchestrator_debug.py around line {e.lineno}")
-            raise IntegrationError(
-                f"Syntax error in modified file: {e}. Rolling back..."
-            ) from e
+            raise IntegrationError(f"Syntax error in modified file: {e}. Rolling back...") from e
 
         # Check that all expected components are present
         expected_strings = [
@@ -520,9 +497,7 @@ from shared.message_bus import MessageBus
 
         missing = [s for s in expected_strings if s not in content]
         if missing:
-            raise IntegrationError(
-                f"Missing expected components: {missing}. Rolling back..."
-            )
+            raise IntegrationError(f"Missing expected components: {missing}. Rolling back...")
 
         logger.info("✅ All expected components present")
 

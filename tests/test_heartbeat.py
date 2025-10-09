@@ -6,6 +6,7 @@ Constitutional compliance:
 - Article II: 100% test success (TDD-first)
 - ADR-010: Result pattern for error handling
 """
+
 import time
 from datetime import datetime, timedelta
 from pathlib import Path
@@ -46,9 +47,7 @@ class TestHeartbeatThread:
         initial_heartbeat = datetime.fromisoformat(initial_lines[2])
 
         # Act - Start heartbeat with 1-second interval
-        thread = HeartbeatThread(
-            lock_file=lock_file, session_id=session_id, update_interval=1
-        )
+        thread = HeartbeatThread(lock_file=lock_file, session_id=session_id, update_interval=1)
         thread.start()
 
         # Wait for 2 updates (2+ seconds)
@@ -78,9 +77,7 @@ class TestHeartbeatThread:
         lock_file, session_id = temp_lock_file
 
         # Act
-        thread = HeartbeatThread(
-            lock_file=lock_file, session_id=session_id, update_interval=1
-        )
+        thread = HeartbeatThread(lock_file=lock_file, session_id=session_id, update_interval=1)
         thread.start()
 
         # Wait for thread to start
@@ -101,9 +98,7 @@ class TestHeartbeatThread:
         lock_file, session_id = temp_lock_file
 
         # Act
-        thread = HeartbeatThread(
-            lock_file=lock_file, session_id=session_id, update_interval=1
-        )
+        thread = HeartbeatThread(lock_file=lock_file, session_id=session_id, update_interval=1)
         thread.start()
 
         # Wait for thread to start
@@ -131,9 +126,7 @@ class TestHeartbeatThread:
         lock_file, session_id = temp_lock_file
 
         # Act
-        thread = HeartbeatThread(
-            lock_file=lock_file, session_id=session_id, update_interval=1
-        )
+        thread = HeartbeatThread(lock_file=lock_file, session_id=session_id, update_interval=1)
         thread.start()
 
         # Wait for thread to start
@@ -153,9 +146,7 @@ class TestHeartbeatThread:
         lock_file, session_id = temp_lock_file
 
         # Act
-        thread = HeartbeatThread(
-            lock_file=lock_file, session_id=session_id, update_interval=1
-        )
+        thread = HeartbeatThread(lock_file=lock_file, session_id=session_id, update_interval=1)
         thread.start()
 
         # Wait for first update
@@ -188,9 +179,7 @@ class TestHeartbeatThread:
         lock_file, session_id = temp_lock_file
 
         # Act
-        thread = HeartbeatThread(
-            lock_file=lock_file, session_id=session_id, update_interval=1
-        )
+        thread = HeartbeatThread(lock_file=lock_file, session_id=session_id, update_interval=1)
 
         # Assert - Thread should be daemon (won't block process exit)
         assert thread.daemon is True
@@ -201,9 +190,7 @@ class TestHeartbeatThread:
         lock_file, session_id = temp_lock_file
 
         # Act
-        thread = HeartbeatThread(
-            lock_file=lock_file, session_id=session_id, update_interval=1
-        )
+        thread = HeartbeatThread(lock_file=lock_file, session_id=session_id, update_interval=1)
 
         # Assert - Thread name should include task identifier
         assert "Heartbeat" in thread.name

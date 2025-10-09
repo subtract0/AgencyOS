@@ -61,7 +61,11 @@ class Agent(LeanAgent):
         if instructions_file and not instructions:
             from pathlib import Path
 
-            instructions = Path(instructions_file).read_text()
+            try:
+                instructions = Path(instructions_file).read_text()
+            except FileNotFoundError:
+                # File doesn't exist, use default instructions
+                instructions = None
 
         if not instructions:
             instructions = f"You are {name}, a helpful AI assistant."

@@ -9,6 +9,7 @@ Constitutional compliance:
 - ADR-008: Strict typing with Pydantic models
 - ADR-010: Result pattern for error handling
 """
+
 import re
 import subprocess
 import sys
@@ -60,9 +61,7 @@ def scan_skipped_tests() -> Result[list[SkippedTest], str]:
                 reason = _extract_skip_reason(Path(file_path), test_name)
 
                 skipped_tests.append(
-                    SkippedTest(
-                        file_path=file_path, test_name=test_name, reason=reason
-                    )
+                    SkippedTest(file_path=file_path, test_name=test_name, reason=reason)
                 )
 
         return Ok(skipped_tests)

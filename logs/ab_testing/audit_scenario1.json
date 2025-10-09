@@ -1,0 +1,52 @@
+{
+  "report_id": "proposal_20251008_231551",
+  "decision": "PROMOTE",
+  "agents": {
+    "winner": "agent_v2_advanced",
+    "challenger": "agent_v2_advanced",
+    "incumbent": "agent_v1_baseline"
+  },
+  "statistics": {
+    "confidence": 0.98,
+    "improvement_pct": 22.2,
+    "p_value": 0.05,
+    "effect_size": 1.767,
+    "test_type": "t_test"
+  },
+  "challenger_metrics": {
+    "mean": 0.88,
+    "std_dev": 0.08,
+    "sample_size": 15,
+    "cv": 0.09090909090909091
+  },
+  "incumbent_metrics": {
+    "mean": 0.72,
+    "std_dev": 0.1,
+    "sample_size": 15,
+    "cv": 0.1388888888888889
+  },
+  "costs": {
+    "challenger_per_trial": 0.125,
+    "incumbent_per_trial": 0.116,
+    "increase_pct": 8.0
+  },
+  "evidence": {
+    "task_ids": [
+      "planner_jwt_auth",
+      "planner_rate_limiting",
+      "planner_caching"
+    ],
+    "total_trials": 30,
+    "duration_seconds": 10800.0,
+    "total_cost_usd": 3.75,
+    "data_quality": 1.0
+  },
+  "risk_factors": [],
+  "auto_actions": {
+    "promotable": false,
+    "rejectable": false,
+    "requires_review": false
+  },
+  "timestamp": "2025-10-08T23:15:51.446022",
+  "notes": null
+}

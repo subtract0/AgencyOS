@@ -154,7 +154,9 @@ class ProjectSpec(BaseModel):
     non_goals: list[str] = Field(
         default_factory=list, max_length=10, description="Explicit non-goals"
     )
-    user_personas: list[str] = Field(default_factory=list, max_length=5, description="User personas")
+    user_personas: list[str] = Field(
+        default_factory=list, max_length=5, description="User personas"
+    )
     acceptance_criteria: list[AcceptanceCriterion] = Field(
         ..., min_length=1, max_length=20, description="Success criteria (1-20)"
     )
@@ -331,8 +333,6 @@ class ProjectOutcome(BaseModel):
         default_factory=list, max_length=20, description="Blockers encountered"
     )
     learnings: list[str] = Field(default_factory=list, max_length=20, description="Lessons learned")
-    would_recommend: bool | None = Field(
-        default=None, description="Would user recommend Trinity?"
-    )
+    would_recommend: bool | None = Field(default=None, description="Would user recommend Trinity?")
 
     model_config = ConfigDict(frozen=True)

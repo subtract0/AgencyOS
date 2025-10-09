@@ -9,6 +9,7 @@ import json
 @dataclass
 class ArticleCompliance:
     """Compliance status for a constitutional article."""
+
     article: str
     compliant: bool
     violations: list[dict]
@@ -29,7 +30,7 @@ class ConstitutionalMonitor:
             "article_ii": self.check_article_ii(),
             "article_iii": self.check_article_iii(),
             "article_iv": self.check_article_iv(),
-            "article_v": self.check_article_v()
+            "article_v": self.check_article_v(),
         }
 
     def check_article_i(self) -> ArticleCompliance:
@@ -42,7 +43,7 @@ class ConstitutionalMonitor:
             article="I: Complete Context",
             compliant=len(violations) == 0,
             violations=violations,
-            last_check=datetime.utcnow().isoformat()
+            last_check=datetime.utcnow().isoformat(),
         )
 
     def check_article_ii(self) -> ArticleCompliance:
@@ -55,7 +56,7 @@ class ConstitutionalMonitor:
             article="II: 100% Verification",
             compliant=len(violations) == 0,
             violations=violations,
-            last_check=datetime.utcnow().isoformat()
+            last_check=datetime.utcnow().isoformat(),
         )
 
     def check_article_iii(self) -> ArticleCompliance:
@@ -68,7 +69,7 @@ class ConstitutionalMonitor:
             article="III: Merge Enforcement",
             compliant=len(violations) == 0,
             violations=violations,
-            last_check=datetime.utcnow().isoformat()
+            last_check=datetime.utcnow().isoformat(),
         )
 
     def check_article_iv(self) -> ArticleCompliance:
@@ -81,7 +82,7 @@ class ConstitutionalMonitor:
             article="IV: Learning",
             compliant=len(violations) == 0,
             violations=violations,
-            last_check=datetime.utcnow().isoformat()
+            last_check=datetime.utcnow().isoformat(),
         )
 
     def check_article_v(self) -> ArticleCompliance:
@@ -94,7 +95,7 @@ class ConstitutionalMonitor:
             article="V: Spec-Driven",
             compliant=len(violations) == 0,
             violations=violations,
-            last_check=datetime.utcnow().isoformat()
+            last_check=datetime.utcnow().isoformat(),
         )
 
     def log_compliance(self, compliance: dict[str, ArticleCompliance]):
@@ -106,10 +107,10 @@ class ConstitutionalMonitor:
                 k: {
                     "article": v.article,
                     "compliant": v.compliant,
-                    "violation_count": len(v.violations)
+                    "violation_count": len(v.violations),
                 }
                 for k, v in compliance.items()
-            }
+            },
         }
 
         with open(self.log_path, "a") as f:

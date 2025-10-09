@@ -7,6 +7,7 @@ Constitutional compliance:
 - ADR-008: Strict typing with Pydantic models
 - ADR-010: Result pattern for error handling
 """
+
 import pytest
 
 from shared.models.priority_task import BacklogError, PriorityTask
@@ -249,9 +250,7 @@ class TestPriorityQueueManager:
         tasks = result.unwrap()
         assert len(tasks) == 0
 
-    def test_parse_backlog_preserves_order(
-        self, priority_queue_manager, sample_backlog_markdown
-    ):
+    def test_parse_backlog_preserves_order(self, priority_queue_manager, sample_backlog_markdown):
         """Test that parsed tasks preserve priority order."""
         # Act
         result = priority_queue_manager.parse_backlog(sample_backlog_markdown)
