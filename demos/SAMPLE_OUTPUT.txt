@@ -1,0 +1,155 @@
+
+╭────────────── 🚀 EPIC 4.2: Complete Self-Evolution System Demo ──────────────╮
+│                                                                              │
+│  Demonstrates the end-to-end agent evolution workflow with rich              │
+│  terminal formatting, statistical analysis, and ADR generation.              │
+│                                                                              │
+│  Constitutional Compliance:                                                  │
+│    • Article I: Complete context validation                                  │
+│    • Article II: 100% verification with statistical tests                    │
+│    • Article III: Automated enforcement (no manual overrides)                │
+│    • Article IV: Continuous learning (patterns stored)                       │
+│                                                                              │
+╰──────────────────────────────────────────────────────────────────────────────╯
+
+
+╭──────────────── 🚀 EPIC 4.2: Demo 1: Simple Evolution Cycle ─────────────────╮
+│                                                                              │
+│  Complete workflow from registration to ADR                                  │
+│                                                                              │
+╰──────────────────────────────────────────────────────────────────────────────╯
+
+────────────────────────── Step 1: Agent Registration ──────────────────────────
+✅ Registered baseline_v1: 526c48c4-efae-4d7e-8829-79144d813105
+✅ Registered advanced_v2: 7ea93fa6-97a6-4a8a-9989-5e4d159a2ef4
+───────────────────── Step 2: Running A/B Test (Mock Data) ─────────────────────
+/Users/am/Code/Agency/demos/epic4_2_complete_demo.py:257: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+  "timestamp": datetime.utcnow().isoformat(),
+📊 Generated 3 trials for baseline_v1
+📊 Generated 3 trials for advanced_v2
+💾 Saved to: benchmark_results/demo_results.jsonl
+───────────────────────── Step 3: Statistical Analysis ─────────────────────────
+                    Agent Comparison                    
+┏━━━━━━━━━━━━━━━┳━━━━━━━━━━━━┳━━━━━━━━━━━┳━━━━━━━━━━━━━┓
+┃ Metric        ┃ Challenger ┃ Incumbent ┃ Improvement ┃
+┡━━━━━━━━━━━━━━━╇━━━━━━━━━━━━╇━━━━━━━━━━━╇━━━━━━━━━━━━━┩
+│ mean_cost     │    $0.0940 │   $0.1033 │       -9.0% │
+│ mean_duration │       9.92 │      9.55 │       +3.9% │
+│ mean_score    │      0.869 │     0.712 │      +22.1% │
+│ sample_size   │       3.00 │      3.00 │       +0.0% │
+│ std_dev       │       0.01 │      0.02 │      -56.5% │
+└───────────────┴────────────┴───────────┴─────────────┘
+─────────────────────── Step 4: Statistical Significance ───────────────────────
+       Statistical Tests       
+┏━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━┓
+┃ Metric            ┃   Value ┃
+┡━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━┩
+│ Score Improvement │  +0.157 │
+│ P-value           │  0.0004 │
+│ Recommendation    │ PROMOTE │
+└───────────────────┴─────────┘
+──────────────────────────── Step 5: ADR Generation ────────────────────────────
+📝 Generated ADR: docs/adr/demos/ADR-002-agent-promotion-advanced_v2.md
+╭──────────────────────────────── ADR Preview ─────────────────────────────────╮
+│                                                                              │
+│     1 # ADR-002: Agent Promotion - advanced_v2                               │
+│     2                                                                        │
+│     3 ## Status                                                              │
+│     4 **Proposed** - 2025-10-08                                              │
+│     5                                                                        │
+│     6 ## Context                                                             │
+│     7 A/B testing framework evaluated challenger agent `advanced_v2` agains  │
+│     8                                                                        │
+│     9 ### Challenger Performance (advanced_v2)                               │
+│    10 - Mean Score: 0.869 (±0.010)                                           │
+│    11 - Mean Duration: 9.92s                                                 │
+│    12 - Mean Cost: $0.0940                                                   │
+│    13 - Sample Size: 3                                                       │
+│    14                                                                        │
+│    15 ### Incumbent Performance (baseline_v1)                                │
+│    16 - Mean Score: 0.712 (±0.023)                                           │
+│    17 - Mean Duration: 9.55s                                                 │
+│    18 - Mean Cost: $0.1033                                                   │
+│    19 - Sample Size: 3                                                       │
+│    20                                                                        │
+│    21 ## Decision                                                            │
+│    22 **Recommendation: PROMOTE**                                            │
+│    23                                                                        │
+│    24 ### Statistical Analysis                                               │
+│    25 - Score Improvement: +0.157 (+15.7%)                                   │
+│    26 - Duration Change: +0.37s                                              │
+│    27 - Cost Change: $-0.0093                                                │
+│    28 - p-value: 0.0004                                                      │
+│    29                                                                        │
+│    30 ### Rationale                                                          │
+│    31 The challenger demonstrates statistically significant improvement in   │
+│    32                                                                        │
+│    33 ## Consequences                                                        │
+│    34                                                                        │
+│    35 ### If Promoted                                                        │
+│    36 - **Positive**: Higher quality outputs, lower costs                    │
+│    37 - **Negative**: Minimal risks identified                               │
+│    38                                                                        │
+│    39 ### If Rejected                                                        │
+│    40 - Maintain current performance level                                   │
+│    41 - Continue monitoring for future improvements                          │
+│    42                                                                        │
+│    43 ## Implementation                                                      │
+│    44 1. Update agent registry to promote advanced_v2                        │
+│    45 2. Deploy to production                                                │
+│    46 3. Monitor metrics for 48 hours                                        │
+│    47 4. Rollback if regression detected                                     │
+│    48                                                                        │
+│    49 ## References                                                          │
+│    50 - A/B Testing Framework: EPIC 4.2                                      │
+│    51 - Benchmark Results: Generated 2025-10-08T23:31:03.019111              │
+│    52 - Article IV: Continuous Learning (Constitution)                       │
+│    53                                                                        │
+│    54 ## Review                                                              │
+│    55 - Generated by: ProposalGenerator                                      │
+│    56 - Timestamp: 2025-10-08T23:31:03.019111                                │
+│    57 - Constitutional Compliance: Articles I, II, IV ✓                      │
+│    58                                                                        │
+│    59 ---                                                                    │
+│    60                                                                        │
+│    61 *"Data-driven evolution through rigorous statistical validation."*     │
+│    62                                                                        │
+│                                                                              │
+╰──────────────────────────────────────────────────────────────────────────────╯
+───────────────────────── Step 6: Before/After Summary ─────────────────────────
+                    Evolution Summary                    
+┏━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━┳━━━━━━━━━━━━┳━━━━━━━━━━━━┓
+┃ Metric        ┃ Before (v1) ┃ After (v2) ┃     Change ┃
+┡━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━╇━━━━━━━━━━━━╇━━━━━━━━━━━━┩
+│ Quality Score │       0.712 │      0.869 │     +22.1% │
+│ Sample Size   │           3 │          3 │          — │
+│ Decision      │     Current │    PROMOTE │ ✅ Promote │
+└───────────────┴─────────────┴────────────┴────────────┘
+
+✅ Demo 1 Complete!
+
+
+
+──────────────────────────────── Demo Complete ─────────────────────────────────
+
+╭──────────────────────────────────────────────────────────────────────────────╮
+│                                                                              │
+│  🎉 All demos completed successfully!                                        │
+│                                                                              │
+│  Key Takeaways:                                                              │
+│    1. Agent Registry tracks performance over time                            │
+│    2. A/B Orchestrator enables data-driven comparisons                       │
+│    3. Parallel execution provides 2-3x speedup                               │
+│    4. Statistical analysis ensures rigorous validation                       │
+│    5. ADR generation automates documentation                                 │
+│                                                                              │
+│  Next Steps:                                                                 │
+│    • Review generated ADRs in docs/adr/demos/                                │
+│    • Run real benchmarks with actual agents                                  │
+│    • Integrate with production workflows                                     │
+│    • Enable continuous learning (Article IV)                                 │
+│                                                                              │
+│  Generated with EPIC 4.2 Self-Evolution System                               │
+│                                                                              │
+╰──────────────────────────────────────────────────────────────────────────────╯
+
