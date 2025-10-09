@@ -1,0 +1,26 @@
+{
+  "shared_workspace": {
+    "enabled": true,
+    "type": "icloud",
+    "path": "/Users/am/Library/Mobile Documents/com~apple~CloudDocs/Agency-Shared",
+    "task_queue_file": "/Users/am/Library/Mobile Documents/com~apple~CloudDocs/Agency-Shared/meta_learning/task_queue.json",
+    "sync_status": "active"
+  },
+  "machines": {
+    "m4_pro": {
+      "hostname": "M4-Pro.local",
+      "agent_ids": ["m4pro-agent1", "m4pro-agent2"],
+      "max_workers": 2
+    },
+    "macbook_air": {
+      "hostname": "MacBook-Air.local",
+      "agent_ids": ["mba-agent1", "mba-agent2"],
+      "max_workers": 2
+    }
+  },
+  "coordination": {
+    "poll_interval": 5,
+    "lock_timeout": 30,
+    "heartbeat_interval": 10
+  }
+}
