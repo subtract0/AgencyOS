@@ -28,7 +28,7 @@ Issues = "https://github.com/agency/agency/issues"
 
 [tool.setuptools.packages.find]
 include = ["agency*", "shared*", "core*", "*_agent*"]
-exclude = ["tests*", "tmp*", "logs*", "data*", "plans*", "specs*", "demos*", "docker*", "patches*", "scratch*"]
+exclude = ["tests*", "tmp*", "logs*", "data*", "plans*", "specs*", "demos*", "docker*", "patches*", "scratch*", "worktrees*"]
 
 [tool.pytest.ini_options]
 minversion = "8.0"
