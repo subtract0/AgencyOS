@@ -230,39 +230,32 @@ jobs:
             let commentBody = '';
 
             if (isApproved) {
-              commentBody = `## 🎯 Unified CI: ✅ APPROVED
-
-**Merge Guardian Status**: All systems green! 🚀
-
-### Validation Results
-- ✅ Lint & Type Safety: PASSED
-- ✅ Test Suite (Py 3.12): PASSED
-- ✅ Test Suite (Py 3.13): PASSED
-- ✅ ADR-002 Compliance: VERIFIED
-
-### Ready for Merge
-All constitutional requirements satisfied. This PR maintains the "No Broken Windows" policy.
-
----
-*Unified CI/CD Pipeline v2.0 - Single Source of Truth*`;
+              commentBody = '## 🎯 Unified CI: ✅ APPROVED\n\n' +
+                '**Merge Guardian Status**: All systems green! 🚀\n\n' +
+                '### Validation Results\n' +
+                '- ✅ Lint & Type Safety: PASSED\n' +
+                '- ✅ Test Suite (Py 3.12): PASSED\n' +
+                '- ✅ Test Suite (Py 3.13): PASSED\n' +
+                '- ✅ ADR-002 Compliance: VERIFIED\n\n' +
+                '### Ready for Merge\n' +
+                'All constitutional requirements satisfied. This PR maintains the "No Broken Windows" policy.\n\n' +
+                '---\n' +
+                '*Unified CI/CD Pipeline v2.0 - Single Source of Truth*';
             } else {
-              commentBody = `## 🚫 Unified CI: ❌ BLOCKED
-
-**Merge Guardian Status**: Quality gates not satisfied 🛑
-
-### Validation Results
-- ${lintStatus === 'success' ? '✅' : '❌'} Lint & Type Safety: ${lintStatus.toUpperCase()}
-- ${testStatus === 'success' ? '✅' : '❌'} Test Suite: ${testStatus.toUpperCase()}
-
-### Required Actions
-${lintStatus !== 'success' ? '- 🔧 Fix linting and type errors\n' : ''}${testStatus !== 'success' ? '- 🧪 Fix test failures\n' : ''}- ♻️ Push fixes to trigger re-validation
-
-### ADR-002 Enforcement
-🚫 **Merge blocked** - 100% success rate required
-🔒 **No bypass allowed** - Quality is non-negotiable
-
----
-*Unified CI/CD Pipeline v2.0 - Constitutional Compliance*`;
+              commentBody = '## 🚫 Unified CI: ❌ BLOCKED\n\n' +
+                '**Merge Guardian Status**: Quality gates not satisfied 🛑\n\n' +
+                '### Validation Results\n' +
+                '- ' + (lintStatus === 'success' ? '✅' : '❌') + ' Lint & Type Safety: ' + lintStatus.toUpperCase() + '\n' +
+                '- ' + (testStatus === 'success' ? '✅' : '❌') + ' Test Suite: ' + testStatus.toUpperCase() + '\n\n' +
+                '### Required Actions\n' +
+                (lintStatus !== 'success' ? '- 🔧 Fix linting and type errors\n' : '') +
+                (testStatus !== 'success' ? '- 🧪 Fix test failures\n' : '') +
+                '- ♻️ Push fixes to trigger re-validation\n\n' +
+                '### ADR-002 Enforcement\n' +
+                '🚫 **Merge blocked** - 100% success rate required\n' +
+                '🔒 **No bypass allowed** - Quality is non-negotiable\n\n' +
+                '---\n' +
+                '*Unified CI/CD Pipeline v2.0 - Constitutional Compliance*';
             }
 
             // Find and update existing comment, or create new one
