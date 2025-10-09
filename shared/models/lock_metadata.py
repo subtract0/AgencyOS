@@ -44,6 +44,10 @@ class LockHandle(BaseModel):
     heartbeat_thread_id: str | None = Field(
         default=None, description="Heartbeat thread identifier (if active)"
     )
+    wait_time_seconds: float = Field(
+        default=0.0,
+        description="Time waited to acquire lock (0 if immediate, >0 if contention)",
+    )
 
     model_config = ConfigDict(extra="forbid")
 
@@ -57,7 +61,7 @@ class LockError(BaseModel):
 
     error_type: str = Field(
         ...,
-        description="Error type: AlreadyLocked, NotOwned, NotFound, IOError, InvalidSession",
+        description="Error type: AlreadyLocked, NotOwned, NotFound, IOError, InvalidSession, Timeout",
     )
     message: str = Field(..., description="Human-readable error message")
     task_id: str | None = Field(default=None, description="Task that caused the error")
@@ -110,4 +114,13 @@ class LockError(BaseModel):
             error_type="InvalidSession",
             message=f"Invalid session ID format: '{session_id}'",
             session_id=session_id,
+        )
+
+    @classmethod
+    def timeout(cls, task_id: str, timeout_seconds: float) -> "LockError":
+        """Create Timeout error."""
+        return cls(
+            error_type="Timeout",
+            message=f"Timeout waiting for lock on task '{task_id}' after {timeout_seconds}s",
+            task_id=task_id,
         )
