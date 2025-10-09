@@ -120,6 +120,7 @@ class ParallelABOrchestrator(EnhancedABOrchestrator):
 
         # Create timestamped results file with UUID to avoid conflicts in parallel test execution
         import uuid
+
         timestamp = datetime.utcnow().strftime("%Y%m%d_%H%M%S")
         unique_id = str(uuid.uuid4())[:8]  # Short UUID suffix
         results_path = results_dir / f"results_{timestamp}_{unique_id}.jsonl"
@@ -183,7 +184,7 @@ class ParallelABOrchestrator(EnhancedABOrchestrator):
                                     f"[{self._completed_jobs}/{self._total_jobs}] "
                                     f"({progress:.1f}%) "
                                     f"Completed: {agent_id} on {task.task_id} "
-                                    f"(repeat {repeat_idx+1}/{self.repeats}), "
+                                    f"(repeat {repeat_idx + 1}/{self.repeats}), "
                                     f"score={result['scores']['aggregate']:.2%}, "
                                     f"cost=${result['cost_usd']:.4f}"
                                 )
@@ -400,12 +401,8 @@ if __name__ == "__main__":
     )
 
     parser = argparse.ArgumentParser(description="Parallel A/B Orchestrator")
-    parser.add_argument(
-        "--agents", nargs="+", default=["agent_v1", "agent_v2"], help="Agent IDs"
-    )
-    parser.add_argument(
-        "--tasks", nargs="+", default=["planner_api_auth_jwt"], help="Task IDs"
-    )
+    parser.add_argument("--agents", nargs="+", default=["agent_v1", "agent_v2"], help="Agent IDs")
+    parser.add_argument("--tasks", nargs="+", default=["planner_api_auth_jwt"], help="Task IDs")
     parser.add_argument("--repeats", type=int, default=2, help="Repeat trials")
     parser.add_argument("--budget", type=float, default=5.0, help="Budget limit (USD)")
     parser.add_argument("--workers", type=int, default=3, help="Max workers")

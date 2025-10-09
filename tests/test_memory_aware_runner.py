@@ -156,10 +156,10 @@ def test_check_ollama_running_via_marker_file():
 
 def test_check_ollama_not_running():
     """Should return False when Ollama not running."""
-    with patch('psutil.process_iter', return_value=[]):
-        with patch('os.path.exists', return_value=False):
+    with patch("psutil.process_iter", return_value=[]):
+        with patch("os.path.exists", return_value=False):
             # Mock health check to return unhealthy
-            with patch('tools.memory_aware_test_runner.check_ollama_health') as mock_health:
+            with patch("tools.memory_aware_test_runner.check_ollama_health") as mock_health:
                 from shared.type_definitions.result import Err
                 from tools.memory_aware_test_runner import check_ollama_running
                 from tools.ollama_health_check import OllamaHealthError
@@ -175,13 +175,15 @@ def test_check_ollama_running_via_docker_health_check():
     from tools.ollama_health_check import OllamaHealthStatus
 
     # Mock health check to return Docker-based Ollama
-    with patch('tools.memory_aware_test_runner.check_ollama_health') as mock_health:
-        mock_health.return_value = Ok(OllamaHealthStatus(
-            is_running=True,
-            is_docker=True,
-            endpoint="http://localhost:11434",
-            models_available=["qwen3-coder:30b"],
-            inference_working=True
-        ))
+    with patch("tools.memory_aware_test_runner.check_ollama_health") as mock_health:
+        mock_health.return_value = Ok(
+            OllamaHealthStatus(
+                is_running=True,
+                is_docker=True,
+                endpoint="http://localhost:11434",
+                models_available=["qwen3-coder:30b"],
+                inference_working=True,
+            )
+        )
 
         assert check_ollama_running() == True, "Should detect Docker Ollama via health check"

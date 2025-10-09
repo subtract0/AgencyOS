@@ -311,7 +311,11 @@ class TestProposalReport:
         )
 
     def test_valid_proposal_report_promote(
-        self, sample_challenger_metrics, sample_incumbent_metrics, sample_comparison, sample_evidence
+        self,
+        sample_challenger_metrics,
+        sample_incumbent_metrics,
+        sample_comparison,
+        sample_evidence,
     ):
         """Test creation of valid ProposalReport with PROMOTE recommendation."""
         report = ProposalReport(
@@ -337,7 +341,11 @@ class TestProposalReport:
         assert report.is_auto_promotable() is True
 
     def test_proposal_report_reject_regression(
-        self, sample_challenger_metrics, sample_incumbent_metrics, sample_comparison, sample_evidence
+        self,
+        sample_challenger_metrics,
+        sample_incumbent_metrics,
+        sample_comparison,
+        sample_evidence,
     ):
         """Test ProposalReport with REJECT recommendation (regression detected)."""
         # Modify challenger to perform worse
@@ -374,7 +382,11 @@ class TestProposalReport:
         assert report.is_auto_rejectable() is True
 
     def test_proposal_report_human_review_marginal(
-        self, sample_challenger_metrics, sample_incumbent_metrics, sample_comparison, sample_evidence
+        self,
+        sample_challenger_metrics,
+        sample_incumbent_metrics,
+        sample_comparison,
+        sample_evidence,
     ):
         """Test ProposalReport with HUMAN_REVIEW (marginal improvement)."""
         # Modify challenger to have marginal improvement
@@ -411,7 +423,11 @@ class TestProposalReport:
         assert report.is_auto_promotable() is False
 
     def test_winner_validation_invalid_winner(
-        self, sample_challenger_metrics, sample_incumbent_metrics, sample_comparison, sample_evidence
+        self,
+        sample_challenger_metrics,
+        sample_incumbent_metrics,
+        sample_comparison,
+        sample_evidence,
     ):
         """Test that winner_id must be either challenger or incumbent."""
         with pytest.raises(ValidationError, match="must be either challenger_id"):
@@ -433,7 +449,11 @@ class TestProposalReport:
             )
 
     def test_auto_promotable_criteria(
-        self, sample_challenger_metrics, sample_incumbent_metrics, sample_comparison, sample_evidence
+        self,
+        sample_challenger_metrics,
+        sample_incumbent_metrics,
+        sample_comparison,
+        sample_evidence,
     ):
         """Test auto-promotion criteria enforcement."""
         # Valid PROMOTE case
@@ -461,7 +481,11 @@ class TestProposalReport:
         assert report.is_auto_promotable() is False
 
     def test_get_promotion_summary(
-        self, sample_challenger_metrics, sample_incumbent_metrics, sample_comparison, sample_evidence
+        self,
+        sample_challenger_metrics,
+        sample_incumbent_metrics,
+        sample_comparison,
+        sample_evidence,
     ):
         """Test promotion summary generation."""
         report = ProposalReport(
@@ -491,7 +515,11 @@ class TestProposalReport:
         assert summary["requires_review"] is False
 
     def test_to_audit_log(
-        self, sample_challenger_metrics, sample_incumbent_metrics, sample_comparison, sample_evidence
+        self,
+        sample_challenger_metrics,
+        sample_incumbent_metrics,
+        sample_comparison,
+        sample_evidence,
     ):
         """Test audit log generation."""
         report = ProposalReport(
@@ -530,7 +558,11 @@ class TestProposalReport:
         assert len(json_str) > 0
 
     def test_risk_factors_trigger_human_review(
-        self, sample_challenger_metrics, sample_incumbent_metrics, sample_comparison, sample_evidence
+        self,
+        sample_challenger_metrics,
+        sample_incumbent_metrics,
+        sample_comparison,
+        sample_evidence,
     ):
         """Test that risk factors force human review."""
         report = ProposalReport(
@@ -555,7 +587,11 @@ class TestProposalReport:
         assert report.requires_human_review() is True
 
     def test_marginal_improvement_triggers_human_review(
-        self, sample_challenger_metrics, sample_incumbent_metrics, sample_comparison, sample_evidence
+        self,
+        sample_challenger_metrics,
+        sample_incumbent_metrics,
+        sample_comparison,
+        sample_evidence,
     ):
         """Test that marginal improvements (0-5%) trigger human review."""
         report = ProposalReport(

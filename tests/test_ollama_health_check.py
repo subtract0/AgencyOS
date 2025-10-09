@@ -66,9 +66,7 @@ class TestDetectDockerOllama:
     @patch("subprocess.run")
     def test_detect_docker_ollama_running(self, mock_run):
         """Test detecting Docker Ollama when container is running."""
-        mock_run.return_value = Mock(
-            returncode=0, stdout="ollama-container\n", stderr=""
-        )
+        mock_run.return_value = Mock(returncode=0, stdout="ollama-container\n", stderr="")
 
         result = detect_docker_ollama()
         assert result is True
@@ -104,17 +102,13 @@ class TestCheckOllamaHealth:
         # Mock /api/tags response
         mock_tags_response = AsyncMock()
         mock_tags_response.status = 200
-        mock_tags_response.json = AsyncMock(
-            return_value={"models": [{"name": "qwen3-coder:30b"}]}
-        )
+        mock_tags_response.json = AsyncMock(return_value={"models": [{"name": "qwen3-coder:30b"}]})
         mock_tags_response.raise_for_status = MagicMock()  # Sync method, not async
 
         # Mock /api/generate response for inference test
         mock_generate_response = AsyncMock()
         mock_generate_response.status = 200
-        mock_generate_response.json = AsyncMock(
-            return_value={"response": "2", "done": True}
-        )
+        mock_generate_response.json = AsyncMock(return_value={"response": "2", "done": True})
         mock_generate_response.raise_for_status = MagicMock()  # Sync method, not async
 
         # Create proper async context managers using MagicMock
@@ -267,9 +261,7 @@ class TestCheckOllamaHealth:
         # Tags endpoint succeeds
         mock_tags_response = AsyncMock()
         mock_tags_response.status = 200
-        mock_tags_response.json = AsyncMock(
-            return_value={"models": [{"name": "qwen3-coder:30b"}]}
-        )
+        mock_tags_response.json = AsyncMock(return_value={"models": [{"name": "qwen3-coder:30b"}]})
         mock_tags_response.raise_for_status = MagicMock()
 
         # Inference endpoint fails

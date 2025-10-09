@@ -43,6 +43,7 @@ class Task:
         machine: Machine identifier where task is running
         priority: Priority level (higher = more important)
     """
+
     task_id: str
     type: str  # "spec", "code", "test", "integrate"
     description: str
@@ -115,6 +116,7 @@ class TaskQueue:
         if config_file.exists():
             try:
                 import json
+
                 config = json.loads(config_file.read_text())
                 if config.get("shared_workspace", {}).get("enabled"):
                     icloud_path = Path(config["shared_workspace"]["task_queue_file"])
@@ -157,7 +159,7 @@ class TaskQueue:
         Constitutional Compliance:
             - Article II: Exclusive lock prevents concurrent writes
         """
-        with open(self.queue_file, 'w') as f:
+        with open(self.queue_file, "w") as f:
             # Acquire exclusive lock for writing (blocks all others)
             fcntl.flock(f.fileno(), fcntl.LOCK_EX)
             try:
@@ -211,9 +213,7 @@ class TaskQueue:
 
         # Sort by priority (descending) for priority-based claiming
         pending_tasks = sorted(
-            [t for t in tasks if t.status == "pending"],
-            key=lambda t: t.priority,
-            reverse=True
+            [t for t in tasks if t.status == "pending"], key=lambda t: t.priority, reverse=True
         )
 
         # Find first claimable task
@@ -354,7 +354,7 @@ class TaskQueue:
             "in_progress": len([t for t in tasks if t.status == "in_progress"]),
             "completed": len([t for t in tasks if t.status == "completed"]),
             "failed": len([t for t in tasks if t.status == "failed"]),
-            "tasks": [asdict(t) for t in tasks]
+            "tasks": [asdict(t) for t in tasks],
         }
 
     def get_next_available(self, agent_id: str) -> dict | None:
@@ -403,7 +403,7 @@ Examples:
 
   # Clear queue (caution!)
   %(prog)s clear
-        """
+        """,
     )
 
     subparsers = parser.add_subparsers(dest="command", required=True)
@@ -411,9 +411,12 @@ Examples:
     # Add task
     add = subparsers.add_parser("add", help="Add task to queue")
     add.add_argument("--id", required=True, help="Task ID")
-    add.add_argument("--type", required=True,
-                     choices=["spec", "code", "test", "integrate", "doc"],
-                     help="Task type")
+    add.add_argument(
+        "--type",
+        required=True,
+        choices=["spec", "code", "test", "integrate", "doc"],
+        help="Task type",
+    )
     add.add_argument("--desc", required=True, help="Description")
     add.add_argument("--files", nargs="+", default=[], help="Files to modify")
     add.add_argument("--deps", nargs="+", default=[], help="Dependency task IDs")
@@ -439,7 +442,7 @@ Examples:
             description=args.desc,
             files_to_modify=args.files,
             dependencies=args.deps,
-            priority=args.priority
+            priority=args.priority,
         )
         queue.add_task(task)
 
@@ -452,7 +455,7 @@ Examples:
 
     elif args.command == "clear":
         confirm = input("Clear all tasks? [y/N]: ")
-        if confirm.lower() == 'y':
+        if confirm.lower() == "y":
             queue.clear_queue()
 
 

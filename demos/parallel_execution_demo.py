@@ -234,7 +234,7 @@ def demo_budget_enforcement():
     print(f"  Jobs completed: {orchestrator._completed_jobs}/12")
     print(f"  Total cost:     ${orchestrator.total_cost:.4f}")
     print(f"  Budget limit:   ${orchestrator.budget_limit:.4f}")
-    print(f"  Budget used:    {(orchestrator.total_cost/orchestrator.budget_limit)*100:.1f}%")
+    print(f"  Budget used:    {(orchestrator.total_cost / orchestrator.budget_limit) * 100:.1f}%")
     print()
 
     if orchestrator.total_cost <= orchestrator.budget_limit * 1.2:

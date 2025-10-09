@@ -60,7 +60,7 @@ def check_ollama_running() -> bool:
         pass
 
     # Method 2: Check for ollama process (native only)
-    for proc in psutil.process_iter(['name']):
+    for proc in psutil.process_iter(["name"]):
         try:
             if proc.info["name"] and "ollama" in proc.info["name"].lower():
                 return True

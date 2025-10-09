@@ -229,7 +229,9 @@ class ProposalGenerator:
 
         return grouped
 
-    def _validate_samples(self, agent_results: dict[str, list[dict[str, object]]]) -> Result[None, str]:
+    def _validate_samples(
+        self, agent_results: dict[str, list[dict[str, object]]]
+    ) -> Result[None, str]:
         """
         Validate minimum sample size per agent.
 
@@ -279,7 +281,9 @@ class ProposalGenerator:
 
         return Ok((challenger_id, incumbent_id))
 
-    def _calculate_statistics(self, results: list[dict[str, object]], agent_id: str) -> AgentMetrics:
+    def _calculate_statistics(
+        self, results: list[dict[str, object]], agent_id: str
+    ) -> AgentMetrics:
         """
         Calculate statistical metrics for agent results.
 
@@ -329,7 +333,9 @@ class ProposalGenerator:
             raw_scores=scores,
         )
 
-    def _compare_agents(self, challenger: AgentMetrics, incumbent: AgentMetrics) -> ComparisonResult:
+    def _compare_agents(
+        self, challenger: AgentMetrics, incumbent: AgentMetrics
+    ) -> ComparisonResult:
         """
         Compare challenger vs incumbent with statistical tests.
 
@@ -338,7 +344,9 @@ class ProposalGenerator:
         """
         # Calculate improvements (positive = challenger better)
         score_improvement = challenger.mean_score - incumbent.mean_score
-        duration_improvement = challenger.mean_duration - incumbent.mean_duration  # Negative = faster
+        duration_improvement = (
+            challenger.mean_duration - incumbent.mean_duration
+        )  # Negative = faster
         cost_improvement = challenger.mean_cost - incumbent.mean_cost  # Negative = cheaper
 
         # Calculate p-value if scipy available (Article II: Verification)
@@ -493,7 +501,7 @@ class ProposalGenerator:
         return f"""# ADR-{adr_number:03d}: Agent Promotion - {report.challenger.agent_id}
 
 ## Status
-**{status}** - {datetime.utcnow().strftime('%Y-%m-%d')}
+**{status}** - {datetime.utcnow().strftime("%Y-%m-%d")}
 
 ## Context
 A/B testing framework evaluated challenger agent `{report.challenger.agent_id}` against incumbent `{report.incumbent.agent_id}`.
@@ -508,7 +516,7 @@ A/B testing framework evaluated challenger agent `{report.challenger.agent_id}` 
 **Recommendation: {report.recommendation}**
 
 ### Statistical Analysis
-- Score Improvement: {report.comparison.score_improvement:+.3f} ({report.comparison.score_improvement*100:+.1f}%)
+- Score Improvement: {report.comparison.score_improvement:+.3f} ({report.comparison.score_improvement * 100:+.1f}%)
 - Duration Change: {report.comparison.duration_improvement:+.2f}s
 - Cost Change: ${report.comparison.cost_improvement:+.4f}
 - {p_value_text}

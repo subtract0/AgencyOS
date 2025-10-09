@@ -183,10 +183,14 @@ def scenario_1_promote_clear_winner():
 
     # Display detailed metrics
     print("\nDETAILED METRICS:")
-    print(f"  Challenger: mean={challenger_metrics.mean_score:.3f}, "
-          f"std={challenger_metrics.std_dev:.3f}, n={challenger_metrics.sample_size}")
-    print(f"  Incumbent:  mean={incumbent_metrics.mean_score:.3f}, "
-          f"std={incumbent_metrics.std_dev:.3f}, n={incumbent_metrics.sample_size}")
+    print(
+        f"  Challenger: mean={challenger_metrics.mean_score:.3f}, "
+        f"std={challenger_metrics.std_dev:.3f}, n={challenger_metrics.sample_size}"
+    )
+    print(
+        f"  Incumbent:  mean={incumbent_metrics.mean_score:.3f}, "
+        f"std={incumbent_metrics.std_dev:.3f}, n={incumbent_metrics.sample_size}"
+    )
     print(f"  Effect Size: {comparison.effect_size:.3f}")
     print(f"  Statistical Significance: {comparison.is_significant}")
 
