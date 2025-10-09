@@ -436,7 +436,17 @@ def autonomous_execution_loop(plan_path: str, tasks: list[Task]) -> ExecutionRes
             print(f"🤖 Spawning CodeAgent...")
             impl_result = spawn_code_agent(task, plan_path, context)
 
-            # Step 4: Run tests (green phase)
+            # Step 4: Auto-Lint & Format (BEFORE tests)
+            print(f"🔧 Auto-linting modified files...")
+            lint_result = auto_lint_and_format(impl_result.modified_files)
+
+            if lint_result.is_err():
+                # Spawn Quality Enforcer to fix lint issues
+                fix_result = spawn_quality_enforcer_fix(lint_result.unwrap_err())
+                if not fix_result.success:
+                    raise ExecutionError(f"Auto-lint failed: {lint_result.unwrap_err()}")
+
+            # Step 5: Run tests (green phase)
             test_run = Bash(f"pytest {impl_result.test_files} -xvs")
 
             if test_run.failed:
@@ -448,7 +458,7 @@ def autonomous_execution_loop(plan_path: str, tasks: list[Task]) -> ExecutionRes
                 else:
                     raise ExecutionError(f"Tests failed, auto-fix unsuccessful: {test_run.errors}")
 
-            # Step 5: Quality check
+            # Step 6: Quality check
             quality_result = spawn_quality_enforcer_validate(impl_result.files)
 
             if not quality_result.constitutional_compliant:
@@ -578,6 +588,60 @@ Output: Implementation files
 """
     )
     return result
+
+
+def auto_lint_and_format(modified_files: list[str]) -> Result[bool, str]:
+    """
+    Auto-lint and format Python files BEFORE commit.
+
+    Runs ruff format + check on all modified Python files.
+    Re-runs tests after auto-fixes to ensure no breakage.
+
+    Returns:
+        Ok(True) if all files pass quality gates
+        Err(message) if violations remain after auto-fix
+    """
+    for file in modified_files:
+        if file.endswith(".py"):
+            # Step 1: Auto-format
+            format_result = subprocess.run(
+                ["ruff", "format", file],
+                capture_output=True,
+                text=True
+            )
+            if format_result.returncode != 0:
+                return Err(f"Ruff format failed for {file}: {format_result.stderr}")
+
+            # Step 2: Auto-fix lints
+            lint_result = subprocess.run(
+                ["ruff", "check", "--fix", file],
+                capture_output=True,
+                text=True
+            )
+            if lint_result.returncode != 0:
+                return Err(f"Ruff lint errors in {file}:\n{lint_result.stdout}")
+
+            # Step 3: Verify Dict[Any] ban
+            dict_check = subprocess.run(
+                ["python", "tools/quality/no_dict_any_check.py"],
+                capture_output=True,
+                text=True
+            )
+            if dict_check.returncode != 0:
+                # Check if this file is in violations
+                if file in dict_check.stdout:
+                    return Err(f"Dict[Any] violation in {file}:\n{dict_check.stdout}")
+
+    # Step 4: Re-run tests after auto-fixes
+    test_result = subprocess.run(
+        ["pytest", "-x", "--tb=short"],
+        capture_output=True,
+        text=True
+    )
+    if test_result.returncode != 0:
+        return Err(f"Tests failed after auto-lint:\n{test_result.stdout}")
+
+    return Ok(True)
 
 
 def spawn_quality_enforcer_validate(files: list[str]) -> QualityResult:

@@ -96,12 +96,37 @@ def validate_constitutional_compliance(action):
     return True
 ```
 
+## MANDATORY Pre-Write Quality Gates
+
+**BEFORE calling Write/Edit tool, validate code mentally:**
+
+1. ✅ **Ruff Lint**: No unused imports, sorted imports, no F401/F841/I001 errors
+2. ✅ **Ruff Format**: Proper spacing, line breaks (black-compatible)
+3. ✅ **Dict[Any] Ban**: NO `dict[str, Any]` - use Pydantic models always
+4. ✅ **Function Length**: All functions <50 lines (Constitutional Law #8)
+5. ✅ **Type Hints**: All parameters + return types annotated
+6. ✅ **Result Pattern**: Error handling via `Result<T,E>` (no try/catch for control flow)
+
+**Why**: Pre-tool-use hooks will BLOCK writes with quality violations. Writing code that passes these gates on first try eliminates 50% of merge time waste.
+
+**Validation Checklist**:
+```python
+# Before Write tool:
+# ✅ ruff check would pass
+# ✅ ruff format --check would pass
+# ✅ No dict[str, Any] present
+# ✅ All functions <50 lines
+# ✅ Full type coverage
+```
+
+**Auto-Lint Integration**: PrimeCCC Phase 3.5 auto-runs `ruff format + check --fix`, but writing compliant code FIRST is faster.
+
 ## Core Competencies
 
 - Test-Driven Development (TDD)
-- Clean code architecture
-- Type-safe programming
-- Functional programming patterns
+- Clean code architecture (quality gates enforced)
+- Type-safe programming (strict typing, no Dict[Any])
+- Functional programming patterns (Result<T,E>)
 - Refactoring and optimization
 - Git workflow management
 
