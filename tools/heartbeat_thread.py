@@ -54,23 +54,24 @@ class HeartbeatThread(threading.Thread):
         - Lock file removed
         - Ownership changed
         - Stop event set
+
+        Uses fine-grained 1-second checks for fast exit detection.
         """
         while not self._stop_event.is_set():
-            # Sleep first (don't update immediately after acquisition)
-            time.sleep(self.update_interval)
+            # CRITICAL FIX: Check stop event every 1 second instead of full interval
+            # This allows fast exit when lock released or file deleted
+            for _ in range(self.update_interval):
+                if self._stop_event.wait(timeout=1.0):  # Check every 1 second
+                    return  # Exit immediately if stop requested
 
-            # Exit if stop requested
-            if self._stop_event.is_set():
-                break
-
-            # Check if lock still exists
+            # Check if lock still exists (fast detection)
             if not self.lock_file.exists():
-                break  # Lock released, exit thread
+                return  # Lock released, exit thread
 
-            # Update heartbeat
-            update_success = self._update_heartbeat()
+            # Update heartbeat with retry logic
+            update_success = self._update_heartbeat_with_retry()
             if not update_success:
-                break  # Ownership lost or error, exit thread
+                return  # Ownership lost or unrecoverable error
 
     def stop(self):
         """Signal thread to stop gracefully."""
@@ -79,6 +80,8 @@ class HeartbeatThread(threading.Thread):
     def _update_heartbeat(self) -> bool:
         """
         Update heartbeat timestamp (line 3) in lock file.
+
+        DEPRECATED: Use _update_heartbeat_with_retry() instead.
 
         Returns:
             True if updated successfully, False if ownership lost or error
@@ -109,3 +112,52 @@ class HeartbeatThread(threading.Thread):
             # Transient filesystem error, log warning but don't exit
             # (Could be temporary file system issue)
             return True  # Continue running
+
+    def _update_heartbeat_with_retry(self, max_retries: int = 3) -> bool:
+        """
+        Update heartbeat with exponential backoff retry for temporary IO errors.
+
+        Args:
+            max_retries: Maximum retry attempts (default 3)
+
+        Returns:
+            True if updated successfully
+            False if ownership lost or unrecoverable error after retries
+        """
+        for attempt in range(max_retries):
+            try:
+                # Read current lock file
+                with self.lock_file.open("r") as f:
+                    lines = f.readlines()
+
+                # Verify ownership (line 1)
+                if len(lines) < 6:
+                    return False  # Malformed lock file
+
+                holder = lines[0].strip()
+                if holder != self.session_id:
+                    return False  # Ownership changed, exit thread
+
+                # Update heartbeat (line 3, index 2)
+                lines[2] = f"{datetime.now().isoformat()}\n"
+
+                # Write updated lock file
+                with self.lock_file.open("w") as f:
+                    f.writelines(lines)
+
+                return True  # Success
+
+            except (IOError, OSError, PermissionError):
+                # Temporary filesystem error, retry with backoff
+                if attempt < max_retries - 1:
+                    time.sleep(2**attempt)  # Exponential backoff: 1s, 2s, 4s
+                    continue
+                else:
+                    # Unrecoverable after 3 attempts, exit thread
+                    return False
+
+            except Exception:
+                # Unexpected error, exit thread immediately
+                return False
+
+        return False
