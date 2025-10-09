@@ -8,6 +8,7 @@ Constitutional compliance:
 - ADR-008: Strict typing with Pydantic models
 - ADR-010: Result pattern for error handling
 """
+
 import os
 import tempfile
 import threading
@@ -119,9 +120,7 @@ class TestLockAcquisition:
         assert lines[4] == "testuser"
         assert lines[5] == "Priority #1: Test Task"
 
-    def test_acquire_lock_already_locked_returns_error(
-        self, lock_manager, temp_lock_dir
-    ):
+    def test_acquire_lock_already_locked_returns_error(self, lock_manager, temp_lock_dir):
         """Test that acquiring an already-locked task returns AlreadyLocked error."""
         # Arrange
         task_id = "priority_2_test"
@@ -409,7 +408,9 @@ class TestHeartbeatFailures:
         # Verify heartbeat thread exists with correct name pattern
         thread_names = [t.name for t in threading.enumerate()]
         expected_name = f"Heartbeat-{task_id}"
-        assert expected_name in thread_names, f"Expected thread '{expected_name}' not found in {thread_names}"
+        assert expected_name in thread_names, (
+            f"Expected thread '{expected_name}' not found in {thread_names}"
+        )
 
         # Cleanup
         lock_manager.release_lock(task_id, session_id)
@@ -429,9 +430,7 @@ class TestHeartbeatFailures:
         )
 
         # Use fast update interval for testing (2 seconds)
-        acquire_result = lock_manager.acquire_lock(
-            task_id, session_id, metadata, update_interval=2
-        )
+        acquire_result = lock_manager.acquire_lock(task_id, session_id, metadata, update_interval=2)
         assert acquire_result.is_ok()
 
         # Read initial heartbeat
@@ -485,7 +484,9 @@ class TestHeartbeatFailures:
 
         # Assert - Thread should no longer exist
         threads_after = [t for t in threading.enumerate() if t.name == thread_name]
-        assert len(threads_after) == 0, f"Heartbeat thread still running after release: {threads_after}"
+        assert len(threads_after) == 0, (
+            f"Heartbeat thread still running after release: {threads_after}"
+        )
 
     def test_heartbeat_exits_if_file_deleted_externally(self, lock_manager, temp_lock_dir):
         """Verify heartbeat exits gracefully if lock file deleted externally."""
@@ -502,9 +503,7 @@ class TestHeartbeatFailures:
         )
 
         # Use fast update interval for testing (2 seconds)
-        acquire_result = lock_manager.acquire_lock(
-            task_id, session_id, metadata, update_interval=2
-        )
+        acquire_result = lock_manager.acquire_lock(task_id, session_id, metadata, update_interval=2)
         assert acquire_result.is_ok()
 
         thread_name = f"Heartbeat-{task_id}"
@@ -613,7 +612,9 @@ class TestHeartbeatFailures:
         # Cleanup
         lock_manager.release_lock(task_id, session_id_new)
 
-    def test_heartbeat_resilient_to_temporary_io_errors(self, lock_manager, temp_lock_dir, monkeypatch):
+    def test_heartbeat_resilient_to_temporary_io_errors(
+        self, lock_manager, temp_lock_dir, monkeypatch
+    ):
         """Verify heartbeat continues after temporary filesystem errors."""
         # Arrange
         task_id = "heartbeat_io_error_test"
@@ -628,9 +629,7 @@ class TestHeartbeatFailures:
         )
 
         # Use fast update interval for testing (2 seconds)
-        acquire_result = lock_manager.acquire_lock(
-            task_id, session_id, metadata, update_interval=2
-        )
+        acquire_result = lock_manager.acquire_lock(task_id, session_id, metadata, update_interval=2)
         assert acquire_result.is_ok()
 
         lock_file = temp_lock_dir / f"{task_id}.lock"
@@ -696,9 +695,7 @@ class TestConcurrentHeartbeats:
                 task_description=f"Concurrent Task {task_id[-1]}",
             )
             # Use fast update interval for testing (2 seconds)
-            result = lock_manager.acquire_lock(
-                task_id, session_id, metadata, update_interval=2
-            )
+            result = lock_manager.acquire_lock(task_id, session_id, metadata, update_interval=2)
             assert result.is_ok()
             lock_handles.append(result.unwrap())
 
@@ -723,16 +720,16 @@ class TestConcurrentHeartbeats:
 
         # Assert - All heartbeats should have updated independently
         for task_id in task_ids:
-            assert final_heartbeats[task_id] > initial_heartbeats[task_id], \
+            assert final_heartbeats[task_id] > initial_heartbeats[task_id], (
                 f"Heartbeat for {task_id} did not update"
+            )
 
         # Verify all lock files still have correct ownership
         for task_id, session_id in zip(task_ids, session_ids):
             lock_file = temp_lock_dir / f"{task_id}.lock"
             with lock_file.open("r") as f:
                 lines = f.readlines()
-            assert lines[0].strip() == session_id, \
-                f"Ownership changed for {task_id}"
+            assert lines[0].strip() == session_id, f"Ownership changed for {task_id}"
 
         # Cleanup
         for task_id, session_id in zip(task_ids, session_ids):
@@ -814,7 +811,9 @@ class TestHeartbeatConfiguration:
 
         # Assert - Inspect thread's update_interval attribute
         # NOTE: This will FAIL until we expose update_interval as parameter
-        assert hasattr(heartbeat_thread, "update_interval"), "HeartbeatThread missing update_interval attribute"
+        assert hasattr(heartbeat_thread, "update_interval"), (
+            "HeartbeatThread missing update_interval attribute"
+        )
         # For now, check default value (60 seconds)
         assert heartbeat_thread.update_interval == 60
 
@@ -846,8 +845,9 @@ class TestHeartbeatConfiguration:
         heartbeat_thread = threads[0]
 
         # Assert
-        assert heartbeat_thread.update_interval == 60, \
+        assert heartbeat_thread.update_interval == 60, (
             f"Default interval is {heartbeat_thread.update_interval}, expected 60"
+        )
 
         # Cleanup
         lock_manager.release_lock(task_id, session_id)
@@ -974,7 +974,9 @@ class TestDeadlockDetection:
         # Assert
         assert result.is_err(), "Expected AlreadyLocked error"
         error = result.unwrap_err()
-        assert error.error_type == "AlreadyLocked", f"Expected AlreadyLocked, got {error.error_type}"
+        assert error.error_type == "AlreadyLocked", (
+            f"Expected AlreadyLocked, got {error.error_type}"
+        )
         assert elapsed < 0.1, f"try_acquire should return immediately, took {elapsed}s"
 
         # Cleanup
@@ -1308,8 +1310,9 @@ class TestLockWaitStatistics:
 
         # NOTE: This will FAIL - need wait_time_seconds field
         assert hasattr(handle, "wait_time_seconds")
-        assert handle.wait_time_seconds < 0.1, \
+        assert handle.wait_time_seconds < 0.1, (
             f"Immediate acquisition should have near-zero wait time, got {handle.wait_time_seconds}s"
+        )
 
         # Cleanup
         lock_manager.release_lock(task_id, session_id)
@@ -1342,8 +1345,9 @@ class TestLockWaitStatistics:
 
         # NOTE: This will FAIL - need to add wait_time_seconds field with default=0.0
         assert hasattr(handle, "wait_time_seconds")
-        assert handle.wait_time_seconds == 0.0, \
+        assert handle.wait_time_seconds == 0.0, (
             f"Regular acquire should have 0 wait time, got {handle.wait_time_seconds}s"
+        )
 
         # Cleanup
         lock_manager.release_lock(task_id, session_id)
