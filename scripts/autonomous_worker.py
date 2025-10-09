@@ -396,6 +396,7 @@ Ensure constitutional compliance at all steps.
                 f"""
 import sys
 sys.path.insert(0, '/Users/am/Code/Agency')
+from agency_swarm import Agency
 from agency_code_agent.agency_code_agent import create_agency_code_agent
 from shared.agent_context import create_agent_context
 from shared.model_policy import agent_model
@@ -407,21 +408,25 @@ os.chdir('{abs_worktree_path}')
 # Create agent context
 context = create_agent_context(session_id='{task.task_id}')
 
-# Create agent
-agent = create_agency_code_agent(
+# Create coder agent
+coder = create_agency_code_agent(
     model=agent_model('coder'),
     reasoning_effort='medium',
     agent_context=context
 )
 
-# Execute mission
+# Create single-agent agency
+agency = Agency([coder], shared_instructions="./autonomous_mission.md")
+
+# Execute mission via agency
 mission = '''
 {mission_content}
 '''
 
-print("🤖 Agent executing mission...")
-response = agent.run(mission)
-print(f"✅ Agent completed: {{response}}")
+print("🤖 Agent executing mission via Agency...")
+response = agency.get_completion(message=mission, recipient_agent=coder)
+print(f"✅ Agent completed")
+print(f"📄 Response: {{response}}")
 """
             ]
 
