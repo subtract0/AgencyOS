@@ -911,6 +911,7 @@ class TestRealAPIIntegration:
 
     def test_real_api_with_tool_call(self):
         """Test real API with tool execution."""
+
         # Arrange - Create a simple calculator tool
         def add(a: float, b: float) -> float:
             """Add two numbers."""
