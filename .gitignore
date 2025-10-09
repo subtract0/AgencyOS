@@ -262,6 +262,9 @@ logs/autonomous_healing/*.jsonl
 logs/constitutional_telemetry/*.jsonl
 logs/telemetry/*.jsonl
 
+# Test-specific runtime logs
+tests/logs/
+
 # Benchmark output - generated during performance testing
 benchmark_results/*.jsonl
 
