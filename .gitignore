@@ -251,3 +251,24 @@ logs/telemetry/*.jsonl
 # Benchmark results (already added earlier)
 # benchmark_results/ (already in .gitignore from cleanup agent)
 
+# Runtime databases (SQLite) - generated at runtime, not for git
+*.db
+!tests/fixtures/**/*.db  # Keep test fixture databases
+
+# Runtime logs - JSONL telemetry and event logs
+logs/**/*.jsonl
+logs/snapshots/
+logs/autonomous_healing/*.jsonl
+logs/constitutional_telemetry/*.jsonl
+logs/telemetry/*.jsonl
+
+# Test-specific runtime logs
+tests/logs/
+
+# Benchmark output - generated during performance testing
+benchmark_results/*.jsonl
+
+# General log files
+*.log
+!docs/**/*.log  # Keep example logs in documentation
+
