@@ -49,7 +49,7 @@ class OllamaHealthStatus(BaseModel):
     inference_working: bool = Field(
         description="Whether inference requests are working"
     )
-    error_message: Optional[str] = Field(
+    error_message: str | None = Field(
         default=None, description="Error message if health check failed"
     )
 
@@ -120,7 +120,7 @@ async def check_inference(
 
                 return Err(OllamaHealthError("Invalid inference response format"))
 
-    except asyncio.TimeoutError:
+    except TimeoutError:
         return Err(OllamaHealthError(f"Inference timeout after {timeout}s"))
     except aiohttp.ClientError as e:
         return Err(OllamaHealthError(f"Inference request failed: {e}"))
@@ -194,7 +194,7 @@ async def check_ollama_health(
                         )
                     )
 
-        except asyncio.TimeoutError:
+        except TimeoutError:
             if attempt < max_retries - 1:
                 # Article I: Retry with 2x timeout
                 current_timeout *= 2
