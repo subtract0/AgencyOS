@@ -250,7 +250,9 @@ class TestAgencyAdapter:
             Path(shared_file).unlink()
 
     @patch("shared.lean_agent.OpenAI")
-    def test_agency_shared_instructions_nonexistent_file_uses_as_string(self, mock_openai, monkeypatch):
+    def test_agency_shared_instructions_nonexistent_file_uses_as_string(
+        self, mock_openai, monkeypatch
+    ):
         """Test Agency uses nonexistent file path as string."""
         monkeypatch.setenv("OPENAI_API_KEY", "test-key")
         # Arrange
@@ -387,6 +389,7 @@ class TestBackwardCompatibility:
     def test_autonomous_worker_typical_usage(self, mock_openai, monkeypatch):
         """Test pattern used in autonomous_worker.py."""
         monkeypatch.setenv("OPENAI_API_KEY", "test-key")
+
         # Arrange - Pattern from autonomous_worker.py
         def create_agent_from_instructions_file(name: str, instructions_file: str):
             return Agent(
