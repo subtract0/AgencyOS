@@ -230,6 +230,46 @@ def mock_agent_context():
     return context
 
 
+@pytest.fixture(scope="session")
+def ollama_available() -> bool:
+    """
+    Check if Ollama service is available for tests.
+
+    Returns:
+        bool: True if Ollama is running and inference is working, False otherwise.
+
+    Usage:
+        def test_ollama_integration(ollama_available):
+            if not ollama_available:
+                pytest.skip("Ollama not available")
+            # Test using Ollama
+            pass
+
+        # Or with decorator:
+        @pytest.mark.skipif(not pytest.config.cache.get("ollama", False), reason="Ollama N/A")
+        def test_with_decorator(ollama_available):
+            assert ollama_available  # Will be skipped if False
+
+    This fixture uses session scope to cache the result and avoid repeated
+    health checks during test execution. It has a short timeout (5s) and
+    single retry to fail fast if Ollama is not available.
+    """
+    import asyncio
+
+    try:
+        from tools.ollama_health_check import check_ollama_health
+
+        result = asyncio.run(check_ollama_health(timeout=5, max_retries=1))
+
+        if result.is_ok():
+            health_status = result.unwrap()
+            return health_status.is_running and health_status.inference_working
+        return False
+    except Exception:
+        # Fail gracefully if health check raises an exception
+        return False
+
+
 # ============================================================================
 # GLOBAL MOCKING FOR UNIT TESTS (Prevent Expensive External API Calls)
 # ============================================================================
