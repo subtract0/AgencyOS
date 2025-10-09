@@ -32,9 +32,23 @@ class DashboardState:
         # State tracking
         self.activities = deque(maxlen=15)
         self.agent_states = {
-            "witness": {"status": "idle", "last_action": "Initializing...", "confidence": 0.0, "events": 0},
-            "architect": {"status": "idle", "last_action": "Idle - waiting for patterns", "events": 0},
-            "executor": {"status": "idle", "last_action": "Queue: 0 tasks", "next_task": None, "events": 0}
+            "witness": {
+                "status": "idle",
+                "last_action": "Initializing...",
+                "confidence": 0.0,
+                "events": 0,
+            },
+            "architect": {
+                "status": "idle",
+                "last_action": "Idle - waiting for patterns",
+                "events": 0,
+            },
+            "executor": {
+                "status": "idle",
+                "last_action": "Queue: 0 tasks",
+                "next_task": None,
+                "events": 0,
+            },
         }
 
         # Fun facts rotation
@@ -57,7 +71,7 @@ class DashboardState:
             "📈 Article II: 100% verification and stability",
             "🎓 VectorStore: Cross-session institutional memory",
             "🛡️  Quality enforcement with autonomous healing",
-            "⚡ M4 Pro optimized: Metal acceleration enabled"
+            "⚡ M4 Pro optimized: Metal acceleration enabled",
         ]
 
         # Start time
@@ -104,9 +118,9 @@ class DashboardState:
 
         model_memory = {
             0: 0,
-            1: 2000,   # 1 model loaded (~2GB)
-            2: 7000,   # 2 models loaded (~7GB)
-            3: 15000   # All 3 loaded (~15GB)
+            1: 2000,  # 1 model loaded (~2GB)
+            2: 7000,  # 2 models loaded (~7GB)
+            3: 15000,  # All 3 loaded (~15GB)
         }
 
         total_mb = base_memory + model_memory.get(active_models, 0)
@@ -125,7 +139,9 @@ class TrinityDashboard:
 
         header_text = Text()
         header_text.append("TRINITY LOCAL M4 - AUTONOMOUS LOOP  ", style="bold cyan")
-        header_text.append(f"[{status}]", style="bold green" if self.state.is_running() else "bold red")
+        header_text.append(
+            f"[{status}]", style="bold green" if self.state.is_running() else "bold red"
+        )
         header_text.append(f"\n⏱️  Uptime: {uptime}  |  ", style="white")
         header_text.append(f"💾 Memory: {memory}  |  ", style="white")
         header_text.append("🔧 Models: 3/3", style="white")
@@ -142,7 +158,9 @@ class TrinityDashboard:
         witness = self.state.agent_states["witness"]
         status_icon = "⚙️" if witness["status"] == "active" else "○"
         witness_text = f"{status_icon}  WITNESS (qwen2.5-coder:1.5b)"
-        witness_status = f"[{'green' if witness['status'] == 'active' else 'dim'}]{witness['last_action']}[/]\n"
+        witness_status = (
+            f"[{'green' if witness['status'] == 'active' else 'dim'}]{witness['last_action']}[/]\n"
+        )
         witness_status += f"Confidence: {witness['confidence']:.2f}  |  Events: {witness['events']}"
         table.add_row(witness_text, witness_status)
 
@@ -168,7 +186,13 @@ class TrinityDashboard:
     def render_fun_facts(self) -> Panel:
         """Render rotating fun facts"""
         if not self.state.show_fun_facts:
-            return Panel("", title="fun_facts (hidden - press F)", border_style="dim", box=box.ROUNDED, height=8)
+            return Panel(
+                "",
+                title="fun_facts (hidden - press F)",
+                border_style="dim",
+                box=box.ROUNDED,
+                height=8,
+            )
 
         self.state.rotate_fun_fact()
         fact = self.state.get_current_fun_fact()
@@ -179,19 +203,29 @@ class TrinityDashboard:
     def render_learning_log(self) -> Panel:
         """Render latest learning patterns"""
         if not self.state.show_learning_log:
-            return Panel("", title="learning_log (hidden - press J)", border_style="dim", box=box.ROUNDED, height=8)
+            return Panel(
+                "",
+                title="learning_log (hidden - press J)",
+                border_style="dim",
+                box=box.ROUNDED,
+                height=8,
+            )
 
         # Read latest learning entries
         learning_entries = []
         sessions_dir = self.state.logs_dir.parent.parent / "logs" / "sessions"
         if sessions_dir.exists():
-            session_files = sorted(sessions_dir.glob("*.json"), key=lambda p: p.stat().st_mtime, reverse=True)
+            session_files = sorted(
+                sessions_dir.glob("*.json"), key=lambda p: p.stat().st_mtime, reverse=True
+            )
             for file in session_files[:3]:
                 try:
                     data = json.loads(file.read_text())
                     if "patterns" in data:
                         for pattern in data["patterns"][:2]:
-                            learning_entries.append(f"• {pattern.get('description', 'Pattern detected')}")
+                            learning_entries.append(
+                                f"• {pattern.get('description', 'Pattern detected')}"
+                            )
                 except Exception:
                     pass
 
@@ -199,7 +233,9 @@ class TrinityDashboard:
             learning_entries = ["(no patterns learned yet - waiting for Trinity activity)"]
 
         content = "\n".join(learning_entries[:5])
-        return Panel(content, title="learning_log", border_style="magenta", box=box.ROUNDED, height=8)
+        return Panel(
+            content, title="learning_log", border_style="magenta", box=box.ROUNDED, height=8
+        )
 
     def render_activity(self) -> Panel:
         """Render recent activity stream"""
@@ -238,23 +274,16 @@ class TrinityDashboard:
 
         # Top-level split
         layout.split_column(
-            Layout(name="header", size=4),
-            Layout(name="body"),
-            Layout(name="footer", size=1)
+            Layout(name="header", size=4), Layout(name="body"), Layout(name="footer", size=1)
         )
 
         # Body split
         layout["body"].split_column(
-            Layout(name="pipeline", size=12),
-            Layout(name="boxes"),
-            Layout(name="activity", size=17)
+            Layout(name="pipeline", size=12), Layout(name="boxes"), Layout(name="activity", size=17)
         )
 
         # Optional boxes side by side
-        layout["boxes"].split_row(
-            Layout(name="fun_facts"),
-            Layout(name="learning_log")
-        )
+        layout["boxes"].split_row(Layout(name="fun_facts"), Layout(name="learning_log"))
 
         # Populate
         layout["header"].update(self.render_header())

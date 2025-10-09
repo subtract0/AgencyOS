@@ -157,9 +157,7 @@ class IntentClassification(BaseModel):
     confidence: float = Field(..., ge=0.0, le=1.0, description="Classification confidence")
     action_required: bool = Field(..., description="Whether action is required")
     priority: str = Field(..., description="Priority level (LOW, NORMAL, HIGH, CRITICAL)")
-    suggested_action: str | None = Field(
-        default=None, description="Suggested action for ARCHITECT"
-    )
+    suggested_action: str | None = Field(default=None, description="Suggested action for ARCHITECT")
     rationale: str = Field(..., max_length=500, description="Explanation of classification")
 
     model_config = ConfigDict(frozen=True)

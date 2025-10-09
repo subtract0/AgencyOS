@@ -279,9 +279,9 @@ def test_agent_registry_model_selection_per_tier(agent_registry):
     # Act & Assert
     for agent_type, tier, expected_model in test_cases:
         model = agent_registry.get_model_for_tier(agent_type, tier)
-        assert (
-            model == expected_model
-        ), f"Expected {expected_model} for {agent_type.value} at {tier.value}, got {model}"
+        assert model == expected_model, (
+            f"Expected {expected_model} for {agent_type.value} at {tier.value}, got {model}"
+        )
 
 
 def test_agent_registry_escalation_path(agent_registry):
@@ -670,9 +670,7 @@ async def test_message_bus_supports_correlation_tracking(mock_message_bus):
 
     # Act
     for msg in messages:
-        await mock_message_bus.publish(
-            "execution_queue", msg, correlation_id=correlation_id
-        )
+        await mock_message_bus.publish("execution_queue", msg, correlation_id=correlation_id)
 
     # Assert
     assert len(mock_message_bus._messages) == 3
@@ -720,7 +718,10 @@ def test_agent_registry_models_match_model_policy():
     assert MODEL_MAP[ModelTier.CLOUD][AgentType.SUMMARY] == "gpt-5-mini"
 
     # Check LOCAL_PLUS tier has same models as LOCAL (different params)
-    assert MODEL_MAP[ModelTier.LOCAL_PLUS][AgentType.CODER] == MODEL_MAP[ModelTier.LOCAL][AgentType.CODER]
+    assert (
+        MODEL_MAP[ModelTier.LOCAL_PLUS][AgentType.CODER]
+        == MODEL_MAP[ModelTier.LOCAL][AgentType.CODER]
+    )
 
 
 # =============================================================================
@@ -797,8 +798,14 @@ async def test_complete_integration_orchestrator_to_executor():
 
         # Mock test execution to avoid actual pytest run
         # Also mock Ollama to prevent actual network calls
-        with patch.object(executor, "_run_verification", return_value="ALL TESTS PASSED"), \
-             patch.object(executor.ollama, "chat", new=AsyncMock(return_value="# Generated code\nprint('hello')")):
+        with (
+            patch.object(executor, "_run_verification", return_value="ALL TESTS PASSED"),
+            patch.object(
+                executor.ollama,
+                "chat",
+                new=AsyncMock(return_value="# Generated code\nprint('hello')"),
+            ),
+        ):
             await executor._handle_message(task_message)
 
         # Assert
@@ -884,7 +891,15 @@ def test_metadata_necessary_compliance():
     assert total_tests >= 18, f"Expected ≥18 tests across NECESSARY categories, got {total_tests}"
     assert all(
         category in test_categories
-        for category in ["Normal", "Edge", "Corner", "Error", "Accessibility", "Regression", "Yield"]
+        for category in [
+            "Normal",
+            "Edge",
+            "Corner",
+            "Error",
+            "Accessibility",
+            "Regression",
+            "Yield",
+        ]
     )
 
 

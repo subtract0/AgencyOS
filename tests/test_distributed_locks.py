@@ -8,6 +8,7 @@ Constitutional compliance:
 - ADR-008: Strict typing with Pydantic models
 - ADR-010: Result pattern for error handling
 """
+
 import os
 import tempfile
 import time
@@ -118,9 +119,7 @@ class TestLockAcquisition:
         assert lines[4] == "testuser"
         assert lines[5] == "Priority #1: Test Task"
 
-    def test_acquire_lock_already_locked_returns_error(
-        self, lock_manager, temp_lock_dir
-    ):
+    def test_acquire_lock_already_locked_returns_error(self, lock_manager, temp_lock_dir):
         """Test that acquiring an already-locked task returns AlreadyLocked error."""
         # Arrange
         task_id = "priority_2_test"

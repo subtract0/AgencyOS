@@ -67,6 +67,7 @@ def consolidate_learnings(source):
     # Fallback to empty analysis
     return _consolidate([])
 
+
 __version__ = "1.0.0"
 
 __all__ = [

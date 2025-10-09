@@ -10,7 +10,6 @@ Constitutional Compliance:
 - TDD Mandate: Tests written before implementation
 """
 
-
 import pytest
 
 from shared.pattern_detector import (

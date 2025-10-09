@@ -40,7 +40,7 @@ BENCHMARK_TASKS = [
         "description": "Fix simple type error in helper function",
         "priority": "MEDIUM",
         "file": "trinity_protocol/core/helper_utils.py",
-        "expected_tier": "LOCAL"
+        "expected_tier": "LOCAL",
     },
     {
         "task_id": "bench_002",
@@ -48,7 +48,7 @@ BENCHMARK_TASKS = [
         "description": "Generate unit tests for new OllamaClient module",
         "priority": "HIGH",
         "file": "trinity_protocol/core/ollama_client.py",
-        "expected_tier": "LOCAL"
+        "expected_tier": "LOCAL",
     },
     {
         "task_id": "bench_003",
@@ -56,7 +56,7 @@ BENCHMARK_TASKS = [
         "description": "Consolidate duplicate logging functions",
         "priority": "LOW",
         "file": "trinity_protocol/core/logging_utils.py",
-        "expected_tier": "LOCAL"
+        "expected_tier": "LOCAL",
     },
     {
         "task_id": "bench_004",
@@ -64,7 +64,7 @@ BENCHMARK_TASKS = [
         "description": "Design API for new agent communication protocol",
         "priority": "HIGH",
         "file": "trinity_protocol/core/message_protocol.py",
-        "expected_tier": "LOCAL_PLUS"  # Complex, may need escalation
+        "expected_tier": "LOCAL_PLUS",  # Complex, may need escalation
     },
     {
         "task_id": "bench_005",
@@ -72,7 +72,7 @@ BENCHMARK_TASKS = [
         "description": "Create utility for parsing agent responses",
         "priority": "MEDIUM",
         "file": "trinity_protocol/tools/response_parser.py",
-        "expected_tier": "LOCAL"
+        "expected_tier": "LOCAL",
     },
     {
         "task_id": "bench_006",
@@ -80,7 +80,7 @@ BENCHMARK_TASKS = [
         "description": "Verify constitutional compliance in HybridExecutor",
         "priority": "HIGH",
         "file": "trinity_protocol/core/hybrid_executor.py",
-        "expected_tier": "LOCAL"
+        "expected_tier": "LOCAL",
     },
     {
         "task_id": "bench_007",
@@ -88,7 +88,7 @@ BENCHMARK_TASKS = [
         "description": "Generate new feature for cost tracking visualization",
         "priority": "MEDIUM",
         "file": "trinity_protocol/core/cost_visualizer.py",
-        "expected_tier": "LOCAL"
+        "expected_tier": "LOCAL",
     },
     {
         "task_id": "bench_008",
@@ -96,7 +96,7 @@ BENCHMARK_TASKS = [
         "description": "Fix complex multi-file dependency issue",
         "priority": "HIGH",
         "file": "trinity_protocol/core/orchestrator.py",
-        "expected_tier": "LOCAL_PLUS"  # Complex, may need escalation
+        "expected_tier": "LOCAL_PLUS",  # Complex, may need escalation
     },
     {
         "task_id": "bench_009",
@@ -104,7 +104,7 @@ BENCHMARK_TASKS = [
         "description": "Generate integration tests for Trinity message bus",
         "priority": "HIGH",
         "file": "tests/trinity_protocol/core/test_message_bus_integration.py",
-        "expected_tier": "LOCAL"
+        "expected_tier": "LOCAL",
     },
     {
         "task_id": "bench_010",
@@ -112,8 +112,8 @@ BENCHMARK_TASKS = [
         "description": "Update documentation for Week 4 Day 2 benchmark results",
         "priority": "LOW",
         "file": "docs/benchmarks/week4_day2_results.md",
-        "expected_tier": "LOCAL"
-    }
+        "expected_tier": "LOCAL",
+    },
 ]
 
 
@@ -151,7 +151,7 @@ def inject_benchmark_tasks():
             "description": task["description"],
             "file": task["file"],
             "expected_tier": task["expected_tier"],
-            "injected_at": datetime.now().isoformat()
+            "injected_at": datetime.now().isoformat(),
         }
 
         bus.publish("ORCHESTRATOR", "IMPROVEMENT_SIGNAL", signal_data)
@@ -183,7 +183,9 @@ def inject_benchmark_tasks():
     print("   tail -100 /tmp/trinity.jsonl | grep -E 'timestamp|EXECUTOR'")
 
     print("\n3. Article V Compliance (Spec-Driven Development):")
-    print("   grep 'task_type' /tmp/trinity.jsonl | grep -E 'CODE_FIX|TEST_GENERATION|ARCHITECTURE|VERIFICATION|GENERAL'")
+    print(
+        "   grep 'task_type' /tmp/trinity.jsonl | grep -E 'CODE_FIX|TEST_GENERATION|ARCHITECTURE|VERIFICATION|GENERAL'"
+    )
 
     print("\n4. Real-time monitoring:")
     print("   tail -f /tmp/trinity.jsonl")
@@ -201,11 +203,10 @@ def inject_benchmark_tasks():
 def get_trinity_pid():
     """Get Trinity process PID."""
     import subprocess
+
     try:
         result = subprocess.run(
-            ["pgrep", "-f", "trinity_protocol.core.orchestrator"],
-            capture_output=True,
-            text=True
+            ["pgrep", "-f", "trinity_protocol.core.orchestrator"], capture_output=True, text=True
         )
         return result.stdout.strip() or "UNKNOWN"
     except Exception:

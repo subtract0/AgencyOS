@@ -254,9 +254,7 @@ class HybridExecutor:
         finally:
             await self.message_bus.ack(message.get("_message_id"))
 
-    async def _execute_task_with_escalation(
-        self, task: JSONValue, task_id: str
-    ) -> TaskResult:
+    async def _execute_task_with_escalation(self, task: JSONValue, task_id: str) -> TaskResult:
         """
         Execute task with escalation support.
 
@@ -289,7 +287,9 @@ class HybridExecutor:
                 attempt_result.duration_seconds = duration
 
                 # Calculate cost (local = $0, cloud = actual cost)
-                cost = 0.0 if current_tier != ModelTier.CLOUD else self._estimate_cloud_cost(duration)
+                cost = (
+                    0.0 if current_tier != ModelTier.CLOUD else self._estimate_cloud_cost(duration)
+                )
                 total_cost += cost
 
                 attempts.append(attempt_result)
@@ -320,9 +320,7 @@ class HybridExecutor:
                 decision = self.escalation_policy.evaluate(escalation_context)
 
                 if decision.should_escalate:
-                    logger.warning(
-                        f"⚠️  Escalating: {decision.reason} → {decision.next_tier.value}"
-                    )
+                    logger.warning(f"⚠️  Escalating: {decision.reason} → {decision.next_tier.value}")
                     current_tier = decision.next_tier
                 else:
                     # No more escalation, retry at same tier
@@ -332,7 +330,9 @@ class HybridExecutor:
                 logger.error(f"❌ Attempt {attempt_num} failed: {e}")
                 # Escalate on exception
                 if current_tier != ModelTier.CLOUD:
-                    current_tier = self.agent_registry.escalation_policy._get_next_tier(current_tier)
+                    current_tier = self.agent_registry.escalation_policy._get_next_tier(
+                        current_tier
+                    )
 
         # Max attempts exhausted
         return TaskResult(
@@ -479,7 +479,9 @@ class HybridExecutor:
         parts.append(f"\nYou are the {agent_type.value} agent. Generate production-ready code.")
 
         # Add final reminder
-        parts.append("\n**REMINDER: Generate complete, executable code. No pseudocode or placeholders.**")
+        parts.append(
+            "\n**REMINDER: Generate complete, executable code. No pseudocode or placeholders.**"
+        )
 
         return "\n\n".join(parts)
 
@@ -550,13 +552,12 @@ class HybridExecutor:
         if "FAILED" in test_output:
             # Extract number from "X failed"
             import re
+
             match = re.search(r"(\d+) failed", test_output)
             return int(match.group(1)) if match else 1
         return 0
 
-    def _count_attempts_at_tier(
-        self, attempts: list[ExecutionAttempt], tier: ModelTier
-    ) -> int:
+    def _count_attempts_at_tier(self, attempts: list[ExecutionAttempt], tier: ModelTier) -> int:
         """Count how many attempts made at specific tier."""
         return sum(1 for a in attempts if a.tier == tier)
 
@@ -607,9 +608,7 @@ class HybridExecutor:
             },
         )
 
-    async def _publish_failure(
-        self, task_id: str, task: JSONValue, error: str
-    ) -> None:
+    async def _publish_failure(self, task_id: str, task: JSONValue, error: str) -> None:
         """Publish task failure."""
         await self.message_bus.publish(
             "telemetry_stream",
@@ -629,12 +628,8 @@ class HybridExecutor:
         """Get execution statistics with computed rates."""
         total = self._stats.tasks_processed
 
-        local_pct = (
-            self._stats.local_successes / total * 100 if total > 0 else 0.0
-        )
-        cloud_pct = (
-            self._stats.cloud_successes / total * 100 if total > 0 else 0.0
-        )
+        local_pct = self._stats.local_successes / total * 100 if total > 0 else 0.0
+        cloud_pct = self._stats.cloud_successes / total * 100 if total > 0 else 0.0
 
         return EnrichedStats(
             tasks_processed=self._stats.tasks_processed,

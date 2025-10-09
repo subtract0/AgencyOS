@@ -61,7 +61,8 @@ CATEGORY_TO_PRIORITY = {
 def group_by_priority(findings: dict[str, int]) -> list[PriorityGroup]:
     """Group findings by priority with effort estimates."""
     groups: dict[str, PriorityGroup] = {
-        p: PriorityGroup(priority=p, count=0, total_effort_hours=0.0) for p in ["P0", "P1", "P2", "P3"]
+        p: PriorityGroup(priority=p, count=0, total_effort_hours=0.0)
+        for p in ["P0", "P1", "P2", "P3"]
     }
 
     for category, count in findings.items():
@@ -108,19 +109,25 @@ def format_pr_comment(state: AuditState) -> str:
     groups_map = {g.priority: g for g in groups}
 
     if p3 := groups_map.get("P3"):
-        lines.append(f"- [ ] Fix all P3 (safest, {p3.count} fixes in ~{int(p3.total_effort_hours * 60)} minutes)")
+        lines.append(
+            f"- [ ] Fix all P3 (safest, {p3.count} fixes in ~{int(p3.total_effort_hours * 60)} minutes)"
+        )
     if p2 := groups_map.get("P2"):
         lines.append(f"- [ ] Fix P2 (medium risk, {p2.count} fixes)")
     if p1 := groups_map.get("P1"):
         lines.append(f"- [ ] Manual review P1 (requires judgment, {p1.count} issues)")
 
-    lines.append("\n💡 **Powered by Trinity AI** - [Learn more](https://github.com/subtract0/Agency)")
+    lines.append(
+        "\n💡 **Powered by Trinity AI** - [Learn more](https://github.com/subtract0/Agency)"
+    )
     return "\n".join(lines)
 
 
 def main() -> None:
     """Main entry point."""
-    parser = argparse.ArgumentParser(description="Format Trinity audit results as GitHub PR comment")
+    parser = argparse.ArgumentParser(
+        description="Format Trinity audit results as GitHub PR comment"
+    )
     parser.add_argument(
         "--input",
         default=".output/audit_recommendations/.audit_state.json",

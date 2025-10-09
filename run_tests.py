@@ -358,7 +358,10 @@ def run_specific_test(test_name: str, timed: bool = False) -> int:
         # Add timeout for safety (5 minutes for specific tests)
         t0 = time.time()
         result = subprocess.run(
-            pytest_args, check=False, env=env, timeout=300
+            pytest_args,
+            check=False,
+            env=env,
+            timeout=300,
             # Removed start_new_session to allow proper stdout/stderr inheritance
         )
         duration = time.time() - t0

@@ -77,11 +77,11 @@ def main():
     comment = get_audit_summary(args.audit_dir)
 
     if args.dry_run:
-        print("\n" + "="*80)
+        print("\n" + "=" * 80)
         print("DRY RUN - Comment Preview:")
-        print("="*80)
+        print("=" * 80)
         print(comment)
-        print("="*80)
+        print("=" * 80)
         return
 
     # Post to PR

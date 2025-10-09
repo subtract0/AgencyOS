@@ -676,9 +676,7 @@ class TestCornerCases:
         (100, ModelTier.CLOUD, False, ModelTier.CLOUD),
     ],
 )
-def test_attempt_count_progression(
-    attempt_count, current_tier, expected_escalate, expected_tier
-):
+def test_attempt_count_progression(attempt_count, current_tier, expected_escalate, expected_tier):
     """Test escalation behavior across all attempt counts and tiers."""
     # Arrange
     policy = EscalationPolicy(max_local_attempts=2, max_local_plus_attempts=1)
@@ -913,7 +911,9 @@ class TestRegressionPrevention:
 
         # Act & Assert - CLOUD
         context_cloud = EscalationContext(attempt_count=100, current_tier=ModelTier.CLOUD)
-        assert policy._should_escalate_by_attempts(context_cloud) is False  # Never escalate from CLOUD
+        assert (
+            policy._should_escalate_by_attempts(context_cloud) is False
+        )  # Never escalate from CLOUD
 
     def test_trigger_priority_order_preserved(self):
         """Regression: Trigger priority order should be stable."""

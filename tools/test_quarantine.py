@@ -237,9 +237,7 @@ class TestQuarantineSystem:
 
 
 def main():
-    parser = argparse.ArgumentParser(
-        description="Test Quarantine System - Auto-mark flaky tests"
-    )
+    parser = argparse.ArgumentParser(description="Test Quarantine System - Auto-mark flaky tests")
     parser.add_argument(
         "--check",
         action="store_true",

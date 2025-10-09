@@ -5,6 +5,7 @@ Constitutional compliance:
 - ADR-008: Strict typing enforcement (no Dict[Any, Any])
 - Constitutional Law #2: Explicit types always
 """
+
 from typing import Literal
 
 from pydantic import BaseModel, ConfigDict, Field

@@ -18,6 +18,7 @@ try:
     from hypothesis import assume, given, settings
     from hypothesis import strategies as st
     from hypothesis.stateful import RuleBasedStateMachine, invariant, rule
+
     HYPOTHESIS_AVAILABLE = True
 except ImportError:
     HYPOTHESIS_AVAILABLE = False
@@ -28,8 +29,11 @@ except ImportError:
     assume = lambda x: None
 
     class DummyStrategy:
-        def __call__(self, *args, **kwargs): return self
-        def __getattr__(self, name): return self
+        def __call__(self, *args, **kwargs):
+            return self
+
+        def __getattr__(self, name):
+            return self
 
     st = DummyStrategy()
     RuleBasedStateMachine = object

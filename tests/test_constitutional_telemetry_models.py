@@ -445,9 +445,7 @@ class TestComplianceMetrics:
         start = datetime.now(UTC) - timedelta(days=7)
         end = datetime.now(UTC)
 
-        metrics = ComplianceMetrics(
-            period_start=start, period_end=end, total_events=0
-        )
+        metrics = ComplianceMetrics(period_start=start, period_end=end, total_events=0)
 
         metrics.calculate_rates()
 
@@ -512,7 +510,9 @@ class TestComplianceMetrics:
 
         with pytest.raises(ValidationError) as exc_info:
             ComplianceMetrics(
-                period_start=start, period_end=end, compliance_rate=1.5  # Invalid >1.0
+                period_start=start,
+                period_end=end,
+                compliance_rate=1.5,  # Invalid >1.0
             )
 
         errors = exc_info.value.errors()
@@ -625,16 +625,8 @@ class TestConstitutionalEventIntegration:
                 event_id=f"batch-{i:03d}",
                 article=Article.ARTICLE_II,
                 rule_description=f"Test rule {i}",
-                action=(
-                    EnforcementAction.PASSED
-                    if i % 2 == 0
-                    else EnforcementAction.BLOCKED
-                ),
-                outcome=(
-                    EnforcementOutcome.SUCCESS
-                    if i % 3 == 0
-                    else EnforcementOutcome.FRICTION
-                ),
+                action=(EnforcementAction.PASSED if i % 2 == 0 else EnforcementAction.BLOCKED),
+                outcome=(EnforcementOutcome.SUCCESS if i % 3 == 0 else EnforcementOutcome.FRICTION),
             )
             events.append(event)
 
@@ -656,20 +648,14 @@ class TestConstitutionalEventIntegration:
                 event_id=f"agg-{i:03d}",
                 article=Article.ARTICLE_III,
                 rule_description="Test",
-                action=EnforcementAction.BLOCKED
-                if i < 20
-                else EnforcementAction.PASSED,
-                outcome=EnforcementOutcome.SUCCESS
-                if i < 90
-                else EnforcementOutcome.FALSE_POSITIVE,
+                action=EnforcementAction.BLOCKED if i < 20 else EnforcementAction.PASSED,
+                outcome=EnforcementOutcome.SUCCESS if i < 90 else EnforcementOutcome.FALSE_POSITIVE,
             )
             for i in range(100)
         ]
 
         # Build metrics
-        metrics = ComplianceMetrics(
-            period_start=start, period_end=end, total_events=len(events)
-        )
+        metrics = ComplianceMetrics(period_start=start, period_end=end, total_events=len(events))
 
         # Count outcomes
         for event in events:

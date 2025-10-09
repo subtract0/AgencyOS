@@ -1,0 +1,30 @@
+{
+  "agents": [
+    {
+      "agent_id": "74d69fbc-6613-45b7-8172-c1b0fe820432",
+      "name": "agent_v1",
+      "version": "1.0.0",
+      "status": "active",
+      "created_at": "2025-10-08T23:29:49.338934",
+      "metadata": {}
+    },
+    {
+      "agent_id": "244cde21-b889-4f57-a19f-686ba8d877fa",
+      "name": "agent_v2",
+      "version": "2.0.0",
+      "status": "active",
+      "created_at": "2025-10-08T23:29:49.339180",
+      "metadata": {}
+    },
+    {
+      "agent_id": "00bd2d7c-637a-4424-9ea4-bdb19a3a0450",
+      "name": "agent_v3",
+      "version": "3.0.0",
+      "status": "active",
+      "created_at": "2025-10-08T23:29:49.339307",
+      "metadata": {}
+    }
+  ],
+  "instances": [],
+  "aiq_events": []
+}

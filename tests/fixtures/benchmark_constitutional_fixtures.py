@@ -82,7 +82,7 @@ def print_results(name: str, stats: dict, threshold_ms: float):
     print(f"  StdDev: {stats['stdev']:6.2f}ms")
     print(f"  Samples: {stats['samples']}")
 
-    status = "✅ PASS" if stats['mean'] < threshold_ms else "❌ FAIL"
+    status = "✅ PASS" if stats["mean"] < threshold_ms else "❌ FAIL"
     print(f"  Status: {status} (threshold: {threshold_ms}ms)")
 
 

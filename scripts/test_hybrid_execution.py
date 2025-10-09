@@ -31,9 +31,9 @@ from trinity_protocol.core.hybrid_executor import TaskType, create_hybrid_execut
 async def test_hybrid_execution():
     """Test hybrid executor with real task."""
 
-    print("="*70)
+    print("=" * 70)
     print(" TESTING HYBRID EXECUTOR")
-    print("="*70)
+    print("=" * 70)
     print()
 
     # Step 1: Initialize infrastructure
@@ -111,9 +111,9 @@ async def test_hybrid_execution():
         stats = hybrid_executor.get_stats()
 
         print()
-        print("="*70)
+        print("=" * 70)
         print(" EXECUTION RESULTS")
-        print("="*70)
+        print("=" * 70)
         print()
         print(f"Tasks Processed:        {stats.get('tasks_processed', 0)}")
         print(f"Tasks Succeeded:        {stats.get('tasks_succeeded', 0)}")
@@ -127,9 +127,9 @@ async def test_hybrid_execution():
 
         # Step 8: Validate success criteria
         print()
-        print("="*70)
+        print("=" * 70)
         print(" SUCCESS CRITERIA VALIDATION")
-        print("="*70)
+        print("=" * 70)
         print()
 
         criteria = {
@@ -160,6 +160,7 @@ async def test_hybrid_execution():
     except Exception as e:
         print(f"\n❌ ERROR: {e}")
         import traceback
+
         traceback.print_exc()
         return 1
 

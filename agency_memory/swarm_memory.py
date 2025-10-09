@@ -889,9 +889,7 @@ class SwarmMemory(Memory):
         """Get overview of entire swarm memory state."""
         return self._store.get_swarm_overview()
 
-    def prune_memories(
-        self, target_count: int | None = None, agent_id: str | None = None
-    ) -> int:
+    def prune_memories(self, target_count: int | None = None, agent_id: str | None = None) -> int:
         """Prune low-priority memories for agent."""
         effective_agent_id = agent_id or self.agent_id
         return self._store.prune_memories(effective_agent_id, target_count)

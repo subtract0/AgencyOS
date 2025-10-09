@@ -27,6 +27,7 @@ from pydantic import BaseModel
 
 class MemoryStats(BaseModel):
     """Statistics about memory storage"""
+
     file_count: int
     total_size: int
     total_size_mb: float
@@ -39,6 +40,7 @@ try:
     from anthropic.types.beta import BetaMessageParam
 
     from tools.anthropic_memory_tool import AgencyMemoryTool, create_memory_tool
+
     ANTHROPIC_AVAILABLE = True
 except ImportError:
     ANTHROPIC_AVAILABLE = False
@@ -51,7 +53,7 @@ def create_client_with_memory(
     api_key: str | None = None,
     session_id: str | None = None,
     base_dir: str | None = None,
-    max_file_size: int = 1_000_000
+    max_file_size: int = 1_000_000,
 ) -> tuple[Any, Any]:
     """Create Anthropic client with memory tool
 
@@ -69,27 +71,19 @@ def create_client_with_memory(
         ValueError: If API key not provided and ANTHROPIC_API_KEY not set
     """
     if not ANTHROPIC_AVAILABLE:
-        raise ImportError(
-            "anthropic SDK not installed. "
-            "Run: uv pip install 'anthropic>=0.42.0'"
-        )
+        raise ImportError("anthropic SDK not installed. Run: uv pip install 'anthropic>=0.42.0'")
 
     # Get API key
     if api_key is None:
         api_key = os.environ.get("ANTHROPIC_API_KEY")
     if not api_key:
-        raise ValueError(
-            "API key required. Set ANTHROPIC_API_KEY or pass api_key parameter"
-        )
+        raise ValueError("API key required. Set ANTHROPIC_API_KEY or pass api_key parameter")
 
     # Create client
     client = anthropic.Anthropic(api_key=api_key)
 
     # Create memory tool
-    memory_tool = create_memory_tool(
-        session_id=session_id,
-        base_dir=base_dir
-    )
+    memory_tool = create_memory_tool(session_id=session_id, base_dir=base_dir)
 
     # Set size limit
     memory_tool.max_file_size = max_file_size
@@ -105,7 +99,7 @@ def run_with_memory(
     max_tokens: int = 4096,
     system: str | None = None,
     temperature: float = 1.0,
-    stream: bool = False
+    stream: bool = False,
 ) -> Any:
     """Run Claude conversation with memory tool enabled
 
@@ -127,10 +121,7 @@ def run_with_memory(
         anthropic.BadRequestError: If beta access denied
     """
     if not ANTHROPIC_AVAILABLE:
-        raise ImportError(
-            "anthropic SDK not installed. "
-            "Run: uv pip install 'anthropic>=0.42.0'"
-        )
+        raise ImportError("anthropic SDK not installed. Run: uv pip install 'anthropic>=0.42.0'")
 
     # Import beta tools
     from anthropic.types.beta import BetaMemoryTool
@@ -142,7 +133,7 @@ def run_with_memory(
         "messages": messages,
         "tools": [BetaMemoryTool(memory_tool)],
         "betas": ["context-management-2025-06-27"],
-        "temperature": temperature
+        "temperature": temperature,
     }
 
     if system:
@@ -161,7 +152,7 @@ def handle_tool_calls(
     memory_tool: Any,
     messages: list[dict[str, str]],
     model: str = "claude-sonnet-4-5",
-    max_iterations: int = 5
+    max_iterations: int = 5,
 ) -> Any:
     """Handle tool calls in a conversation loop
 
@@ -193,10 +184,7 @@ def handle_tool_calls(
             return message
 
         # Add assistant response to history
-        messages.append({
-            "role": "assistant",
-            "content": message.content
-        })
+        messages.append({"role": "assistant", "content": message.content})
 
         # Process tool calls
         tool_results = []
@@ -207,24 +195,20 @@ def handle_tool_calls(
 
                 # Execute tool (memory tool is handled by SDK)
                 # This is just for reference - SDK handles it automatically
-                tool_results.append({
-                    "type": "tool_result",
-                    "tool_use_id": content_block.id,
-                    "content": "Tool executed by SDK"
-                })
+                tool_results.append(
+                    {
+                        "type": "tool_result",
+                        "tool_use_id": content_block.id,
+                        "content": "Tool executed by SDK",
+                    }
+                )
 
         # Add tool results to history
-        messages.append({
-            "role": "user",
-            "content": tool_results
-        })
+        messages.append({"role": "user", "content": tool_results})
 
         # Continue conversation
         message = run_with_memory(
-            client=client,
-            memory_tool=memory_tool,
-            messages=messages,
-            model=model
+            client=client, memory_tool=memory_tool, messages=messages, model=model
         )
 
         iteration += 1
@@ -245,11 +229,7 @@ def get_memory_stats(memory_tool: Any) -> MemoryStats:
 
     if not base_dir.exists():
         return MemoryStats(
-            file_count=0,
-            total_size=0,
-            total_size_mb=0.0,
-            directory_count=0,
-            base_dir=str(base_dir)
+            file_count=0, total_size=0, total_size_mb=0.0, directory_count=0, base_dir=str(base_dir)
         )
 
     file_count = 0
@@ -268,7 +248,7 @@ def get_memory_stats(memory_tool: Any) -> MemoryStats:
         total_size=total_size,
         total_size_mb=round(total_size / 1_000_000, 2),
         directory_count=directory_count,
-        base_dir=str(base_dir)
+        base_dir=str(base_dir),
     )
 
 
@@ -278,5 +258,5 @@ __all__ = [
     "run_with_memory",
     "handle_tool_calls",
     "get_memory_stats",
-    "ANTHROPIC_AVAILABLE"
+    "ANTHROPIC_AVAILABLE",
 ]
