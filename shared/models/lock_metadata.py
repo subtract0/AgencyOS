@@ -6,6 +6,7 @@ Constitutional compliance:
 - ADR-010: Result pattern for error handling
 - Constitutional Law #2: Explicit types always
 """
+
 from datetime import datetime
 
 from pydantic import BaseModel, ConfigDict, Field
@@ -20,9 +21,7 @@ class LockMetadata(BaseModel):
 
     session_id: str = Field(..., description="Unique session identifier")
     timestamp: datetime = Field(..., description="Lock acquisition time (ISO 8601)")
-    heartbeat: datetime = Field(
-        ..., description="Last heartbeat update time (ISO 8601)"
-    )
+    heartbeat: datetime = Field(..., description="Last heartbeat update time (ISO 8601)")
     terminal: str = Field(..., description="Terminal identifier (e.g., terminal_1)")
     user: str = Field(..., description="System user who owns the lock")
     task_description: str = Field(
@@ -66,9 +65,7 @@ class LockError(BaseModel):
     )
     message: str = Field(..., description="Human-readable error message")
     task_id: str | None = Field(default=None, description="Task that caused the error")
-    session_id: str | None = Field(
-        default=None, description="Session involved in error"
-    )
+    session_id: str | None = Field(default=None, description="Session involved in error")
 
     model_config = ConfigDict(extra="forbid")
 
