@@ -266,7 +266,24 @@ unfixable = ["B"]
 ]
 
 [tool.ruff.lint.isort]
-known-first-party = ["agency", "shared", "tools"]
+known-first-party = [
+    "agency",
+    "shared",
+    "tools",
+    "core",
+    "dspy_agents",
+    "meta_learning",
+    "agency_code_agent",
+    "planner_agent",
+    "auditor_agent",
+    "quality_enforcer_agent",
+    "chief_architect_agent",
+    "test_generator_agent",
+    "learning_agent",
+    "merger_agent",
+    "toolsmith_agent",
+    "work_completion_summary_agent",
+]
 
 [tool.ruff.format]
 quote-style = "double"
