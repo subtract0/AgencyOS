@@ -15,7 +15,6 @@ Constitutional Compliance:
 Version: 1.0.0
 Created: 2025-10-09
 """
-
 import json
 import signal
 import subprocess
@@ -391,12 +390,12 @@ Ensure constitutional compliance at all steps.
             abs_worktree_path = worktree_path.absolute()
 
             # Use lean agent system (no subprocess, no hang)
-            from shared.lean_adapter import Agent, Agency
+            import os
+
+            from shared.lean_adapter import Agency, Agent
             from shared.model_policy import agent_model
 
             # Change to worktree directory
-            import os
-
             original_dir = os.getcwd()
             os.chdir(str(abs_worktree_path))
 
