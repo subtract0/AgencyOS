@@ -7,7 +7,6 @@ These validators implement deterministic rule checking for Constitutional Articl
 import json
 import re
 import subprocess
-from typing import Any
 
 from constitutional_hooks.config import (
     ARTICLE_II_ALLOW_SKIPPED,
@@ -55,7 +54,7 @@ def check_test_results() -> Result[bool, ConstitutionalError]:
     """
     try:
         # Run pytest with JSON report
-        result = subprocess.run(
+        subprocess.run(
             ["pytest", "--json-report", "--json-report-file=/tmp/pytest_report.json"],
             capture_output=True,
             text=True,

@@ -64,7 +64,7 @@ def main() -> int:
                 rule_id="Article V",
             )
             sys.stderr.write(f"❌ Constitutional Violation: {error}\n")
-            sys.stderr.write(f"\nIncomplete tasks:\n")
+            sys.stderr.write("\nIncomplete tasks:\n")
             incomplete = set(session_state.tasks_total) - set(
                 session_state.tasks_completed
             )

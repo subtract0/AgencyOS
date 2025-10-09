@@ -4,10 +4,7 @@ Tests for common validator functions (TDD).
 Following Agency OS TDD principle: Write tests BEFORE implementation.
 """
 
-import pytest
 from unittest.mock import Mock, patch
-from constitutional_hooks.errors import ConstitutionalError
-from shared.type_definitions.result import Result, Ok, Err
 
 
 class TestValidatePromptContent:
@@ -71,8 +68,9 @@ class TestCheckTestResults:
     @patch("builtins.open")
     def test_all_tests_pass_returns_ok(self, mock_open, mock_run):
         """All tests passing should return Ok(True)."""
-        from constitutional_hooks.common_validators import check_test_results
         import io
+
+        from constitutional_hooks.common_validators import check_test_results
 
         # Mock pytest success output
         mock_run.return_value = Mock(returncode=0, stdout="")
@@ -89,8 +87,9 @@ class TestCheckTestResults:
     @patch("builtins.open")
     def test_failed_tests_returns_err(self, mock_open, mock_run):
         """Failed tests should return Err with Article II violation."""
-        from constitutional_hooks.common_validators import check_test_results
         import io
+
+        from constitutional_hooks.common_validators import check_test_results
 
         # Mock pytest with failures
         mock_run.return_value = Mock(returncode=1, stdout="")
@@ -109,8 +108,9 @@ class TestCheckTestResults:
     @patch("builtins.open")
     def test_skipped_tests_returns_err(self, mock_open, mock_run):
         """Skipped tests should return Err (incomplete context)."""
-        from constitutional_hooks.common_validators import check_test_results
         import io
+
+        from constitutional_hooks.common_validators import check_test_results
 
         mock_run.return_value = Mock(returncode=0, stdout="")
 

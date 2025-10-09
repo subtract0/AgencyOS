@@ -8,8 +8,6 @@ import json
 import subprocess
 from pathlib import Path
 
-import pytest
-
 HOOK_SCRIPT = Path(__file__).parent.parent / "hook_stop.py"
 
 

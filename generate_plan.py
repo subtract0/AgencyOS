@@ -9,7 +9,9 @@
 """Generate implementation plan using Gemini 2.5 Flash."""
 
 import os
+
 import google.generativeai as genai
+
 
 def get_gemini_api_key() -> str:
     """Get Gemini API key from environment."""

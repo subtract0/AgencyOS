@@ -6,6 +6,7 @@ Agent Orchestration Layer and hook scripts via stdin/stdout.
 """
 
 from typing import Any
+
 from pydantic import BaseModel, Field
 
 
