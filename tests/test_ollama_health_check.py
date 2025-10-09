@@ -165,7 +165,7 @@ class TestCheckOllamaHealth:
 
         # Create context manager that raises timeout
         mock_get_cm = MagicMock()
-        mock_get_cm.__aenter__ = AsyncMock(side_effect=asyncio.TimeoutError("Request timeout"))
+        mock_get_cm.__aenter__ = AsyncMock(side_effect=TimeoutError("Request timeout"))
         mock_get_cm.__aexit__ = AsyncMock(return_value=None)
         mock_session.get = MagicMock(return_value=mock_get_cm)
 

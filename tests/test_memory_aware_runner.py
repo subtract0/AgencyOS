@@ -6,10 +6,11 @@ Constitutional compliance:
 - Article III: Automated worker adjustment enforcement
 """
 
-import pytest
-import psutil
 from pathlib import Path
-from unittest.mock import patch, MagicMock
+from unittest.mock import MagicMock, patch
+
+import psutil
+import pytest
 
 
 def test_get_safe_worker_count_with_local_model():
@@ -159,8 +160,8 @@ def test_check_ollama_not_running():
         with patch('os.path.exists', return_value=False):
             # Mock health check to return unhealthy
             with patch('tools.memory_aware_test_runner.check_ollama_health') as mock_health:
-                from tools.memory_aware_test_runner import check_ollama_running
                 from shared.type_definitions.result import Err
+                from tools.memory_aware_test_runner import check_ollama_running
                 from tools.ollama_health_check import OllamaHealthError
 
                 mock_health.return_value = Err(OllamaHealthError("Not running"))
@@ -169,9 +170,9 @@ def test_check_ollama_not_running():
 
 def test_check_ollama_running_via_docker_health_check():
     """Should detect Docker Ollama via health check."""
+    from shared.type_definitions.result import Ok
     from tools.memory_aware_test_runner import check_ollama_running
     from tools.ollama_health_check import OllamaHealthStatus
-    from shared.type_definitions.result import Ok
 
     # Mock health check to return Docker-based Ollama
     with patch('tools.memory_aware_test_runner.check_ollama_health') as mock_health:

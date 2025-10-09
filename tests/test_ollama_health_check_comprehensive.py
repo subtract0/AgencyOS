@@ -38,7 +38,6 @@ from tools.ollama_health_check import (
     detect_docker_ollama,
 )
 
-
 # ============================================================================
 # NORMAL OPERATION TESTS - Happy path scenarios
 # ============================================================================
@@ -341,7 +340,7 @@ class TestOllamaHealthCheckErrors:
             # Simulate timeout
             async def timeout_generator(*args, **kwargs):
                 await asyncio.sleep(0.1)
-                raise asyncio.TimeoutError("Request timeout")
+                raise TimeoutError("Request timeout")
 
             mock_session.get.side_effect = timeout_generator
 
@@ -414,7 +413,7 @@ class TestOllamaHealthCheckStress:
                 nonlocal call_count
                 call_count += 1
                 if call_count < 3:
-                    raise asyncio.TimeoutError("Timeout")
+                    raise TimeoutError("Timeout")
                 return mock_resp
 
             mock_session.get.side_effect = retry_simulator
@@ -440,7 +439,7 @@ class TestOllamaHealthCheckStress:
 
             # Always timeout
             async def always_timeout(*args, **kwargs):
-                raise asyncio.TimeoutError("Timeout")
+                raise TimeoutError("Timeout")
 
             mock_session.get.side_effect = always_timeout
 

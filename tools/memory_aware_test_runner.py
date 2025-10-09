@@ -10,13 +10,15 @@ Constitutional Compliance:
 - Article III: Automated enforcement via dynamic configuration
 """
 
-import os
 import asyncio
-import psutil
+import os
 from pathlib import Path
 from typing import Literal
+
+import psutil
 from pydantic import BaseModel, Field
-from shared.type_definitions.result import Result, Ok, Err
+
+from shared.type_definitions.result import Err, Ok, Result
 from tools.ollama_health_check import check_ollama_health
 
 
