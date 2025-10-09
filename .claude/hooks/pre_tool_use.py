@@ -195,7 +195,7 @@ def main():
                         for error in errors:
                             sys.stderr.write(f"\n{error}\n")
                         sys.stderr.write(
-                            f"\n🔧 Fix these issues before writing the file.\n"
+                            "\n🔧 Fix these issues before writing the file.\n"
                         )
                         sys.exit(2)  # BLOCK the write
 
