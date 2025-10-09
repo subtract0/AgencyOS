@@ -268,7 +268,7 @@ class LeanAgent:
 
         # Prepare tools
         tools = (
-            [tool.to_openai_format().model_dump() for tool in self.config.tools]
+            [tool.to_openai_format().model_dump(exclude_none=True, mode='json') for tool in self.config.tools]
             if self.config.tools
             else None
         )

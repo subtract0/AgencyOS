@@ -208,7 +208,7 @@ class TestLeanAgentInitialization:
     """Test LeanAgent initialization."""
 
     @patch("shared.lean_agent.OpenAI")
-    def test_agent_initialization_basic(self, mock_openai):
+    def test_agent_initialization_basic(self, mock_openai, monkeypatch):
         """Test basic agent initialization."""
         # Arrange
         config = AgentConfig(name="test", instructions="You are helpful")
@@ -224,11 +224,11 @@ class TestLeanAgentInitialization:
         mock_openai.assert_called_once()
 
     @patch("shared.lean_agent.OpenAI")
-    def test_agent_initialization_with_api_key(self, mock_openai):
+    def test_agent_initialization_with_api_key(self, mock_openai, monkeypatch):
         """Test agent uses OPENAI_API_KEY from environment."""
         # Arrange
         config = AgentConfig(name="test", instructions="Test")
-        os.environ["OPENAI_API_KEY"] = "test-key-123"
+        monkeypatch.setenv("OPENAI_API_KEY", "test-key-123")
 
         # Act
         agent = LeanAgent(config)
@@ -237,12 +237,11 @@ class TestLeanAgentInitialization:
         mock_openai.assert_called_once_with(api_key="test-key-123")
 
     @patch("shared.lean_agent.OpenAI")
-    def test_agent_initialization_missing_api_key(self, mock_openai):
+    def test_agent_initialization_missing_api_key(self, mock_openai, monkeypatch):
         """Test agent raises error when API key missing."""
         # Arrange
         config = AgentConfig(name="test", instructions="Test")
-        if "OPENAI_API_KEY" in os.environ:
-            del os.environ["OPENAI_API_KEY"]
+        monkeypatch.delenv("OPENAI_API_KEY", raising=False)
 
         # Act & Assert - NOW VALIDATED (fixed!)
         with pytest.raises(ValueError, match="OPENAI_API_KEY not found"):
@@ -253,9 +252,10 @@ class TestLeanAgentExecution:
     """Test LeanAgent task execution."""
 
     @patch("shared.lean_agent.OpenAI")
-    def test_run_simple_response_no_tools(self, mock_openai):
+    def test_run_simple_response_no_tools(self, mock_openai, monkeypatch):
         """Test simple agent run without tool calls."""
         # Arrange
+        monkeypatch.setenv("OPENAI_API_KEY", "test-key")
         config = AgentConfig(name="test", instructions="You are helpful")
         agent = LeanAgent(config)
 
@@ -279,7 +279,7 @@ class TestLeanAgentExecution:
         assert agent.messages[2].content == "Hello! How can I help?"
 
     @patch("shared.lean_agent.OpenAI")
-    def test_run_with_tool_call_and_execution(self, mock_openai):
+    def test_run_with_tool_call_and_execution(self, mock_openai, monkeypatch):
         """Test agent run with tool call and execution."""
 
         # Arrange
@@ -298,7 +298,7 @@ class TestLeanAgentExecution:
             name="add", description="Add two numbers", parameters=param, function=mock_add
         )
         config = AgentConfig(name="calc", instructions="You can add", tools=[tool_obj])
-        os.environ["OPENAI_API_KEY"] = "test-key"
+        monkeypatch.setenv("OPENAI_API_KEY", "test-key")
         agent = LeanAgent(config)
 
         # Mock LLM responses - need to return from side_effect to handle multiple calls
@@ -339,7 +339,7 @@ class TestLeanAgentExecution:
         assert "8" in agent.messages[3].content  # Tool result
 
     @patch("shared.lean_agent.OpenAI")
-    def test_run_max_iterations_exceeded(self, mock_openai):
+    def test_run_max_iterations_exceeded(self, mock_openai, monkeypatch):
         """Test agent raises error when max iterations exceeded."""
         # Arrange
         config = AgentConfig(name="test", instructions="Test")
@@ -369,7 +369,7 @@ class TestLeanAgentExecution:
             agent.run("Do something", max_iterations=3)
 
     @patch("shared.lean_agent.OpenAI")
-    def test_run_with_invalid_tool_arguments(self, mock_openai):
+    def test_run_with_invalid_tool_arguments(self, mock_openai, monkeypatch):
         """Test agent handles invalid tool arguments gracefully."""
 
         # Arrange
@@ -385,7 +385,7 @@ class TestLeanAgentExecution:
             name="double", description="Double a number", parameters=param, function=mock_func
         )
         config = AgentConfig(name="calc", instructions="Test", tools=[tool_obj])
-        os.environ["OPENAI_API_KEY"] = "test-key"
+        monkeypatch.setenv("OPENAI_API_KEY", "test-key")
         agent = LeanAgent(config)
 
         # Mock tool call with invalid JSON
@@ -429,7 +429,7 @@ class TestModelSpecificParameters:
     """Test model-specific parameter handling."""
 
     @patch("shared.lean_agent.OpenAI")
-    def test_reasoning_model_gpt5_parameters(self, mock_openai):
+    def test_reasoning_model_gpt5_parameters(self, mock_openai, monkeypatch):
         """Test gpt-5 uses reasoning model parameters."""
         # Arrange
         config = AgentConfig(
@@ -460,7 +460,7 @@ class TestModelSpecificParameters:
         assert "tools" not in call_kwargs  # Not supported by reasoning models
 
     @patch("shared.lean_agent.OpenAI")
-    def test_reasoning_model_o1_parameters(self, mock_openai):
+    def test_reasoning_model_o1_parameters(self, mock_openai, monkeypatch):
         """Test o1 model uses reasoning parameters."""
         # Arrange
         config = AgentConfig(name="o1_agent", instructions="Think", model="o1-preview")
@@ -483,7 +483,7 @@ class TestModelSpecificParameters:
         assert "tools" not in call_kwargs
 
     @patch("shared.lean_agent.OpenAI")
-    def test_reasoning_model_o3_parameters(self, mock_openai):
+    def test_reasoning_model_o3_parameters(self, mock_openai, monkeypatch):
         """Test o3 model uses reasoning parameters."""
         # Arrange
         config = AgentConfig(name="o3_agent", instructions="Think", model="o3-mini")
@@ -505,7 +505,7 @@ class TestModelSpecificParameters:
         assert "temperature" not in call_kwargs
 
     @patch("shared.lean_agent.OpenAI")
-    def test_standard_model_gpt4o_parameters(self, mock_openai):
+    def test_standard_model_gpt4o_parameters(self, mock_openai, monkeypatch):
         """Test gpt-4o uses standard parameters."""
 
         # Arrange
@@ -545,7 +545,7 @@ class TestModelSpecificParameters:
 class TestToolExecution:
     """Test tool execution methods."""
 
-    def test_execute_tool_success(self):
+    def test_execute_tool_success(self, monkeypatch):
         """Test successful tool execution."""
 
         # Arrange
@@ -563,7 +563,7 @@ class TestToolExecution:
         tool_obj = Tool(name="add", description="Add", parameters=param, function=add_numbers)
         config = AgentConfig(name="calc", instructions="Calc", tools=[tool_obj])
         # Mock API key for initialization
-        os.environ["OPENAI_API_KEY"] = "test-key"
+        monkeypatch.setenv("OPENAI_API_KEY", "test-key")
         agent = LeanAgent(config)
 
         # Act
@@ -573,11 +573,11 @@ class TestToolExecution:
         assert result.is_ok()
         assert "15" in result.unwrap()  # Check for 15 (float string format may vary)
 
-    def test_execute_tool_not_found(self):
+    def test_execute_tool_not_found(self, monkeypatch):
         """Test tool not found error."""
         # Arrange
         config = AgentConfig(name="test", instructions="Test", tools=[])
-        os.environ["OPENAI_API_KEY"] = "test-key"
+        monkeypatch.setenv("OPENAI_API_KEY", "test-key")
         agent = LeanAgent(config)
 
         # Act
@@ -588,13 +588,13 @@ class TestToolExecution:
         assert "nonexistent" in result.unwrap_err()
         assert "not found" in result.unwrap_err()
 
-    def test_execute_tool_no_function(self):
+    def test_execute_tool_no_function(self, monkeypatch):
         """Test tool without function implementation."""
         # Arrange
         param = ToolParameter(type="object", properties={}, required=[])
         tool_obj = Tool(name="broken", description="Broken", parameters=param, function=None)
         config = AgentConfig(name="test", instructions="Test", tools=[tool_obj])
-        os.environ["OPENAI_API_KEY"] = "test-key"
+        monkeypatch.setenv("OPENAI_API_KEY", "test-key")
         agent = LeanAgent(config)
 
         # Act
@@ -605,7 +605,7 @@ class TestToolExecution:
         assert "broken" in result.unwrap_err()
         assert "no function" in result.unwrap_err().lower()
 
-    def test_execute_tool_invalid_json_arguments(self):
+    def test_execute_tool_invalid_json_arguments(self, monkeypatch):
         """Test tool execution with invalid JSON arguments."""
 
         # Arrange
@@ -615,7 +615,7 @@ class TestToolExecution:
         param = ToolParameter(type="object", properties={}, required=[])
         tool_obj = Tool(name="test", description="Test", parameters=param, function=dummy)
         config = AgentConfig(name="agent", instructions="Test", tools=[tool_obj])
-        os.environ["OPENAI_API_KEY"] = "test-key"
+        monkeypatch.setenv("OPENAI_API_KEY", "test-key")
         agent = LeanAgent(config)
 
         # Act
@@ -625,7 +625,7 @@ class TestToolExecution:
         assert result.is_err()
         assert "Invalid" in result.unwrap_err() or "JSON" in result.unwrap_err()
 
-    def test_execute_tool_function_raises_exception(self):
+    def test_execute_tool_function_raises_exception(self, monkeypatch):
         """Test tool execution when function raises exception."""
 
         # Arrange
@@ -639,7 +639,7 @@ class TestToolExecution:
         )
         tool_obj = Tool(name="fail", description="Fails", parameters=param, function=failing_tool)
         config = AgentConfig(name="agent", instructions="Test", tools=[tool_obj])
-        os.environ["OPENAI_API_KEY"] = "test-key"
+        monkeypatch.setenv("OPENAI_API_KEY", "test-key")
         agent = LeanAgent(config)
 
         # Act
@@ -655,11 +655,11 @@ class TestMessageHistory:
     """Test message history management."""
 
     @patch("shared.lean_agent.OpenAI")
-    def test_clear_history_preserves_system_message(self, mock_openai):
+    def test_clear_history_preserves_system_message(self, mock_openai, monkeypatch):
         """Test clear_history() keeps system prompt."""
         # Arrange
         config = AgentConfig(name="test", instructions="You are helpful")
-        os.environ["OPENAI_API_KEY"] = "test-key"
+        monkeypatch.setenv("OPENAI_API_KEY", "test-key")
         agent = LeanAgent(config)
         agent.messages.append(Message(role="user", content="Hi"))
         agent.messages.append(Message(role="assistant", content="Hello"))
@@ -673,7 +673,7 @@ class TestMessageHistory:
         assert agent.messages[0].content == "You are helpful"
 
     @patch("shared.lean_agent.OpenAI")
-    def test_message_accumulation_during_run(self, mock_openai):
+    def test_message_accumulation_during_run(self, mock_openai, monkeypatch):
         """Test messages accumulate correctly during agent run."""
         # Arrange
         config = AgentConfig(name="test", instructions="Test")
@@ -729,7 +729,7 @@ class TestThreadSafety:
     """Test thread safety of LeanAgent."""
 
     @patch("shared.lean_agent.OpenAI")
-    def test_concurrent_runs_do_not_corrupt_messages(self, mock_openai):
+    def test_concurrent_runs_do_not_corrupt_messages(self, mock_openai, monkeypatch):
         """Test concurrent agent runs don't corrupt shared state."""
         # Arrange
         config = AgentConfig(name="test", instructions="Test")
@@ -772,11 +772,11 @@ class TestInputValidation:
     """Test input validation."""
 
     @patch("shared.lean_agent.OpenAI")
-    def test_run_with_negative_max_iterations_should_fail(self, mock_openai):
+    def test_run_with_negative_max_iterations_should_fail(self, mock_openai, monkeypatch):
         """Test run() rejects negative max_iterations."""
         # Arrange
         config = AgentConfig(name="test", instructions="Test")
-        os.environ["OPENAI_API_KEY"] = "test-key"
+        monkeypatch.setenv("OPENAI_API_KEY", "test-key")
         agent = LeanAgent(config)
 
         # Act & Assert - NOW VALIDATED (fixed!)
@@ -784,7 +784,7 @@ class TestInputValidation:
             agent.run("Test", max_iterations=-1)
 
     @patch("shared.lean_agent.OpenAI")
-    def test_run_with_empty_message_accepts(self, mock_openai):
+    def test_run_with_empty_message_accepts(self, mock_openai, monkeypatch):
         """Test run() accepts empty user message."""
         # Arrange
         config = AgentConfig(name="test", instructions="Test")
@@ -820,7 +820,7 @@ class TestEdgeCases:
     """Test edge cases and error conditions."""
 
     @patch("shared.lean_agent.OpenAI")
-    def test_empty_tool_list(self, mock_openai):
+    def test_empty_tool_list(self, mock_openai, monkeypatch):
         """Test agent with empty tool list."""
         # Arrange
         config = AgentConfig(name="test", instructions="Test", tools=[])
@@ -842,7 +842,7 @@ class TestEdgeCases:
         assert call_kwargs.get("tools") is None  # No tools passed to API
 
     @patch("shared.lean_agent.OpenAI")
-    def test_very_long_message_history(self, mock_openai):
+    def test_very_long_message_history(self, mock_openai, monkeypatch):
         """Test agent handles long message history."""
         # Arrange
         config = AgentConfig(name="test", instructions="Test")
@@ -868,7 +868,7 @@ class TestEdgeCases:
         assert len(agent.messages) > 200  # All messages preserved
 
     @patch("shared.lean_agent.OpenAI")
-    def test_null_response_content(self, mock_openai):
+    def test_null_response_content(self, mock_openai, monkeypatch):
         """Test agent handles None response content."""
         # Arrange
         config = AgentConfig(name="test", instructions="Test")
@@ -888,17 +888,12 @@ class TestEdgeCases:
         assert result == ""  # Converts None to empty string
 
 
-# Integration tests (require OPENAI_API_KEY in environment)
-@pytest.mark.integration
+# Integration tests with real OpenAI API
 class TestRealAPIIntegration:
-    """Integration tests with real OpenAI API (requires API key)."""
+    """Integration tests with real OpenAI API."""
 
     def test_real_api_simple_completion(self):
         """Test real API call (simple completion, no tools)."""
-        # Skip if no API key
-        if not os.getenv("OPENAI_API_KEY"):
-            pytest.skip("OPENAI_API_KEY not set")
-
         # Arrange
         config = AgentConfig(
             name="test_agent",
@@ -916,10 +911,6 @@ class TestRealAPIIntegration:
 
     def test_real_api_with_tool_call(self):
         """Test real API with tool execution."""
-        # Skip if no API key
-        if not os.getenv("OPENAI_API_KEY"):
-            pytest.skip("OPENAI_API_KEY not set")
-
         # Arrange - Create a simple calculator tool
         def add(a: float, b: float) -> float:
             """Add two numbers."""
