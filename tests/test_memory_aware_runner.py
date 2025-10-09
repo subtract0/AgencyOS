@@ -6,10 +6,11 @@ Constitutional compliance:
 - Article III: Automated worker adjustment enforcement
 """
 
-import pytest
-import psutil
 from pathlib import Path
-from unittest.mock import patch, MagicMock
+from unittest.mock import MagicMock, patch
+
+import psutil
+import pytest
 
 
 def test_get_safe_worker_count_with_local_model():
