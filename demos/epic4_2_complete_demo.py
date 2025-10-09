@@ -118,7 +118,7 @@ def print_section(title: str):
         print("-" * 80)
 
 
-def print_metric_table(title: str, data: dict[str, Any], highlight_key: str = ""):
+def print_metric_table(title: str, data: dict[str, str | int | float], highlight_key: str = ""):
     """Print a metrics table with optional highlighting."""
     if RICH_AVAILABLE and console:
         table = Table(title=title, show_header=True, header_style="bold magenta")
