@@ -159,9 +159,9 @@ class TestMultiAgentCoverage:
         missing_agents = all_agents - all_selected_agents
         expected_missing = {AgentType.LEARNING, AgentType.MERGER, AgentType.SUMMARY}
 
-        assert (
-            missing_agents == expected_missing
-        ), f"Expected {expected_missing}, got {missing_agents}"
+        assert missing_agents == expected_missing, (
+            f"Expected {expected_missing}, got {missing_agents}"
+        )
 
     def test_multi_agent_tasks_have_correct_count(self, hybrid_executor_fixture):
         """Test multi-agent tasks select the correct number of agents."""
@@ -177,9 +177,9 @@ class TestMultiAgentCoverage:
         # Act & Assert
         for task_type, expected_count in multi_agent_tasks.items():
             agents = hybrid_executor_fixture._select_agents_for_task(task_type)
-            assert (
-                len(agents) == expected_count
-            ), f"{task_type.value} should have {expected_count} agents, got {len(agents)}"
+            assert len(agents) == expected_count, (
+                f"{task_type.value} should have {expected_count} agents, got {len(agents)}"
+            )
 
     def test_single_agent_tasks_have_one_agent(self, hybrid_executor_fixture):
         """Test single-agent tasks select exactly one agent."""
@@ -219,9 +219,7 @@ class TestAgentInstantiation:
             AgentType.SUMMARY,
         ],
     )
-    def test_agent_can_be_instantiated_at_local_tier(
-        self, agent_registry_fixture, agent_type
-    ):
+    def test_agent_can_be_instantiated_at_local_tier(self, agent_registry_fixture, agent_type):
         """Test each agent type can be created at LOCAL tier."""
         # Act
         agent = agent_registry_fixture.create_agent(agent_type, ModelTier.LOCAL)
@@ -282,9 +280,9 @@ class TestModelSelection:
         for agent_type in all_agents:
             for tier in all_tiers:
                 model = agent_registry_fixture.get_model_for_agent(agent_type, tier)
-                assert (
-                    model is not None and model != ""
-                ), f"{agent_type.value} should have model at {tier.value}"
+                assert model is not None and model != "", (
+                    f"{agent_type.value} should have model at {tier.value}"
+                )
 
 
 # ============================================================================
@@ -319,10 +317,11 @@ def fix_type_error():
     return True
 """
 
-        with patch.object(
-            hybrid_executor_fixture.ollama, "chat", side_effect=mock_chat
-        ), patch.object(
-            hybrid_executor_fixture, "_run_verification", return_value="All tests passed"
+        with (
+            patch.object(hybrid_executor_fixture.ollama, "chat", side_effect=mock_chat),
+            patch.object(
+                hybrid_executor_fixture, "_run_verification", return_value="All tests passed"
+            ),
         ):
             # Act
             result = await hybrid_executor_fixture._execute_at_tier(
@@ -364,10 +363,11 @@ def refactored_function():
     return "success"
 """
 
-        with patch.object(
-            hybrid_executor_fixture.ollama, "chat", side_effect=mock_chat
-        ), patch.object(
-            hybrid_executor_fixture, "_run_verification", return_value="All tests passed"
+        with (
+            patch.object(hybrid_executor_fixture.ollama, "chat", side_effect=mock_chat),
+            patch.object(
+                hybrid_executor_fixture, "_run_verification", return_value="All tests passed"
+            ),
         ):
             # Act
             result = await hybrid_executor_fixture._execute_at_tier(
@@ -376,9 +376,9 @@ def refactored_function():
 
             # Assert
             assert result.success is True
-            assert (
-                len(agents_executed) == 3
-            ), f"Should execute 3 agents for REFACTORING, got {len(agents_executed)}"
+            assert len(agents_executed) == 3, (
+                f"Should execute 3 agents for REFACTORING, got {len(agents_executed)}"
+            )
 
 
 # ============================================================================
@@ -422,9 +422,7 @@ class TestMappingClarity:
 class TestRegressionPrevention:
     """Test that existing functionality is preserved after refactoring."""
 
-    def test_test_generation_task_still_selects_test_generator(
-        self, hybrid_executor_fixture
-    ):
+    def test_test_generation_task_still_selects_test_generator(self, hybrid_executor_fixture):
         """Test TEST_GENERATION task (original use case) still works."""
         # Arrange
         task_type = TaskType.TEST_GENERATION
@@ -501,9 +499,9 @@ class TestYieldValidation:
         agents = hybrid_executor_fixture._select_agents_for_task(task_type)
 
         # Assert
-        assert (
-            must_include_agent in agents
-        ), f"{task_type.value} should include {must_include_agent.value}"
+        assert must_include_agent in agents, (
+            f"{task_type.value} should include {must_include_agent.value}"
+        )
 
     def test_agents_used_populated_in_execution_attempt(
         self, hybrid_executor_fixture, sample_code_generation_task

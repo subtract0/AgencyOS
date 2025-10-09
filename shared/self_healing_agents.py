@@ -10,6 +10,7 @@ from shared.type_definitions.result import Result, Ok, Err
 @dataclass
 class HealthStatus:
     """Agent health assessment."""
+
     agent_name: str
     healthy: bool
     degradation_detected: bool
@@ -26,7 +27,7 @@ class SelfHealingSystem:
             "min_success_rate": 0.90,
             "max_error_rate": 0.10,
             "min_constitutional_compliance": 1.0,
-            "min_learning_rate": 0.60
+            "min_learning_rate": 0.60,
         }
 
     def check_agent_health(self, agent_name: str) -> HealthStatus:
@@ -54,7 +55,7 @@ class SelfHealingSystem:
             healthy=healthy,
             degradation_detected=degradation_detected,
             issues=issues,
-            recommended_actions=actions
+            recommended_actions=actions,
         )
 
     def auto_heal(self, agent_name: str) -> Result[str, str]:
@@ -66,7 +67,9 @@ class SelfHealingSystem:
 
         # Trigger self-improvement
         # This would call /agent-self-improve programmatically
-        proposal_path = f".claude/proposals/{agent_name}_auto_heal_{datetime.now().strftime('%Y%m%d')}.md"
+        proposal_path = (
+            f".claude/proposals/{agent_name}_auto_heal_{datetime.now().strftime('%Y%m%d')}.md"
+        )
 
         # Generate proposal
         # Submit to review queue

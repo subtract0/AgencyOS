@@ -485,9 +485,7 @@ class GitHubPatternExtractor(BasePatternExtractor):
             logger.debug(f"Failed to analyze fix commit {commit_hash}: {e}")
             return None
 
-    def _analyze_refactoring_commit(
-        self, commit_hash: str, message: str
-    ) -> CodingPattern | None:
+    def _analyze_refactoring_commit(self, commit_hash: str, message: str) -> CodingPattern | None:
         """Analyze a refactoring commit for patterns."""
         try:
             # Get commit stats

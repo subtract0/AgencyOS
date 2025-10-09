@@ -71,9 +71,7 @@ class LearningContext(BaseModel):
     logs_directory: str = Field(
         default="logs/sessions", description="Directory containing session logs"
     )
-    memory_store: str | None = Field(
-        default="vectorstore", description="Where to store learnings"
-    )
+    memory_store: str | None = Field(default="vectorstore", description="Where to store learnings")
     pattern_types: list[str] = Field(
         default_factory=lambda: [
             "tool_usage",
@@ -659,7 +657,9 @@ class DSPyLearningAgent(dspy.Module if DSPY_AVAILABLE else object):
             },
             "pattern_history_size": len(self.pattern_history),
             "avg_confidence": sum(
-                learning.confidence for learnings in self.knowledge_base.values() for learning in learnings
+                learning.confidence
+                for learnings in self.knowledge_base.values()
+                for learning in learnings
             )
             / max(1, sum(len(learnings) for learnings in self.knowledge_base.values())),
         }

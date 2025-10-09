@@ -65,7 +65,7 @@ except ImportError:
 # Skip entire test file if Epic 4.2 features not available
 pytestmark = pytest.mark.skipif(
     not EPIC4_2_AVAILABLE,
-    reason="Epic 4.2 self-evolution features not available. Enable by merging feature/self-evolution-phase1-ab-orchestrator branch."
+    reason="Epic 4.2 self-evolution features not available. Enable by merging feature/self-evolution-phase1-ab-orchestrator branch.",
 )
 
 
@@ -266,10 +266,14 @@ class TestCompleteEvolutionCycle:
 
         # Assert - Registry updated with AIQ scores
         temp_agent_registry.record_aiq(
-            instance_v1, aiq_score=proposal.incumbent.mean_score, metrics={"std_dev": proposal.incumbent.std_dev_score}
+            instance_v1,
+            aiq_score=proposal.incumbent.mean_score,
+            metrics={"std_dev": proposal.incumbent.std_dev_score},
         )
         temp_agent_registry.record_aiq(
-            instance_v2, aiq_score=proposal.challenger.mean_score, metrics={"std_dev": proposal.challenger.std_dev_score}
+            instance_v2,
+            aiq_score=proposal.challenger.mean_score,
+            metrics={"std_dev": proposal.challenger.std_dev_score},
         )
 
         history_v1 = temp_agent_registry.get_agent_aiq_history(agent_v1_id, limit=5)
@@ -709,7 +713,9 @@ class TestParallelWorktreeIsolation:
         duration = time.time() - start_time
 
         # Assert - All jobs completed (or most, allowing for fallback to mock)
-        assert orchestrator._completed_jobs >= 4, f"Expected at least 4 jobs, got {orchestrator._completed_jobs}"
+        assert orchestrator._completed_jobs >= 4, (
+            f"Expected at least 4 jobs, got {orchestrator._completed_jobs}"
+        )
         assert orchestrator._total_jobs == 6
 
         # Assert - Results file valid

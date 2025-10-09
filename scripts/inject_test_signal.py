@@ -43,8 +43,8 @@ def inject_test_signal():
         "suggested_tests": [
             "test_ollama_client_initialization",
             "test_spawn_architect_success",
-            "test_spawn_architect_timeout_retry"
-        ]
+            "test_spawn_architect_timeout_retry",
+        ],
     }
 
     # Publish to message bus
@@ -61,6 +61,7 @@ def inject_test_signal():
     print("  3. Publishes ARCHITECT_READY to bus")
     print("  4. Spawns EXECUTOR (codestral:22b) to implement")
     print("  5. Publishes EXECUTOR_COMPLETE to bus")
+
 
 if __name__ == "__main__":
     inject_test_signal()

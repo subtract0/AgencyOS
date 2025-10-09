@@ -36,6 +36,7 @@ except ImportError:
     # Fallback for older versions
     class BetaAbstractMemoryTool:
         """Fallback base class if anthropic SDK doesn't have memory tool"""
+
         pass
 
 
@@ -60,7 +61,7 @@ class AgencyMemoryTool(BetaAbstractMemoryTool):
         self,
         base_dir: str | None = None,
         max_file_size: int = 1_000_000,  # 1MB
-        max_view_lines: int = 1000
+        max_view_lines: int = 1000,
     ):
         if base_dir is None:
             base_dir = str(Path.home() / ".agency" / "memories")
@@ -92,9 +93,7 @@ class AgencyMemoryTool(BetaAbstractMemoryTool):
         """
         # Must start with /memories
         if not path.startswith("/memories"):
-            raise ValueError(
-                f"Invalid path: must start with /memories (got: {path})"
-            )
+            raise ValueError(f"Invalid path: must start with /memories (got: {path})")
 
         # Detect traversal patterns (before and after URL decoding)
         traversal_patterns = [
@@ -106,12 +105,10 @@ class AgencyMemoryTool(BetaAbstractMemoryTool):
 
         for pattern in traversal_patterns:
             if re.search(pattern, path, re.IGNORECASE):
-                raise ValueError(
-                    f"Path traversal attempt detected: {path}"
-                )
+                raise ValueError(f"Path traversal attempt detected: {path}")
 
         # Remove /memories prefix and normalize
-        relative_path = path[len("/memories"):].lstrip("/")
+        relative_path = path[len("/memories") :].lstrip("/")
 
         # Resolve to absolute path
         full_path = (self.base_dir / relative_path).resolve()
@@ -120,9 +117,7 @@ class AgencyMemoryTool(BetaAbstractMemoryTool):
         try:
             full_path.relative_to(self.base_dir)
         except ValueError as e:
-            raise ValueError(
-                f"Path escapes memory directory: {path} -> {full_path}"
-            ) from e
+            raise ValueError(f"Path escapes memory directory: {path} -> {full_path}") from e
 
         return full_path
 
@@ -173,7 +168,7 @@ class AgencyMemoryTool(BetaAbstractMemoryTool):
 
             # Limit total lines shown
             if len(lines) > self.max_view_lines:
-                lines = lines[:self.max_view_lines]
+                lines = lines[: self.max_view_lines]
                 lines.append(f"\n... (truncated, showing first {self.max_view_lines} lines)")
 
             return "".join(lines)
@@ -369,8 +364,7 @@ class AgencyMemoryTool(BetaAbstractMemoryTool):
 
 
 def create_memory_tool(
-    session_id: str | None = None,
-    base_dir: str | None = None
+    session_id: str | None = None, base_dir: str | None = None
 ) -> AgencyMemoryTool:
     """Factory function to create a memory tool instance
 

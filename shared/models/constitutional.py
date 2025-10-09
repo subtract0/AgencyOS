@@ -90,21 +90,15 @@ class ConstitutionalEvent(BaseModel):
     )
 
     # Metadata
-    severity: str = Field(
-        "info", description="Severity level (info, warning, error, critical)"
-    )
+    severity: str = Field("info", description="Severity level (info, warning, error, critical)")
     error_message: str | None = Field(None, description="Error message if action=blocked")
-    suggested_fix: str | None = Field(
-        None, description="Suggested remediation if available"
-    )
+    suggested_fix: str | None = Field(None, description="Suggested remediation if available")
     metadata: dict[str, JSONValue] = Field(
         default_factory=dict, description="Additional metadata for analysis"
     )
 
     # Learning support
-    tags: list[str] = Field(
-        default_factory=list, description="Tags for categorization and search"
-    )
+    tags: list[str] = Field(default_factory=list, description="Tags for categorization and search")
     # Tags examples: ["constitutional", "article_i", "pre-commit", "agent:planner"]
 
     def to_jsonl(self) -> str:

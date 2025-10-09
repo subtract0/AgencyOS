@@ -87,9 +87,7 @@ class GitWorkflowToolAgency(BaseTool):  # type: ignore[misc]
         None, description="Branch name (required for create_branch, switch_branch, delete_branch)"
     )
 
-    message: str | None = Field(
-        None, description="Commit message (required for commit operation)"
-    )
+    message: str | None = Field(None, description="Commit message (required for commit operation)")
 
     files: list[str] | None = Field(
         None, description="Files to commit (optional, commits all if not specified)"

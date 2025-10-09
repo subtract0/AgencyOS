@@ -579,7 +579,17 @@ class TestConstants:
 
     def test_trinity_agent_tiers_contains_all_agents(self):
         """Test TRINITY_AGENT_TIERS contains all Trinity agents."""
-        expected_agents = {"witness", "auditlearn", "auditor", "learner", "fixer", "architect", "plan", "executor", "execute"}
+        expected_agents = {
+            "witness",
+            "auditlearn",
+            "auditor",
+            "learner",
+            "fixer",
+            "architect",
+            "plan",
+            "executor",
+            "execute",
+        }
         assert set(TRINITY_AGENT_TIERS.keys()) == expected_agents
 
     def test_trinity_agent_tiers_has_correct_defaults(self):

@@ -55,7 +55,9 @@ class HumanReviewRequest(BaseModel):
         default=None, max_length=200, description="Brief description of what would happen if YES"
     )
 
-    model_config = ConfigDict(validate_assignment=True, frozen=False)  # Allow updates during lifecycle
+    model_config = ConfigDict(
+        validate_assignment=True, frozen=False
+    )  # Allow updates during lifecycle
 
 
 class HumanResponse(BaseModel):

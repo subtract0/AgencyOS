@@ -55,9 +55,7 @@ class MemoryRecord(BaseModel):
         default_factory=MemoryMetadata, description="Structured metadata"
     )
     ttl_seconds: int | None = Field(None, description="Time to live in seconds")
-    embedding: list[float] | None = Field(
-        None, description="Vector embedding for semantic search"
-    )
+    embedding: list[float] | None = Field(None, description="Vector embedding for semantic search")
 
     @field_validator("content", mode="before")
     def validate_json_compatible(cls, v: JSONValue) -> JSONValue:

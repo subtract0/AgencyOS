@@ -131,13 +131,9 @@ class AgentRegistry:
         self.default_tier = default_tier
         self._agent_cache: dict[tuple[AgentType, ModelTier], object] = {}
 
-        logger.info(
-            f"AgentRegistry initialized with default_tier={default_tier.value}"
-        )
+        logger.info(f"AgentRegistry initialized with default_tier={default_tier.value}")
 
-    def create_agent(
-        self, agent_type: AgentType, tier: ModelTier | None = None
-    ) -> object:
+    def create_agent(self, agent_type: AgentType, tier: ModelTier | None = None) -> object:
         """
         Create an agent with specified type and model tier.
 
@@ -171,9 +167,7 @@ class AgentRegistry:
         self._agent_cache[cache_key] = agent
         return agent
 
-    def get_model_for_agent(
-        self, agent_type: AgentType, tier: ModelTier | None = None
-    ) -> str:
+    def get_model_for_agent(self, agent_type: AgentType, tier: ModelTier | None = None) -> str:
         """
         Get model name for an agent type at specified tier.
 
@@ -229,9 +223,7 @@ class AgentRegistry:
 
         return factory(**kwargs)
 
-    def create_all_agents(
-        self, tier: ModelTier | None = None
-    ) -> dict[AgentType, object]:
+    def create_all_agents(self, tier: ModelTier | None = None) -> dict[AgentType, object]:
         """
         Create all 10 Agency agents with specified tier.
 
@@ -266,9 +258,7 @@ class AgentRegistry:
         }
 
         next_tier = escalation_map[current_tier]
-        logger.info(
-            f"Escalating {agent_type.value}: {current_tier.value} → {next_tier.value}"
-        )
+        logger.info(f"Escalating {agent_type.value}: {current_tier.value} → {next_tier.value}")
 
         return self.create_agent(agent_type, next_tier)
 

@@ -24,7 +24,9 @@ def test_memory_aware_runner_integration():
     # Verify configuration is valid
     assert 1 <= config.worker_count <= 10, f"Worker count {config.worker_count} out of range"
     assert config.memory_budget_gb >= 0, "Memory budget must be non-negative"
-    assert config.execution_mode in ["parallel", "serial", "adaptive"], f"Invalid mode: {config.execution_mode}"
+    assert config.execution_mode in ["parallel", "serial", "adaptive"], (
+        f"Invalid mode: {config.execution_mode}"
+    )
 
     # Verify worker count aligns with execution mode
     if config.execution_mode == "serial":
@@ -71,7 +73,7 @@ def test_run_tests_with_memory_aware_config():
 @pytest.mark.integration
 def test_cloud_fallback_trigger():
     """Verify cloud fallback is triggered when memory is critical."""
-    with patch('psutil.virtual_memory') as mock_mem:
+    with patch("psutil.virtual_memory") as mock_mem:
         # Simulate critically low memory (6GB available)
         mock_mem.return_value = MagicMock(available=6 * 1024**3)
 
@@ -88,7 +90,7 @@ def test_cloud_fallback_trigger():
 @pytest.mark.integration
 def test_memory_aware_runner_handles_errors_gracefully():
     """Verify graceful error handling when memory detection fails."""
-    with patch('psutil.virtual_memory', side_effect=Exception("Memory read failed")):
+    with patch("psutil.virtual_memory", side_effect=Exception("Memory read failed")):
         from tools.memory_aware_test_runner import get_test_execution_config
 
         result = get_test_execution_config()

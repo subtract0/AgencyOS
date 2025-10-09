@@ -68,9 +68,7 @@ class LearningHintRegistry:
             return []
         return [Hint(**cast(dict[str, JSONValue], h)) for h in hints_raw if isinstance(h, dict)]
 
-    def match_for_error(
-        self, error_type: str | None, error_message: str | None
-    ) -> Hint | None:
+    def match_for_error(self, error_type: str | None, error_message: str | None) -> Hint | None:
         """Find a hint matching error type or error pattern."""
         if not self.data.get("hints"):
             return None

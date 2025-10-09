@@ -17,9 +17,8 @@ IN_CI = os.getenv("CI") == "true"
 pytestmark = [
     pytest.mark.benchmark,
     pytest.mark.skipif(
-        IN_CI,
-        reason="Performance benchmarks are environment-dependent - skip in CI"
-    )
+        IN_CI, reason="Performance benchmarks are environment-dependent - skip in CI"
+    ),
 ]
 
 

@@ -33,7 +33,9 @@ class TestFirestoreLearningPersistence:
 
         # Skip tests if credentials not available (optional feature)
         if not os.path.exists(creds_path):
-            pytest.skip(f"Firestore credentials not found at {creds_path} - skipping integration tests")
+            pytest.skip(
+                f"Firestore credentials not found at {creds_path} - skipping integration tests"
+            )
 
         # Set environment variable for Firestore to use
         os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = creds_path

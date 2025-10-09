@@ -69,7 +69,7 @@ class ConstitutionalTelemetry:
         section: str | None = None,
         error_message: str | None = None,
         suggested_fix: str | None = None,
-        **kwargs: JSONValue
+        **kwargs: JSONValue,
     ) -> ConstitutionalEvent:
         """
         Emit a constitutional enforcement event.
@@ -90,6 +90,7 @@ class ConstitutionalTelemetry:
         """
         # Generate unique event ID
         from datetime import UTC
+
         event_id = f"const_{datetime.now(UTC).strftime('%Y%m%d_%H%M%S')}_{uuid.uuid4().hex[:8]}"
 
         # Create event
@@ -195,10 +196,7 @@ def get_constitutional_telemetry() -> ConstitutionalTelemetry:
 
 
 def emit_constitutional_event(
-    article: Article,
-    rule_description: str,
-    action: EnforcementAction,
-    **kwargs: JSONValue
+    article: Article, rule_description: str, action: EnforcementAction, **kwargs: JSONValue
 ) -> ConstitutionalEvent:
     """
     Convenience function to emit constitutional event.

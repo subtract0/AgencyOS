@@ -193,6 +193,7 @@ class TrinityOrchestrator:
 
             # Create cost tracker with in-memory storage
             from shared.cost_tracker import MemoryStorage
+
             self._cost_tracker = CostTracker(storage=MemoryStorage())
 
             # Create message bus (in-memory for now)
@@ -227,7 +228,7 @@ class TrinityOrchestrator:
             logger.error(
                 f"❌ Failed to initialize HybridExecutor: {e}. "
                 "Trinity will fall back to direct Ollama execution.",
-                exc_info=True
+                exc_info=True,
             )
             self.hybrid_executor = None
 

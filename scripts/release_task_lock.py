@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 """Release task locks - for manual cleanup or automatic session cleanup."""
+
 import os
 import sys
 from pathlib import Path

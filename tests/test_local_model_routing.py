@@ -8,6 +8,7 @@ Constitutional Compliance:
 - Article II: TDD approach (tests written first, then implementation)
 - Article IV: Learning from patterns (routing patterns based on task complexity)
 """
+
 import os
 import unittest
 from unittest.mock import patch
@@ -20,24 +21,34 @@ class TestLocalModelRouting(unittest.TestCase):
 
     def test_p3_routes_to_local_model(self):
         """Test that P3 simple tasks route to local Ollama model."""
-        with patch.dict(os.environ, {
-            "USE_LOCAL_MODEL": "true",
-            "LOCAL_MODEL_NAME": "hf.co/abirhossen/Qwen3-Coder-30B-A3B-Instruct-Q8_0-GGUF:Q8_0",
-            "QUALITY_ENFORCER_MODEL": "",  # Clear override
-        }, clear=False):
+        with patch.dict(
+            os.environ,
+            {
+                "USE_LOCAL_MODEL": "true",
+                "LOCAL_MODEL_NAME": "hf.co/abirhossen/Qwen3-Coder-30B-A3B-Instruct-Q8_0-GGUF:Q8_0",
+                "QUALITY_ENFORCER_MODEL": "",  # Clear override
+            },
+            clear=False,
+        ):
             task = "Fix typo in docstring"
             complexity = classify_task_complexity(task)
             model = get_optimal_model(complexity, agent_key="quality_enforcer")
 
             self.assertEqual(complexity, "P3")
-            self.assertEqual(model, "ollama/hf.co/abirhossen/Qwen3-Coder-30B-A3B-Instruct-Q8_0-GGUF:Q8_0")
+            self.assertEqual(
+                model, "ollama/hf.co/abirhossen/Qwen3-Coder-30B-A3B-Instruct-Q8_0-GGUF:Q8_0"
+            )
 
     def test_p3_cloud_fallback_when_disabled(self):
         """Test that P3 tasks use cloud when local disabled."""
-        with patch.dict(os.environ, {
-            "USE_LOCAL_MODEL": "false",
-            "QUALITY_ENFORCER_MODEL": "",
-        }, clear=False):
+        with patch.dict(
+            os.environ,
+            {
+                "USE_LOCAL_MODEL": "false",
+                "QUALITY_ENFORCER_MODEL": "",
+            },
+            clear=False,
+        ):
             task = "Remove unused import"
             complexity = classify_task_complexity(task)
             model = get_optimal_model(complexity, agent_key="quality_enforcer")
@@ -47,10 +58,14 @@ class TestLocalModelRouting(unittest.TestCase):
 
     def test_p2_uses_gpt4o(self):
         """Test that P2 moderate tasks use gpt-4o."""
-        with patch.dict(os.environ, {
-            "USE_LOCAL_MODEL": "true",
-            "QUALITY_ENFORCER_MODEL": "",
-        }, clear=False):
+        with patch.dict(
+            os.environ,
+            {
+                "USE_LOCAL_MODEL": "true",
+                "QUALITY_ENFORCER_MODEL": "",
+            },
+            clear=False,
+        ):
             task = "Implement OAuth authentication"
             complexity = classify_task_complexity(task)
             model = get_optimal_model(complexity, agent_key="quality_enforcer")
@@ -60,10 +75,14 @@ class TestLocalModelRouting(unittest.TestCase):
 
     def test_p1_uses_gpt5(self):
         """Test that P1 complex tasks use gpt-5."""
-        with patch.dict(os.environ, {
-            "USE_LOCAL_MODEL": "true",
-            "QUALITY_ENFORCER_MODEL": "",
-        }, clear=False):
+        with patch.dict(
+            os.environ,
+            {
+                "USE_LOCAL_MODEL": "true",
+                "QUALITY_ENFORCER_MODEL": "",
+            },
+            clear=False,
+        ):
             task = "Design distributed consensus protocol"
             complexity = classify_task_complexity(task)
             model = get_optimal_model(complexity, agent_key="quality_enforcer")
@@ -73,10 +92,14 @@ class TestLocalModelRouting(unittest.TestCase):
 
     def test_env_override_takes_precedence(self):
         """Test that QUALITY_ENFORCER_MODEL env var overrides routing."""
-        with patch.dict(os.environ, {
-            "USE_LOCAL_MODEL": "true",
-            "QUALITY_ENFORCER_MODEL": "gpt-4o",  # Override
-        }, clear=False):
+        with patch.dict(
+            os.environ,
+            {
+                "USE_LOCAL_MODEL": "true",
+                "QUALITY_ENFORCER_MODEL": "gpt-4o",  # Override
+            },
+            clear=False,
+        ):
             task = "Fix typo"  # P3, should route to local but env overrides
             complexity = classify_task_complexity(task)
             model = get_optimal_model(complexity, agent_key="quality_enforcer")
@@ -86,11 +109,15 @@ class TestLocalModelRouting(unittest.TestCase):
     def test_multiple_p3_tasks_route_locally(self):
         """Test various P3 tasks all route to local model."""
         expected_model = "ollama/hf.co/abirhossen/Qwen3-Coder-30B-A3B-Instruct-Q8_0-GGUF:Q8_0"
-        with patch.dict(os.environ, {
-            "USE_LOCAL_MODEL": "true",
-            "LOCAL_MODEL_NAME": "hf.co/abirhossen/Qwen3-Coder-30B-A3B-Instruct-Q8_0-GGUF:Q8_0",
-            "QUALITY_ENFORCER_MODEL": "",
-        }, clear=False):
+        with patch.dict(
+            os.environ,
+            {
+                "USE_LOCAL_MODEL": "true",
+                "LOCAL_MODEL_NAME": "hf.co/abirhossen/Qwen3-Coder-30B-A3B-Instruct-Q8_0-GGUF:Q8_0",
+                "QUALITY_ENFORCER_MODEL": "",
+            },
+            clear=False,
+        ):
             p3_tasks = [
                 "Fix typo in comment",
                 "Remove unused import",
@@ -105,15 +132,18 @@ class TestLocalModelRouting(unittest.TestCase):
 
                 with self.subTest(task=task):
                     self.assertEqual(complexity, "P3", f"Task '{task}' should be P3")
-                    self.assertEqual(model, expected_model,
-                                     f"Task '{task}' should route to local")
+                    self.assertEqual(model, expected_model, f"Task '{task}' should route to local")
 
     def test_cost_savings_distribution(self):
         """Test realistic task distribution achieves 96% cost reduction."""
-        with patch.dict(os.environ, {
-            "USE_LOCAL_MODEL": "true",
-            "QUALITY_ENFORCER_MODEL": "",
-        }, clear=False):
+        with patch.dict(
+            os.environ,
+            {
+                "USE_LOCAL_MODEL": "true",
+                "QUALITY_ENFORCER_MODEL": "",
+            },
+            clear=False,
+        ):
             # Realistic distribution: 60% P3, 30% P2, 10% P1
             tasks = [
                 *["Fix typo"] * 60,  # P3 → $0 (local)
@@ -154,11 +184,15 @@ class TestLocalModelRouting(unittest.TestCase):
 
     def test_custom_local_model_name(self):
         """Test that LOCAL_MODEL_NAME env var changes local model."""
-        with patch.dict(os.environ, {
-            "USE_LOCAL_MODEL": "true",
-            "LOCAL_MODEL_NAME": "custom-model:7b",
-            "QUALITY_ENFORCER_MODEL": "",
-        }, clear=False):
+        with patch.dict(
+            os.environ,
+            {
+                "USE_LOCAL_MODEL": "true",
+                "LOCAL_MODEL_NAME": "custom-model:7b",
+                "QUALITY_ENFORCER_MODEL": "",
+            },
+            clear=False,
+        ):
             task = "Fix typo"
             complexity = classify_task_complexity(task)
             model = get_optimal_model(complexity, agent_key="quality_enforcer")
