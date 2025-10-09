@@ -50,9 +50,7 @@ def validate_python_code(content: str, file_path: str) -> tuple[bool, list[str]]
     errors = []
 
     # Write to temp file for ruff validation
-    with tempfile.NamedTemporaryFile(
-        mode="w", suffix=".py", delete=False
-    ) as f:
+    with tempfile.NamedTemporaryFile(mode="w", suffix=".py", delete=False) as f:
         f.write(content)
         temp_path = f.name
 
@@ -73,9 +71,7 @@ def validate_python_code(content: str, file_path: str) -> tuple[bool, list[str]]
             text=True,
         )
         if result.returncode != 0:
-            errors.append(
-                f"Ruff format required (run: ruff format {file_path})"
-            )
+            errors.append(f"Ruff format required (run: ruff format {file_path})")
 
         # Quality Gate 3: Dict[str, Any] ban check (Constitutional Law #2)
         if "dict[str, Any]" in content or "Dict[str, Any]" in content:
@@ -136,9 +132,7 @@ def check_function_length(content: str) -> list[str]:
         elif in_function and line.strip():
             # Check if we've exited the function (dedent to same or less level)
             current_indent = len(line) - len(line.lstrip())
-            if current_indent <= func_indent and not line.strip().startswith(
-                "#"
-            ):
+            if current_indent <= func_indent and not line.strip().startswith("#"):
                 # Function ended
                 func_length = i - func_start
                 if func_length > 50:
@@ -184,19 +178,13 @@ def main():
                     sys.exit(0)
 
                 if content:
-                    is_valid, errors = validate_python_code(
-                        content, file_path
-                    )
+                    is_valid, errors = validate_python_code(content, file_path)
 
                     if not is_valid:
-                        sys.stderr.write(
-                            f"❌ Quality Gate Failed for {file_path}:\n"
-                        )
+                        sys.stderr.write(f"❌ Quality Gate Failed for {file_path}:\n")
                         for error in errors:
                             sys.stderr.write(f"\n{error}\n")
-                        sys.stderr.write(
-                            "\n🔧 Fix these issues before writing the file.\n"
-                        )
+                        sys.stderr.write("\n🔧 Fix these issues before writing the file.\n")
                         sys.exit(2)  # BLOCK the write
 
         # Edit tool bypasses validation (surgical edits to existing files)

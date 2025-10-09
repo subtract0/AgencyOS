@@ -61,9 +61,7 @@ def create_user(data: dict[str, str]) -> User:
     return User(**data)
 '''
 
-    exit_code, stdout, stderr = run_hook(
-        "Write", {"file_path": "test.py", "content": valid_code}
-    )
+    exit_code, stdout, stderr = run_hook("Write", {"file_path": "test.py", "content": valid_code})
 
     assert exit_code == 0, f"Expected exit 0, got {exit_code}. Stderr: {stderr}"
     print("✅ Test 1 passed: Valid code allowed")
@@ -71,13 +69,13 @@ def create_user(data: dict[str, str]) -> User:
 
 def test_blocks_lint_violations():
     """Test that ruff lint violations block the write."""
-    lint_violation = '''
+    lint_violation = """
 import os
 import sys  # Unused import - lint violation
 
 def test():
     pass
-'''
+"""
 
     exit_code, stdout, stderr = run_hook(
         "Write", {"file_path": "test.py", "content": lint_violation}
@@ -90,11 +88,11 @@ def test():
 
 def test_blocks_format_violations():
     """Test that ruff format violations block the write."""
-    format_violation = '''
+    format_violation = """
 def test(  ):  # Extra spaces - format violation
     x=1+2  # Missing spaces around operators
     return   x
-'''
+"""
 
     exit_code, stdout, stderr = run_hook(
         "Write", {"file_path": "test.py", "content": format_violation}
@@ -251,7 +249,7 @@ def main():
             print(f"❌ {test.__name__} ERROR: {e}")
             failed += 1
 
-    print(f"\n{'='*60}")
+    print(f"\n{'=' * 60}")
     print(f"Results: {len(tests) - failed}/{len(tests)} tests passed")
 
     if failed > 0:
