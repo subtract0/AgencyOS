@@ -33,8 +33,9 @@ class TestAgentAdapter:
     """Test Agent class (backward compatibility adapter)."""
 
     @patch("shared.lean_agent.OpenAI")
-    def test_agent_adapter_minimal_init(self, mock_openai):
+    def test_agent_adapter_minimal_init(self, mock_openai, monkeypatch):
         """Test Agent adapter with minimal parameters."""
+        monkeypatch.setenv("OPENAI_API_KEY", "test-key")
         # Act
         agent = Agent(name="test_agent", instructions="You are helpful")
 
@@ -45,8 +46,9 @@ class TestAgentAdapter:
         assert len(agent.messages) == 1  # System prompt
 
     @patch("shared.lean_agent.OpenAI")
-    def test_agent_adapter_default_name(self, mock_openai):
+    def test_agent_adapter_default_name(self, mock_openai, monkeypatch):
         """Test Agent with default name."""
+        monkeypatch.setenv("OPENAI_API_KEY", "test-key")
         # Act
         agent = Agent(instructions="Test instructions")
 
@@ -54,8 +56,9 @@ class TestAgentAdapter:
         assert agent.config.name == "agent"  # Default name
 
     @patch("shared.lean_agent.OpenAI")
-    def test_agent_adapter_default_instructions(self, mock_openai):
+    def test_agent_adapter_default_instructions(self, mock_openai, monkeypatch):
         """Test Agent with default instructions generation."""
+        monkeypatch.setenv("OPENAI_API_KEY", "test-key")
         # Act
         agent = Agent(name="helper")
 
@@ -64,8 +67,9 @@ class TestAgentAdapter:
         assert "helpful" in agent.config.instructions.lower()
 
     @patch("shared.lean_agent.OpenAI")
-    def test_agent_adapter_with_instructions_file(self, mock_openai):
+    def test_agent_adapter_with_instructions_file(self, mock_openai, monkeypatch):
         """Test Agent loads instructions from file."""
+        monkeypatch.setenv("OPENAI_API_KEY", "test-key")
         # Arrange - Create temporary instructions file
         with tempfile.NamedTemporaryFile(mode="w", suffix=".md", delete=False) as f:
             f.write("You are a specialized agent.\nYou help with testing.")
@@ -83,8 +87,9 @@ class TestAgentAdapter:
             Path(instructions_file).unlink()
 
     @patch("shared.lean_agent.OpenAI")
-    def test_agent_adapter_instructions_string_takes_precedence(self, mock_openai):
+    def test_agent_adapter_instructions_string_takes_precedence(self, mock_openai, monkeypatch):
         """Test that instructions string overrides instructions_file."""
+        monkeypatch.setenv("OPENAI_API_KEY", "test-key")
         # Arrange
         with tempfile.NamedTemporaryFile(mode="w", suffix=".md", delete=False) as f:
             f.write("File instructions")
@@ -104,8 +109,9 @@ class TestAgentAdapter:
             Path(instructions_file).unlink()
 
     @patch("shared.lean_agent.OpenAI")
-    def test_agent_adapter_custom_model(self, mock_openai):
+    def test_agent_adapter_custom_model(self, mock_openai, monkeypatch):
         """Test Agent with custom model."""
+        monkeypatch.setenv("OPENAI_API_KEY", "test-key")
         # Act
         agent = Agent(name="test", instructions="Test", model="gpt-5")
 
@@ -113,8 +119,9 @@ class TestAgentAdapter:
         assert agent.config.model == "gpt-5"
 
     @patch("shared.lean_agent.OpenAI")
-    def test_agent_adapter_custom_temperature(self, mock_openai):
+    def test_agent_adapter_custom_temperature(self, mock_openai, monkeypatch):
         """Test Agent with custom temperature."""
+        monkeypatch.setenv("OPENAI_API_KEY", "test-key")
         # Act
         agent = Agent(name="test", instructions="Test", temperature=0.2)
 
@@ -122,8 +129,9 @@ class TestAgentAdapter:
         assert agent.config.temperature == 0.2
 
     @patch("shared.lean_agent.OpenAI")
-    def test_agent_adapter_custom_max_tokens(self, mock_openai):
+    def test_agent_adapter_custom_max_tokens(self, mock_openai, monkeypatch):
         """Test Agent with custom max_tokens."""
+        monkeypatch.setenv("OPENAI_API_KEY", "test-key")
         # Act
         agent = Agent(name="test", instructions="Test", max_tokens=8000)
 
@@ -131,8 +139,9 @@ class TestAgentAdapter:
         assert agent.config.max_tokens == 8000
 
     @patch("shared.lean_agent.OpenAI")
-    def test_agent_adapter_with_tools(self, mock_openai):
+    def test_agent_adapter_with_tools(self, mock_openai, monkeypatch):
         """Test Agent with tools."""
+        monkeypatch.setenv("OPENAI_API_KEY", "test-key")
         # Arrange
         param = ToolParameter(type="object", properties={}, required=[])
         tool_obj = Tool(name="test_tool", description="Test", parameters=param)
@@ -145,8 +154,9 @@ class TestAgentAdapter:
         assert agent.config.tools[0].name == "test_tool"
 
     @patch("shared.lean_agent.OpenAI")
-    def test_agent_adapter_ignores_unknown_kwargs(self, mock_openai):
+    def test_agent_adapter_ignores_unknown_kwargs(self, mock_openai, monkeypatch):
         """Test Agent ignores unknown kwargs (for compatibility)."""
+        monkeypatch.setenv("OPENAI_API_KEY", "test-key")
         # Act - Pass extra kwargs that agency-swarm might have
         agent = Agent(
             name="test",
@@ -163,8 +173,9 @@ class TestAgencyAdapter:
     """Test Agency class (backward compatibility adapter)."""
 
     @patch("shared.lean_agent.OpenAI")
-    def test_agency_minimal_init(self, mock_openai):
+    def test_agency_minimal_init(self, mock_openai, monkeypatch):
         """Test Agency with minimal parameters."""
+        monkeypatch.setenv("OPENAI_API_KEY", "test-key")
         # Arrange
         agent = Agent(name="test_agent", instructions="Test")
 
@@ -176,8 +187,9 @@ class TestAgencyAdapter:
         assert agency.agent.config.name == "test_agent"
 
     @patch("shared.lean_agent.OpenAI")
-    def test_agency_with_multiple_agents_uses_first(self, mock_openai):
+    def test_agency_with_multiple_agents_uses_first(self, mock_openai, monkeypatch):
         """Test Agency with multiple agents uses only the first."""
+        monkeypatch.setenv("OPENAI_API_KEY", "test-key")
         # Arrange
         agent1 = Agent(name="agent1", instructions="First")
         agent2 = Agent(name="agent2", instructions="Second")
@@ -191,15 +203,17 @@ class TestAgencyAdapter:
         assert agency.agent.config.name == "agent1"
 
     @patch("shared.lean_agent.OpenAI")
-    def test_agency_requires_at_least_one_agent(self, mock_openai):
+    def test_agency_requires_at_least_one_agent(self, mock_openai, monkeypatch):
         """Test Agency raises error with empty agent list."""
+        monkeypatch.setenv("OPENAI_API_KEY", "test-key")
         # Act & Assert
         with pytest.raises(ValueError, match="at least one agent"):
             Agency(agents=[])
 
     @patch("shared.lean_agent.OpenAI")
-    def test_agency_with_shared_instructions_string(self, mock_openai):
+    def test_agency_with_shared_instructions_string(self, mock_openai, monkeypatch):
         """Test Agency prepends shared instructions."""
+        monkeypatch.setenv("OPENAI_API_KEY", "test-key")
         # Arrange
         agent = Agent(name="test", instructions="Original instructions")
 
@@ -214,8 +228,9 @@ class TestAgencyAdapter:
         ) < agency.agent.config.instructions.index("Original")
 
     @patch("shared.lean_agent.OpenAI")
-    def test_agency_with_shared_instructions_file(self, mock_openai):
+    def test_agency_with_shared_instructions_file(self, mock_openai, monkeypatch):
         """Test Agency loads shared instructions from file."""
+        monkeypatch.setenv("OPENAI_API_KEY", "test-key")
         # Arrange
         with tempfile.NamedTemporaryFile(mode="w", suffix=".md", delete=False) as f:
             f.write("# Shared Guidelines\n\nFollow these rules.")
@@ -235,8 +250,9 @@ class TestAgencyAdapter:
             Path(shared_file).unlink()
 
     @patch("shared.lean_agent.OpenAI")
-    def test_agency_shared_instructions_nonexistent_file_uses_as_string(self, mock_openai):
+    def test_agency_shared_instructions_nonexistent_file_uses_as_string(self, mock_openai, monkeypatch):
         """Test Agency uses nonexistent file path as string."""
+        monkeypatch.setenv("OPENAI_API_KEY", "test-key")
         # Arrange
         agent = Agent(name="test", instructions="Test")
 
@@ -247,8 +263,9 @@ class TestAgencyAdapter:
         assert "./nonexistent_file.md" in agency.agent.config.instructions
 
     @patch("shared.lean_agent.OpenAI")
-    def test_agency_get_completion_simple(self, mock_openai):
+    def test_agency_get_completion_simple(self, mock_openai, monkeypatch):
         """Test Agency.get_completion() method."""
+        monkeypatch.setenv("OPENAI_API_KEY", "test-key")
         # Arrange
         agent = Agent(name="test", instructions="Test")
         agency = Agency(agents=[agent])
@@ -268,8 +285,9 @@ class TestAgencyAdapter:
         assert result == "Hello, how can I help?"
 
     @patch("shared.lean_agent.OpenAI")
-    def test_agency_get_completion_ignores_recipient_agent(self, mock_openai):
+    def test_agency_get_completion_ignores_recipient_agent(self, mock_openai, monkeypatch):
         """Test Agency.get_completion() ignores recipient_agent parameter."""
+        monkeypatch.setenv("OPENAI_API_KEY", "test-key")
         # Arrange
         agent1 = Agent(name="agent1", instructions="First")
         agent2 = Agent(name="agent2", instructions="Second")
@@ -295,8 +313,9 @@ class TestToolConversion:
     """Test tool conversion in adapter."""
 
     @patch("shared.lean_agent.OpenAI")
-    def test_adapter_converts_tool_objects(self, mock_openai):
+    def test_adapter_converts_tool_objects(self, mock_openai, monkeypatch):
         """Test adapter handles Tool objects."""
+        monkeypatch.setenv("OPENAI_API_KEY", "test-key")
         # Arrange
         param = ToolParameter(
             type="object",
@@ -315,8 +334,9 @@ class TestToolConversion:
         assert agent.config.tools[1] == tool2
 
     @patch("shared.lean_agent.OpenAI")
-    def test_adapter_filters_non_tool_objects(self, mock_openai):
+    def test_adapter_filters_non_tool_objects(self, mock_openai, monkeypatch):
         """Test adapter filters out non-Tool objects."""
+        monkeypatch.setenv("OPENAI_API_KEY", "test-key")
         # Arrange
         param = ToolParameter(type="object", properties={}, required=[])
         valid_tool = Tool(name="valid", description="Valid", parameters=param)
@@ -334,8 +354,9 @@ class TestBackwardCompatibility:
     """Test backward compatibility with agency-swarm patterns."""
 
     @patch("shared.lean_agent.OpenAI")
-    def test_agency_swarm_typical_usage(self, mock_openai):
+    def test_agency_swarm_typical_usage(self, mock_openai, monkeypatch):
         """Test typical agency-swarm usage pattern."""
+        monkeypatch.setenv("OPENAI_API_KEY", "test-key")
         # Arrange - Typical agency-swarm code
         coder_agent = Agent(
             name="Coder",
@@ -363,9 +384,9 @@ class TestBackwardCompatibility:
         assert "Code written successfully" in result
 
     @patch("shared.lean_agent.OpenAI")
-    def test_autonomous_worker_typical_usage(self, mock_openai):
+    def test_autonomous_worker_typical_usage(self, mock_openai, monkeypatch):
         """Test pattern used in autonomous_worker.py."""
-
+        monkeypatch.setenv("OPENAI_API_KEY", "test-key")
         # Arrange - Pattern from autonomous_worker.py
         def create_agent_from_instructions_file(name: str, instructions_file: str):
             return Agent(
@@ -407,8 +428,9 @@ class TestEdgeCases:
     """Test edge cases in adapter."""
 
     @patch("shared.lean_agent.OpenAI")
-    def test_agent_with_none_tools(self, mock_openai):
+    def test_agent_with_none_tools(self, mock_openai, monkeypatch):
         """Test Agent with None tools parameter."""
+        monkeypatch.setenv("OPENAI_API_KEY", "test-key")
         # Act
         agent = Agent(name="test", instructions="Test", tools=None)
 
@@ -416,8 +438,9 @@ class TestEdgeCases:
         assert len(agent.config.tools) == 0
 
     @patch("shared.lean_agent.OpenAI")
-    def test_agency_with_none_shared_instructions(self, mock_openai):
+    def test_agency_with_none_shared_instructions(self, mock_openai, monkeypatch):
         """Test Agency with None shared_instructions."""
+        monkeypatch.setenv("OPENAI_API_KEY", "test-key")
         # Arrange
         agent = Agent(name="test", instructions="Original")
 
@@ -428,8 +451,9 @@ class TestEdgeCases:
         assert agency.agent.config.instructions == "Original"
 
     @patch("shared.lean_agent.OpenAI")
-    def test_agent_instructions_file_not_found_uses_default(self, mock_openai):
+    def test_agent_instructions_file_not_found_uses_default(self, mock_openai, monkeypatch):
         """Test Agent with nonexistent instructions file uses default."""
+        monkeypatch.setenv("OPENAI_API_KEY", "test-key")
         # Act
         agent = Agent(name="test_agent", instructions_file="/nonexistent/file.md")
 
@@ -438,8 +462,9 @@ class TestEdgeCases:
         assert "helpful" in agent.config.instructions.lower()
 
     @patch("shared.lean_agent.OpenAI")
-    def test_agency_shared_instructions_absolute_path(self, mock_openai):
+    def test_agency_shared_instructions_absolute_path(self, mock_openai, monkeypatch):
         """Test Agency handles absolute path for shared_instructions."""
+        monkeypatch.setenv("OPENAI_API_KEY", "test-key")
         # Arrange
         with tempfile.NamedTemporaryFile(mode="w", suffix=".md", delete=False) as f:
             f.write("Shared content")
@@ -457,8 +482,9 @@ class TestEdgeCases:
             Path(abs_path).unlink()
 
     @patch("shared.lean_agent.OpenAI")
-    def test_agency_shared_instructions_relative_path(self, mock_openai):
+    def test_agency_shared_instructions_relative_path(self, mock_openai, monkeypatch):
         """Test Agency handles relative path for shared_instructions."""
+        monkeypatch.setenv("OPENAI_API_KEY", "test-key")
         # Arrange
         with tempfile.NamedTemporaryFile(mode="w", suffix=".md", delete=False, dir=".") as f:
             f.write("Relative content")
