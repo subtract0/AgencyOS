@@ -7,6 +7,7 @@ Constitutional compliance:
 - ADR-010: Result pattern for error handling
 - Constitutional Law #5: Result pattern for all functions that can fail
 """
+
 import os
 import time
 from datetime import datetime, timedelta
@@ -33,9 +34,7 @@ class LockManager:
             lock_dir: Optional custom lock directory (defaults to ~/.agency/memories/.locks)
         """
         if lock_dir is None:
-            self.lock_dir = (
-                Path.home() / ".agency" / "memories" / ".locks"
-            )
+            self.lock_dir = Path.home() / ".agency" / "memories" / ".locks"
         else:
             self.lock_dir = Path(lock_dir)
 
@@ -84,9 +83,7 @@ class LockManager:
                 return Err(stale_check.unwrap_err())  # Type-safe error extraction
 
         # Create lock file and start heartbeat with custom interval
-        return self._create_lock_file(
-            lock_file, task_id, session_id, metadata, update_interval
-        )
+        return self._create_lock_file(lock_file, task_id, session_id, metadata, update_interval)
 
     def acquire_lock_with_timeout(
         self,
@@ -136,9 +133,7 @@ class LockManager:
                 handle = result.unwrap()
 
                 # Update handle with wait time (use Pydantic model_copy)
-                handle_with_wait = handle.model_copy(
-                    update={"wait_time_seconds": wait_time}
-                )
+                handle_with_wait = handle.model_copy(update={"wait_time_seconds": wait_time})
                 return Ok(handle_with_wait)
 
             # Check error type
@@ -265,9 +260,7 @@ class LockManager:
         except Exception as e:
             return Err(LockError.io_error(f"Failed to list locks: {e}"))
 
-    def check_stale_locks(
-        self, timeout_minutes: int = 5
-    ) -> Result[list[str], LockError]:
+    def check_stale_locks(self, timeout_minutes: int = 5) -> Result[list[str], LockError]:
         """
         Find and remove locks with stale heartbeats.
 
@@ -378,9 +371,7 @@ class LockManager:
         except Exception as e:
             return Err(LockError.io_error(str(e), task_id=task_id))
 
-    def _check_and_remove_stale_lock(
-        self, lock_file: Path
-    ) -> Result[bool, LockError]:
+    def _check_and_remove_stale_lock(self, lock_file: Path) -> Result[bool, LockError]:
         """
         Check if lock is stale and remove if so.
 
@@ -433,9 +424,7 @@ class LockManager:
 
             if len(lines) < 6:
                 return Err(
-                    LockError.io_error(
-                        f"Malformed lock file (expected 6 lines, got {len(lines)})"
-                    )
+                    LockError.io_error(f"Malformed lock file (expected 6 lines, got {len(lines)})")
                 )
 
             return Ok(
