@@ -209,9 +209,9 @@ class TestAgencyAdapter:
         # Assert
         assert "Shared context" in agency.agent.config.instructions
         assert "Original instructions" in agency.agent.config.instructions
-        assert agency.agent.config.instructions.index("Shared") < agency.agent.config.instructions.index(
-            "Original"
-        )
+        assert agency.agent.config.instructions.index(
+            "Shared"
+        ) < agency.agent.config.instructions.index("Original")
 
     @patch("shared.lean_agent.OpenAI")
     def test_agency_with_shared_instructions_file(self, mock_openai):
@@ -365,6 +365,7 @@ class TestBackwardCompatibility:
     @patch("shared.lean_agent.OpenAI")
     def test_autonomous_worker_typical_usage(self, mock_openai):
         """Test pattern used in autonomous_worker.py."""
+
         # Arrange - Pattern from autonomous_worker.py
         def create_agent_from_instructions_file(name: str, instructions_file: str):
             return Agent(
@@ -459,9 +460,7 @@ class TestEdgeCases:
     def test_agency_shared_instructions_relative_path(self, mock_openai):
         """Test Agency handles relative path for shared_instructions."""
         # Arrange
-        with tempfile.NamedTemporaryFile(
-            mode="w", suffix=".md", delete=False, dir="."
-        ) as f:
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".md", delete=False, dir=".") as f:
             f.write("Relative content")
             rel_path = f"./{Path(f.name).name}"
 
@@ -494,4 +493,7 @@ class TestDocumentation:
         import shared.lean_adapter as adapter_module
 
         assert adapter_module.__doc__ is not None
-        assert "backward" in adapter_module.__doc__.lower() or "compatibility" in adapter_module.__doc__.lower()
+        assert (
+            "backward" in adapter_module.__doc__.lower()
+            or "compatibility" in adapter_module.__doc__.lower()
+        )

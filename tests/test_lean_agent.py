@@ -78,9 +78,7 @@ class TestToolModels:
         # Arrange
         param = ToolParameter(
             type="object",
-            properties={
-                "x": ToolPropertySchema(type="number", description="X coordinate")
-            },
+            properties={"x": ToolPropertySchema(type="number", description="X coordinate")},
             required=["x"],
         )
         tool_obj = Tool(name="get_x", description="Get X value", parameters=param)
@@ -132,9 +130,7 @@ class TestMessage:
 
         tool_calls = [
             ToolCall(
-                id="call_123",
-                type="function",
-                function=FunctionCall(name="test", arguments="{}")
+                id="call_123", type="function", function=FunctionCall(name="test", arguments="{}")
             )
         ]
 
@@ -285,6 +281,7 @@ class TestLeanAgentExecution:
     @patch("shared.lean_agent.OpenAI")
     def test_run_with_tool_call_and_execution(self, mock_openai):
         """Test agent run with tool call and execution."""
+
         # Arrange
         def mock_add(a: float, b: float) -> float:
             return a + b
@@ -374,6 +371,7 @@ class TestLeanAgentExecution:
     @patch("shared.lean_agent.OpenAI")
     def test_run_with_invalid_tool_arguments(self, mock_openai):
         """Test agent handles invalid tool arguments gracefully."""
+
         # Arrange
         def mock_func(x: int) -> int:
             return x * 2
@@ -422,7 +420,9 @@ class TestLeanAgentExecution:
         # Check that error was recorded in messages
         tool_response = agent.messages[3]
         assert tool_response.role == "tool"
-        assert "Error:" in tool_response.content and ("Invalid" in tool_response.content or "JSON" in tool_response.content)
+        assert "Error:" in tool_response.content and (
+            "Invalid" in tool_response.content or "JSON" in tool_response.content
+        )
 
 
 class TestModelSpecificParameters:
@@ -507,14 +507,13 @@ class TestModelSpecificParameters:
     @patch("shared.lean_agent.OpenAI")
     def test_standard_model_gpt4o_parameters(self, mock_openai):
         """Test gpt-4o uses standard parameters."""
+
         # Arrange
         def mock_tool():
             return "result"
 
         param = ToolParameter(type="object", properties={}, required=[])
-        tool_obj = Tool(
-            name="test", description="Test", parameters=param, function=mock_tool
-        )
+        tool_obj = Tool(name="test", description="Test", parameters=param, function=mock_tool)
         config = AgentConfig(
             name="gpt4o_agent",
             instructions="Help",
@@ -548,6 +547,7 @@ class TestToolExecution:
 
     def test_execute_tool_success(self):
         """Test successful tool execution."""
+
         # Arrange
         def add_numbers(a: float, b: float) -> float:
             return a + b
@@ -560,9 +560,7 @@ class TestToolExecution:
             },
             required=["a", "b"],
         )
-        tool_obj = Tool(
-            name="add", description="Add", parameters=param, function=add_numbers
-        )
+        tool_obj = Tool(name="add", description="Add", parameters=param, function=add_numbers)
         config = AgentConfig(name="calc", instructions="Calc", tools=[tool_obj])
         # Mock API key for initialization
         os.environ["OPENAI_API_KEY"] = "test-key"
@@ -594,9 +592,7 @@ class TestToolExecution:
         """Test tool without function implementation."""
         # Arrange
         param = ToolParameter(type="object", properties={}, required=[])
-        tool_obj = Tool(
-            name="broken", description="Broken", parameters=param, function=None
-        )
+        tool_obj = Tool(name="broken", description="Broken", parameters=param, function=None)
         config = AgentConfig(name="test", instructions="Test", tools=[tool_obj])
         os.environ["OPENAI_API_KEY"] = "test-key"
         agent = LeanAgent(config)
@@ -611,14 +607,13 @@ class TestToolExecution:
 
     def test_execute_tool_invalid_json_arguments(self):
         """Test tool execution with invalid JSON arguments."""
+
         # Arrange
         def dummy():
             return "ok"
 
         param = ToolParameter(type="object", properties={}, required=[])
-        tool_obj = Tool(
-            name="test", description="Test", parameters=param, function=dummy
-        )
+        tool_obj = Tool(name="test", description="Test", parameters=param, function=dummy)
         config = AgentConfig(name="agent", instructions="Test", tools=[tool_obj])
         os.environ["OPENAI_API_KEY"] = "test-key"
         agent = LeanAgent(config)
@@ -632,6 +627,7 @@ class TestToolExecution:
 
     def test_execute_tool_function_raises_exception(self):
         """Test tool execution when function raises exception."""
+
         # Arrange
         def failing_tool(x: int) -> int:
             raise ValueError("Something went wrong!")
@@ -641,9 +637,7 @@ class TestToolExecution:
             properties={"x": ToolPropertySchema(type="number")},
             required=["x"],
         )
-        tool_obj = Tool(
-            name="fail", description="Fails", parameters=param, function=failing_tool
-        )
+        tool_obj = Tool(name="fail", description="Fails", parameters=param, function=failing_tool)
         config = AgentConfig(name="agent", instructions="Test", tools=[tool_obj])
         os.environ["OPENAI_API_KEY"] = "test-key"
         agent = LeanAgent(config)
@@ -759,10 +753,7 @@ class TestThreadSafety:
             except Exception as e:
                 errors.append(e)
 
-        threads = [
-            threading.Thread(target=run_agent, args=(f"Question {i}",))
-            for i in range(5)
-        ]
+        threads = [threading.Thread(target=run_agent, args=(f"Question {i}",)) for i in range(5)]
 
         for t in threads:
             t.start()
