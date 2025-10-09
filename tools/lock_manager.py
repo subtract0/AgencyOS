@@ -9,6 +9,7 @@ Constitutional compliance:
 """
 
 import os
+import time
 from datetime import datetime, timedelta
 from pathlib import Path
 
@@ -41,11 +42,15 @@ class LockManager:
         self.lock_dir.mkdir(parents=True, exist_ok=True)
         self.lock_dir.chmod(0o700)  # Owner read/write/execute only
 
+        # Store heartbeat threads for proper cleanup
+        self._heartbeat_threads: dict[str, HeartbeatThread] = {}
+
     def acquire_lock(
         self,
         task_id: str,
         session_id: str,
         metadata: LockMetadata,
+        update_interval: int = 60,
     ) -> Result[LockHandle, LockError]:
         """
         Atomically acquire lock with metadata.
@@ -63,6 +68,7 @@ class LockManager:
             task_id: Task identifier (e.g., "priority_1_test")
             session_id: Session acquiring the lock
             metadata: LockMetadata with all required fields
+            update_interval: Heartbeat update interval in seconds (default 60)
 
         Returns:
             Ok(LockHandle) if acquired successfully
@@ -76,8 +82,115 @@ class LockManager:
             if stale_check.is_err():
                 return Err(stale_check.unwrap_err())  # Type-safe error extraction
 
-        # Create lock file and start heartbeat
-        return self._create_lock_file(lock_file, task_id, session_id, metadata)
+        # Create lock file and start heartbeat with custom interval
+        return self._create_lock_file(lock_file, task_id, session_id, metadata, update_interval)
+
+    def acquire_lock_with_timeout(
+        self,
+        task_id: str,
+        session_id: str,
+        metadata: LockMetadata,
+        timeout_seconds: float,
+        poll_interval: float = 0.5,
+        update_interval: int = 60,
+    ) -> Result[LockHandle, LockError]:
+        """
+        Acquire lock with timeout using polling.
+
+        Algorithm:
+        1. Record start time
+        2. Try to acquire lock (first attempt)
+        3. If timeout=0 and failed, return error immediately (no polling)
+        4. Loop while elapsed < timeout:
+           a. If AlreadyLocked, sleep poll_interval and retry
+           b. If other error, return Err immediately
+           c. Check if timeout exceeded, return Err(Timeout)
+        5. If acquired, return Ok(handle) with wait_time tracking
+
+        Args:
+            task_id: Task identifier
+            session_id: Session acquiring lock
+            metadata: Lock metadata
+            timeout_seconds: Maximum wait time (0 = try once)
+            poll_interval: Time between retry attempts (default 0.5s)
+            update_interval: Heartbeat interval (default 60s)
+
+        Returns:
+            Ok(LockHandle) if acquired (with wait_time tracking)
+            Err(LockError.Timeout) if timeout exceeded (only if timeout > 0)
+            Err(LockError.AlreadyLocked) if timeout=0 and lock held
+            Err(LockError) for other errors
+        """
+        start_time = datetime.now()
+
+        while True:
+            # Try to acquire lock
+            result = self.acquire_lock(task_id, session_id, metadata, update_interval)
+
+            if result.is_ok():
+                # Success! Calculate wait time
+                wait_time = (datetime.now() - start_time).total_seconds()
+                handle = result.unwrap()
+
+                # Update handle with wait time (use Pydantic model_copy)
+                handle_with_wait = handle.model_copy(update={"wait_time_seconds": wait_time})
+                return Ok(handle_with_wait)
+
+            # Check error type
+            error = result.unwrap_err()
+
+            if error.error_type != "AlreadyLocked":
+                # Not a lock contention error, fail immediately
+                return Err(error)
+
+            # For timeout=0, return AlreadyLocked immediately (no polling)
+            if timeout_seconds == 0.0:
+                return Err(error)
+
+            # Check timeout
+            elapsed = (datetime.now() - start_time).total_seconds()
+            if elapsed >= timeout_seconds:
+                return Err(LockError.timeout(task_id, timeout_seconds))
+
+            # Calculate remaining time
+            remaining = timeout_seconds - elapsed
+
+            # Sleep for min(poll_interval, remaining)
+            sleep_time = min(poll_interval, remaining)
+            if sleep_time > 0:
+                time.sleep(sleep_time)
+
+    def try_acquire_lock(
+        self,
+        task_id: str,
+        session_id: str,
+        metadata: LockMetadata,
+        update_interval: int = 60,
+    ) -> Result[LockHandle, LockError]:
+        """
+        Try to acquire lock without blocking (timeout=0).
+
+        Convenience method: alias for acquire_lock_with_timeout(timeout_seconds=0.0)
+
+        Args:
+            task_id: Task identifier
+            session_id: Session acquiring lock
+            metadata: Lock metadata
+            update_interval: Heartbeat interval (default 60s)
+
+        Returns:
+            Ok(LockHandle) if lock immediately available
+            Err(LockError.AlreadyLocked) if lock held by another session
+            Err(LockError) for other errors
+        """
+        return self.acquire_lock_with_timeout(
+            task_id=task_id,
+            session_id=session_id,
+            metadata=metadata,
+            timeout_seconds=0.0,  # No waiting
+            poll_interval=0.1,  # Not used with timeout=0
+            update_interval=update_interval,
+        )
 
     def release_lock(
         self,
@@ -109,6 +222,13 @@ class LockManager:
 
             if holder != session_id:
                 return Err(LockError.not_owned(task_id, session_id))
+
+            # CRITICAL FIX: Stop heartbeat thread BEFORE deleting file
+            if task_id in self._heartbeat_threads:
+                heartbeat_thread = self._heartbeat_threads[task_id]
+                heartbeat_thread.stop()  # Signal thread to exit
+                heartbeat_thread.join(timeout=2.0)  # Wait up to 2 seconds
+                del self._heartbeat_threads[task_id]
 
             # Remove lock file
             lock_file.unlink()
@@ -188,6 +308,7 @@ class LockManager:
         task_id: str,
         session_id: str,
         metadata: LockMetadata,
+        update_interval: int = 60,
     ) -> Result[LockHandle, LockError]:
         """
         Create lock file atomically with metadata and heartbeat.
@@ -197,6 +318,7 @@ class LockManager:
             task_id: Task identifier
             session_id: Session acquiring lock
             metadata: Lock metadata
+            update_interval: Heartbeat update interval in seconds
 
         Returns:
             Ok(LockHandle) if created successfully
@@ -216,13 +338,16 @@ class LockManager:
             # Set permissions to 0600 (owner read/write only)
             lock_file.chmod(0o600)
 
-            # Start heartbeat thread
+            # Start heartbeat thread with custom interval
             heartbeat_thread = HeartbeatThread(
                 lock_file=lock_file,
                 session_id=session_id,
-                update_interval=60,  # Update every 60 seconds
+                update_interval=update_interval,  # Use parameter instead of hardcoded 60
             )
             heartbeat_thread.start()
+
+            # Store thread reference for cleanup
+            self._heartbeat_threads[task_id] = heartbeat_thread
 
             return Ok(
                 LockHandle(
@@ -230,6 +355,7 @@ class LockManager:
                     session_id=session_id,
                     lock_file_path=str(lock_file),
                     heartbeat_thread_id=heartbeat_thread.name,
+                    wait_time_seconds=0.0,  # Default for non-timeout acquisitions
                 )
             )
 

@@ -1,0 +1,218 @@
+[
+  {
+    "task_id": "epic4.2-spec-proposal-generator",
+    "type": "spec",
+    "description": "Create specification for ProposalGenerator with statistical analysis",
+    "files_to_modify": [
+      "docs/specs/proposal_generator_spec.md"
+    ],
+    "dependencies": [],
+    "assigned_to": null,
+    "status": "pending",
+    "worktree": null,
+    "started_at": null,
+    "completed_at": null,
+    "machine": null,
+    "priority": 10
+  },
+  {
+    "task_id": "epic4.2-spec-adr-template",
+    "type": "spec",
+    "description": "Create ADR template structure with evidence and rollback sections",
+    "files_to_modify": [
+      "docs/adr/TEMPLATE_v2.md"
+    ],
+    "dependencies": [],
+    "assigned_to": null,
+    "status": "pending",
+    "worktree": null,
+    "started_at": null,
+    "completed_at": null,
+    "machine": null,
+    "priority": 10
+  },
+  {
+    "task_id": "epic4.2-spec-integration-workflow",
+    "type": "spec",
+    "description": "Define integration workflow for A/B results \u2192 ADR generation",
+    "files_to_modify": [
+      "docs/specs/integration_workflow.md"
+    ],
+    "dependencies": [],
+    "assigned_to": null,
+    "status": "pending",
+    "worktree": null,
+    "started_at": null,
+    "completed_at": null,
+    "machine": null,
+    "priority": 9
+  },
+  {
+    "task_id": "epic4.2-code-proposal-models",
+    "type": "code",
+    "description": "Implement Pydantic models (ProposalReport, AgentMetrics, ComparisonResult)",
+    "files_to_modify": [
+      "meta_learning/models.py",
+      "meta_learning/__init__.py"
+    ],
+    "dependencies": [
+      "epic4.2-spec-proposal-generator"
+    ],
+    "assigned_to": null,
+    "status": "pending",
+    "worktree": null,
+    "started_at": null,
+    "completed_at": null,
+    "machine": null,
+    "priority": 8
+  },
+  {
+    "task_id": "epic4.2-code-statistical-analysis",
+    "type": "code",
+    "description": "Implement statistical analysis (t-test, confidence intervals, scipy integration)",
+    "files_to_modify": [
+      "meta_learning/statistical_analysis.py"
+    ],
+    "dependencies": [
+      "epic4.2-code-proposal-models"
+    ],
+    "assigned_to": null,
+    "status": "pending",
+    "worktree": null,
+    "started_at": null,
+    "completed_at": null,
+    "machine": null,
+    "priority": 7
+  },
+  {
+    "task_id": "epic4.2-code-proposal-generator",
+    "type": "code",
+    "description": "Implement ProposalGenerator class with analyze_results and generate_adr methods",
+    "files_to_modify": [
+      "meta_learning/proposal_generator_v2.py"
+    ],
+    "dependencies": [
+      "epic4.2-code-statistical-analysis",
+      "epic4.2-spec-adr-template"
+    ],
+    "assigned_to": null,
+    "status": "pending",
+    "worktree": null,
+    "started_at": null,
+    "completed_at": null,
+    "machine": null,
+    "priority": 6
+  },
+  {
+    "task_id": "epic4.2-test-statistical-analysis",
+    "type": "test",
+    "description": "Write tests for statistical functions (t-test, confidence intervals)",
+    "files_to_modify": [
+      "tests/meta_learning/test_statistical_analysis.py"
+    ],
+    "dependencies": [
+      "epic4.2-code-statistical-analysis"
+    ],
+    "assigned_to": null,
+    "status": "pending",
+    "worktree": null,
+    "started_at": null,
+    "completed_at": null,
+    "machine": null,
+    "priority": 5
+  },
+  {
+    "task_id": "epic4.2-test-proposal-generator",
+    "type": "test",
+    "description": "Write comprehensive tests for ProposalGenerator (15+ tests)",
+    "files_to_modify": [
+      "tests/meta_learning/test_proposal_generator_v2.py"
+    ],
+    "dependencies": [
+      "epic4.2-code-proposal-generator"
+    ],
+    "assigned_to": null,
+    "status": "pending",
+    "worktree": null,
+    "started_at": null,
+    "completed_at": null,
+    "machine": null,
+    "priority": 5
+  },
+  {
+    "task_id": "epic4.2-test-integration",
+    "type": "test",
+    "description": "Write end-to-end integration tests (A/B results \u2192 ADR)",
+    "files_to_modify": [
+      "tests/integration/test_proposal_workflow.py"
+    ],
+    "dependencies": [
+      "epic4.2-test-proposal-generator",
+      "epic4.2-spec-integration-workflow"
+    ],
+    "assigned_to": null,
+    "status": "pending",
+    "worktree": null,
+    "started_at": null,
+    "completed_at": null,
+    "machine": null,
+    "priority": 4
+  },
+  {
+    "task_id": "epic4.2-doc-user-guide",
+    "type": "doc",
+    "description": "Create user guide for Proposal Generator (usage examples, API reference)",
+    "files_to_modify": [
+      "docs/proposal_generator_guide.md"
+    ],
+    "dependencies": [
+      "epic4.2-code-proposal-generator"
+    ],
+    "assigned_to": null,
+    "status": "pending",
+    "worktree": null,
+    "started_at": null,
+    "completed_at": null,
+    "machine": null,
+    "priority": 3
+  },
+  {
+    "task_id": "epic4.2-demo-proposal-workflow",
+    "type": "code",
+    "description": "Create interactive demo showing complete A/B \u2192 Proposal \u2192 ADR workflow",
+    "files_to_modify": [
+      "demos/proposal_workflow_demo.py"
+    ],
+    "dependencies": [
+      "epic4.2-code-proposal-generator"
+    ],
+    "assigned_to": null,
+    "status": "pending",
+    "worktree": null,
+    "started_at": null,
+    "completed_at": null,
+    "machine": null,
+    "priority": 2
+  },
+  {
+    "task_id": "epic4.2-integrate-final",
+    "type": "integrate",
+    "description": "Run full test suite, update README, create summary PR",
+    "files_to_modify": [
+      "README.md",
+      "docs/EPIC_4.2_SUMMARY.md"
+    ],
+    "dependencies": [
+      "epic4.2-test-integration",
+      "epic4.2-doc-user-guide",
+      "epic4.2-demo-proposal-workflow"
+    ],
+    "assigned_to": null,
+    "status": "pending",
+    "worktree": null,
+    "started_at": null,
+    "completed_at": null,
+    "machine": null,
+    "priority": 1
+  }
+]

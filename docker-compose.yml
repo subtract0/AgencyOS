@@ -1,0 +1,43 @@
+version: '3.8'
+
+services:
+  ollama:
+    image: ollama/ollama:latest
+    container_name: agency-ollama
+    ports:
+      - "11434:11434"
+    volumes:
+      # Persist model data to avoid re-downloading 32GB model on container restart
+      - ~/.ollama:/root/.ollama
+    environment:
+      # Model storage location
+      - OLLAMA_MODELS=/root/.ollama/models
+      # Q8_0 quantization for KV cache (ADR-023: memory-aware execution)
+      - OLLAMA_KV_CACHE_TYPE=q8_0
+      # Enable flash attention for better performance
+      - OLLAMA_FLASH_ATTENTION=1
+      # Metal GPU acceleration (Apple Silicon M4 Pro optimization)
+      - OLLAMA_NUM_GPU=1
+    deploy:
+      resources:
+        limits:
+          # ADR-023: Memory-aware execution - 40GB limit (48GB total - 8GB safety margin)
+          # Allocation: 32GB model + 8GB runtime overhead = 40GB max
+          # Leaves 8GB for macOS + test workers (3 workers @ 3GB = 9GB total)
+          memory: 40G
+    healthcheck:
+      # Article I: Complete context before action - verify service is fully ready
+      # Check model availability via /api/tags endpoint
+      test: ["CMD", "curl", "-f", "http://localhost:11434/api/tags"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      # Allow 2 minutes for initial model pull (32GB download)
+      start_period: 120s
+    restart: unless-stopped
+
+# Additional notes:
+# - Model auto-pull: Run `docker exec agency-ollama ollama pull hf.co/abirhossen/Qwen3-Coder-30B-A3B-Instruct-Q8_0-GGUF:Q8_0` after first startup
+# - Test readiness: `docker-compose ps` shows "healthy" status
+# - Memory monitoring: `docker stats agency-ollama` to verify <40GB usage
+# - Logs: `docker-compose logs -f ollama` to troubleshoot startup issues
