@@ -38,7 +38,6 @@ from shared.models.task_feature_vector import TaskFeatureVector
 from tools.ml_routing.feature_extractor import FeatureExtractor
 from tools.ml_routing.tfidf_vocabulary_builder import TfidfVocabulary
 
-
 # ============================================================================
 # FIXTURES (AAA Pattern - Arrange)
 # ============================================================================
@@ -81,7 +80,7 @@ def sample_tfidf_vocabulary():
         "feature",
     ] + [f"term{i}" for i in range(90)]  # 100 terms total
 
-    idf_scores = {term: 1.0 for term in terms}
+    idf_scores = dict.fromkeys(terms, 1.0)
 
     return TfidfVocabulary(terms=terms, idf_scores=idf_scores)
 

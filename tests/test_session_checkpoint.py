@@ -243,7 +243,7 @@ class TestLoadCheckpoint:
         checkpoint_file = temp_checkpoint_dir / f"{checkpoint.checkpoint_id}.json"
 
         # Corrupt the checksum in the file
-        with open(checkpoint_file, "r") as f:
+        with open(checkpoint_file) as f:
             data = json.load(f)
 
         data["checksum"] = "0" * 64  # Invalid checksum

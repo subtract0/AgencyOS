@@ -30,15 +30,15 @@ Author: TestGeneratorAgent
 Date: 2025-10-10
 """
 
+from datetime import datetime
+
 import pytest
 from pydantic import ValidationError
-from datetime import datetime
 from sklearn.ensemble import (
-    VotingClassifier,
-    RandomForestClassifier,
     GradientBoostingClassifier,
+    RandomForestClassifier,
+    VotingClassifier,
 )
-
 
 # ============================================================================
 # Fixtures (Mock Models)
@@ -333,8 +333,9 @@ class TestModelValidator:
         NECESSARY: E (Error condition - incomplete composition).
         """
         # Arrange
-        from shared.models.ensemble_model import EnsembleModel
         import numpy as np
+
+        from shared.models.ensemble_model import EnsembleModel
 
         # Create ensemble with only RF (missing GB)
         incomplete_ensemble = VotingClassifier(
@@ -381,8 +382,9 @@ class TestUtilityMethods:
         NECESSARY: Y (Yield validation - output format).
         """
         # Arrange
-        from shared.models.ensemble_model import EnsembleModel
         import sklearn
+
+        from shared.models.ensemble_model import EnsembleModel
 
         model = EnsembleModel(
             ensemble=mock_ensemble,
@@ -464,8 +466,9 @@ class TestUtilityMethods:
         NECESSARY: Y (Yield validation - version tracking).
         """
         # Arrange
-        from shared.models.ensemble_model import EnsembleModel
         import sklearn
+
+        from shared.models.ensemble_model import EnsembleModel
 
         model = EnsembleModel(
             ensemble=mock_ensemble,
@@ -837,6 +840,7 @@ class TestIntegration:
         """
         # Arrange
         import sklearn
+
         from shared.models.ensemble_model import EnsembleModel
 
         # Act: Create model

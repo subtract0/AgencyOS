@@ -137,7 +137,7 @@ class ModelStorage:
         ...     predictions = model.ensemble.predict(X_test)
     """
 
-    def __init__(self, base_dir: Optional[Path] = None):
+    def __init__(self, base_dir: Path | None = None):
         """
         Initialize ModelStorage with base directory.
 
@@ -152,7 +152,7 @@ class ModelStorage:
     def save_model(
         self,
         model: EnsembleModel,
-        version: Optional[str] = None,
+        version: str | None = None,
         breaking_change: bool = False,
     ) -> Result[Path, str]:
         """

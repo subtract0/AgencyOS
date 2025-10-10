@@ -191,7 +191,7 @@ class TestGarbageCollectionPerformance:
         gc_metrics = result.unwrap()
 
         sessions_per_second = (gc_metrics.sessions_scanned / elapsed_ms) * 1000
-        print(f"\nGC Performance:")
+        print("\nGC Performance:")
         print(f"  Sessions scanned: {gc_metrics.sessions_scanned}")
         print(f"  Time: {elapsed_ms:.2f}ms")
         print(f"  Rate: {sessions_per_second:.0f} sessions/second")
@@ -228,7 +228,7 @@ class TestGarbageCollectionPerformance:
         assert result.is_ok()
         gc_metrics = result.unwrap()
 
-        print(f"\nGC with deletion:")
+        print("\nGC with deletion:")
         print(f"  Sessions deleted: {gc_metrics.sessions_deleted}")
         print(f"  Time: {elapsed_ms:.2f}ms")
         print(f"  Disk space reclaimed: {gc_metrics.disk_space_reclaimed_mb:.2f}MB")
@@ -286,7 +286,7 @@ class TestCheckpointPerformance:
         avg_save = sum(save_times) / len(save_times)
         avg_resume = sum(resume_times) / len(resume_times)
 
-        print(f"\nCheckpoint Performance:")
+        print("\nCheckpoint Performance:")
         print(f"  Save:   avg={avg_save:.2f}ms, min={min(save_times):.2f}ms, max={max(save_times):.2f}ms")
         print(f"  Resume: avg={avg_resume:.2f}ms, min={min(resume_times):.2f}ms, max={max(resume_times):.2f}ms")
 
@@ -332,7 +332,7 @@ class TestCheckpointPerformance:
         avg_checkpoint = sum(checkpoint_times) / len(checkpoint_times)
         overhead_ms = avg_checkpoint - avg_compress
 
-        print(f"\nCheckpoint Overhead:")
+        print("\nCheckpoint Overhead:")
         print(f"  Compression only: {avg_compress:.2f}ms")
         print(f"  With checkpoint:  {avg_checkpoint:.2f}ms")
         print(f"  Overhead:         {overhead_ms:.2f}ms")
@@ -394,7 +394,7 @@ class TestEndToEndPerformance:
 
         # Results
         total_time = sum(times.values())
-        print(f"\nFull Lifecycle Benchmark:")
+        print("\nFull Lifecycle Benchmark:")
         for operation, time_ms in times.items():
             print(f"  {operation:18s}: {time_ms:6.2f}ms ({time_ms/total_time*100:5.1f}%)")
         print(f"  {'Total':18s}: {total_time:6.2f}ms")
@@ -431,7 +431,7 @@ class TestEndToEndPerformance:
         compressed_size = sum(compressed_sizes)
 
         # Results
-        print(f"\nMemory Usage (50 sessions):")
+        print("\nMemory Usage (50 sessions):")
         print(f"  Uncompressed: {uncompressed_size / (1024 * 1024):.2f}MB")
         print(f"  Compressed:   {compressed_size / (1024 * 1024):.2f}MB")
         print(f"  Reduction:    {(1 - compressed_size/uncompressed_size)*100:.1f}%")

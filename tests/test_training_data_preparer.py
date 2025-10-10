@@ -15,13 +15,14 @@ Author: AgencyCodeAgent
 Date: 2025-10-10
 """
 
-import pytest
 from datetime import datetime
 from typing import Any
 
+import pytest
+
 from shared.agent_context import AgentContext, create_agent_context
-from shared.models.training_dataset import TrainingDataset, TrainingSample, DatasetMetadata
 from shared.models.task_feature_vector import TaskFeatureVector
+from shared.models.training_dataset import DatasetMetadata, TrainingDataset, TrainingSample
 from tools.ml_routing.feature_extractor import FeatureExtractor
 from tools.ml_routing.tfidf_vocabulary_builder import TfidfVocabulary
 from tools.ml_routing.training_data_preparer import TrainingDataPreparer
@@ -79,7 +80,7 @@ def tfidf_vocab() -> TfidfVocabulary:
         "optimization",
     ] + [f"term_{i}" for i in range(90)]  # 100 total terms
 
-    idf_scores = {term: 1.0 for term in terms}
+    idf_scores = dict.fromkeys(terms, 1.0)
 
     return TfidfVocabulary(
         terms=terms, idf_scores=idf_scores, version="v1.0", created_at=datetime.now()

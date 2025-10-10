@@ -57,14 +57,15 @@ def training_dataset_100_samples() -> TrainingDataset:
         TrainingDataset with balanced tier distribution
     """
     from datetime import datetime
+
     from shared.models.training_dataset import DatasetMetadata
 
     np.random.seed(42)  # Reproducibility
 
     # Create all samples (train + val combined)
-    all_samples: List[TrainingSample] = []
-    train_indices: List[int] = []
-    val_indices: List[int] = []
+    all_samples: list[TrainingSample] = []
+    train_indices: list[int] = []
+    val_indices: list[int] = []
     sample_idx = 0
 
     for tier in [1, 2, 3]:  # simple, moderate, complex (1-indexed!)
@@ -360,6 +361,7 @@ def test_insufficient_training_data_fails(
     Constitutional: Article I - Complete context requirement
     """
     from datetime import datetime
+
     from shared.models.training_dataset import DatasetMetadata
 
     trainer = MLModelTrainer()
@@ -590,7 +592,7 @@ def test_integration_test_validation() -> None:
             missing_criteria.append(f"{ac_id}: {description}")
 
     assert len(missing_criteria) == 0, (
-        f"Integration test missing validation for:\n"
+        "Integration test missing validation for:\n"
         + "\n".join(f"  - {c}" for c in missing_criteria)
     )
 
@@ -621,7 +623,7 @@ def test_generate_phase2_summary_report(
     Constitutional Compliance:
     - Article V: Documentation (summary report required)
     """
-    from datetime import datetime, UTC
+    from datetime import UTC, datetime
 
     # Run full pipeline to collect metrics
     trainer = MLModelTrainer()

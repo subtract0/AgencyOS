@@ -107,7 +107,7 @@ def demo_auto_checkpoint():
     result = context.enable_auto_checkpoint(config)
 
     if result.is_ok():
-        print(f"\n✓ Auto-checkpoint enabled")
+        print("\n✓ Auto-checkpoint enabled")
         print(f"  - Interval: Every {config.checkpoint_interval_tasks} tasks")
     else:
         print(f"\n✗ Auto-checkpoint failed: {result.unwrap_err()}")
@@ -128,12 +128,12 @@ def demo_auto_checkpoint():
     phase_result = manager.trigger_checkpoint(context, reason="phase_complete")
 
     if phase_result.is_ok():
-        print(f"\n✓ Phase checkpoint created (manual trigger)")
+        print("\n✓ Phase checkpoint created (manual trigger)")
         print(f"  - Total checkpoints: {manager._checkpoint_count}")
 
     # Cleanup
     context.disable_auto_checkpoint()
-    print(f"\n✓ Auto-checkpoint disabled")
+    print("\n✓ Auto-checkpoint disabled")
 
 
 def demo_multi_day_resume():
@@ -160,16 +160,16 @@ def demo_multi_day_resume():
             ["adr", "research"],
         )
 
-    print(f"✓ ADR-024 started")
-    print(f"  - Progress: 60%")
-    print(f"  - Research: 47 findings")
+    print("✓ ADR-024 started")
+    print("  - Progress: 60%")
+    print("  - Research: 47 findings")
 
     # Create checkpoint before weekend
     checkpoint_result = context.create_checkpoint()
 
     if checkpoint_result.is_ok():
         checkpoint = checkpoint_result.unwrap()
-        print(f"\n✓ Checkpoint saved before weekend")
+        print("\n✓ Checkpoint saved before weekend")
         print(f"  - ID: {checkpoint.checkpoint_id}")
     else:
         print(f"\n✗ Checkpoint failed: {checkpoint_result.unwrap_err()}")
@@ -198,7 +198,7 @@ def demo_multi_day_resume():
         if resume_result.is_ok():
             restored_context = resume_result.unwrap()
 
-            print(f"\n✓ Session resumed successfully")
+            print("\n✓ Session resumed successfully")
             print(f"  - Resume time: {resume_time:.3f}s (target: <5s)")
             print(f"  - Task: {restored_context.get_metadata('task')}")
             print(f"  - Progress: {restored_context.get_metadata('progress_percent')}%")
@@ -208,7 +208,7 @@ def demo_multi_day_resume():
             assert restored_context.get_metadata("progress_percent") == 60
             assert len(restored_context.get_session_memories()) == 47
 
-            print(f"\n✓ State validation: 100% accuracy")
+            print("\n✓ State validation: 100% accuracy")
             print(f"✓ Performance: {'PASS' if resume_time < 5.0 else 'SLOW'}")
         else:
             print(f"\n✗ Resume failed: {resume_result.unwrap_err()}")
@@ -244,12 +244,12 @@ def demo_retention_policy():
         deleted_count = cleanup_result.unwrap()
         remaining_count = len(list(checkpoints_dir.glob("checkpoint_*.json")))
 
-        print(f"✓ Cleanup complete")
+        print("✓ Cleanup complete")
         print(f"  - Deleted: {deleted_count} checkpoints")
         print(f"  - Remaining: {remaining_count} checkpoints")
 
         assert remaining_count == 5, "Retention policy failed"
-        print(f"\n✓ Retention policy: PASS")
+        print("\n✓ Retention policy: PASS")
     else:
         print(f"\n✗ Cleanup failed: {cleanup_result.unwrap_err()}")
 

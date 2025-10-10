@@ -34,7 +34,6 @@ from shared.models.task_feature_vector import TaskFeatureVector
 from shared.models.training_dataset import DatasetMetadata, TrainingDataset, TrainingSample
 from shared.type_definitions.result import Err, Ok, Result
 
-
 # ==============================================================================
 # Test Fixtures
 # ==============================================================================

@@ -19,6 +19,7 @@ Date: 2025-10-10
 
 import pytest
 from pydantic import ValidationError
+
 from shared.models.task_feature_vector import TaskFeatureVector
 
 

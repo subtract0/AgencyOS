@@ -30,7 +30,7 @@ import os
 import tempfile
 import time
 from collections import Counter
-from datetime import datetime, UTC
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any, Dict, List
 from unittest.mock import Mock, patch
@@ -52,7 +52,6 @@ from tools.ml_routing.tfidf_vocabulary_builder import (
     TfidfVocabularyBuilder,
 )
 from tools.ml_routing.training_data_preparer import TrainingDataPreparer
-
 
 # ============================================================================
 # Test Fixtures

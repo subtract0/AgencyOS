@@ -36,7 +36,7 @@ class TfidfVocabulary(BaseModel):
         created_at: Timestamp of vocabulary creation
     """
 
-    terms: List[str] = Field(description="Top 100 keywords by IDF score")
+    terms: list[str] = Field(description="Top 100 keywords by IDF score")
     idf_scores: dict[str, float] = Field(
         description="IDF score per term (inverse document frequency)"
     )
@@ -66,7 +66,7 @@ class TfidfVocabularyBuilder:
         self.min_df = min_df
 
     def build_vocabulary(
-        self, task_descriptions: List[str], top_n: int = 100
+        self, task_descriptions: list[str], top_n: int = 100
     ) -> Result[TfidfVocabulary, str]:
         """
         Build vocabulary from task descriptions using TF-IDF.
@@ -136,7 +136,7 @@ class TfidfVocabularyBuilder:
             return Err(f"Failed to create vectorizer: {e}")
 
     def _fit_vectorizer(
-        self, vectorizer: TfidfVectorizer, task_descriptions: List[str]
+        self, vectorizer: TfidfVectorizer, task_descriptions: list[str]
     ) -> Result[None, str]:
         """
         Fit vectorizer to task descriptions.
@@ -265,7 +265,7 @@ class TfidfVocabularyBuilder:
             Result containing parsed dictionary or error message
         """
         try:
-            with open(path, "r") as f:
+            with open(path) as f:
                 vocab_dict = json.load(f)
             return Ok(vocab_dict)
         except Exception as e:

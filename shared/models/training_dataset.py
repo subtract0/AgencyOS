@@ -18,8 +18,8 @@ Date: 2025-10-10
 """
 
 from datetime import datetime
+
 from pydantic import BaseModel, Field, field_validator, model_validator
-from typing import List, Dict
 
 from .task_feature_vector import TaskFeatureVector
 
@@ -252,7 +252,7 @@ class DatasetMetadata(BaseModel):
         )
     )
 
-    label_distribution: Dict[int, int] = Field(
+    label_distribution: dict[int, int] = Field(
         ...,
         description=(
             "Count of samples per tier label. "
@@ -360,7 +360,7 @@ class DatasetMetadata(BaseModel):
 
     @field_validator("label_distribution")
     @classmethod
-    def validate_label_distribution(cls, v: Dict[int, int]) -> Dict[int, int]:
+    def validate_label_distribution(cls, v: dict[int, int]) -> dict[int, int]:
         """
         Ensure label distribution has valid keys (1, 2, 3).
 
@@ -411,7 +411,7 @@ class TrainingDataset(BaseModel):
         >>> distribution = dataset.get_label_distribution()
     """
 
-    samples: List[TrainingSample] = Field(
+    samples: list[TrainingSample] = Field(
         ...,
         description=(
             "All training samples (train + val combined). "
@@ -419,7 +419,7 @@ class TrainingDataset(BaseModel):
         )
     )
 
-    train_indices: List[int] = Field(
+    train_indices: list[int] = Field(
         ...,
         description=(
             "Indices into samples array for training set. "
@@ -428,7 +428,7 @@ class TrainingDataset(BaseModel):
         )
     )
 
-    val_indices: List[int] = Field(
+    val_indices: list[int] = Field(
         ...,
         description=(
             "Indices into samples array for validation set. "
@@ -537,7 +537,7 @@ class TrainingDataset(BaseModel):
 
         return self
 
-    def get_train_samples(self) -> List[TrainingSample]:
+    def get_train_samples(self) -> list[TrainingSample]:
         """
         Get training samples.
 
@@ -551,7 +551,7 @@ class TrainingDataset(BaseModel):
         """
         return [self.samples[i] for i in self.train_indices]
 
-    def get_val_samples(self) -> List[TrainingSample]:
+    def get_val_samples(self) -> list[TrainingSample]:
         """
         Get validation samples.
 
@@ -565,7 +565,7 @@ class TrainingDataset(BaseModel):
         """
         return [self.samples[i] for i in self.val_indices]
 
-    def get_label_distribution(self) -> Dict[str, Dict[int, int]]:
+    def get_label_distribution(self) -> dict[str, dict[int, int]]:
         """
         Get label distribution for train and val splits.
 
@@ -591,7 +591,7 @@ class TrainingDataset(BaseModel):
             "val": {label: val_labels.count(label) for label in {1, 2, 3}}
         }
 
-    def get_confidence_stats(self) -> Dict[str, Dict[str, float]]:
+    def get_confidence_stats(self) -> dict[str, dict[str, float]]:
         """
         Get confidence statistics for train and val splits.
 
@@ -610,7 +610,7 @@ class TrainingDataset(BaseModel):
         train_confidences = [self.samples[i].confidence for i in self.train_indices]
         val_confidences = [self.samples[i].confidence for i in self.val_indices]
 
-        def compute_stats(confidences: List[float]) -> Dict[str, float]:
+        def compute_stats(confidences: list[float]) -> dict[str, float]:
             if not confidences:
                 return {"mean": 0.0, "min": 0.0, "max": 0.0}
             return {

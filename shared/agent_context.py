@@ -270,9 +270,7 @@ class AgentContext:
             ...     print(f"Restored session: {context.session_id}")
         """
         from agency_memory import Memory
-
         from shared.session_compression import decompress_session_state
-
         from shared.type_definitions.result import Err, Ok
 
         # Decompress session
@@ -329,8 +327,7 @@ class AgentContext:
         """
         from pathlib import Path
 
-        from shared.session_checkpoint import CheckpointError, save_checkpoint
-
+        from shared.session_checkpoint import save_checkpoint
         from shared.type_definitions.result import Err
 
         # Thread-safe checkpoint creation
@@ -404,7 +401,6 @@ class AgentContext:
         from pathlib import Path
 
         from shared.session_checkpoint import load_checkpoint
-
         from shared.type_definitions.result import Err
 
         # Thread-safe restoration

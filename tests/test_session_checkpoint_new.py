@@ -146,7 +146,7 @@ class TestSaveCheckpoint:
         assert checkpoint_file.exists()
 
         # Verify valid JSON
-        with open(checkpoint_file, "r") as f:
+        with open(checkpoint_file) as f:
             data = json.load(f)
 
         assert "checkpoint_id" in data
@@ -356,7 +356,7 @@ class TestLoadCheckpoint:
             / f"{checkpoint.checkpoint_id}.json"
         )
 
-        with open(checkpoint_file, "r") as f:
+        with open(checkpoint_file) as f:
             data = json.load(f)
 
         # Modify session_state_json without updating checksum

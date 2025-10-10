@@ -27,7 +27,6 @@ from shared.models.session import SessionState, SessionStatus
 from shared.session_compression import (
     compress_session_state,
     decompress_session_state,
-    get_compression_stats,
     is_compressed,
 )
 
