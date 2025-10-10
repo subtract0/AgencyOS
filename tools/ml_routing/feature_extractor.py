@@ -23,12 +23,13 @@ import hashlib
 import logging
 import re
 import time
-from typing import Any
 
 import openai
 from sklearn.feature_extraction.text import TfidfVectorizer
 
+from shared.models.extracted_metadata_features import ExtractedMetadataFeatures
 from shared.models.task_feature_vector import TaskFeatureVector
+from shared.models.task_metadata import TaskMetadata
 from shared.type_definitions.result import Err, Ok, Result
 from tools.ml_routing.tfidf_vocabulary_builder import TfidfVocabulary
 
@@ -92,7 +93,7 @@ class FeatureExtractor:
     def extract_features(
         self,
         task_description: str,
-        task_metadata: dict[str, Any] | None = None,
+        task_metadata: TaskMetadata | None = None,
     ) -> Result[TaskFeatureVector, str]:
         """
         Extract 1644-dim feature vector from task description.
@@ -113,7 +114,7 @@ class FeatureExtractor:
         if not task_description.strip():
             return Err("Task description cannot be empty")
 
-        metadata = task_metadata or {}
+        metadata = task_metadata or TaskMetadata()
 
         # Extract all features
         embedding_result = self._generate_embedding(task_description)
@@ -273,8 +274,8 @@ class FeatureExtractor:
             return Err(f"TF-IDF computation failed: {e}")
 
     def _extract_metadata(
-        self, task_description: str, task_metadata: dict[str, Any]
-    ) -> Result[dict[str, Any], str]:
+        self, task_description: str, task_metadata: TaskMetadata
+    ) -> Result[ExtractedMetadataFeatures, str]:
         """
         Extract 8 metadata features from task description and metadata.
 
@@ -290,24 +291,24 @@ class FeatureExtractor:
 
         Args:
             task_description: Task description text
-            task_metadata: Optional metadata dictionary
+            task_metadata: Task metadata
 
         Returns:
-            Result containing metadata features dictionary or error
+            Result containing ExtractedMetadataFeatures or error
         """
         try:
             description_lower = task_description.lower()
 
-            metadata_features = {
-                "description_length": len(task_description),
-                "word_count": len(task_description.split()),
-                "has_refactor_keyword": int("refactor" in description_lower),
-                "has_test_keyword": int("test" in description_lower),
-                "has_async_keyword": int("async" in description_lower),
-                "has_fix_keyword": int("fix" in description_lower),
-                "estimated_time_seconds": float(task_metadata.get("estimated_time_seconds", 0.0)),
-                "historical_tier_mode": int(task_metadata.get("historical_tier_mode", 0)),
-            }
+            metadata_features = ExtractedMetadataFeatures(
+                description_length=len(task_description),
+                word_count=len(task_description.split()),
+                has_refactor_keyword=int("refactor" in description_lower),
+                has_test_keyword=int("test" in description_lower),
+                has_async_keyword=int("async" in description_lower),
+                has_fix_keyword=int("fix" in description_lower),
+                estimated_time_seconds=task_metadata.estimated_time_seconds,
+                historical_tier_mode=task_metadata.historical_tier_mode,
+            )
 
             return Ok(metadata_features)
 
@@ -318,7 +319,7 @@ class FeatureExtractor:
         self,
         embedding: list[float],
         tfidf_features: list[float],
-        metadata_features: dict[str, Any],
+        metadata_features: ExtractedMetadataFeatures,
     ) -> Result[TaskFeatureVector, str]:
         """
         Build TaskFeatureVector from extracted features.
@@ -326,7 +327,7 @@ class FeatureExtractor:
         Args:
             embedding: 1536-dim semantic embedding
             tfidf_features: 100-dim TF-IDF features
-            metadata_features: 8-dim metadata features dictionary
+            metadata_features: 8-dim metadata features
 
         Returns:
             Result containing TaskFeatureVector or error message
@@ -335,14 +336,14 @@ class FeatureExtractor:
             vector = TaskFeatureVector(
                 embedding=embedding,
                 tfidf_features=tfidf_features,
-                description_length=metadata_features["description_length"],
-                word_count=metadata_features["word_count"],
-                has_refactor_keyword=metadata_features["has_refactor_keyword"],
-                has_test_keyword=metadata_features["has_test_keyword"],
-                has_async_keyword=metadata_features["has_async_keyword"],
-                has_fix_keyword=metadata_features["has_fix_keyword"],
-                estimated_time_seconds=metadata_features["estimated_time_seconds"],
-                historical_tier_mode=metadata_features["historical_tier_mode"],
+                description_length=metadata_features.description_length,
+                word_count=metadata_features.word_count,
+                has_refactor_keyword=metadata_features.has_refactor_keyword,
+                has_test_keyword=metadata_features.has_test_keyword,
+                has_async_keyword=metadata_features.has_async_keyword,
+                has_fix_keyword=metadata_features.has_fix_keyword,
+                estimated_time_seconds=metadata_features.estimated_time_seconds,
+                historical_tier_mode=metadata_features.historical_tier_mode,
             )
             return Ok(vector)
         except Exception as e:
@@ -390,12 +391,12 @@ class FeatureExtractor:
             return 0.0
         return self.cache_hits / total_requests
 
-    def get_performance_metrics(self) -> dict[str, Any]:
+    def get_performance_metrics(self) -> dict[str, int | float]:
         """
         Get performance metrics for monitoring.
 
         Returns:
-            Dictionary with cache hit rate, total extractions, etc.
+            Dictionary with cache hit rate, total extractions, etc. (typed union for export)
         """
         return {
             "total_extractions": self.total_extractions,

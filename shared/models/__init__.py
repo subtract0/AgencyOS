@@ -14,12 +14,14 @@ from .dashboard import (
     SessionSummary,
 )
 from .ensemble_model import EnsembleModel
+from .extracted_metadata_features import ExtractedMetadataFeatures
 from .kanban import (
     CardStatus,
     CardType,
     KanbanCard,
     KanbanFeed,
 )
+from .quality_feedback_sample import QualityFeedbackSample
 from .learning import (
     AgentStateLearning,
     ContentTypeBreakdown,
@@ -86,6 +88,7 @@ from .session import (
     TaskProgress,
 )
 from .task_feature_vector import TaskFeatureVector
+from .task_metadata import TaskMetadata
 from .telemetry import (
     AgentMetrics,
     SystemHealth,
@@ -174,6 +177,9 @@ __all__ = [
     "RetentionPolicy",
     # ML Routing models (Leap 5)
     "EnsembleModel",
+    "ExtractedMetadataFeatures",
+    "QualityFeedbackSample",
     "TaskFeatureVector",
+    "TaskMetadata",
     "TrainingDataset",
 ]
