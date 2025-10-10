@@ -1,0 +1,17 @@
+{
+  "metadata": {
+    "generated_at": "2025-10-10T10:16:45.601149+00:00",
+    "snapshot_version": "1.0",
+    "dashboard_available": false,
+    "data_directory": null
+  },
+  "snapshot": {
+    "timestamp": "2025-10-10T10:16:45.601159+00:00",
+    "total_tasks": 0,
+    "correct_classifications": 0,
+    "misclassifications": 0,
+    "accuracy_rate": 0.0,
+    "misclassifications_detected": 0,
+    "refinements_applied": 0
+  }
+}

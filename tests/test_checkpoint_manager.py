@@ -117,7 +117,11 @@ class TestCheckpointTrigger:
 
         # Verify checkpoint file exists
         checkpoint_file = (
-            tmp_path / "sessions" / context.session_id / "checkpoints" / f"{checkpoint.checkpoint_id}.json"
+            tmp_path
+            / "sessions"
+            / context.session_id
+            / "checkpoints"
+            / f"{checkpoint.checkpoint_id}.json"
         )
         assert checkpoint_file.exists()
 
@@ -140,7 +144,10 @@ class TestCheckpointTrigger:
 
         # Verify telemetry logging
         assert any("Checkpoint triggered" in record.message for record in caplog.records)
-        assert any(f"checkpoint_id={checkpoint.checkpoint_id}" in record.message for record in caplog.records)
+        assert any(
+            f"checkpoint_id={checkpoint.checkpoint_id}" in record.message
+            for record in caplog.records
+        )
         assert any("reason=test_reason" in record.message for record in caplog.records)
 
     def test_trigger_checkpoint_thread_safe(self, tmp_path):
@@ -332,7 +339,9 @@ class TestResumeFromCheckpoint:
 
         # Corrupt latest checkpoint
         checkpoints_dir = tmp_path / "sessions" / context.session_id / "checkpoints"
-        checkpoint_files = sorted(checkpoints_dir.glob("checkpoint_*.json"), key=lambda p: p.stat().st_mtime)
+        checkpoint_files = sorted(
+            checkpoints_dir.glob("checkpoint_*.json"), key=lambda p: p.stat().st_mtime
+        )
         latest_checkpoint = checkpoint_files[-1]
 
         # Corrupt file by modifying bytes
@@ -345,7 +354,9 @@ class TestResumeFromCheckpoint:
             f.write(data)
 
         # Act - Resume should fallback to 2nd checkpoint
-        manager = CheckpointManager(CheckpointConfig(checkpoint_max_retries=3, base_path=str(tmp_path)))
+        manager = CheckpointManager(
+            CheckpointConfig(checkpoint_max_retries=3, base_path=str(tmp_path))
+        )
         resume_result = manager.resume_from_checkpoint(context.session_id)
 
         # Assert - 2nd checkpoint restored (version 1)
@@ -373,7 +384,9 @@ class TestResumeFromCheckpoint:
             f.write(data)
 
         # Act - Resume should fail
-        manager = CheckpointManager(CheckpointConfig(checkpoint_max_retries=3, base_path=str(tmp_path)))
+        manager = CheckpointManager(
+            CheckpointConfig(checkpoint_max_retries=3, base_path=str(tmp_path))
+        )
         resume_result = manager.resume_from_checkpoint(context.session_id)
 
         # Assert - All checkpoints corrupted error
@@ -464,7 +477,9 @@ class TestRetentionPolicy:
             time.sleep(0.01)
 
         # Act - Cleanup (keep last 5)
-        manager = CheckpointManager(CheckpointConfig(checkpoint_retention_count=5, base_path=str(tmp_path)))
+        manager = CheckpointManager(
+            CheckpointConfig(checkpoint_retention_count=5, base_path=str(tmp_path))
+        )
         result = manager.cleanup_old_checkpoints(context.session_id)
 
         # Assert
@@ -487,7 +502,11 @@ class TestRetentionPolicy:
 
         # Set mtime to 10 days ago
         checkpoint_file = (
-            tmp_path / "sessions" / context.session_id / "checkpoints" / f"{checkpoint.checkpoint_id}.json"
+            tmp_path
+            / "sessions"
+            / context.session_id
+            / "checkpoints"
+            / f"{checkpoint.checkpoint_id}.json"
         )
         old_time = (datetime.now() - timedelta(days=10)).timestamp()
         checkpoint_file.touch()
@@ -496,7 +515,9 @@ class TestRetentionPolicy:
         os.utime(checkpoint_file, (old_time, old_time))
 
         # Act - Cleanup (retention 7 days)
-        manager = CheckpointManager(CheckpointConfig(checkpoint_retention_days=7, base_path=str(tmp_path)))
+        manager = CheckpointManager(
+            CheckpointConfig(checkpoint_retention_days=7, base_path=str(tmp_path))
+        )
         result = manager.cleanup_old_checkpoints(context.session_id)
 
         # Assert - Old checkpoint deleted
@@ -516,7 +537,9 @@ class TestRetentionPolicy:
             time.sleep(0.01)
 
         # Act - Cleanup with keep all mode
-        manager = CheckpointManager(CheckpointConfig(checkpoint_retention_count=-1, base_path=str(tmp_path)))
+        manager = CheckpointManager(
+            CheckpointConfig(checkpoint_retention_count=-1, base_path=str(tmp_path))
+        )
         result = manager.cleanup_old_checkpoints(context.session_id)
 
         # Assert - No checkpoints deleted

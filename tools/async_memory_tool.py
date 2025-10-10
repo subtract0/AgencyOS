@@ -37,11 +37,11 @@ from typing import Any
 try:
     import aiofiles
     import aiofiles.os
-except ImportError:
+except ImportError as e:
     raise ImportError(
         "aiofiles is required for async memory operations. "
         "Install with: pip install aiofiles"
-    )
+    ) from e
 
 try:
     from anthropic.types.beta import BetaAbstractMemoryTool
@@ -196,9 +196,7 @@ class AsyncMemoryTool(BetaAbstractMemoryTool):
         except ValueError as e:
             return Err(str(e))
         except TimeoutError as e:
-            return Err(f"Lock timeout: {e}")
-        except TimeoutError:
-            return Err(f"I/O timeout reading: {path}")
+            return Err(f"Timeout (lock or I/O): {e}")
         except Exception as e:
             return Err(f"Unexpected error: {e}")
 
@@ -233,9 +231,7 @@ class AsyncMemoryTool(BetaAbstractMemoryTool):
         except ValueError as e:
             return Err(str(e))
         except TimeoutError as e:
-            return Err(f"Lock timeout: {e}")
-        except TimeoutError:
-            return Err(f"I/O timeout writing: {path}")
+            return Err(f"Timeout (lock or I/O): {e}")
         except Exception as e:
             return Err(f"Error creating file: {e}")
 
@@ -290,9 +286,7 @@ class AsyncMemoryTool(BetaAbstractMemoryTool):
         except UnicodeDecodeError:
             return Err(f"File is not valid UTF-8: {path}")
         except TimeoutError as e:
-            return Err(f"Lock timeout: {e}")
-        except TimeoutError:
-            return Err(f"I/O timeout: {path}")
+            return Err(f"Timeout (lock or I/O): {e}")
         except Exception as e:
             return Err(f"Error replacing text: {e}")
 
@@ -344,9 +338,7 @@ class AsyncMemoryTool(BetaAbstractMemoryTool):
         except UnicodeDecodeError:
             return Err(f"File is not valid UTF-8: {path}")
         except TimeoutError as e:
-            return Err(f"Lock timeout: {e}")
-        except TimeoutError:
-            return Err(f"I/O timeout: {path}")
+            return Err(f"Timeout (lock or I/O): {e}")
         except Exception as e:
             return Err(f"Error inserting text: {e}")
 
@@ -382,9 +374,7 @@ class AsyncMemoryTool(BetaAbstractMemoryTool):
         except ValueError as e:
             return Err(str(e))
         except TimeoutError as e:
-            return Err(f"Lock timeout: {e}")
-        except TimeoutError:
-            return Err(f"I/O timeout: {path}")
+            return Err(f"Timeout (lock or I/O): {e}")
         except Exception as e:
             return Err(f"Error deleting: {e}")
 
@@ -430,9 +420,7 @@ class AsyncMemoryTool(BetaAbstractMemoryTool):
         except ValueError as e:
             return Err(str(e))
         except TimeoutError as e:
-            return Err(f"Lock timeout: {e}")
-        except TimeoutError:
-            return Err(f"I/O timeout: {old_path}")
+            return Err(f"Timeout (lock or I/O): {e}")
         except Exception as e:
             return Err(f"Error renaming: {e}")
 

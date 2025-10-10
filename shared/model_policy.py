@@ -154,7 +154,7 @@ def agent_model(
     agent_key: str,
     task_description: str | None = None,
     task_type: str | None = None,
-    context: "AgentContext | None" = None
+    context: "AgentContext | None" = None,
 ) -> str:
     """Return the model for a given agent key with adaptive routing.
 
@@ -192,7 +192,7 @@ def agent_model(
                 task_description=task_description,
                 task_type=task_type or "general",
                 agent_key=agent_key,
-                session_id=getattr(context, "session_id", None)
+                session_id=getattr(context, "session_id", None),
             )
 
             if decision_result.is_ok():

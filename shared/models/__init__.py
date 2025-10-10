@@ -176,10 +176,10 @@ __all__ = [
     "CheckpointMetadata",
     "GCResult",
     "RetentionPolicy",
-    # ML models (Leap 5)
+    # ML Routing models (Leap 5)
+    "EnsembleModel",
     "TaskFeatureVector",
+    "TrainingDataset",
     "TrainingSample",
     "DatasetMetadata",
-    "TrainingDataset",
-    "EnsembleModel",
 ]

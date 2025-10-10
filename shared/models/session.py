@@ -51,14 +51,10 @@ class CompressionMetadata(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     algorithm: str = Field(default="zlib", description="Compression algorithm")
-    compression_level: int = Field(
-        default=6, ge=1, le=9, description="zlib level (1-9)"
-    )
+    compression_level: int = Field(default=6, ge=1, le=9, description="zlib level (1-9)")
     original_size_bytes: int = Field(..., description="Uncompressed size")
     compressed_size_bytes: int = Field(..., description="Compressed size")
-    compression_ratio: float = Field(
-        ..., ge=0, le=1, description="compressed/original"
-    )
+    compression_ratio: float = Field(..., ge=0, le=1, description="compressed/original")
     compression_time_ms: float = Field(..., description="Compression duration")
 
     @property
@@ -124,9 +120,7 @@ class CheckpointMetadata(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     checkpoint_id: str = Field(..., description="Unique checkpoint identifier")
-    parent_checkpoint_id: str | None = Field(
-        None, description="Previous checkpoint for delta"
-    )
+    parent_checkpoint_id: str | None = Field(None, description="Previous checkpoint for delta")
     checkpoint_time: datetime = Field(default_factory=datetime.now)
     step_name: str = Field(..., description="Workflow step at checkpoint")
     completed_steps: list[str] = Field(default_factory=list)
@@ -165,9 +159,7 @@ class SessionState(BaseModel):
     # Timestamps and TTL
     created_at: datetime = Field(default_factory=datetime.now)
     updated_at: datetime = Field(default_factory=datetime.now)
-    ttl_seconds: int = Field(
-        default=2_592_000, description="30 days default"
-    )  # 30 * 24 * 60 * 60
+    ttl_seconds: int = Field(default=2_592_000, description="30 days default")  # 30 * 24 * 60 * 60
     expires_at: datetime | None = Field(None, description="Calculated expiration time")
 
     # State content (compressed when serialized)
@@ -188,12 +180,8 @@ class SessionState(BaseModel):
         le=100.0,
         description="Task completion percentage (0-100)",
     )
-    completed_steps: list[str] = Field(
-        default_factory=list, description="Workflow steps completed"
-    )
-    pending_steps: list[str] = Field(
-        default_factory=list, description="Workflow steps remaining"
-    )
+    completed_steps: list[str] = Field(default_factory=list, description="Workflow steps completed")
+    pending_steps: list[str] = Field(default_factory=list, description="Workflow steps remaining")
 
     # NEW: Memory References (Leap 3 - Spec Section 3.1)
     active_memory_refs: list[str] = Field(
@@ -202,9 +190,7 @@ class SessionState(BaseModel):
     pinned_memories: list[str] = Field(
         default_factory=list, description="Critical memories to retain (no GC)"
     )
-    memory_snapshot_id: str | None = Field(
-        None, description="Latest MemorySnapshot reference"
-    )
+    memory_snapshot_id: str | None = Field(None, description="Latest MemorySnapshot reference")
 
     # NEW: Agent States (Leap 3 - Spec Section 3.1)
     agent_states: dict[str, Any] = Field(
@@ -423,9 +409,7 @@ class GCResult(BaseModel):
     sessions_scanned: int = Field(0, description="Total sessions evaluated")
     sessions_deleted: int = Field(0, description="Sessions deleted")
     sessions_archived: int = Field(0, description="Sessions archived (completed)")
-    disk_space_reclaimed_mb: float = Field(
-        0.0, description="Disk space freed (megabytes)"
-    )
+    disk_space_reclaimed_mb: float = Field(0.0, description="Disk space freed (megabytes)")
     collection_time_ms: float = Field(0.0, description="Total GC execution time")
     errors: list[str] = Field(default_factory=list, description="Error messages")
 
@@ -439,16 +423,10 @@ class RetentionPolicy(BaseModel):
 
     model_config = ConfigDict(extra="forbid")
 
-    completed_retention_days: int = Field(
-        90, description="Retention for completed sessions"
-    )
-    abandoned_retention_days: int = Field(
-        30, description="Retention for abandoned sessions"
-    )
+    completed_retention_days: int = Field(90, description="Retention for completed sessions")
+    abandoned_retention_days: int = Field(30, description="Retention for abandoned sessions")
     failed_retention_days: int = Field(7, description="Retention for failed sessions")
-    respect_ttl: bool = Field(
-        True, description="Honor session TTL regardless of status"
-    )
+    respect_ttl: bool = Field(True, description="Honor session TTL regardless of status")
     archive_completed: bool = Field(
         True, description="Archive completed sessions instead of deleting"
     )

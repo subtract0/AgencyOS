@@ -1,0 +1,10 @@
+{
+  "version": "v1.1",
+  "training_date": "2025-10-10T16:46:19.509629+00:00",
+  "average_accuracy": 0.985,
+  "average_precision": 0.985,
+  "average_recall": 0.985,
+  "average_f1": 0.985,
+  "validation_accuracy": 0.985,
+  "false_negative_rate": 0.0
+}
