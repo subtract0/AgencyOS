@@ -38,7 +38,7 @@ class TestTaskFeatureVectorSchema:
             has_async_keyword=1,
             has_fix_keyword=0,
             estimated_time_seconds=600.0,
-            historical_tier_mode=2
+            historical_tier_mode=2,
         )
 
         assert len(vector.embedding) == 1536
@@ -65,7 +65,7 @@ class TestTaskFeatureVectorSchema:
                 has_async_keyword=0,
                 has_fix_keyword=0,
                 estimated_time_seconds=0.0,
-                historical_tier_mode=0
+                historical_tier_mode=0,
             )
 
         error_str = str(exc_info.value)
@@ -85,7 +85,7 @@ class TestTaskFeatureVectorSchema:
                 has_async_keyword=0,
                 has_fix_keyword=0,
                 estimated_time_seconds=0.0,
-                historical_tier_mode=0
+                historical_tier_mode=0,
             )
 
         error_str = str(exc_info.value)
@@ -105,7 +105,7 @@ class TestTaskFeatureVectorSchema:
                 has_async_keyword=0,
                 has_fix_keyword=0,
                 estimated_time_seconds=0.0,
-                historical_tier_mode=0
+                historical_tier_mode=0,
             )
 
         error_str = str(exc_info.value)
@@ -125,7 +125,7 @@ class TestTaskFeatureVectorSchema:
                 has_async_keyword=0,
                 has_fix_keyword=0,
                 estimated_time_seconds=0.0,
-                historical_tier_mode=0
+                historical_tier_mode=0,
             )
 
         error_str = str(exc_info.value)
@@ -148,7 +148,7 @@ class TestTaskFeatureVectorMetadata:
             has_async_keyword=1,  # 0 or 1
             has_fix_keyword=0,  # 0 or 1
             estimated_time_seconds=1800.0,  # 0-36000 valid
-            historical_tier_mode=1  # 0, 1, or 2
+            historical_tier_mode=1,  # 0, 1, or 2
         )
 
         assert vector.description_length == 250
@@ -168,7 +168,7 @@ class TestTaskFeatureVectorMetadata:
             has_async_keyword=0,  # Valid
             has_fix_keyword=0,  # Valid
             estimated_time_seconds=0.0,
-            historical_tier_mode=0
+            historical_tier_mode=0,
         )
 
         assert vector.has_refactor_keyword == 0
@@ -188,7 +188,7 @@ class TestTaskFeatureVectorMetadata:
             has_async_keyword=1,  # Valid
             has_fix_keyword=1,  # Valid
             estimated_time_seconds=0.0,
-            historical_tier_mode=0
+            historical_tier_mode=0,
         )
 
         assert vector.has_refactor_keyword == 1
@@ -210,7 +210,7 @@ class TestTaskFeatureVectorMetadata:
                 has_async_keyword=0,
                 has_fix_keyword=0,
                 estimated_time_seconds=0.0,
-                historical_tier_mode=0
+                historical_tier_mode=0,
             )
 
         error_str = str(exc_info.value)
@@ -230,7 +230,7 @@ class TestTaskFeatureVectorMetadata:
                 has_async_keyword=0,
                 has_fix_keyword=0,
                 estimated_time_seconds=0.0,
-                historical_tier_mode=tier
+                historical_tier_mode=tier,
             )
             assert vector.historical_tier_mode == tier
 
@@ -247,7 +247,7 @@ class TestTaskFeatureVectorMetadata:
                 has_async_keyword=0,
                 has_fix_keyword=0,
                 estimated_time_seconds=0.0,
-                historical_tier_mode=3  # Invalid (not 0, 1, or 2)
+                historical_tier_mode=3,  # Invalid (not 0, 1, or 2)
             )
 
         error_str = str(exc_info.value)
@@ -267,7 +267,7 @@ class TestTaskFeatureVectorMetadata:
                 has_async_keyword=0,
                 has_fix_keyword=0,
                 estimated_time_seconds=0.0,
-                historical_tier_mode=0
+                historical_tier_mode=0,
             )
 
     def test_estimated_time_negative_rejected(self):
@@ -283,7 +283,7 @@ class TestTaskFeatureVectorMetadata:
                 has_async_keyword=0,
                 has_fix_keyword=0,
                 estimated_time_seconds=-300.0,  # Invalid (negative)
-                historical_tier_mode=0
+                historical_tier_mode=0,
             )
 
 
@@ -302,7 +302,7 @@ class TestTaskFeatureVectorConversion:
             has_async_keyword=1,
             has_fix_keyword=0,
             estimated_time_seconds=600.0,
-            historical_tier_mode=2
+            historical_tier_mode=2,
         )
 
         flat = vector.to_flat_array()
@@ -322,7 +322,7 @@ class TestTaskFeatureVectorConversion:
             has_async_keyword=1,
             has_fix_keyword=0,
             estimated_time_seconds=600.0,
-            historical_tier_mode=2
+            historical_tier_mode=2,
         )
 
         flat = vector.to_flat_array()
@@ -355,7 +355,7 @@ class TestTaskFeatureVectorConversion:
             has_async_keyword=1,  # int
             has_fix_keyword=0,  # int
             estimated_time_seconds=300.0,  # already float
-            historical_tier_mode=1  # int
+            historical_tier_mode=1,  # int
         )
 
         flat = vector.to_flat_array()
@@ -381,7 +381,7 @@ class TestTaskFeatureVectorUtilityMethods:
             has_async_keyword=0,
             has_fix_keyword=0,
             estimated_time_seconds=0.0,
-            historical_tier_mode=0
+            historical_tier_mode=0,
         )
 
         assert vector.get_total_dimensions() == 1644
@@ -398,17 +398,12 @@ class TestTaskFeatureVectorUtilityMethods:
             has_async_keyword=0,
             has_fix_keyword=0,
             estimated_time_seconds=0.0,
-            historical_tier_mode=0
+            historical_tier_mode=0,
         )
 
         breakdown = vector.get_dimension_breakdown()
 
-        assert breakdown == {
-            "embedding": 1536,
-            "tfidf": 100,
-            "metadata": 8,
-            "total": 1644
-        }
+        assert breakdown == {"embedding": 1536, "tfidf": 100, "metadata": 8, "total": 1644}
 
 
 class TestTaskFeatureVectorConstitutionalCompliance:
@@ -426,7 +421,7 @@ class TestTaskFeatureVectorConstitutionalCompliance:
             has_async_keyword=0,
             has_fix_keyword=0,
             estimated_time_seconds=0.0,
-            historical_tier_mode=0
+            historical_tier_mode=0,
         )
 
         # All fields have explicit types (no Any)
@@ -450,7 +445,7 @@ class TestTaskFeatureVectorConstitutionalCompliance:
                 has_async_keyword=0,
                 has_fix_keyword=0,
                 estimated_time_seconds=0.0,
-                historical_tier_mode=0
+                historical_tier_mode=0,
             )
 
         error_str = str(exc_info.value)
@@ -471,7 +466,7 @@ class TestTaskFeatureVectorConstitutionalCompliance:
             has_async_keyword=0,
             has_fix_keyword=0,
             estimated_time_seconds=0.0,
-            historical_tier_mode=2  # VectorStore learned: similar tasks were complex (P1)
+            historical_tier_mode=2,  # VectorStore learned: similar tasks were complex (P1)
         )
 
         assert vector.historical_tier_mode == 2  # Article IV: Learning integrated
@@ -492,7 +487,7 @@ class TestTaskFeatureVectorEdgeCases:
             has_async_keyword=0,
             has_fix_keyword=0,
             estimated_time_seconds=0.0,
-            historical_tier_mode=0
+            historical_tier_mode=0,
         )
 
         flat = vector.to_flat_array()
@@ -511,7 +506,7 @@ class TestTaskFeatureVectorEdgeCases:
             has_async_keyword=1,
             has_fix_keyword=1,
             estimated_time_seconds=36000.0,  # 10 hours
-            historical_tier_mode=2  # Complex
+            historical_tier_mode=2,  # Complex
         )
 
         assert vector.description_length == 10000
@@ -531,7 +526,7 @@ class TestTaskFeatureVectorEdgeCases:
             has_async_keyword=0,
             has_fix_keyword=0,
             estimated_time_seconds=0.0,
-            historical_tier_mode=0
+            historical_tier_mode=0,
         )
 
         flat = vector.to_flat_array()

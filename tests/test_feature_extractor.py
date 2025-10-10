@@ -145,7 +145,9 @@ def test_extract_features_complete_vector(feature_extractor, sample_tasks):
     result = feature_extractor.extract_features(task_description)
 
     # Assert
-    assert result.is_ok(), f"Expected Ok result, got Err: {result.unwrap_err() if result.is_err() else 'N/A'}"
+    assert result.is_ok(), (
+        f"Expected Ok result, got Err: {result.unwrap_err() if result.is_err() else 'N/A'}"
+    )
     features = result.unwrap()
     assert isinstance(features, TaskFeatureVector)
     assert features.get_total_dimensions() == 1644

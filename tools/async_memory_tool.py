@@ -39,8 +39,7 @@ try:
     import aiofiles.os
 except ImportError as e:
     raise ImportError(
-        "aiofiles is required for async memory operations. "
-        "Install with: pip install aiofiles"
+        "aiofiles is required for async memory operations. Install with: pip install aiofiles"
     ) from e
 
 try:
@@ -51,6 +50,7 @@ except ImportError:
         """Fallback base class if anthropic SDK doesn't have memory tool"""
 
         pass
+
 
 from shared.type_definitions.result import Err, Ok, Result
 from tools.memory_lock_manager import MemoryLockManager
@@ -163,9 +163,7 @@ class AsyncMemoryTool(BetaAbstractMemoryTool):
     # ASYNC API - Core Operations (6 memory operations)
     # ========================================================================
 
-    async def view_async(
-        self, path: str, view_range: list[int] | None = None
-    ) -> Result[str, str]:
+    async def view_async(self, path: str, view_range: list[int] | None = None) -> Result[str, str]:
         """Async view directory or file contents
 
         Uses shared lock semantics (multiple concurrent readers allowed).
@@ -235,9 +233,7 @@ class AsyncMemoryTool(BetaAbstractMemoryTool):
         except Exception as e:
             return Err(f"Error creating file: {e}")
 
-    async def str_replace_async(
-        self, path: str, old_str: str, new_str: str
-    ) -> Result[str, str]:
+    async def str_replace_async(self, path: str, old_str: str, new_str: str) -> Result[str, str]:
         """Async replace text in file
 
         Read-modify-write with exclusive lock.
@@ -273,9 +269,7 @@ class AsyncMemoryTool(BetaAbstractMemoryTool):
 
                 # Size check
                 if len(new_content.encode("utf-8")) > self.max_file_size:
-                    return Err(
-                        f"Replacement exceeds size limit ({self.max_file_size} bytes)"
-                    )
+                    return Err(f"Replacement exceeds size limit ({self.max_file_size} bytes)")
 
                 # Write
                 await self._atomic_write_async(full_path, new_content)
@@ -290,9 +284,7 @@ class AsyncMemoryTool(BetaAbstractMemoryTool):
         except Exception as e:
             return Err(f"Error replacing text: {e}")
 
-    async def insert_async(
-        self, path: str, insert_line: int, insert_text: str
-    ) -> Result[str, str]:
+    async def insert_async(self, path: str, insert_line: int, insert_text: str) -> Result[str, str]:
         """Async insert text at line
 
         Args:
@@ -326,9 +318,7 @@ class AsyncMemoryTool(BetaAbstractMemoryTool):
                 # Check size limit
                 new_content = "".join(lines)
                 if len(new_content.encode("utf-8")) > self.max_file_size:
-                    return Err(
-                        f"Insertion exceeds size limit ({self.max_file_size} bytes)"
-                    )
+                    return Err(f"Insertion exceeds size limit ({self.max_file_size} bytes)")
 
                 # Write
                 await self._atomic_write_async(full_path, new_content)
@@ -488,9 +478,7 @@ class AsyncMemoryTool(BetaAbstractMemoryTool):
         """
         semaphore = asyncio.Semaphore(max_concurrency)
 
-        async def _bounded_create(
-            path: str, content: str
-        ) -> tuple[str, Result[str, str]]:
+        async def _bounded_create(path: str, content: str) -> tuple[str, Result[str, str]]:
             """Execute create with semaphore to limit concurrency"""
             async with semaphore:
                 result = await self.create_async(path, content)
@@ -546,9 +534,7 @@ class AsyncMemoryTool(BetaAbstractMemoryTool):
                 temp_path.unlink()
             raise
 
-    async def _read_file_async(
-        self, path: Path, view_range: list[int] | None = None
-    ) -> str:
+    async def _read_file_async(self, path: Path, view_range: list[int] | None = None) -> str:
         """Read file with optional line range and truncation
 
         Args:

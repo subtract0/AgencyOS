@@ -73,10 +73,7 @@ def training_dataset_100_samples() -> TrainingDataset:
         # Create 27 train samples per tier
         for i in range(27):
             features = TaskFeatureVector(
-                embedding=[
-                    float(tier + np.random.rand() * 0.1)
-                    for _ in range(1536)
-                ],
+                embedding=[float(tier + np.random.rand() * 0.1) for _ in range(1536)],
                 tfidf_features=[float(np.random.rand()) for _ in range(100)],
                 description_length=50 + (tier * 50),
                 word_count=10 + (tier * 10),
@@ -103,10 +100,7 @@ def training_dataset_100_samples() -> TrainingDataset:
         # Create 7 val samples per tier
         for i in range(7):
             features = TaskFeatureVector(
-                embedding=[
-                    float(tier + np.random.rand() * 0.1)
-                    for _ in range(1536)
-                ],
+                embedding=[float(tier + np.random.rand() * 0.1) for _ in range(1536)],
                 tfidf_features=[float(np.random.rand()) for _ in range(100)],
                 description_length=50 + (tier * 50),
                 word_count=10 + (tier * 10),
@@ -167,30 +161,28 @@ def test_e2e_training_pipeline_success(
     """
     # Step 1: Train model (Article II: 100% verification)
     trainer = MLModelTrainer()
-    train_result = trainer.train_ensemble_model(
-        training_dataset_100_samples, random_state=42
-    )
+    train_result = trainer.train_ensemble_model(training_dataset_100_samples, random_state=42)
 
-    assert isinstance(
-        train_result, Ok
-    ), f"Training failed: {train_result.error if isinstance(train_result, Err) else ''}"
+    assert isinstance(train_result, Ok), (
+        f"Training failed: {train_result.error if isinstance(train_result, Err) else ''}"
+    )
     ensemble_model = train_result.unwrap()
 
     # Validate training metrics (Article II: Thresholds enforced)
-    assert (
-        ensemble_model.validation_accuracy >= 0.98
-    ), f"Accuracy {ensemble_model.validation_accuracy:.4f} below 98%"
-    assert (
-        ensemble_model.false_negative_rate <= 0.02
-    ), f"FN_rate {ensemble_model.false_negative_rate:.4f} above 2%"
+    assert ensemble_model.validation_accuracy >= 0.98, (
+        f"Accuracy {ensemble_model.validation_accuracy:.4f} below 98%"
+    )
+    assert ensemble_model.false_negative_rate <= 0.02, (
+        f"FN_rate {ensemble_model.false_negative_rate:.4f} above 2%"
+    )
 
     # Step 2: Save model (Article IV: Metadata for learning)
     storage = ModelStorage(base_dir=temp_models_dir)
     save_result = storage.save_model(ensemble_model)
 
-    assert isinstance(
-        save_result, Ok
-    ), f"Save failed: {save_result.error if isinstance(save_result, Err) else ''}"
+    assert isinstance(save_result, Ok), (
+        f"Save failed: {save_result.error if isinstance(save_result, Err) else ''}"
+    )
     model_path = save_result.unwrap()
 
     # Validate file creation
@@ -202,9 +194,7 @@ def test_e2e_training_pipeline_success(
     symlink_path = temp_models_dir / "routing_classifier_latest.pkl"
     assert symlink_path.exists(), "Symlink not created"
     assert symlink_path.is_symlink(), "Latest file is not a symlink"
-    assert (
-        symlink_path.resolve() == model_path
-    ), "Symlink does not point to v1.0"
+    assert symlink_path.resolve() == model_path, "Symlink does not point to v1.0"
 
     # Step 4: Validate file permissions (0600 for security)
     model_stat = os.stat(model_path)
@@ -219,34 +209,25 @@ def test_e2e_training_pipeline_success(
 
     # Step 5: Load model via symlink
     load_result = storage.load_model("latest")
-    assert isinstance(
-        load_result, Ok
-    ), f"Load failed: {load_result.error if isinstance(load_result, Err) else ''}"
+    assert isinstance(load_result, Ok), (
+        f"Load failed: {load_result.error if isinstance(load_result, Err) else ''}"
+    )
     loaded_model = load_result.unwrap()
 
     # Step 6: Validate loaded model matches original
-    assert (
-        loaded_model.validation_accuracy == ensemble_model.validation_accuracy
-    )
-    assert (
-        loaded_model.false_negative_rate
-        == ensemble_model.false_negative_rate
-    )
+    assert loaded_model.validation_accuracy == ensemble_model.validation_accuracy
+    assert loaded_model.false_negative_rate == ensemble_model.false_negative_rate
     assert len(loaded_model.feature_names) == 1644
 
     # Step 7: Inference validation (predictions on validation set)
     val_samples = training_dataset_100_samples.get_val_samples()
-    X_val = np.array(
-        [s.features.to_flat_array() for s in val_samples]
-    )
+    X_val = np.array([s.features.to_flat_array() for s in val_samples])
     y_val = np.array([s.label for s in val_samples])
 
     y_pred = loaded_model.ensemble.predict(X_val)
     inference_accuracy = (y_pred == y_val).mean()
 
-    assert (
-        inference_accuracy >= 0.98
-    ), f"Inference accuracy {inference_accuracy:.4f} below 98%"
+    assert inference_accuracy >= 0.98, f"Inference accuracy {inference_accuracy:.4f} below 98%"
 
     # Step 8: Constitutional compliance validation
     # Article I: Complete context (all training data used)
@@ -265,16 +246,10 @@ def test_e2e_training_pipeline_success(
     assert "training_date" in metadata
 
     print("\n✅ E2E Integration Test PASSED")
-    print(
-        f"   Accuracy: {ensemble_model.validation_accuracy:.4f} (target ≥0.98)"
-    )
-    print(
-        f"   FN_rate: {ensemble_model.false_negative_rate:.4f} (target ≤0.02)"
-    )
+    print(f"   Accuracy: {ensemble_model.validation_accuracy:.4f} (target ≥0.98)")
+    print(f"   FN_rate: {ensemble_model.false_negative_rate:.4f} (target ≤0.02)")
     print(f"   Model: {model_path.name}")
-    print(
-        f"   Symlink: routing_classifier_latest.pkl → {model_path.name}"
-    )
+    print(f"   Symlink: routing_classifier_latest.pkl → {model_path.name}")
 
 
 def test_training_time_performance(
@@ -288,22 +263,16 @@ def test_training_time_performance(
     trainer = MLModelTrainer()
 
     start_time = time.perf_counter()
-    result = trainer.train_ensemble_model(
-        training_dataset_100_samples, random_state=42
-    )
+    result = trainer.train_ensemble_model(training_dataset_100_samples, random_state=42)
     training_time = time.perf_counter() - start_time
 
     # Verify training succeeded
     assert isinstance(result, Ok), "Training failed"
 
     # Scaled target: 100 samples → ~30s (1000 samples → 5 minutes)
-    assert (
-        training_time < 60
-    ), f"Training took {training_time:.1f}s (target <60s for 100 samples)"
+    assert training_time < 60, f"Training took {training_time:.1f}s (target <60s for 100 samples)"
 
-    print(
-        f"\n✅ Training Time: {training_time:.2f}s (scaled target: <60s for 100 samples)"
-    )
+    print(f"\n✅ Training Time: {training_time:.2f}s (scaled target: <60s for 100 samples)")
 
 
 def test_model_versioning_sequence(
@@ -322,18 +291,14 @@ def test_model_versioning_sequence(
     storage = ModelStorage(base_dir=temp_models_dir)
 
     # Save v1.0 (first save)
-    result1 = trainer.train_ensemble_model(
-        training_dataset_100_samples, random_state=42
-    )
+    result1 = trainer.train_ensemble_model(training_dataset_100_samples, random_state=42)
     assert isinstance(result1, Ok)
     save1 = storage.save_model(result1.unwrap())
     assert isinstance(save1, Ok)
     assert "v1.0" in str(save1.unwrap())
 
     # Save v1.1 (retraining, no breaking change)
-    result2 = trainer.train_ensemble_model(
-        training_dataset_100_samples, random_state=43
-    )
+    result2 = trainer.train_ensemble_model(training_dataset_100_samples, random_state=43)
     assert isinstance(result2, Ok)
     save2 = storage.save_model(result2.unwrap(), breaking_change=False)
     assert isinstance(save2, Ok)
@@ -413,10 +378,7 @@ def test_insufficient_training_data_fails(
 
     assert isinstance(result, Err), "Training should fail with insufficient data"
     error_msg = result.unwrap_err()
-    assert (
-        "Insufficient training data" in error_msg
-        or "minimum 50 training samples" in error_msg
-    )
+    assert "Insufficient training data" in error_msg or "minimum 50 training samples" in error_msg
 
 
 def test_accuracy_below_threshold_fails(
@@ -430,27 +392,19 @@ def test_accuracy_below_threshold_fails(
     trainer = MLModelTrainer()
 
     # Mock classifier to return low accuracy
-    with patch(
-        "tools.ml_routing.model_trainer.RandomForestClassifier"
-    ) as mock_rf:
+    with patch("tools.ml_routing.model_trainer.RandomForestClassifier") as mock_rf:
         mock_classifier = Mock()
-        mock_classifier.predict.return_value = np.zeros(
-            21
-        )  # All wrong predictions
+        mock_classifier.predict.return_value = np.zeros(21)  # All wrong predictions
         mock_classifier.predict_proba.return_value = np.ones((21, 3)) / 3
         mock_rf.return_value = mock_classifier
 
-        result = trainer.train_ensemble_model(
-            training_dataset_100_samples, random_state=42
-        )
+        result = trainer.train_ensemble_model(training_dataset_100_samples, random_state=42)
 
         # Should fail validation thresholds
         if isinstance(result, Ok):
             # If training succeeded, check that accuracy is below threshold
             model = result.unwrap()
-            assert (
-                model.validation_accuracy < 0.98
-            ), "Mock should produce low accuracy"
+            assert model.validation_accuracy < 0.98, "Mock should produce low accuracy"
 
 
 def test_fn_rate_above_threshold_fails(
@@ -465,29 +419,21 @@ def test_fn_rate_above_threshold_fails(
 
     # Mock predictions to produce high false negative rate
     # (predict all tier 0, when some are tier 1 or 2)
-    with patch(
-        "tools.ml_routing.model_trainer.RandomForestClassifier"
-    ) as mock_rf:
+    with patch("tools.ml_routing.model_trainer.RandomForestClassifier") as mock_rf:
         mock_classifier = Mock()
         # Predict all simple (tier 0), causing FN for moderate/complex
         mock_classifier.predict.return_value = np.zeros(21)
-        mock_classifier.predict_proba.return_value = np.array(
-            [[1.0, 0.0, 0.0]] * 21
-        )
+        mock_classifier.predict_proba.return_value = np.array([[1.0, 0.0, 0.0]] * 21)
         mock_rf.return_value = mock_classifier
 
-        result = trainer.train_ensemble_model(
-            training_dataset_100_samples, random_state=42
-        )
+        result = trainer.train_ensemble_model(training_dataset_100_samples, random_state=42)
 
         # Should detect high FN rate
         if isinstance(result, Ok):
             model = result.unwrap()
             # With stratified val set (7 samples per tier), predicting all tier 0
             # will miss 14 samples (tier 1 and tier 2), FN_rate = 14/21 = 66%
-            assert (
-                model.false_negative_rate > 0.02
-            ), "Mock should produce high FN rate"
+            assert model.false_negative_rate > 0.02, "Mock should produce high FN rate"
 
 
 def test_model_size_validation(
@@ -502,9 +448,7 @@ def test_model_size_validation(
     storage = ModelStorage(base_dir=temp_models_dir)
 
     # Train and save model
-    result = trainer.train_ensemble_model(
-        training_dataset_100_samples, random_state=42
-    )
+    result = trainer.train_ensemble_model(training_dataset_100_samples, random_state=42)
     assert isinstance(result, Ok)
 
     save_result = storage.save_model(result.unwrap())
@@ -513,9 +457,7 @@ def test_model_size_validation(
     model_path = save_result.unwrap()
     model_size_mb = model_path.stat().st_size / (1024 * 1024)
 
-    assert (
-        model_size_mb < 50
-    ), f"Model size {model_size_mb:.2f}MB exceeds 50MB limit"
+    assert model_size_mb < 50, f"Model size {model_size_mb:.2f}MB exceeds 50MB limit"
 
     print(f"\n✅ Model Size: {model_size_mb:.2f}MB (limit: <50MB)")
 
@@ -532,9 +474,7 @@ def test_load_time_validation(
     storage = ModelStorage(base_dir=temp_models_dir)
 
     # Train and save model
-    result = trainer.train_ensemble_model(
-        training_dataset_100_samples, random_state=42
-    )
+    result = trainer.train_ensemble_model(training_dataset_100_samples, random_state=42)
     assert isinstance(result, Ok)
     save_result = storage.save_model(result.unwrap())
     assert isinstance(save_result, Ok)
@@ -545,9 +485,7 @@ def test_load_time_validation(
     load_time = time.perf_counter() - start_time
 
     assert isinstance(load_result, Ok), "Load failed"
-    assert (
-        load_time < 1.0
-    ), f"Load time {load_time:.3f}s exceeds 1s limit"
+    assert load_time < 1.0, f"Load time {load_time:.3f}s exceeds 1s limit"
 
     print(f"\n✅ Load Time: {load_time:.3f}s (limit: <1s)")
 
@@ -592,9 +530,8 @@ def test_integration_test_validation() -> None:
         if ac_id not in source_code and description.lower() not in source_code.lower():
             missing_criteria.append(f"{ac_id}: {description}")
 
-    assert len(missing_criteria) == 0, (
-        "Integration test missing validation for:\n"
-        + "\n".join(f"  - {c}" for c in missing_criteria)
+    assert len(missing_criteria) == 0, "Integration test missing validation for:\n" + "\n".join(
+        f"  - {c}" for c in missing_criteria
     )
 
     print(f"\n✅ Integration Test Validation: All {len(acceptance_criteria)} criteria covered")
@@ -713,26 +650,28 @@ def test_generate_phase2_summary_report(
     print("=" * 70)
     print("\n## Deliverables")
     print(f"- EnsembleModel Pydantic model ({summary['deliverables']['pydantic_models'][0]})")
-    for tool in summary['deliverables']['ml_tools']:
+    for tool in summary["deliverables"]["ml_tools"]:
         print(f"- {tool}")
-    for test in summary['deliverables']['tests']:
+    for test in summary["deliverables"]["tests"]:
         print(f"- {test}")
-    print(f"- Total: {summary['deliverables']['total_tests']} tests with {summary['deliverables']['pass_rate']} pass rate")
+    print(
+        f"- Total: {summary['deliverables']['total_tests']} tests with {summary['deliverables']['pass_rate']} pass rate"
+    )
 
     print("\n## Acceptance Criteria Validation")
-    for ac_id, status in summary['acceptance_criteria_validation'].items():
+    for ac_id, status in summary["acceptance_criteria_validation"].items():
         print(f"{status}")
 
     print("\n## Constitutional Compliance")
-    for article, status in summary['constitutional_compliance'].items():
+    for article, status in summary["constitutional_compliance"].items():
         print(f"{status}")
 
     print("\n## Performance Metrics")
-    for metric, value in summary['performance_metrics'].items():
+    for metric, value in summary["performance_metrics"].items():
         print(f"- {metric}: {value}")
 
     print("\n## Next Steps")
-    for step in summary['next_steps']:
+    for step in summary["next_steps"]:
         print(step)
 
     print("\n" + "=" * 70)

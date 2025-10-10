@@ -165,14 +165,18 @@ def trained_ensemble_model(temp_models_dir: Path) -> EnsembleModel:
     # Train model
     trainer = MLModelTrainer()
     result = trainer.train_ensemble_model(dataset, random_state=42)
-    assert isinstance(result, Ok), f"Training failed: {result.error if isinstance(result, Err) else ''}"
+    assert isinstance(result, Ok), (
+        f"Training failed: {result.error if isinstance(result, Err) else ''}"
+    )
 
     model = result.unwrap()
 
     # Save model
     storage = ModelStorage(base_dir=temp_models_dir)
     save_result = storage.save_model(model)
-    assert isinstance(save_result, Ok), f"Save failed: {save_result.error if isinstance(save_result, Err) else ''}"
+    assert isinstance(save_result, Ok), (
+        f"Save failed: {save_result.error if isinstance(save_result, Err) else ''}"
+    )
 
     return model
 
@@ -296,7 +300,7 @@ class TestMLClassification:
         # Note: Without A/B testing enabled, all should use ML (or fall back to rules if confidence <0.7)
         # We expect mostly ML classifications with high confidence
         print(f"\n✅ ML Classification: {ml_count} ML, {rule_count} rules (total 100)")
-        print(f"   ML ratio: {ml_count/100:.1%}, Rule ratio: {rule_count/100:.1%}")
+        print(f"   ML ratio: {ml_count / 100:.1%}, Rule ratio: {rule_count / 100:.1%}")
 
     def test_e2e_all_predictions_logged_vectorstore(
         self,
@@ -587,7 +591,7 @@ class TestABTesting:
         print(f"   Total predictions: {len(predictions)}")
         print(f"   ML classifications: {ml_count}")
         print(f"   Rule-based fallbacks: {fallback_count}")
-        print(f"   Fallback rate: {fallback_count/len(predictions):.1%}")
+        print(f"   Fallback rate: {fallback_count / len(predictions):.1%}")
 
 
 # ============================================================================
@@ -742,7 +746,9 @@ class TestConstitutionalCompliance:
         print("⚖️  CONSTITUTIONAL COMPLIANCE VALIDATION")
         print("=" * 70)
         print(f"✅ Article I: Complete context ({success_count}/100 tasks classified)")
-        print(f"✅ Article II: 100% verification (accuracy {trained_ensemble_model.validation_accuracy:.3f} ≥ 0.98)")
+        print(
+            f"✅ Article II: 100% verification (accuracy {trained_ensemble_model.validation_accuracy:.3f} ≥ 0.98)"
+        )
         print(f"✅ Article IV: VectorStore logging ({len(predictions)}/100 predictions stored)")
         print("=" * 70)
 
@@ -876,7 +882,9 @@ def test_generate_phase3_summary_report(
         print(f"- {tool}")
     for test in summary["deliverables"]["tests"]:
         print(f"- {test}")
-    print(f"- Total: {summary['deliverables']['total_tests']} tests with {summary['deliverables']['pass_rate']} pass rate")
+    print(
+        f"- Total: {summary['deliverables']['total_tests']} tests with {summary['deliverables']['pass_rate']} pass rate"
+    )
 
     print("\n## Acceptance Criteria Validation")
     for ac_id, status in summary["acceptance_criteria_validation"].items():

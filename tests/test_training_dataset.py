@@ -580,9 +580,7 @@ def test_training_dataset_confidence_stats_empty() -> None:
         source="vectorstore_quality_feedback",
     )
 
-    dataset = TrainingDataset(
-        samples=samples, train_indices=[], val_indices=[], metadata=metadata
-    )
+    dataset = TrainingDataset(samples=samples, train_indices=[], val_indices=[], metadata=metadata)
 
     stats = dataset.get_confidence_stats()
     assert stats["train"]["mean"] == 0.0

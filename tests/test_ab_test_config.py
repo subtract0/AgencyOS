@@ -119,9 +119,7 @@ class TestABTestConfigModel:
         config = ABTestConfig(enabled=True, ml_percentage=50)
 
         # Act - test 1000 task IDs
-        ml_count = sum(
-            1 for i in range(1000) if config.should_use_ml(f"task-{i}")
-        )
+        ml_count = sum(1 for i in range(1000) if config.should_use_ml(f"task-{i}"))
 
         # Assert - should be roughly 50% (allow 5% variance)
         expected = 500
@@ -133,9 +131,7 @@ class TestABTestConfigModel:
         config = ABTestConfig(enabled=True, ml_percentage=25)
 
         # Act
-        ml_count = sum(
-            1 for i in range(1000) if config.should_use_ml(f"task-{i}")
-        )
+        ml_count = sum(1 for i in range(1000) if config.should_use_ml(f"task-{i}"))
 
         # Assert - should be roughly 25% (allow 5% variance)
         expected = 250
@@ -147,9 +143,7 @@ class TestABTestConfigModel:
         config = ABTestConfig(enabled=True, ml_percentage=75)
 
         # Act
-        ml_count = sum(
-            1 for i in range(1000) if config.should_use_ml(f"task-{i}")
-        )
+        ml_count = sum(1 for i in range(1000) if config.should_use_ml(f"task-{i}"))
 
         # Assert - should be roughly 75% (allow 5% variance)
         expected = 750

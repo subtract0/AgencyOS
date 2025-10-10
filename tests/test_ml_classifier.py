@@ -184,9 +184,7 @@ class TestMLClassifierClassification:
         assert "model not loaded" in result.unwrap_err().lower()
 
     @patch("tools.ml_routing.ml_classifier.FeatureExtractor")
-    def test_classify_returns_error_when_feature_extraction_fails(
-        self, mock_extractor_class
-    ):
+    def test_classify_returns_error_when_feature_extraction_fails(self, mock_extractor_class):
         """Test classify() returns Err when feature extraction fails."""
         # Arrange
         classifier = MLClassifier()
@@ -239,9 +237,7 @@ class TestMLClassifierClassification:
         assert classification.probabilities == {"P1": 0.10, "P2": 0.15, "P3": 0.75}
 
     @patch("tools.ml_routing.ml_classifier.FeatureExtractor")
-    def test_classify_returns_error_when_confidence_below_threshold(
-        self, mock_extractor_class
-    ):
+    def test_classify_returns_error_when_confidence_below_threshold(self, mock_extractor_class):
         """Test classify() returns Err when confidence below threshold."""
         # Arrange
         classifier = MLClassifier(confidence_threshold=0.8)
@@ -358,9 +354,7 @@ class TestMLClassifierConfidence:
 
         # Mock model
         mock_model = MagicMock()
-        mock_model.ensemble.predict_proba.return_value = np.array(
-            [[0.15, 0.72, 0.13]]
-        )
+        mock_model.ensemble.predict_proba.return_value = np.array([[0.15, 0.72, 0.13]])
         mock_model.ensemble.classes_ = np.array(["P1", "P2", "P3"])
         classifier._model = mock_model
 
@@ -380,9 +374,7 @@ class TestMLClassifierConfidence:
         assert confidence == 0.72
 
     @patch("tools.ml_routing.ml_classifier.FeatureExtractor")
-    def test_get_confidence_handles_feature_extraction_failure(
-        self, mock_extractor_class
-    ):
+    def test_get_confidence_handles_feature_extraction_failure(self, mock_extractor_class):
         """Test get_confidence() returns 0.0 on feature extraction failure."""
         # Arrange
         classifier = MLClassifier()

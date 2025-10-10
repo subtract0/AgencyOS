@@ -449,9 +449,7 @@ def test_fallbacks_to_rules_when_ml_classifier_returns_error(mock_ml_classifier)
     """
     # Arrange
     task = {"description": "Implement caching layer"}
-    mock_ml_classifier.classify.return_value = Err(
-        "Feature extraction failed: OpenAI API timeout"
-    )
+    mock_ml_classifier.classify.return_value = Err("Feature extraction failed: OpenAI API timeout")
 
     # Act
     result = mock_ml_classifier.classify(task)
@@ -607,7 +605,9 @@ def test_prediction_log_includes_confidence_and_method(agent_context):
 
     # Assert
     assert len(retrieved) > 0, "Prediction should be retrievable"
-    pred = next((r for r in retrieved if r["key"] == f"ml_prediction_{prediction['task_id']}"), None)
+    pred = next(
+        (r for r in retrieved if r["key"] == f"ml_prediction_{prediction['task_id']}"), None
+    )
     assert pred is not None, "Specific prediction should be found"
 
     content = pred["content"]
@@ -672,7 +672,9 @@ def test_existing_hybrid_executor_tests_still_pass():
     assert cost == 0.20, f"Expected $0.20 for 2 minutes, got ${cost}"
 
 
-def test_execute_with_ml_disabled_identical_to_legacy_behavior(agent_context, message_bus, cost_tracker):
+def test_execute_with_ml_disabled_identical_to_legacy_behavior(
+    agent_context, message_bus, cost_tracker
+):
     """
     Test executor with ML disabled produces identical behavior to legacy.
 

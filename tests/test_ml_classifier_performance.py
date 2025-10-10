@@ -154,14 +154,18 @@ def trained_ensemble_model(temp_models_dir: Path) -> EnsembleModel:
     # Train model
     trainer = MLModelTrainer()
     result = trainer.train_ensemble_model(dataset, random_state=42)
-    assert isinstance(result, Ok), f"Training failed: {result.error if isinstance(result, Err) else ''}"
+    assert isinstance(result, Ok), (
+        f"Training failed: {result.error if isinstance(result, Err) else ''}"
+    )
 
     model = result.unwrap()
 
     # Save model
     storage = ModelStorage(base_dir=temp_models_dir)
     save_result = storage.save_model(model)
-    assert isinstance(save_result, Ok), f"Save failed: {save_result.error if isinstance(save_result, Err) else ''}"
+    assert isinstance(save_result, Ok), (
+        f"Save failed: {save_result.error if isinstance(save_result, Err) else ''}"
+    )
 
     return model
 
@@ -190,7 +194,10 @@ class TestInferenceLatency:
     """Test classification latency under normal operation."""
 
     def test_classify_latency_p50_under_10ms(
-        self, trained_ensemble_model: EnsembleModel, mock_agent_context: AgentContext, temp_models_dir: Path
+        self,
+        trained_ensemble_model: EnsembleModel,
+        mock_agent_context: AgentContext,
+        temp_models_dir: Path,
     ) -> None:
         """
         Test AC-P.2: Median (p50) inference latency <10ms.
@@ -226,7 +233,9 @@ class TestInferenceLatency:
             )
             latency_ms = (time.perf_counter() - start) * 1000
 
-            assert isinstance(result, Ok), f"Classification failed: {result.error if isinstance(result, Err) else ''}"
+            assert isinstance(result, Ok), (
+                f"Classification failed: {result.error if isinstance(result, Err) else ''}"
+            )
             latencies.append(latency_ms)
 
         # Assert: p50 <10ms
@@ -236,7 +245,10 @@ class TestInferenceLatency:
         print(f"\n✅ p50 Inference Latency: {p50:.2f}ms (target <10ms)")
 
     def test_classify_latency_p95_under_30ms(
-        self, trained_ensemble_model: EnsembleModel, mock_agent_context: AgentContext, temp_models_dir: Path
+        self,
+        trained_ensemble_model: EnsembleModel,
+        mock_agent_context: AgentContext,
+        temp_models_dir: Path,
     ) -> None:
         """
         Test AC-P.2: p95 inference latency <30ms.
@@ -280,7 +292,10 @@ class TestInferenceLatency:
         print(f"\n✅ p95 Inference Latency: {p95:.2f}ms (target <30ms)")
 
     def test_classify_latency_p99_under_50ms(
-        self, trained_ensemble_model: EnsembleModel, mock_agent_context: AgentContext, temp_models_dir: Path
+        self,
+        trained_ensemble_model: EnsembleModel,
+        mock_agent_context: AgentContext,
+        temp_models_dir: Path,
     ) -> None:
         """
         Test AC-P.2: p99 inference latency <50ms.
@@ -350,8 +365,12 @@ class TestModelLoading:
         load_time = time.perf_counter() - start
 
         # Assert
-        assert isinstance(result, Ok), f"Load failed: {result.error if isinstance(result, Err) else ''}"
-        assert load_time < 1.0, f"Load time {load_time:.3f}s exceeds 1s target (Article II violation)"
+        assert isinstance(result, Ok), (
+            f"Load failed: {result.error if isinstance(result, Err) else ''}"
+        )
+        assert load_time < 1.0, (
+            f"Load time {load_time:.3f}s exceeds 1s target (Article II violation)"
+        )
 
         print(f"\n✅ Cold Start Load Time: {load_time:.3f}s (target <1s)")
 
@@ -398,7 +417,10 @@ class TestConcurrency:
     """Test thread safety under concurrent load."""
 
     def test_concurrent_classify_thread_safe(
-        self, trained_ensemble_model: EnsembleModel, mock_agent_context: AgentContext, temp_models_dir: Path
+        self,
+        trained_ensemble_model: EnsembleModel,
+        mock_agent_context: AgentContext,
+        temp_models_dir: Path,
     ) -> None:
         """
         Test AC-R.1: Thread-safe inference (10 threads, 10 calls each).
@@ -469,7 +491,10 @@ class TestPredictionLogging:
     """Test VectorStore logging overhead."""
 
     def test_prediction_logging_overhead_under_5ms_p99(
-        self, trained_ensemble_model: EnsembleModel, mock_agent_context: AgentContext, temp_models_dir: Path
+        self,
+        trained_ensemble_model: EnsembleModel,
+        mock_agent_context: AgentContext,
+        temp_models_dir: Path,
     ) -> None:
         """
         Test AC-3.3: Prediction logging <5ms p99 overhead.
@@ -530,7 +555,10 @@ class TestE2EWorkflowLatency:
     """Test end-to-end classification workflow."""
 
     def test_e2e_classification_workflow_latency(
-        self, trained_ensemble_model: EnsembleModel, mock_agent_context: AgentContext, temp_models_dir: Path
+        self,
+        trained_ensemble_model: EnsembleModel,
+        mock_agent_context: AgentContext,
+        temp_models_dir: Path,
     ) -> None:
         """
         Test: E2E workflow (feature extraction + inference + logging) <50ms p99.

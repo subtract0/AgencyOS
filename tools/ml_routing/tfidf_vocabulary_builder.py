@@ -82,9 +82,7 @@ class TfidfVocabularyBuilder:
             return Err("Cannot build vocabulary from empty task list")
 
         if len(task_descriptions) < self.min_df:
-            return Err(
-                f"Need at least {self.min_df} tasks, got {len(task_descriptions)}"
-            )
+            return Err(f"Need at least {self.min_df} tasks, got {len(task_descriptions)}")
 
         # Build TF-IDF vectorizer
         vectorizer_result = self._create_vectorizer(top_n)
@@ -105,7 +103,9 @@ class TfidfVocabularyBuilder:
         }
 
         logger.info(f"Built vocabulary with {len(terms)} terms from {len(task_descriptions)} tasks")
-        logger.info(f"Top 5 terms by IDF: {sorted(idf_scores.items(), key=lambda x: x[1], reverse=True)[:5]}")
+        logger.info(
+            f"Top 5 terms by IDF: {sorted(idf_scores.items(), key=lambda x: x[1], reverse=True)[:5]}"
+        )
 
         return Ok(
             TfidfVocabulary(

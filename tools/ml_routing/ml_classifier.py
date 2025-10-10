@@ -285,9 +285,7 @@ class MLClassifier(BaseModel):
             )
         )
 
-    def _extract_features(
-        self, task_description: str
-    ) -> Result[TaskFeatureVector, str]:
+    def _extract_features(self, task_description: str) -> Result[TaskFeatureVector, str]:
         """
         Extract features from task description.
 

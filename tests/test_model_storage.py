@@ -43,9 +43,7 @@ def temp_models_dir():
 def sample_ensemble_model():
     """Create sample EnsembleModel for testing."""
     # Create simple models (small size for testing)
-    rf_model = RandomForestClassifier(
-        n_estimators=10, max_depth=3, random_state=42
-    )
+    rf_model = RandomForestClassifier(n_estimators=10, max_depth=3, random_state=42)
     gb_model = GradientBoostingClassifier(
         n_estimators=5, learning_rate=0.1, max_depth=3, random_state=42
     )
@@ -68,18 +66,20 @@ def sample_ensemble_model():
     ensemble.fit(X_train, y_train)
 
     # Create feature names (1644 items)
-    feature_names = [f"embedding_{i}" for i in range(1536)] + [
-        f"tfidf_{i}" for i in range(100)
-    ] + [
-        "description_length",
-        "word_count",
-        "has_refactor",
-        "has_test",
-        "has_async",
-        "has_fix",
-        "estimated_time",
-        "historical_tier_mode",
-    ]
+    feature_names = (
+        [f"embedding_{i}" for i in range(1536)]
+        + [f"tfidf_{i}" for i in range(100)]
+        + [
+            "description_length",
+            "word_count",
+            "has_refactor",
+            "has_test",
+            "has_async",
+            "has_fix",
+            "estimated_time",
+            "historical_tier_mode",
+        ]
+    )
 
     model = EnsembleModel(
         ensemble=ensemble,
@@ -159,9 +159,7 @@ class TestModelStorageSaveModel:
         assert (temp_models_dir / "routing_classifier_v1.0.pkl").exists()
         assert (temp_models_dir / "routing_classifier_v1.0.json").exists()
 
-    def test_save_model_with_explicit_version(
-        self, sample_ensemble_model, temp_models_dir
-    ):
+    def test_save_model_with_explicit_version(self, sample_ensemble_model, temp_models_dir):
         """Test save_model with explicit version number."""
         storage = ModelStorage(base_dir=temp_models_dir)
         result = storage.save_model(sample_ensemble_model, version="v2.5")
@@ -183,9 +181,7 @@ class TestModelStorageSaveModel:
         path = result.unwrap()
         assert "v1.0" in path.name
 
-    def test_save_model_increments_minor_version(
-        self, sample_ensemble_model, temp_models_dir
-    ):
+    def test_save_model_increments_minor_version(self, sample_ensemble_model, temp_models_dir):
         """Test save_model increments minor version by default."""
         storage = ModelStorage(base_dir=temp_models_dir)
 
@@ -213,9 +209,7 @@ class TestModelStorageSaveModel:
         path = result.unwrap()
         assert "v2.0" in path.name
 
-    def test_save_model_creates_metadata_json(
-        self, sample_ensemble_model, temp_models_dir
-    ):
+    def test_save_model_creates_metadata_json(self, sample_ensemble_model, temp_models_dir):
         """Test save_model creates metadata JSON file."""
         storage = ModelStorage(base_dir=temp_models_dir)
         result = storage.save_model(sample_ensemble_model, version="v1.0")
@@ -235,9 +229,7 @@ class TestModelStorageSaveModel:
         assert "model_size_mb" in metadata
         assert metadata["sklearn_version"] == sklearn.__version__
 
-    def test_save_model_updates_latest_symlink(
-        self, sample_ensemble_model, temp_models_dir
-    ):
+    def test_save_model_updates_latest_symlink(self, sample_ensemble_model, temp_models_dir):
         """Test save_model updates 'latest' symlink."""
         storage = ModelStorage(base_dir=temp_models_dir)
 
@@ -252,9 +244,7 @@ class TestModelStorageSaveModel:
         assert latest_link.is_symlink()
         assert latest_link.resolve().name == "routing_classifier_v1.1.pkl"
 
-    def test_save_model_sets_secure_permissions(
-        self, sample_ensemble_model, temp_models_dir
-    ):
+    def test_save_model_sets_secure_permissions(self, sample_ensemble_model, temp_models_dir):
         """Test save_model sets 0600 permissions on model files."""
         storage = ModelStorage(base_dir=temp_models_dir)
         result = storage.save_model(sample_ensemble_model, version="v1.0")
@@ -286,9 +276,7 @@ class TestModelStorageSaveModel:
         # Small model should NOT trigger warning
         assert "Warning: Model size" not in captured.out
 
-    def test_save_model_compression_reduces_size(
-        self, sample_ensemble_model, temp_models_dir
-    ):
+    def test_save_model_compression_reduces_size(self, sample_ensemble_model, temp_models_dir):
         """Test save_model uses compression (compress=3)."""
         storage = ModelStorage(base_dir=temp_models_dir)
         result = storage.save_model(sample_ensemble_model, version="v1.0")
@@ -304,9 +292,7 @@ class TestModelStorageSaveModel:
 class TestModelStorageLoadModel:
     """Test ModelStorage.load_model() functionality."""
 
-    def test_load_model_by_version(
-        self, sample_ensemble_model, temp_models_dir
-    ):
+    def test_load_model_by_version(self, sample_ensemble_model, temp_models_dir):
         """Test load_model loads specific version."""
         storage = ModelStorage(base_dir=temp_models_dir)
         storage.save_model(sample_ensemble_model, version="v1.0")
@@ -318,9 +304,7 @@ class TestModelStorageLoadModel:
         assert isinstance(model, EnsembleModel)
         assert model.validation_accuracy == 0.984
 
-    def test_load_model_latest_version(
-        self, sample_ensemble_model, temp_models_dir
-    ):
+    def test_load_model_latest_version(self, sample_ensemble_model, temp_models_dir):
         """Test load_model loads 'latest' version via symlink."""
         storage = ModelStorage(base_dir=temp_models_dir)
         storage.save_model(sample_ensemble_model, version="v1.0")
@@ -332,9 +316,7 @@ class TestModelStorageLoadModel:
         model = result.unwrap()
         assert isinstance(model, EnsembleModel)
 
-    def test_load_model_nonexistent_version_returns_error(
-        self, temp_models_dir
-    ):
+    def test_load_model_nonexistent_version_returns_error(self, temp_models_dir):
         """Test load_model returns error for missing version."""
         storage = ModelStorage(base_dir=temp_models_dir)
         result = storage.load_model(version="v999.0")
@@ -350,9 +332,7 @@ class TestModelStorageLoadModel:
         assert result.is_err()
         assert "No models found" in result.unwrap_err()
 
-    def test_load_model_validates_feature_count(
-        self, sample_ensemble_model, temp_models_dir
-    ):
+    def test_load_model_validates_feature_count(self, sample_ensemble_model, temp_models_dir):
         """Test load_model validates feature count matches expected 1644."""
         storage = ModelStorage(base_dir=temp_models_dir)
         storage.save_model(sample_ensemble_model, version="v1.0")
@@ -371,9 +351,7 @@ class TestModelStorageLoadModel:
         assert result.is_err()
         assert "Incompatible model" in result.unwrap_err()
 
-    def test_load_model_measures_load_time(
-        self, sample_ensemble_model, temp_models_dir
-    ):
+    def test_load_model_measures_load_time(self, sample_ensemble_model, temp_models_dir):
         """Test load_model measures and reports load time."""
         storage = ModelStorage(base_dir=temp_models_dir)
         storage.save_model(sample_ensemble_model, version="v1.0")
@@ -386,9 +364,7 @@ class TestModelStorageLoadModel:
         assert result.is_ok()
         assert load_time < 1.0  # Should be well under 1 second
 
-    def test_load_model_handles_missing_metadata(
-        self, sample_ensemble_model, temp_models_dir
-    ):
+    def test_load_model_handles_missing_metadata(self, sample_ensemble_model, temp_models_dir):
         """Test load_model returns error if metadata JSON missing."""
         storage = ModelStorage(base_dir=temp_models_dir)
         storage.save_model(sample_ensemble_model, version="v1.0")
@@ -412,9 +388,7 @@ class TestModelStorageListModels:
         models = storage.list_models()
         assert models == []
 
-    def test_list_models_returns_all_models(
-        self, sample_ensemble_model, temp_models_dir
-    ):
+    def test_list_models_returns_all_models(self, sample_ensemble_model, temp_models_dir):
         """Test list_models returns all saved models."""
         storage = ModelStorage(base_dir=temp_models_dir)
         storage.save_model(sample_ensemble_model, version="v1.0")
@@ -425,9 +399,7 @@ class TestModelStorageListModels:
         assert len(models) == 3
         assert all(isinstance(m, ModelMetadata) for m in models)
 
-    def test_list_models_sorted_by_version_descending(
-        self, sample_ensemble_model, temp_models_dir
-    ):
+    def test_list_models_sorted_by_version_descending(self, sample_ensemble_model, temp_models_dir):
         """Test list_models returns models sorted by version (newest first)."""
         storage = ModelStorage(base_dir=temp_models_dir)
         storage.save_model(sample_ensemble_model, version="v1.0")
@@ -438,9 +410,7 @@ class TestModelStorageListModels:
         versions = [m.version for m in models]
         assert versions == ["v2.0", "v1.5", "v1.0"]
 
-    def test_list_models_includes_metadata_fields(
-        self, sample_ensemble_model, temp_models_dir
-    ):
+    def test_list_models_includes_metadata_fields(self, sample_ensemble_model, temp_models_dir):
         """Test list_models includes all metadata fields."""
         storage = ModelStorage(base_dir=temp_models_dir)
         storage.save_model(sample_ensemble_model, version="v1.0")
@@ -460,9 +430,7 @@ class TestModelStorageListModels:
 class TestModelStorageIntegration:
     """Integration tests for ModelStorage workflow."""
 
-    def test_save_and_load_roundtrip(
-        self, sample_ensemble_model, temp_models_dir
-    ):
+    def test_save_and_load_roundtrip(self, sample_ensemble_model, temp_models_dir):
         """Test save/load roundtrip preserves model integrity."""
         storage = ModelStorage(base_dir=temp_models_dir)
 
@@ -481,9 +449,7 @@ class TestModelStorageIntegration:
         assert loaded_model.false_negative_rate == sample_ensemble_model.false_negative_rate
         assert len(loaded_model.feature_names) == len(sample_ensemble_model.feature_names)
 
-    def test_multiple_versions_coexist(
-        self, sample_ensemble_model, temp_models_dir
-    ):
+    def test_multiple_versions_coexist(self, sample_ensemble_model, temp_models_dir):
         """Test multiple model versions can coexist."""
         storage = ModelStorage(base_dir=temp_models_dir)
 
@@ -503,9 +469,7 @@ class TestModelStorageIntegration:
         latest_result = storage.load_model(version="latest")
         assert latest_result.is_ok()
 
-    def test_article_i_complete_context(
-        self, sample_ensemble_model, temp_models_dir
-    ):
+    def test_article_i_complete_context(self, sample_ensemble_model, temp_models_dir):
         """Test Article I: Complete context (all metadata saved)."""
         storage = ModelStorage(base_dir=temp_models_dir)
         storage.save_model(sample_ensemble_model, version="v1.0")
@@ -528,9 +492,7 @@ class TestModelStorageIntegration:
         }
         assert set(metadata.keys()) == required_fields
 
-    def test_article_ii_verification(
-        self, sample_ensemble_model, temp_models_dir
-    ):
+    def test_article_ii_verification(self, sample_ensemble_model, temp_models_dir):
         """Test Article II: 100% verification (model integrity)."""
         storage = ModelStorage(base_dir=temp_models_dir)
         storage.save_model(sample_ensemble_model, version="v1.0")
@@ -568,15 +530,16 @@ class TestModelStorageEdgeCases:
 
         # Create model with invalid feature names
         rf_model = RandomForestClassifier(n_estimators=10, max_depth=3, random_state=42)
-        gb_model = GradientBoostingClassifier(n_estimators=5, learning_rate=0.1, max_depth=3, random_state=42)
+        gb_model = GradientBoostingClassifier(
+            n_estimators=5, learning_rate=0.1, max_depth=3, random_state=42
+        )
         ensemble = VotingClassifier(
-            estimators=[("rf", rf_model), ("gb", gb_model)],
-            voting="soft",
-            weights=[0.7, 0.3]
+            estimators=[("rf", rf_model), ("gb", gb_model)], voting="soft", weights=[0.7, 0.3]
         )
 
         # Train on dummy data
         import numpy as np
+
         X_train = np.random.rand(100, 10)
         y_train = np.random.randint(0, 2, 100)
         rf_model.fit(X_train, y_train)
@@ -592,7 +555,7 @@ class TestModelStorageEdgeCases:
                 validation_accuracy=0.984,
                 false_negative_rate=0.018,
                 training_date=datetime.now(UTC).isoformat(),
-                feature_names=[]  # Empty (invalid)
+                feature_names=[],  # Empty (invalid)
             )
 
         assert "1644" in str(exc_info.value)  # Should mention expected dimension
@@ -634,7 +597,10 @@ class TestModelStorageEdgeCases:
         # Invalid version format (missing 'v' prefix)
         result = storage.save_model(sample_ensemble_model, version="1.0")
         assert result.is_err()
-        assert "version format" in result.unwrap_err().lower() or "invalid" in result.unwrap_err().lower()
+        assert (
+            "version format" in result.unwrap_err().lower()
+            or "invalid" in result.unwrap_err().lower()
+        )
 
 
 class TestModelStorageCornerCases:
@@ -659,10 +625,7 @@ class TestModelStorageCornerCases:
             results.append(result)
 
         # Create 3 threads saving different versions
-        threads = [
-            threading.Thread(target=save_model_thread, args=(f"v1.{i}",))
-            for i in range(3)
-        ]
+        threads = [threading.Thread(target=save_model_thread, args=(f"v1.{i}",)) for i in range(3)]
 
         for thread in threads:
             thread.start()
@@ -780,9 +743,7 @@ class TestModelStorageAccessibilityCases:
 class TestModelStorageRegressionPrevention:
     """Test regression prevention (NECESSARY: R for Regression tests)."""
 
-    def test_metadata_json_format_backward_compatible(
-        self, sample_ensemble_model, temp_models_dir
-    ):
+    def test_metadata_json_format_backward_compatible(self, sample_ensemble_model, temp_models_dir):
         """
         Test metadata JSON format is backward compatible.
 
@@ -809,9 +770,7 @@ class TestModelStorageRegressionPrevention:
         }
         assert required_fields.issubset(set(metadata.keys()))
 
-    def test_symlink_behavior_consistent_across_saves(
-        self, sample_ensemble_model, temp_models_dir
-    ):
+    def test_symlink_behavior_consistent_across_saves(self, sample_ensemble_model, temp_models_dir):
         """
         Test symlink always points to newest version (regression prevention).
 
@@ -833,9 +792,7 @@ class TestModelStorageRegressionPrevention:
 class TestModelStorageYieldValidation:
     """Test output validation (NECESSARY: Y for Yield tests)."""
 
-    def test_load_model_returns_valid_ensemble_model(
-        self, sample_ensemble_model, temp_models_dir
-    ):
+    def test_load_model_returns_valid_ensemble_model(self, sample_ensemble_model, temp_models_dir):
         """
         Test load_model returns valid EnsembleModel with all fields.
 
@@ -858,9 +815,7 @@ class TestModelStorageYieldValidation:
         assert 0.0 <= model.false_negative_rate <= 1.0
         assert len(model.feature_names) == 1644
 
-    def test_list_models_returns_sorted_metadata_list(
-        self, sample_ensemble_model, temp_models_dir
-    ):
+    def test_list_models_returns_sorted_metadata_list(self, sample_ensemble_model, temp_models_dir):
         """
         Test list_models returns sorted list of ModelMetadata objects.
 
@@ -883,9 +838,7 @@ class TestModelStorageYieldValidation:
         versions = [m.version for m in models]
         assert versions == ["v2.0", "v1.5", "v1.0"]
 
-    def test_save_model_returns_path_to_saved_file(
-        self, sample_ensemble_model, temp_models_dir
-    ):
+    def test_save_model_returns_path_to_saved_file(self, sample_ensemble_model, temp_models_dir):
         """
         Test save_model returns Path to saved .pkl file.
 
