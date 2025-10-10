@@ -54,7 +54,6 @@ import json
 import time
 from datetime import UTC, datetime, timedelta
 from pathlib import Path
-from typing import List
 from unittest.mock import Mock, patch
 
 import joblib
@@ -222,14 +221,18 @@ def baseline_model_v1(temp_models_dir: Path) -> EnsembleModel:
 
     trainer = MLModelTrainer()
     result = trainer.train_ensemble_model(dataset, random_state=42)
-    assert isinstance(result, Ok), f"Training failed: {result.error if isinstance(result, Err) else ''}"
+    assert isinstance(result, Ok), (
+        f"Training failed: {result.error if isinstance(result, Err) else ''}"
+    )
 
     model = result.unwrap()
 
     # Save baseline model as v1.0
     storage = ModelStorage(base_dir=temp_models_dir)
     save_result = storage.save_model(model, version="v1.0")
-    assert isinstance(save_result, Ok), f"Save failed: {save_result.error if isinstance(save_result, Err) else ''}"
+    assert isinstance(save_result, Ok), (
+        f"Save failed: {save_result.error if isinstance(save_result, Err) else ''}"
+    )
 
     # Create metadata file for scheduler
     metadata_path = temp_models_dir / "ensemble_active_metadata.json"
@@ -331,7 +334,9 @@ class TestWeeklyRetraining:
 
         # Mock TrainingDataMerger with query_predictions
         merger = Mock(spec=TrainingDataMerger)
-        merger.query_predictions.return_value = Ok(prediction_logs_7days[:100])  # First 100 predictions
+        merger.query_predictions.return_value = Ok(
+            prediction_logs_7days[:100]
+        )  # First 100 predictions
 
         # Create scheduler with mocked components
         scheduler = WeeklyRetrainingScheduler(
@@ -351,13 +356,17 @@ class TestWeeklyRetraining:
         assert metadata["validation_accuracy"] == 0.982
 
         # 2. VectorStore predictions queried (mocked in this test)
-        assert merger.query_predictions.called is False  # Not called yet (will be in run_retraining)
+        assert (
+            merger.query_predictions.called is False
+        )  # Not called yet (will be in run_retraining)
 
         # 3. Report directory exists
         assert temp_reports_dir.exists()
 
         print("\n✅ Weekly Retraining Pipeline: Structure validated (metadata, dirs)")
-        print(f"   Current model: {metadata['version']}, accuracy={metadata['validation_accuracy']:.3f}")
+        print(
+            f"   Current model: {metadata['version']}, accuracy={metadata['validation_accuracy']:.3f}"
+        )
         print(f"   Predictions available: {len(prediction_logs_7days)} (7 days)")
 
     def test_e2e_version_increment_minor(
@@ -448,10 +457,7 @@ class TestDriftDetection:
 
         # Act: Calculate accuracy from degraded_predictions directly
         # (VectorStore query would return these in production)
-        correct = sum(
-            1 for p in degraded_predictions
-            if p.predicted_tier == p.actual_tier
-        )
+        correct = sum(1 for p in degraded_predictions if p.predicted_tier == p.actual_tier)
         total = len(degraded_predictions)
         current_accuracy = correct / total if total > 0 else 0.0
 
@@ -473,7 +479,9 @@ class TestDriftDetection:
             print(f"\n✅ Drift Detection: Accuracy drop {accuracy_drop:.1%} detected (rare case)")
         else:
             # Validate drift detection logic would work with proper degradation
-            print(f"\n✅ Drift Detection Logic: Would detect if accuracy_drop={accuracy_drop:.1%} > {drift_threshold:.1%}")
+            print(
+                f"\n✅ Drift Detection Logic: Would detect if accuracy_drop={accuracy_drop:.1%} > {drift_threshold:.1%}"
+            )
             print(f"   Baseline: {baseline_accuracy:.1%}, Current: {current_accuracy:.1%}")
             # Test passes if accuracy is degraded OR logic is correct
             assert current_accuracy < baseline_accuracy or accuracy_drop <= drift_threshold
@@ -532,7 +540,9 @@ class TestDriftDetection:
         # Assert: Should skip retraining
         assert should_skip, f"Should skip retraining: {len(predictions)} < {min_required}"
 
-        print(f"\n✅ Insufficient Data: {len(predictions)} predictions < {min_required} (skip retraining)")
+        print(
+            f"\n✅ Insufficient Data: {len(predictions)} predictions < {min_required} (skip retraining)"
+        )
 
 
 # ============================================================================
@@ -670,10 +680,14 @@ class TestVectorStoreIntegration:
         if predictions:
             sample = predictions[0]
             # VectorStore wraps content, check if task_id exists
-            has_task_id = "task_id" in sample or (isinstance(sample.get("content"), dict) and "task_id" in sample.get("content", {}))
+            has_task_id = "task_id" in sample or (
+                isinstance(sample.get("content"), dict) and "task_id" in sample.get("content", {})
+            )
             assert has_task_id, f"Prediction should have task_id (got: {sample.keys()})"
 
-        print(f"\n✅ VectorStore Logging: {len(predictions)}/{len(prediction_logs_7days)} predictions logged")
+        print(
+            f"\n✅ VectorStore Logging: {len(predictions)}/{len(prediction_logs_7days)} predictions logged"
+        )
         print("   Article IV compliance: 100% prediction logging")
 
     def test_e2e_retraining_metadata_stored(
@@ -711,9 +725,8 @@ class TestVectorStoreIntegration:
             average_precision=0.984,
             average_recall=0.986,
             average_f1=0.985,
-            fold_metrics=[
-                {"accuracy": 0.985, "precision": 0.984, "recall": 0.986, "f1": 0.985}
-            ] * 5,
+            fold_metrics=[{"accuracy": 0.985, "precision": 0.984, "recall": 0.986, "f1": 0.985}]
+            * 5,
             model=baseline_model_v1,
         )
 
@@ -812,7 +825,9 @@ class TestConstitutionalCompliance:
         print("=" * 70)
         print(f"✅ Article I: Complete context ({len(predictions)} predictions)")
         print(f"✅ Article II: 100% verification (accuracy {baseline_accuracy:.1%} ≥ 98%)")
-        print(f"✅ Article IV: VectorStore logging ({len(predictions)}/{expected_predictions} logged)")
+        print(
+            f"✅ Article IV: VectorStore logging ({len(predictions)}/{expected_predictions} logged)"
+        )
         print(f"✅ Article V: Spec-driven (metadata version: {metadata['version']})")
         print("=" * 70)
 
@@ -849,7 +864,9 @@ class TestTelemetryMonitoring:
         sample_event = all_events[0]
         # Check if task_id exists either directly or in content
         has_task_id = "task_id" in sample_event or (
-            "content" in sample_event and isinstance(sample_event.get("content"), dict) and "task_id" in sample_event["content"]
+            "content" in sample_event
+            and isinstance(sample_event.get("content"), dict)
+            and "task_id" in sample_event["content"]
         )
         assert has_task_id, f"Event should have task_id (got keys: {sample_event.keys()})"
 
@@ -942,7 +959,9 @@ def test_generate_phase4_summary_report(
         print(f"- {tool}")
     for test in summary["deliverables"]["tests"]:
         print(f"- {test}")
-    print(f"- Total: {summary['deliverables']['total_tests']} tests with {summary['deliverables']['pass_rate']} pass rate")
+    print(
+        f"- Total: {summary['deliverables']['total_tests']} tests with {summary['deliverables']['pass_rate']} pass rate"
+    )
 
     print("\n## Acceptance Criteria Validation")
     for ac_id, status in summary["acceptance_criteria_validation"].items():

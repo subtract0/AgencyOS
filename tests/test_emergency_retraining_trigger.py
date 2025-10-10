@@ -179,9 +179,10 @@ class TestEmergencyRetrainingTrigger:
         mock_retraining_report.new_accuracy = 0.986
         mock_retraining_report.samples_added = 450
 
-        with patch.object(trigger, "_check_drift") as mock_check, patch.object(
-            trigger, "_trigger_retraining"
-        ) as mock_retrain:
+        with (
+            patch.object(trigger, "_check_drift") as mock_check,
+            patch.object(trigger, "_trigger_retraining") as mock_retrain,
+        ):
             mock_check.return_value = Ok(mock_drift_report)
             mock_retrain.return_value = Ok(mock_retraining_report)
 
@@ -233,9 +234,10 @@ class TestEmergencyRetrainingTrigger:
             "detection_timestamp": "2025-10-10T12:00:00Z",
         }
 
-        with patch.object(trigger, "_check_drift") as mock_check, patch.object(
-            trigger, "_trigger_retraining"
-        ) as mock_retrain:
+        with (
+            patch.object(trigger, "_check_drift") as mock_check,
+            patch.object(trigger, "_trigger_retraining") as mock_retrain,
+        ):
             mock_check.return_value = Ok(mock_drift_report)
             mock_retrain.return_value = Err("Insufficient samples: 250 < 300")
 
@@ -270,9 +272,10 @@ class TestEmergencyRetrainingTrigger:
         mock_retraining_report.new_accuracy = 0.984
         mock_retraining_report.samples_added = 320
 
-        with patch.object(trigger, "_check_drift") as mock_check, patch.object(
-            trigger, "_trigger_retraining"
-        ) as mock_retrain:
+        with (
+            patch.object(trigger, "_check_drift") as mock_check,
+            patch.object(trigger, "_trigger_retraining") as mock_retrain,
+        ):
             mock_check.return_value = Ok(mock_drift_report)
             mock_retrain.return_value = Ok(mock_retraining_report)
 
@@ -300,9 +303,10 @@ class TestEmergencyRetrainingTrigger:
         mock_retraining_report.new_accuracy = 0.986
         mock_retraining_report.samples_added = 450
 
-        with patch.object(trigger, "_check_drift") as mock_check, patch.object(
-            trigger, "_trigger_retraining"
-        ) as mock_retrain:
+        with (
+            patch.object(trigger, "_check_drift") as mock_check,
+            patch.object(trigger, "_trigger_retraining") as mock_retrain,
+        ):
             mock_check.return_value = Ok(mock_drift_report)
             mock_retrain.return_value = Ok(mock_retraining_report)
 
@@ -336,9 +340,10 @@ class TestEmergencyRetrainingTrigger:
         mock_retraining_report.new_accuracy = 0.975  # <98% validation threshold
         mock_retraining_report.samples_added = 450
 
-        with patch.object(trigger, "_check_drift") as mock_check, patch.object(
-            trigger, "_trigger_retraining"
-        ) as mock_retrain:
+        with (
+            patch.object(trigger, "_check_drift") as mock_check,
+            patch.object(trigger, "_trigger_retraining") as mock_retrain,
+        ):
             mock_check.return_value = Ok(mock_drift_report)
             mock_retrain.return_value = Err(
                 "Validation failed: new model accuracy 0.975 < 0.98 threshold"
@@ -365,9 +370,10 @@ class TestEmergencyRetrainingTrigger:
         mock_retraining_report.new_accuracy = 0.986
         mock_retraining_report.samples_added = 450
 
-        with patch.object(trigger, "_check_drift") as mock_check, patch.object(
-            trigger, "_trigger_retraining"
-        ) as mock_retrain:
+        with (
+            patch.object(trigger, "_check_drift") as mock_check,
+            patch.object(trigger, "_trigger_retraining") as mock_retrain,
+        ):
             mock_check.return_value = Ok(mock_drift_report)
             mock_retrain.return_value = Ok(mock_retraining_report)
 
@@ -403,9 +409,10 @@ class TestEmergencyRetrainingTrigger:
         }
 
         # Mock retraining failure after model training
-        with patch.object(trigger, "_check_drift") as mock_check, patch.object(
-            trigger, "_trigger_retraining"
-        ) as mock_retrain:
+        with (
+            patch.object(trigger, "_check_drift") as mock_check,
+            patch.object(trigger, "_trigger_retraining") as mock_retrain,
+        ):
             mock_check.return_value = Ok(mock_drift_report)
             mock_retrain.return_value = Err("Deployment failed: old model preserved")
 
@@ -481,9 +488,10 @@ class TestEmergencyRetrainingTriggerIntegration:
         mock_retraining_report.new_accuracy = 0.987
         mock_retraining_report.samples_added = 480
 
-        with patch.object(trigger, "_check_drift") as mock_check, patch.object(
-            trigger, "_trigger_retraining"
-        ) as mock_retrain:
+        with (
+            patch.object(trigger, "_check_drift") as mock_check,
+            patch.object(trigger, "_trigger_retraining") as mock_retrain,
+        ):
             mock_check.return_value = Ok(mock_drift_report)
             mock_retrain.return_value = Ok(mock_retraining_report)
 

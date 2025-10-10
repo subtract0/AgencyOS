@@ -175,9 +175,7 @@ class FeatureExtractor:
             return Ok(self.embedding_cache[task_hash])
         return Err("Not in cache")
 
-    def _call_openai_with_retry(
-        self, text: str, task_hash: str
-    ) -> Result[list[float], str]:
+    def _call_openai_with_retry(self, text: str, task_hash: str) -> Result[list[float], str]:
         """
         Call OpenAI embeddings API with retry logic.
 
@@ -197,8 +195,7 @@ class FeatureExtractor:
             if attempt < 3 and "timeout" in result.unwrap_err().lower():
                 wait_seconds = 2**attempt
                 logger.warning(
-                    f"Embedding API timeout (attempt {attempt}/3), "
-                    f"retrying in {wait_seconds}s"
+                    f"Embedding API timeout (attempt {attempt}/3), retrying in {wait_seconds}s"
                 )
                 time.sleep(wait_seconds)
             else:
@@ -228,9 +225,7 @@ class FeatureExtractor:
 
             # Validate dimension
             if len(embedding) != 1536:
-                return Err(
-                    f"Invalid embedding dimension: expected 1536, got {len(embedding)}"
-                )
+                return Err(f"Invalid embedding dimension: expected 1536, got {len(embedding)}")
 
             # Cache embedding
             self._cache_embedding(task_hash, embedding)
@@ -270,9 +265,7 @@ class FeatureExtractor:
 
             # Validate dimension
             if len(tfidf_features) != 100:
-                return Err(
-                    f"Invalid TF-IDF dimension: expected 100, got {len(tfidf_features)}"
-                )
+                return Err(f"Invalid TF-IDF dimension: expected 100, got {len(tfidf_features)}")
 
             return Ok(tfidf_features)
 
@@ -312,12 +305,8 @@ class FeatureExtractor:
                 "has_test_keyword": int("test" in description_lower),
                 "has_async_keyword": int("async" in description_lower),
                 "has_fix_keyword": int("fix" in description_lower),
-                "estimated_time_seconds": float(
-                    task_metadata.get("estimated_time_seconds", 0.0)
-                ),
-                "historical_tier_mode": int(
-                    task_metadata.get("historical_tier_mode", 0)
-                ),
+                "estimated_time_seconds": float(task_metadata.get("estimated_time_seconds", 0.0)),
+                "historical_tier_mode": int(task_metadata.get("historical_tier_mode", 0)),
             }
 
             return Ok(metadata_features)
@@ -449,9 +438,7 @@ class FeatureExtractor:
             "performance",
             "scalability",
         ]
-        keyword_score = sum(
-            0.1 for keyword in complexity_keywords if keyword in description_lower
-        )
+        keyword_score = sum(0.1 for keyword in complexity_keywords if keyword in description_lower)
         score += min(keyword_score, 0.4)
 
         # Code snippets (0.15)

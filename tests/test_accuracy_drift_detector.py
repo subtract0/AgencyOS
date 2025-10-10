@@ -63,9 +63,7 @@ class TestAccuracyDriftDetector:
     ):
         """Test no drift when accuracy is 98.5% (above 93.2% threshold)."""
         # Arrange: 100 predictions, 98.5% accuracy
-        predictions = self._create_prediction_logs(
-            count=100, accuracy=0.985, start_date_offset=6
-        )
+        predictions = self._create_prediction_logs(count=100, accuracy=0.985, start_date_offset=6)
         mock_context.search_memories.return_value = predictions
 
         # Act
@@ -93,9 +91,7 @@ class TestAccuracyDriftDetector:
     ):
         """Test drift detected when accuracy is 91.5% (below 93.2% threshold)."""
         # Arrange: 100 predictions, 91.5% accuracy (6.7% drop)
-        predictions = self._create_prediction_logs(
-            count=100, accuracy=0.915, start_date_offset=6
-        )
+        predictions = self._create_prediction_logs(count=100, accuracy=0.915, start_date_offset=6)
         mock_context.search_memories.return_value = predictions
 
         # Act
@@ -122,9 +118,7 @@ class TestAccuracyDriftDetector:
     ):
         """Test accuracy calculated from 7-day rolling window."""
         # Arrange: 300 predictions over 7 days, 95% accuracy
-        predictions = self._create_prediction_logs(
-            count=300, accuracy=0.95, start_date_offset=6
-        )
+        predictions = self._create_prediction_logs(count=300, accuracy=0.95, start_date_offset=6)
         mock_context.search_memories.return_value = predictions
 
         # Act
@@ -144,9 +138,7 @@ class TestAccuracyDriftDetector:
     ):
         """Test error when <100 predictions (insufficient data)."""
         # Arrange: Only 50 predictions (below minimum 100)
-        predictions = self._create_prediction_logs(
-            count=50, accuracy=0.95, start_date_offset=6
-        )
+        predictions = self._create_prediction_logs(count=50, accuracy=0.95, start_date_offset=6)
         mock_context.search_memories.return_value = predictions
 
         # Act
@@ -191,9 +183,7 @@ class TestAccuracyDriftDetector:
     ):
         """Test drift triggered when accuracy drop exactly equals threshold (5%)."""
         # Arrange: 100 predictions, 93.0% accuracy (5.2% drop from 98.2%)
-        predictions = self._create_prediction_logs(
-            count=100, accuracy=0.930, start_date_offset=6
-        )
+        predictions = self._create_prediction_logs(count=100, accuracy=0.930, start_date_offset=6)
         mock_context.search_memories.return_value = predictions
 
         # Act
@@ -205,9 +195,7 @@ class TestAccuracyDriftDetector:
         assert report.accuracy_drop == pytest.approx(0.052, abs=0.01)
         assert report.is_drift_detected is True  # 5.2% > 5% threshold
 
-    def test_drift_detector_with_custom_baseline(
-        self, mock_context: AgentContext
-    ):
+    def test_drift_detector_with_custom_baseline(self, mock_context: AgentContext):
         """Test drift detector with custom baseline accuracy."""
         # Arrange: Custom baseline 95%, threshold 3%
         detector = AccuracyDriftDetector(
@@ -216,9 +204,7 @@ class TestAccuracyDriftDetector:
             drift_threshold=0.03,
             window_days=7,
         )
-        predictions = self._create_prediction_logs(
-            count=100, accuracy=0.91, start_date_offset=6
-        )
+        predictions = self._create_prediction_logs(count=100, accuracy=0.91, start_date_offset=6)
         mock_context.search_memories.return_value = predictions
 
         # Act
@@ -254,9 +240,7 @@ class TestAccuracyDriftDetector:
     ):
         """Test VectorStore query filters by 7-day date range."""
         # Arrange
-        predictions = self._create_prediction_logs(
-            count=100, accuracy=0.98, start_date_offset=6
-        )
+        predictions = self._create_prediction_logs(count=100, accuracy=0.98, start_date_offset=6)
         mock_context.search_memories.return_value = predictions
 
         # Act

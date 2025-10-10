@@ -53,12 +53,8 @@ class RolloutStage(BaseModel):
     """
 
     name: str = Field(..., description="Stage identifier")
-    percentage: int = Field(
-        ..., ge=0, le=100, description="Traffic percentage for new model"
-    )
-    duration_hours: int = Field(
-        ..., gt=0, description="Stage duration in hours"
-    )
+    percentage: int = Field(..., ge=0, le=100, description="Traffic percentage for new model")
+    duration_hours: int = Field(..., gt=0, description="Stage duration in hours")
 
 
 class RolloutConfig(BaseModel):
@@ -128,15 +124,9 @@ class RolloutResult(BaseModel):
 
     success: bool = Field(..., description="Rollout success status")
     stage_completed: str = Field(..., description="Last completed stage")
-    new_model_accuracy: float = Field(
-        ..., ge=0.0, le=1.0, description="New model accuracy"
-    )
-    current_model_accuracy: float = Field(
-        ..., ge=0.0, le=1.0, description="Current model accuracy"
-    )
-    predictions_analyzed: int = Field(
-        ..., ge=0, description="Predictions analyzed"
-    )
+    new_model_accuracy: float = Field(..., ge=0.0, le=1.0, description="New model accuracy")
+    current_model_accuracy: float = Field(..., ge=0.0, le=1.0, description="Current model accuracy")
+    predictions_analyzed: int = Field(..., ge=0, description="Predictions analyzed")
     rollback_triggered: bool = Field(..., description="Rollback triggered")
     message: str = Field(..., description="Result message")
 
@@ -265,9 +255,7 @@ class ABRolloutController:
                 # Rollback to current model
                 rollback_result = self._rollback_symlink()
                 if rollback_result.is_err():
-                    return Err(
-                        f"Rollback failed: {rollback_result.unwrap_err()}"
-                    )
+                    return Err(f"Rollback failed: {rollback_result.unwrap_err()}")
 
                 return Ok(
                     RolloutResult(
@@ -293,16 +281,13 @@ class ABRolloutController:
         # All stages passed - update active symlink to new model
         symlink_result = self._update_active_symlink()
         if symlink_result.is_err():
-            return Err(
-                f"Symlink update failed: {symlink_result.unwrap_err()}"
-            )
+            return Err(f"Symlink update failed: {symlink_result.unwrap_err()}")
 
         final_stage = self.config.stages[-1]
         new_acc, current_acc, pred_count = stage_result.unwrap()
 
         logger.info(
-            f"Rollout completed: {self.new_model_version} now active "
-            f"(accuracy: {new_acc:.3f})"
+            f"Rollout completed: {self.new_model_version} now active (accuracy: {new_acc:.3f})"
         )
 
         return Ok(
@@ -317,9 +302,7 @@ class ABRolloutController:
             )
         )
 
-    def _execute_stage(
-        self, stage: RolloutStage
-    ) -> Result[tuple[float, float, int], str]:
+    def _execute_stage(self, stage: RolloutStage) -> Result[tuple[float, float, int], str]:
         """
         Execute single rollout stage with A/B testing.
 
@@ -359,12 +342,8 @@ class ABRolloutController:
             )
 
         # Split predictions by model version (A/B groups)
-        new_model_predictions = [
-            p for p in predictions if self._is_new_model_prediction(p)
-        ]
-        current_model_predictions = [
-            p for p in predictions if not self._is_new_model_prediction(p)
-        ]
+        new_model_predictions = [p for p in predictions if self._is_new_model_prediction(p)]
+        current_model_predictions = [p for p in predictions if not self._is_new_model_prediction(p)]
 
         # Calculate accuracy for each model
         new_accuracy = self._calculate_accuracy(new_model_predictions)
@@ -414,15 +393,11 @@ class ABRolloutController:
         if not completed:
             return 0.0
 
-        correct = sum(
-            1 for p in completed if p.predicted_tier == p.actual_tier
-        )
+        correct = sum(1 for p in completed if p.predicted_tier == p.actual_tier)
 
         return correct / len(completed)
 
-    def _get_predictions_for_stage(
-        self, stage: RolloutStage
-    ) -> Result[list[PredictionLog], str]:
+    def _get_predictions_for_stage(self, stage: RolloutStage) -> Result[list[PredictionLog], str]:
         """
         Retrieve predictions from VectorStore for stage duration.
 
@@ -446,9 +421,7 @@ class ABRolloutController:
         )
 
         if predictions_result.is_err():
-            return Err(
-                f"Failed to retrieve predictions: {predictions_result.unwrap_err()}"
-            )
+            return Err(f"Failed to retrieve predictions: {predictions_result.unwrap_err()}")
 
         return Ok(predictions_result.unwrap())
 
@@ -467,9 +440,7 @@ class ABRolloutController:
         """
         # In production: time.sleep(stage.duration_hours * 3600)
         # In tests: no-op or mocked
-        logger.debug(
-            f"Waiting {stage.duration_hours}h for {stage.name} (skipped in tests)"
-        )
+        logger.debug(f"Waiting {stage.duration_hours}h for {stage.name} (skipped in tests)")
         return Ok(None)
 
     def _update_active_symlink(self) -> Result[None, str]:
@@ -486,15 +457,10 @@ class ABRolloutController:
         - Article III: Automated symlink update (no manual intervention)
         """
         try:
-            new_model_path = (
-                self.models_dir / f"routing_classifier_{self.new_model_version}.pkl"
-            )
+            new_model_path = self.models_dir / f"routing_classifier_{self.new_model_version}.pkl"
 
             if not new_model_path.exists():
-                return Err(
-                    f"New model not found: {new_model_path} "
-                    "(cannot update symlink)"
-                )
+                return Err(f"New model not found: {new_model_path} (cannot update symlink)")
 
             symlink = self.models_dir / "routing_classifier_latest.pkl"
 
@@ -505,9 +471,7 @@ class ABRolloutController:
             # Create symlink to new model
             symlink.symlink_to(new_model_path.name)
 
-            logger.info(
-                f"Updated active symlink: latest → {self.new_model_version}"
-            )
+            logger.info(f"Updated active symlink: latest → {self.new_model_version}")
 
             return Ok(None)
 
@@ -529,15 +493,11 @@ class ABRolloutController:
         """
         try:
             current_model_path = (
-                self.models_dir
-                / f"routing_classifier_{self.current_model_version}.pkl"
+                self.models_dir / f"routing_classifier_{self.current_model_version}.pkl"
             )
 
             if not current_model_path.exists():
-                return Err(
-                    f"Current model not found: {current_model_path} "
-                    "(cannot rollback)"
-                )
+                return Err(f"Current model not found: {current_model_path} (cannot rollback)")
 
             symlink = self.models_dir / "routing_classifier_latest.pkl"
 
@@ -548,9 +508,7 @@ class ABRolloutController:
             # Create symlink to current model
             symlink.symlink_to(current_model_path.name)
 
-            logger.warning(
-                f"Rolled back symlink: latest → {self.current_model_version}"
-            )
+            logger.warning(f"Rolled back symlink: latest → {self.current_model_version}")
 
             return Ok(None)
 

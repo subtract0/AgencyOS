@@ -133,10 +133,10 @@ class EmergencyRetrainingResult(BaseModel):
 
     triggered: bool = Field(..., description="Whether emergency retraining was triggered")
     drift_detected: bool = Field(..., description="Whether drift was detected")
-    drift_alert_timestamp: str | None = Field(
-        None, description="ISO 8601 timestamp of drift alert"
+    drift_alert_timestamp: str | None = Field(None, description="ISO 8601 timestamp of drift alert")
+    current_accuracy: float = Field(
+        ..., ge=0.0, le=1.0, description="Current rolling 7-day accuracy"
     )
-    current_accuracy: float = Field(..., ge=0.0, le=1.0, description="Current rolling 7-day accuracy")
     accuracy_drop_pct: float = Field(..., description="Accuracy drop percentage")
     retraining_initiated: bool = Field(..., description="Whether retraining was initiated")
     new_model_version: str | None = Field(None, description="New model version (if retrained)")
@@ -369,7 +369,9 @@ class EmergencyRetrainingTrigger:
 
         return time_since_last < threshold
 
-    def _create_no_action_result(self, drift_report: dict) -> Result[EmergencyRetrainingResult, str]:
+    def _create_no_action_result(
+        self, drift_report: dict
+    ) -> Result[EmergencyRetrainingResult, str]:
         """Create result for no action (no drift detected)."""
         result = EmergencyRetrainingResult(
             triggered=False,

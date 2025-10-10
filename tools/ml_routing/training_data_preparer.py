@@ -311,7 +311,9 @@ class TrainingDataPreparer:
 
         if not training_samples:
             failure_summary = "; ".join([f"Sample {i}: {err}" for i, err in failed_samples[:5]])
-            return Err(f"Feature extraction failed for all {len(samples)} samples. First failures: {failure_summary}")
+            return Err(
+                f"Feature extraction failed for all {len(samples)} samples. First failures: {failure_summary}"
+            )
 
         self.logger.info(f"Extracted features for {len(training_samples)} samples")
         return Ok(training_samples)

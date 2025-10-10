@@ -211,9 +211,7 @@ class TestABRolloutController:
         )
 
         # Mock stage execution to always succeed
-        with patch.object(
-            controller, "_execute_stage", return_value=Ok((0.985, 0.982, 150))
-        ):
+        with patch.object(controller, "_execute_stage", return_value=Ok((0.985, 0.982, 150))):
             with patch.object(controller, "_update_active_symlink", return_value=Ok(None)):
                 result = controller.execute_rollout()
 
@@ -234,9 +232,7 @@ class TestABRolloutController:
         )
 
         # Mock stage execution to fail accuracy threshold (0.960 < 0.982 - 0.02)
-        with patch.object(
-            controller, "_execute_stage", return_value=Ok((0.960, 0.982, 150))
-        ):
+        with patch.object(controller, "_execute_stage", return_value=Ok((0.960, 0.982, 150))):
             with patch.object(controller, "_rollback_symlink", return_value=Ok(None)):
                 result = controller.execute_rollout()
 
@@ -283,9 +279,7 @@ class TestABRolloutController:
         assert 0.0 <= current_acc <= 1.0
         assert count == 150
 
-    def test_execute_stage_insufficient_predictions(
-        self, context, default_config, models_dir
-    ):
+    def test_execute_stage_insufficient_predictions(self, context, default_config, models_dir):
         """Test _execute_stage fails with insufficient predictions."""
         controller = ABRolloutController(
             context=context,

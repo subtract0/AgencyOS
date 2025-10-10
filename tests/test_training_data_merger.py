@@ -77,7 +77,6 @@ def mock_feature_extractor():
 
     # Mock extract_features to return valid TaskFeatureVector
     def mock_extract(task_description: str):
-
         features = TaskFeatureVector(
             embedding=[0.1] * 1536,
             tfidf_features=[0.05] * 100,
@@ -236,9 +235,7 @@ class TestQueryPredictionsNormalOperation:
         assert len(predictions) == 10
         assert all(isinstance(p, PredictionLog) for p in predictions)
 
-    def test_query_predictions_filters_by_timestamp(
-        self, mock_context, mock_feature_extractor
-    ):
+    def test_query_predictions_filters_by_timestamp(self, mock_context, mock_feature_extractor):
         """
         Test AC-2: query_predictions() filters by timestamp (days_back).
 
@@ -294,9 +291,7 @@ class TestQueryPredictionsNormalOperation:
         assert len(predictions) == 3
         assert all("recent" in p.task_id for p in predictions)
 
-    def test_query_predictions_filters_by_confidence(
-        self, mock_context, mock_feature_extractor
-    ):
+    def test_query_predictions_filters_by_confidence(self, mock_context, mock_feature_extractor):
         """
         Test AC-3: query_predictions() filters by min_confidence.
 
@@ -408,9 +403,7 @@ class TestConvertPredictionsToSamplesNormalOperation:
         assert samples[0].label == 2
         assert samples[1].label == 3
 
-    def test_convert_predictions_re_extracts_features(
-        self, mock_context, mock_feature_extractor
-    ):
+    def test_convert_predictions_re_extracts_features(self, mock_context, mock_feature_extractor):
         """
         Test AC-5: convert_predictions_to_samples() re-extracts features.
 
@@ -645,9 +638,7 @@ class TestDeduplicateSamplesCornerCases:
 class TestBalanceClassesNormalOperation:
     """Test _balance_classes() undersamples majority tier."""
 
-    def test_balance_classes_undersamples_majority(
-        self, mock_context, mock_feature_extractor
-    ):
+    def test_balance_classes_undersamples_majority(self, mock_context, mock_feature_extractor):
         """
         Test AC-9: _balance_classes() undersamples majority tier to ±10%.
 
@@ -757,9 +748,7 @@ class TestBalanceClassesNormalOperation:
 class TestValidateClassBalanceErrorConditions:
     """Test _validate_class_balance() detects imbalance."""
 
-    def test_validate_class_balance_fails_for_imbalance(
-        self, mock_context, mock_feature_extractor
-    ):
+    def test_validate_class_balance_fails_for_imbalance(self, mock_context, mock_feature_extractor):
         """
         Test AC-10: _validate_class_balance() returns Err for imbalance >10%.
 
@@ -905,7 +894,7 @@ class TestStratifiedSplitNormalOperation:
                         label=label,
                         confidence=0.85,
                         source="vectorstore",
-                        task_id=f"p{4-label}_task_{i}",
+                        task_id=f"p{4 - label}_task_{i}",
                         timestamp=base_time,
                     )
                 )
@@ -921,7 +910,11 @@ class TestStratifiedSplitNormalOperation:
         train_labels = [samples[i].label for i in train_indices]
         val_labels = [samples[i].label for i in val_indices]
 
-        train_label_counts = {1: train_labels.count(1), 2: train_labels.count(2), 3: train_labels.count(3)}
+        train_label_counts = {
+            1: train_labels.count(1),
+            2: train_labels.count(2),
+            3: train_labels.count(3),
+        }
         val_label_counts = {1: val_labels.count(1), 2: val_labels.count(2), 3: val_labels.count(3)}
 
         # Assert: Each label has ~80 train samples and ~20 val samples
@@ -938,9 +931,7 @@ class TestStratifiedSplitNormalOperation:
 class TestEdgeCases:
     """Test edge cases: empty VectorStore, insufficient samples, etc."""
 
-    def test_query_predictions_empty_vectorstore(
-        self, mock_context, mock_feature_extractor
-    ):
+    def test_query_predictions_empty_vectorstore(self, mock_context, mock_feature_extractor):
         """
         Test AC-12: query_predictions() returns Ok with empty list for empty VectorStore.
 
@@ -961,9 +952,7 @@ class TestEdgeCases:
         predictions = result.unwrap()
         assert len(predictions) == 0
 
-    def test_convert_predictions_no_valid_samples(
-        self, mock_context, mock_feature_extractor
-    ):
+    def test_convert_predictions_no_valid_samples(self, mock_context, mock_feature_extractor):
         """
         Test AC-13: convert_predictions_to_samples() returns Err if no valid samples.
 
@@ -1107,9 +1096,7 @@ class TestVersionIncrement:
         # Assert: v1.9 → v2.0
         assert new_version == "v2.0"
 
-    def test_increment_version_invalid_format(
-        self, mock_context, mock_feature_extractor
-    ):
+    def test_increment_version_invalid_format(self, mock_context, mock_feature_extractor):
         """
         Test AC-17: _increment_version() raises ValueError for invalid version format.
 
@@ -1126,9 +1113,7 @@ class TestVersionIncrement:
         with pytest.raises(ValueError, match="Invalid version format"):
             merger._increment_version("v1", "minor")
 
-    def test_increment_version_invalid_increment_type(
-        self, mock_context, mock_feature_extractor
-    ):
+    def test_increment_version_invalid_increment_type(self, mock_context, mock_feature_extractor):
         """
         Test AC-18: _increment_version() raises ValueError for invalid increment_type.
 
@@ -1260,9 +1245,7 @@ class TestErrorHandling:
         predictions = result.unwrap()
         assert len(predictions) == 0
 
-    def test_convert_predictions_handles_parse_failure(
-        self, mock_context, mock_feature_extractor
-    ):
+    def test_convert_predictions_handles_parse_failure(self, mock_context, mock_feature_extractor):
         """
         Test AC-24: convert_predictions_to_samples() filters samples that fail parsing.
 

@@ -211,7 +211,9 @@ def test_stratified_k_fold_preserves_class_balance(mock_training_dataset, mock_a
         )
         mock_skf.return_value = mock_skf_instance
 
-        with patch("tools.ml_routing.model_retrainer.cross_val_score", return_value=np.array([0.985] * 5)):
+        with patch(
+            "tools.ml_routing.model_retrainer.cross_val_score", return_value=np.array([0.985] * 5)
+        ):
             with patch(
                 "tools.ml_routing.model_retrainer.confusion_matrix",
                 return_value=np.array([[27, 0, 0], [0, 26, 0], [0, 0, 26]]),
@@ -320,9 +322,9 @@ def test_average_metrics_across_folds(mock_training_dataset, mock_agent_context)
     # Validate average accuracy
     expected_avg = np.mean([0.985, 0.988, 0.987, 0.986, 0.989])
     assert hasattr(retraining_result, "average_accuracy"), "Result must have average_accuracy"
-    assert (
-        abs(retraining_result.average_accuracy - expected_avg) < 0.001
-    ), f"Average accuracy should be {expected_avg:.3f}, got {retraining_result.average_accuracy:.3f}"
+    assert abs(retraining_result.average_accuracy - expected_avg) < 0.001, (
+        f"Average accuracy should be {expected_avg:.3f}, got {retraining_result.average_accuracy:.3f}"
+    )
 
 
 def test_cv_folds_configurable(mock_training_dataset, mock_agent_context):
@@ -384,7 +386,9 @@ def test_train_ensemble_model_after_cv(mock_training_dataset, mock_agent_context
 
     retrainer = ModelRetrainer(context=mock_agent_context, cv_folds=5)
 
-    with patch("tools.ml_routing.model_retrainer.cross_val_score", return_value=np.array([0.985] * 5)):
+    with patch(
+        "tools.ml_routing.model_retrainer.cross_val_score", return_value=np.array([0.985] * 5)
+    ):
         with patch(
             "tools.ml_routing.model_retrainer.confusion_matrix",
             return_value=np.array([[27, 0, 0], [0, 26, 0], [0, 0, 26]]),
@@ -401,9 +405,9 @@ def test_train_ensemble_model_after_cv(mock_training_dataset, mock_agent_context
     retraining_result = result.unwrap()
 
     assert hasattr(retraining_result, "model"), "Result must have model field"
-    assert isinstance(
-        retraining_result.model, EnsembleModel
-    ), "Model must be EnsembleModel instance"
+    assert isinstance(retraining_result.model, EnsembleModel), (
+        "Model must be EnsembleModel instance"
+    )
 
 
 def test_ensemble_voting_classifier_configuration(mock_training_dataset, mock_agent_context):
@@ -423,7 +427,9 @@ def test_ensemble_voting_classifier_configuration(mock_training_dataset, mock_ag
 
     retrainer = ModelRetrainer(context=mock_agent_context, cv_folds=5)
 
-    with patch("tools.ml_routing.model_retrainer.cross_val_score", return_value=np.array([0.985] * 5)):
+    with patch(
+        "tools.ml_routing.model_retrainer.cross_val_score", return_value=np.array([0.985] * 5)
+    ):
         with patch(
             "tools.ml_routing.model_retrainer.confusion_matrix",
             return_value=np.array([[27, 0, 0], [0, 26, 0], [0, 0, 26]]),
@@ -463,7 +469,9 @@ def test_rf_and_gb_models_configured(mock_training_dataset, mock_agent_context):
 
     retrainer = ModelRetrainer(context=mock_agent_context, cv_folds=5)
 
-    with patch("tools.ml_routing.model_retrainer.cross_val_score", return_value=np.array([0.985] * 5)):
+    with patch(
+        "tools.ml_routing.model_retrainer.cross_val_score", return_value=np.array([0.985] * 5)
+    ):
         with patch(
             "tools.ml_routing.model_retrainer.confusion_matrix",
             return_value=np.array([[27, 0, 0], [0, 26, 0], [0, 0, 26]]),
@@ -480,18 +488,20 @@ def test_rf_and_gb_models_configured(mock_training_dataset, mock_agent_context):
     model = result.unwrap().model
 
     # Validate RandomForest
-    assert isinstance(
-        model.rf_model, RandomForestClassifier
-    ), "rf_model must be RandomForestClassifier"
-    assert model.rf_model.n_estimators == 100, f"RF must have 100 trees, got {model.rf_model.n_estimators}"
+    assert isinstance(model.rf_model, RandomForestClassifier), (
+        "rf_model must be RandomForestClassifier"
+    )
+    assert model.rf_model.n_estimators == 100, (
+        f"RF must have 100 trees, got {model.rf_model.n_estimators}"
+    )
 
     # Validate GradientBoosting
-    assert isinstance(
-        model.gb_model, GradientBoostingClassifier
-    ), "gb_model must be GradientBoostingClassifier"
-    assert (
-        model.gb_model.n_estimators == 50
-    ), f"GB must have 50 estimators, got {model.gb_model.n_estimators}"
+    assert isinstance(model.gb_model, GradientBoostingClassifier), (
+        "gb_model must be GradientBoostingClassifier"
+    )
+    assert model.gb_model.n_estimators == 50, (
+        f"GB must have 50 estimators, got {model.gb_model.n_estimators}"
+    )
 
 
 def test_model_trained_on_full_train_set(mock_training_dataset, mock_agent_context):
@@ -511,7 +521,9 @@ def test_model_trained_on_full_train_set(mock_training_dataset, mock_agent_conte
 
     retrainer = ModelRetrainer(context=mock_agent_context, cv_folds=5)
 
-    with patch("tools.ml_routing.model_retrainer.cross_val_score", return_value=np.array([0.985] * 5)):
+    with patch(
+        "tools.ml_routing.model_retrainer.cross_val_score", return_value=np.array([0.985] * 5)
+    ):
         with patch(
             "tools.ml_routing.model_retrainer.confusion_matrix",
             return_value=np.array([[27, 0, 0], [0, 26, 0], [0, 0, 26]]),
@@ -554,7 +566,9 @@ def test_validation_accuracy_improvement_check(mock_training_dataset, mock_agent
 
     retrainer = ModelRetrainer(context=mock_agent_context, cv_folds=5)
 
-    with patch("tools.ml_routing.model_retrainer.cross_val_score", return_value=np.array([0.986] * 5)):
+    with patch(
+        "tools.ml_routing.model_retrainer.cross_val_score", return_value=np.array([0.986] * 5)
+    ):
         with patch(
             "tools.ml_routing.model_retrainer.confusion_matrix",
             return_value=np.array([[27, 0, 0], [0, 26, 0], [0, 0, 26]]),
@@ -589,7 +603,9 @@ def test_insufficient_improvement_returns_err(mock_training_dataset, mock_agent_
 
     retrainer = ModelRetrainer(context=mock_agent_context, cv_folds=5)
 
-    with patch("tools.ml_routing.model_retrainer.cross_val_score", return_value=np.array([0.983] * 5)):
+    with patch(
+        "tools.ml_routing.model_retrainer.cross_val_score", return_value=np.array([0.983] * 5)
+    ):
         with patch(
             "tools.ml_routing.model_retrainer.confusion_matrix",
             return_value=np.array([[27, 0, 0], [0, 26, 0], [0, 0, 26]]),
@@ -624,7 +640,9 @@ def test_accuracy_at_threshold_succeeds(mock_training_dataset, mock_agent_contex
 
     retrainer = ModelRetrainer(context=mock_agent_context, cv_folds=5)
 
-    with patch("tools.ml_routing.model_retrainer.cross_val_score", return_value=np.array([0.985] * 5)):
+    with patch(
+        "tools.ml_routing.model_retrainer.cross_val_score", return_value=np.array([0.985] * 5)
+    ):
         with patch(
             "tools.ml_routing.model_retrainer.confusion_matrix",
             return_value=np.array([[27, 0, 0], [0, 26, 0], [0, 0, 26]]),
@@ -657,7 +675,9 @@ def test_accuracy_decrease_returns_err(mock_training_dataset, mock_agent_context
 
     retrainer = ModelRetrainer(context=mock_agent_context, cv_folds=5)
 
-    with patch("tools.ml_routing.model_retrainer.cross_val_score", return_value=np.array([0.978] * 5)):
+    with patch(
+        "tools.ml_routing.model_retrainer.cross_val_score", return_value=np.array([0.978] * 5)
+    ):
         with patch(
             "tools.ml_routing.model_retrainer.confusion_matrix",
             return_value=np.array([[27, 0, 0], [0, 26, 0], [0, 0, 26]]),
@@ -672,9 +692,9 @@ def test_accuracy_decrease_returns_err(mock_training_dataset, mock_agent_context
     # Assert
     assert result.is_err(), "Retraining should fail with accuracy regression"
     error_msg = result.unwrap_err()
-    assert (
-        "regression" in error_msg.lower() or "decrease" in error_msg.lower()
-    ), f"Error should mention regression, got: {error_msg}"
+    assert "regression" in error_msg.lower() or "decrease" in error_msg.lower(), (
+        f"Error should mention regression, got: {error_msg}"
+    )
 
 
 # ==============================================================================
@@ -703,7 +723,9 @@ def test_serialize_model_to_versioned_artifact(
         context=mock_agent_context, cv_folds=5, model_output_dir=temp_model_dir
     )
 
-    with patch("tools.ml_routing.model_retrainer.cross_val_score", return_value=np.array([0.985] * 5)):
+    with patch(
+        "tools.ml_routing.model_retrainer.cross_val_score", return_value=np.array([0.985] * 5)
+    ):
         with patch(
             "tools.ml_routing.model_retrainer.confusion_matrix",
             return_value=np.array([[27, 0, 0], [0, 26, 0], [0, 0, 26]]),
@@ -741,7 +763,9 @@ def test_serialized_model_loadable(mock_training_dataset, mock_agent_context, te
         context=mock_agent_context, cv_folds=5, model_output_dir=temp_model_dir
     )
 
-    with patch("tools.ml_routing.model_retrainer.cross_val_score", return_value=np.array([0.985] * 5)):
+    with patch(
+        "tools.ml_routing.model_retrainer.cross_val_score", return_value=np.array([0.985] * 5)
+    ):
         with patch(
             "tools.ml_routing.model_retrainer.confusion_matrix",
             return_value=np.array([[27, 0, 0], [0, 26, 0], [0, 0, 26]]),
@@ -763,9 +787,9 @@ def test_serialized_model_loadable(mock_training_dataset, mock_agent_context, te
     loaded_model = joblib.load(model_path)
 
     assert isinstance(loaded_model, EnsembleModel), "Loaded model must be EnsembleModel"
-    assert (
-        loaded_model.validation_accuracy == saved_model.validation_accuracy
-    ), "Loaded accuracy should match saved accuracy"
+    assert loaded_model.validation_accuracy == saved_model.validation_accuracy, (
+        "Loaded accuracy should match saved accuracy"
+    )
 
 
 def test_version_defaults_to_incremented(mock_training_dataset, mock_agent_context, temp_model_dir):
@@ -787,7 +811,9 @@ def test_version_defaults_to_incremented(mock_training_dataset, mock_agent_conte
         context=mock_agent_context, cv_folds=5, model_output_dir=temp_model_dir
     )
 
-    with patch("tools.ml_routing.model_retrainer.cross_val_score", return_value=np.array([0.985] * 5)):
+    with patch(
+        "tools.ml_routing.model_retrainer.cross_val_score", return_value=np.array([0.985] * 5)
+    ):
         with patch(
             "tools.ml_routing.model_retrainer.confusion_matrix",
             return_value=np.array([[27, 0, 0], [0, 26, 0], [0, 0, 26]]),
@@ -805,7 +831,9 @@ def test_version_defaults_to_incremented(mock_training_dataset, mock_agent_conte
 
     # Check version was auto-incremented (v1.0 → v1.1)
     assert hasattr(retraining_result, "version"), "Result must have version field"
-    assert retraining_result.version == "v1.1", f"Version should be v1.1, got {retraining_result.version}"
+    assert retraining_result.version == "v1.1", (
+        f"Version should be v1.1, got {retraining_result.version}"
+    )
 
 
 def test_artifact_metadata_stored(mock_training_dataset, mock_agent_context, temp_model_dir):
@@ -827,7 +855,9 @@ def test_artifact_metadata_stored(mock_training_dataset, mock_agent_context, tem
         context=mock_agent_context, cv_folds=5, model_output_dir=temp_model_dir
     )
 
-    with patch("tools.ml_routing.model_retrainer.cross_val_score", return_value=np.array([0.985] * 5)):
+    with patch(
+        "tools.ml_routing.model_retrainer.cross_val_score", return_value=np.array([0.985] * 5)
+    ):
         with patch(
             "tools.ml_routing.model_retrainer.confusion_matrix",
             return_value=np.array([[27, 0, 0], [0, 26, 0], [0, 0, 26]]),
@@ -880,7 +910,9 @@ def test_store_metrics_to_vectorstore(mock_training_dataset, mock_agent_context)
 
     retrainer = ModelRetrainer(context=mock_agent_context, cv_folds=5)
 
-    with patch("tools.ml_routing.model_retrainer.cross_val_score", return_value=np.array([0.985] * 5)):
+    with patch(
+        "tools.ml_routing.model_retrainer.cross_val_score", return_value=np.array([0.985] * 5)
+    ):
         with patch(
             "tools.ml_routing.model_retrainer.confusion_matrix",
             return_value=np.array([[27, 0, 0], [0, 26, 0], [0, 0, 26]]),
@@ -923,7 +955,9 @@ def test_vectorstore_tags_include_retraining(mock_training_dataset, mock_agent_c
 
     retrainer = ModelRetrainer(context=mock_agent_context, cv_folds=5)
 
-    with patch("tools.ml_routing.model_retrainer.cross_val_score", return_value=np.array([0.985] * 5)):
+    with patch(
+        "tools.ml_routing.model_retrainer.cross_val_score", return_value=np.array([0.985] * 5)
+    ):
         with patch(
             "tools.ml_routing.model_retrainer.confusion_matrix",
             return_value=np.array([[27, 0, 0], [0, 26, 0], [0, 0, 26]]),
@@ -964,7 +998,9 @@ def test_metrics_include_confidence_score(mock_training_dataset, mock_agent_cont
 
     retrainer = ModelRetrainer(context=mock_agent_context, cv_folds=5)
 
-    with patch("tools.ml_routing.model_retrainer.cross_val_score", return_value=np.array([0.985] * 5)):
+    with patch(
+        "tools.ml_routing.model_retrainer.cross_val_score", return_value=np.array([0.985] * 5)
+    ):
         with patch(
             "tools.ml_routing.model_retrainer.confusion_matrix",
             return_value=np.array([[27, 0, 0], [0, 26, 0], [0, 0, 26]]),
@@ -1059,7 +1095,9 @@ def test_insufficient_training_samples_returns_err():
     # Assert
     assert result.is_err(), "Retraining should fail with <50 train samples"
     error_msg = result.unwrap_err()
-    assert "insufficient" in error_msg.lower(), f"Error should mention insufficient data, got: {error_msg}"
+    assert "insufficient" in error_msg.lower(), (
+        f"Error should mention insufficient data, got: {error_msg}"
+    )
 
 
 def test_cv_training_failure_returns_err(mock_training_dataset, mock_agent_context):
@@ -1080,7 +1118,8 @@ def test_cv_training_failure_returns_err(mock_training_dataset, mock_agent_conte
     retrainer = ModelRetrainer(context=mock_agent_context, cv_folds=5)
 
     with patch(
-        "tools.ml_routing.model_retrainer.cross_val_score", side_effect=ValueError("sklearn CV error")
+        "tools.ml_routing.model_retrainer.cross_val_score",
+        side_effect=ValueError("sklearn CV error"),
     ):
         # Act
         result = retrainer.retrain_ensemble(
@@ -1092,10 +1131,14 @@ def test_cv_training_failure_returns_err(mock_training_dataset, mock_agent_conte
     # Assert
     assert result.is_err(), "Retraining should fail with sklearn exception"
     error_msg = result.unwrap_err()
-    assert "sklearn" in error_msg.lower() or "cv" in error_msg.lower(), f"Error should mention sklearn, got: {error_msg}"
+    assert "sklearn" in error_msg.lower() or "cv" in error_msg.lower(), (
+        f"Error should mention sklearn, got: {error_msg}"
+    )
 
 
-def test_serialization_failure_returns_err(mock_training_dataset, mock_agent_context, temp_model_dir):
+def test_serialization_failure_returns_err(
+    mock_training_dataset, mock_agent_context, temp_model_dir
+):
     """
     Test joblib serialization failure is handled gracefully.
 
@@ -1114,12 +1157,16 @@ def test_serialization_failure_returns_err(mock_training_dataset, mock_agent_con
         context=mock_agent_context, cv_folds=5, model_output_dir=temp_model_dir
     )
 
-    with patch("tools.ml_routing.model_retrainer.cross_val_score", return_value=np.array([0.985] * 5)):
+    with patch(
+        "tools.ml_routing.model_retrainer.cross_val_score", return_value=np.array([0.985] * 5)
+    ):
         with patch(
             "tools.ml_routing.model_retrainer.confusion_matrix",
             return_value=np.array([[27, 0, 0], [0, 26, 0], [0, 0, 26]]),
         ):
-            with patch("tools.ml_routing.model_retrainer.joblib.dump", side_effect=OSError("Disk full")):
+            with patch(
+                "tools.ml_routing.model_retrainer.joblib.dump", side_effect=OSError("Disk full")
+            ):
                 # Act
                 result = retrainer.retrain_ensemble(
                     dataset=mock_training_dataset,
@@ -1131,7 +1178,9 @@ def test_serialization_failure_returns_err(mock_training_dataset, mock_agent_con
     # Assert
     assert result.is_err(), "Retraining should fail with serialization error"
     error_msg = result.unwrap_err()
-    assert "serialization" in error_msg.lower() or "save" in error_msg.lower(), f"Error should mention serialization, got: {error_msg}"
+    assert "serialization" in error_msg.lower() or "save" in error_msg.lower(), (
+        f"Error should mention serialization, got: {error_msg}"
+    )
 
 
 # ==============================================================================

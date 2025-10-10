@@ -90,9 +90,7 @@ class DriftError(BaseModel):
             "unknown",
         }
         if v not in valid_types:
-            raise ValueError(
-                f"error_type must be one of {valid_types}, got '{v}'"
-            )
+            raise ValueError(f"error_type must be one of {valid_types}, got '{v}'")
         return v
 
 
@@ -287,9 +285,7 @@ class AccuracyDriftDetector:
             predictions = predictions_result.unwrap()
 
             # Step 2: Filter predictions with actual_tier (Leap 4 quality feedback)
-            predictions_with_actual = [
-                p for p in predictions if p.get("actual_tier") is not None
-            ]
+            predictions_with_actual = [p for p in predictions if p.get("actual_tier") is not None]
 
             if len(predictions_with_actual) < self.MIN_SAMPLE_SIZE:
                 # Insufficient data (need ≥100 samples for statistical significance)
@@ -306,9 +302,7 @@ class AccuracyDriftDetector:
 
             # Step 3: Calculate accuracy
             correct_predictions = sum(
-                1
-                for p in predictions_with_actual
-                if p["predicted_tier"] == p["actual_tier"]
+                1 for p in predictions_with_actual if p["predicted_tier"] == p["actual_tier"]
             )
             total_predictions = len(predictions_with_actual)
             current_accuracy = correct_predictions / total_predictions
@@ -323,9 +317,7 @@ class AccuracyDriftDetector:
             is_drift_detected = accuracy_drop > self.drift_threshold
 
             # Step 6: Compute severity based on quality signals
-            severity = self._compute_severity(
-                accuracy_drop, avg_test_failure_rate, avg_code_churn
-            )
+            severity = self._compute_severity(accuracy_drop, avg_test_failure_rate, avg_code_churn)
 
             # Step 7: Build report
             report = DriftReport(
@@ -401,9 +393,7 @@ class AccuracyDriftDetector:
                 )
             )
 
-    def _extract_quality_signals(
-        self, predictions: list[dict]
-    ) -> tuple[float, float]:
+    def _extract_quality_signals(self, predictions: list[dict]) -> tuple[float, float]:
         """
         Extract Leap 4 quality signals from predictions.
 
@@ -436,14 +426,10 @@ class AccuracyDriftDetector:
 
         # Calculate averages
         avg_test_failure_rate = (
-            sum(test_failure_rates) / len(test_failure_rates)
-            if test_failure_rates
-            else 0.0
+            sum(test_failure_rates) / len(test_failure_rates) if test_failure_rates else 0.0
         )
         avg_code_churn = (
-            sum(code_churn_values) / len(code_churn_values)
-            if code_churn_values
-            else 0.0
+            sum(code_churn_values) / len(code_churn_values) if code_churn_values else 0.0
         )
 
         return avg_test_failure_rate, avg_code_churn

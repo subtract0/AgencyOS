@@ -119,8 +119,7 @@ class ModelRetrainer:
         self.model_output_dir.mkdir(parents=True, exist_ok=True)
 
         logger.info(
-            f"ModelRetrainer initialized with {cv_folds} folds, "
-            f"output_dir={model_output_dir}"
+            f"ModelRetrainer initialized with {cv_folds} folds, output_dir={model_output_dir}"
         )
 
     def retrain_ensemble(
@@ -234,7 +233,9 @@ class ModelRetrainer:
             )
 
         # Check at least 2 unique labels (multi-class requirement)
-        unique_labels = len([count for count in dataset.metadata.label_distribution.values() if count > 0])
+        unique_labels = len(
+            [count for count in dataset.metadata.label_distribution.values() if count > 0]
+        )
         if unique_labels < 2:
             return Err(
                 f"Dataset must have at least 2 unique labels, got {unique_labels}. "
@@ -264,7 +265,9 @@ class ModelRetrainer:
 
             # Create ensemble for CV
             rf = RandomForestClassifier(n_estimators=100, max_depth=10, random_state=random_state)
-            gb = GradientBoostingClassifier(n_estimators=50, learning_rate=0.1, random_state=random_state)
+            gb = GradientBoostingClassifier(
+                n_estimators=50, learning_rate=0.1, random_state=random_state
+            )
             ensemble = VotingClassifier(
                 estimators=[("rf", rf), ("gb", gb)], voting="soft", weights=[0.7, 0.3]
             )
@@ -386,7 +389,9 @@ class ModelRetrainer:
 
             # Create and train ensemble
             rf = RandomForestClassifier(n_estimators=100, max_depth=10, random_state=random_state)
-            gb = GradientBoostingClassifier(n_estimators=50, learning_rate=0.1, random_state=random_state)
+            gb = GradientBoostingClassifier(
+                n_estimators=50, learning_rate=0.1, random_state=random_state
+            )
             ensemble = VotingClassifier(
                 estimators=[("rf", rf), ("gb", gb)], voting="soft", weights=[0.7, 0.3]
             )

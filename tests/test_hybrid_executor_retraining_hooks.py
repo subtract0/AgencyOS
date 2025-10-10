@@ -413,9 +413,7 @@ def test_retraining_check_exception_does_not_crash_executor(executor, agent_cont
         - Log message: "Failed to check retraining status: {error}"
     """
     # Arrange
-    agent_context.search_memories = Mock(
-        side_effect=Exception("VectorStore connection timeout")
-    )
+    agent_context.search_memories = Mock(side_effect=Exception("VectorStore connection timeout"))
 
     # Act & Assert
     try:
