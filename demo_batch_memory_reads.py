@@ -12,10 +12,9 @@ Usage:
 """
 
 import asyncio
-import time
-from pathlib import Path
-import tempfile
 import shutil
+import tempfile
+import time
 
 from tools.async_memory_tool import AsyncMemoryTool
 
@@ -121,7 +120,7 @@ async def benchmark_parallel(
 
         tasks = [bounded_view(path) for path in paths]
         task_results = await asyncio.gather(*tasks)
-        results = {path: result for path, result in task_results}
+        results = dict(task_results)
     else:
         # Use built-in batch_view_async
         results = await tool.batch_view_async(paths, max_concurrency=max_concurrency)
