@@ -21,7 +21,6 @@ from .kanban import (
     KanbanCard,
     KanbanFeed,
 )
-from .quality_feedback_sample import QualityFeedbackSample
 from .learning import (
     AgentStateLearning,
     ContentTypeBreakdown,
@@ -77,6 +76,7 @@ from .priority_task import (
     BacklogError,
     PriorityTask,
 )
+from .quality_feedback_sample import QualityFeedbackSample
 from .session import (
     CheckpointMetadata,
     CompressionMetadata,
