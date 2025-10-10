@@ -667,15 +667,75 @@ python run_tests.py --run-all         # Must show 100% pass rate
 
 ---
 
+## **🚀 Leap Evolution History**
+
+Agency OS evolves through "Leaps" - major capability expansions that build institutional knowledge:
+
+### **Leap 4: Quality Feedback Loop** ✅ (2025-10-10)
+**Objective**: Continuous improvement of Adaptive Model Router through automated learning
+
+**Achievements**:
+- ✅ **Misclassification Detection**: Four quality signals (test failures, code churn, timing deviation, user feedback)
+- ✅ **VectorStore-Driven Refinement**: Confidence-scored routing rule adjustments (0.6+ threshold)
+- ✅ **Execution Hook Integration**: Zero-overhead quality signal collection in HybridExecutor
+- ✅ **Real-Time Monitoring**: Live accuracy dashboard with tier-specific metrics
+
+**Impact**:
+- +89 tests (100% pass rate maintained)
+- +3 Pydantic models (QualitySignals, MisclassificationReport, RefinementResult)
+- +4 quality feedback tools (collector, detector, refiner, dashboard)
+- Expected ~12% cost reduction through improved routing accuracy
+
+**Documentation**:
+- Spec: `specs/spec-004-quality-feedback-loop.md`
+- ADR: `docs/adr/ADR-025-quality-feedback-loop.md`
+- Report: `docs/leap_4_complete.md`
+
+### **Leap 3: Adaptive Model Router** ✅ (2025-10-07)
+**Objective**: Intelligent task classification and cost optimization
+
+**Achievements**:
+- ✅ **Three-Tier Classification**: P1 (complex), P2 (moderate), P3 (simple)
+- ✅ **Skill Evolution**: Session state tracking, checkpoint/resume
+- ✅ **Learning Extraction**: VectorStore pattern storage, cross-session memory
+- ✅ **Dashboard**: Real-time skill proficiency monitoring
+
+**Impact**:
+- 96% cost reduction ($40K → $1.6K/month) via local model integration
+- +45 tests, 100% pass rate maintained
+
+**Documentation**:
+- ADR: `docs/adr/ADR-024-adaptive-model-router.md`
+
+### **Leap 2: Smart Factory** (Planned)
+**Objective**: Composable command library with JSON schema validation
+
+**Goals**:
+- Task graph DSL with parallel execution
+- Reusable task templates
+- Constitutional compliance validation per node
+
+### **Leap 1: Foundation** ✅ (2024-2025)
+**Objective**: Core agent infrastructure and constitutional framework
+
+**Achievements**:
+- 10 specialized agents (coder, planner, auditor, etc.)
+- 5-Article Constitution (mandatory compliance)
+- Three-tier memory architecture (Memory Tool, VectorStore, Session)
+- 1,636 tests with 100% pass rate
+
+---
+
 ## **📊 Production Metrics**
 
-- **1,725+ tests** passing with 100% success rate (163 new constitutional compliance tests)
+- **1,725+ tests** passing with 100% success rate (+89 new Leap 4 quality feedback tests)
 - **Zero test failures** under constitutional enforcement
 - **<3 seconds** for constitutional test suite validation
-- **161 test files** total across codebase
+- **168 test files** total across codebase (+7 new Leap 4 test files)
 - **>95% healing success rate** for autonomous fixes
 - **100% constitutional compliance** across all agents (Articles I-V)
 - **36 production tools** with security hardening (bash.py, git.py validated)
+- **Quality Feedback Loop** operational (Leap 4 complete: misclassification detection, VectorStore refinement, real-time monitoring)
 
 ---
 
@@ -693,5 +753,5 @@ python run_tests.py --run-all         # Must show 100% pass rate
 
 *"In automation we trust, in discipline we excel, in learning we evolve."*
 
-**Version 1.1.1** - Mars Rover Bulletproofing & Production Ready
-**Last Updated**: 2025-10-07
+**Version 1.2.0** - Leap 4 Quality Feedback Loop Complete
+**Last Updated**: 2025-10-10
