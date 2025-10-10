@@ -72,7 +72,11 @@ def progress_bar(value: float, width: int = 40, show_percentage: bool = True) ->
 # ============================================================================
 
 
-def format_skill_category(category_name: str, skills: dict[str, float], indent: int = 2) -> str:
+def format_skill_category(
+    category_name: str,
+    skills: dict[str, float],
+    indent: int = 2
+) -> str:
     """Format a skill category with progress bars."""
     lines = []
     indent_str = " " * indent
@@ -86,14 +90,18 @@ def format_skill_category(category_name: str, skills: dict[str, float], indent: 
 
     # Individual skills
     for skill_name, skill_value in sorted(skills.items()):
-        display_name = skill_name.replace("_", " ").title()
+        display_name = skill_name.replace('_', ' ').title()
         bar = progress_bar(skill_value)
         lines.append(f"{indent_str}  {display_name:30s} {bar}")
 
     return "\n".join(lines)
 
 
-def display_agent_dashboard(agent_name: str, skill_vector: SkillVector, context: Any) -> str:
+def display_agent_dashboard(
+    agent_name: str,
+    skill_vector: SkillVector,
+    context: Any
+) -> str:
     """
     Display comprehensive skill dashboard for an agent.
 
@@ -109,16 +117,16 @@ def display_agent_dashboard(agent_name: str, skill_vector: SkillVector, context:
 
     # Header
     dashboard = f"""
-{"=" * 70}
+{'='*70}
 🚀 AGENT SKILL DASHBOARD: {agent_name.upper()}
-{"=" * 70}
+{'='*70}
 
 Agent: {agent_name}
-Generated: {datetime.now().strftime("%Y-%m-%d %H:%M:%S")}
-Updates: {skills_dict["update_count"]} skill updates recorded
-Last Updated: {skills_dict["last_updated"]}
+Generated: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}
+Updates: {skills_dict['update_count']} skill updates recorded
+Last Updated: {skills_dict['last_updated']}
 
-Overall Skill Level: {progress_bar(skills_dict["overall_skill_level"])}
+Overall Skill Level: {progress_bar(skills_dict['overall_skill_level'])}
 
 """
 
@@ -127,10 +135,10 @@ Overall Skill Level: {progress_bar(skills_dict["overall_skill_level"])}
     dashboard += f"  {'─' * 60}\n\n"
 
     categories = [
-        ("Technical Skills", skills_dict["technical_skill"]),
-        ("Strategic Skills", skills_dict["strategic_skill"]),
-        ("Collaboration Skills", skills_dict["collaboration_skill"]),
-        ("Quality Skills", skills_dict["quality_skill"]),
+        ("Technical Skills", skills_dict['technical_skill']),
+        ("Strategic Skills", skills_dict['strategic_skill']),
+        ("Collaboration Skills", skills_dict['collaboration_skill']),
+        ("Quality Skills", skills_dict['quality_skill']),
     ]
 
     for cat_name, cat_value in categories:
@@ -142,7 +150,7 @@ Overall Skill Level: {progress_bar(skills_dict["overall_skill_level"])}
 
     top_skills = skill_vector.get_top_skills(n=10)
     for skill_name, skill_value in top_skills:
-        display_name = skill_name.replace("_", " ").title()
+        display_name = skill_name.replace('_', ' ').title()
         dashboard += f"  {display_name:30s} {progress_bar(skill_value)}\n"
 
     # Weakest 5 Skills (improvement areas)
@@ -151,18 +159,19 @@ Overall Skill Level: {progress_bar(skills_dict["overall_skill_level"])}
 
     weak_skills = skill_vector.get_weakest_skills(n=5)
     for skill_name, skill_value in weak_skills:
-        display_name = skill_name.replace("_", " ").title()
+        display_name = skill_name.replace('_', ' ').title()
         dashboard += f"  {display_name:30s} {progress_bar(skill_value)}\n"
 
     # Query VectorStore for historical trend
     historical_skills = context.search_memories(
-        tags=["skill_vector", agent_name], include_session=True
+        tags=["skill_vector", agent_name],
+        include_session=True
     )
 
     if len(historical_skills) > 1:
         # Calculate trend (current vs first)
         first_skills = historical_skills[-1]  # Oldest
-        current_avg = skills_dict["overall_skill_level"]
+        current_avg = skills_dict['overall_skill_level']
         first_avg = first_skills.get("overall_skill_level", 0.5)
 
         trend = current_avg - first_avg
@@ -174,9 +183,9 @@ Overall Skill Level: {progress_bar(skills_dict["overall_skill_level"])}
         dashboard += f"  Historical Data Points: {len(historical_skills)}\n"
 
     # Footer
-    dashboard += f"\n{'=' * 70}\n"
+    dashboard += f"\n{'='*70}\n"
     dashboard += "✅ Dashboard generated successfully\n"
-    dashboard += f"{'=' * 70}\n"
+    dashboard += f"{'='*70}\n"
 
     return dashboard
 
@@ -198,12 +207,12 @@ def compare_agents(agent_names: list[str], context: Any) -> str:
         Formatted comparison table
     """
     comparison = f"""
-{"=" * 70}
+{'='*70}
 🔀 MULTI-AGENT SKILL COMPARISON
-{"=" * 70}
+{'='*70}
 
-Agents: {", ".join(agent_names)}
-Generated: {datetime.now().strftime("%Y-%m-%d %H:%M:%S")}
+Agents: {', '.join(agent_names)}
+Generated: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}
 
 """
 
@@ -211,7 +220,8 @@ Generated: {datetime.now().strftime("%Y-%m-%d %H:%M:%S")}
     agent_skills = {}
     for agent_name in agent_names:
         skill_vector = SkillVector(
-            agent_name=agent_name, session_id=f"compare_{datetime.now().timestamp()}"
+            agent_name=agent_name,
+            session_id=f"compare_{datetime.now().timestamp()}"
         )
         skills_dict = skill_vector.to_dict()
         agent_skills[agent_name] = skills_dict
@@ -247,7 +257,7 @@ Generated: {datetime.now().strftime("%Y-%m-%d %H:%M:%S")}
         update_count = skills.get("update_count", 0)
         comparison += f"  {agent_name:20s} {update_count} updates\n"
 
-    comparison += f"\n{'=' * 70}\n"
+    comparison += f"\n{'='*70}\n"
 
     return comparison
 
@@ -277,29 +287,40 @@ def export_json(agent_name: str, skill_vector: SkillVector) -> str:
 
 
 def main():
-    parser = argparse.ArgumentParser(description="Display agent skill dashboard (M4.3)")
+    parser = argparse.ArgumentParser(
+        description="Display agent skill dashboard (M4.3)"
+    )
     parser.add_argument(
-        "--agent", type=str, default="coder", help="Agent name to display (default: coder)"
+        "--agent",
+        type=str,
+        default="coder",
+        help="Agent name to display (default: coder)"
     )
     parser.add_argument(
         "--format",
         type=str,
         choices=["text", "json"],
         default="text",
-        help="Output format (default: text)",
+        help="Output format (default: text)"
     )
     parser.add_argument(
         "--compare",
         type=str,
         nargs="+",
-        help="Compare multiple agents (e.g., --compare coder planner auditor)",
+        help="Compare multiple agents (e.g., --compare coder planner auditor)"
     )
-    parser.add_argument("--save", type=Path, help="Save output to file")
+    parser.add_argument(
+        "--save",
+        type=Path,
+        help="Save output to file"
+    )
 
     args = parser.parse_args()
 
     # Initialize context
-    context = create_agent_context(session_id=f"skill_dashboard_{datetime.now().timestamp()}")
+    context = create_agent_context(
+        session_id=f"skill_dashboard_{datetime.now().timestamp()}"
+    )
 
     # Generate output
     if args.compare:
@@ -308,7 +329,8 @@ def main():
     else:
         # Single agent dashboard
         skill_vector = SkillVector(
-            agent_name=args.agent, session_id=f"dashboard_{datetime.now().timestamp()}"
+            agent_name=args.agent,
+            session_id=f"dashboard_{datetime.now().timestamp()}"
         )
 
         if args.format == "json":
@@ -318,7 +340,7 @@ def main():
 
     # Display or save
     if args.save:
-        with open(args.save, "w") as f:
+        with open(args.save, 'w') as f:
             f.write(output)
         print(f"✅ Dashboard saved to: {args.save}")
     else:

@@ -37,7 +37,7 @@ COST_PER_1M_TOKENS = {
 AVG_TOKENS_BY_COMPLEXITY = {
     "P1": 2500,  # Complex: specs, ADRs, architecture
     "P2": 1500,  # Moderate: features, refactoring
-    "P3": 500,  # Simple: typos, formatting, imports
+    "P3": 500,   # Simple: typos, formatting, imports
 }
 
 
@@ -73,19 +73,17 @@ def analyze_session_logs(sessions_dir: Path, days: int = 7) -> list[dict[str, An
 
         # Simple parsing: look for task-like patterns
         # In production, would parse structured logs or VectorStore queries
-        with open(log_file, encoding="utf-8", errors="ignore") as f:
+        with open(log_file, encoding='utf-8', errors='ignore') as f:
             content = f.read()
 
             # Extract task indicators (simplified)
             if "Task:" in content or "TODO:" in content:
                 # Placeholder: Real implementation would parse structured data
-                tasks.append(
-                    {
-                        "description": f"Task from {log_file.name}",
-                        "agent": "coder",  # Default
-                        "timestamp": file_mtime.isoformat(),
-                    }
-                )
+                tasks.append({
+                    "description": f"Task from {log_file.name}",
+                    "agent": "coder",  # Default
+                    "timestamp": file_mtime.isoformat()
+                })
 
     return tasks if tasks else generate_synthetic_tasks()
 
@@ -119,9 +117,11 @@ def generate_synthetic_tasks() -> list[dict[str, Any]]:
 
     for i in range(60):
         template = p3_templates[i % len(p3_templates)]
-        tasks.append(
-            {"description": f"{template} #{i + 1}", "agent": "coder", "expected_priority": "P3"}
-        )
+        tasks.append({
+            "description": f"{template} #{i+1}",
+            "agent": "coder",
+            "expected_priority": "P3"
+        })
 
     # P2 tasks (30% = 30 tasks)
     p2_templates = [
@@ -135,9 +135,11 @@ def generate_synthetic_tasks() -> list[dict[str, Any]]:
 
     for i in range(30):
         template = p2_templates[i % len(p2_templates)]
-        tasks.append(
-            {"description": f"{template} #{i + 1}", "agent": "coder", "expected_priority": "P2"}
-        )
+        tasks.append({
+            "description": f"{template} #{i+1}",
+            "agent": "coder",
+            "expected_priority": "P2"
+        })
 
     # P1 tasks (10% = 10 tasks)
     p1_templates = [
@@ -149,13 +151,11 @@ def generate_synthetic_tasks() -> list[dict[str, Any]]:
 
     for i in range(10):
         template = p1_templates[i % len(p1_templates)]
-        tasks.append(
-            {
-                "description": f"{template} #{i + 1}",
-                "agent": "chief_architect",
-                "expected_priority": "P1",
-            }
-        )
+        tasks.append({
+            "description": f"{template} #{i+1}",
+            "agent": "chief_architect",
+            "expected_priority": "P1"
+        })
 
     return tasks
 
@@ -165,7 +165,11 @@ def generate_synthetic_tasks() -> list[dict[str, Any]]:
 # ============================================================================
 
 
-def calculate_cost_for_task(task: dict[str, Any], complexity: str, model: str) -> float:
+def calculate_cost_for_task(
+    task: dict[str, Any],
+    complexity: str,
+    model: str
+) -> float:
     """
     Calculate cost for a single task based on model and complexity.
 
@@ -197,7 +201,7 @@ def validate_cost_savings(
     tasks: list[dict[str, Any]],
     classifier: TaskComplexityClassifier,
     router: ModelRouter,
-    context: Any,
+    context: Any
 ) -> dict[str, Any]:
     """
     Validate cost savings across all tasks.
@@ -220,11 +224,11 @@ def validate_cost_savings(
             task_type="general",
             agent_key=agent_name,
             session_id=None,
-            estimated_tokens=1000,
+            estimated_tokens=1000
         )
 
         # Handle routing result
-        if hasattr(routing_result, "is_ok") and routing_result.is_ok():
+        if hasattr(routing_result, 'is_ok') and routing_result.is_ok():
             decision = routing_result.unwrap()
             priority = decision.complexity.value  # Enum to string
             model = decision.selected_model
@@ -244,16 +248,14 @@ def validate_cost_savings(
         total_cost_without_routing += cost_without_routing
 
         # Store breakdown
-        task_breakdown.append(
-            {
-                "description": task_desc[:50] + "..." if len(task_desc) > 50 else task_desc,
-                "agent": agent_name,
-                "complexity": priority,
-                "model": model,
-                "cost_with_routing": cost_with_routing,
-                "cost_without_routing": cost_without_routing,
-            }
-        )
+        task_breakdown.append({
+            "description": task_desc[:50] + "..." if len(task_desc) > 50 else task_desc,
+            "agent": agent_name,
+            "complexity": priority,
+            "model": model,
+            "cost_with_routing": cost_with_routing,
+            "cost_without_routing": cost_without_routing
+        })
 
     # Calculate savings
     cost_savings_usd = total_cost_without_routing - total_cost_with_routing
@@ -267,15 +269,15 @@ def validate_cost_savings(
             "without_routing_usd": round(total_cost_without_routing, 6),
             "with_routing_usd": round(total_cost_with_routing, 6),
             "savings_usd": round(cost_savings_usd, 6),
-            "savings_percent": round(cost_savings_percent, 2),
+            "savings_percent": round(cost_savings_percent, 2)
         },
         "task_breakdown": task_breakdown,
         "model_distribution": calculate_model_distribution(task_breakdown),
         "validation": {
             "target_savings_percent": 90.0,
             "actual_savings_percent": round(cost_savings_percent, 2),
-            "meets_target": cost_savings_percent >= 85.0,  # Allow 5% variance
-        },
+            "meets_target": cost_savings_percent >= 85.0  # Allow 5% variance
+        }
     }
 
     return report
@@ -308,9 +310,10 @@ def calculate_model_distribution(task_breakdown: list[dict[str, Any]]) -> dict[s
     return {
         "counts": model_counts,
         "percentages": {
-            model: round((count / total_tasks) * 100, 1) for model, count in model_counts.items()
+            model: round((count / total_tasks) * 100, 1)
+            for model, count in model_counts.items()
         },
-        "costs": {model: round(cost, 6) for model, cost in model_costs.items()},
+        "costs": {model: round(cost, 6) for model, cost in model_costs.items()}
     }
 
 
@@ -326,25 +329,25 @@ def generate_report_text(report: dict[str, Any]) -> str:
     dist = report["model_distribution"]
 
     report_text = f"""
-{"=" * 70}
+{'='*70}
 💰 LEAP 3 COST SAVINGS VALIDATION REPORT
-{"=" * 70}
+{'='*70}
 
-**Generated**: {report["timestamp"]}
-**Tasks Analyzed**: {report["total_tasks"]}
+**Generated**: {report['timestamp']}
+**Tasks Analyzed**: {report['total_tasks']}
 
 ---
 
 ## Cost Analysis
 
 **Without Adaptive Routing** (all gpt-5):
-  ${cost["without_routing_usd"]:.6f}
+  ${cost['without_routing_usd']:.6f}
 
 **With Adaptive Routing**:
-  ${cost["with_routing_usd"]:.6f}
+  ${cost['with_routing_usd']:.6f}
 
 **Savings**:
-  ${cost["savings_usd"]:.6f} ({cost["savings_percent"]:.1f}%)
+  ${cost['savings_usd']:.6f} ({cost['savings_percent']:.1f}%)
 
 ---
 
@@ -363,22 +366,22 @@ def generate_report_text(report: dict[str, Any]) -> str:
 
 ## Validation
 
-**Target Savings**: {validation["target_savings_percent"]:.0f}%
-**Actual Savings**: {validation["actual_savings_percent"]:.1f}%
-**Status**: {"✅ MEETS TARGET" if validation["meets_target"] else "❌ BELOW TARGET"}
+**Target Savings**: {validation['target_savings_percent']:.0f}%
+**Actual Savings**: {validation['actual_savings_percent']:.1f}%
+**Status**: {'✅ MEETS TARGET' if validation['meets_target'] else '❌ BELOW TARGET'}
 
 ---
 
 ## Projected Annual Savings
 
 Assuming 10,000 tasks/month:
-- **Without routing**: ${cost["without_routing_usd"] * 10000 / report["total_tasks"]:.2f}/month
-  → ${cost["without_routing_usd"] * 120000 / report["total_tasks"]:.2f}/year
+- **Without routing**: ${cost['without_routing_usd'] * 10000 / report['total_tasks']:.2f}/month
+  → ${cost['without_routing_usd'] * 120000 / report['total_tasks']:.2f}/year
 
-- **With routing**: ${cost["with_routing_usd"] * 10000 / report["total_tasks"]:.2f}/month
-  → ${cost["with_routing_usd"] * 120000 / report["total_tasks"]:.2f}/year
+- **With routing**: ${cost['with_routing_usd'] * 10000 / report['total_tasks']:.2f}/month
+  → ${cost['with_routing_usd'] * 120000 / report['total_tasks']:.2f}/year
 
-- **Net Savings**: ${cost["savings_usd"] * 120000 / report["total_tasks"]:.2f}/year
+- **Net Savings**: ${cost['savings_usd'] * 120000 / report['total_tasks']:.2f}/year
 
 ---
 
@@ -387,7 +390,7 @@ Assuming 10,000 tasks/month:
 
     # Show first 10 tasks
     for i, task in enumerate(report["task_breakdown"][:10]):
-        report_text += f"\n{i + 1}. {task['description']}\n"
+        report_text += f"\n{i+1}. {task['description']}\n"
         report_text += f"   Agent: {task['agent']}, "
         report_text += f"Complexity: {task['complexity']}, "
         report_text += f"Model: {task['model']}\n"
@@ -398,9 +401,9 @@ Assuming 10,000 tasks/month:
         report_text += f"\n... and {len(report['task_breakdown']) - 10} more tasks\n"
 
     report_text += f"""
-{"=" * 70}
-{"✅ COST SAVINGS VALIDATED" if validation["meets_target"] else "⚠️  REVIEW REQUIRED"}
-{"=" * 70}
+{'='*70}
+{'✅ COST SAVINGS VALIDATED' if validation['meets_target'] else '⚠️  REVIEW REQUIRED'}
+{'='*70}
 """
 
     return report_text
@@ -412,21 +415,32 @@ Assuming 10,000 tasks/month:
 
 
 def main():
-    parser = argparse.ArgumentParser(description="Validate Leap 3 cost savings")
-    parser.add_argument(
-        "--sessions", type=int, default=7, help="Number of days of sessions to analyze (default: 7)"
+    parser = argparse.ArgumentParser(
+        description="Validate Leap 3 cost savings"
     )
-    parser.add_argument("--output", type=Path, help="Output JSON report to file")
+    parser.add_argument(
+        "--sessions",
+        type=int,
+        default=7,
+        help="Number of days of sessions to analyze (default: 7)"
+    )
+    parser.add_argument(
+        "--output",
+        type=Path,
+        help="Output JSON report to file"
+    )
     parser.add_argument(
         "--synthetic",
         action="store_true",
-        help="Use synthetic task distribution (default if no logs found)",
+        help="Use synthetic task distribution (default if no logs found)"
     )
 
     args = parser.parse_args()
 
     # Initialize components
-    context = create_agent_context(session_id=f"cost_validation_{datetime.now().timestamp()}")
+    context = create_agent_context(
+        session_id=f"cost_validation_{datetime.now().timestamp()}"
+    )
 
     classifier = TaskComplexityClassifier()
     router = ModelRouter(classifier=classifier)
@@ -447,7 +461,7 @@ def main():
 
     # Save JSON if requested
     if args.output:
-        with open(args.output, "w") as f:
+        with open(args.output, 'w') as f:
             json.dump(report, f, indent=2)
         print(f"\n📄 JSON report saved to: {args.output}")
 
