@@ -290,10 +290,7 @@ class HybridExecutor:
             # Post-execution quality feedback hook (Leap 4, Article IV)
             if self.enable_quality_feedback and result.status == "success":
                 await self._run_quality_feedback_loop(
-                    task_id=task_id,
-                    message=message,
-                    result=result,
-                    start_time=start_time
+                    task_id=task_id, message=message, result=result, start_time=start_time
                 )
 
         except Exception as e:
@@ -302,7 +299,9 @@ class HybridExecutor:
         finally:
             await self.message_bus.ack(message.get("_message_id"))
 
-    async def _classify_task_tier(self, task: JSONValue, task_id: str) -> tuple[ModelTier, str, float, dict[str, float] | None]:
+    async def _classify_task_tier(
+        self, task: JSONValue, task_id: str
+    ) -> tuple[ModelTier, str, float, dict[str, float] | None]:
         """
         Classify task to determine initial tier (ML-first with rule-based fallback).
 
@@ -332,9 +331,9 @@ class HybridExecutor:
 
         # Map tier strings to ModelTier enum
         tier_mapping = {
-            "P1": ModelTier.CLOUD,      # Complex
+            "P1": ModelTier.CLOUD,  # Complex
             "P2": ModelTier.LOCAL_PLUS,  # Moderate
-            "P3": ModelTier.LOCAL,       # Simple
+            "P3": ModelTier.LOCAL,  # Simple
         }
 
         # Step 1: A/B test decision
@@ -355,8 +354,12 @@ class HybridExecutor:
                         # High confidence: Use ML prediction
                         tier = tier_mapping.get(classification.tier, ModelTier.LOCAL)
                         await self._log_prediction_async(
-                            task_id, task_description, classification.tier,
-                            classification.confidence, "ml", classification.probabilities
+                            task_id,
+                            task_description,
+                            classification.tier,
+                            classification.confidence,
+                            "ml",
+                            classification.probabilities,
                         )
                         return (tier, "ml", classification.confidence, classification.probabilities)
                     else:
@@ -367,33 +370,46 @@ class HybridExecutor:
                         )
                         tier = self._rule_based_classify(task_description)
                         await self._log_prediction_async(
-                            task_id, task_description, self._map_tier_to_string(tier),
-                            classification.confidence, "rules", classification.probabilities
+                            task_id,
+                            task_description,
+                            self._map_tier_to_string(tier),
+                            classification.confidence,
+                            "rules",
+                            classification.probabilities,
                         )
-                        return (tier, "rules", classification.confidence, classification.probabilities)
+                        return (
+                            tier,
+                            "rules",
+                            classification.confidence,
+                            classification.probabilities,
+                        )
                 else:
                     # ML error: Fallback to rules
-                    logger.warning(f"ML classification failed: {ml_result.unwrap_err()}, falling back to rules")
+                    logger.warning(
+                        f"ML classification failed: {ml_result.unwrap_err()}, falling back to rules"
+                    )
                     tier = self._rule_based_classify(task_description)
                     await self._log_prediction_async(
-                        task_id, task_description, self._map_tier_to_string(tier),
-                        0.0, "rules", None
+                        task_id,
+                        task_description,
+                        self._map_tier_to_string(tier),
+                        0.0,
+                        "rules",
+                        None,
                     )
                     return (tier, "rules", 0.0, None)
             else:
                 # ML unavailable: Fallback to rules
                 tier = self._rule_based_classify(task_description)
                 await self._log_prediction_async(
-                    task_id, task_description, self._map_tier_to_string(tier),
-                    0.0, "rules", None
+                    task_id, task_description, self._map_tier_to_string(tier), 0.0, "rules", None
                 )
                 return (tier, "rules", 0.0, None)
         else:
             # Control group: Use rule-based classification
             tier = self._rule_based_classify(task_description)
             await self._log_prediction_async(
-                task_id, task_description, self._map_tier_to_string(tier),
-                1.0, "rules", None
+                task_id, task_description, self._map_tier_to_string(tier), 1.0, "rules", None
             )
             return (tier, "rules", 1.0, None)
 
@@ -418,16 +434,27 @@ class HybridExecutor:
 
         # Complex indicators (P1 → CLOUD)
         complex_keywords = [
-            "architecture", "design", "consensus", "distributed",
-            "algorithm", "byzantine", "fault tolerance", "scalability"
+            "architecture",
+            "design",
+            "consensus",
+            "distributed",
+            "algorithm",
+            "byzantine",
+            "fault tolerance",
+            "scalability",
         ]
         if any(kw in description_lower for kw in complex_keywords):
             return ModelTier.CLOUD
 
         # Simple indicators (P3 → LOCAL)
         simple_keywords = [
-            "fix typo", "update readme", "format", "lint",
-            "comment", "documentation", "rename"
+            "fix typo",
+            "update readme",
+            "format",
+            "lint",
+            "comment",
+            "documentation",
+            "rename",
         ]
         if any(kw in description_lower for kw in simple_keywords):
             return ModelTier.LOCAL
@@ -478,7 +505,9 @@ class HybridExecutor:
         # Step 1: Classify task to determine initial tier (Leap 5 Phase 3)
         # If A/B testing disabled, use LOCAL tier (backward compatibility)
         if self._ab_test_config.enabled:
-            initial_tier, method, confidence, probabilities = await self._classify_task_tier(task, task_id)
+            initial_tier, method, confidence, probabilities = await self._classify_task_tier(
+                task, task_id
+            )
             current_tier = initial_tier
 
             logger.info(
@@ -792,11 +821,7 @@ class HybridExecutor:
         return (duration_seconds / 60.0) * 0.10
 
     async def _run_quality_feedback_loop(
-        self,
-        task_id: str,
-        message: JSONValue,
-        result: TaskResult,
-        start_time: datetime
+        self, task_id: str, message: JSONValue, result: TaskResult, start_time: datetime
     ) -> None:
         """
         Post-execution quality feedback loop (Leap 4, Article IV).
@@ -832,7 +857,7 @@ class HybridExecutor:
                 task_id=task_id,
                 original_tier=tier_name,
                 estimated_time_seconds=estimated_time,
-                actual_time_seconds=actual_time
+                actual_time_seconds=actual_time,
             )
 
             if signals_result.is_err():
@@ -851,9 +876,7 @@ class HybridExecutor:
             # Step 2: Detect misclassification (4 detection rules)
             task_description = message.get("description", "")
             detection_result = self.misclassification_detector.detect(
-                task_id=task_id,
-                signals=signals,
-                task_description=task_description
+                task_id=task_id, signals=signals, task_description=task_description
             )
 
             if detection_result.is_err():
@@ -877,8 +900,7 @@ class HybridExecutor:
 
             # Step 3: Refine VectorStore patterns (Article IV mandatory)
             refinement_result = self.rule_refiner.refine(
-                report=report,
-                task_description=task_description
+                report=report, task_description=task_description
             )
 
             if refinement_result.is_err():
@@ -906,16 +928,13 @@ class HybridExecutor:
                     "recommended_tier": report.recommended_tier,
                     "confidence": report.aggregated_confidence,
                     "patterns_updated": refinement.patterns_updated,
-                    "iteration_count": refinement.iteration_count
-                }
+                    "iteration_count": refinement.iteration_count,
+                },
             )
 
         except Exception as e:
             # Graceful degradation: log error but don't fail task execution
-            logger.error(
-                f"❌ Quality feedback loop crashed for {task_id}: {e}",
-                exc_info=True
-            )
+            logger.error(f"❌ Quality feedback loop crashed for {task_id}: {e}", exc_info=True)
 
     def _map_model_tier_to_complexity(self, tier: ModelTier) -> str:
         """
@@ -930,7 +949,7 @@ class HybridExecutor:
         mapping = {
             ModelTier.LOCAL: "simple",
             ModelTier.LOCAL_PLUS: "moderate",
-            ModelTier.CLOUD: "complex"
+            ModelTier.CLOUD: "complex",
         }
         return mapping.get(tier, "simple")
 
@@ -992,9 +1011,8 @@ class HybridExecutor:
 
         except Exception as e:
             logger.error(
-                f"Failed to load ML classifier: {e}. "
-                "Falling back to rule-based classification.",
-                exc_info=True
+                f"Failed to load ML classifier: {e}. Falling back to rule-based classification.",
+                exc_info=True,
             )
             self._ml_classifier = None
             return None
@@ -1006,7 +1024,7 @@ class HybridExecutor:
         tier: str,
         confidence: float,
         method: str,
-        probabilities: dict[str, float] | None = None
+        probabilities: dict[str, float] | None = None,
     ) -> None:
         """
         Log prediction to VectorStore asynchronously (Article IV).
@@ -1048,9 +1066,7 @@ class HybridExecutor:
             # Article IV: Store prediction in VectorStore (async)
             from tools.ml_routing.prediction_logger import log_prediction
 
-            asyncio.create_task(
-                asyncio.to_thread(log_prediction, self.agent_context, prediction)
-            )
+            asyncio.create_task(asyncio.to_thread(log_prediction, self.agent_context, prediction))
 
         except Exception as e:
             # Non-blocking: Log error but do not fail task
@@ -1239,21 +1255,14 @@ class HybridExecutor:
                         # Reload active model after successful rollout
                         self._reload_active_model()
                     else:
-                        logger.error(
-                            f"❌ Automated retraining failed: {result.unwrap_err()}"
-                        )
+                        logger.error(f"❌ Automated retraining failed: {result.unwrap_err()}")
 
                 except Exception as e:
-                    logger.error(
-                        f"Retraining pipeline crashed: {e}",
-                        exc_info=True
-                    )
+                    logger.error(f"Retraining pipeline crashed: {e}", exc_info=True)
 
             # Start background thread
             retraining_thread = threading.Thread(
-                target=run_retraining,
-                name="AutoRetrainingThread",
-                daemon=True
+                target=run_retraining, name="AutoRetrainingThread", daemon=True
             )
             retraining_thread.start()
 

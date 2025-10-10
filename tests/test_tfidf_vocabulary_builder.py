@@ -294,10 +294,7 @@ class TestBuildVocabularyEdgeCases:
         """Test that only top_n terms are returned."""
         # Arrange
         builder = TfidfVocabularyBuilder()
-        tasks = [
-            f"Task {i} with unique word_{i} and common terms"
-            for i in range(50)
-        ]
+        tasks = [f"Task {i} with unique word_{i} and common terms" for i in range(50)]
 
         # Act
         result = builder.build_vocabulary(tasks, top_n=10)

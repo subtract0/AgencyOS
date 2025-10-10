@@ -195,6 +195,7 @@ class ModelStorage:
             else:
                 # Validate version format (vX.Y)
                 import re
+
                 if not re.match(r"^v\d+\.\d+", version):
                     return Err(
                         f"Invalid version format: '{version}'. "
@@ -241,9 +242,7 @@ class ModelStorage:
 
             # Validate model size <50MB
             if model_size_mb > 50:
-                print(
-                    f"⚠️  Warning: Model size {model_size_mb:.1f}MB exceeds 50MB target"
-                )
+                print(f"⚠️  Warning: Model size {model_size_mb:.1f}MB exceeds 50MB target")
 
             return Ok(model_path)
 
@@ -287,16 +286,12 @@ class ModelStorage:
             if version == "latest":
                 latest_link = self.base_dir / "routing_classifier_latest.pkl"
                 if not latest_link.exists():
-                    return Err(
-                        "No models found (routing_classifier_latest.pkl missing)"
-                    )
+                    return Err("No models found (routing_classifier_latest.pkl missing)")
                 try:
                     model_path = latest_link.resolve()
                     # Check if resolved path exists (symlink could be broken)
                     if not model_path.exists():
-                        return Err(
-                            f"Model file not found (broken symlink: {model_path.name})"
-                        )
+                        return Err(f"Model file not found (broken symlink: {model_path.name})")
                 except Exception as e:
                     return Err(f"Failed to resolve latest symlink: {e}")
             else:
@@ -329,9 +324,7 @@ class ModelStorage:
 
             # Step 4: Validate load time <1s
             if load_time > 1.0:
-                print(
-                    f"⚠️  Warning: Model load time {load_time:.2f}s exceeds 1s target"
-                )
+                print(f"⚠️  Warning: Model load time {load_time:.2f}s exceeds 1s target")
 
             return Ok(model)
 

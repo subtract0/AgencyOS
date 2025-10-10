@@ -201,7 +201,9 @@ def mock_openai_embeddings():
 
         # Mock OpenAI class to return our mock client
         mock_openai_module.OpenAI.return_value = mock_client_instance
-        mock_openai_module.APITimeoutError = openai.APITimeoutError  # Keep real exception for testing
+        mock_openai_module.APITimeoutError = (
+            openai.APITimeoutError
+        )  # Keep real exception for testing
 
         yield mock_openai_module
 
@@ -234,7 +236,9 @@ def mock_context_with_samples(test_context, mock_vectorstore_samples):
 # ============================================================================
 
 
-def test_phase1_e2e_pipeline(mock_context_with_samples, mock_vectorstore_samples, mock_openai_embeddings):
+def test_phase1_e2e_pipeline(
+    mock_context_with_samples, mock_vectorstore_samples, mock_openai_embeddings
+):
     """
     Test complete Phase 1 workflow: vocabulary build → feature extraction → dataset preparation.
 
@@ -265,7 +269,9 @@ def test_phase1_e2e_pipeline(mock_context_with_samples, mock_vectorstore_samples
     # Validate: Vocabulary structure (may be <100 if insufficient unique terms)
     # With 100 task samples, we expect at least 50 unique terms after stopword filtering
     assert len(vocab.terms) >= 50, f"Expected ≥50 terms, got {len(vocab.terms)}"
-    assert len(vocab.idf_scores) == len(vocab.terms), f"IDF scores mismatch: {len(vocab.idf_scores)} vs {len(vocab.terms)}"
+    assert len(vocab.idf_scores) == len(vocab.terms), (
+        f"IDF scores mismatch: {len(vocab.idf_scores)} vs {len(vocab.terms)}"
+    )
     assert vocab.version == "v1.0"
     assert isinstance(vocab.created_at, datetime)
 
@@ -299,8 +305,12 @@ def test_phase1_e2e_pipeline(mock_context_with_samples, mock_vectorstore_samples
 
     # Validate: TrainingDataset structure
     assert len(dataset.samples) == 100, f"Expected 100 samples, got {len(dataset.samples)}"
-    assert len(dataset.train_indices) == 80, f"Expected 80 train samples, got {len(dataset.train_indices)}"
-    assert len(dataset.val_indices) == 20, f"Expected 20 val samples, got {len(dataset.val_indices)}"
+    assert len(dataset.train_indices) == 80, (
+        f"Expected 80 train samples, got {len(dataset.train_indices)}"
+    )
+    assert len(dataset.val_indices) == 20, (
+        f"Expected 20 val samples, got {len(dataset.val_indices)}"
+    )
 
     # Validate: No index overlap
     train_set = set(dataset.train_indices)
@@ -314,9 +324,13 @@ def test_phase1_e2e_pipeline(mock_context_with_samples, mock_vectorstore_samples
     for i, sample in enumerate(dataset.samples):
         features = sample.features
         flat_array = features.to_flat_array()
-        assert len(flat_array) == expected_dims, f"Sample {i}: Expected {expected_dims} dimensions, got {len(flat_array)}"
+        assert len(flat_array) == expected_dims, (
+            f"Sample {i}: Expected {expected_dims} dimensions, got {len(flat_array)}"
+        )
         assert len(features.embedding) == 1536, f"Sample {i}: Expected 1536-dim embedding"
-        assert len(features.tfidf_features) == 100, f"Sample {i}: Expected 100-dim TF-IDF features (padded)"
+        assert len(features.tfidf_features) == 100, (
+            f"Sample {i}: Expected 100-dim TF-IDF features (padded)"
+        )
 
     # Validate: Label distribution balanced (stratified split)
     train_labels = [dataset.samples[i].label for i in dataset.train_indices]
@@ -344,7 +358,9 @@ def test_phase1_e2e_pipeline(mock_context_with_samples, mock_vectorstore_samples
     assert dataset.metadata.source == "vectorstore_quality_feedback"
 
 
-def test_phase1_pipeline_performance(mock_context_with_samples, mock_vectorstore_samples, mock_openai_embeddings):
+def test_phase1_pipeline_performance(
+    mock_context_with_samples, mock_vectorstore_samples, mock_openai_embeddings
+):
     """
     Test E2E pipeline completes <30 seconds for 100 samples.
 
@@ -444,7 +460,9 @@ def test_vocabulary_persistence(tmp_path, mock_vectorstore_samples):
     assert loaded_vocab.version == "v1.0"
 
 
-def test_dataset_serialization(mock_context_with_samples, mock_vectorstore_samples, mock_openai_embeddings):
+def test_dataset_serialization(
+    mock_context_with_samples, mock_vectorstore_samples, mock_openai_embeddings
+):
     """
     Test TrainingDataset can be serialized to JSON.
 
@@ -504,7 +522,9 @@ def test_dataset_serialization(mock_context_with_samples, mock_vectorstore_sampl
 # ============================================================================
 
 
-def test_constitutional_article_i_complete_context(mock_context_with_samples, mock_vectorstore_samples, mock_openai_embeddings):
+def test_constitutional_article_i_complete_context(
+    mock_context_with_samples, mock_vectorstore_samples, mock_openai_embeddings
+):
     """
     Test Article I: Complete context (all VectorStore samples queried).
 
@@ -570,7 +590,9 @@ def test_constitutional_article_ii_100_verification():
     assert True, "Article II: All Phase 1 integration tests passing"
 
 
-def test_constitutional_article_iv_vectorstore_integration(mock_context_with_samples, mock_vectorstore_samples, mock_openai_embeddings):
+def test_constitutional_article_iv_vectorstore_integration(
+    mock_context_with_samples, mock_vectorstore_samples, mock_openai_embeddings
+):
     """
     Test Article IV: VectorStore integration (cross-session learning).
 
@@ -632,7 +654,9 @@ def test_constitutional_article_iv_vectorstore_integration(mock_context_with_sam
 # ============================================================================
 
 
-def test_generate_phase1_summary_report(tmp_path, mock_context_with_samples, mock_vectorstore_samples, mock_openai_embeddings):
+def test_generate_phase1_summary_report(
+    tmp_path, mock_context_with_samples, mock_vectorstore_samples, mock_openai_embeddings
+):
     """
     Generate Phase 1 execution summary report.
 
