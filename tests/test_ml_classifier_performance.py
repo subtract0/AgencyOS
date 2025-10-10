@@ -29,7 +29,6 @@ Date: 2025-10-10
 
 import time
 from pathlib import Path
-from typing import List
 from unittest.mock import Mock, patch
 
 import numpy as np
