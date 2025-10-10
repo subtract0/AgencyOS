@@ -18,11 +18,10 @@ import json
 import os
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Dict, List
+from typing import Any
 
 from shared.agent_context import create_agent_context
 from shared.skill_vector import SkillVector
-
 
 # ============================================================================
 # ASCII Progress Bar
@@ -146,7 +145,7 @@ Overall Skill Level: {progress_bar(skills_dict['overall_skill_level'])}
         dashboard += f"  {cat_name:25s} {progress_bar(cat_value)}\n"
 
     # Top 10 Skills
-    dashboard += f"\n  🏆 Top 10 Skills (Individual Dimensions)\n"
+    dashboard += "\n  🏆 Top 10 Skills (Individual Dimensions)\n"
     dashboard += f"  {'─' * 60}\n\n"
 
     top_skills = skill_vector.get_top_skills(n=10)
@@ -155,7 +154,7 @@ Overall Skill Level: {progress_bar(skills_dict['overall_skill_level'])}
         dashboard += f"  {display_name:30s} {progress_bar(skill_value)}\n"
 
     # Weakest 5 Skills (improvement areas)
-    dashboard += f"\n  ⚠️  Areas for Improvement (Weakest 5 Skills)\n"
+    dashboard += "\n  ⚠️  Areas for Improvement (Weakest 5 Skills)\n"
     dashboard += f"  {'─' * 60}\n\n"
 
     weak_skills = skill_vector.get_weakest_skills(n=5)
@@ -185,7 +184,7 @@ Overall Skill Level: {progress_bar(skills_dict['overall_skill_level'])}
 
     # Footer
     dashboard += f"\n{'='*70}\n"
-    dashboard += f"✅ Dashboard generated successfully\n"
+    dashboard += "✅ Dashboard generated successfully\n"
     dashboard += f"{'='*70}\n"
 
     return dashboard

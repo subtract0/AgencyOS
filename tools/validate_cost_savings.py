@@ -15,12 +15,11 @@ import json
 import os
 from datetime import datetime, timedelta
 from pathlib import Path
-from typing import Any, Dict, List
+from typing import Any
 
 from shared.adaptive_model_router import ModelRouter
 from shared.agent_context import create_agent_context
 from shared.task_complexity import TaskComplexityClassifier
-
 
 # ============================================================================
 # Cost Configuration (2025 Q4 Pricing)
@@ -74,7 +73,7 @@ def analyze_session_logs(sessions_dir: Path, days: int = 7) -> List[Dict[str, An
 
         # Simple parsing: look for task-like patterns
         # In production, would parse structured logs or VectorStore queries
-        with open(log_file, 'r', encoding='utf-8', errors='ignore') as f:
+        with open(log_file, encoding='utf-8', errors='ignore') as f:
             content = f.read()
 
             # Extract task indicators (simplified)

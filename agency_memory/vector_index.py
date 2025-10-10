@@ -11,7 +11,6 @@ Constitutional Compliance: Article I (Complete Context), Article II (Memory Budg
 import logging
 import os
 import pickle
-from typing import Any, cast
 
 import numpy as np
 
@@ -61,11 +60,11 @@ class VectorIndex:
         """
         try:
             import faiss
-        except ImportError:
+        except ImportError as e:
             raise ImportError(
                 "faiss-cpu is required for VectorIndex. "
                 "Install with: pip install faiss-cpu~=1.7.4"
-            )
+            ) from e
 
         self.embedding_dim = embedding_dim
         self.hnsw_m = hnsw_m
