@@ -217,7 +217,7 @@ def main(test_mode: str = "unit", fast_only: bool = False, timed: bool = False) 
             # CRITICAL: Force single worker to avoid PyTorch segfault (SPEC-021)
             # TODO: Fix parallel import issue in sentence_transformers/torch
             if worker_count > 1:
-                print(f"⚠️ WARNING: Reducing to 1 worker to avoid PyTorch segfault (see SPEC-021)")
+                print("⚠️ WARNING: Reducing to 1 worker to avoid PyTorch segfault (see SPEC-021)")
                 worker_count = 1
 
             pytest_args.extend(["-n", str(worker_count)])
