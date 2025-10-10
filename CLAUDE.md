@@ -312,26 +312,6 @@ pytest_args = ["-n", str(worker_count), "--dist", "loadgroup"]
 
 ---
 
-## **II. Session Protocol & Development Protocol**
-
-### **Session Initialization**
-
-1. **WARNING:** An unprimed session is inefficient and error-prone. You **MUST** begin every new task by using a /prime command.
-2. **Prompt:** If the first user instruction is not a /prime command, you must respond with: "ATTENTION: Session not initialized. Please select a /prime command to load context and start the mission."
-3. **Execute:** After priming, follow the workflow defined in the command, adhering strictly to the development laws.
-
-### **Development Protocol Articles**
-
-**Article VI: The Prime-First Mandate:** An unprimed session is inefficient. Every new mission must begin with a `/prime` command.
-
-**Article VII: The Development Protocol:** For any new feature development or complex task, you **must** adhere to the following structured workflow:
-1. **PRD Creation:** Use the `/create_prd` command to guide the user in creating a formal Product Requirement Document.
-2. **Task Generation:** Once the PRD is complete, use the `/generate_tasks` command to create a hierarchical task list.
-3. **Iterative Execution:** Use the `/process_tasks` command to execute one sub-task at a time, awaiting explicit user confirmation after each step before proceeding to the next.
-
----
-
-## **III. Available Commands**
 
 ### **Prime Commands** (MANDATORY START)
 
@@ -447,101 +427,9 @@ MergerAgent → Git commit/PR
 
 ---
 
-## **🤖 Claude Agent SDK Integration**
-
-Per **ADR-006**, Agency integrates Claude Agent SDK for enhanced capabilities.
-
-### **When to Use SDK Patterns**
-- **Custom Tools**: Use `@tool` decorator + `create_sdk_mcp_server()`
-- **Session Continuity**: `ClaudeSDKClient` for multi-turn conversations
-- **One-off Tasks**: `query()` function for independent operations
-- **Streaming**: Both support async streaming input/output
-
-### **SDK Quick Patterns**
-```python
-# Custom tool creation
-from claude_agent_sdk import tool, create_sdk_mcp_server
-
-@tool("analyze", "Analyze code quality", {"path": str})
-async def analyze(args):
-    result = perform_analysis(args["path"])
-    return {"content": [{"type": "text", "text": result}]}
-
-server = create_sdk_mcp_server("agency_tools", tools=[analyze])
-
-# Use with options
-from claude_agent_sdk import ClaudeAgentOptions
-options = ClaudeAgentOptions(
-    mcp_servers={"tools": server},
-    allowed_tools=["mcp__tools__analyze"],
-    permission_mode='acceptEdits'
-)
-```
-
-### **Integration Points**
-- **`tools/anthropic_agent.py`** - SDK wrapper implementations
-- **`shared/agent_context.py`** - Context management for SDK agents
-- **`docs/reference/claude-agent-sdk-python.md`** - Full SDK API reference
-
----
-
-## **💾 Anthropic Memory Tool Integration**
-
-Agency integrates Anthropic's **Memory Tool** (beta) for persistent cross-conversation memory.
-
-### **Key Features**
-- **File-based storage** in `~/.agency/memories/{session_id}/`
-- **Cross-conversation persistence** without context window bloat
-- **Security-hardened** with path traversal prevention
-- **Session isolation** for independent memory spaces
-- **6 memory commands**: view, create, str_replace, insert, delete, rename
-
-### **Quick Start**
-```python
-# Enable in AgentContext
-from shared.agent_context import create_agent_context
-
-context = create_agent_context(session_id="my_task")
-context.enable_anthropic_memory()
-
-# Use memory tool
-tool = context.get_anthropic_memory_tool()
-tool.create("/memories/project.txt", "Agency OS features...")
-tool.view("/memories/project.txt")
-tool.str_replace("/memories/project.txt", "features", "capabilities")
-```
-
-### **SDK Integration**
-```python
-# Create Claude client with memory
-from tools.anthropic_agent_with_memory import create_client_with_memory, run_with_memory
-
-client, memory_tool = create_client_with_memory(session_id="conversation_1")
-
-# Run conversation with memory enabled
-response = run_with_memory(
-    client=client,
-    memory_tool=memory_tool,
-    messages=[{"role": "user", "content": "Remember: I prefer Python"}],
-    model="claude-sonnet-4-5"
-)
-```
-
-### **Implementation Files**
-- **`tools/anthropic_memory_tool.py`** - Core memory tool with security validation
-- **`tools/anthropic_agent_with_memory.py`** - SDK integration helpers
-- **`tests/test_anthropic_memory_security.py`** - 30 security tests (100% pass)
-- **`scripts/test_anthropic_memory_beta.py`** - Beta access validation
-- **`demo_anthropic_memory.py`** - Full demo with 3 scenarios
-
-### **Requirements**
-- **anthropic>=0.42.0** (in requirements.txt)
-- **Beta header**: `context-management-2025-06-27`
-- **Supported models**: Claude Sonnet 4.5, Opus 4.1
-
----
-
 ## **🧠 Three-Tier Memory Architecture** (State-of-the-Art)
+
+**ADR-006 Integration:** Claude Agent SDK + Anthropic Memory Tool + VectorStore
 
 Agency employs a **unified memory system** for exponential autonomous growth:
 
@@ -610,10 +498,15 @@ assert os.getenv("USE_ENHANCED_MEMORY") == "true"
 - ❌ Manually document every pattern (VectorStore auto-extracts)
 - ❌ Ignore past learnings (query before action, constitutional law)
 
-### **Documentation**
-- Full architecture: `docs/MEMORY_ARCHITECTURE.md`
-- Memory Tool details: `docs/ANTHROPIC_MEMORY_TOOL.md`
-- VectorStore analysis: `agency_memory/MEMORY_ARCHITECTURE_ANALYSIS.md`
+### **Implementation Files**
+- **Memory Tool**: `tools/anthropic_memory_tool.py`, `tools/anthropic_agent_with_memory.py`
+- **SDK Integration**: `tools/anthropic_agent.py`, `shared/agent_context.py`
+- **Security**: `tests/test_anthropic_memory_security.py` (30 tests, 100% pass)
+- **Docs**: `docs/{MEMORY_ARCHITECTURE, ANTHROPIC_MEMORY_TOOL}.md`, `docs/reference/claude-agent-sdk-python.md`
+
+### **Requirements**
+- `anthropic>=0.42.0`, `USE_ENHANCED_MEMORY=true` (Article IV constitutional requirement)
+- Beta header: `context-management-2025-06-27`, Models: Claude Sonnet 4.5, Opus 4.1
 
 ---
 
