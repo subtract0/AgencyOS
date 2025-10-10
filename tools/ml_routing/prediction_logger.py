@@ -13,7 +13,6 @@ Date: 2025-10-10
 """
 
 from datetime import datetime
-from typing import Optional
 
 from shared.agent_context import AgentContext
 from shared.models.prediction_log import PredictionLog
@@ -23,7 +22,7 @@ from shared.type_definitions.result import Err, Ok, Result
 def get_predictions(
     context: AgentContext,
     since: datetime,
-    tier_filter: Optional[str] = None,
+    tier_filter: str | None = None,
 ) -> Result[list[PredictionLog], str]:
     """
     Retrieve predictions from VectorStore since given timestamp.
