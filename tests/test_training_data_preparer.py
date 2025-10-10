@@ -16,11 +16,11 @@ Date: 2025-10-10
 """
 
 from datetime import datetime
-from typing import Any
 
 import pytest
 
 from shared.agent_context import AgentContext, create_agent_context
+from shared.models.quality_feedback_sample import QualityFeedbackSample
 from shared.models.task_feature_vector import TaskFeatureVector
 from shared.models.training_dataset import DatasetMetadata, TrainingDataset, TrainingSample
 from tools.ml_routing.feature_extractor import FeatureExtractor
@@ -253,8 +253,8 @@ def test_query_vectorstore_returns_feedback_samples(preparer: TrainingDataPrepar
     samples = result.unwrap()
 
     assert len(samples) > 0
-    assert all("task_description" in s for s in samples)
-    assert all("corrected_tier" in s for s in samples)
+    assert all(hasattr(s, "task_description") for s in samples)
+    assert all(hasattr(s, "corrected_tier") for s in samples)
 
 
 def test_query_vectorstore_uses_correct_tags(preparer: TrainingDataPreparer):
@@ -266,8 +266,7 @@ def test_query_vectorstore_uses_correct_tags(preparer: TrainingDataPreparer):
 
     # All samples should have quality_feedback tag
     for sample in samples:
-        tags = sample.get("tags", [])
-        assert "quality_feedback" in tags
+        assert "quality_feedback" in sample.tags
 
 
 # === Tests for _filter_high_quality_labels() ===
@@ -276,24 +275,24 @@ def test_query_vectorstore_uses_correct_tags(preparer: TrainingDataPreparer):
 def test_filter_high_quality_labels_removes_low_confidence(preparer: TrainingDataPreparer):
     """Test _filter_high_quality_labels removes samples below confidence threshold."""
     samples = [
-        {
-            "task_description": "Task 1",
-            "corrected_tier": 2,
-            "confidence": 0.9,
-            "tier_change_count": 0,
-        },
-        {
-            "task_description": "Task 2",
-            "corrected_tier": 1,
-            "confidence": 0.5,
-            "tier_change_count": 0,
-        },
-        {
-            "task_description": "Task 3",
-            "corrected_tier": 3,
-            "confidence": 0.8,
-            "tier_change_count": 0,
-        },
+        QualityFeedbackSample(
+            task_description="Task 1",
+            corrected_tier=2,
+            confidence=0.9,
+            tier_change_count=0,
+        ),
+        QualityFeedbackSample(
+            task_description="Task 2",
+            corrected_tier=1,
+            confidence=0.5,
+            tier_change_count=0,
+        ),
+        QualityFeedbackSample(
+            task_description="Task 3",
+            corrected_tier=3,
+            confidence=0.8,
+            tier_change_count=0,
+        ),
     ]
 
     result = preparer._filter_high_quality_labels(samples, min_confidence=0.7)
@@ -303,30 +302,30 @@ def test_filter_high_quality_labels_removes_low_confidence(preparer: TrainingDat
 
     # Only samples with confidence ≥0.7 should remain
     assert len(filtered) == 2
-    assert all(s["confidence"] >= 0.7 for s in filtered)
+    assert all(s.confidence >= 0.7 for s in filtered)
 
 
 def test_filter_high_quality_labels_removes_oscillating(preparer: TrainingDataPreparer):
     """Test _filter_high_quality_labels removes oscillating samples."""
     samples = [
-        {
-            "task_description": "Task 1",
-            "corrected_tier": 2,
-            "confidence": 0.9,
-            "tier_change_count": 0,
-        },
-        {
-            "task_description": "Task 2",
-            "corrected_tier": 1,
-            "confidence": 0.9,
-            "tier_change_count": 5,
-        },
-        {
-            "task_description": "Task 3",
-            "corrected_tier": 3,
-            "confidence": 0.9,
-            "tier_change_count": 1,
-        },
+        QualityFeedbackSample(
+            task_description="Task 1",
+            corrected_tier=2,
+            confidence=0.9,
+            tier_change_count=0,
+        ),
+        QualityFeedbackSample(
+            task_description="Task 2",
+            corrected_tier=1,
+            confidence=0.9,
+            tier_change_count=5,
+        ),
+        QualityFeedbackSample(
+            task_description="Task 3",
+            corrected_tier=3,
+            confidence=0.9,
+            tier_change_count=1,
+        ),
     ]
 
     result = preparer._filter_high_quality_labels(samples, min_confidence=0.7)
@@ -336,30 +335,30 @@ def test_filter_high_quality_labels_removes_oscillating(preparer: TrainingDataPr
 
     # Only samples with tier_change_count ≤2 should remain
     assert len(filtered) == 2
-    assert all(s["tier_change_count"] <= 2 for s in filtered)
+    assert all(s.tier_change_count <= 2 for s in filtered)
 
 
 def test_filter_high_quality_labels_deduplicates(preparer: TrainingDataPreparer):
     """Test _filter_high_quality_labels removes duplicate task descriptions."""
     samples = [
-        {
-            "task_description": "Fix typo",
-            "corrected_tier": 1,
-            "confidence": 0.9,
-            "tier_change_count": 0,
-        },
-        {
-            "task_description": "Fix typo",
-            "corrected_tier": 1,
-            "confidence": 0.85,
-            "tier_change_count": 0,
-        },
-        {
-            "task_description": "Implement feature",
-            "corrected_tier": 2,
-            "confidence": 0.8,
-            "tier_change_count": 0,
-        },
+        QualityFeedbackSample(
+            task_description="Fix typo",
+            corrected_tier=1,
+            confidence=0.9,
+            tier_change_count=0,
+        ),
+        QualityFeedbackSample(
+            task_description="Fix typo",
+            corrected_tier=1,
+            confidence=0.85,
+            tier_change_count=0,
+        ),
+        QualityFeedbackSample(
+            task_description="Implement feature",
+            corrected_tier=2,
+            confidence=0.8,
+            tier_change_count=0,
+        ),
     ]
 
     result = preparer._filter_high_quality_labels(samples, min_confidence=0.7)
@@ -369,7 +368,7 @@ def test_filter_high_quality_labels_deduplicates(preparer: TrainingDataPreparer)
 
     # Duplicates should be removed
     assert len(filtered) == 2
-    task_descriptions = [s["task_description"] for s in filtered]
+    task_descriptions = [s.task_description for s in filtered]
     assert len(task_descriptions) == len(set(task_descriptions))
 
 

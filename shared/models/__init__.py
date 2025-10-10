@@ -14,6 +14,7 @@ from .dashboard import (
     SessionSummary,
 )
 from .ensemble_model import EnsembleModel
+from .extracted_metadata_features import ExtractedMetadataFeatures
 from .kanban import (
     CardStatus,
     CardType,
@@ -75,6 +76,7 @@ from .priority_task import (
     BacklogError,
     PriorityTask,
 )
+from .quality_feedback_sample import QualityFeedbackSample
 from .session import (
     CheckpointMetadata,
     CompressionMetadata,
@@ -86,13 +88,18 @@ from .session import (
     TaskProgress,
 )
 from .task_feature_vector import TaskFeatureVector
+from .task_metadata import TaskMetadata
 from .telemetry import (
     AgentMetrics,
     SystemHealth,
     TelemetryEvent,
     TelemetryMetrics,
 )
-from .training_dataset import TrainingDataset
+from .training_dataset import (
+    DatasetMetadata,
+    TrainingDataset,
+    TrainingSample,
+)
 
 __all__ = [
     # Lock models
@@ -174,6 +181,11 @@ __all__ = [
     "RetentionPolicy",
     # ML Routing models (Leap 5)
     "EnsembleModel",
+    "ExtractedMetadataFeatures",
+    "QualityFeedbackSample",
     "TaskFeatureVector",
+    "TaskMetadata",
     "TrainingDataset",
+    "TrainingSample",
+    "DatasetMetadata",
 ]

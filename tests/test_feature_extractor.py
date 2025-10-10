@@ -35,6 +35,7 @@ import openai
 import pytest
 
 from shared.models.task_feature_vector import TaskFeatureVector
+from shared.models.task_metadata import TaskMetadata
 from tools.ml_routing.feature_extractor import FeatureExtractor
 from tools.ml_routing.tfidf_vocabulary_builder import TfidfVocabulary
 
@@ -210,7 +211,7 @@ def test_metadata_extraction_all_8_fields(feature_extractor):
     """
     # Arrange
     task_description = "Refactor async test suite to fix race conditions"
-    task_metadata = {"estimated_time_seconds": 300.0, "historical_tier_mode": 2}
+    task_metadata = TaskMetadata(estimated_time_seconds=300.0, historical_tier_mode=2)
 
     # Act
     result = feature_extractor.extract_features(task_description, task_metadata)
@@ -911,7 +912,7 @@ def test_metadata_with_partial_fields(feature_extractor, sample_tasks):
     """
     # Arrange
     task_description = sample_tasks[0]
-    task_metadata = {"estimated_time_seconds": 600.0}
+    task_metadata = TaskMetadata(estimated_time_seconds=600.0)
 
     # Act
     result = feature_extractor.extract_features(task_description, task_metadata)
@@ -1137,7 +1138,7 @@ def test_full_pipeline_integration(feature_extractor):
         "Refactor async authentication module to fix race conditions. "
         "Add comprehensive test coverage for edge cases."
     )
-    task_metadata = {"estimated_time_seconds": 1800.0, "historical_tier_mode": 2}
+    task_metadata = TaskMetadata(estimated_time_seconds=1800.0, historical_tier_mode=2)
 
     # Act
     result = feature_extractor.extract_features(task_description, task_metadata)
