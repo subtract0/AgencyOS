@@ -231,7 +231,7 @@ class MemoryLockManager:
                     if cycle:
                         await self._log_deadlock(cycle)
                         logger.error(
-                            f"Deadlock detected: cycle={[c for c in cycle.cycle_paths]}, "
+                            f"Deadlock detected: cycle={list(cycle.cycle_paths)}, "
                             f"tasks={cycle.task_ids}"
                         )
 

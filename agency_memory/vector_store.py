@@ -677,9 +677,7 @@ class VectorStore:
             # Step 3: Vectorized similarity computation for all queries
             results: list[list[SimilarityResult]] = []
 
-            for query_idx, (query, query_embedding) in enumerate(
-                zip(queries, query_embeddings, strict=True)
-            ):
+            for query_embedding in query_embeddings:
                 query_results = []
 
                 for memory in all_memories:
