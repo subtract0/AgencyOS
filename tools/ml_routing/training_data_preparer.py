@@ -273,7 +273,9 @@ class TrainingDataPreparer:
 
             # Filter 2: Oscillation detection
             if sample.tier_change_count > 2:
-                self.logger.debug(f"Skipping oscillating task: {sample.tier_change_count} tier changes")
+                self.logger.debug(
+                    f"Skipping oscillating task: {sample.tier_change_count} tier changes"
+                )
                 continue
 
             # Filter 3: Deduplication
