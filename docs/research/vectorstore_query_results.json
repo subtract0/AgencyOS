@@ -1,0 +1,39 @@
+{
+  "query_timestamp": "2025-10-10T12:25:17.024583",
+  "total_patterns_found": 0,
+  "queries": {
+    "classification_patterns": {
+      "count": 0,
+      "patterns": []
+    },
+    "ml_patterns": {
+      "count": 0,
+      "patterns": []
+    },
+    "routing_patterns": {
+      "count": 0,
+      "patterns": []
+    },
+    "quality_patterns": {
+      "count": 0,
+      "patterns": []
+    },
+    "vectorstore_learnings": {
+      "count": 0,
+      "patterns": []
+    },
+    "complexity_patterns": {
+      "count": 0,
+      "patterns": []
+    }
+  },
+  "high_confidence_patterns": [],
+  "recommendations": [
+    {
+      "category": "Cold Start Problem",
+      "recommendation": "Use existing Leap 3 keyword/AST classification as fallback when ML model confidence < 0.6.",
+      "rationale": "Hybrid approach (rule-based + ML) ensures stability during initial training phase.",
+      "priority": "HIGH"
+    }
+  ]
+}

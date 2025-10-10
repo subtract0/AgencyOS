@@ -14,7 +14,7 @@ Reference: specs/spec-004-quality-feedback-loop.md Section 9 (Monitoring)
 """
 
 from datetime import datetime
-from typing import Dict, List, Optional
+
 from pydantic import BaseModel, Field
 
 
@@ -77,7 +77,7 @@ class MilestoneMetrics(BaseModel):
         le=1.0,
         description="% of refinements that improved accuracy"
     )
-    avg_refinement_confidence: Optional[float] = Field(
+    avg_refinement_confidence: float | None = Field(
         None,
         ge=0.0,
         le=1.0,
@@ -85,19 +85,19 @@ class MilestoneMetrics(BaseModel):
     )
 
     # Per-tier breakdown
-    p1_accuracy: Optional[float] = Field(
+    p1_accuracy: float | None = Field(
         None,
         ge=0.0,
         le=1.0,
         description="Accuracy for P1 (complex) tasks"
     )
-    p2_accuracy: Optional[float] = Field(
+    p2_accuracy: float | None = Field(
         None,
         ge=0.0,
         le=1.0,
         description="Accuracy for P2 (moderate) tasks"
     )
-    p3_accuracy: Optional[float] = Field(
+    p3_accuracy: float | None = Field(
         None,
         ge=0.0,
         le=1.0,
@@ -105,18 +105,18 @@ class MilestoneMetrics(BaseModel):
     )
 
     # Quality signal statistics
-    avg_test_failure_rate: Optional[float] = Field(
+    avg_test_failure_rate: float | None = Field(
         None,
         ge=0.0,
         le=1.0,
         description="Average test failure rate across tasks"
     )
-    avg_code_churn: Optional[float] = Field(
+    avg_code_churn: float | None = Field(
         None,
         ge=0.0,
         description="Average code churn (lines changed)"
     )
-    avg_execution_time_ratio: Optional[float] = Field(
+    avg_execution_time_ratio: float | None = Field(
         None,
         ge=0.0,
         description="Average execution time ratio (actual/estimated)"
@@ -163,7 +163,7 @@ class MonitoringMilestone(BaseModel):
         default_factory=datetime.now,
         description="Timestamp when milestone was reached"
     )
-    time_since_start: Optional[float] = Field(
+    time_since_start: float | None = Field(
         None,
         ge=0.0,
         description="Seconds since monitoring started"
@@ -187,23 +187,23 @@ class MonitoringMilestone(BaseModel):
         default=True,
         description="Accuracy trending upward compared to previous milestone"
     )
-    accuracy_delta: Optional[float] = Field(
+    accuracy_delta: float | None = Field(
         None,
         description="Accuracy change since last milestone (+/- percentage points)"
     )
 
     # Dashboard snapshot reference
-    dashboard_snapshot_path: Optional[str] = Field(
+    dashboard_snapshot_path: str | None = Field(
         None,
         description="Path to saved dashboard HTML snapshot"
     )
 
     # Learning insights
-    top_misclassification_patterns: List[str] = Field(
+    top_misclassification_patterns: list[str] = Field(
         default_factory=list,
         description="Most common misclassification patterns detected"
     )
-    recommended_actions: List[str] = Field(
+    recommended_actions: list[str] = Field(
         default_factory=list,
         description="Suggested actions to improve accuracy"
     )
@@ -258,7 +258,7 @@ class MilestoneHistory(BaseModel):
         description="When monitoring started"
     )
 
-    milestones: List[MonitoringMilestone] = Field(
+    milestones: list[MonitoringMilestone] = Field(
         default_factory=list,
         description="Ordered list of reached milestones"
     )
@@ -267,29 +267,29 @@ class MilestoneHistory(BaseModel):
         default=False,
         description="True when all 4 milestones reached (100 tasks)"
     )
-    final_accuracy: Optional[float] = Field(
+    final_accuracy: float | None = Field(
         None,
         ge=0.0,
         le=1.0,
         description="Final accuracy at 100-task milestone"
     )
-    accuracy_improvement: Optional[float] = Field(
+    accuracy_improvement: float | None = Field(
         None,
         description="Total accuracy improvement from start to 100 tasks"
     )
 
-    def get_latest_milestone(self) -> Optional[MonitoringMilestone]:
+    def get_latest_milestone(self) -> MonitoringMilestone | None:
         """Get most recent milestone."""
         return self.milestones[-1] if self.milestones else None
 
-    def get_milestone_by_number(self, number: int) -> Optional[MonitoringMilestone]:
+    def get_milestone_by_number(self, number: int) -> MonitoringMilestone | None:
         """Get specific milestone by number (1-4)."""
         for milestone in self.milestones:
             if milestone.milestone_number == number:
                 return milestone
         return None
 
-    def calculate_progression_rate(self) -> Optional[float]:
+    def calculate_progression_rate(self) -> float | None:
         """
         Calculate average accuracy improvement per milestone.
 

@@ -14,9 +14,8 @@ Constitutional Compliance:
 Reference: /Users/am/Code/Agency/specs/spec-004-quality-feedback-loop.md Section 7.4
 """
 
+
 from pydantic import BaseModel, Field
-from typing import List, Optional
-from datetime import datetime
 
 from shared.models.quality_signals import SeverityLevel
 
@@ -68,7 +67,7 @@ class DetectedIssue(BaseModel):
         description="Human-readable issue description with context (e.g., 'Test failure rate 33%')"
     )
 
-    signal_value: Optional[float] = Field(
+    signal_value: float | None = Field(
         None,
         description="Signal value that triggered rule (e.g., 0.33 for test_failure_rate). None for user_feedback."
     )
@@ -147,7 +146,7 @@ class MisclassificationReport(BaseModel):
         pattern="^(simple|moderate|complex)$"
     )
 
-    detected_issues: List[DetectedIssue] = Field(
+    detected_issues: list[DetectedIssue] = Field(
         ...,
         description="List of triggered detection rules with confidence and severity"
     )

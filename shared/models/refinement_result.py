@@ -17,9 +17,8 @@ Constitutional Compliance:
 Reference: /Users/am/Code/Agency/specs/spec-004-quality-feedback-loop.md Section 8
 """
 
+
 from pydantic import BaseModel, Field
-from typing import List, Dict, Optional
-from datetime import datetime
 
 
 class RefinementEntry(BaseModel):
@@ -130,7 +129,7 @@ class RefinementHistory(BaseModel):
         description="Number of refinement iterations (max 3 per spec Section 8.6)"
     )
 
-    refinement_history: List[RefinementEntry] = Field(
+    refinement_history: list[RefinementEntry] = Field(
         default_factory=list,
         description="List of refinement entries in chronological order"
     )
@@ -262,7 +261,7 @@ class RefinementResult(BaseModel):
         description="Number of VectorStore patterns modified (0 if no update needed)"
     )
 
-    confidence_before: Optional[float] = Field(
+    confidence_before: float | None = Field(
         None,
         ge=0.0,
         le=1.0,
@@ -276,7 +275,7 @@ class RefinementResult(BaseModel):
         description="Confidence score after refinement (formula: old * 0.95 + 0.05)"
     )
 
-    threshold_adjustments: List[ThresholdAdjustment] = Field(
+    threshold_adjustments: list[ThresholdAdjustment] = Field(
         default_factory=list,
         description="List of threshold adjustments made during refinement"
     )
@@ -293,7 +292,7 @@ class RefinementResult(BaseModel):
         description="True if routing accuracy >98% on validation set (spec Section 8.5)"
     )
 
-    accuracy_estimate: Optional[float] = Field(
+    accuracy_estimate: float | None = Field(
         None,
         ge=0.0,
         le=1.0,
@@ -357,12 +356,12 @@ class VectorStoreSnapshot(BaseModel):
         description="ISO 8601 timestamp of snapshot creation (UTC)"
     )
 
-    patterns: List[Dict] = Field(
+    patterns: list[dict] = Field(
         ...,
         description="List of all misclassification patterns in VectorStore at snapshot time"
     )
 
-    thresholds: Dict[str, float] = Field(
+    thresholds: dict[str, float] = Field(
         ...,
         description="Detection thresholds at snapshot time (test_failure_rate, code_churn_lines, etc.)"
     )

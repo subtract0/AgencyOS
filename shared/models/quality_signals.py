@@ -16,10 +16,10 @@ Constitutional compliance:
 Reference: specs/spec-004-quality-feedback-loop.md Section 6.1
 """
 
+from datetime import UTC, datetime
 from enum import Enum
-from datetime import datetime, UTC
+
 from pydantic import BaseModel, Field, model_validator
-from typing import Optional
 
 
 class SeverityLevel(str, Enum):
@@ -88,7 +88,7 @@ class QualitySignals(BaseModel):
     )
 
     # Signal 1: Test Failures
-    test_failure_rate: Optional[float] = Field(
+    test_failure_rate: float | None = Field(
         None,
         ge=0.0,
         le=1.0,
@@ -97,7 +97,7 @@ class QualitySignals(BaseModel):
     )
 
     # Signal 2: Code Churn
-    code_churn_lines: Optional[int] = Field(
+    code_churn_lines: int | None = Field(
         None,
         ge=0,
         description="Total lines changed after initial commit (additions + deletions). "
@@ -105,7 +105,7 @@ class QualitySignals(BaseModel):
     )
 
     # Signal 3: Execution Timing
-    execution_time_ratio: Optional[float] = Field(
+    execution_time_ratio: float | None = Field(
         None,
         ge=0.0,
         description="Ratio of actual to estimated execution time (>1.0 means overrun). "
@@ -113,7 +113,7 @@ class QualitySignals(BaseModel):
     )
 
     # Signal 4: User Feedback
-    user_feedback: Optional[UserFeedback] = Field(
+    user_feedback: UserFeedback | None = Field(
         None,
         description="Explicit user classification feedback (manual override). "
                     "CRITICAL if misclassified (highest confidence signal)"
