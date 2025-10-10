@@ -92,7 +92,11 @@ from .telemetry import (
     TelemetryEvent,
     TelemetryMetrics,
 )
-from .training_dataset import TrainingDataset
+from .training_dataset import (
+    DatasetMetadata,
+    TrainingDataset,
+    TrainingSample,
+)
 
 __all__ = [
     # Lock models
@@ -176,4 +180,6 @@ __all__ = [
     "EnsembleModel",
     "TaskFeatureVector",
     "TrainingDataset",
+    "TrainingSample",
+    "DatasetMetadata",
 ]

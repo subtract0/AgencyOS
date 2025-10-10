@@ -49,10 +49,7 @@ from sklearn.ensemble import (
 def mock_rf_model():
     """Create mock RandomForestClassifier for testing."""
     return RandomForestClassifier(
-        n_estimators=100,
-        max_depth=10,
-        min_samples_split=5,
-        random_state=42
+        n_estimators=100, max_depth=10, min_samples_split=5, random_state=42
     )
 
 
@@ -60,10 +57,7 @@ def mock_rf_model():
 def mock_gb_model():
     """Create mock GradientBoostingClassifier for testing."""
     return GradientBoostingClassifier(
-        n_estimators=50,
-        learning_rate=0.1,
-        max_depth=5,
-        random_state=42
+        n_estimators=50, learning_rate=0.1, max_depth=5, random_state=42
     )
 
 
@@ -78,9 +72,7 @@ def mock_ensemble(mock_rf_model, mock_gb_model):
     import numpy as np
 
     ensemble = VotingClassifier(
-        estimators=[("rf", mock_rf_model), ("gb", mock_gb_model)],
-        voting="soft",
-        weights=[0.7, 0.3]
+        estimators=[("rf", mock_rf_model), ("gb", mock_gb_model)], voting="soft", weights=[0.7, 0.3]
     )
 
     # Create minimal training data for fitting
@@ -108,7 +100,7 @@ def valid_feature_names():
         "has_async_keyword",
         "has_fix_keyword",
         "estimated_time_seconds",
-        "historical_tier_mode"
+        "historical_tier_mode",
     ]
     return embedding_names + tfidf_names + metadata_names
 
@@ -148,7 +140,7 @@ class TestFieldValidation:
             validation_accuracy=0.984,  # ≥0.98 ✓
             false_negative_rate=0.018,  # ≤0.02 ✓
             training_date=valid_training_date,
-            feature_names=valid_feature_names  # 1644 items ✓
+            feature_names=valid_feature_names,  # 1644 items ✓
         )
 
         # Assert: All fields set correctly
@@ -171,12 +163,15 @@ class TestFieldValidation:
         """
         # Arrange
         from shared.models.ensemble_model import EnsembleModel
+
         invalid_accuracy = 0.97  # Below 0.98 threshold
 
         # Act & Assert
         # Pydantic Field(ge=0.98) validation happens before custom validator
         # So we get ValidationError with "greater than or equal" message
-        with pytest.raises((ValueError, ValidationError), match="(Model accuracy|greater than or equal)"):
+        with pytest.raises(
+            (ValueError, ValidationError), match="(Model accuracy|greater than or equal)"
+        ):
             EnsembleModel(
                 ensemble=mock_ensemble,
                 rf_model=mock_rf_model,
@@ -184,7 +179,7 @@ class TestFieldValidation:
                 validation_accuracy=invalid_accuracy,
                 false_negative_rate=0.018,
                 training_date=valid_training_date,
-                feature_names=valid_feature_names
+                feature_names=valid_feature_names,
             )
 
     def test_false_negative_rate_above_threshold(
@@ -198,11 +193,14 @@ class TestFieldValidation:
         """
         # Arrange
         from shared.models.ensemble_model import EnsembleModel
+
         invalid_fn_rate = 0.03  # Above 0.02 threshold
 
         # Act & Assert
         # Pydantic Field(le=0.02) validation happens before custom validator
-        with pytest.raises((ValueError, ValidationError), match="(False negative rate|less than or equal)"):
+        with pytest.raises(
+            (ValueError, ValidationError), match="(False negative rate|less than or equal)"
+        ):
             EnsembleModel(
                 ensemble=mock_ensemble,
                 rf_model=mock_rf_model,
@@ -210,7 +208,7 @@ class TestFieldValidation:
                 validation_accuracy=0.984,
                 false_negative_rate=invalid_fn_rate,
                 training_date=valid_training_date,
-                feature_names=valid_feature_names
+                feature_names=valid_feature_names,
             )
 
     def test_feature_names_wrong_length(
@@ -224,6 +222,7 @@ class TestFieldValidation:
         """
         # Arrange
         from shared.models.ensemble_model import EnsembleModel
+
         wrong_feature_names = [f"feature_{i}" for i in range(1000)]  # Should be 1644
 
         # Act & Assert
@@ -235,7 +234,7 @@ class TestFieldValidation:
                 validation_accuracy=0.984,
                 false_negative_rate=0.018,
                 training_date=valid_training_date,
-                feature_names=wrong_feature_names
+                feature_names=wrong_feature_names,
             )
 
     def test_training_date_invalid_format(
@@ -249,6 +248,7 @@ class TestFieldValidation:
         """
         # Arrange
         from shared.models.ensemble_model import EnsembleModel
+
         invalid_date = "2025-13-40"  # Invalid date (month 13, day 40)
 
         # Act & Assert
@@ -260,7 +260,7 @@ class TestFieldValidation:
                 validation_accuracy=0.984,
                 false_negative_rate=0.018,
                 training_date=invalid_date,
-                feature_names=valid_feature_names
+                feature_names=valid_feature_names,
             )
 
 
@@ -292,7 +292,7 @@ class TestModelValidator:
             validation_accuracy=0.984,
             false_negative_rate=0.018,
             training_date=valid_training_date,
-            feature_names=valid_feature_names
+            feature_names=valid_feature_names,
         )
 
         # Assert: Ensemble contains both models (using estimators, not estimators_)
@@ -319,7 +319,7 @@ class TestModelValidator:
             validation_accuracy=0.984,
             false_negative_rate=0.018,
             training_date=valid_training_date,
-            feature_names=valid_feature_names
+            feature_names=valid_feature_names,
         )
 
         # Assert: Voting strategy is 'soft'
@@ -338,10 +338,7 @@ class TestModelValidator:
         from shared.models.ensemble_model import EnsembleModel
 
         # Create ensemble with only RF (missing GB)
-        incomplete_ensemble = VotingClassifier(
-            estimators=[("rf", mock_rf_model)],
-            voting="soft"
-        )
+        incomplete_ensemble = VotingClassifier(estimators=[("rf", mock_rf_model)], voting="soft")
 
         # Fit the incomplete ensemble
         X_train = np.random.rand(10, 1644)
@@ -360,7 +357,7 @@ class TestModelValidator:
                 validation_accuracy=0.984,
                 false_negative_rate=0.018,
                 training_date=valid_training_date,
-                feature_names=valid_feature_names
+                feature_names=valid_feature_names,
             )
 
 
@@ -393,7 +390,7 @@ class TestUtilityMethods:
             validation_accuracy=0.984,
             false_negative_rate=0.018,
             training_date=valid_training_date,
-            feature_names=valid_feature_names
+            feature_names=valid_feature_names,
         )
 
         # Act: Export metadata
@@ -407,7 +404,7 @@ class TestUtilityMethods:
             "training_date",
             "feature_count",
             "model_type",
-            "sklearn_version"
+            "sklearn_version",
         }
         assert metadata["validation_accuracy"] == 0.984
         assert metadata["false_negative_rate"] == 0.018
@@ -434,7 +431,7 @@ class TestUtilityMethods:
             validation_accuracy=0.984,
             false_negative_rate=0.018,
             training_date=valid_training_date,
-            feature_names=valid_feature_names
+            feature_names=valid_feature_names,
         )
 
         # Act: Export metadata
@@ -447,7 +444,7 @@ class TestUtilityMethods:
             ensemble=mock_ensemble,
             rf_model=mock_rf_model,
             gb_model=mock_gb_model,
-            feature_names=valid_feature_names
+            feature_names=valid_feature_names,
         )
 
         # Assert: Metadata matches
@@ -477,7 +474,7 @@ class TestUtilityMethods:
             validation_accuracy=0.984,
             false_negative_rate=0.018,
             training_date=valid_training_date,
-            feature_names=valid_feature_names
+            feature_names=valid_feature_names,
         )
 
         # Act: Export metadata
@@ -503,18 +500,20 @@ class TestUtilityMethods:
         invalid_metadata = {
             "validation_accuracy": 0.95,  # Below 0.98 threshold
             "false_negative_rate": 0.018,
-            "training_date": valid_training_date
+            "training_date": valid_training_date,
         }
 
         # Act & Assert: from_dict validates thresholds
         # Pydantic uses ValidationError, not ValueError for built-in constraints
-        with pytest.raises((ValueError, ValidationError), match="(Model accuracy|greater than or equal)"):
+        with pytest.raises(
+            (ValueError, ValidationError), match="(Model accuracy|greater than or equal)"
+        ):
             EnsembleModel.from_dict(
                 invalid_metadata,
                 ensemble=mock_ensemble,
                 rf_model=mock_rf_model,
                 gb_model=mock_gb_model,
-                feature_names=valid_feature_names
+                feature_names=valid_feature_names,
             )
 
 
@@ -545,7 +544,7 @@ class TestEdgeCases:
             validation_accuracy=0.98,  # Exactly at threshold
             false_negative_rate=0.018,
             training_date=valid_training_date,
-            feature_names=valid_feature_names
+            feature_names=valid_feature_names,
         )
 
         # Assert: Valid
@@ -570,7 +569,7 @@ class TestEdgeCases:
             validation_accuracy=0.984,
             false_negative_rate=0.02,  # Exactly at threshold
             training_date=valid_training_date,
-            feature_names=valid_feature_names
+            feature_names=valid_feature_names,
         )
 
         # Assert: Valid
@@ -595,7 +594,7 @@ class TestEdgeCases:
             validation_accuracy=1.0,  # Perfect
             false_negative_rate=0.0,  # Zero false negatives
             training_date=valid_training_date,
-            feature_names=valid_feature_names
+            feature_names=valid_feature_names,
         )
 
         # Assert: Valid
@@ -621,7 +620,7 @@ class TestEdgeCases:
                 validation_accuracy=0.984,
                 false_negative_rate=0.018,
                 training_date=valid_training_date,
-                feature_names=valid_feature_names
+                feature_names=valid_feature_names,
             )
 
     def test_negative_accuracy_raises_error(
@@ -644,7 +643,7 @@ class TestEdgeCases:
                 validation_accuracy=-0.5,  # Invalid
                 false_negative_rate=0.018,
                 training_date=valid_training_date,
-                feature_names=valid_feature_names
+                feature_names=valid_feature_names,
             )
 
     def test_negative_fn_rate_raises_error(
@@ -667,7 +666,7 @@ class TestEdgeCases:
                 validation_accuracy=0.984,
                 false_negative_rate=-0.1,  # Invalid
                 training_date=valid_training_date,
-                feature_names=valid_feature_names
+                feature_names=valid_feature_names,
             )
 
     def test_empty_feature_names_raises_error(
@@ -691,7 +690,7 @@ class TestEdgeCases:
                 validation_accuracy=0.984,
                 false_negative_rate=0.018,
                 training_date=valid_training_date,
-                feature_names=[]  # Empty list
+                feature_names=[],  # Empty list
             )
 
 
@@ -725,13 +724,13 @@ class TestConstitutionalCompliance:
                 validation_accuracy=0.95,  # Below threshold
                 false_negative_rate=0.018,
                 training_date=valid_training_date,
-                feature_names=valid_feature_names
+                feature_names=valid_feature_names,
             )
             pytest.fail("Expected ValidationError")
         except (ValueError, ValidationError) as e:
             error_msg = str(e)
             # Pydantic error includes threshold (0.98) and field name
-            assert ("0.98" in error_msg or "98" in error_msg)  # Threshold mentioned
+            assert "0.98" in error_msg or "98" in error_msg  # Threshold mentioned
             assert "validation_accuracy" in error_msg  # Field name
 
     def test_article_i_complete_context_validation(
@@ -755,7 +754,7 @@ class TestConstitutionalCompliance:
                 validation_accuracy=0.984,
                 false_negative_rate=0.018,
                 training_date=valid_training_date,
-                feature_names=["feature_1", "feature_2"]  # Incomplete
+                feature_names=["feature_1", "feature_2"],  # Incomplete
             )
             pytest.fail("Expected ValueError")
         except ValueError as e:
@@ -783,13 +782,13 @@ class TestConstitutionalCompliance:
                 validation_accuracy=0.97,  # Below 0.98
                 false_negative_rate=0.018,
                 training_date=valid_training_date,
-                feature_names=valid_feature_names
+                feature_names=valid_feature_names,
             )
             pytest.fail("Expected ValidationError")
         except (ValueError, ValidationError) as e:
             error_msg = str(e)
             # Validation error includes threshold constraint
-            assert ("0.98" in error_msg or "greater than or equal" in error_msg.lower())
+            assert "0.98" in error_msg or "greater than or equal" in error_msg.lower()
 
     def test_article_iv_metadata_for_learning(
         self, mock_ensemble, mock_rf_model, mock_gb_model, valid_feature_names, valid_training_date
@@ -810,7 +809,7 @@ class TestConstitutionalCompliance:
             validation_accuracy=0.984,
             false_negative_rate=0.018,
             training_date=valid_training_date,
-            feature_names=valid_feature_names
+            feature_names=valid_feature_names,
         )
 
         # Act: Export metadata for VectorStore
@@ -851,7 +850,7 @@ class TestIntegration:
             validation_accuracy=0.984,
             false_negative_rate=0.018,
             training_date=valid_training_date,
-            feature_names=valid_feature_names
+            feature_names=valid_feature_names,
         )
 
         # Assert: sklearn version is 1.3.0+

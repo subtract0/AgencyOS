@@ -155,9 +155,7 @@ class MLModelTrainer:
         # Step 5: Run 5-fold cross-validation (Article II: robustness)
         cv_result = self._run_cross_validation(rf_model, gb_model, X_train, y_train)
         if cv_result.is_err():
-            logger.warning(
-                f"Cross-validation warning (non-blocking): {cv_result.unwrap_err()}"
-            )
+            logger.warning(f"Cross-validation warning (non-blocking): {cv_result.unwrap_err()}")
 
         # Step 6: Create VotingClassifier ensemble
         ensemble_result = self._create_voting_ensemble(rf_model, gb_model)
@@ -174,9 +172,7 @@ class MLModelTrainer:
         logger.info(f"Ensemble validation accuracy: {validation_accuracy:.4f}")
 
         # Step 8: Calculate false negative rate for complex tier (label=3)
-        fn_rate_result = self._calculate_false_negative_rate(
-            y_val, y_pred, complex_label=3
-        )
+        fn_rate_result = self._calculate_false_negative_rate(y_val, y_pred, complex_label=3)
         if fn_rate_result.is_err():
             return Err(fn_rate_result.unwrap_err())
 
@@ -205,9 +201,7 @@ class MLModelTrainer:
             dataset,
         )
 
-    def _validate_training_data(
-        self, dataset: TrainingDataset
-    ) -> Result[None, str]:
+    def _validate_training_data(self, dataset: TrainingDataset) -> Result[None, str]:
         """
         Validate training data completeness and quality.
 
@@ -269,22 +263,16 @@ class MLModelTrainer:
             val_samples = dataset.get_val_samples()
 
             # Extract train features/labels
-            X_train = np.array(
-                [sample.features.to_flat_array() for sample in train_samples]
-            )
+            X_train = np.array([sample.features.to_flat_array() for sample in train_samples])
             y_train = np.array([sample.label for sample in train_samples])
 
             # Extract validation features/labels
-            X_val = np.array(
-                [sample.features.to_flat_array() for sample in val_samples]
-            )
+            X_val = np.array([sample.features.to_flat_array() for sample in val_samples])
             y_val = np.array([sample.label for sample in val_samples])
 
             # Validate dimensions (Article II)
             if X_train.shape[1] != 1644:
-                return Err(
-                    f"Invalid feature dimension: expected 1644, got {X_train.shape[1]}"
-                )
+                return Err(f"Invalid feature dimension: expected 1644, got {X_train.shape[1]}")
 
             return Ok((X_train, y_train, X_val, y_val))
 
@@ -464,9 +452,7 @@ class MLModelTrainer:
                 estimators=[("rf", rf_model), ("gb", gb_model)], **VOTING_CONFIG
             )
 
-            logger.info(
-                f"Ensemble created: soft voting, weights={VOTING_CONFIG['weights']}"
-            )
+            logger.info(f"Ensemble created: soft voting, weights={VOTING_CONFIG['weights']}")
 
             return Ok(ensemble)
 
@@ -520,16 +506,13 @@ class MLModelTrainer:
             fn_rate = float(fn_complex / (fn_complex + tp_complex))
 
             logger.info(
-                f"Complex tier metrics: TP={tp_complex}, FN={fn_complex}, "
-                f"FN_rate={fn_rate:.4f}"
+                f"Complex tier metrics: TP={tp_complex}, FN={fn_complex}, FN_rate={fn_rate:.4f}"
             )
 
             return Ok(fn_rate)
 
         except ValueError as e:
-            return Err(
-                f"Complex label {complex_label} not found in validation data: {e}"
-            )
+            return Err(f"Complex label {complex_label} not found in validation data: {e}")
         except Exception as e:
             return Err(f"False negative rate calculation failed: {e}")
 

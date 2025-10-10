@@ -53,7 +53,7 @@ class TrainingSample(BaseModel):
             "1644-dimensional feature vector for ML classification. "
             "Includes semantic embedding (1536-dim), TF-IDF scores (100-dim), "
             "and metadata features (8-dim). See TaskFeatureVector for details."
-        )
+        ),
     )
 
     label: int = Field(
@@ -62,7 +62,7 @@ class TrainingSample(BaseModel):
             "Tier classification: 1 (simple), 2 (moderate), 3 (complex). "
             "NOT 0-indexed for clarity. Maps to P3, P2, P1 priority tiers. "
             "Sourced from quality feedback or manual labeling."
-        )
+        ),
     )
 
     confidence: float = Field(
@@ -73,7 +73,7 @@ class TrainingSample(BaseModel):
             "Confidence score for this label (0.0-1.0). "
             "From Leap 4 quality feedback system or manual labeling. "
             "High confidence (≥0.8) indicates reliable ground truth."
-        )
+        ),
     )
 
     source: str = Field(
@@ -82,7 +82,7 @@ class TrainingSample(BaseModel):
             "Data source: 'vectorstore' (auto-extracted from quality feedback) "
             "or 'manual_label' (human-labeled). "
             "Article IV: VectorStore is primary source for institutional learning."
-        )
+        ),
     )
 
     task_id: str = Field(
@@ -91,19 +91,19 @@ class TrainingSample(BaseModel):
             "Unique task identifier for traceability. "
             "Links back to original task execution in session logs. "
             "Format: 'task_{timestamp}_{hash}' or similar."
-        )
+        ),
     )
 
     timestamp: datetime = Field(
         ...,
         description=(
-            "When this sample was created (UTC). "
-            "Used for temporal analysis and dataset versioning."
-        )
+            "When this sample was created (UTC). Used for temporal analysis and dataset versioning."
+        ),
     )
 
     class Config:
         """Pydantic model configuration."""
+
         json_schema_extra = {
             "example": {
                 "features": {
@@ -116,13 +116,13 @@ class TrainingSample(BaseModel):
                     "has_async_keyword": 1,
                     "has_fix_keyword": 0,
                     "estimated_time_seconds": 300.0,
-                    "historical_tier_mode": 2
+                    "historical_tier_mode": 2,
                 },
                 "label": 2,
                 "confidence": 0.85,
                 "source": "vectorstore",
                 "task_id": "task_20251010_abc123",
-                "timestamp": "2025-10-10T10:00:00Z"
+                "timestamp": "2025-10-10T10:00:00Z",
             }
         }
 
@@ -231,25 +231,23 @@ class DatasetMetadata(BaseModel):
         description=(
             "Total number of samples in dataset (train + val). "
             "Must equal train_count + val_count (validated)."
-        )
+        ),
     )
 
     train_count: int = Field(
         ...,
         ge=0,
         description=(
-            "Number of training samples. "
-            "Typically 70-80% of total_samples for train/val split."
-        )
+            "Number of training samples. Typically 70-80% of total_samples for train/val split."
+        ),
     )
 
     val_count: int = Field(
         ...,
         ge=0,
         description=(
-            "Number of validation samples. "
-            "Typically 20-30% of total_samples for train/val split."
-        )
+            "Number of validation samples. Typically 20-30% of total_samples for train/val split."
+        ),
     )
 
     label_distribution: dict[int, int] = Field(
@@ -258,15 +256,14 @@ class DatasetMetadata(BaseModel):
             "Count of samples per tier label. "
             "Format: {1: count_simple, 2: count_moderate, 3: count_complex}. "
             "Used to detect class imbalance (Article II: complete context)."
-        )
+        ),
     )
 
     created_at: datetime = Field(
         ...,
         description=(
-            "When this dataset was created (UTC). "
-            "Used for versioning and reproducibility tracking."
-        )
+            "When this dataset was created (UTC). Used for versioning and reproducibility tracking."
+        ),
     )
 
     version: str = Field(
@@ -275,7 +272,7 @@ class DatasetMetadata(BaseModel):
             "Dataset version identifier. "
             "Format: 'v{major}.{minor}' (e.g., 'v1.0', 'v2.1'). "
             "Incremented when dataset is updated with new samples."
-        )
+        ),
     )
 
     min_confidence: float = Field(
@@ -286,7 +283,7 @@ class DatasetMetadata(BaseModel):
             "Minimum confidence threshold for including samples. "
             "Samples below this threshold are filtered out. "
             "Default: 0.6 (Article IV: high-quality learning data)."
-        )
+        ),
     )
 
     source: str = Field(
@@ -295,11 +292,12 @@ class DatasetMetadata(BaseModel):
             "Dataset source identifier. "
             "Typically 'vectorstore_quality_feedback' for auto-extracted samples. "
             "Article IV: VectorStore is primary source."
-        )
+        ),
     )
 
     class Config:
         """Pydantic model configuration."""
+
         json_schema_extra = {
             "example": {
                 "total_samples": 1000,
@@ -309,7 +307,7 @@ class DatasetMetadata(BaseModel):
                 "created_at": "2025-10-10T10:00:00Z",
                 "version": "v1.0",
                 "min_confidence": 0.6,
-                "source": "vectorstore_quality_feedback"
+                "source": "vectorstore_quality_feedback",
             }
         }
 
@@ -332,8 +330,7 @@ class DatasetMetadata(BaseModel):
         """
         if v < 0:
             raise ValueError(
-                f"Count must be non-negative, got {v}. "
-                f"Article II violation: Invalid sample count."
+                f"Count must be non-negative, got {v}. Article II violation: Invalid sample count."
             )
         return v
 
@@ -416,7 +413,7 @@ class TrainingDataset(BaseModel):
         description=(
             "All training samples (train + val combined). "
             "Article I: Complete context before splitting."
-        )
+        ),
     )
 
     train_indices: list[int] = Field(
@@ -425,7 +422,7 @@ class TrainingDataset(BaseModel):
             "Indices into samples array for training set. "
             "Typically 70-80% of total samples. "
             "Must not overlap with val_indices (validated)."
-        )
+        ),
     )
 
     val_indices: list[int] = Field(
@@ -434,7 +431,7 @@ class TrainingDataset(BaseModel):
             "Indices into samples array for validation set. "
             "Typically 20-30% of total samples. "
             "Must not overlap with train_indices (validated)."
-        )
+        ),
     )
 
     metadata: DatasetMetadata = Field(
@@ -442,21 +439,33 @@ class TrainingDataset(BaseModel):
         description=(
             "Dataset statistics and metadata. "
             "Includes sample counts, label distribution, versioning."
-        )
+        ),
     )
 
     class Config:
         """Pydantic model configuration."""
+
         json_schema_extra = {
             "example": {
                 "samples": [
                     {
-                        "features": {"embedding": [0.023] + [0.0] * 1535, "tfidf_features": [0.12] + [0.0] * 99, "description_length": 120, "word_count": 20, "has_refactor_keyword": 1, "has_test_keyword": 0, "has_async_keyword": 1, "has_fix_keyword": 0, "estimated_time_seconds": 300.0, "historical_tier_mode": 2},
+                        "features": {
+                            "embedding": [0.023] + [0.0] * 1535,
+                            "tfidf_features": [0.12] + [0.0] * 99,
+                            "description_length": 120,
+                            "word_count": 20,
+                            "has_refactor_keyword": 1,
+                            "has_test_keyword": 0,
+                            "has_async_keyword": 1,
+                            "has_fix_keyword": 0,
+                            "estimated_time_seconds": 300.0,
+                            "historical_tier_mode": 2,
+                        },
                         "label": 2,
                         "confidence": 0.85,
                         "source": "vectorstore",
                         "task_id": "task_001",
-                        "timestamp": "2025-10-10T10:00:00Z"
+                        "timestamp": "2025-10-10T10:00:00Z",
                     }
                 ],
                 "train_indices": [0],
@@ -469,8 +478,8 @@ class TrainingDataset(BaseModel):
                     "created_at": "2025-10-10T10:00:00Z",
                     "version": "v1.0",
                     "min_confidence": 0.6,
-                    "source": "vectorstore_quality_feedback"
-                }
+                    "source": "vectorstore_quality_feedback",
+                },
             }
         }
 
@@ -588,7 +597,7 @@ class TrainingDataset(BaseModel):
 
         return {
             "train": {label: train_labels.count(label) for label in {1, 2, 3}},
-            "val": {label: val_labels.count(label) for label in {1, 2, 3}}
+            "val": {label: val_labels.count(label) for label in {1, 2, 3}},
         }
 
     def get_confidence_stats(self) -> dict[str, dict[str, float]]:
@@ -616,10 +625,7 @@ class TrainingDataset(BaseModel):
             return {
                 "mean": sum(confidences) / len(confidences),
                 "min": min(confidences),
-                "max": max(confidences)
+                "max": max(confidences),
             }
 
-        return {
-            "train": compute_stats(train_confidences),
-            "val": compute_stats(val_confidences)
-        }
+        return {"train": compute_stats(train_confidences), "val": compute_stats(val_confidences)}
