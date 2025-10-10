@@ -21,7 +21,8 @@ import json
 import os
 import time
 from pathlib import Path
-from typing import List
+
+# Removed deprecated typing.List import (use builtin list instead)
 from unittest.mock import Mock, patch
 
 import numpy as np

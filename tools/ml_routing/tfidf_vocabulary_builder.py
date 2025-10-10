@@ -15,8 +15,8 @@ import json
 import logging
 from datetime import datetime
 from pathlib import Path
-from typing import List
 
+# Removed deprecated typing.List import (use builtin list instead)
 from pydantic import BaseModel, Field
 from sklearn.feature_extraction.text import TfidfVectorizer
 
@@ -101,7 +101,7 @@ class TfidfVocabularyBuilder:
         # Extract terms and IDF scores
         terms = vectorizer.get_feature_names_out().tolist()
         idf_scores = {
-            term: float(score) for term, score in zip(terms, vectorizer.idf_)
+            term: float(score) for term, score in zip(terms, vectorizer.idf_, strict=True)
         }
 
         logger.info(f"Built vocabulary with {len(terms)} terms from {len(task_descriptions)} tasks")

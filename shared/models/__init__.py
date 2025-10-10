@@ -14,8 +14,6 @@ from .dashboard import (
     SessionSummary,
 )
 from .ensemble_model import EnsembleModel
-from .task_feature_vector import TaskFeatureVector
-from .training_dataset import TrainingDataset
 from .kanban import (
     CardStatus,
     CardType,
@@ -87,12 +85,14 @@ from .session import (
     TaskContext,
     TaskProgress,
 )
+from .task_feature_vector import TaskFeatureVector
 from .telemetry import (
     AgentMetrics,
     SystemHealth,
     TelemetryEvent,
     TelemetryMetrics,
 )
+from .training_dataset import TrainingDataset
 
 __all__ = [
     # Lock models

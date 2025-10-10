@@ -500,7 +500,7 @@ class TrainingDataset(BaseModel):
         if overlap:
             raise ValueError(
                 f"train_indices and val_indices must not overlap. "
-                f"Found {len(overlap)} overlapping indices: {sorted(list(overlap))[:10]}... "
+                f"Found {len(overlap)} overlapping indices: {sorted(overlap)[:10]}... "
                 f"Article II violation: Invalid train/val split."
             )
 
