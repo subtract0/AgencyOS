@@ -13,6 +13,7 @@ from .dashboard import (
     DashboardSummary,
     SessionSummary,
 )
+from .ensemble_model import EnsembleModel
 from .kanban import (
     CardStatus,
     CardType,
@@ -84,12 +85,14 @@ from .session import (
     TaskContext,
     TaskProgress,
 )
+from .task_feature_vector import TaskFeatureVector
 from .telemetry import (
     AgentMetrics,
     SystemHealth,
     TelemetryEvent,
     TelemetryMetrics,
 )
+from .training_dataset import TrainingDataset
 
 __all__ = [
     # Lock models
@@ -169,4 +172,8 @@ __all__ = [
     "CheckpointMetadata",
     "GCResult",
     "RetentionPolicy",
+    # ML Routing models (Leap 5)
+    "EnsembleModel",
+    "TaskFeatureVector",
+    "TrainingDataset",
 ]
