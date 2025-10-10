@@ -17,7 +17,7 @@ class TestKeywordClassification:
 
         result = classifier.classify(
             "Fix typo in function name: calcualte_total → calculate_total",
-            task_type="code_modification"
+            task_type="code_modification",
         )
 
         assert result.is_ok()
@@ -31,8 +31,7 @@ class TestKeywordClassification:
         classifier = TaskComplexityClassifier()
 
         result = classifier.classify(
-            "Remove unused import statement from utils.py",
-            task_type="code_modification"
+            "Remove unused import statement from utils.py", task_type="code_modification"
         )
 
         assert result.is_ok()
@@ -44,8 +43,7 @@ class TestKeywordClassification:
         classifier = TaskComplexityClassifier()
 
         result = classifier.classify(
-            "Add docstring to calculate_total function",
-            task_type="documentation"
+            "Add docstring to calculate_total function", task_type="documentation"
         )
 
         assert result.is_ok()
@@ -57,8 +55,7 @@ class TestKeywordClassification:
         classifier = TaskComplexityClassifier()
 
         result = classifier.classify(
-            "Rename variable 'x' to 'user_count' for clarity",
-            task_type="code_modification"
+            "Rename variable 'x' to 'user_count' for clarity", task_type="code_modification"
         )
 
         assert result.is_ok()
@@ -70,8 +67,7 @@ class TestKeywordClassification:
         classifier = TaskComplexityClassifier()
 
         result = classifier.classify(
-            "Format code with black formatter",
-            task_type="code_modification"
+            "Format code with black formatter", task_type="code_modification"
         )
 
         assert result.is_ok()
@@ -83,8 +79,7 @@ class TestKeywordClassification:
         classifier = TaskComplexityClassifier()
 
         result = classifier.classify(
-            "Create ADR for database selection: PostgreSQL vs MongoDB",
-            task_type="architecture"
+            "Create ADR for database selection: PostgreSQL vs MongoDB", task_type="architecture"
         )
 
         assert result.is_ok()
@@ -99,7 +94,7 @@ class TestKeywordClassification:
 
         result = classifier.classify(
             "Design distributed consensus algorithm for multi-agent coordination",
-            task_type="architecture"
+            task_type="architecture",
         )
 
         assert result.is_ok()
@@ -111,8 +106,7 @@ class TestKeywordClassification:
         classifier = TaskComplexityClassifier()
 
         result = classifier.classify(
-            "Implement autonomous self-healing for NoneType errors",
-            task_type="architecture"
+            "Implement autonomous self-healing for NoneType errors", task_type="architecture"
         )
 
         assert result.is_ok()
@@ -124,8 +118,7 @@ class TestKeywordClassification:
         classifier = TaskComplexityClassifier()
 
         result = classifier.classify(
-            "Design constitutional compliance validation framework",
-            task_type="architecture"
+            "Design constitutional compliance validation framework", task_type="architecture"
         )
 
         assert result.is_ok()
@@ -137,8 +130,7 @@ class TestKeywordClassification:
         classifier = TaskComplexityClassifier()
 
         result = classifier.classify(
-            "Implement user authentication with JWT tokens",
-            task_type="feature_implementation"
+            "Implement user authentication with JWT tokens", task_type="feature_implementation"
         )
 
         assert result.is_ok()
@@ -150,8 +142,7 @@ class TestKeywordClassification:
         classifier = TaskComplexityClassifier()
 
         result = classifier.classify(
-            "Fix bug: division by zero in calculate_average",
-            task_type="bug_fix"
+            "Fix bug: division by zero in calculate_average", task_type="bug_fix"
         )
 
         assert result.is_ok()
@@ -163,8 +154,7 @@ class TestKeywordClassification:
         classifier = TaskComplexityClassifier()
 
         result = classifier.classify(
-            "Refactor UserService to use dependency injection",
-            task_type="code_modification"
+            "Refactor UserService to use dependency injection", task_type="code_modification"
         )
 
         assert result.is_ok()
@@ -245,10 +235,7 @@ class TestFallbackBehavior:
         """Unknown task without clear keywords → P2 default."""
         classifier = TaskComplexityClassifier()
 
-        result = classifier.classify(
-            "Do something with the system",
-            task_type="general"
-        )
+        result = classifier.classify("Do something with the system", task_type="general")
 
         assert result.is_ok()
         classification = result.unwrap()
@@ -258,10 +245,7 @@ class TestFallbackBehavior:
         """Task with no keyword match → P2 default."""
         classifier = TaskComplexityClassifier()
 
-        result = classifier.classify(
-            "Update the user interface",
-            task_type="general"
-        )
+        result = classifier.classify("Update the user interface", task_type="general")
 
         assert result.is_ok()
         classification = result.unwrap()
@@ -276,10 +260,7 @@ class TestVectorStoreIntegration:
         """Classification works without VectorStore."""
         classifier = TaskComplexityClassifier(vector_store=None)
 
-        result = classifier.classify(
-            "Fix typo in README",
-            task_type="documentation"
-        )
+        result = classifier.classify("Fix typo in README", task_type="documentation")
 
         assert result.is_ok()
         classification = result.unwrap()
@@ -298,23 +279,22 @@ class TestVectorStoreIntegration:
                         "content": {
                             "classified_complexity": "P2",
                             "confidence": 0.8,
-                            "success": True
+                            "success": True,
                         }
                     },
                     {
                         "content": {
                             "classified_complexity": "P2",
                             "confidence": 0.9,
-                            "success": True
+                            "success": True,
                         }
-                    }
+                    },
                 ]
 
         classifier = TaskComplexityClassifier(vector_store=MockVectorStore())
 
         result = classifier.classify(
-            "Implement user signup endpoint",
-            task_type="feature_implementation"
+            "Implement user signup endpoint", task_type="feature_implementation"
         )
 
         assert result.is_ok()
@@ -330,10 +310,7 @@ class TestConfidence:
         """P3 classification with high confidence."""
         classifier = TaskComplexityClassifier()
 
-        result = classifier.classify(
-            "Fix typo in variable name",
-            task_type="code_modification"
-        )
+        result = classifier.classify("Fix typo in variable name", task_type="code_modification")
 
         assert result.is_ok()
         classification = result.unwrap()
@@ -344,8 +321,7 @@ class TestConfidence:
         classifier = TaskComplexityClassifier()
 
         result = classifier.classify(
-            "Create ADR for architectural design decisions",
-            task_type="architecture"
+            "Create ADR for architectural design decisions", task_type="architecture"
         )
 
         assert result.is_ok()
@@ -358,10 +334,7 @@ class TestConfidence:
         """Fallback classification with lower confidence."""
         classifier = TaskComplexityClassifier()
 
-        result = classifier.classify(
-            "Update something in the system",
-            task_type="general"
-        )
+        result = classifier.classify("Update something in the system", task_type="general")
 
         assert result.is_ok()
         classification = result.unwrap()

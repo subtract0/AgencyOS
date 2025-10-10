@@ -74,7 +74,7 @@ class TestStressParallelReads:
         assert elapsed < 5.0, f"50 parallel reads took {elapsed:.3f}s (expected <5s)"
 
         print(f"\n[STRESS] 50 parallel reads (3 workers): {elapsed:.3f}s")
-        print(f"[STRESS] Average per read: {elapsed/50*1000:.2f}ms")
+        print(f"[STRESS] Average per read: {elapsed / 50 * 1000:.2f}ms")
 
     @pytest.mark.asyncio
     async def test_100_parallel_reads_high_concurrency(self, async_tool):
@@ -126,6 +126,7 @@ class TestStressConcurrentAgents:
         WHEN each agent accesses a different file
         THEN all operations complete without deadlock
         """
+
         # Arrange
         async def agent_workflow(agent_id: int):
             """Simulate agent creating and reading its own file"""
@@ -159,7 +160,7 @@ class TestStressConcurrentAgents:
         assert success_count == 100, f"Expected 100 successes, got {success_count}"
 
         print(f"\n[STRESS] 100 concurrent agents: {elapsed:.3f}s")
-        print(f"[STRESS] Average per agent: {elapsed/100*1000:.2f}ms")
+        print(f"[STRESS] Average per agent: {elapsed / 100 * 1000:.2f}ms")
 
         # Check metrics
         metrics = async_tool.get_lock_metrics()
@@ -338,6 +339,7 @@ class TestStressMemoryUsage:
         # Get baseline memory (Python RSS)
         try:
             import psutil
+
             process = psutil.Process(os.getpid())
             baseline_memory = process.memory_info().rss / 1024 / 1024  # MB
         except ImportError:
@@ -375,10 +377,9 @@ class TestStressMemoryUsage:
         print(f"[STRESS] Baseline memory: {baseline_memory:.2f}MB")
         print(f"[STRESS] Final memory: {final_memory:.2f}MB")
         print(f"[STRESS] Memory growth: {memory_growth:.2f}MB")
-        print(f"[STRESS] Ops/sec: {10000/elapsed:.0f}")
+        print(f"[STRESS] Ops/sec: {10000 / elapsed:.0f}")
 
-        assert memory_growth < 100, \
-            f"Memory growth {memory_growth:.2f}MB exceeds 100MB limit"
+        assert memory_growth < 100, f"Memory growth {memory_growth:.2f}MB exceeds 100MB limit"
 
         # Check lock metrics
         metrics = async_tool.get_lock_metrics()

@@ -85,9 +85,7 @@ class CostSummary(BaseModel):
         """Calculate cost savings vs baseline."""
         self.cost_savings_usd = self.baseline_cost_usd - self.total_cost_usd
         if self.baseline_cost_usd > 0:
-            self.cost_reduction_percent = (
-                self.cost_savings_usd / self.baseline_cost_usd
-            ) * 100
+            self.cost_reduction_percent = (self.cost_savings_usd / self.baseline_cost_usd) * 100
 
 
 class ModelRouter:
@@ -106,7 +104,7 @@ class ModelRouter:
     def __init__(
         self,
         classifier: TaskComplexityClassifier | None = None,
-        cost_tracker: "CostTracker | None" = None
+        cost_tracker: "CostTracker | None" = None,
     ):
         """Initialize model router.
 
@@ -123,7 +121,7 @@ class ModelRouter:
         task_type: str = "general",
         agent_key: str = "coder",
         session_id: str | None = None,
-        estimated_tokens: int = 500
+        estimated_tokens: int = 500,
     ) -> Result[RoutingDecision, str]:
         """Route task to optimal model.
 
@@ -158,7 +156,7 @@ class ModelRouter:
                 estimated_cost_usd=self._estimate_cost(override_model, estimated_tokens),
                 estimated_tokens=estimated_tokens,
                 agent_key=agent_key,
-                session_id=session_id or "default"
+                session_id=session_id or "default",
             )
 
             if self.cost_tracker:
@@ -201,7 +199,7 @@ class ModelRouter:
             estimated_cost_usd=estimated_cost,
             estimated_tokens=estimated_tokens,
             agent_key=agent_key,
-            session_id=session_id or "default"
+            session_id=session_id or "default",
         )
 
         # Track decision
@@ -257,12 +255,7 @@ class ModelRouter:
             import subprocess
 
             # Quick check: ollama list
-            result = subprocess.run(
-                ["ollama", "list"],
-                capture_output=True,
-                text=True,
-                timeout=2
-            )
+            result = subprocess.run(["ollama", "list"], capture_output=True, text=True, timeout=2)
 
             # Check if qwen3-coder is in the list
             return "qwen3-coder" in result.stdout or "qwen" in result.stdout
@@ -331,7 +324,7 @@ class CostTracker:
         success: bool,
         actual_tokens: int,
         duration_ms: float,
-        vector_store: Any | None = None
+        vector_store: Any | None = None,
     ) -> None:
         """Record task completion for learning (Article IV).
 
@@ -347,13 +340,7 @@ class CostTracker:
 
         # Store pattern in VectorStore (Article IV requirement)
         if vector_store is not None:
-            self._store_routing_pattern(
-                vector_store,
-                decision,
-                success,
-                actual_cost,
-                duration_ms
-            )
+            self._store_routing_pattern(vector_store, decision, success, actual_cost, duration_ms)
 
     def _calculate_actual_cost(self, model: str, tokens: int) -> float:
         """Calculate actual cost from token usage."""
@@ -374,7 +361,7 @@ class CostTracker:
         decision: RoutingDecision,
         success: bool,
         actual_cost: float,
-        duration_ms: float
+        duration_ms: float,
     ) -> None:
         """Store routing pattern to VectorStore (Article IV).
 
@@ -395,7 +382,7 @@ class CostTracker:
             "duration_ms": duration_ms,
             "confidence": 0.9 if success else 0.5,
             "evidence_count": 1,
-            "timestamp": datetime.now().isoformat()
+            "timestamp": datetime.now().isoformat(),
         }
 
         try:
@@ -406,19 +393,15 @@ class CostTracker:
                     "routing_pattern",
                     f"complexity_{decision.complexity.value}",
                     f"model_{decision.selected_model.replace('/', '_')}",
-                    "adaptive_router"
+                    "adaptive_router",
                 ],
-                namespace="task_classification"
+                namespace="task_classification",
             )
         except Exception as e:
             # Don't fail task if VectorStore write fails
             print(f"Warning: Failed to store routing pattern: {e}")
 
-    def generate_summary(
-        self,
-        period_start: datetime,
-        period_end: datetime
-    ) -> CostSummary:
+    def generate_summary(self, period_start: datetime, period_end: datetime) -> CostSummary:
         """Generate cost summary for time period.
 
         Args:
@@ -429,10 +412,7 @@ class CostTracker:
             CostSummary with aggregated metrics
         """
         # Filter decisions in period
-        period_decisions = [
-            d for d in self.decisions
-            if period_start <= d.timestamp <= period_end
-        ]
+        period_decisions = [d for d in self.decisions if period_start <= d.timestamp <= period_end]
 
         # Count tasks by complexity
         p1_tasks = sum(1 for d in period_decisions if d.complexity == TaskComplexity.P1_COMPLEX)
@@ -440,9 +420,21 @@ class CostTracker:
         p3_tasks = sum(1 for d in period_decisions if d.complexity == TaskComplexity.P3_SIMPLE)
 
         # Sum costs by complexity
-        p1_cost = sum(d.estimated_cost_usd for d in period_decisions if d.complexity == TaskComplexity.P1_COMPLEX)
-        p2_cost = sum(d.estimated_cost_usd for d in period_decisions if d.complexity == TaskComplexity.P2_MODERATE)
-        p3_cost = sum(d.estimated_cost_usd for d in period_decisions if d.complexity == TaskComplexity.P3_SIMPLE)
+        p1_cost = sum(
+            d.estimated_cost_usd
+            for d in period_decisions
+            if d.complexity == TaskComplexity.P1_COMPLEX
+        )
+        p2_cost = sum(
+            d.estimated_cost_usd
+            for d in period_decisions
+            if d.complexity == TaskComplexity.P2_MODERATE
+        )
+        p3_cost = sum(
+            d.estimated_cost_usd
+            for d in period_decisions
+            if d.complexity == TaskComplexity.P3_SIMPLE
+        )
 
         total_cost = p1_cost + p2_cost + p3_cost
         total_tasks = len(period_decisions)
@@ -471,7 +463,7 @@ class CostTracker:
             total_cost_usd=total_cost,
             baseline_cost_usd=baseline_cost,
             avg_routing_latency_ms=avg_latency,
-            p99_routing_latency_ms=p99_latency
+            p99_routing_latency_ms=p99_latency,
         )
 
         summary.calculate_savings()

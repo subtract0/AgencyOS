@@ -213,11 +213,20 @@ def main(test_mode: str = "unit", fast_only: bool = False, timed: bool = False) 
             # Reduce parallelism to prevent memory exhaustion with 32GB local model
             # 48GB Mac: Qwen3-Coder Q8_0 (38GB) + 3 workers (9GB) = 47GB (safe)
             worker_count = int(os.getenv("LOCAL_MODEL_TEST_WORKERS", "3"))
+
+            # CRITICAL: Force single worker to avoid PyTorch segfault (SPEC-021)
+            # TODO: Fix parallel import issue in sentence_transformers/torch
+            if worker_count > 1:
+                print("⚠️ WARNING: Reducing to 1 worker to avoid PyTorch segfault (see SPEC-021)")
+                worker_count = 1
+
             pytest_args.extend(["-n", str(worker_count)])
             print(f"🧠 Local model active: using {worker_count} test workers (memory-safe)")
         else:
-            # Full parallelism when no local model (cloud-only mode)
-            pytest_args.extend(["-n", "auto"])
+            # CRITICAL: Force single worker to avoid PyTorch segfault (SPEC-021)
+            # TODO: Fix parallel import issue in sentence_transformers/torch
+            print("⚠️ WARNING: Using single worker to avoid PyTorch segfault (see SPEC-021)")
+            pytest_args.extend(["-n", "1"])  # Was "auto" but crashes with parallel import
     except ImportError:
         pass  # Run sequentially if xdist not available
 
@@ -225,6 +234,10 @@ def main(test_mode: str = "unit", fast_only: bool = False, timed: bool = False) 
     env = os.environ.copy()
     env["AGENCY_NESTED_TEST"] = "1"
     env["PYTHONUNBUFFERED"] = "1"  # Disable output buffering for immediate feedback
+
+    # Prevent PyTorch/transformers segfault with parallel testing (SPEC-021)
+    env["TOKENIZERS_PARALLELISM"] = "false"  # Disable tokenizer parallelism
+    env["OMP_NUM_THREADS"] = "1"  # Limit OpenMP threads to prevent race conditions
 
     # Add marker selection based on test mode
     if test_mode == "unit":

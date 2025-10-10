@@ -60,11 +60,10 @@ class VectorIndex:
         """
         try:
             import faiss
-        except ImportError:
+        except ImportError as e:
             raise ImportError(
-                "faiss-cpu is required for VectorIndex. "
-                "Install with: pip install faiss-cpu~=1.7.4"
-            )
+                "faiss-cpu is required for VectorIndex. Install with: pip install faiss-cpu~=1.7.4"
+            ) from e
 
         self.embedding_dim = embedding_dim
         self.hnsw_m = hnsw_m
@@ -109,17 +108,14 @@ class VectorIndex:
             return
 
         if len(ids) != len(embeddings):
-            raise ValueError(
-                f"Mismatch: {len(ids)} IDs but {len(embeddings)} embeddings"
-            )
+            raise ValueError(f"Mismatch: {len(ids)} IDs but {len(embeddings)} embeddings")
 
         # Convert to numpy array (FAISS requires float32)
         embeddings_array = np.array(embeddings, dtype=np.float32)
 
         if embeddings_array.shape[1] != self.embedding_dim:
             raise ValueError(
-                f"Expected embedding dim {self.embedding_dim}, "
-                f"got {embeddings_array.shape[1]}"
+                f"Expected embedding dim {self.embedding_dim}, got {embeddings_array.shape[1]}"
             )
 
         # Add to FAISS index (incremental, no rebuild)
@@ -128,13 +124,9 @@ class VectorIndex:
         # Update ID mapping
         self._memory_ids.extend(ids)
 
-        logger.debug(
-            f"Added {len(ids)} vectors to index (total: {self.index.ntotal})"
-        )
+        logger.debug(f"Added {len(ids)} vectors to index (total: {self.index.ntotal})")
 
-    def search(
-        self, query_embedding: list[float], k: int = 10
-    ) -> list[tuple[str, float]]:
+    def search(self, query_embedding: list[float], k: int = 10) -> list[tuple[str, float]]:
         """
         Search for k nearest neighbors using FAISS HNSW.
 
@@ -164,8 +156,7 @@ class VectorIndex:
 
         if query_array.shape[1] != self.embedding_dim:
             raise ValueError(
-                f"Query embedding dim {query_array.shape[1]} != "
-                f"expected {self.embedding_dim}"
+                f"Query embedding dim {query_array.shape[1]} != expected {self.embedding_dim}"
             )
 
         # FAISS search (returns distances and indices)
@@ -236,9 +227,7 @@ class VectorIndex:
                     f,
                 )
 
-            logger.info(
-                f"Saved FAISS index: {len(self._memory_ids)} memories to {save_path}"
-            )
+            logger.info(f"Saved FAISS index: {len(self._memory_ids)} memories to {save_path}")
 
         except Exception as e:
             logger.error(f"Failed to save index to {save_path}: {e}")
@@ -281,8 +270,7 @@ class VectorIndex:
             # Verify configuration matches
             if data["embedding_dim"] != self.embedding_dim:
                 logger.warning(
-                    f"Loaded index dim {data['embedding_dim']} != "
-                    f"current dim {self.embedding_dim}"
+                    f"Loaded index dim {data['embedding_dim']} != current dim {self.embedding_dim}"
                 )
 
             logger.info(

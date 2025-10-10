@@ -219,9 +219,7 @@ def validate_config(data: dict[str, Any]) -> Result[AgencyConfig, ConfigError]:
             error_type = ConfigErrorType.UNKNOWN_FIELD
             # Simple typo detection (could be enhanced with fuzzy matching)
             field_name = field_path.split(".")[-1]
-            suggestion = (
-                f"Unknown field '{field_name}'. Check spelling or remove if not needed"
-            )
+            suggestion = f"Unknown field '{field_name}'. Check spelling or remove if not needed"
         else:
             error_type = ConfigErrorType.VALIDATION_ERROR
             suggestion = None

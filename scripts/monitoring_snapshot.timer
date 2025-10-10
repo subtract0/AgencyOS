@@ -1,0 +1,23 @@
+[Unit]
+Description=Hourly Dashboard Snapshot Timer
+Documentation=https://github.com/subtract0/AgencyOS
+Requires=monitoring_snapshot.service
+
+# Constitutional Compliance Metadata
+# - Article IV: Continuous learning (hourly automated snapshots)
+# - Article V: Spec-004 traceability (monitoring requirements)
+
+[Timer]
+# Run every hour at minute 0
+OnCalendar=hourly
+OnBootSec=5min
+AccuracySec=1min
+
+# Persistent across reboots
+Persistent=true
+
+# Unit to activate
+Unit=monitoring_snapshot.service
+
+[Install]
+WantedBy=timers.target

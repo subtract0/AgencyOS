@@ -151,9 +151,7 @@ class BatchStoreResult(BaseModel):
     avg_time_per_item_ms: float = Field(
         0.0, ge=0.0, description="Average time per item in milliseconds"
     )
-    embedding_batch_count: int = Field(
-        0, ge=0, description="Number of embedding API calls made"
-    )
+    embedding_batch_count: int = Field(0, ge=0, description="Number of embedding API calls made")
 
     @property
     def total_items(self) -> int:
