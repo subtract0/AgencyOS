@@ -36,6 +36,7 @@ if "PYTEST_CURRENT_TEST" in os.environ:
                 # Pre-import in main thread before workers spawn
                 import torch  # noqa: F401 - Pre-import to prevent segfault
                 import transformers  # noqa: F401 - Pre-import to prevent segfault
+
                 _torch_imported = True
                 logger.debug("Pre-imported torch/transformers for test safety")
             except ImportError:
@@ -108,6 +109,7 @@ class VectorStore:
             with _import_lock:
                 # Thread-safe import to prevent segfault with parallel workers
                 from sentence_transformers import SentenceTransformer
+
                 _torch_imported = True
 
             # Use a lightweight model for efficiency
