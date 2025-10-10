@@ -230,6 +230,19 @@ def main(test_mode: str = "unit", fast_only: bool = False, timed: bool = False) 
     except ImportError:
         pass  # Run sequentially if xdist not available
 
+    # PRE-IMPORT PYTORCH IN MAIN THREAD (SPEC-021 FIX)
+    # CRITICAL: Import torch/transformers BEFORE pytest spawns workers
+    # Prevents segfault from parallel imports in VectorStore initialization
+    use_enhanced_memory = os.getenv("USE_ENHANCED_MEMORY", "true").lower() == "true"
+    if use_enhanced_memory:
+        try:
+            print("🔧 Pre-importing PyTorch/transformers in main thread (SPEC-021 safety)...")
+            import torch  # noqa: F401 - Pre-import to prevent worker segfault
+            import transformers  # noqa: F401 - Pre-import to prevent worker segfault
+            print("✅ PyTorch/transformers pre-imported successfully")
+        except ImportError:
+            print("⚠️  PyTorch/transformers not installed - VectorStore will use keyword search only")
+
     # Prepare environment variables
     env = os.environ.copy()
     env["AGENCY_NESTED_TEST"] = "1"
