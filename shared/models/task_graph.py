@@ -247,9 +247,7 @@ class TaskGraph(BaseModel):
             for task in phase.tasks:
                 for dep_id in task.dependencies:
                     if dep_id not in all_task_ids:
-                        raise ValueError(
-                            f"Task {task.id} depends on non-existent task {dep_id}"
-                        )
+                        raise ValueError(f"Task {task.id} depends on non-existent task {dep_id}")
 
         return self
 
@@ -345,7 +343,9 @@ class TaskGraph(BaseModel):
                 is_last = i == len(phase.tasks) - 1
                 prefix = "└─" if is_last else "├─"
 
-                deps_str = f" (depends on: {', '.join(task.dependencies)})" if task.dependencies else ""
+                deps_str = (
+                    f" (depends on: {', '.join(task.dependencies)})" if task.dependencies else ""
+                )
                 lines.append(f"   {prefix} {task.type.value} {task.title}{deps_str}")
 
         if self.checkpoints:
@@ -362,13 +362,13 @@ class TaskGraph(BaseModel):
 
         # Add tasks with styling
         for phase in self.phases:
-            lines.append(f"    subgraph {phase.id}[\"{phase.title}\"]")
+            lines.append(f'    subgraph {phase.id}["{phase.title}"]')
 
             for task in phase.tasks:
                 # Node styling by tier
                 style_class = "tier1" if task.tier == TaskTier.TIER_1 else "tier2"
                 node_label = f"{task.type.value}: {task.title}"
-                lines.append(f"        {task.id}[\"{node_label}\"]:::{style_class}")
+                lines.append(f'        {task.id}["{node_label}"]:::{style_class}')
 
                 # Edges for dependencies
                 for dep_id in task.dependencies:
@@ -388,9 +388,7 @@ class ValidationResult(BaseModel):
     """Result of task graph validation."""
 
     valid: bool = Field(..., description="Whether task graph is valid")
-    violations: list[str] = Field(
-        default_factory=list, description="List of validation violations"
-    )
+    violations: list[str] = Field(default_factory=list, description="List of validation violations")
     warnings: list[str] = Field(default_factory=list, description="Non-blocking warnings")
 
     def __str__(self) -> str:

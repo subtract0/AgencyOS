@@ -122,7 +122,10 @@ class EnhancedMemoryStore(MemoryStore):
             # Phase 2, Task 1: Add to FAISS index if enabled
             if self.vector_index is not None:
                 # Get embedding from vector store (already computed)
-                if hasattr(self.vector_store, "_embeddings") and key in self.vector_store._embeddings:
+                if (
+                    hasattr(self.vector_store, "_embeddings")
+                    and key in self.vector_store._embeddings
+                ):
                     embedding = self.vector_store._embeddings[key]
 
                     # Add to FAISS index (incremental update, <10ms per spec)
@@ -294,7 +297,10 @@ class EnhancedMemoryStore(MemoryStore):
             # Phase 2, Task 1: Use FAISS index if available
             if self.vector_index is not None and self.vector_index.index.ntotal > 0:
                 # Generate query embedding using VectorStore's embedding function
-                if hasattr(self.vector_store, "_embedding_function") and self.vector_store._embedding_function:
+                if (
+                    hasattr(self.vector_store, "_embedding_function")
+                    and self.vector_store._embedding_function
+                ):
                     query_embeddings = self.vector_store._embedding_function([query])
                     query_embedding = query_embeddings[0]
 
@@ -302,7 +308,9 @@ class EnhancedMemoryStore(MemoryStore):
                     search_results = self.vector_index.search(query_embedding, k=top_k)
                 else:
                     # No embedding function, fall back to linear search
-                    logger.warning("Embedding function not available, falling back to linear search")
+                    logger.warning(
+                        "Embedding function not available, falling back to linear search"
+                    )
                     results = self.vector_store.hybrid_search(query, all_memories, top_k)
 
                     # Filter by minimum similarity and convert to memory format
@@ -841,7 +849,6 @@ class EnhancedMemoryStore(MemoryStore):
             logger.error(f"Export for learning failed: {e}")
             return {"error": str(e)}
 
-
     def _rebuild_index_if_needed(self) -> None:
         """
         Rebuild FAISS index from scratch for optimization (per spec: every 1000 additions).
@@ -863,7 +870,10 @@ class EnhancedMemoryStore(MemoryStore):
             all_embeddings = []
 
             for key in self._memories.keys():
-                if hasattr(self.vector_store, "_embeddings") and key in self.vector_store._embeddings:
+                if (
+                    hasattr(self.vector_store, "_embeddings")
+                    and key in self.vector_store._embeddings
+                ):
                     all_ids.append(key)
                     all_embeddings.append(self.vector_store._embeddings[key].tolist())
 

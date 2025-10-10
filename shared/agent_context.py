@@ -296,9 +296,7 @@ class AgentContext:
 
         return Ok(context)
 
-    def create_checkpoint(
-        self, base_path: str | None = None
-    ) -> Result["SessionCheckpoint", str]:
+    def create_checkpoint(self, base_path: str | None = None) -> Result["SessionCheckpoint", str]:
         """
         Create checkpoint from current session state.
 
@@ -359,8 +357,7 @@ class AgentContext:
                     self._metadata["checkpoint_count"] = current_count + 1
 
                 logger.info(
-                    f"Checkpoint created: {checkpoint.checkpoint_id} "
-                    f"(session: {self.session_id})"
+                    f"Checkpoint created: {checkpoint.checkpoint_id} (session: {self.session_id})"
                 )
 
                 return result
@@ -491,9 +488,7 @@ class AgentContext:
 
         return session_state
 
-    def enable_auto_checkpoint(
-        self, config: "CheckpointConfig | None" = None
-    ) -> Result[None, str]:
+    def enable_auto_checkpoint(self, config: "CheckpointConfig | None" = None) -> Result[None, str]:
         """
         Enable automatic checkpoint management for this context.
 
@@ -520,9 +515,7 @@ class AgentContext:
             config = CheckpointConfig()
 
         self._checkpoint_manager = CheckpointManager(config)
-        result = self._checkpoint_manager.start_auto_checkpoint(
-            self, task_id=self.session_id
-        )
+        result = self._checkpoint_manager.start_auto_checkpoint(self, task_id=self.session_id)
 
         if result.is_err():
             return Err(result.unwrap_err())
@@ -558,10 +551,7 @@ class AgentContext:
         return getattr(self, "_checkpoint_manager", None)
 
     def get_optimal_model(
-        self,
-        agent_key: str,
-        task_description: str,
-        task_type: str = "general"
+        self, agent_key: str, task_description: str, task_type: str = "general"
     ) -> str:
         """Get optimal model for task via adaptive routing.
 
@@ -600,7 +590,7 @@ class AgentContext:
                 task_description=task_description,
                 task_type=task_type,
                 agent_key=agent_key,
-                session_id=self.session_id
+                session_id=self.session_id,
             )
 
             if decision_result.is_ok():

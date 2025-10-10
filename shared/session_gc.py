@@ -89,9 +89,7 @@ class SessionGarbageCollector:
         if not self.session_dir.exists():
             logger.warning(f"Session directory does not exist: {self.session_dir}")
 
-    def collect_expired_sessions(
-        self, dry_run: bool = False
-    ) -> Result[GCResult, str]:
+    def collect_expired_sessions(self, dry_run: bool = False) -> Result[GCResult, str]:
         """
         Run garbage collection on all session files.
 
@@ -125,10 +123,7 @@ class SessionGarbageCollector:
             session_files = list(self.session_dir.glob("*.json.zlib"))
             session_files.extend(self.session_dir.glob("*.json"))
 
-            logger.info(
-                f"GC started: {len(session_files)} session files found "
-                f"(dry_run={dry_run})"
-            )
+            logger.info(f"GC started: {len(session_files)} session files found (dry_run={dry_run})")
 
             for session_file in session_files:
                 gc_result.sessions_scanned += 1
@@ -136,9 +131,7 @@ class SessionGarbageCollector:
                 # Load session state
                 load_result = self._load_session(session_file)
                 if load_result.is_err():
-                    error_msg = (
-                        f"{session_file.name}: {load_result.unwrap_err()}"
-                    )
+                    error_msg = f"{session_file.name}: {load_result.unwrap_err()}"
                     gc_result.errors.append(error_msg)
                     logger.warning(f"Failed to load session: {error_msg}")
                     continue
@@ -265,13 +258,11 @@ class SessionGarbageCollector:
             if age_days > retention_days:
                 return (
                     True,
-                    f"Completed session older than {retention_days} days "
-                    f"(age: {age_days} days)",
+                    f"Completed session older than {retention_days} days (age: {age_days} days)",
                 )
             return (
                 False,
-                f"Completed session within {retention_days}-day retention "
-                f"(age: {age_days} days)",
+                f"Completed session within {retention_days}-day retention (age: {age_days} days)",
             )
 
         # Abandoned sessions: 30-day retention (overrides TTL)
@@ -282,13 +273,11 @@ class SessionGarbageCollector:
             if age_days > retention_days:
                 return (
                     True,
-                    f"Abandoned session older than {retention_days} days "
-                    f"(age: {age_days} days)",
+                    f"Abandoned session older than {retention_days} days (age: {age_days} days)",
                 )
             return (
                 False,
-                f"Abandoned session within {retention_days}-day retention "
-                f"(age: {age_days} days)",
+                f"Abandoned session within {retention_days}-day retention (age: {age_days} days)",
             )
 
         # TTL expired for non-completed, non-abandoned sessions

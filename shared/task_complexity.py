@@ -34,9 +34,9 @@ class TaskComplexity(str, Enum):
     def estimated_cost_per_1k_tokens(self) -> float:
         """Estimated cost per 1,000 tokens for this complexity tier."""
         return {
-            "P1": 0.004,   # gpt-5: $4/1M tokens
+            "P1": 0.004,  # gpt-5: $4/1M tokens
             "P2": 0.0015,  # gpt-4o: $1.50/1M tokens
-            "P3": 0.0      # local model: FREE
+            "P3": 0.0,  # local model: FREE
         }[self.value]
 
     @property
@@ -47,7 +47,7 @@ class TaskComplexity(str, Enum):
         models = {
             "P1": "gpt-5",
             "P2": "gpt-4o",
-            "P3": "ollama/qwen3-coder:30b" if use_local else "gpt-4o-mini"
+            "P3": "ollama/qwen3-coder:30b" if use_local else "gpt-4o-mini",
         }
         return models[self.value]
 
@@ -94,7 +94,7 @@ class RoutingDecision(BaseModel):
             "model": self.selected_model,
             "cost_estimate_usd": self.estimated_cost_usd,
             "routing_latency_ms": self.routing_latency_ms,
-            "timestamp": self.timestamp.isoformat()
+            "timestamp": self.timestamp.isoformat(),
         }
 
 
@@ -153,9 +153,7 @@ class TaskComplexityClassifier:
         self.p1_patterns = [re.compile(p, re.IGNORECASE) for p in self.P1_KEYWORDS]
 
     def classify(
-        self,
-        task_description: str,
-        task_type: str = "general"
+        self, task_description: str, task_type: str = "general"
     ) -> Result[ClassificationResult, str]:
         """Classify task complexity using 3-method algorithm.
 
@@ -189,12 +187,14 @@ class TaskComplexityClassifier:
                 return Ok(keyword_result)
 
             # Fallback: P2 moderate (safest default)
-            return Ok(ClassificationResult(
-                complexity=TaskComplexity.P2_MODERATE,
-                method="fallback",
-                confidence=0.5,
-                details={"reason": "No high-confidence match, using P2 default"}
-            ))
+            return Ok(
+                ClassificationResult(
+                    complexity=TaskComplexity.P2_MODERATE,
+                    method="fallback",
+                    confidence=0.5,
+                    details={"reason": "No high-confidence match, using P2 default"},
+                )
+            )
 
         except Exception as e:
             return Err(f"Classification failed: {e}")
@@ -208,7 +208,7 @@ class TaskComplexityClassifier:
                     complexity=TaskComplexity.P3_SIMPLE,
                     method="keyword",
                     confidence=0.9,
-                    details={"matched_pattern": pattern.pattern}
+                    details={"matched_pattern": pattern.pattern},
                 )
 
         # Check P1 (complex)
@@ -218,7 +218,7 @@ class TaskComplexityClassifier:
                     complexity=TaskComplexity.P1_COMPLEX,
                     method="keyword",
                     confidence=0.85,
-                    details={"matched_pattern": pattern.pattern}
+                    details={"matched_pattern": pattern.pattern},
                 )
 
         # No match → P2 moderate (with lower confidence)
@@ -226,7 +226,7 @@ class TaskComplexityClassifier:
             complexity=TaskComplexity.P2_MODERATE,
             method="keyword",
             confidence=0.5,
-            details={"reason": "No P1/P3 keyword match"}
+            details={"reason": "No P1/P3 keyword match"},
         )
 
     def _classify_by_ast(self, task_description: str) -> ClassificationResult:
@@ -244,7 +244,7 @@ class TaskComplexityClassifier:
                     complexity=TaskComplexity.P2_MODERATE,
                     method="ast",
                     confidence=0.4,
-                    details={"reason": "No code blocks found"}
+                    details={"reason": "No code blocks found"},
                 )
 
             # Parse first code block
@@ -259,21 +259,21 @@ class TaskComplexityClassifier:
                     complexity=TaskComplexity.P1_COMPLEX,
                     method="ast",
                     confidence=0.8,
-                    details={"complexity_score": complexity_score}
+                    details={"complexity_score": complexity_score},
                 )
             elif complexity_score > 5:
                 return ClassificationResult(
                     complexity=TaskComplexity.P2_MODERATE,
                     method="ast",
                     confidence=0.75,
-                    details={"complexity_score": complexity_score}
+                    details={"complexity_score": complexity_score},
                 )
             else:
                 return ClassificationResult(
                     complexity=TaskComplexity.P3_SIMPLE,
                     method="ast",
                     confidence=0.7,
-                    details={"complexity_score": complexity_score}
+                    details={"complexity_score": complexity_score},
                 )
 
         except SyntaxError:
@@ -282,7 +282,7 @@ class TaskComplexityClassifier:
                 complexity=TaskComplexity.P2_MODERATE,
                 method="ast",
                 confidence=0.3,
-                details={"reason": "Code parsing failed"}
+                details={"reason": "Code parsing failed"},
             )
 
     def _estimate_complexity(self, tree: ast.AST) -> int:
@@ -311,7 +311,7 @@ class TaskComplexityClassifier:
                 complexity=TaskComplexity.P2_MODERATE,
                 method="vectorstore",
                 confidence=0.0,
-                details={"reason": "VectorStore not available"}
+                details={"reason": "VectorStore not available"},
             )
 
         try:
@@ -319,9 +319,7 @@ class TaskComplexityClassifier:
 
             # Query VectorStore for similar tasks
             similar_tasks = self.vector_store.search(
-                query=task_description,
-                namespace="task_classification",
-                limit=5
+                query=task_description, namespace="task_classification", limit=5
             )
 
             query_latency_ms = (time.perf_counter() - start) * 1000
@@ -331,7 +329,10 @@ class TaskComplexityClassifier:
                     complexity=TaskComplexity.P2_MODERATE,
                     method="vectorstore",
                     confidence=0.3,
-                    details={"reason": "No similar tasks found", "query_latency_ms": query_latency_ms}
+                    details={
+                        "reason": "No similar tasks found",
+                        "query_latency_ms": query_latency_ms,
+                    },
                 )
 
             # Weighted average of historical classifications
@@ -365,8 +366,8 @@ class TaskComplexityClassifier:
                 details={
                     "similar_tasks_found": len(similar_tasks),
                     "complexity_scores": complexity_scores,
-                    "query_latency_ms": query_latency_ms
-                }
+                    "query_latency_ms": query_latency_ms,
+                },
             )
 
         except Exception as e:
@@ -374,5 +375,5 @@ class TaskComplexityClassifier:
                 complexity=TaskComplexity.P2_MODERATE,
                 method="vectorstore",
                 confidence=0.2,
-                details={"error": str(e)}
+                details={"error": str(e)},
             )

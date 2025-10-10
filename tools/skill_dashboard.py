@@ -18,7 +18,7 @@ import json
 import os
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Dict, List
+from typing import Any
 
 from shared.agent_context import create_agent_context
 from shared.skill_vector import SkillVector
