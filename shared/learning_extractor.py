@@ -9,8 +9,6 @@ from dataclasses import dataclass
 from datetime import datetime
 from typing import Any
 
-from pydantic import BaseModel, ConfigDict, Field
-
 
 @dataclass
 class ExtractedPattern:
@@ -51,10 +49,7 @@ class LearningExtractor:
         self.vector_store = vector_store
 
     def extract_from_session(
-        self,
-        session_id: str,
-        session_data: dict[str, Any],
-        min_confidence: float = 0.6
+        self, session_id: str, session_data: dict[str, Any], min_confidence: float = 0.6
     ) -> list[ExtractedPattern]:
         """Extract patterns from completed session.
 
@@ -92,63 +87,68 @@ class LearningExtractor:
 
         # Pattern: Result<T, E> usage
         result_pattern_count = self._count_pattern(
-            session_data,
-            r"Result\[.*,.*\]|from shared\.type_definitions\.result import"
+            session_data, r"Result\[.*,.*\]|from shared\.type_definitions\.result import"
         )
 
         if result_pattern_count > 0:
-            patterns.append(ExtractedPattern(
-                pattern_type="code_pattern",
-                description="Result<T,E> pattern for error handling",
-                context="Functional error handling without exceptions",
-                example="def process() -> Result[Data, Error]: ...",
-                success_rate=0.95,
-                evidence_count=result_pattern_count,
-                tags=["error_handling", "result_pattern", "functional"],
-                confidence=min(0.9, result_pattern_count * 0.3)
-            ))
+            patterns.append(
+                ExtractedPattern(
+                    pattern_type="code_pattern",
+                    description="Result<T,E> pattern for error handling",
+                    context="Functional error handling without exceptions",
+                    example="def process() -> Result[Data, Error]: ...",
+                    success_rate=0.95,
+                    evidence_count=result_pattern_count,
+                    tags=["error_handling", "result_pattern", "functional"],
+                    confidence=min(0.9, result_pattern_count * 0.3),
+                )
+            )
 
         # Pattern: Pydantic models
         pydantic_count = self._count_pattern(
-            session_data,
-            r"from pydantic import BaseModel|class \w+\(BaseModel\)"
+            session_data, r"from pydantic import BaseModel|class \w+\(BaseModel\)"
         )
 
         if pydantic_count > 0:
-            patterns.append(ExtractedPattern(
-                pattern_type="code_pattern",
-                description="Pydantic models for strict typing",
-                context="Type-safe data models with validation",
-                example="class User(BaseModel): name: str",
-                success_rate=0.98,
-                evidence_count=pydantic_count,
-                tags=["typing", "pydantic", "validation"],
-                confidence=min(0.9, pydantic_count * 0.3)
-            ))
+            patterns.append(
+                ExtractedPattern(
+                    pattern_type="code_pattern",
+                    description="Pydantic models for strict typing",
+                    context="Type-safe data models with validation",
+                    example="class User(BaseModel): name: str",
+                    success_rate=0.98,
+                    evidence_count=pydantic_count,
+                    tags=["typing", "pydantic", "validation"],
+                    confidence=min(0.9, pydantic_count * 0.3),
+                )
+            )
 
         return patterns
 
-    def _extract_architectural_patterns(self, session_data: dict[str, Any]) -> list[ExtractedPattern]:
+    def _extract_architectural_patterns(
+        self, session_data: dict[str, Any]
+    ) -> list[ExtractedPattern]:
         """Extract architectural decision patterns."""
         patterns = []
 
         # Pattern: ADR creation
         adr_count = self._count_pattern(
-            session_data,
-            r"ADR-\d+|docs/adr/|Architectural Decision Record"
+            session_data, r"ADR-\d+|docs/adr/|Architectural Decision Record"
         )
 
         if adr_count > 0:
-            patterns.append(ExtractedPattern(
-                pattern_type="architecture",
-                description="ADR-driven architectural decisions",
-                context="Document significant architecture choices",
-                example="ADR-024: Adaptive Model Router for cost optimization",
-                success_rate=1.0,
-                evidence_count=adr_count,
-                tags=["adr", "architecture", "documentation"],
-                confidence=min(0.95, adr_count * 0.5)
-            ))
+            patterns.append(
+                ExtractedPattern(
+                    pattern_type="architecture",
+                    description="ADR-driven architectural decisions",
+                    context="Document significant architecture choices",
+                    example="ADR-024: Adaptive Model Router for cost optimization",
+                    success_rate=1.0,
+                    evidence_count=adr_count,
+                    tags=["adr", "architecture", "documentation"],
+                    confidence=min(0.95, adr_count * 0.5),
+                )
+            )
 
         return patterns
 
@@ -157,64 +157,67 @@ class LearningExtractor:
         patterns = []
 
         # Pattern: AAA pattern (Arrange-Act-Assert)
-        aaa_count = self._count_pattern(
-            session_data,
-            r"# Arrange|# Act|# Assert"
-        )
+        aaa_count = self._count_pattern(session_data, r"# Arrange|# Act|# Assert")
 
         if aaa_count >= 3:  # At least one full AAA test
-            patterns.append(ExtractedPattern(
-                pattern_type="testing",
-                description="AAA (Arrange-Act-Assert) test pattern",
-                context="Clear test structure for readability",
-                example="# Arrange\nuser = User()\n# Act\nresult = user.login()\n# Assert\nassert result.is_ok()",
-                success_rate=0.92,
-                evidence_count=aaa_count // 3,
-                tags=["testing", "aaa_pattern", "structure"],
-                confidence=min(0.85, (aaa_count // 3) * 0.4)
-            ))
+            patterns.append(
+                ExtractedPattern(
+                    pattern_type="testing",
+                    description="AAA (Arrange-Act-Assert) test pattern",
+                    context="Clear test structure for readability",
+                    example="# Arrange\nuser = User()\n# Act\nresult = user.login()\n# Assert\nassert result.is_ok()",
+                    success_rate=0.92,
+                    evidence_count=aaa_count // 3,
+                    tags=["testing", "aaa_pattern", "structure"],
+                    confidence=min(0.85, (aaa_count // 3) * 0.4),
+                )
+            )
 
         # Pattern: TDD (tests written first)
         tdd_indicators = self._count_pattern(
-            session_data,
-            r"test_.*\.py.*created before|TDD|test-driven"
+            session_data, r"test_.*\.py.*created before|TDD|test-driven"
         )
 
         if tdd_indicators > 0:
-            patterns.append(ExtractedPattern(
-                pattern_type="testing",
-                description="TDD (Test-Driven Development)",
-                context="Write tests before implementation",
-                example="1. Write failing test\n2. Implement minimum code\n3. Refactor",
-                success_rate=0.88,
-                evidence_count=tdd_indicators,
-                tags=["testing", "tdd", "methodology"],
-                confidence=min(0.8, tdd_indicators * 0.4)
-            ))
+            patterns.append(
+                ExtractedPattern(
+                    pattern_type="testing",
+                    description="TDD (Test-Driven Development)",
+                    context="Write tests before implementation",
+                    example="1. Write failing test\n2. Implement minimum code\n3. Refactor",
+                    success_rate=0.88,
+                    evidence_count=tdd_indicators,
+                    tags=["testing", "tdd", "methodology"],
+                    confidence=min(0.8, tdd_indicators * 0.4),
+                )
+            )
 
         return patterns
 
-    def _extract_error_handling_patterns(self, session_data: dict[str, Any]) -> list[ExtractedPattern]:
+    def _extract_error_handling_patterns(
+        self, session_data: dict[str, Any]
+    ) -> list[ExtractedPattern]:
         """Extract error handling patterns."""
         patterns = []
 
         # Pattern: Graceful degradation
         degradation_count = self._count_pattern(
-            session_data,
-            r"fallback|graceful.*degrad|error.*recovery"
+            session_data, r"fallback|graceful.*degrad|error.*recovery"
         )
 
         if degradation_count > 0:
-            patterns.append(ExtractedPattern(
-                pattern_type="error_handling",
-                description="Graceful degradation with fallbacks",
-                context="Provide fallback behavior when primary fails",
-                example="if primary.is_err():\n    return fallback_strategy()",
-                success_rate=0.85,
-                evidence_count=degradation_count,
-                tags=["error_handling", "resilience", "fallback"],
-                confidence=min(0.8, degradation_count * 0.3)
-            ))
+            patterns.append(
+                ExtractedPattern(
+                    pattern_type="error_handling",
+                    description="Graceful degradation with fallbacks",
+                    context="Provide fallback behavior when primary fails",
+                    example="if primary.is_err():\n    return fallback_strategy()",
+                    success_rate=0.85,
+                    evidence_count=degradation_count,
+                    tags=["error_handling", "resilience", "fallback"],
+                    confidence=min(0.8, degradation_count * 0.3),
+                )
+            )
 
         return patterns
 
@@ -236,11 +239,7 @@ class LearningExtractor:
 
         return count
 
-    def store_patterns(
-        self,
-        patterns: list[ExtractedPattern],
-        session_id: str
-    ) -> int:
+    def store_patterns(self, patterns: list[ExtractedPattern], session_id: str) -> int:
         """Store extracted patterns to VectorStore (Article IV).
 
         Args:
@@ -264,7 +263,7 @@ class LearningExtractor:
                 "evidence_count": pattern.evidence_count,
                 "confidence": pattern.confidence,
                 "source_session": session_id,
-                "extracted_at": datetime.now().isoformat()
+                "extracted_at": datetime.now().isoformat(),
             }
 
             try:
@@ -272,7 +271,7 @@ class LearningExtractor:
                     key,
                     content,
                     tags=pattern.tags + ["learned_pattern", f"session:{session_id}"],
-                    namespace="learning_patterns"
+                    namespace="learning_patterns",
                 )
                 stored_count += 1
 
@@ -282,10 +281,7 @@ class LearningExtractor:
         return stored_count
 
     def query_similar_patterns(
-        self,
-        pattern_type: str,
-        query: str,
-        limit: int = 5
+        self, pattern_type: str, query: str, limit: int = 5
     ) -> list[dict[str, Any]]:
         """Query VectorStore for similar learned patterns.
 
@@ -299,15 +295,12 @@ class LearningExtractor:
         """
         try:
             results = self.vector_store.search(
-                query=f"{pattern_type} {query}",
-                namespace="learning_patterns",
-                limit=limit
+                query=f"{pattern_type} {query}", namespace="learning_patterns", limit=limit
             )
 
             # Filter by pattern type
             filtered = [
-                r for r in results
-                if r.get("content", {}).get("pattern_type") == pattern_type
+                r for r in results if r.get("content", {}).get("pattern_type") == pattern_type
             ]
 
             return filtered
@@ -316,9 +309,7 @@ class LearningExtractor:
             return []
 
     def generate_learning_report(
-        self,
-        session_id: str,
-        patterns: list[ExtractedPattern]
+        self, session_id: str, patterns: list[ExtractedPattern]
     ) -> dict[str, Any]:
         """Generate learning report for session.
 
@@ -346,25 +337,16 @@ class LearningExtractor:
             "session_id": session_id,
             "patterns_extracted": len(patterns),
             "pattern_types": list(by_type.keys()),
-            "patterns_by_type": {
-                ptype: len(plist) for ptype, plist in by_type.items()
-            },
+            "patterns_by_type": {ptype: len(plist) for ptype, plist in by_type.items()},
             "average_confidence": avg_confidence,
             "total_evidence": total_evidence,
-            "top_patterns": sorted(
-                patterns,
-                key=lambda p: p.confidence,
-                reverse=True
-            )[:5],
-            "timestamp": datetime.now().isoformat()
+            "top_patterns": sorted(patterns, key=lambda p: p.confidence, reverse=True)[:5],
+            "timestamp": datetime.now().isoformat(),
         }
 
 
 def extract_and_store_session_learnings(
-    session_id: str,
-    session_data: dict[str, Any],
-    vector_store: Any,
-    min_confidence: float = 0.6
+    session_id: str, session_data: dict[str, Any], vector_store: Any, min_confidence: float = 0.6
 ) -> dict[str, Any]:
     """Convenience function to extract and store learnings from session.
 
@@ -381,9 +363,7 @@ def extract_and_store_session_learnings(
 
     # Extract patterns
     patterns = extractor.extract_from_session(
-        session_id,
-        session_data,
-        min_confidence=min_confidence
+        session_id, session_data, min_confidence=min_confidence
     )
 
     # Store to VectorStore

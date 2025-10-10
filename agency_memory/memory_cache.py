@@ -85,7 +85,10 @@ class MemoryCache:
         logger.info(f"MemoryCache initialized with max_size={max_size}")
 
     def _generate_cache_key(
-        self, query_tags: list[str] | None = None, query_text: str | None = None, **params: JSONValue
+        self,
+        query_tags: list[str] | None = None,
+        query_text: str | None = None,
+        **params: JSONValue,
     ) -> str:
         """
         Generate deterministic cache key from query parameters.

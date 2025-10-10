@@ -28,10 +28,10 @@ from pathlib import Path
 import pytest
 
 from tools.memory_lock_manager import (
-    MemoryLockManager,
-    LockMetrics,
-    LockContention,
     DeadlockCycle,
+    LockContention,
+    LockMetrics,
+    MemoryLockManager,
     create_memory_lock_manager,
 )
 
@@ -98,7 +98,6 @@ class TestLockManagerBasicOperations:
 
         # Hold lock
         async with lock_manager.acquire_lock(test_path, timeout=5.0):
-
             # Act - Try to acquire with short timeout (will fail)
             with pytest.raises(TimeoutError) as exc_info:
                 async with lock_manager.acquire_lock(test_path, timeout=0.1):
@@ -152,6 +151,7 @@ class TestConcurrentAccess:
         WHEN all acquire locks simultaneously
         THEN all succeed without contention
         """
+
         # Arrange
         async def read_file(file_id: int):
             """Simulate agent reading a file"""

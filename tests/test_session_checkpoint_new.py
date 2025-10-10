@@ -120,9 +120,7 @@ class TestSaveCheckpoint:
         )
         assert expected_path.exists()
 
-    def test_save_checkpoint_writes_json_file(
-        self, temp_session_dir, sample_session_state
-    ):
+    def test_save_checkpoint_writes_json_file(self, temp_session_dir, sample_session_state):
         """AC-1: Test checkpoint writes valid JSON file."""
         session_id, base_path = temp_session_dir
 
@@ -146,7 +144,7 @@ class TestSaveCheckpoint:
         assert checkpoint_file.exists()
 
         # Verify valid JSON
-        with open(checkpoint_file, "r") as f:
+        with open(checkpoint_file) as f:
             data = json.load(f)
 
         assert "checkpoint_id" in data
@@ -154,9 +152,7 @@ class TestSaveCheckpoint:
         assert "session_state_json" in data
         assert "checksum" in data
 
-    def test_save_checkpoint_includes_correct_data(
-        self, temp_session_dir, sample_session_state
-    ):
+    def test_save_checkpoint_includes_correct_data(self, temp_session_dir, sample_session_state):
         """Test checkpoint contains correct session state data."""
         session_id, base_path = temp_session_dir
 
@@ -198,9 +194,7 @@ class TestSaveCheckpoint:
         assert checkpoint.checksum == expected_checksum
         assert len(checkpoint.checksum) == 64  # SHA256 hex length
 
-    def test_save_checkpoint_uses_atomic_write(
-        self, temp_session_dir, sample_session_state
-    ):
+    def test_save_checkpoint_uses_atomic_write(self, temp_session_dir, sample_session_state):
         """AC-3: Test atomic write pattern (temp file + rename)."""
         session_id, base_path = temp_session_dir
 
@@ -296,9 +290,7 @@ class TestSaveCheckpoint:
 class TestLoadCheckpoint:
     """Test load_checkpoint() functionality."""
 
-    def test_load_checkpoint_restores_session_state(
-        self, temp_session_dir, sample_session_state
-    ):
+    def test_load_checkpoint_restores_session_state(self, temp_session_dir, sample_session_state):
         """AC-2: Test checkpoint restore returns original SessionState."""
         session_id, base_path = temp_session_dir
 
@@ -325,10 +317,7 @@ class TestLoadCheckpoint:
         assert restored_state.session_id == sample_session_state.session_id
         assert restored_state.agent_name == sample_session_state.agent_name
         assert restored_state.task_id == sample_session_state.task_id
-        assert (
-            restored_state.task_progress_percent
-            == sample_session_state.task_progress_percent
-        )
+        assert restored_state.task_progress_percent == sample_session_state.task_progress_percent
         assert restored_state.completed_steps == sample_session_state.completed_steps
         assert restored_state.pending_steps == sample_session_state.pending_steps
 
@@ -356,7 +345,7 @@ class TestLoadCheckpoint:
             / f"{checkpoint.checkpoint_id}.json"
         )
 
-        with open(checkpoint_file, "r") as f:
+        with open(checkpoint_file) as f:
             data = json.load(f)
 
         # Modify session_state_json without updating checksum
@@ -394,9 +383,7 @@ class TestLoadCheckpoint:
         assert error.error_type == "io_error"
         assert "not found" in error.message.lower()
 
-    def test_load_checkpoint_handles_invalid_json(
-        self, temp_session_dir, sample_session_state
-    ):
+    def test_load_checkpoint_handles_invalid_json(self, temp_session_dir, sample_session_state):
         """Test error handling for corrupted JSON."""
         session_id, base_path = temp_session_dir
 
@@ -496,9 +483,7 @@ class TestCheckpointErrorModel:
 
     def test_checkpoint_error_has_required_fields(self):
         """Test CheckpointError model structure."""
-        error = CheckpointError(
-            error_type="validation_error", message="Invalid checkpoint data"
-        )
+        error = CheckpointError(error_type="validation_error", message="Invalid checkpoint data")
 
         assert error.error_type == "validation_error"
         assert error.message == "Invalid checkpoint data"
@@ -581,9 +566,7 @@ class TestSessionCheckpointModel:
 class TestCheckpointIntegration:
     """Integration tests for save/load roundtrip."""
 
-    def test_save_load_roundtrip_preserves_all_data(
-        self, temp_session_dir, sample_session_state
-    ):
+    def test_save_load_roundtrip_preserves_all_data(self, temp_session_dir, sample_session_state):
         """Test full save/load cycle preserves all SessionState fields."""
         session_id, base_path = temp_session_dir
 
@@ -614,20 +597,13 @@ class TestCheckpointIntegration:
         assert restored_state.metadata == sample_session_state.metadata
         assert restored_state.task_id == sample_session_state.task_id
         assert restored_state.task_type == sample_session_state.task_type
-        assert (
-            restored_state.task_progress_percent
-            == sample_session_state.task_progress_percent
-        )
+        assert restored_state.task_progress_percent == sample_session_state.task_progress_percent
         assert restored_state.completed_steps == sample_session_state.completed_steps
         assert restored_state.pending_steps == sample_session_state.pending_steps
-        assert (
-            restored_state.active_memory_refs == sample_session_state.active_memory_refs
-        )
+        assert restored_state.active_memory_refs == sample_session_state.active_memory_refs
         assert restored_state.pinned_memories == sample_session_state.pinned_memories
 
-    def test_multiple_checkpoints_in_same_session(
-        self, temp_session_dir, sample_session_state
-    ):
+    def test_multiple_checkpoints_in_same_session(self, temp_session_dir, sample_session_state):
         """Test creating multiple checkpoints for same session."""
         session_id, base_path = temp_session_dir
 
@@ -684,9 +660,7 @@ class TestCheckpointIntegration:
         assert len(state1.completed_steps) == 2
         assert len(state2.completed_steps) == 3
 
-    def test_checkpoints_isolated_per_session(
-        self, temp_session_dir, sample_session_state
-    ):
+    def test_checkpoints_isolated_per_session(self, temp_session_dir, sample_session_state):
         """Test checkpoints are isolated by session_id."""
         session_id_1, base_path = temp_session_dir
         session_id_2 = "test_session_456"
@@ -722,9 +696,7 @@ class TestCheckpointIntegration:
         assert dir2.exists()
         assert dir1 != dir2
 
-    def test_checkpoint_timestamp_accuracy(
-        self, temp_session_dir, sample_session_state
-    ):
+    def test_checkpoint_timestamp_accuracy(self, temp_session_dir, sample_session_state):
         """Test checkpoint timestamp is accurate."""
         session_id, base_path = temp_session_dir
 
