@@ -8,6 +8,8 @@ Lightweight implementation with optional embeddings support.
 
 import json
 import logging
+import os
+import threading
 from collections.abc import Callable
 from dataclasses import dataclass
 from datetime import datetime
@@ -16,6 +18,28 @@ from typing import Any, cast
 from shared.type_definitions.json import JSONValue
 
 logger = logging.getLogger(__name__)
+
+# Thread-safe import lock for PyTorch/transformers to prevent segfault
+# See SPEC-021: PyTorch crashes with parallel imports in pytest workers
+_import_lock = threading.Lock()
+_torch_imported = False
+
+# Pre-import torch if testing to avoid parallel import crashes
+if "PYTEST_CURRENT_TEST" in os.environ:
+    with _import_lock:
+        if not _torch_imported:
+            try:
+                # Set environment variables for safety
+                os.environ["TOKENIZERS_PARALLELISM"] = "false"
+                os.environ["OMP_NUM_THREADS"] = "1"
+
+                # Pre-import in main thread before workers spawn
+                import torch
+                import transformers
+                _torch_imported = True
+                logger.debug("Pre-imported torch/transformers for test safety")
+            except ImportError:
+                pass  # Libraries not installed, will handle later
 
 
 @dataclass
@@ -77,9 +101,14 @@ class VectorStore:
             logger.info("Falling back to keyword search only")
 
     def _init_sentence_transformers(self) -> None:
-        """Initialize sentence-transformers embedding model."""
+        """Initialize sentence-transformers embedding model (thread-safe)."""
+        global _torch_imported, _import_lock
+
         try:
-            from sentence_transformers import SentenceTransformer
+            with _import_lock:
+                # Thread-safe import to prevent segfault with parallel workers
+                from sentence_transformers import SentenceTransformer
+                _torch_imported = True
 
             # Use a lightweight model for efficiency
             model_name = "all-MiniLM-L6-v2"  # 22MB, fast, good quality
