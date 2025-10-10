@@ -57,7 +57,9 @@ class TestBatchStoreOperations:
         # Arrange
         store = EnhancedMemoryStore(use_faiss_index=False)
 
-        memories = [(f"key_{i}", {"content": f"content_{i}"}, [f"tag_{i % 10}"]) for i in range(100)]
+        memories = [
+            (f"key_{i}", {"content": f"content_{i}"}, [f"tag_{i % 10}"]) for i in range(100)
+        ]
 
         # Act
         start_time = time.time()

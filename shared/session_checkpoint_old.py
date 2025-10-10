@@ -28,7 +28,6 @@ import time
 import zlib
 from datetime import datetime
 from pathlib import Path
-from typing import Any
 
 from shared.models.session import CheckpointMetadata, CompressionMetadata, SessionState
 from shared.type_definitions.result import Err, Ok, Result
@@ -146,9 +145,7 @@ class SessionCheckpointManager:
 
             # Calculate compression metrics
             compression_time_ms = (time.perf_counter() - start_time) * 1000
-            compression_ratio = (
-                compressed_size / original_size if original_size > 0 else 0
-            )
+            compression_ratio = compressed_size / original_size if original_size > 0 else 0
 
             # Update compression metadata
             compression_meta = CompressionMetadata(
@@ -303,9 +300,7 @@ class SessionCheckpointManager:
             # Extract session_id from checkpoint_id (format: cp_{session_id}_{timestamp})
             parts = failed_checkpoint_id.split("_")
             if len(parts) < 3:
-                return Err(
-                    f"Cannot extract session_id from checkpoint_id: {failed_checkpoint_id}"
-                )
+                return Err(f"Cannot extract session_id from checkpoint_id: {failed_checkpoint_id}")
 
             # Reconstruct session_id (might have underscores)
             session_id = "_".join(parts[1:-2]) if len(parts) > 3 else parts[1]
@@ -325,9 +320,7 @@ class SessionCheckpointManager:
             checkpoint_path = self.checkpoint_dir / f"{last_good_id}.zlib"
 
             if not checkpoint_path.exists():
-                return Err(
-                    f"Last-known-good checkpoint not found: {last_good_id}"
-                )
+                return Err(f"Last-known-good checkpoint not found: {last_good_id}")
 
             compressed_bytes = checkpoint_path.read_bytes()
 
@@ -342,9 +335,7 @@ class SessionCheckpointManager:
                 return Ok(session)
 
             except Exception as e:
-                return Err(
-                    f"Last-known-good checkpoint corrupted: {str(e)}"
-                )
+                return Err(f"Last-known-good checkpoint corrupted: {str(e)}")
 
         except OSError as e:
             return Err(f"Last-known-good fallback file error: {str(e)}")
@@ -405,9 +396,7 @@ class SessionCheckpointManager:
         except Exception as e:
             return Err(f"Unexpected error during deletion: {str(e)}")
 
-    def get_checkpoint_metadata(
-        self, checkpoint_id: str
-    ) -> Result[CheckpointMetadata, str]:
+    def get_checkpoint_metadata(self, checkpoint_id: str) -> Result[CheckpointMetadata, str]:
         """Get checkpoint metadata without full deserialization.
 
         Args:
@@ -424,9 +413,7 @@ class SessionCheckpointManager:
         """
         # For now, we need to load the full session to get metadata
         # Future optimization: store metadata separately in .meta.json file
-        session_result = self.resume_from_checkpoint(
-            checkpoint_id, validate_checksum=False
-        )
+        session_result = self.resume_from_checkpoint(checkpoint_id, validate_checksum=False)
 
         if session_result.is_err():
             return Err(session_result.unwrap_err())

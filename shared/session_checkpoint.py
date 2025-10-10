@@ -17,12 +17,11 @@ Phase: Leap 3 - Checkpoint Persistence
 import hashlib
 import json
 import logging
-import os
-import tempfile
 from datetime import datetime
 from pathlib import Path
 
 from pydantic import BaseModel, Field, field_validator
+
 from shared.models.session import SessionState
 from shared.type_definitions.result import Err, Ok, Result
 
@@ -133,9 +132,7 @@ def save_checkpoint(
         # Validate session_id
         if not session_id or not session_id.strip():
             return Err(
-                CheckpointError(
-                    error_type="validation_error", message="session_id cannot be empty"
-                )
+                CheckpointError(error_type="validation_error", message="session_id cannot be empty")
             )
 
         # Create checkpoints directory
@@ -196,9 +193,7 @@ def save_checkpoint(
         )
     except OSError as e:
         return Err(
-            CheckpointError(
-                error_type="io_error", message=f"Failed to write checkpoint: {str(e)}"
-            )
+            CheckpointError(error_type="io_error", message=f"Failed to write checkpoint: {str(e)}")
         )
     except Exception as e:
         return Err(
@@ -252,18 +247,12 @@ def load_checkpoint(
 
         if not session_id or not session_id.strip():
             return Err(
-                CheckpointError(
-                    error_type="validation_error", message="session_id cannot be empty"
-                )
+                CheckpointError(error_type="validation_error", message="session_id cannot be empty")
             )
 
         # Construct checkpoint file path
         checkpoint_file = (
-            Path(base_path)
-            / "sessions"
-            / session_id
-            / "checkpoints"
-            / f"{checkpoint_id}.json"
+            Path(base_path) / "sessions" / session_id / "checkpoints" / f"{checkpoint_id}.json"
         )
 
         # Check file exists
@@ -276,7 +265,7 @@ def load_checkpoint(
             )
 
         # Read checkpoint file
-        with open(checkpoint_file, "r") as f:
+        with open(checkpoint_file) as f:
             checkpoint_data = json.load(f)
 
         # Validate and parse checkpoint
@@ -325,9 +314,7 @@ def load_checkpoint(
         )
     except OSError as e:
         return Err(
-            CheckpointError(
-                error_type="io_error", message=f"Failed to read checkpoint: {str(e)}"
-            )
+            CheckpointError(error_type="io_error", message=f"Failed to read checkpoint: {str(e)}")
         )
     except ValueError as e:
         return Err(

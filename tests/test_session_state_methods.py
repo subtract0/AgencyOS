@@ -13,8 +13,9 @@ Constitutional Compliance:
 - ADR-008: No Dict[Any, Any] usage
 """
 
-import pytest
 from datetime import datetime
+
+import pytest
 
 from shared.models.session import SessionState, SessionStatus
 
@@ -352,6 +353,7 @@ class TestTaskProgressValidation:
     def test_agent_states_keys_must_match_agent_ids(self):
         """Test agent_states validates key matches state.agent_id."""
         from pydantic import ValidationError
+
         from shared.models.learning import AgentStateLearning
 
         # Valid: key matches agent_id

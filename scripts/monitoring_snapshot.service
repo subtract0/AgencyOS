@@ -1,0 +1,44 @@
+[Unit]
+Description=Agency Dashboard Snapshot Generator
+Documentation=https://github.com/subtract0/AgencyOS
+After=network.target
+
+# Constitutional Compliance Metadata
+# - Article I: Complete context before action (full dashboard data loaded)
+# - Article II: 100% verification (Pydantic validation of snapshots)
+# - Article IV: Continuous learning (snapshots stored for analysis)
+# - Article V: Spec-004 traceability (monitoring requirements)
+
+[Service]
+Type=oneshot
+WorkingDirectory={{AGENCY_ROOT}}
+Environment="PATH={{AGENCY_ROOT}}/.venv/bin:/usr/local/bin:/usr/bin:/bin"
+
+# Execute snapshot generation
+ExecStart={{PYTHON_CMD}} -m tools.quality_feedback.dashboard_snapshot \
+    --output-dir {{LOG_DIR}}/snapshots \
+    --window-hours 24 \
+    --verbose
+
+# Logging
+StandardOutput=append:{{LOG_DIR}}/systemd.log
+StandardError=append:{{LOG_DIR}}/systemd.log
+
+# Resource limits (prevent memory exhaustion)
+MemoryMax=512M
+CPUQuota=50%
+
+# Security hardening
+PrivateTmp=true
+NoNewPrivileges=true
+ProtectSystem=strict
+ProtectHome=read-only
+ReadWritePaths={{LOG_DIR}}
+ReadWritePaths=%h/.agency/dashboard
+
+# Restart policy (retry on failure)
+Restart=on-failure
+RestartSec=60
+
+[Install]
+WantedBy=default.target

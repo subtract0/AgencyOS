@@ -167,9 +167,7 @@ class TestSearchLatencyBenchmarks:
         ratio_5k_1k = latencies[5000] / latencies[1000]
         ratio_10k_5k = latencies[10000] / latencies[5000]
 
-        print(
-            f"\nSub-linear scaling: 1K→5K: {ratio_5k_1k:.2f}x, 5K→10K: {ratio_10k_5k:.2f}x"
-        )
+        print(f"\nSub-linear scaling: 1K→5K: {ratio_5k_1k:.2f}x, 5K→10K: {ratio_10k_5k:.2f}x")
         assert ratio_5k_1k < 5  # 5x size increase, <5x latency increase
         assert ratio_10k_5k < 2  # 2x size increase, <2x latency increase
 
@@ -417,10 +415,7 @@ class TestCachePerformanceBenchmarks:
 
         # Assert
         stats = cache.get_stats()
-        print(
-            f"\nWarmed cache - First 100 queries hit rate: {stats.hit_rate:.1f}% "
-            f"(target: >50%)"
-        )
+        print(f"\nWarmed cache - First 100 queries hit rate: {stats.hit_rate:.1f}% (target: >50%)")
         assert stats.hit_rate > 50.0, "Cache warming should achieve >50% hit rate"
 
 
@@ -445,7 +440,9 @@ class TestMemoryBudgetBenchmarks:
 
         # Assert
         stats = index.get_stats()
-        print(f"\n10K vectors - Build time: {elapsed:.2f}s, Total vectors: {stats['total_vectors']}")
+        print(
+            f"\n10K vectors - Build time: {elapsed:.2f}s, Total vectors: {stats['total_vectors']}"
+        )
         print("Memory estimate: ~62MB (10K × 1536 × 4 bytes + HNSW overhead)")
 
     @pytest.mark.slow
@@ -534,7 +531,7 @@ class TestIntegrationPerformance:
         search_time = time.perf_counter() - start_search
 
         # Assert
-        print(f"\nEnd-to-end performance:")
+        print("\nEnd-to-end performance:")
         print(f"  Store 1000 items: {store_time:.2f}s ({1000 / store_time:.0f} items/sec)")
         print(f"  Search 50 queries: {search_time:.2f}s ({50 / search_time:.0f} queries/sec)")
 
@@ -560,7 +557,7 @@ class TestIntegrationPerformance:
         second_time = time.perf_counter() - start_second
 
         # Assert
-        print(f"\nFAISS + Cache integration:")
+        print("\nFAISS + Cache integration:")
         print(f"  First search (miss): {first_time * 1000:.2f}ms")
         print(f"  Second search (hit): {second_time * 1000:.2f}ms")
         if second_time > 0:
