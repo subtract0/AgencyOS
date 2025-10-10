@@ -1,0 +1,287 @@
+{
+  "mission": "Leap 6: The Bulletproof Orchestrator - Production Hardening",
+  "leap_number": 6,
+  "phases": [
+    {
+      "id": "phase_1",
+      "title": "Constitutional Integrity & Slop Immunity",
+      "tasks": [
+        {
+          "id": "spec_slop_immunity_protocol",
+          "title": "Define Slop Immunity Protocol",
+          "type": "Spec",
+          "tier": "Tier 1",
+          "agent": "planner",
+          "description": "Define Slop Immunity Protocol specification with three-stage integration (pre-planning, graph validation, post-execution), REVISE workflow, and halt conditions (<3.5 score)",
+          "dependencies": [],
+          "acceptance_criteria": [
+            "Spec follows spec-kit methodology (Goals, Non-Goals, Personas, Acceptance Criteria)",
+            "Three-stage integration clearly defined with workflow diagrams",
+            "REVISE auto-rewrite cycle specified with timeout/retry limits",
+            "Constitutional alignment documented (Article III, Clause 3.2)",
+            "File saved to specs/spec-006-slop-immunity-protocol.md"
+          ],
+          "estimated_tokens": 2000
+        },
+        {
+          "id": "code_slop_immunity_integration",
+          "title": "Implement Article III, Clause 3.2 - Slop Immunity",
+          "type": "Code",
+          "tier": "Tier 2",
+          "agent": "coder",
+          "description": "Integrate slop_guardian.evaluate() as mandatory pre-flight check in /primeA orchestrator before graph execution",
+          "dependencies": ["spec_slop_immunity_protocol"],
+          "acceptance_criteria": [
+            "slop_guardian.evaluate() called before graph execution",
+            "SlopDetected exception raised with score and reasons if <3.5",
+            "Integration follows spec-006 three-stage approach",
+            "Result pattern used (no bare exceptions)",
+            "Audit log entry created for every slop check"
+          ],
+          "estimated_tokens": 3000
+        },
+        {
+          "id": "test_slop_immunity",
+          "title": "Test Slop Immunity Integration",
+          "type": "Test",
+          "tier": "Tier 2",
+          "agent": "test_generator",
+          "description": "Write tests for slop immunity - verify halt on low scores, pass on high scores, REVISE workflow triggers",
+          "dependencies": ["code_slop_immunity_integration"],
+          "verification_target": "code_slop_immunity_integration",
+          "acceptance_criteria": [
+            "All 5 test cases implemented with AAA pattern",
+            "Tests use pytest fixtures for slop_guardian mocking",
+            "Coverage >95% for slop immunity code paths",
+            "Tests verify SlopDetected exception contains score and reasons",
+            "Tests verify audit log entries created correctly"
+          ],
+          "estimated_tokens": 2500
+        },
+        {
+          "id": "code_audit_signing",
+          "title": "Implement Deterministic Audit Signing",
+          "type": "Code",
+          "tier": "Tier 2",
+          "agent": "coder",
+          "description": "Implement SHA256 signing, run snapshots (commit, docker, pip freeze, seed), and audit_log.jsonl append-only ledger",
+          "dependencies": ["spec_slop_immunity_protocol"],
+          "acceptance_criteria": [
+            "SHA256 signing deterministic (same input = same signature)",
+            "RunSnapshot captures all reproducibility data",
+            "audit_log.jsonl append-only (no edits)",
+            "Signature verification detects tampering",
+            "Pydantic models with strict typing (ADR-008)"
+          ],
+          "estimated_tokens": 3500
+        },
+        {
+          "id": "test_audit_signing",
+          "title": "Test Deterministic Audit Signing",
+          "type": "Test",
+          "tier": "Tier 2",
+          "agent": "test_generator",
+          "description": "Write tests for audit signing - verify signature determinism, tamper detection, snapshot completeness",
+          "dependencies": ["code_audit_signing"],
+          "verification_target": "code_audit_signing",
+          "acceptance_criteria": [
+            "All 6 test cases implemented with AAA pattern",
+            "Tests verify signature determinism across runs",
+            "Tests verify tamper detection with altered payloads",
+            "Tests verify RunSnapshot has all required fields",
+            "Coverage >95% for audit_signing.py"
+          ],
+          "estimated_tokens": 2500
+        }
+      ]
+    },
+    {
+      "id": "phase_2",
+      "title": "Resilient & Deterministic Execution Engine",
+      "tasks": [
+        {
+          "id": "spec_resilient_scheduler",
+          "title": "Design Resilient Scheduler Logic",
+          "type": "Spec",
+          "tier": "Tier 1",
+          "agent": "planner",
+          "description": "Design specification for resilient scheduler with deterministic batching, task result contracts, and failure policies",
+          "dependencies": [],
+          "acceptance_criteria": [
+            "Spec follows spec-kit methodology",
+            "Batching algorithm deterministic (same graph = same order)",
+            "Task result contract defined with Pydantic models",
+            "Failure policy covers retries, backoff, idempotency",
+            "File saved to specs/spec-007-resilient-scheduler.md"
+          ],
+          "estimated_tokens": 2000
+        },
+        {
+          "id": "code_full_layer_batching",
+          "title": "Implement Full Layer Batching Loop",
+          "type": "Code",
+          "tier": "Tier 2",
+          "agent": "coder",
+          "description": "Replace TODO at line 143 in graph_executor.py with while pending: loop to process all tasks in layer with max_workers limit",
+          "dependencies": ["spec_resilient_scheduler"],
+          "acceptance_criteria": [
+            "TODO at line 143 replaced with functional batching loop",
+            "All tasks in layer executed (not just first batch)",
+            "max_workers limit enforced",
+            "Deterministic execution order (same graph = same order)",
+            "Audit log entry for every task execution"
+          ],
+          "estimated_tokens": 3000
+        },
+        {
+          "id": "test_full_layer_batching",
+          "title": "Test Full Layer Batching",
+          "type": "Test",
+          "tier": "Tier 2",
+          "agent": "test_generator",
+          "description": "Write tests for full layer batching - verify all tasks execute, max_workers enforced, deterministic ordering",
+          "dependencies": ["code_full_layer_batching"],
+          "verification_target": "code_full_layer_batching",
+          "acceptance_criteria": [
+            "All 5 test cases implemented with AAA pattern",
+            "Tests verify all tasks execute (not just first batch)",
+            "Tests verify max_workers limit with large task sets",
+            "Tests verify deterministic ordering across runs",
+            "Coverage >95% for batching code paths"
+          ],
+          "estimated_tokens": 2500
+        },
+        {
+          "id": "code_failure_handling_retry",
+          "title": "Implement Failure Handling & Retry Wrapper",
+          "type": "Code",
+          "tier": "Tier 2",
+          "agent": "coder",
+          "description": "Implement retry wrapper with exponential backoff, idempotency keys, and error propagation using Result pattern",
+          "dependencies": ["spec_resilient_scheduler"],
+          "acceptance_criteria": [
+            "Exponential backoff implemented correctly",
+            "Idempotency keys prevent duplicate executions",
+            "Result pattern used (no bare exceptions)",
+            "Pydantic models with strict typing (ADR-008)",
+            "Integration with graph_executor tested"
+          ],
+          "estimated_tokens": 3500
+        },
+        {
+          "id": "test_failure_handling",
+          "title": "Test Failure Handling & Retry",
+          "type": "Test",
+          "tier": "Tier 2",
+          "agent": "test_generator",
+          "description": "Write tests for failure handling - verify retries, exponential backoff, idempotency, error propagation",
+          "dependencies": ["code_failure_handling_retry"],
+          "verification_target": "code_failure_handling_retry",
+          "acceptance_criteria": [
+            "All 6 test cases implemented with AAA pattern",
+            "Tests verify exponential backoff with timing assertions",
+            "Tests verify idempotency key enforcement",
+            "Tests verify RetryExhausted error contains attempt count",
+            "Coverage >95% for retry_policy.py"
+          ],
+          "estimated_tokens": 2500
+        }
+      ]
+    },
+    {
+      "id": "phase_3",
+      "title": "Governance & Safety Overrides",
+      "tasks": [
+        {
+          "id": "code_budget_guard",
+          "title": "Implement Budget Guard",
+          "type": "Code",
+          "tier": "Tier 2",
+          "agent": "coder",
+          "description": "Implement budget guard to compare estimated_cost_usd against daily/per-mission limits, raise BudgetExceeded, require --force flag",
+          "dependencies": [],
+          "acceptance_criteria": [
+            "Budget calculation accurate (tokens * cost_per_1k)",
+            "BudgetExceeded raised when limit exceeded",
+            "--force flag allows override (logged to audit trail)",
+            "Pydantic models with strict typing (ADR-008)",
+            "Integration with primeA tested"
+          ],
+          "estimated_tokens": 3000
+        },
+        {
+          "id": "test_budget_guard",
+          "title": "Test Budget Guard",
+          "type": "Test",
+          "tier": "Tier 2",
+          "agent": "test_generator",
+          "description": "Write tests for budget guard - verify limit enforcement, override with --force, audit logging",
+          "dependencies": ["code_budget_guard"],
+          "verification_target": "code_budget_guard",
+          "acceptance_criteria": [
+            "All 6 test cases implemented with AAA pattern",
+            "Tests verify BudgetExceeded contains estimated_cost and limit",
+            "Tests verify --force flag override mechanism",
+            "Tests verify audit log entries for overrides",
+            "Coverage >95% for budget_guard.py"
+          ],
+          "estimated_tokens": 2500
+        },
+        {
+          "id": "test_e2e_hardening",
+          "title": "End-to-End Hardening Validation",
+          "type": "Test",
+          "tier": "Tier 1",
+          "agent": "test_generator",
+          "description": "Write E2E tests - simulate failures, budget overruns, slop-filled intents, verify audit log integrity",
+          "dependencies": ["test_budget_guard", "test_failure_handling", "test_slop_immunity"],
+          "verification_target": "code_slop_immunity_integration",
+          "acceptance_criteria": [
+            "All 8 E2E test cases implemented",
+            "Tests simulate real-world failure scenarios",
+            "Tests verify audit log cryptographic integrity",
+            "Tests verify deterministic reproducibility",
+            "Coverage >90% for orchestrator integration paths"
+          ],
+          "estimated_tokens": 4000
+        }
+      ]
+    }
+  ],
+  "checkpoints": [
+    {
+      "after_phase": "phase_1",
+      "type": "human_review",
+      "prompt": "Review Phase 1 completion: Slop immunity operational, audit trail with SHA256 signatures. Proceed to Phase 2?"
+    },
+    {
+      "after_phase": "phase_2",
+      "type": "human_review",
+      "prompt": "Review Phase 2 completion: Resilient scheduler with full batching, retry policies operational. Proceed to Phase 3?"
+    },
+    {
+      "after_phase": "phase_3",
+      "type": "auto_validate",
+      "prompt": "Final validation: All 7 GPT-5 gaps resolved, full test suite passing, production readiness confirmed"
+    }
+  ],
+  "metadata": {
+    "estimated_tokens": 31500,
+    "estimated_cost_usd": 12.5,
+    "complexity": "complex",
+    "budget_limit_usd": 15.0,
+    "budget_policy": "abort_if_exceeded",
+    "preflight_checks": ["slop_guardian.evaluate(graph) >= 3.5"],
+    "on_failure": "halt_and_request_human_review",
+    "deliverables": {
+      "phase_1": ["ADR-027-slop-immunity.md", "learn_slop_immunity.md"],
+      "phase_2": ["ADR-028-resilient-scheduler.md", "learn_resilient_scheduler.md"],
+      "phase_3": ["ADR-029-budget-guard.md", "learn_budget_guard.md"]
+    },
+    "final_outputs": [
+      "docs/leap6_production_hardening_report.md",
+      "logs/audits/audit_log.jsonl",
+      "logs/audits/leap6_test_summary.json"
+    ]
+  }
+}
