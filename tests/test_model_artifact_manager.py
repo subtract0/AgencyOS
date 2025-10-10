@@ -406,7 +406,7 @@ class TestModelArtifactManager:
 
         # Mock joblib.dump to fail
         def mock_dump(*args, **kwargs):
-            raise IOError("Disk full")
+            raise OSError("Disk full")
 
         monkeypatch.setattr(joblib, "dump", mock_dump)
 

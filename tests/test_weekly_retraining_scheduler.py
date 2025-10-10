@@ -55,7 +55,6 @@ from tools.ml_routing.weekly_retraining_scheduler import (
     WeeklyRetrainingScheduler,
 )
 
-
 # ==============================================================================
 # Test Fixtures
 # ==============================================================================

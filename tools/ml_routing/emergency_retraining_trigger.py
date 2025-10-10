@@ -133,14 +133,14 @@ class EmergencyRetrainingResult(BaseModel):
 
     triggered: bool = Field(..., description="Whether emergency retraining was triggered")
     drift_detected: bool = Field(..., description="Whether drift was detected")
-    drift_alert_timestamp: Optional[str] = Field(
+    drift_alert_timestamp: str | None = Field(
         None, description="ISO 8601 timestamp of drift alert"
     )
     current_accuracy: float = Field(..., ge=0.0, le=1.0, description="Current rolling 7-day accuracy")
     accuracy_drop_pct: float = Field(..., description="Accuracy drop percentage")
     retraining_initiated: bool = Field(..., description="Whether retraining was initiated")
-    new_model_version: Optional[str] = Field(None, description="New model version (if retrained)")
-    new_model_accuracy: Optional[float] = Field(
+    new_model_version: str | None = Field(None, description="New model version (if retrained)")
+    new_model_accuracy: float | None = Field(
         None, ge=0.0, le=1.0, description="New model accuracy (if retrained)"
     )
     samples_used: int = Field(..., ge=0, description="Number of samples used for retraining")
@@ -198,7 +198,7 @@ class EmergencyRetrainingTrigger:
         """
         self.context = context
         self.config = config
-        self._last_alert_timestamp: Optional[datetime] = None
+        self._last_alert_timestamp: datetime | None = None
 
         logger.info(
             f"EmergencyRetrainingTrigger initialized: "
@@ -245,7 +245,7 @@ class EmergencyRetrainingTrigger:
 
     def _handle_no_drift_or_deduplication(
         self, drift_report: dict
-    ) -> Optional[Result[EmergencyRetrainingResult, str]]:
+    ) -> Result[EmergencyRetrainingResult, str] | None:
         """
         Handle no drift or alert deduplication cases.
 

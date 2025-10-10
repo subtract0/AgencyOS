@@ -49,7 +49,6 @@ from shared.type_definitions.result import Err, Ok
 from tools.ml_routing.feature_extractor import FeatureExtractor
 from tools.ml_routing.training_data_merger import TrainingDataMerger
 
-
 # ============================================================================
 # FIXTURES (AAA Pattern - Arrange)
 # ============================================================================
@@ -78,7 +77,6 @@ def mock_feature_extractor():
 
     # Mock extract_features to return valid TaskFeatureVector
     def mock_extract(task_description: str):
-        from shared.type_definitions.result import Ok
 
         features = TaskFeatureVector(
             embedding=[0.1] * 1536,

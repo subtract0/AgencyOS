@@ -83,7 +83,6 @@ from tools.ml_routing.weekly_retraining_scheduler import (
     WeeklyRetrainingScheduler,
 )
 
-
 # ============================================================================
 # Fixtures
 # ============================================================================
@@ -140,9 +139,9 @@ def baseline_model_v1(temp_models_dir: Path) -> EnsembleModel:
     np.random.seed(42)
 
     # Generate baseline training dataset (100 samples)
-    all_samples: List[TrainingSample] = []
-    train_indices: List[int] = []
-    val_indices: List[int] = []
+    all_samples: list[TrainingSample] = []
+    train_indices: list[int] = []
+    val_indices: list[int] = []
     sample_idx = 0
 
     for tier in [1, 2, 3]:
@@ -256,7 +255,7 @@ def baseline_model_v1(temp_models_dir: Path) -> EnsembleModel:
 
 
 @pytest.fixture
-def prediction_logs_7days(mock_agent_context: AgentContext) -> List[PredictionLog]:
+def prediction_logs_7days(mock_agent_context: AgentContext) -> list[PredictionLog]:
     """
     Generate 7 days of prediction logs with ground truth.
 
@@ -305,7 +304,7 @@ class TestWeeklyRetraining:
         mock_agent_context: AgentContext,
         temp_models_dir: Path,
         temp_reports_dir: Path,
-        prediction_logs_7days: List[PredictionLog],
+        prediction_logs_7days: list[PredictionLog],
     ) -> None:
         """
         Test AC-1.1: Weekly retraining with accuracy improvement.
@@ -316,7 +315,6 @@ class TestWeeklyRetraining:
         Article IV: VectorStore source (predictions → retraining)
         """
         # Arrange: Mock components for isolated testing
-        from unittest.mock import Mock
 
         from tools.ml_routing.feature_extractor import FeatureExtractor
         from tools.ml_routing.training_data_merger import TrainingDataMerger
@@ -647,7 +645,7 @@ class TestVectorStoreIntegration:
     def test_e2e_predictions_logged_to_vectorstore(
         self,
         mock_agent_context: AgentContext,
-        prediction_logs_7days: List[PredictionLog],
+        prediction_logs_7days: list[PredictionLog],
     ) -> None:
         """
         Test AC-6.1: 100% prediction logging to VectorStore.
@@ -750,7 +748,7 @@ class TestVectorStoreIntegration:
         assert metadata["previous_accuracy"] == 0.982
         assert metadata["samples_added"] == 150
 
-        print(f"\n✅ VectorStore Metadata: Retraining v1.1 logged")
+        print("\n✅ VectorStore Metadata: Retraining v1.1 logged")
         print(f"   Accuracy: {metadata['previous_accuracy']:.3f} → {metadata['new_accuracy']:.3f}")
         print(f"   Samples added: {metadata['samples_added']}")
 
@@ -768,7 +766,7 @@ class TestConstitutionalCompliance:
         baseline_model_v1: EnsembleModel,
         mock_agent_context: AgentContext,
         temp_models_dir: Path,
-        prediction_logs_7days: List[PredictionLog],
+        prediction_logs_7days: list[PredictionLog],
     ) -> None:
         """
         Test: Constitutional compliance (Articles I, II, IV, V).
@@ -830,7 +828,7 @@ class TestTelemetryMonitoring:
     def test_e2e_telemetry_all_events_logged(
         self,
         mock_agent_context: AgentContext,
-        prediction_logs_7days: List[PredictionLog],
+        prediction_logs_7days: list[PredictionLog],
     ) -> None:
         """
         Test AC-12.1: All events logged to VectorStore.
@@ -869,7 +867,7 @@ def test_generate_phase4_summary_report(
     baseline_model_v1: EnsembleModel,
     mock_agent_context: AgentContext,
     temp_models_dir: Path,
-    prediction_logs_7days: List[PredictionLog],
+    prediction_logs_7days: list[PredictionLog],
 ) -> None:
     """
     Generate Phase 4 completion summary after all tests pass.

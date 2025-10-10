@@ -36,7 +36,6 @@ from shared.message_bus import MessageBus
 from shared.type_definitions.result import Err, Ok
 from trinity_protocol.core.hybrid_executor import HybridExecutor
 
-
 # ============================================================================
 # FIXTURES
 # ============================================================================

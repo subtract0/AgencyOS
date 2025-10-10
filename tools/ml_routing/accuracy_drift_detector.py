@@ -31,13 +31,13 @@ Author: CodeAgent
 Date: 2025-10-10
 """
 
-from datetime import datetime, timedelta, UTC
+from datetime import UTC, datetime, timedelta
 from enum import Enum
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 from shared.agent_context import AgentContext
-from shared.type_definitions.result import Result, Ok, Err
+from shared.type_definitions.result import Err, Ok, Result
 
 
 class DriftSeverity(str, Enum):

@@ -136,7 +136,7 @@ class ModelArtifactManager:
         ...     predictions = model.ensemble.predict(X_test)
     """
 
-    def __init__(self, models_dir: Optional[Path] = None):
+    def __init__(self, models_dir: Path | None = None):
         """
         Initialize ModelArtifactManager with models directory.
 
@@ -156,7 +156,7 @@ class ModelArtifactManager:
     def save_model(
         self,
         model: EnsembleModel,
-        version: Optional[str] = None,
+        version: str | None = None,
     ) -> Result[Path, str]:
         """
         Save ensemble model with versioned artifact and atomic symlink update.
@@ -337,7 +337,7 @@ class ModelArtifactManager:
             logger.info(f"Metadata saved: {metadata_path}")
             return Ok(None)
 
-        except IOError as e:
+        except OSError as e:
             return Err(f"Failed to save metadata: {e}")
 
     def _update_active_symlink(self, artifact_path: Path) -> Result[None, str]:

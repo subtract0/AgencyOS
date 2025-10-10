@@ -20,7 +20,6 @@ from shared.task_complexity import (
 )
 from shared.type_definitions.result import Err, Ok, Result
 
-
 # Model pricing (as of 2025-10, per 1M tokens)
 MODEL_PRICING = {
     "gpt-5": {"input": 4.00, "output": 16.00},

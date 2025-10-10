@@ -19,7 +19,7 @@ Author: CodeAgent
 Date: 2025-10-10
 """
 
-from datetime import datetime, timedelta, UTC
+from datetime import UTC, datetime, timedelta
 from unittest.mock import MagicMock, patch
 
 import pytest
@@ -29,8 +29,8 @@ from shared.models.prediction_log import PredictionLog
 from shared.models.quality_signals import QualitySignals, SeverityLevel
 from tools.ml_routing.accuracy_drift_detector import (
     AccuracyDriftDetector,
-    DriftReport,
     DriftError,
+    DriftReport,
 )
 
 

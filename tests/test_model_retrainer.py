@@ -39,7 +39,6 @@ from shared.models.task_feature_vector import TaskFeatureVector
 from shared.models.training_dataset import DatasetMetadata, TrainingDataset, TrainingSample
 from shared.type_definitions.result import Err, Ok, Result
 
-
 # ==============================================================================
 # Test Fixtures
 # ==============================================================================
@@ -851,7 +850,7 @@ def test_artifact_metadata_stored(mock_training_dataset, mock_agent_context, tem
     # Validate metadata content
     import json
 
-    with open(metadata_path, "r") as f:
+    with open(metadata_path) as f:
         metadata = json.load(f)
 
     assert "training_date" in metadata, "Metadata must have training_date"
@@ -1120,7 +1119,7 @@ def test_serialization_failure_returns_err(mock_training_dataset, mock_agent_con
             "tools.ml_routing.model_retrainer.confusion_matrix",
             return_value=np.array([[27, 0, 0], [0, 26, 0], [0, 0, 26]]),
         ):
-            with patch("tools.ml_routing.model_retrainer.joblib.dump", side_effect=IOError("Disk full")):
+            with patch("tools.ml_routing.model_retrainer.joblib.dump", side_effect=OSError("Disk full")):
                 # Act
                 result = retrainer.retrain_ensemble(
                     dataset=mock_training_dataset,

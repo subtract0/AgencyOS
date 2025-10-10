@@ -11,14 +11,14 @@ Constitutional Compliance:
 
 from datetime import datetime, timedelta
 from enum import Enum
-from typing import Any, TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
-from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
+from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 from shared.type_definitions.json_value import JSONValue
 
 if TYPE_CHECKING:
-    from shared.models.learning import AgentStateLearning
+    pass
 
 
 class SessionStatus(str, Enum):

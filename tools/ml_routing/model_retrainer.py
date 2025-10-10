@@ -498,7 +498,7 @@ class ModelRetrainer:
             logger.info(f"Metadata saved to {metadata_path}")
             return Ok(None)
 
-        except IOError as e:
+        except OSError as e:
             return Err(f"Model serialization failed: {e}")
 
     def _store_metrics_to_vectorstore(

@@ -17,12 +17,11 @@ Phase: Leap 3 - Checkpoint Persistence
 import hashlib
 import json
 import logging
-import os
-import tempfile
 from datetime import datetime
 from pathlib import Path
 
 from pydantic import BaseModel, Field, field_validator
+
 from shared.models.session import SessionState
 from shared.type_definitions.result import Err, Ok, Result
 
@@ -276,7 +275,7 @@ def load_checkpoint(
             )
 
         # Read checkpoint file
-        with open(checkpoint_file, "r") as f:
+        with open(checkpoint_file) as f:
             checkpoint_data = json.load(f)
 
         # Validate and parse checkpoint
