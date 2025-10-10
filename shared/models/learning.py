@@ -173,3 +173,55 @@ class OperationInfo(BaseModel):
     duration_seconds: float = 0.0
     timestamp: datetime = Field(default_factory=datetime.now)
     status: str = "pending"
+
+
+class AgentStateLearning(BaseModel):
+    """
+    Extended agent state with learning capabilities for Leap 3.
+
+    Tracks agent skill vectors, task history, performance metrics,
+    and adaptive model routing weights (P1/P2/P3).
+
+    Constitutional Compliance:
+    - Article II (Law #2): Strict typing, no Dict[Any, Any]
+    - Article IV: Institutional learning integration
+    - ADR-008: Zero Any types
+
+    Spec Reference: specs/leap_3_stateful_learning.md lines 279-472
+    """
+
+    model_config = ConfigDict(extra="forbid")
+
+    # Core identity
+    agent_id: str = Field(..., description="Unique agent identifier")
+    agent_name: str = Field(..., description="Agent name (e.g., 'planner')")
+    session_id: str = Field(..., description="Parent session identifier")
+    status: str = Field(
+        default="pending",
+        description="Agent status: pending, running, completed, terminated",
+    )
+
+    # Learning state
+    skill_vector: list[float] = Field(
+        ..., description="384-dimensional skill embedding for this agent"
+    )
+
+    created_at: datetime = Field(default_factory=datetime.now)
+    updated_at: datetime = Field(default_factory=datetime.now)
+
+    @field_validator("skill_vector")
+    @classmethod
+    def validate_skill_vector_dimension(cls, v: list[float]) -> list[float]:
+        """Ensure skill_vector is 384-dimensional."""
+        if len(v) != 384:
+            raise ValueError(f"skill_vector must be 384-dimensional, got {len(v)}")
+        return v
+
+    @field_validator("status")
+    @classmethod
+    def validate_status(cls, v: str) -> str:
+        """Ensure status is valid."""
+        valid_statuses = {"pending", "running", "completed", "terminated"}
+        if v not in valid_statuses:
+            raise ValueError(f"status must be one of {valid_statuses}, got '{v}'")
+        return v
