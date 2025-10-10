@@ -90,6 +90,13 @@ from .telemetry import (
     TelemetryEvent,
     TelemetryMetrics,
 )
+from .ensemble_model import EnsembleModel
+from .task_feature_vector import TaskFeatureVector
+from .training_dataset import (
+    DatasetMetadata,
+    TrainingDataset,
+    TrainingSample,
+)
 
 __all__ = [
     # Lock models
@@ -169,4 +176,10 @@ __all__ = [
     "CheckpointMetadata",
     "GCResult",
     "RetentionPolicy",
+    # ML models (Leap 5)
+    "TaskFeatureVector",
+    "TrainingSample",
+    "DatasetMetadata",
+    "TrainingDataset",
+    "EnsembleModel",
 ]
