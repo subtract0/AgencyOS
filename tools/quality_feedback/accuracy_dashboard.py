@@ -8,15 +8,15 @@ Constitutional Compliance:
 - Article V: Spec-004 traceability (monitoring requirements)
 """
 
+import json
 from datetime import datetime, timedelta
 from pathlib import Path
-from typing import Dict, List, Optional, Tuple
-import json
+from typing import Optional
 
 from pydantic import BaseModel, Field
 
-from shared.models.quality_signals import QualitySignals
 from shared.models.misclassification_report import MisclassificationReport
+from shared.models.quality_signals import QualitySignals
 from shared.models.refinement_result import RefinementResult
 
 
@@ -30,9 +30,9 @@ class AccuracyMetrics(BaseModel):
     accuracy_rate: float = Field(ge=0.0, le=1.0)
 
     # Breakdown by tier
-    p1_accuracy: Optional[float] = Field(None, ge=0.0, le=1.0)
-    p2_accuracy: Optional[float] = Field(None, ge=0.0, le=1.0)
-    p3_accuracy: Optional[float] = Field(None, ge=0.0, le=1.0)
+    p1_accuracy: float | None = Field(None, ge=0.0, le=1.0)
+    p2_accuracy: float | None = Field(None, ge=0.0, le=1.0)
+    p3_accuracy: float | None = Field(None, ge=0.0, le=1.0)
 
     # Detection metrics
     misclassifications_detected: int = Field(0, ge=0)
@@ -40,7 +40,7 @@ class AccuracyMetrics(BaseModel):
 
     # Refinement metrics
     refinements_applied: int = Field(0, ge=0)
-    avg_confidence: Optional[float] = Field(None, ge=0.0, le=1.0)
+    avg_confidence: float | None = Field(None, ge=0.0, le=1.0)
 
 
 class DashboardSnapshot(BaseModel):
@@ -52,7 +52,7 @@ class DashboardSnapshot(BaseModel):
     current_metrics: AccuracyMetrics
 
     # Historical trend (last 24 hours)
-    hourly_metrics: List[AccuracyMetrics]
+    hourly_metrics: list[AccuracyMetrics]
 
     # Cumulative stats (all time)
     total_tasks_processed: int = Field(ge=0)
@@ -60,10 +60,10 @@ class DashboardSnapshot(BaseModel):
     total_refinements: int = Field(ge=0)
 
     # Recent misclassifications (last 10)
-    recent_misclassifications: List[MisclassificationReport]
+    recent_misclassifications: list[MisclassificationReport]
 
     # Recent refinements (last 10)
-    recent_refinements: List[RefinementResult]
+    recent_refinements: list[RefinementResult]
 
     # Health indicators
     is_improving: bool  # Accuracy trending up
@@ -114,9 +114,9 @@ class AccuracyDashboard:
         task_id: str,
         actual_tier: str,
         predicted_tier: str,
-        quality_signals: List[QualitySignals],
-        misclassification: Optional[MisclassificationReport] = None,
-        refinement: Optional[RefinementResult] = None
+        quality_signals: list[QualitySignals],
+        misclassification: MisclassificationReport | None = None,
+        refinement: RefinementResult | None = None
     ) -> None:
         """Record task execution and outcomes.
 
@@ -272,7 +272,7 @@ class AccuracyDashboard:
             vectorstore_utilization=vectorstore_utilization
         )
 
-    def _get_recent_misclassifications(self, limit: int = 10) -> List[MisclassificationReport]:
+    def _get_recent_misclassifications(self, limit: int = 10) -> list[MisclassificationReport]:
         """Get most recent misclassification reports."""
         if not self.tasks_file.exists():
             return []
@@ -286,7 +286,7 @@ class AccuracyDashboard:
 
         return reports[-limit:]
 
-    def _get_recent_refinements(self, limit: int = 10) -> List[RefinementResult]:
+    def _get_recent_refinements(self, limit: int = 10) -> list[RefinementResult]:
         """Get most recent refinement results."""
         if not self.tasks_file.exists():
             return []
@@ -300,7 +300,7 @@ class AccuracyDashboard:
 
         return refinements[-limit:]
 
-    def _is_accuracy_improving(self, hourly_metrics: List[AccuracyMetrics]) -> bool:
+    def _is_accuracy_improving(self, hourly_metrics: list[AccuracyMetrics]) -> bool:
         """Check if accuracy is trending upward."""
         if len(hourly_metrics) < 2:
             return False
@@ -576,7 +576,7 @@ class AccuracyDashboard:
 """
         return html
 
-    def _render_misclassifications_html(self, reports: List[MisclassificationReport]) -> str:
+    def _render_misclassifications_html(self, reports: list[MisclassificationReport]) -> str:
         """Render misclassification reports as HTML."""
         if not reports:
             return "<p>No recent misclassifications detected.</p>"
@@ -594,7 +594,7 @@ class AccuracyDashboard:
 
         return "\n".join(items)
 
-    def _render_refinements_html(self, refinements: List[RefinementResult]) -> str:
+    def _render_refinements_html(self, refinements: list[RefinementResult]) -> str:
         """Render refinement results as HTML."""
         if not refinements:
             return "<p>No recent refinements applied.</p>"
@@ -617,8 +617,8 @@ def main() -> None:
     dashboard = AccuracyDashboard()
 
     # Generate sample data
-    from datetime import timedelta
     import random
+    from datetime import timedelta
 
     tiers = ["P1", "P2", "P3"]
     base_time = datetime.now() - timedelta(hours=24)
@@ -671,7 +671,7 @@ def main() -> None:
 
     # Print snapshot
     snapshot = dashboard.get_snapshot()
-    print(f"\n📊 Current Metrics:")
+    print("\n📊 Current Metrics:")
     print(f"   Accuracy: {snapshot.current_metrics.accuracy_rate:.1%}")
     print(f"   Detection Rate: {snapshot.current_metrics.detection_rate:.1%}")
     print(f"   Refinement Effectiveness: {snapshot.refinement_effectiveness:.1%}")

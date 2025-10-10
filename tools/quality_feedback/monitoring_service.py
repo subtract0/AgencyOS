@@ -36,17 +36,17 @@ import json
 import threading
 from datetime import datetime, timedelta
 from pathlib import Path
-from typing import Dict, List, Optional
+from typing import Optional
 
 from pydantic import BaseModel, ConfigDict, Field
 
+from shared.models.misclassification_report import MisclassificationReport
 from shared.models.monitoring_milestone import (
-    MonitoringMilestone,
-    MilestoneMetrics,
     MilestoneHistory,
+    MilestoneMetrics,
+    MonitoringMilestone,
 )
 from shared.models.quality_signals import QualitySignals
-from shared.models.misclassification_report import MisclassificationReport
 from shared.models.refinement_result import RefinementResult
 from tools.quality_feedback.accuracy_dashboard import AccuracyDashboard
 
@@ -140,9 +140,9 @@ class MonitoringService:
         task_id: str,
         predicted_tier: str,
         actual_tier: str,
-        quality_signals: Optional[List[QualitySignals]] = None,
-        misclassification: Optional[MisclassificationReport] = None,
-        refinement: Optional[RefinementResult] = None
+        quality_signals: list[QualitySignals] | None = None,
+        misclassification: MisclassificationReport | None = None,
+        refinement: RefinementResult | None = None
     ) -> None:
         """
         Record task execution and increment counter.
@@ -180,7 +180,7 @@ class MonitoringService:
         with self._lock:
             return self._counter.count
 
-    def check_milestone(self) -> Optional[MonitoringMilestone]:
+    def check_milestone(self) -> MonitoringMilestone | None:
         """
         Check if milestone threshold reached and generate report.
 
@@ -216,9 +216,9 @@ class MonitoringService:
 
     def generate_milestone_report(
         self,
-        milestone_threshold: Optional[int] = None,
+        milestone_threshold: int | None = None,
         force: bool = False
-    ) -> Optional[MonitoringMilestone]:
+    ) -> MonitoringMilestone | None:
         """
         Generate milestone report with comprehensive metrics.
 
@@ -321,7 +321,7 @@ class MonitoringService:
         self,
         start_count: int,
         end_count: int
-    ) -> Dict[str, float]:
+    ) -> dict[str, float]:
         """
         Calculate metrics for task interval (since last milestone).
 
@@ -392,7 +392,7 @@ class MonitoringService:
     def _calculate_accuracy_delta(
         self,
         milestone_number: int
-    ) -> Optional[float]:
+    ) -> float | None:
         """
         Calculate accuracy change since previous milestone.
 
@@ -426,9 +426,9 @@ class MonitoringService:
 
     def _extract_top_patterns(
         self,
-        misclassifications: List[MisclassificationReport],
+        misclassifications: list[MisclassificationReport],
         top_n: int = 3
-    ) -> List[str]:
+    ) -> list[str]:
         """
         Extract most common misclassification patterns.
 
@@ -443,7 +443,7 @@ class MonitoringService:
             return []
 
         # Count pattern occurrences
-        pattern_counts: Dict[str, int] = {}
+        pattern_counts: dict[str, int] = {}
 
         for report in misclassifications:
             pattern = f"{report.predicted_tier} → {report.actual_tier}"
@@ -473,9 +473,9 @@ class MonitoringService:
     def _generate_recommendations(
         self,
         metrics: MilestoneMetrics,
-        top_patterns: List[str],
+        top_patterns: list[str],
         is_improving: bool
-    ) -> List[str]:
+    ) -> list[str]:
         """
         Generate actionable recommendations based on metrics.
 
@@ -628,6 +628,7 @@ class MonitoringService:
 def main() -> None:
     """Demo: Monitor first 100 tasks with milestone reports."""
     import random
+
     from shared.models.quality_signals import QualitySignals
 
     service = MonitoringService()
@@ -675,10 +676,10 @@ def main() -> None:
             print(f"   Interval Accuracy: {milestone.metrics.interval_accuracy:.1%}")
             print(f"   Improving: {'✅' if milestone.is_improving else '⚠️'}")
             print(f"   Snapshot: {milestone.dashboard_snapshot_path}")
-            print(f"\n   Top Patterns:")
+            print("\n   Top Patterns:")
             for pattern in milestone.top_misclassification_patterns:
                 print(f"      - {pattern}")
-            print(f"\n   Recommendations:")
+            print("\n   Recommendations:")
             for action in milestone.recommended_actions:
                 print(f"      {action}")
             print()

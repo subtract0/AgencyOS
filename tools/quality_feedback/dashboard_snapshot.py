@@ -19,19 +19,16 @@ Constitutional Compliance:
 """
 
 import json
-from datetime import datetime, UTC
-from pathlib import Path
-from typing import Optional, Dict, Any
 import sys
+from datetime import UTC, datetime
+from pathlib import Path
+from typing import Any, Optional
 
 from pydantic import BaseModel, Field
 
 # Import dashboard if available, otherwise use mock data
 try:
-    from tools.quality_feedback.accuracy_dashboard import (
-        AccuracyDashboard,
-        DashboardSnapshot
-    )
+    from tools.quality_feedback.accuracy_dashboard import AccuracyDashboard, DashboardSnapshot
     DASHBOARD_AVAILABLE = True
 except ImportError:
     DASHBOARD_AVAILABLE = False
@@ -53,7 +50,7 @@ class SnapshotMetadata(BaseModel):
         ...,
         description="Whether real dashboard data was available"
     )
-    data_directory: Optional[str] = Field(
+    data_directory: str | None = Field(
         None,
         description="Path to dashboard data directory (if available)"
     )
@@ -78,8 +75,8 @@ class DashboardSnapshotGenerator:
 
     def __init__(
         self,
-        data_dir: Optional[Path] = None,
-        output_dir: Optional[Path] = None
+        data_dir: Path | None = None,
+        output_dir: Path | None = None
     ):
         """Initialize snapshot generator.
 
@@ -100,7 +97,7 @@ class DashboardSnapshotGenerator:
         self.output_dir.mkdir(parents=True, exist_ok=True)
 
         # Initialize dashboard if available
-        self.dashboard: Optional[AccuracyDashboard] = None
+        self.dashboard: AccuracyDashboard | None = None
         if DASHBOARD_AVAILABLE and self.data_dir.exists():
             try:
                 self.dashboard = AccuracyDashboard(data_dir=str(self.data_dir))
@@ -110,7 +107,7 @@ class DashboardSnapshotGenerator:
     def generate_snapshot(
         self,
         window_hours: int = 24
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """Generate dashboard snapshot.
 
         Args:
@@ -156,8 +153,8 @@ class DashboardSnapshotGenerator:
 
     def save_snapshot(
         self,
-        snapshot: Dict[str, Any],
-        filename: Optional[str] = None
+        snapshot: dict[str, Any],
+        filename: str | None = None
     ) -> Path:
         """Save snapshot to JSON file.
 
@@ -253,7 +250,7 @@ def main():
             metadata = snapshot["metadata"]
             data = snapshot["snapshot"]
 
-            print(f"\n📊 Snapshot Summary:")
+            print("\n📊 Snapshot Summary:")
             print(f"   Timestamp: {metadata['generated_at']}")
             print(f"   Dashboard Available: {metadata['dashboard_available']}")
 

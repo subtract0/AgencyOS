@@ -17,16 +17,16 @@ Reference: /Users/am/Code/Agency/specs/spec-004-quality-feedback-loop.md Section
 import argparse
 import json
 import logging
+from datetime import UTC, datetime
 from pathlib import Path
-from typing import Optional, List, Dict, Any
-from datetime import datetime, UTC
+from typing import Any, Optional
 
-from shared.models.misclassification_report import MisclassificationReport, DetectedIssue
-from shared.models.quality_signals import SeverityLevel
-from tools.quality_feedback.rule_refiner import RuleRefiner
-from tools.quality_feedback.monitoring_service import MonitoringService
 from shared.agent_context import create_agent_context
-from shared.type_definitions.result import Result, Ok, Err
+from shared.models.misclassification_report import DetectedIssue, MisclassificationReport
+from shared.models.quality_signals import SeverityLevel
+from shared.type_definitions.result import Err, Ok, Result
+from tools.quality_feedback.monitoring_service import MonitoringService
+from tools.quality_feedback.rule_refiner import RuleRefiner
 
 logger = logging.getLogger(__name__)
 
@@ -72,7 +72,7 @@ class FeedbackCommand:
         task_id: str,
         original_tier: str,
         correct_tier: str,
-        description: Optional[str] = None
+        description: str | None = None
     ) -> Result[None, FeedbackCommandError]:
         """Mark task as misclassified with user feedback.
 
@@ -140,18 +140,18 @@ class FeedbackCommand:
             )
 
             # Trigger immediate refinement
-            print(f"🔄 Triggering immediate VectorStore refinement...")
+            print("🔄 Triggering immediate VectorStore refinement...")
             refinement_result = self.refiner.refine(report, task_description=description)
 
             if refinement_result.is_err():
                 error = refinement_result.unwrap_err()
                 print(f"⚠️  Refinement failed: {error}")
-                print(f"   Feedback stored, but VectorStore not updated")
+                print("   Feedback stored, but VectorStore not updated")
                 return Ok(None)  # Soft failure, feedback still saved
 
             refinement = refinement_result.unwrap()
 
-            print(f"✅ Refinement complete:")
+            print("✅ Refinement complete:")
             print(f"   Task: {task_id}")
             print(f"   Classification: {original_tier} → {correct_tier}")
 
@@ -166,7 +166,7 @@ class FeedbackCommand:
 
             # Show threshold adjustments if any
             if refinement.threshold_adjustments:
-                print(f"   Threshold adjustments:")
+                print("   Threshold adjustments:")
                 for adj in refinement.threshold_adjustments:
                     print(f"     - {adj.signal_name}: {adj.old_threshold:.2f} → {adj.new_threshold:.2f}")
 
@@ -176,7 +176,7 @@ class FeedbackCommand:
             logger.error(f"Failed to mark feedback: {e}")
             return Err(FeedbackCommandError(f"Failed to mark feedback: {e}"))
 
-    def list_feedback(self, limit: int = 10) -> Result[List[Dict[str, Any]], FeedbackCommandError]:
+    def list_feedback(self, limit: int = 10) -> Result[list[dict[str, Any]], FeedbackCommandError]:
         """List recent user feedback entries.
 
         Args:
@@ -319,7 +319,7 @@ def cmd_feedback_milestone(args: argparse.Namespace) -> None:
         current_count = service.get_current_count()
         history = service.get_history()
 
-        print(f"\n📊 Monitoring Status:")
+        print("\n📊 Monitoring Status:")
         print(f"   Session ID: {service._counter.session_id}")
         print(f"   Current count: {current_count}")
         print(f"   Milestones reached: {len(history.milestones)}/4")
@@ -368,12 +368,12 @@ def cmd_feedback_milestone(args: argparse.Namespace) -> None:
         print(f"\n   Dashboard: {milestone.dashboard_snapshot_path}")
 
         if milestone.top_misclassification_patterns:
-            print(f"\n   Top Patterns:")
+            print("\n   Top Patterns:")
             for pattern in milestone.top_misclassification_patterns:
                 print(f"      - {pattern}")
 
         if milestone.recommended_actions:
-            print(f"\n   Recommendations:")
+            print("\n   Recommendations:")
             for action in milestone.recommended_actions:
                 print(f"      {action}")
 
@@ -383,7 +383,7 @@ def cmd_feedback_milestone(args: argparse.Namespace) -> None:
     if args.history:
         history = service.get_history()
 
-        print(f"\n📈 Milestone History:")
+        print("\n📈 Milestone History:")
         print(f"   Session: {history.monitoring_session_id}")
         print(f"   Started: {history.started_at.strftime('%Y-%m-%d %H:%M:%S')}")
         print(f"   Milestones: {len(history.milestones)}/4\n")
@@ -399,7 +399,7 @@ def cmd_feedback_milestone(args: argparse.Namespace) -> None:
             print()
 
         if history.is_complete:
-            print(f"   ✅ Monitoring Complete!")
+            print("   ✅ Monitoring Complete!")
             print(f"   Final accuracy: {history.final_accuracy:.1%}")
             if history.accuracy_improvement:
                 print(f"   Total improvement: +{history.accuracy_improvement:.1%}")

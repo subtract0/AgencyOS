@@ -22,19 +22,19 @@ Reference: /Users/am/Code/Agency/specs/spec-004-quality-feedback-loop.md Section
 """
 
 import logging
-from datetime import datetime, UTC
-from typing import Dict, Optional, List
+from datetime import UTC, datetime
+from typing import Optional
 
+from shared.agent_context import AgentContext
 from shared.models.misclassification_report import MisclassificationReport
 from shared.models.refinement_result import (
-    RefinementResult,
-    RefinementHistory,
     RefinementEntry,
+    RefinementHistory,
+    RefinementResult,
     ThresholdAdjustment,
-    VectorStoreSnapshot
+    VectorStoreSnapshot,
 )
-from shared.type_definitions.result import Result, Ok, Err
-from shared.agent_context import AgentContext
+from shared.type_definitions.result import Err, Ok, Result
 
 logger = logging.getLogger(__name__)
 
@@ -121,7 +121,7 @@ class RuleRefiner:
         self.thresholds = self._load_thresholds()
 
         # Load refinement history
-        self.history: Dict[str, RefinementHistory] = self._load_history()
+        self.history: dict[str, RefinementHistory] = self._load_history()
 
         logger.debug(
             f"RuleRefiner initialized: decay={decay_factor}, "
@@ -132,7 +132,7 @@ class RuleRefiner:
     def refine(
         self,
         report: MisclassificationReport,
-        task_description: Optional[str] = None
+        task_description: str | None = None
     ) -> Result[RefinementResult, RefinementError]:
         """
         Refine VectorStore patterns based on misclassification report.
@@ -186,7 +186,7 @@ class RuleRefiner:
             )
 
             # Tune thresholds if CRITICAL (spec Section 8.3)
-            threshold_adjustments: List[ThresholdAdjustment] = []
+            threshold_adjustments: list[ThresholdAdjustment] = []
             if report.aggregated_confidence > 0.8:
                 threshold_adjustments = self._tune_thresholds(report)
 
@@ -269,7 +269,7 @@ class RuleRefiner:
 
     def _tune_thresholds(
         self, report: MisclassificationReport
-    ) -> List[ThresholdAdjustment]:
+    ) -> list[ThresholdAdjustment]:
         """
         Tune detection thresholds for CRITICAL detections (spec Section 8.3).
 
@@ -286,7 +286,7 @@ class RuleRefiner:
             >>> adjustments = refiner._tune_thresholds(report)
             >>> adjustments[0].new_threshold  # 0.1 * 0.9 = 0.09
         """
-        adjustments: List[ThresholdAdjustment] = []
+        adjustments: list[ThresholdAdjustment] = []
 
         for issue in report.detected_issues:
             # severity is already a string due to Pydantic use_enum_values
@@ -335,7 +335,7 @@ class RuleRefiner:
     def _store_pattern(
         self,
         report: MisclassificationReport,
-        task_description: Optional[str],
+        task_description: str | None,
         confidence: float
     ) -> int:
         """
@@ -392,8 +392,8 @@ class RuleRefiner:
         return 1
 
     def _query_existing_confidence(
-        self, task_id: str, task_description: Optional[str]
-    ) -> Optional[float]:
+        self, task_id: str, task_description: str | None
+    ) -> float | None:
         """
         Query VectorStore for existing pattern confidence.
 
@@ -552,7 +552,7 @@ class RuleRefiner:
 
         except Exception as e:
             logger.error(f"Snapshot creation failed: {e}")
-            raise RefinementError(f"Snapshot creation failed: {e}")
+            raise RefinementError(f"Snapshot creation failed: {e}") from e
 
     def rollback(self, snapshot: VectorStoreSnapshot) -> Result[None, RefinementError]:
         """
@@ -589,7 +589,7 @@ class RuleRefiner:
             logger.error(f"Rollback failed: {e}")
             return Err(RefinementError(f"Rollback failed: {e}"))
 
-    def _load_thresholds(self) -> Dict[str, float]:
+    def _load_thresholds(self) -> dict[str, float]:
         """
         Load thresholds from persistent storage.
 
@@ -610,7 +610,7 @@ class RuleRefiner:
         # Phase 5: Save to file or VectorStore
         pass
 
-    def _load_history(self) -> Dict[str, RefinementHistory]:
+    def _load_history(self) -> dict[str, RefinementHistory]:
         """
         Load refinement history from persistent storage.
 

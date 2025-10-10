@@ -22,25 +22,24 @@ NECESSARY Pattern Coverage:
 """
 
 import json
-import pytest
 import threading
 import time
-from datetime import datetime, UTC
+from datetime import UTC, datetime
 from pathlib import Path
-from typing import Dict, Any, Optional
-from unittest.mock import Mock, patch, MagicMock
+from typing import Any, Optional
+from unittest.mock import MagicMock, Mock, patch
 
-# Import monitoring service and models
-from tools.quality_feedback.monitoring_service import (
-    MonitoringService,
-    TaskCounter
-)
+import pytest
+
 from shared.models.monitoring_milestone import (
-    MonitoringMilestone,
+    MilestoneHistory,
     MilestoneMetrics,
-    MilestoneHistory
+    MonitoringMilestone,
 )
 from shared.models.quality_signals import QualitySignals
+
+# Import monitoring service and models
+from tools.quality_feedback.monitoring_service import MonitoringService, TaskCounter
 
 
 class TestTaskCountingAndPersistence:

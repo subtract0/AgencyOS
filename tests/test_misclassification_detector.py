@@ -23,28 +23,20 @@ Reference: /Users/am/Code/Agency/specs/spec-004-quality-feedback-loop.md Section
 """
 
 from datetime import datetime
-from unittest.mock import Mock, MagicMock
-from typing import List
+from unittest.mock import MagicMock, Mock
 
 import pytest
 
 # Import modules AFTER they're created (tests first, then implementation)
 # These imports will fail initially - that's correct for TDD RED phase!
 try:
-    from shared.models.quality_signals import (
-        QualitySignals,
-        SeverityLevel,
-        UserFeedback
-    )
-    from shared.models.misclassification_report import (
-        DetectedIssue,
-        MisclassificationReport
-    )
+    from shared.models.misclassification_report import DetectedIssue, MisclassificationReport
+    from shared.models.quality_signals import QualitySignals, SeverityLevel, UserFeedback
+    from shared.type_definitions.result import Err, Ok
     from tools.quality_feedback.misclassification_detector import (
+        DetectionError,
         MisclassificationDetector,
-        DetectionError
     )
-    from shared.type_definitions.result import Ok, Err
 except ImportError:
     # Expected on first test run - mark as xfail
     pytest.skip("Models not yet implemented (TDD RED phase)", allow_module_level=True)

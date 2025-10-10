@@ -17,12 +17,12 @@ Reference: /Users/am/Code/Agency/specs/spec-004-quality-feedback-loop.md Section
 """
 
 from datetime import datetime
-from typing import List, Optional
+from typing import Optional
 
-from shared.models.quality_signals import QualitySignals, SeverityLevel, UserFeedback
-from shared.models.misclassification_report import DetectedIssue, MisclassificationReport
-from shared.type_definitions.result import Result, Ok, Err
 from shared.agent_context import AgentContext
+from shared.models.misclassification_report import DetectedIssue, MisclassificationReport
+from shared.models.quality_signals import QualitySignals, SeverityLevel, UserFeedback
+from shared.type_definitions.result import Err, Ok, Result
 
 
 class DetectionError(Exception):
@@ -58,7 +58,7 @@ class MisclassificationDetector:
         'complex'
     """
 
-    def __init__(self, context: Optional[AgentContext] = None):
+    def __init__(self, context: AgentContext | None = None):
         """
         Initialize detector with optional AgentContext for VectorStore learning.
 
@@ -71,7 +71,7 @@ class MisclassificationDetector:
         self,
         task_id: str,
         signals: QualitySignals,
-        task_description: Optional[str] = None
+        task_description: str | None = None
     ) -> Result[MisclassificationReport, DetectionError]:
         """
         Detect misclassification from quality signals.
@@ -98,7 +98,7 @@ class MisclassificationDetector:
         """
         try:
             # Apply 4 detection rules (Article I: Complete context)
-            detected_issues: List[DetectedIssue] = []
+            detected_issues: list[DetectedIssue] = []
 
             # Rule 1: Test failure detection
             if issue := self._rule_test_failure(signals):
@@ -149,7 +149,7 @@ class MisclassificationDetector:
         except Exception as e:
             return Err(DetectionError(f"Detection failed: {e}"))
 
-    def _rule_test_failure(self, signals: QualitySignals) -> Optional[DetectedIssue]:
+    def _rule_test_failure(self, signals: QualitySignals) -> DetectedIssue | None:
         """
         Rule 1: Test failure detection (spec Section 7.1, confidence=0.95).
 
@@ -172,7 +172,7 @@ class MisclassificationDetector:
 
         return None
 
-    def _rule_code_churn(self, signals: QualitySignals) -> Optional[DetectedIssue]:
+    def _rule_code_churn(self, signals: QualitySignals) -> DetectedIssue | None:
         """
         Rule 2: Code churn detection (spec Section 7.1, confidence varies).
 
@@ -206,7 +206,7 @@ class MisclassificationDetector:
 
         return None
 
-    def _rule_execution_timing(self, signals: QualitySignals) -> Optional[DetectedIssue]:
+    def _rule_execution_timing(self, signals: QualitySignals) -> DetectedIssue | None:
         """
         Rule 3: Execution timing detection (spec Section 7.1, confidence=0.75).
 
@@ -229,7 +229,7 @@ class MisclassificationDetector:
 
         return None
 
-    def _rule_user_feedback(self, signals: QualitySignals) -> Optional[DetectedIssue]:
+    def _rule_user_feedback(self, signals: QualitySignals) -> DetectedIssue | None:
         """
         Rule 4: User feedback override (spec Section 7.1, confidence=1.0).
 
@@ -249,7 +249,7 @@ class MisclassificationDetector:
 
         return None
 
-    def _aggregate_confidence(self, detected_issues: List[DetectedIssue]) -> float:
+    def _aggregate_confidence(self, detected_issues: list[DetectedIssue]) -> float:
         """
         Aggregate confidence from multiple rules (spec Section 7.2).
 
@@ -282,7 +282,7 @@ class MisclassificationDetector:
         weighted_sum = sum(issue.confidence ** 2 for issue in detected_issues)
         return weighted_sum / len(detected_issues)
 
-    def _recommend_tier(self, original_tier: str, detected_issues: List[DetectedIssue]) -> str:
+    def _recommend_tier(self, original_tier: str, detected_issues: list[DetectedIssue]) -> str:
         """
         Determine recommended tier based on detected issues.
 

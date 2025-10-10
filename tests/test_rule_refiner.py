@@ -19,26 +19,26 @@ Pass Rate Target: 100%
 Reference: /Users/am/Code/Agency/specs/spec-004-quality-feedback-loop.md Section 8
 """
 
-import pytest
 from datetime import datetime
-from unittest.mock import Mock, patch, MagicMock
-from typing import Dict, Any
+from typing import Any
+from unittest.mock import MagicMock, Mock, patch
 
+import pytest
+
+from agency_memory import Memory
+from shared.agent_context import AgentContext, create_agent_context
+from shared.models.misclassification_report import (
+    DetectedIssue,
+    MisclassificationReport,
+    SeverityLevel,
+)
 from shared.models.refinement_result import (
     RefinementEntry,
     RefinementHistory,
-    ThresholdAdjustment,
     RefinementResult,
-    VectorStoreSnapshot
+    ThresholdAdjustment,
+    VectorStoreSnapshot,
 )
-from shared.models.misclassification_report import (
-    MisclassificationReport,
-    DetectedIssue,
-    SeverityLevel
-)
-from shared.agent_context import AgentContext, create_agent_context
-from agency_memory import Memory
-
 
 # ============================================================================
 # UNIT TESTS: Pydantic Models (5 tests)
@@ -420,7 +420,7 @@ def test_query_existing_confidence_from_vectorstore():
 
 def test_max_iterations_enforced():
     """Test max 3 iterations per task enforced (spec 8.6)."""
-    from tools.quality_feedback.rule_refiner import RuleRefiner, MaxIterationsExceeded
+    from tools.quality_feedback.rule_refiner import MaxIterationsExceeded, RuleRefiner
 
     # Arrange
     context = create_agent_context(session_id="test")
@@ -495,7 +495,7 @@ def test_oscillation_detection():
 
 def test_oscillation_mitigation():
     """Test oscillation mitigation (spec 8.6)."""
-    from tools.quality_feedback.rule_refiner import RuleRefiner, RefinementError
+    from tools.quality_feedback.rule_refiner import RefinementError, RuleRefiner
 
     # Arrange
     context = create_agent_context(session_id="test")
@@ -837,7 +837,7 @@ def test_refine_error_handling_no_task_description():
 
 def test_refine_error_handling_exception():
     """Test refine returns Err on unexpected exception."""
-    from tools.quality_feedback.rule_refiner import RuleRefiner, RefinementError
+    from tools.quality_feedback.rule_refiner import RefinementError, RuleRefiner
 
     # Arrange
     context = create_agent_context(session_id="test")
@@ -871,6 +871,7 @@ def test_refine_error_handling_exception():
 def test_refinement_latency_under_50ms():
     """Test refinement latency <50ms p99 (spec 8.9)."""
     import time
+
     from tools.quality_feedback.rule_refiner import RuleRefiner
 
     # Arrange

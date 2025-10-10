@@ -20,20 +20,18 @@ import asyncio
 import os
 import random
 import tempfile
-from datetime import datetime, UTC
+from datetime import UTC, datetime
 from pathlib import Path
-from typing import Dict, List, Tuple
 
 import pytest
 
-from tools.quality_feedback.signal_collector import QualitySignalCollector
+from shared.agent_context import AgentContext, create_agent_context
+from shared.models.misclassification_report import MisclassificationReport
+from shared.models.quality_signals import QualitySignals, UserFeedback
+from shared.type_definitions.result import Err, Ok
 from tools.quality_feedback.misclassification_detector import MisclassificationDetector
 from tools.quality_feedback.rule_refiner import RuleRefiner
-from shared.models.quality_signals import QualitySignals, UserFeedback
-from shared.models.misclassification_report import MisclassificationReport
-from shared.agent_context import AgentContext, create_agent_context
-from shared.type_definitions.result import Ok, Err
-
+from tools.quality_feedback.signal_collector import QualitySignalCollector
 
 # ============================================================================
 # Test Fixtures
@@ -105,7 +103,7 @@ class TaskSimulator:
         self.misclassification_rate = misclassification_rate
         self.rng = random.Random(42)  # Fixed seed for reproducibility
 
-    def generate_task(self, task_id: int) -> Dict:
+    def generate_task(self, task_id: int) -> dict:
         """
         Generate a simulated task with ground truth tier.
 
@@ -156,7 +154,7 @@ class TaskSimulator:
             "complexity_score": complexity_score
         }
 
-    def classify_task(self, task: Dict, current_accuracy: float) -> str:
+    def classify_task(self, task: dict, current_accuracy: float) -> str:
         """
         Simulate adaptive router classification with controlled error rate.
 
@@ -189,9 +187,9 @@ class TaskSimulator:
 
     def simulate_execution(
         self,
-        task: Dict,
+        task: dict,
         classified_tier: str
-    ) -> Dict:
+    ) -> dict:
         """
         Simulate task execution and generate quality signals.
 
@@ -303,8 +301,8 @@ class TestLeap4EndToEndQualityFeedback:
         print("🚀 Leap 4 E2E Test: 100-Task Quality Feedback Simulation")
         print(f"{'='*70}")
         print(f"Initial Accuracy: {current_accuracy*100:.1f}%")
-        print(f"Target Accuracy: >98.0%")
-        print(f"Misclassification Rate: 15% intentional")
+        print("Target Accuracy: >98.0%")
+        print("Misclassification Rate: 15% intentional")
         print(f"{'='*70}\n")
 
         # Act: Process 100 tasks with feedback loop
@@ -432,7 +430,7 @@ class TestLeap4EndToEndQualityFeedback:
         print(f"Initial Accuracy: {initial_accuracy:.1f}% (target: ~85%)")
         print(f"Final Accuracy: {final_accuracy:.1f}% (target: >95% for 100 tasks)")
         print(f"Accuracy Improvement: +{final_accuracy - initial_accuracy:.1f}%")
-        print(f"")
+        print("")
         print(f"Misclassifications Detected: {metrics['misclassifications_detected']}/{metrics['total_tasks'] - metrics['correct_initial']} ({detection_rate:.1f}%)")
         print(f"Refinements Applied: {metrics['refinements_applied']}")
         print(f"VectorStore Patterns Stored: {metrics['vectorstore_patterns_stored']}")
@@ -584,7 +582,7 @@ class TestLeap4EndToEndQualityFeedback:
             assert batch_metrics[2]["avg_confidence"] >= 0.70, \
                 f"Average confidence {batch_metrics[2]['avg_confidence']:.2f} below 0.70 target"
 
-        print(f"✅ Convergence validated:")
+        print("✅ Convergence validated:")
         print(f"  - Refinement rate: {batch_metrics[0]['refinement_rate']:.1f}% → {batch_metrics[2]['refinement_rate']:.1f}%")
         print(f"  - Final accuracy: {batch_metrics[2]['final_accuracy']*100:.1f}%")
         print(f"  - Avg confidence: {batch_metrics[2]['avg_confidence']:.2f}")
@@ -711,7 +709,7 @@ class TestConstitutionalCompliance:
 
         # Total tests: 41 + 34 + 26 + 25 + 18 = 144 tests
         expected_total_tests = 144
-        assert expected_total_tests == 144, f"Expected 144 tests total (Article V compliance)"
+        assert expected_total_tests == 144, "Expected 144 tests total (Article V compliance)"
 
 
 # ============================================================================
