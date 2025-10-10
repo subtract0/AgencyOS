@@ -107,6 +107,7 @@ def mock_cross_val_score(monkeypatch):
 
     Returns 5 folds with accuracy scores: [0.98, 0.99, 0.98, 0.99, 0.98].
     """
+
     def mock_cv_score(model, X, y, cv, scoring, n_jobs):
         """Return deterministic CV scores for 5 folds."""
         return np.array([0.98, 0.99, 0.98, 0.99, 0.98])
@@ -126,13 +127,16 @@ def mock_confusion_matrix(monkeypatch):
 
     FN_rate = 0 / (0 + 26) = 0.0 (0%)
     """
+
     def mock_cm(y_true, y_pred, labels):
         """Return deterministic confusion matrix."""
-        return np.array([
-            [25, 1, 1],   # Tier 1
-            [1, 24, 1],   # Tier 2
-            [0, 0, 26],   # Tier 3 (no false negatives)
-        ])
+        return np.array(
+            [
+                [25, 1, 1],  # Tier 1
+                [1, 24, 1],  # Tier 2
+                [0, 0, 26],  # Tier 3 (no false negatives)
+            ]
+        )
 
     monkeypatch.setattr("sklearn.metrics.confusion_matrix", mock_cm)
 
@@ -190,7 +194,9 @@ def small_training_dataset():
 # ==============================================================================
 
 
-def test_train_ensemble_model_success(mock_training_dataset, mock_cross_val_score, mock_confusion_matrix):
+def test_train_ensemble_model_success(
+    mock_training_dataset, mock_cross_val_score, mock_confusion_matrix
+):
     """
     Test successful ensemble model training with valid data.
 
@@ -221,14 +227,22 @@ def test_train_ensemble_model_success(mock_training_dataset, mock_cross_val_scor
     assert hasattr(model, "feature_names"), "Model must have feature_names field"
 
     # Validate thresholds (spec-005 AC-Q.1, AC-Q.2)
-    assert model.validation_accuracy >= 0.98, f"Accuracy must be ≥98%, got {model.validation_accuracy}"
-    assert model.false_negative_rate <= 0.02, f"FN_rate must be ≤2%, got {model.false_negative_rate}"
+    assert model.validation_accuracy >= 0.98, (
+        f"Accuracy must be ≥98%, got {model.validation_accuracy}"
+    )
+    assert model.false_negative_rate <= 0.02, (
+        f"FN_rate must be ≤2%, got {model.false_negative_rate}"
+    )
 
     # Validate feature count (1644 dimensions: 1536 embedding + 100 TF-IDF + 8 metadata)
-    assert len(model.feature_names) == 1644, f"Must have 1644 features, got {len(model.feature_names)}"
+    assert len(model.feature_names) == 1644, (
+        f"Must have 1644 features, got {len(model.feature_names)}"
+    )
 
 
-def test_random_forest_configuration(mock_training_dataset, mock_cross_val_score, mock_confusion_matrix):
+def test_random_forest_configuration(
+    mock_training_dataset, mock_cross_val_score, mock_confusion_matrix
+):
     """
     Test RandomForest has correct configuration (100 trees, max_depth=10).
 
@@ -263,7 +277,9 @@ def test_random_forest_configuration(mock_training_dataset, mock_cross_val_score
     assert rf_model.random_state == 42, f"RF random_state must be 42, got {rf_model.random_state}"
 
 
-def test_gradient_boosting_configuration(mock_training_dataset, mock_cross_val_score, mock_confusion_matrix):
+def test_gradient_boosting_configuration(
+    mock_training_dataset, mock_cross_val_score, mock_confusion_matrix
+):
     """
     Test GradientBoosting has correct configuration (50 estimators, lr=0.1).
 
@@ -292,13 +308,19 @@ def test_gradient_boosting_configuration(mock_training_dataset, mock_cross_val_s
     gb_model = model.gb_model
 
     # Validate configuration (spec-006 AC-1.3)
-    assert isinstance(gb_model, GradientBoostingClassifier), "gb_model must be GradientBoostingClassifier"
+    assert isinstance(gb_model, GradientBoostingClassifier), (
+        "gb_model must be GradientBoostingClassifier"
+    )
     assert gb_model.n_estimators == 50, f"GB must have 50 estimators, got {gb_model.n_estimators}"
-    assert gb_model.learning_rate == 0.1, f"GB learning_rate must be 0.1, got {gb_model.learning_rate}"
+    assert gb_model.learning_rate == 0.1, (
+        f"GB learning_rate must be 0.1, got {gb_model.learning_rate}"
+    )
     assert gb_model.random_state == 42, f"GB random_state must be 42, got {gb_model.random_state}"
 
 
-def test_voting_ensemble_weights(mock_training_dataset, mock_cross_val_score, mock_confusion_matrix):
+def test_voting_ensemble_weights(
+    mock_training_dataset, mock_cross_val_score, mock_confusion_matrix
+):
     """
     Test VotingClassifier uses soft voting with weights [0.7, 0.3].
 
@@ -329,10 +351,14 @@ def test_voting_ensemble_weights(mock_training_dataset, mock_cross_val_score, mo
     # Validate configuration (spec-006 AC-1.1)
     assert isinstance(ensemble, VotingClassifier), "Ensemble must be VotingClassifier"
     assert ensemble.voting == "soft", f"Ensemble must use soft voting, got {ensemble.voting}"
-    assert ensemble.weights == [0.7, 0.3], f"Ensemble weights must be [0.7, 0.3], got {ensemble.weights}"
+    assert ensemble.weights == [0.7, 0.3], (
+        f"Ensemble weights must be [0.7, 0.3], got {ensemble.weights}"
+    )
 
 
-def test_ensemble_model_returned(mock_training_dataset, mock_cross_val_score, mock_confusion_matrix):
+def test_ensemble_model_returned(
+    mock_training_dataset, mock_cross_val_score, mock_confusion_matrix
+):
     """
     Test EnsembleModel fields are populated correctly.
 
@@ -373,8 +399,12 @@ def test_ensemble_model_returned(mock_training_dataset, mock_cross_val_score, mo
 
     # Validate field types
     assert isinstance(model.ensemble, VotingClassifier), "ensemble must be VotingClassifier"
-    assert isinstance(model.rf_model, RandomForestClassifier), "rf_model must be RandomForestClassifier"
-    assert isinstance(model.gb_model, GradientBoostingClassifier), "gb_model must be GradientBoostingClassifier"
+    assert isinstance(model.rf_model, RandomForestClassifier), (
+        "rf_model must be RandomForestClassifier"
+    )
+    assert isinstance(model.gb_model, GradientBoostingClassifier), (
+        "gb_model must be GradientBoostingClassifier"
+    )
     assert isinstance(model.validation_accuracy, float), "validation_accuracy must be float"
     assert isinstance(model.false_negative_rate, float), "false_negative_rate must be float"
     assert isinstance(model.training_date, str), "training_date must be str (ISO 8601)"
@@ -415,7 +445,9 @@ def test_run_cross_validation_5_folds(mock_training_dataset, mock_cross_val_scor
     assert model.validation_accuracy >= 0.98, "CV should produce high accuracy with mock scores"
 
 
-def test_cv_reports_accuracy_precision_recall(mock_training_dataset, mock_cross_val_score, mock_confusion_matrix):
+def test_cv_reports_accuracy_precision_recall(
+    mock_training_dataset, mock_cross_val_score, mock_confusion_matrix
+):
     """
     Test cross-validation reports 4 metrics (accuracy, precision, recall, F1).
 
@@ -464,17 +496,25 @@ def test_cv_stratified_k_fold(mock_training_dataset):
     with patch("sklearn.model_selection.StratifiedKFold") as mock_skf:
         # Mock StratifiedKFold to return 5 folds
         mock_skf_instance = Mock()
-        mock_skf_instance.split = Mock(return_value=[
-            (np.array([0, 1, 2]), np.array([3, 4, 5])),
-            (np.array([6, 7, 8]), np.array([9, 10, 11])),
-            (np.array([12, 13, 14]), np.array([15, 16, 17])),
-            (np.array([18, 19, 20]), np.array([21, 22, 23])),
-            (np.array([24, 25, 26]), np.array([27, 28, 29])),
-        ])
+        mock_skf_instance.split = Mock(
+            return_value=[
+                (np.array([0, 1, 2]), np.array([3, 4, 5])),
+                (np.array([6, 7, 8]), np.array([9, 10, 11])),
+                (np.array([12, 13, 14]), np.array([15, 16, 17])),
+                (np.array([18, 19, 20]), np.array([21, 22, 23])),
+                (np.array([24, 25, 26]), np.array([27, 28, 29])),
+            ]
+        )
         mock_skf.return_value = mock_skf_instance
 
-        with patch("sklearn.model_selection.cross_val_score", return_value=np.array([0.98, 0.99, 0.98, 0.99, 0.98])):
-            with patch("sklearn.metrics.confusion_matrix", return_value=np.array([[25, 1, 1], [1, 24, 1], [0, 0, 26]])):
+        with patch(
+            "sklearn.model_selection.cross_val_score",
+            return_value=np.array([0.98, 0.99, 0.98, 0.99, 0.98]),
+        ):
+            with patch(
+                "sklearn.metrics.confusion_matrix",
+                return_value=np.array([[25, 1, 1], [1, 24, 1], [0, 0, 26]]),
+            ):
                 # Act
                 result = trainer.train_ensemble_model(mock_training_dataset, random_state=42)
 
@@ -482,7 +522,9 @@ def test_cv_stratified_k_fold(mock_training_dataset):
         assert isinstance(result, Ok), "Training should succeed with StratifiedKFold"
 
 
-def test_cv_scores_stored_in_metadata(mock_training_dataset, mock_cross_val_score, mock_confusion_matrix):
+def test_cv_scores_stored_in_metadata(
+    mock_training_dataset, mock_cross_val_score, mock_confusion_matrix
+):
     """
     Test CV scores are available for logging/monitoring.
 
@@ -516,7 +558,9 @@ def test_cv_scores_stored_in_metadata(mock_training_dataset, mock_cross_val_scor
 # ==============================================================================
 
 
-def test_calculate_false_negative_rate_complex(mock_training_dataset, mock_cross_val_score, mock_confusion_matrix):
+def test_calculate_false_negative_rate_complex(
+    mock_training_dataset, mock_cross_val_score, mock_confusion_matrix
+):
     """
     Test FN rate calculation for complex tier (FN_complex / (FN_complex + TP_complex)).
 
@@ -543,7 +587,9 @@ def test_calculate_false_negative_rate_complex(mock_training_dataset, mock_cross
     # Validate FN_rate calculation (from mock confusion matrix)
     # Mock confusion matrix: tier 3 has 0 false negatives, 26 true positives
     # FN_rate = 0 / (0 + 26) = 0.0
-    assert model.false_negative_rate == 0.0, f"FN_rate should be 0.0, got {model.false_negative_rate}"
+    assert model.false_negative_rate == 0.0, (
+        f"FN_rate should be 0.0, got {model.false_negative_rate}"
+    )
 
 
 def test_fn_rate_zero_if_no_complex_samples():
@@ -581,7 +627,7 @@ def test_fn_rate_zero_if_no_complex_samples():
             samples.append(sample)
 
     train_indices = list(range(0, 48))  # 80% train
-    val_indices = list(range(48, 60))   # 20% val
+    val_indices = list(range(48, 60))  # 20% val
 
     metadata = DatasetMetadata(
         total_samples=60,
@@ -602,7 +648,10 @@ def test_fn_rate_zero_if_no_complex_samples():
     )
 
     # Mock confusion matrix for tiers 1 and 2 only
-    with patch("sklearn.model_selection.cross_val_score", return_value=np.array([0.98, 0.99, 0.98, 0.99, 0.98])):
+    with patch(
+        "sklearn.model_selection.cross_val_score",
+        return_value=np.array([0.98, 0.99, 0.98, 0.99, 0.98]),
+    ):
         with patch("sklearn.metrics.confusion_matrix", return_value=np.array([[25, 2], [1, 24]])):
             # Act
             result = trainer.train_ensemble_model(dataset, random_state=42)
@@ -612,7 +661,9 @@ def test_fn_rate_zero_if_no_complex_samples():
     model = result.ok()
 
     # FN_rate should be 0.0 (no complex samples to misclassify)
-    assert model.false_negative_rate == 0.0, f"FN_rate should be 0.0 with no tier 3, got {model.false_negative_rate}"
+    assert model.false_negative_rate == 0.0, (
+        f"FN_rate should be 0.0 with no tier 3, got {model.false_negative_rate}"
+    )
 
 
 def test_fn_rate_threshold_enforcement(mock_training_dataset):
@@ -634,15 +685,23 @@ def test_fn_rate_threshold_enforcement(mock_training_dataset):
 
     # Mock confusion matrix with high FN_rate
     # Tier 3: 2 false negatives, 20 true positives → FN_rate = 2/(2+20) = 9.1% (above 2%)
-    with patch("sklearn.model_selection.cross_val_score", return_value=np.array([0.98, 0.99, 0.98, 0.99, 0.98])):
-        with patch("sklearn.metrics.confusion_matrix", return_value=np.array([[24, 1, 2], [1, 23, 2], [2, 0, 20]])):
+    with patch(
+        "sklearn.model_selection.cross_val_score",
+        return_value=np.array([0.98, 0.99, 0.98, 0.99, 0.98]),
+    ):
+        with patch(
+            "sklearn.metrics.confusion_matrix",
+            return_value=np.array([[24, 1, 2], [1, 23, 2], [2, 0, 20]]),
+        ):
             # Act
             result = trainer.train_ensemble_model(mock_training_dataset, random_state=42)
 
     # Assert
     assert isinstance(result, Err), "Training should fail with FN_rate >2%"
     error_msg = result.unwrap_err()
-    assert "false negative rate" in error_msg.lower(), f"Error should mention FN rate, got: {error_msg}"
+    assert "false negative rate" in error_msg.lower(), (
+        f"Error should mention FN rate, got: {error_msg}"
+    )
 
 
 def test_confusion_matrix_for_fn_calculation(mock_training_dataset, mock_cross_val_score):
@@ -697,8 +756,14 @@ def test_accuracy_below_98_percent_fails(mock_training_dataset):
     trainer = MLModelTrainer()
 
     # Mock CV scores with low accuracy (97%)
-    with patch("sklearn.model_selection.cross_val_score", return_value=np.array([0.96, 0.97, 0.97, 0.98, 0.97])):
-        with patch("sklearn.metrics.confusion_matrix", return_value=np.array([[25, 1, 1], [1, 24, 1], [0, 0, 26]])):
+    with patch(
+        "sklearn.model_selection.cross_val_score",
+        return_value=np.array([0.96, 0.97, 0.97, 0.98, 0.97]),
+    ):
+        with patch(
+            "sklearn.metrics.confusion_matrix",
+            return_value=np.array([[25, 1, 1], [1, 24, 1], [0, 0, 26]]),
+        ):
             # Act
             result = trainer.train_ensemble_model(mock_training_dataset, random_state=42)
 
@@ -726,7 +791,10 @@ def test_accuracy_at_98_percent_succeeds(mock_training_dataset, mock_confusion_m
     trainer = MLModelTrainer()
 
     # Mock CV scores with exact 98% accuracy
-    with patch("sklearn.model_selection.cross_val_score", return_value=np.array([0.98, 0.98, 0.98, 0.98, 0.98])):
+    with patch(
+        "sklearn.model_selection.cross_val_score",
+        return_value=np.array([0.98, 0.98, 0.98, 0.98, 0.98]),
+    ):
         # Act
         result = trainer.train_ensemble_model(mock_training_dataset, random_state=42)
 
@@ -754,7 +822,10 @@ def test_fn_rate_above_2_percent_fails(mock_training_dataset, mock_cross_val_sco
     trainer = MLModelTrainer()
 
     # Mock confusion matrix with FN_rate = 1/(1+23) = 4.2% (above 2%)
-    with patch("sklearn.metrics.confusion_matrix", return_value=np.array([[24, 1, 1], [1, 24, 1], [1, 0, 23]])):
+    with patch(
+        "sklearn.metrics.confusion_matrix",
+        return_value=np.array([[24, 1, 1], [1, 24, 1], [1, 0, 23]]),
+    ):
         # Act
         result = trainer.train_ensemble_model(mock_training_dataset, random_state=42)
 
@@ -782,7 +853,10 @@ def test_fn_rate_at_2_percent_succeeds(mock_training_dataset, mock_cross_val_sco
     trainer = MLModelTrainer()
 
     # Mock confusion matrix with FN_rate = 1/(1+49) = 2% (exact threshold)
-    with patch("sklearn.metrics.confusion_matrix", return_value=np.array([[27, 0, 0], [0, 26, 0], [1, 0, 26]])):
+    with patch(
+        "sklearn.metrics.confusion_matrix",
+        return_value=np.array([[27, 0, 0], [0, 26, 0], [1, 0, 26]]),
+    ):
         # Act
         result = trainer.train_ensemble_model(mock_training_dataset, random_state=42)
 
@@ -797,7 +871,9 @@ def test_fn_rate_at_2_percent_succeeds(mock_training_dataset, mock_cross_val_sco
 # ==============================================================================
 
 
-def test_training_time_under_5_minutes(mock_training_dataset, mock_cross_val_score, mock_confusion_matrix):
+def test_training_time_under_5_minutes(
+    mock_training_dataset, mock_cross_val_score, mock_confusion_matrix
+):
     """
     Test training completes in <5 minutes (300 seconds).
 
@@ -826,7 +902,9 @@ def test_training_time_under_5_minutes(mock_training_dataset, mock_cross_val_sco
     assert training_time < 300.0, f"Training should complete in <300s, took {training_time:.2f}s"
 
 
-def test_training_time_warning_if_exceeds(mock_training_dataset, mock_cross_val_score, mock_confusion_matrix, caplog):
+def test_training_time_warning_if_exceeds(
+    mock_training_dataset, mock_cross_val_score, mock_confusion_matrix, caplog
+):
     """
     Test warning is logged if training exceeds expected time (no failure).
 
@@ -845,14 +923,21 @@ def test_training_time_warning_if_exceeds(mock_training_dataset, mock_cross_val_
 
     # Mock slow training by patching fit() to add delay
     with patch.object(VotingClassifier, "fit") as mock_fit:
+
         def slow_fit(*args, **kwargs):
             time.sleep(0.1)  # Simulate slow training
             return Mock()
 
         mock_fit.side_effect = slow_fit
 
-        with patch("sklearn.model_selection.cross_val_score", return_value=np.array([0.98, 0.99, 0.98, 0.99, 0.98])):
-            with patch("sklearn.metrics.confusion_matrix", return_value=np.array([[25, 1, 1], [1, 24, 1], [0, 0, 26]])):
+        with patch(
+            "sklearn.model_selection.cross_val_score",
+            return_value=np.array([0.98, 0.99, 0.98, 0.99, 0.98]),
+        ):
+            with patch(
+                "sklearn.metrics.confusion_matrix",
+                return_value=np.array([[25, 1, 1], [1, 24, 1], [0, 0, 26]]),
+            ):
                 # Act
                 with caplog.at_level("WARNING"):
                     result = trainer.train_ensemble_model(mock_training_dataset, random_state=42)
@@ -928,7 +1013,9 @@ def test_insufficient_training_data():
     # Assert
     assert isinstance(result, Err), "Training should fail with <50 train samples"
     error_msg = result.unwrap_err()
-    assert "insufficient" in error_msg.lower() or "train" in error_msg.lower(), f"Error should mention insufficient training data, got: {error_msg}"
+    assert "insufficient" in error_msg.lower() or "train" in error_msg.lower(), (
+        f"Error should mention insufficient training data, got: {error_msg}"
+    )
 
 
 def test_insufficient_validation_data():
@@ -966,7 +1053,7 @@ def test_insufficient_validation_data():
             samples.append(sample)
 
     train_indices = list(range(0, 52))  # 52 train samples (above 50)
-    val_indices = list(range(52, 60))   # Only 8 val samples (below 10)
+    val_indices = list(range(52, 60))  # Only 8 val samples (below 10)
 
     metadata = DatasetMetadata(
         total_samples=60,
@@ -992,7 +1079,9 @@ def test_insufficient_validation_data():
     # Assert
     assert isinstance(result, Err), "Training should fail with <10 val samples"
     error_msg = result.unwrap_err()
-    assert "validation" in error_msg.lower() or "val" in error_msg.lower(), f"Error should mention insufficient validation data, got: {error_msg}"
+    assert "validation" in error_msg.lower() or "val" in error_msg.lower(), (
+        f"Error should mention insufficient validation data, got: {error_msg}"
+    )
 
 
 def test_single_class_dataset():
@@ -1055,7 +1144,9 @@ def test_single_class_dataset():
     # Assert
     assert isinstance(result, Err), "Training should fail with single class dataset"
     error_msg = result.unwrap_err()
-    assert "class" in error_msg.lower() or "label" in error_msg.lower(), f"Error should mention single class, got: {error_msg}"
+    assert "class" in error_msg.lower() or "label" in error_msg.lower(), (
+        f"Error should mention single class, got: {error_msg}"
+    )
 
 
 def test_invalid_dataset_structure():
@@ -1177,7 +1268,11 @@ def test_sklearn_training_exception():
     # Assert
     assert isinstance(result, Err), "Training should fail with sklearn exception"
     error_msg = result.unwrap_err()
-    assert "sklearn" in error_msg.lower() or "training" in error_msg.lower() or "error" in error_msg.lower(), f"Error should mention sklearn error, got: {error_msg}"
+    assert (
+        "sklearn" in error_msg.lower()
+        or "training" in error_msg.lower()
+        or "error" in error_msg.lower()
+    ), f"Error should mention sklearn error, got: {error_msg}"
 
 
 # ==============================================================================

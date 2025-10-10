@@ -563,6 +563,42 @@ def _build_arg_parser() -> argparse.ArgumentParser:
     sub = p.add_subparsers(dest="command")
     sp = sub.add_parser("run", help="Start the Agency interactive demo")
     sp.set_defaults(func=_cmd_run)
+
+    # Feedback subcommand (User Feedback CLI for Quality Feedback Loop)
+    from tools.agency_cli.feedback_command import (
+        cmd_feedback_clear,
+        cmd_feedback_list,
+        cmd_feedback_mark,
+    )
+
+    feedback_parser = sub.add_parser(
+        "feedback", help="Manage user feedback for quality feedback loop"
+    )
+    feedback_subparsers = feedback_parser.add_subparsers(dest="feedback_action", required=True)
+
+    # feedback mark subcommand
+    mark_parser = feedback_subparsers.add_parser("mark", help="Mark task as misclassified")
+    mark_parser.add_argument("task_id", help="Task identifier")
+    mark_parser.add_argument(
+        "--original_tier", required=True, choices=["simple", "moderate", "complex"]
+    )
+    mark_parser.add_argument(
+        "--correct_tier", required=True, choices=["simple", "moderate", "complex"]
+    )
+    mark_parser.add_argument(
+        "--description", help="Optional task description for VectorStore embedding"
+    )
+    mark_parser.set_defaults(func=cmd_feedback_mark)
+
+    # feedback list subcommand
+    list_parser = feedback_subparsers.add_parser("list", help="List recent user feedback")
+    list_parser.add_argument("--limit", type=int, default=10, help="Max entries to show")
+    list_parser.set_defaults(func=cmd_feedback_list)
+
+    # feedback clear subcommand
+    clear_parser = feedback_subparsers.add_parser("clear", help="Clear user feedback for task")
+    clear_parser.add_argument("task_id", help="Task identifier")
+    clear_parser.set_defaults(func=cmd_feedback_clear)
     sp = sub.add_parser("dashboard", help="Show telemetry dashboard")
     sp.add_argument("--since", default="1h")
     sp.add_argument("--format", choices=["text", "json"], default="text")
