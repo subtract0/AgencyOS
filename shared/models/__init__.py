@@ -20,6 +20,7 @@ from .kanban import (
     KanbanFeed,
 )
 from .learning import (
+    AgentStateLearning,
     ContentTypeBreakdown,
     LearningConsolidation,
     LearningInsight,
@@ -73,6 +74,16 @@ from .priority_task import (
     BacklogError,
     PriorityTask,
 )
+from .session import (
+    CheckpointMetadata,
+    CompressionMetadata,
+    GCResult,
+    RetentionPolicy,
+    SessionState,
+    SessionStatus,
+    TaskContext,
+    TaskProgress,
+)
 from .telemetry import (
     AgentMetrics,
     SystemHealth,
@@ -94,6 +105,7 @@ __all__ = [
     "MemoryMetadata",
     "MemorySearchResult",
     # Learning models
+    "AgentStateLearning",
     "LearningConsolidation",
     "LearningInsight",
     "LearningMetric",
@@ -148,4 +160,13 @@ __all__ = [
     "KanbanFeed",
     "CardType",
     "CardStatus",
+    # Session models
+    "SessionState",
+    "SessionStatus",
+    "TaskProgress",
+    "TaskContext",
+    "CompressionMetadata",
+    "CheckpointMetadata",
+    "GCResult",
+    "RetentionPolicy",
 ]

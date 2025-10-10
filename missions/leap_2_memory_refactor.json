@@ -1,0 +1,466 @@
+{
+  "mission": "Leap 2 - Memory Architecture Refactoring at Scale",
+  "leap_number": 2,
+  "phases": [
+    {
+      "id": "phase_1_analysis",
+      "title": "Phase 1: Architecture Analysis & Design",
+      "tasks": [
+        {
+          "id": "spec_memory_analysis",
+          "title": "Spec: Current Memory Architecture Analysis",
+          "type": "Spec",
+          "tier": "Tier 1",
+          "agent": "chief_architect",
+          "description": "Analyze current memory architecture (VectorStore, Memory Tool, Session) and identify performance bottlenecks, redundancies, and optimization opportunities. Document current state with metrics.",
+          "dependencies": [],
+          "acceptance_criteria": [
+            "Document all 3 memory tiers with current performance metrics",
+            "Identify top 5 performance bottlenecks with quantitative data",
+            "Map current memory flows across all 10 agents",
+            "Define success metrics for refactoring (latency, throughput, memory usage)"
+          ],
+          "estimated_tokens": 3000
+        },
+        {
+          "id": "spec_vectorstore_optimization",
+          "title": "Spec: VectorStore Optimization Strategy",
+          "type": "Spec",
+          "tier": "Tier 1",
+          "agent": "chief_architect",
+          "description": "Design VectorStore optimization strategy focusing on indexing, query performance, and memory efficiency. Include batch processing and caching strategies.",
+          "dependencies": [],
+          "acceptance_criteria": [
+            "Define indexing strategy for semantic search optimization",
+            "Specify batch processing approach for bulk memory operations",
+            "Design caching layer with eviction policy",
+            "Include memory budget constraints (M4 Pro 48GB target)"
+          ],
+          "estimated_tokens": 2500
+        },
+        {
+          "id": "spec_memory_tool_async",
+          "title": "Spec: Memory Tool Async Refactoring",
+          "type": "Spec",
+          "tier": "Tier 1",
+          "agent": "chief_architect",
+          "description": "Design async/await patterns for Memory Tool operations to enable parallel memory reads/writes across agents. Define concurrency control mechanisms.",
+          "dependencies": [],
+          "acceptance_criteria": [
+            "Specify async API surface for all Memory Tool operations",
+            "Define concurrency control (locks, semaphores) for file operations",
+            "Include error handling for async operations",
+            "Design parallel read strategy for multi-agent scenarios"
+          ],
+          "estimated_tokens": 2500
+        },
+        {
+          "id": "spec_session_state_optimization",
+          "title": "Spec: Session State Management Optimization",
+          "type": "Spec",
+          "tier": "Tier 1",
+          "agent": "chief_architect",
+          "description": "Design efficient session state management with minimal memory footprint. Include state compression, serialization, and garbage collection strategies.",
+          "dependencies": [],
+          "acceptance_criteria": [
+            "Define session state schema with compression strategy",
+            "Specify garbage collection policy for expired sessions",
+            "Include serialization format (JSON/MessagePack/Protobuf comparison)",
+            "Design state persistence for multi-day tasks"
+          ],
+          "estimated_tokens": 2500
+        }
+      ]
+    },
+    {
+      "id": "phase_2_vectorstore",
+      "title": "Phase 2: VectorStore Refactoring",
+      "tasks": [
+        {
+          "id": "code_vectorstore_indexing",
+          "title": "Implement VectorStore Indexing Layer",
+          "type": "Code",
+          "tier": "Tier 2",
+          "agent": "coder",
+          "description": "Implement semantic indexing layer for VectorStore using FAISS or similar. Add support for batch indexing and incremental updates.",
+          "dependencies": ["spec_vectorstore_optimization"],
+          "acceptance_criteria": [
+            "FAISS integration with pickle persistence",
+            "Batch indexing API for bulk memory additions",
+            "Incremental update support without full rebuild",
+            "Query performance <100ms for 10K embeddings"
+          ],
+          "estimated_tokens": 4000
+        },
+        {
+          "id": "code_vectorstore_caching",
+          "title": "Implement VectorStore Caching Layer",
+          "type": "Code",
+          "tier": "Tier 2",
+          "agent": "coder",
+          "description": "Add LRU caching layer for frequently accessed memories. Implement cache warming and eviction strategies.",
+          "dependencies": ["spec_vectorstore_optimization"],
+          "acceptance_criteria": [
+            "LRU cache with configurable size (default 1000 entries)",
+            "Cache warming on startup from top 100 accessed patterns",
+            "Eviction metrics logging (hit/miss ratio)",
+            "Thread-safe cache implementation"
+          ],
+          "estimated_tokens": 3500
+        },
+        {
+          "id": "code_vectorstore_batch_ops",
+          "title": "Implement Batch Memory Operations",
+          "type": "Code",
+          "tier": "Tier 2",
+          "agent": "coder",
+          "description": "Add batch store/search APIs to VectorStore for parallel agent operations. Optimize embedding generation for batches.",
+          "dependencies": ["spec_vectorstore_optimization"],
+          "acceptance_criteria": [
+            "batch_store_memories(List[Memory]) API",
+            "batch_search_memories(List[Query]) API with parallel execution",
+            "Batch embedding generation (single OpenAI call)",
+            "10x throughput improvement for batch operations"
+          ],
+          "estimated_tokens": 3500
+        },
+        {
+          "id": "test_vectorstore_refactor",
+          "title": "Test VectorStore Refactoring",
+          "type": "Test",
+          "tier": "Tier 2",
+          "agent": "test_generator",
+          "description": "Comprehensive AAA tests for VectorStore indexing, caching, and batch operations. Include performance benchmarks.",
+          "dependencies": ["code_vectorstore_indexing", "code_vectorstore_caching", "code_vectorstore_batch_ops"],
+          "verification_target": "code_vectorstore_indexing",
+          "acceptance_criteria": [
+            "Unit tests for indexing (happy path + edge cases)",
+            "Cache hit/miss tests with metrics validation",
+            "Batch operation tests (10, 100, 1000 items)",
+            "Performance regression tests (<100ms query, 10x batch speedup)"
+          ],
+          "estimated_tokens": 4000
+        }
+      ]
+    },
+    {
+      "id": "phase_3_memory_tool",
+      "title": "Phase 3: Memory Tool Async Refactoring",
+      "tasks": [
+        {
+          "id": "code_memory_tool_async_api",
+          "title": "Implement Async Memory Tool API",
+          "type": "Code",
+          "tier": "Tier 2",
+          "agent": "coder",
+          "description": "Refactor Memory Tool to async/await pattern. Add asyncio support for all file operations (create, view, edit, delete).",
+          "dependencies": ["spec_memory_tool_async"],
+          "acceptance_criteria": [
+            "All Memory Tool methods converted to async def",
+            "aiofiles integration for async file I/O",
+            "Backward compatibility wrapper for sync callers",
+            "Async context manager support"
+          ],
+          "estimated_tokens": 3500
+        },
+        {
+          "id": "code_memory_tool_concurrency",
+          "title": "Implement Memory Tool Concurrency Control",
+          "type": "Code",
+          "tier": "Tier 2",
+          "agent": "coder",
+          "description": "Add file-level locking for concurrent Memory Tool operations. Implement asyncio.Lock per file path to prevent race conditions.",
+          "dependencies": ["spec_memory_tool_async"],
+          "acceptance_criteria": [
+            "Per-file asyncio.Lock implementation",
+            "Timeout handling for lock acquisition (5s default)",
+            "Deadlock detection and logging",
+            "Lock contention metrics"
+          ],
+          "estimated_tokens": 3000
+        },
+        {
+          "id": "code_memory_tool_parallel_reads",
+          "title": "Implement Parallel Memory Tool Reads",
+          "type": "Code",
+          "tier": "Tier 2",
+          "agent": "coder",
+          "description": "Add batch_view() API for parallel file reads. Optimize for multi-agent scenarios where 3-5 agents read different memory files simultaneously.",
+          "dependencies": ["spec_memory_tool_async"],
+          "acceptance_criteria": [
+            "batch_view(List[str]) -> List[str] API",
+            "asyncio.gather() for parallel reads",
+            "Read-write lock optimization (allow concurrent reads)",
+            "3x throughput improvement for parallel reads"
+          ],
+          "estimated_tokens": 3000
+        },
+        {
+          "id": "test_memory_tool_async",
+          "title": "Test Async Memory Tool",
+          "type": "Test",
+          "tier": "Tier 2",
+          "agent": "test_generator",
+          "description": "AAA tests for async Memory Tool operations, concurrency control, and parallel reads. Include stress tests with 10 concurrent agents.",
+          "dependencies": ["code_memory_tool_async_api", "code_memory_tool_concurrency", "code_memory_tool_parallel_reads"],
+          "verification_target": "code_memory_tool_async_api",
+          "acceptance_criteria": [
+            "Async operation tests (create, view, edit, delete)",
+            "Concurrency tests (10 agents writing to different files)",
+            "Race condition tests (2 agents editing same file)",
+            "Stress test: 50 parallel reads across 3 workers"
+          ],
+          "estimated_tokens": 4000
+        }
+      ]
+    },
+    {
+      "id": "phase_4_session_state",
+      "title": "Phase 4: Session State Optimization",
+      "tasks": [
+        {
+          "id": "code_session_compression",
+          "title": "Implement Session State Compression",
+          "type": "Code",
+          "tier": "Tier 2",
+          "agent": "coder",
+          "description": "Add zlib compression for session state serialization. Implement compression on save, decompression on load with size metrics.",
+          "dependencies": ["spec_session_state_optimization"],
+          "acceptance_criteria": [
+            "zlib compression integration in AgentContext.save_state()",
+            "Automatic decompression in load_state()",
+            "Compression ratio metrics (target 60% size reduction)",
+            "Backward compatibility with uncompressed sessions"
+          ],
+          "estimated_tokens": 2500
+        },
+        {
+          "id": "code_session_gc",
+          "title": "Implement Session Garbage Collection",
+          "type": "Code",
+          "tier": "Tier 2",
+          "agent": "coder",
+          "description": "Add automatic garbage collection for expired session states. Implement TTL-based cleanup with configurable retention policy.",
+          "dependencies": ["spec_session_state_optimization"],
+          "acceptance_criteria": [
+            "TTL-based session expiration (default 30 days)",
+            "Background cleanup task (runs daily at 2am)",
+            "Retention policy for completed vs abandoned sessions",
+            "Cleanup metrics logging (sessions deleted, space reclaimed)"
+          ],
+          "estimated_tokens": 3000
+        },
+        {
+          "id": "code_session_persistence",
+          "title": "Implement Multi-Day Session Persistence",
+          "type": "Code",
+          "tier": "Tier 2",
+          "agent": "coder",
+          "description": "Add checkpoint/resume support for multi-day tasks. Implement incremental state saving with recovery mechanisms.",
+          "dependencies": ["spec_session_state_optimization"],
+          "acceptance_criteria": [
+            "Checkpoint API: save_checkpoint(checkpoint_id)",
+            "Resume API: resume_from_checkpoint(checkpoint_id)",
+            "Incremental state saving (delta encoding)",
+            "Corruption recovery with last-known-good fallback"
+          ],
+          "estimated_tokens": 3500
+        },
+        {
+          "id": "test_session_optimization",
+          "title": "Test Session State Optimization",
+          "type": "Test",
+          "tier": "Tier 2",
+          "agent": "test_generator",
+          "description": "AAA tests for session compression, garbage collection, and multi-day persistence. Include recovery scenarios.",
+          "dependencies": ["code_session_compression", "code_session_gc", "code_session_persistence"],
+          "verification_target": "code_session_compression",
+          "acceptance_criteria": [
+            "Compression tests (verify 60% size reduction)",
+            "GC tests (verify expired sessions deleted)",
+            "Checkpoint/resume tests (multi-day task simulation)",
+            "Corruption recovery tests (verify fallback to last-known-good)"
+          ],
+          "estimated_tokens": 4000
+        }
+      ]
+    },
+    {
+      "id": "phase_5_integration",
+      "title": "Phase 5: Integration & Performance Validation",
+      "tasks": [
+        {
+          "id": "code_agent_context_refactor",
+          "title": "Refactor AgentContext for Optimized Memory",
+          "type": "Code",
+          "tier": "Tier 2",
+          "agent": "coder",
+          "description": "Integrate all memory optimizations into AgentContext. Ensure all 10 agents use optimized memory APIs seamlessly.",
+          "dependencies": [
+            "code_vectorstore_indexing",
+            "code_vectorstore_caching",
+            "code_vectorstore_batch_ops",
+            "code_memory_tool_async_api",
+            "code_session_compression"
+          ],
+          "acceptance_criteria": [
+            "AgentContext uses async Memory Tool by default",
+            "VectorStore caching enabled for all agents",
+            "Batch operations used in Learning Agent",
+            "Session compression enabled in all save_state() calls"
+          ],
+          "estimated_tokens": 4000
+        },
+        {
+          "id": "code_memory_metrics",
+          "title": "Implement Memory Performance Metrics",
+          "type": "Code",
+          "tier": "Tier 2",
+          "agent": "coder",
+          "description": "Add comprehensive metrics collection for all memory operations. Include Prometheus-style metrics for monitoring.",
+          "dependencies": ["code_agent_context_refactor"],
+          "acceptance_criteria": [
+            "Metrics for VectorStore: query latency, cache hit ratio, batch throughput",
+            "Metrics for Memory Tool: file I/O latency, lock contention, parallel reads",
+            "Metrics for Session: compression ratio, GC frequency, checkpoint size",
+            "Prometheus exporter for real-time monitoring"
+          ],
+          "estimated_tokens": 3500
+        },
+        {
+          "id": "test_integration_memory",
+          "title": "Test Memory Architecture Integration",
+          "type": "Test",
+          "tier": "Tier 2",
+          "agent": "test_generator",
+          "description": "End-to-end integration tests for all memory optimizations. Simulate 10 agents working concurrently on shared memory.",
+          "dependencies": ["code_agent_context_refactor", "code_memory_metrics"],
+          "verification_target": "code_agent_context_refactor",
+          "acceptance_criteria": [
+            "10-agent concurrent memory test (3 workers max)",
+            "VectorStore stress test (1000 queries/sec)",
+            "Memory Tool stress test (50 parallel file operations)",
+            "Session state test (checkpoint/resume across 10 sessions)"
+          ],
+          "estimated_tokens": 5000
+        },
+        {
+          "id": "test_performance_benchmarks",
+          "title": "Test Performance Benchmarks",
+          "type": "Test",
+          "tier": "Tier 2",
+          "agent": "test_generator",
+          "description": "Performance regression tests comparing old vs new memory architecture. Validate success metrics from spec_memory_analysis.",
+          "dependencies": ["code_agent_context_refactor", "code_memory_metrics"],
+          "verification_target": "code_agent_context_refactor",
+          "acceptance_criteria": [
+            "VectorStore query latency: <100ms (baseline: 300ms)",
+            "Memory Tool parallel reads: 3x throughput improvement",
+            "Session state size: 60% reduction via compression",
+            "Overall memory usage: <40GB peak (M4 Pro budget)"
+          ],
+          "estimated_tokens": 4000
+        }
+      ]
+    },
+    {
+      "id": "phase_6_stateful_prep",
+      "title": "Phase 6: Stateful Learning Preparation (Leap 3 Foundation)",
+      "tasks": [
+        {
+          "id": "spec_stateful_learning",
+          "title": "Spec: Stateful Learning Architecture",
+          "type": "Spec",
+          "tier": "Tier 1",
+          "agent": "chief_architect",
+          "description": "Design stateful learning layer that builds on optimized memory architecture. Include agent state persistence, cross-session learning, and adaptive model routing.",
+          "dependencies": [
+            "test_integration_memory",
+            "test_performance_benchmarks"
+          ],
+          "acceptance_criteria": [
+            "Define agent state schema (skills, preferences, history)",
+            "Specify cross-session learning mechanism (pattern accumulation)",
+            "Design adaptive model routing (P1/P2/P3 learned from history)",
+            "Include Leap 3 roadmap with 5 key milestones"
+          ],
+          "estimated_tokens": 3500
+        },
+        {
+          "id": "code_agent_state_schema",
+          "title": "Implement Agent State Schema",
+          "type": "Code",
+          "tier": "Tier 2",
+          "agent": "coder",
+          "description": "Implement Pydantic models for agent state persistence. Include skills, preferences, execution history, and learning metadata.",
+          "dependencies": ["spec_stateful_learning"],
+          "acceptance_criteria": [
+            "AgentState Pydantic model with typed fields",
+            "Skills tracking (successful patterns, failure modes)",
+            "Preferences tracking (model choices, tool usage)",
+            "Execution history (task count, success rate, cost metrics)"
+          ],
+          "estimated_tokens": 3000
+        },
+        {
+          "id": "code_cross_session_learning",
+          "title": "Implement Cross-Session Learning Storage",
+          "type": "Code",
+          "tier": "Tier 2",
+          "agent": "coder",
+          "description": "Add cross-session learning storage using optimized VectorStore. Enable agents to accumulate knowledge across multiple sessions.",
+          "dependencies": ["spec_stateful_learning", "code_agent_state_schema"],
+          "acceptance_criteria": [
+            "AgentContext.accumulate_learning(pattern) API",
+            "Cross-session pattern retrieval with confidence scoring",
+            "Learning decay mechanism (older patterns weighted lower)",
+            "VectorStore integration with agent-specific namespaces"
+          ],
+          "estimated_tokens": 3500
+        },
+        {
+          "id": "test_stateful_prep",
+          "title": "Test Stateful Learning Foundation",
+          "type": "Test",
+          "tier": "Tier 2",
+          "agent": "test_generator",
+          "description": "AAA tests for agent state schema and cross-session learning. Validate readiness for Leap 3 implementation.",
+          "dependencies": ["code_agent_state_schema", "code_cross_session_learning"],
+          "verification_target": "code_agent_state_schema",
+          "acceptance_criteria": [
+            "Agent state serialization/deserialization tests",
+            "Cross-session learning accumulation tests",
+            "Learning decay validation tests",
+            "Leap 3 readiness checklist (5/5 items passing)"
+          ],
+          "estimated_tokens": 4000
+        }
+      ]
+    }
+  ],
+  "checkpoints": [
+    {
+      "after_phase": "phase_1_analysis",
+      "type": "human_review",
+      "prompt": "Review architecture analysis and optimization specs before implementation. Validate success metrics and design decisions."
+    },
+    {
+      "after_phase": "phase_3_memory_tool",
+      "type": "human_review",
+      "prompt": "Review async Memory Tool implementation before session state optimization. Validate concurrency control and performance."
+    },
+    {
+      "after_phase": "phase_5_integration",
+      "type": "human_review",
+      "prompt": "Review integrated memory architecture and performance benchmarks. Validate readiness for Leap 3 preparation."
+    }
+  ],
+  "metadata": {
+    "estimated_tokens": 95000,
+    "estimated_cost_usd": 12.5,
+    "complexity": "complex",
+    "parallel_stress_test": true,
+    "max_concurrency": 6,
+    "target_memory_budget_gb": 40
+  }
+}

@@ -3,6 +3,14 @@
 Implements BetaAbstractMemoryTool for file-based persistent memory storage.
 Enables Claude to maintain context across conversations via /memories directory.
 
+This module provides SYNCHRONOUS operations. For async/await operations,
+use tools.async_memory_tool.AsyncMemoryTool instead.
+
+Backward Compatibility:
+- AgencyMemoryTool provides sync API (legacy, maintained for compatibility)
+- For new code, prefer AsyncMemoryTool for 3x parallel I/O speedup
+- Sync wrapper uses asyncio.run() internally (no event loop conflicts)
+
 Security Features:
 - Path traversal attack prevention (../, %2e%2e/, etc.)
 - Restricted to /memories base directory
@@ -22,6 +30,16 @@ Usage:
 
     # Edit file
     tool.str_replace("/memories/notes.txt", "old", "new")
+
+Migration to Async:
+    from tools.async_memory_tool import AsyncMemoryTool
+
+    tool = AsyncMemoryTool(base_dir="~/.agency/memories")
+
+    # All operations return Result[T, E]
+    result = await tool.view_async("/memories/notes.txt")
+    if result.is_ok():
+        print(result.unwrap())
 """
 
 import os

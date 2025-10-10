@@ -56,7 +56,10 @@ types-Markdown>=3.6.0
 
 # Async & concurrency
 asyncio>=3.4.3
+aiofiles>=23.2.0  # Async file I/O for Memory Tool (Leap 2, Phase 3)
 
 # Optional: DSPy for advanced audit optimization (uncomment to enable)
 # dspy-ai>=2.4.0
-# faiss-cpu>=1.7.0  # For similarity search in optimization
+
+# FAISS for semantic indexing (Phase 2, Task 1: VectorStore Optimization)
+faiss-cpu>=1.7.4  # Sub-linear search via HNSW algorithm

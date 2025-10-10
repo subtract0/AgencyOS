@@ -94,6 +94,22 @@ class MemoryRecord(BaseModel):
         return elapsed > self.ttl_seconds
 
 
+class SearchQuery(BaseModel):
+    """Query parameters for semantic search operations."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    query_text: str = Field(..., description="Search query text")
+    top_k: int = Field(default=10, ge=1, le=100, description="Maximum results to return")
+    min_similarity: float = Field(
+        default=0.5, ge=0.0, le=1.0, description="Minimum similarity threshold"
+    )
+    tags_filter: list[str] | None = Field(
+        default=None, description="Optional tags to filter results"
+    )
+    namespace: str | None = Field(default=None, description="Optional namespace filter")
+
+
 class MemorySearchResult(BaseModel):
     model_config = ConfigDict(extra="forbid")
     """Result from memory search operations."""
@@ -120,3 +136,68 @@ class MemorySearchResult(BaseModel):
         }
         min_level = priority_order[min_priority]
         return [r for r in self.records if priority_order[r.priority] >= min_level]
+
+
+class BatchStoreResult(BaseModel):
+    """Result from batch store operations."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    success_count: int = Field(0, ge=0, description="Number of successfully stored items")
+    failed_items: list[tuple[str, str]] = Field(
+        default_factory=list, description="List of (key, error_reason) for failed items"
+    )
+    total_time_ms: float = Field(0.0, ge=0.0, description="Total operation time in milliseconds")
+    avg_time_per_item_ms: float = Field(
+        0.0, ge=0.0, description="Average time per item in milliseconds"
+    )
+    embedding_batch_count: int = Field(
+        0, ge=0, description="Number of embedding API calls made"
+    )
+
+    @property
+    def total_items(self) -> int:
+        """Total number of items processed."""
+        return self.success_count + len(self.failed_items)
+
+    @property
+    def success_rate(self) -> float:
+        """Success rate as percentage."""
+        if self.total_items == 0:
+            return 0.0
+        return (self.success_count / self.total_items) * 100.0
+
+
+class CacheStats(BaseModel):
+    """Statistics for memory cache performance."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    hits: int = Field(0, ge=0, description="Number of cache hits")
+    misses: int = Field(0, ge=0, description="Number of cache misses")
+    evictions: int = Field(0, ge=0, description="Number of cache evictions (LRU)")
+    size: int = Field(0, ge=0, description="Current cache size")
+    max_size: int = Field(128, ge=1, description="Maximum cache capacity")
+
+    @property
+    def hit_rate(self) -> float:
+        """Calculate cache hit rate as percentage."""
+        total = self.hits + self.misses
+        return (self.hits / total * 100) if total > 0 else 0.0
+
+    @property
+    def total_queries(self) -> int:
+        """Total number of cache queries."""
+        return self.hits + self.misses
+
+    def to_dict(self) -> dict[str, JSONValue]:
+        """Convert to dictionary for logging/telemetry."""
+        return {
+            "hits": self.hits,
+            "misses": self.misses,
+            "evictions": self.evictions,
+            "size": self.size,
+            "max_size": self.max_size,
+            "hit_rate_percent": round(self.hit_rate, 2),
+            "total_queries": self.total_queries,
+        }

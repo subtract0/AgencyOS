@@ -561,6 +561,63 @@ class AgentContext:
         """
         return getattr(self, "_checkpoint_manager", None)
 
+    def get_optimal_model(
+        self,
+        agent_key: str,
+        task_description: str,
+        task_type: str = "general"
+    ) -> str:
+        """Get optimal model for task via adaptive routing.
+
+        Per ADR-024 and Leap 3 Milestone 3: Routes tasks to optimal models
+        based on complexity classification with VectorStore learning.
+
+        Args:
+            agent_key: Agent identifier (e.g., "coder", "planner")
+            task_description: Task description for complexity classification
+            task_type: Task type (e.g., "code_modification", "architecture")
+
+        Returns:
+            Model name optimized for task complexity and cost
+
+        Example:
+            >>> context = create_agent_context()
+            >>> model = context.get_optimal_model(
+            ...     agent_key="coder",
+            ...     task_description="Fix typo in README",
+            ...     task_type="documentation"
+            ... )
+            >>> # Returns "ollama/qwen3-coder:30b" (P3 simple task)
+        """
+        try:
+            from shared.adaptive_model_router import ModelRouter
+            from shared.task_complexity import TaskComplexityClassifier
+
+            # Create classifier with VectorStore integration (Article IV)
+            classifier = TaskComplexityClassifier(vector_store=self.memory)
+
+            # Create router
+            router = ModelRouter(classifier=classifier)
+
+            # Route task
+            decision_result = router.route(
+                task_description=task_description,
+                task_type=task_type,
+                agent_key=agent_key,
+                session_id=self.session_id
+            )
+
+            if decision_result.is_ok():
+                return decision_result.unwrap().selected_model
+
+        except Exception as e:
+            logger.warning(f"Adaptive routing failed, using fallback: {e}")
+
+        # Fallback to simple classification
+        from shared.model_policy import agent_model
+
+        return agent_model(agent_key)
+
 
 def create_agent_context(
     memory: Memory | None = None, session_id: str | None = None
