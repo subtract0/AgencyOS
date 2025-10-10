@@ -150,11 +150,58 @@ def get_optimal_model(complexity: str, agent_key: str = "coder") -> str:
         return "gpt-4o"
 
 
-def agent_model(agent_key: str) -> str:
-    """Return the model for a given agent key with sane defaults.
+def agent_model(
+    agent_key: str,
+    task_description: str | None = None,
+    task_type: str | None = None,
+    context: "AgentContext | None" = None
+) -> str:
+    """Return the model for a given agent key with adaptive routing.
+
+    Args:
+        agent_key: Agent identifier (e.g., "coder", "planner")
+        task_description: Optional task description for complexity classification
+        task_type: Optional task type (e.g., "code_modification", "architecture")
+        context: Optional AgentContext for VectorStore-based routing
+
+    Returns:
+        Model name optimized for task complexity and cost
 
     If an unknown key is provided, fall back to DEFAULT_GLOBAL.
 
-    Note: For complexity-aware routing, use get_optimal_model() instead.
+    Note: For complexity-aware routing, provide task_description.
+          For learning-based routing, provide both task_description and context.
     """
-    return DEFAULTS.get(agent_key, DEFAULT_GLOBAL)
+    # Environment override takes precedence (Article III)
+    agent_override = os.getenv(f"{agent_key.upper()}_MODEL")
+    if agent_override:
+        return agent_override
+
+    # If no task context, use static defaults (backward compatible)
+    if task_description is None:
+        return DEFAULTS.get(agent_key, DEFAULT_GLOBAL)
+
+    # Use enhanced adaptive router if context available
+    if context is not None:
+        try:
+            # Lazy import to avoid circular dependency
+            from shared.adaptive_model_router import ModelRouter
+
+            router = ModelRouter()
+            decision_result = router.route(
+                task_description=task_description,
+                task_type=task_type or "general",
+                agent_key=agent_key,
+                session_id=getattr(context, "session_id", None)
+            )
+
+            if decision_result.is_ok():
+                return decision_result.unwrap().selected_model
+
+        except Exception:
+            # Fallback to simple classification on error
+            pass
+
+    # Simple classification fallback (if no context or error)
+    complexity = classify_task_complexity(task_description)
+    return get_optimal_model(complexity, agent_key)

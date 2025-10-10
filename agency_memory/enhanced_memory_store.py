@@ -3,6 +3,8 @@ Enhanced Memory Store with VectorStore Integration.
 
 Provides unified memory access with both tag-based and semantic search capabilities.
 Automatically populates VectorStore during normal memory operations.
+
+Phase 2 Enhancement: FAISS indexing for sub-linear semantic search (O(√t log t) complexity).
 """
 
 import json
@@ -14,7 +16,9 @@ from shared.models.memory import MemorySearchResult
 from shared.type_definitions.json import JSONValue
 
 from .memory import MemoryStore
+from .memory_cache import MemoryCache, create_memory_cache
 from .type_conversion_utils import create_memory_converter
+from .vector_index import VectorIndex
 from .vector_store import VectorStore
 
 logger = logging.getLogger(__name__)
@@ -32,6 +36,9 @@ class EnhancedMemoryStore(MemoryStore):
         self,
         vector_store: VectorStore | None = None,
         embedding_provider: str = "sentence-transformers",
+        use_faiss_index: bool = True,
+        index_path: str | None = None,
+        index_rebuild_threshold: int = 1000,
     ):
         """
         Initialize enhanced memory store.
@@ -39,14 +46,52 @@ class EnhancedMemoryStore(MemoryStore):
         Args:
             vector_store: Optional VectorStore instance
             embedding_provider: Embedding provider for semantic search
+            use_faiss_index: Enable FAISS indexing for sub-linear search (default: True)
+            index_path: Path for FAISS index persistence (optional)
+            index_rebuild_threshold: Rebuild index after N additions (default: 1000)
+
+        Phase 2 Enhancement:
+        - FAISS HNSW index for <100ms queries at 10K+ memories
+        - Fallback to linear search if FAISS unavailable
+        - Incremental index updates (no full rebuild per addition)
         """
         self._memories: dict[str, dict[str, JSONValue]] = {}
         self.vector_store = vector_store or VectorStore(embedding_provider=embedding_provider)
         self._learning_triggers: list[str] = []
         self.memory_converter = create_memory_converter()
 
+        # LRU cache integration (Phase 2, Task 2)
+        self.cache: MemoryCache = create_memory_cache(max_size=128)
+
+        # FAISS index integration (Phase 2)
+        self.vector_index: VectorIndex | None = None
+        self.use_faiss_index = use_faiss_index
+        self.index_rebuild_threshold = index_rebuild_threshold
+        self._additions_since_last_rebuild = 0
+
+        if use_faiss_index:
+            try:
+                from .vector_index import create_vector_index
+
+                # Initialize FAISS index (1536-dim for OpenAI embeddings)
+                self.vector_index = create_vector_index(
+                    embedding_dim=1536,
+                    index_path=index_path,
+                )
+                logger.info("FAISS indexing enabled for sub-linear semantic search")
+            except ImportError:
+                logger.warning(
+                    "FAISS not available, falling back to linear search. "
+                    "Install with: pip install faiss-cpu~=1.7.4"
+                )
+                self.use_faiss_index = False
+            except Exception as e:
+                logger.warning(f"Failed to initialize FAISS index: {e}, using linear search")
+                self.use_faiss_index = False
+
         logger.info(
-            f"EnhancedMemoryStore initialized with embedding provider: {embedding_provider}"
+            f"EnhancedMemoryStore initialized: provider={embedding_provider}, "
+            f"faiss_enabled={self.use_faiss_index}"
         )
 
     def store(self, key: str, content: JSONValue, tags: list[str]) -> None:
@@ -73,8 +118,29 @@ class EnhancedMemoryStore(MemoryStore):
         try:
             self.vector_store.add_memory(key, memory_record)
             logger.debug(f"Added memory to VectorStore: {key}")
+
+            # Phase 2, Task 1: Add to FAISS index if enabled
+            if self.vector_index is not None:
+                # Get embedding from vector store (already computed)
+                if hasattr(self.vector_store, "_embeddings") and key in self.vector_store._embeddings:
+                    embedding = self.vector_store._embeddings[key]
+
+                    # Add to FAISS index (incremental update, <10ms per spec)
+                    self.vector_index.add_vectors([key], [embedding.tolist()])
+                    self._additions_since_last_rebuild += 1
+
+                    # Check if index rebuild needed (per spec: every 1000 additions)
+                    if self._additions_since_last_rebuild >= self.index_rebuild_threshold:
+                        self._rebuild_index_if_needed()
+
+                    logger.debug(f"Added memory to FAISS index: {key}")
+
         except Exception as e:
-            logger.warning(f"Failed to add memory to VectorStore: {e}")
+            logger.warning(f"Failed to add memory to VectorStore/index: {e}")
+
+        # Invalidate cache entries affected by these tags (Phase 2, Task 2)
+        for tag in tags:
+            self.cache.invalidate_pattern(tag)
 
         # Check for learning trigger conditions
         self._check_learning_triggers(memory_record)
@@ -203,7 +269,7 @@ class EnhancedMemoryStore(MemoryStore):
         self, query: str, top_k: int = 10, min_similarity: float = 0.5
     ) -> list[dict[str, JSONValue]]:
         """
-        Perform semantic search using VectorStore.
+        Perform semantic search using FAISS index (if available) or VectorStore fallback.
 
         Args:
             query: Search query
@@ -212,6 +278,11 @@ class EnhancedMemoryStore(MemoryStore):
 
         Returns:
             List of semantically similar memories with relevance scores
+
+        Phase 2 Enhancement:
+        - Uses FAISS HNSW index for sub-linear search (O(√t log t))
+        - Falls back to linear search if FAISS unavailable
+        - Target: <100ms at 10K memories (per spec Criterion 1.1)
         """
         try:
             # Get all memories for search
@@ -220,7 +291,51 @@ class EnhancedMemoryStore(MemoryStore):
             if not all_memories:
                 return []
 
-            # Perform semantic search
+            # Phase 2, Task 1: Use FAISS index if available
+            if self.vector_index is not None and self.vector_index.index.ntotal > 0:
+                # Generate query embedding using VectorStore's embedding function
+                if hasattr(self.vector_store, "_embedding_function") and self.vector_store._embedding_function:
+                    query_embeddings = self.vector_store._embedding_function([query])
+                    query_embedding = query_embeddings[0]
+
+                    # Search using FAISS index (sub-linear complexity)
+                    search_results = self.vector_index.search(query_embedding, k=top_k)
+                else:
+                    # No embedding function, fall back to linear search
+                    logger.warning("Embedding function not available, falling back to linear search")
+                    results = self.vector_store.hybrid_search(query, all_memories, top_k)
+
+                    # Filter by minimum similarity and convert to memory format
+                    filtered_results = []
+                    for result in results:
+                        if result.similarity_score >= min_similarity:
+                            memory_with_score = result.memory.copy()
+                            memory_with_score["relevance_score"] = result.similarity_score
+                            memory_with_score["search_type"] = result.search_type
+                            filtered_results.append(memory_with_score)
+
+                    logger.debug(
+                        f"Linear semantic search (no embeddings) for '{query}' returned {len(filtered_results)} results"
+                    )
+                    return filtered_results
+
+                # Convert to memory format with scores
+                filtered_results = []
+                for memory_id, similarity in search_results:
+                    if similarity >= min_similarity:
+                        memory = self._memories.get(memory_id)
+                        if memory:
+                            memory_with_score = memory.copy()
+                            memory_with_score["relevance_score"] = similarity
+                            memory_with_score["search_type"] = "faiss_semantic"
+                            filtered_results.append(memory_with_score)
+
+                logger.debug(
+                    f"FAISS semantic search for '{query}' returned {len(filtered_results)} results"
+                )
+                return filtered_results
+
+            # Fallback to linear search if FAISS not available
             results = self.vector_store.hybrid_search(query, all_memories, top_k)
 
             # Filter by minimum similarity and convert to memory format
@@ -232,7 +347,9 @@ class EnhancedMemoryStore(MemoryStore):
                     memory_with_score["search_type"] = result.search_type
                     filtered_results.append(memory_with_score)
 
-            logger.debug(f"Semantic search for '{query}' returned {len(filtered_results)} results")
+            logger.debug(
+                f"Linear semantic search for '{query}' returned {len(filtered_results)} results"
+            )
             return filtered_results
 
         except Exception as e:
@@ -725,16 +842,88 @@ class EnhancedMemoryStore(MemoryStore):
             return {"error": str(e)}
 
 
+    def _rebuild_index_if_needed(self) -> None:
+        """
+        Rebuild FAISS index from scratch for optimization (per spec: every 1000 additions).
+
+        Constitutional Compliance:
+        - Article II (ADR-023): Memory-safe rebuild within 48GB M4 Pro budget
+        - Spec Section 1.3: Incremental updates vs full rebuild trade-off
+        """
+        if self.vector_index is None:
+            return
+
+        try:
+            logger.info(
+                f"Rebuilding FAISS index after {self._additions_since_last_rebuild} additions"
+            )
+
+            # Collect all IDs and embeddings
+            all_ids = []
+            all_embeddings = []
+
+            for key in self._memories.keys():
+                if hasattr(self.vector_store, "_embeddings") and key in self.vector_store._embeddings:
+                    all_ids.append(key)
+                    all_embeddings.append(self.vector_store._embeddings[key].tolist())
+
+            # Rebuild index from scratch
+            self.vector_index.rebuild_index(all_ids, all_embeddings)
+
+            # Reset counter
+            self._additions_since_last_rebuild = 0
+
+            # Persist index
+            if self.vector_index.index_path:
+                self.vector_index.save_index()
+
+            logger.info(f"FAISS index rebuilt successfully with {len(all_ids)} vectors")
+
+        except Exception as e:
+            logger.error(f"Failed to rebuild FAISS index: {e}")
+
+    def get_faiss_index_stats(self) -> dict[str, JSONValue]:
+        """
+        Get FAISS index statistics for monitoring.
+
+        Returns:
+            Dictionary with index metrics (total vectors, config, memory usage estimate)
+        """
+        if self.vector_index is None:
+            return {
+                "faiss_enabled": False,
+                "message": "FAISS indexing not enabled",
+            }
+
+        try:
+            stats = self.vector_index.get_stats()
+            stats["faiss_enabled"] = True
+            stats["additions_since_rebuild"] = self._additions_since_last_rebuild
+            stats["rebuild_threshold"] = self.index_rebuild_threshold
+            return stats
+        except Exception as e:
+            logger.error(f"Failed to get FAISS index stats: {e}")
+            return {"error": str(e), "faiss_enabled": True}
+
+
 def create_enhanced_memory_store(
     embedding_provider: str = "sentence-transformers",
+    use_faiss_index: bool = True,
+    index_path: str | None = None,
 ) -> EnhancedMemoryStore:
     """
     Factory function to create an EnhancedMemoryStore.
 
     Args:
         embedding_provider: Embedding provider for semantic search
+        use_faiss_index: Enable FAISS indexing for sub-linear search (default: True)
+        index_path: Optional path for FAISS index persistence
 
     Returns:
         Configured EnhancedMemoryStore instance
     """
-    return EnhancedMemoryStore(embedding_provider=embedding_provider)
+    return EnhancedMemoryStore(
+        embedding_provider=embedding_provider,
+        use_faiss_index=use_faiss_index,
+        index_path=index_path,
+    )
