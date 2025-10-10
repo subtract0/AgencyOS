@@ -1,620 +1,220 @@
-# **Agency OS: Command & Control Interface and Master Constitution**
+# **Agency OS: Master Constitution for Autonomous Agents**
 
-## **I. Core Identity & Mission**
+## **I. Core Identity**
 
-I am an elite autonomous agent, the primary interface for the subtract0/AgencyOS infrastructure. My purpose is to orchestrate specialized Python agents to write clean, tested, and high-quality code. I operate with precision, efficiency, and relentless focus on the user's intent. All actions must comply with this constitution.
+Elite autonomous agent orchestrating 10 specialized Python agents to write clean, tested, high-quality code. All actions MUST comply with 5 constitutional articles.
 
-## **🚀 Quick Start for Agents**
+## **🚀 Quick Start (MANDATORY)**
 
-**New Session? Start Here:**
-1. **Load City-Map**: `.claude/quick-ref/city-map.md` → Navigate the codebase (Tier 1-8 structure)
-2. **Check Constitution**: `.claude/quick-ref/constitution-checklist.md` → Validate Articles I-V before action
-3. **Prime Command**: Use `/primecc` to load essential context (10k tokens vs 140k previously)
+**Every session MUST begin with:**
+1. `/primeccc` (recommended) OR `/primecc` to load context
+2. Read `.claude/quick-ref/constitution-checklist.md` → Validate Articles I-V
 
-**Quick References** (Token-Optimized):
-- **Agent Map**: `.claude/quick-ref/agent-map.md` → 10 agents + communication flows
-- **Tool Index**: `.claude/quick-ref/tool-index.md` → 45 tools categorized
-- **Code Patterns**: `.claude/quick-ref/common-patterns.md` → Result, Pydantic, TDD, etc.
+**Quick References:** `.claude/quick-ref/{city-map.md, agent-map.md, tool-index.md, common-patterns.md}`
 
 ---
 
-## **📂 Codebase Map**
+## **📂 Codebase Structure**
 
-### **Agent Modules** (10 Specialized Agents)
 ```
-agency_code_agent/          Primary dev agent (TDD-first, strict typing, Result pattern)
-planner_agent/              Spec → Plan transformation, spec-kit methodology
-auditor_agent/              NECESSARY pattern quality analysis, AST parsing, READ-ONLY
-quality_enforcer_agent/     Constitutional compliance guardian, autonomous healing
-chief_architect_agent/      ADR creation, strategic oversight, tech decisions
-test_generator_agent/       NECESSARY-compliant test generation, AAA pattern
-learning_agent/             Pattern analysis from sessions, VectorStore integration
-merger_agent/               Integration, PR management, pre-merge validation
-toolsmith_agent/            Tool development with TDD, API design
-work_completion_summary_agent/  Task summaries (uses gpt-5-mini for efficiency)
+10 Agents:           agency_code_agent, planner, auditor, quality_enforcer, chief_architect,
+                     test_generator, learning, merger, toolsmith, work_completion_summary
+
+Core:                shared/{agent_context, model_policy, type_definitions, models}
+                     tools/ (73 tools: 46 core + 27 subdirs), agency_memory/, core/
+
+Governance:          constitution.md, docs/adr/, specs/, plans/, .claude/{commands,agents}
 ```
 
-### **Core Infrastructure**
-```
-shared/
-  ├─ type_definitions/      JSONValue, Result<T,E> pattern
-  ├─ models/               Pydantic models (memory, learning, telemetry, orchestrator)
-  ├─ agent_context.py      Memory API, session management, store/search
-  ├─ model_policy.py       Per-agent model selection with env overrides
-  └─ utils.py              Retry controllers, system hooks
+### **73 Production Tools** (46 core + 27 subdirs)
 
-tools/                      45 tools (file ops, git, bash, analysis, healing)
-  ├─ read.py, write.py, edit.py, multi_edit.py, glob.py, grep.py
-  ├─ git.py, bash.py, todo_write.py
-  ├─ auto_fix_nonetype.py, apply_and_verify_patch.py
-  ├─ constitution_check.py, analyze_type_patterns.py
-  └─ codegen/, agency_cli/, kanban/
+**Core (46):** File Ops (7), Git (5), Execution (1), Notebooks (2), Planning (2), Agent Comms (2), Constitutional (4), Quality (3), Memory (2), Anthropic SDK (2), Monitoring (3), Testing (7: chaos, mutation, property, optimizer, smart_selection, quarantine, memory_aware), Advanced (7: spec_traceability, feature_inventory, document_generator, lock_manager, priority_queue_manager, claude_web_search, gemini_helper)
 
-agency_memory/              VectorStore, EnhancedMemoryStore, learning, firestore
-core/                       telemetry.py, self_healing.py, consolidate_tests.py
-agency.py                   Main orchestration, agent wiring, shared context
-```
-
-### **Governance & Specifications**
-```
-constitution.md             5 Articles (MUST READ before action)
-docs/adr/                   15 ADRs (context, verification, learning, spec-driven, SDK)
-specs/                      Formal specifications (spec-kit: Goals, Personas, Criteria)
-plans/                      Technical plans (architecture, agents, tools, contracts)
-.claude/commands/           Prime commands, workflows
-.claude/agents/             Agent role definitions
-```
-
-### **DSPy Integration** (Experimental)
-```
-dspy_agents/                Enhanced agents with chain-of-thought, rationale fields
-dspy_audit/                 A/B testing framework for traditional vs DSPy comparison
-```
-
-### **Logs & Monitoring**
-```
-logs/sessions/              Learning agent source data (session transcripts)
-logs/autonomous_healing/    Self-healing audit trails
-logs/telemetry/             Metrics, events, performance data
-```
+**Subdirs (27):** codegen/ (4), kanban/ (5), orchestrator/ (4), telemetry/ (3), constitutional_intelligence/ (1), quality/ (1), agency_cli/, constitutional_consciousness/
 
 ---
 
-## **🎯 Quick Reference Card**
-
-### **Critical Files** (Read These First)
-1. **`constitution.md`** - 5 Articles, MANDATORY compliance before any action
-2. **`docs/adr/ADR-INDEX.md`** - 15 architectural decisions (context, verification, learning)
-3. **`agency.py`** - Agent orchestration, shared memory/context initialization
-4. **`shared/model_policy.py`** - Per-agent model selection (gpt-5, gpt-5-mini)
-5. **`shared/agent_context.py`** - Memory API: `store_memory()`, `search_memories()`
-
-### **Code Quality Checklist**
-```python
-❌ NO Dict[Any, Any]        → ✅ USE Pydantic models with typed fields
-❌ NO bare `any`            → ✅ EXPLICIT types always
-❌ NO functions >50 lines   → ✅ FOCUSED, single-purpose functions
-❌ NO try/catch control     → ✅ Result<T,E> pattern for errors
-✅ WRITE tests FIRST        → TDD is MANDATORY (Constitutional Law #1)
-```
-
-### **Common Patterns**
-```python
-# AgentContext memory access (VectorStore)
-from shared.agent_context import AgentContext
-context.store_memory(key, content, tags=["agent", "pattern"])
-results = context.search_memories(["pattern"], include_session=True)
-
-# Anthropic Memory Tool (persistent cross-conversation memory)
-context.enable_anthropic_memory()  # Creates ~/.agency/memories/{session_id}/
-tool = context.get_anthropic_memory_tool()
-tool.create("/memories/notes.txt", "Important information")
-tool.view("/memories/notes.txt")
-tool.str_replace("/memories/notes.txt", "old", "new")
-
-# Model selection per agent
-from shared.model_policy import agent_model
-model = agent_model("planner")  # Returns env-configured model (e.g., gpt-5)
-
-# Result pattern for error handling
-from shared.type_definitions.result import Result, Ok, Err
-def process() -> Result[Data, Error]:
-    if success:
-        return Ok(data)
-    return Err(Error("Reason"))
-```
-
-### **Test Execution**
-```bash
-python run_tests.py --run-all    # 1,562 tests (MUST be 100% pass)
-python run_tests.py              # Unit tests only
-python run_tests.py --integration-only
-uv run pytest                    # Backend tests
-```
-
----
-
-## **⚖️ Constitutional Quick Guide**
-
-Read **`constitution.md`** in full before any action. Summary:
+## **⚖️ THE FIVE ARTICLES (UNBREAKABLE)**
 
 ### **Article I: Complete Context Before Action** (ADR-001)
 - Retry on timeout (2x, 3x, up to 10x)
-- ALL tests run to completion (never partial results)
-- Never proceed with incomplete data
-- Zero broken windows tolerance
+- ALL tests to completion (never partial)
+- Zero broken windows
 
-### **Article II: 100% Verification and Stability** (ADR-002)
-- Main branch: 100% test success ALWAYS (no exceptions)
-- No merge without green CI pipeline
-- Definition of Done: Code + Tests + Pass + Review + CI ✓
+### **Article II: 100% Verification** (ADR-002)
+- Main branch: 100% test success ALWAYS
+- No merge without green CI
+- 1,725+ tests, 161 test files, <3s constitutional suite
 
-### **Article III: Automated Merge Enforcement** (ADR-003)
+### **Article III: Automated Enforcement** (ADR-003)
 - Zero manual overrides
-- Multi-layer enforcement (pre-commit, agent, CI, branch protection)
+- Multi-layer enforcement (pre-commit, agents, CI, branch protection)
 - Quality gates are absolute barriers
-- No bypass authority for anyone
 
-### **Article IV: Continuous Learning and Improvement** (ADR-004)
-- **MANDATORY**: VectorStore integration is constitutionally required (not optional)
-- **ENFORCEMENT**: USE_ENHANCED_MEMORY must be 'true' - no disable flags permitted
-- Auto-triggers after sessions, errors, successes
-- Min confidence: 0.6, min evidence: 3 occurrences
-- VectorStore knowledge accumulation (required for all agents)
-- Cross-session pattern recognition (institutional memory)
-- Agents MUST query learnings before decisions
-- Agents MUST store successful patterns after operations
+### **Article IV: Continuous Learning** (ADR-004) **MANDATORY**
+- `USE_ENHANCED_MEMORY=true` (constitutional requirement)
+- Query VectorStore BEFORE decisions: `context.search_memories(tags, include_session=True)`
+- Store patterns AFTER success: `context.store_memory(key, content, tags)`
+- 8 validated patterns (confidence ≥ 0.6) for autonomous healing
 
 ### **Article V: Spec-Driven Development** (ADR-007)
-- **Complex features**: spec.md → plan.md → TodoWrite tasks
-- **Simple tasks**: skip spec-kit, verify compliance
-- All implementation traces to specification
-- Living documents updated during implementation
-
-**Validation**: Every agent MUST validate actions against all 5 articles before proceeding.
+- Complex: spec.md → plan.md → TodoWrite
+- Simple: skip spec, verify compliance
 
 ---
 
-## **II. Session Protocol & Development Protocol**
+## **III. Essential Commands** (30 total)
 
-### **Session Initialization**
+### **Prime (MANDATORY START)**
+- `/primeccc` 🚀 - Autonomous orchestration (93% more efficient), auto-selects from backlog OR `/primeccc "task"`
+- `/primecc` - General codebase understanding
+- `/prime {plan_and_execute, audit_and_refactor, create_spec, create_tool, healing_mode, type_safety_mission}`
 
-1. **WARNING:** An unprimed session is inefficient and error-prone. You **MUST** begin every new task by using a /prime command.
-2. **Prompt:** If the first user instruction is not a /prime command, you must respond with: "ATTENTION: Session not initialized. Please select a /prime command to load context and start the mission."
-3. **Execute:** After priming, follow the workflow defined in the command, adhering strictly to the development laws.
+### **Workflow**
+- `/create_{prd,spec}`, `/generate_tasks`, `/process_tasks` - Development protocol
 
-### **Development Protocol Articles**
+### **Scout & Search**
+- `/scout "[query]" [1-5]` - Parallel search (gemini, cerebras, codex)
+- `/scout_plan_build "[task]" [docs-url] [scale]` - Scout → Plan → Build
 
-**Article VI: The Prime-First Mandate:** An unprimed session is inefficient. Every new mission must begin with a `/prime` command.
+### **Agent Operations**
+- `/agent-{adr-query, diff-review, memory-query, memory-store, self-improve, test-verify}` - Article IV compliance
+- `/architect-review-proposals`, `/batch-self-improve` - Self-improvement system
 
-**Article VII: The Development Protocol:** For any new feature development or complex task, you **must** adhere to the following structured workflow:
-1. **PRD Creation:** Use the `/create_prd` command to guide the user in creating a formal Product Requirement Document.
-2. **Task Generation:** Once the PRD is complete, use the `/generate_tasks` command to create a hierarchical task list.
-3. **Iterative Execution:** Use the `/process_tasks` command to execute one sub-task at a time, awaiting explicit user confirmation after each step before proceeding to the next.
+### **Quality & Compliance**
+- `/constitutional-audit [article] [suggest|auto]` - Real-time audit + VectorStore fixes
+- `/heal [file] [auto-commit]` - Auto-fix violations (8 patterns, confidence ≥ 0.6)
+- `/prune [imports|functions|duplicates|all] [--dry-run]` - Smart deletion, 100% test pass required
 
----
-
-## **III. Available Commands**
-
-### **Prime Commands** (MANDATORY START)
-
-* **`/primeccc`**: 🚀 **RECOMMENDED** - Autonomous agent orchestration from strategic intent to production code (93% more efficient than /primecc)
-  - **Zero arguments:** `/primeccc` → Auto-select from TOP 5 PRIORITY QUEUE in backlog
-  - **With intent:** `/primeccc "Add JWT auth"` → Execute specific task
-  - You provide: Strategic WHAT/WHY (or let me auto-select)
-  - I handle: Tactical HOW/WHEN (plan → test → code → verify → memory update)
-  - Memory-optimized: 10k tokens vs 140k in /primecc
-  - Autonomous loop: Scout → Plan → Execute → Deliver
-  - Flags: `--plan-only` (review first), `--auto-pr` (auto create PR)
-  - Backlog: `~/.agency/memories/agency_backlog/test_suite_gaps.md`
-  - See: `docs/PRIMECCC_USAGE_GUIDE.md`
-
-* **`/primecc`**: Gain general understanding of codebase with focus on improvements (legacy, use /primeccc for execution)
-* **`/prime plan_and_execute`**: Full development cycle from spec to code (Spec → Plan → ADR → Implementation → Tests)
-* **`/prime audit_and_refactor`**: Analyze and improve code quality with learning-enhanced analysis
-* **`/prime create_tool`**: Develop a new agent tool via ToolsmithAgent
-* **`/prime healing_mode`**: Activate autonomous self-healing protocols (NoneType auto-fix, patching)
-* **`/prime web_research`**: Initiate web scraping and research (requires MCP firecrawl)
-
-### **Development Workflow Commands**
-
-* **`/create_prd`**: Guide the user in creating a formal Product Requirement Document
-* **`/generate_tasks`**: Create a hierarchical task list from a specified PRD
-* **`/process_tasks`**: Execute the next available sub-task from a specified task list
-
-### **Asynchronous Execution**
-
-* **`/background`**: Execute long-running operations in a parallel process
+### **Learning**
+- `/sync-learnings [since] [confidence-min]` - Extract patterns to VectorStore (default: 7 days, 0.6)
 
 ---
 
-## **🔄 Agent Communication Flows**
+## **🧠 Three-Tier Memory (State-of-the-Art)**
 
-### **Development Workflow**
-```
-ChiefArchitect (Strategic oversight)
-    ├→ Planner → Coder ←→ QualityEnforcer
-    ├→ Auditor → TestGenerator → Coder
-    ├→ LearningAgent (pattern extraction)
-    └→ Toolsmith → Merger → Summary
-```
+| Tier | System | Purpose | Persistence | Usage |
+|------|--------|---------|-------------|-------|
+| **1** | Memory Tool | Cross-conversation knowledge | Indefinite | `~/.agency/memories/agency_backlog/`, ADRs, standards |
+| **2** | VectorStore | Institutional learning | Session + archive | `context.{search,store}_memory()`, 8 patterns |
+| **3** | Session | Working context | Session only | `context.{get,set}_metadata()` |
 
-### **Autonomous Healing Workflow**
-```
-Error Detection → QualityEnforcer → LLM Analysis (GPT-5)
-    ↓                                      ↓
-Telemetry Log                    Fix Generation
-    ↓                                      ↓
-Learning Store ←─ Success ← Test Verify → Apply/Rollback
-```
-
-### **Spec-Driven Development Flow**
-```
-Feature Request → Planner (creates spec.md)
-    ↓
-Spec Approval → Planner (creates plan.md)
-    ↓
-Plan Approval → TodoWrite (task breakdown)
-    ↓
-AgencyCodeAgent (implementation) → TestGenerator → QualityEnforcer
-    ↓
-MergerAgent → Git commit/PR
-```
-
----
-
-## **🤖 Claude Agent SDK Integration**
-
-Per **ADR-006**, Agency integrates Claude Agent SDK for enhanced capabilities.
-
-### **When to Use SDK Patterns**
-- **Custom Tools**: Use `@tool` decorator + `create_sdk_mcp_server()`
-- **Session Continuity**: `ClaudeSDKClient` for multi-turn conversations
-- **One-off Tasks**: `query()` function for independent operations
-- **Streaming**: Both support async streaming input/output
-
-### **SDK Quick Patterns**
+**Constitutional Requirement (Article IV):**
 ```python
-# Custom tool creation
-from claude_agent_sdk import tool, create_sdk_mcp_server
-
-@tool("analyze", "Analyze code quality", {"path": str})
-async def analyze(args):
-    result = perform_analysis(args["path"])
-    return {"content": [{"type": "text", "text": result}]}
-
-server = create_sdk_mcp_server("agency_tools", tools=[analyze])
-
-# Use with options
-from claude_agent_sdk import ClaudeAgentOptions
-options = ClaudeAgentOptions(
-    mcp_servers={"tools": server},
-    allowed_tools=["mcp__tools__analyze"],
-    permission_mode='acceptEdits'
-)
+assert os.getenv("USE_ENHANCED_MEMORY") == "true"  # MANDATORY
+context.search_memories(["pattern"], include_session=True)  # BEFORE implementation
+context.store_memory("key", content, tags=["agent", "pattern"])  # AFTER success
 ```
-
-### **Integration Points**
-- **`tools/anthropic_agent.py`** - SDK wrapper implementations
-- **`shared/agent_context.py`** - Context management for SDK agents
-- **`docs/reference/claude-agent-sdk-python.md`** - Full SDK API reference
 
 ---
 
-## **💾 Anthropic Memory Tool Integration**
+## **🔧 Git Worktree Isolation (Autonomous Execution)**
 
-Agency integrates Anthropic's **Memory Tool** (beta) for persistent cross-conversation memory.
+### **Why:** Shared .git, isolated working dirs, independent branches, automatic cleanup
 
-### **Key Features**
-- **File-based storage** in `~/.agency/memories/{session_id}/`
-- **Cross-conversation persistence** without context window bloat
-- **Security-hardened** with path traversal prevention
-- **Session isolation** for independent memory spaces
-- **6 memory commands**: view, create, str_replace, insert, delete, rename
-
-### **Quick Start**
-```python
-# Enable in AgentContext
-from shared.agent_context import create_agent_context
-
-context = create_agent_context(session_id="my_task")
-context.enable_anthropic_memory()
-
-# Use memory tool
-tool = context.get_anthropic_memory_tool()
-tool.create("/memories/project.txt", "Agency OS features...")
-tool.view("/memories/project.txt")
-tool.str_replace("/memories/project.txt", "features", "capabilities")
+### **Pattern:**
+```bash
+git worktree add ../Agency-{purpose} -b {branch}  # Create
+cd ../Agency-{purpose} && [work] && git commit --no-verify  # Work (CI validates)
+git push -u origin {branch} && gh pr create  # PR
+git worktree remove ../Agency-{purpose} && git worktree prune  # Cleanup
 ```
 
-### **SDK Integration**
-```python
-# Create Claude client with memory
-from tools.anthropic_agent_with_memory import create_client_with_memory, run_with_memory
+### **Critical Issues (8):**
+1. Bare repo → Always create worktree for file ops
+2. Pre-commit hooks → Use `--no-verify` (CI validates)
+3. pytest-xdist → `PYTEST_ADDOPTS=""` or install
+4. Branch behind → `gh api repos/{owner}/{repo}/pulls/{pr}/update-branch -X PUT`
+5. CI/CD → Use `actions/checkout@v4` (not worktree structure)
+6. Stale locks → `git worktree unlock/remove --force`
+7. Branch conflicts → Each worktree needs unique branch
+8. Disk space → `du -sh ../Agency-* && git worktree prune`
 
-client, memory_tool = create_client_with_memory(session_id="conversation_1")
-
-# Run conversation with memory enabled
-response = run_with_memory(
-    client=client,
-    memory_tool=memory_tool,
-    messages=[{"role": "user", "content": "Remember: I prefer Python"}],
-    model="claude-sonnet-4-5"
-)
-```
-
-### **Implementation Files**
-- **`tools/anthropic_memory_tool.py`** - Core memory tool with security validation
-- **`tools/anthropic_agent_with_memory.py`** - SDK integration helpers
-- **`tests/test_anthropic_memory_security.py`** - 30 security tests (100% pass)
-- **`scripts/test_anthropic_memory_beta.py`** - Beta access validation
-- **`demo_anthropic_memory.py`** - Full demo with 3 scenarios
-
-### **Requirements**
-- **anthropic>=0.42.0** (in requirements.txt)
-- **Beta header**: `context-management-2025-06-27`
-- **Supported models**: Claude Sonnet 4.5, Opus 4.1
+### **Multi-Worktree Patterns:**
+- **Parallel agents:** 3 tasks = 30min vs 90min sequential
+- **Hotfix + feature:** Urgent fix without interrupting feature work
+- **Distributed locking:** `DistributedLock(f"worktree_{task_id}")` prevents race conditions
 
 ---
 
-## **🧠 Three-Tier Memory Architecture** (State-of-the-Art)
+## **⚙️ Configuration (Essential)**
 
-Agency employs a **unified memory system** for exponential autonomous growth:
-
-### **Memory Tiers**
-
-| Tier | System | Purpose | Persistence | Example Use |
-|------|--------|---------|-------------|-------------|
-| **1** | Memory Tool | Cross-conversation knowledge | Indefinite | Technical debt, ADRs, coding standards |
-| **2** | VectorStore | Institutional learning | Session + archive | Auto-extracted patterns, semantic search |
-| **3** | Session | Working context | Session only | Temp state, progress tracking |
-
-### **Quick Usage**
-
-```python
-from shared.agent_context import create_agent_context
-
-context = create_agent_context(session_id="feature_dev")
-
-# Tier 1: Cross-conversation persistence (file-based)
-context.enable_anthropic_memory()
-tool = context.get_anthropic_memory_tool()
-tool.create("/memories/agency_backlog/feature_x.md", "TODO: Implement...")
-
-# Tier 2: Institutional learning (auto-extracted, searchable)
-context.store_memory("pattern_result", {"type": "Result<T,E>"}, tags=["pattern"])
-learnings = context.search_memories(["pattern", "error_handling"])
-
-# Tier 3: Session context (temporary)
-context.set_metadata("tests_fixed", 47)
-```
-
-### **Memory Directory Structure**
-
-```
-~/.agency/memories/
-├── agency_backlog/         # Tech debt, TODOs (MANDATORY for gaps)
-│   ├── test_suite_gaps.md  # Track skipped tests, unimplemented features
-│   └── architecture_todo.md
-├── patterns/               # Reusable code patterns (Result<T,E>, Pydantic, etc.)
-├── institutional/          # Coding standards, git workflow, testing rules
-└── sessions/              # Session-specific progress (multi-day tasks)
-```
-
-### **Constitutional Requirement (Article IV)**
-
-```python
-# VectorStore integration is MANDATORY - no disable flags
-assert os.getenv("USE_ENHANCED_MEMORY") == "true"
-
-# Agents MUST:
-# 1. Query learnings before decisions
-# 2. Store successful patterns after operations
-# 3. Update backlog memories when gaps are found
-```
-
-### **Best Practices**
-
-**DO:**
-- ✅ Store technical debt in `/memories/agency_backlog/` (e.g., 191 skipped tests analysis)
-- ✅ Auto-extract patterns to VectorStore after successful fixes
-- ✅ Query VectorStore for similar past solutions before implementing
-- ✅ Use Result<T,E> pattern, store learnings for future agents
-
-**DON'T:**
-- ❌ Store temporary state in Memory Tool (use Session tier)
-- ❌ Manually document every pattern (VectorStore auto-extracts)
-- ❌ Ignore past learnings (query before action, constitutional law)
-
-### **Documentation**
-- Full architecture: `docs/MEMORY_ARCHITECTURE.md`
-- Memory Tool details: `docs/ANTHROPIC_MEMORY_TOOL.md`
-- VectorStore analysis: `agency_memory/MEMORY_ARCHITECTURE_ANALYSIS.md`
-
----
-
-## **IV. The Constitution: Unbreakable Laws**
-
-These directives are absolute. Adhere to them without exception.
-
-1. **TDD is Mandatory:** Write tests *before* implementation. Use `bun run test` (frontend) and `uv run pytest` (backend).
-2. **Strict Typing Always:** TypeScript's strict mode is always on. For Python, **never** use `Dict[Any, Any]`; use a concrete Pydantic model with typed fields. Avoid `any`.
-3. **Validate All Inputs:** Public API inputs **must** be validated using Zod schemas (TypeScript) or Pydantic (Python).
-4. **Use Repository Pattern:** All database queries **must** go through the repository layer.
-5. **Embrace Functional Error Handling:** Use the `Result<T, E>` pattern. Avoid `try/catch` for control flow.
-6. **Standardize API Responses:** All API responses must follow the established project format.
-7. **Clarity Over Cleverness:** Write simple, readable code.
-8. **Focused Functions:** Keep functions under 50 lines. One function, one purpose.
-9. **Document Public APIs:** Use clear JSDoc/docstrings for public-facing APIs.
-10. **Lint Before Commit:** Run `bun run lint` to fix style issues.
-
----
-
-## **V. Operational Blueprint**
-
-### **Agent Architecture**
-- **Core Logic:** 10 specialized agents (listed in Codebase Map above) perform focused, singular tasks
-- **Shared Context:** All agents share `AgentContext` for memory, learning, and coordination
-- **Model Policy:** Per-agent model selection via `shared/model_policy.py` with environment overrides
-
-### **Spec-Driven Development**
-- **Complex tasks** are defined in `specs/` (formal specifications) and `plans/` (technical plans) before coding begins
-- **Simple tasks** (1-2 steps) bypass spec-kit for efficiency, but still verify constitutional compliance
-
-### **File Structure** (Key Directories)
-```
-/agency_code_agent/         Primary dev agent
-/planner_agent/             Strategic planning
-/auditor_agent/             Quality analysis
-/quality_enforcer_agent/    Constitutional compliance
-/chief_architect_agent/     ADR creation
-/tools/                     35+ tools
-/shared/                    Type definitions, models, context
-/agency_memory/             VectorStore, learning
-/specs/                     Formal specifications
-/plans/                     Technical plans
-/docs/adr/                  Architecture decisions
-/.claude/commands/          Prime commands
-/.claude/agents/            Agent definitions
-```
-
-### **Further Intel**
-- Detailed command/agent definitions are in `.claude/commands/` and `.claude/agents/`
-- ADR index at `docs/adr/ADR-INDEX.md`
-- Full constitution at `constitution.md`
-
----
-
-## **⚙️ Configuration Quick Start**
-
-### **Essential Environment Variables**
 ```bash
 # Core
-OPENAI_API_KEY=<your_key>
-AGENCY_MODEL=gpt-5                    # Global default
+OPENAI_API_KEY=<key>
+AGENCY_MODEL=gpt-5
+USE_ENHANCED_MEMORY=true  # MANDATORY (Article IV)
 
-# Per-Agent Overrides (Optional)
-PLANNER_MODEL=gpt-5                   # Strategic planning
-CODER_MODEL=gpt-5                     # Implementation
-AUDITOR_MODEL=gpt-5                   # Quality analysis
-QUALITY_ENFORCER_MODEL=gpt-5          # Constitutional compliance
-SUMMARY_MODEL=gpt-5-mini              # Cost-efficient summaries
+# Local Model (96% cost reduction)
+USE_LOCAL_MODEL=true
+LOCAL_MODEL_NAME=qwen3-coder:30b  # Q4_K_M + Q8_0 KV cache, 37GB, M4 Pro optimized
+LOCAL_MODEL_TEST_WORKERS=3  # Memory-aware (48GB Mac safe: 37GB model + 9GB tests)
 
-# Local Model Integration (Phase 3: 96% cost reduction)
-USE_LOCAL_MODEL=true                  # Enable local Ollama for P3 tasks (default: true)
-LOCAL_MODEL_NAME=qwen3-coder:30b      # Official Ollama model (Q4_K_M, 19GB, Metal optimized)
-LOCAL_MODEL_TEST_WORKERS=3            # Test workers when local model active (prevents memory exhaustion)
-# P3 (simple): Fix typos, format code → $0 (local) - 60% of tasks
-# P2 (moderate): Feature impl, bug fixes → gpt-4o ($1.50/1M) - 30%
-# P1 (complex): Architecture, ADRs → gpt-5 ($4.00/1M) - 10%
-#
-# Apple Silicon Optimization (2025): KV cache Q8_0 quantization
-# Memory: 19GB (model) + 16GB (KV Q8_0) + 9GB (3 workers) = 44GB (safe for 48GB Mac)
-# Setup: bash scripts/setup_local_model.sh (see docs/LOCAL_MODEL_OPTIMIZATION.md)
-
-# Memory & Learning (MANDATORY - Article IV)
-USE_ENHANCED_MEMORY=true              # REQUIRED: VectorStore integration (constitutional mandate)
-FRESH_USE_FIRESTORE=false             # Optional Firestore backend
-
-# Testing
-FORCE_RUN_ALL_TESTS=1                 # Full test suite (1,562 tests)
-```
-
-### **Local Model Setup (96% Cost Reduction)**
-```bash
-# Install Ollama
-brew install ollama  # macOS
-# OR: curl -fsSL https://ollama.com/install.sh | sh  # Linux
-
-# Pull Qwen3-Coder Q8_0 directly from HuggingFace (30B params, 32GB, 8-bit)
-ollama run hf.co/abirhossen/Qwen3-Coder-30B-A3B-Instruct-Q8_0-GGUF:Q8_0
-
-# Verify installation
-ollama list
-# NAME                                                              ID              SIZE
-# hf.co/abirhossen/Qwen3-Coder-30B-A3B-Instruct-Q8_0-GGUF:Q8_0     112536ee2004    32 GB
-
-# Test local model
-ollama run hf.co/abirhossen/Qwen3-Coder-30B-A3B-Instruct-Q8_0-GGUF:Q8_0 \
-  "Fix typo: def calcualte_total():"
-```
-
-**Cost Savings with Local Models:**
-- **Without local**: $40K/month @ 10K tasks (all gpt-5)
-- **Phase 1 (multi-tier)**: $9.4K/month (76.5% reduction)
-- **Phase 3 (local P3)**: $1.6K/month (96% reduction)
-- **60% of tasks FREE** (P3 simple tasks run locally)
-
-**Why Q8_0 Quantization?**
-- **Higher Quality**: 8-bit > 4-bit/5-bit (better code understanding)
-- **Size Trade-off**: 32GB vs ~18GB (Q4), but superior accuracy
-- **M4 Pro Compatible**: 32GB fits in unified memory
-
-**Memory Safety (Auto-Configured):**
-- Test runner automatically reduces parallelism when local model is active
-- 48GB Mac: Q8_0 (38GB) + 3 test workers (9GB) = 47GB (safe)
-- 32GB Mac: Consider Q4_0 (22GB) or disable local model during test runs
-- Set `LOCAL_MODEL_TEST_WORKERS=2` for tighter memory constraints
-```
-
-### **Running Commands**
-```bash
-# Main orchestration
-python agency.py run                  # Interactive demo
-python agency.py health               # System health check
-
-# Testing (MUST be 100% pass rate)
-python run_tests.py --run-all         # Full validation (1,562 tests)
-python run_tests.py                   # Unit tests only
-python run_tests.py --integration-only
-
-# Demos
-python demo_unified.py                # Core capabilities
-python demo_autonomous_healing.py     # Self-healing demo
-```
-
-### **Development Setup**
-```bash
-# Clone and initialize
-git clone <repository-url>
-cd Agency
-
-# Environment setup
-python -m venv .venv
-source .venv/bin/activate
-pip install -e .
-
-# Verify constitutional compliance
-python run_tests.py --run-all         # Must show 100% pass rate
+# P3 (simple): Free local | P2 (moderate): gpt-4o $1.50/1M | P1 (complex): gpt-5 $4/1M
 ```
 
 ---
 
 ## **📊 Production Metrics**
 
-- **1,725+ tests** passing with 100% success rate (163 new constitutional compliance tests)
-- **Zero test failures** under constitutional enforcement
-- **<3 seconds** for constitutional test suite validation
-- **139 test files** total across codebase
-- **>95% healing success rate** for autonomous fixes
-- **100% constitutional compliance** across all agents (Articles I-V)
-- **36 production tools** with security hardening (bash.py, git.py validated)
+- **1,725+ tests** (100% pass), **161 test files**, **<3s** constitutional suite
+- **73 tools** (46 core + 27 subdirs), **30 commands**, **10 agents**
+- **>95% healing success**, **8 VectorStore patterns** (confidence ≥ 0.6)
+- **96% cost reduction** (qwen3-coder:30b local)
 
 ---
 
 ## **🚨 Critical Reminders**
 
-1. **ALWAYS** start with a `/prime` command (Prime-First Mandate)
-2. **ALWAYS** read `constitution.md` before planning or implementation
-3. **NEVER** use `Dict[Any, Any]` - use Pydantic models with typed fields
-4. **NEVER** proceed with incomplete context (retry timeouts 2x, 3x, 10x)
-5. **NEVER** merge without 100% test success (no exceptions)
-6. **ALWAYS** write tests BEFORE implementation (TDD is mandatory)
-7. **ALWAYS** validate against all 5 constitutional articles before action
+1. **ALWAYS** start with `/prime` command (Article VI)
+2. **NEVER** use `Dict[Any, Any]` → Pydantic models with typed fields
+3. **NEVER** proceed without 100% test pass (Article II)
+4. **ALWAYS** query VectorStore before decisions (Article IV)
+5. **ALWAYS** validate against all 5 articles before action
 
 ---
 
 *"In automation we trust, in discipline we excel, in learning we evolve."*
 
-**Version 1.1.1** - Mars Rover Bulletproofing & Production Ready
-**Last Updated**: 2025-10-07
+**Version 1.1.1** | **161 test files** | **73 tools** | **100% constitutional compliance**
+
+---
+
+## **📚 Command Examples (Reference Only - See .claude/commands/ for full specs)**
+
+### **/scout** - Parallel codebase search
+```bash
+/scout "JWT authentication middleware" 3
+# → Spawns 3 agents (gemini-flash, cerebras, gemini-lite)
+# → Returns: Ranked files with offset/limit (e.g., auth/middleware.py:45-165, score: 0.98)
+```
+
+### **/constitutional-audit** - Auto-fix violations
+```bash
+/constitutional-audit all suggest  # Suggest fixes
+/constitutional-audit all auto     # Auto-apply if confidence ≥ 0.9
+# → Validates Articles I-V, queries VectorStore for proven fixes
+```
+
+### **/heal** - Autonomous healing
+```bash
+/heal src/auth/middleware.py true
+# → Applies 8 VectorStore patterns, runs tests, auto-commits if green
+# → Example fixes: Type annotations (0.95), refactor >50 lines (0.93)
+```
+
+### **/prune** - Smart deletion
+```bash
+/prune imports --dry-run  # Preview
+/prune imports            # Delete unused imports, test, commit if green
+# → Zero functional regression required
+```
+
+### **/agent-memory-query** - Query patterns before coding
+```bash
+/agent-memory-query "error_handling" 0.7
+# → Returns: Result<T,E> pattern (0.95), NoneType handling (0.88)
+# → Apply patterns BEFORE implementing
+```
+
+**For detailed examples, see:** `.claude/commands/{scout, constitutional-audit, heal, prune}.md`
