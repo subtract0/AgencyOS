@@ -26,8 +26,8 @@ from pathlib import Path
 from typing import TYPE_CHECKING
 
 from pydantic import BaseModel, Field
+
 from shared.session_checkpoint import (
-    CheckpointError,
     SessionCheckpoint,
     load_checkpoint,
     save_checkpoint,

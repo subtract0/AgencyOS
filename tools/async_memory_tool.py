@@ -52,7 +52,7 @@ except ImportError:
 
         pass
 
-from shared.type_definitions.result import Result, Ok, Err
+from shared.type_definitions.result import Err, Ok, Result
 from tools.memory_lock_manager import MemoryLockManager
 
 
@@ -197,7 +197,7 @@ class AsyncMemoryTool(BetaAbstractMemoryTool):
             return Err(str(e))
         except TimeoutError as e:
             return Err(f"Lock timeout: {e}")
-        except asyncio.TimeoutError:
+        except TimeoutError:
             return Err(f"I/O timeout reading: {path}")
         except Exception as e:
             return Err(f"Unexpected error: {e}")
@@ -234,7 +234,7 @@ class AsyncMemoryTool(BetaAbstractMemoryTool):
             return Err(str(e))
         except TimeoutError as e:
             return Err(f"Lock timeout: {e}")
-        except asyncio.TimeoutError:
+        except TimeoutError:
             return Err(f"I/O timeout writing: {path}")
         except Exception as e:
             return Err(f"Error creating file: {e}")
@@ -291,7 +291,7 @@ class AsyncMemoryTool(BetaAbstractMemoryTool):
             return Err(f"File is not valid UTF-8: {path}")
         except TimeoutError as e:
             return Err(f"Lock timeout: {e}")
-        except asyncio.TimeoutError:
+        except TimeoutError:
             return Err(f"I/O timeout: {path}")
         except Exception as e:
             return Err(f"Error replacing text: {e}")
@@ -345,7 +345,7 @@ class AsyncMemoryTool(BetaAbstractMemoryTool):
             return Err(f"File is not valid UTF-8: {path}")
         except TimeoutError as e:
             return Err(f"Lock timeout: {e}")
-        except asyncio.TimeoutError:
+        except TimeoutError:
             return Err(f"I/O timeout: {path}")
         except Exception as e:
             return Err(f"Error inserting text: {e}")
@@ -383,7 +383,7 @@ class AsyncMemoryTool(BetaAbstractMemoryTool):
             return Err(str(e))
         except TimeoutError as e:
             return Err(f"Lock timeout: {e}")
-        except asyncio.TimeoutError:
+        except TimeoutError:
             return Err(f"I/O timeout: {path}")
         except Exception as e:
             return Err(f"Error deleting: {e}")
@@ -431,7 +431,7 @@ class AsyncMemoryTool(BetaAbstractMemoryTool):
             return Err(str(e))
         except TimeoutError as e:
             return Err(f"Lock timeout: {e}")
-        except asyncio.TimeoutError:
+        except TimeoutError:
             return Err(f"I/O timeout: {old_path}")
         except Exception as e:
             return Err(f"Error renaming: {e}")

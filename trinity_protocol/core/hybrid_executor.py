@@ -29,6 +29,9 @@ from shared.agent_context import AgentContext
 from shared.cost_tracker import CostTracker
 from shared.message_bus import MessageBus
 from shared.type_definitions import JSONValue
+from tools.quality_feedback.misclassification_detector import MisclassificationDetector
+from tools.quality_feedback.rule_refiner import RuleRefiner
+from tools.quality_feedback.signal_collector import QualitySignalCollector
 from trinity_protocol.core.agent_registry import (
     AgentRegistry,
     AgentType,
@@ -41,9 +44,6 @@ from trinity_protocol.core.escalation_rules import (
     create_escalation_policy,
 )
 from trinity_protocol.core.ollama_client import OllamaClient
-from tools.quality_feedback.signal_collector import QualitySignalCollector
-from tools.quality_feedback.misclassification_detector import MisclassificationDetector
-from tools.quality_feedback.rule_refiner import RuleRefiner
 
 logger = logging.getLogger(__name__)
 
@@ -235,6 +235,7 @@ class HybridExecutor:
 
         # Initialize ML classifier components (Leap 5 Phase 3, ADR-026)
         import os
+
         from shared.models.ab_test_config import ABTestConfig
 
         self._ab_test_config = ABTestConfig(
@@ -1221,12 +1222,12 @@ class HybridExecutor:
         try:
             # Try to import AutoModelUpdateOrchestrator
             # If unavailable (parallel implementation), gracefully skip
+            # Spawn orchestrator in background thread
+            import threading
+
             from tools.ml_routing.auto_model_update_orchestrator import (
                 AutoModelUpdateOrchestrator,
             )
-
-            # Spawn orchestrator in background thread
-            import threading
 
             def run_retraining():
                 try:

@@ -534,7 +534,7 @@ class TestIntegrationPerformance:
         search_time = time.perf_counter() - start_search
 
         # Assert
-        print(f"\nEnd-to-end performance:")
+        print("\nEnd-to-end performance:")
         print(f"  Store 1000 items: {store_time:.2f}s ({1000 / store_time:.0f} items/sec)")
         print(f"  Search 50 queries: {search_time:.2f}s ({50 / search_time:.0f} queries/sec)")
 
@@ -560,7 +560,7 @@ class TestIntegrationPerformance:
         second_time = time.perf_counter() - start_second
 
         # Assert
-        print(f"\nFAISS + Cache integration:")
+        print("\nFAISS + Cache integration:")
         print(f"  First search (miss): {first_time * 1000:.2f}ms")
         print(f"  Second search (hit): {second_time * 1000:.2f}ms")
         if second_time > 0:

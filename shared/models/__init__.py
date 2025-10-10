@@ -13,6 +13,7 @@ from .dashboard import (
     DashboardSummary,
     SessionSummary,
 )
+from .ensemble_model import EnsembleModel
 from .kanban import (
     CardStatus,
     CardType,
@@ -84,14 +85,13 @@ from .session import (
     TaskContext,
     TaskProgress,
 )
+from .task_feature_vector import TaskFeatureVector
 from .telemetry import (
     AgentMetrics,
     SystemHealth,
     TelemetryEvent,
     TelemetryMetrics,
 )
-from .ensemble_model import EnsembleModel
-from .task_feature_vector import TaskFeatureVector
 from .training_dataset import (
     DatasetMetadata,
     TrainingDataset,

@@ -4,9 +4,7 @@ Per Leap 3 Milestone 4: Track agent skill development over time using
 exponential moving average (EMA) for continuous learning.
 """
 
-import json
-import math
-from dataclasses import asdict, dataclass
+from dataclasses import dataclass
 from datetime import datetime
 from typing import Any
 

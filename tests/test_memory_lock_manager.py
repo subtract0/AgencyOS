@@ -28,10 +28,10 @@ from pathlib import Path
 import pytest
 
 from tools.memory_lock_manager import (
-    MemoryLockManager,
-    LockMetrics,
-    LockContention,
     DeadlockCycle,
+    LockContention,
+    LockMetrics,
+    MemoryLockManager,
     create_memory_lock_manager,
 )
 

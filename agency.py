@@ -565,7 +565,11 @@ def _build_arg_parser() -> argparse.ArgumentParser:
     sp.set_defaults(func=_cmd_run)
 
     # Feedback subcommand (User Feedback CLI for Quality Feedback Loop)
-    from tools.agency_cli.feedback_command import cmd_feedback_mark, cmd_feedback_list, cmd_feedback_clear
+    from tools.agency_cli.feedback_command import (
+        cmd_feedback_clear,
+        cmd_feedback_list,
+        cmd_feedback_mark,
+    )
 
     feedback_parser = sub.add_parser(
         "feedback",
