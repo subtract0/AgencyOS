@@ -43,7 +43,6 @@ from shared.type_definitions.result import Err, Ok
 from tools.ml_routing.model_storage import ModelStorage
 from tools.ml_routing.model_trainer import MLModelTrainer
 
-
 # ============================================================================
 # Fixtures
 # ============================================================================
@@ -75,9 +74,9 @@ def trained_ensemble_model(temp_models_dir: Path) -> EnsembleModel:
     np.random.seed(42)
 
     # Generate 102 samples (81 train, 21 val)
-    all_samples: List[TrainingSample] = []
-    train_indices: List[int] = []
-    val_indices: List[int] = []
+    all_samples: list[TrainingSample] = []
+    train_indices: list[int] = []
+    val_indices: list[int] = []
     sample_idx = 0
 
     for tier in [1, 2, 3]:
@@ -272,7 +271,7 @@ class TestInferenceLatency:
             )
             latency_ms = (time.perf_counter() - start) * 1000
 
-            assert isinstance(result, Ok), f"Classification failed"
+            assert isinstance(result, Ok), "Classification failed"
             latencies.append(latency_ms)
 
         # Assert: p95 <30ms
@@ -316,7 +315,7 @@ class TestInferenceLatency:
             )
             latency_ms = (time.perf_counter() - start) * 1000
 
-            assert isinstance(result, Ok), f"Classification failed"
+            assert isinstance(result, Ok), "Classification failed"
             latencies.append(latency_ms)
 
         # Assert: p99 <50ms (CRITICAL THRESHOLD)
@@ -381,7 +380,7 @@ class TestModelLoading:
             result = extractor.extract_features(task_description, metadata)
             latency_ms = (time.perf_counter() - start) * 1000
 
-            assert isinstance(result, Ok), f"Feature extraction failed"
+            assert isinstance(result, Ok), "Feature extraction failed"
             latencies.append(latency_ms)
 
         # Assert: p99 <25ms
@@ -459,7 +458,7 @@ class TestConcurrency:
         ok_count = sum(1 for _, _, result in results if isinstance(result, Ok))
         assert ok_count == 100, f"Only {ok_count}/100 classifications succeeded"
 
-        print(f"\n✅ Concurrent Classification: 100/100 successful (10 threads × 10 tasks)")
+        print("\n✅ Concurrent Classification: 100/100 successful (10 threads × 10 tasks)")
 
 
 # ============================================================================
@@ -586,11 +585,11 @@ class TestE2EWorkflowLatency:
         print("\n" + "=" * 70)
         print("🚀 E2E CLASSIFICATION WORKFLOW LATENCY REPORT")
         print("=" * 70)
-        print(f"Samples: 100")
+        print("Samples: 100")
         print(f"p50: {p50:.2f}ms")
         print(f"p95: {p95:.2f}ms")
         print(f"p99: {p99:.2f}ms (target <50ms)")
-        print(f"\n✅ All latency targets met (Article II compliance)")
+        print("\n✅ All latency targets met (Article II compliance)")
         print("=" * 70)
 
 

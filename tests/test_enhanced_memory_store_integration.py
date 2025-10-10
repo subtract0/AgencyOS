@@ -215,7 +215,7 @@ class TestEndToEndPerformance:
         search_time = time.time() - start_search
 
         # Assert - Performance within reasonable bounds
-        print(f"\nEnd-to-end performance:")
+        print("\nEnd-to-end performance:")
         print(f"  Store 1000 items: {store_time:.2f}s")
         print(f"  Search 100 queries: {search_time:.2f}s")
 
@@ -283,7 +283,7 @@ class TestMemoryBudgetIntegration:
 
         # Assert - All components functioning
         assert memory_count == 1000
-        print(f"\nMemory footprint:")
+        print("\nMemory footprint:")
         print(f"  Memories: {memory_count}")
         print(f"  FAISS stats: {faiss_stats}")
         print(f"  Cache stats: {cache_stats}")

@@ -41,7 +41,6 @@ from shared.type_definitions.result import Err, Ok
 from tools.ml_routing.ml_classifier import ClassificationResult, MLClassifier
 from trinity_protocol.core.hybrid_executor import HybridExecutor, ModelTier, TaskResult
 
-
 # ============================================================================
 # FIXTURES
 # ============================================================================

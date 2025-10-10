@@ -29,10 +29,10 @@ Author: TestGeneratorAgent
 Date: 2025-10-10
 """
 
-import pytest
 from datetime import UTC, datetime
-from pydantic import ValidationError
 
+import pytest
+from pydantic import ValidationError
 
 # ============================================================================
 # Test Category 1: Field Validation (NECESSARY: N - Normal Operation)

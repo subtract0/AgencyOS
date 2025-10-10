@@ -54,7 +54,6 @@ from shared.type_definitions.result import Err, Ok
 from tools.ml_routing.model_storage import ModelStorage
 from tools.ml_routing.model_trainer import MLModelTrainer
 
-
 # ============================================================================
 # Fixtures
 # ============================================================================
@@ -86,9 +85,9 @@ def trained_ensemble_model(temp_models_dir: Path) -> EnsembleModel:
     np.random.seed(42)
 
     # Generate 102 samples (81 train, 21 val)
-    all_samples: List[TrainingSample] = []
-    train_indices: List[int] = []
-    val_indices: List[int] = []
+    all_samples: list[TrainingSample] = []
+    train_indices: list[int] = []
+    val_indices: list[int] = []
     sample_idx = 0
 
     for tier in [1, 2, 3]:
@@ -194,7 +193,7 @@ def mock_agent_context(tmp_path: Path) -> AgentContext:
 
 
 @pytest.fixture
-def validation_tasks_100() -> List[dict]:
+def validation_tasks_100() -> list[dict]:
     """
     Generate 100 validation tasks with known ground truth labels.
 
@@ -244,7 +243,7 @@ class TestMLClassification:
         trained_ensemble_model: EnsembleModel,
         mock_agent_context: AgentContext,
         temp_models_dir: Path,
-        validation_tasks_100: List[dict],
+        validation_tasks_100: list[dict],
     ) -> None:
         """
         Test AC-2.1: Classify 100 tasks with ML (verify ~50 ML, ~50 rules via A/B).
@@ -305,7 +304,7 @@ class TestMLClassification:
         trained_ensemble_model: EnsembleModel,
         mock_agent_context: AgentContext,
         temp_models_dir: Path,
-        validation_tasks_100: List[dict],
+        validation_tasks_100: list[dict],
     ) -> None:
         """
         Test AC-3.1: 100% prediction logging to VectorStore (Article IV).
@@ -344,14 +343,14 @@ class TestMLClassification:
             "(Article IV violation: Incomplete logging)"
         )
 
-        print(f"\n✅ VectorStore Logging: 100/100 predictions logged (Article IV compliance)")
+        print("\n✅ VectorStore Logging: 100/100 predictions logged (Article IV compliance)")
 
     def test_e2e_ml_accuracy_above_98_percent(
         self,
         trained_ensemble_model: EnsembleModel,
         mock_agent_context: AgentContext,
         temp_models_dir: Path,
-        validation_tasks_100: List[dict],
+        validation_tasks_100: list[dict],
     ) -> None:
         """
         Test AC-Q.1: ML accuracy ≥98% on validation set.
@@ -448,7 +447,7 @@ class TestFallbackHandling:
             assert classification.method == "rule_based_fallback", (
                 f"Expected rule-based fallback, got {classification.method}"
             )
-            print(f"\n✅ Fallback Triggered: Low confidence (0.33 < 0.7) → rule-based")
+            print("\n✅ Fallback Triggered: Low confidence (0.33 < 0.7) → rule-based")
 
     def test_e2e_model_unavailable_graceful_fallback(
         self,
@@ -484,7 +483,7 @@ class TestFallbackHandling:
         assert classification.method == "rule_based_fallback", (
             f"Expected rule-based fallback, got {classification.method}"
         )
-        print(f"\n✅ Model Unavailable: Graceful fallback to rules (no crash)")
+        print("\n✅ Model Unavailable: Graceful fallback to rules (no crash)")
 
 
 # ============================================================================
@@ -546,7 +545,7 @@ class TestABTesting:
         trained_ensemble_model: EnsembleModel,
         mock_agent_context: AgentContext,
         temp_models_dir: Path,
-        validation_tasks_100: List[dict],
+        validation_tasks_100: list[dict],
     ) -> None:
         """
         Test AC-4.3: Telemetry shows A/B metrics (ML accuracy, fallback count).
@@ -585,7 +584,7 @@ class TestABTesting:
 
         # Assert: Telemetry captured
         assert len(predictions) == 100, "Expected 100 predictions in telemetry"
-        print(f"\n✅ Telemetry Metrics:")
+        print("\n✅ Telemetry Metrics:")
         print(f"   Total predictions: {len(predictions)}")
         print(f"   ML classifications: {ml_count}")
         print(f"   Rule-based fallbacks: {fallback_count}")
@@ -634,7 +633,7 @@ class TestRegressionCompliance:
             )
             assert isinstance(result, Ok), f"Regression test failed for task {i}"
 
-        print(f"\n✅ Zero Regression: 10/10 smoke tests passed (existing functionality intact)")
+        print("\n✅ Zero Regression: 10/10 smoke tests passed (existing functionality intact)")
 
     def test_e2e_ml_disabled_identical_to_legacy(
         self,
@@ -674,7 +673,7 @@ class TestRegressionCompliance:
 
         # Assert: All use rule-based (legacy behavior)
         assert fallback_count == 10, f"Expected 10 rule-based, got {fallback_count}"
-        print(f"\n✅ ML Disabled: 10/10 classifications use rules (legacy behavior)")
+        print("\n✅ ML Disabled: 10/10 classifications use rules (legacy behavior)")
 
 
 # ============================================================================
@@ -690,7 +689,7 @@ class TestConstitutionalCompliance:
         trained_ensemble_model: EnsembleModel,
         mock_agent_context: AgentContext,
         temp_models_dir: Path,
-        validation_tasks_100: List[dict],
+        validation_tasks_100: list[dict],
     ) -> None:
         """
         Test: Constitutional compliance (Articles I, II, IV).
@@ -759,7 +758,7 @@ def test_generate_phase3_summary_report(
     trained_ensemble_model: EnsembleModel,
     mock_agent_context: AgentContext,
     temp_models_dir: Path,
-    validation_tasks_100: List[dict],
+    validation_tasks_100: list[dict],
 ) -> None:
     """
     Generate Phase 3 completion summary after all tests pass.
@@ -767,7 +766,7 @@ def test_generate_phase3_summary_report(
     Constitutional Compliance:
     - Article V: Documentation (summary report required)
     """
-    from datetime import datetime, UTC
+    from datetime import UTC, datetime
 
     # Run full pipeline to collect metrics
     from tools.ml_routing.ml_classifier import MLClassifier

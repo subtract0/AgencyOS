@@ -16,7 +16,6 @@ Constitutional Compliance:
 
 import logging
 import tempfile
-from pathlib import Path
 
 from shared.agent_context import create_agent_context
 

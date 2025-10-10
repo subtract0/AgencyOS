@@ -28,7 +28,6 @@ import time
 import zlib
 from datetime import datetime
 from pathlib import Path
-from typing import Any
 
 from shared.models.session import CheckpointMetadata, CompressionMetadata, SessionState
 from shared.type_definitions.result import Err, Ok, Result
