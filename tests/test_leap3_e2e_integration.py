@@ -51,10 +51,7 @@ def test_context(temp_session_dir):
     os.environ["USE_ENHANCED_MEMORY"] = "true"
     os.environ["FRESH_USE_FIRESTORE"] = "false"
 
-    context = create_agent_context(
-        session_id=session_id,
-        agent_name="test_agent"
-    )
+    context = create_agent_context(session_id=session_id, agent_name="test_agent")
 
     return context
 
@@ -92,13 +89,7 @@ class TestEndToEndRoutingFlow:
     """Test complete flow from task to execution to learning."""
 
     @pytest.mark.asyncio
-    async def test_simple_task_local_routing(
-        self,
-        classifier,
-        router,
-        skill_vector,
-        test_context
-    ):
+    async def test_simple_task_local_routing(self, classifier, router, skill_vector, test_context):
         """
         E2E Test 1: Simple P3 task → Local model → Skill update
 
@@ -115,9 +106,7 @@ class TestEndToEndRoutingFlow:
 
         # Act: Step 1 - Classify
         complexity_result = classifier.classify(
-            task_description=task_description,
-            agent_name=agent_name,
-            context=test_context
+            task_description=task_description, agent_name=agent_name, context=test_context
         )
 
         assert isinstance(complexity_result, Ok)
@@ -129,9 +118,7 @@ class TestEndToEndRoutingFlow:
 
         # Act: Step 2 - Route
         model = router.select_model(
-            task_description=task_description,
-            agent_name=agent_name,
-            complexity=complexity
+            task_description=task_description, agent_name=agent_name, complexity=complexity
         )
 
         # Assert: Should route to local (free)
@@ -152,7 +139,7 @@ class TestEndToEndRoutingFlow:
             task_type="code_fix",
             complexity=complexity.priority,
             success=success,
-            duration_seconds=(end_time - start_time).total_seconds()
+            duration_seconds=(end_time - start_time).total_seconds(),
         )
 
         # Assert: Skills should improve
@@ -172,13 +159,7 @@ class TestEndToEndRoutingFlow:
             assert cost == 0.0, "Local model should have zero cost"
 
     @pytest.mark.asyncio
-    async def test_complex_task_gpt5_routing(
-        self,
-        classifier,
-        router,
-        skill_vector,
-        test_context
-    ):
+    async def test_complex_task_gpt5_routing(self, classifier, router, skill_vector, test_context):
         """
         E2E Test 2: Complex P1 task → GPT-5 → Skill update
 
@@ -199,9 +180,7 @@ class TestEndToEndRoutingFlow:
 
         # Act: Step 1 - Classify
         complexity_result = classifier.classify(
-            task_description=task_description,
-            agent_name=agent_name,
-            context=test_context
+            task_description=task_description, agent_name=agent_name, context=test_context
         )
 
         assert isinstance(complexity_result, Ok)
@@ -216,9 +195,7 @@ class TestEndToEndRoutingFlow:
 
         # Act: Step 2 - Route
         model = router.select_model(
-            task_description=task_description,
-            agent_name=agent_name,
-            complexity=complexity
+            task_description=task_description, agent_name=agent_name, complexity=complexity
         )
 
         # Assert: Should route to gpt-5 (premium)
@@ -237,7 +214,7 @@ class TestEndToEndRoutingFlow:
             task_type="architecture",
             complexity=complexity.priority,
             success=success,
-            duration_seconds=(end_time - start_time).total_seconds()
+            duration_seconds=(end_time - start_time).total_seconds(),
         )
 
         # Assert: Skills should improve in architecture domain
@@ -254,12 +231,7 @@ class TestEndToEndRoutingFlow:
         assert cost > 0.005, "Premium model should have measurable cost"
 
     @pytest.mark.asyncio
-    async def test_multi_task_cost_accumulation(
-        self,
-        classifier,
-        router,
-        test_context
-    ):
+    async def test_multi_task_cost_accumulation(self, classifier, router, test_context):
         """
         E2E Test 3: Multiple tasks → Cost accumulation → Validate 90% savings
 
@@ -279,12 +251,10 @@ class TestEndToEndRoutingFlow:
             ("Update import statement", "coder", "P3"),
             ("Rename variable for clarity", "coder", "P3"),
             ("Add type hint to parameter", "coder", "P3"),
-
             # P2 tasks (30%) - Moderate, gpt-4o
             ("Implement user authentication endpoint", "coder", "P2"),
             ("Write unit tests for auth module", "test_generator", "P2"),
             ("Refactor database query logic", "coder", "P2"),
-
             # P1 tasks (10%) - Complex, gpt-5
             ("Design distributed caching architecture", "chief_architect", "P1"),
         ]
@@ -296,26 +266,26 @@ class TestEndToEndRoutingFlow:
         for task_desc, agent_name, expected_priority in tasks:
             # Classify
             complexity_result = classifier.classify(
-                task_description=task_desc,
-                agent_name=agent_name,
-                context=test_context
+                task_description=task_desc, agent_name=agent_name, context=test_context
             )
 
             if isinstance(complexity_result, Err):
                 # Fallback to expected priority
-                complexity = type('obj', (object,), {
-                    'priority': expected_priority,
-                    'confidence': 0.7,
-                    'reasoning': 'Fallback classification'
-                })()
+                complexity = type(
+                    "obj",
+                    (object,),
+                    {
+                        "priority": expected_priority,
+                        "confidence": 0.7,
+                        "reasoning": "Fallback classification",
+                    },
+                )()
             else:
                 complexity = complexity_result.unwrap()
 
             # Route
             model = router.select_model(
-                task_description=task_desc,
-                agent_name=agent_name,
-                complexity=complexity
+                task_description=task_desc, agent_name=agent_name, complexity=complexity
             )
 
             # Calculate cost with routing
@@ -340,8 +310,7 @@ class TestEndToEndRoutingFlow:
 
         # Assert: Validate 90% cost savings
         cost_savings_percent = (
-            (total_cost_without_routing - total_cost_with_routing)
-            / total_cost_without_routing
+            (total_cost_without_routing - total_cost_with_routing) / total_cost_without_routing
         ) * 100
 
         print("\n💰 Cost Analysis:")
@@ -350,8 +319,9 @@ class TestEndToEndRoutingFlow:
         print(f"   Savings: {cost_savings_percent:.1f}%")
 
         # Allow some tolerance for classification variance
-        assert cost_savings_percent >= 85.0, \
+        assert cost_savings_percent >= 85.0, (
             f"Expected ≥85% savings, got {cost_savings_percent:.1f}%"
+        )
 
 
 # ============================================================================
@@ -380,7 +350,7 @@ class TestSkillEvolutionIntegration:
                 task_type="code_implementation",
                 complexity="P2",
                 success=True,
-                duration_seconds=30.0
+                duration_seconds=30.0,
             )
 
         # Assert: Skills should improve
@@ -422,7 +392,7 @@ class TestSkillEvolutionIntegration:
                 task_type="code_implementation",
                 complexity="P2",
                 success=True,
-                duration_seconds=30.0
+                duration_seconds=30.0,
             )
 
         initial_success_rate = skill_vector.to_dict()["execution_metrics"]["success_rate"]
@@ -433,7 +403,7 @@ class TestSkillEvolutionIntegration:
                 task_type="code_implementation",
                 complexity="P2",
                 success=False,
-                duration_seconds=60.0
+                duration_seconds=60.0,
             )
 
         # Assert: Success rate should decrease
@@ -445,11 +415,7 @@ class TestSkillEvolutionIntegration:
         assert abs(final_success_rate - expected_rate) < 0.15  # Allow EMA smoothing variance
 
     @pytest.mark.asyncio
-    async def test_skill_persistence_to_vectorstore(
-        self,
-        skill_vector,
-        test_context
-    ):
+    async def test_skill_persistence_to_vectorstore(self, skill_vector, test_context):
         """
         E2E Test 6: Skill vector persistence to VectorStore
 
@@ -463,10 +429,7 @@ class TestSkillEvolutionIntegration:
 
         # Act: Update skills
         skill_vector.record_task_execution(
-            task_type="architecture",
-            complexity="P1",
-            success=True,
-            duration_seconds=120.0
+            task_type="architecture", complexity="P1", success=True, duration_seconds=120.0
         )
 
         # Save to VectorStore
@@ -474,13 +437,12 @@ class TestSkillEvolutionIntegration:
         test_context.store_memory(
             key=f"skill_vector_{agent_name}_{datetime.now().timestamp()}",
             content=skills_dict,
-            tags=["skill_vector", agent_name, "leap3"]
+            tags=["skill_vector", agent_name, "leap3"],
         )
 
         # Act: Query VectorStore for skills
         results = test_context.search_memories(
-            tags=["skill_vector", agent_name],
-            include_session=True
+            tags=["skill_vector", agent_name], include_session=True
         )
 
         # Assert: Skills should be retrievable
@@ -503,11 +465,7 @@ class TestLearningExtractionIntegration:
     """Test automatic pattern extraction and VectorStore integration."""
 
     @pytest.mark.asyncio
-    async def test_pattern_extraction_from_session(
-        self,
-        learning_extractor,
-        test_context
-    ):
+    async def test_pattern_extraction_from_session(self, learning_extractor, test_context):
         """
         E2E Test 7: Extract patterns from simulated session data
 
@@ -525,7 +483,7 @@ class TestLearningExtractionIntegration:
                     "complexity": "P2",
                     "success": True,
                     "approach": "Added null check before accessing user.email",
-                    "outcome": "Tests passing, no NoneType errors"
+                    "outcome": "Tests passing, no NoneType errors",
                 },
                 {
                     "description": "Fix NoneType error in profile endpoint",
@@ -533,7 +491,7 @@ class TestLearningExtractionIntegration:
                     "complexity": "P2",
                     "success": True,
                     "approach": "Added null check before accessing profile.bio",
-                    "outcome": "Tests passing, no NoneType errors"
+                    "outcome": "Tests passing, no NoneType errors",
                 },
                 {
                     "description": "Fix NoneType error in settings page",
@@ -541,8 +499,8 @@ class TestLearningExtractionIntegration:
                     "complexity": "P2",
                     "success": True,
                     "approach": "Added null check before accessing settings.theme",
-                    "outcome": "Tests passing, no NoneType errors"
-                }
+                    "outcome": "Tests passing, no NoneType errors",
+                },
             ]
         }
 
@@ -550,7 +508,7 @@ class TestLearningExtractionIntegration:
         test_context.store_memory(
             key=f"session_log_{datetime.now().timestamp()}",
             content=session_data,
-            tags=["session", "error_handling", "leap3_test"]
+            tags=["session", "error_handling", "leap3_test"],
         )
 
         # Act: Extract patterns
@@ -560,9 +518,7 @@ class TestLearningExtractionIntegration:
         assert len(patterns) > 0, "No patterns extracted"
 
         # Find error handling pattern
-        error_handling_patterns = [
-            p for p in patterns if p["category"] == "error_handling"
-        ]
+        error_handling_patterns = [p for p in patterns if p["category"] == "error_handling"]
         assert len(error_handling_patterns) > 0, "No error handling patterns found"
 
         # Verify confidence (3 occurrences = high confidence)
@@ -571,11 +527,7 @@ class TestLearningExtractionIntegration:
         assert pattern["evidence_count"] >= 3, "Insufficient evidence"
 
     @pytest.mark.asyncio
-    async def test_learning_persistence_across_sessions(
-        self,
-        learning_extractor,
-        test_context
-    ):
+    async def test_learning_persistence_across_sessions(self, learning_extractor, test_context):
         """
         E2E Test 8: Validate learning persistence across sessions
 
@@ -592,20 +544,19 @@ class TestLearningExtractionIntegration:
             "confidence": 0.85,
             "evidence_count": 5,
             "context": "Error handling in agent code",
-            "timestamp": datetime.now().isoformat()
+            "timestamp": datetime.now().isoformat(),
         }
 
         # Act: Store pattern
         test_context.store_memory(
             key=f"pattern_{pattern['name']}",
             content=pattern,
-            tags=["pattern", "code", "error_handling", "leap3"]
+            tags=["pattern", "code", "error_handling", "leap3"],
         )
 
         # Act: Query for pattern (simulate new session)
         results = test_context.search_memories(
-            tags=["pattern", "error_handling"],
-            include_session=True
+            tags=["pattern", "error_handling"], include_session=True
         )
 
         # Assert: Pattern should be retrievable
@@ -637,7 +588,7 @@ class TestConstitutionalCompliance:
         result = classifier.classify(
             task_description="Implement JWT authentication",
             agent_name="coder",
-            context=test_context
+            context=test_context,
         )
 
         # Assert: Result should be complete (Ok or Err, never partial)
@@ -663,10 +614,7 @@ class TestConstitutionalCompliance:
 
         # Act: Record task execution
         skill_vector.record_task_execution(
-            task_type="testing",
-            complexity="P2",
-            success=True,
-            duration_seconds=45.0
+            task_type="testing", complexity="P2", success=True, duration_seconds=45.0
         )
 
         # Assert: Skills should update (verification)
@@ -691,20 +639,20 @@ class TestConstitutionalCompliance:
         - Memory retrieval works (search_memories)
         """
         # Assert: VectorStore must be enabled (constitutional requirement)
-        assert os.getenv("USE_ENHANCED_MEMORY", "false").lower() == "true", \
+        assert os.getenv("USE_ENHANCED_MEMORY", "false").lower() == "true", (
             "Article IV violation: VectorStore integration is mandatory"
+        )
 
         # Act: Store learning
         test_context.store_memory(
             key="test_learning_article_iv",
             content={"pattern": "TDD first, always"},
-            tags=["learning", "testing", "article_iv"]
+            tags=["learning", "testing", "article_iv"],
         )
 
         # Act: Retrieve learning
         results = test_context.search_memories(
-            tags=["learning", "article_iv"],
-            include_session=True
+            tags=["learning", "article_iv"], include_session=True
         )
 
         # Assert: Learning should be stored and retrievable
@@ -728,15 +676,13 @@ class TestConstitutionalCompliance:
             "acceptance_criteria": [
                 "All routing paths tested (P1, P2, P3)",
                 "Cost validation included",
-                "Skill updates verified"
-            ]
+                "Skill updates verified",
+            ],
         }
 
         # Act: Store task with spec traceability
         test_context.store_memory(
-            key="task_with_spec_ref",
-            content=task,
-            tags=["task", "spec_driven", "article_v"]
+            key="task_with_spec_ref", content=task, tags=["task", "spec_driven", "article_v"]
         )
 
         # Assert: Task should reference spec (Article V compliance)
@@ -771,9 +717,7 @@ class TestPerformanceValidation:
         start = time.perf_counter()
 
         complexity_result = classifier.classify(
-            task_description=task_description,
-            agent_name=agent_name,
-            context=test_context
+            task_description=task_description, agent_name=agent_name, context=test_context
         )
 
         classification_time = (time.perf_counter() - start) * 1000  # ms
@@ -784,9 +728,7 @@ class TestPerformanceValidation:
 
             start = time.perf_counter()
             model = router.select_model(
-                task_description=task_description,
-                agent_name=agent_name,
-                complexity=complexity
+                task_description=task_description, agent_name=agent_name, complexity=complexity
             )
             routing_time = (time.perf_counter() - start) * 1000  # ms
         else:
@@ -801,8 +743,9 @@ class TestPerformanceValidation:
         print(f"   Total: {total_time:.2f}ms")
 
         # Relaxed threshold for CI environments (VectorStore may be slower)
-        assert total_time < 200, \
+        assert total_time < 200, (
             f"Routing too slow: {total_time:.2f}ms (target: <50ms, max: 200ms for CI)"
+        )
 
 
 # ============================================================================
@@ -823,9 +766,9 @@ def test_generate_leap3_m5_summary(test_context):
     ✅ Performance validated (<50ms routing)
     """
     summary = f"""
-{'='*70}
+{"=" * 70}
 🎯 LEAP 3 MILESTONE 5: INTEGRATION & VALIDATION COMPLETE
-{'='*70}
+{"=" * 70}
 
 ## Test Coverage
 
@@ -917,7 +860,7 @@ def test_generate_leap3_m5_summary(test_context):
 **Quality**: Production-ready, fully tested
 **Impact**: $216K/year cost savings, validated in E2E tests
 
-{'='*70}
+{"=" * 70}
 """
 
     print(summary)
@@ -929,9 +872,9 @@ def test_generate_leap3_m5_summary(test_context):
             "summary": summary,
             "tests_created": 15,
             "cost_savings_validated": True,
-            "production_ready": True
+            "production_ready": True,
         },
-        tags=["leap3", "milestone5", "summary", "e2e_tests"]
+        tags=["leap3", "milestone5", "summary", "e2e_tests"],
     )
 
     # Always pass (report generation)

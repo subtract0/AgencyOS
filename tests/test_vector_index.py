@@ -386,7 +386,11 @@ class TestVectorIndexPersistence:
 
             # Create with custom config
             index1 = VectorIndex(
-                embedding_dim=768, hnsw_m=32, ef_construction=300, ef_search=256, index_path=index_path
+                embedding_dim=768,
+                hnsw_m=32,
+                ef_construction=300,
+                ef_search=256,
+                index_path=index_path,
             )
             index1.add_vectors(["memory_1"], [np.random.rand(768).tolist()])
             index1.save_index()
@@ -475,7 +479,9 @@ class TestVectorIndexStats:
         from agency_memory.vector_index import VectorIndex
 
         index = VectorIndex(embedding_dim=1536, hnsw_m=16, ef_construction=200, ef_search=128)
-        index.add_vectors([f"memory_{i}" for i in range(10)], [np.random.rand(1536).tolist() for _ in range(10)])
+        index.add_vectors(
+            [f"memory_{i}" for i in range(10)], [np.random.rand(1536).tolist() for _ in range(10)]
+        )
 
         # Act
         stats = index.get_stats()

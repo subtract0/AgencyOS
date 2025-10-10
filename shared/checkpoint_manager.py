@@ -58,9 +58,7 @@ class CheckpointConfig(BaseModel):
     checkpoint_interval_minutes: int = Field(
         default=30, ge=1, description="Checkpoint every N minutes (background timer)"
     )
-    checkpoint_on_interrupt: bool = Field(
-        default=True, description="Checkpoint on SIGINT (Ctrl+C)"
-    )
+    checkpoint_on_interrupt: bool = Field(default=True, description="Checkpoint on SIGINT (Ctrl+C)")
     checkpoint_on_phase_complete: bool = Field(
         default=True, description="Checkpoint on explicit phase completion"
     )
@@ -84,9 +82,7 @@ class CheckpointConfig(BaseModel):
     )
 
     # Storage
-    base_path: str = Field(
-        default="~/.agency", description="Base directory for checkpoints"
-    )
+    base_path: str = Field(default="~/.agency", description="Base directory for checkpoints")
 
 
 class CheckpointManager:
@@ -130,9 +126,7 @@ class CheckpointManager:
 
         logger.debug(f"CheckpointManager initialized: {config}")
 
-    def start_auto_checkpoint(
-        self, context: AgentContext, task_id: str
-    ) -> Result[None, str]:
+    def start_auto_checkpoint(self, context: AgentContext, task_id: str) -> Result[None, str]:
         """
         Start auto-checkpoint system for given context.
 
@@ -191,9 +185,7 @@ class CheckpointManager:
                 self._original_sigint_handler = None
 
             self._context = None
-            logger.info(
-                f"Auto-checkpoint stopped: total_checkpoints={self._checkpoint_count}"
-            )
+            logger.info(f"Auto-checkpoint stopped: total_checkpoints={self._checkpoint_count}")
             return Ok(None)
 
     def trigger_checkpoint(
@@ -220,16 +212,12 @@ class CheckpointManager:
 
                 # Create checkpoint
                 base_path = Path(self.config.base_path).expanduser()
-                result = save_checkpoint(
-                    session_state, context.session_id, str(base_path)
-                )
+                result = save_checkpoint(session_state, context.session_id, str(base_path))
 
                 if result.is_err():
                     error = result.unwrap_err()
                     self._checkpoint_failures += 1
-                    logger.error(
-                        f"Checkpoint failed: {error.error_type} - {error.message}"
-                    )
+                    logger.error(f"Checkpoint failed: {error.error_type} - {error.message}")
                     return Err(f"{error.error_type}: {error.message}")
 
                 checkpoint = result.unwrap()
@@ -249,9 +237,7 @@ class CheckpointManager:
                 logger.error(f"Checkpoint trigger failed: {e}")
                 return Err(f"unexpected_error: {str(e)}")
 
-    def detect_paused_session(
-        self, session_id: str
-    ) -> Result[SessionCheckpoint | None, str]:
+    def detect_paused_session(self, session_id: str) -> Result[SessionCheckpoint | None, str]:
         """
         Detect if session has paused with checkpoints available.
 
@@ -276,7 +262,9 @@ class CheckpointManager:
 
             # Find all checkpoint files
             checkpoint_files = sorted(
-                checkpoints_dir.glob("checkpoint_*.json"), key=lambda p: p.stat().st_mtime, reverse=True
+                checkpoints_dir.glob("checkpoint_*.json"),
+                key=lambda p: p.stat().st_mtime,
+                reverse=True,
             )
 
             if not checkpoint_files:
@@ -287,10 +275,7 @@ class CheckpointManager:
             latest_file = checkpoint_files[0]
             checkpoint_id = latest_file.stem
 
-            logger.info(
-                f"Paused session detected: {session_id}, "
-                f"latest_checkpoint={checkpoint_id}"
-            )
+            logger.info(f"Paused session detected: {session_id}, latest_checkpoint={checkpoint_id}")
 
             # Return checkpoint metadata wrapper (simplified)
             checkpoint_metadata = SessionCheckpoint(
@@ -356,9 +341,7 @@ class CheckpointManager:
                 current_file = checkpoint_files[attempt]
                 current_id = current_file.stem
 
-                logger.info(
-                    f"Resume attempt {attempt + 1}/{max_retries}: {current_id}"
-                )
+                logger.info(f"Resume attempt {attempt + 1}/{max_retries}: {current_id}")
 
                 result = load_checkpoint(current_id, session_id, str(base_path))
 
@@ -401,14 +384,11 @@ class CheckpointManager:
                     # Checksum mismatch or corruption - try next checkpoint
                     error = result.unwrap_err()
                     logger.warning(
-                        f"Checkpoint {current_id} failed: {error.message}, "
-                        f"trying fallback..."
+                        f"Checkpoint {current_id} failed: {error.message}, trying fallback..."
                     )
 
             # All checkpoints failed
-            return Err(
-                f"all_checkpoints_corrupted: tried {max_retries} checkpoints"
-            )
+            return Err(f"all_checkpoints_corrupted: tried {max_retries} checkpoints")
 
         except Exception as e:
             logger.error(f"Resume from checkpoint failed: {e}")
@@ -447,15 +427,13 @@ class CheckpointManager:
 
             # Retention policy: keep last N
             if self.config.checkpoint_retention_count >= 0:
-                for old_file in checkpoint_files[self.config.checkpoint_retention_count:]:
+                for old_file in checkpoint_files[self.config.checkpoint_retention_count :]:
                     old_file.unlink()
                     deleted_count += 1
                     logger.debug(f"Deleted old checkpoint: {old_file.name}")
 
             # Retention policy: delete older than M days
-            cutoff_time = datetime.now() - timedelta(
-                days=self.config.checkpoint_retention_days
-            )
+            cutoff_time = datetime.now() - timedelta(days=self.config.checkpoint_retention_days)
             for checkpoint_file in checkpoint_files:
                 file_mtime = datetime.fromtimestamp(checkpoint_file.stat().st_mtime)
                 if file_mtime < cutoff_time:
@@ -467,9 +445,7 @@ class CheckpointManager:
                     )
 
             # Log telemetry (Article IV)
-            logger.info(
-                f"Checkpoint cleanup: session={session_id}, deleted={deleted_count}"
-            )
+            logger.info(f"Checkpoint cleanup: session={session_id}, deleted={deleted_count}")
 
             return Ok(deleted_count)
 
@@ -499,9 +475,7 @@ class CheckpointManager:
                 # Trigger checkpoint when interval reached
                 if elapsed >= interval_seconds:
                     if self._context:
-                        result = self.trigger_checkpoint(
-                            self._context, reason="interval_timer"
-                        )
+                        result = self.trigger_checkpoint(self._context, reason="interval_timer")
                         if result.is_err():
                             logger.error(f"Interval checkpoint failed: {result.unwrap_err()}")
 
@@ -522,15 +496,11 @@ class CheckpointManager:
             logger.info("Interrupt signal received, creating emergency checkpoint...")
 
             if self._context:
-                result = self.trigger_checkpoint(
-                    self._context, reason="user_interrupt"
-                )
+                result = self.trigger_checkpoint(self._context, reason="user_interrupt")
                 if result.is_ok():
                     logger.info("Emergency checkpoint created successfully")
                 else:
-                    logger.error(
-                        f"Emergency checkpoint failed: {result.unwrap_err()}"
-                    )
+                    logger.error(f"Emergency checkpoint failed: {result.unwrap_err()}")
 
             # Call original handler (or default behavior)
             if self._original_sigint_handler and callable(self._original_sigint_handler):
@@ -538,6 +508,7 @@ class CheckpointManager:
             else:
                 # Default: exit gracefully
                 import sys
+
                 sys.exit(0)
 
         signal.signal(signal.SIGINT, _interrupt_handler)

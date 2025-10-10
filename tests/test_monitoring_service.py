@@ -78,11 +78,7 @@ class TestTaskCountingAndPersistence:
         service = MonitoringService(data_dir=str(tmp_path))
 
         for i in range(10):
-            service.record_task(
-                task_id=f"task_{i}",
-                predicted_tier="P2",
-                actual_tier="P2"
-            )
+            service.record_task(task_id=f"task_{i}", predicted_tier="P2", actual_tier="P2")
 
         assert service.get_current_count() == 10
 
@@ -103,11 +99,7 @@ class TestTaskCountingAndPersistence:
         # First instance: record 42 tasks
         service1 = MonitoringService(data_dir=data_dir)
         for i in range(42):
-            service1.record_task(
-                task_id=f"task_{i}",
-                predicted_tier="P2",
-                actual_tier="P2"
-            )
+            service1.record_task(task_id=f"task_{i}", predicted_tier="P2", actual_tier="P2")
 
         # Second instance: load from disk
         service2 = MonitoringService(data_dir=data_dir)
@@ -137,8 +129,7 @@ class TestTaskCountingAndPersistence:
 
             # Verify warning was logged
             warning_calls = [
-                call for call in mock_print.call_args_list
-                if "Failed to load counter" in str(call)
+                call for call in mock_print.call_args_list if "Failed to load counter" in str(call)
             ]
             assert len(warning_calls) > 0
 
@@ -172,9 +163,7 @@ class TestThreadSafety:
         def record_10_tasks(thread_id: int):
             for i in range(10):
                 service.record_task(
-                    task_id=f"task_{thread_id}_{i}",
-                    predicted_tier="P2",
-                    actual_tier="P2"
+                    task_id=f"task_{thread_id}_{i}", predicted_tier="P2", actual_tier="P2"
                 )
 
         # Spawn 10 threads, each recording 10 tasks
@@ -199,17 +188,17 @@ class TestMilestoneDetection:
     - N: Normal milestone progression
     """
 
-    @pytest.mark.parametrize("task_count,expected_threshold", [
-        (25, 25),    # First milestone
-        (50, 50),    # Second milestone
-        (75, 75),    # Third milestone
-        (100, 100),  # Fourth milestone
-    ])
+    @pytest.mark.parametrize(
+        "task_count,expected_threshold",
+        [
+            (25, 25),  # First milestone
+            (50, 50),  # Second milestone
+            (75, 75),  # Third milestone
+            (100, 100),  # Fourth milestone
+        ],
+    )
     def test_milestone_triggers_at_exact_thresholds(
-        self,
-        tmp_path: Path,
-        task_count: int,
-        expected_threshold: int
+        self, tmp_path: Path, task_count: int, expected_threshold: int
     ):
         """Test milestone triggers at exact 25/50/75/100 boundaries (Edge cases).
 
@@ -225,11 +214,7 @@ class TestMilestoneDetection:
 
         # Record tasks
         for i in range(task_count):
-            service.record_task(
-                task_id=f"task_{i}",
-                predicted_tier="P2",
-                actual_tier="P2"
-            )
+            service.record_task(task_id=f"task_{i}", predicted_tier="P2", actual_tier="P2")
 
         # Check milestone
         milestone = service.check_milestone()
@@ -253,11 +238,7 @@ class TestMilestoneDetection:
 
         # Record 24 tasks
         for i in range(24):
-            service.record_task(
-                task_id=f"task_{i}",
-                predicted_tier="P2",
-                actual_tier="P2"
-            )
+            service.record_task(task_id=f"task_{i}", predicted_tier="P2", actual_tier="P2")
 
         # Check milestone (should be None)
         milestone = service.check_milestone()
@@ -280,11 +261,7 @@ class TestMilestoneDetection:
 
         # Record 25 tasks
         for i in range(25):
-            service.record_task(
-                task_id=f"task_{i}",
-                predicted_tier="P2",
-                actual_tier="P2"
-            )
+            service.record_task(task_id=f"task_{i}", predicted_tier="P2", actual_tier="P2")
 
         # First check should return milestone
         first_check = service.check_milestone()
@@ -313,11 +290,7 @@ class TestMilestoneDetection:
         milestones_triggered = []
 
         for i in range(1, 101):
-            service.record_task(
-                task_id=f"task_{i}",
-                predicted_tier="P2",
-                actual_tier="P2"
-            )
+            service.record_task(task_id=f"task_{i}", predicted_tier="P2", actual_tier="P2")
 
             # Check for milestone
             milestone = service.check_milestone()
@@ -353,11 +326,7 @@ class TestMilestoneReportStructure:
 
         # Record 25 tasks
         for i in range(25):
-            service.record_task(
-                task_id=f"task_{i}",
-                predicted_tier="P2",
-                actual_tier="P2"
-            )
+            service.record_task(task_id=f"task_{i}", predicted_tier="P2", actual_tier="P2")
 
         milestone = service.check_milestone()
 
@@ -390,14 +359,14 @@ class TestMilestoneReportStructure:
             service.record_task(
                 task_id=f"task_correct_{i}",
                 predicted_tier="P2",
-                actual_tier="P2"  # Correct
+                actual_tier="P2",  # Correct
             )
 
         for i in range(2):
             service.record_task(
                 task_id=f"task_wrong_{i}",
                 predicted_tier="P2",
-                actual_tier="P1"  # Misclassified
+                actual_tier="P1",  # Misclassified
             )
 
         milestone = service.check_milestone()
@@ -422,11 +391,7 @@ class TestMilestoneReportStructure:
 
         # Record 25 tasks
         for i in range(25):
-            service.record_task(
-                task_id=f"task_{i}",
-                predicted_tier="P2",
-                actual_tier="P2"
-            )
+            service.record_task(task_id=f"task_{i}", predicted_tier="P2", actual_tier="P2")
 
         milestone = service.check_milestone()
 
@@ -466,11 +431,7 @@ class TestMilestoneHistory:
 
         # Record 100 tasks
         for i in range(100):
-            service.record_task(
-                task_id=f"task_{i}",
-                predicted_tier="P2",
-                actual_tier="P2"
-            )
+            service.record_task(task_id=f"task_{i}", predicted_tier="P2", actual_tier="P2")
             service.check_milestone()
 
         # Get history
@@ -496,11 +457,7 @@ class TestMilestoneHistory:
 
         # Record 50 tasks
         for i in range(50):
-            service.record_task(
-                task_id=f"task_{i}",
-                predicted_tier="P2",
-                actual_tier="P2"
-            )
+            service.record_task(task_id=f"task_{i}", predicted_tier="P2", actual_tier="P2")
             service.check_milestone()
 
         # Get history
@@ -554,11 +511,7 @@ class TestEdgeCases:
         milestones_triggered = []
 
         for i in range(1, 151):
-            service.record_task(
-                task_id=f"task_{i}",
-                predicted_tier="P2",
-                actual_tier="P2"
-            )
+            service.record_task(task_id=f"task_{i}", predicted_tier="P2", actual_tier="P2")
 
             milestone = service.check_milestone()
             if milestone:
@@ -585,11 +538,7 @@ class TestEdgeCases:
 
         # Record 25 tasks
         for i in range(25):
-            service.record_task(
-                task_id=f"task_{i}",
-                predicted_tier="P2",
-                actual_tier="P2"
-            )
+            service.record_task(task_id=f"task_{i}", predicted_tier="P2", actual_tier="P2")
 
         milestone = service.check_milestone()
 
@@ -623,11 +572,7 @@ class TestResetFunctionality:
 
         # Record 50 tasks
         for i in range(50):
-            service.record_task(
-                task_id=f"task_{i}",
-                predicted_tier="P2",
-                actual_tier="P2"
-            )
+            service.record_task(task_id=f"task_{i}", predicted_tier="P2", actual_tier="P2")
             service.check_milestone()
 
         # Verify state before reset
@@ -671,11 +616,7 @@ class TestConstitutionalCompliance:
 
         # Record 25 tasks
         for i in range(25):
-            service.record_task(
-                task_id=f"task_{i}",
-                predicted_tier="P2",
-                actual_tier="P2"
-            )
+            service.record_task(task_id=f"task_{i}", predicted_tier="P2", actual_tier="P2")
 
         milestone = service.check_milestone()
 
@@ -709,11 +650,7 @@ class TestPerformance:
         service = MonitoringService(data_dir=str(tmp_path))
 
         for i in range(25):
-            service.record_task(
-                task_id=f"task_{i}",
-                predicted_tier="P2",
-                actual_tier="P2"
-            )
+            service.record_task(task_id=f"task_{i}", predicted_tier="P2", actual_tier="P2")
 
         # Measure generation time
         start_time = time.perf_counter()

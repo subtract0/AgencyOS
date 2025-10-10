@@ -27,6 +27,7 @@ from shared.type_definitions.result import Err, Ok, Result
 
 class DetectionError(Exception):
     """Raised when detection fails."""
+
     pass
 
 
@@ -68,10 +69,7 @@ class MisclassificationDetector:
         self.context = context
 
     def detect(
-        self,
-        task_id: str,
-        signals: QualitySignals,
-        task_description: str | None = None
+        self, task_id: str, signals: QualitySignals, task_description: str | None = None
     ) -> Result[MisclassificationReport, DetectionError]:
         """
         Detect misclassification from quality signals.
@@ -141,7 +139,7 @@ class MisclassificationDetector:
                 detected_issues=detected_issues,
                 aggregated_confidence=aggregated_confidence,
                 is_misclassified=is_misclassified,
-                detected_at=datetime.utcnow().isoformat()
+                detected_at=datetime.utcnow().isoformat(),
             )
 
             return Ok(report)
@@ -167,7 +165,7 @@ class MisclassificationDetector:
                 confidence=0.95,
                 severity=SeverityLevel.CRITICAL,
                 description=f"Test failure rate {signals.test_failure_rate:.1%} (>10% threshold)",
-                signal_value=signals.test_failure_rate
+                signal_value=signals.test_failure_rate,
             )
 
         return None
@@ -192,7 +190,7 @@ class MisclassificationDetector:
                 confidence=0.85,
                 severity=SeverityLevel.CRITICAL,
                 description=f"Code churn {signals.code_churn_lines} lines (>100 threshold)",
-                signal_value=float(signals.code_churn_lines)
+                signal_value=float(signals.code_churn_lines),
             )
 
         elif signals.code_churn_lines > 50 and signals.original_tier == "simple":
@@ -201,7 +199,7 @@ class MisclassificationDetector:
                 confidence=0.70,
                 severity=SeverityLevel.WARNING,
                 description=f"Code churn {signals.code_churn_lines} lines (>50 threshold)",
-                signal_value=float(signals.code_churn_lines)
+                signal_value=float(signals.code_churn_lines),
             )
 
         return None
@@ -224,7 +222,7 @@ class MisclassificationDetector:
                 confidence=0.75,
                 severity=SeverityLevel.WARNING,
                 description=f"Execution time ratio {signals.execution_time_ratio:.1f}x (>3.0 threshold)",
-                signal_value=signals.execution_time_ratio
+                signal_value=signals.execution_time_ratio,
             )
 
         return None
@@ -244,7 +242,7 @@ class MisclassificationDetector:
                 confidence=1.0,
                 severity=SeverityLevel.CRITICAL,
                 description="User explicitly flagged as misclassified",
-                signal_value=None
+                signal_value=None,
             )
 
         return None
@@ -279,7 +277,7 @@ class MisclassificationDetector:
             return 1.0
 
         # Weighted average: sum(confidence^2) / count
-        weighted_sum = sum(issue.confidence ** 2 for issue in detected_issues)
+        weighted_sum = sum(issue.confidence**2 for issue in detected_issues)
         return weighted_sum / len(detected_issues)
 
     def _recommend_tier(self, original_tier: str, detected_issues: list[DetectedIssue]) -> str:
@@ -313,7 +311,11 @@ class MisclassificationDetector:
         if critical_issues:
             # Check for test failures >30% → complex
             for issue in critical_issues:
-                if issue.rule_name == "test_failure" and issue.signal_value and issue.signal_value > 0.3:
+                if (
+                    issue.rule_name == "test_failure"
+                    and issue.signal_value
+                    and issue.signal_value > 0.3
+                ):
                     return "complex"
 
             # Otherwise upgrade to moderate
@@ -352,7 +354,7 @@ class MisclassificationDetector:
             # Query VectorStore for similar misclassifications (Article IV)
             similar_cases = self.context.search_memories(
                 tags=["misclassification", original_tier],
-                include_session=False  # Cross-session learning
+                include_session=False,  # Cross-session learning
             )
 
             # If similar case exists with high confidence, boost by 0.1

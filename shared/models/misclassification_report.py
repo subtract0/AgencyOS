@@ -14,7 +14,6 @@ Constitutional Compliance:
 Reference: /Users/am/Code/Agency/specs/spec-004-quality-feedback-loop.md Section 7.4
 """
 
-
 from pydantic import BaseModel, Field
 
 from shared.models.quality_signals import SeverityLevel
@@ -47,29 +46,26 @@ class DetectedIssue(BaseModel):
 
     rule_name: str = Field(
         ...,
-        description="Rule that triggered (e.g., 'test_failure', 'code_churn', 'execution_timing', 'user_feedback')"
+        description="Rule that triggered (e.g., 'test_failure', 'code_churn', 'execution_timing', 'user_feedback')",
     )
 
     confidence: float = Field(
         ...,
         ge=0.0,
         le=1.0,
-        description="Rule confidence score (0.0-1.0). Higher confidence indicates stronger evidence of misclassification."
+        description="Rule confidence score (0.0-1.0). Higher confidence indicates stronger evidence of misclassification.",
     )
 
-    severity: SeverityLevel = Field(
-        ...,
-        description="Issue severity level (CRITICAL/WARNING/INFO)"
-    )
+    severity: SeverityLevel = Field(..., description="Issue severity level (CRITICAL/WARNING/INFO)")
 
     description: str = Field(
         ...,
-        description="Human-readable issue description with context (e.g., 'Test failure rate 33%')"
+        description="Human-readable issue description with context (e.g., 'Test failure rate 33%')",
     )
 
     signal_value: float | None = Field(
         None,
-        description="Signal value that triggered rule (e.g., 0.33 for test_failure_rate). None for user_feedback."
+        description="Signal value that triggered rule (e.g., 0.33 for test_failure_rate). None for user_feedback.",
     )
 
     class Config:
@@ -80,7 +76,7 @@ class DetectedIssue(BaseModel):
                 "confidence": 0.95,
                 "severity": "critical",
                 "description": "Test failure rate 33% (5/15 tests failed)",
-                "signal_value": 0.33
+                "signal_value": 0.33,
             }
         }
 
@@ -129,26 +125,22 @@ class MisclassificationReport(BaseModel):
         True
     """
 
-    task_id: str = Field(
-        ...,
-        description="Task identifier (same as QualitySignals.task_id)"
-    )
+    task_id: str = Field(..., description="Task identifier (same as QualitySignals.task_id)")
 
     original_tier: str = Field(
         ...,
         description="Tier task was routed to (simple/moderate/complex)",
-        pattern="^(simple|moderate|complex)$"
+        pattern="^(simple|moderate|complex)$",
     )
 
     recommended_tier: str = Field(
         ...,
         description="Recommended tier based on detection (simple/moderate/complex)",
-        pattern="^(simple|moderate|complex)$"
+        pattern="^(simple|moderate|complex)$",
     )
 
     detected_issues: list[DetectedIssue] = Field(
-        ...,
-        description="List of triggered detection rules with confidence and severity"
+        ..., description="List of triggered detection rules with confidence and severity"
     )
 
     aggregated_confidence: float = Field(
@@ -156,19 +148,16 @@ class MisclassificationReport(BaseModel):
         ge=0.0,
         le=1.0,
         description="Weighted average confidence from all triggered rules. "
-                    "Formula: sum(confidence^2) / count. User feedback always returns 1.0."
+        "Formula: sum(confidence^2) / count. User feedback always returns 1.0.",
     )
 
     is_misclassified: bool = Field(
         ...,
         description="True if any CRITICAL or WARNING issue detected. "
-                    "False if all issues are INFO or no issues detected."
+        "False if all issues are INFO or no issues detected.",
     )
 
-    detected_at: str = Field(
-        ...,
-        description="ISO 8601 timestamp of detection (UTC)"
-    )
+    detected_at: str = Field(..., description="ISO 8601 timestamp of detection (UTC)")
 
     class Config:
         use_enum_values = True
@@ -183,18 +172,18 @@ class MisclassificationReport(BaseModel):
                         "confidence": 0.95,
                         "severity": "critical",
                         "description": "Test failure rate 33% (5/15 tests failed)",
-                        "signal_value": 0.33
+                        "signal_value": 0.33,
                     },
                     {
                         "rule_name": "code_churn",
                         "confidence": 0.85,
                         "severity": "critical",
                         "description": "Code churn 145 lines (>100 threshold)",
-                        "signal_value": 145
-                    }
+                        "signal_value": 145,
+                    },
                 ],
                 "aggregated_confidence": 0.905,
                 "is_misclassified": True,
-                "detected_at": "2025-10-10T15:23:45Z"
+                "detected_at": "2025-10-10T15:23:45Z",
             }
         }

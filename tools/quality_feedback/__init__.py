@@ -2,7 +2,4 @@
 
 from tools.quality_feedback.signal_collector import QualitySignalCollector, SignalCollectionError
 
-__all__ = [
-    "QualitySignalCollector",
-    "SignalCollectionError"
-]
+__all__ = ["QualitySignalCollector", "SignalCollectionError"]

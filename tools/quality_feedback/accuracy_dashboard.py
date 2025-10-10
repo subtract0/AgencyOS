@@ -67,7 +67,9 @@ class DashboardSnapshot(BaseModel):
 
     # Health indicators
     is_improving: bool  # Accuracy trending up
-    refinement_effectiveness: float = Field(ge=0.0, le=1.0)  # % of refinements that improve accuracy
+    refinement_effectiveness: float = Field(
+        ge=0.0, le=1.0
+    )  # % of refinements that improve accuracy
     vectorstore_utilization: float = Field(ge=0.0, le=1.0)  # % of tasks querying learnings
 
 
@@ -116,7 +118,7 @@ class AccuracyDashboard:
         predicted_tier: str,
         quality_signals: list[QualitySignals],
         misclassification: MisclassificationReport | None = None,
-        refinement: RefinementResult | None = None
+        refinement: RefinementResult | None = None,
     ) -> None:
         """Record task execution and outcomes.
 
@@ -136,7 +138,7 @@ class AccuracyDashboard:
             "is_correct": actual_tier == predicted_tier,
             "quality_signals": [s.dict() for s in quality_signals],
             "misclassification": misclassification.dict() if misclassification else None,
-            "refinement": refinement.dict() if refinement else None
+            "refinement": refinement.dict() if refinement else None,
         }
 
         # Append to JSONL file
@@ -158,7 +160,7 @@ class AccuracyDashboard:
                 total_tasks=0,
                 correct_classifications=0,
                 misclassifications=0,
-                accuracy_rate=0.0
+                accuracy_rate=0.0,
             )
 
         cutoff = datetime.now() - timedelta(hours=window_hours)
@@ -179,7 +181,7 @@ class AccuracyDashboard:
                 total_tasks=0,
                 correct_classifications=0,
                 misclassifications=0,
-                accuracy_rate=0.0
+                accuracy_rate=0.0,
             )
 
         # Calculate overall accuracy
@@ -189,9 +191,11 @@ class AccuracyDashboard:
         accuracy_rate = correct / total_tasks
 
         # Calculate per-tier accuracy
-        tier_stats = {"P1": {"correct": 0, "total": 0},
-                      "P2": {"correct": 0, "total": 0},
-                      "P3": {"correct": 0, "total": 0}}
+        tier_stats = {
+            "P1": {"correct": 0, "total": 0},
+            "P2": {"correct": 0, "total": 0},
+            "P3": {"correct": 0, "total": 0},
+        }
 
         for record in records:
             tier = record["actual_tier"]
@@ -199,12 +203,21 @@ class AccuracyDashboard:
             if record["is_correct"]:
                 tier_stats[tier]["correct"] += 1
 
-        p1_accuracy = (tier_stats["P1"]["correct"] / tier_stats["P1"]["total"]
-                      if tier_stats["P1"]["total"] > 0 else None)
-        p2_accuracy = (tier_stats["P2"]["correct"] / tier_stats["P2"]["total"]
-                      if tier_stats["P2"]["total"] > 0 else None)
-        p3_accuracy = (tier_stats["P3"]["correct"] / tier_stats["P3"]["total"]
-                      if tier_stats["P3"]["total"] > 0 else None)
+        p1_accuracy = (
+            tier_stats["P1"]["correct"] / tier_stats["P1"]["total"]
+            if tier_stats["P1"]["total"] > 0
+            else None
+        )
+        p2_accuracy = (
+            tier_stats["P2"]["correct"] / tier_stats["P2"]["total"]
+            if tier_stats["P2"]["total"] > 0
+            else None
+        )
+        p3_accuracy = (
+            tier_stats["P3"]["correct"] / tier_stats["P3"]["total"]
+            if tier_stats["P3"]["total"] > 0
+            else None
+        )
 
         # Calculate detection metrics
         detected = sum(1 for r in records if r["misclassification"] is not None)
@@ -212,8 +225,9 @@ class AccuracyDashboard:
 
         # Calculate refinement metrics
         refinements = sum(1 for r in records if r["refinement"] is not None)
-        confidences = [r["refinement"]["confidence"] for r in records
-                      if r["refinement"] is not None]
+        confidences = [
+            r["refinement"]["confidence"] for r in records if r["refinement"] is not None
+        ]
         avg_confidence = sum(confidences) / len(confidences) if confidences else None
 
         return AccuracyMetrics(
@@ -228,7 +242,7 @@ class AccuracyDashboard:
             misclassifications_detected=detected,
             detection_rate=detection_rate,
             refinements_applied=refinements,
-            avg_confidence=avg_confidence
+            avg_confidence=avg_confidence,
         )
 
     def get_snapshot(self) -> DashboardSnapshot:
@@ -247,7 +261,7 @@ class AccuracyDashboard:
             hourly_metrics.append(metrics)
 
         # Cumulative stats (all time)
-        all_time_metrics = self.calculate_metrics(window_hours=24*365)  # 1 year max
+        all_time_metrics = self.calculate_metrics(window_hours=24 * 365)  # 1 year max
 
         # Recent misclassifications and refinements
         recent_misclassifications = self._get_recent_misclassifications(limit=10)
@@ -269,7 +283,7 @@ class AccuracyDashboard:
             recent_refinements=recent_refinements,
             is_improving=is_improving,
             refinement_effectiveness=refinement_effectiveness,
-            vectorstore_utilization=vectorstore_utilization
+            vectorstore_utilization=vectorstore_utilization,
         )
 
     def _get_recent_misclassifications(self, limit: int = 10) -> list[MisclassificationReport]:
@@ -307,7 +321,11 @@ class AccuracyDashboard:
 
         # Compare recent 6 hours vs previous 6 hours
         recent_avg = sum(m.accuracy_rate for m in hourly_metrics[:6]) / 6
-        previous_avg = sum(m.accuracy_rate for m in hourly_metrics[6:12]) / 6 if len(hourly_metrics) >= 12 else recent_avg
+        previous_avg = (
+            sum(m.accuracy_rate for m in hourly_metrics[6:12]) / 6
+            if len(hourly_metrics) >= 12
+            else recent_avg
+        )
 
         return recent_avg > previous_avg
 
@@ -398,8 +416,9 @@ class AccuracyDashboard:
         snapshot = self.get_snapshot()
 
         # Generate accuracy trend chart data
-        trend_data = [(m.timestamp.strftime("%H:%M"), m.accuracy_rate * 100)
-                     for m in snapshot.hourly_metrics]
+        trend_data = [
+            (m.timestamp.strftime("%H:%M"), m.accuracy_rate * 100) for m in snapshot.hourly_metrics
+        ]
 
         html = f"""
 <!DOCTYPE html>
@@ -483,7 +502,7 @@ class AccuracyDashboard:
         <div class="metric-card">
             <div class="metric-value">{snapshot.current_metrics.accuracy_rate:.1%}</div>
             <div class="metric-label">
-                <span class="status-indicator {'status-good' if snapshot.current_metrics.accuracy_rate >= 0.9 else 'status-warning' if snapshot.current_metrics.accuracy_rate >= 0.8 else 'status-error'}"></span>
+                <span class="status-indicator {"status-good" if snapshot.current_metrics.accuracy_rate >= 0.9 else "status-warning" if snapshot.current_metrics.accuracy_rate >= 0.8 else "status-error"}"></span>
                 Current Accuracy (1h)
             </div>
         </div>
@@ -491,8 +510,8 @@ class AccuracyDashboard:
         <div class="metric-card">
             <div class="metric-value">{snapshot.cumulative_accuracy:.1%}</div>
             <div class="metric-label">
-                <span class="status-indicator {'status-good' if snapshot.is_improving else 'status-warning'}"></span>
-                Cumulative Accuracy {'↑' if snapshot.is_improving else '→'}
+                <span class="status-indicator {"status-good" if snapshot.is_improving else "status-warning"}"></span>
+                Cumulative Accuracy {"↑" if snapshot.is_improving else "→"}
             </div>
         </div>
 
@@ -624,7 +643,7 @@ def main() -> None:
     base_time = datetime.now() - timedelta(hours=24)
 
     for i in range(100):
-        task_time = base_time + timedelta(minutes=i*14.4)  # ~100 tasks in 24h
+        task_time = base_time + timedelta(minutes=i * 14.4)  # ~100 tasks in 24h
 
         actual_tier = random.choice(tiers)
         # Simulate 85% accuracy initially, improving to 90%
@@ -636,7 +655,7 @@ def main() -> None:
                 signal_type="execution_time",
                 value=random.uniform(0.5, 5.0),
                 expected_range=(0.0, 10.0),
-                confidence=random.uniform(0.7, 0.95)
+                confidence=random.uniform(0.7, 0.95),
             )
         ]
 
@@ -648,9 +667,11 @@ def main() -> None:
                 predicted_tier=predicted_tier,
                 actual_tier=actual_tier,
                 evidence_signals=quality_signals,
-                severity="high" if abs(int(predicted_tier[1]) - int(actual_tier[1])) > 1 else "medium",
+                severity="high"
+                if abs(int(predicted_tier[1]) - int(actual_tier[1])) > 1
+                else "medium",
                 confidence=random.uniform(0.7, 0.95),
-                detection_timestamp=task_time
+                detection_timestamp=task_time,
             )
 
         dashboard.record_task(
@@ -658,7 +679,7 @@ def main() -> None:
             actual_tier=actual_tier,
             predicted_tier=predicted_tier,
             quality_signals=quality_signals,
-            misclassification=misclassification
+            misclassification=misclassification,
         )
 
     # Generate HTML

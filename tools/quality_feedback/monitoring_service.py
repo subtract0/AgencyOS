@@ -142,7 +142,7 @@ class MonitoringService:
         actual_tier: str,
         quality_signals: list[QualitySignals] | None = None,
         misclassification: MisclassificationReport | None = None,
-        refinement: RefinementResult | None = None
+        refinement: RefinementResult | None = None,
     ) -> None:
         """
         Record task execution and increment counter.
@@ -162,7 +162,7 @@ class MonitoringService:
             predicted_tier=predicted_tier,
             quality_signals=quality_signals or [],
             misclassification=misclassification,
-            refinement=refinement
+            refinement=refinement,
         )
 
         # Increment counter (thread-safe)
@@ -203,9 +203,7 @@ class MonitoringService:
             return None
 
         # Generate milestone report
-        milestone = self.generate_milestone_report(
-            milestone_threshold=next_milestone
-        )
+        milestone = self.generate_milestone_report(milestone_threshold=next_milestone)
 
         # Update last milestone (thread-safe)
         with self._lock:
@@ -215,9 +213,7 @@ class MonitoringService:
         return milestone
 
     def generate_milestone_report(
-        self,
-        milestone_threshold: int | None = None,
-        force: bool = False
+        self, milestone_threshold: int | None = None, force: bool = False
     ) -> MonitoringMilestone | None:
         """
         Generate milestone report with comprehensive metrics.
@@ -254,10 +250,7 @@ class MonitoringService:
 
         # Calculate interval metrics (since last milestone)
         last_milestone_count = self._counter.last_milestone
-        interval_metrics = self._calculate_interval_metrics(
-            last_milestone_count,
-            current_count
-        )
+        interval_metrics = self._calculate_interval_metrics(last_milestone_count, current_count)
 
         # Build milestone metrics
         metrics = MilestoneMetrics(
@@ -275,7 +268,7 @@ class MonitoringService:
             p3_accuracy=snapshot.current_metrics.p3_accuracy,
             avg_test_failure_rate=interval_metrics.get("avg_test_failure_rate"),
             avg_code_churn=interval_metrics.get("avg_code_churn"),
-            avg_execution_time_ratio=interval_metrics.get("avg_execution_time_ratio")
+            avg_execution_time_ratio=interval_metrics.get("avg_execution_time_ratio"),
         )
 
         # Calculate improvement indicators
@@ -289,11 +282,7 @@ class MonitoringService:
 
         # Analyze misclassification patterns
         top_patterns = self._extract_top_patterns(snapshot.recent_misclassifications)
-        recommended_actions = self._generate_recommendations(
-            metrics,
-            top_patterns,
-            is_improving
-        )
+        recommended_actions = self._generate_recommendations(metrics, top_patterns, is_improving)
 
         # Create milestone
         time_since_start = (datetime.now() - self._counter.started_at).total_seconds()
@@ -309,7 +298,7 @@ class MonitoringService:
             accuracy_delta=accuracy_delta,
             dashboard_snapshot_path=str(snapshot_path.absolute()),
             top_misclassification_patterns=top_patterns,
-            recommended_actions=recommended_actions
+            recommended_actions=recommended_actions,
         )
 
         # Save milestone report
@@ -317,11 +306,7 @@ class MonitoringService:
 
         return milestone
 
-    def _calculate_interval_metrics(
-        self,
-        start_count: int,
-        end_count: int
-    ) -> dict[str, float]:
+    def _calculate_interval_metrics(self, start_count: int, end_count: int) -> dict[str, float]:
         """
         Calculate metrics for task interval (since last milestone).
 
@@ -334,10 +319,7 @@ class MonitoringService:
         """
         # Read task records in interval
         if not self.dashboard.tasks_file.exists():
-            return {
-                "accuracy": 0.0,
-                "detection_rate": 0.0
-            }
+            return {"accuracy": 0.0, "detection_rate": 0.0}
 
         interval_records = []
         with open(self.dashboard.tasks_file) as f:
@@ -346,10 +328,7 @@ class MonitoringService:
                     interval_records.append(json.loads(line))
 
         if not interval_records:
-            return {
-                "accuracy": 0.0,
-                "detection_rate": 0.0
-            }
+            return {"accuracy": 0.0, "detection_rate": 0.0}
 
         # Calculate interval accuracy
         correct = sum(1 for r in interval_records if r["is_correct"])
@@ -377,7 +356,8 @@ class MonitoringService:
         timings = [
             r["quality_signals"][0].get("execution_time_ratio")
             for r in interval_records
-            if r["quality_signals"] and r["quality_signals"][0].get("execution_time_ratio") is not None
+            if r["quality_signals"]
+            and r["quality_signals"][0].get("execution_time_ratio") is not None
         ]
         avg_execution_time_ratio = sum(timings) / len(timings) if timings else None
 
@@ -386,13 +366,10 @@ class MonitoringService:
             "detection_rate": detection_rate,
             "avg_test_failure_rate": avg_test_failure_rate,
             "avg_code_churn": avg_code_churn,
-            "avg_execution_time_ratio": avg_execution_time_ratio
+            "avg_execution_time_ratio": avg_execution_time_ratio,
         }
 
-    def _calculate_accuracy_delta(
-        self,
-        milestone_number: int
-    ) -> float | None:
+    def _calculate_accuracy_delta(self, milestone_number: int) -> float | None:
         """
         Calculate accuracy change since previous milestone.
 
@@ -406,7 +383,9 @@ class MonitoringService:
             return None  # No previous milestone to compare
 
         # Load previous milestone
-        prev_milestone_path = self.milestones_dir / f"milestone_{self.MILESTONES[milestone_number - 2]}.json"
+        prev_milestone_path = (
+            self.milestones_dir / f"milestone_{self.MILESTONES[milestone_number - 2]}.json"
+        )
 
         if not prev_milestone_path.exists():
             return None
@@ -425,9 +404,7 @@ class MonitoringService:
             return None
 
     def _extract_top_patterns(
-        self,
-        misclassifications: list[MisclassificationReport],
-        top_n: int = 3
+        self, misclassifications: list[MisclassificationReport], top_n: int = 3
     ) -> list[str]:
         """
         Extract most common misclassification patterns.
@@ -462,19 +439,12 @@ class MonitoringService:
             pattern_counts[pattern] = pattern_counts.get(pattern, 0) + 1
 
         # Sort by frequency
-        sorted_patterns = sorted(
-            pattern_counts.items(),
-            key=lambda x: x[1],
-            reverse=True
-        )
+        sorted_patterns = sorted(pattern_counts.items(), key=lambda x: x[1], reverse=True)
 
         return [pattern for pattern, _ in sorted_patterns[:top_n]]
 
     def _generate_recommendations(
-        self,
-        metrics: MilestoneMetrics,
-        top_patterns: list[str],
-        is_improving: bool
+        self, metrics: MilestoneMetrics, top_patterns: list[str], is_improving: bool
     ) -> list[str]:
         """
         Generate actionable recommendations based on metrics.
@@ -491,19 +461,13 @@ class MonitoringService:
 
         # Accuracy recommendations
         if metrics.overall_accuracy < 0.90:
-            recommendations.append(
-                "⚠️  Accuracy below 90% - Continue VectorStore refinement"
-            )
+            recommendations.append("⚠️  Accuracy below 90% - Continue VectorStore refinement")
         elif metrics.overall_accuracy >= 0.98:
-            recommendations.append(
-                "✅ Target accuracy achieved (>98%) - Monitor for stability"
-            )
+            recommendations.append("✅ Target accuracy achieved (>98%) - Monitor for stability")
 
         # Improvement trend
         if not is_improving and metrics.total_tasks > 25:
-            recommendations.append(
-                "⚠️  Accuracy plateaued - Review threshold tuning"
-            )
+            recommendations.append("⚠️  Accuracy plateaued - Review threshold tuning")
 
         # Detection rate
         if metrics.detection_rate > 0.15:
@@ -522,21 +486,17 @@ class MonitoringService:
         # Pattern-specific recommendations
         if "test failures" in " ".join(top_patterns):
             recommendations.append(
-                "💡 Test failure pattern detected - "
-                "Lower test_failure_rate threshold to 0.09"
+                "💡 Test failure pattern detected - Lower test_failure_rate threshold to 0.09"
             )
 
         if "high churn" in " ".join(top_patterns):
             recommendations.append(
-                "💡 High churn pattern detected - "
-                "Lower code_churn threshold to 90 lines"
+                "💡 High churn pattern detected - Lower code_churn threshold to 90 lines"
             )
 
         # Default recommendation if none generated
         if not recommendations:
-            recommendations.append(
-                "✅ System performing well - Continue monitoring"
-            )
+            recommendations.append("✅ System performing well - Continue monitoring")
 
         return recommendations
 
@@ -591,8 +551,7 @@ class MonitoringService:
             final_accuracy = milestones[-1].metrics.overall_accuracy
             if len(milestones) > 1:
                 accuracy_improvement = (
-                    milestones[-1].metrics.overall_accuracy -
-                    milestones[0].metrics.overall_accuracy
+                    milestones[-1].metrics.overall_accuracy - milestones[0].metrics.overall_accuracy
                 )
 
         return MilestoneHistory(
@@ -601,7 +560,7 @@ class MonitoringService:
             milestones=milestones,
             is_complete=is_complete,
             final_accuracy=final_accuracy,
-            accuracy_improvement=accuracy_improvement
+            accuracy_improvement=accuracy_improvement,
         )
 
     def reset(self) -> None:
@@ -653,10 +612,13 @@ def main() -> None:
         signals = [
             QualitySignals(
                 task_id=f"task_{i}",
-                original_tier=predicted_tier.lower().replace("p1", "complex").replace("p2", "moderate").replace("p3", "simple"),
+                original_tier=predicted_tier.lower()
+                .replace("p1", "complex")
+                .replace("p2", "moderate")
+                .replace("p3", "simple"),
                 test_failure_rate=random.uniform(0.0, 0.2),
                 code_churn_lines=random.randint(10, 150),
-                execution_time_ratio=random.uniform(0.5, 4.0)
+                execution_time_ratio=random.uniform(0.5, 4.0),
             )
         ]
 
@@ -664,7 +626,7 @@ def main() -> None:
             task_id=f"task_{i}",
             predicted_tier=actual_tier,
             actual_tier=actual_tier if random.random() < base_accuracy else random.choice(tiers),
-            quality_signals=signals
+            quality_signals=signals,
         )
 
         # Check for milestone

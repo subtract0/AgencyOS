@@ -33,6 +33,7 @@ logger = logging.getLogger(__name__)
 
 class FeedbackCommandError(Exception):
     """Raised when feedback command fails."""
+
     pass
 
 
@@ -68,11 +69,7 @@ class FeedbackCommand:
         logger.debug(f"FeedbackCommand initialized: {self.FEEDBACK_DIR}")
 
     def mark_misclassified(
-        self,
-        task_id: str,
-        original_tier: str,
-        correct_tier: str,
-        description: str | None = None
+        self, task_id: str, original_tier: str, correct_tier: str, description: str | None = None
     ) -> Result[None, FeedbackCommandError]:
         """Mark task as misclassified with user feedback.
 
@@ -101,9 +98,7 @@ class FeedbackCommand:
             # Validate tier values
             valid_tiers = {"simple", "moderate", "complex"}
             if original_tier not in valid_tiers or correct_tier not in valid_tiers:
-                return Err(FeedbackCommandError(
-                    f"Invalid tier. Must be one of: {valid_tiers}"
-                ))
+                return Err(FeedbackCommandError(f"Invalid tier. Must be one of: {valid_tiers}"))
 
             # Store user feedback in file (for SignalCollector retrieval)
             feedback_data = {
@@ -111,7 +106,7 @@ class FeedbackCommand:
                 "original_tier": original_tier,
                 "correct_tier": correct_tier,
                 "feedback": "misclassified",
-                "marked_at": datetime.now(UTC).isoformat()
+                "marked_at": datetime.now(UTC).isoformat(),
             }
 
             feedback_file = self.FEEDBACK_DIR / f"{task_id}.json"
@@ -131,12 +126,12 @@ class FeedbackCommand:
                         confidence=1.0,  # Highest confidence
                         severity=SeverityLevel.CRITICAL,
                         description="User explicitly flagged as misclassified",
-                        signal_value=None
+                        signal_value=None,
                     )
                 ],
                 aggregated_confidence=1.0,  # User feedback always 1.0
                 is_misclassified=True,
-                detected_at=datetime.now(UTC).isoformat()
+                detected_at=datetime.now(UTC).isoformat(),
             )
 
             # Trigger immediate refinement
@@ -157,7 +152,9 @@ class FeedbackCommand:
 
             # Handle confidence_before being None
             if refinement.confidence_before is not None:
-                print(f"   Confidence: {refinement.confidence_before:.2f} → {refinement.confidence_after:.2f}")
+                print(
+                    f"   Confidence: {refinement.confidence_before:.2f} → {refinement.confidence_after:.2f}"
+                )
             else:
                 print(f"   Confidence: N/A → {refinement.confidence_after:.2f}")
 
@@ -168,7 +165,9 @@ class FeedbackCommand:
             if refinement.threshold_adjustments:
                 print("   Threshold adjustments:")
                 for adj in refinement.threshold_adjustments:
-                    print(f"     - {adj.signal_name}: {adj.old_threshold:.2f} → {adj.new_threshold:.2f}")
+                    print(
+                        f"     - {adj.signal_name}: {adj.old_threshold:.2f} → {adj.new_threshold:.2f}"
+                    )
 
             return Ok(None)
 
@@ -194,9 +193,7 @@ class FeedbackCommand:
         """
         try:
             feedback_files = sorted(
-                self.FEEDBACK_DIR.glob("*.json"),
-                key=lambda p: p.stat().st_mtime,
-                reverse=True
+                self.FEEDBACK_DIR.glob("*.json"), key=lambda p: p.stat().st_mtime, reverse=True
             )[:limit]
 
             entries = []
@@ -251,7 +248,7 @@ def cmd_feedback_mark(args: argparse.Namespace) -> None:
         task_id=args.task_id,
         original_tier=args.original_tier,
         correct_tier=args.correct_tier,
-        description=args.description
+        description=args.description,
     )
 
     if result.is_err():
@@ -327,7 +324,9 @@ def cmd_feedback_milestone(args: argparse.Namespace) -> None:
 
         if history.milestones:
             latest = history.get_latest_milestone()
-            print(f"\n   Latest milestone: #{latest.milestone_number} ({latest.task_threshold} tasks)")
+            print(
+                f"\n   Latest milestone: #{latest.milestone_number} ({latest.task_threshold} tasks)"
+            )
             print(f"   Overall accuracy: {latest.metrics.overall_accuracy:.1%}")
             print(f"   Improving: {'✅' if latest.is_improving else '⚠️'}")
 
@@ -415,7 +414,7 @@ def cmd_feedback_milestone(args: argparse.Namespace) -> None:
         if not args.force:
             print("⚠️  WARNING: This will delete all milestone data and reset the counter.")
             response = input("Continue? [y/N]: ")
-            if response.lower() != 'y':
+            if response.lower() != "y":
                 print("Reset cancelled.")
                 return
 

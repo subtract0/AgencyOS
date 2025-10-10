@@ -44,6 +44,7 @@ except ImportError:
 # Test Suite 1: QualitySignals Pydantic Model
 # ============================================================================
 
+
 class TestQualitySignalsPydanticModel:
     """Test Pydantic model validation and severity computation."""
 
@@ -56,7 +57,7 @@ class TestQualitySignalsPydanticModel:
             test_failure_rate=0.15,
             code_churn_lines=120,
             execution_time_ratio=4.2,
-            user_feedback=UserFeedback.MISCLASSIFIED
+            user_feedback=UserFeedback.MISCLASSIFIED,
         )
 
         # Assert
@@ -72,10 +73,7 @@ class TestQualitySignalsPydanticModel:
     def test_valid_quality_signals_minimal_fields(self):
         """Test QualitySignals with only required fields."""
         # Arrange
-        signals = QualitySignals(
-            task_id="task_456",
-            original_tier="moderate"
-        )
+        signals = QualitySignals(task_id="task_456", original_tier="moderate")
 
         # Assert
         assert signals.task_id == "task_456"
@@ -90,55 +88,37 @@ class TestQualitySignalsPydanticModel:
         """Test validation rejects test_failure_rate < 0.0."""
         # Act & Assert
         with pytest.raises(ValueError, match="greater than or equal to 0"):
-            QualitySignals(
-                task_id="task_789",
-                original_tier="simple",
-                test_failure_rate=-0.5
-            )
+            QualitySignals(task_id="task_789", original_tier="simple", test_failure_rate=-0.5)
 
     def test_invalid_test_failure_rate_above_one(self):
         """Test validation rejects test_failure_rate > 1.0."""
         # Act & Assert
         with pytest.raises(ValueError, match="less than or equal to 1"):
-            QualitySignals(
-                task_id="task_789",
-                original_tier="simple",
-                test_failure_rate=1.5
-            )
+            QualitySignals(task_id="task_789", original_tier="simple", test_failure_rate=1.5)
 
     def test_invalid_code_churn_negative(self):
         """Test validation rejects negative code_churn_lines."""
         # Act & Assert
         with pytest.raises(ValueError, match="greater than or equal to 0"):
-            QualitySignals(
-                task_id="task_789",
-                original_tier="simple",
-                code_churn_lines=-10
-            )
+            QualitySignals(task_id="task_789", original_tier="simple", code_churn_lines=-10)
 
     def test_invalid_execution_time_ratio_negative(self):
         """Test validation rejects negative execution_time_ratio."""
         # Act & Assert
         with pytest.raises(ValueError, match="greater than or equal to 0"):
-            QualitySignals(
-                task_id="task_789",
-                original_tier="simple",
-                execution_time_ratio=-1.5
-            )
+            QualitySignals(task_id="task_789", original_tier="simple", execution_time_ratio=-1.5)
 
     def test_invalid_original_tier(self):
         """Test validation rejects invalid tier values."""
         # Act & Assert
         with pytest.raises(ValueError, match="String should match pattern"):
-            QualitySignals(
-                task_id="task_789",
-                original_tier="invalid_tier"
-            )
+            QualitySignals(task_id="task_789", original_tier="invalid_tier")
 
 
 # ============================================================================
 # Test Suite 2: Severity Computation Logic
 # ============================================================================
+
 
 class TestSeverityComputation:
     """Test severity level computation from quality signals."""
@@ -147,9 +127,7 @@ class TestSeverityComputation:
         """Test CRITICAL severity from user_feedback=misclassified."""
         # Arrange & Act
         signals = QualitySignals(
-            task_id="task_001",
-            original_tier="simple",
-            user_feedback=UserFeedback.MISCLASSIFIED
+            task_id="task_001", original_tier="simple", user_feedback=UserFeedback.MISCLASSIFIED
         )
 
         # Assert
@@ -161,7 +139,7 @@ class TestSeverityComputation:
         signals = QualitySignals(
             task_id="task_002",
             original_tier="simple",
-            test_failure_rate=0.3  # 30% failures
+            test_failure_rate=0.3,  # 30% failures
         )
 
         # Assert
@@ -173,7 +151,7 @@ class TestSeverityComputation:
         signals = QualitySignals(
             task_id="task_003",
             original_tier="moderate",
-            code_churn_lines=168  # 168 lines changed
+            code_churn_lines=168,  # 168 lines changed
         )
 
         # Assert
@@ -185,7 +163,7 @@ class TestSeverityComputation:
         signals = QualitySignals(
             task_id="task_004",
             original_tier="simple",
-            code_churn_lines=75  # Between 50 and 100
+            code_churn_lines=75,  # Between 50 and 100
         )
 
         # Assert
@@ -197,7 +175,7 @@ class TestSeverityComputation:
         signals = QualitySignals(
             task_id="task_005",
             original_tier="moderate",
-            execution_time_ratio=4.5  # Took 4.5x longer
+            execution_time_ratio=4.5,  # Took 4.5x longer
         )
 
         # Assert
@@ -206,10 +184,7 @@ class TestSeverityComputation:
     def test_severity_info_when_all_signals_none(self):
         """Test INFO severity when all signals are None."""
         # Arrange & Act
-        signals = QualitySignals(
-            task_id="task_006",
-            original_tier="complex"
-        )
+        signals = QualitySignals(task_id="task_006", original_tier="complex")
 
         # Assert
         assert signals.severity == SeverityLevel.INFO
@@ -223,7 +198,7 @@ class TestSeverityComputation:
             test_failure_rate=0.05,  # 5% failures (below 10%)
             code_churn_lines=30,  # Below 50
             execution_time_ratio=1.2,  # Below 3.0
-            user_feedback=UserFeedback.CORRECT
+            user_feedback=UserFeedback.CORRECT,
         )
 
         # Assert
@@ -238,7 +213,7 @@ class TestSeverityComputation:
             test_failure_rate=0.0,  # No failures
             code_churn_lines=10,  # Low churn
             execution_time_ratio=1.0,  # Perfect timing
-            user_feedback=UserFeedback.MISCLASSIFIED  # User says it's wrong
+            user_feedback=UserFeedback.MISCLASSIFIED,  # User says it's wrong
         )
 
         # Assert - user feedback overrides all other positive signals
@@ -249,19 +224,14 @@ class TestSeverityComputation:
 # Test Suite 3: QualitySignalCollector - Test Failure Collection
 # ============================================================================
 
+
 class TestCollectTestFailures:
     """Test pytest JSON report parsing for test failure rate."""
 
     @pytest.fixture
     def mock_pytest_report(self):
         """Fixture providing sample pytest JSON report."""
-        return {
-            "summary": {
-                "total": 10,
-                "passed": 7,
-                "failed": 3
-            }
-        }
+        return {"summary": {"total": 10, "passed": 7, "failed": 3}}
 
     def test_collect_test_failure_rate_from_valid_report(self, tmp_path, mock_pytest_report):
         """Test collecting test_failure_rate from valid pytest JSON report."""
@@ -269,15 +239,10 @@ class TestCollectTestFailures:
         report_path = tmp_path / "report.json"
         report_path.write_text(json.dumps(mock_pytest_report))
 
-        collector = QualitySignalCollector(
-            pytest_report_path=str(report_path)
-        )
+        collector = QualitySignalCollector(pytest_report_path=str(report_path))
 
         # Act
-        result = collector.collect_signals(
-            task_id="task_test_001",
-            original_tier="simple"
-        )
+        result = collector.collect_signals(task_id="task_test_001", original_tier="simple")
 
         # Assert
         assert result.is_ok()
@@ -288,19 +253,12 @@ class TestCollectTestFailures:
         """Test test_failure_rate=0.0 when all tests pass."""
         # Arrange
         report_path = tmp_path / "report.json"
-        report_path.write_text(json.dumps({
-            "summary": {"total": 15, "passed": 15, "failed": 0}
-        }))
+        report_path.write_text(json.dumps({"summary": {"total": 15, "passed": 15, "failed": 0}}))
 
-        collector = QualitySignalCollector(
-            pytest_report_path=str(report_path)
-        )
+        collector = QualitySignalCollector(pytest_report_path=str(report_path))
 
         # Act
-        result = collector.collect_signals(
-            task_id="task_test_002",
-            original_tier="moderate"
-        )
+        result = collector.collect_signals(task_id="task_test_002", original_tier="moderate")
 
         # Assert
         assert result.is_ok()
@@ -312,15 +270,10 @@ class TestCollectTestFailures:
         # Arrange
         report_path = tmp_path / "nonexistent.json"
 
-        collector = QualitySignalCollector(
-            pytest_report_path=str(report_path)
-        )
+        collector = QualitySignalCollector(pytest_report_path=str(report_path))
 
         # Act
-        result = collector.collect_signals(
-            task_id="task_test_003",
-            original_tier="simple"
-        )
+        result = collector.collect_signals(task_id="task_test_003", original_tier="simple")
 
         # Assert
         assert result.is_ok()
@@ -333,15 +286,10 @@ class TestCollectTestFailures:
         report_path = tmp_path / "malformed.json"
         report_path.write_text("{ invalid json }")
 
-        collector = QualitySignalCollector(
-            pytest_report_path=str(report_path)
-        )
+        collector = QualitySignalCollector(pytest_report_path=str(report_path))
 
         # Act
-        result = collector.collect_signals(
-            task_id="task_test_004",
-            original_tier="simple"
-        )
+        result = collector.collect_signals(task_id="task_test_004", original_tier="simple")
 
         # Assert - should not crash, return None for test_failure_rate
         assert result.is_ok()
@@ -353,76 +301,61 @@ class TestCollectTestFailures:
 # Test Suite 4: QualitySignalCollector - Code Churn Collection
 # ============================================================================
 
+
 class TestCollectCodeChurn:
     """Test git diff parsing for code churn measurement."""
 
-    @patch('subprocess.run')
+    @patch("subprocess.run")
     def test_collect_code_churn_from_git_diff(self, mock_run):
         """Test collecting code_churn_lines from git diff --stat."""
         # Arrange
         mock_run.return_value = Mock(
-            returncode=0,
-            stdout="5 files changed, 145 insertions(+), 23 deletions(-)\n"
+            returncode=0, stdout="5 files changed, 145 insertions(+), 23 deletions(-)\n"
         )
 
         collector = QualitySignalCollector()
 
         # Act
-        result = collector.collect_signals(
-            task_id="task_churn_001",
-            original_tier="moderate"
-        )
+        result = collector.collect_signals(task_id="task_churn_001", original_tier="moderate")
 
         # Assert
         assert result.is_ok()
         signals = result.unwrap()
         assert signals.code_churn_lines == 168  # 145 + 23
 
-    @patch('subprocess.run')
+    @patch("subprocess.run")
     def test_collect_code_churn_insertions_only(self, mock_run):
         """Test code churn with only insertions (no deletions)."""
         # Arrange
-        mock_run.return_value = Mock(
-            returncode=0,
-            stdout="3 files changed, 50 insertions(+)\n"
-        )
+        mock_run.return_value = Mock(returncode=0, stdout="3 files changed, 50 insertions(+)\n")
 
         collector = QualitySignalCollector()
 
         # Act
-        result = collector.collect_signals(
-            task_id="task_churn_002",
-            original_tier="simple"
-        )
+        result = collector.collect_signals(task_id="task_churn_002", original_tier="simple")
 
         # Assert
         assert result.is_ok()
         signals = result.unwrap()
         assert signals.code_churn_lines == 50
 
-    @patch('subprocess.run')
+    @patch("subprocess.run")
     def test_collect_code_churn_deletions_only(self, mock_run):
         """Test code churn with only deletions (no insertions)."""
         # Arrange
-        mock_run.return_value = Mock(
-            returncode=0,
-            stdout="2 files changed, 30 deletions(-)\n"
-        )
+        mock_run.return_value = Mock(returncode=0, stdout="2 files changed, 30 deletions(-)\n")
 
         collector = QualitySignalCollector()
 
         # Act
-        result = collector.collect_signals(
-            task_id="task_churn_003",
-            original_tier="simple"
-        )
+        result = collector.collect_signals(task_id="task_churn_003", original_tier="simple")
 
         # Assert
         assert result.is_ok()
         signals = result.unwrap()
         assert signals.code_churn_lines == 30
 
-    @patch('subprocess.run')
+    @patch("subprocess.run")
     def test_collect_code_churn_git_command_failure(self, mock_run):
         """Test code_churn_lines=None when git command fails."""
         # Arrange
@@ -431,17 +364,14 @@ class TestCollectCodeChurn:
         collector = QualitySignalCollector()
 
         # Act
-        result = collector.collect_signals(
-            task_id="task_churn_004",
-            original_tier="simple"
-        )
+        result = collector.collect_signals(task_id="task_churn_004", original_tier="simple")
 
         # Assert
         assert result.is_ok()
         signals = result.unwrap()
         assert signals.code_churn_lines is None  # Graceful degradation
 
-    @patch('subprocess.run')
+    @patch("subprocess.run")
     def test_collect_code_churn_git_timeout(self, mock_run):
         """Test code_churn_lines=None when git command times out."""
         # Arrange
@@ -450,10 +380,7 @@ class TestCollectCodeChurn:
         collector = QualitySignalCollector()
 
         # Act
-        result = collector.collect_signals(
-            task_id="task_churn_005",
-            original_tier="simple"
-        )
+        result = collector.collect_signals(task_id="task_churn_005", original_tier="simple")
 
         # Assert - should not crash
         assert result.is_ok()
@@ -464,6 +391,7 @@ class TestCollectCodeChurn:
 # ============================================================================
 # Test Suite 5: QualitySignalCollector - Execution Timing
 # ============================================================================
+
 
 class TestCollectExecutionTiming:
     """Test execution time ratio calculation."""
@@ -478,7 +406,7 @@ class TestCollectExecutionTiming:
             task_id="task_timing_001",
             original_tier="simple",
             estimated_time_seconds=200.0,
-            actual_time_seconds=200.0
+            actual_time_seconds=200.0,
         )
 
         # Assert
@@ -496,7 +424,7 @@ class TestCollectExecutionTiming:
             task_id="task_timing_002",
             original_tier="simple",
             estimated_time_seconds=200.0,
-            actual_time_seconds=600.0  # Took 3x longer
+            actual_time_seconds=600.0,  # Took 3x longer
         )
 
         # Assert
@@ -514,7 +442,7 @@ class TestCollectExecutionTiming:
             task_id="task_timing_003",
             original_tier="moderate",
             estimated_time_seconds=400.0,
-            actual_time_seconds=200.0  # Finished in half the time
+            actual_time_seconds=200.0,  # Finished in half the time
         )
 
         # Assert
@@ -529,9 +457,7 @@ class TestCollectExecutionTiming:
 
         # Act
         result = collector.collect_signals(
-            task_id="task_timing_004",
-            original_tier="simple",
-            actual_time_seconds=300.0
+            task_id="task_timing_004", original_tier="simple", actual_time_seconds=300.0
         )
 
         # Assert
@@ -546,9 +472,7 @@ class TestCollectExecutionTiming:
 
         # Act
         result = collector.collect_signals(
-            task_id="task_timing_005",
-            original_tier="simple",
-            estimated_time_seconds=200.0
+            task_id="task_timing_005", original_tier="simple", estimated_time_seconds=200.0
         )
 
         # Assert
@@ -561,6 +485,7 @@ class TestCollectExecutionTiming:
 # Test Suite 6: QualitySignalCollector - User Feedback
 # ============================================================================
 
+
 class TestCollectUserFeedback:
     """Test user feedback collection from file store."""
 
@@ -572,15 +497,10 @@ class TestCollectUserFeedback:
         feedback_file = feedback_dir / "task_feedback_001.json"
         feedback_file.write_text(json.dumps({"feedback": "misclassified"}))
 
-        collector = QualitySignalCollector(
-            user_feedback_dir=str(feedback_dir)
-        )
+        collector = QualitySignalCollector(user_feedback_dir=str(feedback_dir))
 
         # Act
-        result = collector.collect_signals(
-            task_id="task_feedback_001",
-            original_tier="simple"
-        )
+        result = collector.collect_signals(task_id="task_feedback_001", original_tier="simple")
 
         # Assert
         assert result.is_ok()
@@ -595,15 +515,10 @@ class TestCollectUserFeedback:
         feedback_file = feedback_dir / "task_feedback_002.json"
         feedback_file.write_text(json.dumps({"feedback": "correct"}))
 
-        collector = QualitySignalCollector(
-            user_feedback_dir=str(feedback_dir)
-        )
+        collector = QualitySignalCollector(user_feedback_dir=str(feedback_dir))
 
         # Act
-        result = collector.collect_signals(
-            task_id="task_feedback_002",
-            original_tier="moderate"
-        )
+        result = collector.collect_signals(task_id="task_feedback_002", original_tier="moderate")
 
         # Assert
         assert result.is_ok()
@@ -618,15 +533,10 @@ class TestCollectUserFeedback:
         feedback_file = feedback_dir / "task_feedback_003.json"
         feedback_file.write_text(json.dumps({"feedback": "unsure"}))
 
-        collector = QualitySignalCollector(
-            user_feedback_dir=str(feedback_dir)
-        )
+        collector = QualitySignalCollector(user_feedback_dir=str(feedback_dir))
 
         # Act
-        result = collector.collect_signals(
-            task_id="task_feedback_003",
-            original_tier="complex"
-        )
+        result = collector.collect_signals(task_id="task_feedback_003", original_tier="complex")
 
         # Assert
         assert result.is_ok()
@@ -639,15 +549,10 @@ class TestCollectUserFeedback:
         feedback_dir = tmp_path / "feedback"
         feedback_dir.mkdir()
 
-        collector = QualitySignalCollector(
-            user_feedback_dir=str(feedback_dir)
-        )
+        collector = QualitySignalCollector(user_feedback_dir=str(feedback_dir))
 
         # Act
-        result = collector.collect_signals(
-            task_id="task_feedback_999",
-            original_tier="simple"
-        )
+        result = collector.collect_signals(task_id="task_feedback_999", original_tier="simple")
 
         # Assert
         assert result.is_ok()
@@ -662,15 +567,10 @@ class TestCollectUserFeedback:
         feedback_file = feedback_dir / "task_feedback_004.json"
         feedback_file.write_text("{ invalid json }")
 
-        collector = QualitySignalCollector(
-            user_feedback_dir=str(feedback_dir)
-        )
+        collector = QualitySignalCollector(user_feedback_dir=str(feedback_dir))
 
         # Act
-        result = collector.collect_signals(
-            task_id="task_feedback_004",
-            original_tier="simple"
-        )
+        result = collector.collect_signals(task_id="task_feedback_004", original_tier="simple")
 
         # Assert - should not crash
         assert result.is_ok()
@@ -682,22 +582,20 @@ class TestCollectUserFeedback:
 # Test Suite 7: Full Integration Tests
 # ============================================================================
 
+
 class TestQualitySignalCollectorIntegration:
     """End-to-end integration tests with all signals."""
 
-    @patch('subprocess.run')
+    @patch("subprocess.run")
     def test_full_integration_all_signals_collected(self, mock_run, tmp_path):
         """Test full collection with all four signals present."""
         # Arrange - pytest report
         report_path = tmp_path / "report.json"
-        report_path.write_text(json.dumps({
-            "summary": {"total": 10, "failed": 3}
-        }))
+        report_path.write_text(json.dumps({"summary": {"total": 10, "failed": 3}}))
 
         # Arrange - git diff
         mock_run.return_value = Mock(
-            returncode=0,
-            stdout="5 files changed, 145 insertions(+), 23 deletions(-)\n"
+            returncode=0, stdout="5 files changed, 145 insertions(+), 23 deletions(-)\n"
         )
 
         # Arrange - user feedback
@@ -707,8 +605,7 @@ class TestQualitySignalCollectorIntegration:
         feedback_file.write_text(json.dumps({"feedback": "misclassified"}))
 
         collector = QualitySignalCollector(
-            pytest_report_path=str(report_path),
-            user_feedback_dir=str(feedback_dir)
+            pytest_report_path=str(report_path), user_feedback_dir=str(feedback_dir)
         )
 
         # Act
@@ -716,7 +613,7 @@ class TestQualitySignalCollectorIntegration:
             task_id="task_integration_001",
             original_tier="simple",
             estimated_time_seconds=200.0,
-            actual_time_seconds=600.0
+            actual_time_seconds=600.0,
         )
 
         # Assert
@@ -732,25 +629,18 @@ class TestQualitySignalCollectorIntegration:
         # Severity is CRITICAL (user feedback overrides all)
         assert signals.severity == SeverityLevel.CRITICAL
 
-    @patch('subprocess.run')
+    @patch("subprocess.run")
     def test_full_integration_partial_signals_graceful(self, mock_run, tmp_path):
         """Test graceful handling when some signals unavailable."""
         # Arrange - only git diff succeeds, others fail
-        mock_run.return_value = Mock(
-            returncode=0,
-            stdout="3 files changed, 85 insertions(+)\n"
-        )
+        mock_run.return_value = Mock(returncode=0, stdout="3 files changed, 85 insertions(+)\n")
 
         collector = QualitySignalCollector(
-            pytest_report_path="/nonexistent/report.json",
-            user_feedback_dir="/nonexistent/feedback"
+            pytest_report_path="/nonexistent/report.json", user_feedback_dir="/nonexistent/feedback"
         )
 
         # Act
-        result = collector.collect_signals(
-            task_id="task_integration_002",
-            original_tier="moderate"
-        )
+        result = collector.collect_signals(task_id="task_integration_002", original_tier="moderate")
 
         # Assert
         assert result.is_ok()
@@ -767,22 +657,18 @@ class TestQualitySignalCollectorIntegration:
         # Severity based on available signals
         assert signals.severity == SeverityLevel.WARNING  # churn > 50
 
-    @patch('subprocess.run')
+    @patch("subprocess.run")
     def test_full_integration_all_signals_missing(self, mock_run):
         """Test handling when all signals unavailable."""
         # Arrange - all collection methods fail
         mock_run.return_value = Mock(returncode=1)
 
         collector = QualitySignalCollector(
-            pytest_report_path="/nonexistent/report.json",
-            user_feedback_dir="/nonexistent/feedback"
+            pytest_report_path="/nonexistent/report.json", user_feedback_dir="/nonexistent/feedback"
         )
 
         # Act
-        result = collector.collect_signals(
-            task_id="task_integration_003",
-            original_tier="simple"
-        )
+        result = collector.collect_signals(task_id="task_integration_003", original_tier="simple")
 
         # Assert
         assert result.is_ok()
@@ -801,6 +687,7 @@ class TestQualitySignalCollectorIntegration:
 # ============================================================================
 # Test Suite 8: Constitutional Compliance
 # ============================================================================
+
 
 class TestConstitutionalCompliance:
     """Test constitutional compliance requirements."""
@@ -821,8 +708,7 @@ class TestConstitutionalCompliance:
 
         # Verify no 'Any' in type definitions
         for field_name, field_type in annotations.items():
-            assert "Any" not in str(field_type), \
-                f"Field '{field_name}' uses Any type (violation)"
+            assert "Any" not in str(field_type), f"Field '{field_name}' uses Any type (violation)"
 
     def test_article_ii_result_pattern_used(self):
         """Article II: QualitySignalCollector returns Result<T, E>."""

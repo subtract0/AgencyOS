@@ -32,10 +32,7 @@ class TestSnapshotMetadata:
 
     def test_metadata_with_custom_data_dir(self):
         """Test metadata with custom data directory."""
-        metadata = SnapshotMetadata(
-            dashboard_available=True,
-            data_directory="/custom/path"
-        )
+        metadata = SnapshotMetadata(dashboard_available=True, data_directory="/custom/path")
 
         assert metadata.data_directory == "/custom/path"
 
@@ -68,10 +65,7 @@ class TestMockDashboardSnapshot:
     def test_mock_snapshot_with_data(self):
         """Test mock snapshot with custom data."""
         snapshot = MockDashboardSnapshot(
-            total_tasks=50,
-            correct_classifications=42,
-            misclassifications=8,
-            accuracy_rate=0.84
+            total_tasks=50, correct_classifications=42, misclassifications=8, accuracy_rate=0.84
         )
 
         assert snapshot.total_tasks == 50
@@ -101,10 +95,7 @@ class TestDashboardSnapshotGenerator:
 
             data_dir.mkdir(parents=True, exist_ok=True)
 
-            generator = DashboardSnapshotGenerator(
-                data_dir=data_dir,
-                output_dir=output_dir
-            )
+            generator = DashboardSnapshotGenerator(data_dir=data_dir, output_dir=output_dir)
             yield generator
 
     def test_generator_initialization(self, temp_generator):
@@ -267,8 +258,10 @@ class TestCLIIntegration:
             original_argv = sys.argv
             sys.argv = [
                 "dashboard_snapshot.py",
-                "--output-dir", str(output_dir),
-                "--window-hours", "12"
+                "--output-dir",
+                str(output_dir),
+                "--window-hours",
+                "12",
             ]
 
             try:

@@ -536,8 +536,7 @@ class TestSessionGarbageCollectorPerformance:
         # Spec target: <100ms for 1000 sessions
         # Allowing 200ms buffer for CI/test environments
         assert gc_result.collection_time_ms < 200, (
-            f"GC took {gc_result.collection_time_ms:.2f}ms for 1000 sessions, "
-            f"expected <200ms"
+            f"GC took {gc_result.collection_time_ms:.2f}ms for 1000 sessions, expected <200ms"
         )
 
 

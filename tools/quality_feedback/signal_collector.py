@@ -28,6 +28,7 @@ from shared.type_definitions.result import Err, Ok, Result
 
 class SignalCollectionError(Exception):
     """Raised when signal collection fails critically."""
+
     pass
 
 
@@ -62,7 +63,7 @@ class QualitySignalCollector:
     def __init__(
         self,
         pytest_report_path: str = ".test_results/report.json",
-        user_feedback_dir: str = "~/.agency/memories/feedback"
+        user_feedback_dir: str = "~/.agency/memories/feedback",
     ):
         """
         Initialize quality signal collector.
@@ -79,7 +80,7 @@ class QualitySignalCollector:
         task_id: str,
         original_tier: str,
         estimated_time_seconds: float | None = None,
-        actual_time_seconds: float | None = None
+        actual_time_seconds: float | None = None,
     ) -> Result[QualitySignals, SignalCollectionError]:
         """
         Collect all quality signals for a task.
@@ -129,7 +130,7 @@ class QualitySignalCollector:
                 code_churn_lines=code_churn_lines,
                 execution_time_ratio=execution_time_ratio,
                 user_feedback=user_feedback,
-                detected_at=datetime.now(UTC).isoformat()
+                detected_at=datetime.now(UTC).isoformat(),
             )
 
             return Ok(signals)
@@ -187,7 +188,7 @@ class QualitySignalCollector:
                 ["git", "diff", "--stat", "HEAD~1"],
                 capture_output=True,
                 text=True,
-                timeout=5  # 5 second timeout
+                timeout=5,  # 5 second timeout
             )
 
             if result.returncode != 0:

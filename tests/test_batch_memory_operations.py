@@ -224,8 +224,9 @@ class TestBatchPartialFailures:
             await async_tool.create_async(f"/memories/exists{i}.txt", f"Content {i}")
 
         # Request both existing and nonexistent files
-        paths = [f"/memories/exists{i}.txt" for i in range(5)] + \
-                [f"/memories/missing{i}.txt" for i in range(5)]
+        paths = [f"/memories/exists{i}.txt" for i in range(5)] + [
+            f"/memories/missing{i}.txt" for i in range(5)
+        ]
 
         # Act
         results = await async_tool.batch_view_async(paths)
@@ -351,9 +352,10 @@ class TestBatchPerformance:
 
         # Assert - Parallel should be faster (at least 1.3x for writes)
         # Writes have more overhead than reads, so lower speedup expected
-        assert speedup >= 1.3, \
-            f"Expected 1.3x speedup, got {speedup:.2f}x " \
+        assert speedup >= 1.3, (
+            f"Expected 1.3x speedup, got {speedup:.2f}x "
             f"(sequential={sequential_time:.3f}s, parallel={parallel_time:.3f}s)"
+        )
 
         print(f"\n[PERFORMANCE] Sequential writes: {sequential_time:.3f}s")
         print(f"[PERFORMANCE] Parallel writes: {parallel_time:.3f}s")
@@ -393,8 +395,7 @@ class TestBatchPerformance:
         await async_tool.batch_view_async(paths, max_concurrency=3)
 
         # Assert - Max concurrent should not exceed 3
-        assert max_concurrent <= 3, \
-            f"Expected max 3 concurrent operations, got {max_concurrent}"
+        assert max_concurrent <= 3, f"Expected max 3 concurrent operations, got {max_concurrent}"
 
         # Restore original method
         async_tool.view_async = original_view

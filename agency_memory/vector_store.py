@@ -532,12 +532,12 @@ class VectorStore:
                         all_embeddings.extend(batch_embeddings)
                         embedding_batch_count += 1
                         logger.debug(
-                            f"Generated embeddings for batch {i//batch_size + 1}: "
+                            f"Generated embeddings for batch {i // batch_size + 1}: "
                             f"{len(batch_embeddings)} items"
                         )
                     except Exception as e:
                         logger.error(
-                            f"Embedding generation failed for batch {i}-{i+batch_size}: {e}"
+                            f"Embedding generation failed for batch {i}-{i + batch_size}: {e}"
                         )
                         # Mark batch as failed, continue with next batch
                         all_embeddings.extend([None] * len(batch_texts))
@@ -586,9 +586,7 @@ class VectorStore:
                 self._memory_texts = snapshot["memory_texts"]
                 self._embeddings = snapshot["embeddings"]
 
-                logger.error(
-                    f"Batch store rolled back: {len(failed)}/{len(memories)} items failed"
-                )
+                logger.error(f"Batch store rolled back: {len(failed)}/{len(memories)} items failed")
                 successful = []
                 failed = [(key, "Rolled back due to high failure rate") for key, _ in memories]
 

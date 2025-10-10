@@ -57,8 +57,12 @@ class TestCompressionPerformance:
         max_time = max(times)
 
         # Assert
-        print(f"\nCompression 1MB: avg={avg_time:.2f}ms, min={min_time:.2f}ms, max={max_time:.2f}ms")
-        assert avg_time < 10.0, f"Average compression time {avg_time:.2f}ms exceeds 10ms target (AC-P.1)"
+        print(
+            f"\nCompression 1MB: avg={avg_time:.2f}ms, min={min_time:.2f}ms, max={max_time:.2f}ms"
+        )
+        assert avg_time < 10.0, (
+            f"Average compression time {avg_time:.2f}ms exceeds 10ms target (AC-P.1)"
+        )
 
     def test_benchmark_decompression_1mb(self):
         """Benchmark decompression <8ms for 1MB compressed session (AC-P.2)."""
@@ -87,8 +91,12 @@ class TestCompressionPerformance:
         max_time = max(times)
 
         # Assert
-        print(f"\nDecompression 1MB: avg={avg_time:.2f}ms, min={min_time:.2f}ms, max={max_time:.2f}ms")
-        assert avg_time < 8.0, f"Average decompression time {avg_time:.2f}ms exceeds 8ms target (AC-P.2)"
+        print(
+            f"\nDecompression 1MB: avg={avg_time:.2f}ms, min={min_time:.2f}ms, max={max_time:.2f}ms"
+        )
+        assert avg_time < 8.0, (
+            f"Average decompression time {avg_time:.2f}ms exceeds 8ms target (AC-P.2)"
+        )
 
     def test_benchmark_compression_ratio_1mb(self):
         """Benchmark compression ratio for 1MB session."""
@@ -106,8 +114,10 @@ class TestCompressionPerformance:
         _, metadata = result.unwrap()
 
         # Assert
-        print(f"\nCompression ratio: {metadata.compression_ratio:.4f} "
-              f"(reduction: {metadata.size_reduction_percent:.1f}%)")
+        print(
+            f"\nCompression ratio: {metadata.compression_ratio:.4f} "
+            f"(reduction: {metadata.size_reduction_percent:.1f}%)"
+        )
         print(f"  Original: {metadata.original_size_bytes:,} bytes")
         print(f"  Compressed: {metadata.compressed_size_bytes:,} bytes")
         assert metadata.size_reduction_percent >= 60.0
@@ -134,8 +144,10 @@ class TestCompressionPerformance:
             assert result.is_ok()
             _, metadata = result.unwrap()
 
-            print(f"  {level}   | {elapsed_ms:7.2f}   | {metadata.compression_ratio:6.4f}  | "
-                  f"{metadata.size_reduction_percent:5.1f}%")
+            print(
+                f"  {level}   | {elapsed_ms:7.2f}   | {metadata.compression_ratio:6.4f}  | "
+                f"{metadata.size_reduction_percent:5.1f}%"
+            )
 
         # Assert - Level 6 (default) should be balanced
         result = compress_session_state(session, compression_level=6)
@@ -287,8 +299,12 @@ class TestCheckpointPerformance:
         avg_resume = sum(resume_times) / len(resume_times)
 
         print("\nCheckpoint Performance:")
-        print(f"  Save:   avg={avg_save:.2f}ms, min={min(save_times):.2f}ms, max={max(save_times):.2f}ms")
-        print(f"  Resume: avg={avg_resume:.2f}ms, min={min(resume_times):.2f}ms, max={max(resume_times):.2f}ms")
+        print(
+            f"  Save:   avg={avg_save:.2f}ms, min={min(save_times):.2f}ms, max={max(save_times):.2f}ms"
+        )
+        print(
+            f"  Resume: avg={avg_resume:.2f}ms, min={min(resume_times):.2f}ms, max={max(resume_times):.2f}ms"
+        )
 
         assert avg_save < 10.0, f"Average save time {avg_save:.2f}ms exceeds 10ms target"
         assert avg_resume < 10.0, f"Average resume time {avg_resume:.2f}ms exceeds 10ms target"
@@ -396,7 +412,7 @@ class TestEndToEndPerformance:
         total_time = sum(times.values())
         print("\nFull Lifecycle Benchmark:")
         for operation, time_ms in times.items():
-            print(f"  {operation:18s}: {time_ms:6.2f}ms ({time_ms/total_time*100:5.1f}%)")
+            print(f"  {operation:18s}: {time_ms:6.2f}ms ({time_ms / total_time * 100:5.1f}%)")
         print(f"  {'Total':18s}: {total_time:6.2f}ms")
 
         # Assert - Total lifecycle <50ms
@@ -434,7 +450,7 @@ class TestEndToEndPerformance:
         print("\nMemory Usage (50 sessions):")
         print(f"  Uncompressed: {uncompressed_size / (1024 * 1024):.2f}MB")
         print(f"  Compressed:   {compressed_size / (1024 * 1024):.2f}MB")
-        print(f"  Reduction:    {(1 - compressed_size/uncompressed_size)*100:.1f}%")
+        print(f"  Reduction:    {(1 - compressed_size / uncompressed_size) * 100:.1f}%")
 
         # Assert - <100MB total for 50 sessions with compression
         assert compressed_size / (1024 * 1024) < 100, "Memory footprint exceeds 100MB target"
@@ -472,15 +488,19 @@ class TestScalabilityBenchmarks:
 
             throughput_mbps = (metadata.original_size_bytes / (1024 * 1024)) / elapsed
 
-            print(f"{size_kb:9d} | {elapsed_ms:9.2f} | {metadata.compression_ratio:6.4f}  | "
-                  f"{throughput_mbps:16.2f}")
+            print(
+                f"{size_kb:9d} | {elapsed_ms:9.2f} | {metadata.compression_ratio:6.4f}  | "
+                f"{throughput_mbps:16.2f}"
+            )
 
-            results.append({
-                "size_kb": size_kb,
-                "time_ms": elapsed_ms,
-                "ratio": metadata.compression_ratio,
-                "throughput_mbps": throughput_mbps,
-            })
+            results.append(
+                {
+                    "size_kb": size_kb,
+                    "time_ms": elapsed_ms,
+                    "ratio": metadata.compression_ratio,
+                    "throughput_mbps": throughput_mbps,
+                }
+            )
 
         # Assert - Performance scales reasonably
         # Larger files should have similar or better throughput due to compression efficiency
@@ -520,11 +540,13 @@ class TestScalabilityBenchmarks:
 
             print(f"{count:8d} | {elapsed_ms:9.2f} | {rate:14.0f}")
 
-            results.append({
-                "count": count,
-                "time_ms": elapsed_ms,
-                "rate": rate,
-            })
+            results.append(
+                {
+                    "count": count,
+                    "time_ms": elapsed_ms,
+                    "rate": rate,
+                }
+            )
 
         # Assert - Rate should stay above 100 sessions/sec even at 1000 sessions
         assert results[-1]["rate"] >= 100

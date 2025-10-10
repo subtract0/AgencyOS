@@ -46,6 +46,7 @@ from trinity_protocol.core.hybrid_executor import HybridExecutor, ModelTier, Tas
 # FIXTURES
 # ============================================================================
 
+
 @pytest.fixture
 def agent_context():
     """Create AgentContext with VectorStore."""
@@ -75,7 +76,7 @@ def executor_with_feedback(agent_context, message_bus, cost_tracker):
         message_bus=message_bus,
         cost_tracker=cost_tracker,
         agent_context=agent_context,
-        enable_quality_feedback=True
+        enable_quality_feedback=True,
     )
 
 
@@ -86,7 +87,7 @@ def executor_without_feedback(agent_context, message_bus, cost_tracker):
         message_bus=message_bus,
         cost_tracker=cost_tracker,
         agent_context=agent_context,
-        enable_quality_feedback=False
+        enable_quality_feedback=False,
     )
 
 
@@ -99,7 +100,7 @@ def sample_task_message():
         "description": "Implement async handler with error handling",
         "estimated_time_seconds": 100.0,
         "complexity": "simple",
-        "_message_id": str(uuid.uuid4())
+        "_message_id": str(uuid.uuid4()),
     }
 
 
@@ -116,13 +117,14 @@ def sample_task_result():
         escalation_count=0,
         test_pass_rate=1.0,
         agents_used=["coder"],
-        error=None
+        error=None,
     )
 
 
 # ============================================================================
 # UNIT TESTS: Initialization and Configuration
 # ============================================================================
+
 
 def test_executor_feedback_enabled(executor_with_feedback):
     """Test executor initializes feedback loop components when enabled."""
@@ -162,11 +164,10 @@ def test_tier_mapping_cloud(executor_with_feedback):
 # INTEGRATION TESTS: End-to-End Feedback Loop
 # ============================================================================
 
+
 @pytest.mark.asyncio
 async def test_feedback_loop_successful_classification(
-    executor_with_feedback,
-    sample_task_message,
-    sample_task_result
+    executor_with_feedback, sample_task_message, sample_task_result
 ):
     """Test feedback loop when task is correctly classified (no refinement needed)."""
     # Mock signal collection (no issues detected)
@@ -176,7 +177,7 @@ async def test_feedback_loop_successful_classification(
         test_failure_rate=0.0,  # No test failures
         code_churn_lines=10,  # Low churn
         execution_time_ratio=1.2,  # Within acceptable range
-        user_feedback=None
+        user_feedback=None,
     )
 
     executor_with_feedback.signal_collector.collect_signals = Mock(return_value=Ok(signals))
@@ -189,7 +190,7 @@ async def test_feedback_loop_successful_classification(
         detected_issues=[],
         aggregated_confidence=0.0,
         is_misclassified=False,
-        detected_at=datetime.utcnow().isoformat()
+        detected_at=datetime.utcnow().isoformat(),
     )
     executor_with_feedback.misclassification_detector.detect = Mock(return_value=Ok(report))
 
@@ -199,7 +200,7 @@ async def test_feedback_loop_successful_classification(
         task_id="task_test_123",
         message=sample_task_message,
         result=sample_task_result,
-        start_time=start_time
+        start_time=start_time,
     )
 
     # Verify signals collected
@@ -214,9 +215,7 @@ async def test_feedback_loop_successful_classification(
 
 @pytest.mark.asyncio
 async def test_feedback_loop_misclassification_detected(
-    executor_with_feedback,
-    sample_task_message,
-    sample_task_result
+    executor_with_feedback, sample_task_message, sample_task_result
 ):
     """Test feedback loop when misclassification is detected and refined."""
     # Mock signal collection (CRITICAL test failures)
@@ -226,7 +225,7 @@ async def test_feedback_loop_misclassification_detected(
         test_failure_rate=0.33,  # 33% test failures (CRITICAL)
         code_churn_lines=120,  # High churn (CRITICAL)
         execution_time_ratio=4.5,  # Severe overrun (WARNING)
-        user_feedback=None
+        user_feedback=None,
     )
     executor_with_feedback.signal_collector.collect_signals = Mock(return_value=Ok(signals))
 
@@ -241,12 +240,12 @@ async def test_feedback_loop_misclassification_detected(
                 confidence=0.95,
                 severity=SeverityLevel.CRITICAL,
                 description="Test failure rate 33% (>10% threshold)",
-                signal_value=0.33
+                signal_value=0.33,
             )
         ],
         aggregated_confidence=0.95,
         is_misclassified=True,
-        detected_at=datetime.utcnow().isoformat()
+        detected_at=datetime.utcnow().isoformat(),
     )
     executor_with_feedback.misclassification_detector.detect = Mock(return_value=Ok(report))
 
@@ -260,7 +259,7 @@ async def test_feedback_loop_misclassification_detected(
         iteration_count=1,
         convergence_achieved=False,
         accuracy_estimate=None,
-        refined_at=datetime.utcnow().isoformat()
+        refined_at=datetime.utcnow().isoformat(),
     )
     executor_with_feedback.rule_refiner.refine = Mock(return_value=Ok(refinement))
 
@@ -270,7 +269,7 @@ async def test_feedback_loop_misclassification_detected(
         task_id="task_test_123",
         message=sample_task_message,
         result=sample_task_result,
-        start_time=start_time
+        start_time=start_time,
     )
 
     # Verify full workflow executed
@@ -288,16 +287,14 @@ async def test_feedback_loop_misclassification_detected(
             "recommended_tier": "complex",
             "confidence": 0.95,
             "patterns_updated": 1,
-            "iteration_count": 1
-        }
+            "iteration_count": 1,
+        },
     )
 
 
 @pytest.mark.asyncio
 async def test_feedback_loop_graceful_degradation_signal_collection_fails(
-    executor_with_feedback,
-    sample_task_message,
-    sample_task_result
+    executor_with_feedback, sample_task_message, sample_task_result
 ):
     """Test graceful degradation when signal collection fails."""
     # Mock signal collection failure
@@ -311,7 +308,7 @@ async def test_feedback_loop_graceful_degradation_signal_collection_fails(
         task_id="task_test_123",
         message=sample_task_message,
         result=sample_task_result,
-        start_time=start_time
+        start_time=start_time,
     )
 
     # Verify workflow stopped after signal collection failure
@@ -321,9 +318,7 @@ async def test_feedback_loop_graceful_degradation_signal_collection_fails(
 
 @pytest.mark.asyncio
 async def test_feedback_loop_graceful_degradation_detection_fails(
-    executor_with_feedback,
-    sample_task_message,
-    sample_task_result
+    executor_with_feedback, sample_task_message, sample_task_result
 ):
     """Test graceful degradation when misclassification detection fails."""
     # Mock signal collection (success)
@@ -333,7 +328,7 @@ async def test_feedback_loop_graceful_degradation_detection_fails(
         test_failure_rate=0.15,
         code_churn_lines=50,
         execution_time_ratio=2.0,
-        user_feedback=None
+        user_feedback=None,
     )
     executor_with_feedback.signal_collector.collect_signals = Mock(return_value=Ok(signals))
 
@@ -348,7 +343,7 @@ async def test_feedback_loop_graceful_degradation_detection_fails(
         task_id="task_test_123",
         message=sample_task_message,
         result=sample_task_result,
-        start_time=start_time
+        start_time=start_time,
     )
 
     # Verify workflow stopped after detection failure
@@ -359,9 +354,7 @@ async def test_feedback_loop_graceful_degradation_detection_fails(
 
 @pytest.mark.asyncio
 async def test_feedback_loop_graceful_degradation_refinement_fails(
-    executor_with_feedback,
-    sample_task_message,
-    sample_task_result
+    executor_with_feedback, sample_task_message, sample_task_result
 ):
     """Test graceful degradation when VectorStore refinement fails."""
     # Mock signal collection (success)
@@ -371,7 +364,7 @@ async def test_feedback_loop_graceful_degradation_refinement_fails(
         test_failure_rate=0.25,
         code_churn_lines=100,
         execution_time_ratio=3.5,
-        user_feedback=None
+        user_feedback=None,
     )
     executor_with_feedback.signal_collector.collect_signals = Mock(return_value=Ok(signals))
 
@@ -383,7 +376,7 @@ async def test_feedback_loop_graceful_degradation_refinement_fails(
         detected_issues=[],
         aggregated_confidence=0.85,
         is_misclassified=True,
-        detected_at=datetime.utcnow().isoformat()
+        detected_at=datetime.utcnow().isoformat(),
     )
     executor_with_feedback.misclassification_detector.detect = Mock(return_value=Ok(report))
 
@@ -398,7 +391,7 @@ async def test_feedback_loop_graceful_degradation_refinement_fails(
         task_id="task_test_123",
         message=sample_task_message,
         result=sample_task_result,
-        start_time=start_time
+        start_time=start_time,
     )
 
     # Verify workflow completed but no telemetry (refinement failed)
@@ -410,9 +403,7 @@ async def test_feedback_loop_graceful_degradation_refinement_fails(
 
 @pytest.mark.asyncio
 async def test_feedback_loop_graceful_degradation_exception_crash(
-    executor_with_feedback,
-    sample_task_message,
-    sample_task_result
+    executor_with_feedback, sample_task_message, sample_task_result
 ):
     """Test graceful degradation when unexpected exception occurs."""
     # Mock signal collection to raise exception
@@ -426,7 +417,7 @@ async def test_feedback_loop_graceful_degradation_exception_crash(
         task_id="task_test_123",
         message=sample_task_message,
         result=sample_task_result,
-        start_time=start_time
+        start_time=start_time,
     )
 
     # Verify no telemetry event (graceful degradation)
@@ -435,9 +426,7 @@ async def test_feedback_loop_graceful_degradation_exception_crash(
 
 @pytest.mark.asyncio
 async def test_feedback_loop_with_user_feedback_override(
-    executor_with_feedback,
-    sample_task_message,
-    sample_task_result
+    executor_with_feedback, sample_task_message, sample_task_result
 ):
     """Test feedback loop with user feedback override (highest confidence)."""
     # Mock signal collection with user feedback (confidence=1.0)
@@ -447,7 +436,7 @@ async def test_feedback_loop_with_user_feedback_override(
         test_failure_rate=0.0,
         code_churn_lines=10,
         execution_time_ratio=1.0,
-        user_feedback=UserFeedback.MISCLASSIFIED  # User override
+        user_feedback=UserFeedback.MISCLASSIFIED,  # User override
     )
     executor_with_feedback.signal_collector.collect_signals = Mock(return_value=Ok(signals))
 
@@ -462,12 +451,12 @@ async def test_feedback_loop_with_user_feedback_override(
                 confidence=1.0,  # Highest confidence
                 severity=SeverityLevel.CRITICAL,
                 description="User explicitly flagged as misclassified",
-                signal_value=None
+                signal_value=None,
             )
         ],
         aggregated_confidence=1.0,
         is_misclassified=True,
-        detected_at=datetime.utcnow().isoformat()
+        detected_at=datetime.utcnow().isoformat(),
     )
     executor_with_feedback.misclassification_detector.detect = Mock(return_value=Ok(report))
 
@@ -481,7 +470,7 @@ async def test_feedback_loop_with_user_feedback_override(
         iteration_count=1,
         convergence_achieved=False,
         accuracy_estimate=None,
-        refined_at=datetime.utcnow().isoformat()
+        refined_at=datetime.utcnow().isoformat(),
     )
     executor_with_feedback.rule_refiner.refine = Mock(return_value=Ok(refinement))
 
@@ -491,7 +480,7 @@ async def test_feedback_loop_with_user_feedback_override(
         task_id="task_test_123",
         message=sample_task_message,
         result=sample_task_result,
-        start_time=start_time
+        start_time=start_time,
     )
 
     # Verify refinement triggered with user feedback (highest priority)
@@ -507,8 +496,8 @@ async def test_feedback_loop_with_user_feedback_override(
             "recommended_tier": "moderate",
             "confidence": 1.0,
             "patterns_updated": 1,
-            "iteration_count": 1
-        }
+            "iteration_count": 1,
+        },
     )
 
 
@@ -516,11 +505,10 @@ async def test_feedback_loop_with_user_feedback_override(
 # EDGE CASES
 # ============================================================================
 
+
 @pytest.mark.asyncio
 async def test_feedback_loop_skipped_when_disabled(
-    executor_without_feedback,
-    sample_task_message,
-    sample_task_result
+    executor_without_feedback, sample_task_message, sample_task_result
 ):
     """Test feedback loop is skipped when disabled."""
     # Attempt to run feedback loop (should no-op)
@@ -533,10 +521,7 @@ async def test_feedback_loop_skipped_when_disabled(
 
 
 @pytest.mark.asyncio
-async def test_feedback_loop_skipped_for_failed_tasks(
-    executor_with_feedback,
-    sample_task_message
-):
+async def test_feedback_loop_skipped_for_failed_tasks(executor_with_feedback, sample_task_message):
     """Test feedback loop is skipped for failed tasks (status != 'success')."""
     # Create failed task result
     failed_result = TaskResult(
@@ -549,7 +534,7 @@ async def test_feedback_loop_skipped_for_failed_tasks(
         escalation_count=3,
         test_pass_rate=0.0,
         agents_used=["coder"],
-        error="Test failures"
+        error="Test failures",
     )
 
     # Mock signal collector (should not be called)
@@ -565,10 +550,7 @@ async def test_feedback_loop_skipped_for_failed_tasks(
 
 
 @pytest.mark.asyncio
-async def test_feedback_loop_missing_estimated_time(
-    executor_with_feedback,
-    sample_task_result
-):
+async def test_feedback_loop_missing_estimated_time(executor_with_feedback, sample_task_result):
     """Test feedback loop handles missing estimated_time gracefully."""
     # Task message without estimated_time
     task_message_no_estimate = {
@@ -576,7 +558,7 @@ async def test_feedback_loop_missing_estimated_time(
         "task_type": "code_generation",
         "description": "Implement feature",
         # No estimated_time_seconds
-        "_message_id": str(uuid.uuid4())
+        "_message_id": str(uuid.uuid4()),
     }
 
     # Mock signal collection (should handle None estimated_time)
@@ -586,7 +568,7 @@ async def test_feedback_loop_missing_estimated_time(
         test_failure_rate=0.0,
         code_churn_lines=10,
         execution_time_ratio=None,  # None due to missing estimate
-        user_feedback=None
+        user_feedback=None,
     )
     executor_with_feedback.signal_collector.collect_signals = Mock(return_value=Ok(signals))
 
@@ -598,7 +580,7 @@ async def test_feedback_loop_missing_estimated_time(
         detected_issues=[],
         aggregated_confidence=0.0,
         is_misclassified=False,
-        detected_at=datetime.utcnow().isoformat()
+        detected_at=datetime.utcnow().isoformat(),
     )
     executor_with_feedback.misclassification_detector.detect = Mock(return_value=Ok(report))
 
@@ -608,7 +590,7 @@ async def test_feedback_loop_missing_estimated_time(
         task_id="task_test_123",
         message=task_message_no_estimate,
         result=sample_task_result,
-        start_time=start_time
+        start_time=start_time,
     )
 
     # Verify workflow executed successfully
@@ -617,9 +599,7 @@ async def test_feedback_loop_missing_estimated_time(
 
 @pytest.mark.asyncio
 async def test_feedback_loop_timing_calculation(
-    executor_with_feedback,
-    sample_task_message,
-    sample_task_result
+    executor_with_feedback, sample_task_message, sample_task_result
 ):
     """Test feedback loop correctly calculates execution time."""
     # Mock signal collection to capture timing parameters
@@ -627,14 +607,16 @@ async def test_feedback_loop_timing_calculation(
 
     def capture_signals(**kwargs):
         captured_args.update(kwargs)
-        return Ok(QualitySignals(
-            task_id=kwargs["task_id"],
-            original_tier=kwargs["original_tier"],
-            test_failure_rate=0.0,
-            code_churn_lines=0,
-            execution_time_ratio=kwargs.get("execution_time_ratio"),
-            user_feedback=None
-        ))
+        return Ok(
+            QualitySignals(
+                task_id=kwargs["task_id"],
+                original_tier=kwargs["original_tier"],
+                test_failure_rate=0.0,
+                code_churn_lines=0,
+                execution_time_ratio=kwargs.get("execution_time_ratio"),
+                user_feedback=None,
+            )
+        )
 
     executor_with_feedback.signal_collector.collect_signals = Mock(side_effect=capture_signals)
 
@@ -646,7 +628,7 @@ async def test_feedback_loop_timing_calculation(
         detected_issues=[],
         aggregated_confidence=0.0,
         is_misclassified=False,
-        detected_at=datetime.utcnow().isoformat()
+        detected_at=datetime.utcnow().isoformat(),
     )
     executor_with_feedback.misclassification_detector.detect = Mock(return_value=Ok(report))
 
@@ -658,7 +640,7 @@ async def test_feedback_loop_timing_calculation(
         task_id="task_test_123",
         message=sample_task_message,
         result=sample_task_result,
-        start_time=start_time
+        start_time=start_time,
     )
 
     # Verify timing was calculated
@@ -670,6 +652,7 @@ async def test_feedback_loop_timing_calculation(
 # ============================================================================
 # CONSTITUTIONAL COMPLIANCE TESTS
 # ============================================================================
+
 
 def test_article_i_complete_context_all_signals_collected(executor_with_feedback):
     """Test Article I: All signals collected before detection (complete context)."""

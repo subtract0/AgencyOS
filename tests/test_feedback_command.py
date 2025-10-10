@@ -42,6 +42,7 @@ from tools.agency_cli.feedback_command import (
 # UNIT TESTS (10+ tests required)
 # ============================================================================
 
+
 class TestFeedbackCommandUnit:
     """Unit tests for FeedbackCommand class."""
 
@@ -52,7 +53,7 @@ class TestFeedbackCommandUnit:
         feedback_dir.mkdir(parents=True, exist_ok=True)
 
         # Patch FEEDBACK_DIR class attribute
-        with patch.object(FeedbackCommand, 'FEEDBACK_DIR', feedback_dir):
+        with patch.object(FeedbackCommand, "FEEDBACK_DIR", feedback_dir):
             yield feedback_dir
 
     @pytest.fixture
@@ -79,7 +80,7 @@ class TestFeedbackCommandUnit:
             iteration_count=1,
             convergence_achieved=False,
             accuracy_estimate=None,
-            refined_at=datetime.now(UTC).isoformat()
+            refined_at=datetime.now(UTC).isoformat(),
         )
 
         refiner.refine = Mock(return_value=Ok(refinement))
@@ -88,23 +89,25 @@ class TestFeedbackCommandUnit:
     @pytest.fixture
     def feedback_command(self, temp_feedback_dir, mock_context, mock_refiner):
         """Create FeedbackCommand instance with mocks."""
-        with patch('tools.agency_cli.feedback_command.create_agent_context', return_value=mock_context), \
-             patch('tools.agency_cli.feedback_command.RuleRefiner', return_value=mock_refiner):
+        with (
+            patch(
+                "tools.agency_cli.feedback_command.create_agent_context", return_value=mock_context
+            ),
+            patch("tools.agency_cli.feedback_command.RuleRefiner", return_value=mock_refiner),
+        ):
             cmd = FeedbackCommand()
             cmd.context = mock_context
             cmd.refiner = mock_refiner
             return cmd
 
     # Test 1: Valid tiers → feedback file created
-    def test_mark_misclassified_valid_tiers_creates_file(
-        self, feedback_command, temp_feedback_dir
-    ):
+    def test_mark_misclassified_valid_tiers_creates_file(self, feedback_command, temp_feedback_dir):
         """Test mark_misclassified with valid tiers creates feedback file."""
         result = feedback_command.mark_misclassified(
             task_id="task_42",
             original_tier="simple",
             correct_tier="complex",
-            description="Fix critical bug"
+            description="Fix critical bug",
         )
 
         assert result.is_ok()
@@ -130,7 +133,7 @@ class TestFeedbackCommandUnit:
             task_id="task_42",
             original_tier="invalid_tier",  # Invalid
             correct_tier="complex",
-            description="Fix bug"
+            description="Fix bug",
         )
 
         assert result.is_err()
@@ -138,15 +141,10 @@ class TestFeedbackCommandUnit:
         assert "Invalid tier" in str(error)
 
     # Test 3: Triggers refinement → RuleRefiner called
-    def test_mark_misclassified_triggers_refinement(
-        self, feedback_command, mock_refiner
-    ):
+    def test_mark_misclassified_triggers_refinement(self, feedback_command, mock_refiner):
         """Test mark_misclassified triggers immediate refinement."""
         result = feedback_command.mark_misclassified(
-            task_id="task_42",
-            original_tier="simple",
-            correct_tier="complex",
-            description="Fix bug"
+            task_id="task_42", original_tier="simple", correct_tier="complex", description="Fix bug"
         )
 
         assert result.is_ok()
@@ -172,9 +170,7 @@ class TestFeedbackCommandUnit:
         assert issues[0].severity == SeverityLevel.CRITICAL
 
     # Test 4: List feedback → returns 5 most recent
-    def test_list_feedback_returns_recent_entries(
-        self, feedback_command, temp_feedback_dir
-    ):
+    def test_list_feedback_returns_recent_entries(self, feedback_command, temp_feedback_dir):
         """Test list_feedback returns most recent entries."""
         # Create 5 feedback files
         for i in range(5):
@@ -184,7 +180,7 @@ class TestFeedbackCommandUnit:
                 "original_tier": "simple",
                 "correct_tier": "complex",
                 "feedback": "misclassified",
-                "marked_at": datetime.now(UTC).isoformat()
+                "marked_at": datetime.now(UTC).isoformat(),
             }
             with open(feedback_file, "w") as f:
                 json.dump(data, f)
@@ -196,9 +192,7 @@ class TestFeedbackCommandUnit:
         assert len(entries) == 3  # Limited to 3
 
     # Test 5: Empty directory → returns empty list
-    def test_list_feedback_empty_directory_returns_empty(
-        self, feedback_command, temp_feedback_dir
-    ):
+    def test_list_feedback_empty_directory_returns_empty(self, feedback_command, temp_feedback_dir):
         """Test list_feedback with empty directory returns empty list."""
         result = feedback_command.list_feedback(limit=10)
 
@@ -207,9 +201,7 @@ class TestFeedbackCommandUnit:
         assert len(entries) == 0
 
     # Test 6: Clear feedback → file deleted
-    def test_clear_feedback_deletes_file(
-        self, feedback_command, temp_feedback_dir
-    ):
+    def test_clear_feedback_deletes_file(self, feedback_command, temp_feedback_dir):
         """Test clear_feedback deletes existing feedback file."""
         # Create feedback file
         feedback_file = temp_feedback_dir / "task_42.json"
@@ -218,7 +210,7 @@ class TestFeedbackCommandUnit:
             "original_tier": "simple",
             "correct_tier": "complex",
             "feedback": "misclassified",
-            "marked_at": datetime.now(UTC).isoformat()
+            "marked_at": datetime.now(UTC).isoformat(),
         }
         with open(feedback_file, "w") as f:
             json.dump(data, f)
@@ -240,15 +232,10 @@ class TestFeedbackCommandUnit:
         assert "No feedback found" in str(error)
 
     # Test 8: User feedback stored with confidence=1.0
-    def test_user_feedback_has_highest_confidence(
-        self, feedback_command, mock_refiner
-    ):
+    def test_user_feedback_has_highest_confidence(self, feedback_command, mock_refiner):
         """Test user feedback creates CRITICAL issue with confidence=1.0."""
         feedback_command.mark_misclassified(
-            task_id="task_42",
-            original_tier="simple",
-            correct_tier="complex",
-            description="Fix bug"
+            task_id="task_42", original_tier="simple", correct_tier="complex", description="Fix bug"
         )
 
         # Extract MisclassificationReport from refiner call
@@ -260,15 +247,10 @@ class TestFeedbackCommandUnit:
         assert report.detected_issues[0].confidence == 1.0
 
     # Test 9: User feedback creates CRITICAL severity
-    def test_user_feedback_creates_critical_severity(
-        self, feedback_command, mock_refiner
-    ):
+    def test_user_feedback_creates_critical_severity(self, feedback_command, mock_refiner):
         """Test user feedback creates CRITICAL severity issue."""
         feedback_command.mark_misclassified(
-            task_id="task_42",
-            original_tier="simple",
-            correct_tier="complex",
-            description="Fix bug"
+            task_id="task_42", original_tier="simple", correct_tier="complex", description="Fix bug"
         )
 
         # Extract MisclassificationReport
@@ -284,10 +266,7 @@ class TestFeedbackCommandUnit:
     ):
         """Test refinement result displays confidence update."""
         feedback_command.mark_misclassified(
-            task_id="task_42",
-            original_tier="simple",
-            correct_tier="complex",
-            description="Fix bug"
+            task_id="task_42", original_tier="simple", correct_tier="complex", description="Fix bug"
         )
 
         # Verify refiner was called
@@ -307,10 +286,7 @@ class TestFeedbackCommandUnit:
         mock_refiner.refine = Mock(return_value=Err("Refinement failed"))
 
         result = feedback_command.mark_misclassified(
-            task_id="task_42",
-            original_tier="simple",
-            correct_tier="complex",
-            description="Fix bug"
+            task_id="task_42", original_tier="simple", correct_tier="complex", description="Fix bug"
         )
 
         # Should still succeed (soft failure)
@@ -329,7 +305,7 @@ class TestFeedbackCommandUnit:
             task_id="task_42",
             original_tier="simple",
             correct_tier="complex",
-            description=None  # No description
+            description=None,  # No description
         )
 
         assert result.is_ok()
@@ -343,6 +319,7 @@ class TestFeedbackCommandUnit:
 # INTEGRATION TESTS (3+ tests required)
 # ============================================================================
 
+
 class TestFeedbackCommandIntegration:
     """Integration tests for E2E workflow."""
 
@@ -352,15 +329,16 @@ class TestFeedbackCommandIntegration:
         feedback_dir = tmp_path / ".agency" / "memories" / "feedback"
         feedback_dir.mkdir(parents=True, exist_ok=True)
 
-        with patch.object(FeedbackCommand, 'FEEDBACK_DIR', feedback_dir):
+        with patch.object(FeedbackCommand, "FEEDBACK_DIR", feedback_dir):
             yield feedback_dir
 
     # Integration Test 1: E2E mark → list → clear workflow
     def test_e2e_mark_list_clear_workflow(self, temp_feedback_dir):
         """Test complete E2E workflow: mark → list → clear."""
-        with patch('tools.agency_cli.feedback_command.create_agent_context') as mock_ctx, \
-             patch('tools.agency_cli.feedback_command.RuleRefiner') as mock_refiner_cls:
-
+        with (
+            patch("tools.agency_cli.feedback_command.create_agent_context") as mock_ctx,
+            patch("tools.agency_cli.feedback_command.RuleRefiner") as mock_refiner_cls,
+        ):
             # Setup mocks
             mock_context = Mock()
             mock_context.session_id = "test"
@@ -376,7 +354,7 @@ class TestFeedbackCommandIntegration:
                 iteration_count=1,
                 convergence_achieved=False,
                 accuracy_estimate=None,
-                refined_at=datetime.now(UTC).isoformat()
+                refined_at=datetime.now(UTC).isoformat(),
             )
             mock_refiner.refine = Mock(return_value=Ok(refinement))
             mock_refiner_cls.return_value = mock_refiner
@@ -388,7 +366,7 @@ class TestFeedbackCommandIntegration:
                 task_id="task_42",
                 original_tier="simple",
                 correct_tier="complex",
-                description="Fix bug"
+                description="Fix bug",
             )
             assert mark_result.is_ok()
 
@@ -412,9 +390,10 @@ class TestFeedbackCommandIntegration:
     # Integration Test 2: E2E mark → VectorStore pattern updated
     def test_e2e_mark_updates_vectorstore(self, temp_feedback_dir):
         """Test mark triggers VectorStore pattern update."""
-        with patch('tools.agency_cli.feedback_command.create_agent_context') as mock_ctx, \
-             patch('tools.agency_cli.feedback_command.RuleRefiner') as mock_refiner_cls:
-
+        with (
+            patch("tools.agency_cli.feedback_command.create_agent_context") as mock_ctx,
+            patch("tools.agency_cli.feedback_command.RuleRefiner") as mock_refiner_cls,
+        ):
             # Setup mocks
             mock_context = Mock()
             mock_context.session_id = "test"
@@ -431,7 +410,7 @@ class TestFeedbackCommandIntegration:
                 iteration_count=1,
                 convergence_achieved=False,
                 accuracy_estimate=None,
-                refined_at=datetime.now(UTC).isoformat()
+                refined_at=datetime.now(UTC).isoformat(),
             )
             mock_refiner.refine = Mock(return_value=Ok(refinement))
             mock_refiner_cls.return_value = mock_refiner
@@ -443,7 +422,7 @@ class TestFeedbackCommandIntegration:
                 task_id="task_42",
                 original_tier="simple",
                 correct_tier="complex",
-                description="Fix critical bug"
+                description="Fix critical bug",
             )
 
             # Verify RuleRefiner.refine was called (which updates VectorStore)
@@ -452,9 +431,10 @@ class TestFeedbackCommandIntegration:
     # Integration Test 3: E2E immediate refinement applied
     def test_e2e_immediate_refinement_applied(self, temp_feedback_dir, capsys):
         """Test immediate refinement is triggered (no wait for next execution)."""
-        with patch('tools.agency_cli.feedback_command.create_agent_context') as mock_ctx, \
-             patch('tools.agency_cli.feedback_command.RuleRefiner') as mock_refiner_cls:
-
+        with (
+            patch("tools.agency_cli.feedback_command.create_agent_context") as mock_ctx,
+            patch("tools.agency_cli.feedback_command.RuleRefiner") as mock_refiner_cls,
+        ):
             # Setup mocks
             mock_context = Mock()
             mock_context.session_id = "test"
@@ -470,7 +450,7 @@ class TestFeedbackCommandIntegration:
                 iteration_count=1,
                 convergence_achieved=False,
                 accuracy_estimate=None,
-                refined_at=datetime.now(UTC).isoformat()
+                refined_at=datetime.now(UTC).isoformat(),
             )
             mock_refiner.refine = Mock(return_value=Ok(refinement))
             mock_refiner_cls.return_value = mock_refiner
@@ -482,7 +462,7 @@ class TestFeedbackCommandIntegration:
                 task_id="task_42",
                 original_tier="simple",
                 correct_tier="complex",
-                description="Fix bug"
+                description="Fix bug",
             )
 
             # Verify immediate refinement message
@@ -495,6 +475,7 @@ class TestFeedbackCommandIntegration:
 # CLI INTEGRATION TESTS (argparse)
 # ============================================================================
 
+
 class TestFeedbackCLI:
     """Test CLI command handlers."""
 
@@ -504,14 +485,15 @@ class TestFeedbackCLI:
         feedback_dir = tmp_path / ".agency" / "memories" / "feedback"
         feedback_dir.mkdir(parents=True, exist_ok=True)
 
-        with patch.object(FeedbackCommand, 'FEEDBACK_DIR', feedback_dir):
+        with patch.object(FeedbackCommand, "FEEDBACK_DIR", feedback_dir):
             yield feedback_dir
 
     def test_cmd_feedback_mark_success(self, temp_feedback_dir, capsys):
         """Test cmd_feedback_mark CLI handler with valid args."""
-        with patch('tools.agency_cli.feedback_command.create_agent_context') as mock_ctx, \
-             patch('tools.agency_cli.feedback_command.RuleRefiner') as mock_refiner_cls:
-
+        with (
+            patch("tools.agency_cli.feedback_command.create_agent_context") as mock_ctx,
+            patch("tools.agency_cli.feedback_command.RuleRefiner") as mock_refiner_cls,
+        ):
             # Setup mocks
             mock_context = Mock()
             mock_context.session_id = "test"
@@ -527,7 +509,7 @@ class TestFeedbackCLI:
                 iteration_count=1,
                 convergence_achieved=False,
                 accuracy_estimate=None,
-                refined_at=datetime.now(UTC).isoformat()
+                refined_at=datetime.now(UTC).isoformat(),
             )
             mock_refiner.refine = Mock(return_value=Ok(refinement))
             mock_refiner_cls.return_value = mock_refiner
@@ -548,9 +530,10 @@ class TestFeedbackCLI:
 
     def test_cmd_feedback_mark_failure_exits(self, temp_feedback_dir):
         """Test cmd_feedback_mark exits with code 1 on error."""
-        with patch('tools.agency_cli.feedback_command.create_agent_context') as mock_ctx, \
-             patch('tools.agency_cli.feedback_command.RuleRefiner') as mock_refiner_cls:
-
+        with (
+            patch("tools.agency_cli.feedback_command.create_agent_context") as mock_ctx,
+            patch("tools.agency_cli.feedback_command.RuleRefiner") as mock_refiner_cls,
+        ):
             mock_context = Mock()
             mock_ctx.return_value = mock_context
             mock_refiner_cls.return_value = Mock()
@@ -577,14 +560,15 @@ class TestFeedbackCLI:
             "original_tier": "simple",
             "correct_tier": "complex",
             "feedback": "misclassified",
-            "marked_at": "2025-10-10T12:00:00Z"
+            "marked_at": "2025-10-10T12:00:00Z",
         }
         with open(feedback_file, "w") as f:
             json.dump(data, f)
 
-        with patch('tools.agency_cli.feedback_command.create_agent_context'), \
-             patch('tools.agency_cli.feedback_command.RuleRefiner'):
-
+        with (
+            patch("tools.agency_cli.feedback_command.create_agent_context"),
+            patch("tools.agency_cli.feedback_command.RuleRefiner"),
+        ):
             args = Mock()
             args.limit = 10
 
@@ -604,14 +588,15 @@ class TestFeedbackCLI:
             "original_tier": "simple",
             "correct_tier": "complex",
             "feedback": "misclassified",
-            "marked_at": "2025-10-10T12:00:00Z"
+            "marked_at": "2025-10-10T12:00:00Z",
         }
         with open(feedback_file, "w") as f:
             json.dump(data, f)
 
-        with patch('tools.agency_cli.feedback_command.create_agent_context'), \
-             patch('tools.agency_cli.feedback_command.RuleRefiner'):
-
+        with (
+            patch("tools.agency_cli.feedback_command.create_agent_context"),
+            patch("tools.agency_cli.feedback_command.RuleRefiner"),
+        ):
             args = Mock()
             args.task_id = "task_42"
 
@@ -626,6 +611,7 @@ class TestFeedbackCLI:
 # ERROR HANDLING TESTS
 # ============================================================================
 
+
 class TestFeedbackCommandErrors:
     """Test error handling scenarios."""
 
@@ -635,21 +621,22 @@ class TestFeedbackCommandErrors:
         feedback_dir = tmp_path / ".agency" / "memories" / "feedback"
         feedback_dir.mkdir(parents=True, exist_ok=True)
 
-        with patch.object(FeedbackCommand, 'FEEDBACK_DIR', feedback_dir):
+        with patch.object(FeedbackCommand, "FEEDBACK_DIR", feedback_dir):
             yield feedback_dir
 
     def test_invalid_original_tier(self, temp_feedback_dir):
         """Test invalid original_tier parameter."""
-        with patch('tools.agency_cli.feedback_command.create_agent_context'), \
-             patch('tools.agency_cli.feedback_command.RuleRefiner'):
-
+        with (
+            patch("tools.agency_cli.feedback_command.create_agent_context"),
+            patch("tools.agency_cli.feedback_command.RuleRefiner"),
+        ):
             cmd = FeedbackCommand()
 
             result = cmd.mark_misclassified(
                 task_id="task_42",
                 original_tier="invalid",
                 correct_tier="complex",
-                description="Fix bug"
+                description="Fix bug",
             )
 
             assert result.is_err()
@@ -657,16 +644,17 @@ class TestFeedbackCommandErrors:
 
     def test_invalid_correct_tier(self, temp_feedback_dir):
         """Test invalid correct_tier parameter."""
-        with patch('tools.agency_cli.feedback_command.create_agent_context'), \
-             patch('tools.agency_cli.feedback_command.RuleRefiner'):
-
+        with (
+            patch("tools.agency_cli.feedback_command.create_agent_context"),
+            patch("tools.agency_cli.feedback_command.RuleRefiner"),
+        ):
             cmd = FeedbackCommand()
 
             result = cmd.mark_misclassified(
                 task_id="task_42",
                 original_tier="simple",
                 correct_tier="invalid",
-                description="Fix bug"
+                description="Fix bug",
             )
 
             assert result.is_err()
@@ -674,9 +662,10 @@ class TestFeedbackCommandErrors:
 
     def test_exception_during_refinement(self, temp_feedback_dir):
         """Test exception during refinement is handled gracefully."""
-        with patch('tools.agency_cli.feedback_command.create_agent_context') as mock_ctx, \
-             patch('tools.agency_cli.feedback_command.RuleRefiner') as mock_refiner_cls:
-
+        with (
+            patch("tools.agency_cli.feedback_command.create_agent_context") as mock_ctx,
+            patch("tools.agency_cli.feedback_command.RuleRefiner") as mock_refiner_cls,
+        ):
             mock_context = Mock()
             mock_ctx.return_value = mock_context
 
@@ -692,7 +681,7 @@ class TestFeedbackCommandErrors:
                 task_id="task_42",
                 original_tier="simple",
                 correct_tier="complex",
-                description="Fix bug"
+                description="Fix bug",
             )
 
             # Feedback file should exist despite exception
@@ -704,6 +693,7 @@ class TestFeedbackCommandErrors:
 # COVERAGE TESTS (ensure >95%)
 # ============================================================================
 
+
 class TestFeedbackCommandCoverage:
     """Additional tests to ensure >95% coverage."""
 
@@ -713,7 +703,7 @@ class TestFeedbackCommandCoverage:
         feedback_dir = tmp_path / ".agency" / "memories" / "feedback"
         feedback_dir.mkdir(parents=True, exist_ok=True)
 
-        with patch.object(FeedbackCommand, 'FEEDBACK_DIR', feedback_dir):
+        with patch.object(FeedbackCommand, "FEEDBACK_DIR", feedback_dir):
             yield feedback_dir
 
     def test_feedback_directory_created_if_missing(self, tmp_path):
@@ -723,10 +713,11 @@ class TestFeedbackCommandCoverage:
         # Ensure directory doesn't exist
         assert not feedback_dir.exists()
 
-        with patch.object(FeedbackCommand, 'FEEDBACK_DIR', feedback_dir), \
-             patch('tools.agency_cli.feedback_command.create_agent_context'), \
-             patch('tools.agency_cli.feedback_command.RuleRefiner'):
-
+        with (
+            patch.object(FeedbackCommand, "FEEDBACK_DIR", feedback_dir),
+            patch("tools.agency_cli.feedback_command.create_agent_context"),
+            patch("tools.agency_cli.feedback_command.RuleRefiner"),
+        ):
             cmd = FeedbackCommand()
 
             # Directory should be created
@@ -734,9 +725,10 @@ class TestFeedbackCommandCoverage:
 
     def test_list_feedback_empty_message(self, temp_feedback_dir, capsys):
         """Test list_feedback displays message when no entries found."""
-        with patch('tools.agency_cli.feedback_command.create_agent_context'), \
-             patch('tools.agency_cli.feedback_command.RuleRefiner'):
-
+        with (
+            patch("tools.agency_cli.feedback_command.create_agent_context"),
+            patch("tools.agency_cli.feedback_command.RuleRefiner"),
+        ):
             args = Mock()
             args.limit = 10
 
@@ -749,9 +741,10 @@ class TestFeedbackCommandCoverage:
         """Test threshold adjustments are displayed in output."""
         from shared.models.refinement_result import ThresholdAdjustment
 
-        with patch('tools.agency_cli.feedback_command.create_agent_context') as mock_ctx, \
-             patch('tools.agency_cli.feedback_command.RuleRefiner') as mock_refiner_cls:
-
+        with (
+            patch("tools.agency_cli.feedback_command.create_agent_context") as mock_ctx,
+            patch("tools.agency_cli.feedback_command.RuleRefiner") as mock_refiner_cls,
+        ):
             mock_context = Mock()
             mock_ctx.return_value = mock_context
 
@@ -763,7 +756,7 @@ class TestFeedbackCommandCoverage:
                 old_threshold=0.1,
                 new_threshold=0.09,
                 adjustment_count=3,
-                adjusted_at=datetime.now(UTC).isoformat()
+                adjusted_at=datetime.now(UTC).isoformat(),
             )
 
             refinement = RefinementResult(
@@ -775,7 +768,7 @@ class TestFeedbackCommandCoverage:
                 iteration_count=1,
                 convergence_achieved=False,
                 accuracy_estimate=None,
-                refined_at=datetime.now(UTC).isoformat()
+                refined_at=datetime.now(UTC).isoformat(),
             )
 
             mock_refiner.refine = Mock(return_value=Ok(refinement))
@@ -787,7 +780,7 @@ class TestFeedbackCommandCoverage:
                 task_id="task_42",
                 original_tier="simple",
                 correct_tier="complex",
-                description="Fix bug"
+                description="Fix bug",
             )
 
             captured = capsys.readouterr()

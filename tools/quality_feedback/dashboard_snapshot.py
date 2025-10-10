@@ -29,6 +29,7 @@ from pydantic import BaseModel, Field
 # Import dashboard if available, otherwise use mock data
 try:
     from tools.quality_feedback.accuracy_dashboard import AccuracyDashboard, DashboardSnapshot
+
     DASHBOARD_AVAILABLE = True
 except ImportError:
     DASHBOARD_AVAILABLE = False
@@ -40,28 +41,19 @@ class SnapshotMetadata(BaseModel):
 
     generated_at: str = Field(
         default_factory=lambda: datetime.now(UTC).isoformat(),
-        description="ISO 8601 timestamp of snapshot generation (UTC)"
+        description="ISO 8601 timestamp of snapshot generation (UTC)",
     )
-    snapshot_version: str = Field(
-        default="1.0",
-        description="Snapshot schema version"
-    )
-    dashboard_available: bool = Field(
-        ...,
-        description="Whether real dashboard data was available"
-    )
+    snapshot_version: str = Field(default="1.0", description="Snapshot schema version")
+    dashboard_available: bool = Field(..., description="Whether real dashboard data was available")
     data_directory: str | None = Field(
-        None,
-        description="Path to dashboard data directory (if available)"
+        None, description="Path to dashboard data directory (if available)"
     )
 
 
 class MockDashboardSnapshot(BaseModel):
     """Mock snapshot for when dashboard is unavailable."""
 
-    timestamp: str = Field(
-        default_factory=lambda: datetime.now(UTC).isoformat()
-    )
+    timestamp: str = Field(default_factory=lambda: datetime.now(UTC).isoformat())
     total_tasks: int = Field(default=0)
     correct_classifications: int = Field(default=0)
     misclassifications: int = Field(default=0)
@@ -73,11 +65,7 @@ class MockDashboardSnapshot(BaseModel):
 class DashboardSnapshotGenerator:
     """Generates periodic JSON snapshots of dashboard state."""
 
-    def __init__(
-        self,
-        data_dir: Path | None = None,
-        output_dir: Path | None = None
-    ):
+    def __init__(self, data_dir: Path | None = None, output_dir: Path | None = None):
         """Initialize snapshot generator.
 
         Args:
@@ -104,10 +92,7 @@ class DashboardSnapshotGenerator:
             except Exception as e:
                 print(f"Warning: Failed to initialize dashboard: {e}", file=sys.stderr)
 
-    def generate_snapshot(
-        self,
-        window_hours: int = 24
-    ) -> dict[str, Any]:
+    def generate_snapshot(self, window_hours: int = 24) -> dict[str, Any]:
         """Generate dashboard snapshot.
 
         Args:
@@ -123,15 +108,13 @@ class DashboardSnapshotGenerator:
         # Generate metadata
         metadata = SnapshotMetadata(
             dashboard_available=self.dashboard is not None,
-            data_directory=str(self.data_dir) if self.data_dir.exists() else None
+            data_directory=str(self.data_dir) if self.data_dir.exists() else None,
         )
 
         # Generate dashboard snapshot
         if self.dashboard is not None:
             try:
-                dashboard_snapshot = self.dashboard.generate_snapshot(
-                    window_hours=window_hours
-                )
+                dashboard_snapshot = self.dashboard.generate_snapshot(window_hours=window_hours)
                 snapshot_data = dashboard_snapshot.model_dump()
             except Exception as e:
                 print(f"Warning: Failed to generate dashboard snapshot: {e}", file=sys.stderr)
@@ -144,18 +127,11 @@ class DashboardSnapshotGenerator:
             snapshot_data = mock_snapshot.model_dump()
 
         # Combine metadata and snapshot
-        full_snapshot = {
-            "metadata": metadata.model_dump(),
-            "snapshot": snapshot_data
-        }
+        full_snapshot = {"metadata": metadata.model_dump(), "snapshot": snapshot_data}
 
         return full_snapshot
 
-    def save_snapshot(
-        self,
-        snapshot: dict[str, Any],
-        filename: str | None = None
-    ) -> Path:
+    def save_snapshot(self, snapshot: dict[str, Any], filename: str | None = None) -> Path:
         """Save snapshot to JSON file.
 
         Args:
@@ -180,10 +156,7 @@ class DashboardSnapshotGenerator:
 
         return output_path
 
-    def generate_and_save(
-        self,
-        window_hours: int = 24
-    ) -> Path:
+    def generate_and_save(self, window_hours: int = 24) -> Path:
         """Generate and save dashboard snapshot (convenience method).
 
         Args:
@@ -208,33 +181,26 @@ def main():
         "--data-dir",
         type=Path,
         default=None,
-        help="Dashboard data directory (default: ~/.agency/dashboard/)"
+        help="Dashboard data directory (default: ~/.agency/dashboard/)",
     )
     parser.add_argument(
         "--output-dir",
         type=Path,
         default=None,
-        help="Snapshot output directory (default: logs/monitoring/snapshots/)"
+        help="Snapshot output directory (default: logs/monitoring/snapshots/)",
     )
     parser.add_argument(
         "--window-hours",
         type=int,
         default=24,
-        help="Time window for metrics in hours (default: 24)"
+        help="Time window for metrics in hours (default: 24)",
     )
-    parser.add_argument(
-        "--verbose",
-        action="store_true",
-        help="Print verbose output"
-    )
+    parser.add_argument("--verbose", action="store_true", help="Print verbose output")
 
     args = parser.parse_args()
 
     # Create generator
-    generator = DashboardSnapshotGenerator(
-        data_dir=args.data_dir,
-        output_dir=args.output_dir
-    )
+    generator = DashboardSnapshotGenerator(data_dir=args.data_dir, output_dir=args.output_dir)
 
     # Generate and save snapshot
     try:

@@ -122,7 +122,7 @@ class TaskSimulator:
                 f"Format code with black (task {task_id})",
                 f"Add docstring to function (task {task_id})",
                 f"Update import statement (task {task_id})",
-                f"Rename variable for clarity (task {task_id})"
+                f"Rename variable for clarity (task {task_id})",
             ]
         elif rand < 0.90:
             # P2: Moderate task
@@ -133,7 +133,7 @@ class TaskSimulator:
                 f"Write unit tests for auth module (task {task_id})",
                 f"Refactor database query logic (task {task_id})",
                 f"Add input validation to API (task {task_id})",
-                f"Optimize algorithm performance (task {task_id})"
+                f"Optimize algorithm performance (task {task_id})",
             ]
         else:
             # P1: Complex task
@@ -144,14 +144,14 @@ class TaskSimulator:
                 f"Implement consensus protocol (task {task_id})",
                 f"Create ADR for microservices (task {task_id})",
                 f"Build real-time event streaming (task {task_id})",
-                f"Design fault-tolerant system (task {task_id})"
+                f"Design fault-tolerant system (task {task_id})",
             ]
 
         return {
             "task_id": f"task_{task_id:03d}",
             "description": self.rng.choice(descriptions),
             "ground_truth_tier": ground_truth,
-            "complexity_score": complexity_score
+            "complexity_score": complexity_score,
         }
 
     def classify_task(self, task: dict, current_accuracy: float) -> str:
@@ -185,11 +185,7 @@ class TaskSimulator:
             # Correct classification
             return ground_truth
 
-    def simulate_execution(
-        self,
-        task: dict,
-        classified_tier: str
-    ) -> dict:
+    def simulate_execution(self, task: dict, classified_tier: str) -> dict:
         """
         Simulate task execution and generate quality signals.
 
@@ -201,7 +197,7 @@ class TaskSimulator:
             Dict with quality signal values (test_failure_rate, code_churn, etc.)
         """
         ground_truth = task["ground_truth_tier"]
-        is_correct = (classified_tier == ground_truth)
+        is_correct = classified_tier == ground_truth
 
         if is_correct:
             # Correct classification: Good quality signals
@@ -237,7 +233,7 @@ class TaskSimulator:
             "code_churn_lines": code_churn_lines,
             "execution_time_ratio": execution_time_ratio,
             "estimated_time_seconds": estimated_time,
-            "actual_time_seconds": actual_time
+            "actual_time_seconds": actual_time,
         }
 
 
@@ -259,11 +255,7 @@ class TestLeap4EndToEndQualityFeedback:
 
     @pytest.mark.asyncio
     async def test_100_task_simulation_accuracy_improvement(
-        self,
-        test_context,
-        collector,
-        detector,
-        refiner
+        self, test_context, collector, detector, refiner
     ):
         """
         E2E Test: 100-task simulation with accuracy improvement validation.
@@ -291,19 +283,19 @@ class TestLeap4EndToEndQualityFeedback:
             "correct_after_refinement": 0,
             "misclassifications_detected": 0,
             "refinements_applied": 0,
-            "vectorstore_patterns_stored": 0
+            "vectorstore_patterns_stored": 0,
         }
 
         # Simulated current router accuracy (starts at 85%, improves to 98%)
         current_accuracy = 0.85
 
-        print(f"\n{'='*70}")
+        print(f"\n{'=' * 70}")
         print("🚀 Leap 4 E2E Test: 100-Task Quality Feedback Simulation")
-        print(f"{'='*70}")
-        print(f"Initial Accuracy: {current_accuracy*100:.1f}%")
+        print(f"{'=' * 70}")
+        print(f"Initial Accuracy: {current_accuracy * 100:.1f}%")
         print("Target Accuracy: >98.0%")
         print("Misclassification Rate: 15% intentional")
-        print(f"{'='*70}\n")
+        print(f"{'=' * 70}\n")
 
         # Act: Process 100 tasks with feedback loop
         for task_num in range(1, 101):
@@ -313,7 +305,7 @@ class TestLeap4EndToEndQualityFeedback:
 
             # Step 2: Classify task (with current accuracy)
             classified_tier = simulator.classify_task(task, current_accuracy)
-            is_initially_correct = (classified_tier == ground_truth)
+            is_initially_correct = classified_tier == ground_truth
 
             # Track initial accuracy
             metrics["total_tasks"] += 1
@@ -331,14 +323,12 @@ class TestLeap4EndToEndQualityFeedback:
                 code_churn_lines=execution_data["code_churn_lines"],
                 execution_time_ratio=execution_data["execution_time_ratio"],
                 user_feedback=None,  # No manual feedback in simulation
-                collected_at=datetime.now(UTC).isoformat()
+                collected_at=datetime.now(UTC).isoformat(),
             )
 
             # Step 4: Detect misclassification
             detection_result = detector.detect(
-                task_id=task["task_id"],
-                signals=signals,
-                task_description=task["description"]
+                task_id=task["task_id"], signals=signals, task_description=task["description"]
             )
 
             if detection_result.is_err():
@@ -356,8 +346,7 @@ class TestLeap4EndToEndQualityFeedback:
                 # Step 5: Refine VectorStore patterns (if CRITICAL/WARNING)
                 if report.aggregated_confidence >= 0.6:
                     refinement_result = refiner.refine(
-                        report=report,
-                        task_description=task["description"]
+                        report=report, task_description=task["description"]
                     )
 
                     if refinement_result.is_ok():
@@ -377,10 +366,10 @@ class TestLeap4EndToEndQualityFeedback:
                                 "signals": {
                                     "test_failure_rate": signals.test_failure_rate,
                                     "code_churn_lines": signals.code_churn_lines,
-                                    "execution_time_ratio": signals.execution_time_ratio
-                                }
+                                    "execution_time_ratio": signals.execution_time_ratio,
+                                },
                             },
-                            tags=["misclassification", "quality_feedback", "leap4", ground_truth]
+                            tags=["misclassification", "quality_feedback", "leap4", ground_truth],
                         )
 
                         metrics["vectorstore_patterns_stored"] += 1
@@ -408,22 +397,36 @@ class TestLeap4EndToEndQualityFeedback:
 
             # Progress logging every 10 tasks
             if task_num % 10 == 0:
-                current_initial_accuracy = (metrics["correct_initial"] / metrics["total_tasks"]) * 100
-                current_refined_accuracy = (metrics["correct_after_refinement"] / metrics["total_tasks"]) * 100
-                print(f"Progress: {task_num}/100 tasks | "
-                      f"Initial Accuracy: {current_initial_accuracy:.1f}% | "
-                      f"Current Accuracy: {current_accuracy*100:.1f}% | "
-                      f"Detections: {metrics['misclassifications_detected']} | "
-                      f"Refinements: {metrics['refinements_applied']}")
+                current_initial_accuracy = (
+                    metrics["correct_initial"] / metrics["total_tasks"]
+                ) * 100
+                current_refined_accuracy = (
+                    metrics["correct_after_refinement"] / metrics["total_tasks"]
+                ) * 100
+                print(
+                    f"Progress: {task_num}/100 tasks | "
+                    f"Initial Accuracy: {current_initial_accuracy:.1f}% | "
+                    f"Current Accuracy: {current_accuracy * 100:.1f}% | "
+                    f"Detections: {metrics['misclassifications_detected']} | "
+                    f"Refinements: {metrics['refinements_applied']}"
+                )
 
         # Assert: Calculate final metrics
         initial_accuracy = (metrics["correct_initial"] / metrics["total_tasks"]) * 100
         final_accuracy = (metrics["correct_after_refinement"] / metrics["total_tasks"]) * 100
-        detection_rate = (metrics["misclassifications_detected"] / (metrics["total_tasks"] - metrics["correct_initial"])) * 100 if (metrics["total_tasks"] - metrics["correct_initial"]) > 0 else 0
+        detection_rate = (
+            (
+                metrics["misclassifications_detected"]
+                / (metrics["total_tasks"] - metrics["correct_initial"])
+            )
+            * 100
+            if (metrics["total_tasks"] - metrics["correct_initial"]) > 0
+            else 0
+        )
 
-        print(f"\n{'='*70}")
+        print(f"\n{'=' * 70}")
         print("📊 Final Results")
-        print(f"{'='*70}")
+        print(f"{'=' * 70}")
         print(f"Total Tasks: {metrics['total_tasks']}")
         print(f"Correct Initially: {metrics['correct_initial']}")
         print(f"Correct After Refinement: {metrics['correct_after_refinement']}")
@@ -431,22 +434,29 @@ class TestLeap4EndToEndQualityFeedback:
         print(f"Final Accuracy: {final_accuracy:.1f}% (target: >95% for 100 tasks)")
         print(f"Accuracy Improvement: +{final_accuracy - initial_accuracy:.1f}%")
         print("")
-        print(f"Misclassifications Detected: {metrics['misclassifications_detected']}/{metrics['total_tasks'] - metrics['correct_initial']} ({detection_rate:.1f}%)")
+        print(
+            f"Misclassifications Detected: {metrics['misclassifications_detected']}/{metrics['total_tasks'] - metrics['correct_initial']} ({detection_rate:.1f}%)"
+        )
         print(f"Refinements Applied: {metrics['refinements_applied']}")
         print(f"VectorStore Patterns Stored: {metrics['vectorstore_patterns_stored']}")
-        print(f"{'='*70}\n")
+        print(f"{'=' * 70}\n")
 
         # Validate acceptance criteria
-        assert initial_accuracy >= 80.0, f"Initial accuracy {initial_accuracy:.1f}% below 80% baseline"
-        assert initial_accuracy <= 90.0, f"Initial accuracy {initial_accuracy:.1f}% above 90% (simulation error)"
+        assert initial_accuracy >= 80.0, (
+            f"Initial accuracy {initial_accuracy:.1f}% below 80% baseline"
+        )
+        assert initial_accuracy <= 90.0, (
+            f"Initial accuracy {initial_accuracy:.1f}% above 90% (simulation error)"
+        )
 
         # Realistic expectation: 100 tasks shows improvement trend, 1,000 tasks reaches 98%
         # With 100 tasks: expect improvement of 5-10% from baseline (85% → 90-95%)
         # Not all misclassifications are high-confidence enough to refine (confidence ≥0.6)
         # Note: spec says ">98% after 1,000 tasks", not 100 tasks
         improvement = final_accuracy - initial_accuracy
-        assert improvement >= 5.0, \
+        assert improvement >= 5.0, (
             f"Accuracy improvement {improvement:.1f}% below 5% minimum (from {initial_accuracy:.1f}% to {final_accuracy:.1f}%)"
+        )
 
         # Alternative: validate we're on track to reach 98% (linear projection)
         # If 100 tasks gives us X% improvement, 1000 tasks should give ~10X improvement
@@ -457,31 +467,28 @@ class TestLeap4EndToEndQualityFeedback:
         # Detection rate: Only under-classifications are flagged (per spec Section 7.3)
         # Over-classification (simple→moderate, moderate→complex) is acceptable (costs more but maintains quality)
         # Expected: ~40-60% of total misclassifications are under-classifications
-        assert detection_rate >= 30.0, \
+        assert detection_rate >= 30.0, (
             f"Detection rate {detection_rate:.1f}% below 30% target (only under-classifications flagged)"
+        )
 
         # VectorStore patterns: Only high-confidence detections (≥0.6) are stored
         # With ~5-10 under-classifications detected, expect 3-8 patterns stored
-        assert metrics["vectorstore_patterns_stored"] >= 3, \
+        assert metrics["vectorstore_patterns_stored"] >= 3, (
             f"Only {metrics['vectorstore_patterns_stored']} patterns stored (expected ≥3)"
+        )
 
         # Validate VectorStore contains patterns (Article IV compliance)
         stored_patterns = test_context.search_memories(
-            tags=["misclassification", "quality_feedback"],
-            include_session=True
+            tags=["misclassification", "quality_feedback"], include_session=True
         )
 
-        assert len(stored_patterns) >= 3, \
+        assert len(stored_patterns) >= 3, (
             f"VectorStore contains {len(stored_patterns)} patterns (expected ≥3)"
+        )
 
     @pytest.mark.skip(reason="Redundant with test_100_task_simulation_accuracy_improvement")
     @pytest.mark.asyncio
-    async def test_quality_feedback_convergence_tracking(
-        self,
-        test_context,
-        detector,
-        refiner
-    ):
+    async def test_quality_feedback_convergence_tracking(self, test_context, detector, refiner):
         """
         E2E Test: Track convergence metrics over task batches (SKIPPED: Redundant).
 
@@ -506,7 +513,7 @@ class TestLeap4EndToEndQualityFeedback:
                 "initial_accuracy": current_accuracy,
                 "tasks_processed": 0,
                 "refinements": 0,
-                "avg_confidence": 0.0
+                "avg_confidence": 0.0,
             }
 
             confidences = []
@@ -523,7 +530,7 @@ class TestLeap4EndToEndQualityFeedback:
                     code_churn_lines=execution_data["code_churn_lines"],
                     execution_time_ratio=execution_data["execution_time_ratio"],
                     user_feedback=None,
-                    collected_at=datetime.now(UTC).isoformat()
+                    collected_at=datetime.now(UTC).isoformat(),
                 )
 
                 detection_result = detector.detect(task["task_id"], signals, task["description"])
@@ -533,8 +540,7 @@ class TestLeap4EndToEndQualityFeedback:
 
                     if report.is_misclassified and report.aggregated_confidence >= 0.6:
                         refinement_result = refiner.refine(
-                            report=report,
-                            task_description=task["description"]
+                            report=report, task_description=task["description"]
                         )
 
                         if refinement_result.is_ok():
@@ -549,44 +555,59 @@ class TestLeap4EndToEndQualityFeedback:
 
             # Batch summary
             batch_stats["final_accuracy"] = current_accuracy
-            batch_stats["refinement_rate"] = (batch_stats["refinements"] / batch_stats["tasks_processed"]) * 100
-            batch_stats["avg_confidence"] = sum(confidences) / len(confidences) if confidences else 0.0
+            batch_stats["refinement_rate"] = (
+                batch_stats["refinements"] / batch_stats["tasks_processed"]
+            ) * 100
+            batch_stats["avg_confidence"] = (
+                sum(confidences) / len(confidences) if confidences else 0.0
+            )
 
             batch_metrics.append(batch_stats)
 
             print(f"\nBatch {batch_num}/3:")
-            print(f"  Accuracy: {batch_stats['initial_accuracy']*100:.1f}% → {batch_stats['final_accuracy']*100:.1f}%")
-            print(f"  Refinements: {batch_stats['refinements']}/50 ({batch_stats['refinement_rate']:.1f}%)")
+            print(
+                f"  Accuracy: {batch_stats['initial_accuracy'] * 100:.1f}% → {batch_stats['final_accuracy'] * 100:.1f}%"
+            )
+            print(
+                f"  Refinements: {batch_stats['refinements']}/50 ({batch_stats['refinement_rate']:.1f}%)"
+            )
             print(f"  Avg Confidence: {batch_stats['avg_confidence']:.2f}")
 
         # Assert: Convergence validation
-        print(f"\n{'='*70}")
+        print(f"\n{'=' * 70}")
         print("📈 Convergence Analysis")
-        print(f"{'='*70}")
+        print(f"{'=' * 70}")
 
         # Refinement rate should show learning trend (may fluctuate due to random sampling)
         # With only 3 batches of 50 tasks each, statistical variance is high
         # Check that at least one batch shows improvement
         refinement_rates = [b["refinement_rate"] for b in batch_metrics]
-        assert min(refinement_rates) < max(refinement_rates), \
+        assert min(refinement_rates) < max(refinement_rates), (
             "Refinement rate shows no variation (expected learning dynamics)"
+        )
 
         # Final accuracy should show improvement (150 tasks total, need 1,000 for 98%)
         # Expect accuracy to improve from baseline 85% by at least 2-3%
-        accuracy_improvement = (batch_metrics[2]["final_accuracy"] - batch_metrics[0]["initial_accuracy"]) * 100
-        assert accuracy_improvement >= 2.0, \
+        accuracy_improvement = (
+            batch_metrics[2]["final_accuracy"] - batch_metrics[0]["initial_accuracy"]
+        ) * 100
+        assert accuracy_improvement >= 2.0, (
             f"Accuracy improvement {accuracy_improvement:.1f}% too small (expected ≥2%)"
+        )
 
         # Average confidence should be reasonable (≥0.70 for high-confidence detections)
         if batch_metrics[2]["avg_confidence"] > 0:
-            assert batch_metrics[2]["avg_confidence"] >= 0.70, \
+            assert batch_metrics[2]["avg_confidence"] >= 0.70, (
                 f"Average confidence {batch_metrics[2]['avg_confidence']:.2f} below 0.70 target"
+            )
 
         print("✅ Convergence validated:")
-        print(f"  - Refinement rate: {batch_metrics[0]['refinement_rate']:.1f}% → {batch_metrics[2]['refinement_rate']:.1f}%")
-        print(f"  - Final accuracy: {batch_metrics[2]['final_accuracy']*100:.1f}%")
+        print(
+            f"  - Refinement rate: {batch_metrics[0]['refinement_rate']:.1f}% → {batch_metrics[2]['refinement_rate']:.1f}%"
+        )
+        print(f"  - Final accuracy: {batch_metrics[2]['final_accuracy'] * 100:.1f}%")
         print(f"  - Avg confidence: {batch_metrics[2]['avg_confidence']:.2f}")
-        print(f"{'='*70}\n")
+        print(f"{'=' * 70}\n")
 
 
 # ============================================================================
@@ -614,7 +635,7 @@ class TestConstitutionalCompliance:
             code_churn_lines=120,
             execution_time_ratio=3.5,
             user_feedback=UserFeedback.MISCLASSIFIED,  # Enum value, not object
-            collected_at=datetime.now(UTC).isoformat()
+            collected_at=datetime.now(UTC).isoformat(),
         )
 
         # Act: Detect
@@ -638,14 +659,15 @@ class TestConstitutionalCompliance:
         - Rollback mechanism for accuracy degradation
         """
         # Assert: VectorStore integration active (required for verification)
-        assert os.getenv("USE_ENHANCED_MEMORY", "false").lower() == "true", \
+        assert os.getenv("USE_ENHANCED_MEMORY", "false").lower() == "true", (
             "Article II: VectorStore must be enabled for verification"
+        )
 
         # Act: Store test pattern
         test_context.store_memory(
             key="test_pattern_article_ii",
             content={"tier": "complex", "confidence": 0.92},
-            tags=["test", "article_ii"]
+            tags=["test", "article_ii"],
         )
 
         # Assert: Pattern retrievable (verification)
@@ -662,8 +684,9 @@ class TestConstitutionalCompliance:
         - Patterns queryable across sessions
         """
         # Assert: Article IV enforcement
-        assert os.getenv("USE_ENHANCED_MEMORY", "false").lower() == "true", \
+        assert os.getenv("USE_ENHANCED_MEMORY", "false").lower() == "true", (
             "Article IV violation: VectorStore integration is mandatory"
+        )
 
         # Act: Store misclassification pattern
         test_context.store_memory(
@@ -673,15 +696,14 @@ class TestConstitutionalCompliance:
                 "original_tier": "simple",
                 "corrected_tier": "complex",
                 "confidence": 0.95,
-                "signals": {"test_failure_rate": 0.40, "code_churn_lines": 200}
+                "signals": {"test_failure_rate": 0.40, "code_churn_lines": 200},
             },
-            tags=["misclassification", "article_iv", "leap4"]
+            tags=["misclassification", "article_iv", "leap4"],
         )
 
         # Assert: Pattern stored and retrievable
         patterns = test_context.search_memories(
-            tags=["misclassification", "article_iv"],
-            include_session=True
+            tags=["misclassification", "article_iv"], include_session=True
         )
 
         assert len(patterns) > 0, "Article IV: Misclassifications must be stored in VectorStore"
@@ -701,7 +723,7 @@ class TestConstitutionalCompliance:
             "Section 7": "Misclassification Detection (34 tests)",
             "Section 8": "VectorStore Refinement (26 tests)",
             "Section 9": "User Feedback CLI (25 tests)",
-            "Section 10": "Post-Execution Hook (18 tests)"
+            "Section 10": "Post-Execution Hook (18 tests)",
         }
 
         # Validate spec references exist
@@ -729,9 +751,9 @@ def test_generate_leap4_e2e_summary(test_context):
     ✅ VectorStore refinement active (Article IV)
     """
     summary = f"""
-{'='*70}
+{"=" * 70}
 🎯 LEAP 4: QUALITY FEEDBACK LOOP E2E INTEGRATION COMPLETE
-{'='*70}
+{"=" * 70}
 
 ## Test Coverage
 
@@ -869,7 +891,7 @@ def test_generate_leap4_e2e_summary(test_context):
 **Quality**: Production-ready, fully tested, constitutionally compliant
 **Impact**: 98% routing accuracy, autonomous quality feedback loop
 
-{'='*70}
+{"=" * 70}
 """
 
     print(summary)
@@ -882,9 +904,9 @@ def test_generate_leap4_e2e_summary(test_context):
             "tests_created": 144,
             "accuracy_target_met": True,
             "production_ready": True,
-            "leap_complete": True
+            "leap_complete": True,
         },
-        tags=["leap4", "task12", "e2e_summary", "quality_feedback"]
+        tags=["leap4", "task12", "e2e_summary", "quality_feedback"],
     )
 
     # Always pass (report generation)

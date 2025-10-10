@@ -17,7 +17,6 @@ Constitutional Compliance:
 Reference: /Users/am/Code/Agency/specs/spec-004-quality-feedback-loop.md Section 8
 """
 
-
 from pydantic import BaseModel, Field
 
 
@@ -46,33 +45,26 @@ class RefinementEntry(BaseModel):
         'complex'
     """
 
-    timestamp: str = Field(
-        ...,
-        description="ISO 8601 timestamp of refinement operation (UTC)"
-    )
+    timestamp: str = Field(..., description="ISO 8601 timestamp of refinement operation (UTC)")
 
     original_tier: str = Field(
         ...,
         description="Tier before refinement (simple/moderate/complex)",
-        pattern="^(simple|moderate|complex)$"
+        pattern="^(simple|moderate|complex)$",
     )
 
     corrected_tier: str = Field(
         ...,
         description="Tier after refinement (simple/moderate/complex)",
-        pattern="^(simple|moderate|complex)$"
+        pattern="^(simple|moderate|complex)$",
     )
 
     confidence: float = Field(
-        ...,
-        ge=0.0,
-        le=1.0,
-        description="Confidence score after refinement (0.0-1.0)"
+        ..., ge=0.0, le=1.0, description="Confidence score after refinement (0.0-1.0)"
     )
 
     reason: str = Field(
-        ...,
-        description="Human-readable reason for refinement (e.g., 'Test failure detected')"
+        ..., description="Human-readable reason for refinement (e.g., 'Test failure detected')"
     )
 
     class Config:
@@ -83,7 +75,7 @@ class RefinementEntry(BaseModel):
                 "original_tier": "simple",
                 "corrected_tier": "complex",
                 "confidence": 0.95,
-                "reason": "Test failure rate 33% (CRITICAL)"
+                "reason": "Test failure rate 33% (CRITICAL)",
             }
         }
 
@@ -118,20 +110,18 @@ class RefinementHistory(BaseModel):
     """
 
     task_id: str = Field(
-        ...,
-        description="Unique task identifier (same as MisclassificationReport.task_id)"
+        ..., description="Unique task identifier (same as MisclassificationReport.task_id)"
     )
 
     iteration_count: int = Field(
         default=0,
         ge=0,
         le=3,
-        description="Number of refinement iterations (max 3 per spec Section 8.6)"
+        description="Number of refinement iterations (max 3 per spec Section 8.6)",
     )
 
     refinement_history: list[RefinementEntry] = Field(
-        default_factory=list,
-        description="List of refinement entries in chronological order"
+        default_factory=list, description="List of refinement entries in chronological order"
     )
 
     class Config:
@@ -146,9 +136,9 @@ class RefinementHistory(BaseModel):
                         "original_tier": "simple",
                         "corrected_tier": "complex",
                         "confidence": 0.95,
-                        "reason": "Test failures detected"
+                        "reason": "Test failures detected",
                     }
-                ]
+                ],
             }
         }
 
@@ -179,30 +169,20 @@ class ThresholdAdjustment(BaseModel):
     """
 
     signal_name: str = Field(
-        ...,
-        description="Signal name (test_failure_rate, code_churn_lines, execution_time_ratio)"
+        ..., description="Signal name (test_failure_rate, code_churn_lines, execution_time_ratio)"
     )
 
-    old_threshold: float = Field(
-        ...,
-        description="Threshold value before adjustment"
-    )
+    old_threshold: float = Field(..., description="Threshold value before adjustment")
 
     new_threshold: float = Field(
-        ...,
-        description="Threshold value after adjustment (10% reduction per spec Section 8.3)"
+        ..., description="Threshold value after adjustment (10% reduction per spec Section 8.3)"
     )
 
     adjustment_count: int = Field(
-        ...,
-        ge=0,
-        description="Number of CRITICAL detections triggering this adjustment"
+        ..., ge=0, description="Number of CRITICAL detections triggering this adjustment"
     )
 
-    adjusted_at: str = Field(
-        ...,
-        description="ISO 8601 timestamp of adjustment (UTC)"
-    )
+    adjusted_at: str = Field(..., description="ISO 8601 timestamp of adjustment (UTC)")
 
     class Config:
         use_enum_values = True
@@ -212,7 +192,7 @@ class ThresholdAdjustment(BaseModel):
                 "old_threshold": 0.1,
                 "new_threshold": 0.09,
                 "adjustment_count": 3,
-                "adjusted_at": "2025-10-10T15:23:45Z"
+                "adjusted_at": "2025-10-10T15:23:45Z",
             }
         }
 
@@ -251,58 +231,48 @@ class RefinementResult(BaseModel):
     """
 
     task_id: str = Field(
-        ...,
-        description="Task identifier (same as MisclassificationReport.task_id)"
+        ..., description="Task identifier (same as MisclassificationReport.task_id)"
     )
 
     patterns_updated: int = Field(
-        ...,
-        ge=0,
-        description="Number of VectorStore patterns modified (0 if no update needed)"
+        ..., ge=0, description="Number of VectorStore patterns modified (0 if no update needed)"
     )
 
     confidence_before: float | None = Field(
-        None,
-        ge=0.0,
-        le=1.0,
-        description="Confidence score before refinement (None if new pattern)"
+        None, ge=0.0, le=1.0, description="Confidence score before refinement (None if new pattern)"
     )
 
     confidence_after: float = Field(
         ...,
         ge=0.0,
         le=1.0,
-        description="Confidence score after refinement (formula: old * 0.95 + 0.05)"
+        description="Confidence score after refinement (formula: old * 0.95 + 0.05)",
     )
 
     threshold_adjustments: list[ThresholdAdjustment] = Field(
-        default_factory=list,
-        description="List of threshold adjustments made during refinement"
+        default_factory=list, description="List of threshold adjustments made during refinement"
     )
 
     iteration_count: int = Field(
         ...,
         ge=0,
         le=3,
-        description="Total refinement iterations for this task (max 3 per spec Section 8.6)"
+        description="Total refinement iterations for this task (max 3 per spec Section 8.6)",
     )
 
     convergence_achieved: bool = Field(
         default=False,
-        description="True if routing accuracy >98% on validation set (spec Section 8.5)"
+        description="True if routing accuracy >98% on validation set (spec Section 8.5)",
     )
 
     accuracy_estimate: float | None = Field(
         None,
         ge=0.0,
         le=1.0,
-        description="Estimated routing accuracy after refinement (computed in Phase 5)"
+        description="Estimated routing accuracy after refinement (computed in Phase 5)",
     )
 
-    refined_at: str = Field(
-        ...,
-        description="ISO 8601 timestamp of refinement operation (UTC)"
-    )
+    refined_at: str = Field(..., description="ISO 8601 timestamp of refinement operation (UTC)")
 
     class Config:
         use_enum_values = True
@@ -316,7 +286,7 @@ class RefinementResult(BaseModel):
                 "iteration_count": 1,
                 "convergence_achieved": False,
                 "accuracy_estimate": None,
-                "refined_at": "2025-10-10T15:23:45Z"
+                "refined_at": "2025-10-10T15:23:45Z",
             }
         }
 
@@ -347,30 +317,25 @@ class VectorStoreSnapshot(BaseModel):
     """
 
     snapshot_id: str = Field(
-        ...,
-        description="Unique snapshot identifier (e.g., 'snapshot_1728567825')"
+        ..., description="Unique snapshot identifier (e.g., 'snapshot_1728567825')"
     )
 
-    created_at: str = Field(
-        ...,
-        description="ISO 8601 timestamp of snapshot creation (UTC)"
-    )
+    created_at: str = Field(..., description="ISO 8601 timestamp of snapshot creation (UTC)")
 
     patterns: list[dict] = Field(
-        ...,
-        description="List of all misclassification patterns in VectorStore at snapshot time"
+        ..., description="List of all misclassification patterns in VectorStore at snapshot time"
     )
 
     thresholds: dict[str, float] = Field(
         ...,
-        description="Detection thresholds at snapshot time (test_failure_rate, code_churn_lines, etc.)"
+        description="Detection thresholds at snapshot time (test_failure_rate, code_churn_lines, etc.)",
     )
 
     accuracy_baseline: float = Field(
         ...,
         ge=0.0,
         le=1.0,
-        description="Routing accuracy baseline (for degradation detection, >5% drop triggers rollback)"
+        description="Routing accuracy baseline (for degradation detection, >5% drop triggers rollback)",
     )
 
     class Config:
@@ -384,14 +349,14 @@ class VectorStoreSnapshot(BaseModel):
                         "task_id": "task_1",
                         "original_tier": "simple",
                         "corrected_tier": "complex",
-                        "confidence": 0.95
+                        "confidence": 0.95,
                     }
                 ],
                 "thresholds": {
                     "test_failure_rate": 0.1,
                     "code_churn_lines": 100,
-                    "execution_time_ratio": 3.0
+                    "execution_time_ratio": 3.0,
                 },
-                "accuracy_baseline": 0.92
+                "accuracy_baseline": 0.92,
             }
         }

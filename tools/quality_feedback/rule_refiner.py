@@ -41,16 +41,19 @@ logger = logging.getLogger(__name__)
 
 class RefinementError(Exception):
     """Raised when refinement fails."""
+
     pass
 
 
 class MaxIterationsExceeded(RefinementError):
     """Raised when task exceeds max 3 refinement iterations."""
+
     pass
 
 
 class AccuracyDegradation(RefinementError):
     """Raised when accuracy degrades >5% after refinement."""
+
     pass
 
 
@@ -83,14 +86,14 @@ class RuleRefiner:
     DEFAULT_THRESHOLDS = {
         "test_failure_rate": 0.1,
         "code_churn_lines": 100,
-        "execution_time_ratio": 3.0
+        "execution_time_ratio": 3.0,
     }
 
     # Minimum thresholds (spec Section 8.3)
     MIN_THRESHOLDS = {
         "test_failure_rate": 0.05,
         "code_churn_lines": 50,
-        "execution_time_ratio": 2.0
+        "execution_time_ratio": 2.0,
     }
 
     def __init__(
@@ -98,7 +101,7 @@ class RuleRefiner:
         context: AgentContext,
         decay_factor: float = 0.95,
         evidence_weight: float = 0.05,
-        convergence_threshold: float = 0.98
+        convergence_threshold: float = 0.98,
     ):
         """
         Initialize refiner with VectorStore context.
@@ -130,9 +133,7 @@ class RuleRefiner:
         )
 
     def refine(
-        self,
-        report: MisclassificationReport,
-        task_description: str | None = None
+        self, report: MisclassificationReport, task_description: str | None = None
     ) -> Result[RefinementResult, RefinementError]:
         """
         Refine VectorStore patterns based on misclassification report.
@@ -158,31 +159,25 @@ class RuleRefiner:
         """
         try:
             # Check max iterations (spec Section 8.6)
-            history = self.history.get(
-                report.task_id,
-                RefinementHistory(task_id=report.task_id)
-            )
+            history = self.history.get(report.task_id, RefinementHistory(task_id=report.task_id))
 
             if history.iteration_count >= 3:
-                return Err(MaxIterationsExceeded(
-                    f"Task {report.task_id} reached max 3 refinement iterations"
-                ))
+                return Err(
+                    MaxIterationsExceeded(
+                        f"Task {report.task_id} reached max 3 refinement iterations"
+                    )
+                )
 
             # Detect oscillation (spec Section 8.6)
             if self._detect_oscillation(history):
-                return Err(RefinementError(
-                    f"Task {report.task_id} is oscillating between tiers"
-                ))
+                return Err(RefinementError(f"Task {report.task_id} is oscillating between tiers"))
 
             # Query existing confidence from VectorStore (Article IV)
-            confidence_before = self._query_existing_confidence(
-                report.task_id, task_description
-            )
+            confidence_before = self._query_existing_confidence(report.task_id, task_description)
 
             # Update confidence (spec Section 8.2)
             confidence_after = self._update_confidence(
-                old_confidence=confidence_before or 0.6,
-                new_evidence=report.is_misclassified
+                old_confidence=confidence_before or 0.6, new_evidence=report.is_misclassified
             )
 
             # Tune thresholds if CRITICAL (spec Section 8.3)
@@ -192,23 +187,23 @@ class RuleRefiner:
 
             # Store pattern in VectorStore (spec Section 8.4, Article IV)
             patterns_updated = self._store_pattern(
-                report=report,
-                task_description=task_description,
-                confidence=confidence_after
+                report=report, task_description=task_description, confidence=confidence_after
             )
 
             # Update iteration count
             history.iteration_count += 1
-            history.refinement_history.append(RefinementEntry(
-                timestamp=datetime.now(UTC).isoformat(),
-                original_tier=report.original_tier,
-                corrected_tier=report.recommended_tier,
-                confidence=confidence_after,
-                reason=(
-                    f"Misclassification detected "
-                    f"(confidence={report.aggregated_confidence:.2f})"
+            history.refinement_history.append(
+                RefinementEntry(
+                    timestamp=datetime.now(UTC).isoformat(),
+                    original_tier=report.original_tier,
+                    corrected_tier=report.recommended_tier,
+                    confidence=confidence_after,
+                    reason=(
+                        f"Misclassification detected "
+                        f"(confidence={report.aggregated_confidence:.2f})"
+                    ),
                 )
-            ))
+            )
             self.history[report.task_id] = history
 
             # Check convergence (spec Section 8.5)
@@ -224,7 +219,7 @@ class RuleRefiner:
                 iteration_count=history.iteration_count,
                 convergence_achieved=convergence_achieved,
                 accuracy_estimate=None,  # Computed in Phase 5
-                refined_at=datetime.now(UTC).isoformat()
+                refined_at=datetime.now(UTC).isoformat(),
             )
 
             # Save updated history and thresholds
@@ -243,9 +238,7 @@ class RuleRefiner:
             logger.error(f"Refinement failed: {e}")
             return Err(RefinementError(f"Refinement failed: {e}"))
 
-    def _update_confidence(
-        self, old_confidence: float, new_evidence: bool
-    ) -> float:
+    def _update_confidence(self, old_confidence: float, new_evidence: bool) -> float:
         """
         Update confidence using exponential decay + evidence weight (spec Section 8.2).
 
@@ -267,9 +260,7 @@ class RuleRefiner:
             return min(1.0, decayed + self.evidence_weight)
         return max(0.0, decayed)
 
-    def _tune_thresholds(
-        self, report: MisclassificationReport
-    ) -> list[ThresholdAdjustment]:
+    def _tune_thresholds(self, report: MisclassificationReport) -> list[ThresholdAdjustment]:
         """
         Tune detection thresholds for CRITICAL detections (spec Section 8.3).
 
@@ -290,7 +281,9 @@ class RuleRefiner:
 
         for issue in report.detected_issues:
             # severity is already a string due to Pydantic use_enum_values
-            severity_str = issue.severity if isinstance(issue.severity, str) else issue.severity.value
+            severity_str = (
+                issue.severity if isinstance(issue.severity, str) else issue.severity.value
+            )
             if severity_str != "critical":
                 continue
 
@@ -298,7 +291,7 @@ class RuleRefiner:
             threshold_key = {
                 "test_failure": "test_failure_rate",
                 "code_churn": "code_churn_lines",
-                "execution_timing": "execution_time_ratio"
+                "execution_timing": "execution_time_ratio",
             }.get(issue.rule_name)
 
             if not threshold_key:
@@ -311,18 +304,20 @@ class RuleRefiner:
                 old_threshold = self.thresholds[threshold_key]
                 new_threshold = max(
                     self.MIN_THRESHOLDS[threshold_key],
-                    old_threshold * 0.9  # 10% reduction
+                    old_threshold * 0.9,  # 10% reduction
                 )
 
                 if new_threshold != old_threshold:
                     self.thresholds[threshold_key] = new_threshold
-                    adjustments.append(ThresholdAdjustment(
-                        signal_name=threshold_key,
-                        old_threshold=old_threshold,
-                        new_threshold=new_threshold,
-                        adjustment_count=detection_count,
-                        adjusted_at=datetime.now(UTC).isoformat()
-                    ))
+                    adjustments.append(
+                        ThresholdAdjustment(
+                            signal_name=threshold_key,
+                            old_threshold=old_threshold,
+                            new_threshold=new_threshold,
+                            adjustment_count=detection_count,
+                            adjusted_at=datetime.now(UTC).isoformat(),
+                        )
+                    )
 
                     logger.info(
                         f"Threshold tuned: {threshold_key} "
@@ -333,10 +328,7 @@ class RuleRefiner:
         return adjustments
 
     def _store_pattern(
-        self,
-        report: MisclassificationReport,
-        task_description: str | None,
-        confidence: float
+        self, report: MisclassificationReport, task_description: str | None, confidence: float
     ) -> int:
         """
         Store misclassification pattern in VectorStore (spec Section 8.4).
@@ -353,7 +345,9 @@ class RuleRefiner:
             - Article IV: VectorStore integration mandatory
         """
         if not task_description:
-            logger.debug(f"No task_description provided for {report.task_id}, skipping pattern storage")
+            logger.debug(
+                f"No task_description provided for {report.task_id}, skipping pattern storage"
+            )
             return 0
 
         pattern = {
@@ -366,27 +360,21 @@ class RuleRefiner:
             "detected_issues": [issue.model_dump() for issue in report.detected_issues],
             "aggregated_confidence": report.aggregated_confidence,
             "iteration_count": self.history.get(
-                report.task_id,
-                RefinementHistory(task_id=report.task_id)
+                report.task_id, RefinementHistory(task_id=report.task_id)
             ).iteration_count,
             "created_at": datetime.now(UTC).isoformat(),
-            "session_id": self.context.session_id
+            "session_id": self.context.session_id,
         }
 
         # Store in VectorStore with tags (Article IV)
         self.context.store_memory(
             key=f"misclassification_{report.task_id}_{int(datetime.now(UTC).timestamp())}",
             content=pattern,
-            tags=[
-                "misclassification_pattern",
-                report.original_tier,
-                report.recommended_tier
-            ]
+            tags=["misclassification_pattern", report.original_tier, report.recommended_tier],
         )
 
         logger.debug(
-            f"Pattern stored: {report.task_id} "
-            f"({report.original_tier} → {report.recommended_tier})"
+            f"Pattern stored: {report.task_id} ({report.original_tier} → {report.recommended_tier})"
         )
 
         return 1
@@ -412,8 +400,7 @@ class RuleRefiner:
 
         try:
             patterns = self.context.search_memories(
-                tags=["misclassification_pattern"],
-                include_session=True
+                tags=["misclassification_pattern"], include_session=True
             )
 
             # Search for similar task descriptions
@@ -444,16 +431,10 @@ class RuleRefiner:
         if len(history.refinement_history) < 3:
             return False
 
-        last_3_tiers = [
-            entry.corrected_tier
-            for entry in history.refinement_history[-3:]
-        ]
+        last_3_tiers = [entry.corrected_tier for entry in history.refinement_history[-3:]]
 
         # Oscillation: alternating tiers (e.g., ["complex", "simple", "complex"])
-        return (
-            len(set(last_3_tiers)) == 2 and
-            last_3_tiers[0] != last_3_tiers[1]
-        )
+        return len(set(last_3_tiers)) == 2 and last_3_tiers[0] != last_3_tiers[1]
 
     def _count_critical_detections(self, threshold_key: str) -> int:
         """
@@ -470,21 +451,18 @@ class RuleRefiner:
         try:
             patterns = self.context.search_memories(
                 tags=["misclassification_pattern"],
-                include_session=False  # Cross-session learning
+                include_session=False,  # Cross-session learning
             )
 
             for pattern in patterns:
                 content = pattern.get("content", {})
                 if isinstance(content, dict):
                     for issue in content.get("detected_issues", []):
-                        if (
-                            issue.get("severity") == "critical" and
-                            issue.get("rule_name") in {
-                                "test_failure",
-                                "code_churn",
-                                "execution_timing"
-                            }
-                        ):
+                        if issue.get("severity") == "critical" and issue.get("rule_name") in {
+                            "test_failure",
+                            "code_churn",
+                            "execution_timing",
+                        }:
                             count += 1
 
         except Exception as e:
@@ -525,7 +503,7 @@ class RuleRefiner:
         try:
             patterns = self.context.search_memories(
                 tags=["misclassification_pattern"],
-                include_session=False  # Include all patterns
+                include_session=False,  # Include all patterns
             )
 
             # Extract pattern content
@@ -540,12 +518,11 @@ class RuleRefiner:
                 created_at=datetime.now(UTC).isoformat(),
                 patterns=pattern_list,
                 thresholds=self.thresholds.copy(),
-                accuracy_baseline=0.85  # Placeholder, computed in Phase 5
+                accuracy_baseline=0.85,  # Placeholder, computed in Phase 5
             )
 
             logger.info(
-                f"Snapshot created: {snapshot.snapshot_id} "
-                f"({len(snapshot.patterns)} patterns)"
+                f"Snapshot created: {snapshot.snapshot_id} ({len(snapshot.patterns)} patterns)"
             )
 
             return snapshot

@@ -78,7 +78,9 @@ class TestSaveCheckpoint:
         result = save_checkpoint(sample_session_state, "test_session_123", base_path)
 
         # Assert: Result is Ok
-        assert result.is_ok(), f"Expected Ok, got Err: {result.unwrap_err().message if result.is_err() else ''}"
+        assert result.is_ok(), (
+            f"Expected Ok, got Err: {result.unwrap_err().message if result.is_err() else ''}"
+        )
 
         checkpoint = result.unwrap()
 
@@ -88,9 +90,7 @@ class TestSaveCheckpoint:
         assert len(checkpoint.checksum) == 64  # SHA256 hex digest length
 
         # Verify checkpoint file exists
-        checkpoint_file = (
-            temp_checkpoint_dir / f"{checkpoint.checkpoint_id}.json"
-        )
+        checkpoint_file = temp_checkpoint_dir / f"{checkpoint.checkpoint_id}.json"
         assert checkpoint_file.exists(), f"Checkpoint file not found: {checkpoint_file}"
 
         # Verify file contains valid JSON
@@ -113,7 +113,9 @@ class TestSaveCheckpoint:
         result = save_checkpoint(sample_session_state, "test_session_123", str(non_existent_dir))
 
         # Assert: Success with auto-created directories
-        assert result.is_ok(), f"Expected Ok, got Err: {result.unwrap_err().message if result.is_err() else ''}"
+        assert result.is_ok(), (
+            f"Expected Ok, got Err: {result.unwrap_err().message if result.is_err() else ''}"
+        )
 
         checkpoint = result.unwrap()
         checkpoint_file = (
@@ -198,7 +200,9 @@ class TestLoadCheckpoint:
         load_result = load_checkpoint(checkpoint.checkpoint_id, "test_session_123", base_path)
 
         # Assert: Ok with SessionState
-        assert load_result.is_ok(), f"Expected Ok, got Err: {load_result.unwrap_err().message if load_result.is_err() else ''}"
+        assert load_result.is_ok(), (
+            f"Expected Ok, got Err: {load_result.unwrap_err().message if load_result.is_err() else ''}"
+        )
 
         loaded_state = load_result.unwrap()
 
@@ -390,7 +394,7 @@ class TestCheckpointModel:
         invalid_data = {
             "checkpoint_id": "checkpoint_123",
             "timestamp": datetime.now(),
-            "session_state_json": '{}',
+            "session_state_json": "{}",
             "checksum": "abc123",  # Too short
         }
 
@@ -473,7 +477,7 @@ class TestCheckpointIntegration:
         # Save 3 checkpoints with different progress
         for i, progress in enumerate([25.0, 50.0, 75.0]):
             sample_session_state.task_progress_percent = progress
-            sample_session_state.completed_steps = [f"step{j}" for j in range(1, i+2)]
+            sample_session_state.completed_steps = [f"step{j}" for j in range(1, i + 2)]
 
             result = save_checkpoint(sample_session_state, "test_session_123", base_path)
             assert result.is_ok()

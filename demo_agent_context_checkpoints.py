@@ -51,9 +51,7 @@ def demo_basic_checkpoint_workflow():
             checkpoint = checkpoint_result.unwrap()
             print(f"  ✓ Checkpoint created: {checkpoint.checkpoint_id}")
             print(f"  ✓ Checksum: {checkpoint.checksum[:16]}...")
-            print(
-                f"  ✓ Last checkpoint time: {session1.get_metadata('last_checkpoint_time')}"
-            )
+            print(f"  ✓ Last checkpoint time: {session1.get_metadata('last_checkpoint_time')}")
             print(f"  ✓ Checkpoint count: {session1.get_metadata('checkpoint_count')}")
 
             # Session 2: Restore from checkpoint (simulating restart)

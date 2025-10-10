@@ -46,6 +46,7 @@ except ImportError:
 # Test Suite 1: Pydantic Model Validation
 # ============================================================================
 
+
 class TestDetectedIssueModel:
     """Test DetectedIssue Pydantic model validation."""
 
@@ -56,7 +57,7 @@ class TestDetectedIssueModel:
             confidence=0.95,
             severity=SeverityLevel.CRITICAL,
             description="Test failure rate 33%",
-            signal_value=0.33
+            signal_value=0.33,
         )
 
         assert issue.rule_name == "test_failure"
@@ -69,30 +70,26 @@ class TestDetectedIssueModel:
         """Test confidence must be 0.0-1.0."""
         # Valid: exactly 0.0
         issue1 = DetectedIssue(
-            rule_name="test", confidence=0.0,
-            severity=SeverityLevel.INFO, description="Test"
+            rule_name="test", confidence=0.0, severity=SeverityLevel.INFO, description="Test"
         )
         assert issue1.confidence == 0.0
 
         # Valid: exactly 1.0
         issue2 = DetectedIssue(
-            rule_name="test", confidence=1.0,
-            severity=SeverityLevel.CRITICAL, description="Test"
+            rule_name="test", confidence=1.0, severity=SeverityLevel.CRITICAL, description="Test"
         )
         assert issue2.confidence == 1.0
 
         # Invalid: below 0.0
         with pytest.raises(Exception):  # Pydantic ValidationError
             DetectedIssue(
-                rule_name="test", confidence=-0.1,
-                severity=SeverityLevel.INFO, description="Test"
+                rule_name="test", confidence=-0.1, severity=SeverityLevel.INFO, description="Test"
             )
 
         # Invalid: above 1.0
         with pytest.raises(Exception):
             DetectedIssue(
-                rule_name="test", confidence=1.1,
-                severity=SeverityLevel.INFO, description="Test"
+                rule_name="test", confidence=1.1, severity=SeverityLevel.INFO, description="Test"
             )
 
     def test_detected_issue_optional_signal_value(self):
@@ -102,7 +99,7 @@ class TestDetectedIssueModel:
             confidence=1.0,
             severity=SeverityLevel.CRITICAL,
             description="User flagged as misclassified",
-            signal_value=None
+            signal_value=None,
         )
 
         assert issue.signal_value is None
@@ -119,7 +116,7 @@ class TestMisclassificationReportModel:
                 confidence=0.95,
                 severity=SeverityLevel.CRITICAL,
                 description="Test failures",
-                signal_value=0.3
+                signal_value=0.3,
             )
         ]
 
@@ -130,7 +127,7 @@ class TestMisclassificationReportModel:
             detected_issues=issues,
             aggregated_confidence=0.95,
             is_misclassified=True,
-            detected_at=datetime.utcnow().isoformat()
+            detected_at=datetime.utcnow().isoformat(),
         )
 
         assert report.task_id == "task_123"
@@ -149,7 +146,7 @@ class TestMisclassificationReportModel:
             detected_issues=[],
             aggregated_confidence=0.0,
             is_misclassified=False,
-            detected_at=datetime.utcnow().isoformat()
+            detected_at=datetime.utcnow().isoformat(),
         )
 
         assert len(report.detected_issues) == 0
@@ -160,6 +157,7 @@ class TestMisclassificationReportModel:
 # ============================================================================
 # Test Suite 2: Detection Rule Unit Tests (15+ tests)
 # ============================================================================
+
 
 class TestRule1TestFailureDetection:
     """Test Rule 1: Test failure detection (confidence=0.95)."""
@@ -173,7 +171,7 @@ class TestRule1TestFailureDetection:
             test_failure_rate=0.33,  # 33% failures
             code_churn_lines=None,
             execution_time_ratio=None,
-            user_feedback=None
+            user_feedback=None,
         )
 
         result = detector.detect("task_1", signals)
@@ -199,7 +197,7 @@ class TestRule1TestFailureDetection:
             test_failure_rate=0.2,  # 20% failures
             code_churn_lines=None,
             execution_time_ratio=None,
-            user_feedback=None
+            user_feedback=None,
         )
 
         result = detector.detect("task_2", signals)
@@ -220,7 +218,7 @@ class TestRule1TestFailureDetection:
             test_failure_rate=0.09,  # Below 10% threshold
             code_churn_lines=None,
             execution_time_ratio=None,
-            user_feedback=None
+            user_feedback=None,
         )
 
         result = detector.detect("task_3", signals)
@@ -240,7 +238,7 @@ class TestRule1TestFailureDetection:
             test_failure_rate=None,  # No tests run
             code_churn_lines=None,
             execution_time_ratio=None,
-            user_feedback=None
+            user_feedback=None,
         )
 
         result = detector.detect("task_4", signals)
@@ -263,7 +261,7 @@ class TestRule2CodeChurnDetection:
             test_failure_rate=None,
             code_churn_lines=150,  # >100 threshold
             execution_time_ratio=None,
-            user_feedback=None
+            user_feedback=None,
         )
 
         result = detector.detect("task_5", signals)
@@ -289,7 +287,7 @@ class TestRule2CodeChurnDetection:
             test_failure_rate=None,
             code_churn_lines=75,  # >50 threshold
             execution_time_ratio=None,
-            user_feedback=None
+            user_feedback=None,
         )
 
         result = detector.detect("task_6", signals)
@@ -313,7 +311,7 @@ class TestRule2CodeChurnDetection:
             test_failure_rate=None,
             code_churn_lines=49,  # Below 50 threshold
             execution_time_ratio=None,
-            user_feedback=None
+            user_feedback=None,
         )
 
         result = detector.detect("task_7", signals)
@@ -336,7 +334,7 @@ class TestRule3ExecutionTimingDetection:
             test_failure_rate=None,
             code_churn_lines=None,
             execution_time_ratio=4.5,  # >3.0 threshold
-            user_feedback=None
+            user_feedback=None,
         )
 
         result = detector.detect("task_8", signals)
@@ -361,7 +359,7 @@ class TestRule3ExecutionTimingDetection:
             test_failure_rate=None,
             code_churn_lines=None,
             execution_time_ratio=2.9,  # Below 3.0 threshold
-            user_feedback=None
+            user_feedback=None,
         )
 
         result = detector.detect("task_9", signals)
@@ -384,7 +382,7 @@ class TestRule4UserFeedbackOverride:
             test_failure_rate=None,
             code_churn_lines=None,
             execution_time_ratio=None,
-            user_feedback=UserFeedback.MISCLASSIFIED
+            user_feedback=UserFeedback.MISCLASSIFIED,
         )
 
         result = detector.detect("task_10", signals)
@@ -409,7 +407,7 @@ class TestRule4UserFeedbackOverride:
             test_failure_rate=None,
             code_churn_lines=None,
             execution_time_ratio=None,
-            user_feedback=UserFeedback.CORRECT
+            user_feedback=UserFeedback.CORRECT,
         )
 
         result = detector.detect("task_11", signals)
@@ -424,6 +422,7 @@ class TestRule4UserFeedbackOverride:
 # Test Suite 3: Multi-Signal Aggregation
 # ============================================================================
 
+
 class TestMultiSignalAggregation:
     """Test aggregated confidence calculation from multiple rules."""
 
@@ -434,9 +433,9 @@ class TestMultiSignalAggregation:
             task_id="task_12",
             original_tier="simple",
             test_failure_rate=0.3,  # Triggers Rule 1 (0.95)
-            code_churn_lines=120,   # Triggers Rule 2 (0.85)
+            code_churn_lines=120,  # Triggers Rule 2 (0.85)
             execution_time_ratio=None,
-            user_feedback=None
+            user_feedback=None,
         )
 
         result = detector.detect("task_12", signals)
@@ -455,10 +454,10 @@ class TestMultiSignalAggregation:
         signals = QualitySignals(
             task_id="task_13",
             original_tier="simple",
-            test_failure_rate=0.2,   # Rule 1: 0.95
-            code_churn_lines=75,     # Rule 2: 0.70
-            execution_time_ratio=4.0, # Rule 3: 0.75
-            user_feedback=None
+            test_failure_rate=0.2,  # Rule 1: 0.95
+            code_churn_lines=75,  # Rule 2: 0.70
+            execution_time_ratio=4.0,  # Rule 3: 0.75
+            user_feedback=None,
         )
 
         result = detector.detect("task_13", signals)
@@ -477,10 +476,10 @@ class TestMultiSignalAggregation:
         signals = QualitySignals(
             task_id="task_14",
             original_tier="simple",
-            test_failure_rate=0.3,   # Would be 0.95
-            code_churn_lines=120,    # Would be 0.85
+            test_failure_rate=0.3,  # Would be 0.95
+            code_churn_lines=120,  # Would be 0.85
             execution_time_ratio=None,
-            user_feedback=UserFeedback.MISCLASSIFIED  # Overrides to 1.0
+            user_feedback=UserFeedback.MISCLASSIFIED,  # Overrides to 1.0
         )
 
         result = detector.detect("task_14", signals)
@@ -494,6 +493,7 @@ class TestMultiSignalAggregation:
 # Test Suite 4: Recommended Tier Computation
 # ============================================================================
 
+
 class TestRecommendedTierComputation:
     """Test recommended tier based on detected issues."""
 
@@ -506,7 +506,7 @@ class TestRecommendedTierComputation:
             test_failure_rate=0.4,  # >30% → complex
             code_churn_lines=None,
             execution_time_ratio=None,
-            user_feedback=None
+            user_feedback=None,
         )
 
         result = detector.detect("task_15", signals)
@@ -524,7 +524,7 @@ class TestRecommendedTierComputation:
             test_failure_rate=0.2,  # 10-30% → moderate
             code_churn_lines=None,
             execution_time_ratio=None,
-            user_feedback=None
+            user_feedback=None,
         )
 
         result = detector.detect("task_16", signals)
@@ -542,7 +542,7 @@ class TestRecommendedTierComputation:
             test_failure_rate=None,
             code_churn_lines=150,  # CRITICAL churn
             execution_time_ratio=None,
-            user_feedback=None
+            user_feedback=None,
         )
 
         result = detector.detect("task_17", signals)
@@ -556,6 +556,7 @@ class TestRecommendedTierComputation:
 # Test Suite 5: False Positive Mitigation
 # ============================================================================
 
+
 class TestFalsePositiveMitigation:
     """Test false positive mitigation (complex tier with good metrics)."""
 
@@ -568,7 +569,7 @@ class TestFalsePositiveMitigation:
             test_failure_rate=0.0,
             code_churn_lines=10,
             execution_time_ratio=0.9,
-            user_feedback=None
+            user_feedback=None,
         )
 
         result = detector.detect("task_18", signals)
@@ -586,9 +587,9 @@ class TestFalsePositiveMitigation:
             task_id="task_19",
             original_tier="moderate",
             test_failure_rate=0.02,  # 2% failures (acceptable)
-            code_churn_lines=25,     # Low churn
-            execution_time_ratio=1.5, # Minor overrun
-            user_feedback=None
+            code_churn_lines=25,  # Low churn
+            execution_time_ratio=1.5,  # Minor overrun
+            user_feedback=None,
         )
 
         result = detector.detect("task_19", signals)
@@ -601,6 +602,7 @@ class TestFalsePositiveMitigation:
 # ============================================================================
 # Test Suite 6: VectorStore Learning Boost (Article IV)
 # ============================================================================
+
 
 class TestVectorStoreLearningBoost:
     """Test VectorStore learning boost (+0.1 confidence)."""
@@ -615,7 +617,7 @@ class TestVectorStoreLearningBoost:
                 "original_tier": "simple",
                 "corrected_tier": "complex",
                 "confidence": 0.9,  # High confidence
-                "detected_at": "2025-10-09T12:00:00Z"
+                "detected_at": "2025-10-09T12:00:00Z",
             }
         ]
 
@@ -626,7 +628,7 @@ class TestVectorStoreLearningBoost:
             test_failure_rate=None,
             code_churn_lines=75,  # Base confidence: 0.70^2 = 0.49
             execution_time_ratio=None,
-            user_feedback=None
+            user_feedback=None,
         )
 
         result = detector.detect("task_20", signals, task_description="Refactor async handler")
@@ -652,7 +654,7 @@ class TestVectorStoreLearningBoost:
             test_failure_rate=None,
             code_churn_lines=75,  # Base confidence: 0.70^2 = 0.49
             execution_time_ratio=None,
-            user_feedback=None
+            user_feedback=None,
         )
 
         result = detector.detect("task_21", signals, task_description="Fix typo")
@@ -675,7 +677,7 @@ class TestVectorStoreLearningBoost:
             test_failure_rate=0.2,
             code_churn_lines=None,
             execution_time_ratio=None,
-            user_feedback=None
+            user_feedback=None,
         )
 
         result = detector.detect("task_22", signals, task_description="Refactor")
@@ -691,6 +693,7 @@ class TestVectorStoreLearningBoost:
 # Test Suite 7: Integration Tests (5+ tests)
 # ============================================================================
 
+
 class TestEndToEndIntegration:
     """Integration tests for complete detection workflow."""
 
@@ -701,9 +704,9 @@ class TestEndToEndIntegration:
             task_id="task_e2e_1",
             original_tier="simple",
             test_failure_rate=0.33,  # Rule 1: CRITICAL
-            code_churn_lines=145,    # Rule 2: CRITICAL
-            execution_time_ratio=4.2, # Rule 3: WARNING
-            user_feedback=None
+            code_churn_lines=145,  # Rule 2: CRITICAL
+            execution_time_ratio=4.2,  # Rule 3: WARNING
+            user_feedback=None,
         )
 
         result = detector.detect("task_e2e_1", signals)
@@ -732,7 +735,7 @@ class TestEndToEndIntegration:
             test_failure_rate=0.0,
             code_churn_lines=5,
             execution_time_ratio=0.8,
-            user_feedback=None
+            user_feedback=None,
         )
 
         result = detector.detect("task_e2e_2", signals)
@@ -755,7 +758,7 @@ class TestEndToEndIntegration:
             test_failure_rate=0.15,
             code_churn_lines=80,
             execution_time_ratio=2.5,
-            user_feedback=None
+            user_feedback=None,
         )
 
         start_time = time.time()
@@ -767,7 +770,9 @@ class TestEndToEndIntegration:
         elapsed_time = time.time() - start_time
 
         # Should complete in <1 second (spec requirement: <10ms p99)
-        assert elapsed_time < 1.0, f"Performance regression: {elapsed_time:.2f}s for 1,000 detections"
+        assert elapsed_time < 1.0, (
+            f"Performance regression: {elapsed_time:.2f}s for 1,000 detections"
+        )
 
     def test_stability_100_consecutive_detections(self):
         """Stability: 100 consecutive detections without crashes."""
@@ -780,7 +785,7 @@ class TestEndToEndIntegration:
                 test_failure_rate=0.1 + (i % 3) * 0.1,  # Vary signals
                 code_churn_lines=50 + i,
                 execution_time_ratio=2.0 + (i % 5) * 0.5,
-                user_feedback=None
+                user_feedback=None,
             )
 
             result = detector.detect(f"task_stability_{i}", signals)
@@ -797,7 +802,7 @@ class TestEndToEndIntegration:
             test_failure_rate=0.2,
             code_churn_lines=75,
             execution_time_ratio=3.5,
-            user_feedback=None
+            user_feedback=None,
         )
 
         # Run detection twice
@@ -823,6 +828,7 @@ class TestEndToEndIntegration:
 # Test Suite 8: Error Handling
 # ============================================================================
 
+
 class TestErrorHandling:
     """Test error handling and Result pattern compliance."""
 
@@ -835,14 +841,14 @@ class TestErrorHandling:
             test_failure_rate=0.2,
             code_churn_lines=None,
             execution_time_ratio=None,
-            user_feedback=None
+            user_feedback=None,
         )
 
         result = detector.detect("task_result", signals)
 
         # Must return Result type
-        assert hasattr(result, 'is_ok')
-        assert hasattr(result, 'is_err')
+        assert hasattr(result, "is_ok")
+        assert hasattr(result, "is_err")
         assert result.is_ok()
 
     def test_detect_handles_invalid_signals_gracefully(self):
@@ -854,7 +860,7 @@ class TestErrorHandling:
             test_failure_rate=None,
             code_churn_lines=None,
             execution_time_ratio=None,
-            user_feedback=None
+            user_feedback=None,
         )
 
         result = detector.detect("task_none", signals)

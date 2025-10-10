@@ -398,6 +398,7 @@ class TestEndToEndWorkflows:
         WHEN all execute concurrently
         THEN all workflows complete successfully
         """
+
         # Arrange
         async def agent_workflow(agent_id: int):
             """Simulate agent creating, editing, and deleting files"""
@@ -409,9 +410,7 @@ class TestEndToEndWorkflows:
                 return False
 
             # Edit
-            replace_result = await async_tool.str_replace_async(
-                path, "initial", "updated"
-            )
+            replace_result = await async_tool.str_replace_async(path, "initial", "updated")
             if replace_result.is_err():
                 return False
 

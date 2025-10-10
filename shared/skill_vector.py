@@ -33,20 +33,27 @@ SKILL_DIMENSIONS = {
     "type_safety": SkillDimension(2, "type_safety", "technical", "Strict typing, no Any"),
     "error_handling": SkillDimension(3, "error_handling", "technical", "Result pattern usage"),
     "performance": SkillDimension(4, "performance", "technical", "Optimization, efficiency"),
-
     # Strategic Skills (96-191)
-    "architectural_design": SkillDimension(96, "architectural_design", "strategic", "System architecture"),
+    "architectural_design": SkillDimension(
+        96, "architectural_design", "strategic", "System architecture"
+    ),
     "adr_creation": SkillDimension(97, "adr_creation", "strategic", "ADR documentation"),
     "planning": SkillDimension(98, "planning", "strategic", "Task breakdown, planning"),
-    "complexity_estimation": SkillDimension(99, "complexity_estimation", "strategic", "Accurate estimates"),
-
+    "complexity_estimation": SkillDimension(
+        99, "complexity_estimation", "strategic", "Accurate estimates"
+    ),
     # Collaboration Skills (192-287)
     "communication": SkillDimension(192, "communication", "collaboration", "Clear communication"),
-    "context_awareness": SkillDimension(193, "context_awareness", "collaboration", "Understanding context"),
-    "multi_agent_coordination": SkillDimension(194, "multi_agent_coordination", "collaboration", "Agent coordination"),
-
+    "context_awareness": SkillDimension(
+        193, "context_awareness", "collaboration", "Understanding context"
+    ),
+    "multi_agent_coordination": SkillDimension(
+        194, "multi_agent_coordination", "collaboration", "Agent coordination"
+    ),
     # Quality Skills (288-383)
-    "constitutional_compliance": SkillDimension(288, "constitutional_compliance", "quality", "Articles I-V"),
+    "constitutional_compliance": SkillDimension(
+        288, "constitutional_compliance", "quality", "Articles I-V"
+    ),
     "verification": SkillDimension(289, "verification", "quality", "100% test pass rate"),
     "learning": SkillDimension(290, "learning", "quality", "VectorStore usage"),
     "autonomy": SkillDimension(291, "autonomy", "quality", "Self-healing, adaptation"),
@@ -89,12 +96,7 @@ class SkillVector(BaseModel):
     collaboration_skill: float = Field(default=0.5, ge=0.0, le=1.0)
     quality_skill: float = Field(default=0.5, ge=0.0, le=1.0)
 
-    def update_skill(
-        self,
-        skill_name: str,
-        new_value: float,
-        confidence: float = 1.0
-    ) -> None:
+    def update_skill(self, skill_name: str, new_value: float, confidence: float = 1.0) -> None:
         """Update a single skill dimension using EMA.
 
         Args:
@@ -133,7 +135,7 @@ class SkillVector(BaseModel):
         quality_score: float,
         complexity: str,
         duration_ms: float,
-        confidence: float = 0.8
+        confidence: float = 0.8,
     ) -> None:
         """Update skill vector from task completion result.
 
@@ -313,17 +315,14 @@ class SkillVector(BaseModel):
                 "skill_vector",
                 f"agent:{self.agent_name}",
                 f"session:{self.session_id}",
-                "leap_3_m4"
+                "leap_3_m4",
             ],
-            namespace="skill_evolution"
+            namespace="skill_evolution",
         )
 
     @classmethod
     def load_from_vectorstore(
-        cls,
-        vector_store: Any,
-        agent_name: str,
-        session_id: str
+        cls, vector_store: Any, agent_name: str, session_id: str
     ) -> "SkillVector | None":
         """Load skill vector from VectorStore.
 
@@ -338,11 +337,7 @@ class SkillVector(BaseModel):
         key = f"skill_vector_{agent_name}_{session_id}"
 
         try:
-            results = vector_store.search(
-                query=key,
-                namespace="skill_evolution",
-                limit=1
-            )
+            results = vector_store.search(query=key, namespace="skill_evolution", limit=1)
 
             if results:
                 content = results[0].get("content", {})
@@ -371,11 +366,7 @@ class SkillEvolutionTracker:
         self.vector_store = vector_store
         self.history: list[SkillVector] = []
 
-    def record_session(
-        self,
-        session_id: str,
-        skill_vector: SkillVector
-    ) -> None:
+    def record_session(self, session_id: str, skill_vector: SkillVector) -> None:
         """Record skill vector for a session.
 
         Args:
@@ -385,11 +376,7 @@ class SkillEvolutionTracker:
         skill_vector.save_to_vectorstore(self.vector_store)
         self.history.append(skill_vector)
 
-    def get_skill_trend(
-        self,
-        skill_name: str,
-        window_size: int = 10
-    ) -> list[float]:
+    def get_skill_trend(self, skill_name: str, window_size: int = 10) -> list[float]:
         """Get skill trend over recent sessions.
 
         Args:

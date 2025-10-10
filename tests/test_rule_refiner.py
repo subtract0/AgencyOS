@@ -44,6 +44,7 @@ from shared.models.refinement_result import (
 # UNIT TESTS: Pydantic Models (5 tests)
 # ============================================================================
 
+
 def test_refinement_entry_validation():
     """Test RefinementEntry Pydantic validation."""
     # Arrange & Act
@@ -52,7 +53,7 @@ def test_refinement_entry_validation():
         original_tier="simple",
         corrected_tier="complex",
         confidence=0.95,
-        reason="Test failure rate 33%"
+        reason="Test failure rate 33%",
     )
 
     # Assert
@@ -66,11 +67,7 @@ def test_refinement_entry_validation():
 def test_refinement_history_max_iterations():
     """Test RefinementHistory enforces max 3 iterations."""
     # Arrange & Act
-    history = RefinementHistory(
-        task_id="task_42",
-        iteration_count=3,
-        refinement_history=[]
-    )
+    history = RefinementHistory(task_id="task_42", iteration_count=3, refinement_history=[])
 
     # Assert
     assert history.iteration_count == 3
@@ -80,7 +77,7 @@ def test_refinement_history_max_iterations():
         RefinementHistory(
             task_id="task_42",
             iteration_count=4,  # Exceeds max 3
-            refinement_history=[]
+            refinement_history=[],
         )
 
 
@@ -92,7 +89,7 @@ def test_threshold_adjustment_validation():
         old_threshold=0.1,
         new_threshold=0.09,
         adjustment_count=3,
-        adjusted_at="2025-10-10T15:23:45Z"
+        adjusted_at="2025-10-10T15:23:45Z",
     )
 
     # Assert
@@ -114,7 +111,7 @@ def test_refinement_result_validation():
         iteration_count=1,
         convergence_achieved=False,
         accuracy_estimate=None,
-        refined_at="2025-10-10T15:23:45Z"
+        refined_at="2025-10-10T15:23:45Z",
     )
 
     # Assert
@@ -134,7 +131,7 @@ def test_vectorstore_snapshot_validation():
         created_at="2025-10-10T15:23:45Z",
         patterns=[{"task_id": "task_1", "confidence": 0.95}],
         thresholds={"test_failure_rate": 0.1},
-        accuracy_baseline=0.92
+        accuracy_baseline=0.92,
     )
 
     # Assert
@@ -147,6 +144,7 @@ def test_vectorstore_snapshot_validation():
 # ============================================================================
 # UNIT TESTS: Confidence Adjustment (3 tests)
 # ============================================================================
+
 
 def test_confidence_adjustment_with_evidence():
     """Test confidence adjustment formula with supporting evidence (spec 8.2)."""
@@ -214,6 +212,7 @@ def test_confidence_convergence_after_iterations():
 # UNIT TESTS: Threshold Tuning (3 tests)
 # ============================================================================
 
+
 def test_threshold_tuning_10_percent_reduction():
     """Test threshold tuning applies 10% reduction (spec 8.3)."""
     from tools.quality_feedback.rule_refiner import RuleRefiner
@@ -236,16 +235,16 @@ def test_threshold_tuning_10_percent_reduction():
                 confidence=0.95,
                 severity=SeverityLevel.CRITICAL,
                 description="Test failure rate 33%",
-                signal_value=0.33
+                signal_value=0.33,
             )
         ],
         aggregated_confidence=0.95,
         is_misclassified=True,
-        detected_at="2025-10-10T15:23:45Z"
+        detected_at="2025-10-10T15:23:45Z",
     )
 
     # Mock 3+ CRITICAL detections
-    with patch.object(refiner, '_count_critical_detections', return_value=3):
+    with patch.object(refiner, "_count_critical_detections", return_value=3):
         # Act
         adjustments = refiner._tune_thresholds(report)
 
@@ -277,16 +276,16 @@ def test_threshold_min_enforcement():
                 confidence=0.95,
                 severity=SeverityLevel.CRITICAL,
                 description="Test failures",
-                signal_value=0.33
+                signal_value=0.33,
             )
         ],
         aggregated_confidence=0.95,
         is_misclassified=True,
-        detected_at="2025-10-10T15:23:45Z"
+        detected_at="2025-10-10T15:23:45Z",
     )
 
     # Mock 3+ CRITICAL detections
-    with patch.object(refiner, '_count_critical_detections', return_value=3):
+    with patch.object(refiner, "_count_critical_detections", return_value=3):
         # Act
         adjustments = refiner._tune_thresholds(report)
 
@@ -314,12 +313,12 @@ def test_threshold_tuning_only_for_critical():
                 confidence=0.70,
                 severity=SeverityLevel.WARNING,  # Not CRITICAL
                 description="Code churn 75 lines",
-                signal_value=75
+                signal_value=75,
             )
         ],
         aggregated_confidence=0.70,
         is_misclassified=True,
-        detected_at="2025-10-10T15:23:45Z"
+        detected_at="2025-10-10T15:23:45Z",
     )
 
     # Act
@@ -333,6 +332,7 @@ def test_threshold_tuning_only_for_critical():
 # ============================================================================
 # UNIT TESTS: Pattern Storage (2 tests)
 # ============================================================================
+
 
 def test_pattern_storage_to_vectorstore():
     """Test misclassification pattern stored in VectorStore (spec 8.4)."""
@@ -353,29 +353,24 @@ def test_pattern_storage_to_vectorstore():
                 confidence=0.95,
                 severity=SeverityLevel.CRITICAL,
                 description="Test failures",
-                signal_value=0.33
+                signal_value=0.33,
             )
         ],
         aggregated_confidence=0.95,
         is_misclassified=True,
-        detected_at="2025-10-10T15:23:45Z"
+        detected_at="2025-10-10T15:23:45Z",
     )
 
     # Act
     patterns_updated = refiner._store_pattern(
-        report=report,
-        task_description="Refactor async error handler",
-        confidence=0.95
+        report=report, task_description="Refactor async error handler", confidence=0.95
     )
 
     # Assert
     assert patterns_updated == 1
 
     # Verify pattern stored in VectorStore
-    patterns = context.search_memories(
-        tags=["misclassification_pattern"],
-        include_session=True
-    )
+    patterns = context.search_memories(tags=["misclassification_pattern"], include_session=True)
     assert len(patterns) == 1
     assert patterns[0]["content"]["task_id"] == "task_42"
     assert patterns[0]["content"]["original_tier"] == "simple"
@@ -399,15 +394,14 @@ def test_query_existing_confidence_from_vectorstore():
             "type": "misclassification_pattern",
             "task_id": "task_42",
             "task_description": "Refactor async handler",
-            "confidence": 0.85
+            "confidence": 0.85,
         },
-        tags=["misclassification_pattern"]
+        tags=["misclassification_pattern"],
     )
 
     # Act
     confidence = refiner._query_existing_confidence(
-        task_id="task_42",
-        task_description="Refactor async handler"
+        task_id="task_42", task_description="Refactor async handler"
     )
 
     # Assert
@@ -417,6 +411,7 @@ def test_query_existing_confidence_from_vectorstore():
 # ============================================================================
 # UNIT TESTS: Stability Guarantees (3 tests)
 # ============================================================================
+
 
 def test_max_iterations_enforced():
     """Test max 3 iterations per task enforced (spec 8.6)."""
@@ -430,7 +425,7 @@ def test_max_iterations_enforced():
     refiner.history["task_42"] = RefinementHistory(
         task_id="task_42",
         iteration_count=3,  # Already at max
-        refinement_history=[]
+        refinement_history=[],
     )
 
     report = MisclassificationReport(
@@ -440,7 +435,7 @@ def test_max_iterations_enforced():
         detected_issues=[],
         aggregated_confidence=0.95,
         is_misclassified=True,
-        detected_at="2025-10-10T15:23:45Z"
+        detected_at="2025-10-10T15:23:45Z",
     )
 
     # Act & Assert
@@ -467,23 +462,23 @@ def test_oscillation_detection():
                 original_tier="simple",
                 corrected_tier="complex",
                 confidence=0.95,
-                reason="Test failures"
+                reason="Test failures",
             ),
             RefinementEntry(
                 timestamp="2025-10-10T15:24:45Z",
                 original_tier="complex",
                 corrected_tier="simple",
                 confidence=0.70,
-                reason="Low churn"
+                reason="Low churn",
             ),
             RefinementEntry(
                 timestamp="2025-10-10T15:25:45Z",
                 original_tier="simple",
                 corrected_tier="complex",
                 confidence=0.90,
-                reason="Test failures again"
-            )
-        ]
+                reason="Test failures again",
+            ),
+        ],
     )
 
     # Act
@@ -511,23 +506,23 @@ def test_oscillation_mitigation():
                 original_tier="simple",
                 corrected_tier="complex",
                 confidence=0.95,
-                reason="Test failures"
+                reason="Test failures",
             ),
             RefinementEntry(
                 timestamp="2025-10-10T15:24:45Z",
                 original_tier="complex",
                 corrected_tier="simple",
                 confidence=0.70,
-                reason="Low churn"
+                reason="Low churn",
             ),
             RefinementEntry(
                 timestamp="2025-10-10T15:25:45Z",
                 original_tier="simple",
                 corrected_tier="complex",
                 confidence=0.90,
-                reason="Test failures"
-            )
-        ]
+                reason="Test failures",
+            ),
+        ],
     )
 
     report = MisclassificationReport(
@@ -537,7 +532,7 @@ def test_oscillation_mitigation():
         detected_issues=[],
         aggregated_confidence=0.70,
         is_misclassified=True,
-        detected_at="2025-10-10T15:26:45Z"
+        detected_at="2025-10-10T15:26:45Z",
     )
 
     # Act
@@ -553,6 +548,7 @@ def test_oscillation_mitigation():
 # ============================================================================
 # UNIT TESTS: Convergence & Rollback (2 tests)
 # ============================================================================
+
 
 def test_convergence_check_placeholder():
     """Test convergence check (placeholder until Phase 5, spec 8.5)."""
@@ -583,7 +579,7 @@ def test_snapshot_creation():
     context.store_memory(
         key="pattern_1",
         content={"task_id": "task_1", "confidence": 0.95},
-        tags=["misclassification_pattern"]
+        tags=["misclassification_pattern"],
     )
 
     # Act
@@ -599,6 +595,7 @@ def test_snapshot_creation():
 # ============================================================================
 # INTEGRATION TESTS (5+ tests)
 # ============================================================================
+
 
 def test_e2e_refine_operation():
     """Integration test: MisclassificationReport → refine() → RefinementResult."""
@@ -619,12 +616,12 @@ def test_e2e_refine_operation():
                 confidence=0.95,
                 severity=SeverityLevel.CRITICAL,
                 description="Test failure rate 33%",
-                signal_value=0.33
+                signal_value=0.33,
             )
         ],
         aggregated_confidence=0.95,
         is_misclassified=True,
-        detected_at="2025-10-10T15:23:45Z"
+        detected_at="2025-10-10T15:23:45Z",
     )
 
     # Act
@@ -661,12 +658,12 @@ def test_convergence_simulation():
                     confidence=0.95,
                     severity=SeverityLevel.CRITICAL,
                     description="Test failures",
-                    signal_value=0.15
+                    signal_value=0.15,
                 )
             ],
             aggregated_confidence=0.95,
             is_misclassified=True,
-            detected_at="2025-10-10T15:23:45Z"
+            detected_at="2025-10-10T15:23:45Z",
         )
 
         result = refiner.refine(report, task_description=f"Task {i}")
@@ -675,10 +672,7 @@ def test_convergence_simulation():
         assert result.is_ok()
 
     # After 100 tasks, VectorStore should have 100 patterns
-    patterns = context.search_memories(
-        tags=["misclassification_pattern"],
-        include_session=True
-    )
+    patterns = context.search_memories(tags=["misclassification_pattern"], include_session=True)
     assert len(patterns) == 100
 
 
@@ -695,7 +689,7 @@ def test_rollback_scenario():
     context.store_memory(
         key="pattern_1",
         content={"task_id": "task_1", "confidence": 0.95},
-        tags=["misclassification_pattern"]
+        tags=["misclassification_pattern"],
     )
 
     # Create snapshot
@@ -736,12 +730,12 @@ def test_threshold_tuning_integration():
                     confidence=0.95,
                     severity=SeverityLevel.CRITICAL,
                     description="Test failures",
-                    signal_value=0.15
+                    signal_value=0.15,
                 )
             ],
             aggregated_confidence=0.95,
             is_misclassified=True,
-            detected_at="2025-10-10T15:23:45Z"
+            detected_at="2025-10-10T15:23:45Z",
         )
 
         refiner.refine(report, task_description=f"Task {i}")
@@ -768,9 +762,9 @@ def test_vectorstore_learning_boost():
             "type": "misclassification_pattern",
             "task_id": "task_1",
             "task_description": "Refactor async error handler",
-            "confidence": 0.85
+            "confidence": 0.85,
         },
-        tags=["misclassification_pattern"]
+        tags=["misclassification_pattern"],
     )
 
     # New similar task
@@ -784,12 +778,12 @@ def test_vectorstore_learning_boost():
                 confidence=0.95,
                 severity=SeverityLevel.CRITICAL,
                 description="Test failures",
-                signal_value=0.33
+                signal_value=0.33,
             )
         ],
         aggregated_confidence=0.95,
         is_misclassified=True,
-        detected_at="2025-10-10T15:23:45Z"
+        detected_at="2025-10-10T15:23:45Z",
     )
 
     # Act
@@ -808,6 +802,7 @@ def test_vectorstore_learning_boost():
 # ERROR HANDLING TESTS (2 tests)
 # ============================================================================
 
+
 def test_refine_error_handling_no_task_description():
     """Test refine handles missing task_description gracefully."""
     from tools.quality_feedback.rule_refiner import RuleRefiner
@@ -823,7 +818,7 @@ def test_refine_error_handling_no_task_description():
         detected_issues=[],
         aggregated_confidence=0.95,
         is_misclassified=True,
-        detected_at="2025-10-10T15:23:45Z"
+        detected_at="2025-10-10T15:23:45Z",
     )
 
     # Act (no task_description provided)
@@ -850,11 +845,11 @@ def test_refine_error_handling_exception():
         detected_issues=[],
         aggregated_confidence=0.95,
         is_misclassified=True,
-        detected_at="2025-10-10T15:23:45Z"
+        detected_at="2025-10-10T15:23:45Z",
     )
 
     # Mock _store_pattern to raise exception
-    with patch.object(refiner, '_store_pattern', side_effect=Exception("VectorStore error")):
+    with patch.object(refiner, "_store_pattern", side_effect=Exception("VectorStore error")):
         # Act
         result = refiner.refine(report, task_description="Test task")
 
@@ -867,6 +862,7 @@ def test_refine_error_handling_exception():
 # ============================================================================
 # PERFORMANCE TESTS (1 test)
 # ============================================================================
+
 
 def test_refinement_latency_under_50ms():
     """Test refinement latency <50ms p99 (spec 8.9)."""
@@ -889,12 +885,12 @@ def test_refinement_latency_under_50ms():
                 confidence=0.95,
                 severity=SeverityLevel.CRITICAL,
                 description="Test failures",
-                signal_value=0.33
+                signal_value=0.33,
             )
         ],
         aggregated_confidence=0.95,
         is_misclassified=True,
-        detected_at="2025-10-10T15:23:45Z"
+        detected_at="2025-10-10T15:23:45Z",
     )
 
     # Act

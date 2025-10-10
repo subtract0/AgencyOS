@@ -30,6 +30,7 @@ class SeverityLevel(str, Enum):
     WARNING: High churn or timing deviation (monitor for patterns)
     INFO: Minor deviations (no action needed)
     """
+
     CRITICAL = "critical"
     WARNING = "warning"
     INFO = "info"
@@ -43,6 +44,7 @@ class UserFeedback(str, Enum):
     MISCLASSIFIED: Task routed to wrong tier (negative signal, highest confidence)
     UNSURE: User uncertain about classification (neutral signal)
     """
+
     CORRECT = "correct"
     MISCLASSIFIED = "misclassified"
     UNSURE = "unsure"
@@ -78,13 +80,12 @@ class QualitySignals(BaseModel):
 
     # Task metadata
     task_id: str = Field(
-        ...,
-        description="Unique task identifier (same as routing decision task_id)"
+        ..., description="Unique task identifier (same as routing decision task_id)"
     )
     original_tier: str = Field(
         ...,
         description="Tier task was routed to (simple/moderate/complex)",
-        pattern="^(simple|moderate|complex)$"
+        pattern="^(simple|moderate|complex)$",
     )
 
     # Signal 1: Test Failures
@@ -93,7 +94,7 @@ class QualitySignals(BaseModel):
         ge=0.0,
         le=1.0,
         description="Ratio of failed tests (0.0-1.0), None if no tests run. "
-                    "CRITICAL threshold: >0.1 (>10% failures indicate wrong tier)"
+        "CRITICAL threshold: >0.1 (>10% failures indicate wrong tier)",
     )
 
     # Signal 2: Code Churn
@@ -101,7 +102,7 @@ class QualitySignals(BaseModel):
         None,
         ge=0,
         description="Total lines changed after initial commit (additions + deletions). "
-                    "CRITICAL: >100 (major refactor), WARNING: >50 (moderate refactor)"
+        "CRITICAL: >100 (major refactor), WARNING: >50 (moderate refactor)",
     )
 
     # Signal 3: Execution Timing
@@ -109,25 +110,25 @@ class QualitySignals(BaseModel):
         None,
         ge=0.0,
         description="Ratio of actual to estimated execution time (>1.0 means overrun). "
-                    "WARNING: >3.0 (task took 3x+ longer than estimated)"
+        "WARNING: >3.0 (task took 3x+ longer than estimated)",
     )
 
     # Signal 4: User Feedback
     user_feedback: UserFeedback | None = Field(
         None,
         description="Explicit user classification feedback (manual override). "
-                    "CRITICAL if misclassified (highest confidence signal)"
+        "CRITICAL if misclassified (highest confidence signal)",
     )
 
     # Computed Fields
     severity: SeverityLevel = Field(
         default=SeverityLevel.INFO,
-        description="Computed severity based on threshold rules (auto-computed on init)"
+        description="Computed severity based on threshold rules (auto-computed on init)",
     )
 
     detected_at: str = Field(
         default_factory=lambda: datetime.now(UTC).isoformat(),
-        description="ISO 8601 timestamp of signal collection (UTC)"
+        description="ISO 8601 timestamp of signal collection (UTC)",
     )
 
     class Config:
@@ -141,7 +142,7 @@ class QualitySignals(BaseModel):
                 "execution_time_ratio": 2.3,
                 "user_feedback": None,
                 "severity": "critical",
-                "detected_at": "2025-10-10T12:34:56.789Z"
+                "detected_at": "2025-10-10T12:34:56.789Z",
             }
         }
 

@@ -45,19 +45,13 @@ class TestAccuracyDashboard:
         # Arrange
         quality_signals = [
             QualitySignals(
-                signal_type="execution_time",
-                value=2.5,
-                expected_range=(0.0, 10.0),
-                confidence=0.9
+                signal_type="execution_time", value=2.5, expected_range=(0.0, 10.0), confidence=0.9
             )
         ]
 
         # Act
         temp_dashboard.record_task(
-            task_id="task_1",
-            actual_tier="P2",
-            predicted_tier="P2",
-            quality_signals=quality_signals
+            task_id="task_1", actual_tier="P2", predicted_tier="P2", quality_signals=quality_signals
         )
 
         # Assert
@@ -79,7 +73,7 @@ class TestAccuracyDashboard:
                 signal_type="model_confidence",
                 value=0.6,
                 expected_range=(0.8, 1.0),
-                confidence=0.85
+                confidence=0.85,
             )
         ]
 
@@ -90,7 +84,7 @@ class TestAccuracyDashboard:
             evidence_signals=quality_signals,
             severity="high",
             confidence=0.85,
-            detection_timestamp=datetime.now()
+            detection_timestamp=datetime.now(),
         )
 
         # Act
@@ -99,7 +93,7 @@ class TestAccuracyDashboard:
             actual_tier="P1",
             predicted_tier="P3",
             quality_signals=quality_signals,
-            misclassification=misclassification
+            misclassification=misclassification,
         )
 
         # Assert
@@ -124,10 +118,7 @@ class TestAccuracyDashboard:
         """Test metrics calculation with basic task data."""
         # Arrange
         signal = QualitySignals(
-            signal_type="test",
-            value=1.0,
-            expected_range=(0.0, 2.0),
-            confidence=0.9
+            signal_type="test", value=1.0, expected_range=(0.0, 2.0), confidence=0.9
         )
 
         # Record 10 tasks: 8 correct, 2 incorrect
@@ -137,7 +128,7 @@ class TestAccuracyDashboard:
                 task_id=f"task_{i}",
                 actual_tier="P1",
                 predicted_tier=predicted,
-                quality_signals=[signal]
+                quality_signals=[signal],
             )
 
         # Act
@@ -153,10 +144,7 @@ class TestAccuracyDashboard:
         """Test per-tier accuracy calculation."""
         # Arrange
         signal = QualitySignals(
-            signal_type="test",
-            value=1.0,
-            expected_range=(0.0, 2.0),
-            confidence=0.9
+            signal_type="test", value=1.0, expected_range=(0.0, 2.0), confidence=0.9
         )
 
         tasks = [
@@ -173,25 +161,22 @@ class TestAccuracyDashboard:
                 task_id=f"task_{i}",
                 actual_tier=actual,
                 predicted_tier=predicted,
-                quality_signals=[signal]
+                quality_signals=[signal],
             )
 
         # Act
         metrics = temp_dashboard.calculate_metrics()
 
         # Assert
-        assert metrics.p1_accuracy == pytest.approx(2/3)  # 2 correct out of 3
-        assert metrics.p2_accuracy == pytest.approx(1/2)  # 1 correct out of 2
+        assert metrics.p1_accuracy == pytest.approx(2 / 3)  # 2 correct out of 3
+        assert metrics.p2_accuracy == pytest.approx(1 / 2)  # 1 correct out of 2
         assert metrics.p3_accuracy == pytest.approx(1.0)  # 1 correct out of 1
 
     def test_calculate_metrics_with_detection(self, temp_dashboard: AccuracyDashboard):
         """Test detection rate calculation."""
         # Arrange
         signal = QualitySignals(
-            signal_type="test",
-            value=1.0,
-            expected_range=(0.0, 2.0),
-            confidence=0.9
+            signal_type="test", value=1.0, expected_range=(0.0, 2.0), confidence=0.9
         )
 
         # 10 tasks: 8 correct, 2 incorrect (1 detected)
@@ -207,7 +192,7 @@ class TestAccuracyDashboard:
                     evidence_signals=[signal],
                     severity="medium",
                     confidence=0.8,
-                    detection_timestamp=datetime.now()
+                    detection_timestamp=datetime.now(),
                 )
 
             temp_dashboard.record_task(
@@ -215,7 +200,7 @@ class TestAccuracyDashboard:
                 actual_tier="P1",
                 predicted_tier=predicted,
                 quality_signals=[signal],
-                misclassification=misclassification
+                misclassification=misclassification,
             )
 
         # Act
@@ -229,19 +214,13 @@ class TestAccuracyDashboard:
         """Test complete dashboard snapshot generation."""
         # Arrange
         signal = QualitySignals(
-            signal_type="test",
-            value=1.0,
-            expected_range=(0.0, 2.0),
-            confidence=0.9
+            signal_type="test", value=1.0, expected_range=(0.0, 2.0), confidence=0.9
         )
 
         # Record some tasks
         for i in range(10):
             temp_dashboard.record_task(
-                task_id=f"task_{i}",
-                actual_tier="P1",
-                predicted_tier="P1",
-                quality_signals=[signal]
+                task_id=f"task_{i}", actual_tier="P1", predicted_tier="P1", quality_signals=[signal]
             )
 
         # Act
@@ -258,17 +237,11 @@ class TestAccuracyDashboard:
         """Test HTML rendering."""
         # Arrange
         signal = QualitySignals(
-            signal_type="test",
-            value=1.0,
-            expected_range=(0.0, 2.0),
-            confidence=0.9
+            signal_type="test", value=1.0, expected_range=(0.0, 2.0), confidence=0.9
         )
 
         temp_dashboard.record_task(
-            task_id="task_1",
-            actual_tier="P1",
-            predicted_tier="P1",
-            quality_signals=[signal]
+            task_id="task_1", actual_tier="P1", predicted_tier="P1", quality_signals=[signal]
         )
 
         # Act
@@ -284,10 +257,7 @@ class TestAccuracyDashboard:
         """Test retrieval of recent misclassifications."""
         # Arrange
         signal = QualitySignals(
-            signal_type="test",
-            value=1.0,
-            expected_range=(0.0, 2.0),
-            confidence=0.9
+            signal_type="test", value=1.0, expected_range=(0.0, 2.0), confidence=0.9
         )
 
         # Create 15 misclassifications
@@ -299,7 +269,7 @@ class TestAccuracyDashboard:
                 evidence_signals=[signal],
                 severity="medium",
                 confidence=0.8,
-                detection_timestamp=datetime.now()
+                detection_timestamp=datetime.now(),
             )
 
             temp_dashboard.record_task(
@@ -307,7 +277,7 @@ class TestAccuracyDashboard:
                 actual_tier="P1",
                 predicted_tier="P2",
                 quality_signals=[signal],
-                misclassification=misclassification
+                misclassification=misclassification,
             )
 
         # Act
@@ -321,10 +291,7 @@ class TestAccuracyDashboard:
         """Test retrieval of recent refinements."""
         # Arrange
         signal = QualitySignals(
-            signal_type="test",
-            value=1.0,
-            expected_range=(0.0, 2.0),
-            confidence=0.9
+            signal_type="test", value=1.0, expected_range=(0.0, 2.0), confidence=0.9
         )
 
         # Create 5 refinements
@@ -336,7 +303,7 @@ class TestAccuracyDashboard:
                 refined_rule={"tier": "P2"},
                 confidence=0.8,
                 evidence_count=5,
-                refinement_timestamp=datetime.now()
+                refinement_timestamp=datetime.now(),
             )
 
             temp_dashboard.record_task(
@@ -344,7 +311,7 @@ class TestAccuracyDashboard:
                 actual_tier="P1",
                 predicted_tier="P1",
                 quality_signals=[signal],
-                refinement=refinement
+                refinement=refinement,
             )
 
         # Act
@@ -358,10 +325,7 @@ class TestAccuracyDashboard:
         """Test detection of accuracy improvement trend."""
         # Arrange
         signal = QualitySignals(
-            signal_type="test",
-            value=1.0,
-            expected_range=(0.0, 2.0),
-            confidence=0.9
+            signal_type="test", value=1.0, expected_range=(0.0, 2.0), confidence=0.9
         )
 
         # Simulate improving accuracy over time
@@ -376,7 +340,7 @@ class TestAccuracyDashboard:
                 task_id=f"task_{i}",
                 actual_tier="P1",
                 predicted_tier=predicted,
-                quality_signals=[signal]
+                quality_signals=[signal],
             )
 
         # Act
@@ -389,18 +353,12 @@ class TestAccuracyDashboard:
         """Test metrics calculation respects time windows."""
         # Arrange
         signal = QualitySignals(
-            signal_type="test",
-            value=1.0,
-            expected_range=(0.0, 2.0),
-            confidence=0.9
+            signal_type="test", value=1.0, expected_range=(0.0, 2.0), confidence=0.9
         )
 
         # Record task within 1-hour window
         temp_dashboard.record_task(
-            task_id="task_recent",
-            actual_tier="P1",
-            predicted_tier="P1",
-            quality_signals=[signal]
+            task_id="task_recent", actual_tier="P1", predicted_tier="P1", quality_signals=[signal]
         )
 
         # Manually add old task (>1 hour ago) to JSONL
@@ -412,7 +370,7 @@ class TestAccuracyDashboard:
             "is_correct": False,
             "quality_signals": [signal.dict()],
             "misclassification": None,
-            "refinement": None
+            "refinement": None,
         }
 
         with open(temp_dashboard.tasks_file, "a") as f:
@@ -438,7 +396,7 @@ class TestAccuracyMetrics:
             total_tasks=10,
             correct_classifications=8,
             misclassifications=2,
-            accuracy_rate=0.8
+            accuracy_rate=0.8,
         )
         assert metrics.accuracy_rate == 0.8
 
@@ -449,7 +407,7 @@ class TestAccuracyMetrics:
                 total_tasks=10,
                 correct_classifications=8,
                 misclassifications=2,
-                accuracy_rate=1.5
+                accuracy_rate=1.5,
             )
 
         # Invalid: <0.0
@@ -459,7 +417,7 @@ class TestAccuracyMetrics:
                 total_tasks=10,
                 correct_classifications=8,
                 misclassifications=2,
-                accuracy_rate=-0.1
+                accuracy_rate=-0.1,
             )
 
     def test_validation_counts(self):
@@ -470,7 +428,7 @@ class TestAccuracyMetrics:
             total_tasks=0,
             correct_classifications=0,
             misclassifications=0,
-            accuracy_rate=0.0
+            accuracy_rate=0.0,
         )
         assert metrics.total_tasks == 0
 
@@ -481,7 +439,7 @@ class TestAccuracyMetrics:
                 total_tasks=-1,
                 correct_classifications=0,
                 misclassifications=0,
-                accuracy_rate=0.0
+                accuracy_rate=0.0,
             )
 
 
@@ -496,7 +454,7 @@ class TestDashboardSnapshot:
             total_tasks=10,
             correct_classifications=9,
             misclassifications=1,
-            accuracy_rate=0.9
+            accuracy_rate=0.9,
         )
 
         # Act
@@ -511,7 +469,7 @@ class TestDashboardSnapshot:
             recent_refinements=[],
             is_improving=True,
             refinement_effectiveness=0.8,
-            vectorstore_utilization=1.0
+            vectorstore_utilization=1.0,
         )
 
         # Assert

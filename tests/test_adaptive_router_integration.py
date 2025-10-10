@@ -24,7 +24,7 @@ class TestModelRouting:
         result = router.route(
             task_description="Fix typo in README: recieve → receive",
             task_type="documentation",
-            agent_key="coder"
+            agent_key="coder",
         )
 
         assert result.is_ok()
@@ -43,7 +43,7 @@ class TestModelRouting:
         result = router.route(
             task_description="Implement user authentication with JWT tokens",
             task_type="feature_implementation",
-            agent_key="coder"
+            agent_key="coder",
         )
 
         assert result.is_ok()
@@ -61,7 +61,7 @@ class TestModelRouting:
         result = router.route(
             task_description="Create ADR for database selection strategy",
             task_type="architecture",
-            agent_key="chief_architect"
+            agent_key="chief_architect",
         )
 
         assert result.is_ok()
@@ -83,7 +83,7 @@ class TestModelRouting:
             result = router.route(
                 task_description="Create ADR for critical architecture",
                 task_type="architecture",
-                agent_key="chief_architect"
+                agent_key="chief_architect",
             )
 
             assert result.is_ok()
@@ -107,7 +107,7 @@ class TestModelRouting:
             result = router.route(
                 task_description="Fix typo",  # P3 task
                 task_type="documentation",
-                agent_key="coder"
+                agent_key="coder",
             )
 
             assert result.is_ok()
@@ -147,7 +147,7 @@ class TestCostTracking:
             task_description="Implement feature X",
             task_type="feature_implementation",
             agent_key="coder",
-            estimated_tokens=1000  # 1K tokens
+            estimated_tokens=1000,  # 1K tokens
         )
 
         assert result.is_ok()
@@ -177,8 +177,7 @@ class TestCostTracking:
         # Generate summary
         now = datetime.now()
         summary = tracker.generate_summary(
-            period_start=now - timedelta(hours=1),
-            period_end=now + timedelta(hours=1)
+            period_start=now - timedelta(hours=1), period_end=now + timedelta(hours=1)
         )
 
         assert summary.total_tasks == 10
@@ -200,9 +199,7 @@ class TestPerformance:
         router = ModelRouter(classifier=classifier)
 
         result = router.route(
-            task_description="Fix typo in README",
-            task_type="documentation",
-            agent_key="coder"
+            task_description="Fix typo in README", task_type="documentation", agent_key="coder"
         )
 
         assert result.is_ok()
@@ -224,7 +221,7 @@ class TestAgentContextIntegration:
         model = context.get_optimal_model(
             agent_key="coder",
             task_description="Fix typo in variable name",
-            task_type="code_modification"
+            task_type="code_modification",
         )
 
         # Should route to local or mini
@@ -237,7 +234,7 @@ class TestAgentContextIntegration:
         model = context.get_optimal_model(
             agent_key="chief_architect",
             task_description="Design distributed consensus algorithm",
-            task_type="architecture"
+            task_type="architecture",
         )
 
         assert model == "gpt-5"
@@ -249,7 +246,7 @@ class TestAgentContextIntegration:
         model = context.get_optimal_model(
             agent_key="coder",
             task_description="Implement JWT authentication",
-            task_type="feature_implementation"
+            task_type="feature_implementation",
         )
 
         assert model == "gpt-4o"
@@ -268,9 +265,7 @@ class TestLocalModelFallback:
 
         try:
             result = router.route(
-                task_description="Fix typo",
-                task_type="documentation",
-                agent_key="coder"
+                task_description="Fix typo", task_type="documentation", agent_key="coder"
             )
 
             assert result.is_ok()
@@ -295,12 +290,9 @@ class TestVectorStoreLearning:
                 self.stored_memories = []
 
             def add_memory(self, key, content, tags=None, namespace=None):
-                self.stored_memories.append({
-                    "key": key,
-                    "content": content,
-                    "tags": tags or [],
-                    "namespace": namespace
-                })
+                self.stored_memories.append(
+                    {"key": key, "content": content, "tags": tags or [], "namespace": namespace}
+                )
 
         vector_store = MockVectorStore()
         tracker = CostTracker()
@@ -309,9 +301,7 @@ class TestVectorStoreLearning:
 
         # Route a task
         result = router.route(
-            task_description="Implement auth",
-            task_type="feature_implementation",
-            agent_key="coder"
+            task_description="Implement auth", task_type="feature_implementation", agent_key="coder"
         )
 
         assert result.is_ok()
@@ -323,7 +313,7 @@ class TestVectorStoreLearning:
             success=True,
             actual_tokens=500,
             duration_ms=2500.0,
-            vector_store=vector_store
+            vector_store=vector_store,
         )
 
         # Verify pattern stored
@@ -346,9 +336,7 @@ class TestConstitutionalCompliance:
         router = ModelRouter(classifier=classifier)
 
         result = router.route(
-            task_description="Fix typo",
-            task_type="documentation",
-            agent_key="coder"
+            task_description="Fix typo", task_type="documentation", agent_key="coder"
         )
 
         # Result pattern used
@@ -372,10 +360,7 @@ class TestConstitutionalCompliance:
         """Classification confidence is tracked (Article II verification)."""
         classifier = TaskComplexityClassifier()
 
-        result = classifier.classify(
-            "Fix typo in README",
-            task_type="documentation"
-        )
+        result = classifier.classify("Fix typo in README", task_type="documentation")
 
         assert result.is_ok()
         classification = result.unwrap()

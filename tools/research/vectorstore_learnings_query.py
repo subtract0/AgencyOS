@@ -30,42 +30,37 @@ def query_vectorstore_learnings() -> dict:
     logger.info("Querying classification patterns...")
     classification_patterns = context.search_memories(
         tags=["pattern", "classification"],
-        include_session=False  # Cross-session
+        include_session=False,  # Cross-session
     )
 
     # Query 2: Machine learning patterns
     logger.info("Querying ML integration patterns...")
     ml_patterns = context.search_memories(
-        tags=["machine_learning", "adaptive"],
-        include_session=False
+        tags=["machine_learning", "adaptive"], include_session=False
     )
 
     # Query 3: Routing patterns (Leap 3)
     logger.info("Querying adaptive routing patterns...")
     routing_patterns = context.search_memories(
-        tags=["routing_pattern", "adaptive_router"],
-        include_session=False
+        tags=["routing_pattern", "adaptive_router"], include_session=False
     )
 
     # Query 4: Quality feedback patterns (Leap 4)
     logger.info("Querying quality feedback patterns...")
     quality_patterns = context.search_memories(
-        tags=["quality_metrics", "misclassification"],
-        include_session=False
+        tags=["quality_metrics", "misclassification"], include_session=False
     )
 
     # Query 5: VectorStore learnings (general)
     logger.info("Querying VectorStore integration learnings...")
     vectorstore_learnings = context.search_memories(
-        tags=["vectorstore", "learning"],
-        include_session=False
+        tags=["vectorstore", "learning"], include_session=False
     )
 
     # Query 6: Task complexity patterns
     logger.info("Querying task complexity patterns...")
     complexity_patterns = context.search_memories(
-        tags=["task_complexity", "P1", "P2", "P3"],
-        include_session=False
+        tags=["task_complexity", "P1", "P2", "P3"], include_session=False
     )
 
     # Aggregate results
@@ -242,8 +237,8 @@ def generate_markdown_report(query_results: dict, output_path: Path) -> None:
     """
     report = f"""# VectorStore Pattern Learnings for Leap 5
 
-**Research Date**: {query_results['query_timestamp']}
-**Total Patterns Found**: {query_results['total_patterns_found']}
+**Research Date**: {query_results["query_timestamp"]}
+**Total Patterns Found**: {query_results["total_patterns_found"]}
 **Constitutional Compliance**: Article IV (MANDATORY VectorStore query before decisions)
 
 ---
@@ -254,42 +249,42 @@ This document summarizes existing pattern recognition and machine learning learn
 queried as a constitutional requirement (Article IV) before Leap 5 design decisions.
 
 **Key Findings**:
-- **{query_results['queries']['routing_patterns']['count']} Adaptive Routing Patterns** (Leap 3): 3-method classification (keyword, AST, VectorStore)
-- **{query_results['queries']['quality_patterns']['count']} Quality Feedback Patterns** (Leap 4): Misclassification detection and refinement
-- **{len(query_results['high_confidence_patterns'])} High-Confidence Patterns** (confidence >= 0.6): Validated by Article IV thresholds
-- **{len(query_results['recommendations'])} Recommendations**: Inform Leap 5 design
+- **{query_results["queries"]["routing_patterns"]["count"]} Adaptive Routing Patterns** (Leap 3): 3-method classification (keyword, AST, VectorStore)
+- **{query_results["queries"]["quality_patterns"]["count"]} Quality Feedback Patterns** (Leap 4): Misclassification detection and refinement
+- **{len(query_results["high_confidence_patterns"])} High-Confidence Patterns** (confidence >= 0.6): Validated by Article IV thresholds
+- **{len(query_results["recommendations"])} Recommendations**: Inform Leap 5 design
 
 ---
 
 ## 1. Query Results Summary
 
 ### 1.1 Classification Patterns
-- **Count**: {query_results['queries']['classification_patterns']['count']}
+- **Count**: {query_results["queries"]["classification_patterns"]["count"]}
 - **Tags**: `pattern`, `classification`
 - **Purpose**: Existing task classification approaches
 
 ### 1.2 Machine Learning Patterns
-- **Count**: {query_results['queries']['ml_patterns']['count']}
+- **Count**: {query_results["queries"]["ml_patterns"]["count"]}
 - **Tags**: `machine_learning`, `adaptive`
 - **Purpose**: Previous ML integration attempts
 
 ### 1.3 Routing Patterns (Leap 3)
-- **Count**: {query_results['queries']['routing_patterns']['count']}
+- **Count**: {query_results["queries"]["routing_patterns"]["count"]}
 - **Tags**: `routing_pattern`, `adaptive_router`
 - **Purpose**: Adaptive Model Router learnings (ADR-024)
 
 ### 1.4 Quality Patterns (Leap 4)
-- **Count**: {query_results['queries']['quality_patterns']['count']}
+- **Count**: {query_results["queries"]["quality_patterns"]["count"]}
 - **Tags**: `quality_metrics`, `misclassification`
 - **Purpose**: Quality Feedback Loop learnings
 
 ### 1.5 VectorStore Learnings
-- **Count**: {query_results['queries']['vectorstore_learnings']['count']}
+- **Count**: {query_results["queries"]["vectorstore_learnings"]["count"]}
 - **Tags**: `vectorstore`, `learning`
 - **Purpose**: VectorStore integration best practices
 
 ### 1.6 Task Complexity Patterns
-- **Count**: {query_results['queries']['complexity_patterns']['count']}
+- **Count**: {query_results["queries"]["complexity_patterns"]["count"]}
 - **Tags**: `task_complexity`, `P1`, `P2`, `P3`
 - **Purpose**: Complexity classification training data
 
@@ -304,10 +299,10 @@ queried as a constitutional requirement (Article IV) before Leap 5 design decisi
     # Add high-confidence patterns
     for idx, pattern in enumerate(query_results["high_confidence_patterns"][:20], 1):
         report += f"""
-### Pattern {idx}: {pattern['key']}
-- **Confidence**: {pattern['confidence']:.2f}
-- **Tags**: {', '.join(pattern['tags'])}
-- **Content Preview**: {pattern['content_preview']}...
+### Pattern {idx}: {pattern["key"]}
+- **Confidence**: {pattern["confidence"]:.2f}
+- **Tags**: {", ".join(pattern["tags"])}
+- **Content Preview**: {pattern["content_preview"]}...
 
 """
 
@@ -323,11 +318,11 @@ queried as a constitutional requirement (Article IV) before Leap 5 design decisi
 
     for idx, rec in enumerate(query_results["recommendations"], 1):
         report += f"""
-### Recommendation {idx}: {rec['category']} [{rec['priority']}]
+### Recommendation {idx}: {rec["category"]} [{rec["priority"]}]
 
-**Recommendation**: {rec['recommendation']}
+**Recommendation**: {rec["recommendation"]}
 
-**Rationale**: {rec['rationale']}
+**Rationale**: {rec["rationale"]}
 
 """
 
@@ -499,9 +494,7 @@ def main():
 
     logger.info("✅ VectorStore learnings query complete!")
     logger.info(f"📊 Total patterns found: {query_results['total_patterns_found']}")
-    logger.info(
-        f"🔥 High-confidence patterns: {len(query_results['high_confidence_patterns'])}"
-    )
+    logger.info(f"🔥 High-confidence patterns: {len(query_results['high_confidence_patterns'])}")
     logger.info(f"💡 Recommendations: {len(query_results['recommendations'])}")
 
 
