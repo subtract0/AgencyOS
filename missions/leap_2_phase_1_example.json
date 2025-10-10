@@ -1,0 +1,158 @@
+{
+  "mission": "Leap 2 - Smart Factory: Phase 1 Composable Command Library",
+  "leap_number": 2,
+  "metadata": {
+    "complexity": "complex",
+    "estimated_tokens": 24000,
+    "estimated_cost_usd": 2.4
+  },
+  "phases": [
+    {
+      "id": "phase_1_design",
+      "title": "Command Interface Design",
+      "tasks": [
+        {
+          "id": "spec_command_interface",
+          "title": "Spec: Command JSON Schema",
+          "type": "Spec",
+          "tier": "Tier 1",
+          "agent": "chief_architect",
+          "description": "Define composable command DSL with JSON schema validation. Schema must support Spec/Code/Test task types, dependency resolution, tier assignment, and acceptance criteria.",
+          "dependencies": [],
+          "acceptance_criteria": [
+            "Schema validates 10 example commands without errors",
+            "Supports Spec/Code/Test task types with enum validation",
+            "Includes dependency resolution logic (DAG validation)",
+            "Documents tier assignment rules (Tier 1 vs Tier 2)",
+            "Defines acceptance criteria format for Spec tasks"
+          ],
+          "estimated_tokens": 3000
+        },
+        {
+          "id": "code_task_graph_model",
+          "title": "Implement TaskGraph Pydantic Model",
+          "type": "Code",
+          "tier": "Tier 2",
+          "agent": "coder",
+          "description": "Create shared/models/task_graph.py with TaskGraph, Phase, Task, Checkpoint Pydantic models. Include validators for Code→Test dependencies, DAG validation, and memory budget checks.",
+          "dependencies": ["spec_command_interface"],
+          "estimated_tokens": 4000
+        },
+        {
+          "id": "test_task_graph_model",
+          "title": "Test TaskGraph Validation",
+          "type": "Test",
+          "tier": "Tier 2",
+          "agent": "test_generator",
+          "description": "AAA tests for TaskGraph validation: happy path (valid graphs), edge cases (circular deps, missing deps, Code without Test), and constitutional violations.",
+          "dependencies": ["code_task_graph_model"],
+          "verification_target": "code_task_graph_model",
+          "estimated_tokens": 3000
+        }
+      ]
+    },
+    {
+      "id": "phase_2_dag_scheduler",
+      "title": "DAG Scheduler Implementation",
+      "tasks": [
+        {
+          "id": "spec_parallel_execution",
+          "title": "Spec: Parallel Execution Strategy",
+          "type": "Spec",
+          "tier": "Tier 1",
+          "agent": "planner",
+          "description": "Define parallel execution strategy with topological sort, memory-aware worker limits (3 max with local model), and constitutional compliance checks at each layer.",
+          "dependencies": ["test_task_graph_model"],
+          "acceptance_criteria": [
+            "Topological sort algorithm specified with time complexity O(V+E)",
+            "Memory-aware worker calculation documented (Article II Section 2.4)",
+            "Error handling strategy for task failures defined",
+            "Constitutional validation checkpoints identified"
+          ],
+          "estimated_tokens": 2500
+        },
+        {
+          "id": "code_topological_sort",
+          "title": "Implement Topological Sort",
+          "type": "Code",
+          "tier": "Tier 2",
+          "agent": "coder",
+          "description": "Add topological_sort() method to TaskGraph that returns list of parallelizable layers. Use Kahn's algorithm or DFS-based approach.",
+          "dependencies": ["spec_parallel_execution"],
+          "estimated_tokens": 2000
+        },
+        {
+          "id": "test_topological_sort",
+          "title": "Test Topological Sort",
+          "type": "Test",
+          "tier": "Tier 2",
+          "agent": "test_generator",
+          "description": "Test topological sort with linear graph (sequential), parallel graph (independent tasks), and mixed dependencies.",
+          "dependencies": ["code_topological_sort"],
+          "verification_target": "code_topological_sort",
+          "estimated_tokens": 2000
+        },
+        {
+          "id": "code_parallel_executor",
+          "title": "Implement Parallel Executor",
+          "type": "Code",
+          "tier": "Tier 2",
+          "agent": "coder",
+          "description": "Create execute_task_graph() function with asyncio.gather for parallel execution, memory-aware worker limits, and error handling with user retry/skip/abort prompts.",
+          "dependencies": ["code_topological_sort"],
+          "estimated_tokens": 3500
+        },
+        {
+          "id": "test_parallel_executor",
+          "title": "Test Parallel Executor",
+          "type": "Test",
+          "tier": "Tier 2",
+          "agent": "test_generator",
+          "description": "Integration tests for parallel executor: verify correct layer execution order, memory budget enforcement, and error handling with mock tasks.",
+          "dependencies": ["code_parallel_executor"],
+          "verification_target": "code_parallel_executor",
+          "estimated_tokens": 2500
+        }
+      ]
+    },
+    {
+      "id": "phase_3_visualization",
+      "title": "Real-Time Visualization",
+      "tasks": [
+        {
+          "id": "code_mermaid_renderer",
+          "title": "Implement Mermaid DAG Renderer",
+          "type": "Code",
+          "tier": "Tier 2",
+          "agent": "coder",
+          "description": "Add to_mermaid() method to TaskGraph that generates Mermaid diagram with phase subgraphs, tier-based styling, and dependency edges.",
+          "dependencies": ["test_topological_sort"],
+          "estimated_tokens": 1500
+        },
+        {
+          "id": "test_mermaid_renderer",
+          "title": "Test Mermaid Renderer",
+          "type": "Test",
+          "tier": "Tier 2",
+          "agent": "test_generator",
+          "description": "Verify Mermaid output is valid syntax, includes all tasks and edges, and applies correct styling classes.",
+          "dependencies": ["code_mermaid_renderer"],
+          "verification_target": "code_mermaid_renderer",
+          "estimated_tokens": 1000
+        }
+      ]
+    }
+  ],
+  "checkpoints": [
+    {
+      "after_phase": "phase_1_design",
+      "type": "human_review",
+      "prompt": "Review TaskGraph Pydantic models and JSON schema before implementing DAG scheduler. Verify Code→Test dependencies validation is working."
+    },
+    {
+      "after_phase": "phase_2_dag_scheduler",
+      "type": "human_review",
+      "prompt": "Review parallel execution strategy and memory-aware worker limits. Test with example mission graph before visualization phase."
+    }
+  ]
+}
