@@ -33,15 +33,14 @@ import pytest
 from shared.agent_context import create_agent_context
 from shared.cost_tracker import CostTracker, MemoryStorage
 from shared.message_bus import MessageBus
+from shared.models.misclassification_report import DetectedIssue, MisclassificationReport
 from shared.models.quality_signals import QualitySignals, SeverityLevel, UserFeedback
-from shared.models.misclassification_report import MisclassificationReport, DetectedIssue
 from shared.models.refinement_result import RefinementResult
-from shared.type_definitions.result import Ok, Err
-from trinity_protocol.core.hybrid_executor import HybridExecutor, ModelTier, TaskResult
-from tools.quality_feedback.signal_collector import SignalCollectionError
+from shared.type_definitions.result import Err, Ok
 from tools.quality_feedback.misclassification_detector import DetectionError
 from tools.quality_feedback.rule_refiner import RefinementError
-
+from tools.quality_feedback.signal_collector import SignalCollectionError
+from trinity_protocol.core.hybrid_executor import HybridExecutor, ModelTier, TaskResult
 
 # ============================================================================
 # FIXTURES

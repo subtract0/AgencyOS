@@ -19,24 +19,24 @@ Reference: /Users/am/Code/Agency/specs/spec-004-quality-feedback-loop.md Section
 """
 
 import json
-import pytest
 import tempfile
+from datetime import UTC, datetime
 from pathlib import Path
-from datetime import datetime, UTC
-from unittest.mock import Mock, patch, MagicMock
+from unittest.mock import MagicMock, Mock, patch
 
+import pytest
+
+from shared.models.misclassification_report import DetectedIssue, MisclassificationReport
+from shared.models.quality_signals import SeverityLevel
+from shared.models.refinement_result import RefinementResult
+from shared.type_definitions.result import Err, Ok
 from tools.agency_cli.feedback_command import (
     FeedbackCommand,
     FeedbackCommandError,
-    cmd_feedback_mark,
+    cmd_feedback_clear,
     cmd_feedback_list,
-    cmd_feedback_clear
+    cmd_feedback_mark,
 )
-from shared.models.misclassification_report import MisclassificationReport, DetectedIssue
-from shared.models.quality_signals import SeverityLevel
-from shared.models.refinement_result import RefinementResult
-from shared.type_definitions.result import Ok, Err
-
 
 # ============================================================================
 # UNIT TESTS (10+ tests required)

@@ -5,19 +5,20 @@ and HTML rendering functionality.
 """
 
 import json
-import pytest
 from datetime import datetime, timedelta
 from pathlib import Path
 from tempfile import TemporaryDirectory
 
+import pytest
+
+from shared.models.misclassification_report import MisclassificationReport
+from shared.models.quality_signals import QualitySignals
+from shared.models.refinement_result import RefinementResult
 from tools.quality_feedback.accuracy_dashboard import (
     AccuracyDashboard,
     AccuracyMetrics,
-    DashboardSnapshot
+    DashboardSnapshot,
 )
-from shared.models.quality_signals import QualitySignals
-from shared.models.misclassification_report import MisclassificationReport
-from shared.models.refinement_result import RefinementResult
 
 
 class TestAccuracyDashboard:

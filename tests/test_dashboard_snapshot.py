@@ -4,15 +4,16 @@ Validates snapshot generation, JSON structure, and file I/O.
 """
 
 import json
-import pytest
 from datetime import datetime
 from pathlib import Path
 from tempfile import TemporaryDirectory
 
+import pytest
+
 from tools.quality_feedback.dashboard_snapshot import (
     DashboardSnapshotGenerator,
+    MockDashboardSnapshot,
     SnapshotMetadata,
-    MockDashboardSnapshot
 )
 
 

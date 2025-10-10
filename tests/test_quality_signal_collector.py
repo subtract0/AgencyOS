@@ -20,24 +20,20 @@ Constitutional Compliance:
 
 import json
 import subprocess
-from pathlib import Path
 from datetime import datetime
-from unittest.mock import Mock, patch, mock_open
+from pathlib import Path
 from typing import Optional
+from unittest.mock import Mock, mock_open, patch
 
 import pytest
 
 # Import modules AFTER they're created (tests first, then implementation)
 # These imports will fail initially - that's correct for TDD!
 try:
-    from shared.models.quality_signals import (
-        QualitySignals,
-        SeverityLevel,
-        UserFeedback
-    )
+    from shared.models.quality_signals import QualitySignals, SeverityLevel, UserFeedback
     from tools.quality_feedback.signal_collector import (
         QualitySignalCollector,
-        SignalCollectionError
+        SignalCollectionError,
     )
 except ImportError:
     # Expected on first test run - mark as xfail
@@ -816,8 +812,9 @@ class TestConstitutionalCompliance:
 
     def test_article_ii_strict_typing_no_dict_any_any(self):
         """Article II: QualitySignals uses strict typing (no Dict[Any, Any])."""
-        from shared.models.quality_signals import QualitySignals
         import inspect
+
+        from shared.models.quality_signals import QualitySignals
 
         # Get type annotations
         annotations = QualitySignals.__annotations__
@@ -829,9 +826,10 @@ class TestConstitutionalCompliance:
 
     def test_article_ii_result_pattern_used(self):
         """Article II: QualitySignalCollector returns Result<T, E>."""
-        from tools.quality_feedback.signal_collector import QualitySignalCollector
-        from shared.type_definitions.result import Result
         import inspect
+
+        from shared.type_definitions.result import Result
+        from tools.quality_feedback.signal_collector import QualitySignalCollector
 
         # Verify collect_signals returns Result
         sig = inspect.signature(QualitySignalCollector.collect_signals)

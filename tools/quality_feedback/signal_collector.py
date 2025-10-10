@@ -18,12 +18,12 @@ Reference: specs/spec-004-quality-feedback-loop.md
 
 import json
 import subprocess
-from typing import Optional
-from datetime import datetime, UTC
+from datetime import UTC, datetime
 from pathlib import Path
+from typing import Optional
 
 from shared.models.quality_signals import QualitySignals, SeverityLevel, UserFeedback
-from shared.type_definitions.result import Result, Ok, Err
+from shared.type_definitions.result import Err, Ok, Result
 
 
 class SignalCollectionError(Exception):
@@ -78,8 +78,8 @@ class QualitySignalCollector:
         self,
         task_id: str,
         original_tier: str,
-        estimated_time_seconds: Optional[float] = None,
-        actual_time_seconds: Optional[float] = None
+        estimated_time_seconds: float | None = None,
+        actual_time_seconds: float | None = None
     ) -> Result[QualitySignals, SignalCollectionError]:
         """
         Collect all quality signals for a task.
@@ -137,7 +137,7 @@ class QualitySignalCollector:
         except Exception as e:
             return Err(SignalCollectionError(f"Failed to collect signals: {e}"))
 
-    def _collect_test_failure_rate(self) -> Optional[float]:
+    def _collect_test_failure_rate(self) -> float | None:
         """
         Parse pytest JSON report for test failure rate.
 
@@ -169,7 +169,7 @@ class QualitySignalCollector:
             # Log warning but don't fail collection
             return None
 
-    def _collect_code_churn(self) -> Optional[int]:
+    def _collect_code_churn(self) -> int | None:
         """
         Run `git diff --stat HEAD~1` for code churn measurement.
 
@@ -221,7 +221,7 @@ class QualitySignalCollector:
             # Graceful degradation: return None instead of crashing
             return None
 
-    def _collect_user_feedback(self, task_id: str) -> Optional[UserFeedback]:
+    def _collect_user_feedback(self, task_id: str) -> UserFeedback | None:
         """
         Check user feedback store for manual classification override.
 

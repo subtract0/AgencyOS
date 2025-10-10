@@ -30,7 +30,6 @@ from shared.skill_vector import SkillVector
 from shared.task_complexity import TaskComplexityClassifier
 from shared.type_definitions.result import Err, Ok, Result
 
-
 # ============================================================================
 # Test Fixtures
 # ============================================================================
@@ -345,7 +344,7 @@ class TestEndToEndRoutingFlow:
             / total_cost_without_routing
         ) * 100
 
-        print(f"\n💰 Cost Analysis:")
+        print("\n💰 Cost Analysis:")
         print(f"   Without routing (all gpt-5): ${total_cost_without_routing:.6f}")
         print(f"   With routing: ${total_cost_with_routing:.6f}")
         print(f"   Savings: {cost_savings_percent:.1f}%")
@@ -796,7 +795,7 @@ class TestPerformanceValidation:
         total_time = classification_time + routing_time
 
         # Assert: Total latency < 50ms (allowing VectorStore variance)
-        print(f"\n⏱️ Performance:")
+        print("\n⏱️ Performance:")
         print(f"   Classification: {classification_time:.2f}ms")
         print(f"   Routing: {routing_time:.2f}ms")
         print(f"   Total: {total_time:.2f}ms")
