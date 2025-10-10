@@ -272,3 +272,4 @@ benchmark_results/*.jsonl
 *.log
 !docs/**/*.log  # Keep example logs in documentation
 
+hooks-repo/
