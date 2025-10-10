@@ -22,12 +22,13 @@ Date: 2025-10-10
 import logging
 from collections import Counter
 from datetime import datetime
-from typing import Any
 
 from sklearn.model_selection import train_test_split
 
 from shared.agent_context import AgentContext
+from shared.models.quality_feedback_sample import QualityFeedbackSample
 from shared.models.task_feature_vector import TaskFeatureVector
+from shared.models.task_metadata import TaskMetadata
 from shared.models.training_dataset import (
     DatasetMetadata,
     TrainingDataset,
@@ -105,7 +106,7 @@ class TrainingDataPreparer:
         # Step 6: Create dataset
         return self._build_dataset(training_samples, train_indices, val_indices, min_confidence)
 
-    def _query_and_filter(self, min_confidence: float) -> Result[list[dict[str, Any]], str]:
+    def _query_and_filter(self, min_confidence: float) -> Result[list[QualityFeedbackSample], str]:
         """
         Query VectorStore and filter high-quality samples.
 
@@ -205,7 +206,7 @@ class TrainingDataPreparer:
 
         return Ok(dataset)
 
-    def _query_vectorstore(self) -> Result[list[dict[str, Any]], str]:
+    def _query_vectorstore(self) -> Result[list[QualityFeedbackSample], str]:
         """
         Query VectorStore for quality feedback signals.
 
@@ -224,14 +225,20 @@ class TrainingDataPreparer:
             if not feedback_patterns:
                 return Err("No quality feedback found in VectorStore")
 
-            # Extract content from memory records
+            # Extract content from memory records and convert to typed models
             samples = []
             for pattern in feedback_patterns:
                 content = pattern.get("content", {})
                 if isinstance(content, dict):
                     # Add tags to content for filtering
                     content["tags"] = pattern.get("tags", [])
-                    samples.append(content)
+                    # Convert to typed model
+                    sample = QualityFeedbackSample.from_vectorstore_content(content)
+                    if sample:
+                        samples.append(sample)
+
+            if not samples:
+                return Err("No valid quality feedback samples found in VectorStore")
 
             return Ok(samples)
 
@@ -239,8 +246,8 @@ class TrainingDataPreparer:
             return Err(f"VectorStore query failed: {e}")
 
     def _filter_high_quality_labels(
-        self, samples: list[dict[str, Any]], min_confidence: float
-    ) -> Result[list[dict[str, Any]], str]:
+        self, samples: list[QualityFeedbackSample], min_confidence: float
+    ) -> Result[list[QualityFeedbackSample], str]:
         """
         Filter samples for high-quality labels.
 
@@ -261,22 +268,21 @@ class TrainingDataPreparer:
 
         for sample in samples:
             # Filter 1: Confidence threshold
-            confidence = sample.get("confidence", 0.0)
-            if confidence < min_confidence:
+            if sample.confidence < min_confidence:
                 continue
 
             # Filter 2: Oscillation detection
-            tier_change_count = sample.get("tier_change_count", 0)
-            if tier_change_count > 2:
-                self.logger.debug(f"Skipping oscillating task: {tier_change_count} tier changes")
+            if sample.tier_change_count > 2:
+                self.logger.debug(
+                    f"Skipping oscillating task: {sample.tier_change_count} tier changes"
+                )
                 continue
 
             # Filter 3: Deduplication
-            task_desc = sample.get("task_description", "")
-            if task_desc in seen_tasks:
+            if sample.task_description in seen_tasks:
                 continue
 
-            seen_tasks.add(task_desc)
+            seen_tasks.add(sample.task_description)
             filtered.append(sample)
 
         if not filtered:
@@ -285,7 +291,7 @@ class TrainingDataPreparer:
         return Ok(filtered)
 
     def _extract_features_for_samples(
-        self, samples: list[dict[str, Any]]
+        self, samples: list[QualityFeedbackSample]
     ) -> Result[list[TrainingSample], str]:
         """
         Extract features for all samples using FeatureExtractor.
@@ -319,29 +325,31 @@ class TrainingDataPreparer:
         return Ok(training_samples)
 
     def _extract_features_for_single_sample(
-        self, index: int, sample: dict[str, Any]
+        self, index: int, sample: QualityFeedbackSample
     ) -> Result[TrainingSample, str]:
         """
         Extract features for a single sample.
 
         Args:
             index: Sample index for logging
-            sample: Quality feedback sample dictionary
+            sample: Quality feedback sample
 
         Returns:
             Result with TrainingSample or error message
         """
-        task_description = sample.get("task_description", "")
-        if not task_description:
+        if not sample.task_description:
             return Err(f"Sample {index}: Empty task description")
+
+        # Create typed metadata
+        task_metadata = TaskMetadata(
+            estimated_time_seconds=sample.estimated_time_seconds,
+            historical_tier_mode=sample.historical_tier_mode,
+        )
 
         # Extract features
         features_result = self.feature_extractor.extract_features(
-            task_description=task_description,
-            task_metadata={
-                "estimated_time_seconds": sample.get("estimated_time_seconds", 0.0),
-                "historical_tier_mode": sample.get("historical_tier_mode", 0),
-            },
+            task_description=sample.task_description,
+            task_metadata=task_metadata,
         )
 
         if features_result.is_err():
@@ -351,13 +359,11 @@ class TrainingDataPreparer:
         return Ok(
             TrainingSample(
                 features=features_result.unwrap(),
-                label=sample.get("corrected_tier", 0),
-                confidence=sample.get("confidence", 0.0),
+                label=sample.corrected_tier,
+                confidence=sample.confidence,
                 source="vectorstore",
-                task_id=sample.get("task_id", f"task_{index}"),
-                timestamp=datetime.fromisoformat(
-                    sample.get("timestamp", datetime.now().isoformat())
-                ),
+                task_id=sample.task_id,
+                timestamp=datetime.fromisoformat(sample.timestamp),
             )
         )
 
@@ -467,7 +473,9 @@ class TrainingDataPreparer:
         """
         return len(tier_changes) > 2
 
-    def get_dataset_statistics(self, dataset: TrainingDataset) -> dict[str, Any]:
+    def get_dataset_statistics(
+        self, dataset: TrainingDataset
+    ) -> dict[str, int | float | dict[int, int] | str]:
         """
         Get comprehensive dataset statistics for monitoring.
 
@@ -475,7 +483,7 @@ class TrainingDataPreparer:
             dataset: TrainingDataset to analyze
 
         Returns:
-            Dictionary with statistics
+            Dictionary with statistics (typed union for export/monitoring)
         """
         train_samples = dataset.get_train_samples()
         val_samples = dataset.get_val_samples()

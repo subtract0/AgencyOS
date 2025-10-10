@@ -13,7 +13,6 @@ Date: 2025-10-10
 """
 
 from datetime import datetime
-from typing import Any
 
 import sklearn
 from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
@@ -351,7 +350,7 @@ class EnsembleModel(BaseModel):
 
         return self
 
-    def to_dict(self) -> dict[str, Any]:
+    def to_dict(self) -> dict[str, float | str | int]:
         """
         Export metadata to dictionary (exclude sklearn models).
 
@@ -361,7 +360,7 @@ class EnsembleModel(BaseModel):
         - Model comparison (debugging, drift detection)
 
         Returns:
-            Dictionary with metadata fields (5 keys)
+            Dictionary with metadata fields (typed union for export)
 
         Example:
             >>> model = EnsembleModel(...)
@@ -381,7 +380,7 @@ class EnsembleModel(BaseModel):
     @classmethod
     def from_dict(
         cls,
-        data: dict[str, Any],
+        data: dict[str, float | str],
         ensemble: VotingClassifier,
         rf_model: RandomForestClassifier,
         gb_model: GradientBoostingClassifier,
