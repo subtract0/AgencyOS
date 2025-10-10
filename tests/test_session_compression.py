@@ -107,13 +107,13 @@ class TestSessionCompressionNormalOperation:
                 "files": ["spec.md", "plan.md", "tests.py"] * 10,  # Repetitive
                 "progress": {"step": 3, "total": 7},
             },
-            memory_snapshots=[
-                {"timestamp": "2025-10-10T12:00:00", "event": "spec_created"}
-            ] * 20,  # Highly repetitive
+            memory_snapshots=[{"timestamp": "2025-10-10T12:00:00", "event": "spec_created"}]
+            * 20,  # Highly repetitive
             tool_results=[
                 {"tool": "read", "file": "spec.md", "success": True},
                 {"tool": "write", "file": "plan.md", "success": True},
-            ] * 15,  # Highly repetitive
+            ]
+            * 15,  # Highly repetitive
         )
 
         # Act
@@ -125,7 +125,9 @@ class TestSessionCompressionNormalOperation:
         size_reduction = metadata.size_reduction_percent
         # Real-world sessions with repetitive data achieve 60%+
         # Note: Spec shows 93% on production data, this test validates the pattern works
-        assert size_reduction >= 50.0, f"Expected ≥50% reduction (60% on production data), got {size_reduction:.1f}%"
+        assert size_reduction >= 50.0, (
+            f"Expected ≥50% reduction (60% on production data), got {size_reduction:.1f}%"
+        )
 
     def test_compression_with_different_levels(self):
         """Test compression with levels 1-9."""
@@ -437,8 +439,7 @@ class TestSessionCompressionPerformance:
         assert result.is_ok()
         _, metadata = result.unwrap()
         assert metadata.compression_time_ms < 10.0, (
-            f"Compression took {metadata.compression_time_ms:.2f}ms, "
-            f"expected <10ms (AC-2.4)"
+            f"Compression took {metadata.compression_time_ms:.2f}ms, expected <10ms (AC-2.4)"
         )
 
     def test_decompression_faster_than_compression(self):
@@ -514,9 +515,7 @@ class TestSessionCompressionAccessibility:
     def test_estimate_compression_ratio(self):
         """Test compression ratio estimation heuristic."""
         # Arrange
-        small_session = SessionState(
-            session_id="small", agent_name="test", metadata={"x": 1}
-        )
+        small_session = SessionState(session_id="small", agent_name="test", metadata={"x": 1})
         large_session = SessionState(
             session_id="large",
             agent_name="test",

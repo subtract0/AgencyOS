@@ -33,11 +33,13 @@ class TestAdaptiveRoutingIntegration:
             task_description="Fix typo in variable name",
             task_type="code_fix",
             agent_key="coder",
-            estimated_tokens=100
+            estimated_tokens=100,
         )
 
         # Assert
-        assert result.is_ok(), f"Routing failed: {result.unwrap_err() if result.is_err() else 'N/A'}"
+        assert result.is_ok(), (
+            f"Routing failed: {result.unwrap_err() if result.is_err() else 'N/A'}"
+        )
 
         decision = result.unwrap()
         assert decision.selected_model is not None
@@ -55,7 +57,7 @@ class TestAdaptiveRoutingIntegration:
             task_description="Create ADR for distributed caching architecture",
             task_type="architecture",
             agent_key="chief_architect",
-            estimated_tokens=2000
+            estimated_tokens=2000,
         )
 
         # Assert
@@ -83,7 +85,7 @@ class TestAdaptiveRoutingIntegration:
                 task_description="Any task",
                 task_type="general",
                 agent_key="coder",
-                estimated_tokens=100
+                estimated_tokens=100,
             )
 
             # Assert
@@ -106,10 +108,7 @@ class TestSkillVectorIntegration:
     def test_skill_vector_can_be_created(self):
         """Test that skill vectors can be instantiated."""
         # Act
-        skills = SkillVector(
-            agent_name="test_agent",
-            session_id="test_session"
-        )
+        skills = SkillVector(agent_name="test_agent", session_id="test_session")
 
         # Assert
         assert skills.agent_name == "test_agent"
@@ -120,20 +119,13 @@ class TestSkillVectorIntegration:
     def test_skill_vector_can_update_from_task(self):
         """Test that skills can be updated from task execution."""
         # Arrange
-        skills = SkillVector(
-            agent_name="test_agent",
-            session_id="test_session"
-        )
+        skills = SkillVector(agent_name="test_agent", session_id="test_session")
 
         initial_skill = skills.overall_skill_level
 
         # Act
         skills.update_from_task_result(
-            task_type="code",
-            complexity="P2",
-            success=True,
-            quality_score=0.9,
-            duration_ms=30000.0
+            task_type="code", complexity="P2", success=True, quality_score=0.9, duration_ms=30000.0
         )
 
         # Assert
@@ -144,10 +136,7 @@ class TestSkillVectorIntegration:
     def test_skill_vector_provides_top_skills(self):
         """Test that top skills can be retrieved."""
         # Arrange
-        skills = SkillVector(
-            agent_name="test_agent",
-            session_id="test_session"
-        )
+        skills = SkillVector(agent_name="test_agent", session_id="test_session")
 
         # Act
         top_5 = skills.get_top_skills(n=5)
@@ -160,17 +149,10 @@ class TestSkillVectorIntegration:
     def test_skill_vector_serialization(self):
         """Test that skill vectors can be serialized and deserialized."""
         # Arrange
-        original = SkillVector(
-            agent_name="test_agent",
-            session_id="test_session"
-        )
+        original = SkillVector(agent_name="test_agent", session_id="test_session")
 
         original.update_from_task_result(
-            task_type="test",
-            complexity="P2",
-            success=True,
-            quality_score=0.85,
-            duration_ms=45000.0
+            task_type="test", complexity="P2", success=True, quality_score=0.85, duration_ms=45000.0
         )
 
         # Act
@@ -191,31 +173,23 @@ class TestVectorStoreIntegration:
         """Test that VectorStore is enabled (Article IV requirement)."""
         # Assert
         use_enhanced_memory = os.getenv("USE_ENHANCED_MEMORY", "false")
-        assert use_enhanced_memory.lower() == "true", \
+        assert use_enhanced_memory.lower() == "true", (
             "Article IV violation: VectorStore must be enabled (USE_ENHANCED_MEMORY=true)"
+        )
 
     def test_agent_context_can_store_and_retrieve_memory(self):
         """Test that agent context can interact with VectorStore."""
         # Arrange
-        context = create_agent_context(
-            session_id=f"test_{datetime.now().timestamp()}"
-        )
+        context = create_agent_context(session_id=f"test_{datetime.now().timestamp()}")
 
         test_key = f"test_memory_{datetime.now().timestamp()}"
         test_content = {"test": "data", "leap": 3}
 
         # Act: Store
-        context.store_memory(
-            key=test_key,
-            content=test_content,
-            tags=["test", "leap3", "m5"]
-        )
+        context.store_memory(key=test_key, content=test_content, tags=["test", "leap3", "m5"])
 
         # Act: Retrieve
-        results = context.search_memories(
-            tags=["test", "leap3"],
-            include_session=True
-        )
+        results = context.search_memories(tags=["test", "leap3"], include_session=True)
 
         # Assert
         assert len(results) > 0, "Memory not stored or not retrievable"
@@ -245,12 +219,11 @@ class TestCostSavingsValidation:
             ["python", "tools/validate_cost_savings.py", "--synthetic"],
             capture_output=True,
             text=True,
-            timeout=60
+            timeout=60,
         )
 
         # Assert
-        assert result.returncode in [0, 1], \
-            f"Cost validation tool crashed: {result.stderr}"
+        assert result.returncode in [0, 1], f"Cost validation tool crashed: {result.stderr}"
 
         # Check output contains key metrics
         assert "Cost Analysis" in result.stdout
@@ -277,12 +250,11 @@ class TestSkillDashboardVisualization:
             ["python", "tools/skill_dashboard.py", "--agent", "coder"],
             capture_output=True,
             text=True,
-            timeout=30
+            timeout=30,
         )
 
         # Assert
-        assert result.returncode == 0, \
-            f"Skill dashboard crashed: {result.stderr}"
+        assert result.returncode == 0, f"Skill dashboard crashed: {result.stderr}"
 
         # Check output contains expected sections
         assert "AGENT SKILL DASHBOARD" in result.stdout
@@ -298,7 +270,7 @@ class TestSkillDashboardVisualization:
             ["python", "tools/skill_dashboard.py", "--compare", "coder", "planner"],
             capture_output=True,
             text=True,
-            timeout=30
+            timeout=30,
         )
 
         # Assert

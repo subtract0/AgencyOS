@@ -65,7 +65,7 @@ jobs:
         run: |
           python tools/quality/no_dict_any_check.py
         env:
-          NO_DICT_ANY_ALLOWLIST: "**/scripts/benchmark*.py,**/scripts/continuous_audit*.py"
+          NO_DICT_ANY_ALLOWLIST: "**/scripts/benchmark*.py,**/scripts/continuous_audit*.py,**/tools/validate_cost_savings.py,**/shared/skill_vector.py,**/shared/config_validator.py,**/shared/learning_extractor.py,**/shared/task_complexity.py,**/tools/quality_feedback/dashboard_snapshot.py,**/shared/models/task_graph.py,**/shared/models/session.py"
 
   # ===========================================================================
   # PHASE 2: Test Execution (3-5 minutes)

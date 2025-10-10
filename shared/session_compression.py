@@ -114,9 +114,7 @@ def compress_session_state(
 
         # Calculate metrics
         compression_time_ms = (time.perf_counter() - start_time) * 1000
-        compression_ratio = (
-            compressed_size / original_size if original_size > 0 else 0
-        )
+        compression_ratio = compressed_size / original_size if original_size > 0 else 0
 
         metadata = CompressionMetadata(
             algorithm="zlib",
@@ -202,9 +200,7 @@ def decompress_session_state(
         return Err(f"Unexpected error during decompression: {str(e)}")
 
 
-def get_compression_stats(
-    original_size: int, compressed_size: int
-) -> dict[str, float | int]:
+def get_compression_stats(original_size: int, compressed_size: int) -> dict[str, float | int]:
     """
     Calculate compression statistics.
 

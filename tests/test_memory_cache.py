@@ -508,10 +508,14 @@ class TestCacheWarming:
 
         cache = MemoryCache(max_size=128)
         mock_results1 = [
-            MemoryRecord(key="mem1", content="test1", tags=["tag1"], timestamp="2025-01-01T00:00:00")
+            MemoryRecord(
+                key="mem1", content="test1", tags=["tag1"], timestamp="2025-01-01T00:00:00"
+            )
         ]
         mock_results2 = [
-            MemoryRecord(key="mem2", content="test2", tags=["tag2"], timestamp="2025-01-01T00:00:00")
+            MemoryRecord(
+                key="mem2", content="test2", tags=["tag2"], timestamp="2025-01-01T00:00:00"
+            )
         ]
 
         frequent_queries = [
@@ -646,7 +650,9 @@ class TestCachePerformance:
 
         cache = MemoryCache()
         mock_results = [
-            MemoryRecord(key="mem1", content="test" * 100, tags=["tag1"], timestamp="2025-01-01T00:00:00")
+            MemoryRecord(
+                key="mem1", content="test" * 100, tags=["tag1"], timestamp="2025-01-01T00:00:00"
+            )
         ]
         cache.set("key1", mock_results)
 

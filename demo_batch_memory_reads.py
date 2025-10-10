@@ -31,10 +31,7 @@ async def setup_test_files(tool: AsyncMemoryTool, count: int = 100) -> list[str]
     """
     print(f"Setting up {count} test files...")
 
-    files = {
-        f"/memories/test_file_{i}.txt": f"Content for file {i}\n" * 10
-        for i in range(count)
-    }
+    files = {f"/memories/test_file_{i}.txt": f"Content for file {i}\n" * 10 for i in range(count)}
 
     results = await tool.batch_create_async(files, max_concurrency=10)
 
@@ -120,7 +117,7 @@ async def benchmark_parallel(
 
         tasks = [bounded_view(path) for path in paths]
         task_results = await asyncio.gather(*tasks)
-        results = {path: result for path, result in task_results}
+        results = dict(task_results)
     else:
         # Use built-in batch_view_async
         results = await tool.batch_view_async(paths, max_concurrency=max_concurrency)
@@ -157,9 +154,7 @@ async def main():
         print("=" * 60)
 
         sequential_time_local = await benchmark_sequential(tool, paths)
-        parallel_time_10_local = await benchmark_parallel(
-            tool, paths, max_concurrency=10
-        )
+        parallel_time_10_local = await benchmark_parallel(tool, paths, max_concurrency=10)
 
         print("\n=== Local SSD Summary ===")
         print(f"Sequential: {sequential_time_local:.3f}s")
@@ -174,9 +169,7 @@ async def main():
         print("=" * 60)
 
         latency = 0.005  # 5ms network latency
-        sequential_time_network = await benchmark_sequential(
-            tool, paths, simulate_latency=latency
-        )
+        sequential_time_network = await benchmark_sequential(tool, paths, simulate_latency=latency)
         parallel_time_10_network = await benchmark_parallel(
             tool, paths, max_concurrency=10, simulate_latency=latency
         )
