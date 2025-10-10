@@ -13,6 +13,9 @@ from .dashboard import (
     DashboardSummary,
     SessionSummary,
 )
+from .ensemble_model import EnsembleModel
+from .task_feature_vector import TaskFeatureVector
+from .training_dataset import TrainingDataset
 from .kanban import (
     CardStatus,
     CardType,
@@ -169,4 +172,8 @@ __all__ = [
     "CheckpointMetadata",
     "GCResult",
     "RetentionPolicy",
+    # ML Routing models (Leap 5)
+    "EnsembleModel",
+    "TaskFeatureVector",
+    "TrainingDataset",
 ]

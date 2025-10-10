@@ -1,16 +1,6 @@
-"""ML-based task routing tools."""
+"""ML-based task routing tools (Leap 5 Phase 1-2)."""
 
-from tools.ml_routing.ab_rollout_controller import (
-    ABRolloutController,
-    RolloutConfig,
-    RolloutError,
-    RolloutResult,
-    RolloutStage,
-)
-from tools.ml_routing.prediction_logger import (
-    get_predictions,
-    log_prediction,
-)
+# Phase 1-2: Only import implemented modules
 from tools.ml_routing.tfidf_vocabulary_builder import (
     TfidfVocabulary,
     TfidfVocabularyBuilder,
@@ -19,11 +9,8 @@ from tools.ml_routing.tfidf_vocabulary_builder import (
 __all__ = [
     "TfidfVocabulary",
     "TfidfVocabularyBuilder",
-    "log_prediction",
-    "get_predictions",
-    "ABRolloutController",
-    "RolloutConfig",
-    "RolloutStage",
-    "RolloutResult",
-    "RolloutError",
 ]
+
+# Phase 3-4 modules (not yet implemented):
+# - ab_rollout_controller (A/B testing, canary rollout)
+# - prediction_logger (ML prediction tracking)
