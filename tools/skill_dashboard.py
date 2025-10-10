@@ -72,7 +72,7 @@ def progress_bar(value: float, width: int = 40, show_percentage: bool = True) ->
 # ============================================================================
 
 
-def format_skill_category(category_name: str, skills: Dict[str, float], indent: int = 2) -> str:
+def format_skill_category(category_name: str, skills: dict[str, float], indent: int = 2) -> str:
     """Format a skill category with progress bars."""
     lines = []
     indent_str = " " * indent
@@ -186,7 +186,7 @@ Overall Skill Level: {progress_bar(skills_dict["overall_skill_level"])}
 # ============================================================================
 
 
-def compare_agents(agent_names: List[str], context: Any) -> str:
+def compare_agents(agent_names: list[str], context: Any) -> str:
     """
     Compare skill levels across multiple agents.
 

@@ -194,7 +194,7 @@ class AsyncMemoryTool(BetaAbstractMemoryTool):
         except ValueError as e:
             return Err(str(e))
         except TimeoutError as e:
-            return Err(f"Timeout (lock or I/O) reading: {path} - {e}")
+            return Err(f"Lock timeout: {e}")
         except Exception as e:
             return Err(f"Unexpected error: {e}")
 
@@ -229,7 +229,7 @@ class AsyncMemoryTool(BetaAbstractMemoryTool):
         except ValueError as e:
             return Err(str(e))
         except TimeoutError as e:
-            return Err(f"Timeout (lock or I/O) writing: {path} - {e}")
+            return Err(f"Lock timeout: {e}")
         except Exception as e:
             return Err(f"Error creating file: {e}")
 
@@ -280,7 +280,7 @@ class AsyncMemoryTool(BetaAbstractMemoryTool):
         except UnicodeDecodeError:
             return Err(f"File is not valid UTF-8: {path}")
         except TimeoutError as e:
-            return Err(f"Timeout (lock or I/O): {path} - {e}")
+            return Err(f"Lock timeout: {e}")
         except Exception as e:
             return Err(f"Error replacing text: {e}")
 
@@ -328,7 +328,7 @@ class AsyncMemoryTool(BetaAbstractMemoryTool):
         except UnicodeDecodeError:
             return Err(f"File is not valid UTF-8: {path}")
         except TimeoutError as e:
-            return Err(f"Timeout (lock or I/O): {path} - {e}")
+            return Err(f"Lock timeout: {e}")
         except Exception as e:
             return Err(f"Error inserting text: {e}")
 
@@ -364,7 +364,7 @@ class AsyncMemoryTool(BetaAbstractMemoryTool):
         except ValueError as e:
             return Err(str(e))
         except TimeoutError as e:
-            return Err(f"Timeout (lock or I/O): {path} - {e}")
+            return Err(f"Lock timeout: {e}")
         except Exception as e:
             return Err(f"Error deleting: {e}")
 
@@ -410,7 +410,7 @@ class AsyncMemoryTool(BetaAbstractMemoryTool):
         except ValueError as e:
             return Err(str(e))
         except TimeoutError as e:
-            return Err(f"Timeout (lock or I/O): {old_path} - {e}")
+            return Err(f"Lock timeout: {e}")
         except Exception as e:
             return Err(f"Error renaming: {e}")
 

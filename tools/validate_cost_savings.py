@@ -46,7 +46,7 @@ AVG_TOKENS_BY_COMPLEXITY = {
 # ============================================================================
 
 
-def analyze_session_logs(sessions_dir: Path, days: int = 7) -> List[Dict[str, Any]]:
+def analyze_session_logs(sessions_dir: Path, days: int = 7) -> list[dict[str, Any]]:
     """
     Extract tasks from recent session logs.
 
@@ -90,7 +90,7 @@ def analyze_session_logs(sessions_dir: Path, days: int = 7) -> List[Dict[str, An
     return tasks if tasks else generate_synthetic_tasks()
 
 
-def generate_synthetic_tasks() -> List[Dict[str, Any]]:
+def generate_synthetic_tasks() -> list[dict[str, Any]]:
     """
     Generate synthetic task distribution matching real-world usage.
 
@@ -165,7 +165,7 @@ def generate_synthetic_tasks() -> List[Dict[str, Any]]:
 # ============================================================================
 
 
-def calculate_cost_for_task(task: Dict[str, Any], complexity: str, model: str) -> float:
+def calculate_cost_for_task(task: dict[str, Any], complexity: str, model: str) -> float:
     """
     Calculate cost for a single task based on model and complexity.
 
@@ -194,11 +194,11 @@ def calculate_cost_for_task(task: Dict[str, Any], complexity: str, model: str) -
 
 
 def validate_cost_savings(
-    tasks: List[Dict[str, Any]],
+    tasks: list[dict[str, Any]],
     classifier: TaskComplexityClassifier,
     router: ModelRouter,
     context: Any,
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """
     Validate cost savings across all tasks.
 
@@ -281,7 +281,7 @@ def validate_cost_savings(
     return report
 
 
-def calculate_model_distribution(task_breakdown: List[Dict[str, Any]]) -> Dict[str, Any]:
+def calculate_model_distribution(task_breakdown: list[dict[str, Any]]) -> dict[str, Any]:
     """Calculate distribution of tasks by model."""
     model_counts = {}
     model_costs = {}
@@ -319,7 +319,7 @@ def calculate_model_distribution(task_breakdown: List[Dict[str, Any]]) -> Dict[s
 # ============================================================================
 
 
-def generate_report_text(report: Dict[str, Any]) -> str:
+def generate_report_text(report: dict[str, Any]) -> str:
     """Generate human-readable report."""
     cost = report["cost_analysis"]
     validation = report["validation"]
