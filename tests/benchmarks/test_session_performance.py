@@ -57,8 +57,12 @@ class TestCompressionPerformance:
         max_time = max(times)
 
         # Assert
-        print(f"\nCompression 1MB: avg={avg_time:.2f}ms, min={min_time:.2f}ms, max={max_time:.2f}ms")
-        assert avg_time < 10.0, f"Average compression time {avg_time:.2f}ms exceeds 10ms target (AC-P.1)"
+        print(
+            f"\nCompression 1MB: avg={avg_time:.2f}ms, min={min_time:.2f}ms, max={max_time:.2f}ms"
+        )
+        assert avg_time < 10.0, (
+            f"Average compression time {avg_time:.2f}ms exceeds 10ms target (AC-P.1)"
+        )
 
     def test_benchmark_decompression_1mb(self):
         """Benchmark decompression <8ms for 1MB compressed session (AC-P.2)."""
@@ -87,8 +91,12 @@ class TestCompressionPerformance:
         max_time = max(times)
 
         # Assert
-        print(f"\nDecompression 1MB: avg={avg_time:.2f}ms, min={min_time:.2f}ms, max={max_time:.2f}ms")
-        assert avg_time < 8.0, f"Average decompression time {avg_time:.2f}ms exceeds 8ms target (AC-P.2)"
+        print(
+            f"\nDecompression 1MB: avg={avg_time:.2f}ms, min={min_time:.2f}ms, max={max_time:.2f}ms"
+        )
+        assert avg_time < 8.0, (
+            f"Average decompression time {avg_time:.2f}ms exceeds 8ms target (AC-P.2)"
+        )
 
     def test_benchmark_compression_ratio_1mb(self):
         """Benchmark compression ratio for 1MB session."""
@@ -287,8 +295,14 @@ class TestCheckpointPerformance:
         avg_resume = sum(resume_times) / len(resume_times)
 
         print("\nCheckpoint Performance:")
-        print(f"  Save:   avg={avg_save:.2f}ms, min={min(save_times):.2f}ms, max={max(save_times):.2f}ms")
-        print(f"  Resume: avg={avg_resume:.2f}ms, min={min(resume_times):.2f}ms, max={max(resume_times):.2f}ms")
+        print(
+            f"  Save:   avg={avg_save:.2f}ms, min={min(save_times):.2f}ms, "
+            f"max={max(save_times):.2f}ms"
+        )
+        print(
+            f"  Resume: avg={avg_resume:.2f}ms, min={min(resume_times):.2f}ms, "
+            f"max={max(resume_times):.2f}ms"
+        )
 
         assert avg_save < 10.0, f"Average save time {avg_save:.2f}ms exceeds 10ms target"
         assert avg_resume < 10.0, f"Average resume time {avg_resume:.2f}ms exceeds 10ms target"
