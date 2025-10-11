@@ -26,7 +26,6 @@ Test Coverage:
 
 import re
 from pathlib import Path
-from typing import List
 
 import pytest
 
@@ -142,7 +141,7 @@ class ClaudeMdValidator:
             content: CLAUDE.md file content
 
         Returns:
-            Result[List[str], DocumentationError]: List of found examples or error
+            Result[list[str], DocumentationError]: List of found examples or error
         """
         # Find command examples (lines starting with /primeA)
         example_pattern = r"(/primeA\s+[^\n]+)"
