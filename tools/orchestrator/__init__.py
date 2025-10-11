@@ -22,6 +22,14 @@ Usage:
     result = await run_parallel(context, task_specs, policy)
 """
 
+from .retry_policy import (
+    IdempotencyKey,
+    RetryExhausted,
+    RetryMetrics,
+    RetryPolicy as EnhancedRetryPolicy,
+    retry_with_policy,
+    retry_with_policy_sync,
+)
 from .scheduler import (
     BackoffType,
     CancellationType,
@@ -44,4 +52,11 @@ __all__ = [
     "BackoffType",
     "FairnessType",
     "CancellationType",
+    # Enhanced retry policy (Leap 6)
+    "EnhancedRetryPolicy",
+    "IdempotencyKey",
+    "RetryExhausted",
+    "RetryMetrics",
+    "retry_with_policy",
+    "retry_with_policy_sync",
 ]
