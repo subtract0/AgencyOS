@@ -34,8 +34,8 @@ if "PYTEST_CURRENT_TEST" in os.environ:
                 os.environ["OMP_NUM_THREADS"] = "1"
 
                 # Pre-import in main thread before workers spawn
-                import torch  # noqa: F401,RUF100 - Pre-import to prevent segfault
-                import transformers  # noqa: F401,RUF100 - Pre-import to prevent segfault
+                import torch  # noqa: F401 - Pre-import to prevent segfault
+                import transformers  # noqa: F401 - Pre-import to prevent segfault
 
                 _torch_imported = True
                 logger.debug("Pre-imported torch/transformers for test safety")
