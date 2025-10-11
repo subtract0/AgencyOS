@@ -169,12 +169,3 @@ jobs:
           echo "🧹 Cleaning up Docker containers..."
           docker compose down -v
           docker system prune -f
-
-      - name: Report test results
-        if: always()
-        uses: dorny/test-reporter@v1
-        with:
-          name: Ollama Docker Tests
-          path: 'test-results/*.xml'
-          reporter: java-junit
-          fail-on-error: true
