@@ -16,11 +16,11 @@ import sys
 from datetime import datetime
 from pathlib import Path
 
-# Add project root to path
+# Add project root to path (must be before imports)
 project_root = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(project_root))
 
-from shared.agent_context import create_agent_context
+from shared.agent_context import create_agent_context  # noqa: E402
 
 
 def store_patterns():
@@ -610,9 +610,9 @@ def test_docker_detection_success(self, mock_run):
 
     print("✓ Successfully stored 12 patterns to VectorStore")
     print(f"  - Session ID: {context.session_id}")
-    print(f"  - Average confidence: 0.82")
-    print(f"  - Constitutional compliance: Articles I-V")
-    print(f"\nPatterns stored:")
+    print("  - Average confidence: 0.82")
+    print("  - Constitutional compliance: Articles I-V")
+    print("\nPatterns stored:")
     print("  1. Docker Compose Service Lifecycle Management (0.95)")
     print("  2. Exponential Backoff Health Check Protocol (0.88)")
     print("  3. Volume Persistence for Expensive Resources (0.85)")
@@ -631,5 +631,5 @@ def test_docker_detection_success(self, mock_run):
 
 if __name__ == "__main__":
     context = store_patterns()
-    print(f"\n✓ Pattern extraction complete - VectorStore updated")
-    print(f"  Query example: context.search_memories(['docker-compose', 'article-i'])")
+    print("\n✓ Pattern extraction complete - VectorStore updated")
+    print("  Query example: context.search_memories(['docker-compose', 'article-i'])")
