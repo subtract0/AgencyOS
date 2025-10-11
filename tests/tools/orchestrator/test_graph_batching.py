@@ -279,7 +279,12 @@ class TestRunGraphFullLayerExecution:
                     score=4.0,
                     reasons=[],
                     top_fixes=[],
-                    dimension_scores={"clarity": 4.0, "measurability": 4.0, "completeness": 4.0, "actionability": 4.0},
+                    dimension_scores={
+                        "clarity": 4.0,
+                        "measurability": 4.0,
+                        "completeness": 4.0,
+                        "actionability": 4.0,
+                    },
                 )
             )
             yield mock_slop
@@ -287,8 +292,11 @@ class TestRunGraphFullLayerExecution:
     # --- NORMAL OPERATION ---
 
     @pytest.mark.asyncio
-    async def test_run_graph_executes_all_tasks_in_single_layer(self, mock_context, simple_policy, mock_slop_immunity):
+    async def test_run_graph_executes_all_tasks_in_single_layer(
+        self, mock_context, simple_policy, mock_slop_immunity
+    ):
         """Test all tasks in single layer execute (Article I: Complete Context)."""
+
         # Arrange
         def mock_agent_factory(ctx):
             agent = AsyncMock()
@@ -315,8 +323,11 @@ class TestRunGraphFullLayerExecution:
         assert {task.id for task in result.tasks} == {"task_1", "task_2", "task_3"}
 
     @pytest.mark.asyncio
-    async def test_run_graph_executes_all_tasks_across_multiple_batches(self, mock_context, simple_policy, mock_slop_immunity):
+    async def test_run_graph_executes_all_tasks_across_multiple_batches(
+        self, mock_context, simple_policy, mock_slop_immunity
+    ):
         """Test layer with tasks > max_workers executes ALL tasks in multiple batches."""
+
         # Arrange
         def mock_agent_factory(ctx):
             agent = AsyncMock()
@@ -327,7 +338,9 @@ class TestRunGraphFullLayerExecution:
         # 5 tasks in layer 0, max_workers=2 → 3 batches
         graph = TaskGraph(
             nodes={
-                f"task_{i}": TaskSpec(agent_factory=mock_agent_factory, prompt=f"Task {i}", id=f"task_{i}")
+                f"task_{i}": TaskSpec(
+                    agent_factory=mock_agent_factory, prompt=f"Task {i}", id=f"task_{i}"
+                )
                 for i in range(5)
             },
             edges=[],
@@ -342,7 +355,9 @@ class TestRunGraphFullLayerExecution:
         assert all(task.status == "success" for task in result.tasks)
 
     @pytest.mark.asyncio
-    async def test_run_graph_respects_max_workers_concurrency(self, mock_context, simple_policy, mock_slop_immunity):
+    async def test_run_graph_respects_max_workers_concurrency(
+        self, mock_context, simple_policy, mock_slop_immunity
+    ):
         """Test max_workers limit enforced (no more than max_workers concurrent tasks)."""
         # Arrange
         concurrent_tasks = []
@@ -362,7 +377,9 @@ class TestRunGraphFullLayerExecution:
         # 6 tasks, max_workers=3
         graph = TaskGraph(
             nodes={
-                f"task_{i}": TaskSpec(agent_factory=mock_agent_factory, prompt=f"Task {i}", id=f"task_{i}")
+                f"task_{i}": TaskSpec(
+                    agent_factory=mock_agent_factory, prompt=f"Task {i}", id=f"task_{i}"
+                )
                 for i in range(6)
             },
             edges=[],
@@ -380,7 +397,9 @@ class TestRunGraphFullLayerExecution:
     # --- EDGE CASES ---
 
     @pytest.mark.asyncio
-    async def test_run_graph_with_empty_graph(self, mock_context, simple_policy, mock_slop_immunity):
+    async def test_run_graph_with_empty_graph(
+        self, mock_context, simple_policy, mock_slop_immunity
+    ):
         """Test empty graph returns zero results."""
         # Arrange
         graph = TaskGraph(nodes={}, edges=[])
@@ -394,8 +413,11 @@ class TestRunGraphFullLayerExecution:
         assert result.metrics.tasks == 0
 
     @pytest.mark.asyncio
-    async def test_run_graph_with_single_task(self, mock_context, simple_policy, mock_slop_immunity):
+    async def test_run_graph_with_single_task(
+        self, mock_context, simple_policy, mock_slop_immunity
+    ):
         """Test single task executes successfully."""
+
         # Arrange
         def mock_agent_factory(ctx):
             agent = AsyncMock()
@@ -404,7 +426,9 @@ class TestRunGraphFullLayerExecution:
             return agent
 
         graph = TaskGraph(
-            nodes={"task_1": TaskSpec(agent_factory=mock_agent_factory, prompt="Task 1", id="task_1")},
+            nodes={
+                "task_1": TaskSpec(agent_factory=mock_agent_factory, prompt="Task 1", id="task_1")
+            },
             edges=[],
         )
 
@@ -420,8 +444,11 @@ class TestRunGraphFullLayerExecution:
     # --- CORNER CASES ---
 
     @pytest.mark.asyncio
-    async def test_run_graph_with_max_workers_greater_than_layer_size(self, mock_context, mock_slop_immunity):
+    async def test_run_graph_with_max_workers_greater_than_layer_size(
+        self, mock_context, mock_slop_immunity
+    ):
         """Test max_workers > layer_size executes all tasks in single batch."""
+
         # Arrange
         def mock_agent_factory(ctx):
             agent = AsyncMock()
@@ -449,8 +476,11 @@ class TestRunGraphFullLayerExecution:
     # --- TELEMETRY (Yield) ---
 
     @pytest.mark.asyncio
-    async def test_run_graph_emits_batch_started_events(self, mock_context, simple_policy, mock_slop_immunity):
+    async def test_run_graph_emits_batch_started_events(
+        self, mock_context, simple_policy, mock_slop_immunity
+    ):
         """Test batch_started telemetry events emitted for each batch."""
+
         # Arrange
         def mock_agent_factory(ctx):
             agent = AsyncMock()
@@ -461,7 +491,9 @@ class TestRunGraphFullLayerExecution:
         # 5 tasks, max_workers=2 → 3 batches
         graph = TaskGraph(
             nodes={
-                f"task_{i}": TaskSpec(agent_factory=mock_agent_factory, prompt=f"Task {i}", id=f"task_{i}")
+                f"task_{i}": TaskSpec(
+                    agent_factory=mock_agent_factory, prompt=f"Task {i}", id=f"task_{i}"
+                )
                 for i in range(5)
             },
             edges=[],
@@ -478,7 +510,9 @@ class TestRunGraphFullLayerExecution:
 
         # Assert
         batch_started_events = [e for e in telemetry_events if e.get("type") == "batch_started"]
-        assert len(batch_started_events) == 3, f"Expected 3 batch_started events, got {len(batch_started_events)}"
+        assert len(batch_started_events) == 3, (
+            f"Expected 3 batch_started events, got {len(batch_started_events)}"
+        )
 
         # Verify first batch structure
         first_batch = batch_started_events[0]
@@ -487,8 +521,11 @@ class TestRunGraphFullLayerExecution:
         assert first_batch["concurrency"] == 2
 
     @pytest.mark.asyncio
-    async def test_run_graph_emits_batch_finished_events(self, mock_context, simple_policy, mock_slop_immunity):
+    async def test_run_graph_emits_batch_finished_events(
+        self, mock_context, simple_policy, mock_slop_immunity
+    ):
         """Test batch_finished telemetry events emitted after batch completion."""
+
         # Arrange
         def mock_agent_factory(ctx):
             agent = AsyncMock()
@@ -498,7 +535,9 @@ class TestRunGraphFullLayerExecution:
 
         graph = TaskGraph(
             nodes={
-                f"task_{i}": TaskSpec(agent_factory=mock_agent_factory, prompt=f"Task {i}", id=f"task_{i}")
+                f"task_{i}": TaskSpec(
+                    agent_factory=mock_agent_factory, prompt=f"Task {i}", id=f"task_{i}"
+                )
                 for i in range(5)
             },
             edges=[],
@@ -523,8 +562,11 @@ class TestRunGraphFullLayerExecution:
             assert "duration_s" in event
 
     @pytest.mark.asyncio
-    async def test_run_graph_emits_layer_completed_event(self, mock_context, simple_policy, mock_slop_immunity):
+    async def test_run_graph_emits_layer_completed_event(
+        self, mock_context, simple_policy, mock_slop_immunity
+    ):
         """Test layer_completed telemetry event emitted after layer finishes."""
+
         # Arrange
         def mock_agent_factory(ctx):
             agent = AsyncMock()
@@ -562,7 +604,9 @@ class TestRunGraphFullLayerExecution:
     # --- DETERMINISM (Regression) ---
 
     @pytest.mark.asyncio
-    async def test_run_graph_deterministic_execution_order_across_runs(self, mock_context, simple_policy, mock_slop_immunity):
+    async def test_run_graph_deterministic_execution_order_across_runs(
+        self, mock_context, simple_policy, mock_slop_immunity
+    ):
         """Test same graph produces identical execution order across runs."""
         # Arrange
         execution_orders = []
@@ -630,14 +674,22 @@ class TestLayerCompletionAssertion:
                     score=4.0,
                     reasons=[],
                     top_fixes=[],
-                    dimension_scores={"clarity": 4.0, "measurability": 4.0, "completeness": 4.0, "actionability": 4.0},
+                    dimension_scores={
+                        "clarity": 4.0,
+                        "measurability": 4.0,
+                        "completeness": 4.0,
+                        "actionability": 4.0,
+                    },
                 )
             )
             yield mock_slop
 
     @pytest.mark.asyncio
-    async def test_layer_completion_assertion_passes_when_all_tasks_complete(self, mock_context, mock_slop_immunity):
+    async def test_layer_completion_assertion_passes_when_all_tasks_complete(
+        self, mock_context, mock_slop_immunity
+    ):
         """Test assertion passes when all tasks in layer complete."""
+
         # Arrange
         def mock_agent_factory(ctx):
             agent = AsyncMock()
@@ -678,6 +730,7 @@ class TestSlopImmunityIntegration:
     @pytest.mark.asyncio
     async def test_slop_immunity_allows_high_quality_task_descriptions(self, mock_context):
         """Test high-quality task descriptions pass slop immunity check."""
+
         # Arrange
         def mock_agent_factory(ctx):
             agent = AsyncMock()
@@ -705,7 +758,12 @@ class TestSlopImmunityIntegration:
             score=4.0,
             reasons=[],
             top_fixes=[],
-            dimension_scores={"clarity": 4.0, "measurability": 4.0, "completeness": 4.0, "actionability": 4.0},
+            dimension_scores={
+                "clarity": 4.0,
+                "measurability": 4.0,
+                "completeness": 4.0,
+                "actionability": 4.0,
+            },
         )
 
         with patch("tools.orchestrator.graph.enforce_slop_immunity") as mock_enforce:

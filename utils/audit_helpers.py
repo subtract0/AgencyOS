@@ -13,9 +13,7 @@ import os
 import tempfile
 
 # Environment-driven data dir (respects AGENCY_DATA_DIR env var)
-AGENCY_DATA_DIR = os.getenv(
-    "AGENCY_DATA_DIR", os.path.join(os.path.expanduser("~"), ".agency")
-)
+AGENCY_DATA_DIR = os.getenv("AGENCY_DATA_DIR", os.path.join(os.path.expanduser("~"), ".agency"))
 AUDIT_HMAC_KEY = os.getenv("AGENCY_AUDIT_HMAC_KEY")  # MUST be set in CI/production vault
 
 
@@ -77,9 +75,7 @@ def sign_entry_hmac(entry_json: str) -> str:
         - For full non-repudiation, use ed25519 asymmetric signing
     """
     if AUDIT_HMAC_KEY:
-        return hmac.new(
-            AUDIT_HMAC_KEY.encode(), entry_json.encode(), hashlib.sha256
-        ).hexdigest()
+        return hmac.new(AUDIT_HMAC_KEY.encode(), entry_json.encode(), hashlib.sha256).hexdigest()
     # Fallback to SHA256 (development only - log warning in production)
     return hashlib.sha256(entry_json.encode()).hexdigest()
 

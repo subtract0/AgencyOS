@@ -56,9 +56,7 @@ class RunSnapshot(BaseModel):
 
     model_config = {"extra": "forbid"}
 
-    git_commit_hash: str = Field(
-        ..., description="Git commit hash (40-char SHA1) of the codebase"
-    )
+    git_commit_hash: str = Field(..., description="Git commit hash (40-char SHA1) of the codebase")
     docker_image_hash: str = Field(
         ..., description="Docker image hash (sha256:...) for runtime environment"
     )
@@ -158,9 +156,7 @@ class AuditSigner:
         json_data = json.dumps(data, sort_keys=True, ensure_ascii=False)
 
         # Create HMAC-SHA256 signature
-        signature = hashlib.sha256(
-            (self.secret + json_data).encode("utf-8")
-        ).hexdigest()
+        signature = hashlib.sha256((self.secret + json_data).encode("utf-8")).hexdigest()
 
         return signature
 

@@ -239,9 +239,12 @@ def main(test_mode: str = "unit", fast_only: bool = False, timed: bool = False) 
             print("🔧 Pre-importing PyTorch/transformers in main thread (SPEC-021 safety)...")
             import torch  # noqa: F401 - Pre-import to prevent worker segfault
             import transformers  # noqa: F401 - Pre-import to prevent worker segfault
+
             print("✅ PyTorch/transformers pre-imported successfully")
         except ImportError:
-            print("⚠️  PyTorch/transformers not installed - VectorStore will use keyword search only")
+            print(
+                "⚠️  PyTorch/transformers not installed - VectorStore will use keyword search only"
+            )
 
     # Prepare environment variables
     env = os.environ.copy()
