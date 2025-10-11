@@ -10,24 +10,24 @@ Test Coverage:
 - NECESSARY pattern: Normal, Edge, Corner, Error, Security, Stress, Accessibility, Regression, Yield
 """
 
-import pytest
 from unittest.mock import AsyncMock, MagicMock, Mock, patch
+
+import pytest
 
 from shared.agent_context import AgentContext
 from shared.models.task_graph import Phase, Task, TaskGraph, TaskTier, TaskType
-from tools.orchestrator.approval_checkpoint import ApprovedSpec, ApprovalDecision
+from tools.orchestrator.approval_checkpoint import ApprovalDecision, ApprovedSpec
 from tools.orchestrator.approval_checkpoint import Spec as ApprovalSpec
 from tools.orchestrator.intent_parser import InputMode, Intent
 from tools.orchestrator.pr_creator import PRUrl
-from tools.orchestrator.spec_generator import SpecIntent
 from tools.orchestrator.spec_generator import Spec as SpecGenSpec
+from tools.orchestrator.spec_generator import SpecIntent
 from tools.orchestrator.test_verification_gate import VerificationResults
 from tools.orchestrator.two_stage_orchestrator import (
     OrchestrationError,
     TwoStageOrchestrator,
     create_orchestrator,
 )
-
 
 # ============================================================================
 # FIXTURES
@@ -831,7 +831,9 @@ def test_store_workflow_success(
         assert "success" in tags
     elif call_args.kwargs:
         # Keyword args
-        assert call_args.kwargs.get("key", call_args.args[0] if call_args.args else "").startswith("orchestration_success_")
+        assert call_args.kwargs.get("key", call_args.args[0] if call_args.args else "").startswith(
+            "orchestration_success_"
+        )
         assert "orchestration" in call_args.kwargs.get("tags", [])
     else:
         # Mixed args/kwargs - just verify the call was made

@@ -14,9 +14,9 @@ import pytest
 
 from shared.type_definitions.result import Err, Ok
 from tools.orchestrator.test_verification_gate import (
-    VerificationResults,
-    VerificationError,
     TestVerificationGate,
+    VerificationError,
+    VerificationResults,
     verify_tests,
 )
 
@@ -329,7 +329,7 @@ tests/test_example.py::test_feature PASSED
     async def test_execute_tests_timeout(self, gate: TestVerificationGate):
         """Test test execution timeout (Article I)."""
         mock_process = AsyncMock()
-        mock_process.communicate.side_effect = asyncio.TimeoutError()
+        mock_process.communicate.side_effect = TimeoutError()
         mock_process.kill = AsyncMock()
         mock_process.wait = AsyncMock()
 
@@ -384,9 +384,7 @@ tests/test_example.py::test_feature PASSED
     async def test_verify_retry_on_timeout(self, gate: TestVerificationGate):
         """Test Article I retry logic: retry on timeout with exponential backoff."""
         # First attempt: timeout
-        timeout_error = VerificationError(
-            reason="timeout", message="Timed out", exit_code=124
-        )
+        timeout_error = VerificationError(reason="timeout", message="Timed out", exit_code=124)
 
         # Second attempt: success
         success_results = VerificationResults(
@@ -445,9 +443,7 @@ tests/test_example.py::test_feature PASSED
     @pytest.mark.asyncio
     async def test_verify_exhausts_all_retries(self, gate: TestVerificationGate):
         """Test that all retry attempts are exhausted on persistent timeout."""
-        timeout_error = VerificationError(
-            reason="timeout", message="Timed out", exit_code=124
-        )
+        timeout_error = VerificationError(reason="timeout", message="Timed out", exit_code=124)
 
         call_count = 0
 
@@ -553,9 +549,7 @@ class TestConstitutionalCompliance:
         gate = TestVerificationGate()
 
         # Simulate timeout then success
-        timeout_error = VerificationError(
-            reason="timeout", message="Timed out", exit_code=124
-        )
+        timeout_error = VerificationError(reason="timeout", message="Timed out", exit_code=124)
         success_results = VerificationResults(
             passed=100,
             failed=0,

@@ -134,9 +134,9 @@ class TestVerificationGate:
         self.base_timeout = 600  # 10 minutes (increased from 2 minutes)
         self.timeout_multipliers = [1, 2, 3, 10]  # Article I retry policy
 
-    async def verify(self, mode: Literal["all", "unit", "fast"] = "all") -> Result[
-        VerificationResults, VerificationError
-    ]:
+    async def verify(
+        self, mode: Literal["all", "unit", "fast"] = "all"
+    ) -> Result[VerificationResults, VerificationError]:
         """Verify all tests pass with constitutional retry logic.
 
         Args:
@@ -229,13 +229,14 @@ class TestVerificationGate:
             try:
                 # Wait for completion with timeout
                 stdout_data, _ = await asyncio.wait_for(
-                    process.communicate(), timeout=timeout + 30  # +30s grace period
+                    process.communicate(),
+                    timeout=timeout + 30,  # +30s grace period
                 )
 
                 output = stdout_data.decode("utf-8", errors="replace")
                 exit_code = process.returncode or 0
 
-            except asyncio.TimeoutError:
+            except TimeoutError:
                 # Kill process on timeout
                 process.kill()
                 await process.wait()
@@ -371,9 +372,9 @@ class TestVerificationGate:
 
 
 # Convenience function for quick verification
-async def verify_tests(mode: Literal["all", "unit", "fast"] = "all") -> Result[
-    VerificationResults, VerificationError
-]:
+async def verify_tests(
+    mode: Literal["all", "unit", "fast"] = "all",
+) -> Result[VerificationResults, VerificationError]:
     """Verify all tests pass with constitutional enforcement.
 
     Args:

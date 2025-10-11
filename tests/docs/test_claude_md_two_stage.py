@@ -26,12 +26,10 @@ Test Coverage:
 
 import re
 from pathlib import Path
-from typing import List
 
 import pytest
 
 from shared.type_definitions.result import Err, Ok, Result
-
 
 # === Helper Functions ===
 
@@ -135,7 +133,7 @@ class ClaudeMdValidator:
 
         return Ok(True)
 
-    def validate_example_commands(self, content: str) -> Result[List[str], DocumentationError]:
+    def validate_example_commands(self, content: str) -> Result[list[str], DocumentationError]:
         """
         Validate that example commands with /primeA are present.
 
@@ -143,7 +141,7 @@ class ClaudeMdValidator:
             content: CLAUDE.md file content
 
         Returns:
-            Result[List[str], DocumentationError]: List of found examples or error
+            Result[list[str], DocumentationError]: List of found examples or error
         """
         # Find command examples (lines starting with /primeA)
         example_pattern = r"(/primeA\s+[^\n]+)"
@@ -591,7 +589,9 @@ class TestCommandAccuracy:
         command_with_desc_pattern = r"/primeA[^\n]*(?:two-stage|Stage|workflow|checkpoint)"
 
         # Act
-        descriptions = re.findall(command_with_desc_pattern, claude_md_content, re.IGNORECASE | re.DOTALL)
+        descriptions = re.findall(
+            command_with_desc_pattern, claude_md_content, re.IGNORECASE | re.DOTALL
+        )
 
         # Assert
         assert len(descriptions) > 0, "Command descriptions should mention two-stage workflow"
@@ -634,7 +634,9 @@ class TestDocumentationRegression:
         ]
 
         # Assert
-        assert len(found_keywords) >= 3, "Documentation should reference constitutional requirements"
+        assert len(found_keywords) >= 3, (
+            "Documentation should reference constitutional requirements"
+        )
 
     def test_preserves_existing_documentation_structure(self, claude_md_content):
         """Should preserve major documentation sections."""
@@ -647,9 +649,7 @@ class TestDocumentationRegression:
         ]
 
         # Act
-        found_sections = [
-            section for section in essential_sections if section in claude_md_content
-        ]
+        found_sections = [section for section in essential_sections if section in claude_md_content]
 
         # Assert
         assert len(found_sections) >= 3, f"Missing essential sections. Found: {found_sections}"
@@ -692,9 +692,7 @@ class TestPerformance:
 class TestFullDocumentationValidation:
     """Integration tests for complete documentation validation."""
 
-    def test_complete_two_stage_documentation_exists(
-        self, validator, claude_md_content
-    ):
+    def test_complete_two_stage_documentation_exists(self, validator, claude_md_content):
         """Should pass all two-stage workflow validation checks."""
         # Act
         results = [
@@ -719,7 +717,9 @@ class TestFullDocumentationValidation:
             "has_flag": validator.validate_two_stage_flag(claude_md_content).is_ok(),
             "has_stages": validator.validate_workflow_stages_described(claude_md_content).is_ok(),
             "has_examples": validator.validate_example_commands(claude_md_content).is_ok(),
-            "has_checkpoints": validator.validate_checkpoint_documentation(claude_md_content).is_ok(),
+            "has_checkpoints": validator.validate_checkpoint_documentation(
+                claude_md_content
+            ).is_ok(),
         }
 
         # Act

@@ -43,14 +43,14 @@ if [ $elapsed -ge $timeout ]; then
     exit 1
 fi
 
-# Check model availability
-echo "🔍 Checking if qwen3-coder model is available..."
-if docker exec agency-ollama ollama list | grep -q "qwen3-coder"; then
-    echo "✅ qwen3-coder model already installed"
+# Initialize model using init script (Article I & II compliance)
+echo "📥 Initializing model using init_ollama_model.sh..."
+export OLLAMA_MODEL="hf.co/abirhossen/Qwen3-Coder-30B-A3B-Instruct-Q8_0-GGUF:Q8_0"
+if bash scripts/init_ollama_model.sh; then
+    echo "✅ Model initialization complete"
 else
-    echo "📥 Pulling qwen3-coder model (32GB, may take 10-30 minutes)..."
-    docker exec agency-ollama ollama pull hf.co/abirhossen/Qwen3-Coder-30B-A3B-Instruct-Q8_0-GGUF:Q8_0
-    echo "✅ Model pull complete"
+    echo "❌ Model initialization failed"
+    exit 1
 fi
 
 # Verify memory usage

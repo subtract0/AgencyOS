@@ -38,11 +38,10 @@ import pytest
 from shared.agent_context import AgentContext
 from shared.models.task_graph import Phase, Task, TaskGraph, TaskTier, TaskType
 from shared.type_definitions.result import Err, Ok, Result
-from tools.orchestrator.approval_checkpoint import ApprovedSpec, ApprovalDecision, Spec
+from tools.orchestrator.approval_checkpoint import ApprovalDecision, ApprovedSpec, Spec
 from tools.orchestrator.intent_parser import InputMode, Intent
 from tools.orchestrator.pr_creator import PRError, PRUrl
 from tools.orchestrator.test_verification_gate import VerificationError, VerificationResults
-
 
 # ============================================================================
 # TDD PLACEHOLDER - TwoStageOrchestrator (to be implemented by CodeAgent)
