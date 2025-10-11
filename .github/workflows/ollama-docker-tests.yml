@@ -64,10 +64,39 @@ jobs:
           echo "🚀 Starting Ollama service with model: ${OLLAMA_MODEL}"
           docker compose up -d
 
+      - name: Wait for Ollama service to start
+        run: |
+          echo "⏳ Waiting for Ollama service to start (max 60s)..."
+          timeout=60
+          elapsed=0
+          while [ $elapsed -lt $timeout ]; do
+            if curl -s http://localhost:11434/api/version >/dev/null 2>&1; then
+              echo "✅ Ollama service is running"
+              exit 0
+            fi
+            sleep 5
+            elapsed=$((elapsed + 5))
+            echo "  Waiting... ${elapsed}s/${timeout}s"
+          done
+
+          echo "❌ Ollama service failed to start within ${timeout}s"
+          echo "Container logs:"
+          docker compose logs ollama
+          exit 1
+
+      - name: Pull CI model
+        run: |
+          echo "📥 Pulling ${OLLAMA_MODEL} model..."
+          docker exec agency-ollama ollama pull ${OLLAMA_MODEL}
+          echo "✅ Model pull complete"
+
+          # Verify model is available
+          docker exec agency-ollama ollama list
+
       - name: Wait for Ollama health check
         run: |
-          echo "⏳ Waiting for Ollama to be healthy (max 180s)..."
-          timeout=180
+          echo "⏳ Waiting for Ollama to be fully healthy (max 120s)..."
+          timeout=120
           elapsed=0
           while [ $elapsed -lt $timeout ]; do
             if docker inspect --format='{{.State.Health.Status}}' agency-ollama 2>/dev/null | grep -q "healthy"; then
@@ -83,15 +112,6 @@ jobs:
           echo "Container logs:"
           docker compose logs ollama
           exit 1
-
-      - name: Pull CI model
-        run: |
-          echo "📥 Pulling ${OLLAMA_MODEL} model..."
-          docker exec agency-ollama ollama pull ${OLLAMA_MODEL}
-          echo "✅ Model pull complete"
-
-          # Verify model is available
-          docker exec agency-ollama ollama list
 
       - name: Test model inference
         run: |
