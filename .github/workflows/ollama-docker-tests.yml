@@ -93,22 +93,23 @@ jobs:
           # Verify model is available
           docker exec agency-ollama ollama list
 
-      - name: Wait for Ollama health check
+      - name: Verify Ollama is ready
         run: |
-          echo "⏳ Waiting for Ollama to be fully healthy (max 120s)..."
-          timeout=120
+          echo "⏳ Verifying Ollama API is ready (max 30s)..."
+          timeout=30
           elapsed=0
           while [ $elapsed -lt $timeout ]; do
-            if docker inspect --format='{{.State.Health.Status}}' agency-ollama 2>/dev/null | grep -q "healthy"; then
-              echo "✅ Ollama service is healthy"
+            if curl -f http://localhost:11434/api/tags >/dev/null 2>&1; then
+              echo "✅ Ollama API is ready and model is available"
+              curl -s http://localhost:11434/api/tags | head -20
               exit 0
             fi
-            sleep 5
-            elapsed=$((elapsed + 5))
+            sleep 2
+            elapsed=$((elapsed + 2))
             echo "  Waiting... ${elapsed}s/${timeout}s"
           done
 
-          echo "❌ Ollama failed to become healthy within ${timeout}s"
+          echo "❌ Ollama API failed to become ready within ${timeout}s"
           echo "Container logs:"
           docker compose logs ollama
           exit 1
