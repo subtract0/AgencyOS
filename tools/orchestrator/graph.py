@@ -114,30 +114,30 @@ async def run_graph(
 
     for task_id, task_spec in graph.nodes.items():
         # Extract description from task spec
-        task_description = task_spec.prompt if hasattr(task_spec, 'prompt') else str(task_spec)
+        task_description = task_spec.prompt if hasattr(task_spec, "prompt") else str(task_spec)
 
-        result = enforce_slop_immunity(
-            task_description,
-            guardian,
-            stage="graph_validation"
-        )
+        result = enforce_slop_immunity(task_description, guardian, stage="graph_validation")
 
         if result.is_err():
             # Slop detected - raise exception to halt execution
             slop_error = result.unwrap_err()
-            _telemetry_emit({
-                "type": "slop_detected",
-                "task_id": task_id,
-                "score": slop_error.verdict.score,
-                "status": slop_error.verdict.status,
-                "reasons": slop_error.verdict.reasons,
-            })
+            _telemetry_emit(
+                {
+                    "type": "slop_detected",
+                    "task_id": task_id,
+                    "score": slop_error.verdict.score,
+                    "status": slop_error.verdict.status,
+                    "reasons": slop_error.verdict.reasons,
+                }
+            )
             raise slop_error
 
-    _telemetry_emit({
-        "type": "slop_check_passed",
-        "tasks_validated": len(graph.nodes),
-    })
+    _telemetry_emit(
+        {
+            "type": "slop_check_passed",
+            "tasks_validated": len(graph.nodes),
+        }
+    )
 
     # Level-by-level execution based on indegree (simple backpressure)
     levels: list[list[str]] = _levels(graph)
@@ -205,9 +205,9 @@ async def run_graph(
 
         # Verify layer completion (Article I: Complete Context Before Action)
         completed_in_layer = [r for r in all_results.values() if r.id in level]
-        assert len(completed_in_layer) == len(
-            level
-        ), f"Layer {layer_idx} incomplete: expected {len(level)} tasks, got {len(completed_in_layer)}"
+        assert len(completed_in_layer) == len(level), (
+            f"Layer {layer_idx} incomplete: expected {len(level)} tasks, got {len(completed_in_layer)}"
+        )
 
         layer_finished = time.time()
         tasks_succeeded = sum(1 for r in layer_results if r.status == "success")

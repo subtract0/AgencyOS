@@ -330,9 +330,7 @@ Respond in JSON format only."""
         """
         prompt = (
             "Rewrite the following specification preserving intent but applying these actionable fixes:\n"
-            "Fixes:\n- "
-            + "\n- ".join(fixes)
-            + "\n\nOriginal:\n" + original_text
+            "Fixes:\n- " + "\n- ".join(fixes) + "\n\nOriginal:\n" + original_text
         )
 
         try:
@@ -445,7 +443,12 @@ def enforce_slop_immunity(
             score=0.0,
             reasons=[err_msg],
             top_fixes=["Slop eval failure"],
-            dimension_scores={"clarity": 0.0, "measurability": 0.0, "completeness": 0.0, "actionability": 0.0},
+            dimension_scores={
+                "clarity": 0.0,
+                "measurability": 0.0,
+                "completeness": 0.0,
+                "actionability": 0.0,
+            },
         )
         # Audit the failure
         log_slop_evaluation(failing, text, stage=stage, attempt=0)
@@ -487,7 +490,12 @@ def enforce_slop_immunity(
                     score=0.0,
                     reasons=[re_eval.unwrap_err()],
                     top_fixes=[],
-                    dimension_scores={"clarity": 0.0, "measurability": 0.0, "completeness": 0.0, "actionability": 0.0},
+                    dimension_scores={
+                        "clarity": 0.0,
+                        "measurability": 0.0,
+                        "completeness": 0.0,
+                        "actionability": 0.0,
+                    },
                 )
                 log_slop_evaluation(failure_verdict, rewritten_text, stage=stage, attempt=attempt)
                 continue

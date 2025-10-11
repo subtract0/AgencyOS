@@ -34,7 +34,12 @@ class TestSlopVerdict:
             score=4.0,
             reasons=[],
             top_fixes=[],
-            dimension_scores={"clarity": 4.0, "measurability": 4.0, "completeness": 4.0, "actionability": 4.0},
+            dimension_scores={
+                "clarity": 4.0,
+                "measurability": 4.0,
+                "completeness": 4.0,
+                "actionability": 4.0,
+            },
         )
 
         assert verdict.status == VerdictStatus.ACCEPT
@@ -45,7 +50,12 @@ class TestSlopVerdict:
             score=2.8,
             reasons=["Vague outcome", "No acceptance criteria"],
             top_fixes=["Specify measurable success metrics", "Define concrete deliverables"],
-            dimension_scores={"clarity": 2.5, "measurability": 2.0, "completeness": 3.5, "actionability": 3.2},
+            dimension_scores={
+                "clarity": 2.5,
+                "measurability": 2.0,
+                "completeness": 3.5,
+                "actionability": 3.2,
+            },
         )
 
         assert verdict.status == VerdictStatus.REVISE
@@ -56,7 +66,12 @@ class TestSlopVerdict:
             score=1.5,
             reasons=["Completely vague", "No structure", "No measurable criteria"],
             top_fixes=["Start with clear goals", "Define acceptance criteria"],
-            dimension_scores={"clarity": 1.0, "measurability": 1.5, "completeness": 2.0, "actionability": 1.5},
+            dimension_scores={
+                "clarity": 1.0,
+                "measurability": 1.5,
+                "completeness": 2.0,
+                "actionability": 1.5,
+            },
         )
 
         assert verdict.status == VerdictStatus.REJECT
@@ -67,7 +82,12 @@ class TestSlopVerdict:
             score=3.5,
             reasons=[],
             top_fixes=[],
-            dimension_scores={"clarity": 3.5, "measurability": 3.5, "completeness": 3.5, "actionability": 3.5},
+            dimension_scores={
+                "clarity": 3.5,
+                "measurability": 3.5,
+                "completeness": 3.5,
+                "actionability": 3.5,
+            },
         )
 
         assert verdict.status == VerdictStatus.ACCEPT
@@ -78,7 +98,12 @@ class TestSlopVerdict:
             score=3.4,
             reasons=["Minor vagueness"],
             top_fixes=["Clarify edge cases"],
-            dimension_scores={"clarity": 3.4, "measurability": 3.4, "completeness": 3.4, "actionability": 3.4},
+            dimension_scores={
+                "clarity": 3.4,
+                "measurability": 3.4,
+                "completeness": 3.4,
+                "actionability": 3.4,
+            },
         )
 
         assert verdict.status == VerdictStatus.REVISE
@@ -89,7 +114,12 @@ class TestSlopVerdict:
             score=2.0,
             reasons=["Vague"],
             top_fixes=["Clarify"],
-            dimension_scores={"clarity": 2.0, "measurability": 2.0, "completeness": 2.0, "actionability": 2.0},
+            dimension_scores={
+                "clarity": 2.0,
+                "measurability": 2.0,
+                "completeness": 2.0,
+                "actionability": 2.0,
+            },
         )
 
         assert verdict.status == VerdictStatus.REVISE
@@ -100,7 +130,12 @@ class TestSlopVerdict:
             score=1.9,
             reasons=["Critically vague"],
             top_fixes=["Rewrite completely"],
-            dimension_scores={"clarity": 1.9, "measurability": 1.9, "completeness": 1.9, "actionability": 1.9},
+            dimension_scores={
+                "clarity": 1.9,
+                "measurability": 1.9,
+                "completeness": 1.9,
+                "actionability": 1.9,
+            },
         )
 
         assert verdict.status == VerdictStatus.REJECT
@@ -115,7 +150,12 @@ class TestSlopDetected:
             score=2.8,
             reasons=["Vague outcome", "No acceptance criteria"],
             top_fixes=["Specify measurable success metrics", "Define concrete deliverables"],
-            dimension_scores={"clarity": 2.5, "measurability": 2.0, "completeness": 3.5, "actionability": 3.2},
+            dimension_scores={
+                "clarity": 2.5,
+                "measurability": 2.0,
+                "completeness": 3.5,
+                "actionability": 3.2,
+            },
         )
 
         exception = SlopDetected(verdict, "Make the system better")
@@ -132,7 +172,12 @@ class TestSlopDetected:
             score=1.5,
             reasons=["Critically vague"],
             top_fixes=["Rewrite completely"],
-            dimension_scores={"clarity": 1.0, "measurability": 1.5, "completeness": 2.0, "actionability": 1.5},
+            dimension_scores={
+                "clarity": 1.0,
+                "measurability": 1.5,
+                "completeness": 2.0,
+                "actionability": 1.5,
+            },
         )
 
         exception = SlopDetected(verdict, "Make it work")
@@ -173,7 +218,9 @@ class TestSlopGuardian:
         mock_client.chat.completions.create.return_value = mock_response
 
         guardian = SlopGuardian()
-        result = guardian.evaluate("Implement JWT authentication with RSA-256, 15-minute token expiry, and refresh token rotation")
+        result = guardian.evaluate(
+            "Implement JWT authentication with RSA-256, 15-minute token expiry, and refresh token rotation"
+        )
 
         assert result.is_ok()
         verdict = result.unwrap()
@@ -200,7 +247,10 @@ class TestSlopGuardian:
                                 "actionability": 3.2,
                             },
                             "reasons": ["Vague outcome", "No acceptance criteria"],
-                            "top_fixes": ["Specify measurable success metrics", "Define concrete deliverables"],
+                            "top_fixes": [
+                                "Specify measurable success metrics",
+                                "Define concrete deliverables",
+                            ],
                         }
                     )
                 )
@@ -235,7 +285,11 @@ class TestSlopGuardian:
                                 "completeness": 2.0,
                                 "actionability": 1.5,
                             },
-                            "reasons": ["Completely vague", "No structure", "No measurable criteria"],
+                            "reasons": [
+                                "Completely vague",
+                                "No structure",
+                                "No measurable criteria",
+                            ],
                             "top_fixes": ["Start with clear goals", "Define acceptance criteria"],
                         }
                     )
@@ -338,7 +392,9 @@ class TestSlopGuardian:
         mock_openai.return_value = mock_client
 
         # All 3 calls fail
-        mock_client.chat.completions.create.side_effect = openai.APIError(message="Timeout", request=Mock(), body={})
+        mock_client.chat.completions.create.side_effect = openai.APIError(
+            message="Timeout", request=Mock(), body={}
+        )
 
         guardian = SlopGuardian()
         result = guardian.evaluate("Test spec")
@@ -471,8 +527,10 @@ class TestAuditLogging:
         import importlib
 
         import utils.audit_helpers
+
         importlib.reload(utils.audit_helpers)
         import tools.orchestrator.slop_guardian
+
         importlib.reload(tools.orchestrator.slop_guardian)
 
         from tools.orchestrator.slop_guardian import SlopVerdict
@@ -481,7 +539,12 @@ class TestAuditLogging:
             score=2.8,
             reasons=["Vague"],
             top_fixes=["Clarify"],
-            dimension_scores={"clarity": 2.5, "measurability": 2.0, "completeness": 3.5, "actionability": 3.2},
+            dimension_scores={
+                "clarity": 2.5,
+                "measurability": 2.0,
+                "completeness": 3.5,
+                "actionability": 3.2,
+            },
         )
 
         log_slop_evaluation(verdict, "Test spec", stage="pre_planning", attempt=0)
@@ -510,8 +573,10 @@ class TestAuditLogging:
         import importlib
 
         import utils.audit_helpers
+
         importlib.reload(utils.audit_helpers)
         import tools.orchestrator.slop_guardian
+
         importlib.reload(tools.orchestrator.slop_guardian)
 
         from tools.orchestrator.slop_guardian import SlopVerdict
@@ -520,14 +585,24 @@ class TestAuditLogging:
             score=2.8,
             reasons=["Vague"],
             top_fixes=["Clarify"],
-            dimension_scores={"clarity": 2.5, "measurability": 2.0, "completeness": 3.5, "actionability": 3.2},
+            dimension_scores={
+                "clarity": 2.5,
+                "measurability": 2.0,
+                "completeness": 3.5,
+                "actionability": 3.2,
+            },
         )
 
         verdict2 = SlopVerdict(
             score=4.0,
             reasons=[],
             top_fixes=[],
-            dimension_scores={"clarity": 4.0, "measurability": 4.0, "completeness": 4.0, "actionability": 4.0},
+            dimension_scores={
+                "clarity": 4.0,
+                "measurability": 4.0,
+                "completeness": 4.0,
+                "actionability": 4.0,
+            },
         )
 
         log_slop_evaluation(verdict1, "Spec 1", stage="pre_planning", attempt=0)

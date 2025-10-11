@@ -42,9 +42,7 @@ def capture_reproducibility_snapshot() -> RunSnapshot:
     - Article I: Complete context (all reproducibility data)
     """
     # Get git commit hash
-    git_hash = subprocess.check_output(
-        ["git", "rev-parse", "HEAD"], text=True
-    ).strip()
+    git_hash = subprocess.check_output(["git", "rev-parse", "HEAD"], text=True).strip()
 
     # Get docker image hash (if available)
     try:
@@ -60,9 +58,7 @@ def capture_reproducibility_snapshot() -> RunSnapshot:
         docker_hash = "sha256:none"
 
     # Get pip freeze output
-    pip_freeze = subprocess.check_output(
-        ["pip", "freeze"], text=True
-    ).strip()
+    pip_freeze = subprocess.check_output(["pip", "freeze"], text=True).strip()
 
     # Get random seed from environment (or default)
     random_seed = int(os.getenv("RANDOM_SEED", "42"))
