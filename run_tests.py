@@ -60,7 +60,10 @@ class DockerManager:
                 timeout=5,
             )
         except subprocess.CalledProcessError:
-            return False, "Docker daemon not running. Start Docker Desktop or run: sudo systemctl start docker"
+            return (
+                False,
+                "Docker daemon not running. Start Docker Desktop or run: sudo systemctl start docker",
+            )
         except subprocess.TimeoutExpired:
             return False, "Docker daemon not responding (timeout)"
 
@@ -81,7 +84,10 @@ class DockerManager:
                 continue
 
         if docker_compose_cmd is None:
-            return False, "docker-compose not installed. Docker Compose v2 comes with Docker Desktop."
+            return (
+                False,
+                "docker-compose not installed. Docker Compose v2 comes with Docker Desktop.",
+            )
 
         # Store the working command for later use
         self.docker_compose_cmd = docker_compose_cmd
@@ -142,7 +148,8 @@ class DockerManager:
             try:
                 # Check service health via docker-compose ps
                 result = subprocess.run(
-                    self.docker_compose_cmd + ["-f", str(self.compose_file), "ps", "--format", "json"],
+                    self.docker_compose_cmd
+                    + ["-f", str(self.compose_file), "ps", "--format", "json"],
                     check=True,
                     capture_output=True,
                     text=True,
@@ -154,7 +161,8 @@ class DockerManager:
                     services = [json.loads(line) for line in result.stdout.strip().split("\n")]
                     # Check if all services are running and healthy
                     all_healthy = all(
-                        svc.get("State") == "running" and svc.get("Health", "healthy") in ["healthy", ""]
+                        svc.get("State") == "running"
+                        and svc.get("Health", "healthy") in ["healthy", ""]
                         for svc in services
                     )
 
@@ -221,7 +229,9 @@ def _record_timing(
         pass
 
 
-def main(test_mode: str = "unit", fast_only: bool = False, timed: bool = False, with_docker: bool = False) -> int:
+def main(
+    test_mode: str = "unit", fast_only: bool = False, timed: bool = False, with_docker: bool = False
+) -> int:
     # RECURSION GUARDS: Prevent nested test runs
     if os.environ.get("AGENCY_NESTED_TEST") == "1":
         print("⚠️  Nested test run detected; exiting to prevent recursion.")
@@ -729,6 +739,8 @@ if __name__ == "__main__":
     else:
         # Default behavior excludes slow and benchmark tests automatically
         fast_only = test_mode == "unit"
-        exit_code = main(test_mode, fast_only=fast_only, timed=args.timed, with_docker=args.with_docker)
+        exit_code = main(
+            test_mode, fast_only=fast_only, timed=args.timed, with_docker=args.with_docker
+        )
 
     sys.exit(exit_code)

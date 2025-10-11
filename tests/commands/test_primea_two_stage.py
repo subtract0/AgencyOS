@@ -124,7 +124,10 @@ def sample_task_graph() -> TaskGraph:
                         tier=TaskTier.TIER_2,
                         agent="test_generator",
                         description="Write tests for JWT authentication",
-                        dependencies=["spec_auth", "code_auth"],  # Test depends on Code (current validator logic)
+                        dependencies=[
+                            "spec_auth",
+                            "code_auth",
+                        ],  # Test depends on Code (current validator logic)
                         verification_target="code_auth",
                     ),
                 ],
@@ -298,9 +301,7 @@ class TestEdgeCases:
     - Backlog with no Ready tasks
     """
 
-    def test_two_stage_flag_conflicts_with_graph_flag(
-        self, mock_context: AgentContext
-    ) -> None:
+    def test_two_stage_flag_conflicts_with_graph_flag(self, mock_context: AgentContext) -> None:
         """
         Test mutually exclusive flags: --two-stage and --graph.
 
@@ -540,9 +541,7 @@ class TestErrorConditions:
         assert "not found" in result.unwrap_err()
         assert nonexistent_path in result.unwrap_err()
 
-    def test_spec_path_is_directory(
-        self, mock_context: AgentContext, tmp_path: Path
-    ) -> None:
+    def test_spec_path_is_directory(self, mock_context: AgentContext, tmp_path: Path) -> None:
         """
         Test error when spec path points to directory.
 
@@ -660,9 +659,7 @@ class TestBackwardCompatibility:
         assert len(loaded_graph.phases) == len(sample_task_graph.phases)
         # Legacy workflow: no approval checkpoint required
 
-    def test_existing_mission_files_still_loadable(
-        self, mock_context: AgentContext
-    ) -> None:
+    def test_existing_mission_files_still_loadable(self, mock_context: AgentContext) -> None:
         """
         Test that existing mission JSON files are still valid.
 
@@ -703,7 +700,9 @@ class TestBackwardCompatibility:
                             "tier": "Tier 2",
                             "agent": "test_generator",
                             "description": "Write tests for feature",
-                            "dependencies": ["code_task_1"],  # Test depends on Code (validator logic)
+                            "dependencies": [
+                                "code_task_1"
+                            ],  # Test depends on Code (validator logic)
                             "verification_target": "code_task_1",
                         },
                     ],
@@ -793,9 +792,7 @@ class TestOutputValidation:
             Future TDD validator: Code task will have Test task in dependencies (test-first).
         """
         # Arrange
-        code_tasks = [
-            task for task in sample_task_graph.all_tasks() if task.type == TaskType.CODE
-        ]
+        code_tasks = [task for task in sample_task_graph.all_tasks() if task.type == TaskType.CODE]
 
         # Act & Assert
         for code_task in code_tasks:
@@ -870,9 +867,7 @@ class TestAccessibility:
     - Consistent terminology
     """
 
-    def test_error_messages_are_clear_and_actionable(
-        self, mock_context: AgentContext
-    ) -> None:
+    def test_error_messages_are_clear_and_actionable(self, mock_context: AgentContext) -> None:
         """
         Test that error messages provide clear guidance.
 

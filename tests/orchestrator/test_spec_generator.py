@@ -1059,7 +1059,9 @@ class TestSpecGeneratorVectorStoreIntegration:
 
         # Act
         context = planner_agent._prepare_context(
-            request, "full", learning_patterns=similar_specs  # type: ignore
+            request,
+            "full",
+            learning_patterns=similar_specs,  # type: ignore
         )
 
         # Assert
@@ -1067,9 +1069,7 @@ class TestSpecGeneratorVectorStoreIntegration:
         assert context.learning_patterns[0]["confidence"] == 0.85
         assert context.learning_patterns[0]["feature_type"] == "authentication"
 
-    def test_store_successful_spec_pattern_after_approval(
-        self, planner_agent, mock_agent_context
-    ):
+    def test_store_successful_spec_pattern_after_approval(self, planner_agent, mock_agent_context):
         """
         GIVEN: Successfully generated and approved specification
         WHEN: Spec is finalized
@@ -1119,7 +1119,9 @@ class TestSpecGeneratorVectorStoreIntegration:
         # Arrange
         request = "Add authentication with social login"
         context = PlanningContext(
-            request=request, mode="full", learning_patterns=sample_vectorstore_patterns  # type: ignore
+            request=request,
+            mode="full",
+            learning_patterns=sample_vectorstore_patterns,  # type: ignore
         )
         requirement_type = RequirementType(
             category="feature", complexity="complex", requires_spec=True, estimated_effort="weeks"
@@ -1157,7 +1159,9 @@ class TestSpecGeneratorVectorStoreIntegration:
         ]
         request = "Test feature"
         context = PlanningContext(
-            request=request, mode="full", learning_patterns=low_confidence_patterns  # type: ignore
+            request=request,
+            mode="full",
+            learning_patterns=low_confidence_patterns,  # type: ignore
         )
         requirement_type = RequirementType(
             category="feature", complexity="simple", requires_spec=True, estimated_effort="hours"

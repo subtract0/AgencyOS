@@ -145,7 +145,9 @@ def calculate_test_workers() -> tuple[int, bool, str]:
             f"workers to prevent memory exhaustion (available: {available_gb:.1f}GB)"
         )
     else:
-        rationale = f"Local model OFF, using {worker_count} workers (available: {available_gb:.1f}GB)"
+        rationale = (
+            f"Local model OFF, using {worker_count} workers (available: {available_gb:.1f}GB)"
+        )
 
     memory_safe = available_gb >= 10.0  # Require 10GB+ for "safe" status
 
@@ -243,7 +245,7 @@ def _get_blocking_reason(is_complete: bool, pass_rate: float) -> str:
         return "Article I: Incomplete test execution (timed out or truncated)"
 
     if pass_rate < 1.0:
-        return f"Article II: Test pass rate {pass_rate*100:.1f}% (required: 100%)"
+        return f"Article II: Test pass rate {pass_rate * 100:.1f}% (required: 100%)"
 
     return "Unknown blocking reason"
 
@@ -268,9 +270,7 @@ def perform_rollback() -> Result[str, str]:
             return Err(f"Failed to unstage changes: {result.stderr}")
 
         # Step 2: Discard working directory changes
-        result = subprocess.run(
-            ["git", "restore", "."], capture_output=True, text=True, timeout=10
-        )
+        result = subprocess.run(["git", "restore", "."], capture_output=True, text=True, timeout=10)
 
         if result.returncode != 0:
             return Err(f"Failed to discard changes: {result.stderr}")
@@ -849,6 +849,7 @@ class TestPerformRollback:
     @patch("subprocess.run")
     def test_rollback_discard_failure(self, mock_run: Mock) -> None:
         """Test rollback failure during discard step."""
+
         # Arrange
         def side_effect(*args, **kwargs):
             if "restore" in args[0] and "--staged" in args[0]:
@@ -940,9 +941,7 @@ class TestEdgeCases:
 
         # Verify timeout progression
         base_timeout_s = config.base_timeout_ms / 1000
-        expected_timeouts = [
-            base_timeout_s * mult for mult in config.timeout_multipliers
-        ]
+        expected_timeouts = [base_timeout_s * mult for mult in config.timeout_multipliers]
         assert expected_timeouts == [120, 240, 360, 600, 1200]
 
     def test_max_total_timeout_21x_base(self) -> None:

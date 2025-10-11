@@ -115,12 +115,12 @@ def demo_multiple_violations():
     print("DEMO 3: Multiple Violations")
     print("=" * 70)
 
-    multiple_violations_test = '''
+    multiple_violations_test = """
 def test_basic():
     user_data = {"email": "test@example.com"}
     result = create_user(user_data)
     assert result
-'''
+"""
 
     print("\nTest Code:")
     print(multiple_violations_test)
