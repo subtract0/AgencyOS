@@ -22,6 +22,187 @@ from typing import Any
 JSONValue = Any  # Type hint placeholder
 
 
+class DockerManager:
+    """Manage Docker Compose lifecycle for test execution.
+
+    Constitutional Compliance:
+    - Article I: Complete context before action (health check retry logic)
+    - Article II: 100% verification (cleanup even on failure)
+    """
+
+    def __init__(self, compose_file: Path):
+        self.compose_file = compose_file
+        self.services_started = False
+
+    def check_docker_available(self) -> tuple[bool, str]:
+        """Check if Docker and docker-compose are available.
+
+        Returns:
+            Tuple of (is_available, error_message)
+        """
+        # Check if docker is installed
+        try:
+            subprocess.run(
+                ["docker", "--version"],
+                check=True,
+                capture_output=True,
+                timeout=5,
+            )
+        except (subprocess.CalledProcessError, FileNotFoundError, subprocess.TimeoutExpired):
+            return False, "Docker not installed. Install from: https://www.docker.com/get-started"
+
+        # Check if Docker daemon is running
+        try:
+            subprocess.run(
+                ["docker", "ps"],
+                check=True,
+                capture_output=True,
+                timeout=5,
+            )
+        except subprocess.CalledProcessError:
+            return (
+                False,
+                "Docker daemon not running. Start Docker Desktop or run: sudo systemctl start docker",
+            )
+        except subprocess.TimeoutExpired:
+            return False, "Docker daemon not responding (timeout)"
+
+        # Check for docker-compose (try both v1 and v2)
+        docker_compose_cmd = None
+        for cmd in [["docker", "compose"], ["docker-compose"]]:
+            try:
+                result = subprocess.run(
+                    cmd + ["version"],
+                    check=True,
+                    capture_output=True,
+                    timeout=5,
+                )
+                if result.returncode == 0:
+                    docker_compose_cmd = cmd
+                    break
+            except (subprocess.CalledProcessError, FileNotFoundError, subprocess.TimeoutExpired):
+                continue
+
+        if docker_compose_cmd is None:
+            return (
+                False,
+                "docker-compose not installed. Docker Compose v2 comes with Docker Desktop.",
+            )
+
+        # Store the working command for later use
+        self.docker_compose_cmd = docker_compose_cmd
+        return True, ""
+
+    def start_services(self) -> tuple[bool, str]:
+        """Start Docker Compose services.
+
+        Returns:
+            Tuple of (success, error_message)
+        """
+        if not self.compose_file.exists():
+            return False, f"docker-compose.yml not found at {self.compose_file}"
+
+        try:
+            # Start docker-compose services
+            subprocess.run(
+                self.docker_compose_cmd + ["-f", str(self.compose_file), "up", "-d"],
+                check=True,
+                capture_output=True,
+                text=True,
+                timeout=60,
+            )
+
+            self.services_started = True
+            print("✅ Docker Compose services started successfully")
+
+            # Wait for services to be healthy (Article I: retry logic)
+            if not self._wait_for_health():
+                return False, "Docker services failed health check"
+
+            return True, ""
+
+        except subprocess.CalledProcessError as e:
+            return False, f"Failed to start Docker Compose: {e.stderr}"
+        except subprocess.TimeoutExpired:
+            return False, "Docker Compose startup timed out (60s)"
+        except Exception as e:
+            return False, f"Unexpected error starting Docker: {e}"
+
+    def _wait_for_health(self) -> bool:
+        """Wait for Docker services to become healthy (Article I).
+
+        Uses exponential backoff: 2s, 4s, 8s, 16s (cap at 16s)
+        Max wait: 120 seconds
+
+        Returns:
+            True if services healthy, False if timeout
+        """
+        max_wait_seconds = 120
+        initial_interval = 2
+        interval = initial_interval
+        elapsed = 0
+
+        print("⏳ Waiting for Docker services to become healthy...")
+
+        while elapsed < max_wait_seconds:
+            try:
+                # Check service health via docker-compose ps
+                result = subprocess.run(
+                    self.docker_compose_cmd
+                    + ["-f", str(self.compose_file), "ps", "--format", "json"],
+                    check=True,
+                    capture_output=True,
+                    text=True,
+                    timeout=10,
+                )
+
+                # Parse JSON output to check health status
+                if result.stdout.strip():
+                    services = [json.loads(line) for line in result.stdout.strip().split("\n")]
+                    # Check if all services are running and healthy
+                    all_healthy = all(
+                        svc.get("State") == "running"
+                        and svc.get("Health", "healthy") in ["healthy", ""]
+                        for svc in services
+                    )
+
+                    if all_healthy:
+                        print("✅ All Docker services are healthy")
+                        return True
+
+            except (subprocess.CalledProcessError, subprocess.TimeoutExpired, json.JSONDecodeError):
+                # Service not ready yet, continue retrying
+                pass
+
+            time.sleep(interval)
+            elapsed += interval
+
+            # Exponential backoff: 2s, 4s, 8s, 16s, then cap at 16s (Article I)
+            interval = min(interval * 2, 16)
+
+        print("⚠️  Docker services did not become healthy within 120s")
+        return False
+
+    def stop_services(self) -> None:
+        """Stop and cleanup Docker Compose services (Article II: always cleanup)."""
+        if not self.services_started:
+            return
+
+        try:
+            print("\n🧹 Stopping Docker Compose services...")
+            subprocess.run(
+                self.docker_compose_cmd + ["-f", str(self.compose_file), "down"],
+                check=True,
+                capture_output=True,
+                timeout=30,
+            )
+            print("✅ Docker Compose services stopped successfully")
+        except (subprocess.CalledProcessError, subprocess.TimeoutExpired) as e:
+            print(f"⚠️  Warning: Docker cleanup failed: {e}")
+        except Exception as e:
+            print(f"⚠️  Warning: Unexpected error during cleanup: {e}")
+
+
 def _record_timing(
     duration_s: float,
     test_mode: str,
@@ -48,7 +229,9 @@ def _record_timing(
         pass
 
 
-def main(test_mode: str = "unit", fast_only: bool = False, timed: bool = False) -> int:
+def main(
+    test_mode: str = "unit", fast_only: bool = False, timed: bool = False, with_docker: bool = False
+) -> int:
     # RECURSION GUARDS: Prevent nested test runs
     if os.environ.get("AGENCY_NESTED_TEST") == "1":
         print("⚠️  Nested test run detected; exiting to prevent recursion.")
@@ -84,9 +267,43 @@ def main(test_mode: str = "unit", fast_only: bool = False, timed: bool = False) 
 
     atexit.register(cleanup_pid_file)
 
+    # DOCKER LIFECYCLE MANAGEMENT (Article I & II compliance)
+    docker_manager = None
+    if with_docker:
+        print("\n🐳 Docker Integration Enabled")
+        print("=" * 60)
+
+        # Initialize Docker manager
+        project_root = Path(__file__).resolve().parent
+        compose_file = project_root / "docker-compose.yml"
+        docker_manager = DockerManager(compose_file)
+
+        # Check Docker availability
+        available, error_msg = docker_manager.check_docker_available()
+        if not available:
+            print(f"❌ Docker Check Failed: {error_msg}")
+            print("   Tests will run without Docker services")
+            print("   Install Docker or run without --with-docker flag")
+            return 1
+
+        # Start Docker services
+        print("🚀 Starting Docker Compose services...")
+        success, error_msg = docker_manager.start_services()
+        if not success:
+            print(f"❌ Docker Startup Failed: {error_msg}")
+            print("   Check Docker logs: docker-compose logs")
+            return 1
+
+        # Register cleanup handler (Article II: cleanup even on failure)
+        atexit.register(docker_manager.stop_services)
+
+        print("=" * 60)
+
     # SIGNAL HANDLING: Clean shutdown on interruption
     def signal_handler(sig: int, frame: FrameType | None) -> None:
         print(f"\n⚠️  Received signal {sig}, cleaning up...")
+        if docker_manager:
+            docker_manager.stop_services()
         cleanup_pid_file()
         sys.exit(1)
 
@@ -209,24 +426,28 @@ def main(test_mode: str = "unit", fast_only: bool = False, timed: bool = False) 
         # Check if local model is active (Phase 3 cost optimization)
         use_local = os.getenv("USE_LOCAL_MODEL", "true").lower() == "true"
 
-        if use_local:
+        # Docker services consume memory: adjust worker count accordingly
+        if with_docker:
+            # Docker Ollama service (40GB limit) + tests: reduce workers
+            # 48GB Mac: Docker (40GB) + 2 workers (6GB) = 46GB (safe)
+            worker_count = int(os.getenv("LOCAL_MODEL_TEST_WORKERS", "2"))
+            print(f"🐳 Docker services active: using {worker_count} test workers (memory-safe)")
+        elif use_local:
             # Reduce parallelism to prevent memory exhaustion with 32GB local model
             # 48GB Mac: Qwen3-Coder Q8_0 (38GB) + 3 workers (9GB) = 47GB (safe)
             worker_count = int(os.getenv("LOCAL_MODEL_TEST_WORKERS", "3"))
-
-            # CRITICAL: Force single worker to avoid PyTorch segfault (SPEC-021)
-            # TODO: Fix parallel import issue in sentence_transformers/torch
-            if worker_count > 1:
-                print("⚠️ WARNING: Reducing to 1 worker to avoid PyTorch segfault (see SPEC-021)")
-                worker_count = 1
-
-            pytest_args.extend(["-n", str(worker_count)])
             print(f"🧠 Local model active: using {worker_count} test workers (memory-safe)")
         else:
-            # CRITICAL: Force single worker to avoid PyTorch segfault (SPEC-021)
-            # TODO: Fix parallel import issue in sentence_transformers/torch
-            print("⚠️ WARNING: Using single worker to avoid PyTorch segfault (see SPEC-021)")
-            pytest_args.extend(["-n", "1"])  # Was "auto" but crashes with parallel import
+            # No local model or Docker: default parallelism
+            worker_count = 10
+
+        # CRITICAL: Force single worker to avoid PyTorch segfault (SPEC-021)
+        # TODO: Fix parallel import issue in sentence_transformers/torch
+        if worker_count > 1:
+            print("⚠️ WARNING: Reducing to 1 worker to avoid PyTorch segfault (see SPEC-021)")
+            worker_count = 1
+
+        pytest_args.extend(["-n", str(worker_count)])
     except ImportError:
         pass  # Run sequentially if xdist not available
 
@@ -254,6 +475,15 @@ def main(test_mode: str = "unit", fast_only: bool = False, timed: bool = False) 
     # Prevent PyTorch/transformers segfault with parallel testing (SPEC-021)
     env["TOKENIZERS_PARALLELISM"] = "false"  # Disable tokenizer parallelism
     env["OMP_NUM_THREADS"] = "1"  # Limit OpenMP threads to prevent race conditions
+
+    # Docker integration: Enable/disable Ollama tests based on --with-docker flag
+    if with_docker:
+        # Docker services running: enable Ollama tests
+        env["SKIP_OLLAMA_TESTS"] = "0"
+        print("✅ Ollama tests ENABLED (Docker services running)")
+    else:
+        # No Docker services: skip Ollama tests (default behavior)
+        env["SKIP_OLLAMA_TESTS"] = "1"
 
     # Add marker selection based on test mode
     if test_mode == "unit":
@@ -435,6 +665,7 @@ def create_parser() -> argparse.ArgumentParser:
   python run_tests.py --integration-only # Run integration tests only
   python run_tests.py --run-integration  # Run integration tests only (legacy)
   python run_tests.py --run-all          # Run all tests
+  python run_tests.py --with-docker      # Run with Docker services (enables Ollama tests)
   python run_tests.py test_specific.py   # Run specific test file""",
     )
 
@@ -460,6 +691,13 @@ def create_parser() -> argparse.ArgumentParser:
     )
     test_group.add_argument(
         "--run-all", action="store_true", help="Run ALL tests (unit + integration)"
+    )
+
+    # Docker integration flag
+    parser.add_argument(
+        "--with-docker",
+        action="store_true",
+        help="Run with Docker services (starts docker-compose, enables Ollama tests)",
     )
 
     # Specific test file
@@ -501,6 +739,8 @@ if __name__ == "__main__":
     else:
         # Default behavior excludes slow and benchmark tests automatically
         fast_only = test_mode == "unit"
-        exit_code = main(test_mode, fast_only=fast_only, timed=args.timed)
+        exit_code = main(
+            test_mode, fast_only=fast_only, timed=args.timed, with_docker=args.with_docker
+        )
 
     sys.exit(exit_code)

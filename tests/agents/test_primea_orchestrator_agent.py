@@ -78,9 +78,7 @@ class TestPrimeAOrchestratorAgentDefinition:
         exists = agent_definition_path.exists()
 
         # Assert
-        assert exists, (
-            f"PrimeA orchestrator agent definition missing at: {agent_definition_path}"
-        )
+        assert exists, f"PrimeA orchestrator agent definition missing at: {agent_definition_path}"
 
     def test_agent_definition_is_readable(self, agent_definition_path: Path):
         """
@@ -95,9 +93,7 @@ class TestPrimeAOrchestratorAgentDefinition:
         content = agent_definition_path.read_text()
 
         # Assert
-        assert len(content) > 100, (
-            "Agent definition file too small to contain valid documentation"
-        )
+        assert len(content) > 100, "Agent definition file too small to contain valid documentation"
 
     def test_contains_execution_protocol_section(self, agent_content: str):
         """
@@ -109,16 +105,10 @@ class TestPrimeAOrchestratorAgentDefinition:
         # Arrange: Content provided by fixture
 
         # Act
-        has_protocol = re.search(
-            r"##\s+Execution\s+Protocol",
-            agent_content,
-            re.IGNORECASE
-        )
+        has_protocol = re.search(r"##\s+Execution\s+Protocol", agent_content, re.IGNORECASE)
 
         # Assert
-        assert has_protocol, (
-            "Agent definition missing '## Execution Protocol' section"
-        )
+        assert has_protocol, "Agent definition missing '## Execution Protocol' section"
 
     def test_contains_phase_definitions(self, agent_content: str):
         """
@@ -134,19 +124,14 @@ class TestPrimeAOrchestratorAgentDefinition:
             "Phase 2: Visualization",
             "Phase 3: Parallel Execution",
             "Phase 4: Reflection",
-            "Phase 5: Reporting"
+            "Phase 5: Reporting",
         ]
 
         # Act
-        missing_phases = [
-            phase for phase in required_phases
-            if phase not in agent_content
-        ]
+        missing_phases = [phase for phase in required_phases if phase not in agent_content]
 
         # Assert
-        assert not missing_phases, (
-            f"Agent definition missing required phases: {missing_phases}"
-        )
+        assert not missing_phases, f"Agent definition missing required phases: {missing_phases}"
 
     def test_contains_example_prompts_section(self, agent_content: str):
         """
@@ -159,15 +144,11 @@ class TestPrimeAOrchestratorAgentDefinition:
 
         # Act
         has_examples = re.search(
-            r"##\s+Example\s+Prompts\s+to\s+Agent",
-            agent_content,
-            re.IGNORECASE
+            r"##\s+Example\s+Prompts\s+to\s+Agent", agent_content, re.IGNORECASE
         )
 
         # Assert
-        assert has_examples, (
-            "Agent definition missing '## Example Prompts to Agent' section"
-        )
+        assert has_examples, "Agent definition missing '## Example Prompts to Agent' section"
 
     def test_contains_spec_task_example(self, agent_content: str):
         """
@@ -180,15 +161,11 @@ class TestPrimeAOrchestratorAgentDefinition:
 
         # Act
         has_spec_example = re.search(
-            r"###\s+Execute\s+Task\s+\(Spec\)",
-            agent_content,
-            re.IGNORECASE
+            r"###\s+Execute\s+Task\s+\(Spec\)", agent_content, re.IGNORECASE
         )
 
         # Assert
-        assert has_spec_example, (
-            "Agent definition missing example prompt for Spec task type"
-        )
+        assert has_spec_example, "Agent definition missing example prompt for Spec task type"
 
     def test_contains_code_task_example(self, agent_content: str):
         """
@@ -201,15 +178,11 @@ class TestPrimeAOrchestratorAgentDefinition:
 
         # Act
         has_code_example = re.search(
-            r"###\s+Execute\s+Task\s+\(Code\)",
-            agent_content,
-            re.IGNORECASE
+            r"###\s+Execute\s+Task\s+\(Code\)", agent_content, re.IGNORECASE
         )
 
         # Assert
-        assert has_code_example, (
-            "Agent definition missing example prompt for Code task type"
-        )
+        assert has_code_example, "Agent definition missing example prompt for Code task type"
 
     def test_contains_test_task_example(self, agent_content: str):
         """
@@ -222,15 +195,11 @@ class TestPrimeAOrchestratorAgentDefinition:
 
         # Act
         has_test_example = re.search(
-            r"###\s+Execute\s+Task\s+\(Test\)",
-            agent_content,
-            re.IGNORECASE
+            r"###\s+Execute\s+Task\s+\(Test\)", agent_content, re.IGNORECASE
         )
 
         # Assert
-        assert has_test_example, (
-            "Agent definition missing example prompt for Test task type"
-        )
+        assert has_test_example, "Agent definition missing example prompt for Test task type"
 
     # ============================================================================
     # EDGE CASE TESTS - Boundary conditions
@@ -285,9 +254,7 @@ class TestPrimeAOrchestratorAgentDefinition:
         has_protocol = re.search(r"##\s+Execution\s+Protocol", content)
 
         # Assert
-        assert has_protocol is None, (
-            "Malformed markdown should not contain proper sections"
-        )
+        assert has_protocol is None, "Malformed markdown should not contain proper sections"
 
     # ============================================================================
     # CORNER CASE TESTS - Unusual combinations
@@ -301,18 +268,10 @@ class TestPrimeAOrchestratorAgentDefinition:
         AAA: Arrange (content + articles) → Act (search) → Assert (all found)
         """
         # Arrange
-        constitutional_refs = [
-            "Article I",
-            "Article II",
-            "Article IV",
-            "Article V"
-        ]
+        constitutional_refs = ["Article I", "Article II", "Article IV", "Article V"]
 
         # Act
-        missing_refs = [
-            ref for ref in constitutional_refs
-            if ref not in agent_content
-        ]
+        missing_refs = [ref for ref in constitutional_refs if ref not in agent_content]
 
         # Assert
         assert not missing_refs, (
@@ -329,16 +288,11 @@ class TestPrimeAOrchestratorAgentDefinition:
         # Arrange: Content provided by fixture
 
         # Act
-        criteria_matches = re.findall(
-            r"Acceptance\s+Criteria:",
-            agent_content,
-            re.IGNORECASE
-        )
+        criteria_matches = re.findall(r"Acceptance\s+Criteria:", agent_content, re.IGNORECASE)
 
         # Assert
         assert len(criteria_matches) >= 3, (
-            f"Expected ≥3 example prompts with acceptance criteria, "
-            f"found {len(criteria_matches)}"
+            f"Expected ≥3 example prompts with acceptance criteria, found {len(criteria_matches)}"
         )
 
     def test_contains_tier_classification_in_examples(self, agent_content: str):
@@ -351,16 +305,11 @@ class TestPrimeAOrchestratorAgentDefinition:
         # Arrange: Content provided by fixture
 
         # Act
-        tier_matches = re.findall(
-            r"Tier:\s+Tier\s+[123]",
-            agent_content,
-            re.IGNORECASE
-        )
+        tier_matches = re.findall(r"Tier:\s+Tier\s+[123]", agent_content, re.IGNORECASE)
 
         # Assert
         assert len(tier_matches) >= 3, (
-            f"Expected ≥3 example prompts with Tier classification, "
-            f"found {len(tier_matches)}"
+            f"Expected ≥3 example prompts with Tier classification, found {len(tier_matches)}"
         )
 
     # ============================================================================
@@ -398,15 +347,10 @@ class TestPrimeAOrchestratorAgentDefinition:
         # Arrange: Content provided by fixture
 
         # Act
-        has_agent_map = re.search(
-            r"AGENT_MAP\s*=\s*\{",
-            agent_content
-        )
+        has_agent_map = re.search(r"AGENT_MAP\s*=\s*\{", agent_content)
 
         # Assert
-        assert has_agent_map, (
-            "Agent definition missing AGENT_MAP routing configuration"
-        )
+        assert has_agent_map, "Agent definition missing AGENT_MAP routing configuration"
 
     def test_contains_memory_aware_execution_section(self, agent_content: str):
         """
@@ -419,15 +363,11 @@ class TestPrimeAOrchestratorAgentDefinition:
 
         # Act
         has_memory_section = re.search(
-            r"##\s+Memory-Aware\s+Execution",
-            agent_content,
-            re.IGNORECASE
+            r"##\s+Memory-Aware\s+Execution", agent_content, re.IGNORECASE
         )
 
         # Assert
-        assert has_memory_section, (
-            "Agent definition missing '## Memory-Aware Execution' section"
-        )
+        assert has_memory_section, "Agent definition missing '## Memory-Aware Execution' section"
 
     def test_contains_success_criteria_section(self, agent_content: str):
         """
@@ -439,16 +379,10 @@ class TestPrimeAOrchestratorAgentDefinition:
         # Arrange: Content provided by fixture
 
         # Act
-        has_success_criteria = re.search(
-            r"##\s+Success\s+Criteria",
-            agent_content,
-            re.IGNORECASE
-        )
+        has_success_criteria = re.search(r"##\s+Success\s+Criteria", agent_content, re.IGNORECASE)
 
         # Assert
-        assert has_success_criteria, (
-            "Agent definition missing '## Success Criteria' section"
-        )
+        assert has_success_criteria, "Agent definition missing '## Success Criteria' section"
 
     # ============================================================================
     # SECURITY TESTS - Injection and validation
@@ -464,11 +398,7 @@ class TestPrimeAOrchestratorAgentDefinition:
         # Arrange: Content provided by fixture
 
         # Act
-        script_tags = re.findall(
-            r"<script[^>]*>",
-            agent_content,
-            re.IGNORECASE
-        )
+        script_tags = re.findall(r"<script[^>]*>", agent_content, re.IGNORECASE)
 
         # Assert
         assert not script_tags, (
@@ -486,9 +416,7 @@ class TestPrimeAOrchestratorAgentDefinition:
 
         # Act
         sql_patterns = re.findall(
-            r"(DROP\s+TABLE|DELETE\s+FROM|INSERT\s+INTO.*VALUES)",
-            agent_content,
-            re.IGNORECASE
+            r"(DROP\s+TABLE|DELETE\s+FROM|INSERT\s+INTO.*VALUES)", agent_content, re.IGNORECASE
         )
 
         # Assert
@@ -510,11 +438,7 @@ class TestPrimeAOrchestratorAgentDefinition:
         # Arrange: Content provided by fixture
 
         # Act
-        python_blocks = re.findall(
-            r"```python\n(.*?)```",
-            agent_content,
-            re.DOTALL
-        )
+        python_blocks = re.findall(r"```python\n(.*?)```", agent_content, re.DOTALL)
 
         # Assert
         assert len(python_blocks) >= 5, (
@@ -523,9 +447,7 @@ class TestPrimeAOrchestratorAgentDefinition:
 
         # Validate each block has content
         for idx, block in enumerate(python_blocks):
-            assert len(block.strip()) > 0, (
-                f"Python code block {idx} is empty"
-            )
+            assert len(block.strip()) > 0, f"Python code block {idx} is empty"
 
     def test_contains_valid_markdown_code_blocks(self, agent_content: str):
         """
@@ -537,11 +459,7 @@ class TestPrimeAOrchestratorAgentDefinition:
         # Arrange: Content provided by fixture
 
         # Act
-        markdown_blocks = re.findall(
-            r"```markdown\n(.*?)```",
-            agent_content,
-            re.DOTALL
-        )
+        markdown_blocks = re.findall(r"```markdown\n(.*?)```", agent_content, re.DOTALL)
 
         # Assert
         assert len(markdown_blocks) >= 1, (
@@ -558,25 +476,13 @@ class TestPrimeAOrchestratorAgentDefinition:
         # Arrange: Content provided by fixture
 
         # Act
-        has_vectorstore = re.search(
-            r"VectorStore",
-            agent_content,
-            re.IGNORECASE
-        )
+        has_vectorstore = re.search(r"VectorStore", agent_content, re.IGNORECASE)
 
-        has_learnings = re.search(
-            r"Relevant\s+Learnings",
-            agent_content,
-            re.IGNORECASE
-        )
+        has_learnings = re.search(r"Relevant\s+Learnings", agent_content, re.IGNORECASE)
 
         # Assert
-        assert has_vectorstore, (
-            "Agent definition missing VectorStore reference (Article IV)"
-        )
-        assert has_learnings, (
-            "Agent definition missing 'Relevant Learnings' in examples"
-        )
+        assert has_vectorstore, "Agent definition missing VectorStore reference (Article IV)"
+        assert has_learnings, "Agent definition missing 'Relevant Learnings' in examples"
 
     # ============================================================================
     # REGRESSION TESTS - Bug prevention
@@ -592,21 +498,13 @@ class TestPrimeAOrchestratorAgentDefinition:
         # Arrange: Content provided by fixture
 
         # Act
-        frontmatter = re.search(
-            r"^---\n(.*?)\n---",
-            agent_content,
-            re.DOTALL
-        )
+        frontmatter = re.search(r"^---\n(.*?)\n---", agent_content, re.DOTALL)
 
         # Assert
-        assert frontmatter, (
-            "Agent definition missing YAML frontmatter"
-        )
+        assert frontmatter, "Agent definition missing YAML frontmatter"
 
         frontmatter_content = frontmatter.group(1)
-        assert "model:" in frontmatter_content, (
-            "Agent definition frontmatter missing 'model' field"
-        )
+        assert "model:" in frontmatter_content, "Agent definition frontmatter missing 'model' field"
 
     def test_no_broken_internal_links(self, agent_content: str):
         """
@@ -626,9 +524,7 @@ class TestPrimeAOrchestratorAgentDefinition:
         # Assert
         # For this agent definition, we primarily validate structure exists
         # (actual anchor validation would require header-to-anchor conversion)
-        assert len(headers) >= 8, (
-            f"Expected ≥8 major sections, found {len(headers)}"
-        )
+        assert len(headers) >= 8, f"Expected ≥8 major sections, found {len(headers)}"
 
 
 class TestPrimeAOrchestratorAgentIntegration:
@@ -656,10 +552,7 @@ class TestPrimeAOrchestratorAgentIntegration:
         ]
 
         # Act
-        missing_agents = [
-            agent_dir for agent_dir in agent_dirs
-            if not agent_dir.exists()
-        ]
+        missing_agents = [agent_dir for agent_dir in agent_dirs if not agent_dir.exists()]
 
         # Assert
         assert not missing_agents, (
@@ -674,15 +567,12 @@ class TestPrimeAOrchestratorAgentIntegration:
         AAA: Arrange (paths) → Act (read model) → Assert (phases match)
         """
         # Arrange
-        task_graph_model_path = Path(
-            "/Users/am/Code/Agency/shared/models/task_graph.py"
-        )
+        task_graph_model_path = Path("/Users/am/Code/Agency/shared/models/task_graph.py")
 
         # Act
         model_exists = task_graph_model_path.exists()
 
         # Assert
         assert model_exists, (
-            "TaskGraph model not found at expected path "
-            "(referenced in agent definition Phase 1)"
+            "TaskGraph model not found at expected path (referenced in agent definition Phase 1)"
         )

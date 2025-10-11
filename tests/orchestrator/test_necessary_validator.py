@@ -228,7 +228,9 @@ class NECESSARYValidator:
 
         for node in ast.walk(tree):
             # Handle both sync and async test functions
-            if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)) and node.name.startswith("test_"):
+            if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)) and node.name.startswith(
+                "test_"
+            ):
                 # Extract test function
                 func = TestFunction(
                     name=node.name,
@@ -446,7 +448,9 @@ class NECESSARYValidator:
 
     def _calculate_quality_score(self, test_ast: TestFileAST, violations: list[Violation]) -> float:
         """Calculate overall quality score (0.0-1.0)."""
-        total_tests = len(test_ast.functions) + sum(len(cls.test_methods) for cls in test_ast.classes)
+        total_tests = len(test_ast.functions) + sum(
+            len(cls.test_methods) for cls in test_ast.classes
+        )
         if total_tests == 0:
             return 1.0
 
@@ -472,7 +476,9 @@ class NECESSARYValidator:
         best_fix = max(violation.suggested_fixes, key=lambda f: f.get("confidence", 0.0))
 
         if best_fix["confidence"] < self.confidence_threshold:
-            return Err(f"Fix confidence {best_fix['confidence']} below threshold {self.confidence_threshold}")
+            return Err(
+                f"Fix confidence {best_fix['confidence']} below threshold {self.confidence_threshold}"
+            )
 
         # Generate fix based on strategy
         if best_fix["strategy"] == "insert_aaa_comments":
@@ -573,7 +579,9 @@ def test_validation_when_valid_input_then_returns_ok():
     assert test_ast.module_docstring == "Test module docstring."
 
 
-def test_validate_compliant_test_file_when_all_rules_pass_then_is_compliant(temp_test_dir, validator):
+def test_validate_compliant_test_file_when_all_rules_pass_then_is_compliant(
+    temp_test_dir, validator
+):
     """Test validation of fully NECESSARY-compliant test file."""
     # Arrange
     test_file = temp_test_dir / "test_compliant.py"
@@ -653,7 +661,9 @@ def test_parse_empty_file_when_no_content_then_returns_empty_ast(temp_test_dir, 
     assert len(test_ast.classes) == 0
 
 
-def test_parse_file_with_no_tests_when_only_imports_then_returns_empty_functions(temp_test_dir, validator):
+def test_parse_file_with_no_tests_when_only_imports_then_returns_empty_functions(
+    temp_test_dir, validator
+):
     """Test parsing file with imports but no test functions."""
     # Arrange
     test_file = temp_test_dir / "test_imports_only.py"
@@ -672,7 +682,9 @@ from module import function
     assert len(test_ast.functions) == 0
 
 
-def test_validate_test_with_minimal_docstring_when_under_20_chars_then_violation(temp_test_dir, validator):
+def test_validate_test_with_minimal_docstring_when_under_20_chars_then_violation(
+    temp_test_dir, validator
+):
     """Test validation detects docstring under 20 character minimum."""
     # Arrange
     test_file = temp_test_dir / "test_short_doc.py"
@@ -694,7 +706,9 @@ def test_validate_test_with_minimal_docstring_when_under_20_chars_then_violation
     assert len(docstring_violations) > 0
 
 
-def test_parse_class_based_tests_when_test_class_present_then_extracts_methods(temp_test_dir, validator):
+def test_parse_class_based_tests_when_test_class_present_then_extracts_methods(
+    temp_test_dir, validator
+):
     """Test parsing class-based test structure extracts test methods."""
     # Arrange
     test_file = temp_test_dir / "test_class.py"
@@ -735,15 +749,17 @@ def test_parse_class_based_tests_when_test_class_present_then_extracts_methods(t
 # ============================================================================
 
 
-def test_validate_test_with_mixed_violations_when_multiple_issues_then_all_detected(temp_test_dir, validator):
+def test_validate_test_with_mixed_violations_when_multiple_issues_then_all_detected(
+    temp_test_dir, validator
+):
     """Test validation detects multiple violation types in single test."""
     # Arrange
     test_file = temp_test_dir / "test_mixed.py"
     test_file.write_text(
-        '''def test_1():
+        """def test_1():
     result = validate("input")
     assert result
-'''
+"""
     )
 
     # Act
@@ -759,7 +775,9 @@ def test_validate_test_with_mixed_violations_when_multiple_issues_then_all_detec
     assert "aaa_structure" in violation_types  # Missing AAA comments
 
 
-def test_validate_test_with_parametrize_decorator_when_multiple_cases_then_recognizes(temp_test_dir, validator):
+def test_validate_test_with_parametrize_decorator_when_multiple_cases_then_recognizes(
+    temp_test_dir, validator
+):
     """Test validation recognizes parametrized tests with decorator."""
     # Arrange
     test_file = temp_test_dir / "test_parametrize.py"
@@ -794,7 +812,9 @@ def test_email_validation_when_input_provided_then_validates(input, expected):
     assert "parametrize" in func.decorators or "mark" in func.decorators
 
 
-def test_validate_test_with_no_assertions_when_empty_body_then_critical_violation(temp_test_dir, validator):
+def test_validate_test_with_no_assertions_when_empty_body_then_critical_violation(
+    temp_test_dir, validator
+):
     """Test validation flags tests without assertions as critical."""
     # Arrange
     test_file = temp_test_dir / "test_no_assert.py"
@@ -829,7 +849,9 @@ def test_validate_test_with_no_assertions_when_empty_body_then_critical_violatio
 # ============================================================================
 
 
-def test_parse_file_with_syntax_error_when_invalid_python_then_returns_err(temp_test_dir, validator):
+def test_parse_file_with_syntax_error_when_invalid_python_then_returns_err(
+    temp_test_dir, validator
+):
     """Test parsing file with syntax errors returns ParseError."""
     # Arrange
     test_file = temp_test_dir / "test_syntax_error.py"
@@ -865,7 +887,9 @@ def test_parse_nonexistent_file_when_file_missing_then_returns_err(validator):
     assert "not found" in error.message.lower()
 
 
-def test_validate_file_with_parse_error_when_syntax_invalid_then_returns_err(temp_test_dir, validator):
+def test_validate_file_with_parse_error_when_syntax_invalid_then_returns_err(
+    temp_test_dir, validator
+):
     """Test validate returns error when file cannot be parsed."""
     # Arrange
     test_file = temp_test_dir / "test_bad_syntax.py"
@@ -933,7 +957,9 @@ def test_generate_auto_fix_when_no_suggested_fixes_then_returns_err(validator):
 # ============================================================================
 
 
-def test_parse_file_with_malicious_code_when_dangerous_imports_then_parses_safely(temp_test_dir, validator):
+def test_parse_file_with_malicious_code_when_dangerous_imports_then_parses_safely(
+    temp_test_dir, validator
+):
     """Test parser safely handles files with potentially dangerous imports."""
     # Arrange
     test_file = temp_test_dir / "test_malicious.py"
@@ -1014,17 +1040,19 @@ def test_parse_large_test_file_when_many_tests_then_completes_quickly(temp_test_
     assert len(test_ast.functions) == 100
 
 
-def test_validate_file_with_many_violations_when_multiple_issues_then_reports_all(temp_test_dir, validator):
+def test_validate_file_with_many_violations_when_multiple_issues_then_reports_all(
+    temp_test_dir, validator
+):
     """Test validation reports all violations in file with many issues."""
     # Arrange
     test_file = temp_test_dir / "test_many_violations.py"
     # Generate 20 tests with various violations
     test_content = "\n\n".join(
         [
-            f'''def test_{i}():
+            f"""def test_{i}():
     result = func_{i}()
     assert result
-'''
+"""
             for i in range(20)
         ]
     )
@@ -1051,9 +1079,9 @@ def test_validation_report_when_generated_then_has_clear_structure(temp_test_dir
     # Arrange
     test_file = temp_test_dir / "test_api.py"
     test_file.write_text(
-        '''def test_basic():
+        """def test_basic():
     assert True
-'''
+"""
     )
 
     # Act
@@ -1110,13 +1138,17 @@ def test_suggested_fix_when_generated_then_includes_confidence_score(validator):
 # ============================================================================
 
 
-def test_validate_generic_test_names_when_common_antipatterns_then_violation(temp_test_dir, validator):
+def test_validate_generic_test_names_when_common_antipatterns_then_violation(
+    temp_test_dir, validator
+):
     """Test validation catches known antipatterns in test naming."""
     # Arrange - Known bad patterns from spec
     bad_names = ["test_1", "test_basic", "test_foo", "test_bar", "test_temp"]
     test_file = temp_test_dir / "test_antipatterns.py"
 
-    test_content = "\n\n".join([f"def {name}():\n    '''Test.'''\n    assert True\n" for name in bad_names])
+    test_content = "\n\n".join(
+        [f"def {name}():\n    '''Test.'''\n    assert True\n" for name in bad_names]
+    )
     test_file.write_text(test_content)
 
     # Act
@@ -1165,7 +1197,9 @@ async def test_async_operation_when_called_then_completes():
 # ============================================================================
 
 
-def test_calculate_quality_score_when_no_violations_then_returns_perfect_score(temp_test_dir, validator):
+def test_calculate_quality_score_when_no_violations_then_returns_perfect_score(
+    temp_test_dir, validator
+):
     """Test quality score calculation returns 1.0 for perfect tests."""
     # Arrange
     test_file = temp_test_dir / "test_perfect.py"
@@ -1194,7 +1228,9 @@ def test_calculate_quality_score_when_no_violations_then_returns_perfect_score(t
     assert report.score >= 0.5  # Reasonable threshold for mock implementation
 
 
-def test_validation_report_timestamp_when_generated_then_includes_iso_format(temp_test_dir, validator):
+def test_validation_report_timestamp_when_generated_then_includes_iso_format(
+    temp_test_dir, validator
+):
     """Test ValidationReport includes ISO-formatted timestamp."""
     # Arrange
     test_file = temp_test_dir / "test_timestamp.py"
@@ -1242,7 +1278,9 @@ def test_violation_suggested_fixes_when_multiple_strategies_then_sorted_by_confi
 # ============================================================================
 
 
-def test_validator_with_vectorstore_context_when_query_patterns_then_boosts_confidence(mock_agent_context, temp_test_dir):
+def test_validator_with_vectorstore_context_when_query_patterns_then_boosts_confidence(
+    mock_agent_context, temp_test_dir
+):
     """Test validator queries VectorStore for patterns (Article IV compliance)."""
     # Arrange
     mock_agent_context.search_memories.return_value = [
@@ -1267,7 +1305,9 @@ def test_validator_with_vectorstore_context_when_query_patterns_then_boosts_conf
     # mock_agent_context.search_memories.assert_called()
 
 
-def test_validator_stores_successful_fix_when_applied_then_updates_vectorstore(mock_agent_context, validator):
+def test_validator_stores_successful_fix_when_applied_then_updates_vectorstore(
+    mock_agent_context, validator
+):
     """Test validator stores successful fixes in VectorStore (Article IV)."""
     # Arrange
     violation = Violation(
@@ -1275,7 +1315,9 @@ def test_validator_stores_successful_fix_when_applied_then_updates_vectorstore(m
         severity="medium",
         line_number=5,
         description="Missing AAA",
-        suggested_fixes=[{"strategy": "insert_aaa_comments", "confidence": 0.92, "preview": "AAA fix"}],
+        suggested_fixes=[
+            {"strategy": "insert_aaa_comments", "confidence": 0.92, "preview": "AAA fix"}
+        ],
     )
 
     # Act
@@ -1292,7 +1334,9 @@ def test_validator_stores_successful_fix_when_applied_then_updates_vectorstore(m
 # ============================================================================
 
 
-def test_validator_article_i_compliance_when_parsing_then_requires_complete_context(validator, temp_test_dir):
+def test_validator_article_i_compliance_when_parsing_then_requires_complete_context(
+    validator, temp_test_dir
+):
     """Test Article I: Complete context before action (full AST required)."""
     # Arrange
     test_file = temp_test_dir / "test_context.py"
@@ -1309,7 +1353,9 @@ def test_validator_article_i_compliance_when_parsing_then_requires_complete_cont
     assert test_ast.functions is not None
 
 
-def test_validator_article_ii_compliance_when_validation_complete_then_100_percent_verified(validator, temp_test_dir):
+def test_validator_article_ii_compliance_when_validation_complete_then_100_percent_verified(
+    validator, temp_test_dir
+):
     """Test Article II: 100% verification and stability (all tests validated)."""
     # Arrange
     test_file = temp_test_dir / "test_verify.py"
@@ -1336,7 +1382,9 @@ def test_three():
     # Verify all tests were processed
 
 
-def test_validator_article_iv_compliance_when_initialized_then_requires_vectorstore_context(mock_agent_context):
+def test_validator_article_iv_compliance_when_initialized_then_requires_vectorstore_context(
+    mock_agent_context,
+):
     """Test Article IV: Continuous learning mandatory (VectorStore required)."""
     # Arrange & Act
     validator = NECESSARYValidator(context=mock_agent_context, confidence_threshold=0.6)

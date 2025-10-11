@@ -276,8 +276,7 @@ class TwoStageOrchestrator:
 
         approved_spec = approval_result.unwrap()
         logger.info(
-            f"Spec approved: {approved_spec.spec.title} "
-            f"(edits: {approved_spec.edit_count})"
+            f"Spec approved: {approved_spec.spec.title} (edits: {approved_spec.edit_count})"
         )
 
         stage_1_duration = time.time() - self._stage_1_start
@@ -570,7 +569,9 @@ class TwoStageOrchestrator:
             "Assuming all tasks completed successfully."
         )
 
-        self._update_todo("completed", f"DAG execution complete ({len(task_graph.all_tasks())} tasks)")
+        self._update_todo(
+            "completed", f"DAG execution complete ({len(task_graph.all_tasks())} tasks)"
+        )
         return Ok(None)
 
     async def _verify_tests(self) -> Result[VerificationResults, OrchestrationError]:
