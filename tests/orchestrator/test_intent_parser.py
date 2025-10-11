@@ -123,9 +123,7 @@ class TestIntentParserAutoSelection:
         assert intent.mode == InputMode.AUTO_SELECT
         assert "Ollama Docker Compose" in intent.content
         assert intent.source == "agency_backlog/test_suite_gaps.md"
-        mock_memory_tool.view.assert_called_once_with(
-            "/memories/agency_backlog/test_suite_gaps.md"
-        )
+        mock_memory_tool.view.assert_called_once_with("/memories/agency_backlog/test_suite_gaps.md")
 
     def test_parse_when_auto_select_and_empty_backlog_then_returns_error(
         self, mock_context, mock_memory_tool
@@ -191,9 +189,7 @@ class TestIntentParserAutoSelection:
     ):
         """Test that auto-select returns error when backlog file does not exist."""
         # Arrange
-        mock_memory_tool.view.side_effect = FileNotFoundError(
-            "Backlog file not found"
-        )
+        mock_memory_tool.view.side_effect = FileNotFoundError("Backlog file not found")
         parser = IntentParser(mock_context)
 
         # Act
@@ -274,18 +270,14 @@ class TestIntentParserNaturalLanguage:
         """Mock AgentContext."""
         return MagicMock(spec=AgentContext)
 
-    def test_parse_when_natural_language_mode_then_returns_intent_string(
-        self, mock_context
-    ):
+    def test_parse_when_natural_language_mode_then_returns_intent_string(self, mock_context):
         """Test that natural language mode returns the raw intent string."""
         # Arrange
         intent_string = "Add JWT authentication to API endpoints"
         parser = IntentParser(mock_context)
 
         # Act
-        result = parser.parse(
-            user_input=intent_string, mode=InputMode.NATURAL_LANGUAGE
-        )
+        result = parser.parse(user_input=intent_string, mode=InputMode.NATURAL_LANGUAGE)
 
         # Assert
         assert result.is_ok(), "Natural language parsing should succeed"
@@ -294,9 +286,7 @@ class TestIntentParserNaturalLanguage:
         assert intent.content == intent_string
         assert intent.source is None
 
-    def test_parse_when_natural_language_and_empty_string_then_returns_error(
-        self, mock_context
-    ):
+    def test_parse_when_natural_language_and_empty_string_then_returns_error(self, mock_context):
         """Test that natural language mode returns error for empty input."""
         # Arrange
         parser = IntentParser(mock_context)
@@ -310,9 +300,7 @@ class TestIntentParserNaturalLanguage:
         assert error.error_type == "EmptyInput"
         assert "Intent string cannot be empty" in error.message
 
-    def test_parse_when_natural_language_and_whitespace_only_then_returns_error(
-        self, mock_context
-    ):
+    def test_parse_when_natural_language_and_whitespace_only_then_returns_error(self, mock_context):
         """Test that natural language mode returns error for whitespace-only input."""
         # Arrange
         parser = IntentParser(mock_context)
@@ -325,9 +313,7 @@ class TestIntentParserNaturalLanguage:
         error = result.unwrap_err()
         assert error.error_type == "EmptyInput"
 
-    def test_parse_when_natural_language_and_none_input_then_returns_error(
-        self, mock_context
-    ):
+    def test_parse_when_natural_language_and_none_input_then_returns_error(self, mock_context):
         """Test that natural language mode returns error when user_input is None."""
         # Arrange
         parser = IntentParser(mock_context)
@@ -403,9 +389,7 @@ class TestIntentParserExplicitSpec:
         parser = IntentParser(mock_context)
 
         # Act
-        result = parser.parse(
-            user_input=str(temp_spec_file), mode=InputMode.EXPLICIT_SPEC
-        )
+        result = parser.parse(user_input=str(temp_spec_file), mode=InputMode.EXPLICIT_SPEC)
 
         # Assert
         assert result.is_ok(), "Explicit spec mode should succeed with valid file"
@@ -415,9 +399,7 @@ class TestIntentParserExplicitSpec:
         assert "Goals" in intent.content
         assert intent.source == str(temp_spec_file)
 
-    def test_parse_when_explicit_spec_and_file_missing_then_returns_error(
-        self, mock_context
-    ):
+    def test_parse_when_explicit_spec_and_file_missing_then_returns_error(self, mock_context):
         """Test that explicit spec mode returns error when file does not exist."""
         # Arrange
         parser = IntentParser(mock_context)
@@ -450,9 +432,7 @@ class TestIntentParserExplicitSpec:
         assert error.error_type == "EmptySpec"
         assert "Spec file is empty" in error.message
 
-    def test_parse_when_explicit_spec_and_invalid_path_then_returns_error(
-        self, mock_context
-    ):
+    def test_parse_when_explicit_spec_and_invalid_path_then_returns_error(self, mock_context):
         """Test that explicit spec mode returns error for invalid file path."""
         # Arrange
         parser = IntentParser(mock_context)
@@ -466,9 +446,7 @@ class TestIntentParserExplicitSpec:
         error = result.unwrap_err()
         assert error.error_type == "InvalidPath"
 
-    def test_parse_when_explicit_spec_and_none_input_then_returns_error(
-        self, mock_context
-    ):
+    def test_parse_when_explicit_spec_and_none_input_then_returns_error(self, mock_context):
         """Test that explicit spec mode returns error when user_input is None."""
         # Arrange
         parser = IntentParser(mock_context)
@@ -493,9 +471,7 @@ class TestIntentParserExplicitSpec:
         parser = IntentParser(mock_context)
 
         # Act
-        result = parser.parse(
-            user_input=str(unreadable_spec), mode=InputMode.EXPLICIT_SPEC
-        )
+        result = parser.parse(user_input=str(unreadable_spec), mode=InputMode.EXPLICIT_SPEC)
 
         # Assert (cleanup before assertion to avoid permission issues)
         unreadable_spec.chmod(0o644)  # Restore permissions for cleanup
@@ -515,9 +491,7 @@ class TestIntentParserModeInference:
         context.get_anthropic_memory_tool = MagicMock(return_value=tool)
         return context
 
-    def test_parse_when_no_mode_and_no_input_then_infers_auto_select(
-        self, mock_context
-    ):
+    def test_parse_when_no_mode_and_no_input_then_infers_auto_select(self, mock_context):
         """Test that missing mode and input defaults to auto-select."""
         # Arrange
         parser = IntentParser(mock_context)
@@ -541,9 +515,7 @@ class TestIntentParserModeInference:
         intent = result.unwrap()
         assert intent.mode == InputMode.AUTO_SELECT
 
-    def test_parse_when_no_mode_and_string_input_then_infers_natural_language(
-        self, mock_context
-    ):
+    def test_parse_when_no_mode_and_string_input_then_infers_natural_language(self, mock_context):
         """Test that missing mode with string input infers natural language."""
         # Arrange
         parser = IntentParser(mock_context)
@@ -604,9 +576,7 @@ class TestIntentParserEdgeCases:
         parser = IntentParser(mock_context)
 
         # Act
-        result = parser.parse(
-            user_input=unicode_intent, mode=InputMode.NATURAL_LANGUAGE
-        )
+        result = parser.parse(user_input=unicode_intent, mode=InputMode.NATURAL_LANGUAGE)
 
         # Assert
         assert result.is_ok()
@@ -661,9 +631,7 @@ class TestIntentParserResultPattern:
         parser = IntentParser(mock_context)
 
         # Act
-        result = parser.parse(
-            user_input="Test intent", mode=InputMode.NATURAL_LANGUAGE
-        )
+        result = parser.parse(user_input="Test intent", mode=InputMode.NATURAL_LANGUAGE)
 
         # Assert
         assert isinstance(result, Result), "Should return Result type"
@@ -687,9 +655,7 @@ class TestIntentParserResultPattern:
         """Test that unwrap() succeeds on Ok result."""
         # Arrange
         parser = IntentParser(mock_context)
-        result = parser.parse(
-            user_input="Test", mode=InputMode.NATURAL_LANGUAGE
-        )
+        result = parser.parse(user_input="Test", mode=InputMode.NATURAL_LANGUAGE)
 
         # Act
         intent = result.unwrap()
@@ -736,9 +702,7 @@ class TestIntentParserConstitutionalCompliance:
         parser = IntentParser(mock_context)
 
         # Act
-        result = parser.parse(
-            user_input="Test intent", mode=InputMode.NATURAL_LANGUAGE
-        )
+        result = parser.parse(user_input="Test intent", mode=InputMode.NATURAL_LANGUAGE)
 
         # Assert (Article IV: Learning integration)
         # Parser should query VectorStore for similar intent patterns
@@ -752,9 +716,7 @@ class TestIntentParserConstitutionalCompliance:
         parser = IntentParser(mock_context)
 
         # Act
-        result = parser.parse(
-            user_input="Test", mode=InputMode.NATURAL_LANGUAGE
-        )
+        result = parser.parse(user_input="Test", mode=InputMode.NATURAL_LANGUAGE)
 
         # Assert (when implementation exists)
         # Intent and IntentError should be Pydantic models

@@ -51,7 +51,9 @@ class TestLeap7CompletionReportStructure:
             "Conclusion",
         ]
 
-        report_path = Path(__file__).parent.parent.parent / "docs" / "leap_7_test_driven_autonomy_complete.md"
+        report_path = (
+            Path(__file__).parent.parent.parent / "docs" / "leap_7_test_driven_autonomy_complete.md"
+        )
 
         # Act: Parse report and extract section headers (## Level 2)
         if not report_path.exists():
@@ -74,7 +76,9 @@ class TestLeap7CompletionReportStructure:
         - Assert: Header hierarchy is valid (no h4 before h3, etc.)
         """
         # Arrange
-        report_path = Path(__file__).parent.parent.parent / "docs" / "leap_7_test_driven_autonomy_complete.md"
+        report_path = (
+            Path(__file__).parent.parent.parent / "docs" / "leap_7_test_driven_autonomy_complete.md"
+        )
 
         if not report_path.exists():
             pytest.skip(f"Report not yet generated: {report_path}")
@@ -100,7 +104,9 @@ class TestLeap7CompletionReportStructure:
         - Assert: Both fields present with valid values
         """
         # Arrange
-        report_path = Path(__file__).parent.parent.parent / "docs" / "leap_7_test_driven_autonomy_complete.md"
+        report_path = (
+            Path(__file__).parent.parent.parent / "docs" / "leap_7_test_driven_autonomy_complete.md"
+        )
 
         if not report_path.exists():
             pytest.skip(f"Report not yet generated: {report_path}")
@@ -111,9 +117,15 @@ class TestLeap7CompletionReportStructure:
         first_section = "\n".join(lines)
 
         # Assert: Status and Date fields present
-        assert re.search(r"\*\*Status\*\*:\s*✅\s*\*\*COMPLETE\*\*", first_section), "Status field missing or incorrect"
-        assert re.search(r"\*\*Date\*\*:\s*\d{4}-\d{2}-\d{2}", first_section), "Date field missing or incorrect format"
-        assert re.search(r"\*\*Leap\*\*:\s*Leap 7", first_section, re.IGNORECASE), "Leap number missing"
+        assert re.search(r"\*\*Status\*\*:\s*✅\s*\*\*COMPLETE\*\*", first_section), (
+            "Status field missing or incorrect"
+        )
+        assert re.search(r"\*\*Date\*\*:\s*\d{4}-\d{2}-\d{2}", first_section), (
+            "Date field missing or incorrect format"
+        )
+        assert re.search(r"\*\*Leap\*\*:\s*Leap 7", first_section, re.IGNORECASE), (
+            "Leap number missing"
+        )
 
 
 class TestLeap7MetricsValidation:
@@ -129,8 +141,12 @@ class TestLeap7MetricsValidation:
         - Assert: Task count matches mission file (26 tasks total)
         """
         # Arrange: Load mission file
-        mission_path = Path(__file__).parent.parent.parent / "missions" / "leap_7_test_driven_autonomy.json"
-        report_path = Path(__file__).parent.parent.parent / "docs" / "leap_7_test_driven_autonomy_complete.md"
+        mission_path = (
+            Path(__file__).parent.parent.parent / "missions" / "leap_7_test_driven_autonomy.json"
+        )
+        report_path = (
+            Path(__file__).parent.parent.parent / "docs" / "leap_7_test_driven_autonomy_complete.md"
+        )
 
         if not report_path.exists():
             pytest.skip(f"Report not yet generated: {report_path}")
@@ -146,7 +162,9 @@ class TestLeap7MetricsValidation:
 
         # Assert: Report mentions correct task count (26 tasks)
         assert str(total_tasks) in report_content, f"Report must mention {total_tasks} tasks"
-        assert re.search(rf"\b{total_tasks}\s+tasks?\b", report_content, re.IGNORECASE), "Task count not found in report"
+        assert re.search(rf"\b{total_tasks}\s+tasks?\b", report_content, re.IGNORECASE), (
+            "Task count not found in report"
+        )
 
     def test_report_contains_test_pass_rate_metrics(self):
         """
@@ -158,7 +176,9 @@ class TestLeap7MetricsValidation:
         - Assert: 100% pass rate mentioned (Article II compliance)
         """
         # Arrange
-        report_path = Path(__file__).parent.parent.parent / "docs" / "leap_7_test_driven_autonomy_complete.md"
+        report_path = (
+            Path(__file__).parent.parent.parent / "docs" / "leap_7_test_driven_autonomy_complete.md"
+        )
 
         if not report_path.exists():
             pytest.skip(f"Report not yet generated: {report_path}")
@@ -167,8 +187,12 @@ class TestLeap7MetricsValidation:
         report_content = report_path.read_text()
 
         # Assert: 100% pass rate mentioned
-        assert re.search(r"100%\s+pass", report_content, re.IGNORECASE), "100% test pass rate not mentioned"
-        assert "0 failures" in report_content or "zero failures" in report_content.lower(), "Zero failures not mentioned"
+        assert re.search(r"100%\s+pass", report_content, re.IGNORECASE), (
+            "100% test pass rate not mentioned"
+        )
+        assert "0 failures" in report_content or "zero failures" in report_content.lower(), (
+            "Zero failures not mentioned"
+        )
 
     def test_report_contains_cost_metrics_within_budget(self):
         """
@@ -180,8 +204,12 @@ class TestLeap7MetricsValidation:
         - Assert: Cost mentioned and within budget
         """
         # Arrange: Load mission file
-        mission_path = Path(__file__).parent.parent.parent / "missions" / "leap_7_test_driven_autonomy.json"
-        report_path = Path(__file__).parent.parent.parent / "docs" / "leap_7_test_driven_autonomy_complete.md"
+        mission_path = (
+            Path(__file__).parent.parent.parent / "missions" / "leap_7_test_driven_autonomy.json"
+        )
+        report_path = (
+            Path(__file__).parent.parent.parent / "docs" / "leap_7_test_driven_autonomy_complete.md"
+        )
 
         if not report_path.exists():
             pytest.skip(f"Report not yet generated: {report_path}")
@@ -200,10 +228,14 @@ class TestLeap7MetricsValidation:
         assert len(cost_matches) > 0, "No cost metrics found in report"
 
         # Check that at least one cost value is mentioned in context of total cost
-        total_cost_pattern = re.search(r"total.*cost.*\$(\d+(?:\.\d+)?)", report_content, re.IGNORECASE)
+        total_cost_pattern = re.search(
+            r"total.*cost.*\$(\d+(?:\.\d+)?)", report_content, re.IGNORECASE
+        )
         if total_cost_pattern:
             total_cost = float(total_cost_pattern.group(1))
-            assert total_cost <= budget_limit, f"Total cost ${total_cost} exceeds budget ${budget_limit}"
+            assert total_cost <= budget_limit, (
+                f"Total cost ${total_cost} exceeds budget ${budget_limit}"
+            )
 
     def test_report_contains_new_tests_count(self):
         """
@@ -215,7 +247,9 @@ class TestLeap7MetricsValidation:
         - Assert: New tests count mentioned (expected ~10 test files)
         """
         # Arrange
-        report_path = Path(__file__).parent.parent.parent / "docs" / "leap_7_test_driven_autonomy_complete.md"
+        report_path = (
+            Path(__file__).parent.parent.parent / "docs" / "leap_7_test_driven_autonomy_complete.md"
+        )
 
         if not report_path.exists():
             pytest.skip(f"Report not yet generated: {report_path}")
@@ -225,7 +259,9 @@ class TestLeap7MetricsValidation:
 
         # Assert: New tests mentioned (10 Test tasks in mission)
         assert re.search(r"new test", report_content, re.IGNORECASE), "New tests not mentioned"
-        assert re.search(r"\+\d+\s+tests?", report_content, re.IGNORECASE), "Test count increment not found"
+        assert re.search(r"\+\d+\s+tests?", report_content, re.IGNORECASE), (
+            "Test count increment not found"
+        )
 
 
 class TestLeap7ConstitutionalCompliance:
@@ -249,7 +285,9 @@ class TestLeap7ConstitutionalCompliance:
             "Article V",
         ]
 
-        report_path = Path(__file__).parent.parent.parent / "docs" / "leap_7_test_driven_autonomy_complete.md"
+        report_path = (
+            Path(__file__).parent.parent.parent / "docs" / "leap_7_test_driven_autonomy_complete.md"
+        )
 
         if not report_path.exists():
             pytest.skip(f"Report not yet generated: {report_path}")
@@ -271,7 +309,9 @@ class TestLeap7ConstitutionalCompliance:
         - Assert: Article I compliance validated (retry logic implemented)
         """
         # Arrange
-        report_path = Path(__file__).parent.parent.parent / "docs" / "leap_7_test_driven_autonomy_complete.md"
+        report_path = (
+            Path(__file__).parent.parent.parent / "docs" / "leap_7_test_driven_autonomy_complete.md"
+        )
 
         if not report_path.exists():
             pytest.skip(f"Report not yet generated: {report_path}")
@@ -281,7 +321,9 @@ class TestLeap7ConstitutionalCompliance:
 
         # Assert: Article I compliance with retry logic
         assert "Article I" in report_content, "Article I not found"
-        assert re.search(r"retry.*logic", report_content, re.IGNORECASE), "Retry logic not mentioned for Article I"
+        assert re.search(r"retry.*logic", report_content, re.IGNORECASE), (
+            "Retry logic not mentioned for Article I"
+        )
 
     def test_report_shows_article_ii_compliance(self):
         """
@@ -293,7 +335,9 @@ class TestLeap7ConstitutionalCompliance:
         - Assert: Article II compliance validated (100% test pass rate)
         """
         # Arrange
-        report_path = Path(__file__).parent.parent.parent / "docs" / "leap_7_test_driven_autonomy_complete.md"
+        report_path = (
+            Path(__file__).parent.parent.parent / "docs" / "leap_7_test_driven_autonomy_complete.md"
+        )
 
         if not report_path.exists():
             pytest.skip(f"Report not yet generated: {report_path}")
@@ -303,7 +347,9 @@ class TestLeap7ConstitutionalCompliance:
 
         # Assert: Article II compliance with 100% tests
         assert "Article II" in report_content, "Article II not found"
-        assert re.search(r"100%.*test", report_content, re.IGNORECASE), "100% test pass not mentioned for Article II"
+        assert re.search(r"100%.*test", report_content, re.IGNORECASE), (
+            "100% test pass not mentioned for Article II"
+        )
 
     def test_report_shows_article_v_compliance(self):
         """
@@ -315,7 +361,9 @@ class TestLeap7ConstitutionalCompliance:
         - Assert: Article V compliance validated (spec-driven workflow)
         """
         # Arrange
-        report_path = Path(__file__).parent.parent.parent / "docs" / "leap_7_test_driven_autonomy_complete.md"
+        report_path = (
+            Path(__file__).parent.parent.parent / "docs" / "leap_7_test_driven_autonomy_complete.md"
+        )
 
         if not report_path.exists():
             pytest.skip(f"Report not yet generated: {report_path}")
@@ -325,7 +373,9 @@ class TestLeap7ConstitutionalCompliance:
 
         # Assert: Article V compliance with spec-driven
         assert "Article V" in report_content, "Article V not found"
-        assert re.search(r"spec.*driven", report_content, re.IGNORECASE), "Spec-driven not mentioned for Article V"
+        assert re.search(r"spec.*driven", report_content, re.IGNORECASE), (
+            "Spec-driven not mentioned for Article V"
+        )
 
 
 class TestLeap7AchievementsSection:
@@ -352,7 +402,9 @@ class TestLeap7AchievementsSection:
             "TwoStageOrchestrator",
         ]
 
-        report_path = Path(__file__).parent.parent.parent / "docs" / "leap_7_test_driven_autonomy_complete.md"
+        report_path = (
+            Path(__file__).parent.parent.parent / "docs" / "leap_7_test_driven_autonomy_complete.md"
+        )
 
         if not report_path.exists():
             pytest.skip(f"Report not yet generated: {report_path}")
@@ -374,7 +426,9 @@ class TestLeap7AchievementsSection:
         - Assert: TDD workflow highlighted as achievement
         """
         # Arrange
-        report_path = Path(__file__).parent.parent.parent / "docs" / "leap_7_test_driven_autonomy_complete.md"
+        report_path = (
+            Path(__file__).parent.parent.parent / "docs" / "leap_7_test_driven_autonomy_complete.md"
+        )
 
         if not report_path.exists():
             pytest.skip(f"Report not yet generated: {report_path}")
@@ -383,8 +437,12 @@ class TestLeap7AchievementsSection:
         report_content = report_path.read_text()
 
         # Assert: TDD workflow achievement
-        assert re.search(r"TDD.*workflow", report_content, re.IGNORECASE), "TDD workflow not mentioned"
-        assert re.search(r"two.*stage", report_content, re.IGNORECASE), "Two-stage workflow not mentioned"
+        assert re.search(r"TDD.*workflow", report_content, re.IGNORECASE), (
+            "TDD workflow not mentioned"
+        )
+        assert re.search(r"two.*stage", report_content, re.IGNORECASE), (
+            "Two-stage workflow not mentioned"
+        )
 
 
 class TestLeap7EdgeCases:
@@ -446,7 +504,9 @@ Done.
             r"\d+%\s+pass",  # Pass rate percentage
         ]
 
-        report_path = Path(__file__).parent.parent.parent / "docs" / "leap_7_test_driven_autonomy_complete.md"
+        report_path = (
+            Path(__file__).parent.parent.parent / "docs" / "leap_7_test_driven_autonomy_complete.md"
+        )
 
         if not report_path.exists():
             pytest.skip(f"Report not yet generated: {report_path}")
@@ -455,7 +515,9 @@ Done.
         report_content = report_path.read_text()
 
         # Assert: At least 3 metric patterns found
-        matches_found = sum(1 for pattern in metric_patterns if re.search(pattern, report_content, re.IGNORECASE))
+        matches_found = sum(
+            1 for pattern in metric_patterns if re.search(pattern, report_content, re.IGNORECASE)
+        )
         assert matches_found >= 3, f"Expected at least 3 metric patterns, found {matches_found}"
 
     def test_report_handles_empty_file_gracefully(self):
@@ -490,7 +552,9 @@ class TestLeap7NextStepsSection:
         - Assert: Section present with future work mentioned
         """
         # Arrange
-        report_path = Path(__file__).parent.parent.parent / "docs" / "leap_7_test_driven_autonomy_complete.md"
+        report_path = (
+            Path(__file__).parent.parent.parent / "docs" / "leap_7_test_driven_autonomy_complete.md"
+        )
 
         if not report_path.exists():
             pytest.skip(f"Report not yet generated: {report_path}")
@@ -499,7 +563,9 @@ class TestLeap7NextStepsSection:
         report_content = report_path.read_text()
 
         # Assert: Next Steps section present
-        assert re.search(r"##\s+Next Steps", report_content, re.IGNORECASE), "Next Steps section not found"
+        assert re.search(r"##\s+Next Steps", report_content, re.IGNORECASE), (
+            "Next Steps section not found"
+        )
 
     def test_report_mentions_leap_8_or_future_work(self):
         """
@@ -511,7 +577,9 @@ class TestLeap7NextStepsSection:
         - Assert: Future direction mentioned
         """
         # Arrange
-        report_path = Path(__file__).parent.parent.parent / "docs" / "leap_7_test_driven_autonomy_complete.md"
+        report_path = (
+            Path(__file__).parent.parent.parent / "docs" / "leap_7_test_driven_autonomy_complete.md"
+        )
 
         if not report_path.exists():
             pytest.skip(f"Report not yet generated: {report_path}")
@@ -539,7 +607,9 @@ class TestLeap7LessonsLearnedSection:
         - Assert: Section present with reflections
         """
         # Arrange
-        report_path = Path(__file__).parent.parent.parent / "docs" / "leap_7_test_driven_autonomy_complete.md"
+        report_path = (
+            Path(__file__).parent.parent.parent / "docs" / "leap_7_test_driven_autonomy_complete.md"
+        )
 
         if not report_path.exists():
             pytest.skip(f"Report not yet generated: {report_path}")
@@ -548,7 +618,9 @@ class TestLeap7LessonsLearnedSection:
         report_content = report_path.read_text()
 
         # Assert: Lessons Learned section present
-        assert re.search(r"##\s+Lessons Learned", report_content, re.IGNORECASE), "Lessons Learned section not found"
+        assert re.search(r"##\s+Lessons Learned", report_content, re.IGNORECASE), (
+            "Lessons Learned section not found"
+        )
 
     def test_report_includes_what_went_well_subsection(self):
         """
@@ -560,7 +632,9 @@ class TestLeap7LessonsLearnedSection:
         - Assert: Subsection present with positive outcomes
         """
         # Arrange
-        report_path = Path(__file__).parent.parent.parent / "docs" / "leap_7_test_driven_autonomy_complete.md"
+        report_path = (
+            Path(__file__).parent.parent.parent / "docs" / "leap_7_test_driven_autonomy_complete.md"
+        )
 
         if not report_path.exists():
             pytest.skip(f"Report not yet generated: {report_path}")
@@ -569,7 +643,9 @@ class TestLeap7LessonsLearnedSection:
         report_content = report_path.read_text()
 
         # Assert: What Went Well subsection
-        assert re.search(r"###\s+What Went Well", report_content, re.IGNORECASE), "What Went Well subsection not found"
+        assert re.search(r"###\s+What Went Well", report_content, re.IGNORECASE), (
+            "What Went Well subsection not found"
+        )
 
 
 class TestLeap7SecurityAndStress:
@@ -592,7 +668,9 @@ class TestLeap7SecurityAndStress:
             r"-----BEGIN.*PRIVATE KEY-----",  # Private key
         ]
 
-        report_path = Path(__file__).parent.parent.parent / "docs" / "leap_7_test_driven_autonomy_complete.md"
+        report_path = (
+            Path(__file__).parent.parent.parent / "docs" / "leap_7_test_driven_autonomy_complete.md"
+        )
 
         if not report_path.exists():
             pytest.skip(f"Report not yet generated: {report_path}")
@@ -602,7 +680,9 @@ class TestLeap7SecurityAndStress:
 
         # Assert: No secrets found
         for pattern in secret_patterns:
-            assert not re.search(pattern, report_content), f"Potential secret found matching pattern: {pattern}"
+            assert not re.search(pattern, report_content), (
+                f"Potential secret found matching pattern: {pattern}"
+            )
 
     def test_report_handles_large_content_gracefully(self):
         """
@@ -614,7 +694,9 @@ class TestLeap7SecurityAndStress:
         - Assert: Parsing completes without errors
         """
         # Arrange
-        report_path = Path(__file__).parent.parent.parent / "docs" / "leap_7_test_driven_autonomy_complete.md"
+        report_path = (
+            Path(__file__).parent.parent.parent / "docs" / "leap_7_test_driven_autonomy_complete.md"
+        )
 
         if not report_path.exists():
             pytest.skip(f"Report not yet generated: {report_path}")
@@ -645,7 +727,9 @@ class TestLeap7ReportComparison:
         """
         # Arrange: Load Leap 4 report as reference
         leap4_path = Path(__file__).parent.parent.parent / "docs" / "leap_4_complete.md"
-        leap7_path = Path(__file__).parent.parent.parent / "docs" / "leap_7_test_driven_autonomy_complete.md"
+        leap7_path = (
+            Path(__file__).parent.parent.parent / "docs" / "leap_7_test_driven_autonomy_complete.md"
+        )
 
         if not leap4_path.exists():
             pytest.skip("Leap 4 report not available for comparison")
@@ -685,7 +769,9 @@ class TestLeap7ReportComparison:
         # Arrange: Expected pattern
         filename_pattern = r"leap_\d+_[a-z_]+_complete\.md"
 
-        report_path = Path(__file__).parent.parent.parent / "docs" / "leap_7_test_driven_autonomy_complete.md"
+        report_path = (
+            Path(__file__).parent.parent.parent / "docs" / "leap_7_test_driven_autonomy_complete.md"
+        )
 
         if not report_path.exists():
             pytest.skip(f"Report not yet generated: {report_path}")
@@ -694,4 +780,6 @@ class TestLeap7ReportComparison:
         filename = report_path.name
 
         # Assert: Matches pattern
-        assert re.match(filename_pattern, filename), f"Filename does not match pattern: {filename_pattern}"
+        assert re.match(filename_pattern, filename), (
+            f"Filename does not match pattern: {filename_pattern}"
+        )

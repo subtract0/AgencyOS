@@ -68,20 +68,39 @@ services:
       start_period: 120s
     restart: unless-stopped
 """,
-            "applicability": ["LLM services (Ollama, vLLM, TGI)", "Database integration tests", "Message queue tests"],
+            "applicability": [
+                "LLM services (Ollama, vLLM, TGI)",
+                "Database integration tests",
+                "Message queue tests",
+            ],
             "trade_offs": {
-                "pro": ["Deterministic", "Portable", "CI/CD-ready", "Volume persistence", "Memory limits"],
-                "con": ["Docker dependency", "Initial startup time"]
+                "pro": [
+                    "Deterministic",
+                    "Portable",
+                    "CI/CD-ready",
+                    "Volume persistence",
+                    "Memory limits",
+                ],
+                "con": ["Docker dependency", "Initial startup time"],
             },
             "constitutional_alignment": ["article-i", "article-ii", "article-iii"],
             "related_files": [
                 "docker-compose.yml",
                 "tests/conftest.py",
-                "docs/adr/ADR-028-ollama-docker-integration.md"
+                "docs/adr/ADR-028-ollama-docker-integration.md",
             ],
-            "mission_context": "Enable 140 Ollama integration tests via Docker Compose"
+            "mission_context": "Enable 140 Ollama integration tests via Docker Compose",
         },
-        tags=["docker-compose", "lifecycle-management", "health-checks", "volume-persistence", "adr-023", "article-i", "article-ii", "architecture"]
+        tags=[
+            "docker-compose",
+            "lifecycle-management",
+            "health-checks",
+            "volume-persistence",
+            "adr-023",
+            "article-i",
+            "article-ii",
+            "architecture",
+        ],
     )
 
     # Pattern 1.2: Exponential Backoff Health Check Protocol
@@ -121,20 +140,35 @@ def wait_for_service_healthy(endpoint: str, max_wait: int = 120) -> Result[str, 
 
     return Err(f"Service failed to start after {max_wait}s")
 """,
-            "applicability": ["Distributed system health checks", "External API dependency verification", "Model loading validation"],
+            "applicability": [
+                "Distributed system health checks",
+                "External API dependency verification",
+                "Model loading validation",
+            ],
             "trade_offs": {
-                "pro": ["Resilient to slow starts", "Reduces load during startup", "Verifies actual resource"],
-                "con": ["Longer maximum wait time", "Complexity increase"]
+                "pro": [
+                    "Resilient to slow starts",
+                    "Reduces load during startup",
+                    "Verifies actual resource",
+                ],
+                "con": ["Longer maximum wait time", "Complexity increase"],
             },
             "constitutional_alignment": ["article-i", "article-ii"],
             "related_files": [
                 "tests/conftest.py",
                 "docker-compose.yml",
-                "docs/adr/ADR-028-ollama-docker-integration.md"
+                "docs/adr/ADR-028-ollama-docker-integration.md",
             ],
-            "mission_context": "Health check retry logic for Docker Ollama startup"
+            "mission_context": "Health check retry logic for Docker Ollama startup",
         },
-        tags=["exponential-backoff", "health-checks", "article-i", "retry-logic", "docker-healthcheck", "architecture"]
+        tags=[
+            "exponential-backoff",
+            "health-checks",
+            "article-i",
+            "retry-logic",
+            "docker-healthcheck",
+            "architecture",
+        ],
     )
 
     # Pattern 1.3: Volume Persistence for Expensive Resources
@@ -162,20 +196,36 @@ services:
     environment:
       - SERVICE_STORAGE_PATH=/root/.service_data
 """,
-            "applicability": ["LLM model storage", "ML dataset caching", "Compiled artifacts", "Database fixtures"],
+            "applicability": [
+                "LLM model storage",
+                "ML dataset caching",
+                "Compiled artifacts",
+                "Database fixtures",
+            ],
             "trade_offs": {
-                "pro": ["96% faster subsequent starts (32s vs 15min)", "One-time download cost", "CI/CD caching"],
-                "con": ["32GB disk space requirement", "Volume mount complexity"]
+                "pro": [
+                    "96% faster subsequent starts (32s vs 15min)",
+                    "One-time download cost",
+                    "CI/CD caching",
+                ],
+                "con": ["32GB disk space requirement", "Volume mount complexity"],
             },
             "constitutional_alignment": ["article-iii", "article-iv"],
             "related_files": [
                 "docker-compose.yml",
                 "docs/adr/ADR-028-ollama-docker-integration.md",
-                "specs/spec-023-ollama-docker-integration.md"
+                "specs/spec-023-ollama-docker-integration.md",
             ],
-            "mission_context": "Persist 32GB Ollama model across container restarts"
+            "mission_context": "Persist 32GB Ollama model across container restarts",
         },
-        tags=["volume-persistence", "docker-volumes", "resource-caching", "performance-optimization", "disk-space-tradeoff", "architecture"]
+        tags=[
+            "volume-persistence",
+            "docker-volumes",
+            "resource-caching",
+            "performance-optimization",
+            "disk-space-tradeoff",
+            "architecture",
+        ],
     )
 
     # Pattern 2.1: Session-Scoped Pytest Fixtures for External Services
@@ -213,20 +263,39 @@ def docker_service(request):
         lambda: subprocess.run(["docker", "compose", "down"], timeout=30)
     )
 """,
-            "applicability": ["Database integration tests", "Message queue tests", "External API mocking servers", "LLM service tests"],
+            "applicability": [
+                "Database integration tests",
+                "Message queue tests",
+                "External API mocking servers",
+                "LLM service tests",
+            ],
             "trade_offs": {
-                "pro": ["Shared Docker instance (efficient)", "Guaranteed cleanup", "Graceful skip support"],
-                "con": ["Single shared state (tests must be independent)", "Longer setup time (amortized)"]
+                "pro": [
+                    "Shared Docker instance (efficient)",
+                    "Guaranteed cleanup",
+                    "Graceful skip support",
+                ],
+                "con": [
+                    "Single shared state (tests must be independent)",
+                    "Longer setup time (amortized)",
+                ],
             },
             "constitutional_alignment": ["article-i", "article-ii", "article-iii"],
             "related_files": [
                 "tests/conftest.py",
                 "tests/trinity_protocol/README_DOCKER_OLLAMA_FIXTURE.md",
-                "docs/adr/ADR-028-ollama-docker-integration.md"
+                "docs/adr/ADR-028-ollama-docker-integration.md",
             ],
-            "mission_context": "Manage Docker Ollama lifecycle for 140 integration tests"
+            "mission_context": "Manage Docker Ollama lifecycle for 140 integration tests",
         },
-        tags=["pytest-fixtures", "session-scope", "docker-lifecycle", "integration-testing", "cleanup-patterns", "testing"]
+        tags=[
+            "pytest-fixtures",
+            "session-scope",
+            "docker-lifecycle",
+            "integration-testing",
+            "cleanup-patterns",
+            "testing",
+        ],
     )
 
     # Pattern 2.2: Remove Import-Time Checks, Use Fixture Dependencies
@@ -259,19 +328,33 @@ class TestIntegrationWorkflows:
         endpoint = docker_ollama
         # ... test logic
 """,
-            "applicability": ["External service integration tests", "Hardware-dependent tests", "CI/CD vs local execution"],
+            "applicability": [
+                "External service integration tests",
+                "Hardware-dependent tests",
+                "CI/CD vs local execution",
+            ],
             "trade_offs": {
-                "pro": ["Fixtures control lifecycle", "Automated service management", "No manual setup"],
-                "con": ["Refactoring existing tests", "Test parameter increase"]
+                "pro": [
+                    "Fixtures control lifecycle",
+                    "Automated service management",
+                    "No manual setup",
+                ],
+                "con": ["Refactoring existing tests", "Test parameter increase"],
             },
             "constitutional_alignment": ["article-i", "article-iii"],
             "related_files": [
                 "tests/trinity_protocol/core/test_hybrid_executor.py",
-                "docs/adr/ADR-028-ollama-docker-integration.md"
+                "docs/adr/ADR-028-ollama-docker-integration.md",
             ],
-            "mission_context": "Removed OLLAMA_AVAILABLE import-time check for 140 tests"
+            "mission_context": "Removed OLLAMA_AVAILABLE import-time check for 140 tests",
         },
-        tags=["pytest-refactoring", "import-time-checks", "fixture-dependencies", "test-architecture", "testing"]
+        tags=[
+            "pytest-refactoring",
+            "import-time-checks",
+            "fixture-dependencies",
+            "test-architecture",
+            "testing",
+        ],
     )
 
     # Pattern 2.3: Memory-Aware Test Execution (ADR-023)
@@ -306,10 +389,18 @@ def get_safe_worker_count() -> int:
     else:
         return 10  # Full parallelism
 """,
-            "applicability": ["Large model testing", "Memory-intensive operations", "Resource-constrained CI"],
+            "applicability": [
+                "Large model testing",
+                "Memory-intensive operations",
+                "Resource-constrained CI",
+            ],
             "trade_offs": {
-                "pro": ["Prevents OOM crashes", "Maintains 100% test completion", "ADR-023 compliance"],
-                "con": ["Slower test execution (8min vs 3min)", "Complexity in worker calculation"]
+                "pro": [
+                    "Prevents OOM crashes",
+                    "Maintains 100% test completion",
+                    "ADR-023 compliance",
+                ],
+                "con": ["Slower test execution (8min vs 3min)", "Complexity in worker calculation"],
             },
             "constitutional_alignment": ["article-i", "article-ii"],
             "related_files": [
@@ -317,11 +408,18 @@ def get_safe_worker_count() -> int:
                 "tools/memory_aware_test_runner.py",
                 "docker-compose.yml",
                 "docs/adr/ADR-023-memory-aware-test-execution.md",
-                "docs/adr/ADR-028-ollama-docker-integration.md"
+                "docs/adr/ADR-028-ollama-docker-integration.md",
             ],
-            "mission_context": "Memory-safe test execution with Docker Ollama (3 workers, 9GB budget)"
+            "mission_context": "Memory-safe test execution with Docker Ollama (3 workers, 9GB budget)",
         },
-        tags=["memory-aware-execution", "adr-023", "worker-adjustment", "docker-memory-limits", "resource-constraints", "testing"]
+        tags=[
+            "memory-aware-execution",
+            "adr-023",
+            "worker-adjustment",
+            "docker-memory-limits",
+            "resource-constraints",
+            "testing",
+        ],
     )
 
     # Pattern 2.4: CI/CD Small Model Strategy
@@ -351,19 +449,33 @@ def get_safe_worker_count() -> int:
     OLLAMA_MODEL: qwen2.5-coder:1.5b  # Override dev model
   run: pytest tests/trinity_protocol/
 """,
-            "applicability": ["LLM integration tests", "ML model validation", "Database fixtures (small dataset in CI)"],
+            "applicability": [
+                "LLM integration tests",
+                "ML model validation",
+                "Database fixtures (small dataset in CI)",
+            ],
             "trade_offs": {
-                "pro": ["3-min CI download vs 15-min dev", "Same API compatibility", "Fast validation"],
-                "con": ["Different model behavior in CI vs dev", "Potential false positives"]
+                "pro": [
+                    "3-min CI download vs 15-min dev",
+                    "Same API compatibility",
+                    "Fast validation",
+                ],
+                "con": ["Different model behavior in CI vs dev", "Potential false positives"],
             },
             "constitutional_alignment": ["article-iii"],
             "related_files": [
                 "docs/adr/ADR-028-ollama-docker-integration.md",
-                "specs/spec-023-ollama-docker-integration.md"
+                "specs/spec-023-ollama-docker-integration.md",
             ],
-            "mission_context": "CI uses qwen2.5-coder:1.5b (900MB) vs dev qwen3-coder:30b (19GB)"
+            "mission_context": "CI uses qwen2.5-coder:1.5b (900MB) vs dev qwen3-coder:30b (19GB)",
         },
-        tags=["ci-cd-optimization", "model-strategy", "dual-configuration", "fast-validation", "testing"]
+        tags=[
+            "ci-cd-optimization",
+            "model-strategy",
+            "dual-configuration",
+            "fast-validation",
+            "testing",
+        ],
     )
 
     # Pattern 3.1: Shell Script with Comprehensive Error Handling
@@ -406,16 +518,19 @@ trap cleanup EXIT
             "applicability": ["Setup scripts", "Health check scripts", "CI/CD automation"],
             "trade_offs": {
                 "pro": ["Early error detection", "Visual clarity", "Guaranteed cleanup"],
-                "con": ["Complexity increase", "Strict mode may catch false positives"]
+                "con": ["Complexity increase", "Strict mode may catch false positives"],
             },
             "constitutional_alignment": ["article-i", "article-ii"],
-            "related_files": [
-                "scripts/init_ollama_model.sh",
-                "scripts/verify_ollama_docker.sh"
-            ],
-            "mission_context": "Robust model initialization script with Docker detection"
+            "related_files": ["scripts/init_ollama_model.sh", "scripts/verify_ollama_docker.sh"],
+            "mission_context": "Robust model initialization script with Docker detection",
         },
-        tags=["shell-scripting", "error-handling", "defensive-programming", "logging-patterns", "tooling"]
+        tags=[
+            "shell-scripting",
+            "error-handling",
+            "defensive-programming",
+            "logging-patterns",
+            "tooling",
+        ],
     )
 
     # Pattern 3.2: Multi-Layer Service Detection
@@ -447,20 +562,30 @@ def detect_service() -> Result[ServiceInfo, str]:
     # Layer 3: Graceful failure
     return Err("Service not available. Try:\\n  - Docker: docker compose up -d\\n  - Native: service serve &")
 """,
-            "applicability": ["Services with dual deployment modes", "Development vs production detection", "CI/CD vs local execution"],
+            "applicability": [
+                "Services with dual deployment modes",
+                "Development vs production detection",
+                "CI/CD vs local execution",
+            ],
             "trade_offs": {
                 "pro": ["Flexible deployment", "Graceful degradation", "Clear diagnostic messages"],
-                "con": ["Detection complexity", "Multiple code paths to maintain"]
+                "con": ["Detection complexity", "Multiple code paths to maintain"],
             },
             "constitutional_alignment": ["article-i"],
             "related_files": [
                 "scripts/init_ollama_model.sh",
                 "tools/memory_aware_test_runner.py",
-                "tests/conftest.py"
+                "tests/conftest.py",
             ],
-            "mission_context": "Detect Docker vs native Ollama for memory-aware execution"
+            "mission_context": "Detect Docker vs native Ollama for memory-aware execution",
         },
-        tags=["service-detection", "fallback-logic", "multi-layer-detection", "docker-vs-native", "tooling"]
+        tags=[
+            "service-detection",
+            "fallback-logic",
+            "multi-layer-detection",
+            "docker-vs-native",
+            "tooling",
+        ],
     )
 
     # Pattern 3.3: Pytest Test Validation for Shell Scripts
@@ -489,19 +614,30 @@ def test_docker_detection_success(self, mock_run):
     assert "docker exec agency-ollama" in result.stdout.decode()
     assert result.returncode == 0
 """,
-            "applicability": ["Setup scripts validation", "Health check scripts", "CI/CD automation scripts"],
+            "applicability": [
+                "Setup scripts validation",
+                "Health check scripts",
+                "CI/CD automation scripts",
+            ],
             "trade_offs": {
-                "pro": ["Catch regressions early", "Validate error paths", "No external dependencies in tests"],
-                "con": ["Mock complexity", "May diverge from real execution"]
+                "pro": [
+                    "Catch regressions early",
+                    "Validate error paths",
+                    "No external dependencies in tests",
+                ],
+                "con": ["Mock complexity", "May diverge from real execution"],
             },
             "constitutional_alignment": ["article-ii"],
-            "related_files": [
-                "tests/test_init_ollama_model.py",
-                "scripts/init_ollama_model.sh"
-            ],
-            "mission_context": "Validate model initialization script with 334 lines of pytest tests"
+            "related_files": ["tests/test_init_ollama_model.py", "scripts/init_ollama_model.sh"],
+            "mission_context": "Validate model initialization script with 334 lines of pytest tests",
         },
-        tags=["pytest-shell-testing", "script-validation", "mock-subprocess", "regression-testing", "tooling"]
+        tags=[
+            "pytest-shell-testing",
+            "script-validation",
+            "mock-subprocess",
+            "regression-testing",
+            "tooling",
+        ],
     )
 
     # Pattern 4.1: Spec-Driven Development with Acceptance Criteria
@@ -542,19 +678,30 @@ def test_docker_detection_success(self, mock_run):
 ### Constitutional Compliance
 - [ ] AC-CI.1: Article I compliance (retry logic)
 """,
-            "applicability": ["Complex feature development", "External integration projects", "Regulatory compliance features"],
+            "applicability": [
+                "Complex feature development",
+                "External integration projects",
+                "Regulatory compliance features",
+            ],
             "trade_offs": {
                 "pro": ["Clear scope", "Testable requirements", "Traceability", "Risk mitigation"],
-                "con": ["Upfront documentation cost", "Maintenance overhead"]
+                "con": ["Upfront documentation cost", "Maintenance overhead"],
             },
             "constitutional_alignment": ["article-v"],
             "related_files": [
                 "specs/spec-023-ollama-docker-integration.md",
-                "docs/adr/ADR-028-ollama-docker-integration.md"
+                "docs/adr/ADR-028-ollama-docker-integration.md",
             ],
-            "mission_context": "48 acceptance criteria for Docker Compose integration"
+            "mission_context": "48 acceptance criteria for Docker Compose integration",
         },
-        tags=["spec-driven-development", "acceptance-criteria", "article-v", "documentation-patterns", "formal-specifications", "documentation"]
+        tags=[
+            "spec-driven-development",
+            "acceptance-criteria",
+            "article-v",
+            "documentation-patterns",
+            "formal-specifications",
+            "documentation",
+        ],
     )
 
     # Pattern 4.2: ADR with Constitutional Alignment Section
@@ -594,18 +741,32 @@ def test_docker_detection_success(self, mock_run):
 - Real functionality tests (no mocks)
 - 100% test coverage
 """,
-            "applicability": ["Major architectural changes", "Constitutional compliance validation", "Pattern documentation"],
+            "applicability": [
+                "Major architectural changes",
+                "Constitutional compliance validation",
+                "Pattern documentation",
+            ],
             "trade_offs": {
                 "pro": ["Explicit compliance", "Pattern reusability", "Audit trail"],
-                "con": ["Documentation effort", "Requires constitutional knowledge"]
+                "con": ["Documentation effort", "Requires constitutional knowledge"],
             },
-            "constitutional_alignment": ["article-i", "article-ii", "article-iii", "article-iv", "article-v"],
-            "related_files": [
-                "docs/adr/ADR-028-ollama-docker-integration.md"
+            "constitutional_alignment": [
+                "article-i",
+                "article-ii",
+                "article-iii",
+                "article-iv",
+                "article-v",
             ],
-            "mission_context": "ADR-028 with comprehensive constitutional alignment section"
+            "related_files": ["docs/adr/ADR-028-ollama-docker-integration.md"],
+            "mission_context": "ADR-028 with comprehensive constitutional alignment section",
         },
-        tags=["adr-patterns", "constitutional-alignment", "architectural-decisions", "compliance-documentation", "documentation"]
+        tags=[
+            "adr-patterns",
+            "constitutional-alignment",
+            "architectural-decisions",
+            "compliance-documentation",
+            "documentation",
+        ],
     )
 
     print("✓ Successfully stored 12 patterns to VectorStore")

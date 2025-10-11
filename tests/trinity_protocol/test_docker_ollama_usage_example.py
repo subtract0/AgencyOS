@@ -70,9 +70,7 @@ class TestOllamaIntegrationExample:
 class TestArchitectWithOllama:
     """Example: ARCHITECT agent integration test with real Ollama."""
 
-    def test_architect_queries_ollama_for_code_analysis(
-        self, docker_ollama, architect_agent
-    ):
+    def test_architect_queries_ollama_for_code_analysis(self, docker_ollama, architect_agent):
         """
         ARCHITECT agent uses Ollama for code analysis (integration test).
 

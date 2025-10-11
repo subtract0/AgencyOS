@@ -831,7 +831,9 @@ def test_store_workflow_success(
         assert "success" in tags
     elif call_args.kwargs:
         # Keyword args
-        assert call_args.kwargs.get("key", call_args.args[0] if call_args.args else "").startswith("orchestration_success_")
+        assert call_args.kwargs.get("key", call_args.args[0] if call_args.args else "").startswith(
+            "orchestration_success_"
+        )
         assert "orchestration" in call_args.kwargs.get("tags", [])
     else:
         # Mixed args/kwargs - just verify the call was made

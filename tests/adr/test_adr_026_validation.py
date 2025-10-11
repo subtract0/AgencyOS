@@ -318,7 +318,9 @@ Constitution: /constitution.md
 
         # Act: Check for Article I references
         has_article_i = "Article I" in adr_content
-        has_complete_context = "Complete Context" in adr_content or "complete context" in adr_content
+        has_complete_context = (
+            "Complete Context" in adr_content or "complete context" in adr_content
+        )
 
         # Assert: Article I referenced with compliance details
         assert has_article_i, "ADR missing Article I reference"
@@ -350,7 +352,9 @@ Constitution: /constitution.md
 
         # Act: Check for Article II references
         has_article_ii = "Article II" in adr_content
-        has_verification = "100%" in adr_content and ("Verification" in adr_content or "test" in adr_content)
+        has_verification = "100%" in adr_content and (
+            "Verification" in adr_content or "test" in adr_content
+        )
 
         # Assert: Article II referenced with test compliance
         assert has_article_ii, "ADR missing Article II reference"
@@ -382,7 +386,11 @@ Constitution: /constitution.md
 
         # Act: Check for Article V references
         has_article_v = "Article V" in adr_content
-        has_spec_driven = "Spec-Driven" in adr_content or "spec-driven" in adr_content or "specification" in adr_content
+        has_spec_driven = (
+            "Spec-Driven" in adr_content
+            or "spec-driven" in adr_content
+            or "specification" in adr_content
+        )
 
         # Assert: Article V referenced with spec process
         assert has_article_v, "ADR missing Article V reference"
@@ -453,7 +461,9 @@ Content here.
 
         # Assert: Level-1 heading with ADR number
         assert first_line.startswith("# ADR-"), "ADR missing level-1 heading"
-        assert re.match(r"^# ADR-\d+:", first_line), "ADR heading format incorrect (expected '# ADR-NNN: Title')"
+        assert re.match(r"^# ADR-\d+:", first_line), (
+            "ADR heading format incorrect (expected '# ADR-NNN: Title')"
+        )
 
     def test_adr_sections_use_level_2_headings(self):
         """
@@ -487,7 +497,9 @@ Content.
         assert "Context" in level_2_headings, "Context should use level-2 heading"
         assert "Decision" in level_2_headings, "Decision should use level-2 heading"
         assert "Consequences" in level_2_headings, "Consequences should use level-2 heading"
-        assert "Alternatives Considered" in level_2_headings, "Alternatives should use level-2 heading"
+        assert "Alternatives Considered" in level_2_headings, (
+            "Alternatives should use level-2 heading"
+        )
 
     def test_adr_subsections_use_level_3_headings(self):
         """
@@ -869,7 +881,9 @@ Impact here.
         decision = self._extract_section_content(adr_content, "Decision")
 
         # Assert: Decision clearly states chosen solution
-        assert "Option B" in decision or "Holistic" in decision, "Decision doesn't state chosen option"
+        assert "Option B" in decision or "Holistic" in decision, (
+            "Decision doesn't state chosen option"
+        )
         assert "Phase" in decision or "plan" in decision, "Decision missing execution plan"
 
     def test_adr_alternatives_section_explains_why_rejected(self):
@@ -923,6 +937,7 @@ Impact here.
             "Alternatives missing constitutional compliance check"
         )
 
+
 class TestADRIntegration(ADRHelperMixin):
     """Integration tests for ADR validation with real files (NECESSARY: Normal)."""
 
@@ -955,7 +970,9 @@ class TestADRIntegration(ADRHelperMixin):
         assert "Context" in sections, "ADR-026 CI quality missing Context section"
         assert "Decision" in sections, "ADR-026 CI quality missing Decision section"
         assert "Consequences" in sections, "ADR-026 CI quality missing Consequences section"
-        assert "Alternatives Considered" in sections, "ADR-026 CI quality missing Alternatives section"
+        assert "Alternatives Considered" in sections, (
+            "ADR-026 CI quality missing Alternatives section"
+        )
 
     def test_adr_026_ml_classifier_file_exists_and_validates(self, adr_directory: Path):
         """
@@ -981,7 +998,9 @@ class TestADRIntegration(ADRHelperMixin):
         assert "Context" in sections, "ADR-026 ML classifier missing Context section"
         assert "Decision" in sections, "ADR-026 ML classifier missing Decision section"
         assert "Consequences" in sections, "ADR-026 ML classifier missing Consequences section"
-        assert "Alternatives Considered" in sections, "ADR-026 ML classifier missing Alternatives section"
+        assert "Alternatives Considered" in sections, (
+            "ADR-026 ML classifier missing Alternatives section"
+        )
 
     def test_adr_026_contains_constitutional_references(self, adr_directory: Path):
         """

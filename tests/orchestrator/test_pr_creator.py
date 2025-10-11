@@ -158,13 +158,9 @@ class PRCreator:
             return Ok(self.worktree_path)
 
         except subprocess.TimeoutExpired:
-            return Err(
-                PRCreatorError("create_worktree", "Worktree creation timed out", ">10s")
-            )
+            return Err(PRCreatorError("create_worktree", "Worktree creation timed out", ">10s"))
         except FileNotFoundError:
-            return Err(
-                PRCreatorError("create_worktree", "Git command not found", "Install git")
-            )
+            return Err(PRCreatorError("create_worktree", "Git command not found", "Install git"))
 
     def generate_commit_message(
         self, commit_type: str, title: str, body: str, breaking_change: bool = False
@@ -205,11 +201,15 @@ class PRCreator:
 
         return Ok("\n".join(lines))
 
-    def commit_changes(self, message: str, files: list[str] | None = None) -> Result[str, PRCreatorError]:
+    def commit_changes(
+        self, message: str, files: list[str] | None = None
+    ) -> Result[str, PRCreatorError]:
         """Commit changes in worktree with validation."""
         if not self.worktree_path:
             return Err(
-                PRCreatorError("commit_changes", "No worktree created", "Call create_worktree first")
+                PRCreatorError(
+                    "commit_changes", "No worktree created", "Call create_worktree first"
+                )
             )
 
         # Stage files
@@ -224,9 +224,7 @@ class PRCreator:
             )
 
             if result.returncode != 0:
-                return Err(
-                    PRCreatorError("commit_changes", "Failed to stage files", result.stderr)
-                )
+                return Err(PRCreatorError("commit_changes", "Failed to stage files", result.stderr))
 
             # Create commit
             commit_result = subprocess.run(
@@ -238,9 +236,7 @@ class PRCreator:
             )
 
             if commit_result.returncode != 0:
-                return Err(
-                    PRCreatorError("commit_changes", "Commit failed", commit_result.stderr)
-                )
+                return Err(PRCreatorError("commit_changes", "Commit failed", commit_result.stderr))
 
             # Get commit SHA
             sha_result = subprocess.run(
@@ -263,7 +259,9 @@ class PRCreator:
         """Validate 100% test pass requirement (Article II enforcement)."""
         if not self.worktree_path:
             return Err(
-                PRCreatorError("validate_tests_pass", "No worktree created", "Call create_worktree first")
+                PRCreatorError(
+                    "validate_tests_pass", "No worktree created", "Call create_worktree first"
+                )
             )
 
         try:
@@ -307,7 +305,9 @@ class PRCreator:
         """Create pull request via gh CLI."""
         if not self.worktree_path or not self.branch_name:
             return Err(
-                PRCreatorError("create_pr", "No worktree/branch created", "Complete worktree setup first")
+                PRCreatorError(
+                    "create_pr", "No worktree/branch created", "Complete worktree setup first"
+                )
             )
 
         # Push branch first
@@ -321,9 +321,7 @@ class PRCreator:
             )
 
             if push_result.returncode != 0:
-                return Err(
-                    PRCreatorError("create_pr", "Failed to push branch", push_result.stderr)
-                )
+                return Err(PRCreatorError("create_pr", "Failed to push branch", push_result.stderr))
 
             # Build gh pr create command
             cmd = ["gh", "pr", "create", "--title", title, "--body", body, "--base", base]
@@ -351,9 +349,7 @@ class PRCreator:
                             "Run 'gh auth login'",
                         )
                     )
-                return Err(
-                    PRCreatorError("create_pr", "PR creation failed", pr_result.stderr)
-                )
+                return Err(PRCreatorError("create_pr", "PR creation failed", pr_result.stderr))
 
             # Extract PR URL and number
             pr_url = pr_result.stdout.strip()
@@ -367,10 +363,14 @@ class PRCreator:
             return Err(PRCreatorError("create_pr", "PR creation timed out", ">30s"))
         except FileNotFoundError:
             return Err(
-                PRCreatorError("create_pr", "GitHub CLI (gh) not found", "Install from cli.github.com")
+                PRCreatorError(
+                    "create_pr", "GitHub CLI (gh) not found", "Install from cli.github.com"
+                )
             )
 
-    def check_ci_status(self, pr_number: int, timeout: int = 300) -> Result[dict[str, Any], PRCreatorError]:
+    def check_ci_status(
+        self, pr_number: int, timeout: int = 300
+    ) -> Result[dict[str, Any], PRCreatorError]:
         """Check CI pipeline status for PR."""
         try:
             result = subprocess.run(
@@ -382,9 +382,7 @@ class PRCreator:
             )
 
             if result.returncode != 0:
-                return Err(
-                    PRCreatorError("check_ci_status", "CI checks failed", result.stdout)
-                )
+                return Err(PRCreatorError("check_ci_status", "CI checks failed", result.stdout))
 
             # Parse output for status
             if "fail" in result.stdout.lower():
@@ -403,7 +401,9 @@ class PRCreator:
         """Check for merge conflicts with main branch."""
         if not self.worktree_path:
             return Err(
-                PRCreatorError("check_merge_conflicts", "No worktree created", "Call create_worktree first")
+                PRCreatorError(
+                    "check_merge_conflicts", "No worktree created", "Call create_worktree first"
+                )
             )
 
         try:
@@ -418,7 +418,9 @@ class PRCreator:
 
             if fetch_result.returncode != 0:
                 return Err(
-                    PRCreatorError("check_merge_conflicts", "Failed to fetch main", fetch_result.stderr)
+                    PRCreatorError(
+                        "check_merge_conflicts", "Failed to fetch main", fetch_result.stderr
+                    )
                 )
 
             # Attempt dry-run merge
@@ -450,7 +452,9 @@ class PRCreator:
             return Ok(None)
 
         except subprocess.TimeoutExpired:
-            return Err(PRCreatorError("check_merge_conflicts", "Merge conflict check timed out", ""))
+            return Err(
+                PRCreatorError("check_merge_conflicts", "Merge conflict check timed out", "")
+            )
 
     def cleanup_worktree(self, force: bool = False) -> Result[None, PRCreatorError]:
         """Remove worktree and cleanup Git references after PR merge."""
@@ -537,7 +541,14 @@ class TestNormalOperation:
         # Verify git worktree command was called
         mock_subprocess_run.assert_called_once()
         call_args = mock_subprocess_run.call_args
-        assert call_args[0][0] == ["git", "worktree", "add", str(worktree_path), "-b", "feat/jwt-authentication"]
+        assert call_args[0][0] == [
+            "git",
+            "worktree",
+            "add",
+            str(worktree_path),
+            "-b",
+            "feat/jwt-authentication",
+        ]
 
     def test_generate_commit_message_success(self):
         """
@@ -579,7 +590,9 @@ class TestNormalOperation:
         ]
 
         # Act
-        result = pr_creator.commit_changes("feat: Add feature\n\nCo-Authored-By: Claude <noreply@anthropic.com>")
+        result = pr_creator.commit_changes(
+            "feat: Add feature\n\nCo-Authored-By: Claude <noreply@anthropic.com>"
+        )
 
         # Assert
         assert result.is_ok()
@@ -625,7 +638,9 @@ class TestNormalOperation:
 
         mock_subprocess_run.side_effect = [
             Mock(returncode=0, stdout="", stderr=""),  # git push
-            Mock(returncode=0, stdout="https://github.com/org/repo/pull/123\n", stderr=""),  # gh pr create
+            Mock(
+                returncode=0, stdout="https://github.com/org/repo/pull/123\n", stderr=""
+            ),  # gh pr create
         ]
 
         # Act
@@ -750,7 +765,9 @@ class TestEdgeCases:
 
         mock_subprocess_run.side_effect = [
             Mock(returncode=0, stdout="", stderr=""),  # git push succeeds
-            Mock(returncode=1, stdout="", stderr="Error: authentication failed (401)"),  # gh pr create fails
+            Mock(
+                returncode=1, stdout="", stderr="Error: authentication failed (401)"
+            ),  # gh pr create fails
         ]
 
         # Act
@@ -774,7 +791,9 @@ class TestEdgeCases:
 
         mock_subprocess_run.side_effect = [
             Mock(returncode=0, stdout="", stderr=""),  # git fetch succeeds
-            Mock(returncode=1, stdout="", stderr="CONFLICT (content): Merge conflict in file.py"),  # merge fails
+            Mock(
+                returncode=1, stdout="", stderr="CONFLICT (content): Merge conflict in file.py"
+            ),  # merge fails
             Mock(returncode=0, stdout="", stderr=""),  # git merge --abort
         ]
 
@@ -1119,8 +1138,7 @@ class TestStress:
         # Arrange
         sessions = ["session-1", "session-2", "session-3"]
         creators = [
-            PRCreator(repo_root=pr_creator_config["repo_root"], session_id=sid)
-            for sid in sessions
+            PRCreator(repo_root=pr_creator_config["repo_root"], session_id=sid) for sid in sessions
         ]
 
         mock_subprocess_run.return_value = Mock(returncode=0, stdout="", stderr="")
@@ -1183,7 +1201,11 @@ class TestAccessibility:
 
         mock_subprocess_run.side_effect = [
             Mock(returncode=0, stdout="", stderr=""),  # git push succeeds
-            Mock(returncode=1, stdout="", stderr="Error: authentication required. Run 'gh auth login'"),
+            Mock(
+                returncode=1,
+                stdout="",
+                stderr="Error: authentication required. Run 'gh auth login'",
+            ),
         ]
 
         # Act
@@ -1209,7 +1231,9 @@ class TestAccessibility:
 
         mock_subprocess_run.side_effect = [
             Mock(returncode=0, stdout="", stderr=""),  # git push
-            Mock(returncode=0, stdout="https://github.com/org/repo/pull/456\n", stderr=""),  # gh pr create
+            Mock(
+                returncode=0, stdout="https://github.com/org/repo/pull/456\n", stderr=""
+            ),  # gh pr create
         ]
 
         # Act
@@ -1361,7 +1385,9 @@ class TestYield:
 
         mock_subprocess_run.side_effect = [
             Mock(returncode=0, stdout="", stderr=""),  # git push
-            Mock(returncode=0, stdout="https://github.com/org/repo/pull/789\n", stderr=""),  # gh pr create
+            Mock(
+                returncode=0, stdout="https://github.com/org/repo/pull/789\n", stderr=""
+            ),  # gh pr create
         ]
 
         # Act
