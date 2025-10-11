@@ -1,0 +1,609 @@
+{
+  "mission": "Autonomous CI Feedback Loop",
+  "leap_number": null,
+  "phases": [
+    {
+      "id": "phase_1",
+      "title": "Testing Phase - CI Monitor Core",
+      "tasks": [
+        {
+          "id": "test_ci_status_poller",
+          "title": "Test CI status polling with gh pr checks",
+          "type": "Test",
+          "tier": "Tier 2",
+          "agent": "test_generator",
+          "description": "Write NECESSARY-compliant tests for CI status polling: Normal (success/failure detection), Edge (timeout, rate limit), Security (credential validation), Spec (AC-1 verification), Resilience (network failures). Use AAA pattern, assert real GitHub API behavior.",
+          "dependencies": [],
+          "acceptance_criteria": [
+            "NECESSARY validator passes (7 categories covered)",
+            "Tests verify real gh CLI integration (not mocked)",
+            "Edge case: handles rate limiting (429 responses)",
+            "Edge case: handles timeout during polling",
+            "Security: validates GITHUB_TOKEN presence",
+            "Spec: validates AC-1 (30s polling interval)",
+            "Resilience: retries on transient failures"
+          ],
+          "estimated_tokens": 3500,
+          "verification_target": "code_ci_status_poller"
+        },
+        {
+          "id": "test_log_fetcher",
+          "title": "Test failure log fetching with gh run view",
+          "type": "Test",
+          "tier": "Tier 2",
+          "agent": "test_generator",
+          "description": "Write NECESSARY-compliant tests for log fetching: Normal (successful log retrieval), Edge (large logs, truncated output), Security (auth errors), Spec (AC-2 verification), Resilience (partial log downloads). Validate real gh run view --log behavior.",
+          "dependencies": [],
+          "acceptance_criteria": [
+            "NECESSARY validator passes (7 categories covered)",
+            "Tests verify real GitHub Actions log parsing",
+            "Edge case: handles logs >10MB",
+            "Edge case: handles ANSI color codes in logs",
+            "Security: handles unauthorized run access",
+            "Spec: validates AC-2 (auto-fetch logs on failure)",
+            "Resilience: handles incomplete log downloads"
+          ],
+          "estimated_tokens": 3500,
+          "verification_target": "code_log_fetcher"
+        },
+        {
+          "id": "test_error_parser",
+          "title": "Test common error pattern parsing",
+          "type": "Test",
+          "tier": "Tier 2",
+          "agent": "test_generator",
+          "description": "Write NECESSARY-compliant tests for error pattern recognition: Normal (missing deps, lint, format, type errors), Edge (multi-line errors, nested tracebacks), Security (no log injection), Spec (AC-5 verification), Accessibility (error message clarity). Validate Result<T,E> pattern usage.",
+          "dependencies": [],
+          "acceptance_criteria": [
+            "NECESSARY validator passes (7 categories covered)",
+            "Tests cover 5+ common error patterns (AC-5)",
+            "Edge case: handles multi-line stack traces",
+            "Edge case: handles interleaved stdout/stderr",
+            "Security: sanitizes log content (no code injection)",
+            "Spec: validates AC-5 (pattern recognition)",
+            "Accessibility: error messages are actionable"
+          ],
+          "estimated_tokens": 3500,
+          "verification_target": "code_error_parser"
+        },
+        {
+          "id": "test_retry_controller",
+          "title": "Test retry loop with max attempts (5)",
+          "type": "Test",
+          "tier": "Tier 2",
+          "agent": "test_generator",
+          "description": "Write NECESSARY-compliant tests for retry logic: Normal (success after N retries), Edge (max attempts reached), Security (no infinite loops), Spec (AC-3 verification), Resilience (exponential backoff). Validate constitutional Article I compliance (complete context).",
+          "dependencies": [],
+          "acceptance_criteria": [
+            "NECESSARY validator passes (7 categories covered)",
+            "Tests verify max 5 retry attempts (AC-4)",
+            "Edge case: exits after max attempts reached",
+            "Edge case: handles CI timeout (600s limit)",
+            "Security: prevents infinite retry loops",
+            "Spec: validates AC-3 (auto-retrigger)",
+            "Resilience: exponential backoff (30s, 60s, 120s)"
+          ],
+          "estimated_tokens": 3500,
+          "verification_target": "code_retry_controller"
+        }
+      ]
+    },
+    {
+      "id": "phase_2",
+      "title": "Implementation Phase - CI Monitor Core",
+      "tasks": [
+        {
+          "id": "code_ci_status_poller",
+          "title": "Implement CI status polling via gh pr checks",
+          "type": "Code",
+          "tier": "Tier 2",
+          "agent": "coder",
+          "description": "Implement tools/ci_monitor/status_poller.py: poll_until_complete(pr_number: int, max_wait: int = 600) -> Result[CIStatus, CIError]. Use gh pr checks, parse JSON output, detect terminal states (success/failure). Apply Result<T,E> pattern. Query VectorStore for gh CLI patterns before implementing.",
+          "dependencies": ["test_ci_status_poller"],
+          "acceptance_criteria": [
+            "All tests in test_ci_status_poller pass (100%)",
+            "Function signature uses Result<CIStatus, CIError>",
+            "Pydantic models: CIStatus, CheckResult, CIError",
+            "Polls every 30s until terminal state (AC-1)",
+            "Functions <50 lines (Article II)",
+            "Type hints: 100% coverage (mypy passes)",
+            "VectorStore query applied (Article IV)"
+          ],
+          "estimated_tokens": 4000,
+          "verification_target": null
+        },
+        {
+          "id": "code_log_fetcher",
+          "title": "Implement failure log fetching via gh run view",
+          "type": "Code",
+          "tier": "Tier 2",
+          "agent": "coder",
+          "description": "Implement tools/ci_monitor/log_fetcher.py: fetch_failure_logs(run_id: int) -> Result[LogContent, LogError]. Use gh run view --log, parse ANSI-stripped output, extract error sections. Apply Result<T,E> pattern. Query VectorStore for log parsing patterns before implementing.",
+          "dependencies": ["test_log_fetcher"],
+          "acceptance_criteria": [
+            "All tests in test_log_fetcher pass (100%)",
+            "Function signature uses Result<LogContent, LogError>",
+            "Pydantic models: LogContent, LogSection, LogError",
+            "Fetches logs automatically on failure (AC-2)",
+            "Strips ANSI codes for parsing",
+            "Functions <50 lines (Article II)",
+            "VectorStore query applied (Article IV)"
+          ],
+          "estimated_tokens": 4000,
+          "verification_target": null
+        },
+        {
+          "id": "code_error_parser",
+          "title": "Implement common error pattern parser",
+          "type": "Code",
+          "tier": "Tier 2",
+          "agent": "coder",
+          "description": "Implement tools/ci_monitor/error_parser.py: parse_common_errors(logs: str) -> Result[list[ErrorPattern], ParseError]. Detect: missing dependencies (pip install), lint errors (ruff), format errors (ruff format), type errors (mypy). Use regex + AST parsing. Apply Result<T,E> pattern. Query VectorStore for error patterns before implementing.",
+          "dependencies": ["test_error_parser"],
+          "acceptance_criteria": [
+            "All tests in test_error_parser pass (100%)",
+            "Function signature uses Result<list[ErrorPattern], ParseError>",
+            "Pydantic models: ErrorPattern, ErrorType enum",
+            "Recognizes 5+ common error types (AC-5)",
+            "Returns actionable fix suggestions",
+            "Functions <50 lines (Article II)",
+            "VectorStore query applied (Article IV)"
+          ],
+          "estimated_tokens": 4000,
+          "verification_target": null
+        },
+        {
+          "id": "code_retry_controller",
+          "title": "Implement retry loop controller with max attempts",
+          "type": "Code",
+          "tier": "Tier 2",
+          "agent": "coder",
+          "description": "Implement tools/ci_monitor/retry_controller.py: retry_with_backoff(operation: Callable, max_attempts: int = 5) -> Result[T, RetryError]. Use exponential backoff (30s, 60s, 120s, 240s, 480s). Exit conditions: success, max attempts, user intervention needed. Apply Result<T,E> pattern. Query VectorStore for retry patterns before implementing.",
+          "dependencies": ["test_retry_controller"],
+          "acceptance_criteria": [
+            "All tests in test_retry_controller pass (100%)",
+            "Function signature uses Result<T, RetryError>",
+            "Pydantic models: RetryResult, RetryError, BackoffStrategy",
+            "Max 5 attempts (AC-4)",
+            "Exponential backoff applied",
+            "Functions <50 lines (Article II)",
+            "VectorStore query applied (Article IV)"
+          ],
+          "estimated_tokens": 4000,
+          "verification_target": null
+        }
+      ]
+    },
+    {
+      "id": "phase_3",
+      "title": "Testing Phase - Auto-Fix Integration",
+      "tasks": [
+        {
+          "id": "test_fix_generator",
+          "title": "Test automatic fix generation for CI errors",
+          "type": "Test",
+          "tier": "Tier 2",
+          "agent": "test_generator",
+          "description": "Write NECESSARY-compliant tests for fix generation: Normal (missing deps -> pip install, lint -> ruff fix), Edge (conflicting fixes, non-fixable errors), Security (no arbitrary command execution), Spec (AC-5 verification), Resilience (rollback on failure). Validate VectorStore learning integration.",
+          "dependencies": ["code_error_parser"],
+          "acceptance_criteria": [
+            "NECESSARY validator passes (7 categories covered)",
+            "Tests cover 5+ fix strategies",
+            "Edge case: handles conflicting fix suggestions",
+            "Edge case: handles non-automatable errors",
+            "Security: validates all shell commands",
+            "Spec: validates AC-5 (auto-fix common errors)",
+            "Resilience: rollback on failed fix application"
+          ],
+          "estimated_tokens": 3500,
+          "verification_target": "code_fix_generator"
+        },
+        {
+          "id": "test_fix_applicator",
+          "title": "Test fix application with git commit and push",
+          "type": "Test",
+          "tier": "Tier 2",
+          "agent": "test_generator",
+          "description": "Write NECESSARY-compliant tests for fix application: Normal (apply fix, commit, push), Edge (merge conflicts, push failures), Security (credential validation), Spec (AC-3 verification), Resilience (rollback on CI failure). Validate git workflow integration.",
+          "dependencies": [],
+          "acceptance_criteria": [
+            "NECESSARY validator passes (7 categories covered)",
+            "Tests verify real git operations (worktree-safe)",
+            "Edge case: handles merge conflicts during push",
+            "Edge case: handles branch protection rules",
+            "Security: validates git credentials",
+            "Spec: validates AC-3 (auto-push fixes)",
+            "Resilience: rollback via git reset on failure"
+          ],
+          "estimated_tokens": 3500,
+          "verification_target": "code_fix_applicator"
+        },
+        {
+          "id": "test_ci_retrigger",
+          "title": "Test CI retrigger mechanism (empty commit fallback)",
+          "type": "Test",
+          "tier": "Tier 2",
+          "agent": "test_generator",
+          "description": "Write NECESSARY-compliant tests for CI retrigger: Normal (CI starts automatically), Edge (timeout -> empty commit), Security (no force push), Spec (AC-3 verification), Resilience (wait for CI start confirmation). Validate gh workflow run integration.",
+          "dependencies": [],
+          "acceptance_criteria": [
+            "NECESSARY validator passes (7 categories covered)",
+            "Tests verify wait-for-CI-start logic",
+            "Edge case: creates empty commit after 60s timeout",
+            "Edge case: handles branch protection (no force push)",
+            "Security: validates GITHUB_TOKEN scope",
+            "Spec: validates AC-3 (auto-retrigger)",
+            "Resilience: verifies CI run started (not just pushed)"
+          ],
+          "estimated_tokens": 3500,
+          "verification_target": "code_ci_retrigger"
+        }
+      ]
+    },
+    {
+      "id": "phase_4",
+      "title": "Implementation Phase - Auto-Fix Integration",
+      "tasks": [
+        {
+          "id": "code_fix_generator",
+          "title": "Implement automatic fix generator",
+          "type": "Code",
+          "tier": "Tier 2",
+          "agent": "coder",
+          "description": "Implement tools/ci_monitor/fix_generator.py: generate_fixes(errors: list[ErrorPattern]) -> Result[list[Fix], FixError]. Map error types to fixes: missing deps -> pip install, lint -> ruff check --fix, format -> ruff format, type errors -> suggest manual fix. Query VectorStore for fix patterns before implementing.",
+          "dependencies": ["test_fix_generator"],
+          "acceptance_criteria": [
+            "All tests in test_fix_generator pass (100%)",
+            "Function signature uses Result<list[Fix], FixError>",
+            "Pydantic models: Fix, FixStrategy, FixError",
+            "Generates fixes for 5+ error types (AC-5)",
+            "VectorStore integration for learned fixes (Article IV)",
+            "Functions <50 lines (Article II)",
+            "Type hints: 100% coverage"
+          ],
+          "estimated_tokens": 4000,
+          "verification_target": null
+        },
+        {
+          "id": "code_fix_applicator",
+          "title": "Implement fix applicator with git workflow",
+          "type": "Code",
+          "tier": "Tier 2",
+          "agent": "coder",
+          "description": "Implement tools/ci_monitor/fix_applicator.py: apply_fix_and_push(fixes: list[Fix]) -> Result[CommitResult, ApplyError]. Execute fix commands, stage changes, commit with descriptive message, push to remote. Handle rollback on failure. Query VectorStore for git workflow patterns before implementing.",
+          "dependencies": ["test_fix_applicator"],
+          "acceptance_criteria": [
+            "All tests in test_fix_applicator pass (100%)",
+            "Function signature uses Result<CommitResult, ApplyError>",
+            "Pydantic models: CommitResult, ApplyError",
+            "Auto-commits and pushes fixes (AC-3)",
+            "Rollback on failure (git reset --hard)",
+            "Functions <50 lines (Article II)",
+            "VectorStore query applied (Article IV)"
+          ],
+          "estimated_tokens": 4000,
+          "verification_target": null
+        },
+        {
+          "id": "code_ci_retrigger",
+          "title": "Implement CI retrigger with empty commit fallback",
+          "type": "Code",
+          "tier": "Tier 2",
+          "agent": "coder",
+          "description": "Implement tools/ci_monitor/ci_retrigger.py: wait_for_ci_start(pr_number: int, timeout: int = 60) -> Result[RunStarted, TriggerError]. Poll gh run list until new run appears. If timeout, create empty commit (git commit --allow-empty). Query VectorStore for CI trigger patterns before implementing.",
+          "dependencies": ["test_ci_retrigger"],
+          "acceptance_criteria": [
+            "All tests in test_ci_retrigger pass (100%)",
+            "Function signature uses Result<RunStarted, TriggerError>",
+            "Pydantic models: RunStarted, TriggerError",
+            "Auto-retriggers CI (AC-3)",
+            "Empty commit fallback after 60s timeout",
+            "Functions <50 lines (Article II)",
+            "VectorStore query applied (Article IV)"
+          ],
+          "estimated_tokens": 4000,
+          "verification_target": null
+        }
+      ]
+    },
+    {
+      "id": "phase_5",
+      "title": "Testing Phase - Autonomous Feedback Loop",
+      "tasks": [
+        {
+          "id": "test_feedback_loop_orchestrator",
+          "title": "Test complete feedback loop orchestration",
+          "type": "Test",
+          "tier": "Tier 1",
+          "agent": "test_generator",
+          "description": "Write NECESSARY-compliant tests for feedback loop: Normal (watch->diagnose->fix->verify cycle), Edge (max retries, user intervention), Security (no unauthorized actions), Spec (AC-1 to AC-5 verification), Resilience (crash recovery). Validate constitutional Article I-V compliance.",
+          "dependencies": [
+            "code_ci_status_poller",
+            "code_log_fetcher",
+            "code_error_parser",
+            "code_retry_controller",
+            "code_fix_generator",
+            "code_fix_applicator",
+            "code_ci_retrigger"
+          ],
+          "acceptance_criteria": [
+            "NECESSARY validator passes (7 categories covered)",
+            "Integration test: full cycle (watch->fix->verify)",
+            "Edge case: stops after 5 failed fix attempts",
+            "Edge case: notifies user when blocked",
+            "Security: validates all GitHub API calls",
+            "Spec: validates all 5 acceptance criteria",
+            "Article I: complete context (all logs fetched)",
+            "Article II: 100% test pass before completion",
+            "Article IV: VectorStore learning applied"
+          ],
+          "estimated_tokens": 5000,
+          "verification_target": "code_feedback_loop_orchestrator"
+        },
+        {
+          "id": "test_smart_notifier",
+          "title": "Test smart user notification logic",
+          "type": "Test",
+          "tier": "Tier 2",
+          "agent": "test_generator",
+          "description": "Write NECESSARY-compliant tests for smart notifications: Normal (notify on success/blocked), Edge (no noise during fixes), Security (no sensitive data in notifications), Spec (AC-4 verification), Accessibility (clear status messages). Validate notification timing logic.",
+          "dependencies": [],
+          "acceptance_criteria": [
+            "NECESSARY validator passes (7 categories covered)",
+            "Tests verify notification timing (AC-4)",
+            "Edge case: no notifications during retry loop",
+            "Edge case: notifies on max attempts reached",
+            "Security: sanitizes error messages (no tokens)",
+            "Spec: validates AC-4 (smart notification)",
+            "Accessibility: notifications are actionable"
+          ],
+          "estimated_tokens": 3500,
+          "verification_target": "code_smart_notifier"
+        },
+        {
+          "id": "test_learning_integration",
+          "title": "Test VectorStore learning integration",
+          "type": "Test",
+          "tier": "Tier 2",
+          "agent": "test_generator",
+          "description": "Write NECESSARY-compliant tests for learning integration: Normal (store successful fixes), Edge (confidence threshold filtering), Security (no PII in learnings), Spec (AC-5 verification), Year-round (session continuity). Validate Article IV compliance (continuous learning).",
+          "dependencies": [],
+          "acceptance_criteria": [
+            "NECESSARY validator passes (7 categories covered)",
+            "Tests verify pattern storage after success",
+            "Edge case: filters low confidence patterns (<0.6)",
+            "Edge case: handles VectorStore unavailable",
+            "Security: sanitizes stored patterns",
+            "Spec: validates AC-5 (pattern learning)",
+            "Article IV: query before fix, store after success"
+          ],
+          "estimated_tokens": 3500,
+          "verification_target": "code_learning_integration"
+        }
+      ]
+    },
+    {
+      "id": "phase_6",
+      "title": "Implementation Phase - Autonomous Feedback Loop",
+      "tasks": [
+        {
+          "id": "code_feedback_loop_orchestrator",
+          "title": "Implement autonomous feedback loop orchestrator",
+          "type": "Code",
+          "tier": "Tier 1",
+          "agent": "coder",
+          "description": "Implement tools/ci_monitor/feedback_loop.py: autonomous_ci_fix_loop(pr_number: int, max_attempts: int = 5) -> Result[LoopResult, LoopError]. Orchestrate: poll status -> fetch logs -> parse errors -> generate fixes -> apply fixes -> wait for CI -> repeat. Exit on success, max attempts, or user intervention needed. Query VectorStore for orchestration patterns before implementing.",
+          "dependencies": ["test_feedback_loop_orchestrator"],
+          "acceptance_criteria": [
+            "All tests in test_feedback_loop_orchestrator pass (100%)",
+            "Function signature uses Result<LoopResult, LoopError>",
+            "Pydantic models: LoopResult, LoopState, LoopError",
+            "Implements full watch-diagnose-fix-verify cycle",
+            "Max 5 retry attempts (AC-4)",
+            "Constitutional compliance: Articles I-V validated",
+            "Functions <50 lines (Article II)",
+            "VectorStore query applied (Article IV)"
+          ],
+          "estimated_tokens": 6000,
+          "verification_target": null
+        },
+        {
+          "id": "code_smart_notifier",
+          "title": "Implement smart user notifier",
+          "type": "Code",
+          "tier": "Tier 2",
+          "agent": "coder",
+          "description": "Implement tools/ci_monitor/smart_notifier.py: should_notify_user(status: LoopState) -> Result[NotificationDecision, NotifyError]. Logic: notify on all checks pass, blocked (needs human decision), or max attempts reached. Do NOT notify during retry loop. Query VectorStore for notification patterns before implementing.",
+          "dependencies": ["test_smart_notifier"],
+          "acceptance_criteria": [
+            "All tests in test_smart_notifier pass (100%)",
+            "Function signature uses Result<NotificationDecision, NotifyError>",
+            "Pydantic models: NotificationDecision, NotificationReason",
+            "Implements AC-4 (smart notification logic)",
+            "No noise during retry loop",
+            "Functions <50 lines (Article II)",
+            "VectorStore query applied (Article IV)"
+          ],
+          "estimated_tokens": 4000,
+          "verification_target": null
+        },
+        {
+          "id": "code_learning_integration",
+          "title": "Implement VectorStore learning integration",
+          "type": "Code",
+          "tier": "Tier 2",
+          "agent": "coder",
+          "description": "Implement tools/ci_monitor/learning_integration.py: store_successful_fix(error: ErrorPattern, fix: Fix) -> Result[None, StoreError] and query_fix_patterns(error: ErrorPattern) -> Result[list[Fix], QueryError]. Store successful fixes with confidence scores. Query before generating fixes. Apply Article IV (continuous learning).",
+          "dependencies": ["test_learning_integration"],
+          "acceptance_criteria": [
+            "All tests in test_learning_integration pass (100%)",
+            "Function signatures use Result<T, E> pattern",
+            "Pydantic models: FixLearning, LearningQuery",
+            "Stores fixes after success (Article IV)",
+            "Queries VectorStore before fix generation",
+            "Min confidence: 0.6 for pattern application",
+            "Functions <50 lines (Article II)"
+          ],
+          "estimated_tokens": 4000,
+          "verification_target": null
+        }
+      ]
+    },
+    {
+      "id": "phase_7",
+      "title": "Integration Testing Phase",
+      "tasks": [
+        {
+          "id": "test_end_to_end_scenario",
+          "title": "Test end-to-end CI feedback loop scenario",
+          "type": "Test",
+          "tier": "Tier 1",
+          "agent": "test_generator",
+          "description": "Write end-to-end integration test: Create test PR with intentional CI failure (missing dependency), trigger feedback loop, verify automatic fix and success. Validate all acceptance criteria (AC-1 to AC-5). Use real GitHub API (not mocked). Constitutional validation: Articles I-V.",
+          "dependencies": [
+            "code_feedback_loop_orchestrator",
+            "code_smart_notifier",
+            "code_learning_integration"
+          ],
+          "acceptance_criteria": [
+            "NECESSARY validator passes (7 categories covered)",
+            "End-to-end test: PR creation -> CI failure -> auto-fix -> CI success",
+            "Validates AC-1: autonomous monitoring (no user interaction)",
+            "Validates AC-2: auto-fetch logs",
+            "Validates AC-3: auto-retrigger CI",
+            "Validates AC-4: smart notification (only on done/blocked)",
+            "Validates AC-5: error pattern recognition",
+            "Article I: complete context (all CI checks verified)",
+            "Article II: 100% test pass rate maintained"
+          ],
+          "estimated_tokens": 6000,
+          "verification_target": "integration_validation"
+        },
+        {
+          "id": "test_constitutional_compliance",
+          "title": "Test constitutional compliance across all articles",
+          "type": "Test",
+          "tier": "Tier 1",
+          "agent": "quality_enforcer",
+          "description": "Validate constitutional compliance: Article I (complete context), Article II (100% verification), Article III (automated enforcement), Article IV (VectorStore learning), Article V (spec traceability). Run constitutional audit tool. Ensure zero violations.",
+          "dependencies": [
+            "code_feedback_loop_orchestrator",
+            "code_smart_notifier",
+            "code_learning_integration"
+          ],
+          "acceptance_criteria": [
+            "Constitutional audit tool passes (zero violations)",
+            "Article I: All timeouts handled with retries",
+            "Article II: 100% test pass rate before completion",
+            "Article III: Quality gates enforced (no bypasses)",
+            "Article IV: VectorStore query/store implemented",
+            "Article V: All code traces to spec-autonomous-ci-feedback-loop.md",
+            "NECESSARY validator: 100% pattern coverage",
+            "Result<T,E> pattern: 100% error handling"
+          ],
+          "estimated_tokens": 5000,
+          "verification_target": "constitutional_validation"
+        }
+      ]
+    },
+    {
+      "id": "phase_8",
+      "title": "Documentation and CLI Integration",
+      "tasks": [
+        {
+          "id": "test_cli_integration",
+          "title": "Test CLI command for feedback loop invocation",
+          "type": "Test",
+          "tier": "Tier 2",
+          "agent": "test_generator",
+          "description": "Write NECESSARY-compliant tests for CLI integration: Normal (invoke via /ci-fix-loop <pr>), Edge (invalid PR number, missing credentials), Security (credential validation), Accessibility (help text clarity). Validate CLI argument parsing and orchestrator handoff.",
+          "dependencies": ["code_feedback_loop_orchestrator"],
+          "acceptance_criteria": [
+            "NECESSARY validator passes (7 categories covered)",
+            "Tests verify CLI argument parsing",
+            "Edge case: handles invalid PR numbers",
+            "Edge case: handles missing GITHUB_TOKEN",
+            "Security: validates credentials before execution",
+            "Accessibility: help text explains all flags",
+            "CLI invokes autonomous_ci_fix_loop correctly"
+          ],
+          "estimated_tokens": 3500,
+          "verification_target": "code_cli_integration"
+        },
+        {
+          "id": "code_cli_integration",
+          "title": "Implement CLI command for feedback loop",
+          "type": "Code",
+          "tier": "Tier 2",
+          "agent": "coder",
+          "description": "Implement .claude/commands/ci_fix_loop.py: CLI command /ci-fix-loop <pr> [--max-attempts N]. Parse arguments, validate credentials, invoke autonomous_ci_fix_loop. Display progress and final summary. Apply Result<T,E> pattern for CLI errors.",
+          "dependencies": ["test_cli_integration"],
+          "acceptance_criteria": [
+            "All tests in test_cli_integration pass (100%)",
+            "CLI command: /ci-fix-loop <pr> [--max-attempts N]",
+            "Help text: /ci-fix-loop --help",
+            "Invokes autonomous_ci_fix_loop orchestrator",
+            "Displays progress during execution",
+            "Functions <50 lines (Article II)",
+            "VectorStore query applied (Article IV)"
+          ],
+          "estimated_tokens": 4000,
+          "verification_target": null
+        },
+        {
+          "id": "code_documentation",
+          "title": "Document autonomous CI feedback loop usage",
+          "type": "Code",
+          "tier": "Tier 2",
+          "agent": "coder",
+          "description": "Create docs/CI_FEEDBACK_LOOP.md: Architecture overview, usage examples, configuration, troubleshooting. Include Mermaid diagrams for watch-diagnose-fix-verify cycle. Reference spec-autonomous-ci-feedback-loop.md and constitutional requirements.",
+          "dependencies": [
+            "code_feedback_loop_orchestrator",
+            "code_cli_integration"
+          ],
+          "acceptance_criteria": [
+            "Documentation covers: Architecture, Usage, Configuration, Troubleshooting",
+            "Mermaid diagram: watch-diagnose-fix-verify cycle",
+            "Code examples: CLI invocation, programmatic usage",
+            "References spec-autonomous-ci-feedback-loop.md",
+            "Constitutional compliance section (Articles I-V)",
+            "Links to related ADRs (ADR-001, ADR-002, ADR-004)"
+          ],
+          "estimated_tokens": 4000,
+          "verification_target": null
+        }
+      ]
+    }
+  ],
+  "checkpoints": [
+    {
+      "after_phase": "phase_2",
+      "type": "auto_validate",
+      "prompt": "Validate CI monitor core implementation: All phase 2 tests pass (100%), Result<T,E> pattern applied, VectorStore integration functional."
+    },
+    {
+      "after_phase": "phase_4",
+      "type": "auto_validate",
+      "prompt": "Validate auto-fix integration: All phase 4 tests pass (100%), git workflow functional, CI retrigger working."
+    },
+    {
+      "after_phase": "phase_6",
+      "type": "auto_validate",
+      "prompt": "Validate feedback loop orchestrator: All phase 6 tests pass (100%), autonomous cycle functional, smart notifications working."
+    },
+    {
+      "after_phase": "phase_7",
+      "type": "human_review",
+      "prompt": "Review end-to-end integration test results and constitutional compliance audit. Approve for CLI integration and documentation."
+    }
+  ],
+  "metadata": {
+    "estimated_tokens": 92000,
+    "estimated_cost_usd": 2.89,
+    "complexity": "high",
+    "constitutional_articles": ["I", "II", "III", "IV", "V"],
+    "spec_reference": "specs/spec-autonomous-ci-feedback-loop.md",
+    "related_adrs": ["ADR-001", "ADR-002", "ADR-004"],
+    "success_criteria": "90% of CI failures resolved autonomously (AC target)"
+  }
+}
