@@ -37,6 +37,20 @@ from shared.type_definitions.result import Err, Ok, Result
 logger = logging.getLogger(__name__)
 
 
+class SpecMetadata(BaseModel):
+    """
+    Metadata for specification (priority, tags, etc.).
+
+    Constitutional Compliance:
+        - Law #2: No Dict[Any, Any] - use typed Pydantic model
+    """
+
+    priority: str = Field(default="medium", description="Priority level")
+    tags: list[str] = Field(default_factory=list, description="Categorization tags")
+    estimated_complexity: str = Field(default="moderate", description="Estimated complexity")
+    related_specs: list[str] = Field(default_factory=list, description="Related specification IDs")
+
+
 class SpecIntent(BaseModel):
     """
     User intent for feature specification generation.
@@ -91,8 +105,8 @@ class Spec(BaseModel):
     success_criteria: list[str] = Field(
         ..., min_length=1, description="Success criteria (testable acceptance criteria)"
     )
-    metadata: dict[str, Any] = Field(
-        default_factory=dict, description="Additional metadata (priority, tags, etc.)"
+    metadata: SpecMetadata = Field(
+        default_factory=SpecMetadata, description="Additional metadata (priority, tags, etc.)"
     )
 
     @field_validator("goals", "personas", "success_criteria")
