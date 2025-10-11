@@ -14,9 +14,9 @@ import pytest
 
 from shared.type_definitions.result import Err, Ok
 from tools.orchestrator.test_verification_gate import (
-    VerificationResults,
-    VerificationError,
     TestVerificationGate,
+    VerificationError,
+    VerificationResults,
     verify_tests,
 )
 
@@ -329,7 +329,7 @@ tests/test_example.py::test_feature PASSED
     async def test_execute_tests_timeout(self, gate: TestVerificationGate):
         """Test test execution timeout (Article I)."""
         mock_process = AsyncMock()
-        mock_process.communicate.side_effect = asyncio.TimeoutError()
+        mock_process.communicate.side_effect = TimeoutError()
         mock_process.kill = AsyncMock()
         mock_process.wait = AsyncMock()
 

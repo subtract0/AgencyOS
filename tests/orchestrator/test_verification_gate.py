@@ -20,10 +20,16 @@ Constitutional Compliance:
 from __future__ import annotations
 
 import subprocess
+from typing import Literal
 from unittest.mock import MagicMock, Mock, call, patch
 
 import psutil
 import pytest
+
+# ============================================================================
+# Pydantic Models (from spec-009)
+# ============================================================================
+from pydantic import BaseModel, Field
 
 from shared.type_definitions.result import Err, Ok, Result
 from tools.memory_aware_test_runner import (
@@ -32,15 +38,6 @@ from tools.memory_aware_test_runner import (
     get_safe_worker_count,
     verify_memory_safe,
 )
-
-
-# ============================================================================
-# Pydantic Models (from spec-009)
-# ============================================================================
-
-
-from pydantic import BaseModel, Field
-from typing import Literal
 
 
 class VerificationConfig(BaseModel):

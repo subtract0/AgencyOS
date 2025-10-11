@@ -32,7 +32,6 @@ import pytest
 
 from shared.type_definitions.result import Err, Ok, Result
 
-
 # === Helper Functions ===
 
 
@@ -135,7 +134,7 @@ class ClaudeMdValidator:
 
         return Ok(True)
 
-    def validate_example_commands(self, content: str) -> Result[List[str], DocumentationError]:
+    def validate_example_commands(self, content: str) -> Result[list[str], DocumentationError]:
         """
         Validate that example commands with /primeA are present.
 
