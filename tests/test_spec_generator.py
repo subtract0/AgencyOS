@@ -12,7 +12,7 @@ import pytest
 
 from shared.agent_context import create_agent_context
 from shared.type_definitions.result import Err, Ok
-from tools.orchestrator.spec_generator import SpecIntent, Spec, SpecGenerator
+from tools.orchestrator.spec_generator import Spec, SpecGenerator, SpecIntent
 
 
 class TestIntentModel:

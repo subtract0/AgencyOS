@@ -32,7 +32,6 @@ import pytest
 
 from shared.type_definitions.result import Err, Ok, Result
 
-
 # ============================================================================
 # TEST FIXTURES
 # ============================================================================
@@ -397,7 +396,7 @@ class PRCreator:
 
         except subprocess.TimeoutExpired:
             return Err(
-                PRCreatorError("check_ci_status", f"CI status check timed out", f">{timeout}s")
+                PRCreatorError("check_ci_status", "CI status check timed out", f">{timeout}s")
             )
 
     def check_merge_conflicts(self) -> Result[None, PRCreatorError]:

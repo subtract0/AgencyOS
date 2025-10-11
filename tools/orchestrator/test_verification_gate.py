@@ -235,7 +235,7 @@ class TestVerificationGate:
                 output = stdout_data.decode("utf-8", errors="replace")
                 exit_code = process.returncode or 0
 
-            except asyncio.TimeoutError:
+            except TimeoutError:
                 # Kill process on timeout
                 process.kill()
                 await process.wait()

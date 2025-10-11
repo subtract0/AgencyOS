@@ -98,7 +98,7 @@ class DockerManager:
 
         try:
             # Start docker-compose services
-            result = subprocess.run(
+            subprocess.run(
                 self.docker_compose_cmd + ["-f", str(self.compose_file), "up", "-d"],
                 check=True,
                 capture_output=True,

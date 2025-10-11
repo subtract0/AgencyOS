@@ -39,7 +39,6 @@ from shared.models.task_graph import Phase, Task, TaskGraph, TaskTier, TaskType
 from shared.type_definitions.result import Err, Ok, Result
 from tools.orchestrator.intent_parser import InputMode, Intent, IntentParser
 
-
 # =============================================================================
 # Test Fixtures
 # =============================================================================
