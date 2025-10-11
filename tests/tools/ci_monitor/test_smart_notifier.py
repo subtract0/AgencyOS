@@ -385,9 +385,7 @@ def test_create_notification_when_success_then_returns_ok(notifier, sample_error
     elapsed_seconds = 120.5
 
     # Act
-    result = notifier.create_notification(
-        ci_status, attempt_count, elapsed_seconds, sample_errors
-    )
+    result = notifier.create_notification(ci_status, attempt_count, elapsed_seconds, sample_errors)
 
     # Assert
     assert result.is_ok()
@@ -454,9 +452,7 @@ def test_create_notification_when_empty_errors_then_returns_ok(notifier):
     error_messages = []
 
     # Act
-    result = notifier.create_notification(
-        ci_status, attempt_count, elapsed_seconds, error_messages
-    )
+    result = notifier.create_notification(ci_status, attempt_count, elapsed_seconds, error_messages)
 
     # Assert
     assert result.is_ok()
@@ -477,9 +473,7 @@ def test_create_notification_when_none_errors_then_returns_ok(notifier):
     elapsed_seconds = 30.0
 
     # Act
-    result = notifier.create_notification(
-        ci_status, attempt_count, elapsed_seconds, None
-    )
+    result = notifier.create_notification(ci_status, attempt_count, elapsed_seconds, None)
 
     # Assert
     assert result.is_ok()
@@ -684,8 +678,12 @@ def test_notification_summary_human_readable(notifier):
         # Assert
         if result.is_ok():
             notification = result.unwrap()
-            assert expected_emoji in notification.summary, f"Expected emoji {expected_emoji} for {ci_status}"
-            assert str(attempt_count) in notification.summary, "Summary should include attempt count"
+            assert expected_emoji in notification.summary, (
+                f"Expected emoji {expected_emoji} for {ci_status}"
+            )
+            assert str(attempt_count) in notification.summary, (
+                "Summary should include attempt count"
+            )
 
 
 def test_notification_to_dict_serialization(notifier):
@@ -749,8 +747,7 @@ def test_notification_timing_accuracy(notifier):
 
         # Assert
         assert should_notify == expected, (
-            f"Timing mismatch for status={ci_status}, "
-            f"attempt={attempt_count}, blocked={is_blocked}"
+            f"Timing mismatch for status={ci_status}, attempt={attempt_count}, blocked={is_blocked}"
         )
 
 
@@ -768,9 +765,7 @@ def test_notification_error_limit_to_three(notifier):
     many_errors = [f"Error {i}" for i in range(10)]  # 10 errors
 
     # Act
-    result = notifier.create_notification(
-        ci_status, attempt_count, elapsed_seconds, many_errors
-    )
+    result = notifier.create_notification(ci_status, attempt_count, elapsed_seconds, many_errors)
 
     # Assert
     assert result.is_ok()
@@ -799,9 +794,7 @@ def test_constitutional_article_i_complete_context(notifier, sample_errors):
     elapsed_seconds = 150.5
 
     # Act
-    result = notifier.create_notification(
-        ci_status, attempt_count, elapsed_seconds, sample_errors
-    )
+    result = notifier.create_notification(ci_status, attempt_count, elapsed_seconds, sample_errors)
 
     # Assert
     assert result.is_ok()
@@ -880,7 +873,9 @@ def test_necessary_pattern_compliance():
         "N": len([f for f in test_functions if "_when_" in f and "_then_" in f]),
         "E": len([f for f in test_functions if "edge" in f.lower() or "boundary" in f.lower()]),
         "S": len([f for f in test_functions if "sanitize" in f.lower() or "security" in f.lower()]),
-        "A": len([f for f in test_functions if "actionable" in f.lower() or "readable" in f.lower()]),
+        "A": len(
+            [f for f in test_functions if "actionable" in f.lower() or "readable" in f.lower()]
+        ),
     }
 
     print(f"\n✅ NECESSARY pattern: {len(test_functions)} tests implemented")

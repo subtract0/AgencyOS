@@ -76,9 +76,7 @@ class CIStatus(BaseModel):
     checks: list[CheckResult] = Field(default_factory=list, description="List of checks")
     all_passing: bool = Field(..., description="Whether all checks are passing")
     has_failures: bool = Field(..., description="Whether any checks failed")
-    is_complete: bool = Field(
-        ..., description="Whether all checks reached terminal state"
-    )
+    is_complete: bool = Field(..., description="Whether all checks reached terminal state")
 
 
 class PollResult(BaseModel):
@@ -403,11 +401,7 @@ class StatusPoller:
             # Check if complete
             if status.is_complete:
                 elapsed = time.time() - start_time
-                return Ok(
-                    PollResult(
-                        status=status, elapsed_seconds=elapsed, poll_count=poll_count
-                    )
-                )
+                return Ok(PollResult(status=status, elapsed_seconds=elapsed, poll_count=poll_count))
 
             # Check timeout
             elapsed = time.time() - start_time

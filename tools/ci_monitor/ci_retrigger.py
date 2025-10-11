@@ -60,12 +60,8 @@ class BranchProtection(BaseModel):
     """Branch protection status."""
 
     protected: bool = Field(..., description="Whether branch is protected")
-    allows_force_push: bool = Field(
-        default=False, description="Whether force push is allowed"
-    )
-    required_checks: list[str] = Field(
-        default_factory=list, description="Required status checks"
-    )
+    allows_force_push: bool = Field(default=False, description="Whether force push is allowed")
+    required_checks: list[str] = Field(default_factory=list, description="Required status checks")
 
 
 # ============================================================================
@@ -145,9 +141,7 @@ class CIRetrigger:
             )
             raise ValueError(error.model_dump_json())
 
-    async def wait_and_retrigger(
-        self, pr_number: int
-    ) -> Result[RetriggerResult, RetriggerError]:
+    async def wait_and_retrigger(self, pr_number: int) -> Result[RetriggerResult, RetriggerError]:
         """
         Wait for CI to start, retrigger if timeout (AC-3 implementation).
 
@@ -428,9 +422,7 @@ class CIRetrigger:
                 timeout=5,
             )
 
-            commit_sha = (
-                sha_result.stdout.strip() if sha_result.returncode == 0 else "unknown"
-            )
+            commit_sha = sha_result.stdout.strip() if sha_result.returncode == 0 else "unknown"
 
             return Ok(commit_sha)
 

@@ -130,6 +130,7 @@ async def test_retry_first_attempt_success_no_delay(fast_policy):
     Spec: Normal operation baseline
     Expected: Operation succeeds immediately, total_attempts=1, total_delay_s=0
     """
+
     async def successful_operation():
         return "immediate_success"
 
@@ -157,6 +158,7 @@ async def test_retry_max_attempts_reached(default_policy):
     Spec: AC-4 (max retry attempts: 5 fix cycles)
     Expected: Fails after exactly 5 attempts, raises RetryExhausted
     """
+
     async def always_failing_operation():
         raise Exception("Permanent failure")
 
@@ -204,6 +206,7 @@ async def test_retry_non_retryable_error(fast_policy):
     Spec: Error condition requirement
     Expected: Certain errors (KeyboardInterrupt, SystemExit) fail without retry
     """
+
     async def non_retryable_operation():
         raise KeyboardInterrupt("User interrupted")
 
@@ -221,6 +224,7 @@ async def test_retry_custom_should_retry_predicate(fast_policy):
     Spec: Error condition requirement
     Expected: Only retries errors matching custom predicate
     """
+
     def should_retry_network_errors(exception: Exception) -> bool:
         return "network" in str(exception).lower()
 
@@ -282,6 +286,7 @@ async def test_retry_clear_error_messages(default_policy):
     Spec: Accessibility requirement
     Expected: Error messages include attempt count, errors list, actionable context
     """
+
     async def failing_operation():
         raise Exception("Database connection refused")
 
@@ -307,6 +312,7 @@ async def test_retry_result_pattern_integration(fast_policy):
     Spec: Accessibility requirement (Constitutional Law #5)
     Expected: Returns Result[T, E], no bare exceptions for control flow
     """
+
     async def operation_that_succeeds():
         return "success_value"
 

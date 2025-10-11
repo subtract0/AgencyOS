@@ -83,8 +83,8 @@ class LogError(BaseModel):
     Constitutional Law #2: Explicit error types with Pydantic.
     """
 
-    error_type: Literal["auth_error", "not_found", "timeout", "parse_error", "validation_error"] = Field(
-        description="Classification of error type"
+    error_type: Literal["auth_error", "not_found", "timeout", "parse_error", "validation_error"] = (
+        Field(description="Classification of error type")
     )
     message: str = Field(description="Human-readable error message")
     run_id: int | None = Field(default=None, description="Run ID if available")

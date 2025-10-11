@@ -221,7 +221,9 @@ class FixApplicator:
 
         # Generate commit message if not provided
         if not commit_message:
-            commit_message = f"fix: {fix.description}\n\nCo-Authored-By: Claude <noreply@anthropic.com>"
+            commit_message = (
+                f"fix: {fix.description}\n\nCo-Authored-By: Claude <noreply@anthropic.com>"
+            )
 
         # Commit fix
         commit_result = self._commit_changes(fix.file_path, commit_message)
@@ -294,9 +296,7 @@ class FixApplicator:
                 )
         except subprocess.TimeoutExpired:
             return Err(
-                FixApplicatorError(
-                    "commit_changes", "Git add timed out", ">5s", code="timeout"
-                )
+                FixApplicatorError("commit_changes", "Git add timed out", ">5s", code="timeout")
             )
         except Exception as exc:
             return Err(
@@ -338,9 +338,7 @@ class FixApplicator:
                 )
         except subprocess.TimeoutExpired:
             return Err(
-                FixApplicatorError(
-                    "commit_changes", "Git commit timed out", ">10s", code="timeout"
-                )
+                FixApplicatorError("commit_changes", "Git commit timed out", ">10s", code="timeout")
             )
         except Exception as exc:
             return Err(
@@ -446,9 +444,7 @@ class FixApplicator:
             return Ok(None)
         except subprocess.TimeoutExpired:
             return Err(
-                FixApplicatorError(
-                    "push_to_remote", "Git push timed out", ">30s", code="timeout"
-                )
+                FixApplicatorError("push_to_remote", "Git push timed out", ">30s", code="timeout")
             )
         except Exception as exc:
             return Err(
@@ -698,9 +694,7 @@ def test_apply_fix_push_rejected_merge_conflict(mock_run, temp_worktree, sample_
         # git commit
         subprocess.CompletedProcess(args=[], returncode=0, stdout="", stderr=""),
         # git rev-parse HEAD
-        subprocess.CompletedProcess(
-            args=[], returncode=0, stdout="abc123\n", stderr=""
-        ),
+        subprocess.CompletedProcess(args=[], returncode=0, stdout="abc123\n", stderr=""),
         # git push (rejected)
         subprocess.CompletedProcess(
             args=[],
@@ -741,9 +735,7 @@ def test_apply_fix_branch_protection_prevents_push(mock_run, temp_worktree, samp
         # git commit
         subprocess.CompletedProcess(args=[], returncode=0, stdout="", stderr=""),
         # git rev-parse HEAD
-        subprocess.CompletedProcess(
-            args=[], returncode=0, stdout="abc123\n", stderr=""
-        ),
+        subprocess.CompletedProcess(args=[], returncode=0, stdout="abc123\n", stderr=""),
         # git push (protected branch)
         subprocess.CompletedProcess(
             args=[],
@@ -1042,6 +1034,7 @@ def test_push_validates_credentials_missing_token(mock_run, temp_worktree, sampl
     Spec: Security validation
     Expected: Returns Err with code "missing_credentials" if no token
     """
+
     # Arrange
     # Mock git config to return no credentials
     def mock_run_side_effect(*args, **kwargs):

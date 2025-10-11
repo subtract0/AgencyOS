@@ -202,7 +202,9 @@ def test_parse_missing_dependency_error(sample_missing_dependency_log):
     result = parse_ci_logs(sample_missing_dependency_log)
 
     # Assert
-    assert result.is_ok(), f"Expected Ok, got Err: {result.unwrap_err() if result.is_err() else None}"
+    assert result.is_ok(), (
+        f"Expected Ok, got Err: {result.unwrap_err() if result.is_err() else None}"
+    )
     patterns = result.unwrap()
     assert len(patterns) == 1
     assert patterns[0].category == "missing_dependency"
@@ -776,7 +778,9 @@ def test_parse_log_with_1000_line_stack_trace():
     """
     # Arrange
     stack_trace = "Traceback (most recent call last):\n"
-    stack_trace += "\n".join([f'  File "module{i}.py", line {i}, in function_{i}\n    call()' for i in range(1000)])
+    stack_trace += "\n".join(
+        [f'  File "module{i}.py", line {i}, in function_{i}\n    call()' for i in range(1000)]
+    )
     stack_trace += "\nRuntimeError: Maximum recursion depth exceeded"
 
     # Act

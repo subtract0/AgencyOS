@@ -254,7 +254,9 @@ def test_generate_fix_for_missing_dependency(sample_missing_dependency_errors):
     result = generate_fixes(sample_missing_dependency_errors)
 
     # Assert
-    assert result.is_ok(), f"Expected Ok, got Err: {result.unwrap_err() if result.is_err() else None}"
+    assert result.is_ok(), (
+        f"Expected Ok, got Err: {result.unwrap_err() if result.is_err() else None}"
+    )
     fixes = result.unwrap()
     assert len(fixes) == 2
     assert all(fix.error_category == "missing_dependency" for fix in fixes)
@@ -989,7 +991,9 @@ def test_ac5_all_five_fix_strategies_implemented(
             strategies_covered.add(fixes[0].error_category)
 
     # Assert - AC-5 requires 5+ common error fixes
-    assert len(strategies_covered) >= 5, f"Only {len(strategies_covered)} strategies covered, need 5+"
+    assert len(strategies_covered) >= 5, (
+        f"Only {len(strategies_covered)} strategies covered, need 5+"
+    )
 
 
 @pytest.mark.unit
@@ -1024,7 +1028,10 @@ def test_generated_fixes_include_actionable_descriptions():
     if fixes:
         assert len(fixes[0].fix_strategy.description) > 10
         # Description should explain what the fix does
-        assert any(keyword in fixes[0].fix_strategy.description.lower() for keyword in ["install", "fix", "format", "check"])
+        assert any(
+            keyword in fixes[0].fix_strategy.description.lower()
+            for keyword in ["install", "fix", "format", "check"]
+        )
 
 
 @pytest.mark.unit

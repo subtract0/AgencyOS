@@ -151,9 +151,7 @@ class CLIIntegration:
 
         # Validate credentials (NECESSARY-S3: GitHub token validation)
         if not self._validate_credentials():
-            self._print_error(
-                "Missing GITHUB_TOKEN. Set via: export GITHUB_TOKEN=ghp_..."
-            )
+            self._print_error("Missing GITHUB_TOKEN. Set via: export GITHUB_TOKEN=ghp_...")
             return CLIExitCode.MISSING_CREDENTIALS
 
         # Query VectorStore for CLI patterns (Article IV)
@@ -435,9 +433,7 @@ class TestNormalOperation:
         assert exit_code == CLIExitCode.SUCCESS
         mock_loop.assert_called_once_with(pr_number=456, max_attempts=10)
 
-    async def test_cli_prints_success_summary(
-        self, mock_successful_loop_result, capsys
-    ):
+    async def test_cli_prints_success_summary(self, mock_successful_loop_result, capsys):
         """
         NECESSARY-N3: CLI prints success summary on completion.
 
@@ -484,9 +480,7 @@ class TestNormalOperation:
         assert "Exit Codes:" in captured.out
         assert exc_info.value.code == 0
 
-    async def test_vectorstore_integration_query_before_execution(
-        self, mock_agent_context
-    ):
+    async def test_vectorstore_integration_query_before_execution(self, mock_agent_context):
         """
         NECESSARY-N5: CLI queries VectorStore for patterns before execution.
 
@@ -1118,9 +1112,7 @@ class TestAccessibility:
         assert "2    Invalid arguments" in captured.out
         assert "3    Missing credentials" in captured.out
 
-    async def test_success_summary_includes_metrics(
-        self, mock_successful_loop_result, capsys
-    ):
+    async def test_success_summary_includes_metrics(self, mock_successful_loop_result, capsys):
         """
         NECESSARY-A3: Success summary includes actionable metrics.
 
@@ -1256,9 +1248,7 @@ class TestRegression:
 class TestYieldValidation:
     """Test output correctness (NECESSARY-Y)."""
 
-    async def test_exit_code_0_only_on_all_checks_passing(
-        self, mock_successful_loop_result
-    ):
+    async def test_exit_code_0_only_on_all_checks_passing(self, mock_successful_loop_result):
         """
         NECESSARY-Y1: Exit code 0 only when all CI checks pass.
 

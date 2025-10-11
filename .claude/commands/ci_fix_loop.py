@@ -75,10 +75,7 @@ def parse_arguments(args: list[str]) -> Result[dict[str, Any], str]:
         else:
             return Result.err(f"Error: Unknown argument '{arg}'. Use --help for usage.")
 
-    return Result.ok({
-        "pr_number": pr_number,
-        "max_attempts": max_attempts
-    })
+    return Result.ok({"pr_number": pr_number, "max_attempts": max_attempts})
 
 
 def validate_credentials() -> Result[None, str]:
@@ -98,8 +95,7 @@ def validate_credentials() -> Result[None, str]:
     # Validate token format (basic check)
     if not (token.startswith("ghp_") or token.startswith("ghs_") or token.startswith("gho_")):
         return Result.err(
-            "Error: GITHUB_TOKEN has invalid format.\n"
-            "Expected format: ghp_*, ghs_*, or gho_*"
+            "Error: GITHUB_TOKEN has invalid format.\nExpected format: ghp_*, ghs_*, or gho_*"
         )
 
     return Result.ok(None)
@@ -169,10 +165,7 @@ def main(args: list[str]) -> int:
 
     # Run feedback loop
     try:
-        exit_code = asyncio.run(run_feedback_loop(
-            parsed["pr_number"],
-            parsed["max_attempts"]
-        ))
+        exit_code = asyncio.run(run_feedback_loop(parsed["pr_number"], parsed["max_attempts"]))
         return exit_code
     except KeyboardInterrupt:
         print("\n\n⚠️ Interrupted by user")

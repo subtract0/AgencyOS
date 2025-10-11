@@ -331,7 +331,9 @@ def test_vectorstore_unavailable_graceful_degradation(sample_error_patterns):
     failing_context = create_agent_context(session_id="failing_vectorstore")
 
     # Mock search_memories to raise exception
-    with patch.object(failing_context, "search_memories", side_effect=Exception("VectorStore down")):
+    with patch.object(
+        failing_context, "search_memories", side_effect=Exception("VectorStore down")
+    ):
         patterns = _query_vectorstore_for_fix_patterns(failing_context, "missing_dependency")
 
         # Validate graceful degradation
@@ -961,7 +963,9 @@ def test_vectorstore_failure_doesnt_block_fix_application(sample_error_patterns)
     failing_context = create_agent_context(session_id="failing")
 
     # Mock search_memories to raise exception
-    with patch.object(failing_context, "search_memories", side_effect=Exception("VectorStore down")):
+    with patch.object(
+        failing_context, "search_memories", side_effect=Exception("VectorStore down")
+    ):
         from tools.ci_monitor.code_fix_generator import _query_vectorstore_for_fix_patterns
 
         # Query should return empty list, not raise exception
@@ -1035,7 +1039,9 @@ def test_partial_pattern_retrieval_on_error(agent_context):
 
     # Validate partial retrieval: only valid high-confidence pattern returned
     # (corrupted and low-confidence patterns filtered out)
-    assert len(patterns) == 1, f"Only valid high-confidence patterns should be retrieved, got {len(patterns)}"
+    assert len(patterns) == 1, (
+        f"Only valid high-confidence patterns should be retrieved, got {len(patterns)}"
+    )
     assert patterns[0]["confidence"] == 0.9
 
 
@@ -1112,9 +1118,9 @@ def test_spec_traceability_ac5_pattern_learning(agent_context):
     patterns = _query_vectorstore_for_fix_patterns(agent_context, "missing_dependency")
 
     assert len(patterns) > 0, "AC-5: Pattern learning functional"
-    assert any(
-        p.get("spec_reference") == "AC-5" for p in patterns
-    ), "AC-5: Spec traceability maintained"
+    assert any(p.get("spec_reference") == "AC-5" for p in patterns), (
+        "AC-5: Spec traceability maintained"
+    )
 
 
 def test_article_iv_compliance_before_after_pattern(agent_context, sample_successful_fix):

@@ -178,12 +178,12 @@ def test_article_i_zero_broken_windows():
     for module in modules:
         # Verify module uses Result pattern
         module_source = Path(module.__file__).read_text()
-        assert (
-            "from shared.type_definitions.result import" in module_source
-        ), f"Article I: {module.__name__} missing Result imports (broken window)"
-        assert (
-            "Result[" in module_source
-        ), f"Article I: {module.__name__} not using Result pattern (broken window)"
+        assert "from shared.type_definitions.result import" in module_source, (
+            f"Article I: {module.__name__} missing Result imports (broken window)"
+        )
+        assert "Result[" in module_source, (
+            f"Article I: {module.__name__} not using Result pattern (broken window)"
+        )
 
 
 # ============================================================================
@@ -360,9 +360,7 @@ def test_article_iii_multi_layer_enforcement():
     from tools.ci_monitor.status_poller import CheckState
 
     assert CheckState.is_terminal("success") is True
-    assert CheckState.is_terminal("pending") is False, (
-        "Article III: Must wait for terminal state"
-    )
+    assert CheckState.is_terminal("pending") is False, "Article III: Must wait for terminal state"
 
 
 # ============================================================================
@@ -535,9 +533,7 @@ def test_article_v_spec_exists():
     # Verify spec template compliance
     assert "## Goals" in spec_content, "Article V: Spec missing Goals section"
     assert "## Personas" in spec_content, "Article V: Spec missing Personas section"
-    assert (
-        "## Acceptance Criteria" in spec_content
-    ), "Article V: Spec missing Acceptance Criteria"
+    assert "## Acceptance Criteria" in spec_content, "Article V: Spec missing Acceptance Criteria"
     assert "## Constitutional Alignment" in spec_content, (
         "Article V: Spec missing Constitutional Alignment"
     )
@@ -555,15 +551,13 @@ def test_article_v_traceability_to_spec():
     Spec: AC-1 through AC-5 in spec-autonomous-ci-feedback-loop.md
     """
     # Verify status_poller traces to AC-1
-    status_poller_path = Path(
-        "/Users/am/Code/Agency/tools/ci_monitor/status_poller.py"
-    )
+    status_poller_path = Path("/Users/am/Code/Agency/tools/ci_monitor/status_poller.py")
     status_poller_content = status_poller_path.read_text()
 
     assert "AC-1" in status_poller_content, "Article V: Missing AC-1 traceability"
-    assert (
-        "spec-autonomous-ci-feedback-loop.md" in status_poller_content
-    ), "Article V: Missing spec reference"
+    assert "spec-autonomous-ci-feedback-loop.md" in status_poller_content, (
+        "Article V: Missing spec reference"
+    )
 
     # Verify log_fetcher traces to AC-2
     log_fetcher_path = Path("/Users/am/Code/Agency/tools/ci_monitor/log_fetcher.py")
@@ -572,9 +566,7 @@ def test_article_v_traceability_to_spec():
     assert "AC-2" in log_fetcher_content, "Article V: Missing AC-2 traceability"
 
     # Verify retry_controller traces to AC-3
-    retry_controller_path = Path(
-        "/Users/am/Code/Agency/tools/ci_monitor/retry_controller.py"
-    )
+    retry_controller_path = Path("/Users/am/Code/Agency/tools/ci_monitor/retry_controller.py")
     retry_controller_content = retry_controller_path.read_text()
 
     assert "AC-3" in retry_controller_content, "Article V: Missing AC-3 traceability"
@@ -595,9 +587,7 @@ def test_article_v_task_granularity():
     spec_content = spec_path.read_text()
 
     # Verify task breakdown exists
-    assert "## Implementation Plan" in spec_content, (
-        "Article V: Missing Implementation Plan"
-    )
+    assert "## Implementation Plan" in spec_content, "Article V: Missing Implementation Plan"
     assert "### Phase 1" in spec_content, "Article V: Missing Phase 1 breakdown"
     assert "### Phase 2" in spec_content, "Article V: Missing Phase 2 breakdown"
     assert "### Phase 3" in spec_content, "Article V: Missing Phase 3 breakdown"
@@ -651,9 +641,9 @@ async def test_all_five_articles_integrated(agent_context):
     orchestrator_source = Path(
         "/Users/am/Code/Agency/tools/ci_monitor/feedback_loop_orchestrator.py"
     ).read_text()
-    assert (
-        "spec-autonomous-ci-feedback-loop.md" in orchestrator_source
-    ), "Article V: Spec reference present"
+    assert "spec-autonomous-ci-feedback-loop.md" in orchestrator_source, (
+        "Article V: Spec reference present"
+    )
 
 
 def test_constitutional_compliance_zero_violations():

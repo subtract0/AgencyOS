@@ -222,9 +222,7 @@ class RetryController:
 
                 # Check custom retry predicate
                 if should_retry and not should_retry(exc):
-                    return Err(
-                        RetryExhausted(attempts=attempt, errors=errors + [str(exc)])
-                    )
+                    return Err(RetryExhausted(attempts=attempt, errors=errors + [str(exc)]))
 
                 # Record error
                 errors.append(str(exc))

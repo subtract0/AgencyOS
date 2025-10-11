@@ -337,9 +337,7 @@ async def wait_for_ci_to_start(pr_number: int, timeout: int = 120) -> bool:
 
     while time.time() - start_time < timeout:
         # Check if CI checks exist
-        result = run_gh_command(
-            ["gh", "pr", "checks", str(pr_number), "--json", "name,state"]
-        )
+        result = run_gh_command(["gh", "pr", "checks", str(pr_number), "--json", "name,state"])
 
         if result.is_ok():
             try:
@@ -425,9 +423,7 @@ class TestEndToEndScenario:
 
         # Configure git identity
         run_git_command(temp_worktree, ["git", "config", "user.name", "CI Test Bot"])
-        run_git_command(
-            temp_worktree, ["git", "config", "user.email", "ci-test@agency.example"]
-        )
+        run_git_command(temp_worktree, ["git", "config", "user.email", "ci-test@agency.example"])
 
         # Create intentionally broken files
         broken_file = create_intentionally_broken_code(temp_worktree)
@@ -443,9 +439,7 @@ class TestEndToEndScenario:
         assert commit_result.is_ok(), f"Failed to commit: {commit_result.unwrap_err()}"
 
         # Create test branch
-        branch_result = run_git_command(
-            temp_worktree, ["git", "checkout", "-b", test_branch_name]
-        )
+        branch_result = run_git_command(temp_worktree, ["git", "checkout", "-b", test_branch_name])
         assert branch_result.is_ok(), f"Failed to create branch: {branch_result.unwrap_err()}"
 
         # Push to remote
@@ -550,12 +544,8 @@ class TestEndToEndScenario:
             assert len(error_patterns) > 0, "Should detect at least one error pattern"
 
             # Verify missing dependency error detected
-            missing_dep_errors = [
-                e for e in error_patterns if e.category == "missing_dependency"
-            ]
-            assert len(missing_dep_errors) > 0, (
-                "Should detect missing pytest dependency error"
-            )
+            missing_dep_errors = [e for e in error_patterns if e.category == "missing_dependency"]
+            assert len(missing_dep_errors) > 0, "Should detect missing pytest dependency error"
 
             # ====================================================================
             # PHASE 5: Generate and apply fix (AC-5: autonomous fix)
@@ -606,9 +596,7 @@ class TestEndToEndScenario:
             )
 
             retrigger_result = await retrigger.wait_and_retrigger(pr_number=pr_number)
-            assert retrigger_result.is_ok(), (
-                f"CI retrigger failed: {retrigger_result.unwrap_err()}"
-            )
+            assert retrigger_result.is_ok(), f"CI retrigger failed: {retrigger_result.unwrap_err()}"
 
             retrigger_info = retrigger_result.unwrap()
             assert retrigger_info.ci_started, "CI should have started after fix"
@@ -660,9 +648,7 @@ class TestEndToEndScenario:
             )
 
             notification = notification_result.unwrap()
-            assert "success" in notification.title.lower(), (
-                "Notification should indicate success"
-            )
+            assert "success" in notification.title.lower(), "Notification should indicate success"
 
             # ====================================================================
             # PHASE 8: Verify VectorStore integration (Article IV)
@@ -858,12 +844,16 @@ def test_necessary_coverage_end_to_end():
     Total: 349,426 bytes, 304+ tests across 11 files
     """
     # Verify end-to-end test class exists
-    assert hasattr(TestEndToEndScenario, "test_full_autonomous_cycle_intentional_failure_to_success")
+    assert hasattr(
+        TestEndToEndScenario, "test_full_autonomous_cycle_intentional_failure_to_success"
+    )
     assert hasattr(TestEndToEndScenario, "test_orchestrator_integration_with_real_components")
 
     # Verify acceptance criteria coverage
     ac_criteria = ["AC-1", "AC-2", "AC-3", "AC-4", "AC-5"]
-    test_docstring = TestEndToEndScenario.test_full_autonomous_cycle_intentional_failure_to_success.__doc__
+    test_docstring = (
+        TestEndToEndScenario.test_full_autonomous_cycle_intentional_failure_to_success.__doc__
+    )
 
     for criterion in ac_criteria:
         assert criterion in test_docstring, f"Missing acceptance criterion: {criterion}"
@@ -898,7 +888,10 @@ def test_constitutional_compliance_documented():
 
     # Verify all articles documented
     for i in range(1, 6):
-        assert f"Article {i}" in docstring or f"Article {['I', 'II', 'III', 'IV', 'V'][i-1]}" in docstring
+        assert (
+            f"Article {i}" in docstring
+            or f"Article {['I', 'II', 'III', 'IV', 'V'][i - 1]}" in docstring
+        )
 
     # Verify acceptance criteria documented
     for i in range(1, 6):

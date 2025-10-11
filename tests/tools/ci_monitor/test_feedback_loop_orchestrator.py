@@ -333,7 +333,9 @@ class TestNormalOperation:
             # (Implementation pending)
             assert orchestrator.pr_number == 123
 
-    @pytest.mark.skip(reason="Integration test placeholder - implementation complete but full mocking complex")
+    @pytest.mark.skip(
+        reason="Integration test placeholder - implementation complete but full mocking complex"
+    )
     async def test_full_cycle_one_fix_iteration(
         self,
         mock_ci_status_failed,
@@ -1086,6 +1088,16 @@ def test_necessary_coverage_complete():
     assert total_tests == 43, f"Expected 43 tests, found {total_tests}"
 
     # Verify all NECESSARY categories present
-    required_categories = ["Normal", "Edge", "Corner", "Error", "Security", "Stress", "Accessibility", "Regression", "Yield"]
+    required_categories = [
+        "Normal",
+        "Edge",
+        "Corner",
+        "Error",
+        "Security",
+        "Stress",
+        "Accessibility",
+        "Regression",
+        "Yield",
+    ]
     for category in required_categories:
         assert category in test_counts, f"Missing NECESSARY category: {category}"

@@ -239,12 +239,7 @@ def test_fetch_logs_handles_truncated_output():
     - Available content still parsed correctly
     - AC-2: Resilience (partial log downloads)
     """
-    truncated_output = (
-        "Job logs start...\n"
-        "Line 1\n"
-        "Line 2\n"
-        "[Log truncated due to size limit]\n"
-    )
+    truncated_output = "Job logs start...\nLine 1\nLine 2\n[Log truncated due to size limit]\n"
 
     with patch("subprocess.run") as mock_run:
         mock_run.return_value = MagicMock(
