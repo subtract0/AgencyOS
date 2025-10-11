@@ -23,7 +23,7 @@ Created: 2025-10-11
 """
 
 from datetime import datetime
-from typing import Any
+from typing import TypedDict
 
 from pydantic import BaseModel, Field
 
@@ -103,6 +103,38 @@ class QueryError(BaseModel):
     is_recoverable: bool = Field(default=True)
 
 
+class LearningStatistics(BaseModel):
+    """
+    Statistics about stored learning patterns.
+
+    Attributes:
+        total_patterns: Total number of patterns
+        categories: Count by category
+        avg_confidence: Average confidence score
+        high_confidence_count: Number of high confidence patterns (≥0.8)
+    """
+
+    total_patterns: int = Field(default=0, ge=0)
+    categories: dict[str, int] = Field(default_factory=dict)
+    avg_confidence: float = Field(default=0.0, ge=0.0, le=1.0)
+    high_confidence_count: int = Field(default=0, ge=0)
+
+
+class MemoryContent(TypedDict, total=False):
+    """
+    Type definition for VectorStore memory content.
+
+    This ensures type safety without Dict[str, Any] violations.
+    """
+
+    category: str
+    strategy_type: str
+    command: str
+    confidence: float
+    timestamp: str
+    evidence_count: int
+
+
 # ============================================================================
 # PUBLIC API (Article IV: VectorStore Integration)
 # ============================================================================
@@ -173,7 +205,7 @@ def store_successful_fix(
 
 
 def _parse_learning_from_memory(
-    content: dict[str, Any], min_confidence: float
+    content: MemoryContent, min_confidence: float
 ) -> FixLearning | None:
     """Parse FixLearning from memory content (<50 lines)."""
     # Validate confidence threshold
@@ -199,15 +231,11 @@ def _parse_learning_from_memory(
         return None
 
 
-def _extract_patterns(memories: list[dict[str, Any]], min_confidence: float) -> list[FixLearning]:
+def _extract_patterns(memories: list[MemoryContent], min_confidence: float) -> list[FixLearning]:
     """Extract and validate patterns from memories (<50 lines)."""
     patterns: list[FixLearning] = []
     for memory in memories:
-        content = memory.get("content", {})
-        if not isinstance(content, dict):
-            continue
-
-        learning = _parse_learning_from_memory(content, min_confidence)
+        learning = _parse_learning_from_memory(memory, min_confidence)
         if learning:
             patterns.append(learning)
 
@@ -269,15 +297,10 @@ def query_fix_patterns(
 # ============================================================================
 
 
-def _calculate_statistics(patterns: list[dict[str, Any]]) -> dict[str, Any]:
+def _calculate_statistics(patterns: list[MemoryContent]) -> LearningStatistics:
     """Calculate statistics from patterns (<50 lines)."""
     if not patterns:
-        return {
-            "total_patterns": 0,
-            "categories": {},
-            "avg_confidence": 0.0,
-            "high_confidence_count": 0,
-        }
+        return LearningStatistics()
 
     categories: dict[str, int] = {}
     confidences: list[float] = []
@@ -293,15 +316,15 @@ def _calculate_statistics(patterns: list[dict[str, Any]]) -> dict[str, Any]:
     avg_confidence = sum(confidences) / len(confidences) if confidences else 0.0
     high_confidence_count = sum(1 for c in confidences if c >= 0.8)
 
-    return {
-        "total_patterns": len(patterns),
-        "categories": categories,
-        "avg_confidence": avg_confidence,
-        "high_confidence_count": high_confidence_count,
-    }
+    return LearningStatistics(
+        total_patterns=len(patterns),
+        categories=categories,
+        avg_confidence=avg_confidence,
+        high_confidence_count=high_confidence_count,
+    )
 
 
-def get_learning_statistics(context: AgentContext) -> dict[str, Any]:
+def get_learning_statistics(context: AgentContext) -> LearningStatistics:
     """
     Get statistics about stored learning patterns (<50 lines).
 
@@ -309,18 +332,20 @@ def get_learning_statistics(context: AgentContext) -> dict[str, Any]:
         context: AgentContext for VectorStore access
 
     Returns:
-        Dictionary with learning statistics
+        LearningStatistics with pattern statistics
 
     Example:
         >>> stats = get_learning_statistics(context)
-        >>> print(f"Learned {stats['total_patterns']} patterns")
+        >>> print(f"Learned {stats.total_patterns} patterns")
     """
     try:
         memories = context.search_memories(
             tags=["fix", "pattern", "success"],
             include_session=False,
         )
-        patterns = [m.get("content", {}) for m in memories if isinstance(m.get("content"), dict)]
+        patterns: list[MemoryContent] = [
+            m.get("content", {}) for m in memories if isinstance(m.get("content"), dict)
+        ]
         return _calculate_statistics(patterns)
     except Exception:
         return _calculate_statistics([])
