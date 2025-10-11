@@ -57,7 +57,7 @@ jobs:
       - name: Install dependencies
         run: |
           pip install -e .
-          pip install pytest pytest-asyncio psutil requests
+          pip install pytest pytest-asyncio psutil requests python-dotenv
 
       - name: Start Ollama service
         run: |
