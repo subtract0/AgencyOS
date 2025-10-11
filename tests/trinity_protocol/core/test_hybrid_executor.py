@@ -32,21 +32,6 @@ from unittest.mock import AsyncMock, Mock, patch
 import pytest
 import requests
 
-# Mark specific test classes to skip due to Ollama dependency
-# Note: Most tests use mocked agents, so only skip classes that actually need Ollama
-
-
-def is_ollama_available() -> bool:
-    """Check if Ollama server is running at localhost:11434."""
-    try:
-        response = requests.get("http://localhost:11434/api/tags", timeout=1)
-        return response.status_code == 200
-    except Exception:
-        return False
-
-
-OLLAMA_AVAILABLE = is_ollama_available()
-
 from shared.agent_context import AgentContext, create_agent_context
 from shared.cost_tracker import CostTracker, MemoryStorage
 from shared.message_bus import MessageBus
@@ -1156,9 +1141,8 @@ class TestYieldValidation:
             assert result.test_failures >= 0
 
     @pytest.mark.asyncio
-    @pytest.mark.xfail(reason="Ollama dependency in CI - requires local infrastructure")
     async def test_execute_task_with_escalation_returns_complete_task_result(
-        self, hybrid_executor, sample_code_fix_task
+        self, hybrid_executor, sample_code_fix_task, docker_ollama
     ):
         """Test _execute_task_with_escalation returns complete TaskResult."""
         # Arrange
