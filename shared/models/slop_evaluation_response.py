@@ -7,6 +7,7 @@ Constitutional Compliance:
 
 from pydantic import BaseModel, Field, confloat
 
+
 # Robust Pydantic model for LLM JSON output
 class RawSlopEval(BaseModel):
     """Raw evaluation response from GPT-5 slop rubric.

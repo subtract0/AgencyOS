@@ -349,7 +349,7 @@ class TestRetryWithPolicySync:
             nonlocal call_count
             call_count += 1
             if call_count < 3:
-                raise IOError("Transient I/O error")
+                raise OSError("Transient I/O error")
             return "success"
 
         result = retry_with_policy_sync("sync_task_2", operation, policy)

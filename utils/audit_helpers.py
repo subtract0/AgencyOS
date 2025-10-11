@@ -41,7 +41,7 @@ def append_jsonl_atomic(path: str, obj: dict) -> None:
     # Read existing content
     existing_content = ""
     if os.path.exists(path):
-        with open(path, "r") as f:
+        with open(path) as f:
             existing_content = f.read()
 
     # Write existing + new line to temp file
