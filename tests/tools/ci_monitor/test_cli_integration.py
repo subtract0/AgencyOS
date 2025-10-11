@@ -68,7 +68,7 @@ from tools.ci_monitor.feedback_loop_orchestrator import (
     LoopResult,
     autonomous_ci_fix_loop,
 )
-from tools.ci_monitor.status_poller import CIStatus, CheckResult
+from tools.ci_monitor.status_poller import CheckResult, CIStatus
 
 # ============================================================================
 # CLI IMPLEMENTATION (To be created in tools/ci_monitor/cli_integration.py)
@@ -189,8 +189,8 @@ class CLIIntegration:
         # Extract PR number (required positional argument)
         try:
             pr_number = int(args[0])
-        except (ValueError, IndexError):
-            raise ValueError("PR number is required as first argument")
+        except (ValueError, IndexError) as e:
+            raise ValueError("PR number is required as first argument") from e
 
         # Parse optional flags
         max_attempts = 5
@@ -290,7 +290,7 @@ For more information: docs/adr/ADR-027-autonomous-ci-feedback-loop.md
 
     def _print_success(self, result: LoopResult) -> None:
         """Print success summary (NECESSARY-A: Accessibility)."""
-        print(f"✓ CI Feedback Loop Complete")
+        print("✓ CI Feedback Loop Complete")
         print(f"  PR #{result.ci_status.pr_number}: All checks passing")
         print(f"  Fix attempts: {result.fix_attempts}")
         print(f"  Elapsed time: {result.elapsed_seconds:.1f}s")
@@ -298,11 +298,11 @@ For more information: docs/adr/ADR-027-autonomous-ci-feedback-loop.md
 
     def _print_blocked(self, error: LoopError) -> None:
         """Print blocked message (NECESSARY-A: Accessibility)."""
-        print(f"✗ CI Feedback Loop Blocked")
+        print("✗ CI Feedback Loop Blocked")
         print(f"  Reason: {error.message}")
         print(f"  Details: {error.details}")
         print(f"  Recoverable: {error.recoverable}")
-        print(f"\nManual intervention required. Review CI logs for details.")
+        print("\nManual intervention required. Review CI logs for details.")
 
 
 # ============================================================================

@@ -1396,9 +1396,7 @@ def test_constitutional_article_ii_100_percent_verification():
     necessary_categories = {
         "N": 3,  # Normal operation
         "E": 4,  # Edge cases
-        "C": 2,  # Corner cases
-        "E": 4,  # Error conditions
-        "S": 2,  # Security
+        "C": 2,  # Error conditions
         "S": 2,  # Stress
         "A": 2,  # Accessibility
         "R": 1,  # Regression

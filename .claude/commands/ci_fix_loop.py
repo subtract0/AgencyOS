@@ -36,8 +36,8 @@ from typing import Any
 
 # Import the orchestrator
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.dirname(__file__))))
-from tools.ci_monitor.feedback_loop_orchestrator import autonomous_ci_fix_loop
 from shared.type_definitions.result import Result
+from tools.ci_monitor.feedback_loop_orchestrator import autonomous_ci_fix_loop
 
 
 def parse_arguments(args: list[str]) -> Result[dict[str, Any], str]:
@@ -118,7 +118,7 @@ async def run_feedback_loop(pr_number: int, max_attempts: int) -> int:
     """
     print(f"🚀 Starting autonomous CI feedback loop for PR #{pr_number}")
     print(f"   Max attempts: {max_attempts}")
-    print(f"   Monitoring CI status...\n")
+    print("   Monitoring CI status...\n")
 
     result = await autonomous_ci_fix_loop(pr_number, max_attempts)
 
@@ -130,7 +130,7 @@ async def run_feedback_loop(pr_number: int, max_attempts: int) -> int:
             print(f"   Elapsed time: {loop_result.elapsed_seconds:.1f}s")
             return 0
         else:
-            print(f"\n⚠️ Blocked: Unable to resolve CI failures")
+            print("\n⚠️ Blocked: Unable to resolve CI failures")
             print(f"   Final state: {loop_result.final_state}")
             print(f"   Attempts used: {loop_result.fix_attempts}/{max_attempts}")
             return 1

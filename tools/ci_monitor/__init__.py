@@ -60,17 +60,13 @@ __all__ = [
 ]
 
 # Log Fetcher (AC-2: Autonomous log fetching)
-from .log_fetcher import LogContent, LogError, LogSection, fetch_failure_logs
-
-# Status Poller exports (AC-1: Autonomous monitoring)
-from .status_poller import (
-    CIStatus,
-    CheckResult,
-    CheckState,
-    PollResult,
-    StatusPoller,
-    StatusPollerError,
-    poll_until_complete,
+# CI Retrigger exports (AC-3: Autonomous retrigger)
+from .ci_retrigger import (
+    BranchProtection,
+    CIRetrigger,
+    RetriggerError,
+    RetriggerResult,
+    wait_and_retrigger_ci,
 )
 
 # Error Parser exports (AC-5: Error pattern recognition)
@@ -81,15 +77,6 @@ from .code_error_parser import (
     sanitize_log_output,
 )
 
-# CI Retrigger exports (AC-3: Autonomous retrigger)
-from .ci_retrigger import (
-    BranchProtection,
-    CIRetrigger,
-    RetriggerError,
-    RetriggerResult,
-    wait_and_retrigger_ci,
-)
-
 # Fix Applicator exports (AC-3: Apply fixes and push)
 from .fix_applicator import (
     CodeFix,
@@ -98,6 +85,7 @@ from .fix_applicator import (
     FixApplicatorError,
     apply_fix_and_push,
 )
+from .log_fetcher import LogContent, LogError, LogSection, fetch_failure_logs
 
 # Smart Notifier exports (AC-4: Smart notification)
 from .smart_notifier import (
@@ -107,4 +95,15 @@ from .smart_notifier import (
     SmartNotifier,
     create_user_notification,
     should_notify_user,
+)
+
+# Status Poller exports (AC-1: Autonomous monitoring)
+from .status_poller import (
+    CheckResult,
+    CheckState,
+    CIStatus,
+    PollResult,
+    StatusPoller,
+    StatusPollerError,
+    poll_until_complete,
 )

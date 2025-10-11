@@ -419,7 +419,6 @@ async def test_article_iv_query_before_action(agent_context):
     Spec: AC-5 (recognizes common errors, applies known fixes)
     """
     from tools.ci_monitor.code_error_parser import ErrorPattern
-    from tools.ci_monitor.learning_integration import query_fix_patterns
 
     # Create error pattern
     error = ErrorPattern(
@@ -452,7 +451,6 @@ async def test_article_iv_store_after_success(agent_context):
     """
     from tools.ci_monitor.code_error_parser import ErrorPattern
     from tools.ci_monitor.code_fix_generator import FixStrategy, GeneratedFix
-    from tools.ci_monitor.learning_integration import store_successful_fix
 
     # Create successful fix pattern
     error = ErrorPattern(

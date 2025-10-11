@@ -35,7 +35,6 @@ from shared.type_definitions.result import Err, Ok, Result
 # ============================================================================
 # IMPORTS (Implementation to be created)
 # ============================================================================
-
 # Implementation imports (created by CodeAgent)
 from tools.ci_monitor.code_fix_generator import (
     FixError,
@@ -46,7 +45,6 @@ from tools.ci_monitor.code_fix_generator import (
     rollback_fix,
     validate_fix_safety,
 )
-
 
 # ============================================================================
 # FIXTURES
@@ -850,8 +848,9 @@ def test_generate_fix_handles_100_plus_errors():
     - Act: Generate fixes
     - Assert: Completes in reasonable time (<5 seconds)
     """
-    from tools.ci_monitor.code_error_parser import ErrorPattern
     import time
+
+    from tools.ci_monitor.code_error_parser import ErrorPattern
 
     # Arrange
     large_error_list = [

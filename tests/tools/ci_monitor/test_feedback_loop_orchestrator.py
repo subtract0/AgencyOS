@@ -50,7 +50,7 @@ from tools.ci_monitor.code_fix_generator import FixStrategy, GeneratedFix
 from tools.ci_monitor.fix_applicator import CodeFix, FixApplication
 from tools.ci_monitor.log_fetcher import LogContent, LogError, LogSection
 from tools.ci_monitor.retry_controller import RetryExhausted, RetryMetrics, RetryPolicy
-from tools.ci_monitor.status_poller import CIStatus, CheckResult, CheckState, PollResult
+from tools.ci_monitor.status_poller import CheckResult, CheckState, CIStatus, PollResult
 
 # ============================================================================
 # MOCK DATA STRUCTURES

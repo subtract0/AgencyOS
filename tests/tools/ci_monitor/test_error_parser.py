@@ -33,14 +33,12 @@ from shared.type_definitions.result import Err, Ok, Result
 # ============================================================================
 # IMPORTS (Implementation now available)
 # ============================================================================
-
 from tools.ci_monitor.code_error_parser import (
     ErrorPattern,
     ParseError,
     parse_ci_logs,
     sanitize_log_output,
 )
-
 
 # ============================================================================
 # FIXTURES
@@ -1157,21 +1155,23 @@ def test_necessary_framework_completeness():
     - Assert: All 9 categories have tests
     """
     # Arrange
-    necessary_categories = {
-        "N": "Normal",  # 7 tests (5 AC-5 patterns + 2 variants)
-        "E": "Edge",  # 3 tests (multi-line, interleaved, nested)
-        "C": "Corner",  # 4 tests (empty, whitespace, unicode, malformed)
-        "E": "Error",  # 3 tests (None, encoding, type mismatch)
-        "S": "Security",  # 6 tests (ANSI, injection, HTML, DoS, code exec, encoding)
-        "S": "Stress",  # 3 tests (large log, long line, deep stack)
-        "A": "Accessibility",  # 3 tests (actionable messages, categories, confidence)
-        "R": "Regression",  # 2 tests (pytest, unittest formats)
-        "Y": "Yield",  # 3 tests (Result types, ErrorPattern, spec)
+    # NECESSARY pattern compliance check
+    # Note: Using unique keys to avoid F601 error
+    necessary_count = {
+        "Normal": 7,  # 5 AC-5 patterns + 2 variants
+        "Edge": 3,  # multi-line, interleaved, nested
+        "Corner": 4,  # empty, whitespace, unicode, malformed
+        "Error": 3,  # None, encoding, type mismatch
+        "Security": 6,  # ANSI, injection, HTML, DoS, code exec, encoding
+        "Stress": 3,  # large log, long line, deep stack
+        "Accessibility": 3,  # actionable messages, categories, confidence
+        "Regression": 2,  # pytest, unittest formats
+        "Yield": 3,  # Result types, ErrorPattern, spec
     }
 
     # Act: Test counts verified through test discovery
     # (This meta-test documents that all 9 categories are addressed)
 
     # Assert
-    assert len(necessary_categories) == 9
+    assert len(necessary_count) == 9
     # 34+ tests total covering all NECESSARY dimensions
