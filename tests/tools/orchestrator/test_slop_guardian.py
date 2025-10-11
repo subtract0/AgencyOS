@@ -469,12 +469,13 @@ class TestAuditLogging:
 
         # Re-import to pick up new env var
         import importlib
+
         import utils.audit_helpers
         importlib.reload(utils.audit_helpers)
         import tools.orchestrator.slop_guardian
         importlib.reload(tools.orchestrator.slop_guardian)
 
-        from tools.orchestrator.slop_guardian import log_slop_evaluation, SlopVerdict
+        from tools.orchestrator.slop_guardian import SlopVerdict
 
         verdict = SlopVerdict(
             score=2.8,
@@ -490,7 +491,7 @@ class TestAuditLogging:
         assert audit_file.exists()
 
         # Verify audit entry format
-        with open(audit_file, "r") as f:
+        with open(audit_file) as f:
             entry = json.loads(f.read())
 
         assert "timestamp" in entry
@@ -507,12 +508,13 @@ class TestAuditLogging:
 
         # Re-import to pick up new env var
         import importlib
+
         import utils.audit_helpers
         importlib.reload(utils.audit_helpers)
         import tools.orchestrator.slop_guardian
         importlib.reload(tools.orchestrator.slop_guardian)
 
-        from tools.orchestrator.slop_guardian import log_slop_evaluation, SlopVerdict
+        from tools.orchestrator.slop_guardian import SlopVerdict
 
         verdict1 = SlopVerdict(
             score=2.8,
@@ -533,7 +535,7 @@ class TestAuditLogging:
 
         # Verify 2 entries in log
         audit_file = tmp_path / "audit" / "slop_immunity" / "slop_evaluations.jsonl"
-        with open(audit_file, "r") as f:
+        with open(audit_file) as f:
             lines = f.readlines()
 
         assert len(lines) == 2

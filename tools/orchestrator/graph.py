@@ -8,8 +8,14 @@ from shared.agent_context import AgentContext  # type: ignore
 from shared.models.orchestrator import ExecutionMetrics
 from shared.type_definitions.json import JSONValue
 
-from .scheduler import OrchestrationPolicy, OrchestrationResult, TaskResult, TaskSpec
-from .scheduler import _telemetry_emit, run_parallel as _run_parallel
+from .scheduler import (
+    OrchestrationPolicy,
+    OrchestrationResult,
+    TaskResult,
+    TaskSpec,
+    _telemetry_emit,
+)
+from .scheduler import run_parallel as _run_parallel
 from .slop_guardian import SlopDetected, SlopGuardian, enforce_slop_immunity
 
 

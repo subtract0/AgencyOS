@@ -26,9 +26,11 @@ from .retry_policy import (
     IdempotencyKey,
     RetryExhausted,
     RetryMetrics,
-    RetryPolicy as EnhancedRetryPolicy,
     retry_with_policy,
     retry_with_policy_sync,
+)
+from .retry_policy import (
+    RetryPolicy as EnhancedRetryPolicy,
 )
 from .scheduler import (
     BackoffType,

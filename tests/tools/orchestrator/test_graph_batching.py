@@ -41,7 +41,6 @@ from tools.orchestrator.scheduler import (
     TaskSpec,
 )
 
-
 # ============================================================================
 # DETERMINISTIC BATCHING ALGORITHM TESTS
 # ============================================================================

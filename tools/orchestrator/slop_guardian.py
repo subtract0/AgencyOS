@@ -20,16 +20,16 @@ import hashlib
 import json
 import os
 import time
-from datetime import datetime, timezone
+from datetime import UTC, datetime, timezone
 from enum import Enum
 from typing import Any, Optional
 
 import openai
-from pydantic import BaseModel, Field, field_validator, model_validator, ValidationError
+from pydantic import BaseModel, Field, ValidationError, field_validator, model_validator
 
 from shared.models.slop_evaluation_response import RawSlopEval
 from shared.type_definitions.result import Err, Ok, Result
-from utils.audit_helpers import write_audit_entry, AGENCY_DATA_DIR
+from utils.audit_helpers import AGENCY_DATA_DIR, write_audit_entry
 
 
 class VerdictStatus(str, Enum):
@@ -80,7 +80,7 @@ class SlopVerdict(BaseModel):
         default=None, description="Verdict status (ACCEPT/REVISE/REJECT), auto-computed from score"
     )
     evaluated_at: str = Field(
-        default_factory=lambda: datetime.now(timezone.utc).isoformat(),
+        default_factory=lambda: datetime.now(UTC).isoformat(),
         description="ISO 8601 timestamp of evaluation (UTC)",
     )
 
@@ -88,7 +88,7 @@ class SlopVerdict(BaseModel):
         use_enum_values = True
 
     @model_validator(mode="after")
-    def compute_status(self) -> "SlopVerdict":
+    def compute_status(self) -> SlopVerdict:
         """Compute verdict status from score if not provided."""
         if self.status is None:
             if self.score >= 3.5:
@@ -146,7 +146,7 @@ class SlopGuardian:
         VerdictStatus.REVISE  # score: 2.5, reasons: ["Vague outcome", "No metrics"]
     """
 
-    def __init__(self, model: str = "gpt-5", temperature: float = 0.3, client: Optional[Any] = None):
+    def __init__(self, model: str = "gpt-5", temperature: float = 0.3, client: Any | None = None):
         """
         Initialize slop guardian.
 
@@ -330,7 +330,7 @@ Respond in JSON format only."""
         """
         prompt = (
             "Rewrite the following specification preserving intent but applying these actionable fixes:\n"
-            f"Fixes:\n- "
+            "Fixes:\n- "
             + "\n- ".join(fixes)
             + "\n\nOriginal:\n" + original_text
         )
@@ -394,7 +394,7 @@ def log_slop_evaluation(
     - HMAC-SHA256 signing with secret key (vs plain SHA256)
     """
     audit_entry = {
-        "timestamp": datetime.now(timezone.utc).isoformat(),
+        "timestamp": datetime.now(UTC).isoformat(),
         "stage": stage,
         "attempt": attempt,
         "task_id": task_id,
