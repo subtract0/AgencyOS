@@ -74,6 +74,13 @@ This is the first true **AGI-class development system** - autonomous, adaptive, 
 - Graceful degradation under resource constraints
 - Batch remaining tasks when layer > workers
 
+### **8. Two-Stage Workflow** (Leap 7 Innovation)
+- **Stage 1: Spec Generation** - Generate comprehensive specification with acceptance criteria
+- **Stage 2: TDD Execution** - User approval checkpoint before implementation begins
+- Automatic test generation following NECESSARY pattern (Normal, Edge, Security)
+- Constitutional compliance enforced at every step (Articles I-V)
+- Backward compatible: Falls back to legacy workflow if flag not present
+
 ---
 
 ## 📋 Command Signature
@@ -87,6 +94,9 @@ This is the first true **AGI-class development system** - autonomous, adaptive, 
 
 # Load pre-defined task graph JSON
 /primeA --graph missions/leap_7_intelligent_decomposition.json
+
+# Two-stage workflow: Spec generation → User approval → TDD execution
+/primeA "Implement rate limiting middleware" --two-stage
 
 # Plan-only mode (review before execution)
 /primeA "Implement rate limiting middleware" --plan-only
@@ -102,7 +112,38 @@ This is the first true **AGI-class development system** - autonomous, adaptive, 
 
 # Compose from templates (future)
 /primeA compose feature_auth using [spec_feature, code_pydantic, test_unit]
+
+# Show help
+/primeA --help
 ```
+
+---
+
+## 🔧 Command Flags
+
+| Flag | Description | Compatible Flags |
+|------|-------------|------------------|
+| `--two-stage` | Two-stage workflow with spec approval checkpoint | `--visualize`, `--auto-pr` |
+| `--graph <file>` | Load pre-defined task graph JSON | `--force`, `--auto-pr`, `--visualize` |
+| `--plan-only` | Generate task graph without execution | `--visualize` |
+| `--visualize` | Show real-time Mermaid DAG and ASCII tree | All flags |
+| `--auto-pr` | Automatically create GitHub PR on completion | All flags except `--plan-only` |
+| `--force` | Override budget limits (logged to audit trail) | `--graph`, `--auto-pr` |
+| `--help` | Show detailed usage information | None |
+
+**Flag Priority Order**:
+1. `--help` → Show help, exit immediately
+2. `--two-stage` → Route to TwoStageOrchestrator, bypass legacy workflow
+3. `--plan-only` → Generate task graph, save to file, exit
+4. `--graph <file>` → Load explicit graph file
+5. No args → Auto-select from backlog priority queue
+6. `<intent>` → Natural language → task graph generation
+
+**Default Behavior** (no flags):
+- Auto-select highest priority task from backlog (`~/.agency/memories/agency_backlog/test_suite_gaps.md`)
+- Generate task graph via Planner agent
+- Execute with legacy workflow (STEPS 3-7)
+- No PR creation (manual review required)
 
 ---
 
@@ -230,6 +271,53 @@ Output ONLY valid JSON matching TaskGraph schema.
 **Mode 3: Explicit Graph File** (`--graph <file>`):
 1. Read JSON from file path (e.g., `missions/leap_7_intelligent_decomposition.json`)
 2. Parse directly (skip planner agent)
+
+---
+
+### **STEP 2.5: Two-Stage Workflow Routing** 🔀 (Conditional)
+
+**If `--two-stage` flag is present**, route to TwoStageOrchestrator instead of legacy workflow:
+
+```python
+import sys
+
+if "--two-stage" in sys.argv:
+    # Two-stage workflow: Spec generation → User approval → TDD execution
+    from tools.orchestrator.two_stage_orchestrator import TwoStageOrchestrator
+
+    orchestrator = TwoStageOrchestrator()
+
+    # Extract intent from args
+    intent = " ".join(arg for arg in sys.argv[1:] if not arg.startswith("--"))
+
+    # Run two-stage workflow
+    result = orchestrator.orchestrate(
+        intent=intent,
+        visualize="--visualize" in sys.argv,
+        auto_pr="--auto-pr" in sys.argv
+    )
+
+    if result.is_err():
+        print(f"❌ Two-stage workflow failed: {result.unwrap_err()}")
+        exit(1)
+
+    # Exit after two-stage completion (no legacy workflow)
+    print("✅ Two-stage workflow complete")
+    exit(0)
+
+# Otherwise, continue with legacy workflow (STEPS 3-7)
+```
+
+**Two-Stage Workflow Overview**:
+1. **Stage 1**: Generate specification with acceptance criteria, test plan
+2. **Checkpoint**: User approval (review spec before implementation)
+3. **Stage 2**: TDD execution (tests-first, then implementation)
+4. **Verification**: All tests pass, constitutional compliance validated
+
+**Backward Compatibility**:
+- Without `--two-stage`: Uses legacy workflow (STEPS 3-7 below)
+- With `--two-stage`: Routes to TwoStageOrchestrator, bypasses legacy workflow
+- All existing flags (`--plan-only`, `--auto-pr`, etc.) still work
 
 ---
 
@@ -677,7 +765,60 @@ Suggested Fixes:
 Please refine mission description and retry.
 ```
 
-### Example 3: Production-Hardened Graph Execution
+### Example 3: Two-Stage Workflow with User Approval
+```bash
+$ /primeA "Implement rate limiting middleware for API endpoints" --two-stage
+
+📝 Generating specification...
+
+## Stage 1: Specification Generation
+
+### Feature: Rate Limiting Middleware
+**Objective**: Protect API from abuse via token bucket algorithm
+
+**Acceptance Criteria**:
+- ✅ Rate limit configurable per endpoint (requests/minute)
+- ✅ Graceful degradation (429 status with Retry-After header)
+- ✅ Redis backend for distributed tracking
+- ✅ Exempt health check endpoints from rate limiting
+- ✅ Admin override mechanism for trusted IPs
+
+**Test Plan (NECESSARY)**:
+- Normal: Valid request under limit succeeds
+- Normal: Multiple requests under limit all succeed
+- Edge: Request at exact limit threshold succeeds
+- Edge: Request exceeding limit returns 429
+- Security: High-volume burst attack blocked
+- Security: IP spoofing attempts detected
+
+**Estimated Effort**: 2-3 hours (Tier 2, moderate complexity)
+**Estimated Cost**: $1.80 (5 Code tasks, 3 Test tasks, all Tier 2)
+
+🚦 Approve specification and proceed to implementation? [Y/n]: Y
+
+## Stage 2: TDD Execution
+
+Phase 1/2: Test Generation (3 tasks)
+  ✅ test_rate_limit_normal_usage (Tier 2, local)
+  ✅ test_rate_limit_edge_cases (Tier 2, local)
+  ✅ test_rate_limit_security (Tier 2, local)
+
+Phase 2/2: Implementation (5 tasks)
+  [Batch 1: 3 workers]
+  ✅ code_token_bucket_algorithm (Tier 2, gpt-4o)
+  ✅ code_redis_backend (Tier 2, local)
+  ✅ code_middleware_integration (Tier 2, local)
+  [Batch 2: 2 workers]
+  ✅ code_admin_override (Tier 2, local)
+  ✅ code_health_check_exemption (Tier 2, local)
+
+✅ Complete! 8/8 tasks, 47 tests passing
+🧠 Stored 3 new patterns (token bucket, distributed rate limit, middleware)
+💰 Cost: $1.20 (33% under estimate)
+📋 Files modified: 5 created, 2 updated
+```
+
+### Example 4: Production-Hardened Graph Execution
 ```bash
 $ /primeA --graph missions/leap_7_intelligent_decomposition.json
 
@@ -744,6 +885,13 @@ Phase 3/3: Validation & Testing (3 tasks)
 - ✅ **MANDATORY**: Mark all complete before final report
 - ✅ Pattern: "Always update TodoWrite at completion" (confidence 1.0)
 
+### **6. Two-Stage Workflow** (Leap 7 Innovation)
+- ✅ Spec generation with acceptance criteria validation
+- ✅ User approval checkpoint (review before implementation)
+- ✅ Automatic TDD graph generation (NECESSARY pattern compliance)
+- ✅ Backward compatibility (flag-based routing, no breaking changes)
+- ✅ Constitutional compliance enforced at both stages
+
 ---
 
 ## 🧬 Meta-Intelligence Patterns
@@ -792,6 +940,99 @@ Cross-graph learning:
 - ✅ Adaptive model routing (96% cost savings via P1/P2/P3 + local model)
 - ✅ Constitutional compliance (Articles I-V enforcement at every step)
 - ✅ Self-evolution (VectorStore learning, emergent strategies)
+- ✅ Two-stage workflow (Leap 7: spec approval checkpoint, automatic TDD generation)
+
+**Command Handler Logic** (Pseudo-code):
+
+```python
+def handle_primea_command(args: list[str]) -> Result[str, str]:
+    """
+    Route to appropriate workflow based on flags.
+
+    Backward compatibility: All existing workflows remain intact.
+    """
+    # Priority 1: Help text
+    if "--help" in args:
+        return display_help_text()
+
+    # Priority 2: Two-stage workflow (Leap 7 innovation)
+    if "--two-stage" in args:
+        from tools.orchestrator.two_stage_orchestrator import TwoStageOrchestrator
+
+        orchestrator = TwoStageOrchestrator()
+        intent = extract_intent(args)  # Remove flags, join remaining
+
+        result = orchestrator.orchestrate(
+            intent=intent,
+            visualize="--visualize" in args,
+            auto_pr="--auto-pr" in args
+        )
+
+        return result  # Exit, bypass legacy workflow
+
+    # Priority 3: Legacy workflows (STEPS 3-7)
+    if "--plan-only" in args:
+        return plan_only_workflow(args)
+
+    if "--graph" in args:
+        graph_file = extract_graph_file(args)
+        return graph_execution_workflow(graph_file, args)
+
+    # Default: Auto-select from backlog or natural language intent
+    if len(args) == 1:  # /primeA with no args
+        return auto_select_from_backlog()
+    else:
+        intent = extract_intent(args)
+        return natural_language_workflow(intent, args)
+
+
+def display_help_text() -> Result[str, str]:
+    """Display comprehensive help text."""
+    help_text = """
+    🚀 /primeA: AgencyOS Autopoietic Orchestrator
+
+    USAGE:
+        /primeA [options] [intent]
+
+    OPTIONS:
+        --two-stage       Two-stage workflow (spec → approval → TDD)
+        --graph <file>    Load pre-defined task graph JSON
+        --plan-only       Generate task graph without execution
+        --visualize       Show real-time Mermaid DAG and ASCII tree
+        --auto-pr         Create GitHub PR automatically on completion
+        --force           Override budget limits (logged to audit trail)
+        --help            Show this help message
+
+    EXAMPLES:
+        /primeA
+            Auto-select highest priority task from backlog
+
+        /primeA "Build JWT authentication with RSA-256 signing"
+            Natural language intent → task graph → execution
+
+        /primeA "Implement rate limiting middleware" --two-stage
+            Two-stage workflow with spec approval checkpoint
+
+        /primeA --graph missions/leap_7_intelligent_decomposition.json
+            Execute pre-defined task graph
+
+        /primeA "Add caching layer" --plan-only --visualize
+            Generate and visualize task graph without execution
+
+    WORKFLOW TYPES:
+        - Auto-selection: No args → priority queue
+        - Natural language: String arg → Planner generates task graph
+        - Explicit graph: --graph <file> → load JSON directly
+        - Two-stage: --two-stage → spec generation → user approval → TDD
+
+    BACKWARD COMPATIBILITY:
+        All existing workflows remain intact. New --two-stage flag is optional.
+
+    For detailed documentation, see:
+        .claude/commands/primea.md
+    """
+    return Ok(help_text)
+```
 
 **You provide**: Strategic WHAT (mission intent)
 **I handle**: Tactical HOW (parallel execution, agent orchestration) and WHEN (dependency resolution, scheduling)

@@ -1,0 +1,659 @@
+{
+  "mission": "Leap 7: Test-Driven Autonomy - Two-Stage TDD Protocol",
+  "leap_number": 7,
+  "phases": [
+    {
+      "id": "phase_1",
+      "title": "Design & Specification",
+      "tasks": [
+        {
+          "id": "spec_tdd_workflow",
+          "title": "Define Two-Stage TDD Workflow Specification",
+          "type": "Spec",
+          "tier": "Tier 1",
+          "agent": "planner",
+          "description": "Create formal specification for Intent-to-Spec \u2192 Spec-to-Execution TDD workflow. Define input modes (auto-selection, natural language intent, explicit spec), approval gates, test-first generation logic, and verification checkpoints. Use spec-kit methodology with Goals, Personas, Success Criteria sections.",
+          "dependencies": [],
+          "acceptance_criteria": [
+            "Workflow supports 3 input modes: auto-selection from backlog, natural language intent, explicit spec file",
+            "Spec approval checkpoint defined with human review prompt and edit loop",
+            "TDD graph generation logic: Test tasks created before Code tasks with verification_target",
+            "Test verification gate defined with 100% pass requirement and Article I retry logic",
+            "PR creation workflow specified with git worktree isolation and mergeability check"
+          ],
+          "estimated_tokens": 6000
+        },
+        {
+          "id": "spec_necessary_validator",
+          "title": "Design NECESSARY Compliance Validator",
+          "type": "Spec",
+          "tier": "Tier 1",
+          "agent": "planner",
+          "description": "Design AST-based validation system for NECESSARY pattern compliance in generated tests. Specify checks for descriptive names (no test_1), AAA structure (Arrange-Act-Assert), docstrings, and edge case coverage. Define auto-fix strategies for common violations.",
+          "dependencies": [],
+          "acceptance_criteria": [
+            "AST parsing logic defined for Python pytest files",
+            "Validation rules: descriptive names (regex ^test_[a-z_]+_when_[a-z_]+_then_[a-z_]+$), AAA comments, docstrings",
+            "Auto-fix strategies: name suggestion, AAA template insertion, docstring generation",
+            "Integration with test_generator agent output validation",
+            "Confidence-scored fix recommendations (0.6+ threshold)"
+          ],
+          "estimated_tokens": 5000
+        },
+        {
+          "id": "spec_test_verification_gate",
+          "title": "Architect Test Verification Gate",
+          "type": "Spec",
+          "tier": "Tier 1",
+          "agent": "chief_architect",
+          "description": "Design test verification checkpoint that runs full test suite after Code task completion. Specify retry logic (2x, 3x, 10x timeout), failure handling (rollback vs. fix), and integration with TodoWrite progress tracking. Define test isolation strategy (pytest-xdist, memory-aware workers).",
+          "dependencies": [],
+          "acceptance_criteria": [
+            "100% test pass requirement (no exceptions per Article II)",
+            "Article I retry logic: 2x, 3x, up to 10x timeout on incomplete results",
+            "Memory-aware worker calculation (3 workers local model, 10 cloud-only)",
+            "Rollback strategy: git restore on test failure",
+            "Integration with memory_aware_test_runner.py (merged in PR #56)"
+          ],
+          "estimated_tokens": 5500
+        },
+        {
+          "id": "spec_pr_creation_workflow",
+          "title": "Design PR Creation and Mergeability Workflow",
+          "type": "Spec",
+          "tier": "Tier 1",
+          "agent": "planner",
+          "description": "Specify git worktree isolation workflow for PR creation. Define branch naming conventions, commit message templates (with Co-Authored-By: Claude), PR body format (Summary, Test Plan, Constitutional Compliance), and mergeability checks (CI green, no conflicts, branch protection satisfied).",
+          "dependencies": [],
+          "acceptance_criteria": [
+            "Git worktree creation pattern: git worktree add ../Agency-{session_id} -b leap-7-tdd-autonomy",
+            "Commit message template: imperative title + body with Claude Co-Author",
+            "PR body format: ## Summary, ## Test Plan (checklist), ## Constitutional Compliance (Articles I-V)",
+            "Mergeability checks: gh pr checks, git status (no conflicts), CI pipeline status",
+            "Auto-cleanup: git worktree remove after merge"
+          ],
+          "estimated_tokens": 4500
+        },
+        {
+          "id": "spec_tdd_graph_generator",
+          "title": "Architect TDD-First Task Graph Generator",
+          "type": "Spec",
+          "tier": "Tier 1",
+          "agent": "chief_architect",
+          "description": "Design TaskGraph generation logic that creates Test tasks BEFORE Code tasks. Specify dependency inference (Test depends on Code, Code depends on Spec), tier classification (P1/P2/P3 based on complexity), and verification_target auto-population. Define VectorStore query for similar past graphs.",
+          "dependencies": [
+            "spec_tdd_workflow"
+          ],
+          "acceptance_criteria": [
+            "Test task generation: verification_target = code_task_id, dependencies = [code_task_id]",
+            "Dependency inference: Spec \u2192 Code \u2192 Test (reversed order in graph generation)",
+            "Tier classification: architecture/ADR = Tier 1, implementation/testing = Tier 2",
+            "VectorStore query: search for similar graphs (confidence \u2265 0.6) before generation",
+            "Pydantic validation: all Code tasks have Test dependencies (Article II enforcement)"
+          ],
+          "estimated_tokens": 6500
+        }
+      ]
+    },
+    {
+      "id": "phase_2",
+      "title": "Core Implementation - Stage 1 (Intent-to-Spec)",
+      "tasks": [
+        {
+          "id": "test_intent_parser",
+          "title": "AAA Tests for Intent Parser (3 Input Modes)",
+          "type": "Test",
+          "tier": "Tier 2",
+          "agent": "test_generator",
+          "description": "Generate AAA-pattern tests for IntentParser class. Test 3 input modes: (1) auto-selection from ~/.agency/memories/agency_backlog/, (2) natural language intent string, (3) explicit spec file path. Include edge cases: empty backlog, malformed intent, missing spec file.",
+          "dependencies": [
+            "spec_tdd_workflow",
+            "code_intent_parser"
+          ],
+          "verification_target": "code_intent_parser",
+          "acceptance_criteria": [
+            "AAA structure (Arrange-Act-Assert) with comments",
+            "Happy path tests for all 3 input modes",
+            "Edge cases: empty backlog, invalid intent, FileNotFoundError",
+            "100% test coverage for IntentParser class",
+            "NECESSARY compliant (descriptive names, docstrings)"
+          ],
+          "estimated_tokens": 3000
+        },
+        {
+          "id": "code_intent_parser",
+          "title": "Implement Intent Parser with 3 Input Modes",
+          "type": "Code",
+          "tier": "Tier 2",
+          "agent": "coder",
+          "description": "Create IntentParser class in tools/orchestrator/intent_parser.py. Implement parse() method with 3 modes: (1) read backlog Markdown, find highest Ready task, (2) return raw intent string, (3) read spec file. Use Result<Intent, Error> pattern for error handling. Integrate with Memory Tool API for backlog access.",
+          "dependencies": [
+            "spec_tdd_workflow"
+          ],
+          "acceptance_criteria": [
+            "IntentParser class with parse(input: str | None, mode: InputMode) -> Result[Intent, Error]",
+            "InputMode enum: AUTO_SELECT, NATURAL_LANGUAGE, EXPLICIT_SPEC",
+            "Memory Tool integration: context.get_anthropic_memory_tool().view('agency_backlog/test_suite_gaps.md')",
+            "Result pattern for error handling (no try/except control flow)",
+            "Pydantic Intent model with validation"
+          ],
+          "estimated_tokens": 4000
+        },
+        {
+          "id": "test_spec_generator",
+          "title": "AAA Tests for Spec Generator (Spec-Kit Template)",
+          "type": "Test",
+          "tier": "Tier 2",
+          "agent": "test_generator",
+          "description": "Generate AAA tests for SpecGenerator class. Test spec-kit template generation (Goals, Personas, Success Criteria), VectorStore pattern application, and Pydantic validation. Include edge cases: missing patterns, empty intent, invalid template.",
+          "dependencies": [
+            "spec_tdd_workflow",
+            "code_spec_generator"
+          ],
+          "verification_target": "code_spec_generator",
+          "acceptance_criteria": [
+            "AAA structure with clear test phases",
+            "Happy path: intent \u2192 spec.md with Goals/Personas/Criteria sections",
+            "VectorStore integration: mock search_memories() with sample patterns",
+            "Edge cases: no VectorStore patterns, malformed intent",
+            "Pydantic Spec model validation tests"
+          ],
+          "estimated_tokens": 3500
+        },
+        {
+          "id": "code_spec_generator",
+          "title": "Implement Spec Generator (Spec-Kit Methodology)",
+          "type": "Code",
+          "tier": "Tier 2",
+          "agent": "coder",
+          "description": "Create SpecGenerator class in tools/orchestrator/spec_generator.py. Implement generate(intent: Intent) -> Result[Spec, Error] with spec-kit template (Goals, Personas, Success Criteria). Query VectorStore for relevant patterns (confidence \u2265 0.6) and inject into spec. Use Planner agent for LLM-powered spec generation.",
+          "dependencies": [
+            "code_intent_parser"
+          ],
+          "acceptance_criteria": [
+            "SpecGenerator class with generate() method",
+            "Spec-kit template: ## Goals, ## Personas, ## Success Criteria sections",
+            "VectorStore query: context.search_memories(['spec', 'pattern'], confidence_min=0.6)",
+            "Planner agent integration for LLM spec generation",
+            "Pydantic Spec model with validation (title, goals, personas, criteria fields)"
+          ],
+          "estimated_tokens": 4500
+        },
+        {
+          "id": "test_approval_checkpoint",
+          "title": "AAA Tests for Approval Checkpoint Handler",
+          "type": "Test",
+          "tier": "Tier 2",
+          "agent": "test_generator",
+          "description": "Generate AAA tests for ApprovalCheckpoint class. Test user approval flow (approve, reject, edit loop), timeout handling (5 minutes), and spec persistence. Include edge cases: immediate approval, 3+ edit iterations, timeout expiration.",
+          "dependencies": [
+            "spec_tdd_workflow",
+            "code_approval_checkpoint"
+          ],
+          "verification_target": "code_approval_checkpoint",
+          "acceptance_criteria": [
+            "AAA pattern for all test scenarios",
+            "Happy path: user approves spec on first prompt",
+            "Edit loop: user rejects \u2192 agent re-generates \u2192 approval",
+            "Timeout: 5 minutes with user notification",
+            "Spec persistence: save approved spec to /tmp/ or Memory Tool"
+          ],
+          "estimated_tokens": 3000
+        },
+        {
+          "id": "code_approval_checkpoint",
+          "title": "Implement Approval Checkpoint with Edit Loop",
+          "type": "Code",
+          "tier": "Tier 2",
+          "agent": "coder",
+          "description": "Create ApprovalCheckpoint class in tools/orchestrator/approval_checkpoint.py. Implement await_approval(spec: Spec) -> Result[ApprovedSpec, Error] with user prompt (approve/reject/edit), edit loop (max 3 iterations), and 5-minute timeout. Use TodoWrite to track checkpoint status.",
+          "dependencies": [
+            "code_spec_generator"
+          ],
+          "acceptance_criteria": [
+            "ApprovalCheckpoint class with await_approval() async method",
+            "User prompt: [A]pprove / [R]eject / [E]dit with clear instructions",
+            "Edit loop: if reject, call Planner agent to re-generate spec (max 3 attempts)",
+            "Timeout: asyncio.wait_for(user_input(), timeout=300) with graceful error",
+            "TodoWrite integration: update checkpoint status (pending \u2192 approved/rejected)"
+          ],
+          "estimated_tokens": 4000
+        }
+      ]
+    },
+    {
+      "id": "phase_3",
+      "title": "Core Implementation - Stage 2 (Spec-to-Execution)",
+      "tasks": [
+        {
+          "id": "test_tdd_graph_generator",
+          "title": "AAA Tests for TDD-First Graph Generator",
+          "type": "Test",
+          "tier": "Tier 2",
+          "agent": "test_generator",
+          "description": "Generate AAA tests for TDDGraphGenerator class. Test TaskGraph generation with Test-before-Code ordering, dependency inference (Code \u2192 Test), verification_target auto-population, and Pydantic validation. Include edge cases: circular dependencies, missing verification_target, invalid tier.",
+          "dependencies": [
+            "spec_tdd_graph_generator",
+            "code_tdd_graph_generator"
+          ],
+          "verification_target": "code_tdd_graph_generator",
+          "acceptance_criteria": [
+            "AAA structure for all scenarios",
+            "Happy path: Spec \u2192 TaskGraph with Test tasks before Code tasks",
+            "Dependency inference: Test.dependencies = [Code.id], Test.verification_target = Code.id",
+            "Pydantic validation: Article II enforcement (all Code tasks have Test dependencies)",
+            "Edge cases: circular deps (should raise ValueError), missing agent name"
+          ],
+          "estimated_tokens": 3500
+        },
+        {
+          "id": "code_tdd_graph_generator",
+          "title": "Implement TDD-First Task Graph Generator",
+          "type": "Code",
+          "tier": "Tier 2",
+          "agent": "coder",
+          "description": "Create TDDGraphGenerator class in tools/orchestrator/tdd_graph_generator.py. Implement generate(spec: ApprovedSpec) -> Result[TaskGraph, Error] that creates Test tasks BEFORE Code tasks. Auto-infer dependencies (Test depends on Code) and populate verification_target. Query VectorStore for similar graphs (confidence \u2265 0.6).",
+          "dependencies": [
+            "code_approval_checkpoint"
+          ],
+          "acceptance_criteria": [
+            "TDDGraphGenerator class with generate() method",
+            "Task creation order: Spec \u2192 Test \u2192 Code (reversed in graph execution via dependencies)",
+            "Auto-population: Test.verification_target = Code.id, Test.dependencies.append(Code.id)",
+            "VectorStore query: search for 'task_graph' + spec.title patterns",
+            "Pydantic TaskGraph validation (enforces Article II via validators)"
+          ],
+          "estimated_tokens": 5000
+        },
+        {
+          "id": "test_necessary_validator",
+          "title": "AAA Tests for NECESSARY Compliance Validator",
+          "type": "Test",
+          "tier": "Tier 2",
+          "agent": "test_generator",
+          "description": "Generate AAA tests for NECESSARYValidator class. Test AST parsing for test name patterns (test_X_when_Y_then_Z), AAA comment detection, docstring presence, and auto-fix generation. Include edge cases: valid test file, multiple violations, unsupported syntax.",
+          "dependencies": [
+            "spec_necessary_validator",
+            "code_necessary_validator"
+          ],
+          "verification_target": "code_necessary_validator",
+          "acceptance_criteria": [
+            "AAA tests for all validation rules",
+            "Happy path: valid NECESSARY-compliant test file (passes all checks)",
+            "Violation detection: non-descriptive name, missing AAA comments, no docstring",
+            "Auto-fix generation: confidence-scored suggestions (0.6+ threshold)",
+            "Edge cases: empty file, syntax error, non-test file"
+          ],
+          "estimated_tokens": 3500
+        },
+        {
+          "id": "code_necessary_validator",
+          "title": "Implement NECESSARY Compliance Validator (AST-Based)",
+          "type": "Code",
+          "tier": "Tier 2",
+          "agent": "coder",
+          "description": "Create NECESSARYValidator class in tools/orchestrator/necessary_validator.py. Implement validate(test_file_path: str) -> Result[ValidationReport, Error] using AST parsing. Check: (1) test names match ^test_.*_when_.*_then_.*, (2) AAA comments present, (3) docstrings exist. Generate auto-fix suggestions with confidence scores.",
+          "dependencies": [
+            "code_tdd_graph_generator"
+          ],
+          "acceptance_criteria": [
+            "NECESSARYValidator class with validate() method",
+            "AST parsing: ast.parse() to analyze pytest test functions",
+            "Validation checks: name regex, AAA comment search, docstring extraction",
+            "Auto-fix suggestions: ValidationFix(description, code_snippet, confidence)",
+            "ValidationReport Pydantic model: passed: bool, violations: list[Violation], fixes: list[Fix]"
+          ],
+          "estimated_tokens": 4500
+        },
+        {
+          "id": "test_verification_gate",
+          "title": "AAA Tests for Test Verification Gate",
+          "type": "Test",
+          "tier": "Tier 2",
+          "agent": "test_generator",
+          "description": "Generate AAA tests for TestVerificationGate class. Test full test suite execution (100% pass requirement), Article I retry logic (2x, 3x, 10x timeout), memory-aware worker calculation, and rollback on failure. Include edge cases: all tests pass, partial failure, timeout.",
+          "dependencies": [
+            "spec_test_verification_gate",
+            "code_test_verification_gate"
+          ],
+          "verification_target": "code_test_verification_gate",
+          "acceptance_criteria": [
+            "AAA tests for verification workflow",
+            "Happy path: run_tests() \u2192 100% pass \u2192 Ok(TestResults)",
+            "Article I retry: timeout on attempt 1 \u2192 retry 2x \u2192 success",
+            "Memory-aware workers: local model ON \u2192 3 workers, OFF \u2192 10 workers",
+            "Rollback: test failure \u2192 git restore, Err(TestFailure)"
+          ],
+          "estimated_tokens": 4000
+        },
+        {
+          "id": "code_test_verification_gate",
+          "title": "Implement Test Verification Gate (Article I Retry)",
+          "type": "Code",
+          "tier": "Tier 2",
+          "agent": "coder",
+          "description": "Create TestVerificationGate class in tools/orchestrator/test_verification_gate.py. Implement verify() -> Result[TestResults, Error] that runs full test suite (python run_tests.py --run-all) with 100% pass requirement. Implement Article I retry logic (2x, 3x, 10x timeout). Integrate with memory_aware_test_runner.py for worker calculation.",
+          "dependencies": [
+            "code_necessary_validator"
+          ],
+          "acceptance_criteria": [
+            "TestVerificationGate class with verify() async method",
+            "Test execution: subprocess.run(['python', 'run_tests.py', '--run-all'], timeout=600)",
+            "Article I retry: on timeout, retry with 2x, 3x, 10x multipliers",
+            "Memory-aware: import get_safe_worker_count() from tools.memory_aware_test_runner",
+            "100% pass requirement: parse pytest output, Err() if any failures"
+          ],
+          "estimated_tokens": 5000
+        },
+        {
+          "id": "test_pr_creator",
+          "title": "AAA Tests for PR Creator (Git Worktree + GH CLI)",
+          "type": "Test",
+          "tier": "Tier 2",
+          "agent": "test_generator",
+          "description": "Generate AAA tests for PRCreator class. Test git worktree creation, commit with Co-Author, gh pr create, mergeability check (CI status, conflicts), and cleanup. Include edge cases: worktree exists, gh CLI auth failure, PR conflicts.",
+          "dependencies": [
+            "spec_pr_creation_workflow",
+            "code_pr_creator"
+          ],
+          "verification_target": "code_pr_creator",
+          "acceptance_criteria": [
+            "AAA tests for PR workflow",
+            "Happy path: worktree \u2192 commit \u2192 gh pr create \u2192 CI green \u2192 cleanup",
+            "Git worktree: mock subprocess calls for 'git worktree add'",
+            "Mergeability: gh pr checks --watch, parse JSON for green status",
+            "Edge cases: worktree already exists, gh auth error, CI fails"
+          ],
+          "estimated_tokens": 4000
+        },
+        {
+          "id": "code_pr_creator",
+          "title": "Implement PR Creator (Worktree Isolation + Mergeability Check)",
+          "type": "Code",
+          "tier": "Tier 2",
+          "agent": "coder",
+          "description": "Create PRCreator class in tools/orchestrator/pr_creator.py. Implement create_pr(branch_name: str, files: list[str]) -> Result[PRUrl, Error] with git worktree isolation, commit (Co-Authored-By: Claude), gh pr create, and mergeability verification. Use subprocess for git/gh commands.",
+          "dependencies": [
+            "code_test_verification_gate"
+          ],
+          "acceptance_criteria": [
+            "PRCreator class with create_pr() async method",
+            "Git worktree: subprocess.run(['git', 'worktree', 'add', f'../Agency-{session_id}', '-b', branch_name])",
+            "Commit template: 'feat: Leap 7 TDD Autonomy\\n\\nCo-Authored-By: Claude <noreply@anthropic.com>'",
+            "gh pr create: subprocess with --title, --body (Summary/Test Plan/Compliance sections)",
+            "Mergeability: gh pr checks, parse 'state: success', Err() if conflicts"
+          ],
+          "estimated_tokens": 5000
+        }
+      ]
+    },
+    {
+      "id": "phase_4",
+      "title": "Integration & Orchestration",
+      "tasks": [
+        {
+          "id": "test_two_stage_orchestrator",
+          "title": "AAA Tests for Two-Stage Orchestrator Integration",
+          "type": "Test",
+          "tier": "Tier 2",
+          "agent": "test_generator",
+          "description": "Generate AAA integration tests for TwoStageOrchestrator class. Test end-to-end workflow: Intent \u2192 Spec \u2192 Approval \u2192 TaskGraph \u2192 Execution \u2192 Tests \u2192 PR. Include edge cases: spec rejection, test failure, PR creation error.",
+          "dependencies": [
+            "spec_tdd_workflow",
+            "code_two_stage_orchestrator"
+          ],
+          "verification_target": "code_two_stage_orchestrator",
+          "acceptance_criteria": [
+            "AAA integration tests for full workflow",
+            "Happy path: intent \u2192 approved spec \u2192 task graph \u2192 100% tests pass \u2192 PR created",
+            "Spec rejection: user rejects \u2192 re-generate \u2192 approval on 2nd attempt",
+            "Test failure: tests fail \u2192 rollback \u2192 Err(TestFailure)",
+            "Mock all external dependencies (IntentParser, SpecGenerator, TestVerificationGate, PRCreator)"
+          ],
+          "estimated_tokens": 4500
+        },
+        {
+          "id": "code_two_stage_orchestrator",
+          "title": "Implement Two-Stage Orchestrator (End-to-End TDD Workflow)",
+          "type": "Code",
+          "tier": "Tier 2",
+          "agent": "coder",
+          "description": "Create TwoStageOrchestrator class in tools/orchestrator/two_stage_orchestrator.py. Implement orchestrate(input: str | None) -> Result[PRUrl, Error] that coordinates: IntentParser \u2192 SpecGenerator \u2192 ApprovalCheckpoint \u2192 TDDGraphGenerator \u2192 NECESSARYValidator \u2192 DAG execution \u2192 TestVerificationGate \u2192 PRCreator. Use TodoWrite for progress tracking.",
+          "dependencies": [
+            "code_pr_creator"
+          ],
+          "acceptance_criteria": [
+            "TwoStageOrchestrator class with orchestrate() async method",
+            "Stage 1: parse_intent() \u2192 generate_spec() \u2192 await_approval()",
+            "Stage 2: generate_graph() \u2192 validate_tests() \u2192 execute_dag() \u2192 verify_tests() \u2192 create_pr()",
+            "TodoWrite integration: update todos at each stage (8 total)",
+            "Error propagation: use Result pattern, Err() at any failure halts workflow"
+          ],
+          "estimated_tokens": 6000
+        },
+        {
+          "id": "test_primea_integration",
+          "title": "AAA Tests for /primeA Command Integration",
+          "type": "Test",
+          "tier": "Tier 2",
+          "agent": "test_generator",
+          "description": "Generate AAA tests for updated /primeA command with two-stage workflow. Test command parsing (--two-stage flag), orchestrator invocation, and backward compatibility (legacy workflow). Include edge cases: flag conflicts, missing input.",
+          "dependencies": [
+            "spec_tdd_workflow",
+            "code_primea_integration"
+          ],
+          "verification_target": "code_primea_integration",
+          "acceptance_criteria": [
+            "AAA tests for command integration",
+            "Happy path: /primeA 'intent' --two-stage \u2192 TwoStageOrchestrator.orchestrate()",
+            "Backward compat: /primeA --graph file.json \u2192 legacy DAG execution",
+            "Flag validation: --two-stage + --graph \u2192 error (mutually exclusive)",
+            "Mock TwoStageOrchestrator to avoid full execution"
+          ],
+          "estimated_tokens": 3000
+        },
+        {
+          "id": "code_primea_integration",
+          "title": "Integrate Two-Stage Workflow into /primeA Command",
+          "type": "Code",
+          "tier": "Tier 2",
+          "agent": "coder",
+          "description": "Update .claude/commands/primea.md to add --two-stage flag. Modify command handler to invoke TwoStageOrchestrator when flag is present, otherwise use legacy workflow. Ensure backward compatibility for existing task graph execution.",
+          "dependencies": [
+            "code_two_stage_orchestrator"
+          ],
+          "acceptance_criteria": [
+            "Updated .claude/commands/primea.md with --two-stage flag documentation",
+            "Command handler: if --two-stage: TwoStageOrchestrator().orchestrate(input) else: legacy_orchestrate()",
+            "Backward compatibility: /primeA --graph file.json still works (no breaking changes)",
+            "Help text: /primeA --help shows --two-stage usage",
+            "Default behavior: without flags, use auto-selection mode"
+          ],
+          "estimated_tokens": 4000
+        }
+      ]
+    },
+    {
+      "id": "phase_5",
+      "title": "Documentation & Reflection",
+      "tasks": [
+        {
+          "id": "test_orchestrator_agent_update",
+          "title": "AAA Tests for Orchestrator Agent Definition Validator",
+          "type": "Test",
+          "tier": "Tier 2",
+          "agent": "test_generator",
+          "description": "Generate AAA tests for agent definition update validation. Test that .claude/agents/primeA_orchestrator.md contains two-stage workflow documentation, example prompts, and updated execution protocol. Use file content validation.",
+          "dependencies": [
+            "code_orchestrator_agent_update"
+          ],
+          "verification_target": "code_orchestrator_agent_update",
+          "acceptance_criteria": [
+            "AAA tests for Markdown content validation",
+            "Happy path: updated agent definition contains 'Two-Stage TDD Protocol' section",
+            "Validation checks: workflow diagram, example prompts, checkpoint definitions",
+            "Edge case: file missing, malformed Markdown",
+            "Use pytest for file read + regex assertions"
+          ],
+          "estimated_tokens": 2500
+        },
+        {
+          "id": "code_orchestrator_agent_update",
+          "title": "Update Orchestrator Agent Definition (Two-Stage Workflow)",
+          "type": "Code",
+          "tier": "Tier 2",
+          "agent": "coder",
+          "description": "Update .claude/agents/primeA_orchestrator.md to document two-stage TDD workflow. Add sections: Two-Stage Execution Protocol, TDD-First Graph Generation, NECESSARY Compliance Validation, Test Verification Gate, PR Creation Workflow. Include Mermaid diagram and example prompts.",
+          "dependencies": [
+            "code_primea_integration"
+          ],
+          "acceptance_criteria": [
+            "New section: ## Two-Stage TDD Protocol with workflow diagram",
+            "Subsections: Intent Parsing, Spec Generation, Approval Checkpoint, TDD Graph Generation, Test Verification, PR Creation",
+            "Mermaid diagram: Intent \u2192 Spec \u2192 Approval \u2192 Graph \u2192 Tests \u2192 PR",
+            "Example prompts: Stage 1 (Spec generation), Stage 2 (Test-first graph)",
+            "Updated Success Criteria: include 100% test pass, NECESSARY compliance, PR mergeability"
+          ],
+          "estimated_tokens": 3500
+        },
+        {
+          "id": "test_adr_generation",
+          "title": "AAA Tests for ADR-026 Content Validator",
+          "type": "Test",
+          "tier": "Tier 1",
+          "agent": "test_generator",
+          "description": "Generate AAA tests for ADR-026 content validation. Test that generated ADR contains Context, Decision, Consequences, Alternatives sections. Validate Markdown structure and constitutional alignment references (Articles I, II, V).",
+          "dependencies": [
+            "code_adr_generation"
+          ],
+          "verification_target": "code_adr_generation",
+          "acceptance_criteria": [
+            "AAA tests for ADR Markdown validation",
+            "Happy path: ADR contains all required sections (Context, Decision, Consequences, Alternatives)",
+            "Content validation: references to Article I (retry), Article II (100% tests), Article V (spec-driven)",
+            "Edge case: missing section, malformed Markdown",
+            "Regex assertions for section headers (## Context, ## Decision, etc.)"
+          ],
+          "estimated_tokens": 3000
+        },
+        {
+          "id": "code_adr_generation",
+          "title": "Generate ADR-026: Two-Stage TDD Orchestration",
+          "type": "Code",
+          "tier": "Tier 1",
+          "agent": "chief_architect",
+          "description": "Create docs/adr/ADR-026-two-stage-tdd-orchestration.md documenting Leap 7 architectural decisions. Include Context (why two-stage needed), Decision (Intent\u2192Spec\u2192Execution), Consequences (100% spec approval, test-first enforcement), Alternatives (single-stage, manual spec), Constitutional Alignment (Articles I, II, V).",
+          "dependencies": [
+            "code_orchestrator_agent_update"
+          ],
+          "acceptance_criteria": [
+            "ADR file: docs/adr/ADR-026-two-stage-tdd-orchestration.md",
+            "Sections: Context, Decision, Consequences, Alternatives, Constitutional Alignment",
+            "Context: gap analysis (current orchestrator lacks spec approval, no TDD enforcement)",
+            "Decision: two-stage workflow with checkpoints, TDD-first graph generation",
+            "Consequences: +95% spec accuracy (human review), 100% Article II compliance (TDD enforcement)",
+            "Constitutional Alignment: Article I (complete context via retry), Article II (100% tests), Article V (spec-driven)"
+          ],
+          "estimated_tokens": 5000
+        },
+        {
+          "id": "test_claude_md_update",
+          "title": "AAA Tests for CLAUDE.md Update Validator",
+          "type": "Test",
+          "tier": "Tier 2",
+          "agent": "test_generator",
+          "description": "Generate AAA tests for CLAUDE.md update validation. Test that /primeA command documentation includes --two-stage flag, two-stage workflow description, and updated examples. Use file content validation.",
+          "dependencies": [
+            "code_claude_md_update"
+          ],
+          "verification_target": "code_claude_md_update",
+          "acceptance_criteria": [
+            "AAA tests for Markdown validation",
+            "Happy path: CLAUDE.md contains '/primeA --two-stage' documentation",
+            "Content checks: workflow stages, checkpoint descriptions, example commands",
+            "Edge case: section missing, outdated examples",
+            "Regex assertions for command syntax"
+          ],
+          "estimated_tokens": 2500
+        },
+        {
+          "id": "code_claude_md_update",
+          "title": "Update CLAUDE.md with Two-Stage Workflow Documentation",
+          "type": "Code",
+          "tier": "Tier 2",
+          "agent": "coder",
+          "description": "Update CLAUDE.md /primeA command section to document --two-stage flag and workflow. Add usage examples, checkpoint descriptions, and constitutional compliance notes. Update Leap Evolution History with Leap 7 entry.",
+          "dependencies": [
+            "code_adr_generation"
+          ],
+          "acceptance_criteria": [
+            "Updated /primeA section: add --two-stage flag with description",
+            "Two-Stage Workflow subsection: Stage 1 (Intent\u2192Spec), Stage 2 (Spec\u2192Execution)",
+            "Usage examples: /primeA 'Build auth' --two-stage, /primeA --two-stage (auto-select)",
+            "Checkpoint documentation: spec approval prompt, test verification 100% requirement",
+            "Leap Evolution History: Leap 7 entry with Achievements (TDD protocol, NECESSARY validator, test gate, PR creator)"
+          ],
+          "estimated_tokens": 4000
+        },
+        {
+          "id": "test_leap7_completion_report",
+          "title": "AAA Tests for Leap 7 Completion Report Validator",
+          "type": "Test",
+          "tier": "Tier 2",
+          "agent": "test_generator",
+          "description": "Generate AAA tests for completion report validation. Test that report contains Mission Summary, Achievements, Constitutional Compliance, Metrics, Next Steps sections. Validate Markdown structure and metric accuracy (tasks completed, tests passing).",
+          "dependencies": [
+            "code_leap7_completion_report"
+          ],
+          "verification_target": "code_leap7_completion_report",
+          "acceptance_criteria": [
+            "AAA tests for report Markdown validation",
+            "Happy path: report contains all required sections",
+            "Metric validation: 26 tasks completed, X tests passing, $Y cost",
+            "Constitutional Compliance: Articles I, II, III, IV, V checkmarks",
+            "Edge case: missing section, invalid metrics"
+          ],
+          "estimated_tokens": 3000
+        },
+        {
+          "id": "code_leap7_completion_report",
+          "title": "Generate Leap 7 Completion Report",
+          "type": "Code",
+          "tier": "Tier 1",
+          "agent": "summary",
+          "description": "Create docs/leap_7_test_driven_autonomy_complete.md with comprehensive completion report. Include Mission Summary, Achievements (TDD workflow, NECESSARY validator, test gate, PR creator), Constitutional Compliance (Articles I-V), Metrics (26 tasks, X tests, $Y cost), Impact Analysis, Next Steps (Leap 8 proposal).",
+          "dependencies": [
+            "code_claude_md_update"
+          ],
+          "acceptance_criteria": [
+            "Report file: docs/leap_7_test_driven_autonomy_complete.md",
+            "Sections: Mission Summary, Achievements, Constitutional Compliance, Metrics, Impact, Next Steps",
+            "Achievements: 8 new components (IntentParser, SpecGenerator, ApprovalCheckpoint, TDDGraphGenerator, NECESSARYValidator, TestVerificationGate, PRCreator, TwoStageOrchestrator)",
+            "Metrics: 26 tasks (5 Spec, 11 Code, 10 Test), X tests passing (100%), $Y cost (\u2264$20)",
+            "Impact: +95% spec accuracy (human review), 100% TDD compliance (Article II enforcement), +PR automation",
+            "Next Steps: Leap 8 - Intelligent Pattern Composition (template library, cross-graph learning)"
+          ],
+          "estimated_tokens": 5000
+        }
+      ]
+    }
+  ],
+  "checkpoints": [
+    {
+      "after_phase": "phase_1",
+      "type": "human_review",
+      "prompt": "Review Phase 1 specifications for Two-Stage TDD Workflow. Approve design for Intent-to-Spec, NECESSARY validator, test verification gate, PR creation workflow, and TDD-first graph generator. Proceed to Phase 2 implementation? [Y/n]"
+    },
+    {
+      "after_phase": "phase_5",
+      "type": "auto_validate",
+      "prompt": "Run full test suite to verify 100% pass rate (Article II). Validate documentation updates. Confirm PR creation workflow functional. Auto-proceed if all validations pass."
+    }
+  ],
+  "metadata": {
+    "estimated_tokens": 105000,
+    "estimated_cost_usd": 18.5,
+    "complexity": "complex",
+    "budget_limit_usd": 20.0
+  }
+}

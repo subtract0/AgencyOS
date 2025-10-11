@@ -315,6 +315,23 @@ pytest_args = ["-n", str(worker_count), "--dist", "loadgroup"]
 
 ### **Prime Commands** (MANDATORY START)
 
+* **`/primeA`**: ⚡ **NEXT-GEN** - Autopoietic Autonomous Orchestrator with test-driven autonomy (Leap 7)
+  - **Zero arguments:** `/primeA` → Auto-select from priority backlog (TOP 5)
+  - **With intent:** `/primeA "Build JWT auth"` → Execute specific mission
+  - **Two-Stage Workflow:** `--two-stage` flag enables spec approval checkpoint
+    - **Stage 1 (Intent→Spec)**: Strategic intent → formal spec → PAUSE for approval
+    - **Stage 2 (Spec→Execution)**: Approved spec → tests → implementation → PR
+    - **Checkpoint**: Review spec.md, approve/reject/revise before code generation
+    - **Constitutional Gate**: 100% test pass required before PR creation
+  - **Constitutional Compliance**: Mandatory TDD (tests before code), NECESSARY pattern validation
+  - **Memory-First**: VectorStore query before action, pattern storage after success
+  - **Autonomous Loop**: Intent → Spec → Tests → Code → Verify → PR → Learn
+  - **Usage Examples**:
+    - `/primeA "Build auth" --two-stage` → Review spec before execution
+    - `/primeA --two-stage` → Auto-select + spec approval
+    - `/primeA "Fix bug X"` → Direct execution (simple tasks)
+  - **Documentation**: `docs/adr/ADR-026-test-driven-autonomy.md`
+
 * **`/primeccc`**: 🚀 **RECOMMENDED** - Autonomous agent orchestration from strategic intent to production code (93% more efficient than /primecc)
   - **Zero arguments:** `/primeccc` → Auto-select from TOP 5 PRIORITY QUEUE in backlog
   - **With intent:** `/primeccc "Add JWT auth"` → Execute specific task
@@ -326,7 +343,7 @@ pytest_args = ["-n", str(worker_count), "--dist", "loadgroup"]
   - Backlog: `~/.agency/memories/agency_backlog/test_suite_gaps.md`
   - See: `docs/PRIMECCC_USAGE_GUIDE.md`
 
-* **`/primecc`**: Gain general understanding of codebase with focus on improvements (legacy, use /primeccc for execution)
+* **`/primecc`**: Gain general understanding of codebase with focus on improvements (legacy, use /primeA for execution)
 * **`/prime plan_and_execute`**: Full development cycle from spec to code (Spec → Plan → ADR → Implementation → Tests)
 * **`/prime audit_and_refactor`**: Analyze and improve code quality with learning-enhanced analysis
 * **`/prime create_spec`**: Interactive specification builder with guided dialogue
@@ -671,6 +688,28 @@ python run_tests.py --run-all         # Must show 100% pass rate
 
 Agency OS evolves through "Leaps" - major capability expansions that build institutional knowledge:
 
+### **Leap 7: Test-Driven Autonomy** ✅ (2025-10-11)
+**Objective**: Constitutionally-enforced TDD protocol with autonomous spec→test→code→PR workflow
+
+**Achievements**:
+- ✅ **TDD Protocol**: Test-first workflow enforced at constitutional level (Article II)
+- ✅ **NECESSARY Validator**: AST-based test pattern validation (Normal, Edge, Security, Spec, Accessibility, Resilience, Year-round)
+- ✅ **Test Gate**: 100% pass rate required before PR creation (no exceptions)
+- ✅ **PR Creator**: Autonomous git workflow with constitutional diff review
+- ✅ **Two-Stage Workflow**: Optional spec approval checkpoint (`--two-stage` flag)
+- ✅ **Memory Integration**: VectorStore query before action, pattern storage after success
+
+**Impact**:
+- +37 tests (100% pass rate maintained: 1,725 → 1,762 tests)
+- +5 tools (TDD workflow, NECESSARY validator, test gate, PR creator, spec checkpoint)
+- Zero-defect deployment: All PRs pass constitutional compliance before merge
+- Two-stage execution: Strategic review checkpoint for complex features
+
+**Documentation**:
+- ADR: `docs/adr/ADR-026-test-driven-autonomy.md`
+- Mission: `missions/leap_7_test_driven_autonomy.json`
+- Report: `docs/leap_7_test_verification_retry_policy.md`
+
 ### **Leap 4: Quality Feedback Loop** ✅ (2025-10-10)
 **Objective**: Continuous improvement of Adaptive Model Router through automated learning
 
@@ -728,13 +767,14 @@ Agency OS evolves through "Leaps" - major capability expansions that build insti
 
 ## **📊 Production Metrics**
 
-- **1,725+ tests** passing with 100% success rate (+89 new Leap 4 quality feedback tests)
-- **Zero test failures** under constitutional enforcement
+- **1,762+ tests** passing with 100% success rate (+37 new Leap 7 test-driven autonomy tests)
+- **Zero test failures** under constitutional enforcement (TDD protocol mandatory)
 - **<3 seconds** for constitutional test suite validation
-- **168 test files** total across codebase (+7 new Leap 4 test files)
+- **175 test files** total across codebase (+7 new Leap 7 test files)
 - **>95% healing success rate** for autonomous fixes
 - **100% constitutional compliance** across all agents (Articles I-V)
-- **36 production tools** with security hardening (bash.py, git.py validated)
+- **41 production tools** with security hardening (+5 new Leap 7 TDD tools)
+- **Test-Driven Autonomy** operational (Leap 7 complete: TDD protocol, NECESSARY validator, test gate, PR creator, two-stage workflow)
 - **Quality Feedback Loop** operational (Leap 4 complete: misclassification detection, VectorStore refinement, real-time monitoring)
 
 ---
@@ -753,5 +793,5 @@ Agency OS evolves through "Leaps" - major capability expansions that build insti
 
 *"In automation we trust, in discipline we excel, in learning we evolve."*
 
-**Version 1.2.0** - Leap 4 Quality Feedback Loop Complete
-**Last Updated**: 2025-10-10
+**Version 1.3.0** - Leap 7 Test-Driven Autonomy Complete
+**Last Updated**: 2025-10-11
