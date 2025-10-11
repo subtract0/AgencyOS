@@ -32,11 +32,6 @@ from unittest.mock import Mock, patch
 
 import pytest
 
-# Requires Ollama server for real agent execution - these are integration tests
-pytestmark = pytest.mark.skip(
-    reason="Requires Ollama server at localhost:11434 - integration test for all 10 agent types"
-)
-
 from trinity_protocol.core.agent_registry import AgentType, ModelTier
 from trinity_protocol.core.hybrid_executor import (
     HybridExecutor,
@@ -219,7 +214,9 @@ class TestAgentInstantiation:
             AgentType.SUMMARY,
         ],
     )
-    def test_agent_can_be_instantiated_at_local_tier(self, agent_registry_fixture, agent_type):
+    def test_agent_can_be_instantiated_at_local_tier(
+        self, agent_registry_fixture, agent_type, docker_ollama
+    ):
         """Test each agent type can be created at LOCAL tier."""
         # Act
         agent = agent_registry_fixture.create_agent(agent_type, ModelTier.LOCAL)
@@ -229,7 +226,7 @@ class TestAgentInstantiation:
         assert hasattr(agent, "name")
 
     @pytest.mark.parametrize("tier", [ModelTier.LOCAL, ModelTier.LOCAL_PLUS, ModelTier.CLOUD])
-    def test_coder_agent_works_at_all_tiers(self, agent_registry_fixture, tier):
+    def test_coder_agent_works_at_all_tiers(self, agent_registry_fixture, tier, docker_ollama):
         """Test CODER agent (most used) works at all tiers."""
         # Act
         agent = agent_registry_fixture.create_agent(AgentType.CODER, tier)
@@ -295,7 +292,7 @@ class TestMultiAgentChaining:
 
     @pytest.mark.asyncio
     async def test_two_agent_sequence_executes_in_order(
-        self, hybrid_executor_fixture, sample_code_fix_task
+        self, hybrid_executor_fixture, sample_code_fix_task, docker_ollama
     ):
         """
         Test 2-agent task executes agents sequentially.
@@ -336,7 +333,7 @@ def fix_type_error():
 
     @pytest.mark.asyncio
     async def test_three_agent_sequence_for_refactoring(
-        self, hybrid_executor_fixture, sample_refactoring_task
+        self, hybrid_executor_fixture, sample_refactoring_task, docker_ollama
     ):
         """
         Test 3-agent task (REFACTORING) executes all agents.
