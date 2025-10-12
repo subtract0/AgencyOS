@@ -8,29 +8,31 @@ Validates 4 checkpoints with graceful fallback behavior:
 4. Lint/format pre-validation (trivial error elimination)
 """
 
-import pytest
 from pathlib import Path
-from shared.models.task_graph import Task, TaskGraph, TaskType, TaskTier, Phase
-from trinity_protocol.core.trm_validator import (
-    TRMValidator,
-    ReasoningTask,
-    ProblemType,
-    TRMUnavailableError,
-    ValidationResult,
-)
+
+import pytest
+
+from shared.models.task_graph import Phase, Task, TaskGraph, TaskTier, TaskType
 from tools.trm_training.grid_transformers import (
-    task_graph_to_adjacency_matrix,
+    apply_lint_fix,
+    code_to_lint_grid,
     code_to_type_constraint_grid,
     function_signature_to_grid,
-    code_to_lint_grid,
-    apply_lint_fix,
+    task_graph_to_adjacency_matrix,
 )
 from tools.trm_training.validation_checkpoints import (
-    validate_dag_checkpoint,
-    validate_type_constraints_checkpoint,
-    infer_edge_cases_checkpoint,
-    validate_lint_checkpoint,
     apply_trm_validation_gates,
+    infer_edge_cases_checkpoint,
+    validate_dag_checkpoint,
+    validate_lint_checkpoint,
+    validate_type_constraints_checkpoint,
+)
+from trinity_protocol.core.trm_validator import (
+    ProblemType,
+    ReasoningTask,
+    TRMUnavailableError,
+    TRMValidator,
+    ValidationResult,
 )
 
 
@@ -61,7 +63,9 @@ class TestTRMValidator:
 
         validation = result.unwrap()
         assert validation.converged is True, "DAG should be validated (no cycle)"
-        assert validation.confidence >= 0.85, f"Confidence {validation.confidence} should be >= 0.85"
+        assert validation.confidence >= 0.85, (
+            f"Confidence {validation.confidence} should be >= 0.85"
+        )
         assert validation.latency_ms >= 0, "Latency should be non-negative"
 
     @pytest.mark.asyncio
@@ -139,7 +143,9 @@ class TestTRMValidator:
 
         validation = result.unwrap()
         assert validation.converged is False, "Dict[Any, Any] violation should be detected"
-        assert len(validation.violations) > 0, "Violations list should contain Dict[Any, Any] violation"
+        assert len(validation.violations) > 0, (
+            "Violations list should contain Dict[Any, Any] violation"
+        )
         assert "Dict[Any, Any]" in validation.violations[0].description
 
     @pytest.mark.asyncio
@@ -165,8 +171,12 @@ class TestTRMValidator:
 
         inference = result.unwrap()
         assert len(inference.edge_cases) >= 2, "Should discover at least 2 boundary edge cases"
-        assert any("min" in ec.description.lower() for ec in inference.edge_cases), "Should discover min boundary"
-        assert any("max" in ec.description.lower() for ec in inference.edge_cases), "Should discover max boundary"
+        assert any("min" in ec.description.lower() for ec in inference.edge_cases), (
+            "Should discover min boundary"
+        )
+        assert any("max" in ec.description.lower() for ec in inference.edge_cases), (
+            "Should discover max boundary"
+        )
 
     @pytest.mark.asyncio
     async def test_lint_validation_no_violations(self):

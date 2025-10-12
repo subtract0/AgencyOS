@@ -33,6 +33,7 @@ logger = logging.getLogger(__name__)
 # Qwen3-Coder adapter for real model inference (fallback if TRM-7M unavailable)
 try:
     from tools.trm_training.qwen_trm_adapter import QwenTRMAdapter
+
     QWEN_AVAILABLE = True
 except ImportError:
     QWEN_AVAILABLE = False
@@ -60,13 +61,15 @@ class ReasoningTask(BaseModel):
 
     problem_type: ProblemType
     input_grid: list[list[int]] = Field(
-        ..., description="2D matrix encoding problem structure (e.g., adjacency matrix, type annotations)"
+        ...,
+        description="2D matrix encoding problem structure (e.g., adjacency matrix, type annotations)",
     )
-    proposed_solution: Optional[list[list[int]]] = Field(
+    proposed_solution: list[list[int]] | None = Field(
         None, description="Optional solution grid for verification (None = inference mode)"
     )
     constraints: list[str] = Field(
-        ..., description='Natural language constraints (e.g., ["Must be acyclic (DAG)", "No self-loops"])'
+        ...,
+        description='Natural language constraints (e.g., ["Must be acyclic (DAG)", "No self-loops"])',
     )
     max_refinement_steps: int = Field(
         16, description="Maximum recursive backtracking iterations (16 from TRM paper for accuracy)"
@@ -88,23 +91,30 @@ class Violation(BaseModel):
 
     line: int = Field(..., description="Line number where violation occurs")
     description: str = Field(..., description="Human-readable violation description")
-    suggested_fix: str = Field(..., description="Suggested fix (e.g., 'Use Pydantic model instead of Dict[Any, Any]')")
+    suggested_fix: str = Field(
+        ..., description="Suggested fix (e.g., 'Use Pydantic model instead of Dict[Any, Any]')"
+    )
 
 
 class EdgeCase(BaseModel):
     """Inferred edge case for comprehensive test coverage."""
 
     category: str = Field(
-        ..., description='Edge case category (e.g., "Boundary", "Empty/null", "Concurrent", "Resource exhaustion")'
+        ...,
+        description='Edge case category (e.g., "Boundary", "Empty/null", "Concurrent", "Resource exhaustion")',
     )
-    description: str = Field(..., description="Test case description (e.g., 'Test at exact rate limit threshold')")
+    description: str = Field(
+        ..., description="Test case description (e.g., 'Test at exact rate limit threshold')"
+    )
 
 
 class LintFix(BaseModel):
     """Auto-applied lint/format fix."""
 
     line: int = Field(..., description="Line number where fix was applied")
-    fix_type: str = Field(..., description='Fix type (e.g., "remove_trailing_space", "sort_imports")')
+    fix_type: str = Field(
+        ..., description='Fix type (e.g., "remove_trailing_space", "sort_imports")'
+    )
     applied: bool = Field(..., description="Whether fix was successfully applied")
 
 
@@ -116,12 +126,20 @@ class ValidationResult(BaseModel):
     - converged=False: Violations/cycles detected, refinement unsuccessful
     """
 
-    converged: bool = Field(..., description="Whether validation converged (True = passed, False = violations detected)")
-    confidence: float = Field(..., ge=0.0, le=1.0, description="Validation confidence score (0.0-1.0)")
+    converged: bool = Field(
+        ..., description="Whether validation converged (True = passed, False = violations detected)"
+    )
+    confidence: float = Field(
+        ..., ge=0.0, le=1.0, description="Validation confidence score (0.0-1.0)"
+    )
     refinement_steps: int = Field(..., description="Number of recursive refinement steps used")
     latency_ms: float = Field(..., description="Validation latency in milliseconds")
-    violations: list[Violation] = Field(default_factory=list, description="Type constraint or lint violations")
-    edge_cases: list[EdgeCase] = Field(default_factory=list, description="Inferred edge cases for test coverage")
+    violations: list[Violation] = Field(
+        default_factory=list, description="Type constraint or lint violations"
+    )
+    edge_cases: list[EdgeCase] = Field(
+        default_factory=list, description="Inferred edge cases for test coverage"
+    )
     fixes: list[LintFix] = Field(default_factory=list, description="Auto-applied lint/format fixes")
 
 
@@ -150,7 +168,7 @@ class TRMValidator:
 
     def __init__(
         self,
-        model_path: Optional[Path] = None,
+        model_path: Path | None = None,
         device: str = "cpu",
         fallback_to_python: bool = True,
         use_mock: bool = True,  # Use mock model for MVP testing
@@ -324,10 +342,10 @@ class TRMValidator:
                 result = adapter.validate_dag(grid, task_ids)
 
                 return ValidationResult(
-                    converged=result.get("converged", True),
-                    confidence=result.get("confidence", 0.87),
-                    refinement_steps=result.get("refinement_steps", 1),
-                    latency_ms=result.get("latency_ms", 0.0),
+                    converged=result.converged,
+                    confidence=result.confidence,
+                    refinement_steps=result.refinement_steps,
+                    latency_ms=result.latency_ms,
                     violations=[],
                     edge_cases=[],
                     fixes=[],
@@ -368,21 +386,21 @@ class TRMValidator:
                 line_numbers = list(range(1, len(task.input_grid) + 1))
                 result = adapter.validate_type_constraints(task.input_grid, line_numbers)
 
-                # Convert dict violations to Pydantic models
-                for v in result.get("violations", []):
+                # Convert Qwen violations to local Violation models
+                for v in result.violations:
                     violations.append(
                         Violation(
-                            line=v["line"],
-                            description=v["description"],
-                            suggested_fix=v["suggested_fix"],
+                            line=v.line,
+                            description=v.description,
+                            suggested_fix=v.suggested_fix,
                         )
                     )
 
                 return ValidationResult(
-                    converged=result.get("converged", len(violations) == 0),
-                    confidence=result.get("confidence", 0.95),
-                    refinement_steps=result.get("refinement_steps", 1),
-                    latency_ms=result.get("latency_ms", 0.0),
+                    converged=result.converged,
+                    confidence=result.confidence,
+                    refinement_steps=result.refinement_steps,
+                    latency_ms=result.latency_ms,
                     violations=violations,
                     edge_cases=[],
                     fixes=[],
@@ -428,23 +446,23 @@ class TRMValidator:
             adapter = self._model["adapter"]
             try:
                 # Generate param names for grid (param_1, param_2, ...)
-                param_names = [f"param_{i+1}" for i in range(len(task.input_grid))]
+                param_names = [f"param_{i + 1}" for i in range(len(task.input_grid))]
                 result = adapter.infer_edge_cases(task.input_grid, param_names)
 
-                # Convert dict edge cases to Pydantic models
-                for ec in result.get("edge_cases", []):
+                # Convert Qwen edge cases to local EdgeCase models
+                for ec in result.edge_cases:
                     edge_cases.append(
                         EdgeCase(
-                            category=ec["category"],
-                            description=ec["description"],
+                            category=ec.category,
+                            description=ec.description,
                         )
                     )
 
                 return ValidationResult(
-                    converged=result.get("converged", True),
-                    confidence=result.get("confidence", 0.90),
-                    refinement_steps=result.get("refinement_steps", 1),
-                    latency_ms=result.get("latency_ms", 0.0),
+                    converged=result.converged,
+                    confidence=result.confidence,
+                    refinement_steps=result.refinement_steps,
+                    latency_ms=result.latency_ms,
                     violations=[],
                     edge_cases=edge_cases,
                     fixes=[],
@@ -459,8 +477,13 @@ class TRMValidator:
                 max_val = row[2]
                 edge_cases.extend(
                     [
-                        EdgeCase(category="Boundary", description=f"Test param_{i+1} at min value (0)"),
-                        EdgeCase(category="Boundary", description=f"Test param_{i+1} at max value ({max_val})"),
+                        EdgeCase(
+                            category="Boundary", description=f"Test param_{i + 1} at min value (0)"
+                        ),
+                        EdgeCase(
+                            category="Boundary",
+                            description=f"Test param_{i + 1} at max value ({max_val})",
+                        ),
                     ]
                 )
 
@@ -494,21 +517,21 @@ class TRMValidator:
                 line_numbers = list(range(1, len(task.input_grid) + 1))
                 result = adapter.validate_lint(task.input_grid, line_numbers)
 
-                # Convert dict fixes to Pydantic models
-                for f in result.get("fixes", []):
+                # Convert Qwen fixes to local LintFix models
+                for f in result.fixes:
                     fixes.append(
                         LintFix(
-                            line=f["line"],
-                            fix_type=f["fix_type"],
-                            applied=f["applied"],
+                            line=f.line,
+                            fix_type=f.fix_type,
+                            applied=f.applied,
                         )
                     )
 
                 return ValidationResult(
-                    converged=result.get("converged", len(violations) == 0),
-                    confidence=result.get("confidence", 0.98),
-                    refinement_steps=result.get("refinement_steps", 1),
-                    latency_ms=result.get("latency_ms", 0.0),
+                    converged=result.converged,
+                    confidence=result.confidence,
+                    refinement_steps=result.refinement_steps,
+                    latency_ms=result.latency_ms,
                     violations=violations,
                     edge_cases=[],
                     fixes=fixes,
