@@ -33,9 +33,11 @@ from shared.models.night_watch import (
     MissionResult,
     OrchestratorConfig,
     OrchestratorReport,
+    SignalHandlerStatus,
     TaskQueue,
     TaskQueueItem,
     TaskStatus,
+    WorkerStatus,
 )
 
 # Configure logging
@@ -311,7 +313,7 @@ def generate_remote_worker_command(air_threads: int, queue_path: str) -> str:
     return command
 
 
-def monitor_workers(worker_count: int, queue_path: str, timeout_seconds: int = 300) -> dict[str, Any]:
+def monitor_workers(worker_count: int, queue_path: str, timeout_seconds: int = 300) -> WorkerStatus:
     """
     Monitor workers and return status.
 
@@ -321,9 +323,12 @@ def monitor_workers(worker_count: int, queue_path: str, timeout_seconds: int = 3
         timeout_seconds: Maximum time to monitor
 
     Returns:
-        Dict with monitoring results
+        WorkerStatus with worker metrics
     """
     start_time = time.time()
+    completed = 0
+    failed = 0
+    pending = 0
 
     while time.time() - start_time < timeout_seconds:
         time.sleep(1)
@@ -331,27 +336,33 @@ def monitor_workers(worker_count: int, queue_path: str, timeout_seconds: int = 3
         # Check if all tasks completed
         try:
             queue = TaskQueue.model_validate_json(Path(queue_path).read_text())
-            pending = [t for t in queue.tasks if t.status == TaskStatus.PENDING]
-            in_progress = [t for t in queue.tasks if t.status == TaskStatus.IN_PROGRESS]
+            pending = sum(1 for t in queue.tasks if t.status == TaskStatus.PENDING)
+            in_progress = sum(1 for t in queue.tasks if t.status == TaskStatus.IN_PROGRESS)
+            completed = sum(1 for t in queue.tasks if t.status == TaskStatus.COMPLETED)
+            failed = sum(1 for t in queue.tasks if t.status == TaskStatus.FAILED)
 
             if not pending and not in_progress:
-                return {"orchestrator_alive": True, "crashed_workers": 0}
+                break
         except Exception:
             pass
 
-    return {"orchestrator_alive": True, "crashed_workers": 0}
+    return WorkerStatus(
+        active_workers=worker_count,
+        completed_tasks=completed,
+        failed_tasks=failed,
+        pending_tasks=pending,
+        elapsed_seconds=time.time() - start_time,
+    )
 
 
-def setup_signal_handlers() -> dict[str, bool]:
+def setup_signal_handlers() -> SignalHandlerStatus:
     """
     Setup signal handlers for graceful shutdown.
 
     Returns:
-        Dict of registered signal handlers
+        SignalHandlerStatus of registered signal handlers
     """
     import signal
-
-    handlers = {}
 
     def sigint_handler(signum, frame):
         logger.info("Received SIGINT, shutting down gracefully...")
@@ -362,10 +373,7 @@ def setup_signal_handlers() -> dict[str, bool]:
     signal.signal(signal.SIGINT, sigint_handler)
     signal.signal(signal.SIGTERM, sigterm_handler)
 
-    handlers["SIGINT"] = True
-    handlers["SIGTERM"] = True
-
-    return handlers
+    return SignalHandlerStatus(sigint_registered=True, sigterm_registered=True)
 
 
 def wait_for_workers(workers: list[threading.Thread], timeout_minutes: int = 480) -> None:

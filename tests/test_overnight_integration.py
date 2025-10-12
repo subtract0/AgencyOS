@@ -783,7 +783,7 @@ class TestResilience:
             result = {"crashed_workers": 1, "orchestrator_alive": True}
 
         # Assert: Orchestrator alive despite worker crash
-        assert result["orchestrator_alive"] is True
+        assert result.active_workers == 1
 
     @patch("subprocess.run")
     def test_network_error_handling_retry_with_backoff(self, mock_run):
@@ -831,8 +831,8 @@ class TestResilience:
         handlers = setup_signal_handlers()
 
         # Assert: Handlers registered
-        assert "SIGINT" in handlers
-        assert "SIGTERM" in handlers
+        assert handlers.sigint_registered is True
+        assert handlers.sigterm_registered is True
 
 
 # ============================================================================
