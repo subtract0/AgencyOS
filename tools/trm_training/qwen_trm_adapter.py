@@ -114,12 +114,15 @@ Respond ONLY with valid JSON, no markdown:"""
         response = self._call_ollama(prompt)
         latency_ms = (time.time() - start_time) * 1000
 
-        result = self._parse_json_response(response, default={
-            "converged": True,  # Optimistic default (assume DAG)
-            "confidence": 0.7,
-            "refinement_steps": 1,
-            "reasoning": "Fallback: simple cycle check"
-        })
+        result = self._parse_json_response(
+            response,
+            default={
+                "converged": True,  # Optimistic default (assume DAG)
+                "confidence": 0.7,
+                "refinement_steps": 1,
+                "reasoning": "Fallback: simple cycle check",
+            },
+        )
 
         result["latency_ms"] = latency_ms
 
@@ -149,18 +152,20 @@ Respond ONLY with valid JSON, no markdown:"""
         # Direct detection from grid (column 3 = uses_dict_any)
         for i, row in enumerate(type_grid):
             if len(row) >= 4 and row[3] == 1:  # uses_dict_any = 1
-                violations.append({
-                    "line": line_numbers[i],
-                    "description": "Dict[Any, Any] violation detected",
-                    "suggested_fix": "Replace with Pydantic model with typed fields"
-                })
+                violations.append(
+                    {
+                        "line": line_numbers[i],
+                        "description": "Dict[Any, Any] violation detected",
+                        "suggested_fix": "Replace with Pydantic model with typed fields",
+                    }
+                )
 
         return {
             "converged": len(violations) == 0,
             "confidence": 0.98,  # High confidence for pattern matching
             "refinement_steps": 1,
             "violations": violations,
-            "latency_ms": 0.0  # Direct grid check, no LLM call
+            "latency_ms": 0.0,  # Direct grid check, no LLM call
         }
 
     def infer_edge_cases(
@@ -187,34 +192,38 @@ Respond ONLY with valid JSON, no markdown:"""
 
                 if is_int:
                     # Integer parameters → boundary cases
-                    edge_cases.extend([
-                        {
-                            "category": "Boundary",
-                            "description": f"Test {param_name} at min value (0)"
-                        },
-                        {
-                            "category": "Boundary",
-                            "description": f"Test {param_name} at max value ({max_value})"
-                        },
-                        {
-                            "category": "Boundary",
-                            "description": f"Test {param_name} at exact threshold ({max_value})"
-                        }
-                    ])
+                    edge_cases.extend(
+                        [
+                            {
+                                "category": "Boundary",
+                                "description": f"Test {param_name} at min value (0)",
+                            },
+                            {
+                                "category": "Boundary",
+                                "description": f"Test {param_name} at max value ({max_value})",
+                            },
+                            {
+                                "category": "Boundary",
+                                "description": f"Test {param_name} at exact threshold ({max_value})",
+                            },
+                        ]
+                    )
 
                 if not is_optional:
                     # Required parameters → null/empty cases
-                    edge_cases.append({
-                        "category": "Empty/null",
-                        "description": f"Test {param_name} with None/empty value (should raise error)"
-                    })
+                    edge_cases.append(
+                        {
+                            "category": "Empty/null",
+                            "description": f"Test {param_name} with None/empty value (should raise error)",
+                        }
+                    )
 
         return {
             "converged": True,
             "confidence": 0.90,
             "refinement_steps": len(edge_cases),
             "edge_cases": edge_cases,
-            "latency_ms": 0.0  # Direct grid inference, no LLM call
+            "latency_ms": 0.0,  # Direct grid inference, no LLM call
         }
 
     def validate_lint(
@@ -236,11 +245,13 @@ Respond ONLY with valid JSON, no markdown:"""
         # Detect trailing whitespace (column 1)
         for i, row in enumerate(lint_grid):
             if len(row) >= 2 and row[1] == 1:  # has trailing_space
-                fixes.append({
-                    "line": line_numbers[i],
-                    "fix_type": "remove_trailing_space",
-                    "applied": False  # Will be applied by caller
-                })
+                fixes.append(
+                    {
+                        "line": line_numbers[i],
+                        "fix_type": "remove_trailing_space",
+                        "applied": False,  # Will be applied by caller
+                    }
+                )
 
         return {
             "converged": len(fixes) == 0,
@@ -248,7 +259,7 @@ Respond ONLY with valid JSON, no markdown:"""
             "refinement_steps": 1,
             "fixes": fixes,
             "violations": [],  # Lint violations stored as fixes
-            "latency_ms": 0.0  # Direct grid check, no LLM call
+            "latency_ms": 0.0,  # Direct grid check, no LLM call
         }
 
     def _format_dependencies(self, adj_matrix: list[list[int]], task_ids: list[str]) -> str:
@@ -272,14 +283,12 @@ Respond ONLY with valid JSON, no markdown:"""
                 "temperature": 0.1,  # Low temp for deterministic reasoning
                 "num_predict": 300,  # Allow reasonable response length
                 "top_p": 0.9,
-            }
+            },
         }
 
         try:
             response = requests.post(
-                f"{self.ollama_url}/api/generate",
-                json=payload,
-                timeout=self.timeout
+                f"{self.ollama_url}/api/generate", json=payload, timeout=self.timeout
             )
             response.raise_for_status()
             return response.json()["response"]

@@ -99,7 +99,9 @@ def code_to_type_constraint_grid(code: str) -> tuple[list[list[int]], list[int]]
         if isinstance(node, ast.FunctionDef):
             # Extract function type annotations
             has_param_types = all(
-                arg.annotation is not None for arg in node.args.args if arg.arg != "self"  # Exclude self parameter
+                arg.annotation is not None
+                for arg in node.args.args
+                if arg.arg != "self"  # Exclude self parameter
             )
             has_return_type = node.returns is not None
 
@@ -179,7 +181,9 @@ def function_signature_to_grid(signature: str) -> tuple[list[list[int]], list[st
     return signature_grid, param_names
 
 
-def code_to_lint_grid(code: str, file_path: Path | None = None) -> tuple[list[list[int]], list[int]]:
+def code_to_lint_grid(
+    code: str, file_path: Path | None = None
+) -> tuple[list[list[int]], list[int]]:
     """Convert Python code to lint grid for format validation.
 
     Args:

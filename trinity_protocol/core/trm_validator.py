@@ -33,6 +33,7 @@ logger = logging.getLogger(__name__)
 # Qwen3-Coder adapter for real model inference (fallback if TRM-7M unavailable)
 try:
     from tools.trm_training.qwen_trm_adapter import QwenTRMAdapter
+
     QWEN_AVAILABLE = True
 except ImportError:
     QWEN_AVAILABLE = False
@@ -60,13 +61,15 @@ class ReasoningTask(BaseModel):
 
     problem_type: ProblemType
     input_grid: list[list[int]] = Field(
-        ..., description="2D matrix encoding problem structure (e.g., adjacency matrix, type annotations)"
+        ...,
+        description="2D matrix encoding problem structure (e.g., adjacency matrix, type annotations)",
     )
     proposed_solution: list[list[int]] | None = Field(
         None, description="Optional solution grid for verification (None = inference mode)"
     )
     constraints: list[str] = Field(
-        ..., description='Natural language constraints (e.g., ["Must be acyclic (DAG)", "No self-loops"])'
+        ...,
+        description='Natural language constraints (e.g., ["Must be acyclic (DAG)", "No self-loops"])',
     )
     max_refinement_steps: int = Field(
         16, description="Maximum recursive backtracking iterations (16 from TRM paper for accuracy)"
@@ -88,23 +91,30 @@ class Violation(BaseModel):
 
     line: int = Field(..., description="Line number where violation occurs")
     description: str = Field(..., description="Human-readable violation description")
-    suggested_fix: str = Field(..., description="Suggested fix (e.g., 'Use Pydantic model instead of Dict[Any, Any]')")
+    suggested_fix: str = Field(
+        ..., description="Suggested fix (e.g., 'Use Pydantic model instead of Dict[Any, Any]')"
+    )
 
 
 class EdgeCase(BaseModel):
     """Inferred edge case for comprehensive test coverage."""
 
     category: str = Field(
-        ..., description='Edge case category (e.g., "Boundary", "Empty/null", "Concurrent", "Resource exhaustion")'
+        ...,
+        description='Edge case category (e.g., "Boundary", "Empty/null", "Concurrent", "Resource exhaustion")',
     )
-    description: str = Field(..., description="Test case description (e.g., 'Test at exact rate limit threshold')")
+    description: str = Field(
+        ..., description="Test case description (e.g., 'Test at exact rate limit threshold')"
+    )
 
 
 class LintFix(BaseModel):
     """Auto-applied lint/format fix."""
 
     line: int = Field(..., description="Line number where fix was applied")
-    fix_type: str = Field(..., description='Fix type (e.g., "remove_trailing_space", "sort_imports")')
+    fix_type: str = Field(
+        ..., description='Fix type (e.g., "remove_trailing_space", "sort_imports")'
+    )
     applied: bool = Field(..., description="Whether fix was successfully applied")
 
 
@@ -116,12 +126,20 @@ class ValidationResult(BaseModel):
     - converged=False: Violations/cycles detected, refinement unsuccessful
     """
 
-    converged: bool = Field(..., description="Whether validation converged (True = passed, False = violations detected)")
-    confidence: float = Field(..., ge=0.0, le=1.0, description="Validation confidence score (0.0-1.0)")
+    converged: bool = Field(
+        ..., description="Whether validation converged (True = passed, False = violations detected)"
+    )
+    confidence: float = Field(
+        ..., ge=0.0, le=1.0, description="Validation confidence score (0.0-1.0)"
+    )
     refinement_steps: int = Field(..., description="Number of recursive refinement steps used")
     latency_ms: float = Field(..., description="Validation latency in milliseconds")
-    violations: list[Violation] = Field(default_factory=list, description="Type constraint or lint violations")
-    edge_cases: list[EdgeCase] = Field(default_factory=list, description="Inferred edge cases for test coverage")
+    violations: list[Violation] = Field(
+        default_factory=list, description="Type constraint or lint violations"
+    )
+    edge_cases: list[EdgeCase] = Field(
+        default_factory=list, description="Inferred edge cases for test coverage"
+    )
     fixes: list[LintFix] = Field(default_factory=list, description="Auto-applied lint/format fixes")
 
 
@@ -428,7 +446,7 @@ class TRMValidator:
             adapter = self._model["adapter"]
             try:
                 # Generate param names for grid (param_1, param_2, ...)
-                param_names = [f"param_{i+1}" for i in range(len(task.input_grid))]
+                param_names = [f"param_{i + 1}" for i in range(len(task.input_grid))]
                 result = adapter.infer_edge_cases(task.input_grid, param_names)
 
                 # Convert dict edge cases to Pydantic models
@@ -459,8 +477,13 @@ class TRMValidator:
                 max_val = row[2]
                 edge_cases.extend(
                     [
-                        EdgeCase(category="Boundary", description=f"Test param_{i+1} at min value (0)"),
-                        EdgeCase(category="Boundary", description=f"Test param_{i+1} at max value ({max_val})"),
+                        EdgeCase(
+                            category="Boundary", description=f"Test param_{i + 1} at min value (0)"
+                        ),
+                        EdgeCase(
+                            category="Boundary",
+                            description=f"Test param_{i + 1} at max value ({max_val})",
+                        ),
                     ]
                 )
 

@@ -32,9 +32,7 @@ class SpeakSummary(Tool):
     Use this when the summary is ready to notify the user audibly about what was done and what is needed next.
     """
 
-    summary_text: str = Field(
-        ..., description="The summary text to convert to speech and play"
-    )
+    summary_text: str = Field(..., description="The summary text to convert to speech and play")
 
     def run(self) -> str:
         try:
