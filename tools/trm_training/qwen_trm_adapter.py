@@ -19,11 +19,75 @@ Constitutional Compliance:
 import json
 import logging
 import time
-from typing import Any
 
 import requests
+from pydantic import BaseModel, Field
 
 logger = logging.getLogger(__name__)
+
+
+class QwenDAGResponse(BaseModel):
+    """Response from Qwen DAG validation."""
+
+    converged: bool
+    confidence: float
+    refinement_steps: int
+    reasoning: str = ""
+    latency_ms: float = 0.0
+
+
+class QwenViolation(BaseModel):
+    """Type constraint or lint violation."""
+
+    line: int
+    description: str
+    suggested_fix: str
+
+
+class QwenTypeConstraintResponse(BaseModel):
+    """Response from Qwen type constraint validation."""
+
+    converged: bool
+    confidence: float
+    refinement_steps: int
+    violations: list[QwenViolation] = Field(default_factory=list)
+    latency_ms: float = 0.0
+
+
+class QwenEdgeCase(BaseModel):
+    """Inferred edge case."""
+
+    category: str
+    description: str
+
+
+class QwenEdgeCaseResponse(BaseModel):
+    """Response from Qwen edge case inference."""
+
+    converged: bool
+    confidence: float
+    refinement_steps: int
+    edge_cases: list[QwenEdgeCase] = Field(default_factory=list)
+    latency_ms: float = 0.0
+
+
+class QwenLintFix(BaseModel):
+    """Auto-applied lint fix."""
+
+    line: int
+    fix_type: str
+    applied: bool = False
+
+
+class QwenLintResponse(BaseModel):
+    """Response from Qwen lint validation."""
+
+    converged: bool
+    confidence: float
+    refinement_steps: int
+    fixes: list[QwenLintFix] = Field(default_factory=list)
+    violations: list[QwenViolation] = Field(default_factory=list)
+    latency_ms: float = 0.0
 
 
 class QwenTRMAdapter:
@@ -74,7 +138,7 @@ class QwenTRMAdapter:
         except Exception as e:
             logger.warning(f"Ollama connection check failed: {e}")
 
-    def validate_dag(self, adj_matrix: list[list[int]], task_ids: list[str]) -> dict[str, Any]:
+    def validate_dag(self, adj_matrix: list[list[int]], task_ids: list[str]) -> QwenDAGResponse:
         """Validate DAG using recursive reasoning.
 
         Args:
@@ -124,20 +188,24 @@ Respond ONLY with valid JSON, no markdown:"""
             },
         )
 
-        result["latency_ms"] = latency_ms
-
         logger.info(
             f"Qwen DAG validation: converged={result['converged']}, "
             f"confidence={result['confidence']:.2f}, latency={latency_ms:.0f}ms"
         )
 
-        return result
+        return QwenDAGResponse(
+            converged=result.get("converged", True),
+            confidence=result.get("confidence", 0.7),
+            refinement_steps=result.get("refinement_steps", 1),
+            reasoning=result.get("reasoning", ""),
+            latency_ms=latency_ms,
+        )
 
     def validate_type_constraints(
         self,
         type_grid: list[list[int]],
         line_numbers: list[int],
-    ) -> dict[str, Any]:
+    ) -> QwenTypeConstraintResponse:
         """Validate type constraints (detect Dict[Any, Any]).
 
         Args:
@@ -150,29 +218,30 @@ Respond ONLY with valid JSON, no markdown:"""
         violations = []
 
         # Direct detection from grid (column 3 = uses_dict_any)
+        violations = []
         for i, row in enumerate(type_grid):
             if len(row) >= 4 and row[3] == 1:  # uses_dict_any = 1
                 violations.append(
-                    {
-                        "line": line_numbers[i],
-                        "description": "Dict[Any, Any] violation detected",
-                        "suggested_fix": "Replace with Pydantic model with typed fields",
-                    }
+                    QwenViolation(
+                        line=line_numbers[i],
+                        description="Dict[Any, Any] violation detected",
+                        suggested_fix="Replace with Pydantic model with typed fields",
+                    )
                 )
 
-        return {
-            "converged": len(violations) == 0,
-            "confidence": 0.98,  # High confidence for pattern matching
-            "refinement_steps": 1,
-            "violations": violations,
-            "latency_ms": 0.0,  # Direct grid check, no LLM call
-        }
+        return QwenTypeConstraintResponse(
+            converged=len(violations) == 0,
+            confidence=0.98,  # High confidence for pattern matching
+            refinement_steps=1,
+            violations=violations,
+            latency_ms=0.0,  # Direct grid check, no LLM call
+        )
 
     def infer_edge_cases(
         self,
         signature_grid: list[list[int]],
         param_names: list[str],
-    ) -> dict[str, Any]:
+    ) -> QwenEdgeCaseResponse:
         """Infer missing edge cases from function signature.
 
         Args:
@@ -194,43 +263,43 @@ Respond ONLY with valid JSON, no markdown:"""
                     # Integer parameters → boundary cases
                     edge_cases.extend(
                         [
-                            {
-                                "category": "Boundary",
-                                "description": f"Test {param_name} at min value (0)",
-                            },
-                            {
-                                "category": "Boundary",
-                                "description": f"Test {param_name} at max value ({max_value})",
-                            },
-                            {
-                                "category": "Boundary",
-                                "description": f"Test {param_name} at exact threshold ({max_value})",
-                            },
+                            QwenEdgeCase(
+                                category="Boundary",
+                                description=f"Test {param_name} at min value (0)",
+                            ),
+                            QwenEdgeCase(
+                                category="Boundary",
+                                description=f"Test {param_name} at max value ({max_value})",
+                            ),
+                            QwenEdgeCase(
+                                category="Boundary",
+                                description=f"Test {param_name} at exact threshold ({max_value})",
+                            ),
                         ]
                     )
 
                 if not is_optional:
                     # Required parameters → null/empty cases
                     edge_cases.append(
-                        {
-                            "category": "Empty/null",
-                            "description": f"Test {param_name} with None/empty value (should raise error)",
-                        }
+                        QwenEdgeCase(
+                            category="Empty/null",
+                            description=f"Test {param_name} with None/empty value (should raise error)",
+                        )
                     )
 
-        return {
-            "converged": True,
-            "confidence": 0.90,
-            "refinement_steps": len(edge_cases),
-            "edge_cases": edge_cases,
-            "latency_ms": 0.0,  # Direct grid inference, no LLM call
-        }
+        return QwenEdgeCaseResponse(
+            converged=True,
+            confidence=0.90,
+            refinement_steps=len(edge_cases),
+            edge_cases=edge_cases,
+            latency_ms=0.0,  # Direct grid inference, no LLM call
+        )
 
     def validate_lint(
         self,
         lint_grid: list[list[int]],
         line_numbers: list[int],
-    ) -> dict[str, Any]:
+    ) -> QwenLintResponse:
         """Validate lint/format rules.
 
         Args:
@@ -243,24 +312,25 @@ Respond ONLY with valid JSON, no markdown:"""
         fixes = []
 
         # Detect trailing whitespace (column 1)
+        fixes = []
         for i, row in enumerate(lint_grid):
             if len(row) >= 2 and row[1] == 1:  # has trailing_space
                 fixes.append(
-                    {
-                        "line": line_numbers[i],
-                        "fix_type": "remove_trailing_space",
-                        "applied": False,  # Will be applied by caller
-                    }
+                    QwenLintFix(
+                        line=line_numbers[i],
+                        fix_type="remove_trailing_space",
+                        applied=False,  # Will be applied by caller
+                    )
                 )
 
-        return {
-            "converged": len(fixes) == 0,
-            "confidence": 0.98,
-            "refinement_steps": 1,
-            "fixes": fixes,
-            "violations": [],  # Lint violations stored as fixes
-            "latency_ms": 0.0,  # Direct grid check, no LLM call
-        }
+        return QwenLintResponse(
+            converged=len(fixes) == 0,
+            confidence=0.98,
+            refinement_steps=1,
+            fixes=fixes,
+            violations=[],  # Lint violations stored as fixes
+            latency_ms=0.0,  # Direct grid check, no LLM call
+        )
 
     def _format_dependencies(self, adj_matrix: list[list[int]], task_ids: list[str]) -> str:
         """Format adjacency matrix as dependency list."""

@@ -342,10 +342,10 @@ class TRMValidator:
                 result = adapter.validate_dag(grid, task_ids)
 
                 return ValidationResult(
-                    converged=result.get("converged", True),
-                    confidence=result.get("confidence", 0.87),
-                    refinement_steps=result.get("refinement_steps", 1),
-                    latency_ms=result.get("latency_ms", 0.0),
+                    converged=result.converged,
+                    confidence=result.confidence,
+                    refinement_steps=result.refinement_steps,
+                    latency_ms=result.latency_ms,
                     violations=[],
                     edge_cases=[],
                     fixes=[],
@@ -386,21 +386,21 @@ class TRMValidator:
                 line_numbers = list(range(1, len(task.input_grid) + 1))
                 result = adapter.validate_type_constraints(task.input_grid, line_numbers)
 
-                # Convert dict violations to Pydantic models
-                for v in result.get("violations", []):
+                # Convert Qwen violations to local Violation models
+                for v in result.violations:
                     violations.append(
                         Violation(
-                            line=v["line"],
-                            description=v["description"],
-                            suggested_fix=v["suggested_fix"],
+                            line=v.line,
+                            description=v.description,
+                            suggested_fix=v.suggested_fix,
                         )
                     )
 
                 return ValidationResult(
-                    converged=result.get("converged", len(violations) == 0),
-                    confidence=result.get("confidence", 0.95),
-                    refinement_steps=result.get("refinement_steps", 1),
-                    latency_ms=result.get("latency_ms", 0.0),
+                    converged=result.converged,
+                    confidence=result.confidence,
+                    refinement_steps=result.refinement_steps,
+                    latency_ms=result.latency_ms,
                     violations=violations,
                     edge_cases=[],
                     fixes=[],
@@ -449,20 +449,20 @@ class TRMValidator:
                 param_names = [f"param_{i + 1}" for i in range(len(task.input_grid))]
                 result = adapter.infer_edge_cases(task.input_grid, param_names)
 
-                # Convert dict edge cases to Pydantic models
-                for ec in result.get("edge_cases", []):
+                # Convert Qwen edge cases to local EdgeCase models
+                for ec in result.edge_cases:
                     edge_cases.append(
                         EdgeCase(
-                            category=ec["category"],
-                            description=ec["description"],
+                            category=ec.category,
+                            description=ec.description,
                         )
                     )
 
                 return ValidationResult(
-                    converged=result.get("converged", True),
-                    confidence=result.get("confidence", 0.90),
-                    refinement_steps=result.get("refinement_steps", 1),
-                    latency_ms=result.get("latency_ms", 0.0),
+                    converged=result.converged,
+                    confidence=result.confidence,
+                    refinement_steps=result.refinement_steps,
+                    latency_ms=result.latency_ms,
                     violations=[],
                     edge_cases=edge_cases,
                     fixes=[],
@@ -517,21 +517,21 @@ class TRMValidator:
                 line_numbers = list(range(1, len(task.input_grid) + 1))
                 result = adapter.validate_lint(task.input_grid, line_numbers)
 
-                # Convert dict fixes to Pydantic models
-                for f in result.get("fixes", []):
+                # Convert Qwen fixes to local LintFix models
+                for f in result.fixes:
                     fixes.append(
                         LintFix(
-                            line=f["line"],
-                            fix_type=f["fix_type"],
-                            applied=f["applied"],
+                            line=f.line,
+                            fix_type=f.fix_type,
+                            applied=f.applied,
                         )
                     )
 
                 return ValidationResult(
-                    converged=result.get("converged", len(violations) == 0),
-                    confidence=result.get("confidence", 0.98),
-                    refinement_steps=result.get("refinement_steps", 1),
-                    latency_ms=result.get("latency_ms", 0.0),
+                    converged=result.converged,
+                    confidence=result.confidence,
+                    refinement_steps=result.refinement_steps,
+                    latency_ms=result.latency_ms,
                     violations=violations,
                     edge_cases=[],
                     fixes=fixes,
