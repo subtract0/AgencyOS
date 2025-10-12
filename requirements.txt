@@ -6,6 +6,7 @@ openai-agents[litellm]>=0.2.0
 openai>=1.0.0
 anthropic>=0.42.0  # Memory tool support (beta: context-management-2025-06-27)
 claude-agent-sdk>=0.1.0
+elevenlabs>=1.0.0  # Text-to-speech for audio summaries
 
 # Google Cloud dependencies (Firestore for memory persistence)
 google-cloud-firestore>=2.11.0
