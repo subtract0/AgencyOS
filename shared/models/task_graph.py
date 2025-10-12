@@ -63,6 +63,9 @@ class Task(BaseModel):
     verification_target: str | None = Field(
         None, description="For Test tasks: Code task ID being verified"
     )
+    result: dict[str, Any] | None = Field(
+        None, description="Task execution result (e.g., files_modified, test_output)"
+    )
 
     @field_validator("id")
     @classmethod
