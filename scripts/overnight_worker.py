@@ -342,9 +342,7 @@ def push_branch_with_retry(
     return False
 
 
-def execute_task_command(
-    task: TaskQueueItem, log_file: str, timeout: int = 3600
-) -> int:
+def execute_task_command(task: TaskQueueItem, log_file: str, timeout: int = 3600) -> int:
     """
     Execute /primeA command for task.
 
@@ -608,9 +606,7 @@ def log_task_progress(log_file: str, task: TaskQueueItem, message: str) -> None:
         f.write(f"[{timestamp}] Task {task.id} ({task.title}): {message}\n")
 
 
-def process_worker_queue(
-    queue_file: str, worker_id: str, log_dir: str = "logs/overnight"
-) -> None:
+def process_worker_queue(queue_file: str, worker_id: str, log_dir: str = "logs/overnight") -> None:
     """
     Main worker loop: claim tasks, execute, report results.
 
@@ -709,9 +705,7 @@ def main() -> int:
     parser = argparse.ArgumentParser(description="Overnight worker for autonomous night watch")
     parser.add_argument("--queue-file", required=True, help="Path to task_queue.json")
     parser.add_argument("--worker-id", required=True, help="Unique worker identifier")
-    parser.add_argument(
-        "--log-dir", default="logs/overnight", help="Directory for worker logs"
-    )
+    parser.add_argument("--log-dir", default="logs/overnight", help="Directory for worker logs")
 
     args = parser.parse_args()
 

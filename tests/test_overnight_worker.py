@@ -256,7 +256,9 @@ class TestWorkerGitOperations:
         """Worker handles error when branch already exists."""
         # Arrange
         mock_run.return_value = Mock(
-            returncode=128, stdout="", stderr="fatal: A branch named 'night-watch/test' already exists"
+            returncode=128,
+            stdout="",
+            stderr="fatal: A branch named 'night-watch/test' already exists",
         )
 
         # Act
@@ -369,6 +371,7 @@ class TestWorkerSuccessCriteria:
     @patch("subprocess.run")
     def test_worker_detects_failing_tests(self, mock_run: Mock):
         """Worker detects when tests fail (success criterion 2)."""
+
         # Arrange - Mock test run to fail
         def side_effect(*args, **kwargs):
             cmd = args[0] if args else []
@@ -390,6 +393,7 @@ class TestWorkerSuccessCriteria:
     @patch("subprocess.run")
     def test_worker_detects_uncommitted_changes(self, mock_run: Mock):
         """Worker detects uncommitted changes (success criterion 3)."""
+
         # Arrange
         def side_effect(*args, **kwargs):
             cmd = args[0] if args else []
@@ -469,7 +473,10 @@ class TestWorkerStatusUpdates:
         from scripts.overnight_worker import update_task_status
 
         update_task_status(
-            str(queue_file), "task_001", TaskStatus.FAILED, error_message="Command failed with exit code 1"
+            str(queue_file),
+            "task_001",
+            TaskStatus.FAILED,
+            error_message="Command failed with exit code 1",
         )
 
         # Assert
@@ -569,7 +576,10 @@ class TestWorkerErrorHandling:
         from scripts.overnight_worker import update_task_status
 
         update_task_status(
-            str(queue_file), "task_001", TaskStatus.TIMEOUT, error_message="Task exceeded 60 minute limit"
+            str(queue_file),
+            "task_001",
+            TaskStatus.TIMEOUT,
+            error_message="Task exceeded 60 minute limit",
         )
 
         # Assert

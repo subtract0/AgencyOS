@@ -290,9 +290,7 @@ class TestNormalOperations:
 
         # Act: Spawn 3 workers concurrently
         with ThreadPoolExecutor(max_workers=3) as executor:
-            futures = [
-                executor.submit(worker_claim, f"worker-{i:02d}") for i in range(1, 4)
-            ]
+            futures = [executor.submit(worker_claim, f"worker-{i:02d}") for i in range(1, 4)]
             for future in futures:
                 future.result()
 
@@ -468,9 +466,7 @@ class TestEdgeCases:
         assert len(set(claimed_tasks)) == 2  # Unique tasks
 
     @patch("scripts.overnight_worker.execute_primea_command")
-    def test_worker_failure_does_not_block_other_workers(
-        self, mock_execute, temp_dir, queue_file
-    ):
+    def test_worker_failure_does_not_block_other_workers(self, mock_execute, temp_dir, queue_file):
         """Test that one worker's failure doesn't prevent others from working."""
         from scripts.overnight_worker import claim_next_task, mark_task_failed
 
@@ -526,14 +522,10 @@ class TestEdgeCases:
         from scripts.overnight_worker import create_mission_branch
 
         # Act: Create same branch twice
-        branch1 = create_mission_branch(
-            str(mock_git_repo), "test_mission", "20251012-0300"
-        )
+        branch1 = create_mission_branch(str(mock_git_repo), "test_mission", "20251012-0300")
 
         # Branch already exists, should append suffix
-        branch2 = create_mission_branch(
-            str(mock_git_repo), "test_mission", "20251012-0300"
-        )
+        branch2 = create_mission_branch(str(mock_git_repo), "test_mission", "20251012-0300")
 
         # Assert: Different branch names
         assert branch1 == "night-watch/test-mission-20251012-0300"
@@ -585,8 +577,7 @@ class TestSecurity:
         # Act: Spawn 3 workers trying to claim same task
         with ThreadPoolExecutor(max_workers=3) as executor:
             futures = [
-                executor.submit(worker_claim_with_delay, f"worker-{i:02d}")
-                for i in range(1, 4)
+                executor.submit(worker_claim_with_delay, f"worker-{i:02d}") for i in range(1, 4)
             ]
             for future in futures:
                 future.result()
@@ -599,20 +590,15 @@ class TestSecurity:
         from scripts.overnight_worker import create_mission_branch
 
         # Act: Create branches for different missions
-        branch1 = create_mission_branch(
-            str(mock_git_repo), "mission_alpha", "20251012-0300"
-        )
-        branch2 = create_mission_branch(
-            str(mock_git_repo), "mission_beta", "20251012-0305"
-        )
-        branch3 = create_mission_branch(
-            str(mock_git_repo), "mission_gamma", "20251012-0310"
-        )
+        branch1 = create_mission_branch(str(mock_git_repo), "mission_alpha", "20251012-0300")
+        branch2 = create_mission_branch(str(mock_git_repo), "mission_beta", "20251012-0305")
+        branch3 = create_mission_branch(str(mock_git_repo), "mission_gamma", "20251012-0310")
 
         # Assert: All branches unique and exist
         assert branch1 != branch2 != branch3
         assert all(
-            branch in subprocess.run(
+            branch
+            in subprocess.run(
                 ["git", "branch", "--list"],
                 cwd=mock_git_repo,
                 capture_output=True,
@@ -765,9 +751,7 @@ class TestResilience:
     """Test resilience and error recovery (NECESSARY: R)."""
 
     @patch("scripts.overnight_worker.claim_next_task")
-    def test_worker_crash_recovery_orchestrator_continues(
-        self, mock_claim, temp_dir, queue_file
-    ):
+    def test_worker_crash_recovery_orchestrator_continues(self, mock_claim, temp_dir, queue_file):
         """Test orchestrator continues if worker crashes."""
         from scripts.overnight_orchestrator import monitor_workers
 
@@ -776,9 +760,7 @@ class TestResilience:
 
         # Act: Orchestrator monitors workers
         try:
-            result = monitor_workers(
-                worker_count=1, queue_path=str(queue_file), timeout_seconds=5
-            )
+            result = monitor_workers(worker_count=1, queue_path=str(queue_file), timeout_seconds=5)
         except Exception:
             result = {"crashed_workers": 1, "orchestrator_alive": True}
 

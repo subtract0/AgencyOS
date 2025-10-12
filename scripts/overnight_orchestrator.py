@@ -485,9 +485,7 @@ def generate_next_steps(results: list[MissionResult]) -> list[str]:
     return steps
 
 
-def generate_final_report(
-    queue_path: str, config: OrchestratorConfig
-) -> OrchestratorReport:
+def generate_final_report(queue_path: str, config: OrchestratorConfig) -> OrchestratorReport:
     """
     Generate final report from completed task queue.
 
