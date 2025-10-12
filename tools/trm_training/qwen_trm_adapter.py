@@ -370,8 +370,11 @@ Respond ONLY with valid JSON, no markdown:"""
             logger.error(f"Ollama API error: {e}")
             raise
 
-    def _parse_json_response(self, response: str, default: dict[str, Any]) -> dict[str, Any]:
-        """Parse JSON response from Qwen3-Coder with fallback."""
+    def _parse_json_response(self, response: str, default: dict) -> dict:
+        """Parse JSON response from Qwen3-Coder with fallback.
+
+        Note: Returns untyped dict for internal use only (will be converted to Pydantic models by callers).
+        """
         try:
             # Strip markdown code blocks if present
             text = response.strip()
