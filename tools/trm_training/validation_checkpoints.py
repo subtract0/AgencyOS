@@ -13,7 +13,7 @@ from pathlib import Path
 from typing import Optional
 
 from shared.models.task_graph import Task, TaskGraph, TaskType
-from shared.type_definitions.result import Ok, Err, Result
+from shared.type_definitions.result import Err, Ok, Result
 from tools.trm_training.grid_transformers import (
     apply_lint_fix,
     code_to_lint_grid,
@@ -85,7 +85,9 @@ async def validate_dag_checkpoint(
 
         has_cycle = graph.has_circular_dependencies()
         if has_cycle:
-            return Err("Task Graph Validation FAILED: Circular dependencies detected (Python fallback)")
+            return Err(
+                "Task Graph Validation FAILED: Circular dependencies detected (Python fallback)"
+            )
 
         print("✅ DAG Validation: PASS (Python fallback)")
         # Return mock validation result for fallback
@@ -106,7 +108,7 @@ async def validate_dag_checkpoint(
     validation = validation_result.unwrap()
 
     if not validation.converged:
-        print(f"❌ TRM-7M Validation FAILED: Circular dependencies detected")
+        print("❌ TRM-7M Validation FAILED: Circular dependencies detected")
         print(f"   Confidence: {validation.confidence:.2f}")
         print(f"   Refinement steps: {validation.refinement_steps}")
         return Err("Task Graph Validation FAILED: Circular dependencies detected")
@@ -116,7 +118,9 @@ async def validate_dag_checkpoint(
         f"✅ TRM-7M DAG Validation: PASS (confidence {validation.confidence:.2f}, "
         f"{validation.refinement_steps} steps)"
     )
-    print(f"   Speed: {validation.latency_ms:.1f}ms (vs ~{python_latency_estimate:.0f}ms for Python)")
+    print(
+        f"   Speed: {validation.latency_ms:.1f}ms (vs ~{python_latency_estimate:.0f}ms for Python)"
+    )
 
     return Ok(validation)
 
@@ -201,19 +205,29 @@ async def validate_type_constraints_checkpoint(
                 print(f"   - Line {violation.line}: {violation.description}")
 
             # TODO: Auto-fix with QualityEnforcer (implement in next step)
-            print(f"🔧 Auto-fix recommended: Use QualityEnforcer to fix violations")
-            print(f"   Suggested fix: {validation.violations[0].suggested_fix if validation.violations else 'N/A'}")
+            print("🔧 Auto-fix recommended: Use QualityEnforcer to fix violations")
+            print(
+                f"   Suggested fix: {validation.violations[0].suggested_fix if validation.violations else 'N/A'}"
+            )
 
             return Ok(validation)  # Return violations for caller to handle
 
-        print(f"✅ Type constraints validated: {file_path} (confidence {validation.confidence:.2f})")
+        print(
+            f"✅ Type constraints validated: {file_path} (confidence {validation.confidence:.2f})"
+        )
 
     # No violations found
     from trinity_protocol.core.trm_validator import ValidationResult
 
     return Ok(
         ValidationResult(
-            converged=True, confidence=1.0, refinement_steps=0, latency_ms=0.0, violations=[], edge_cases=[], fixes=[]
+            converged=True,
+            confidence=1.0,
+            refinement_steps=0,
+            latency_ms=0.0,
+            violations=[],
+            edge_cases=[],
+            fixes=[],
         )
     )
 
@@ -294,7 +308,7 @@ async def infer_edge_cases_checkpoint(
     result = await trm_validator.validate_and_refine(edge_case_inference)
 
     if result.is_err():
-        print(f"⚠️ TRM-7M unavailable, skipping edge case inference...")
+        print("⚠️ TRM-7M unavailable, skipping edge case inference...")
         return result
 
     inference = result.unwrap()
@@ -391,7 +405,7 @@ async def validate_lint_checkpoint(
         result = await trm_validator.validate_and_refine(lint_validation)
 
         if result.is_err():
-            print(f"⚠️ TRM-7M unavailable, skipping lint pre-validation...")
+            print("⚠️ TRM-7M unavailable, skipping lint pre-validation...")
             continue
 
         validation = result.unwrap()
@@ -406,7 +420,9 @@ async def validate_lint_checkpoint(
                     if success:
                         total_fixes.append(fix)
 
-            print(f"✅ Lint violations fixed automatically (confidence {validation.confidence:.2f})")
+            print(
+                f"✅ Lint violations fixed automatically (confidence {validation.confidence:.2f})"
+            )
         else:
             print(f"✅ Lint validation: PASS (confidence {validation.confidence:.2f})")
 

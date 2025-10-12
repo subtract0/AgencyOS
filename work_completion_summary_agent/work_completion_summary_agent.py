@@ -5,6 +5,8 @@ from datetime import UTC
 import litellm
 from agency_swarm import Agent
 from agency_swarm.tools import BaseTool as Tool
+from elevenlabs import play
+from elevenlabs.client import ElevenLabs
 from pydantic import Field
 
 from shared.agent_context import AgentContext, create_agent_context
@@ -22,6 +24,36 @@ from shared.system_hooks import (
 )
 
 current_dir = os.path.dirname(os.path.abspath(__file__))
+
+
+class SpeakSummary(Tool):
+    """Convert the summary to speech using ElevenLabs and play it to notify the user.
+
+    Use this when the summary is ready to notify the user audibly about what was done and what is needed next.
+    """
+
+    summary_text: str = Field(..., description="The summary text to convert to speech and play")
+
+    def run(self) -> str:
+        try:
+            api_key = os.getenv("ELEVENLABS_API_KEY")
+            if not api_key:
+                return "ElevenLabs API key not found in environment variables. Please set ELEVENLABS_API_KEY in .env file."
+
+            client = ElevenLabs(api_key=api_key)
+
+            audio = client.text_to_speech.convert(
+                text=self.summary_text,
+                voice_id="JBFqnCBsd6RMkjVDRZzb",
+                model_id="eleven_multilingual_v2",
+                output_format="mp3_44100_128",
+            )
+
+            play(audio)
+
+            return f"✓ Audio summary played successfully. Summary: {self.summary_text}"
+        except Exception as e:
+            return f"Failed to play audio summary: {e}. Summary text: {self.summary_text}"
 
 
 class RegenerateWithGpt5(Tool):
@@ -201,7 +233,7 @@ def create_work_completion_summary_agent(
         model=get_model_instance(model),
         hooks=combined_hook,
         model_settings=create_model_settings(model, reasoning_effort),
-        tools=[RegenerateWithGpt5],
+        tools=[SpeakSummary, RegenerateWithGpt5],
     )
 
     # Enable cost tracking if provided
