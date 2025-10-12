@@ -37,7 +37,7 @@ class SuccessCriteria(BaseModel):
     all_criteria_met: bool
 
 
-def acquire_lock(lock_file: str, timeout: float = 5.0) -> Optional[int]:
+def acquire_lock(lock_file: str, timeout: float = 5.0) -> int | None:
     """
     Acquire exclusive file lock with timeout.
 
@@ -83,7 +83,7 @@ def release_lock(fd: int) -> None:
 
 def acquire_lock_with_retry(
     lock_file: str, max_retries: int = 3, timeout: float = 5.0
-) -> Optional[int]:
+) -> int | None:
     """
     Acquire lock with exponential backoff retry (Article I compliance).
 
@@ -109,7 +109,7 @@ def acquire_lock_with_retry(
     return None
 
 
-def claim_next_task(queue_file: str, worker_id: str) -> Optional[TaskQueueItem]:
+def claim_next_task(queue_file: str, worker_id: str) -> TaskQueueItem | None:
     """
     Claim next pending task from queue with file locking.
 
@@ -302,7 +302,7 @@ def execute_with_timeout(func, timeout_seconds: int):
         try:
             future.result(timeout=timeout_seconds)
         except concurrent.futures.TimeoutError:
-            raise TimeoutError(f"Function exceeded timeout of {timeout_seconds} seconds")
+            raise TimeoutError(f"Function exceeded timeout of {timeout_seconds} seconds") from None
 
 
 def push_branch_with_retry(
@@ -371,10 +371,10 @@ def execute_task_command(
 
         # Log output
         with open(log_file, "a") as f:
-            f.write(f"\n=== Command Output ===\n")
+            f.write("\n=== Command Output ===\n")
             f.write(result.stdout)
             if result.stderr:
-                f.write(f"\n=== Command Errors ===\n")
+                f.write("\n=== Command Errors ===\n")
                 f.write(result.stderr)
 
         return result.returncode
@@ -531,8 +531,8 @@ def update_task_status(
     queue_file: str,
     task_id: str,
     status: TaskStatus,
-    branch_name: Optional[str] = None,
-    error_message: Optional[str] = None,
+    branch_name: str | None = None,
+    error_message: str | None = None,
 ) -> None:
     """
     Update task status in queue with file locking.

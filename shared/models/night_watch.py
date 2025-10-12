@@ -7,7 +7,6 @@ including missions, task queues, and execution results.
 
 from datetime import UTC, datetime
 from enum import Enum
-from typing import Optional
 
 from pydantic import BaseModel, Field
 
@@ -67,16 +66,16 @@ class TaskQueueItem(BaseModel):
     priority: int = Field(..., description="Numeric priority (1 = highest)")
     estimated_duration_minutes: int = Field(..., description="Estimated completion time")
     status: TaskStatus = Field(default=TaskStatus.PENDING, description="Current task status")
-    assigned_to: Optional[str] = Field(
+    assigned_to: str | None = Field(
         None, description="Worker ID that claimed this task (e.g., 'worker-m4pro-01')"
     )
-    branch_name: Optional[str] = Field(
+    branch_name: str | None = Field(
         None,
         description="Git branch name created for this task (e.g., 'night-watch/pydantic-migration-20251012-0315')",
     )
-    started_at: Optional[datetime] = Field(None, description="ISO timestamp when task started")
-    completed_at: Optional[datetime] = Field(None, description="ISO timestamp when task completed")
-    error_message: Optional[str] = Field(None, description="Error message if task failed")
+    started_at: datetime | None = Field(None, description="ISO timestamp when task started")
+    completed_at: datetime | None = Field(None, description="ISO timestamp when task completed")
+    error_message: str | None = Field(None, description="Error message if task failed")
     retry_count: int = Field(default=0, description="Number of retry attempts")
 
 
@@ -105,13 +104,13 @@ class MissionResult(BaseModel):
     title: str = Field(..., description="Mission title")
     status: TaskStatus = Field(..., description="Final status")
     worker_id: str = Field(..., description="Worker that executed this mission")
-    branch_name: Optional[str] = Field(None, description="Git branch name")
+    branch_name: str | None = Field(None, description="Git branch name")
     started_at: datetime = Field(..., description="Start timestamp")
     completed_at: datetime = Field(..., description="Completion timestamp")
     duration_minutes: float = Field(..., description="Execution duration in minutes")
     tests_passed: bool = Field(default=False, description="Whether all tests passed")
-    pr_url: Optional[str] = Field(None, description="Pull request URL if auto-created")
-    error_message: Optional[str] = Field(None, description="Error message if failed")
+    pr_url: str | None = Field(None, description="Pull request URL if auto-created")
+    error_message: str | None = Field(None, description="Error message if failed")
     log_file: str = Field(..., description="Path to detailed execution log")
 
 

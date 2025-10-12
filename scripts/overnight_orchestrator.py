@@ -26,7 +26,7 @@ import threading
 import time
 from datetime import UTC, datetime
 from pathlib import Path
-from typing import Optional
+from typing import Any
 
 from shared.models.night_watch import (
     Mission,
@@ -150,6 +150,11 @@ def create_task_queue(missions: list[Mission], mission_set: str) -> TaskQueue:
             priority=mission.priority.value,
             estimated_duration_minutes=mission.estimated_duration_minutes,
             status=TaskStatus.PENDING,
+            assigned_to=None,
+            branch_name=None,
+            started_at=None,
+            completed_at=None,
+            error_message=None,
         )
         tasks.append(task)
 
@@ -306,7 +311,7 @@ def generate_remote_worker_command(air_threads: int, queue_path: str) -> str:
     return command
 
 
-def monitor_workers(worker_count: int, queue_path: str, timeout_seconds: int = 300) -> dict:
+def monitor_workers(worker_count: int, queue_path: str, timeout_seconds: int = 300) -> dict[str, Any]:
     """
     Monitor workers and return status.
 
@@ -424,6 +429,7 @@ def aggregate_results(queue_path: str) -> list[MissionResult]:
             completed_at=task.completed_at or datetime.now(UTC),
             duration_minutes=duration_minutes,
             tests_passed=(task.status == TaskStatus.COMPLETED),
+            pr_url=None,
             error_message=task.error_message,
             log_file=f"logs/overnight/{task.assigned_to or 'unknown'}-{datetime.now(UTC).strftime('%Y%m%d')}.log",
         )
