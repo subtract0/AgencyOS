@@ -62,7 +62,7 @@ class ReasoningTask(BaseModel):
     input_grid: list[list[int]] = Field(
         ..., description="2D matrix encoding problem structure (e.g., adjacency matrix, type annotations)"
     )
-    proposed_solution: Optional[list[list[int]]] = Field(
+    proposed_solution: list[list[int]] | None = Field(
         None, description="Optional solution grid for verification (None = inference mode)"
     )
     constraints: list[str] = Field(
@@ -150,7 +150,7 @@ class TRMValidator:
 
     def __init__(
         self,
-        model_path: Optional[Path] = None,
+        model_path: Path | None = None,
         device: str = "cpu",
         fallback_to_python: bool = True,
         use_mock: bool = True,  # Use mock model for MVP testing

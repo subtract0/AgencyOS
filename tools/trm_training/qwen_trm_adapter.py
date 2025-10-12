@@ -69,7 +69,7 @@ class QwenTRMAdapter:
                     f"Run: ollama pull {self.model_name}"
                 )
             else:
-                logger.info(f"✅ Qwen3-Coder available via Ollama")
+                logger.info("✅ Qwen3-Coder available via Ollama")
 
         except Exception as e:
             logger.warning(f"Ollama connection check failed: {e}")
