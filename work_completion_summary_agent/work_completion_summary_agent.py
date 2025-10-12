@@ -5,8 +5,8 @@ from datetime import UTC
 import litellm
 from agency_swarm import Agent
 from agency_swarm.tools import BaseTool as Tool
-from elevenlabs.client import ElevenLabs
 from elevenlabs import play
+from elevenlabs.client import ElevenLabs
 from pydantic import Field
 
 from shared.agent_context import AgentContext, create_agent_context
