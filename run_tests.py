@@ -417,40 +417,49 @@ def main(
             "--ignore=tests/e2e/",  # e2e tests import agency at module level
         ]
 
+    # CRITICAL: pytest-xdist DISABLED due to segfault in execnet/gateway_base.py
+    # Issue: Even with 1 worker, xdist uses IPC via execnet which causes segfault
+    # Segfault location: execnet/gateway_base.py:534 in read() - worker communication
+    # Temporary fix: Run tests sequentially (no -n flag) until root cause resolved
+    # TODO: Investigate execnet segfault - may be related to Python 3.13 or asyncio tests
+    print("⚠️  pytest-xdist DISABLED: Running tests sequentially to avoid segfault")
+    print("   This will take longer but ensures test completion")
+
     # Add parallel execution if pytest-xdist is available
     # (Firestore tests excluded via --ignore flags, safe to parallelize)
     # Memory-aware worker count: reduce parallelism when local Ollama model is active
-    try:
-        import xdist  # noqa: F401 - pytest-xdist module imported as 'xdist', checked for availability
-
-        # Check if local model is active (Phase 3 cost optimization)
-        use_local = os.getenv("USE_LOCAL_MODEL", "true").lower() == "true"
-
-        # Docker services consume memory: adjust worker count accordingly
-        if with_docker:
-            # Docker Ollama service (40GB limit) + tests: reduce workers
-            # 48GB Mac: Docker (40GB) + 1 worker (3GB) = 43GB (safest, prevents socket exhaustion)
-            worker_count = int(os.getenv("LOCAL_MODEL_TEST_WORKERS", "1"))
-            print(f"🐳 Docker services active: using {worker_count} test workers (memory-safe)")
-        elif use_local:
-            # Reduce parallelism to prevent socket exhaustion and memory issues
-            # 48GB Mac: Qwen3-Coder Q8_0 (38GB) + 1 worker (3GB) = 41GB (safest)
-            # CRITICAL: Reduced from 2 to 1 worker to fix segfault crashes at ~21% completion
-            # Root cause: Socket exhaustion during parallel async network tests (crash at socket.py:295)
-            worker_count = int(os.getenv("LOCAL_MODEL_TEST_WORKERS", "1"))
-            print(f"🧠 Local model active: using {worker_count} test workers (crash-safe)")
-        else:
-            # No local model or Docker: default parallelism
-            worker_count = 10
-
-        # VectorStore disabled for tests (USE_ENHANCED_MEMORY=false)
-        # PyTorch segfault workaround no longer needed - restore full parallelism
-        # Previous: worker_count = 1 (forced single worker per SPEC-021)
-        # Current: worker_count = 10 (full parallelism, 2-3 minute test runs)
-
-        pytest_args.extend(["-n", str(worker_count)])
-    except ImportError:
-        pass  # Run sequentially if xdist not available
+    # DISABLED: See above
+    # try:
+    #     import xdist  # noqa: F401 - pytest-xdist module imported as 'xdist', checked for availability
+    #
+    #     # Check if local model is active (Phase 3 cost optimization)
+    #     use_local = os.getenv("USE_LOCAL_MODEL", "true").lower() == "true"
+    #
+    #     # Docker services consume memory: adjust worker count accordingly
+    #     if with_docker:
+    #         # Docker Ollama service (40GB limit) + tests: reduce workers
+    #         # 48GB Mac: Docker (40GB) + 1 worker (3GB) = 43GB (safest, prevents socket exhaustion)
+    #         worker_count = int(os.getenv("LOCAL_MODEL_TEST_WORKERS", "1"))
+    #         print(f"🐳 Docker services active: using {worker_count} test workers (memory-safe)")
+    #     elif use_local:
+    #         # Reduce parallelism to prevent socket exhaustion and memory issues
+    #         # 48GB Mac: Qwen3-Coder Q8_0 (38GB) + 1 worker (3GB) = 41GB (safest)
+    #         # CRITICAL: Reduced from 2 to 1 worker to fix segfault crashes at ~21% completion
+    #         # Root cause: Socket exhaustion during parallel async network tests (crash at socket.py:295)
+    #         worker_count = int(os.getenv("LOCAL_MODEL_TEST_WORKERS", "1"))
+    #         print(f"🧠 Local model active: using {worker_count} test workers (crash-safe)")
+    #     else:
+    #         # No local model or Docker: default parallelism
+    #         worker_count = 10
+    #
+    #     # VectorStore disabled for tests (USE_ENHANCED_MEMORY=false)
+    #     # PyTorch segfault workaround no longer needed - restore full parallelism
+    #     # Previous: worker_count = 1 (forced single worker per SPEC-021)
+    #     # Current: worker_count = 10 (full parallelism, 2-3 minute test runs)
+    #
+    #     pytest_args.extend(["-n", str(worker_count)])
+    # except ImportError:
+    #     pass  # Run sequentially if xdist not available
 
     # PyTorch pre-import removed (VectorStore disabled for tests via USE_ENHANCED_MEMORY=false)
     # Previous workaround (SPEC-021) no longer needed
