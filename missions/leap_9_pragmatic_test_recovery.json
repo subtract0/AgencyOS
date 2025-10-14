@@ -1,0 +1,374 @@
+{
+  "mission": "Leap 9: Pragmatic Test Suite Recovery (Human-Out-of-Loop)",
+  "leap_number": 9,
+  "strategic_goal": "Achieve 100% test pass rate through strategic, iterative fixes (no full suite timeouts)",
+  "context": {
+    "prior_mission": "leap_8_completion_protocol",
+    "current_state": "1,754/1,762 passing (99.5%), 8 known failures cataloged",
+    "target_state": "1,762/1,762 passing (100%), stable execution <10min",
+    "constraints": [
+      "NO full test suite runs with default timeout (avoid 45+ min hangs)",
+      "Targeted test execution only (specific files or test IDs)",
+      "Catalog all failures and hangs explicitly before attempting fixes",
+      "One-by-one fix approach with verification after each fix",
+      "Use --timeout-multiplier 3.0 ONLY for targeted test runs (<100 tests)"
+    ],
+    "known_failures": {
+      "adaptive_router": 6,
+      "trinity_protocol": 2,
+      "total": 8,
+      "root_causes_identified": true
+    }
+  },
+  "phases": [
+    {
+      "id": "phase_1",
+      "title": "Strategic Failure Analysis & Environment Validation",
+      "estimated_hours": 2,
+      "estimated_cost_usd": 4.0,
+      "tasks": [
+        {
+          "id": "validate_environment_config",
+          "title": "Validate and fix environment variable overrides",
+          "type": "Code",
+          "tier": "Tier 2",
+          "agent": "coder",
+          "description": "PRIMARY ROOT CAUSE IDENTIFIED: Environment variables AGENCY_MODEL=gpt-5 and CODER_MODEL=gpt-5 override adaptive router logic, causing 4 critical test failures. Task: (1) Check current .env and shell environment for these overrides, (2) Document current values, (3) Create environment isolation strategy for tests, (4) Add test setup that unsets these variables, (5) Verify adaptive router can function without overrides. DO NOT modify global environment - only test isolation.",
+          "dependencies": [],
+          "acceptance_criteria": [
+            ".env file documented (does NOT contain AGENCY_MODEL or CODER_MODEL)",
+            "Shell environment documented (unset AGENCY_MODEL CODER_MODEL confirmed)",
+            "Test isolation strategy implemented (pytest fixture or conftest.py)",
+            "Adaptive router tests run in clean environment (no global model overrides)",
+            "Verification: Re-run 6 adaptive router tests in isolation (pytest tests/test_adaptive_router_integration.py::TestModelRouting -v)"
+          ],
+          "estimated_tokens": 2000,
+          "execution_strategy": {
+            "bash_commands": [
+              "echo $AGENCY_MODEL",
+              "echo $CODER_MODEL",
+              "cat .env | grep -E '(AGENCY_MODEL|CODER_MODEL)' || echo 'Not found in .env'",
+              "# DO NOT RUN: unset AGENCY_MODEL CODER_MODEL (affects global shell)"
+            ],
+            "test_isolation": "Add pytest fixture in tests/conftest.py to unset variables per test",
+            "verification_command": "pytest tests/test_adaptive_router_integration.py::TestModelRouting -v --tb=short"
+          }
+        },
+        {
+          "id": "run_targeted_failing_tests_only",
+          "title": "Run ONLY the 8 known failing tests in isolation",
+          "type": "Test",
+          "tier": "Tier 2",
+          "agent": "test_generator",
+          "description": "Run ONLY the 8 cataloged failing tests (6 adaptive router + 2 trinity protocol) in isolation with 3x timeout. DO NOT RUN FULL SUITE. Goal: (1) Verify failures are reproducible, (2) Capture full tracebacks with --tb=long, (3) Identify if environment fix (task 1) resolves any failures, (4) Document remaining failures after environment fix. Use pytest -k to target specific tests.",
+          "dependencies": ["validate_environment_config"],
+          "acceptance_criteria": [
+            "Only 8 tests executed (not full 1,762 suite)",
+            "Execution time <2 minutes (8 tests with 3x timeout)",
+            "All 8 test results captured with full tracebacks",
+            "Environment fix impact documented (how many failures resolved?)",
+            "Remaining failures cataloged with updated error messages",
+            "Output saved to logs/leap9_targeted_test_results.txt"
+          ],
+          "estimated_tokens": 2000,
+          "verification_target": "validate_environment_config",
+          "test_execution": {
+            "command": "pytest tests/test_adaptive_router_integration.py tests/trinity_protocol/core/test_hybrid_executor.py::TestErrorConditions::test_execute_task_with_escalation_succeeds_at_local tests/trinity_protocol/core/test_hybrid_executor.py::TestIntegrationWorkflows::test_workflow_statistics_accumulation -v --tb=long --timeout-multiplier 3.0 > logs/leap9_targeted_test_results.txt 2>&1",
+            "alternative": "Run each test individually if batch hangs",
+            "timeout_per_test": "30 seconds (3x multiplier)",
+            "expected_duration": "< 2 minutes"
+          }
+        },
+        {
+          "id": "analyze_remaining_failures",
+          "title": "Analyze failures after environment fix",
+          "type": "Spec",
+          "tier": "Tier 1",
+          "agent": "auditor",
+          "description": "Analyze test results from task 2 to determine: (1) How many failures resolved by environment fix, (2) Remaining failures requiring code changes, (3) Updated priority ranking, (4) Fix strategies for each remaining failure. Use TestFailureClassifier to re-evaluate auto-fixability. Update test_failures_summary.json with post-environment-fix results.",
+          "dependencies": ["run_targeted_failing_tests_only"],
+          "acceptance_criteria": [
+            "Environment fix impact quantified (X failures resolved out of 8)",
+            "Remaining failures re-classified (trivial/simple/moderate/complex)",
+            "Priority ranking updated (critical → high → medium)",
+            "Fix strategies documented for each remaining failure",
+            "test_failures_summary.json updated with latest results",
+            "Decision: Proceed to Phase 2 if failures remain, else skip to Phase 3"
+          ],
+          "estimated_tokens": 3000,
+          "analysis_inputs": {
+            "test_results": "logs/leap9_targeted_test_results.txt",
+            "prior_catalog": "logs/test_failures_summary.json",
+            "classifier": "tools/test_failure_classifier.py"
+          }
+        }
+      ]
+    },
+    {
+      "id": "phase_2",
+      "title": "Iterative Test Fixes (One-by-One Strategy)",
+      "estimated_hours": 4,
+      "estimated_cost_usd": 10.0,
+      "tasks": [
+        {
+          "id": "fix_critical_failures_batch",
+          "title": "Fix all CRITICAL priority failures (model routing)",
+          "type": "Code",
+          "tier": "Tier 2",
+          "agent": "coder",
+          "description": "Fix remaining CRITICAL failures after environment fix (if any). Expected failures: (1) F1.2: P2 routes to gpt-5 instead of gpt-4o, (2) F1.3: AgentContext P2 routing, (3) F1.6: Fallback to gpt-5 instead of gpt-4o-mini. Root cause: ModelRouter.route() logic in shared/adaptive_model_router.py. Apply VectorStore pattern for model tier mapping (if available). Verify each fix individually with targeted test run.",
+          "dependencies": ["analyze_remaining_failures"],
+          "acceptance_criteria": [
+            "All CRITICAL failures fixed (F1.2, F1.3, F1.6 if still failing)",
+            "ModelRouter P2 mapping: P2_MODERATE → gpt-4o (NOT gpt-5)",
+            "Fallback logic: P3 local unavailable → gpt-4o-mini (NOT gpt-5)",
+            "Each fix verified with single test run before proceeding to next",
+            "No new test failures introduced (verify with targeted test run)",
+            "Fixed tests pass consistently (run 2x to check for flakiness)"
+          ],
+          "estimated_tokens": 4000,
+          "fix_strategy": {
+            "file": "shared/adaptive_model_router.py",
+            "method": "ModelRouter.route()",
+            "expected_changes": [
+              "P2_MODERATE: Return 'gpt-4o' instead of 'gpt-5'",
+              "P3_SIMPLE fallback: Return 'gpt-4o-mini' when local unavailable",
+              "Add unit test to verify tier mappings"
+            ],
+            "verification_per_fix": [
+              "pytest tests/test_adaptive_router_integration.py::TestModelRouting::test_p2_routes_to_gpt4o -v",
+              "pytest tests/test_adaptive_router_integration.py::TestAgentContextIntegration::test_get_optimal_model_p2 -v",
+              "pytest tests/test_adaptive_router_integration.py::TestLocalModelFallback::test_local_model_unavailable_fallback -v"
+            ]
+          }
+        },
+        {
+          "id": "fix_high_priority_failures_batch",
+          "title": "Fix all HIGH priority failures (classification & cost tracking)",
+          "type": "Code",
+          "tier": "Tier 2",
+          "agent": "coder",
+          "description": "Fix remaining HIGH priority failures: (1) F1.1: P3 misclassification (typo tasks as P2), (2) F1.4: Cost calculation incorrect, (3) F1.5: Cost summary P3 count wrong. Root cause: TaskComplexityClassifier in shared/task_complexity.py. Add keyword detection for 'typo', 'fix typo', 'README', 'documentation' → P3_SIMPLE. Verify cost calculation matches expected rates after model routing fixes.",
+          "dependencies": ["fix_critical_failures_batch"],
+          "acceptance_criteria": [
+            "All HIGH failures fixed (F1.1, F1.4, F1.5 if still failing)",
+            "TaskComplexityClassifier: Typo tasks classified as P3_SIMPLE",
+            "Cost calculation matches expected rates (gpt-4o $1.50/1M)",
+            "Cost summary tracks P3 tasks correctly (6 typo tasks = 6 P3)",
+            "Each fix verified individually before proceeding",
+            "No new failures introduced"
+          ],
+          "estimated_tokens": 4000,
+          "fix_strategy": {
+            "file": "shared/task_complexity.py",
+            "class": "TaskComplexityClassifier",
+            "expected_changes": [
+              "Add P3 keyword detection: ['typo', 'fix typo', 'README', 'documentation', 'formatting']",
+              "Adjust complexity scoring: Typo tasks → P3_SIMPLE (high confidence)",
+              "Add unit test for typo task classification"
+            ],
+            "verification_per_fix": [
+              "pytest tests/test_adaptive_router_integration.py::TestModelRouting::test_p3_routes_to_local_model -v",
+              "pytest tests/test_adaptive_router_integration.py::TestCostTracking -v"
+            ]
+          }
+        },
+        {
+          "id": "fix_medium_priority_failures_batch",
+          "title": "Fix all MEDIUM priority failures (Trinity Protocol)",
+          "type": "Code",
+          "tier": "Tier 2",
+          "agent": "coder",
+          "description": "Fix remaining MEDIUM priority failures: (1) F2.1: LOCAL_PLUS escalation instead of LOCAL, (2) F2.2: Statistics accumulation not working. Root cause: HybridExecutor in trinity_protocol/core/hybrid_executor.py. Review escalation logic and statistics tracking. May require mock setup adjustments or async completion awaits in tests.",
+          "dependencies": ["fix_high_priority_failures_batch"],
+          "acceptance_criteria": [
+            "All MEDIUM failures fixed (F2.1, F2.2)",
+            "HybridExecutor: LOCAL tier sufficient for mock tasks (no unnecessary escalation)",
+            "Statistics accumulation works (3 tasks → total_tasks=3)",
+            "Each fix verified individually",
+            "No new failures introduced"
+          ],
+          "estimated_tokens": 4000,
+          "fix_strategy": {
+            "file": "trinity_protocol/core/hybrid_executor.py",
+            "methods": [
+              "_execute_task_with_escalation()",
+              "_update_statistics()"
+            ],
+            "expected_changes": [
+              "Escalation logic: Check mock execution success at LOCAL before escalating",
+              "Statistics tracking: Ensure _update_statistics() called after task completion",
+              "Test setup: Verify async tasks complete before statistics check"
+            ],
+            "verification_per_fix": [
+              "pytest tests/trinity_protocol/core/test_hybrid_executor.py::TestErrorConditions::test_execute_task_with_escalation_succeeds_at_local -v",
+              "pytest tests/trinity_protocol/core/test_hybrid_executor.py::TestIntegrationWorkflows::test_workflow_statistics_accumulation -v"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "id": "phase_3",
+      "title": "Validation, Stability, & Learning",
+      "estimated_hours": 2,
+      "estimated_cost_usd": 4.0,
+      "tasks": [
+        {
+          "id": "run_fixed_tests_3x_stability",
+          "title": "Run ALL 8 fixed tests 3 times for stability",
+          "type": "Test",
+          "tier": "Tier 2",
+          "agent": "test_generator",
+          "description": "Run the 8 previously failing tests 3 times consecutively to verify stability (no flakiness). Use targeted test execution (NOT full suite). Capture results for each run. All 3 runs must show 100% pass rate (8/8 passing). Document execution time per run. If any run fails, identify flaky test and add retry logic or skip marker.",
+          "dependencies": ["fix_medium_priority_failures_batch"],
+          "acceptance_criteria": [
+            "3 consecutive runs executed (8 tests × 3 runs = 24 test executions)",
+            "All 3 runs show 100% pass rate (8/8 passing)",
+            "No flaky tests detected (consistent results across runs)",
+            "Execution time <2 minutes per run (total <6 minutes)",
+            "Stability metrics documented in logs/leap9_stability_validation.txt"
+          ],
+          "estimated_tokens": 2000,
+          "verification_target": "fix_medium_priority_failures_batch",
+          "test_execution": {
+            "command": "for i in {1..3}; do echo \"=== Run $i ===\" >> logs/leap9_stability_validation.txt; pytest tests/test_adaptive_router_integration.py tests/trinity_protocol/core/test_hybrid_executor.py::TestErrorConditions::test_execute_task_with_escalation_succeeds_at_local tests/trinity_protocol/core/test_hybrid_executor.py::TestIntegrationWorkflows::test_workflow_statistics_accumulation -v --tb=short >> logs/leap9_stability_validation.txt 2>&1; done",
+            "expected_duration": "< 6 minutes",
+            "flaky_test_handling": "Add @pytest.mark.flaky(reruns=3) if inconsistent results"
+          }
+        },
+        {
+          "id": "run_full_suite_verification",
+          "title": "Run FULL test suite ONCE with 3x timeout for final verification",
+          "type": "Test",
+          "tier": "Tier 2",
+          "agent": "test_generator",
+          "description": "FINAL VALIDATION: Run full test suite (1,762 tests) ONCE with 3x timeout multiplier (16.2 min). This is the ONLY full suite run in Leap 9. Goal: (1) Verify 100% pass rate (1,762/1,762), (2) Capture baseline execution time, (3) Document any new failures introduced by fixes. If timeout occurs, STOP and catalog hanging tests (do not retry full suite). Use --tb=line for concise output.",
+          "dependencies": ["run_fixed_tests_3x_stability"],
+          "acceptance_criteria": [
+            "Full suite executed ONCE with 3x timeout (16.2 min limit)",
+            "100% pass rate achieved (1,762/1,762 passing) OR failures cataloged",
+            "Execution time <10 minutes (target) or documented if longer",
+            "No new failures introduced by fixes (compare to baseline)",
+            "If timeout: Hanging tests identified and cataloged in logs/leap9_hanging_tests.txt",
+            "Output saved to logs/leap9_full_suite_final.txt"
+          ],
+          "estimated_tokens": 2000,
+          "verification_target": "run_fixed_tests_3x_stability",
+          "test_execution": {
+            "command": "python run_tests.py --run-all --timeout-multiplier 3.0 --tb=line > logs/leap9_full_suite_final.txt 2>&1",
+            "timeout": "16.2 minutes (3x multiplier: 1,762 tests × 150ms × 3 + 60s)",
+            "fallback_if_timeout": "Identify last completed test in logs/leap9_full_suite_final.txt, catalog remaining tests as 'hanging', SKIP retry",
+            "success_criteria": "PASSED=1762, FAILED=0, ERRORS=0"
+          }
+        },
+        {
+          "id": "document_leap_9_completion",
+          "title": "Update ADR-031 and extract patterns to VectorStore",
+          "type": "Learning",
+          "tier": "Tier 1",
+          "agent": "chief_architect",
+          "description": "Complete Leap 9 documentation: (1) Update ADR-031-test-suite-recovery.md with final metrics, (2) Document environment variable root cause and fix strategy, (3) List all fixes applied (model routing, classification, escalation, statistics), (4) Extract 5+ patterns to VectorStore (confidence ≥0.6): environment isolation strategy, targeted test execution, one-by-one fix approach, timeout avoidance strategy. Mark ADR status 'Complete'.",
+          "dependencies": ["run_full_suite_verification"],
+          "acceptance_criteria": [
+            "ADR-031 status updated to 'Complete' with completion date",
+            "Final metrics documented: 1,762/1,762 passing (100%), execution time",
+            "Environment variable root cause documented (AGENCY_MODEL, CODER_MODEL)",
+            "All fixes applied documented (model routing, classification, etc.)",
+            "5+ patterns extracted to VectorStore (confidence ≥0.6)",
+            "Leap 9 learnings documented: targeted testing, timeout avoidance, iterative fixes"
+          ],
+          "estimated_tokens": 3000,
+          "patterns_to_extract": [
+            "Pattern: Environment isolation for tests (unset global model overrides)",
+            "Pattern: Targeted test execution (avoid full suite timeouts)",
+            "Pattern: One-by-one fix strategy (verify after each fix)",
+            "Pattern: Timeout avoidance (3x multiplier for targeted runs only)",
+            "Pattern: Root cause analysis (environment variables override logic)"
+          ]
+        }
+      ]
+    }
+  ],
+  "checkpoints": [
+    {
+      "after_phase": "phase_1",
+      "type": "auto_validate",
+      "prompt": "Verify environment fix impact and remaining failures before Phase 2",
+      "validation": {
+        "environment_documented": true,
+        "targeted_tests_executed": true,
+        "failures_re_analyzed": true,
+        "decision_made": "proceed_to_phase_2_if_failures_remain_else_skip_to_phase_3"
+      }
+    },
+    {
+      "after_phase": "phase_2",
+      "type": "auto_validate",
+      "prompt": "Verify all 8 failures fixed before stability validation",
+      "validation": {
+        "critical_failures_fixed": true,
+        "high_failures_fixed": true,
+        "medium_failures_fixed": true,
+        "targeted_tests_passing": true,
+        "no_new_failures": true
+      }
+    },
+    {
+      "after_task": "run_full_suite_verification",
+      "type": "completion_gate",
+      "prompt": "Apply STEP 6.5 validation gate (ADR-032 pattern_1_1)",
+      "validation": {
+        "all_tasks_completed": true,
+        "acceptance_criteria_met": true,
+        "todowrite_synced": true,
+        "constitutional_compliant": true,
+        "test_pass_rate": 1.0,
+        "full_suite_executed": true
+      }
+    }
+  ],
+  "metadata": {
+    "estimated_tokens": 28000,
+    "estimated_cost_usd": 18.0,
+    "estimated_hours": 8,
+    "complexity": "moderate",
+    "budget_limit_usd": 25.0,
+    "key_constraints": {
+      "no_full_suite_default_timeout": "Avoid 45+ minute hangs",
+      "targeted_execution_only": "Run only failing tests until Phase 3 final validation",
+      "one_by_one_fixes": "Verify each fix before proceeding to next",
+      "3x_timeout_targeted": "Use 3x multiplier ONLY for targeted test runs (<100 tests)",
+      "single_full_suite_run": "ONE full suite run in entire Leap 9 (Phase 3, Task 6)"
+    },
+    "success_criteria": {
+      "test_pass_rate": 1.0,
+      "test_count_passing": 1762,
+      "test_count_skipped": "<=3",
+      "execution_time": "<10 min",
+      "stability": "3 consecutive passes for 8 fixed tests",
+      "documentation": "ADR-031 completed",
+      "learning": "5+ patterns stored to VectorStore"
+    },
+    "risk_mitigation": {
+      "timeout_risk": "Use targeted test execution, avoid full suite until Phase 3",
+      "flaky_test_risk": "3x stability validation for fixed tests",
+      "regression_risk": "Verify each fix individually before proceeding",
+      "environment_risk": "Test isolation strategy (pytest fixture, not global unset)"
+    },
+    "constitutional_alignment": {
+      "article_i": "Complete context (targeted test execution, full tracebacks)",
+      "article_ii": "100% verification (target: 1,762/1,762 passing)",
+      "article_iii": "Automated enforcement (STEP 6.5 validation gate)",
+      "article_iv": "Continuous learning (5+ patterns extracted, environment isolation strategy)",
+      "article_v": "Spec-driven (this mission graph, acceptance criteria)"
+    },
+    "preflight_checks": [
+      "leap_8_adr_032_exists",
+      "completion_validator_tests_passing",
+      "test_failure_classifier_available",
+      "logs_directory_exists",
+      "vectorstore_patterns_accessible"
+    ]
+  }
+}
