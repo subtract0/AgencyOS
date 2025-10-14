@@ -31,6 +31,9 @@ from unittest.mock import AsyncMock, MagicMock, Mock, patch
 
 import pytest
 
+# Mark entire file as serial to prevent pytest-xdist hang
+pytestmark = pytest.mark.serial
+
 from shared.agent_context import AgentContext, create_agent_context
 from shared.type_definitions.result import Err, Ok, Result
 from tools.ci_monitor.feedback_loop_orchestrator import FeedbackLoopOrchestrator

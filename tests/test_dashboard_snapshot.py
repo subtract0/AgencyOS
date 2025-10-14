@@ -104,7 +104,7 @@ class TestDashboardSnapshotGenerator:
         assert temp_generator.output_dir.exists()
 
     def test_generate_snapshot_without_dashboard(self, temp_generator):
-        """Test snapshot generation when dashboard unavailable."""
+        """Test snapshot generation when dashboard has no data (empty directory)."""
         snapshot = temp_generator.generate_snapshot()
 
         # Verify structure
@@ -115,21 +115,23 @@ class TestDashboardSnapshotGenerator:
         metadata = snapshot["metadata"]
         assert "generated_at" in metadata
         assert "dashboard_available" in metadata
-        assert metadata["dashboard_available"] is False
+        # Dashboard is available (object exists) but has no data
+        assert metadata["dashboard_available"] is True
 
-        # Verify mock snapshot data
+        # Verify snapshot data (empty dashboard returns zero metrics)
         data = snapshot["snapshot"]
-        assert "total_tasks" in data
-        assert "accuracy_rate" in data
-        assert data["total_tasks"] == 0
+        assert "total_tasks_processed" in data
+        assert data["total_tasks_processed"] == 0
+        assert "cumulative_accuracy" in data
+        assert data["cumulative_accuracy"] == 0.0
 
     def test_generate_snapshot_with_window(self, temp_generator):
         """Test snapshot generation with custom time window."""
         snapshot = temp_generator.generate_snapshot(window_hours=48)
 
         assert "snapshot" in snapshot
-        # Verify snapshot was generated (even if mock)
-        assert snapshot["snapshot"]["total_tasks"] >= 0
+        # Verify snapshot was generated with real dashboard data
+        assert snapshot["snapshot"]["total_tasks_processed"] >= 0
 
     def test_save_snapshot(self, temp_generator):
         """Test snapshot saving to file."""
@@ -203,12 +205,12 @@ class TestDashboardSnapshotGenerator:
         assert "snapshot_version" in metadata
         assert "dashboard_available" in metadata
 
-        # Verify snapshot data structure
+        # Verify snapshot data structure (DashboardSnapshot model fields)
         data = snapshot["snapshot"]
-        assert "total_tasks" in data
-        assert "correct_classifications" in data
-        assert "misclassifications" in data
-        assert "accuracy_rate" in data
+        assert "total_tasks_processed" in data
+        assert "cumulative_accuracy" in data
+        assert "current_metrics" in data
+        assert "hourly_metrics" in data
 
     def test_snapshot_timestamp_format(self, temp_generator):
         """Test snapshot timestamp is valid ISO 8601."""
@@ -238,9 +240,9 @@ class TestDashboardSnapshotGenerator:
         # data_dir exists but is empty
         snapshot = temp_generator.generate_snapshot()
 
-        # Should use mock data, not crash
-        assert snapshot["metadata"]["dashboard_available"] is False
-        assert snapshot["snapshot"]["total_tasks"] == 0
+        # Dashboard available but returns empty metrics (no crash)
+        assert snapshot["metadata"]["dashboard_available"] is True
+        assert snapshot["snapshot"]["total_tasks_processed"] == 0
 
 
 class TestCLIIntegration:

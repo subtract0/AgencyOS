@@ -17,6 +17,7 @@ Phase: Leap 3 - CheckpointManager Service
 
 from __future__ import annotations
 
+import json
 import logging
 import signal
 import threading
@@ -112,7 +113,7 @@ class CheckpointManager:
     def __init__(self, config: CheckpointConfig):
         """Initialize CheckpointManager with configuration."""
         self.config = config
-        self._lock = threading.Lock()
+        self._lock = threading.RLock()  # Use RLock for reentrant locking (on_task_complete → trigger_checkpoint)
         self._timer_thread: threading.Thread | None = None
         self._stop_timer = threading.Event()
         self._task_count = 0
@@ -171,13 +172,18 @@ class CheckpointManager:
 
         Returns:
             Result[None, str] on success/failure
+
+        Fix: Stop timer thread BEFORE acquiring lock to prevent deadlock
+        (timer thread may call trigger_checkpoint which acquires lock)
         """
+        # Stop timer thread FIRST without holding lock
+        if self._timer_thread and self._timer_thread.is_alive():
+            self._stop_timer.set()
+            self._timer_thread.join(timeout=5)
+
+        # Now acquire lock for cleanup
         with self._lock:
-            # Stop timer thread
-            if self._timer_thread and self._timer_thread.is_alive():
-                self._stop_timer.set()
-                self._timer_thread.join(timeout=5)
-                self._timer_thread = None
+            self._timer_thread = None
 
             # Restore original signal handler
             if self._original_sigint_handler:
@@ -271,21 +277,48 @@ class CheckpointManager:
                 logger.debug(f"No checkpoint files found for session: {session_id}")
                 return Ok(None)
 
-            # Load latest checkpoint metadata (just ID, no full restore)
-            latest_file = checkpoint_files[0]
-            checkpoint_id = latest_file.stem
+            # Try checkpoints in order (newest first) until we find a valid one
+            for checkpoint_file in checkpoint_files:
+                checkpoint_id = checkpoint_file.stem
 
-            logger.info(f"Paused session detected: {session_id}, latest_checkpoint={checkpoint_id}")
+                # Read checkpoint file to get checksum (lightweight validation)
+                try:
+                    with open(checkpoint_file, "r") as f:
+                        checkpoint_data = json.load(f)
 
-            # Return checkpoint metadata wrapper (simplified)
-            checkpoint_metadata = SessionCheckpoint(
-                checkpoint_id=checkpoint_id,
-                timestamp=datetime.fromtimestamp(latest_file.stat().st_mtime),
-                session_state_json="",  # Not loaded yet
-                checksum="",  # Not loaded yet
-            )
+                    # Validate checksum is valid hex (64 chars)
+                    checksum = checkpoint_data.get("checksum", "")
+                    if len(checksum) != 64 or not all(
+                        c in "0123456789abcdef" for c in checksum.lower()
+                    ):
+                        # Corrupted checkpoint, try next
+                        logger.warning(
+                            f"Checkpoint {checkpoint_id} has invalid checksum, trying next..."
+                        )
+                        continue
 
-            return Ok(checkpoint_metadata)
+                    # Valid checkpoint found
+                    logger.info(
+                        f"Paused session detected: {session_id}, latest_checkpoint={checkpoint_id}"
+                    )
+
+                    # Return checkpoint metadata (with valid checksum for Pydantic validation)
+                    checkpoint_metadata = SessionCheckpoint(
+                        checkpoint_id=checkpoint_id,
+                        timestamp=datetime.fromtimestamp(checkpoint_file.stat().st_mtime),
+                        session_state_json=checkpoint_data.get("session_state_json", ""),
+                        checksum=checksum,
+                    )
+
+                    return Ok(checkpoint_metadata)
+
+                except (json.JSONDecodeError, IOError) as e:
+                    logger.warning(f"Cannot read checkpoint {checkpoint_id}: {e}, trying next...")
+                    continue
+
+            # No valid checkpoints found
+            logger.debug(f"No valid checkpoints found for session: {session_id}")
+            return Ok(None)
 
         except Exception as e:
             logger.error(f"Paused session detection failed: {e}")
@@ -424,25 +457,36 @@ class CheckpointManager:
             )
 
             deleted_count = 0
-
-            # Retention policy: keep last N
-            if self.config.checkpoint_retention_count >= 0:
-                for old_file in checkpoint_files[self.config.checkpoint_retention_count :]:
-                    old_file.unlink()
-                    deleted_count += 1
-                    logger.debug(f"Deleted old checkpoint: {old_file.name}")
-
-            # Retention policy: delete older than M days
             cutoff_time = datetime.now() - timedelta(days=self.config.checkpoint_retention_days)
+
+            # Track which files to keep based on retention count
+            files_to_keep = (
+                set(checkpoint_files[: self.config.checkpoint_retention_count])
+                if self.config.checkpoint_retention_count >= 0
+                else set(checkpoint_files)
+            )
+
+            # Single pass: delete files that violate EITHER retention policy
             for checkpoint_file in checkpoint_files:
-                file_mtime = datetime.fromtimestamp(checkpoint_file.stat().st_mtime)
-                if file_mtime < cutoff_time:
+                should_delete = False
+
+                # Retention policy 1: Beyond retention count
+                if checkpoint_file not in files_to_keep:
+                    should_delete = True
+                    reason = "count"
+
+                # Retention policy 2: Older than retention days (AND already marked for deletion OR within keep count)
+                if checkpoint_file.exists():
+                    file_mtime = datetime.fromtimestamp(checkpoint_file.stat().st_mtime)
+                    if file_mtime < cutoff_time:
+                        should_delete = True
+                        reason = "age"
+
+                # Delete if either policy says so
+                if should_delete and checkpoint_file.exists():
                     checkpoint_file.unlink()
                     deleted_count += 1
-                    logger.debug(
-                        f"Deleted expired checkpoint: {checkpoint_file.name} "
-                        f"(age: {(datetime.now() - file_mtime).days} days)"
-                    )
+                    logger.debug(f"Deleted checkpoint ({reason}): {checkpoint_file.name}")
 
             # Log telemetry (Article IV)
             logger.info(f"Checkpoint cleanup: session={session_id}, deleted={deleted_count}")

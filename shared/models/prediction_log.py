@@ -25,31 +25,32 @@ class PredictionLog(BaseModel):
     Prediction log for online learning and monitoring.
 
     Workflow:
-    1. Before execution: Create log with predicted_tier, actual_tier=None
-    2. After execution: Update log with actual_tier
-    3. Learning analysis: Compare predicted_tier vs actual_tier
+    1. Before execution: Create log with tier prediction
+    2. Log to VectorStore with class probabilities
+    3. Learning analysis: Compare predictions vs outcomes
 
     Fields:
         task_id: Unique task identifier
-        predicted_tier: Predicted tier (P1/P2/P3)
-        actual_tier: Actual tier after execution (None until complete)
+        tier: Predicted tier ("simple", "moderate", or "complex")
         confidence: Model confidence score (0.0-1.0)
-        timestamp: Prediction timestamp (UTC)
-        method: Classification method ("ml" or "rules")
+        method: Classification method ("ml_model" or "rule_based_fallback")
+        model_version: Model version timestamp (ISO 8601)
+        class_probabilities: Dict mapping tier names to probabilities
+        session_id: Session identifier for tracking
+        timestamp: Prediction timestamp (ISO 8601 string, auto-populated)
+        ab_group: Optional A/B test group ("control" or "new_model")
+        fallback_reason: Optional reason for fallback to rules
 
     Example:
-        >>> # Before execution
         >>> log = PredictionLog(
         ...     task_id="task-123",
-        ...     predicted_tier="P2",
-        ...     actual_tier=None,
-        ...     confidence=0.82,
-        ...     method="ml"
+        ...     tier="complex",
+        ...     confidence=0.92,
+        ...     method="ml_model",
+        ...     model_version="2025-10-10T12:00:00Z",
+        ...     class_probabilities={"simple": 0.03, "moderate": 0.05, "complex": 0.92},
+        ...     session_id="session_leap5_phase3_1728567825"
         ... )
-        >>>
-        >>> # After execution (update actual_tier)
-        >>> log.actual_tier = "P1"  # Task was more complex than predicted
-        >>> assert log.is_mispredicted()  # True - P2 != P1
     """
 
     task_id: str = Field(
@@ -57,14 +58,9 @@ class PredictionLog(BaseModel):
         description="Unique task identifier for tracking",
     )
 
-    predicted_tier: str = Field(
+    tier: str = Field(
         ...,
-        description="Predicted tier (P1=complex, P2=moderate, P3=simple)",
-    )
-
-    actual_tier: str | None = Field(
-        None,
-        description="Actual tier after execution (None until complete)",
+        description="Predicted tier (simple, moderate, or complex)",
     )
 
     confidence: float = Field(
@@ -74,26 +70,55 @@ class PredictionLog(BaseModel):
         description="Model confidence score (0.0-1.0)",
     )
 
-    timestamp: datetime = Field(
-        default_factory=datetime.utcnow,
-        description="Prediction timestamp (UTC)",
-    )
-
     method: str = Field(
         ...,
-        description="Classification method (ml or rules)",
+        description="Classification method (ml_model or rule_based_fallback)",
     )
 
-    @field_validator("predicted_tier")
+    model_version: str = Field(
+        ...,
+        description="Model version timestamp (ISO 8601)",
+    )
+
+    class_probabilities: dict[str, float] = Field(
+        default_factory=dict,
+        description="Mapping of tier names to class probabilities",
+    )
+
+    session_id: str = Field(
+        ...,
+        description="Session identifier for tracking",
+    )
+
+    timestamp: str = Field(
+        default_factory=lambda: datetime.utcnow().isoformat() + "Z",
+        description="Prediction timestamp (ISO 8601 UTC string)",
+    )
+
+    ab_group: str | None = Field(
+        None,
+        description="Optional A/B test group (control or new_model)",
+    )
+
+    fallback_reason: str | None = Field(
+        None,
+        description="Optional reason for fallback to rule-based classification",
+    )
+
+    # Legacy field support for backward compatibility
+    predicted_tier: str | None = Field(None, exclude=True)
+    actual_tier: str | None = Field(None, exclude=True)
+
+    @field_validator("tier")
     @classmethod
-    def validate_predicted_tier(cls, v: str) -> str:
+    def validate_tier(cls, v: str) -> str:
         """
-        Validate predicted_tier is P1, P2, or P3.
+        Validate tier is "simple", "moderate", or "complex".
 
         Article II compliance: Strict validation before storage.
 
         Args:
-            v: Predicted tier to validate
+            v: Tier to validate
 
         Returns:
             Validated tier string
@@ -101,38 +126,10 @@ class PredictionLog(BaseModel):
         Raises:
             ValueError: If tier is invalid
         """
-        valid_tiers = {"P1", "P2", "P3"}
+        valid_tiers = {"simple", "moderate", "complex"}
         if v not in valid_tiers:
             raise ValueError(
-                f"predicted_tier must be one of {valid_tiers}, got '{v}'. "
-                "Article II violation: Invalid tier value."
-            )
-        return v
-
-    @field_validator("actual_tier")
-    @classmethod
-    def validate_actual_tier(cls, v: str | None) -> str | None:
-        """
-        Validate actual_tier is None or P1/P2/P3.
-
-        Article II compliance: Strict validation before storage.
-
-        Args:
-            v: Actual tier to validate
-
-        Returns:
-            Validated tier string or None
-
-        Raises:
-            ValueError: If tier is invalid
-        """
-        if v is None:
-            return None
-
-        valid_tiers = {"P1", "P2", "P3"}
-        if v not in valid_tiers:
-            raise ValueError(
-                f"actual_tier must be one of {valid_tiers}, got '{v}'. "
+                f"tier must be one of {valid_tiers}, got '{v}'. "
                 "Article II violation: Invalid tier value."
             )
         return v
@@ -141,7 +138,7 @@ class PredictionLog(BaseModel):
     @classmethod
     def validate_method(cls, v: str) -> str:
         """
-        Validate method is "ml" or "rules".
+        Validate method is "ml_model" or "rule_based_fallback".
 
         Article II compliance: Strict validation before storage.
 
@@ -154,7 +151,7 @@ class PredictionLog(BaseModel):
         Raises:
             ValueError: If method is invalid
         """
-        valid_methods = {"ml", "rules"}
+        valid_methods = {"ml_model", "rule_based_fallback"}
         if v not in valid_methods:
             raise ValueError(
                 f"method must be one of {valid_methods}, got '{v}'. "
@@ -164,12 +161,11 @@ class PredictionLog(BaseModel):
 
     def to_dict(self) -> dict:
         """
-        Export prediction log to dictionary for storage.
+        Export prediction log to dictionary for VectorStore storage.
 
         Used for:
         - JSON serialization (VectorStore storage)
-        - Database persistence (prediction history)
-        - Learning analysis (misclassification detection)
+        - Learning analysis (Article IV compliance)
 
         Returns:
             Dictionary with all fields
@@ -178,16 +174,26 @@ class PredictionLog(BaseModel):
             >>> log = PredictionLog(...)
             >>> data = log.to_dict()
             >>> data.keys()
-            dict_keys(['task_id', 'predicted_tier', 'actual_tier', 'confidence', 'timestamp', 'method'])
+            dict_keys(['task_id', 'tier', 'confidence', 'method', 'model_version', ...]
         """
-        return {
+        result = {
             "task_id": self.task_id,
-            "predicted_tier": self.predicted_tier,
-            "actual_tier": self.actual_tier,
+            "tier": self.tier,
             "confidence": self.confidence,
-            "timestamp": self.timestamp.isoformat(),
             "method": self.method,
+            "model_version": self.model_version,
+            "class_probabilities": self.class_probabilities,
+            "session_id": self.session_id,
+            "timestamp": self.timestamp,
         }
+
+        # Add optional fields if present
+        if self.ab_group is not None:
+            result["ab_group"] = self.ab_group
+        if self.fallback_reason is not None:
+            result["fallback_reason"] = self.fallback_reason
+
+        return result
 
     @classmethod
     def from_dict(cls, data: dict) -> "PredictionLog":
@@ -196,7 +202,7 @@ class PredictionLog(BaseModel):
 
         Used for:
         - JSON deserialization (VectorStore retrieval)
-        - Database loading (prediction history)
+        - Article IV learning integration
 
         Args:
             data: Dictionary with prediction log fields
@@ -210,39 +216,14 @@ class PredictionLog(BaseModel):
         Example:
             >>> data = {
             ...     "task_id": "task-123",
-            ...     "predicted_tier": "P2",
-            ...     "actual_tier": "P1",
-            ...     "confidence": 0.82,
-            ...     "timestamp": "2025-10-10T12:30:00",
-            ...     "method": "ml"
+            ...     "tier": "complex",
+            ...     "confidence": 0.92,
+            ...     "method": "ml_model",
+            ...     "model_version": "2025-10-10T12:00:00Z",
+            ...     "class_probabilities": {"complex": 0.92},
+            ...     "session_id": "session_test",
+            ...     "timestamp": "2025-10-10T12:30:00Z"
             ... }
             >>> log = PredictionLog.from_dict(data)
         """
-        # Parse ISO 8601 timestamp
-        if isinstance(data.get("timestamp"), str):
-            data["timestamp"] = datetime.fromisoformat(data["timestamp"])
-
         return cls(**data)
-
-    def is_mispredicted(self) -> bool:
-        """
-        Check if prediction was incorrect.
-
-        Compares predicted_tier vs actual_tier. Returns False if actual_tier
-        is None (task not yet executed).
-
-        Returns:
-            True if predicted_tier != actual_tier, False otherwise
-
-        Example:
-            >>> log = PredictionLog(predicted_tier="P2", actual_tier="P1", ...)
-            >>> log.is_mispredicted()
-            True  # Predicted P2 but actual P1
-            >>>
-            >>> log = PredictionLog(predicted_tier="P2", actual_tier=None, ...)
-            >>> log.is_mispredicted()
-            False  # No actual tier yet
-        """
-        if self.actual_tier is None:
-            return False
-        return self.predicted_tier != self.actual_tier

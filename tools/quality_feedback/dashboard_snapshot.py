@@ -114,20 +114,27 @@ class DashboardSnapshotGenerator:
         # Generate dashboard snapshot
         if self.dashboard is not None:
             try:
-                dashboard_snapshot = self.dashboard.generate_snapshot(window_hours=window_hours)
-                snapshot_data = dashboard_snapshot.model_dump()
+                dashboard_snapshot = self.dashboard.get_snapshot()
+                # Use mode='json' to ensure datetime objects are serialized
+                snapshot_data = dashboard_snapshot.model_dump(mode='json')
             except Exception as e:
                 print(f"Warning: Failed to generate dashboard snapshot: {e}", file=sys.stderr)
                 # Fallback to mock snapshot
                 mock_snapshot = MockDashboardSnapshot()
-                snapshot_data = mock_snapshot.model_dump()
+                snapshot_data = mock_snapshot.model_dump(mode='json')
+                # Mark dashboard as unavailable since we fell back to mock
+                metadata = SnapshotMetadata(
+                    dashboard_available=False,
+                    data_directory=str(self.data_dir) if self.data_dir.exists() else None,
+                )
+                return {"metadata": metadata.model_dump(mode='json'), "snapshot": snapshot_data}
         else:
             # Use mock snapshot when dashboard unavailable
             mock_snapshot = MockDashboardSnapshot()
-            snapshot_data = mock_snapshot.model_dump()
+            snapshot_data = mock_snapshot.model_dump(mode='json')
 
-        # Combine metadata and snapshot
-        full_snapshot = {"metadata": metadata.model_dump(), "snapshot": snapshot_data}
+        # Combine metadata and snapshot (use mode='json' for datetime serialization)
+        full_snapshot = {"metadata": metadata.model_dump(mode='json'), "snapshot": snapshot_data}
 
         return full_snapshot
 
@@ -146,7 +153,8 @@ class DashboardSnapshotGenerator:
         """
         # Generate filename if not provided
         if filename is None:
-            timestamp = datetime.now(UTC).strftime("%Y%m%d_%H%M%S")
+            # Include microseconds to ensure uniqueness for rapid snapshots
+            timestamp = datetime.now(UTC).strftime("%Y%m%d_%H%M%S_%f")
             filename = f"snapshot_{timestamp}.json"
 
         # Save to file

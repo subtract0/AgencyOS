@@ -51,7 +51,7 @@ class TestPredictionLogFieldValidation:
         NECESSARY: N (Normal operation - happy path).
         """
         # Arrange: Import here to allow implementation later
-        from tools.ml_routing.prediction_log import PredictionLog
+        from shared.models.prediction_log import PredictionLog
 
         # Act: Create valid PredictionLog with auto-populated timestamp
         log = PredictionLog(
@@ -86,7 +86,7 @@ class TestPredictionLogFieldValidation:
         NECESSARY: Y (Yield validation - output format).
         """
         # Arrange
-        from tools.ml_routing.prediction_log import PredictionLog
+        from shared.models.prediction_log import PredictionLog
 
         timestamp = datetime.now(UTC).isoformat()
         log = PredictionLog(
@@ -124,7 +124,7 @@ class TestPredictionLogFieldValidation:
         NECESSARY: Y (Yield validation - roundtrip serialization).
         """
         # Arrange
-        from tools.ml_routing.prediction_log import PredictionLog
+        from shared.models.prediction_log import PredictionLog
 
         original_log = PredictionLog(
             task_id="task_roundtrip_test",
@@ -157,7 +157,7 @@ class TestPredictionLogFieldValidation:
         NECESSARY: E (Error condition - out of bounds).
         """
         # Arrange
-        from tools.ml_routing.prediction_log import PredictionLog
+        from shared.models.prediction_log import PredictionLog
 
         # Act & Assert: confidence > 1.0
         with pytest.raises(ValidationError, match="less than or equal to 1"):
@@ -190,7 +190,7 @@ class TestPredictionLogFieldValidation:
         NECESSARY: N (Normal operation - default timestamp).
         """
         # Arrange
-        from tools.ml_routing.prediction_log import PredictionLog
+        from shared.models.prediction_log import PredictionLog
 
         before = datetime.now(UTC)
 

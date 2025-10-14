@@ -31,6 +31,9 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
+# Mark entire file as serial to prevent pytest-xdist hang (deadlock in checkpoint logic)
+pytestmark = pytest.mark.serial
+
 from shared.agent_context import create_agent_context
 from shared.checkpoint_manager import CheckpointConfig, CheckpointManager
 from shared.models.session import SessionState, SessionStatus

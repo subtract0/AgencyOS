@@ -14,7 +14,7 @@ Constitutional Compliance:
 Reference: /Users/am/Code/Agency/specs/spec-004-quality-feedback-loop.md Section 7.4
 """
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
 
 from shared.models.quality_signals import SeverityLevel
 
@@ -68,9 +68,9 @@ class DetectedIssue(BaseModel):
         description="Signal value that triggered rule (e.g., 0.33 for test_failure_rate). None for user_feedback.",
     )
 
-    class Config:
-        use_enum_values = True
-        json_schema_extra = {
+    model_config = ConfigDict(
+        use_enum_values=True,
+        json_schema_extra={
             "example": {
                 "rule_name": "test_failure",
                 "confidence": 0.95,
@@ -78,7 +78,8 @@ class DetectedIssue(BaseModel):
                 "description": "Test failure rate 33% (5/15 tests failed)",
                 "signal_value": 0.33,
             }
-        }
+        },
+    )
 
 
 class MisclassificationReport(BaseModel):
@@ -159,9 +160,9 @@ class MisclassificationReport(BaseModel):
 
     detected_at: str = Field(..., description="ISO 8601 timestamp of detection (UTC)")
 
-    class Config:
-        use_enum_values = True
-        json_schema_extra = {
+    model_config = ConfigDict(
+        use_enum_values=True,
+        json_schema_extra={
             "example": {
                 "task_id": "refactor_async_handler_42",
                 "original_tier": "simple",
@@ -186,4 +187,5 @@ class MisclassificationReport(BaseModel):
                 "is_misclassified": True,
                 "detected_at": "2025-10-10T15:23:45Z",
             }
-        }
+        },
+    )

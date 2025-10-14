@@ -368,6 +368,102 @@ This index catalogs all Architecture Decision Records for the Agency multi-agent
 
 ---
 
+### ADR-029: Test Suite Repair Mission - Restoring Constitutional Article II Compliance
+**Status:** Partially Complete
+**Date:** 2025-10-12
+**File:** `docs/adr/ADR-029-test-suite-repair-mission.md`
+
+**Decision:** Multi-phase diagnostic and remediation strategy to restore test suite health and constitutional compliance.
+
+**Key Components:**
+- **Phase 1**: Restore test parallelism (1 → 2 workers, VectorStore disabled for tests)
+- **Phase 2**: Fix Docker health checks (custom image with curl)
+- **Phase 3**: Migrate Pydantic models (15 files, v1 → v2)
+- **Phase 4**: Fix pytest collection warnings
+- **Phase 5**: Eliminate segmentation faults (serial marker + GC + worker reduction)
+
+**Achievements:**
+- ✅ Pydantic warnings: 15 → 0
+- ✅ Collection errors: 4 → 0
+- ✅ Segmentation faults: Eliminated
+- ✅ Docker health checks: Working (2,230+ failures → 14s success)
+- ✅ Worker parallelism: 2x speedup (1 → 2 workers)
+- ✅ Zero regressions (63/63 overnight agent tests still passing)
+
+**Remaining Work:**
+- ⚠️ Test completion: Suite still times out occasionally (10-15 min vs <10 min target)
+- ❌ 100% pass rate: Not yet verified (Article II compliance pending)
+- ⚠️ ~40+ test failures: Require investigation and fixes
+
+**Impact:**
+- 5 patterns extracted for VectorStore (PyTorch workaround, Docker dependencies, Pydantic migration, socket exhaustion, memory-aware workers)
+- Test runtime: 25-30 min → 10-15 min (2x improvement)
+- Memory safety: 44GB/48GB utilization (safe for 48GB Mac)
+
+**Constitutional Compliance:** Articles I (partial), III, IV, V satisfied; Article II pending full verification
+
+---
+
+### ADR-030: pytest-xdist Segfault Investigation and Test Suite Stabilization
+**Status:** Resolved
+**Date:** 2025-10-14
+**File:** `docs/adr/ADR-030-pytest-xdist-segfault-investigation.md`
+
+**Decision:** Uninstall pytest-rerunfailures plugin (root cause of segfaults) and re-enable pytest-xdist with -n 6 workers.
+
+**Root Cause:** pytest-rerunfailures + Python 3.13 async socket lifecycle incompatibility caused segmentation faults.
+
+**Resolution:**
+- ✅ pytest-rerunfailures uninstalled (zero segfaults across all parallelism levels)
+- ✅ pytest-xdist re-enabled with -n 6 workers (2.7-3.2x speedup validated)
+- ✅ 86 async socket tests now pass reliably
+- ✅ Memory-aware worker selection integrated (ADR-023)
+
+**Trade-offs:**
+- ❌ No auto-retry for flaky tests (manual retry with `pytest --lf`)
+- ✅ 100% test completion achieved (no crashes)
+
+**Constitutional Compliance:** Articles I (Complete Context), II (100% Verification), III (Automated Enforcement)
+
+---
+
+### ADR-031: Test Suite Recovery - Leap 8 Infrastructure Stabilization
+**Status:** In Progress
+**Date:** 2025-10-14
+**File:** `docs/adr/ADR-031-test-suite-recovery.md`
+
+**Decision:** Comprehensive test suite recovery through 5-phase diagnostic and repair strategy.
+
+**Key Components:**
+- **Phase 1**: Diagnostic Analysis (pytest-rerunfailures identified as segfault cause)
+- **Phase 2**: Critical Blocker Fixes (segfaults eliminated, hangs resolved)
+- **Phase 3**: Assertion Failure Fixes (40 schema regressions fixed)
+- **Phase 4**: Pytest Configuration Optimization (pytest-xdist re-enabled, memory-aware workers)
+- **Phase 5**: Full Suite Validation (in progress)
+
+**Achievements:**
+- ✅ Zero segfaults (pytest-rerunfailures uninstalled)
+- ✅ Zero hangs (checkpoint_manager deadlock fixed, vectorstore quarantined)
+- ✅ 40 schema failures fixed (test_accuracy_dashboard, test_ab_rollout, test_dashboard_snapshot)
+- ✅ pytest-xdist re-enabled: 2.7-3.2x speedup (15.35s → 4.73s)
+- ✅ 8 patterns extracted for VectorStore
+
+**Remaining Work:**
+- ⏸️ ~20 schema failures remaining (4-6 hours estimated)
+- ⏸️ Timeout resolution (suite completes in 10+ min vs 5-8 min target)
+- ⏸️ 3-run validation for stability
+- ⏸️ 18 vectorstore performance benchmarks quarantined (deferred to pytest-forked implementation)
+
+**Impact:**
+- Test suite stability: 0% completion → 90%+ completion
+- Pass rate: Unable to measure → 90%+ (targeting 100%)
+- Execution time: Infinite (crashed) → ~10 min (expected 5-8 post-fix)
+- Worker count: 10 (excessive) → 6 (memory-safe)
+
+**Constitutional Compliance:** Article I ✅, Article II ⚠️ (partial - 90%+ achieved, targeting 100%), Article III ✅, Article IV ✅, Article V ✅
+
+---
+
 ## Review Schedule
 
 - **Weekly:** Review new ADR proposals
@@ -385,5 +481,5 @@ This index catalogs all Architecture Decision Records for the Agency multi-agent
 
 ---
 
-*Last Updated: 2025-10-04*
+*Last Updated: 2025-10-14*
 *Next Review: 2025-11-01*

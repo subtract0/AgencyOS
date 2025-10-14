@@ -31,7 +31,7 @@ from typing import Any
 
 import joblib
 import numpy as np
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
 from sklearn.ensemble import GradientBoostingClassifier, RandomForestClassifier, VotingClassifier
 from sklearn.metrics import confusion_matrix
 from sklearn.model_selection import StratifiedKFold, cross_val_score
@@ -72,8 +72,7 @@ class RetrainingResult(BaseModel):
     training_date: str = Field(..., description="ISO 8601 training timestamp")
     artifact_path: str = Field(..., description="Path to serialized model file")
 
-    class Config:
-        arbitrary_types_allowed = True
+    model_config = ConfigDict(arbitrary_types_allowed=True)
 
 
 class ModelRetrainer:

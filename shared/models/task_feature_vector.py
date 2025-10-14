@@ -19,7 +19,7 @@ Date: 2025-10-10
 
 from typing import ClassVar
 
-from pydantic import BaseModel, Field, field_validator
+from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 
 class TaskFeatureVector(BaseModel):
@@ -174,10 +174,8 @@ class TaskFeatureVector(BaseModel):
         ),
     )
 
-    class Config:
-        """Pydantic model configuration."""
-
-        json_schema_extra = {
+    model_config = ConfigDict(
+        json_schema_extra={
             "example": {
                 "embedding": [0.023, -0.045, 0.012, 0.089, -0.034] + [0.0] * 1531,  # 1536 floats
                 "tfidf_features": [0.12, 0.0, 0.08, 0.05, 0.0, 0.03] + [0.0] * 94,  # 100 floats
@@ -196,6 +194,7 @@ class TaskFeatureVector(BaseModel):
                 "Constitutional compliance: Article II (strict typing), Article IV (VectorStore learning)."
             ),
         }
+    )
 
     @field_validator("embedding")
     @classmethod
