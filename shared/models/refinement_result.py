@@ -17,7 +17,7 @@ Constitutional Compliance:
 Reference: /Users/am/Code/Agency/specs/spec-004-quality-feedback-loop.md Section 8
 """
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
 
 
 class RefinementEntry(BaseModel):
@@ -67,9 +67,9 @@ class RefinementEntry(BaseModel):
         ..., description="Human-readable reason for refinement (e.g., 'Test failure detected')"
     )
 
-    class Config:
-        use_enum_values = True
-        json_schema_extra = {
+    model_config = ConfigDict(
+        use_enum_values=True,
+        json_schema_extra={
             "example": {
                 "timestamp": "2025-10-10T15:23:45Z",
                 "original_tier": "simple",
@@ -77,7 +77,8 @@ class RefinementEntry(BaseModel):
                 "confidence": 0.95,
                 "reason": "Test failure rate 33% (CRITICAL)",
             }
-        }
+        },
+    )
 
 
 class RefinementHistory(BaseModel):
@@ -124,9 +125,9 @@ class RefinementHistory(BaseModel):
         default_factory=list, description="List of refinement entries in chronological order"
     )
 
-    class Config:
-        use_enum_values = True
-        json_schema_extra = {
+    model_config = ConfigDict(
+        use_enum_values=True,
+        json_schema_extra={
             "example": {
                 "task_id": "refactor_async_handler_42",
                 "iteration_count": 1,
@@ -140,7 +141,8 @@ class RefinementHistory(BaseModel):
                     }
                 ],
             }
-        }
+        },
+    )
 
 
 class ThresholdAdjustment(BaseModel):
@@ -184,9 +186,9 @@ class ThresholdAdjustment(BaseModel):
 
     adjusted_at: str = Field(..., description="ISO 8601 timestamp of adjustment (UTC)")
 
-    class Config:
-        use_enum_values = True
-        json_schema_extra = {
+    model_config = ConfigDict(
+        use_enum_values=True,
+        json_schema_extra={
             "example": {
                 "signal_name": "test_failure_rate",
                 "old_threshold": 0.1,
@@ -194,7 +196,8 @@ class ThresholdAdjustment(BaseModel):
                 "adjustment_count": 3,
                 "adjusted_at": "2025-10-10T15:23:45Z",
             }
-        }
+        },
+    )
 
 
 class RefinementResult(BaseModel):
@@ -274,9 +277,9 @@ class RefinementResult(BaseModel):
 
     refined_at: str = Field(..., description="ISO 8601 timestamp of refinement operation (UTC)")
 
-    class Config:
-        use_enum_values = True
-        json_schema_extra = {
+    model_config = ConfigDict(
+        use_enum_values=True,
+        json_schema_extra={
             "example": {
                 "task_id": "refactor_async_handler_42",
                 "patterns_updated": 1,
@@ -288,7 +291,8 @@ class RefinementResult(BaseModel):
                 "accuracy_estimate": None,
                 "refined_at": "2025-10-10T15:23:45Z",
             }
-        }
+        },
+    )
 
 
 class VectorStoreSnapshot(BaseModel):
@@ -338,9 +342,9 @@ class VectorStoreSnapshot(BaseModel):
         description="Routing accuracy baseline (for degradation detection, >5% drop triggers rollback)",
     )
 
-    class Config:
-        use_enum_values = True
-        json_schema_extra = {
+    model_config = ConfigDict(
+        use_enum_values=True,
+        json_schema_extra={
             "example": {
                 "snapshot_id": "snapshot_1728567825",
                 "created_at": "2025-10-10T15:23:45Z",
@@ -359,4 +363,5 @@ class VectorStoreSnapshot(BaseModel):
                 },
                 "accuracy_baseline": 0.92,
             }
-        }
+        },
+    )

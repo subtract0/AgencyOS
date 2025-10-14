@@ -255,14 +255,16 @@ class TestABRolloutController:
         stage = RolloutStage(name="stage1", percentage=10, duration_hours=16)
 
         # Mock prediction retrieval with sufficient samples
+        timestamp_str = (datetime.now(UTC) - timedelta(hours=8)).isoformat().replace("+00:00", "") + "Z"
         mock_predictions = [
             PredictionLog(
                 task_id=f"task-{i}",
-                predicted_tier="P2",
-                actual_tier="P2" if i % 10 != 0 else "P1",  # 90% accuracy
+                tier="moderate",
                 confidence=0.85,
-                method="ml",
-                timestamp=datetime.now(UTC) - timedelta(hours=8),
+                method="ml_model",
+                model_version="v2.0",
+                session_id="test_session",
+                timestamp=timestamp_str,
             )
             for i in range(150)
         ]
@@ -292,14 +294,16 @@ class TestABRolloutController:
         stage = RolloutStage(name="stage1", percentage=10, duration_hours=16)
 
         # Mock insufficient predictions (< min_predictions=100)
+        timestamp_str = datetime.now(UTC).isoformat().replace("+00:00", "") + "Z"
         mock_predictions = [
             PredictionLog(
                 task_id=f"task-{i}",
-                predicted_tier="P2",
-                actual_tier="P2",
+                tier="moderate",
                 confidence=0.85,
-                method="ml",
-                timestamp=datetime.now(UTC),
+                method="ml_model",
+                model_version="v2.0",
+                session_id="test_session",
+                timestamp=timestamp_str,
             )
             for i in range(50)  # Only 50 predictions
         ]
@@ -323,13 +327,18 @@ class TestABRolloutController:
             models_dir=models_dir,
         )
 
+        timestamp_str = datetime.now(UTC).isoformat().replace("+00:00", "") + "Z"
         predictions = [
             PredictionLog(
                 task_id=f"task-{i}",
-                predicted_tier="P2",
-                actual_tier="P2" if i < 98 else "P1",  # 98% accuracy
+                tier="moderate",
                 confidence=0.85,
-                method="ml",
+                method="ml_model",
+                model_version="v2.0",
+                session_id="test_session",
+                timestamp=timestamp_str,
+                predicted_tier="P2",  # Legacy field for accuracy calculation
+                actual_tier="P2" if i < 98 else "P1",  # 98% accuracy
             )
             for i in range(100)
         ]
@@ -427,19 +436,25 @@ class TestABRolloutController:
         stage = RolloutStage(name="stage1", percentage=10, duration_hours=16)
 
         # Store mock predictions in VectorStore
+        timestamp_base = datetime.now(UTC) - timedelta(hours=8)
         for i in range(150):
+            # Format timestamp properly: replace +00:00 with Z
+            timestamp_str = timestamp_base.isoformat().replace("+00:00", "") + "Z"
             prediction = PredictionLog(
                 task_id=f"task-{i}",
-                predicted_tier="P2",
-                actual_tier="P2",
+                tier="moderate",
                 confidence=0.85,
-                method="ml",
-                timestamp=datetime.now(UTC) - timedelta(hours=8),
+                method="ml_model",
+                model_version="v2.0",
+                session_id="test_session",
+                timestamp=timestamp_str,
+                predicted_tier="P2",  # Legacy field for accuracy calculation
+                actual_tier="P2",  # Legacy field for accuracy calculation
             )
             context.store_memory(
-                key=f"prediction_task-{i}_{prediction.timestamp.isoformat()}",
+                key=f"prediction_task-{i}_{prediction.timestamp}",
                 content=prediction.to_dict(),
-                tags=["prediction", "P2", "ml"],
+                tags=["prediction", "P2", "ml_model"],
             )
 
         result = controller._get_predictions_for_stage(stage)

@@ -20,6 +20,9 @@ Constitutional Compliance:
 - Functions <50 lines: Focused, testable units
 
 This comprehensive test suite validates the COMPLETE health check behavior.
+
+SERIAL EXECUTION REQUIRED: These tests mock aiohttp connections and must run
+serially to prevent socket exhaustion and segfaults during parallel execution.
 """
 
 import asyncio
@@ -28,6 +31,9 @@ from unittest.mock import AsyncMock, MagicMock, Mock, patch
 
 import aiohttp
 import pytest
+
+# Mark entire module as serial to prevent socket exhaustion
+pytestmark = [pytest.mark.serial, pytest.mark.network]
 
 from shared.type_definitions.result import Err, Ok
 from tools.ollama_health_check import (

@@ -1,0 +1,14 @@
+FROM ollama/ollama:latest
+
+# Install curl for health checks (minimal overhead: ~2-3 MB)
+# Article I: Complete context - health checks ensure service is fully ready
+# Article II: 100% verification - curl enables reliable container status validation
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends curl && \
+    apt-get clean && rm -rf /var/lib/apt/lists/*
+
+# Metadata
+LABEL description="Ollama with curl for Docker health checks" \
+      maintainer="AgencyOS" \
+      version="1.0.0" \
+      constitutional_compliance="Articles I & II"

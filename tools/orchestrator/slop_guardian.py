@@ -25,7 +25,7 @@ from enum import Enum
 from typing import Any, Optional
 
 import openai
-from pydantic import BaseModel, Field, ValidationError, field_validator, model_validator
+from pydantic import BaseModel, ConfigDict, Field, ValidationError, field_validator, model_validator
 
 from shared.models.slop_evaluation_response import RawSlopEval
 from shared.type_definitions.result import Err, Ok, Result
@@ -84,8 +84,7 @@ class SlopVerdict(BaseModel):
         description="ISO 8601 timestamp of evaluation (UTC)",
     )
 
-    class Config:
-        use_enum_values = True
+    model_config = ConfigDict(use_enum_values=True)
 
     @model_validator(mode="after")
     def compute_status(self) -> SlopVerdict:

@@ -41,6 +41,8 @@ from shared.type_definitions.result import Err, Ok, Result
 class TestFunction:
     """Parsed test function metadata."""
 
+    __test__ = False  # Not a test class - prevent pytest collection
+
     def __init__(
         self,
         name: str,
@@ -67,6 +69,8 @@ class TestFunction:
 class TestClass:
     """Parsed test class metadata."""
 
+    __test__ = False  # Not a test class - prevent pytest collection
+
     def __init__(
         self,
         name: str,
@@ -86,6 +90,8 @@ class TestClass:
 
 class TestFileAST:
     """Complete parsed test file representation."""
+
+    __test__ = False  # Not a test class - prevent pytest collection
 
     def __init__(
         self,

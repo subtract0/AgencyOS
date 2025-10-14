@@ -374,96 +374,62 @@ def main(
     print("\n🧪 Running tests with pytest...")
     print("-" * 40)
 
-    # Pytest arguments for comprehensive testing
-    # Use uv run pytest in local dev, python -m pytest in CI
+    # ============================================================================
+    # PYTEST COMMAND CONSTRUCTION
+    # ============================================================================
+    # DESIGN: Thin wrapper around pytest - all behavior delegated to pytest.ini
+    # - pytest.ini controls: markers, parallelism (-n 6), output format, timeouts
+    # - run_tests.py controls: marker selection (-m), test ignores, verbosity overrides
+    # - Memory-aware worker selection overrides pytest.ini static config when safe
+    #
+    # WHY: Single source of truth for pytest behavior (pytest.ini)
+    # - Avoids duplicate configuration between pytest.ini and run_tests.py
+    # - Easier maintenance: change pytest.ini once, affects all invocations
+    # - Respects developer pytest.ini customizations
+    # ============================================================================
+
     is_ci = os.environ.get("CI") == "true"
 
     if is_ci:
         # CI environment - use python -m pytest
-        pytest_args = [
-            python_executable,
-            "-m",
-            "pytest",
-            "tests/",  # Test directory
-            "-v",  # Verbose output
-            "--tb=short",  # Short traceback format
-            "--strict-markers",  # Strict marker checking
-            "--durations=10",  # Show 10 slowest tests
-            # "-x",  # Stop on first failure - commented out to run all tests
-            "--color=yes",  # Colored output
-            # Exclude integration tests that hang at collection time
-            "--ignore=tests/test_firestore_learning_persistence.py",
-            "--ignore=tests/test_firestore_mock_integration.py",
-            "--ignore=tests/e2e/",  # e2e tests import agency at module level
-        ]
+        pytest_args = [python_executable, "-m", "pytest"]
     else:
         # Local development - use uv run pytest for better dependency management
-        # Use -q (quiet) for fast mode to reduce output overhead
-        verbosity_flag = "-q" if test_mode == "fast" else "-v"
-        pytest_args = [
-            "uv",
-            "run",
-            "pytest",
-            "tests/",  # Test directory
-            verbosity_flag,  # Quiet for fast mode, verbose otherwise
-            "--tb=short",  # Short traceback format
-            "--strict-markers",  # Strict marker checking
-            "--durations=10",  # Show 10 slowest tests
-            # "-x",  # Stop on first failure - commented out to run all tests
-            "--color=yes",  # Colored output
-            # Exclude integration tests that hang at collection time
-            "--ignore=tests/test_firestore_learning_persistence.py",
-            "--ignore=tests/test_firestore_mock_integration.py",
-            "--ignore=tests/e2e/",  # e2e tests import agency at module level
-        ]
+        pytest_args = ["uv", "run", "pytest"]
 
-    # CRITICAL: pytest-xdist DISABLED due to segfault in execnet/gateway_base.py
-    # Issue: Even with 1 worker, xdist uses IPC via execnet which causes segfault
-    # Segfault location: execnet/gateway_base.py:534 in read() - worker communication
-    # Temporary fix: Run tests sequentially (no -n flag) until root cause resolved
-    # TODO: Investigate execnet segfault - may be related to Python 3.13 or asyncio tests
-    print("⚠️  pytest-xdist DISABLED: Running tests sequentially to avoid segfault")
-    print("   This will take longer but ensures test completion")
+    # Test directory (explicit, not in pytest.ini)
+    pytest_args.append("tests/")
 
-    # Add parallel execution if pytest-xdist is available
-    # (Firestore tests excluded via --ignore flags, safe to parallelize)
-    # Memory-aware worker count: reduce parallelism when local Ollama model is active
-    # DISABLED: See above
-    # try:
-    #     import xdist  # noqa: F401 - pytest-xdist module imported as 'xdist', checked for availability
-    #
-    #     # Check if local model is active (Phase 3 cost optimization)
-    #     use_local = os.getenv("USE_LOCAL_MODEL", "true").lower() == "true"
-    #
-    #     # Docker services consume memory: adjust worker count accordingly
-    #     if with_docker:
-    #         # Docker Ollama service (40GB limit) + tests: reduce workers
-    #         # 48GB Mac: Docker (40GB) + 1 worker (3GB) = 43GB (safest, prevents socket exhaustion)
-    #         worker_count = int(os.getenv("LOCAL_MODEL_TEST_WORKERS", "1"))
-    #         print(f"🐳 Docker services active: using {worker_count} test workers (memory-safe)")
-    #     elif use_local:
-    #         # Reduce parallelism to prevent socket exhaustion and memory issues
-    #         # 48GB Mac: Qwen3-Coder Q8_0 (38GB) + 1 worker (3GB) = 41GB (safest)
-    #         # CRITICAL: Reduced from 2 to 1 worker to fix segfault crashes at ~21% completion
-    #         # Root cause: Socket exhaustion during parallel async network tests (crash at socket.py:295)
-    #         worker_count = int(os.getenv("LOCAL_MODEL_TEST_WORKERS", "1"))
-    #         print(f"🧠 Local model active: using {worker_count} test workers (crash-safe)")
-    #     else:
-    #         # No local model or Docker: default parallelism
-    #         worker_count = 10
-    #
-    #     # VectorStore disabled for tests (USE_ENHANCED_MEMORY=false)
-    #     # PyTorch segfault workaround no longer needed - restore full parallelism
-    #     # Previous: worker_count = 1 (forced single worker per SPEC-021)
-    #     # Current: worker_count = 10 (full parallelism, 2-3 minute test runs)
-    #
-    #     pytest_args.extend(["-n", str(worker_count)])
-    # except ImportError:
-    #     pass  # Run sequentially if xdist not available
+    # Verbosity override (only for fast mode, otherwise defer to pytest.ini -q)
+    if test_mode != "fast":
+        pytest_args.append("-v")  # Override pytest.ini -q for non-fast modes
 
-    # PyTorch pre-import removed (VectorStore disabled for tests via USE_ENHANCED_MEMORY=false)
-    # Previous workaround (SPEC-021) no longer needed
+    # Show slowest tests (not in pytest.ini, useful for optimization)
+    pytest_args.append("--durations=10")
 
+    # Test ignores (known problematic tests, not suitable for pytest.ini)
+    # These are runtime issues, not configuration preferences
+    pytest_args.extend([
+        "--ignore=tests/test_firestore_learning_persistence.py",
+        "--ignore=tests/test_firestore_mock_integration.py",
+        "--ignore=tests/e2e/",  # e2e tests import agency at module level
+        "--ignore=tests/benchmarks/test_vectorstore_performance.py",  # Quarantined
+    ])
+
+    # Memory-aware worker selection (ADR-023 integration)
+    # Overrides pytest.ini static config (-n 6) with dynamic adjustment
+    try:
+        from tools.memory_aware_test_runner import get_safe_worker_count
+        worker_count = get_safe_worker_count()
+        pytest_args.extend(["-n", str(worker_count)])
+        print(f"✓ pytest-xdist: {worker_count} workers (memory-aware, overrides pytest.ini)")
+    except Exception:
+        # Fallback to pytest.ini default (-n 6 --dist loadgroup)
+        print("✓ pytest-xdist: using pytest.ini defaults (-n 6)")
+
+    # ============================================================================
+    # ENVIRONMENT CONFIGURATION
+    # ============================================================================
     # Prepare environment variables
     env = os.environ.copy()
     env["AGENCY_NESTED_TEST"] = "1"
@@ -486,15 +452,19 @@ def main(
         # No Docker services: skip Ollama tests (default behavior)
         env["SKIP_OLLAMA_TESTS"] = "1"
 
-    # Add marker selection based on test mode
+    # ============================================================================
+    # MARKER SELECTION (Test Mode Filtering)
+    # ============================================================================
+    # Marker definitions are in pytest.ini - we just select which to run
+    # Default (no -m flag): pytest.ini controls what runs
+    # ============================================================================
     if test_mode == "unit":
-        if fast_only:
-            pytest_args.extend(["-m", "not integration and not slow and not benchmark"])
-        else:
-            pytest_args.extend(["-m", "not integration and not slow and not benchmark"])
+        # Unit tests only: exclude integration, slow, and benchmark
+        pytest_args.extend(["-m", "not integration and not slow and not benchmark"])
     elif test_mode == "integration" or test_mode == "integration-only":
         pytest_args.extend(["-m", "integration"])
     elif test_mode == "fast":
+        # Fast unit tests: exclude integration, slow, benchmark, and github
         pytest_args.extend(["-m", "not integration and not slow and not benchmark and not github"])
     elif test_mode == "slow":
         pytest_args.extend(["-m", "slow"])
@@ -510,7 +480,7 @@ def main(
         env["AGENCY_SKIP_GIT"] = "0"
         print("🚀 FORCE MODE: Running ALL tests including normally skipped ones")
         print("   This will make real API calls and may incur costs")
-    # Default: no marker filtering is applied
+    # Default: no marker filtering - pytest.ini controls default behavior
 
     try:
         # Add timeout for safety - use very large timeout to allow full test completion
@@ -593,27 +563,33 @@ def main(
 
 
 def run_specific_test(test_name: str, timed: bool = False) -> int:
-    """Run a specific test file or test function"""
+    """Run a specific test file or test function.
+
+    Delegates to pytest.ini for configuration (markers, parallelism, output format).
+    """
     print("=" * 60)
     print("AGENCY CODE AGENCY - SPECIFIC TEST RUNNER")
     print("=" * 60)
     print(f"\n🧪 Running specific test: {test_name}")
     print("-" * 40)
 
+    # Build pytest command (delegates to pytest.ini for configuration)
     pytest_args = [
         sys.executable,
         "-m",
         "pytest",
         f"tests/{test_name}" if not test_name.startswith("tests/") else test_name,
-        "-v",
-        "--tb=short",
-        "--color=yes",
+        "-v",  # Verbose for specific tests (override pytest.ini -q)
     ]
 
     try:
         # Set environment variable to prevent nested test runs
         env = os.environ.copy()
         env["AGENCY_NESTED_TEST"] = "1"
+        env["PYTHONUNBUFFERED"] = "1"
+
+        # Disable VectorStore for tests (same as main runner)
+        env["USE_ENHANCED_MEMORY"] = "false"
 
         # Add timeout for safety (5 minutes for specific tests)
         t0 = time.time()
@@ -622,7 +598,6 @@ def run_specific_test(test_name: str, timed: bool = False) -> int:
             check=False,
             env=env,
             timeout=300,
-            # Removed start_new_session to allow proper stdout/stderr inheritance
         )
         duration = time.time() - t0
 

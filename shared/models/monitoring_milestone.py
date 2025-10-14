@@ -15,7 +15,7 @@ Reference: specs/spec-004-quality-feedback-loop.md Section 9 (Monitoring)
 
 from datetime import datetime
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
 
 
 class MilestoneMetrics(BaseModel):
@@ -148,8 +148,8 @@ class MonitoringMilestone(BaseModel):
         default_factory=list, description="Suggested actions to improve accuracy"
     )
 
-    class Config:
-        json_schema_extra = {
+    model_config = ConfigDict(
+        json_schema_extra={
             "example": {
                 "milestone_number": 2,
                 "task_threshold": 50,
@@ -180,6 +180,7 @@ class MonitoringMilestone(BaseModel):
                 ],
             }
         }
+    )
 
 
 class MilestoneHistory(BaseModel):
