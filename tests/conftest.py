@@ -426,3 +426,37 @@ def performance_tracker():
             return _tracker()
 
     return PerformanceTracker()
+
+
+@pytest.fixture
+def clean_model_env(monkeypatch):
+    """
+    Isolate adaptive router tests from global model overrides.
+
+    Problem: AGENCY_MODEL and CODER_MODEL environment variables override
+    adaptive router logic, causing tests to fail when they expect tier-based
+    model selection but receive forced gpt-5.
+
+    Solution: Unset override variables for tests that validate adaptive routing.
+
+    Usage:
+        def test_adaptive_router(clean_model_env):
+            # Test runs with clean environment (no AGENCY_MODEL/CODER_MODEL)
+            router = AdaptiveModelRouter()
+            assert router.route_task("simple", Priority.P3) == "gpt-5-mini"
+
+    Constitutional Compliance:
+    - Article I: Complete context (environment isolation prevents test pollution)
+    - Article II: 100% verification (tests validate actual router behavior)
+    """
+    # Unset global model overrides that interfere with adaptive routing
+    monkeypatch.delenv("AGENCY_MODEL", raising=False)
+    monkeypatch.delenv("CODER_MODEL", raising=False)
+    monkeypatch.delenv("PLANNER_MODEL", raising=False)
+    monkeypatch.delenv("AUDITOR_MODEL", raising=False)
+    monkeypatch.delenv("QUALITY_ENFORCER_MODEL", raising=False)
+    monkeypatch.delenv("SUMMARY_MODEL", raising=False)
+
+    yield
+
+    # Environment restored automatically by monkeypatch fixture cleanup

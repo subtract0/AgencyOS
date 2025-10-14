@@ -57,6 +57,12 @@ from .test_verification_gate import (
     VerificationResults,
     verify_tests,
 )
+from .completion_validator import (
+    CompletionValidator,
+    ValidationError as CompletionValidationError,
+    ValidationResults as CompletionValidationResults,
+    ConstitutionalChecks,
+)
 
 __all__ = [
     # Orchestration scheduling
@@ -89,4 +95,9 @@ __all__ = [
     "VerificationError",
     "VerificationResults",
     "verify_tests",
+    # Completion validator (Leap 7)
+    "CompletionValidator",
+    "CompletionValidationError",
+    "CompletionValidationResults",
+    "ConstitutionalChecks",
 ]

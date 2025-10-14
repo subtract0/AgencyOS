@@ -13,6 +13,37 @@ from shared.agent_context import create_agent_context
 from shared.task_complexity import TaskComplexity, TaskComplexityClassifier
 
 
+@pytest.fixture(autouse=True)
+def clean_model_env():
+    """Clean model-related environment variables for tests.
+
+    Save existing values, unset for test, restore after.
+    This ensures tests run with clean environment regardless of shell config.
+    """
+    # Save existing values
+    saved_env = {}
+    model_vars = [
+        "AGENCY_MODEL",
+        "CODER_MODEL",
+        "PLANNER_MODEL",
+        "AUDITOR_MODEL",
+        "QUALITY_ENFORCER_MODEL",
+        "SUMMARY_MODEL",
+        "FORCE_MODEL",
+    ]
+
+    for var in model_vars:
+        if var in os.environ:
+            saved_env[var] = os.environ[var]
+            del os.environ[var]
+
+    yield
+
+    # Restore original values
+    for var, value in saved_env.items():
+        os.environ[var] = value
+
+
 class TestModelRouting:
     """Test model routing decisions."""
 
@@ -153,8 +184,9 @@ class TestCostTracking:
         assert result.is_ok()
         decision = result.unwrap()
 
-        # P2 → gpt-4o → ~$1.50/1M → ~$0.0015 for 1K tokens
-        assert 0.001 <= decision.estimated_cost_usd <= 0.003
+        # P2 → gpt-4o → $1.50/1M input, $6.00/1M output
+        # 1K tokens: 600 input + 400 output = $0.0009 + $0.0024 = $0.0033
+        assert 0.003 <= decision.estimated_cost_usd <= 0.004
 
     def test_cost_summary_generation(self):
         """Generate cost summary for time period."""
