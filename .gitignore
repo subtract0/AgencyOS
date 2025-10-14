@@ -300,3 +300,6 @@ docs/environment_isolation_verification.md
 docs/leap_8_*.md
 !docs/leap_8_completion_summary.md
 docs/leap_8_vectorstore_patterns.json
+
+# Leap execution analysis and reports (Markdown)
+logs/leap*_*.md

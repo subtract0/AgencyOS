@@ -1,0 +1,319 @@
+{
+  "mission": "Leap 9: Complete Test Suite Recovery to 100%",
+  "leap_number": 9,
+  "strategic_goal": "Achieve constitutional Article II compliance (100% test pass rate)",
+  "context": {
+    "prior_mission": "leap_8_test_suite_recovery_completion_protocol",
+    "current_state": "1,754/1,762 passing (99.5%), suite times out at 2min",
+    "target_state": "1,762/1,762 passing (100%), stable execution <10min",
+    "remaining_work": "Phases 2-3 from Leap 8 (timeout resolution, assertion fixes)"
+  },
+  "phases": [
+    {
+      "id": "phase_1",
+      "title": "Diagnostic Completion",
+      "estimated_hours": 4,
+      "estimated_cost_usd": 8.0,
+      "tasks": [
+        {
+          "id": "increase_test_timeout",
+          "title": "Increase test suite timeout to 5 minutes",
+          "type": "Code",
+          "tier": "Tier 2",
+          "agent": "coder",
+          "description": "Update run_tests.py to support dynamic timeout calculation based on test count. Constitutional Article I requires complete context - 2min timeout prevents full test suite visibility. Formula: timeout = test_count * 150ms + 60s safety margin. Implement timeout multiplier support for retries (2x, 3x, 10x).",
+          "dependencies": [],
+          "acceptance_criteria": [
+            "run_tests.py timeout increased from 120s to 300s default",
+            "Dynamic timeout calculation: test_count * 150ms + 60s",
+            "Constitutional retry multipliers supported (2x, 3x, 10x)",
+            "Full test suite completes without timeout (1,762 tests)",
+            "Execution time baseline documented (<10 min target)"
+          ],
+          "estimated_tokens": 2000,
+          "implementation": {
+            "file": "run_tests.py",
+            "changes": [
+              "Update DEFAULT_TIMEOUT = 300000 (5 min)",
+              "Add calculate_dynamic_timeout(test_count) function",
+              "Support --timeout-multiplier flag for retries"
+            ]
+          }
+        },
+        {
+          "id": "catalog_remaining_failures",
+          "title": "Catalog all remaining test failures",
+          "type": "Code",
+          "tier": "Tier 2",
+          "agent": "auditor",
+          "description": "Run full test suite with --tb=short to catalog all failures. Parse output to identify: (1) Remaining assertion failures (~20 expected), (2) Any uncovered blockers (segfaults/hangs), (3) Import errors or environment issues. Create TestFailureCatalog with failure types, root causes, priority ranking, and effort estimates.",
+          "dependencies": ["increase_test_timeout"],
+          "acceptance_criteria": [
+            "Complete failure catalog with no timeouts",
+            "All failures classified: blocker/fixable/trivial",
+            "Root cause identified for each failure type",
+            "Priority ranking: critical path tests first",
+            "Effort estimates per failure (hours)",
+            "TestFailureCatalog JSON file created"
+          ],
+          "estimated_tokens": 4000,
+          "output": {
+            "file": "logs/test_failure_catalog.json",
+            "model": {
+              "segfaults": "list[str]",
+              "hangs": "list[str]",
+              "assertions": "list[str]",
+              "imports": "list[str]",
+              "priority_ranking": "dict[str, int]",
+              "estimated_effort": "dict[str, float]"
+            }
+          }
+        },
+        {
+          "id": "classify_failures_by_fixability",
+          "title": "Classify failures by auto-fixability",
+          "type": "Code",
+          "tier": "Tier 2",
+          "agent": "auditor",
+          "description": "Implement TestFailureClassifier to categorize failures by fixability: (1) Trivial (pure deletions, <5 lines, auto-fixable), (2) Simple (single function edits, unit test validation, auto-fixable), (3) Moderate (multi-function changes, integration tests), (4) Complex (architectural changes, manual fix required). Use LLM analysis (qwen2.5-coder:32b) for assertion failure root cause analysis.",
+          "dependencies": ["catalog_remaining_failures"],
+          "acceptance_criteria": [
+            "TestFailureClassifier implemented with auto_fixability scoring",
+            "All failures classified: trivial/simple/moderate/complex",
+            "Auto-fix confidence scores calculated (0.0-1.0)",
+            "Risk scores assessed for each fix",
+            "Classification report generated with fix strategies"
+          ],
+          "estimated_tokens": 3000,
+          "implementation": {
+            "file": "tools/test_failure_classifier.py",
+            "classification_rules": {
+              "trivial": "auto_fixable=True, confidence>=0.95, <5 lines",
+              "simple": "auto_fixable=True, confidence>=0.80, single function",
+              "moderate": "auto_fixable=False, confidence>=0.60, multi-function",
+              "complex": "auto_fixable=False, confidence<0.60, architectural"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "phase_2",
+      "title": "Systematic Test Fixes",
+      "estimated_hours": 10,
+      "estimated_cost_usd": 24.0,
+      "tasks": [
+        {
+          "id": "fix_blockers",
+          "title": "Fix any remaining blocker failures",
+          "type": "Code",
+          "tier": "Tier 1",
+          "agent": "coder",
+          "description": "Fix any critical blockers discovered in Phase 1 cataloging: (1) Segfaults (if any), (2) Hangs (if any), (3) Import errors blocking other tests. Use constitutional timeout policy (2x, 3x, 10x retries) if fixes require iteration. Quarantine truly unfixable tests with clear documentation and skip markers.",
+          "dependencies": ["classify_failures_by_fixability"],
+          "acceptance_criteria": [
+            "Zero blocker failures remaining",
+            "All segfaults eliminated or quarantined",
+            "All hangs resolved or quarantined",
+            "Import errors fixed or dependencies documented",
+            "Quarantined tests have @pytest.mark.skip with reason"
+          ],
+          "estimated_tokens": 4000
+        },
+        {
+          "id": "fix_assertion_failures_batch_1",
+          "title": "Fix first 10 assertion failures",
+          "type": "Code",
+          "tier": "Tier 2",
+          "agent": "coder",
+          "description": "Fix top 10 assertion failures by priority ranking from Phase 1 classification. Focus on: (1) Schema mismatches (Pydantic model updates), (2) Environment variable issues (fixture cleanup), (3) Test expectation updates (behavior changes). Apply fixes from VectorStore patterns (confidence >=0.80). Verify each fix with test pass before proceeding to next.",
+          "dependencies": ["fix_blockers"],
+          "acceptance_criteria": [
+            "10 previously failing tests now pass",
+            "All fixes verified with test execution",
+            "No new test failures introduced",
+            "Fixes include regression test coverage",
+            "VectorStore patterns applied where applicable"
+          ],
+          "estimated_tokens": 5000,
+          "fix_strategies": [
+            "Schema mismatch: Update Pydantic models (pattern_3_2)",
+            "Environment pollution: Add cleanup fixtures (pattern_2_2)",
+            "Test isolation: Apply fixture-based isolation"
+          ]
+        },
+        {
+          "id": "fix_assertion_failures_batch_2",
+          "title": "Fix remaining assertion failures",
+          "type": "Code",
+          "tier": "Tier 2",
+          "agent": "coder",
+          "description": "Fix remaining assertion failures (~10-20 expected). Continue methodology from batch_1. If any tests represent truly broken features (not test bugs), document as known issues with clear repro steps and mark with @pytest.mark.skip(reason='Known issue: <description>'). Ensure all skipped tests have JIRA tickets or GitHub issues for tracking.",
+          "dependencies": ["fix_assertion_failures_batch_1"],
+          "acceptance_criteria": [
+            "All assertion failures fixed or documented",
+            "Known issues tracked with skip markers and tickets",
+            "Test suite shows only PASSED/SKIPPED (no FAILED)",
+            "100% pass rate achieved (excluding documented skips)",
+            "All skipped tests have tracking issues"
+          ],
+          "estimated_tokens": 5000
+        }
+      ]
+    },
+    {
+      "id": "phase_3",
+      "title": "Validation & Documentation",
+      "estimated_hours": 2,
+      "estimated_cost_usd": 4.0,
+      "tasks": [
+        {
+          "id": "three_run_stability_validation",
+          "title": "Run test suite 3 times for stability",
+          "type": "Test",
+          "tier": "Tier 2",
+          "agent": "test_generator",
+          "description": "Execute full test suite 3 times consecutively to verify stability (no flakiness). Run with 'python run_tests.py --run-all' and capture: (1) Pass/fail counts, (2) Execution time per run, (3) Any flaky tests (different results across runs), (4) Memory usage during execution. Document baseline metrics for future performance monitoring.",
+          "dependencies": ["fix_assertion_failures_batch_2"],
+          "acceptance_criteria": [
+            "3 consecutive runs with 100% pass rate (excluding documented skips)",
+            "Consistent results across all 3 runs (no flakiness)",
+            "Execution time <10 minutes per run",
+            "Memory usage <44GB (safe for 48GB Mac)",
+            "Baseline metrics documented for future comparison"
+          ],
+          "estimated_tokens": 2000,
+          "verification_target": "fix_assertion_failures_batch_2",
+          "stability_metrics": {
+            "pass_rate": "100%",
+            "flaky_tests": 0,
+            "execution_time": "<10 min",
+            "memory_usage": "<44GB"
+          }
+        },
+        {
+          "id": "update_adr_031",
+          "title": "Complete ADR-031 documentation",
+          "type": "Spec",
+          "tier": "Tier 1",
+          "agent": "chief_architect",
+          "description": "Update ADR-031-test-suite-recovery.md with Leap 9 completion details: (1) Final test count (1,762/1,762 or X skipped), (2) Execution time baseline, (3) List of quarantined tests with reasons, (4) Patterns applied from VectorStore, (5) Lessons learned from Leap 8 + Leap 9. Mark ADR status as 'Complete' with completion date.",
+          "dependencies": ["three_run_stability_validation"],
+          "acceptance_criteria": [
+            "ADR-031 status updated to 'Complete'",
+            "Final test metrics documented (count, pass rate, execution time)",
+            "Quarantined tests listed with skip reasons and tracking issues",
+            "VectorStore patterns applied section added",
+            "Leap 8 + Leap 9 lessons learned documented"
+          ],
+          "estimated_tokens": 3000,
+          "adr_sections": [
+            "Final Metrics",
+            "Quarantined Tests",
+            "VectorStore Patterns Applied",
+            "Lessons Learned",
+            "Prevention Strategies"
+          ]
+        },
+        {
+          "id": "extract_patterns_to_vectorstore",
+          "title": "Extract and store test fixing patterns",
+          "type": "Learning",
+          "tier": "Tier 2",
+          "agent": "learning_agent",
+          "description": "Extract patterns from Leap 9 execution and store to VectorStore: (1) Test fixing strategies (schema updates, fixture cleanup, isolation), (2) Classification patterns (auto-fixability scoring), (3) Timeout handling (dynamic calculation), (4) Stability validation (3-run methodology). Minimum confidence 0.6 per Article IV. Store 5+ patterns with evidence and confidence scores.",
+          "dependencies": ["update_adr_031"],
+          "acceptance_criteria": [
+            "5+ patterns extracted with confidence >=0.6",
+            "All patterns stored to VectorStore with tags",
+            "Evidence counts documented for each pattern",
+            "Cross-reference to Leap 8 patterns (completion validation)",
+            "Pattern storage validated (query retrieval test)"
+          ],
+          "estimated_tokens": 2000,
+          "pattern_categories": [
+            "test_fixing_strategies",
+            "classification_patterns",
+            "timeout_handling",
+            "stability_validation"
+          ]
+        }
+      ]
+    }
+  ],
+  "checkpoints": [
+    {
+      "after_phase": "phase_1",
+      "type": "auto_validate",
+      "prompt": "Verify complete failure catalog and classification before starting fixes",
+      "validation": {
+        "file_exists": "logs/test_failure_catalog.json",
+        "classification_complete": true,
+        "all_failures_categorized": true
+      }
+    },
+    {
+      "after_phase": "phase_2",
+      "type": "auto_validate",
+      "prompt": "Verify 100% pass rate achieved before stability validation",
+      "validation": {
+        "test_pass_rate": 1.0,
+        "blockers_resolved": true,
+        "assertions_fixed": true
+      }
+    },
+    {
+      "after_task": "three_run_stability_validation",
+      "type": "completion_gate",
+      "prompt": "Apply STEP 6.5 validation gate (ADR-032 pattern_1_1)",
+      "validation": {
+        "all_tasks_completed": true,
+        "acceptance_criteria_met": true,
+        "todowrite_synced": true,
+        "constitutional_compliant": true,
+        "test_pass_rate": 1.0,
+        "stability_validated": true
+      }
+    }
+  ],
+  "metadata": {
+    "estimated_tokens": 36000,
+    "estimated_cost_usd": 36.0,
+    "estimated_hours": 16,
+    "complexity": "moderate",
+    "budget_limit_usd": 50.0,
+    "dependencies": {
+      "prior_mission": "leap_8_test_suite_recovery_completion_protocol",
+      "adr_references": [
+        "ADR-031-test-suite-recovery.md",
+        "ADR-032-autonomous-completion-protocol.md"
+      ],
+      "vectorstore_patterns": [
+        "pattern_1_1_completion_validation_gate",
+        "pattern_2_1_test_failure_cataloging",
+        "pattern_2_2_environment_variable_cleanup"
+      ]
+    },
+    "success_criteria": {
+      "test_pass_rate": 1.0,
+      "test_count_passing": 1762,
+      "test_count_skipped": "<=10",
+      "execution_time": "<10 min",
+      "stability": "3 consecutive 100% pass runs",
+      "documentation": "ADR-031 completed",
+      "learning": "5+ patterns stored to VectorStore"
+    },
+    "constitutional_alignment": {
+      "article_i": "Complete context (full failure catalog, no timeouts)",
+      "article_ii": "100% verification (target: 1,762/1,762 passing)",
+      "article_iii": "Automated enforcement (STEP 6.5 validation gate)",
+      "article_iv": "Continuous learning (5+ patterns extracted)",
+      "article_v": "Spec-driven (this mission graph, acceptance criteria)"
+    },
+    "preflight_checks": [
+      "leap_8_adr_032_exists",
+      "completion_validator_tests_passing",
+      "vectorstore_patterns_accessible"
+    ]
+  }
+}
