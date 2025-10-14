@@ -229,8 +229,34 @@ def _record_timing(
         pass
 
 
+def calculate_dynamic_timeout(test_count: int = 1762, multiplier: float = 1.0) -> int:
+    """Calculate dynamic timeout based on test count and multiplier (Article I compliance).
+
+    Formula: timeout = (test_count * 150ms + 60s safety margin) * multiplier
+
+    Constitutional retry multipliers (Article I):
+    - 1.0x: Initial attempt (default: 5min for 1,762 tests)
+    - 2.0x: First retry (10min)
+    - 3.0x: Second retry (15min)
+    - 10.0x: Final retry (50min)
+
+    Args:
+        test_count: Number of tests to execute (default: 1,762 full suite)
+        multiplier: Constitutional retry multiplier (1.0, 2.0, 3.0, or 10.0)
+
+    Returns:
+        Timeout in seconds
+    """
+    base_timeout = int((test_count * 0.15) + 60)  # 150ms per test + 60s safety
+    return int(base_timeout * multiplier)
+
+
 def main(
-    test_mode: str = "unit", fast_only: bool = False, timed: bool = False, with_docker: bool = False
+    test_mode: str = "unit",
+    fast_only: bool = False,
+    timed: bool = False,
+    with_docker: bool = False,
+    timeout_multiplier: float = 1.0
 ) -> int:
     # RECURSION GUARDS: Prevent nested test runs
     if os.environ.get("AGENCY_NESTED_TEST") == "1":
@@ -483,10 +509,18 @@ def main(
     # Default: no marker filtering - pytest.ini controls default behavior
 
     try:
-        # Add timeout for safety - use very large timeout to allow full test completion
-        # Allow override from environment for CI environments
-        default_timeout = 3600  # 60 minutes for all test modes (allow full suite completion)
+        # Dynamic timeout calculation (Article I: Complete context before action)
+        # Formula: (test_count * 150ms + 60s) * multiplier
+        # - Full suite (1,762 tests): ~5min (1x), 10min (2x), 15min (3x), 50min (10x)
+        # Allow override from environment for CI or manual testing
+        default_timeout = calculate_dynamic_timeout(test_count=1762, multiplier=timeout_multiplier)
         timeout_seconds = int(os.environ.get("AGENCY_TEST_TIMEOUT_OVERRIDE", str(default_timeout)))
+
+        if timeout_multiplier > 1.0:
+            print(f"⏰ Timeout multiplier: {timeout_multiplier}x (constitutional retry, Article I)")
+            print(f"⏰ Calculated timeout: {timeout_seconds}s ({timeout_seconds/60:.1f} minutes)")
+        else:
+            print(f"⏰ Dynamic timeout: {timeout_seconds}s ({timeout_seconds/60:.1f} minutes) for ~1,762 tests")
 
         # Debug: Print the exact command being run
         print(f"🔍 Running command: {' '.join(pytest_args)}\n")
@@ -535,13 +569,17 @@ def main(
         return result.returncode
 
     except subprocess.TimeoutExpired:
-        timeout_desc = "60 minutes" if test_mode == "all" else "60 seconds"
-        print(f"❌ Test run timed out after {timeout_desc}!")
+        timeout_minutes = timeout_seconds / 60
+        print(f"❌ Test run timed out after {timeout_minutes:.1f} minutes ({timeout_seconds}s)!")
         print("   This may indicate infinite loops or stuck processes.")
         print("   Check for:")
         print("   - Recursive test execution")
         print("   - Hanging network requests")
         print("   - Deadlocks in async code")
+        print(f"\n💡 Constitutional retry options (Article I):")
+        print(f"   - 2x retry: python run_tests.py --run-all --timeout-multiplier 2.0  ({timeout_seconds*2/60:.1f} min)")
+        print(f"   - 3x retry: python run_tests.py --run-all --timeout-multiplier 3.0  ({timeout_seconds*3/60:.1f} min)")
+        print(f"   - 10x retry: python run_tests.py --run-all --timeout-multiplier 10.0 ({timeout_seconds*10/60:.1f} min)")
         return 124  # Timeout exit code
 
     except FileNotFoundError:
@@ -686,6 +724,15 @@ def create_parser() -> argparse.ArgumentParser:
         help="Record run duration to logs/benchmarks/test_timings.jsonl and print it",
     )
 
+    # Timeout multiplier for constitutional retries (Article I)
+    parser.add_argument(
+        "--timeout-multiplier",
+        type=float,
+        default=1.0,
+        choices=[1.0, 2.0, 3.0, 10.0],
+        help="Timeout multiplier for constitutional retries (1.0=5min, 2.0=10min, 3.0=15min, 10.0=50min)",
+    )
+
     return parser
 
 
@@ -716,7 +763,11 @@ if __name__ == "__main__":
         # Default behavior excludes slow and benchmark tests automatically
         fast_only = test_mode == "unit"
         exit_code = main(
-            test_mode, fast_only=fast_only, timed=args.timed, with_docker=args.with_docker
+            test_mode,
+            fast_only=fast_only,
+            timed=args.timed,
+            with_docker=args.with_docker,
+            timeout_multiplier=args.timeout_multiplier
         )
 
     sys.exit(exit_code)
