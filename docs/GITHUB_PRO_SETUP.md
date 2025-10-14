@@ -197,6 +197,7 @@ git push --force  # Should fail with protection error
 
 ```bash
 # After /clear, execute your task via /primeA
+# PR creation is automatic (--auto-pr is now default)
 /primeA "implement rate limiting middleware"
 ```
 
@@ -223,8 +224,8 @@ When you run `/primeA "your task"`, the Planner agent automatically generates a 
 # 1. After /clear
 /clear
 
-# 2. New task via /primeA with auto-PR
-/primeA "add JWT authentication" --auto-pr
+# 2. New task via /primeA (PR creation automatic)
+/primeA "add JWT authentication"
 
 # PrimeA executes:
 #   ✅ Creates feat/jwt-auth branch
@@ -234,7 +235,7 @@ When you run `/primeA "your task"`, the Planner agent automatically generates a 
 #   ✅ Runs tests locally (100% pass required)
 #   ✅ Commits changes
 #   ✅ Pushes to feat/jwt-auth
-#   ✅ Creates PR automatically
+#   ✅ Creates PR automatically (default behavior)
 #   ✅ CI triggered (GitHub Actions)
 
 # 3. Monitor CI
@@ -251,17 +252,20 @@ git pull
 ### /primeA Flags for Branch Protection
 
 ```bash
+# Standard: Execute task and create PR (default)
+/primeA "your task"
+
 # Plan-only: Review task graph before execution
 /primeA "your task" --plan-only
 
 # Execute reviewed graph
 /primeA --graph /tmp/task_graph_*.json
 
-# Auto-create PR after completion
-/primeA "your task" --auto-pr
+# Skip PR creation (manual review)
+/primeA "your task" --no-pr
 
-# Two-stage: Spec approval checkpoint
-/primeA "your task" --two-stage --auto-pr
+# Two-stage: Spec approval checkpoint (PR automatic)
+/primeA "your task" --two-stage
 ```
 
 ### What PrimeA Handles Automatically
@@ -297,7 +301,8 @@ gh pr create --title "feat: Your feature" --body "Description"
 1. **Never push to main directly** (branch protection will block you)
 2. **Always use feature branches** (PrimeA does this automatically)
 3. **CI must pass** before merge (required status check)
-4. **Use `/primeA --auto-pr`** for full automation
+4. **PR creation is automatic** (use `--no-pr` to disable if needed)
+5. **After `/clear`**, just run: `/primeA "your task"`
 
 ---
 

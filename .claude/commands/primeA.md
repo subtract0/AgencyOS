@@ -97,16 +97,19 @@ This is the first true **AGI-class development system** - autonomous, adaptive, 
 ## 📋 Command Signature
 
 ```bash
-# Auto-select highest priority from backlog
+# Auto-select highest priority from backlog (creates PR automatically)
 /primeA
 
-# Natural language intent → auto-generate + execute task graph
+# Natural language intent → auto-generate + execute task graph → PR
 /primeA "Build JWT authentication with RSA-256 signing"
+
+# Skip PR creation (manual review before PR)
+/primeA "Refactor memory architecture" --no-pr
 
 # Load pre-defined task graph JSON
 /primeA --graph missions/leap_7_intelligent_decomposition.json
 
-# Two-stage workflow: Spec generation → User approval → TDD execution
+# Two-stage workflow: Spec generation → User approval → TDD execution → PR
 /primeA "Implement rate limiting middleware" --two-stage
 
 # Plan-only mode (review before execution)
@@ -114,9 +117,6 @@ This is the first true **AGI-class development system** - autonomous, adaptive, 
 
 # Real-time visualization
 /primeA "Add caching layer" --visualize
-
-# Auto-create PR after completion
-/primeA "Refactor memory architecture" --auto-pr
 
 # Force budget override (logged to audit trail)
 /primeA --graph missions/expensive_mission.json --force
@@ -134,12 +134,12 @@ This is the first true **AGI-class development system** - autonomous, adaptive, 
 
 | Flag | Description | Compatible Flags |
 |------|-------------|------------------|
-| `--two-stage` | Two-stage workflow with spec approval checkpoint | `--visualize`, `--auto-pr` |
-| `--graph <file>` | Load pre-defined task graph JSON | `--force`, `--auto-pr`, `--visualize` |
+| `--two-stage` | Two-stage workflow with spec approval checkpoint | `--visualize`, `--no-pr` |
+| `--graph <file>` | Load pre-defined task graph JSON | `--force`, `--no-pr`, `--visualize` |
 | `--plan-only` | Generate task graph without execution | `--visualize` |
 | `--visualize` | Show real-time Mermaid DAG and ASCII tree | All flags |
-| `--auto-pr` | Automatically create GitHub PR on completion | All flags except `--plan-only` |
-| `--force` | Override budget limits (logged to audit trail) | `--graph`, `--auto-pr` |
+| `--no-pr` | Skip PR creation (manual review before PR) | All flags except `--plan-only` |
+| `--force` | Override budget limits (logged to audit trail) | `--graph` |
 | `--help` | Show detailed usage information | None |
 
 **Flag Priority Order**:
@@ -154,7 +154,8 @@ This is the first true **AGI-class development system** - autonomous, adaptive, 
 - Auto-select highest priority task from backlog (`~/.agency/memories/agency_backlog/test_suite_gaps.md`)
 - Generate task graph via Planner agent
 - Execute with legacy workflow (STEPS 3-7)
-- No PR creation (manual review required)
+- **✅ Automatically create PR on completion** (Article III compliance)
+- CI checks required before merge (branch protection enforced)
 
 ---
 
@@ -1682,16 +1683,19 @@ When generating task graphs, the Planner agent **automatically includes** branch
 ### Usage After /clear
 
 ```bash
-# Standard workflow (branch creation automatic)
-/primeA "implement feature X" --auto-pr
+# Standard workflow (branch creation + PR automatic)
+/primeA "implement feature X"
 
 # Plan-only to review branch workflow
 /primeA "implement feature X" --plan-only
 
-# Two-stage with PR automation
-/primeA "implement feature X" --two-stage --auto-pr
+# Two-stage with PR automation (default)
+/primeA "implement feature X" --two-stage
+
+# Skip PR creation (manual review)
+/primeA "implement feature X" --no-pr
 ```
 
 ---
 
-**Updated**: 2025-10-14 (Branch protection integration)
+**Updated**: 2025-10-14 (Branch protection integration, --auto-pr now default)
