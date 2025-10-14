@@ -8,8 +8,10 @@
 
 ### Option 1: Execute Pre-Generated Task Graph (Recommended)
 ```bash
-/primeA --graph /tmp/mission_completion_graph.json --visualize
+/primeA --graph missions/mission_completion_graph.json --visualize
 ```
+
+**Note**: File is in `missions/` directory (committed to git) AND `/tmp/` (temporary backup)
 
 ### Option 2: Natural Language Resume
 ```
@@ -23,7 +25,7 @@ Remaining work:
 5. Implement autonomous completion validator (prevent future premature conclusions)
 
 Context: See docs/adr/ADR-031-test-suite-recovery.md for full details.
-Execute: /primeA --graph /tmp/mission_completion_graph.json
+Execute: /primeA --graph missions/mission_completion_graph.json
 ```
 
 ### Option 3: Simple Instruction
@@ -96,8 +98,9 @@ Read docs/adr/ADR-031-test-suite-recovery.md and complete the remaining 10% to r
 - `docs/PYTEST_XDIST_ANALYSIS.md` - Parallelism validation
 - `docs/PATTERN_EXTRACTION_REPORT.md` - 11 reusable patterns
 
-### Task Graph (In /tmp)
-- `/tmp/mission_completion_graph.json` - 15 tasks for remaining work
+### Task Graph (Committed to Git)
+- `missions/mission_completion_graph.json` - 15 tasks for remaining work (COMMITTED)
+- `/tmp/mission_completion_graph.json` - Backup copy (temporary)
 
 ### Code Changes (Committed)
 - `pytest.ini` - Re-enabled xdist with -n 6
