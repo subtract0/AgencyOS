@@ -1607,3 +1607,91 @@ def display_help_text() -> Result[str, str]:
 *"Not coding - designing evolution itself."*
 
 **This is the first AGI-class autonomous development orchestrator with recursive reasoning validation.**
+
+---
+
+## 🔒 Branch Protection Integration (Article III)
+
+**IMPORTANT**: With branch protection active, primeA automatically ensures constitutional compliance.
+
+### Automatic Feature Branch Creation
+
+When generating task graphs, the Planner agent **automatically includes** branch setup tasks:
+
+```json
+{
+  "phases": [
+    {
+      "id": "phase_0_setup",
+      "title": "Git Workflow Setup",
+      "tasks": [
+        {
+          "id": "create_feature_branch",
+          "title": "Create feature branch for isolated work",
+          "type": "Code",
+          "tier": "Tier 2",
+          "agent": "coder",
+          "description": "Create feature branch (feat/task-name) and checkout. Branch protection prevents direct main commits (Article III).",
+          "dependencies": [],
+          "acceptance_criteria": [
+            "Feature branch created with semantic naming (feat/, fix/, docs/)",
+            "Checked out to feature branch",
+            "Verified not on main branch"
+          ]
+        }
+      ]
+    },
+    // ... your implementation phases ...
+    {
+      "id": "phase_final_pr",
+      "title": "PR Creation & CI",
+      "tasks": [
+        {
+          "id": "create_pull_request",
+          "title": "Create PR and trigger CI",
+          "type": "Code",
+          "tier": "Tier 1",
+          "agent": "merger",
+          "description": "Create GitHub PR, trigger CI checks (Article II - 100% verification required).",
+          "dependencies": ["all_implementation_tasks"],
+          "acceptance_criteria": [
+            "PR created with comprehensive description",
+            "CI workflow triggered",
+            "All required checks pending/passing"
+          ]
+        }
+      ]
+    }
+  ]
+}
+```
+
+### Constitutional Enforcement
+
+**Article III** (Automated Merge Enforcement):
+- ✅ Task graphs **always** create feature branches first
+- ✅ PR creation included as final task (with `--auto-pr`)
+- ✅ CI checks required before merge
+- ✅ No bypass authority (even for orchestrator)
+
+**Branch Protection Active:**
+- Direct pushes to main **blocked**
+- CI must pass before merge
+- Conversation resolution required
+
+### Usage After /clear
+
+```bash
+# Standard workflow (branch creation automatic)
+/primeA "implement feature X" --auto-pr
+
+# Plan-only to review branch workflow
+/primeA "implement feature X" --plan-only
+
+# Two-stage with PR automation
+/primeA "implement feature X" --two-stage --auto-pr
+```
+
+---
+
+**Updated**: 2025-10-14 (Branch protection integration)
