@@ -905,6 +905,211 @@ Store to: ~/.agency/memories/agency_backlog/leap_{next_leap}_proposal.md
 
 ---
 
+### **STEP 6.5: Validate Autonomous Completion** ✅ **MANDATORY**
+
+**Constitutional Gate**: Before generating execution report, validate 100% completion.
+
+```python
+from tools.orchestrator.completion_validator import CompletionValidator
+
+# CRITICAL: Validate completion before STEP 7
+print("\n" + "="*70)
+print("🔍 STEP 6.5: VALIDATING AUTONOMOUS COMPLETION")
+print("="*70 + "\n")
+
+# Collect validation inputs
+task_results = [
+    {
+        "id": task.id,
+        "status": task.status,  # Must be "success" or "completed"
+        "acceptance_criteria_met": task.acceptance_criteria_met,
+        "type": task.type.value,
+    }
+    for task in graph.get_all_tasks()
+]
+
+todos = context.get("todos", [])  # From TodoWrite
+
+spec_criteria = []
+if graph.spec_file and Path(graph.spec_file).exists():
+    spec_content = Read(graph.spec_file)
+    # Extract acceptance criteria from spec (look for "## Acceptance Criteria" section)
+    spec_criteria = extract_acceptance_criteria(spec_content)
+
+backlog_items = []
+backlog_path = Path.home() / ".agency/memories/agency_backlog"
+if backlog_path.exists():
+    # Check for pending backlog items
+    for backlog_file in backlog_path.glob("*.md"):
+        content = Read(str(backlog_file))
+        if "TODO:" in content or "PENDING:" in content:
+            backlog_items.append(f"{backlog_file.name}: {content[:100]}")
+
+context_usage = len(str(context)) / 200000  # Rough estimate (200k token limit)
+
+# Execute validation
+validator = CompletionValidator(
+    task_results=task_results,
+    todos=todos,
+    spec_criteria=spec_criteria,
+    backlog_items=backlog_items,
+    context_usage=context_usage,
+)
+
+validation_result = validator.validate()
+
+if validation_result.is_err():
+    # VALIDATION FAILED - BLOCK STEP 7
+    error = validation_result.unwrap_err()
+    print(f"❌ VALIDATION FAILED: {error.reason}")
+    print(f"\n{error.message}\n")
+    print("Failed Checks:")
+    for check in error.failed_checks:
+        print(f"  ❌ {check}")
+    print("\nSuggestions:")
+    for suggestion in error.suggestions:
+        print(f"  💡 {suggestion}")
+
+    # CONSTITUTIONAL REQUIREMENT: Continue execution until 100% complete
+    print("\n⚠️ EXECUTION CONTINUES UNTIL VALIDATION PASSES")
+    print("Article I: No action without complete context")
+    print("Article II: 100% verification requirement")
+    print("\n🔄 Returning to incomplete tasks...")
+
+    # DO NOT proceed to STEP 7
+    # Return to STEP 4 and continue execution
+    raise ValidationError(f"Completion validation failed: {error.message}")
+
+else:
+    # VALIDATION PASSED - PROCEED TO STEP 7
+    validation = validation_result.unwrap()
+    print(validation.get_summary())
+
+    # Store validation success pattern (Article IV)
+    context.store_memory(
+        key=f"completion_validation_{graph.mission}_{int(time.time())}",
+        content={
+            "mission": graph.mission,
+            "validation_passed": True,
+            "all_tasks_completed": validation.all_tasks_completed,
+            "acceptance_criteria_met": validation.acceptance_criteria_met,
+            "constitutional_compliant": validation.constitutional_compliant,
+            "context_efficiency": validation.context_efficiency,
+            "warnings": validation.warnings,
+        },
+        tags=["primeA", "completion_validation", "success", "constitutional"],
+    )
+
+    print("\n✅ VALIDATION PASSED - PROCEEDING TO STEP 7")
+```
+
+**Six Validation Checks** (from ADR-032):
+
+1. **All Tasks Completed** (Article I)
+   - Every task has status "success" or "completed"
+   - No pending, in_progress, failed, or skipped tasks
+   - Retries with constitutional timeout policy (2x, 3x, 10x)
+
+2. **Acceptance Criteria Met** (Article V)
+   - All spec.md acceptance criteria validated
+   - Traceability: spec → plan → tasks → verification
+   - Each criterion explicitly marked as "met"
+
+3. **TodoWrite Synchronized** (Article I)
+   - All TodoWrite items marked "completed"
+   - No pending or in_progress todos
+   - TodoWrite reflects actual execution state
+
+4. **Backlog Zero** (Article IV - warning only)
+   - No pending items in `~/.agency/memories/agency_backlog/`
+   - Warning if backlog non-empty (not blocking)
+   - Suggests creating follow-up mission
+
+5. **Constitutional Compliance** (All Articles)
+   - Article I: Complete context (all tasks executed)
+   - Article II: 100% verification (all tests pass)
+   - Article III: Automated enforcement (validator IS enforcement)
+   - Article IV: VectorStore patterns applied (completion pattern confidence 1.0)
+   - Article V: Spec-driven (acceptance criteria validated)
+
+6. **Context Efficiency** (Article I - warning only)
+   - Context window usage efficiency ≥80%
+   - Warning if inefficient context usage detected
+   - Suggests optimization opportunities
+
+**Example: Valid Completion**
+
+```python
+# All checks pass
+ValidationResults(
+    all_tasks_completed=True,         # ✅ All tasks succeeded
+    acceptance_criteria_met=True,     # ✅ Spec criteria validated
+    todowrite_synced=True,            # ✅ All todos completed
+    backlog_zero=False,               # ⚠️ Warning only
+    constitutional_compliant=True,    # ✅ All 5 articles
+    context_efficiency=0.85,          # ✅ 85% efficiency
+    warnings=["Backlog contains 2 items"],
+    errors=[]                         # ✅ No blocking errors
+)
+# Result: Proceed to STEP 7
+```
+
+**Example: Invalid Completion**
+
+```python
+# Incomplete tasks detected
+ValidationError(
+    reason="incomplete_tasks",
+    message="Found 15 incomplete task(s): test_fix_1, test_fix_2, ...",
+    failed_checks=["task_completion"],
+    suggestions=[
+        "Continue execution until all tasks reach 'success' status",
+        "Retry failed tasks with constitutional timeout policy (2x, 3x, 10x)"
+    ]
+)
+# Result: Block STEP 7, return to STEP 4, continue execution
+```
+
+**Why This Matters** (ADR-032):
+
+During the Test Suite Recovery mission (ADR-031), primeA prematurely concluded at 90% completion:
+- **187 tests fixed** (93% of failures)
+- **15 tests still failing** (7% incomplete)
+- **Execution report generated anyway** ("90% complete, excellent progress")
+
+This violated constitutional Article I (complete context) and Article II (100% verification).
+
+**STEP 6.5 prevents premature conclusions**:
+- No execution report without 100% task completion
+- Constitutional enforcement (no manual override)
+- Institutional learning (stored in VectorStore, confidence 1.0)
+- Future orchestrators query this pattern before STEP 7
+
+**Error Handling** (Result Pattern):
+
+```python
+# Success case
+Ok(ValidationResults(...))
+
+# Failure case
+Err(ValidationError(
+    reason="incomplete_tasks",
+    message="...",
+    failed_checks=[...],
+    suggestions=[...]
+))
+```
+
+**References**:
+- **ADR-032**: Autonomous Completion Protocol (this validation gate)
+- **ADR-031**: Test Suite Recovery (incident that revealed 90% conclusion)
+- **ADR-001**: Complete Context Before Action (Article I enforcement)
+- **ADR-010**: Result Pattern for Error Handling
+- **Implementation**: `tools/orchestrator/completion_validator.py`
+- **Tests**: `tests/orchestrator/test_completion_validator.py` (39 tests, 100% pass)
+
+---
+
 ### **STEP 7: Generate Execution Report** 📋
 
 ```python
