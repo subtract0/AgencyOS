@@ -1,0 +1,1 @@
+/primeA --graph missions/mission_completion_graph.json --visualize
