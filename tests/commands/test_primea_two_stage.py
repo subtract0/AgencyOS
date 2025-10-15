@@ -683,26 +683,24 @@ class TestBackwardCompatibility:
                     "title": "Phase 1",
                     "tasks": [
                         {
-                            "id": "code_task_1",
-                            "title": "Code Task 1",
-                            "type": "Code",
-                            "tier": "Tier 2",
-                            "agent": "coder",
-                            "description": "Implement feature",
-                            "dependencies": [],
-                            "acceptance_criteria": ["Tests pass"],
-                        },
-                        {
                             "id": "test_task_1",
                             "title": "Test Task 1",
                             "type": "Test",
                             "tier": "Tier 2",
                             "agent": "test_generator",
                             "description": "Write tests for feature",
-                            "dependencies": [
-                                "code_task_1"
-                            ],  # Test depends on Code (validator logic)
+                            "dependencies": [],  # Test written first (TDD)
                             "verification_target": "code_task_1",
+                        },
+                        {
+                            "id": "code_task_1",
+                            "title": "Code Task 1",
+                            "type": "Code",
+                            "tier": "Tier 2",
+                            "agent": "coder",
+                            "description": "Implement feature",
+                            "dependencies": ["test_task_1"],  # Code depends on Test (TDD)
+                            "acceptance_criteria": ["Tests pass"],
                         },
                     ],
                 }
@@ -717,14 +715,14 @@ class TestBackwardCompatibility:
         # Assert
         assert graph.mission == "Legacy Mission"
         assert len(graph.phases) == 1
-        # Verify Article II compliance maintained
+        # Verify Article II compliance maintained (TDD-first)
         code_tasks = [t for t in graph.all_tasks() if t.type == TaskType.CODE]
         test_tasks = [t for t in graph.all_tasks() if t.type == TaskType.TEST]
         assert len(code_tasks) == 1
         assert len(test_tasks) == 1
-        # Verify Test task references Code task
+        # Verify Code task depends on Test task (TDD-first)
         assert test_tasks[0].verification_target == "code_task_1"
-        assert "code_task_1" in test_tasks[0].dependencies
+        assert "test_task_1" in code_tasks[0].dependencies
 
 
 # =============================================================================
@@ -805,10 +803,12 @@ class TestOutputValidation:
             # Assert: At least one Test task exists
             assert len(test_tasks) > 0, f"Code task {code_task.id} lacks Test task"
 
-            # Assert: Test task references Code task (current validator logic)
+            # Assert: TDD-first compliance (Code depends on Test, not vice versa)
             test_task = test_tasks[0]
             assert test_task.verification_target == code_task.id
-            assert code_task.id in test_task.dependencies
+            assert test_task.id in code_task.dependencies, (
+                f"Code task {code_task.id} must depend on Test task {test_task.id} (TDD-first)"
+            )
 
 
 # =============================================================================
