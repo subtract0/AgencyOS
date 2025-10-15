@@ -1154,8 +1154,12 @@ class ArchitecturalDecision(BaseModel):
 
     title: str = Field(..., min_length=5, max_length=100, description="Decision title")
     choice: str = Field(..., min_length=2, max_length=100, description="Selected option")
-    rationale: str = Field(..., min_length=10, max_length=500, description="Reasoning (1-2 sentences)")
-    tradeoffs: str = Field(..., min_length=10, max_length=500, description="Trade-offs (1-2 sentences)")
+    rationale: str = Field(
+        ..., min_length=10, max_length=500, description="Reasoning (1-2 sentences)"
+    )
+    tradeoffs: str = Field(
+        ..., min_length=10, max_length=500, description="Trade-offs (1-2 sentences)"
+    )
 
 
 class Tier1Summary(BaseModel):
@@ -1191,12 +1195,24 @@ class Tier1Summary(BaseModel):
 
     model_config = ConfigDict(extra="forbid")
 
-    mission: str = Field(..., min_length=10, max_length=500, description="Mission statement (1-2 sentences)")
-    approach: str = Field(..., min_length=10, max_length=500, description="Technical approach (1-2 sentences)")
-    test_summary: str = Field(..., min_length=10, max_length=300, description="Test coverage summary")
-    deliverables: list[str] = Field(..., min_items=1, description="List of files to be created/modified")
-    constitutional_status: ConstitutionalStatus = Field(..., description="Articles I-V compliance status")
-    effort_estimate: str = Field(..., min_length=3, max_length=50, description="Time estimate (e.g., '4-6 hours')")
+    mission: str = Field(
+        ..., min_length=10, max_length=500, description="Mission statement (1-2 sentences)"
+    )
+    approach: str = Field(
+        ..., min_length=10, max_length=500, description="Technical approach (1-2 sentences)"
+    )
+    test_summary: str = Field(
+        ..., min_length=10, max_length=300, description="Test coverage summary"
+    )
+    deliverables: list[str] = Field(
+        ..., min_length=1, description="List of files to be created/modified"
+    )
+    constitutional_status: ConstitutionalStatus = Field(
+        ..., description="Articles I-V compliance status"
+    )
+    effort_estimate: str = Field(
+        ..., min_length=3, max_length=50, description="Time estimate (e.g., '4-6 hours')"
+    )
     risk_level: RiskLevel = Field(..., description="Implementation risk level")
     line_count: int = Field(..., ge=1, le=25, description="Tier 1 line count (must be ≤25)")
 
@@ -1234,7 +1250,7 @@ class Tier2Summary(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     decisions: list[ArchitecturalDecision] = Field(
-        ..., min_items=1, max_items=6, description="4-6 key architectural decisions"
+        ..., min_length=1, max_length=6, description="4-6 key architectural decisions"
     )
     security_implications: str = Field(..., min_length=10, description="Security considerations")
     dependencies: str = Field(..., min_length=5, description="Required libraries/services")
@@ -1340,10 +1356,11 @@ class CheckpointResult(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     action: UserAction = Field(..., description="User action (APPROVE/REVISE/VIEW/QUIT)")
-    tier_viewed: int = Field(..., ge=1, le=3, description="Last tier viewed before decision (1/2/3)")
+    tier_viewed: int = Field(
+        ..., ge=1, le=3, description="Last tier viewed before decision (1/2/3)"
+    )
     timestamp: datetime = Field(
-        default_factory=lambda: datetime.now(),
-        description="Decision timestamp"
+        default_factory=lambda: datetime.now(), description="Decision timestamp"
     )
 
 
