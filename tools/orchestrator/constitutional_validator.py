@@ -84,10 +84,13 @@ from typing import Any, TypeVar
 from shared.agent_context import AgentContext
 from shared.models.orchestrator_models import (
     BypassAttempt,
+    ExecutionContextInput,
     LearningQuery,
+    PatternContent,
     RetryConfig,
     SpecTrace,
     TestGateResult,
+    TestResultsInput,
 )
 from shared.type_definitions.result import Err, Ok, Result
 
@@ -278,7 +281,7 @@ class ArticleIITestGate:
 
     def validate_test_results(
         self,
-        test_results: dict[str, Any],
+        test_results: TestResultsInput,
         task_graph: Any,
         code_analysis: dict[str, Any] | None = None,
     ) -> Result[dict[str, Any], Any]:
@@ -308,10 +311,10 @@ class ArticleIITestGate:
             >>> result = gate.validate_test_results(test_results, task_graph)
             >>> assert result.is_ok()
         """
-        pass_rate = test_results.get("pass_rate", 0.0)
-        test_count = test_results.get("test_count", 0)
-        tests_failed = test_results.get("tests_failed", 0)
-        failures = test_results.get("failures", [])
+        pass_rate = test_results.pass_rate
+        test_count = test_results.test_count
+        tests_failed = test_results.tests_failed
+        failures = test_results.failures
 
         # Check for simulated work in code analysis
         if code_analysis and code_analysis.get("simulated_work_detected"):
@@ -328,12 +331,12 @@ class ArticleIITestGate:
         # Enforce 100% pass rate
         if pass_rate < 1.0:
             # Build detailed error message with test failure information
-            failed_test_names = [f.get("test", "") for f in failures]
+            failed_test_names = [f.test for f in failures]
             failure_details = []
             for f in failures:
-                test_name = f.get("test", "unknown")
-                file_loc = f"{f.get('file', '')}:{f.get('line', '')}" if f.get("file") else ""
-                error_msg = f.get("error", "")
+                test_name = f.test
+                file_loc = f"{f.file}:{f.line}" if f.file else ""
+                error_msg = f.error
                 if file_loc:
                     failure_details.append(f"{test_name} ({file_loc}): {error_msg}")
                 else:
@@ -352,7 +355,7 @@ class ArticleIITestGate:
                     "pass_rate": pass_rate,
                     "failed_tests": failed_test_names,
                     "article": "Article II",
-                    "recommended_fix": failures[0].get("recommended_fix", "") if failures else "",
+                    "recommended_fix": failures[0].recommended_fix or "" if failures else "",
                     "failure_details": failure_details,
                     "__str__": lambda self: detailed_message,
                 },
@@ -696,7 +699,7 @@ class ArticleIVLearningIntegration:
             return Err(f"VectorStore query failed: {e}")
 
     def store_pattern(
-        self, key: str, content: dict[str, Any], tags: list[str]
+        self, key: str, content: PatternContent, tags: list[str]
     ) -> Result[bool, str]:
         """
         Store successful pattern to VectorStore.
@@ -731,8 +734,8 @@ class ArticleIVLearningIntegration:
             True
         """
         try:
-            # Store to VectorStore via AgentContext
-            self.context.store_memory(key=key, content=content, tags=tags)
+            # Store to VectorStore via AgentContext (convert Pydantic model to dict)
+            self.context.store_memory(key=key, content=content.model_dump(), tags=tags)
             return Ok(True)
 
         except Exception as e:
@@ -923,7 +926,7 @@ def enforce_article_i_retry_protocol(
 
 
 def enforce_article_ii_test_gate(
-    test_results: dict[str, Any],
+    test_results: TestResultsInput,
     task_graph: Any,
     code_analysis: dict[str, Any] | None = None,
 ) -> Result[dict[str, Any], Any]:
@@ -965,7 +968,7 @@ def enforce_article_ii_test_gate(
 
 
 def enforce_article_iii_no_bypass(
-    execution_context: dict[str, Any],
+    execution_context: ExecutionContextInput,
     task_graph: Any,
     static_analysis_mode: bool = False,
 ) -> Result[dict[str, Any], Any]:
@@ -975,7 +978,7 @@ def enforce_article_iii_no_bypass(
     This is a placeholder implementation for test compatibility.
     """
     detector = ArticleIIIBypassDetector()
-    cli_flags = execution_context.get("flags", [])
+    cli_flags = execution_context.flags
     env_vars = {k: v for k, v in os.environ.items() if k in detector.forbidden_env_vars}
 
     result = detector.detect_bypass_attempt(cli_flags, env_vars)

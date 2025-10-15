@@ -800,6 +800,203 @@ class GitValidationResult(BaseModel):
             )
 
 
+# ============================================================================
+# TYPE-SAFE RESPONSE MODELS (Leap 8 - Article II Strict Typing)
+# ============================================================================
+
+
+class TestFailure(BaseModel):
+    """
+    Individual test failure details for constitutional validation.
+
+    Captures all information needed to diagnose and fix test failures:
+    - Test name and location (file:line)
+    - Error message and stack trace
+    - Recommended fix (if available)
+
+    Constitutional Compliance:
+        - Article II: 100% verification (no dict[str, Any] for test results)
+
+    Example:
+        >>> failure = TestFailure(
+        ...     test="test_auth_token_valid",
+        ...     file="tests/test_auth.py",
+        ...     line=42,
+        ...     error="AssertionError: Expected 200, got 401",
+        ...     recommended_fix="Check token expiry logic"
+        ... )
+    """
+
+    model_config = ConfigDict(extra="forbid")
+
+    test: str = Field(..., min_length=1, description="Test function name")
+    file: str | None = Field(None, description="Test file path")
+    line: int | None = Field(None, ge=1, description="Line number where test failed")
+    error: str = Field("", description="Error message or stack trace")
+    recommended_fix: str | None = Field(None, description="Suggested fix for failure")
+
+
+class TestResultsInput(BaseModel):
+    """
+    Test execution results input for Article II validation.
+
+    Enhanced version of TestGateResult with detailed failure information
+    for constitutional test gate enforcement.
+
+    Fields:
+        pass_rate: Percentage of tests passed (0.0 to 1.0)
+        test_count: Total number of tests executed
+        tests_passed: Number of tests that passed
+        tests_failed: Number of tests that failed
+        failures: List of detailed failure information
+
+    Constitutional Compliance:
+        - Article II: 100% verification (pass_rate must be 1.0 for merge)
+
+    Example:
+        >>> results = TestResultsInput(
+        ...     pass_rate=1.0,
+        ...     test_count=100,
+        ...     tests_passed=100,
+        ...     tests_failed=0,
+        ...     failures=[]
+        ... )
+    """
+
+    model_config = ConfigDict(extra="forbid")
+
+    pass_rate: float = Field(..., ge=0.0, le=1.0)
+    test_count: int = Field(..., ge=0)
+    tests_passed: int = Field(..., ge=0)
+    tests_failed: int = Field(..., ge=0)
+    failures: list[TestFailure] = Field(default_factory=list)
+
+
+class PatternContent(BaseModel):
+    """
+    Flexible pattern content for VectorStore storage (Article IV).
+
+    Allows any fields to accommodate different pattern types while
+    enforcing type safety for common fields.
+
+    Common Fields (all optional):
+        code: Implementation code snippet
+        tests_passed: Whether tests passed for this pattern
+        confidence: Confidence score (0.0 to 1.0)
+        description: Human-readable description
+        tags: Categorization tags
+
+    Constitutional Compliance:
+        - Article II: Strict typing (no dict[str, Any])
+        - Article IV: Pattern storage after successful operations
+
+    Example:
+        >>> pattern = PatternContent(
+        ...     code="def authenticate(token): ...",
+        ...     tests_passed=True,
+        ...     confidence=0.92,
+        ...     description="JWT auth with RS256 signing",
+        ...     tags=["auth", "jwt", "security"]
+        ... )
+    """
+
+    model_config = ConfigDict(extra="allow")  # Allow additional fields per pattern type
+
+    # Common optional fields
+    code: str | None = None
+    tests_passed: bool | None = None
+    confidence: float | None = Field(None, ge=0.0, le=1.0)
+    description: str | None = None
+    tags: list[str] | None = None
+
+
+class ExecutionContextInput(BaseModel):
+    """
+    Execution context for Article III bypass detection.
+
+    Provides CLI flags and environment variables for
+    constitutional bypass detection and audit logging.
+
+    Fields:
+        flags: CLI flags passed to orchestrator (e.g., ["--force", "--no-verify"])
+
+    Constitutional Compliance:
+        - Article III: Automated enforcement (no manual bypass)
+
+    Example:
+        >>> context = ExecutionContextInput(
+        ...     flags=["--force", "--no-verify"]
+        ... )
+    """
+
+    model_config = ConfigDict(extra="forbid")
+
+    flags: list[str] = Field(default_factory=list)
+
+
+class HealthCheckResponse(BaseModel):
+    """
+    Health check response for local model availability testing.
+
+    Used by fallback handlers to determine if local models (Ollama)
+    are available for P3 task execution.
+
+    Fields:
+        status: Health status ("healthy", "unhealthy", "timeout")
+        error: Error message if unhealthy (None if healthy)
+
+    Constitutional Compliance:
+        - Article II: Strict typing (no dict[str, Any])
+
+    Example:
+        >>> response = HealthCheckResponse(
+        ...     status="healthy"
+        ... )
+        >>> response = HealthCheckResponse(
+        ...     status="unhealthy",
+        ...     error="Connection refused"
+        ... )
+    """
+
+    model_config = ConfigDict(extra="forbid")
+
+    status: str = Field(..., pattern="^(healthy|unhealthy|timeout)$")
+    error: str | None = None
+
+
+class GitHubAPIResponse(BaseModel):
+    """
+    GitHub API response for PR/issue operations.
+
+    Used by fallback handlers and retry logic for GitHub
+    API interactions (rate limiting, transient failures).
+
+    Fields:
+        status: Response status ("success", "error")
+        pr_url: Pull request URL if created (None on error)
+        error: Error message if status is error (None on success)
+
+    Constitutional Compliance:
+        - Article II: Strict typing (no dict[str, Any])
+
+    Example:
+        >>> response = GitHubAPIResponse(
+        ...     status="success",
+        ...     pr_url="https://github.com/org/repo/pull/123"
+        ... )
+        >>> response = GitHubAPIResponse(
+        ...     status="error",
+        ...     error="HTTP 429: Rate limit exceeded"
+        ... )
+    """
+
+    model_config = ConfigDict(extra="forbid")
+
+    status: str = Field(..., pattern="^(success|error)$")
+    pr_url: str | None = None
+    error: str | None = None
+
+
 class GitValidationError(Exception):
     """
     Exception raised when git validation fails.
@@ -914,4 +1111,10 @@ __all__ = [
     "BranchInfo",
     "GitValidationResult",
     "GitValidationError",
+    "TestFailure",
+    "TestResultsInput",
+    "PatternContent",
+    "ExecutionContextInput",
+    "HealthCheckResponse",
+    "GitHubAPIResponse",
 ]

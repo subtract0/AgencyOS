@@ -44,6 +44,7 @@ from unittest.mock import AsyncMock, Mock, patch
 import pytest
 
 from shared.agent_context import AgentContext
+from shared.models.orchestrator_models import GitHubAPIResponse, HealthCheckResponse
 from shared.type_definitions.result import Err, Ok, Result
 
 # THESE IMPORTS WILL FAIL - IMPLEMENTATION DOESN'T EXIST YET (RED PHASE)
@@ -194,9 +195,9 @@ async def test_ollama_health_check_timeout_fallback_to_cloud(
     """
 
     # Arrange: Simulate health check timeout
-    async def slow_health_check() -> dict[str, Any]:
+    async def slow_health_check() -> HealthCheckResponse:
         await asyncio.sleep(6)  # Exceeds 5s timeout
-        return {"status": "healthy"}
+        return HealthCheckResponse(status="healthy")
 
     # Act
     start_time = time.time()
@@ -234,14 +235,14 @@ async def test_github_api_rate_limit_exponential_backoff(
     # Arrange: Simulate GitHub API 429 rate limit
     attempt_count = 0
 
-    async def mock_github_api_call() -> dict[str, Any]:
+    async def mock_github_api_call() -> GitHubAPIResponse:
         nonlocal attempt_count
         attempt_count += 1
 
         if attempt_count < 3:
             raise Exception("HTTP 429: API rate limit exceeded")
         else:
-            return {"status": "success", "pr_url": "https://github.com/org/repo/pull/123"}
+            return GitHubAPIResponse(status="success", pr_url="https://github.com/org/repo/pull/123")
 
     # Act
     start_time = time.time()
@@ -356,7 +357,7 @@ async def test_multiple_fallbacks_simultaneously_no_race_conditions(
         side_effect=ConnectionError("VectorStore unreachable")
     )
 
-    async def failing_health_check() -> dict[str, Any]:
+    async def failing_health_check() -> HealthCheckResponse:
         raise ConnectionError("Ollama unreachable")
 
     # Act: Run both fallbacks in parallel
@@ -392,7 +393,7 @@ async def test_retry_exhaustion_after_max_attempts(mock_agent_context: AgentCont
     """
 
     # Arrange: Simulate permanent GitHub API failure
-    async def permanent_failure() -> dict[str, Any]:
+    async def permanent_failure() -> GitHubAPIResponse:
         raise Exception("HTTP 429: API rate limit exceeded")
 
     # Act
@@ -459,9 +460,9 @@ async def test_local_model_latency_spike_fallback_after_5s(
     """
 
     # Arrange: Simulate slow health check
-    async def slow_health_check() -> dict[str, Any]:
+    async def slow_health_check() -> HealthCheckResponse:
         await asyncio.sleep(6)
-        return {"status": "healthy"}
+        return HealthCheckResponse(status="healthy")
 
     # Act
     result = await handle_local_model_unavailable(
@@ -532,7 +533,7 @@ async def test_github_api_retry_limit_5_attempts(mock_agent_context: AgentContex
     # Arrange: Count retry attempts
     attempt_count = 0
 
-    async def always_fails() -> dict[str, Any]:
+    async def always_fails() -> GitHubAPIResponse:
         nonlocal attempt_count
         attempt_count += 1
         raise Exception("HTTP 429: Rate limit")
@@ -615,12 +616,12 @@ async def test_transient_failure_recovers_on_retry(mock_agent_context: AgentCont
     # Arrange: Transient failure on first attempt
     attempt_count = 0
 
-    async def transient_failure() -> dict[str, Any]:
+    async def transient_failure() -> GitHubAPIResponse:
         nonlocal attempt_count
         attempt_count += 1
         if attempt_count == 1:
             raise Exception("Connection timeout")
-        return {"status": "success"}
+        return GitHubAPIResponse(status="success")
 
     # Act
     result = await handle_github_rate_limit(
@@ -685,7 +686,7 @@ async def test_invalid_api_key_permanent_failure_no_retry(
     """
 
     # Arrange: Simulate invalid API key
-    async def invalid_api_key() -> dict[str, Any]:
+    async def invalid_api_key() -> GitHubAPIResponse:
         raise Exception("HTTP 401: Unauthorized")
 
     # Act
@@ -759,7 +760,7 @@ async def test_local_model_fallback_does_not_bypass_article_three_budget_guard(
     """
 
     # Arrange: Local model unavailable
-    async def failing_health_check() -> dict[str, Any]:
+    async def failing_health_check() -> HealthCheckResponse:
         raise ConnectionError("Ollama unreachable")
 
     # Act
@@ -860,9 +861,9 @@ async def test_local_model_health_check_abort_latency_under_100ms(
     """
 
     # Arrange: Health check that will timeout
-    async def slow_health_check() -> dict[str, Any]:
+    async def slow_health_check() -> HealthCheckResponse:
         await asyncio.sleep(10)
-        return {"status": "healthy"}
+        return HealthCheckResponse(status="healthy")
 
     # Act
     start_time = time.time()
@@ -904,10 +905,10 @@ async def test_parallel_fallback_checks_no_deadlocks(
         side_effect=ConnectionError("VectorStore unreachable")
     )
 
-    async def failing_health_check() -> dict[str, Any]:
+    async def failing_health_check() -> HealthCheckResponse:
         raise ConnectionError("Ollama unreachable")
 
-    async def failing_github_api() -> dict[str, Any]:
+    async def failing_github_api() -> GitHubAPIResponse:
         raise Exception("HTTP 429: Rate limit")
 
     # Act: Run all fallbacks in parallel
@@ -947,7 +948,7 @@ async def test_exponential_backoff_timing_2s_4s_8s_16s_32s() -> None:
     last_attempt_time: float | None = None
     attempt_count = 0
 
-    async def track_retry_timing() -> dict[str, Any]:
+    async def track_retry_timing() -> GitHubAPIResponse:
         nonlocal last_attempt_time, attempt_count
         current_time = time.time()
         attempt_count += 1
@@ -961,7 +962,7 @@ async def test_exponential_backoff_timing_2s_4s_8s_16s_32s() -> None:
         # Succeed on 6th attempt (after 5 retry delays recorded)
         if attempt_count < 6:
             raise Exception("Transient failure")
-        return {"status": "success"}
+        return GitHubAPIResponse(status="success")
 
     # Act
     result = await retry_with_exponential_backoff(
@@ -1001,7 +1002,7 @@ async def test_retry_abort_on_permanent_error_code_401() -> None:
     # Arrange: Permanent failure (invalid API key)
     attempt_count = 0
 
-    async def permanent_auth_failure() -> dict[str, Any]:
+    async def permanent_auth_failure() -> GitHubAPIResponse:
         nonlocal attempt_count
         attempt_count += 1
         raise Exception("HTTP 401: Unauthorized")
