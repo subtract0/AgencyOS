@@ -311,10 +311,10 @@ class ArticleIITestGate:
             >>> result = gate.validate_test_results(test_results, task_graph)
             >>> assert result.is_ok()
         """
-        pass_rate = test_results.pass_rate
-        test_count = test_results.test_count
-        tests_failed = test_results.tests_failed
-        failures = test_results.failures
+        pass_rate = test_results.get("pass_rate", 0.0)
+        test_count = test_results.get("test_count", 0)
+        tests_failed = test_results.get("tests_failed", 0)
+        failures = test_results.get("failures", [])
 
         # Check for simulated work in code analysis
         if code_analysis and code_analysis.get("simulated_work_detected"):
@@ -331,12 +331,12 @@ class ArticleIITestGate:
         # Enforce 100% pass rate
         if pass_rate < 1.0:
             # Build detailed error message with test failure information
-            failed_test_names = [f.test for f in failures]
+            failed_test_names = [f.get("test", "unknown") for f in failures]
             failure_details = []
             for f in failures:
-                test_name = f.test
-                file_loc = f"{f.file}:{f.line}" if f.file else ""
-                error_msg = f.error
+                test_name = f.get("test", "unknown")
+                file_loc = f"{f.get('file', '')}:{f.get('line', '')}" if f.get("file") else ""
+                error_msg = f.get("error", "No error message")
                 if file_loc:
                     failure_details.append(f"{test_name} ({file_loc}): {error_msg}")
                 else:
@@ -355,7 +355,7 @@ class ArticleIITestGate:
                     "pass_rate": pass_rate,
                     "failed_tests": failed_test_names,
                     "article": "Article II",
-                    "recommended_fix": failures[0].recommended_fix or "" if failures else "",
+                    "recommended_fix": failures[0].get("recommended_fix", "") if failures else "",
                     "failure_details": failure_details,
                     "__str__": lambda self: detailed_message,
                 },

@@ -697,7 +697,9 @@ def test_read_backlog_queue_large_backlog_performance(tmp_path: Path) -> None:
     large_backlog = "# Large Backlog\n\n"
     for i in range(1, 1001):
         status = "Ready" if i % 3 == 0 else "Blocked"
-        large_backlog += f"- [ ] Priority {i}: Task {i} (Status: {status})\n"
+        # Priority must be 1-5 (Article III validation)
+        priority = ((i - 1) % 5) + 1  # Cycles through 1-5
+        large_backlog += f"- [ ] Priority {priority}: Task {i} (Status: {status})\n"
 
     backlog_file.write_text(large_backlog)
 
@@ -730,13 +732,19 @@ def test_select_next_task_large_backlog_performance(tmp_path: Path) -> None:
     backlog_dir.mkdir(parents=True, exist_ok=True)
     backlog_file = backlog_dir / "test_suite_gaps.md"
 
-    # Generate large backlog with first Ready task at priority 3
+    # Generate large backlog with first Ready task at priority 1
+    # (Task 3 is first Ready, should have lowest priority number for selection)
     large_backlog = "# Large Backlog\n\n"
-    large_backlog += "- [ ] Priority 1: Task 1 (Status: Blocked)\n"
-    large_backlog += "- [ ] Priority 2: Task 2 (Status: Blocked)\n"
+    large_backlog += "- [ ] Priority 2: Task 1 (Status: Blocked)\n"
+    large_backlog += "- [ ] Priority 3: Task 2 (Status: Blocked)\n"
     for i in range(3, 1001):
         status = "Ready" if i % 3 == 0 else "Blocked"
-        large_backlog += f"- [ ] Priority {i}: Task {i} (Status: {status})\n"
+        # Priority must be 1-5, cycle through to ensure first Ready gets priority 1
+        priority = ((i - 1) % 5) + 1  # Task 3 gets ((3-1) % 5) + 1 = 3
+        # Adjust: make first few Ready tasks priority 1
+        if i == 3:  # First Ready task
+            priority = 1
+        large_backlog += f"- [ ] Priority {priority}: Task {i} (Status: {status})\n"
 
     backlog_file.write_text(large_backlog)
 
@@ -749,7 +757,7 @@ def test_select_next_task_large_backlog_performance(tmp_path: Path) -> None:
     assert result.is_ok()
     task = result.unwrap()
     assert task is not None
-    assert task.priority == 3, f"Expected priority 3 (first Ready), got {task.priority}"
+    assert task.priority == 1, f"Expected priority 1 (first Ready task), got {task.priority}"
     assert elapsed_time < 2.0, f"Expected <2s, took {elapsed_time:.2f}s (PERF-002 violation)"
 
 
