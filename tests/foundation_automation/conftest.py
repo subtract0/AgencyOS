@@ -261,9 +261,7 @@ def complex_task_graph() -> TaskGraph:
                 )
             )
 
-        phases.append(
-            Phase(id=f"phase_{phase_num}", title=f"Phase {phase_num}", tasks=tasks)
-        )
+        phases.append(Phase(id=f"phase_{phase_num}", title=f"Phase {phase_num}", tasks=tasks))
 
     return TaskGraph(mission="Test Mission: Complex multi-phase project", phases=phases)
 

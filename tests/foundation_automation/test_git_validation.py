@@ -756,9 +756,9 @@ def test_git_validation_performance(
 
     # Assert
     assert result.is_ok(), "Validation should succeed for performance test"
-    assert (
-        elapsed_time < max_time
-    ), f"Git validation took {elapsed_time:.4f}s, expected <{max_time}s (GIT-006)"
+    assert elapsed_time < max_time, (
+        f"Git validation took {elapsed_time:.4f}s, expected <{max_time}s (GIT-006)"
+    )
 
 
 def test_batch_validation_performance(
@@ -829,8 +829,7 @@ def test_error_message_explains_article_iii_violation(isolated_git_repo: Path) -
     required_keywords = ["article", "protected", "checkout"]
     for keyword in required_keywords:
         assert keyword in error_msg.lower(), (
-            f"Error message missing keyword '{keyword}' (GIT-005)\n"
-            f"Message: {error_msg}"
+            f"Error message missing keyword '{keyword}' (GIT-005)\nMessage: {error_msg}"
         )
 
     # Check for actionable command

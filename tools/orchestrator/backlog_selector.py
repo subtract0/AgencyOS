@@ -37,9 +37,7 @@ logger = logging.getLogger(__name__)
 
 # Markdown parsing regex patterns
 PRIORITY_PATTERN = re.compile(r"Priority\s+(\d+):")
-STATUS_PATTERN = re.compile(
-    r"\(Status:\s*(\w+)(?:\s*-\s*(.+?))?\)$", re.IGNORECASE
-)
+STATUS_PATTERN = re.compile(r"\(Status:\s*(\w+)(?:\s*-\s*(.+?))?\)$", re.IGNORECASE)
 TASK_LINE_PATTERN = re.compile(r"^-\s+\[\s*.\s*\]\s+(.+)$")
 
 
@@ -121,9 +119,7 @@ def _validate_path(file_path: Path) -> Result[Path, str]:
         return Err(f"Path validation error: {e}")
 
 
-def _read_file_with_retry(
-    file_path: Path, max_retries: int = 3
-) -> Result[str, str]:
+def _read_file_with_retry(file_path: Path, max_retries: int = 3) -> Result[str, str]:
     """
     Read file with retry logic (Article I).
 
@@ -147,9 +143,7 @@ def _read_file_with_retry(
         try:
             content = file_path.read_text()
             if attempt > 0:
-                logger.info(
-                    f"File read succeeded after {attempt} retries: {file_path}"
-                )
+                logger.info(f"File read succeeded after {attempt} retries: {file_path}")
             return Ok(content)
 
         except FileNotFoundError:
@@ -167,9 +161,7 @@ def _read_file_with_retry(
                 )
                 time.sleep(delay)
             else:
-                return Err(
-                    f"Failed to read file after {max_retries} retries: {file_path}"
-                )
+                return Err(f"Failed to read file after {max_retries} retries: {file_path}")
 
         except OSError as e:
             if attempt < max_retries - 1:
@@ -248,9 +240,7 @@ def _parse_task_line(line: str) -> Result[BacklogTask, str]:
     locked_at = None
     if status == TaskStatus.LOCKED and status_reason:
         # Format: "in progress by agent_id at timestamp"
-        locked_match = re.search(
-            r"by\s+(\S+)\s+at\s+(.+)", status_reason, re.IGNORECASE
-        )
+        locked_match = re.search(r"by\s+(\S+)\s+at\s+(.+)", status_reason, re.IGNORECASE)
         if locked_match:
             locked_by = locked_match.group(1)
             try:
@@ -345,11 +335,7 @@ def read_backlog_queue(
     except OSError:
         last_modified = None
 
-    return Ok(
-        BacklogQueue(
-            tasks=tasks, file_path=str(validated_path), last_modified=last_modified
-        )
-    )
+    return Ok(BacklogQueue(tasks=tasks, file_path=str(validated_path), last_modified=last_modified))
 
 
 def select_next_task(backlog_path: Path | str) -> Result[BacklogTask | None, str]:
@@ -400,9 +386,7 @@ def select_next_task(backlog_path: Path | str) -> Result[BacklogTask | None, str
     return Ok(selected)
 
 
-def lock_task(
-    backlog_path: Path | str, priority: int, agent_id: str
-) -> Result[BacklogTask, str]:
+def lock_task(backlog_path: Path | str, priority: int, agent_id: str) -> Result[BacklogTask, str]:
     """
     Atomically lock task to prevent duplicate work.
 
@@ -445,9 +429,7 @@ def lock_task(
 
     # Check if already locked
     if task.status == TaskStatus.LOCKED:
-        return Err(
-            f"Task already locked by {task.locked_by} at {task.locked_at}"
-        )
+        return Err(f"Task already locked by {task.locked_by} at {task.locked_at}")
 
     # Lock task
     task.status = TaskStatus.LOCKED
@@ -459,9 +441,7 @@ def lock_task(
     if write_result.is_err():
         return Err(write_result.unwrap_err())
 
-    logger.info(
-        f"Locked task: priority={priority}, agent={agent_id}, time={task.locked_at}"
-    )
+    logger.info(f"Locked task: priority={priority}, agent={agent_id}, time={task.locked_at}")
 
     return Ok(task)
 
@@ -554,20 +534,14 @@ def _write_backlog_queue(queue: BacklogQueue) -> Result[bool, str]:
             status_str = "Status: Blocked"
         elif task.status == TaskStatus.LOCKED:
             locked_by = task.locked_by or "unknown"
-            locked_at = (
-                task.locked_at.isoformat() if task.locked_at else "unknown"
-            )
-            status_str = (
-                f"Status: Locked - in progress by {locked_by} at {locked_at}"
-            )
+            locked_at = task.locked_at.isoformat() if task.locked_at else "unknown"
+            status_str = f"Status: Locked - in progress by {locked_by} at {locked_at}"
         else:
             status_str = "Status: Ready"
 
         # Build task line
         checkbox = "[ ]"
-        task_line = (
-            f"- {checkbox} Priority {task.priority}: {task.description} ({status_str})"
-        )
+        task_line = f"- {checkbox} Priority {task.priority}: {task.description} ({status_str})"
         lines.append(task_line)
 
     # Write to file

@@ -73,9 +73,7 @@ class ValidationResults(BaseModel):
     todowrite_synced: bool = Field(description="TodoWrite matches task completion")
     backlog_zero: bool = Field(description="No pending backlog items")
     constitutional_compliant: bool = Field(description="All 5 articles compliant")
-    context_efficiency: float = Field(
-        ge=0.0, le=1.0, description="Context usage efficiency (0-1)"
-    )
+    context_efficiency: float = Field(ge=0.0, le=1.0, description="Context usage efficiency (0-1)")
     constitutional_checks: ConstitutionalChecks = Field(
         description="Detailed constitutional check results"
     )
@@ -316,9 +314,7 @@ class CompletionValidator:
 
         # Check if tasks explicitly marked acceptance criteria as met
         unmet_criteria = [
-            task["id"]
-            for task in self.task_results
-            if task.get("acceptance_criteria_met") is False
+            task["id"] for task in self.task_results if task.get("acceptance_criteria_met") is False
         ]
 
         if unmet_criteria:
@@ -346,9 +342,7 @@ class CompletionValidator:
         Constitutional: Article I (complete context - todos reflect reality)
         """
         incomplete_todos = [
-            todo["content"]
-            for todo in self.todos
-            if todo.get("status") not in ["completed"]
+            todo["content"] for todo in self.todos if todo.get("status") not in ["completed"]
         ]
 
         if incomplete_todos:
@@ -399,9 +393,7 @@ class CompletionValidator:
         )
 
         # Article I: Complete context (all tasks executed)
-        incomplete_tasks = [
-            task for task in self.task_results if task.get("status") != "success"
-        ]
+        incomplete_tasks = [task for task in self.task_results if task.get("status") != "success"]
         checks.article_i = len(incomplete_tasks) == 0
         checks.details["Article I"] = (
             "✅ All tasks executed to completion"
@@ -431,13 +423,9 @@ class CompletionValidator:
 
         # Article IV: Continuous learning (VectorStore integration)
         # Pattern confidence 1.0 - this is the learned completion pattern
-        learning_applied = any(
-            task.get("learning_applied") for task in self.task_results
-        )
+        learning_applied = any(task.get("learning_applied") for task in self.task_results)
         checks.article_iv = True  # Validator itself applies learned patterns
-        checks.details["Article IV"] = (
-            "✅ VectorStore completion patterns applied (confidence 1.0)"
-        )
+        checks.details["Article IV"] = "✅ VectorStore completion patterns applied (confidence 1.0)"
 
         # Article V: Spec-driven (acceptance criteria validated)
         # Note: Empty spec criteria is allowed (simple tasks bypass spec-kit)

@@ -311,9 +311,7 @@ async def test_step_3_5_slop_immunity_fail(orchestrator, simple_task_graph):
     from tools.orchestrator.slop_guardian import SlopDetected
 
     orchestrator.slop_guardian = MagicMock()
-    orchestrator.slop_guardian.evaluate = MagicMock(
-        return_value=Err("LLM timeout")
-    )
+    orchestrator.slop_guardian.evaluate = MagicMock(return_value=Err("LLM timeout"))
 
     # Mock enforce_slop_immunity to return error
     with patch(
@@ -461,7 +459,9 @@ async def test_step_6_5_completion_validation_pass(orchestrator, simple_task_gra
 
 
 @pytest.mark.asyncio
-async def test_step_6_5_completion_validation_fail_incomplete_tasks(orchestrator, simple_task_graph):
+async def test_step_6_5_completion_validation_fail_incomplete_tasks(
+    orchestrator, simple_task_graph
+):
     """Test STEP 6.5: Completion validation fails with incomplete tasks."""
     # Setup: Mark one task as failed
     orchestrator.task_results = [
@@ -481,7 +481,9 @@ async def test_step_6_5_completion_validation_fail_incomplete_tasks(orchestrator
 
 
 @pytest.mark.asyncio
-async def test_step_6_5_completion_validation_fail_todowrite_mismatch(orchestrator, simple_task_graph):
+async def test_step_6_5_completion_validation_fail_todowrite_mismatch(
+    orchestrator, simple_task_graph
+):
     """Test STEP 6.5: Completion validation fails with incomplete todos."""
     # Setup: All tasks complete but todos incomplete
     orchestrator.task_results = [
@@ -528,7 +530,12 @@ async def test_execute_full_flow_success(orchestrator, tmp_path):
                 score=4.5,
                 reasons=[],
                 top_fixes=[],
-                dimension_scores={"clarity": 4.5, "measurability": 4.5, "completeness": 4.5, "actionability": 4.5},
+                dimension_scores={
+                    "clarity": 4.5,
+                    "measurability": 4.5,
+                    "completeness": 4.5,
+                    "actionability": 4.5,
+                },
             )
         )
     )
@@ -570,7 +577,11 @@ async def test_execute_fail_on_completion_validation(orchestrator):
     orchestrator._parse_and_generate_graph = AsyncMock(
         return_value=Ok(orchestrator._create_stub_graph())
     )
-    orchestrator._validate_dag_with_trm = AsyncMock(return_value=Ok(ValidationResult(converged=True, confidence=0.95, refinement_steps=0, latency_ms=0.0)))
+    orchestrator._validate_dag_with_trm = AsyncMock(
+        return_value=Ok(
+            ValidationResult(converged=True, confidence=0.95, refinement_steps=0, latency_ms=0.0)
+        )
+    )
     orchestrator._check_slop_immunity = AsyncMock(
         return_value=Ok(SlopVerdict(score=4.5, reasons=[], top_fixes=[], dimension_scores={}))
     )
@@ -631,9 +642,17 @@ async def test_constitutional_article_i_complete_context(orchestrator):
 async def test_constitutional_article_ii_100_verification(orchestrator):
     """Test Article II: 100% verification (completion validator enforces)."""
     # Mock incomplete execution (some tests failed)
-    orchestrator._parse_and_generate_graph = AsyncMock(return_value=Ok(orchestrator._create_stub_graph()))
-    orchestrator._validate_dag_with_trm = AsyncMock(return_value=Ok(ValidationResult(converged=True, confidence=0.95, refinement_steps=0, latency_ms=0.0)))
-    orchestrator._check_slop_immunity = AsyncMock(return_value=Ok(SlopVerdict(score=4.5, reasons=[], top_fixes=[], dimension_scores={})))
+    orchestrator._parse_and_generate_graph = AsyncMock(
+        return_value=Ok(orchestrator._create_stub_graph())
+    )
+    orchestrator._validate_dag_with_trm = AsyncMock(
+        return_value=Ok(
+            ValidationResult(converged=True, confidence=0.95, refinement_steps=0, latency_ms=0.0)
+        )
+    )
+    orchestrator._check_slop_immunity = AsyncMock(
+        return_value=Ok(SlopVerdict(score=4.5, reasons=[], top_fixes=[], dimension_scores={}))
+    )
     orchestrator._check_budget = AsyncMock(return_value=Ok(None))
     orchestrator._execute_dag = AsyncMock(return_value=Ok(None))
     orchestrator._reflect_and_evolve = AsyncMock(return_value=None)
@@ -660,11 +679,19 @@ async def test_constitutional_article_ii_100_verification(orchestrator):
 async def test_constitutional_article_iii_automated_enforcement(orchestrator):
     """Test Article III: Automated enforcement (no manual bypass)."""
     # All 3 quality gates should be enforced
-    orchestrator._parse_and_generate_graph = AsyncMock(return_value=Ok(orchestrator._create_stub_graph()))
+    orchestrator._parse_and_generate_graph = AsyncMock(
+        return_value=Ok(orchestrator._create_stub_graph())
+    )
 
     # Mock all gates to pass
-    orchestrator._validate_dag_with_trm = AsyncMock(return_value=Ok(ValidationResult(converged=True, confidence=0.95, refinement_steps=0, latency_ms=0.0)))
-    orchestrator._check_slop_immunity = AsyncMock(return_value=Ok(SlopVerdict(score=4.5, reasons=[], top_fixes=[], dimension_scores={})))
+    orchestrator._validate_dag_with_trm = AsyncMock(
+        return_value=Ok(
+            ValidationResult(converged=True, confidence=0.95, refinement_steps=0, latency_ms=0.0)
+        )
+    )
+    orchestrator._check_slop_immunity = AsyncMock(
+        return_value=Ok(SlopVerdict(score=4.5, reasons=[], top_fixes=[], dimension_scores={}))
+    )
     orchestrator._check_budget = AsyncMock(return_value=Ok(None))
     orchestrator._execute_dag = AsyncMock(return_value=Ok(None))
     orchestrator._reflect_and_evolve = AsyncMock(return_value=None)
@@ -879,7 +906,10 @@ def test_auto_select_from_backlog_success(orchestrator, tmp_path):
 
     assert result.is_ok()
     intent = result.unwrap()
-    assert "Implement Docker Compose setup for Ollama" in intent or "Fix failing integration tests" in intent
+    assert (
+        "Implement Docker Compose setup for Ollama" in intent
+        or "Fix failing integration tests" in intent
+    )
 
     # Cleanup
     backlog_file.unlink()
@@ -909,7 +939,9 @@ async def test_generate_graph_from_intent(orchestrator):
 
     assert result.is_ok()
     task_graph = result.unwrap()
-    assert "JWT authentication" in task_graph.mission or "Foundation Automation" in task_graph.mission
+    assert (
+        "JWT authentication" in task_graph.mission or "Foundation Automation" in task_graph.mission
+    )
     assert len(task_graph.phases) >= 2  # Should have Phase 0 + Implementation
 
 
@@ -982,11 +1014,15 @@ def test_create_foundation_graph_dependencies(orchestrator):
     graph = orchestrator._create_foundation_graph("Implement feature X")
 
     # Implementation task should depend on git test (Article II: tests before code)
-    impl_task = next(t for t in graph.all_tasks() if "_code" in t.id and t.id != "verify_git_branch")
+    impl_task = next(
+        t for t in graph.all_tasks() if "_code" in t.id and t.id != "verify_git_branch"
+    )
     assert "test_git_branch" in impl_task.dependencies
 
     # Implementation test task should depend on implementation code
-    impl_test_task = next(t for t in graph.all_tasks() if "_test" in t.id and t.id != "test_git_branch")
+    impl_test_task = next(
+        t for t in graph.all_tasks() if "_test" in t.id and t.id != "test_git_branch"
+    )
     assert impl_task.id in impl_test_task.dependencies
 
     # If PR creation exists, should depend on implementation test

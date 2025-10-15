@@ -44,7 +44,9 @@ def test_validates_successful_completion():
     result = validator.validate()
 
     # Assert
-    assert result.is_ok(), f"Expected Ok, got Err: {result.unwrap_err() if result.is_err() else None}"
+    assert result.is_ok(), (
+        f"Expected Ok, got Err: {result.unwrap_err() if result.is_err() else None}"
+    )
     validation = result.unwrap()
     assert validation.all_tasks_completed is True
     assert validation.acceptance_criteria_met is True
@@ -59,12 +61,8 @@ def test_validates_with_backlog_warning():
     """N: Validate with backlog items present (warning only)."""
     # Arrange
     validator = CompletionValidator(
-        task_results=[
-            {"id": "task1", "status": "success", "acceptance_criteria_met": True}
-        ],
-        todos=[
-            {"content": "Task 1", "status": "completed", "activeForm": "Completed Task 1"}
-        ],
+        task_results=[{"id": "task1", "status": "success", "acceptance_criteria_met": True}],
+        todos=[{"content": "Task 1", "status": "completed", "activeForm": "Completed Task 1"}],
         spec_criteria=["Feature implemented"],
         backlog_items=["TODO: Optimize performance"],
     )
@@ -133,12 +131,8 @@ def test_validates_todowrite_mismatch():
     """E: Edge case where TodoWrite doesn't match task results."""
     # Arrange
     validator = CompletionValidator(
-        task_results=[
-            {"id": "task1", "status": "success", "acceptance_criteria_met": True}
-        ],
-        todos=[
-            {"content": "Task 1", "status": "in_progress", "activeForm": "Working Task 1"}
-        ],
+        task_results=[{"id": "task1", "status": "success", "acceptance_criteria_met": True}],
+        todos=[{"content": "Task 1", "status": "in_progress", "activeForm": "Working Task 1"}],
         spec_criteria=["Feature A"],
         backlog_items=[],
     )
@@ -163,9 +157,7 @@ def test_validates_malicious_task_injection():
         task_results=[
             {"id": "'; DROP TABLE tasks; --", "status": "success", "acceptance_criteria_met": True}
         ],
-        todos=[
-            {"content": "Normal task", "status": "completed", "activeForm": "Completed"}
-        ],
+        todos=[{"content": "Normal task", "status": "completed", "activeForm": "Completed"}],
         spec_criteria=["Feature"],
         backlog_items=[],
     )
@@ -184,12 +176,8 @@ def test_validates_spec_criteria_not_met():
     """Sp: Spec - validate acceptance criteria traceability."""
     # Arrange
     validator = CompletionValidator(
-        task_results=[
-            {"id": "task1", "status": "success", "acceptance_criteria_met": False}
-        ],
-        todos=[
-            {"content": "Task 1", "status": "completed", "activeForm": "Completed Task 1"}
-        ],
+        task_results=[{"id": "task1", "status": "success", "acceptance_criteria_met": False}],
+        todos=[{"content": "Task 1", "status": "completed", "activeForm": "Completed Task 1"}],
         spec_criteria=["Feature A: Must validate input", "Feature B: Must handle errors"],
         backlog_items=[],
     )
@@ -208,12 +196,8 @@ def test_validates_missing_spec_criteria():
     """Sp: Spec - validate with empty spec criteria."""
     # Arrange
     validator = CompletionValidator(
-        task_results=[
-            {"id": "task1", "status": "success", "acceptance_criteria_met": True}
-        ],
-        todos=[
-            {"content": "Task 1", "status": "completed", "activeForm": "Completed Task 1"}
-        ],
+        task_results=[{"id": "task1", "status": "success", "acceptance_criteria_met": True}],
+        todos=[{"content": "Task 1", "status": "completed", "activeForm": "Completed Task 1"}],
         spec_criteria=[],
         backlog_items=[],
     )
@@ -235,12 +219,8 @@ def test_validates_with_null_values():
     """R: Resilience - handle None/null values gracefully."""
     # Arrange
     validator = CompletionValidator(
-        task_results=[
-            {"id": "task1", "status": "success", "acceptance_criteria_met": None}
-        ],
-        todos=[
-            {"content": "Task 1", "status": "completed", "activeForm": "Completed Task 1"}
-        ],
+        task_results=[{"id": "task1", "status": "success", "acceptance_criteria_met": None}],
+        todos=[{"content": "Task 1", "status": "completed", "activeForm": "Completed Task 1"}],
         spec_criteria=["Feature"],
         backlog_items=[],
     )
@@ -259,9 +239,7 @@ def test_validates_with_malformed_data():
         task_results=[
             {"id": "task1", "status": "success"}  # Missing acceptance_criteria_met
         ],
-        todos=[
-            {"content": "Task 1", "status": "completed", "activeForm": "Completed Task 1"}
-        ],
+        todos=[{"content": "Task 1", "status": "completed", "activeForm": "Completed Task 1"}],
         spec_criteria=["Feature"],
         backlog_items=[],
     )
@@ -311,12 +289,8 @@ def test_validates_constitutional_articles():
     """Test that all 5 constitutional articles are checked."""
     # Arrange
     validator = CompletionValidator(
-        task_results=[
-            {"id": "task1", "status": "success", "acceptance_criteria_met": True}
-        ],
-        todos=[
-            {"content": "Task 1", "status": "completed", "activeForm": "Completed Task 1"}
-        ],
+        task_results=[{"id": "task1", "status": "success", "acceptance_criteria_met": True}],
+        todos=[{"content": "Task 1", "status": "completed", "activeForm": "Completed Task 1"}],
         spec_criteria=["Feature"],
         backlog_items=[],
     )
@@ -339,12 +313,8 @@ def test_validates_context_efficiency():
     """Test context efficiency validation (Article I)."""
     # Arrange
     validator = CompletionValidator(
-        task_results=[
-            {"id": "task1", "status": "success", "acceptance_criteria_met": True}
-        ],
-        todos=[
-            {"content": "Task 1", "status": "completed", "activeForm": "Completed Task 1"}
-        ],
+        task_results=[{"id": "task1", "status": "success", "acceptance_criteria_met": True}],
+        todos=[{"content": "Task 1", "status": "completed", "activeForm": "Completed Task 1"}],
         spec_criteria=["Feature"],
         backlog_items=[],
         context_usage=0.45,  # 45% usage (below 80% threshold)
@@ -374,11 +344,23 @@ def test_integration_with_primeA_execution():
             {"id": "verify_tests", "status": "success", "acceptance_criteria_met": True},
         ],
         todos=[
-            {"content": "Phase 1: Spec Generation", "status": "completed", "activeForm": "Completed"},
+            {
+                "content": "Phase 1: Spec Generation",
+                "status": "completed",
+                "activeForm": "Completed",
+            },
             {"content": "Phase 2: Test Writing", "status": "completed", "activeForm": "Completed"},
-            {"content": "Phase 3: Implementation", "status": "completed", "activeForm": "Completed"},
+            {
+                "content": "Phase 3: Implementation",
+                "status": "completed",
+                "activeForm": "Completed",
+            },
             {"content": "Phase 4: Verification", "status": "completed", "activeForm": "Completed"},
-            {"content": "Post-execution reflection", "status": "completed", "activeForm": "Completed"},
+            {
+                "content": "Post-execution reflection",
+                "status": "completed",
+                "activeForm": "Completed",
+            },
         ],
         spec_criteria=[
             "All acceptance criteria must be met",

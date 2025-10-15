@@ -322,9 +322,7 @@ class TestTestGateResult:
 
     def test_create_test_gate_result_valid_100_percent(self):
         """Normal: Create result with 100% pass rate."""
-        result = TestGateResult(
-            pass_rate=1.0, total_tests=100, passed_tests=100, failed_tests=[]
-        )
+        result = TestGateResult(pass_rate=1.0, total_tests=100, passed_tests=100, failed_tests=[])
 
         assert result.pass_rate == 1.0
         assert result.total_tests == 100
@@ -1135,6 +1133,4 @@ class TestZeroAnyTypes:
                 field_type_str = str(field_type)
                 # Allow "Any" in contexts like list[dict[str, Any]] but not bare Any
                 if field_type_str == "typing.Any" or field_type_str == "Any":
-                    pytest.fail(
-                        f"Class {cls.__name__} field {field_name} has bare Any type"
-                    )
+                    pytest.fail(f"Class {cls.__name__} field {field_name} has bare Any type")

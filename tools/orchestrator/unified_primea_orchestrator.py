@@ -387,7 +387,9 @@ class UnifiedPrimeAOrchestrator:
             return Err(graph_result.unwrap_err())
 
         task_graph = graph_result.unwrap()
-        self._update_todo("completed", f"Step 2: Graph generated ({len(task_graph.all_tasks())} tasks)")
+        self._update_todo(
+            "completed", f"Step 2: Graph generated ({len(task_graph.all_tasks())} tasks)"
+        )
 
         # ====================================================================
         # PHASE 0: GIT WORKFLOW VALIDATION (Article III: Branch Protection)
@@ -435,7 +437,9 @@ class UnifiedPrimeAOrchestrator:
         if execution_result.is_err():
             return Err(execution_result.unwrap_err())
 
-        self._update_todo("completed", f"Step 5: DAG execution complete ({self.metrics.tasks_completed} tasks)")
+        self._update_todo(
+            "completed", f"Step 5: DAG execution complete ({self.metrics.tasks_completed} tasks)"
+        )
 
         # ====================================================================
         # STEP 6: REFLECTION & EVOLUTION
@@ -453,7 +457,9 @@ class UnifiedPrimeAOrchestrator:
         # ====================================================================
 
         logger.info("STEP 6.5: Validating autonomous completion...")
-        self._update_todo("in_progress", "Step 6.5: Completion validation (BLOCKS report if incomplete)")
+        self._update_todo(
+            "in_progress", "Step 6.5: Completion validation (BLOCKS report if incomplete)"
+        )
 
         completion_result = await self._validate_completion(task_graph)
         if completion_result.is_err():
@@ -596,7 +602,9 @@ class UnifiedPrimeAOrchestrator:
             Result with natural language intent string or ExecutionError
         """
         # Read backlog file
-        backlog_path = Path.home() / ".agency" / "memories" / "agency_backlog" / "test_suite_gaps.md"
+        backlog_path = (
+            Path.home() / ".agency" / "memories" / "agency_backlog" / "test_suite_gaps.md"
+        )
 
         if not backlog_path.exists():
             return Err(
@@ -669,7 +677,9 @@ class UnifiedPrimeAOrchestrator:
         #
         # For now, create a minimal graph that includes Phase 0 git setup and final PR phase
 
-        logger.warning("IMPLEMENTATION NOTE: Planner agent integration requires agency_swarm Task tool")
+        logger.warning(
+            "IMPLEMENTATION NOTE: Planner agent integration requires agency_swarm Task tool"
+        )
         logger.warning("Using template-based graph generation for foundation automation")
 
         # Generate task graph with Phase 0 git setup and final PR creation
@@ -740,8 +750,13 @@ class UnifiedPrimeAOrchestrator:
                             tier=TaskTier.TIER_1,  # Complex by default
                             agent="coder",
                             description=intent,
-                            dependencies=["test_git_branch"],  # Depend on test, not code (Article II)
-                            acceptance_criteria=["Implementation complete", "Code follows constitutional patterns"],
+                            dependencies=[
+                                "test_git_branch"
+                            ],  # Depend on test, not code (Article II)
+                            acceptance_criteria=[
+                                "Implementation complete",
+                                "Code follows constitutional patterns",
+                            ],
                         ),
                         Task(
                             id=f"{task_prefix}_test",
@@ -756,41 +771,45 @@ class UnifiedPrimeAOrchestrator:
                     ],
                 ),
                 # PHASE FINAL: PR Creation (only if enable_pr_creation=True)
-                *([
-                    Phase(
-                        id="phase_final_pr",
-                        title="PR Creation & CI",
-                        tasks=[
-                            Task(
-                                id="create_pull_request",
-                                title="Create PR and trigger CI",
-                                type=TaskType.CODE,
-                                tier=TaskTier.TIER_1,
-                                agent="merger",
-                                description=(
-                                    f"Create GitHub PR for: {intent}. "
-                                    "Trigger CI checks (Article II - 100% verification required)."
+                *(
+                    [
+                        Phase(
+                            id="phase_final_pr",
+                            title="PR Creation & CI",
+                            tasks=[
+                                Task(
+                                    id="create_pull_request",
+                                    title="Create PR and trigger CI",
+                                    type=TaskType.CODE,
+                                    tier=TaskTier.TIER_1,
+                                    agent="merger",
+                                    description=(
+                                        f"Create GitHub PR for: {intent}. "
+                                        "Trigger CI checks (Article II - 100% verification required)."
+                                    ),
+                                    dependencies=[f"{task_prefix}_test"],
+                                    acceptance_criteria=[
+                                        "PR created with comprehensive description",
+                                        "CI workflow triggered",
+                                        "All required checks pending/passing",
+                                    ],
                                 ),
-                                dependencies=[f"{task_prefix}_test"],
-                                acceptance_criteria=[
-                                    "PR created with comprehensive description",
-                                    "CI workflow triggered",
-                                    "All required checks pending/passing",
-                                ],
-                            ),
-                            Task(
-                                id="verify_pull_request",
-                                title="Verify PR creation and CI status",
-                                type=TaskType.TEST,
-                                tier=TaskTier.TIER_2,
-                                agent="test_generator",
-                                description="Verify PR was created successfully and CI checks are running",
-                                dependencies=["create_pull_request"],
-                                verification_target="create_pull_request",
-                            ),
-                        ],
-                    )
-                ] if self.enable_pr_creation else []),
+                                Task(
+                                    id="verify_pull_request",
+                                    title="Verify PR creation and CI status",
+                                    type=TaskType.TEST,
+                                    tier=TaskTier.TIER_2,
+                                    agent="test_generator",
+                                    description="Verify PR was created successfully and CI checks are running",
+                                    dependencies=["create_pull_request"],
+                                    verification_target="create_pull_request",
+                                ),
+                            ],
+                        )
+                    ]
+                    if self.enable_pr_creation
+                    else []
+                ),
             ],
         )
 
@@ -813,7 +832,10 @@ class UnifiedPrimeAOrchestrator:
                             agent="coder",
                             description="Create tools/orchestrator/unified_primea_orchestrator.py",
                             dependencies=[],
-                            acceptance_criteria=["All STEPS implemented", "Constitutional compliance validated"],
+                            acceptance_criteria=[
+                                "All STEPS implemented",
+                                "Constitutional compliance validated",
+                            ],
                         ),
                         Task(
                             id="test_orchestrator",
@@ -943,7 +965,9 @@ class UnifiedPrimeAOrchestrator:
         self.metrics.article_iii_gates_enforced += 1
         self.metrics.trm_dag_validations += 1
 
-        logger.info(f"✅ STEP 3.1: DAG validation passed (TRM confidence {dag_result.unwrap().confidence:.2f})")
+        logger.info(
+            f"✅ STEP 3.1: DAG validation passed (TRM confidence {dag_result.unwrap().confidence:.2f})"
+        )
 
         # ====================================================================
         # STEP 3.5: SLOP IMMUNITY CHECK
@@ -1457,8 +1481,8 @@ class UnifiedPrimeAOrchestrator:
 
 ## Quality Gates
 - **Slop Immunity**: {self.metrics.slop_immunity_score}/5.0 (threshold: 3.5)
-- **Budget Guard**: {'✅ Passed' if self.metrics.budget_guard_passed else '❌ Failed'}
-- **Completion Validation**: {'✅ Passed' if self.metrics.completion_validation_passed else '❌ Failed'}
+- **Budget Guard**: {"✅ Passed" if self.metrics.budget_guard_passed else "❌ Failed"}
+- **Completion Validation**: {"✅ Passed" if self.metrics.completion_validation_passed else "❌ Failed"}
 
 ## TRM-7M Validation Impact
 - DAG Validations: {self.metrics.trm_dag_validations}
@@ -1498,15 +1522,51 @@ class UnifiedPrimeAOrchestrator:
             return
 
         self.todos = [
-            {"content": "Step 0: Initialize TodoWrite", "status": "completed", "activeForm": "Completed TodoWrite initialization"},
-            {"content": "Step 1: Load agent identity", "status": "pending", "activeForm": "Loading agent identity"},
-            {"content": "Step 2: Parse input and generate task graph", "status": "pending", "activeForm": "Parsing input"},
-            {"content": "Step 3: Validate task graph (DAG, Slop, Budget)", "status": "pending", "activeForm": "Validating graph"},
-            {"content": "Step 4: Visualize task graph", "status": "pending", "activeForm": "Visualizing graph"},
-            {"content": "Step 5: Execute DAG (parallel scheduler + TRM gates)", "status": "pending", "activeForm": "Executing DAG"},
-            {"content": "Step 6: Reflection and evolution", "status": "pending", "activeForm": "Extracting patterns"},
-            {"content": "Step 6.5: Completion validation (BLOCKS report if incomplete)", "status": "pending", "activeForm": "Validating completion"},
-            {"content": "Step 7: Generate execution report", "status": "pending", "activeForm": "Generating report"},
+            {
+                "content": "Step 0: Initialize TodoWrite",
+                "status": "completed",
+                "activeForm": "Completed TodoWrite initialization",
+            },
+            {
+                "content": "Step 1: Load agent identity",
+                "status": "pending",
+                "activeForm": "Loading agent identity",
+            },
+            {
+                "content": "Step 2: Parse input and generate task graph",
+                "status": "pending",
+                "activeForm": "Parsing input",
+            },
+            {
+                "content": "Step 3: Validate task graph (DAG, Slop, Budget)",
+                "status": "pending",
+                "activeForm": "Validating graph",
+            },
+            {
+                "content": "Step 4: Visualize task graph",
+                "status": "pending",
+                "activeForm": "Visualizing graph",
+            },
+            {
+                "content": "Step 5: Execute DAG (parallel scheduler + TRM gates)",
+                "status": "pending",
+                "activeForm": "Executing DAG",
+            },
+            {
+                "content": "Step 6: Reflection and evolution",
+                "status": "pending",
+                "activeForm": "Extracting patterns",
+            },
+            {
+                "content": "Step 6.5: Completion validation (BLOCKS report if incomplete)",
+                "status": "pending",
+                "activeForm": "Validating completion",
+            },
+            {
+                "content": "Step 7: Generate execution report",
+                "status": "pending",
+                "activeForm": "Generating report",
+            },
         ]
 
         logger.info("TodoWrite initialized with 9 steps")
@@ -1523,7 +1583,9 @@ class UnifiedPrimeAOrchestrator:
 
         # Find matching todo and update status
         for todo in self.todos:
-            if todo["content"] == description or description.startswith(todo["content"].split(":")[0]):
+            if todo["content"] == description or description.startswith(
+                todo["content"].split(":")[0]
+            ):
                 todo["status"] = status
                 logger.debug(f"TodoWrite updated: {status} - {description}")
                 return
@@ -1702,6 +1764,7 @@ class UnifiedPrimeAOrchestratorWrapper:
         if branch_name == "non-repo":
             # Graceful fallback: Log warning but allow execution
             import logging
+
             logging.warning("Not in a git repository - PR creation will be skipped")
 
         return Ok(None)
@@ -1749,12 +1812,14 @@ class UnifiedPrimeAOrchestratorWrapper:
         # STEP 1: Validate git workflow (Article III)
         git_result = await self._validate_git()
         if git_result.is_err():
-            return Err(ExecutionError(
-                step="step_0_todo_init",
-                reason="Git validation failed",
-                details=git_result.unwrap_err(),
-                suggestions=["Ensure you're in a git repository", "Check git configuration"]
-            ))
+            return Err(
+                ExecutionError(
+                    step="step_0_todo_init",
+                    reason="Git validation failed",
+                    details=git_result.unwrap_err(),
+                    suggestions=["Ensure you're in a git repository", "Check git configuration"],
+                )
+            )
 
         # STEP 2: Load or generate task graph
         if graph is None:
@@ -1773,12 +1838,14 @@ class UnifiedPrimeAOrchestratorWrapper:
                 if result.is_err():
                     # Convert string error to ExecutionError
                     error_str = result.unwrap_err()
-                    return Err(ExecutionError(
-                        step="step_2_parse_input",
-                        reason="Failed to load graph file",
-                        details=error_str,
-                        suggestions=["Check file path exists", "Validate JSON syntax"]
-                    ))
+                    return Err(
+                        ExecutionError(
+                            step="step_2_parse_input",
+                            reason="Failed to load graph file",
+                            details=error_str,
+                            suggestions=["Check file path exists", "Validate JSON syntax"],
+                        )
+                    )
 
                 exec_result = result.unwrap()
 
@@ -1792,12 +1859,17 @@ class UnifiedPrimeAOrchestratorWrapper:
                     graph_json = graph_path.read_text()
                     graph = TaskGraph.model_validate_json(graph_json)
                 except Exception as e:
-                    return Err(ExecutionError(
-                        step="step_2_parse_input",
-                        reason="Failed to load graph file",
-                        details=str(e),
-                        suggestions=["Check graph file format matches TaskGraph schema", "Validate JSON syntax"]
-                    ))
+                    return Err(
+                        ExecutionError(
+                            step="step_2_parse_input",
+                            reason="Failed to load graph file",
+                            details=str(e),
+                            suggestions=[
+                                "Check graph file format matches TaskGraph schema",
+                                "Validate JSON syntax",
+                            ],
+                        )
+                    )
             else:
                 # No graph or graph_file provided
                 # Create minimal dummy graph for testing scenarios where execution is mocked
@@ -1838,12 +1910,14 @@ class UnifiedPrimeAOrchestratorWrapper:
         # STEP 3: Execute DAG
         dag_result = await self._execute_dag(graph)
         if dag_result.is_err():
-            return Err(ExecutionError(
-                step="step_5_execute_dag",
-                reason="DAG execution failed",
-                details=dag_result.unwrap_err(),
-                suggestions=["Check task dependencies", "Review agent logs for errors"]
-            ))
+            return Err(
+                ExecutionError(
+                    step="step_5_execute_dag",
+                    reason="DAG execution failed",
+                    details=dag_result.unwrap_err(),
+                    suggestions=["Check task dependencies", "Review agent logs for errors"],
+                )
+            )
 
         # STEP 4: Create PR if flag enabled
         pr_url = None
@@ -1856,22 +1930,26 @@ class UnifiedPrimeAOrchestratorWrapper:
         # STEP 5: Validate completion
         completion_result = await self._validate_completion(graph)
         if completion_result.is_err():
-            return Err(ExecutionError(
-                step="step_6.5_completion_validation",
-                reason="Completion validation failed",
-                details=completion_result.unwrap_err(),
-                suggestions=["Check all tasks completed", "Review TodoWrite status"]
-            ))
+            return Err(
+                ExecutionError(
+                    step="step_6.5_completion_validation",
+                    reason="Completion validation failed",
+                    details=completion_result.unwrap_err(),
+                    suggestions=["Check all tasks completed", "Review TodoWrite status"],
+                )
+            )
 
         # STEP 6: Generate report
         report_result = await self._generate_report(graph)
         if report_result.is_err():
-            return Err(ExecutionError(
-                step="step_7_report",
-                reason="Report generation failed",
-                details=report_result.unwrap_err(),
-                suggestions=["Check file system permissions", "Review report template"]
-            ))
+            return Err(
+                ExecutionError(
+                    step="step_7_report",
+                    reason="Report generation failed",
+                    details=report_result.unwrap_err(),
+                    suggestions=["Check file system permissions", "Review report template"],
+                )
+            )
 
         report_content = report_result.unwrap()
 
@@ -1922,50 +2000,63 @@ class UnifiedPrimeAOrchestratorWrapper:
 
         # Detect conflicting flags
         if plan_only and (auto_pr or flags.get("auto_pr", False)):
-            return Err(ExecutionError(
-                step="step_2_parse_input",
-                reason="Conflicting flags detected",
-                details="Cannot use --plan-only with --auto-pr (plan-only mode does not execute tasks)",
-                suggestions=[
-                    "Use --plan-only alone to generate plan",
-                    "Use --auto-pr without --plan-only to execute and create PR"
-                ]
-            ))
+            return Err(
+                ExecutionError(
+                    step="step_2_parse_input",
+                    reason="Conflicting flags detected",
+                    details="Cannot use --plan-only with --auto-pr (plan-only mode does not execute tasks)",
+                    suggestions=[
+                        "Use --plan-only alone to generate plan",
+                        "Use --auto-pr without --plan-only to execute and create PR",
+                    ],
+                )
+            )
 
         # If plan_only mode, use plan_only_mode() method
         if plan_only:
             if intent is None:
-                return Err(ExecutionError(
-                    step="step_2_parse_input",
-                    reason="Intent required for plan-only mode",
-                    details="--plan-only requires natural language intent to generate task graph",
-                    suggestions=["Provide intent: /primeA 'Build feature X' --plan-only"]
-                ))
+                return Err(
+                    ExecutionError(
+                        step="step_2_parse_input",
+                        reason="Intent required for plan-only mode",
+                        details="--plan-only requires natural language intent to generate task graph",
+                        suggestions=["Provide intent: /primeA 'Build feature X' --plan-only"],
+                    )
+                )
 
             plan_result = await self.plan_only_mode(intent)
             if plan_result.is_err():
-                return Err(ExecutionError(
-                    step="step_2_parse_input",
-                    reason="Plan generation failed",
-                    details=plan_result.unwrap_err(),
-                    suggestions=["Check intent is clear and specific", "Review planner agent logs"]
-                ))
+                return Err(
+                    ExecutionError(
+                        step="step_2_parse_input",
+                        reason="Plan generation failed",
+                        details=plan_result.unwrap_err(),
+                        suggestions=[
+                            "Check intent is clear and specific",
+                            "Review planner agent logs",
+                        ],
+                    )
+                )
 
             # Return result with plan_only status
             task_graph = plan_result.unwrap()
             from shared.models.orchestrator_models import PrimeAResult
 
-            return Ok(PrimeAResult(
-                mission=task_graph.mission,
-                status="plan_only",
-                pr_url=None,
-                tasks_completed=0,
-                tasks_total=len(task_graph.all_tasks()),
-                report_path=None,
-            ))
+            return Ok(
+                PrimeAResult(
+                    mission=task_graph.mission,
+                    status="plan_only",
+                    pr_url=None,
+                    tasks_completed=0,
+                    tasks_total=len(task_graph.all_tasks()),
+                    report_path=None,
+                )
+            )
 
         # Merge flags with instance settings
-        use_auto_pr = auto_pr if auto_pr is not None else flags.get("auto_pr", self.enable_pr_creation)
+        use_auto_pr = (
+            auto_pr if auto_pr is not None else flags.get("auto_pr", self.enable_pr_creation)
+        )
         enable_todos = flags.get("enable_todos", self.enable_todos)
         visualize = flags.get("visualize", self.visualize)
 
@@ -1982,12 +2073,14 @@ class UnifiedPrimeAOrchestratorWrapper:
 
         if result.is_err():
             # Convert string error to ExecutionError
-            return Err(ExecutionError(
-                step="step_5_execute_dag",
-                reason="Workflow execution failed",
-                details=result.unwrap_err(),
-                suggestions=["Check workflow logs", "Review agent execution results"]
-            ))
+            return Err(
+                ExecutionError(
+                    step="step_5_execute_dag",
+                    reason="Workflow execution failed",
+                    details=result.unwrap_err(),
+                    suggestions=["Check workflow logs", "Review agent execution results"],
+                )
+            )
 
         return result
 
@@ -2124,12 +2217,7 @@ async def execute_primea_workflow(
     start_time = datetime.now()
 
     # 1. Input validation
-    if (
-        intent is None
-        and graph is None
-        and backlog_path is None
-        and graph_file is None
-    ):
+    if intent is None and graph is None and backlog_path is None and graph_file is None:
         return Err("Must provide intent, graph, backlog_path, or graph_file")
 
     # 2. Create default context if not provided
@@ -2225,9 +2313,9 @@ async def execute_primea_workflow(
         # Initial TodoWrite: All phases pending
         phase_todos = [
             {
-                "content": f"Phase {i+1}: {phase.title}",
+                "content": f"Phase {i + 1}: {phase.title}",
                 "status": "pending",
-                "activeForm": f"Executing Phase {i+1}: {phase.title}"
+                "activeForm": f"Executing Phase {i + 1}: {phase.title}",
             }
             for i, phase in enumerate(graph.phases)
         ]

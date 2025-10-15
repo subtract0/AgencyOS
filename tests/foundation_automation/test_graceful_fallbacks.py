@@ -96,9 +96,7 @@ def test_vectorstore_unavailable_logs_warning_continues_execution(
     )
 
     # Act
-    result = handle_vectorstore_unavailable(
-        context=mock_agent_context, operation="search_patterns"
-    )
+    result = handle_vectorstore_unavailable(context=mock_agent_context, operation="search_patterns")
 
     # Assert
     assert result.is_ok(), f"VectorStore fallback should succeed, got: {result}"
@@ -194,6 +192,7 @@ async def test_ollama_health_check_timeout_fallback_to_cloud(
 
     Expected: Result<FallbackResult, FallbackError> with OK(strategy=CLOUD_ROUTING)
     """
+
     # Arrange: Simulate health check timeout
     async def slow_health_check() -> dict[str, Any]:
         await asyncio.sleep(6)  # Exceeds 5s timeout
@@ -289,9 +288,7 @@ Found 1 error.
 """
 
     # Act
-    result = handle_precommit_failure(
-        hook_output=hook_output, repo_path=tmp_path, auto_fix=False
-    )
+    result = handle_precommit_failure(hook_output=hook_output, repo_path=tmp_path, auto_fix=False)
 
     # Assert
     assert result.is_ok(), f"Pre-commit fallback should succeed, got: {result}"
@@ -322,9 +319,7 @@ def test_linting_errors_auto_fix_with_ruff_retry_commit(tmp_path: Path) -> None:
     hook_output = "tests/test_example.py:1:1: F401 [*] `os` imported but unused"
 
     # Act
-    result = handle_precommit_failure(
-        hook_output=hook_output, repo_path=tmp_path, auto_fix=True
-    )
+    result = handle_precommit_failure(hook_output=hook_output, repo_path=tmp_path, auto_fix=True)
 
     # Assert
     assert result.is_ok(), f"Linting auto-fix fallback should succeed, got: {result}"
@@ -366,9 +361,7 @@ async def test_multiple_fallbacks_simultaneously_no_race_conditions(
 
     # Act: Run both fallbacks in parallel
     results = await asyncio.gather(
-        asyncio.to_thread(
-            handle_vectorstore_unavailable, mock_agent_context, "search_patterns"
-        ),
+        asyncio.to_thread(handle_vectorstore_unavailable, mock_agent_context, "search_patterns"),
         handle_local_model_unavailable(mock_agent_context, failing_health_check),
         return_exceptions=True,
     )
@@ -397,6 +390,7 @@ async def test_retry_exhaustion_after_max_attempts(mock_agent_context: AgentCont
 
     Expected: Result<FallbackResult, FallbackError> with Err(RETRY_EXHAUSTED)
     """
+
     # Arrange: Simulate permanent GitHub API failure
     async def permanent_failure() -> dict[str, Any]:
         raise Exception("HTTP 429: API rate limit exceeded")
@@ -434,14 +428,10 @@ def test_vectorstore_partial_failure_query_succeeds_store_fails(
     """
     # Arrange: Query succeeds, store fails
     mock_agent_context.search_memories = Mock(return_value=[{"pattern": "TDD"}])
-    mock_agent_context.store_memory = Mock(
-        side_effect=ConnectionError("Write operation failed")
-    )
+    mock_agent_context.store_memory = Mock(side_effect=ConnectionError("Write operation failed"))
 
     # Act
-    result = handle_vectorstore_unavailable(
-        context=mock_agent_context, operation="store_pattern"
-    )
+    result = handle_vectorstore_unavailable(context=mock_agent_context, operation="store_pattern")
 
     # Assert
     assert result.is_ok(), f"Partial VectorStore failure should fallback, got: {result}"
@@ -467,6 +457,7 @@ async def test_local_model_latency_spike_fallback_after_5s(
 
     Expected: Result<FallbackResult, FallbackError> with OK(strategy=CLOUD_ROUTING)
     """
+
     # Arrange: Simulate slow health check
     async def slow_health_check() -> dict[str, Any]:
         await asyncio.sleep(6)
@@ -484,7 +475,10 @@ async def test_local_model_latency_spike_fallback_after_5s(
     fallback_result = result.unwrap()
 
     assert fallback_result.strategy == FallbackStrategy.CLOUD_ROUTING
-    assert "latency" in fallback_result.warning_message.lower() or "timeout" in fallback_result.warning_message.lower()
+    assert (
+        "latency" in fallback_result.warning_message.lower()
+        or "timeout" in fallback_result.warning_message.lower()
+    )
 
 
 # ============================================================================
@@ -503,6 +497,7 @@ def test_vectorstore_timeout_limit_10_seconds(mock_agent_context: AgentContext) 
 
     Expected: Fallback activated after 10s timeout
     """
+
     # Arrange: Simulate timeout error
     def timeout_query(*args: Any, **kwargs: Any) -> list[dict[str, Any]]:
         raise TimeoutError("VectorStore query exceeded 10s timeout")
@@ -594,8 +589,9 @@ async def test_exponential_backoff_timing_validation() -> None:
 
     for i, expected in enumerate(expected_timings):
         actual = retry_times[i]
-        assert abs(actual - expected) < tolerance, \
-            f"Retry {i+1} timing: expected ~{expected}s, got {actual:.2f}s"
+        assert abs(actual - expected) < tolerance, (
+            f"Retry {i + 1} timing: expected ~{expected}s, got {actual:.2f}s"
+        )
 
 
 # ============================================================================
@@ -661,9 +657,7 @@ def test_permanent_vectorstore_failure_no_retry_immediate_fallback(
     )
 
     # Act
-    result = handle_vectorstore_unavailable(
-        context=mock_agent_context, operation="search_patterns"
-    )
+    result = handle_vectorstore_unavailable(context=mock_agent_context, operation="search_patterns")
 
     # Assert
     assert result.is_ok(), "Permanent failure should fallback immediately"
@@ -689,6 +683,7 @@ async def test_invalid_api_key_permanent_failure_no_retry(
 
     Expected: Result<FallbackResult, FallbackError> with Err(PERMANENT_FAILURE)
     """
+
     # Arrange: Simulate invalid API key
     async def invalid_api_key() -> dict[str, Any]:
         raise Exception("HTTP 401: Unauthorized")
@@ -735,9 +730,7 @@ def test_vectorstore_fallback_does_not_bypass_article_two_verification(
     )
 
     # Act
-    result = handle_vectorstore_unavailable(
-        context=mock_agent_context, operation="search_patterns"
-    )
+    result = handle_vectorstore_unavailable(context=mock_agent_context, operation="search_patterns")
 
     # Assert
     assert result.is_ok(), "Fallback should succeed"
@@ -764,6 +757,7 @@ async def test_local_model_fallback_does_not_bypass_article_three_budget_guard(
 
     Expected: Fallback triggers budget validation before execution
     """
+
     # Arrange: Local model unavailable
     async def failing_health_check() -> dict[str, Any]:
         raise ConnectionError("Ollama unreachable")
@@ -803,9 +797,7 @@ def test_precommit_auto_fix_does_not_skip_test_verification(tmp_path: Path) -> N
     hook_output = "tests/test_example.py:1:1: F401 [*] `os` imported but unused"
 
     # Act
-    result = handle_precommit_failure(
-        hook_output=hook_output, repo_path=tmp_path, auto_fix=True
-    )
+    result = handle_precommit_failure(hook_output=hook_output, repo_path=tmp_path, auto_fix=True)
 
     # Assert
     assert result.is_ok(), "Auto-fix should succeed"
@@ -843,9 +835,7 @@ def test_vectorstore_fallback_latency_under_100ms(
 
     # Act
     start_time = time.time()
-    result = handle_vectorstore_unavailable(
-        context=mock_agent_context, operation="search_patterns"
-    )
+    result = handle_vectorstore_unavailable(context=mock_agent_context, operation="search_patterns")
     elapsed_time = (time.time() - start_time) * 1000  # Convert to ms
 
     # Assert
@@ -868,6 +858,7 @@ async def test_local_model_health_check_abort_latency_under_100ms(
 
     Expected: Timeout detection + fallback <100ms overhead
     """
+
     # Arrange: Health check that will timeout
     async def slow_health_check() -> dict[str, Any]:
         await asyncio.sleep(10)
@@ -921,9 +912,7 @@ async def test_parallel_fallback_checks_no_deadlocks(
 
     # Act: Run all fallbacks in parallel
     results = await asyncio.gather(
-        asyncio.to_thread(
-            handle_vectorstore_unavailable, mock_agent_context, "search_patterns"
-        ),
+        asyncio.to_thread(handle_vectorstore_unavailable, mock_agent_context, "search_patterns"),
         handle_local_model_unavailable(mock_agent_context, failing_health_check),
         handle_github_rate_limit(mock_agent_context, failing_github_api, max_retries=1),
         return_exceptions=True,
@@ -991,8 +980,9 @@ async def test_exponential_backoff_timing_2s_4s_8s_16s_32s() -> None:
 
     for i, expected in enumerate(expected_delays):
         actual = retry_delays[i]
-        assert abs(actual - expected) < tolerance, \
-            f"Retry {i+1} delay: expected {expected}s, got {actual:.2f}s"
+        assert abs(actual - expected) < tolerance, (
+            f"Retry {i + 1} delay: expected {expected}s, got {actual:.2f}s"
+        )
 
 
 @pytest.mark.asyncio

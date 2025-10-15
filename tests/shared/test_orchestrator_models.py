@@ -423,7 +423,8 @@ def test_fallback_result_requires_all_mandatory_fields() -> None:
     # Invalid: missing success
     with pytest.raises(ValidationError):
         FallbackResult(
-            strategy=FallbackStrategy.SESSION_ONLY, warning_message="Test"  # type: ignore
+            strategy=FallbackStrategy.SESSION_ONLY,
+            warning_message="Test",  # type: ignore
         )
 
     # Invalid: missing warning_message
@@ -503,9 +504,7 @@ def test_fallback_result_constitutional_bypass_always_false() -> None:
         result = FallbackResult(
             strategy=strategy, success=True, warning_message=f"Testing {strategy.value}"
         )
-        assert (
-            result.constitutional_bypass is False
-        ), f"Strategy {strategy.value} allows bypass!"
+        assert result.constitutional_bypass is False, f"Strategy {strategy.value} allows bypass!"
 
 
 def test_fallback_result_test_verification_required_always_true() -> None:
@@ -525,9 +524,7 @@ def test_fallback_result_test_verification_required_always_true() -> None:
         warning_message="Local model unavailable",
     )
 
-    assert (
-        result.test_verification_required is True
-    ), "Test verification must never be skipped!"
+    assert result.test_verification_required is True, "Test verification must never be skipped!"
 
 
 def test_fallback_result_budget_guard_active_always_true() -> None:

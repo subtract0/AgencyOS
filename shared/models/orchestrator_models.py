@@ -62,9 +62,7 @@ class FallbackResult(BaseModel):
 
     model_config = ConfigDict(extra="forbid")
 
-    strategy: FallbackStrategy = Field(
-        ..., description="Fallback strategy that was applied"
-    )
+    strategy: FallbackStrategy = Field(..., description="Fallback strategy that was applied")
     success: bool = Field(..., description="True if fallback succeeded")
     warning_message: str = Field(
         ..., description="User-facing warning message describing the fallback"
@@ -72,9 +70,7 @@ class FallbackResult(BaseModel):
     suggested_fix: str | None = Field(
         None, description="Optional suggestion for resolving the underlying issue"
     )
-    execution_continues: bool = Field(
-        True, description="True if execution can continue safely"
-    )
+    execution_continues: bool = Field(True, description="True if execution can continue safely")
     retry_count: int = Field(0, ge=0, description="Number of retries performed")
     latency_ms: float | None = Field(
         None, ge=0.0, description="Fallback execution latency in milliseconds"
@@ -122,9 +118,7 @@ class RetryPolicy(BaseModel):
     base_delay_seconds: float = Field(
         2.0, gt=0.0, description="Base delay in seconds before first retry"
     )
-    backoff_multiplier: float = Field(
-        2.0, ge=1.0, description="Multiplier for exponential backoff"
-    )
+    backoff_multiplier: float = Field(2.0, ge=1.0, description="Multiplier for exponential backoff")
     abort_on_errors: list[str] = Field(
         default_factory=lambda: ["401", "403"],
         description="HTTP status codes or error types that abort immediately (permanent failures)",
@@ -274,9 +268,7 @@ class TestGateResult(BaseModel):
     total_tests: int = Field(..., ge=0)
     passed_tests: int = Field(..., ge=0)
     failed_tests: list[str] = Field(default_factory=list)
-    simulation_detected: bool = Field(
-        False, description="True if mocked tests detected"
-    )
+    simulation_detected: bool = Field(False, description="True if mocked tests detected")
 
 
 class BypassAttempt(BaseModel):
@@ -316,12 +308,8 @@ class BypassAttempt(BaseModel):
 
     model_config = ConfigDict(extra="forbid")
 
-    flag: str = Field(
-        ..., description="Flag that triggered bypass attempt (--force, etc)"
-    )
-    source: str = Field(
-        ..., description="Source of bypass (cli, env_var, config)"
-    )
+    flag: str = Field(..., description="Flag that triggered bypass attempt (--force, etc)")
+    source: str = Field(..., description="Source of bypass (cli, env_var, config)")
     timestamp: datetime
     rejected: bool = Field(True, description="Whether bypass was rejected")
     article: str = Field("Article III", description="Constitutional article violated")
@@ -400,14 +388,10 @@ class SpecTrace(BaseModel):
 
     model_config = ConfigDict(extra="forbid")
 
-    spec_id: str = Field(
-        ..., pattern=r"SPEC-\d{3}", description="Spec ID format: SPEC-XXX"
-    )
+    spec_id: str = Field(..., pattern=r"SPEC-\d{3}", description="Spec ID format: SPEC-XXX")
     acceptance_criteria: list[str] = Field(..., min_length=1)
     matched: bool
-    coverage: float = Field(
-        ..., ge=0.0, le=1.0, description="Percentage of criteria covered"
-    )
+    coverage: float = Field(..., ge=0.0, le=1.0, description="Percentage of criteria covered")
 
 
 # ============================================================================
@@ -519,9 +503,7 @@ class PrimeAResult(BaseModel):
     execution_time_seconds: float = Field(
         ..., ge=0.0, description="Total execution time in seconds"
     )
-    visualization: str | None = Field(
-        None, description="Mermaid graph visualization for PR/docs"
-    )
+    visualization: str | None = Field(None, description="Mermaid graph visualization for PR/docs")
     report_path: str | None = Field(None, description="Path to execution report file")
     selected_from_backlog: bool = Field(
         False,
@@ -790,9 +772,7 @@ class GitValidationResult(BaseModel):
 
     is_safe: bool = Field(..., description="True if branch is safe for execution")
     branch_name: str = Field(..., min_length=1, description="Current git branch name")
-    pattern_match: str | None = Field(
-        None, description="Pattern that matched (e.g., 'feat/*')"
-    )
+    pattern_match: str | None = Field(None, description="Pattern that matched (e.g., 'feat/*')")
     error_message: str | None = Field(
         None, description="Error details if validation failed (None if safe)"
     )
@@ -913,7 +893,6 @@ class GitValidationError(Exception):
             f"branch_name={self.branch_name!r}, "
             f"recovery_hint={self.recovery_hint!r})"
         )
-
 
 
 __all__ = [

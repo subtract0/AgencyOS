@@ -58,9 +58,7 @@ from tools.orchestrator.backlog_selector import (
 # ============================================================================
 
 
-def test_read_backlog_queue_normal(
-    tmp_path: Path, sample_backlog_content: str
-) -> None:
+def test_read_backlog_queue_normal(tmp_path: Path, sample_backlog_content: str) -> None:
     """
     BACKLOG-001 NECESSARY Normal: Read backlog file correctly.
 
@@ -82,7 +80,9 @@ def test_read_backlog_queue_normal(
     result = read_backlog_queue(str(backlog_file))
 
     # Assert
-    assert result.is_ok(), f"Expected Ok, got Err: {result.unwrap_err() if result.is_err() else None}"
+    assert result.is_ok(), (
+        f"Expected Ok, got Err: {result.unwrap_err() if result.is_err() else None}"
+    )
 
     queue = result.unwrap()
     assert len(queue.tasks) == 5, f"Expected 5 tasks, got {len(queue.tasks)}"
@@ -94,9 +94,7 @@ def test_read_backlog_queue_normal(
     assert "authentication middleware" in first_task.description.lower()
 
 
-def test_select_next_task_normal(
-    tmp_path: Path, sample_backlog_content: str
-) -> None:
+def test_select_next_task_normal(tmp_path: Path, sample_backlog_content: str) -> None:
     """
     BACKLOG-002 NECESSARY Normal: Select highest priority Ready task.
 
@@ -117,7 +115,9 @@ def test_select_next_task_normal(
     result = select_next_task(str(backlog_file))
 
     # Assert
-    assert result.is_ok(), f"Expected Ok, got Err: {result.unwrap_err() if result.is_err() else None}"
+    assert result.is_ok(), (
+        f"Expected Ok, got Err: {result.unwrap_err() if result.is_err() else None}"
+    )
 
     task = result.unwrap()
     assert task.priority == 1, f"Expected priority 1, got {task.priority}"
@@ -151,7 +151,9 @@ def test_lock_task_normal(tmp_path: Path, sample_backlog_content: str) -> None:
     lock_result = lock_task(str(backlog_file), task.priority, agent_id="test_agent")
 
     # Assert
-    assert lock_result.is_ok(), f"Expected Ok, got Err: {lock_result.unwrap_err() if lock_result.is_err() else None}"
+    assert lock_result.is_ok(), (
+        f"Expected Ok, got Err: {lock_result.unwrap_err() if lock_result.is_err() else None}"
+    )
 
     locked_task = lock_result.unwrap()
     assert locked_task.status == TaskStatus.LOCKED
@@ -192,7 +194,9 @@ def test_unlock_task_normal(tmp_path: Path, sample_backlog_content: str) -> None
     unlock_result = unlock_task(str(backlog_file), task.priority)
 
     # Assert
-    assert unlock_result.is_ok(), f"Expected Ok, got Err: {unlock_result.unwrap_err() if unlock_result.is_err() else None}"
+    assert unlock_result.is_ok(), (
+        f"Expected Ok, got Err: {unlock_result.unwrap_err() if unlock_result.is_err() else None}"
+    )
 
     unlocked_task = unlock_result.unwrap()
     assert unlocked_task.status == TaskStatus.READY
@@ -230,7 +234,9 @@ def test_read_backlog_queue_empty(tmp_path: Path) -> None:
     result = read_backlog_queue(str(backlog_file))
 
     # Assert
-    assert result.is_ok(), f"Expected Ok, got Err: {result.unwrap_err() if result.is_err() else None}"
+    assert result.is_ok(), (
+        f"Expected Ok, got Err: {result.unwrap_err() if result.is_err() else None}"
+    )
     queue = result.unwrap()
     assert len(queue.tasks) == 0, f"Expected 0 tasks, got {len(queue.tasks)}"
 
@@ -256,7 +262,9 @@ def test_select_next_task_empty_backlog(tmp_path: Path) -> None:
     result = select_next_task(str(backlog_file))
 
     # Assert
-    assert result.is_ok(), f"Expected Ok, got Err: {result.unwrap_err() if result.is_err() else None}"
+    assert result.is_ok(), (
+        f"Expected Ok, got Err: {result.unwrap_err() if result.is_err() else None}"
+    )
     task = result.unwrap()
     assert task is None, f"Expected None, got {task}"
 
@@ -276,9 +284,7 @@ def test_select_next_task_single_ready_task(tmp_path: Path) -> None:
     backlog_dir = tmp_path / ".agency" / "memories" / "agency_backlog"
     backlog_dir.mkdir(parents=True, exist_ok=True)
     backlog_file = backlog_dir / "test_suite_gaps.md"
-    backlog_file.write_text(
-        "# Backlog\n\n- [ ] Priority 1: Single task (Status: Ready)\n"
-    )
+    backlog_file.write_text("# Backlog\n\n- [ ] Priority 1: Single task (Status: Ready)\n")
 
     # Act
     result = select_next_task(str(backlog_file))
@@ -414,7 +420,9 @@ def test_read_backlog_queue_malformed_markdown(tmp_path: Path) -> None:
         result = read_backlog_queue(str(backlog_file))
 
     # Assert
-    assert result.is_ok(), f"Expected Ok (partial parse), got Err: {result.unwrap_err() if result.is_err() else None}"
+    assert result.is_ok(), (
+        f"Expected Ok (partial parse), got Err: {result.unwrap_err() if result.is_err() else None}"
+    )
 
     queue = result.unwrap()
     assert len(queue.tasks) == 1, f"Expected 1 valid task, got {len(queue.tasks)}"
@@ -785,7 +793,9 @@ def test_read_backlog_queue_file_read_timeout_retry(tmp_path: Path) -> None:
         result = read_backlog_queue(str(backlog_file))
 
     # Assert
-    assert result.is_ok(), f"Expected Ok after retry, got Err: {result.unwrap_err() if result.is_err() else None}"
+    assert result.is_ok(), (
+        f"Expected Ok after retry, got Err: {result.unwrap_err() if result.is_err() else None}"
+    )
     assert call_count == 2, f"Expected 2 attempts (retry), got {call_count}"
 
 
@@ -794,7 +804,9 @@ def test_read_backlog_queue_file_read_timeout_retry(tmp_path: Path) -> None:
 # ============================================================================
 
 
-@pytest.mark.skip(reason="VectorStore integration not implemented in Phase 2 - reserved for future enhancement")
+@pytest.mark.skip(
+    reason="VectorStore integration not implemented in Phase 2 - reserved for future enhancement"
+)
 def test_select_next_task_stores_pattern_in_vectorstore(
     tmp_path: Path, sample_backlog_content: str, mock_agent_context: AgentContext
 ) -> None:

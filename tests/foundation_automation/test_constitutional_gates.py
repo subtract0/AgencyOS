@@ -102,10 +102,12 @@ def test_article_i_timeout_triggers_2x_retry(mock_agent_context: AgentContext) -
     Expected: Result<dict, ConstitutionalValidationError> with retry metadata
     """
     # Arrange: Mock operation that times out once, then succeeds
-    mock_operation = Mock(side_effect=[
-        {"status": "timeout", "timeout": 120},  # First attempt times out
-        {"status": "success", "timeout": 240},  # Second attempt succeeds
-    ])
+    mock_operation = Mock(
+        side_effect=[
+            {"status": "timeout", "timeout": 120},  # First attempt times out
+            {"status": "success", "timeout": 240},  # Second attempt succeeds
+        ]
+    )
 
     # Act
     result = enforce_article_i_retry_protocol(
@@ -138,11 +140,13 @@ def test_article_i_second_timeout_triggers_3x_retry(mock_agent_context: AgentCon
     Expected: Result<dict, ConstitutionalValidationError> with retry metadata
     """
     # Arrange: Mock operation that times out twice, then succeeds
-    mock_operation = Mock(side_effect=[
-        {"status": "timeout", "timeout": 120},  # First attempt times out
-        {"status": "timeout", "timeout": 240},  # Second attempt times out (2x)
-        {"status": "success", "timeout": 360},  # Third attempt succeeds (3x)
-    ])
+    mock_operation = Mock(
+        side_effect=[
+            {"status": "timeout", "timeout": 120},  # First attempt times out
+            {"status": "timeout", "timeout": 240},  # Second attempt times out (2x)
+            {"status": "success", "timeout": 360},  # Third attempt succeeds (3x)
+        ]
+    )
 
     # Act
     result = enforce_article_i_retry_protocol(
@@ -175,12 +179,14 @@ def test_article_i_third_timeout_triggers_10x_retry_final(mock_agent_context: Ag
     Expected: Result<dict, ConstitutionalValidationError> with max retry count
     """
     # Arrange: Mock operation that times out three times, then succeeds on 10x retry
-    mock_operation = Mock(side_effect=[
-        {"status": "timeout", "timeout": 120},   # First attempt times out
-        {"status": "timeout", "timeout": 240},   # Second attempt times out (2x)
-        {"status": "timeout", "timeout": 360},   # Third attempt times out (3x)
-        {"status": "success", "timeout": 1200},  # Fourth attempt succeeds (10x)
-    ])
+    mock_operation = Mock(
+        side_effect=[
+            {"status": "timeout", "timeout": 120},  # First attempt times out
+            {"status": "timeout", "timeout": 240},  # Second attempt times out (2x)
+            {"status": "timeout", "timeout": 360},  # Third attempt times out (3x)
+            {"status": "success", "timeout": 1200},  # Fourth attempt succeeds (10x)
+        ]
+    )
 
     # Act
     result = enforce_article_i_retry_protocol(
@@ -214,12 +220,14 @@ def test_article_i_10x_timeout_raises_execution_error(mock_agent_context: AgentC
     Expected: Result<dict, ConstitutionalValidationError> with Err
     """
     # Arrange: Mock operation that times out on ALL attempts
-    mock_operation = Mock(side_effect=[
-        {"status": "timeout", "timeout": 120},   # First attempt times out
-        {"status": "timeout", "timeout": 240},   # Second attempt times out (2x)
-        {"status": "timeout", "timeout": 360},   # Third attempt times out (3x)
-        {"status": "timeout", "timeout": 1200},  # Fourth attempt times out (10x)
-    ])
+    mock_operation = Mock(
+        side_effect=[
+            {"status": "timeout", "timeout": 120},  # First attempt times out
+            {"status": "timeout", "timeout": 240},  # Second attempt times out (2x)
+            {"status": "timeout", "timeout": 360},  # Third attempt times out (3x)
+            {"status": "timeout", "timeout": 1200},  # Fourth attempt times out (10x)
+        ]
+    )
 
     # Act
     result = enforce_article_i_retry_protocol(
@@ -251,11 +259,13 @@ def test_article_i_incomplete_data_triggers_retry(mock_agent_context: AgentConte
     Expected: Result<dict, ConstitutionalValidationError> with OK
     """
     # Arrange: Mock operation that returns incomplete data twice, then complete
-    mock_operation = Mock(side_effect=[
-        {"status": "incomplete", "data": {"partial": True}},  # First: incomplete
-        {"status": "incomplete", "data": {"partial": True}},  # Second: incomplete
-        {"status": "success", "data": {"complete": True}},    # Third: complete
-    ])
+    mock_operation = Mock(
+        side_effect=[
+            {"status": "incomplete", "data": {"partial": True}},  # First: incomplete
+            {"status": "incomplete", "data": {"partial": True}},  # Second: incomplete
+            {"status": "success", "data": {"complete": True}},  # Third: complete
+        ]
+    )
 
     # Act
     result = enforce_article_i_retry_protocol(
@@ -289,15 +299,17 @@ def test_article_i_test_failures_halt_immediately(mock_agent_context: AgentConte
     Expected: Result<dict, ConstitutionalValidationError> with Err
     """
     # Arrange: Mock operation that returns test failures
-    mock_operation = Mock(return_value={
-        "status": "failed",
-        "tests_passed": 98,
-        "tests_failed": 2,
-        "failures": [
-            {"test": "test_auth_middleware", "error": "AssertionError: Expected 200, got 401"},
-            {"test": "test_jwt_validation", "error": "AssertionError: Token expired"},
-        ],
-    })
+    mock_operation = Mock(
+        return_value={
+            "status": "failed",
+            "tests_passed": 98,
+            "tests_failed": 2,
+            "failures": [
+                {"test": "test_auth_middleware", "error": "AssertionError: Expected 200, got 401"},
+                {"test": "test_jwt_validation", "error": "AssertionError: Token expired"},
+            ],
+        }
+    )
 
     # Act
     result = enforce_article_i_retry_protocol(
@@ -499,7 +511,12 @@ def test_article_ii_no_simulation_in_production_detected(simple_task_graph: Task
         "violations": [
             {"file": "auth.py", "line": 45, "type": "mock", "code": "return Mock(status=200)"},
             {"file": "api.py", "line": 89, "type": "hardcoded", "code": 'return {"status": "ok"}'},
-            {"file": "middleware.py", "line": 123, "type": "print_statement", "code": "print('Processing...')"},
+            {
+                "file": "middleware.py",
+                "line": 123,
+                "type": "print_statement",
+                "code": "print('Processing...')",
+            },
         ],
     }
 
@@ -572,11 +589,14 @@ def test_article_iii_no_env_var_overrides_for_quality_gates(simple_task_graph: T
     Expected: Result<dict, ConstitutionalValidationError> with Err
     """
     # Arrange: Environment variables attempting to bypass quality gates
-    with patch.dict(os.environ, {
-        "SKIP_TESTS": "true",
-        "ALLOW_FAILING_TESTS": "true",
-        "TEST_THRESHOLD": "0.9",
-    }):
+    with patch.dict(
+        os.environ,
+        {
+            "SKIP_TESTS": "true",
+            "ALLOW_FAILING_TESTS": "true",
+            "TEST_THRESHOLD": "0.9",
+        },
+    ):
         # Act
         result = enforce_article_iii_no_bypass(
             execution_context={"flags": []},
@@ -689,11 +709,13 @@ async def test_article_iv_vectorstore_queried_before_task_execution(
     Expected: Result<dict, ConstitutionalValidationError> with learnings applied
     """
     # Arrange: Mock VectorStore with learnings
-    mock_agent_context.search_memories = AsyncMock(return_value=[
-        {"pattern": "TDD workflow", "confidence": 0.85, "content": "Write tests first"},
-        {"pattern": "Result pattern", "confidence": 0.88, "content": "Use Result<T,E>"},
-        {"pattern": "Low confidence", "confidence": 0.3, "content": "Should be ignored"},
-    ])
+    mock_agent_context.search_memories = AsyncMock(
+        return_value=[
+            {"pattern": "TDD workflow", "confidence": 0.85, "content": "Write tests first"},
+            {"pattern": "Result pattern", "confidence": 0.88, "content": "Use Result<T,E>"},
+            {"pattern": "Low confidence", "confidence": 0.3, "content": "Should be ignored"},
+        ]
+    )
 
     # Act
     result = await enforce_article_iv_learning(
@@ -810,12 +832,14 @@ async def test_article_iv_minimum_confidence_threshold_enforced(
     Expected: Result<dict, ConstitutionalValidationError> with filtered learnings
     """
     # Arrange: Mock VectorStore with mixed confidence learnings
-    mock_agent_context.search_memories = AsyncMock(return_value=[
-        {"pattern": "High confidence", "confidence": 0.85, "content": "Apply this"},
-        {"pattern": "Medium confidence", "confidence": 0.6, "content": "Apply this (boundary)"},
-        {"pattern": "Low confidence", "confidence": 0.59, "content": "Ignore this"},
-        {"pattern": "Very low confidence", "confidence": 0.2, "content": "Ignore this"},
-    ])
+    mock_agent_context.search_memories = AsyncMock(
+        return_value=[
+            {"pattern": "High confidence", "confidence": 0.85, "content": "Apply this"},
+            {"pattern": "Medium confidence", "confidence": 0.6, "content": "Apply this (boundary)"},
+            {"pattern": "Low confidence", "confidence": 0.59, "content": "Ignore this"},
+            {"pattern": "Very low confidence", "confidence": 0.2, "content": "Ignore this"},
+        ]
+    )
 
     # Act
     result = await enforce_article_iv_learning(
@@ -900,7 +924,9 @@ def test_article_v_missing_spec_id_raises_validation_error(simple_task_graph: Ta
     assert error.phase_id == "phase_2"
 
 
-def test_article_v_acceptance_criteria_match_spec_requirements(simple_task_graph: TaskGraph) -> None:
+def test_article_v_acceptance_criteria_match_spec_requirements(
+    simple_task_graph: TaskGraph,
+) -> None:
     """
     CONST-012 NECESSARY Normal: Acceptance criteria match spec requirements.
 
@@ -939,7 +965,9 @@ def test_article_v_acceptance_criteria_match_spec_requirements(simple_task_graph
     assert result_value["spec_coverage"] >= 0.33  # At least 1/3 criteria covered
 
 
-def test_article_v_task_graph_missing_spec_criteria_raises_error(simple_task_graph: TaskGraph) -> None:
+def test_article_v_task_graph_missing_spec_criteria_raises_error(
+    simple_task_graph: TaskGraph,
+) -> None:
     """
     CONST-012 NECESSARY Error: Task graph doesn't trace to spec criteria.
 
@@ -1078,13 +1106,15 @@ async def test_constitutional_gates_performance_under_3_seconds(
     )
 
     # All articles should pass
-    assert all([
-        article_i_result.is_ok(),
-        article_ii_result.is_ok(),
-        article_iii_result.is_ok(),
-        article_iv_result.is_ok(),
-        article_v_result.is_ok(),
-    ]), "All constitutional articles should pass"
+    assert all(
+        [
+            article_i_result.is_ok(),
+            article_ii_result.is_ok(),
+            article_iii_result.is_ok(),
+            article_iv_result.is_ok(),
+            article_v_result.is_ok(),
+        ]
+    ), "All constitutional articles should pass"
 
 
 # ============================================================================

@@ -513,8 +513,8 @@ class ScanDocumentation:
 
                 # Check if article is explicitly referenced
                 article_referenced = (
-                    article.value.lower() in content or
-                    f"article {article.value.split()[-1]}" in content  # e.g., "article i"
+                    article.value.lower() in content
+                    or f"article {article.value.split()[-1]}" in content  # e.g., "article i"
                 )
 
                 # If file has significant keyword matches but no article reference
@@ -539,9 +539,7 @@ class ScanDocumentation:
             )
         )
 
-    def _generate_summary(
-        self, results: list[ScanResult], total_issues: int, passed: bool
-    ) -> str:
+    def _generate_summary(self, results: list[ScanResult], total_issues: int, passed: bool) -> str:
         """
         Generate human-readable summary of scan results.
 
@@ -651,9 +649,7 @@ def main() -> int:
     """
     import argparse
 
-    parser = argparse.ArgumentParser(
-        description="Scan Agency OS documentation for quality issues"
-    )
+    parser = argparse.ArgumentParser(description="Scan Agency OS documentation for quality issues")
 
     parser.add_argument(
         "--missing-claude",

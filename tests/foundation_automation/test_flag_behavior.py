@@ -72,10 +72,14 @@ def tmp_git_repo(tmp_path):
     # Create initial commit (required for branch to be valid)
     (tmp_path / "README.md").write_text("# Test Repository")
     subprocess.run(["git", "add", "README.md"], cwd=tmp_path, check=True, capture_output=True)
-    subprocess.run(["git", "commit", "-m", "Initial commit"], cwd=tmp_path, check=True, capture_output=True)
+    subprocess.run(
+        ["git", "commit", "-m", "Initial commit"], cwd=tmp_path, check=True, capture_output=True
+    )
 
     # Create feature branch
-    subprocess.run(["git", "checkout", "-b", "feat/test-flags"], cwd=tmp_path, check=True, capture_output=True)
+    subprocess.run(
+        ["git", "checkout", "-b", "feat/test-flags"], cwd=tmp_path, check=True, capture_output=True
+    )
 
     return tmp_path
 
@@ -189,7 +193,9 @@ async def test_no_pr_flag_skips_pr_creation_but_commits_locally(
             )
 
     # ASSERT: Execution completes, no PR created
-    assert result.is_ok(), f"Expected success, got error: {result.unwrap_err() if result.is_err() else None}"
+    assert result.is_ok(), (
+        f"Expected success, got error: {result.unwrap_err() if result.is_err() else None}"
+    )
 
     exec_result = result.unwrap()
     assert exec_result.status == "complete"
@@ -207,7 +213,9 @@ async def test_no_pr_flag_skips_pr_creation_but_commits_locally(
 
 
 @pytest.mark.asyncio
-async def test_no_pr_flag_still_pushes_to_remote_branch(orchestrator, simple_task_graph, tmp_git_repo, mock_validation_results):
+async def test_no_pr_flag_still_pushes_to_remote_branch(
+    orchestrator, simple_task_graph, tmp_git_repo, mock_validation_results
+):
     """
     FLAG-002: --no-pr still pushes to remote branch (for manual PR creation).
 
@@ -230,10 +238,7 @@ async def test_no_pr_flag_still_pushes_to_remote_branch(orchestrator, simple_tas
         with patch.object(orchestrator, "_execute_dag", return_value=Ok(None)):
             with patch.object(orchestrator, "_validate_git", return_value=Ok(None)):
                 with patch.object(orchestrator, "_validate_completion") as mock_validator:
-
-                    mock_validator.return_value = Ok(
-                        mock_validation_results
-                    )
+                    mock_validator.return_value = Ok(mock_validation_results)
 
                     result = await orchestrator.execute(visualize=False)
 
@@ -248,7 +253,9 @@ async def test_no_pr_flag_still_pushes_to_remote_branch(orchestrator, simple_tas
 
 
 @pytest.mark.asyncio
-async def test_auto_pr_flag_creates_pr_without_confirmation(orchestrator, simple_task_graph, tmp_git_repo, mock_validation_results):
+async def test_auto_pr_flag_creates_pr_without_confirmation(
+    orchestrator, simple_task_graph, tmp_git_repo, mock_validation_results
+):
     """
     FLAG-003: --auto-pr creates PR without confirmation (default behavior per ADR-026).
 
@@ -275,10 +282,7 @@ async def test_auto_pr_flag_creates_pr_without_confirmation(orchestrator, simple
         with patch.object(orchestrator, "_execute_dag", return_value=Ok(None)):
             with patch.object(orchestrator, "_validate_git", return_value=Ok(None)):
                 with patch.object(orchestrator, "_validate_completion") as mock_validator:
-
-                    mock_validator.return_value = Ok(
-                        mock_validation_results
-                    )
+                    mock_validator.return_value = Ok(mock_validation_results)
 
                     result = await orchestrator.execute(visualize=False)
 
@@ -292,7 +296,9 @@ async def test_auto_pr_flag_creates_pr_without_confirmation(orchestrator, simple
 
 
 @pytest.mark.asyncio
-async def test_auto_pr_includes_constitutional_diff_review(orchestrator, simple_task_graph, tmp_git_repo, mock_validation_results):
+async def test_auto_pr_includes_constitutional_diff_review(
+    orchestrator, simple_task_graph, tmp_git_repo, mock_validation_results
+):
     """
     FLAG-004: --auto-pr includes constitutional diff review before PR creation.
 
@@ -317,10 +323,7 @@ async def test_auto_pr_includes_constitutional_diff_review(orchestrator, simple_
 
         with patch.object(orchestrator, "_execute_dag", return_value=Ok(None)):
             with patch.object(orchestrator, "_validate_completion") as mock_validator:
-
-                mock_validator.return_value = Ok(
-                    mock_validation_results
-                )
+                mock_validator.return_value = Ok(mock_validation_results)
 
                 result = await orchestrator.execute(visualize=False)
 
@@ -332,7 +335,9 @@ async def test_auto_pr_includes_constitutional_diff_review(orchestrator, simple_
 
 
 @pytest.mark.asyncio
-async def test_default_behavior_creates_pr_automatically(orchestrator, simple_task_graph, tmp_git_repo, mock_validation_results):
+async def test_default_behavior_creates_pr_automatically(
+    orchestrator, simple_task_graph, tmp_git_repo, mock_validation_results
+):
     """
     FLAG-005: Default behavior creates PR automatically (no flags specified).
 
@@ -356,10 +361,7 @@ async def test_default_behavior_creates_pr_automatically(orchestrator, simple_ta
         # ACT: Execute with no flags (default behavior)
         with patch.object(orchestrator, "_execute_dag", return_value=Ok(None)):
             with patch.object(orchestrator, "_validate_completion") as mock_validator:
-
-                mock_validator.return_value = Ok(
-                    mock_validation_results
-                )
+                mock_validator.return_value = Ok(mock_validation_results)
 
                 result = await orchestrator.execute(visualize=False)
 
@@ -371,7 +373,9 @@ async def test_default_behavior_creates_pr_automatically(orchestrator, simple_ta
 
 
 @pytest.mark.asyncio
-async def test_plan_only_flag_generates_graph_and_exits_without_execution(orchestrator, agent_context, tmp_git_repo, mock_validation_results):
+async def test_plan_only_flag_generates_graph_and_exits_without_execution(
+    orchestrator, agent_context, tmp_git_repo, mock_validation_results
+):
     """
     FLAG-006: --plan-only generates graph, saves to file, exits without execution.
 
@@ -399,7 +403,9 @@ async def test_plan_only_flag_generates_graph_and_exits_without_execution(orches
 
 
 @pytest.mark.asyncio
-async def test_visualize_flag_displays_mermaid_dag(orchestrator, simple_task_graph, tmp_git_repo, capsys, mock_validation_results):
+async def test_visualize_flag_displays_mermaid_dag(
+    orchestrator, simple_task_graph, tmp_git_repo, capsys, mock_validation_results
+):
     """
     FLAG-007: --visualize displays Mermaid DAG and ASCII tree.
 
@@ -417,9 +423,7 @@ async def test_visualize_flag_displays_mermaid_dag(orchestrator, simple_task_gra
         with patch.object(orchestrator, "_validate_completion") as mock_validator:
             from tools.orchestrator.completion_validator import ValidationResults
 
-            mock_validator.return_value = Ok(
-                mock_validation_results
-            )
+            mock_validator.return_value = Ok(mock_validation_results)
 
             result = await orchestrator.execute(visualize=True)
 
@@ -432,7 +436,9 @@ async def test_visualize_flag_displays_mermaid_dag(orchestrator, simple_task_gra
 
 
 @pytest.mark.asyncio
-async def test_graph_flag_loads_explicit_task_graph_json(orchestrator, tmp_git_repo, tmp_path, mock_validation_results):
+async def test_graph_flag_loads_explicit_task_graph_json(
+    orchestrator, tmp_git_repo, tmp_path, mock_validation_results
+):
     """
     FLAG-008: --graph <file> loads explicit task graph JSON.
 
@@ -486,9 +492,7 @@ async def test_graph_flag_loads_explicit_task_graph_json(orchestrator, tmp_git_r
         with patch.object(orchestrator, "_validate_completion") as mock_validator:
             from tools.orchestrator.completion_validator import ValidationResults
 
-            mock_validator.return_value = Ok(
-                mock_validation_results
-            )
+            mock_validator.return_value = Ok(mock_validation_results)
 
             result = await orchestrator.execute(graph_file=str(graph_file), visualize=False)
 
@@ -507,7 +511,9 @@ async def test_graph_flag_loads_explicit_task_graph_json(orchestrator, tmp_git_r
 
 
 @pytest.mark.asyncio
-async def test_conflicting_flags_plan_only_and_auto_pr_returns_error(orchestrator, tmp_git_repo, mock_validation_results):
+async def test_conflicting_flags_plan_only_and_auto_pr_returns_error(
+    orchestrator, tmp_git_repo, mock_validation_results
+):
     """
     EDGE: Conflicting flags (--plan-only --auto-pr) should return clear error.
 
@@ -531,13 +537,21 @@ async def test_conflicting_flags_plan_only_and_auto_pr_returns_error(orchestrato
     # ASSERT: Conflicting flags detected
     assert result.is_err(), "Expected error for conflicting flags"
     error = result.unwrap_err()
-    assert "conflicting" in error.reason.lower(), f"Expected 'conflicting' in reason, got: {error.reason}"
-    assert "--plan-only" in error.details or "plan-only" in error.details, f"Expected '--plan-only' in details, got: {error.details}"
-    assert "--auto-pr" in error.details or "auto-pr" in error.details, f"Expected '--auto-pr' in details, got: {error.details}"
+    assert "conflicting" in error.reason.lower(), (
+        f"Expected 'conflicting' in reason, got: {error.reason}"
+    )
+    assert "--plan-only" in error.details or "plan-only" in error.details, (
+        f"Expected '--plan-only' in details, got: {error.details}"
+    )
+    assert "--auto-pr" in error.details or "auto-pr" in error.details, (
+        f"Expected '--auto-pr' in details, got: {error.details}"
+    )
 
 
 @pytest.mark.asyncio
-async def test_multiple_compatible_flags_work_together(orchestrator, tmp_git_repo, mock_validation_results):
+async def test_multiple_compatible_flags_work_together(
+    orchestrator, tmp_git_repo, mock_validation_results
+):
     """
     EDGE: Multiple compatible flags (--visualize --auto-pr) should work together.
 
@@ -557,10 +571,7 @@ async def test_multiple_compatible_flags_work_together(orchestrator, tmp_git_rep
         with patch.object(orchestrator, "_execute_dag", return_value=Ok(None)):
             with patch.object(orchestrator, "_validate_git", return_value=Ok(None)):
                 with patch.object(orchestrator, "_validate_completion") as mock_validator:
-
-                    mock_validator.return_value = Ok(
-                        mock_validation_results
-                    )
+                    mock_validator.return_value = Ok(mock_validation_results)
 
                     result = await orchestrator.execute(visualize=True)
 
@@ -578,7 +589,9 @@ async def test_multiple_compatible_flags_work_together(orchestrator, tmp_git_rep
 
 
 @pytest.mark.asyncio
-async def test_invalid_graph_file_path_returns_clear_error(orchestrator, tmp_git_repo, mock_validation_results):
+async def test_invalid_graph_file_path_returns_clear_error(
+    orchestrator, tmp_git_repo, mock_validation_results
+):
     """
     ERROR: Invalid --graph path should return clear error message.
 
@@ -602,12 +615,18 @@ async def test_invalid_graph_file_path_returns_clear_error(orchestrator, tmp_git
     assert error.step == "step_2_parse_input"
     # Check error message contains info about file not found
     error_text = (error.reason + " " + error.details).lower()
-    assert "not found" in error_text or "does not exist" in error_text or "failed to load" in error_text, f"Expected file error in: {error_text}"
+    assert (
+        "not found" in error_text
+        or "does not exist" in error_text
+        or "failed to load" in error_text
+    ), f"Expected file error in: {error_text}"
     assert invalid_path in error.details
 
 
 @pytest.mark.asyncio
-async def test_missing_required_graph_argument_returns_error(orchestrator, tmp_git_repo, mock_validation_results):
+async def test_missing_required_graph_argument_returns_error(
+    orchestrator, tmp_git_repo, mock_validation_results
+):
     """
     ERROR: --graph flag without file path should return error.
 
@@ -644,7 +663,9 @@ async def test_missing_required_graph_argument_returns_error(orchestrator, tmp_g
 
 
 @pytest.mark.asyncio
-async def test_graph_path_traversal_attack_blocked(orchestrator, tmp_git_repo, mock_validation_results):
+async def test_graph_path_traversal_attack_blocked(
+    orchestrator, tmp_git_repo, mock_validation_results
+):
     """
     SECURITY: Path traversal in --graph flag should be blocked.
 
@@ -670,7 +691,9 @@ async def test_graph_path_traversal_attack_blocked(orchestrator, tmp_git_repo, m
 
 
 @pytest.mark.asyncio
-async def test_flag_injection_via_graph_filename_blocked(orchestrator, tmp_git_repo, tmp_path, mock_validation_results):
+async def test_flag_injection_via_graph_filename_blocked(
+    orchestrator, tmp_git_repo, tmp_path, mock_validation_results
+):
     """
     SECURITY: Command injection via --graph filename should be blocked.
 
@@ -703,7 +726,9 @@ async def test_flag_injection_via_graph_filename_blocked(orchestrator, tmp_git_r
 
 
 @pytest.mark.asyncio
-async def test_full_workflow_no_pr_flag_integration(orchestrator, tmp_git_repo, tmp_path, mock_validation_results):
+async def test_full_workflow_no_pr_flag_integration(
+    orchestrator, tmp_git_repo, tmp_path, mock_validation_results
+):
     """
     INTEGRATION: Full workflow with --no-pr flag (end-to-end).
 
@@ -762,9 +787,7 @@ async def test_full_workflow_no_pr_flag_integration(orchestrator, tmp_git_repo, 
         with patch.object(orchestrator, "_validate_completion") as mock_validator:
             from tools.orchestrator.completion_validator import ValidationResults
 
-            mock_validator.return_value = Ok(
-                mock_validation_results
-            )
+            mock_validator.return_value = Ok(mock_validation_results)
 
             result = await orchestrator.execute(graph_file=str(graph_file), visualize=False)
 

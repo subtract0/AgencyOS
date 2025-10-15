@@ -132,9 +132,7 @@ class TestMissingClaudeScans:
         assert scan_result.issues_found > 0
 
         # Should detect missing CLAUDE.md in trinity_protocol/
-        trinity_issues = [
-            i for i in scan_result.issues if "trinity_protocol" in i.file_path
-        ]
+        trinity_issues = [i for i in scan_result.issues if "trinity_protocol" in i.file_path]
         assert len(trinity_issues) > 0
 
     def test_passes_when_all_claude_files_present(self, temp_project_dir: Path):
@@ -169,10 +167,7 @@ class TestCrossReferenceValidation:
         # Create file with broken link
         doc_file = temp_project_dir / "docs" / "test.md"
         doc_file.parent.mkdir(exist_ok=True)
-        doc_file.write_text(
-            "# Test Doc\n\n"
-            "See [missing file](missing_file.md) for details.\n"
-        )
+        doc_file.write_text("# Test Doc\n\nSee [missing file](missing_file.md) for details.\n")
 
         scanner = ScanDocumentation(project_root=temp_project_dir)
         result = scanner._scan_cross_references()
@@ -183,10 +178,7 @@ class TestCrossReferenceValidation:
         assert scan_result.issues_found > 0
 
         # Should detect broken link
-        broken_link_issues = [
-            i for i in scan_result.issues
-            if "missing_file.md" in i.description
-        ]
+        broken_link_issues = [i for i in scan_result.issues if "missing_file.md" in i.description]
         assert len(broken_link_issues) > 0
 
     def test_passes_with_valid_links(self, temp_project_dir: Path):
@@ -195,9 +187,7 @@ class TestCrossReferenceValidation:
         docs_dir = temp_project_dir / "docs"
         docs_dir.mkdir(exist_ok=True)
 
-        (docs_dir / "first.md").write_text(
-            "# First\n\nSee [second](second.md) for details.\n"
-        )
+        (docs_dir / "first.md").write_text("# First\n\nSee [second](second.md) for details.\n")
         (docs_dir / "second.md").write_text("# Second\n\nContent here.\n")
 
         scanner = ScanDocumentation(project_root=temp_project_dir)
@@ -213,9 +203,7 @@ class TestCrossReferenceValidation:
         # Create file with absolute path link
         doc_file = temp_project_dir / "docs" / "test.md"
         doc_file.parent.mkdir(exist_ok=True)
-        doc_file.write_text(
-            f"# Test\n\nSee [constitution]({temp_project_dir}/constitution.md)\n"
-        )
+        doc_file.write_text(f"# Test\n\nSee [constitution]({temp_project_dir}/constitution.md)\n")
 
         scanner = ScanDocumentation(project_root=temp_project_dir)
         result = scanner._scan_cross_references()
@@ -244,7 +232,8 @@ class TestTokenBudgetValidation:
 
         # Should detect oversized root CLAUDE.md
         oversized_issues = [
-            i for i in scan_result.issues
+            i
+            for i in scan_result.issues
             if "CLAUDE.md" in i.file_path and "exceeds" in i.description
         ]
         assert len(oversized_issues) > 0
@@ -300,7 +289,8 @@ class TestConstitutionalReferenceScanning:
 
         # Should suggest Article I reference
         article_i_issues = [
-            i for i in scan_result.issues
+            i
+            for i in scan_result.issues
             if "Article I" in i.description and "timeout_handling.md" in i.file_path
         ]
         assert len(article_i_issues) > 0
@@ -322,10 +312,7 @@ class TestConstitutionalReferenceScanning:
         scan_result = result.unwrap()
 
         # Should not flag this doc
-        timeout_issues = [
-            i for i in scan_result.issues
-            if "timeout_handling.md" in i.file_path
-        ]
+        timeout_issues = [i for i in scan_result.issues if "timeout_handling.md" in i.file_path]
         assert len(timeout_issues) == 0
 
     def test_detects_missing_article_ii_in_test_docs(self, temp_project_dir: Path):
@@ -348,7 +335,8 @@ class TestConstitutionalReferenceScanning:
 
         # Should suggest Article II reference
         article_ii_issues = [
-            i for i in scan_result.issues
+            i
+            for i in scan_result.issues
             if "Article II" in i.description and "testing_guide.md" in i.file_path
         ]
         assert len(article_ii_issues) > 0

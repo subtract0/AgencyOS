@@ -211,7 +211,7 @@ class ArticleIRetryPolicy:
                     if status == "success":
                         result["retry_count"] = retry_count
                         result["final_timeout"] = timeout
-                        result["is_final_retry"] = (attempt == self.config.max_retries - 1)
+                        result["is_final_retry"] = attempt == self.config.max_retries - 1
                         return Ok(result)
 
                 # Unknown result format - return as-is
@@ -243,8 +243,7 @@ class ArticleIRetryPolicy:
             (),
             {
                 "retry_count": self.config.max_retries,
-                "max_timeout": self.config.initial_timeout
-                * self.config.timeout_multipliers[-1],
+                "max_timeout": self.config.initial_timeout * self.config.timeout_multipliers[-1],
                 "__str__": lambda self: "Unable to obtain complete context",
             },
         )()
@@ -278,7 +277,10 @@ class ArticleIITestGate:
     """
 
     def validate_test_results(
-        self, test_results: dict[str, Any], task_graph: Any, code_analysis: dict[str, Any] | None = None
+        self,
+        test_results: dict[str, Any],
+        task_graph: Any,
+        code_analysis: dict[str, Any] | None = None,
     ) -> Result[dict[str, Any], Any]:
         """
         Validate test results and enforce 100% pass rate.
@@ -330,7 +332,7 @@ class ArticleIITestGate:
             failure_details = []
             for f in failures:
                 test_name = f.get("test", "unknown")
-                file_loc = f"{f.get('file', '')}:{f.get('line', '')}" if f.get('file') else ""
+                file_loc = f"{f.get('file', '')}:{f.get('line', '')}" if f.get("file") else ""
                 error_msg = f.get("error", "")
                 if file_loc:
                     failure_details.append(f"{test_name} ({file_loc}): {error_msg}")
@@ -547,9 +549,7 @@ class ArticleIIIBypassDetector:
                     }
 
                     # Generate HMAC signature
-                    data_to_sign = (
-                        f"{entry['timestamp']}:{entry['flag']}:{entry['source']}"
-                    )
+                    data_to_sign = f"{entry['timestamp']}:{entry['flag']}:{entry['source']}"
                     signature = self._create_hmac_signature(data_to_sign)
                     entry["hmac"] = signature
 
@@ -578,9 +578,7 @@ class ArticleIIIBypassDetector:
             >>> len(sig)
             64  # 256 bits = 32 bytes = 64 hex chars
         """
-        return hmac.new(
-            self.hmac_secret.encode(), data.encode(), hashlib.sha256
-        ).hexdigest()
+        return hmac.new(self.hmac_secret.encode(), data.encode(), hashlib.sha256).hexdigest()
 
 
 class ArticleIVLearningIntegration:
@@ -846,9 +844,7 @@ class ArticleVTraceability:
         """
         # 1. Validate spec_id format
         if not re.match(self.spec_id_pattern, spec_id):
-            return Err(
-                f"Invalid spec_id format: {spec_id} (must be SPEC-XXX, e.g., SPEC-030)"
-            )
+            return Err(f"Invalid spec_id format: {spec_id} (must be SPEC-XXX, e.g., SPEC-030)")
 
         # 2. Validate acceptance criteria not empty (Pydantic requirement)
         if not acceptance_criteria:
@@ -856,15 +852,9 @@ class ArticleVTraceability:
 
         # 3. Calculate coverage
         matched_criteria = [
-            ac
-            for ac in acceptance_criteria
-            if any(ac in impl for impl in implemented_criteria)
+            ac for ac in acceptance_criteria if any(ac in impl for impl in implemented_criteria)
         ]
-        coverage = (
-            len(matched_criteria) / len(acceptance_criteria)
-            if acceptance_criteria
-            else 0.0
-        )
+        coverage = len(matched_criteria) / len(acceptance_criteria) if acceptance_criteria else 0.0
 
         # 4. Create SpecTrace
         trace = SpecTrace(

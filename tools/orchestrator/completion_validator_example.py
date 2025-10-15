@@ -159,9 +159,7 @@ def example_backlog_warning():
                 "type": "code",
             }
         ],
-        todos=[
-            {"content": "Task 1", "status": "completed", "activeForm": "Completed"}
-        ],
+        todos=[{"content": "Task 1", "status": "completed", "activeForm": "Completed"}],
         spec_criteria=["Feature implemented"],
         backlog_items=[
             "TODO: Optimize performance (low priority)",
@@ -197,9 +195,7 @@ def example_constitutional_checks():
                 "type": "code",
             }
         ],
-        todos=[
-            {"content": "Task 1", "status": "completed", "activeForm": "Completed"}
-        ],
+        todos=[{"content": "Task 1", "status": "completed", "activeForm": "Completed"}],
         spec_criteria=["Feature implemented"],
         backlog_items=[],
         context_usage=0.92,
@@ -214,21 +210,13 @@ def example_constitutional_checks():
         checks = validation.constitutional_checks
         print(f"Article I (Complete Context): {'✅' if checks.article_i else '❌'}")
         print(f"  {checks.details['Article I']}")
-        print(
-            f"\nArticle II (100% Verification): {'✅' if checks.article_ii else '❌'}"
-        )
+        print(f"\nArticle II (100% Verification): {'✅' if checks.article_ii else '❌'}")
         print(f"  {checks.details['Article II']}")
-        print(
-            f"\nArticle III (Automated Enforcement): {'✅' if checks.article_iii else '❌'}"
-        )
+        print(f"\nArticle III (Automated Enforcement): {'✅' if checks.article_iii else '❌'}")
         print(f"  {checks.details['Article III']}")
-        print(
-            f"\nArticle IV (Continuous Learning): {'✅' if checks.article_iv else '❌'}"
-        )
+        print(f"\nArticle IV (Continuous Learning): {'✅' if checks.article_iv else '❌'}")
         print(f"  {checks.details['Article IV']}")
-        print(
-            f"\nArticle V (Spec-Driven Development): {'✅' if checks.article_v else '❌'}"
-        )
+        print(f"\nArticle V (Spec-Driven Development): {'✅' if checks.article_v else '❌'}")
         print(f"  {checks.details['Article V']}")
 
         print(f"\nContext Efficiency: {validation.context_efficiency:.1%}")

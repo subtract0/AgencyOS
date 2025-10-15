@@ -131,9 +131,7 @@ def get_current_branch(repo_path: Path | str = ".") -> Result[str, GitValidation
                     GitValidationError(
                         message="Detached HEAD state detected. You are not on a branch.",
                         branch_name=None,
-                        recovery_hint=(
-                            "Create a new branch: git checkout -b feat/<feature-name>"
-                        ),
+                        recovery_hint=("Create a new branch: git checkout -b feat/<feature-name>"),
                     )
                 )
 
@@ -254,8 +252,10 @@ def validate_branch_safety(
         error = branch_result.unwrap_err()
 
         # Graceful fallback for non-repo contexts
-        if graceful_fallback and ("not a git repository" in error.message.lower() or
-                                  "detached head" in error.message.lower()):
+        if graceful_fallback and (
+            "not a git repository" in error.message.lower()
+            or "detached head" in error.message.lower()
+        ):
             # Return Ok with special "non-repo" marker
             return Ok("non-repo")
 

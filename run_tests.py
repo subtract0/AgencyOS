@@ -256,7 +256,7 @@ def main(
     fast_only: bool = False,
     timed: bool = False,
     with_docker: bool = False,
-    timeout_multiplier: float = 1.0
+    timeout_multiplier: float = 1.0,
 ) -> int:
     # RECURSION GUARDS: Prevent nested test runs
     if os.environ.get("AGENCY_NESTED_TEST") == "1":
@@ -435,17 +435,20 @@ def main(
 
     # Test ignores (known problematic tests, not suitable for pytest.ini)
     # These are runtime issues, not configuration preferences
-    pytest_args.extend([
-        "--ignore=tests/test_firestore_learning_persistence.py",
-        "--ignore=tests/test_firestore_mock_integration.py",
-        "--ignore=tests/e2e/",  # e2e tests import agency at module level
-        "--ignore=tests/benchmarks/test_vectorstore_performance.py",  # Quarantined
-    ])
+    pytest_args.extend(
+        [
+            "--ignore=tests/test_firestore_learning_persistence.py",
+            "--ignore=tests/test_firestore_mock_integration.py",
+            "--ignore=tests/e2e/",  # e2e tests import agency at module level
+            "--ignore=tests/benchmarks/test_vectorstore_performance.py",  # Quarantined
+        ]
+    )
 
     # Memory-aware worker selection (ADR-023 integration)
     # Overrides pytest.ini static config (-n 6) with dynamic adjustment
     try:
         from tools.memory_aware_test_runner import get_safe_worker_count
+
         worker_count = get_safe_worker_count()
         pytest_args.extend(["-n", str(worker_count)])
         print(f"✓ pytest-xdist: {worker_count} workers (memory-aware, overrides pytest.ini)")
@@ -518,9 +521,11 @@ def main(
 
         if timeout_multiplier > 1.0:
             print(f"⏰ Timeout multiplier: {timeout_multiplier}x (constitutional retry, Article I)")
-            print(f"⏰ Calculated timeout: {timeout_seconds}s ({timeout_seconds/60:.1f} minutes)")
+            print(f"⏰ Calculated timeout: {timeout_seconds}s ({timeout_seconds / 60:.1f} minutes)")
         else:
-            print(f"⏰ Dynamic timeout: {timeout_seconds}s ({timeout_seconds/60:.1f} minutes) for ~1,762 tests")
+            print(
+                f"⏰ Dynamic timeout: {timeout_seconds}s ({timeout_seconds / 60:.1f} minutes) for ~1,762 tests"
+            )
 
         # Debug: Print the exact command being run
         print(f"🔍 Running command: {' '.join(pytest_args)}\n")
@@ -577,9 +582,15 @@ def main(
         print("   - Hanging network requests")
         print("   - Deadlocks in async code")
         print("\n💡 Constitutional retry options (Article I):")
-        print(f"   - 2x retry: python run_tests.py --run-all --timeout-multiplier 2.0  ({timeout_seconds*2/60:.1f} min)")
-        print(f"   - 3x retry: python run_tests.py --run-all --timeout-multiplier 3.0  ({timeout_seconds*3/60:.1f} min)")
-        print(f"   - 10x retry: python run_tests.py --run-all --timeout-multiplier 10.0 ({timeout_seconds*10/60:.1f} min)")
+        print(
+            f"   - 2x retry: python run_tests.py --run-all --timeout-multiplier 2.0  ({timeout_seconds * 2 / 60:.1f} min)"
+        )
+        print(
+            f"   - 3x retry: python run_tests.py --run-all --timeout-multiplier 3.0  ({timeout_seconds * 3 / 60:.1f} min)"
+        )
+        print(
+            f"   - 10x retry: python run_tests.py --run-all --timeout-multiplier 10.0 ({timeout_seconds * 10 / 60:.1f} min)"
+        )
         return 124  # Timeout exit code
 
     except FileNotFoundError:
@@ -767,7 +778,7 @@ if __name__ == "__main__":
             fast_only=fast_only,
             timed=args.timed,
             with_docker=args.with_docker,
-            timeout_multiplier=args.timeout_multiplier
+            timeout_multiplier=args.timeout_multiplier,
         )
 
     sys.exit(exit_code)

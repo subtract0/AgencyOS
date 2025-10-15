@@ -255,7 +255,9 @@ class TestABRolloutController:
         stage = RolloutStage(name="stage1", percentage=10, duration_hours=16)
 
         # Mock prediction retrieval with sufficient samples
-        timestamp_str = (datetime.now(UTC) - timedelta(hours=8)).isoformat().replace("+00:00", "") + "Z"
+        timestamp_str = (datetime.now(UTC) - timedelta(hours=8)).isoformat().replace(
+            "+00:00", ""
+        ) + "Z"
         mock_predictions = [
             PredictionLog(
                 task_id=f"task-{i}",

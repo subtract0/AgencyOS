@@ -217,7 +217,9 @@ class TestInferenceLatency:
 
         # Pre-load model (exclude cold start from latency measurement)
         result = classifier.load_model(model_path)
-        assert isinstance(result, Ok), f"Model load failed: {result.unwrap_err() if isinstance(result, Err) else ''}"
+        assert isinstance(result, Ok), (
+            f"Model load failed: {result.unwrap_err() if isinstance(result, Err) else ''}"
+        )
 
         # Act: Measure 100 classifications
         latencies = []
@@ -265,7 +267,9 @@ class TestInferenceLatency:
 
         # Pre-load model
         result = classifier.load_model(model_path)
-        assert isinstance(result, Ok), f"Model load failed: {result.unwrap_err() if isinstance(result, Err) else ''}"
+        assert isinstance(result, Ok), (
+            f"Model load failed: {result.unwrap_err() if isinstance(result, Err) else ''}"
+        )
 
         # Act: Measure 100 classifications
         latencies = []
@@ -311,7 +315,9 @@ class TestInferenceLatency:
 
         # Pre-load model
         result = classifier.load_model(model_path)
-        assert isinstance(result, Ok), f"Model load failed: {result.unwrap_err() if isinstance(result, Err) else ''}"
+        assert isinstance(result, Ok), (
+            f"Model load failed: {result.unwrap_err() if isinstance(result, Err) else ''}"
+        )
 
         # Act: Measure 100 classifications
         latencies = []
@@ -437,7 +443,9 @@ class TestConcurrency:
 
         # Pre-load model
         result = classifier.load_model(model_path)
-        assert isinstance(result, Ok), f"Model load failed: {result.unwrap_err() if isinstance(result, Err) else ''}"
+        assert isinstance(result, Ok), (
+            f"Model load failed: {result.unwrap_err() if isinstance(result, Err) else ''}"
+        )
 
         results = []
         errors = []
@@ -508,7 +516,9 @@ class TestPredictionLogging:
 
         # Pre-load model
         result = classifier.load_model(model_path)
-        assert isinstance(result, Ok), f"Model load failed: {result.unwrap_err() if isinstance(result, Err) else ''}"
+        assert isinstance(result, Ok), (
+            f"Model load failed: {result.unwrap_err() if isinstance(result, Err) else ''}"
+        )
 
         # Act: Measure logging overhead (100 predictions)
         logging_latencies = []
@@ -572,7 +582,9 @@ class TestE2EWorkflowLatency:
 
         # Pre-load model
         result = classifier.load_model(model_path)
-        assert isinstance(result, Ok), f"Model load failed: {result.unwrap_err() if isinstance(result, Err) else ''}"
+        assert isinstance(result, Ok), (
+            f"Model load failed: {result.unwrap_err() if isinstance(result, Err) else ''}"
+        )
 
         # Act: Measure 100 E2E classifications
         e2e_latencies = []
