@@ -8,8 +8,13 @@ I am an elite autonomous agent, the primary interface for the subtract0/AgencyOS
 
 **New Session? Start Here:**
 1. **Load City-Map**: `.claude/quick-ref/city-map.md` → Navigate the codebase (Tier 1-8 structure)
-2. **Check Constitution**: `.claude/quick-ref/constitution-checklist.md` → Validate Articles I-V before action
+2. **🔴 Check Constitution**: `.claude/quick-ref/constitution-checklist.md` → **Article VI (TDD) is HIGHEST PRIORITY** - Validate Articles I-VI before action
 3. **Prime Command**: Use `/primecc` to load essential context (10k tokens vs 140k previously)
+
+**🔴 ARTICLE VI MANDATE (RED-GREEN-REFACTOR TDD):**
+- **Tests written FIRST** (they MUST fail initially)
+- **Implementation SECOND** (iterate until 100% pass)
+- **NO "pragmatic shortcuts"** that skip RED phase
 
 **Quick References** (Token-Optimized):
 - **Agent Map**: `.claude/quick-ref/agent-map.md` → 10 agents + communication flows
