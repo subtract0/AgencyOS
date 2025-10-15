@@ -25,25 +25,26 @@ Version: 1.0.0
 Created: 2025-10-15
 """
 
-import pytest
 from pathlib import Path
+
+import pytest
+
 from shared.models.orchestrator_models import (
+    ConstitutionalStatus,
+    RiskLevel,
     Tier1Summary,
     Tier2Summary,
     Tier3Reference,
     TieredSpec,
-    ConstitutionalStatus,
-    RiskLevel,
 )
 from tools.orchestrator.spec_tier_generator import (
     SpecTierGenerator,
     TierGenerationError,
-    parse_spec_structure,
+    create_tier3_reference,
     extract_tier1_summary,
     extract_tier2_decisions,
-    create_tier3_reference,
+    parse_spec_structure,
 )
-
 
 # ============================================================================
 # NORMAL: Standard spec parsing and tier generation

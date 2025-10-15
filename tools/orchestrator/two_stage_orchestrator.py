@@ -41,12 +41,17 @@ Created: 2025-10-11
 """
 
 import logging
+import os
+import time
 from datetime import UTC, datetime
+from pathlib import Path
 from typing import Literal
 
+import yaml
 from pydantic import BaseModel, Field
 
 from shared.agent_context import AgentContext
+from shared.models.orchestrator_models import UserAction
 from shared.models.task_graph import TaskGraph
 from shared.type_definitions.result import Err, Ok, Result
 from tools.orchestrator.approval_checkpoint import (
@@ -54,10 +59,12 @@ from tools.orchestrator.approval_checkpoint import (
     ApprovedSpec,
     Spec,
 )
+from tools.orchestrator.checkpoint_ui import CheckpointUI
 from tools.orchestrator.intent_parser import InputMode, Intent, IntentParser
 from tools.orchestrator.necessary_validator import NECESSARYValidator, ValidationReport
 from tools.orchestrator.pr_creator import PRCreator, PRError, PRUrl
 from tools.orchestrator.spec_generator import SpecGenerator, SpecIntent
+from tools.orchestrator.spec_tier_generator import SpecTierGenerator
 from tools.orchestrator.tdd_graph_generator import TDDGraphGenerator
 from tools.orchestrator.test_verification_gate import (
     TestVerificationGate,
@@ -67,6 +74,85 @@ from tools.orchestrator.test_verification_gate import (
 from tools.todo_write import TodoItem, TodoWrite
 
 logger = logging.getLogger(__name__)
+
+
+# ============================================================================
+# CONFIG LOADING
+# ============================================================================
+
+
+def load_tiered_review_config() -> dict:
+    """
+    Load tiered review configuration from ~/.agency/config.yml.
+
+    Returns default configuration if file doesn't exist.
+
+    Returns:
+        dict: Configuration with two_stage.checkpoint settings
+
+    Default Config:
+        {
+            "two_stage": {
+                "checkpoint": {
+                    "enable_tiered_review": True,
+                    "timeout_seconds": 30,
+                    "default_action": "approve",
+                    "fallback_on_error": True
+                }
+            }
+        }
+    """
+    config_path = Path.home() / ".agency" / "config.yml"
+
+    if not config_path.exists():
+        logger.info("Config file not found, using defaults for tiered review")
+        return {
+            "two_stage": {
+                "checkpoint": {
+                    "enable_tiered_review": True,
+                    "timeout_seconds": 30,
+                    "default_action": "approve",
+                    "fallback_on_error": True,
+                }
+            }
+        }
+
+    try:
+        with open(config_path) as f:
+            config = yaml.safe_load(f) or {}
+
+        # Ensure nested structure exists
+        if "two_stage" not in config:
+            config["two_stage"] = {}
+        if "checkpoint" not in config["two_stage"]:
+            config["two_stage"]["checkpoint"] = {}
+
+        # Fill in defaults for missing keys
+        defaults = {
+            "enable_tiered_review": True,
+            "timeout_seconds": 30,
+            "default_action": "approve",
+            "fallback_on_error": True,
+        }
+
+        for key, default_value in defaults.items():
+            if key not in config["two_stage"]["checkpoint"]:
+                config["two_stage"]["checkpoint"][key] = default_value
+
+        return config
+
+    except Exception as e:
+        logger.warning(f"Failed to load config from {config_path}: {e}. Using defaults.")
+        return {
+            "two_stage": {
+                "checkpoint": {
+                    "enable_tiered_review": True,
+                    "timeout_seconds": 30,
+                    "default_action": "approve",
+                    "fallback_on_error": True,
+                }
+            }
+        }
 
 
 # ============================================================================
@@ -185,6 +271,10 @@ class TwoStageOrchestrator:
         self.repo_path = repo_path
         self.enable_todos = enable_todos
 
+        # Load tiered review configuration
+        config = load_tiered_review_config()
+        tiered_config = config["two_stage"]["checkpoint"]
+
         # Initialize components
         self.intent_parser = IntentParser(context=context)
         self.spec_generator = SpecGenerator(context=context)
@@ -193,6 +283,21 @@ class TwoStageOrchestrator:
         self.necessary_validator = NECESSARYValidator()
         self.test_gate = TestVerificationGate()
         self.pr_creator = PRCreator(repo_path=repo_path)
+
+        # Tiered review components (Leap 7 enhancement)
+        self.tier_generator = SpecTierGenerator()
+        self.checkpoint_ui = CheckpointUI(
+            timeout_seconds=tiered_config["timeout_seconds"],
+            default_action=UserAction[tiered_config["default_action"].upper()],
+        )
+        self.enable_tiered_review = tiered_config["enable_tiered_review"]
+        self.fallback_on_error = tiered_config["fallback_on_error"]
+
+        logger.info(
+            f"Tiered review: {'enabled' if self.enable_tiered_review else 'disabled'} "
+            f"(timeout: {tiered_config['timeout_seconds']}s, "
+            f"default: {tiered_config['default_action']})"
+        )
 
         # Metrics tracking
         self._start_time: float = 0.0
@@ -461,32 +566,162 @@ class TwoStageOrchestrator:
         """
         Await user approval with interactive prompt.
 
-        Uses ApprovalCheckpoint with SlopGuardian evaluation.
-        Allows up to 3 edit iterations with Planner re-generation.
+        Two approval modes:
+        1. Tiered Review (NEW - Leap 7): Three-tier progressive disclosure
+           - Tier 1: Executive summary (<25 lines, 30-second read)
+           - Tier 2: Key decisions (<50 lines, 2-minute read)
+           - Tier 3: Full spec reference
+           - Auto-approve: 30-second countdown
+
+        2. Legacy Approval: Full spec display with SlopGuardian evaluation
+
+        Mode selection via config: enable_tiered_review (default: True)
 
         Args:
             spec: Generated specification
 
         Returns:
             Result with ApprovedSpec or OrchestrationError
+
+        Constitutional Compliance:
+            - Article I: Complete context (all tiers available before approval)
+            - Article IV: VectorStore learning (tier usage patterns stored)
         """
-        result = await self.approval_checkpoint.await_approval(spec)
+        if self.enable_tiered_review:
+            # NEW: Tiered review workflow (Leap 7 enhancement)
+            logger.info("Using tiered review checkpoint (3-tier progressive disclosure)")
 
-        if result.is_err():
-            return Err(
-                OrchestrationError(
-                    stage="spec_approval",
-                    reason=result.unwrap_err(),
-                    details=f"Spec: {spec.title}",
+            # Generate tiered spec
+            tier_result = self.tier_generator.generate_tiered_spec(spec.file_path)
+
+            if tier_result.is_ok():
+                # Tier generation succeeded - use CheckpointUI
+                tiered_spec = tier_result.unwrap()
+                checkpoint_result = self.checkpoint_ui.present_checkpoint(tiered_spec)
+
+                if checkpoint_result.action == UserAction.APPROVE:
+                    # User approved specification
+                    logger.info(
+                        f"Spec approved via tiered review "
+                        f"(tier {checkpoint_result.tier_viewed}, "
+                        f"decision at {checkpoint_result.timestamp})"
+                    )
+
+                    # Store tier usage pattern to VectorStore (Article IV)
+                    decision_time_seconds = (
+                        datetime.now(UTC) - checkpoint_result.timestamp
+                    ).total_seconds()
+
+                    self.context.store_memory(
+                        key=f"tiered_review_success_{int(time.time())}",
+                        content={
+                            "mission": spec.title,
+                            "tier_viewed": checkpoint_result.tier_viewed,
+                            "decision_time_seconds": abs(decision_time_seconds),
+                            "action": checkpoint_result.action.value,
+                        },
+                        tags=["two_stage", "tiered_review", "success", "checkpoint"],
+                    )
+
+                    # Convert to ApprovedSpec (edit_count=0 for tiered review)
+                    approved = ApprovedSpec(spec=spec, edit_count=0, final_approval=True)
+                    self._update_todo(
+                        "completed",
+                        f"Spec approved (tiered review, tier {checkpoint_result.tier_viewed})",
+                    )
+                    return Ok(approved)
+
+                elif checkpoint_result.action == UserAction.REVISE:
+                    # User requested revision
+                    logger.info("Spec revision requested (tiered review)")
+                    return Err(
+                        OrchestrationError(
+                            stage="spec_approval",
+                            reason="User requested spec revision",
+                            details="Tiered review: REVISE action selected",
+                        )
+                    )
+
+                elif checkpoint_result.action == UserAction.QUIT:
+                    # User cancelled orchestration
+                    logger.info("Orchestration cancelled by user (tiered review)")
+                    return Err(
+                        OrchestrationError(
+                            stage="spec_approval",
+                            reason="User cancelled orchestration at checkpoint",
+                            details="Tiered review: QUIT action selected",
+                        )
+                    )
+
+                else:
+                    # Should not reach here (all actions covered)
+                    logger.warning(f"Unknown user action: {checkpoint_result.action}")
+                    return Err(
+                        OrchestrationError(
+                            stage="spec_approval",
+                            reason=f"Unknown user action: {checkpoint_result.action}",
+                        )
+                    )
+
+            else:
+                # Tier generation failed - fallback to legacy or hard error
+                tier_error = tier_result.unwrap_err()
+                logger.warning(
+                    f"Tier generation failed: {tier_error.reason}. "
+                    f"{'Falling back to legacy approval checkpoint.' if self.fallback_on_error else 'Hard error (no fallback).'}"
                 )
-            )
 
-        approved = result.unwrap()
-        self._update_todo(
-            "completed",
-            f"Spec approved: {approved.spec.title} (edits: {approved.edit_count})",
-        )
-        return Ok(approved)
+                if self.fallback_on_error:
+                    # Graceful degradation to legacy approval
+                    logger.info("Using legacy approval checkpoint (fallback)")
+                    result = await self.approval_checkpoint.await_approval(spec)
+
+                    if result.is_err():
+                        return Err(
+                            OrchestrationError(
+                                stage="spec_approval",
+                                reason=result.unwrap_err(),
+                                details=f"Spec: {spec.title} (fallback from tier generation failure)",
+                            )
+                        )
+
+                    approved = result.unwrap()
+                    self._update_todo(
+                        "completed",
+                        f"Spec approved (legacy fallback): {approved.spec.title}",
+                    )
+                    return Ok(approved)
+
+                else:
+                    # No fallback - hard error
+                    return Err(
+                        OrchestrationError(
+                            stage="spec_approval",
+                            reason=f"Tier generation failed: {tier_error.reason}",
+                            details=tier_error.recovery_hint or "Check spec file format",
+                        )
+                    )
+
+        else:
+            # Legacy approval workflow (tiered review disabled)
+            logger.info("Using legacy approval checkpoint (tiered review disabled)")
+            result = await self.approval_checkpoint.await_approval(spec)
+
+            if result.is_err():
+                return Err(
+                    OrchestrationError(
+                        stage="spec_approval",
+                        reason=result.unwrap_err(),
+                        details=f"Spec: {spec.title}",
+                    )
+                )
+
+            approved = result.unwrap()
+            self._update_todo(
+                "completed",
+                f"Spec approved (legacy): {approved.spec.title} (edits: {approved.edit_count})",
+            )
+            return Ok(approved)
 
     # ========================================================================
     # STAGE 2: GRAPH GENERATION → EXECUTION → VERIFICATION → PR

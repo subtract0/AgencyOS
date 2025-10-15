@@ -23,31 +23,31 @@ Version: 1.0.0
 Created: 2025-10-15
 """
 
-import pytest
 import time
-from unittest.mock import Mock, patch, MagicMock
 from io import StringIO
+from pathlib import Path
+from unittest.mock import MagicMock, Mock, patch
+
+import pytest
 
 from shared.models.orchestrator_models import (
+    ArchitecturalDecision,
+    ConstitutionalStatus,
+    RiskLevel,
     Tier1Summary,
     Tier2Summary,
     Tier3Reference,
     TieredSpec,
-    ArchitecturalDecision,
-    ConstitutionalStatus,
-    RiskLevel,
 )
 from tools.orchestrator.checkpoint_ui import (
+    CheckpointResult,
     CheckpointUI,
     UserAction,
-    CheckpointResult,
+    countdown_with_interrupt,
     render_tier1,
     render_tier2,
     render_tier3,
-    countdown_with_interrupt,
 )
-from pathlib import Path
-
 
 # ============================================================================
 # TEST FIXTURES
