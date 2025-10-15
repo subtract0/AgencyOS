@@ -446,12 +446,22 @@ def main(
 
     # Memory-aware worker selection (ADR-023 integration)
     # Overrides pytest.ini static config (-n 6) with dynamic adjustment
+    # PYTEST_WORKERS env var overrides memory-aware selection (for CI)
     try:
-        from tools.memory_aware_test_runner import get_safe_worker_count
+        # Check for explicit worker override (CI environment)
+        worker_override = os.environ.get("PYTEST_WORKERS")
+        if worker_override:
+            worker_count = int(worker_override)
+            pytest_args.extend(["-n", str(worker_count)])
+            print(
+                f"✓ pytest-xdist: {worker_count} workers (PYTEST_WORKERS override for CI)"
+            )
+        else:
+            from tools.memory_aware_test_runner import get_safe_worker_count
 
-        worker_count = get_safe_worker_count()
-        pytest_args.extend(["-n", str(worker_count)])
-        print(f"✓ pytest-xdist: {worker_count} workers (memory-aware, overrides pytest.ini)")
+            worker_count = get_safe_worker_count()
+            pytest_args.extend(["-n", str(worker_count)])
+            print(f"✓ pytest-xdist: {worker_count} workers (memory-aware, overrides pytest.ini)")
     except Exception:
         # Fallback to pytest.ini default (-n 6 --dist loadgroup)
         print("✓ pytest-xdist: using pytest.ini defaults (-n 6)")

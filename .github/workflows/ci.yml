@@ -18,7 +18,7 @@ jobs:
   test-suite:
     name: Test Suite (Article II - 100% Verification)
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 30
 
     steps:
       - name: Checkout code
@@ -44,6 +44,7 @@ jobs:
           python run_tests.py --run-all --timeout-multiplier 3.0
         env:
           FORCE_RUN_ALL_TESTS: '1'
+          PYTEST_WORKERS: '4'  # Override memory-aware worker count for CI (faster execution)
 
       - name: Upload test results
         if: always()
