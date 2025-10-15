@@ -29,6 +29,7 @@ Constitutional Compliance:
 
 from datetime import datetime
 from enum import Enum
+from pathlib import Path
 from typing import Any
 
 from pydantic import BaseModel, ConfigDict, Field
@@ -1092,6 +1093,284 @@ class GitValidationError(Exception):
         )
 
 
+# ============================================================================
+# TIERED SPEC REVIEW MODELS (Leap 7 - Two-Stage Workflow Enhancement)
+# ============================================================================
+
+
+class ConstitutionalStatus(str, Enum):
+    """
+    Constitutional compliance status for specifications.
+
+    Used in Tier 1 summaries to indicate whether the specification
+    meets all 5 constitutional articles (I-V).
+    """
+
+    COMPLIANT = "compliant"  # All articles satisfied (✅)
+    NEEDS_REVIEW = "needs_review"  # Missing required sections (⚠️)
+    NON_COMPLIANT = "non_compliant"  # Violations detected (🔴)
+
+
+class RiskLevel(str, Enum):
+    """
+    Risk assessment for feature implementation.
+
+    Used in Tier 1 summaries to communicate implementation risk
+    and guide user approval decisions.
+    """
+
+    LOW = "low"  # Well-understood problem, low complexity (🟢)
+    MEDIUM = "medium"  # Some complexity, moderate risk (🟡)
+    HIGH = "high"  # Novel problem, high complexity, critical system (🔴)
+
+
+class ArchitecturalDecision(BaseModel):
+    """
+    Single architectural decision with rationale and trade-offs.
+
+    Represents one key decision in Tier 2 (e.g., "RSA-256 vs HMAC-SHA256").
+    Includes choice made, reasoning, and acknowledged trade-offs.
+
+    Fields:
+        title: Decision title (e.g., "RSA-256 vs HMAC-SHA256")
+        choice: Selected option (e.g., "RSA-256")
+        rationale: Why this choice was made (1-2 sentences)
+        tradeoffs: Acknowledged trade-offs (1-2 sentences)
+
+    Constitutional Compliance:
+        - Article II: Strict typing (no dict[str, Any])
+        - Article V: Spec-driven (traceable decision rationale)
+
+    Example:
+        >>> decision = ArchitecturalDecision(
+        ...     title="Token Storage",
+        ...     choice="HTTP-only cookies",
+        ...     rationale="XSS protection, automatic transmission",
+        ...     tradeoffs="CSRF risk (mitigated with CSRF tokens)"
+        ... )
+    """
+
+    model_config = ConfigDict(extra="forbid")
+
+    title: str = Field(..., min_length=5, max_length=100, description="Decision title")
+    choice: str = Field(..., min_length=2, max_length=100, description="Selected option")
+    rationale: str = Field(..., min_length=10, max_length=500, description="Reasoning (1-2 sentences)")
+    tradeoffs: str = Field(..., min_length=10, max_length=500, description="Trade-offs (1-2 sentences)")
+
+
+class Tier1Summary(BaseModel):
+    """
+    Tier 1: Executive Summary (<25 lines, 30-second read).
+
+    Provides the minimum information needed for rapid approval:
+    - Mission statement (what are we building?)
+    - Approach (how are we building it?)
+    - Test summary (how is it verified?)
+    - Deliverables (what files will be created?)
+    - Constitutional status (does it comply with Articles I-V?)
+    - Effort estimate (how long will it take?)
+    - Risk level (how risky is this change?)
+
+    Constitutional Compliance:
+        - Article I: Complete context (all required fields present)
+        - Article II: Test summary required (100% verification)
+        - Article V: Mission statement traces to specification
+
+    Example:
+        >>> tier1 = Tier1Summary(
+        ...     mission="Implement JWT authentication with RSA-256 signing",
+        ...     approach="Use PyJWT library with RSA key pair generation",
+        ...     test_summary="47 NECESSARY tests (Normal, Edge, Security)",
+        ...     deliverables=["auth_middleware.py", "jwt_utils.py", "tests/"],
+        ...     constitutional_status=ConstitutionalStatus.COMPLIANT,
+        ...     effort_estimate="6-8 hours",
+        ...     risk_level=RiskLevel.MEDIUM,
+        ...     line_count=20
+        ... )
+    """
+
+    model_config = ConfigDict(extra="forbid")
+
+    mission: str = Field(..., min_length=10, max_length=500, description="Mission statement (1-2 sentences)")
+    approach: str = Field(..., min_length=10, max_length=500, description="Technical approach (1-2 sentences)")
+    test_summary: str = Field(..., min_length=10, max_length=300, description="Test coverage summary")
+    deliverables: list[str] = Field(..., min_items=1, description="List of files to be created/modified")
+    constitutional_status: ConstitutionalStatus = Field(..., description="Articles I-V compliance status")
+    effort_estimate: str = Field(..., min_length=3, max_length=50, description="Time estimate (e.g., '4-6 hours')")
+    risk_level: RiskLevel = Field(..., description="Implementation risk level")
+    line_count: int = Field(..., ge=1, le=25, description="Tier 1 line count (must be ≤25)")
+
+
+class Tier2Summary(BaseModel):
+    """
+    Tier 2: Key Decisions (<50 lines, 2-minute read).
+
+    Provides deeper context on architectural choices:
+    - 4-6 architectural decisions with rationale/trade-offs
+    - Security implications
+    - Dependencies (libraries, services)
+    - Performance considerations (optional)
+
+    Constitutional Compliance:
+        - Article I: Complete context (all decisions documented)
+        - Article V: Decision rationale traces to spec
+
+    Example:
+        >>> tier2 = Tier2Summary(
+        ...     decisions=[
+        ...         ArchitecturalDecision(
+        ...             title="RSA-256 vs HMAC-SHA256",
+        ...             choice="RSA-256",
+        ...             rationale="Public key verification without exposing private key",
+        ...             tradeoffs="Slower signing vs better security model"
+        ...         )
+        ...     ],
+        ...     security_implications="Private key must be stored in HSM",
+        ...     dependencies="PyJWT 2.8+, cryptography 41.0+",
+        ...     line_count=35
+        ... )
+    """
+
+    model_config = ConfigDict(extra="forbid")
+
+    decisions: list[ArchitecturalDecision] = Field(
+        ..., min_items=1, max_items=6, description="4-6 key architectural decisions"
+    )
+    security_implications: str = Field(..., min_length=10, description="Security considerations")
+    dependencies: str = Field(..., min_length=5, description="Required libraries/services")
+    performance_notes: str | None = Field(None, description="Optional performance considerations")
+    line_count: int = Field(..., ge=1, le=50, description="Tier 2 line count (must be ≤50)")
+
+
+class Tier3Reference(BaseModel):
+    """
+    Tier 3: Full Specification Reference.
+
+    Points to the complete specification file with metadata:
+    - File path (absolute or relative)
+    - Line count (total lines in spec)
+    - Section count (number of ## sections)
+
+    Constitutional Compliance:
+        - Article I: Complete context (full spec always available)
+        - Article V: Spec traceability (file path stored)
+
+    Example:
+        >>> tier3 = Tier3Reference(
+        ...     file_path=Path("/tmp/spec_jwt_auth.md"),
+        ...     line_count=250,
+        ...     section_count=8
+        ... )
+    """
+
+    model_config = ConfigDict(extra="forbid")
+
+    file_path: Path = Field(..., description="Path to full specification file")
+    line_count: int = Field(..., ge=1, description="Total lines in specification")
+    section_count: int = Field(..., ge=1, description="Number of sections (## headings)")
+
+
+class TieredSpec(BaseModel):
+    """
+    Complete tiered specification (Tier 1 + Tier 2 + Tier 3).
+
+    Combines all three tiers for progressive disclosure UI:
+    - Tier 1: Show immediately (30-second read)
+    - Tier 2: Show if user requests more detail (2-minute read)
+    - Tier 3: Show if user wants full spec (interactive view)
+
+    Constitutional Compliance:
+        - Article I: Complete context (all tiers present)
+        - Article II: Test summary in Tier 1 (verification required)
+        - Article V: Spec file in Tier 3 (traceability)
+
+    Example:
+        >>> tiered_spec = TieredSpec(
+        ...     tier1=tier1_summary,
+        ...     tier2=tier2_summary,
+        ...     tier3=tier3_reference
+        ... )
+    """
+
+    model_config = ConfigDict(extra="forbid")
+
+    tier1: Tier1Summary = Field(..., description="Executive summary (<25 lines)")
+    tier2: Tier2Summary = Field(..., description="Key decisions (<50 lines)")
+    tier3: Tier3Reference = Field(..., description="Full spec reference")
+
+
+class UserAction(str, Enum):
+    """
+    User action at checkpoint (keyboard shortcuts).
+
+    Used by CheckpointUI to track which action user selected:
+    - APPROVE: Proceed with implementation (press 'A')
+    - REVISE: Request specification changes (press 'R')
+    - VIEW: View full spec (press 'V', then re-prompt)
+    - QUIT: Cancel orchestration (press 'Q')
+    """
+
+    APPROVE = "approve"
+    REVISE = "revise"
+    VIEW = "view"
+    QUIT = "quit"
+
+
+class CheckpointResult(BaseModel):
+    """
+    Result of checkpoint interaction.
+
+    Tracks user's decision and which tier they viewed before deciding:
+    - action: What user chose (APPROVE/REVISE/VIEW/QUIT)
+    - tier_viewed: Which tier was last displayed (1/2/3)
+    - timestamp: When decision was made
+
+    Constitutional Compliance:
+        - Article I: Complete context (tier_viewed tracked)
+        - Article V: Decision trace (timestamp stored)
+
+    Example:
+        >>> result = CheckpointResult(
+        ...     action=UserAction.APPROVE,
+        ...     tier_viewed=1,  # Approved after reading Tier 1 only
+        ...     timestamp=datetime.now(UTC)
+        ... )
+    """
+
+    model_config = ConfigDict(extra="forbid")
+
+    action: UserAction = Field(..., description="User action (APPROVE/REVISE/VIEW/QUIT)")
+    tier_viewed: int = Field(..., ge=1, le=3, description="Last tier viewed before decision (1/2/3)")
+    timestamp: datetime = Field(
+        default_factory=lambda: datetime.now(),
+        description="Decision timestamp"
+    )
+
+
+class TierGenerationError(BaseModel):
+    """
+    Error during tier generation with recovery hints.
+
+    Used when spec_tier_generator fails to parse specification:
+    - reason: Human-readable error message
+    - file_path: Spec file that caused error
+    - recovery_hint: Suggested fix
+
+    Example:
+        >>> error = TierGenerationError(
+        ...     reason="Specification file is empty",
+        ...     file_path=Path("/tmp/empty_spec.md"),
+        ...     recovery_hint="Add Executive Summary section to spec"
+        ... )
+    """
+
+    model_config = ConfigDict(extra="forbid")
+
+    reason: str = Field(..., min_length=10, description="Error reason")
+    file_path: Path | None = Field(None, description="Spec file that caused error")
+    recovery_hint: str | None = Field(None, description="Suggested fix")
+
+
 __all__ = [
     "FallbackStrategy",
     "FallbackResult",
@@ -1117,4 +1396,15 @@ __all__ = [
     "ExecutionContextInput",
     "HealthCheckResponse",
     "GitHubAPIResponse",
+    # Tiered Spec Review Models (Leap 7)
+    "ConstitutionalStatus",
+    "RiskLevel",
+    "ArchitecturalDecision",
+    "Tier1Summary",
+    "Tier2Summary",
+    "Tier3Reference",
+    "TieredSpec",
+    "UserAction",
+    "CheckpointResult",
+    "TierGenerationError",
 ]
