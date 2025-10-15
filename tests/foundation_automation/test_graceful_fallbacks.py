@@ -242,7 +242,9 @@ async def test_github_api_rate_limit_exponential_backoff(
         if attempt_count < 3:
             raise Exception("HTTP 429: API rate limit exceeded")
         else:
-            return GitHubAPIResponse(status="success", pr_url="https://github.com/org/repo/pull/123")
+            return GitHubAPIResponse(
+                status="success", pr_url="https://github.com/org/repo/pull/123"
+            )
 
     # Act
     start_time = time.time()
