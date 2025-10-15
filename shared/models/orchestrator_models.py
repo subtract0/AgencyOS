@@ -257,11 +257,9 @@ class TestGateResult(BaseModel):
         ...     failed_tests=[]
         ... )
         >>> result.pass_rate == 1.0  # Required for PR creation
-        True
-
-    Constitutional Compliance:
-        - Article II: 100% verification and stability (no merge without green tests)
     """
+
+    __test__ = False  # Tell pytest this is not a test class
 
     model_config = ConfigDict(extra="forbid")
 
@@ -826,6 +824,8 @@ class TestFailure(BaseModel):
         ... )
     """
 
+    __test__ = False  # Tell pytest this is not a test class
+
     model_config = ConfigDict(extra="forbid")
 
     test: str = Field(..., min_length=1, description="Test function name")
@@ -861,6 +861,8 @@ class TestResultsInput(BaseModel):
         ...     failures=[]
         ... )
     """
+
+    __test__ = False  # Tell pytest this is not a test class
 
     model_config = ConfigDict(extra="forbid")
 

@@ -453,9 +453,7 @@ def main(
         if worker_override:
             worker_count = int(worker_override)
             pytest_args.extend(["-n", str(worker_count)])
-            print(
-                f"✓ pytest-xdist: {worker_count} workers (PYTEST_WORKERS override for CI)"
-            )
+            print(f"✓ pytest-xdist: {worker_count} workers (PYTEST_WORKERS override for CI)")
         else:
             from tools.memory_aware_test_runner import get_safe_worker_count
 

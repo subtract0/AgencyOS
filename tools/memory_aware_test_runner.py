@@ -25,6 +25,8 @@ from tools.ollama_health_check import check_ollama_health
 class TestExecutionConfig(BaseModel):
     """Configuration for memory-aware test execution."""
 
+    __test__ = False  # Tell pytest this is not a test class
+
     worker_count: int = Field(ge=1, le=10)
     memory_budget_gb: int = Field(ge=0)
     local_model_active: bool
