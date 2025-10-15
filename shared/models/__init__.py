@@ -13,7 +13,14 @@ from .dashboard import (
     DashboardSummary,
     SessionSummary,
 )
-from .ensemble_model import EnsembleModel
+
+# Optional sklearn-dependent imports (Leap 5 ML routing)
+try:
+    from .ensemble_model import EnsembleModel
+except ImportError:
+    # sklearn not installed - ML routing features unavailable
+    EnsembleModel = None  # type: ignore
+
 from .extracted_metadata_features import ExtractedMetadataFeatures
 from .kanban import (
     CardStatus,
