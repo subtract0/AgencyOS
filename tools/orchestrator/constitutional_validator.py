@@ -978,7 +978,11 @@ def enforce_article_iii_no_bypass(
     This is a placeholder implementation for test compatibility.
     """
     detector = ArticleIIIBypassDetector()
-    cli_flags = execution_context.get("flags", []) if isinstance(execution_context, dict) else execution_context.flags
+    cli_flags = (
+        execution_context.get("flags", [])
+        if isinstance(execution_context, dict)
+        else execution_context.flags
+    )
     env_vars = {k: v for k, v in os.environ.items() if k in detector.forbidden_env_vars}
 
     result = detector.detect_bypass_attempt(cli_flags, env_vars)

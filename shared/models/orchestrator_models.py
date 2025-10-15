@@ -585,9 +585,7 @@ class BacklogTask(BaseModel):
     - Article III: Field validation enforced (priority 1-5)
     """
 
-    priority: int = Field(
-        ..., ge=1, le=5, description="Task priority (1=highest, 5=lowest)"
-    )
+    priority: int = Field(..., ge=1, le=5, description="Task priority (1=highest, 5=lowest)")
     status: TaskStatus = Field(..., description="Current task status in lifecycle")
     description: str = Field(
         ..., min_length=1, description="Human-readable task description from markdown"

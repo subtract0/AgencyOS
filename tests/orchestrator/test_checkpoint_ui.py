@@ -218,10 +218,12 @@ def test_normal_user_approves_at_tier1(sample_tiered_spec):
     ui = CheckpointUI(timeout_seconds=30)
 
     # Act
-    with patch("tools.orchestrator.checkpoint_ui.select_with_timeout") as mock_select, \
-         patch("tools.orchestrator.checkpoint_ui.get_user_input") as mock_input:
-        mock_select.return_value = True   # Input available on first check
-        mock_input.return_value = "a"     # User approves
+    with (
+        patch("tools.orchestrator.checkpoint_ui.select_with_timeout") as mock_select,
+        patch("tools.orchestrator.checkpoint_ui.get_user_input") as mock_input,
+    ):
+        mock_select.return_value = True  # Input available on first check
+        mock_input.return_value = "a"  # User approves
 
         result = ui.present_checkpoint(sample_tiered_spec)
 
@@ -245,11 +247,13 @@ def test_edge_interrupt_countdown_immediately():
     timeout_seconds = 30
 
     # Act
-    with patch("tools.orchestrator.checkpoint_ui.select_with_timeout") as mock_select, \
-         patch("tools.orchestrator.checkpoint_ui.get_user_input") as mock_input:
+    with (
+        patch("tools.orchestrator.checkpoint_ui.select_with_timeout") as mock_select,
+        patch("tools.orchestrator.checkpoint_ui.get_user_input") as mock_input,
+    ):
         # Simulate immediate user input available
         mock_select.return_value = True  # Input available immediately
-        mock_input.return_value = "r"    # User chooses revise
+        mock_input.return_value = "r"  # User chooses revise
 
         start = time.time()
         result = countdown_with_interrupt(timeout_seconds, default_action=UserAction.APPROVE)
@@ -289,9 +293,11 @@ def test_edge_view_tier3_then_approve(sample_tiered_spec):
     ui = CheckpointUI(timeout_seconds=30)
 
     # Act
-    with patch("tools.orchestrator.checkpoint_ui.select_with_timeout") as mock_select, \
-         patch("tools.orchestrator.checkpoint_ui.get_user_input") as mock_input:
-        mock_select.return_value = True   # Input available
+    with (
+        patch("tools.orchestrator.checkpoint_ui.select_with_timeout") as mock_select,
+        patch("tools.orchestrator.checkpoint_ui.get_user_input") as mock_input,
+    ):
+        mock_select.return_value = True  # Input available
         # User flow: interrupt countdown -> V (view tier2) -> V (view tier3) -> A (approve)
         mock_input.side_effect = ["v", "v", "a"]
 
@@ -339,7 +345,9 @@ def test_security_escape_sequences_in_tier_content(sample_tiered_spec):
 
     # Assert
     # User-injected escape sequences should be stripped
-    assert "\x1b[31m" not in rendered or "RED TEXT" in rendered  # Either stripped or visible as text
+    assert (
+        "\x1b[31m" not in rendered or "RED TEXT" in rendered
+    )  # Either stripped or visible as text
     assert "\x1b]0;" not in rendered
     assert "\x1b[2J" not in rendered
 
@@ -360,9 +368,11 @@ def test_specification_shortcuts_displayed(sample_tiered_spec):
 
     # Act
     with patch("builtins.print") as mock_print:
-        with patch("tools.orchestrator.checkpoint_ui.select_with_timeout") as mock_select, \
-             patch("tools.orchestrator.checkpoint_ui.get_user_input") as mock_input:
-            mock_select.return_value = True   # Input available
+        with (
+            patch("tools.orchestrator.checkpoint_ui.select_with_timeout") as mock_select,
+            patch("tools.orchestrator.checkpoint_ui.get_user_input") as mock_input,
+        ):
+            mock_select.return_value = True  # Input available
             mock_input.return_value = "a"
 
             ui.present_checkpoint(sample_tiered_spec)
@@ -419,9 +429,11 @@ def test_compliance_all_tiers_available_before_approval(sample_tiered_spec):
     ui = CheckpointUI(timeout_seconds=30)
 
     # Act
-    with patch("tools.orchestrator.checkpoint_ui.select_with_timeout") as mock_select, \
-         patch("tools.orchestrator.checkpoint_ui.get_user_input") as mock_input:
-        mock_select.return_value = True   # Input available
+    with (
+        patch("tools.orchestrator.checkpoint_ui.select_with_timeout") as mock_select,
+        patch("tools.orchestrator.checkpoint_ui.get_user_input") as mock_input,
+    ):
+        mock_select.return_value = True  # Input available
         mock_input.return_value = "a"
 
         result = ui.present_checkpoint(sample_tiered_spec)

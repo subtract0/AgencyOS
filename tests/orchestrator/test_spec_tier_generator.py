@@ -118,6 +118,7 @@ Medium (authentication is critical, but well-understood problem)
 
     # Act
     import time
+
     start = time.time()
     result = generator.generate_tiered_spec(spec_path)
     duration = time.time() - start
@@ -128,7 +129,10 @@ Medium (authentication is critical, but well-understood problem)
     tiered_spec = result.unwrap()
 
     # Tier 1 validation
-    assert tiered_spec.tier1.mission == "Implement JWT authentication with RSA-256 signing for secure API access."
+    assert (
+        tiered_spec.tier1.mission
+        == "Implement JWT authentication with RSA-256 signing for secure API access."
+    )
     assert "RSA-256" in tiered_spec.tier1.approach
     assert tiered_spec.tier1.test_summary is not None
     assert len(tiered_spec.tier1.deliverables) > 0
@@ -318,7 +322,11 @@ def test_edge_very_long_spec_file():
     spec_content = "# Feature Specification: Large Feature\n\n"
     spec_content += "## Executive Summary\nA very complex feature.\n\n"
     spec_content += "## Goals\n" + "\n".join([f"- Goal {i}" for i in range(500)]) + "\n\n"
-    spec_content += "## Acceptance Criteria\n" + "\n".join([f"{i}. Criterion {i}" for i in range(1000)]) + "\n\n"
+    spec_content += (
+        "## Acceptance Criteria\n"
+        + "\n".join([f"{i}. Criterion {i}" for i in range(1000)])
+        + "\n\n"
+    )
     spec_content += "## Detailed Implementation\n" + ("Implementation details.\n" * 1000)
 
     spec_path = Path("/tmp/test_spec_large.md")
@@ -417,7 +425,10 @@ def test_specification_tier1_under_25_lines():
     Acceptance Criterion: User can approve in 30 seconds (requires <25 lines)
     """
     # Arrange
-    spec_content = "# Feature\n\n## Executive Summary\nImplement complex feature with many requirements.\n" + ("Additional detail line.\n" * 30)
+    spec_content = (
+        "# Feature\n\n## Executive Summary\nImplement complex feature with many requirements.\n"
+        + ("Additional detail line.\n" * 30)
+    )
     spec_path = Path("/tmp/test_spec_tier1_limit.md")
     spec_path.write_text(spec_content)
 
@@ -447,7 +458,9 @@ def test_specification_tier2_under_50_lines():
 
 ## Architectural Decisions
 
-""" + "\n\n".join([f"### Decision {i}\nContent {i}\nRationale {i}\nTrade-off {i}" for i in range(20)])
+""" + "\n\n".join(
+        [f"### Decision {i}\nContent {i}\nRationale {i}\nTrade-off {i}" for i in range(20)]
+    )
 
     spec_path = Path("/tmp/test_spec_tier2_limit.md")
     spec_path.write_text(spec_content)

@@ -207,10 +207,16 @@ def parse_spec_structure(content: str) -> dict[str, Any]:
             structure["executive_summary"] = "No executive summary found"
 
     # Extract Goals
-    goals_match = re.search(r"##\s+Goals?\s*\n\s*(.+?)(?=\n##|\Z)", content, re.DOTALL | re.IGNORECASE)
+    goals_match = re.search(
+        r"##\s+Goals?\s*\n\s*(.+?)(?=\n##|\Z)", content, re.DOTALL | re.IGNORECASE
+    )
     if goals_match:
         goals_text = goals_match.group(1).strip()
-        structure["goals"] = [line.strip("- ").strip() for line in goals_text.splitlines() if line.strip().startswith("-")]
+        structure["goals"] = [
+            line.strip("- ").strip()
+            for line in goals_text.splitlines()
+            if line.strip().startswith("-")
+        ]
     else:
         structure["goals"] = []
 
@@ -253,7 +259,9 @@ def parse_spec_structure(content: str) -> dict[str, Any]:
         structure["test_plan"] = test_match.group(1).strip()
     else:
         # Fallback: Look for test mention in acceptance criteria
-        structure["test_plan"] = f"{len(structure.get('acceptance_criteria', []))} acceptance criteria defined"
+        structure["test_plan"] = (
+            f"{len(structure.get('acceptance_criteria', []))} acceptance criteria defined"
+        )
 
     # Extract Architectural Decisions
     decisions_match = re.findall(
@@ -311,7 +319,9 @@ def parse_spec_structure(content: str) -> dict[str, Any]:
     if effort_match:
         effort_text = effort_match.group(1).strip().split("\n")[0]  # First line only
         # Extract just the time estimate (e.g., "6-8 hours" from "6-8 hours (details)")
-        time_pattern = re.search(r"(\d+[-–]\d+\s+(hours?|days?|weeks?))", effort_text, re.IGNORECASE)
+        time_pattern = re.search(
+            r"(\d+[-–]\d+\s+(hours?|days?|weeks?))", effort_text, re.IGNORECASE
+        )
         if time_pattern:
             structure["effort"] = time_pattern.group(1)
         else:
@@ -340,7 +350,10 @@ def parse_spec_structure(content: str) -> dict[str, Any]:
             structure["risk"] = "medium"
     else:
         # Infer risk from keywords
-        if any(keyword in content.lower() for keyword in ["critical", "security", "authentication", "encryption"]):
+        if any(
+            keyword in content.lower()
+            for keyword in ["critical", "security", "authentication", "encryption"]
+        ):
             structure["risk"] = "medium"
         else:
             structure["risk"] = "low"
@@ -360,7 +373,9 @@ def parse_spec_structure(content: str) -> dict[str, Any]:
         ]
     else:
         # Infer from file mentions in content (e.g., `file.py`, `path/to/file.ts`)
-        file_matches = re.findall(r"`([a-zA-Z0-9_/.-]+\.(?:py|ts|tsx|js|jsx|md|yml|yaml))`", content)
+        file_matches = re.findall(
+            r"`([a-zA-Z0-9_/.-]+\.(?:py|ts|tsx|js|jsx|md|yml|yaml))`", content
+        )
         structure["deliverables"] = list(set(file_matches))[:5]  # Max 5 files
 
     if not structure["deliverables"]:
@@ -369,7 +384,10 @@ def parse_spec_structure(content: str) -> dict[str, Any]:
     # Constitutional compliance check
     has_goals = len(structure.get("goals", [])) > 0
     has_criteria = len(structure.get("acceptance_criteria", [])) > 0
-    has_tests = "test" in structure.get("test_plan", "").lower() or len(structure.get("acceptance_criteria", [])) > 0
+    has_tests = (
+        "test" in structure.get("test_plan", "").lower()
+        or len(structure.get("acceptance_criteria", [])) > 0
+    )
 
     if has_goals and has_criteria and has_tests:
         structure["constitutional_compliance"] = True
@@ -414,7 +432,9 @@ def extract_tier1_summary(structure: dict[str, Any]) -> Tier1Summary:
     # Test summary
     test_plan = structure.get("test_plan", "")
     test_criteria_count = len(structure.get("acceptance_criteria", []))
-    test_summary = test_plan if test_plan else f"{test_criteria_count} acceptance criteria to verify"
+    test_summary = (
+        test_plan if test_plan else f"{test_criteria_count} acceptance criteria to verify"
+    )
 
     # Deliverables
     deliverables = structure.get("deliverables", ["Implementation files"])
@@ -432,7 +452,11 @@ def extract_tier1_summary(structure: dict[str, Any]) -> Tier1Summary:
 
     # Risk level
     risk_str = structure.get("risk", "low")
-    risk_level = RiskLevel.LOW if risk_str == "low" else (RiskLevel.HIGH if risk_str == "high" else RiskLevel.MEDIUM)
+    risk_level = (
+        RiskLevel.LOW
+        if risk_str == "low"
+        else (RiskLevel.HIGH if risk_str == "high" else RiskLevel.MEDIUM)
+    )
 
     # Calculate line count (estimate: ~4 lines per field)
     line_count = min(7 + len(deliverables), 25)  # 7 fields + deliverables, capped at 25
@@ -501,7 +525,9 @@ def extract_tier2_decisions(structure: dict[str, Any]) -> Tier2Summary:
     # Dependencies (handle both string and list)
     dependencies_raw = structure.get("dependencies", "No dependencies specified")
     if isinstance(dependencies_raw, list):
-        dependencies = ", ".join(dependencies_raw) if dependencies_raw else "No dependencies specified"
+        dependencies = (
+            ", ".join(dependencies_raw) if dependencies_raw else "No dependencies specified"
+        )
     else:
         dependencies = dependencies_raw
 

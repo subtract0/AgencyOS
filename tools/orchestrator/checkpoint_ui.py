@@ -423,7 +423,9 @@ def render_tier3(tier3: Tier3Reference) -> str:
     output.append("├" + "─" * 78 + "┤")
     output.append("│" + " " * 78 + "│")
     output.append("│ " + f"📁 FILE: {file_path_str[:70]}".ljust(77) + "│")
-    output.append("│ " + f"📏 SIZE: {tier3.line_count} lines, {tier3.section_count} sections".ljust(77) + "│")
+    output.append(
+        "│ " + f"📏 SIZE: {tier3.line_count} lines, {tier3.section_count} sections".ljust(77) + "│"
+    )
     output.append("│" + " " * 78 + "│")
     output.append("│ " + f"🔍 View full spec: cat {file_path_str[:58]}".ljust(77) + "│")
     output.append("└" + "─" * 78 + "┘")
@@ -477,7 +479,9 @@ def countdown_with_interrupt(timeout_seconds: int, default_action: UserAction) -
                 return parse_user_action(user_input)
 
         # Timeout reached - return default action
-        print(f"\n\n✅ Auto-approve timeout ({timeout_seconds}s) - Defaulting to {default_action.value.upper()}")
+        print(
+            f"\n\n✅ Auto-approve timeout ({timeout_seconds}s) - Defaulting to {default_action.value.upper()}"
+        )
         return default_action
 
     except KeyboardInterrupt:
