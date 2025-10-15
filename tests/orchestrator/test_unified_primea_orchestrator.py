@@ -84,7 +84,7 @@ def orchestrator(agent_context, tmp_path):
 
 @pytest.fixture
 def simple_task_graph():
-    """Create simple task graph for testing."""
+    """Create simple task graph for testing (TDD-compliant: Test BEFORE Code)."""
     return TaskGraph(
         mission="Test Mission: Simple graph",
         phases=[
@@ -93,26 +93,26 @@ def simple_task_graph():
                 title="Implementation",
                 tasks=[
                     Task(
-                        id="code_task",
-                        title="Code task",
-                        type=TaskType.CODE,
-                        tier=TaskTier.TIER_2,
-                        agent="coder",
-                        description="Implement feature",
-                        dependencies=[],
-                        acceptance_criteria=["Feature implemented"],
-                        estimated_tokens=1000,
-                    ),
-                    Task(
                         id="test_task",
                         title="Test task",
                         type=TaskType.TEST,
                         tier=TaskTier.TIER_2,
                         agent="test_generator",
-                        description="Test feature",
-                        dependencies=["code_task"],
-                        verification_target="code_task",
+                        description="Test feature (RED phase)",
+                        dependencies=[],  # Test has no dependencies (Article II)
+                        verification_target="code_task",  # Points to future Code task
                         estimated_tokens=500,
+                    ),
+                    Task(
+                        id="code_task",
+                        title="Code task",
+                        type=TaskType.CODE,
+                        tier=TaskTier.TIER_2,
+                        agent="coder",
+                        description="Implement feature (GREEN phase)",
+                        dependencies=["test_task"],  # Code depends on Test (TDD)
+                        acceptance_criteria=["Feature implemented"],
+                        estimated_tokens=1000,
                     ),
                 ],
             )
@@ -122,7 +122,7 @@ def simple_task_graph():
 
 @pytest.fixture
 def circular_task_graph():
-    """Create task graph with circular dependency for testing."""
+    """Create task graph with circular dependency for testing (TDD-compliant per task, but cycle between tasks)."""
     return TaskGraph(
         mission="Test Mission: Circular graph",
         phases=[
@@ -131,32 +131,23 @@ def circular_task_graph():
                 title="Circular Phase",
                 tasks=[
                     Task(
-                        id="task_a",
-                        title="Task A",
-                        type=TaskType.CODE,
-                        tier=TaskTier.TIER_2,
-                        agent="coder",
-                        description="Task A",
-                        dependencies=["test_b"],  # Circular dependency (depends on test of B)
-                    ),
-                    Task(
                         id="test_a",
                         title="Test A",
                         type=TaskType.TEST,
                         tier=TaskTier.TIER_2,
                         agent="test_generator",
-                        description="Test A",
-                        dependencies=["task_a"],
+                        description="Test A (RED phase)",
+                        dependencies=["task_b"],  # Circular: Test A depends on Code B
                         verification_target="task_a",
                     ),
                     Task(
-                        id="task_b",
-                        title="Task B",
+                        id="task_a",
+                        title="Task A",
                         type=TaskType.CODE,
                         tier=TaskTier.TIER_2,
                         agent="coder",
-                        description="Task B",
-                        dependencies=["test_a"],  # Circular dependency (depends on test of A)
+                        description="Task A (GREEN phase)",
+                        dependencies=["test_a"],  # Code A depends on Test A (TDD)
                     ),
                     Task(
                         id="test_b",
@@ -164,9 +155,18 @@ def circular_task_graph():
                         type=TaskType.TEST,
                         tier=TaskTier.TIER_2,
                         agent="test_generator",
-                        description="Test B",
-                        dependencies=["task_b"],
+                        description="Test B (RED phase)",
+                        dependencies=["task_a"],  # Circular: Test B depends on Code A
                         verification_target="task_b",
+                    ),
+                    Task(
+                        id="task_b",
+                        title="Task B",
+                        type=TaskType.CODE,
+                        tier=TaskTier.TIER_2,
+                        agent="coder",
+                        description="Task B (GREEN phase)",
+                        dependencies=["test_b"],  # Code B depends on Test B (TDD)
                     ),
                 ],
             )
@@ -987,49 +987,49 @@ def test_create_foundation_graph_without_pr(agent_context):
 
 
 def test_create_foundation_graph_phase_0_tasks(orchestrator):
-    """Test Phase 0 includes git workflow setup tasks."""
+    """Test Phase 0 includes git workflow setup tasks (TDD: Test BEFORE Code)."""
     graph = orchestrator._create_foundation_graph("Implement feature X")
 
-    # Phase 0 should have git validation tasks (code + test for Article II)
+    # Phase 0 should have git validation tasks (Test + Code for Article II)
     phase_0 = graph.phases[0]
     assert phase_0.id == "phase_0_setup"
-    assert len(phase_0.tasks) == 2  # Code + Test (Article II requirement)
+    assert len(phase_0.tasks) == 2  # Test + Code (Article II requirement)
 
-    # Code task: git branch verification
-    git_code_task = phase_0.tasks[0]
+    # Test task: verify git branch setup (RED phase - comes FIRST)
+    git_test_task = phase_0.tasks[0]
+    assert git_test_task.id == "test_git_branch"
+    assert git_test_task.type == TaskType.TEST
+    assert git_test_task.verification_target == "verify_git_branch"
+
+    # Code task: git branch verification (GREEN phase - comes SECOND)
+    git_code_task = phase_0.tasks[1]
     assert git_code_task.id == "verify_git_branch"
     assert git_code_task.type == TaskType.CODE
     assert "Branch protection" in git_code_task.description
     assert len(git_code_task.acceptance_criteria) == 3
 
-    # Test task: verify git branch setup
-    git_test_task = phase_0.tasks[1]
-    assert git_test_task.id == "test_git_branch"
-    assert git_test_task.type == TaskType.TEST
-    assert git_test_task.verification_target == "verify_git_branch"
-
 
 def test_create_foundation_graph_dependencies(orchestrator):
-    """Test Phase 0 dependencies are properly set."""
+    """Test Phase 0 dependencies follow TDD pattern (Test BEFORE Code)."""
     graph = orchestrator._create_foundation_graph("Implement feature X")
 
-    # Implementation task should depend on git test (Article II: tests before code)
-    impl_task = next(
-        t for t in graph.all_tasks() if "_code" in t.id and t.id != "verify_git_branch"
-    )
-    assert "test_git_branch" in impl_task.dependencies
-
-    # Implementation test task should depend on implementation code
+    # Implementation test should depend on git CODE (Phase 0 Code task)
     impl_test_task = next(
         t for t in graph.all_tasks() if "_test" in t.id and t.id != "test_git_branch"
     )
-    assert impl_task.id in impl_test_task.dependencies
+    assert "verify_git_branch" in impl_test_task.dependencies
 
-    # If PR creation exists, should depend on implementation test
+    # Implementation CODE should depend on implementation TEST (Article II: TDD)
+    impl_code_task = next(
+        t for t in graph.all_tasks() if "_code" in t.id and t.id != "verify_git_branch"
+    )
+    assert impl_test_task.id in impl_code_task.dependencies
+
+    # If PR creation exists, should depend on implementation CODE
     pr_tasks = [t for t in graph.all_tasks() if t.id == "create_pull_request"]
     if pr_tasks:
         pr_task = pr_tasks[0]
-        assert impl_test_task.id in pr_task.dependencies
+        assert impl_code_task.id in pr_task.dependencies
 
 
 @pytest.mark.asyncio

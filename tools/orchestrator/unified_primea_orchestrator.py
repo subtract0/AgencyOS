@@ -703,11 +703,21 @@ class UnifiedPrimeAOrchestrator:
         return TaskGraph(
             mission=f"Foundation Automation: {intent}",
             phases=[
-                # PHASE 0: Git Workflow Setup (Article III compliance)
+                # PHASE 0: Git Workflow Setup (Article III compliance - TDD: Test BEFORE Code)
                 Phase(
                     id="phase_0_setup",
                     title="Git Workflow Setup",
                     tasks=[
+                        Task(
+                            id="test_git_branch",
+                            title="Test git branch setup",
+                            type=TaskType.TEST,
+                            tier=TaskTier.TIER_2,
+                            agent="test_generator",
+                            description="Verify git branch is not main/master and feature branch exists (RED phase)",
+                            dependencies=[],  # Test has no dependencies (Article II)
+                            verification_target="verify_git_branch",
+                        ),
                         Task(
                             id="verify_git_branch",
                             title="Verify not on main branch",
@@ -717,56 +727,46 @@ class UnifiedPrimeAOrchestrator:
                             description=(
                                 "Check current git branch. If on main/master, create and checkout "
                                 f"feature branch: feat/{task_prefix}. Branch protection prevents "
-                                "direct main commits (Article III)."
+                                "direct main commits (Article III - GREEN phase)."
                             ),
-                            dependencies=[],
+                            dependencies=["test_git_branch"],  # Code depends on Test (TDD)
                             acceptance_criteria=[
                                 "Current branch verified (not main/master)",
                                 "Feature branch created if needed",
                                 "Working on feature branch",
                             ],
                         ),
-                        Task(
-                            id="test_git_branch",
-                            title="Test git branch setup",
-                            type=TaskType.TEST,
-                            tier=TaskTier.TIER_2,
-                            agent="test_generator",
-                            description="Verify git branch is not main/master and feature branch exists",
-                            dependencies=["verify_git_branch"],
-                            verification_target="verify_git_branch",
-                        ),
                     ],
                 ),
-                # PHASE 1: Implementation (placeholder - real planner would expand this)
+                # PHASE 1: Implementation (TDD: Test BEFORE Code - Article II)
                 Phase(
                     id="phase_1_implementation",
                     title="Implementation",
                     tasks=[
-                        Task(
-                            id=f"{task_prefix}_code",
-                            title=f"Implement: {intent}",
-                            type=TaskType.CODE,
-                            tier=TaskTier.TIER_1,  # Complex by default
-                            agent="coder",
-                            description=intent,
-                            dependencies=[
-                                "test_git_branch"
-                            ],  # Depend on test, not code (Article II)
-                            acceptance_criteria=[
-                                "Implementation complete",
-                                "Code follows constitutional patterns",
-                            ],
-                        ),
                         Task(
                             id=f"{task_prefix}_test",
                             title=f"Test: {intent}",
                             type=TaskType.TEST,
                             tier=TaskTier.TIER_2,
                             agent="test_generator",
-                            description=f"Write comprehensive tests for: {intent}",
-                            dependencies=[f"{task_prefix}_code"],
+                            description=f"Write comprehensive tests for: {intent} (RED phase)",
+                            dependencies=["verify_git_branch"],  # Depends on Phase 0 Code task
                             verification_target=f"{task_prefix}_code",
+                        ),
+                        Task(
+                            id=f"{task_prefix}_code",
+                            title=f"Implement: {intent}",
+                            type=TaskType.CODE,
+                            tier=TaskTier.TIER_1,  # Complex by default
+                            agent="coder",
+                            description=f"{intent} (GREEN phase)",
+                            dependencies=[
+                                f"{task_prefix}_test"
+                            ],  # Code depends on Test (Article II)
+                            acceptance_criteria=[
+                                "Implementation complete",
+                                "Code follows constitutional patterns",
+                            ],
                         ),
                     ],
                 ),
@@ -814,7 +814,7 @@ class UnifiedPrimeAOrchestrator:
         )
 
     def _create_stub_graph(self) -> TaskGraph:
-        """Create stub task graph for MVP testing (DEPRECATED - use _create_foundation_graph)."""
+        """Create stub task graph for MVP testing (TDD-compliant: Test BEFORE Code)."""
         from shared.models.task_graph import Phase, TaskGraph
 
         return TaskGraph(
@@ -825,27 +825,27 @@ class UnifiedPrimeAOrchestrator:
                     title="Implementation",
                     tasks=[
                         Task(
-                            id="code_orchestrator",
-                            title="Create unified orchestrator",
-                            type=TaskType.CODE,
-                            tier=TaskTier.TIER_1,
-                            agent="coder",
-                            description="Create tools/orchestrator/unified_primea_orchestrator.py",
-                            dependencies=[],
-                            acceptance_criteria=[
-                                "All STEPS implemented",
-                                "Constitutional compliance validated",
-                            ],
-                        ),
-                        Task(
                             id="test_orchestrator",
                             title="Test unified orchestrator",
                             type=TaskType.TEST,
                             tier=TaskTier.TIER_2,
                             agent="test_generator",
-                            description="Create tests/orchestrator/test_unified_primea_orchestrator.py",
-                            dependencies=["code_orchestrator"],
+                            description="Create tests/orchestrator/test_unified_primea_orchestrator.py (RED phase)",
+                            dependencies=[],  # Test has no dependencies (Article II)
                             verification_target="code_orchestrator",
+                        ),
+                        Task(
+                            id="code_orchestrator",
+                            title="Create unified orchestrator",
+                            type=TaskType.CODE,
+                            tier=TaskTier.TIER_1,
+                            agent="coder",
+                            description="Create tools/orchestrator/unified_primea_orchestrator.py (GREEN phase)",
+                            dependencies=["test_orchestrator"],  # Code depends on Test (TDD)
+                            acceptance_criteria=[
+                                "All STEPS implemented",
+                                "Constitutional compliance validated",
+                            ],
                         ),
                     ],
                 )
