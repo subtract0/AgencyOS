@@ -586,7 +586,7 @@ class BacklogTask(BaseModel):
     """
 
     priority: int = Field(
-        ..., ge=1, description="Task priority (1=highest, higher numbers = lower priority)"
+        ..., ge=1, le=5, description="Task priority (1=highest, 5=lowest)"
     )
     status: TaskStatus = Field(..., description="Current task status in lifecycle")
     description: str = Field(
