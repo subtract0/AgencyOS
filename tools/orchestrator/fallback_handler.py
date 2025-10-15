@@ -34,8 +34,9 @@ Usage:
 import asyncio
 import subprocess
 import time
+from collections.abc import Awaitable, Callable
 from pathlib import Path
-from typing import Any, Awaitable, Callable, TypeVar
+from typing import Any, TypeVar
 
 from shared.agent_context import AgentContext
 from shared.models.orchestrator_models import (
@@ -208,7 +209,7 @@ async def handle_local_model_unavailable(
                 execution_continues=True
             ))
 
-    except (asyncio.TimeoutError, ConnectionError, Exception) as e:
+    except (TimeoutError, ConnectionError, Exception) as e:
         # Health check failed or timed out → route to cloud
         error_type = e.__class__.__name__
         return Ok(FallbackResult(

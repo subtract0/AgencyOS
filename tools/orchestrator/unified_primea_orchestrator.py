@@ -108,7 +108,6 @@ from pydantic import BaseModel, Field
 from shared.agent_context import AgentContext
 from shared.models.orchestrator_models import PrimeAResult
 from shared.models.task_graph import Task, TaskGraph, TaskTier, TaskType
-from tools.todo_write import TodoWrite
 from shared.type_definitions.result import Err, Ok, Result
 from tools.orchestrator.budget_guard import (
     BudgetExceeded,
@@ -686,7 +685,7 @@ class UnifiedPrimeAOrchestrator:
         Returns:
             TaskGraph with complete automation workflow
         """
-        from shared.models.task_graph import Phase, Task, TaskGraph, TaskTier, TaskType
+        from shared.models.task_graph import Phase, TaskGraph
 
         # Generate sanitized task prefix from intent
         task_prefix = intent.lower().replace(" ", "_")[:30]
@@ -797,7 +796,7 @@ class UnifiedPrimeAOrchestrator:
 
     def _create_stub_graph(self) -> TaskGraph:
         """Create stub task graph for MVP testing (DEPRECATED - use _create_foundation_graph)."""
-        from shared.models.task_graph import Phase, Task, TaskGraph, TaskTier, TaskType
+        from shared.models.task_graph import Phase, TaskGraph
 
         return TaskGraph(
             mission="Stub Mission: Wire PrimeA Component Integration",
@@ -1612,8 +1611,8 @@ class UnifiedPrimeAOrchestratorWrapper:
 
     async def _create_pr(self, graph: TaskGraph) -> Result[str, str]:
         """Create PR using gh CLI if in git repository."""
-        import subprocess
         import logging
+        import subprocess
 
         # Check if we're in a git repository
         try:
@@ -1785,6 +1784,7 @@ class UnifiedPrimeAOrchestratorWrapper:
 
                 # Load the graph for PR creation
                 from pathlib import Path
+
                 from shared.models.task_graph import TaskGraph
 
                 try:
@@ -2005,7 +2005,7 @@ class UnifiedPrimeAOrchestratorWrapper:
             Ok(TaskGraph) on success
             Err(error_message) on failure
         """
-        from shared.models.task_graph import Phase, Task, TaskGraph, TaskTier, TaskType
+        from shared.models.task_graph import Phase, TaskGraph
 
         # For tests, create a minimal task graph from intent
         # In production, this would call the planner agent
@@ -2113,7 +2113,7 @@ async def execute_primea_workflow(
     from pathlib import Path
 
     from shared.agent_context import create_agent_context
-    from shared.models.task_graph import Phase, Task, TaskGraph, TaskTier, TaskType
+    from shared.models.task_graph import Phase, TaskGraph
     from tools.orchestrator.backlog_selector import (
         read_backlog_queue,
         select_next_task,

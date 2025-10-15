@@ -624,7 +624,7 @@ async def test_e2e_graph_generation_timeout_error(
         nonlocal retry_count
         retry_count += 1
         if retry_count <= 2:
-            raise asyncio.TimeoutError("Graph generation timeout")
+            raise TimeoutError("Graph generation timeout")
         return Mock(is_ok=lambda: True, unwrap=lambda: Mock(task_graph=simple_task_graph))
 
     # Act

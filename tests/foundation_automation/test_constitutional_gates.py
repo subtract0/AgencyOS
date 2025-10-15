@@ -57,9 +57,9 @@ from shared.type_definitions.result import Err, Ok, Result
 # Tests will fail with ImportError when constitutional_validator.py doesn't exist
 try:
     from tools.orchestrator.constitutional_validator import (
-        ArticleIRetryPolicy,
-        ArticleIITestGate,
         ArticleIIIBypassDetector,
+        ArticleIITestGate,
+        ArticleIRetryPolicy,
         ArticleIVLearningIntegration,
         ArticleVTraceability,
         ConstitutionalValidationError,

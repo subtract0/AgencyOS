@@ -5,7 +5,7 @@ Defines Pydantic models for audio configuration, audio segments,
 transcription results, and related data structures.
 
 Constitutional Compliance:
-- Article II: Strict typing with Pydantic (no Dict[Any, Any])
+- Article II: Strict typing with Pydantic (no untyped dicts)
 - Article VII: Functions <50 lines
 - Clear, descriptive naming
 """

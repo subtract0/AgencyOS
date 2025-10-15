@@ -283,7 +283,7 @@ class CheckpointManager:
 
                 # Read checkpoint file to get checksum (lightweight validation)
                 try:
-                    with open(checkpoint_file, "r") as f:
+                    with open(checkpoint_file) as f:
                         checkpoint_data = json.load(f)
 
                     # Validate checksum is valid hex (64 chars)
@@ -312,7 +312,7 @@ class CheckpointManager:
 
                     return Ok(checkpoint_metadata)
 
-                except (json.JSONDecodeError, IOError) as e:
+                except (OSError, json.JSONDecodeError) as e:
                     logger.warning(f"Cannot read checkpoint {checkpoint_id}: {e}, trying next...")
                     continue
 

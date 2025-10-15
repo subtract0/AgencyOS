@@ -467,7 +467,7 @@ class ScanDocumentation:
                     severity=ViolationSeverity.MEDIUM,
                     file_path=str(file_path.relative_to(self.project_root)),
                     description=f"{file_type} exceeds token budget: {estimated_tokens} tokens (limit: {budget})",
-                    suggested_fix=f"Reduce content or split into multiple files. Consider moving details to separate docs.",
+                    suggested_fix="Reduce content or split into multiple files. Consider moving details to separate docs.",
                     auto_fixable=False,
                 )
         except Exception:

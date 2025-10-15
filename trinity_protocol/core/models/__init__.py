@@ -2,7 +2,7 @@
 Trinity Protocol Core Models - Production-Ready Data Structures
 
 All models in this directory meet production criteria:
-- Strict Pydantic typing (no Dict[Any, Any])
+- Strict Pydantic typing (no untyped dicts)
 - Comprehensive validation
 - Documentation with examples
 - Used by production agents

@@ -28,6 +28,16 @@ Usage:
     result = parser.parse(None, InputMode.AUTO_SELECT)
 """
 
+from .completion_validator import (
+    CompletionValidator,
+    ConstitutionalChecks,
+)
+from .completion_validator import (
+    ValidationError as CompletionValidationError,
+)
+from .completion_validator import (
+    ValidationResults as CompletionValidationResults,
+)
 from .intent_parser import InputMode, Intent, IntentParser
 from .retry_policy import (
     IdempotencyKey,
@@ -56,12 +66,6 @@ from .test_verification_gate import (
     VerificationError,
     VerificationResults,
     verify_tests,
-)
-from .completion_validator import (
-    CompletionValidator,
-    ValidationError as CompletionValidationError,
-    ValidationResults as CompletionValidationResults,
-    ConstitutionalChecks,
 )
 
 __all__ = [

@@ -76,9 +76,10 @@ import os
 import re
 import subprocess
 import time
+from collections.abc import Callable
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Callable, TypeVar
+from typing import Any, TypeVar
 
 from shared.agent_context import AgentContext
 from shared.models.orchestrator_models import (
@@ -337,9 +338,9 @@ class ArticleIITestGate:
                     failure_details.append(f"{test_name}: {error_msg}")
 
             detailed_message = (
-                f"100% test success required (Article II). "
-                f"100% is not negotiable - no exceptions\n\n"
-                f"Failed tests:\n" + "\n".join(f"  - {detail}" for detail in failure_details)
+                "100% test success required (Article II). "
+                "100% is not negotiable - no exceptions\n\n"
+                "Failed tests:\n" + "\n".join(f"  - {detail}" for detail in failure_details)
             )
 
             error = type(
@@ -1009,7 +1010,7 @@ def enforce_article_iii_no_bypass(
                 "audit_logged": True,
                 "gate_failures": [],  # Will be populated by caller if quality gates failed
                 "execution_allowed": False,
-                "__str__": lambda self: f"Article III: No manual override capabilities",
+                "__str__": lambda self: "Article III: No manual override capabilities",
             },
         )()
         return Err(error)

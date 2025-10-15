@@ -25,36 +25,36 @@ NECESSARY Pattern Coverage:
 - Yield: Output validation (computed properties, methods)
 """
 
-import pytest
 from datetime import datetime, timedelta
+
+import pytest
 from pydantic import ValidationError
 
 from shared.models.orchestrator_models import (
-    # Backlog models (PHASE1-001)
-    TaskStatus,
-    BacklogTask,
     BacklogQueue,
-    # Constitutional validation models (PHASE1-002)
-    RetryConfig,
-    TestGateResult,
-    BypassAttempt,
-    LearningQuery,
-    SpecTrace,
+    BacklogTask,
     # Git validation models (PHASE1-003)
     BranchInfo,
-    GitValidationResult,
-    GitValidationError,
+    BypassAttempt,
+    FallbackError,
+    FallbackResult,
     # Fallback/retry models
     FallbackStrategy,
-    FallbackResult,
-    RetryPolicy,
-    FallbackError,
+    GitValidationError,
+    GitValidationResult,
+    LearningQuery,
+    PrimeAResult,
     # PrimeA result models (PHASE1-005)
     PRMetadata,
+    # Constitutional validation models (PHASE1-002)
+    RetryConfig,
+    RetryPolicy,
+    SpecTrace,
     TaskGraphExecution,
-    PrimeAResult,
+    # Backlog models (PHASE1-001)
+    TaskStatus,
+    TestGateResult,
 )
-
 
 # ============================================================================
 # BACKLOG AUTO-SELECTION MODELS (PHASE1-001)
@@ -1055,8 +1055,8 @@ class TestImportPaths:
             GitValidationError,
             GitValidationResult,
             LearningQuery,
-            PRMetadata,
             PrimeAResult,
+            PRMetadata,
             RetryConfig,
             RetryPolicy,
             SpecTrace,

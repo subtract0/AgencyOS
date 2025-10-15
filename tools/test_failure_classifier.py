@@ -404,13 +404,13 @@ if __name__ == "__main__":
         json.dump(catalog.model_dump(), f, indent=2)
 
     print(f"✅ Test Failure Catalog created: {output_path}")
-    print(f"\n📊 Summary:")
+    print("\n📊 Summary:")
     print(f"  Total tests: {catalog.total_tests}")
     print(f"  Passed: {catalog.passed}")
     print(f"  Failed: {catalog.failed}")
     print(f"  Errors: {catalog.errors}")
     print(f"  Skipped: {catalog.skipped}")
-    print(f"\n🔍 Failures by complexity:")
+    print("\n🔍 Failures by complexity:")
 
     complexity_counts = {}
     for failure in catalog.failures:

@@ -53,7 +53,6 @@ from tools.orchestrator.backlog_selector import (
     unlock_task,
 )
 
-
 # ============================================================================
 # NECESSARY NORMAL: Valid backlog with Ready tasks
 # ============================================================================

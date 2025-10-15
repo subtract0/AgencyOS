@@ -10,8 +10,9 @@ Constitutional Compliance:
 Test Pattern: NECESSARY (Normal, Edge, Security, Spec, Accessibility, Resilience, Year-round)
 """
 
-import pytest
 from pathlib import Path
+
+import pytest
 
 from shared.type_definitions.result import Err, Ok
 from tools.orchestrator.completion_validator import (
@@ -19,7 +20,6 @@ from tools.orchestrator.completion_validator import (
     ValidationError,
     ValidationResults,
 )
-
 
 # ===== NORMAL CASES =====
 
