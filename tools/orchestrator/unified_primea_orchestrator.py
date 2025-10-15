@@ -1722,7 +1722,7 @@ class UnifiedPrimeAOrchestratorWrapper:
         graph_file: str | None = None,
         visualize: bool | None = None,
         **kwargs: Any,
-    ) -> Result[PrimeAResult, str]:
+    ) -> Result[PrimeAResult, ExecutionError]:
         """
         Execute task graph with configured flags.
 
@@ -1742,7 +1742,7 @@ class UnifiedPrimeAOrchestratorWrapper:
 
         Returns:
             Ok(PrimeAResult) on success
-            Err(error_message) on failure
+            Err(ExecutionError) on failure
         """
         # Use provided visualize flag or fall back to instance setting
         viz_flag = visualize if visualize is not None else self.visualize
@@ -1750,7 +1750,12 @@ class UnifiedPrimeAOrchestratorWrapper:
         # STEP 1: Validate git workflow (Article III)
         git_result = await self._validate_git()
         if git_result.is_err():
-            return Err(git_result.unwrap_err())
+            return Err(ExecutionError(
+                step="step_0_todo_init",
+                reason="Git validation failed",
+                details=git_result.unwrap_err(),
+                suggestions=["Ensure you're in a git repository", "Check git configuration"]
+            ))
 
         # STEP 2: Load or generate task graph
         if graph is None:
@@ -1767,7 +1772,14 @@ class UnifiedPrimeAOrchestratorWrapper:
                     visualize=viz_flag,
                 )
                 if result.is_err():
-                    return result
+                    # Convert string error to ExecutionError
+                    error_str = result.unwrap_err()
+                    return Err(ExecutionError(
+                        step="step_2_parse_input",
+                        reason="Failed to load graph file",
+                        details=error_str,
+                        suggestions=["Check file path exists", "Validate JSON syntax"]
+                    ))
 
                 exec_result = result.unwrap()
 
@@ -1780,7 +1792,12 @@ class UnifiedPrimeAOrchestratorWrapper:
                     graph_json = graph_path.read_text()
                     graph = TaskGraph.model_validate_json(graph_json)
                 except Exception as e:
-                    return Err(f"Failed to load graph: {e}")
+                    return Err(ExecutionError(
+                        step="step_2_parse_input",
+                        reason="Failed to load graph file",
+                        details=str(e),
+                        suggestions=["Check graph file format matches TaskGraph schema", "Validate JSON syntax"]
+                    ))
             else:
                 # No graph or graph_file provided
                 # Create minimal dummy graph for testing scenarios where execution is mocked
@@ -1821,7 +1838,12 @@ class UnifiedPrimeAOrchestratorWrapper:
         # STEP 3: Execute DAG
         dag_result = await self._execute_dag(graph)
         if dag_result.is_err():
-            return Err(dag_result.unwrap_err())
+            return Err(ExecutionError(
+                step="step_5_execute_dag",
+                reason="DAG execution failed",
+                details=dag_result.unwrap_err(),
+                suggestions=["Check task dependencies", "Review agent logs for errors"]
+            ))
 
         # STEP 4: Create PR if flag enabled
         pr_url = None
@@ -1834,12 +1856,22 @@ class UnifiedPrimeAOrchestratorWrapper:
         # STEP 5: Validate completion
         completion_result = await self._validate_completion(graph)
         if completion_result.is_err():
-            return Err(completion_result.unwrap_err())
+            return Err(ExecutionError(
+                step="step_6.5_completion_validation",
+                reason="Completion validation failed",
+                details=completion_result.unwrap_err(),
+                suggestions=["Check all tasks completed", "Review TodoWrite status"]
+            ))
 
         # STEP 6: Generate report
         report_result = await self._generate_report(graph)
         if report_result.is_err():
-            return Err(report_result.unwrap_err())
+            return Err(ExecutionError(
+                step="step_7_report",
+                reason="Report generation failed",
+                details=report_result.unwrap_err(),
+                suggestions=["Check file system permissions", "Review report template"]
+            ))
 
         report_content = report_result.unwrap()
 
@@ -1858,6 +1890,7 @@ class UnifiedPrimeAOrchestratorWrapper:
             selected_from_backlog=False,
             backlog_priority=None,
             constitutional_compliant=True,
+            report_path=report_content if report_content else None,  # Include report content/path
         )
 
         return Ok(result)
@@ -1866,8 +1899,10 @@ class UnifiedPrimeAOrchestratorWrapper:
         self,
         intent: str | None = None,
         graph: TaskGraph | None = None,
-        flags: dict[str, Any] | None = None
-    ) -> Result[PrimeAResult, str]:
+        flags: dict[str, Any] | None = None,
+        plan_only: bool = False,
+        auto_pr: bool | None = None,
+    ) -> Result[PrimeAResult, ExecutionError]:
         """
         Execute workflow with dynamic flags.
 
@@ -1875,16 +1910,62 @@ class UnifiedPrimeAOrchestratorWrapper:
             intent: Natural language intent
             graph: Task graph (if provided, intent ignored)
             flags: Dynamic flags (overrides constructor settings)
+            plan_only: Generate plan without execution (--plan-only flag)
+            auto_pr: Create PR automatically (--auto-pr flag)
 
         Returns:
             Ok(PrimeAResult) on success
-            Err(error_message) on failure
+            Err(ExecutionError) on failure
         """
         if flags is None:
             flags = {}
 
+        # Detect conflicting flags
+        if plan_only and (auto_pr or flags.get("auto_pr", False)):
+            return Err(ExecutionError(
+                step="step_2_parse_input",
+                reason="Conflicting flags detected",
+                details="Cannot use --plan-only with --auto-pr (plan-only mode does not execute tasks)",
+                suggestions=[
+                    "Use --plan-only alone to generate plan",
+                    "Use --auto-pr without --plan-only to execute and create PR"
+                ]
+            ))
+
+        # If plan_only mode, use plan_only_mode() method
+        if plan_only:
+            if intent is None:
+                return Err(ExecutionError(
+                    step="step_2_parse_input",
+                    reason="Intent required for plan-only mode",
+                    details="--plan-only requires natural language intent to generate task graph",
+                    suggestions=["Provide intent: /primeA 'Build feature X' --plan-only"]
+                ))
+
+            plan_result = await self.plan_only_mode(intent)
+            if plan_result.is_err():
+                return Err(ExecutionError(
+                    step="step_2_parse_input",
+                    reason="Plan generation failed",
+                    details=plan_result.unwrap_err(),
+                    suggestions=["Check intent is clear and specific", "Review planner agent logs"]
+                ))
+
+            # Return result with plan_only status
+            task_graph = plan_result.unwrap()
+            from shared.models.orchestrator_models import PrimeAResult
+
+            return Ok(PrimeAResult(
+                mission=task_graph.mission,
+                status="plan_only",
+                pr_url=None,
+                tasks_completed=0,
+                tasks_total=len(task_graph.all_tasks()),
+                report_path=None,
+            ))
+
         # Merge flags with instance settings
-        auto_pr = flags.get("auto_pr", self.enable_pr_creation)
+        use_auto_pr = auto_pr if auto_pr is not None else flags.get("auto_pr", self.enable_pr_creation)
         enable_todos = flags.get("enable_todos", self.enable_todos)
         visualize = flags.get("visualize", self.visualize)
 
@@ -1893,11 +1974,20 @@ class UnifiedPrimeAOrchestratorWrapper:
             intent=intent,
             context=self.context,
             repo_path=self.repo_path,
-            auto_pr=auto_pr,
+            auto_pr=use_auto_pr,
             enable_todos=enable_todos,
             graph=graph,
             visualize=visualize,
         )
+
+        if result.is_err():
+            # Convert string error to ExecutionError
+            return Err(ExecutionError(
+                step="step_5_execute_dag",
+                reason="Workflow execution failed",
+                details=result.unwrap_err(),
+                suggestions=["Check workflow logs", "Review agent execution results"]
+            ))
 
         return result
 
@@ -1919,6 +2009,7 @@ class UnifiedPrimeAOrchestratorWrapper:
 
         # For tests, create a minimal task graph from intent
         # In production, this would call the planner agent
+        # TDD: Test task BEFORE Code task (Article II compliance)
         graph = TaskGraph(
             mission=intent,
             phases=[
@@ -1927,23 +2018,24 @@ class UnifiedPrimeAOrchestratorWrapper:
                     title="Implementation",
                     tasks=[
                         Task(
-                            id="code_task",
-                            title="Implement feature",
-                            type=TaskType.CODE,
-                            tier=TaskTier.TIER_2,
-                            agent="coder",
-                            description=f"Implement: {intent}",
-                            dependencies=[],
-                        ),
-                        Task(
                             id="test_task",
                             title="Write tests",
                             type=TaskType.TEST,
                             tier=TaskTier.TIER_2,
                             agent="test_generator",
                             description=f"Test: {intent}",
-                            dependencies=["code_task"],
+                            dependencies=[],
                             verification_target="code_task",
+                        ),
+                        Task(
+                            id="code_task",
+                            title="Implement feature",
+                            type=TaskType.CODE,
+                            tier=TaskTier.TIER_2,
+                            agent="coder",
+                            description=f"Implement: {intent}",
+                            dependencies=["test_task"],
+                            acceptance_criteria=["Feature implemented", "All tests pass"],
                         ),
                     ],
                 )
