@@ -104,20 +104,6 @@ def sample_task_graph() -> TaskGraph:
                         ],
                     ),
                     Task(
-                        id="code_auth",
-                        title="Implement authentication",
-                        type=TaskType.CODE,
-                        tier=TaskTier.TIER_2,
-                        agent="coder",
-                        description="Implement JWT authentication with refresh tokens",
-                        dependencies=["spec_auth"],
-                        acceptance_criteria=[
-                            "Token generation with RSA-256 signing",
-                            "Refresh token rotation implemented",
-                            "All tests pass",
-                        ],
-                    ),
-                    Task(
                         id="test_auth",
                         title="Test authentication logic",
                         type=TaskType.TEST,
@@ -126,9 +112,22 @@ def sample_task_graph() -> TaskGraph:
                         description="Write tests for JWT authentication",
                         dependencies=[
                             "spec_auth",
-                            "code_auth",
-                        ],  # Test depends on Code (current validator logic)
+                        ],  # Test written first (TDD-first, Article II compliance)
                         verification_target="code_auth",
+                    ),
+                    Task(
+                        id="code_auth",
+                        title="Implement authentication",
+                        type=TaskType.CODE,
+                        tier=TaskTier.TIER_2,
+                        agent="coder",
+                        description="Implement JWT authentication with refresh tokens",
+                        dependencies=["spec_auth", "test_auth"],  # Code depends on Test (TDD-first)
+                        acceptance_criteria=[
+                            "Token generation with RSA-256 signing",
+                            "Refresh token rotation implemented",
+                            "All tests pass",
+                        ],
                     ),
                 ],
             )

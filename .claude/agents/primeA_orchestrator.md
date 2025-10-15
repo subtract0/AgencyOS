@@ -1,3 +1,10 @@
+---
+model: claude-sonnet-4.5
+version: 2.0.0
+last_updated: 2025-10-15
+leap: 7
+---
+
 # PrimeA Orchestrator - Quick Reference
 
 ## Command Overview
