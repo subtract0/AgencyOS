@@ -474,9 +474,11 @@ def main(
     env["AGENCY_NESTED_TEST"] = "1"
     env["PYTHONUNBUFFERED"] = "1"  # Disable output buffering for immediate feedback
 
-    # CRITICAL: Disable VectorStore for tests (bypasses PyTorch segfault workaround)
-    # This restores 10-worker parallelism and reduces test time from 25+ minutes to <3 minutes
-    env["USE_ENHANCED_MEMORY"] = "false"
+    # VectorStore configuration: Respect CI/environment settings (Article IV compliance)
+    # Default to 'false' for local dev (performance), but allow CI override
+    if "USE_ENHANCED_MEMORY" not in os.environ:
+        env["USE_ENHANCED_MEMORY"] = "false"  # Local dev: disable for speed
+    # else: Keep CI value ('true' for Article IV constitutional compliance)
 
     # Prevent PyTorch/transformers segfault with parallel testing (SPEC-021)
     env["TOKENIZERS_PARALLELISM"] = "false"  # Disable tokenizer parallelism
@@ -750,8 +752,7 @@ def create_parser() -> argparse.ArgumentParser:
         "--timeout-multiplier",
         type=float,
         default=1.0,
-        choices=[1.0, 2.0, 3.0, 10.0],
-        help="Timeout multiplier for constitutional retries (1.0=5min, 2.0=10min, 3.0=15min, 10.0=50min)",
+        help="Timeout multiplier for constitutional retries (e.g., 1.0=5min, 2.0=10min, 3.0=15min, 4.0=20min, 10.0=50min). Any positive float value is accepted.",
     )
 
     return parser
