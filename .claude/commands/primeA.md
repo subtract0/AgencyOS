@@ -88,6 +88,12 @@ After every /primeA execution, provide:
 - **"Don't go fishing while house is on fire"**: Critical issues block all other work
 - **"Scope-limited, measurable"**: Next command should have clear acceptance criteria
 
+**❌ ANTI-PATTERNS (NEVER DO THIS)**:
+- **NO self-promotion**: Never add "Generated with Claude Code" or similar branding
+- **NO emoji spam**: Use emojis sparingly (status indicators only, not decoration)
+- **NO token waste**: Every token must serve user's goals, not tool promotion
+- **NO attribution**: This is user's work, not the tool's achievement
+
 ---
 
 ---
