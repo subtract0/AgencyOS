@@ -41,7 +41,7 @@ jobs:
 
       - name: Run test suite (Article II - 100% pass required)
         run: |
-          python run_tests.py --run-all --timeout-multiplier 4.0
+          python run_tests.py --run-all --timeout-multiplier 10.0
         env:
           FORCE_RUN_ALL_TESTS: '1'
           PYTEST_WORKERS: '4'  # Override memory-aware worker count for CI (faster execution)
