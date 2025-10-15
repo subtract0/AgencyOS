@@ -734,8 +734,10 @@ class ArticleIVLearningIntegration:
             True
         """
         try:
-            # Store to VectorStore via AgentContext (convert Pydantic model to dict)
-            self.context.store_memory(key=key, content=content.model_dump(), tags=tags)
+            # Store to VectorStore via AgentContext (convert Pydantic model to dict if needed)
+            # Handle both PatternContent (Pydantic) and plain dict inputs
+            content_dict = content.model_dump() if hasattr(content, 'model_dump') else content
+            self.context.store_memory(key=key, content=content_dict, tags=tags)
             return Ok(True)
 
         except Exception as e:
