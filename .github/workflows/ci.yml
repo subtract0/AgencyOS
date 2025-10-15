@@ -103,16 +103,26 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
+      - name: Set up Python for quality check
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Install ruff for Dict[Any, Any] check
+        run: |
+          python -m pip install --upgrade pip
+          pip install ruff
+
       - name: Check for Dict[Any, Any] violations (Constitutional)
         run: |
-          echo "Checking for Dict[Any, Any] violations..."
-          if grep -r "Dict\[Any, Any\]" --include="*.py" . --exclude-dir=".venv" --exclude-dir=".git"; then
-            echo "❌ CONSTITUTIONAL VIOLATION: Dict[Any, Any] found (Article III)"
+          echo "Checking for Dict[Any, Any] violations in code (not comments)..."
+          python tools/quality/no_dict_any_check.py || {
+            echo "❌ CONSTITUTIONAL VIOLATION: Dict[Any, Any] found in code (Article II)"
             echo "Use Pydantic models with typed fields instead"
+            echo "Run 'python tools/quality/no_dict_any_check.py' locally to see violations"
             exit 1
-          else
-            echo "✅ No Dict[Any, Any] violations found"
-          fi
+          }
+          echo "✅ No Dict[Any, Any] violations found in code"
 
       - name: Check ADR index is updated
         run: |
