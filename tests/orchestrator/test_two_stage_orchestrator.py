@@ -44,57 +44,10 @@ from tools.orchestrator.pr_creator import PRError, PRUrl
 from tools.orchestrator.test_verification_gate import VerificationError, VerificationResults
 
 # ============================================================================
-# TDD PLACEHOLDER - TwoStageOrchestrator (to be implemented by CodeAgent)
+# REAL IMPLEMENTATION - Import from tools/orchestrator/two_stage_orchestrator.py
 # ============================================================================
 
-
-class TwoStageOrchestrator:
-    """
-    Two-stage TDD orchestrator: Intent → Spec → TaskGraph → Execution.
-
-    TDD PLACEHOLDER: This class will be implemented AFTER tests pass.
-
-    Workflow:
-        Stage 1: Specification Phase
-            1. Parse user intent (IntentParser)
-            2. Generate specification (SpecGenerator)
-            3. Await user approval (ApprovalCheckpoint)
-
-        Stage 2: Execution Phase
-            4. Generate task graph (TDDGraphGenerator)
-            5. Execute tasks (placeholder for executor)
-            6. Verify tests pass (TestVerificationGate)
-            7. Create PR (PRCreator)
-
-    Constitutional Compliance:
-        - Article I: Complete context before execution
-        - Article II: 100% test verification enforced
-        - Article IV: VectorStore learning after completion
-        - Article V: Spec-driven workflow
-    """
-
-    def __init__(self, context: AgentContext):
-        """Initialize orchestrator with context."""
-        self.context = context
-
-    async def orchestrate(
-        self,
-        user_input: str | None = None,
-        input_mode: InputMode | None = None,
-    ) -> Result[PRUrl, str]:
-        """
-        Execute two-stage TDD workflow.
-
-        Args:
-            user_input: User input string (None for auto-select)
-            input_mode: Input mode (AUTO_SELECT, NATURAL_LANGUAGE, EXPLICIT_SPEC)
-
-        Returns:
-            Result with PRUrl on success, error message on failure
-
-        TDD PLACEHOLDER: Implement after tests pass.
-        """
-        raise NotImplementedError("TDD: Implement after tests pass")
+from tools.orchestrator.two_stage_orchestrator import TwoStageOrchestrator
 
 
 # ============================================================================
