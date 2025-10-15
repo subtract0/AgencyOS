@@ -50,7 +50,8 @@ import html
 import logging
 import re
 from pathlib import Path
-from typing import Any
+
+from pydantic import BaseModel, Field
 
 from shared.models.orchestrator_models import (
     ArchitecturalDecision,
@@ -65,6 +66,41 @@ from shared.models.orchestrator_models import (
 from shared.type_definitions.result import Err, Ok, Result
 
 logger = logging.getLogger(__name__)
+
+
+class SpecStructure(BaseModel):
+    """
+    Structured representation of parsed specification content.
+
+    Replaces Dict[str, Any] with strongly-typed Pydantic model for constitutional compliance.
+
+    Attributes:
+        executive_summary: First paragraph or explicit Executive Summary section
+        goals: Bulleted list of feature goals
+        acceptance_criteria: Numbered list of acceptance criteria
+        approach: Technical approach/implementation strategy
+        test_plan: Test strategy description
+        decisions: Architectural decisions (list of dicts with title/choice/rationale/tradeoff)
+        security: Security implications description
+        dependencies: External dependencies (string or list)
+        effort: Estimated effort (e.g., "6-8 hours")
+        risk: Risk level ("low", "medium", "high")
+        deliverables: List of deliverable files/components
+        constitutional_compliance: Whether spec meets Article V requirements
+    """
+
+    executive_summary: str = ""
+    goals: list[str] = Field(default_factory=list)
+    acceptance_criteria: list[str] = Field(default_factory=list)
+    approach: str = ""
+    test_plan: str = ""
+    decisions: list[dict[str, str]] = Field(default_factory=list)
+    security: str | list[str] = ""
+    dependencies: str | list[str] = ""
+    effort: str = ""
+    risk: str = "low"
+    deliverables: list[str] = Field(default_factory=list)
+    constitutional_compliance: bool = False
 
 
 class SpecTierGenerator:
@@ -160,9 +196,9 @@ class SpecTierGenerator:
             )
 
 
-def parse_spec_structure(content: str) -> dict[str, Any]:
+def parse_spec_structure(content: str) -> SpecStructure:
     """
-    Parse specification markdown into structured dictionary.
+    Parse specification markdown into structured Pydantic model.
 
     Extracts key sections using regex patterns:
     - Executive Summary
@@ -179,16 +215,17 @@ def parse_spec_structure(content: str) -> dict[str, Any]:
         content: Specification markdown content
 
     Returns:
-        Dictionary with extracted sections
+        SpecStructure model with extracted sections
 
     Example:
         >>> structure = parse_spec_structure(spec_content)
-        >>> print(structure["executive_summary"])
+        >>> print(structure.executive_summary)
     """
     # Sanitize HTML/JS to prevent XSS (security requirement)
     content = html.escape(content, quote=False)  # Escape HTML tags but preserve structure
 
-    structure: dict[str, Any] = {}
+    # Build structure dictionary first, then convert to Pydantic model
+    structure_dict: dict[str, str | list[str] | list[dict[str, str]] | bool] = {}
 
     # Extract Executive Summary (first paragraph or explicit section)
     exec_summary_match = re.search(
@@ -197,14 +234,14 @@ def parse_spec_structure(content: str) -> dict[str, Any]:
         re.DOTALL | re.IGNORECASE,
     )
     if exec_summary_match:
-        structure["executive_summary"] = exec_summary_match.group(1).strip()
+        structure_dict["executive_summary"] = exec_summary_match.group(1).strip()
     else:
         # Fallback: Use first paragraph after title
         first_para_match = re.search(r"^#\s+.+?\n\s*(.+?)(?=\n##|\Z)", content, re.DOTALL)
         if first_para_match:
-            structure["executive_summary"] = first_para_match.group(1).strip()
+            structure_dict["executive_summary"] = first_para_match.group(1).strip()
         else:
-            structure["executive_summary"] = "No executive summary found"
+            structure_dict["executive_summary"] = "No executive summary found"
 
     # Extract Goals
     goals_match = re.search(
@@ -212,13 +249,13 @@ def parse_spec_structure(content: str) -> dict[str, Any]:
     )
     if goals_match:
         goals_text = goals_match.group(1).strip()
-        structure["goals"] = [
+        structure_dict["goals"] = [
             line.strip("- ").strip()
             for line in goals_text.splitlines()
             if line.strip().startswith("-")
         ]
     else:
-        structure["goals"] = []
+        structure_dict["goals"] = []
 
     # Extract Acceptance Criteria
     criteria_match = re.search(
@@ -234,9 +271,9 @@ def parse_spec_structure(content: str) -> dict[str, Any]:
             for line in criteria_text.splitlines()
             if re.match(r"^\d+\.|^\-", line.strip())
         ]
-        structure["acceptance_criteria"] = criteria_lines
+        structure_dict["acceptance_criteria"] = criteria_lines
     else:
-        structure["acceptance_criteria"] = []
+        structure_dict["acceptance_criteria"] = []
 
     # Extract Approach
     approach_match = re.search(
@@ -245,9 +282,9 @@ def parse_spec_structure(content: str) -> dict[str, Any]:
         re.DOTALL | re.IGNORECASE,
     )
     if approach_match:
-        structure["approach"] = approach_match.group(2).strip()
+        structure_dict["approach"] = approach_match.group(2).strip()
     else:
-        structure["approach"] = "Approach details not specified"
+        structure_dict["approach"] = "Approach details not specified"
 
     # Extract Test Plan
     test_match = re.search(
@@ -256,11 +293,11 @@ def parse_spec_structure(content: str) -> dict[str, Any]:
         re.DOTALL | re.IGNORECASE,
     )
     if test_match:
-        structure["test_plan"] = test_match.group(1).strip()
+        structure_dict["test_plan"] = test_match.group(1).strip()
     else:
         # Fallback: Look for test mention in acceptance criteria
-        structure["test_plan"] = (
-            f"{len(structure.get('acceptance_criteria', []))} acceptance criteria defined"
+        structure_dict["test_plan"] = (
+            f"{len(structure_dict.get('acceptance_criteria', []))} acceptance criteria defined"
         )
 
     # Extract Architectural Decisions
@@ -278,7 +315,7 @@ def parse_spec_structure(content: str) -> dict[str, Any]:
             re.DOTALL | re.IGNORECASE,
         )
 
-    structure["decisions"] = [
+    structure_dict["decisions"] = [
         {
             "title": title.strip(),
             "choice": choice.strip(),
@@ -295,9 +332,9 @@ def parse_spec_structure(content: str) -> dict[str, Any]:
         re.DOTALL | re.IGNORECASE,
     )
     if security_match:
-        structure["security"] = security_match.group(1).strip()
+        structure_dict["security"] = security_match.group(1).strip()
     else:
-        structure["security"] = "No security implications specified"
+        structure_dict["security"] = "No security implications specified"
 
     # Extract Dependencies
     deps_match = re.search(
@@ -306,9 +343,9 @@ def parse_spec_structure(content: str) -> dict[str, Any]:
         re.DOTALL | re.IGNORECASE,
     )
     if deps_match:
-        structure["dependencies"] = deps_match.group(1).strip()
+        structure_dict["dependencies"] = deps_match.group(1).strip()
     else:
-        structure["dependencies"] = "No dependencies specified"
+        structure_dict["dependencies"] = "No dependencies specified"
 
     # Extract Effort Estimate
     effort_match = re.search(
@@ -323,16 +360,16 @@ def parse_spec_structure(content: str) -> dict[str, Any]:
             r"(\d+[-–]\d+\s+(hours?|days?|weeks?))", effort_text, re.IGNORECASE
         )
         if time_pattern:
-            structure["effort"] = time_pattern.group(1)
+            structure_dict["effort"] = time_pattern.group(1)
         else:
-            structure["effort"] = effort_text
+            structure_dict["effort"] = effort_text
     else:
         # Fallback: Look for time patterns in content (e.g., "4-6 hours", "2-3 days")
         time_match = re.search(r"(\d+[-–]\d+\s+(hours?|days?|weeks?))", content, re.IGNORECASE)
         if time_match:
-            structure["effort"] = time_match.group(1)
+            structure_dict["effort"] = time_match.group(1)
         else:
-            structure["effort"] = "Effort not estimated"
+            structure_dict["effort"] = "Effort not estimated"
 
     # Extract Risk Level
     risk_match = re.search(
@@ -343,20 +380,20 @@ def parse_spec_structure(content: str) -> dict[str, Any]:
     if risk_match:
         risk_text = risk_match.group(1).strip().lower()
         if "low" in risk_text:
-            structure["risk"] = "low"
+            structure_dict["risk"] = "low"
         elif "high" in risk_text:
-            structure["risk"] = "high"
+            structure_dict["risk"] = "high"
         else:
-            structure["risk"] = "medium"
+            structure_dict["risk"] = "medium"
     else:
         # Infer risk from keywords
         if any(
             keyword in content.lower()
             for keyword in ["critical", "security", "authentication", "encryption"]
         ):
-            structure["risk"] = "medium"
+            structure_dict["risk"] = "medium"
         else:
-            structure["risk"] = "low"
+            structure_dict["risk"] = "low"
 
     # Extract Deliverables
     deliverables_match = re.search(
@@ -366,7 +403,7 @@ def parse_spec_structure(content: str) -> dict[str, Any]:
     )
     if deliverables_match:
         deliverables_text = deliverables_match.group(1).strip()
-        structure["deliverables"] = [
+        structure_dict["deliverables"] = [
             line.strip("- ").strip()
             for line in deliverables_text.splitlines()
             if line.strip().startswith("-") or line.strip().startswith("*")
@@ -376,28 +413,29 @@ def parse_spec_structure(content: str) -> dict[str, Any]:
         file_matches = re.findall(
             r"`([a-zA-Z0-9_/.-]+\.(?:py|ts|tsx|js|jsx|md|yml|yaml))`", content
         )
-        structure["deliverables"] = list(set(file_matches))[:5]  # Max 5 files
+        structure_dict["deliverables"] = list(set(file_matches))[:5]  # Max 5 files
 
-    if not structure["deliverables"]:
-        structure["deliverables"] = ["Implementation files (details in spec)"]
+    if not structure_dict["deliverables"]:
+        structure_dict["deliverables"] = ["Implementation files (details in spec)"]
 
     # Constitutional compliance check
-    has_goals = len(structure.get("goals", [])) > 0
-    has_criteria = len(structure.get("acceptance_criteria", [])) > 0
+    has_goals = len(structure_dict.get("goals", [])) > 0
+    has_criteria = len(structure_dict.get("acceptance_criteria", [])) > 0
     has_tests = (
-        "test" in structure.get("test_plan", "").lower()
-        or len(structure.get("acceptance_criteria", [])) > 0
+        "test" in structure_dict.get("test_plan", "").lower()
+        or len(structure_dict.get("acceptance_criteria", [])) > 0
     )
 
     if has_goals and has_criteria and has_tests:
-        structure["constitutional_compliance"] = True
+        structure_dict["constitutional_compliance"] = True
     else:
-        structure["constitutional_compliance"] = False
+        structure_dict["constitutional_compliance"] = False
 
-    return structure
+    # Convert dict to Pydantic model for type safety
+    return SpecStructure(**structure_dict)
 
 
-def extract_tier1_summary(structure: dict[str, Any]) -> Tier1Summary:
+def extract_tier1_summary(structure: SpecStructure) -> Tier1Summary:
     """
     Extract Tier 1 executive summary from spec structure.
 
@@ -421,37 +459,37 @@ def extract_tier1_summary(structure: dict[str, Any]) -> Tier1Summary:
         >>> print(tier1.mission)
     """
     # Mission: First sentence of executive summary
-    exec_summary = structure.get("executive_summary", "")
+    exec_summary = structure.executive_summary
     mission = exec_summary.split(".")[0].strip() + "." if exec_summary else "Mission not specified"
 
     # Approach: Truncate to 1-2 sentences
-    approach = structure.get("approach", "Approach not specified")
+    approach = structure.approach
     approach_sentences = approach.split(".")[:2]  # Max 2 sentences
     approach = ". ".join(s.strip() for s in approach_sentences if s.strip()) + "."
 
     # Test summary
-    test_plan = structure.get("test_plan", "")
-    test_criteria_count = len(structure.get("acceptance_criteria", []))
+    test_plan = structure.test_plan
+    test_criteria_count = len(structure.acceptance_criteria)
     test_summary = (
         test_plan if test_plan else f"{test_criteria_count} acceptance criteria to verify"
     )
 
     # Deliverables
-    deliverables = structure.get("deliverables", ["Implementation files"])
+    deliverables = structure.deliverables
 
     # Constitutional status
-    if structure.get("constitutional_compliance", False):
+    if structure.constitutional_compliance:
         const_status = ConstitutionalStatus.COMPLIANT
-    elif structure.get("executive_summary", "") == "No executive summary found":
+    elif structure.executive_summary == "No executive summary found":
         const_status = ConstitutionalStatus.NON_COMPLIANT
     else:
         const_status = ConstitutionalStatus.NEEDS_REVIEW
 
     # Effort estimate
-    effort = structure.get("effort", "Effort not estimated")
+    effort = structure.effort
 
     # Risk level
-    risk_str = structure.get("risk", "low")
+    risk_str = structure.risk
     risk_level = (
         RiskLevel.LOW
         if risk_str == "low"
@@ -473,7 +511,7 @@ def extract_tier1_summary(structure: dict[str, Any]) -> Tier1Summary:
     )
 
 
-def extract_tier2_decisions(structure: dict[str, Any]) -> Tier2Summary:
+def extract_tier2_decisions(structure: SpecStructure) -> Tier2Summary:
     """
     Extract Tier 2 key decisions from spec structure.
 
@@ -493,7 +531,7 @@ def extract_tier2_decisions(structure: dict[str, Any]) -> Tier2Summary:
         >>> print(len(tier2.decisions))
     """
     # Architectural decisions
-    decision_dicts = structure.get("decisions", [])
+    decision_dicts = structure.decisions
     decisions = [
         ArchitecturalDecision(
             title=d["title"][:100],
@@ -516,14 +554,14 @@ def extract_tier2_decisions(structure: dict[str, Any]) -> Tier2Summary:
         ]
 
     # Security implications (handle both string and list)
-    security_raw = structure.get("security", "No security implications specified")
+    security_raw = structure.security
     if isinstance(security_raw, list):
         security = ", ".join(security_raw) if security_raw else "No security implications specified"
     else:
         security = security_raw
 
     # Dependencies (handle both string and list)
-    dependencies_raw = structure.get("dependencies", "No dependencies specified")
+    dependencies_raw = structure.dependencies
     if isinstance(dependencies_raw, list):
         dependencies = (
             ", ".join(dependencies_raw) if dependencies_raw else "No dependencies specified"
