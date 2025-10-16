@@ -151,17 +151,27 @@ def mock_github_api() -> Mock:
     """
     Mock GitHub API (gh CLI) for PR creation tests.
 
-    Returns mock subprocess.run for gh CLI commands.
+    Returns mock subprocess.run for gh CLI commands ONLY (not git commands).
+    This prevents interference with git validation which also uses subprocess.run.
 
     Article III: PR creation tested without actual GitHub API calls
     """
-    mock_api = Mock()
+    # Save reference to original subprocess.run before patching
+    original_subprocess_run = subprocess.run
 
-    # Mock successful PR creation
-    mock_api.return_value = Mock(
-        returncode=0, stdout="https://github.com/org/repo/pull/123", stderr=""
-    )
+    def selective_mock(*args, **kwargs):
+        """Mock only 'gh' commands, pass through git commands."""
+        cmd = args[0] if args else kwargs.get("args", [])
+        if cmd and cmd[0] == "gh":
+            # Mock gh pr create response
+            return Mock(
+                returncode=0, stdout="https://github.com/org/repo/pull/123", stderr=""
+            )
+        else:
+            # Pass through to original subprocess.run for git commands
+            return original_subprocess_run(*args, **kwargs)
 
+    mock_api = Mock(side_effect=selective_mock)
     return mock_api
 
 

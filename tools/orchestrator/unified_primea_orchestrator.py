@@ -771,12 +771,23 @@ class UnifiedPrimeAOrchestrator:
                     ],
                 ),
                 # PHASE FINAL: PR Creation (only if enable_pr_creation=True)
+                # TDD: Test task BEFORE Code task (Article II)
                 *(
                     [
                         Phase(
                             id="phase_final_pr",
                             title="PR Creation & CI",
                             tasks=[
+                                Task(
+                                    id="test_pull_request",
+                                    title="Test PR creation readiness",
+                                    type=TaskType.TEST,
+                                    tier=TaskTier.TIER_2,
+                                    agent="test_generator",
+                                    description="Verify PR prerequisites: all tests pass, no uncommitted changes (RED phase)",
+                                    dependencies=[f"{task_prefix}_code"],  # Depends on Phase 1 Code task
+                                    verification_target="create_pull_request",
+                                ),
                                 Task(
                                     id="create_pull_request",
                                     title="Create PR and trigger CI",
@@ -785,24 +796,14 @@ class UnifiedPrimeAOrchestrator:
                                     agent="merger",
                                     description=(
                                         f"Create GitHub PR for: {intent}. "
-                                        "Trigger CI checks (Article II - 100% verification required)."
+                                        "Trigger CI checks (Article II - 100% verification required - GREEN phase)."
                                     ),
-                                    dependencies=[f"{task_prefix}_test"],
+                                    dependencies=["test_pull_request"],  # Code depends on Test (TDD)
                                     acceptance_criteria=[
                                         "PR created with comprehensive description",
                                         "CI workflow triggered",
                                         "All required checks pending/passing",
                                     ],
-                                ),
-                                Task(
-                                    id="verify_pull_request",
-                                    title="Verify PR creation and CI status",
-                                    type=TaskType.TEST,
-                                    tier=TaskTier.TIER_2,
-                                    agent="test_generator",
-                                    description="Verify PR was created successfully and CI checks are running",
-                                    dependencies=["create_pull_request"],
-                                    verification_target="create_pull_request",
                                 ),
                             ],
                         )
@@ -2313,9 +2314,9 @@ async def execute_primea_workflow(
         # Initial TodoWrite: All phases pending
         phase_todos = [
             {
-                "content": f"Phase {i + 1}: {phase.title}",
+                "task": f"Phase {i + 1}: {phase.title}",
                 "status": "pending",
-                "activeForm": f"Executing Phase {i + 1}: {phase.title}",
+                "priority": "medium",
             }
             for i, phase in enumerate(graph.phases)
         ]
