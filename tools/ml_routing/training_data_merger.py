@@ -158,7 +158,7 @@ class TrainingDataMerger:
 
     def _has_required_fields(self, content: dict) -> bool:
         """Check if content has required fields."""
-        return all(key in content for key in ["confidence", "actual_tier", "timestamp"])
+        return all(key in content for key in ["confidence", "tier", "timestamp", "method", "model_version", "session_id"])
 
     def _meets_filter_criteria(self, content: dict, cutoff: float, min_conf: float) -> bool:
         """Check if content meets filter criteria."""
@@ -166,16 +166,26 @@ class TrainingDataMerger:
         if content.get("confidence", 0.0) < min_conf:
             return False
 
-        # Filter by ground truth availability
-        if content.get("actual_tier") is None:
+        # Filter by tier availability
+        if content.get("tier") is None:
             return False
 
         # Filter by timestamp
         timestamp_str = content.get("timestamp", "")
         try:
-            timestamp = datetime.fromisoformat(timestamp_str).timestamp()
+            # Handle multiple timestamp formats
+            # Format: "2025-10-15T13:32:11.850606+00:00Z" or "2025-10-15T13:32:11.850606Z" or "2025-10-15T13:32:11.850606+00:00"
+            if "+" in timestamp_str:
+                # Already has timezone offset, remove trailing Z if present
+                timestamp_clean = timestamp_str.rstrip("Z")
+            else:
+                # No timezone offset, replace Z with +00:00
+                timestamp_clean = timestamp_str.replace("Z", "+00:00")
+
+            timestamp = datetime.fromisoformat(timestamp_clean).timestamp()
             return timestamp >= cutoff
-        except (ValueError, TypeError):
+        except (ValueError, TypeError) as e:
+            logger.warning(f"Failed to parse timestamp '{timestamp_str}': {e}")
             return False
 
     def convert_predictions_to_samples(
@@ -229,9 +239,20 @@ class TrainingDataMerger:
             return Err(f"Feature extraction failed: {features_result.unwrap_err()}")
 
         # Convert tier to label
-        label_result = self._tier_to_label(prediction.actual_tier)
+        label_result = self._tier_to_label(prediction.tier)
         if label_result.is_err():
             return Err(label_result.unwrap_err())
+
+        # Parse timestamp string to datetime object
+        timestamp_str = prediction.timestamp
+        if "+" in timestamp_str:
+            # Already has timezone offset, remove trailing Z if present
+            timestamp_clean = timestamp_str.rstrip("Z")
+        else:
+            # No timezone offset, replace Z with +00:00
+            timestamp_clean = timestamp_str.replace("Z", "+00:00")
+
+        parsed_timestamp = datetime.fromisoformat(timestamp_clean)
 
         # Create TrainingSample
         sample = TrainingSample(
@@ -240,14 +261,14 @@ class TrainingDataMerger:
             confidence=prediction.confidence,
             source="vectorstore",
             task_id=prediction.task_id,
-            timestamp=prediction.timestamp,
+            timestamp=parsed_timestamp,
         )
 
         return Ok(sample)
 
     def _tier_to_label(self, tier: str) -> Result[int, str]:
         """Convert tier string to label integer."""
-        tier_map = {"P1": 3, "P2": 2, "P3": 1}
+        tier_map = {"complex": 3, "moderate": 2, "simple": 1}
         label = tier_map.get(tier, 0)
 
         if label == 0:

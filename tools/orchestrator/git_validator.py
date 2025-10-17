@@ -135,8 +135,14 @@ def get_current_branch(repo_path: Path | str = ".") -> Result[str, GitValidation
                     )
                 )
 
-            # Not a git repository
-            if "not a git repository" in stderr.lower():
+            # Not a git repository (check for multiple language variants)
+            stderr_lower = stderr.lower()
+            if (
+                "not a git repository" in stderr_lower
+                or "kein git-repository" in stderr_lower  # German
+                or "non è un repository git" in stderr_lower  # Italian
+                or "pas un dépôt git" in stderr_lower  # French
+            ):
                 return Err(
                     GitValidationError(
                         message=f"Not a git repository: {repo_path_obj}",
@@ -199,7 +205,7 @@ def get_current_branch(repo_path: Path | str = ".") -> Result[str, GitValidation
 
 def validate_branch_safety(
     repo_path: Path | str = ".",
-    graceful_fallback: bool = True,
+    graceful_fallback: bool = False,
 ) -> Result[str, GitValidationError]:
     """
     Validate current branch is safe for execution (Article III enforcement).
@@ -210,16 +216,16 @@ def validate_branch_safety(
 
     Args:
         repo_path: Path to git repository (default: current directory)
-        graceful_fallback: If True, return Ok("non-repo") for non-repo contexts instead of error (default: True)
+        graceful_fallback: If True, return Ok("non-repo") for non-repo contexts instead of error (default: False)
 
     Returns:
         Ok(branch_name) if branch is safe for execution
         Ok("non-repo") if graceful_fallback=True and not in git repository
-        Err(GitValidationError) if branch is protected or invalid pattern
+        Err(GitValidationError) if branch is protected, invalid pattern, or detached HEAD
 
     Article III Compliance:
         No bypass mechanism exists for protected branches (no --force flag, no override parameter)
-        Graceful fallback allows execution in non-repo contexts (e.g., test environments)
+        Detached HEAD state always raises ValidationError (GIT-004) unless graceful_fallback=True
         Error messages reference Article III and provide recovery hints
 
     Performance:
@@ -233,11 +239,11 @@ def validate_branch_safety(
         >>> print(result.unwrap())
         'feat/test'
 
-        >>> # Non-repo context with graceful fallback
-        >>> result = validate_branch_safety(repo_path="/tmp/not-a-repo")
-        >>> assert result.is_ok()
-        >>> print(result.unwrap())
-        'non-repo'
+        >>> # Detached HEAD (default: error)
+        >>> result = validate_branch_safety(repo_path="/tmp/detached")
+        >>> assert result.is_err()
+        >>> print(result.unwrap_err().message)
+        'Detached HEAD state detected...'
 
         >>> # Protected branch
         >>> result = validate_branch_safety(repo_path=".")
@@ -251,15 +257,14 @@ def validate_branch_safety(
     if branch_result.is_err():
         error = branch_result.unwrap_err()
 
-        # Graceful fallback for non-repo contexts
+        # Graceful fallback for non-repo contexts (ONLY if explicitly enabled)
         if graceful_fallback and (
             "not a git repository" in error.message.lower()
-            or "detached head" in error.message.lower()
         ):
             # Return Ok with special "non-repo" marker
             return Ok("non-repo")
 
-        # Propagate error from get_current_branch (no fallback)
+        # Propagate error from get_current_branch (detached HEAD, git errors)
         return Err(error)
 
     branch_name = branch_result.unwrap()

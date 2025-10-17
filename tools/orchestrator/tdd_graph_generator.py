@@ -461,8 +461,10 @@ class TDDGraphGenerator:
 
         For each Code task, creates Test task with:
         - verification_target = Code task ID
-        - dependencies = [Code task ID]
+        - dependencies = spec_task dependencies (Test comes FIRST in TDD)
         - agent = test_generator
+
+        Then updates Code task dependencies to include Test task (TDD workflow).
 
         Args:
             code_tasks: List of Code tasks
@@ -472,12 +474,17 @@ class TDDGraphGenerator:
 
         Constitutional Compliance:
             - Article II: Every Code task MUST have Test task
+            - TDD Workflow: Test tasks come BEFORE Code tasks (Code depends on Test)
         """
         test_tasks = []
 
         for code_task in code_tasks:
             # Create Test task ID by replacing 'code_' with 'test_'
             test_task_id = code_task.id.replace("code_", "test_", 1)
+
+            # Test task dependencies: Same as Code task dependencies (both depend on Spec)
+            # This ensures Test task can execute BEFORE Code task
+            test_dependencies = code_task.dependencies.copy()
 
             test_tasks.append(
                 Task(
@@ -487,23 +494,27 @@ class TDDGraphGenerator:
                     tier=TaskTier.TIER_2,  # Test generation is P2 (moderate)
                     agent="test_generator",
                     description=(
-                        f"Generate comprehensive tests for {code_task.title}. "
+                        f"Write comprehensive tests FIRST for {code_task.title}. "
                         f"Follow NECESSARY pattern: Normal, Edge, Corner, Error, Security, Stress, "
                         f"Accessibility, Regression, Yield. "
-                        f"Achieve >95% coverage. "
+                        f"Tests must FAIL initially (no implementation yet). "
                         f"Use AAA pattern (Arrange, Act, Assert)."
                     ),
-                    dependencies=[code_task.id],  # Test depends on Code task
+                    dependencies=test_dependencies,  # Test depends on same tasks as Code (e.g., Spec)
                     verification_target=code_task.id,  # Links Test to Code task
                     acceptance_criteria=[
-                        f"Tests cover all {code_task.title} functionality",
+                        f"Tests written for {code_task.title} (TDD red phase)",
                         "NECESSARY pattern coverage complete",
-                        "All tests pass (100% success rate)",
-                        ">95% code coverage",
+                        "Tests initially fail (no implementation)",
+                        ">95% expected coverage when implementation added",
                     ],
                     estimated_tokens=2000,  # Tests typically cheaper than implementation
                 )
             )
+
+            # TDD Workflow: Code task now depends on Test task (Test FIRST)
+            # Add Test task ID to Code task dependencies
+            code_task.dependencies.append(test_task_id)
 
         logger.debug(f"Generated {len(test_tasks)} Test tasks for {len(code_tasks)} Code tasks")
 

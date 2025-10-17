@@ -56,17 +56,18 @@ def log_prediction(
         >>> context = create_agent_context(session_id="session_001")
         >>> prediction = PredictionLog(
         ...     task_id="task_abc",
-        ...     predicted_tier="P2",
-        ...     actual_tier=None,
+        ...     tier="moderate",
         ...     confidence=0.85,
-        ...     method="ml"
+        ...     method="ml_model",
+        ...     model_version="2025-10-10T12:00:00Z",
+        ...     session_id="session_001"
         ... )
         >>> result = log_prediction(context, prediction)
         >>> assert result.is_ok()
     """
     try:
         # Generate unique key for prediction
-        timestamp_str = prediction_log.timestamp.isoformat()
+        timestamp_str = prediction_log.timestamp  # Already an ISO string
         key = f"prediction_{prediction_log.task_id}_{timestamp_str}"
 
         # Convert to dict for storage
@@ -75,7 +76,7 @@ def log_prediction(
         # Tags for searchability: ['prediction', tier, method]
         tags = [
             "prediction",
-            prediction_log.predicted_tier,
+            prediction_log.tier,
             prediction_log.method,
         ]
 
@@ -84,7 +85,7 @@ def log_prediction(
 
         logger.debug(
             f"Logged prediction: task_id={prediction_log.task_id}, "
-            f"tier={prediction_log.predicted_tier}, "
+            f"tier={prediction_log.tier}, "
             f"confidence={prediction_log.confidence:.2f}"
         )
 
@@ -106,12 +107,12 @@ def get_predictions(
 
     Filters:
     - since: Only return predictions after this timestamp (UTC)
-    - tier_filter: Only return predictions with this tier (P1/P2/P3)
+    - tier_filter: Only return predictions with this tier (simple/moderate/complex)
 
     Args:
         context: AgentContext with VectorStore access
         since: Optional timestamp filter (UTC)
-        tier_filter: Optional tier filter (P1/P2/P3)
+        tier_filter: Optional tier filter (simple/moderate/complex)
 
     Returns:
         Result[list[PredictionLog], str] - Ok(predictions) or Err(message)
@@ -128,9 +129,9 @@ def get_predictions(
         >>> result = get_predictions(context)
         >>> predictions = result.unwrap()
         >>>
-        >>> # Get P1 predictions from last hour
+        >>> # Get complex predictions from last hour
         >>> cutoff = datetime.now(UTC) - timedelta(hours=1)
-        >>> result = get_predictions(context, since=cutoff, tier_filter="P1")
+        >>> result = get_predictions(context, since=cutoff, tier_filter="complex")
     """
     try:
         # Build search tags (conjunctive search)

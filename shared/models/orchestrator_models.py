@@ -1050,6 +1050,7 @@ class GitValidationError(Exception):
             >>> raise error
         """
         self.message = message
+        self.reason = message  # Tests expect 'reason' attribute - alias for message
         self.branch_name = branch_name
         self.recovery_hint = recovery_hint
         super().__init__(message)

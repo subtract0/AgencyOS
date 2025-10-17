@@ -116,9 +116,9 @@ async def check_inference(endpoint: str, timeout: int = 10) -> Result[bool, Olla
 
                 return Err(OllamaHealthError("Invalid inference response format"))
 
-    except TimeoutError:
+    except asyncio.TimeoutError:
         return Err(OllamaHealthError(f"Inference timeout after {timeout}s"))
-    except aiohttp.ClientError as e:
+    except (aiohttp.ClientError, ConnectionRefusedError, OSError) as e:
         return Err(OllamaHealthError(f"Inference request failed: {e}"))
     except Exception as e:
         return Err(OllamaHealthError(f"Inference test error: {e}"))
@@ -154,6 +154,7 @@ async def check_ollama_health(
     """
     is_docker = detect_docker_ollama()
     current_timeout = timeout
+    last_error: str | None = None
 
     for attempt in range(max_retries):
         try:
@@ -190,7 +191,9 @@ async def check_ollama_health(
                         )
                     )
 
-        except TimeoutError:
+        except asyncio.TimeoutError as e:
+            last_error = f"Timeout after {current_timeout}s"
+            logger.debug(f"Caught asyncio.TimeoutError: {e}")
             if attempt < max_retries - 1:
                 # Article I: Retry with 2x timeout
                 current_timeout *= 2
@@ -205,15 +208,19 @@ async def check_ollama_health(
                 logger.error(error_msg)
                 return Err(OllamaHealthError(error_msg))
 
-        except aiohttp.ClientError as e:
+        except (aiohttp.ClientError, ConnectionRefusedError, OSError) as e:
+            # Handle connection refused, network errors, etc.
+            # For connection errors, return immediately without retry
             error_msg = f"Connection error: {e}"
-            logger.error(error_msg)
+            logger.error(f"Caught connection error: {type(e).__name__}: {e}")
             return Err(OllamaHealthError(error_msg))
 
         except Exception as e:
+            last_error = str(e)
             error_msg = f"Health check failed: {e}"
-            logger.error(error_msg)
+            logger.error(f"Caught generic exception: {type(e).__name__}: {e}")
             return Err(OllamaHealthError(error_msg))
 
     # Should not reach here, but satisfy type checker
-    return Err(OllamaHealthError(f"Failed after {max_retries} retries"))
+    final_error = last_error or f"Failed after {max_retries} retries"
+    return Err(OllamaHealthError(final_error))

@@ -51,7 +51,7 @@ import yaml
 from pydantic import BaseModel, Field
 
 from shared.agent_context import AgentContext
-from shared.models.orchestrator_models import UserAction
+from shared.models.orchestrator_models import GitValidationError, UserAction
 from shared.models.task_graph import TaskGraph
 from shared.type_definitions.result import Err, Ok, Result
 from tools.orchestrator.approval_checkpoint import (
@@ -60,10 +60,17 @@ from tools.orchestrator.approval_checkpoint import (
     Spec,
 )
 from tools.orchestrator.checkpoint_ui import CheckpointUI
+from tools.orchestrator.git_validator import validate_branch_safety
 from tools.orchestrator.intent_parser import InputMode, Intent, IntentParser
 from tools.orchestrator.necessary_validator import NECESSARYValidator, ValidationReport
 from tools.orchestrator.pr_creator import PRCreator, PRError, PRUrl
-from tools.orchestrator.spec_generator import SpecGenerator, SpecIntent
+from tools.orchestrator.spec_generator import (
+    Spec as SpecGeneratorSpec,
+)
+from tools.orchestrator.spec_generator import (
+    SpecGenerator,
+    SpecIntent,
+)
 from tools.orchestrator.spec_tier_generator import SpecTierGenerator
 from tools.orchestrator.tdd_graph_generator import TDDGraphGenerator
 from tools.orchestrator.test_verification_gate import (
@@ -258,6 +265,8 @@ class TwoStageOrchestrator:
         context: AgentContext,
         repo_path: str = ".",
         enable_todos: bool = True,
+        enable_tiered_review: bool | None = None,
+        auto_approve_for_tests: bool = False,
     ):
         """
         Initialize two-stage orchestrator.
@@ -266,10 +275,13 @@ class TwoStageOrchestrator:
             context: AgentContext for memory/learning integration
             repo_path: Repository root path (default: current directory)
             enable_todos: Enable TodoWrite progress tracking (default: True)
+            enable_tiered_review: Enable tiered review checkpoint (None = use config, False = legacy)
+            auto_approve_for_tests: Auto-approve specs for testing (bypasses stdin, default: False)
         """
         self.context = context
         self.repo_path = repo_path
         self.enable_todos = enable_todos
+        self.auto_approve_for_tests = auto_approve_for_tests
 
         # Load tiered review configuration
         config = load_tiered_review_config()
@@ -290,7 +302,11 @@ class TwoStageOrchestrator:
             timeout_seconds=tiered_config["timeout_seconds"],
             default_action=UserAction[tiered_config["default_action"].upper()],
         )
-        self.enable_tiered_review = tiered_config["enable_tiered_review"]
+        # Override config with parameter if provided (for testing)
+        if enable_tiered_review is not None:
+            self.enable_tiered_review = enable_tiered_review
+        else:
+            self.enable_tiered_review = tiered_config["enable_tiered_review"]
         self.fallback_on_error = tiered_config["fallback_on_error"]
 
         logger.info(
@@ -371,7 +387,7 @@ class TwoStageOrchestrator:
             return Err(spec_result.unwrap_err())
 
         spec = spec_result.unwrap()
-        logger.info(f"Spec generated: {spec.title} ({len(spec.goals)} goals)")
+        logger.info(f"Spec generated: {spec.title} (version {spec.version})")
 
         # Step 3: Await user approval
         logger.info("Stage 1.3: Awaiting spec approval...")
@@ -559,8 +575,13 @@ class TwoStageOrchestrator:
                 )
             )
 
-        self._update_todo("completed", f"Spec generated: {result.unwrap().title}")
-        return Ok(result.unwrap())
+        # Convert SpecGenerator.Spec to ApprovalCheckpoint.Spec
+        # (Different Spec models: spec-kit format → markdown format)
+        generated_spec = result.unwrap()
+        approval_spec = self._convert_spec_to_approval_format(generated_spec)
+
+        self._update_todo("completed", f"Spec generated: {approval_spec.title}")
+        return Ok(approval_spec)
 
     async def _await_approval(self, spec: Spec) -> Result[ApprovedSpec, OrchestrationError]:
         """
@@ -575,6 +596,8 @@ class TwoStageOrchestrator:
 
         2. Legacy Approval: Full spec display with SlopGuardian evaluation
 
+        3. Test Mode: Auto-approve without stdin interaction (auto_approve_for_tests=True)
+
         Mode selection via config: enable_tiered_review (default: True)
 
         Args:
@@ -586,13 +609,33 @@ class TwoStageOrchestrator:
         Constitutional Compliance:
             - Article I: Complete context (all tiers available before approval)
             - Article IV: VectorStore learning (tier usage patterns stored)
+            - Article II: Tests must run without human interaction
         """
+        # Test mode: Auto-approve without stdin interaction (prevents pytest stdin errors)
+        if self.auto_approve_for_tests:
+            logger.info("Auto-approving spec for testing (no stdin interaction)")
+            from tools.orchestrator.approval_checkpoint import ApprovalDecision
+
+            approved = ApprovedSpec(
+                spec=spec,
+                decision=ApprovalDecision(
+                    action="approve",
+                    reason="Auto-approved for testing"
+                ),
+                edit_count=0,
+            )
+            return Ok(approved)
+
         if self.enable_tiered_review:
             # NEW: Tiered review workflow (Leap 7 enhancement)
             logger.info("Using tiered review checkpoint (3-tier progressive disclosure)")
 
+            # Write spec to temporary file for tiered generation
+            # (Spec is created in-memory, needs file path for SpecTierGenerator)
+            spec_file_path = self._write_spec_to_temp_file(spec)
+
             # Generate tiered spec
-            tier_result = self.tier_generator.generate_tiered_spec(spec.file_path)
+            tier_result = self.tier_generator.generate_tiered_spec(spec_file_path)
 
             if tier_result.is_ok():
                 # Tier generation succeeded - use CheckpointUI
@@ -722,6 +765,72 @@ class TwoStageOrchestrator:
                 f"Spec approved (legacy): {approved.spec.title} (edits: {approved.edit_count})",
             )
             return Ok(approved)
+
+    # ========================================================================
+    # PHASE 0: GIT VALIDATION
+    # ========================================================================
+
+    def _validate_git_workflow(self) -> Result[None, GitValidationError]:
+        """
+        Phase 0: Validate git branch compliance (Article III).
+
+        Checks:
+        - Not on main/master branch
+        - Feature branch pattern (feat/*, fix/*, etc.)
+        - Repository exists
+
+        Returns:
+            Ok(None) if branch is safe for execution
+            Err(GitValidationError) if:
+                - On protected branch (main, master, develop, production, staging)
+                - Invalid branch pattern (not feat/*, fix/*, docs/*, refactor/*, test/*)
+                - Detached HEAD state
+
+        Constitutional Compliance:
+            - Article III: Automated merge enforcement (no manual bypass)
+            - Protected branches ALWAYS raise error (no --force flag)
+            - Graceful fallback for non-repo contexts (warning only)
+
+        Example:
+            >>> orchestrator = TwoStageOrchestrator(context=context, repo_path=".")
+            >>> result = orchestrator._validate_git_workflow()
+            >>> if result.is_err():
+            ...     raise result.unwrap_err()
+            >>> # Proceed with orchestration
+        """
+        # Validate branch safety with graceful fallback for non-repo contexts
+        # (graceful_fallback=True means non-repo returns Ok("non-repo") instead of error)
+        result = validate_branch_safety(
+            repo_path=self.repo_path,
+            graceful_fallback=True,  # Allow execution in non-repo contexts (warning only)
+        )
+
+        if result.is_err():
+            # Branch validation failed (protected branch or invalid pattern)
+            error = result.unwrap_err()
+            logger.error(
+                f"Git validation failed: {error.message} "
+                f"(branch: {error.branch_name}, hint: {error.recovery_hint})"
+            )
+            return Err(error)
+
+        branch_name = result.unwrap()
+
+        if branch_name == "non-repo":
+            # Graceful fallback: not in git repository (warning only)
+            logger.warning(
+                "Not in a git repository - proceeding without branch validation. "
+                "This is acceptable for testing, but production workflows should "
+                "always run in a git repository (Article III)."
+            )
+            return Ok(None)
+
+        # Branch is safe for execution
+        logger.info(
+            f"Git validation passed: branch '{branch_name}' is safe for execution "
+            f"(Article III compliance)"
+        )
+        return Ok(None)
 
     # ========================================================================
     # STAGE 2: GRAPH GENERATION → EXECUTION → VERIFICATION → PR
@@ -999,6 +1108,109 @@ class TwoStageOrchestrator:
     # UTILITY FUNCTIONS
     # ========================================================================
 
+    def _convert_spec_to_approval_format(self, generated_spec: SpecGeneratorSpec) -> Spec:
+        """
+        Convert SpecGenerator.Spec (spec-kit format) to ApprovalCheckpoint.Spec (markdown format).
+
+        SpecGenerator returns a spec with structured fields (goals, personas, success_criteria).
+        ApprovalCheckpoint expects a spec with markdown content for display.
+
+        Args:
+            generated_spec: Spec from SpecGenerator (has goals, personas, success_criteria)
+
+        Returns:
+            Spec for ApprovalCheckpoint (has title, content, created_at, version)
+
+        Conversion Format:
+            ## Goals
+            - Goal 1
+            - Goal 2
+
+            ## Personas
+            - Persona 1
+            - Persona 2
+
+            ## Success Criteria
+            - Criterion 1
+            - Criterion 2
+        """
+        # Format spec-kit fields into markdown content
+        content_parts = []
+
+        # Goals section
+        if generated_spec.goals:
+            content_parts.append("## Goals\n")
+            for goal in generated_spec.goals:
+                content_parts.append(f"- {goal}\n")
+            content_parts.append("\n")
+
+        # Personas section
+        if generated_spec.personas:
+            content_parts.append("## Personas\n")
+            for persona in generated_spec.personas:
+                content_parts.append(f"- {persona}\n")
+            content_parts.append("\n")
+
+        # Success Criteria section
+        if generated_spec.success_criteria:
+            content_parts.append("## Success Criteria\n")
+            for criterion in generated_spec.success_criteria:
+                content_parts.append(f"- {criterion}\n")
+            content_parts.append("\n")
+
+        # Combine into markdown content
+        content = "".join(content_parts).strip()
+
+        # Create ApprovalCheckpoint.Spec
+        return Spec(
+            title=generated_spec.title,
+            content=content,
+            version=1,  # First version
+        )
+
+    def _write_spec_to_temp_file(self, spec: Spec) -> Path:
+        """
+        Write in-memory spec to temporary file for tiered generation.
+
+        SpecTierGenerator requires file path for parsing, but Spec is created
+        in-memory during orchestration. This creates a temporary spec file
+        in specs/ directory for tiered review.
+
+        Args:
+            spec: In-memory specification
+
+        Returns:
+            Path to written spec file
+
+        File Format:
+            # {spec.title}
+
+            {spec.content}
+        """
+        import tempfile
+        from pathlib import Path
+
+        # Create specs directory if it doesn't exist
+        specs_dir = Path(self.repo_path) / "specs"
+        specs_dir.mkdir(exist_ok=True)
+
+        # Generate filename from spec title (kebab-case)
+        import re
+
+        filename = spec.title.lower().replace(" ", "-")
+        filename = re.sub(r"[^a-z0-9-]", "", filename)
+        filename = re.sub(r"-+", "-", filename).strip("-")
+        filename = f"spec-{filename[:50]}.md"
+
+        spec_path = specs_dir / filename
+
+        # Write spec content to file
+        spec_markdown = f"# {spec.title}\n\n{spec.content}"
+        spec_path.write_text(spec_markdown, encoding="utf-8")
+
+        logger.info(f"Wrote spec to temporary file: {spec_path}")
+        return spec_path
+
     def _generate_branch_name(self, spec_title: str) -> str:
         """
         Generate branch name from spec title.
@@ -1066,6 +1278,7 @@ def create_orchestrator(
     context: AgentContext,
     repo_path: str = ".",
     enable_todos: bool = True,
+    enable_tiered_review: bool | None = None,
 ) -> TwoStageOrchestrator:
     """
     Factory function to create TwoStageOrchestrator instance.
@@ -1074,6 +1287,7 @@ def create_orchestrator(
         context: AgentContext for memory/learning integration
         repo_path: Repository root path (default: current directory)
         enable_todos: Enable TodoWrite progress tracking (default: True)
+        enable_tiered_review: Enable tiered review checkpoint (None = use config, False = legacy)
 
     Returns:
         Configured TwoStageOrchestrator instance
@@ -1082,6 +1296,7 @@ def create_orchestrator(
         context=context,
         repo_path=repo_path,
         enable_todos=enable_todos,
+        enable_tiered_review=enable_tiered_review,
     )
 
 

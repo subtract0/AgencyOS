@@ -609,6 +609,7 @@ def create_tier3_reference(file_path: Path, line_count: int, section_count: int)
 
 
 __all__ = [
+    "SpecStructure",
     "SpecTierGenerator",
     "parse_spec_structure",
     "extract_tier1_summary",
