@@ -1,0 +1,398 @@
+{
+  "analysis_date": "2025-10-17",
+  "suite_metrics": {
+    "total_tests": 5804,
+    "runtime_minutes": 3.9,
+    "total_lines": 154115,
+    "test_files": 277
+  },
+  "health_score": {
+    "overall": 72,
+    "target": 90,
+    "components": {
+      "length": 95,
+      "mocking": 70,
+      "timing": 60,
+      "complexity": 98,
+      "skipped": 65,
+      "assertions": 50
+    }
+  },
+  "bloat_indicators": {
+    "long_tests": {
+      "count": 12,
+      "percentage": 0.2,
+      "threshold": 100,
+      "impact": "LOW"
+    },
+    "heavy_mocks": {
+      "count": 37,
+      "percentage": 0.7,
+      "threshold": 10,
+      "impact": "MEDIUM"
+    },
+    "sleepy_tests": {
+      "count": 69,
+      "percentage": 1.3,
+      "estimated_sleep_time_seconds": 89,
+      "impact": "HIGH"
+    },
+    "complex_tests": {
+      "count": 1,
+      "percentage": 0.0,
+      "threshold": 5,
+      "impact": "MINIMAL"
+    },
+    "skipped_tests": {
+      "count": 105,
+      "percentage": 2.0,
+      "impact": "HIGH"
+    },
+    "no_assertions": {
+      "count": 47,
+      "percentage": 0.9,
+      "impact": "CRITICAL"
+    }
+  },
+  "averages_per_test": {
+    "lines": 17.7,
+    "assertions": 0.0,
+    "mocks": 0.4
+  },
+  "worst_offenders": [
+    {
+      "rank": 1,
+      "file": "test_chief_architect_agent.py",
+      "bloat_score": 5207,
+      "lines": 1517,
+      "mocks": 369,
+      "tests": 34,
+      "recommendation": "DELETE 50% of tests",
+      "roi": "Save 800 lines, reduce churn 40%"
+    },
+    {
+      "rank": 2,
+      "file": "test_firestore_learning_persistence.py",
+      "test": "test_production_insights_exist",
+      "bloat_score": 7,
+      "lines": 134,
+      "sleeps": 1,
+      "recommendation": "REFACTOR or DELETE",
+      "roi": "Reduce 100 lines, eliminate flakiness"
+    },
+    {
+      "rank": 3,
+      "file": "test_chief_architect_agent_simple.py",
+      "bloat_score": 450,
+      "tests": 3,
+      "avg_mocks": 13,
+      "recommendation": "DELETE ENTIRE FILE",
+      "roi": "Delete 150 lines, reduce churn"
+    },
+    {
+      "rank": 4,
+      "file": "test_memory_cache.py",
+      "tests": 31,
+      "sleeps": 9,
+      "recommendation": "REFACTOR",
+      "roi": "Eliminate 70% sleeps, save 2-3s"
+    },
+    {
+      "rank": 5,
+      "file": "test_distributed_locks.py",
+      "tests": 32,
+      "sleeps": 9,
+      "lines": 1104,
+      "recommendation": "OPTIMIZE",
+      "roi": "8s → 2s runtime"
+    }
+  ],
+  "churn_hotspots": [
+    {
+      "file": "tests/conftest.py",
+      "modifications_6mo": 20,
+      "recommendation": "KEEP, stabilize fixtures"
+    },
+    {
+      "file": "test_chief_architect_agent.py",
+      "modifications_6mo": 11,
+      "recommendation": "REDUCE by 50%"
+    },
+    {
+      "file": "test_bash_tool.py",
+      "modifications_6mo": 11,
+      "recommendation": "Add contract tests"
+    },
+    {
+      "file": "test_memory_api.py",
+      "modifications_6mo": 10,
+      "recommendation": "ACCEPTABLE, monitor"
+    }
+  ],
+  "skipped_tests_breakdown": {
+    "total": 105,
+    "categories": {
+      "not_implemented": {
+        "count": 12,
+        "action": "DELETE",
+        "priority": "IMMEDIATE"
+      },
+      "experimental": {
+        "count": 1,
+        "action": "REVIEW",
+        "priority": "MEDIUM"
+      },
+      "env_dependent": {
+        "count": 34,
+        "action": "KEEP",
+        "priority": "LOW"
+      },
+      "flaky": {
+        "count": 2,
+        "action": "FIX",
+        "priority": "IMMEDIATE"
+      },
+      "slow": {
+        "count": 2,
+        "action": "OPTIMIZE",
+        "priority": "MEDIUM"
+      },
+      "integration": {
+        "count": 4,
+        "action": "KEEP",
+        "priority": "LOW"
+      },
+      "other": {
+        "count": 50,
+        "action": "REVIEW",
+        "priority": "MEDIUM"
+      }
+    }
+  },
+  "performance_waste": {
+    "sleep_breakdown": {
+      "cache_lru": {
+        "tests": 10,
+        "avg_sleeps": 3.0,
+        "total_time_seconds": 30
+      },
+      "distributed_locks": {
+        "tests": 9,
+        "avg_sleeps": 1.0,
+        "total_time_seconds": 9
+      },
+      "checkpoint_manager": {
+        "tests": 8,
+        "avg_sleeps": 1.0,
+        "total_time_seconds": 8
+      },
+      "heartbeat": {
+        "tests": 7,
+        "avg_sleeps": 1.0,
+        "total_time_seconds": 7
+      },
+      "chaos_testing": {
+        "tests": 12,
+        "avg_sleeps": 1.0,
+        "total_time_seconds": 12
+      },
+      "other": {
+        "tests": 23,
+        "avg_sleeps": 1.0,
+        "total_time_seconds": 23
+      }
+    },
+    "total_sleep_time_seconds": 89,
+    "percentage_of_runtime": 38,
+    "optimization_potential_seconds": 52
+  },
+  "quick_wins": [
+    {
+      "number": 1,
+      "action": "Delete test_chief_architect_agent_simple.py",
+      "effort_minutes": 5,
+      "roi": "-150 lines, -13 mocks/test",
+      "justification": "Complete duplicate"
+    },
+    {
+      "number": 2,
+      "action": "Delete 12 'not implemented' skipped tests",
+      "effort_minutes": 10,
+      "roi": "-2% skipped tests",
+      "justification": "Technical debt"
+    },
+    {
+      "number": 3,
+      "action": "Mock time.sleep() in test_chaos_testing.py",
+      "effort_minutes": 15,
+      "roi": "-12s runtime",
+      "justification": "Eliminate flakiness"
+    },
+    {
+      "number": 4,
+      "action": "Parametrize test_bash_pydantic_validation.py",
+      "effort_minutes": 30,
+      "roi": "Delete 40 tests",
+      "justification": "Reduce redundancy"
+    },
+    {
+      "number": 5,
+      "action": "Fix 2 flaky meta-tests with @pytest.mark.serial",
+      "effort_minutes": 5,
+      "roi": "Un-skip 2 tests",
+      "justification": "Improve CI stability"
+    }
+  ],
+  "delete_candidates": [
+    {
+      "rank": 1,
+      "file": "test_chief_architect_agent.py",
+      "test": "test_factory_with_different_contexts",
+      "reason": "16 mocks, no assertions",
+      "lines": 56,
+      "mocks": 16
+    },
+    {
+      "rank": 2,
+      "file": "test_chief_architect_agent.py",
+      "test": "test_factory_returns_fresh_instance",
+      "reason": "15 mocks, no assertions",
+      "lines": 48,
+      "mocks": 15
+    },
+    {
+      "rank": 3,
+      "file": "test_chief_architect_agent.py",
+      "test": "test_agent_creation_with_defaults",
+      "reason": "14 mocks, no assertions",
+      "lines": 57,
+      "mocks": 14
+    },
+    {
+      "rank": 4,
+      "file": "test_chief_architect_agent.py",
+      "test": "test_tools_folder_configuration",
+      "reason": "14 mocks, no assertions",
+      "lines": 49,
+      "mocks": 14
+    },
+    {
+      "rank": 5,
+      "file": "test_chief_architect_agent.py",
+      "test": "test_agent_creation_without_context",
+      "reason": "14 mocks, no assertions",
+      "lines": 50,
+      "mocks": 14
+    },
+    {
+      "rank": 6,
+      "file": "test_chief_architect_agent.py",
+      "test": "test_factory_parameter_combinations",
+      "reason": "14 mocks, no assertions",
+      "lines": 56,
+      "mocks": 14
+    },
+    {
+      "rank": 7,
+      "file": "test_chief_architect_agent_simple.py",
+      "test": "test_agent_creation_succeeds",
+      "reason": "Duplicate file",
+      "lines": 50,
+      "mocks": 13
+    },
+    {
+      "rank": 8,
+      "file": "test_chief_architect_agent_simple.py",
+      "test": "test_agent_has_correct_name",
+      "reason": "Duplicate file",
+      "lines": 49,
+      "mocks": 13
+    },
+    {
+      "rank": 9,
+      "file": "test_chief_architect_agent_simple.py",
+      "test": "test_agent_description_includes_key_terms",
+      "reason": "Duplicate file",
+      "lines": 57,
+      "mocks": 13
+    },
+    {
+      "rank": 10,
+      "file": "test_firestore_learning_persistence.py",
+      "test": "test_production_insights_exist",
+      "reason": "134 lines, 1 sleep, no assertions",
+      "lines": 134,
+      "mocks": 0
+    }
+  ],
+  "recommendations": {
+    "immediate_actions": {
+      "timeframe": "Next 7 Days",
+      "actions": [
+        "DELETE test_chief_architect_agent_simple.py",
+        "DELETE 12 'not implemented' skipped tests",
+        "DELETE 20 highest-mock tests from test_chief_architect_agent.py",
+        "FIX 2 flaky meta-tests with @pytest.mark.serial",
+        "REFACTOR Mock time.sleep() in test_chaos_testing.py"
+      ],
+      "expected_impact": {
+        "tests": -200,
+        "lines": -800,
+        "runtime_seconds": -15
+      }
+    },
+    "short_term_actions": {
+      "timeframe": "Next 30 Days",
+      "actions": [
+        "REFACTOR test_memory_cache.py - remove sleeps",
+        "REFACTOR test_distributed_locks.py - event-based sync",
+        "REFACTOR test_firestore_learning_persistence.py - split long test",
+        "PARAMETRIZE test_bash_pydantic_validation.py",
+        "PARAMETRIZE test_git_validation.py"
+      ],
+      "expected_impact": {
+        "tests": -100,
+        "runtime_seconds": -40
+      }
+    },
+    "strategic_actions": {
+      "timeframe": "Next 90 Days",
+      "actions": [
+        "ADOPT property-based testing with Hypothesis",
+        "ADOPT contract testing for tool interfaces",
+        "REFACTOR test_model_policy_enhanced.py (107 → 30 tests)",
+        "POLICY Max 5 mocks per test",
+        "POLICY Max 50 lines per test"
+      ],
+      "expected_impact": {
+        "tests": -500,
+        "lines": -2000,
+        "churn_reduction_percentage": 50
+      }
+    }
+  },
+  "target_state": {
+    "timeframe": "90 Days",
+    "metrics": {
+      "tests": 5000,
+      "lines": 130000,
+      "runtime_minutes": 2.5,
+      "skipped": 50,
+      "health_score": 90
+    },
+    "improvements": {
+      "tests_reduction_percentage": -14,
+      "lines_reduction_percentage": -16,
+      "runtime_reduction_percentage": -36,
+      "skipped_reduction_percentage": -52
+    }
+  },
+  "success_criteria": [
+    "Zero tests >100 lines",
+    "Zero tests >10 mocks",
+    "<30 sleeps total (<0.6%)",
+    "<50 skipped (<1%)",
+    "<2 minute runtime",
+    "<5 churn events/file/6mo"
+  ]
+}
