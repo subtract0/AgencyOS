@@ -1,0 +1,402 @@
+{
+  "mission": "Fix Test Suite: Make all foundation automation tests pass (61 failures → 0)",
+  "context": {
+    "current_state": "19 passing, 61 failing, 1 error in foundation automation tests",
+    "target_state": "100% test pass rate on main branch",
+    "constraints": ["TDD compliance", "No test skipping", "Constitutional enforcement"],
+    "priority": "CRITICAL - blocking main branch health"
+  },
+  "phases": [
+    {
+      "id": "phase_1_analysis",
+      "title": "Failure Analysis & Categorization",
+      "tasks": [
+        {
+          "id": "task_1_1",
+          "title": "Analyze all 61 test failures and categorize by root cause",
+          "description": "Run pytest with verbose output, group failures by: missing methods, wrong assertions, mock issues, import errors",
+          "type": "ANALYSIS",
+          "tier": "TIER_3",
+          "agent": "auditor",
+          "estimated_tokens": 15000,
+          "acceptance_criteria": [
+            "CSV file with: test_name, failure_type, required_fix, priority",
+            "Identify quick wins (simple fixes) vs complex issues",
+            "Group related failures that share same root cause"
+          ]
+        },
+        {
+          "id": "task_1_2",
+          "title": "Create dependency map of failing tests",
+          "description": "Identify which implementations will fix multiple tests at once",
+          "type": "ANALYSIS",
+          "tier": "TIER_3",
+          "agent": "planner",
+          "dependencies": ["task_1_1"],
+          "estimated_tokens": 8000,
+          "acceptance_criteria": [
+            "Dependency graph showing test → implementation mappings",
+            "Priority order based on impact (fixes most tests first)"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "phase_2_gates_implementation",
+      "title": "Constitutional Gates Implementation (12 tests)",
+      "tasks": [
+        {
+          "id": "task_2_1",
+          "title": "Create foundation_automation_gates.py module",
+          "description": "Implement FoundationGateError exception and GateValidationResult model in tools/orchestrator/foundation_automation_gates.py",
+          "type": "CODE",
+          "tier": "TIER_2",
+          "agent": "coder",
+          "dependencies": ["task_1_2"],
+          "estimated_tokens": 10000,
+          "acceptance_criteria": [
+            "FoundationGateError exception class created",
+            "GateValidationResult Pydantic model with all required fields",
+            "Proper imports and type hints"
+          ]
+        },
+        {
+          "id": "task_2_2",
+          "title": "Implement 12 gate validation functions",
+          "description": "Create all GATE-001 through GATE-012 validation functions: validate_complete_graph, validate_timeout_retry, validate_test_failures, etc.",
+          "type": "CODE",
+          "tier": "TIER_1",
+          "agent": "coder",
+          "dependencies": ["task_2_1"],
+          "estimated_tokens": 25000,
+          "acceptance_criteria": [
+            "All 12 gate validation functions implemented",
+            "Each returns Result[None, FoundationGateError]",
+            "Proper Article I-V enforcement logic"
+          ]
+        },
+        {
+          "id": "task_2_3",
+          "title": "Test gate implementations",
+          "description": "Verify all 14 tests in test_foundation_automation_gates.py pass",
+          "type": "TEST",
+          "tier": "TIER_2",
+          "agent": "test_generator",
+          "dependencies": ["task_2_2"],
+          "verification_target": "task_2_2",
+          "estimated_tokens": 5000,
+          "acceptance_criteria": [
+            "14/14 tests passing in test_foundation_automation_gates.py",
+            "No import errors or type mismatches"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "phase_3_fallback_implementation",
+      "title": "Fallback Handler Implementation (13 tests)",
+      "tasks": [
+        {
+          "id": "task_3_1",
+          "title": "Create fallback_handler.py module",
+          "description": "Implement FallbackHandler class in tools/orchestrator/fallback_handler.py with retry logic and graceful degradation",
+          "type": "CODE",
+          "tier": "TIER_2",
+          "agent": "coder",
+          "dependencies": ["task_1_2"],
+          "estimated_tokens": 12000,
+          "acceptance_criteria": [
+            "FallbackHandler class with all 7 fallback methods",
+            "Exponential backoff retry logic",
+            "Non-blocking execution (returns safe defaults)"
+          ]
+        },
+        {
+          "id": "task_3_2",
+          "title": "Implement specific fallback scenarios",
+          "description": "Implement handlers for: VectorStore unavailable, TRM unavailable, Slop timeout, Local model failure, GitHub rate limit, Pre-commit failure, Memory Tool unavailable",
+          "type": "CODE",
+          "tier": "TIER_2",
+          "agent": "coder",
+          "dependencies": ["task_3_1"],
+          "estimated_tokens": 18000,
+          "acceptance_criteria": [
+            "All 7 FALLBACK scenarios handled",
+            "Proper logging with warnings",
+            "Safe default values returned",
+            "Retry logic with configurable timeouts"
+          ]
+        },
+        {
+          "id": "task_3_3",
+          "title": "Test fallback handlers",
+          "description": "Verify all 13 tests in test_foundation_automation_fallbacks.py pass",
+          "type": "TEST",
+          "tier": "TIER_2",
+          "agent": "test_generator",
+          "dependencies": ["task_3_2"],
+          "verification_target": "task_3_2",
+          "estimated_tokens": 5000,
+          "acceptance_criteria": [
+            "13/13 tests passing in test_foundation_automation_fallbacks.py",
+            "Fallbacks complete within 5 seconds",
+            "No exceptions raised"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "phase_4_flag_routing",
+      "title": "Flag Routing Implementation (20 tests)",
+      "tasks": [
+        {
+          "id": "task_4_1",
+          "title": "Enhance _handle_flags method in UnifiedPrimeAOrchestrator",
+          "description": "Add comprehensive flag parsing, validation, and routing logic to existing _handle_flags method",
+          "type": "CODE",
+          "tier": "TIER_2",
+          "agent": "coder",
+          "dependencies": ["task_1_2"],
+          "estimated_tokens": 8000,
+          "acceptance_criteria": [
+            "All 8 FLAG scenarios handled",
+            "Flag conflict detection",
+            "Help text generation",
+            "Audit logging for --force flag"
+          ]
+        },
+        {
+          "id": "task_4_2",
+          "title": "Implement flag-specific behaviors",
+          "description": "Implement behaviors for: --two-stage routing, --plan-only save & exit, --visualize output, --no-pr skip, --force budget override",
+          "type": "CODE",
+          "tier": "TIER_2",
+          "agent": "coder",
+          "dependencies": ["task_4_1"],
+          "estimated_tokens": 12000,
+          "acceptance_criteria": [
+            "Each flag triggers correct behavior",
+            "Flag combinations work correctly",
+            "Invalid combinations detected and rejected"
+          ]
+        },
+        {
+          "id": "task_4_3",
+          "title": "Test flag behaviors",
+          "description": "Verify all 20 tests in test_foundation_automation_flags.py pass",
+          "type": "TEST",
+          "tier": "TIER_2",
+          "agent": "test_generator",
+          "dependencies": ["task_4_2"],
+          "verification_target": "task_4_2",
+          "estimated_tokens": 5000,
+          "acceptance_criteria": [
+            "20/20 tests passing in test_foundation_automation_flags.py",
+            "Flag routing works correctly",
+            "Help text displays properly"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "phase_5_git_validation_fixes",
+      "title": "Git Validation Test Fixes (17 tests)",
+      "tasks": [
+        {
+          "id": "task_5_1",
+          "title": "Fix GitValidationError attributes",
+          "description": "Add missing 'reason' attribute to GitValidationError or update tests to use correct attribute names",
+          "type": "CODE",
+          "tier": "TIER_3",
+          "agent": "coder",
+          "dependencies": ["task_1_2"],
+          "estimated_tokens": 3000,
+          "acceptance_criteria": [
+            "GitValidationError has all expected attributes",
+            "Tests use correct attribute names"
+          ]
+        },
+        {
+          "id": "task_5_2",
+          "title": "Fix git command mocking in tests",
+          "description": "Add proper subprocess mocking for git checkout/worktree commands that are failing",
+          "type": "TEST",
+          "tier": "TIER_3",
+          "agent": "test_generator",
+          "dependencies": ["task_5_1"],
+          "verification_target": "task_5_1",
+          "estimated_tokens": 5000,
+          "acceptance_criteria": [
+            "Git commands properly mocked",
+            "No subprocess.CalledProcessError in tests",
+            "Worktree tests pass"
+          ]
+        },
+        {
+          "id": "task_5_3",
+          "title": "Verify git validation tests",
+          "description": "Ensure all 17 tests in test_foundation_automation_git_validation.py pass",
+          "type": "TEST",
+          "tier": "TIER_3",
+          "agent": "test_generator",
+          "dependencies": ["task_5_2"],
+          "verification_target": "task_5_2",
+          "estimated_tokens": 3000,
+          "acceptance_criteria": [
+            "17/17 tests passing",
+            "Performance test <50ms"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "phase_6_e2e_fixes",
+      "title": "E2E Test Fixes (8 tests)",
+      "tasks": [
+        {
+          "id": "task_6_1",
+          "title": "Fix TaskGraph validation error in test_e2e_005",
+          "description": "Correct the TaskGraph fixture to ensure proper task dependencies and TDD compliance",
+          "type": "TEST",
+          "tier": "TIER_3",
+          "agent": "test_generator",
+          "dependencies": ["task_1_2"],
+          "estimated_tokens": 3000,
+          "acceptance_criteria": [
+            "TaskGraph validates correctly",
+            "No pydantic ValidationError"
+          ]
+        },
+        {
+          "id": "task_6_2",
+          "title": "Add missing E2E method implementations",
+          "description": "Implement remaining E2E workflow methods for two-stage, slop immunity, and budget checks",
+          "type": "CODE",
+          "tier": "TIER_2",
+          "agent": "coder",
+          "dependencies": ["task_6_1", "task_2_3", "task_3_3"],
+          "estimated_tokens": 10000,
+          "acceptance_criteria": [
+            "Two-stage workflow with approval checkpoint",
+            "Slop immunity enforcement (blocking mode)",
+            "Budget exceeded error formatting"
+          ]
+        },
+        {
+          "id": "task_6_3",
+          "title": "Add git repository mocking",
+          "description": "Mock git repository for PR creation tests to avoid actual git operations",
+          "type": "TEST",
+          "tier": "TIER_3",
+          "agent": "test_generator",
+          "dependencies": ["task_6_2"],
+          "verification_target": "task_6_2",
+          "estimated_tokens": 4000,
+          "acceptance_criteria": [
+            "Git operations properly mocked",
+            "PR creation tests pass without real git repo"
+          ]
+        },
+        {
+          "id": "task_6_4",
+          "title": "Verify all E2E tests",
+          "description": "Ensure all 8 tests in test_foundation_automation_e2e.py pass",
+          "type": "TEST",
+          "tier": "TIER_2",
+          "agent": "test_generator",
+          "dependencies": ["task_6_3"],
+          "verification_target": "task_6_3",
+          "estimated_tokens": 3000,
+          "acceptance_criteria": [
+            "8/8 tests passing",
+            "E2E workflow completes successfully"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "phase_7_integration",
+      "title": "Integration & Verification",
+      "tasks": [
+        {
+          "id": "task_7_1",
+          "title": "Run complete test suite",
+          "description": "Execute all foundation automation tests together to verify no conflicts",
+          "type": "TEST",
+          "tier": "TIER_1",
+          "agent": "quality_enforcer",
+          "dependencies": ["task_2_3", "task_3_3", "task_4_3", "task_5_3", "task_6_4"],
+          "estimated_tokens": 5000,
+          "acceptance_criteria": [
+            "82/82 tests passing (100% pass rate)",
+            "No import errors or conflicts",
+            "Test execution <10 seconds"
+          ]
+        },
+        {
+          "id": "task_7_2",
+          "title": "Update orchestrator integration tests",
+          "description": "Ensure test_unified_primea_orchestrator.py still passes with new implementations",
+          "type": "TEST",
+          "tier": "TIER_2",
+          "agent": "test_generator",
+          "dependencies": ["task_7_1"],
+          "verification_target": "task_7_1",
+          "estimated_tokens": 5000,
+          "acceptance_criteria": [
+            "35/35 original orchestrator tests still pass",
+            "No regression in existing functionality"
+          ]
+        },
+        {
+          "id": "task_7_3",
+          "title": "Run full Agency test suite",
+          "description": "Execute python run_tests.py --run-all to verify no breakage in other tests",
+          "type": "TEST",
+          "tier": "TIER_1",
+          "agent": "quality_enforcer",
+          "dependencies": ["task_7_2"],
+          "verification_target": "task_7_2",
+          "estimated_tokens": 8000,
+          "acceptance_criteria": [
+            "1700+ total tests passing",
+            "No new failures introduced",
+            "Main branch ready for merge"
+          ]
+        },
+        {
+          "id": "task_7_4",
+          "title": "Create PR with all fixes",
+          "description": "Create comprehensive PR with all test fixes, proper commit messages, and test results",
+          "type": "CODE",
+          "tier": "TIER_3",
+          "agent": "merger",
+          "dependencies": ["task_7_3"],
+          "estimated_tokens": 5000,
+          "acceptance_criteria": [
+            "PR created with clear description",
+            "All tests green in CI",
+            "Constitutional compliance verified",
+            "Ready for merge to main"
+          ]
+        }
+      ]
+    }
+  ],
+  "success_criteria": {
+    "mandatory": [
+      "100% test pass rate (82/82 foundation tests)",
+      "No regression in existing tests",
+      "All constitutional articles enforced",
+      "TDD compliance maintained"
+    ],
+    "optional": [
+      "Performance <10s for test suite",
+      "Test coverage >95%",
+      "Documentation updated"
+    ]
+  },
+  "estimated_total_tokens": 185000,
+  "estimated_time_hours": 4,
+  "priority": "P1_CRITICAL"
+}
