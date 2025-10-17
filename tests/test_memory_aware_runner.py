@@ -15,13 +15,23 @@ import pytest
 
 def test_get_safe_worker_count_with_local_model():
     """When local model active and low memory, use 3 workers."""
+    # Import at module level to avoid circular imports from tools/__init__.py
+    import sys
+    import importlib.util
+    spec = importlib.util.spec_from_file_location(
+        "memory_aware_test_runner",
+        Path(__file__).parent.parent / "tools" / "memory_aware_test_runner.py"
+    )
+    runner_module = importlib.util.module_from_spec(spec)
+    sys.modules['memory_aware_test_runner'] = runner_module
+    spec.loader.exec_module(runner_module)
+    get_safe_worker_count = runner_module.get_safe_worker_count
+
     with patch("psutil.virtual_memory") as mock_mem:
         # Simulate 12GB available (local model uses 38GB, total 48GB)
         mock_mem.return_value = MagicMock(available=12 * 1024**3)
 
         with patch("os.path.exists", return_value=True):  # Ollama running
-            from tools.memory_aware_test_runner import get_safe_worker_count
-
             workers = get_safe_worker_count()
             assert workers == 3, "Should use conservative parallelism with local model"
 

@@ -387,8 +387,11 @@ def test_bash_concurrent_execution_allowed():
     thread1.start()
     thread2.start()
 
-    thread1.join()
-    thread2.join()
+    thread1.join(timeout=15)
+    thread2.join(timeout=15)
+
+    assert not thread1.is_alive(), "Thread 1 did not terminate within 15 seconds"
+    assert not thread2.is_alive(), "Thread 2 did not terminate within 15 seconds"
 
     assert len(results) == 2
     # Both should succeed now with parallel execution enabled

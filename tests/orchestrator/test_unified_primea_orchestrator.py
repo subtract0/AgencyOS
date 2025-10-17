@@ -79,6 +79,7 @@ def orchestrator(agent_context, tmp_path):
         repo_path=str(tmp_path),
         enable_todos=True,
         enable_pr_creation=False,  # Disable PR creation for tests
+        enable_slop_immunity=False,  # Non-blocking mode for tests (graceful fallback)
     )
 
 
@@ -121,8 +122,12 @@ def simple_task_graph():
 
 
 @pytest.fixture
-def circular_task_graph():
+def circular_task_graph(monkeypatch):
     """Create task graph with circular dependency for testing (TDD-compliant per task, but cycle between tasks)."""
+    # Skip both TDD and DAG validation for this intentionally broken graph
+    monkeypatch.setenv("SKIP_TDD_VALIDATION", "true")
+    monkeypatch.setenv("SKIP_DAG_VALIDATION", "true")
+
     return TaskGraph(
         mission="Test Mission: Circular graph",
         phases=[
@@ -551,7 +556,14 @@ async def test_execute_full_flow_success(orchestrator, tmp_path):
                 backlog_zero=True,
                 constitutional_compliant=True,
                 context_efficiency=0.85,
-                constitutional_checks=MagicMock(),
+                constitutional_checks=ConstitutionalChecks(
+                    article_i=True,
+                    article_ii=True,
+                    article_iii=True,
+                    article_iv=True,
+                    article_v=True,
+                    details={}
+                ),
                 warnings=[],
                 errors=[],
             )
@@ -705,11 +717,12 @@ async def test_constitutional_article_iii_automated_enforcement(orchestrator):
                 constitutional_compliant=True,
                 context_efficiency=0.85,
                 constitutional_checks=ConstitutionalChecks(
-                    article_i_complete_context=True,
-                    article_ii_verification=True,
-                    article_iii_enforcement=True,
-                    article_iv_learning=True,
-                    article_v_spec_driven=True,
+                    article_i=True,
+                    article_ii=True,
+                    article_iii=True,
+                    article_iv=True,
+                    article_v=True,
+                    details={}
                 ),
                 warnings=[],
                 errors=[],
@@ -747,10 +760,21 @@ async def test_graceful_fallback_trm_unavailable(orchestrator, simple_task_graph
 @pytest.mark.asyncio
 async def test_graceful_fallback_slop_guardian_error(orchestrator, simple_task_graph):
     """Test graceful fallback when Slop Guardian fails."""
-    # Mock Slop Guardian to return error
+    from tools.orchestrator.slop_guardian import SlopDetected, SlopVerdict, VerdictStatus
+
+    # Create real SlopDetected error (not MagicMock)
+    verdict = SlopVerdict(
+        score=1.5,
+        reasons=["Test failure: Guardian error"],
+        top_fixes=["Fix the guardian"],
+        dimension_scores={"clarity": 1.0, "measurability": 1.0, "completeness": 2.0, "actionability": 2.0}
+    )
+    error = SlopDetected(verdict=verdict, original_text="Test mission")
+
+    # Mock Slop Guardian to return real error
     with patch(
         "tools.orchestrator.unified_primea_orchestrator.enforce_slop_immunity",
-        return_value=Err(MagicMock()),
+        return_value=Err(error),
     ):
         result = await orchestrator._check_slop_immunity(simple_task_graph)
 
@@ -768,24 +792,27 @@ def test_phase_0_git_validation_pass_feature_branch(orchestrator, tmp_path):
     # Setup: Initialize git repo on feature branch
     import subprocess
 
-    subprocess.run(["git", "init"], cwd=tmp_path, check=True, capture_output=True)
+    subprocess.run(["git", "init"], cwd=tmp_path, check=True, capture_output=True, timeout=10)
     subprocess.run(
         ["git", "config", "user.email", "test@example.com"],
         cwd=tmp_path,
         check=True,
         capture_output=True,
+        timeout=10,
     )
     subprocess.run(
         ["git", "config", "user.name", "Test User"],
         cwd=tmp_path,
         check=True,
         capture_output=True,
+        timeout=10,
     )
     subprocess.run(
         ["git", "checkout", "-b", "feat/test-automation"],
         cwd=tmp_path,
         check=True,
         capture_output=True,
+        timeout=10,
     )
 
     result = orchestrator._validate_git_workflow()
@@ -798,18 +825,20 @@ def test_phase_0_git_validation_fail_main_branch(orchestrator, tmp_path):
     # Setup: Initialize git repo on main branch
     import subprocess
 
-    subprocess.run(["git", "init"], cwd=tmp_path, check=True, capture_output=True)
+    subprocess.run(["git", "init"], cwd=tmp_path, check=True, capture_output=True, timeout=10)
     subprocess.run(
         ["git", "config", "user.email", "test@example.com"],
         cwd=tmp_path,
         check=True,
         capture_output=True,
+        timeout=10,
     )
     subprocess.run(
         ["git", "config", "user.name", "Test User"],
         cwd=tmp_path,
         check=True,
         capture_output=True,
+        timeout=10,
     )
 
     result = orchestrator._validate_git_workflow()
@@ -842,24 +871,24 @@ def test_load_graph_from_file_success(orchestrator, tmp_path):
                 "title": "Implementation",
                 "tasks": [
                     {
-                        "id": "task_1",
-                        "title": "Task 1",
-                        "type": "Code",
-                        "tier": "Tier 2",
-                        "agent": "coder",
-                        "description": "Implement feature",
-                        "dependencies": [],
-                        "acceptance_criteria": ["Feature implemented"],
-                    },
-                    {
                         "id": "test_1",
                         "title": "Test Task 1",
                         "type": "Test",
                         "tier": "Tier 2",
                         "agent": "test_generator",
-                        "description": "Test feature",
-                        "dependencies": ["task_1"],
+                        "description": "Test feature (RED phase)",
+                        "dependencies": [],
                         "verification_target": "task_1",
+                    },
+                    {
+                        "id": "task_1",
+                        "title": "Task 1",
+                        "type": "Code",
+                        "tier": "Tier 2",
+                        "agent": "coder",
+                        "description": "Implement feature (GREEN phase)",
+                        "dependencies": ["test_1"],  # TDD: Code depends on Test
+                        "acceptance_criteria": ["Feature implemented"],
                     },
                 ],
             }
@@ -924,10 +953,11 @@ def test_auto_select_from_backlog_not_found(orchestrator):
 
     result = orchestrator._auto_select_from_backlog()
 
-    # Should return error with helpful suggestions
-    if result.is_err():
-        error = result.unwrap_err()
-        assert "Backlog file not found" in error.reason
+    # Should return error with helpful message
+    assert result.is_err(), "Should return Err when backlog file not found"
+    error = result.unwrap_err()
+    assert error.reason == "Backlog file not found", "Error reason should indicate backlog file not found"
+    assert backlog_path.as_posix().lower() in error.details.lower(), "Error details should mention backlog path"
 
 
 @pytest.mark.asyncio
@@ -960,10 +990,21 @@ def test_create_foundation_graph_with_pr(agent_context):
     assert graph.phases[0].id == "phase_0_setup"
     assert graph.phases[-1].id == "phase_final_pr"
 
-    # Final phase should have PR creation task
-    pr_task = graph.phases[-1].tasks[0]
+    # Final phase should have 2 tasks: Test THEN Code (TDD - Article II)
+    assert len(graph.phases[-1].tasks) == 2
+    test_task = graph.phases[-1].tasks[0]
+    pr_task = graph.phases[-1].tasks[1]
+
+    # Test task comes first (TDD)
+    assert test_task.id == "test_pull_request"
+    assert test_task.type == TaskType.TEST
+    assert test_task.verification_target == "create_pull_request"
+
+    # PR creation task depends on test
     assert pr_task.id == "create_pull_request"
     assert pr_task.agent == "merger"
+    assert pr_task.type == TaskType.CODE
+    assert "test_pull_request" in pr_task.dependencies
 
 
 def test_create_foundation_graph_without_pr(agent_context):
@@ -1062,18 +1103,20 @@ async def test_constitutional_article_iii_branch_protection(orchestrator, tmp_pa
     # Setup: Initialize git repo on main branch
     import subprocess
 
-    subprocess.run(["git", "init"], cwd=tmp_path, check=True, capture_output=True)
+    subprocess.run(["git", "init"], cwd=tmp_path, check=True, capture_output=True, timeout=10)
     subprocess.run(
         ["git", "config", "user.email", "test@example.com"],
         cwd=tmp_path,
         check=True,
         capture_output=True,
+        timeout=10,
     )
     subprocess.run(
         ["git", "config", "user.name", "Test User"],
         cwd=tmp_path,
         check=True,
         capture_output=True,
+        timeout=10,
     )
 
     # Execute on main branch (should fail)

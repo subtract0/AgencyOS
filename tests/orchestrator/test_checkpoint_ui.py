@@ -398,20 +398,36 @@ def test_specification_30_second_auto_approve(sample_tiered_spec):
     Acceptance Criterion: User can approve in 30 seconds by reading Tier 1 only
     """
     # Arrange
-    ui = CheckpointUI(timeout_seconds=10)  # Use actual timeout that works in test
+    # Note: CheckpointUI enforces minimum timeout of 10s (security: prevent abuse)
+    # So timeout_seconds=3 will be clamped to 10s
+    ui = CheckpointUI(timeout_seconds=3)
 
     # Act
-    with patch("tools.orchestrator.checkpoint_ui.select_with_timeout") as mock_select:
-        mock_select.return_value = False  # No user input (timeout on each check)
+    # Use mock to simulate time passing without actually waiting
+    start_time = time.time()
+    call_count = [0]  # Track number of select_with_timeout calls
 
-        start = time.time()
+    def mock_time_side_effect():
+        """Simulate time passing based on select_with_timeout calls."""
+        # Each call represents a 0.1s polling interval
+        elapsed = call_count[0] * 0.1
+        return start_time + elapsed
+
+    with (
+        patch("tools.orchestrator.checkpoint_ui.select_with_timeout") as mock_select,
+        patch("tools.orchestrator.checkpoint_ui.time.time") as mock_time,
+    ):
+        mock_select.side_effect = lambda timeout: (call_count.__setitem__(0, call_count[0] + 1), False)[1]
+        mock_time.side_effect = mock_time_side_effect
+
         result = ui.present_checkpoint(sample_tiered_spec)
-        duration = time.time() - start
 
     # Assert
     assert result.action == UserAction.APPROVE
-    assert 9.5 < duration < 11.0  # Should timeout after ~10 seconds
     assert result.tier_viewed == 1  # Only Tier 1 shown before auto-approve
+    # CheckpointUI clamps timeout to 10s minimum (not 3s)
+    # 10 seconds / 0.1s interval = ~100 calls
+    assert 95 < call_count[0] < 105  # Allow some variance
 
 
 # ============================================================================

@@ -85,28 +85,31 @@ def temp_git_repo(tmp_path):
     repo_path.mkdir()
 
     # Initialize git repo
-    subprocess.run(["git", "init"], cwd=str(repo_path), check=True, capture_output=True)
+    subprocess.run(["git", "init"], cwd=str(repo_path), check=True, capture_output=True, timeout=10)
     subprocess.run(
         ["git", "config", "user.name", "Test User"],
         cwd=str(repo_path),
         check=True,
         capture_output=True,
+        timeout=10,
     )
     subprocess.run(
         ["git", "config", "user.email", "test@example.com"],
         cwd=str(repo_path),
         check=True,
         capture_output=True,
+        timeout=10,
     )
 
     # Create initial commit
     (repo_path / "README.md").write_text("Test repo")
-    subprocess.run(["git", "add", "."], cwd=str(repo_path), check=True, capture_output=True)
+    subprocess.run(["git", "add", "."], cwd=str(repo_path), check=True, capture_output=True, timeout=10)
     subprocess.run(
         ["git", "commit", "-m", "Initial commit"],
         cwd=str(repo_path),
         check=True,
         capture_output=True,
+        timeout=10,
     )
 
     # Create test branch
@@ -115,6 +118,7 @@ def temp_git_repo(tmp_path):
         cwd=str(repo_path),
         check=True,
         capture_output=True,
+        timeout=10,
     )
 
     yield repo_path

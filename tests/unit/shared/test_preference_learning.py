@@ -563,10 +563,16 @@ class TestMultiUserIsolation:
         assert alice_prefs.unwrap().total_responses == 3
         assert bob_prefs.unwrap().total_responses == 0  # Bob should have ZERO
 
+    @pytest.mark.serial
     def test_concurrent_user_preference_storage(
         self, alice_learner, bob_learner, sample_responses_alice, sample_responses_bob
     ):
-        """Should handle concurrent preference updates for different users."""
+        """Should handle concurrent preference updates for different users.
+
+        Note: Marked as serial due to SQLite database table initialization issues
+        in parallel test execution (xdist). The test uses separate database instances
+        for alice and bob, and parallel execution causes "no such table" errors.
+        """
         # Arrange & Act - Interleaved observations
         alice_learner.observe(sample_responses_alice[0])
         bob_learner.observe(sample_responses_bob[0])

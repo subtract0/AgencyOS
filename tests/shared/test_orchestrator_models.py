@@ -42,15 +42,15 @@ def test_fallback_strategy_enum_has_all_strategies() -> None:
     NECESSARY Normal: FallbackStrategy enum contains all required strategies.
 
     Validates:
-    - Enum has 7 strategies (SESSION_ONLY, CLOUD_ROUTING, etc.)
+    - Enum has 8 strategies (SESSION_ONLY, CLOUD_ROUTING, USER_INTERVENTION, etc.)
     - Each strategy is a string value
     - Values match naming convention
 
-    Expected: All 7 strategies present
+    Expected: All 8 strategies present
     """
     strategies = list(FallbackStrategy)
 
-    assert len(strategies) == 7, f"Expected 7 strategies, got {len(strategies)}"
+    assert len(strategies) == 8, f"Expected 8 strategies, got {len(strategies)}"
 
     expected_values = {
         "session_only",
@@ -58,6 +58,7 @@ def test_fallback_strategy_enum_has_all_strategies() -> None:
         "retry_success",
         "auto_fix_success",
         "manual_intervention",
+        "user_intervention",  # New: Alias for manual_intervention
         "read_only",
         "skip_learning",
     }

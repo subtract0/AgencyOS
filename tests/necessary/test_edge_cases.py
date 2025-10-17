@@ -407,7 +407,8 @@ class TestConcurrentEdgeCases:
         for thread in threads:
             thread.start()
         for thread in threads:
-            thread.join()
+            thread.join(timeout=5)
+            assert not thread.is_alive(), "Thread did not complete within timeout"
 
         # No errors should occur
         assert len(errors) == 0
@@ -437,7 +438,8 @@ class TestConcurrentEdgeCases:
         for thread in threads:
             thread.start()
         for thread in threads:
-            thread.join()
+            thread.join(timeout=5)
+            assert not thread.is_alive(), "Thread did not complete within timeout"
 
         # No errors should occur
         assert len(errors) == 0
@@ -474,7 +476,8 @@ class TestConcurrentEdgeCases:
         for thread in threads:
             thread.start()
         for thread in threads:
-            thread.join()
+            thread.join(timeout=5)
+            assert not thread.is_alive(), "Thread did not complete within timeout"
 
         # No errors should occur
         assert len(errors) == 0

@@ -38,6 +38,7 @@ from shared.models.orchestrator_models import (
     TieredSpec,
 )
 from tools.orchestrator.spec_tier_generator import (
+    SpecStructure,
     SpecTierGenerator,
     TierGenerationError,
     create_tier3_reference,
@@ -176,17 +177,17 @@ def test_normal_tier1_executive_summary_extraction():
     - Risk level
     """
     # Arrange
-    spec_structure = {
-        "executive_summary": "Build rate limiting middleware for API protection.",
-        "goals": ["Protect against DDoS", "Token bucket algorithm"],
-        "acceptance_criteria": ["Handle 1000 req/min", "Redis backend"],
-        "approach": "Token bucket with Redis distributed state",
-        "test_plan": "47 NECESSARY tests (Normal, Edge, Security)",
-        "deliverables": ["middleware.py", "redis_backend.py", "tests/"],
-        "effort": "4-6 hours",
-        "risk": "low",
-        "constitutional_compliance": True,
-    }
+    spec_structure = SpecStructure(
+        executive_summary="Build rate limiting middleware for API protection.",
+        goals=["Protect against DDoS", "Token bucket algorithm"],
+        acceptance_criteria=["Handle 1000 req/min", "Redis backend"],
+        approach="Token bucket with Redis distributed state",
+        test_plan="47 NECESSARY tests (Normal, Edge, Security)",
+        deliverables=["middleware.py", "redis_backend.py", "tests/"],
+        effort="4-6 hours",
+        risk="low",
+        constitutional_compliance=True,
+    )
 
     # Act
     tier1 = extract_tier1_summary(spec_structure)
@@ -214,8 +215,8 @@ def test_normal_tier2_key_decisions_extraction():
     - Performance considerations noted
     """
     # Arrange
-    spec_structure = {
-        "decisions": [
+    spec_structure = SpecStructure(
+        decisions=[
             {
                 "title": "Token Bucket vs Leaky Bucket",
                 "choice": "Token bucket",
@@ -229,10 +230,9 @@ def test_normal_tier2_key_decisions_extraction():
                 "tradeoffs": "Network latency vs scalability",
             },
         ],
-        "security": ["Rate limit bypass via header spoofing", "Redis auth required"],
-        "dependencies": ["redis-py 5.0+", "asyncio support"],
-        "performance": "< 5ms overhead per request",
-    }
+        security=["Rate limit bypass via header spoofing", "Redis auth required"],
+        dependencies=["redis-py 5.0+", "asyncio support"],
+    )
 
     # Act
     tier2 = extract_tier2_decisions(spec_structure)

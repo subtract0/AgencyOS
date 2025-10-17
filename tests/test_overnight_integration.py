@@ -755,17 +755,36 @@ class TestResilience:
         """Test orchestrator continues if worker crashes."""
         from scripts.overnight_orchestrator import monitor_workers
 
-        # Arrange: Mock worker crash
+        # Arrange: Create queue with 1 pending task
+        from shared.models.night_watch import TaskQueue, TaskQueueItem, TaskStatus
+
+        queue = TaskQueue(
+            mission_set="test",
+            tasks=[
+                TaskQueueItem(
+                    id="task_001",
+                    mission_id="mission_1",
+                    title="Test Task",
+                    command="/primeA 'Test'",
+                    priority=1,
+                    estimated_duration_minutes=10,
+                    status=TaskStatus.PENDING,
+                )
+            ],
+        )
+        queue_file.write_text(queue.model_dump_json(indent=2))
+
+        # Mock worker crash
         mock_claim.side_effect = Exception("Worker crashed")
 
-        # Act: Orchestrator monitors workers
-        try:
-            result = monitor_workers(worker_count=1, queue_path=str(queue_file), timeout_seconds=5)
-        except Exception:
-            result = {"crashed_workers": 1, "orchestrator_alive": True}
+        # Act: Orchestrator monitors workers (should handle crash gracefully)
+        result = monitor_workers(worker_count=1, queue_path=str(queue_file), timeout_seconds=2)
 
-        # Assert: Orchestrator alive despite worker crash
-        assert result.active_workers == 1
+        # Assert: Orchestrator alive and returned status (didn't crash)
+        # WorkerStatus has active_workers, completed_tasks, failed_tasks, pending_tasks, elapsed_seconds
+        assert isinstance(result, object)  # Result returned successfully
+        assert hasattr(result, "active_workers")
+        assert result.active_workers == 1  # Worker count maintained
 
     @patch("subprocess.run")
     def test_network_error_handling_retry_with_backoff(self, mock_run):
@@ -794,15 +813,38 @@ class TestResilience:
     @pytest.mark.timeout(10)
     def test_timeout_enforcement_60_minute_limit(self):
         """Test tasks timeout after max duration."""
-        from scripts.overnight_worker import execute_with_timeout
+        from scripts.overnight_worker import execute_task_command
+        from shared.models.night_watch import TaskQueueItem, TaskStatus
 
-        # Arrange: Long-running task
-        def slow_task():
-            time.sleep(100)  # Simulate long work
+        # Arrange: Create task with long-running command
+        task = TaskQueueItem(
+            id="task_001",
+            mission_id="test_mission",
+            title="Long Running Task",
+            command="sleep 30",  # Sleep command
+            priority=1,
+            estimated_duration_minutes=10,
+            status=TaskStatus.IN_PROGRESS,
+        )
 
-        # Act & Assert: Timeout enforced
-        with pytest.raises(TimeoutError):
-            execute_with_timeout(slow_task, timeout_seconds=2)
+        # Create temp log file
+        import tempfile
+
+        with tempfile.NamedTemporaryFile(mode="w", delete=False, suffix=".log") as log_file:
+            log_path = log_file.name
+
+        try:
+            # Act: Execute with 1 second timeout (should timeout)
+            exit_code = execute_task_command(task, log_path, timeout=1)
+
+            # Assert: Exit code -1 indicates timeout
+            assert exit_code == -1, f"Expected timeout exit code -1, got {exit_code}"
+        finally:
+            # Cleanup
+            import os
+
+            if os.path.exists(log_path):
+                os.unlink(log_path)
 
     @patch("signal.signal")
     def test_graceful_shutdown_on_interrupt(self, mock_signal):

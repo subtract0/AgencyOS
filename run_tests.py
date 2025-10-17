@@ -257,6 +257,8 @@ def main(
     timed: bool = False,
     with_docker: bool = False,
     timeout_multiplier: float = 1.0,
+    json_report: bool = False,
+    json_report_file: str = ".report.json",
 ) -> int:
     # RECURSION GUARDS: Prevent nested test runs
     if os.environ.get("AGENCY_NESTED_TEST") == "1":
@@ -512,14 +514,23 @@ def main(
     elif test_mode == "github":
         pytest_args.extend(["-m", "github"])
     elif test_mode == "all":
-        # For "all" mode, force running ALL tests including skipped ones
-        pytest_args.extend(["--runxfail", "-p", "no:warnings"])
+        # For "all" mode, run unit + integration BUT skip slow E2E tests (>5min each)
+        # Slow tests marked with @pytest.mark.slow include:
+        # - Real GitHub API tests (10-15 min each)
+        # - Large graph scale tests (10 min each)
+        pytest_args.extend(["-m", "not slow", "--runxfail", "-p", "no:warnings"])
         # Set environment variables to force-enable all conditional skips
         env["FORCE_RUN_ALL_TESTS"] = "1"
         env["AGENCY_SKIP_GIT"] = "0"
-        print("🚀 FORCE MODE: Running ALL tests including normally skipped ones")
+        print("🚀 FORCE MODE: Running ALL tests EXCEPT slow E2E (>5min each)")
+        print("   Slow tests skipped: test_full_autonomous_cycle_*, test_e2e_large_graph_scale")
         print("   This will make real API calls and may incur costs")
     # Default: no marker filtering - pytest.ini controls default behavior
+
+    # JSON report generation (if requested)
+    if json_report:
+        pytest_args.extend(["--json-report", f"--json-report-file={json_report_file}"])
+        print(f"📊 JSON report will be saved to: {json_report_file}")
 
     try:
         # Dynamic timeout calculation (Article I: Complete context before action)
@@ -753,6 +764,20 @@ def create_parser() -> argparse.ArgumentParser:
         help="Timeout multiplier for constitutional retries (e.g., 1.0=5min, 2.0=10min, 3.0=15min, 4.0=20min, 10.0=50min). Any positive float value is accepted.",
     )
 
+    # JSON report generation
+    parser.add_argument(
+        "--json-report",
+        action="store_true",
+        help="Generate JSON report using pytest-json-report plugin",
+    )
+
+    parser.add_argument(
+        "--json-report-file",
+        type=str,
+        default=".report.json",
+        help="Path to JSON report file (default: .report.json)",
+    )
+
     return parser
 
 
@@ -788,6 +813,8 @@ if __name__ == "__main__":
             timed=args.timed,
             with_docker=args.with_docker,
             timeout_multiplier=args.timeout_multiplier,
+            json_report=args.json_report,
+            json_report_file=args.json_report_file,
         )
 
     sys.exit(exit_code)

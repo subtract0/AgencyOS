@@ -181,14 +181,21 @@ def sample_retraining_result():
 @pytest.fixture
 def sample_predictions():
     """Create sample PredictionLog instances."""
+    tier_names = ["simple", "moderate", "complex"]
     return [
         PredictionLog(
             task_id=f"task_{i}",
-            predicted_tier=f"P{i % 3 + 1}",
+            tier=tier_names[i % 3],  # Use valid tier names
             confidence=0.9,
-            timestamp=datetime.now(UTC),
-            actual_tier=f"P{i % 3 + 1}",
-            method="ml",
+            method="ml_model",  # Valid method name
+            model_version="2025-10-10T12:00:00Z",  # Added required field
+            class_probabilities={  # Added required field
+                "simple": 0.1 if i % 3 != 0 else 0.8,
+                "moderate": 0.1 if i % 3 != 1 else 0.8,
+                "complex": 0.1 if i % 3 != 2 else 0.8,
+            },
+            session_id="test_session",  # Added required field
+            timestamp=datetime.now(UTC).isoformat(),  # Convert to ISO string
         )
         for i in range(50)
     ]

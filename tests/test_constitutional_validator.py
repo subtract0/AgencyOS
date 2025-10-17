@@ -5,6 +5,7 @@ Following TDD principles: write tests first, then implementation.
 Tests all 5 constitutional articles and decorator functionality.
 """
 
+import os
 from unittest.mock import Mock, patch
 
 import pytest
@@ -13,6 +14,13 @@ from shared.agent_context import AgentContext, create_agent_context
 
 
 # Test fixtures
+@pytest.fixture(autouse=True)
+def constitutional_env():
+    """Ensure constitutional environment variables are set for all tests."""
+    with patch.dict(os.environ, {"USE_ENHANCED_MEMORY": "true"}):
+        yield
+
+
 @pytest.fixture
 def mock_agent_context():
     """Create a mock agent context for testing."""
