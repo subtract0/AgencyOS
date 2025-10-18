@@ -1,0 +1,420 @@
+{
+  "mission": "Achieve 100% Green Test Suite - Zero Compromises",
+  "leap_number": null,
+  "strategic_intent": "Make test suite pass 100% green with zero workarounds, zero skips (except legitimate slow tests), and zero broken windows. Fix root causes systematically using parallel specialized agents to conserve Opus tokens for architectural oversight.",
+
+  "architectural_philosophy": {
+    "what_makes_a_shining_example": [
+      "Tests that catch real bugs, not testing implementation details",
+      "Fast feedback loops (<10 min for full suite)",
+      "Zero flaky tests - deterministic pass/fail",
+      "Clear test names that document expected behavior",
+      "Comprehensive coverage of edge cases (NECESSARY pattern)",
+      "Resilient to environment changes (mocked external dependencies)",
+      "Self-documenting via test assertions",
+      "Constitutional compliance (TDD, no blind skips)"
+    ],
+    "when_tests_themselves_are_wrong": [
+      "Testing private implementation details instead of public API",
+      "Overly brittle mocks that break on refactoring",
+      "Tests that require complex setup indicating poor design",
+      "Long-running E2E tests better suited for integration tier",
+      "Tests with hard-coded absolute paths or environment assumptions",
+      "Tests without clear failure messages",
+      "Duplicate test logic across multiple files"
+    ],
+    "high_altitude_perspective": "A test suite is the heartbeat of autonomous development. When it's green, we can deploy with confidence. When it's flaky, we waste hours debugging phantom issues. The goal is not '100% coverage' but '100% confidence'. Some tests need deletion, not fixing. Some need complete rewrites. This mission takes that high-level view."
+  },
+
+  "phases": [
+    {
+      "id": "phase_1_critical_blockers",
+      "title": "Fix Critical Blockers Preventing Clean Test Runs",
+      "description": "Fix worker crashes and hangs that prevent accurate test result collection",
+      "tasks": [
+        {
+          "id": "fix_regex_backtracking_worker_crash",
+          "title": "Fix regex catastrophic backtracking in test_error_parser.py",
+          "type": "Code",
+          "tier": "Tier 1",
+          "agent": "coder",
+          "description": "Worker crashes on test_parse_log_with_very_long_single_line due to regex backtracking on 10KB+ lines. Add line length limit (e.g., 5000 chars) or use non-greedy regex. This is blocking accurate test result collection - highest priority.",
+          "dependencies": [],
+          "acceptance_criteria": [
+            "test_error_parser.py::test_parse_log_with_very_long_single_line passes without worker crash",
+            "No regex backtracking catastrophe on long lines",
+            "All test_error_parser.py tests pass",
+            "Full test run completes without worker crashes"
+          ],
+          "estimated_tokens": 2000,
+          "file_path": "tools/ci_monitor/code_error_parser.py"
+        },
+        {
+          "id": "test_fix_regex_backtracking",
+          "title": "Verify regex fix with comprehensive edge cases",
+          "type": "Test",
+          "tier": "Tier 2",
+          "agent": "test_generator",
+          "description": "Test that regex fix handles: (1) very long single lines (10KB+), (2) moderate lines (1KB), (3) short lines, (4) empty lines, (5) lines with special regex chars",
+          "dependencies": ["fix_regex_backtracking_worker_crash"],
+          "verification_target": "fix_regex_backtracking_worker_crash",
+          "acceptance_criteria": [
+            "All edge cases pass",
+            "No performance regression on normal lines",
+            "Clear error messages for rejected long lines"
+          ],
+          "estimated_tokens": 1500
+        },
+        {
+          "id": "fix_distributed_locks_worker_crash",
+          "title": "Fix distributed locks test causing worker hangs",
+          "type": "Code",
+          "tier": "Tier 2",
+          "agent": "coder",
+          "description": "Worker gw1 crashed on distributed locks test. Add proper timeouts to lock acquisition, use faster heartbeat intervals for testing (0.1s instead of 2s). Ensure all threads join with timeout.",
+          "dependencies": [],
+          "acceptance_criteria": [
+            "All test_distributed_locks.py tests pass",
+            "No worker crashes on lock tests",
+            "Tests complete in <30s (currently may hang)"
+          ],
+          "estimated_tokens": 2000,
+          "file_path": "tests/test_distributed_locks.py"
+        }
+      ]
+    },
+
+    {
+      "id": "phase_2_systematic_audit",
+      "title": "Auditor-Led Strategic Analysis of Remaining 67 Failures",
+      "description": "Use auditor agent to categorize ALL remaining failures by root cause, identify patterns, and propose architectural solutions (not band-aids)",
+      "tasks": [
+        {
+          "id": "audit_remaining_failures",
+          "title": "Comprehensive audit of all 67 remaining test failures",
+          "type": "Code",
+          "tier": "Tier 1",
+          "agent": "auditor",
+          "description": "Run full test suite with detailed failure output. Categorize failures by: (1) Missing implementations, (2) Incorrect test assumptions, (3) Environmental issues (git, filesystem), (4) Schema evolution issues, (5) Performance/timeout issues, (6) Tests that should be deleted. Generate prioritized fix list with estimated impact. Identify systemic issues requiring architectural changes.",
+          "dependencies": ["fix_regex_backtracking_worker_crash", "fix_distributed_locks_worker_crash"],
+          "acceptance_criteria": [
+            "All 67 failures categorized with root cause",
+            "Prioritized fix list (P0: critical, P1: high, P2: medium)",
+            "Identification of tests that need deletion vs fixing",
+            "Architectural recommendations for systemic issues",
+            "Estimated tokens and time for each category"
+          ],
+          "estimated_tokens": 8000
+        },
+        {
+          "id": "identify_deletable_tests",
+          "title": "Identify tests that should be deleted, not fixed",
+          "type": "Code",
+          "tier": "Tier 1",
+          "agent": "auditor",
+          "description": "High-level analysis: which tests are testing implementation details instead of behavior? Which tests are duplicates? Which tests require unreasonable setup indicating design smell? Propose deletions with justification. Apply 'shining example' criteria from architectural philosophy.",
+          "dependencies": ["audit_remaining_failures"],
+          "acceptance_criteria": [
+            "List of 5-10 tests proposed for deletion with justification",
+            "Analysis of what each test was trying to verify",
+            "Recommendation for alternative coverage if needed",
+            "No deletion of tests covering genuine edge cases"
+          ],
+          "estimated_tokens": 5000
+        }
+      ]
+    },
+
+    {
+      "id": "phase_3_parallel_agent_fixes",
+      "title": "Parallel Specialized Agent Execution (Conserve Opus Tokens)",
+      "description": "Deploy 5-8 parallel agents to fix categorized issues simultaneously, using Tier 2 models for tactical fixes while Opus orchestrates",
+      "tasks": [
+        {
+          "id": "fix_git_validation_failures",
+          "title": "Fix git validation test failures (E2E mocking issues)",
+          "type": "Code",
+          "tier": "Tier 2",
+          "agent": "coder",
+          "description": "Fix 2 git validation failures caused by missing git executable mocks or incorrect branch assumptions in E2E tests. Add proper fixture setup, mock subprocess.run for git commands with realistic outputs.",
+          "dependencies": ["audit_remaining_failures"],
+          "acceptance_criteria": [
+            "All foundation_automation_git_validation tests pass",
+            "Mocks are realistic and maintainable",
+            "Tests are environment-independent"
+          ],
+          "estimated_tokens": 3000,
+          "file_path": "tests/orchestrator/test_foundation_automation_git_validation.py"
+        },
+        {
+          "id": "fix_prediction_log_schema_issues",
+          "title": "Fix PredictionLog validation in weekly_retraining_scheduler",
+          "type": "Code",
+          "tier": "Tier 2",
+          "agent": "coder",
+          "description": "Fix the 1 error in test_weekly_retraining_scheduler.py caused by PredictionLog schema validation. Ensure all PredictionLog instances use correct schema, update any outdated .dict() calls to .model_dump().",
+          "dependencies": ["audit_remaining_failures"],
+          "acceptance_criteria": [
+            "test_weekly_retraining_scheduler.py passes 100%",
+            "PredictionLog schema validation is correct",
+            "All Pydantic V2 migrations completed"
+          ],
+          "estimated_tokens": 2500,
+          "file_path": "scripts/overnight_worker.py"
+        },
+        {
+          "id": "fix_model_loading_fixtures",
+          "title": "Fix missing trained model fixtures for model tests",
+          "type": "Code",
+          "tier": "Tier 2",
+          "agent": "coder",
+          "description": "Fix 1 model loading failure by creating proper test fixtures for trained models. Use mock models or pre-trained small models for testing, ensure fixtures are lightweight and fast to load.",
+          "dependencies": ["audit_remaining_failures"],
+          "acceptance_criteria": [
+            "All model trainer/loader tests pass",
+            "Fixtures are <1MB, load in <1s",
+            "Tests don't require external model files"
+          ],
+          "estimated_tokens": 2000,
+          "file_path": "tests/test_model_trainer.py"
+        },
+        {
+          "id": "fix_dataset_validation_pydantic_error",
+          "title": "Fix TrainingSample Pydantic validation error",
+          "type": "Code",
+          "tier": "Tier 2",
+          "agent": "coder",
+          "description": "Fix 1 dataset validation error caused by incorrect TrainingSample Pydantic model usage. Ensure all fields are correctly typed, use .model_validate() instead of .parse_obj(), update to Pydantic V2 patterns.",
+          "dependencies": ["audit_remaining_failures"],
+          "acceptance_criteria": [
+            "TrainingSample validation passes",
+            "All dataset tests pass",
+            "Pydantic V2 patterns used throughout"
+          ],
+          "estimated_tokens": 1500,
+          "file_path": "tools/ml_routing/training_data_merger.py"
+        },
+        {
+          "id": "update_pydantic_v1_to_v2_patterns",
+          "title": "Update all .dict() → .model_dump() (26 deprecation warnings)",
+          "type": "Code",
+          "tier": "Tier 2",
+          "agent": "coder",
+          "description": "Systematically update all Pydantic V1 patterns to V2: .dict() → .model_dump(), .parse_obj() → .model_validate(), .schema() → .model_json_schema(). Fix 26 deprecation warnings across monitoring service and other modules.",
+          "dependencies": ["audit_remaining_failures"],
+          "acceptance_criteria": [
+            "Zero Pydantic deprecation warnings",
+            "All .dict() calls replaced with .model_dump()",
+            "All .parse_obj() calls replaced with .model_validate()",
+            "Tests pass with Pydantic V2"
+          ],
+          "estimated_tokens": 4000,
+          "file_path": "tools/quality_feedback/monitoring_service.py"
+        },
+        {
+          "id": "fix_remaining_categorized_failures",
+          "title": "Fix remaining categorized failures from audit report",
+          "type": "Code",
+          "tier": "Tier 2",
+          "agent": "coder",
+          "description": "Address remaining failures based on auditor's prioritized list. Focus on P0 and P1 issues first. Use parallel agents for independent failures. Follow root-cause fixing, no workarounds.",
+          "dependencies": ["audit_remaining_failures", "identify_deletable_tests", "fix_git_validation_failures", "fix_prediction_log_schema_issues", "fix_model_loading_fixtures", "fix_dataset_validation_pydantic_error", "update_pydantic_v1_to_v2_patterns"],
+          "acceptance_criteria": [
+            "All P0 failures fixed",
+            "All P1 failures fixed",
+            "P2 failures fixed or documented for future work",
+            "Zero broken windows"
+          ],
+          "estimated_tokens": 10000
+        }
+      ]
+    },
+
+    {
+      "id": "phase_4_performance_optimization",
+      "title": "Optimize Test Suite Performance (<10 Min Target)",
+      "description": "Make fast feedback loops a reality - target full suite in <10 minutes",
+      "tasks": [
+        {
+          "id": "identify_slow_tests",
+          "title": "Profile test suite to identify slowest 20 tests",
+          "type": "Code",
+          "tier": "Tier 2",
+          "agent": "auditor",
+          "description": "Run test suite with --durations=20 to identify slowest tests. Categorize slow tests as: (1) Legitimately slow (E2E, integration) → mark with @pytest.mark.slow, (2) Unnecessarily slow (long sleeps) → optimize, (3) Redundant slow tests → delete.",
+          "dependencies": ["fix_remaining_categorized_failures"],
+          "acceptance_criteria": [
+            "List of 20 slowest tests with timings",
+            "Categorization of each slow test",
+            "Recommendations for optimization or marking",
+            "Target: full suite in <10 minutes"
+          ],
+          "estimated_tokens": 3000
+        },
+        {
+          "id": "optimize_slow_tests",
+          "title": "Optimize unnecessarily slow tests (long sleeps, inefficient mocks)",
+          "type": "Code",
+          "tier": "Tier 2",
+          "agent": "coder",
+          "description": "Apply optimizations from TEST_SUITE_FIX_ACTION_PLAN.md: replace long sleeps with faster intervals for testing, use mocks instead of real operations, add asyncio timeouts. Do NOT mark tests as @pytest.mark.slow unless they are genuinely E2E/integration tests.",
+          "dependencies": ["identify_slow_tests"],
+          "acceptance_criteria": [
+            "Tests complete 2-5x faster",
+            "No unnecessary sleeps (>1s)",
+            "All sleeps have clear justification comments",
+            "Full suite completes in <10 minutes"
+          ],
+          "estimated_tokens": 5000
+        },
+        {
+          "id": "mark_legitimate_slow_tests",
+          "title": "Mark legitimate E2E/integration tests with @pytest.mark.slow",
+          "type": "Code",
+          "tier": "Tier 2",
+          "agent": "coder",
+          "description": "Mark truly slow E2E/integration tests (>30s) with @pytest.mark.slow so they can be run separately in CI. Document why each test is legitimately slow. Ensure fast unit tests run by default.",
+          "dependencies": ["identify_slow_tests", "optimize_slow_tests"],
+          "acceptance_criteria": [
+            "5-10 tests marked with @pytest.mark.slow",
+            "Each marked test has justification comment",
+            "Default test run (without --slow) completes in <5 min",
+            "CI can run slow tests separately"
+          ],
+          "estimated_tokens": 2000
+        }
+      ]
+    },
+
+    {
+      "id": "phase_5_constitutional_validation",
+      "title": "Constitutional Compliance & Quality Gates",
+      "description": "Verify all 6 articles are enforced, zero workarounds remain",
+      "tasks": [
+        {
+          "id": "validate_no_blind_skips",
+          "title": "Audit all @pytest.mark.skip to ensure legitimate reasons",
+          "type": "Code",
+          "tier": "Tier 1",
+          "agent": "auditor",
+          "description": "Grep for all @pytest.mark.skip in tests/. For each skip: (1) Verify it has clear reason, (2) Verify reason is legitimate (external dependency unavailable, not 'test is broken'), (3) Propose fixes for any 'broken' skips, (4) Delete skips that are no longer relevant.",
+          "dependencies": ["fix_remaining_categorized_failures"],
+          "acceptance_criteria": [
+            "Every @pytest.mark.skip has documented reason",
+            "No skips due to 'test is broken' or 'TODO'",
+            "Skips only for genuine external dependencies",
+            "List of skips that can be removed"
+          ],
+          "estimated_tokens": 3000
+        },
+        {
+          "id": "validate_article_vi_tdd_compliance",
+          "title": "Verify Article VI (TDD) compliance across test suite",
+          "type": "Code",
+          "tier": "Tier 1",
+          "agent": "quality_enforcer",
+          "description": "Validate that all tests follow TDD patterns: tests were written first, tests cover NECESSARY pattern (Normal/Edge/Security/Spec/Accessibility/Resilience/Year-round), no implementation-detail testing. Generate report of any violations.",
+          "dependencies": ["fix_remaining_categorized_failures"],
+          "acceptance_criteria": [
+            "All tests follow NECESSARY pattern",
+            "No tests testing private methods",
+            "All tests have clear arrange-act-assert structure",
+            "Report of any TDD pattern violations"
+          ],
+          "estimated_tokens": 4000
+        },
+        {
+          "id": "validate_zero_broken_windows",
+          "title": "Final audit: zero broken windows, zero workarounds",
+          "type": "Code",
+          "tier": "Tier 1",
+          "agent": "quality_enforcer",
+          "description": "Comprehensive audit to ensure: (1) No @pytest.mark.xfail, (2) No try/except pass, (3) No 'TODO: fix this test', (4) No commented-out assertions, (5) No hardcoded absolute paths, (6) No flaky tests. Generate constitutional compliance report.",
+          "dependencies": ["validate_no_blind_skips", "validate_article_vi_tdd_compliance"],
+          "acceptance_criteria": [
+            "Zero broken windows detected",
+            "Zero workarounds in test suite",
+            "100% constitutional compliance (Articles I-VI)",
+            "Test suite is a 'shining example' by our criteria"
+          ],
+          "estimated_tokens": 5000
+        }
+      ]
+    },
+
+    {
+      "id": "phase_6_final_verification",
+      "title": "100% Green Verification & Documentation",
+      "description": "Final full test run, confirm 100% pass rate, document learnings",
+      "tasks": [
+        {
+          "id": "run_full_test_suite_clean",
+          "title": "Run full test suite on clean checkout - verify 100% green",
+          "type": "Test",
+          "tier": "Tier 2",
+          "agent": "test_generator",
+          "description": "Run python run_tests.py --run-all on clean checkout (no cached fixtures, no artifacts). Verify: (1) 100% pass rate (no failures, no errors), (2) Completes in <10 minutes, (3) No worker crashes, (4) No deprecation warnings (except external libs), (5) All skips are legitimate.",
+          "dependencies": ["fix_remaining_categorized_failures", "optimize_slow_tests", "mark_legitimate_slow_tests", "validate_zero_broken_windows"],
+          "verification_target": "fix_remaining_categorized_failures",
+          "acceptance_criteria": [
+            "100% pass rate (6001/6001 or actual count)",
+            "Zero failures, zero errors",
+            "Runtime <10 minutes",
+            "Zero worker crashes",
+            "Only legitimate skips remain"
+          ],
+          "estimated_tokens": 2000
+        },
+        {
+          "id": "generate_test_suite_excellence_report",
+          "title": "Generate comprehensive test suite excellence report",
+          "type": "Code",
+          "tier": "Tier 1",
+          "agent": "chief_architect",
+          "description": "Document the journey from 98.8% → 100%, architectural decisions made, tests deleted vs fixed, performance improvements, constitutional compliance validation. Include 'What makes this a shining example' section. Store as ADR.",
+          "dependencies": ["run_full_test_suite_clean"],
+          "acceptance_criteria": [
+            "Comprehensive report documenting all changes",
+            "Architectural decisions documented as ADR",
+            "Performance improvements quantified",
+            "Constitutional compliance validated",
+            "Learnings extracted to VectorStore"
+          ],
+          "estimated_tokens": 6000
+        }
+      ]
+    }
+  ],
+
+  "checkpoints": [
+    {
+      "after_phase": "phase_1_critical_blockers",
+      "type": "auto_validate",
+      "criteria": "All worker crashes resolved, test run completes without hangs"
+    },
+    {
+      "after_phase": "phase_2_systematic_audit",
+      "type": "human_review",
+      "prompt": "Review auditor's categorization of 67 failures and proposed deletions. Approve strategic approach before parallel agent execution."
+    },
+    {
+      "after_phase": "phase_3_parallel_agent_fixes",
+      "type": "auto_validate",
+      "criteria": "All categorized failures fixed, test pass rate >99.5%"
+    },
+    {
+      "after_phase": "phase_5_constitutional_validation",
+      "type": "auto_validate",
+      "criteria": "Zero broken windows, zero workarounds, 100% constitutional compliance"
+    }
+  ],
+
+  "metadata": {
+    "estimated_tokens": 75000,
+    "estimated_cost_usd": 8.50,
+    "complexity": "complex",
+    "budget_limit_usd": 15.00,
+    "parallelization_strategy": "Phase 3 tasks can run in parallel (5-8 agents), conserving Opus tokens for orchestration",
+    "success_definition": "6001/6001 tests passing, <10 min runtime, zero skips (except legitimate slow tests), zero workarounds, constitutional compliance validated"
+  }
+}
