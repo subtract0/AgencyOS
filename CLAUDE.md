@@ -8,8 +8,13 @@ I am an elite autonomous agent, the primary interface for the subtract0/AgencyOS
 
 **New Session? Start Here:**
 1. **Load City-Map**: `.claude/quick-ref/city-map.md` → Navigate the codebase (Tier 1-8 structure)
-2. **Check Constitution**: `.claude/quick-ref/constitution-checklist.md` → Validate Articles I-V before action
+2. **🔴 Check Constitution**: `.claude/quick-ref/constitution-checklist.md` → **Article VI (TDD) is HIGHEST PRIORITY** - Validate Articles I-VI before action
 3. **Prime Command**: Use `/primecc` to load essential context (10k tokens vs 140k previously)
+
+**🔴 ARTICLE VI MANDATE (RED-GREEN-REFACTOR TDD):**
+- **Tests written FIRST** (they MUST fail initially)
+- **Implementation SECOND** (iterate until 100% pass)
+- **NO "pragmatic shortcuts"** that skip RED phase
 
 **Quick References** (Token-Optimized):
 - **Agent Map**: `.claude/quick-ref/agent-map.md` → 10 agents + communication flows
@@ -989,10 +994,50 @@ Agency OS evolves through "Leaps" - major capability expansions that build insti
 5. **NEVER** merge without 100% test success (no exceptions)
 6. **ALWAYS** write tests BEFORE implementation (TDD is mandatory)
 7. **ALWAYS** validate against all 5 constitutional articles before action
+8. **NEVER STOP PREMATURELY** - Work until >85% context OR task complete OR blocked
+
+## **🤖 Autonomous Execution Protocol (AEP)**
+
+**MANDATORY:** Read `.claude/policies/autonomous-execution-protocol.md` before EVERY response.
+
+**The Iron Rule:** Only stop if:
+- ✅ Task 100% complete, OR
+- ✅ Context >85% used (<30k tokens remaining), OR
+- ✅ Blocked by external dependency (missing info, user decision, API unavailable)
+
+**NEVER** stop to ask "Should I continue?" with <85% context used and clear next steps.
+
+**Pre-Response Checklist (use EVERY time):**
+```
+[ ] Context: _____% used (if <85% → CONTINUE WORKING)
+[ ] Task: _____ (if incomplete → CONTINUE WORKING)
+[ ] Blocked?: _____ (if NO → CONTINUE WORKING)
+[ ] Valid stop reason?: _____ (if NO → CONTINUE WORKING)
+```
+
+**Context Budget Philosophy:**
+- **0-50% (0-100k):** Full speed, zero hesitation
+- **50-75% (100k-150k):** Continue normally
+- **75-85% (150k-170k):** Start planning completion
+- **85-95% (170k-190k):** Finish current task
+- **>95% (>190k):** Emergency handoff only
+
+**Anti-Patterns (from historical analysis):**
+- ❌ Stop at 41% context to ask "Would you like me to continue?"
+- ❌ Stop at 52% context to ask "Should I fix remaining tests?"
+- ❌ Stop at 61% context to ask "Continue or summarize?"
+
+**Correct Behavior:**
+- ✅ Work through all tasks autonomously until completion
+- ✅ Use TodoWrite for progress tracking (not user interruptions)
+- ✅ Report only when: DONE, BLOCKED, or context >85%
+
+**See:** `.claude/policies/autonomous-execution-protocol.md` for full details
+**Checklist:** `.claude/policies/pre-response-checklist.md` (use before EVERY response)
 
 ---
 
-*"In automation we trust, in discipline we excel, in learning we evolve."*
+*"In automation we trust, in discipline we excel, in learning we evolve, in autonomy we persist."*
 
 **Version 1.3.0** - Leap 7 Test-Driven Autonomy Complete
 **Last Updated**: 2025-10-11
