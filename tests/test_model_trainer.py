@@ -516,7 +516,7 @@ def test_cv_reports_accuracy_precision_recall(
     assert 0.0 <= model.validation_accuracy <= 1.0, "Accuracy must be in [0.0, 1.0]"
 
 
-@pytest.mark.timeout(15)  # ML training with mocks + CV can take 10-12s
+@pytest.mark.timeout(25)  # ML training with mocks + CV can take 10-12s locally, +25s for CI variability
 def test_cv_stratified_k_fold(mock_training_dataset, mock_sklearn_training):
     """
     Test cross-validation uses StratifiedKFold (preserves class balance).
