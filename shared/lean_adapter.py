@@ -104,22 +104,29 @@ class Agency:
 
     def __init__(
         self,
-        agents: list[Agent],
+        agents: Agent | list[Agent],
         shared_instructions: str | None = None,
         **kwargs,
     ):
         """
-        Initialize agency with single agent.
+        Initialize agency with single agent or list of agents.
 
         Args:
-            agents: List of agents (we only use the first one)
+            agents: Single Agent or list of Agents (we only use the first one)
             shared_instructions: Shared instructions (prepended to agent instructions)
-            **kwargs: Ignored
+            **kwargs: Ignored (for backward compatibility)
         """
-        if not agents:
-            raise ValueError("Agency requires at least one agent")
-
-        self.agent = agents[0]
+        # Handle both single Agent and list[Agent] for backward compatibility
+        if isinstance(agents, list):
+            if not agents:
+                raise ValueError("Agency requires at least one agent")
+            self.agent = agents[0]
+        elif isinstance(agents, Agent):
+            self.agent = agents
+        else:
+            raise TypeError(
+                f"agents must be Agent or list[Agent], got {type(agents).__name__}"
+            )
 
         # Prepend shared instructions if provided
         if shared_instructions:
