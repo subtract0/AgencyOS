@@ -6,14 +6,14 @@ Constitutional compliance:
 - Article III: Automated worker adjustment enforcement
 """
 
-# Increase timeout for psutil operations (CI requires more time)
-pytestmark = pytest.mark.timeout(30)
-
 from pathlib import Path
 from unittest.mock import MagicMock, patch
 
 import psutil
 import pytest
+
+# Increase timeout for psutil operations (CI requires more time)
+pytestmark = pytest.mark.timeout(30)
 
 
 def test_get_safe_worker_count_with_local_model():
