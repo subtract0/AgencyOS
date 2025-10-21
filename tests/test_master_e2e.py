@@ -272,7 +272,7 @@ result = process_data(None)
             sys.path.insert(0, os.getcwd())
 
             # Test the key imports
-            from agency_swarm import Agency
+            from shared.lean_adapter import Agency
             from agency_swarm.tools import SendMessageHandoff
 
             print("✅ Multi-Agent: Agency framework imports work")

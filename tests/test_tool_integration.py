@@ -6,7 +6,7 @@ Tests that tools can be invoked directly via the agent
 import os
 
 import pytest
-from agency_swarm import Agency
+from shared.lean_adapter import Agency
 from agency_swarm.tools import SendMessageHandoff
 
 from coding_agent.coding_agent import create_coding_agent

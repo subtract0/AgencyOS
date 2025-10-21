@@ -1,7 +1,7 @@
 from unittest.mock import MagicMock, create_autospec, patch
 
 import pytest
-from agency_swarm import Agency, Agent
+from shared.lean_adapter import Agency, Agent
 from agency_swarm.tools import SendMessageHandoff
 
 

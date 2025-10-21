@@ -4,7 +4,7 @@ Backward Compatibility Adapter
 Provides drop-in replacement for agency_swarm classes to ease migration.
 
 This allows existing code like:
-    from agency_swarm import Agent
+    from shared.lean_adapter import Agent
 To work with:
     from shared.lean_adapter import Agent
 

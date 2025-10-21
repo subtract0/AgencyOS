@@ -258,7 +258,7 @@ class TestAgencyFast:
             mock_agency_class.return_value = mock_agency
 
             # Create agency (mocked)
-            from agency_swarm import Agency
+            from shared.lean_adapter import Agency
 
             _ = Agency(
                 mock_create_agent(model="gpt-5-mini", reasoning_effort="low"),
