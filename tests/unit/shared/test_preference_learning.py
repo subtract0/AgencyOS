@@ -470,6 +470,7 @@ class TestPreferenceAnalysis:
         assert low_stakes_pref is not None
         assert low_stakes_pref.confidence < 0.5  # Low confidence with only 3 samples
 
+    @pytest.mark.serial
     def test_trend_detection_stable(self, alice_learner):
         """Should detect stable trend when acceptance rate is constant."""
         # Arrange - Consistent YES responses
