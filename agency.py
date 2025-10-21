@@ -240,7 +240,7 @@ agency = Agency(
     summary,
     toolsmith,
     quality_enforcer,
-    name="AgencyCode",
+    name="agencyOS",
     communication_flows=[
         (chief_architect, auditor, SendMessageHandoff),
         (chief_architect, learning_agent, SendMessageHandoff),

@@ -2,7 +2,7 @@
 
 **Version 1.1.1** - Mars Rover Bulletproofing & Production Ready
 
-Elite autonomous software engineering system with **proven self-healing capabilities**, **100% constitutional compliance**, and **93% token-optimized documentation**. Built with [Agency Swarm](https://agency-swarm.ai/welcome/overview) framework with tier-based navigation for autonomous agents.
+Elite autonomous software engineering system with **proven self-healing capabilities**, **100% constitutional compliance**, and **93% token-optimized documentation**. Built with the agencyOS framework with tier-based navigation for autonomous agents.
 
 ## 🚀 Quick Start
 

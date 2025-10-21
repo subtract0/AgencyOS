@@ -1,5 +1,5 @@
-# Core Agency Swarm framework
-git+https://github.com/VRSEN/agency-swarm.git@main
+# Core agencyOS framework
+git+https://github.com/subtract0/agency-swarm.git@main
 
 # LLM & AI dependencies
 openai-agents[litellm]>=0.2.0

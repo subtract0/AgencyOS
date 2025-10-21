@@ -65,7 +65,7 @@ Plans integrate with:
 ```
 Specification → Technical Plan → Task Breakdown → Implementation → Validation
      ↓              ↓               ↓              ↓            ↓
-   Goals &      Architecture &   TodoWrite     AgencyCode    Test Suite
+   Goals &      Architecture &   TodoWrite     agencyOS      Test Suite
    Criteria     Agent Roles     Task List     Agent Work    Validation
 ```
 
