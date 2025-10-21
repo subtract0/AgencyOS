@@ -618,6 +618,7 @@ class TestPredictionLogging:
 class TestE2EWorkflowLatency:
     """Test end-to-end classification workflow."""
 
+    @pytest.mark.serial  # Force sequential execution to avoid parallel worker CPU contention
     def test_e2e_classification_workflow_latency(
         self,
         trained_ensemble_model: EnsembleModel,
