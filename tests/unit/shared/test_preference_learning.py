@@ -67,9 +67,12 @@ def message_bus(temp_db):
 
 @pytest.fixture
 def alice_learner(message_bus, temp_db):
-    """Create preference learner for Alice."""
-    # Use unique temporary file for each test to avoid conflicts
-    with tempfile.NamedTemporaryFile(suffix="_alice.db", delete=False) as f:
+    """Create preference learner for Alice with strict isolation."""
+    # Use process ID + timestamp + user ID for guaranteed uniqueness across parallel workers
+    import os
+    import time
+    unique_suffix = f"_alice_{os.getpid()}_{int(time.time() * 1000000)}.db"
+    with tempfile.NamedTemporaryFile(suffix=unique_suffix, delete=False) as f:
         db_path = f.name
     learner = PreferenceLearner(
         user_id="alice", message_bus=message_bus, db_path=db_path, min_confidence=0.6
@@ -80,9 +83,12 @@ def alice_learner(message_bus, temp_db):
 
 @pytest.fixture
 def bob_learner(message_bus, temp_db):
-    """Create preference learner for Bob."""
-    # Use unique temporary file for each test to avoid conflicts
-    with tempfile.NamedTemporaryFile(suffix="_bob.db", delete=False) as f:
+    """Create preference learner for Bob with strict isolation."""
+    # Use process ID + timestamp + user ID for guaranteed uniqueness across parallel workers
+    import os
+    import time
+    unique_suffix = f"_bob_{os.getpid()}_{int(time.time() * 1000000)}.db"
+    with tempfile.NamedTemporaryFile(suffix=unique_suffix, delete=False) as f:
         db_path = f.name
     learner = PreferenceLearner(
         user_id="bob", message_bus=message_bus, db_path=db_path, min_confidence=0.6
