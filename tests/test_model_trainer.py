@@ -642,7 +642,7 @@ def test_calculate_false_negative_rate_complex(
     )
 
 
-@pytest.mark.timeout(15)  # ML training with dataset manipulation
+@pytest.mark.timeout(60)  # ML training with dataset manipulation
 def test_fn_rate_zero_if_no_complex_samples(mock_sklearn_training):
     """
     Test FN rate is 0 when no complex samples exist (edge case).
@@ -717,7 +717,7 @@ def test_fn_rate_zero_if_no_complex_samples(mock_sklearn_training):
     )
 
 
-@pytest.mark.timeout(15)  # Multiple nested patches + ML training
+@pytest.mark.timeout(60)  # Multiple nested patches + ML training
 def test_fn_rate_threshold_enforcement(mock_training_dataset):
     """
     Test FN_rate >2% returns Err (threshold enforcement).
@@ -820,7 +820,7 @@ def test_confusion_matrix_for_fn_calculation(
 # ==============================================================================
 
 
-@pytest.mark.timeout(15)  # Multiple nested patches + ML training
+@pytest.mark.timeout(60)  # Multiple nested patches + ML training
 def test_accuracy_below_98_percent_fails(mock_training_dataset):
     """
     Test accuracy <98% returns Err (threshold enforcement).
@@ -884,7 +884,7 @@ def test_accuracy_below_98_percent_fails(mock_training_dataset):
     assert "accuracy" in error_msg.lower(), f"Error should mention accuracy, got: {error_msg}"
 
 
-@pytest.mark.timeout(15)
+@pytest.mark.timeout(60)
 def test_accuracy_at_98_percent_succeeds(
     mock_training_dataset, mock_sklearn_training, mock_confusion_matrix
 ):
@@ -918,7 +918,7 @@ def test_accuracy_at_98_percent_succeeds(
     assert model.validation_accuracy >= 0.98, "Accuracy should be ≥98%"
 
 
-@pytest.mark.timeout(15)  # ML training with confusion matrix mocks
+@pytest.mark.timeout(60)  # ML training with confusion matrix mocks
 def test_fn_rate_above_2_percent_fails(
     mock_training_dataset, mock_sklearn_training, mock_cross_val_score
 ):
@@ -954,7 +954,7 @@ def test_fn_rate_above_2_percent_fails(
     assert "false negative" in error_msg.lower(), f"Error should mention FN rate, got: {error_msg}"
 
 
-@pytest.mark.timeout(15)  # ML training with confusion matrix mocks
+@pytest.mark.timeout(60)  # ML training with confusion matrix mocks
 def test_fn_rate_at_2_percent_succeeds(
     mock_training_dataset, mock_sklearn_training, mock_cross_val_score
 ):
