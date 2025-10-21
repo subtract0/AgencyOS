@@ -317,3 +317,4 @@ exclude_lines = [
 ]
 [tool.poetry.dependencies]
 pydantic = "^2.11.9"
+aiofiles = "^25.1.0"
