@@ -459,9 +459,12 @@ def main(
         else:
             from tools.memory_aware_test_runner import get_safe_worker_count
 
-            worker_count = get_safe_worker_count()
+            # Cap at 3 workers for 0% flakiness (Article II: 100% pass rate mandatory)
+            # Memory-aware count can suggest 10 workers, but parallel timing tests need stability
+            memory_based_count = get_safe_worker_count()
+            worker_count = min(memory_based_count, 3)
             pytest_args.extend(["-n", str(worker_count)])
-            print(f"✓ pytest-xdist: {worker_count} workers (memory-aware, overrides pytest.ini)")
+            print(f"✓ pytest-xdist: {worker_count} workers (capped at 3 for stability, Article II compliance)")
     except Exception:
         # Fallback to pytest.ini default (-n 6 --dist loadgroup)
         print("✓ pytest-xdist: using pytest.ini defaults (-n 6)")
