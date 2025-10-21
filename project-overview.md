@@ -26,7 +26,7 @@ The Agency operates under five immutable constitutional articles:
 
 ### Multi-Agent System (10 Agents)
 1. **ChiefArchitectAgent**: Strategic oversight and self-directed task creation
-2. **AgencyOSAgent**: Primary development with 16 specialized tools
+2. **CodingAgent**: Primary development with 16 specialized tools
 3. **PlannerAgent**: Strategic planning using spec-kit methodology
 4. **AuditorAgent**: Quality analysis using CodeHealer NECESSARY pattern
 5. **TestGeneratorAgent**: NECESSARY-compliant test generation

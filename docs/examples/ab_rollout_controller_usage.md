@@ -452,6 +452,6 @@ def test_end_to_end_rollout():
 
 ---
 
-**Author**: AgencyOSAgent
+**Author**: CodingAgent
 **Date**: 2025-10-10
 **Constitutional Compliance**: Articles I-IV ✅

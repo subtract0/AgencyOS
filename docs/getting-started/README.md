@@ -71,7 +71,7 @@ Planner (creates plan.md) → User Approval
     ↓
 TodoWrite (task breakdown)
     ↓
-AgencyOSAgent (TDD implementation)
+CodingAgent (TDD implementation)
     ↓
 TestGenerator + QualityEnforcer → Tests Pass?
     ↓

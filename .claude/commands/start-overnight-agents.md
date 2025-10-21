@@ -138,7 +138,7 @@ When you wake up, the orchestrator report shows:
       "id": "pydantic_migration",
       "title": "Migrate Dict[Any, Any] to Pydantic Models",
       "description": "Replace all Dict[Any, Any] with properly typed Pydantic models",
-      "command": "/primeA 'Migrate all Dict[str, Any] to Pydantic models in agencyos_agent/'",
+      "command": "/primeA 'Migrate all Dict[str, Any] to Pydantic models in coding_agent/'",
       "priority": 1,
       "estimated_duration_minutes": 30,
       "tags": ["refactoring", "type-safety"],

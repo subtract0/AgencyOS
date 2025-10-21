@@ -153,7 +153,7 @@ See **[Cost Dashboard Guide](COST_DASHBOARD_GUIDE.md)** for complete documentati
 
 All Agency sub-agents accept and store `cost_tracker`:
 
-- ✅ AgencyOSAgent
+- ✅ CodingAgent
 - ✅ TestGeneratorAgent
 - ✅ ToolsmithAgent
 - ✅ QualityEnforcerAgent
@@ -240,7 +240,7 @@ ARCHITECT (Cognition)
 execution_queue (MessageBus)
     ↓
 EXECUTOR (Action)
-    ├─→ AgencyOSAgent ────→ CostTracker
+    ├─→ CodingAgent ────→ CostTracker
     ├─→ TestGeneratorAgent ──→ CostTracker
     ├─→ ToolsmithAgent ──────→ CostTracker
     ├─→ QualityEnforcerAgent → CostTracker

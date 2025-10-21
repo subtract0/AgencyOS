@@ -7,7 +7,7 @@ from unittest.mock import Mock, patch
 
 import pytest
 
-from agencyos_agent.agencyos_agent import create_agencyos_agent
+from coding_agent.coding_agent import create_coding_agent
 
 
 class TestMemoryIntegration:
@@ -16,14 +16,14 @@ class TestMemoryIntegration:
     def test_agent_context_creation(self, mock_agent_context):
         """Test that agent context is properly created."""
         with (
-            patch("agencyos_agent.agencyos_agent.create_agent_context") as mock_create,
-            patch("agencyos_agent.agencyos_agent.Agent"),
-            patch("agencyos_agent.agencyos_agent.get_model_instance") as mock_model,
+            patch("coding_agent.coding_agent.create_agent_context") as mock_create,
+            patch("coding_agent.coding_agent.Agent"),
+            patch("coding_agent.coding_agent.get_model_instance") as mock_model,
         ):
             mock_create.return_value = mock_agent_context
             mock_model.return_value = "gpt-5-mini"
 
-            _ = create_agencyos_agent(model="gpt-5-mini", reasoning_effort="low")
+            _ = create_coding_agent(model="gpt-5-mini", reasoning_effort="low")
 
             # Verify agent context was created
             assert mock_create.called
@@ -33,21 +33,21 @@ class TestMemoryIntegration:
         """Test that memory integration hooks are properly created."""
         with (
             patch(
-                "agencyos_agent.agencyos_agent.create_memory_integration_hook"
+                "coding_agent.coding_agent.create_memory_integration_hook"
             ) as mock_memory_hook,
             patch(
-                "agencyos_agent.agencyos_agent.create_system_reminder_hook"
+                "coding_agent.coding_agent.create_system_reminder_hook"
             ) as mock_reminder_hook,
-            patch("agencyos_agent.agencyos_agent.create_composite_hook") as mock_composite,
-            patch("agencyos_agent.agencyos_agent.Agent"),
-            patch("agencyos_agent.agencyos_agent.get_model_instance") as mock_model,
+            patch("coding_agent.coding_agent.create_composite_hook") as mock_composite,
+            patch("coding_agent.coding_agent.Agent"),
+            patch("coding_agent.coding_agent.get_model_instance") as mock_model,
         ):
             mock_model.return_value = "gpt-5-mini"
             mock_memory_hook.return_value = Mock()
             mock_reminder_hook.return_value = Mock()
             mock_composite.return_value = Mock()
 
-            _ = create_agencyos_agent(
+            _ = create_coding_agent(
                 model="gpt-5-mini", reasoning_effort="medium", agent_context=mock_agent_context
             )
 
@@ -62,12 +62,12 @@ class TestMemoryIntegration:
     def test_agent_creation_memory_storage(self, mock_agent_context):
         """Test that agent creation is stored in memory."""
         with (
-            patch("agencyos_agent.agencyos_agent.Agent"),
-            patch("agencyos_agent.agencyos_agent.get_model_instance") as mock_model,
+            patch("coding_agent.coding_agent.Agent"),
+            patch("coding_agent.coding_agent.get_model_instance") as mock_model,
         ):
             mock_model.return_value = "gpt-5-mini"
 
-            _ = create_agencyos_agent(
+            _ = create_coding_agent(
                 model="gpt-5-mini", reasoning_effort="high", agent_context=mock_agent_context
             )
 
@@ -81,7 +81,7 @@ class TestMemoryIntegration:
             memory_tags = call_args[0][2]
 
             assert memory_key.startswith("agent_created_")
-            assert memory_data["agent_type"] == "AgencyOSAgent"
+            assert memory_data["agent_type"] == "CodingAgent"
             assert memory_data["model"] == "gpt-5-mini"
             assert memory_data["reasoning_effort"] == "high"
             assert memory_data["session_id"] == "test_session_123"
@@ -117,17 +117,17 @@ class TestMemoryIntegration:
         """Test that memory hooks are properly integrated."""
         with (
             patch(
-                "agencyos_agent.agencyos_agent.create_memory_integration_hook"
+                "coding_agent.coding_agent.create_memory_integration_hook"
             ) as mock_memory_hook,
-            patch("agencyos_agent.agencyos_agent.create_composite_hook") as mock_composite,
-            patch("agencyos_agent.agencyos_agent.Agent"),
-            patch("agencyos_agent.agencyos_agent.get_model_instance") as mock_model,
+            patch("coding_agent.coding_agent.create_composite_hook") as mock_composite,
+            patch("coding_agent.coding_agent.Agent"),
+            patch("coding_agent.coding_agent.get_model_instance") as mock_model,
         ):
             mock_model.return_value = "gpt-5-mini"
             mock_memory_hook.return_value = mock_system_hooks["memory_hook"]
             mock_composite.return_value = Mock()
 
-            _ = create_agencyos_agent(
+            _ = create_coding_agent(
                 model="gpt-5-mini", reasoning_effort="low", agent_context=mock_agent_context
             )
 
@@ -142,17 +142,17 @@ class TestMemoryIntegration:
     def test_session_id_consistency(self, mock_agent_context):
         """Test that session ID is consistent across memory operations."""
         with (
-            patch("agencyos_agent.agencyos_agent.Agent"),
-            patch("agencyos_agent.agencyos_agent.get_model_instance") as mock_model,
+            patch("coding_agent.coding_agent.Agent"),
+            patch("coding_agent.coding_agent.get_model_instance") as mock_model,
         ):
             mock_model.return_value = "gpt-5-mini"
 
             # Create multiple agents with same context
-            _ = create_agencyos_agent(
+            _ = create_coding_agent(
                 model="gpt-5-mini", reasoning_effort="low", agent_context=mock_agent_context
             )
 
-            _ = create_agencyos_agent(
+            _ = create_coding_agent(
                 model="gpt-4o", reasoning_effort="medium", agent_context=mock_agent_context
             )
 
@@ -170,12 +170,12 @@ class TestMemoryIntegration:
     def test_memory_tagging_system(self, mock_agent_context):
         """Test that memory entries are properly tagged."""
         with (
-            patch("agencyos_agent.agencyos_agent.Agent"),
-            patch("agencyos_agent.agencyos_agent.get_model_instance") as mock_model,
+            patch("coding_agent.coding_agent.Agent"),
+            patch("coding_agent.coding_agent.get_model_instance") as mock_model,
         ):
             mock_model.return_value = "claude-3-sonnet"
 
-            _ = create_agencyos_agent(
+            _ = create_coding_agent(
                 model="claude-3-sonnet", reasoning_effort="high", agent_context=mock_agent_context
             )
 
@@ -210,9 +210,9 @@ class TestMemoryIntegration:
 
         for model in models_to_test:
             with (
-                patch("agencyos_agent.agencyos_agent.create_agent_context") as mock_create,
-                patch("agencyos_agent.agencyos_agent.Agent"),
-                patch("agencyos_agent.agencyos_agent.get_model_instance") as mock_model,
+                patch("coding_agent.coding_agent.create_agent_context") as mock_create,
+                patch("coding_agent.coding_agent.Agent"),
+                patch("coding_agent.coding_agent.get_model_instance") as mock_model,
             ):
                 mock_context = Mock()
                 mock_context.session_id = f"session_{model}"
@@ -220,7 +220,7 @@ class TestMemoryIntegration:
                 mock_create.return_value = mock_context
                 mock_model.return_value = model
 
-                _ = create_agencyos_agent(model=model, reasoning_effort="medium")
+                _ = create_coding_agent(model=model, reasoning_effort="medium")
 
                 # Verify context creation and memory storage
                 assert mock_create.called
@@ -237,29 +237,29 @@ class TestMemoryIntegration:
         mock_agent_context.store_memory.side_effect = Exception("Memory storage error")
 
         with (
-            patch("agencyos_agent.agencyos_agent.Agent"),
-            patch("agencyos_agent.agencyos_agent.get_model_instance") as mock_model,
-            patch("agencyos_agent.agencyos_agent.render_instructions") as mock_render,
+            patch("coding_agent.coding_agent.Agent"),
+            patch("coding_agent.coding_agent.get_model_instance") as mock_model,
+            patch("coding_agent.coding_agent.render_instructions") as mock_render,
         ):
             mock_model.return_value = "gpt-5-mini"
             mock_render.return_value = "Test instructions"
 
             # This should raise an exception as memory storage is critical
             with pytest.raises(Exception):
-                _ = create_agencyos_agent(
+                _ = create_coding_agent(
                     model="gpt-5-mini", reasoning_effort="low", agent_context=mock_agent_context
                 )
 
     def test_memory_cleanup_and_lifecycle(self, mock_agent_context):
         """Test memory cleanup and lifecycle management."""
         with (
-            patch("agencyos_agent.agencyos_agent.Agent"),
-            patch("agencyos_agent.agencyos_agent.get_model_instance") as mock_model,
+            patch("coding_agent.coding_agent.Agent"),
+            patch("coding_agent.coding_agent.get_model_instance") as mock_model,
         ):
             mock_model.return_value = "gpt-5-mini"
 
             # Create and simulate agent lifecycle
-            _ = create_agencyos_agent(
+            _ = create_coding_agent(
                 model="gpt-5-mini", reasoning_effort="medium", agent_context=mock_agent_context
             )
 

@@ -38,9 +38,9 @@ def _simulate_execution(self, task, worktree_path):
 **With:**
 ```python
 def _execute_task_real(self, task: Task, worktree_path: Path) -> bool:
-    """Execute task using real AgencyOSAgent"""
+    """Execute task using real CodingAgent"""
 
-    from agencyos_agent import AgencyOSAgent
+    from coding_agent import CodingAgent
     from shared.agent_context import create_agent_context
 
     # Create mission file
@@ -50,7 +50,7 @@ def _execute_task_real(self, task: Task, worktree_path: Path) -> bool:
 
     # Initialize agent with context
     context = create_agent_context(session_id=task.task_id)
-    agent = AgencyOSAgent(context=context)
+    agent = CodingAgent(context=context)
 
     try:
         # Execute mission

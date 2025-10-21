@@ -132,7 +132,7 @@ Build a searchable pattern library at `docs/patterns/` with categorized extracte
    - Specificity: Include context ("authentication timeout in API calls") > generic ("timeout")
    - Hybrid search: Combine semantic + tag filtering for precision
 3. Examples provided: 10 annotated query examples with results comparison
-4. Developer applies: Improved query strategy in AgencyOSAgent
+4. Developer applies: Improved query strategy in CodingAgent
 5. Results: Pattern match precision improves from 60% to 85%
 ```
 
@@ -272,7 +272,7 @@ Build a searchable pattern library at `docs/patterns/` with categorized extracte
 ### Agent Integration
 - **LearningAgent**: Primary pattern curator, extracts patterns from sessions, generates documentation
 - **PlannerAgent**: Pattern consumer, queries VectorStore for planning guidance
-- **AgencyOSAgent**: Pattern consumer, applies code patterns during implementation
+- **CodingAgent**: Pattern consumer, applies code patterns during implementation
 - **QualityEnforcerAgent**: Pattern consumer, uses healing patterns for autonomous fixing
 
 ### System Integration

@@ -15,7 +15,7 @@ Constitutional Compliance:
 - Law #8: Functions <50 lines each
 
 Reference: specs/spec-005-advanced-pattern-recognition.md Section 5.3
-Author: AgencyOSAgent
+Author: CodingAgent
 Date: 2025-10-10
 """
 

@@ -554,7 +554,7 @@ class TestDependencyAnalyzer:
 
         for module in modules:
             # Convert module path to test path
-            # e.g., agencyos_agent/tools/read.py → tests/tools/test_read.py
+            # e.g., coding_agent/tools/read.py → tests/tools/test_read.py
             module_path = Path(module)
             test_path = Path("tests") / module_path.parent / f"test_{module_path.stem}.py"
 

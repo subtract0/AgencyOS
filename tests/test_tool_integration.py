@@ -9,7 +9,7 @@ import pytest
 from agency_swarm import Agency
 from agency_swarm.tools import SendMessageHandoff
 
-from agencyos_agent.agencyos_agent import create_agencyos_agent
+from coding_agent.coding_agent import create_coding_agent
 from planner_agent.planner_agent import create_planner_agent
 
 # CI skip marker for tests requiring OpenAI API
@@ -21,7 +21,7 @@ ci_skip = pytest.mark.skipif(
 @pytest.fixture
 def agent():
     """Create agency code agent for testing"""
-    return create_agencyos_agent()
+    return create_coding_agent()
 
 
 def test_agent_creation(agent):
@@ -101,7 +101,7 @@ async def test_handoff_coder_to_planner_via_agency():
     This would raise if the hooks didn't implement on_handoff, so this
     test guards against regressions by exercising the handoff lifecycle.
     """
-    coder = create_agencyos_agent(model="gpt-5-mini", reasoning_effort="low")
+    coder = create_coding_agent(model="gpt-5-mini", reasoning_effort="low")
     planner = create_planner_agent(model="gpt-5-mini", reasoning_effort="low")
 
     agency = Agency(

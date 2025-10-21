@@ -115,7 +115,7 @@ class ScanDocumentation:
         "tools/orchestrator",
         "shared",
         "agency_memory",
-        "agencyos_agent",
+        "coding_agent",
         "planner_agent",
         "auditor_agent",
         "quality_enforcer_agent",

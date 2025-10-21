@@ -21,7 +21,7 @@ from agency_swarm.tools import SendMessageHandoff
 from dotenv import load_dotenv
 
 # Agency imports - specialized agents
-from agencyos_agent.agencyos_agent import create_agencyos_agent
+from coding_agent.coding_agent import create_coding_agent
 
 # Agency imports - memory subsystem
 from agency_memory import (
@@ -202,7 +202,7 @@ else:
 planner = create_planner_agent(
     model=agent_model("planner"), reasoning_effort="high", agent_context=shared_context
 )
-coder = create_agencyos_agent(
+coder = create_coding_agent(
     model=agent_model("coder"), reasoning_effort="medium", agent_context=shared_context
 )
 auditor = create_auditor_agent(

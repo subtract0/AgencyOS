@@ -17,7 +17,7 @@
 **Impact**: Trinity cannot actually execute tasks yet, only simulate them. Demo works but production doesn't.
 
 **Next Steps**:
-1. Import actual agents (AgencyOSAgent, TestGeneratorAgent, etc.)
+1. Import actual agents (CodingAgent, TestGeneratorAgent, etc.)
 2. Replace mock execution in `_execute_sub_agent()` (line 389)
 3. Wire cost tracking to real LLM calls
 4. Test with actual task execution
@@ -99,7 +99,7 @@ grep -r 'Dict\[Any, Any\]' --include='*.py' /Users/am/Code/Agency
 5. Verify dashboard shows real costs
 
 **Affected Files**:
-- `agencyos_agent/agent.py`
+- `coding_agent/agent.py`
 - `planner_agent/agent.py`
 - `test_generator_agent/agent.py`
 - `merger_agent/agent.py`

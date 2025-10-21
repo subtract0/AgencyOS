@@ -143,7 +143,7 @@ Create context-optimized CLAUDE.md in each agent directory with:
 
 | Agent | Lines | Size | Token Budget |
 |-------|-------|------|--------------|
-| agencyos_agent/CLAUDE.md | 395 | 12 KB | ✅ <1500 |
+| coding_agent/CLAUDE.md | 395 | 12 KB | ✅ <1500 |
 | planner_agent/CLAUDE.md | 453 | 14 KB | ✅ <1500 |
 | auditor_agent/CLAUDE.md | 512 | 15 KB | ✅ <1500 |
 | quality_enforcer_agent/CLAUDE.md | 551 | 17 KB | ✅ <1500 |
@@ -172,7 +172,7 @@ Each file follows consistent structure:
 
 ### Key Features Per Agent
 
-**agencyos_agent**:
+**coding_agent**:
 - TDD-first implementation patterns
 - Result<T,E> and Pydantic model examples
 - Hardware-aware execution (M4 Pro 48GB constraints)
@@ -411,7 +411,7 @@ Extract and expand "Leap Evolution History" from root CLAUDE.md into standalone 
 1. `tools/scan_documentation.py` (723 lines)
 2. `tests/tools/test_scan_documentation.py` (594 lines)
 3. `.claude/commands/scan.md` (413 lines)
-4. `agencyos_agent/CLAUDE.md` (395 lines)
+4. `coding_agent/CLAUDE.md` (395 lines)
 5. `planner_agent/CLAUDE.md` (453 lines)
 6. `auditor_agent/CLAUDE.md` (512 lines)
 7. `quality_enforcer_agent/CLAUDE.md` (551 lines)

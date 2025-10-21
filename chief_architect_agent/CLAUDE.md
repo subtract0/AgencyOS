@@ -18,7 +18,7 @@
 - ADR query for guidance on patterns
 
 **Do NOT use for:**
-- Code implementation (use AgencyOSAgent)
+- Code implementation (use CodingAgent)
 - Tactical planning (use Planner)
 - Code analysis (use Auditor)
 

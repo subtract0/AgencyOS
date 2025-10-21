@@ -1003,7 +1003,7 @@ log_event(
 - **AdaptiveRouterAgent**: Consumes quality signals to refine classification accuracy (primary consumer)
 - **QualityEnforcerAgent**: Monitors quality signal trends, reports accuracy metrics
 - **LearningAgent**: Extracts patterns from quality signals for cross-session learning
-- **AgencyOSAgent**: Execution time tracked for timing ratio signal
+- **CodingAgent**: Execution time tracked for timing ratio signal
 
 ### System Integration
 

@@ -348,7 +348,7 @@ Trinity's EXECUTOR agent needs real agent implementations (currently mocked):
 ```python
 # Current state (mocked)
 self.sub_agents = {
-    SubAgentType.CODE_WRITER: None,        # TODO: AgencyOSAgent
+    SubAgentType.CODE_WRITER: None,        # TODO: CodingAgent
     SubAgentType.TEST_ARCHITECT: None,     # TODO: TestGeneratorAgent
     SubAgentType.TOOL_DEVELOPER: None,     # TODO: ToolsmithAgent
     SubAgentType.IMMUNITY_ENFORCER: None,  # TODO: QualityEnforcerAgent
@@ -358,7 +358,7 @@ self.sub_agents = {
 ```
 
 **Wiring checklist**:
-1. Import real agents: `from agencyos_agent.agent import AgencyOSAgent`
+1. Import real agents: `from coding_agent.agent import CodingAgent`
 2. Pass `AgentContext` and `CostTracker` to all agents
 3. Update `_execute_sub_agent()` to invoke real agent methods
 4. Verify all agents implement `execute(spec: Dict[str, Any]) -> Dict[str, Any]`
@@ -566,7 +566,7 @@ Budget includes 73% buffer for:
 **Issue**: Agent import fails
 ```bash
 # Verify agent modules installed
-python -c "from agencyos_agent.agent import AgencyOSAgent"
+python -c "from coding_agent.agent import CodingAgent"
 ```
 
 **Issue**: Tests timeout

@@ -32,7 +32,7 @@ The Agency uses a **simplified, focused multi-agent architecture** with clear re
 
 ---
 
-### 2. AgencyOSAgent (Coder)
+### 2. CodingAgent (Coder)
 **Role**: Primary development agent with comprehensive toolset
 
 **Key Responsibilities**:
@@ -68,8 +68,8 @@ The Agency uses a **simplified, focused multi-agent architecture** with clear re
 
 **Communication Patterns**:
 - **Inbound**: ChiefArchitectAgent, User (planning mode)
-- **Outbound**: AuditorAgent, AgencyOSAgent
-- **Bidirectional**: AgencyOSAgent (collaborative planning)
+- **Outbound**: AuditorAgent, CodingAgent
+- **Bidirectional**: CodingAgent (collaborative planning)
 
 ---
 
@@ -90,7 +90,7 @@ The Agency uses a **simplified, focused multi-agent architecture** with clear re
 
 **Communication Patterns**:
 - **Inbound**: ChiefArchitectAgent, PlannerAgent
-- **Outbound**: AgencyOSAgent, TestGeneratorAgent, QualityEnforcerAgent
+- **Outbound**: CodingAgent, TestGeneratorAgent, QualityEnforcerAgent
 
 ---
 
@@ -106,7 +106,7 @@ The Agency uses a **simplified, focused multi-agent architecture** with clear re
 
 **Communication Patterns**:
 - **Inbound**: AuditorAgent, QualityEnforcerAgent
-- **Outbound**: AgencyOSAgent
+- **Outbound**: CodingAgent
 - **Bidirectional**: QualityEnforcerAgent (quality collaboration)
 
 ---
@@ -137,7 +137,7 @@ The Agency uses a **simplified, focused multi-agent architecture** with clear re
 - Coordinates final deployment and release activities
 
 **Communication Patterns**:
-- **Inbound**: AgencyOSAgent, ToolsmithAgent
+- **Inbound**: CodingAgent, ToolsmithAgent
 - **Outbound**: WorkCompletionSummaryAgent
 
 ---
@@ -169,7 +169,7 @@ The Agency uses a **simplified, focused multi-agent architecture** with clear re
 
 **Communication Patterns**:
 - **Inbound**: ChiefArchitectAgent, AuditorAgent
-- **Outbound**: AgencyOSAgent, TestGeneratorAgent
+- **Outbound**: CodingAgent, TestGeneratorAgent
 - **Bidirectional**: TestGeneratorAgent
 - **Autonomous**: Self-initiated healing workflows
 
@@ -200,7 +200,7 @@ The Agency uses a **simplified, focused multi-agent architecture** with clear re
 - Tracks project progress and milestone achievements
 
 **Communication Patterns**:
-- **Inbound**: AgencyOSAgent, PlannerAgent, MergerAgent
+- **Inbound**: CodingAgent, PlannerAgent, MergerAgent
 - **Route-Aware**: Activated via "tts" or "audio summary" intents
 - **Outbound**: User (completion summaries)
 
@@ -208,14 +208,14 @@ The Agency uses a **simplified, focused multi-agent architecture** with clear re
 
 ### Development Workflow
 ```
-User Request → PlannerAgent → AgencyOSAgent → MergerAgent → Completion
+User Request → PlannerAgent → CodingAgent → MergerAgent → Completion
                      ↓              ↓
               AuditorAgent  →  TestGeneratorAgent
 ```
 
 ### Quality Assurance Workflow
 ```
-AuditorAgent → QualityEnforcerAgent → TestGeneratorAgent → AgencyOSAgent
+AuditorAgent → QualityEnforcerAgent → TestGeneratorAgent → CodingAgent
        ↓                    ↓                     ↓
    Violations         Autonomous          Test Implementation
    Detected            Healing

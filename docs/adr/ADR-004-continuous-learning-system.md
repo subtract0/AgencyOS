@@ -574,7 +574,7 @@ EVOLUTION_TRIGGERS = {
 
 ## Report Metadata
 
-- **Author**: AgencyOSAgent via LearningAgent implementation
+- **Author**: CodingAgent via LearningAgent implementation
 - **Stakeholder**: @am
 - **Date**: 2025-09-22
 - **Dependencies**: ADR-001, ADR-002, ADR-003

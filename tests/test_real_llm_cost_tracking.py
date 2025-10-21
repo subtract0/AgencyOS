@@ -20,7 +20,7 @@ from pathlib import Path
 
 from openai import OpenAI
 
-from agencyos_agent.agencyos_agent import create_agencyos_agent
+from coding_agent.coding_agent import create_coding_agent
 from merger_agent.merger_agent import create_merger_agent
 from quality_enforcer_agent.quality_enforcer_agent import create_quality_enforcer_agent
 from shared.agent_context import create_agent_context
@@ -110,20 +110,20 @@ def test_cost_tracking_context_manager(cost_tracker):
     assert "ContextAgent" in summary.by_agent
 
 
-def test_agencyos_agent_cost_tracking(cost_tracker, agent_context):
-    """Test that AgencyOSAgent tracks LLM costs."""
+def test_coding_agent_cost_tracking(cost_tracker, agent_context):
+    """Test that CodingAgent tracks LLM costs."""
     # Skip if no API key
     if not os.getenv("OPENAI_API_KEY"):
         pytest.skip("OPENAI_API_KEY not set - skipping real API test")
 
     # Create agent with cost tracking
-    agent = create_agencyos_agent(
+    agent = create_coding_agent(
         model="gpt-4o-mini", agent_context=agent_context, cost_tracker=cost_tracker
     )
 
     # Verify agent was created
     assert agent is not None
-    assert agent.name == "AgencyOSAgent"
+    assert agent.name == "CodingAgent"
 
     # Check that cost tracker was attached to context
     assert hasattr(agent_context, "cost_tracker")
@@ -138,7 +138,7 @@ def test_all_agents_have_cost_tracking_support(cost_tracker, agent_context):
     """Verify all 6 agents support cost tracking parameter."""
 
     agents = [
-        ("AgencyOSAgent", create_agencyos_agent, "gpt-4o-mini"),
+        ("CodingAgent", create_coding_agent, "gpt-4o-mini"),
         ("TestGeneratorAgent", create_test_generator_agent, "gpt-5"),
         ("ToolSmithAgent", create_toolsmith_agent, "gpt-5"),
         ("QualityEnforcerAgent", create_quality_enforcer_agent, "gpt-5"),

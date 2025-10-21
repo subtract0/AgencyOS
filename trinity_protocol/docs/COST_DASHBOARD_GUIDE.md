@@ -692,7 +692,7 @@ Ensure CostTracker is wired to agents:
 python trinity_protocol/verify_cost_tracking.py
 
 # Expected output:
-# ✅ AgencyOSAgent: cost_tracker stored correctly
+# ✅ CodingAgent: cost_tracker stored correctly
 # ✅ TestGeneratorAgent: cost_tracker stored correctly
 # ...
 ```

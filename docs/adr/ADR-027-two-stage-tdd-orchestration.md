@@ -115,7 +115,7 @@ STAGE 2: SPEC → EXECUTION (Verified Implementation)
 │  ↓                                                          │
 │  Execute Task Layers                                        │
 │    ┌───────────────────────────────────────────────┐       │
-│    │  Code Task (AgencyOSAgent)                   │       │
+│    │  Code Task (CodingAgent)                   │       │
 │    │    • Implement changes in git worktree        │       │
 │    │    • Status: "in_progress"                     │       │
 │    └───────────────────────────────────────────────┘       │
@@ -228,7 +228,7 @@ async def execute_code_task(task: Task) -> Result[TaskResult, TaskError]:
     """Execute Code task with test verification gate."""
 
     # 1. Execute code implementation
-    code_result = await agencyos_agent.execute(task)
+    code_result = await coding_agent.execute(task)
 
     if code_result.is_err():
         return code_result

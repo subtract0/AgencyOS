@@ -273,7 +273,7 @@ known-first-party = [
     "core",
     "dspy_agents",
     "meta_learning",
-    "agencyos_agent",
+    "coding_agent",
     "planner_agent",
     "auditor_agent",
     "quality_enforcer_agent",

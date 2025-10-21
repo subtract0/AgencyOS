@@ -659,7 +659,7 @@ Easy to test:
 ### Outputs To:
 
 - **TestGenerator**: Delegates test creation for complex tools
-- **AgencyOSAgent**: Tools used during implementation
+- **CodingAgent**: Tools used during implementation
 - **QualityEnforcer**: Validates tool constitutional compliance
 - **VectorStore**: Stores successful tool patterns (Article IV)
 

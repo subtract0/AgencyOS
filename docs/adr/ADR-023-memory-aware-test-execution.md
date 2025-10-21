@@ -201,7 +201,7 @@ if config.fallback_to_cloud:
 
 | Version | Date | Author | Changes |
 |---------|------|--------|---------|
-| 1.0 | 2025-10-09 | AgencyOSAgent | Initial ADR for memory-aware test execution |
+| 1.0 | 2025-10-09 | CodingAgent | Initial ADR for memory-aware test execution |
 
 ---
 

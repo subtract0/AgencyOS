@@ -46,7 +46,7 @@ Successfully completed comprehensive production wiring of Trinity Protocol and A
 
 All 10 agents updated with **PROACTIVE** descriptions showing intelligent interconnection:
 
-1. **AgencyOSAgent** - Primary engineer, coordinates with 5+ agents
+1. **CodingAgent** - Primary engineer, coordinates with 5+ agents
 2. **PlannerAgent** - Strategic architect, queries LearningAgent for patterns
 3. **TestGeneratorAgent** - TDD specialist, enforces Article II
 4. **QualityEnforcerAgent** - Constitutional guardian, autonomous healing
@@ -174,7 +174,7 @@ shared_memory = Memory(store=firestore_store)
 **Real Sub-Agents**:
 ```python
 self.sub_agents = {
-    SubAgentType.CODE_WRITER: create_agencyos_agent(...),
+    SubAgentType.CODE_WRITER: create_coding_agent(...),
     SubAgentType.TEST_ARCHITECT: create_test_generator_agent(...),
     SubAgentType.TOOL_DEVELOPER: create_toolsmith_agent(...),
     SubAgentType.IMMUNITY_ENFORCER: create_quality_enforcer_agent(...),
@@ -207,7 +207,7 @@ if result.returncode != 0:
 
 All 10 agents enhanced with **intelligent coordination patterns**:
 
-**AgencyOSAgent** coordinates with:
+**CodingAgent** coordinates with:
 - PlannerAgent (specifications)
 - TestGeneratorAgent (TDD test-first)
 - QualityEnforcerAgent (Article II compliance)
@@ -219,12 +219,12 @@ All 10 agents enhanced with **intelligent coordination patterns**:
 - LearningAgent (historical patterns)
 - AuditorAgent (quality planning)
 - TestGeneratorAgent (test strategy)
-- AgencyOSAgent (implementation)
+- CodingAgent (implementation)
 
 **QualityEnforcerAgent** coordinates with:
 - AuditorAgent (Q(T) scoring)
 - TestGeneratorAgent (coverage)
-- AgencyOSAgent (healing)
+- CodingAgent (healing)
 - LearningAgent (pattern learning)
 - ChiefArchitectAgent (strategic guidance)
 
@@ -326,7 +326,7 @@ python trinity_protocol/generate_24h_report.py --input logs/24h_test/ --output r
 ### Modified Files (15 total)
 
 **Agent Factories** (10 files - all with PROACTIVE descriptions):
-1. `agencyos_agent/agencyos_agent.py`
+1. `coding_agent/coding_agent.py`
 2. `planner_agent/planner_agent.py`
 3. `test_generator_agent/test_generator_agent.py`
 4. `quality_enforcer_agent/quality_enforcer_agent.py`

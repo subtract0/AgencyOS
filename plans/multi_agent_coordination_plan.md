@@ -148,7 +148,7 @@ CI detects push → Scan for changes → Update backlog → Commit
 
 ## Agent Assignments
 
-### Primary Agent: AgencyOSAgent
+### Primary Agent: CodingAgent
 - **Role**: Implement lock metadata, heartbeat, and backlog management
 - **Tasks**:
   - Create `LockMetadata` Pydantic model with strict typing
@@ -190,7 +190,7 @@ CI detects push → Scan for changes → Update backlog → Commit
 
 ### Agent Communication Flow
 ```
-PlannerAgent → AgencyOSAgent → TestGeneratorAgent → QualityEnforcerAgent
+PlannerAgent → CodingAgent → TestGeneratorAgent → QualityEnforcerAgent
      ↓               ↓                    ↓                    ↓
   Planning      Implementation        Testing            Validation
 ```
@@ -445,7 +445,7 @@ Priority #1: Ollama Docker Compose Setup
 
 #### Phase 1: Enhanced Lock Metadata (1 hour)
 **Duration**: 1 hour
-**Agents**: AgencyOSAgent, TestGeneratorAgent
+**Agents**: CodingAgent, TestGeneratorAgent
 **Deliverables**:
 - [x] `LockMetadata` Pydantic model with strict typing
 - [x] Enhanced `acquire_lock()` with metadata storage (6 fields)
@@ -453,19 +453,19 @@ Priority #1: Ollama Docker Compose Setup
 - [x] Tests for 2+ parallel instances with metadata verification
 
 **Tasks**:
-1. **TASK-001: Create LockMetadata Pydantic model** - AgencyOSAgent
+1. **TASK-001: Create LockMetadata Pydantic model** - CodingAgent
    - File: `shared/models/lock_metadata.py`
    - Fields: session_id, timestamp, heartbeat, terminal, user, task_description
    - Validation: All fields required, extra fields forbidden
    - Acceptance: Model passes mypy type checking, 100% test coverage
 
-2. **TASK-002: Enhance acquire_lock() with metadata** - AgencyOSAgent
+2. **TASK-002: Enhance acquire_lock() with metadata** - CodingAgent
    - File: `tools/lock_manager.py` (create new)
    - Function: `acquire_lock(task_id, session_id, metadata) -> Result[LockHandle, LockError]`
    - Behavior: Write 6-line lock file atomically, verify ownership
    - Acceptance: Lock file contains all metadata, atomic write verified
 
-3. **TASK-003: Update list_active_locks() for metadata display** - AgencyOSAgent
+3. **TASK-003: Update list_active_locks() for metadata display** - CodingAgent
    - File: `scripts/release_task_lock.py` (edit)
    - Function: `list_active_locks() -> None`
    - Output: Rich display with terminal, user, task, duration
@@ -479,7 +479,7 @@ Priority #1: Ollama Docker Compose Setup
 
 #### Phase 2: Heartbeat Mechanism (2 hours)
 **Duration**: 2 hours
-**Agents**: AgencyOSAgent, TestGeneratorAgent
+**Agents**: CodingAgent, TestGeneratorAgent
 **Deliverables**:
 - [x] Background thread updating heartbeat every 60 seconds
 - [x] Stale lock detection (timeout: 5 minutes)
@@ -487,19 +487,19 @@ Priority #1: Ollama Docker Compose Setup
 - [x] Tests simulating crash and verifying cleanup
 
 **Tasks**:
-1. **TASK-005: Create HeartbeatThread worker** - AgencyOSAgent
+1. **TASK-005: Create HeartbeatThread worker** - CodingAgent
    - File: `tools/heartbeat_thread.py` (create)
    - Class: `HeartbeatThread(Thread)` with 60s update loop
    - Behavior: Update line 3 of lock file, verify ownership, exit on lock loss
    - Acceptance: Thread updates heartbeat every 60s, exits cleanly
 
-2. **TASK-006: Integrate heartbeat into acquire_lock()** - AgencyOSAgent
+2. **TASK-006: Integrate heartbeat into acquire_lock()** - CodingAgent
    - File: `tools/lock_manager.py` (edit)
    - Behavior: Start HeartbeatThread after successful lock acquisition
    - Return: LockHandle with thread reference for cleanup
    - Acceptance: Heartbeat starts automatically, thread stored in handle
 
-3. **TASK-007: Implement check_stale_locks()** - AgencyOSAgent
+3. **TASK-007: Implement check_stale_locks()** - CodingAgent
    - File: `tools/lock_manager.py` (edit)
    - Function: `check_stale_locks(timeout_minutes=5) -> Result[list[str], LockError]`
    - Behavior: Read all locks, compare heartbeat to current time, remove stale
@@ -513,7 +513,7 @@ Priority #1: Ollama Docker Compose Setup
 
 #### Phase 3: TOP 20 Backlog Expansion (1 hour)
 **Duration**: 1 hour
-**Agents**: AgencyOSAgent, TestGeneratorAgent
+**Agents**: CodingAgent, TestGeneratorAgent
 **Deliverables**:
 - [x] `PriorityTask` Pydantic model (rank 1-20)
 - [x] `PriorityQueueManager` for parsing backlog Markdown
@@ -521,19 +521,19 @@ Priority #1: Ollama Docker Compose Setup
 - [x] Tests for queue parsing and filtering
 
 **Tasks**:
-1. **TASK-009: Create PriorityTask Pydantic model** - AgencyOSAgent
+1. **TASK-009: Create PriorityTask Pydantic model** - CodingAgent
    - File: `shared/models/priority_task.py` (create)
    - Fields: rank (1-20), id, description, value, effort, roi, status, command, next_step
    - Validation: Rank 1-20, status enum, extra fields forbidden
    - Acceptance: Model passes mypy, 100% test coverage
 
-2. **TASK-010: Implement PriorityQueueManager** - AgencyOSAgent
+2. **TASK-010: Implement PriorityQueueManager** - CodingAgent
    - File: `tools/priority_queue_manager.py` (create)
    - Class: `PriorityQueueManager` with `parse_backlog(content) -> Result[list[PriorityTask], BacklogError]`
    - Behavior: Regex parse Markdown, extract 20 tasks, validate with Pydantic
    - Acceptance: Parse all 20 tasks correctly, return Result type
 
-3. **TASK-011: Add filter_ready_tasks() method** - AgencyOSAgent
+3. **TASK-011: Add filter_ready_tasks() method** - CodingAgent
    - File: `tools/priority_queue_manager.py` (edit)
    - Function: `filter_ready_tasks(tasks: list[PriorityTask]) -> list[PriorityTask]`
    - Behavior: Filter status == "Ready", exclude Blocked/In Progress/Done
@@ -547,7 +547,7 @@ Priority #1: Ollama Docker Compose Setup
 
 #### Phase 4: Auto-Update CI Integration (3 hours)
 **Duration**: 3 hours
-**Agents**: AgencyOSAgent, TestGeneratorAgent
+**Agents**: CodingAgent, TestGeneratorAgent
 **Deliverables**:
 - [x] `scripts/update_backlog.py` for automated scanning
 - [x] Scan skipped tests (`@pytest.mark.skip`)
@@ -556,31 +556,31 @@ Priority #1: Ollama Docker Compose Setup
 - [x] CI workflow for automated updates
 
 **Tasks**:
-1. **TASK-013: Create update_backlog.py script** - AgencyOSAgent
+1. **TASK-013: Create update_backlog.py script** - CodingAgent
    - File: `scripts/update_backlog.py` (create)
    - Functions: `scan_skipped_tests()`, `detect_completed_tasks()`, `recalculate_priorities()`
    - Entry point: CLI with `--scan-skipped-tests`, `--update-status`, `--recalculate`
    - Acceptance: Script runs successfully, returns exit code 0 on success
 
-2. **TASK-014: Implement scan_skipped_tests()** - AgencyOSAgent
+2. **TASK-014: Implement scan_skipped_tests()** - CodingAgent
    - File: `scripts/update_backlog.py` (edit)
    - Function: `scan_skipped_tests() -> Result[list[SkippedTest], ScanError]`
    - Behavior: Run `pytest --collect-only -m skip`, parse output, extract reasons
    - Acceptance: Find all skipped tests, extract reason field
 
-3. **TASK-015: Implement detect_completed_tasks()** - AgencyOSAgent
+3. **TASK-015: Implement detect_completed_tasks()** - CodingAgent
    - File: `scripts/update_backlog.py` (edit)
    - Function: `detect_completed_tasks() -> Result[list[str], DetectError]`
    - Behavior: Grep backlog for "✅ DONE" markers, extract task IDs
    - Acceptance: Find all completed tasks, return IDs
 
-4. **TASK-016: Implement recalculate_priorities()** - AgencyOSAgent
+4. **TASK-016: Implement recalculate_priorities()** - CodingAgent
    - File: `scripts/update_backlog.py` (edit)
    - Function: `recalculate_priorities(tasks) -> Result[list[PriorityTask], CalculationError]`
    - Behavior: Sort by ROI (Value/Effort) descending, re-rank 1-20
    - Acceptance: TOP 20 sorted correctly, ROI calculated accurately
 
-5. **TASK-017: Create GitHub Actions workflow** - AgencyOSAgent
+5. **TASK-017: Create GitHub Actions workflow** - CodingAgent
    - File: `.github/workflows/backlog-update.yml` (create)
    - Triggers: Push to main, cron every 6 hours
    - Steps: Checkout, run update_backlog.py, commit if changed, push
@@ -842,7 +842,7 @@ Agency/
 
 ### Agent Time Allocation
 - **PlannerAgent**: 1 hour (this plan)
-- **AgencyOSAgent**: 5 hours (implementation, 18 tasks)
+- **CodingAgent**: 5 hours (implementation, 18 tasks)
 - **TestGeneratorAgent**: 2 hours (test generation, 6 test files)
 - **QualityEnforcerAgent**: 1 hour (constitutional validation)
 

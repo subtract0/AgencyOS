@@ -60,7 +60,7 @@ def sample_telemetry_data():
         {
             "event_type": "error_resolved",
             "timestamp": "2024-01-01T12:00:00Z",
-            "agent": "agencyos_agent",
+            "agent": "coding_agent",
             "error_type": "NoneType",
             "resolution_pattern": "null_check_added",
             "context": {"file": "test.py", "function": "process_data"},

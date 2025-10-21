@@ -588,7 +588,7 @@ def main(
             print("- Check the output above for specific test failures")
             print("- Ensure all dependencies are installed correctly")
             print("- Verify environment variables are set (if needed)")
-            print("- Check that all tool files are present in agencyos_agent/tools/")
+            print("- Check that all tool files are present in coding_agent/tools/")
             if test_mode == "integration":
                 print("- Integration tests may require additional setup or services")
 

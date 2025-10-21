@@ -41,7 +41,7 @@ python -m tools.scan_documentation [options]
 - `tools/orchestrator/` - Orchestrator tools
 - `shared/` - Shared utilities and types
 - `agency_memory/` - Memory and learning systems
-- `agencyos_agent/` - Code generation agent
+- `coding_agent/` - Code generation agent
 - `planner_agent/` - Planning and specification agent
 - `auditor_agent/` - Quality auditing agent
 - `quality_enforcer_agent/` - Constitutional enforcement agent

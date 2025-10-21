@@ -2,7 +2,7 @@
 DSPy-powered Code Agent Implementation
 
 This module implements a DSPy Module that replaces the static markdown-based
-AgencyOSAgent with adaptive, learning-based agent reasoning.
+CodingAgent with adaptive, learning-based agent reasoning.
 
 Key Features:
 - Uses DSPy signatures for structured reasoning
@@ -97,7 +97,7 @@ class DSPyCodeAgent(dspy.Module if DSPY_AVAILABLE else object):
     """
     DSPy-powered Code Agent that handles all software development tasks.
 
-    This agent replaces the static AgencyOSAgent with adaptive reasoning
+    This agent replaces the static CodingAgent with adaptive reasoning
     capabilities, learning from successful patterns and constitutional compliance.
 
     Falls back to a basic implementation when DSPy is not available.

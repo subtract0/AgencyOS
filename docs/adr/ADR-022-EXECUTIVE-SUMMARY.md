@@ -21,14 +21,14 @@ Enhanced Recommendations (with autonomous metadata)
   ↓
 Auto-Classification (confidence + risk scores)
   ↓
-AgencyOSAgent Autonomous Fixes (60-70% automated)
+CodingAgent Autonomous Fixes (60-70% automated)
   ↓
 Human Review (30-40% high-risk only)
 ```
 
 ## The Problem
 
-The Phase 4 continuous audit system generates **328 high-quality recommendations**, but each recommendation requires **human interpretation** before AgencyOSAgent can act:
+The Phase 4 continuous audit system generates **328 high-quality recommendations**, but each recommendation requires **human interpretation** before CodingAgent can act:
 
 1. **No Confidence Scores** - Is this safe to auto-fix?
 2. **No Fix Code** - What's the actual patch?
@@ -170,7 +170,7 @@ if success_rate > 0.80:
 
 ## Autonomous Safety Thresholds
 
-**AgencyOSAgent applies fix autonomously IF**:
+**CodingAgent applies fix autonomously IF**:
 ```python
 recommendation.auto_fixable == True
 AND recommendation.fix_confidence >= 0.80

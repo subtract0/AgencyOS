@@ -133,9 +133,9 @@ filesystem_server = MCPServerStdio(
 ```
 Agency-Code/
   - agency.py
-  - agencyos_agent/
+  - coding_agent/
     - __init__.py
-    - agencyos_agent.py
+    - coding_agent.py
     - instructions.md
   - subagent_name/
     - __init__.py

@@ -66,7 +66,7 @@ tests/test_git_error_paths.py (4 tests)
 ## Duplicate Groups to Consolidate Later (10 groups)
 
 1. **toolsmith_agent**: comprehensive ← dspy (keep legacy, delete dspy)
-2. **agencyos_agent**: base ← fixed (merge into one)
+2. **coding_agent**: base ← fixed (merge into one)
 3. **chief_architect_agent**: 3 files → 1 (consolidate)
 4. **planner_agent**: legacy ← dspy (keep legacy, delete dspy)
 5. **retry_controller**: base ← additional (merge)

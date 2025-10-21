@@ -1135,7 +1135,7 @@ Test Reference: tests/tools/ci_monitor/test_status_poller.py
 ---
 
 **Report Metadata**:
-- **Author**: AgencyOSAgent
+- **Author**: CodingAgent
 - **Reviewers**: @am
 - **Date**: 2025-10-11
 - **Constitutional Compliance**: Articles I-V ✅

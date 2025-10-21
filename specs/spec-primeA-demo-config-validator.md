@@ -59,7 +59,7 @@ Implement a configuration file validation system that parses YAML/JSON configura
 - **Pain Points**: Runtime failures due to typos or invalid values in config files
 - **Technical Proficiency**: Intermediate - understands YAML/JSON, needs clear error messages
 
-#### Persona 2: AgencyOSAgent
+#### Persona 2: CodingAgent
 - **Description**: Development agent loading configuration files during application startup
 - **Goals**: Type-safe configuration parsing with comprehensive error reporting
 - **Pain Points**: Cryptic parsing errors, ambiguous validation failures

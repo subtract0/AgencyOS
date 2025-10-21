@@ -419,7 +419,7 @@ Install pytest-cov, configure coverage settings, integrate with run_tests.py.
 ```toml
 # pyproject.toml
 [tool.coverage.run]
-source = [".", "agencyos_agent", "planner_agent", "tools", "shared"]
+source = [".", "coding_agent", "planner_agent", "tools", "shared"]
 omit = ["*/tests/*", "*/__pycache__/*", "*/migrations/*"]
 
 [tool.coverage.report]

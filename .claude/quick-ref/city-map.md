@@ -38,7 +38,7 @@
 ```
 /chief_architect_agent/       → Strategic oversight, ADR creation
 /planner_agent/               → Spec-kit methodology
-/agencyos_agent/           → Primary development (TDD-first)
+/coding_agent/           → Primary development (TDD-first)
 /quality_enforcer_agent/      → Constitutional compliance
 /auditor_agent/               → NECESSARY pattern analysis
 /test_generator_agent/        → Test generation (AAA pattern)

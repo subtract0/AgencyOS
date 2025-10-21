@@ -9,7 +9,7 @@ import pytest
 from agency_swarm import Agency
 from dotenv import load_dotenv
 
-from agencyos_agent.agencyos_agent import create_agencyos_agent
+from coding_agent.coding_agent import create_coding_agent
 from planner_agent.planner_agent import create_planner_agent
 
 # Load environment variables
@@ -33,7 +33,7 @@ def cleanup_fib():
 def planner_agency():
     """Create agency with planner agent entry point for testing"""
     planner = create_planner_agent(model="gpt-5-mini", reasoning_effort="low")
-    coder = create_agencyos_agent(model="gpt-5-mini", reasoning_effort="low")
+    coder = create_coding_agent(model="gpt-5-mini", reasoning_effort="low")
 
     # Set up handoffs
     planner.handoffs = [coder]

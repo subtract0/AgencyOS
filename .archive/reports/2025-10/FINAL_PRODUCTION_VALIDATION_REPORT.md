@@ -148,7 +148,7 @@ Trinity Protocol production wiring is **COMPLETE** and **VALIDATED**. All system
 │  Status: ✅ OPERATIONAL                                       │
 │                                                                │
 │  Sub-Agents (6/6 wired):                                      │
-│    ✅ CODE_WRITER    (AgencyOSAgent)                        │
+│    ✅ CODE_WRITER    (CodingAgent)                        │
 │    ✅ TEST_ARCHITECT (TestGeneratorAgent)                     │
 │    ✅ TOOL_DEVELOPER (ToolsmithAgent)                         │
 │    ✅ IMMUNITY_ENFORCER (QualityEnforcerAgent)                │

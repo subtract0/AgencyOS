@@ -131,7 +131,7 @@ This test validates Trinity Protocol's ability to operate autonomously for 24 co
 **Expected behavior**:
 - WITNESS detects as "duplication" (confidence >0.8)
 - ARCHITECT creates consolidation plan
-- EXECUTOR delegates to AgencyOSAgent
+- EXECUTOR delegates to CodingAgent
 - Cost tracked: ~$0.03-0.06 per cycle
 
 #### 5. Flaky Test Event

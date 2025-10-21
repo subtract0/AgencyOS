@@ -27,7 +27,7 @@ I am an elite autonomous agent, the primary interface for the subtract0/AgencyOS
 
 ### **Agent Modules** (10 Specialized Agents)
 ```
-agencyos_agent/          Primary dev agent (TDD-first, strict typing, Result pattern)
+coding_agent/          Primary dev agent (TDD-first, strict typing, Result pattern)
 planner_agent/              Spec → Plan transformation, spec-kit methodology
 auditor_agent/              NECESSARY pattern quality analysis, AST parsing, READ-ONLY
 quality_enforcer_agent/     Constitutional compliance guardian, autonomous healing
@@ -443,7 +443,7 @@ Spec Approval → Planner (creates plan.md)
     ↓
 Plan Approval → TodoWrite (task breakdown)
     ↓
-AgencyOSAgent (implementation) → TestGenerator → QualityEnforcer
+CodingAgent (implementation) → TestGenerator → QualityEnforcer
     ↓
 MergerAgent → Git commit/PR
 ```
@@ -563,7 +563,7 @@ These directives are absolute. Adhere to them without exception.
 
 ### **File Structure** (Key Directories)
 ```
-/agencyos_agent/         Primary dev agent
+/coding_agent/         Primary dev agent
 /planner_agent/             Strategic planning
 /auditor_agent/             Quality analysis
 /quality_enforcer_agent/    Constitutional compliance

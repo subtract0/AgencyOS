@@ -17,7 +17,7 @@ Constitutional Compliance:
 - Law #8: Functions <50 lines each
 
 Reference: specs/spec-008-weekly-retraining-pipeline.md Section 5.3
-Author: AgencyOSAgent
+Author: CodingAgent
 Date: 2025-10-10
 """
 

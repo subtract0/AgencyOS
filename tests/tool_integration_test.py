@@ -5,13 +5,13 @@ Tests that tools can be invoked directly via the agent
 
 import pytest
 
-from agencyos_agent.agencyos_agent import create_agencyos_agent
+from coding_agent.coding_agent import create_coding_agent
 
 
 @pytest.fixture
 def agent():
     """Create agency code agent for testing"""
-    return create_agencyos_agent()
+    return create_coding_agent()
 
 
 def test_agent_creation(agent):

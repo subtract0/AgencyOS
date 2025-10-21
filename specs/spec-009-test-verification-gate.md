@@ -61,7 +61,7 @@ Define a mandatory test verification checkpoint that runs after all Code task co
 
 ### Primary Personas
 
-#### Persona 1: AgencyOSAgent (Primary User)
+#### Persona 1: CodingAgent (Primary User)
 - **Description**: Primary development agent implementing features and fixes
 - **Goals**: Complete tasks efficiently while maintaining 100% test pass rate
 - **Pain Points**: Proceeding with broken tests wastes time debugging later, unclear when tests are "done"
@@ -83,7 +83,7 @@ Define a mandatory test verification checkpoint that runs after all Code task co
 
 #### Journey 1: Code Task with Test Verification (Primary Use Case - Success Path)
 ```
-1. AgencyOSAgent starts with: TodoWrite task "Implement feature X" marked in_progress
+1. CodingAgent starts with: TodoWrite task "Implement feature X" marked in_progress
 2. Agent performs:
    - Writes tests first (TDD mandate)
    - Implements feature code
@@ -105,7 +105,7 @@ Define a mandatory test verification checkpoint that runs after all Code task co
 
 #### Journey 2: Code Task with Timeout Retry (Article I Retry Path)
 ```
-1. AgencyOSAgent starts with: TodoWrite task "Fix performance bug" marked in_progress
+1. CodingAgent starts with: TodoWrite task "Fix performance bug" marked in_progress
 2. Agent performs: Code changes, marks task complete
 3. Test Verification Gate triggers:
    - Attempt 1: timeout=120s → TIMEOUT (VectorStore initialization slow)
@@ -122,7 +122,7 @@ Define a mandatory test verification checkpoint that runs after all Code task co
 
 #### Journey 3: Code Task with Test Failures (Article II Failure Path)
 ```
-1. AgencyOSAgent starts with: TodoWrite task "Add authentication" marked in_progress
+1. CodingAgent starts with: TodoWrite task "Add authentication" marked in_progress
 2. Agent performs: Code changes, marks task complete
 3. Test Verification Gate triggers:
    - Memory-aware workers: 3 (local model active)
@@ -144,7 +144,7 @@ Define a mandatory test verification checkpoint that runs after all Code task co
 
 #### Journey 4: Memory Exhaustion Prevention (ADR-023 Safety Path)
 ```
-1. AgencyOSAgent starts with: TodoWrite task "Optimize search" marked in_progress
+1. CodingAgent starts with: TodoWrite task "Optimize search" marked in_progress
 2. Agent performs: Code changes in VectorStore module
 3. Test Verification Gate triggers:
    - System state: Ollama running (Qwen3-Coder Q8_0, 38GB loaded)
@@ -169,7 +169,7 @@ Define a mandatory test verification checkpoint that runs after all Code task co
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
-│                    AgencyOSAgent Workflow                  │
+│                    CodingAgent Workflow                  │
 │  ┌──────────────────────────────────────────────────────┐   │
 │  │ 1. TodoWrite: Mark task in_progress                  │   │
 │  │ 2. Write tests (TDD)                                 │   │
@@ -851,7 +851,7 @@ def store_verification_pattern(
 ### Phase 4: Agent Integration (Week 2)
 
 **Tasks**:
-1. Update AgencyOSAgent to trigger gate after code changes
+1. Update CodingAgent to trigger gate after code changes
 2. Update QualityEnforcerAgent to use gate for validation
 3. Add gate status to agent communication protocol
 4. Update agent documentation

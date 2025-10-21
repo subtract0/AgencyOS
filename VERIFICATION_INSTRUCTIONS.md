@@ -46,7 +46,7 @@ ls -la logs/autonomous_healing/ 2>/dev/null || echo "No healing logs yet"
 python -c "
 try:
     from chief_architect_agent import create_chief_architect_agent
-    from agencyos_agent.agencyos_agent import create_agencyos_agent
+    from coding_agent.coding_agent import create_coding_agent
     from planner_agent.planner_agent import create_planner_agent
     from auditor_agent import create_auditor_agent
     from test_generator_agent import create_test_generator_agent
@@ -62,10 +62,10 @@ except ImportError as e:
 
 # Test 2: Test agent creation (with safe model)
 python -c "
-from agencyos_agent.agencyos_agent import create_agencyos_agent
+from coding_agent.coding_agent import create_coding_agent
 from planner_agent.planner_agent import create_planner_agent
 try:
-    coder = create_agencyos_agent(model='gpt-4', reasoning_effort='low')
+    coder = create_coding_agent(model='gpt-4', reasoning_effort='low')
     planner = create_planner_agent(model='gpt-4', reasoning_effort='low')
     print('✅ Core agents can be created')
 except Exception as e:
@@ -390,7 +390,7 @@ For a rapid verification (5 minutes):
 python -c "from tools.auto_fix_nonetype import AutoNoneTypeFixer; print('✅ Healing')"
 
 # 2. Quick agent check
-python -c "from agencyos_agent.agencyos_agent import create_agencyos_agent; print('✅ Agents')"
+python -c "from coding_agent.coding_agent import create_coding_agent; print('✅ Agents')"
 
 # 3. Quick memory check
 python -c "from agency_memory import Memory; print('✅ Memory')"

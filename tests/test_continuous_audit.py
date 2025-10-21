@@ -52,7 +52,7 @@ def sample_config():
             "max_runtime_hours": 48,
             "scan_interval_minutes": 10,
             "targets": [
-                "agencyos_agent/",
+                "coding_agent/",
                 "planner_agent/",
                 "shared/",
                 "tools/",
@@ -100,7 +100,7 @@ def sample_state():
         start_time=datetime.fromisoformat("2025-10-07T19:00:00"),
         last_scan_time=datetime.fromisoformat("2025-10-07T21:30:00"),
         scanned_files=[
-            "agencyos_agent/agent.py",
+            "coding_agent/agent.py",
             "shared/cost_tracker.py",
         ],
         recommendations_count=5,
@@ -128,7 +128,7 @@ def sample_recommendation():
         "summary": "Multiple agents have duplicate initialization patterns.",
         "details": "Found 5 instances of identical agent setup code across different agent modules.",
         "affected_files": [
-            {"path": "agencyos_agent/agent.py", "lines": "15-30"},
+            {"path": "coding_agent/agent.py", "lines": "15-30"},
             {"path": "planner_agent/agent.py", "lines": "20-35"},
         ],
         "recommendation_steps": [
@@ -354,7 +354,7 @@ class TestDeduplication:
             f.write("**Category**: Consolidation\n\n")
             f.write(f"**Details**: {details_text}\n\n")
             f.write("**Affected Files**:\n")
-            f.write("- `agencyos_agent/agent.py` (lines 15-30)\n")
+            f.write("- `coding_agent/agent.py` (lines 15-30)\n")
 
         # Create new issue with overlapping file and similar details
         new_issue = Issue(
@@ -366,7 +366,7 @@ class TestDeduplication:
             summary="Duplicate init patterns",
             details=details_text,  # Same details for high similarity
             locations=[
-                FileLocation(file_path="agencyos_agent/agent.py", line_start=20, line_end=35)
+                FileLocation(file_path="coding_agent/agent.py", line_start=20, line_end=35)
             ],
             recommendation_steps=["Create base class"],
         )
@@ -449,7 +449,7 @@ class TestDeduplication:
             f.write("# localM4_recommends_001-consolidate_patterns.md\n\n")
             f.write("**Category**: Consolidation\n\n")
             f.write("**Affected Files**:\n")
-            f.write("- `agencyos_agent/agent.py`\n")
+            f.write("- `coding_agent/agent.py`\n")
 
         # Create linting issue with no file overlap
         new_issue = Issue(
@@ -491,7 +491,7 @@ class TestDeduplication:
             f.write("**Category**: Consolidation\n")
             f.write("**Instances Found**: 1\n\n")
             f.write("## Affected Files\n\n")
-            f.write("- `agencyos_agent/agent.py` (lines 15-30)\n\n")
+            f.write("- `coding_agent/agent.py` (lines 15-30)\n\n")
 
         # Create new issue to append
         new_issue = Issue(
@@ -599,7 +599,7 @@ class TestRecommendationGeneration:
             summary="Multiple agents have duplicate initialization patterns",
             details="Found 5 instances of identical agent setup code across different agent modules",
             locations=[
-                FileLocation(file_path="agencyos_agent/agent.py", line_start=15, line_end=30),
+                FileLocation(file_path="coding_agent/agent.py", line_start=15, line_end=30),
                 FileLocation(file_path="planner_agent/agent.py", line_start=20, line_end=35),
             ],
             recommendation_steps=[

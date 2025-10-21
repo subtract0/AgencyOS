@@ -55,7 +55,7 @@ Design and implement a stateful learning system that enables agents to accumulat
 
 ### Primary Personas
 
-#### Persona 1: AgencyOSAgent (Skill-Accumulating Developer)
+#### Persona 1: CodingAgent (Skill-Accumulating Developer)
 - **Description**: Primary development agent learning from repeated coding tasks
 - **Goals**: Recognize similar bugs, reuse proven fix patterns, optimize model usage cost
 - **Pain Points**: No memory of past fixes, always uses gpt-5 (expensive), repeats mistakes
@@ -77,7 +77,7 @@ Design and implement a stateful learning system that enables agents to accumulat
 
 #### Journey 1: First-Time Bug Fix (Current - No Learning)
 ```
-1. AgencyOSAgent receives bug: NoneType error in shared/agent_context.py:145
+1. CodingAgent receives bug: NoneType error in shared/agent_context.py:145
 2. Task classification: P2 (static rule: "bug fix" = moderate)
 3. Model selection: gpt-4o ($1.50/1M tokens)
 4. Fix generation: 30 seconds, 2K tokens, cost $0.003
@@ -87,7 +87,7 @@ Design and implement a stateful learning system that enables agents to accumulat
 
 #### Journey 2: Repeated Bug Fix (Future - Skill Accumulation)
 ```
-1. AgencyOSAgent receives bug: NoneType error in tools/bash.py:89
+1. CodingAgent receives bug: NoneType error in tools/bash.py:89
 2. VectorStore query: Find similar "NoneType" fixes (3 past successes found)
 3. Skill vector update: confidence=0.85 for "NoneType fixes" → downgrade to P3
 4. Task classification: P3 (learned rule: "NoneType + past success" = simple)
@@ -953,7 +953,7 @@ class CheckpointManager:
 ## Integration Points
 
 ### Agent Integration
-- **AgencyOSAgent**: Primary consumer of adaptive routing (60% of tasks)
+- **CodingAgent**: Primary consumer of adaptive routing (60% of tasks)
 - **PlannerAgent**: Multi-day checkpoint/resume for complex specifications
 - **ChiefArchitect**: P1 task routing (architectural decisions remain gpt-5)
 - **LearningAgent**: Pattern extraction from task_history, skill vector analysis
@@ -1017,7 +1017,7 @@ class CheckpointManager:
 ### Stakeholders
 - **Primary Stakeholder**: @am (Product Owner, Constitutional Authority)
 - **Technical Reviewers**: ChiefArchitect (this agent), LearningAgent, QualityEnforcer
-- **Implementation Agents**: AgencyOSAgent, PlannerAgent, TestGenerator
+- **Implementation Agents**: CodingAgent, PlannerAgent, TestGenerator
 
 ### Review Criteria
 - [x] **Completeness**: All sections filled with technical detail and code examples

@@ -42,7 +42,7 @@ The `test_master_e2e.py` suite validates all critical features of the Agency OS 
 **Validates:** Each specialized agent can be imported and instantiated
 **Key Agents Tested:**
 - ChiefArchitectAgent - Strategic oversight
-- AgencyOSAgent - Primary development
+- CodingAgent - Primary development
 - PlannerAgent - Spec-driven planning
 - AuditorAgent - Quality analysis
 - TestGeneratorAgent - Test creation

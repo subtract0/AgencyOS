@@ -45,7 +45,7 @@ Agency OS is an autonomous multi-agent development system that orchestrates spec
 Traditional development requires constant context switching, manual testing, and vigilant code review. Agency OS handles the entire development lifecycle autonomously:
 
 - **Write specifications** → Planner creates formal specs
-- **Generate code** → AgencyOSAgent implements with TDD
+- **Generate code** → CodingAgent implements with TDD
 - **Run tests** → TestGenerator ensures coverage
 - **Enforce quality** → QualityEnforcer validates constitutional compliance
 - **Learn from experience** → LearningAgent extracts patterns
@@ -156,7 +156,7 @@ Agency OS autonomously:
 
 1. **PlannerAgent** analyzes the request and creates a task plan
 2. **TestGeneratorAgent** writes tests FIRST (TDD mandate)
-3. **AgencyOSAgent** implements the email validator
+3. **CodingAgent** implements the email validator
 4. **QualityEnforcer** validates constitutional compliance
 5. **MergerAgent** commits the changes to git
 
@@ -226,7 +226,7 @@ Agency OS:
 ✅ PlannerAgent: Created formal specification (specs/forgot-password.md)
 ✅ ChiefArchitect: Created ADR-018 for security decisions
 ✅ PlannerAgent: Generated implementation plan (plans/forgot-password-plan.md)
-✅ AgencyOSAgent: Implemented password reset service (TDD)
+✅ CodingAgent: Implemented password reset service (TDD)
 ✅ TestGenerator: Created 23 comprehensive tests
 ✅ QualityEnforcer: Validated constitutional compliance
 ✅ All tests passed (23/23)
@@ -305,12 +305,12 @@ def ensure_complete_context(operation_func, max_retries=3):
 
 ```
 ❌ BAD (Incomplete Context):
-AgencyOSAgent: "Test suite timed out after 2 minutes. I'll assume tests pass."
+CodingAgent: "Test suite timed out after 2 minutes. I'll assume tests pass."
 
 ✅ GOOD (Article I Compliance):
-AgencyOSAgent: "Test suite timed out. Retrying with 4-minute timeout..."
+CodingAgent: "Test suite timed out. Retrying with 4-minute timeout..."
 [Wait for completion]
-AgencyOSAgent: "All 1,711 tests passed (100%). Context complete."
+CodingAgent: "All 1,711 tests passed (100%). Context complete."
 ```
 
 **Violation Examples and Remediation:**
@@ -514,18 +514,18 @@ class ConstitutionalAgent:
 **Real-World Example:**
 
 ```
-Session 1: AgencyOSAgent fixes NoneType error in user service
+Session 1: CodingAgent fixes NoneType error in user service
           🧠 Pattern learned: "Check None before accessing attributes"
           📈 Confidence: 0.4 (1 occurrence) - NOT STORED
 
-Session 2: AgencyOSAgent fixes similar error in auth service
+Session 2: CodingAgent fixes similar error in auth service
           🧠 Pattern updated: Confidence: 0.65 (2 occurrences) - NOT STORED
 
-Session 3: AgencyOSAgent fixes similar error in payment service
+Session 3: CodingAgent fixes similar error in payment service
           🧠 Pattern confirmed: Confidence: 0.82 (3 occurrences)
           ✅ STORED in VectorStore
 
-Session 4: AgencyOSAgent encounters similar code pattern
+Session 4: CodingAgent encounters similar code pattern
           🧠 VectorStore search: Found matching pattern (confidence 0.82)
           ✅ Proactively applies None-check pattern
           ✅ Error prevented before it occurs
@@ -784,7 +784,7 @@ You: /prime_cc
 Agents:
   ✅ ChiefArchitect - Strategic oversight
   ✅ Planner - Spec → Plan transformation
-  ✅ AgencyOSAgent - TDD implementation
+  ✅ CodingAgent - TDD implementation
   ✅ QualityEnforcer - Constitutional compliance
   ✅ Auditor - Quality analysis
   ✅ TestGenerator - Test creation
@@ -898,7 +898,7 @@ Result: Jake understands the auth system in 5 minutes vs. 2 days
     ↓
 4. Task breakdown with TodoWrite
     ↓
-5. AgencyOSAgent implements (TDD)
+5. CodingAgent implements (TDD)
     ↓
 6. TestGenerator ensures coverage
     ↓
@@ -957,7 +957,7 @@ You: Create a user notification system that:
    4. Integration adapters (Twilio, SendGrid)
 
    Agent assignments:
-   - AgencyOSAgent: Core implementation
+   - CodingAgent: Core implementation
    - TestGenerator: Comprehensive test suite
    - QualityEnforcer: Constitutional validation
 
@@ -1074,7 +1074,7 @@ Agency OS Workflow:
 ✅ Planner: Technical plan ready
 
 [Minute 3-10: Implementation]
-✅ AgencyOSAgent: Implemented Stripe service
+✅ CodingAgent: Implemented Stripe service
 ✅ TestGenerator: 34 tests created
 ✅ QualityEnforcer: Security validation passed
 
@@ -1934,7 +1934,7 @@ Inputs from:
 
 Outputs to:
   - PlannerAgent: ADR references for implementation plans
-  - AgencyOSAgent: Architectural guidance
+  - CodingAgent: Architectural guidance
   - All agents: ADR documentation for future reference
 ```
 
@@ -2013,7 +2013,7 @@ ChiefArchitect investigation:
 
 Solution: Extract shared interfaces to separate module
 ✅ ADR-024 created: Dependency Management Strategy
-✅ Refactoring plan sent to AgencyOSAgent
+✅ Refactoring plan sent to CodingAgent
 ```
 
 **Afternoon: Long-term Planning**
@@ -2088,7 +2088,7 @@ Inputs from:
   - LearningAgent: Historical patterns and best practices
 
 Outputs to:
-  - AgencyOSAgent: Implementation tasks and specifications
+  - CodingAgent: Implementation tasks and specifications
   - TestGenerator: Test strategy and acceptance criteria
   - QualityEnforcer: Quality requirements
   - All agents: Formal specifications and plans
@@ -2235,7 +2235,7 @@ Request → Auth → RateLimitMiddleware → RateLimiter → RedisStore
 
 ## Agent Assignments
 
-### AgencyOSAgent
+### CodingAgent
 - Implement RateLimitMiddleware
 - Implement RateLimiter core logic
 - Implement RedisStore interface
@@ -2337,7 +2337,7 @@ Emma's Result:
 
 ---
 
-### AgencyOSAgent
+### CodingAgent
 
 **Role**: Primary development agent with TDD-first implementation
 
@@ -2363,11 +2363,11 @@ Emma's Result:
 **Configuration:**
 
 ```python
-from agencyos_agent import create_agencyos_agent
+from coding_agent import create_coding_agent
 from shared.agent_context import create_agent_context
 
 context = create_agent_context()
-coder = create_agencyos_agent(
+coder = create_coding_agent(
     model="gpt-5",  # Quality-critical agent
     agent_context=context
 )
@@ -2389,11 +2389,11 @@ coder = create_agencyos_agent(
 **Example Interaction:**
 
 ```python
-from agencyos_agent import create_agencyos_agent
+from coding_agent import create_coding_agent
 from shared.agent_context import create_agent_context
 
 context = create_agent_context()
-coder = create_agencyos_agent(agent_context=context)
+coder = create_coding_agent(agent_context=context)
 
 # Request implementation
 task = """
@@ -2585,14 +2585,14 @@ value = divide(10, 0).unwrap_or(0.0)
 **Challenge**: Nathan needs to add a "recently viewed" feature but doesn't have time to write code.
 
 ```python
-Nathan: (to AgencyOSAgent)
+Nathan: (to CodingAgent)
         Implement "recently viewed items" feature:
         - Track last 10 items user viewed
         - Store in Redis with 7-day expiration
         - Provide API endpoint to retrieve
         - Include comprehensive tests
 
-AgencyOSAgent (TDD Workflow):
+CodingAgent (TDD Workflow):
 
 [Minute 1-2: Write Tests]
 ✅ tests/test_recently_viewed.py (12 tests)
@@ -2632,7 +2632,7 @@ Nathan's Result:
 - Manual coding required: 0 lines
 ```
 
-**Key Takeaway**: AgencyOSAgent writes production code faster and more reliably than manual coding through strict TDD and constitutional compliance.
+**Key Takeaway**: CodingAgent writes production code faster and more reliably than manual coding through strict TDD and constitutional compliance.
 
 ---
 

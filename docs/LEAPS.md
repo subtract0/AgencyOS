@@ -62,7 +62,7 @@ This creates **exponential institutional growth**: Later Leaps leverage patterns
 **Achievements**:
 
 1. **10 Specialized Agents**:
-   - `AgencyOSAgent`: TDD-first implementation (strict typing, Result pattern)
+   - `CodingAgent`: TDD-first implementation (strict typing, Result pattern)
    - `PlannerAgent`: Spec → Plan transformation (spec-kit methodology)
    - `AuditorAgent`: NECESSARY pattern quality analysis (AST parsing, read-only)
    - `QualityEnforcerAgent`: Constitutional compliance guardian (autonomous healing)

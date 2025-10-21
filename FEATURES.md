@@ -37,7 +37,7 @@ This document provides a comprehensive inventory of features implemented in Agen
 **Description**: Strategic oversight and self-directed task creation
 **Test Coverage**: `tests/test_agency.py`
 
-### AgencyOSAgent
+### CodingAgent
 **Description**: Primary coding agent with full Claude Code tool set
 **Test Coverage**: `tests/test_agency.py`
 

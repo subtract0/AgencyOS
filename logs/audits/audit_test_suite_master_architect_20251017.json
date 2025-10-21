@@ -83,7 +83,7 @@
           "title": "AGENT-TO-AGENT COMMUNICATION: Untested Protocol",
           "description": "10 specialized agents communicate via context handoffs, but integration tests only cover isolated agents. No tests validate ChiefArchitect→Planner→Coder→QualityEnforcer flows.",
           "files_affected": [
-            "agency_code_agent/agency_code_agent.py",
+            "coding_agent/agency_code_agent.py",
             "planner_agent/planner_agent.py",
             "quality_enforcer_agent/quality_enforcer_agent.py"
           ],

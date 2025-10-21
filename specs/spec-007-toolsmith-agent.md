@@ -54,7 +54,7 @@ Introduce ToolSmithAgent, a meta-agent that designs, scaffolds, implements, test
 - Goals: Close systemic gaps with minimal, reversible changes
 - Pain Points: Slow iteration on new tools; manual testing burden
 
-#### AgencyOSAgent
+#### CodingAgent
 - Description: Implements code; must remain compatible with new tools
 - Goals: Clear contracts, minimal churn, green tests
 - Pain Points: Ambiguous specifications for new tools
@@ -171,7 +171,7 @@ Introduce ToolSmithAgent, a meta-agent that designs, scaffolds, implements, test
 
 ### Agent Integration
 - PlannerAgent: may draft specs for future tool directives
-- AgencyOSAgent: remains compatible; can import new tools via `tools/__init__.py`
+- CodingAgent: remains compatible; can import new tools via `tools/__init__.py`
 - LearningAgent: records scaffolding patterns and outcomes
 - MergerAgent: final verification and integration
 

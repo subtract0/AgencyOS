@@ -8,7 +8,7 @@ from unittest.mock import AsyncMock, Mock, patch
 
 import pytest
 
-from agencyos_agent.agencyos_agent import create_agencyos_agent
+from coding_agent.coding_agent import create_coding_agent
 
 
 class TestAgencyFast:
@@ -248,7 +248,7 @@ class TestAgencyFast:
         with (
             patch("agency_swarm.Agency") as mock_agency_class,
             patch(
-                "agencyos_agent.agencyos_agent.create_agencyos_agent"
+                "coding_agent.coding_agent.create_coding_agent"
             ) as mock_create_agent,
         ):
             # Setup mocks
@@ -319,10 +319,10 @@ class TestAgencyFast:
     def test_tool_integration_mocking_fast(self):
         """Test that tools are properly mocked for fast execution."""
         with (
-            patch("agencyos_agent.agencyos_agent.Agent") as mock_agent_class,
-            patch("agencyos_agent.agencyos_agent.get_model_instance") as mock_model,
-            patch("agencyos_agent.agencyos_agent.render_instructions") as mock_render,
-            patch("agencyos_agent.agencyos_agent.create_agent_context") as mock_context,
+            patch("coding_agent.coding_agent.Agent") as mock_agent_class,
+            patch("coding_agent.coding_agent.get_model_instance") as mock_model,
+            patch("coding_agent.coding_agent.render_instructions") as mock_render,
+            patch("coding_agent.coding_agent.create_agent_context") as mock_context,
         ):
             mock_model.return_value = "gpt-5-mini"
             mock_render.return_value = "Test instructions"
@@ -332,7 +332,7 @@ class TestAgencyFast:
             mock_context.return_value = mock_agent_context
 
             # Create agent with mocked tools
-            _ = create_agencyos_agent(model="gpt-5-mini", reasoning_effort="low")
+            _ = create_coding_agent(model="gpt-5-mini", reasoning_effort="low")
 
             # Verify agent creation (tools should be mocked)
             assert mock_agent_class.called

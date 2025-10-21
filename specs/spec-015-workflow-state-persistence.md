@@ -264,7 +264,7 @@ Implement a workflow state machine with checkpoint persistence, resumability aft
 ### Agent Integration
 - **PlannerAgent**: Uses workflow state machine for plan_and_execute and audit_and_refactor workflows
 - **QualityEnforcerAgent**: Uses parallel executor for concurrent healing operations
-- **AgencyOSAgent**: Checkpoints after code generation, resume from checkpoint on interruption
+- **CodingAgent**: Checkpoints after code generation, resume from checkpoint on interruption
 - **All Agents**: Workflow state accessible via shared AgentContext
 
 ### System Integration

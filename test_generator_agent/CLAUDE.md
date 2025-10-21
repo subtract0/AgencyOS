@@ -17,14 +17,14 @@
 - Test quality enhancement required
 
 **Do NOT use for:**
-- Code implementation (use AgencyOSAgent)
+- Code implementation (use CodingAgent)
 - Test execution (use Bash tool)
 - Code analysis (use Auditor)
 
 **Decision Tree:**
 ```
 New feature?
-├─ TDD workflow? → AgencyOSAgent writes tests first
+├─ TDD workflow? → CodingAgent writes tests first
 └─ Need generated tests? → TestGenerator
 
 Coverage gaps?
@@ -51,26 +51,26 @@ Test quality issues?
 ## Dependencies & Communication
 
 ### I Depend On
-- **AgencyOSAgent**: Implementation code to test
+- **CodingAgent**: Implementation code to test
 - **Auditor**: Coverage gap reports
 - **QualityEnforcer**: Test quality validation
 - **VectorStore**: Test patterns (Article IV)
 
 ### Who Depends On Me
-- **AgencyOSAgent**: Receives generated tests
+- **CodingAgent**: Receives generated tests
 - **QualityEnforcer**: Validates test quality
 - **Auditor**: Analyzes test coverage
 
 ### Communication Flow
 ```
 Auditor → coverage gaps → TestGenerator
-AgencyOSAgent → implementation → TestGenerator
+CodingAgent → implementation → TestGenerator
                                     ↓
                               Generate tests (NECESSARY)
                                     ↓
                               Verify tests fail initially (TDD)
                                     ↓
-AgencyOSAgent ← test suite ← TestGenerator
+CodingAgent ← test suite ← TestGenerator
 ```
 
 ## Constitutional Requirements

@@ -17,7 +17,7 @@
 - Work documentation for stakeholders
 
 **Do NOT use for:**
-- Code implementation (use AgencyOSAgent)
+- Code implementation (use CodingAgent)
 - Strategic planning (use Planner)
 - Quality validation (use QualityEnforcer)
 

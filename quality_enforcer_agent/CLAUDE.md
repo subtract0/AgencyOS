@@ -19,7 +19,7 @@
 
 **Do NOT use for:**
 - Code analysis only (use Auditor READ-ONLY)
-- Manual implementation (use AgencyOSAgent)
+- Manual implementation (use CodingAgent)
 - Test generation (use TestGenerator)
 - Strategic planning (use Planner)
 
@@ -28,7 +28,7 @@
 Quality issue detected?
 ├─ Auto-fixable? → QualityEnforcer (autonomous healing)
 ├─ Needs analysis? → Auditor (READ-ONLY)
-└─ Manual fix needed? → AgencyOSAgent
+└─ Manual fix needed? → CodingAgent
 
 Constitutional violation?
 └─ Any severity? → QualityEnforcer (MANDATORY enforcement)

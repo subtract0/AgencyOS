@@ -11,7 +11,7 @@ Constitutional Compliance:
 - Law #1: TDD (tests written FIRST)
 - Law #5: Result pattern for all fallible operations
 
-Author: AgencyOSAgent
+Author: CodingAgent
 Date: 2025-10-10
 """
 

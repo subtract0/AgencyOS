@@ -3,18 +3,18 @@ from unittest.mock import Mock, patch
 
 import pytest
 
-from agencyos_agent.agencyos_agent import create_agencyos_agent
+from coding_agent.coding_agent import create_coding_agent
 from shared.agent_context import create_agent_context
 
 
-class TestAgencyOSAgentCreation:
+class TestCodingAgentCreation:
     """Test suite for the agency code agent factory function."""
 
     def test_agent_creation_default_params(self):
         """Test agent creation with default parameters."""
-        agent = create_agencyos_agent()
+        agent = create_coding_agent()
 
-        assert agent.name == "AgencyOSAgent"
+        assert agent.name == "CodingAgent"
         assert isinstance(agent.description, str)
         assert "software engineer" in agent.description
         assert "implementation specialist" in agent.description
@@ -22,15 +22,15 @@ class TestAgencyOSAgentCreation:
     def test_agent_creation_custom_params(self):
         """Test agent creation with custom parameters."""
         ctx = create_agent_context()
-        agent = create_agencyos_agent(model="gpt-5", reasoning_effort="high", agent_context=ctx)
+        agent = create_coding_agent(model="gpt-5", reasoning_effort="high", agent_context=ctx)
 
-        assert agent.name == "AgencyOSAgent"
+        assert agent.name == "CodingAgent"
         assert agent is not None
 
     def test_agent_creation_with_context(self):
         """Test agent creation with provided agent context."""
         ctx = create_agent_context()
-        agent = create_agencyos_agent(agent_context=ctx)
+        agent = create_coding_agent(agent_context=ctx)
 
         assert agent is not None
         assert hasattr(agent, "hooks")
@@ -39,35 +39,35 @@ class TestAgencyOSAgentCreation:
     def test_agent_creation_creates_context_when_none(self):
         """Test that agent creation creates context when none provided."""
         with patch(
-            "agencyos_agent.agencyos_agent.create_agent_context"
+            "coding_agent.coding_agent.create_agent_context"
         ) as mock_create_context:
             mock_ctx = Mock()
             mock_ctx.session_id = "test_session"
             mock_create_context.return_value = mock_ctx
 
-            agent = create_agencyos_agent(agent_context=None)
+            agent = create_coding_agent(agent_context=None)
 
             mock_create_context.assert_called_once()
             assert agent is not None
 
-    @patch("agencyos_agent.agencyos_agent.detect_model_type")
+    @patch("coding_agent.coding_agent.detect_model_type")
     def test_model_type_detection(self, mock_detect):
         """Test that model type is detected correctly."""
         mock_detect.return_value = (True, False, False)  # is_openai, is_claude, is_other
 
-        agent = create_agencyos_agent(model="gpt-4")
+        agent = create_coding_agent(model="gpt-4")
 
         mock_detect.assert_called_once_with("gpt-4")
         assert agent is not None
 
-    @patch("agencyos_agent.agencyos_agent.select_instructions_file")
-    @patch("agencyos_agent.agencyos_agent.render_instructions")
+    @patch("coding_agent.coding_agent.select_instructions_file")
+    @patch("coding_agent.coding_agent.render_instructions")
     def test_instructions_handling(self, mock_render, mock_select):
         """Test that instructions are selected and rendered correctly."""
         mock_select.return_value = "/path/to/instructions.md"
         mock_render.return_value = "Rendered instructions"
 
-        agent = create_agencyos_agent(model="gpt-5")
+        agent = create_coding_agent(model="gpt-5")
 
         mock_select.assert_called_once()
         mock_render.assert_called_once_with("/path/to/instructions.md", "gpt-5")
@@ -76,7 +76,7 @@ class TestAgencyOSAgentCreation:
 
     def test_agent_tools_configuration(self):
         """Test that agent has proper tools configured."""
-        agent = create_agencyos_agent()
+        agent = create_coding_agent()
 
         # Check that tools are present
         assert hasattr(agent, "tools")
@@ -105,23 +105,23 @@ class TestAgencyOSAgentCreation:
         for tool in expected_core_tools:
             assert any(tool in name for name in tool_names), f"Missing core tool: {tool}"
 
-    @patch("agencyos_agent.agencyos_agent.detect_model_type")
+    @patch("coding_agent.coding_agent.detect_model_type")
     def test_openai_specific_tools(self, mock_detect):
         """Test that OpenAI-specific tools are added for OpenAI models."""
         mock_detect.return_value = (True, False, False)  # is_openai=True
 
-        agent = create_agencyos_agent(model="gpt-4")
+        agent = create_coding_agent(model="gpt-4")
 
         tool_names = [getattr(t, "name", getattr(t, "__name__", str(t))) for t in agent.tools]
         # Should include WebSearchTool for OpenAI models
         assert any("WebSearchTool" in str(tool) for tool in agent.tools)
 
-    @patch("agencyos_agent.agencyos_agent.detect_model_type")
+    @patch("coding_agent.coding_agent.detect_model_type")
     def test_claude_specific_tools(self, mock_detect):
         """Test that Claude-specific tools are added for Claude models."""
         mock_detect.return_value = (False, True, False)  # is_claude=True
 
-        agent = create_agencyos_agent(model="claude-3")
+        agent = create_coding_agent(model="claude-3")
 
         tool_names = [getattr(t, "name", getattr(t, "__name__", str(t))) for t in agent.tools]
         # Should include ClaudeWebSearch for Claude models
@@ -129,7 +129,7 @@ class TestAgencyOSAgentCreation:
 
     def test_agent_hooks_configuration(self):
         """Test that agent has proper hooks configured."""
-        agent = create_agencyos_agent()
+        agent = create_coding_agent()
 
         assert hasattr(agent, "hooks")
         assert agent.hooks is not None
@@ -137,17 +137,17 @@ class TestAgencyOSAgentCreation:
 
     def test_agent_model_settings(self):
         """Test that agent has proper model settings."""
-        agent = create_agencyos_agent(model="gpt-5-mini", reasoning_effort="medium")
+        agent = create_coding_agent(model="gpt-5-mini", reasoning_effort="medium")
 
         assert hasattr(agent, "model_settings")
         # The agent should have model settings configured
 
-    @patch("agencyos_agent.agencyos_agent.get_model_instance")
+    @patch("coding_agent.coding_agent.get_model_instance")
     def test_model_instance_creation(self, mock_get_model):
         """Test that model instance is created correctly."""
         mock_get_model.return_value = "gpt-5"  # Return string instead of Mock
 
-        agent = create_agencyos_agent(model="gpt-5")
+        agent = create_coding_agent(model="gpt-5")
 
         mock_get_model.assert_called_once_with("gpt-5")
         assert agent.model == "gpt-5"
@@ -157,7 +157,7 @@ class TestAgencyOSAgentCreation:
         ctx = create_agent_context()
 
         with patch.object(ctx, "store_memory") as mock_store:
-            agent = create_agencyos_agent(agent_context=ctx)
+            agent = create_coding_agent(agent_context=ctx)
 
             mock_store.assert_called_once()
             call_args = mock_store.call_args
@@ -165,7 +165,7 @@ class TestAgencyOSAgentCreation:
             # Check that memory was stored with correct data
             assert f"agent_created_{ctx.session_id}" in call_args[0][0]
             memory_data = call_args[0][1]
-            assert memory_data["agent_type"] == "AgencyOSAgent"
+            assert memory_data["agent_type"] == "CodingAgent"
             assert memory_data["model"] == "gpt-5-mini"  # default model
             assert memory_data["reasoning_effort"] == "medium"  # default effort
             assert memory_data["session_id"] == ctx.session_id
@@ -178,24 +178,24 @@ class TestAgencyOSAgentCreation:
 
     def test_tools_folder_configuration(self):
         """Test that tools folder is correctly configured."""
-        agent = create_agencyos_agent()
+        agent = create_coding_agent()
 
         assert hasattr(agent, "tools_folder")
         # Should point to tools directory within agent directory
         expected_path = os.path.join(
-            os.path.dirname(os.path.abspath(__file__)).replace("/tests", "/agencyos_agent"),
+            os.path.dirname(os.path.abspath(__file__)).replace("/tests", "/coding_agent"),
             "tools",
         )
         # Just verify it's a string path for now
         assert isinstance(agent.tools_folder, str)
 
 
-class TestAgencyOSAgentDescription:
+class TestCodingAgentDescription:
     """Test suite for agent description and role definition."""
 
     def test_agent_description_content(self):
         """Test that agent description accurately describes its role."""
-        agent = create_agencyos_agent()
+        agent = create_coding_agent()
 
         description = agent.description.lower()
 
@@ -216,7 +216,7 @@ class TestAgencyOSAgentDescription:
 
     def test_agent_description_mentions_triggers(self):
         """Test that description mentions when agent should be triggered."""
-        agent = create_agencyos_agent()
+        agent = create_coding_agent()
 
         description = agent.description.lower()
 
@@ -226,7 +226,7 @@ class TestAgencyOSAgentDescription:
 
     def test_agent_description_mentions_planning_integration(self):
         """Test that description mentions integration with PlannerAgent."""
-        agent = create_agencyos_agent()
+        agent = create_coding_agent()
 
         description = agent.description
 
@@ -235,7 +235,7 @@ class TestAgencyOSAgentDescription:
 
     def test_agent_description_mentions_quality_standards(self):
         """Test that description mentions code quality responsibilities."""
-        agent = create_agencyos_agent()
+        agent = create_coding_agent()
 
         description = agent.description.lower()
 
@@ -243,13 +243,13 @@ class TestAgencyOSAgentDescription:
         assert "quality" in description or "standards" in description
 
 
-class TestAgencyOSAgentIntegration:
+class TestCodingAgentIntegration:
     """Integration tests for the agency code agent."""
 
     def test_agent_system_hooks_integration(self):
         """Test that agent integrates properly with system hooks."""
         ctx = create_agent_context()
-        agent = create_agencyos_agent(agent_context=ctx)
+        agent = create_coding_agent(agent_context=ctx)
 
         # Agent should have hooks configured
         assert agent.hooks is not None
@@ -264,7 +264,7 @@ class TestAgencyOSAgentIntegration:
         except Exception as e:
             pytest.fail(f"Agent hooks integration failed: {e}")
 
-    @patch("agencyos_agent.agencyos_agent.create_model_settings")
+    @patch("coding_agent.coding_agent.create_model_settings")
     def test_model_settings_integration(self, mock_create_settings):
         """Test that model settings are properly integrated."""
         from agents.model_settings import ModelSettings
@@ -272,14 +272,14 @@ class TestAgencyOSAgentIntegration:
         mock_settings = ModelSettings(temperature=0.1, max_tokens=4000)
         mock_create_settings.return_value = mock_settings
 
-        agent = create_agencyos_agent(model="gpt-5", reasoning_effort="high")
+        agent = create_coding_agent(model="gpt-5", reasoning_effort="high")
 
         mock_create_settings.assert_called_once_with("gpt-5", "high")
         assert agent.model_settings == mock_settings
 
     def test_agent_tool_availability(self):
         """Test that all required tools are available and accessible."""
-        agent = create_agencyos_agent()
+        agent = create_coding_agent()
 
         # Test that core development tools are available
         tool_names = [getattr(t, "name", getattr(t, "__name__", str(t))) for t in agent.tools]
@@ -304,11 +304,11 @@ class TestAgencyOSAgentIntegration:
     def test_current_directory_detection(self):
         """Test that current directory is detected correctly."""
         # This tests that the module can find its own directory
-        from agencyos_agent.agencyos_agent import current_dir
+        from coding_agent.coding_agent import current_dir
 
         assert isinstance(current_dir, str)
         assert os.path.exists(current_dir)
-        assert "agencyos_agent" in current_dir
+        assert "coding_agent" in current_dir
 
     def test_error_resilience(self):
         """Test that agent creation is resilient to various error conditions."""
@@ -317,31 +317,31 @@ class TestAgencyOSAgentIntegration:
 
         for model in models_to_test:
             try:
-                agent = create_agencyos_agent(model=model)
+                agent = create_coding_agent(model=model)
                 assert agent is not None
-                assert agent.name == "AgencyOSAgent"
+                assert agent.name == "CodingAgent"
             except Exception as e:
                 # Some models might fail, but it should be handled gracefully
-                assert "AgencyOSAgent" not in str(e) or "creation" not in str(e)
+                assert "CodingAgent" not in str(e) or "creation" not in str(e)
 
     def test_agent_uniqueness(self):
         """Test that each agent creation produces a unique instance."""
-        agent1 = create_agencyos_agent()
-        agent2 = create_agencyos_agent()
+        agent1 = create_coding_agent()
+        agent2 = create_coding_agent()
 
         # Should be different instances
         assert agent1 is not agent2
 
         # But should have same name and basic properties
-        assert agent1.name == agent2.name == "AgencyOSAgent"
+        assert agent1.name == agent2.name == "CodingAgent"
 
     def test_context_isolation(self):
         """Test that different agent contexts are properly isolated."""
         ctx1 = create_agent_context()
         ctx2 = create_agent_context()
 
-        agent1 = create_agencyos_agent(agent_context=ctx1)
-        agent2 = create_agencyos_agent(agent_context=ctx2)
+        agent1 = create_coding_agent(agent_context=ctx1)
+        agent2 = create_coding_agent(agent_context=ctx2)
 
         # Agents should be different
         assert agent1 is not agent2
@@ -350,14 +350,14 @@ class TestAgencyOSAgentIntegration:
         assert ctx1.session_id != ctx2.session_id
 
 
-class TestAgencyOSAgentErrorHandling:
+class TestCodingAgentErrorHandling:
     """Test suite for error handling in agent creation and operation."""
 
     def test_invalid_model_handling(self):
         """Test handling of invalid model specifications."""
         # Should not crash with invalid model
         try:
-            agent = create_agencyos_agent(model="completely-invalid-model")
+            agent = create_coding_agent(model="completely-invalid-model")
             # Might succeed with fallback behavior
             assert agent is not None
         except Exception:
@@ -367,26 +367,26 @@ class TestAgencyOSAgentErrorHandling:
     def test_invalid_reasoning_effort_handling(self):
         """Test handling of invalid reasoning effort levels."""
         try:
-            agent = create_agencyos_agent(reasoning_effort="invalid-effort")
+            agent = create_coding_agent(reasoning_effort="invalid-effort")
             assert agent is not None
         except Exception:
             pass
 
     @patch(
-        "agencyos_agent.agencyos_agent.select_instructions_file",
+        "coding_agent.coding_agent.select_instructions_file",
         side_effect=FileNotFoundError(),
     )
     def test_missing_instructions_handling(self, mock_select):
         """Test handling when instructions file is missing."""
         try:
-            agent = create_agencyos_agent()
+            agent = create_coding_agent()
             # Should handle missing instructions gracefully
         except FileNotFoundError:
             # Or fail appropriately
             pass
 
     @patch(
-        "agencyos_agent.agencyos_agent.create_agent_context",
+        "coding_agent.coding_agent.create_agent_context",
         side_effect=Exception("Context creation failed"),
     )
     def test_context_creation_failure_handling(self, mock_create_context):
@@ -394,7 +394,7 @@ class TestAgencyOSAgentErrorHandling:
         ctx = create_agent_context()  # Create a working context
 
         # Should still work with provided context even if creation would fail
-        agent = create_agencyos_agent(agent_context=ctx)
+        agent = create_coding_agent(agent_context=ctx)
         assert agent is not None
 
     def test_memory_storage_failure_handling(self):
@@ -404,7 +404,7 @@ class TestAgencyOSAgentErrorHandling:
         # Mock memory to fail
         with patch.object(ctx, "store_memory", side_effect=Exception("Memory storage failed")):
             try:
-                agent = create_agencyos_agent(agent_context=ctx)
+                agent = create_coding_agent(agent_context=ctx)
                 # Should still create agent even if memory storage fails
                 assert agent is not None
             except Exception:

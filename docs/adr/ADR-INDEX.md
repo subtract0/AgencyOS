@@ -332,7 +332,7 @@ This index catalogs all Architecture Decision Records for the Agency multi-agent
 **Date:** 2025-10-07
 **File:** `docs/adr/ADR-022-autonomous-auditor-architecture.md`
 
-**Decision:** Extend auditor recommendations with autonomous execution metadata to enable AgencyOSAgent to apply fixes without human interpretation.
+**Decision:** Extend auditor recommendations with autonomous execution metadata to enable CodingAgent to apply fixes without human interpretation.
 
 **Key Components:**
 - **Enhanced Pydantic Model**: `EnhancedRecommendation` with auto-fixability classification, generated fix code, dependency analysis, risk quantification, validation strategies, and learning integration

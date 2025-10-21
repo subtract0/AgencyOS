@@ -49,7 +49,7 @@ The plan breaks down the specification into 5 milestones with ~45 atomic tasks a
                     ┌──────────┴──────────┐
                     │                     │
             ┌───────▼────────┐    ┌──────▼─────────┐
-            │ AgencyOSAgent│    │ ChiefArchitect │
+            │ CodingAgent│    │ ChiefArchitect │
             │ (60% of tasks) │    │ (10% P1 tasks) │
             └────────────────┘    └────────────────┘
 ```

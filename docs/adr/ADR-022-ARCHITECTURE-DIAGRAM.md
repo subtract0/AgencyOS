@@ -119,7 +119,7 @@
               ↓
    ┌─────────────────────────────┐
    │  Autonomous Fix Applicator  │
-   │  (AgencyOSAgent)          │
+   │  (CodingAgent)          │
    │  • Read generated_fix.patch │
    │  • Apply patch              │
    │  • Run validation tests     │

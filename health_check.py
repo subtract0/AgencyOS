@@ -135,7 +135,7 @@ def check_constitutional_compliance() -> tuple[bool, str]:
 def check_agents() -> tuple[bool, str]:
     """Check if agent modules are accessible"""
     agent_modules = [
-        "agencyos_agent",
+        "coding_agent",
         "planner_agent",
         "auditor_agent",
         "quality_enforcer_agent",

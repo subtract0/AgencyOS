@@ -155,14 +155,14 @@ result = process_data(None)
             print(f"❌ ChiefArchitectAgent: {e}")
 
         try:
-            from agencyos_agent.agencyos_agent import create_agencyos_agent
+            from coding_agent.coding_agent import create_coding_agent
 
-            agent = create_agencyos_agent(model="gpt-4", reasoning_effort="low")
-            agents_status["AgencyOSAgent"] = True
-            print("✅ AgencyOSAgent")
+            agent = create_coding_agent(model="gpt-4", reasoning_effort="low")
+            agents_status["CodingAgent"] = True
+            print("✅ CodingAgent")
         except Exception as e:
-            agents_status["AgencyOSAgent"] = False
-            print(f"❌ AgencyOSAgent: {e}")
+            agents_status["CodingAgent"] = False
+            print(f"❌ CodingAgent: {e}")
 
         try:
             from planner_agent.planner_agent import create_planner_agent
@@ -606,7 +606,7 @@ result = process_data(None)
 
         # Check agents (at least core ones)
         try:
-            from agencyos_agent.agencyos_agent import create_agencyos_agent
+            from coding_agent.coding_agent import create_coding_agent
             from chief_architect_agent import create_chief_architect_agent
             from planner_agent.planner_agent import create_planner_agent
 

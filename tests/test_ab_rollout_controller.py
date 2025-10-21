@@ -17,7 +17,7 @@ Constitutional compliance:
 - Law #5: Result pattern
 
 Reference: specs/spec-007-phase3-ml-inference.md Section 3.2
-Author: AgencyOSAgent
+Author: CodingAgent
 Date: 2025-10-10
 """
 

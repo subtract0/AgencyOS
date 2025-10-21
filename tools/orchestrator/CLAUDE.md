@@ -25,7 +25,7 @@
 
 **Do NOT use for:**
 - User-facing commands (tools are infrastructure, not interface)
-- Direct code implementation (use AgencyOSAgent)
+- Direct code implementation (use CodingAgent)
 - Simple single-task execution (overkill for non-orchestration)
 
 **Decision Tree**:

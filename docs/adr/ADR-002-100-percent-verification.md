@@ -110,7 +110,7 @@ fi
 - Test-Driven Development - Kent Beck
 
 ## Review
-- Author: AgencyOSAgent
+- Author: CodingAgent
 - Mandated by: @am
 - Date: 2025-09-21
 

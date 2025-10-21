@@ -182,7 +182,7 @@
 
 ### Agent Integration
 - **PlannerAgent**: [How this feature integrates]
-- **AgencyOSAgent**: [How this feature integrates]
+- **CodingAgent**: [How this feature integrates]
 - **LearningAgent**: [How this feature integrates]
 - **Other Agents**: [How this feature integrates]
 

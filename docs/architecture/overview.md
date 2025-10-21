@@ -97,7 +97,7 @@ graph TD
 - QualityEnforcer - Constitutional compliance
 
 **Tier 2: Execution (GPT-5 + Medium Reasoning)**
-- AgencyOSAgent - Primary development, TDD-first
+- CodingAgent - Primary development, TDD-first
 - TestGenerator - AAA pattern, NECESSARY compliance
 - Merger - Git workflow automation
 - Toolsmith - Tool development
