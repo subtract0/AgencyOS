@@ -3,7 +3,7 @@ import os
 from datetime import UTC
 
 import litellm
-from agency_swarm import Agent
+from shared.lean_adapter import Agent
 from agency_swarm.tools import BaseTool as Tool
 from pydantic import Field
 

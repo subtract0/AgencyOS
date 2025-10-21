@@ -46,7 +46,7 @@ See tests/fixtures/test_constitutional_test_agents.py for complete test coverage
 
 from typing import Any
 
-from agency_swarm import Agent
+from shared.lean_adapter import Agent
 
 from agency_memory import InMemoryStore, Memory
 from shared.agent_context import AgentContext

@@ -6,7 +6,7 @@ when requirements are unclear or incomplete.
 import os
 
 import pytest
-from agency_swarm import Agency
+from shared.lean_adapter import Agency
 from dotenv import load_dotenv
 
 from coding_agent.coding_agent import create_coding_agent

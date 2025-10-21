@@ -6,7 +6,7 @@ Tests the agent with 5 diverse queries to validate functionality
 from unittest.mock import MagicMock, patch
 
 import pytest
-from agency_swarm import Agency
+from shared.lean_adapter import Agency
 from dotenv import load_dotenv
 
 # Load environment variables

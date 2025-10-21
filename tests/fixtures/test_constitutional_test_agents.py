@@ -9,7 +9,7 @@ import os
 import time
 
 import pytest
-from agency_swarm import Agent
+from shared.lean_adapter import Agent
 
 from shared.agent_context import AgentContext
 from shared.type_definitions.result import Err, Ok, Result
