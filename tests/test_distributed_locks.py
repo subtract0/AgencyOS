@@ -222,7 +222,8 @@ class TestLockAcquisition:
             thread.start()
 
         for thread in threads:
-            thread.join()
+            thread.join(timeout=10)
+            assert not thread.is_alive(), "Thread did not terminate within 10 seconds"
 
         # Assert - All acquisitions should succeed
         assert len(results) == 3
@@ -440,7 +441,7 @@ class TestHeartbeatFailures:
         heartbeat_1 = datetime.fromisoformat(lines_initial[2].strip())
 
         # Act - Wait for 2 heartbeat intervals
-        time.sleep(4)
+        time.sleep(2.5)  # Reduced for testing (wait for ~2 heartbeat intervals)
 
         # Read updated heartbeat
         with lock_file.open("r") as f:
@@ -480,7 +481,7 @@ class TestHeartbeatFailures:
         assert release_result.is_ok()
 
         # Wait for thread to exit (daemon threads should exit quickly)
-        time.sleep(1)
+        time.sleep(0.5)
 
         # Assert - Thread should no longer exist
         threads_after = [t for t in threading.enumerate() if t.name == thread_name]
@@ -515,7 +516,7 @@ class TestHeartbeatFailures:
         lock_file.unlink()
 
         # Wait for heartbeat to detect deletion (fast detection with 1s checks)
-        time.sleep(3)
+        time.sleep(3.0)  # Wait enough for heartbeat to detect file deletion
 
         # Assert - Thread should exit when it detects missing file
         threads_after = [t for t in threading.enumerate() if t.name == thread_name]
@@ -558,7 +559,7 @@ class TestHeartbeatFailures:
         )
 
         # Wait for heartbeat to detect ownership change (fast detection)
-        time.sleep(3)
+        time.sleep(3.0)  # Wait enough for heartbeat to detect ownership change
 
         # Assert - Original heartbeat thread should exit
         threads_after = [t for t in threading.enumerate() if t.name == thread_name]
@@ -612,6 +613,7 @@ class TestHeartbeatFailures:
         # Cleanup
         lock_manager.release_lock(task_id, session_id_new)
 
+    @pytest.mark.timeout(15)  # Test simulates real-world delays (2s + 3s waits)
     def test_heartbeat_resilient_to_temporary_io_errors(
         self, lock_manager, temp_lock_dir, monkeypatch
     ):
@@ -708,7 +710,7 @@ class TestConcurrentHeartbeats:
             initial_heartbeats[task_id] = datetime.fromisoformat(lines[2].strip())
 
         # Act - Wait for 2 heartbeat intervals
-        time.sleep(4)
+        time.sleep(2.5)  # Reduced for testing (wait for ~2 heartbeat intervals)
 
         # Read final heartbeats
         final_heartbeats = {}
@@ -1131,7 +1133,7 @@ class TestDeadlockDetection:
         waiter.start()
 
         # Release lock after 2 seconds
-        time.sleep(2)
+        time.sleep(1.0)  # Reduced for testing
         lock_manager.release_lock(task_id, session_1)
 
         waiter.join(timeout=6)
@@ -1261,7 +1263,7 @@ class TestLockWaitStatistics:
         waiter = Thread(target=waiter_thread)
         waiter.start()
 
-        time.sleep(2)
+        time.sleep(2.0)  # Wait to ensure measurable wait time
         lock_manager.release_lock(task_id, session_1)
 
         waiter.join(timeout=6)

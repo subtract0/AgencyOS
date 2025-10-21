@@ -38,6 +38,10 @@ import pytest
 # Note: We need to patch these at module level before import
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
+# Mock enhanced_store initialization to prevent slow model loading
+# This must happen BEFORE importing agency module
+sys.modules.setdefault("sentence_transformers", MagicMock())
+
 
 class TestCliEventScope:
     """Tests for _cli_event_scope() CRITICAL function."""

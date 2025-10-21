@@ -488,7 +488,7 @@ python demo_batch_memory_reads.py
 
 ---
 
-**Author**: AgencyCodeAgent
+**Author**: CodingAgent
 **Date**: 2025-10-10
 **Spec**: `specs/leap_2_memory_tool_async.md`
 **ADRs**: ADR-001 (Complete Context), ADR-002 (Verification), ADR-010 (Result Pattern)

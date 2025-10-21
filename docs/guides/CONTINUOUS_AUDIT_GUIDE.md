@@ -149,7 +149,7 @@ audit:
   scan_interval_minutes: 10
 
   targets:
-    - "agency_code_agent/"
+    - "coding_agent/"
     - "planner_agent/"
     - "auditor_agent/"
     - "quality_enforcer_agent/"
@@ -209,7 +209,7 @@ audit:
 
 ```yaml
   targets:
-    - "agency_code_agent/"
+    - "coding_agent/"
     - "planner_agent/"
     - "shared/"
     - "tools/"
@@ -299,8 +299,8 @@ python scripts/continuous_audit_m4pro.py --mode once
 [INFO] Continuous Audit System initialized
 [INFO] Mode: once
 [INFO] Running single scan cycle
-[INFO] Scanning target: agency_code_agent/
-[INFO] Found 3 issues in agency_code_agent/
+[INFO] Scanning target: coding_agent/
+[INFO] Found 3 issues in coding_agent/
 [INFO] Created recommendation: localaudit_recommendations/localM4_recommends_001-dict_any_violations.md
 [INFO] Scan complete: 3 new recommendations
 [INFO] Total recommendations: 3
@@ -452,7 +452,7 @@ Shows exact locations:
 ```
 - `shared/utils.py` (lines 45-52)
 - `tools/bash.py` (line 123)
-- `agency_code_agent/agent.py`
+- `coding_agent/agent.py`
 ```
 
 **Line numbers** are provided when the issue is localized. If the entire file is affected, no line numbers are shown.
@@ -490,7 +490,7 @@ localaudit_recommendations/
   "start_time": "2025-10-07T19:00:00",
   "last_scan_time": "2025-10-07T21:30:00",
   "scanned_files": [
-    "agency_code_agent/agent.py",
+    "coding_agent/agent.py",
     "shared/cost_tracker.py"
   ],
   "recommendations_count": 42,

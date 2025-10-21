@@ -360,7 +360,7 @@ class ProjectOutcome(BaseModel):
 
 ## Agent Assignments
 
-### Primary Agent: AgencyCodeAgent
+### Primary Agent: CodingAgent
 - **Role**: Implement all Phase 3 components (primary developer)
 - **Tasks**:
   - Create all data models (models/project.py, models/qa_session.py, etc.)
@@ -441,12 +441,12 @@ class ProjectOutcome(BaseModel):
 
 ### Agent Communication Flow
 ```
-1. ChiefArchitect → Create ADR → AgencyCodeAgent (architecture approved)
-2. AgencyCodeAgent → Implement core components → TestGeneratorAgent (code ready)
-3. TestGeneratorAgent → Generate tests → AgencyCodeAgent (tests available)
-4. ToolsmithAgent → Implement tools (parallel) → AgencyCodeAgent (tools ready)
-5. QualityEnforcer → Validate compliance → AgencyCodeAgent (fixes if needed)
-6. AgencyCodeAgent → Final integration → All agents (complete)
+1. ChiefArchitect → Create ADR → CodingAgent (architecture approved)
+2. CodingAgent → Implement core components → TestGeneratorAgent (code ready)
+3. TestGeneratorAgent → Generate tests → CodingAgent (tests available)
+4. ToolsmithAgent → Implement tools (parallel) → CodingAgent (tools ready)
+5. QualityEnforcer → Validate compliance → CodingAgent (fixes if needed)
+6. CodingAgent → Final integration → All agents (complete)
 ```
 
 ---
@@ -457,7 +457,7 @@ class ProjectOutcome(BaseModel):
 
 #### Phase 3.1: Foundation & Data Models (Days 1-2)
 **Duration**: 2 days
-**Agents**: ChiefArchitect, AgencyCodeAgent
+**Agents**: ChiefArchitect, CodingAgent
 **Deliverables**:
 - [ ] ADR-017 created and approved
 - [ ] All Pydantic models implemented (models/project.py, models/qa_session.py)
@@ -467,14 +467,14 @@ class ProjectOutcome(BaseModel):
 
 **Tasks**:
 1. TASK-3.1.1: ChiefArchitect creates ADR-017 (Phase 3 architecture) - 4 hours
-2. TASK-3.1.2: AgencyCodeAgent implements Project Pydantic models - 3 hours
-3. TASK-3.1.3: AgencyCodeAgent implements QASession models - 2 hours
-4. TASK-3.1.4: AgencyCodeAgent implements ProjectState manager with Firestore - 4 hours
+2. TASK-3.1.2: CodingAgent implements Project Pydantic models - 3 hours
+3. TASK-3.1.3: CodingAgent implements QASession models - 2 hours
+4. TASK-3.1.4: CodingAgent implements ProjectState manager with Firestore - 4 hours
 5. TASK-3.1.5: TestGeneratorAgent creates model unit tests - 3 hours
 
 #### Phase 3.2: Project Initialization (Days 3-5)
 **Duration**: 3 days
-**Agents**: AgencyCodeAgent, TestGeneratorAgent
+**Agents**: CodingAgent, TestGeneratorAgent
 **Deliverables**:
 - [ ] ProjectInitializer implemented (Q&A orchestration)
 - [ ] SpecFromConversation implemented (spec generation)
@@ -483,16 +483,16 @@ class ProjectOutcome(BaseModel):
 - [ ] Unit tests (40 tests) and integration tests (15 tests)
 
 **Tasks**:
-1. TASK-3.2.1: AgencyCodeAgent implements ProjectInitializer core - 6 hours
-2. TASK-3.2.2: AgencyCodeAgent implements Q&A generation logic - 4 hours
-3. TASK-3.2.3: AgencyCodeAgent implements SpecFromConversation - 5 hours
-4. TASK-3.2.4: AgencyCodeAgent implements PlanGenerator - 5 hours
-5. TASK-3.2.5: AgencyCodeAgent integrates with HumanReviewQueue - 3 hours
+1. TASK-3.2.1: CodingAgent implements ProjectInitializer core - 6 hours
+2. TASK-3.2.2: CodingAgent implements Q&A generation logic - 4 hours
+3. TASK-3.2.3: CodingAgent implements SpecFromConversation - 5 hours
+4. TASK-3.2.4: CodingAgent implements PlanGenerator - 5 hours
+5. TASK-3.2.5: CodingAgent integrates with HumanReviewQueue - 3 hours
 6. TASK-3.2.6: TestGeneratorAgent creates initialization tests - 6 hours
 
 #### Phase 3.3: Daily Check-in System (Days 6-8)
 **Duration**: 3 days
-**Agents**: AgencyCodeAgent, TestGeneratorAgent
+**Agents**: CodingAgent, TestGeneratorAgent
 **Deliverables**:
 - [ ] DailyCheckin coordinator implemented
 - [ ] Question generation based on project phase
@@ -501,16 +501,16 @@ class ProjectOutcome(BaseModel):
 - [ ] Unit tests (25 tests) and integration tests (15 tests)
 
 **Tasks**:
-1. TASK-3.3.1: AgencyCodeAgent implements DailyCheckin coordinator - 5 hours
-2. TASK-3.3.2: AgencyCodeAgent implements check-in question generation - 4 hours
-3. TASK-3.3.3: AgencyCodeAgent integrates timing intelligence from Phase 2 - 3 hours
-4. TASK-3.3.4: AgencyCodeAgent implements response handling - 3 hours
-5. TASK-3.3.5: AgencyCodeAgent implements state updates from responses - 3 hours
+1. TASK-3.3.1: CodingAgent implements DailyCheckin coordinator - 5 hours
+2. TASK-3.3.2: CodingAgent implements check-in question generation - 4 hours
+3. TASK-3.3.3: CodingAgent integrates timing intelligence from Phase 2 - 3 hours
+4. TASK-3.3.4: CodingAgent implements response handling - 3 hours
+5. TASK-3.3.5: CodingAgent implements state updates from responses - 3 hours
 6. TASK-3.3.6: TestGeneratorAgent creates check-in tests - 5 hours
 
 #### Phase 3.4: Project Executor (Days 9-11)
 **Duration**: 3 days
-**Agents**: AgencyCodeAgent, ToolsmithAgent, TestGeneratorAgent
+**Agents**: CodingAgent, ToolsmithAgent, TestGeneratorAgent
 **Deliverables**:
 - [ ] ProjectExecutor orchestration implemented
 - [ ] Background task execution framework
@@ -519,16 +519,16 @@ class ProjectOutcome(BaseModel):
 - [ ] Unit tests (30 tests) and E2E tests (10 tests)
 
 **Tasks**:
-1. TASK-3.4.1: AgencyCodeAgent implements ProjectExecutor core - 6 hours
-2. TASK-3.4.2: AgencyCodeAgent implements background task framework - 5 hours
-3. TASK-3.4.3: AgencyCodeAgent implements completion detection - 3 hours
+1. TASK-3.4.1: CodingAgent implements ProjectExecutor core - 6 hours
+2. TASK-3.4.2: CodingAgent implements background task framework - 5 hours
+3. TASK-3.4.3: CodingAgent implements completion detection - 3 hours
 4. TASK-3.4.4: ToolsmithAgent implements web research tool - 4 hours
 5. TASK-3.4.5: ToolsmithAgent implements document generator - 5 hours
 6. TASK-3.4.6: TestGeneratorAgent creates executor and E2E tests - 8 hours
 
 #### Phase 3.5: Integration & Validation (Days 12-14)
 **Duration**: 3 days
-**Agents**: AgencyCodeAgent, QualityEnforcer, TestGeneratorAgent
+**Agents**: CodingAgent, QualityEnforcer, TestGeneratorAgent
 **Deliverables**:
 - [ ] End-to-end integration with Phase 1-2 systems
 - [ ] Full regression testing (Phase 1-2 tests still pass)
@@ -537,12 +537,12 @@ class ProjectOutcome(BaseModel):
 - [ ] Documentation (PHASE_3_IMPLEMENTATION_SUMMARY.md)
 
 **Tasks**:
-1. TASK-3.5.1: AgencyCodeAgent integrates with WITNESS/ARCHITECT - 4 hours
-2. TASK-3.5.2: AgencyCodeAgent creates demo script - 3 hours
+1. TASK-3.5.1: CodingAgent integrates with WITNESS/ARCHITECT - 4 hours
+2. TASK-3.5.2: CodingAgent creates demo script - 3 hours
 3. TASK-3.5.3: TestGeneratorAgent runs full regression tests - 2 hours
 4. TASK-3.5.4: QualityEnforcer validates constitutional compliance - 2 hours
-5. TASK-3.5.5: AgencyCodeAgent creates implementation summary - 3 hours
-6. TASK-3.5.6: AgencyCodeAgent fixes any issues found - 4 hours
+5. TASK-3.5.5: CodingAgent creates implementation summary - 3 hours
+6. TASK-3.5.6: CodingAgent fixes any issues found - 4 hours
 
 ### File Structure Plan
 ```

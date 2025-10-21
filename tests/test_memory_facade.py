@@ -240,7 +240,8 @@ class TestSingleton:
 
         # Wait for all threads to complete
         for thread in threads:
-            thread.join()
+            thread.join(timeout=5)
+            assert not thread.is_alive(), "Thread did not complete within timeout"
 
         # All instances should be the same
         assert all(inst is instances[0] for inst in instances)

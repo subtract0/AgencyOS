@@ -330,7 +330,8 @@ def test_read_concurrent_access(tmp_path: Path):
     for t in threads:
         t.start()
     for t in threads:
-        t.join()
+        t.join(timeout=5)
+        assert not t.is_alive(), "Thread did not complete within timeout"
 
     # All should succeed
     assert len(errors) == 0

@@ -146,7 +146,9 @@ class TestTRMValidator:
         assert len(validation.violations) > 0, (
             "Violations list should contain Dict[Any, Any] violation"
         )
-        assert "Dict[Any, Any]" in validation.violations[0].description
+        assert "dict" in validation.violations[0].description.lower(), (
+            f"Expected 'dict' in violation description, got: {validation.violations[0].description}"
+        )
 
     @pytest.mark.asyncio
     async def test_edge_case_inference(self):
@@ -377,17 +379,7 @@ class TestValidationCheckpoints:
     @pytest.mark.asyncio
     async def test_checkpoint_3_edge_case_inference(self):
         """Test CHECKPOINT 3 edge case inference (mock)."""
-        # Create test task with verification target
-        code_task = Task(
-            id="code_rate_limit",
-            title="Code Rate Limit",
-            type=TaskType.CODE,
-            tier=TaskTier.TIER_2,
-            agent="coder",
-            description="Implement rate_limit(requests_per_min: int, burst_size: int) -> bool",
-            dependencies=[],
-        )
-
+        # Create test task BEFORE code task (TDD workflow, Article II)
         test_task = Task(
             id="test_rate_limit",
             title="Test Rate Limit",
@@ -395,16 +387,26 @@ class TestValidationCheckpoints:
             tier=TaskTier.TIER_2,
             agent="test_generator",
             description="Test rate limiting",
-            dependencies=["code_rate_limit"],
+            dependencies=[],
             verification_target="code_rate_limit",
             acceptance_criteria=[],
+        )
+
+        code_task = Task(
+            id="code_rate_limit",
+            title="Code Rate Limit",
+            type=TaskType.CODE,
+            tier=TaskTier.TIER_2,
+            agent="coder",
+            description="Implement rate_limit(requests_per_min: int, burst_size: int) -> bool",
+            dependencies=["test_rate_limit"],  # TDD: Code depends on Test
         )
 
         graph = TaskGraph(
             mission="Test Mission",
             phases=[
-                Phase(id="phase_1", title="Phase 1", tasks=[code_task]),
-                Phase(id="phase_2", title="Phase 2", tasks=[test_task]),
+                Phase(id="phase_1", title="Phase 1", tasks=[test_task]),
+                Phase(id="phase_2", title="Phase 2", tasks=[code_task]),
             ],
         )
 

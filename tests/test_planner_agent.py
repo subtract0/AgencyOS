@@ -9,7 +9,7 @@ import pytest
 from agency_swarm import Agency
 from dotenv import load_dotenv
 
-from agency_code_agent.agency_code_agent import create_agency_code_agent
+from coding_agent.coding_agent import create_coding_agent
 from planner_agent.planner_agent import create_planner_agent
 
 # Load environment variables
@@ -33,7 +33,7 @@ def cleanup_fib():
 def planner_agency():
     """Create agency with planner agent entry point for testing"""
     planner = create_planner_agent(model="gpt-5-mini", reasoning_effort="low")
-    coder = create_agency_code_agent(model="gpt-5-mini", reasoning_effort="low")
+    coder = create_coding_agent(model="gpt-5-mini", reasoning_effort="low")
 
     # Set up handoffs
     planner.handoffs = [coder]
@@ -227,7 +227,7 @@ async def test_planner_asks_about_incomplete_requirements(planner_agency):
 
 
 @ci_skip
-@pytest.mark.timeout(30)  # 30 second timeout for API calls
+@pytest.mark.timeout(90)  # 90 second timeout for API calls (increased for LLM API variability)
 @pytest.mark.asyncio
 async def test_planner_comprehensive_question_behavior(planner_agency, ambiguous_queries):
     """Test planner's question-asking behavior across multiple ambiguous queries"""

@@ -3,7 +3,7 @@ Trinity Protocol Core - Production-Ready Modules
 
 All modules in this directory meet production criteria:
 - 100% test coverage
-- Strict Pydantic typing (no Dict[Any, Any])
+- Strict Pydantic typing (no untyped dicts)
 - Constitutional compliance (all 5 articles)
 - Result<T,E> error handling
 - Functions <50 lines

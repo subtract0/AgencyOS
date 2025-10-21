@@ -786,13 +786,13 @@ class PreferenceLearner:
             else response.question_type.value
         )
 
-        # Async publish (fire and forget)
+        # Async publish (fire and forget with proper exception handling)
         import asyncio
 
-        try:
-            loop = asyncio.get_event_loop()
-            loop.create_task(
-                self.message_bus.publish(
+        async def _safe_publish() -> None:
+            """Wrapper to catch and suppress exceptions from background publish."""
+            try:
+                await self.message_bus.publish(
                     "telemetry_stream",
                     {
                         "event_type": f"response_{response_type_str.lower()}",
@@ -803,7 +803,16 @@ class PreferenceLearner:
                         "timestamp": response.timestamp.isoformat(),
                     },
                 )
-            )
+            except RuntimeError:
+                # Message bus closed or not initialized - skip telemetry silently
+                pass
+            except Exception:
+                # Any other exception - skip telemetry silently (fire-and-forget pattern)
+                pass
+
+        try:
+            loop = asyncio.get_event_loop()
+            loop.create_task(_safe_publish())
         except RuntimeError:
             # No event loop - skip telemetry
             pass

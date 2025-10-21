@@ -629,7 +629,7 @@
 ### Coverage by Agent
 | Agent | Functions | Test Coverage | Status |
 |-------|-----------|---------------|--------|
-| **AgencyCodeAgent** | 45 | ⚠️ PARTIAL | Some gaps |
+| **CodingAgent** | 45 | ⚠️ PARTIAL | Some gaps |
 | **PlannerAgent** | 32 | ⚠️ PARTIAL | Some gaps |
 | **AuditorAgent** | 28 | ✅ FULL | Well-tested |
 | **QualityEnforcerAgent** | 35 | ✅ FULL | Well-tested |

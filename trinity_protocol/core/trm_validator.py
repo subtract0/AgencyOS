@@ -3,7 +3,7 @@ TRM-7M Recursive Reasoning Validator for AgencyOS
 
 Provides ultra-fast, zero-cost validation across 4 critical checkpoints:
 1. DAG validation (circular dependency detection)
-2. Type constraint validation (Dict[Any, Any] elimination)
+2. Type constraint validation (untyped dict elimination)
 3. Edge case inference (boundary condition discovery)
 4. Lint/format pre-validation (trivial error elimination)
 
@@ -44,7 +44,7 @@ class ProblemType(str, Enum):
     """TRM-7M supported problem types for AgencyOS validation."""
 
     DEPENDENCY_GRAPH = "dependency_graph"  # DAG circular dependency detection
-    TYPE_CONSTRAINTS = "type_constraints"  # Dict[Any, Any] violation detection
+    TYPE_CONSTRAINTS = "type_constraints"  # Untyped dict violation detection
     EDGE_CASE_INFERENCE = "edge_case_inference"  # Boundary condition discovery
     LINT_VALIDATION = "lint_validation"  # Format/style pre-validation
 
@@ -92,7 +92,7 @@ class Violation(BaseModel):
     line: int = Field(..., description="Line number where violation occurs")
     description: str = Field(..., description="Human-readable violation description")
     suggested_fix: str = Field(
-        ..., description="Suggested fix (e.g., 'Use Pydantic model instead of Dict[Any, Any]')"
+        ..., description="Suggested fix (e.g., 'Use Pydantic model instead of untyped dict')"
     )
 
 
@@ -156,7 +156,7 @@ class TRMValidator:
 
     Provides 4 validation checkpoints:
     1. DAG validation (10-100x faster than Python DFS)
-    2. Type constraint validation (catch Dict[Any, Any] before tests)
+    2. Type constraint validation (catch untyped dicts before tests)
     3. Edge case inference (auto-discover missing boundaries)
     4. Lint/format pre-validation (eliminate trivial CI failures)
 
@@ -368,13 +368,13 @@ class TRMValidator:
         )
 
     async def _validate_type_constraints(self, task: ReasoningTask) -> ValidationResult:
-        """Validate type constraints (detect Dict[Any, Any] violations).
+        """Validate type constraints (detect untyped dict violations).
 
         Args:
             task: ReasoningTask with type constraint grid
 
         Returns:
-            ValidationResult with violations list if any Dict[Any, Any] found
+            ValidationResult with violations list if any untyped dicts found
         """
         violations: list[Violation] = []
 
@@ -415,7 +415,7 @@ class TRMValidator:
                 violations.append(
                     Violation(
                         line=i + 1,
-                        description="Dict[Any, Any] violation detected",
+                        description="Untyped dict violation detected",
                         suggested_fix="Replace with Pydantic model with typed fields",
                     )
                 )

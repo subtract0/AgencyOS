@@ -213,7 +213,7 @@ TASK_TO_AGENT_MAP = {
 
 ### Phase 1: Single-Agent Smoke Test ✅
 ```
-Agent: AgencyCodeAgent
+Agent: CodingAgent
 Model: qwen2.5-coder:32b (LOCAL tier)
 Time: 97.31s (includes model loading)
 Memory: 277.52 MB (0.6% of 48GB)

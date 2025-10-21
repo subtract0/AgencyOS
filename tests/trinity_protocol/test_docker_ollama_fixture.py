@@ -27,6 +27,7 @@ class TestDockerOllamaFixture:
         # This test will be skipped if the fixture is properly checking the env var
         # We can't directly test the skip here, but the fixture itself handles it
 
+    @pytest.mark.integration
     @pytest.mark.skipif(
         os.getenv("SKIP_OLLAMA_TESTS") == "1", reason="Skipping Docker Ollama tests"
     )
@@ -37,6 +38,7 @@ class TestDockerOllamaFixture:
         assert isinstance(docker_ollama, str)
         assert docker_ollama.startswith("http://")
 
+    @pytest.mark.integration
     @pytest.mark.skipif(
         os.getenv("SKIP_OLLAMA_TESTS") == "1", reason="Skipping Docker Ollama tests"
     )
@@ -53,6 +55,7 @@ class TestDockerOllamaFixture:
         data = response.json()
         assert "models" in data  # Ollama API response structure
 
+    @pytest.mark.integration
     @pytest.mark.skipif(
         os.getenv("SKIP_OLLAMA_TESTS") == "1", reason="Skipping Docker Ollama tests"
     )
@@ -67,6 +70,7 @@ class TestDockerOllamaFixture:
         # Assert - Service is reachable
         assert response.status_code in [200, 404]  # 404 is ok (root endpoint)
 
+    @pytest.mark.integration
     @pytest.mark.skipif(
         os.getenv("SKIP_OLLAMA_TESTS") == "1", reason="Skipping Docker Ollama tests"
     )

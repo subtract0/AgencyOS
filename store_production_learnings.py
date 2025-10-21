@@ -199,7 +199,7 @@ Anti-pattern: Don't add tracking code to each agent. That's 10x the work and eas
         },
         {
             "key": "dict_any_any_constitutional_violation",
-            "content": """Dict[Any, Any] Constitutional Audit Results: Comprehensive grep audit found ZERO Dict[Any, Any] violations in production code.
+            "content": """Untyped Dict Constitutional Audit Results: Comprehensive grep audit found ZERO untyped dict violations in production code.
 
 Found 69 Dict[str, Any] violations concentrated in trinity_protocol module (experimental code).
 

@@ -5,7 +5,7 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "agency"
 version = "1.0.0"
-description = "Agency Code Agency - Multi-Agent Development System"
+description = "AgencyOS Agency - Multi-Agent Development System"
 readme = "README.md"
 requires-python = ">=3.11"
 authors = [
@@ -273,7 +273,7 @@ known-first-party = [
     "core",
     "dspy_agents",
     "meta_learning",
-    "agency_code_agent",
+    "coding_agent",
     "planner_agent",
     "auditor_agent",
     "quality_enforcer_agent",
@@ -317,3 +317,4 @@ exclude_lines = [
 ]
 [tool.poetry.dependencies]
 pydantic = "^2.11.9"
+aiofiles = "^25.1.0"

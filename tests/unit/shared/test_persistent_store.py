@@ -376,7 +376,8 @@ class TestConcurrency:
         for t in threads:
             t.start()
         for t in threads:
-            t.join()
+            t.join(timeout=5)
+            assert not t.is_alive(), "Thread did not complete within timeout"
 
         # Verify all entries written
         result = store.list_keys()
@@ -408,8 +409,10 @@ class TestConcurrency:
         read_thread.start()
         write_thread.start()
 
-        read_thread.join()
-        write_thread.join()
+        read_thread.join(timeout=5)
+        assert not read_thread.is_alive(), "Thread did not complete within timeout"
+        write_thread.join(timeout=5)
+        assert not write_thread.is_alive(), "Thread did not complete within timeout"
 
         # No exceptions = success
         store.close()

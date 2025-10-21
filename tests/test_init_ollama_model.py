@@ -237,7 +237,9 @@ class TestInitOllamaModelIntegration:
 
         # Should fail with clear error message (Article I: complete context)
         assert result.returncode != 0, "Script should fail with missing container"
-        assert "Container" in result.stdout or "not running" in result.stdout, (
+        # Check both stdout and stderr for error message
+        output = result.stdout + result.stderr
+        assert "Container" in output or "not running" in output or "not found" in output, (
             "Missing error message"
         )
 

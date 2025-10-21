@@ -20,7 +20,7 @@ Constitutional compliance:
 - Law #5: Result pattern for error handling
 
 Reference: specs/spec-009-misclassification-detection.md Section 5.3
-Author: AgencyCodeAgent
+Author: CodingAgent
 Date: 2025-10-10
 """
 

@@ -25,6 +25,8 @@ from tools.ollama_health_check import check_ollama_health
 class TestExecutionConfig(BaseModel):
     """Configuration for memory-aware test execution."""
 
+    __test__ = False  # Tell pytest this is not a test class
+
     worker_count: int = Field(ge=1, le=10)
     memory_budget_gb: int = Field(ge=0)
     local_model_active: bool
@@ -50,7 +52,17 @@ def check_ollama_running() -> bool:
     """
     # Method 1: Comprehensive health check (detects Docker + native)
     try:
-        result = asyncio.run(check_ollama_health(timeout=5, max_retries=1))
+        # Run with timeout to prevent hanging
+        async def _check_with_timeout():
+            try:
+                return await asyncio.wait_for(
+                    check_ollama_health(timeout=2, max_retries=1),
+                    timeout=5.0,  # Overall timeout for health check
+                )
+            except TimeoutError:
+                return Err("Health check timeout")
+
+        result = asyncio.run(_check_with_timeout())
 
         if isinstance(result, Ok):
             return result.value.is_running

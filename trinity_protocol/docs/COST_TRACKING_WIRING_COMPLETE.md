@@ -10,7 +10,7 @@ Successfully wired CostTracker to capture real LLM API costs across all Agency a
 
 All agent factories now accept and propagate `cost_tracker`:
 
-1. **AgencyCodeAgent** (`agency_code_agent/agency_code_agent.py`) ✅
+1. **CodingAgent** (`coding_agent/coding_agent.py`) ✅
    - Factory parameter: `cost_tracker = None`
    - Stores in `agent_context.cost_tracker`
    - Logs tracking status in memory
@@ -52,7 +52,7 @@ All agent factories now accept and propagate `cost_tracker`:
 ```
 Total: 6 agents | Passed: 6 | Failed: 0
 
-✅ AgencyCodeAgent
+✅ CodingAgent
 ✅ TestGeneratorAgent
 ✅ ToolsmithAgent
 ✅ QualityEnforcerAgent
@@ -91,7 +91,7 @@ EXECUTOR (Trinity Protocol)
     │         └─── cost_tracker reference
     │
     └─── Sub-Agents (all receive cost_tracker)
-          ├─── AgencyCodeAgent
+          ├─── CodingAgent
           ├─── TestGeneratorAgent
           ├─── ToolsmithAgent
           ├─── QualityEnforcerAgent
@@ -135,7 +135,7 @@ if hasattr(agent_context, 'cost_tracker') and agent_context.cost_tracker:
 ```
 
 **Integration Points:**
-- AgencyCodeAgent: Main LLM loop
+- CodingAgent: Main LLM loop
 - TestGeneratorAgent: `GenerateTests.run()`
 - ToolsmithAgent: Tool scaffolding
 - QualityEnforcerAgent: Constitutional checks, quality analysis
@@ -159,7 +159,7 @@ Cost tracking is working correctly
 ## Files Modified
 
 ```
-agency_code_agent/agency_code_agent.py              (lines 44-91)
+coding_agent/coding_agent.py              (lines 44-91)
 test_generator_agent/test_generator_agent.py        (lines 556-601)
 toolsmith_agent/toolsmith_agent.py                  (lines 21-65)
 quality_enforcer_agent/quality_enforcer_agent.py    (lines 218-278)
@@ -235,7 +235,7 @@ Total Tokens: 1.2M (800K input, 400K output)
 Success Rate: 98.7%
 
 By Agent:
-  AgencyCodeAgent:        $5.23 (67 calls)
+  CodingAgent:        $5.23 (67 calls)
   TestGeneratorAgent:     $3.14 (32 calls)
   ToolsmithAgent:         $2.01 (18 calls)
   QualityEnforcerAgent:   $1.45 (25 calls)

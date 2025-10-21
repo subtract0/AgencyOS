@@ -60,6 +60,9 @@ import joblib
 import numpy as np
 import pytest
 
+# Mark all tests as slow (skip by default, run with --run-slow)
+pytestmark = pytest.mark.slow
+
 from shared.agent_context import AgentContext, create_agent_context
 from shared.models.ensemble_model import EnsembleModel
 from shared.models.prediction_log import PredictionLog

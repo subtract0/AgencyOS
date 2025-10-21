@@ -13,7 +13,14 @@ from .dashboard import (
     DashboardSummary,
     SessionSummary,
 )
-from .ensemble_model import EnsembleModel
+
+# Optional sklearn-dependent imports (Leap 5 ML routing)
+try:
+    from .ensemble_model import EnsembleModel
+except ImportError:
+    # sklearn not installed - ML routing features unavailable
+    EnsembleModel = None  # type: ignore
+
 from .extracted_metadata_features import ExtractedMetadataFeatures
 from .kanban import (
     CardStatus,
@@ -49,6 +56,26 @@ from .orchestrator import (
     FairnessType,
     OrchestrationResultModel,
     TaskResultModel,
+)
+from .orchestrator_models import (
+    BacklogQueue,
+    BacklogTask,
+    BranchInfo,
+    BypassAttempt,
+    FallbackError,
+    FallbackResult,
+    FallbackStrategy,
+    GitValidationError,
+    GitValidationResult,
+    LearningQuery,
+    PrimeAResult,
+    PRMetadata,
+    RetryConfig,
+    RetryPolicy,
+    SpecTrace,
+    TaskGraphExecution,
+    TaskStatus,
+    TestGateResult,
 )
 from .patterns import (
     ApplicationPriority,
@@ -165,6 +192,29 @@ __all__ = [
     "BackoffType",
     "FairnessType",
     "CancellationType",
+    # Fallback handling models (PHASE1-004)
+    "FallbackStrategy",
+    "FallbackResult",
+    "RetryPolicy",
+    "FallbackError",
+    # Constitutional validation models (PHASE1-002)
+    "RetryConfig",
+    "TestGateResult",
+    "BypassAttempt",
+    "LearningQuery",
+    "SpecTrace",
+    # PrimeA execution result models (PHASE1-005)
+    "PRMetadata",
+    "TaskGraphExecution",
+    "PrimeAResult",
+    # Backlog auto-selection models (PHASE1-001)
+    "TaskStatus",
+    "BacklogTask",
+    "BacklogQueue",
+    # Git validation models (PHASE1-003)
+    "BranchInfo",
+    "GitValidationResult",
+    "GitValidationError",
     # Kanban models
     "KanbanCard",
     "KanbanFeed",

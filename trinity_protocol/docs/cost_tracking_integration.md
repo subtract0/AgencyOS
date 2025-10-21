@@ -33,7 +33,7 @@ ModelTier.CLOUD_PREMIUM   # GPT-5, Claude Opus - $0.005/$0.015 per 1K tokens
 **Phase 1: Infrastructure Wiring** ✅ COMPLETE
 
 All agent factories now accept and store `cost_tracker`:
-- `create_agency_code_agent()` ✅
+- `create_coding_agent()` ✅
 - `create_test_generator_agent()` ✅
 - `create_toolsmith_agent()` ✅
 - `create_quality_enforcer_agent()` ✅
@@ -127,7 +127,7 @@ def determine_tier(model_name: str) -> ModelTier:
 
 ### Integration Points by Agent
 
-#### 1. AgencyCodeAgent
+#### 1. CodingAgent
 **Files to modify:**
 - Main LLM calls in agent execution loop
 - Tool invocations that use LLM
@@ -318,4 +318,4 @@ This work supports:
 
 - CostTracker implementation: `/Users/am/Code/Agency/trinity_protocol/cost_tracker.py`
 - EXECUTOR integration: `/Users/am/Code/Agency/trinity_protocol/executor_agent.py`
-- Agent factories: `agency_code_agent/`, `test_generator_agent/`, etc.
+- Agent factories: `coding_agent/`, `test_generator_agent/`, etc.

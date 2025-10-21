@@ -17,6 +17,7 @@ Date: 2025-10-10
 
 import json
 import os
+import threading
 import time
 from pathlib import Path
 from typing import Optional
@@ -137,6 +138,9 @@ class ModelStorage:
         ...     predictions = model.ensemble.predict(X_test)
     """
 
+    # Class-level lock for thread-safe symlink updates
+    _symlink_lock = threading.Lock()
+
     def __init__(self, base_dir: Path | None = None):
         """
         Initialize ModelStorage with base directory.
@@ -230,11 +234,12 @@ class ModelStorage:
             except Exception as e:
                 return Err(f"Failed to save metadata: {e}")
 
-            # Step 5: Update symlink
-            latest_link = self.base_dir / "routing_classifier_latest.pkl"
-            if latest_link.exists() or latest_link.is_symlink():
-                latest_link.unlink()
-            latest_link.symlink_to(model_path.name)
+            # Step 5: Update symlink (thread-safe)
+            with self._symlink_lock:
+                latest_link = self.base_dir / "routing_classifier_latest.pkl"
+                if latest_link.exists() or latest_link.is_symlink():
+                    latest_link.unlink()
+                latest_link.symlink_to(model_path.name)
 
             # Step 6: Set permissions (0600)
             os.chmod(model_path, 0o600)

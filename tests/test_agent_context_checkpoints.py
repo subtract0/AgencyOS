@@ -116,7 +116,8 @@ class TestAgentContextCheckpointCreation:
         for t in threads:
             t.start()
         for t in threads:
-            t.join()
+            t.join(timeout=5)
+            assert not t.is_alive(), "Thread did not complete within timeout"
 
         # Assert
         assert len(errors) == 0, f"Thread safety errors: {errors}"
@@ -232,7 +233,8 @@ class TestAgentContextCheckpointRestoration:
         for t in threads:
             t.start()
         for t in threads:
-            t.join()
+            t.join(timeout=5)
+            assert not t.is_alive(), "Thread did not complete within timeout"
 
         # Assert
         assert len(errors) == 0, f"Thread safety errors: {errors}"

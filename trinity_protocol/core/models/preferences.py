@@ -6,7 +6,7 @@ Tracks Alex's response patterns to optimize proactive assistance.
 Philosophy: Learn what Alex actually finds helpful, not what we think he should.
 
 Constitutional Compliance:
-- Article II: Strict typing with Pydantic (no Dict[Any, Any])
+- Article II: Strict typing with Pydantic (no untyped dicts)
 - Article IV: Continuous learning from all interactions
 - Privacy: Secure storage of personal preferences
 """

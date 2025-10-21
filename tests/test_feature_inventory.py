@@ -576,7 +576,7 @@ def test_process_data():
         output = captured.out
 
         # Check that output contains expected elements
-        assert "🔍 Agency Code Feature Inventory" in output
+        assert "🔍 AgencyOS Feature Inventory" in output
         assert "📊 Summary:" in output
         assert "Features documented:" in output
         assert "Test files referenced:" in output

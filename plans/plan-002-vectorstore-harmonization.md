@@ -28,7 +28,7 @@ Add a minimal `search` API and backward-compatible stats to `VectorStore`; ensur
 
 ## Agent Assignments
 
-### Primary Agent: AgencyCodeAgent
+### Primary Agent: CodingAgent
 - Tasks:
   - Implement VectorStore changes
   - Adjust StoreKnowledge

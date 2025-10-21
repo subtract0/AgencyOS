@@ -213,7 +213,7 @@ class TrinityCompleteDemo:
                 "keywords": ["NoneType", "critical", "payment"],
             },
             {
-                "message": "Dict[Any, Any] detected in user model - constitutional violation",
+                "message": "Untyped dict detected in user model - constitutional violation",
                 "file": "models/user.py",
                 "severity": "high",
                 "keywords": ["type_safety", "constitution", "violation"],
@@ -323,7 +323,7 @@ async def demo_architect():
     await message_bus.publish(
         "telemetry_stream",
         {
-            "message": "Dict[Any, Any] usage detected in core models - violates Article II type safety",
+            "message": "Untyped dict usage detected in core models - violates Article II type safety",
             "file": "models/user.py",
             "severity": "critical",
             "keywords": ["architecture", "constitutional_violation"],

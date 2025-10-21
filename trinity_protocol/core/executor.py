@@ -31,7 +31,7 @@ from pathlib import Path
 from typing import Any
 
 # Import Agency sub-agent factories
-from agency_code_agent import create_agency_code_agent
+from coding_agent import create_coding_agent
 from merger_agent import create_merger_agent
 from quality_enforcer_agent import create_quality_enforcer_agent
 from shared.agent_context import AgentContext
@@ -157,7 +157,7 @@ class ExecutorAgent:
     def _initialize_sub_agents(self) -> dict[SubAgentType, Any]:
         """Initialize all sub-agents with cost tracking."""
         return {
-            SubAgentType.CODE_WRITER: create_agency_code_agent(
+            SubAgentType.CODE_WRITER: create_coding_agent(
                 model=agent_model("coder"),
                 agent_context=self.agent_context,
                 cost_tracker=self.cost_tracker,

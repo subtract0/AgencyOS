@@ -20,23 +20,26 @@ from pydantic import BaseModel, Field
 
 class FailureType(str, Enum):
     """Test failure categories."""
-    BLOCKER = "blocker"          # Segfault, hang, import error
-    ASSERTION = "assertion"       # Test logic failure (assert statement)
-    TIMEOUT = "timeout"           # Test execution timeout
-    SKIP = "skip"                 # Conditional skip (not a failure)
+
+    BLOCKER = "blocker"  # Segfault, hang, import error
+    ASSERTION = "assertion"  # Test logic failure (assert statement)
+    TIMEOUT = "timeout"  # Test execution timeout
+    SKIP = "skip"  # Conditional skip (not a failure)
 
 
 class FixComplexity(str, Enum):
     """Fix complexity classification."""
-    TRIVIAL = "trivial"          # Pure deletion, <5 lines, confidence ≥0.95
-    SIMPLE = "simple"            # Single function edit, unit test validation, ≥0.80
-    MODERATE = "moderate"        # Multi-function changes, integration tests, ≥0.60
-    COMPLEX = "complex"          # Architectural changes, manual fix required, <0.60
+
+    TRIVIAL = "trivial"  # Pure deletion, <5 lines, confidence ≥0.95
+    SIMPLE = "simple"  # Single function edit, unit test validation, ≥0.80
+    MODERATE = "moderate"  # Multi-function changes, integration tests, ≥0.60
+    COMPLEX = "complex"  # Architectural changes, manual fix required, <0.60
 
 
 @dataclass
 class FailurePattern:
     """Pattern matched from VectorStore for proven fixes."""
+
     pattern_id: str
     description: str
     confidence: float
@@ -46,7 +49,10 @@ class FailurePattern:
 
 class TestFailure(BaseModel):
     """Individual test failure record."""
-    test_id: str = Field(..., description="Fully qualified test name (e.g., tests/test_foo.py::test_bar)")
+
+    test_id: str = Field(
+        ..., description="Fully qualified test name (e.g., tests/test_foo.py::test_bar)"
+    )
     failure_type: FailureType
     error_message: str = Field(..., description="Error message or assertion output")
     traceback: str = Field(default="", description="Full traceback (if available)")
@@ -57,16 +63,23 @@ class TestFailure(BaseModel):
     fix_complexity: FixComplexity | None = None
     auto_fixable: bool = False
     confidence: float = Field(default=0.0, ge=0.0, le=1.0)
-    risk_score: float = Field(default=0.5, ge=0.0, le=1.0, description="Risk of regression (0=safe, 1=high risk)")
+    risk_score: float = Field(
+        default=0.5, ge=0.0, le=1.0, description="Risk of regression (0=safe, 1=high risk)"
+    )
 
     # Fix strategy
     fix_strategy: str = ""
-    matched_patterns: list[str] = Field(default_factory=list, description="VectorStore pattern IDs matched")
-    estimated_effort_hours: float = Field(default=0.5, ge=0.1, description="Estimated fix time in hours")
+    matched_patterns: list[str] = Field(
+        default_factory=list, description="VectorStore pattern IDs matched"
+    )
+    estimated_effort_hours: float = Field(
+        default=0.5, ge=0.1, description="Estimated fix time in hours"
+    )
 
 
 class TestFailureCatalog(BaseModel):
     """Complete test failure catalog with classification."""
+
     total_tests: int = Field(..., description="Total test count")
     passed: int
     failed: int
@@ -80,7 +93,9 @@ class TestFailureCatalog(BaseModel):
     assertions: list[str] = Field(default_factory=list, description="Assertion failure test IDs")
 
     # Priority ranking
-    priority_ranking: dict[str, int] = Field(default_factory=dict, description="test_id -> priority (1=highest)")
+    priority_ranking: dict[str, int] = Field(
+        default_factory=dict, description="test_id -> priority (1=highest)"
+    )
     estimated_effort: dict[str, float] = Field(default_factory=dict, description="test_id -> hours")
 
     # Execution metadata
@@ -113,21 +128,21 @@ class TestFailureClassifier:
                 description="Environment variable pollution between tests",
                 confidence=0.85,
                 evidence_count=5,
-                fix_strategy="Add cleanup fixtures: @pytest.fixture(autouse=True) to reset env vars"
+                fix_strategy="Add cleanup fixtures: @pytest.fixture(autouse=True) to reset env vars",
             ),
             FailurePattern(
                 pattern_id="pattern_3_2_schema_mismatch",
                 description="Pydantic model validation failures",
                 confidence=0.90,
                 evidence_count=8,
-                fix_strategy="Update Pydantic models with correct field types and validators"
+                fix_strategy="Update Pydantic models with correct field types and validators",
             ),
             FailurePattern(
                 pattern_id="pattern_fixture_isolation",
                 description="Test isolation failures (shared state)",
                 confidence=0.80,
                 evidence_count=6,
-                fix_strategy="Apply fixture-based isolation with proper scope (function/module)"
+                fix_strategy="Apply fixture-based isolation with proper scope (function/module)",
             ),
         ]
 
@@ -182,13 +197,33 @@ class TestFailureClassifier:
         for pattern in self.patterns:
             # Simple keyword matching (TODO: use embeddings for semantic search)
             keywords = {
-                "pattern_2_2_env_cleanup": ["environment", "env", "os.environ", "AGENCY_", "monkeypatch"],
-                "pattern_3_2_schema_mismatch": ["pydantic", "validation", "ValidationError", "field required"],
-                "pattern_fixture_isolation": ["fixture", "scope", "autouse", "teardown", "shared state"],
+                "pattern_2_2_env_cleanup": [
+                    "environment",
+                    "env",
+                    "os.environ",
+                    "AGENCY_",
+                    "monkeypatch",
+                ],
+                "pattern_3_2_schema_mismatch": [
+                    "pydantic",
+                    "validation",
+                    "ValidationError",
+                    "field required",
+                ],
+                "pattern_fixture_isolation": [
+                    "fixture",
+                    "scope",
+                    "autouse",
+                    "teardown",
+                    "shared state",
+                ],
             }
 
             pattern_keywords = keywords.get(pattern.pattern_id, [])
-            if any(kw.lower() in error_lower or kw.lower() in traceback_lower for kw in pattern_keywords):
+            if any(
+                kw.lower() in error_lower or kw.lower() in traceback_lower
+                for kw in pattern_keywords
+            ):
                 matched.append(pattern)
 
         return matched
@@ -215,7 +250,10 @@ class TestFailureClassifier:
         if failure.confidence >= 0.95 and failure.failure_type != FailureType.BLOCKER:
             # Trivial: High confidence, non-blocker (e.g., import error, simple assertion)
             # Check if fix is likely <5 lines
-            if "ImportError" in failure.error_message or "ModuleNotFoundError" in failure.error_message:
+            if (
+                "ImportError" in failure.error_message
+                or "ModuleNotFoundError" in failure.error_message
+            ):
                 return FixComplexity.TRIVIAL
 
         if failure.confidence >= 0.80 and failure.failure_type == FailureType.ASSERTION:
@@ -249,10 +287,10 @@ class TestFailureClassifier:
     def _estimate_effort(self, failure: TestFailure) -> float:
         """Estimate fix effort in hours."""
         effort_map = {
-            FixComplexity.TRIVIAL: 0.25,   # 15 minutes
-            FixComplexity.SIMPLE: 0.5,     # 30 minutes
-            FixComplexity.MODERATE: 2.0,   # 2 hours
-            FixComplexity.COMPLEX: 4.0,    # 4+ hours
+            FixComplexity.TRIVIAL: 0.25,  # 15 minutes
+            FixComplexity.SIMPLE: 0.5,  # 30 minutes
+            FixComplexity.MODERATE: 2.0,  # 2 hours
+            FixComplexity.COMPLEX: 4.0,  # 4+ hours
         }
 
         base_effort = effort_map.get(failure.fix_complexity, 1.0)
@@ -270,7 +308,10 @@ class TestFailureClassifier:
                 return "BLOCKER: Quarantine test with @pytest.mark.skip. Investigate segfault root cause (likely C extension issue)."
             if "timeout" in failure.error_message.lower():
                 return "BLOCKER: Test hangs. Add explicit timeout, check for infinite loops or deadlocks."
-            if "ImportError" in failure.error_message or "ModuleNotFoundError" in failure.error_message:
+            if (
+                "ImportError" in failure.error_message
+                or "ModuleNotFoundError" in failure.error_message
+            ):
                 return "BLOCKER: Missing dependency or import path issue. Check requirements.txt and PYTHONPATH."
 
         if failure.failure_type == FailureType.ASSERTION:
@@ -288,16 +329,10 @@ def parse_pytest_output(output_text: str) -> TestFailureCatalog:
     Returns:
         TestFailureCatalog with all failures parsed
     """
-    catalog = TestFailureCatalog(
-        total_tests=0,
-        passed=0,
-        failed=0,
-        errors=0,
-        skipped=0
-    )
+    catalog = TestFailureCatalog(total_tests=0, passed=0, failed=0, errors=0, skipped=0)
 
     # Extract summary line (e.g., "1234 passed, 12 failed, 5 errors, 10 skipped in 300.00s")
-    summary_pattern = r'(\d+)\s+passed(?:,\s+(\d+)\s+failed)?(?:,\s+(\d+)\s+error(?:s)?)?(?:,\s+(\d+)\s+skipped)?.*?in\s+([\d.]+)s'
+    summary_pattern = r"(\d+)\s+passed(?:,\s+(\d+)\s+failed)?(?:,\s+(\d+)\s+error(?:s)?)?(?:,\s+(\d+)\s+skipped)?.*?in\s+([\d.]+)s"
     summary_match = re.search(summary_pattern, output_text)
 
     if summary_match:
@@ -313,13 +348,13 @@ def parse_pytest_output(output_text: str) -> TestFailureCatalog:
         catalog.timeout_occurred = True
 
     # Parse individual failures (FAILED tests/...)
-    failure_pattern = r'FAILED\s+(tests/[^\s]+)\s+-\s+(.+?)(?=\nFAILED|\nERROR|\n=|$)'
+    failure_pattern = r"FAILED\s+(tests/[^\s]+)\s+-\s+(.+?)(?=\nFAILED|\nERROR|\n=|$)"
     for match in re.finditer(failure_pattern, output_text, re.DOTALL):
         test_id = match.group(1)
         error_message = match.group(2).strip()
 
         # Extract file path and line number
-        file_match = re.match(r'(tests/[^:]+)::(.+)', test_id)
+        file_match = re.match(r"(tests/[^:]+)::(.+)", test_id)
         if file_match:
             file_path = file_match.group(1)
         else:
@@ -329,18 +364,18 @@ def parse_pytest_output(output_text: str) -> TestFailureCatalog:
             test_id=test_id,
             failure_type=FailureType.ASSERTION,
             error_message=error_message[:500],  # Truncate long messages
-            file_path=file_path
+            file_path=file_path,
         )
         catalog.failures.append(failure)
         catalog.assertions.append(test_id)
 
     # Parse errors (ERROR tests/...)
-    error_pattern = r'ERROR\s+(tests/[^\s]+)\s+-\s+(.+?)(?=\nFAILED|\nERROR|\n=|$)'
+    error_pattern = r"ERROR\s+(tests/[^\s]+)\s+-\s+(.+?)(?=\nFAILED|\nERROR|\n=|$)"
     for match in re.finditer(error_pattern, output_text, re.DOTALL):
         test_id = match.group(1)
         error_message = match.group(2).strip()
 
-        file_match = re.match(r'(tests/[^:]+)::(.+)', test_id)
+        file_match = re.match(r"(tests/[^:]+)::(.+)", test_id)
         if file_match:
             file_path = file_match.group(1)
         else:
@@ -350,7 +385,7 @@ def parse_pytest_output(output_text: str) -> TestFailureCatalog:
             test_id=test_id,
             failure_type=FailureType.BLOCKER,  # Errors are blockers
             error_message=error_message[:500],
-            file_path=file_path
+            file_path=file_path,
         )
         catalog.failures.append(failure)
         catalog.blockers.append(test_id)
@@ -388,8 +423,8 @@ if __name__ == "__main__":
         catalog.failures,
         key=lambda f: (
             0 if f.failure_type == FailureType.BLOCKER else 1,  # Blockers first
-            -f.confidence  # High confidence first
-        )
+            -f.confidence,  # High confidence first
+        ),
     )
 
     for rank, failure in enumerate(sorted_failures, 1):
@@ -404,21 +439,27 @@ if __name__ == "__main__":
         json.dump(catalog.model_dump(), f, indent=2)
 
     print(f"✅ Test Failure Catalog created: {output_path}")
-    print(f"\n📊 Summary:")
+    print("\n📊 Summary:")
     print(f"  Total tests: {catalog.total_tests}")
     print(f"  Passed: {catalog.passed}")
     print(f"  Failed: {catalog.failed}")
     print(f"  Errors: {catalog.errors}")
     print(f"  Skipped: {catalog.skipped}")
-    print(f"\n🔍 Failures by complexity:")
+    print("\n🔍 Failures by complexity:")
 
     complexity_counts = {}
     for failure in catalog.failures:
         if failure.fix_complexity:
-            complexity_counts[failure.fix_complexity.value] = complexity_counts.get(failure.fix_complexity.value, 0) + 1
+            complexity_counts[failure.fix_complexity.value] = (
+                complexity_counts.get(failure.fix_complexity.value, 0) + 1
+            )
 
     for complexity, count in sorted(complexity_counts.items()):
-        auto_fixable_count = sum(1 for f in catalog.failures if f.fix_complexity and f.fix_complexity.value == complexity and f.auto_fixable)
+        auto_fixable_count = sum(
+            1
+            for f in catalog.failures
+            if f.fix_complexity and f.fix_complexity.value == complexity and f.auto_fixable
+        )
         print(f"  {complexity.capitalize()}: {count} ({auto_fixable_count} auto-fixable)")
 
     print(f"\n⏱️  Total estimated effort: {sum(catalog.estimated_effort.values()):.1f} hours")

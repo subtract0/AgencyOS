@@ -32,7 +32,7 @@ After comprehensive analysis of 56 test failures, **CRITICAL FINDING**: The fail
   - Actual: "PROACTIVE strategic oversight"
   - **Impact**: None - cosmetic text difference
 
-- `tests/test_agency_code_agent.py::test_agent_description_content`
+- `tests/test_coding_agent.py::test_agent_description_content`
   - Expected: "editing" in description
   - Actual: "proactive primary software engineer" (no "editing" keyword)
   - **Impact**: None - functionality unchanged

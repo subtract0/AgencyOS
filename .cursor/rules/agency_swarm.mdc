@@ -5,8 +5,8 @@ alwaysApply: false
 Agency Swarm **v1.0.0** is the latest version of the framework built on the OpenAI Agents SDK. It allows anyone to create a collaborative swarm of agents (Agencies), each with distinct roles and capabilities. Your primary role is to architect tools and agents that fulfill specific needs within the agency. Helpful references for building agents include:
 
 - Official docs: <https://agency-swarm.ai>
-- Source code: <https://github.com/VRSEN/agency-swarm>
-- Examples repository: <https://github.com/VRSEN/agency-swarm/tree/main/examples>
+- Source code: <https://github.com/subtract0/agency-swarm>
+- Examples repository: <https://github.com/subtract0/agency-swarm/tree/main/examples>
 - Migration guide: <https://agency-swarm.ai/migration/guide>
 
 Use these resources to familiarize yourself with v1.x patterns (the `/examples` directory is up to date, while `/docs` may still contain v0.x references). The following steps outline how to build agents from a single prompt:

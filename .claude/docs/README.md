@@ -372,7 +372,7 @@ Before submitting documentation:
 ### Agent Resources
 
 - **Tool Implementations**: `/tools/` (45 production tools)
-- **Agent Modules**: `/agency_code_agent/`, `/planner_agent/`, etc.
+- **Agent Modules**: `/coding_agent/`, `/planner_agent/`, etc.
 - **Shared Infrastructure**: `/shared/` (types, models, context)
 - **Memory System**: `/agency_memory/` (VectorStore, learning)
 

@@ -448,7 +448,7 @@ def validate_test_environment() -> Result[EnvironmentValidationResult, str]:
     # Check for hardcoded overrides in source code
     import subprocess
     grep_result = subprocess.run(
-        ["grep", "-r", "os.environ\\[.*MODEL.*\\] =", "tools/", "agency_code_agent/"],
+        ["grep", "-r", "os.environ\\[.*MODEL.*\\] =", "tools/", "coding_agent/"],
         capture_output=True,
         text=True
     )

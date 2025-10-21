@@ -815,7 +815,7 @@ def store_learnings_after_success(
 - **Commit Quality**: Conventional commits, clear messages
 - **Article IV Compliance**: 100% (query before, store after)
 
-## Real-World Examples from Agency Codebase
+## Real-World Examples from AgencyOSbase
 
 ### Example 1: Creating a Constitutional Validator Tool
 

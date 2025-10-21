@@ -5,7 +5,7 @@ Defines Pydantic models for project initialization, execution, and tracking.
 Supports conversational project creation with formal specification generation.
 
 Constitutional Compliance:
-- Article II: Strict typing with Pydantic (zero Dict[Any, Any])
+- Article II: Strict typing with Pydantic (zero untyped dicts)
 - Article V: Spec-driven development (formal specifications required)
 - Article I: Complete context before action (all required fields validated)
 - Privacy: User project data encrypted, full control over deletion

@@ -34,7 +34,7 @@ def test_intent_router_sets_route_flag():
     # on_start should set route_to_agent
     import asyncio
 
-    asyncio.get_event_loop().run_until_complete(hook.on_start(wrapper, agent=None))
+    asyncio.run(hook.on_start(wrapper, agent=None))
 
     assert wrapper.context.get("route_to_agent") == "WorkCompletionSummaryAgent"
 
@@ -59,7 +59,7 @@ def test_tool_wrapper_retries_on_failure():
 
     import asyncio
 
-    asyncio.get_event_loop().run_until_complete(hook.on_tool_start(wrapper, agent=None, tool=tool))
+    asyncio.run(hook.on_tool_start(wrapper, agent=None, tool=tool))
 
     # First call will be retried by wrapper, resulting in success
     result = tool.run()
@@ -87,9 +87,7 @@ def test_mutation_snapshot_hook_creates_snapshot(tmp_path, monkeypatch):
 
         import asyncio
 
-        asyncio.get_event_loop().run_until_complete(
-            hook.on_tool_start(wrapper, agent=None, tool=tool)
-        )
+        asyncio.run(hook.on_tool_start(wrapper, agent=None, tool=tool))
 
         # Verify a snapshot was created
         snaps_dir = repo_root / "logs" / "snapshots"

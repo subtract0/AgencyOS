@@ -15,7 +15,7 @@ audit:
   # Target directories for audit scanning
   # Covers all agent modules, core infrastructure, and governance files
   targets:
-    - "agency_code_agent/"
+    - "coding_agent/"
     - "planner_agent/"
     - "auditor_agent/"
     - "quality_enforcer_agent/"

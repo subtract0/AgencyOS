@@ -288,7 +288,7 @@ shared_context.cost_tracker = shared_cost_tracker
 
 **All 10 agents automatically tracked:**
 1. Planner
-2. Coder (AgencyCodeAgent)
+2. Coder (CodingAgent)
 3. Auditor
 4. TestGenerator
 5. LearningAgent

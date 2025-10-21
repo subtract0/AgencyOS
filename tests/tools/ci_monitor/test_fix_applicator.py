@@ -213,7 +213,7 @@ class FixApplicator:
                 cwd=str(self.worktree_path),
                 capture_output=True,
                 text=True,
-                timeout=5,
+                timeout=10,
             )
             diff = diff_result.stdout
         except Exception as exc:
@@ -283,7 +283,7 @@ class FixApplicator:
                 cwd=str(self.worktree_path),
                 capture_output=True,
                 text=True,
-                timeout=5,
+                timeout=10,
             )
             if result.returncode != 0:
                 return Err(
@@ -357,7 +357,7 @@ class FixApplicator:
                 cwd=str(self.worktree_path),
                 capture_output=True,
                 text=True,
-                timeout=5,
+                timeout=10,
             )
             if result.returncode != 0:
                 return Err(
@@ -462,7 +462,7 @@ class FixApplicator:
             result = subprocess.run(
                 ["git", "config", "user.name"],
                 capture_output=True,
-                timeout=5,
+                timeout=10,
             )
             return result.returncode == 0
         except Exception:
@@ -525,16 +525,18 @@ def temp_worktree(tmp_path):
     worktree_path.mkdir(parents=True)
 
     # Initialize git repo
-    subprocess.run(["git", "init"], cwd=str(worktree_path), check=True)
+    subprocess.run(["git", "init"], cwd=str(worktree_path), check=True, timeout=10)
     subprocess.run(
         ["git", "config", "user.name", "Test User"],
         cwd=str(worktree_path),
         check=True,
+        timeout=10,
     )
     subprocess.run(
         ["git", "config", "user.email", "test@example.com"],
         cwd=str(worktree_path),
         check=True,
+        timeout=10,
     )
 
     # Create test file
@@ -542,11 +544,12 @@ def temp_worktree(tmp_path):
     test_file.write_text("def calculate_total():\n    return 42\n")
 
     # Initial commit
-    subprocess.run(["git", "add", "."], cwd=str(worktree_path), check=True)
+    subprocess.run(["git", "add", "."], cwd=str(worktree_path), check=True, timeout=10)
     subprocess.run(
         ["git", "commit", "-m", "Initial commit"],
         cwd=str(worktree_path),
         check=True,
+        timeout=10,
     )
 
     yield worktree_path
@@ -629,6 +632,7 @@ def test_apply_fix_with_custom_commit_message(temp_worktree, sample_fix):
         cwd=str(temp_worktree),
         capture_output=True,
         text=True,
+        timeout=10,
     )
     assert "improve type safety" in commit_msg_result.stdout
 
@@ -1097,6 +1101,7 @@ def test_commit_message_includes_claude_attribution(temp_worktree, sample_fix):
         cwd=str(temp_worktree),
         capture_output=True,
         text=True,
+        timeout=10,
     )
     assert "Co-Authored-By: Claude" in commit_msg_result.stdout
 
@@ -1119,11 +1124,12 @@ def test_apply_large_diff(temp_worktree):
     large_file.write_text(old_content)
 
     # Commit large file
-    subprocess.run(["git", "add", "."], cwd=str(temp_worktree), check=True)
+    subprocess.run(["git", "add", "."], cwd=str(temp_worktree), check=True, timeout=10)
     subprocess.run(
         ["git", "commit", "-m", "Add large file"],
         cwd=str(temp_worktree),
         check=True,
+        timeout=10,
     )
 
     applicator = FixApplicator(
@@ -1235,6 +1241,7 @@ def test_rollback_on_ci_failure(temp_worktree, sample_fix):
         cwd=str(temp_worktree),
         capture_output=True,
         text=True,
+        timeout=10,
     ).stdout.strip()
 
     # Act: Rollback
@@ -1249,6 +1256,7 @@ def test_rollback_on_ci_failure(temp_worktree, sample_fix):
         cwd=str(temp_worktree),
         capture_output=True,
         text=True,
+        timeout=10,
     ).stdout.strip()
 
     assert int(commit_count_after) == int(commit_count_before) - 1

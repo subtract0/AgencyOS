@@ -86,7 +86,7 @@
 
 **Hypothesis**:
 - The `_execute_task_real()` subprocess may have import errors
-- Python path issues when invoking `agency_code_agent`
+- Python path issues when invoking `coding_agent`
 - Environment variables not passed to subprocess
 
 **Evidence**:
@@ -121,7 +121,7 @@
 3. **Fix subprocess execution**
    - Test _execute_task_real() standalone
    - Verify environment variables passed correctly
-   - Ensure agency_code_agent imports work in subprocess
+   - Ensure coding_agent imports work in subprocess
 
 4. **Reset and retry**
    - Reset all failed/suspicious tasks

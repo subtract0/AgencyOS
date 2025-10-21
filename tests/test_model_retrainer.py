@@ -18,7 +18,7 @@ Constitutional Compliance:
 Test Framework: pytest with NECESSARY pattern
 Reference: specs/spec-008-weekly-retraining-pipeline.md Section 5.4
 
-Author: AgencyCodeAgent
+Author: CodingAgent
 Date: 2025-10-10
 """
 

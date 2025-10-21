@@ -14,9 +14,9 @@ from unittest.mock import patch
 
 import pytest
 
-from agency_code_agent.agency_code_agent import create_agency_code_agent
 from agency_memory.enhanced_memory_store import EnhancedMemoryStore
 from agency_memory.memory import InMemoryStore, Memory
+from coding_agent.coding_agent import create_coding_agent
 from shared.agent_context import create_agent_context
 from shared.model_policy import DEFAULTS, agent_model
 
@@ -27,15 +27,15 @@ class TestPerformanceBenchmarks:
     def test_agent_creation_performance(self):
         """Test that agent creation completes within reasonable time."""
         with (
-            patch("agency_code_agent.agency_code_agent.Agent"),
-            patch("agency_code_agent.agency_code_agent.get_model_instance") as mock_model,
+            patch("coding_agent.coding_agent.Agent"),
+            patch("coding_agent.coding_agent.get_model_instance") as mock_model,
         ):
             mock_model.return_value = "gpt-5-mini"
 
             start_time = time.time()
 
             # Create agent
-            agent = create_agency_code_agent(model="gpt-5-mini", reasoning_effort="medium")
+            agent = create_coding_agent(model="gpt-5-mini", reasoning_effort="medium")
 
             elapsed = time.time() - start_time
 
@@ -143,12 +143,12 @@ class TestToolListConsistency:
     def test_expected_tools_present(self):
         """Test that expected tools are present in agent creation."""
         with (
-            patch("agency_code_agent.agency_code_agent.Agent") as mock_agent,
-            patch("agency_code_agent.agency_code_agent.get_model_instance") as mock_model,
+            patch("coding_agent.coding_agent.Agent") as mock_agent,
+            patch("coding_agent.coding_agent.get_model_instance") as mock_model,
         ):
             mock_model.return_value = "gpt-5-mini"
 
-            create_agency_code_agent(model="gpt-5-mini")
+            create_coding_agent(model="gpt-5-mini")
 
             # Get tools list from agent creation
             call_kwargs = mock_agent.call_args[1]
@@ -161,14 +161,14 @@ class TestToolListConsistency:
     def test_tool_list_not_empty(self):
         """Test that tool list is never empty."""
         with (
-            patch("agency_code_agent.agency_code_agent.Agent") as mock_agent,
-            patch("agency_code_agent.agency_code_agent.get_model_instance") as mock_model,
+            patch("coding_agent.coding_agent.Agent") as mock_agent,
+            patch("coding_agent.coding_agent.get_model_instance") as mock_model,
         ):
             mock_model.return_value = "gpt-5-mini"
 
             # Test with different reasoning efforts
             for effort in ["low", "medium", "high"]:
-                create_agency_code_agent(model="gpt-5-mini", reasoning_effort=effort)
+                create_coding_agent(model="gpt-5-mini", reasoning_effort=effort)
 
                 call_kwargs = mock_agent.call_args[1]
                 tools = call_kwargs.get("tools", [])
@@ -178,12 +178,12 @@ class TestToolListConsistency:
     def test_tool_list_structure_consistency(self):
         """Test that tool list structure is consistent."""
         with (
-            patch("agency_code_agent.agency_code_agent.Agent") as mock_agent,
-            patch("agency_code_agent.agency_code_agent.get_model_instance") as mock_model,
+            patch("coding_agent.coding_agent.Agent") as mock_agent,
+            patch("coding_agent.coding_agent.get_model_instance") as mock_model,
         ):
             mock_model.return_value = "gpt-5-mini"
 
-            create_agency_code_agent()
+            create_coding_agent()
 
             call_kwargs = mock_agent.call_args[1]
             tools = call_kwargs.get("tools", [])
@@ -288,13 +288,13 @@ class TestBackwardsCompatibility:
     def test_agent_creation_default_parameters_stable(self):
         """Test that default parameters for agent creation are stable."""
         with (
-            patch("agency_code_agent.agency_code_agent.Agent") as mock_agent,
-            patch("agency_code_agent.agency_code_agent.get_model_instance") as mock_model,
+            patch("coding_agent.coding_agent.Agent") as mock_agent,
+            patch("coding_agent.coding_agent.get_model_instance") as mock_model,
         ):
             mock_model.return_value = "gpt-5-mini"
 
             # Create with defaults
-            create_agency_code_agent()
+            create_coding_agent()
 
             call_kwargs = mock_agent.call_args[1]
 
@@ -307,7 +307,7 @@ class TestBackwardsCompatibility:
             assert "model" in call_kwargs
 
             # Name should be consistent
-            assert call_kwargs["name"] == "AgencyCodeAgent"
+            assert call_kwargs["name"] == "CodingAgent"
 
     def test_model_policy_keys_stable(self):
         """Test that model policy keys remain stable."""
@@ -428,30 +428,30 @@ class TestConfigurationConsistency:
     def test_agent_name_consistency(self):
         """Test that agent name is consistent."""
         with (
-            patch("agency_code_agent.agency_code_agent.Agent") as mock_agent,
-            patch("agency_code_agent.agency_code_agent.get_model_instance") as mock_model,
+            patch("coding_agent.coding_agent.Agent") as mock_agent,
+            patch("coding_agent.coding_agent.get_model_instance") as mock_model,
         ):
             mock_model.return_value = "gpt-5-mini"
 
             # Create multiple times
             for _ in range(3):
-                create_agency_code_agent()
+                create_coding_agent()
 
                 call_kwargs = mock_agent.call_args[1]
                 name = call_kwargs["name"]
 
                 # Name should always be the same
-                assert name == "AgencyCodeAgent"
+                assert name == "CodingAgent"
 
     def test_tools_folder_path_consistency(self):
         """Test that tools folder path is consistent."""
         with (
-            patch("agency_code_agent.agency_code_agent.Agent") as mock_agent,
-            patch("agency_code_agent.agency_code_agent.get_model_instance") as mock_model,
+            patch("coding_agent.coding_agent.Agent") as mock_agent,
+            patch("coding_agent.coding_agent.get_model_instance") as mock_model,
         ):
             mock_model.return_value = "gpt-5-mini"
 
-            create_agency_code_agent()
+            create_coding_agent()
 
             call_kwargs = mock_agent.call_args[1]
             tools_folder = call_kwargs.get("tools_folder")

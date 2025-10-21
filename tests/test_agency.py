@@ -1,5 +1,5 @@
 """
-Test Agency for Agency Code Agent
+Test Agency for AgencyOS Agent
 Tests the agent with 5 diverse queries to validate functionality
 """
 
@@ -17,7 +17,7 @@ load_dotenv()
 def mock_agency():
     """Create a mock agency for testing"""
     mock_agent = MagicMock()
-    mock_agent.name = "AgencyCodeAgent"
+    mock_agent.name = "CodingAgent"
     mock_agent.model = "gpt-5-mini"
     mock_agent.tools = []
 
@@ -153,7 +153,7 @@ async def test_error_handling():
         mock_get_response.side_effect = Exception("Simulated error")
 
         mock_agent = MagicMock()
-        mock_agent.name = "AgencyCodeAgent"
+        mock_agent.name = "CodingAgent"
 
         with patch.object(Agency, "__init__", lambda self, *args, **kwargs: None):
             agency = Agency.__new__(Agency)

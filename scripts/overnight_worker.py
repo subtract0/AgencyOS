@@ -300,9 +300,14 @@ def execute_with_timeout(func, timeout_seconds: int):
     with concurrent.futures.ThreadPoolExecutor(max_workers=1) as executor:
         future = executor.submit(func)
         try:
-            future.result(timeout=timeout_seconds)
+            result = future.result(timeout=timeout_seconds)
+            return result
         except concurrent.futures.TimeoutError:
+            # Cancel the future to prevent ThreadPoolExecutor from waiting
+            future.cancel()
             raise TimeoutError(f"Function exceeded timeout of {timeout_seconds} seconds") from None
+        except Exception as e:
+            raise e
 
 
 def push_branch_with_retry(

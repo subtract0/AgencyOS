@@ -8,7 +8,7 @@ from unittest.mock import AsyncMock, Mock, patch
 
 import pytest
 
-from agency_code_agent.agency_code_agent import create_agency_code_agent
+from coding_agent.coding_agent import create_coding_agent
 
 
 class TestAgencyFast:
@@ -247,9 +247,7 @@ class TestAgencyFast:
         """Test fast agency creation with mocked components."""
         with (
             patch("agency_swarm.Agency") as mock_agency_class,
-            patch(
-                "agency_code_agent.agency_code_agent.create_agency_code_agent"
-            ) as mock_create_agent,
+            patch("coding_agent.coding_agent.create_coding_agent") as mock_create_agent,
         ):
             # Setup mocks
             mock_agent = Mock()
@@ -319,10 +317,10 @@ class TestAgencyFast:
     def test_tool_integration_mocking_fast(self):
         """Test that tools are properly mocked for fast execution."""
         with (
-            patch("agency_code_agent.agency_code_agent.Agent") as mock_agent_class,
-            patch("agency_code_agent.agency_code_agent.get_model_instance") as mock_model,
-            patch("agency_code_agent.agency_code_agent.render_instructions") as mock_render,
-            patch("agency_code_agent.agency_code_agent.create_agent_context") as mock_context,
+            patch("coding_agent.coding_agent.Agent") as mock_agent_class,
+            patch("coding_agent.coding_agent.get_model_instance") as mock_model,
+            patch("coding_agent.coding_agent.render_instructions") as mock_render,
+            patch("coding_agent.coding_agent.create_agent_context") as mock_context,
         ):
             mock_model.return_value = "gpt-5-mini"
             mock_render.return_value = "Test instructions"
@@ -332,7 +330,7 @@ class TestAgencyFast:
             mock_context.return_value = mock_agent_context
 
             # Create agent with mocked tools
-            _ = create_agency_code_agent(model="gpt-5-mini", reasoning_effort="low")
+            _ = create_coding_agent(model="gpt-5-mini", reasoning_effort="low")
 
             # Verify agent creation (tools should be mocked)
             assert mock_agent_class.called

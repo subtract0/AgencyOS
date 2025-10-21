@@ -62,7 +62,7 @@
 ### Primary Personas
 
 #### Persona 1: Autonomous Agent (Primary User)
-- **Description**: Agency agents (AgencyCodeAgent, QualityEnforcer, Auditor) executing tasks in isolation
+- **Description**: Agency agents (CodingAgent, QualityEnforcer, Auditor) executing tasks in isolation
 - **Goals**: Create feature branches, commit changes, open PRs without human intervention or workspace conflicts
 - **Pain Points**: File conflicts when multiple agents work simultaneously, pre-commit hook blocking PRs with test failures, forgetting Co-Authored-By attribution
 - **Technical Proficiency**: Expert (programmatic Git access via Python subprocess)
@@ -77,7 +77,7 @@
 
 #### Journey 1: Autonomous Feature Implementation
 ```
-1. User starts with: AgencyCodeAgent receives task "Implement JWT authentication"
+1. User starts with: CodingAgent receives task "Implement JWT authentication"
 2. User needs to: Isolate work from main workspace to avoid conflicts
 3. User performs:
    - Creates worktree: git worktree add ../Agency-{session_id} -b feat/jwt-auth
@@ -245,7 +245,7 @@
 ## Integration Points
 
 ### Agent Integration
-- **AgencyCodeAgent**: Primary user of PR creation workflow for feature implementation
+- **CodingAgent**: Primary user of PR creation workflow for feature implementation
 - **QualityEnforcer**: Validates constitutional compliance before PR creation
 - **LearningAgent**: Stores successful PR patterns in VectorStore (branch names, commit structure)
 - **MergerAgent**: Consumes PR URLs for automated merge coordination
@@ -317,7 +317,7 @@
 
 ### Stakeholders
 - **Primary Stakeholder**: @am (repository owner, constitutional authority)
-- **Secondary Stakeholders**: AgencyCodeAgent, QualityEnforcer, LearningAgent (workflow consumers)
+- **Secondary Stakeholders**: CodingAgent, QualityEnforcer, LearningAgent (workflow consumers)
 - **Technical Reviewers**: ChiefArchitect (ADR alignment), PlannerAgent (spec completeness)
 
 ### Review Criteria

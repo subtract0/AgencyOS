@@ -96,7 +96,7 @@ class MonitoringService:
         self.data_dir.mkdir(parents=True, exist_ok=True)
 
         self.counter_file = self.data_dir / "task_counter.json"
-        self.milestones_dir = Path("logs/monitoring/milestones")
+        self.milestones_dir = self.data_dir / "milestones"
         self.milestones_dir.mkdir(parents=True, exist_ok=True)
 
         # Thread lock for counter operations
@@ -128,12 +128,11 @@ class MonitoringService:
         return TaskCounter()
 
     def _save_counter(self) -> None:
-        """Save task counter to persistence file (thread-safe)."""
-        with self._lock:
-            # Convert datetime to ISO string for JSON serialization
-            data = self._counter.dict()
-            data["started_at"] = self._counter.started_at.isoformat()
-            self.counter_file.write_text(json.dumps(data, indent=2))
+        """Save task counter to persistence file (must be called with lock held)."""
+        # Convert datetime to ISO string for JSON serialization
+        data = self._counter.model_dump()
+        data["started_at"] = self._counter.started_at.isoformat()
+        self.counter_file.write_text(json.dumps(data, indent=2))
 
     def record_task(
         self,
@@ -230,14 +229,15 @@ class MonitoringService:
 
         # Determine milestone number and threshold
         if milestone_threshold is None:
-            # Find current milestone based on count
+            # Find next ungenerated milestone based on count
             milestone_threshold = None
             for threshold in self.MILESTONES:
-                if current_count >= threshold:
+                if current_count >= threshold and threshold > self._counter.last_milestone:
                     milestone_threshold = threshold
+                    break  # Take the FIRST matching milestone, not the last
 
             if milestone_threshold is None:
-                return None  # Haven't reached first milestone yet
+                return None  # Haven't reached next milestone yet
 
         # Check if already generated (unless forced)
         if not force and milestone_threshold <= self._counter.last_milestone:
@@ -511,7 +511,7 @@ class MonitoringService:
         filepath = self.milestones_dir / filename
 
         # Convert to dict for JSON serialization
-        data = milestone.dict()
+        data = milestone.model_dump()
         data["reached_at"] = milestone.reached_at.isoformat()
 
         filepath.write_text(json.dumps(data, indent=2))
