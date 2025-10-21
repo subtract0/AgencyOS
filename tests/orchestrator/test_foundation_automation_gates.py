@@ -295,8 +295,8 @@ def test_gate_006_slop_immunity_enforcement(simple_task_graph: TaskGraph) -> Non
     Article III: "Quality gates are absolute barriers"
     Expected: Result<GateValidationResult, FoundationGateError> with Err
     """
-    # Arrange: Mock slop guardian with low quality score
-    mock_guardian = AsyncMock(
+    # Arrange: Mock slop guardian with low quality score (sync function)
+    mock_guardian = Mock(
         return_value={
             "status": "REJECT",
             "score": 2.5,
@@ -332,8 +332,8 @@ def test_gate_007_budget_guard_enforcement(simple_task_graph: TaskGraph) -> None
     Article III: "Quality gates are absolute barriers"
     Expected: Result<GateValidationResult, FoundationGateError> with Err
     """
-    # Arrange: Mock budget guard with limit exceeded
-    mock_guard = AsyncMock(
+    # Arrange: Mock budget guard with limit exceeded (sync function)
+    mock_guard = Mock(
         return_value={
             "within_budget": False,
             "estimated_cost": 125.00,
