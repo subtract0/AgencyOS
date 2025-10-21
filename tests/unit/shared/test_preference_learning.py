@@ -69,6 +69,8 @@ def message_bus(temp_db):
 def alice_learner(message_bus, temp_db):
     """Create preference learner for Alice."""
     db_path = str(Path(temp_db).parent / "alice_prefs.db")
+    # Ensure clean state by removing any existing database file
+    Path(db_path).unlink(missing_ok=True)
     learner = PreferenceLearner(
         user_id="alice", message_bus=message_bus, db_path=db_path, min_confidence=0.6
     )
@@ -80,6 +82,8 @@ def alice_learner(message_bus, temp_db):
 def bob_learner(message_bus, temp_db):
     """Create preference learner for Bob."""
     db_path = str(Path(temp_db).parent / "bob_prefs.db")
+    # Ensure clean state by removing any existing database file
+    Path(db_path).unlink(missing_ok=True)
     learner = PreferenceLearner(
         user_id="bob", message_bus=message_bus, db_path=db_path, min_confidence=0.6
     )
