@@ -119,7 +119,7 @@ NECESSARY Markers:         0 ⚠️
 **Risk**: Agent communication failures would be silent. ChiefArchitect → Planner → Coder → QualityEnforcer handoffs untested.
 
 **Tests Found**:
-- `test_coding_agent.py` (isolated, 34 tests)
+- `test_agency_code_agent.py` (isolated, 34 tests)
 - `test_planner_agent.py` (isolated, 5 tests)
 - `test_quality_enforcer_agent.py` (isolated, 48 tests)
 
