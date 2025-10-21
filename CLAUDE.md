@@ -162,14 +162,15 @@ Read **`constitution.md`** in full before any action. Summary:
 
 ### **Article II: 100% Verification and Stability** (ADR-002)
 - Main branch: 100% test success ALWAYS (no exceptions)
-- No merge without green CI pipeline
-- Definition of Done: Code + Tests + Pass + Review + CI ✓
+- No merge without 100% test pass (local OR CI verification)
+- Definition of Done: Code + Tests + Pass + Review + Quality Gates ✓
 
-### **Article III: Automated Merge Enforcement** (ADR-003)
-- Zero manual overrides
-- Multi-layer enforcement (pre-commit, agent, CI, branch protection)
-- Quality gates are absolute barriers
+### **Article III: Automated Local Enforcement** (ADR-003)
+- Zero manual overrides for quality standards
+- Multi-layer LOCAL enforcement (pre-commit, pre-push, agent validation, branch protection)
+- Quality gates are absolute barriers (local enforcement is FREE)
 - No bypass authority for anyone
+- **CI/CD is OPTIONAL** (currently disabled to save costs, local gates sufficient)
 
 ### **Article IV: Continuous Learning and Improvement** (ADR-004)
 - **MANDATORY**: VectorStore integration is constitutionally required (not optional)

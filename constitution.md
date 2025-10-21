@@ -108,10 +108,12 @@ def ensure_complete_context(operation_func, max_retries=3):
 #### Definition of Done
 1. Code written ✓
 2. Tests written ✓
-3. All tests pass ✓
+3. All tests pass (local verification: `python run_tests.py --run-all`) ✓
 4. Code review ✓
-5. CI pipeline green ✓
+5. Quality gates pass (local hooks + agent validation OR optional CI) ✓
 6. = COMPLETE (not before)
+
+**Note**: Local test verification (`python run_tests.py --run-all` showing 100% pass) is constitutionally equivalent to CI pipeline verification. Both satisfy Article II requirements.
 
 ### Section 2.3: Enforcement Mechanisms
 ```bash
@@ -173,30 +175,38 @@ if not verify_memory_safe(required_gb=10):
 
 ---
 
-## Article III: Automated Merge Enforcement (ADR-003)
+## Article III: Automated Local Enforcement (ADR-003)
 
 ### Section 3.1: Foundational Principle
-**Quality standards SHALL be technically enforced, not manually governed.**
+**Quality standards SHALL be technically enforced through local gates and automation, not manually governed or dependent on paid infrastructure.**
 
 ### Section 3.2: Enforcement Architecture
 
 #### Zero-Tolerance Policy
-- No manual override capabilities
+- No manual override capabilities for quality standards
 - No "emergency bypass" mechanisms
 - 100% test success at ALL enforcement layers
 - Automatic rejection of quality violations
+- **Constitutional compliance is FREE** - no paid services required
 
-#### Multi-Layer Enforcement
-1. **Pre-commit Hook**: Local enforcement preventing bad commits
-2. **Agent Validation**: Automated agent-level verification
-3. **CI/CD Pipeline**: Remote verification and enforcement
-4. **Branch Protection**: Repository-level safeguards
+#### Multi-Layer Local Enforcement (Cost: $0/month)
+1. **Pre-commit Hook** (LOCAL, MANDATORY): Prevents commits with failing tests
+2. **Pre-push Verification** (LOCAL, MANDATORY): Requires 100% test pass before push
+3. **Agent Validation** (LOCAL, MANDATORY): Automated constitutional compliance checking
+4. **Branch Protection** (GITHUB FREE TIER): PR review requirements, protected branches
+
+#### Optional Remote Enforcement (Cost: Variable)
+- **CI/CD Pipeline** (OPTIONAL): Automated remote verification via GitHub Actions
+- **Status**: Currently disabled to reduce costs (all workflows in `.disabled` state)
+- **Re-enablement**: Available when budget permits, not constitutionally required
+- **Substitute**: Local verification is equally valid and constitutionally compliant
 
 #### No Bypass Authority
-- No human can override enforcement
+- No human can override local quality gates
 - No emergency exceptions permitted
-- Quality gates are absolute barriers
+- Quality gates are absolute barriers (local or remote)
 - System failure requires infrastructure repair, not bypass
+- **Local enforcement IS automated enforcement** - equally valid as CI/CD
 
 ### Section 3.3: Agent Requirements
 ```python
