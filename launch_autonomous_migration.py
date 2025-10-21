@@ -25,7 +25,7 @@ async def main():
     # Import the Agency
     try:
         from agency import agency
-        from agency_code_agent.agency_code_agent import AgencyCodeAgent
+        from coding_agent.coding_agent import CodingAgent
     except ImportError as e:
         print(f"Failed to import Agency: {e}")
         print("Ensure you're in the Agency directory and dependencies are installed")
@@ -67,14 +67,14 @@ async def main():
         ceo = agency.ceo  # ChiefArchitectAgent
         code_agent = None
 
-        # Find the AgencyCodeAgent
+        # Find the CodingAgent
         for agent in agency.agents:
-            if isinstance(agent, AgencyCodeAgent):
+            if isinstance(agent, CodingAgent):
                 code_agent = agent
                 break
 
         if not code_agent:
-            print("❌ Could not find AgencyCodeAgent")
+            print("❌ Could not find CodingAgent")
             return 1
 
         print("✅ Agency initialized with agents:")

@@ -179,7 +179,7 @@ pytest $(cat selected_tests.txt)
 
 ```bash
 # 1. Make code changes
-vim agency_code_agent/coder.py
+vim coding_agent/coder.py
 
 # 2. Run affected tests only (fast!)
 ./scripts/run_smart_tests.sh

@@ -273,7 +273,7 @@ If test system is compromised:
 - **"No Broken Windows"**: The Pragmatic Programmer principle
 
 ## Review
-- **Author**: AgencyCodeAgent
+- **Author**: CodingAgent
 - **Mandated by**: @am
 - **Date**: 2025-09-21
 - **Dependencies**: ADR-002 (strict requirement)

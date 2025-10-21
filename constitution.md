@@ -305,6 +305,184 @@ def constitutional_planning_process(feature_request):
 
 ---
 
+## Article VI: Red-Green-Refactor TDD Workflow (Amendment 2025-10-14)
+
+### Section 6.1: Foundational Principle
+**All development SHALL follow strict Test-Driven Development: tests are written FIRST and MUST fail, proving they test real requirements.**
+
+### Section 6.2: Mandatory Workflow (No Exceptions)
+
+#### The Sacred Sequence
+```
+Natural Language Intent
+    ↓
+Technical Specification (acceptance criteria)
+    ↓
+Write Tests FIRST (RED: tests MUST fail initially)
+    ↓
+Implement Code (GREEN: iterate until 100% tests pass)
+    ↓
+Refactor (REFACTOR: improve while maintaining 100% pass)
+```
+
+#### RED Phase (Failing Tests Required)
+- Tests MUST be written BEFORE any implementation code
+- Tests MUST fail initially (proves they test real functionality)
+- Failed tests MUST verify against specification acceptance criteria
+- "Test passes without implementation" = test is broken, not implementation
+- Minimum test coverage: NECESSARY pattern (Normal, Edge, Constraints, Error, Security, Scale, Async, Retry, Yield)
+
+#### GREEN Phase (Implementation to Pass Tests)
+- Implementation begins ONLY after tests are written and failing
+- Iterate implementation until 100% of tests pass
+- No skipping tests to achieve "green"
+- No modifying tests to make them pass (fix implementation, not tests)
+- 100% pass rate is the ONLY acceptable outcome
+
+#### REFACTOR Phase (Improve While Maintaining Green)
+- Refactoring permitted ONLY when all tests are green
+- All tests MUST remain passing during refactoring
+- No "temporary" test skips during refactoring
+- Refactoring that breaks tests is reverted immediately
+
+### Section 6.3: Prohibited Practices
+
+#### "Pragmatic Approaches" That Violate TDD
+- ❌ **FORBIDDEN**: "Given the spec, I can move directly to implementation"
+- ❌ **FORBIDDEN**: "Let me consolidate test definitions with implementation"
+- ❌ **FORBIDDEN**: "These test specs are sufficient, proceeding to code"
+- ❌ **FORBIDDEN**: Any workflow that skips RED phase (failing tests first)
+
+#### Valid Test-First Development
+- ✅ **REQUIRED**: Write test file → Run test → See failure → Implement → Run test → See success
+- ✅ **REQUIRED**: Every acceptance criterion gets a failing test before implementation
+- ✅ **REQUIRED**: Tests verify ACTUAL behavior (not mocked/stubbed responses)
+- ✅ **REQUIRED**: Test execution demonstrates specification compliance
+
+### Section 6.4: Implementation Requirements
+
+```python
+def constitutional_tdd_workflow(intent: str) -> Result[str, str]:
+    """
+    Article VI enforcement: Strict TDD workflow.
+
+    Workflow:
+        1. Intent → Spec (acceptance criteria defined)
+        2. Spec → Tests (written first, MUST fail)
+        3. Tests → Implementation (iterate until 100% pass)
+        4. Implementation → Refactor (maintain 100% pass)
+    """
+    # Phase 1: Generate specification
+    spec = generate_specification(intent)
+    validate_acceptance_criteria_exist(spec)
+
+    # Phase 2: Write tests FIRST (RED)
+    tests = write_tests_from_spec(spec)
+    test_results = run_tests(tests)
+
+    # Validation: Tests MUST fail initially
+    if test_results.pass_rate == 1.0:
+        raise ConstitutionalViolation(
+            "Article VI: Tests passed without implementation. "
+            "Tests must fail first to prove they verify real requirements."
+        )
+
+    # Phase 3: Implement until tests pass (GREEN)
+    while test_results.pass_rate < 1.0:
+        implementation = implement_to_pass_tests(tests, test_results)
+        test_results = run_tests(tests)
+
+        if implementation.timeout_exceeded:
+            raise ConstitutionalViolation("Article I: Complete context required")
+
+    # Phase 4: Refactor while maintaining green
+    if refactoring_needed(implementation):
+        refactored = refactor_code(implementation)
+        test_results = run_tests(tests)
+
+        if test_results.pass_rate < 1.0:
+            raise ConstitutionalViolation(
+                "Article VI: Refactoring broke tests. "
+                "Revert changes and refactor again."
+            )
+
+    return Ok("TDD workflow complete: 100% test pass rate")
+```
+
+### Section 6.5: Orchestrator-Level TDD Enforcement
+
+#### PrimeA Orchestrator Compliance
+When generating task graphs, orchestrators MUST enforce:
+
+1. **Test Tasks Before Code Tasks**:
+   ```json
+   {
+     "phase_1_testing": {
+       "tasks": [
+         {"id": "test_feature_x", "type": "Test", "dependencies": ["spec"]}
+       ]
+     },
+     "phase_2_implementation": {
+       "tasks": [
+         {"id": "code_feature_x", "type": "Code", "dependencies": ["test_feature_x"]}
+       ]
+     }
+   }
+   ```
+
+2. **Test Verification Gate**:
+   - Test tasks execute FIRST
+   - Tests MUST initially fail (RED)
+   - Code tasks execute ONLY after test verification
+   - Code tasks iterate until tests pass (GREEN)
+
+3. **No "Pragmatic Shortcuts"**:
+   - Cannot skip from Spec → Implementation
+   - Cannot consolidate test definition with implementation
+   - Cannot proceed without explicit RED → GREEN transition
+   - Cannot mark Code task complete without 100% test pass rate
+
+### Section 6.6: Enforcement Mechanisms
+
+```python
+# Pre-commit hook validation
+def validate_tdd_compliance(commit_files):
+    """Verify TDD workflow was followed."""
+
+    # Check for orphaned implementation (code without tests)
+    code_files = [f for f in commit_files if is_implementation_file(f)]
+    test_files = [f for f in commit_files if is_test_file(f)]
+
+    if code_files and not test_files:
+        raise ConstitutionalViolation(
+            "Article VI: Implementation committed without corresponding tests. "
+            "TDD requires tests FIRST."
+        )
+
+    # Check for test passage without implementation changes
+    # (indicates tests were modified to pass, not implementation)
+    git_log = get_commit_history(commit_files)
+    if test_files_modified_after_passing(git_log):
+        raise ConstitutionalViolation(
+            "Article VI: Tests modified after passing. "
+            "Fix implementation, not tests."
+        )
+
+    return True
+```
+
+### Section 6.7: Success Criteria
+
+**Article VI compliance is achieved when**:
+- ✅ 100% of Code tasks have preceding Test tasks in dependency graph
+- ✅ Test tasks generate failing tests initially (RED phase documented)
+- ✅ Implementation tasks iterate until 100% test pass rate (GREEN phase documented)
+- ✅ No "pragmatic" shortcuts bypass RED → GREEN workflow
+- ✅ Git history shows test commits BEFORE implementation commits
+- ✅ Refactoring occurs ONLY when tests are passing (GREEN maintained)
+
+---
+
 ## Enforcement and Compliance
 
 ### Constitutional Validation
@@ -334,6 +512,10 @@ def validate_constitutional_compliance(agent_action):
     if not follows_spec_driven_process(agent_action):
         raise ConstitutionalViolation("Article V violated: Spec-driven process not followed")
 
+    # Article VI: RED-GREEN-REFACTOR TDD Workflow
+    if not follows_tdd_workflow(agent_action):
+        raise ConstitutionalViolation("Article VI violated: TDD workflow not followed (tests must be written FIRST and fail)")
+
     return True
 ```
 
@@ -345,15 +527,22 @@ ALL agent instructions MUST include:
 
 Before any action, you MUST:
 1. Read and understand /constitution.md
-2. Validate your planned action against all five articles
-3. Ensure your approach follows spec-driven development (Article V)
-4. Apply relevant learnings from VectorStore (Article IV)
-5. Maintain 100% quality standards (Article II)
-6. Gather complete context (Article I)
-7. Work within automated enforcement systems (Article III)
+2. Validate your planned action against all six articles
+3. **Follow RED-GREEN-REFACTOR TDD workflow (Article VI - HIGHEST PRIORITY)**
+   - Write tests FIRST (they MUST fail initially)
+   - Implement ONLY after tests are failing
+   - Iterate until 100% tests pass
+   - NO "pragmatic shortcuts" that skip RED phase
+4. Ensure your approach follows spec-driven development (Article V)
+5. Apply relevant learnings from VectorStore (Article IV)
+6. Maintain 100% quality standards (Article II)
+7. Gather complete context (Article I)
+8. Work within automated enforcement systems (Article III)
 
 NEVER proceed with any action that violates constitutional principles.
 Constitutional violations are BLOCKERS that must be resolved.
+
+**Article VI is NON-NEGOTIABLE**: Tests come FIRST, implementation comes SECOND.
 ```
 
 ### Metrics and Monitoring
@@ -361,6 +550,8 @@ Constitutional violations are BLOCKERS that must be resolved.
 - **Violation Detection Time**: Target <1 minute
 - **Learning Application Rate**: >80% of applicable patterns used
 - **Spec-Driven Compliance**: 100% of new features follow Article V
+- **TDD Workflow Compliance (Article VI)**: 100% of code has tests written first
+- **RED Phase Verification**: 100% of initial test runs show failures (proving tests are real)
 
 ---
 
@@ -391,11 +582,12 @@ Constitutional violations are BLOCKERS that must be resolved.
 - **Annually**: Comprehensive constitution evolution review
 
 ### Success Criteria
-- 100% constitutional compliance across all agents
+- 100% constitutional compliance across all agents (Articles I-VI)
 - Zero constitutional violations in production
 - Measurable improvement in development quality and speed
 - Successful learning integration and self-improvement
-- Full spec-driven development adoption
+- Full spec-driven development adoption (Article V)
+- Universal TDD workflow adoption (Article VI - tests FIRST, always)
 
 ---
 

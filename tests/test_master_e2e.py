@@ -155,14 +155,14 @@ result = process_data(None)
             print(f"❌ ChiefArchitectAgent: {e}")
 
         try:
-            from agency_code_agent.agency_code_agent import create_agency_code_agent
+            from coding_agent.coding_agent import create_coding_agent
 
-            agent = create_agency_code_agent(model="gpt-4", reasoning_effort="low")
-            agents_status["AgencyCodeAgent"] = True
-            print("✅ AgencyCodeAgent")
+            agent = create_coding_agent(model="gpt-4", reasoning_effort="low")
+            agents_status["CodingAgent"] = True
+            print("✅ CodingAgent")
         except Exception as e:
-            agents_status["AgencyCodeAgent"] = False
-            print(f"❌ AgencyCodeAgent: {e}")
+            agents_status["CodingAgent"] = False
+            print(f"❌ CodingAgent: {e}")
 
         try:
             from planner_agent.planner_agent import create_planner_agent
@@ -606,8 +606,8 @@ result = process_data(None)
 
         # Check agents (at least core ones)
         try:
-            from agency_code_agent.agency_code_agent import create_agency_code_agent
             from chief_architect_agent import create_chief_architect_agent
+            from coding_agent.coding_agent import create_coding_agent
             from planner_agent.planner_agent import create_planner_agent
 
             validations["multi_agent"] = True

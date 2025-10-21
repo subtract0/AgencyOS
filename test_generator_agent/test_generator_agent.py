@@ -605,7 +605,7 @@ def create_test_generator_agent(
         description=(
             "PROACTIVE test generation specialist ensuring 100% Article II compliance through TDD methodology. "
             "Automatically triggered BEFORE code implementation (test-first) or to address coverage gaps identified by AuditorAgent. "
-            "INTELLIGENTLY coordinates with: (1) AgencyCodeAgent to ensure tests exist before implementation, "
+            "INTELLIGENTLY coordinates with: (1) CodingAgent to ensure tests exist before implementation, "
             "(2) AuditorAgent for NECESSARY pattern compliance validation, (3) QualityEnforcerAgent for constitutional verification, "
             "and (4) PlannerAgent for test strategy alignment with specifications. Generates NECESSARY-compliant test suites using "
             "AAA-pattern (Arrange-Act-Assert) with pytest framework and comprehensive edge case coverage. PROACTIVELY suggests additional "

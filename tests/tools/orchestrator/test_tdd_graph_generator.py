@@ -125,16 +125,26 @@ class TestTDDGraphGeneratorNormalOperation:
     def test_generate_creates_test_tasks_before_code_tasks_in_dependencies(
         self, generator, simple_spec
     ):
-        """Test Test tasks depend on Code tasks (reversed execution order)."""
+        """Test Code tasks depend on Test tasks (TDD workflow - tests FIRST)."""
         # Act
         result = generator.generate(simple_spec)
         graph = result.unwrap()
 
-        # Assert
+        # Assert - Code tasks must depend on Test tasks (TDD)
+        code_tasks = [t for t in graph.all_tasks() if t.type == TaskType.CODE]
         test_tasks = [t for t in graph.all_tasks() if t.type == TaskType.TEST]
-        for test_task in test_tasks:
-            assert test_task.verification_target in test_task.dependencies, (
-                f"Test task {test_task.id} missing Code task in dependencies"
+
+        for code_task in code_tasks:
+            # Find matching Test task
+            matching_test = next(
+                (t for t in test_tasks if t.verification_target == code_task.id), None
+            )
+            assert matching_test is not None, f"Code task {code_task.id} missing Test task"
+
+            # TDD: Code task must depend on Test task (tests written FIRST)
+            assert matching_test.id in code_task.dependencies, (
+                f"Code task {code_task.id} missing Test task {matching_test.id} in dependencies "
+                f"(TDD requires Test BEFORE Code)"
             )
 
 
@@ -379,19 +389,21 @@ class TestTDDGraphGeneratorTaskGraphValidation:
         # Pydantic validation happens automatically during model creation
         # If we got here without exception, validation passed
 
-        # Additional checks for Article II compliance
+        # Additional checks for Article II compliance (TDD workflow)
         code_tasks = [t for t in graph.all_tasks() if t.type == TaskType.CODE]
         test_tasks = [t for t in graph.all_tasks() if t.type == TaskType.TEST]
 
         # Every Code task must have Test task (validated by TaskGraph model)
+        # TDD: Code task depends on Test task (tests written FIRST)
         for code_task in code_tasks:
             matching_tests = [
                 t
                 for t in test_tasks
-                if t.verification_target == code_task.id and code_task.id in t.dependencies
+                if t.verification_target == code_task.id and t.id in code_task.dependencies
             ]
             assert len(matching_tests) == 1, (
-                f"Code task {code_task.id} missing Test dependency (Article II)"
+                f"Code task {code_task.id} missing Test dependency (Article II). "
+                f"Expected Test task ID in code_task.dependencies"
             )
 
     def test_generated_graph_has_no_circular_dependencies(self, generator):

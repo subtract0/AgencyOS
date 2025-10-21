@@ -437,6 +437,7 @@ class PRCreator:
                 ["git", "merge", "--abort"],
                 cwd=str(self.worktree_path),
                 capture_output=True,
+                text=True,
                 timeout=5,
             )
 

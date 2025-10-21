@@ -30,7 +30,7 @@ Successfully completed Trinity Protocol production wiring using parallel agent o
 1. Added 8 imports for real agent factories
 2. Updated `__init__()` to accept `agent_context` parameter
 3. Replaced mock registry (lines 111-119) with real agent instantiation:
-   - **CODE_WRITER**: AgencyCodeAgent
+   - **CODE_WRITER**: CodingAgent
    - **TEST_ARCHITECT**: TestGeneratorAgent
    - **TOOL_DEVELOPER**: ToolsmithAgent
    - **IMMUNITY_ENFORCER**: QualityEnforcerAgent
@@ -119,7 +119,7 @@ Successfully completed Trinity Protocol production wiring using parallel agent o
 
 **Deliverables**:
 1. Updated all 6 agent factories to accept `cost_tracker` parameter:
-   - `agency_code_agent/agency_code_agent.py`
+   - `coding_agent/coding_agent.py`
    - `test_generator_agent/test_generator_agent.py`
    - `toolsmith_agent/toolsmith_agent.py`
    - `quality_enforcer_agent/quality_enforcer_agent.py`
@@ -137,7 +137,7 @@ Successfully completed Trinity Protocol production wiring using parallel agent o
 
 **Verification Results**: ✅ **6/6 agents passing**
 ```
-✅ AgencyCodeAgent
+✅ CodingAgent
 ✅ TestGeneratorAgent
 ✅ ToolsmithAgent
 ✅ QualityEnforcerAgent
@@ -399,7 +399,7 @@ Cost tracking: $0.0125 (test call successful)
 ### Modified Files (10)
 
 1. `/Users/am/Code/Agency/trinity_protocol/executor_agent.py` (252 lines)
-2. `/Users/am/Code/Agency/agency_code_agent/agency_code_agent.py`
+2. `/Users/am/Code/Agency/coding_agent/coding_agent.py`
 3. `/Users/am/Code/Agency/test_generator_agent/test_generator_agent.py`
 4. `/Users/am/Code/Agency/toolsmith_agent/toolsmith_agent.py`
 5. `/Users/am/Code/Agency/quality_enforcer_agent/quality_enforcer_agent.py`

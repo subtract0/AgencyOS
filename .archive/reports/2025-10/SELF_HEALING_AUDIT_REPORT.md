@@ -61,7 +61,7 @@ The CodeHealer framework demonstrates **strong foundational architecture** but r
 2. **Quality Validation Missing**: No verification that generated tests are actually good
 3. **Integration Testing**: No testing with real-world complex codebases
 
-#### AgencyCodeAgent
+#### CodingAgent
 **Q(T): 0.75** - Best tested agent but still has gaps
 
 **Strengths:**

@@ -116,25 +116,25 @@ class DashboardSnapshotGenerator:
             try:
                 dashboard_snapshot = self.dashboard.get_snapshot()
                 # Use mode='json' to ensure datetime objects are serialized
-                snapshot_data = dashboard_snapshot.model_dump(mode='json')
+                snapshot_data = dashboard_snapshot.model_dump(mode="json")
             except Exception as e:
                 print(f"Warning: Failed to generate dashboard snapshot: {e}", file=sys.stderr)
                 # Fallback to mock snapshot
                 mock_snapshot = MockDashboardSnapshot()
-                snapshot_data = mock_snapshot.model_dump(mode='json')
+                snapshot_data = mock_snapshot.model_dump(mode="json")
                 # Mark dashboard as unavailable since we fell back to mock
                 metadata = SnapshotMetadata(
                     dashboard_available=False,
                     data_directory=str(self.data_dir) if self.data_dir.exists() else None,
                 )
-                return {"metadata": metadata.model_dump(mode='json'), "snapshot": snapshot_data}
+                return {"metadata": metadata.model_dump(mode="json"), "snapshot": snapshot_data}
         else:
             # Use mock snapshot when dashboard unavailable
             mock_snapshot = MockDashboardSnapshot()
-            snapshot_data = mock_snapshot.model_dump(mode='json')
+            snapshot_data = mock_snapshot.model_dump(mode="json")
 
         # Combine metadata and snapshot (use mode='json' for datetime serialization)
-        full_snapshot = {"metadata": metadata.model_dump(mode='json'), "snapshot": snapshot_data}
+        full_snapshot = {"metadata": metadata.model_dump(mode="json"), "snapshot": snapshot_data}
 
         return full_snapshot
 

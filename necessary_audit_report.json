@@ -1,5 +1,5 @@
 {
-  "file_analyzed": "/Users/am/Code/Agency/agency_code_agent/agency_code_agent.py",
+  "file_analyzed": "/Users/am/Code/Agency/coding_agent/agency_code_agent.py",
   "analysis_timestamp": "2025-09-21T00:00:00Z",
   "target_function": "create_agency_code_agent",
   "function_signature": "create_agency_code_agent(model: str = 'gpt-5-mini', reasoning_effort: str = 'medium', agent_context: AgentContext = None) -> Agent",

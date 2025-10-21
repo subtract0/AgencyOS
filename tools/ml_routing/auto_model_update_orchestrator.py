@@ -20,7 +20,7 @@ Constitutional Compliance:
 - Law #8: Functions <50 lines each
 
 Reference: Task description - AutoModelUpdateOrchestrator implementation
-Author: AgencyCodeAgent
+Author: CodingAgent
 Date: 2025-10-10
 """
 

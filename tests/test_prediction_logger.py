@@ -25,7 +25,7 @@ Constitutional compliance:
 - Article V: Spec-driven (traces to spec-007-phase3-ml-inference.md)
 
 Reference: specs/spec-007-phase3-ml-inference.md Section 5.5
-Author: AgencyCodeAgent
+Author: CodingAgent
 Date: 2025-10-10
 """
 
@@ -58,10 +58,11 @@ class TestLogPredictionNormalOperation:
         context = AgentContext(memory=Memory(), session_id="test_session_001")
         prediction = PredictionLog(
             task_id="task_abc123",
-            predicted_tier="P2",
-            actual_tier=None,
+            tier="moderate",
             confidence=0.85,
-            method="ml",
+            method="ml_model",
+            model_version="2025-10-10T12:00:00Z",
+            session_id="test_session_001",
         )
 
         # Act
@@ -90,10 +91,11 @@ class TestLogPredictionNormalOperation:
         context = AgentContext(memory=Memory(), session_id="test_session_002")
         prediction = PredictionLog(
             task_id="task_xyz789",
-            predicted_tier="P1",
-            actual_tier=None,
+            tier="complex",
             confidence=0.92,
-            method="rules",
+            method="rule_based_fallback",
+            model_version="2025-10-10T12:00:00Z",
+            session_id="test_session_002",
         )
 
         # Act
@@ -104,8 +106,8 @@ class TestLogPredictionNormalOperation:
         stored = context.search_memories(["prediction"], include_session=True)
         tags = stored[0]["tags"]
         assert "prediction" in tags
-        assert "P1" in tags
-        assert "rules" in tags
+        assert "complex" in tags
+        assert "rule_based_fallback" in tags
         assert f"session:{context.session_id}" in tags
 
     def test_log_prediction_async_non_blocking(self):
@@ -123,10 +125,11 @@ class TestLogPredictionNormalOperation:
         context = AgentContext(memory=Memory(), session_id="test_session_003")
         prediction = PredictionLog(
             task_id="task_perf_test",
-            predicted_tier="P3",
-            actual_tier=None,
+            tier="simple",
             confidence=0.98,
-            method="ml",
+            method="ml_model",
+            model_version="2025-10-10T12:00:00Z",
+            session_id="test_session_003",
         )
 
         # Act: Measure execution time
@@ -163,10 +166,11 @@ class TestGetPredictionsRetrieval:
         for i in range(3):
             prediction = PredictionLog(
                 task_id=f"task_{i}",
-                predicted_tier="P2",
-                actual_tier=None,
+                tier="moderate",
                 confidence=0.80 + i * 0.05,
-                method="ml",
+                method="ml_model",
+                model_version="2025-10-10T12:00:00Z",
+                session_id="test_session_004",
             )
             log_prediction(context, prediction)
 
@@ -195,11 +199,12 @@ class TestGetPredictionsRetrieval:
         # Log prediction 1 (old)
         old_prediction = PredictionLog(
             task_id="task_old",
-            predicted_tier="P3",
-            actual_tier=None,
+            tier="simple",
             confidence=0.95,
-            method="ml",
-            timestamp=datetime.now(UTC) - timedelta(hours=2),
+            method="ml_model",
+            model_version="2025-10-10T12:00:00Z",
+            session_id="test_session_005",
+            timestamp=(datetime.now(UTC) - timedelta(hours=2)).isoformat() + "Z",
         )
         log_prediction(context, old_prediction)
 
@@ -211,10 +216,11 @@ class TestGetPredictionsRetrieval:
         # Log prediction 2 (new)
         new_prediction = PredictionLog(
             task_id="task_new",
-            predicted_tier="P2",
-            actual_tier=None,
+            tier="moderate",
             confidence=0.88,
-            method="ml",
+            method="ml_model",
+            model_version="2025-10-10T12:00:00Z",
+            session_id="test_session_005",
         )
         log_prediction(context, new_prediction)
 
@@ -239,24 +245,25 @@ class TestGetPredictionsRetrieval:
         context = AgentContext(memory=Memory(), session_id="test_session_006")
 
         # Log predictions with different tiers
-        for tier in ["P1", "P2", "P3"]:
+        for tier in ["complex", "moderate", "simple"]:
             prediction = PredictionLog(
                 task_id=f"task_{tier}",
-                predicted_tier=tier,
-                actual_tier=None,
+                tier=tier,
                 confidence=0.85,
-                method="ml",
+                method="ml_model",
+                model_version="2025-10-10T12:00:00Z",
+                session_id="test_session_006",
             )
             log_prediction(context, prediction)
 
-        # Act: Retrieve only P1 predictions
-        result = get_predictions(context, since=None, tier_filter="P1")
+        # Act: Retrieve only complex predictions
+        result = get_predictions(context, since=None, tier_filter="complex")
 
-        # Assert: Only P1 prediction retrieved
+        # Assert: Only complex prediction retrieved
         assert result.is_ok()
         predictions = result.unwrap()
         assert len(predictions) == 1
-        assert predictions[0].predicted_tier == "P1"
+        assert predictions[0].tier == "complex"
 
     def test_get_predictions_empty_result(self):
         """
@@ -301,13 +308,14 @@ class TestGetPredictionsRetrieval:
             key="valid_prediction",
             content={
                 "task_id": "task_valid",
-                "predicted_tier": "P3",
-                "actual_tier": None,
+                "tier": "simple",
                 "confidence": 0.90,
-                "timestamp": datetime.now(UTC).isoformat(),
-                "method": "ml",
+                "method": "ml_model",
+                "model_version": "2025-10-10T12:00:00Z",
+                "session_id": "test_session_008",
+                "timestamp": datetime.now(UTC).isoformat() + "Z",
             },
-            tags=["prediction", "P3", "ml"],
+            tags=["prediction", "simple", "ml_model"],
         )
 
         # Act: Retrieve predictions (should skip corrupted entry)
@@ -340,10 +348,11 @@ class TestPredictionLoggerEdgeCases:
         context = AgentContext(memory=Memory(), session_id="test_session_009")
         prediction = PredictionLog(
             task_id="task_complete",
-            predicted_tier="P2",
-            actual_tier="P1",  # Task completed, actual tier known
+            tier="moderate",
             confidence=0.82,
-            method="ml",
+            method="ml_model",
+            model_version="2025-10-10T12:00:00Z",
+            session_id="test_session_009",
         )
 
         # Act
@@ -353,7 +362,7 @@ class TestPredictionLoggerEdgeCases:
         # Retrieve and verify
         predictions = get_predictions(context, since=None, tier_filter=None).unwrap()
         assert len(predictions) == 1
-        assert predictions[0].actual_tier == "P1"
+        assert predictions[0].tier == "moderate"
 
     def test_get_predictions_combined_filters(self):
         """
@@ -368,14 +377,15 @@ class TestPredictionLoggerEdgeCases:
 
         context = AgentContext(memory=Memory(), session_id="test_session_010")
 
-        # Log old P1 prediction
+        # Log old complex prediction
         old_p1 = PredictionLog(
-            task_id="task_old_p1",
-            predicted_tier="P1",
-            actual_tier=None,
+            task_id="task_old_complex",
+            tier="complex",
             confidence=0.90,
-            method="ml",
-            timestamp=datetime.now(UTC) - timedelta(hours=1),
+            method="ml_model",
+            model_version="2025-10-10T12:00:00Z",
+            session_id="test_session_010",
+            timestamp=(datetime.now(UTC) - timedelta(hours=1)).isoformat() + "Z",
         )
         log_prediction(context, old_p1)
 
@@ -383,34 +393,36 @@ class TestPredictionLoggerEdgeCases:
         cutoff_time = datetime.now(UTC)
         time.sleep(0.1)
 
-        # Log new P1 prediction
+        # Log new complex prediction
         new_p1 = PredictionLog(
-            task_id="task_new_p1",
-            predicted_tier="P1",
-            actual_tier=None,
+            task_id="task_new_complex",
+            tier="complex",
             confidence=0.92,
-            method="ml",
+            method="ml_model",
+            model_version="2025-10-10T12:00:00Z",
+            session_id="test_session_010",
         )
         log_prediction(context, new_p1)
 
-        # Log new P2 prediction (should be filtered out)
+        # Log new moderate prediction (should be filtered out)
         new_p2 = PredictionLog(
-            task_id="task_new_p2",
-            predicted_tier="P2",
-            actual_tier=None,
+            task_id="task_new_moderate",
+            tier="moderate",
             confidence=0.85,
-            method="ml",
+            method="ml_model",
+            model_version="2025-10-10T12:00:00Z",
+            session_id="test_session_010",
         )
         log_prediction(context, new_p2)
 
-        # Act: Retrieve P1 predictions since cutoff_time
-        result = get_predictions(context, since=cutoff_time, tier_filter="P1")
+        # Act: Retrieve complex predictions since cutoff_time
+        result = get_predictions(context, since=cutoff_time, tier_filter="complex")
 
-        # Assert: Only new P1 prediction retrieved
+        # Assert: Only new complex prediction retrieved
         assert result.is_ok()
         predictions = result.unwrap()
         assert len(predictions) == 1
-        assert predictions[0].task_id == "task_new_p1"
+        assert predictions[0].task_id == "task_new_complex"
 
     def test_log_prediction_batch_logging(self):
         """
@@ -432,10 +444,11 @@ class TestPredictionLoggerEdgeCases:
         for i in range(batch_size):
             prediction = PredictionLog(
                 task_id=f"task_batch_{i}",
-                predicted_tier="P2",
-                actual_tier=None,
+                tier="moderate",
                 confidence=0.80 + (i % 20) * 0.01,
-                method="ml",
+                method="ml_model",
+                model_version="2025-10-10T12:00:00Z",
+                session_id="test_session_011",
             )
             result = log_prediction(context, prediction)
             assert result.is_ok()

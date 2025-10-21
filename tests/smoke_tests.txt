@@ -12,7 +12,7 @@
 #     ...
 
 # Core Agent Tests (6 critical agents)
-tests/unit/test_agency_code_agent_creation.py
+tests/unit/test_coding_agent_creation.py
 tests/unit/test_planner_agent_creation.py
 tests/unit/test_quality_enforcer_creation.py
 

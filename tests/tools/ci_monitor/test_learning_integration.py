@@ -842,7 +842,8 @@ def test_concurrent_pattern_storage(agent_context):
 
     # Wait for all threads
     for thread in threads:
-        thread.join()
+        thread.join(timeout=5)
+        assert not thread.is_alive(), "Thread did not complete within timeout"
 
     # Validate all patterns stored
     patterns = agent_context.search_memories(

@@ -547,7 +547,7 @@ class SessionPatternExtractor(BasePatternExtractor):
 
         # Look for agent mentions
         agent_patterns = [
-            r"(PlannerAgent|AgencyCodeAgent|LearningAgent|AuditorAgent)",
+            r"(PlannerAgent|CodingAgent|LearningAgent|AuditorAgent)",
             r"handoff to (\w+)",
             r"agent (\w+)",
         ]

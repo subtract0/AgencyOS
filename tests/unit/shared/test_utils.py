@@ -262,7 +262,8 @@ class TestSilenceWarningsIntegration:
         for t in threads:
             t.start()
         for t in threads:
-            t.join()
+            t.join(timeout=5)
+            assert not t.is_alive(), "Thread did not complete within timeout"
 
         # Should not have any errors
         assert len(errors) == 0

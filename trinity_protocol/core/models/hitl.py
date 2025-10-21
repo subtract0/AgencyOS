@@ -5,7 +5,7 @@ Defines Pydantic models for the question-answer system that enables
 Trinity to ask Alex questions and capture responses (YES/NO/LATER).
 
 Constitutional Compliance:
-- Article II: Strict typing with Pydantic (no Dict[Any, Any])
+- Article II: Strict typing with Pydantic (no untyped dicts)
 - Article IV: Continuous learning from responses
 - Article VII: Clear, descriptive naming
 - Privacy: Respect user focus time

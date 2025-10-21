@@ -369,7 +369,11 @@ class TestEndToEndScenario:
     and constitutional requirements with real GitHub API interaction.
     """
 
+    @pytest.mark.skip(
+        reason="Long-running real GitHub API test (15 min) - should be mocked or run manually in CI only"
+    )
     @pytest.mark.timeout(900)  # 15 minute timeout for full cycle
+    @pytest.mark.slow  # Skip in default --run-all (real GitHub API, 10-15 min execution)
     async def test_full_autonomous_cycle_intentional_failure_to_success(
         self,
         temp_worktree: Path,
@@ -408,6 +412,7 @@ class TestEndToEndScenario:
         - GITHUB_TOKEN with repo and workflow scopes
         - gh CLI authenticated
         - Network access to GitHub API
+        SKIPPED: 15-minute test hangs test suite - should be run in dedicated CI job with real GitHub API
         """
         # ====================================================================
         # PHASE 1: Setup - Create worktree with intentional CI failure
@@ -752,6 +757,7 @@ class TestEndToEndScenario:
             )
 
     @pytest.mark.timeout(600)  # 10 minute timeout
+    @pytest.mark.slow  # Skip in default --run-all (real GitHub API, 10 min execution)
     async def test_orchestrator_integration_with_real_components(
         self,
         temp_worktree: Path,

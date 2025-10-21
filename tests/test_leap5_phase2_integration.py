@@ -17,6 +17,10 @@ Date: 2025-10-10
 Constitutional: Articles I, II, IV, V compliant
 """
 
+import pytest
+
+pytestmark = pytest.mark.timeout(120)  # 2 minute timeout for ML training tests
+
 import json
 import os
 import time

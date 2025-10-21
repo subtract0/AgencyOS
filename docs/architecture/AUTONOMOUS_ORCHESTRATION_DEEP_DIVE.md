@@ -277,11 +277,11 @@ def _execute_task_real(self, task: Task, worktree_path: Path) -> bool:
     mission_file.write_text(mission)
 
     # Invoke Claude Code Agent
-    from agency_code_agent import AgencyCodeAgent
+    from coding_agent import CodingAgent
     from shared.agent_context import create_agent_context
 
     context = create_agent_context(session_id=task.task_id)
-    agent = AgencyCodeAgent(context=context)
+    agent = CodingAgent(context=context)
 
     # Run agent with mission
     result = agent.execute_mission(

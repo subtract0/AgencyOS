@@ -31,7 +31,7 @@ Constitutional Framework
          ↓
     Task Breakdown (TodoWrite)
          ↓
-    Implementation (AgencyCodeAgent)
+    Implementation (CodingAgent)
          ↓
     Learning Extraction (LearningAgent)
 ```
@@ -66,7 +66,7 @@ Constitutional Framework
 ```
 User Request → Constitutional Check → Workflow Classification → Spec Creation → Plan Creation → Task Breakdown → Implementation
      ↓              ↓                      ↓                ↓              ↓             ↓              ↓
-Requirements → Compliance → Simple/Complex → Goals/Criteria → Architecture → TodoWrite → AgencyCodeAgent
+Requirements → Compliance → Simple/Complex → Goals/Criteria → Architecture → TodoWrite → CodingAgent
 ```
 
 ---
@@ -84,7 +84,7 @@ Requirements → Compliance → Simple/Complex → Goals/Criteria → Architectu
 - **Tools Required**: Read, Write, TodoWrite, VectorStore access
 - **Deliverables**: Specifications, technical plans, task breakdowns
 
-### Supporting Agent: AgencyCodeAgent
+### Supporting Agent: CodingAgent
 - **Role**: Implementation execution based on spec-kit outputs
 - **Tasks**:
   - Execute TodoWrite tasks with spec/plan references
@@ -113,7 +113,7 @@ Requirements → Compliance → Simple/Complex → Goals/Criteria → Architectu
 
 ### Agent Communication Flow
 ```
-User Request → PlannerAgent → (Spec Creation) → PlannerAgent → (Plan Creation) → PlannerAgent → (Task Breakdown) → AgencyCodeAgent
+User Request → PlannerAgent → (Spec Creation) → PlannerAgent → (Plan Creation) → PlannerAgent → (Task Breakdown) → CodingAgent
                     ↓                              ↓                              ↓                              ↓
             Constitutional Check           Architecture Design            TodoWrite Tasks              Implementation
                     ↓                              ↓                              ↓                              ↓
@@ -282,7 +282,7 @@ class SpecKitWorkflow:
 
 #### Phase 1: Foundation Setup (Current)
 **Duration**: 1 day
-**Agents**: AgencyCodeAgent (current implementation)
+**Agents**: CodingAgent (current implementation)
 **Deliverables**:
 - [x] constitution.md with all constitutional articles
 - [x] /specs directory with README.md and TEMPLATE.md
@@ -290,15 +290,15 @@ class SpecKitWorkflow:
 - [x] Enhanced PlannerAgent instructions
 
 **Tasks**:
-1. Create constitutional framework - AgencyCodeAgent ✓
-2. Establish directory structures - AgencyCodeAgent ✓
-3. Design specification template - AgencyCodeAgent ✓
-4. Design technical plan template - AgencyCodeAgent ✓
-5. Update PlannerAgent instructions - AgencyCodeAgent ✓
+1. Create constitutional framework - CodingAgent ✓
+2. Establish directory structures - CodingAgent ✓
+3. Design specification template - CodingAgent ✓
+4. Design technical plan template - CodingAgent ✓
+5. Update PlannerAgent instructions - CodingAgent ✓
 
 #### Phase 2: Workflow Validation (In Progress)
 **Duration**: 0.5 days
-**Agents**: PlannerAgent (enhanced), AgencyCodeAgent
+**Agents**: PlannerAgent (enhanced), CodingAgent
 **Deliverables**:
 - [ ] spec-001-spec-driven-development.md (this specification)
 - [ ] plan-001-spec-driven-development.md (this plan)
@@ -306,8 +306,8 @@ class SpecKitWorkflow:
 - [ ] Validated spec-kit workflow end-to-end
 
 **Tasks**:
-1. Create Phase 5 specification - AgencyCodeAgent ✓
-2. Create Phase 5 technical plan - AgencyCodeAgent ✓
+1. Create Phase 5 specification - CodingAgent ✓
+2. Create Phase 5 technical plan - CodingAgent ✓
 3. Break down remaining tasks - PlannerAgent (pending)
 4. Validate workflow effectiveness - PlannerAgent (pending)
 
@@ -506,7 +506,7 @@ class SpecKitWorkflow:
 
 ### Agent Time Allocation
 - **PlannerAgent**: 4 hours (enhanced instructions, workflow implementation)
-- **AgencyCodeAgent**: 2 hours (foundation setup, validation)
+- **CodingAgent**: 2 hours (foundation setup, validation)
 - **LearningAgent**: 1 hour (pattern extraction setup)
 - **AuditorAgent**: 1 hour (compliance validation)
 

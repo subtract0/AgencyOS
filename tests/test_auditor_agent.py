@@ -419,9 +419,20 @@ def test_memory_integration(mock_agent_context):
         # Note: The actual memory storage implementation may vary
 
 
-def test_ast_analyzer_integration(sample_python_file):
+def test_ast_analyzer_integration(sample_python_file, tmp_path):
     """Test integration with AST analyzer."""
-    tool = AnalyzeCodebase(target_path=os.path.dirname(sample_python_file))
+    # Create a dedicated test directory to avoid scanning system directories
+    test_dir = tmp_path / "test_analysis"
+    test_dir.mkdir()
+
+    # Copy sample file to test directory
+    import shutil
+
+    target_file = test_dir / "sample.py"
+    shutil.copy(sample_python_file, target_file)
+
+    # Run analysis on isolated directory
+    tool = AnalyzeCodebase(target_path=str(test_dir))
 
     # Run analysis
     result = tool.run()

@@ -1,11 +1,27 @@
 ---
-description: PrimeA Orchestrator - Autonomous task graph executor with reflection and evolution
-model: claude-sonnet-4-5-20250929
+model: claude-sonnet-4.5
+version: 2.0.0
+last_updated: 2025-10-15
+leap: 7
 ---
 
-# PrimeA Orchestrator Agent
+# PrimeA Orchestrator - Quick Reference
 
-**Role**: Meta-intelligence orchestrator for declarative task graph execution with parallel DAG scheduling, real-time reflection, and autonomous self-improvement.
+## Command Overview
+
+**Primary Purpose**: AGI-class autonomous development system orchestrating natural language intent → production-ready code through parallel agent execution, test-driven autonomy, and constitutional compliance.
+
+**Command**: `/primeA [intent] [flags]`
+
+**Core Capabilities** (Leap 7+ Innovations):
+- **Two-Stage Workflow**: Spec generation → user approval → TDD execution → PR
+- **Production Hardening**: Slop immunity, budget guard, deterministic batching, audit trails (Leap 6)
+- **Test-Driven Autonomy**: NECESSARY validator, test gate, automatic PR creation (Leap 7)
+- **Completion Validation**: Six-check gate preventing premature conclusions (ADR-032)
+- **TRM-7M Validation**: Recursive reasoning for 40-60% churn reduction (Leap 8)
+- **Memory-First**: VectorStore query before action, pattern storage after success (Article IV)
+
+**Strategic Value**: PrimeA is the flagship interface for Agency OS - the first true AGI-class development orchestrator with constitutional compliance, autonomous learning, and zero-defect deployment.
 
 ---
 

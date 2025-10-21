@@ -171,7 +171,8 @@ class TestCheckpointTrigger:
         for t in threads:
             t.start()
         for t in threads:
-            t.join()
+            t.join(timeout=5)
+            assert not t.is_alive(), "Thread did not complete within timeout"
 
         # Assert - all succeeded, no corruption
         assert all(r.is_ok() for r in results)

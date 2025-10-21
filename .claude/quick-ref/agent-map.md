@@ -16,11 +16,11 @@
 **Use When**: Feature planning, spec → plan transformation
 **Location**: `planner_agent/`
 
-### AgencyCodeAgent
+### CodingAgent
 **Purpose**: Primary development, TDD-first, Result<T,E> pattern
 **Model**: GPT-5 (medium reasoning)
 **Use When**: Implementation, coding, refactoring
-**Location**: `agency_code_agent/`
+**Location**: `coding_agent/`
 
 ### QualityEnforcer
 **Purpose**: Constitutional compliance, autonomous healing orchestration

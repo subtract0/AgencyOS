@@ -19,7 +19,7 @@ experimental modules to production status.
 
 **Production Criteria**:
 - ✅ 100% test coverage (all paths tested)
-- ✅ Strict Pydantic typing (no Dict[Any, Any])
+- ✅ Strict Pydantic typing (no untyped dicts)
 - ✅ Constitutional compliance (Articles I-V)
 - ✅ Result<T,E> error handling
 - ✅ Functions <50 lines

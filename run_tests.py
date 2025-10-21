@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Test Runner for Agency Code Agency
+Test Runner for AgencyOS Agency
 Runs all tests using pytest framework
 """
 
@@ -256,7 +256,9 @@ def main(
     fast_only: bool = False,
     timed: bool = False,
     with_docker: bool = False,
-    timeout_multiplier: float = 1.0
+    timeout_multiplier: float = 1.0,
+    json_report: bool = False,
+    json_report_file: str = ".report.json",
 ) -> int:
     # RECURSION GUARDS: Prevent nested test runs
     if os.environ.get("AGENCY_NESTED_TEST") == "1":
@@ -435,20 +437,31 @@ def main(
 
     # Test ignores (known problematic tests, not suitable for pytest.ini)
     # These are runtime issues, not configuration preferences
-    pytest_args.extend([
-        "--ignore=tests/test_firestore_learning_persistence.py",
-        "--ignore=tests/test_firestore_mock_integration.py",
-        "--ignore=tests/e2e/",  # e2e tests import agency at module level
-        "--ignore=tests/benchmarks/test_vectorstore_performance.py",  # Quarantined
-    ])
+    pytest_args.extend(
+        [
+            "--ignore=tests/test_firestore_learning_persistence.py",
+            "--ignore=tests/test_firestore_mock_integration.py",
+            "--ignore=tests/e2e/",  # e2e tests import agency at module level
+            "--ignore=tests/benchmarks/test_vectorstore_performance.py",  # Quarantined
+        ]
+    )
 
     # Memory-aware worker selection (ADR-023 integration)
     # Overrides pytest.ini static config (-n 6) with dynamic adjustment
+    # PYTEST_WORKERS env var overrides memory-aware selection (for CI)
     try:
-        from tools.memory_aware_test_runner import get_safe_worker_count
-        worker_count = get_safe_worker_count()
-        pytest_args.extend(["-n", str(worker_count)])
-        print(f"✓ pytest-xdist: {worker_count} workers (memory-aware, overrides pytest.ini)")
+        # Check for explicit worker override (CI environment)
+        worker_override = os.environ.get("PYTEST_WORKERS")
+        if worker_override:
+            worker_count = int(worker_override)
+            pytest_args.extend(["-n", str(worker_count)])
+            print(f"✓ pytest-xdist: {worker_count} workers (PYTEST_WORKERS override for CI)")
+        else:
+            from tools.memory_aware_test_runner import get_safe_worker_count
+
+            worker_count = get_safe_worker_count()
+            pytest_args.extend(["-n", str(worker_count)])
+            print(f"✓ pytest-xdist: {worker_count} workers (memory-aware, overrides pytest.ini)")
     except Exception:
         # Fallback to pytest.ini default (-n 6 --dist loadgroup)
         print("✓ pytest-xdist: using pytest.ini defaults (-n 6)")
@@ -461,9 +474,11 @@ def main(
     env["AGENCY_NESTED_TEST"] = "1"
     env["PYTHONUNBUFFERED"] = "1"  # Disable output buffering for immediate feedback
 
-    # CRITICAL: Disable VectorStore for tests (bypasses PyTorch segfault workaround)
-    # This restores 10-worker parallelism and reduces test time from 25+ minutes to <3 minutes
-    env["USE_ENHANCED_MEMORY"] = "false"
+    # VectorStore configuration: Respect CI/environment settings (Article IV compliance)
+    # Default to 'false' for local dev (performance), but allow CI override
+    if "USE_ENHANCED_MEMORY" not in os.environ:
+        env["USE_ENHANCED_MEMORY"] = "false"  # Local dev: disable for speed
+    # else: Keep CI value ('true' for Article IV constitutional compliance)
 
     # Prevent PyTorch/transformers segfault with parallel testing (SPEC-021)
     env["TOKENIZERS_PARALLELISM"] = "false"  # Disable tokenizer parallelism
@@ -499,14 +514,23 @@ def main(
     elif test_mode == "github":
         pytest_args.extend(["-m", "github"])
     elif test_mode == "all":
-        # For "all" mode, force running ALL tests including skipped ones
-        pytest_args.extend(["--runxfail", "-p", "no:warnings"])
+        # For "all" mode, run unit + integration BUT skip slow E2E tests (>5min each)
+        # Slow tests marked with @pytest.mark.slow include:
+        # - Real GitHub API tests (10-15 min each)
+        # - Large graph scale tests (10 min each)
+        pytest_args.extend(["-m", "not slow", "--runxfail", "-p", "no:warnings"])
         # Set environment variables to force-enable all conditional skips
         env["FORCE_RUN_ALL_TESTS"] = "1"
         env["AGENCY_SKIP_GIT"] = "0"
-        print("🚀 FORCE MODE: Running ALL tests including normally skipped ones")
+        print("🚀 FORCE MODE: Running ALL tests EXCEPT slow E2E (>5min each)")
+        print("   Slow tests skipped: test_full_autonomous_cycle_*, test_e2e_large_graph_scale")
         print("   This will make real API calls and may incur costs")
     # Default: no marker filtering - pytest.ini controls default behavior
+
+    # JSON report generation (if requested)
+    if json_report:
+        pytest_args.extend(["--json-report", f"--json-report-file={json_report_file}"])
+        print(f"📊 JSON report will be saved to: {json_report_file}")
 
     try:
         # Dynamic timeout calculation (Article I: Complete context before action)
@@ -518,9 +542,11 @@ def main(
 
         if timeout_multiplier > 1.0:
             print(f"⏰ Timeout multiplier: {timeout_multiplier}x (constitutional retry, Article I)")
-            print(f"⏰ Calculated timeout: {timeout_seconds}s ({timeout_seconds/60:.1f} minutes)")
+            print(f"⏰ Calculated timeout: {timeout_seconds}s ({timeout_seconds / 60:.1f} minutes)")
         else:
-            print(f"⏰ Dynamic timeout: {timeout_seconds}s ({timeout_seconds/60:.1f} minutes) for ~1,762 tests")
+            print(
+                f"⏰ Dynamic timeout: {timeout_seconds}s ({timeout_seconds / 60:.1f} minutes) for ~1,762 tests"
+            )
 
         # Debug: Print the exact command being run
         print(f"🔍 Running command: {' '.join(pytest_args)}\n")
@@ -554,7 +580,7 @@ def main(
             print(f"- {mode_descriptions.get(test_mode, test_mode)} executed successfully")
             print(f"- Execution time: {execution_time:.2f} seconds")
             print("- No failures or errors detected")
-            print("- Agency Code Agency is ready for use")
+            print("- AgencyOS Agency is ready for use")
         else:
             print("❌ Some tests failed!")
             print(f"Exit code: {result.returncode}")
@@ -562,7 +588,7 @@ def main(
             print("- Check the output above for specific test failures")
             print("- Ensure all dependencies are installed correctly")
             print("- Verify environment variables are set (if needed)")
-            print("- Check that all tool files are present in agency_code_agent/tools/")
+            print("- Check that all tool files are present in coding_agent/tools/")
             if test_mode == "integration":
                 print("- Integration tests may require additional setup or services")
 
@@ -576,10 +602,16 @@ def main(
         print("   - Recursive test execution")
         print("   - Hanging network requests")
         print("   - Deadlocks in async code")
-        print(f"\n💡 Constitutional retry options (Article I):")
-        print(f"   - 2x retry: python run_tests.py --run-all --timeout-multiplier 2.0  ({timeout_seconds*2/60:.1f} min)")
-        print(f"   - 3x retry: python run_tests.py --run-all --timeout-multiplier 3.0  ({timeout_seconds*3/60:.1f} min)")
-        print(f"   - 10x retry: python run_tests.py --run-all --timeout-multiplier 10.0 ({timeout_seconds*10/60:.1f} min)")
+        print("\n💡 Constitutional retry options (Article I):")
+        print(
+            f"   - 2x retry: python run_tests.py --run-all --timeout-multiplier 2.0  ({timeout_seconds * 2 / 60:.1f} min)"
+        )
+        print(
+            f"   - 3x retry: python run_tests.py --run-all --timeout-multiplier 3.0  ({timeout_seconds * 3 / 60:.1f} min)"
+        )
+        print(
+            f"   - 10x retry: python run_tests.py --run-all --timeout-multiplier 10.0 ({timeout_seconds * 10 / 60:.1f} min)"
+        )
         return 124  # Timeout exit code
 
     except FileNotFoundError:
@@ -668,7 +700,7 @@ def run_specific_test(test_name: str, timed: bool = False) -> int:
 def create_parser() -> argparse.ArgumentParser:
     """Create argument parser for test runner"""
     parser = argparse.ArgumentParser(
-        description="Agency Code Agency Test Runner",
+        description="AgencyOS Agency Test Runner",
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""Examples:
   python run_tests.py                    # Run unit tests only (default)
@@ -729,8 +761,21 @@ def create_parser() -> argparse.ArgumentParser:
         "--timeout-multiplier",
         type=float,
         default=1.0,
-        choices=[1.0, 2.0, 3.0, 10.0],
-        help="Timeout multiplier for constitutional retries (1.0=5min, 2.0=10min, 3.0=15min, 10.0=50min)",
+        help="Timeout multiplier for constitutional retries (e.g., 1.0=5min, 2.0=10min, 3.0=15min, 4.0=20min, 10.0=50min). Any positive float value is accepted.",
+    )
+
+    # JSON report generation
+    parser.add_argument(
+        "--json-report",
+        action="store_true",
+        help="Generate JSON report using pytest-json-report plugin",
+    )
+
+    parser.add_argument(
+        "--json-report-file",
+        type=str,
+        default=".report.json",
+        help="Path to JSON report file (default: .report.json)",
     )
 
     return parser
@@ -767,7 +812,9 @@ if __name__ == "__main__":
             fast_only=fast_only,
             timed=args.timed,
             with_docker=args.with_docker,
-            timeout_multiplier=args.timeout_multiplier
+            timeout_multiplier=args.timeout_multiplier,
+            json_report=args.json_report,
+            json_report_file=args.json_report_file,
         )
 
     sys.exit(exit_code)

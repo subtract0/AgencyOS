@@ -11,7 +11,7 @@ Author: CodeAgent
 Date: 2025-10-10
 """
 
-from datetime import datetime
+from datetime import UTC, datetime
 
 import pytest
 from pydantic import ValidationError
@@ -25,76 +25,87 @@ class TestPredictionLogModel:
     def test_creates_prediction_log_with_all_fields(self):
         """Test creating PredictionLog with all fields."""
         # Arrange
-        timestamp = datetime.utcnow()
+        timestamp = datetime.utcnow().isoformat() + "Z"
 
         # Act
         log = PredictionLog(
             task_id="task-123",
-            predicted_tier="P1",
-            actual_tier="P1",
+            tier="complex",
             confidence=0.85,
+            method="ml_model",
+            model_version="2025-10-10T12:00:00Z",
+            session_id="session_test",
             timestamp=timestamp,
-            method="ml",
+            class_probabilities={"complex": 0.85, "moderate": 0.10, "simple": 0.05},
         )
 
         # Assert
         assert log.task_id == "task-123"
-        assert log.predicted_tier == "P1"
-        assert log.actual_tier == "P1"
+        assert log.tier == "complex"
         assert log.confidence == 0.85
         assert log.timestamp == timestamp
-        assert log.method == "ml"
+        assert log.method == "ml_model"
+        assert log.model_version == "2025-10-10T12:00:00Z"
+        assert log.session_id == "session_test"
 
-    def test_creates_prediction_log_with_none_actual_tier(self):
-        """Test creating PredictionLog with None actual_tier (before execution)."""
+    def test_creates_prediction_log_with_minimal_fields(self):
+        """Test creating PredictionLog with minimal required fields."""
         # Act
         log = PredictionLog(
             task_id="task-456",
-            predicted_tier="P2",
-            actual_tier=None,
+            tier="moderate",
             confidence=0.72,
-            method="rules",
+            method="rule_based_fallback",
+            model_version="2025-10-10T12:00:00Z",
+            session_id="session_test",
         )
 
         # Assert
         assert log.task_id == "task-456"
-        assert log.predicted_tier == "P2"
-        assert log.actual_tier is None
+        assert log.tier == "moderate"
         assert log.confidence == 0.72
-        assert log.method == "rules"
-        assert isinstance(log.timestamp, datetime)
+        assert log.method == "rule_based_fallback"
+        assert log.model_version == "2025-10-10T12:00:00Z"
+        assert log.session_id == "session_test"
+        assert isinstance(log.timestamp, str)
 
     def test_creates_prediction_log_with_default_timestamp(self):
         """Test PredictionLog creates default timestamp."""
         # Act
+        from datetime import timezone
+
+        before = datetime.now(UTC)
         log = PredictionLog(
             task_id="task-789",
-            predicted_tier="P3",
-            actual_tier=None,
+            tier="simple",
             confidence=0.95,
-            method="ml",
+            method="ml_model",
+            model_version="2025-10-10T12:00:00Z",
+            session_id="session_test",
         )
+        after = datetime.now(UTC)
 
         # Assert
-        assert isinstance(log.timestamp, datetime)
-        # Timestamp should be recent (within last second)
-        time_diff = datetime.utcnow() - log.timestamp
-        assert time_diff.total_seconds() < 1.0
+        assert isinstance(log.timestamp, str)
+        # Timestamp should be ISO 8601 format
+        log_time = datetime.fromisoformat(log.timestamp.replace("Z", "+00:00"))
+        assert before <= log_time <= after
 
-    def test_rejects_invalid_predicted_tier(self):
+    def test_rejects_invalid_tier(self):
         """Test validation rejects invalid tier values."""
         # Act & Assert
         with pytest.raises(ValidationError) as exc_info:
             PredictionLog(
                 task_id="task-999",
-                predicted_tier="P4",  # Invalid tier
-                actual_tier=None,
+                tier="P4",  # Invalid tier
                 confidence=0.8,
-                method="ml",
+                method="ml_model",
+                model_version="2025-10-10T12:00:00Z",
+                session_id="session_test",
             )
 
         # Assert error message
-        assert "predicted_tier" in str(exc_info.value)
+        assert "tier" in str(exc_info.value)
 
     def test_rejects_invalid_confidence_below_zero(self):
         """Test validation rejects confidence < 0.0."""
@@ -102,10 +113,11 @@ class TestPredictionLogModel:
         with pytest.raises(ValidationError) as exc_info:
             PredictionLog(
                 task_id="task-neg",
-                predicted_tier="P1",
-                actual_tier=None,
+                tier="complex",
                 confidence=-0.1,  # Invalid
-                method="ml",
+                method="ml_model",
+                model_version="2025-10-10T12:00:00Z",
+                session_id="session_test",
             )
 
         # Assert error message
@@ -117,10 +129,11 @@ class TestPredictionLogModel:
         with pytest.raises(ValidationError) as exc_info:
             PredictionLog(
                 task_id="task-high",
-                predicted_tier="P2",
-                actual_tier=None,
+                tier="moderate",
                 confidence=1.5,  # Invalid
-                method="ml",
+                method="ml_model",
+                model_version="2025-10-10T12:00:00Z",
+                session_id="session_test",
             )
 
         # Assert error message
@@ -132,10 +145,11 @@ class TestPredictionLogModel:
         with pytest.raises(ValidationError) as exc_info:
             PredictionLog(
                 task_id="task-bad",
-                predicted_tier="P1",
-                actual_tier=None,
+                tier="complex",
                 confidence=0.8,
                 method="unknown",  # Invalid method
+                model_version="2025-10-10T12:00:00Z",
+                session_id="session_test",
             )
 
         # Assert error message
@@ -144,14 +158,16 @@ class TestPredictionLogModel:
     def test_to_dict_exports_all_fields(self):
         """Test to_dict() exports all fields correctly."""
         # Arrange
-        timestamp = datetime(2025, 10, 10, 12, 30, 0)
+        timestamp = "2025-10-10T12:30:00Z"
         log = PredictionLog(
             task_id="task-export",
-            predicted_tier="P2",
-            actual_tier="P1",
+            tier="moderate",
             confidence=0.78,
+            method="ml_model",
+            model_version="2025-10-10T12:00:00Z",
+            session_id="session_test",
             timestamp=timestamp,
-            method="ml",
+            class_probabilities={"moderate": 0.78, "simple": 0.12, "complex": 0.10},
         )
 
         # Act
@@ -159,39 +175,47 @@ class TestPredictionLogModel:
 
         # Assert
         assert data["task_id"] == "task-export"
-        assert data["predicted_tier"] == "P2"
-        assert data["actual_tier"] == "P1"
+        assert data["tier"] == "moderate"
         assert data["confidence"] == 0.78
-        assert data["timestamp"] == "2025-10-10T12:30:00"
-        assert data["method"] == "ml"
+        assert data["timestamp"] == timestamp
+        assert data["method"] == "ml_model"
+        assert data["model_version"] == "2025-10-10T12:00:00Z"
+        assert data["session_id"] == "session_test"
+        assert data["class_probabilities"] == {"moderate": 0.78, "simple": 0.12, "complex": 0.10}
 
-    def test_to_dict_handles_none_actual_tier(self):
-        """Test to_dict() handles None actual_tier."""
+    def test_to_dict_handles_optional_fields(self):
+        """Test to_dict() handles optional fields correctly."""
         # Arrange
         log = PredictionLog(
-            task_id="task-none",
-            predicted_tier="P3",
-            actual_tier=None,
+            task_id="task-optional",
+            tier="simple",
             confidence=0.9,
-            method="rules",
+            method="rule_based_fallback",
+            model_version="2025-10-10T12:00:00Z",
+            session_id="session_test",
+            ab_group="new_model",
+            fallback_reason="ML confidence below threshold",
         )
 
         # Act
         data = log.to_dict()
 
         # Assert
-        assert data["actual_tier"] is None
+        assert data["ab_group"] == "new_model"
+        assert data["fallback_reason"] == "ML confidence below threshold"
 
     def test_from_dict_deserializes_correctly(self):
         """Test from_dict() deserializes data correctly."""
         # Arrange
         data = {
             "task_id": "task-deser",
-            "predicted_tier": "P1",
-            "actual_tier": "P2",
+            "tier": "complex",
             "confidence": 0.82,
-            "timestamp": "2025-10-10T15:45:00",
-            "method": "ml",
+            "method": "ml_model",
+            "model_version": "2025-10-10T12:00:00Z",
+            "session_id": "session_test",
+            "timestamp": "2025-10-10T15:45:00Z",
+            "class_probabilities": {"complex": 0.82, "moderate": 0.13, "simple": 0.05},
         }
 
         # Act
@@ -199,37 +223,42 @@ class TestPredictionLogModel:
 
         # Assert
         assert log.task_id == "task-deser"
-        assert log.predicted_tier == "P1"
-        assert log.actual_tier == "P2"
+        assert log.tier == "complex"
         assert log.confidence == 0.82
-        assert log.timestamp == datetime(2025, 10, 10, 15, 45, 0)
-        assert log.method == "ml"
+        assert log.timestamp == "2025-10-10T15:45:00Z"
+        assert log.method == "ml_model"
+        assert log.model_version == "2025-10-10T12:00:00Z"
+        assert log.session_id == "session_test"
 
-    def test_from_dict_handles_none_actual_tier(self):
-        """Test from_dict() handles None actual_tier."""
+    def test_from_dict_handles_optional_fields(self):
+        """Test from_dict() handles optional fields correctly."""
         # Arrange
         data = {
-            "task_id": "task-deser-none",
-            "predicted_tier": "P3",
-            "actual_tier": None,
+            "task_id": "task-deser-optional",
+            "tier": "simple",
             "confidence": 0.95,
-            "timestamp": "2025-10-10T16:00:00",
-            "method": "rules",
+            "method": "rule_based_fallback",
+            "model_version": "2025-10-10T12:00:00Z",
+            "session_id": "session_test",
+            "timestamp": "2025-10-10T16:00:00Z",
+            "ab_group": "control",
+            "fallback_reason": "Testing fallback",
         }
 
         # Act
         log = PredictionLog.from_dict(data)
 
         # Assert
-        assert log.actual_tier is None
+        assert log.ab_group == "control"
+        assert log.fallback_reason == "Testing fallback"
 
     def test_from_dict_rejects_missing_required_fields(self):
         """Test from_dict() rejects data with missing required fields."""
         # Arrange
         data = {
             "task_id": "task-incomplete",
-            "predicted_tier": "P1",
-            # Missing confidence, method
+            "tier": "complex",
+            # Missing confidence, method, model_version, session_id
         }
 
         # Act & Assert
@@ -239,68 +268,49 @@ class TestPredictionLogModel:
     def test_supports_all_tier_values(self):
         """Test PredictionLog supports all valid tier values."""
         # Act & Assert
-        for tier in ["P1", "P2", "P3"]:
+        for tier in ["simple", "moderate", "complex"]:
             log = PredictionLog(
                 task_id=f"task-{tier}",
-                predicted_tier=tier,
-                actual_tier=tier,
+                tier=tier,
                 confidence=0.9,
-                method="ml",
+                method="ml_model",
+                model_version="2025-10-10T12:00:00Z",
+                session_id="session_test",
             )
-            assert log.predicted_tier == tier
-            assert log.actual_tier == tier
+            assert log.tier == tier
 
     def test_supports_both_method_values(self):
         """Test PredictionLog supports both valid method values."""
         # Act & Assert
-        for method in ["ml", "rules"]:
+        for method in ["ml_model", "rule_based_fallback"]:
             log = PredictionLog(
                 task_id=f"task-{method}",
-                predicted_tier="P2",
-                actual_tier=None,
+                tier="moderate",
                 confidence=0.8,
                 method=method,
+                model_version="2025-10-10T12:00:00Z",
+                session_id="session_test",
             )
             assert log.method == method
 
-    def test_is_mispredicted_returns_false_when_no_actual_tier(self):
-        """Test is_mispredicted() returns False when actual_tier is None."""
-        # Arrange
+    def test_legacy_field_support(self):
+        """Test legacy predicted_tier/actual_tier fields are excluded from serialization."""
+        # Arrange - Create log with legacy fields (should be ignored)
         log = PredictionLog(
-            task_id="task-pending",
-            predicted_tier="P1",
-            actual_tier=None,
+            task_id="task-legacy",
+            tier="complex",
             confidence=0.85,
-            method="ml",
+            method="ml_model",
+            model_version="2025-10-10T12:00:00Z",
+            session_id="session_test",
+            predicted_tier="P1",  # Legacy field - should be excluded
+            actual_tier="P2",  # Legacy field - should be excluded
         )
 
-        # Act & Assert
-        assert log.is_mispredicted() is False
+        # Act
+        data = log.to_dict()
 
-    def test_is_mispredicted_returns_false_when_tiers_match(self):
-        """Test is_mispredicted() returns False when tiers match."""
-        # Arrange
-        log = PredictionLog(
-            task_id="task-correct",
-            predicted_tier="P2",
-            actual_tier="P2",
-            confidence=0.9,
-            method="ml",
-        )
-
-        # Act & Assert
-        assert log.is_mispredicted() is False
-
-    def test_is_mispredicted_returns_true_when_tiers_differ(self):
-        """Test is_mispredicted() returns True when tiers differ."""
-        # Arrange
-        log = PredictionLog(
-            task_id="task-wrong",
-            predicted_tier="P3",
-            actual_tier="P1",
-            confidence=0.75,
-            method="ml",
-        )
-
-        # Act & Assert
-        assert log.is_mispredicted() is True
+        # Assert - Legacy fields excluded from dict
+        assert "predicted_tier" not in data
+        assert "actual_tier" not in data
+        assert data["tier"] == "complex"  # New field present

@@ -349,12 +349,13 @@ class SpecGenerator:
             # Build Success Criteria section
             success_criteria = self._build_success_criteria(intent)
 
-            # Build metadata
-            metadata = {
-                "intent_priority": intent.priority,
-                "intent_tags": intent.tags,
-                "patterns_used": len(patterns),
-            }
+            # Build metadata (SpecMetadata Pydantic model)
+            metadata = SpecMetadata(
+                priority=intent.priority,
+                tags=intent.tags,
+                estimated_complexity="moderate",
+                related_specs=[],
+            )
 
             # Create Spec model
             spec = Spec(

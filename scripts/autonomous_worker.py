@@ -290,7 +290,7 @@ Implement the feature according to the specification.
    - Use Result<T,E> pattern for error handling
    - Use Pydantic models for data structures
    - Functions under 50 lines
-   - No `Dict[Any, Any]`
+   - No untyped dicts
 
 ### Output:
 Modify files as specified in task
@@ -433,7 +433,7 @@ Ensure constitutional compliance at all steps.
 
 Follow these principles:
 - Write clean, tested, typed code
-- Use Pydantic models (never Dict[Any, Any])
+- Use Pydantic models (never untyped dicts)
 - Use Result<T,E> pattern for errors
 - Keep functions under 50 lines
 - Write tests before implementation (TDD)

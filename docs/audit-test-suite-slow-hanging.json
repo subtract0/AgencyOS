@@ -1,0 +1,278 @@
+{
+  "analysis_timestamp": "2025-10-16",
+  "analysis_type": "slow_and_hanging_tests",
+  "total_test_files_analyzed": 175,
+  "critical_issues_found": 18,
+
+  "slow_tests": [
+    {
+      "file": "tests/test_checkpoint_manager.py",
+      "tests": [
+        "test_interval_timer_creates_checkpoint::line 576",
+        "test_interval_timer_multiple_triggers::line 598"
+      ],
+      "severity": "critical",
+      "issue": "Excessive time.sleep() calls (61s, 125s)",
+      "impact": "Together add ~3 minutes to test suite",
+      "recommendation": "Mock interval timers or use fake time (freezegun)",
+      "status": "marked with @pytest.mark.skip"
+    },
+    {
+      "file": "tests/test_heartbeat.py",
+      "tests": [
+        "test_heartbeat_start_stop::line 54",
+        "test_heartbeat_handles_filesystem_errors_gracefully::line 153"
+      ],
+      "severity": "high",
+      "issue": "Multiple time.sleep(1.5-2.5) calls in single test",
+      "impact": "~5-7 seconds per test",
+      "recommendation": "Mock heartbeat intervals, use threading.Event instead of sleep",
+      "status": "marked @pytest.mark.slow"
+    },
+    {
+      "file": "tests/test_distributed_locks.py",
+      "tests": [
+        "test_heartbeat_updates_timestamp::line 443",
+        "test_heartbeat_stops_when_lock_released::line 483",
+        "test_heartbeat_prevents_stale_lock::line 518"
+      ],
+      "severity": "high",
+      "issue": "Multiple time.sleep(2-4) calls for lock heartbeat testing",
+      "impact": "~10 seconds total",
+      "recommendation": "Mock heartbeat mechanism, use configurable intervals for testing",
+      "status": "active"
+    },
+    {
+      "file": "tests/test_overnight_integration.py",
+      "tests": [
+        "test_timeout_enforcement_60_minute_limit::line 801"
+      ],
+      "severity": "medium",
+      "issue": "time.sleep(100) for timeout testing",
+      "impact": "Test marked with timeout(10), but sleep(100) will cause timeout",
+      "recommendation": "Use timeout=2 and sleep(1) to test timeout logic faster",
+      "status": "active with @pytest.mark.timeout(10)"
+    },
+    {
+      "file": "tests/test_firestore_learning_persistence.py",
+      "tests": [
+        "multiple tests with time.sleep(1-2)"
+      ],
+      "severity": "medium",
+      "issue": "Waiting for Firestore operations (6+ sleep calls)",
+      "impact": "~8-10 seconds",
+      "recommendation": "Mock Firestore client, use async/await with faster intervals",
+      "status": "active"
+    }
+  ],
+
+  "hanging_tests": [
+    {
+      "file": "tests/foundation_automation/test_e2e_natural_language_flow.py",
+      "test": "test_e2e_large_graph_scale::line 848",
+      "severity": "critical",
+      "issue": "10 minute timeout (@pytest.mark.timeout(600)), complex async graph execution",
+      "blocking_operations": [
+        "20-task graph execution with memory tracking",
+        "tracemalloc overhead",
+        "potential asyncio.gather() without proper error handling"
+      ],
+      "recommendation": "Reduce graph size to 5-10 tasks for testing, add intermediate progress logging",
+      "status": "active"
+    },
+    {
+      "file": "tests/tools/ci_monitor/test_end_to_end_scenario.py",
+      "test": "test_full_autonomous_cycle_intentional_failure_to_success::line 372",
+      "severity": "critical",
+      "issue": "15 minute timeout (@pytest.mark.timeout(900)), real GitHub API interaction",
+      "blocking_operations": [
+        "Real GitHub PR creation",
+        "CI job polling (30s intervals)",
+        "Potential infinite wait if CI never completes"
+      ],
+      "recommendation": "Mock GitHub API, use fixture-based CI status instead of real polling",
+      "status": "active"
+    },
+    {
+      "file": "tests/orchestrator/test_foundation_automation_git_validation.py",
+      "tests": "multiple tests with subprocess.run calls",
+      "severity": "high",
+      "issue": "29 subprocess.run() calls without timeout parameter",
+      "blocking_operations": [
+        "git init, git add, git commit commands",
+        "subprocess.run() missing timeout= parameter",
+        "Potential hang if git command blocks"
+      ],
+      "recommendation": "Add timeout=10 to all subprocess.run() calls",
+      "fix_pattern": "subprocess.run([...], timeout=10, ...)",
+      "status": "active"
+    },
+    {
+      "file": "tests/orchestrator/test_pr_creator.py",
+      "tests": "multiple git/gh command tests",
+      "severity": "high",
+      "issue": "20+ subprocess.run() calls for git/gh CLI without timeouts",
+      "blocking_operations": [
+        "git push operations",
+        "gh pr create (GitHub CLI)",
+        "git merge operations"
+      ],
+      "recommendation": "Add timeout=30 for network operations (git push, gh pr create)",
+      "status": "active"
+    },
+    {
+      "file": "tests/orchestrator/test_unified_primea_orchestrator.py",
+      "tests": "git workflow tests",
+      "severity": "high",
+      "issue": "15+ subprocess.run() calls without timeout",
+      "blocking_operations": [
+        "git init",
+        "git config",
+        "git add/commit"
+      ],
+      "recommendation": "Add timeout=10 to all subprocess.run() calls",
+      "status": "active"
+    }
+  ],
+
+  "missing_timeouts_on_async": [
+    {
+      "file": "tests/foundation_automation/test_e2e_natural_language_flow.py",
+      "issue": "Large async graph execution without intermediate timeouts",
+      "recommendation": "Add asyncio.wait_for() around individual task executions",
+      "status": "active"
+    },
+    {
+      "file": "tests/orchestrator/test_foundation_automation_e2e.py",
+      "issue": "async def test_ functions without per-operation timeouts",
+      "recommendation": "Wrap long operations in asyncio.wait_for(op, timeout=30)",
+      "status": "active"
+    }
+  ],
+
+  "subprocess_without_cleanup": [
+    {
+      "files": [
+        "tests/orchestrator/test_foundation_automation_git_validation.py",
+        "tests/orchestrator/test_pr_creator.py",
+        "tests/orchestrator/test_unified_primea_orchestrator.py",
+        "tests/tools/ci_monitor/test_fix_applicator.py"
+      ],
+      "issue": "subprocess.run() calls without timeout parameter",
+      "count": "80+ occurrences",
+      "severity": "critical",
+      "recommendation": "Add timeout=10 (local git) or timeout=30 (network) to all subprocess.run() calls",
+      "fix_pattern": "subprocess.run([cmd], capture_output=True, text=True, timeout=10, check=True)"
+    }
+  ],
+
+  "tests_with_long_timeouts": [
+    {
+      "file": "tests/tools/ci_monitor/test_end_to_end_scenario.py",
+      "timeout": 900,
+      "reason": "Full autonomous CI cycle with real GitHub API",
+      "recommendation": "Mock GitHub API to reduce to 30s timeout"
+    },
+    {
+      "file": "tests/foundation_automation/test_e2e_natural_language_flow.py",
+      "timeout": 600,
+      "reason": "Large graph execution (20 tasks)",
+      "recommendation": "Reduce graph size to 5-10 tasks, reduce timeout to 60s"
+    }
+  ],
+
+  "blocking_operations": [
+    {
+      "operation": "time.sleep(>5 seconds)",
+      "locations": [
+        "test_checkpoint_manager.py: sleep(61), sleep(125)",
+        "test_distributed_locks.py: sleep(2-4) in 8 tests",
+        "test_firestore_learning_persistence.py: sleep(1-2) in 6 tests",
+        "test_overnight_integration.py: sleep(100)"
+      ],
+      "total_blocking_time": "~200 seconds if all run",
+      "recommendation": "Replace with mock timers or use fake time library"
+    },
+    {
+      "operation": "subprocess.run() without timeout",
+      "locations": [
+        "orchestrator/ tests: 80+ calls",
+        "tools/ci_monitor/ tests: 40+ calls",
+        "trinity_protocol/ tests: 20+ calls"
+      ],
+      "total_calls": "140+",
+      "recommendation": "Add timeout parameter to prevent infinite hangs"
+    },
+    {
+      "operation": "Real GitHub API calls",
+      "locations": [
+        "tools/ci_monitor/test_end_to_end_scenario.py",
+        "orchestrator/test_pr_creator.py (some tests)"
+      ],
+      "recommendation": "Mock gh CLI responses, use fixtures for CI status"
+    }
+  ],
+
+  "recommendations": [
+    {
+      "priority": 1,
+      "action": "Add timeout=10 to all subprocess.run() calls in orchestrator/ tests",
+      "impact": "Prevents infinite hangs on git commands",
+      "files_affected": 15,
+      "estimated_fixes": 80
+    },
+    {
+      "priority": 2,
+      "action": "Replace long time.sleep() calls with mocked timers",
+      "impact": "Reduces test suite time by ~3-4 minutes",
+      "files_affected": 5,
+      "specific_tests": [
+        "test_checkpoint_manager.py (skip already applied)",
+        "test_distributed_locks.py",
+        "test_firestore_learning_persistence.py"
+      ]
+    },
+    {
+      "priority": 3,
+      "action": "Reduce timeout on large async tests",
+      "impact": "Faster failure detection, prevents 10-15 minute hangs",
+      "files_affected": 2,
+      "changes": [
+        "test_e2e_natural_language_flow.py: 600s -> 120s",
+        "test_end_to_end_scenario.py: Mock GitHub API instead of real calls"
+      ]
+    },
+    {
+      "priority": 4,
+      "action": "Add intermediate timeouts to async operations",
+      "impact": "Better error localization in async tests",
+      "pattern": "await asyncio.wait_for(task.execute(), timeout=30)"
+    },
+    {
+      "priority": 5,
+      "action": "Mock heartbeat intervals for faster testing",
+      "impact": "Reduces heartbeat tests from 5-7s to <1s",
+      "files_affected": 3
+    }
+  ],
+
+  "quick_wins": [
+    "Add timeout=10 to subprocess.run() in test_foundation_automation_git_validation.py (29 calls)",
+    "Add timeout=30 to subprocess.run() in test_pr_creator.py (20 calls)",
+    "Skip or mark as @pytest.mark.slow the test_e2e_large_graph_scale test (600s timeout)",
+    "Mock GitHub API in test_end_to_end_scenario.py to avoid 900s timeout"
+  ],
+
+  "estimated_time_savings": {
+    "subprocess_timeouts": "Prevents indefinite hangs (could save 20+ minutes on timeout failures)",
+    "sleep_replacements": "3-4 minutes per full test run",
+    "async_timeout_reductions": "8-10 minutes on slow async tests",
+    "total_potential_savings": "11-14 minutes per test run + hang prevention"
+  },
+
+  "constitutional_compliance": {
+    "article_i": "Complete Context Before Action - VIOLATED by tests that timeout incomplete",
+    "article_ii": "100% Verification - VIOLATED by hanging tests that prevent full suite completion",
+    "recommendation": "Fix blocking operations to ensure Article I & II compliance"
+  }
+}
