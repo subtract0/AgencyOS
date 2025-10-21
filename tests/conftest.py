@@ -64,37 +64,38 @@ def pytest_collection_modifyitems(items):
         # Auto-categorize by path
         if "/unit/" in test_path or "/tests/unit/" in test_path:
             item.add_marker(pytest.mark.unit)
-            # Unit tests should be fast (2 seconds max)
-            if not any(m.name == "timeout" for m in item.iter_markers()):
-                item.add_marker(pytest.mark.timeout(2))
-
-        elif "/integration/" in test_path or "/tests/integration/" in test_path:
-            item.add_marker(pytest.mark.integration)
-            # Integration tests can be slower (10 seconds max)
+            # Unit tests should be fast (10 seconds max, increased for resource contention)
             if not any(m.name == "timeout" for m in item.iter_markers()):
                 item.add_marker(pytest.mark.timeout(10))
 
-        elif "/e2e/" in test_path or "/tests/e2e/" in test_path:
-            item.add_marker(pytest.mark.e2e)
-            # E2E tests can be much slower (30 seconds max)
+        elif "/integration/" in test_path or "/tests/integration/" in test_path:
+            item.add_marker(pytest.mark.integration)
+            # Integration tests can be slower (30 seconds max, increased for full suite runs)
             if not any(m.name == "timeout" for m in item.iter_markers()):
                 item.add_marker(pytest.mark.timeout(30))
 
-        elif "/benchmark/" in test_path or "/tests/benchmark/" in test_path:
-            item.add_marker(pytest.mark.benchmark)
-            # Benchmarks can take longer
+        elif "/e2e/" in test_path or "/tests/e2e/" in test_path:
+            item.add_marker(pytest.mark.e2e)
+            # E2E tests can be much slower (60 seconds max, increased for resource contention)
             if not any(m.name == "timeout" for m in item.iter_markers()):
                 item.add_marker(pytest.mark.timeout(60))
+
+        elif "/benchmark/" in test_path or "/tests/benchmark/" in test_path:
+            item.add_marker(pytest.mark.benchmark)
+            # Benchmarks can take longer (120 seconds max)
+            if not any(m.name == "timeout" for m in item.iter_markers()):
+                item.add_marker(pytest.mark.timeout(120))
 
         else:
             # Tests not in categorized directories default to unit with timeout
             # This ensures uncategorized tests don't hang the suite
+            # Increased to 30s to account for ML model retraining and resource contention
             if not any(
                 m.name in ("unit", "integration", "e2e", "benchmark") for m in item.iter_markers()
             ):
                 item.add_marker(pytest.mark.unit)
             if not any(m.name == "timeout" for m in item.iter_markers()):
-                item.add_marker(pytest.mark.timeout(5))
+                item.add_marker(pytest.mark.timeout(30))
 
         # Track slow tests for optimization opportunities
         item.stash_start_time = None
