@@ -258,9 +258,7 @@ def validate_branch_safety(
         error = branch_result.unwrap_err()
 
         # Graceful fallback for non-repo contexts (ONLY if explicitly enabled)
-        if graceful_fallback and (
-            "not a git repository" in error.message.lower()
-        ):
+        if graceful_fallback and ("not a git repository" in error.message.lower()):
             # Return Ok with special "non-repo" marker
             return Ok("non-repo")
 

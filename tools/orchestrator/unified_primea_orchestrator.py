@@ -230,9 +230,7 @@ class ExecutionResult(BaseModel):
 
     # Additional E2E fields (optional, populated by execute_e2e_workflow)
     spec_approved: bool = Field(default=False, description="Spec approved (two-stage workflow)")
-    two_stage_completed: bool = Field(
-        default=False, description="Two-stage workflow completed"
-    )
+    two_stage_completed: bool = Field(default=False, description="Two-stage workflow completed")
     graph_saved: bool = Field(default=False, description="Graph saved (plan-only mode)")
     graph_path: str | None = Field(None, description="Saved graph file path")
     tasks_executed: bool = Field(default=True, description="Tasks executed (not plan-only)")
@@ -395,10 +393,7 @@ class UnifiedPrimeAOrchestrator:
         }
 
         # Detect unknown flags
-        valid_flags = {
-            "two-stage", "plan-only", "visualize", "auto-pr",
-            "no-pr", "force", "help"
-        }
+        valid_flags = {"two-stage", "plan-only", "visualize", "auto-pr", "no-pr", "force", "help"}
         unknown_flags = set(flags.keys()) - valid_flags
         if unknown_flags:
             raise ValueError(f"Unknown flags: {', '.join(unknown_flags)}")
@@ -465,16 +460,20 @@ Constitutional Compliance:
         # FLAG-008: Validate flag combinations
         invalid_combinations = [
             # --plan-only + --auto-pr (plan-only doesn't execute, so no PR)
-            (flags.get("plan-only") and flags.get("auto-pr"),
-             "Invalid flag combination: --plan-only and --auto-pr (plan-only doesn't execute code)"),
-
+            (
+                flags.get("plan-only") and flags.get("auto-pr"),
+                "Invalid flag combination: --plan-only and --auto-pr (plan-only doesn't execute code)",
+            ),
             # --two-stage + --plan-only (contradictory workflows)
-            (flags.get("two-stage") and flags.get("plan-only"),
-             "Invalid flag combination: --two-stage and --plan-only (contradictory workflows)"),
-
+            (
+                flags.get("two-stage") and flags.get("plan-only"),
+                "Invalid flag combination: --two-stage and --plan-only (contradictory workflows)",
+            ),
             # --two-stage + --plan-only + --auto-pr (triple conflict)
-            (flags.get("two-stage") and flags.get("plan-only") and flags.get("auto-pr"),
-             "Invalid flag combination: --two-stage, --plan-only, and --auto-pr are mutually exclusive"),
+            (
+                flags.get("two-stage") and flags.get("plan-only") and flags.get("auto-pr"),
+                "Invalid flag combination: --two-stage, --plan-only, and --auto-pr are mutually exclusive",
+            ),
         ]
 
         for condition, error_msg in invalid_combinations:
@@ -898,7 +897,11 @@ Constitutional Compliance:
                 line_stripped = line.strip()
 
                 # Format 1: Complex format with ### header
-                if line_stripped.startswith("###") and "[" in line_stripped and "]" in line_stripped:
+                if (
+                    line_stripped.startswith("###")
+                    and "[" in line_stripped
+                    and "]" in line_stripped
+                ):
                     # Save previous task if exists
                     if current_task:
                         tasks.append(current_task)
@@ -921,7 +924,9 @@ Constitutional Compliance:
 
                 # Format 2: Simple checkbox format
                 # Example: "- [ ] Priority 1: Fix authentication bug in login flow"
-                elif line_stripped.startswith("-") and "[" in line_stripped and "]" in line_stripped:
+                elif (
+                    line_stripped.startswith("-") and "[" in line_stripped and "]" in line_stripped
+                ):
                     # Extract checkbox status
                     checkbox_start = line_stripped.index("[") + 1
                     checkbox_end = line_stripped.index("]")
@@ -1193,7 +1198,9 @@ Constitutional Compliance:
                                     tier=TaskTier.TIER_2,
                                     agent="test_generator",
                                     description="Verify PR prerequisites: all tests pass, no uncommitted changes (RED phase)",
-                                    dependencies=[f"{task_prefix}_code"],  # Depends on Phase 1 Code task
+                                    dependencies=[
+                                        f"{task_prefix}_code"
+                                    ],  # Depends on Phase 1 Code task
                                     verification_target="create_pull_request",
                                 ),
                                 Task(
@@ -1206,7 +1213,9 @@ Constitutional Compliance:
                                         f"Create GitHub PR for: {intent}. "
                                         "Trigger CI checks (Article II - 100% verification required - GREEN phase)."
                                     ),
-                                    dependencies=["test_pull_request"],  # Code depends on Test (TDD)
+                                    dependencies=[
+                                        "test_pull_request"
+                                    ],  # Code depends on Test (TDD)
                                     acceptance_criteria=[
                                         "PR created with comprehensive description",
                                         "CI workflow triggered",
@@ -2611,7 +2620,6 @@ async def execute_task(
         - Permanent errors (PermissionError, ValueError): Fail immediately after max retries
         - Backoff: 1s, 2s, 4s, 8s...
     """
-    import asyncio
 
     attempt = 0
     backoff_seconds = 1.0
@@ -2738,8 +2746,8 @@ async def execute_primea_workflow(
                 "Provide a natural language intent string",
                 "Pass an explicit TaskGraph object",
                 "Specify a backlog_path for auto-selection",
-                "Provide a graph_file path to load"
-            ]
+                "Provide a graph_file path to load",
+            ],
         )
         return Err(error)
 
@@ -2751,8 +2759,8 @@ async def execute_primea_workflow(
             suggestions=[
                 "Provide a descriptive mission statement",
                 "Use specific, actionable language",
-                "Example: 'Add JWT authentication to API endpoints'"
-            ]
+                "Example: 'Add JWT authentication to API endpoints'",
+            ],
         )
         return Err(error)
 
@@ -2778,8 +2786,7 @@ async def execute_primea_workflow(
         # Check for SQL injection patterns (case-insensitive)
         intent_upper = intent.upper()
         dangerous_patterns_found = [
-            pattern for pattern in sql_injection_patterns
-            if pattern in intent_upper
+            pattern for pattern in sql_injection_patterns if pattern in intent_upper
         ]
 
         if dangerous_patterns_found:
@@ -2788,11 +2795,9 @@ async def execute_primea_workflow(
             for pattern in dangerous_patterns_found:
                 # Remove the pattern (case-insensitive replacement)
                 import re
+
                 sanitized_intent = re.sub(
-                    re.escape(pattern),
-                    "",
-                    sanitized_intent,
-                    flags=re.IGNORECASE
+                    re.escape(pattern), "", sanitized_intent, flags=re.IGNORECASE
                 )
 
             # Remove single quotes and semicolons to prevent SQL string escaping
@@ -2925,10 +2930,7 @@ async def execute_primea_workflow(
             # Execute task with retry logic (Article I)
             try:
                 task_result = await execute_task(
-                    task=task,
-                    context=context,
-                    repo_path=repo_path,
-                    max_retries=3
+                    task=task, context=context, repo_path=repo_path, max_retries=3
                 )
 
                 if task_result.is_ok():
@@ -2954,7 +2956,7 @@ async def execute_primea_workflow(
                 "Check task execution logs for permission or configuration errors",
                 "Verify dependencies are met",
                 "Check for transient vs permanent failures",
-            ]
+            ],
         )
         return Err(error.reason)
 
@@ -2971,7 +2973,9 @@ async def execute_primea_workflow(
         if result_check.returncode == 0:
             # Create a marker file to ensure there's something to commit
             marker_path = Path(repo_path) / ".primea_execution_marker"
-            marker_path.write_text(f"Execution completed: {mission}\nTimestamp: {start_time.isoformat()}\n")
+            marker_path.write_text(
+                f"Execution completed: {mission}\nTimestamp: {start_time.isoformat()}\n"
+            )
 
             # Stage all changes (including marker file)
             subprocess.run(

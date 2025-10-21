@@ -69,7 +69,11 @@ def test_run_tests_with_memory_aware_config():
     assert result.returncode in [0, 5], f"Test execution failed:\n{result.stdout}\n{result.stderr}"
     # Check for either "passed" (with or without ANSI codes) or "no tests collected"
     stdout_clean = result.stdout.replace("\x1b", "").lower()  # Remove ANSI escape codes
-    assert "passed" in stdout_clean or "no tests ran" in stdout_clean or "no tests collected" in stdout_clean, "Test should pass or not be found"
+    assert (
+        "passed" in stdout_clean
+        or "no tests ran" in stdout_clean
+        or "no tests collected" in stdout_clean
+    ), "Test should pass or not be found"
 
 
 @pytest.mark.integration

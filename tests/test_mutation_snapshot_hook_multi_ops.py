@@ -46,9 +46,7 @@ def test_snapshot_hook_multi_operations(tmp_path):
             ]
         )
         wrapper = DummyWrapper()
-        asyncio.run(
-            hook.on_tool_start(wrapper, agent=None, tool=tool)
-        )
+        asyncio.run(hook.on_tool_start(wrapper, agent=None, tool=tool))
 
         snaps_dir = root / "logs" / "snapshots"
         assert snaps_dir.exists()

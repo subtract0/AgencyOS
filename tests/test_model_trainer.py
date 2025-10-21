@@ -113,6 +113,7 @@ def mock_sklearn_training(monkeypatch):
     - Model.score() - returns 0.99
     - accuracy_score - returns 0.985 (above 98% threshold)
     """
+
     # Mock fit methods to return self (sklearn convention)
     def mock_fit(self, X, y, *args, **kwargs):
         return self
@@ -456,7 +457,9 @@ def test_ensemble_model_returned(
 # ==============================================================================
 
 
-def test_run_cross_validation_5_folds(mock_training_dataset, mock_sklearn_training, mock_cross_val_score):
+def test_run_cross_validation_5_folds(
+    mock_training_dataset, mock_sklearn_training, mock_cross_val_score
+):
     """
     Test cross-validation runs with 5 folds.
 
@@ -516,7 +519,9 @@ def test_cv_reports_accuracy_precision_recall(
     assert 0.0 <= model.validation_accuracy <= 1.0, "Accuracy must be in [0.0, 1.0]"
 
 
-@pytest.mark.timeout(25)  # ML training with mocks + CV can take 10-12s locally, +25s for CI variability
+@pytest.mark.timeout(
+    25
+)  # ML training with mocks + CV can take 10-12s locally, +25s for CI variability
 def test_cv_stratified_k_fold(mock_training_dataset, mock_sklearn_training):
     """
     Test cross-validation uses StratifiedKFold (preserves class balance).
@@ -745,10 +750,12 @@ def test_fn_rate_threshold_enforcement(mock_training_dataset):
                     with patch("sklearn.ensemble.GradientBoostingClassifier.predict", mock_predict):
                         with patch("sklearn.ensemble.VotingClassifier.predict", mock_predict):
                             with patch("sklearn.ensemble.RandomForestClassifier.score", mock_score):
-                                with patch("sklearn.ensemble.GradientBoostingClassifier.score", mock_score):
+                                with patch(
+                                    "sklearn.ensemble.GradientBoostingClassifier.score", mock_score
+                                ):
                                     with patch(
                                         "tools.ml_routing.model_trainer.accuracy_score",
-                                        return_value=0.985  # High accuracy
+                                        return_value=0.985,  # High accuracy
                                     ):
                                         with patch(
                                             "sklearn.model_selection.cross_val_score",
@@ -756,10 +763,14 @@ def test_fn_rate_threshold_enforcement(mock_training_dataset):
                                         ):
                                             with patch(
                                                 "tools.ml_routing.model_trainer.confusion_matrix",
-                                                return_value=np.array([[24, 1, 2], [1, 23, 2], [2, 0, 20]]),
+                                                return_value=np.array(
+                                                    [[24, 1, 2], [1, 23, 2], [2, 0, 20]]
+                                                ),
                                             ):
                                                 # Act
-                                                result = trainer.train_ensemble_model(mock_training_dataset, random_state=42)
+                                                result = trainer.train_ensemble_model(
+                                                    mock_training_dataset, random_state=42
+                                                )
 
     # Assert
     assert isinstance(result, Err), "Training should fail with FN_rate >2%"
@@ -769,7 +780,9 @@ def test_fn_rate_threshold_enforcement(mock_training_dataset):
     )
 
 
-def test_confusion_matrix_for_fn_calculation(mock_training_dataset, mock_sklearn_training, mock_cross_val_score):
+def test_confusion_matrix_for_fn_calculation(
+    mock_training_dataset, mock_sklearn_training, mock_cross_val_score
+):
     """
     Test confusion matrix is used for FN calculation.
 
@@ -839,10 +852,12 @@ def test_accuracy_below_98_percent_fails(mock_training_dataset):
                     with patch("sklearn.ensemble.GradientBoostingClassifier.predict", mock_predict):
                         with patch("sklearn.ensemble.VotingClassifier.predict", mock_predict):
                             with patch("sklearn.ensemble.RandomForestClassifier.score", mock_score):
-                                with patch("sklearn.ensemble.GradientBoostingClassifier.score", mock_score):
+                                with patch(
+                                    "sklearn.ensemble.GradientBoostingClassifier.score", mock_score
+                                ):
                                     with patch(
                                         "sklearn.metrics.accuracy_score",
-                                        return_value=0.97  # LOW accuracy (below 98%)
+                                        return_value=0.97,  # LOW accuracy (below 98%)
                                     ):
                                         with patch(
                                             "sklearn.model_selection.cross_val_score",
@@ -850,10 +865,14 @@ def test_accuracy_below_98_percent_fails(mock_training_dataset):
                                         ):
                                             with patch(
                                                 "sklearn.metrics.confusion_matrix",
-                                                return_value=np.array([[25, 1, 1], [1, 24, 1], [0, 0, 26]]),
+                                                return_value=np.array(
+                                                    [[25, 1, 1], [1, 24, 1], [0, 0, 26]]
+                                                ),
                                             ):
                                                 # Act
-                                                result = trainer.train_ensemble_model(mock_training_dataset, random_state=42)
+                                                result = trainer.train_ensemble_model(
+                                                    mock_training_dataset, random_state=42
+                                                )
 
     # Assert
     assert isinstance(result, Err), "Training should fail with accuracy <98%"
@@ -862,7 +881,9 @@ def test_accuracy_below_98_percent_fails(mock_training_dataset):
 
 
 @pytest.mark.timeout(15)
-def test_accuracy_at_98_percent_succeeds(mock_training_dataset, mock_sklearn_training, mock_confusion_matrix):
+def test_accuracy_at_98_percent_succeeds(
+    mock_training_dataset, mock_sklearn_training, mock_confusion_matrix
+):
     """
     Test accuracy at exactly 98% succeeds (boundary test).
 
@@ -894,7 +915,9 @@ def test_accuracy_at_98_percent_succeeds(mock_training_dataset, mock_sklearn_tra
 
 
 @pytest.mark.timeout(15)  # ML training with confusion matrix mocks
-def test_fn_rate_above_2_percent_fails(mock_training_dataset, mock_sklearn_training, mock_cross_val_score):
+def test_fn_rate_above_2_percent_fails(
+    mock_training_dataset, mock_sklearn_training, mock_cross_val_score
+):
     """
     Test FN_rate >2% returns Err (threshold enforcement).
 
@@ -928,7 +951,9 @@ def test_fn_rate_above_2_percent_fails(mock_training_dataset, mock_sklearn_train
 
 
 @pytest.mark.timeout(15)  # ML training with confusion matrix mocks
-def test_fn_rate_at_2_percent_succeeds(mock_training_dataset, mock_sklearn_training, mock_cross_val_score):
+def test_fn_rate_at_2_percent_succeeds(
+    mock_training_dataset, mock_sklearn_training, mock_cross_val_score
+):
     """
     Test FN_rate at exactly 2% succeeds (boundary test).
 
@@ -996,7 +1021,11 @@ def test_training_time_under_5_minutes(
 
 
 def test_training_time_warning_if_exceeds(
-    mock_training_dataset, mock_sklearn_training, mock_cross_val_score, mock_confusion_matrix, caplog
+    mock_training_dataset,
+    mock_sklearn_training,
+    mock_cross_val_score,
+    mock_confusion_matrix,
+    caplog,
 ):
     """
     Test warning is logged if training exceeds expected time (no failure).

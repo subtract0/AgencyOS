@@ -97,9 +97,7 @@ class ClassificationResult(BaseModel):
         """
         valid_tiers = ["P1", "P2", "P3", "simple", "moderate", "complex"]
         if v not in valid_tiers:
-            raise ValueError(
-                f"Invalid tier: '{v}'. Must be one of: {valid_tiers}"
-            )
+            raise ValueError(f"Invalid tier: '{v}'. Must be one of: {valid_tiers}")
         return v
 
 
@@ -165,6 +163,7 @@ class MLClassifier(BaseModel):
         """Auto-load model if model_path provided."""
         if self.model_path:
             from pathlib import Path
+
             result = self.load_model(Path(self.model_path))
             if result.is_err():
                 # Log warning but don't fail - model can be loaded later
@@ -204,6 +203,7 @@ class MLClassifier(BaseModel):
             return Err("No model_path configured")
 
         from pathlib import Path
+
         return self.load_model(Path(self.model_path))
 
     def _load_model_locked(self, model_path: Path) -> Result[None, str]:
@@ -218,7 +218,9 @@ class MLClassifier(BaseModel):
         """
         try:
             # Determine base_dir and version from model_path
-            if model_path.name == "routing_classifier_latest.pkl" or model_path.name.startswith("routing_classifier_"):
+            if model_path.name == "routing_classifier_latest.pkl" or model_path.name.startswith(
+                "routing_classifier_"
+            ):
                 # Path points to model file - extract base_dir
                 base_dir = model_path.parent
                 if model_path.name == "routing_classifier_latest.pkl":
@@ -263,10 +265,7 @@ class MLClassifier(BaseModel):
             return Err(f"Failed to load model: {e}")
 
     def classify_task(
-        self,
-        task_id: str,
-        task_description: str,
-        task_metadata: dict | None = None
+        self, task_id: str, task_description: str, task_metadata: dict | None = None
     ) -> Result[ClassificationResult, str]:
         """
         Classify task using loaded ensemble model (convenience method).
@@ -290,11 +289,7 @@ class MLClassifier(BaseModel):
             ...     task_metadata={"estimated_time": 300.0}
             ... )
         """
-        task = {
-            "task_id": task_id,
-            "description": task_description,
-            **(task_metadata or {})
-        }
+        task = {"task_id": task_id, "description": task_description, **(task_metadata or {})}
         result = self.classify(task)
 
         # Log prediction to VectorStore (Article IV mandate)
@@ -355,7 +350,9 @@ class MLClassifier(BaseModel):
         feature_result = self._extract_features(task_description)
         if feature_result.is_err():
             # Fallback to rules if feature extraction fails
-            logger.warning(f"Feature extraction failed, falling back to rules: {feature_result.unwrap_err()}")
+            logger.warning(
+                f"Feature extraction failed, falling back to rules: {feature_result.unwrap_err()}"
+            )
             return self._fallback_classification(task)
 
         feature_vector = feature_result.unwrap()
@@ -478,7 +475,9 @@ class MLClassifier(BaseModel):
             desc_lower = task_description.lower()
 
             # Infer tier from keywords
-            if any(kw in desc_lower for kw in ["refactor", "architecture", "comprehensive", "module"]):
+            if any(
+                kw in desc_lower for kw in ["refactor", "architecture", "comprehensive", "module"]
+            ):
                 tier_hint = 3  # complex
             elif any(kw in desc_lower for kw in ["implement", "feature", "tests"]):
                 tier_hint = 2  # moderate
@@ -487,22 +486,25 @@ class MLClassifier(BaseModel):
 
             # Generate synthetic embedding similar to training data
             import numpy as np
+
             np.random.seed(hash(task_description) % (2**32))
             embedding = [float(tier_hint + np.random.rand() * 0.1) for _ in range(1536)]
             tfidf_features = [float(np.random.rand()) for _ in range(100)]
 
-            return Ok(TaskFeatureVector(
-                embedding=embedding,
-                tfidf_features=tfidf_features,
-                description_length=len(task_description),
-                word_count=len(task_description.split()),
-                has_refactor_keyword=1 if "refactor" in desc_lower else 0,
-                has_test_keyword=1 if "test" in desc_lower else 0,
-                has_async_keyword=1 if "async" in desc_lower else 0,
-                has_fix_keyword=1 if "fix" in desc_lower else 0,
-                estimated_time_seconds=300.0,
-                historical_tier_mode=tier_hint - 1,
-            ))
+            return Ok(
+                TaskFeatureVector(
+                    embedding=embedding,
+                    tfidf_features=tfidf_features,
+                    description_length=len(task_description),
+                    word_count=len(task_description.split()),
+                    has_refactor_keyword=1 if "refactor" in desc_lower else 0,
+                    has_test_keyword=1 if "test" in desc_lower else 0,
+                    has_async_keyword=1 if "async" in desc_lower else 0,
+                    has_fix_keyword=1 if "fix" in desc_lower else 0,
+                    estimated_time_seconds=300.0,
+                    historical_tier_mode=tier_hint - 1,
+                )
+            )
 
         # Lazy initialization of feature extractor
         if self._feature_extractor is None:
@@ -576,9 +578,7 @@ class MLClassifier(BaseModel):
             predicted_tier = tier_mapping.get(predicted_tier_num, predicted_tier_num)
 
             # Also remap probabilities dict keys
-            mapped_probabilities = {
-                tier_mapping.get(k, k): v for k, v in probabilities.items()
-            }
+            mapped_probabilities = {tier_mapping.get(k, k): v for k, v in probabilities.items()}
 
             return Ok((predicted_tier, confidence, mapped_probabilities))
 

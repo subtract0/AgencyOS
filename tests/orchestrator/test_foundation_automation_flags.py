@@ -38,20 +38,21 @@ Version: 1.0.0 (TDD RED Phase)
 Created: 2025-10-16
 """
 
-import pytest
 from pathlib import Path
 from unittest.mock import AsyncMock, MagicMock, patch
+
+import pytest
 
 from shared.agent_context import create_agent_context
 from shared.models.task_graph import Phase, Task, TaskGraph, TaskTier, TaskType
 from shared.type_definitions.result import Err, Ok
+from tools.orchestrator.two_stage_orchestrator import (
+    OrchestrationError,
+    TwoStageOrchestrator,
+)
 from tools.orchestrator.unified_primea_orchestrator import (
     ExecutionError,
     UnifiedPrimeAOrchestrator,
-)
-from tools.orchestrator.two_stage_orchestrator import (
-    TwoStageOrchestrator,
-    OrchestrationError,
 )
 
 # ============================================================================
@@ -227,8 +228,12 @@ async def test_flag_002_plan_only_saves_graph_to_missions_directory(agent_contex
     assert result["skip_execution"] is True
     assert result["save_graph"] is True
     assert result["auto_pr"] is False
+
+
 @pytest.mark.asyncio
-async def test_flag_003_visualize_enables_mermaid_dag_output(agent_context, tmp_path, simple_task_graph):
+async def test_flag_003_visualize_enables_mermaid_dag_output(
+    agent_context, tmp_path, simple_task_graph
+):
     """
     FLAG-003 (Normal): --visualize flag enables Mermaid DAG generation.
 
@@ -253,6 +258,8 @@ async def test_flag_003_visualize_enables_mermaid_dag_output(agent_context, tmp_
     # GREEN PHASE: Method implemented
     result = orchestrator._handle_flags({"visualize": True})
     assert result["enable_visualization"] is True
+
+
 @pytest.mark.asyncio
 async def test_flag_003_visualize_generates_ascii_tree(agent_context, tmp_path):
     """
@@ -275,6 +282,8 @@ async def test_flag_003_visualize_generates_ascii_tree(agent_context, tmp_path):
     # GREEN PHASE: Method implemented
     result = orchestrator._handle_flags({"visualize": True})
     assert result["enable_visualization"] is True
+
+
 @pytest.mark.asyncio
 async def test_flag_004_auto_pr_creates_pr_after_success(agent_context, tmp_path):
     """
@@ -303,6 +312,8 @@ async def test_flag_004_auto_pr_creates_pr_after_success(agent_context, tmp_path
     # GREEN PHASE: Method implemented
     result = orchestrator._handle_flags({"auto-pr": True})
     assert result["auto_pr"] is True
+
+
 @pytest.mark.asyncio
 async def test_flag_004_auto_pr_is_default_behavior(agent_context, tmp_path):
     """
@@ -325,6 +336,8 @@ async def test_flag_004_auto_pr_is_default_behavior(agent_context, tmp_path):
     # GREEN PHASE: Method implemented
     result = orchestrator._handle_flags({})
     assert result["auto_pr"] is True  # Default
+
+
 @pytest.mark.asyncio
 async def test_flag_005_no_pr_skips_pr_creation(agent_context, tmp_path):
     """
@@ -351,6 +364,8 @@ async def test_flag_005_no_pr_skips_pr_creation(agent_context, tmp_path):
     # GREEN PHASE: Method implemented
     result = orchestrator._handle_flags({"no-pr": True})
     assert result["auto_pr"] is False
+
+
 @pytest.mark.asyncio
 async def test_flag_005_no_pr_overrides_auto_pr_default(agent_context, tmp_path):
     """
@@ -374,6 +389,8 @@ async def test_flag_005_no_pr_overrides_auto_pr_default(agent_context, tmp_path)
     # GREEN PHASE: Method implemented
     result = orchestrator._handle_flags({"no-pr": True})
     assert result["auto_pr"] is False
+
+
 @pytest.mark.asyncio
 async def test_flag_006_force_overrides_budget_guard(agent_context, tmp_path):
     """
@@ -400,6 +417,8 @@ async def test_flag_006_force_overrides_budget_guard(agent_context, tmp_path):
     # GREEN PHASE: Method implemented
     result = orchestrator._handle_flags({"force": True})
     assert result["force_budget"] is True
+
+
 @pytest.mark.asyncio
 async def test_flag_006_force_requires_authorization(agent_context, tmp_path):
     """
@@ -426,6 +445,8 @@ async def test_flag_006_force_requires_authorization(agent_context, tmp_path):
     # GREEN PHASE: Method implemented
     result = orchestrator._handle_flags({"force": True})
     assert result["force_budget"] is True
+
+
 def test_flag_007_help_displays_comprehensive_help(agent_context, tmp_path):
     """
     FLAG-007 (Normal): --help flag displays comprehensive help text.
@@ -453,6 +474,8 @@ def test_flag_007_help_displays_comprehensive_help(agent_context, tmp_path):
     assert result["help_requested"] is True
     assert result["display_help"] is True
     assert "help_text" in result
+
+
 def test_flag_007_help_includes_flag_examples(agent_context, tmp_path):
     """
     FLAG-007 (Accessibility): --help includes clear examples for each flag.
@@ -476,6 +499,8 @@ def test_flag_007_help_includes_flag_examples(agent_context, tmp_path):
     assert result["help_requested"] is True
     assert result["display_help"] is True
     assert "help_text" in result
+
+
 @pytest.mark.asyncio
 async def test_flag_008_invalid_plan_only_with_auto_pr(agent_context, tmp_path):
     """
@@ -503,6 +528,8 @@ async def test_flag_008_invalid_plan_only_with_auto_pr(agent_context, tmp_path):
     # GREEN PHASE: Method implemented
     with pytest.raises(ValueError, match="Invalid flag combination"):
         orchestrator._handle_flags({"plan-only": True, "auto-pr": True})
+
+
 @pytest.mark.asyncio
 async def test_flag_008_invalid_unknown_flag(agent_context, tmp_path):
     """
@@ -526,6 +553,8 @@ async def test_flag_008_invalid_unknown_flag(agent_context, tmp_path):
     # GREEN PHASE: Method implemented
     with pytest.raises(ValueError, match="Unknown flags"):
         orchestrator._handle_flags({"invalid-flag": True})
+
+
 @pytest.mark.asyncio
 async def test_flag_008_invalid_force_without_budget_exceed(agent_context, tmp_path):
     """
@@ -549,6 +578,8 @@ async def test_flag_008_invalid_force_without_budget_exceed(agent_context, tmp_p
     # GREEN PHASE: Method implemented
     result = orchestrator._handle_flags({"force": True})
     assert result["force_budget"] is True
+
+
 @pytest.mark.asyncio
 async def test_flag_integration_two_stage_visualize_no_pr(agent_context, tmp_path):
     """
@@ -576,6 +607,8 @@ async def test_flag_integration_two_stage_visualize_no_pr(agent_context, tmp_pat
     assert result.get("route_to") == "TwoStageOrchestrator"
     assert result["enable_visualization"] is True
     assert result["auto_pr"] is False
+
+
 @pytest.mark.asyncio
 async def test_flag_integration_plan_only_visualize(agent_context, tmp_path):
     """
@@ -603,6 +636,8 @@ async def test_flag_integration_plan_only_visualize(agent_context, tmp_path):
     assert result["skip_execution"] is True
     assert result["enable_visualization"] is True
     assert result["auto_pr"] is False
+
+
 @pytest.mark.asyncio
 async def test_article_iv_flag_usage_stored_to_vectorstore(agent_context, tmp_path):
     """
@@ -630,6 +665,8 @@ async def test_article_iv_flag_usage_stored_to_vectorstore(agent_context, tmp_pa
     result = orchestrator._handle_flags({"two-stage": True, "visualize": True})
     assert result.get("route_to") == "TwoStageOrchestrator"
     assert result["enable_visualization"] is True
+
+
 @pytest.mark.asyncio
 async def test_article_i_all_flags_validated_before_action(agent_context, tmp_path):
     """
@@ -654,11 +691,7 @@ async def test_article_i_all_flags_validated_before_action(agent_context, tmp_pa
 
     # GREEN PHASE: Method implemented - should raise ValueError for invalid combo
     with pytest.raises(ValueError, match="Invalid flag combination"):
-        result = orchestrator._handle_flags({
-            "two-stage": True,
-            "plan-only": True,
-            "auto-pr": True
-        })
+        result = orchestrator._handle_flags({"two-stage": True, "plan-only": True, "auto-pr": True})
 
 
 # ============================================================================

@@ -334,7 +334,11 @@ class TestOllamaHealthCheckErrors:
             error = result.unwrap_err()
             assert isinstance(error, OllamaHealthError)
             # Check for retry-related error message (after max retries exhausted)
-            assert "retries" in str(error).lower() or "failed" in str(error).lower() or "connection" in str(error).lower()
+            assert (
+                "retries" in str(error).lower()
+                or "failed" in str(error).lower()
+                or "connection" in str(error).lower()
+            )
 
     async def test_timeout_error_on_slow_response(self):
         """Health check handles timeout gracefully."""

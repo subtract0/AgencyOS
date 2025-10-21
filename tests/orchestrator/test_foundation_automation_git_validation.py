@@ -50,7 +50,6 @@ from tools.orchestrator.two_stage_orchestrator import (
     TwoStageOrchestrator,
 )
 
-
 # ============================================================================
 # FIXTURES
 # ============================================================================
@@ -208,17 +207,17 @@ def test_main_branch_execution_raises_article_iii_violation(
     error_message = error.reason.lower()
 
     # Check for Article III reference
-    assert (
-        "article iii" in error_message or "protected" in error_message
-    ), f"Error should reference Article III, got: {error.reason}"
+    assert "article iii" in error_message or "protected" in error_message, (
+        f"Error should reference Article III, got: {error.reason}"
+    )
 
     # Check for "main" branch mention
     assert "main" in error_message, f"Error should mention 'main' branch, got: {error.reason}"
 
     # Check for actionable guidance
-    assert (
-        "checkout" in error_message or "feature branch" in error_message
-    ), f"Error should provide guidance, got: {error.reason}"
+    assert "checkout" in error_message or "feature branch" in error_message, (
+        f"Error should provide guidance, got: {error.reason}"
+    )
 
 
 # ============================================================================
@@ -272,9 +271,9 @@ def test_master_branch_execution_raises_article_iii_violation(
     error = result.unwrap_err()
     error_message = error.reason.lower()
 
-    assert (
-        "article iii" in error_message or "protected" in error_message
-    ), f"Error should reference Article III, got: {error.reason}"
+    assert "article iii" in error_message or "protected" in error_message, (
+        f"Error should reference Article III, got: {error.reason}"
+    )
     assert "master" in error_message, f"Error should mention 'master' branch, got: {error.reason}"
 
 
@@ -584,9 +583,9 @@ def test_detached_head_raises_validation_error(
 
     # Check for guidance in either reason or recovery_hint
     full_message = f"{error_message} {recovery_hint}"
-    assert (
-        "checkout" in full_message or "create" in full_message
-    ), f"Error should provide guidance, got reason: {error.reason}, hint: {error.recovery_hint}"
+    assert "checkout" in full_message or "create" in full_message, (
+        f"Error should provide guidance, got reason: {error.reason}, hint: {error.recovery_hint}"
+    )
 
 
 # ============================================================================
@@ -740,6 +739,7 @@ def test_git_command_subprocess_error_handled(
 
     Expected: Result with Err(OrchestrationError) with recovery suggestions
     """
+
     # Arrange: Mock subprocess.run to raise CalledProcessError
     def failing_git_run(*args, **kwargs):
         if "git" in str(args[0]):
@@ -892,9 +892,9 @@ def test_error_message_explains_article_iii_violation(
         )
 
     # Check for actionable command or guidance
-    assert (
-        "git checkout" in error_message or "feature branch" in error_message
-    ), f"Error should provide actionable guidance, got: {error.reason}"
+    assert "git checkout" in error_message or "feature branch" in error_message, (
+        f"Error should provide actionable guidance, got: {error.reason}"
+    )
 
 
 # ============================================================================

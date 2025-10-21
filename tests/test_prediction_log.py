@@ -11,7 +11,7 @@ Author: CodeAgent
 Date: 2025-10-10
 """
 
-from datetime import datetime
+from datetime import UTC, datetime
 
 import pytest
 from pydantic import ValidationError
@@ -74,7 +74,7 @@ class TestPredictionLogModel:
         # Act
         from datetime import timezone
 
-        before = datetime.now(timezone.utc)
+        before = datetime.now(UTC)
         log = PredictionLog(
             task_id="task-789",
             tier="simple",
@@ -83,7 +83,7 @@ class TestPredictionLogModel:
             model_version="2025-10-10T12:00:00Z",
             session_id="session_test",
         )
-        after = datetime.now(timezone.utc)
+        after = datetime.now(UTC)
 
         # Assert
         assert isinstance(log.timestamp, str)

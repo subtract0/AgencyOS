@@ -26,10 +26,11 @@ Created: 2025-10-16
 Status: RED phase - All tests MUST fail
 """
 
-import pytest
 from pathlib import Path
 from typing import Optional
 from unittest.mock import MagicMock, patch
+
+import pytest
 
 from tools.orchestrator.unified_primea_orchestrator import UnifiedPrimeAOrchestrator
 
@@ -41,10 +42,7 @@ def orchestrator():
     mock_context = MagicMock()
 
     orch = UnifiedPrimeAOrchestrator(
-        context=mock_context,
-        repo_path=".",
-        enable_todos=False,
-        enable_pr_creation=False
+        context=mock_context, repo_path=".", enable_todos=False, enable_pr_creation=False
     )
     return orch
 
@@ -218,7 +216,9 @@ def test_auto_select_handles_missing_backlog_file(orchestrator, tmp_path):
     # Assert: Should return Err gracefully
     assert result.is_err(), "Should return Err for missing backlog file"
     error_msg = str(result.unwrap_err())
-    assert "no tasks" in error_msg.lower() or "not found" in error_msg.lower(), "Error should mention missing/no tasks"
+    assert "no tasks" in error_msg.lower() or "not found" in error_msg.lower(), (
+        "Error should mention missing/no tasks"
+    )
 
 
 # BACKLOG-004: Edge - Empty backlog prompts for intent
@@ -248,7 +248,9 @@ def test_auto_select_handles_empty_backlog(orchestrator, empty_backlog_content, 
     # Assert: Should return Err gracefully
     assert result.is_err(), "Should return Err for empty backlog"
     error_msg = str(result.unwrap_err())
-    assert "no ready tasks" in error_msg.lower() or "no tasks" in error_msg.lower(), "Error should mention no tasks available"
+    assert "no ready tasks" in error_msg.lower() or "no tasks" in error_msg.lower(), (
+        "Error should mention no tasks available"
+    )
 
 
 # BACKLOG-005: Security/Resilience - Malformed backlog warning and fallback
@@ -279,12 +281,16 @@ def test_auto_select_handles_malformed_backlog(orchestrator, malformed_backlog_c
     # Assert: Should return Err gracefully
     assert result.is_err(), "Should return Err for malformed backlog"
     error_msg = str(result.unwrap_err())
-    assert "no tasks" in error_msg.lower() or "no ready tasks" in error_msg.lower(), "Error should indicate parsing failure"
+    assert "no tasks" in error_msg.lower() or "no ready tasks" in error_msg.lower(), (
+        "Error should indicate parsing failure"
+    )
     # Should NOT raise ValueError, KeyError, etc.
 
 
 # BACKLOG-006: Spec - Integration with execute() workflow (Bonus)
-def test_execute_uses_auto_select_when_no_intent_provided(orchestrator, valid_backlog_content, tmp_path):
+def test_execute_uses_auto_select_when_no_intent_provided(
+    orchestrator, valid_backlog_content, tmp_path
+):
     """
     Test that execute() method calls auto-select when intent is None.
 

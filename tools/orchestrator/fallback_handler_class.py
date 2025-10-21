@@ -18,7 +18,8 @@ Constitutional Compliance:
 import logging
 import subprocess
 import time
-from typing import Any, Callable, Dict, Optional, TypeVar
+from collections.abc import Callable
+from typing import Any, Optional, TypeVar
 
 from shared.type_definitions.result import Err, Ok, Result
 
@@ -39,7 +40,7 @@ class FallbackHandler:
     - FALLBACK-007: Memory Tool unavailable
     """
 
-    def __init__(self, max_retries: int = 3, logger: Optional[logging.Logger] = None):
+    def __init__(self, max_retries: int = 3, logger: logging.Logger | None = None):
         """
         Initialize FallbackHandler.
 
@@ -51,9 +52,7 @@ class FallbackHandler:
         self.retry_delays = [1, 2, 4, 8]  # Exponential backoff in seconds
         self.logger = logger or logging.getLogger(__name__)
 
-    def handle_vectorstore_unavailable(
-        self, task_context: Dict[str, Any]
-    ) -> Dict[str, Any]:
+    def handle_vectorstore_unavailable(self, task_context: dict[str, Any]) -> dict[str, Any]:
         """
         FALLBACK-001: VectorStore unavailable → log warning, return empty memories.
 
@@ -78,9 +77,7 @@ class FallbackHandler:
             >>> assert result["fallback_applied"] is True
             >>> assert result["memories"] == []
         """
-        self.logger.warning(
-            "VectorStore unavailable - using session-only memory (Tier 3 fallback)"
-        )
+        self.logger.warning("VectorStore unavailable - using session-only memory (Tier 3 fallback)")
 
         return {
             "fallback_applied": True,
@@ -89,7 +86,7 @@ class FallbackHandler:
             "tier": 3,
         }
 
-    def handle_trm_unavailable(self, code_sample: str) -> Dict[str, Any]:
+    def handle_trm_unavailable(self, code_sample: str) -> dict[str, Any]:
         """
         FALLBACK-002: TRM unavailable → Python validation fallback.
 
@@ -135,7 +132,7 @@ class FallbackHandler:
 
     def handle_slop_guardian_timeout(
         self, code_sample: str, timeout_seconds: int
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """
         FALLBACK-003: Slop Guardian timeout → fallback verdict (static analysis).
 
@@ -177,7 +174,7 @@ class FallbackHandler:
             "timeout_seconds": timeout_seconds,
         }
 
-    def handle_local_model_unavailable(self, task: Dict[str, Any]) -> Dict[str, Any]:
+    def handle_local_model_unavailable(self, task: dict[str, Any]) -> dict[str, Any]:
         """
         FALLBACK-004: Local model unavailable → cloud API routing.
 
@@ -213,9 +210,7 @@ class FallbackHandler:
             "original_model": task.get("model", "unknown"),
         }
 
-    def handle_github_rate_limit(
-        self, api_call: Callable, max_retries: int = 4
-    ) -> Dict[str, Any]:
+    def handle_github_rate_limit(self, api_call: Callable, max_retries: int = 4) -> dict[str, Any]:
         """
         FALLBACK-005: GitHub API rate limit → exponential backoff retry.
 
@@ -281,9 +276,7 @@ class FallbackHandler:
             "pr_number": None,
         }
 
-    def handle_precommit_hook_failure(
-        self, commit_message: str, hook_error: str
-    ) -> Dict[str, Any]:
+    def handle_precommit_hook_failure(self, commit_message: str, hook_error: str) -> dict[str, Any]:
         """
         FALLBACK-006: Pre-commit hook failure → --no-verify bypass in worktree.
 
@@ -366,7 +359,7 @@ class FallbackHandler:
                 "error": str(e),
             }
 
-    def handle_memory_tool_unavailable(self, session_id: str) -> Dict[str, Any]:
+    def handle_memory_tool_unavailable(self, session_id: str) -> dict[str, Any]:
         """
         FALLBACK-007: Memory Tool unavailable → session-only memory (Tier 3).
 
@@ -404,7 +397,7 @@ class FallbackHandler:
     def retry_with_exponential_backoff(
         self,
         operation: Callable[[], T],
-        max_retries: Optional[int] = None,
+        max_retries: int | None = None,
         base_delay: float = 1.0,
     ) -> T:
         """
@@ -441,14 +434,12 @@ class FallbackHandler:
                     raise
 
                 delay = base_delay * (2**attempt)
-                self.logger.warning(
-                    f"Retry {attempt + 1}/{retries} after {delay}s (error: {e})"
-                )
+                self.logger.warning(f"Retry {attempt + 1}/{retries} after {delay}s (error: {e})")
                 time.sleep(delay)
 
         raise Exception("Max retries exceeded")
 
-    def get_safe_defaults(self, scenario_name: str) -> Dict[str, Any]:
+    def get_safe_defaults(self, scenario_name: str) -> dict[str, Any]:
         """
         Get safe default values for fallback scenarios.
 
@@ -486,7 +477,7 @@ class FallbackHandler:
 
 # Convenience function for creating handler
 def create_fallback_handler(
-    max_retries: int = 3, logger: Optional[logging.Logger] = None
+    max_retries: int = 3, logger: logging.Logger | None = None
 ) -> FallbackHandler:
     """
     Create FallbackHandler instance with optional custom configuration.

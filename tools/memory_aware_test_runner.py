@@ -57,9 +57,9 @@ def check_ollama_running() -> bool:
             try:
                 return await asyncio.wait_for(
                     check_ollama_health(timeout=2, max_retries=1),
-                    timeout=5.0  # Overall timeout for health check
+                    timeout=5.0,  # Overall timeout for health check
                 )
-            except asyncio.TimeoutError:
+            except TimeoutError:
                 return Err("Health check timeout")
 
         result = asyncio.run(_check_with_timeout())

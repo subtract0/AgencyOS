@@ -42,6 +42,9 @@ from unittest.mock import AsyncMock, Mock, patch
 import pytest
 
 from shared.agent_context import AgentContext
+
+# PrimeAResult is in shared.models.orchestrator_models
+from shared.models.orchestrator_models import PrimeAResult
 from shared.models.task_graph import TaskGraph
 from shared.type_definitions.result import Err, Ok, Result
 
@@ -52,9 +55,6 @@ from tools.orchestrator.unified_primea_orchestrator import (
     UnifiedPrimeAOrchestrator,
     execute_primea_workflow,
 )
-
-# PrimeAResult is in shared.models.orchestrator_models
-from shared.models.orchestrator_models import PrimeAResult
 
 # verify_audit_log_integrity doesn't exist yet - tests that use it should be skipped
 try:
@@ -404,7 +404,7 @@ async def test_e2e_empty_intent_edge(
     error = result.unwrap_err()
     assert "empty" in str(error).lower() or "required" in str(error).lower()
     # ExecutionError has 'suggestions' list, not 'recovery_suggestion' string
-    assert hasattr(error, 'suggestions') and len(error.suggestions) > 0
+    assert hasattr(error, "suggestions") and len(error.suggestions) > 0
 
 
 @pytest.mark.asyncio
@@ -579,7 +579,9 @@ async def test_e2e_graph_size_constraint(
 # ============================================================================
 
 
-@pytest.mark.skip(reason="Intent is treated as plain text string, not parsed as JSON - test assumption invalid")
+@pytest.mark.skip(
+    reason="Intent is treated as plain text string, not parsed as JSON - test assumption invalid"
+)
 @pytest.mark.asyncio
 async def test_e2e_invalid_intent_error(
     mock_agent_context: AgentContext,
@@ -616,7 +618,9 @@ async def test_e2e_invalid_intent_error(
     assert "json" in str(error).lower() or "parse" in str(error).lower()
 
 
-@pytest.mark.skip(reason="PlannerAgent not exposed in unified_primea_orchestrator module - cannot patch")
+@pytest.mark.skip(
+    reason="PlannerAgent not exposed in unified_primea_orchestrator module - cannot patch"
+)
 @pytest.mark.asyncio
 async def test_e2e_graph_generation_timeout_error(
     mock_agent_context: AgentContext,
@@ -663,7 +667,9 @@ async def test_e2e_graph_generation_timeout_error(
     assert retry_count >= 2, "Should retry at least once (Article I)"
 
 
-@pytest.mark.skip(reason="PlannerAgent not exposed in unified_primea_orchestrator module - cannot patch")
+@pytest.mark.skip(
+    reason="PlannerAgent not exposed in unified_primea_orchestrator module - cannot patch"
+)
 @pytest.mark.asyncio
 async def test_e2e_planner_failure_error(
     mock_agent_context: AgentContext,

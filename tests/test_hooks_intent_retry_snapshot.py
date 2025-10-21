@@ -87,9 +87,7 @@ def test_mutation_snapshot_hook_creates_snapshot(tmp_path, monkeypatch):
 
         import asyncio
 
-        asyncio.run(
-            hook.on_tool_start(wrapper, agent=None, tool=tool)
-        )
+        asyncio.run(hook.on_tool_start(wrapper, agent=None, tool=tool))
 
         # Verify a snapshot was created
         snaps_dir = repo_root / "logs" / "snapshots"

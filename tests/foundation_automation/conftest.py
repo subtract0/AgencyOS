@@ -164,9 +164,7 @@ def mock_github_api() -> Mock:
         cmd = args[0] if args else kwargs.get("args", [])
         if cmd and cmd[0] == "gh":
             # Mock gh pr create response
-            return Mock(
-                returncode=0, stdout="https://github.com/org/repo/pull/123", stderr=""
-            )
+            return Mock(returncode=0, stdout="https://github.com/org/repo/pull/123", stderr="")
         else:
             # Pass through to original subprocess.run for git commands
             return original_subprocess_run(*args, **kwargs)

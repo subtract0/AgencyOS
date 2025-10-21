@@ -370,11 +370,15 @@ class TestStressMemoryUsage:
                 gc.collect()
                 current_memory = process.memory_info().rss / 1024 / 1024
                 memory_growth = current_memory - baseline_memory
-                print(f"[STRESS] After {(batch + 1) * batch_size} ops: {memory_growth:.2f}MB growth")
+                print(
+                    f"[STRESS] After {(batch + 1) * batch_size} ops: {memory_growth:.2f}MB growth"
+                )
 
                 # Early termination if memory growth excessive (prevents timeout)
                 if memory_growth > 150:
-                    print(f"[STRESS] Early termination at {(batch + 1) * batch_size} ops - excessive memory growth")
+                    print(
+                        f"[STRESS] Early termination at {(batch + 1) * batch_size} ops - excessive memory growth"
+                    )
                     break
 
         elapsed = time.perf_counter() - start

@@ -618,10 +618,7 @@ class TwoStageOrchestrator:
 
             approved = ApprovedSpec(
                 spec=spec,
-                decision=ApprovalDecision(
-                    action="approve",
-                    reason="Auto-approved for testing"
-                ),
+                decision=ApprovalDecision(action="approve", reason="Auto-approved for testing"),
                 edit_count=0,
             )
             return Ok(approved)

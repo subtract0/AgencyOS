@@ -673,6 +673,7 @@ class ArticleIVLearningIntegration:
         """
         try:
             import inspect
+
             start_time = time.time()
 
             # Query VectorStore via AgentContext
@@ -683,6 +684,7 @@ class ArticleIVLearningIntegration:
             if inspect.iscoroutine(search_result):
                 # This shouldn't happen in production, but handle for test compatibility
                 import asyncio
+
                 try:
                     # Try to get existing event loop
                     loop = asyncio.get_event_loop()
@@ -1033,7 +1035,9 @@ def enforce_article_iii_no_bypass(
         # Create descriptive error message including detected bypasses
         detected_flags = [a.flag for a in attempts]
         if attempts[0].source == "env_var":
-            error_msg = f"Article III: Environment variable override detected: {', '.join(detected_flags)}"
+            error_msg = (
+                f"Article III: Environment variable override detected: {', '.join(detected_flags)}"
+            )
         else:
             error_msg = "Article III: No manual override capabilities"
 
@@ -1106,11 +1110,13 @@ async def enforce_article_iv_learning(
         # First get raw results from VectorStore to count total
         try:
             import inspect
+
             raw_results = context.search_memories(tags=["pattern", "test"], include_session=True)
 
             # Handle async mock in tests
             if inspect.iscoroutine(raw_results):
                 import asyncio
+
                 try:
                     loop = asyncio.get_event_loop()
                     if not loop.is_running():
@@ -1124,7 +1130,9 @@ async def enforce_article_iv_learning(
 
             # Calculate applied vs ignored counts
             total_learnings = len(raw_results)
-            applied_learnings = [r for r in raw_results if r.get("confidence", 1.0) >= min_confidence]
+            applied_learnings = [
+                r for r in raw_results if r.get("confidence", 1.0) >= min_confidence
+            ]
             learnings_applied = len(applied_learnings)
             learnings_ignored = total_learnings - learnings_applied
 
@@ -1140,6 +1148,7 @@ async def enforce_article_iv_learning(
         except Exception as e:
             # VectorStore query failed - return error details
             import logging
+
             logging.warning(f"Article IV: VectorStore query failed: {e}")
             return Err(f"VectorStore query failed: {e}")
 

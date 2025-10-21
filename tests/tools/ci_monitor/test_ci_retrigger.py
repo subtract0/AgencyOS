@@ -103,7 +103,9 @@ def temp_git_repo(tmp_path):
 
     # Create initial commit
     (repo_path / "README.md").write_text("Test repo")
-    subprocess.run(["git", "add", "."], cwd=str(repo_path), check=True, capture_output=True, timeout=10)
+    subprocess.run(
+        ["git", "add", "."], cwd=str(repo_path), check=True, capture_output=True, timeout=10
+    )
     subprocess.run(
         ["git", "commit", "-m", "Initial commit"],
         cwd=str(repo_path),

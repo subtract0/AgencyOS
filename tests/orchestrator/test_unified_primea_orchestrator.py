@@ -562,7 +562,7 @@ async def test_execute_full_flow_success(orchestrator, tmp_path):
                     article_iii=True,
                     article_iv=True,
                     article_v=True,
-                    details={}
+                    details={},
                 ),
                 warnings=[],
                 errors=[],
@@ -722,7 +722,7 @@ async def test_constitutional_article_iii_automated_enforcement(orchestrator):
                     article_iii=True,
                     article_iv=True,
                     article_v=True,
-                    details={}
+                    details={},
                 ),
                 warnings=[],
                 errors=[],
@@ -767,7 +767,12 @@ async def test_graceful_fallback_slop_guardian_error(orchestrator, simple_task_g
         score=1.5,
         reasons=["Test failure: Guardian error"],
         top_fixes=["Fix the guardian"],
-        dimension_scores={"clarity": 1.0, "measurability": 1.0, "completeness": 2.0, "actionability": 2.0}
+        dimension_scores={
+            "clarity": 1.0,
+            "measurability": 1.0,
+            "completeness": 2.0,
+            "actionability": 2.0,
+        },
     )
     error = SlopDetected(verdict=verdict, original_text="Test mission")
 
@@ -956,8 +961,12 @@ def test_auto_select_from_backlog_not_found(orchestrator):
     # Should return error with helpful message
     assert result.is_err(), "Should return Err when backlog file not found"
     error = result.unwrap_err()
-    assert error.reason == "Backlog file not found", "Error reason should indicate backlog file not found"
-    assert backlog_path.as_posix().lower() in error.details.lower(), "Error details should mention backlog path"
+    assert error.reason == "Backlog file not found", (
+        "Error reason should indicate backlog file not found"
+    )
+    assert backlog_path.as_posix().lower() in error.details.lower(), (
+        "Error details should mention backlog path"
+    )
 
 
 @pytest.mark.asyncio

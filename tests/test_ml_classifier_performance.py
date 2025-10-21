@@ -363,7 +363,9 @@ class TestInferenceLatency:
 
         # Assert: p99 <60ms (CRITICAL THRESHOLD - adjusted for CI variability)
         p99 = float(np.percentile(latencies, 99))
-        assert p99 < 60.0, f"p99 latency {p99:.2f}ms exceeds 60ms target (adjusted for CI variability)"
+        assert p99 < 60.0, (
+            f"p99 latency {p99:.2f}ms exceeds 60ms target (adjusted for CI variability)"
+        )
 
         print(f"\n✅ p99 Inference Latency: {p99:.2f}ms (target <60ms, was <50ms)")
 
@@ -423,7 +425,7 @@ class TestModelLoading:
         openai_api_key = os.getenv("OPENAI_API_KEY", "")
         terms = ["test", "feature", "implement", "refactor", "fix"]
         tfidf_vocab = TfidfVocabulary(
-            terms=terms, idf_scores={term: 1.0 for term in terms}, version="v1.0"
+            terms=terms, idf_scores=dict.fromkeys(terms, 1.0), version="v1.0"
         )
         extractor = FeatureExtractor(
             openai_api_key=openai_api_key, tfidf_vocabulary=tfidf_vocab, cache_size=1000
@@ -680,7 +682,9 @@ class TestE2EWorkflowLatency:
         p50 = float(np.percentile(e2e_latencies, 50))
         p95 = float(np.percentile(e2e_latencies, 95))
 
-        assert p99 < 120.0, f"E2E p99 latency {p99:.2f}ms exceeds 120ms target (E2E with API calls, adjusted for CI)"
+        assert p99 < 120.0, (
+            f"E2E p99 latency {p99:.2f}ms exceeds 120ms target (E2E with API calls, adjusted for CI)"
+        )
 
         print("\n" + "=" * 70)
         print("🚀 E2E CLASSIFICATION WORKFLOW LATENCY REPORT")

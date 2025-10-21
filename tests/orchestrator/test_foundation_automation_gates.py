@@ -59,6 +59,7 @@ try:
     from tools.orchestrator.foundation_automation_gates import (
         FoundationGateError,
         GateValidationResult,
+        validate_all_gates,
         validate_gate_001_incomplete_graph,
         validate_gate_002_timeout_retry,
         validate_gate_003_test_failures,
@@ -71,7 +72,6 @@ try:
         validate_gate_010_vectorstore_storage,
         validate_gate_011_acceptance_criteria,
         validate_gate_012_graph_traceability,
-        validate_all_gates,
     )
 except ImportError:
     # Expected in RED phase - mark tests as expected to fail
@@ -616,9 +616,7 @@ async def test_all_gates_pass_for_valid_workflow(
 
     # Performance: Gate validation <500ms (constitutional_gates baseline is 3s for all articles)
     # Gates are faster because they're pre-execution checks, not full article enforcement
-    assert (
-        elapsed_time < 0.5
-    ), f"Gate validation took {elapsed_time:.3f}s, exceeds 500ms target"
+    assert elapsed_time < 0.5, f"Gate validation took {elapsed_time:.3f}s, exceeds 500ms target"
 
 
 @pytest.mark.asyncio

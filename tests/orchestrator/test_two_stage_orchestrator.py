@@ -46,9 +46,7 @@ from tools.orchestrator.test_verification_gate import VerificationError, Verific
 # ============================================================================
 # REAL IMPLEMENTATION - Import from tools/orchestrator/two_stage_orchestrator.py
 # ============================================================================
-
 from tools.orchestrator.two_stage_orchestrator import TwoStageOrchestrator
-
 
 # ============================================================================
 # TEST FIXTURES
@@ -243,15 +241,11 @@ class TestTwoStageOrchestratorHappyPath:
         """
         # Arrange
         orchestrator = TwoStageOrchestrator(
-            mock_context,
-            enable_tiered_review=False,
-            auto_approve_for_tests=True
+            mock_context, enable_tiered_review=False, auto_approve_for_tests=True
         )
 
         # Act
-        result = await orchestrator.orchestrate(
-            input_value="Add JWT authentication"
-        )
+        result = await orchestrator.orchestrate(input_value="Add JWT authentication")
 
         # Assert
         # This should fail with NotImplementedError (TDD pattern)
@@ -274,9 +268,7 @@ class TestTwoStageOrchestratorHappyPath:
         """
         # Arrange
         orchestrator = TwoStageOrchestrator(
-            mock_context,
-            enable_tiered_review=False,
-            auto_approve_for_tests=True
+            mock_context, enable_tiered_review=False, auto_approve_for_tests=True
         )
 
         # Setup backlog content
@@ -330,15 +322,11 @@ class TestTwoStageOrchestratorEdgeCases:
         """
         # Arrange
         orchestrator = TwoStageOrchestrator(
-            mock_context,
-            enable_tiered_review=False,
-            auto_approve_for_tests=True
+            mock_context, enable_tiered_review=False, auto_approve_for_tests=True
         )
 
         # Act
-        result = await orchestrator.orchestrate(
-            input_value="Add JWT authentication"
-        )
+        result = await orchestrator.orchestrate(input_value="Add JWT authentication")
 
         # Assert
         # Placeholder - will implement approval retry logic
@@ -362,15 +350,11 @@ class TestTwoStageOrchestratorEdgeCases:
         """
         # Arrange
         orchestrator = TwoStageOrchestrator(
-            mock_context,
-            enable_tiered_review=False,
-            auto_approve_for_tests=True
+            mock_context, enable_tiered_review=False, auto_approve_for_tests=True
         )
 
         # Act
-        result = await orchestrator.orchestrate(
-            input_value="Add JWT authentication"
-        )
+        result = await orchestrator.orchestrate(input_value="Add JWT authentication")
 
         # Assert
         # Expected: Err(TestFailure) when tests fail
@@ -396,15 +380,11 @@ class TestTwoStageOrchestratorEdgeCases:
         """
         # Arrange
         orchestrator = TwoStageOrchestrator(
-            mock_context,
-            enable_tiered_review=False,
-            auto_approve_for_tests=True
+            mock_context, enable_tiered_review=False, auto_approve_for_tests=True
         )
 
         # Act
-        result = await orchestrator.orchestrate(
-            input_value="Add JWT authentication"
-        )
+        result = await orchestrator.orchestrate(input_value="Add JWT authentication")
 
         # Assert
         # Expected: Err with git error details from PRCreator
@@ -435,9 +415,7 @@ class TestTwoStageOrchestratorErrorConditions:
         """
         # Arrange
         orchestrator = TwoStageOrchestrator(
-            mock_context,
-            enable_tiered_review=False,
-            auto_approve_for_tests=True
+            mock_context, enable_tiered_review=False, auto_approve_for_tests=True
         )
 
         # Act
@@ -465,15 +443,11 @@ class TestTwoStageOrchestratorErrorConditions:
         """
         # Arrange
         orchestrator = TwoStageOrchestrator(
-            mock_context,
-            enable_tiered_review=False,
-            auto_approve_for_tests=True
+            mock_context, enable_tiered_review=False, auto_approve_for_tests=True
         )
 
         # Act
-        result = await orchestrator.orchestrate(
-            input_value="Add JWT authentication"
-        )
+        result = await orchestrator.orchestrate(input_value="Add JWT authentication")
 
         # Assert
         # Expected: Err when VectorStore unavailable (Article IV)
@@ -496,15 +470,11 @@ class TestTwoStageOrchestratorErrorConditions:
         """
         # Arrange
         orchestrator = TwoStageOrchestrator(
-            mock_context,
-            enable_tiered_review=False,
-            auto_approve_for_tests=True
+            mock_context, enable_tiered_review=False, auto_approve_for_tests=True
         )
 
         # Act
-        result = await orchestrator.orchestrate(
-            input_value="Add JWT authentication"
-        )
+        result = await orchestrator.orchestrate(input_value="Add JWT authentication")
 
         # Assert
         # Expected: Err on graph validation failure
@@ -538,15 +508,11 @@ class TestTwoStageOrchestratorConstitutionalCompliance:
         """
         # Arrange
         orchestrator = TwoStageOrchestrator(
-            mock_context,
-            enable_tiered_review=False,
-            auto_approve_for_tests=True
+            mock_context, enable_tiered_review=False, auto_approve_for_tests=True
         )
 
         # Act
-        result = await orchestrator.orchestrate(
-            input_value="Add JWT authentication"
-        )
+        result = await orchestrator.orchestrate(input_value="Add JWT authentication")
 
         # Assert
         # Expected: context.store_memory() called with success pattern
@@ -570,15 +536,11 @@ class TestTwoStageOrchestratorConstitutionalCompliance:
         """
         # Arrange
         orchestrator = TwoStageOrchestrator(
-            mock_context,
-            enable_tiered_review=False,
-            auto_approve_for_tests=True
+            mock_context, enable_tiered_review=False, auto_approve_for_tests=True
         )
 
         # Act
-        result = await orchestrator.orchestrate(
-            input_value="Add JWT authentication"
-        )
+        result = await orchestrator.orchestrate(input_value="Add JWT authentication")
 
         # Assert
         # Expected: Err when tests have any failures
@@ -614,15 +576,11 @@ class TestTwoStageOrchestratorTimeoutRetry:
         """
         # Arrange
         orchestrator = TwoStageOrchestrator(
-            mock_context,
-            enable_tiered_review=False,
-            auto_approve_for_tests=True
+            mock_context, enable_tiered_review=False, auto_approve_for_tests=True
         )
 
         # Act
-        result = await orchestrator.orchestrate(
-            input_value="Add JWT authentication"
-        )
+        result = await orchestrator.orchestrate(input_value="Add JWT authentication")
 
         # Assert
         # Expected: Retry logic with exponential backoff
@@ -643,15 +601,11 @@ class TestTwoStageOrchestratorResultPattern:
         """Test successful orchestration returns Ok(PRUrl)."""
         # Arrange
         orchestrator = TwoStageOrchestrator(
-            mock_context,
-            enable_tiered_review=False,
-            auto_approve_for_tests=True
+            mock_context, enable_tiered_review=False, auto_approve_for_tests=True
         )
 
         # Act
-        result = await orchestrator.orchestrate(
-            input_value="Add JWT authentication"
-        )
+        result = await orchestrator.orchestrate(input_value="Add JWT authentication")
 
         # Assert
         # Expected: Result[PRUrl, str] type
@@ -663,9 +617,7 @@ class TestTwoStageOrchestratorResultPattern:
         """Test failed orchestration returns Err(error_message)."""
         # Arrange
         orchestrator = TwoStageOrchestrator(
-            mock_context,
-            enable_tiered_review=False,
-            auto_approve_for_tests=True
+            mock_context, enable_tiered_review=False, auto_approve_for_tests=True
         )
 
         # Act
@@ -696,9 +648,7 @@ class TestTwoStageOrchestratorResultPattern:
         """
         # Arrange
         orchestrator = TwoStageOrchestrator(
-            mock_context,
-            enable_tiered_review=False,
-            auto_approve_for_tests=True
+            mock_context, enable_tiered_review=False, auto_approve_for_tests=True
         )
 
         # Act - should NOT raise, even on errors

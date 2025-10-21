@@ -116,7 +116,7 @@ async def check_inference(endpoint: str, timeout: int = 10) -> Result[bool, Olla
 
                 return Err(OllamaHealthError("Invalid inference response format"))
 
-    except asyncio.TimeoutError:
+    except TimeoutError:
         return Err(OllamaHealthError(f"Inference timeout after {timeout}s"))
     except (aiohttp.ClientError, ConnectionRefusedError, OSError) as e:
         return Err(OllamaHealthError(f"Inference request failed: {e}"))
@@ -191,7 +191,7 @@ async def check_ollama_health(
                         )
                     )
 
-        except asyncio.TimeoutError as e:
+        except TimeoutError as e:
             last_error = f"Timeout after {current_timeout}s"
             logger.debug(f"Caught asyncio.TimeoutError: {e}")
             if attempt < max_retries - 1:

@@ -11,9 +11,10 @@ Constitutional Compliance:
 - Law #8: Focused test functions (<50 lines each)
 """
 
-import pytest
-from unittest.mock import Mock, patch, MagicMock
 from typing import Optional
+from unittest.mock import MagicMock, Mock, patch
+
+import pytest
 
 # Import FallbackHandler class (GREEN phase - implementation exists)
 from tools.orchestrator.fallback_handler_class import FallbackHandler
@@ -67,9 +68,7 @@ class TestFallbackHandler:
             assert "VectorStore unavailable" in str(mock_logger.warning.call_args)
 
     # FALLBACK-002: TRM unavailable → Python validation fallback
-    def test_trm_unavailable_falls_back_to_python_validation(
-        self, fallback_handler, mock_logger
-    ):
+    def test_trm_unavailable_falls_back_to_python_validation(self, fallback_handler, mock_logger):
         """
         Test FALLBACK-002: TypeScript Runtime Monitor unavailable fallback.
 
@@ -97,9 +96,7 @@ def process_user(user_id: int) -> dict[str, str]:
         assert "TRM" in str(mock_logger.warning.call_args)
 
     # FALLBACK-003: Slop Guardian timeout → fallback verdict
-    def test_slop_guardian_timeout_returns_fallback_verdict(
-        self, fallback_handler, mock_logger
-    ):
+    def test_slop_guardian_timeout_returns_fallback_verdict(self, fallback_handler, mock_logger):
         """
         Test FALLBACK-003: Slop Guardian timeout fallback.
 
@@ -117,9 +114,7 @@ def calculate_total(items: list[dict]) -> float:
         timeout_seconds = 30
 
         # Act - no external dependency, pure fallback
-        result = fallback_handler.handle_slop_guardian_timeout(
-            code_sample, timeout_seconds
-        )
+        result = fallback_handler.handle_slop_guardian_timeout(code_sample, timeout_seconds)
 
         # Assert
         assert result is not None
@@ -131,9 +126,7 @@ def calculate_total(items: list[dict]) -> float:
         assert "Slop Guardian timeout" in str(mock_logger.warning.call_args)
 
     # FALLBACK-004: Local model unavailable → cloud API routing
-    def test_local_model_unavailable_routes_to_cloud_api(
-        self, fallback_handler, mock_logger
-    ):
+    def test_local_model_unavailable_routes_to_cloud_api(self, fallback_handler, mock_logger):
         """
         Test FALLBACK-004: Local model unavailable fallback.
 
@@ -151,9 +144,7 @@ def calculate_total(items: list[dict]) -> float:
         }
 
         # Simulate local model unavailable
-        with patch(
-            "tools.ollama_health_check.check_ollama_health", return_value=False
-        ):
+        with patch("tools.ollama_health_check.check_ollama_health", return_value=False):
             # Act
             result = fallback_handler.handle_local_model_unavailable(task)
 
@@ -167,9 +158,7 @@ def calculate_total(items: list[dict]) -> float:
             assert "Local model unavailable" in str(mock_logger.warning.call_args)
 
     # FALLBACK-005: GitHub API rate limit → exponential backoff
-    def test_github_rate_limit_applies_exponential_backoff(
-        self, fallback_handler, mock_logger
-    ):
+    def test_github_rate_limit_applies_exponential_backoff(self, fallback_handler, mock_logger):
         """
         Test FALLBACK-005: GitHub API rate limit fallback.
 
@@ -202,9 +191,7 @@ def calculate_total(items: list[dict]) -> float:
         assert "rate limit" in str(mock_logger.warning.call_args).lower()
 
     # FALLBACK-006: Pre-commit hook failure → --no-verify bypass
-    def test_precommit_hook_failure_bypasses_with_no_verify(
-        self, fallback_handler, mock_logger
-    ):
+    def test_precommit_hook_failure_bypasses_with_no_verify(self, fallback_handler, mock_logger):
         """
         Test FALLBACK-006: Pre-commit hook failure fallback.
 
@@ -223,15 +210,10 @@ def calculate_total(items: list[dict]) -> float:
         # It should run git commit --no-verify (bypass the hook)
         with patch(
             "subprocess.run",
-            return_value=Mock(
-                returncode=0,
-                stdout="[feat-branch 1234567] feat: Add new feature"
-            ),
+            return_value=Mock(returncode=0, stdout="[feat-branch 1234567] feat: Add new feature"),
         ):
             # Act
-            result = fallback_handler.handle_precommit_hook_failure(
-                commit_message, hook_error
-            )
+            result = fallback_handler.handle_precommit_hook_failure(commit_message, hook_error)
 
             # Assert
             assert result is not None
@@ -244,9 +226,7 @@ def calculate_total(items: list[dict]) -> float:
             assert "worktree" in str(mock_logger.warning.call_args).lower()
 
     # FALLBACK-007: Memory Tool unavailable → session-only memory
-    def test_memory_tool_unavailable_uses_session_only_memory(
-        self, fallback_handler, mock_logger
-    ):
+    def test_memory_tool_unavailable_uses_session_only_memory(self, fallback_handler, mock_logger):
         """
         Test FALLBACK-007: Memory Tool unavailable fallback.
 
@@ -328,9 +308,7 @@ class TestFallbackRetryLogic:
         # Act & Assert
         with patch("time.sleep"):  # Mock sleep to avoid actual delays
             with pytest.raises(Exception) as exc_info:
-                fallback_handler.retry_with_exponential_backoff(
-                    operation, max_retries=max_retries
-                )
+                fallback_handler.retry_with_exponential_backoff(operation, max_retries=max_retries)
 
         assert "Always fails" in str(exc_info.value)
         assert operation.call_count == max_retries + 1  # Initial + retries

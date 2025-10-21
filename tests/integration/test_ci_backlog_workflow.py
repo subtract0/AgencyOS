@@ -30,7 +30,6 @@ from unittest.mock import MagicMock, patch
 import pytest
 import yaml
 
-
 # ============================================================================
 # NORMAL OPERATION TESTS - Happy path scenarios
 # ============================================================================
@@ -79,9 +78,9 @@ def test_workflow_installs_requirements():
 
     # Check that requirements.txt is installed
     assert "requirements.txt" in content, "requirements.txt must be installed"
-    assert (
-        "uv pip install --system -r requirements.txt" in content
-    ), "Must use uv pip install for requirements.txt"
+    assert "uv pip install --system -r requirements.txt" in content, (
+        "Must use uv pip install for requirements.txt"
+    )
 
 
 @pytest.mark.integration
@@ -144,9 +143,7 @@ def test_requirements_install_before_package():
 
     assert req_pos != -1, "requirements.txt installation not found"
     assert pkg_pos != -1, "Package installation not found"
-    assert (
-        req_pos < pkg_pos
-    ), "requirements.txt MUST be installed before package (-e .)"
+    assert req_pos < pkg_pos, "requirements.txt MUST be installed before package (-e .)"
 
 
 @pytest.mark.integration
@@ -175,9 +172,7 @@ def test_workflow_triggers_on_multiple_events():
 
     assert "schedule" in triggers, "Missing schedule trigger"
     assert len(triggers["schedule"]) == 1, "Should have one cron schedule"
-    assert (
-        triggers["schedule"][0]["cron"] == "0 */6 * * *"
-    ), "Cron should run every 6 hours"
+    assert triggers["schedule"][0]["cron"] == "0 */6 * * *", "Cron should run every 6 hours"
 
     assert "workflow_dispatch" in triggers, "Missing manual trigger"
 
@@ -209,9 +204,7 @@ def test_python_version_is_313():
 
     assert python_step is not None, "Python setup step not found"
     assert "with" in python_step, "Python step missing 'with' config"
-    assert (
-        python_step["with"]["python-version"] == "3.13"
-    ), "Python version must be 3.13"
+    assert python_step["with"]["python-version"] == "3.13", "Python version must be 3.13"
 
 
 # ============================================================================
@@ -238,9 +231,9 @@ def test_workflow_skip_ci_in_commit_message():
 
     # Check commit message format
     assert "[skip ci]" in content, "Commit message must include [skip ci]"
-    assert (
-        'git commit -m "chore: Auto-update backlog [skip ci]"' in content
-    ), "Commit message format incorrect"
+    assert 'git commit -m "chore: Auto-update backlog [skip ci]"' in content, (
+        "Commit message format incorrect"
+    )
 
 
 @pytest.mark.integration
@@ -276,9 +269,9 @@ def test_workflow_handles_no_changes_gracefully():
 
     # Verify commit step is conditional
     assert "if" in commit_step, "Commit step must be conditional"
-    assert (
-        "steps.check_changes.outputs.changes == 'true'" in commit_step["if"]
-    ), "Commit condition incorrect"
+    assert "steps.check_changes.outputs.changes == 'true'" in commit_step["if"], (
+        "Commit condition incorrect"
+    )
 
 
 # ============================================================================
@@ -607,15 +600,9 @@ def test_recalculate_priorities_returns_sorted_list():
     sorted_tasks = recalculate_priorities(tasks)
 
     # Verify sorted by ROI descending
-    assert (
-        sorted_tasks[0].description == "High ROI task"
-    ), "First task should be highest ROI"
-    assert (
-        sorted_tasks[1].description == "Medium ROI task"
-    ), "Second task should be medium ROI"
-    assert (
-        sorted_tasks[2].description == "Low ROI task"
-    ), "Third task should be lowest ROI"
+    assert sorted_tasks[0].description == "High ROI task", "First task should be highest ROI"
+    assert sorted_tasks[1].description == "Medium ROI task", "Second task should be medium ROI"
+    assert sorted_tasks[2].description == "Low ROI task", "Third task should be lowest ROI"
 
     # Verify ranks are reassigned
     assert sorted_tasks[0].rank == 1, "Top task should have rank 1"

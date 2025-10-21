@@ -16,14 +16,15 @@ import pytest
 def test_get_safe_worker_count_with_local_model():
     """When local model active and low memory, use 3 workers."""
     # Import at module level to avoid circular imports from tools/__init__.py
-    import sys
     import importlib.util
+    import sys
+
     spec = importlib.util.spec_from_file_location(
         "memory_aware_test_runner",
-        Path(__file__).parent.parent / "tools" / "memory_aware_test_runner.py"
+        Path(__file__).parent.parent / "tools" / "memory_aware_test_runner.py",
     )
     runner_module = importlib.util.module_from_spec(spec)
-    sys.modules['memory_aware_test_runner'] = runner_module
+    sys.modules["memory_aware_test_runner"] = runner_module
     spec.loader.exec_module(runner_module)
     get_safe_worker_count = runner_module.get_safe_worker_count
 

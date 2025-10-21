@@ -369,7 +369,9 @@ class TestEndToEndScenario:
     and constitutional requirements with real GitHub API interaction.
     """
 
-    @pytest.mark.skip(reason="Long-running real GitHub API test (15 min) - should be mocked or run manually in CI only")
+    @pytest.mark.skip(
+        reason="Long-running real GitHub API test (15 min) - should be mocked or run manually in CI only"
+    )
     @pytest.mark.timeout(900)  # 15 minute timeout for full cycle
     @pytest.mark.slow  # Skip in default --run-all (real GitHub API, 10-15 min execution)
     async def test_full_autonomous_cycle_intentional_failure_to_success(

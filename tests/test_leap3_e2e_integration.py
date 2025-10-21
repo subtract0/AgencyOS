@@ -274,9 +274,7 @@ class TestEndToEndRoutingFlow:
         for task_desc, agent_name, expected_priority in tasks:
             # Classify (map agent name to task type)
             task_type = "architecture" if agent_name == "chief_architect" else "code_modification"
-            complexity_result = classifier.classify(
-                task_description=task_desc, task_type=task_type
-            )
+            complexity_result = classifier.classify(task_description=task_desc, task_type=task_type)
 
             if isinstance(complexity_result, Err):
                 # Fallback: use expected priority directly
@@ -370,16 +368,10 @@ class TestSkillEvolutionIntegration:
         final_skills = skill_vector.to_dict()
 
         # Technical skills should improve (includes code quality)
-        assert (
-            final_skills["technical_skill"]
-            >= initial_skills["technical_skill"]
-        )
+        assert final_skills["technical_skill"] >= initial_skills["technical_skill"]
 
         # Overall skill level should improve
-        assert (
-            final_skills["overall_skill_level"]
-            >= initial_skills["overall_skill_level"]
-        )
+        assert final_skills["overall_skill_level"] >= initial_skills["overall_skill_level"]
 
         # Update count should increase
         assert final_skills["update_count"] >= 10
@@ -639,10 +631,7 @@ class TestConstitutionalCompliance:
         updated_skills = skill_vector.to_dict()
 
         # Update count should increase
-        assert (
-            updated_skills["update_count"]
-            > initial_skills["update_count"]
-        )
+        assert updated_skills["update_count"] > initial_skills["update_count"]
 
         # Overall skill level should be calculable (not NaN)
         assert 0.0 <= updated_skills["overall_skill_level"] <= 1.0

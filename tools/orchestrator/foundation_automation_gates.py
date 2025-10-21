@@ -76,7 +76,6 @@ from shared.agent_context import AgentContext
 from shared.models.task_graph import TaskGraph, TaskType
 from shared.type_definitions.result import Err, Ok, Result
 
-
 # ============================================================================
 # PYDANTIC MODELS
 # ============================================================================
@@ -766,9 +765,7 @@ async def validate_gate_009_vectorstore_query(
         learnings = context.search_memories(tags=["pattern", "orchestrator"], include_session=True)
 
         # Filter by confidence (≥0.6)
-        high_confidence_learnings = [
-            l for l in learnings if l.get("confidence", 1.0) >= 0.6
-        ]
+        high_confidence_learnings = [learning for learning in learnings if learning.get("confidence", 1.0) >= 0.6]
 
         execution_time_ms = (time.time() - start_time) * 1000
 

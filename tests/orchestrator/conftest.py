@@ -11,6 +11,7 @@ Constitutional Compliance:
 # Import foundation automation fixtures for reuse
 from tests.foundation_automation.conftest import (
     cleanup_test_artifacts,
+    complex_task_graph,
     create_backlog_file,
     isolated_git_repo,
     mock_agent_context,
@@ -24,7 +25,6 @@ from tests.foundation_automation.conftest import (
     sample_backlog_content,
     sample_intents,
     simple_task_graph,
-    complex_task_graph,
 )
 
 __all__ = [

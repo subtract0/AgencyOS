@@ -71,7 +71,6 @@ def enable_synthetic_features():
     feature vectors (embeddings ~[tier, tier, ...]), so we need matching
     synthetic features during inference to achieve >98% accuracy.
     """
-    import os
 
     old_value = os.environ.get("USE_SYNTHETIC_FEATURES")
     os.environ["USE_SYNTHETIC_FEATURES"] = "true"
@@ -562,8 +561,7 @@ class TestABTesting:
         )
 
         print(
-            f"\n✅ A/B Split Balance: {ml_pct:.1%} ML, "
-            f"{1 - ml_pct:.1%} rules (48-52% target met)"
+            f"\n✅ A/B Split Balance: {ml_pct:.1%} ML, {1 - ml_pct:.1%} rules (48-52% target met)"
         )
 
     def test_e2e_telemetry_shows_ab_metrics(

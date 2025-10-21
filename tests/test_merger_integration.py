@@ -168,16 +168,22 @@ class TestGitHubWorkflowIntegration:
     def test_github_workflow_exists(self):
         """Test that GitHub Actions workflow file exists (or disabled version exists)."""
         workflow_path = os.path.join(project_root, ".github", "workflows", "merge-guardian.yml")
-        workflow_path_disabled = os.path.join(project_root, ".github", "workflows", "merge-guardian.yml.disabled")
+        workflow_path_disabled = os.path.join(
+            project_root, ".github", "workflows", "merge-guardian.yml.disabled"
+        )
 
         # Check for either enabled or disabled version
         exists = os.path.exists(workflow_path) or os.path.exists(workflow_path_disabled)
-        assert exists, "GitHub workflow file missing (neither merge-guardian.yml nor merge-guardian.yml.disabled found)"
+        assert exists, (
+            "GitHub workflow file missing (neither merge-guardian.yml nor merge-guardian.yml.disabled found)"
+        )
 
     def test_github_workflow_yaml_structure(self):
         """Test that GitHub workflow has correct YAML structure."""
         workflow_path = os.path.join(project_root, ".github", "workflows", "merge-guardian.yml")
-        workflow_path_disabled = os.path.join(project_root, ".github", "workflows", "merge-guardian.yml.disabled")
+        workflow_path_disabled = os.path.join(
+            project_root, ".github", "workflows", "merge-guardian.yml.disabled"
+        )
 
         # Use whichever version exists
         if os.path.exists(workflow_path):
@@ -198,7 +204,9 @@ class TestGitHubWorkflowIntegration:
     def test_github_workflow_adr_002_enforcement(self):
         """Test that GitHub workflow enforces ADR-002 requirements."""
         workflow_path = os.path.join(project_root, ".github", "workflows", "merge-guardian.yml")
-        workflow_path_disabled = os.path.join(project_root, ".github", "workflows", "merge-guardian.yml.disabled")
+        workflow_path_disabled = os.path.join(
+            project_root, ".github", "workflows", "merge-guardian.yml.disabled"
+        )
 
         # Use whichever version exists
         if os.path.exists(workflow_path):
@@ -227,7 +235,9 @@ class TestGitHubWorkflowIntegration:
     def test_github_workflow_python_setup(self):
         """Test that GitHub workflow properly sets up Python environment."""
         workflow_path = os.path.join(project_root, ".github", "workflows", "merge-guardian.yml")
-        workflow_path_disabled = os.path.join(project_root, ".github", "workflows", "merge-guardian.yml.disabled")
+        workflow_path_disabled = os.path.join(
+            project_root, ".github", "workflows", "merge-guardian.yml.disabled"
+        )
 
         # Use whichever version exists
         if os.path.exists(workflow_path):
@@ -248,7 +258,9 @@ class TestGitHubWorkflowIntegration:
     def test_github_workflow_test_execution_logic(self):
         """Test that GitHub workflow has proper test execution and result processing."""
         workflow_path = os.path.join(project_root, ".github", "workflows", "merge-guardian.yml")
-        workflow_path_disabled = os.path.join(project_root, ".github", "workflows", "merge-guardian.yml.disabled")
+        workflow_path_disabled = os.path.join(
+            project_root, ".github", "workflows", "merge-guardian.yml.disabled"
+        )
 
         # Use whichever version exists
         if os.path.exists(workflow_path):

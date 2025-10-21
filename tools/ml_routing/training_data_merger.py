@@ -158,7 +158,10 @@ class TrainingDataMerger:
 
     def _has_required_fields(self, content: dict) -> bool:
         """Check if content has required fields."""
-        return all(key in content for key in ["confidence", "tier", "timestamp", "method", "model_version", "session_id"])
+        return all(
+            key in content
+            for key in ["confidence", "tier", "timestamp", "method", "model_version", "session_id"]
+        )
 
     def _meets_filter_criteria(self, content: dict, cutoff: float, min_conf: float) -> bool:
         """Check if content meets filter criteria."""

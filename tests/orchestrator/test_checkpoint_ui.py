@@ -417,7 +417,10 @@ def test_specification_30_second_auto_approve(sample_tiered_spec):
         patch("tools.orchestrator.checkpoint_ui.select_with_timeout") as mock_select,
         patch("tools.orchestrator.checkpoint_ui.time.time") as mock_time,
     ):
-        mock_select.side_effect = lambda timeout: (call_count.__setitem__(0, call_count[0] + 1), False)[1]
+        mock_select.side_effect = lambda timeout: (
+            call_count.__setitem__(0, call_count[0] + 1),
+            False,
+        )[1]
         mock_time.side_effect = mock_time_side_effect
 
         result = ui.present_checkpoint(sample_tiered_spec)
