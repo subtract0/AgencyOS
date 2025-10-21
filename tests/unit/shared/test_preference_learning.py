@@ -68,9 +68,9 @@ def message_bus(temp_db):
 @pytest.fixture
 def alice_learner(message_bus, temp_db):
     """Create preference learner for Alice."""
-    db_path = str(Path(temp_db).parent / "alice_prefs.db")
-    # Ensure clean state by removing any existing database file
-    Path(db_path).unlink(missing_ok=True)
+    # Use unique temporary file for each test to avoid conflicts
+    with tempfile.NamedTemporaryFile(suffix="_alice.db", delete=False) as f:
+        db_path = f.name
     learner = PreferenceLearner(
         user_id="alice", message_bus=message_bus, db_path=db_path, min_confidence=0.6
     )
@@ -81,9 +81,9 @@ def alice_learner(message_bus, temp_db):
 @pytest.fixture
 def bob_learner(message_bus, temp_db):
     """Create preference learner for Bob."""
-    db_path = str(Path(temp_db).parent / "bob_prefs.db")
-    # Ensure clean state by removing any existing database file
-    Path(db_path).unlink(missing_ok=True)
+    # Use unique temporary file for each test to avoid conflicts
+    with tempfile.NamedTemporaryFile(suffix="_bob.db", delete=False) as f:
+        db_path = f.name
     learner = PreferenceLearner(
         user_id="bob", message_bus=message_bus, db_path=db_path, min_confidence=0.6
     )
