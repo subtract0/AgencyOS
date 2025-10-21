@@ -104,29 +104,52 @@ class Agency:
 
     def __init__(
         self,
-        agents: Agent | list[Agent],
+        *agents: Agent,
         shared_instructions: str | None = None,
         **kwargs,
     ):
         """
         Initialize agency with single agent or list of agents.
 
+        Supports multiple calling patterns for backward compatibility:
+        - Agency(agent) - single agent
+        - Agency(agent1, agent2, agent3) - multiple agents (we use first)
+        - Agency([agent1, agent2]) - list of agents
+        - Agency(agents=[agent1, agent2]) - keyword argument
+
         Args:
-            agents: Single Agent or list of Agents (we only use the first one)
+            *agents: Variable number of Agent objects, or single list[Agent]
             shared_instructions: Shared instructions (prepended to agent instructions)
-            **kwargs: Ignored (for backward compatibility)
+            **kwargs: Additional arguments (ignored for backward compatibility)
         """
-        # Handle both single Agent and list[Agent] for backward compatibility
-        if isinstance(agents, list):
-            if not agents:
+        # Handle different calling patterns
+        if not agents:
+            # Check if agents passed as keyword arg
+            if "agents" in kwargs:
+                agents_arg = kwargs.pop("agents")
+                if isinstance(agents_arg, list):
+                    agents = tuple(agents_arg)
+                else:
+                    agents = (agents_arg,)
+            else:
                 raise ValueError("Agency requires at least one agent")
-            self.agent = agents[0]
-        elif isinstance(agents, Agent):
-            self.agent = agents
-        else:
-            raise TypeError(
-                f"agents must be Agent or list[Agent], got {type(agents).__name__}"
-            )
+
+        # If first argument is a list, extract agents from it
+        if len(agents) == 1 and isinstance(agents[0], list):
+            agents = tuple(agents[0])
+
+        if not agents:
+            raise ValueError("Agency requires at least one agent")
+
+        # Validate all agents
+        for idx, agent in enumerate(agents):
+            if not isinstance(agent, Agent):
+                raise TypeError(
+                    f"Agent at position {idx} must be Agent, got {type(agent).__name__}"
+                )
+
+        # Use first agent (for lean_adapter compatibility)
+        self.agent = agents[0]
 
         # Prepend shared instructions if provided
         if shared_instructions:
