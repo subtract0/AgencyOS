@@ -19,6 +19,9 @@ from pattern_intelligence.pattern_applicator import PatternApplicator
 class TestIntelligenceAmplificationBenchmarks:
     """Test-driven benchmarks for measuring AI intelligence amplification."""
 
+    # Increase timeout for pattern intelligence tests (CI requires more time)
+    pytestmark = pytest.mark.timeout(60)
+
     @pytest.fixture
     def intelligence_system(self):
         """Set up complete intelligence system for testing."""
