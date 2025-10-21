@@ -44,6 +44,10 @@ from shared.type_definitions.result import Err, Ok, Result
 # ==============================================================================
 
 
+# Increase timeout for ML training tests (CI requires more time)
+pytestmark = pytest.mark.timeout(60)
+
+
 @pytest.fixture
 def mock_agent_context():
     """Create mock AgentContext for VectorStore operations."""
