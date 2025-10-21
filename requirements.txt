@@ -64,4 +64,3 @@ aiofiles>=23.2.0  # Async file I/O for Memory Tool (Leap 2, Phase 3)
 
 # FAISS for semantic indexing (Phase 2, Task 1: VectorStore Optimization)
 faiss-cpu>=1.7.4  # Sub-linear search via HNSW algorithm
-aiofiles>=25.1.0
