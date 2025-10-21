@@ -38,9 +38,7 @@ class TestCodingAgentCreation:
 
     def test_agent_creation_creates_context_when_none(self):
         """Test that agent creation creates context when none provided."""
-        with patch(
-            "coding_agent.coding_agent.create_agent_context"
-        ) as mock_create_context:
+        with patch("coding_agent.coding_agent.create_agent_context") as mock_create_context:
             mock_ctx = Mock()
             mock_ctx.session_id = "test_session"
             mock_create_context.return_value = mock_ctx

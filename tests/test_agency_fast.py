@@ -247,9 +247,7 @@ class TestAgencyFast:
         """Test fast agency creation with mocked components."""
         with (
             patch("agency_swarm.Agency") as mock_agency_class,
-            patch(
-                "coding_agent.coding_agent.create_coding_agent"
-            ) as mock_create_agent,
+            patch("coding_agent.coding_agent.create_coding_agent") as mock_create_agent,
         ):
             # Setup mocks
             mock_agent = Mock()

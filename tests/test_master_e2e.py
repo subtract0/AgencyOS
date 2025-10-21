@@ -606,8 +606,8 @@ result = process_data(None)
 
         # Check agents (at least core ones)
         try:
-            from coding_agent.coding_agent import create_coding_agent
             from chief_architect_agent import create_chief_architect_agent
+            from coding_agent.coding_agent import create_coding_agent
             from planner_agent.planner_agent import create_planner_agent
 
             validations["multi_agent"] = True

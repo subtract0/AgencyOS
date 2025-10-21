@@ -32,12 +32,8 @@ class TestMemoryIntegration:
     def test_memory_integration_hook_creation(self, mock_agent_context):
         """Test that memory integration hooks are properly created."""
         with (
-            patch(
-                "coding_agent.coding_agent.create_memory_integration_hook"
-            ) as mock_memory_hook,
-            patch(
-                "coding_agent.coding_agent.create_system_reminder_hook"
-            ) as mock_reminder_hook,
+            patch("coding_agent.coding_agent.create_memory_integration_hook") as mock_memory_hook,
+            patch("coding_agent.coding_agent.create_system_reminder_hook") as mock_reminder_hook,
             patch("coding_agent.coding_agent.create_composite_hook") as mock_composite,
             patch("coding_agent.coding_agent.Agent"),
             patch("coding_agent.coding_agent.get_model_instance") as mock_model,
@@ -116,9 +112,7 @@ class TestMemoryIntegration:
     def test_memory_hook_integration(self, mock_agent_context, mock_system_hooks):
         """Test that memory hooks are properly integrated."""
         with (
-            patch(
-                "coding_agent.coding_agent.create_memory_integration_hook"
-            ) as mock_memory_hook,
+            patch("coding_agent.coding_agent.create_memory_integration_hook") as mock_memory_hook,
             patch("coding_agent.coding_agent.create_composite_hook") as mock_composite,
             patch("coding_agent.coding_agent.Agent"),
             patch("coding_agent.coding_agent.get_model_instance") as mock_model,

@@ -20,9 +20,6 @@ from agency_swarm import Agency
 from agency_swarm.tools import SendMessageHandoff
 from dotenv import load_dotenv
 
-# Agency imports - specialized agents
-from coding_agent.coding_agent import create_coding_agent
-
 # Agency imports - memory subsystem
 from agency_memory import (
     Memory,
@@ -31,6 +28,9 @@ from agency_memory import (
 )
 from auditor_agent import create_auditor_agent
 from chief_architect_agent import create_chief_architect_agent
+
+# Agency imports - specialized agents
+from coding_agent.coding_agent import create_coding_agent
 from learning_agent import create_learning_agent
 from merger_agent.merger_agent import create_merger_agent
 from planner_agent.planner_agent import create_planner_agent

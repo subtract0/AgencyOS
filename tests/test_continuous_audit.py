@@ -365,9 +365,7 @@ class TestDeduplication:
             effort_hours=3.0,
             summary="Duplicate init patterns",
             details=details_text,  # Same details for high similarity
-            locations=[
-                FileLocation(file_path="coding_agent/agent.py", line_start=20, line_end=35)
-            ],
+            locations=[FileLocation(file_path="coding_agent/agent.py", line_start=20, line_end=35)],
             recommendation_steps=["Create base class"],
         )
 

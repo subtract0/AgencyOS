@@ -169,12 +169,8 @@ class TestAgentInitialization:
     def test_hooks_integration(self, mock_agent_context):
         """Test that system hooks are properly integrated."""
         with (
-            patch(
-                "coding_agent.coding_agent.create_system_reminder_hook"
-            ) as mock_reminder,
-            patch(
-                "coding_agent.coding_agent.create_memory_integration_hook"
-            ) as mock_memory,
+            patch("coding_agent.coding_agent.create_system_reminder_hook") as mock_reminder,
+            patch("coding_agent.coding_agent.create_memory_integration_hook") as mock_memory,
             patch("coding_agent.coding_agent.create_composite_hook") as mock_composite,
             patch("coding_agent.coding_agent.Agent") as mock_agent_class,
             patch("coding_agent.coding_agent.get_model_instance") as mock_model,

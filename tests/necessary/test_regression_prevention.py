@@ -14,9 +14,9 @@ from unittest.mock import patch
 
 import pytest
 
-from coding_agent.coding_agent import create_coding_agent
 from agency_memory.enhanced_memory_store import EnhancedMemoryStore
 from agency_memory.memory import InMemoryStore, Memory
+from coding_agent.coding_agent import create_coding_agent
 from shared.agent_context import create_agent_context
 from shared.model_policy import DEFAULTS, agent_model
 

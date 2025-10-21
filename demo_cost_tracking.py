@@ -71,9 +71,7 @@ def demo_agent_cost_tracking():
 
     # Create agent with cost tracking
     context = create_agent_context()
-    agent = create_coding_agent(
-        model="gpt-4o-mini", agent_context=context, cost_tracker=tracker
-    )
+    agent = create_coding_agent(model="gpt-4o-mini", agent_context=context, cost_tracker=tracker)
 
     print(f"\nCreated {agent.name} with cost tracking enabled")
     print(f"Cost tracker attached to agent context: {hasattr(context, 'cost_tracker')}")
