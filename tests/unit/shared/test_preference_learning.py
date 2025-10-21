@@ -531,7 +531,7 @@ class TestPreferenceAnalysis:
 class TestMultiUserIsolation:
     """CRITICAL: Verify NO cross-user data contamination."""
 
-    @pytest.mark.serial
+    @pytest.mark.serial  # Force sequential execution to avoid DB file race conditions
     def test_alice_and_bob_have_separate_preferences(
         self, alice_learner, bob_learner, sample_responses_alice, sample_responses_bob
     ):

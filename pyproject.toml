@@ -52,7 +52,7 @@ addopts = [
     "-m", "not integration and not e2e",  # Default: unit tests only
     "--maxfail=3",              # Stop after 3 failures for faster feedback
     "--disable-warnings",       # Reduce noise from warnings
-    "-n", "auto",               # Parallel execution with pytest-xdist
+    "-n", "3",                  # Parallel execution: 3 workers (stability over speed for timing tests)
 ]
 filterwarnings = [
     "error",                    # Turn warnings into errors
