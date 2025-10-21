@@ -2,7 +2,7 @@
 """
 Autonomous Recommendation Implementation System
 
-Orchestrates AgencyCodeAgent to apply audit recommendations from continuous_audit_m4pro.py.
+Orchestrates AgencyOSAgent to apply audit recommendations from continuous_audit_m4pro.py.
 Uses trinity_protocol AgentRegistry with qwen2.5-coder:32b for local execution.
 
 Constitutional Compliance:
@@ -16,7 +16,7 @@ Architecture:
 1. Read recommendations from .output/audit_recommendations/
 2. Parse markdown files (priority, category, affected files, fix steps)
 3. Process in priority order (P3 → P1, safest first)
-4. Use AgencyCodeAgent for implementation
+4. Use AgencyOSAgent for implementation
 5. Validate with tests after each change
 6. Commit successful changes, rollback failures
 7. Generate summary report
@@ -574,7 +574,7 @@ class TestValidator:
 
 class RecommendationFixer:
     """
-    Main orchestrator for applying recommendations via AgencyCodeAgent.
+    Main orchestrator for applying recommendations via AgencyOSAgent.
     """
 
     def __init__(
@@ -659,7 +659,7 @@ class RecommendationFixer:
 
     def apply_fix(self, recommendation: Recommendation) -> Result[FixResult, str]:
         """
-        Apply a single recommendation using AgencyCodeAgent.
+        Apply a single recommendation using AgencyOSAgent.
 
         Article IV Compliance: Query learnings before action, store after success.
 
@@ -718,7 +718,7 @@ class RecommendationFixer:
             if branch_result.is_err():
                 return Err(branch_result.unwrap_err())
 
-            # Get AgencyCodeAgent
+            # Get AgencyOSAgent
             coder = self.registry.create_agent(AgentType.CODER)
 
             # Build prompt for agent
@@ -894,7 +894,7 @@ class RecommendationFixer:
             return Err(f"Failed to apply fix: {e}")
 
     def _build_fix_prompt(self, recommendation: Recommendation) -> str:
-        """Build prompt for AgencyCodeAgent."""
+        """Build prompt for AgencyOSAgent."""
         prompt_parts = [
             f"# Fix Request: {recommendation.category.value.upper()}",
             "",

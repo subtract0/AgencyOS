@@ -22,7 +22,7 @@ Constitutional Compliance:
 Cron Schedule: 0 2 * * 0 (Sundays at 2 AM)
 
 Reference: specs/spec-008-weekly-retraining-pipeline.md Section 5.5
-Author: AgencyCodeAgent
+Author: AgencyOSAgent
 Date: 2025-10-10
 """
 

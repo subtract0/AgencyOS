@@ -42,13 +42,13 @@ current_dir = os.path.dirname(os.path.abspath(__file__))
 
 
 @constitutional_compliance
-def create_agency_code_agent(
+def create_agencyos_agent(
     model: str = "gpt-5-mini",
     reasoning_effort: str = "medium",
     agent_context: AgentContext = None,
     cost_tracker=None,
 ) -> Agent:
-    """Factory that returns a fresh AgencyCodeAgent instance.
+    """Factory that returns a fresh AgencyOSAgent instance.
     Use this in tests to avoid reusing a singleton across multiple agencies.
 
     Args:
@@ -80,7 +80,7 @@ def create_agency_code_agent(
     agent_context.store_memory(
         f"agent_created_{agent_context.session_id}",
         {
-            "agent_type": "AgencyCodeAgent",
+            "agent_type": "AgencyOSAgent",
             "model": model,
             "reasoning_effort": reasoning_effort,
             "session_id": agent_context.session_id,
@@ -95,7 +95,7 @@ def create_agency_code_agent(
 
     # Create agent
     agent = Agent(
-        name="AgencyCodeAgent",
+        name="AgencyOSAgent",
         description=(
             "PROACTIVE primary software engineer and implementation specialist with autonomous coordination capabilities. "
             "Intelligently triggered when code changes, file edits, or technical implementation is needed. AUTOMATICALLY coordinates "
@@ -142,4 +142,4 @@ def create_agency_code_agent(
 
 
 # Note: We don't create a singleton at module level to avoid circular imports.
-# Use create_agency_code_agent() directly or import and call when needed.
+# Use create_agencyos_agent() directly or import and call when needed.

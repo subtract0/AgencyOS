@@ -15,7 +15,7 @@ import logging
 from enum import Enum
 from typing import Literal
 
-from agency_code_agent import create_agency_code_agent
+from agencyos_agent import create_agencyos_agent
 from auditor_agent import create_auditor_agent
 from chief_architect_agent import create_chief_architect_agent
 from learning_agent import create_learning_agent
@@ -186,7 +186,7 @@ class AgentRegistry:
     ) -> object:
         """Internal factory method to create agent by type."""
         factories = {
-            AgentType.CODER: create_agency_code_agent,
+            AgentType.CODER: create_agencyos_agent,
             AgentType.PLANNER: create_planner_agent,
             AgentType.AUDITOR: create_auditor_agent,
             AgentType.TEST_GENERATOR: create_test_generator_agent,

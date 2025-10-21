@@ -4,7 +4,7 @@
 **Status**: Draft
 **Created**: 2025-10-16
 **Updated**: 2025-10-16
-**Owner**: Agency Code Agent
+**Owner**: AgencyOS Agent
 **Related Specs**: SPEC-030 (Foundation Automation Test Coverage)
 **Related ADRs**: ADR-027 (Two-Stage TDD), ADR-032 (Autonomous Completion Protocol)
 

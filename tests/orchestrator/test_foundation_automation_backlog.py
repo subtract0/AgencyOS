@@ -21,7 +21,7 @@ Constitutional Compliance:
 - Article II: TDD (tests written FIRST, must fail initially)
 - Article VI: RED phase (implementation doesn't exist yet)
 
-Author: Claude (AgencyCodeAgent)
+Author: Claude (AgencyOSAgent)
 Created: 2025-10-16
 Status: RED phase - All tests MUST fail
 """

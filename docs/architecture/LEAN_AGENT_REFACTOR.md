@@ -16,7 +16,7 @@
 
 Agency Swarm was causing autonomous agents to fail:
 
-1. **Initialization Hang**: `create_agency_code_agent()` hung for 60+ seconds or timed out
+1. **Initialization Hang**: `create_agencyos_agent()` hung for 60+ seconds or timed out
 2. **Subprocess Issues**: Running agents in subprocess caused API initialization deadlocks
 3. **Complexity**: 10K+ lines of framework code for simple LLM API calls
 4. **Unpredictable**: Black-box behavior made debugging nearly impossible

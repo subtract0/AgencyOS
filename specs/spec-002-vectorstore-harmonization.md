@@ -38,7 +38,7 @@ Unify the VectorStore API with the LearningAgent toolchain to eliminate interfac
 ## User Personas & Journeys
 
 - PlannerAgent: relies on spec-kit to plan harmonization work
-- AgencyCodeAgent: implements minimal, compatible changes
+- AgencyOSAgent: implements minimal, compatible changes
 - LearningAgent: stores and retrieves learnings reliably
 
 ---
@@ -74,7 +74,7 @@ Unify the VectorStore API with the LearningAgent toolchain to eliminate interfac
 ---
 
 ## Integration Points
-- PlannerAgent, AgencyCodeAgent, LearningAgent, MergerAgent
+- PlannerAgent, AgencyOSAgent, LearningAgent, MergerAgent
 
 ---
 

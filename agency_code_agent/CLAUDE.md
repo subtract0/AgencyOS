@@ -1,4 +1,4 @@
-# AgencyCodeAgent - Quick Reference
+# AgencyOSAgent - Quick Reference
 
 ## Role & Identity
 
@@ -10,7 +10,7 @@
 
 ## When to Use Me
 
-**Invoke AgencyCodeAgent when:**
+**Invoke AgencyOSAgent when:**
 - Implementing features from approved specs/plans
 - Refactoring code to improve quality
 - Fixing bugs with test coverage
@@ -26,17 +26,17 @@
 **Decision Tree:**
 ```
 New feature request?
-├─ Has spec/plan? → AgencyCodeAgent (implement)
-└─ No spec? → Planner first, then AgencyCodeAgent
+├─ Has spec/plan? → AgencyOSAgent (implement)
+└─ No spec? → Planner first, then AgencyOSAgent
 
 Code quality issue?
 ├─ Need analysis only? → Auditor (READ-ONLY)
 ├─ Need fix? → QualityEnforcer (autonomous healing)
-└─ Manual fix needed? → AgencyCodeAgent
+└─ Manual fix needed? → AgencyOSAgent
 
 Test coverage gap?
 ├─ Generate tests? → TestGenerator
-└─ Implement with tests? → AgencyCodeAgent (TDD)
+└─ Implement with tests? → AgencyOSAgent (TDD)
 ```
 
 ## My Tools & Capabilities
@@ -78,7 +78,7 @@ Test coverage gap?
 
 ### Communication Flow
 ```
-Planner → spec.md/plan.md → AgencyCodeAgent
+Planner → spec.md/plan.md → AgencyOSAgent
                             ↓
                       Query VectorStore (Article IV)
                             ↓
@@ -86,11 +86,11 @@ Planner → spec.md/plan.md → AgencyCodeAgent
                             ↓
                       Implement to pass tests
                             ↓
-QualityEnforcer ← validation ← AgencyCodeAgent
+QualityEnforcer ← validation ← AgencyOSAgent
                             ↓
                       Store learnings (Article IV)
                             ↓
-MergerAgent ← completed code ← AgencyCodeAgent
+MergerAgent ← completed code ← AgencyOSAgent
 ```
 
 ## Constitutional Requirements

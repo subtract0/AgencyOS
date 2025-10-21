@@ -101,7 +101,7 @@ Successfully optimized Trinity Protocol's EXECUTOR agent from 774 lines to 488 l
 All 6 Agency sub-agents successfully imported and instantiated:
 
 ```python
-✅ CodeWriter (agency_code_agent)
+✅ CodeWriter (agencyos_agent)
 ✅ TestArchitect (test_generator_agent)
 ✅ ToolDeveloper (toolsmith_agent)
 ✅ ImmunityEnforcer (quality_enforcer_agent)
@@ -139,7 +139,7 @@ All 6 Agency sub-agents successfully imported and instantiated:
 def __init__(self, ...):
     # 30 lines of setup
     self.sub_agents = {
-        SubAgentType.CODE_WRITER: create_agency_code_agent(...),
+        SubAgentType.CODE_WRITER: create_agencyos_agent(...),
         SubAgentType.TEST_ARCHITECT: create_test_generator_agent(...),
         # ... 25+ more lines
     }
@@ -156,7 +156,7 @@ def __init__(self, ...):
 # New helper: 34 lines (separate concern)
 def _initialize_sub_agents(self) -> Dict[SubAgentType, Any]:
     return {
-        SubAgentType.CODE_WRITER: create_agency_code_agent(...),
+        SubAgentType.CODE_WRITER: create_agencyos_agent(...),
         # ...
     }
 ```

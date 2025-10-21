@@ -17,7 +17,7 @@ The continuous audit system (`scripts/continuous_audit_m4pro.py`) currently deli
 - **Priority elevation** (3+ instances → bump priority)
 - **Local M4 Pro execution** (qwen2.5-coder:32b)
 
-**Problem**: Recommendations require **human interpretation** before AgencyCodeAgent can act. The autonomous fixer (`scripts/autonomous_recommendation_fixer.py`) exists but lacks critical metadata to make safe, confident decisions.
+**Problem**: Recommendations require **human interpretation** before AgencyOSAgent can act. The autonomous fixer (`scripts/autonomous_recommendation_fixer.py`) exists but lacks critical metadata to make safe, confident decisions.
 
 ### The Autonomous Gap
 
@@ -44,7 +44,7 @@ Found commented code in function validate_input() lines 45-82
 
 ### Target State (6/5 Stars - Autonomous-Ready)
 
-Make recommendations **immediately actionable** by AgencyCodeAgent:
+Make recommendations **immediately actionable** by AgencyOSAgent:
 - **Auto-fixability classification** with confidence scores
 - **Generated fix code** ready to apply
 - **Dependency analysis** for safe ordering
@@ -1415,7 +1415,7 @@ else:
 
 ### Positive
 
-1. **Autonomous Execution** - AgencyCodeAgent can apply 60-70% of recommendations without human intervention
+1. **Autonomous Execution** - AgencyOSAgent can apply 60-70% of recommendations without human intervention
 2. **Reduced Cognitive Load** - Humans review only high-risk changes
 3. **Faster Feedback** - Auto-fixes applied within minutes, not days
 4. **Learning Integration** - Article IV compliance through VectorStore success patterns

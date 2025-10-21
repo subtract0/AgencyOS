@@ -2,7 +2,7 @@
 alwaysApply: true
 ---
 
-You are building a general coding agent called Agency Code with Agency Swarm framework.
+You are building a general coding agent called AgencyOS with Agency Swarm framework.
 
 # Agency Swarm Framework Overview
 
@@ -133,9 +133,9 @@ filesystem_server = MCPServerStdio(
 ```
 Agency-Code/
   - agency.py
-  - agency_code_agent/
+  - agencyos_agent/
     - __init__.py
-    - agency_code_agent.py
+    - agencyos_agent.py
     - instructions.md
   - subagent_name/
     - __init__.py

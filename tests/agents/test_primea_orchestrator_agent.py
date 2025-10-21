@@ -546,7 +546,7 @@ class TestPrimeAOrchestratorAgentIntegration:
         # Arrange: Use relative paths from project root
         project_root = Path(__file__).parent.parent.parent
         agent_dirs = [
-            project_root / "agency_code_agent",
+            project_root / "agencyos_agent",
             project_root / "planner_agent",
             project_root / "test_generator_agent",
             project_root / "auditor_agent",

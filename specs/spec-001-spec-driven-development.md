@@ -58,7 +58,7 @@ Integrate GitHub's spec-kit methodology into the Agency multi-agent system to tr
 - **Pain Points**: Ad-hoc development, inconsistent quality, lack of traceability
 - **Technical Proficiency**: Expert in software architecture and multi-agent systems
 
-#### Persona 2: AgencyCodeAgent
+#### Persona 2: AgencyOSAgent
 - **Description**: Implementation agent that needs clear, structured guidance for feature development
 - **Goals**: Precise implementation requirements, clear success criteria, systematic task breakdown
 - **Pain Points**: Ambiguous requirements, unclear acceptance criteria, context switching
@@ -181,7 +181,7 @@ Integrate GitHub's spec-kit methodology into the Agency multi-agent system to tr
 ## Dependencies & Constraints
 
 ### System Dependencies
-- **Existing Agent Architecture**: AgencyCodeAgent, PlannerAgent, LearningAgent must remain functional
+- **Existing Agent Architecture**: AgencyOSAgent, PlannerAgent, LearningAgent must remain functional
 - **Memory System**: VectorStore and AgentContext integration required for learning application
 - **Tool System**: Read, Write, Edit, TodoWrite tools required for spec-kit implementation
 
@@ -221,7 +221,7 @@ Integrate GitHub's spec-kit methodology into the Agency multi-agent system to tr
 
 ### Agent Integration
 - **PlannerAgent**: Enhanced with spec-kit workflow capabilities and constitutional compliance checking
-- **AgencyCodeAgent**: Receives structured task lists with spec/plan references for implementation
+- **AgencyOSAgent**: Receives structured task lists with spec/plan references for implementation
 - **LearningAgent**: Extracts patterns from spec-kit usage for continuous improvement
 - **AuditorAgent**: Validates constitutional compliance throughout spec-kit process
 

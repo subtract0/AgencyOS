@@ -285,7 +285,7 @@ for match in matches:
 
 | Agent | Memory API Usage | Typical Volume | Pattern |
 |-------|-----------------|----------------|---------|
-| **AgencyCodeAgent** | `store_memory` (patterns, fixes) | ~50 memories/session | Write-heavy |
+| **AgencyOSAgent** | `store_memory` (patterns, fixes) | ~50 memories/session | Write-heavy |
 | **PlannerAgent** | `search_memories` (past plans) | ~20 searches/session | Read-heavy |
 | **AuditorAgent** | `search_memories` (violations) | ~100 searches/session | **Read-intensive** |
 | **QualityEnforcer** | `store_memory` (constitutional logs) | ~30 memories/session | Write-moderate |

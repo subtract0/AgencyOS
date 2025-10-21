@@ -28,7 +28,7 @@ def create_mock_agent(name: str) -> MagicMock:
     return mock_agent
 
 # Usage
-mock_coder = create_mock_agent("AgencyCodeAgent")
+mock_coder = create_mock_agent("AgencyOSAgent")
 mock_planner = create_mock_agent("PlannerAgent")
 ```
 
@@ -38,7 +38,7 @@ mock_planner = create_mock_agent("PlannerAgent")
 from tests.fixtures.constitutional_test_agents import create_constitutional_test_agent
 
 # Usage
-coder = create_constitutional_test_agent("AgencyCodeAgent")
+coder = create_constitutional_test_agent("AgencyOSAgent")
 planner = create_constitutional_test_agent("PlannerAgent")
 ```
 
@@ -115,12 +115,12 @@ agent = create_constitutional_test_agent(
 
 ```python
 # Before
-mock_coder = create_mock_agent("AgencyCodeAgent")
+mock_coder = create_mock_agent("AgencyOSAgent")
 mock_planner = create_mock_agent("PlannerAgent")
 mock_auditor = create_mock_agent("AuditorAgent")
 
 # After
-coder = create_constitutional_test_agent("AgencyCodeAgent")
+coder = create_constitutional_test_agent("AgencyOSAgent")
 planner = create_constitutional_test_agent("PlannerAgent")
 auditor = create_constitutional_test_agent("AuditorAgent")
 ```

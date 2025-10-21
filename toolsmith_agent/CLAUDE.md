@@ -17,7 +17,7 @@
 - Tool testing and validation
 
 **Do NOT use for:**
-- Feature implementation (use AgencyCodeAgent)
+- Feature implementation (use AgencyOSAgent)
 - Code analysis (use Auditor)
 - Quality enforcement (use QualityEnforcer)
 

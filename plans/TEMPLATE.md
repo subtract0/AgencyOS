@@ -73,7 +73,7 @@ Input → Processing → Validation → Storage → Output
 
 ### Agent Communication Flow
 ```
-PlannerAgent → AgencyCodeAgent → TestGeneratorAgent → AuditorAgent
+PlannerAgent → AgencyOSAgent → TestGeneratorAgent → AuditorAgent
      ↓               ↓                    ↓               ↓
   Planning      Implementation        Testing         Validation
 ```
@@ -398,7 +398,7 @@ project_root/
 
 ### Agent Time Allocation
 - **PlannerAgent**: [X hours/days]
-- **AgencyCodeAgent**: [X hours/days]
+- **AgencyOSAgent**: [X hours/days]
 - **LearningAgent**: [X hours/days]
 - **Other Agents**: [X hours/days]
 

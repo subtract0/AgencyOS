@@ -24,7 +24,7 @@ Entry template:
 
 - Agent: Claude
 - Date: 2025-01-13
-- Affected directories: `agency_code_agent/tools/`, `tests/`
+- Affected directories: `agencyos_agent/tools/`, `tests/`
 - Summary of changes:
   - **Critical Hanging Issue Fix**: Completely resolved Bash tool hanging when called multiple times by agents
   - **Architecture Overhaul**:
@@ -54,26 +54,26 @@ Entry template:
 
 - Agent: Claude
 - Date: 2025-08-13
-- Affected directories: `agency_code_agent/`, `agency.py`, `tests/`, `run_tests.py`, `.cursor/rules/`
+- Affected directories: `agencyos_agent/`, `agency.py`, `tests/`, `run_tests.py`, `.cursor/rules/`
 - Summary of changes:
   - **Major Structure Refactor**: Refined project organization for better modularity and clarity
   - **Directory Changes**:
-    - Renamed `agency_code/` → `agency_code_agent/` for better semantic naming
-    - Moved `agency.py` from `agency_code_agent/` to root directory for easier access
-    - Updated agency.py import: `from .agency_code_agent import agency_code_agent` → `from agency_code_agent.agency_code_agent import agency_code_agent`
-    - Updated instructions.md path to `agency_code_agent/instructions.md`
+    - Renamed `agencyos/` → `agencyos_agent/` for better semantic naming
+    - Moved `agency.py` from `agencyos_agent/` to root directory for easier access
+    - Updated agency.py import: `from .agencyos_agent import agencyos_agent` → `from agencyos_agent.agencyos_agent import agencyos_agent`
+    - Updated instructions.md path to `agencyos_agent/instructions.md`
   - **Import Updates**: Updated all import statements across entire codebase:
-    - All test files: `from agency_code.*` → `from agency_code_agent.*` (20+ files)
-    - Core files: `tests/conftest.py`, `run_tests.py`, `agency_code_agent/__init__.py`
+    - All test files: `from agencyos.*` → `from agencyos_agent.*` (20+ files)
+    - Core files: `tests/conftest.py`, `run_tests.py`, `agencyos_agent/__init__.py`
     - Tool references and internal paths updated consistently
   - **Configuration Updates**:
-    - Updated todo file path: `/tmp/agency_code_todos.json` → `/tmp/agency_code_agent_todos.json`
+    - Updated todo file path: `/tmp/agencyos_todos.json` → `/tmp/agencyos_agent_todos.json`
     - Updated all documentation and help text references
   - **Documentation Updates**:
     - Updated `project-overview.mdc` directory structure diagram
-    - Reflects new layout with `agency.py` at root and `agency_code_agent/` as module folder
+    - Reflects new layout with `agency.py` at root and `agencyos_agent/` as module folder
   - **Architecture Benefits**:
-    - Clearer separation: root-level orchestration (`agency.py`) and agent module (`agency_code_agent/`)
+    - Clearer separation: root-level orchestration (`agency.py`) and agent module (`agencyos_agent/`)
     - More intuitive project navigation and understanding
     - Better alignment with Agency Swarm best practices
 
@@ -81,22 +81,22 @@ Entry template:
 
 - Agent: Claude
 - Date: 2025-08-13
-- Affected directories: `agency_code/`, `tests/`, `run_tests.py`
+- Affected directories: `agencyos/`, `tests/`, `run_tests.py`
 - Summary of changes:
-  - **Project Rename**: Renamed `claude_code` folder and agent to `agency_code` for better branding alignment
+  - **Project Rename**: Renamed `claude_code` folder and agent to `agencyos` for better branding alignment
   - **Directory Structure**:
-    - Renamed `claude_code/` → `agency_code/`
-    - Renamed `claude_code_agent.py` → `agency_code_agent.py`
-    - Updated agent class name: `ClaudeCodeAgent` → `AgencyCodeAgent`
-    - Updated factory function: `create_claude_code_agent()` → `create_agency_code_agent()`
-    - Updated singleton variable: `claude_code_agent` → `agency_code_agent`
+    - Renamed `claude_code/` → `agencyos/`
+    - Renamed `claude_code_agent.py` → `agencyos_agent.py`
+    - Updated agent class name: `ClaudeCodeAgent` → `AgencyOSAgent`
+    - Updated factory function: `create_claude_code_agent()` → `create_agencyos_agent()`
+    - Updated singleton variable: `claude_code_agent` → `agencyos_agent`
   - **Import Updates**: Updated all import statements across:
     - All test files in `tests/` directory (20+ files)
     - Core agency files (`agency.py`, `__init__.py`)
     - Tool files and references
     - Test runner (`run_tests.py`)
   - **Configuration Updates**:
-    - Updated todo file path: `/tmp/claude_code_todos.json` → `/tmp/agency_code_todos.json`
+    - Updated todo file path: `/tmp/claude_code_todos.json` → `/tmp/agencyos_todos.json`
     - Updated all internal references and documentation paths
   - **Backward Compatibility**: Maintained all functionality while updating naming throughout codebase
 
@@ -104,7 +104,7 @@ Entry template:
 
 - Agent: Claude
 - Date: 2025-08-13
-- Affected directories: `agency_code/tools/`, `tests/`
+- Affected directories: `agencyos/tools/`, `tests/`
 - Summary of changes:
   - **YAML/Implementation Alignment**: Fixed all identified mismatches between YAML schema and tool implementations
   - **Shared State Infrastructure**:
@@ -169,7 +169,7 @@ Entry template:
 
 - Agent: Cursor
 - Date: 2025-08-12
-- Affected directories: `tests/`, `agency_code/tools/`, `agency_code/`, `.cursor/rules/`
+- Affected directories: `tests/`, `agencyos/tools/`, `agencyos/`, `.cursor/rules/`
 - Summary of changes:
   - Organized tests into `tests/` and fixed imports/paths
   - Added dedicated tests for Bash, Read, Edit, Grep, Glob, TodoWrite

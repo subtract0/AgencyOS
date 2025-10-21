@@ -460,7 +460,7 @@ class CodeGenerationOutput(TaskOutputData):
 # Task result with typed data
 result = TaskResultContract[CodeGenerationOutput](
     task_id="generate_api_handler",
-    agent_name="AgencyCodeAgent",
+    agent_name="AgencyOSAgent",
     status="success",
     data=CodeGenerationOutput(
         code="def handler(): ...",
@@ -718,7 +718,7 @@ def replay_execution_order(graph_id: str) -> list[str]:
 ### Agent Integration
 
 - **PrimeCCC**: Primary consumer - constructs task graphs, relies on full layer execution
-- **AgencyCodeAgent**: Task executor - produces results validated against contracts
+- **AgencyOSAgent**: Task executor - produces results validated against contracts
 - **QualityEnforcer**: Constitutional compliance validation
 - **LearningAgent**: Extracts execution patterns (retry rates, failure modes)
 

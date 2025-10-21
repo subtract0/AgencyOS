@@ -27,7 +27,7 @@ Performance:
 - Emergency retraining: <4 hours (training + validation + deployment)
 
 Reference: specs/spec-009-misclassification-detection.md Section 5.3
-Author: AgencyCodeAgent
+Author: AgencyOSAgent
 Date: 2025-10-10
 """
 

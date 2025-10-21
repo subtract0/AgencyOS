@@ -7,7 +7,7 @@ from unittest.mock import AsyncMock, Mock, patch
 
 import pytest
 
-from agency_code_agent.agency_code_agent import create_agency_code_agent
+from agencyos_agent.agencyos_agent import create_agencyos_agent
 
 
 class TestToolDispatcher:
@@ -16,14 +16,14 @@ class TestToolDispatcher:
     def test_agent_has_required_tools(self, mock_agent_context):
         """Test that agent is created with all required tools."""
         with (
-            patch("agency_code_agent.agency_code_agent.Agent") as mock_agent_class,
-            patch("agency_code_agent.agency_code_agent.get_model_instance") as mock_model,
-            patch("agency_code_agent.agency_code_agent.render_instructions") as mock_render,
+            patch("agencyos_agent.agencyos_agent.Agent") as mock_agent_class,
+            patch("agencyos_agent.agencyos_agent.get_model_instance") as mock_model,
+            patch("agencyos_agent.agencyos_agent.render_instructions") as mock_render,
         ):
             mock_model.return_value = "gpt-5-mini"
             mock_render.return_value = "Test instructions"
 
-            _ = create_agency_code_agent(
+            _ = create_agencyos_agent(
                 model="gpt-5-mini", reasoning_effort="low", agent_context=mock_agent_context
             )
 
@@ -54,17 +54,17 @@ class TestToolDispatcher:
     def test_openai_model_gets_web_search_tool(self, mock_agent_context):
         """Test that OpenAI models get WebSearchTool."""
         with (
-            patch("agency_code_agent.agency_code_agent.detect_model_type") as mock_detect,
-            patch("agency_code_agent.agency_code_agent.Agent") as mock_agent_class,
-            patch("agency_code_agent.agency_code_agent.get_model_instance") as mock_model,
-            patch("agency_code_agent.agency_code_agent.render_instructions") as mock_render,
+            patch("agencyos_agent.agencyos_agent.detect_model_type") as mock_detect,
+            patch("agencyos_agent.agencyos_agent.Agent") as mock_agent_class,
+            patch("agencyos_agent.agencyos_agent.get_model_instance") as mock_model,
+            patch("agencyos_agent.agencyos_agent.render_instructions") as mock_render,
         ):
             # Mock as OpenAI model
             mock_detect.return_value = (True, False, False)  # is_openai, is_claude, other
             mock_model.return_value = "gpt-5-mini"
             mock_render.return_value = "Test instructions"
 
-            _ = create_agency_code_agent(
+            _ = create_agencyos_agent(
                 model="gpt-5-mini", reasoning_effort="low", agent_context=mock_agent_context
             )
 
@@ -74,17 +74,17 @@ class TestToolDispatcher:
     def test_claude_model_gets_claude_web_search(self, mock_agent_context):
         """Test that Claude models get ClaudeWebSearch tool."""
         with (
-            patch("agency_code_agent.agency_code_agent.detect_model_type") as mock_detect,
-            patch("agency_code_agent.agency_code_agent.Agent") as mock_agent_class,
-            patch("agency_code_agent.agency_code_agent.get_model_instance") as mock_model,
-            patch("agency_code_agent.agency_code_agent.render_instructions") as mock_render,
+            patch("agencyos_agent.agencyos_agent.detect_model_type") as mock_detect,
+            patch("agencyos_agent.agencyos_agent.Agent") as mock_agent_class,
+            patch("agencyos_agent.agencyos_agent.get_model_instance") as mock_model,
+            patch("agencyos_agent.agencyos_agent.render_instructions") as mock_render,
         ):
             # Mock as Claude model
             mock_detect.return_value = (False, True, False)  # is_openai, is_claude, other
             mock_model.return_value = "claude-3-sonnet"
             mock_render.return_value = "Test instructions"
 
-            _ = create_agency_code_agent(
+            _ = create_agencyos_agent(
                 model="claude-3-sonnet", reasoning_effort="medium", agent_context=mock_agent_context
             )
 
@@ -136,16 +136,16 @@ class TestToolDispatcher:
 
         for model, effort in models_to_test:
             with (
-                patch("agency_code_agent.agency_code_agent.Agent") as mock_agent_class,
-                patch("agency_code_agent.agency_code_agent.get_model_instance") as mock_model,
-                patch("agency_code_agent.agency_code_agent.render_instructions") as mock_render,
+                patch("agencyos_agent.agencyos_agent.Agent") as mock_agent_class,
+                patch("agencyos_agent.agencyos_agent.get_model_instance") as mock_model,
+                patch("agencyos_agent.agencyos_agent.render_instructions") as mock_render,
             ):
                 mock_model.return_value = model
                 mock_render.return_value = "Test instructions"
                 mock_agent = Mock()
                 mock_agent_class.return_value = mock_agent
 
-                _ = create_agency_code_agent(
+                _ = create_agencyos_agent(
                     model=model, reasoning_effort=effort, agent_context=mock_agent_context
                 )
 
@@ -158,7 +158,7 @@ class TestToolDispatcher:
                 assert "description" in call_kwargs
                 assert "instructions" in call_kwargs
                 assert "tools" in call_kwargs
-                assert call_kwargs["name"] == "AgencyCodeAgent"
+                assert call_kwargs["name"] == "AgencyOSAgent"
 
     @pytest.mark.asyncio
     async def test_concurrent_tool_usage(self, mock_tool_calls):
@@ -193,16 +193,16 @@ class TestToolDispatcher:
     def test_tool_folder_configuration(self, mock_agent_context):
         """Test that tools folder is correctly configured."""
         with (
-            patch("agency_code_agent.agency_code_agent.Agent") as mock_agent_class,
-            patch("agency_code_agent.agency_code_agent.get_model_instance") as mock_model,
-            patch("agency_code_agent.agency_code_agent.render_instructions") as mock_render,
+            patch("agencyos_agent.agencyos_agent.Agent") as mock_agent_class,
+            patch("agencyos_agent.agencyos_agent.get_model_instance") as mock_model,
+            patch("agencyos_agent.agencyos_agent.render_instructions") as mock_render,
             patch("os.path.join") as mock_path_join,
         ):
             mock_model.return_value = "gpt-5-mini"
             mock_render.return_value = "Test instructions"
             mock_path_join.return_value = "/mocked/tools/path"
 
-            _ = create_agency_code_agent(
+            _ = create_agencyos_agent(
                 model="gpt-5-mini", reasoning_effort="low", agent_context=mock_agent_context
             )
 
@@ -214,16 +214,16 @@ class TestToolDispatcher:
     def test_instructions_rendering(self, mock_agent_context):
         """Test that instructions are properly rendered for different models."""
         with (
-            patch("agency_code_agent.agency_code_agent.Agent") as mock_agent_class,
-            patch("agency_code_agent.agency_code_agent.render_instructions") as mock_render,
-            patch("agency_code_agent.agency_code_agent.select_instructions_file") as mock_select,
-            patch("agency_code_agent.agency_code_agent.get_model_instance") as mock_model,
+            patch("agencyos_agent.agencyos_agent.Agent") as mock_agent_class,
+            patch("agencyos_agent.agencyos_agent.render_instructions") as mock_render,
+            patch("agencyos_agent.agencyos_agent.select_instructions_file") as mock_select,
+            patch("agencyos_agent.agencyos_agent.get_model_instance") as mock_model,
         ):
             mock_render.return_value = "Rendered instructions for test"
             mock_select.return_value = "/path/to/instructions.md"
             mock_model.return_value = "gpt-5-mini"
 
-            _ = create_agency_code_agent(
+            _ = create_agencyos_agent(
                 model="gpt-5-mini", reasoning_effort="medium", agent_context=mock_agent_context
             )
 

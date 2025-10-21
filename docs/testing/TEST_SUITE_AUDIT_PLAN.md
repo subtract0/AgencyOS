@@ -364,7 +364,7 @@ NECESSARY Score: 7/7 average
 4. Validate metrics
 
 **Timeline**: 5 days
-**Owner**: Agency Code Agent + Test Generator
+**Owner**: AgencyOS Agent + Test Generator
 
 ### Phase 4: Continuous Enforcement (Ongoing)
 **Goal**: Prevent bloat from returning

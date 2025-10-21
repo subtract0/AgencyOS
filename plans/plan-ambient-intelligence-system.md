@@ -1157,7 +1157,7 @@ This implementation plan provides a comprehensive roadmap for building the Ambie
 **Next Steps**:
 1. ChiefArchitect creates formal spec and ADR (TASK-003)
 2. User approves specification
-3. AgencyCodeAgent begins implementation (TASK-001)
+3. AgencyOSAgent begins implementation (TASK-001)
 4. Parallel agent execution across phases
 5. Quality gates at each phase
 6. Final validation and merge

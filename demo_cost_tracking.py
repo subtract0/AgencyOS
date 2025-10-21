@@ -16,7 +16,7 @@ import os
 from openai import OpenAI
 from trinity_protocol.cost_tracker import CostTracker
 
-from agency_code_agent.agency_code_agent import create_agency_code_agent
+from agencyos_agent.agencyos_agent import create_agencyos_agent
 from shared.agent_context import create_agent_context
 from shared.llm_cost_wrapper import wrap_openai_client
 
@@ -71,7 +71,7 @@ def demo_agent_cost_tracking():
 
     # Create agent with cost tracking
     context = create_agent_context()
-    agent = create_agency_code_agent(
+    agent = create_agencyos_agent(
         model="gpt-4o-mini", agent_context=context, cost_tracker=tracker
     )
 
@@ -154,7 +154,7 @@ def demo_multi_agent_tracking():
 
     # Create multiple agents with same tracker
     agents = [
-        create_agency_code_agent(model="gpt-4o-mini", agent_context=context, cost_tracker=tracker),
+        create_agencyos_agent(model="gpt-4o-mini", agent_context=context, cost_tracker=tracker),
         create_test_generator_agent(model="gpt-5", agent_context=context, cost_tracker=tracker),
         create_toolsmith_agent(model="gpt-5", agent_context=context, cost_tracker=tracker),
     ]

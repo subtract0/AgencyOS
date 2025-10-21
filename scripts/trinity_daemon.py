@@ -6,7 +6,7 @@ WATCHER → FIXER → LEARNER trinity pattern for autonomous code quality improv
 
 Components:
 1. WATCHER: Monitors recommendation files (Phase 4 audit output)
-2. FIXER: Applies fixes via AgencyCodeAgent
+2. FIXER: Applies fixes via AgencyOSAgent
 3. LEARNER: Extracts patterns from successful fixes, stores in VectorStore
 
 Constitutional Compliance:

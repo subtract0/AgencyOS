@@ -1,17 +1,17 @@
 """
-Tool Integration Test for Agency Code Agent
+Tool Integration Test for AgencyOS Agent
 Tests that tools can be invoked directly via the agent
 """
 
 import pytest
 
-from agency_code_agent.agency_code_agent import create_agency_code_agent
+from agencyos_agent.agencyos_agent import create_agencyos_agent
 
 
 @pytest.fixture
 def agent():
     """Create agency code agent for testing"""
-    return create_agency_code_agent()
+    return create_agencyos_agent()
 
 
 def test_agent_creation(agent):

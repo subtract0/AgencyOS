@@ -449,7 +449,7 @@ Current limitations and workarounds
 ### Inputs From (Gathers Summary Data):
 
 - **ALL Agents**: Completed work and accomplishments
-- **AgencyCodeAgent**: Implementation details, code changes
+- **AgencyOSAgent**: Implementation details, code changes
 - **TestGenerator**: Test coverage, test results
 - **QualityEnforcer**: Violations found/fixed, healing actions
 - **Planner**: Original plan adherence

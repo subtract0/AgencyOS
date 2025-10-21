@@ -157,7 +157,7 @@ echo "✅ Article II Section 2.4: Compliant"
   - Add `@pytest.mark.unit` marker (if not auto-categorized)
 
 - [ ] **Move integration tests to `tests/integration/`**
-  - Replace `create_mock_agent` with real `AgencyCodeAgent()`, `PlannerAgent()`, etc.
+  - Replace `create_mock_agent` with real `AgencyOSAgent()`, `PlannerAgent()`, etc.
   - Keep mocks for true external dependencies (cloud APIs)
   - Verify <10s timeout constraint
   - Add `@pytest.mark.integration` marker
@@ -209,7 +209,7 @@ echo "✅ Article II Section 2.4: Compliant"
   - Reference ADR-021 in test generation guidance
 
 Agents to update:
-  - [ ] `agency_code_agent/instructions.md`
+  - [ ] `agencyos_agent/instructions.md`
   - [ ] `planner_agent/instructions.md`
   - [ ] `auditor_agent/instructions.md`
   - [ ] `quality_enforcer_agent/instructions.md`

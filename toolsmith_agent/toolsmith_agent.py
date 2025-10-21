@@ -74,7 +74,7 @@ def create_toolsmith_agent(
         description=(
             "PROACTIVE meta-agent tool development craftsman creating reusable, well-tested utilities following TDD methodology. AUTOMATICALLY "
             "triggered when new tool capabilities needed by other agents or workflow automation required. INTELLIGENTLY coordinates with: "
-            "(1) PlannerAgent for tool specifications and API design, (2) AgencyCodeAgent for implementation, "
+            "(1) PlannerAgent for tool specifications and API design, (2) AgencyOSAgent for implementation, "
             "(3) TestGeneratorAgent for comprehensive tool testing, (4) AuditorAgent for quality validation, and (5) LearningAgent "
             "to identify tool usage patterns and improvement opportunities. Creates tools using strict TDD with scaffold directives: (a) write tests first, "
             "(b) implement minimal functionality, (c) refactor for clarity, (d) document thoroughly. All tools follow Agency Swarm "

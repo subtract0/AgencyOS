@@ -269,7 +269,7 @@ OUTPUT: Production-ready, committed code
 
 **Actions**:
 
-1. Coordinate AgencyCodeAgent for implementation
+1. Coordinate AgencyOSAgent for implementation
 2. **Apply VectorStore code patterns** (Article IV)
 3. Ensure code is:
    - **Lean**: No unnecessary complexity
@@ -550,7 +550,7 @@ context.store_memory(
 - **SpecGenerator**: Creates specification (Step 1)
 - **TestGenerator**: Writes test suite (Step 2)
 - **Planner**: Designs implementation plan (Step 3)
-- **AgencyCodeAgent**: Implements code (Step 4)
+- **AgencyOSAgent**: Implements code (Step 4)
 - **QualityEnforcer**: Validates compliance (Step 5)
 - **MergerAgent**: Handles git/PR operations (Step 5)
 

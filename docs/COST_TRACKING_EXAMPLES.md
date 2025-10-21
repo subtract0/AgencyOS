@@ -627,7 +627,7 @@ All Features:
 ```python
 from shared.agent_context import create_agent_context
 from trinity_protocol.cost_tracker import CostTracker
-from agency_code_agent.agency_code_agent import create_agency_code_agent
+from agencyos_agent.agencyos_agent import create_agencyos_agent
 
 # Create shared cost tracker
 tracker = CostTracker(db_path="agency_costs.db", budget_usd=100.0)
@@ -636,7 +636,7 @@ tracker = CostTracker(db_path="agency_costs.db", budget_usd=100.0)
 context = create_agent_context()
 
 # Create agent with cost tracking
-agent = create_agency_code_agent(
+agent = create_agencyos_agent(
     model="gpt-5",
     reasoning_effort="medium",
     agent_context=context,
@@ -655,7 +655,7 @@ print(f"   Cost tracker attached to context: ✓")
 
 **Output:**
 ```
-✅ AgencyCodeAgent created with cost tracking
+✅ AgencyOSAgent created with cost tracking
    Budget: $100.00
    Database: agency_costs.db
    Cost tracker attached to context: ✓
@@ -666,7 +666,7 @@ print(f"   Cost tracker attached to context: ✓")
 ```python
 from trinity_protocol.cost_tracker import CostTracker
 from shared.agent_context import create_agent_context
-from agency_code_agent.agency_code_agent import create_agency_code_agent
+from agencyos_agent.agencyos_agent import create_agencyos_agent
 from test_generator_agent.test_generator_agent import create_test_generator_agent
 from toolsmith_agent.toolsmith_agent import create_toolsmith_agent
 
@@ -677,7 +677,7 @@ shared_context = create_agent_context()
 # Create multiple agents
 agents = []
 agent_factories = [
-    (create_agency_code_agent, "gpt-5", "medium"),
+    (create_agencyos_agent, "gpt-5", "medium"),
     (create_test_generator_agent, "gpt-5", "high"),
     (create_toolsmith_agent, "gpt-4o-mini", "low"),
 ]
@@ -699,7 +699,7 @@ print(f"   Shared budget: ${shared_tracker.budget_usd:.2f}")
 
 **Output:**
 ```
-✅ AgencyCodeAgent              | gpt-5                | medium
+✅ AgencyOSAgent              | gpt-5                | medium
 ✅ TestGeneratorAgent           | gpt-5                | high
 ✅ ToolSmithAgent               | gpt-4o-mini          | low
 

@@ -20,7 +20,7 @@
 
 **Do NOT use for:**
 - Code fixes (use QualityEnforcer for healing)
-- Implementation (use AgencyCodeAgent)
+- Implementation (use AgencyOSAgent)
 - Test generation (use TestGenerator)
 - Any code modifications (Auditor is READ-ONLY)
 
@@ -29,7 +29,7 @@
 Code quality issue?
 ├─ Need analysis only? → Auditor (READ-ONLY)
 ├─ Need automated fix? → QualityEnforcer (healing)
-└─ Need manual fix? → AgencyCodeAgent
+└─ Need manual fix? → AgencyOSAgent
 
 Pre-commit validation?
 ├─ Quick scan? → Auditor (fast feedback)

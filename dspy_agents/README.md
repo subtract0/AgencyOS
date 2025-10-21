@@ -53,7 +53,7 @@ configure_dspy_for_agent("planner")  # Uses PLANNER_MODEL env var
 
 ### DSPyCodeAgent
 
-The main code agent implementation that replaces the static AgencyCodeAgent.
+The main code agent implementation that replaces the static AgencyOSAgent.
 
 **Key Capabilities:**
 - Task planning with constitutional constraints
@@ -137,4 +137,4 @@ This enables continuous improvement and adaptation to project-specific patterns.
 
 ## Integration
 
-The DSPyCodeAgent is designed to be a drop-in replacement for the existing AgencyCodeAgent while providing enhanced capabilities when DSPy is available.
+The DSPyCodeAgent is designed to be a drop-in replacement for the existing AgencyOSAgent while providing enhanced capabilities when DSPy is available.

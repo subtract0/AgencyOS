@@ -1,6 +1,6 @@
-# Agency Code Features
+# AgencyOS Features
 
-This document provides a comprehensive inventory of features implemented in Agency Code.
+This document provides a comprehensive inventory of features implemented in AgencyOS.
 
 ## 🤖 Autonomous Self-Healing (Revolutionary)
 
@@ -37,7 +37,7 @@ This document provides a comprehensive inventory of features implemented in Agen
 **Description**: Strategic oversight and self-directed task creation
 **Test Coverage**: `tests/test_agency.py`
 
-### AgencyCodeAgent
+### AgencyOSAgent
 **Description**: Primary coding agent with full Claude Code tool set
 **Test Coverage**: `tests/test_agency.py`
 

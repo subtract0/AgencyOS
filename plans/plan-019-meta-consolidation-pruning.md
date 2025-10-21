@@ -187,7 +187,7 @@ class GitWorkflowAssisted:
 TOTAL: ~2,738 lines
 
 Agent directories (instructions.md):
-agency_code_agent/instructions.md
+agencyos_agent/instructions.md
 planner_agent/instructions.md
 ... (duplicates of .claude/agents/)
 
@@ -786,7 +786,7 @@ def git_status() -> Result[GitStatus, Error]:
 **Example of Current Chaos:**
 ```
 tests/
-├── test_agency_code_agent.py
+├── test_agencyos_agent.py
 ├── test_auditor_agent.py
 ├── test_chief_architect_agent.py
 ├── test_constitutional_compliance.py

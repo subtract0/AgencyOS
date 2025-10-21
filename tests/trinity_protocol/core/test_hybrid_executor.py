@@ -165,7 +165,7 @@ def sample_test_generation_task() -> JSONValue:
         "task_id": str(uuid.uuid4()),
         "task_type": "test_generation",
         "description": "Generate tests for new feature",
-        "target_file": "agency_code_agent/core.py",
+        "target_file": "agencyos_agent/core.py",
         "complexity": "low",
     }
 

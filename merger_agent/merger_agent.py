@@ -79,7 +79,7 @@ def create_merger_agent(
         name="MergerAgent",
         description=(
             "PROACTIVE integration and release management specialist with Git workflow automation. Acts as the quality gatekeeper - final "
-            "quality gate before code reaches main branch. AUTOMATICALLY triggered when AgencyCodeAgent completes implementation and tests pass. "
+            "quality gate before code reaches main branch. AUTOMATICALLY triggered when AgencyOSAgent completes implementation and tests pass. "
             "INTELLIGENTLY coordinates with: (1) QualityEnforcerAgent for final constitutional compliance check, "
             "(2) TestGeneratorAgent to verify 100% test success requirement, (3) AuditorAgent for pre-merge quality validation, "
             "and (4) WorkCompletionSummaryAgent for change documentation. PROACTIVELY performs: (a) git status/diff analysis, "

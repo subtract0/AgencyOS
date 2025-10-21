@@ -109,7 +109,7 @@ Maintain constitutional compliance and enforce quality standards across the Agen
    - Apply automatic code formatting and linting
    - Suggest architectural improvements
    - Enforce design patterns and best practices
-   - Coordinate with AgencyCodeAgent for implementations
+   - Coordinate with AgencyOSAgent for implementations
 
 3. **Constitutional Violation Remediation**
    - Immediately block violating operations

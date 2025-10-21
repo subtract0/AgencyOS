@@ -325,7 +325,7 @@ def create_mock_agent(name: str) -> MagicMock:
 
 @pytest.mark.asyncio
 async def test_coder_handoff_to_planner_minimal():
-    mock_coder = create_mock_agent("AgencyCodeAgent")  # Article II violation
+    mock_coder = create_mock_agent("AgencyOSAgent")  # Article II violation
     mock_planner = create_mock_agent("PlannerAgent")   # Article II violation
     # ... rest of test
 ```
@@ -339,7 +339,7 @@ async def test_coder_handoff_to_planner_minimal():
 async def test_handoff_message_serialization():
     """Unit test: Handoff message structure (mocks OK for agents)."""
     # Mock agents for isolated message testing
-    mock_coder = create_mock_agent("AgencyCodeAgent")  # OK: External to message logic
+    mock_coder = create_mock_agent("AgencyOSAgent")  # OK: External to message logic
     mock_planner = create_mock_agent("PlannerAgent")   # OK: External to message logic
 
     message = HandoffMessage(from_agent=mock_coder, to_agent=mock_planner)
@@ -353,10 +353,10 @@ async def test_handoff_message_serialization():
 async def test_real_coder_to_planner_handoff():
     """Integration test: Real agent handoff (Article II compliance)."""
     # Use REAL agents (Article II: verify real functionality)
-    from agency_code_agent import AgencyCodeAgent
+    from agencyos_agent import AgencyOSAgent
     from planner_agent import PlannerAgent
 
-    real_coder = AgencyCodeAgent()  # Real implementation
+    real_coder = AgencyOSAgent()  # Real implementation
     real_planner = PlannerAgent()   # Real implementation
 
     # Test actual handoff behavior

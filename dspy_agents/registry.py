@@ -142,7 +142,7 @@ class AgentRegistry:
         """Register legacy agent creation functions."""
         try:
             # Import legacy agent creators
-            from agency_code_agent.agency_code_agent import create_agency_code_agent
+            from agencyos_agent.agencyos_agent import create_agencyos_agent
             from auditor_agent import create_auditor_agent
             from chief_architect_agent import create_chief_architect_agent
             from learning_agent import create_learning_agent
@@ -155,7 +155,7 @@ class AgentRegistry:
             # Register legacy agents
             self._legacy_agents.update(
                 {
-                    "code": create_agency_code_agent,
+                    "code": create_agencyos_agent,
                     "auditor": create_auditor_agent,
                     "planner": create_planner_agent,
                     "learning": create_learning_agent,

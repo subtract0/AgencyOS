@@ -17,7 +17,7 @@
 - Green main enforcement
 
 **Do NOT use for:**
-- Code implementation (use AgencyCodeAgent)
+- Code implementation (use AgencyOSAgent)
 - Quality validation (use QualityEnforcer)
 - Test generation (use TestGenerator)
 

@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Test Runner for Agency Code Agency
+Test Runner for AgencyOS Agency
 Runs all tests using pytest framework
 """
 
@@ -580,7 +580,7 @@ def main(
             print(f"- {mode_descriptions.get(test_mode, test_mode)} executed successfully")
             print(f"- Execution time: {execution_time:.2f} seconds")
             print("- No failures or errors detected")
-            print("- Agency Code Agency is ready for use")
+            print("- AgencyOS Agency is ready for use")
         else:
             print("❌ Some tests failed!")
             print(f"Exit code: {result.returncode}")
@@ -588,7 +588,7 @@ def main(
             print("- Check the output above for specific test failures")
             print("- Ensure all dependencies are installed correctly")
             print("- Verify environment variables are set (if needed)")
-            print("- Check that all tool files are present in agency_code_agent/tools/")
+            print("- Check that all tool files are present in agencyos_agent/tools/")
             if test_mode == "integration":
                 print("- Integration tests may require additional setup or services")
 
@@ -700,7 +700,7 @@ def run_specific_test(test_name: str, timed: bool = False) -> int:
 def create_parser() -> argparse.ArgumentParser:
     """Create argument parser for test runner"""
     parser = argparse.ArgumentParser(
-        description="Agency Code Agency Test Runner",
+        description="AgencyOS Agency Test Runner",
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""Examples:
   python run_tests.py                    # Run unit tests only (default)

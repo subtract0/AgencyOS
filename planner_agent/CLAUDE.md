@@ -18,7 +18,7 @@
 - Architectural planning required
 
 **Do NOT use for:**
-- Code implementation (use AgencyCodeAgent)
+- Code implementation (use AgencyOSAgent)
 - Code quality analysis (use Auditor)
 - Direct coding (delegate to CodeAgent)
 - Simple one-step tasks (skip spec-kit for efficiency)
@@ -27,10 +27,10 @@
 ```
 New feature request?
 ├─ Complex (>2 days)? → Planner (spec.md → plan.md)
-└─ Simple (<1 day)? → AgencyCodeAgent (skip spec-kit)
+└─ Simple (<1 day)? → AgencyOSAgent (skip spec-kit)
 
 Specification exists?
-├─ Approved? → AgencyCodeAgent (implement)
+├─ Approved? → AgencyOSAgent (implement)
 └─ Not approved? → Planner (refine spec)
 
 Architecture decision?
@@ -69,7 +69,7 @@ Architecture decision?
 - **VectorStore**: Similar specs and planning patterns (Article IV)
 
 ### Who Depends On Me
-- **AgencyCodeAgent**: Needs specs, plans, task assignments
+- **AgencyOSAgent**: Needs specs, plans, task assignments
 - **ChiefArchitect**: Escalates complex architectural decisions
 - **QualityEnforcer**: Validates plans for constitutional compliance
 - **TestGenerator**: Receives testing strategy requirements
@@ -88,7 +88,7 @@ User → feature request → Planner
                         ↓
                   Generate TodoWrite tasks
                         ↓
-AgencyCodeAgent ← spec/plan/tasks ← Planner
+AgencyOSAgent ← spec/plan/tasks ← Planner
 ```
 
 ## Constitutional Requirements

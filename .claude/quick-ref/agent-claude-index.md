@@ -19,7 +19,7 @@ Each agent has its own CLAUDE.md file located in its directory with:
 
 ### Core Development Agents
 
-1. **[AgencyCodeAgent](../../agency_code_agent/CLAUDE.md)**
+1. **[AgencyOSAgent](../../agencyos_agent/CLAUDE.md)**
    - **Role**: TDD-first implementation, Result patterns, type safety
    - **Model**: GPT-5 (medium reasoning)
    - **Complexity**: P2/P3 (implementation, refactoring, bug fixes)
@@ -131,7 +131,7 @@ Each agent has its own CLAUDE.md file located in its directory with:
 ### I need to...
 
 **Implement a feature:**
-- Has spec/plan? → [AgencyCodeAgent](../../agency_code_agent/CLAUDE.md)
+- Has spec/plan? → [AgencyOSAgent](../../agencyos_agent/CLAUDE.md)
 - No spec? → [Planner](../../planner_agent/CLAUDE.md) first
 
 **Analyze code quality:**
@@ -140,7 +140,7 @@ Each agent has its own CLAUDE.md file located in its directory with:
 
 **Work with tests:**
 - Generate tests? → [TestGenerator](../../test_generator_agent/CLAUDE.md)
-- Write tests manually (TDD)? → [AgencyCodeAgent](../../agency_code_agent/CLAUDE.md)
+- Write tests manually (TDD)? → [AgencyOSAgent](../../agencyos_agent/CLAUDE.md)
 
 **Make architectural decisions:**
 - Create ADR? → [ChiefArchitect](../../chief_architect_agent/CLAUDE.md)
@@ -161,7 +161,7 @@ Each agent has its own CLAUDE.md file located in its directory with:
 ### Agent CLAUDE.md Files (10 agents)
 ```
 Agency/
-├── agency_code_agent/CLAUDE.md          (395 lines, 12KB)
+├── agencyos_agent/CLAUDE.md          (395 lines, 12KB)
 ├── planner_agent/CLAUDE.md              (453 lines, 13KB)
 ├── auditor_agent/CLAUDE.md              (512 lines, 15KB)
 ├── quality_enforcer_agent/CLAUDE.md     (551 lines, 17KB)

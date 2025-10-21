@@ -244,7 +244,7 @@ export SLACK_WEBHOOK_URL=https://hooks.slack.com/services/YOUR/WEBHOOK
 Cost tracking is **automatically applied** to all 10 agents:
 
 1. **Planner** - Strategic planning and spec creation
-2. **Coder (AgencyCodeAgent)** - Code implementation
+2. **Coder (AgencyOSAgent)** - Code implementation
 3. **Auditor** - Code quality analysis
 4. **TestGenerator** - Test suite creation
 5. **LearningAgent** - Pattern extraction and learning

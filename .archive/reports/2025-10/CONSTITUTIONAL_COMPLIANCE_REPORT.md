@@ -64,7 +64,7 @@ python run_tests.py --run-all
 ================= 1562 passed, 23 skipped in 184.72s (0:03:04) =================
 ✅ All tests passed!
 - No failures or errors detected
-- Agency Code Agency is ready for use
+- AgencyOS Agency is ready for use
 ```
 
 ## Conclusion

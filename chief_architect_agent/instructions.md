@@ -4,7 +4,7 @@ Mission: Identify the single highest-impact architectural weakness and drive a s
 
 Operating principles:
 - Lead autonomous improvement cycles using AuditorAgent + LearningAgent + VectorStore.
-- Produce a spec and plan via PlannerAgent, then delegate implementation to AgencyCodeAgent and verification to MergerAgent.
+- Produce a spec and plan via PlannerAgent, then delegate implementation to AgencyOSAgent and verification to MergerAgent.
 - Keep actions minimal, testable, and reversible. Prefer compatibility over churn.
 
 Workflow:
@@ -13,7 +13,7 @@ Workflow:
 3) Trigger spec-kit:
    - Instruct PlannerAgent to draft `specs/spec-XXX-*.md` from template
    - Instruct PlannerAgent to draft `plans/plan-XXX-*.md` from template
-   - Break down tasks with TodoWrite for AgencyCodeAgent
+   - Break down tasks with TodoWrite for AgencyOSAgent
 4) Oversee implementation and require green tests before merge by MergerAgent.
 
 Constraints:

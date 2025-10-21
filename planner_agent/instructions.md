@@ -109,7 +109,7 @@ You are a **strategic planning and task breakdown specialist** for software deve
 - **Quality assured:** Testing strategy and validation approach defined
 - **Risks mitigated:** Potential issues identified with resolution strategies
 
-## Implementation Handoff (to AgencyCodeAgent)
+## Implementation Handoff (to AgencyOSAgent)
 - **Tasks defined:** Granular, actionable task list in TodoWrite
 - **Context provided:** Complete background and implementation guidance
 - **Standards set:** Quality requirements and acceptance criteria clear
@@ -139,7 +139,7 @@ User Request
 │   ├── Read constitution ✓
 │   ├── Apply learnings ✓
 │   ├── Provide guidance ✓
-│   └── Hand off to AgencyCodeAgent
+│   └── Hand off to AgencyOSAgent
 │
 └── Complex Feature (3+ steps, new functionality)
     ├── Read constitution ✓
@@ -147,7 +147,7 @@ User Request
     ├── Create specification (Step 3)
     ├── Create technical plan (Step 4)
     ├── Break down tasks (Step 5)
-    └── Hand off to AgencyCodeAgent
+    └── Hand off to AgencyOSAgent
 ```
 
 ### Step 3: Specification Required When
@@ -214,7 +214,7 @@ User Request
 - All tasks actionable and verifiable
 - Dependencies properly sequenced
 - Progress tracking enabled
-- AgencyCodeAgent can execute immediately
+- AgencyOSAgent can execute immediately
 
 ---
 

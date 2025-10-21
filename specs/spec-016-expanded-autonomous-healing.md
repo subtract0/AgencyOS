@@ -66,7 +66,7 @@ Expand Agency OS autonomous healing from NoneType-only coverage (1 error categor
 - **Pain Points**: Limited to NoneType errors, reactive-only detection, no learning integration, no observability
 - **Technical Proficiency**: Expert in autonomous operations, requires healing primitives and pattern library
 
-#### Persona 3: AgencyCodeAgent (Code Producer)
+#### Persona 3: AgencyOSAgent (Code Producer)
 - **Description**: Agent writing code that may introduce errors requiring autonomous healing
 - **Goals**: Immediate feedback on code quality issues, automated fixes where possible, clear guidance on complex errors
 - **Pain Points**: Errors discovered late in process, manual fixing interrupts flow, no pattern guidance
@@ -269,7 +269,7 @@ Expand Agency OS autonomous healing from NoneType-only coverage (1 error categor
 ### Agent Integration
 - **QualityEnforcerAgent**: Orchestrates expanded healing across all error categories
 - **LearningAgent**: Extracts and refines healing patterns from successful operations
-- **AgencyCodeAgent**: Receives proactive healing feedback during code generation
+- **AgencyOSAgent**: Receives proactive healing feedback during code generation
 - **AuditorAgent**: Triggers healing based on static analysis findings
 
 ### System Integration
@@ -355,7 +355,7 @@ Expand Agency OS autonomous healing from NoneType-only coverage (1 error categor
 
 ### Stakeholders
 - **Primary Stakeholder**: @am (Project Owner)
-- **Secondary Stakeholders**: QualityEnforcerAgent, AgencyCodeAgent (healing participants)
+- **Secondary Stakeholders**: QualityEnforcerAgent, AgencyOSAgent (healing participants)
 - **Technical Reviewers**: LearningAgent (pattern validation), AuditorAgent (quality assurance)
 
 ### Review Criteria

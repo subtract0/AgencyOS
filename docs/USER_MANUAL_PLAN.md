@@ -502,7 +502,7 @@ Acceptance Criteria:
 #### 5.3 PlannerAgent
 - Role, tools, patterns, configuration, examples, troubleshooting
 
-#### 5.4 AgencyCodeAgent
+#### 5.4 AgencyOSAgent
 - Role, tools, patterns, configuration, examples, troubleshooting
 
 #### 5.5 AuditorAgent

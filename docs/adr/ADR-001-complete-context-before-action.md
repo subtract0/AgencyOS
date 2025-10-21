@@ -98,7 +98,7 @@ def run_tests_with_complete_context(test_path, max_retries=3):
 - Test-Driven Development Best Practices
 
 ## Review
-- Author: AgencyCodeAgent
+- Author: AgencyOSAgent
 - Reviewers: @am
 - Date: 2025-09-21
 

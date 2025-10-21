@@ -17,7 +17,7 @@
 - Cross-session learning analysis
 
 **Do NOT use for:**
-- Real-time coding (use AgencyCodeAgent)
+- Real-time coding (use AgencyOSAgent)
 - Quality enforcement (use QualityEnforcer)
 - Test generation (use TestGenerator)
 

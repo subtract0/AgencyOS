@@ -25,7 +25,7 @@ Constitutional compliance:
 - Article V: Spec-driven (traces to spec-007-phase3-ml-inference.md)
 
 Reference: specs/spec-007-phase3-ml-inference.md Section 5.5
-Author: AgencyCodeAgent
+Author: AgencyOSAgent
 Date: 2025-10-10
 """
 

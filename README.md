@@ -126,7 +126,7 @@ The Agency operates under strict constitutional principles that ensure quality a
 ### 10 Core Agents + DSPy Enhanced Agents
 **Traditional Agency Swarm Agents:**
 - **ChiefArchitectAgent**: Strategic oversight and self-directed task creation
-- **AgencyCodeAgent**: Primary development agent with comprehensive toolset
+- **AgencyOSAgent**: Primary development agent with comprehensive toolset
 - **PlannerAgent**: Strategic planning using spec-kit methodology
 - **AuditorAgent**: Quality analysis using NECESSARY pattern
 - **TestGeneratorAgent**: NECESSARY-compliant test generation
@@ -208,7 +208,7 @@ Planner ────────────┬─→ Spec-Kit Methodology
                     ├─→ Task Decomposition
                     └─→ Strategic Planning
 
-AgencyCodeAgent ────┬─→ Primary Development
+AgencyOSAgent ────┬─→ Primary Development
                     ├─→ Tool Execution
                     └─→ Code Generation
 

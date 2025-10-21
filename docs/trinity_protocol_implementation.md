@@ -34,7 +34,7 @@ Transform Agency into a continuously running autonomous system with persistent l
 │                                                              │
 │  ┌────────────────────────────────────────────────────────┐ │
 │  │         Existing Specialized Agents (Unchanged)        │ │
-│  │  AgencyCodeAgent, PlannerAgent, AuditorAgent, etc.    │ │
+│  │  AgencyOSAgent, PlannerAgent, AuditorAgent, etc.    │ │
 │  └────────────────────────────────────────────────────────┘ │
 └─────────────────────────────────────────────────────────────┘
 ```
@@ -2046,7 +2046,7 @@ class ExecuteAgent:
 
 **Key Points for Weeks 5-6:**
 - PLAN and EXECUTE are thin orchestration layers
-- They use existing agents (AgencyCodeAgent, PlannerAgent, etc.)
+- They use existing agents (AgencyOSAgent, PlannerAgent, etc.)
 - Hybrid cloud/local routing for optimal quality/cost
 - Close the feedback loop: EXECUTE → telemetry_stream → AUDITLEARN
 

@@ -140,7 +140,7 @@ with patch.object(Agency, "get_response") as mock_get_response:
 ```python
 async def test_coder_handoff_to_planner_minimal():
     """Test handoff mechanism from Coder to Planner using mocks."""
-    mock_coder = create_mock_agent("AgencyCodeAgent")
+    mock_coder = create_mock_agent("AgencyOSAgent")
     mock_planner = create_mock_agent("PlannerAgent")
 
     # VIOLATION: This doesn't test if real agents can handoff
@@ -345,7 +345,7 @@ tests/
 import pytest
 from shared.agent_context import create_agent_context
 from planner_agent.planner_agent import create_planner_agent
-from agency_code_agent.agency_code_agent import create_coder_agent
+from agencyos_agent.agencyos_agent import create_coder_agent
 
 @pytest.fixture
 def real_agent_context():
@@ -362,7 +362,7 @@ def real_planner_agent(real_agent_context):
 
 @pytest.fixture
 def real_coder_agent(real_agent_context):
-    """Real AgencyCodeAgent instance with constitutional compliance."""
+    """Real AgencyOSAgent instance with constitutional compliance."""
     return create_coder_agent(
         model="gpt-5-mini",
         agent_context=real_agent_context
@@ -545,7 +545,7 @@ Tests using `create_mock_agent` are not testing the system - they're testing whe
 
 **PRIORITY**: BLOCKER - This affects trust in entire test suite.
 
-**OWNER**: QualityEnforcerAgent + AgencyCodeAgent
+**OWNER**: QualityEnforcerAgent + AgencyOSAgent
 
 **TIMELINE**: Week 1 (4 hours) for immediate fix, Week 2 (8 hours) for comprehensive coverage.
 

@@ -13,7 +13,7 @@ from unittest.mock import Mock, patch
 
 import pytest
 
-from agency_code_agent.agency_code_agent import create_agency_code_agent
+from agencyos_agent.agencyos_agent import create_agencyos_agent
 from agency_memory.enhanced_memory_store import EnhancedMemoryStore
 from agency_memory.memory import InMemoryStore
 from shared.agent_context import create_agent_context
@@ -314,27 +314,27 @@ class TestAgentCreationEdgeCases:
     def test_agent_creation_with_minimum_parameters(self):
         """Test creating agent with minimal parameters."""
         with (
-            patch("agency_code_agent.agency_code_agent.Agent"),
-            patch("agency_code_agent.agency_code_agent.get_model_instance") as mock_model,
+            patch("agencyos_agent.agencyos_agent.Agent"),
+            patch("agencyos_agent.agencyos_agent.get_model_instance") as mock_model,
         ):
             mock_model.return_value = "gpt-5-mini"
 
             # Should work with defaults
-            agent = create_agency_code_agent()
+            agent = create_agencyos_agent()
             assert agent is not None
 
     def test_agent_creation_with_all_parameters(self):
         """Test creating agent with all parameters specified."""
         with (
-            patch("agency_code_agent.agency_code_agent.Agent"),
-            patch("agency_code_agent.agency_code_agent.get_model_instance") as mock_model,
+            patch("agencyos_agent.agencyos_agent.Agent"),
+            patch("agencyos_agent.agencyos_agent.get_model_instance") as mock_model,
         ):
             mock_model.return_value = "gpt-5"
             mock_context = Mock()
             mock_context.session_id = "test_session"
             mock_context.store_memory = Mock()
 
-            agent = create_agency_code_agent(
+            agent = create_agencyos_agent(
                 model="gpt-5", reasoning_effort="high", agent_context=mock_context
             )
             assert agent is not None
@@ -342,16 +342,16 @@ class TestAgentCreationEdgeCases:
     def test_agent_creation_with_invalid_reasoning_effort(self):
         """Test creating agent with invalid reasoning effort."""
         with (
-            patch("agency_code_agent.agency_code_agent.Agent"),
-            patch("agency_code_agent.agency_code_agent.get_model_instance") as mock_model,
-            patch("agency_code_agent.agency_code_agent.create_model_settings") as mock_settings,
+            patch("agencyos_agent.agencyos_agent.Agent"),
+            patch("agencyos_agent.agencyos_agent.get_model_instance") as mock_model,
+            patch("agencyos_agent.agencyos_agent.create_model_settings") as mock_settings,
         ):
             mock_model.return_value = "gpt-5-mini"
             mock_settings.return_value = Mock()
 
             # Should handle invalid value (might default or raise)
             try:
-                agent = create_agency_code_agent(model="gpt-5-mini", reasoning_effort="invalid")
+                agent = create_agencyos_agent(model="gpt-5-mini", reasoning_effort="invalid")
                 # If it doesn't raise, that's valid behavior
                 assert agent is not None
             except (ValueError, KeyError):
@@ -361,9 +361,9 @@ class TestAgentCreationEdgeCases:
     def test_agent_creation_reasoning_effort_boundary_values(self):
         """Test reasoning effort with boundary string values."""
         with (
-            patch("agency_code_agent.agency_code_agent.Agent"),
-            patch("agency_code_agent.agency_code_agent.get_model_instance") as mock_model,
-            patch("agency_code_agent.agency_code_agent.create_model_settings") as mock_settings,
+            patch("agencyos_agent.agencyos_agent.Agent"),
+            patch("agencyos_agent.agencyos_agent.get_model_instance") as mock_model,
+            patch("agencyos_agent.agencyos_agent.create_model_settings") as mock_settings,
         ):
             mock_model.return_value = "gpt-5-mini"
             mock_settings.return_value = Mock()
@@ -373,7 +373,7 @@ class TestAgentCreationEdgeCases:
 
             for effort in edge_cases:
                 try:
-                    agent = create_agency_code_agent(model="gpt-5-mini", reasoning_effort=effort)
+                    agent = create_agencyos_agent(model="gpt-5-mini", reasoning_effort=effort)
                     # If it succeeds, that's fine
                 except (ValueError, KeyError, AttributeError):
                     # Raising errors for invalid input is also fine

@@ -33,7 +33,7 @@ def temp_project_dir(tmp_path: Path) -> Path:
     (tmp_path / "tools" / "orchestrator").mkdir(parents=True)
     (tmp_path / "shared").mkdir()
     (tmp_path / "agency_memory").mkdir()
-    (tmp_path / "agency_code_agent").mkdir()
+    (tmp_path / "agencyos_agent").mkdir()
     (tmp_path / ".claude" / "commands").mkdir(parents=True)
     (tmp_path / ".claude" / "quick-ref").mkdir()
 
@@ -143,7 +143,7 @@ class TestMissingClaudeScans:
             "tools/orchestrator",
             "shared",
             "agency_memory",
-            "agency_code_agent",
+            "agencyos_agent",
         ]
 
         for dir_path in critical_dirs:
@@ -443,7 +443,7 @@ class TestExitCodes:
             "tools/orchestrator",
             "shared",
             "agency_memory",
-            "agency_code_agent",
+            "agencyos_agent",
         ]
 
         for dir_path in critical_dirs:

@@ -482,7 +482,7 @@ class CodeBundleAttachmentHook(AgentHooks):
 
 class SystemReminderHook(AgentHooks):
     """
-    System reminder hook for Agency Code to inject periodic reminders about important instructions.
+    System reminder hook for AgencyOS to inject periodic reminders about important instructions.
 
     Triggers reminders:
     - Every 15 tool calls
@@ -644,7 +644,7 @@ NEVER proactively create documentation files (*.md) or README files. Only create
 
 class MessageFilterHook(AgentHooks):
     """
-    Message filter hook for Agency Code to filter duplicates and reorder messages.
+    Message filter hook for AgencyOS to filter duplicates and reorder messages.
 
     Used to remove duplicating tool call messages created when using anthropic models
     and reorder message order to make them compatible with the anthropic model.

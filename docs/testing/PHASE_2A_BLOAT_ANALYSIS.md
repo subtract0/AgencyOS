@@ -48,9 +48,9 @@
 - **toolsmith_agent** (2 files):
   - `/Users/am/Code/Agency/tests/test_toolsmith_agent_comprehensive.py`
   - `/Users/am/Code/Agency/tests/dspy_agents/test_toolsmith_agent.py`
-- **agency_code_agent** (2 files):
-  - `/Users/am/Code/Agency/tests/test_agency_code_agent.py`
-  - `/Users/am/Code/Agency/tests/test_agency_code_agent_fixed.py`
+- **agencyos_agent** (2 files):
+  - `/Users/am/Code/Agency/tests/test_agencyos_agent.py`
+  - `/Users/am/Code/Agency/tests/test_agencyos_agent_fixed.py`
 - **chief_architect_agent** (3 files):
   - `/Users/am/Code/Agency/tests/test_chief_architect_agent_simple.py`
   - `/Users/am/Code/Agency/tests/test_chief_architect_agent.py`
@@ -194,7 +194,7 @@
 ### Follow-up (Phase 2A.2 - Requires Manual Review)
 
 5. **Consolidate Duplicates**: Review 10 duplicate test groups
-   - Merge test_agency_code_agent_fixed.py → test_agency_code_agent.py
+   - Merge test_agencyos_agent_fixed.py → test_agencyos_agent.py
    - Merge test_retry_controller_additional.py → test_retry_controller.py
    - Consolidate chief_architect_agent tests (3 files → 1)
    - Estimated savings: ~100 tests

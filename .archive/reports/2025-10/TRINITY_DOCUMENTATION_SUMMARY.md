@@ -319,7 +319,7 @@ result = await executor.execute_task(task)
 # Cost Tracking
 from shared.cost_tracker import CostTracker
 tracker = CostTracker()
-tracker.track(agent_name="AgencyCodeAgent", model="gpt-5", ...)
+tracker.track(agent_name="AgencyOSAgent", model="gpt-5", ...)
 
 # Message Bus
 from shared.message_bus import MessageBus

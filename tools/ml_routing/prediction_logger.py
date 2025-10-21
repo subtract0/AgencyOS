@@ -14,7 +14,7 @@ Constitutional Compliance:
 - Law #8: Functions <50 lines each
 
 Reference: specs/spec-007-phase3-ml-inference.md Section 5.5
-Author: AgencyCodeAgent
+Author: AgencyOSAgent
 Date: 2025-10-10
 """
 

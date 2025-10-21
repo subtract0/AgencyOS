@@ -2,7 +2,7 @@
 """
 Phase 1.1: Single-Agent Smoke Test for Local M4 Pro Execution
 
-Tests AgencyCodeAgent with LOCAL tier (qwen2.5-coder:32b) to validate:
+Tests AgencyOSAgent with LOCAL tier (qwen2.5-coder:32b) to validate:
 - Local model execution works
 - Memory usage is acceptable on M4 Pro (48GB)
 - Code quality meets basic standards
@@ -74,7 +74,7 @@ async def test_single_agent_local():
 """
 
     logger.info(f"\n📝 Test Task:\n{test_task}")
-    logger.info(f"\n🤖 Creating AgencyCodeAgent with MODEL: qwen2.5-coder:32b (LOCAL tier)")
+    logger.info(f"\n🤖 Creating AgencyOSAgent with MODEL: qwen2.5-coder:32b (LOCAL tier)")
 
     start_memory = get_memory_usage_mb()
     start_time = time.time()

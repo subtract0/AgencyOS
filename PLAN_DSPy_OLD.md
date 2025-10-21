@@ -8,7 +8,7 @@ This engineering plan outlines a systematic migration from AgencyOS's current st
 
 ## Phase 1: Foundational Setup & Proof of Concept
 
-**Phase Objective:** Establish the DSPy foundation and migrate the AgencyCodeAgent to validate the new architecture.
+**Phase Objective:** Establish the DSPy foundation and migrate the AgencyOSAgent to validate the new architecture.
 
 ### Concrete Tasks
 
@@ -36,7 +36,7 @@ This engineering plan outlines a systematic migration from AgencyOS's current st
        verification_status: VerificationResult = dspy.OutputField(desc="Validation")
    ```
 
-3. **Implement AgencyCodeAgent DSPy Module**
+3. **Implement AgencyOSAgent DSPy Module**
    ```python
    # dspy_agents/modules/code_agent.py
    class DSPyCodeAgent(dspy.Module):

@@ -26,7 +26,7 @@ Trinity Protocol is currently operational with complete test coverage (317/317 t
 ```python
 # trinity_protocol/executor_agent.py (lines 101-108)
 self._sub_agent_registry: Dict[str, Any] = {
-    "CodeWriter": None,        # TODO: Import AgencyCodeAgent
+    "CodeWriter": None,        # TODO: Import AgencyOSAgent
     "TestArchitect": None,     # TODO: Import TestGeneratorAgent
     "ToolDeveloper": None,     # TODO: Import ToolsmithAgent
     "ImmunityEnforcer": None,  # TODO: Import QualityEnforcerAgent
@@ -39,7 +39,7 @@ self._sub_agent_registry: Dict[str, Any] = {
 
 **Step 1**: Add imports at top of `executor_agent.py`
 ```python
-from agency_code_agent.agent import AgencyCodeAgent
+from agencyos_agent.agent import AgencyOSAgent
 from test_generator_agent.agent import TestGeneratorAgent
 from toolsmith_agent.agent import ToolsmithAgent
 from quality_enforcer_agent.agent import QualityEnforcerAgent
@@ -67,7 +67,7 @@ def __init__(
 
     # Real agent registry
     self._sub_agent_registry: Dict[str, Any] = {
-        "CodeWriter": AgencyCodeAgent(context=agent_context, cost_tracker=cost_tracker),
+        "CodeWriter": AgencyOSAgent(context=agent_context, cost_tracker=cost_tracker),
         "TestArchitect": TestGeneratorAgent(context=agent_context, cost_tracker=cost_tracker),
         "ToolDeveloper": ToolsmithAgent(context=agent_context, cost_tracker=cost_tracker),
         "ImmunityEnforcer": QualityEnforcerAgent(context=agent_context, cost_tracker=cost_tracker),
@@ -297,7 +297,7 @@ python -m mypy trinity_protocol/ --no-error-summary
 **Step 1**: Verify agent constructors accept `cost_tracker`
 ```python
 # Each agent should accept cost_tracker in __init__
-class AgencyCodeAgent:
+class AgencyOSAgent:
     def __init__(self, context: AgentContext, cost_tracker: CostTracker):
         self.context = context
         self.cost_tracker = cost_tracker
@@ -625,7 +625,7 @@ Each sub-agent MUST implement:
 **Symptom**: `ModuleNotFoundError` when importing agent
 **Solution**: Verify agent module installed and in PYTHONPATH
 ```bash
-python -c "from agency_code_agent.agent import AgencyCodeAgent"
+python -c "from agencyos_agent.agent import AgencyOSAgent"
 ```
 
 ### Issue: Test verification times out
@@ -700,7 +700,7 @@ data = DataModel(key="value")
 ## Next Steps
 
 1. **Read** `docs/trinity_protocol/QUICKSTART.md` - Updated with production setup
-2. **Review** agent interfaces in `agency_code_agent/`, `test_generator_agent/`, etc.
+2. **Review** agent interfaces in `agencyos_agent/`, `test_generator_agent/`, etc.
 3. **Start** with Phase 1.1 (sub-agent wiring)
 4. **Test** incrementally after each change
 5. **Validate** with `python run_tests.py --run-all` before proceeding

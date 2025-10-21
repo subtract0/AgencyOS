@@ -71,7 +71,7 @@ The CheckpointManager addresses the current manual checkpoint limitation where a
 - **Pain Points**: Lost progress on crash, no periodic checkpoints, manual save required
 - **Technical Proficiency**: Autonomous agent, requires zero-config checkpoint system
 
-#### Persona 3: AgencyCodeAgent (Feature Developer)
+#### Persona 3: AgencyOSAgent (Feature Developer)
 - **Description**: Primary dev agent implementing multi-file features with >20 steps
 - **Goals**: Checkpoint after each major phase (test generation, implementation, verification)
 - **Pain Points**: No phase-based checkpoints, all-or-nothing execution, no granular resume
@@ -130,11 +130,11 @@ The CheckpointManager addresses the current manual checkpoint limitation where a
 8. Impact: Zero data loss, interrupt-safe execution
 ```
 
-#### Journey 3: Phase-Based Checkpoints (AgencyCodeAgent)
+#### Journey 3: Phase-Based Checkpoints (AgencyOSAgent)
 
 **Current State (No Phase Checkpoints)**:
 ```
-1. AgencyCodeAgent implements feature X (20 steps, 2 hours)
+1. AgencyOSAgent implements feature X (20 steps, 2 hours)
 2. Steps 1-15 complete successfully (tests generated, code written)
 3. Step 16 fails (test execution timeout)
 4. No checkpoint at phase boundaries → must retry all 20 steps
@@ -143,7 +143,7 @@ The CheckpointManager addresses the current manual checkpoint limitation where a
 
 **Future State (Phase Checkpoints)**:
 ```
-1. AgencyCodeAgent implements feature X (20 steps, 2 hours)
+1. AgencyOSAgent implements feature X (20 steps, 2 hours)
 2. Phase 1 complete (steps 1-5: tests) → checkpoint_phase_test
 3. Phase 2 complete (steps 6-15: code) → checkpoint_phase_code
 4. Step 16 fails (test execution timeout)

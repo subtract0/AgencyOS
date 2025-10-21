@@ -222,7 +222,7 @@ pytest -n auto
 
 ```bash
 # Make code changes
-vim agency_code_agent/coder.py
+vim agencyos_agent/coder.py
 
 # Run only affected tests (instant feedback)
 ./scripts/run_smart_tests.sh
