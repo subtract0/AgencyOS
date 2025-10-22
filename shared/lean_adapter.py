@@ -42,6 +42,7 @@ class Agent(LeanAgent):
         temperature: float = 0.7,
         max_tokens: int = 4000,
         tools: list[Any] | None = None,
+        description: str | None = None,  # Agent description for compatibility
         **kwargs,
     ):
         """
@@ -90,6 +91,64 @@ class Agent(LeanAgent):
 
         # Initialize parent
         super().__init__(config)
+
+        # Store description for backward compatibility
+        self._description = description or f"{name} agent"
+
+    # Property accessors for backward compatibility with tests
+    @property
+    def name(self) -> str:
+        """Agent name (backward compatibility property)."""
+        return self.config.name
+
+    @property
+    def description(self) -> str:
+        """Agent description (backward compatibility property)."""
+        return self._description
+
+    @property
+    def model(self) -> str:
+        """LLM model name (backward compatibility property)."""
+        return self.config.model
+
+    @property
+    def instructions(self) -> str:
+        """System instructions (backward compatibility property)."""
+        return self.config.instructions
+
+    @property
+    def temperature(self) -> float:
+        """Sampling temperature (backward compatibility property)."""
+        return self.config.temperature
+
+    @property
+    def max_tokens(self) -> int:
+        """Max response tokens (backward compatibility property)."""
+        return self.config.max_tokens
+
+    @property
+    def tools(self) -> list[Any]:
+        """List of tools (backward compatibility property)."""
+        return self.config.tools
+
+    @property
+    def hooks(self) -> dict[str, Any]:
+        """Agent hooks (backward compatibility property, returns empty dict for now)."""
+        return {}
+
+    @property
+    def tools_folder(self) -> str | None:
+        """Tools folder path (backward compatibility property, returns None for now)."""
+        return None
+
+    @property
+    def model_settings(self) -> dict[str, Any]:
+        """Model settings (backward compatibility property)."""
+        return {
+            "model": self.config.model,
+            "temperature": self.config.temperature,
+            "max_tokens": self.config.max_tokens,
+        }
 
 
 class Agency:
