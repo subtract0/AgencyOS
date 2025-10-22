@@ -93,6 +93,9 @@ def create_coding_agent(
     if cost_tracker is not None:
         agent_context.cost_tracker = cost_tracker
 
+    # Create model settings and extract temperature/max_tokens for Agent constructor
+    model_settings_obj = create_model_settings(model, reasoning_effort)
+
     # Create agent
     agent = Agent(
         name="CodingAgent",
@@ -112,6 +115,8 @@ def create_coding_agent(
         tools_folder=os.path.join(current_dir, "tools"),
         model=get_model_instance(model),
         hooks=combined_hook,
+        temperature=model_settings_obj.temperature if model_settings_obj.temperature is not None else 0.7,
+        max_tokens=model_settings_obj.max_tokens if model_settings_obj.max_tokens is not None else 32000,
         tools=[
             Bash,
             Glob,
@@ -129,7 +134,6 @@ def create_coding_agent(
         ]
         + ([WebSearchTool()] if is_openai else [])
         + ([ClaudeWebSearch] if is_claude else []),
-        model_settings=create_model_settings(model, reasoning_effort),
     )
 
     # Enable cost tracking if provided

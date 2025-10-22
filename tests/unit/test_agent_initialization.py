@@ -89,7 +89,7 @@ class TestAgentInitialization:
             mock_render.assert_called_with("/path/to/instructions.md", "gpt-5-mini")
 
     def test_model_settings_creation(self, mock_agent_context):
-        """Test that model settings are properly created."""
+        """Test that model settings are properly created and extracted to temperature/max_tokens."""
         reasoning_efforts = ["low", "medium", "high"]
 
         for effort in reasoning_efforts:
@@ -100,7 +100,7 @@ class TestAgentInitialization:
             ):
                 from agents.model_settings import ModelSettings
 
-                mock_settings.return_value = ModelSettings(temperature=0.7)
+                mock_settings.return_value = ModelSettings(temperature=0.8, max_tokens=16000)
                 mock_model.return_value = "gpt-5-mini"
 
                 create_coding_agent(
@@ -111,9 +111,12 @@ class TestAgentInitialization:
                 assert mock_settings.called
                 mock_settings.assert_called_with("gpt-5-mini", effort)
 
-                # Check that settings were passed to agent
+                # Check that temperature and max_tokens were extracted and passed to agent
                 call_kwargs = mock_agent_class.call_args[1]
-                assert "model_settings" in call_kwargs
+                assert "temperature" in call_kwargs
+                assert call_kwargs["temperature"] == 0.8
+                assert "max_tokens" in call_kwargs
+                assert call_kwargs["max_tokens"] == 16000
 
     def test_tools_folder_configuration(self, mock_agent_context):
         """Test that tools folder is correctly configured."""
@@ -254,7 +257,9 @@ class TestAgentInitialization:
                 patch("coding_agent.coding_agent.Agent"),
                 patch("coding_agent.coding_agent.get_model_instance") as mock_model,
             ):
-                mock_settings.return_value = {"reasoning_effort": effort}
+                from agents.model_settings import ModelSettings
+
+                mock_settings.return_value = ModelSettings(temperature=0.7, max_tokens=32000)
                 mock_model.return_value = "gpt-5-mini"
 
                 # This should not raise an exception

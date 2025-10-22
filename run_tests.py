@@ -605,16 +605,8 @@ def main(
         print("   - Recursive test execution")
         print("   - Hanging network requests")
         print("   - Deadlocks in async code")
-        print("\n💡 Constitutional retry options (Article I):")
-        print(
-            f"   - 2x retry: python run_tests.py --run-all --timeout-multiplier 2.0  ({timeout_seconds * 2 / 60:.1f} min)"
-        )
-        print(
-            f"   - 3x retry: python run_tests.py --run-all --timeout-multiplier 3.0  ({timeout_seconds * 3 / 60:.1f} min)"
-        )
-        print(
-            f"   - 10x retry: python run_tests.py --run-all --timeout-multiplier 10.0 ({timeout_seconds * 10 / 60:.1f} min)"
-        )
+        print(f"\n💡 To increase timeout, use: --timeout-multiplier <N>")
+        print(f"   Example: python run_tests.py --timeout-multiplier 2.0  (double timeout)")
         return 124  # Timeout exit code
 
     except FileNotFoundError:
