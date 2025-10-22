@@ -1,0 +1,365 @@
+{
+  "mission_id": "autonomous-parallel-dev-phase-2",
+  "title": "Autonomous Parallel Development Rails - Phase 2",
+  "status": "BLOCKED",
+  "blocking_reason": "Main must be 100% green before starting (Article II compliance)",
+  "priority": 2,
+  "estimated_days": 5.5,
+  "estimated_days_parallel": 3,
+  "created": "2025-10-22",
+  "spec": "specs/spec-029-parallel-development-rails.md",
+  "phase": "Phase 2 - Autonomous Resolution",
+
+  "objective": "Transform parallel development rails from reactive tools into proactive autonomous system that detects, resolves, and prevents merge conflicts without user intervention.",
+
+  "success_criteria": [
+    "User never has to say 'merging is blocked in GitHub'",
+    "System detects conflicts automatically (WATCHER)",
+    "System resolves conflicts autonomously (FIXER)",
+    "System learns from resolutions (LEARNER)",
+    "System notifies user only when complete or manual intervention required"
+  ],
+
+  "constitutional_compliance": {
+    "article_i": "Complete context via WATCHER (scan all PRs, full worktree analysis)",
+    "article_ii": "100% test verification after FIXER resolves conflicts",
+    "article_iii": "No bypass - all resolutions must pass tests before merge",
+    "article_iv": "LEARNER stores resolution patterns in VectorStore (MANDATORY)",
+    "article_v": "Follows spec-029 (parallel development rails specification)"
+  },
+
+  "architecture": {
+    "pattern": "Trinity (WATCHER → FIXER → LEARNER)",
+    "watcher": {
+      "components": [
+        "Pre-commit hook enhancement",
+        "GitHub Actions PR conflict detector",
+        "Background daemon (5-minute polling)"
+      ],
+      "purpose": "Detect conflicts BEFORE they reach GitHub"
+    },
+    "fixer": {
+      "components": [
+        "Auto-resolve in isolated worktrees",
+        "Merge strategy selection (ours/theirs/manual)",
+        "Test execution and validation"
+      ],
+      "purpose": "Resolve conflicts autonomously with test validation"
+    },
+    "learner": {
+      "components": [
+        "VectorStore pattern storage",
+        "Conflict probability tracking",
+        "Strategy recommendation engine"
+      ],
+      "purpose": "Learn from resolutions and improve accuracy"
+    }
+  },
+
+  "task_graph": {
+    "nodes": [
+      {
+        "id": "T1",
+        "name": "Enhance pre-commit hook",
+        "description": "Add ParallelWorkDetector check to existing .git/hooks/pre-commit",
+        "type": "implementation",
+        "priority": 1,
+        "estimated_hours": 2,
+        "dependencies": [],
+        "files": [".git/hooks/pre-commit", "tools/parallel_dev/parallel_work_detector.py"]
+      },
+      {
+        "id": "T2",
+        "name": "Create GitHub Actions workflow",
+        "description": "New .github/workflows/parallel-dev-check.yml for PR conflict detection",
+        "type": "implementation",
+        "priority": 1,
+        "estimated_hours": 3,
+        "dependencies": [],
+        "files": [".github/workflows/parallel-dev-check.yml"]
+      },
+      {
+        "id": "T3",
+        "name": "Build background daemon (WATCHER)",
+        "description": "Poll PRs every 5 minutes, detect conflicts, orchestrate resolution",
+        "type": "implementation",
+        "priority": 2,
+        "estimated_hours": 4,
+        "dependencies": [],
+        "files": ["scripts/parallel_dev_daemon.py", "tools/parallel_dev/watcher.py"]
+      },
+      {
+        "id": "T4",
+        "name": "Build FIXER module",
+        "description": "Auto-resolve conflicts in isolated worktrees with test validation",
+        "type": "implementation",
+        "priority": 2,
+        "estimated_hours": 5,
+        "dependencies": ["T3"],
+        "files": ["tools/parallel_dev/fixer.py", "tools/parallel_dev/merge_strategies.py"]
+      },
+      {
+        "id": "T5",
+        "name": "Build LEARNER module",
+        "description": "Store resolution patterns in VectorStore, query for recommendations",
+        "type": "implementation",
+        "priority": 3,
+        "estimated_hours": 3,
+        "dependencies": ["T4"],
+        "files": ["tools/parallel_dev/learner.py", "tools/parallel_dev/pattern_storage.py"]
+      },
+      {
+        "id": "T6",
+        "name": "Create config system",
+        "description": "ParallelDevConfig with thresholds, strategies, daemon settings",
+        "type": "implementation",
+        "priority": 1,
+        "estimated_hours": 2,
+        "dependencies": [],
+        "files": ["tools/parallel_dev/config.py"]
+      },
+      {
+        "id": "T7",
+        "name": "Build notifier",
+        "description": "GitHub PR comments, commit messages, VectorStore logs",
+        "type": "implementation",
+        "priority": 3,
+        "estimated_hours": 2,
+        "dependencies": [],
+        "files": ["tools/parallel_dev/notifier.py"]
+      },
+      {
+        "id": "T8",
+        "name": "Integrate with merge-guardian",
+        "description": "Add parallel work check to .github/workflows/merge-guardian.yml",
+        "type": "integration",
+        "priority": 2,
+        "estimated_hours": 2,
+        "dependencies": ["T2"],
+        "files": [".github/workflows/merge-guardian.yml"]
+      },
+      {
+        "id": "T9",
+        "name": "Integrate with PrimeCCC",
+        "description": "Add parallel work check to /primeccc command workflow",
+        "type": "integration",
+        "priority": 2,
+        "estimated_hours": 1,
+        "dependencies": [],
+        "files": [".claude/commands/primeccc.md", "tools/orchestrator/unified_primea_orchestrator.py"]
+      },
+      {
+        "id": "T10",
+        "name": "Write comprehensive tests",
+        "description": "Unit + integration tests for daemon, fixer, learner modules",
+        "type": "testing",
+        "priority": 1,
+        "estimated_hours": 6,
+        "dependencies": ["T3", "T4", "T5"],
+        "files": [
+          "tests/tools/parallel_dev/test_daemon.py",
+          "tests/tools/parallel_dev/test_fixer.py",
+          "tests/tools/parallel_dev/test_learner.py",
+          "tests/integration/test_autonomous_conflict_resolution.py"
+        ]
+      },
+      {
+        "id": "T11",
+        "name": "Create daemon systemd service",
+        "description": "Systemd unit file for 24/7 daemon execution with resource limits",
+        "type": "deployment",
+        "priority": 3,
+        "estimated_hours": 1,
+        "dependencies": ["T3", "T4", "T5"],
+        "files": ["scripts/parallel_dev_daemon.service", "scripts/install_daemon.sh"]
+      },
+      {
+        "id": "T12",
+        "name": "Documentation",
+        "description": "Update README, add daemon docs, integration guide, troubleshooting",
+        "type": "documentation",
+        "priority": 3,
+        "estimated_hours": 2,
+        "dependencies": ["T10"],
+        "files": [
+          "tools/parallel_dev/README.md",
+          "docs/AUTONOMOUS_PARALLEL_DEV.md",
+          "docs/DAEMON_SETUP_GUIDE.md"
+        ]
+      }
+    ],
+    "edges": [
+      {"from": "T3", "to": "T4", "type": "blocking"},
+      {"from": "T4", "to": "T5", "type": "blocking"},
+      {"from": "T2", "to": "T8", "type": "blocking"},
+      {"from": "T3", "to": "T10", "type": "required_for_testing"},
+      {"from": "T4", "to": "T10", "type": "required_for_testing"},
+      {"from": "T5", "to": "T10", "type": "required_for_testing"},
+      {"from": "T3", "to": "T11", "type": "required_for_deployment"},
+      {"from": "T4", "to": "T11", "type": "required_for_deployment"},
+      {"from": "T5", "to": "T11", "type": "required_for_deployment"},
+      {"from": "T10", "to": "T12", "type": "blocking"}
+    ],
+    "critical_path": ["T3", "T4", "T5", "T10", "T12"],
+    "total_estimated_hours": 33,
+    "parallelizable_hours": 15
+  },
+
+  "execution_phases": [
+    {
+      "phase": 1,
+      "name": "Prevention",
+      "duration_hours": 7,
+      "parallel_tasks": ["T1", "T2", "T6"],
+      "description": "Detect conflicts before they reach GitHub",
+      "deliverables": [
+        "Enhanced pre-commit hook",
+        "GitHub Actions PR conflict detector",
+        "Configuration system"
+      ]
+    },
+    {
+      "phase": 2,
+      "name": "Autonomous Resolution",
+      "duration_hours": 12,
+      "sequential_tasks": ["T3", "T4", "T5"],
+      "description": "Background daemon auto-resolves conflicts",
+      "deliverables": [
+        "WATCHER module (daemon)",
+        "FIXER module (conflict resolution)",
+        "LEARNER module (pattern storage)"
+      ]
+    },
+    {
+      "phase": 3,
+      "name": "Integration",
+      "duration_hours": 5,
+      "parallel_tasks": ["T7", "T8", "T9"],
+      "description": "Integrate with existing workflows",
+      "deliverables": [
+        "Notification system",
+        "Merge-guardian integration",
+        "PrimeCCC integration"
+      ]
+    },
+    {
+      "phase": 4,
+      "name": "Quality & Deployment",
+      "duration_hours": 9,
+      "sequential_tasks": ["T10", "T11", "T12"],
+      "description": "Testing, deployment, documentation",
+      "deliverables": [
+        "Comprehensive test suite",
+        "Systemd daemon service",
+        "Complete documentation"
+      ]
+    }
+  ],
+
+  "risk_mitigation": [
+    {
+      "risk": "Daemon auto-merges conflicting changes incorrectly",
+      "impact": "high",
+      "mitigation": [
+        "Tests required after every resolution (Article II)",
+        "Manual approval for >30% conflict probability",
+        "Automatic rollback on test failure"
+      ]
+    },
+    {
+      "risk": "Infinite loop if conflicts persist",
+      "impact": "medium",
+      "mitigation": [
+        "Max 3 resolution attempts per PR",
+        "Circuit breaker after repeated failures",
+        "Alert user for manual intervention"
+      ]
+    },
+    {
+      "risk": "Daemon consumes excessive resources",
+      "impact": "medium",
+      "mitigation": [
+        "Max 3 concurrent resolutions",
+        "5-minute poll interval (not real-time)",
+        "Systemd resource limits (CPU, memory)"
+      ]
+    }
+  ],
+
+  "dependencies": {
+    "internal": [
+      "tools/parallel_dev/parallel_work_detector.py",
+      "tools/parallel_dev/worktree_manager.py",
+      ".claude/commands/parallel-dev.md",
+      "shared/agent_context.py (VectorStore)",
+      "shared/type_definitions/result.py"
+    ],
+    "external": [
+      "gh CLI (GitHub PR operations)",
+      "git (worktree, merge operations)",
+      "pytest (test validation)",
+      "systemd (daemon management)"
+    ]
+  },
+
+  "deliverables": [
+    {
+      "name": "Pre-commit hook enhancement",
+      "file": ".git/hooks/pre-commit",
+      "description": "Blocks commits with >10% conflict probability"
+    },
+    {
+      "name": "GitHub Actions workflow",
+      "file": ".github/workflows/parallel-dev-check.yml",
+      "description": "Detects and comments on PR conflicts"
+    },
+    {
+      "name": "Background daemon",
+      "file": "scripts/parallel_dev_daemon.py",
+      "description": "Autonomous conflict resolver (WATCHER → FIXER → LEARNER)"
+    },
+    {
+      "name": "Configuration system",
+      "file": "tools/parallel_dev/config.py",
+      "description": "Thresholds, strategies, daemon settings"
+    },
+    {
+      "name": "Test suite",
+      "files": [
+        "tests/tools/parallel_dev/test_daemon.py",
+        "tests/tools/parallel_dev/test_fixer.py",
+        "tests/tools/parallel_dev/test_learner.py"
+      ],
+      "description": "Comprehensive unit + integration tests"
+    },
+    {
+      "name": "Documentation",
+      "files": [
+        "tools/parallel_dev/README.md",
+        "docs/AUTONOMOUS_PARALLEL_DEV.md"
+      ],
+      "description": "Setup guides, troubleshooting, integration docs"
+    }
+  ],
+
+  "primeA_usage": {
+    "command": "/primeA missions/autonomous-parallel-dev-phase-2.json",
+    "flags": [
+      "--plan-only (review phases before execution)",
+      "--auto-pr (create PR automatically when complete)"
+    ],
+    "prerequisites": [
+      "Main branch must be 100% green (Article II)",
+      "No blocking test failures",
+      "VectorStore accessible (Article IV requirement)"
+    ]
+  },
+
+  "notes": [
+    "This mission is BLOCKED until main is 100% green",
+    "Current test failures: Leap 3 integration tests (Pydantic ValidationError)",
+    "Fix test failures first, then unblock this mission",
+    "Estimated wall-clock time with 2 agents: ~3 days",
+    "Follows Trinity pattern (WATCHER → FIXER → LEARNER) like trinity_daemon.py"
+  ]
+}
