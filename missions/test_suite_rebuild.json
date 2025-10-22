@@ -1,0 +1,367 @@
+{
+  "mission": "NECESSARY-Compliant Test Suite Rebuild",
+  "leap_number": null,
+  "phases": [
+    {
+      "id": "phase_1_audit",
+      "title": "Audit & Strategic Analysis",
+      "tasks": [
+        {
+          "id": "analyze_125_failures",
+          "title": "Analyze remaining 125 test failures by root cause",
+          "type": "Spec",
+          "tier": "Tier 1",
+          "agent": "auditor",
+          "description": "Deep analysis of the 125 remaining test failures. Categorize by: (1) Root cause (not symptom), (2) Failure type (assertion, timeout, error), (3) Test file concentration. Output: Categorized failure report with fix recommendations.",
+          "dependencies": [],
+          "acceptance_criteria": [
+            "All 125 failures categorized by root cause",
+            "Failure concentration identified (e.g., 35 in test_agent_registry.py)",
+            "Fix vs delete recommendations for each category",
+            "Report saved to /tmp/test_failure_analysis.json"
+          ],
+          "estimated_tokens": 8000
+        },
+        {
+          "id": "identify_duplicates",
+          "title": "Identify duplicate and redundant test files",
+          "type": "Spec",
+          "tier": "Tier 2",
+          "agent": "auditor",
+          "description": "Run similarity analysis on all 277 test files. Identify: (1) Duplicate files (e.g., test_agency_code_agent.py vs test_agency_code_agent_fixed.py), (2) Tests with >80% code similarity, (3) Redundant test patterns. Output: Deletion candidates list with justification.",
+          "dependencies": [],
+          "acceptance_criteria": [
+            "Duplicate test files identified with similarity scores",
+            "Redundant test patterns documented",
+            "Deletion candidates list created (/tmp/test_deletion_candidates.json)",
+            "Estimated test count reduction calculated"
+          ],
+          "estimated_tokens": 5000
+        },
+        {
+          "id": "measure_runtime_distribution",
+          "title": "Measure test runtime distribution and identify slow tests",
+          "type": "Spec",
+          "tier": "Tier 2",
+          "agent": "auditor",
+          "description": "Analyze test runtime from recent runs. Identify: (1) Tests taking >5 seconds, (2) Flaky tests (inconsistent pass/fail), (3) Runtime distribution by test file. Target: <2 minute total runtime. Output: Slow test report.",
+          "dependencies": [],
+          "acceptance_criteria": [
+            "Runtime distribution analyzed (current: 7 minutes)",
+            "Slow tests (>5s) identified and listed",
+            "Flaky tests identified from multiple run comparison",
+            "Report saved to /tmp/test_runtime_analysis.json"
+          ],
+          "estimated_tokens": 4000
+        },
+        {
+          "id": "necessary_pattern_audit",
+          "title": "Audit NECESSARY pattern compliance across test suite",
+          "type": "Spec",
+          "tier": "Tier 1",
+          "agent": "quality_enforcer",
+          "description": "Check test suite for NECESSARY pattern compliance (Normal, Edge, Security, Specification, Accessibility, Resilience, Year-round). Identify gaps in coverage. Prioritize high-value test areas. Output: NECESSARY compliance report.",
+          "dependencies": [],
+          "acceptance_criteria": [
+            "All 7 NECESSARY categories checked across test suite",
+            "Coverage gaps identified by category",
+            "High-value test areas prioritized (agent_registry, integration, core agents)",
+            "Compliance report saved to /tmp/necessary_compliance_audit.json"
+          ],
+          "estimated_tokens": 6000
+        },
+        {
+          "id": "create_deletion_candidates_list",
+          "title": "Create comprehensive test deletion candidates list",
+          "type": "Spec",
+          "tier": "Tier 1",
+          "agent": "planner",
+          "description": "Synthesize findings from tasks analyze_125_failures, identify_duplicates, measure_runtime_distribution. Create final deletion candidates list with: (1) Flaky tests, (2) Slow tests (>5s), (3) Duplicate tests, (4) Low-value tests. Include justification and archive strategy.",
+          "dependencies": ["analyze_125_failures", "identify_duplicates", "measure_runtime_distribution", "necessary_pattern_audit"],
+          "acceptance_criteria": [
+            "Comprehensive deletion candidates list created",
+            "Each candidate has justification and impact assessment",
+            "Archive strategy defined (move to tests/archived/ with documentation)",
+            "Final list saved to /tmp/test_deletion_final.json"
+          ],
+          "estimated_tokens": 5000
+        }
+      ]
+    },
+    {
+      "id": "phase_2_cleanup",
+      "title": "Surgical Test Suite Cleanup",
+      "tasks": [
+        {
+          "id": "delete_flaky_slow_tests",
+          "title": "Delete or archive flaky and slow tests",
+          "type": "Code",
+          "tier": "Tier 2",
+          "agent": "coder",
+          "description": "Based on /tmp/test_deletion_final.json, delete or move flaky/slow tests to tests/archived/. Create archive manifest documenting: (1) Why archived, (2) Original purpose, (3) Replacement strategy. Preserve git history.",
+          "dependencies": ["create_deletion_candidates_list"],
+          "acceptance_criteria": [
+            "Flaky tests moved to tests/archived/ with manifest",
+            "Slow tests (>5s) optimized or archived",
+            "Archive manifest created at tests/archived/MANIFEST.md",
+            "Git history preserved (git mv, not delete)"
+          ],
+          "estimated_tokens": 3000
+        },
+        {
+          "id": "consolidate_duplicate_files",
+          "title": "Consolidate duplicate test files",
+          "type": "Code",
+          "tier": "Tier 2",
+          "agent": "coder",
+          "description": "Merge duplicate test files (test_agency_code_agent.py + test_agency_code_agent_fixed.py). Keep best tests from each, discard duplicates. Update imports and references. Document consolidation decisions.",
+          "dependencies": ["create_deletion_candidates_list"],
+          "acceptance_criteria": [
+            "Duplicate files merged (e.g., test_agency_code_agent.py becomes canonical)",
+            "Best tests preserved, duplicates removed",
+            "All imports and references updated",
+            "Consolidation documented in commit message"
+          ],
+          "estimated_tokens": 4000
+        },
+        {
+          "id": "archive_skipped_tests",
+          "title": "Archive 164 skipped tests with documentation",
+          "type": "Code",
+          "tier": "Tier 2",
+          "agent": "coder",
+          "description": "Move all 164 skipped tests to tests/archived/skipped/. Create documentation explaining: (1) Why skipped, (2) Re-enable conditions, (3) Value assessment. Group by skip reason.",
+          "dependencies": [],
+          "acceptance_criteria": [
+            "All 164 skipped tests moved to tests/archived/skipped/",
+            "Skip reasons documented in tests/archived/skipped/REASONS.md",
+            "Re-enable conditions specified for each group",
+            "Estimated re-enable effort documented"
+          ],
+          "estimated_tokens": 3000
+        },
+        {
+          "id": "optimize_pytest_config",
+          "title": "Optimize pytest configuration for speed",
+          "type": "Code",
+          "tier": "Tier 2",
+          "agent": "coder",
+          "description": "Update pytest.ini and run_tests.py for faster execution. Enable: (1) Pytest-xdist parallelization (3 workers for local model compatibility), (2) Fail-fast for quick feedback, (3) Test result caching. Target: <2 min runtime.",
+          "dependencies": [],
+          "acceptance_criteria": [
+            "Pytest configuration optimized (pytest.ini updated)",
+            "Parallel execution enabled (3 workers, memory-aware)",
+            "Test result caching enabled (--lf, --ff flags)",
+            "Configuration changes documented in pytest.ini comments"
+          ],
+          "estimated_tokens": 2000
+        }
+      ]
+    },
+    {
+      "id": "phase_3_necessary_rebuild",
+      "title": "NECESSARY-Compliant Test Rebuild (High-Value Areas)",
+      "tasks": [
+        {
+          "id": "rebuild_agent_registry_tests",
+          "title": "Rebuild test_agent_registry.py with NECESSARY pattern (35 failures)",
+          "type": "Code",
+          "tier": "Tier 1",
+          "agent": "test_generator",
+          "description": "Completely rewrite tests/trinity_protocol/core/test_agent_registry.py following NECESSARY pattern. Cover: (1) Normal cases (agent creation, basic operations), (2) Edge cases (invalid inputs, boundary conditions), (3) Security (malicious inputs, injection), (4) Specification (contract compliance). Target: 100% pass rate, <30s runtime.",
+          "dependencies": ["delete_flaky_slow_tests", "consolidate_duplicate_files"],
+          "acceptance_criteria": [
+            "All 7 NECESSARY categories covered (Normal, Edge, Security, Specification, Accessibility, Resilience, Year-round)",
+            "Test runtime <30 seconds for entire file",
+            "100% pass rate verified",
+            "Tests are deterministic (zero flakiness)"
+          ],
+          "estimated_tokens": 10000
+        },
+        {
+          "id": "verify_agent_registry_tests",
+          "title": "Verify agent_registry tests pass consistently",
+          "type": "Test",
+          "tier": "Tier 2",
+          "agent": "test_generator",
+          "description": "Run tests/trinity_protocol/core/test_agent_registry.py 5 times consecutively. Verify: (1) 100% pass rate all 5 runs, (2) Runtime <30s each run, (3) Zero flakiness. Document any failures for iteration.",
+          "dependencies": ["rebuild_agent_registry_tests"],
+          "verification_target": "rebuild_agent_registry_tests",
+          "acceptance_criteria": [
+            "5 consecutive runs with 100% pass rate",
+            "Average runtime <30 seconds",
+            "Zero flakiness detected",
+            "Verification report saved to /tmp/agent_registry_verification.json"
+          ],
+          "estimated_tokens": 2000
+        },
+        {
+          "id": "rebuild_integration_tests",
+          "title": "Rebuild integration tests (test_ci_backlog_workflow.py, 12 failures)",
+          "type": "Code",
+          "tier": "Tier 2",
+          "agent": "test_generator",
+          "description": "Rewrite tests/integration/test_ci_backlog_workflow.py with NECESSARY pattern. Focus on: (1) Fast, deterministic tests, (2) Mock external dependencies, (3) Clear failure messages. Remove flaky CI-dependent tests.",
+          "dependencies": ["delete_flaky_slow_tests"],
+          "acceptance_criteria": [
+            "NECESSARY pattern applied (focus on Normal, Edge, Resilience)",
+            "External dependencies mocked (no real CI calls)",
+            "Runtime <20 seconds",
+            "100% pass rate verified"
+          ],
+          "estimated_tokens": 7000
+        },
+        {
+          "id": "verify_integration_tests",
+          "title": "Verify integration tests pass consistently",
+          "type": "Test",
+          "tier": "Tier 2",
+          "agent": "test_generator",
+          "description": "Run tests/integration/test_ci_backlog_workflow.py 3 times consecutively. Verify 100% pass rate, runtime <20s, zero flakiness.",
+          "dependencies": ["rebuild_integration_tests"],
+          "verification_target": "rebuild_integration_tests",
+          "acceptance_criteria": [
+            "3 consecutive runs with 100% pass rate",
+            "Average runtime <20 seconds",
+            "Zero flakiness detected"
+          ],
+          "estimated_tokens": 1500
+        },
+        {
+          "id": "rebuild_core_agent_tests",
+          "title": "Rebuild core agent tests (toolsmith, coder, planner)",
+          "type": "Code",
+          "tier": "Tier 2",
+          "agent": "test_generator",
+          "description": "Consolidate and rebuild tests for core agents: (1) test_toolsmith_agent_comprehensive.py (12 failures), (2) test_agency_code_agent.py (11 failures), (3) test_planner_agent.py (5 failures). Apply NECESSARY pattern, remove duplicates, ensure fast runtime.",
+          "dependencies": ["consolidate_duplicate_files", "delete_flaky_slow_tests"],
+          "acceptance_criteria": [
+            "Duplicate tests removed across agent test files",
+            "NECESSARY pattern applied to all core agent tests",
+            "Combined runtime <60 seconds for all 3 files",
+            "100% pass rate verified for each file"
+          ],
+          "estimated_tokens": 12000
+        },
+        {
+          "id": "verify_core_agent_tests",
+          "title": "Verify core agent tests pass consistently",
+          "type": "Test",
+          "tier": "Tier 2",
+          "agent": "test_generator",
+          "description": "Run core agent tests (toolsmith, coder, planner) 3 times consecutively. Verify 100% pass rate, combined runtime <60s, zero flakiness.",
+          "dependencies": ["rebuild_core_agent_tests"],
+          "verification_target": "rebuild_core_agent_tests",
+          "acceptance_criteria": [
+            "3 consecutive runs with 100% pass rate for all 3 files",
+            "Combined average runtime <60 seconds",
+            "Zero flakiness detected across all runs"
+          ],
+          "estimated_tokens": 2000
+        }
+      ]
+    },
+    {
+      "id": "phase_4_verification",
+      "title": "Final Verification & Constitutional Compliance",
+      "tasks": [
+        {
+          "id": "run_full_test_suite",
+          "title": "Run full test suite and verify 100% pass rate",
+          "type": "Test",
+          "tier": "Tier 2",
+          "agent": "test_generator",
+          "description": "Execute python run_tests.py --run-all and verify: (1) 100% pass rate (0 failures), (2) No skipped tests in core areas, (3) All tests complete successfully. Document any failures for immediate fix.",
+          "dependencies": ["verify_agent_registry_tests", "verify_integration_tests", "verify_core_agent_tests"],
+          "verification_target": "rebuild_agent_registry_tests",
+          "acceptance_criteria": [
+            "100% pass rate (0 failed tests)",
+            "Zero test errors or crashes",
+            "All rebuilt tests passing",
+            "Test results saved to /tmp/full_suite_verification.txt"
+          ],
+          "estimated_tokens": 2000
+        },
+        {
+          "id": "measure_runtime",
+          "title": "Measure and verify test suite runtime <2 minutes",
+          "type": "Test",
+          "tier": "Tier 2",
+          "agent": "auditor",
+          "description": "Measure test suite runtime and verify <2 minute target (vs current 7 minutes). Break down runtime by: (1) Phase (setup, execution, teardown), (2) Test file, (3) Slowest tests. If >2 min, identify bottlenecks for Phase 2 iteration.",
+          "dependencies": ["run_full_test_suite"],
+          "verification_target": "optimize_pytest_config",
+          "acceptance_criteria": [
+            "Total runtime <2 minutes (vs 7 min baseline)",
+            "Runtime breakdown by test file documented",
+            "Slowest tests identified (if any >5s)",
+            "Runtime report saved to /tmp/test_runtime_final.json"
+          ],
+          "estimated_tokens": 3000
+        },
+        {
+          "id": "verify_zero_flakiness",
+          "title": "Run 3 consecutive passes to verify zero flakiness",
+          "type": "Test",
+          "tier": "Tier 2",
+          "agent": "test_generator",
+          "description": "Execute python run_tests.py --run-all three times consecutively. Verify: (1) 100% pass rate all 3 runs, (2) Same test count all 3 runs, (3) No timeouts or hangs. This satisfies Constitutional Article II (100% verification requirement).",
+          "dependencies": ["measure_runtime"],
+          "verification_target": "run_full_test_suite",
+          "acceptance_criteria": [
+            "3 consecutive runs with identical results (100% pass)",
+            "No flakiness detected (same tests pass/fail pattern)",
+            "Zero timeouts or test hangs across all runs",
+            "Article II compliance verified and documented"
+          ],
+          "estimated_tokens": 2000
+        },
+        {
+          "id": "generate_coverage_report",
+          "title": "Generate NECESSARY pattern coverage report",
+          "type": "Test",
+          "tier": "Tier 1",
+          "agent": "quality_enforcer",
+          "description": "Generate comprehensive coverage report showing: (1) NECESSARY category coverage (Normal/Edge/Security/etc), (2) Code coverage by module, (3) Gaps in test coverage, (4) Recommendations for future test additions. Compare to baseline.",
+          "dependencies": ["verify_zero_flakiness"],
+          "verification_target": "necessary_pattern_audit",
+          "acceptance_criteria": [
+            "NECESSARY category coverage documented (target: all 7 categories)",
+            "Code coverage report generated (target: >80%)",
+            "Coverage gaps identified with priority ranking",
+            "Report saved to /tmp/test_coverage_final.html"
+          ],
+          "estimated_tokens": 4000
+        }
+      ]
+    }
+  ],
+  "checkpoints": [
+    {
+      "after_phase": "phase_1_audit",
+      "type": "human_review",
+      "prompt": "Review audit findings before proceeding with test deletion:\n\n1. Check /tmp/test_deletion_final.json for deletion candidates\n2. Verify NECESSARY compliance gaps in /tmp/necessary_compliance_audit.json\n3. Review failure analysis in /tmp/test_failure_analysis.json\n\nApprove to proceed with Phase 2 (Cleanup), or iterate on Phase 1 analysis."
+    },
+    {
+      "after_phase": "phase_2_cleanup",
+      "type": "auto_validate",
+      "prompt": "Validate cleanup results: (1) Tests still collect successfully, (2) No import errors after file moves, (3) Archive manifest complete."
+    },
+    {
+      "after_phase": "phase_3_necessary_rebuild",
+      "type": "auto_validate",
+      "prompt": "Validate rebuilt tests: (1) All rebuilt test files pass individually, (2) NECESSARY pattern compliance verified, (3) Runtime targets met."
+    }
+  ],
+  "metadata": {
+    "estimated_tokens": 89500,
+    "estimated_cost_usd": 2.25,
+    "complexity": "complex",
+    "budget_limit_usd": 5.0,
+    "preflight_checks": [
+      "slop_guardian.evaluate(graph) >= 3.5",
+      "git status clean (no uncommitted changes in tests/)",
+      "backup created of current test suite"
+    ]
+  }
+}
