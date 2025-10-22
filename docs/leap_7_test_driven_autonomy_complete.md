@@ -306,7 +306,7 @@ result = gate.verify_tests(worktree_path="/Users/am/Code/Agency-task")
 - [x] Article IV: VectorStore learnings extracted
 - [x] Article V: Spec-driven development (spec-20251011-{slug}.md)
 
-🤖 Generated with [Claude Code](https://claude.com/claude-code)
+🤖 Autonomously generated
 
 Co-Authored-By: Claude <noreply@anthropic.com>
 ```

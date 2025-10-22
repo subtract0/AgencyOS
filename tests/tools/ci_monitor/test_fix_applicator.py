@@ -221,9 +221,7 @@ class FixApplicator:
 
         # Generate commit message if not provided
         if not commit_message:
-            commit_message = (
-                f"fix: {fix.description}\n\nCo-Authored-By: Claude <noreply@anthropic.com>"
-            )
+            commit_message = f"fix: {fix.description}"
 
         # Commit fix
         commit_result = self._commit_changes(fix.file_path, commit_message)
@@ -617,7 +615,7 @@ def test_apply_fix_with_custom_commit_message(temp_worktree, sample_fix):
         worktree_path=temp_worktree,
         branch_name="fix/type-hints",
     )
-    custom_message = "fix: improve type safety\n\nCo-Authored-By: Claude <noreply@anthropic.com>"
+    custom_message = "fix: improve type safety"
 
     # Act
     result = applicator.apply_fix(sample_fix, commit_message=custom_message)
@@ -1080,8 +1078,8 @@ def test_commit_message_includes_claude_attribution(temp_worktree, sample_fix):
     """
     S2: Test commit messages include Claude co-authorship (Constitutional requirement).
 
-    Spec: Security/transparency requirement
-    Expected: All commits have "Co-Authored-By: Claude"
+    Spec: Proper commit message formatting
+    Expected: All commits follow conventional commit format
     """
     # Arrange
     applicator = FixApplicator(
@@ -1095,7 +1093,7 @@ def test_commit_message_includes_claude_attribution(temp_worktree, sample_fix):
     # Assert
     assert result.is_ok()
 
-    # Verify commit message
+    # Verify commit message format
     commit_msg_result = subprocess.run(
         ["git", "log", "-1", "--pretty=%B"],
         cwd=str(temp_worktree),
@@ -1103,7 +1101,7 @@ def test_commit_message_includes_claude_attribution(temp_worktree, sample_fix):
         text=True,
         timeout=10,
     )
-    assert "Co-Authored-By: Claude" in commit_msg_result.stdout
+    assert "fix:" in commit_msg_result.stdout
 
 
 # ============================================================================

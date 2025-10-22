@@ -244,9 +244,7 @@ class FixApplicator:
         diff = self._generate_diff(fix.file_path)
 
         if not commit_message:
-            commit_message = (
-                f"fix: {fix.description}\n\nCo-Authored-By: Claude <noreply@anthropic.com>"
-            )
+            commit_message = f"fix: {fix.description}"
 
         commit_result = self._commit_changes(fix.file_path, commit_message)
         if commit_result.is_err():

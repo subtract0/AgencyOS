@@ -447,7 +447,7 @@ git commit -m "feat: Approve ADR-XXX - Article III post-merge exception
 Article VII meta-constitutional evolution: Evidence-based amendment
 Pattern confidence: 0.89, Evidence count: 23 instances over 30 days
 
-🤖 Generated with [Claude Code](https://claude.com/claude-code)
+🤖 Autonomously generated
 
 Co-Authored-By: Claude <noreply@anthropic.com>"
 ```

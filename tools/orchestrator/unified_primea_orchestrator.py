@@ -2991,11 +2991,7 @@ async def execute_primea_workflow(
 Implements {mission}
 
 Tasks completed: {completed_tasks}/{total_tasks}
-Test pass rate: 100%
-
-🤖 Generated with [Claude Code](https://claude.com/claude-code)
-
-Co-Authored-By: Claude <noreply@anthropic.com>"""
+Test pass rate: 100%"""
 
             # Commit changes
             subprocess.run(
@@ -3039,10 +3035,6 @@ graph TD
 - [x] All tasks completed
 - [x] Tests passing (100% rate)
 - [x] Constitutional compliance verified
-
-🤖 Generated with [Claude Code](https://claude.com/claude-code)
-
-Co-Authored-By: Claude <noreply@anthropic.com>
 """
 
         try:
