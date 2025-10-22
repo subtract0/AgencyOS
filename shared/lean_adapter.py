@@ -19,6 +19,27 @@ from typing import Any
 from shared.lean_agent import AgentConfig, LeanAgent, Tool
 
 
+class ToolWrapper:
+    """Wrapper to add .name attribute to tool classes/instances for backward compatibility."""
+
+    def __init__(self, tool_or_class):
+        self._tool = tool_or_class
+        # Add .name attribute - handle both classes and instances
+        if hasattr(tool_or_class, '__name__'):
+            # It's a class
+            self.name = tool_or_class.__name__
+        else:
+            # It's an instance - use class name
+            self.name = tool_or_class.__class__.__name__
+
+    def __getattr__(self, item):
+        """Delegate all other attributes to the wrapped tool."""
+        return getattr(self._tool, item)
+
+    def __repr__(self):
+        return f"ToolWrapper({self.name})"
+
+
 class Agent(LeanAgent):
     """
     Drop-in replacement for agency_swarm.Agent.
@@ -71,22 +92,19 @@ class Agent(LeanAgent):
         if not instructions:
             instructions = f"You are {name}, a helpful AI assistant."
 
-        # Convert tools if provided
-        lean_tools = []
-        if tools:
-            for tool in tools:
-                if isinstance(tool, Tool):
-                    lean_tools.append(tool)
-                # Add more tool conversion logic as needed
+        # Store tools separately for backward compatibility
+        # (agency-swarm tools don't match LeanAgent Tool Pydantic model)
+        # Wrap tools to add .name attribute
+        self._tools = [ToolWrapper(tool) for tool in (tools if tools else [])]
 
-        # Create config
+        # Create config without tools (tools stored separately)
         config = AgentConfig(
             name=name,
             instructions=instructions,
             model=model,
             temperature=temperature,
             max_tokens=max_tokens,
-            tools=lean_tools,
+            tools=[],  # Empty for now, agency-swarm tools stored in self._tools
         )
 
         # Initialize parent
@@ -129,7 +147,7 @@ class Agent(LeanAgent):
     @property
     def tools(self) -> list[Any]:
         """List of tools (backward compatibility property)."""
-        return self.config.tools
+        return self._tools
 
     @property
     def hooks(self) -> dict[str, Any]:
