@@ -21,11 +21,21 @@ import json
 import os
 import threading
 from collections.abc import Callable
+from typing import TYPE_CHECKING, Union
 
 from openai import OpenAI
 from pydantic import BaseModel, Field
 
 from shared.type_definitions.result import Err, Ok, Result
+
+# Import LitellmModel at runtime for Pydantic model resolution
+# (not just TYPE_CHECKING, as Pydantic needs to resolve Union[str, LitellmModel])
+try:
+    from agents.extensions.models.litellm_model import LitellmModel
+except ImportError:
+    # Fallback: Define a placeholder type if agents package not installed
+    # This allows the module to load, but LitellmModel won't be usable
+    LitellmModel = type("LitellmModel", (), {})  # type: ignore
 
 
 class ToolParameter(BaseModel):
@@ -85,14 +95,23 @@ class Tool(BaseModel):
 
 
 class AgentConfig(BaseModel):
-    """Agent configuration."""
+    """Agent configuration.
+
+    Note: model field accepts both str (e.g., "gpt-4o") and LitellmModel objects
+    to support Trinity Protocol's adaptive model routing with local models.
+    """
 
     name: str
     instructions: str
-    model: str = "gpt-4o"
+    model: Union[str, LitellmModel] = "gpt-4o"  # Accept both str and LitellmModel (no quotes!)
     temperature: float = 0.7
     max_tokens: int = 4000
     tools: list[Tool] = Field(default_factory=list)
+
+    class Config:
+        """Pydantic config."""
+
+        arbitrary_types_allowed = True  # Allow LitellmModel objects
 
 
 class ToolCall(BaseModel):
