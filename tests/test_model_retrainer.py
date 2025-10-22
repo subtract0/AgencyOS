@@ -18,7 +18,7 @@ Constitutional Compliance:
 Test Framework: pytest with NECESSARY pattern
 Reference: specs/spec-008-weekly-retraining-pipeline.md Section 5.4
 
-Author: AgencyCodeAgent
+Author: CodingAgent
 Date: 2025-10-10
 """
 
@@ -42,6 +42,10 @@ from shared.type_definitions.result import Err, Ok, Result
 # ==============================================================================
 # Test Fixtures
 # ==============================================================================
+
+
+# Increase timeout for ML training tests (CI requires more time)
+pytestmark = pytest.mark.timeout(60)
 
 
 @pytest.fixture

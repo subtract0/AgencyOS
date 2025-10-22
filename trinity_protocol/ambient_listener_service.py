@@ -4,7 +4,7 @@ PRODUCTION-READY implementation for capturing real voice data.
 
 Constitutional Compliance:
 - Article I: Complete context before action (full audio chunks)
-- Article II: Strict typing with Pydantic models (no Dict[Any, Any])
+- Article II: Strict typing with Pydantic models (no untyped dicts)
 - Article V: Spec-driven development
 - Article VII: Functions <50 lines
 

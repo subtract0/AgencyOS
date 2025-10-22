@@ -6,10 +6,10 @@ when requirements are unclear or incomplete.
 import os
 
 import pytest
-from agency_swarm import Agency
+from shared.lean_adapter import Agency
 from dotenv import load_dotenv
 
-from agency_code_agent.agency_code_agent import create_agency_code_agent
+from coding_agent.coding_agent import create_coding_agent
 from planner_agent.planner_agent import create_planner_agent
 
 # Load environment variables
@@ -33,7 +33,7 @@ def cleanup_fib():
 def planner_agency():
     """Create agency with planner agent entry point for testing"""
     planner = create_planner_agent(model="gpt-5-mini", reasoning_effort="low")
-    coder = create_agency_code_agent(model="gpt-5-mini", reasoning_effort="low")
+    coder = create_coding_agent(model="gpt-5-mini", reasoning_effort="low")
 
     # Set up handoffs
     planner.handoffs = [coder]
@@ -100,7 +100,7 @@ def ambiguous_queries():
     ]
 
 
-@pytest.mark.timeout(30)  # 30 second timeout for API calls
+@pytest.mark.timeout(60)  # 60 second timeout for API calls (increased for LLM variability)
 @pytest.mark.asyncio
 @ci_skip
 async def test_planner_asks_clarifying_questions_vague_auth(planner_agency):
@@ -159,7 +159,7 @@ async def test_planner_asks_clarifying_questions_vague_auth(planner_agency):
         assert False, "Should not start detailed planning without clarification"
 
 
-@pytest.mark.timeout(30)  # 30 second timeout for API calls
+@pytest.mark.timeout(60)  # 60 second timeout for API calls (increased for LLM variability)
 @pytest.mark.asyncio
 @ci_skip
 async def test_planner_asks_about_missing_context(planner_agency):
@@ -193,7 +193,7 @@ async def test_planner_asks_about_missing_context(planner_agency):
     assert asks_context, f"Should ask for bug context. Got: {response[:500]}..."
 
 
-@pytest.mark.timeout(30)  # 30 second timeout for API calls
+@pytest.mark.timeout(60)  # 60 second timeout for API calls (increased for LLM variability)
 @pytest.mark.asyncio
 @ci_skip
 async def test_planner_asks_about_incomplete_requirements(planner_agency):
@@ -227,7 +227,7 @@ async def test_planner_asks_about_incomplete_requirements(planner_agency):
 
 
 @ci_skip
-@pytest.mark.timeout(30)  # 30 second timeout for API calls
+@pytest.mark.timeout(180)  # 180 second timeout for multiple API calls (increased for LLM API variability)
 @pytest.mark.asyncio
 async def test_planner_comprehensive_question_behavior(planner_agency, ambiguous_queries):
     """Test planner's question-asking behavior across multiple ambiguous queries"""
@@ -299,7 +299,7 @@ async def test_planner_comprehensive_question_behavior(planner_agency, ambiguous
     return results
 
 
-@pytest.mark.timeout(30)  # 30 second timeout for API calls
+@pytest.mark.timeout(60)  # 60 second timeout for API calls (increased for LLM variability)
 @pytest.mark.asyncio
 @ci_skip
 async def test_planner_with_clear_requirements_minimal_questions(planner_agency):

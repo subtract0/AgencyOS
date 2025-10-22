@@ -58,7 +58,7 @@ class TestSelectionReport(BaseModel):
     model_config = ConfigDict(
         json_schema_extra={
             "example": {
-                "changed_files": ["agency_code_agent/coder.py"],
+                "changed_files": ["coding_agent/coder.py"],
                 "affected_tests": ["tests/test_coder.py::test_generate_code"],
                 "total_tests": 2438,
                 "estimated_time_saved": 180.0,
@@ -199,7 +199,7 @@ class SmartTestSelector:
     def _resolve_import_to_file(self, import_name: str) -> str | None:
         """Resolve an import statement to an actual file path."""
         # Convert import to file path
-        # e.g., "agency_code_agent.coder" -> "agency_code_agent/coder.py"
+        # e.g., "coding_agent.coder" -> "coding_agent/coder.py"
 
         parts = import_name.split(".")
         potential_paths = [

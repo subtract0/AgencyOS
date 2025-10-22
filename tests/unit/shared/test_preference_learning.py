@@ -67,8 +67,13 @@ def message_bus(temp_db):
 
 @pytest.fixture
 def alice_learner(message_bus, temp_db):
-    """Create preference learner for Alice."""
-    db_path = str(Path(temp_db).parent / "alice_prefs.db")
+    """Create preference learner for Alice with strict isolation."""
+    # Use process ID + timestamp + user ID for guaranteed uniqueness across parallel workers
+    import os
+    import time
+    unique_suffix = f"_alice_{os.getpid()}_{int(time.time() * 1000000)}.db"
+    with tempfile.NamedTemporaryFile(suffix=unique_suffix, delete=False) as f:
+        db_path = f.name
     learner = PreferenceLearner(
         user_id="alice", message_bus=message_bus, db_path=db_path, min_confidence=0.6
     )
@@ -78,8 +83,13 @@ def alice_learner(message_bus, temp_db):
 
 @pytest.fixture
 def bob_learner(message_bus, temp_db):
-    """Create preference learner for Bob."""
-    db_path = str(Path(temp_db).parent / "bob_prefs.db")
+    """Create preference learner for Bob with strict isolation."""
+    # Use process ID + timestamp + user ID for guaranteed uniqueness across parallel workers
+    import os
+    import time
+    unique_suffix = f"_bob_{os.getpid()}_{int(time.time() * 1000000)}.db"
+    with tempfile.NamedTemporaryFile(suffix=unique_suffix, delete=False) as f:
+        db_path = f.name
     learner = PreferenceLearner(
         user_id="bob", message_bus=message_bus, db_path=db_path, min_confidence=0.6
     )
@@ -470,6 +480,7 @@ class TestPreferenceAnalysis:
         assert low_stakes_pref is not None
         assert low_stakes_pref.confidence < 0.5  # Low confidence with only 3 samples
 
+    @pytest.mark.serial
     def test_trend_detection_stable(self, alice_learner):
         """Should detect stable trend when acceptance rate is constant."""
         # Arrange - Consistent YES responses
@@ -520,6 +531,7 @@ class TestPreferenceAnalysis:
 class TestMultiUserIsolation:
     """CRITICAL: Verify NO cross-user data contamination."""
 
+    @pytest.mark.serial  # Force sequential execution to avoid DB file race conditions
     def test_alice_and_bob_have_separate_preferences(
         self, alice_learner, bob_learner, sample_responses_alice, sample_responses_bob
     ):
@@ -563,10 +575,16 @@ class TestMultiUserIsolation:
         assert alice_prefs.unwrap().total_responses == 3
         assert bob_prefs.unwrap().total_responses == 0  # Bob should have ZERO
 
+    @pytest.mark.serial
     def test_concurrent_user_preference_storage(
         self, alice_learner, bob_learner, sample_responses_alice, sample_responses_bob
     ):
-        """Should handle concurrent preference updates for different users."""
+        """Should handle concurrent preference updates for different users.
+
+        Note: Marked as serial due to SQLite database table initialization issues
+        in parallel test execution (xdist). The test uses separate database instances
+        for alice and bob, and parallel execution causes "no such table" errors.
+        """
         # Arrange & Act - Interleaved observations
         alice_learner.observe(sample_responses_alice[0])
         bob_learner.observe(sample_responses_bob[0])

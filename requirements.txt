@@ -1,11 +1,9 @@
-# Core Agency Swarm framework
-git+https://github.com/VRSEN/agency-swarm.git@main
-
 # LLM & AI dependencies
 openai-agents[litellm]>=0.2.0
 openai>=1.0.0
 anthropic>=0.42.0  # Memory tool support (beta: context-management-2025-06-27)
 claude-agent-sdk>=0.1.0
+elevenlabs>=1.0.0  # Text-to-speech for audio summaries
 
 # Google Cloud dependencies (Firestore for memory persistence)
 google-cloud-firestore>=2.11.0
@@ -33,7 +31,7 @@ pytest-asyncio>=0.21.0
 pytest-xdist>=3.0.0
 pytest-timeout>=2.0.0
 pytest-cov>=4.0.0
-pytest-rerunfailures>=12.0.0  # Auto-retry flaky tests
+pytest-rerunfailures>=12.0.0  # DISABLED: Python 3.13 incompatibility (ADR-030) - causes segfaults with async socket tests
 pytest-json-report>=1.5.0  # Test health tracking
 hypothesis>=6.0.0  # Property-based testing
 

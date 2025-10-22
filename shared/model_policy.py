@@ -173,9 +173,14 @@ def agent_model(
           For learning-based routing, provide both task_description and context.
     """
     # Environment override takes precedence (Article III)
-    agent_override = os.getenv(f"{agent_key.upper()}_MODEL")
-    if agent_override:
-        return agent_override
+    # Add None check to prevent AttributeError when agent_key is None
+    if agent_key is not None:
+        agent_override = os.getenv(f"{agent_key.upper()}_MODEL")
+        if agent_override:
+            return agent_override
+    else:
+        # Fallback to global default when agent_key is None
+        return DEFAULT_GLOBAL
 
     # If no task context, use static defaults (backward compatible)
     if task_description is None:

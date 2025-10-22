@@ -2,7 +2,12 @@ version: '3.8'
 
 services:
   ollama:
-    image: ollama/ollama:latest
+    # Custom image with curl for health checks (see Dockerfile.ollama-healthcheck)
+    # Official ollama/ollama:latest does not include curl or network utilities
+    build:
+      context: .
+      dockerfile: Dockerfile.ollama-healthcheck
+    image: agency-ollama-healthcheck:latest
     container_name: agency-ollama
     ports:
       - "11434:11434"

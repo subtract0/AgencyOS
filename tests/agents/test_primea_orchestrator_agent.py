@@ -13,6 +13,7 @@ Verification Target: code_orchestrator_agent_update
 Constitutional Compliance: Article II - 100% Verification
 """
 
+import os
 import re
 from pathlib import Path
 
@@ -36,8 +37,9 @@ class TestPrimeAOrchestratorAgentDefinition:
         Returns:
             Path to .claude/agents/primeA_orchestrator.md
         """
-        # Arrange
-        return Path("/Users/am/Code/Agency/.claude/agents/primeA_orchestrator.md")
+        # Arrange: Use relative path from project root
+        project_root = Path(__file__).parent.parent.parent
+        return project_root / ".claude" / "agents" / "primeA_orchestrator.md"
 
     @pytest.fixture
     def agent_content(self, agent_definition_path: Path) -> str:
@@ -541,14 +543,15 @@ class TestPrimeAOrchestratorAgentIntegration:
         NECESSARY: A (Accessibility - API consistency)
         AAA: Arrange (paths) → Act (check existence) → Assert (all found)
         """
-        # Arrange
+        # Arrange: Use relative paths from project root
+        project_root = Path(__file__).parent.parent.parent
         agent_dirs = [
-            Path("/Users/am/Code/Agency/agency_code_agent"),
-            Path("/Users/am/Code/Agency/planner_agent"),
-            Path("/Users/am/Code/Agency/test_generator_agent"),
-            Path("/Users/am/Code/Agency/auditor_agent"),
-            Path("/Users/am/Code/Agency/quality_enforcer_agent"),
-            Path("/Users/am/Code/Agency/chief_architect_agent"),
+            project_root / "coding_agent",
+            project_root / "planner_agent",
+            project_root / "test_generator_agent",
+            project_root / "auditor_agent",
+            project_root / "quality_enforcer_agent",
+            project_root / "chief_architect_agent",
         ]
 
         # Act
@@ -566,8 +569,9 @@ class TestPrimeAOrchestratorAgentIntegration:
         NECESSARY: A (Accessibility - schema consistency)
         AAA: Arrange (paths) → Act (read model) → Assert (phases match)
         """
-        # Arrange
-        task_graph_model_path = Path("/Users/am/Code/Agency/shared/models/task_graph.py")
+        # Arrange: Use relative path from project root
+        project_root = Path(__file__).parent.parent.parent
+        task_graph_model_path = project_root / "shared" / "models" / "task_graph.py"
 
         # Act
         model_exists = task_graph_model_path.exists()

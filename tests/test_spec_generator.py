@@ -68,14 +68,15 @@ class TestSpecModel:
                 "Token refresh works without re-authentication",
                 "100% test coverage for auth flows",
             ],
-            metadata={"intent_priority": "high"},
+            metadata={"priority": "high"},
         )
 
         assert spec.title == "JWT Authentication"
         assert len(spec.goals) == 2
         assert len(spec.personas) == 2
         assert len(spec.success_criteria) == 3
-        assert spec.metadata["intent_priority"] == "high"
+        # Access SpecMetadata attributes (Pydantic model, not dict)
+        assert spec.metadata.priority == "high"
 
     def test_spec_empty_lists_invalid(self) -> None:
         """Test Spec validation fails with empty required lists."""
@@ -224,9 +225,9 @@ class TestSpecGenerator:
         assert result.is_ok()
         spec = result.unwrap()
 
-        # Metadata should include intent info
-        assert spec.metadata.get("intent_priority") == "high"
-        assert spec.metadata.get("intent_tags") == ["test", "feature"]
+        # Metadata should include intent info (access as attributes)
+        assert spec.metadata.priority == "high"
+        assert spec.metadata.tags == ["test", "feature"]
 
 
 class TestSpecGeneratorPlannerIntegration:

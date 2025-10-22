@@ -110,7 +110,7 @@ def test_create_coder_agent_with_local_tier(registry_local: AgentRegistry):
     # Assert
     assert agent is not None
     assert hasattr(agent, "name")
-    assert agent.name == "AgencyCodeAgent"
+    assert agent.name == "CodingAgent"
 
 
 def test_create_planner_agent_with_local_tier(registry_local: AgentRegistry):
@@ -161,7 +161,7 @@ def test_create_agent_uses_default_tier_when_tier_is_none(registry_local: AgentR
 @pytest.mark.parametrize(
     "agent_type,expected_name",
     [
-        (AgentType.CODER, "AgencyCodeAgent"),
+        (AgentType.CODER, "CodingAgent"),
         (AgentType.PLANNER, "PlannerAgent"),
         (AgentType.AUDITOR, "AuditorAgent"),
         (AgentType.TEST_GENERATOR, "TestGeneratorAgent"),
@@ -191,7 +191,7 @@ def test_all_agents_can_be_created_with_local_tier(
 @pytest.mark.parametrize(
     "agent_type,expected_name",
     [
-        (AgentType.CODER, "AgencyCodeAgent"),
+        (AgentType.CODER, "CodingAgent"),
         (AgentType.PLANNER, "PlannerAgent"),
         (AgentType.AUDITOR, "AuditorAgent"),
         (AgentType.TEST_GENERATOR, "TestGeneratorAgent"),
@@ -599,7 +599,7 @@ def test_coder_agent_has_correct_attributes(registry_local: AgentRegistry):
     assert hasattr(agent, "name")
     assert hasattr(agent, "description")
     assert hasattr(agent, "instructions")
-    assert agent.name == "AgencyCodeAgent"
+    assert agent.name == "CodingAgent"
 
 
 def test_planner_agent_has_correct_attributes(registry_local: AgentRegistry):

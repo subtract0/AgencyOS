@@ -273,3 +273,44 @@ benchmark_results/*.jsonl
 !docs/**/*.log  # Keep example logs in documentation
 
 hooks-repo/
+
+# Leap execution artifacts (temporary files and logs)
+logs/leap*_*.txt
+logs/leap*_*.json
+logs/*_catalog*.json
+logs/*_summary.json
+logs/*_inventory.md
+*_summary.md
+store_*.py
+verify_*.py
+run_*.sh
+completion_patterns_stored.md
+environment_fix_summary.md
+
+# Mission planning artifacts (temporary)
+missions/LEAP_*_EXECUTION_PLAN.md
+missions/leap_*_resumption_instructions.md
+
+# Test validation reports (temporary)
+test_completion_validator_verification_report.md
+
+# Analysis artifacts (temporary)
+docs/analysis/
+docs/environment_isolation_verification.md
+docs/leap_8_*.md
+!docs/leap_8_completion_summary.md
+docs/leap_8_vectorstore_patterns.json
+
+# Leap execution analysis and reports (Markdown)
+logs/leap*_*.md
+
+# Auto-added by Constitutional Guardian - prevent root clutter
+/*.log
+/*.json
+!package.json
+!tsconfig.json
+!firebase.json
+!.agency_config.json
+/*.txt
+!requirements*.txt
+!README.txt

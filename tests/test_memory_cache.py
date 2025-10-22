@@ -581,7 +581,8 @@ class TestCacheThreadSafety:
         for t in threads:
             t.start()
         for t in threads:
-            t.join()
+            t.join(timeout=5)
+            assert not t.is_alive(), "Thread did not terminate within 5 seconds"
 
         # Assert - All reads successful, no exceptions
         assert len(results) == 1000  # 10 threads × 100 reads
@@ -606,7 +607,8 @@ class TestCacheThreadSafety:
         for t in threads:
             t.start()
         for t in threads:
-            t.join()
+            t.join(timeout=5)
+            assert not t.is_alive(), "Thread did not terminate within 5 seconds"
 
         # Assert - All writes successful, cache size correct
         assert len(cache._cache) == 100  # 10 threads × 10 writes = 100 entries
@@ -633,7 +635,8 @@ class TestCacheThreadSafety:
         for t in threads:
             t.start()
         for t in threads:
-            t.join()
+            t.join(timeout=5)
+            assert not t.is_alive(), "Thread did not terminate within 5 seconds"
 
         # Assert - No crashes, some entries invalidated
         # (Exact count may vary due to race conditions, but should be consistent)

@@ -1,4 +1,4 @@
-# Agency Codebase City-Map
+# AgencyOSbase City-Map
 
 **Visual navigation guide for autonomous agents - optimized for token efficiency**
 
@@ -38,7 +38,7 @@
 ```
 /chief_architect_agent/       → Strategic oversight, ADR creation
 /planner_agent/               → Spec-kit methodology
-/agency_code_agent/           → Primary development (TDD-first)
+/coding_agent/           → Primary development (TDD-first)
 /quality_enforcer_agent/      → Constitutional compliance
 /auditor_agent/               → NECESSARY pattern analysis
 /test_generator_agent/        → Test generation (AAA pattern)

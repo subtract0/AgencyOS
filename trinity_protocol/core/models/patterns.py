@@ -5,7 +5,7 @@ Defines Pydantic models for detected patterns, pattern types, contexts,
 and ambient events for proactive assistance.
 
 Constitutional Compliance:
-- Article II: Strict typing with Pydantic (no Dict[Any, Any])
+- Article II: Strict typing with Pydantic (no untyped dicts)
 - Article IV: Continuous learning with pattern persistence
 - Article VII: Clear, descriptive naming
 """

@@ -5,7 +5,7 @@ AuditorAgent - Quality Assurance Agent for NECESSARY pattern analysis and Q(T) s
 import json
 import os
 
-from agency_swarm import Agent
+from shared.lean_adapter import Agent
 from agency_swarm.tools import BaseTool as Tool
 from pydantic import Field
 
@@ -369,7 +369,7 @@ def _build_auditor_agent(
             "PROACTIVE quality assurance specialist and NECESSARY pattern compliance auditor. Continuously analyzes codebase for "
             "quality violations using AST-based analysis and Q(T) scoring methodology. AUTOMATICALLY triggered for code reviews, "
             "quality assessments, and pattern detection. INTELLIGENTLY coordinates with: (1) TestGeneratorAgent to address coverage gaps, "
-            "(2) QualityEnforcerAgent for constitutional violations, (3) AgencyCodeAgent for quality improvements, "
+            "(2) QualityEnforcerAgent for constitutional violations, (3) CodingAgent for quality improvements, "
             "(4) LearningAgent to identify recurring anti-patterns, and (5) PlannerAgent for strategic refactoring planning. "
             "Uses NECESSARY pattern analysis (Named, Executable, Comprehensive, Error-validated, State-verified, Side-effects controlled, "
             "Assertions meaningful, Repeatable, Yield fast) to calculate quality scores. PROACTIVELY detects: type safety violations, "

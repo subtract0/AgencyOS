@@ -9,7 +9,7 @@ import time
 from datetime import UTC
 from subprocess import TimeoutExpired
 
-from agency_swarm import Agent
+from shared.lean_adapter import Agent
 from agency_swarm.tools import BaseTool as Tool
 from pydantic import Field
 
@@ -425,7 +425,7 @@ Use these tools to maintain quality while delegating complex analysis to LLM pro
             "PROACTIVE constitutional compliance guardian and autonomous healing orchestrator. Continuously monitors all agent activities "
             "for Article I-V compliance and AUTOMATICALLY intervenes when violations detected. INTELLIGENTLY coordinates with: "
             "(1) AuditorAgent for quality assessments and Q(T) scoring, (2) TestGeneratorAgent to ensure test coverage requirements, "
-            "(3) AgencyCodeAgent for autonomous healing and fix application, (4) LearningAgent to learn from successful healing patterns, "
+            "(3) CodingAgent for autonomous healing and fix application, (4) LearningAgent to learn from successful healing patterns, "
             "and (5) ChiefArchitectAgent for strategic quality guidance. PROACTIVELY detects NoneType errors, type safety violations, "
             "and Dict[Any, Any] usage through continuous code monitoring. Uses LLM-powered analysis (GPT-5) to generate intelligent fixes, "
             "then AUTOMATICALLY applies patches with test verification and rollback capability. Enforces Article II (100% test success), "

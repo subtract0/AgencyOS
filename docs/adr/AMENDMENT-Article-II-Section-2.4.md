@@ -126,7 +126,7 @@ def create_mock_agent(name: str) -> MagicMock:
     return mock_agent
 
 async def test_coder_handoff_to_planner_minimal():
-    mock_coder = create_mock_agent("AgencyCodeAgent")  # Violation
+    mock_coder = create_mock_agent("CodingAgent")  # Violation
     mock_planner = create_mock_agent("PlannerAgent")   # Violation
 ```
 
@@ -138,7 +138,7 @@ async def test_coder_handoff_to_planner_minimal():
 @pytest.mark.unit
 async def test_handoff_message_serialization():
     """Unit test: Message structure (mocks OK for agents)."""
-    mock_coder = create_mock_agent("AgencyCodeAgent")  # OK: External to message logic
+    mock_coder = create_mock_agent("CodingAgent")  # OK: External to message logic
     message = HandoffMessage(from_agent=mock_coder, ...)
     assert message.serialize() == expected_format
 ```
@@ -149,7 +149,7 @@ async def test_handoff_message_serialization():
 @pytest.mark.integration
 async def test_real_coder_to_planner_handoff():
     """Integration test: Real agent handoff (Article II compliance)."""
-    real_coder = AgencyCodeAgent()  # Real implementation
+    real_coder = CodingAgent()  # Real implementation
     real_planner = PlannerAgent()   # Real implementation
     result = await real_coder.handoff_to(real_planner, "Task delegated")
     assert result.success  # Verifying REAL behavior

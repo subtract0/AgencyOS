@@ -133,7 +133,7 @@ session = SessionState(
         ),
         "coder": AgentStateLearning(
             agent_id="coder",
-            agent_name="agency_code_agent",
+            agent_name="coding_agent",
             session_id="session_20251010_143022",
             status="running",
             skill_vector=[0.3, 0.4, ...],

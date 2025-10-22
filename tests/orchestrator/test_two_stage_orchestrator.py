@@ -39,63 +39,14 @@ from shared.agent_context import AgentContext
 from shared.models.task_graph import Phase, Task, TaskGraph, TaskTier, TaskType
 from shared.type_definitions.result import Err, Ok, Result
 from tools.orchestrator.approval_checkpoint import ApprovalDecision, ApprovedSpec, Spec
-from tools.orchestrator.intent_parser import InputMode, Intent
+from tools.orchestrator.intent_parser import Intent
 from tools.orchestrator.pr_creator import PRError, PRUrl
 from tools.orchestrator.test_verification_gate import VerificationError, VerificationResults
 
 # ============================================================================
-# TDD PLACEHOLDER - TwoStageOrchestrator (to be implemented by CodeAgent)
+# REAL IMPLEMENTATION - Import from tools/orchestrator/two_stage_orchestrator.py
 # ============================================================================
-
-
-class TwoStageOrchestrator:
-    """
-    Two-stage TDD orchestrator: Intent → Spec → TaskGraph → Execution.
-
-    TDD PLACEHOLDER: This class will be implemented AFTER tests pass.
-
-    Workflow:
-        Stage 1: Specification Phase
-            1. Parse user intent (IntentParser)
-            2. Generate specification (SpecGenerator)
-            3. Await user approval (ApprovalCheckpoint)
-
-        Stage 2: Execution Phase
-            4. Generate task graph (TDDGraphGenerator)
-            5. Execute tasks (placeholder for executor)
-            6. Verify tests pass (TestVerificationGate)
-            7. Create PR (PRCreator)
-
-    Constitutional Compliance:
-        - Article I: Complete context before execution
-        - Article II: 100% test verification enforced
-        - Article IV: VectorStore learning after completion
-        - Article V: Spec-driven workflow
-    """
-
-    def __init__(self, context: AgentContext):
-        """Initialize orchestrator with context."""
-        self.context = context
-
-    async def orchestrate(
-        self,
-        user_input: str | None = None,
-        input_mode: InputMode | None = None,
-    ) -> Result[PRUrl, str]:
-        """
-        Execute two-stage TDD workflow.
-
-        Args:
-            user_input: User input string (None for auto-select)
-            input_mode: Input mode (AUTO_SELECT, NATURAL_LANGUAGE, EXPLICIT_SPEC)
-
-        Returns:
-            Result with PRUrl on success, error message on failure
-
-        TDD PLACEHOLDER: Implement after tests pass.
-        """
-        raise NotImplementedError("TDD: Implement after tests pass")
-
+from tools.orchestrator.two_stage_orchestrator import TwoStageOrchestrator
 
 # ============================================================================
 # TEST FIXTURES
@@ -121,6 +72,8 @@ def mock_context():
 @pytest.fixture
 def sample_intent():
     """Sample intent for testing."""
+    from tools.orchestrator.intent_parser import InputMode
+
     return Intent(
         description="Add JWT authentication to API endpoints",
         mode=InputMode.NATURAL_LANGUAGE,
@@ -287,13 +240,12 @@ class TestTwoStageOrchestratorHappyPath:
             - Article V: Spec-driven from intent to PR
         """
         # Arrange
-        orchestrator = TwoStageOrchestrator(mock_context)
+        orchestrator = TwoStageOrchestrator(
+            mock_context, enable_tiered_review=False, auto_approve_for_tests=True
+        )
 
         # Act
-        result = await orchestrator.orchestrate(
-            user_input="Add JWT authentication",
-            input_mode=InputMode.NATURAL_LANGUAGE,
-        )
+        result = await orchestrator.orchestrate(input_value="Add JWT authentication")
 
         # Assert
         # This should fail with NotImplementedError (TDD pattern)
@@ -315,7 +267,9 @@ class TestTwoStageOrchestratorHappyPath:
         Implementation will read from Memory Tool backlog file.
         """
         # Arrange
-        orchestrator = TwoStageOrchestrator(mock_context)
+        orchestrator = TwoStageOrchestrator(
+            mock_context, enable_tiered_review=False, auto_approve_for_tests=True
+        )
 
         # Setup backlog content
         backlog_content = """# Agency Backlog
@@ -333,8 +287,7 @@ class TestTwoStageOrchestratorHappyPath:
 
         # Act
         result = await orchestrator.orchestrate(
-            user_input=None,  # No input for auto-select
-            input_mode=InputMode.AUTO_SELECT,
+            input_value=None  # No input for auto-select
         )
 
         # Assert
@@ -368,13 +321,12 @@ class TestTwoStageOrchestratorEdgeCases:
         TDD Note: This demonstrates the approval checkpoint retry logic.
         """
         # Arrange
-        orchestrator = TwoStageOrchestrator(mock_context)
+        orchestrator = TwoStageOrchestrator(
+            mock_context, enable_tiered_review=False, auto_approve_for_tests=True
+        )
 
         # Act
-        result = await orchestrator.orchestrate(
-            user_input="Add JWT authentication",
-            input_mode=InputMode.NATURAL_LANGUAGE,
-        )
+        result = await orchestrator.orchestrate(input_value="Add JWT authentication")
 
         # Assert
         # Placeholder - will implement approval retry logic
@@ -397,13 +349,12 @@ class TestTwoStageOrchestratorEdgeCases:
         TDD Note: This demonstrates Article II enforcement - no PR creation on test failure.
         """
         # Arrange
-        orchestrator = TwoStageOrchestrator(mock_context)
+        orchestrator = TwoStageOrchestrator(
+            mock_context, enable_tiered_review=False, auto_approve_for_tests=True
+        )
 
         # Act
-        result = await orchestrator.orchestrate(
-            user_input="Add JWT authentication",
-            input_mode=InputMode.NATURAL_LANGUAGE,
-        )
+        result = await orchestrator.orchestrate(input_value="Add JWT authentication")
 
         # Assert
         # Expected: Err(TestFailure) when tests fail
@@ -428,13 +379,12 @@ class TestTwoStageOrchestratorEdgeCases:
         TDD Note: Demonstrates error propagation from PRCreator.
         """
         # Arrange
-        orchestrator = TwoStageOrchestrator(mock_context)
+        orchestrator = TwoStageOrchestrator(
+            mock_context, enable_tiered_review=False, auto_approve_for_tests=True
+        )
 
         # Act
-        result = await orchestrator.orchestrate(
-            user_input="Add JWT authentication",
-            input_mode=InputMode.NATURAL_LANGUAGE,
-        )
+        result = await orchestrator.orchestrate(input_value="Add JWT authentication")
 
         # Assert
         # Expected: Err with git error details from PRCreator
@@ -464,12 +414,13 @@ class TestTwoStageOrchestratorErrorConditions:
             - Article I: Complete context (parse before action)
         """
         # Arrange
-        orchestrator = TwoStageOrchestrator(mock_context)
+        orchestrator = TwoStageOrchestrator(
+            mock_context, enable_tiered_review=False, auto_approve_for_tests=True
+        )
 
         # Act
         result = await orchestrator.orchestrate(
-            user_input="",  # Empty input
-            input_mode=InputMode.NATURAL_LANGUAGE,
+            input_value=""  # Empty input
         )
 
         # Assert
@@ -491,13 +442,12 @@ class TestTwoStageOrchestratorErrorConditions:
             - Article IV: VectorStore required (Article IV compliance)
         """
         # Arrange
-        orchestrator = TwoStageOrchestrator(mock_context)
+        orchestrator = TwoStageOrchestrator(
+            mock_context, enable_tiered_review=False, auto_approve_for_tests=True
+        )
 
         # Act
-        result = await orchestrator.orchestrate(
-            user_input="Add JWT authentication",
-            input_mode=InputMode.NATURAL_LANGUAGE,
-        )
+        result = await orchestrator.orchestrate(input_value="Add JWT authentication")
 
         # Assert
         # Expected: Err when VectorStore unavailable (Article IV)
@@ -519,13 +469,12 @@ class TestTwoStageOrchestratorErrorConditions:
             - Article II: TDD validation (circular deps violate Article II)
         """
         # Arrange
-        orchestrator = TwoStageOrchestrator(mock_context)
+        orchestrator = TwoStageOrchestrator(
+            mock_context, enable_tiered_review=False, auto_approve_for_tests=True
+        )
 
         # Act
-        result = await orchestrator.orchestrate(
-            user_input="Add JWT authentication",
-            input_mode=InputMode.NATURAL_LANGUAGE,
-        )
+        result = await orchestrator.orchestrate(input_value="Add JWT authentication")
 
         # Assert
         # Expected: Err on graph validation failure
@@ -558,13 +507,12 @@ class TestTwoStageOrchestratorConstitutionalCompliance:
             - Article IV: VectorStore learning MANDATORY after completion
         """
         # Arrange
-        orchestrator = TwoStageOrchestrator(mock_context)
+        orchestrator = TwoStageOrchestrator(
+            mock_context, enable_tiered_review=False, auto_approve_for_tests=True
+        )
 
         # Act
-        result = await orchestrator.orchestrate(
-            user_input="Add JWT authentication",
-            input_mode=InputMode.NATURAL_LANGUAGE,
-        )
+        result = await orchestrator.orchestrate(input_value="Add JWT authentication")
 
         # Assert
         # Expected: context.store_memory() called with success pattern
@@ -587,13 +535,12 @@ class TestTwoStageOrchestratorConstitutionalCompliance:
             - Article II: 100% test success (no exceptions)
         """
         # Arrange
-        orchestrator = TwoStageOrchestrator(mock_context)
+        orchestrator = TwoStageOrchestrator(
+            mock_context, enable_tiered_review=False, auto_approve_for_tests=True
+        )
 
         # Act
-        result = await orchestrator.orchestrate(
-            user_input="Add JWT authentication",
-            input_mode=InputMode.NATURAL_LANGUAGE,
-        )
+        result = await orchestrator.orchestrate(input_value="Add JWT authentication")
 
         # Assert
         # Expected: Err when tests have any failures
@@ -628,13 +575,12 @@ class TestTwoStageOrchestratorTimeoutRetry:
             - Article I: Retry with exponential backoff (2x, 3x, 10x)
         """
         # Arrange
-        orchestrator = TwoStageOrchestrator(mock_context)
+        orchestrator = TwoStageOrchestrator(
+            mock_context, enable_tiered_review=False, auto_approve_for_tests=True
+        )
 
         # Act
-        result = await orchestrator.orchestrate(
-            user_input="Add JWT authentication",
-            input_mode=InputMode.NATURAL_LANGUAGE,
-        )
+        result = await orchestrator.orchestrate(input_value="Add JWT authentication")
 
         # Assert
         # Expected: Retry logic with exponential backoff
@@ -654,13 +600,12 @@ class TestTwoStageOrchestratorResultPattern:
     async def test_orchestrate_success_returns_ok_result(self, mock_context):
         """Test successful orchestration returns Ok(PRUrl)."""
         # Arrange
-        orchestrator = TwoStageOrchestrator(mock_context)
+        orchestrator = TwoStageOrchestrator(
+            mock_context, enable_tiered_review=False, auto_approve_for_tests=True
+        )
 
         # Act
-        result = await orchestrator.orchestrate(
-            user_input="Add JWT authentication",
-            input_mode=InputMode.NATURAL_LANGUAGE,
-        )
+        result = await orchestrator.orchestrate(input_value="Add JWT authentication")
 
         # Assert
         # Expected: Result[PRUrl, str] type
@@ -671,12 +616,13 @@ class TestTwoStageOrchestratorResultPattern:
     async def test_orchestrate_failure_returns_err_result(self, mock_context):
         """Test failed orchestration returns Err(error_message)."""
         # Arrange
-        orchestrator = TwoStageOrchestrator(mock_context)
+        orchestrator = TwoStageOrchestrator(
+            mock_context, enable_tiered_review=False, auto_approve_for_tests=True
+        )
 
         # Act
         result = await orchestrator.orchestrate(
-            user_input="",  # Invalid input
-            input_mode=InputMode.NATURAL_LANGUAGE,
+            input_value=""  # Invalid input
         )
 
         # Assert
@@ -701,13 +647,14 @@ class TestTwoStageOrchestratorResultPattern:
             - ADR-010: Result pattern (no try/except for control flow)
         """
         # Arrange
-        orchestrator = TwoStageOrchestrator(mock_context)
+        orchestrator = TwoStageOrchestrator(
+            mock_context, enable_tiered_review=False, auto_approve_for_tests=True
+        )
 
         # Act - should NOT raise, even on errors
         try:
             result = await orchestrator.orchestrate(
-                user_input="",  # Invalid input
-                input_mode=InputMode.NATURAL_LANGUAGE,
+                input_value=""  # Invalid input
             )
 
             # Assert: Either Result type or NotImplementedError (TDD placeholder)

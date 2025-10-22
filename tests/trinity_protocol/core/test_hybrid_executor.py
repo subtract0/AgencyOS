@@ -165,7 +165,7 @@ def sample_test_generation_task() -> JSONValue:
         "task_id": str(uuid.uuid4()),
         "task_type": "test_generation",
         "description": "Generate tests for new feature",
-        "target_file": "agency_code_agent/core.py",
+        "target_file": "coding_agent/core.py",
         "complexity": "low",
     }
 
@@ -627,10 +627,11 @@ class TestErrorConditions:
 
                 # Assert
                 assert result.status == "success"
-                assert result.model_tier == ModelTier.LOCAL
+                # Test generation is P2 (moderate) → LOCAL_PLUS per ADR-024
+                assert result.model_tier == ModelTier.LOCAL_PLUS
                 assert result.escalation_count == 0
                 assert result.test_pass_rate == 1.0
-                assert result.cost_usd == 0.0  # LOCAL is free
+                assert result.cost_usd == 0.0  # LOCAL_PLUS is still free (local model)
 
     @pytest.mark.asyncio
     async def test_execute_task_with_escalation_escalates_on_failure(
@@ -1415,7 +1416,8 @@ class TestIntegrationWorkflows:
         stats = executor.get_stats()
         assert stats.tasks_processed == 3
         assert stats.tasks_succeeded == 3
-        assert stats.local_successes == 3
+        # Test generation tasks are P2 → LOCAL_PLUS per ADR-024
+        assert stats.local_plus_successes == 3
         assert stats.cost_saved_usd > 0.0  # Saved vs cloud
 
 

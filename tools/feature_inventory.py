@@ -64,7 +64,7 @@ def main() -> None:
         print("❌ FEATURES.md not found")
         return
 
-    print("🔍 Agency Code Feature Inventory\n")
+    print("🔍 AgencyOS Feature Inventory\n")
 
     # Extract features and test files
     features, test_files = extract_features_from_md(features_file)

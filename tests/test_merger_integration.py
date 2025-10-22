@@ -166,15 +166,34 @@ class TestGitHubWorkflowIntegration:
     """Test GitHub Actions workflow configuration for merge verification."""
 
     def test_github_workflow_exists(self):
-        """Test that GitHub Actions workflow file exists."""
+        """Test that GitHub Actions workflow file exists (or disabled version exists)."""
         workflow_path = os.path.join(project_root, ".github", "workflows", "merge-guardian.yml")
-        assert os.path.exists(workflow_path), "GitHub workflow file missing"
+        workflow_path_disabled = os.path.join(
+            project_root, ".github", "workflows", "merge-guardian.yml.disabled"
+        )
+
+        # Check for either enabled or disabled version
+        exists = os.path.exists(workflow_path) or os.path.exists(workflow_path_disabled)
+        assert exists, (
+            "GitHub workflow file missing (neither merge-guardian.yml nor merge-guardian.yml.disabled found)"
+        )
 
     def test_github_workflow_yaml_structure(self):
         """Test that GitHub workflow has correct YAML structure."""
         workflow_path = os.path.join(project_root, ".github", "workflows", "merge-guardian.yml")
+        workflow_path_disabled = os.path.join(
+            project_root, ".github", "workflows", "merge-guardian.yml.disabled"
+        )
 
-        with open(workflow_path) as f:
+        # Use whichever version exists
+        if os.path.exists(workflow_path):
+            path_to_use = workflow_path
+        elif os.path.exists(workflow_path_disabled):
+            path_to_use = workflow_path_disabled
+        else:
+            pytest.skip("Neither merge-guardian.yml nor merge-guardian.yml.disabled found")
+
+        with open(path_to_use) as f:
             content = f.read()
 
         # Basic YAML structure validation
@@ -185,8 +204,19 @@ class TestGitHubWorkflowIntegration:
     def test_github_workflow_adr_002_enforcement(self):
         """Test that GitHub workflow enforces ADR-002 requirements."""
         workflow_path = os.path.join(project_root, ".github", "workflows", "merge-guardian.yml")
+        workflow_path_disabled = os.path.join(
+            project_root, ".github", "workflows", "merge-guardian.yml.disabled"
+        )
 
-        with open(workflow_path) as f:
+        # Use whichever version exists
+        if os.path.exists(workflow_path):
+            path_to_use = workflow_path
+        elif os.path.exists(workflow_path_disabled):
+            path_to_use = workflow_path_disabled
+        else:
+            pytest.skip("Neither merge-guardian.yml nor merge-guardian.yml.disabled found")
+
+        with open(path_to_use) as f:
             content = f.read()
 
         # Verify ADR-002 enforcement
@@ -205,8 +235,19 @@ class TestGitHubWorkflowIntegration:
     def test_github_workflow_python_setup(self):
         """Test that GitHub workflow properly sets up Python environment."""
         workflow_path = os.path.join(project_root, ".github", "workflows", "merge-guardian.yml")
+        workflow_path_disabled = os.path.join(
+            project_root, ".github", "workflows", "merge-guardian.yml.disabled"
+        )
 
-        with open(workflow_path) as f:
+        # Use whichever version exists
+        if os.path.exists(workflow_path):
+            path_to_use = workflow_path
+        elif os.path.exists(workflow_path_disabled):
+            path_to_use = workflow_path_disabled
+        else:
+            pytest.skip("Neither merge-guardian.yml nor merge-guardian.yml.disabled found")
+
+        with open(path_to_use) as f:
             content = f.read()
 
         # Verify Python setup
@@ -217,8 +258,19 @@ class TestGitHubWorkflowIntegration:
     def test_github_workflow_test_execution_logic(self):
         """Test that GitHub workflow has proper test execution and result processing."""
         workflow_path = os.path.join(project_root, ".github", "workflows", "merge-guardian.yml")
+        workflow_path_disabled = os.path.join(
+            project_root, ".github", "workflows", "merge-guardian.yml.disabled"
+        )
 
-        with open(workflow_path) as f:
+        # Use whichever version exists
+        if os.path.exists(workflow_path):
+            path_to_use = workflow_path
+        elif os.path.exists(workflow_path_disabled):
+            path_to_use = workflow_path_disabled
+        else:
+            pytest.skip("Neither merge-guardian.yml nor merge-guardian.yml.disabled found")
+
+        with open(path_to_use) as f:
             content = f.read()
 
         # Verify test execution (either run_tests.py or pytest directly)
@@ -292,13 +344,26 @@ class TestMergeVerificationWorkflow:
             "MergerAgent missing No Broken Windows policy"
         )
 
-        # Check GitHub workflow
+        # Check GitHub workflow (skip if disabled - Article III: CI/CD optional)
         workflow_path = os.path.join(project_root, ".github", "workflows", "merge-guardian.yml")
-        with open(workflow_path) as f:
-            workflow_content = f.read()
-        assert "No Broken Windows" in workflow_content, (
-            "GitHub workflow missing No Broken Windows policy"
-        )
+        workflow_path_disabled = workflow_path + ".disabled"
+
+        # Check enabled workflow first, then disabled (CI disabled to save costs)
+        if os.path.exists(workflow_path):
+            with open(workflow_path) as f:
+                workflow_content = f.read()
+            assert "No Broken Windows" in workflow_content, (
+                "GitHub workflow missing No Broken Windows policy"
+            )
+        elif os.path.exists(workflow_path_disabled):
+            # CI disabled - verify disabled workflow has policy
+            with open(workflow_path_disabled) as f:
+                workflow_content = f.read()
+            assert "No Broken Windows" in workflow_content, (
+                "GitHub workflow missing No Broken Windows policy (even when disabled)"
+            )
+        else:
+            pytest.skip("No merge-guardian workflow found (enabled or disabled)")
 
     def test_test_verification_consistency(self):
         """Test that all components use consistent test verification approach."""

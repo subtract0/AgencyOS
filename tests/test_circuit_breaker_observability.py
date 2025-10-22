@@ -46,10 +46,8 @@ def test_breaker_logs_and_env_tuning(monkeypatch):
     logger.addHandler(handler)
 
     try:
-        # Wrap the tool
-        asyncio.get_event_loop().run_until_complete(
-            hook.on_tool_start(wrapper, agent=None, tool=tool)
-        )
+        # Wrap the tool - Use asyncio.run() to handle event loop creation
+        asyncio.run(hook.on_tool_start(wrapper, agent=None, tool=tool))
 
         # First execution should fail and open the circuit (threshold=1)
         with pytest.raises(ValueError):

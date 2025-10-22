@@ -174,7 +174,8 @@ class TestThreadSafety:
 
         # Wait for all threads to complete
         for thread in threads:
-            thread.join()
+            thread.join(timeout=5)
+            assert not thread.is_alive(), "Thread did not complete within timeout"
 
         # Verify no lost updates (100 total tasks)
         assert service.get_current_count() == 100
@@ -216,8 +217,17 @@ class TestMilestoneDetection:
         for i in range(task_count):
             service.record_task(task_id=f"task_{i}", predicted_tier="P2", actual_tier="P2")
 
-        # Check milestone
-        milestone = service.check_milestone()
+        # Check milestones repeatedly until we reach the expected threshold
+        # (Since check_milestone() returns one milestone at a time, we need to
+        # call it multiple times to process all intermediate milestones)
+        milestone = None
+        while True:
+            next_milestone = service.check_milestone()
+            if next_milestone is None:
+                break
+            milestone = next_milestone
+            if milestone.task_threshold == expected_threshold:
+                break
 
         assert milestone is not None
         assert milestone.task_threshold == expected_threshold
@@ -395,8 +405,8 @@ class TestMilestoneReportStructure:
 
         milestone = service.check_milestone()
 
-        # Verify file exists
-        milestone_file = Path("logs/monitoring/milestones/milestone_25.json")
+        # Verify file exists in tmp_path
+        milestone_file = tmp_path / "milestones" / "milestone_25.json"
         assert milestone_file.exists()
 
         # Verify JSON content
@@ -544,7 +554,7 @@ class TestEdgeCases:
 
         # Verify directories created
         assert data_dir.exists()
-        assert Path("logs/monitoring/milestones").exists()
+        assert (data_dir / "milestones").exists()
         assert milestone is not None
 
 

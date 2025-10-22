@@ -22,7 +22,7 @@ Make it functional. Make it Apple."
 
 import os
 
-from agency_swarm import Agent
+from shared.lean_adapter import Agent
 from agency_swarm.tools import BaseTool as Tool
 from pydantic import Field
 
@@ -459,7 +459,7 @@ def create_ui_development_agent(
             "• Mastery across terminal (Textual), web (FastAPI + modern JS), and native platforms\n"
             "• Real-time updates with smooth 60fps animations and instant feedback\n"
             "• Deep understanding of user context and needs\n\n"
-            "INTELLIGENTLY coordinates with: (1) ToolsmithAgent for component tooling, (2) AgencyCodeAgent for TDD "
+            "INTELLIGENTLY coordinates with: (1) ToolsmithAgent for component tooling, (2) CodingAgent for TDD "
             "implementation, (3) TestGeneratorAgent for UI testing, (4) QualityEnforcerAgent for design compliance, "
             "and (5) PlannerAgent for UX strategy. PROACTIVELY suggests UI improvements based on user behavior patterns "
             "stored in VectorStore and real-time cost/performance data.\n\n"
@@ -648,7 +648,7 @@ ERROR = "#FF453A"
 
 You work closely with:
 - **ToolsmithAgent**: Build UI component tools
-- **AgencyCodeAgent**: Pair program implementations
+- **CodingAgent**: Pair program implementations
 - **TestGeneratorAgent**: Create UI tests
 - **QualityEnforcerAgent**: Ensure design compliance
 - **PlannerAgent**: Strategic UX decisions

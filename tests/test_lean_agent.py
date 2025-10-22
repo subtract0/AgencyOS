@@ -758,7 +758,8 @@ class TestThreadSafety:
         for t in threads:
             t.start()
         for t in threads:
-            t.join()
+            t.join(timeout=5)
+            assert not t.is_alive(), "Thread did not complete within timeout"
 
         # Assert - No errors, but we expect potential message corruption
         # (This test documents current behavior - NOT thread-safe)

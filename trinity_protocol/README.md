@@ -285,14 +285,14 @@ from shared.cost_tracker import CostTracker
 
 tracker = CostTracker(db_path="costs.db")
 tracker.track(
-    agent_name="AgencyCodeAgent",
+    agent_name="CodingAgent",
     model="gpt-5",
     input_tokens=1500,
     output_tokens=800,
     duration_ms=2300
 )
 
-summary = tracker.get_summary(agent="AgencyCodeAgent")
+summary = tracker.get_summary(agent="CodingAgent")
 print(f"Total cost: ${summary.total_cost:.2f}")
 ```
 

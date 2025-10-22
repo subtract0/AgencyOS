@@ -29,36 +29,37 @@
       "title": "Implementation",
       "tasks": [
         {
+          "id": "test_implementation",
+          "title": "Test Feature Implementation",
+          "type": "Test",
+          "tier": "Tier 2",
+          "agent": "test_generator",
+          "description": "Write AAA-pattern tests with 100% pass rate (TDD-first)",
+          "dependencies": ["spec_feature"],
+          "acceptance_criteria": [
+            "AAA pattern (Arrange-Act-Assert)",
+            "Happy path + 3 edge cases",
+            "NECESSARY pattern compliance"
+          ],
+          "estimated_tokens": 2000,
+          "verification_target": "code_implementation"
+        },
+        {
           "id": "code_implementation",
           "title": "Implement Feature Logic",
           "type": "Code",
           "tier": "Tier 2",
           "agent": "coder",
           "description": "Implement the feature logic with strict typing and Result<T,E> pattern",
-          "dependencies": ["spec_feature"],
+          "dependencies": ["spec_feature", "test_implementation"],
           "acceptance_criteria": [
             "No Dict[Any, Any] usage",
             "All functions typed",
             "Result<T,E> pattern for error handling",
-            "Pydantic models for data validation"
-          ],
-          "estimated_tokens": 3000
-        },
-        {
-          "id": "test_implementation",
-          "title": "Test Feature Implementation",
-          "type": "Test",
-          "tier": "Tier 2",
-          "agent": "test_generator",
-          "description": "Write AAA-pattern tests with 100% pass rate",
-          "dependencies": ["code_implementation"],
-          "acceptance_criteria": [
-            "AAA pattern (Arrange-Act-Assert)",
-            "Happy path + 3 edge cases",
+            "Pydantic models for data validation",
             "100% test pass rate"
           ],
-          "estimated_tokens": 2000,
-          "verification_target": "code_implementation"
+          "estimated_tokens": 3000
         }
       ]
     }

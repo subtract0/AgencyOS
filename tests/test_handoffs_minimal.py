@@ -1,7 +1,7 @@
 from unittest.mock import MagicMock, create_autospec, patch
 
 import pytest
-from agency_swarm import Agency, Agent
+from shared.lean_adapter import Agency, Agent
 from agency_swarm.tools import SendMessageHandoff
 
 
@@ -23,7 +23,7 @@ def create_mock_agent(name: str, with_handoff: bool = True) -> MagicMock:
 async def test_coder_handoff_to_planner_minimal():
     """Test handoff mechanism from Coder to Planner using mocks."""
     # Create mock agents using proper Agent specs
-    mock_coder = create_mock_agent("AgencyCodeAgent")
+    mock_coder = create_mock_agent("CodingAgent")
     mock_planner = create_mock_agent("PlannerAgent")
 
     # Mock the get_response method at Agency level
@@ -64,7 +64,7 @@ async def test_coder_handoff_to_planner_minimal():
 async def test_planner_reports_its_name_minimal():
     """Test that Planner correctly identifies itself after handoff using mocks."""
     # Create mock agents
-    mock_coder = create_mock_agent("AgencyCodeAgent")
+    mock_coder = create_mock_agent("CodingAgent")
     mock_planner = create_mock_agent("PlannerAgent")
 
     # Mock the get_response method
@@ -104,7 +104,7 @@ async def test_planner_reports_its_name_minimal():
 @pytest.mark.asyncio
 async def test_bidirectional_handoff():
     """Test bidirectional handoff between Coder and Planner using mocks."""
-    mock_coder = create_mock_agent("AgencyCodeAgent")
+    mock_coder = create_mock_agent("CodingAgent")
     mock_planner = create_mock_agent("PlannerAgent")
 
     with patch.object(Agency, "get_response") as mock_get_response:
@@ -137,7 +137,7 @@ async def test_bidirectional_handoff():
 @pytest.mark.asyncio
 async def test_handoff_error_handling():
     """Test that handoff errors are properly handled using mocks."""
-    mock_coder = create_mock_agent("AgencyCodeAgent", with_handoff=True)
+    mock_coder = create_mock_agent("CodingAgent", with_handoff=True)
     mock_planner = create_mock_agent("PlannerAgent", with_handoff=False)
 
     with patch.object(Agency, "get_response") as mock_get_response:
@@ -165,14 +165,14 @@ async def test_handoff_error_handling():
 @pytest.mark.asyncio
 async def test_handoff_with_context():
     """Test handoff with context preservation using mocks."""
-    mock_coder = create_mock_agent("AgencyCodeAgent")
+    mock_coder = create_mock_agent("CodingAgent")
     mock_planner = create_mock_agent("PlannerAgent")
 
     with patch.object(Agency, "get_response") as mock_get_response:
         # Simulate context preservation in handoff
         mock_response = MagicMock()
         mock_response.text = (
-            "Context preserved: Task details transferred from AgencyCodeAgent to PlannerAgent. "
+            "Context preserved: Task details transferred from CodingAgent to PlannerAgent. "
             "PlannerAgent acknowledges receipt of context."
         )
         mock_get_response.return_value = mock_response
@@ -191,6 +191,6 @@ async def test_handoff_with_context():
 
         # Verify context was preserved
         assert "Context preserved" in response
-        assert "AgencyCodeAgent" in response
+        assert "CodingAgent" in response
         assert "PlannerAgent" in response
         assert mock_get_response.called

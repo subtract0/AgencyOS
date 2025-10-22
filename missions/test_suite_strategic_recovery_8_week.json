@@ -1,0 +1,856 @@
+{
+  "mission": "Test Suite Strategic Recovery - 8-Week Production Readiness Initiative",
+  "leap_number": 10,
+  "phases": [
+    {
+      "id": "phase_0_stabilization",
+      "title": "Phase 0: CI Stabilization & PR Merge (Days 1-5)",
+      "tasks": [
+        {
+          "id": "task_0_1_diagnose_ci",
+          "title": "Diagnose main branch CI failures",
+          "type": "Code",
+          "tier": "Tier 1",
+          "agent": "auditor",
+          "description": "Investigate why 'Update Backlog' workflow is failing on GitHub main (5 consecutive failures). Analyze workflow files, permissions, and backlog format. Identify root cause and document fix strategy.",
+          "dependencies": [],
+          "acceptance_criteria": [
+            "Root cause identified (workflow file, permissions, or backlog format)",
+            "Fix strategy documented with specific file changes",
+            "No side effects on other workflows verified"
+          ],
+          "estimated_tokens": 5000
+        },
+        {
+          "id": "task_0_2_fix_ci",
+          "title": "Fix main CI workflow",
+          "type": "Code",
+          "tier": "Tier 2",
+          "agent": "coder",
+          "description": "Apply fix for 'Update Backlog' workflow failure. May require workflow file changes, backlog format updates, or GitHub Action permissions adjustments.",
+          "dependencies": ["task_0_1_diagnose_ci"],
+          "acceptance_criteria": [
+            "Workflow runs successfully on main branch",
+            "No breaking changes to backlog functionality",
+            "All other workflows remain unaffected"
+          ],
+          "estimated_tokens": 4000
+        },
+        {
+          "id": "task_0_3_test_ci_fix",
+          "title": "Validate CI fix with integration test",
+          "type": "Test",
+          "tier": "Tier 2",
+          "agent": "test_generator",
+          "description": "Create integration test for backlog workflow to prevent future CI failures. Test should validate workflow trigger conditions, catch invalid backlog markdown, and run in <10s.",
+          "dependencies": ["task_0_2_fix_ci"],
+          "verification_target": "task_0_2_fix_ci",
+          "acceptance_criteria": [
+            "Test validates workflow trigger conditions",
+            "Test catches invalid backlog markdown",
+            "Test runs in <10s"
+          ],
+          "estimated_tokens": 3000
+        },
+        {
+          "id": "task_0_4_create_pr",
+          "title": "Create PR for local commits",
+          "type": "Code",
+          "tier": "Tier 2",
+          "agent": "merger",
+          "description": "Push 4 local commits to GitHub and create PR for fix/test-suite-top-3-blockers branch. Commits: (1) fix 100% pass rate, (2) orchestrator/ML fixes, (3) audit docs, (4) config updates. Link to audit documents in PR description.",
+          "dependencies": ["task_0_3_test_ci_fix"],
+          "acceptance_criteria": [
+            "Branch pushed to origin (fix/test-suite-top-3-blockers)",
+            "PR created with comprehensive description",
+            "CI triggered and passing",
+            "Linked to audit documents (TEST_SUITE_MASTER_ARCHITECT_COMPREHENSIVE_AUDIT.md)"
+          ],
+          "estimated_tokens": 3000
+        },
+        {
+          "id": "task_0_5_merge_prs",
+          "title": "Merge all open PRs to main",
+          "type": "Code",
+          "tier": "Tier 2",
+          "agent": "merger",
+          "description": "Sequentially merge PRs to main after CI validation: (1) PR #90 branch protection docs, (2) PR #91 Tiered Spec Review, (3) new PR test suite fixes. Validate no merge conflicts, CI green after each merge, all tests passing on main.",
+          "dependencies": ["task_0_4_create_pr"],
+          "acceptance_criteria": [
+            "All 3 PRs merged to main",
+            "No merge conflicts",
+            "Main branch CI green after each merge",
+            "All 5,804 tests passing on main"
+          ],
+          "estimated_tokens": 4000
+        }
+      ]
+    },
+    {
+      "id": "phase_1_p0_blockers_1_2",
+      "title": "Phase 1: P0 Blockers #1-2 - NECESSARY Markers + Coverage (Week 1)",
+      "tasks": [
+        {
+          "id": "task_1_1_spec_necessary",
+          "title": "Spec NECESSARY marker strategy",
+          "type": "Spec",
+          "tier": "Tier 1",
+          "agent": "planner",
+          "description": "Design auto-classification strategy to apply NECESSARY markers to 5,804 existing tests. Define classification rules for 7 categories (Normal, Edge, Security, Spec, Accessibility, Resilience, Year-round). Use AST-based heuristics with confidence scoring. Create spec-033.",
+          "dependencies": ["task_0_5_merge_prs"],
+          "acceptance_criteria": [
+            "Classification rules for all 7 NECESSARY categories",
+            "AST-based auto-detection heuristics documented",
+            "Confidence scoring mechanism defined",
+            "Dry-run mode specified for validation"
+          ],
+          "estimated_tokens": 6000
+        },
+        {
+          "id": "task_1_2_implement_classifier",
+          "title": "Implement NECESSARY classifier",
+          "type": "Code",
+          "tier": "Tier 2",
+          "agent": "coder",
+          "description": "Build Python script to auto-classify and apply NECESSARY markers using AST parsing. Script should parse all 292 test files, apply markers via AST rewriting, preserve existing decorators, generate classification report, support dry-run mode.",
+          "dependencies": ["task_1_1_spec_necessary"],
+          "acceptance_criteria": [
+            "Script parses all 292 test files successfully",
+            "Applies markers via AST rewriting (preserves syntax)",
+            "Preserves existing test decorators",
+            "Generates classification report with confidence scores",
+            "Dry-run mode validates before applying"
+          ],
+          "estimated_tokens": 5000
+        },
+        {
+          "id": "task_1_3_test_classifier",
+          "title": "Test NECESSARY classifier",
+          "type": "Test",
+          "tier": "Tier 2",
+          "agent": "test_generator",
+          "description": "Validate NECESSARY classifier accuracy and safety with 20+ tests covering all 7 marker categories, edge cases (empty files, malformed syntax, existing markers), and performance (<5s for 5,804 files).",
+          "dependencies": ["task_1_2_implement_classifier"],
+          "verification_target": "task_1_2_implement_classifier",
+          "acceptance_criteria": [
+            "20+ tests covering all 7 marker categories",
+            "Edge cases covered (empty files, malformed syntax, existing markers)",
+            "Performance test (<5s for 5,804 files)",
+            "All tests passing"
+          ],
+          "estimated_tokens": 4000
+        },
+        {
+          "id": "task_1_4_apply_markers",
+          "title": "Apply NECESSARY markers to test suite",
+          "type": "Code",
+          "tier": "Tier 2",
+          "agent": "coder",
+          "description": "Execute classifier on entire test suite (5,804 tests, 292 files). Run dry-run first, review report, create git checkpoint, apply markers, validate syntax with pytest --collect-only, ensure 100% pass rate maintained.",
+          "dependencies": ["task_1_3_test_classifier"],
+          "acceptance_criteria": [
+            "All 5,804 tests marked with NECESSARY categories",
+            "Syntax validated (pytest --collect-only succeeds)",
+            "All tests still pass (100% pass rate maintained)",
+            "Classification report shows confidence scores"
+          ],
+          "estimated_tokens": 3000
+        },
+        {
+          "id": "task_1_5_spec_coverage",
+          "title": "Spec code coverage strategy",
+          "type": "Spec",
+          "tier": "Tier 1",
+          "agent": "planner",
+          "description": "Design pytest-cov integration with coverage gates and CI integration. Define target coverage (70% baseline, 85% goal), exclusion rules, CI/CD integration strategy, coverage report format. Create spec-034.",
+          "dependencies": ["task_1_4_apply_markers"],
+          "acceptance_criteria": [
+            "Target coverage percentage defined (70% baseline, 85% goal)",
+            "Exclusion rules specified (test files, migrations, __init__.py)",
+            "CI/CD integration strategy documented",
+            "Coverage report format selected (HTML, terminal, XML)"
+          ],
+          "estimated_tokens": 5000
+        },
+        {
+          "id": "task_1_6_install_coverage",
+          "title": "Install and configure pytest-cov",
+          "type": "Code",
+          "tier": "Tier 2",
+          "agent": "coder",
+          "description": "Install pytest-cov, configure coverage settings in pyproject.toml, integrate with run_tests.py (add --coverage flag), create .coveragerc exclusion rules, update .gitignore for coverage artifacts.",
+          "dependencies": ["task_1_5_spec_coverage"],
+          "acceptance_criteria": [
+            "pytest-cov installed (pip install pytest-cov)",
+            "Coverage report generated successfully",
+            "HTML report browsable (htmlcov/index.html)",
+            "Terminal report shows per-file coverage"
+          ],
+          "estimated_tokens": 3000
+        },
+        {
+          "id": "task_1_7_test_coverage",
+          "title": "Test coverage integration",
+          "type": "Test",
+          "tier": "Tier 2",
+          "agent": "test_generator",
+          "description": "Validate coverage integration works correctly with tests for report generation, HTML output, and baseline coverage >70%.",
+          "dependencies": ["task_1_6_install_coverage"],
+          "verification_target": "task_1_6_install_coverage",
+          "acceptance_criteria": [
+            "Coverage report generated after test run",
+            "Baseline coverage measured and documented",
+            "No false negatives (test files excluded)"
+          ],
+          "estimated_tokens": 3000
+        },
+        {
+          "id": "task_1_8_generate_report",
+          "title": "Generate initial coverage report",
+          "type": "Code",
+          "tier": "Tier 2",
+          "agent": "coder",
+          "description": "Run full test suite with coverage, analyze results, create analysis document (docs/test-coverage-baseline-2025-10-17.md), identify top 10 uncovered critical files, prioritize coverage improvements for Phase 2.",
+          "dependencies": ["task_1_7_test_coverage"],
+          "acceptance_criteria": [
+            "Baseline coverage documented",
+            "Critical gaps identified (auth, orchestrator, memory)",
+            "Improvement targets set (70% → 85%)",
+            "Coverage report published (HTML + JSON)"
+          ],
+          "estimated_tokens": 3000
+        }
+      ]
+    },
+    {
+      "id": "phase_2_p0_blockers_3_4",
+      "title": "Phase 2: P0 Blockers #3-4 - /primeccc E2E + Article IV (Week 2)",
+      "tasks": [
+        {
+          "id": "task_2_1_spec_primeccc_e2e",
+          "title": "Spec /primeccc E2E test strategy",
+          "type": "Spec",
+          "tier": "Tier 1",
+          "agent": "planner",
+          "description": "Design comprehensive E2E test plan for /primeccc autonomous orchestration workflow. Cover 7 workflow steps (auto-select, generate graph, validate, execute, verify, PR, learning). Define 20+ test scenarios, test data fixtures, mock strategy, performance targets. Create spec-035.",
+          "dependencies": ["task_1_8_generate_report"],
+          "acceptance_criteria": [
+            "20+ E2E test scenarios (happy path + edge cases)",
+            "Test data fixtures (realistic backlog items)",
+            "Mock strategy for expensive operations (GitHub API, LLM calls)",
+            "Performance targets (<5 min per E2E test)"
+          ],
+          "estimated_tokens": 6000
+        },
+        {
+          "id": "task_2_2_create_fixtures",
+          "title": "Create /primeccc E2E test fixtures",
+          "type": "Code",
+          "tier": "Tier 2",
+          "agent": "coder",
+          "description": "Build realistic test fixtures for E2E /primeccc workflow. Create 5+ backlog fixtures (simple, moderate, complex), mocks for external services (GitHub, OpenAI), reusable fixtures across E2E tests.",
+          "dependencies": ["task_2_1_spec_primeccc_e2e"],
+          "acceptance_criteria": [
+            "5+ backlog fixtures (simple, moderate, complex)",
+            "Mocks for external services (GitHub, OpenAI)",
+            "Fixtures reusable across E2E tests"
+          ],
+          "estimated_tokens": 4000
+        },
+        {
+          "id": "task_2_3_implement_e2e_happy",
+          "title": "Implement /primeccc E2E tests (happy path)",
+          "type": "Code",
+          "tier": "Tier 2",
+          "agent": "coder",
+          "description": "Build 10 happy-path E2E tests for core /primeccc functionality. Tests: auto-select from backlog, parallel execution, PR creation, task graph validation, phase completion, VectorStore learning, cost tracking, TodoWrite integration, checkpoint handling, error recovery.",
+          "dependencies": ["task_2_2_create_fixtures"],
+          "acceptance_criteria": [
+            "10 tests covering core workflow",
+            "All tests pass (green baseline)",
+            "Tests run in <5 min total",
+            "Use NECESSARY markers (necessary_normal)"
+          ],
+          "estimated_tokens": 6000
+        },
+        {
+          "id": "task_2_4_test_e2e_happy",
+          "title": "Test /primeccc E2E happy path",
+          "type": "Test",
+          "tier": "Tier 2",
+          "agent": "test_generator",
+          "description": "Validate E2E happy path tests are correctly implemented and passing. Meta-tests for test count, fixture usage, timeout protection.",
+          "dependencies": ["task_2_3_implement_e2e_happy"],
+          "verification_target": "task_2_3_implement_e2e_happy",
+          "acceptance_criteria": [
+            "E2E tests validated",
+            "All 10 tests passing",
+            "Coverage report shows /primeccc orchestrator covered"
+          ],
+          "estimated_tokens": 3000
+        },
+        {
+          "id": "task_2_5_implement_e2e_edge",
+          "title": "Implement /primeccc E2E tests (edge cases)",
+          "type": "Code",
+          "tier": "Tier 2",
+          "agent": "coder",
+          "description": "Build 10 edge-case E2E tests for failure scenarios and boundary conditions. Tests: empty backlog, circular dependency, agent failure retry, invalid task graph, budget exceeded, timeout handling, partial completion recovery, conflicting PRs, VectorStore unavailable, checkpoint rejection.",
+          "dependencies": ["task_2_4_test_e2e_happy"],
+          "acceptance_criteria": [
+            "10 edge-case tests",
+            "All tests pass",
+            "Use NECESSARY markers (necessary_edge, necessary_resilience)"
+          ],
+          "estimated_tokens": 6000
+        },
+        {
+          "id": "task_2_6_test_e2e_edge",
+          "title": "Test /primeccc E2E edge cases",
+          "type": "Test",
+          "tier": "Tier 2",
+          "agent": "test_generator",
+          "description": "Validate edge-case tests are robust. Verify edge cases caught and handled gracefully, coverage improvement documented.",
+          "dependencies": ["task_2_5_implement_e2e_edge"],
+          "verification_target": "task_2_5_implement_e2e_edge",
+          "acceptance_criteria": [
+            "All 10 edge-case tests passing",
+            "Edge cases caught and handled gracefully",
+            "Coverage improvement documented"
+          ],
+          "estimated_tokens": 3000
+        },
+        {
+          "id": "task_2_7_spec_article_iv",
+          "title": "Spec Article IV VectorStore enforcement",
+          "type": "Spec",
+          "tier": "Tier 1",
+          "agent": "planner",
+          "description": "Design strategy to enforce Article IV (VectorStore mandatory) in test suite. Current issue: tests disable with USE_ENHANCED_MEMORY=false. Propose solution: constitutional gate pytest plugin, separate test modes (unit optional, integration required, E2E mandatory), memory assertions. Create spec-036.",
+          "dependencies": ["task_2_6_test_e2e_edge"],
+          "acceptance_criteria": [
+            "Test mode classification (unit vs integration vs E2E)",
+            "VectorStore enforcement strategy per mode",
+            "Backward compatibility (existing tests don't break)"
+          ],
+          "estimated_tokens": 5000
+        },
+        {
+          "id": "task_2_8_implement_article_iv",
+          "title": "Implement Article IV enforcement plugin",
+          "type": "Code",
+          "tier": "Tier 2",
+          "agent": "coder",
+          "description": "Build pytest plugin to enforce VectorStore usage in E2E/integration tests. Plugin activates for E2E/integration markers, unit tests unaffected, clear error message on violation.",
+          "dependencies": ["task_2_7_spec_article_iv"],
+          "acceptance_criteria": [
+            "Plugin activates for E2E/integration markers",
+            "Unit tests unaffected (can disable VectorStore)",
+            "Clear error message on Article IV violation"
+          ],
+          "estimated_tokens": 3000
+        },
+        {
+          "id": "task_2_9_test_article_iv",
+          "title": "Test Article IV enforcement",
+          "type": "Test",
+          "tier": "Tier 2",
+          "agent": "test_generator",
+          "description": "Validate Article IV enforcement plugin works correctly. Tests: enforcement for E2E, unit tests allowed, clear error messages.",
+          "dependencies": ["task_2_8_implement_article_iv"],
+          "verification_target": "task_2_8_implement_article_iv",
+          "acceptance_criteria": [
+            "Enforcement validated",
+            "E2E tests blocked without VectorStore",
+            "Unit tests unaffected"
+          ],
+          "estimated_tokens": 3000
+        },
+        {
+          "id": "task_2_10_enable_vectorstore_ci",
+          "title": "Enable VectorStore in CI for E2E tests",
+          "type": "Code",
+          "tier": "Tier 2",
+          "agent": "coder",
+          "description": "Update CI workflows to enable VectorStore for E2E/integration test runs. Modify .github/workflows/test.yml to set USE_ENHANCED_MEMORY=true for E2E tests.",
+          "dependencies": ["task_2_9_test_article_iv"],
+          "acceptance_criteria": [
+            "CI enables VectorStore for E2E tests",
+            "All E2E tests pass in CI",
+            "Article IV enforced (no bypass possible)"
+          ],
+          "estimated_tokens": 2000
+        }
+      ]
+    },
+    {
+      "id": "phase_3_p1_gaps",
+      "title": "Phase 3: P1 Gaps - Agent Comm + Memory + Constitutional (Weeks 3-4)",
+      "tasks": [
+        {
+          "id": "task_3_1_spec_agent_comm",
+          "title": "Spec agent communication test strategy",
+          "type": "Spec",
+          "tier": "Tier 1",
+          "agent": "planner",
+          "description": "Design comprehensive test plan for 10 agents communication patterns. Current: 5 tests for 10 agents (inadequate). Target: 50 tests (10 agents × 5 comm patterns). Patterns: handoff, context sharing, error propagation, parallel coordination, sequential chaining.",
+          "dependencies": ["task_2_10_enable_vectorstore_ci"],
+          "acceptance_criteria": [
+            "50 test scenarios defined (10 agents × 5 patterns)",
+            "Communication patterns documented (handoff, context, error, parallel, sequential)",
+            "Test fixtures for agent mocking",
+            "Performance targets (<10s per test)"
+          ],
+          "estimated_tokens": 6000
+        },
+        {
+          "id": "task_3_2_implement_agent_comm",
+          "title": "Implement agent communication tests",
+          "type": "Code",
+          "tier": "Tier 2",
+          "agent": "coder",
+          "description": "Build 50 agent communication tests covering all 10 agents and 5 patterns. Tests should validate handoff correctness, context preservation, error propagation, parallel coordination, sequential chaining.",
+          "dependencies": ["task_3_1_spec_agent_comm"],
+          "acceptance_criteria": [
+            "50 tests implemented (10 agents × 5 patterns)",
+            "All tests passing",
+            "Use NECESSARY markers",
+            "Tests run in <10s each"
+          ],
+          "estimated_tokens": 8000
+        },
+        {
+          "id": "task_3_3_test_agent_comm",
+          "title": "Test agent communication tests",
+          "type": "Test",
+          "tier": "Tier 2",
+          "agent": "test_generator",
+          "description": "Validate agent communication tests are comprehensive and correct. Meta-tests for coverage, performance, edge cases.",
+          "dependencies": ["task_3_2_implement_agent_comm"],
+          "verification_target": "task_3_2_implement_agent_comm",
+          "acceptance_criteria": [
+            "All 50 tests validated",
+            "Coverage improvement documented",
+            "Performance targets met (<10s per test)"
+          ],
+          "estimated_tokens": 3000
+        },
+        {
+          "id": "task_3_4_spec_memory_arch",
+          "title": "Spec memory architecture E2E tests",
+          "type": "Spec",
+          "tier": "Tier 1",
+          "agent": "planner",
+          "description": "Design E2E test plan for three-tier memory architecture (Anthropic Memory Tool, VectorStore, Session). Current: Anthropic Memory Tool untested. Target: 20 E2E tests covering create, view, edit, delete, search, persistence.",
+          "dependencies": ["task_3_3_test_agent_comm"],
+          "acceptance_criteria": [
+            "20 test scenarios defined",
+            "Coverage for all 3 memory tiers",
+            "Cross-tier integration tests",
+            "Security tests (sandbox escape, path traversal)"
+          ],
+          "estimated_tokens": 5000
+        },
+        {
+          "id": "task_3_5_implement_memory_tests",
+          "title": "Implement memory architecture tests",
+          "type": "Code",
+          "tier": "Tier 2",
+          "agent": "coder",
+          "description": "Build 20 memory architecture E2E tests. Tests: create/view/edit/delete files, search across tiers, persistence validation, security (sandbox escape, path traversal), performance (<5s per operation).",
+          "dependencies": ["task_3_4_spec_memory_arch"],
+          "acceptance_criteria": [
+            "20 tests implemented",
+            "All tests passing",
+            "Security tests validate sandbox",
+            "Performance targets met"
+          ],
+          "estimated_tokens": 6000
+        },
+        {
+          "id": "task_3_6_test_memory_tests",
+          "title": "Test memory architecture tests",
+          "type": "Test",
+          "tier": "Tier 2",
+          "agent": "test_generator",
+          "description": "Validate memory architecture tests are comprehensive. Meta-tests for coverage, security, performance.",
+          "dependencies": ["task_3_5_implement_memory_tests"],
+          "verification_target": "task_3_5_implement_memory_tests",
+          "acceptance_criteria": [
+            "All 20 tests validated",
+            "Security validated (no escapes)",
+            "Performance validated (<5s per op)"
+          ],
+          "estimated_tokens": 3000
+        },
+        {
+          "id": "task_3_7_spec_constitutional",
+          "title": "Spec constitutional enforcement tests",
+          "type": "Spec",
+          "tier": "Tier 1",
+          "agent": "planner",
+          "description": "Design automated enforcement tests for Articles III-V. Current: Articles I-II covered, III-V minimal. Target: 30 tests (10 per article). Article III: merge enforcement, quality gates, no bypass. Article IV: VectorStore mandatory, learning triggers. Article V: spec traceability, acceptance criteria.",
+          "dependencies": ["task_3_6_test_memory_tests"],
+          "acceptance_criteria": [
+            "30 test scenarios defined (10 per article)",
+            "Enforcement mechanisms specified",
+            "Violation detection strategies",
+            "Auto-healing suggestions"
+          ],
+          "estimated_tokens": 6000
+        },
+        {
+          "id": "task_3_8_implement_constitutional",
+          "title": "Implement constitutional enforcement tests",
+          "type": "Code",
+          "tier": "Tier 2",
+          "agent": "coder",
+          "description": "Build 30 constitutional enforcement tests. Tests: Article III (merge blocks, quality gates, no bypass), Article IV (VectorStore required, learning auto-triggers), Article V (spec links, acceptance criteria).",
+          "dependencies": ["task_3_7_spec_constitutional"],
+          "acceptance_criteria": [
+            "30 tests implemented",
+            "All tests passing",
+            "Constitutional violations caught",
+            "Use NECESSARY markers (necessary_spec)"
+          ],
+          "estimated_tokens": 7000
+        },
+        {
+          "id": "task_3_9_test_constitutional",
+          "title": "Test constitutional enforcement tests",
+          "type": "Test",
+          "tier": "Tier 2",
+          "agent": "test_generator",
+          "description": "Validate constitutional enforcement tests are comprehensive. Meta-tests for coverage, violation detection, auto-healing.",
+          "dependencies": ["task_3_8_implement_constitutional"],
+          "verification_target": "task_3_8_implement_constitutional",
+          "acceptance_criteria": [
+            "All 30 tests validated",
+            "Violations detected correctly",
+            "Coverage improvement documented"
+          ],
+          "estimated_tokens": 3000
+        },
+        {
+          "id": "task_3_10_expand_e2e",
+          "title": "Expand E2E workflow coverage",
+          "type": "Code",
+          "tier": "Tier 2",
+          "agent": "coder",
+          "description": "Double E2E test count from 29 to 58 tests. Add tests for: two-stage workflow, plan-only mode, graph execution, budget guard, slop immunity, completion validator, TodoWrite integration, learning extraction, ADR generation, PR creation.",
+          "dependencies": ["task_3_9_test_constitutional"],
+          "acceptance_criteria": [
+            "58 E2E tests (2x from 29)",
+            "All tests passing",
+            "Coverage improvement >2%",
+            "Use NECESSARY markers (necessary_normal, necessary_edge)"
+          ],
+          "estimated_tokens": 8000
+        },
+        {
+          "id": "task_3_11_test_e2e_expansion",
+          "title": "Test E2E workflow expansion",
+          "type": "Test",
+          "tier": "Tier 2",
+          "agent": "test_generator",
+          "description": "Validate expanded E2E tests are comprehensive. Meta-tests for coverage, performance, edge cases.",
+          "dependencies": ["task_3_10_expand_e2e"],
+          "verification_target": "task_3_10_expand_e2e",
+          "acceptance_criteria": [
+            "All 58 tests validated",
+            "Coverage >3.5% (target: 5%)",
+            "Performance acceptable (<5 min per test)"
+          ],
+          "estimated_tokens": 3000
+        }
+      ]
+    },
+    {
+      "id": "phase_4_production_hardening",
+      "title": "Phase 4: Production Hardening - Security + Stress + Bloat (Weeks 5-8)",
+      "tasks": [
+        {
+          "id": "task_4_1_spec_security",
+          "title": "Spec security testing strategy",
+          "type": "Spec",
+          "tier": "Tier 1",
+          "agent": "planner",
+          "description": "Design penetration testing strategy for Agency OS. Current: 7 security tests (minimal). Target: 50 tests. Categories: auth bypass, injection (SQL, command, code), CSRF, XSS, path traversal, privilege escalation, secrets exposure, rate limiting.",
+          "dependencies": ["task_3_11_test_e2e_expansion"],
+          "acceptance_criteria": [
+            "50 security test scenarios defined",
+            "Coverage for 8 attack categories",
+            "Penetration testing tools integrated (OWASP ZAP, Bandit)",
+            "Severity classification (critical/high/medium/low)"
+          ],
+          "estimated_tokens": 6000
+        },
+        {
+          "id": "task_4_2_implement_security",
+          "title": "Implement security tests",
+          "type": "Code",
+          "tier": "Tier 2",
+          "agent": "coder",
+          "description": "Build 50 security tests covering 8 attack categories. Tests: auth bypass, injection, CSRF, XSS, path traversal, privilege escalation, secrets exposure, rate limiting. Use OWASP ZAP and Bandit.",
+          "dependencies": ["task_4_1_spec_security"],
+          "acceptance_criteria": [
+            "50 security tests implemented",
+            "All tests passing (no vulnerabilities)",
+            "Use NECESSARY markers (necessary_security)",
+            "Integration with security tools (OWASP ZAP, Bandit)"
+          ],
+          "estimated_tokens": 10000
+        },
+        {
+          "id": "task_4_3_test_security",
+          "title": "Test security tests",
+          "type": "Test",
+          "tier": "Tier 2",
+          "agent": "test_generator",
+          "description": "Validate security tests are comprehensive. Meta-tests for coverage, severity classification, tool integration.",
+          "dependencies": ["task_4_2_implement_security"],
+          "verification_target": "task_4_2_implement_security",
+          "acceptance_criteria": [
+            "All 50 tests validated",
+            "No critical vulnerabilities detected",
+            "Security baseline established"
+          ],
+          "estimated_tokens": 4000
+        },
+        {
+          "id": "task_4_4_spec_stress",
+          "title": "Spec stress testing strategy",
+          "type": "Spec",
+          "tier": "Tier 1",
+          "agent": "planner",
+          "description": "Design load and stress testing strategy. Current: no load tests. Target: 20 tests. Scenarios: 1000 concurrent tasks, memory profiling, CPU profiling, network latency, database contention, cache invalidation, worker pool exhaustion.",
+          "dependencies": ["task_4_3_test_security"],
+          "acceptance_criteria": [
+            "20 stress test scenarios defined",
+            "Load targets specified (1000 concurrent tasks)",
+            "Profiling strategy (memory, CPU, network)",
+            "Performance baselines (latency, throughput)"
+          ],
+          "estimated_tokens": 5000
+        },
+        {
+          "id": "task_4_5_implement_stress",
+          "title": "Implement stress tests",
+          "type": "Code",
+          "tier": "Tier 2",
+          "agent": "coder",
+          "description": "Build 20 stress tests. Tests: 1000 concurrent tasks, memory profiling, CPU profiling, network latency simulation, database contention, cache invalidation, worker pool exhaustion. Use locust for load generation.",
+          "dependencies": ["task_4_4_spec_stress"],
+          "acceptance_criteria": [
+            "20 stress tests implemented",
+            "All tests passing (no crashes)",
+            "Performance baselines established",
+            "Use NECESSARY markers (necessary_resilience)"
+          ],
+          "estimated_tokens": 8000
+        },
+        {
+          "id": "task_4_6_test_stress",
+          "title": "Test stress tests",
+          "type": "Test",
+          "tier": "Tier 2",
+          "agent": "test_generator",
+          "description": "Validate stress tests are comprehensive. Meta-tests for performance baselines, crash detection, resource exhaustion.",
+          "dependencies": ["task_4_5_implement_stress"],
+          "verification_target": "task_4_5_implement_stress",
+          "acceptance_criteria": [
+            "All 20 tests validated",
+            "Performance baselines documented",
+            "No crashes under load"
+          ],
+          "estimated_tokens": 3000
+        },
+        {
+          "id": "task_4_7_spec_chaos",
+          "title": "Spec chaos engineering strategy",
+          "type": "Spec",
+          "tier": "Tier 1",
+          "agent": "planner",
+          "description": "Design chaos engineering tests. Current: minimal. Target: 15 tests. Scenarios: network failures, agent crashes, partial failures, timeout cascades, retry storms, circuit breaker validation, graceful degradation.",
+          "dependencies": ["task_4_6_test_stress"],
+          "acceptance_criteria": [
+            "15 chaos test scenarios defined",
+            "Failure injection strategy",
+            "Recovery validation criteria",
+            "Resilience patterns tested"
+          ],
+          "estimated_tokens": 5000
+        },
+        {
+          "id": "task_4_8_implement_chaos",
+          "title": "Implement chaos engineering tests",
+          "type": "Code",
+          "tier": "Tier 2",
+          "agent": "coder",
+          "description": "Build 15 chaos tests. Tests: network failures, agent crashes, partial failures, timeout cascades, retry storms, circuit breaker, graceful degradation. Use chaos-monkey library.",
+          "dependencies": ["task_4_7_spec_chaos"],
+          "acceptance_criteria": [
+            "15 chaos tests implemented",
+            "All tests passing (graceful failures)",
+            "Resilience validated",
+            "Use NECESSARY markers (necessary_resilience)"
+          ],
+          "estimated_tokens": 7000
+        },
+        {
+          "id": "task_4_9_test_chaos",
+          "title": "Test chaos engineering tests",
+          "type": "Test",
+          "tier": "Tier 2",
+          "agent": "test_generator",
+          "description": "Validate chaos tests are comprehensive. Meta-tests for failure injection, recovery validation, resilience patterns.",
+          "dependencies": ["task_4_8_implement_chaos"],
+          "verification_target": "task_4_8_implement_chaos",
+          "acceptance_criteria": [
+            "All 15 tests validated",
+            "Graceful failures confirmed",
+            "Resilience patterns documented"
+          ],
+          "estimated_tokens": 3000
+        },
+        {
+          "id": "task_4_10_delete_bloat",
+          "title": "Delete 200 bloated tests",
+          "type": "Code",
+          "tier": "Tier 2",
+          "agent": "coder",
+          "description": "Execute bloat cleanup following TEST_SUITE_CLEANUP_CHECKLIST.md. Delete 200 tests in batches (50 at a time). Tests: test_chief_architect_agent_simple.py (entire file), 12 'not implemented' stubs, 20 high-mock tests from test_chief_architect_agent.py, duplicates, redundant.",
+          "dependencies": ["task_4_9_test_chaos"],
+          "acceptance_criteria": [
+            "200 tests deleted (batched 50 at a time)",
+            "100% pass rate maintained after each batch",
+            "Git checkpoints before each batch",
+            "Rollback strategy documented"
+          ],
+          "estimated_tokens": 5000
+        },
+        {
+          "id": "task_4_11_refactor_sleep",
+          "title": "Refactor time.sleep() mocking",
+          "type": "Code",
+          "tier": "Tier 2",
+          "agent": "coder",
+          "description": "Mock time.sleep() in 69 tests to save 89s runtime. Primary targets: test_chaos_testing.py (12 tests), test_memory_cache.py (9 tests), test_distributed_locks.py (9 tests). Use monkeypatch or freezegun.",
+          "dependencies": ["task_4_10_delete_bloat"],
+          "acceptance_criteria": [
+            "69 tests refactored (time.sleep mocked)",
+            "89s runtime saved (verified with --durations)",
+            "All tests still passing",
+            "No timing-dependent failures"
+          ],
+          "estimated_tokens": 4000
+        },
+        {
+          "id": "task_4_12_parametrize_tests",
+          "title": "Parametrize duplicate tests",
+          "type": "Code",
+          "tier": "Tier 2",
+          "agent": "coder",
+          "description": "Parametrize redundant tests to reduce duplication. Targets: test_bash_pydantic_validation.py (40 tests → 10 parametrized), test_git_validation.py (similar). Use pytest.mark.parametrize.",
+          "dependencies": ["task_4_11_refactor_sleep"],
+          "acceptance_criteria": [
+            "40 tests parametrized (test_bash_pydantic_validation)",
+            "Test count reduced 40 → 10",
+            "All tests still passing",
+            "Coverage maintained"
+          ],
+          "estimated_tokens": 4000
+        },
+        {
+          "id": "task_4_13_generate_adr",
+          "title": "Generate ADR-032 (8-Week Recovery)",
+          "type": "Spec",
+          "tier": "Tier 1",
+          "agent": "chief_architect",
+          "description": "Generate comprehensive ADR documenting 8-week test suite recovery initiative. Include: context (audit findings), decision (phased approach), consequences (metrics improvement), alternatives considered, constitutional alignment, lessons learned.",
+          "dependencies": ["task_4_12_parametrize_tests"],
+          "acceptance_criteria": [
+            "ADR-032 published (docs/adr/ADR-032-test-suite-strategic-recovery.md)",
+            "Context: audit findings documented",
+            "Decision: phased approach justified",
+            "Consequences: metrics improvement quantified",
+            "Constitutional alignment validated"
+          ],
+          "estimated_tokens": 8000
+        },
+        {
+          "id": "task_4_14_update_docs",
+          "title": "Update test architecture documentation",
+          "type": "Code",
+          "tier": "Tier 2",
+          "agent": "coder",
+          "description": "Update all test architecture documentation to reflect 8-week improvements. Documents: TEST_ARCHITECTURE_ACTION_PLAN.md, constitution.md (Articles III-V enforcement), CLAUDE.md (testing guidelines), README.md (test suite metrics).",
+          "dependencies": ["task_4_13_generate_adr"],
+          "acceptance_criteria": [
+            "All documentation updated",
+            "Metrics reflect final state",
+            "Constitutional articles updated",
+            "Testing guidelines current"
+          ],
+          "estimated_tokens": 5000
+        },
+        {
+          "id": "task_4_15_final_validation",
+          "title": "Final validation and handoff",
+          "type": "Test",
+          "tier": "Tier 1",
+          "agent": "test_generator",
+          "description": "Execute final validation: full test suite run (100% pass), coverage validation (≥85%), security audit (no critical), stress tests (no crashes), grade calculation (≥95/100 = A grade). Generate handoff report.",
+          "dependencies": ["task_4_14_update_docs"],
+          "verification_target": "task_4_14_update_docs",
+          "acceptance_criteria": [
+            "100% test pass rate (all tests)",
+            "Coverage ≥85% (validated)",
+            "No critical security vulnerabilities",
+            "No crashes under stress",
+            "Final Grade: A (95/100)"
+          ],
+          "estimated_tokens": 6000
+        }
+      ]
+    }
+  ],
+  "checkpoints": [
+    {
+      "after_phase": "phase_0_stabilization",
+      "type": "human_review",
+      "prompt": "Review Phase 0 completion: Main branch CI green, all PRs merged, clean git state. Approve Phase 1-2 execution (Weeks 1-2)?"
+    },
+    {
+      "after_phase": "phase_1_p0_blockers_1_2",
+      "type": "human_review",
+      "prompt": "Review Phase 1 completion: NECESSARY markers applied (5,804 tests), code coverage baseline (≥70%). Approve Phase 2 execution (Week 2)?"
+    },
+    {
+      "after_phase": "phase_2_p0_blockers_3_4",
+      "type": "human_review",
+      "prompt": "Review Phase 2 completion: /primeccc E2E tests (20 tests), Article IV enforced. Approve Phase 3 execution (Weeks 3-4)?"
+    },
+    {
+      "after_phase": "phase_3_p1_gaps",
+      "type": "human_review",
+      "prompt": "Review Phase 3 completion: Agent comm tests (50), memory tests (20), constitutional tests (30), E2E expansion (58). Approve Phase 4 execution (Weeks 5-8)?"
+    },
+    {
+      "after_phase": "phase_4_production_hardening",
+      "type": "auto_validate",
+      "prompt": "Final validation: 100% pass rate, ≥85% coverage, no critical security issues, Final Grade A (95/100)."
+    }
+  ],
+  "metadata": {
+    "estimated_tokens": 250000,
+    "estimated_cost_usd": 50.0,
+    "complexity": "complex",
+    "budget_limit_usd": 100.0,
+    "preflight_checks": [
+      "slop_guardian.evaluate(graph) >= 3.5",
+      "budget_guard.check_budget(estimate, limits)",
+      "completion_validator.validate(results)"
+    ]
+  }
+}

@@ -1,6 +1,6 @@
 import os
 
-from agency_swarm import Agent
+from shared.lean_adapter import Agent
 
 from shared.agent_context import AgentContext, create_agent_context
 from shared.agent_utils import (
@@ -66,7 +66,7 @@ def create_planner_agent(
             "complex features need planning, or architectural guidance is requested. AUTOMATICALLY analyzes requirements against "
             "constitutional articles (I-V) and queries LearningAgent for historical patterns before creating plans. Creates formal "
             "specifications in /specs/ and technical plans in /plans/ following spec-kit methodology. PROACTIVELY coordinates with: "
-            "(1) ChiefArchitectAgent for ADR creation, (2) AgencyCodeAgent for bidirectional implementation handoffs, "
+            "(1) ChiefArchitectAgent for ADR creation, (2) CodingAgent for bidirectional implementation handoffs, "
             "(3) AuditorAgent for quality validation planning, (4) TestGeneratorAgent for test strategy, and (5) LearningAgent for "
             "pattern-based optimization. Uses enhanced reasoning (high effort) for strategic decisions and consults shared VectorStore "
             "memory for cross-session learning. When prompting this agent, describe high-level goals and constraints. This agent "

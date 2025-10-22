@@ -19,7 +19,7 @@ Reference: specs/spec-004-quality-feedback-loop.md Section 6.1
 from datetime import UTC, datetime
 from enum import Enum
 
-from pydantic import BaseModel, Field, model_validator
+from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 
 class SeverityLevel(str, Enum):
@@ -131,9 +131,9 @@ class QualitySignals(BaseModel):
         description="ISO 8601 timestamp of signal collection (UTC)",
     )
 
-    class Config:
-        use_enum_values = True
-        json_schema_extra = {
+    model_config = ConfigDict(
+        use_enum_values=True,
+        json_schema_extra={
             "example": {
                 "task_id": "task_abc123",
                 "original_tier": "simple",
@@ -144,7 +144,8 @@ class QualitySignals(BaseModel):
                 "severity": "critical",
                 "detected_at": "2025-10-10T12:34:56.789Z",
             }
-        }
+        },
+    )
 
     @model_validator(mode="after")
     def compute_severity_after_validation(self) -> "QualitySignals":

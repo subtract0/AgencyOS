@@ -19,7 +19,7 @@ Date: 2025-10-10
 
 from datetime import datetime
 
-from pydantic import BaseModel, Field, field_validator, model_validator
+from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
 from .task_feature_vector import TaskFeatureVector
 
@@ -101,10 +101,8 @@ class TrainingSample(BaseModel):
         ),
     )
 
-    class Config:
-        """Pydantic model configuration."""
-
-        json_schema_extra = {
+    model_config = ConfigDict(
+        json_schema_extra={
             "example": {
                 "features": {
                     "embedding": [0.023, -0.045] + [0.0] * 1534,
@@ -125,6 +123,7 @@ class TrainingSample(BaseModel):
                 "timestamp": "2025-10-10T10:00:00Z",
             }
         }
+    )
 
     @field_validator("label")
     @classmethod
@@ -295,10 +294,8 @@ class DatasetMetadata(BaseModel):
         ),
     )
 
-    class Config:
-        """Pydantic model configuration."""
-
-        json_schema_extra = {
+    model_config = ConfigDict(
+        json_schema_extra={
             "example": {
                 "total_samples": 1000,
                 "train_count": 800,
@@ -310,6 +307,7 @@ class DatasetMetadata(BaseModel):
                 "source": "vectorstore_quality_feedback",
             }
         }
+    )
 
     @field_validator("train_count", "val_count", "total_samples")
     @classmethod
@@ -442,10 +440,8 @@ class TrainingDataset(BaseModel):
         ),
     )
 
-    class Config:
-        """Pydantic model configuration."""
-
-        json_schema_extra = {
+    model_config = ConfigDict(
+        json_schema_extra={
             "example": {
                 "samples": [
                     {
@@ -482,6 +478,7 @@ class TrainingDataset(BaseModel):
                 },
             }
         }
+    )
 
     @model_validator(mode="after")
     def validate_splits(self) -> "TrainingDataset":

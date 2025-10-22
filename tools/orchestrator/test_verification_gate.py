@@ -118,6 +118,8 @@ class TestVerificationGate:
             print(f"Verification failed: {error.message}")
     """
 
+    __test__ = False  # Tell pytest this is not a test class
+
     def __init__(self, project_root: Path | None = None):
         """Initialize test verification gate.
 

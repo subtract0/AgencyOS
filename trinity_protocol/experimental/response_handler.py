@@ -52,7 +52,7 @@ Required steps:
 5. Calculate and store response time for learning
 
 **Constitutional Compliance (Partial)**:
-- Article II: Strict typing - Pydantic models, no Dict[Any, Any] ✅
+- Article II: Strict typing - Pydantic models, no untyped dicts ✅
 - Article IV: Continuous learning - track all responses ⚠️ (privacy concerns)
 - Privacy: Respect user decisions, never bypass NO responses ✅
 """

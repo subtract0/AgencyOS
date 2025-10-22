@@ -9,7 +9,7 @@ Usage:
     from trinity_protocol.cost_tracker import CostTracker
 
     tracker = CostTracker()
-    wrap_openai_client(tracker, agent_name="AgencyCodeAgent")
+    wrap_openai_client(tracker, agent_name="CodingAgent")
 """
 
 import functools
@@ -67,7 +67,7 @@ def wrap_openai_client(
 
     Example:
         >>> tracker = CostTracker()
-        >>> wrap_openai_client(tracker, "AgencyCodeAgent")
+        >>> wrap_openai_client(tracker, "CodingAgent")
         >>> # All subsequent OpenAI calls will be tracked
     """
     from openai.resources.chat import Completions
@@ -167,11 +167,11 @@ def wrap_agent_with_cost_tracking(
         correlation_id: Optional correlation ID
 
     Example:
-        >>> from agency_code_agent import create_agency_code_agent
+        >>> from coding_agent import create_coding_agent
         >>> from shared.cost_tracker import CostTracker
         >>>
         >>> tracker = CostTracker()
-        >>> agent = create_agency_code_agent()
+        >>> agent = create_coding_agent()
         >>> wrap_agent_with_cost_tracking(agent, tracker)
     """
     agent_name = getattr(agent, "name", agent.__class__.__name__)

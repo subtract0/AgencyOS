@@ -1,6 +1,6 @@
 import os
 
-from agency_swarm import Agent as _Agent
+from shared.lean_adapter import Agent as _Agent
 
 from shared.agent_context import AgentContext, create_agent_context
 from shared.constitutional_validator import constitutional_compliance

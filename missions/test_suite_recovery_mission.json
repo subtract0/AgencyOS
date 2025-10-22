@@ -1,0 +1,273 @@
+{
+  "mission": "Test Suite Recovery: Achieve 100% Green Suite for Autonomous Development",
+  "leap_number": 8,
+  "phases": [
+    {
+      "id": "phase_1",
+      "title": "Diagnostic Analysis",
+      "tasks": [
+        {
+          "id": "analyze_segfault_root_cause",
+          "title": "Analyze segfault at socket.py:295",
+          "type": "Code",
+          "tier": "Tier 1",
+          "agent": "auditor",
+          "description": "Investigate segfault occurring at socket.py:295 in accept() during test execution. This appears to be in pytest_rerunfailures plugin. Determine if this is related to Python 3.13, asyncio tests, or pytest plugin interaction. Review test files around the 60-test mark where segfault consistently occurs.",
+          "dependencies": [],
+          "acceptance_criteria": [
+            "Root cause identified (Python 3.13 incompatibility, plugin bug, or test code issue)",
+            "Documented in ADR with evidence",
+            "Workaround strategy proposed"
+          ],
+          "estimated_tokens": 5000
+        },
+        {
+          "id": "catalog_all_test_failures",
+          "title": "Catalog all test failures and hangs",
+          "type": "Code",
+          "tier": "Tier 2",
+          "agent": "auditor",
+          "description": "Run test suite with --tb=no to catalog all failures without stopping. Identify: (1) Segfaulting tests, (2) Hanging tests (checkpoint_manager, vectorstore_performance), (3) Assertion failures (the ~78 'F' markers). Create comprehensive inventory with test names, failure types, and priority.",
+          "dependencies": ["analyze_segfault_root_cause"],
+          "acceptance_criteria": [
+            "Complete list of all failing tests with failure types",
+            "Priority ranking (blockers vs. fixable)",
+            "Estimated effort per test"
+          ],
+          "estimated_tokens": 4000
+        },
+        {
+          "id": "identify_run_tests_double_execution",
+          "title": "Fix run_tests.py double execution bug",
+          "type": "Code",
+          "tier": "Tier 2",
+          "agent": "coder",
+          "description": "run_tests.py currently runs tests twice: first with pytest-xdist (progress shown), then again with 'uv run pytest' sequentially (causing timeout). The second run starts around 51% and hangs. Remove the duplicate sequential run from run_tests.py lines 403-537.",
+          "dependencies": [],
+          "acceptance_criteria": [
+            "run_tests.py only invokes pytest once",
+            "No duplicate test execution",
+            "Tests complete without 51% hang"
+          ],
+          "estimated_tokens": 3000
+        }
+      ]
+    },
+    {
+      "id": "phase_2",
+      "title": "Critical Blocker Fixes",
+      "tasks": [
+        {
+          "id": "fix_segfault_tests",
+          "title": "Eliminate segfault in socket tests",
+          "type": "Code",
+          "tier": "Tier 1",
+          "agent": "coder",
+          "description": "Fix the segfault occurring at socket.py:295 during pytest execution. Based on analysis from phase_1, apply appropriate fix: (1) Disable pytest-rerunfailures plugin, (2) Add pytest.mark.no_retry to problematic async tests, (3) Isolate socket-based tests with serial marker, or (4) Pin Python version if 3.13 incompatibility.",
+          "dependencies": ["analyze_segfault_root_cause"],
+          "acceptance_criteria": [
+            "No segfaults during test execution",
+            "Tests pass socket.py:295 without crash",
+            "Root cause documented in commit message"
+          ],
+          "estimated_tokens": 4000
+        },
+        {
+          "id": "fix_vectorstore_performance_segfault",
+          "title": "Fix test_vectorstore_performance.py segfault",
+          "type": "Code",
+          "tier": "Tier 2",
+          "agent": "coder",
+          "description": "test_vectorstore_performance.py causes segfault even when run sequentially (not xdist-related). This suggests PyTorch/transformers issue or memory corruption. Options: (1) Skip/quarantine test, (2) Fix memory leak, (3) Isolate in subprocess, (4) Mock VectorStore for performance tests.",
+          "dependencies": ["analyze_segfault_root_cause"],
+          "acceptance_criteria": [
+            "test_vectorstore_performance.py runs without segfault",
+            "Performance benchmarks still validate correctly",
+            "Tests pass or are properly quarantined with documentation"
+          ],
+          "estimated_tokens": 5000
+        },
+        {
+          "id": "fix_checkpoint_manager_hang",
+          "title": "Fix test_checkpoint_manager.py hang at test 9/20",
+          "type": "Code",
+          "tier": "Tier 2",
+          "agent": "coder",
+          "description": "test_checkpoint_manager.py hangs at test 9/20. Investigate: (1) Infinite loop, (2) Deadlock in async code, (3) Blocking I/O without timeout, (4) Resource leak. Add timeouts, fix deadlock, or quarantine test with explanation.",
+          "dependencies": ["catalog_all_test_failures"],
+          "acceptance_criteria": [
+            "test_checkpoint_manager.py completes all 20 tests",
+            "No hangs or timeouts",
+            "Root cause fixed or test quarantined with clear documentation"
+          ],
+          "estimated_tokens": 4000
+        }
+      ]
+    },
+    {
+      "id": "phase_3",
+      "title": "Assertion Failure Fixes",
+      "tasks": [
+        {
+          "id": "fix_assertion_failures_batch_1",
+          "title": "Fix first 20 assertion failures",
+          "type": "Code",
+          "tier": "Tier 2",
+          "agent": "coder",
+          "description": "Fix the first 20 of the ~78 failing assertions ('F' markers). Run tests with --tb=short to get detailed failure info. Fix actual bugs in code or update tests to reflect correct behavior. Prioritize: (1) Easy fixes (typos, outdated expectations), (2) Logic errors, (3) Architectural issues.",
+          "dependencies": ["catalog_all_test_failures"],
+          "acceptance_criteria": [
+            "20 previously failing tests now pass",
+            "All fixes include regression test coverage",
+            "No new test failures introduced"
+          ],
+          "estimated_tokens": 8000
+        },
+        {
+          "id": "fix_assertion_failures_batch_2",
+          "title": "Fix remaining assertion failures",
+          "type": "Code",
+          "tier": "Tier 2",
+          "agent": "coder",
+          "description": "Fix remaining ~58 failing assertions from catalog. Continue methodology from batch_1. If any tests represent broken features, document as known issues with clear repro steps and mark as @pytest.mark.skip(reason='Known issue: <JIRA-123>').",
+          "dependencies": ["fix_assertion_failures_batch_1"],
+          "acceptance_criteria": [
+            "All assertion failures fixed or documented",
+            "Known issues tracked with skip markers",
+            "Test suite shows only PASSED/SKIPPED (no FAILED)"
+          ],
+          "estimated_tokens": 10000
+        }
+      ]
+    },
+    {
+      "id": "phase_4",
+      "title": "Pytest Configuration Optimization",
+      "tasks": [
+        {
+          "id": "investigate_pytest_xdist_safety",
+          "title": "Determine safe pytest-xdist configuration",
+          "type": "Code",
+          "tier": "Tier 1",
+          "agent": "auditor",
+          "description": "After fixing segfaults and hangs, re-enable pytest-xdist cautiously. Test with: (1) -n 1 (single worker), (2) -n 2, (3) -n 4, (4) -n auto. Identify maximum safe parallelism without crashes. Document which tests need @pytest.mark.serial.",
+          "dependencies": ["fix_segfault_tests", "fix_vectorstore_performance_segfault", "fix_checkpoint_manager_hang"],
+          "acceptance_criteria": [
+            "Optimal worker count determined (stability vs. speed)",
+            "All serial-required tests marked",
+            "pytest.ini configured with safe defaults"
+          ],
+          "estimated_tokens": 4000
+        },
+        {
+          "id": "update_pytest_ini",
+          "title": "Update pytest.ini with optimized configuration",
+          "type": "Code",
+          "tier": "Tier 2",
+          "agent": "coder",
+          "description": "Update pytest.ini with findings from investigation. Re-enable pytest-xdist with safe worker count. Add necessary ignores for quarantined tests. Configure proper timeouts. Ensure run_tests.py respects pytest.ini settings.",
+          "dependencies": ["investigate_pytest_xdist_safety"],
+          "acceptance_criteria": [
+            "pytest.ini has optimal parallelism configuration",
+            "All quarantined tests properly excluded",
+            "Configuration documented with comments"
+          ],
+          "estimated_tokens": 2000
+        },
+        {
+          "id": "simplify_run_tests_py",
+          "title": "Simplify run_tests.py to respect pytest.ini",
+          "type": "Code",
+          "tier": "Tier 2",
+          "agent": "coder",
+          "description": "Refactor run_tests.py to be a thin wrapper around pytest that respects pytest.ini configuration. Remove duplicate test execution logic. Keep Docker lifecycle management and environment setup. Delegate all pytest behavior to pytest.ini.",
+          "dependencies": ["identify_run_tests_double_execution", "update_pytest_ini"],
+          "acceptance_criteria": [
+            "run_tests.py invokes pytest exactly once",
+            "All pytest config comes from pytest.ini",
+            "Docker lifecycle still works correctly"
+          ],
+          "estimated_tokens": 3000
+        }
+      ]
+    },
+    {
+      "id": "phase_5",
+      "title": "Verification and Documentation",
+      "tasks": [
+        {
+          "id": "full_suite_validation",
+          "title": "Run complete test suite to 100% green",
+          "type": "Test",
+          "tier": "Tier 2",
+          "agent": "test_generator",
+          "description": "Execute full test suite with 'python run_tests.py --run-all' and verify 100% pass rate. Run 3 times to ensure stability (no flakiness). Document: (1) Total test count, (2) Execution time, (3) Any skipped tests with reasons, (4) Performance vs. baseline.",
+          "dependencies": ["fix_assertion_failures_batch_2", "simplify_run_tests_py"],
+          "acceptance_criteria": [
+            "100% test pass rate (excluding documented skips)",
+            "3 consecutive clean runs without crashes",
+            "Execution time documented (baseline for future optimization)"
+          ],
+          "estimated_tokens": 3000,
+          "verification_target": "fix_assertion_failures_batch_2"
+        },
+        {
+          "id": "create_adr_test_suite_recovery",
+          "title": "Document test suite recovery in ADR",
+          "type": "Spec",
+          "tier": "Tier 1",
+          "agent": "chief_architect",
+          "description": "Create ADR-030-test-suite-recovery.md documenting: (1) Root causes of test failures (segfault, double execution, assertion failures), (2) Fixes applied, (3) New testing practices to prevent regression, (4) Quarantined tests and their future remediation plan.",
+          "dependencies": ["full_suite_validation"],
+          "acceptance_criteria": [
+            "ADR explains all root causes with evidence",
+            "Decisions documented with rationale",
+            "Prevention strategies clearly defined"
+          ],
+          "estimated_tokens": 4000
+        },
+        {
+          "id": "update_constitution_article_ii",
+          "title": "Validate Article II compliance",
+          "type": "Spec",
+          "tier": "Tier 1",
+          "agent": "quality_enforcer",
+          "description": "Verify that restored test suite upholds Article II: 100% verification and stability. Update constitution.md if needed to codify new testing practices (e.g., mandatory @pytest.mark.serial for async network tests). Ensure pre-commit hooks enforce test pass requirement.",
+          "dependencies": ["full_suite_validation"],
+          "acceptance_criteria": [
+            "Article II requirements verified",
+            "Pre-commit hooks enforce 100% pass rate",
+            "New testing practices documented in constitution"
+          ],
+          "estimated_tokens": 3000
+        }
+      ]
+    }
+  ],
+  "checkpoints": [
+    {
+      "after_phase": "phase_1",
+      "type": "auto_validate",
+      "prompt": "Verify diagnostic analysis identified root causes before proceeding to fixes"
+    },
+    {
+      "after_phase": "phase_2",
+      "type": "auto_validate",
+      "prompt": "Verify all critical blockers (segfaults, hangs) are resolved before fixing assertion failures"
+    },
+    {
+      "after_phase": "phase_4",
+      "type": "auto_validate",
+      "prompt": "Verify pytest configuration is stable before final validation"
+    }
+  ],
+  "metadata": {
+    "estimated_tokens": 65000,
+    "estimated_cost_usd": 2.50,
+    "complexity": "complex",
+    "budget_limit_usd": 5.00,
+    "preflight_checks": [
+      "slop_guardian.evaluate(mission) >= 3.5"
+    ]
+  }
+}

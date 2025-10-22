@@ -249,6 +249,7 @@ def docker_ollama(request):
             check=True,
             capture_output=True,
             text=True,
+            timeout=10,
         )
     except subprocess.CalledProcessError as e:
         pytest.skip(f"Failed to start Docker Compose: {e.stderr}")

@@ -566,6 +566,7 @@ class TestMutationTesterExecution:
 class TestMutationTesterFullRun:
     """Test complete mutation testing workflow."""
 
+    @pytest.mark.timeout(10)  # 10 second timeout for full mutation test workflow
     @pytest.mark.skipif(
         os.environ.get("CI") == "true",
         reason="Flaky in CI due to parallel execution and subprocess spawning",

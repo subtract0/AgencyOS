@@ -1,0 +1,295 @@
+{
+  "mission": "Complete Test Suite Recovery to 100% and Implement Autonomous Completion Protocol",
+  "leap_number": 8,
+  "phases": [
+    {
+      "id": "phase_1",
+      "title": "Remaining Test Failures Resolution",
+      "tasks": [
+        {
+          "id": "identify_remaining_failures",
+          "title": "Identify all ~20 remaining test failures",
+          "type": "Code",
+          "tier": "Tier 2",
+          "agent": "auditor",
+          "description": "Run test suite sequentially with -x flag to identify first failure, document it, repeat until all ~20 failures cataloged. Create detailed inventory with test names, error messages, and root causes.",
+          "dependencies": [],
+          "acceptance_criteria": [
+            "Complete list of all remaining failing tests",
+            "Root cause identified for each failure (schema mismatch, missing fixtures, etc.)",
+            "Priority ranking assigned"
+          ],
+          "estimated_tokens": 3000
+        },
+        {
+          "id": "fix_remaining_schema_failures",
+          "title": "Fix all remaining schema-related test failures",
+          "type": "Code",
+          "tier": "Tier 2",
+          "agent": "coder",
+          "description": "Update test fixtures for remaining ~20 schema failures. Apply same methodology from test_accuracy_dashboard fix: read model schemas, update ALL test fixtures to match current Pydantic models from Leap 4.",
+          "dependencies": ["identify_remaining_failures"],
+          "acceptance_criteria": [
+            "All schema-related test failures resolved",
+            "Test fixtures match current Pydantic model schemas",
+            "Zero new test failures introduced"
+          ],
+          "estimated_tokens": 8000
+        },
+        {
+          "id": "verify_schema_fixes",
+          "title": "Verify schema fixes pass all tests",
+          "type": "Test",
+          "tier": "Tier 2",
+          "agent": "test_generator",
+          "description": "Run test suite to verify all schema fixes work correctly. Ensure 100% pass rate achieved.",
+          "dependencies": ["fix_remaining_schema_failures"],
+          "acceptance_criteria": [
+            "All previously failing tests now pass",
+            "Zero regression failures",
+            "Test suite completes without timeout"
+          ],
+          "estimated_tokens": 2000,
+          "verification_target": "fix_remaining_schema_failures"
+        }
+      ]
+    },
+    {
+      "id": "phase_2",
+      "title": "Timeout Resolution",
+      "tasks": [
+        {
+          "id": "identify_timeout_cause",
+          "title": "Binary search to identify hanging test",
+          "type": "Code",
+          "tier": "Tier 2",
+          "agent": "auditor",
+          "description": "Test suite times out at 10 minutes (expected: 5-8 minutes). Use binary search to isolate hanging test: run first half, then second half, repeat until single test identified. Document exact test causing timeout.",
+          "dependencies": ["verify_schema_fixes"],
+          "acceptance_criteria": [
+            "Exact test causing timeout identified",
+            "Test name, file path, and behavior documented",
+            "Root cause hypothesis formed (infinite loop, blocking I/O, resource leak)"
+          ],
+          "estimated_tokens": 3000
+        },
+        {
+          "id": "fix_timeout_issue",
+          "title": "Fix or quarantine hanging test",
+          "type": "Code",
+          "tier": "Tier 2",
+          "agent": "coder",
+          "description": "Fix identified hanging test by adding timeout decorators, fixing blocking I/O, or cleaning up resources. If unfixable, quarantine with @pytest.mark.skip and detailed documentation.",
+          "dependencies": ["identify_timeout_cause"],
+          "acceptance_criteria": [
+            "Hanging test fixed or quarantined",
+            "Test suite completes in <8 minutes",
+            "No timeout during full suite run"
+          ],
+          "estimated_tokens": 4000
+        }
+      ]
+    },
+    {
+      "id": "phase_3",
+      "title": "Final Validation and Verification",
+      "tasks": [
+        {
+          "id": "three_run_validation",
+          "title": "Execute 3-run stability validation",
+          "type": "Test",
+          "tier": "Tier 2",
+          "agent": "test_generator",
+          "description": "Run full test suite 3 consecutive times to verify stability. Document: (1) Pass rate, (2) Execution time, (3) Flaky tests (if any), (4) Performance metrics. Confirm 100% pass rate and zero crashes.",
+          "dependencies": ["fix_timeout_issue"],
+          "acceptance_criteria": [
+            "3 consecutive runs with 100% pass rate",
+            "Zero flaky tests (consistent results across runs)",
+            "Execution time <8 minutes per run",
+            "Zero segfaults, hangs, or crashes"
+          ],
+          "estimated_tokens": 3000,
+          "verification_target": "fix_timeout_issue"
+        },
+        {
+          "id": "update_adr_031_complete",
+          "title": "Update ADR-031 status to COMPLETE",
+          "type": "Spec",
+          "tier": "Tier 1",
+          "agent": "chief_architect",
+          "description": "Update ADR-031 status from IN PROGRESS to COMPLETE. Add final metrics: 100% pass rate, total execution time, remaining work section removed, success criteria met. Document achievement of constitutional Article II compliance.",
+          "dependencies": ["three_run_validation"],
+          "acceptance_criteria": [
+            "ADR-031 status changed to COMPLETE",
+            "Final metrics documented (100% pass rate, execution time)",
+            "Constitutional compliance verified (Article II fully satisfied)",
+            "Next steps updated (Leap 9 proposal)"
+          ],
+          "estimated_tokens": 2000
+        },
+        {
+          "id": "update_article_ii_compliance",
+          "title": "Declare Article II full compliance",
+          "type": "Spec",
+          "tier": "Tier 1",
+          "agent": "quality_enforcer",
+          "description": "Update ARTICLE_II_COMPLIANCE_REPORT.md to reflect FULL COMPLIANCE status. Change from PARTIAL (90%+) to COMPLETE (100%). Document validation evidence and constitutional satisfaction.",
+          "dependencies": ["three_run_validation"],
+          "acceptance_criteria": [
+            "Article II compliance status: FULL COMPLIANCE",
+            "100% pass rate documented with evidence",
+            "Constitutional requirement fully satisfied",
+            "Gap analysis section removed (zero gaps remaining)"
+          ],
+          "estimated_tokens": 2000
+        }
+      ]
+    },
+    {
+      "id": "phase_4",
+      "title": "Autonomous Completion Protocol Implementation",
+      "tasks": [
+        {
+          "id": "analyze_premature_conclusion",
+          "title": "Analyze why orchestrator concluded at 90%",
+          "type": "Code",
+          "tier": "Tier 1",
+          "agent": "auditor",
+          "description": "Investigate why PrimeA orchestrator declared mission complete at 90% with 40% context remaining. Identify decision point in execution protocol where early termination occurred. Document root cause: (1) Missing completion criteria check, (2) Premature report generation, (3) Insufficient validation gate.",
+          "dependencies": [],
+          "acceptance_criteria": [
+            "Root cause identified (specific code location or logic flaw)",
+            "Evidence documented (execution logs, decision points)",
+            "Pattern extracted for VectorStore (confidence ≥0.8)"
+          ],
+          "estimated_tokens": 4000
+        },
+        {
+          "id": "design_completion_validator",
+          "title": "Design autonomous completion validator",
+          "type": "Spec",
+          "tier": "Tier 1",
+          "agent": "chief_architect",
+          "description": "Design validation gate that prevents premature mission conclusion. Requirements: (1) Check all task acceptance criteria met 100%, (2) Verify constitutional compliance (Articles I-V), (3) Confirm zero remaining work documented, (4) Validate context usage efficiency (warn if <80% used but work incomplete).",
+          "dependencies": ["analyze_premature_conclusion"],
+          "acceptance_criteria": [
+            "Validation gate specification complete",
+            "All edge cases covered (partial completion, timeout, errors)",
+            "Integration points identified (STEP 7 in execution protocol)",
+            "Backward compatibility maintained"
+          ],
+          "estimated_tokens": 5000
+        },
+        {
+          "id": "implement_completion_validator",
+          "title": "Implement autonomous completion validator",
+          "type": "Code",
+          "tier": "Tier 2",
+          "agent": "coder",
+          "description": "Implement validation gate in PrimeA execution protocol. Add check before STEP 7 (Generate Execution Report) that validates: (1) All tasks completed (not just attempted), (2) All acceptance criteria met, (3) Constitutional compliance achieved, (4) Zero TODO items in remaining work. Block report generation if validation fails.",
+          "dependencies": ["design_completion_validator"],
+          "acceptance_criteria": [
+            "Validator integrated into execution protocol (before STEP 7)",
+            "All validation checks implemented and tested",
+            "Clear error messages when validation fails",
+            "Execution continues until 100% complete or explicit failure"
+          ],
+          "estimated_tokens": 6000
+        },
+        {
+          "id": "test_completion_validator",
+          "title": "Test completion validator with edge cases",
+          "type": "Test",
+          "tier": "Tier 2",
+          "agent": "test_generator",
+          "description": "Create comprehensive test suite for completion validator. Test scenarios: (1) All tasks complete → validator passes, (2) One task incomplete → validator blocks, (3) Constitutional violation → validator blocks, (4) Remaining work documented → validator blocks. Ensure validator prevents premature conclusions.",
+          "dependencies": ["implement_completion_validator"],
+          "acceptance_criteria": [
+            "All test scenarios pass (100% coverage)",
+            "Validator correctly identifies incomplete missions",
+            "No false positives (blocks valid completions)",
+            "No false negatives (allows incomplete missions)"
+          ],
+          "estimated_tokens": 4000,
+          "verification_target": "implement_completion_validator"
+        }
+      ]
+    },
+    {
+      "id": "phase_5",
+      "title": "Documentation and Pattern Storage",
+      "tasks": [
+        {
+          "id": "create_completion_protocol_adr",
+          "title": "Create ADR for autonomous completion protocol",
+          "type": "Spec",
+          "tier": "Tier 1",
+          "agent": "chief_architect",
+          "description": "Create ADR-032 documenting the autonomous completion protocol. Include: (1) Context (premature 90% conclusion), (2) Decision (validation gate implementation), (3) Consequences (zero premature conclusions), (4) Constitutional alignment (Article I: complete context), (5) Implementation details.",
+          "dependencies": ["test_completion_validator"],
+          "acceptance_criteria": [
+            "ADR-032 created with comprehensive documentation",
+            "Root cause analysis included (why 90% conclusion happened)",
+            "Prevention mechanism documented (validation gate)",
+            "Future orchestrators will apply this pattern"
+          ],
+          "estimated_tokens": 4000
+        },
+        {
+          "id": "store_completion_patterns",
+          "title": "Store completion patterns to VectorStore",
+          "type": "Code",
+          "tier": "Tier 2",
+          "agent": "learning",
+          "description": "Extract and store 3 patterns to VectorStore: (1) Autonomous completion validation (confidence 1.0), (2) Premature conclusion prevention (confidence 0.95), (3) Context usage efficiency monitoring (confidence 0.85). Tag for orchestration, quality-enforcement, and meta-intelligence categories.",
+          "dependencies": ["create_completion_protocol_adr"],
+          "acceptance_criteria": [
+            "3 patterns extracted with confidence ≥0.85",
+            "Patterns stored to VectorStore with proper tags",
+            "Patterns queryable by future orchestrators",
+            "Article IV compliance documented"
+          ],
+          "estimated_tokens": 3000
+        },
+        {
+          "id": "update_primea_documentation",
+          "title": "Update PrimeA documentation with completion protocol",
+          "type": "Spec",
+          "tier": "Tier 2",
+          "agent": "coder",
+          "description": "Update .claude/commands/primea.md to document autonomous completion validator. Add new section in STEP 6.5 (before STEP 7) explaining validation gate, requirements, and error handling. Update execution protocol flowchart.",
+          "dependencies": ["create_completion_protocol_adr"],
+          "acceptance_criteria": [
+            "PrimeA documentation updated with completion protocol",
+            "Execution protocol includes validation gate (STEP 6.5)",
+            "Clear instructions for future orchestrators",
+            "Examples included (valid vs invalid completion)"
+          ],
+          "estimated_tokens": 3000
+        }
+      ]
+    }
+  ],
+  "checkpoints": [
+    {
+      "after_phase": "phase_1",
+      "type": "auto_validate",
+      "prompt": "Verify all remaining test failures identified and fixed before proceeding to timeout resolution"
+    },
+    {
+      "after_phase": "phase_3",
+      "type": "auto_validate",
+      "prompt": "Verify 100% pass rate achieved and Article II compliance before implementing prevention mechanism"
+    }
+  ],
+  "metadata": {
+    "estimated_tokens": 65000,
+    "estimated_cost_usd": 2.50,
+    "complexity": "complex",
+    "budget_limit_usd": 5.00,
+    "preflight_checks": [
+      "slop_guardian.evaluate(mission) >= 3.5",
+      "completion_validator.check_previous_mission() == 90% (validate issue exists)"
+    ]
+  }
+}

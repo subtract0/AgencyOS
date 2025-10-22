@@ -5,7 +5,7 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "agency"
 version = "1.0.0"
-description = "Agency Code Agency - Multi-Agent Development System"
+description = "AgencyOS Agency - Multi-Agent Development System"
 readme = "README.md"
 requires-python = ">=3.11"
 authors = [
@@ -52,7 +52,7 @@ addopts = [
     "-m", "not integration and not e2e",  # Default: unit tests only
     "--maxfail=3",              # Stop after 3 failures for faster feedback
     "--disable-warnings",       # Reduce noise from warnings
-    "-n", "auto",               # Parallel execution with pytest-xdist
+    "-n", "3",                  # Parallel execution: 3 workers (stability over speed for timing tests)
 ]
 filterwarnings = [
     "error",                    # Turn warnings into errors
@@ -273,7 +273,7 @@ known-first-party = [
     "core",
     "dspy_agents",
     "meta_learning",
-    "agency_code_agent",
+    "coding_agent",
     "planner_agent",
     "auditor_agent",
     "quality_enforcer_agent",
@@ -317,3 +317,4 @@ exclude_lines = [
 ]
 [tool.poetry.dependencies]
 pydantic = "^2.11.9"
+aiofiles = "^25.1.0"

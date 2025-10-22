@@ -317,7 +317,7 @@ This positions you well for the next phase: **agents that modify their own defin
 | Agent | Traditional | DSPy-Enhanced |
 |-------|-------------|---------------|
 | Auditor | `auditor_agent/` | `dspy_agents/modules/auditor_agent.py` |
-| Code Agent | `agency_code_agent/` | `dspy_agents/modules/code_agent.py` |
+| Code Agent | `coding_agent/` | `dspy_agents/modules/code_agent.py` |
 | Learning | `learning_agent/` | `dspy_agents/modules/learning_agent.py` |
 | Planner | `planner_agent/` | `dspy_agents/modules/planner_agent.py` |
 | Toolsmith | `toolsmith_agent/` | `dspy_agents/modules/toolsmith_agent.py` |

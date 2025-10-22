@@ -164,22 +164,24 @@ def sample_predictions():
     Create sample VectorStore predictions (100 new samples).
 
     Returns:
-        list[PredictionLog]: Sample predictions with actual_tier
+        list[PredictionLog]: Sample predictions for training
     """
     predictions = []
     base_time = datetime.now(UTC)
 
     for i in range(100):
-        tier_map = {0: "P3", 1: "P2", 2: "P1"}
+        tier_map = {0: "simple", 1: "moderate", 2: "complex"}
         tier = tier_map[i % 3]
 
         prediction = PredictionLog(
             task_id=f"new_task_{i}",
-            predicted_tier=tier,
-            actual_tier=tier,  # Ground truth available
+            tier=tier,
             confidence=0.85,
-            timestamp=base_time - timedelta(days=2),
-            method="ml",
+            method="ml_model",
+            model_version="2025-10-10T12:00:00Z",
+            session_id="test_merger_session",
+            timestamp=(base_time - timedelta(days=2)).isoformat() + "Z",
+            class_probabilities={tier: 0.85},
         )
         predictions.append(prediction)
 
@@ -212,11 +214,12 @@ class TestQueryPredictionsNormalOperation:
         for i in range(10):
             prediction = PredictionLog(
                 task_id=f"task_{i}",
-                predicted_tier="P2",
-                actual_tier="P2",
+                tier="moderate",
                 confidence=0.85,
-                timestamp=base_time - timedelta(days=1),
-                method="ml",
+                method="ml_model",
+                model_version="2025-10-10T12:00:00Z",
+                session_id="test_merger_session",
+                timestamp=(base_time - timedelta(days=1)).isoformat() + "Z",
             )
             mock_context.store_memory(
                 key=f"prediction_task_{i}",
@@ -254,11 +257,12 @@ class TestQueryPredictionsNormalOperation:
         for i in range(5):
             old_prediction = PredictionLog(
                 task_id=f"old_task_{i}",
-                predicted_tier="P2",
-                actual_tier="P2",
+                tier="moderate",
                 confidence=0.85,
-                timestamp=base_time - timedelta(days=10),  # 10 days old
-                method="ml",
+                method="ml_model",
+                model_version="2025-10-10T12:00:00Z",
+                session_id="test_merger_session",
+                timestamp=(base_time - timedelta(days=10)).isoformat() + "Z",  # 10 days old
             )
             mock_context.store_memory(
                 key=f"prediction_old_task_{i}",
@@ -270,11 +274,12 @@ class TestQueryPredictionsNormalOperation:
         for i in range(3):
             recent_prediction = PredictionLog(
                 task_id=f"recent_task_{i}",
-                predicted_tier="P2",
-                actual_tier="P2",
+                tier="moderate",
                 confidence=0.85,
-                timestamp=base_time - timedelta(days=2),  # 2 days old
-                method="ml",
+                method="ml_model",
+                model_version="2025-10-10T12:00:00Z",
+                session_id="test_merger_session",
+                timestamp=(base_time - timedelta(days=2)).isoformat() + "Z",  # 2 days old
             )
             mock_context.store_memory(
                 key=f"prediction_recent_task_{i}",
@@ -310,11 +315,12 @@ class TestQueryPredictionsNormalOperation:
         for i in range(5):
             low_conf = PredictionLog(
                 task_id=f"low_conf_task_{i}",
-                predicted_tier="P2",
-                actual_tier="P2",
+                tier="moderate",
                 confidence=0.5,  # Below threshold
-                timestamp=base_time - timedelta(days=1),
-                method="ml",
+                method="ml_model",
+                model_version="2025-10-10T12:00:00Z",
+                session_id="test_merger_session",
+                timestamp=(base_time - timedelta(days=1)).isoformat() + "Z",
             )
             mock_context.store_memory(
                 key=f"prediction_low_conf_task_{i}",
@@ -326,11 +332,12 @@ class TestQueryPredictionsNormalOperation:
         for i in range(7):
             high_conf = PredictionLog(
                 task_id=f"high_conf_task_{i}",
-                predicted_tier="P2",
-                actual_tier="P2",
+                tier="moderate",
                 confidence=0.9,  # Above threshold
-                timestamp=base_time - timedelta(days=1),
-                method="ml",
+                method="ml_model",
+                model_version="2025-10-10T12:00:00Z",
+                session_id="test_merger_session",
+                timestamp=(base_time - timedelta(days=1)).isoformat() + "Z",
             )
             mock_context.store_memory(
                 key=f"prediction_high_conf_task_{i}",
@@ -372,19 +379,19 @@ class TestConvertPredictionsToSamplesNormalOperation:
         predictions = [
             PredictionLog(
                 task_id="task_123",
-                predicted_tier="P2",
-                actual_tier="P2",
+                tier="moderate",
                 confidence=0.85,
-                timestamp=datetime.now(UTC),
-                method="ml",
+                method="ml_model",
+                model_version="2025-10-10T12:00:00Z",
+                session_id="test_merger_session",
             ),
             PredictionLog(
                 task_id="task_456",
-                predicted_tier="P1",
-                actual_tier="P1",
+                tier="complex",
                 confidence=0.92,
-                timestamp=datetime.now(UTC),
-                method="ml",
+                method="ml_model",
+                model_version="2025-10-10T12:00:00Z",
+                session_id="test_merger_session",
             ),
         ]
 
@@ -419,11 +426,11 @@ class TestConvertPredictionsToSamplesNormalOperation:
         predictions = [
             PredictionLog(
                 task_id="refactor authentication module",
-                predicted_tier="P2",
-                actual_tier="P2",
+                tier="moderate",
                 confidence=0.85,
-                timestamp=datetime.now(UTC),
-                method="ml",
+                method="ml_model",
+                model_version="2025-10-10T12:00:00Z",
+                session_id="test_merger_session",
             ),
         ]
 
@@ -975,11 +982,11 @@ class TestEdgeCases:
         predictions = [
             PredictionLog(
                 task_id="task_123",
-                predicted_tier="P2",
-                actual_tier="P2",
+                tier="moderate",
                 confidence=0.85,
-                timestamp=datetime.now(UTC),
-                method="ml",
+                method="ml_model",
+                model_version="2025-10-10T12:00:00Z",
+                session_id="test_merger_session",
             ),
         ]
 
@@ -1008,31 +1015,16 @@ class TestEdgeCases:
 
         base_time = datetime.now(UTC)
 
-        # Store predictions WITHOUT actual_tier
-        for i in range(5):
-            prediction = PredictionLog(
-                task_id=f"task_{i}",
-                predicted_tier="P2",
-                actual_tier=None,  # Missing ground truth
-                confidence=0.85,
-                timestamp=base_time - timedelta(days=1),
-                method="ml",
-            )
-            mock_context.store_memory(
-                key=f"prediction_task_{i}",
-                content=prediction.to_dict(),
-                tags=["prediction"],
-            )
-
-        # Store predictions WITH actual_tier
+        # Store predictions for testing (all valid with ground truth)
         for i in range(3):
             prediction = PredictionLog(
                 task_id=f"task_with_ground_truth_{i}",
-                predicted_tier="P2",
-                actual_tier="P2",  # Ground truth available
+                tier="moderate",
                 confidence=0.85,
-                timestamp=base_time - timedelta(days=1),
-                method="ml",
+                method="ml_model",
+                model_version="2025-10-10T12:00:00Z",
+                session_id="test_merger_session",
+                timestamp=(base_time - timedelta(days=1)).isoformat() + "Z",
             )
             mock_context.store_memory(
                 key=f"prediction_task_with_ground_truth_{i}",
@@ -1043,11 +1035,11 @@ class TestEdgeCases:
         # Act
         result = merger.query_predictions(days_back=7, min_confidence=0.8)
 
-        # Assert: Only predictions with actual_tier retrieved (3, not 8)
+        # Assert: Only predictions retrieved (3 samples)
         assert result.is_ok()
         predictions = result.unwrap()
         assert len(predictions) == 3
-        assert all(p.actual_tier is not None for p in predictions)
+        assert all(p.tier is not None for p in predictions)
 
 
 # ============================================================================
@@ -1183,11 +1175,12 @@ class TestErrorHandling:
         # Store prediction with invalid timestamp
         prediction = PredictionLog(
             task_id="task_invalid_ts",
-            predicted_tier="P2",
-            actual_tier="P2",
+            tier="moderate",
             confidence=0.85,
-            timestamp=datetime.now(UTC) - timedelta(days=1),
-            method="ml",
+            method="ml_model",
+            model_version="2025-10-10T12:00:00Z",
+            session_id="test_merger_session",
+            timestamp=(datetime.now(UTC) - timedelta(days=1)).isoformat() + "Z",
         )
         prediction_dict = prediction.to_dict()
         prediction_dict["timestamp"] = "invalid-timestamp"  # Corrupt timestamp
@@ -1224,11 +1217,9 @@ class TestErrorHandling:
         # Store incomplete prediction (missing confidence field)
         incomplete_prediction = {
             "task_id": "task_incomplete",
-            "predicted_tier": "P2",
-            "actual_tier": "P2",
-            # Missing "confidence" field
-            "timestamp": datetime.now(UTC).isoformat(),
-            "method": "ml",
+            "tier": "moderate",
+            # Missing "confidence", "method", "model_version", "session_id" fields
+            "timestamp": datetime.now(UTC).isoformat() + "Z",
         }
 
         mock_context.store_memory(
@@ -1262,11 +1253,11 @@ class TestErrorHandling:
         predictions = [
             PredictionLog(
                 task_id="task_123",
-                predicted_tier="P2",
-                actual_tier="P2",
+                tier="moderate",
                 confidence=0.85,
-                timestamp=datetime.now(UTC),
-                method="ml",
+                method="ml_model",
+                model_version="2025-10-10T12:00:00Z",
+                session_id="test_merger_session",
             ),
         ]
 

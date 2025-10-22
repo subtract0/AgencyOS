@@ -93,7 +93,8 @@ class TestMemoryAsyncErrorConditions:
         for thread in threads:
             thread.start()
         for thread in threads:
-            thread.join()
+            thread.join(timeout=5)
+            assert not thread.is_alive(), "Thread did not complete within timeout"
 
         # Check for errors
         assert len(errors) == 0, f"Concurrent operations caused errors: {errors}"
@@ -137,7 +138,8 @@ class TestMemoryAsyncErrorConditions:
         for thread in threads:
             thread.start()
         for thread in threads:
-            thread.join()
+            thread.join(timeout=5)
+            assert not thread.is_alive(), "Thread did not complete within timeout"
 
         assert len(errors) == 0, f"Concurrent read/write caused errors: {errors}"
 

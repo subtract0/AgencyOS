@@ -317,15 +317,18 @@ def _match_test_failure(line: str, context_lines: list[str]) -> ErrorPattern | N
     # Extract test name from context if available (look in context for test function header)
     message = "Test failed"
     test_name = None
+    test_header_lines = []
     for ctx_line in context_lines:
         test_match = re.search(r"def (test_\w+)", ctx_line)
         if test_match:
             test_name = test_match.group(1)
+            test_header_lines.append(ctx_line)
             break
         # Also check pytest output format
         test_match = re.search(r"_{5,}\s+(test_\w+)\s+_{5,}", ctx_line)
         if test_match:
             test_name = test_match.group(1)
+            test_header_lines.append(ctx_line)
             break
 
     if test_name:
@@ -335,10 +338,14 @@ def _match_test_failure(line: str, context_lines: list[str]) -> ErrorPattern | N
         if test_name_match:
             message = f"Test failed: test_{test_name_match.group(1)}"
 
+    # Include relevant context lines in raw_text for multiline tracebacks
+    raw_text_parts = test_header_lines + [line]
+    raw_text = "\n".join(raw_text_parts).strip() if test_header_lines else line.strip()
+
     return ErrorPattern(
         category=category,
         message=message,
-        raw_text=line.strip(),
+        raw_text=raw_text,
         file_path=file_path,
         line_number=line_number,
         suggested_fix="Review test expectations and fix implementation",
@@ -413,14 +420,28 @@ def parse_ci_logs(log_content: Any) -> Result[list[ErrorPattern], ParseError]:
     # Multi-line context for test failures (NECESSARY-E: edge cases)
     context_window = 10
 
+    # CRITICAL FIX: Per-line length limit to prevent regex catastrophic backtracking
+    # Lines longer than 5000 chars are typically binary data or corrupted logs
+    MAX_LINE_LENGTH = 5000
+
     for i, line in enumerate(lines):
         if not line.strip():
             continue
 
+        # Truncate extremely long lines to prevent regex backtracking (worker crashes)
+        # Keep beginning and end for error identification
+        if len(line) > MAX_LINE_LENGTH:
+            # Keep first 2000 and last 1000 chars, add indicator
+            line = line[:2000] + " ... [TRUNCATED - LINE TOO LONG] ... " + line[-1000:]
+
         # Get context lines for multi-line patterns
         context_start = max(0, i - context_window)
         context_end = min(len(lines), i + context_window)
-        context_lines = lines[context_start:context_end]
+        # Also truncate context lines to prevent backtracking
+        context_lines = [
+            (ln[:2000] + " ... [TRUNCATED] ... " + ln[-1000:]) if len(ln) > MAX_LINE_LENGTH else ln
+            for ln in lines[context_start:context_end]
+        ]
 
         # Try all matchers (priority order - specific errors before generic test failures)
         # Note: Using explicit function calls instead of lambdas to avoid E741/B023 linting issues

@@ -64,7 +64,7 @@ All five constitutional articles are now fully enforced:
 ### 🤖 All 10 Agents Operational
 
 1. **ChiefArchitectAgent** - Strategic oversight and ADR creation
-2. **AgencyCodeAgent** - Primary development with comprehensive toolset
+2. **CodingAgent** - Primary development with comprehensive toolset
 3. **PlannerAgent** - Spec-driven strategic planning
 4. **AuditorAgent** - Quality analysis using NECESSARY pattern
 5. **TestGeneratorAgent** - Comprehensive test generation

@@ -24,7 +24,7 @@ def test_router_no_trigger_no_route():
     hook = create_intent_router_hook()
     w = DummyWrapper()
     w.context.set("latest_user_prompt", "please summarize text")
-    asyncio.get_event_loop().run_until_complete(hook.on_start(w, agent=None))
+    asyncio.run(hook.on_start(w, agent=None))
     assert w.context.get("route_to_agent") is None
 
 
@@ -32,5 +32,5 @@ def test_router_case_insensitive():
     hook = create_intent_router_hook()
     w = DummyWrapper()
     w.context.set("latest_user_prompt", "Please provide an Audio Summary of results")
-    asyncio.get_event_loop().run_until_complete(hook.on_start(w, agent=None))
+    asyncio.run(hook.on_start(w, agent=None))
     assert w.context.get("route_to_agent") == "WorkCompletionSummaryAgent"

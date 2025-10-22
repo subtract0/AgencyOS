@@ -7,8 +7,8 @@ Constitutional compliance: Article II (Green Main enforcement).
 
 # Map of old assertions → new assertions
 ASSERTION_FIXES = {
-    # AgencyCodeAgent
-    ("'editing' in", "agency_code_agent"): "'implementation specialist' in",
+    # CodingAgent
+    ("'editing' in", "coding_agent"): "'implementation specialist' in",
     # AuditorAgent
     ("'quality assurance enforcer' in", "auditor"): "'quality assurance specialist' in",
     # ChiefArchitectAgent

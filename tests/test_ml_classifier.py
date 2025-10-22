@@ -126,7 +126,8 @@ class TestMLClassifierModelLoading:
         # Assert
         assert result.is_ok()
         assert classifier.model_version == "2025-10-10T12:00:00Z"
-        mock_storage.load_model.assert_called_once_with(model_path)
+        # ModelStorage.load_model is now called with version='latest' (not file path)
+        mock_storage.load_model.assert_called_once_with(version="latest")
 
     @patch("tools.ml_routing.ml_classifier.ModelStorage")
     def test_load_model_failure(self, mock_storage_class):
@@ -171,7 +172,7 @@ class TestMLClassifierClassification:
     """Test MLClassifier classification logic."""
 
     def test_classify_returns_error_when_model_not_loaded(self):
-        """Test classify() returns Err when model not loaded."""
+        """Test classify() falls back to rule-based when model not loaded."""
         # Arrange
         classifier = MLClassifier()
         task = {"description": "Implement feature X"}
@@ -179,13 +180,15 @@ class TestMLClassifierClassification:
         # Act
         result = classifier.classify(task)
 
-        # Assert
-        assert result.is_err()
-        assert "model not loaded" in result.unwrap_err().lower()
+        # Assert - Should fall back to rule-based classification
+        assert result.is_ok()
+        classification = result.unwrap()
+        assert classification.method == "rule_based_fallback"
+        assert classification.tier in ["P1", "P2", "P3", "simple", "moderate", "complex"]
 
     @patch("tools.ml_routing.ml_classifier.FeatureExtractor")
     def test_classify_returns_error_when_feature_extraction_fails(self, mock_extractor_class):
-        """Test classify() returns Err when feature extraction fails."""
+        """Test classify() falls back to rule-based when feature extraction fails."""
         # Arrange
         classifier = MLClassifier()
         classifier._model = MagicMock()  # Model loaded
@@ -199,9 +202,11 @@ class TestMLClassifierClassification:
         # Act
         result = classifier.classify(task)
 
-        # Assert
-        assert result.is_err()
-        assert "feature extraction" in result.unwrap_err().lower()
+        # Assert - Should fall back to rule-based classification
+        assert result.is_ok()
+        classification = result.unwrap()
+        assert classification.method == "rule_based_fallback"
+        assert classification.tier in ["P1", "P2", "P3", "simple", "moderate", "complex"]
 
     @patch("tools.ml_routing.ml_classifier.FeatureExtractor")
     def test_classify_success_with_high_confidence(self, mock_extractor_class):
@@ -238,7 +243,7 @@ class TestMLClassifierClassification:
 
     @patch("tools.ml_routing.ml_classifier.FeatureExtractor")
     def test_classify_returns_error_when_confidence_below_threshold(self, mock_extractor_class):
-        """Test classify() returns Err when confidence below threshold."""
+        """Test classify() falls back to rule-based when confidence below threshold."""
         # Arrange
         classifier = MLClassifier(confidence_threshold=0.8)
 
@@ -262,11 +267,11 @@ class TestMLClassifierClassification:
         # Act
         result = classifier.classify(task)
 
-        # Assert
-        assert result.is_err()
-        assert "confidence" in result.unwrap_err().lower()
-        assert "0.40" in result.unwrap_err()
-        assert "0.8" in result.unwrap_err()
+        # Assert - Should fall back to rule-based classification
+        assert result.is_ok()
+        classification = result.unwrap()
+        assert classification.method == "rule_based_fallback"
+        assert classification.tier in ["P1", "P2", "P3", "simple", "moderate", "complex"]
 
     @patch("tools.ml_routing.ml_classifier.FeatureExtractor")
     def test_classify_handles_p1_complex_tier(self, mock_extractor_class):

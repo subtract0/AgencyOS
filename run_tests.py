@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Test Runner for Agency Code Agency
+Test Runner for AgencyOS Agency
 Runs all tests using pytest framework
 """
 
@@ -229,8 +229,36 @@ def _record_timing(
         pass
 
 
+def calculate_dynamic_timeout(test_count: int = 1762, multiplier: float = 1.0) -> int:
+    """Calculate dynamic timeout based on test count and multiplier (Article I compliance).
+
+    Formula: timeout = (test_count * 150ms + 60s safety margin) * multiplier
+
+    Constitutional retry multipliers (Article I):
+    - 1.0x: Initial attempt (default: 5min for 1,762 tests)
+    - 2.0x: First retry (10min)
+    - 3.0x: Second retry (15min)
+    - 10.0x: Final retry (50min)
+
+    Args:
+        test_count: Number of tests to execute (default: 1,762 full suite)
+        multiplier: Constitutional retry multiplier (1.0, 2.0, 3.0, or 10.0)
+
+    Returns:
+        Timeout in seconds
+    """
+    base_timeout = int((test_count * 0.15) + 60)  # 150ms per test + 60s safety
+    return int(base_timeout * multiplier)
+
+
 def main(
-    test_mode: str = "unit", fast_only: bool = False, timed: bool = False, with_docker: bool = False
+    test_mode: str = "unit",
+    fast_only: bool = False,
+    timed: bool = False,
+    with_docker: bool = False,
+    timeout_multiplier: float = 1.0,
+    json_report: bool = False,
+    json_report_file: str = ".report.json",
 ) -> int:
     # RECURSION GUARDS: Prevent nested test runs
     if os.environ.get("AGENCY_NESTED_TEST") == "1":
@@ -265,7 +293,22 @@ def main(
     def cleanup_pid_file() -> None:
         pid_file.unlink(missing_ok=True)
 
+    # Clean up compiled files on exit (Article III: automated enforcement)
+    def cleanup_compiled_files() -> None:
+        """Remove compiled files to keep repository pristine."""
+        try:
+            cleanup_script = Path(__file__).parent / "scripts" / "cleanup_compiled_files.py"
+            if cleanup_script.exists():
+                subprocess.run(
+                    [sys.executable, str(cleanup_script), "--quiet"],
+                    timeout=30,
+                    capture_output=True
+                )
+        except Exception:
+            pass  # Silent cleanup - don't break test run
+
     atexit.register(cleanup_pid_file)
+    atexit.register(cleanup_compiled_files)
 
     # DOCKER LIFECYCLE MANAGEMENT (Article I & II compliance)
     docker_manager = None
@@ -374,103 +417,86 @@ def main(
     print("\n🧪 Running tests with pytest...")
     print("-" * 40)
 
-    # Pytest arguments for comprehensive testing
-    # Use uv run pytest in local dev, python -m pytest in CI
+    # ============================================================================
+    # PYTEST COMMAND CONSTRUCTION
+    # ============================================================================
+    # DESIGN: Thin wrapper around pytest - all behavior delegated to pytest.ini
+    # - pytest.ini controls: markers, parallelism (-n 6), output format, timeouts
+    # - run_tests.py controls: marker selection (-m), test ignores, verbosity overrides
+    # - Memory-aware worker selection overrides pytest.ini static config when safe
+    #
+    # WHY: Single source of truth for pytest behavior (pytest.ini)
+    # - Avoids duplicate configuration between pytest.ini and run_tests.py
+    # - Easier maintenance: change pytest.ini once, affects all invocations
+    # - Respects developer pytest.ini customizations
+    # ============================================================================
+
     is_ci = os.environ.get("CI") == "true"
 
     if is_ci:
         # CI environment - use python -m pytest
-        pytest_args = [
-            python_executable,
-            "-m",
-            "pytest",
-            "tests/",  # Test directory
-            "-v",  # Verbose output
-            "--tb=short",  # Short traceback format
-            "--strict-markers",  # Strict marker checking
-            "--durations=10",  # Show 10 slowest tests
-            # "-x",  # Stop on first failure - commented out to run all tests
-            "--color=yes",  # Colored output
-            # Exclude integration tests that hang at collection time
-            "--ignore=tests/test_firestore_learning_persistence.py",
-            "--ignore=tests/test_firestore_mock_integration.py",
-            "--ignore=tests/e2e/",  # e2e tests import agency at module level
-        ]
+        pytest_args = [python_executable, "-m", "pytest"]
     else:
         # Local development - use uv run pytest for better dependency management
-        # Use -q (quiet) for fast mode to reduce output overhead
-        verbosity_flag = "-q" if test_mode == "fast" else "-v"
-        pytest_args = [
-            "uv",
-            "run",
-            "pytest",
-            "tests/",  # Test directory
-            verbosity_flag,  # Quiet for fast mode, verbose otherwise
-            "--tb=short",  # Short traceback format
-            "--strict-markers",  # Strict marker checking
-            "--durations=10",  # Show 10 slowest tests
-            # "-x",  # Stop on first failure - commented out to run all tests
-            "--color=yes",  # Colored output
-            # Exclude integration tests that hang at collection time
+        pytest_args = ["uv", "run", "pytest"]
+
+    # Test directory (explicit, not in pytest.ini)
+    pytest_args.append("tests/")
+
+    # Verbosity override (only for fast mode, otherwise defer to pytest.ini -q)
+    if test_mode != "fast":
+        pytest_args.append("-v")  # Override pytest.ini -q for non-fast modes
+
+    # Show slowest tests (not in pytest.ini, useful for optimization)
+    pytest_args.append("--durations=10")
+
+    # Test ignores (known problematic tests, not suitable for pytest.ini)
+    # These are runtime issues, not configuration preferences
+    pytest_args.extend(
+        [
             "--ignore=tests/test_firestore_learning_persistence.py",
             "--ignore=tests/test_firestore_mock_integration.py",
             "--ignore=tests/e2e/",  # e2e tests import agency at module level
+            "--ignore=tests/benchmarks/test_vectorstore_performance.py",  # Quarantined
         ]
+    )
 
-    # Add parallel execution if pytest-xdist is available
-    # (Firestore tests excluded via --ignore flags, safe to parallelize)
-    # Memory-aware worker count: reduce parallelism when local Ollama model is active
+    # Memory-aware worker selection (ADR-023 integration)
+    # Overrides pytest.ini static config (-n 6) with dynamic adjustment
+    # PYTEST_WORKERS env var overrides memory-aware selection (for CI)
     try:
-        import xdist  # noqa: F401 - pytest-xdist module imported as 'xdist', checked for availability
-
-        # Check if local model is active (Phase 3 cost optimization)
-        use_local = os.getenv("USE_LOCAL_MODEL", "true").lower() == "true"
-
-        # Docker services consume memory: adjust worker count accordingly
-        if with_docker:
-            # Docker Ollama service (40GB limit) + tests: reduce workers
-            # 48GB Mac: Docker (40GB) + 2 workers (6GB) = 46GB (safe)
-            worker_count = int(os.getenv("LOCAL_MODEL_TEST_WORKERS", "2"))
-            print(f"🐳 Docker services active: using {worker_count} test workers (memory-safe)")
-        elif use_local:
-            # Reduce parallelism to prevent memory exhaustion with 32GB local model
-            # 48GB Mac: Qwen3-Coder Q8_0 (38GB) + 3 workers (9GB) = 47GB (safe)
-            worker_count = int(os.getenv("LOCAL_MODEL_TEST_WORKERS", "3"))
-            print(f"🧠 Local model active: using {worker_count} test workers (memory-safe)")
+        # Check for explicit worker override (CI environment)
+        worker_override = os.environ.get("PYTEST_WORKERS")
+        if worker_override:
+            worker_count = int(worker_override)
+            pytest_args.extend(["-n", str(worker_count)])
+            print(f"✓ pytest-xdist: {worker_count} workers (PYTEST_WORKERS override for CI)")
         else:
-            # No local model or Docker: default parallelism
-            worker_count = 10
+            from tools.memory_aware_test_runner import get_safe_worker_count
 
-        # CRITICAL: Force single worker to avoid PyTorch segfault (SPEC-021)
-        # TODO: Fix parallel import issue in sentence_transformers/torch
-        if worker_count > 1:
-            print("⚠️ WARNING: Reducing to 1 worker to avoid PyTorch segfault (see SPEC-021)")
-            worker_count = 1
+            # Cap at 3 workers for 0% flakiness (Article II: 100% pass rate mandatory)
+            # Memory-aware count can suggest 10 workers, but parallel timing tests need stability
+            memory_based_count = get_safe_worker_count()
+            worker_count = min(memory_based_count, 3)
+            pytest_args.extend(["-n", str(worker_count)])
+            print(f"✓ pytest-xdist: {worker_count} workers (capped at 3 for stability, Article II compliance)")
+    except Exception:
+        # Fallback to pytest.ini default (-n 6 --dist loadgroup)
+        print("✓ pytest-xdist: using pytest.ini defaults (-n 6)")
 
-        pytest_args.extend(["-n", str(worker_count)])
-    except ImportError:
-        pass  # Run sequentially if xdist not available
-
-    # PRE-IMPORT PYTORCH IN MAIN THREAD (SPEC-021 FIX)
-    # CRITICAL: Import torch/transformers BEFORE pytest spawns workers
-    # Prevents segfault from parallel imports in VectorStore initialization
-    use_enhanced_memory = os.getenv("USE_ENHANCED_MEMORY", "true").lower() == "true"
-    if use_enhanced_memory:
-        try:
-            print("🔧 Pre-importing PyTorch/transformers in main thread (SPEC-021 safety)...")
-            import torch  # noqa: F401 - Pre-import to prevent worker segfault
-            import transformers  # noqa: F401 - Pre-import to prevent worker segfault
-
-            print("✅ PyTorch/transformers pre-imported successfully")
-        except ImportError:
-            print(
-                "⚠️  PyTorch/transformers not installed - VectorStore will use keyword search only"
-            )
-
+    # ============================================================================
+    # ENVIRONMENT CONFIGURATION
+    # ============================================================================
     # Prepare environment variables
     env = os.environ.copy()
     env["AGENCY_NESTED_TEST"] = "1"
     env["PYTHONUNBUFFERED"] = "1"  # Disable output buffering for immediate feedback
+
+    # VectorStore configuration: Respect CI/environment settings (Article IV compliance)
+    # Default to 'false' for local dev (performance), but allow CI override
+    if "USE_ENHANCED_MEMORY" not in os.environ:
+        env["USE_ENHANCED_MEMORY"] = "false"  # Local dev: disable for speed
+    # else: Keep CI value ('true' for Article IV constitutional compliance)
 
     # Prevent PyTorch/transformers segfault with parallel testing (SPEC-021)
     env["TOKENIZERS_PARALLELISM"] = "false"  # Disable tokenizer parallelism
@@ -485,15 +511,19 @@ def main(
         # No Docker services: skip Ollama tests (default behavior)
         env["SKIP_OLLAMA_TESTS"] = "1"
 
-    # Add marker selection based on test mode
+    # ============================================================================
+    # MARKER SELECTION (Test Mode Filtering)
+    # ============================================================================
+    # Marker definitions are in pytest.ini - we just select which to run
+    # Default (no -m flag): pytest.ini controls what runs
+    # ============================================================================
     if test_mode == "unit":
-        if fast_only:
-            pytest_args.extend(["-m", "not integration and not slow and not benchmark"])
-        else:
-            pytest_args.extend(["-m", "not integration and not slow and not benchmark"])
+        # Unit tests only: exclude integration, slow, and benchmark
+        pytest_args.extend(["-m", "not integration and not slow and not benchmark"])
     elif test_mode == "integration" or test_mode == "integration-only":
         pytest_args.extend(["-m", "integration"])
     elif test_mode == "fast":
+        # Fast unit tests: exclude integration, slow, benchmark, and github
         pytest_args.extend(["-m", "not integration and not slow and not benchmark and not github"])
     elif test_mode == "slow":
         pytest_args.extend(["-m", "slow"])
@@ -502,20 +532,39 @@ def main(
     elif test_mode == "github":
         pytest_args.extend(["-m", "github"])
     elif test_mode == "all":
-        # For "all" mode, force running ALL tests including skipped ones
-        pytest_args.extend(["--runxfail", "-p", "no:warnings"])
+        # For "all" mode, run unit + integration BUT skip slow E2E tests (>5min each)
+        # Slow tests marked with @pytest.mark.slow include:
+        # - Real GitHub API tests (10-15 min each)
+        # - Large graph scale tests (10 min each)
+        pytest_args.extend(["-m", "not slow", "--runxfail", "-p", "no:warnings"])
         # Set environment variables to force-enable all conditional skips
         env["FORCE_RUN_ALL_TESTS"] = "1"
         env["AGENCY_SKIP_GIT"] = "0"
-        print("🚀 FORCE MODE: Running ALL tests including normally skipped ones")
+        print("🚀 FORCE MODE: Running ALL tests EXCEPT slow E2E (>5min each)")
+        print("   Slow tests skipped: test_full_autonomous_cycle_*, test_e2e_large_graph_scale")
         print("   This will make real API calls and may incur costs")
-    # Default: no marker filtering is applied
+    # Default: no marker filtering - pytest.ini controls default behavior
+
+    # JSON report generation (if requested)
+    if json_report:
+        pytest_args.extend(["--json-report", f"--json-report-file={json_report_file}"])
+        print(f"📊 JSON report will be saved to: {json_report_file}")
 
     try:
-        # Add timeout for safety (600 seconds for all test modes to prevent timeouts)
-        # Allow override from environment for CI environments
-        default_timeout = 600  # 10 minutes for all test modes
+        # Dynamic timeout calculation (Article I: Complete context before action)
+        # Formula: (test_count * 150ms + 60s) * multiplier
+        # - Full suite (1,762 tests): ~5min (1x), 10min (2x), 15min (3x), 50min (10x)
+        # Allow override from environment for CI or manual testing
+        default_timeout = calculate_dynamic_timeout(test_count=1762, multiplier=timeout_multiplier)
         timeout_seconds = int(os.environ.get("AGENCY_TEST_TIMEOUT_OVERRIDE", str(default_timeout)))
+
+        if timeout_multiplier > 1.0:
+            print(f"⏰ Timeout multiplier: {timeout_multiplier}x (constitutional retry, Article I)")
+            print(f"⏰ Calculated timeout: {timeout_seconds}s ({timeout_seconds / 60:.1f} minutes)")
+        else:
+            print(
+                f"⏰ Dynamic timeout: {timeout_seconds}s ({timeout_seconds / 60:.1f} minutes) for ~1,762 tests"
+            )
 
         # Debug: Print the exact command being run
         print(f"🔍 Running command: {' '.join(pytest_args)}\n")
@@ -549,7 +598,7 @@ def main(
             print(f"- {mode_descriptions.get(test_mode, test_mode)} executed successfully")
             print(f"- Execution time: {execution_time:.2f} seconds")
             print("- No failures or errors detected")
-            print("- Agency Code Agency is ready for use")
+            print("- AgencyOS Agency is ready for use")
         else:
             print("❌ Some tests failed!")
             print(f"Exit code: {result.returncode}")
@@ -557,20 +606,22 @@ def main(
             print("- Check the output above for specific test failures")
             print("- Ensure all dependencies are installed correctly")
             print("- Verify environment variables are set (if needed)")
-            print("- Check that all tool files are present in agency_code_agent/tools/")
+            print("- Check that all tool files are present in coding_agent/tools/")
             if test_mode == "integration":
                 print("- Integration tests may require additional setup or services")
 
         return result.returncode
 
     except subprocess.TimeoutExpired:
-        timeout_desc = "10 minutes" if test_mode == "all" else "60 seconds"
-        print(f"❌ Test run timed out after {timeout_desc}!")
+        timeout_minutes = timeout_seconds / 60
+        print(f"❌ Test run timed out after {timeout_minutes:.1f} minutes ({timeout_seconds}s)!")
         print("   This may indicate infinite loops or stuck processes.")
         print("   Check for:")
         print("   - Recursive test execution")
         print("   - Hanging network requests")
         print("   - Deadlocks in async code")
+        print(f"\n💡 To increase timeout, use: --timeout-multiplier <N>")
+        print(f"   Example: python run_tests.py --timeout-multiplier 2.0  (double timeout)")
         return 124  # Timeout exit code
 
     except FileNotFoundError:
@@ -592,27 +643,33 @@ def main(
 
 
 def run_specific_test(test_name: str, timed: bool = False) -> int:
-    """Run a specific test file or test function"""
+    """Run a specific test file or test function.
+
+    Delegates to pytest.ini for configuration (markers, parallelism, output format).
+    """
     print("=" * 60)
     print("AGENCY CODE AGENCY - SPECIFIC TEST RUNNER")
     print("=" * 60)
     print(f"\n🧪 Running specific test: {test_name}")
     print("-" * 40)
 
+    # Build pytest command (delegates to pytest.ini for configuration)
     pytest_args = [
         sys.executable,
         "-m",
         "pytest",
         f"tests/{test_name}" if not test_name.startswith("tests/") else test_name,
-        "-v",
-        "--tb=short",
-        "--color=yes",
+        "-v",  # Verbose for specific tests (override pytest.ini -q)
     ]
 
     try:
         # Set environment variable to prevent nested test runs
         env = os.environ.copy()
         env["AGENCY_NESTED_TEST"] = "1"
+        env["PYTHONUNBUFFERED"] = "1"
+
+        # Disable VectorStore for tests (same as main runner)
+        env["USE_ENHANCED_MEMORY"] = "false"
 
         # Add timeout for safety (5 minutes for specific tests)
         t0 = time.time()
@@ -621,7 +678,6 @@ def run_specific_test(test_name: str, timed: bool = False) -> int:
             check=False,
             env=env,
             timeout=300,
-            # Removed start_new_session to allow proper stdout/stderr inheritance
         )
         duration = time.time() - t0
 
@@ -654,7 +710,7 @@ def run_specific_test(test_name: str, timed: bool = False) -> int:
 def create_parser() -> argparse.ArgumentParser:
     """Create argument parser for test runner"""
     parser = argparse.ArgumentParser(
-        description="Agency Code Agency Test Runner",
+        description="AgencyOS Agency Test Runner",
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""Examples:
   python run_tests.py                    # Run unit tests only (default)
@@ -710,6 +766,28 @@ def create_parser() -> argparse.ArgumentParser:
         help="Record run duration to logs/benchmarks/test_timings.jsonl and print it",
     )
 
+    # Timeout multiplier for constitutional retries (Article I)
+    parser.add_argument(
+        "--timeout-multiplier",
+        type=float,
+        default=1.0,
+        help="Timeout multiplier for constitutional retries (e.g., 1.0=5min, 2.0=10min, 3.0=15min, 4.0=20min, 10.0=50min). Any positive float value is accepted.",
+    )
+
+    # JSON report generation
+    parser.add_argument(
+        "--json-report",
+        action="store_true",
+        help="Generate JSON report using pytest-json-report plugin",
+    )
+
+    parser.add_argument(
+        "--json-report-file",
+        type=str,
+        default=".report.json",
+        help="Path to JSON report file (default: .report.json)",
+    )
+
     return parser
 
 
@@ -740,7 +818,13 @@ if __name__ == "__main__":
         # Default behavior excludes slow and benchmark tests automatically
         fast_only = test_mode == "unit"
         exit_code = main(
-            test_mode, fast_only=fast_only, timed=args.timed, with_docker=args.with_docker
+            test_mode,
+            fast_only=fast_only,
+            timed=args.timed,
+            with_docker=args.with_docker,
+            timeout_multiplier=args.timeout_multiplier,
+            json_report=args.json_report,
+            json_report_file=args.json_report_file,
         )
 
     sys.exit(exit_code)

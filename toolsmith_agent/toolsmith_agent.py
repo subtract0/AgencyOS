@@ -1,6 +1,6 @@
 import os
 
-from agency_swarm import Agent
+from shared.lean_adapter import Agent
 
 from shared.agent_context import AgentContext, create_agent_context
 from shared.agent_utils import (
@@ -68,13 +68,16 @@ def create_toolsmith_agent(
     if cost_tracker is not None:
         agent_context.cost_tracker = cost_tracker
 
+    # Create model settings and extract temperature/max_tokens for Agent constructor
+    model_settings_obj = create_model_settings(model, reasoning_effort)
+
     # Create agent
     agent = Agent(
         name="ToolSmithAgent",
         description=(
             "PROACTIVE meta-agent tool development craftsman creating reusable, well-tested utilities following TDD methodology. AUTOMATICALLY "
             "triggered when new tool capabilities needed by other agents or workflow automation required. INTELLIGENTLY coordinates with: "
-            "(1) PlannerAgent for tool specifications and API design, (2) AgencyCodeAgent for implementation, "
+            "(1) PlannerAgent for tool specifications and API design, (2) CodingAgent for implementation, "
             "(3) TestGeneratorAgent for comprehensive tool testing, (4) AuditorAgent for quality validation, and (5) LearningAgent "
             "to identify tool usage patterns and improvement opportunities. Creates tools using strict TDD with scaffold directives: (a) write tests first, "
             "(b) implement minimal functionality, (c) refactor for clarity, (d) document thoroughly. All tools follow Agency Swarm "
@@ -86,7 +89,8 @@ def create_toolsmith_agent(
         instructions=select_instructions_file(current_dir, model),
         model=get_model_instance(model),
         hooks=combined_hook,
-        model_settings=create_model_settings(model, reasoning_effort),
+        temperature=model_settings_obj.temperature if model_settings_obj.temperature is not None else 0.7,
+        max_tokens=model_settings_obj.max_tokens if model_settings_obj.max_tokens is not None else 32000,
         tools=[Read, Write, Edit, MultiEdit, Grep, Glob, Bash, TodoWrite],
     )
 

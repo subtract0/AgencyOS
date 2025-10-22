@@ -28,6 +28,16 @@ Usage:
     result = parser.parse(None, InputMode.AUTO_SELECT)
 """
 
+from .completion_validator import (
+    CompletionValidator,
+    ConstitutionalChecks,
+)
+from .completion_validator import (
+    ValidationError as CompletionValidationError,
+)
+from .completion_validator import (
+    ValidationResults as CompletionValidationResults,
+)
 from .intent_parser import InputMode, Intent, IntentParser
 from .retry_policy import (
     IdempotencyKey,
@@ -89,4 +99,9 @@ __all__ = [
     "VerificationError",
     "VerificationResults",
     "verify_tests",
+    # Completion validator (Leap 7)
+    "CompletionValidator",
+    "CompletionValidationError",
+    "CompletionValidationResults",
+    "ConstitutionalChecks",
 ]

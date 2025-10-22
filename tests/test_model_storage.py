@@ -619,10 +619,12 @@ class TestModelStorageCornerCases:
 
         storage = ModelStorage(base_dir=temp_models_dir)
         results = []
+        lock = threading.Lock()
 
         def save_model_thread(version):
             result = storage.save_model(sample_ensemble_model, version=version)
-            results.append(result)
+            with lock:
+                results.append(result)
 
         # Create 3 threads saving different versions
         threads = [threading.Thread(target=save_model_thread, args=(f"v1.{i}",)) for i in range(3)]
@@ -631,10 +633,14 @@ class TestModelStorageCornerCases:
             thread.start()
 
         for thread in threads:
-            thread.join()
+            thread.join(timeout=5)
+            assert not thread.is_alive(), "Thread did not complete within timeout"
 
         # All saves should succeed
-        assert all(r.is_ok() for r in results)
+        assert len(results) == 3, f"Expected 3 results, got {len(results)}"
+        assert all(r.is_ok() for r in results), (
+            f"Some saves failed: {[r.unwrap_err() for r in results if r.is_err()]}"
+        )
         assert len(storage.list_models()) == 3
 
     def test_load_model_with_special_characters_in_version(

@@ -16,12 +16,9 @@ from typing import cast
 
 # Third-party imports
 import litellm
-from agency_swarm import Agency
+from shared.lean_adapter import Agency
 from agency_swarm.tools import SendMessageHandoff
 from dotenv import load_dotenv
-
-# Agency imports - specialized agents
-from agency_code_agent.agency_code_agent import create_agency_code_agent
 
 # Agency imports - memory subsystem
 from agency_memory import (
@@ -31,6 +28,9 @@ from agency_memory import (
 )
 from auditor_agent import create_auditor_agent
 from chief_architect_agent import create_chief_architect_agent
+
+# Agency imports - specialized agents
+from coding_agent.coding_agent import create_coding_agent
 from learning_agent import create_learning_agent
 from merger_agent.merger_agent import create_merger_agent
 from planner_agent.planner_agent import create_planner_agent
@@ -202,7 +202,7 @@ else:
 planner = create_planner_agent(
     model=agent_model("planner"), reasoning_effort="high", agent_context=shared_context
 )
-coder = create_agency_code_agent(
+coder = create_coding_agent(
     model=agent_model("coder"), reasoning_effort="medium", agent_context=shared_context
 )
 auditor = create_auditor_agent(
@@ -240,7 +240,7 @@ agency = Agency(
     summary,
     toolsmith,
     quality_enforcer,
-    name="AgencyCode",
+    name="agencyOS",
     communication_flows=[
         (chief_architect, auditor, SendMessageHandoff),
         (chief_architect, learning_agent, SendMessageHandoff),

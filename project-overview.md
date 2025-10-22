@@ -1,8 +1,8 @@
-# Agency Code - Autonomous Software Engineering System
+# AgencyOS - Autonomous Software Engineering System
 
 ## Mission Statement
 
-Agency Code is a revolutionary multi-agent software engineering system that achieves true autonomous self-healing while maintaining constitutional governance. The system can detect errors, generate fixes, apply patches, verify through testing, and commit changes without human intervention.
+AgencyOS is a revolutionary multi-agent software engineering system that achieves true autonomous self-healing while maintaining constitutional governance. The system can detect errors, generate fixes, apply patches, verify through testing, and commit changes without human intervention.
 
 ## Core Principles
 
@@ -26,7 +26,7 @@ The Agency operates under five immutable constitutional articles:
 
 ### Multi-Agent System (10 Agents)
 1. **ChiefArchitectAgent**: Strategic oversight and self-directed task creation
-2. **AgencyCodeAgent**: Primary development with 16 specialized tools
+2. **CodingAgent**: Primary development with 16 specialized tools
 3. **PlannerAgent**: Strategic planning using spec-kit methodology
 4. **AuditorAgent**: Quality analysis using CodeHealer NECESSARY pattern
 5. **TestGeneratorAgent**: NECESSARY-compliant test generation
@@ -125,7 +125,7 @@ Every operation in the Agency must comply with all five constitutional articles.
 
 ## The Achievement
 
-Agency Code represents the world's first truly autonomous software engineering system that:
+AgencyOS represents the world's first truly autonomous software engineering system that:
 - **Heals itself** automatically when errors occur
 - **Maintains quality** through constitutional governance
 - **Learns continuously** from every interaction

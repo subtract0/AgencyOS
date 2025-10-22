@@ -1,5 +1,59 @@
 # 🤖 Agency Agent Architecture
 
+## 🚨 WARP RULES (CONSTITUTIONAL ENFORCEMENT)
+
+### ARTICLE I: COMPLETE CONTEXT BEFORE ACTION - NO HANGING COMMANDS
+**THIS IS FORBIDDEN AND VIOLATES THE CONSTITUTION:**
+- NEVER leave hanging commands running (e.g., `gh pr checks --watch`)
+- NEVER leave open interactive windows that require user input (e.g., "press :qa")
+- NEVER leave processes in an incomplete state
+- ALL operations must be FULLY COMPLETED before response ends
+- If a command hangs or requires interaction: TERMINATE IT and find alternative approach
+- Use non-interactive flags: `--no-pager`, `--non-interactive`, `--batch`, etc.
+- Constitutional violation: Article I - Complete Context Before Action
+
+### FULL CONSTITUTION INTEGRATION
+All agents must operate under the complete Agency Constitution:
+
+**Article I: Complete Context Before Action**
+- No action without complete contextual understanding
+- At timeouts: halt and retry with 2x, 3x, up to 10x extended timeouts  
+- ALL tests must run to completion
+- NEVER proceed with incomplete data
+- No broken windows tolerance
+
+**Article II: 100% Verification and Stability**
+- Main branch MUST maintain 100% test success
+- No merge without green CI pipeline
+- Tests verify REAL functionality, not simulated behavior
+- "Delete the Fire First" priority always
+
+**Article III: Automated Merge Enforcement** 
+- Quality standards technically enforced, not manually governed
+- No manual override capabilities
+- No bypass authority for anyone
+- Quality gates are absolute barriers
+
+**Article IV: Continuous Learning and Improvement**
+- Agency continuously improves through experiential learning
+- VectorStore integration mandatory (USE_ENHANCED_MEMORY=true)
+- All agents query learnings before decisions
+- Store successful patterns after operations
+
+**Article V: Spec-Driven Development**
+- All development follows formal specification processes
+- New features begin with formal spec.md
+- Plans decompose into verifiable tasks
+- Progress tracking required throughout
+
+**Article VI: Red-Green-Refactor TDD Workflow**
+- Tests written FIRST (must fail initially)
+- Implementation ONLY after failing tests exist
+- 100% pass rate required before completion
+- No "pragmatic shortcuts" that skip RED phase
+
+---
+
 Comprehensive documentation of the Agency's 10-agent architecture, their roles, responsibilities, and communication patterns.
 
 ## 🏗️ Architecture Overview
@@ -7,7 +61,7 @@ Comprehensive documentation of the Agency's 10-agent architecture, their roles, 
 The Agency uses a **simplified, focused multi-agent architecture** with clear responsibilities and streamlined communication flows. Each agent is specialized for specific tasks while maintaining constitutional compliance and autonomous healing capabilities.
 
 ### Design Principles
-- **Constitutional Compliance**: All agents operate under the five constitutional articles
+- **Constitutional Compliance**: All agents operate under the six constitutional articles
 - **LLM-First Design**: Complex analysis delegated to GPT-5 rather than custom Python systems
 - **Focused Responsibilities**: Each agent has clear, non-overlapping duties
 - **Autonomous Healing**: Quality and error recovery capabilities built into the system
@@ -32,7 +86,7 @@ The Agency uses a **simplified, focused multi-agent architecture** with clear re
 
 ---
 
-### 2. AgencyCodeAgent (Coder)
+### 2. CodingAgent (Coder)
 **Role**: Primary development agent with comprehensive toolset
 
 **Key Responsibilities**:
@@ -68,8 +122,8 @@ The Agency uses a **simplified, focused multi-agent architecture** with clear re
 
 **Communication Patterns**:
 - **Inbound**: ChiefArchitectAgent, User (planning mode)
-- **Outbound**: AuditorAgent, AgencyCodeAgent
-- **Bidirectional**: AgencyCodeAgent (collaborative planning)
+- **Outbound**: AuditorAgent, CodingAgent
+- **Bidirectional**: CodingAgent (collaborative planning)
 
 ---
 
@@ -90,7 +144,7 @@ The Agency uses a **simplified, focused multi-agent architecture** with clear re
 
 **Communication Patterns**:
 - **Inbound**: ChiefArchitectAgent, PlannerAgent
-- **Outbound**: AgencyCodeAgent, TestGeneratorAgent, QualityEnforcerAgent
+- **Outbound**: CodingAgent, TestGeneratorAgent, QualityEnforcerAgent
 
 ---
 
@@ -106,7 +160,7 @@ The Agency uses a **simplified, focused multi-agent architecture** with clear re
 
 **Communication Patterns**:
 - **Inbound**: AuditorAgent, QualityEnforcerAgent
-- **Outbound**: AgencyCodeAgent
+- **Outbound**: CodingAgent
 - **Bidirectional**: QualityEnforcerAgent (quality collaboration)
 
 ---
@@ -137,7 +191,7 @@ The Agency uses a **simplified, focused multi-agent architecture** with clear re
 - Coordinates final deployment and release activities
 
 **Communication Patterns**:
-- **Inbound**: AgencyCodeAgent, ToolsmithAgent
+- **Inbound**: CodingAgent, ToolsmithAgent
 - **Outbound**: WorkCompletionSummaryAgent
 
 ---
@@ -169,7 +223,7 @@ The Agency uses a **simplified, focused multi-agent architecture** with clear re
 
 **Communication Patterns**:
 - **Inbound**: ChiefArchitectAgent, AuditorAgent
-- **Outbound**: AgencyCodeAgent, TestGeneratorAgent
+- **Outbound**: CodingAgent, TestGeneratorAgent
 - **Bidirectional**: TestGeneratorAgent
 - **Autonomous**: Self-initiated healing workflows
 
@@ -200,7 +254,7 @@ The Agency uses a **simplified, focused multi-agent architecture** with clear re
 - Tracks project progress and milestone achievements
 
 **Communication Patterns**:
-- **Inbound**: AgencyCodeAgent, PlannerAgent, MergerAgent
+- **Inbound**: CodingAgent, PlannerAgent, MergerAgent
 - **Route-Aware**: Activated via "tts" or "audio summary" intents
 - **Outbound**: User (completion summaries)
 
@@ -208,14 +262,14 @@ The Agency uses a **simplified, focused multi-agent architecture** with clear re
 
 ### Development Workflow
 ```
-User Request → PlannerAgent → AgencyCodeAgent → MergerAgent → Completion
+User Request → PlannerAgent → CodingAgent → MergerAgent → Completion
                      ↓              ↓
               AuditorAgent  →  TestGeneratorAgent
 ```
 
 ### Quality Assurance Workflow
 ```
-AuditorAgent → QualityEnforcerAgent → TestGeneratorAgent → AgencyCodeAgent
+AuditorAgent → QualityEnforcerAgent → TestGeneratorAgent → CodingAgent
        ↓                    ↓                     ↓
    Violations         Autonomous          Test Implementation
    Detected            Healing
@@ -231,13 +285,14 @@ Error Detection → QualityEnforcerAgent → LLM Analysis → Fix Application �
 
 ## 🛡️ Constitutional Compliance
 
-All agents operate under the **Five Constitutional Articles**:
+All agents operate under the **Six Constitutional Articles**:
 
 1. **Complete Context Before Action**: Agents gather full context before taking action
 2. **100% Verification**: All agents maintain 100% test success rate
 3. **Automated Enforcement**: Quality standards technically enforced
 4. **Continuous Learning**: All agents participate in learning and improvement
 5. **Spec-Driven Development**: All features require formal specifications
+6. **Red-Green-Refactor TDD**: Tests written first, must fail initially
 
 ## 🎯 Key Benefits
 

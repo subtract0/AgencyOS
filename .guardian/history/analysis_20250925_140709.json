@@ -7,7 +7,7 @@
       "id": "notest_agency_code_agent",
       "type": "testing",
       "severity": "high",
-      "file_path": "/Users/am/Code/Agency/agency_code_agent/agency_code_agent.py",
+      "file_path": "/Users/am/Code/Agency/coding_agent/agency_code_agent.py",
       "line_range": null,
       "description": "No test file found for agency_code_agent.py (1 functions)",
       "suggested_fix": "Create tests/test_agency_code_agent.py with comprehensive test coverage",
@@ -21,7 +21,7 @@
       "id": "nodoc_agency_code_agent_43",
       "type": "documentation",
       "severity": "low",
-      "file_path": "/Users/am/Code/Agency/agency_code_agent/agency_code_agent.py",
+      "file_path": "/Users/am/Code/Agency/coding_agent/agency_code_agent.py",
       "line_range": [
         43,
         44

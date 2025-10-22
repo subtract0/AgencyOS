@@ -2,7 +2,7 @@
 """
 Pydantic Refactoring Orchestration Script
 
-Creates autonomous task breakdown for replacing all Dict[Any, Any] with Pydantic models.
+Creates autonomous task breakdown for replacing all untyped dicts with Pydantic models.
 Perfect for overnight 4-agent parallel execution (M4 Pro + MacBook Air).
 
 Usage:
@@ -38,7 +38,7 @@ def create_pydantic_refactor_tasks():
     print("🔧 PYDANTIC REFACTORING ORCHESTRATION")
     print("=" * 70)
     print()
-    print("Goal: Replace all Dict[Any, Any] with typed Pydantic models")
+    print("Goal: Replace all untyped dicts with typed Pydantic models")
     print("Scope: ~50-60 core files in main codebase")
     print("Agents: 4 (2 M4 Pro + 2 MacBook Air)")
     print("Est. Time: 8-12 hours (overnight)")
@@ -53,7 +53,7 @@ def create_pydantic_refactor_tasks():
             Task(
                 task_id="pydantic-refactor-analyze-all-occurrences",
                 type="spec",
-                description="Analyze all Dict[Any, Any] occurrences in main codebase (exclude worktrees)",
+                description="Analyze all untyped dict occurrences in main codebase (exclude worktrees)",
                 files_to_modify=["docs/specs/pydantic_refactor_analysis.md"],
                 dependencies=[],
                 priority=10,
@@ -61,7 +61,7 @@ def create_pydantic_refactor_tasks():
             Task(
                 task_id="pydantic-refactor-categorize-by-module",
                 type="spec",
-                description="Categorize Dict[Any, Any] by module (shared/, tools/, etc.)",
+                description="Categorize untyped dicts by module (shared/, tools/, etc.)",
                 files_to_modify=["docs/specs/pydantic_refactor_categories.md"],
                 dependencies=["pydantic-refactor-analyze-all-occurrences"],
                 priority=10,
@@ -82,7 +82,7 @@ def create_pydantic_refactor_tasks():
     # ===================================================================
 
     shared_modules = [
-        ("agent_context", "Replace Dict[Any, Any] in AgentContext with typed models"),
+        ("agent_context", "Replace untyped dicts in AgentContext with typed models"),
         ("model_policy", "Replace config dicts with PolicyConfig Pydantic model"),
         ("pattern_detector", "Replace pattern dicts with PatternMatch Pydantic model"),
         ("prompt_compression", "Replace compression metadata with CompressionResult model"),
@@ -192,7 +192,7 @@ def create_pydantic_refactor_tasks():
             Task(
                 task_id="pydantic-refactor-verify-no-any",
                 type="test",
-                description="Grep verification: ensure no Dict[Any, Any] in main codebase",
+                description="Grep verification: ensure no untyped dicts in main codebase",
                 files_to_modify=["tests/test_no_dict_any_any.py"],
                 dependencies=["pydantic-refactor-mypy-validation"],
                 priority=5,
@@ -217,7 +217,7 @@ def create_pydantic_refactor_tasks():
             Task(
                 task_id="pydantic-refactor-docs-migration-guide",
                 type="doc",
-                description="Create migration guide for developers using old Dict[Any, Any] patterns",
+                description="Create migration guide for developers using old untyped dict patterns",
                 files_to_modify=["docs/PYDANTIC_MIGRATION_GUIDE.md"],
                 dependencies=["pydantic-refactor-integration-tests"],
                 priority=3,
