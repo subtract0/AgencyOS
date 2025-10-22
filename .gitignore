@@ -303,3 +303,14 @@ docs/leap_8_vectorstore_patterns.json
 
 # Leap execution analysis and reports (Markdown)
 logs/leap*_*.md
+
+# Auto-added by Constitutional Guardian - prevent root clutter
+/*.log
+/*.json
+!package.json
+!tsconfig.json
+!firebase.json
+!.agency_config.json
+/*.txt
+!requirements*.txt
+!README.txt
