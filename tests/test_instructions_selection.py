@@ -67,12 +67,15 @@ def test_reasoning_summary_auto_for_agents():
 
     # For OpenAI GPT-5 models, reasoning should be configured and summary set to auto
     assert code_agent.model_settings is not None
-    assert getattr(code_agent.model_settings, "reasoning", None) is not None
-    assert getattr(code_agent.model_settings.reasoning, "summary", None) == "auto"
+    # model_settings returns a dict, not object
+    assert "reasoning" in code_agent.model_settings
+    assert hasattr(code_agent.model_settings["reasoning"], "summary")
+    assert code_agent.model_settings["reasoning"].summary == "auto"
 
     assert planner_agent.model_settings is not None
-    # planner may use dict or object depending on implementation; normalize
-    reasoning = getattr(planner_agent.model_settings, "reasoning", None)
+    # Both agents use dict, check dict key
+    assert "reasoning" in planner_agent.model_settings
+    reasoning = planner_agent.model_settings["reasoning"]
     if isinstance(reasoning, dict):
         assert reasoning.get("summary") == "auto"
     else:

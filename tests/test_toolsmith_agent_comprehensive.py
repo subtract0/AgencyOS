@@ -377,7 +377,9 @@ class TestToolSmithAgentModelSettings:
         agent = create_toolsmith_agent(model="gpt-5", reasoning_effort="high")
 
         mock_create_settings.assert_called_once_with("gpt-5", "high")
-        assert agent.model_settings == mock_settings
+        # Agent.model_settings returns a dict for compatibility, not ModelSettings object
+        assert agent.model_settings["temperature"] == mock_settings.temperature
+        assert agent.model_settings["max_tokens"] == mock_settings.max_tokens
 
     def test_default_model_and_reasoning(self):
         """Test default model and reasoning effort values."""

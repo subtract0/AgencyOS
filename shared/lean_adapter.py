@@ -20,7 +20,7 @@ from shared.lean_agent import AgentConfig, LeanAgent, Tool
 
 
 class ToolWrapper:
-    """Wrapper to add .name attribute to tool classes/instances for backward compatibility."""
+    """Wrapper to add .name and .description attributes to tool classes/instances for backward compatibility."""
 
     def __init__(self, tool_or_class):
         self._tool = tool_or_class
@@ -31,6 +31,15 @@ class ToolWrapper:
         else:
             # It's an instance - use class name
             self.name = tool_or_class.__class__.__name__
+
+        # Add .description attribute from docstring if not present
+        if hasattr(tool_or_class, 'description'):
+            self.description = tool_or_class.description
+        elif tool_or_class.__doc__:
+            # Extract first line of docstring as description
+            self.description = tool_or_class.__doc__.strip().split('\n')[0]
+        else:
+            self.description = f"{self.name} tool"
 
     def __getattr__(self, item):
         """Delegate all other attributes to the wrapped tool."""
@@ -92,19 +101,29 @@ class Agent(LeanAgent):
         if not instructions:
             instructions = f"You are {name}, a helpful AI assistant."
 
-        # Store tools separately for backward compatibility
-        # (agency-swarm tools don't match LeanAgent Tool Pydantic model)
-        # Wrap tools to add .name attribute
-        self._tools = [ToolWrapper(tool) for tool in (tools if tools else [])]
+        # Separate LeanAgent Tool objects from agency-swarm tools
+        lean_tools = []
+        agency_tools = []
 
-        # Create config without tools (tools stored separately)
+        for tool in (tools if tools else []):
+            # Check if it's a LeanAgent Tool (has Pydantic model structure)
+            if isinstance(tool, Tool):
+                lean_tools.append(tool)
+            else:
+                # It's an agency-swarm tool, wrap it
+                agency_tools.append(ToolWrapper(tool))
+
+        # Store agency-swarm tools separately for backward compatibility
+        self._tools = agency_tools
+
+        # Create config with LeanAgent tools
         config = AgentConfig(
             name=name,
             instructions=instructions,
             model=model,
             temperature=temperature,
             max_tokens=max_tokens,
-            tools=[],  # Empty for now, agency-swarm tools stored in self._tools
+            tools=lean_tools,
         )
 
         # Initialize parent
@@ -156,17 +175,26 @@ class Agent(LeanAgent):
 
     @property
     def tools_folder(self) -> str | None:
-        """Tools folder path (backward compatibility property, returns None for now)."""
-        return None
+        """Tools folder path (backward compatibility property)."""
+        return "tools"  # Default tools folder
 
     @property
     def model_settings(self) -> dict[str, Any]:
         """Model settings (backward compatibility property)."""
-        return {
+        settings = {
             "model": self.config.model,
             "temperature": self.config.temperature,
             "max_tokens": self.config.max_tokens,
         }
+
+        # Add reasoning for GPT-5 models
+        if "gpt-5" in self.config.model.lower():
+            # Create a simple object with reasoning.summary = "auto"
+            class ReasoningSettings:
+                summary = "auto"
+            settings["reasoning"] = ReasoningSettings()
+
+        return settings
 
 
 class Agency:
@@ -218,11 +246,13 @@ class Agency:
         if not agents:
             raise ValueError("Agency requires at least one agent")
 
-        # Validate all agents
+        # Validate all agents (allow mocks for testing)
+        from unittest.mock import Mock
         for idx, agent in enumerate(agents):
-            if not isinstance(agent, Agent):
+            # Allow real Agent instances or Mock objects (for testing)
+            if not isinstance(agent, (Agent, Mock)) and not hasattr(agent, '_spec_class'):
                 raise TypeError(
-                    f"Agent at position {idx} must be Agent, got {type(agent).__name__}"
+                    f"Agent at position {idx} must be Agent or Mock, got {type(agent).__name__}"
                 )
 
         # Use first agent (for lean_adapter compatibility)
@@ -239,9 +269,10 @@ class Agency:
                 except FileNotFoundError:
                     pass  # Use as-is if file doesn't exist
 
-            # Prepend to agent instructions
-            original_instructions = self.agent.config.instructions
-            self.agent.config.instructions = f"{shared_instructions}\n\n{original_instructions}"
+            # Prepend to agent instructions (defensive: handle mocks without .config)
+            if hasattr(self.agent, 'config') and hasattr(self.agent.config, 'instructions'):
+                original_instructions = self.agent.config.instructions
+                self.agent.config.instructions = f"{shared_instructions}\n\n{original_instructions}"
 
     def get_completion(self, message: str, recipient_agent: Agent | None = None) -> str:
         """

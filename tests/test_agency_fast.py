@@ -246,29 +246,27 @@ class TestAgencyFast:
     def test_agency_creation_fast(self):
         """Test fast agency creation with mocked components."""
         with (
-            patch("agency_swarm.Agency") as mock_agency_class,
             patch("coding_agent.coding_agent.create_coding_agent") as mock_create_agent,
         ):
             # Setup mocks
             mock_agent = Mock()
             mock_agent.name = "TestAgent"
+            mock_agent.config = Mock()
+            mock_agent.config.instructions = "Mock instructions"
             mock_create_agent.return_value = mock_agent
 
-            mock_agency = Mock()
-            mock_agency_class.return_value = mock_agency
-
-            # Create agency (mocked)
+            # Create agency (actual Agency class, mocked agent)
             from shared.lean_adapter import Agency
 
-            _ = Agency(
+            agency = Agency(
                 mock_create_agent(model="gpt-5-mini", reasoning_effort="low"),
                 communication_flows=[],
                 shared_instructions="Test agency for fast testing",
             )
 
             # Verify creation
-            assert mock_agency_class.called
             assert mock_create_agent.called
+            assert agency.agent.name == "TestAgent"
 
     @pytest.mark.asyncio
     async def test_response_format_validation_fast(self, mock_agency_fast):

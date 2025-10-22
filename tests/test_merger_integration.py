@@ -344,13 +344,26 @@ class TestMergeVerificationWorkflow:
             "MergerAgent missing No Broken Windows policy"
         )
 
-        # Check GitHub workflow
+        # Check GitHub workflow (skip if disabled - Article III: CI/CD optional)
         workflow_path = os.path.join(project_root, ".github", "workflows", "merge-guardian.yml")
-        with open(workflow_path) as f:
-            workflow_content = f.read()
-        assert "No Broken Windows" in workflow_content, (
-            "GitHub workflow missing No Broken Windows policy"
-        )
+        workflow_path_disabled = workflow_path + ".disabled"
+
+        # Check enabled workflow first, then disabled (CI disabled to save costs)
+        if os.path.exists(workflow_path):
+            with open(workflow_path) as f:
+                workflow_content = f.read()
+            assert "No Broken Windows" in workflow_content, (
+                "GitHub workflow missing No Broken Windows policy"
+            )
+        elif os.path.exists(workflow_path_disabled):
+            # CI disabled - verify disabled workflow has policy
+            with open(workflow_path_disabled) as f:
+                workflow_content = f.read()
+            assert "No Broken Windows" in workflow_content, (
+                "GitHub workflow missing No Broken Windows policy (even when disabled)"
+            )
+        else:
+            pytest.skip("No merge-guardian workflow found (enabled or disabled)")
 
     def test_test_verification_consistency(self):
         """Test that all components use consistent test verification approach."""
