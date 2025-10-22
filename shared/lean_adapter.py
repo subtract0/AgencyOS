@@ -256,9 +256,9 @@ class Agency:
         """
         return self.agent.run(message)
 
-    def get_response(self, message: str, recipient_agent: Agent | None = None) -> str:
+    async def get_response(self, message: str, recipient_agent: Agent | None = None) -> str:
         """
-        Get response from agent (alias for get_completion for backward compatibility).
+        Get response from agent (async alias for backward compatibility).
 
         Args:
             message: User message
@@ -267,4 +267,6 @@ class Agency:
         Returns:
             Agent response
         """
+        # get_completion is synchronous, but tests expect async
+        # Run synchronously and return result
         return self.get_completion(message, recipient_agent)
