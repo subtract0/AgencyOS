@@ -293,7 +293,22 @@ def main(
     def cleanup_pid_file() -> None:
         pid_file.unlink(missing_ok=True)
 
+    # Clean up compiled files on exit (Article III: automated enforcement)
+    def cleanup_compiled_files() -> None:
+        """Remove compiled files to keep repository pristine."""
+        try:
+            cleanup_script = Path(__file__).parent / "scripts" / "cleanup_compiled_files.py"
+            if cleanup_script.exists():
+                subprocess.run(
+                    [sys.executable, str(cleanup_script), "--quiet"],
+                    timeout=30,
+                    capture_output=True
+                )
+        except Exception:
+            pass  # Silent cleanup - don't break test run
+
     atexit.register(cleanup_pid_file)
+    atexit.register(cleanup_compiled_files)
 
     # DOCKER LIFECYCLE MANAGEMENT (Article I & II compliance)
     docker_manager = None

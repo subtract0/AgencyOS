@@ -1,0 +1,321 @@
+{
+  "mission": "Solidify Test Base: Eliminate Hanging Tests and Reduce Test Time",
+  "leap_number": 9,
+  "phases": [
+    {
+      "id": "phase_1_analysis",
+      "title": "Root Cause Analysis",
+      "tasks": [
+        {
+          "id": "analyze_hanging_test",
+          "title": "Analyze hanging test patterns in autonomous_audit_loop",
+          "type": "Spec",
+          "tier": "Tier 1",
+          "agent": "auditor",
+          "description": "Analyze test_autonomous_audit_loop.py to identify root causes of 5.4-minute timeout. Focus on: (1) asyncio.sleep() delays, (2) subprocess.run() blocking commands, (3) recursive test execution risks, (4) missing per-function timeouts. Generate detailed spec with acceptance criteria for each fix.",
+          "dependencies": [],
+          "acceptance_criteria": [
+            "Root causes documented with line numbers and code snippets",
+            "Impact analysis: quantify time added by each issue (e.g., 3 asyncio.sleep(1) = 3 seconds)",
+            "Risk assessment: identify blocking vs non-blocking issues",
+            "Prioritization matrix: P0 (blocking hangs) vs P1 (performance) vs P2 (code quality)",
+            "Spec includes before/after metrics (current: 4+ sec, target: <500ms for unit tests)"
+          ],
+          "estimated_tokens": 4000
+        }
+      ]
+    },
+    {
+      "id": "phase_2_immediate_fixes",
+      "title": "Immediate Blocking Fixes (P0)",
+      "tasks": [
+        {
+          "id": "test_remove_intentional_delays",
+          "title": "Write test to verify no intentional delays in test execution",
+          "type": "Test",
+          "tier": "Tier 2",
+          "agent": "test_generator",
+          "description": "Create test to ensure autonomous_audit_loop() completes in <500ms for unit tests. Use monkeypatch to mock asyncio.sleep(). Follow NECESSARY pattern: Normal (3 cycles, mocked sleep), Edge (0 cycles, 1000 cycles), Error (sleep throws exception), Security (ensure sleep can't be exploited), Scale (1000 cycles in <2s with mocked sleep).",
+          "dependencies": ["analyze_hanging_test"],
+          "verification_target": "remove_intentional_delays",
+          "acceptance_criteria": [
+            "Test passes with current code (has asyncio.sleep)",
+            "Test fails when asyncio.sleep removed (validates test works)",
+            "Test uses monkeypatch to mock asyncio.sleep",
+            "Test measures execution time (<500ms for unit tests)",
+            "Test covers NECESSARY pattern (Normal, Edge, Error, Security, Scale)"
+          ],
+          "estimated_tokens": 3000
+        },
+        {
+          "id": "remove_intentional_delays",
+          "title": "Remove asyncio.sleep() from test autonomous loop",
+          "type": "Code",
+          "tier": "Tier 2",
+          "agent": "coder",
+          "description": "Remove all asyncio.sleep() calls from autonomous_audit_loop() function in tests/integration/test_autonomous_audit_loop.py. Delete lines with 'await asyncio.sleep(1)' or similar. Verify no intentional delays remain. Preserve all actual test logic (cleanup, audit, prioritization, validation).",
+          "dependencies": ["test_remove_intentional_delays"],
+          "acceptance_criteria": [
+            "All asyncio.sleep() calls removed from test functions",
+            "Test still validates all 6 steps (pre-flight, audit, prioritization, refactoring, validation, post-flight)",
+            "Test passes in <500ms (down from 4+ seconds)",
+            "No broken tests introduced",
+            "Git diff shows only asyncio.sleep() deletions, no logic changes"
+          ],
+          "estimated_tokens": 2000
+        },
+        {
+          "id": "test_non_blocking_cleanup",
+          "title": "Write test to verify process cleanup is non-blocking",
+          "type": "Test",
+          "tier": "Tier 2",
+          "agent": "test_generator",
+          "description": "Create test to ensure pre_flight_cleanup() and post_flight_cleanup() complete in <200ms. Test should verify: (1) cleanup doesn't block on xargs with no processes, (2) cleanup has timeout, (3) cleanup uses psutil or pgrep instead of pipe chains. Follow NECESSARY pattern: Normal (cleanup with no processes), Edge (cleanup with 10 processes), Error (pgrep fails), Security (can't kill non-test processes), Async (concurrent cleanup calls).",
+          "dependencies": ["analyze_hanging_test"],
+          "verification_target": "fix_non_blocking_cleanup",
+          "acceptance_criteria": [
+            "Test fails with current subprocess.run() implementation (validates issue exists)",
+            "Test passes with psutil or pgrep implementation",
+            "Test measures cleanup time (<200ms)",
+            "Test verifies no blocking on xargs",
+            "Test covers NECESSARY pattern (Normal, Edge, Error, Security, Async)"
+          ],
+          "estimated_tokens": 3500
+        },
+        {
+          "id": "fix_non_blocking_cleanup",
+          "title": "Replace blocking subprocess cleanup with non-blocking psutil",
+          "type": "Code",
+          "tier": "Tier 2",
+          "agent": "coder",
+          "description": "Replace subprocess.run() with pipe chains in pre_flight_cleanup() and post_flight_cleanup(). Use Python's psutil library instead: iterate psutil.process_iter(), filter by 'pytest' in name, kill if PID != current_pid. Add timeout=2 to prevent hangs. Ensure no xargs blocking issues.",
+          "dependencies": ["test_non_blocking_cleanup"],
+          "acceptance_criteria": [
+            "psutil replaces all subprocess.run() with pipe chains in cleanup functions",
+            "Cleanup completes in <200ms (measured)",
+            "Cleanup has timeout (2 seconds max)",
+            "No xargs or grep blocking issues remain",
+            "Current PID excluded from kill (no self-termination)",
+            "Tests pass at 100%"
+          ],
+          "estimated_tokens": 2500
+        },
+        {
+          "id": "test_function_timeouts",
+          "title": "Write test to verify all async tests have timeouts",
+          "type": "Test",
+          "tier": "Tier 2",
+          "agent": "test_generator",
+          "description": "Create meta-test to scan test_autonomous_audit_loop.py and ensure all @pytest.mark.asyncio functions have @pytest.mark.timeout() decorators. Test should parse AST, find async test functions, verify timeout decorator exists. Follow NECESSARY pattern: Normal (all tests have timeouts), Edge (timeout value appropriate for function complexity), Error (missing timeout decorator), Security (timeout can't be bypassed).",
+          "dependencies": ["analyze_hanging_test"],
+          "verification_target": "add_function_timeouts",
+          "acceptance_criteria": [
+            "Test scans Python AST for async test functions",
+            "Test verifies @pytest.mark.timeout() decorator present",
+            "Test validates timeout values (unit: 5s, integration: 10s)",
+            "Test fails if any async test missing timeout",
+            "Test covers NECESSARY pattern (Normal, Edge, Error, Security)"
+          ],
+          "estimated_tokens": 3000
+        },
+        {
+          "id": "add_function_timeouts",
+          "title": "Add @pytest.mark.timeout() to all async test functions",
+          "type": "Code",
+          "tier": "Tier 2",
+          "agent": "coder",
+          "description": "Add @pytest.mark.timeout() decorator to all async test functions in tests/integration/test_autonomous_audit_loop.py. Use timeout=5 for unit tests (cleanup, prioritization, validation) and timeout=10 for integration test (full cycle). Ensure pytest-timeout is in requirements.txt.",
+          "dependencies": ["test_function_timeouts"],
+          "acceptance_criteria": [
+            "All async test functions have @pytest.mark.timeout() decorator",
+            "Timeout values appropriate: 5s for unit, 10s for integration",
+            "pytest-timeout added to requirements.txt or pyproject.toml",
+            "Tests still pass at 100%",
+            "Hanging tests now fail fast (within timeout) instead of hanging forever"
+          ],
+          "estimated_tokens": 2000
+        }
+      ]
+    },
+    {
+      "id": "phase_3_test_organization",
+      "title": "Test Organization and Performance (P1)",
+      "tasks": [
+        {
+          "id": "test_unit_integration_separation",
+          "title": "Write test to verify unit/integration test separation",
+          "type": "Test",
+          "tier": "Tier 2",
+          "agent": "test_generator",
+          "description": "Create test to ensure unit tests (fast, no delays) are marked separately from integration tests (slow, full cycles). Test should verify: (1) pytest markers exist (@pytest.mark.unit, @pytest.mark.integration), (2) unit tests complete in <100ms each, (3) integration tests allowed up to 10s. Follow NECESSARY pattern: Normal (run unit tests only), Edge (run integration tests only), Error (missing markers), Security (markers can't be bypassed).",
+          "dependencies": ["remove_intentional_delays", "fix_non_blocking_cleanup", "add_function_timeouts"],
+          "verification_target": "separate_unit_integration_tests",
+          "acceptance_criteria": [
+            "Test validates pytest marker separation",
+            "Test measures unit test execution time (<100ms)",
+            "Test verifies integration test markers present",
+            "Test ensures -m 'not integration' runs only fast tests",
+            "Test covers NECESSARY pattern (Normal, Edge, Error, Security)"
+          ],
+          "estimated_tokens": 3500
+        },
+        {
+          "id": "separate_unit_integration_tests",
+          "title": "Separate unit and integration tests with pytest markers",
+          "type": "Code",
+          "tier": "Tier 2",
+          "agent": "coder",
+          "description": "Add pytest markers to tests/integration/test_autonomous_audit_loop.py: @pytest.mark.unit for fast tests (cleanup, prioritization, validation), @pytest.mark.integration for full cycle test. Update pytest.ini to register markers. Document in test file docstring: 'Run unit tests: pytest -m \"not integration\" -v' and 'Run all tests: pytest -v'.",
+          "dependencies": ["test_unit_integration_separation"],
+          "acceptance_criteria": [
+            "Unit tests marked with @pytest.mark.unit",
+            "Integration tests marked with @pytest.mark.integration",
+            "pytest.ini registers custom markers",
+            "Documentation added to test file docstring",
+            "pytest -m 'not integration' runs only unit tests (<500ms total)",
+            "pytest -v runs all tests (unit + integration)"
+          ],
+          "estimated_tokens": 2500
+        },
+        {
+          "id": "test_mock_asyncio_sleep",
+          "title": "Write test to verify asyncio.sleep is mocked in unit tests",
+          "type": "Test",
+          "tier": "Tier 2",
+          "agent": "test_generator",
+          "description": "Create test to ensure unit tests use monkeypatch to mock asyncio.sleep, while integration tests use real sleep (if needed). Test should verify: (1) unit tests complete instantly with mocked sleep, (2) integration tests allowed real sleep, (3) mocked sleep called correct number of times. Follow NECESSARY pattern: Normal (mock works), Edge (sleep(0) vs sleep(1000)), Error (mock throws exception), Security (mock can't be bypassed).",
+          "dependencies": ["separate_unit_integration_tests"],
+          "verification_target": "add_asyncio_sleep_mocks",
+          "acceptance_criteria": [
+            "Test verifies unit tests mock asyncio.sleep",
+            "Test measures unit test time (should be instant with mock)",
+            "Test validates integration tests can use real sleep if needed",
+            "Test counts asyncio.sleep calls (should be 0 for unit tests)",
+            "Test covers NECESSARY pattern (Normal, Edge, Error, Security)"
+          ],
+          "estimated_tokens": 3000
+        },
+        {
+          "id": "add_asyncio_sleep_mocks",
+          "title": "Add monkeypatch to mock asyncio.sleep in unit tests",
+          "type": "Code",
+          "tier": "Tier 2",
+          "agent": "coder",
+          "description": "Update unit tests to use monkeypatch.setattr('asyncio.sleep', lambda x: None) at start of each unit test function. This makes unit tests instant by skipping sleep delays. Keep real asyncio.sleep in integration test (if needed for realistic timing). Document monkeypatch usage in test docstrings.",
+          "dependencies": ["test_mock_asyncio_sleep"],
+          "acceptance_criteria": [
+            "Unit tests use monkeypatch to mock asyncio.sleep",
+            "Unit tests complete instantly (<100ms each)",
+            "Integration test uses real asyncio.sleep if needed",
+            "No asyncio.sleep delays in unit test execution",
+            "Tests pass at 100%",
+            "Monkeypatch documented in test docstrings"
+          ],
+          "estimated_tokens": 2000
+        }
+      ]
+    },
+    {
+      "id": "phase_4_verification",
+      "title": "Comprehensive Verification and Documentation",
+      "tasks": [
+        {
+          "id": "test_performance_regression",
+          "title": "Write performance regression test for test suite",
+          "type": "Test",
+          "tier": "Tier 2",
+          "agent": "test_generator",
+          "description": "Create test to ensure test suite performance doesn't regress. Test should: (1) measure total test execution time, (2) verify unit tests complete in <500ms, (3) verify integration tests complete in <10s, (4) fail if performance regresses >20%. Follow NECESSARY pattern: Normal (all tests within budget), Edge (single slow test detected), Error (timeout occurs), Scale (1000 test functions).",
+          "dependencies": ["separate_unit_integration_tests", "add_asyncio_sleep_mocks"],
+          "verification_target": "verify_all_fixes",
+          "acceptance_criteria": [
+            "Test measures test suite execution time",
+            "Test enforces performance budget (unit: <500ms, integration: <10s)",
+            "Test fails if performance regresses >20%",
+            "Test identifies specific slow tests (outliers)",
+            "Test covers NECESSARY pattern (Normal, Edge, Error, Scale)"
+          ],
+          "estimated_tokens": 3500
+        },
+        {
+          "id": "verify_all_fixes",
+          "title": "Verify all hanging test fixes and measure performance",
+          "type": "Code",
+          "tier": "Tier 2",
+          "agent": "coder",
+          "description": "Run full test suite with pytest -v and measure performance. Verify: (1) no asyncio.sleep in unit tests, (2) psutil replaces subprocess pipes, (3) all async tests have timeouts, (4) unit/integration separation works, (5) unit tests <500ms, integration <10s. Document performance improvements in migration doc.",
+          "dependencies": ["test_performance_regression"],
+          "acceptance_criteria": [
+            "Full test suite passes at 100%",
+            "Unit tests complete in <500ms (down from 4+ seconds)",
+            "Integration tests complete in <10s",
+            "No hanging tests (all have timeouts)",
+            "Performance improvement documented (before/after metrics)",
+            "pytest -m 'not integration' runs only fast tests"
+          ],
+          "estimated_tokens": 3000
+        },
+        {
+          "id": "update_test_documentation",
+          "title": "Update test documentation with performance guidelines",
+          "type": "Code",
+          "tier": "Tier 2",
+          "agent": "coder",
+          "description": "Update tests/integration/test_autonomous_audit_loop.py docstring and create docs/testing/PERFORMANCE_GUIDELINES.md. Document: (1) unit vs integration test rules, (2) timeout requirements (@pytest.mark.timeout), (3) asyncio.sleep mocking (monkeypatch), (4) process cleanup best practices (psutil), (5) performance budgets (unit: <100ms, integration: <10s). Include examples of good/bad test patterns.",
+          "dependencies": ["verify_all_fixes"],
+          "acceptance_criteria": [
+            "Test file docstring updated with performance guidelines",
+            "docs/testing/PERFORMANCE_GUIDELINES.md created",
+            "Guidelines include unit vs integration test rules",
+            "Guidelines include timeout requirements",
+            "Guidelines include asyncio.sleep mocking examples",
+            "Guidelines include good/bad test pattern examples",
+            "Constitutional compliance referenced (Article I: complete context, Article II: 100% verification)"
+          ],
+          "estimated_tokens": 3000
+        },
+        {
+          "id": "create_migration_summary",
+          "title": "Create migration summary document for test solidification",
+          "type": "Code",
+          "tier": "Tier 1",
+          "agent": "coder",
+          "description": "Create docs/migrations/test_solidification_hanging_tests.md summarizing all fixes. Include: (1) problems identified (asyncio.sleep, subprocess blocking, missing timeouts), (2) solutions implemented (psutil, monkeypatch, pytest markers), (3) before/after metrics (4+ sec → <500ms), (4) constitutional alignment (Articles I-III), (5) future prevention (performance budgets, CI gates). Follow ADR-032 style documentation.",
+          "dependencies": ["update_test_documentation"],
+          "acceptance_criteria": [
+            "Migration doc created: docs/migrations/test_solidification_hanging_tests.md",
+            "Document includes problems, solutions, metrics (before/after)",
+            "Document references constitutional articles (I, II, III)",
+            "Document includes future prevention strategies",
+            "Document follows ADR-032 style (context, decision, consequences)",
+            "Document includes code examples of fixes"
+          ],
+          "estimated_tokens": 4000
+        }
+      ]
+    }
+  ],
+  "checkpoints": [
+    {
+      "after_phase": "phase_2_immediate_fixes",
+      "type": "auto_validate",
+      "prompt": "Validate P0 fixes: (1) asyncio.sleep removed, (2) psutil cleanup non-blocking, (3) timeouts added. All tests must pass at 100%."
+    },
+    {
+      "after_phase": "phase_3_test_organization",
+      "type": "auto_validate",
+      "prompt": "Validate test organization: (1) unit/integration separation works, (2) unit tests <500ms, (3) integration tests <10s. Performance regression test must pass."
+    }
+  ],
+  "metadata": {
+    "estimated_tokens": 48500,
+    "estimated_cost_usd": 1.25,
+    "complexity": "moderate",
+    "budget_limit_usd": 2.0,
+    "preflight_checks": [
+      "All tests currently pass (even if slow)",
+      "pytest-timeout is installable",
+      "psutil is installable"
+    ]
+  }
+}
