@@ -280,6 +280,7 @@ class CheckpointManager:
                 return Ok(None)
 
             # Try checkpoints in order (newest first) until we find a valid one
+            had_corrupted_checkpoints = False
             for checkpoint_file in checkpoint_files:
                 checkpoint_id = checkpoint_file.stem
 
@@ -297,6 +298,7 @@ class CheckpointManager:
                         logger.warning(
                             f"Checkpoint {checkpoint_id} has invalid checksum, trying next..."
                         )
+                        had_corrupted_checkpoints = True
                         continue
 
                     # Valid checkpoint found
@@ -316,11 +318,16 @@ class CheckpointManager:
 
                 except (OSError, json.JSONDecodeError) as e:
                     logger.warning(f"Cannot read checkpoint {checkpoint_id}: {e}, trying next...")
+                    had_corrupted_checkpoints = True
                     continue
 
-            # No valid checkpoints found
-            logger.debug(f"No valid checkpoints found for session: {session_id}")
-            return Ok(None)
+            # No valid checkpoints found - distinguish between no checkpoints and all corrupted
+            if had_corrupted_checkpoints:
+                logger.error(f"All checkpoints corrupted for session: {session_id}")
+                return Err("all_checkpoints_corrupted")
+            else:
+                logger.debug(f"No valid checkpoints found for session: {session_id}")
+                return Ok(None)
 
         except Exception as e:
             logger.error(f"Paused session detection failed: {e}")
@@ -351,7 +358,8 @@ class CheckpointManager:
             if checkpoint_id is None:
                 detection_result = self.detect_paused_session(session_id)
                 if detection_result.is_err():
-                    return Err(detection_result.unwrap_err())
+                    # Error from detect_paused_session (e.g., all_checkpoints_corrupted)
+                    return detection_result
 
                 checkpoint_meta = detection_result.unwrap()
                 if checkpoint_meta is None:
