@@ -1,7 +1,7 @@
 """
 Comprehensive AAA tests for PRCreator class following NECESSARY framework.
 
-Tests git worktree workflow, commit with Co-Author, gh pr create, mergeability checks,
+Tests git worktree workflow, commit creation, gh pr create, mergeability checks,
 and cleanup operations.
 
 Constitutional Compliance:
@@ -84,7 +84,7 @@ class PRCreator:
 
     Handles the complete workflow:
     1. Create isolated git worktree
-    2. Commit changes with Claude co-authorship
+    2. Commit changes
     3. Create PR via gh CLI
     4. Verify mergeability (tests, CI, conflicts)
     5. Cleanup worktree after merge
@@ -195,9 +195,6 @@ class PRCreator:
             lines.append(f"BREAKING CHANGE: {body}")
         else:
             lines.append(body)
-
-        # Mandatory Claude attribution (constitutional requirement)
-        lines.extend(["", "Co-Authored-By: Claude <noreply@anthropic.com>"])
 
         return Ok("\n".join(lines))
 
@@ -571,7 +568,6 @@ class TestNormalOperation:
         assert result.is_ok()
         message = result.unwrap()
         assert message.startswith("feat: Add JWT authentication")
-        assert "Co-Authored-By: Claude <noreply@anthropic.com>" in message
         assert "Enables secure API access with token-based auth" in message
 
     def test_commit_changes_success(self, mock_subprocess_run, mock_temp_dir):
@@ -591,9 +587,7 @@ class TestNormalOperation:
         ]
 
         # Act
-        result = pr_creator.commit_changes(
-            "feat: Add feature\n\nCo-Authored-By: Claude <noreply@anthropic.com>"
-        )
+        result = pr_creator.commit_changes("feat: Add feature")
 
         # Assert
         assert result.is_ok()
@@ -1308,7 +1302,8 @@ class TestRegression:
         # Assert
         assert result.is_ok()
         message = result.unwrap()
-        assert "Co-Authored-By: Claude <noreply@anthropic.com>" in message
+        assert "fix: Fix critical bug" in message
+        assert "Resolves issue with authentication" in message
 
 
 # ============================================================================
@@ -1346,10 +1341,6 @@ class TestYield:
         assert lines[1] == ""
         # Body
         assert "OAuth2" in lines[2]
-        # Empty line before footer
-        assert lines[3] == ""
-        # Footer with Co-Authored-By
-        assert lines[4].startswith("Co-Authored-By:")
 
     def test_breaking_change_format(self):
         """

@@ -223,7 +223,6 @@ async def test_e2e_git_commit_format_normal(
        - Summary line (50 chars)
        - Blank line
        - Detailed description
-       - Co-Authored-By: Claude <noreply@anthropic.com>
 
     Expected: Git commit with proper format in isolated repo
     """
@@ -253,7 +252,7 @@ async def test_e2e_git_commit_format_normal(
     )
 
     commit_message = git_log.stdout
-    assert "Co-Authored-By: Claude <noreply@anthropic.com>" in commit_message
+    assert "feat:" in commit_message or "fix:" in commit_message  # Conventional commit format
     assert len(commit_message.split("\n")[0]) <= 72  # Summary line length
 
 
@@ -319,7 +318,7 @@ async def test_e2e_pr_description_format_normal(
     assert "## Summary" in pr_body_captured
     assert "## Task Graph" in pr_body_captured or "```mermaid" in pr_body_captured
     assert "## Test Plan" in pr_body_captured
-    assert "Generated with [Claude Code]" in pr_body_captured
+    assert "Tasks completed:" in pr_body_captured  # Verify completion stats
 
 
 @pytest.mark.asyncio

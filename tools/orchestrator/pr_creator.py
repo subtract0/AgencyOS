@@ -4,7 +4,7 @@ PR Creator for Leap 7 TDD Autonomy.
 Provides git worktree isolation workflow for autonomous PR creation with:
 - Zero file conflicts via isolated worktrees
 - Constitutional compliance enforcement (Article II: 100% test pass)
-- Standardized commit/PR templates with Claude co-authorship
+- Standardized commit/PR templates
 - Mergeability verification via gh pr checks
 - Automatic cleanup after PR merge
 
@@ -105,7 +105,7 @@ class PRCreator:
 
     This class implements the complete PR creation workflow:
     1. Create isolated git worktree (zero file conflicts)
-    2. Commit changes with Claude co-authorship
+    2. Commit changes
     3. Push to remote with upstream tracking
     4. Create GitHub PR via gh CLI
     5. Verify mergeability (CI checks, conflicts)
@@ -362,7 +362,7 @@ class PRCreator:
         title: str,
         description: str,
     ) -> Result[CommitInfo, PRError]:
-        """Commit changes with Claude co-authorship."""
+        """Commit changes."""
         # Stage files
         stage_result = await self._run_git(
             ["add"] + files,
@@ -559,12 +559,10 @@ class PRCreator:
     # ========================================================================
 
     def _generate_commit_message(self, title: str, description: str) -> str:
-        """Generate commit message with Co-Authored-By."""
+        """Generate commit message."""
         return f"""feat: Leap 7 TDD Autonomy - {title}
 
-{description}
-
-Co-Authored-By: Claude <noreply@anthropic.com>"""
+{description}"""
 
     def _generate_pr_body(self, description: str, files: list[str]) -> str:
         """Generate PR body with Summary/Test Plan/Compliance sections."""
@@ -592,11 +590,7 @@ Co-Authored-By: Claude <noreply@anthropic.com>"""
 - [x] **Article II**: 100% test verification enforced
 - [x] **Article III**: Automated quality gates
 - [x] **Article IV**: Patterns stored in VectorStore
-- [x] **Article V**: Spec-driven implementation
-
----
-
-🤖 Generated with [Claude Code](https://claude.com/claude-code)"""
+- [x] **Article V**: Spec-driven implementation"""
 
     # ========================================================================
     # UTILITY FUNCTIONS

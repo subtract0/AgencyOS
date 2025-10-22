@@ -192,11 +192,7 @@ Verification:
 - ✅ Public API intact
 - ✅ Zero functional regression
 
-LOC saved: [X] lines
-
-🤖 Generated with [Claude Code](https://claude.com/claude-code)
-
-Co-Authored-By: Claude <noreply@anthropic.com>"
+LOC saved: [X] lines"
 ```
 
 # Workflow

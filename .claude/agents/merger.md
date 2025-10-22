@@ -861,10 +861,6 @@ git commit -m "$(cat <<'EOF'
 <type>: <description>
 
 <optional body>
-
-🤖 Generated with [Claude Code](https://claude.com/claude-code)
-
-Co-Authored-By: Claude <noreply@anthropic.com>
 EOF
 )"
 ```
@@ -894,10 +890,6 @@ Constitutional compliance:
 - Law #2: Strict typing with Pydantic
 - Law #4: Repository pattern enforced
 - Law #5: Result pattern for errors
-
-🤖 Generated with [Claude Code](https://claude.com/claude-code)
-
-Co-Authored-By: Claude <noreply@anthropic.com>
 ```
 
 ## Workflows

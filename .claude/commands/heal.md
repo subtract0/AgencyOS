@@ -72,11 +72,7 @@ Applied validated fixes:
 - [violation 1]: [fix strategy] (confidence: 0.XX)
 - [violation 2]: [fix strategy] (confidence: 0.XX)
 
-All tests passing (100%)
-
-🤖 Generated with [Claude Code](https://claude.com/claude-code)
-
-Co-Authored-By: Claude <noreply@anthropic.com>"
+All tests passing (100%)"
 ```
 
 # Workflow
