@@ -133,7 +133,7 @@
 - [x] **AC-3.2**: Summary section: 2-3 sentence overview + bullet points of key changes (auto-generated from commits)
 - [x] **AC-3.3**: Test Plan section: Markdown checklist of testing performed (e.g., "- [x] Unit tests pass (47/47)" )
 - [x] **AC-3.4**: Constitutional Compliance section: Checklist validating Articles I-V with evidence (e.g., "- [x] Article II: 100% test pass (1,725/1,725)")
-- [x] **AC-3.5**: Footer includes: "🤖 Generated with [Claude Code](https://claude.com/claude-code)"
+- [x] **AC-3.5**: Footer includes: "🤖 Autonomously generated"
 
 #### Feature Component 4: Mergeability Checks
 - [x] **AC-4.1**: System validates 100% test pass via `python run_tests.py --run-all` before allowing PR creation
@@ -541,7 +541,7 @@ def generate_pr_body(
     lines.append("")
 
     lines.append("---")
-    lines.append("🤖 Generated with [Claude Code](https://claude.com/claude-code)")
+    lines.append("🤖 Autonomously generated")
 
     return "\n".join(lines)
 ```

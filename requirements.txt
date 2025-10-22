@@ -56,6 +56,9 @@ types-Markdown>=3.6.0
 asyncio>=3.4.3
 aiofiles>=23.2.0  # Async file I/O for Memory Tool (Leap 2, Phase 3)
 
+# Process management (autonomous cleanup operations)
+psutil>=5.9.0  # Non-blocking process enumeration and cleanup (ADR-032)
+
 # Optional: DSPy for advanced audit optimization (uncomment to enable)
 # dspy-ai>=2.4.0
 

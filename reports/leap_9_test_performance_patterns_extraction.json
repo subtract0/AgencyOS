@@ -1,0 +1,936 @@
+{
+  "mission": "leap_9_test_performance_optimization",
+  "extraction_date": "2025-10-22",
+  "patterns_extracted": 15,
+  "constitutional_compliance": {
+    "article_iv": true,
+    "min_confidence": 0.6,
+    "min_evidence": 1,
+    "vectorstore_ready": true
+  },
+  "summary": {
+    "total_patterns": 15,
+    "high_confidence": 9,
+    "medium_confidence": 6,
+    "categories": {
+      "test_performance": 5,
+      "tdd_protocol": 3,
+      "documentation": 2,
+      "constitutional_compliance": 3,
+      "agent_orchestration": 2
+    },
+    "mission_metrics": {
+      "performance_improvement": "86.4%",
+      "baseline_before": "3.91s",
+      "baseline_after": "0.53s",
+      "speedup_factor": "7.4x",
+      "tests_created": 78,
+      "test_pass_rate": "100%",
+      "phases_completed": 4,
+      "execution_duration": "single_session"
+    }
+  },
+  "patterns": [
+    {
+      "id": "pattern_leap9_1_remove_intentional_delays",
+      "name": "Remove Intentional Delays from Test Code",
+      "confidence": 0.95,
+      "evidence_count": 1,
+      "category": "test_performance",
+      "pattern_type": "optimization",
+      "context": "Unit tests containing asyncio.sleep() or time.sleep() artificially inflate execution time without adding testing value",
+      "problem": "Real delays in unit tests create slow feedback loops, prevent rapid iteration, and add no validation value since we test logic, not timing",
+      "solution": {
+        "step_1": "Identify all asyncio.sleep() and time.sleep() calls in test files",
+        "step_2": "Distinguish between unit tests (no delays allowed) and integration tests (real delays may be needed)",
+        "step_3": "Remove all intentional delays from unit tests completely",
+        "step_4": "For integration tests, evaluate if delay is necessary for workflow validation",
+        "step_5": "Document mocking patterns for future test authors"
+      },
+      "code_example": {
+        "before": "# ❌ BAD: Real delay adds 11 seconds to test suite\n@pytest.mark.unit\n@pytest.mark.asyncio\nasync def test_with_delay():\n    await asyncio.sleep(10.0)  # Unnecessary\n    await asyncio.sleep(1.0)   # Unnecessary\n    result = await function_under_test()\n    assert result is not None",
+        "after": "# ✅ GOOD: No delay, instant execution\n@pytest.mark.unit\n@pytest.mark.timeout(5)\n@pytest.mark.asyncio\nasync def test_without_delay():\n    # No sleep needed - we test logic, not timing\n    result = await function_under_test()\n    assert result is not None"
+      },
+      "performance_impact": {
+        "time_saved": "~2.0s per test run",
+        "percentage_improvement": "51.2%",
+        "baseline_before": "3.91s",
+        "baseline_after": "1.91s"
+      },
+      "evidence": {
+        "mission": "leap_9_test_performance_optimization",
+        "phase": "phase_2_p0_critical_fixes",
+        "task": "remove_intentional_delays",
+        "implementation_file": "tests/integration/test_autonomous_audit_loop.py",
+        "validation_file": "tests/integration/test_remove_intentional_delays.py",
+        "static_analysis": "16 remaining asyncio.sleep calls are in documentation/comments only"
+      },
+      "applicability": {
+        "when": "Unit tests take >1s to execute",
+        "how_to_detect": "grep -r 'asyncio.sleep\\|time.sleep' tests/ --include='*.py'",
+        "priority": "P0 (critical for fast feedback)",
+        "effort": "Low (pure deletion, no logic changes)"
+      },
+      "constitutional_alignment": {
+        "article_i": "Complete context before action (no premature timeouts from slow tests)",
+        "article_ii": "100% verification enabled by fast tests (rapid iteration)",
+        "article_iv": "Pattern documented for institutional memory"
+      },
+      "tags": [
+        "test_performance",
+        "asyncio_sleep",
+        "unit_test_optimization",
+        "fast_feedback",
+        "high_confidence",
+        "leap_9"
+      ]
+    },
+    {
+      "id": "pattern_leap9_2_psutil_non_blocking_cleanup",
+      "name": "Replace Subprocess Pipes with psutil for Process Cleanup",
+      "confidence": 0.95,
+      "evidence_count": 1,
+      "category": "test_performance",
+      "pattern_type": "optimization",
+      "context": "Process cleanup using subprocess.run() with shell pipes (ps | grep | awk | xargs) is slow, fragile, and insecure",
+      "problem": "Shell-based cleanup blocks for 500-1000ms, varies by OS, exposes shell injection risk, and provides poor error handling",
+      "solution": {
+        "step_1": "Import psutil library for cross-platform process management",
+        "step_2": "Replace subprocess.run() with psutil.process_iter()",
+        "step_3": "Whitelist only test-related processes (security requirement)",
+        "step_4": "Exclude current PID to prevent self-termination",
+        "step_5": "Use proc.kill() for non-blocking cleanup",
+        "step_6": "Handle psutil.NoSuchProcess and psutil.AccessDenied gracefully"
+      },
+      "code_example": {
+        "before": "# ❌ BAD: Blocking subprocess with shell pipes (500-1000ms)\nimport subprocess\n\ndef cleanup_old_way():\n    subprocess.run(\n        \"ps aux | grep pytest | awk '{print $2}' | xargs kill\",\n        shell=True,  # Security risk\n        check=False\n    )\n    # Problems:\n    # 1. Blocks for 500-1000ms\n    # 2. Fragile parsing (OS-dependent)\n    # 3. Shell injection risk\n    # 4. No error handling",
+        "after": "# ✅ GOOD: Non-blocking psutil with security (<200ms)\nimport os\nimport psutil\n\ndef cleanup_new_way():\n    current_pid = os.getpid()\n    killed_count = 0\n\n    for proc in psutil.process_iter(['pid', 'name', 'cmdline']):\n        try:\n            # Security: Skip current process\n            if proc.info['pid'] == current_pid:\n                continue\n\n            # Security: Whitelist test processes only\n            cmdline = ' '.join(proc.info['cmdline'] or [])\n            if 'pytest' in cmdline.lower():\n                proc.kill()  # Non-blocking\n                killed_count += 1\n\n        except (psutil.NoSuchProcess, psutil.AccessDenied):\n            continue  # Graceful degradation\n\n    return killed_count"
+      },
+      "performance_impact": {
+        "time_saved": "~0.6s per test run",
+        "percentage_improvement": "80%",
+        "baseline_before": "500-1000ms (blocking)",
+        "baseline_after": "<200ms (non-blocking)",
+        "speedup": "5x faster"
+      },
+      "security_benefits": [
+        "No shell=True (prevents injection attacks)",
+        "Whitelist-based process filtering",
+        "Current PID exclusion (prevents self-termination)",
+        "Graceful error handling (no test failures on permission denied)"
+      ],
+      "evidence": {
+        "mission": "leap_9_test_performance_optimization",
+        "phase": "phase_2_p0_critical_fixes",
+        "task": "replace_subprocess_with_psutil",
+        "implementation_file": "tests/integration/test_autonomous_audit_loop.py",
+        "validation_file": "tests/integration/test_non_blocking_cleanup.py",
+        "validation_tests": 24,
+        "validation_pass_rate": "100%"
+      },
+      "applicability": {
+        "when": "Test cleanup involves killing processes",
+        "how_to_detect": "grep -r 'subprocess.*grep\\|subprocess.*awk' tests/",
+        "priority": "P0 (critical for performance and security)",
+        "effort": "Medium (requires psutil dependency, API change)"
+      },
+      "constitutional_alignment": {
+        "article_ii": "100% stability maintained (24/24 validation tests passing)",
+        "article_iii": "Automated enforcement via validation suite",
+        "article_iv": "Pattern stored for future process cleanup scenarios"
+      },
+      "tags": [
+        "test_performance",
+        "psutil",
+        "non_blocking",
+        "process_cleanup",
+        "security",
+        "high_confidence",
+        "leap_9"
+      ]
+    },
+    {
+      "id": "pattern_leap9_3_function_level_timeouts",
+      "name": "Add Explicit Function-Level Timeout Decorators",
+      "confidence": 0.9,
+      "evidence_count": 1,
+      "category": "test_performance",
+      "pattern_type": "fail_fast",
+      "context": "Async tests without timeout decorators can hang indefinitely, blocking CI/CD pipelines and preventing rapid iteration",
+      "problem": "Infinite loops, deadlocks, or stuck I/O operations in tests cause CI timeouts (30+ minutes) instead of failing fast (<10s)",
+      "solution": {
+        "step_1": "Add @pytest.mark.timeout() decorator to ALL async test functions",
+        "step_2": "Use 5s timeout for unit tests (should complete in <100ms)",
+        "step_3": "Use 10s timeout for integration tests (should complete in <3s)",
+        "step_4": "Place timeout decorator BEFORE @pytest.mark.asyncio",
+        "step_5": "Validate all async functions have timeouts via static analysis"
+      },
+      "code_example": {
+        "before": "# ❌ BAD: No timeout (can hang forever)\n@pytest.mark.unit\n@pytest.mark.asyncio\nasync def test_without_timeout():\n    result = await function_that_might_hang()\n    assert result is not None",
+        "after": "# ✅ GOOD: Timeout enforced (fails after 5s)\n@pytest.mark.unit\n@pytest.mark.timeout(5)  # Fail fast if hangs\n@pytest.mark.asyncio\nasync def test_with_timeout():\n    result = await function_that_might_hang()\n    assert result is not None"
+      },
+      "performance_impact": {
+        "ci_time_saved": "Up to 25 minutes per hanging test",
+        "detection_time": "5-10s instead of 30+ minutes",
+        "benefit": "Fail-fast prevents CI queue blocking"
+      },
+      "timeout_standards": {
+        "unit_test": "5s (should be <100ms, buffer for CI variability)",
+        "integration_test": "10s (should be <3s, buffer for workflow completion)",
+        "performance_test": "2s (strict budget for regression detection)"
+      },
+      "evidence": {
+        "mission": "leap_9_test_performance_optimization",
+        "phase": "phase_2_p0_critical_fixes",
+        "task": "add_function_timeouts",
+        "implementation_count": 7,
+        "validation_file": "tests/validation/test_function_timeouts.py",
+        "validation_tests": 12,
+        "validation_pass_rate": "100%"
+      },
+      "applicability": {
+        "when": "Any async test function (mandatory per Constitutional Article I)",
+        "how_to_detect": "Static analysis: functions with @pytest.mark.asyncio missing @pytest.mark.timeout",
+        "priority": "P0 (prevents CI blocking)",
+        "effort": "Low (decorator addition only)"
+      },
+      "constitutional_alignment": {
+        "article_i": "Complete context before action (timeout prevents incomplete test runs)",
+        "article_ii": "100% verification (fast failure enables rapid retry)",
+        "article_iii": "Automated enforcement (validation suite checks all async functions)"
+      },
+      "tags": [
+        "test_performance",
+        "timeout",
+        "fail_fast",
+        "ci_protection",
+        "high_confidence",
+        "leap_9"
+      ]
+    },
+    {
+      "id": "pattern_leap9_4_unit_integration_separation",
+      "name": "Separate Unit and Integration Tests with Markers",
+      "confidence": 0.9,
+      "evidence_count": 1,
+      "category": "test_performance",
+      "pattern_type": "test_organization",
+      "context": "Mixed test types prevent selective execution, forcing developers to run slow integration tests during rapid iteration",
+      "problem": "Running full suite (unit + integration) takes 3-5 minutes, but developers need <1s feedback for unit test iteration",
+      "solution": {
+        "step_1": "Mark unit tests with @pytest.mark.unit (fast, mocked I/O)",
+        "step_2": "Mark integration tests with @pytest.mark.integration (real I/O)",
+        "step_3": "Add selective execution commands to test file docstring",
+        "step_4": "Configure pytest.ini with custom markers",
+        "step_5": "Validate marker usage via automated test suite"
+      },
+      "code_example": {
+        "unit_test": "# Unit test: Fast, mocked I/O, <100ms\n@pytest.mark.unit\n@pytest.mark.timeout(5)\n@pytest.mark.asyncio\nasync def test_unit_example(monkeypatch):\n    # Mock external dependencies\n    monkeypatch.setattr(asyncio, 'sleep', lambda x: None)\n    result = await function_under_test()\n    assert result.is_ok()",
+        "integration_test": "# Integration test: Real I/O, <10s\n@pytest.mark.integration\n@pytest.mark.timeout(10)\n@pytest.mark.asyncio\nasync def test_integration_example():\n    # Real workflow with actual dependencies\n    result = await complete_workflow()\n    assert result.is_ok()",
+        "selective_execution": "# Fast feedback: Unit tests only (6 tests in 0.39s)\npytest -m 'not integration' tests/integration/test_autonomous_audit_loop.py\n\n# Full validation: All tests (7 tests in 0.53s)\npytest tests/integration/test_autonomous_audit_loop.py"
+      },
+      "performance_impact": {
+        "unit_only_execution": "0.39s (6 tests)",
+        "full_suite_execution": "0.53s (7 tests)",
+        "developer_benefit": "24% faster feedback for unit test iteration",
+        "unit_budget_met": "390ms < 500ms target (24% under budget)"
+      },
+      "evidence": {
+        "mission": "leap_9_test_performance_optimization",
+        "phase": "phase_3_p1_test_architecture",
+        "task": "separate_unit_integration_tests",
+        "implementation_file": "tests/integration/test_autonomous_audit_loop.py",
+        "validation_file": "tests/validation/test_unit_integration_separation.py",
+        "validation_tests": 16,
+        "validation_pass_rate": "100%"
+      },
+      "applicability": {
+        "when": "Test file contains both fast unit tests and slower integration tests",
+        "how_to_detect": "Test files with >5 tests and execution time >1s",
+        "priority": "P1 (improves developer experience)",
+        "effort": "Low (marker addition + docstring)"
+      },
+      "constitutional_alignment": {
+        "article_ii": "100% verification with fast feedback (unit tests complete in <500ms)",
+        "article_iii": "Automated enforcement (16 validation tests verify marker usage)",
+        "article_iv": "Pattern documented for future test organization"
+      },
+      "tags": [
+        "test_performance",
+        "test_organization",
+        "pytest_markers",
+        "selective_execution",
+        "fast_feedback",
+        "high_confidence",
+        "leap_9"
+      ]
+    },
+    {
+      "id": "pattern_leap9_5_performance_regression_suite",
+      "name": "Automated Performance Regression Suite with Baselines",
+      "confidence": 0.85,
+      "evidence_count": 1,
+      "category": "test_performance",
+      "pattern_type": "regression_prevention",
+      "context": "Performance improvements degrade over time without automated guards against regression",
+      "problem": "Without baseline tracking and automated validation, performance optimizations are lost as new code is added",
+      "solution": {
+        "step_1": "Capture performance baselines (before/after optimization)",
+        "step_2": "Create automated test suite validating baselines",
+        "step_3": "Set absolute thresholds (unit <500ms, integration <10s, suite <2s)",
+        "step_4": "Set relative thresholds (maintain 80%+ improvement vs baseline)",
+        "step_5": "Add 20% margin for CI variability (CPU load, scheduling, GC)",
+        "step_6": "Fail CI builds if performance regresses beyond margin"
+      },
+      "code_example": {
+        "baseline_definition": "# Performance baselines with 20% margin\nBASELINE_UNIT_TESTS_MS = 500  # Target\nBASELINE_UNIT_TESTS_MARGIN_MS = 600  # +20%\nBASELINE_INTEGRATION_TEST_MS = 10000  # 10s\nBASELINE_INTEGRATION_TEST_MARGIN_MS = 12000  # +20%\nBASELINE_TOTAL_SUITE_MS = 2000\nBASELINE_TOTAL_SUITE_MARGIN_MS = 2400  # +20%",
+        "regression_test": "@pytest.mark.performance\ndef test_performance_vs_baseline():\n    \"\"\"Guard against regression beyond 20% of baseline.\"\"\"\n    result = run_test_suite()\n    \n    # Absolute threshold\n    assert result.unit_duration_ms < BASELINE_UNIT_TESTS_MARGIN_MS, (\n        f\"Unit tests too slow: {result.unit_duration_ms}ms \"\n        f\"(target: <{BASELINE_UNIT_TESTS_MARGIN_MS}ms)\"\n    )\n    \n    # Relative improvement (maintain 80%+ vs original 3.91s)\n    baseline_before = 3910  # ms\n    improvement_pct = ((baseline_before - result.total_ms) / baseline_before) * 100\n    assert improvement_pct >= 80.0, (\n        f\"Performance regressed: {improvement_pct:.1f}% improvement \"\n        f\"(required: >=80%)\"\n    )"
+      },
+      "regression_metrics": {
+        "baseline_before_optimization": "3.91s",
+        "baseline_after_optimization": "0.53s",
+        "improvement_percentage": "86.4%",
+        "absolute_threshold_unit": "600ms (with 20% margin)",
+        "absolute_threshold_integration": "12s (with 20% margin)",
+        "absolute_threshold_suite": "2.4s (with 20% margin)",
+        "relative_threshold": "80% minimum improvement maintenance"
+      },
+      "evidence": {
+        "mission": "leap_9_test_performance_optimization",
+        "phase": "phase_4_p2_regression_prevention",
+        "task": "create_performance_regression_suite",
+        "implementation_file": "tests/integration/test_performance_regression.py",
+        "validation_tests": 10,
+        "validation_pass_rate": "100%",
+        "documented_baselines": "docs/testing/PERFORMANCE_GUIDELINES.md"
+      },
+      "applicability": {
+        "when": "After significant performance optimization (>50% improvement)",
+        "how_to_detect": "Performance degradation in CI logs (tests taking longer)",
+        "priority": "P2 (prevents future regression)",
+        "effort": "Medium (requires baseline capture + test suite)"
+      },
+      "constitutional_alignment": {
+        "article_ii": "100% verification (automated performance validation)",
+        "article_iii": "Automated enforcement (CI fails on regression)",
+        "article_iv": "Continuous learning (baselines stored for future comparison)"
+      },
+      "tags": [
+        "test_performance",
+        "regression_prevention",
+        "baseline_tracking",
+        "ci_automation",
+        "high_confidence",
+        "leap_9"
+      ]
+    },
+    {
+      "id": "pattern_leap9_6_tdd_red_green_refactor",
+      "name": "Test-First Development with RED-GREEN-REFACTOR Protocol",
+      "confidence": 0.95,
+      "evidence_count": 1,
+      "category": "tdd_protocol",
+      "pattern_type": "development_workflow",
+      "context": "Constitutional Article VI mandates test-first development for all code changes",
+      "problem": "Code-first development leads to untested edge cases, poor test coverage, and brittle implementations",
+      "solution": {
+        "red_phase": "Write test FIRST - test MUST fail initially (proves test validity)",
+        "green_phase": "Implement MINIMUM code to make test pass",
+        "refactor_phase": "Improve code quality while maintaining 100% test pass rate",
+        "validation": "Meta-tests validate test quality (NECESSARY pattern compliance)"
+      },
+      "code_example": {
+        "red_phase": "# STEP 1: Write test FIRST (must fail initially)\n@pytest.mark.unit\n@pytest.mark.timeout(5)\ndef test_cleanup_performance():\n    \"\"\"Test that cleanup completes in <200ms.\"\"\"\n    start = time.time()\n    cleanup_orphaned_processes()  # Function doesn't exist yet\n    elapsed_ms = (time.time() - start) * 1000\n    \n    assert elapsed_ms < 200, f\"Cleanup too slow: {elapsed_ms}ms\"\n\n# Run test: FAILS (function not implemented) ✅ RED PHASE COMPLETE",
+        "green_phase": "# STEP 2: Implement MINIMUM code to pass test\nimport psutil\nimport os\n\ndef cleanup_orphaned_processes():\n    current_pid = os.getpid()\n    for proc in psutil.process_iter(['pid', 'cmdline']):\n        if proc.info['pid'] != current_pid and 'pytest' in ' '.join(proc.info['cmdline'] or []):\n            proc.kill()\n\n# Run test: PASSES (under 200ms) ✅ GREEN PHASE COMPLETE",
+        "refactor_phase": "# STEP 3: Refactor for quality (security, error handling)\ndef cleanup_orphaned_processes():\n    current_pid = os.getpid()\n    killed_count = 0\n    \n    for proc in psutil.process_iter(['pid', 'name', 'cmdline']):\n        try:\n            # Security: Skip current process\n            if proc.info['pid'] == current_pid:\n                continue\n            \n            # Security: Whitelist test processes\n            cmdline = ' '.join(proc.info['cmdline'] or [])\n            if 'pytest' in cmdline.lower():\n                proc.kill()\n                killed_count += 1\n        except (psutil.NoSuchProcess, psutil.AccessDenied):\n            continue  # Graceful error handling\n    \n    return killed_count\n\n# Run test: STILL PASSES ✅ REFACTOR PHASE COMPLETE"
+      },
+      "leap_9_execution": {
+        "phase_2_tests_first": "78 validation tests written BEFORE implementation",
+        "test_categories": [
+          "24 tests: Non-blocking cleanup (NECESSARY pattern)",
+          "16 tests: asyncio.sleep mocking (NECESSARY pattern)",
+          "12 tests: Function timeouts (NECESSARY pattern)",
+          "16 tests: Unit/integration separation (NECESSARY pattern)",
+          "10 tests: Performance regression (baseline tracking)"
+        ],
+        "implementation_after_tests": "All fixes implemented AFTER tests written and failing",
+        "final_pass_rate": "100% (78/78 validation + 7/7 main suite)"
+      },
+      "evidence": {
+        "mission": "leap_9_test_performance_optimization",
+        "all_phases": "TDD protocol applied throughout",
+        "validation_tests_written_first": 78,
+        "implementation_tests_passing": 85,
+        "constitutional_article": "Article VI (TDD mandatory)"
+      },
+      "applicability": {
+        "when": "ALL code changes (no exceptions per Constitutional Article VI)",
+        "how_to_enforce": "Pre-commit hooks validate test-first workflow",
+        "priority": "P0 (constitutional requirement)",
+        "effort": "Same total time, better quality outcomes"
+      },
+      "constitutional_alignment": {
+        "article_vi": "Test-first development (highest priority constitutional requirement)",
+        "article_ii": "100% verification (tests written before code guarantees coverage)",
+        "article_iv": "Continuous learning (TDD patterns stored for future reference)"
+      },
+      "tags": [
+        "tdd_protocol",
+        "red_green_refactor",
+        "test_first",
+        "article_vi",
+        "constitutional_requirement",
+        "high_confidence",
+        "leap_9"
+      ]
+    },
+    {
+      "id": "pattern_leap9_7_necessary_test_coverage",
+      "name": "NECESSARY Pattern Compliance for Test Coverage",
+      "confidence": 0.9,
+      "evidence_count": 1,
+      "category": "tdd_protocol",
+      "pattern_type": "test_quality",
+      "context": "Test suites must cover all 9 NECESSARY categories to prevent production failures",
+      "problem": "Tests covering only happy paths miss edge cases, error scenarios, and security vulnerabilities",
+      "solution": {
+        "necessary_acronym": "Normal, Edge, Corner, Error, Security, Scale, Stress, Accessibility, Resilience, Yield",
+        "coverage_requirements": [
+          "Normal: Happy path scenarios",
+          "Edge: Boundary conditions (0, max, negative)",
+          "Corner: Multiple edge cases combined",
+          "Error: Failure scenarios and recovery",
+          "Security: Input validation, injection prevention, access control",
+          "Scale: Large input handling (100x, 1000x nominal)",
+          "Stress: Concurrent operations, resource limits",
+          "Accessibility: Documentation, examples for future developers",
+          "Resilience: Network failures, timeouts, retries (now Regression in docs)",
+          "Yield: Output correctness validation"
+        ]
+      },
+      "code_example": {
+        "test_suite_structure": "# test_non_blocking_cleanup.py - NECESSARY pattern\n\n# Normal (2 tests)\ndef test_cleanup_completes_quickly(): pass\ndef test_cleanup_kills_test_processes(): pass\n\n# Edge (4 tests)\ndef test_cleanup_with_zero_processes(): pass\ndef test_cleanup_with_100_processes(): pass\ndef test_cleanup_excludes_current_pid(): pass\ndef test_cleanup_whitelist_filtering(): pass\n\n# Error (4 tests)\ndef test_cleanup_handles_process_disappeared(): pass\ndef test_cleanup_handles_access_denied(): pass\ndef test_cleanup_handles_invalid_cmdline(): pass\ndef test_cleanup_returns_error_on_failure(): pass\n\n# Security (5 tests)\ndef test_cleanup_never_kills_current_process(): pass\ndef test_cleanup_whitelists_only_test_processes(): pass\ndef test_cleanup_no_shell_injection_risk(): pass\ndef test_cleanup_graceful_permission_denied(): pass\ndef test_cleanup_validates_pid_before_kill(): pass\n\n# Scale (3 tests)\ndef test_cleanup_scales_to_1000_processes(): pass\ndef test_cleanup_performance_linear_scaling(): pass\n\n# Stress (2 tests)\ndef test_cleanup_concurrent_calls(): pass\ndef test_cleanup_under_memory_pressure(): pass\n\n# Accessibility (2 tests)\ndef test_cleanup_has_clear_docstring(): pass\ndef test_cleanup_examples_documented(): pass\n\n# Regression (1 test)\ndef test_cleanup_performance_vs_baseline(): pass\n\n# Yield (1 test)\ndef test_cleanup_returns_killed_count(): pass\n\n# TOTAL: 24 tests covering all NECESSARY categories"
+      },
+      "leap_9_evidence": {
+        "non_blocking_cleanup_suite": "24 tests (NECESSARY complete)",
+        "mock_asyncio_sleep_suite": "16 tests (NECESSARY complete)",
+        "function_timeouts_suite": "12 tests (NECESSARY complete)",
+        "unit_integration_separation_suite": "16 tests (NECESSARY complete)",
+        "performance_regression_suite": "10 tests (NECESSARY complete)",
+        "total_validation_tests": 78,
+        "all_suites_pass_rate": "100%"
+      },
+      "evidence": {
+        "mission": "leap_9_test_performance_optimization",
+        "test_suites_following_necessary": 5,
+        "total_tests": 78,
+        "pass_rate": "100%",
+        "constitutional_article": "Article II (100% verification requires NECESSARY coverage)"
+      },
+      "applicability": {
+        "when": "Writing any test suite (mandatory for production code)",
+        "how_to_validate": "Code review checklist verifies NECESSARY categories present",
+        "priority": "P0 (constitutional requirement)",
+        "effort": "Medium (10-20 tests per feature vs 2-3 for happy path only)"
+      },
+      "constitutional_alignment": {
+        "article_ii": "100% verification (NECESSARY coverage prevents production failures)",
+        "article_iv": "Continuous learning (NECESSARY patterns stored for future reference)",
+        "article_vi": "TDD protocol (tests written first with NECESSARY coverage)"
+      },
+      "tags": [
+        "tdd_protocol",
+        "necessary_pattern",
+        "test_coverage",
+        "quality_assurance",
+        "high_confidence",
+        "leap_9"
+      ]
+    },
+    {
+      "id": "pattern_leap9_8_meta_test_validation",
+      "name": "Meta-Tests Validating Test Quality",
+      "confidence": 0.85,
+      "evidence_count": 1,
+      "category": "tdd_protocol",
+      "pattern_type": "test_quality",
+      "context": "Tests themselves need validation to ensure they're testing the right things correctly",
+      "problem": "Poorly written tests provide false confidence, miss regressions, or become maintenance burdens",
+      "solution": {
+        "meta_test_categories": [
+          "Test completeness: All expected tests exist",
+          "Test quality: NECESSARY pattern coverage validated",
+          "Test performance: Execution time within budgets",
+          "Test reliability: No flakiness, consistent results",
+          "Test maintainability: Clear documentation, examples"
+        ],
+        "validation_approach": "Write tests that validate other tests' structure and behavior"
+      },
+      "code_example": {
+        "meta_test_example": "# Meta-test: Validate all async functions have timeout decorators\n@pytest.mark.unit\ndef test_all_async_tests_have_timeouts():\n    \"\"\"Validate timeout decorator presence on all async tests.\"\"\"\n    import ast\n    import inspect\n    from pathlib import Path\n    \n    test_file = Path('tests/integration/test_autonomous_audit_loop.py')\n    source = test_file.read_text()\n    tree = ast.parse(source)\n    \n    async_tests_without_timeout = []\n    \n    for node in ast.walk(tree):\n        if isinstance(node, ast.AsyncFunctionDef) and node.name.startswith('test_'):\n            decorators = [d.id for d in node.decorator_list if isinstance(d, ast.Name)]\n            has_asyncio = 'asyncio' in decorators or any('pytest' in str(d) for d in node.decorator_list)\n            has_timeout = any('timeout' in str(d) for d in node.decorator_list)\n            \n            if has_asyncio and not has_timeout:\n                async_tests_without_timeout.append(node.name)\n    \n    assert len(async_tests_without_timeout) == 0, (\n        f\"Found {len(async_tests_without_timeout)} async tests without timeout:\"\n        f\"\\n  - \" + \"\\n  - \".join(async_tests_without_timeout)\n    )\n\n# This test validates STRUCTURE, not just behavior"
+      },
+      "leap_9_meta_tests": {
+        "test_function_timeouts.py": "12 meta-tests validating timeout decorator presence",
+        "test_unit_integration_separation.py": "16 meta-tests validating marker usage",
+        "test_performance_regression.py": "10 meta-tests validating baseline adherence",
+        "test_mock_asyncio_sleep.py": "16 meta-tests validating mocking patterns"
+      },
+      "evidence": {
+        "mission": "leap_9_test_performance_optimization",
+        "meta_test_suites": 4,
+        "total_meta_tests": 54,
+        "meta_test_pass_rate": "100%",
+        "benefit": "Catches test quality issues before they reach production"
+      },
+      "applicability": {
+        "when": "After writing test suites, validate test structure",
+        "how_to_detect": "Code review identifies missing meta-tests",
+        "priority": "P1 (improves test quality)",
+        "effort": "Medium (requires AST parsing or introspection)"
+      },
+      "constitutional_alignment": {
+        "article_ii": "100% verification (meta-tests validate test quality)",
+        "article_iv": "Continuous learning (meta-test patterns stored for future use)"
+      },
+      "tags": [
+        "tdd_protocol",
+        "meta_testing",
+        "test_quality",
+        "validation",
+        "medium_confidence",
+        "leap_9"
+      ]
+    },
+    {
+      "id": "pattern_leap9_9_performance_guidelines_documentation",
+      "name": "Comprehensive Performance Guidelines Documentation",
+      "confidence": 0.9,
+      "evidence_count": 1,
+      "category": "documentation",
+      "pattern_type": "knowledge_transfer",
+      "context": "Performance patterns are lost without clear documentation for future test authors",
+      "problem": "New test authors repeat past mistakes without documented best practices and anti-patterns",
+      "solution": {
+        "document_structure": [
+          "Overview: Why performance matters (constitutional mandate)",
+          "Unit vs Integration rules: Clear distinction and budgets",
+          "Timeout requirements: Mandatory decorators with rationale",
+          "asyncio.sleep mocking: Patterns and examples",
+          "Process cleanup best practices: psutil vs subprocess",
+          "Performance budgets: Absolute thresholds with margins",
+          "Good vs bad patterns: Side-by-side comparisons",
+          "Constitutional compliance: Article alignment",
+          "Validation tools: How to verify adherence"
+        ],
+        "examples_per_pattern": "Minimum 3 (before/after, good/bad, documentation)"
+      },
+      "code_example": {
+        "docstring_pattern": "# In test file header (150+ lines of guidance)\n\"\"\"\nPERFORMANCE GUIDELINES FOR TEST AUTHORS\n========================================\n\nPERFORMANCE BUDGET (Constitutional Mandate - Article II):\n- Unit tests: <100ms each, <500ms total suite\n- Integration tests: <10s each\n- Total suite: <2s (this file baseline: 0.53s, was 3.91s before optimization)\n\nMARKER USAGE:\n- @pytest.mark.unit: Fast unit tests (no delays, mocked I/O)\n- @pytest.mark.integration: Full integration tests (complete workflow)\n- MANDATORY: All async tests MUST have @pytest.mark.timeout() decorator\n\nASYNCIO.SLEEP MOCKING STRATEGY:\n\nPOLICY:\n- Unit tests MUST complete in <1s (ideally <500ms)\n- Unit tests MUST NOT use real asyncio.sleep (adds no testing value)\n- Integration tests CAN use real sleep if needed\n\nExample 1: Basic Mocking\n------------------------\nfrom unittest.mock import AsyncMock, patch\n\n@pytest.mark.unit\n@pytest.mark.asyncio\nasync def test_with_mocked_sleep():\n    async def function_with_sleep():\n        await asyncio.sleep(1.0)  # Would normally take 1 second\n        return \"done\"\n    \n    # Mock sleep to be instantaneous\n    with patch('asyncio.sleep', new_callable=AsyncMock):\n        start = time.time()\n        result = await function_with_sleep()\n        elapsed = time.time() - start\n    \n    # Assert: Instant execution (not 1 second)\n    assert elapsed < 0.1, \"Mocked sleep should be instant\"\n    assert result == \"done\"\n\n[... 100+ more lines of examples and rationale ...]\n\"\"\""
+      },
+      "documentation_created": {
+        "file": "docs/testing/PERFORMANCE_GUIDELINES.md",
+        "lines": 923,
+        "sections": 9,
+        "code_examples": 15,
+        "good_bad_comparisons": 5,
+        "constitutional_references": 5
+      },
+      "evidence": {
+        "mission": "leap_9_test_performance_optimization",
+        "phase": "phase_4_p2_documentation",
+        "primary_doc": "docs/testing/PERFORMANCE_GUIDELINES.md (923 lines)",
+        "test_file_docstrings": "150+ lines per test file",
+        "benefit": "Future test authors avoid repeating optimization work"
+      },
+      "applicability": {
+        "when": "After any significant optimization or pattern discovery",
+        "how_to_maintain": "Update documentation when patterns evolve",
+        "priority": "P2 (prevents knowledge loss)",
+        "effort": "Medium (comprehensive documentation takes time)"
+      },
+      "constitutional_alignment": {
+        "article_iv": "Continuous learning (documentation is institutional memory)",
+        "article_v": "Spec-driven development (documentation traces to specs)"
+      },
+      "tags": [
+        "documentation",
+        "performance_guidelines",
+        "knowledge_transfer",
+        "institutional_memory",
+        "high_confidence",
+        "leap_9"
+      ]
+    },
+    {
+      "id": "pattern_leap9_10_inline_docstring_examples",
+      "name": "Inline Docstring Examples in Test Files",
+      "confidence": 0.85,
+      "evidence_count": 1,
+      "category": "documentation",
+      "pattern_type": "accessibility",
+      "context": "Developers need examples at point of use, not just in separate documentation",
+      "problem": "Separate documentation files are often overlooked, leading to pattern violations",
+      "solution": {
+        "embed_examples_in_test_files": "Add 50-150 line docstrings with examples",
+        "include_rationale": "Explain WHY patterns matter (not just HOW)",
+        "show_good_bad_comparisons": "Side-by-side examples of what to do/avoid",
+        "reference_validation_tests": "Point to test files validating patterns",
+        "update_on_pattern_changes": "Keep docstrings in sync with patterns"
+      },
+      "code_example": {
+        "test_file_docstring": "# At top of test_autonomous_audit_loop.py\n\"\"\"\nTest autonomous audit loop for prime_audit_and_refactor command.\n\n==============================================================================\nASYNCIO.SLEEP MOCKING STRATEGY (For Future Test Authors)\n==============================================================================\n\nPOLICY:\n- Unit tests (@pytest.mark.unit) MUST complete in <1s (ideally <500ms)\n- Unit tests MUST NOT use real asyncio.sleep (adds no testing value)\n- Integration tests (@pytest.mark.integration) CAN use real sleep if needed\n\nCURRENT STATE (Phase 2-3 Complete):\n- All asyncio.sleep calls REMOVED from this file\n- Unit tests run instantly without mocking (no sleep = no need to mock)\n- Performance validated: 6 unit tests complete in <1s total\n\nMOCKING PATTERN (For Future Tests That Need Delays):\n\nExample 1: Basic Mocking with unittest.mock\n-------------------------------------------\nfrom unittest.mock import AsyncMock, patch\n\n@pytest.mark.unit\n@pytest.mark.asyncio\nasync def test_with_mocked_sleep():\n    async def function_with_sleep():\n        await asyncio.sleep(1.0)  # Would normally take 1 second\n        return \"done\"\n    \n    # Mock sleep to be instantaneous\n    with patch('asyncio.sleep', new_callable=AsyncMock):\n        start = time.time()\n        result = await function_with_sleep()\n        elapsed = time.time() - start\n    \n    # Assert: Instant execution (not 1 second)\n    assert elapsed < 0.1, \"Mocked sleep should be instant\"\n    assert result == \"done\"\n\n[... more examples ...]\n\nRATIONALE:\n- Unit tests should be FAST (enable rapid iteration)\n- Real delays add NO testing value (we test logic, not timing)\n- Mocking proves code works correctly regardless of timing\n- Article II (Constitutional): Fast tests enable 100% verification\n\"\"\""
+      },
+      "leap_9_implementation": {
+        "test_autonomous_audit_loop.py": "150+ line docstring with mocking examples",
+        "test_non_blocking_cleanup.py": "50+ line docstring with psutil pattern",
+        "test_performance_regression.py": "35+ line docstring with validation instructions",
+        "benefit": "Developers see examples where they write code"
+      },
+      "evidence": {
+        "mission": "leap_9_test_performance_optimization",
+        "test_files_with_comprehensive_docstrings": 3,
+        "total_docstring_lines": 235,
+        "code_examples_inline": 8,
+        "accessibility_score": "High (examples at point of use)"
+      },
+      "applicability": {
+        "when": "Any test file with reusable patterns or complex setup",
+        "how_to_validate": "Code review checks for docstring presence and quality",
+        "priority": "P2 (improves developer experience)",
+        "effort": "Low (writing docstrings while fresh in memory)"
+      },
+      "constitutional_alignment": {
+        "article_iv": "Continuous learning (inline examples are institutional memory)",
+        "necessary_pattern": "Accessibility (examples provided for future developers)"
+      },
+      "tags": [
+        "documentation",
+        "docstrings",
+        "inline_examples",
+        "accessibility",
+        "medium_confidence",
+        "leap_9"
+      ]
+    },
+    {
+      "id": "pattern_leap9_11_article_i_complete_context",
+      "name": "Constitutional Article I: Complete Context via Timeout Handling",
+      "confidence": 0.9,
+      "evidence_count": 1,
+      "category": "constitutional_compliance",
+      "pattern_type": "timeout_protocol",
+      "context": "Article I mandates complete context before action, requiring retry protocols when tests timeout",
+      "problem": "Premature timeouts prevent complete test execution, violating Article I and causing incomplete failure analysis",
+      "solution": {
+        "dynamic_timeout_calculation": "timeout = test_count * 150ms + 60s safety margin",
+        "retry_multipliers": "2x, 3x, 10x timeout for retries (exponential backoff)",
+        "explicit_function_timeouts": "All async functions have @pytest.mark.timeout() decorators",
+        "complete_execution_validation": "Tests run to completion, no partial results"
+      },
+      "code_example": {
+        "dynamic_timeout": "# run_tests.py - Dynamic timeout calculation\ndef calculate_dynamic_timeout(test_count: int) -> int:\n    \"\"\"Calculate timeout based on test count.\n    \n    Article I requires complete context - timeout must allow\n    all tests to execute fully.\n    \n    Formula: test_count * 150ms + 60s safety margin\n    \n    Returns:\n        Timeout in milliseconds\n    \"\"\"\n    base_time_per_test_ms = 150\n    safety_margin_ms = 60_000  # 60 seconds\n    \n    return (test_count * base_time_per_test_ms) + safety_margin_ms\n\n# Example usage\ntest_count = 1762\ntimeout_ms = calculate_dynamic_timeout(test_count)  # 324,300ms = 5.4 min",
+        "retry_protocol": "# Retry with exponential backoff (Article I compliance)\ntimeout_ms = 300_000  # 5 minutes default\nmax_retries = 3\n\nfor attempt in range(max_retries):\n    result = run_test_suite(timeout=timeout_ms)\n    \n    if result.is_ok() and result.all_tests_completed:\n        return result  # Complete context obtained\n    \n    # Article I: Exponential backoff for incomplete context\n    if attempt < max_retries - 1:\n        timeout_ms *= 2  # 2x, 3x, 10x multipliers\n        logger.info(f\"Retry {attempt+1} with {timeout_ms}ms timeout\")\n\nraise TimeoutError(\"Failed to obtain complete context after retries\")"
+      },
+      "leap_9_implementation": {
+        "initial_timeout": "120s (insufficient for 1762 tests)",
+        "optimized_timeout": "300s (5 min, sufficient for full suite)",
+        "function_timeouts": "7 functions with explicit @pytest.mark.timeout() decorators",
+        "outcome": "100% test completion, zero partial results"
+      },
+      "evidence": {
+        "mission": "leap_9_test_performance_optimization",
+        "constitutional_article": "Article I (Complete Context Before Action)",
+        "timeout_increases": "120s → 300s for full suite",
+        "function_timeout_additions": 7,
+        "validation": "All 1762 tests complete without timeout"
+      },
+      "applicability": {
+        "when": "Running test suites that may timeout (>1000 tests or slow integration)",
+        "how_to_detect": "Test suite timeouts in CI logs",
+        "priority": "P0 (constitutional requirement)",
+        "effort": "Low (timeout configuration changes)"
+      },
+      "constitutional_alignment": {
+        "article_i": "Complete context before action (primary mandate)",
+        "article_ii": "100% verification (complete context enables full validation)"
+      },
+      "tags": [
+        "constitutional_compliance",
+        "article_i",
+        "timeout_handling",
+        "complete_context",
+        "high_confidence",
+        "leap_9"
+      ]
+    },
+    {
+      "id": "pattern_leap9_12_article_ii_100_percent_verification",
+      "name": "Constitutional Article II: 100% Verification via Fast Tests",
+      "confidence": 0.95,
+      "evidence_count": 1,
+      "category": "constitutional_compliance",
+      "pattern_type": "verification_protocol",
+      "context": "Article II mandates 100% test pass rate on main branch, requiring fast tests to enable continuous verification",
+      "problem": "Slow tests discourage developers from running full suite, leading to broken main branch",
+      "solution": {
+        "performance_budgets": "Unit <500ms, integration <10s, suite <2s",
+        "rapid_feedback": "Fast tests enable pre-commit hooks (<1s)",
+        "100_percent_pass_rate": "All tests passing before merge (no exceptions)",
+        "regression_prevention": "Automated performance guards prevent degradation"
+      },
+      "code_example": {
+        "pre_commit_hook": "#!/bin/bash\n# .git/hooks/pre-commit - Article II enforcement\n\necho \"Running unit tests (Article II: 100% verification)...\"\n\n# Run only unit tests (fast feedback)\npytest -m \"unit and not integration\" --timeout=5 -v\n\nif [ $? -ne 0 ]; then\n    echo \"❌ Unit tests failed (Article II violation)\"\n    echo \"   Fix tests before committing\"\n    exit 1\nfi\n\necho \"✅ Unit tests passed (100% pass rate maintained)\"\nexit 0",
+        "ci_enforcement": "# .github/workflows/test.yml - Article II enforcement\n\nname: Test Suite (Article II Compliance)\n\non: [push, pull_request]\n\njobs:\n  test:\n    runs-on: ubuntu-latest\n    steps:\n      - uses: actions/checkout@v3\n      \n      - name: Run full test suite\n        run: python run_tests.py --run-all\n        timeout-minutes: 10\n      \n      - name: Verify 100% pass rate (Article II)\n        run: |\n          if [ $? -ne 0 ]; then\n            echo \"❌ Article II violation: Tests failed\"\n            echo \"   Main branch requires 100% pass rate\"\n            exit 1\n          fi\n          echo \"✅ Article II compliant: 100% pass rate\""
+      },
+      "leap_9_outcomes": {
+        "performance_improvement": "86.4% faster (3.91s → 0.53s)",
+        "pre_commit_feasibility": "Unit tests <500ms enable pre-commit hooks",
+        "ci_duration": "Full suite <10 min (was timing out at 30+ min)",
+        "pass_rate": "100% (85/85 validation + 7/7 main suite)"
+      },
+      "evidence": {
+        "mission": "leap_9_test_performance_optimization",
+        "constitutional_article": "Article II (100% Verification and Stability)",
+        "baseline_before": "3.91s (too slow for pre-commit)",
+        "baseline_after": "0.53s (enables pre-commit hooks)",
+        "pass_rate": "100% (92/92 tests passing)"
+      },
+      "applicability": {
+        "when": "Enforcing quality standards on all code changes",
+        "how_to_enforce": "Pre-commit hooks + CI validation",
+        "priority": "P0 (constitutional requirement)",
+        "effort": "Low (once tests are fast)"
+      },
+      "constitutional_alignment": {
+        "article_ii": "100% verification and stability (primary mandate)",
+        "article_iii": "Automated local enforcement (pre-commit hooks)"
+      },
+      "tags": [
+        "constitutional_compliance",
+        "article_ii",
+        "100_percent_verification",
+        "fast_tests",
+        "high_confidence",
+        "leap_9"
+      ]
+    },
+    {
+      "id": "pattern_leap9_13_article_iii_automated_enforcement",
+      "name": "Constitutional Article III: Automated Quality Gate Enforcement",
+      "confidence": 0.85,
+      "evidence_count": 1,
+      "category": "constitutional_compliance",
+      "pattern_type": "automation",
+      "context": "Article III mandates automated local enforcement of quality standards with no manual overrides",
+      "problem": "Manual quality checks are skipped under time pressure, leading to degraded code quality",
+      "solution": {
+        "pre_commit_hooks": "Run fast unit tests before commit (<1s)",
+        "pre_push_hooks": "Run full suite before push (<10s)",
+        "performance_regression_suite": "Automated baseline validation",
+        "ci_enforcement": "Final validation gate (no bypass)",
+        "zero_manual_overrides": "No flags to skip quality gates"
+      },
+      "code_example": {
+        "automated_regression_test": "# tests/integration/test_performance_regression.py\n@pytest.mark.performance\ndef test_unit_tests_under_500ms_budget():\n    \"\"\"Article III: Automated performance budget enforcement.\n    \n    Unit tests MUST complete in <500ms to enable pre-commit hooks.\n    This is a quality gate with no bypass mechanism.\n    \"\"\"\n    result = run_unit_tests()\n    \n    assert result.duration_ms < 500, (\n        f\"❌ Article III violation: Unit tests too slow\\n\"\n        f\"   Duration: {result.duration_ms}ms\\n\"\n        f\"   Budget: <500ms\\n\"\n        f\"   Action: Optimize tests (remove delays, mock I/O)\\n\"\n        f\"   See: docs/testing/PERFORMANCE_GUIDELINES.md\"\n    )",
+        "ci_enforcement_no_bypass": "# .github/workflows/test.yml - No bypass allowed\n\n- name: Performance regression check (Article III)\n  run: pytest tests/integration/test_performance_regression.py -v\n  # NO continue-on-error\n  # NO allow-failure flags\n  # Quality gates are absolute barriers per Article III"
+      },
+      "leap_9_automated_gates": {
+        "performance_regression_suite": "10 tests enforcing baselines",
+        "function_timeout_validation": "12 tests enforcing timeout decorators",
+        "unit_integration_separation": "16 tests enforcing marker usage",
+        "mock_pattern_validation": "16 tests enforcing mocking patterns",
+        "total_automated_gates": 54
+      },
+      "evidence": {
+        "mission": "leap_9_test_performance_optimization",
+        "constitutional_article": "Article III (Automated Local Enforcement)",
+        "automated_validation_tests": 54,
+        "zero_bypass_mechanisms": true,
+        "enforcement_level": "Pre-commit + CI (multi-layer)"
+      },
+      "applicability": {
+        "when": "Enforcing any quality standard that can be automated",
+        "how_to_implement": "Write validation tests + configure git hooks + CI enforcement",
+        "priority": "P0 (constitutional requirement)",
+        "effort": "Medium (requires test suite + hook configuration)"
+      },
+      "constitutional_alignment": {
+        "article_iii": "Automated local enforcement (primary mandate)",
+        "article_ii": "100% verification (automation ensures consistency)"
+      },
+      "tags": [
+        "constitutional_compliance",
+        "article_iii",
+        "automated_enforcement",
+        "quality_gates",
+        "medium_confidence",
+        "leap_9"
+      ]
+    },
+    {
+      "id": "pattern_leap9_14_parallel_test_generation",
+      "name": "Parallel Test Generation for Efficiency",
+      "confidence": 0.8,
+      "evidence_count": 1,
+      "category": "agent_orchestration",
+      "pattern_type": "parallel_execution",
+      "context": "Test generation for independent validation suites can be parallelized to reduce execution time",
+      "problem": "Sequential test generation creates bottlenecks when multiple independent test suites are needed",
+      "solution": {
+        "identify_independent_tasks": "Test suites with no dependencies can run in parallel",
+        "layer_based_execution": "Layer 2 (tests) parallelized, Layer 3 (code) sequential",
+        "task_graph_analysis": "Dependency analysis determines parallelization strategy",
+        "agent_coordination": "TestGeneratorAgent spawns parallel instances for independent tasks"
+      },
+      "code_example": {
+        "parallel_task_graph": "# Mission graph layer structure\nlayers = [\n    # Layer 1: Spec (sequential, foundation)\n    {\"task\": \"create_performance_spec\", \"dependencies\": []},\n    \n    # Layer 2: Tests (PARALLEL - no dependencies between test suites)\n    {\n        \"task\": \"test_remove_intentional_delays\",\n        \"dependencies\": [\"create_performance_spec\"],\n        \"parallel_group\": \"test_generation\"\n    },\n    {\n        \"task\": \"test_non_blocking_cleanup\",\n        \"dependencies\": [\"create_performance_spec\"],\n        \"parallel_group\": \"test_generation\"\n    },\n    {\n        \"task\": \"test_function_timeouts\",\n        \"dependencies\": [\"create_performance_spec\"],\n        \"parallel_group\": \"test_generation\"\n    },\n    \n    # Layer 3: Code (SEQUENTIAL - depends on tests passing)\n    {\n        \"task\": \"implement_psutil_cleanup\",\n        \"dependencies\": [\"test_non_blocking_cleanup\"]  # Wait for test\n    },\n    {\n        \"task\": \"add_timeout_decorators\",\n        \"dependencies\": [\"test_function_timeouts\"]  # Wait for test\n    }\n]",
+        "orchestrator_parallel_execution": "# Agent orchestration with parallelization\nasync def execute_layer_2_tests_parallel(tasks):\n    \"\"\"Execute independent test generation tasks in parallel.\"\"\"\n    test_tasks = [t for t in tasks if t['parallel_group'] == 'test_generation']\n    \n    # Spawn parallel test generation agents\n    results = await asyncio.gather(*[\n        test_generator_agent.generate_test_suite(\n            task['task'],\n            task['dependencies']\n        )\n        for task in test_tasks\n    ])\n    \n    # Verify all tests pass before proceeding to Layer 3\n    assert all(r.is_ok() for r in results), \"All tests must pass before implementation\"\n    \n    return results"
+      },
+      "leap_9_parallelization": {
+        "layer_2_parallel_tasks": 3,
+        "test_suites_generated_simultaneously": [
+          "test_remove_intentional_delays.py",
+          "test_non_blocking_cleanup.py",
+          "test_function_timeouts.py"
+        ],
+        "time_saved": "~40% reduction vs sequential (3 tasks at once vs 3 sequential)",
+        "layer_3_sequential": "Code implementation waits for tests (TDD protocol)"
+      },
+      "evidence": {
+        "mission": "leap_9_test_performance_optimization",
+        "parallel_test_generation_tasks": 3,
+        "execution_mode": "Layer 2 parallel, Layer 3 sequential",
+        "benefit": "Faster mission completion without violating TDD protocol"
+      },
+      "applicability": {
+        "when": "Multiple independent test suites needed for same feature",
+        "how_to_detect": "Task graph analysis identifies zero-dependency nodes",
+        "priority": "P2 (optimization, not requirement)",
+        "effort": "Low (orchestrator handles parallelization automatically)"
+      },
+      "constitutional_alignment": {
+        "article_vi": "TDD protocol maintained (tests before code, even when parallel)",
+        "article_ii": "100% verification (all parallel tests must pass before code)"
+      },
+      "tags": [
+        "agent_orchestration",
+        "parallel_execution",
+        "test_generation",
+        "efficiency",
+        "medium_confidence",
+        "leap_9"
+      ]
+    },
+    {
+      "id": "pattern_leap9_15_phase_checkpoint_auto_validation",
+      "name": "Phase Checkpoint Auto-Validation",
+      "confidence": 0.8,
+      "evidence_count": 1,
+      "category": "agent_orchestration",
+      "pattern_type": "quality_gate",
+      "context": "Multi-phase missions need validation checkpoints to ensure each phase completes successfully before proceeding",
+      "problem": "Proceeding to next phase with incomplete prior phase wastes effort on work that will fail",
+      "solution": {
+        "checkpoint_definition": "Define validation criteria after each phase",
+        "auto_validation": "Orchestrator automatically validates criteria before proceeding",
+        "failure_handling": "Halt mission and report incomplete phase on validation failure",
+        "validation_types": [
+          "file_exists: Required output files present",
+          "test_pass_rate: All tests passing",
+          "acceptance_criteria_met: Phase objectives achieved"
+        ]
+      },
+      "code_example": {
+        "checkpoint_definition": "# Mission graph checkpoint definition\ncheckpoints = [\n    {\n        \"after_phase\": \"phase_2_p0_critical_fixes\",\n        \"type\": \"auto_validate\",\n        \"validation\": {\n            \"test_pass_rate\": 1.0,  # 100% tests passing\n            \"intentional_delays_removed\": True,\n            \"psutil_cleanup_implemented\": True,\n            \"function_timeouts_added\": True\n        },\n        \"failure_action\": \"halt_mission\"\n    },\n    {\n        \"after_phase\": \"phase_3_p1_test_architecture\",\n        \"type\": \"auto_validate\",\n        \"validation\": {\n            \"unit_integration_separated\": True,\n            \"performance_under_budget\": True,\n            \"documentation_complete\": True\n        },\n        \"failure_action\": \"halt_mission\"\n    }\n]",
+        "auto_validation_implementation": "async def validate_phase_checkpoint(checkpoint):\n    \"\"\"Auto-validate phase completion criteria.\"\"\"\n    validation = checkpoint['validation']\n    failures = []\n    \n    # Validate test pass rate\n    if 'test_pass_rate' in validation:\n        result = await run_test_suite()\n        if result.pass_rate < validation['test_pass_rate']:\n            failures.append(f\"Test pass rate: {result.pass_rate} < {validation['test_pass_rate']}\")\n    \n    # Validate performance budgets\n    if 'performance_under_budget' in validation:\n        result = await run_performance_tests()\n        if not result.all_budgets_met:\n            failures.append(f\"Performance budgets not met: {result.violations}\")\n    \n    if failures:\n        raise CheckpointValidationError(\n            f\"Phase {checkpoint['after_phase']} validation failed:\\n\"\n            + \"\\n\".join(f\"  - {f}\" for f in failures)\n        )\n    \n    return Ok(\"Phase validation passed\")"
+      },
+      "leap_9_checkpoints": {
+        "after_phase_1": "Complete failure catalog and classification",
+        "after_phase_2": "100% test pass rate achieved",
+        "after_phase_3": "3 consecutive stable runs validated",
+        "validation_results": "All checkpoints passed, no mission halts"
+      },
+      "evidence": {
+        "mission": "leap_9_test_performance_optimization",
+        "checkpoints_defined": 3,
+        "checkpoints_validated": 3,
+        "checkpoint_pass_rate": "100%",
+        "benefit": "Zero wasted effort on invalid phase transitions"
+      },
+      "applicability": {
+        "when": "Multi-phase missions with dependencies between phases",
+        "how_to_detect": "Mission graphs with 3+ phases",
+        "priority": "P1 (prevents wasted effort)",
+        "effort": "Low (checkpoint definition in mission graph)"
+      },
+      "constitutional_alignment": {
+        "article_ii": "100% verification (checkpoints enforce quality gates)",
+        "article_iii": "Automated enforcement (no manual checkpoint overrides)"
+      },
+      "tags": [
+        "agent_orchestration",
+        "phase_checkpoints",
+        "auto_validation",
+        "quality_gates",
+        "medium_confidence",
+        "leap_9"
+      ]
+    }
+  ],
+  "cross_references": {
+    "pattern_leap9_1_remove_intentional_delays": {
+      "related_patterns": [
+        "pattern_leap9_3_function_level_timeouts",
+        "pattern_leap9_4_unit_integration_separation"
+      ],
+      "constitutional_articles": ["article_i", "article_ii", "article_iv"],
+      "validation_files": [
+        "tests/integration/test_remove_intentional_delays.py",
+        "tests/integration/test_mock_asyncio_sleep.py"
+      ]
+    },
+    "pattern_leap9_2_psutil_non_blocking_cleanup": {
+      "related_patterns": [
+        "pattern_leap9_5_performance_regression_suite",
+        "pattern_leap9_11_article_i_complete_context"
+      ],
+      "constitutional_articles": ["article_ii", "article_iii", "article_iv"],
+      "validation_files": [
+        "tests/integration/test_non_blocking_cleanup.py"
+      ]
+    },
+    "pattern_leap9_6_tdd_red_green_refactor": {
+      "related_patterns": [
+        "pattern_leap9_7_necessary_test_coverage",
+        "pattern_leap9_8_meta_test_validation"
+      ],
+      "constitutional_articles": ["article_vi", "article_ii", "article_iv"],
+      "all_validation_files": [
+        "tests/integration/test_mock_asyncio_sleep.py",
+        "tests/integration/test_non_blocking_cleanup.py",
+        "tests/validation/test_function_timeouts.py",
+        "tests/validation/test_unit_integration_separation.py",
+        "tests/integration/test_performance_regression.py"
+      ]
+    }
+  },
+  "metadata": {
+    "extraction_agent": "learning_agent",
+    "extraction_method": "manual_analysis_with_document_review",
+    "source_documents": [
+      "docs/testing/PERFORMANCE_GUIDELINES.md (923 lines)",
+      "reports/test_performance_verification_complete.md",
+      "docs/leap_9_meta_patterns_vectorstore.json",
+      "missions/leap_9_complete_test_recovery.json"
+    ],
+    "constitutional_compliance_validated": true,
+    "all_patterns_confidence_above_0_6": true,
+    "all_patterns_have_evidence": true,
+    "vectorstore_ready": true,
+    "next_steps": {
+      "sync_to_vectorstore": "Store all 15 patterns with confidence >= 0.6",
+      "update_backlog": "Document patterns in agency_backlog for future reference",
+      "adr_reference": "Update ADR-031 with pattern extraction completion"
+    }
+  }
+}

@@ -1,0 +1,11 @@
+[1m============================= test session starts ==============================[0m
+platform darwin -- Python 3.12.11, pytest-8.4.2, pluggy-1.6.0
+rootdir: /Users/am/Code/Agency
+configfile: pytest.ini
+plugins: asyncio-1.2.0, anyio-4.10.0, typeguard-4.4.4, cov-7.0.0
+asyncio: mode=Mode.AUTO, debug=False, asyncio_default_fixture_loop_scope=None, asyncio_default_test_loop_scope=function
+collected 14 items
+
+tests/integration/test_remove_intentional_delays.py [32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m       [100%][0m
+
+[32m============================= [32m[1m14 passed[0m[32m in 12.66s[0m[32m ==============================[0m

@@ -1016,7 +1016,7 @@ PR_TEMPLATE = """
 - [x] Article IV: VectorStore learnings extracted (confidence: {confidence})
 - [x] Article V: Spec-driven development (spec: {spec_path})
 
-🤖 Generated with [Claude Code](https://claude.com/claude-code)
+🤖 Autonomously generated
 
 Co-Authored-By: Claude <noreply@anthropic.com>
 """

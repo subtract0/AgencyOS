@@ -61,15 +61,21 @@ def pytest_collection_modifyitems(items):
             )
         test_path = str(item.fspath)
 
-        # Auto-categorize by path
+        # Auto-categorize by path (skip if test has explicit marker)
+        has_explicit_marker = any(
+            m.name in ("unit", "integration", "e2e") for m in item.iter_markers()
+        )
+
         if "/unit/" in test_path or "/tests/unit/" in test_path:
-            item.add_marker(pytest.mark.unit)
+            if not has_explicit_marker:
+                item.add_marker(pytest.mark.unit)
             # Unit tests should be fast (10 seconds max, increased for resource contention)
             if not any(m.name == "timeout" for m in item.iter_markers()):
                 item.add_marker(pytest.mark.timeout(10))
 
         elif "/integration/" in test_path or "/tests/integration/" in test_path:
-            item.add_marker(pytest.mark.integration)
+            if not has_explicit_marker:
+                item.add_marker(pytest.mark.integration)
             # Integration tests can be slower (30 seconds max, increased for full suite runs)
             if not any(m.name == "timeout" for m in item.iter_markers()):
                 item.add_marker(pytest.mark.timeout(30))
