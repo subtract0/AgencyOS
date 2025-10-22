@@ -255,3 +255,16 @@ class Agency:
             Agent response
         """
         return self.agent.run(message)
+
+    def get_response(self, message: str, recipient_agent: Agent | None = None) -> str:
+        """
+        Get response from agent (alias for get_completion for backward compatibility).
+
+        Args:
+            message: User message
+            recipient_agent: Target agent (ignored, we only have one)
+
+        Returns:
+            Agent response
+        """
+        return self.get_completion(message, recipient_agent)
