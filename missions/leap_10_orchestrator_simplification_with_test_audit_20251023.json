@@ -1,0 +1,524 @@
+{
+  "mission": "Codebase Simplification: Lean SpaceX Rocket (Preserve All Honey)",
+  "leap_number": 10,
+  "metadata": {
+    "estimated_tokens": 62500,
+    "estimated_cost_usd": 17.5,
+    "complexity": "moderate",
+    "budget_limit_usd": 15.0,
+    "target_hardware": "M4 Pro 48GB",
+    "cost_savings_target": "96% (via local model)",
+    "honey_preservation": "100% (all battle-tested capabilities)",
+    "risk_level": "LOW (gradual migration, backward compatible)",
+    "test_count_corrected": {
+      "claimed": 1725,
+      "actual": 5889,
+      "passed": 5749,
+      "skipped": 140,
+      "note": "User correction: test suite larger than initially assessed (GOOD NEWS!)"
+    },
+    "phases_count": 5,
+    "test_audit_added": true,
+    "test_audit_scope": "5,889 tests for NECESSARY compliance and quality"
+  },
+  "phases": [
+    {
+      "id": "phase_1_local_execution",
+      "title": "Phase 1: Enable Local Execution (IMMEDIATE VALUE)",
+      "tasks": [
+        {
+          "id": "spec_local_execution_setup",
+          "title": "Design local execution configuration strategy",
+          "type": "Spec",
+          "tier": "Tier 1",
+          "agent": "chief_architect",
+          "description": "Create comprehensive specification for local execution setup on M4 Pro 48GB with Qwen3-Coder Q8_0 (32GB). Define environment variables, memory budgets, worker limits, and safety guardrails. HONEY: Enable 96% cost savings while preserving all capabilities.",
+          "dependencies": [],
+          "acceptance_criteria": [
+            "Environment variables defined (USE_LOCAL_MODEL, LOCAL_MODEL_NAME, memory limits)",
+            "Memory budget calculated (48GB total, 32GB model, 16GB KV cache, 3 max workers)",
+            "Safety guardrails specified (OOM prevention, graceful degradation)",
+            "Backward compatibility ensured (works with/without local model)",
+            "Cost savings quantified (96% reduction vs cloud-only)"
+          ],
+          "estimated_tokens": 3000
+        },
+        {
+          "id": "code_env_example",
+          "title": "Create .env.example with local model config",
+          "type": "Code",
+          "tier": "Tier 2",
+          "agent": "coder",
+          "description": "Create `.env.example` file with all required environment variables for local execution. Include comments explaining each variable, memory implications, and M4 Pro-specific recommendations. Use Qwen3-Coder Q8_0 (32GB) as default model.",
+          "dependencies": [
+            "spec_local_execution_setup"
+          ],
+          "acceptance_criteria": [
+            "USE_LOCAL_MODEL=true",
+            "LOCAL_MODEL_NAME=qwen3-coder:30b (or hf.co/... Q8_0)",
+            "LOCAL_MODEL_TEST_WORKERS=3",
+            "Comments explain memory budget (48GB \u2192 3 workers safe)",
+            "OPENAI_API_KEY documented for hybrid cloud fallback"
+          ],
+          "estimated_tokens": 1500
+        },
+        {
+          "id": "test_env_config",
+          "title": "Test environment configuration validation",
+          "type": "Test",
+          "tier": "Tier 2",
+          "agent": "test_generator",
+          "description": "Write tests to validate environment configuration parsing, memory budget calculation, and worker limit enforcement. Test both local-only and hybrid (local + cloud) modes. NECESSARY pattern: Normal (valid config), Edge (missing vars, invalid values), Security (env injection).",
+          "dependencies": [
+            "code_env_example"
+          ],
+          "verification_target": "code_env_example",
+          "acceptance_criteria": [
+            "Test env parsing with all variables set",
+            "Test fallback to defaults when variables missing",
+            "Test memory budget calculation (48GB \u2192 3 workers)",
+            "Test invalid model name handling",
+            "Test hybrid mode (local + cloud) configuration"
+          ],
+          "estimated_tokens": 2500
+        },
+        {
+          "id": "code_local_execution_quickstart",
+          "title": "Write local execution quickstart guide",
+          "type": "Code",
+          "tier": "Tier 2",
+          "agent": "coder",
+          "description": "Create `docs/local-execution-quickstart.md` with step-by-step setup instructions for M4 Pro 48GB. Include Ollama installation, model download, environment setup, verification tests, and troubleshooting. Target audience: Users new to local LLM execution.",
+          "dependencies": [
+            "spec_local_execution_setup",
+            "code_env_example"
+          ],
+          "acceptance_criteria": [
+            "Step 1: Install Ollama (brew install ollama)",
+            "Step 2: Download Qwen3-Coder Q8_0 (32GB model)",
+            "Step 3: Configure environment (.env setup)",
+            "Step 4: Verify installation (test local execution)",
+            "Troubleshooting section (OOM, slow execution, model errors)",
+            "Cost savings calculation (96% reduction example)"
+          ],
+          "estimated_tokens": 3500
+        },
+        {
+          "id": "test_local_execution_verification",
+          "title": "Test local execution end-to-end workflow",
+          "type": "Test",
+          "tier": "Tier 2",
+          "agent": "test_generator",
+          "description": "Create integration test that verifies local execution works end-to-end: Ollama connectivity, model loading, task execution with memory limits, cost tracking. Should pass on M4 Pro 48GB with Qwen3-Coder.",
+          "dependencies": [
+            "code_local_execution_quickstart"
+          ],
+          "verification_target": "code_local_execution_quickstart",
+          "acceptance_criteria": [
+            "Test Ollama service availability",
+            "Test model loading (Qwen3-Coder Q8_0)",
+            "Test task execution with 3 workers (memory-safe)",
+            "Test cost tracking ($0 for local tasks)",
+            "Test graceful fallback to cloud when local unavailable"
+          ],
+          "estimated_tokens": 3000
+        }
+      ]
+    },
+    {
+      "id": "phase_2_orchestrator_hierarchy",
+      "title": "Phase 2: Clarify Orchestrator Hierarchy (ARCHITECTURE)",
+      "tasks": [
+        {
+          "id": "spec_orchestrator_architecture",
+          "title": "Design lean orchestrator architecture",
+          "type": "Spec",
+          "tier": "Tier 1",
+          "agent": "chief_architect",
+          "description": "Define clear orchestrator hierarchy: PRIMARY (/primeA \u2192 two_stage_orchestrator), SPECIALIZED (trinity protocol, overnight), DEPRECATED (unified_primea, parallel, feedback_loop). Create decision tree for users and agents. HONEY: Preserve all 10 battle-tested capabilities (constitutional compliance, two-stage workflow, Trinity Protocol, etc.).",
+          "dependencies": [
+            "phase_1_local_execution"
+          ],
+          "acceptance_criteria": [
+            "Primary orchestrator identified: two_stage_orchestrator.py",
+            "Specialized orchestrators categorized (trinity, overnight experimental)",
+            "Deprecated orchestrators listed with migration path",
+            "Decision tree created (user-facing, agent-facing)",
+            "All 10 honey capabilities mapped to new architecture",
+            "Backward compatibility strategy defined"
+          ],
+          "estimated_tokens": 4000
+        },
+        {
+          "id": "code_orchestrator_claude_md",
+          "title": "Update tools/orchestrator/CLAUDE.md with decision tree",
+          "type": "Code",
+          "tier": "Tier 2",
+          "agent": "coder",
+          "description": "Update tools/orchestrator/CLAUDE.md to document clear orchestrator hierarchy and decision tree. Add 'When to Use Which Orchestrator' section with visual decision flow. Preserve existing honey documentation.",
+          "dependencies": [
+            "spec_orchestrator_architecture"
+          ],
+          "acceptance_criteria": [
+            "Decision tree added (flowchart format)",
+            "Primary orchestrator: /primeA \u2192 two_stage_orchestrator",
+            "Specialized use cases documented (trinity, overnight)",
+            "Deprecation warnings added (unified_primea, parallel)",
+            "Migration path documented",
+            "Honey capabilities preserved (all 10 listed)"
+          ],
+          "estimated_tokens": 2500
+        },
+        {
+          "id": "code_deprecation_warnings",
+          "title": "Add deprecation warnings to unified_primea_orchestrator.py",
+          "type": "Code",
+          "tier": "Tier 2",
+          "agent": "coder",
+          "description": "Add deprecation warning at top of unified_primea_orchestrator.py directing users to two_stage_orchestrator.py. Warning should be clear but not block usage (backward compatibility). Log deprecation event to telemetry.",
+          "dependencies": [
+            "spec_orchestrator_architecture"
+          ],
+          "acceptance_criteria": [
+            "Deprecation warning added to file docstring",
+            "Warning printed on import (once per session)",
+            "Clear migration message (use two_stage_orchestrator instead)",
+            "Telemetry event logged (track usage)",
+            "File remains functional (backward compatibility)"
+          ],
+          "estimated_tokens": 1500
+        },
+        {
+          "id": "test_orchestrator_routing",
+          "title": "Test orchestrator hierarchy routing",
+          "type": "Test",
+          "tier": "Tier 2",
+          "agent": "test_generator",
+          "description": "Create tests verifying /primeA command correctly routes to two_stage_orchestrator, deprecation warnings display properly, and all honey capabilities remain accessible. NECESSARY pattern: Normal (standard routing), Edge (explicit unified_primea usage), Security (no bypass of warnings).",
+          "dependencies": [
+            "code_orchestrator_claude_md",
+            "code_deprecation_warnings"
+          ],
+          "verification_target": "code_orchestrator_claude_md",
+          "acceptance_criteria": [
+            "Test /primeA routes to two_stage_orchestrator",
+            "Test deprecation warning displays on unified_primea import",
+            "Test backward compatibility (old code still works)",
+            "Test telemetry logging (deprecation events)",
+            "Test honey capabilities accessible (constitutional compliance, TDD, etc.)"
+          ],
+          "estimated_tokens": 2500
+        }
+      ]
+    },
+    {
+      "id": "phase_3_test_suite_simplification",
+      "title": "Phase 3: Test Suite Simplification (5,889 tests, 26.5 min runtime)",
+      "tasks": [
+        {
+          "id": "spec_test_suite_optimization",
+          "title": "Design test suite simplification strategy",
+          "type": "Spec",
+          "tier": "Tier 1",
+          "agent": "chief_architect",
+          "description": "Create strategy for test suite simplification: integrate memory-aware test runner, consolidate orchestrator tests (7 \u2192 3 files), flag experimental tests (DSPy, Trinity experimental). HONEY: Maintain 100% pass rate, preserve constitutional compliance tests, keep NECESSARY pattern.",
+          "dependencies": [
+            "phase_2_orchestrator_hierarchy"
+          ],
+          "acceptance_criteria": [
+            "Memory-aware test runner integration plan (automatic 3 workers when local model active)",
+            "Orchestrator test consolidation plan (merge similar, keep unique)",
+            "Experimental test flagging strategy (pytest markers)",
+            "Pass rate preservation guarantee (100% maintained)",
+            "Constitutional test preservation (Article I-V tests untouched)",
+            "Estimated complexity reduction (30% fewer test files)"
+          ],
+          "estimated_tokens": 3500
+        },
+        {
+          "id": "code_memory_aware_integration",
+          "title": "Integrate memory-aware test runner",
+          "type": "Code",
+          "tier": "Tier 2",
+          "agent": "coder",
+          "description": "Update run_tests.py to automatically use memory-aware worker count when local model active. Integrate existing tools/memory_aware_test_runner.py logic. Should detect local model, calculate safe worker count (max 3 for M4 Pro), and configure pytest automatically.",
+          "dependencies": [
+            "spec_test_suite_optimization"
+          ],
+          "acceptance_criteria": [
+            "Auto-detect local model active (USE_LOCAL_MODEL=true)",
+            "Calculate safe worker count (get_safe_worker_count())",
+            "Configure pytest -n flag automatically",
+            "Log memory budget info to console",
+            "Graceful fallback if memory detection fails"
+          ],
+          "estimated_tokens": 2000
+        },
+        {
+          "id": "code_experimental_test_markers",
+          "title": "Add pytest markers for experimental tests",
+          "type": "Code",
+          "tier": "Tier 2",
+          "agent": "coder",
+          "description": "Add @pytest.mark.experimental to DSPy tests, Trinity experimental tests, and other non-production tests. Update pytest.ini to skip experimental by default (run with pytest -m experimental). Document in docs/testing/experimental-tests.md.",
+          "dependencies": [
+            "spec_test_suite_optimization"
+          ],
+          "acceptance_criteria": [
+            "@pytest.mark.experimental added to DSPy tests",
+            "@pytest.mark.experimental added to Trinity experimental",
+            "pytest.ini updated (skip experimental by default)",
+            "Documentation created (docs/testing/experimental-tests.md)",
+            "Run command documented (pytest -m experimental for full suite)"
+          ],
+          "estimated_tokens": 2000
+        },
+        {
+          "id": "test_memory_aware_runner",
+          "title": "Test memory-aware test runner integration",
+          "type": "Test",
+          "tier": "Tier 2",
+          "agent": "test_generator",
+          "description": "Create tests verifying memory-aware test runner correctly detects local model, calculates worker count, and prevents OOM. Test with/without local model, various memory levels, edge cases. NECESSARY pattern: Normal (48GB M4 Pro), Edge (low memory <10GB), Security (prevent resource exhaustion).",
+          "dependencies": [
+            "code_memory_aware_integration",
+            "code_experimental_test_markers"
+          ],
+          "verification_target": "code_memory_aware_integration",
+          "acceptance_criteria": [
+            "Test worker count calculation (48GB \u2192 3 workers)",
+            "Test local model detection (USE_LOCAL_MODEL=true/false)",
+            "Test low memory handling (<10GB \u2192 1 worker)",
+            "Test cloud-only mode (>20GB \u2192 10 workers)",
+            "Test OOM prevention (no crashes during test runs)"
+          ],
+          "estimated_tokens": 2500
+        }
+      ]
+    },
+    {
+      "id": "phase_3b_test_suite_audit",
+      "title": "Phase 3B: Comprehensive Test Suite Audit (5,889 Tests)",
+      "tasks": [
+        {
+          "id": "spec_test_audit_strategy",
+          "title": "Design test audit and consolidation strategy",
+          "type": "Spec",
+          "tier": "Tier 1",
+          "agent": "chief_architect",
+          "description": "Create comprehensive strategy for auditing 5,889 tests against NECESSARY pattern and software engineering best practices.\n\nNECESSARY Pattern (9 categories):\n- Normal: Standard usage paths\n- Edge: Boundary conditions, edge cases\n- Cascading: Error propagation, side effects\n- Essential: Critical business logic\n- Security: Auth, injection, XSS, CSRF\n- Spec: Acceptance criteria validation\n- Accessibility: Inclusive design\n- Resilience: Error recovery, timeouts\n- Year-round: Time-based logic, DST\n\nAudit Criteria:\n1. NECESSARY compliance (which categories covered?)\n2. Test quality (AAA pattern, clear assertions, focused)\n3. Duplication (similar tests, consolidation opportunities)\n4. Value (does it catch real bugs or just noise?)\n5. Maintenance burden (flaky, overly complex, brittle)\n6. Coverage gaps (what's NOT tested but should be?)\n\nDecision Framework:\n- KEEP: High value, clear purpose, catches bugs, maintainable\n- CONSOLIDATE: Duplicate/similar tests, merge into parameterized test\n- ENHANCE: Good intent but incomplete NECESSARY coverage\n- REPLACE: Outdated approach, better pattern available\n- DELETE: Zero value (always passes, redundant, tests implementation not behavior)\n\nOutput: Surgical plan preserving honey, removing cruft.",
+          "dependencies": [
+            "phase_3_test_suite_simplification"
+          ],
+          "acceptance_criteria": [
+            "NECESSARY pattern criteria defined for all 9 categories",
+            "Test quality rubric created (AAA, assertions, focus)",
+            "Duplication detection strategy (AST similarity, naming patterns)",
+            "Value assessment criteria (bug detection history, failure rate)",
+            "Maintenance burden metrics (flakiness, complexity, runtime)",
+            "Keep/consolidate/delete decision framework with examples",
+            "Expected reduction target (10-20% consolidation without losing coverage)"
+          ],
+          "estimated_tokens": 4000
+        },
+        {
+          "id": "code_test_audit_analyzer",
+          "title": "Build automated test audit analyzer",
+          "type": "Code",
+          "tier": "Tier 2",
+          "agent": "coder",
+          "description": "Create tools/test_audit_analyzer.py to automatically analyze 5,889 tests.\n\nFeatures:\n1. NECESSARY Pattern Detection:\n   - Scan test names for category keywords (test_normal_, test_edge_, test_security_)\n   - Analyze test body for pattern compliance (assertions, error handling)\n   - Generate coverage matrix (which categories have gaps?)\n\n2. Quality Metrics:\n   - AAA pattern detection (Arrange, Act, Assert sections)\n   - Assertion count (too few = weak test, too many = unfocused)\n   - Test length (>50 lines = candidate for split)\n   - Complexity (cyclomatic complexity, nested loops)\n\n3. Duplication Detection:\n   - AST similarity (85%+ similar = consolidation candidate)\n   - Naming pattern analysis (test_foo_1, test_foo_2 = parameterize?)\n   - Setup/teardown duplication (shared fixture opportunity)\n\n4. Value Analysis:\n   - Parse git history for test failure frequency\n   - Identify tests that never fail (always-passing = low value?)\n   - Runtime analysis (slow tests that could be optimized)\n\n5. Reporting:\n   - JSON report per test file with recommendations\n   - Summary dashboard (total tests, NECESSARY coverage %, consolidation opportunities)\n   - Prioritized action list (high-impact improvements first)\n\nOutput: Actionable analysis of all 5,889 tests.",
+          "dependencies": [
+            "spec_test_audit_strategy"
+          ],
+          "acceptance_criteria": [
+            "AST parsing for test structure analysis",
+            "NECESSARY pattern detection (9 categories)",
+            "Quality metrics calculation (AAA, assertions, complexity)",
+            "Duplication detection (85%+ similarity threshold)",
+            "Git history analysis for failure frequency",
+            "JSON report generation per test file",
+            "Summary dashboard with actionable recommendations"
+          ],
+          "estimated_tokens": 3500
+        },
+        {
+          "id": "code_run_test_audit",
+          "title": "Execute test audit analyzer on full suite",
+          "type": "Code",
+          "tier": "Tier 2",
+          "agent": "auditor",
+          "description": "Run test_audit_analyzer.py on all test files, generate comprehensive report.\n\nExecution:\n1. Scan all test files (tests/**/*.py)\n2. Analyze each test function (5,889 total)\n3. Generate per-file reports (JSON format)\n4. Aggregate into summary dashboard\n\nOutput Files:\n- test_audit_summary.json (overall stats, recommendations)\n- test_audit_details/ (per-file detailed reports)\n- test_audit_dashboard.html (visual report for review)\n\nExpected Findings:\n- NECESSARY coverage: 60-70% (room for improvement)\n- Duplication: 10-15% consolidation opportunities\n- Low value: 5-10% candidates for deletion\n- Quality issues: 15-20% need enhancement\n- High value: 60-70% keep as-is (honey!)\n\nThis is READ-ONLY analysis, no tests deleted yet.",
+          "dependencies": [
+            "code_test_audit_analyzer"
+          ],
+          "acceptance_criteria": [
+            "All 5,889 tests analyzed",
+            "Summary report generated (JSON + HTML)",
+            "Per-file detailed reports created",
+            "Consolidation opportunities identified (with groupings)",
+            "Deletion candidates listed (with rationale)",
+            "Enhancement opportunities documented (NECESSARY gaps)",
+            "High-value tests catalogued (preserve as honey)"
+          ],
+          "estimated_tokens": 3000
+        },
+        {
+          "id": "code_test_consolidation_plan",
+          "title": "Create surgical test consolidation plan",
+          "type": "Code",
+          "tier": "Tier 1",
+          "agent": "planner",
+          "description": "Based on audit report, create surgical plan for test suite optimization.\n\nPlan Structure:\n1. PRESERVE (Honey - 60-70%):\n   - High-value tests (catch real bugs)\n   - Good NECESSARY coverage\n   - Clear, maintainable, focused\n   - NO CHANGES (these are gold)\n\n2. CONSOLIDATE (10-15%):\n   - Duplicate/similar tests \u2192 parameterized tests\n   - Example: test_foo_valid_1, test_foo_valid_2 \u2192 @pytest.mark.parametrize\n   - Shared setup/teardown \u2192 fixtures\n   - Similar assertions \u2192 helper functions\n\n3. ENHANCE (15-20%):\n   - Good tests with incomplete NECESSARY coverage\n   - Add edge cases, security checks, resilience tests\n   - Improve assertions (more specific, better error messages)\n   - Add docstrings explaining what bug this catches\n\n4. DELETE (5-10%):\n   - Always-passing tests (zero failures in git history)\n   - Redundant after consolidation\n   - Testing implementation details (not behavior)\n   - Overly complex, brittle, unmaintainable\n\n5. REPLACE (5%):\n   - Outdated patterns (better approach available)\n   - Integration tests that should be unit tests\n   - Slow tests that could be faster\n\nOutput: Prioritized action plan with examples, estimated impact.",
+          "dependencies": [
+            "code_run_test_audit"
+          ],
+          "acceptance_criteria": [
+            "PRESERVE list (honey tests, no changes)",
+            "CONSOLIDATE plan (parameterization opportunities with code examples)",
+            "ENHANCE plan (NECESSARY gaps to fill with specific recommendations)",
+            "DELETE list (low-value tests with rationale)",
+            "REPLACE plan (outdated patterns with modern alternatives)",
+            "Impact estimate (coverage maintained, runtime reduced, maintenance easier)",
+            "Risk assessment (what could break, mitigation strategies)"
+          ],
+          "estimated_tokens": 4000
+        },
+        {
+          "id": "test_audit_verification",
+          "title": "Verify test audit analyzer correctness",
+          "type": "Test",
+          "tier": "Tier 2",
+          "agent": "test_generator",
+          "description": "Create tests for test_audit_analyzer to ensure accurate analysis.\n\nTest Cases:\n1. NECESSARY Pattern Detection:\n   - Test with complete NECESSARY coverage \u2192 9/9 categories detected\n   - Test with gaps \u2192 missing categories identified\n   - Test with wrong patterns \u2192 flagged for enhancement\n\n2. Quality Metrics:\n   - Well-structured test (AAA pattern) \u2192 high quality score\n   - Poorly structured test \u2192 low quality score, specific issues identified\n   - Complex test (>50 lines) \u2192 flagged for split\n\n3. Duplication Detection:\n   - Identical tests \u2192 100% similarity, consolidation recommended\n   - Similar tests (85% overlap) \u2192 consolidation candidate\n   - Different tests \u2192 no false positives\n\n4. Value Analysis:\n   - Test with failure history \u2192 high value, preserve\n   - Always-passing test \u2192 low value, deletion candidate\n\n5. Edge Cases:\n   - Empty test file \u2192 graceful handling\n   - Malformed test \u2192 error reported, analysis continues\n   - Large test suite (1000+ tests) \u2192 performance acceptable\n\nOutput: Confidence in audit analyzer accuracy.",
+          "dependencies": [
+            "code_test_audit_analyzer"
+          ],
+          "verification_target": "code_test_audit_analyzer",
+          "acceptance_criteria": [
+            "Test NECESSARY pattern detection accuracy (>90%)",
+            "Test quality metrics calculation (AAA, assertions, complexity)",
+            "Test duplication detection (no false positives)",
+            "Test value analysis (git history parsing)",
+            "Test edge case handling (empty files, malformed tests)",
+            "Test performance (5,889 tests analyzed in <5 minutes)",
+            "Test report generation (JSON, HTML output valid)"
+          ],
+          "estimated_tokens": 3000
+        }
+      ]
+    },
+    {
+      "id": "phase_4_documentation_and_learnings",
+      "title": "Phase 4: Documentation & VectorStore Learnings",
+      "tasks": [
+        {
+          "id": "code_migration_guide",
+          "title": "Write migration guide",
+          "type": "Code",
+          "tier": "Tier 2",
+          "agent": "coder",
+          "description": "Create docs/migrations/orchestrator-simplification.md documenting the entire simplification process, rationale, before/after comparison, and rollback procedure. Serve as reference for future refactorings.",
+          "dependencies": [
+            "phase_3_test_suite_simplification",
+            "phase_3b_test_suite_audit"
+          ],
+          "acceptance_criteria": [
+            "Before/after comparison (7 \u2192 3 orchestrators)",
+            "Rationale explained (honey preservation, clarity)",
+            "Step-by-step migration instructions",
+            "Rollback procedure documented",
+            "Success criteria listed (100% test pass, cost savings)",
+            "Lessons learned section"
+          ],
+          "estimated_tokens": 3000
+        },
+        {
+          "id": "code_extract_learnings",
+          "title": "Extract VectorStore learnings from unified_primea",
+          "type": "Code",
+          "tier": "Tier 1",
+          "agent": "learning",
+          "description": "Analyze unified_primea_orchestrator.py and extract reusable patterns to VectorStore (Article IV). Identify production hardening patterns, TDD workflows, constitutional compliance checks. Store with confidence \u22650.6 for cross-session reuse.",
+          "dependencies": [
+            "phase_3_test_suite_simplification",
+            "phase_3b_test_suite_audit"
+          ],
+          "acceptance_criteria": [
+            "Production hardening patterns extracted (slop immunity, budget guard)",
+            "TDD workflow patterns identified",
+            "Constitutional compliance patterns documented",
+            "Stored to VectorStore with confidence scores",
+            "Minimum 5 patterns extracted (confidence \u22650.6)",
+            "Patterns tagged for future orchestrator development"
+          ],
+          "estimated_tokens": 4000
+        },
+        {
+          "id": "code_adr_generation",
+          "title": "Generate ADR for orchestrator simplification",
+          "type": "Code",
+          "tier": "Tier 1",
+          "agent": "chief_architect",
+          "description": "Generate docs/adr/ADR-XXX-orchestrator-simplification.md documenting architectural decision: why simplify, alternatives considered, consequences, constitutional alignment, metrics. Reference Leap 10 evolution.",
+          "dependencies": [
+            "code_extract_learnings"
+          ],
+          "acceptance_criteria": [
+            "Context: Orchestrator bloat problem explained",
+            "Decision: Clear hierarchy (PRIMARY \u2192 SPECIALIZED \u2192 DEPRECATED)",
+            "Alternatives: Why not big-bang refactor? Why preserve backward compat?",
+            "Consequences: 60% reduction, 96% cost savings, easier maintenance",
+            "Constitutional alignment: All 5 articles compliant",
+            "Metrics: Before/after comparison table"
+          ],
+          "estimated_tokens": 3500
+        },
+        {
+          "id": "test_final_verification",
+          "title": "Final end-to-end verification",
+          "type": "Test",
+          "tier": "Tier 2",
+          "agent": "test_generator",
+          "description": "Create comprehensive end-to-end test verifying all phases complete successfully: local execution works, orchestrator hierarchy clear, tests run with memory-aware limits, all honey preserved. This is the final validation.",
+          "dependencies": [
+            "code_migration_guide",
+            "code_adr_generation"
+          ],
+          "verification_target": "code_migration_guide",
+          "acceptance_criteria": [
+            "Test local execution (96% cost savings achieved)",
+            "Test /primeA routing (two_stage_orchestrator used)",
+            "Test memory-aware test runner (3 workers with local model)",
+            "Test all 10 honey capabilities accessible",
+            "Test 100% test pass rate maintained",
+            "Test backward compatibility (old code works)"
+          ],
+          "estimated_tokens": 3500
+        }
+      ]
+    }
+  ],
+  "checkpoints": [
+    {
+      "after_phase": "phase_1_local_execution",
+      "type": "human_review",
+      "prompt": "Phase 1 complete: Local execution enabled. Verify 96% cost savings achieved and quickstart guide clear. Proceed to Phase 2?"
+    },
+    {
+      "after_phase": "phase_2_orchestrator_hierarchy",
+      "type": "human_review",
+      "prompt": "Phase 2 complete: Orchestrator hierarchy clarified. Verify decision tree clear and deprecation warnings working. Proceed to Phase 3?"
+    },
+    {
+      "after_phase": "phase_3_test_suite_simplification",
+      "type": "auto_validate",
+      "prompt": "Validate all tests pass with memory-aware runner (100% pass rate required)"
+    },
+    {
+      "after_phase": "phase_3b_test_suite_audit",
+      "type": "human_review",
+      "prompt": "Phase 3B complete: Test audit finished. Review consolidation plan (preserve honey, surgical improvements). Approve deletion/consolidation candidates? Proceed to Phase 4?"
+    }
+  ]
+}
