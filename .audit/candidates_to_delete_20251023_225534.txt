@@ -1,0 +1,13 @@
+# Test Deletion Candidates (Generated 20251023_225534)
+# Threshold: score < 10.0
+# Total candidates: 1
+#
+# Format: file::test_name
+#   Score: X.X
+#   Reason: ...
+
+tests/test_utils.py::test_mocking_hell
+  Score: 5.2
+  Reason: Mocking hell (10+ mocks); Tests implementation, not behavior
+  Mocks: 12, LOC: 120, Assertions: 2
+

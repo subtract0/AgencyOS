@@ -1,0 +1,95 @@
+# ADR-034 Finalization Specification - Summary
+
+## Specification Details
+- **File**: specs/spec-phase10-adr034-finalization.md
+- **Lines**: 483
+- **Sections**: 49
+- **Requirements**: 8 (5 functional, 3 non-functional)
+- **Acceptance Criteria**: 25+ checkboxes
+
+## What This Spec Defines
+
+### 1. Implementation Section Updates (FR1)
+- V5 architecture overview (three-tier fallback: V5_FULL → V5_PARTIAL → V4_FALLBACK)
+- Graceful fallback implementation details
+- Integration points with file paths
+- Data flow diagram
+
+### 2. Validation Section Updates (FR2)
+- Populate "Actual" column in metrics table
+- Document data sources (runtime cache, CI database, git)
+- Methodology for metric collection
+- V4 vs V5 comparison
+
+### 3. Rollout Plan Updates (FR3)
+- Mark Phase 1-10 status (✅ or ⏳)
+- Clarify Phase 6-8 (spec complete, impl deferred)
+- Add completion dates
+
+### 4. Lessons Learned Section (FR4)
+- V4→V5 migration insights
+- TDD learnings (Article VI compliance)
+- Constitutional compliance notes (Articles I-V)
+- Performance optimization notes
+- Trade-offs documented
+
+### 5. References Enhancement (FR5)
+- Link 10+ related documents
+- One-line descriptions
+- Relative paths validated
+
+## Implementation Plan (5 Steps)
+
+1. **Gather Metrics Data** (30 min)
+   - Run V5 audit on Agency suite
+   - Extract P1 rate, runtime accuracy, bug detectors
+   
+2. **Draft Implementation Section** (45 min)
+   - Architecture overview
+   - Detection logic
+   - Integration points
+   
+3. **Write Lessons Learned** (30 min)
+   - Migration insights
+   - TDD notes
+   - Constitutional compliance
+   
+4. **Update ADR-034** (30 min)
+   - Merge drafts
+   - Update tables
+   - Remove placeholders
+   
+5. **Validation** (15 min)
+   - Check markdown syntax
+   - Verify links
+   - Review against criteria
+
+**Total Effort**: 2.5 hours
+
+## Success Criteria (User-Specified)
+
+✅ 1. Implementation section has V5 integration details (not just file list)
+✅ 2. Validation section filled with real metrics
+✅ 3. Rollout plan reflects Phase 1-10 status
+✅ 4. Lessons Learned documents migration insights
+✅ 5. References section links to related ADRs and specs
+
+## Constitutional Compliance
+
+- **Article I**: Complete context (all V5 data collected before finalization)
+- **Article II**: 100% verification (metrics from actual test runs)
+- **Article V**: Spec-driven (traces to TEST_AUDIT_V5_PLAN.md Phase 10)
+
+## Key Deliverables
+
+1. **Primary**: Updated docs/adr/ADR-034-empirical-test-value-scoring.md
+2. **Supporting**: adr034_validation_metrics.txt (collected data)
+3. **This Spec**: specs/spec-phase10-adr034-finalization.md (guidance)
+
+## Next Steps
+
+1. Review this spec for completeness
+2. Gather validation metrics (run V5 audit)
+3. Follow 5-step implementation plan
+4. Update ADR-034 with actual data
+5. Validate against acceptance criteria

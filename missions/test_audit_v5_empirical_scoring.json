@@ -1,0 +1,635 @@
+{
+  "mission": "Test Value Auditor V5: Empirical Data-Driven Scoring",
+  "leap_number": 9,
+  "phases": [
+    {
+      "id": "phase_1_runtime_data",
+      "title": "Actual Runtime Data Integration",
+      "tasks": [
+        {
+          "id": "parse_pytest_execution_logs",
+          "title": "Parse pytest execution reports for actual runtimes",
+          "type": "Code",
+          "tier": "Tier 2",
+          "agent": "coder",
+          "description": "Create parser for pytest --junitxml and pytest-reportlog outputs to extract actual test execution times (not keyword-based heuristics). Support multiple formats (JUnit XML, pytest-json-report). FALLBACK: If no junitxml available, use heuristics mode (keyword-based estimation). IDEMPOTENCY: Safe to re-run without corrupting data (read-only parser).",
+          "dependencies": [],
+          "acceptance_criteria": [
+            "Parses JUnit XML files successfully",
+            "Parses pytest-reportlog JSON files",
+            "Extracts duration_seconds per test with precision to milliseconds",
+            "Handles missing/incomplete reports gracefully with heuristics fallback",
+            "Returns dict[test_id, runtime_seconds] mapping",
+            "Idempotent: Re-running produces identical results"
+          ],
+          "estimated_tokens": 3500
+        },
+        {
+          "id": "nonlinear_runtime_penalty",
+          "title": "Implement non-linear runtime penalty function",
+          "type": "Code",
+          "tier": "Tier 2",
+          "agent": "coder",
+          "description": "Replace linear runtime penalty (-runtime * 0.1) with non-linear function that steeply penalizes tests >30s (exponential/threshold-based). Formula: penalty = runtime_sec * (1 + exp((runtime_sec - 30) / 10)) for runtime >30s.",
+          "dependencies": ["parse_pytest_execution_logs"],
+          "acceptance_criteria": [
+            "Tests <10s have minimal penalty (<1 point)",
+            "Tests 10-30s have moderate penalty (1-3 points)",
+            "Tests >30s have steep penalty (5-20 points)",
+            "Tests >60s have extreme penalty (20+ points)",
+            "Formula is configurable via weights.yaml"
+          ],
+          "estimated_tokens": 2500
+        },
+        {
+          "id": "test_runtime_integration",
+          "title": "Test runtime data parser with actual pytest output",
+          "type": "Test",
+          "tier": "Tier 2",
+          "agent": "test_generator",
+          "description": "Validate runtime parser against real pytest output files. Test edge cases: missing durations, malformed XML, empty reports. Verify non-linear penalty function correctness.",
+          "dependencies": ["parse_pytest_execution_logs", "nonlinear_runtime_penalty"],
+          "verification_target": "parse_pytest_execution_logs",
+          "acceptance_criteria": [
+            "Parses sample JUnit XML with 100+ tests",
+            "Handles empty/missing duration fields",
+            "Non-linear penalty matches expected values for 10s/30s/60s tests",
+            "Integration test with real test_value_audit.py output"
+          ],
+          "estimated_tokens": 3000
+        }
+      ]
+    },
+    {
+      "id": "phase_2_failure_history",
+      "title": "CI Failure History Tracking",
+      "tasks": [
+        {
+          "id": "provision_ci_access",
+          "title": "Provision CI access tokens and artifact permissions",
+          "type": "Spec",
+          "tier": "Tier 1",
+          "agent": "planner",
+          "description": "Configure CI access: GitHub Actions artifact download permission, workflow log read access. Generate GITHUB_TOKEN with repo:read + actions:read scopes. Document token provisioning in CI/CD setup guide.",
+          "dependencies": [],
+          "acceptance_criteria": [
+            "GITHUB_TOKEN with actions:read scope provisioned",
+            "GitHub Actions artifact download permission verified",
+            "Access to workflow logs (last 90 days) confirmed",
+            "Token stored securely (environment variable, not committed)",
+            "Fallback documented: manual log download if API unavailable"
+          ],
+          "estimated_tokens": 2000
+        },
+        {
+          "id": "ci_failure_log_parser",
+          "title": "Parse CI logs for test failure history",
+          "type": "Code",
+          "tier": "Tier 2",
+          "agent": "coder",
+          "description": "Extract test failure events from CI logs (last 30-90 days). Support GitHub Actions, CircleCI, Jenkins formats. Track: test_id, failure_date, failure_reason, fixed_date. Store in SQLite database (.audit/failure_history.sqlite) for fast queries. FALLBACK: If CI access fails, use local pytest cache. IDEMPOTENCY: Upsert-based (safe re-run).",
+          "dependencies": ["provision_ci_access"],
+          "acceptance_criteria": [
+            "Parses GitHub Actions workflow logs",
+            "Extracts pytest failure output (test name, traceback)",
+            "Calculates failure frequency (failures per 90 days)",
+            "Distinguishes flaky tests (fails 2-9/10 runs) vs consistent failures (10/10) vs fixed bugs (1-2 failures, then 0)",
+            "Stores in SQLite at .audit/failure_history.sqlite with indexes for <100ms queries",
+            "Performance SLA: Queries <100ms for 5k tests, DB size <50MB for 90 days history",
+            "Idempotent: Re-running updates existing records (upsert logic)"
+          ],
+          "estimated_tokens": 4500
+        },
+        {
+          "id": "failure_bonus_weight",
+          "title": "Add failure history bonus to scoring formula",
+          "type": "Code",
+          "tier": "Tier 2",
+          "agent": "coder",
+          "description": "Integrate failure history into test value scoring. Formula: + (recent_failures * FAILURE_BONUS_WEIGHT). FAILURE_BONUS_WEIGHT=5 (configurable). Recent failures = failures in last 90 days that were subsequently fixed (proven bug detectors). FLAKY DEFINITION: Fails 2-9/10 runs. FIXED DEFINITION: 0 failures in last 3 consecutive CI runs after previous failures.",
+          "dependencies": ["ci_failure_log_parser"],
+          "acceptance_criteria": [
+            "Tests with 0 failures get 0 bonus",
+            "Tests with 1-2 recent failures (then fixed per definition) get +5-10 bonus (proven bug detectors)",
+            "Tests with 3+ failures (then fixed) get +15 bonus (critical regression tests)",
+            "Flaky tests (2-9/10 fails, never reach 3 consecutive passes) get -5 penalty (unreliable)",
+            "Consistent failures (10/10 fails) get 0 bonus (not fixed, likely test bug)",
+            "Bonus weight is configurable in weights.yaml",
+            "Fixed definition: Pass in 3 consecutive CI runs after last failure"
+          ],
+          "estimated_tokens": 2800
+        },
+        {
+          "id": "test_failure_history_scoring",
+          "title": "Test failure history integration with scoring",
+          "type": "Test",
+          "tier": "Tier 2",
+          "agent": "test_generator",
+          "description": "Validate failure history bonus calculation. Test edge cases: no failures, flaky tests, fixed regressions. Verify SQLite query performance (<100ms for 5k tests).",
+          "dependencies": ["ci_failure_log_parser", "failure_bonus_weight"],
+          "verification_target": "failure_bonus_weight",
+          "acceptance_criteria": [
+            "Test with 2 fixed failures scores +10 bonus",
+            "Flaky test (12 failures, never fixed) scores -5 penalty",
+            "No-failure test scores 0 bonus",
+            "SQLite query performance <100ms for 5,408 tests",
+            "Integration test with test_value_audit.py"
+          ],
+          "estimated_tokens": 3200
+        }
+      ]
+    },
+    {
+      "id": "phase_3_git_metadata",
+      "title": "Git Churn and Last Modified Analysis",
+      "tasks": [
+        {
+          "id": "git_churn_analyzer",
+          "title": "Analyze git history for test churn",
+          "type": "Code",
+          "tier": "Tier 2",
+          "agent": "coder",
+          "description": "Use git log to track test file modifications. Calculate co-change frequency (test modified alongside production code). Track: commits_last_90_days, lines_changed, co-change_count. High co-change = brittle test (breaks on refactor).",
+          "dependencies": [],
+          "acceptance_criteria": [
+            "Runs git log --numstat --follow on test files",
+            "Calculates commits per test file (last 90 days)",
+            "Detects co-changes (test + production file in same commit)",
+            "Calculates last_modified date for age penalty",
+            "Performance: <5s for 5,000 test files"
+          ],
+          "estimated_tokens": 3800
+        },
+        {
+          "id": "maintenance_burden_enhancement",
+          "title": "Enhance maintenance burden with churn + age factors",
+          "type": "Code",
+          "tier": "Tier 2",
+          "agent": "coder",
+          "description": "Update _score_maintenance_burden() to include: (1) git churn (co-change frequency), (2) test age (years since last modified). Formula: burden += (co_change_count * 1.5) + (years_since_modified * AGE_PENALTY_WEIGHT). AGE_PENALTY_WEIGHT=0.5 (old tests may be obsolete).",
+          "dependencies": ["git_churn_analyzer"],
+          "acceptance_criteria": [
+            "Tests with high co-change (5+ commits) get +7.5 burden penalty",
+            "Tests >2 years old get +1.0 age penalty (may be obsolete)",
+            "Tests <6 months old get 0 age penalty",
+            "Churn and age weights configurable in weights.yaml",
+            "Backward compatible (works without git data)"
+          ],
+          "estimated_tokens": 3000
+        },
+        {
+          "id": "test_git_metadata_integration",
+          "title": "Test git churn and age penalty calculations",
+          "type": "Test",
+          "tier": "Tier 2",
+          "agent": "test_generator",
+          "description": "Validate git churn analysis and age penalty. Test edge cases: new tests (0 commits), deleted tests, renamed files. Verify performance on large repos (1000+ test files).",
+          "dependencies": ["git_churn_analyzer", "maintenance_burden_enhancement"],
+          "verification_target": "maintenance_burden_enhancement",
+          "acceptance_criteria": [
+            "Test modified 5 times with production code gets +7.5 churn penalty",
+            "Test last modified 3 years ago gets +1.5 age penalty",
+            "New test (0 commits) gets 0 churn penalty",
+            "Git log parsing completes <5s for Agency repo (5k tests)",
+            "Integration test with test_value_audit.py"
+          ],
+          "estimated_tokens": 3500
+        }
+      ]
+    },
+    {
+      "id": "phase_4_mock_context",
+      "title": "Mock Context Analysis (External vs Internal)",
+      "tasks": [
+        {
+          "id": "mock_classifier",
+          "title": "Classify mocks as external vs internal",
+          "type": "Code",
+          "tier": "Tier 2",
+          "agent": "coder",
+          "description": "Analyze mock targets to distinguish: (1) external mocks (DB, API, filesystem) - acceptable, (2) internal mocks (project classes) - code smell. Use AST to parse mock targets. External patterns: 'requests', 'psycopg2', 'Path', 'open'. Internal: project module names.",
+          "dependencies": [],
+          "acceptance_criteria": [
+            "Detects external mocks: MagicMock(spec=requests.Session)",
+            "Detects internal mocks: MagicMock(spec=AgentContext)",
+            "Calculates external_mock_count and internal_mock_count separately",
+            "Returns mock classification per test",
+            "Performance: <10ms per test function"
+          ],
+          "estimated_tokens": 3200
+        },
+        {
+          "id": "mock_penalty_refinement",
+          "title": "Refine maintenance burden based on mock context",
+          "type": "Code",
+          "tier": "Tier 2",
+          "agent": "coder",
+          "description": "Update maintenance burden formula: external_mocks get 0.3x penalty (acceptable), internal_mocks get 0.8x penalty (tests implementation). Formula: burden += (external_mocks * 0.3) + (internal_mocks * 0.8). High internal mock count = implementation detail testing.",
+          "dependencies": ["mock_classifier"],
+          "acceptance_criteria": [
+            "Test with 5 external mocks (DB) gets +1.5 penalty (acceptable overhead)",
+            "Test with 5 internal mocks (classes) gets +4.0 penalty (code smell)",
+            "Mixed mocks calculated correctly (3 external + 2 internal = 0.9 + 1.6 = 2.5)",
+            "Mock weights configurable in weights.yaml",
+            "Backward compatible with existing mock_count metric"
+          ],
+          "estimated_tokens": 2800
+        },
+        {
+          "id": "test_mock_classification",
+          "title": "Test mock classification accuracy",
+          "type": "Test",
+          "tier": "Tier 2",
+          "agent": "test_generator",
+          "description": "Validate mock classifier against known test cases. Test edge cases: nested mocks, spec= vs spec_set=, patching. Verify maintenance burden calculation with different mock mixes.",
+          "dependencies": ["mock_classifier", "mock_penalty_refinement"],
+          "verification_target": "mock_penalty_refinement",
+          "acceptance_criteria": [
+            "Correctly classifies MagicMock(spec=requests.Session) as external",
+            "Correctly classifies MagicMock(spec=AgentContext) as internal",
+            "Handles patch('agency.tools.bash.subprocess') correctly",
+            "Maintenance burden calculation verified for 10 test samples",
+            "Integration test with test_value_audit.py"
+          ],
+          "estimated_tokens": 3000
+        }
+      ]
+    },
+    {
+      "id": "phase_5_score_normalization",
+      "title": "Score Normalization and Configurable Weights",
+      "tasks": [
+        {
+          "id": "weights_yaml_schema",
+          "title": "Create weights.yaml configuration schema",
+          "type": "Spec",
+          "tier": "Tier 1",
+          "agent": "planner",
+          "description": "Design weights.yaml schema for configurable scoring weights. Include: bug_detection_weight, critical_path_weight, integration_bonus, runtime_penalty_threshold, failure_bonus_weight, age_penalty_weight, mock_penalties (external/internal), normalization settings (z-score/min-max).",
+          "dependencies": [],
+          "acceptance_criteria": [
+            "Schema supports all 8 scoring components",
+            "Default values based on current empirical data",
+            "Normalization mode: 'none', 'z-score', 'min-max'",
+            "Validation rules for weight ranges (0-10)",
+            "Example weights.yaml with comments"
+          ],
+          "estimated_tokens": 2500
+        },
+        {
+          "id": "configurable_weights_loader",
+          "title": "Implement weights.yaml loader and validator",
+          "type": "Code",
+          "tier": "Tier 2",
+          "agent": "coder",
+          "description": "Load weights from weights.yaml, validate schema, apply defaults if missing. Use Pydantic for validation. Support environment variable overrides (AUDIT_WEIGHTS_FILE). Cache parsed weights for performance.",
+          "dependencies": ["weights_yaml_schema"],
+          "acceptance_criteria": [
+            "Loads weights.yaml successfully",
+            "Validates weight ranges (0-10 for multipliers, 0-100 for thresholds)",
+            "Falls back to defaults if file missing",
+            "Supports AUDIT_WEIGHTS_FILE env variable",
+            "Caches parsed weights (no re-read on every test)"
+          ],
+          "estimated_tokens": 3000
+        },
+        {
+          "id": "score_normalization_engine",
+          "title": "Implement z-score and min-max normalization",
+          "type": "Code",
+          "tier": "Tier 2",
+          "agent": "coder",
+          "description": "Add score normalization to make components comparable. Z-score: (value - mean) / stddev. Min-max: (value - min) / (max - min) * range. Apply per-component before weighted sum. Configurable via weights.yaml normalization_mode.",
+          "dependencies": ["configurable_weights_loader"],
+          "acceptance_criteria": [
+            "Z-score normalization implemented correctly",
+            "Min-max normalization implemented correctly",
+            "None mode (no normalization) supported",
+            "Normalization applied per scoring component (bug_detection, critical_path, etc.)",
+            "Edge cases handled: all values same (stddev=0), single value"
+          ],
+          "estimated_tokens": 3500
+        },
+        {
+          "id": "test_weights_and_normalization",
+          "title": "Test configurable weights and normalization",
+          "type": "Test",
+          "tier": "Tier 2",
+          "agent": "test_generator",
+          "description": "Validate weights.yaml loading, schema validation, normalization correctness. Test edge cases: missing file, invalid weights, normalization with outliers.",
+          "dependencies": ["configurable_weights_loader", "score_normalization_engine"],
+          "verification_target": "score_normalization_engine",
+          "acceptance_criteria": [
+            "Loads valid weights.yaml successfully",
+            "Rejects invalid weights (out of range)",
+            "Z-score normalization matches expected values (verified with numpy)",
+            "Min-max normalization produces [0,1] range",
+            "Handles missing weights.yaml gracefully (defaults)"
+          ],
+          "estimated_tokens": 3200
+        }
+      ]
+    },
+    {
+      "id": "phase_6_calibration_tuner",
+      "title": "Grid Search Tuner for Weight Calibration",
+      "tasks": [
+        {
+          "id": "manual_labeling_tool",
+          "title": "Create manual test labeling tool",
+          "type": "Code",
+          "tier": "Tier 2",
+          "agent": "coder",
+          "description": "Build CLI tool for manual test quality labeling. Display test code, current score, ask user: 'Keep/Review/Delete/Consolidate?'. Save labels to labeled_tests.json for calibration. Support batch labeling (50-100 tests).",
+          "dependencies": [],
+          "acceptance_criteria": [
+            "CLI displays test code with syntax highlighting",
+            "Shows current score components breakdown",
+            "Captures user label (Keep/Review/Delete/Consolidate)",
+            "Saves to labeled_tests.json with timestamp",
+            "Supports resume (skip already labeled tests)",
+            "Target: 50-100 labeled samples for calibration"
+          ],
+          "estimated_tokens": 3800
+        },
+        {
+          "id": "grid_search_tuner",
+          "title": "Implement grid search for weight optimization",
+          "type": "Code",
+          "tier": "Tier 2",
+          "agent": "coder",
+          "description": "Grid search to find optimal weights.yaml that maximizes agreement with manual labels. Search space: bug_detection_weight (5-15), critical_path_weight (3-7), etc. Metric: accuracy (predicted action matches manual label). Use sklearn GridSearchCV pattern.",
+          "dependencies": ["manual_labeling_tool"],
+          "acceptance_criteria": [
+            "Grid search over 6+ weight dimensions",
+            "Evaluates accuracy against labeled_tests.json",
+            "Reports best weights with accuracy score",
+            "Generates optimized weights.yaml",
+            "Runtime <10 minutes for 50 samples, 100 grid points",
+            "Logs search progress (current accuracy, best so far)"
+          ],
+          "estimated_tokens": 4500
+        },
+        {
+          "id": "test_calibration_pipeline",
+          "title": "Test weight calibration pipeline end-to-end",
+          "type": "Test",
+          "tier": "Tier 2",
+          "agent": "test_generator",
+          "description": "Validate manual labeling tool UX, grid search correctness, weight optimization. Test with synthetic labeled data (known optimal weights).",
+          "dependencies": ["manual_labeling_tool", "grid_search_tuner"],
+          "verification_target": "grid_search_tuner",
+          "acceptance_criteria": [
+            "Manual labeling tool saves valid JSON",
+            "Grid search finds optimal weights for synthetic data (accuracy >90%)",
+            "Optimized weights improve accuracy vs defaults",
+            "End-to-end pipeline runs <15 minutes",
+            "Generated weights.yaml is valid and loadable"
+          ],
+          "estimated_tokens": 3500
+        }
+      ]
+    },
+    {
+      "id": "phase_7_safety_pipeline",
+      "title": "Manual Review Pipeline and Safety Mechanisms",
+      "tasks": [
+        {
+          "id": "delete_candidates_pr_generator",
+          "title": "Generate PR with deletion candidates (never auto-delete)",
+          "type": "Code",
+          "tier": "Tier 2",
+          "agent": "coder",
+          "description": "Create PR with candidates_to_delete.txt, run CI, require human approval. Include: (1) list of tests to delete, (2) backup of deleted tests (zip + timestamp), (3) revert script, (4) CI check for test suite health. NEVER delete tests automatically (constitutional safety). FLAGS: --dry-run (preview only, no PR), --apply (create PR). REVERT: Documented in revert.sh with 1-command restore.",
+          "dependencies": [],
+          "acceptance_criteria": [
+            "Generates candidates_to_delete.txt with LOW score tests (<10)",
+            "Creates backup.{timestamp}.zip with test file copies",
+            "Generates revert.sh script to restore deleted tests (1-command: ./revert.sh backup.{timestamp}.zip)",
+            "Creates GitHub PR with detailed description",
+            "PR requires approval + CI pass before merge",
+            "PR description includes: test count, score distribution, risk assessment",
+            "--dry-run flag: Preview candidates without creating PR",
+            "--apply flag: Required to actually create PR (safety)",
+            "Revert behavior documented: unzip backup, git checkout, restore all tests"
+          ],
+          "estimated_tokens": 4000
+        },
+        {
+          "id": "visual_audit_report",
+          "title": "Create visual audit report (histogram + sampling)",
+          "type": "Code",
+          "tier": "Tier 2",
+          "agent": "coder",
+          "description": "Generate visual report with: (1) score histogram (matplotlib), (2) top 10 highest-value tests, (3) bottom 10 lowest-value tests, (4) stratified sample of LOW tests for manual review (sample_size configurable, default 50). Stratified sampling: include tests at bucket edges (scores 9, 10, 11) for calibration validation. Output: HTML report with interactive charts.",
+          "dependencies": [],
+          "acceptance_criteria": [
+            "Histogram shows score distribution (bins: 0-10, 10-20, 20-30, 30+)",
+            "Top 10 and bottom 10 tests listed with code snippets",
+            "Stratified sample of LOW tests (default sample_size=50, configurable)",
+            "Stratified sampling includes bucket-edge tests (e.g., score 9, 10, 11) for calibration",
+            "HTML report with embedded charts (no external dependencies)",
+            "Report includes: test count, avg score, median, std dev",
+            "Sample size configurable via --sample-size flag"
+          ],
+          "estimated_tokens": 3500
+        },
+        {
+          "id": "test_safety_pipeline",
+          "title": "Test PR generation and visual reporting",
+          "type": "Test",
+          "tier": "Tier 2",
+          "agent": "test_generator",
+          "description": "Validate PR generator creates valid GitHub PR, backup/revert scripts work, visual report renders correctly.",
+          "dependencies": ["delete_candidates_pr_generator", "visual_audit_report"],
+          "verification_target": "delete_candidates_pr_generator",
+          "acceptance_criteria": [
+            "Generated candidates_to_delete.txt is valid",
+            "Backup directory contains all test files",
+            "Revert script successfully restores deleted tests",
+            "HTML report renders in browser",
+            "Histogram shows expected distribution for sample data"
+          ],
+          "estimated_tokens": 3200
+        }
+      ]
+    },
+    {
+      "id": "phase_8_validation_metrics",
+      "title": "Impact Validation Metrics (Pre/Post Cleanup)",
+      "tasks": [
+        {
+          "id": "pre_cleanup_metrics_collector",
+          "title": "Collect baseline metrics before cleanup",
+          "type": "Code",
+          "tier": "Tier 2",
+          "agent": "coder",
+          "description": "Measure baseline metrics: (1) CI runtime (pytest --durations=0), (2) flaky test rate (run 10x, count failures), (3) test suite size (count, LOC), (4) coverage percentage. Store in .audit/metrics_baseline.json for comparison. IDEMPOTENCY: Appends timestamped entries (safe re-run). Performance SLA: <30 minutes for 5k tests (10 runs).",
+          "dependencies": [],
+          "acceptance_criteria": [
+            "Runs pytest 10 times, measures avg runtime and std dev",
+            "Identifies flaky tests (failed 1-9 out of 10 runs per definition)",
+            "Calculates test suite size (count, total LOC)",
+            "Measures code coverage (pytest-cov)",
+            "Saves to .audit/metrics_baseline.json with timestamp",
+            "Performance SLA: Completes <30 minutes for full Agency suite",
+            "Idempotent: Re-running appends new baseline entry (history preserved)"
+          ],
+          "estimated_tokens": 3500
+        },
+        {
+          "id": "post_cleanup_metrics_collector",
+          "title": "Collect post-cleanup metrics and generate comparison report",
+          "type": "Code",
+          "tier": "Tier 2",
+          "agent": "coder",
+          "description": "Re-run metrics collection after test cleanup. Generate comparison report: CI runtime improvement, flaky test reduction, coverage delta, bug escape rate (manual input). Validate KPIs improved (A/B style validation).",
+          "dependencies": ["pre_cleanup_metrics_collector"],
+          "acceptance_criteria": [
+            "Collects same metrics as baseline (runtime, flaky rate, coverage)",
+            "Calculates deltas: runtime reduction %, flaky test reduction count",
+            "Generates comparison report (Markdown + JSON)",
+            "Validates: CI runtime reduced by ≥30%, flaky tests reduced by ≥50%",
+            "Includes manual input for bug escape rate (bugs found in prod post-cleanup)"
+          ],
+          "estimated_tokens": 3800
+        },
+        {
+          "id": "test_metrics_validation",
+          "title": "Test metrics collection accuracy",
+          "type": "Test",
+          "tier": "Tier 2",
+          "agent": "test_generator",
+          "description": "Validate baseline metrics collector, post-cleanup comparison, report generation. Test with synthetic data (known improvements).",
+          "dependencies": ["pre_cleanup_metrics_collector", "post_cleanup_metrics_collector"],
+          "verification_target": "post_cleanup_metrics_collector",
+          "acceptance_criteria": [
+            "Baseline collector runs successfully on Agency test suite",
+            "Flaky test detection works (identify known flaky tests)",
+            "Comparison report shows correct deltas",
+            "Validation passes for expected improvements (synthetic data)",
+            "Report generation completes <5 minutes"
+          ],
+          "estimated_tokens": 3000
+        }
+      ]
+    },
+    {
+      "id": "phase_9_integration",
+      "title": "Integration with Existing Test Value Auditor",
+      "tasks": [
+        {
+          "id": "refactor_test_value_auditor",
+          "title": "Refactor test_value_audit.py to use new scoring engine",
+          "type": "Code",
+          "tier": "Tier 2",
+          "agent": "coder",
+          "description": "Replace heuristic-based scoring in test_value_audit.py with empirical data-driven scoring. Integrate: runtime parser, failure history, git churn, mock classifier, configurable weights, normalization. Maintain backward compatibility (fallback to heuristics if data unavailable).",
+          "dependencies": [
+            "parse_pytest_execution_logs",
+            "ci_failure_log_parser",
+            "git_churn_analyzer",
+            "mock_classifier",
+            "score_normalization_engine"
+          ],
+          "acceptance_criteria": [
+            "Uses actual runtime data if available (fallback to heuristics)",
+            "Integrates failure history bonus if CI logs parsed",
+            "Includes git churn and age penalties",
+            "Distinguishes external vs internal mocks",
+            "Applies z-score normalization if configured",
+            "Backward compatible: works without any empirical data (defaults to heuristics)"
+          ],
+          "estimated_tokens": 5000
+        },
+        {
+          "id": "end_to_end_audit_test",
+          "title": "End-to-end test of enhanced audit system",
+          "type": "Test",
+          "tier": "Tier 1",
+          "agent": "test_generator",
+          "description": "Run complete audit on Agency test suite (5,408 tests) with all enhancements enabled. Verify: runtime data integration, failure history, git churn, mock classification, normalization, configurable weights. Compare results to baseline (V4 audit). CONFIGURABLE: execution_time_limit (default 6h, prevents CI killer), max_workers (default 4, prevents memory exhaustion).",
+          "dependencies": ["refactor_test_value_auditor"],
+          "verification_target": "refactor_test_value_auditor",
+          "acceptance_criteria": [
+            "Audit completes successfully on full 5,408 test suite",
+            "Runtime data integrated for all tests",
+            "Failure history bonus applied correctly",
+            "Git churn penalties reflect actual repo history",
+            "Mock classification improves maintenance burden accuracy",
+            "Score distribution shows better calibration (15-20% P1 vs 74% in V4)",
+            "Generated report includes all new metrics",
+            "Execution time ≤6 hours for full suite (configurable via --time-limit flag)",
+            "Max workers configurable (default 4, prevents repo CI/runner kill)",
+            "Memory usage <6GB during full audit run",
+            "Graceful timeout handling: partial results + resume capability"
+          ],
+          "estimated_tokens": 4500
+        }
+      ]
+    },
+    {
+      "id": "phase_10_documentation",
+      "title": "Documentation and ADR",
+      "tasks": [
+        {
+          "id": "create_adr_empirical_scoring",
+          "title": "Create ADR-034: Empirical Test Value Scoring",
+          "type": "Spec",
+          "tier": "Tier 1",
+          "agent": "chief_architect",
+          "description": "Document architectural decision to replace heuristic scoring with empirical data-driven approach. Include: context (V4 audit limitations), decision (8 empirical enhancements), consequences (30-40% better calibration, 96% P1 reduction), alternatives considered (keep heuristics, use ML model).",
+          "dependencies": ["end_to_end_audit_test"],
+          "acceptance_criteria": [
+            "ADR follows existing format (docs/adr/ADR-INDEX.md)",
+            "Context explains V4 limitations (74% P1, 60% false gaps)",
+            "Decision details 8 enhancements (runtime, failure history, git churn, etc.)",
+            "Consequences include: calibration improvement, false positive reduction",
+            "Alternatives: heuristics only (rejected), ML model (future work)",
+            "References: Gemini feedback, ChatGPT5 suggestions, V4 analysis"
+          ],
+          "estimated_tokens": 4000
+        },
+        {
+          "id": "update_usage_documentation",
+          "title": "Update test value audit usage guide",
+          "type": "Code",
+          "tier": "Tier 2",
+          "agent": "coder",
+          "description": "Update HANDOFF_VALUE_FIRST_TESTING.md and README sections with V5 usage instructions. Include: (1) how to configure weights.yaml, (2) how to run grid search tuner, (3) how to interpret visual reports, (4) how to use PR safety pipeline.",
+          "dependencies": ["create_adr_empirical_scoring"],
+          "acceptance_criteria": [
+            "HANDOFF updated with V5 instructions",
+            "weights.yaml configuration documented with examples",
+            "Grid search tuner usage documented (labeling + optimization)",
+            "Visual report interpretation guide included",
+            "PR safety pipeline workflow documented",
+            "Migration guide from V4 to V5 included"
+          ],
+          "estimated_tokens": 3500
+        }
+      ]
+    }
+  ],
+  "checkpoints": [
+    {
+      "after_phase": "phase_5_score_normalization",
+      "type": "human_review",
+      "prompt": "Review configurable weights.yaml schema and normalization approach. Approve before implementing calibration tuner."
+    },
+    {
+      "after_phase": "phase_9_integration",
+      "type": "human_review",
+      "prompt": "Review end-to-end audit results on full test suite. Validate score distribution improvements before documentation."
+    }
+  ],
+  "metadata": {
+    "estimated_tokens": 98300,
+    "estimated_cost_usd": "TBD",
+    "complexity": "complex",
+    "budget_limit_usd": 10.0,
+    "preflight_checks": [
+      "slop_guardian.evaluate(graph) >= 3.5"
+    ]
+  }
+}
