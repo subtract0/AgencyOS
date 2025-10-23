@@ -1,0 +1,1 @@
+{"tests": [{"nodeid": "test_a.py::test_stable", "outcome": "passed"}, {"nodeid": "test_b.py::test_flaky", "outcome": "failed"}]}

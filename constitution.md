@@ -26,7 +26,7 @@ This constitution establishes the fundamental principles governing the Agency mu
 
 #### Timeout Handling
 - At EVERY timeout: halt and analyze
-- Retry with extended timeouts (2x, 3x, up to 10x)
+- Retry with extended timeouts
 - NEVER proceed with incomplete data
 - NEVER declare "I have seen enough" with partial results
 
@@ -34,14 +34,14 @@ This constitution establishes the fundamental principles governing the Agency mu
 - ALL tests MUST run to completion
 - Upon failures or skips: IMMEDIATELY halt
 - Fix failing tests BEFORE new features
-- No mission is complete while tests fail
+- NO mission is complete while tests fail
 
 #### Context Verification
 - Explicitly verify: "Do I have all information?"
 - When uncertain: re-execute
 - Better 5 minutes of waiting than 5 hours in wrong direction
 
-#### No Broken Windows
+#### No Broken Windows!
 - Applies to ALL generated code
 - Applies to "temporary" solutions
 - Applies under ALL circumstances
@@ -493,6 +493,292 @@ def validate_tdd_compliance(commit_files):
 
 ---
 
+## Article VII: Value-First Testing Philosophy (Amendment 2025-10-23)
+
+### Section 7.1: Foundational Principle
+**Tests SHALL prioritize actual bug detection over comprehensive coverage. Delete tests with value score <10. Keep tests with score >20. Let ACTUAL QUALITY determine the final count, not arbitrary targets.**
+
+**Quality > Quantity. Integration > Unit. Behavior > Implementation.**
+
+### Section 7.2: The Testing Inversion Problem
+
+#### Current Anti-Pattern (Inverted Pyramid)
+```
+        /\
+       /UI\         ← 100 end-to-end tests
+      /    \
+     /Integ.\       ← 500 integration tests
+    /        \
+   /   Unit   \     ← 5,954 unit tests (TOO MANY!)
+  /____________\
+```
+
+**Problems**:
+- 6,554 tests but many catch no real bugs
+- Unit tests test implementation details (break on every refactor)
+- Mocking hell: Mock everything, test nothing real
+- Slow CI/CD (30+ minutes)
+- High maintenance burden (100+ tests break per refactor)
+
+#### Target Pattern (Proper Pyramid)
+```
+  /\
+ /UI\              ← 100 end-to-end tests (keep)
+/____\
+/Integ\            ← 1,500 integration tests (INCREASE!)
+/______\
+/ Unit  \          ← 900 unit tests (REDUCE 85%!)
+/________\
+```
+
+**Goals**:
+- HIGH-VALUE tests (based on actual scores, not arbitrary count)
+- Integration tests > Unit tests (test behavior, not implementation)
+- Fast CI/CD (let quality improvements determine speed)
+- Low maintenance (fewer tests breaking on refactors)
+
+### Section 7.3: Test Value Scoring
+
+#### Value Formula
+```python
+test_value = (
+    bug_detection_score * 10 +      # 0-10: Real bugs caught
+    critical_path_score * 5 +        # 0-10: Tests core logic
+    integration_score * 3 -          # 0-10: Tests real components
+    runtime_penalty * 0.1 -          # Penalty for slow tests
+    maintenance_burden * 2           # Penalty for fragile tests
+)
+```
+
+#### Test Categories
+- **HIGH (>20)**: KEEP - Integration, critical path, security, e2e
+- **MEDIUM (10-20)**: REVIEW - Complex algorithms, edge cases, consolidate
+- **LOW (<10)**: DELETE - Mocking hell, implementation details, redundant
+
+### Section 7.4: Mandatory Test Classification
+
+#### Tests to KEEP (Based on Score >20)
+- ✅ **Integration tests**: Test real components working together
+- ✅ **E2E tests**: Test complete user workflows
+- ✅ **Critical path tests**: Core business logic
+- ✅ **Security tests**: Auth, injection, XSS, CSRF
+- ✅ **Regression tests**: Real bugs that were fixed
+- ✅ **Property-based tests**: Hypothesis-driven edge coverage
+
+#### Tests to DELETE (Based on Score <10)
+- ❌ **Mocking hell**: >10 mocks, <3 assertions
+- ❌ **Implementation detail tests**: Tests HOW, not WHAT
+- ❌ **Framework tests**: Testing library behavior, not our code
+- ❌ **Redundant tests**: Same behavior tested 5 different ways
+- ❌ **"Just in case" tests**: Scenarios that never happen
+- ❌ **Tests that never fail**: Always pass (no value)
+
+#### Tests to CONSOLIDATE (Based on Redundancy Detection)
+- 🔄 **Parameterize similar tests**: N tests → 1 parameterized test
+- 🔄 **Merge overlapping coverage**: Test A + B → Single comprehensive test
+- 🔄 **Convert to property-based**: Multiple edge cases → 1 hypothesis test
+
+### Section 7.5: Test Quality Standards
+
+#### What Makes a Test HIGH-VALUE?
+1. **Tests BEHAVIOR, not implementation**:
+   - ✅ GOOD: `assert user_can_login_with_valid_credentials()`
+   - ❌ BAD: `mock_auth.login.assert_called_once_with(username, password)`
+
+2. **Uses REAL components, not mocks**:
+   - ✅ GOOD: `result = memory_store.set("key", "value"); assert memory_store.get("key") == "value"`
+   - ❌ BAD: `mock_store.set.assert_called_once(); mock_store.get.return_value = "value"`
+
+3. **Catches REAL bugs**:
+   - ✅ GOOD: Security tests (injection, XSS)
+   - ✅ GOOD: Data integrity tests (corruption, loss)
+   - ❌ BAD: Constructor tests with all mocks
+
+4. **Fast feedback**:
+   - ✅ GOOD: <1 second per test (integration), <10ms per test (unit)
+   - ❌ BAD: >10 seconds per test (slow, blocks CI/CD)
+
+5. **Low maintenance**:
+   - ✅ GOOD: Survives refactors (tests interface, not internals)
+   - ❌ BAD: Breaks on every refactor (tests implementation details)
+
+### Section 7.6: NECESSARY Pattern - Revised for Value
+
+#### OLD NECESSARY Pattern (Coverage-First)
+```python
+# 9 categories: Normal, Edge, Cascading, Essential, Security, Spec,
+# Accessibility, Resilience, Year-round
+# Problem: Optimizes for comprehensive coverage, not bug detection
+```
+
+#### NEW NECESSARY Pattern (Value-First)
+```python
+# Test what MATTERS:
+# 1. Integration tests for critical paths (highest value)
+# 2. Security tests for vulnerabilities (critical)
+# 3. Edge cases for algorithms (medium value)
+# 4. Normal cases for happy paths (baseline)
+#
+# DO NOT TEST:
+# - Implementation details (mocking hell)
+# - Framework behavior (not our code)
+# - Redundant scenarios (consolidate)
+```
+
+#### Value-First Test Selection
+For each test, ask:
+1. **Does this catch real bugs?** (If no → DELETE)
+2. **Does this test behavior or implementation?** (Implementation → DELETE)
+3. **Is this tested by integration tests?** (If yes → DELETE unit test)
+4. **Is this redundant?** (If yes → CONSOLIDATE)
+5. **Is this slow or flaky?** (If yes → FIX or DELETE)
+
+### Section 7.7: Test Suite Health Metrics
+
+#### Mandatory Metrics (Quality-Based, Not Prescriptive)
+- **Test count**: Result of quality-based deletion (let audit determine)
+- **Test pyramid ratio**: Integration > Unit (audit determines actual ratio)
+- **CI/CD time**: Faster than before (improvement measured)
+- **Bug detection rate**: Higher than before (integration tests)
+- **Maintenance burden**: Fewer tests breaking (behavior > implementation)
+- **Test suite health score**: >80/100 (calculated, not prescribed)
+
+#### Health Score Formula
+```python
+health_score = (
+    (integration_test_pct * 0.3) +           # 70% integration = 21 points
+    (high_value_test_pct * 0.4) +            # 50% high-value = 20 points
+    (100 - ci_time_minutes * 2) * 0.2 +      # <15min = 14 points
+    (bug_detection_rate * 20) * 0.1          # 0.5/test/year = 10 points
+)
+# Target: >80/100
+```
+
+### Section 7.8: Implementation Requirements
+
+#### Test Value Audit (Mandatory)
+```python
+# Run test value audit
+from scripts.test_value_audit import TestValueAuditor
+
+auditor = TestValueAuditor()
+results = auditor.run_audit(test_dir=Path("tests"))
+
+# Review results
+delete_candidates = [t for t in results['tests'] if t['action'] == 'DELETE']
+print(f"Found {len(delete_candidates)} low-value tests to delete")
+
+# Delete after manual review
+auditor.save_results()  # Generates deletion candidate list
+```
+
+#### Test Generator Compliance
+```python
+# test_generator_agent MUST prioritize value
+def generate_tests(feature_spec):
+    # 1. Generate integration tests FIRST (highest value)
+    integration_tests = generate_integration_tests(feature_spec)
+
+    # 2. Generate critical path tests
+    critical_tests = generate_critical_path_tests(feature_spec)
+
+    # 3. Generate security tests (if applicable)
+    security_tests = generate_security_tests(feature_spec)
+
+    # 4. Generate unit tests ONLY for complex algorithms
+    unit_tests = generate_unit_tests_for_algorithms(feature_spec)
+
+    # DO NOT generate:
+    # - Tests with >5 mocks
+    # - Tests of implementation details
+    # - Redundant variations
+
+    return integration_tests + critical_tests + security_tests + unit_tests
+```
+
+### Section 7.9: Enforcement Mechanisms
+
+#### Pre-commit Hook Validation
+```bash
+# Reject commits that worsen test suite health
+test_suite_health_before=$(calculate_health_score)
+test_suite_health_after=$(calculate_health_score_with_new_tests)
+
+if [ $test_suite_health_after -lt $test_suite_health_before ]; then
+    echo "❌ BLOCKED by Constitution Article VII"
+    echo "New tests DECREASE test suite health"
+    echo "Health before: $test_suite_health_before/100"
+    echo "Health after: $test_suite_health_after/100"
+    echo ""
+    echo "Violations:"
+    echo "- New tests are low-value (score <10)"
+    echo "- OR: New tests worsen pyramid ratio"
+    echo "- OR: New tests increase CI/CD time significantly"
+    exit 1
+fi
+```
+
+#### Test Generator Validation
+```python
+# test_generator_agent must validate generated tests
+def validate_generated_tests(tests):
+    for test in tests:
+        value_score = calculate_test_value(test)
+
+        if value_score < 10:
+            raise ConstitutionalViolation(
+                "Article VII: Generated low-value test. "
+                f"Value score: {value_score} < 10. "
+                "Prioritize integration tests, not mocking hell."
+            )
+
+        if test.mock_count > 10:
+            raise ConstitutionalViolation(
+                "Article VII: Mocking hell detected (>10 mocks). "
+                "Use real components or integration tests."
+            )
+
+    return True
+```
+
+### Section 7.10: Success Criteria
+
+**Article VII compliance is achieved when**:
+- ✅ All tests with score <10 are DELETED (quality threshold, not count)
+- ✅ All tests with score >20 are KEPT (quality threshold, not count)
+- ✅ Test pyramid: Integration > Unit (ratio determined by actual value)
+- ✅ CI/CD time: Measurably faster than before pruning
+- ✅ Test suite health score: >80/100 (calculated from actual metrics)
+- ✅ Bug detection: Higher rate than before (integration tests catch more)
+- ✅ New tests generated: Value score >15 (quality bar, not percentage)
+
+### Section 7.11: Migration Path
+
+#### Phase 1: Audit (Week 1)
+- Run `python scripts/test_value_audit.py`
+- Review deletion candidates (top 100 manual review)
+- Identify consolidation opportunities
+
+#### Phase 2: Delete (Week 2)
+- Batch delete low-value tests (value score <5)
+- Verify test suite still passes (coverage maintained)
+- CI/CD time reduction verification
+
+#### Phase 3: Consolidate (Week 3)
+- Parameterize redundant tests
+- Merge overlapping tests
+- Convert to property-based tests
+
+#### Phase 4: Rebalance (Week 4)
+- Add integration tests for critical paths
+- Remove unit tests covered by integration
+- Achieve target pyramid ratio (70% integration, 30% unit)
+
+**Timeline**: 4 weeks
+**Outcome**: 2,000-3,000 high-value tests (down from 6,554)
+
+---
+
 ## Enforcement and Compliance
 
 ### Constitutional Validation
@@ -526,6 +812,10 @@ def validate_constitutional_compliance(agent_action):
     if not follows_tdd_workflow(agent_action):
         raise ConstitutionalViolation("Article VI violated: TDD workflow not followed (tests must be written FIRST and fail)")
 
+    # Article VII: Value-First Testing Philosophy
+    if not follows_value_first_testing(agent_action):
+        raise ConstitutionalViolation("Article VII violated: Tests must prioritize value (integration > unit, behavior > implementation)")
+
     return True
 ```
 
@@ -537,22 +827,27 @@ ALL agent instructions MUST include:
 
 Before any action, you MUST:
 1. Read and understand /constitution.md
-2. Validate your planned action against all six articles
-3. **Follow RED-GREEN-REFACTOR TDD workflow (Article VI - HIGHEST PRIORITY)**
+2. Validate your planned action against all seven articles
+3. **Follow VALUE-FIRST TESTING (Article VII - NEW PRIORITY)**
+   - Integration tests > Unit tests
+   - Behavior testing > Implementation testing
+   - 2,000-3,000 HIGH-VALUE tests (not 6,554 low-value tests)
+   - DELETE mocking hell, implementation details, redundant tests
+4. **Follow RED-GREEN-REFACTOR TDD workflow (Article VI - HIGHEST PRIORITY)**
    - Write tests FIRST (they MUST fail initially)
    - Implement ONLY after tests are failing
    - Iterate until 100% tests pass
    - NO "pragmatic shortcuts" that skip RED phase
-4. Ensure your approach follows spec-driven development (Article V)
-5. Apply relevant learnings from VectorStore (Article IV)
-6. Maintain 100% quality standards (Article II)
-7. Gather complete context (Article I)
-8. Work within automated enforcement systems (Article III)
+5. Ensure your approach follows spec-driven development (Article V)
+6. Apply relevant learnings from VectorStore (Article IV)
+7. Maintain 100% quality standards (Article II)
+8. Gather complete context (Article I)
+9. Work within automated enforcement systems (Article III)
 
 NEVER proceed with any action that violates constitutional principles.
 Constitutional violations are BLOCKERS that must be resolved.
 
-**Article VI is NON-NEGOTIABLE**: Tests come FIRST, implementation comes SECOND.
+**Articles VI + VII are NON-NEGOTIABLE**: Tests come FIRST (TDD), HIGH-VALUE tests ONLY (Value-First).
 ```
 
 ### Metrics and Monitoring

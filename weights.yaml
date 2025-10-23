@@ -1,0 +1,88 @@
+# Test Value Scoring Weights Configuration
+# V5 Empirical Scoring System
+
+# =============================================================================
+# SCORING COMPONENT WEIGHTS
+# =============================================================================
+
+# Bug Detection (0-10 scale)
+bug_detection_weight: 10.0  # Tests that catch real bugs (assertions, edge cases)
+
+# Critical Path (0-10 scale)
+critical_path_weight: 5.0  # Tests core business logic, user-facing features
+
+# Integration Bonus (0-10 scale)
+integration_bonus_weight: 3.0  # Tests multiple components together
+
+# =============================================================================
+# PENALTY WEIGHTS
+# =============================================================================
+
+# Runtime Penalty (non-linear)
+runtime_penalty:
+  fast_threshold: 10.0  # Tests <10s: minimal penalty
+  moderate_threshold: 30.0  # Tests 10-30s: moderate penalty
+  slow_threshold: 30.0  # Tests >30s: exponential penalty starts
+  extreme_threshold: 60.0  # Tests >60s: extreme penalty
+  base_weight: 0.1  # Base linear multiplier
+  exponential_factor: 10.0  # Exponential growth rate for slow tests
+
+# Maintenance Burden
+maintenance_burden_weight: 2.0  # Base maintenance burden multiplier
+
+# Mock Penalties
+mock_penalties:
+  external_mock_weight: 0.3  # DB, API, filesystem mocks (acceptable)
+  internal_mock_weight: 0.8  # Project class mocks (tests implementation)
+
+# Git Churn Penalties
+git_churn:
+  churn_weight: 1.5  # Co-change frequency penalty
+  age_penalty_weight: 0.5  # Old test penalty (may be obsolete)
+
+# =============================================================================
+# FAILURE HISTORY BONUSES
+# =============================================================================
+
+failure_history:
+  failure_bonus_weight: 5.0  # Points per fixed failure (proven bug detector)
+  flaky_penalty: -5.0  # Penalty for flaky tests (unreliable)
+  min_fixed_for_bonus: 1  # Minimum fixed failures to earn bonus
+  lookback_days: 90  # Days to look back for CI failures
+
+# =============================================================================
+# SCORE NORMALIZATION
+# =============================================================================
+
+normalization:
+  mode: z-score  # Options: 'none', 'z-score', 'min-max'
+  # z-score: (value - mean) / stddev (centers around 0, ±3 range)
+  # min-max: (value - min) / (max - min) * 100 (scales to 0-100)
+  # none: Raw scores (no normalization)
+
+# =============================================================================
+# SCORING THRESHOLDS
+# =============================================================================
+
+thresholds:
+  high_value: 20  # Score >= 20: KEEP (integration, critical path, security)
+  medium_value: 10  # Score 10-20: REVIEW (complex algorithms, edge cases)
+  low_value: 10  # Score < 10: DELETE (mocking hell, implementation details)
+
+# =============================================================================
+# NOTES
+# =============================================================================
+
+# Weight Ranges:
+# - Component weights: 0-10 (higher = more important)
+# - Penalty weights: 0-10 (higher = stronger penalty)
+# - Bonus weights: -10 to +10 (negative = penalty, positive = bonus)
+
+# Validation Rules:
+# - All weights must be numeric
+# - Component weights: 0 <= weight <= 10
+# - Thresholds: 0 <= threshold <= 100
+
+# Calibration:
+# Use grid_search_tuner.py to optimize weights based on manual labels.
+# Target: 15-20% P1 (high-value tests), not 74% like V4.
