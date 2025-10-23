@@ -17,7 +17,7 @@ pytestmark = pytest.mark.timeout(30)
 
 
 def test_get_safe_worker_count_with_local_model():
-    """When local model active and low memory, use 3 workers."""
+    """When local model active, always use 1 worker (serial) for stability."""
     # Import at module level to avoid circular imports from tools/__init__.py
     import importlib.util
     import sys
@@ -37,20 +37,31 @@ def test_get_safe_worker_count_with_local_model():
 
         with patch("os.path.exists", return_value=True):  # Ollama running
             workers = get_safe_worker_count()
-            assert workers == 3, "Should use conservative parallelism with local model"
+            assert workers == 1, "Should use serial execution when local model active (prevents pytest-xdist crashes)"
 
 
 def test_get_safe_worker_count_without_local_model():
-    """When local model OFF and high memory, use 10 workers."""
+    """When local model OFF and high memory (>=20GB), use 3 workers (conservative max)."""
+    import importlib.util
+    import sys
+
+    spec = importlib.util.spec_from_file_location(
+        "memory_aware_test_runner",
+        Path(__file__).parent.parent / "tools" / "memory_aware_test_runner.py",
+    )
+    runner_module = importlib.util.module_from_spec(spec)
+    sys.modules["memory_aware_test_runner"] = runner_module
+    spec.loader.exec_module(runner_module)
+    get_safe_worker_count = runner_module.get_safe_worker_count
+
     with patch("psutil.virtual_memory") as mock_mem:
-        # Simulate 30GB available
+        # Simulate 30GB available (must be >= 20GB for 3 workers)
         mock_mem.return_value = MagicMock(available=30 * 1024**3)
 
-        with patch("os.path.exists", return_value=False):  # Ollama not running
-            from tools.memory_aware_test_runner import get_safe_worker_count
-
+        # Mock check_ollama_running to return False (no local model)
+        with patch.object(runner_module, "check_ollama_running", return_value=False):
             workers = get_safe_worker_count()
-            assert workers == 10, "Should use full parallelism without local model"
+            assert workers == 3, "Should use 3 workers with >=20GB and no local model"
 
 
 def test_get_safe_worker_count_critical_memory():
@@ -78,26 +89,36 @@ def test_verify_memory_safe():
 
 
 def test_get_test_execution_config_parallel_mode():
-    """High memory without local model should use parallel mode."""
+    """High memory (>=20GB) without local model uses adaptive mode with 3 workers."""
+    import importlib.util
+    import sys
+
+    spec = importlib.util.spec_from_file_location(
+        "memory_aware_test_runner",
+        Path(__file__).parent.parent / "tools" / "memory_aware_test_runner.py",
+    )
+    runner_module = importlib.util.module_from_spec(spec)
+    sys.modules["memory_aware_test_runner"] = runner_module
+    spec.loader.exec_module(runner_module)
+    get_test_execution_config = runner_module.get_test_execution_config
+
     with patch("psutil.virtual_memory") as mock_mem:
         mock_mem.return_value = MagicMock(available=30 * 1024**3)
 
         with patch("psutil.process_iter", return_value=[]):
             with patch("os.path.exists", return_value=False):
-                from tools.memory_aware_test_runner import get_test_execution_config
-
                 result = get_test_execution_config()
                 assert result.is_ok()
 
                 config = result.unwrap()
-                assert config.worker_count == 10
-                assert config.execution_mode == "parallel"
+                assert config.worker_count == 3, "3 workers with >=20GB and no local model"
+                assert config.execution_mode == "adaptive", "3 workers = adaptive mode (not parallel)"
                 assert config.local_model_active == False
                 assert config.fallback_to_cloud == False
 
 
 def test_get_test_execution_config_adaptive_mode():
-    """Local model with medium memory should use adaptive mode."""
+    """Local model active should use serial mode (1 worker) to prevent crashes."""
     with patch("psutil.virtual_memory") as mock_mem:
         mock_mem.return_value = MagicMock(available=12 * 1024**3)
 
@@ -111,8 +132,8 @@ def test_get_test_execution_config_adaptive_mode():
             assert result.is_ok()
 
             config = result.unwrap()
-            assert config.worker_count == 3
-            assert config.execution_mode == "adaptive"
+            assert config.worker_count == 1, "Serial execution when local model active (prevents pytest-xdist crashes)"
+            assert config.execution_mode == "serial"
             assert config.local_model_active == True
 
 
