@@ -162,9 +162,15 @@ class TestValueAuditor:
             runtime_cache_path = cwd / '.audit' / 'runtime_cache.json'
             if runtime_cache_path.exists():
                 self.runtime_parser = RuntimeDataParser()
-                self.runtime_parser.load_cached_runtimes(runtime_cache_path)
-                self.v5_runtime_available = True
-                logging.info("✅ Loaded runtime data from cache")
+                # load_cached_runtimes returns True if parsed successfully (even if empty)
+                if self.runtime_parser.load_cached_runtimes(runtime_cache_path):
+                    self.v5_runtime_available = True
+                    if len(self.runtime_parser.runtimes) > 0:
+                        logging.info(f"✅ Loaded {len(self.runtime_parser.runtimes)} runtimes from cache")
+                    else:
+                        logging.info("✅ Runtime cache loaded (empty)")
+                else:
+                    logging.warning("⚠️  Runtime cache exists but failed to parse (corrupt JSON)")
             else:
                 logging.info("ℹ️  Runtime cache not found (.audit/runtime_cache.json)")
                 logging.info("   Using heuristic runtime estimates")
