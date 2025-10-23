@@ -89,9 +89,12 @@ class RuntimePenaltyCalculator:
             )
             return penalty
 
-        # Extreme tests (>60s): Very high penalty
+        # Extreme tests (>60s): Very high penalty (continue exponential growth)
         else:
-            base_extreme_penalty = 20.0  # Base penalty at 60s
+            # Calculate penalty at threshold using exponential formula
+            base_extreme_penalty = self.extreme_threshold * (
+                1 + math.exp((self.extreme_threshold - self.slow_threshold) / self.exponential_factor)
+            )
             additional_penalty = (runtime_seconds - self.extreme_threshold) * 0.5
             return base_extreme_penalty + additional_penalty
 

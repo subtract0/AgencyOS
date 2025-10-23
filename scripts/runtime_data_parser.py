@@ -150,7 +150,7 @@ class RuntimeDataParser:
         """
         Fallback: Estimate runtime from test code heuristics.
 
-        Heuristics:
+        Heuristics (CODE patterns checked first - more specific than NAME):
         - E2E/integration tests: 30s default
         - Database tests: 5s
         - Mock-heavy tests: 1s
@@ -159,14 +159,12 @@ class RuntimeDataParser:
         code_lower = test_code.lower()
         name_lower = test_name.lower()
 
-        # E2E and integration tests (slow)
-        if any(k in name_lower for k in ['e2e', 'integration', 'end_to_end']):
-            return 30.0
-
+        # Check CODE patterns first (more specific than name patterns)
+        # E2E markers in code
         if any(k in code_lower for k in ['requests.', 'httpx.', 'selenium', 'playwright']):
             return 20.0
 
-        # Database tests
+        # Database tests (check code, not just name)
         if any(k in code_lower for k in ['session.commit', 'db.', 'session.query', 'execute(']):
             return 5.0
 
@@ -178,6 +176,13 @@ class RuntimeDataParser:
         mock_count = code_lower.count('mock') + code_lower.count('patch')
         if mock_count > 5:
             return 1.0
+
+        # E2E and integration tests (only check NAME if code didn't match specific patterns)
+        if any(k in name_lower for k in ['e2e', 'end_to_end']):
+            return 30.0
+        # Integration is less specific, so use moderate estimate
+        if 'integration' in name_lower:
+            return 10.0
 
         # Simple unit tests (fast)
         return 0.1
@@ -253,16 +258,30 @@ class RuntimeDataParser:
 
         print(f"✅ Exported {len(data)} runtimes to {output_path}")
 
-    def load_cached_runtimes(self, cache_path: Path) -> None:
-        """Load previously parsed runtimes from cache."""
+    def load_cached_runtimes(self, cache_path: Path) -> bool:
+        """
+        Load previously parsed runtimes from cache.
+
+        Returns:
+            True if cache was successfully parsed (even if empty)
+            False if cache failed to parse (corrupt JSON)
+        """
         if not cache_path.exists():
-            return
+            return False
 
         try:
             with open(cache_path, 'r') as f:
                 data = json.load(f)
 
-            for test_id, rt_data in data.items():
+            # Handle both formats: direct dict or nested under 'runtimes' key
+            if 'runtimes' in data:
+                # New format with metadata
+                runtimes_data = data['runtimes']
+            else:
+                # Legacy format (direct dict)
+                runtimes_data = data
+
+            for test_id, rt_data in runtimes_data.items():
                 self.runtimes[test_id] = TestRuntime(
                     test_id=test_id,
                     duration_seconds=rt_data['duration_seconds'],
@@ -270,10 +289,12 @@ class RuntimeDataParser:
                     timestamp=rt_data.get('timestamp')
                 )
 
-            print(f"✅ Loaded {len(data)} runtimes from cache")
+            print(f"✅ Loaded {len(runtimes_data)} runtimes from cache")
+            return True
 
         except Exception as e:
             print(f"⚠️  Failed to load cache {cache_path}: {e}")
+            return False
 
 
 def find_pytest_outputs(search_dirs: Optional[List[Path]] = None) -> Dict[str, List[Path]]:
