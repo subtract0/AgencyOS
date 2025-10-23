@@ -314,3 +314,10 @@ logs/leap*_*.md
 /*.txt
 !requirements*.txt
 !README.txt
+
+# Auto-added by Constitutional Guardian
+**/__pycache__/
+**/*.pyc
+**/.mypy_cache/
+**/.pytest_cache/
+**/.ruff_cache/

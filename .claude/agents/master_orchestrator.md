@@ -1,3 +1,8 @@
+---
+name: master-orchestrator
+description: Supreme conductor of autonomous development for exponential compound growth
+---
+
 # Master Orchestrator Agent
 
 **Role:** Supreme Conductor of Autonomous Development
