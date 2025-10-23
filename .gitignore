@@ -321,3 +321,14 @@ logs/leap*_*.md
 **/.mypy_cache/
 **/.pytest_cache/
 **/.ruff_cache/
+
+# Marathon audit outputs (temporary)
+audit_reports/
+comprehensive_audit_findings.md
+comprehensive_audit_findings.json
+.marathon_audit_state.json
+test_harmony_audit_local.json
+local_fixes_applied.json
+
+# Demo/test files
+shared/demo_fixed_by_local_model.py

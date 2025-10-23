@@ -42,6 +42,7 @@ class VerificationResults(BaseModel):
     timed_out: bool = Field(default=False, description="Whether execution timed out")
     exit_code: int = Field(description="Process exit code")
     worker_count: int = Field(ge=1, le=10, description="Number of pytest workers used")
+    retry_count: int = Field(default=0, ge=0, le=3, description="Number of retries performed (Article I)")
     output: str = Field(default="", description="Raw test output for debugging")
 
     def is_constitutional(self) -> bool:
@@ -157,14 +158,16 @@ class TestVerificationGate:
         # Try execution with exponential backoff (Article I)
         last_error: VerificationError | None = None
 
-        for multiplier in self.timeout_multipliers:
+        for retry_attempt, multiplier in enumerate(self.timeout_multipliers):
             timeout = self.base_timeout * multiplier
 
-            result = await self._execute_tests(mode, timeout, worker_count)
+            result = await self._execute_tests(mode, timeout, worker_count, retry_attempt)
 
             if result.is_ok():
-                # Success! Return results
-                return result
+                # Success! Return results with retry count
+                results = result.unwrap()
+                results.retry_count = retry_attempt
+                return Ok(results)
 
             # Capture error for potential retry
             error = result.unwrap_err()
@@ -192,7 +195,7 @@ class TestVerificationGate:
         return Err(last_error)
 
     async def _execute_tests(
-        self, mode: str, timeout: int, worker_count: int
+        self, mode: str, timeout: int, worker_count: int, retry_attempt: int = 0
     ) -> Result[VerificationResults, VerificationError]:
         """Execute test suite with given timeout.
 
@@ -200,6 +203,7 @@ class TestVerificationGate:
             mode: Test mode ("all", "unit", "fast")
             timeout: Timeout in seconds
             worker_count: Number of pytest workers
+            retry_attempt: Current retry attempt number (for tracking)
 
         Returns:
             Result with VerificationResults or VerificationError
