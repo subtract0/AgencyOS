@@ -229,25 +229,32 @@ def _record_timing(
         pass
 
 
-def calculate_dynamic_timeout(test_count: int = 1762, multiplier: float = 1.0) -> int:
-    """Calculate dynamic timeout based on test count and multiplier (Article I compliance).
+def calculate_dynamic_timeout(test_count: int = 5891, multiplier: float = 1.0) -> int:
+    """Calculate dynamic timeout based on test count.
 
-    Formula: timeout = (test_count * 150ms + 60s safety margin) * multiplier
+    Empirical data:
+    - 5,891 items collected (5,749 passed + 140 skipped + 2 xpassed)
+    - Actual execution time: 1,591.94s (26.5 minutes)
+    - Average time per test: 0.277s
+    - Slowest tests: planner agent tests (86s, 34s, 26s, 20s)
 
-    Constitutional retry multipliers (Article I):
-    - 1.0x: Initial attempt (default: 5min for 1,762 tests)
-    - 2.0x: First retry (10min)
-    - 3.0x: Second retry (15min)
-    - 10.0x: Final retry (50min)
+    Formula: timeout = (test_count * avg_time * 1.2 + 5min_buffer) * multiplier
+    - 20% safety margin for test variability
+    - 5 minutes for pytest setup/teardown/collection
+    - pytest.ini --timeout=120 prevents individual test hangs
 
     Args:
-        test_count: Number of tests to execute (default: 1,762 full suite)
-        multiplier: Constitutional retry multiplier (1.0, 2.0, 3.0, or 10.0)
+        test_count: Number of tests (default: 5,891)
+        multiplier: Timeout multiplier for retries (default: 1.0)
 
     Returns:
         Timeout in seconds
     """
-    base_timeout = int((test_count * 0.15) + 60)  # 150ms per test + 60s safety
+    avg_test_time = 0.277
+    safety_margin = 1.2
+    setup_buffer = 300
+
+    base_timeout = int((test_count * avg_test_time * safety_margin) + setup_buffer)
     return int(base_timeout * multiplier)
 
 
@@ -474,12 +481,13 @@ def main(
         else:
             from tools.memory_aware_test_runner import get_safe_worker_count
 
-            # Cap at 3 workers for 0% flakiness (Article II: 100% pass rate mandatory)
-            # Memory-aware count can suggest 10 workers, but parallel timing tests need stability
+            # Cap at 1 worker for 100% stability (Article II: 100% pass rate mandatory)
+            # Tests have race conditions with parallel execution - serial mode prevents all failures
+            # Memory-aware count can suggest 3-10 workers, but tests require serial execution
             memory_based_count = get_safe_worker_count()
-            worker_count = min(memory_based_count, 3)
+            worker_count = min(memory_based_count, 1)
             pytest_args.extend(["-n", str(worker_count)])
-            print(f"✓ pytest-xdist: {worker_count} workers (capped at 3 for stability, Article II compliance)")
+            print(f"✓ pytest-xdist: {worker_count} workers (serial mode for stability, Article II compliance)")
     except Exception:
         # Fallback to pytest.ini default (-n 6 --dist loadgroup)
         print("✓ pytest-xdist: using pytest.ini defaults (-n 6)")
@@ -551,19 +559,16 @@ def main(
         print(f"📊 JSON report will be saved to: {json_report_file}")
 
     try:
-        # Dynamic timeout calculation (Article I: Complete context before action)
-        # Formula: (test_count * 150ms + 60s) * multiplier
-        # - Full suite (1,762 tests): ~5min (1x), 10min (2x), 15min (3x), 50min (10x)
-        # Allow override from environment for CI or manual testing
-        default_timeout = calculate_dynamic_timeout(test_count=1762, multiplier=timeout_multiplier)
+        # Calculate timeout based on empirical test execution data
+        default_timeout = calculate_dynamic_timeout(multiplier=timeout_multiplier)
         timeout_seconds = int(os.environ.get("AGENCY_TEST_TIMEOUT_OVERRIDE", str(default_timeout)))
 
         if timeout_multiplier > 1.0:
-            print(f"⏰ Timeout multiplier: {timeout_multiplier}x (constitutional retry, Article I)")
+            print(f"⏰ Timeout multiplier: {timeout_multiplier}x")
             print(f"⏰ Calculated timeout: {timeout_seconds}s ({timeout_seconds / 60:.1f} minutes)")
         else:
             print(
-                f"⏰ Dynamic timeout: {timeout_seconds}s ({timeout_seconds / 60:.1f} minutes) for ~1,762 tests"
+                f"⏰ Dynamic timeout: {timeout_seconds}s ({timeout_seconds / 60:.1f} minutes) for ~5,891 items"
             )
 
         # Debug: Print the exact command being run

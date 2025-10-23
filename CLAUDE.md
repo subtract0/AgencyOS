@@ -192,130 +192,42 @@ Read **`constitution.md`** in full before any action. Summary:
 
 ---
 
-## **🔧 Git Worktree Isolation for Autonomous Agents**
+## **🔧 Git Worktree Isolation**
 
-### **Why Worktrees?**
+**Why:** Parallel autonomous execution without file conflicts (shared .git, isolated working directories, independent branches)
 
-Git worktrees enable parallel autonomous execution without file conflicts:
-- ✅ **Shared .git database** (one repository, minimal disk usage)
-- ✅ **Isolated working directories** (agents never collide on file writes)
-- ✅ **Independent branches** (separate HEAD pointers per worktree)
-- ✅ **Automatic cleanup** (no orphaned clones)
-
-### **Worktree Creation Patterns**
-
+**Workflow:**
 ```bash
-# Core repository (bare or regular)
-/Users/am/Code/Agency/              # Main .git database (may be bare)
+# Create worktree
+git worktree add ../Agency-task -b task-branch && cd ../Agency-task
 
-# Create isolated worktree for task
-git worktree add ../Agency-{purpose} -b {branch-name}
+# Work in isolation
+git add . && git commit --no-verify -m "feat: add feature"  # Bypass pre-commit in worktrees
 
-# Examples:
-git worktree add ../Agency-test-audit -b test-suite-audit
-git worktree add ../Agency-main main
-git worktree add ../Agency-feature-x -b feat/feature-x
+# Push and PR
+git push -u origin task-branch && gh pr create
+
+# Cleanup after merge
+cd /Users/am/Code/Agency && git worktree remove ../Agency-task && git worktree prune
 ```
 
-### **Worktree Workflow**
+**Common Issues:**
+- **Bare repo error**: Always create worktree for file operations (`git worktree add ../Agency-work main`)
+- **Pre-commit failures**: Use `--no-verify` (tests validated in CI, Articles II-III)
+- **pytest-xdist missing**: `PYTEST_ADDOPTS="" pytest tests/`
+- **Branch behind**: `gh api repos/{owner}/{repo}/pulls/{pr}/update-branch -X PUT`
 
-**1. Create worktree for isolated work:**
-```bash
-git worktree add ../Agency-task -b task-branch
-cd ../Agency-task
-```
-
-**2. Work in isolation (zero interference with main workspace):**
-```bash
-# Edit files, run tests, create commits
-git add .
-git commit --no-verify -m "feat: add feature"  # Bypass pre-commit if needed
-```
-
-**3. Push and create PR:**
-```bash
-git push -u origin task-branch
-gh pr create --title "feat: Add feature" --body "Description"
-```
-
-**4. Cleanup after merge:**
-```bash
-cd /Users/am/Code/Agency
-git worktree remove ../Agency-task
-git worktree prune
-```
-
-### **Critical Worktree Gotchas**
-
-**Issue 1: Bare Repository Error**
-```bash
-# Error: "Diese Operation muss in einem Arbeitsverzeichnis ausgeführt werden"
-# Cause: /Users/am/Code/Agency is bare (no working directory)
-# Fix: ALWAYS create worktree for file operations
-git worktree add ../Agency-work main
-```
-
-**Issue 2: Pre-commit Hooks**
-```bash
-# Error: "All tests must pass before commit"
-# Cause: Pre-commit hook runs full test suite (Articles II, III)
-# Fix: Use --no-verify in worktrees (tests validated in CI)
-git commit --no-verify -m "message"
-```
-
-**Issue 3: pytest-xdist Not Available**
-```bash
-# Error: "unrecognized arguments: -n --dist loadgroup"
-# Cause: Worktree may have incomplete virtual environment
-# Fix: Use PYTEST_ADDOPTS="" or install pytest-xdist
-PYTEST_ADDOPTS="" pytest tests/
-```
-
-**Issue 4: Branch Behind After Merge**
-```bash
-# Error: PR shows "behind" after upstream merge
-# Fix: Update branch before merge
-gh api repos/{owner}/{repo}/pulls/{pr}/update-branch -X PUT
-```
-
-### **Memory-Aware Test Execution in Worktrees**
-
+**Memory-Aware Test Execution:**
 ```python
-# tools/memory_aware_test_runner.py (merged via PR #56)
 from tools.memory_aware_test_runner import get_safe_worker_count
-
-# Dynamic worker adjustment based on:
-# - Available memory (psutil.virtual_memory)
-# - Local model state (Ollama process detection)
-# - Safety margins (5GB buffer)
-
 worker_count = get_safe_worker_count()
-# Returns:
-# - 1 worker if <10GB available (critical memory)
-# - 3 workers if local model ON + <15GB (M4 Pro safe: 38GB model + 9GB tests)
-# - 10 workers if local model OFF + >20GB (full parallelism)
-# - 6 workers otherwise (moderate parallelism)
-
-# Integration with pytest:
+# Returns: 1 (<10GB), 3 (local model ON), 10 (cloud only), or 6 (moderate)
 pytest_args = ["-n", str(worker_count), "--dist", "loadgroup"]
 ```
 
-**Constitutional Compliance in Worktrees:**
-- **Article I**: Memory-aware runner prevents crashes (complete context always)
-- **Article II**: Tests validated in CI (pre-commit bypass acceptable in worktrees)
-- **Article III**: Branch protection enforced (no force push, no bypass)
-- **Article IV**: VectorStore learning auto-extracts patterns after success
-- **Article V**: ADR-023 documents memory-aware execution architecture
+**Constitutional Compliance:** Article I (memory-aware prevents crashes), Article II (CI validation), Article III (branch protection), Article IV (VectorStore learning), Article V (ADR-023)
 
-### **PrimeCCC Worktree Integration**
-
-```bash
-# Autonomous execution in isolated worktree
-/primeccc --plan-only "audit test-suite"
-# Creates: /Users/am/Code/Agency-{session-id}/
-# Runs: Auditor → Planner → Code Agents (parallel)
-# Output: Audit report, plan, PRs (zero main workspace interference)
-```
+**PrimeCCC Integration:** `/primeccc "audit test-suite"` → Creates `/Agency-{session-id}/` worktree, runs parallel agents, zero main workspace interference
 
 ---
 
@@ -658,205 +570,39 @@ ollama run hf.co/abirhossen/Qwen3-Coder-30B-A3B-Instruct-Q8_0-GGUF:Q8_0 \
 - Set `LOCAL_MODEL_TEST_WORKERS=2` for tighter memory constraints
 ```
 
-### **Docker Compose Setup (Recommended for Testing)**
+### **Docker Compose Setup (Recommended)**
 
-**Why Docker Compose?**
-- ✅ **Reproducible environments**: Consistent Ollama setup across dev machines and CI
-- ✅ **Automatic lifecycle management**: Tests auto-start/stop Ollama services
-- ✅ **Model persistence**: 32GB model downloaded once, persists across container restarts
-- ✅ **Memory safety**: Docker resource limits prevent kernel panics (40GB cap)
-- ✅ **CI integration**: 140 Ollama integration tests now fully automated
+**Setup:** `brew install --cask docker && docker compose up -d` → Enables 140 Ollama integration tests
+**Usage:** `python run_tests.py --with-docker --run-all` (unit + integration)
 
-**Setup Instructions:**
-```bash
-# 1. Install Docker Desktop (includes Docker Compose V2)
-# macOS: https://www.docker.com/products/docker-desktop/
-brew install --cask docker  # Alternative: Download from website
+**Benefits:** Reproducible environments, auto lifecycle management, 32GB model persistence, 40GB memory limits (ADR-023)
 
-# 2. Start Docker Desktop
-# Ensure Docker daemon is running (check menu bar icon)
-
-# 3. Verify Docker installation
-docker --version          # Should show: Docker version 24.x+
-docker compose version    # Should show: Docker Compose version v2.x+
-docker ps                 # Should show: Empty list (or running containers)
-
-# 4. Pull Ollama image and model (one-time setup, ~5 minutes)
-docker compose up -d      # Start Ollama service in background
-docker exec agency-ollama ollama pull hf.co/abirhossen/Qwen3-Coder-30B-A3B-Instruct-Q8_0-GGUF:Q8_0
-
-# 5. Verify Ollama is running
-docker compose ps         # Should show: agency-ollama (healthy)
-curl http://localhost:11434/api/tags  # Should return model list JSON
-
-# 6. Run tests with Docker (enables 140 Ollama integration tests)
-python run_tests.py --with-docker --run-all
-```
-
-**docker-compose.yml Configuration:**
+**Config** (`docker-compose.yml`):
 ```yaml
-# File: /Users/am/Code/Agency/docker-compose.yml
 services:
   ollama:
     image: ollama/ollama:latest
     container_name: agency-ollama
-    ports:
-      - "11434:11434"
-    volumes:
-      # Model persistence: Avoids re-downloading 32GB model
-      - ~/.ollama:/root/.ollama
+    ports: ["11434:11434"]
+    volumes: ["~/.ollama:/root/.ollama"]
     environment:
-      - OLLAMA_MODELS=/root/.ollama/models
-      - OLLAMA_KV_CACHE_TYPE=q8_0      # 2x memory savings (ADR-023)
-      - OLLAMA_FLASH_ATTENTION=1       # ~20% faster inference
-      - OLLAMA_NUM_GPU=1               # Metal GPU on Apple Silicon
+      OLLAMA_KV_CACHE_TYPE: q8_0  # 2x memory savings
+      OLLAMA_FLASH_ATTENTION: 1
     deploy:
       resources:
         limits:
-          memory: 40G  # 32GB model + 8GB runtime (ADR-023 safety)
+          memory: 40G
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:11434/api/tags"]
-      interval: 30s
-      timeout: 10s
-      retries: 5
-      start_period: 120s  # Initial model download time
-    restart: unless-stopped
+      start_period: 120s
 ```
-
-**Test Execution with Docker:**
-```bash
-# Run all tests (unit + integration with Ollama)
-python run_tests.py --with-docker --run-all
-
-# Run only integration tests requiring Ollama
-python run_tests.py --with-docker --integration-only
-
-# Run specific Ollama test suite
-python run_tests.py --with-docker tests/trinity_protocol/core/test_hybrid_executor.py
-
-# Without Docker (skips Ollama tests)
-python run_tests.py --run-all  # 140 Ollama tests skipped
-```
-
-**Memory Requirements:**
-- **Total System Memory**: 48GB (M4 Pro) or 32GB (M2/M3)
-- **Docker Limit**: 40GB for Ollama container
-- **Test Workers**: 2 workers when Docker active (prevents memory exhaustion)
-- **Model Storage**: ~32GB disk space in `~/.ollama/models/`
 
 **Troubleshooting:**
+- **Port conflict**: `lsof -i :11434 && killall ollama`
+- **Memory issues**: `docker stats agency-ollama` (should be <40GB)
+- **Unhealthy container**: `docker compose logs ollama && docker compose restart`
 
-**Issue 1: Docker daemon not running**
-```bash
-# macOS: Start Docker Desktop from Applications
-# Check status:
-docker ps  # Should NOT error with "Cannot connect to Docker daemon"
-```
-
-**Issue 2: Port 11434 already in use**
-```bash
-# Find process using port 11434
-lsof -i :11434
-
-# If native Ollama running, stop it:
-killall ollama
-
-# Or change Docker port in docker-compose.yml:
-ports:
-  - "11435:11434"  # Use different host port
-```
-
-**Issue 3: Model download timeout (first run)**
-```bash
-# Expected: 5-10 minutes for 32GB Q8_0 model
-# Monitor download progress:
-docker logs -f agency-ollama
-
-# If timeout, increase health check start_period:
-# Edit docker-compose.yml:
-healthcheck:
-  start_period: 300s  # 5 minutes vs 120s
-```
-
-**Issue 4: Container not healthy**
-```bash
-# Check container status
-docker compose ps
-
-# View logs for errors
-docker compose logs ollama
-
-# Restart services
-docker compose down
-docker compose up -d
-
-# Verify health manually
-curl http://localhost:11434/api/tags
-```
-
-**Issue 5: Memory exhaustion / kernel panic**
-```bash
-# Check memory usage
-docker stats agency-ollama
-
-# If >40GB, reduce model size or KV cache:
-# Option A: Use Q4_0 KV cache (saves more memory)
-OLLAMA_KV_CACHE_TYPE=q4_0
-
-# Option B: Use smaller model (7B instead of 30B)
-docker exec agency-ollama ollama pull qwen3-coder:7b
-```
-
-**CI/CD Integration:**
-```yaml
-# .github/workflows/test.yml snippet
-- name: Setup Docker Compose
-  run: |
-    docker compose up -d
-    # Wait for health check (max 180s)
-    timeout 180 bash -c 'until curl -f http://localhost:11434/api/tags; do sleep 5; done'
-
-- name: Run Tests with Ollama
-  env:
-    LOCAL_MODEL_TEST_WORKERS: 2  # Memory-aware worker limit
-  run: python run_tests.py --with-docker --run-all
-
-- name: Cleanup Docker
-  if: always()
-  run: docker compose down -v
-```
-
-**Docker Compose vs Native Ollama:**
-| Feature | Docker Compose | Native Ollama |
-|---------|---------------|---------------|
-| Setup Time | 5 min (first run) | 10 min (manual install) |
-| Test Automation | ✅ Fully automated | ❌ Manual start required |
-| Model Persistence | ✅ Volume mounts | ✅ ~/.ollama directory |
-| Memory Limits | ✅ Docker enforced | ❌ OS-level only |
-| CI/CD Ready | ✅ GitHub Actions compatible | ❌ Requires custom scripts |
-| Cleanup | ✅ Automatic (`docker compose down`) | ❌ Manual process kill |
-
-**Best Practices:**
-- ✅ Use `--with-docker` for full integration test coverage (1,762 tests)
-- ✅ Run `docker compose down` after tests to free memory
-- ✅ Monitor memory with `docker stats` during test runs
-- ✅ Keep Docker Desktop updated for latest performance improvements
-- ❌ Don't commit `~/.ollama/` directory (large model files)
-- ❌ Don't run Docker Ollama + native Ollama simultaneously (port conflict)
-
-**Constitutional Compliance:**
-- **Article I**: Health check retries with exponential backoff (5 attempts)
-- **Article II**: 100% test pass rate with Docker-managed Ollama (140 integration tests)
-- **Article III**: Automated enforcement via `--with-docker` flag (no manual setup)
-- **Article IV**: VectorStore patterns applied (ADR-023 memory-aware execution)
-- **Article V**: Traceable to specs (`spec-023-ollama-docker-integration.md`, `spec-ollama-test-integration.md`)
-
-**Related Documentation:**
-- Spec: `specs/spec-023-ollama-docker-integration.md` - Docker Compose architecture
-- Spec: `specs/spec-ollama-test-integration.md` - Test integration strategy
-- ADR: `docs/adr/ADR-023-memory-aware-test-execution.md` - Memory safety
-- Tool: `tools/memory_aware_test_runner.py` - Worker adjustment logic
-- Tool: `tools/ollama_health_check.py` - Health validation
+**Docs:** `specs/spec-023-ollama-docker-integration.md`, `docs/adr/ADR-023-memory-aware-test-execution.md`
 
 ### **Running Commands**
 ```bash
@@ -893,82 +639,15 @@ python run_tests.py --run-all         # Must show 100% pass rate
 
 ## **🚀 Leap Evolution History**
 
-Agency OS evolves through "Leaps" - major capability expansions that build institutional knowledge:
+**Leap 7: Test-Driven Autonomy** ✅ (2025-10-11) - TDD protocol, NECESSARY validator, test gate, PR creator, two-stage workflow. +37 tests, +5 tools. *ADR-026*
 
-### **Leap 7: Test-Driven Autonomy** ✅ (2025-10-11)
-**Objective**: Constitutionally-enforced TDD protocol with autonomous spec→test→code→PR workflow
+**Leap 4: Quality Feedback Loop** ✅ (2025-10-10) - Misclassification detection, VectorStore-driven refinement, real-time monitoring. +89 tests, ~12% cost reduction. *ADR-025*
 
-**Achievements**:
-- ✅ **TDD Protocol**: Test-first workflow enforced at constitutional level (Article II)
-- ✅ **NECESSARY Validator**: AST-based test pattern validation (Normal, Edge, Security, Spec, Accessibility, Resilience, Year-round)
-- ✅ **Test Gate**: 100% pass rate required before PR creation (no exceptions)
-- ✅ **PR Creator**: Autonomous git workflow with constitutional diff review
-- ✅ **Two-Stage Workflow**: Optional spec approval checkpoint (`--two-stage` flag)
-- ✅ **Memory Integration**: VectorStore query before action, pattern storage after success
+**Leap 3: Adaptive Model Router** ✅ (2025-10-07) - Three-tier classification (P1/P2/P3), skill evolution, cross-session learning. 96% cost reduction ($40K → $1.6K/month). *ADR-024*
 
-**Impact**:
-- +37 tests (100% pass rate maintained: 1,725 → 1,762 tests)
-- +5 tools (TDD workflow, NECESSARY validator, test gate, PR creator, spec checkpoint)
-- Zero-defect deployment: All PRs pass constitutional compliance before merge
-- Two-stage execution: Strategic review checkpoint for complex features
+**Leap 2: Smart Factory** (Planned) - Task graph DSL, reusable templates, constitutional validation per node
 
-**Documentation**:
-- ADR: `docs/adr/ADR-026-test-driven-autonomy.md`
-- Mission: `missions/leap_7_test_driven_autonomy.json`
-- Report: `docs/leap_7_test_verification_retry_policy.md`
-
-### **Leap 4: Quality Feedback Loop** ✅ (2025-10-10)
-**Objective**: Continuous improvement of Adaptive Model Router through automated learning
-
-**Achievements**:
-- ✅ **Misclassification Detection**: Four quality signals (test failures, code churn, timing deviation, user feedback)
-- ✅ **VectorStore-Driven Refinement**: Confidence-scored routing rule adjustments (0.6+ threshold)
-- ✅ **Execution Hook Integration**: Zero-overhead quality signal collection in HybridExecutor
-- ✅ **Real-Time Monitoring**: Live accuracy dashboard with tier-specific metrics
-
-**Impact**:
-- +89 tests (100% pass rate maintained)
-- +3 Pydantic models (QualitySignals, MisclassificationReport, RefinementResult)
-- +4 quality feedback tools (collector, detector, refiner, dashboard)
-- Expected ~12% cost reduction through improved routing accuracy
-
-**Documentation**:
-- Spec: `specs/spec-004-quality-feedback-loop.md`
-- ADR: `docs/adr/ADR-025-quality-feedback-loop.md`
-- Report: `docs/leap_4_complete.md`
-
-### **Leap 3: Adaptive Model Router** ✅ (2025-10-07)
-**Objective**: Intelligent task classification and cost optimization
-
-**Achievements**:
-- ✅ **Three-Tier Classification**: P1 (complex), P2 (moderate), P3 (simple)
-- ✅ **Skill Evolution**: Session state tracking, checkpoint/resume
-- ✅ **Learning Extraction**: VectorStore pattern storage, cross-session memory
-- ✅ **Dashboard**: Real-time skill proficiency monitoring
-
-**Impact**:
-- 96% cost reduction ($40K → $1.6K/month) via local model integration
-- +45 tests, 100% pass rate maintained
-
-**Documentation**:
-- ADR: `docs/adr/ADR-024-adaptive-model-router.md`
-
-### **Leap 2: Smart Factory** (Planned)
-**Objective**: Composable command library with JSON schema validation
-
-**Goals**:
-- Task graph DSL with parallel execution
-- Reusable task templates
-- Constitutional compliance validation per node
-
-### **Leap 1: Foundation** ✅ (2024-2025)
-**Objective**: Core agent infrastructure and constitutional framework
-
-**Achievements**:
-- 10 specialized agents (coder, planner, auditor, etc.)
-- 5-Article Constitution (mandatory compliance)
-- Three-tier memory architecture (Memory Tool, VectorStore, Session)
-- 1,636 tests with 100% pass rate
+**Leap 1: Foundation** ✅ (2024-2025) - 10 agents, 5-Article Constitution, three-tier memory, 1,636 tests
 
 ---
 

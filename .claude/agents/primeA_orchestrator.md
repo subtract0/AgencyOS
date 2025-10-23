@@ -1,4 +1,6 @@
 ---
+name: primeA-orchestrator
+description: AGI-class autonomous development orchestrator for natural language intent to production code
 model: claude-sonnet-4.5
 version: 2.0.0
 last_updated: 2025-10-15

@@ -91,12 +91,13 @@ def get_safe_worker_count() -> int:
     """Calculate safe pytest worker count based on memory and local model state.
 
     Memory budgets:
-    - Local model ON (38GB): 3 workers max (9GB test budget, 47GB total)
-    - Local model OFF: 10 workers max (30GB test budget)
+    - Local model ON (38GB): 1 worker (serial, prevent pytest-xdist crashes)
+    - Local model OFF: 3 workers max (conservative for stability)
     - Critical memory (<10GB): 1 worker (sequential)
 
     Returns:
-        Safe number of pytest workers (1-10)
+        Safe number of pytest workers (1-3), heavily biased toward serial execution
+        to prevent pytest-xdist worker crashes and OSError: cannot send issues
     """
     mem = psutil.virtual_memory()
     available_gb = mem.available / (1024**3)
@@ -107,16 +108,17 @@ def get_safe_worker_count() -> int:
     if available_gb < 10:
         return 1
 
-    # Local model active: conservative parallelism
-    if local_model_active and available_gb < 15:
-        return 3  # 9GB test budget
+    # Local model active: ALWAYS serial execution to prevent worker crashes
+    # This fixes "OSError: cannot send (already closed?)" pytest-xdist issues
+    if local_model_active:
+        return 1  # Serial execution only when local model running
 
-    # Plenty of memory: full parallelism
+    # Plenty of memory AND no local model: limited parallelism for stability
     if available_gb >= 20:
-        return 10
+        return 3  # Conservative max (down from 10)
 
-    # Medium memory: moderate parallelism
-    return 6
+    # Medium memory: still serial for maximum stability
+    return 1
 
 
 def verify_memory_safe(required_gb: int) -> bool:
