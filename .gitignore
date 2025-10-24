@@ -330,5 +330,15 @@ comprehensive_audit_findings.json
 test_harmony_audit_local.json
 local_fixes_applied.json
 
+# Test Quality Automation artifacts (generated at runtime)
+.audit/*.json
+.audit/*.xml
+.audit/*.html
+.audit/candidates_to_delete*.txt
+revert_*.sh
+
+# Session handoff notes (temporary)
+NEXT_SESSION_*.md
+
 # Demo/test files
 shared/demo_fixed_by_local_model.py
