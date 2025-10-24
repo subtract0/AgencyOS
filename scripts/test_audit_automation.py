@@ -25,7 +25,9 @@ from dataclasses import dataclass, asdict
 from datetime import datetime
 import getpass
 
-# Add scripts to path for V5 imports
+# Add project root and scripts directory to path
+project_root = Path(__file__).parent.parent
+sys.path.insert(0, str(project_root))
 sys.path.insert(0, str(Path(__file__).parent))
 
 from shared.type_definitions.result import Result, Ok, Err
@@ -33,10 +35,12 @@ from shared.type_definitions.result import Result, Ok, Err
 # V5 components
 try:
     from test_value_audit_v5 import TestValueAuditorV5
-    from convert_junit_to_cache import convert_junit_to_cache
-except ImportError:
+except ImportError as e:
+    print(f"⚠️  V5 import failed: {e}")
     TestValueAuditorV5 = None
-    convert_junit_to_cache = None
+
+# Runtime cache converter (optional - we have fallback)
+convert_junit_to_cache = None
 
 # AgentContext for VectorStore logging (Article IV)
 try:
@@ -153,23 +157,26 @@ class AuditOrchestrator:
             # Import here to avoid circular dependencies
             if TestValueAuditorV5 is None:
                 # Fallback: create mock results for testing
+                print("⚠️  TestValueAuditorV5 not available, using mock results")
                 results = self._create_mock_results()
             else:
                 auditor = TestValueAuditorV5()
 
-                # Load test suite
-                try:
-                    from test_value_audit import collect_pytest_tests
-                    tests = collect_pytest_tests()
-                except ImportError:
-                    # Fallback for testing
-                    results = self._create_mock_results()
-                else:
-                    # Score all tests
-                    results = []
-                    for test in tests:
-                        score = auditor.score_test(test)
-                        results.append(asdict(score))
+                # Load test suite using V5's extract_test_functions
+                print(f"🔍 Extracting tests from tests/ directory...")
+                tests = auditor.extract_test_functions(Path("tests"))
+                print(f"✅ Extracted {len(tests)} test functions")
+
+                # Score all tests
+                print(f"📊 Scoring {len(tests)} tests...")
+                results = []
+                for i, test in enumerate(tests):
+                    score = auditor.score_test(test)
+                    results.append(asdict(score))
+                    if (i + 1) % 1000 == 0:
+                        print(f"   ...scored {i + 1}/{len(tests)} tests")
+
+                print(f"✅ Scored {len(results)} tests")
 
             # Generate distribution
             distribution = self._calculate_distribution(results)
