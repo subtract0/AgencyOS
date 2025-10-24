@@ -140,8 +140,20 @@ class Memory:
     """
 
     def __init__(self, store: MemoryStore | None = None):
-        """Initialize with store backend. Defaults to InMemoryStore."""
-        self._store = store or InMemoryStore()
+        """
+        Initialize with store backend. Defaults to EnhancedMemoryStore.
+
+        Article IV Compliance:
+            Defaults to EnhancedMemoryStore (VectorStore integration mandatory).
+            VectorStore enables institutional learning and cross-session knowledge.
+            InMemoryStore only used when explicitly specified (e.g., tests).
+        """
+        from agency_memory.enhanced_memory_store import EnhancedMemoryStore
+
+        if store is None:
+            self._store = EnhancedMemoryStore()
+        else:
+            self._store = store
 
     def store(self, key: str, content: JSONValue, tags: list[str] | None = None) -> None:
         """Store content with key and optional tags."""

@@ -617,5 +617,15 @@ def create_agent_context(
 
     Returns:
         Configured AgentContext instance
+
+    Article IV Compliance:
+        Creates EnhancedMemoryStore by default (VectorStore integration mandatory).
+        VectorStore enables cross-session learning accumulation.
     """
+    from agency_memory import EnhancedMemoryStore
+    from agency_memory import Memory as MemoryClass
+
+    if memory is None:
+        memory = MemoryClass(store=EnhancedMemoryStore())
+
     return AgentContext(memory=memory, session_id=session_id)
