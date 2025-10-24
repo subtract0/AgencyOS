@@ -21,7 +21,9 @@ classifiers = [
     "Operating System :: OS Independent",
 ]
 dependencies = [
+    "aiofiles>=25.1.0",
     "pytest-timeout>=2.4.0",
+    "scikit-learn>=1.7.2",
 ]
 
 [project.urls]
