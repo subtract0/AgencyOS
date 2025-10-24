@@ -42,6 +42,7 @@ watchdog>=6.0.0
 # Self-healing system dependencies
 numpy>=1.21.0
 scikit-learn>=1.0.0
+joblib>=1.3.0  # Model persistence for ML routing (scikit-learn dependency)
 scipy>=1.7.0
 flask>=2.0.0
 plotly>=5.0.0
