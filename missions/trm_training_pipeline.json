@@ -1,124 +1,108 @@
 {
-  "mission": "TRM-7M Training Pipeline - Local Model Fine-tuning for Recursive Reasoning",
+  "mission": "TRM-7M Training Pipeline - Local Model Fine-tuning for Recursive Reasoning (1,102 Examples)",
   "leap_number": 8,
   "phases": [
     {
-      "id": "phase_1_data_extraction",
-      "title": "Data Extraction & Quality Assessment",
+      "id": "phase_1_data_preparation",
+      "title": "Data Preparation & Deduplication",
       "tasks": [
         {
-          "id": "create_extraction_script",
-          "title": "Create robust JSON extraction script",
+          "id": "verify_dataset",
+          "title": "Verify cleaned dataset availability",
           "type": "Code",
           "tier": "Tier 2",
           "agent": "coder",
-          "description": "Implement scripts/extract_weird_jsonl.py with lenient JSON parsing (handles smart quotes, empty lines, weird numbering). Must extract all 659+ JSON objects from weirdly-numbered-json-contents.md.",
+          "description": "Verify data/training_examples_final.jsonl exists with 1,102 unique examples. All examples pre-cleaned with proper JSON formatting, no duplicates.",
           "dependencies": [],
           "acceptance_criteria": [
-            "Script successfully parses messy JSON with brace-matching",
-            "Handles Unicode quote normalization (smart quotes → standard quotes)",
-            "Outputs valid JSONL to data/seed.jsonl",
-            "Reports count of extracted objects (expect 659+)",
-            "Provides error recovery for malformed entries"
+            "data/training_examples_final.jsonl exists",
+            "File contains 1,102 lines (one JSON per line)",
+            "All examples have 'instruction' and 'output' fields",
+            "No duplicates present",
+            "All JSON is valid and parseable"
           ],
-          "estimated_tokens": 3000
+          "estimated_tokens": 1500
         },
         {
-          "id": "run_extraction",
-          "title": "Extract training data from source file",
+          "id": "dedupe_dataset",
+          "title": "Run deduplication on dataset",
           "type": "Code",
           "tier": "Tier 2",
           "agent": "coder",
-          "description": "Execute extraction script on weirdly-numbered-json-contents.md, produce data/seed.jsonl with all 659 objects.",
-          "dependencies": ["create_extraction_script"],
+          "description": "Execute scripts/dedupe_and_provenance.py on data/training_examples_final.jsonl to create data/seed.dedup.jsonl with provenance tracking. Expected: 1,102 unique examples.",
+          "dependencies": ["verify_dataset"],
           "acceptance_criteria": [
-            "data/seed.jsonl created with 659+ objects",
-            "Each line is valid JSON",
-            "No data loss from source file",
-            "Extraction report includes object count and error summary"
+            "data/seed.dedup.jsonl created with 1,102 objects",
+            "Provenance manifest created with checksums",
+            "All examples have _provenance metadata",
+            "Deduplication report shows 0-5% reduction",
+            "No data loss from source file"
           ],
           "estimated_tokens": 2000
-        },
-        {
-          "id": "test_extraction",
-          "title": "Validate extraction quality",
-          "type": "Test",
-          "tier": "Tier 2",
-          "agent": "test_generator",
-          "description": "Create tests for extraction script: malformed JSON recovery, Unicode handling, empty line tolerance, correct object count.",
-          "dependencies": ["create_extraction_script"],
-          "acceptance_criteria": [
-            "Test malformed JSON recovery (missing braces, extra commas)",
-            "Test Unicode quote normalization",
-            "Test empty line and comment handling",
-            "Test correct object count (659+)",
-            "All tests pass with 100% extraction rate"
-          ],
-          "verification_target": "create_extraction_script",
-          "estimated_tokens": 2500
         }
       ]
     },
     {
       "id": "phase_2_intelligent_sampling",
-      "title": "Heuristic Sampling for Maximum Information Gain",
+      "title": "Stratified Sampling for Maximum Diversity (500 samples)",
       "tasks": [
         {
           "id": "create_sampling_script",
-          "title": "Implement complexity-based sampling algorithm",
+          "title": "Implement stratified sampling algorithm",
           "type": "Code",
           "tier": "Tier 2",
           "agent": "coder",
-          "description": "Create scripts/sample_for_labeling.py with complexity scoring (instruction length + keyword presence). Keywords: graph, dag, csp, sat, knapsack, schedule, invariant, recurs, prove, edge, dependency, constraint, shortest, optimal, induct, contradiction.",
-          "dependencies": ["run_extraction"],
+          "description": "Use scripts/stratified_sampler.py (already created) with 7 task types. Sample 500 examples (from 1,102) across: graph, constraint, optimization, proof, algorithm, regex, other. Ensures maximum diversity + difficulty.",
+          "dependencies": ["dedupe_dataset"],
           "acceptance_criteria": [
-            "Complexity score function ranks by instruction length",
-            "Bonus points (50) for each complexity keyword present",
-            "Sample top N most complex examples for labeling",
-            "Output to data/sample_200.jsonl",
-            "Deterministic sampling (same seed → same sample)"
+            "Stratified sampling across 7 task types",
+            "Complexity scoring by length + keyword density",
+            "Output to data/sample_500.jsonl",
+            "Deterministic sampling (same seed → same sample)",
+            "Sampling report shows type distribution"
           ],
-          "estimated_tokens": 3500
+          "estimated_tokens": 2000
         },
         {
           "id": "run_sampling",
-          "title": "Generate 200-sample subset for labeling",
+          "title": "Generate 500-sample stratified subset",
           "type": "Code",
           "tier": "Tier 2",
           "agent": "coder",
-          "description": "Execute sampling script to create data/sample_200.jsonl with highest-complexity examples from seed.jsonl.",
+          "description": "Execute scripts/stratified_sampler.py on data/seed.dedup.jsonl to create data/sample_500.jsonl with 500 highest-quality examples across all task types.",
           "dependencies": ["create_sampling_script"],
           "acceptance_criteria": [
-            "data/sample_200.jsonl created with 200 objects",
-            "Objects sorted by complexity score (highest first)",
+            "data/sample_500.jsonl created with 500 objects",
+            "All 7 task types represented",
+            "Sampling report shows type distribution",
             "All samples have valid JSON structure",
-            "Sampling report shows score distribution"
+            "Diversity score ≥0.8 across categories"
           ],
           "estimated_tokens": 2000
         },
         {
           "id": "test_sampling",
-          "title": "Validate sampling quality and diversity",
+          "title": "Validate sampling diversity",
           "type": "Test",
           "tier": "Tier 2",
           "agent": "test_generator",
-          "description": "Create tests for sampling script: complexity scoring correctness, keyword detection, deterministic output, sample diversity.",
-          "dependencies": ["create_sampling_script"],
+          "description": "Verify data/sample_500.jsonl has proper stratification: all 7 task types present, no single type >30%, keyword diversity across samples.",
+          "dependencies": ["run_sampling"],
           "acceptance_criteria": [
-            "Test complexity score calculation",
-            "Test keyword detection accuracy",
-            "Test deterministic sampling (same seed)",
-            "Test sample diversity (not all same type)",
+            "All 7 task types have ≥5% representation",
+            "No single type exceeds 30% of sample",
+            "All 17 complexity keywords present",
+            "Deterministic output verified",
             "All tests pass"
           ],
-          "verification_target": "create_sampling_script",
+          "verification_target": "run_sampling",
           "estimated_tokens": 2500
         }
       ]
     },
     {
       "id": "phase_3_auto_labeling",
-      "title": "Automated Labeling with GPT-5 CODEX",
+      "title": "Automated Labeling with GPT-5 CODEX (500 samples)",
       "tasks": [
         {
           "id": "create_labeling_prompt",
@@ -126,7 +110,7 @@
           "type": "Spec",
           "tier": "Tier 1",
           "agent": "planner",
-          "description": "Create optimal prompt template for GPT-5 CODEX to decide when TRM-7M should be called. Binary classification: 1 (call TRM) for deep logical/recursive/constraint tasks, 0 (no TRM) for simple I/O/formatting.",
+          "description": "Create optimal prompt template for GPT-5 CODEX to decide when TRM-7M should be called. Binary classification: 1 (call TRM) for deep logical/recursive/constraint tasks, 0 (no TRM) for simple I/O/formatting. Target: 500 samples.",
           "dependencies": ["run_sampling"],
           "acceptance_criteria": [
             "Prompt clearly defines TRM use cases (graphs, SAT, CSP, inductive proofs, edge-case inference)",
@@ -143,7 +127,7 @@
           "type": "Code",
           "tier": "Tier 1",
           "agent": "coder",
-          "description": "Create scripts/auto_label_batch.py to call GPT-5 CODEX on data/sample_200.jsonl, produce data/auto_200.jsonl with labels. Uses OpenAI batch API for cost efficiency.",
+          "description": "Create scripts/auto_label_batch.py to call GPT-5 CODEX on data/sample_500.jsonl, produce data/auto_500.jsonl with labels. Uses OpenAI batch API for cost efficiency.",
           "dependencies": ["create_labeling_prompt"],
           "acceptance_criteria": [
             "Batch API integration (not streaming, for cost control)",
@@ -160,10 +144,10 @@
           "type": "Code",
           "tier": "Tier 1",
           "agent": "coder",
-          "description": "Run auto-labeler on data/sample_200.jsonl, produce data/auto_200.jsonl with GPT-5 CODEX labels.",
+          "description": "Run auto-labeler on data/sample_500.jsonl, produce data/auto_500.jsonl with GPT-5 CODEX labels.",
           "dependencies": ["create_auto_labeler"],
           "acceptance_criteria": [
-            "data/auto_200.jsonl created with 200 labeled objects",
+            "data/auto_500.jsonl created with 500 labeled objects",
             "All objects have label (0 or 1)",
             "Source field marked as 'auto'",
             "Confidence scores included (if available from API)",
@@ -193,7 +177,7 @@
     },
     {
       "id": "phase_4_human_review_protocol",
-      "title": "Human Review Interface & Quality Control",
+      "title": "Human Review Interface & Quality Control (500 samples)",
       "tasks": [
         {
           "id": "create_labeling_rubric",
@@ -218,14 +202,14 @@
           "type": "Code",
           "tier": "Tier 2",
           "agent": "coder",
-          "description": "Create scripts/manual_label_cli.py: interactive terminal UI to review/correct auto-labels from data/auto_200.jsonl, output to data/labeled_200.jsonl.",
+          "description": "Create scripts/manual_label_cli.py: interactive terminal UI to review/correct auto-labels from data/auto_500.jsonl, output to data/labeled_500.jsonl.",
           "dependencies": ["create_labeling_rubric"],
           "acceptance_criteria": [
             "Display instruction + auto-label, ask for confirmation/correction",
             "Accept inputs: Y (confirm), N (flip label), S (skip), Q (quit with progress save)",
             "Show progress (15/200 reviewed, 185 remaining)",
             "Auto-save every 10 reviews (prevent data loss)",
-            "Final output: data/labeled_200.jsonl with reviewed_by, review_time, notes fields"
+            "Final output: data/labeled_500.jsonl with reviewed_by, review_time, notes fields"
           ],
           "estimated_tokens": 4500
         },
