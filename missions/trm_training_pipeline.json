@@ -1,0 +1,640 @@
+{
+  "mission": "TRM-7M Training Pipeline - Local Model Fine-tuning for Recursive Reasoning",
+  "leap_number": 8,
+  "phases": [
+    {
+      "id": "phase_1_data_extraction",
+      "title": "Data Extraction & Quality Assessment",
+      "tasks": [
+        {
+          "id": "create_extraction_script",
+          "title": "Create robust JSON extraction script",
+          "type": "Code",
+          "tier": "Tier 2",
+          "agent": "coder",
+          "description": "Implement scripts/extract_weird_jsonl.py with lenient JSON parsing (handles smart quotes, empty lines, weird numbering). Must extract all 659+ JSON objects from weirdly-numbered-json-contents.md.",
+          "dependencies": [],
+          "acceptance_criteria": [
+            "Script successfully parses messy JSON with brace-matching",
+            "Handles Unicode quote normalization (smart quotes → standard quotes)",
+            "Outputs valid JSONL to data/seed.jsonl",
+            "Reports count of extracted objects (expect 659+)",
+            "Provides error recovery for malformed entries"
+          ],
+          "estimated_tokens": 3000
+        },
+        {
+          "id": "run_extraction",
+          "title": "Extract training data from source file",
+          "type": "Code",
+          "tier": "Tier 2",
+          "agent": "coder",
+          "description": "Execute extraction script on weirdly-numbered-json-contents.md, produce data/seed.jsonl with all 659 objects.",
+          "dependencies": ["create_extraction_script"],
+          "acceptance_criteria": [
+            "data/seed.jsonl created with 659+ objects",
+            "Each line is valid JSON",
+            "No data loss from source file",
+            "Extraction report includes object count and error summary"
+          ],
+          "estimated_tokens": 2000
+        },
+        {
+          "id": "test_extraction",
+          "title": "Validate extraction quality",
+          "type": "Test",
+          "tier": "Tier 2",
+          "agent": "test_generator",
+          "description": "Create tests for extraction script: malformed JSON recovery, Unicode handling, empty line tolerance, correct object count.",
+          "dependencies": ["create_extraction_script"],
+          "acceptance_criteria": [
+            "Test malformed JSON recovery (missing braces, extra commas)",
+            "Test Unicode quote normalization",
+            "Test empty line and comment handling",
+            "Test correct object count (659+)",
+            "All tests pass with 100% extraction rate"
+          ],
+          "verification_target": "create_extraction_script",
+          "estimated_tokens": 2500
+        }
+      ]
+    },
+    {
+      "id": "phase_2_intelligent_sampling",
+      "title": "Heuristic Sampling for Maximum Information Gain",
+      "tasks": [
+        {
+          "id": "create_sampling_script",
+          "title": "Implement complexity-based sampling algorithm",
+          "type": "Code",
+          "tier": "Tier 2",
+          "agent": "coder",
+          "description": "Create scripts/sample_for_labeling.py with complexity scoring (instruction length + keyword presence). Keywords: graph, dag, csp, sat, knapsack, schedule, invariant, recurs, prove, edge, dependency, constraint, shortest, optimal, induct, contradiction.",
+          "dependencies": ["run_extraction"],
+          "acceptance_criteria": [
+            "Complexity score function ranks by instruction length",
+            "Bonus points (50) for each complexity keyword present",
+            "Sample top N most complex examples for labeling",
+            "Output to data/sample_200.jsonl",
+            "Deterministic sampling (same seed → same sample)"
+          ],
+          "estimated_tokens": 3500
+        },
+        {
+          "id": "run_sampling",
+          "title": "Generate 200-sample subset for labeling",
+          "type": "Code",
+          "tier": "Tier 2",
+          "agent": "coder",
+          "description": "Execute sampling script to create data/sample_200.jsonl with highest-complexity examples from seed.jsonl.",
+          "dependencies": ["create_sampling_script"],
+          "acceptance_criteria": [
+            "data/sample_200.jsonl created with 200 objects",
+            "Objects sorted by complexity score (highest first)",
+            "All samples have valid JSON structure",
+            "Sampling report shows score distribution"
+          ],
+          "estimated_tokens": 2000
+        },
+        {
+          "id": "test_sampling",
+          "title": "Validate sampling quality and diversity",
+          "type": "Test",
+          "tier": "Tier 2",
+          "agent": "test_generator",
+          "description": "Create tests for sampling script: complexity scoring correctness, keyword detection, deterministic output, sample diversity.",
+          "dependencies": ["create_sampling_script"],
+          "acceptance_criteria": [
+            "Test complexity score calculation",
+            "Test keyword detection accuracy",
+            "Test deterministic sampling (same seed)",
+            "Test sample diversity (not all same type)",
+            "All tests pass"
+          ],
+          "verification_target": "create_sampling_script",
+          "estimated_tokens": 2500
+        }
+      ]
+    },
+    {
+      "id": "phase_3_auto_labeling",
+      "title": "Automated Labeling with GPT-5 CODEX",
+      "tasks": [
+        {
+          "id": "create_labeling_prompt",
+          "title": "Design TRM routing decision prompt template",
+          "type": "Spec",
+          "tier": "Tier 1",
+          "agent": "planner",
+          "description": "Create optimal prompt template for GPT-5 CODEX to decide when TRM-7M should be called. Binary classification: 1 (call TRM) for deep logical/recursive/constraint tasks, 0 (no TRM) for simple I/O/formatting.",
+          "dependencies": ["run_sampling"],
+          "acceptance_criteria": [
+            "Prompt clearly defines TRM use cases (graphs, SAT, CSP, inductive proofs, edge-case inference)",
+            "Prompt specifies output format: {\"label\": 1} or {\"label\": 0}",
+            "Prompt includes decision criteria (complexity, reasoning depth)",
+            "Prompt handles ambiguous cases (prefer 1 only with explicit reasoning request)",
+            "Prompt template accepts input object with instruction/prompt/input fields"
+          ],
+          "estimated_tokens": 4000
+        },
+        {
+          "id": "create_auto_labeler",
+          "title": "Implement batch auto-labeling script",
+          "type": "Code",
+          "tier": "Tier 1",
+          "agent": "coder",
+          "description": "Create scripts/auto_label_batch.py to call GPT-5 CODEX on data/sample_200.jsonl, produce data/auto_200.jsonl with labels. Uses OpenAI batch API for cost efficiency.",
+          "dependencies": ["create_labeling_prompt"],
+          "acceptance_criteria": [
+            "Batch API integration (not streaming, for cost control)",
+            "Robust error handling (retry on timeout, skip malformed)",
+            "Output format: {id, instruction, input, label, source='auto', confidence, timestamp}",
+            "Progress tracking (100 done, 100 remaining, etc.)",
+            "Cost estimation before execution"
+          ],
+          "estimated_tokens": 5000
+        },
+        {
+          "id": "run_auto_labeling",
+          "title": "Execute auto-labeling on 200-sample",
+          "type": "Code",
+          "tier": "Tier 1",
+          "agent": "coder",
+          "description": "Run auto-labeler on data/sample_200.jsonl, produce data/auto_200.jsonl with GPT-5 CODEX labels.",
+          "dependencies": ["create_auto_labeler"],
+          "acceptance_criteria": [
+            "data/auto_200.jsonl created with 200 labeled objects",
+            "All objects have label (0 or 1)",
+            "Source field marked as 'auto'",
+            "Confidence scores included (if available from API)",
+            "Labeling report: count of 0s vs 1s, cost, time"
+          ],
+          "estimated_tokens": 3000
+        },
+        {
+          "id": "test_auto_labeler",
+          "title": "Validate auto-labeling correctness",
+          "type": "Test",
+          "tier": "Tier 2",
+          "agent": "test_generator",
+          "description": "Create tests for auto-labeler: batch API usage, error handling, output format, cost calculation.",
+          "dependencies": ["create_auto_labeler"],
+          "acceptance_criteria": [
+            "Test batch API request format",
+            "Test retry logic on timeout",
+            "Test output format validation",
+            "Test cost estimation accuracy",
+            "All tests pass"
+          ],
+          "verification_target": "create_auto_labeler",
+          "estimated_tokens": 2500
+        }
+      ]
+    },
+    {
+      "id": "phase_4_human_review_protocol",
+      "title": "Human Review Interface & Quality Control",
+      "tasks": [
+        {
+          "id": "create_labeling_rubric",
+          "title": "Design one-page labeling rubric",
+          "type": "Spec",
+          "tier": "Tier 2",
+          "agent": "planner",
+          "description": "Create clear, concise rubric for human labelers: 1 (YES) for graph/DAG/SAT/CSP/proof/edge-case tasks, 0 (NO) for single-file/formatting/simple I/O, S (skip) for incomplete context. Include 10 gold examples for calibration.",
+          "dependencies": ["run_auto_labeling"],
+          "acceptance_criteria": [
+            "Rubric fits on one page (markdown format)",
+            "Clear decision criteria with examples",
+            "10 gold-standard labeled examples (5 positive, 5 negative)",
+            "Fatigue prevention: recommend 50-100 labels per session",
+            "Optional notes field for edge cases"
+          ],
+          "estimated_tokens": 3000
+        },
+        {
+          "id": "create_review_cli",
+          "title": "Build interactive labeling CLI tool",
+          "type": "Code",
+          "tier": "Tier 2",
+          "agent": "coder",
+          "description": "Create scripts/manual_label_cli.py: interactive terminal UI to review/correct auto-labels from data/auto_200.jsonl, output to data/labeled_200.jsonl.",
+          "dependencies": ["create_labeling_rubric"],
+          "acceptance_criteria": [
+            "Display instruction + auto-label, ask for confirmation/correction",
+            "Accept inputs: Y (confirm), N (flip label), S (skip), Q (quit with progress save)",
+            "Show progress (15/200 reviewed, 185 remaining)",
+            "Auto-save every 10 reviews (prevent data loss)",
+            "Final output: data/labeled_200.jsonl with reviewed_by, review_time, notes fields"
+          ],
+          "estimated_tokens": 4500
+        },
+        {
+          "id": "test_review_cli",
+          "title": "Validate review CLI functionality",
+          "type": "Test",
+          "tier": "Tier 2",
+          "agent": "test_generator",
+          "description": "Create tests for review CLI: navigation, auto-save, progress tracking, output format.",
+          "dependencies": ["create_review_cli"],
+          "acceptance_criteria": [
+            "Test label confirmation/flip logic",
+            "Test auto-save every 10 reviews",
+            "Test progress tracking accuracy",
+            "Test output format (reviewed_by, review_time, notes)",
+            "All tests pass"
+          ],
+          "verification_target": "create_review_cli",
+          "estimated_tokens": 2500
+        }
+      ]
+    },
+    {
+      "id": "phase_5_training_data_prep",
+      "title": "Final Training Dataset Production",
+      "tasks": [
+        {
+          "id": "create_merge_script",
+          "title": "Merge auto + human labels into final dataset",
+          "type": "Code",
+          "tier": "Tier 2",
+          "agent": "coder",
+          "description": "Create scripts/merge_labels.py: combine data/auto_200.jsonl (auto-labels) + data/labeled_200.jsonl (human-reviewed) → learning/trm_labels.jsonl. Human labels override auto-labels.",
+          "dependencies": ["create_review_cli"],
+          "acceptance_criteria": [
+            "Human-reviewed labels override auto-labels (higher confidence)",
+            "Output format: {id, instruction, input, label, source (human|auto), reviewed_by, review_time, notes, confidence}",
+            "Duplicate detection (same instruction appears multiple times)",
+            "Quality report: human vs auto agreement rate, label distribution",
+            "Output to learning/trm_labels.jsonl"
+          ],
+          "estimated_tokens": 3500
+        },
+        {
+          "id": "run_merge",
+          "title": "Execute merge to produce final dataset",
+          "type": "Code",
+          "tier": "Tier 2",
+          "agent": "coder",
+          "description": "Run merge script to create learning/trm_labels.jsonl with 200+ labeled examples.",
+          "dependencies": ["create_merge_script"],
+          "acceptance_criteria": [
+            "learning/trm_labels.jsonl created with 200+ objects",
+            "All objects have label (0 or 1)",
+            "Source field indicates human or auto",
+            "Quality report generated (agreement rate, distribution)",
+            "No duplicates in final dataset"
+          ],
+          "estimated_tokens": 2000
+        },
+        {
+          "id": "create_quality_validator",
+          "title": "Implement dataset quality validator",
+          "type": "Code",
+          "tier": "Tier 2",
+          "agent": "coder",
+          "description": "Create scripts/validate_training_data.py: check learning/trm_labels.jsonl for balance (not >90% one class), diversity (keyword coverage), completeness (all required fields).",
+          "dependencies": ["run_merge"],
+          "acceptance_criteria": [
+            "Check label balance (30-70% for each class)",
+            "Check keyword diversity (all 17 keywords represented)",
+            "Check schema completeness (id, instruction, input, label, source)",
+            "Check for data leakage (no test data in training)",
+            "Generate validation report with warnings"
+          ],
+          "estimated_tokens": 3500
+        },
+        {
+          "id": "test_quality_validator",
+          "title": "Validate quality validator correctness",
+          "type": "Test",
+          "tier": "Tier 2",
+          "agent": "test_generator",
+          "description": "Create tests for quality validator: balance checking, diversity scoring, schema validation.",
+          "dependencies": ["create_quality_validator"],
+          "acceptance_criteria": [
+            "Test balance detection (imbalanced dataset triggers warning)",
+            "Test keyword diversity calculation",
+            "Test schema validation (missing fields caught)",
+            "Test data leakage detection",
+            "All tests pass"
+          ],
+          "verification_target": "create_quality_validator",
+          "estimated_tokens": 2500
+        }
+      ]
+    },
+    {
+      "id": "phase_6_model_training",
+      "title": "Local Model Fine-tuning with LoRA/QLoRA",
+      "tasks": [
+        {
+          "id": "create_training_config",
+          "title": "Design training configuration for Qwen3-Coder/GPT-OSS",
+          "type": "Spec",
+          "tier": "Tier 1",
+          "agent": "planner",
+          "description": "Create optimal training config for local fine-tuning: LoRA (Low-Rank Adaptation) for parameter efficiency, binary classification head, learning rate schedule, batch size, epochs.",
+          "dependencies": ["run_merge"],
+          "acceptance_criteria": [
+            "LoRA rank=8, alpha=16 for memory efficiency",
+            "Binary classification head (sigmoid output)",
+            "Learning rate: 2e-4 with warmup (10% of steps)",
+            "Batch size: 4 (fits in 48GB M4 Pro memory)",
+            "Epochs: 3-5 (prevent overfitting on 200 samples)",
+            "Evaluation split: 80/20 train/val"
+          ],
+          "estimated_tokens": 4000
+        },
+        {
+          "id": "create_training_script",
+          "title": "Implement local model fine-tuning script",
+          "type": "Code",
+          "tier": "Tier 1",
+          "agent": "coder",
+          "description": "Create scripts/train_router.py using Hugging Face Transformers + PEFT (Parameter-Efficient Fine-Tuning). Supports qwen3coder-30b and gpt-oss-20b, outputs LoRA adapter to models/trm_router_lora/.",
+          "dependencies": ["create_training_config"],
+          "acceptance_criteria": [
+            "Load base model (qwen3coder-30b or gpt-oss-20b) in 8-bit quantization",
+            "Apply LoRA adapter to attention layers",
+            "Train on learning/trm_labels.jsonl with 80/20 split",
+            "Track metrics: accuracy, precision, recall, F1 on validation set",
+            "Save LoRA adapter to models/trm_router_lora/",
+            "Training completes in <2 hours on M4 Pro 48GB"
+          ],
+          "estimated_tokens": 6000
+        },
+        {
+          "id": "create_inference_wrapper",
+          "title": "Build TRM router inference wrapper",
+          "type": "Code",
+          "tier": "Tier 2",
+          "agent": "coder",
+          "description": "Create tools/trm_router.py: lightweight wrapper to load LoRA adapter + base model, classify tasks (0 or 1), integrate with Agency orchestrator.",
+          "dependencies": ["create_training_script"],
+          "acceptance_criteria": [
+            "Load base model + LoRA adapter from models/trm_router_lora/",
+            "Accept input: {instruction, input} → output: {label (0|1), confidence}",
+            "Inference latency <500ms on M4 Pro",
+            "Memory footprint <4GB (quantized model)",
+            "Thread-safe for parallel orchestration"
+          ],
+          "estimated_tokens": 4000
+        },
+        {
+          "id": "test_training",
+          "title": "Validate training script correctness",
+          "type": "Test",
+          "tier": "Tier 2",
+          "agent": "test_generator",
+          "description": "Create tests for training script: LoRA initialization, data loading, metric tracking, checkpoint saving.",
+          "dependencies": ["create_training_script"],
+          "acceptance_criteria": [
+            "Test LoRA adapter initialization (rank, alpha)",
+            "Test data loading from JSONL",
+            "Test metric calculation (accuracy, F1)",
+            "Test checkpoint saving/loading",
+            "All tests pass"
+          ],
+          "verification_target": "create_training_script",
+          "estimated_tokens": 3000
+        }
+      ]
+    },
+    {
+      "id": "phase_7_shadow_mode",
+      "title": "Shadow Mode Deployment & Telemetry",
+      "tasks": [
+        {
+          "id": "create_shadow_mode",
+          "title": "Implement shadow mode for parallel routing",
+          "type": "Code",
+          "tier": "Tier 1",
+          "agent": "coder",
+          "description": "Create tools/orchestrator/shadow_router.py: run TRM router in parallel with production routing (Leap 3 model router), log discrepancies for retraining without impacting production.",
+          "dependencies": ["create_inference_wrapper"],
+          "acceptance_criteria": [
+            "Run both routers (production + TRM) on every task",
+            "Production router controls actual execution (no impact)",
+            "Log discrepancies to logs/shadow_mode/routing_deltas.jsonl",
+            "Track metrics: agreement rate, TRM precision/recall, latency difference",
+            "Weekly summary report for retraining decisions"
+          ],
+          "estimated_tokens": 5000
+        },
+        {
+          "id": "create_telemetry_dashboard",
+          "title": "Build telemetry dashboard for shadow mode",
+          "type": "Code",
+          "tier": "Tier 2",
+          "agent": "coder",
+          "description": "Create scripts/shadow_mode_dashboard.py: visualize shadow mode metrics (agreement rate over time, confusion matrix, cost impact if TRM were live).",
+          "dependencies": ["create_shadow_mode"],
+          "acceptance_criteria": [
+            "Read logs/shadow_mode/routing_deltas.jsonl",
+            "Plot agreement rate over time (7-day rolling window)",
+            "Generate confusion matrix (TRM vs production)",
+            "Calculate hypothetical cost savings if TRM were live",
+            "Output HTML dashboard to logs/shadow_mode/dashboard.html"
+          ],
+          "estimated_tokens": 4000
+        },
+        {
+          "id": "create_retraining_loop",
+          "title": "Implement automated retraining trigger",
+          "type": "Code",
+          "tier": "Tier 1",
+          "agent": "coder",
+          "description": "Create scripts/auto_retrain.py: monitor shadow mode metrics, trigger retraining if agreement rate drops below threshold (e.g., 85%), collect new labeled examples from discrepancies.",
+          "dependencies": ["create_telemetry_dashboard"],
+          "acceptance_criteria": [
+            "Monitor agreement rate weekly",
+            "Trigger retraining if rate <85% for 2 consecutive weeks",
+            "Collect discrepancies as new training data (human review required)",
+            "Increment model version (v1 → v2)",
+            "Notify user of retraining trigger"
+          ],
+          "estimated_tokens": 4500
+        },
+        {
+          "id": "test_shadow_mode",
+          "title": "Validate shadow mode correctness",
+          "type": "Test",
+          "tier": "Tier 2",
+          "agent": "test_generator",
+          "description": "Create tests for shadow mode: parallel routing, discrepancy logging, production non-impact.",
+          "dependencies": ["create_shadow_mode"],
+          "acceptance_criteria": [
+            "Test both routers execute in parallel",
+            "Test production router controls actual execution",
+            "Test discrepancy logging format",
+            "Test zero production impact (latency, errors)",
+            "All tests pass"
+          ],
+          "verification_target": "create_shadow_mode",
+          "estimated_tokens": 3000
+        }
+      ]
+    },
+    {
+      "id": "phase_8_integration",
+      "title": "Agency Orchestrator Integration",
+      "tasks": [
+        {
+          "id": "update_model_policy",
+          "title": "Integrate TRM router into model policy",
+          "type": "Code",
+          "tier": "Tier 1",
+          "agent": "coder",
+          "description": "Update shared/model_policy.py to use TRM router for tier classification. If TRM label=1 (complex reasoning), route to TRM-7M, else use existing Leap 3 router (P1/P2/P3).",
+          "dependencies": ["create_shadow_mode"],
+          "acceptance_criteria": [
+            "Query TRM router before Leap 3 router",
+            "If TRM label=1, route to TRM-7M for recursive reasoning",
+            "If TRM label=0, fallback to Leap 3 router (gpt-5/gpt-4o/local)",
+            "Track TRM routing decisions in telemetry",
+            "Backward compatible (disable flag: USE_TRM_ROUTER=false)"
+          ],
+          "estimated_tokens": 4000
+        },
+        {
+          "id": "create_trm_agent",
+          "title": "Build TRM-7M agent wrapper",
+          "type": "Code",
+          "tier": "Tier 1",
+          "agent": "coder",
+          "description": "Create coding_agent/trm_agent.py: wrapper for TRM-7M recursive reasoning model, handles grid-based input/output, integrates with Agency context.",
+          "dependencies": ["update_model_policy"],
+          "acceptance_criteria": [
+            "Load TRM-7M model (7M params, local inference)",
+            "Accept task description → convert to grid format",
+            "Run recursive reasoning (16 refinement steps)",
+            "Output reasoning trace + final answer",
+            "Inference latency <1s for typical tasks"
+          ],
+          "estimated_tokens": 5000
+        },
+        {
+          "id": "update_primea_protocol",
+          "title": "Add TRM validation gates to /primeA workflow",
+          "type": "Code",
+          "tier": "Tier 1",
+          "agent": "coder",
+          "description": "Update .claude/commands/primea.md to include TRM-7M validation checkpoints (STEP 3.1, 5.1, 5.2, 5.3) as documented in Leap 8 spec.",
+          "dependencies": ["create_trm_agent"],
+          "acceptance_criteria": [
+            "Checkpoint 1: DAG validation (circular dependencies)",
+            "Checkpoint 2: Type constraint validation (Dict[Any, Any])",
+            "Checkpoint 3: Edge case inference (test coverage)",
+            "Checkpoint 4: Lint/format pre-validation",
+            "All checkpoints integrated into execution protocol"
+          ],
+          "estimated_tokens": 3500
+        },
+        {
+          "id": "test_integration",
+          "title": "Validate end-to-end TRM integration",
+          "type": "Test",
+          "tier": "Tier 1",
+          "agent": "test_generator",
+          "description": "Create integration tests: TRM router → TRM-7M agent → validation gates in /primeA workflow.",
+          "dependencies": ["update_primea_protocol"],
+          "acceptance_criteria": [
+            "Test TRM router classification accuracy on known examples",
+            "Test TRM-7M agent inference on reasoning tasks",
+            "Test validation gates trigger correctly (DAG, types, edge cases, lint)",
+            "Test backward compatibility (USE_TRM_ROUTER=false works)",
+            "All tests pass, 100% integration coverage"
+          ],
+          "verification_target": "update_primea_protocol",
+          "estimated_tokens": 4500
+        }
+      ]
+    },
+    {
+      "id": "phase_9_documentation",
+      "title": "Documentation & Knowledge Transfer",
+      "tasks": [
+        {
+          "id": "create_adr",
+          "title": "Generate ADR-034 for TRM Training Pipeline",
+          "type": "Spec",
+          "tier": "Tier 1",
+          "agent": "chief_architect",
+          "description": "Create docs/adr/ADR-034-trm-training-pipeline.md documenting the entire training workflow, design decisions, cost analysis, and integration with Agency.",
+          "dependencies": ["test_integration"],
+          "acceptance_criteria": [
+            "Context: TRM-7M recursive reasoning, local model fine-tuning goal",
+            "Decision: LoRA fine-tuning on 659 extracted examples, shadow mode deployment",
+            "Consequences: 40-60% churn reduction, $0 inference cost, <1s latency",
+            "Alternatives Considered: Cloud API vs local, full fine-tuning vs LoRA",
+            "Constitutional Alignment: Article IV (learning), Article I (complete context)"
+          ],
+          "estimated_tokens": 5000
+        },
+        {
+          "id": "create_user_guide",
+          "title": "Write TRM training pipeline user guide",
+          "type": "Spec",
+          "tier": "Tier 2",
+          "agent": "planner",
+          "description": "Create docs/TRM_TRAINING_GUIDE.md: step-by-step guide for users to train their own TRM router model using the pipeline.",
+          "dependencies": ["create_adr"],
+          "acceptance_criteria": [
+            "Prerequisites: Python 3.11+, 48GB RAM, Hugging Face account",
+            "Step-by-step execution: extraction → sampling → labeling → training → deployment",
+            "Troubleshooting: common errors, memory issues, labeling quality tips",
+            "Cost estimation: OpenAI API costs for auto-labeling",
+            "Expected results: 85%+ agreement rate in shadow mode"
+          ],
+          "estimated_tokens": 4000
+        },
+        {
+          "id": "update_readme",
+          "title": "Update main README with TRM training section",
+          "type": "Code",
+          "tier": "Tier 2",
+          "agent": "coder",
+          "description": "Add TRM Training Pipeline section to CLAUDE.md, link to ADR-034 and user guide.",
+          "dependencies": ["create_user_guide"],
+          "acceptance_criteria": [
+            "Section added under Leap 8 innovations",
+            "Links to ADR-034, TRM_TRAINING_GUIDE.md",
+            "Quick start example (5 commands from extraction to deployment)",
+            "Cost savings estimate (96% → 98% with TRM)",
+            "Constitutional compliance notes (Article IV)"
+          ],
+          "estimated_tokens": 2500
+        }
+      ]
+    }
+  ],
+  "checkpoints": [
+    {
+      "after_phase": "phase_3_auto_labeling",
+      "type": "human_review",
+      "prompt": "Review auto-labeled data quality before proceeding to human review phase. Check label distribution (expect 30-70% balance), sample 10 examples for correctness."
+    },
+    {
+      "after_phase": "phase_5_training_data_prep",
+      "type": "human_review",
+      "prompt": "Validate final training dataset quality. Review quality report: balance, diversity, agreement rate. Approve before expensive training phase."
+    },
+    {
+      "after_phase": "phase_7_shadow_mode",
+      "type": "human_review",
+      "prompt": "Review shadow mode telemetry after 1 week. Check agreement rate, confusion matrix, cost impact. Decide: promote to production or retrain."
+    }
+  ],
+  "metadata": {
+    "estimated_tokens": 120000,
+    "estimated_cost_usd": 25.0,
+    "complexity": "complex",
+    "budget_limit_usd": 30.0,
+    "preflight_checks": [
+      "slop_guardian.evaluate(graph) >= 3.5",
+      "budget_guard.check_budget(25.0, 30.0)",
+      "weirdly-numbered-json-contents.md exists and has 1216 lines"
+    ]
+  }
+}
