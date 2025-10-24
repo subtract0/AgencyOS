@@ -20,6 +20,8 @@ from functools import wraps
 from pathlib import Path
 from typing import Any
 
+from shared.type_definitions.result import Result, Ok, Err
+
 logger = logging.getLogger(__name__)
 
 
@@ -179,7 +181,7 @@ def validate_article_iii() -> None:
     logger.debug("Article III validated: Enforcement mechanisms in place")
 
 
-def validate_article_iv(agent_context: Any | None = None) -> None:
+def validate_article_iv(agent_context: Any | None = None) -> Result[bool, str]:
     """
     Validate Article IV: Continuous Learning and Improvement.
 
@@ -192,29 +194,51 @@ def validate_article_iv(agent_context: Any | None = None) -> None:
     Args:
         agent_context: Optional AgentContext instance
 
-    Raises:
-        ConstitutionalViolation: If learning infrastructure missing or disabled
+    Returns:
+        Ok(True) if compliant, Err(reason) if violated
+
+    Constitutional Mandate:
+    - Article IV: Continuous Learning and Improvement (ADR-004)
+    - VectorStore integration is constitutionally required (not optional)
+    - No disable flags permitted (USE_ENHANCED_MEMORY must be 'true')
     """
+    from agency_memory import InMemoryStore, EnhancedMemoryStore
+
     # Check if learning is explicitly disabled (CONSTITUTIONAL VIOLATION)
     if _get_env_flag("DISABLE_LEARNING"):
-        raise ConstitutionalViolation(
-            "Article IV violated: DISABLE_LEARNING flag detected. "
+        return Err(
+            "Article IV violation: DISABLE_LEARNING flag detected. "
             "Learning is constitutionally mandatory."
         )
 
     # Verify VectorStore is MANDATORY (not optional)
     use_enhanced = os.getenv("USE_ENHANCED_MEMORY", "true").lower()
     if use_enhanced != "true":
-        raise ConstitutionalViolation(
-            "Article IV violated: USE_ENHANCED_MEMORY must be 'true'. "
+        return Err(
+            "Article IV violation: USE_ENHANCED_MEMORY must be 'true'. "
             "VectorStore integration is constitutionally mandatory, not optional."
         )
 
     # If context provided, verify memory system
     if agent_context is not None:
         if not hasattr(agent_context, "memory") or agent_context.memory is None:
-            raise ConstitutionalViolation(
-                "Article IV violated: AgentContext missing memory system for learning integration"
+            return Err(
+                "Article IV violation: AgentContext missing memory system for learning integration"
+            )
+
+        # Check memory backend type (must NOT be InMemoryStore)
+        if isinstance(agent_context.memory._store, InMemoryStore):
+            return Err(
+                "Article IV violation: Memory backend is InMemoryStore (ephemeral). "
+                "VectorStore integration is constitutionally mandatory. "
+                "Use create_agent_context() without explicit memory param to get VectorStore by default."
+            )
+
+        # Verify backend is VectorStore-compatible
+        if not isinstance(agent_context.memory._store, EnhancedMemoryStore):
+            return Err(
+                f"Article IV violation: Memory backend is {type(agent_context.memory._store).__name__} "
+                "(not EnhancedMemoryStore). VectorStore integration required for cross-session learning."
             )
 
     # Check for learning agent availability
@@ -223,6 +247,7 @@ def validate_article_iv(agent_context: Any | None = None) -> None:
         logger.warning("Article IV: LearningAgent module not found - learning may be limited")
 
     logger.debug("Article IV validated: Mandatory learning infrastructure in place")
+    return Ok(True)
 
 
 def validate_article_v() -> None:
