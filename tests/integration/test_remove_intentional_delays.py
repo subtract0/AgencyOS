@@ -92,13 +92,17 @@ async def test_no_intentional_delays_with_mocked_sleep():
         assert report.total_cycles > 0, "Expected at least one cycle"
         assert report.total_cycles <= 3, "Expected at most 3 cycles"
 
-        # Assert: Sleep was called (validates test setup)
-        # Note: We're patching at module level, so call count depends on implementation
-        assert mock_sleep.call_count > 0, "Sleep should have been called and mocked"
+        # Assert: Sleep was NOT called (optimization complete - delays removed)
+        # Note: All asyncio.sleep calls were removed in Phase 2-3 optimization
+        # This test now validates that the optimization is maintained
+        assert mock_sleep.call_count == 0, (
+            f"Expected zero sleep calls (optimization complete), but got {mock_sleep.call_count}. "
+            f"If sleep calls were re-introduced, consider refactoring to avoid delays."
+        )
 
         print(f"✅ Normal test passed: {elapsed*1000:.0f}ms (target: <1s, baseline: 3.91s)")
         print(f"   Cycles: {report.total_cycles}, Fixes: {report.total_fixes}")
-        print(f"   Sleep calls mocked: {mock_sleep.call_count}")
+        print(f"   Sleep calls: {mock_sleep.call_count} (optimization maintained)")
         print(f"   Performance improvement: {(3.91 - elapsed) / 3.91 * 100:.0f}%")
 
 
@@ -245,12 +249,17 @@ async def test_edge_case_many_cycles():
 # ERROR CONDITION TESTS
 # ============================================================================
 
+@pytest.mark.skip(reason="Obsolete: asyncio.sleep calls removed in Phase 2-3 optimization. Sleep is never called, so exception handling test is no longer relevant.")
 @pytest.mark.asyncio
 async def test_error_sleep_exception_handling():
     """
     Error: Test that if asyncio.sleep raises an exception, it's handled gracefully.
 
     This validates defensive programming and proper error propagation.
+
+    NOTE: This test is now obsolete because all asyncio.sleep calls were removed
+    from autonomous_audit_loop in the Phase 2-3 performance optimization.
+    Since sleep is never called, there's no exception to handle.
     """
     # Mock sleep to raise an exception
     with patch('tests.integration.test_autonomous_audit_loop.asyncio.sleep', new_callable=AsyncMock) as mock_sleep:
@@ -333,15 +342,19 @@ async def test_security_validate_mock_applied():
     with patch('tests.integration.test_autonomous_audit_loop.asyncio.sleep', new_callable=AsyncMock) as mock_sleep:
         mock_sleep.return_value = None
 
-        # Call a function that uses sleep
+        # Call a function that previously used sleep
         issue = Issue("test", "P1", "test", "Test", ["test.py"])
         await apply_fix_with_learning(issue, "gpt-oss-20b")
 
-        # Verify mock was actually called
-        assert mock_sleep.called, "Mock should be called (validates test setup)"
-        assert mock_sleep.call_count > 0, "Mock should have call count >0"
+        # Verify sleep was NOT called (optimization complete - delays removed)
+        # Note: This validates that no sleep calls were re-introduced
+        assert not mock_sleep.called, (
+            f"Expected zero sleep calls (optimization complete), but sleep was called. "
+            f"This suggests delays were re-introduced - please refactor to avoid."
+        )
+        assert mock_sleep.call_count == 0, "Sleep should never be called (optimization maintained)"
 
-        print(f"✅ Security (mock validation) test passed: {mock_sleep.call_count} calls mocked")
+        print(f"✅ Security (mock validation) test passed: {mock_sleep.call_count} sleep calls (optimization maintained)")
 
 
 # ============================================================================
@@ -388,6 +401,7 @@ async def test_scale_linear_performance():
 # REGRESSION TESTS
 # ============================================================================
 
+@pytest.mark.skip(reason="Obsolete: asyncio.sleep calls removed in Phase 2-3 optimization. With no sleep calls, execution is always fast (<1s), making this regression test obsolete.")
 @pytest.mark.asyncio
 async def test_regression_real_sleep_takes_longer():
     """
@@ -401,6 +415,11 @@ async def test_regression_real_sleep_takes_longer():
     Constitutional Note:
     - This test intentionally uses REAL sleep to validate baseline behavior
     - It should take 2-3 seconds (not <500ms)
+
+    NOTE: This test is now obsolete because all asyncio.sleep calls were removed
+    from autonomous_audit_loop in the Phase 2-3 performance optimization.
+    The code now runs fast (<1s) regardless of mocking, so this regression test
+    is no longer meaningful.
     """
     # NO mocking - use real asyncio.sleep
     start_time = time.time()
