@@ -35,26 +35,6 @@ def temp_file(temp_dir: Path) -> Path:
 
 
 @pytest.fixture
-def mock_agent_context():
-    """
-    Provide a mock AgentContext for unit tests.
-
-    DEPRECATED: Use create_test_agent_context() for constitutional compliance.
-    This fixture violates Article II (Mocks ≠ Green amendment).
-
-    Avoids loading real memory stores and configuration.
-    """
-    from unittest.mock import Mock
-
-    context = Mock()
-    context.store_memory = Mock()
-    context.search_memories = Mock(return_value=[])
-    context.get_session_id = Mock(return_value="test-session-123")
-
-    return context
-
-
-@pytest.fixture
 def constitutional_test_agent():
     """
     Provide a REAL Agent instance for testing (constitutional compliance).

@@ -17,17 +17,6 @@ if str(project_root) not in sys.path:
 
 
 @pytest.fixture
-def mock_agent_context():
-    """Mock AgentContext for memory tests."""
-    context = Mock()
-    context.session_id = "test_session_123"
-    context.store_memory = Mock()
-    context.retrieve_memory = Mock(return_value=None)
-    context.get_memories_by_tags = Mock(return_value=[])
-    return context
-
-
-@pytest.fixture
 def mock_memory():
     """Mock Memory instance."""
     memory = Mock()

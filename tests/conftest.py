@@ -232,14 +232,14 @@ def temp_file_with_content(tmp_path):
 
 @pytest.fixture
 def mock_agent_context():
-    """Mock AgentContext for integration tests."""
-    import uuid
-    from datetime import datetime
+    """Mock AgentContext for integration tests.
 
+    Uses a static session_id for deterministic test behavior.
+    Session ID uniqueness is tested separately in unit tests.
+    """
     context = Mock()
-    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-    unique_suffix = str(uuid.uuid4())[:8]
-    context.session_id = f"test_session_{timestamp}_{unique_suffix}"
+    # Static session_id for predictable test assertions
+    context.session_id = "test_session_123"
     context.store_memory = Mock()
     context.retrieve_memory = Mock(return_value=None)
     context.get_memories_by_tags = Mock(return_value=[])
