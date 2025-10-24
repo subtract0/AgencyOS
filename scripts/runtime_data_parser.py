@@ -232,14 +232,54 @@ class RuntimeDataParser:
 
     def get_runtime(self, test_id: str, test_code: str = "") -> float:
         """
-        Get runtime for a specific test.
+        Get runtime for a specific test with fuzzy matching support.
 
-        Falls back to heuristics if no data available.
+        Matching strategy:
+        1. Exact match (current behavior)
+        2. Fuzzy match without class name (file.py::TestClass::method → file.py::method)
+        3. Fuzzy match with class name (file.py::method → file.py::TestClass::method)
+        4. Fallback to heuristics
+
+        This handles mismatches between cached test IDs (with class names) and
+        extracted test IDs (without class names), improving empirical data coverage.
+
+        Args:
+            test_id: Test identifier in pytest format (file::class::method or file::method)
+            test_code: Test source code for heuristic estimation fallback
+
+        Returns:
+            Runtime in seconds (empirical or estimated)
         """
+        # Try exact match first (fast path)
         if test_id in self.runtimes:
             return self.runtimes[test_id].duration_seconds
 
-        # Fallback to heuristics
+        # Fuzzy matching: extract file path and method name
+        # Test ID formats:
+        #   - With class: tests/test_foo.py::TestFoo::test_method
+        #   - Without class: tests/test_foo.py::test_method
+        parts = test_id.split("::")
+        if len(parts) < 2:
+            # Invalid format, fall back to heuristics
+            return self.estimate_runtime_from_heuristics(test_code, test_id)
+
+        file_path = parts[0]
+        method_name = parts[-1]  # Last part is always the method name
+
+        # Search cache for entries matching file + method (ignore class)
+        for cached_id, runtime_data in self.runtimes.items():
+            cached_parts = cached_id.split("::")
+            if len(cached_parts) < 2:
+                continue
+
+            cached_file = cached_parts[0]
+            cached_method = cached_parts[-1]
+
+            # Match if file path and method name are the same (ignore class)
+            if cached_file == file_path and cached_method == method_name:
+                return runtime_data.duration_seconds
+
+        # No fuzzy match found, fall back to heuristics
         return self.estimate_runtime_from_heuristics(test_code, test_id)
 
     def export_runtimes(self, output_path: Path) -> None:

@@ -164,6 +164,110 @@ def test_addition():
         runtime = parser.get_runtime("test_e2e", e2e_code)
         assert runtime == 30.0  # E2E heuristic
 
+    def test_fuzzy_match_without_class_name(self):
+        """Test fuzzy matching when test ID lacks class name but cache has it."""
+        parser = RuntimeDataParser()
+
+        # Cache has class name
+        parser.runtimes["tests/test_foo.py::TestFoo::test_bar"] = TestRuntime(
+            test_id="tests/test_foo.py::TestFoo::test_bar",
+            duration_seconds=1.23,
+            source="junitxml"
+        )
+
+        # Query without class name should match
+        runtime = parser.get_runtime("tests/test_foo.py::test_bar", "")
+        assert runtime == 1.23
+
+    def test_fuzzy_match_with_class_name(self):
+        """Test fuzzy matching when test ID has class name but cache doesn't."""
+        parser = RuntimeDataParser()
+
+        # Cache without class name
+        parser.runtimes["tests/test_foo.py::test_bar"] = TestRuntime(
+            test_id="tests/test_foo.py::test_bar",
+            duration_seconds=2.34,
+            source="junitxml"
+        )
+
+        # Query with class name should match
+        runtime = parser.get_runtime("tests/test_foo.py::TestFoo::test_bar", "")
+        assert runtime == 2.34
+
+    def test_fuzzy_match_exact_takes_priority(self):
+        """Test that exact matches take priority over fuzzy matches."""
+        parser = RuntimeDataParser()
+
+        # Cache has both exact and fuzzy match
+        parser.runtimes["tests/test_foo.py::test_bar"] = TestRuntime(
+            test_id="tests/test_foo.py::test_bar",
+            duration_seconds=1.0,
+            source="junitxml"
+        )
+        parser.runtimes["tests/test_foo.py::TestFoo::test_bar"] = TestRuntime(
+            test_id="tests/test_foo.py::TestFoo::test_bar",
+            duration_seconds=2.0,
+            source="junitxml"
+        )
+
+        # Exact match should be returned (not fuzzy)
+        runtime1 = parser.get_runtime("tests/test_foo.py::test_bar", "")
+        assert runtime1 == 1.0  # Exact match
+
+        runtime2 = parser.get_runtime("tests/test_foo.py::TestFoo::test_bar", "")
+        assert runtime2 == 2.0  # Exact match
+
+    def test_fuzzy_match_multiple_candidates(self):
+        """Test fuzzy matching when multiple cache entries match the pattern."""
+        parser = RuntimeDataParser()
+
+        # Cache has multiple tests with same method name in different classes
+        parser.runtimes["tests/test_foo.py::TestFoo::test_method"] = TestRuntime(
+            test_id="tests/test_foo.py::TestFoo::test_method",
+            duration_seconds=1.0,
+            source="junitxml"
+        )
+        parser.runtimes["tests/test_foo.py::TestBar::test_method"] = TestRuntime(
+            test_id="tests/test_foo.py::TestBar::test_method",
+            duration_seconds=2.0,
+            source="junitxml"
+        )
+
+        # Query without class name should match one of them (first found)
+        runtime = parser.get_runtime("tests/test_foo.py::test_method", "")
+        assert runtime in [1.0, 2.0]  # Should match one of them
+
+    def test_fuzzy_match_no_match_falls_back_to_heuristics(self):
+        """Test that fuzzy matching falls back to heuristics when no match found."""
+        parser = RuntimeDataParser()
+
+        # Cache has different test
+        parser.runtimes["tests/test_other.py::test_other"] = TestRuntime(
+            test_id="tests/test_other.py::test_other",
+            duration_seconds=1.0,
+            source="junitxml"
+        )
+
+        # Query for non-existent test should fall back to heuristics
+        e2e_code = "def test_e2e_flow(): pass"
+        runtime = parser.get_runtime("tests/test_foo.py::test_e2e_flow", e2e_code)
+        assert runtime == 30.0  # E2E heuristic (name contains 'e2e')
+
+    def test_fuzzy_match_edge_case_single_colon(self):
+        """Test fuzzy matching handles edge case with single colon separator."""
+        parser = RuntimeDataParser()
+
+        # Cache with double colon (pytest format)
+        parser.runtimes["tests/test_foo.py::test_bar"] = TestRuntime(
+            test_id="tests/test_foo.py::test_bar",
+            duration_seconds=1.5,
+            source="junitxml"
+        )
+
+        # Query with same format should exact match (not fuzzy)
+        runtime = parser.get_runtime("tests/test_foo.py::test_bar", "")
+        assert runtime == 1.5
+
     def test_export_and_load_cache(self, tmp_path):
         """Test exporting and loading runtime cache."""
         parser = RuntimeDataParser()
