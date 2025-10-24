@@ -140,8 +140,16 @@ class Memory:
     """
 
     def __init__(self, store: MemoryStore | None = None):
-        """Initialize with store backend. Defaults to InMemoryStore."""
-        self._store = store or InMemoryStore()
+        """Initialize with store backend.
+
+        Defaults to EnhancedMemoryStore for Article IV compliance (persistent cross-session learning).
+        Use explicit InMemoryStore() param for ephemeral memory (e.g., testing).
+        """
+        if store is None:
+            from agency_memory.enhanced_memory_store import EnhancedMemoryStore
+            self._store = EnhancedMemoryStore()
+        else:
+            self._store = store
 
     def store(self, key: str, content: JSONValue, tags: list[str] | None = None) -> None:
         """Store content with key and optional tags."""
