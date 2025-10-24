@@ -1,0 +1,142 @@
+================================================================================
+AGENCY OS TEST SUITE QUICK REFERENCE
+Generated: October 24, 2025
+================================================================================
+
+KEY STATISTICS:
+- Total Files: 309
+- Total Tests: ~6,852
+- Total Code: 167,303 lines
+- Consolidation Potential: 25-35% (~50K lines)
+
+CRITICAL ISSUES:
+1. 220 root-level tests without clear unit/integration/e2e classification
+2. 3 duplicate mock_agent_context fixtures (different conftest files)
+3. 10+ test pair duplications (~2,000-3,000 lines)
+4. 5 placeholder/version variant files that should be deleted
+
+DISTRIBUTION BY CATEGORY:
+- Root Tests:          220 files, 111.3K lines  [NEEDS REORGANIZATION]
+- Tools Tests:         21 files, 17.1K lines    [GOOD]
+- Orchestrator Tests:  16 files, 12.3K lines    [HIGH VALUE - PROTECT]
+- Unit Tests:          22 files, 10.0K lines    [GOOD]
+- Integration Tests:   11 files, 7.1K lines     [GOOD]
+- Foundation Auto:     7 files, 5.5K lines      [MEDIUM VALUE]
+- Necessary Pattern:   4 files, 2.0K lines      [HIGH VALUE - PROTECT]
+- Fixtures:            4 files, 835 lines       [HAS DUPLICATION]
+- Benchmarks:          3 files, 1.1K lines      [GOOD]
+- E2E Tests:           1 file, 29 lines         [SEVERELY UNDERDEVELOPED]
+
+FILES TO PROTECT (100% Strategic Value):
+✓ tests/orchestrator/test_pr_creator.py (1,502 lines)
+✓ tests/orchestrator/test_necessary_validator.py (1,402 lines)
+✓ tests/orchestrator/test_spec_generator.py (1,288 lines)
+✓ tests/integration/test_autonomous_audit_loop.py (benchmark file)
+✓ tests/necessary/ (4 files, 2K lines total)
+✓ tests/tools/ci_monitor/test_fix_generator.py (1,556 lines)
+✓ tests/tools/ci_monitor/test_feedback_loop_orchestrator.py (1,103 lines)
+
+DUPLICATE TEST PAIRS (Consolidation Targets):
+1. chief_architect_agent (3 files, 2,196 lines)
+   - test_chief_architect_agent.py (1,732) [KEEP]
+   - test_chief_architect_agent_simple.py (189) [DELETE]
+   - unit/test_chief_architect_agent.py (275) [DELETE]
+   → Savings: ~450 lines
+
+2. retry_controller (3 files, 1,483 lines)
+   - test_retry_controller.py (517)
+   - unit/shared/test_retry_controller.py (524)
+   - tools/ci_monitor/test_retry_controller.py (442)
+   → Consolidate: 2 files, Savings: ~400 lines
+
+3. ollama_health_check (2 files, 859 lines)
+   - test_ollama_health_check.py (300) [DELETE]
+   - test_ollama_health_check_comprehensive.py (559) [KEEP]
+   → Savings: ~300 lines
+
+4. timeout_wrapper (2 files)
+   - test_timeout_wrapper.py [DELETE - move unit to tests/unit/]
+   - unit/shared/test_timeout_wrapper.py [KEEP]
+   → Savings: ~150 lines
+
+5. session_checkpoint (2 files)
+   - test_session_checkpoint.py [CLARIFY CANONICAL]
+   - test_session_checkpoint_new.py [DELETE if complete]
+   → Savings: ~300+ lines (if merged)
+
+6. agency_code_agent (2 files)
+   - test_agency_code_agent.py [KEEP]
+   - test_agency_code_agent_fixed.py [DELETE - fix merged]
+   → Savings: ~500 lines
+
+DUPLICATE FIXTURES (Root Cause of Test Pollution):
+- mock_agent_context (DEFINED 3 TIMES)
+  - /tests/conftest.py:233 [KEEP]
+  - /tests/unit/conftest.py:19 [REMOVE]
+  - /tests/fixtures/conftest.py:37 [REMOVE - DEPRECATED]
+  → Savings: ~50 lines, improves test reliability
+
+- temp_file, temp_workspace [USE pytest's tmp_path instead]
+- mock_openai_client [DEFINE ONCE]
+- mock_environment_vars, isolated_test_env [MERGE]
+
+TESTS TO DELETE (Placeholder/Minimal):
+- test_example.py (100 lines) - Just placeholder comments
+- test_e2e_router_agency_integration.py (29 lines) - Barely a test
+- test_agency_code_agent_fixed.py (~500 lines) - "Fixed" version obsolete
+→ Total Savings: ~630 lines, 0 test loss
+
+PHASE 1: QUICK WINS (1-2 hours)
+[ ] Delete test_example.py
+[ ] Delete test_agency_code_agent_fixed.py
+[ ] Delete test_chief_architect_agent_simple.py
+[ ] Remove mock_agent_context from unit/conftest.py
+[ ] Remove mock_agent_context from fixtures/conftest.py
+Estimated Savings: ~1,000+ lines, 0 test loss
+
+PHASE 2: MEDIUM EFFORT (2-4 hours)
+[ ] Consolidate retry_controller (3 files → 2)
+[ ] Consolidate ollama_health_check (2 files → 1)
+[ ] Consolidate timeout_wrapper (2 files → 1)
+[ ] Clarify session_checkpoint (2 files → 1)
+[ ] Consolidate spec_generator (2 files → clarify scope)
+Estimated Savings: ~1,200+ lines, 0 test loss
+
+PHASE 3: HEAVY REFACTORING (4-8 hours)
+[ ] Reorganize 220 root tests into unit/integration/e2e directories
+[ ] Split very large test files if maintainability suffers
+[ ] Expand E2E test suite (currently 29 lines - needs ~7K lines)
+Estimated Savings: Variable (refactoring, not deletion)
+
+CONSTITUTIONAL COMPLIANCE STATUS:
+Article I (Complete Context):    ✓ OK - Tests have proper timeouts
+Article II (100% Verification):   ✓ OK - Performance regression suite in place
+Article III (Enforcement):        ✓ OK - Conftest properly enforces categorization
+Article IV (Learning):            ✓ OK - Learning agent tests comprehensive
+Article V (Spec-Driven):          ✓ OK - Spec generator thoroughly tested
+
+⚠️  WARNING: E2E test suite minimal (29 lines) - risk of untested edge cases
+
+PERFORMANCE STATS:
+- Unit timeout: 10s (increased from 2s for resource contention)
+- Integration timeout: 30s (for full suite)
+- E2E timeout: 60s
+- Benchmark timeout: 120s
+- test_autonomous_audit_loop.py optimization: 3.91s → 0.53s (86.4% faster)
+
+ESTIMATED TOTAL CONSOLIDATION IMPACT:
+- Phase 1: -1,000 lines (quick wins)
+- Phase 2: -1,200 lines (medium effort)
+- Phase 3: Variable (reorganization for clarity)
+- Total consolidation potential: 25-35% (~50K lines)
+- Test loss: 0 (all consolidations preserve functionality)
+
+PRIORITY RECOMMENDATIONS:
+1. Phase 1 Quick Wins (DELETE placeholder/version files)
+2. Phase 2 Consolidation (MERGE duplicate test suites)
+3. Fixture Deduplication (FIX mock pollution)
+4. Root Test Reorganization (MOVE tests to proper directories)
+5. E2E Expansion (ADD proper end-to-end tests)
+
+For detailed analysis, see: test_suite_analysis_20251024.md
+================================================================================
