@@ -1,0 +1,28 @@
+{
+  "target_count": 500,
+  "actual_count": 500,
+  "strata_details": {
+    "graph": {
+      "sampled": 73
+    },
+    "constraint": {
+      "sampled": 70
+    },
+    "other": {
+      "sampled": 74
+    },
+    "algorithm": {
+      "sampled": 66
+    },
+    "proof": {
+      "sampled": 105
+    },
+    "optimization": {
+      "sampled": 71
+    },
+    "regex": {
+      "sampled": 41
+    }
+  },
+  "note": "Report regenerated after data cleaning (removed (NNN) prefixes)"
+}

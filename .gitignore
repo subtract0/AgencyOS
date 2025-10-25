@@ -342,3 +342,4 @@ NEXT_SESSION_*.md
 
 # Demo/test files
 shared/demo_fixed_by_local_model.py
+.venv-training/
