@@ -1,0 +1,178 @@
+name: TRM Router Validation
+
+on:
+  push:
+    branches: [main, develop]
+    paths:
+      - 'models/trm_router_lora/**'
+      - 'learning/**'
+      - 'scripts/tune_thresholds.py'
+      - 'scripts/calibration_dashboard.py'
+  pull_request:
+    branches: [main]
+    paths:
+      - 'models/trm_router_lora/**'
+      - 'learning/**'
+  schedule:
+    # Run daily calibration check at 2 AM UTC
+    - cron: '0 2 * * *'
+  workflow_dispatch:
+    inputs:
+      alert_on_failure:
+        description: 'Send alert if calibration fails'
+        required: false
+        default: 'true'
+
+jobs:
+  validate-calibration:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          lfs: true  # Pull Git LFS files (model checkpoints)
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install torch transformers peft datasets scikit-learn matplotlib numpy
+
+      - name: Download model checkpoint (if not in repo)
+        run: |
+          # If models are stored externally (e.g., S3, HuggingFace Hub)
+          # aws s3 sync s3://your-bucket/models/ models/ --exclude "*" --include "trm_router_lora/*"
+          echo "Using model from repo (Git LFS)"
+
+      - name: Validate calibration metrics
+        id: calibration
+        run: |
+          python scripts/calibration_dashboard.py \
+            --model models/trm_router_lora \
+            --gold-set data/gold_eval_50.jsonl \
+            --output logs/calibration/dashboard.html \
+            --alert-thresholds "roc_auc<0.9,ece>0.05,brier>0.12"
+        continue-on-error: true
+
+      - name: Check calibration status
+        if: steps.calibration.outcome == 'failure'
+        run: |
+          echo "⚠️ Calibration check failed!"
+          echo "Review metrics in logs/calibration/dashboard.json"
+          cat logs/calibration/dashboard.json
+          exit 1
+
+      - name: Upload calibration report
+        if: always()
+        uses: actions/upload-artifact@v3
+        with:
+          name: calibration-report
+          path: |
+            logs/calibration/dashboard.html
+            logs/calibration/dashboard.json
+          retention-days: 30
+
+      - name: Run threshold validation
+        run: |
+          python scripts/tune_thresholds.py \
+            --model models/trm_router_lora \
+            --val-data learning/trm_labels_val.jsonl \
+            --output models/trm_router_lora/threshold_validation.json \
+            --criterion f1
+
+      - name: Check for calibration drift
+        run: |
+          # Compare current metrics to baseline (stored in repo)
+          python - <<'EOF'
+          import json
+          from pathlib import Path
+
+          current = json.loads(Path("logs/calibration/dashboard.json").read_text())
+          baseline_path = Path("models/trm_router_lora/baseline_metrics.json")
+
+          if not baseline_path.exists():
+              print("⚠️ No baseline found - creating from current metrics")
+              baseline_path.write_text(json.dumps(current["metrics"], indent=2))
+              exit(0)
+
+          baseline = json.loads(baseline_path.read_text())
+          current_metrics = current["metrics"]
+
+          # Check for significant drift (>5% relative change)
+          drift_detected = False
+          for metric in ["roc_auc", "brier_score", "ece"]:
+              if metric not in baseline or metric not in current_metrics:
+                  continue
+
+              baseline_val = baseline[metric]
+              current_val = current_metrics[metric]
+
+              if metric == "roc_auc":
+                  # Higher is better
+                  relative_change = (baseline_val - current_val) / baseline_val
+                  if relative_change > 0.05:
+                      print(f"⚠️ {metric} degraded by {relative_change*100:.1f}%: {baseline_val:.4f} → {current_val:.4f}")
+                      drift_detected = True
+              else:
+                  # Lower is better
+                  relative_change = (current_val - baseline_val) / baseline_val
+                  if relative_change > 0.05:
+                      print(f"⚠️ {metric} degraded by {relative_change*100:.1f}%: {baseline_val:.4f} → {current_val:.4f}")
+                      drift_detected = True
+
+          if drift_detected:
+              print("\n🚨 Calibration drift detected! Consider retraining.")
+              exit(1)
+          else:
+              print("✅ No significant calibration drift detected")
+          EOF
+
+      - name: Comment PR with results
+        if: github.event_name == 'pull_request'
+        uses: actions/github-script@v6
+        with:
+          script: |
+            const fs = require('fs');
+            const metrics = JSON.parse(fs.readFileSync('logs/calibration/dashboard.json', 'utf8'));
+
+            const body = `
+            ## TRM Router Calibration Report
+
+            **Status**: ${metrics.alerts.length === 0 ? '✅ PASS' : '⚠️ ALERTS'}
+
+            ### Key Metrics
+            - **ROC-AUC**: ${metrics.metrics.roc_auc.toFixed(4)} (target: > 0.9)
+            - **Brier Score**: ${metrics.metrics.brier_score.toFixed(4)} (target: < 0.12)
+            - **ECE**: ${metrics.metrics.ece.toFixed(4)} (target: < 0.05)
+
+            ${metrics.alerts.length > 0 ? '### ⚠️ Alerts\n' + metrics.alerts.map(a => `- ${a}`).join('\n') : ''}
+
+            <details>
+            <summary>Full Report</summary>
+
+            [Download HTML Dashboard](https://github.com/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId})
+            </details>
+            `;
+
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: body
+            });
+
+      - name: Send Slack alert (if calibration fails)
+        if: failure() && github.event.inputs.alert_on_failure == 'true'
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+        run: |
+          curl -X POST -H 'Content-type: application/json' \
+            --data "{\"text\":\"🚨 TRM Router calibration failed in ${GITHUB_REPOSITORY}. Review: https://github.com/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}\"}" \
+            $SLACK_WEBHOOK_URL

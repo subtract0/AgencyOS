@@ -1,0 +1,62 @@
+======================================================================
+ESPER3.1 QLORA TRAINING (M4 Pro Optimized)
+======================================================================
+🔥 Using 10 CPU threads (M4 Pro performance cores)
+
+📦 Model: ValiantLabs/gpt-oss-20b-Esper3.1
+📊 Data: data/esper31_training_formatted.jsonl
+💾 Output: models/esper31-algorithms-qlora
+🔧 LoRA rank: 8 (reduced for memory)
+📈 Epochs: 3
+💪 Gradient accumulation: 32 (simulates batch=32)
+⏱️  Estimated time: 4-6 hours (CPU, full dataset, 10 threads)
+
+🧠 Free memory: 7.5 GB
+⚠️  WARNING: Low memory. Close other applications!
+Continue anyway? [y/N]: `torch_dtype` is deprecated! Use `dtype` instead!
+
+📝 Loading tokenizer...
+📦 Loading base model in FP16...
+   (This may take 10-15 minutes - model is ~20GB)
+   Loading to CPU (MPS has compatibility issues)
+Loading checkpoint shards:   0%|          | 0/9 [00:00<?, ?it/s]Loading checkpoint shards:  11%|█         | 1/9 [00:01<00:15,  1.94s/it]Loading checkpoint shards:  22%|██▏       | 2/9 [00:04<00:14,  2.05s/it]Loading checkpoint shards:  33%|███▎      | 3/9 [00:06<00:12,  2.10s/it]Loading checkpoint shards:  44%|████▍     | 4/9 [00:10<00:14,  2.83s/it]Loading checkpoint shards:  56%|█████▌    | 5/9 [00:13<00:12,  3.17s/it]Loading checkpoint shards:  67%|██████▋   | 6/9 [00:17<00:10,  3.44s/it]Loading checkpoint shards:  78%|███████▊  | 7/9 [00:23<00:08,  4.26s/it]Loading checkpoint shards:  89%|████████▉ | 8/9 [00:31<00:05,  5.31s/it]Loading checkpoint shards: 100%|██████████| 9/9 [00:35<00:00,  4.96s/it]Loading checkpoint shards: 100%|██████████| 9/9 [00:35<00:00,  3.96s/it]
+/Users/am/Code/Agency/.venv-training/lib/python3.12/site-packages/bitsandbytes/cextension.py:34: UserWarning: The installed version of bitsandbytes was compiled without GPU support. 8-bit optimizers, 8-bit multiplication, and GPU quantization are unavailable.
+  warn("The installed version of bitsandbytes was compiled without GPU support. "
+✅ Model loaded on CPU in FP16 (~20GB)
+✅ Gradient checkpointing enabled (saves ~40% memory)
+
+🔧 Adding LoRA adapters...
+'NoneType' object has no attribute 'cadam32bit_grad_fp32'
+
+📊 Trainable Parameters:
+   Total: 20,916,747,840
+   Trainable: 1,990,656 (0.01%)
+   Memory for adapters: ~0.00 GB
+
+📊 Loading training data...
+✅ Loaded 1102 training examples (full dataset)
+🔄 Formatting data...
+Map:   0%|          | 0/1102 [00:00<?, ? examples/s]Map: 100%|██████████| 1102/1102 [00:00<00:00, 16101.26 examples/s]
+🔄 Tokenizing...
+Map:   0%|          | 0/1102 [00:00<?, ? examples/s]Map:  91%|█████████ | 1000/1102 [00:00<00:00, 3546.24 examples/s]Map: 100%|██████████| 1102/1102 [00:00<00:00, 3498.04 examples/s]
+✅ Training samples: 991
+✅ Validation samples: 111
+
+⚙️  Configuring training...
+
+🚀 Starting training...
+   CPU threads: 10 (performance cores)
+   Data workers: 0 (single process - avoids macOS fork issues)
+   Effective batch size: 32
+   Steps per epoch: 30
+   Estimated time: ~4-6 hours (full dataset)
+
+======================================================================
+💡 TIP: You can safely Ctrl+C and resume later from last checkpoint
+======================================================================
+
+  0%|          | 0/93 [00:00<?, ?it/s]/Users/am/Code/Agency/.venv-training/lib/python3.12/site-packages/torch/utils/data/dataloader.py:692: UserWarning: 'pin_memory' argument is set as true but not supported on MPS now, device pinned memory won't be used.
+  warnings.warn(warn_msg)
+`use_cache=True` is incompatible with gradient checkpointing. Setting `use_cache=False`.
+  1%|          | 1/93 [49:35<76:03:00, 2975.87s/it]/opt/homebrew/Cellar/python@3.12/3.12.11/Frameworks/Python.framework/Versions/3.12/lib/python3.12/multiprocessing/resource_tracker.py:279: UserWarning: resource_tracker: There appear to be 1 leaked semaphore objects to clean up at shutdown
+  warnings.warn('resource_tracker: There appear to be %d '

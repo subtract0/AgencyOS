@@ -612,10 +612,18 @@ def create_agent_context(
     Factory function to create an AgentContext instance.
 
     Args:
-        memory: Optional Memory instance (creates default if None)
+        memory: Optional Memory instance (creates EnhancedMemoryStore by default for Article IV compliance)
         session_id: Optional session identifier (generates if None)
 
     Returns:
         Configured AgentContext instance
+
+    Article IV Compliance:
+        Defaults to EnhancedMemoryStore for persistent cross-session learning.
+        VectorStore integration is constitutionally mandatory (ADR-004).
     """
+    if memory is None:
+        from agency_memory import EnhancedMemoryStore, Memory as MemoryClass
+        memory = MemoryClass(store=EnhancedMemoryStore())
+
     return AgentContext(memory=memory, session_id=session_id)

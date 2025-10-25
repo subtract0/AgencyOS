@@ -1,0 +1,25 @@
+`torch_dtype` is deprecated! Use `dtype` instead!
+Loading tokenizer...
+Loading model in FP16...
+Loading checkpoint shards:   0%|          | 0/9 [00:00<?, ?it/s]Loading checkpoint shards:  11%|█         | 1/9 [00:01<00:15,  1.95s/it]Loading checkpoint shards:  22%|██▏       | 2/9 [00:04<00:14,  2.06s/it]Loading checkpoint shards:  33%|███▎      | 3/9 [00:06<00:12,  2.10s/it]Loading checkpoint shards:  44%|████▍     | 4/9 [00:09<00:12,  2.58s/it]Loading checkpoint shards:  56%|█████▌    | 5/9 [00:13<00:12,  3.04s/it]Loading checkpoint shards:  67%|██████▋   | 6/9 [00:17<00:10,  3.38s/it]Loading checkpoint shards:  78%|███████▊  | 7/9 [00:24<00:08,  4.46s/it]Loading checkpoint shards:  89%|████████▉ | 8/9 [00:32<00:05,  5.59s/it]Loading checkpoint shards: 100%|██████████| 9/9 [00:36<00:00,  5.16s/it]Loading checkpoint shards: 100%|██████████| 9/9 [00:36<00:00,  4.04s/it]
+/Users/am/Code/Agency/.venv-training/lib/python3.12/site-packages/bitsandbytes/cextension.py:34: UserWarning: The installed version of bitsandbytes was compiled without GPU support. 8-bit optimizers, 8-bit multiplication, and GPU quantization are unavailable.
+  warn("The installed version of bitsandbytes was compiled without GPU support. "
+✅ Model loaded
+✅ Gradient checkpointing enabled
+Adding LoRA adapters...
+'NoneType' object has no attribute 'cadam32bit_grad_fp32'
+✅ LoRA adapters added
+Loading training data...
+Map:   0%|          | 0/1102 [00:00<?, ? examples/s]Map: 100%|██████████| 1102/1102 [00:00<00:00, 16395.86 examples/s]
+Map:   0%|          | 0/1102 [00:00<?, ? examples/s]Map:  91%|█████████ | 1000/1102 [00:00<00:00, 3514.96 examples/s]Map: 100%|██████████| 1102/1102 [00:00<00:00, 3441.31 examples/s]
+Training samples: 991
+Validation samples: 111
+
+🚀 Starting training...
+Config: Optimal
+Steps per epoch: 30
+
+  0%|          | 0/93 [00:00<?, ?it/s]/Users/am/Code/Agency/.venv-training/lib/python3.12/site-packages/torch/utils/data/dataloader.py:692: UserWarning: 'pin_memory' argument is set as true but not supported on MPS now, device pinned memory won't be used.
+  warnings.warn(warn_msg)
+`use_cache=True` is incompatible with gradient checkpointing. Setting `use_cache=False`.
+  1%|          | 1/93 [52:50<81:00:50, 3170.12s/it]                                                     1%|          | 1/93 [52:50<81:00:50, 3170.12s/it]  2%|▏         | 2/93 [1:46:09<80:33:54, 3187.19s/it]                                                       2%|▏         | 2/93 [1:46:09<80:33:54, 3187.19s/it]  3%|▎         | 3/93 [2:41:36<81:16:49, 3251.22s/it]                                                       3%|▎         | 3/93 [2:41:36<81:16:49, 3251.22s/it]  4%|▍         | 4/93 [3:38:14<81:48:14, 3308.93s/it]                                                       4%|▍         | 4/93 [3:38:14<81:48:14, 3308.93s/it]  5%|▌         | 5/93 [4:21:56<74:49:56, 3061.32s/it]                                                       5%|▌         | 5/93 [4:21:56<74:49:56, 3061.32s/it]  6%|▋         | 6/93 [5:13:24<74:12:12, 3070.49s/it]                                                       6%|▋         | 6/93 [5:13:24<74:12:12, 3070.49s/it]  8%|▊         | 7/93 [6:06:26<74:13:23, 3107.02s/it]                                                       8%|▊         | 7/93 [6:06:26<74:13:23, 3107.02s/it]  9%|▊         | 8/93 [7:02:19<75:12:34, 3185.34s/it]                                                       9%|▊         | 8/93 [7:02:19<75:12:34, 3185.34s/it] 10%|▉         | 9/93 [7:52:04<72:51:31, 3122.51s/it]                                                      10%|▉         | 9/93 [7:52:04<72:51:31, 3122.51s/it]

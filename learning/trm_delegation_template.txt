@@ -1,0 +1,155 @@
+# TRM Delegation Template
+# Generalist uses this to format tasks for TRM execution
+
+## Task Types Supported
+- GRAPH: shortest path, cycle detection, topological sort, reachability
+- SAT: boolean satisfiability (CNF), 2-SAT, 3-SAT
+- CSP: constraint satisfaction (graph coloring, scheduling, assignment)
+- INDUCTIVE_PROOF: loop invariants, termination proofs, correctness proofs
+- ALG: knapsack, scheduling, optimization problems
+- VERIFICATION: type checking, resource acquisition order, overflow checks
+
+## Template Format (JSON)
+
+```json
+{
+  "task_id": "<uuid>",
+  "task_type": "<GRAPH|SAT|CSP|INDUCTIVE_PROOF|ALG|VERIFICATION>",
+  "input": "<canonical-serialized-input>",
+  "constraints": "<explicit constraints or domain limits>",
+  "max_depth": <integer recursion bound>,
+  "memo_key_hint": "<short canonical key for caching>",
+  "expected_output_schema": "<schema description>",
+  "local_checks": ["<check1>", "<check2>"],
+  "timeout_seconds": <int>,
+  "resource_hint": {"mem_mb": <int>, "cpu_ms": <int>}
+}
+```
+
+## Canonical Encodings by Task Type
+
+### GRAPH Tasks
+```
+Input format: "nodes:[A,B,C];edges:[A-B:3,B-C:2];source:A;dest:C"
+Constraints: "non-negative weights; node ids lexicographic"
+Output schema: '{"path":["A","B","C"],"distance":5}'
+Local checks: ["path[0]==source","path[-1]==dest","distance==sum(weights)"]
+```
+
+### SAT Tasks
+```
+Input format: "vars:[x,y,z];clauses:[(x,~y),(~x,z),(y,z)]"
+Constraints: "CNF form; variables canonical ordering"
+Output schema: '{"satisfiable":true,"assignment":{"x":1,"y":0,"z":1}}'
+Local checks: ["all_clauses_satisfied","assignment_complete"]
+```
+
+### CSP Tasks
+```
+Input format: "domains:{A:[1,2,3],B:[1,2]};constraints:[A!=B,A+B<5]"
+Constraints: "finite domains; constraints in CNF-like normal form"
+Output schema: '{"solution":{"A":1,"B":2},"satisfiable":true}'
+Local checks: ["all_constraints_satisfied","all_vars_assigned"]
+```
+
+### INDUCTIVE_PROOF Tasks
+```
+Input format: "code:<snippet>;invariant:<claim>;vars:[n,sum,i]"
+Constraints: "loop invariant or termination proof"
+Output schema: '{"base_case":<proof>,"inductive_step":<proof>,"valid":true}'
+Local checks: ["base_case_holds","inductive_step_sound","conclusion_correct"]
+```
+
+### ALG (Algorithm) Tasks
+```
+Input format: "problem:knapsack;items:[(w:3,v:4),(w:2,v:3)];capacity:5"
+Constraints: "0/1 knapsack; integer weights/values"
+Output schema: '{"items":[0,1],"weight":5,"value":7,"optimal":true}'
+Local checks: ["weight<=capacity","value_correct","optimality_proven"]
+```
+
+### VERIFICATION Tasks
+```
+Input format: "code:<snippet>;property:<safety_property>"
+Constraints: "finite state space or bounded verification"
+Output schema: '{"verified":true,"counterexample":null,"proof":<steps>}'
+Local checks: ["property_holds","proof_valid","no_false_positives"]
+```
+
+## Example: Shortest Path Delegation
+
+**Original Task**:
+```
+Instruction: Find the shortest path from node A to node C in this graph.
+Input: Graph with nodes A,B,C and edges A-B (weight 3), B-C (weight 2), A-C (weight 8).
+```
+
+**Delegated TRM Task**:
+```json
+{
+  "task_id": "uuid-12345",
+  "task_type": "GRAPH",
+  "input": "nodes:[A,B,C];edges:[A-B:3,B-C:2,A-C:8];source:A;dest:C",
+  "constraints": "non-negative weights; node ids canonical lexicographic; simple paths only",
+  "max_depth": 10,
+  "memo_key_hint": "dijkstra-A-C-3nodes",
+  "expected_output_schema": "{\"path\":[\"A\",\"B\",\"C\"],\"distance\":5}",
+  "local_checks": [
+    "path[0] == 'A'",
+    "path[-1] == 'C'",
+    "distance == sum([edges[path[i]][path[i+1]] for i in range(len(path)-1)])",
+    "len(path) >= 2"
+  ],
+  "timeout_seconds": 5,
+  "resource_hint": {"mem_mb": 64, "cpu_ms": 200}
+}
+```
+
+## Memoization Strategy
+
+**Canonical Keys** (for cache hits):
+- GRAPH: `{task_type}-{sorted_nodes}-{sorted_edges}-{source}-{dest}`
+- SAT: `{task_type}-{num_vars}-{sorted_clauses_hash}`
+- CSP: `{task_type}-{sorted_domains}-{sorted_constraints_hash}`
+
+**Cache Hit Ratio Target**: >50% for recursive subproblems
+
+## Verification Protocol
+
+1. TRM produces output in expected_output_schema format
+2. Execute all local_checks (Python eval with sandboxing)
+3. If all checks pass → accept output
+4. If any check fails → log failure, fallback to Generalist
+5. Track verification success rate (target: >95%)
+
+## Training Data Format for Delegation Layer
+
+For fine-tuning the Generalist's delegation capability:
+
+```jsonl
+{"messages": [
+  {"role": "system", "content": "You are a task delegation expert. Convert natural language tasks into canonical TRM format."},
+  {"role": "user", "content": "Task: Find shortest path from A to C. Graph: A-B (3), B-C (2), A-C (8)."},
+  {"role": "assistant", "content": "{\"task_id\":\"...\",\"task_type\":\"GRAPH\",\"input\":\"nodes:[A,B,C];edges:[A-B:3,B-C:2,A-C:8];source:A;dest:C\",\"constraints\":\"non-negative weights\",\"max_depth\":10,\"memo_key_hint\":\"dijkstra-A-C-3nodes\",\"expected_output_schema\":\"{\\\"path\\\":[\\\"A\\\",\\\"B\\\",\\\"C\\\"],\\\"distance\\\":5}\",\"local_checks\":[\"path[0]=='A'\",\"path[-1]=='C'\"],\"timeout_seconds\":5,\"resource_hint\":{\"mem_mb\":64,\"cpu_ms\":200}}"}
+]}
+```
+
+## Integration with Agency OS
+
+1. Router (binary classifier) decides: use_trm = 0/1, task_type
+2. If use_trm = 1:
+   - Generalist creates TRM task using this template
+   - TRM executor (Qwen3-Coder-13B Q4 + QLoRA adapter) processes task
+   - Verification layer checks local_checks
+   - If valid → return output; if invalid → fallback to Generalist
+3. If use_trm = 0:
+   - Generalist handles task directly
+
+## Success Metrics
+
+- **Router Accuracy**: >90% precision, >85% recall
+- **Delegation Quality**: >95% of TRM tasks pass schema validation
+- **Verification Pass Rate**: >95% of TRM outputs pass local_checks
+- **Memoization Hit Rate**: >50% for recursive subproblems
+- **Cost Savings**: 40-60% reduction in Generalist API calls
+- **Latency**: <1s for TRM tasks (local inference)

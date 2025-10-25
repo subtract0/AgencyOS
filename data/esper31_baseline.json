@@ -1,0 +1,167 @@
+[
+  {
+    "test_id": "algorithm_1",
+    "category": "algorithm",
+    "difficulty": "medium",
+    "prompt": "Find the shortest path from A to C in graph: A-B:3, B-C:2, A-C:8",
+    "response": "Thinking...\nThe user: \"Find the shortest path from A to C in graph: A-B:3, B-C:2, A-C:8\". We need to compute shortest path: between A and C. There are two possible paths: direct edge A-C weight 8; or ...",
+    "response_time": 15.155987977981567,
+    "contains_expected_keywords": 6,
+    "total_expected_keywords": 6,
+    "score": 1.0
+  },
+  {
+    "test_id": "algorithm_2",
+    "category": "algorithm",
+    "difficulty": "easy",
+    "prompt": "Detect if there's a cycle in this directed graph: A->B, B->C, C->A",
+    "response": "Thinking...\nWe need to detect if there's a cycle. The graph: A->B, B->C, C->A. That's a cycle of length 3. So yes, cycle exists. Provide explanation. Probably output \"Cycle detected\" or \"Yes\". The que...",
+    "response_time": 3.8168540000915527,
+    "contains_expected_keywords": 6,
+    "total_expected_keywords": 6,
+    "score": 1.0
+  },
+  {
+    "test_id": "algorithm_3",
+    "category": "algorithm",
+    "difficulty": "medium",
+    "prompt": "Perform topological sort on: A->B, A->C, B->D, C->D",
+    "response": "Thinking...\nWe need to do a topological sort on the directed graph with edges: A\u2192B, A\u2192C, B\u2192D, C\u2192D. The graph has vertices A, B, C, D. It's a DAG. The partial order: A before B and C; B before D; C bef...",
+    "response_time": 11.533805131912231,
+    "contains_expected_keywords": 6,
+    "total_expected_keywords": 6,
+    "score": 1.0
+  },
+  {
+    "test_id": "algorithm_4",
+    "category": "algorithm",
+    "difficulty": "hard",
+    "prompt": "Solve the knapsack problem: items [(5,10), (4,40), (6,30), (3,50)], capacity=10",
+    "response": "Thinking...\nWe need to solve knapsack problem: given items each with weight and value? Items list: (5,10) weight 5 value 10? Or maybe first is weight, second value. Usually tuple (weight, value). Item...",
+    "response_time": 15.008861064910889,
+    "contains_expected_keywords": 5,
+    "total_expected_keywords": 5,
+    "score": 1.0
+  },
+  {
+    "test_id": "algorithm_5",
+    "category": "algorithm",
+    "difficulty": "medium",
+    "prompt": "Check if binary tree is balanced: root=3, left=9, right=20(15,7)",
+    "response": "Thinking...\nThe user: \"Check if binary tree is balanced: root=3, left=9, right=20(15,7)\". They want to determine if the tree is balanced. The tree: root 3, left child 9 (no children?), right child 20 ...",
+    "response_time": 17.882855892181396,
+    "contains_expected_keywords": 5,
+    "total_expected_keywords": 5,
+    "score": 1.0
+  },
+  {
+    "test_id": "coding_6",
+    "category": "coding",
+    "difficulty": "easy",
+    "prompt": "Write a Python function to validate email addresses using regex",
+    "response": "Thinking...\nUser asks: \"Write a Python function to validate email addresses using regex\". They want code. Provide function with regex pattern, explanation. Should consider typical email validation. Pr...",
+    "response_time": 29.205804109573364,
+    "contains_expected_keywords": 5,
+    "total_expected_keywords": 5,
+    "score": 1.0
+  },
+  {
+    "test_id": "coding_7",
+    "category": "coding",
+    "difficulty": "medium",
+    "prompt": "Implement a simple LRU cache in Python",
+    "response": "Thinking...\nThe user requests \"Implement a simple LRU cache in Python\". We need to provide code that implements a simple LRU cache. It could be a class LRUCache with methods get and put, with capacity...",
+    "response_time": 23.483815908432007,
+    "contains_expected_keywords": 6,
+    "total_expected_keywords": 6,
+    "score": 1.0
+  },
+  {
+    "test_id": "coding_8",
+    "category": "coding",
+    "difficulty": "medium",
+    "prompt": "Create a decorator that times function execution",
+    "response": "Thinking...\nThe user says: \"Create a decorator that times function execution\". They likely want a Python decorator that measures execution time. Provide an example, maybe with optional printing or ret...",
+    "response_time": 23.43500280380249,
+    "contains_expected_keywords": 5,
+    "total_expected_keywords": 5,
+    "score": 1.0
+  },
+  {
+    "test_id": "coding_9",
+    "category": "coding",
+    "difficulty": "medium",
+    "prompt": "Write a context manager for database connections",
+    "response": "Thinking...\nWe need to write a context manager for database connections. The user didn't specify which database, but typical would be for Python using sqlite3 or a generic DB-API. We should show a con...",
+    "response_time": 50.06974983215332,
+    "contains_expected_keywords": 5,
+    "total_expected_keywords": 5,
+    "score": 1.0
+  },
+  {
+    "test_id": "coding_10",
+    "category": "coding",
+    "difficulty": "hard",
+    "prompt": "Implement async/await pattern for file reading",
+    "response": "Thinking...\nThe user: \"Implement async/await pattern for file reading\". They likely want code example, maybe in JavaScript/Node.js? But could be Python. They didn't specify language. But given async/a...",
+    "response_time": 46.4264919757843,
+    "contains_expected_keywords": 5,
+    "total_expected_keywords": 5,
+    "score": 1.0
+  },
+  {
+    "test_id": "devops_11",
+    "category": "devops",
+    "difficulty": "easy",
+    "prompt": "Write a Dockerfile for a Python FastAPI application",
+    "response": "Thinking...\nWe need to write a Dockerfile for a Python FastAPI app. The answer should be thorough, explain the Dockerfile content, mention base image, copy requirements, install, copy source, expose p...",
+    "response_time": 27.543872117996216,
+    "contains_expected_keywords": 6,
+    "total_expected_keywords": 6,
+    "score": 1.0
+  },
+  {
+    "test_id": "devops_12",
+    "category": "devops",
+    "difficulty": "medium",
+    "prompt": "Create a docker-compose.yml for app + postgres + redis",
+    "response": "Thinking...\nThe user wants a docker-compose.yml for app + postgres + redis. We need to provide a yaml file with services for the app, postgres, and redis. Should include networks, volumes for postgres...",
+    "response_time": 22.586641788482666,
+    "contains_expected_keywords": 5,
+    "total_expected_keywords": 5,
+    "score": 1.0
+  },
+  {
+    "test_id": "devops_13",
+    "category": "devops",
+    "difficulty": "medium",
+    "prompt": "Write a GitHub Actions workflow for pytest + coverage",
+    "response": "Thinking...\nThe user: \"Write a GitHub Actions workflow for pytest + coverage\". They want a GitHub Actions workflow that runs tests with pytest and coverage. Likely for a Python project. Provide YAML c...",
+    "response_time": 28.595961809158325,
+    "contains_expected_keywords": 5,
+    "total_expected_keywords": 5,
+    "score": 1.0
+  },
+  {
+    "test_id": "devops_14",
+    "category": "devops",
+    "difficulty": "hard",
+    "prompt": "Create a Kubernetes deployment for 3 replicas with health checks",
+    "response": "Thinking...\nThe user asks: \"Create a Kubernetes deployment for 3 replicas with health checks\". They want a Kubernetes deployment YAML file that has 3 replicas and includes health checks (liveness and ...",
+    "response_time": 15.010617971420288,
+    "contains_expected_keywords": 5,
+    "total_expected_keywords": 5,
+    "score": 1.0
+  },
+  {
+    "test_id": "devops_15",
+    "category": "devops",
+    "difficulty": "easy",
+    "prompt": "Write a bash script to monitor disk usage and send alerts",
+    "response": "Thinking...\nThe user asks: \"Write a bash script to monitor disk usage and send alerts\". They likely want a bash script that monitors disk usage (maybe for a set of directories or whole file system), a...",
+    "response_time": 59.622414112091064,
+    "contains_expected_keywords": 5,
+    "total_expected_keywords": 6,
+    "score": 0.8333333333333334
+  }
+]
