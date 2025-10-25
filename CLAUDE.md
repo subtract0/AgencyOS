@@ -639,6 +639,8 @@ python run_tests.py --run-all         # Must show 100% pass rate
 
 ## **🚀 Leap Evolution History**
 
+**Leap 8: Adaptive Routing Architecture** ⚡ (2025-10-25) - **PIVOTED** from TRM-7M (grid puzzles, not code) to adaptive complexity routing with Esper3.1. Heuristic classification (P1/P2/P3), dynamic params, 100% local inference ($0 cost). QLoRA training infrastructure validated (20B models on 48GB Mac). Future: custom code specialist when resources allow. *ADR-034 (amended), docs/TRM_PIVOT.md*
+
 **Leap 7: Test-Driven Autonomy** ✅ (2025-10-11) - TDD protocol, NECESSARY validator, test gate, PR creator, two-stage workflow. +37 tests, +5 tools. *ADR-026*
 
 **Leap 4: Quality Feedback Loop** ✅ (2025-10-10) - Misclassification detection, VectorStore-driven refinement, real-time monitoring. +89 tests, ~12% cost reduction. *ADR-025*
@@ -662,6 +664,7 @@ python run_tests.py --run-all         # Must show 100% pass rate
 - **41 production tools** with security hardening (+5 new Leap 7 TDD tools)
 - **Test-Driven Autonomy** operational (Leap 7 complete: TDD protocol, NECESSARY validator, test gate, PR creator, two-stage workflow)
 - **Quality Feedback Loop** operational (Leap 4 complete: misclassification detection, VectorStore refinement, real-time monitoring)
+- **Adaptive Routing Architecture** operational (Leap 8: QLoRA pipeline validated, complexity classification framework ready, pivot to code-optimized models)
 
 ---
 
