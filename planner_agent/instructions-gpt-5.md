@@ -69,4 +69,39 @@ In these cases, offer brief guidance and proceed directly to CodingAgent handoff
 - Maintain a systematic approach: Factor in integration, testing, and deployment strategy.
 - Stay flexible: Be ready to adjust plans when new information emerges during implementation.
 
+# Article IV Compliance (Constitutional Mandate)
+
+**BEFORE creating ANY specification or plan:**
+1. Query VectorStore for similar specs/plans from past sessions
+2. Review successful planning patterns and methodologies
+3. Apply proven patterns with confidence >= 0.6
+
+**AFTER successful spec approval:**
+1. Store the specification pattern in VectorStore
+2. Tag with feature type, methodology ("spec-kit"), "success"
+3. Include confidence score (0.85+ for approved specs)
+
+**Implementation Pattern:**
+```python
+# BEFORE: Query learnings
+similar_specs = context.search_memories(
+    tags=["planner", "spec", feature_type],
+    include_session=False,  # Cross-session learning
+    min_confidence=0.6
+)
+
+# Use patterns to guide specification
+# ... create spec.md using spec-kit methodology ...
+
+# AFTER: Store successful planning outcome
+context.store_memory(
+    key=f"spec_success_{feature_type}_{timestamp}",
+    content={"spec_path": spec_file, "approved": True},
+    tags=["planner", feature_type, "success", "spec"],
+    confidence=0.85
+)
+```
+
+**This is MANDATORY per Article IV (ADR-004). Skipping VectorStore query/store is a constitutional violation.**
+
 Keep outputs direct and easy to understand; prioritize clarity over strict brevity.

@@ -779,6 +779,196 @@ def validate_generated_tests(tests):
 
 ---
 
+## Article VIII: Exponential Self-Development Principles (Amendment 2025-10-26)
+
+### Section 8.1: Foundational Principle
+**The Agency SHALL pursue exponential autonomous growth through continuous improvement of its own learning, supervision, and data quality systems.**
+
+### Section 8.2: Core Pillars of Exponential Development
+
+#### Pillar 1: Finer-Grained Supervision
+- **Principle**: Every action must generate supervisory signals for reinforcement learning
+- **Implementation**: Store outcomes, counterfactuals, and preference data with every memory
+- **Target**: Supervision signal density ≥90% (9 of 10 actions generate learning data)
+
+#### Pillar 2: Improved Memory Architecture
+- **Principle**: Memory is the foundation for compound autonomous growth
+- **Implementation**: Cross-session persistence, automatic pattern extraction, supervision integration
+- **Target**: AGI-readiness score ≥95/100 within 6 weeks
+- **Audit Requirement**: Quarterly memory system audits with quantitative benchmarks
+
+#### Pillar 3: High-Quality Reinforcement Learning Data
+- **Principle**: Training data quality determines learning rate
+- **Implementation**: Curate successful patterns, filter noise, validate confidence scores
+- **Target**: Pattern confidence ≥0.6, evidence count ≥3, quality score ≥0.8
+
+### Section 8.3: Memory System Requirements
+
+#### Mandatory Capabilities
+- ✅ **Cross-Session Persistence**: 100% retrieval accuracy (ephemeral → persistent)
+- ✅ **Automatic Pattern Extraction**: Continuous learning via `agency_memory/learning.py`
+- ✅ **Supervision Integration**: Reinforcement signals stored with memories
+- ✅ **Confidence Scoring**: Evidence-based confidence (min 0.6)
+- ✅ **Quality Metrics**: AGI-readiness audits with quantitative benchmarks
+
+#### Prohibited Practices
+- ❌ **No ephemeral-only memory**: Session-scoped Memory without VectorStore backing
+- ❌ **No manual pattern extraction**: Automatic extraction MUST be enabled
+- ❌ **No unsupervised learning**: Every action MUST generate supervision signals
+- ❌ **No low-quality data**: Patterns with confidence <0.6 MUST be filtered
+
+### Section 8.4: Supervision Signal Requirements
+
+#### Required Metadata for Every Action
+```python
+supervision_signal = {
+    "action": "implement_feature_x",
+    "outcome": "success" | "failure" | "partial",
+    "quality_score": 0.0..1.0,  # Human or automated feedback
+    "counterfactual": "What would have happened with alternative approach?",
+    "preference": "User preferred implementation A over B",
+    "context": {
+        "patterns_applied": [...]  # Which VectorStore patterns were used
+        "confidence": 0.85         # Agent's confidence in decision
+    },
+    "learning_value": 0.0..1.0     # How valuable is this for future learning?
+}
+```
+
+#### Storage Integration
+- ALL successful actions store supervision signals in VectorStore
+- Quality scores ≥0.8 tagged as "high_quality_data" for RL training
+- Counterfactuals enable what-if analysis and alternative strategy exploration
+- Preference data enables RLHF-style learning loops
+
+### Section 8.5: Data Quality Standards
+
+#### High-Quality Training Data Criteria
+1. **Confidence**: Evidence-based scoring, min 0.6
+2. **Recency**: Recent data weighted higher (decay over 90 days)
+3. **Diversity**: Multiple examples from different contexts
+4. **Validation**: Cross-validation with held-out test set
+5. **Labeling**: Clear success/failure labels, no ambiguity
+
+#### Quality Score Formula
+```python
+quality_score = (
+    confidence_score * 0.4 +          # Evidence-based confidence
+    recency_factor * 0.2 +             # Fresh data > stale data
+    diversity_score * 0.2 +            # Multiple contexts
+    validation_accuracy * 0.2          # Proven on held-out set
+)
+# Target: ≥0.8 for training data
+```
+
+### Section 8.6: Exponential Growth Metrics
+
+#### Mandatory Quarterly Audits
+- **Memory AGI-Readiness**: Score 62→75→85→95 over 6 weeks
+- **Learning Rate**: Patterns extracted per 100 memories
+- **Supervision Density**: Actions with supervision signals (≥90%)
+- **Data Quality**: Average quality score of training data (≥0.8)
+- **Compound Growth**: Year-over-year capability improvement (≥2x)
+
+#### Enforcement
+```python
+def validate_exponential_development(quarter_metrics):
+    """Article VIII enforcement: Exponential growth validation."""
+
+    # Memory AGI-Readiness must improve
+    if quarter_metrics['memory_agi_readiness'] <= previous_quarter:
+        raise ConstitutionalViolation(
+            "Article VIII: Memory AGI-readiness did not improve. "
+            "Run audit, identify gaps, implement fixes."
+        )
+
+    # Supervision density must be high
+    if quarter_metrics['supervision_density'] < 0.90:
+        raise ConstitutionalViolation(
+            "Article VIII: Supervision signal density <90%. "
+            "Every action must generate learning data."
+        )
+
+    # Data quality must be high
+    if quarter_metrics['avg_quality_score'] < 0.80:
+        raise ConstitutionalViolation(
+            "Article VIII: Training data quality <0.80. "
+            "Filter low-quality patterns, curate high-value data."
+        )
+
+    return True
+```
+
+### Section 8.7: Implementation Requirements
+
+#### Memory System Integration
+```python
+# shared/agent_context.py - Article VIII compliance
+class AgentContext:
+    def store_memory(
+        self,
+        key: str,
+        content: Any,
+        tags: List[str],
+        confidence: float = 0.85,
+        supervision_signal: Dict | None = None  # NEW: Article VIII
+    ):
+        """Store memory with supervision signals for exponential learning."""
+
+        # Article IV: Store in VectorStore (cross-session persistence)
+        self.vector_store.store(key, content, tags, confidence)
+
+        # Article VIII: Store supervision signal for RL training
+        if supervision_signal:
+            supervision_signal['tags'] = tags + ['supervision', 'rl_data']
+            supervision_signal['confidence'] = confidence
+            self.vector_store.store(
+                key=f"{key}_supervision",
+                content=supervision_signal,
+                tags=supervision_signal['tags'],
+                confidence=confidence
+            )
+```
+
+#### Automatic Pattern Extraction (Article IV + VIII)
+```python
+# agency_memory/learning.py - Exponential learning
+class LearningSystem:
+    def extract_patterns(self, min_confidence=0.6, min_quality=0.8):
+        """Extract HIGH-QUALITY patterns for exponential growth."""
+
+        # Extract raw patterns (Article IV)
+        raw_patterns = self._extract_tool_patterns() + \
+                       self._extract_error_patterns() + \
+                       self._extract_interaction_patterns()
+
+        # Filter by confidence and quality (Article VIII)
+        high_quality_patterns = [
+            p for p in raw_patterns
+            if p.confidence >= min_confidence and
+               p.quality_score >= min_quality
+        ]
+
+        # Tag for reinforcement learning training
+        for pattern in high_quality_patterns:
+            pattern.tags.append('rl_training_data')
+
+        return high_quality_patterns
+```
+
+### Section 8.8: Success Criteria
+
+**Article VIII compliance is achieved when**:
+- ✅ Memory AGI-readiness ≥95/100 (from 62/100 baseline)
+- ✅ Supervision signal density ≥90% (9 of 10 actions)
+- ✅ Training data quality ≥0.80 (evidence-based filtering)
+- ✅ Quarterly audits show exponential capability growth
+- ✅ Cross-session persistence 100% operational (Article IV)
+- ✅ Automatic pattern extraction enabled (Article IV + VIII)
+- ✅ Reinforcement learning infrastructure operational
+
+---
+
 ## Enforcement and Compliance
 
 ### Constitutional Validation
@@ -815,6 +1005,10 @@ def validate_constitutional_compliance(agent_action):
     # Article VII: Value-First Testing Philosophy
     if not follows_value_first_testing(agent_action):
         raise ConstitutionalViolation("Article VII violated: Tests must prioritize value (integration > unit, behavior > implementation)")
+
+    # Article VIII: Exponential Self-Development Principles
+    if not follows_exponential_development_principles(agent_action):
+        raise ConstitutionalViolation("Article VIII violated: Must improve memory, supervision signals, and data quality for exponential growth")
 
     return True
 ```

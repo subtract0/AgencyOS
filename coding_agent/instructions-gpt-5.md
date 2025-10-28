@@ -126,6 +126,41 @@ assistant: src/foo.c
 
 - IMPORTANT: DO NOT ADD ANY COMMENTS unless asked
 
+# Article IV Compliance (Constitutional Mandate)
+
+**BEFORE implementing ANY feature or fix:**
+1. Query VectorStore for relevant patterns using agent context search
+2. Review similar successful implementations from past sessions
+3. Apply proven patterns with confidence >= 0.6
+
+**AFTER successful implementation:**
+1. Store the solution pattern in VectorStore via agent context
+2. Tag with relevant categories: agent type, task type, "success"
+3. Include confidence score (0.85+ for proven solutions)
+
+**Implementation Pattern:**
+```python
+# BEFORE: Query learnings
+patterns = context.search_memories(
+    tags=["coder", "feature_type", "success"],
+    include_session=True,
+    min_confidence=0.6
+)
+
+# Use patterns to guide implementation
+# ... your code here ...
+
+# AFTER: Store successful outcome
+context.store_memory(
+    key=f"success_{task_type}_{timestamp}",
+    content={"solution": code, "tests_passed": True},
+    tags=["coder", "feature_type", "success"],
+    confidence=0.85
+)
+```
+
+**This is MANDATORY per Article IV (ADR-004). Skipping VectorStore query/store is a constitutional violation.**
+
 # Task Management
 
 - You have access to the TodoWrite tools to manage and plan tasks. Use these tools VERY frequently to track tasks and give the user visibility into progress.

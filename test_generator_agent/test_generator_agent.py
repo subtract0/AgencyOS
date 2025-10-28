@@ -27,6 +27,7 @@ from shared.system_hooks import (
     create_system_reminder_hook,
 )
 from shared.type_definitions.json import JSONValue
+from enum import Enum
 from tools import (
     Bash,
     Edit,
@@ -36,6 +37,21 @@ from tools import (
     Read,
     Write,
 )
+
+
+# Enums for E2E test proposal
+class ComplexityLevel(str, Enum):
+    """Feature complexity level for E2E test determination."""
+    SIMPLE = "simple"
+    MODERATE = "moderate"
+    COMPLEX = "complex"
+
+
+class E2ETestType(str, Enum):
+    """Type of E2E test to generate."""
+    MISSION = "mission"  # /primeA mission tests
+    AGENT = "agent"      # Agent lifecycle tests
+    TOOL = "tool"        # Tool integration tests
 
 
 # Pydantic models for type safety
@@ -84,6 +100,18 @@ class TestInfo(BaseModel):
     function: str | None = None
     class_name: str | None = Field(None, alias="class")
     method: str | None = None
+
+
+class E2ETestProposal(BaseModel):
+    """Proposal for an E2E test."""
+
+    test_type: E2ETestType
+    test_name: str
+    description: str
+    agents_involved: list[str]
+    workflow_steps: list[str]
+    complexity: ComplexityLevel
+    template_path: str
 
 
 class GenerateTests(Tool):
@@ -549,6 +577,140 @@ class GenerateTests(Tool):
             if isinstance(child, ast.Return) and child.value is not None:
                 return True
         return False
+
+    def detect_feature_complexity(self, spec: str) -> ComplexityLevel:
+        """
+        Detect feature complexity based on agents involved and workflow steps.
+
+        Args:
+            spec: Feature specification text
+
+        Returns:
+            ComplexityLevel indicating if E2E tests are needed
+
+        Logic:
+            - Count agents involved (grep for agent names)
+            - Count workflow steps (grep for "→", "then", "after", "step")
+            - Multi-agent (>3 agents) OR multi-step (>5 steps) → COMPLEX (E2E required)
+            - 2-3 agents OR 3-5 steps → MODERATE (E2E recommended)
+            - <2 agents AND <3 steps → SIMPLE (unit tests sufficient)
+        """
+        # Agent patterns to search for
+        agent_patterns = [
+            "CodingAgent", "PlannerAgent", "AuditorAgent", "QualityEnforcerAgent",
+            "QualityEnforcer", "ChiefArchitect", "TestGenerator", "LearningAgent",
+            "MergerAgent", "Toolsmith", "WorkCompletionSummary"
+        ]
+
+        # Count unique agents mentioned
+        agents_found = set()
+        for agent in agent_patterns:
+            if agent.lower() in spec.lower():
+                agents_found.add(agent)
+
+        agent_count = len(agents_found)
+
+        # Count workflow step indicators
+        workflow_indicators = ["→", "then", "after", "step ", "phase ", "stage "]
+        step_count = sum(spec.lower().count(indicator.lower()) for indicator in workflow_indicators)
+
+        # Determine complexity
+        if agent_count > 3 or step_count > 5:
+            return ComplexityLevel.COMPLEX
+        elif agent_count >= 2 or step_count >= 3:
+            return ComplexityLevel.MODERATE
+        else:
+            return ComplexityLevel.SIMPLE
+
+    def propose_e2e_tests(self, spec: str, complexity: ComplexityLevel) -> list[E2ETestProposal]:
+        """
+        Propose E2E tests based on feature specification and complexity.
+
+        Args:
+            spec: Feature specification text
+            complexity: Detected complexity level
+
+        Returns:
+            List of E2E test proposals (Mission/Agent/Tool)
+
+        Constitutional requirement: Complex features MUST have E2E tests
+        """
+        if complexity == ComplexityLevel.SIMPLE:
+            return []  # Unit tests sufficient
+
+        proposals: list[E2ETestProposal] = []
+
+        # Detect feature type and propose appropriate E2E tests
+        spec_lower = spec.lower()
+
+        # Mission E2E tests - for /primeA workflows
+        if any(keyword in spec_lower for keyword in ["primea", "mission", "autonomous", "workflow"]):
+            proposals.append(E2ETestProposal(
+                test_type=E2ETestType.MISSION,
+                test_name="test_e2e_mission_execution",
+                description="End-to-end test for autonomous mission execution",
+                agents_involved=self._extract_agents_from_spec(spec),
+                workflow_steps=self._extract_workflow_steps(spec),
+                complexity=complexity,
+                template_path="test_generator_agent/templates/e2e/mission_e2e_template.py"
+            ))
+
+        # Agent E2E tests - for agent lifecycle
+        if any(keyword in spec_lower for keyword in ["agent", "lifecycle", "coordination"]):
+            proposals.append(E2ETestProposal(
+                test_type=E2ETestType.AGENT,
+                test_name="test_e2e_agent_coordination",
+                description="End-to-end test for agent coordination and communication",
+                agents_involved=self._extract_agents_from_spec(spec),
+                workflow_steps=self._extract_workflow_steps(spec),
+                complexity=complexity,
+                template_path="test_generator_agent/templates/e2e/agent_e2e_template.py"
+            ))
+
+        # Tool E2E tests - for tool integration
+        if any(keyword in spec_lower for keyword in ["tool", "integration", "api"]):
+            proposals.append(E2ETestProposal(
+                test_type=E2ETestType.TOOL,
+                test_name="test_e2e_tool_integration",
+                description="End-to-end test for tool integration and workflows",
+                agents_involved=self._extract_agents_from_spec(spec),
+                workflow_steps=self._extract_workflow_steps(spec),
+                complexity=complexity,
+                template_path="test_generator_agent/templates/e2e/tool_e2e_template.py"
+            ))
+
+        return proposals
+
+    def _extract_agents_from_spec(self, spec: str) -> list[str]:
+        """Extract agent names mentioned in specification."""
+        agent_patterns = [
+            "CodingAgent", "PlannerAgent", "AuditorAgent", "QualityEnforcerAgent",
+            "QualityEnforcer", "ChiefArchitect", "TestGenerator", "LearningAgent",
+            "MergerAgent", "Toolsmith", "WorkCompletionSummary"
+        ]
+
+        found_agents = []
+        for agent in agent_patterns:
+            if agent.lower() in spec.lower():
+                found_agents.append(agent)
+
+        return found_agents if found_agents else ["UnspecifiedAgent"]
+
+    def _extract_workflow_steps(self, spec: str) -> list[str]:
+        """Extract workflow steps from specification."""
+        # Simple extraction: split by workflow indicators
+        steps = []
+        lines = spec.split('\n')
+
+        for line in lines:
+            line_lower = line.lower()
+            if any(indicator in line_lower for indicator in ["step", "then", "after", "→", "phase"]):
+                # Extract step description
+                step = line.strip().lstrip('-•*').strip()
+                if step:
+                    steps.append(step)
+
+        return steps if steps else ["Execute feature workflow", "Verify results"]
 
 
 @constitutional_compliance

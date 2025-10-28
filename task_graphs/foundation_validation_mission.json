@@ -1,0 +1,473 @@
+{
+  "mission_id": "foundation_validation_mission",
+  "version": "2.0",
+  "description": "Foundation Validation Mission - Prove 7 core capabilities exist with 100% test coverage (no aspirational claims)",
+  "estimated_cost_usd": 9.0,
+  "estimated_tokens": 28000,
+  "constitutional_requirements": {
+    "article_i": "Complete validation - all 7 claims verified end-to-end",
+    "article_ii": "100% test pass rate - no skipped tests, no failures",
+    "article_iv": "VectorStore integration - query before planning, store after validation",
+    "article_v": "Spec-driven - each claim is acceptance criterion",
+    "article_vi": "TDD workflow - tests BEFORE code for each claim"
+  },
+  "phases": {
+    "phase_1_learning_infrastructure": {
+      "name": "Phase 1: Learning Infrastructure (Force Multiplier)",
+      "description": "Validate VectorStore pattern extraction, self-reflective learning, cross-session memory",
+      "dependencies": [],
+      "exponential_impact": "Patterns stored in Phase 1 accelerate Phases 2-3 validation",
+      "tasks": [
+        {
+          "id": "claim_1_spec",
+          "type": "Spec",
+          "subagent_type": "planner",
+          "description": "Define validation approach for VectorStore pattern extraction (claim 1)",
+          "prompt": "Create validation spec for claim 1: VectorStore pattern extraction from agency_memory/enhanced_memory_store.py. Acceptance criteria: 50+ patterns stored with confidence ≥0.6, patterns retrievable with tag search, confidence calculation validated. Define test scenarios: store pattern with confidence, retrieve by tags, verify confidence scoring formula.",
+          "dependencies": [],
+          "acceptance_criteria": [
+            "Spec defines test approach for pattern storage validation",
+            "Acceptance criteria match claim 1 benchmark (50+ patterns, avg confidence ≥0.6)",
+            "Test scenarios cover NECESSARY categories (Normal, Edge, Security, etc.)"
+          ],
+          "estimated_tokens": 800,
+          "tier": "P2"
+        },
+        {
+          "id": "claim_1_test",
+          "type": "Test",
+          "subagent_type": "test-generator",
+          "description": "Write NECESSARY pattern tests for VectorStore pattern extraction (claim 1)",
+          "prompt": "Generate tests for claim 1 validation (VectorStore pattern extraction). Test file: tests/foundation_validation/test_vectorstore_pattern_extraction.py. NECESSARY categories: test_normal_pattern_storage (basic store/retrieve), test_edge_empty_patterns (no patterns stored), test_security_pattern_confidence (validate confidence ≥0.6 filter), test_essential_tag_search (tag-based retrieval). Tests MUST fail initially (no validation code yet).",
+          "dependencies": ["claim_1_spec"],
+          "verification_target": "tests/foundation_validation/test_vectorstore_pattern_extraction.py",
+          "acceptance_criteria": [
+            "Tests written following NECESSARY pattern",
+            "Tests fail initially (RED phase - no implementation)",
+            "Coverage includes Normal, Edge, Security, Essential categories",
+            "Assertions verify 50+ patterns, confidence ≥0.6, tag search works"
+          ],
+          "estimated_tokens": 1200,
+          "tier": "P2"
+        },
+        {
+          "id": "claim_1_code",
+          "type": "Code",
+          "subagent_type": "coder",
+          "description": "Implement validation logic for VectorStore pattern extraction (claim 1)",
+          "prompt": "Implement claim 1 validation: VectorStore pattern extraction benchmark. Create foundation_validation/validate_vectorstore_patterns.py. Logic: (1) Store 50+ patterns to VectorStore with confidence scores, (2) Retrieve patterns by tags, (3) Verify avg confidence ≥0.6, (4) Return Result[ValidationReport, str]. Iterate until tests pass (GREEN phase).",
+          "dependencies": ["claim_1_test"],
+          "acceptance_criteria": [
+            "Validation code passes all tests (100% pass rate)",
+            "Benchmark achieves 50+ patterns stored",
+            "Average confidence ≥0.6 verified",
+            "Result pattern used for error handling"
+          ],
+          "estimated_tokens": 1500,
+          "tier": "P2"
+        },
+        {
+          "id": "claim_2_spec",
+          "type": "Spec",
+          "subagent_type": "planner",
+          "description": "Define validation approach for self-reflective learning (claim 2)",
+          "prompt": "Create validation spec for claim 2: Self-reflective learning via shared/agent_context.py store_memory/search_memories. Acceptance criteria: 80%+ agent actions query VectorStore first, agents store patterns after success, tag-based search works. Define test scenarios: agent queries before action, agent stores after success, search by tags retrieves relevant patterns.",
+          "dependencies": [],
+          "acceptance_criteria": [
+            "Spec defines test approach for learning workflow validation",
+            "Acceptance criteria match claim 2 benchmark (80%+ query rate)",
+            "Test scenarios cover agent workflow (query → action → store)"
+          ],
+          "estimated_tokens": 800,
+          "tier": "P2"
+        },
+        {
+          "id": "claim_2_test",
+          "type": "Test",
+          "subagent_type": "test-generator",
+          "description": "Write NECESSARY pattern tests for self-reflective learning (claim 2)",
+          "prompt": "Generate tests for claim 2 validation (self-reflective learning). Test file: tests/foundation_validation/test_self_reflective_learning.py. NECESSARY categories: test_normal_query_before_action (agent queries VectorStore before action), test_normal_store_after_success (agent stores pattern after success), test_edge_no_patterns (agent proceeds when no patterns found), test_essential_tag_search (search_memories retrieves by tags). Tests MUST fail initially.",
+          "dependencies": ["claim_2_spec"],
+          "verification_target": "tests/foundation_validation/test_self_reflective_learning.py",
+          "acceptance_criteria": [
+            "Tests written following NECESSARY pattern",
+            "Tests fail initially (RED phase)",
+            "Coverage includes Normal, Edge, Essential categories",
+            "Assertions verify 80%+ query rate, store after success, tag search"
+          ],
+          "estimated_tokens": 1200,
+          "tier": "P2"
+        },
+        {
+          "id": "claim_2_code",
+          "type": "Code",
+          "subagent_type": "coder",
+          "description": "Implement validation logic for self-reflective learning (claim 2)",
+          "prompt": "Implement claim 2 validation: Self-reflective learning benchmark. Create foundation_validation/validate_self_reflective_learning.py. Logic: (1) Simulate agent workflow (query → action → store), (2) Track query rate across 100 actions, (3) Verify ≥80% query rate, (4) Verify patterns stored after success, (5) Return Result[ValidationReport, str]. Iterate until tests pass.",
+          "dependencies": ["claim_2_test"],
+          "acceptance_criteria": [
+            "Validation code passes all tests (100% pass rate)",
+            "Benchmark achieves ≥80% query rate",
+            "Store after success verified",
+            "Result pattern used for error handling"
+          ],
+          "estimated_tokens": 1500,
+          "tier": "P2"
+        },
+        {
+          "id": "claim_3_spec",
+          "type": "Spec",
+          "subagent_type": "planner",
+          "description": "Define validation approach for cross-session institutional memory (claim 3)",
+          "prompt": "Create validation spec for claim 3: Cross-session institutional memory (VectorStore persistence). Acceptance criteria: Pattern from session N retrieved in session N+1, 90%+ retrieval accuracy, VectorStore persists across sessions. Define test scenarios: store pattern in session 1, retrieve in session 2, verify persistence.",
+          "dependencies": [],
+          "acceptance_criteria": [
+            "Spec defines test approach for cross-session persistence validation",
+            "Acceptance criteria match claim 3 benchmark (90%+ retrieval)",
+            "Test scenarios cover multi-session workflow"
+          ],
+          "estimated_tokens": 800,
+          "tier": "P2"
+        },
+        {
+          "id": "claim_3_test",
+          "type": "Test",
+          "subagent_type": "test-generator",
+          "description": "Write NECESSARY pattern tests for cross-session memory (claim 3)",
+          "prompt": "Generate tests for claim 3 validation (cross-session memory). Test file: tests/foundation_validation/test_cross_session_memory.py. NECESSARY categories: test_normal_cross_session_retrieval (store in session 1, retrieve in session 2), test_edge_session_isolation (session-specific tags work), test_essential_persistence (VectorStore survives session restart), test_security_session_access (no unauthorized access). Tests MUST fail initially.",
+          "dependencies": ["claim_3_spec"],
+          "verification_target": "tests/foundation_validation/test_cross_session_memory.py",
+          "acceptance_criteria": [
+            "Tests written following NECESSARY pattern",
+            "Tests fail initially (RED phase)",
+            "Coverage includes Normal, Edge, Essential, Security categories",
+            "Assertions verify 90%+ retrieval accuracy across sessions"
+          ],
+          "estimated_tokens": 1200,
+          "tier": "P2"
+        },
+        {
+          "id": "claim_3_code",
+          "type": "Code",
+          "subagent_type": "coder",
+          "description": "Implement validation logic for cross-session memory (claim 3)",
+          "prompt": "Implement claim 3 validation: Cross-session memory benchmark. Create foundation_validation/validate_cross_session_memory.py. Logic: (1) Create session 1, store 20 patterns, (2) Create session 2, retrieve patterns by tags, (3) Verify 90%+ retrieval accuracy, (4) Test persistence across VectorStore restart, (5) Return Result[ValidationReport, str]. Iterate until tests pass.",
+          "dependencies": ["claim_3_test"],
+          "acceptance_criteria": [
+            "Validation code passes all tests (100% pass rate)",
+            "Benchmark achieves 90%+ retrieval accuracy",
+            "Cross-session persistence verified",
+            "Result pattern used for error handling"
+          ],
+          "estimated_tokens": 1500,
+          "tier": "P2"
+        }
+      ]
+    },
+    "phase_2_quality_enforcement": {
+      "name": "Phase 2: Quality Enforcement (Risk Reducer)",
+      "description": "Validate constitutional governance and test-driven autonomy",
+      "dependencies": ["phase_1_learning_infrastructure"],
+      "exponential_impact": "Uses Phase 1 patterns for faster validation, stores quality patterns for Phase 3",
+      "tasks": [
+        {
+          "id": "claim_4_spec",
+          "type": "Spec",
+          "subagent_type": "planner",
+          "description": "Define validation approach for constitutional governance (claim 4)",
+          "prompt": "Create validation spec for claim 4: Constitutional governance (constitution.md + .git/hooks/pre-commit). Acceptance criteria: Pre-commit blocks violations, Article IV mandatory, 0 constitutional violations merged in last 30 days. Define test scenarios: pre-commit hook blocks failing tests, Article IV enforcement (VectorStore query required), constitutional compliance checks.",
+          "dependencies": ["claim_3_code"],
+          "acceptance_criteria": [
+            "Spec defines test approach for constitutional governance validation",
+            "Acceptance criteria match claim 4 benchmark (0 violations merged)",
+            "Test scenarios cover pre-commit enforcement and Article IV"
+          ],
+          "estimated_tokens": 800,
+          "tier": "P2"
+        },
+        {
+          "id": "claim_4_test",
+          "type": "Test",
+          "subagent_type": "test-generator",
+          "description": "Write NECESSARY pattern tests for constitutional governance (claim 4)",
+          "prompt": "Generate tests for claim 4 validation (constitutional governance). Test file: tests/foundation_validation/test_constitutional_governance.py. NECESSARY categories: test_normal_precommit_enforcement (pre-commit blocks failing tests), test_edge_bypass_attempt (no manual override allowed), test_security_article_iv_mandatory (VectorStore integration required), test_essential_zero_violations (validate 0 violations in git log). Tests MUST fail initially.",
+          "dependencies": ["claim_4_spec"],
+          "verification_target": "tests/foundation_validation/test_constitutional_governance.py",
+          "acceptance_criteria": [
+            "Tests written following NECESSARY pattern",
+            "Tests fail initially (RED phase)",
+            "Coverage includes Normal, Edge, Security, Essential categories",
+            "Assertions verify pre-commit blocks, Article IV enforced, 0 violations"
+          ],
+          "estimated_tokens": 1200,
+          "tier": "P2"
+        },
+        {
+          "id": "claim_4_code",
+          "type": "Code",
+          "subagent_type": "coder",
+          "description": "Implement validation logic for constitutional governance (claim 4)",
+          "prompt": "Implement claim 4 validation: Constitutional governance benchmark. Create foundation_validation/validate_constitutional_governance.py. Logic: (1) Verify .git/hooks/pre-commit exists and blocks violations, (2) Validate Article IV enforcement (USE_ENHANCED_MEMORY=true), (3) Scan git log for constitutional violations (last 30 days), (4) Return Result[ValidationReport, str]. Iterate until tests pass.",
+          "dependencies": ["claim_4_test"],
+          "acceptance_criteria": [
+            "Validation code passes all tests (100% pass rate)",
+            "Pre-commit hook enforcement verified",
+            "Article IV mandatory check passes",
+            "0 violations in git log verified"
+          ],
+          "estimated_tokens": 1500,
+          "tier": "P2"
+        },
+        {
+          "id": "claim_5_spec",
+          "type": "Spec",
+          "subagent_type": "planner",
+          "description": "Define validation approach for test-driven autonomy (claim 5)",
+          "prompt": "Create validation spec for claim 5: Test-driven autonomy (TDD in constitution, test generators exist). Acceptance criteria: Tests written before code (git commit order), 100% of last 50 code commits follow test-first, RED-GREEN-REFACTOR cycle validated. Define test scenarios: verify test commits before code commits, validate TDD workflow in git history.",
+          "dependencies": ["claim_4_code"],
+          "acceptance_criteria": [
+            "Spec defines test approach for TDD workflow validation",
+            "Acceptance criteria match claim 5 benchmark (100% test-first)",
+            "Test scenarios cover git commit order validation"
+          ],
+          "estimated_tokens": 800,
+          "tier": "P2"
+        },
+        {
+          "id": "claim_5_test",
+          "type": "Test",
+          "subagent_type": "test-generator",
+          "description": "Write NECESSARY pattern tests for test-driven autonomy (claim 5)",
+          "prompt": "Generate tests for claim 5 validation (test-driven autonomy). Test file: tests/foundation_validation/test_tdd_autonomy.py. NECESSARY categories: test_normal_test_first_workflow (tests committed before code), test_edge_no_code_commits (only test commits allowed first), test_essential_red_green_cycle (validate RED-GREEN-REFACTOR), test_essential_git_history (100% of last 50 commits follow TDD). Tests MUST fail initially.",
+          "dependencies": ["claim_5_spec"],
+          "verification_target": "tests/foundation_validation/test_tdd_autonomy.py",
+          "acceptance_criteria": [
+            "Tests written following NECESSARY pattern",
+            "Tests fail initially (RED phase)",
+            "Coverage includes Normal, Edge, Essential categories",
+            "Assertions verify test-first workflow in git history"
+          ],
+          "estimated_tokens": 1200,
+          "tier": "P2"
+        },
+        {
+          "id": "claim_5_code",
+          "type": "Code",
+          "subagent_type": "coder",
+          "description": "Implement validation logic for test-driven autonomy (claim 5)",
+          "prompt": "Implement claim 5 validation: Test-driven autonomy benchmark. Create foundation_validation/validate_tdd_autonomy.py. Logic: (1) Parse git log (last 50 commits), (2) Identify test file commits vs code file commits, (3) Verify test commits precede code commits, (4) Calculate TDD compliance rate (target: 100%), (5) Return Result[ValidationReport, str]. Iterate until tests pass.",
+          "dependencies": ["claim_5_test"],
+          "acceptance_criteria": [
+            "Validation code passes all tests (100% pass rate)",
+            "Git commit order analysis works",
+            "100% TDD compliance verified",
+            "Result pattern used for error handling"
+          ],
+          "estimated_tokens": 1500,
+          "tier": "P2"
+        }
+      ]
+    },
+    "phase_3_meta_cognitive_capability": {
+      "name": "Phase 3: Meta-Cognitive Capability (Intelligence Amplifier)",
+      "description": "Validate meta-cognitive reasoning and autonomous completion validation",
+      "dependencies": ["phase_2_quality_enforcement"],
+      "exponential_impact": "Uses Phase 1-2 patterns for meta-reasoning, validates full autonomous loop",
+      "tasks": [
+        {
+          "id": "claim_6_spec",
+          "type": "Spec",
+          "subagent_type": "planner",
+          "description": "Define validation approach for meta-cognitive reasoning (claim 6)",
+          "prompt": "Create validation spec for claim 6: Meta-cognitive reasoning (/primeA command with reasoning traces). Acceptance criteria: 100% of /primeA executions include meta-reasoning, reasoning traces detectable in logs, decision justification validated. Define test scenarios: run /primeA with simple task, verify reasoning trace in output, validate meta-cognitive analysis.",
+          "dependencies": ["claim_5_code"],
+          "acceptance_criteria": [
+            "Spec defines test approach for meta-cognitive reasoning validation",
+            "Acceptance criteria match claim 6 benchmark (100% executions include reasoning)",
+            "Test scenarios cover /primeA execution and trace detection"
+          ],
+          "estimated_tokens": 800,
+          "tier": "P2"
+        },
+        {
+          "id": "claim_6_test",
+          "type": "Test",
+          "subagent_type": "test-generator",
+          "description": "Write NECESSARY pattern tests for meta-cognitive reasoning (claim 6)",
+          "prompt": "Generate tests for claim 6 validation (meta-cognitive reasoning). Test file: tests/foundation_validation/test_meta_cognitive_reasoning.py. NECESSARY categories: test_normal_primea_reasoning (verify reasoning trace in /primeA output), test_edge_no_reasoning (detect missing meta-reasoning), test_essential_decision_justification (validate decision rationale), test_essential_100_percent_coverage (100% of executions include reasoning). Tests MUST fail initially.",
+          "dependencies": ["claim_6_spec"],
+          "verification_target": "tests/foundation_validation/test_meta_cognitive_reasoning.py",
+          "acceptance_criteria": [
+            "Tests written following NECESSARY pattern",
+            "Tests fail initially (RED phase)",
+            "Coverage includes Normal, Edge, Essential categories",
+            "Assertions verify reasoning trace detection and 100% coverage"
+          ],
+          "estimated_tokens": 1200,
+          "tier": "P2"
+        },
+        {
+          "id": "claim_6_code",
+          "type": "Code",
+          "subagent_type": "coder",
+          "description": "Implement validation logic for meta-cognitive reasoning (claim 6)",
+          "prompt": "Implement claim 6 validation: Meta-cognitive reasoning benchmark. Create foundation_validation/validate_meta_cognitive_reasoning.py. Logic: (1) Execute /primeA with test mission (e.g., 'Add hello world function'), (2) Capture output and logs, (3) Parse for reasoning traces (keywords: 'rationale', 'justification', 'meta-reasoning'), (4) Verify 100% of executions include reasoning, (5) Return Result[ValidationReport, str]. Iterate until tests pass.",
+          "dependencies": ["claim_6_test"],
+          "acceptance_criteria": [
+            "Validation code passes all tests (100% pass rate)",
+            "/primeA execution and log capture works",
+            "Reasoning trace detection validated",
+            "100% coverage verified"
+          ],
+          "estimated_tokens": 1800,
+          "tier": "P2"
+        },
+        {
+          "id": "claim_7_spec",
+          "type": "Spec",
+          "subagent_type": "planner",
+          "description": "Define validation approach for autonomous completion validation (claim 7)",
+          "prompt": "Create validation spec for claim 7: Autonomous completion validation (tools/orchestrator/completion_validator.py, ADR-032). Acceptance criteria: CompletionValidator blocks premature stopping, 0 false positives (never blocks valid completions), six-check validation works. Define test scenarios: validator blocks incomplete tasks, validator passes complete tasks, false positive detection.",
+          "dependencies": ["claim_6_code"],
+          "acceptance_criteria": [
+            "Spec defines test approach for completion validator",
+            "Acceptance criteria match claim 7 benchmark (0 false positives)",
+            "Test scenarios cover blocking and validation logic"
+          ],
+          "estimated_tokens": 800,
+          "tier": "P2"
+        },
+        {
+          "id": "claim_7_test",
+          "type": "Test",
+          "subagent_type": "test-generator",
+          "description": "Write NECESSARY pattern tests for autonomous completion validation (claim 7)",
+          "prompt": "Generate tests for claim 7 validation (autonomous completion validation). Test file: tests/foundation_validation/test_completion_validator.py. NECESSARY categories: test_normal_complete_tasks (validator passes when all complete), test_normal_incomplete_tasks (validator blocks when incomplete), test_edge_false_positive (never blocks valid completion), test_security_constitutional_checks (Article I-V validation), test_essential_zero_false_positives (0 false positives across 100 scenarios). Tests MUST fail initially.",
+          "dependencies": ["claim_7_spec"],
+          "verification_target": "tests/foundation_validation/test_completion_validator.py",
+          "acceptance_criteria": [
+            "Tests written following NECESSARY pattern",
+            "Tests fail initially (RED phase)",
+            "Coverage includes Normal, Edge, Security, Essential categories",
+            "Assertions verify blocking logic and 0 false positives"
+          ],
+          "estimated_tokens": 1200,
+          "tier": "P2"
+        },
+        {
+          "id": "claim_7_code",
+          "type": "Code",
+          "subagent_type": "coder",
+          "description": "Implement validation logic for autonomous completion validation (claim 7)",
+          "prompt": "Implement claim 7 validation: Completion validator benchmark. Create foundation_validation/validate_completion_validator.py. Logic: (1) Create test scenarios (complete vs incomplete tasks), (2) Run CompletionValidator on each scenario, (3) Verify blocking behavior (Err for incomplete, Ok for complete), (4) Track false positives (blocks valid completion = false positive), (5) Verify 0 false positives across 100 scenarios, (6) Return Result[ValidationReport, str]. Iterate until tests pass.",
+          "dependencies": ["claim_7_test"],
+          "acceptance_criteria": [
+            "Validation code passes all tests (100% pass rate)",
+            "CompletionValidator integration works",
+            "Blocking logic validated (incomplete = Err)",
+            "0 false positives verified across 100 scenarios"
+          ],
+          "estimated_tokens": 1800,
+          "tier": "P2"
+        }
+      ]
+    },
+    "phase_4_integration": {
+      "name": "Phase 4: Integration Report",
+      "description": "Aggregate all validation results and generate comprehensive report",
+      "dependencies": ["phase_3_meta_cognitive_capability"],
+      "tasks": [
+        {
+          "id": "integration_report",
+          "type": "Code",
+          "subagent_type": "coder",
+          "description": "Generate comprehensive validation report for all 7 claims",
+          "prompt": "Create integration report generator: foundation_validation/generate_report.py. Logic: (1) Aggregate validation results from claims 1-7, (2) Calculate overall success rate (target: 100%), (3) Generate markdown report with: executive summary, claim-by-claim results, benchmark achievements, constitutional compliance status. Format: reports/foundation_validation_report.md. Include: claim descriptions, acceptance criteria, test results, benchmark metrics, exponential impact summary.",
+          "dependencies": ["claim_7_code"],
+          "acceptance_criteria": [
+            "Report aggregates all 7 claim results",
+            "Overall success rate calculated (100% target)",
+            "Markdown report generated with all sections",
+            "Benchmark achievements documented"
+          ],
+          "estimated_tokens": 1500,
+          "tier": "P3"
+        }
+      ]
+    }
+  },
+  "validation_metrics": {
+    "claim_1": {
+      "name": "VectorStore Pattern Extraction",
+      "file": "agency_memory/enhanced_memory_store.py",
+      "benchmark": "50+ patterns stored, avg confidence ≥0.6",
+      "acceptance_criteria": "Pattern storage works, tag search works, confidence calculation validated"
+    },
+    "claim_2": {
+      "name": "Self-Reflective Learning",
+      "file": "shared/agent_context.py",
+      "benchmark": "80%+ agent actions query VectorStore first",
+      "acceptance_criteria": "Agents query before action, agents store after success, tag-based search works"
+    },
+    "claim_3": {
+      "name": "Cross-Session Institutional Memory",
+      "file": "agency_memory/vector_store.py",
+      "benchmark": "90%+ retrieval accuracy across sessions",
+      "acceptance_criteria": "Pattern from session N retrieved in session N+1, persistence validated"
+    },
+    "claim_4": {
+      "name": "Constitutional Governance",
+      "file": "constitution.md + .git/hooks/pre-commit",
+      "benchmark": "0 constitutional violations merged in last 30 days",
+      "acceptance_criteria": "Pre-commit blocks violations, Article IV mandatory, automated enforcement works"
+    },
+    "claim_5": {
+      "name": "Test-Driven Autonomy",
+      "file": "constitution.md (Article VI, TDD)",
+      "benchmark": "100% of last 50 code commits follow test-first",
+      "acceptance_criteria": "Tests written before code (git commit order), RED-GREEN-REFACTOR cycle validated"
+    },
+    "claim_6": {
+      "name": "Meta-Cognitive Reasoning",
+      "file": ".claude/commands/primeA.md",
+      "benchmark": "100% of /primeA executions include meta-reasoning",
+      "acceptance_criteria": "Reasoning traces detected, decision justification validated"
+    },
+    "claim_7": {
+      "name": "Autonomous Completion Validation",
+      "file": "tools/orchestrator/completion_validator.py (ADR-032)",
+      "benchmark": "0 false positives (never blocks valid completions)",
+      "acceptance_criteria": "CompletionValidator blocks premature stopping, six-check validation works"
+    }
+  },
+  "total_tasks": 22,
+  "critical_path": [
+    "claim_1_spec → claim_1_test → claim_1_code",
+    "claim_2_spec → claim_2_test → claim_2_code",
+    "claim_3_spec → claim_3_test → claim_3_code",
+    "claim_4_spec → claim_4_test → claim_4_code",
+    "claim_5_spec → claim_5_test → claim_5_code",
+    "claim_6_spec → claim_6_test → claim_6_code",
+    "claim_7_spec → claim_7_test → claim_7_code",
+    "integration_report"
+  ],
+  "exponential_sequencing": {
+    "phase_1": "Learning infrastructure stores patterns for Phase 2-3",
+    "phase_2": "Quality enforcement uses Phase 1 patterns, stores quality patterns for Phase 3",
+    "phase_3": "Meta-cognitive capability uses Phase 1-2 patterns for reasoning validation"
+  },
+  "budget_allocation": {
+    "phase_1": "$3.60 (12 tasks × $0.30 avg)",
+    "phase_2": "$2.70 (9 tasks × $0.30 avg)",
+    "phase_3": "$2.40 (2 tasks × $1.20 avg, meta-reasoning is P2)",
+    "integration": "$0.30 (1 task × $0.30, report gen is P3)",
+    "total": "$9.00"
+  },
+  "success_criteria": {
+    "all_tests_pass": "100% test pass rate (no skipped tests, no failures)",
+    "all_claims_validated": "7/7 claims proven with benchmarks achieved",
+    "constitutional_compliance": "Articles I, II, IV, V, VI enforced throughout",
+    "exponential_impact": "Phase 1 patterns accelerate Phase 2-3 (measurable speedup)",
+    "zero_aspirational_claims": "Every claim maps to provably-existing file/capability"
+  }
+}

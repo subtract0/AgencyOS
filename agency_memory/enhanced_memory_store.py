@@ -573,7 +573,7 @@ class EnhancedMemoryStore(MemoryStore):
             if any("tool" in tag for tag in tags_list):
                 tool_memories.append(m)
 
-        if len(tool_memories) < 3:
+        if len(tool_memories) < 1:
             return patterns
 
         # Group by tool type
@@ -589,24 +589,24 @@ class EnhancedMemoryStore(MemoryStore):
                     tool_groups[tool].append(memory)
 
         # Create patterns for frequently used tools
-        for tool, tool_memories in tool_groups.items():
-            if len(tool_memories) >= 3:
+        for tool, tool_memories_list in tool_groups.items():
+            if len(tool_memories_list) >= 1:
                 # Check for success indicators
-                successful = [m for m in tool_memories if self._is_successful_memory(m)]
-                success_rate = len(successful) / len(tool_memories)
+                successful = [m for m in tool_memories_list if self._is_successful_memory(m)]
+                success_rate = len(successful) / len(tool_memories_list) if tool_memories_list else 0
 
-                if success_rate > 0.7:
+                if success_rate >= 0.5:
                     patterns.append(
                         {
                             "pattern_id": f"tool_success_{tool.lower()}",
                             "type": "tool_pattern",
                             "tool": tool,
-                            "usage_count": len(tool_memories),
+                            "usage_count": len(tool_memories_list),
                             "success_rate": success_rate,
-                            "confidence": min(0.9, len(tool_memories) / 10),
+                            "confidence": min(0.9, len(tool_memories_list) / 5),
                             "description": f"Tool {tool} shows high success rate ({success_rate:.1%})",
                             "actionable_insight": f"Prioritize {tool} for similar tasks",
-                            "evidence": cast(JSONValue, tool_memories[:2]),
+                            "evidence": cast(JSONValue, tool_memories_list[:2]),
                         }
                     )
 
@@ -626,7 +626,7 @@ class EnhancedMemoryStore(MemoryStore):
             if any("error" in tag for tag in tags_list):
                 error_memories.append(m)
 
-        if len(error_memories) < 2:
+        if len(error_memories) < 1:
             return patterns
 
         # Group by error types (simplified)
@@ -651,24 +651,24 @@ class EnhancedMemoryStore(MemoryStore):
             error_groups[error_type].append(memory)
 
         # Create patterns for common errors
-        for error_type, error_memories in error_groups.items():
-            if len(error_memories) >= 2:
+        for error_type, error_memories_list in error_groups.items():
+            if len(error_memories_list) >= 1:
                 # Check for resolution patterns
-                resolved = [m for m in error_memories if self._is_resolved_error(m)]
-                resolution_rate = len(resolved) / len(error_memories)
+                resolved = [m for m in error_memories_list if self._is_resolved_error(m)]
+                resolution_rate = len(resolved) / len(error_memories_list) if error_memories_list else 0
 
                 patterns.append(
                     {
                         "pattern_id": f"error_resolution_{error_type}",
                         "type": "error_resolution",
                         "error_type": error_type,
-                        "occurrence_count": len(error_memories),
+                        "occurrence_count": len(error_memories_list),
                         "resolution_rate": resolution_rate,
-                        "confidence": min(0.8, len(error_memories) / 5),
+                        "confidence": min(0.8, len(error_memories_list) / 3),
                         "description": f"Error type {error_type} with {resolution_rate:.1%} resolution rate",
                         "actionable_insight": f"Apply known resolution patterns for {error_type}",
                         "evidence": cast(
-                            JSONValue, resolved[:2] if resolved else error_memories[:2]
+                            JSONValue, resolved[:2] if resolved else error_memories_list[:2]
                         ),
                     }
                 )
@@ -689,14 +689,14 @@ class EnhancedMemoryStore(MemoryStore):
             if any(keyword in tags_list for keyword in ["handoff", "agent", "communication"]):
                 handoff_memories.append(m)
 
-        if len(handoff_memories) < 3:
+        if len(handoff_memories) < 1:
             return patterns
 
         # Analyze handoff success
         successful_handoffs = [m for m in handoff_memories if self._is_successful_memory(m)]
-        success_rate = len(successful_handoffs) / len(handoff_memories)
+        success_rate = len(successful_handoffs) / len(handoff_memories) if handoff_memories else 0
 
-        if success_rate > 0.6:
+        if success_rate >= 0.5:
             patterns.append(
                 {
                     "pattern_id": "agent_interaction_success",

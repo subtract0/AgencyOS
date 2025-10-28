@@ -1,0 +1,59 @@
+graph TD
+    subgraph phase_1_learning_infrastructure["Phase 1: Learning Infrastructure Validation (Force Multiplier)"]
+        spec_vectorstore_validation["Spec: VectorStore Pattern Extraction Specification"]:::tier1
+        test_vectorstore_validation["Test: VectorStore Validation Tests (RED Phase)"]:::tier2
+        spec_vectorstore_validation --> test_vectorstore_validation
+        code_vectorstore_validation["Code: VectorStore Validation Implementation (GREEN Phase)"]:::tier2
+        test_vectorstore_validation --> code_vectorstore_validation
+        spec_cost_reduction_audit["Spec: 96% Cost Reduction Audit Specification"]:::tier1
+        test_cost_reduction_audit["Test: Cost Reduction Audit Tests (RED Phase)"]:::tier2
+        spec_cost_reduction_audit --> test_cost_reduction_audit
+        code_cost_reduction_audit["Code: Cost Reduction Audit Implementation (GREEN Phase)"]:::tier2
+        test_cost_reduction_audit --> code_cost_reduction_audit
+    end
+    subgraph phase_2_quality_enforcement["Phase 2: Quality Enforcement Validation (Risk Reducer)"]
+        spec_constitutional_governance["Spec: Constitutional Governance Specification"]:::tier1
+        code_vectorstore_validation --> spec_constitutional_governance
+        code_cost_reduction_audit --> spec_constitutional_governance
+        test_constitutional_governance["Test: Constitutional Governance Tests (RED Phase)"]:::tier2
+        spec_constitutional_governance --> test_constitutional_governance
+        code_constitutional_governance["Code: Constitutional Governance Implementation (GREEN Phase)"]:::tier2
+        test_constitutional_governance --> code_constitutional_governance
+        spec_tdd_workflow["Spec: Test-Driven Autonomy Specification"]:::tier1
+        code_constitutional_governance --> spec_tdd_workflow
+        test_tdd_workflow["Test: TDD Workflow Validation Tests (RED Phase)"]:::tier2
+        spec_tdd_workflow --> test_tdd_workflow
+        code_tdd_workflow["Code: TDD Workflow Validator Implementation (GREEN Phase)"]:::tier2
+        test_tdd_workflow --> code_tdd_workflow
+    end
+    subgraph phase_3_meta_cognitive["Phase 3: Meta-Cognitive Capability Validation (Intelligence Amplifier)"]
+        spec_meta_reasoning["Spec: Meta-Cognitive Reasoning Specification"]:::tier1
+        code_tdd_workflow --> spec_meta_reasoning
+        test_meta_reasoning["Test: Meta-Cognitive Reasoning Tests (RED Phase)"]:::tier2
+        spec_meta_reasoning --> test_meta_reasoning
+        code_meta_reasoning["Code: Meta-Cognitive Reasoning Validator Implementation (GREEN Phase)"]:::tier2
+        test_meta_reasoning --> code_meta_reasoning
+        spec_completion_validation["Spec: Autonomous Completion Validation Specification"]:::tier1
+        code_meta_reasoning --> spec_completion_validation
+        test_completion_validation["Test: Completion Validation Tests (RED Phase)"]:::tier2
+        spec_completion_validation --> test_completion_validation
+        code_completion_validation["Code: Completion Validator Implementation (GREEN Phase)"]:::tier2
+        test_completion_validation --> code_completion_validation
+    end
+    subgraph phase_4_autonomy_proof["Phase 4: Optimization & Autonomy Validation (Efficiency & Proof)"]
+        spec_mission_validation["Spec: Mission Validation Specification"]:::tier1
+        code_completion_validation --> spec_mission_validation
+        test_mission_validation["Test: Mission Validation Tests (RED Phase)"]:::tier2
+        spec_mission_validation --> test_mission_validation
+        code_mission_validation["Code: Mission Validator Implementation (GREEN Phase)"]:::tier2
+        test_mission_validation --> code_mission_validation
+        spec_zero_intervention["Spec: Zero-Intervention Cycles Specification"]:::tier1
+        code_mission_validation --> spec_zero_intervention
+        test_zero_intervention["Test: Zero-Intervention Tests (RED Phase)"]:::tier2
+        spec_zero_intervention --> test_zero_intervention
+        code_zero_intervention["Code: Zero-Intervention Validator Implementation (GREEN Phase)"]:::tier2
+        test_zero_intervention --> code_zero_intervention
+    end
+
+    classDef tier1 fill:#cce5ff,stroke:#0066cc
+    classDef tier2 fill:#d4edda,stroke:#28a745

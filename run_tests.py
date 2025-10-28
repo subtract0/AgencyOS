@@ -459,14 +459,25 @@ def main(
 
     # Test ignores (known problematic tests, not suitable for pytest.ini)
     # These are runtime issues, not configuration preferences
-    pytest_args.extend(
-        [
-            "--ignore=tests/test_firestore_learning_persistence.py",
-            "--ignore=tests/test_firestore_mock_integration.py",
-            "--ignore=tests/e2e/",  # e2e tests import agency at module level
-            "--ignore=tests/benchmarks/test_vectorstore_performance.py",  # Quarantined
-        ]
-    )
+    # Skip E2E tests by default (they have different execution requirements)
+    if test_mode != "e2e":
+        pytest_args.extend(
+            [
+                "--ignore=tests/test_firestore_learning_persistence.py",
+                "--ignore=tests/test_firestore_mock_integration.py",
+                "--ignore=tests/e2e/",  # e2e tests import agency at module level
+                "--ignore=tests/benchmarks/test_vectorstore_performance.py",  # Quarantined
+            ]
+        )
+    else:
+        # E2E mode: ignore all other tests, run only E2E
+        pytest_args.extend(
+            [
+                "--ignore=tests/test_firestore_learning_persistence.py",
+                "--ignore=tests/test_firestore_mock_integration.py",
+                "--ignore=tests/benchmarks/test_vectorstore_performance.py",  # Quarantined
+            ]
+        )
 
     # Memory-aware worker selection (ADR-023 integration)
     # Overrides pytest.ini static config (-n 6) with dynamic adjustment
@@ -527,18 +538,23 @@ def main(
     # ============================================================================
     if test_mode == "unit":
         # Unit tests only: exclude integration, slow, and benchmark
-        pytest_args.extend(["-m", "not integration and not slow and not benchmark"])
+        pytest_args.extend(["-m", "not integration and not slow and not benchmark and not e2e"])
     elif test_mode == "integration" or test_mode == "integration-only":
         pytest_args.extend(["-m", "integration"])
     elif test_mode == "fast":
         # Fast unit tests: exclude integration, slow, benchmark, and github
-        pytest_args.extend(["-m", "not integration and not slow and not benchmark and not github"])
+        pytest_args.extend(["-m", "not integration and not slow and not benchmark and not github and not e2e"])
     elif test_mode == "slow":
         pytest_args.extend(["-m", "slow"])
     elif test_mode == "benchmark":
         pytest_args.extend(["-m", "benchmark"])
     elif test_mode == "github":
         pytest_args.extend(["-m", "github"])
+    elif test_mode == "e2e":
+        # E2E tests only: select e2e marker, use longer timeout
+        pytest_args.extend(["-m", "e2e", "--timeout=600"])  # 10 minute timeout for E2E tests
+        # Override test directory to only run E2E tests
+        pytest_args[pytest_args.index("tests/")] = "tests/e2e/"
     elif test_mode == "all":
         # For "all" mode, run unit + integration BUT skip slow E2E tests (>5min each)
         # Slow tests marked with @pytest.mark.slow include:
@@ -725,7 +741,8 @@ def create_parser() -> argparse.ArgumentParser:
   python run_tests.py --github           # Run GitHub integration tests only
   python run_tests.py --integration-only # Run integration tests only
   python run_tests.py --run-integration  # Run integration tests only (legacy)
-  python run_tests.py --run-all          # Run all tests
+  python run_tests.py --e2e              # Run E2E tests only (end-to-end workflows)
+  python run_tests.py --run-all          # Run all tests (except E2E and slow)
   python run_tests.py --with-docker      # Run with Docker services (enables Ollama tests)
   python run_tests.py test_specific.py   # Run specific test file""",
     )
@@ -752,6 +769,11 @@ def create_parser() -> argparse.ArgumentParser:
     )
     test_group.add_argument(
         "--run-all", action="store_true", help="Run ALL tests (unit + integration)"
+    )
+    test_group.add_argument(
+        "--e2e",
+        action="store_true",
+        help="Run ONLY E2E tests (end-to-end workflows, slower, realistic)",
     )
 
     # Docker integration flag
@@ -815,6 +837,8 @@ if __name__ == "__main__":
         test_mode = "integration"
     elif args.run_all:
         test_mode = "all"
+    elif args.e2e:
+        test_mode = "e2e"
 
     # Execute the appropriate test mode
     if args.specific_test:

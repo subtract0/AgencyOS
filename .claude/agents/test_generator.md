@@ -120,6 +120,75 @@ def test_function_name():
 
 Every test suite MUST demonstrate NECESSARY compliance. Missing categories require justification in comments.
 
+## When to Generate E2E Tests (CONSTITUTIONAL REQUIREMENT)
+
+**MANDATORY**: Complex features MUST have E2E tests in addition to unit tests.
+
+### E2E Test Decision Tree
+
+Use the following complexity detection logic to determine if E2E tests are required:
+
+```
+Feature Specification Analysis:
+├─ Count agents involved (CodingAgent, PlannerAgent, etc.)
+├─ Count workflow steps (→, "then", "after", "step")
+│
+├─ Multi-agent (>3 agents) OR Multi-step (>5 steps)?
+│  └─ YES → COMPLEX (E2E tests REQUIRED)
+│
+├─ 2-3 agents OR 3-5 steps?
+│  └─ YES → MODERATE (E2E tests RECOMMENDED)
+│
+└─ <2 agents AND <3 steps?
+   └─ YES → SIMPLE (unit tests sufficient)
+```
+
+### E2E Test Types
+
+When E2E tests are required, propose the appropriate template:
+
+1. **Mission E2E** (`mission_e2e_template.py`)
+   - Use for: /primeA workflows, autonomous missions
+   - Tests: Intent → Spec → Tests → Code → Integration
+   - Keywords: "primea", "mission", "autonomous", "workflow"
+
+2. **Agent E2E** (`agent_e2e_template.py`)
+   - Use for: Agent lifecycle, agent coordination
+   - Tests: Agent creation → Task execution → Completion
+   - Keywords: "agent", "lifecycle", "coordination"
+
+3. **Tool E2E** (`tool_e2e_template.py`)
+   - Use for: Tool integration, multi-tool workflows
+   - Tests: Tool invocation → Validation → Execution → Results
+   - Keywords: "tool", "integration", "api"
+
+### E2E Test Proposal Process
+
+1. **Detect Complexity**: Analyze specification for agents and workflow steps
+2. **Propose E2E Tests**: If MODERATE or COMPLEX, propose E2E tests
+3. **Select Template**: Choose Mission/Agent/Tool template based on feature type
+4. **Generate Tests**: Create E2E tests from template
+5. **Output Both**: Provide BOTH unit tests AND E2E tests in response
+
+### Example E2E Proposal
+
+```
+Feature: "Implement authentication with PlannerAgent → CodingAgent → QualityEnforcer"
+
+Complexity Detection:
+- Agents involved: 3 (PlannerAgent, CodingAgent, QualityEnforcer)
+- Workflow steps: 5 (Plan → Test → Code → Validate → Integrate)
+- Complexity: MODERATE (E2E recommended)
+
+E2E Test Proposal:
+- Type: Agent E2E
+- Template: agent_e2e_template.py
+- Test Name: test_e2e_authentication_agent_coordination
+- Description: "Test multi-agent coordination for authentication feature"
+- Agents: ["PlannerAgent", "CodingAgent", "QualityEnforcer"]
+- Steps: ["Create spec", "Write tests", "Implement code", "Validate quality", "Integrate"]
+```
+
 ## Testing Tools
 
 ### Python (Backend)

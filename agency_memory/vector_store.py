@@ -61,14 +61,20 @@ class VectorStore:
     - Keyword-based fallback
     - Hybrid search combining both approaches
     - Optional external embedding provider support
+    - Persistent storage with automatic save/load
     """
 
-    def __init__(self, embedding_provider: str | None = None):
+    def __init__(
+        self,
+        embedding_provider: str | None = None,
+        storage_path: str | None = None
+    ):
         """
         Initialize VectorStore.
 
         Args:
             embedding_provider: Optional embedding provider ('openai', 'sentence-transformers', etc.)
+            storage_path: Optional file path for persistent storage (default: ~/.agency/memories/vectorstore)
         """
         self._embeddings: dict[str, list[float]] = {}
         self._memory_texts: dict[str, str] = {}
@@ -76,11 +82,21 @@ class VectorStore:
         self._embedding_provider = embedding_provider
         self._embedding_function: Callable[[list[str]], list[list[float]]] | None = None
 
+        # Set storage path
+        if storage_path is None:
+            from pathlib import Path
+            storage_path = str(Path.home() / ".agency" / "memories" / "vectorstore")
+        self.storage_path = storage_path
+
         # Try to initialize embedding function
         self._initialize_embeddings()
 
+        # Load from disk if exists
+        self._load_from_disk()
+
         logger.info(
-            f"VectorStore initialized with provider: {embedding_provider or 'keyword-only'}"
+            f"VectorStore initialized with provider: {embedding_provider or 'keyword-only'}, "
+            f"storage: {self.storage_path}"
         )
 
     def _initialize_embeddings(self) -> None:
@@ -154,6 +170,32 @@ class VectorStore:
 
         except ImportError as e:
             raise ImportError("openai not available. Install with: pip install openai") from e
+
+    def store(
+        self,
+        key: str,
+        content: Any,
+        tags: list[str],
+        confidence: float = 0.85
+    ) -> None:
+        """
+        Store memory with metadata in VectorStore (Article IV compliance).
+
+        Args:
+            key: Unique identifier for the memory
+            content: Content to store (any JSON-serializable type)
+            tags: Tags for categorization
+            confidence: Confidence score (0.0-1.0)
+        """
+        memory = {
+            "key": key,
+            "content": content,
+            "tags": tags,
+            "confidence": confidence,
+            "timestamp": datetime.now().isoformat()
+        }
+        self.add_memory(key, memory)
+        self.save()  # Persist to disk immediately
 
     def add_memory(self, memory_key: str, memory_content: dict[str, JSONValue]) -> None:
         """
@@ -425,10 +467,28 @@ class VectorStore:
         return dot_product / (magnitude1 * magnitude2)
 
     def search(
-        self, query: str, namespace: str | None = None, limit: int = 10
+        self,
+        query: str | None = None,
+        namespace: str | None = None,
+        limit: int = 10,
+        min_confidence: float | None = None
     ) -> list[dict[str, JSONValue]]:
+        """
+        Search memories by query and/or confidence threshold.
+
+        Args:
+            query: Optional search query for semantic/hybrid search
+            namespace: Optional namespace filter
+            limit: Maximum number of results
+            min_confidence: Optional minimum confidence threshold
+
+        Returns:
+            List of matching memories
+        """
         try:
             memories = list(self._memory_records.values())
+
+            # Apply namespace filter
             if namespace:
                 filtered_memories = []
                 for m in memories:
@@ -437,15 +497,30 @@ class VectorStore:
                         if isinstance(metadata, dict) and metadata.get("namespace") == namespace:
                             filtered_memories.append(m)
                 memories = filtered_memories
-            results = self.hybrid_search(query, memories, top_k=limit)
-            return [
-                {
-                    **r.memory,
-                    "relevance_score": r.similarity_score,
-                    "search_type": r.search_type,
-                }
-                for r in results
-            ]
+
+            # Apply confidence filter
+            if min_confidence is not None:
+                memories = [
+                    m for m in memories
+                    if isinstance(m, dict) and m.get("confidence", 1.0) >= min_confidence
+                ]
+
+            # If query is provided, use hybrid search
+            if query:
+                results = self.hybrid_search(query, memories, top_k=limit)
+                return [
+                    {
+                        **r.memory,
+                        "relevance_score": r.similarity_score,
+                        "search_type": r.search_type,
+                    }
+                    for r in results
+                ]
+            else:
+                # No query: return filtered memories sorted by confidence
+                memories.sort(key=lambda m: m.get("confidence", 0.0) if isinstance(m, dict) else 0.0, reverse=True)
+                return memories[:limit]
+
         except (ValueError, KeyError) as e:
             import logging
 
@@ -469,6 +544,65 @@ class VectorStore:
         self._embeddings.pop(memory_key, None)
         self._memory_texts.pop(memory_key, None)
         self._memory_records.pop(memory_key, None)
+
+    @property
+    def _memories(self) -> dict[str, dict[str, JSONValue]]:
+        """
+        Compatibility property for tests that expect _memories attribute.
+
+        Returns:
+            Reference to _memory_records
+        """
+        return self._memory_records
+
+    def search_by_tags(
+        self,
+        tags: list[str],
+        min_confidence: float = 0.6,
+        limit: int = 10
+    ) -> list[dict[str, JSONValue]]:
+        """
+        Search memories by tags with optional confidence filtering.
+
+        Args:
+            tags: List of tags to search for
+            min_confidence: Minimum confidence score (0.0-1.0)
+            limit: Maximum number of results
+
+        Returns:
+            List of memories matching tags and confidence threshold
+        """
+        results = []
+
+        for memory in self._memory_records.values():
+            if not isinstance(memory, dict):
+                continue
+
+            # Check if memory has required tags
+            memory_tags = memory.get("tags", [])
+            if not isinstance(memory_tags, list):
+                continue
+
+            # Check if ANY of the search tags match
+            has_matching_tag = any(tag in memory_tags for tag in tags)
+            if not has_matching_tag:
+                continue
+
+            # Check confidence threshold
+            confidence = memory.get("confidence", 1.0)  # Default to 1.0 for backward compatibility
+            if not isinstance(confidence, (int, float)):
+                confidence = 1.0
+
+            if confidence < min_confidence:
+                continue
+
+            results.append(memory)
+
+        # Sort by confidence (descending)
+        results.sort(key=lambda m: m.get("confidence", 0.0), reverse=True)
+
+        # Return limited results
+        return results[:limit]
 
     def get_stats(self) -> dict[str, JSONValue]:
         """
@@ -649,6 +783,120 @@ class VectorStore:
         )
 
         return result
+
+    def save(self) -> None:
+        """
+        Save VectorStore state to disk for persistence.
+
+        Persists:
+        - Memory records (_memory_records)
+        - Memory texts (_memory_texts)
+        - Embeddings (_embeddings)
+
+        Storage format: JSON file at self.storage_path
+        Thread-safe with file locking for concurrent writes.
+        """
+        import fcntl
+        from pathlib import Path
+
+        try:
+            storage_dir = Path(self.storage_path)
+            storage_dir.mkdir(parents=True, exist_ok=True)
+
+            storage_file = storage_dir / "vectorstore_data.json"
+            lock_file = storage_dir / ".vectorstore.lock"
+
+            # Acquire exclusive lock for concurrent write safety
+            with open(lock_file, "w") as lock:
+                try:
+                    fcntl.flock(lock.fileno(), fcntl.LOCK_EX)
+
+                    # Load existing data to merge (for concurrent writes from multiple processes)
+                    existing_data = {}
+                    if storage_file.exists():
+                        try:
+                            with open(storage_file, "r") as f:
+                                existing_data = json.load(f)
+                        except (json.JSONDecodeError, IOError):
+                            logger.warning(f"Failed to load existing data, starting fresh")
+
+                    # Merge with existing data (last-write-wins for conflicts)
+                    merged_records = existing_data.get("memory_records", {})
+                    merged_texts = existing_data.get("memory_texts", {})
+                    merged_embeddings = existing_data.get("embeddings", {})
+
+                    merged_records.update(self._memory_records)
+                    merged_texts.update(self._memory_texts)
+                    merged_embeddings.update(self._embeddings)
+
+                    # Prepare data for serialization
+                    data = {
+                        "memory_records": merged_records,
+                        "memory_texts": merged_texts,
+                        "embeddings": merged_embeddings,
+                        "metadata": {
+                            "embedding_provider": self._embedding_provider,
+                            "last_saved": datetime.now().isoformat(),
+                            "total_memories": len(merged_records)
+                        }
+                    }
+
+                    # Write to disk atomically (write to temp, then rename)
+                    temp_file = storage_dir / f"vectorstore_data.json.tmp.{os.getpid()}"
+                    with open(temp_file, "w") as f:
+                        json.dump(data, f, indent=2)
+
+                    # Atomic rename
+                    temp_file.replace(storage_file)
+
+                    logger.debug(
+                        f"VectorStore saved: {len(merged_records)} memories to {storage_file}"
+                    )
+
+                finally:
+                    fcntl.flock(lock.fileno(), fcntl.LOCK_UN)
+
+        except Exception as e:
+            logger.error(f"Failed to save VectorStore to {self.storage_path}: {e}")
+
+    def _load_from_disk(self) -> None:
+        """
+        Load VectorStore state from disk if exists.
+
+        Loads:
+        - Memory records (_memory_records)
+        - Memory texts (_memory_texts)
+        - Embeddings (_embeddings)
+        """
+        from pathlib import Path
+
+        try:
+            storage_file = Path(self.storage_path) / "vectorstore_data.json"
+
+            if not storage_file.exists():
+                logger.debug(f"No existing VectorStore data at {storage_file}")
+                return
+
+            with open(storage_file, "r") as f:
+                data = json.load(f)
+
+            # Restore state
+            self._memory_records = data.get("memory_records", {})
+            self._memory_texts = data.get("memory_texts", {})
+            self._embeddings = data.get("embeddings", {})
+
+            metadata = data.get("metadata", {})
+            total_memories = metadata.get("total_memories", 0)
+            last_saved = metadata.get("last_saved", "unknown")
+
+            logger.info(
+                f"VectorStore loaded: {total_memories} memories from {storage_file} "
+                f"(last saved: {last_saved})"
+            )
+
+        except Exception as e:
+            logger.warning(f"Failed to load VectorStore from {self.storage_path}: {e}")
+            # Continue with empty store (don't crash)
 
     def batch_search_memories(
         self,
