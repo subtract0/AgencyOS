@@ -73,12 +73,20 @@ class EnhancedMemoryStore(MemoryStore):
             try:
                 from .vector_index import create_vector_index
 
-                # Initialize FAISS index (1536-dim for OpenAI embeddings)
+                # Detect embedding dimension from VectorStore
+                embedding_dim = 384  # Default for sentence-transformers (all-MiniLM-L6-v2)
+                if embedding_provider == "openai":
+                    embedding_dim = 1536  # OpenAI text-embedding-ada-002
+
+                # Initialize FAISS index with correct dimension
                 self.vector_index = create_vector_index(
-                    embedding_dim=1536,
+                    embedding_dim=embedding_dim,
                     index_path=index_path,
                 )
-                logger.info("FAISS indexing enabled for sub-linear semantic search")
+                logger.info(
+                    f"FAISS indexing enabled for sub-linear semantic search "
+                    f"(embedding_dim={embedding_dim})"
+                )
             except ImportError:
                 logger.warning(
                     "FAISS not available, falling back to linear search. "
@@ -129,7 +137,7 @@ class EnhancedMemoryStore(MemoryStore):
                     embedding = self.vector_store._embeddings[key]
 
                     # Add to FAISS index (incremental update, <10ms per spec)
-                    self.vector_index.add_vectors([key], [embedding.tolist()])
+                    self.vector_index.add_vectors([key], [embedding])
                     self._additions_since_last_rebuild += 1
 
                     # Check if index rebuild needed (per spec: every 1000 additions)
