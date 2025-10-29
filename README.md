@@ -4,6 +4,19 @@
 
 Elite autonomous software engineering system with **proven self-healing capabilities**, **100% constitutional compliance**, and **93% token-optimized documentation**. Built with the agencyOS framework with tier-based navigation for autonomous agents.
 
+## 💻 Hardware Specifications
+
+**Production Environment (M4 MAX Mac Studio):**
+- **CPU**: 16-Core Apple M4 MAX
+- **GPU**: 40-Core (Metal acceleration for ML/AI workloads)
+- **Neural Engine**: 16-Core NPU (AI inference optimization)
+- **Memory**: 128GB Unified Memory (shared CPU/GPU/NPU)
+- **Optimal Config**: Q8_0 models (32GB) + 20 parallel test workers + 30GB headroom
+
+**Legacy Support:**
+- 48GB Macs: Q8_0 (38GB) + 3 test workers
+- 32GB Macs: Q4_0 (22GB) recommended
+
 ## 🚀 Quick Start
 
 **New to Agency?** Start here:
@@ -109,7 +122,7 @@ The Agency operates under strict constitutional principles that ensure quality a
 - **🔒 Type Safety**: Zero `Dict[Any, Any]` violations, complete JSONValue usage
 - **🔧 LLM-First Design**: Leverages GPT-5 intelligence instead of complex Python systems
 - **🔬 DSPy Integration**: Advanced chain-of-thought reasoning with rationale fields
-- **💰 Cost Optimization**: 96% reduction with local qwen3-coder:30b Q4_K_M (M4 Pro optimized)
+- **💰 Cost Optimization**: 96% reduction with local qwen3-coder:30b Q8_0 (M4 MAX Mac Studio optimized)
 
 ### Developer Experience
 - **⚡ Quick Setup**: One-command environment setup

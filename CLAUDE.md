@@ -561,13 +561,14 @@ ollama run hf.co/abirhossen/Qwen3-Coder-30B-A3B-Instruct-Q8_0-GGUF:Q8_0 \
 **Why Q8_0 Quantization?**
 - **Higher Quality**: 8-bit > 4-bit/5-bit (better code understanding)
 - **Size Trade-off**: 32GB vs ~18GB (Q4), but superior accuracy
-- **M4 Pro Compatible**: 32GB fits in unified memory
+- **M4 MAX Compatible**: 32GB fits easily in 128GB unified memory
 
 **Memory Safety (Auto-Configured):**
 - Test runner automatically reduces parallelism when local model is active
+- **M4 MAX Mac Studio (128GB)**: Q8_0 (38GB) + 20 test workers (60GB) = 98GB (safe, 30GB headroom)
 - 48GB Mac: Q8_0 (38GB) + 3 test workers (9GB) = 47GB (safe)
 - 32GB Mac: Consider Q4_0 (22GB) or disable local model during test runs
-- Set `LOCAL_MODEL_TEST_WORKERS=2` for tighter memory constraints
+- Set `LOCAL_MODEL_TEST_WORKERS` to match available RAM (20 for M4 MAX, 3 for 48GB)
 ```
 
 ### **Docker Compose Setup (Recommended)**
