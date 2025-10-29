@@ -179,7 +179,7 @@ def test_faiss_index_persists() -> None:
         # Add 10 test vectors (384-dim, all zeros for simplicity)
         test_vectors = [[0.1 * i] * 384 for i in range(10)]
         test_keys = [f"vector_{i}" for i in range(10)]
-        index_n.add_vectors(keys=test_keys, vectors=test_vectors)
+        index_n.add_vectors(ids=test_keys, embeddings=test_vectors)
 
         # Verify Session N has 10 vectors
         assert index_n.index.ntotal == 10, "Session N should have 10 vectors in FAISS index"

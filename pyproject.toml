@@ -7,16 +7,14 @@ name = "agency"
 version = "1.0.0"
 description = "AgencyOS Agency - Multi-Agent Development System"
 readme = "README.md"
-requires-python = ">=3.11,<3.13"  # PyTorch 2.x officially supports 3.8-3.12; 3.13 causes 30s+ import timeouts
+requires-python = ">=3.12,<3.13"  # agency-swarm>=1.2.0 requires >=3.12, PyTorch 2.x supports 3.12; 3.13 causes 30s+ import timeouts
 authors = [
     {name = "Agency Development Team"},
 ]
 classifiers = [
     "Development Status :: 4 - Beta",
     "Programming Language :: Python :: 3",
-    "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
-    "Programming Language :: Python :: 3.13",
     "License :: OSI Approved :: MIT License",
     "Operating System :: OS Independent",
 ]
@@ -43,6 +41,7 @@ dependencies = [
 
     # Utilities
     "aiofiles>=25.1.0",
+    "litellm>=1.0.0",
 
     # Optional backends
     "google-cloud-firestore>=2.21.0",
