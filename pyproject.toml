@@ -24,6 +24,8 @@ dependencies = [
     # Core runtime
     "pydantic>=2.11.9",
     "anthropic>=0.72.0",
+    "openai>=1.0.0",
+    "agency-swarm>=1.2.0",
     "python-dotenv>=1.2.0",
     "psutil>=7.1.0",
 
@@ -37,9 +39,13 @@ dependencies = [
     "pytest-timeout>=2.4.0",
     "pytest-asyncio>=1.0.0",
     "pytest-cov>=7.0.0",
+    "pytest-xdist>=3.8.0",
 
     # Utilities
     "aiofiles>=25.1.0",
+
+    # Optional backends
+    "google-cloud-firestore>=2.21.0",
 ]
 
 [project.urls]
