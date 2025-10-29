@@ -7,7 +7,7 @@ name = "agency"
 version = "1.0.0"
 description = "AgencyOS Agency - Multi-Agent Development System"
 readme = "README.md"
-requires-python = ">=3.11"
+requires-python = ">=3.11,<3.13"  # PyTorch 2.x officially supports 3.8-3.12; 3.13 causes 30s+ import timeouts
 authors = [
     {name = "Agency Development Team"},
 ]
