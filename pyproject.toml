@@ -42,6 +42,7 @@ dependencies = [
     # Utilities
     "aiofiles>=25.1.0",
     "litellm>=1.0.0",
+    "watchdog>=6.0.0",
 
     # Optional backends
     "google-cloud-firestore>=2.21.0",

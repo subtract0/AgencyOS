@@ -53,11 +53,11 @@ jobs:
           # Full history for comprehensive analysis
           fetch-depth: 0
 
-      - name: "🐍 Set up Python 3.13"
+      - name: "🐍 Set up Python 3.12"
         uses: actions/setup-python@v5
         with:
-          python-version: '3.13'
-          # Use exact version for consistency
+          python-version: '3.12'
+          # Use exact version for consistency (3.12 required for ML libraries)
           cache: 'pip'
 
       - name: "📦 Cache Dependencies"

@@ -267,7 +267,9 @@ class TestBatchOperationsWithFAISS:
 
         # Assert
         if store.vector_index:
-            assert store._additions_since_last_rebuild == 0  # Depends on embedding generation
+            # With sentence-transformers installed, embeddings are generated, so counter increments
+            # 100 additions, threshold=1000, so no rebuild triggered yet
+            assert store._additions_since_last_rebuild == 100
 
     def test_batch_store_triggers_index_rebuild(self):
         """Regression: Batch store triggers index rebuild at threshold."""

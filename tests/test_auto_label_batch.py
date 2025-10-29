@@ -60,10 +60,10 @@ class TestCostEstimation:
         """Test cost estimation is reasonable."""
         result = auto_label_batch.estimate_cost(num_samples=500, avg_tokens_per_sample=200)
 
-        # 500 samples * 200 input tokens * $1.25/1M (batch rate) = ~$0.125 input
-        # 500 samples * 10 output tokens * $5/1M (batch rate) = ~$0.025 output
-        # Total should be around $0.15
-        assert 0.10 <= result["total_cost_usd"] <= 0.30, f"Cost {result['total_cost_usd']} outside expected range"
+        # 500 samples * 200 input tokens * $15/1M (GPT-5 batch rate) = ~$1.50 input
+        # 500 samples * 10 output tokens * $60/1M (GPT-5 batch rate) = ~$0.30 output
+        # Total should be around $1.80 (updated for GPT-5 pricing)
+        assert 0.50 <= result["total_cost_usd"] <= 2.00, f"Cost {result['total_cost_usd']} outside expected range"
 
     def test_estimate_cost_zero_samples(self):
         """Test cost estimation handles zero samples."""
