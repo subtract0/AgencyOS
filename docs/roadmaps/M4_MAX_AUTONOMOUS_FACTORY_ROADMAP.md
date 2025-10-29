@@ -324,20 +324,72 @@ pytest -n 20 --durations=10
 - Rejection reason stored in VectorStore
 - Approval triggers pattern reinforcement
 
-### 4.2 Learning Coach Integration
-**Purpose**: Convert human PR reviews into supervision signals
+### 4.2 Learning Coach Integration ⭐ CRITICAL
+**Purpose**: Convert human PR reviews into supervision signals (THE FLYWHEEL)
+
+**Why This Matters**: This is the highest-leverage, lowest-risk autonomous loop. Your expert judgment becomes training data for all future agents BEFORE they write code.
+
+**Implementation**: `tools/auto_supervise_hook.py` (GitHub webhook handler)
 
 **Workflow**:
-```
-1. Monitor GitHub webhook (PR merge/reject events)
-2. Extract PR metadata (agent_id, memory_id, fix_type)
-3. Store supervision signal in VectorStore:
-   - Merged → reinforcement_signal: "approved"
-   - Rejected → reinforcement_signal: "rejected" + reason
-4. Update agent confidence scores
+```python
+# GitHub webhook → auto_supervise_hook.py
+def handle_pr_event(event):
+    if event['action'] == 'closed' and event['pr'].get('merged'):
+        # Human APPROVED this autogen PR
+        memory_id = extract_memory_id(event['pr']['body'])
+        context.store_memory(
+            key=f"supervision_{memory_id}",
+            content={
+                "pr_number": event['pr']['number'],
+                "agent_id": event['pr']['agent_id'],
+                "fix_type": event['pr']['fix_type'],
+                "human_actor": event['sender']['login'],
+                "reinforcement_signal": "approved",
+                "merged_at": event['pr']['merged_at']
+            },
+            tags=["supervision", "approved", event['pr']['fix_type']]
+        )
+    elif event['action'] == 'closed' and not event['pr'].get('merged'):
+        # Human REJECTED this autogen PR
+        rejection_reason = extract_rejection_comment(event['pr'])
+        context.store_memory(
+            key=f"supervision_{memory_id}",
+            content={
+                "pr_number": event['pr']['number'],
+                "reinforcement_signal": "rejected",
+                "reason": rejection_reason,
+                "human_actor": event['sender']['login']
+            },
+            tags=["supervision", "rejected", event['pr']['fix_type']]
+        )
 ```
 
-**Value**: Agents learn from your expert judgment
+**GitHub Webhook Setup**:
+```bash
+# .github/workflows/learning_coach.yml
+on:
+  pull_request:
+    types: [closed]
+
+jobs:
+  supervise:
+    if: contains(github.event.pull_request.labels.*.name, 'autogen')
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Store supervision signal
+        run: |
+          python tools/auto_supervise_hook.py \
+            --pr-number ${{ github.event.pull_request.number }} \
+            --action ${{ github.event.action }} \
+            --merged ${{ github.event.pull_request.merged }}
+```
+
+**Value**:
+- **Approved PRs** → Increase agent confidence for similar patterns
+- **Rejected PRs** → Blacklist bad patterns, prevent repeat mistakes
+- **Continuous Learning** → Every PR review improves the system
 
 ---
 
