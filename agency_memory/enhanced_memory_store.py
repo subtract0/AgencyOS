@@ -883,7 +883,8 @@ class EnhancedMemoryStore(MemoryStore):
                     and key in self.vector_store._embeddings
                 ):
                     all_ids.append(key)
-                    all_embeddings.append(self.vector_store._embeddings[key].tolist())
+                    # Embedding is already a list from VectorStore
+                    all_embeddings.append(self.vector_store._embeddings[key])
 
             # Rebuild index from scratch
             self.vector_index.rebuild_index(all_ids, all_embeddings)
