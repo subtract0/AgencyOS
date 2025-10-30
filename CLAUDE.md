@@ -605,6 +605,28 @@ services:
 
 **Docs:** `specs/spec-023-ollama-docker-integration.md`, `docs/adr/ADR-023-memory-aware-test-execution.md`
 
+### **Hardware Recommendations & Migration Notes**
+
+**Current Development Environment (as of October 2025)**:
+- **M4 Pro MacBook Pro (48GB)**:
+  - Test workers: 3 (to avoid memory pressure)
+  - Full test suite: ~25-30 minutes
+  - Limitations: Occasional memory pressure with local model + aggressive testing
+  - Workaround: Reduced parallelism via `LOCAL_MODEL_TEST_WORKERS=3`
+
+**Recommended Migration Target**:
+- **Mac Studio M4 MAX (128GB)**:
+  - Test workers: 20 (aggressive parallelism)
+  - Full test suite: <15 minutes (2x faster)
+  - Benefits: Run larger models (70B Q4) + aggressive test parallelism
+  - Migration Guide: `docs/hardware/MAC_STUDIO_MIGRATION.md`
+  - Cost Savings: ~$1.2K/month (97% reduction vs all-cloud)
+
+**Migration Resources**:
+- Clean setup guide: `docs/hardware/MAC_STUDIO_MIGRATION.md`
+- Mac Studio .env template: `.env.mac_studio`
+- Expected improvements: 2x test speed, 3x model capacity, zero memory pressure
+
 ### **Running Commands**
 ```bash
 # Main orchestration
