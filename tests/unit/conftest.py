@@ -49,7 +49,7 @@ def mock_openai_client():
 @pytest.fixture
 def mock_agency_swarm_agent():
     """Mock Agency Swarm Agent to avoid actual LLM calls."""
-    with patch("agency_swarm.Agent") as mock_agent_class:
+    with patch("shared.lean_adapter.Agent") as mock_agent_class:
         mock_agent = Mock()
         mock_agent.get_response = Mock()
         mock_agent.name = "TestAgent"
@@ -68,7 +68,7 @@ def mock_agency_swarm_agent():
 @pytest.fixture
 def mock_agency():
     """Mock Agency for testing without actual LLM calls."""
-    with patch("agency_swarm.Agency") as mock_agency_class:
+    with patch("shared.lean_adapter.Agency") as mock_agency_class:
         mock_agency = Mock()
         mock_agency.get_response = Mock()
 

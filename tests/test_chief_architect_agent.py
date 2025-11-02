@@ -817,7 +817,7 @@ class TestChiefArchitectAgentErrorHandling:
                 "chief_architect_agent.chief_architect_agent.select_instructions_file",
                 return_value="gpt-5",
             ) as mock_select,
-            patch("agency_swarm.Agent", return_value="gpt-5") as mock_agent_class,
+            patch("shared.lean_adapter.Agent", return_value="gpt-5") as mock_agent_class,
             patch(
                 "chief_architect_agent.chief_architect_agent.get_model_instance",
                 return_value="gpt-5",
