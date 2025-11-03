@@ -99,17 +99,21 @@ class TestOptimalModelSelection:
 
     def test_p2_tasks_use_standard_model(self):
         """Test P2 tasks route to gpt-4o (balanced cost/quality)."""
-        model = get_optimal_model("P2", agent_key="coder")
+        # Clear environment overrides to test complexity-based routing
+        with patch.dict(os.environ, {"CODER_MODEL": ""}, clear=False):
+            model = get_optimal_model("P2", agent_key="coder")
 
-        # Should use standard gpt-4o or agent default
-        assert model in ["gpt-4o", "gpt-5"], f"P2 should use gpt-4o or gpt-5, got {model}"
+            # Should use standard gpt-4o or agent default
+            assert model in ["gpt-4o", "gpt-5"], f"P2 should use gpt-4o or gpt-5, got {model}"
 
     def test_p1_tasks_use_premium_model(self):
         """Test P1 tasks route to gpt-5 for maximum quality."""
-        model = get_optimal_model("P1", agent_key="planner")
+        # Clear environment overrides to test complexity-based routing
+        with patch.dict(os.environ, {"PLANNER_MODEL": ""}, clear=False):
+            model = get_optimal_model("P1", agent_key="planner")
 
-        # Should use premium model for critical tasks
-        assert model == "gpt-5", "P1 critical tasks require gpt-5"
+            # Should use premium model for critical tasks
+            assert model == "gpt-5", "P1 critical tasks require gpt-5"
 
     def test_env_override_still_works(self):
         """Test environment variable overrides are still respected."""
