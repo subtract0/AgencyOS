@@ -466,7 +466,7 @@ tests/test_example.py::test_feature PASSED
         """Test that verify passes correct mode to execute_tests."""
         captured_mode = None
 
-        async def mock_execute(mode, timeout, worker_count):
+        async def mock_execute(mode, timeout, worker_count, retry_attempt):
             nonlocal captured_mode
             captured_mode = mode
             return Ok(
@@ -490,7 +490,7 @@ tests/test_example.py::test_feature PASSED
         """Test that verify uses memory-aware worker count."""
         captured_worker_count = None
 
-        async def mock_execute(mode, timeout, worker_count):
+        async def mock_execute(mode, timeout, worker_count, retry_attempt):
             nonlocal captured_worker_count
             captured_worker_count = worker_count
             return Ok(
