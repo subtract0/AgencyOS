@@ -17,7 +17,7 @@ class TestAgencyFast:
     @pytest.fixture
     def mock_agency_fast(self):
         """Create a fast mocked agency for testing."""
-        with patch("agency_swarm.Agency") as mock_agency_class:
+        with patch("shared.lean_adapter.Agency") as mock_agency_class:
             mock_agency = Mock()
             mock_agency.get_response = AsyncMock()
             mock_agency_class.return_value = mock_agency

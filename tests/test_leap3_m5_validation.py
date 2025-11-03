@@ -9,6 +9,7 @@ Validates:
 """
 
 import os
+import sys
 from datetime import datetime
 
 import pytest
@@ -216,7 +217,7 @@ class TestCostSavingsValidation:
 
         # Act
         result = subprocess.run(
-            ["python", "tools/validate_cost_savings.py", "--synthetic"],
+            [sys.executable, "tools/validate_cost_savings.py", "--synthetic"],
             capture_output=True,
             text=True,
             timeout=60,
@@ -247,7 +248,7 @@ class TestSkillDashboardVisualization:
 
         # Act
         result = subprocess.run(
-            ["python", "tools/skill_dashboard.py", "--agent", "coder"],
+            [sys.executable, "tools/skill_dashboard.py", "--agent", "coder"],
             capture_output=True,
             text=True,
             timeout=30,
@@ -267,7 +268,7 @@ class TestSkillDashboardVisualization:
 
         # Act
         result = subprocess.run(
-            ["python", "tools/skill_dashboard.py", "--compare", "coder", "planner"],
+            [sys.executable, "tools/skill_dashboard.py", "--compare", "coder", "planner"],
             capture_output=True,
             text=True,
             timeout=30,
