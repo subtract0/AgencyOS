@@ -133,17 +133,36 @@ class TestModelRoutingIntegration:
 
     def test_existing_agent_model_function_unchanged(self):
         """Test backward compatibility - agent_model() still works."""
-        # Should return default model for each agent
-        planner_model = agent_model("planner")
-        coder_model = agent_model("coder")
-        summary_model = agent_model("summary")
+        # Mock both os.getenv (for env var check) and DEFAULTS dict (for default lookup)
+        import shared.model_policy
 
-        assert isinstance(planner_model, str)
-        assert isinstance(coder_model, str)
-        assert isinstance(summary_model, str)
+        original_getenv = os.getenv
 
-        # Summary should use cheaper model
-        assert "mini" in summary_model.lower() or summary_model == "gpt-5-mini"
+        def mock_getenv(key, default=None):
+            # Return None for agent model env vars to test default behavior
+            if key in ["PLANNER_MODEL", "CODER_MODEL", "SUMMARY_MODEL"]:
+                return None
+            return original_getenv(key, default)
+
+        mock_defaults = {
+            "planner": "gpt-5",
+            "coder": "gpt-5",
+            "summary": "gpt-5-mini",  # Test expectation
+        }
+
+        with patch.object(shared.model_policy.os, 'getenv', side_effect=mock_getenv), \
+             patch.object(shared.model_policy, 'DEFAULTS', mock_defaults):
+            # Should return default model for each agent
+            planner_model = agent_model("planner")
+            coder_model = agent_model("coder")
+            summary_model = agent_model("summary")
+
+            assert isinstance(planner_model, str)
+            assert isinstance(coder_model, str)
+            assert isinstance(summary_model, str)
+
+            # Summary should use cheaper model
+            assert "mini" in summary_model.lower() or summary_model == "gpt-5-mini"
 
     def test_complexity_aware_routing_api(self):
         """Test new complexity-aware API works alongside existing API."""
