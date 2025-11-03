@@ -468,7 +468,7 @@ class TestIntegration:
         import subprocess
 
         result = subprocess.run(
-            ['python', 'scripts/label_tests.py', '--help'],
+            [sys.executable, 'scripts/label_tests.py', '--help'],
             capture_output=True,
             text=True
         )
