@@ -14,11 +14,12 @@ NECESSARY Pattern Coverage:
 """
 
 from unittest.mock import MagicMock, patch
+import sys
 
 import pytest
 from pydantic import ValidationError
 
-from tools.bash import Bash, CommandValidationError
+from tools.bash import Bash, CommandValidationError, _SANDBOX_SUPPORTED
 
 
 class TestValidCommandsPassValidation:
@@ -240,6 +241,7 @@ class TestEmptyAndInvalidCommands:
 class TestSystemDirectoryProtection:
     """Test protection against system directory modifications (NECESSARY: Security)."""
 
+    @pytest.mark.skipif(not _SANDBOX_SUPPORTED, reason="Sandbox not supported on this host")
     def test_write_to_etc_blocked(self):
         # Arrange
         tool = Bash(command="echo 'malicious' > /etc/passwd")
@@ -250,6 +252,7 @@ class TestSystemDirectoryProtection:
         # Should be blocked by sandbox or runtime validation
         assert "Exit code: 0" not in result or "Operation not permitted" in result
 
+    @pytest.mark.skipif(not _SANDBOX_SUPPORTED, reason="Sandbox not supported on this host")
     def test_write_to_bin_blocked(self):
         # Arrange
         tool = Bash(command="cp /tmp/malicious.sh /bin/evil")
@@ -278,6 +281,7 @@ class TestSystemDirectoryProtection:
 class TestPathTraversalProtection:
     """Test protection against path traversal attacks (NECESSARY: Security)."""
 
+    @pytest.mark.skipif(not _SANDBOX_SUPPORTED, reason="Sandbox not supported on this host")
     def test_path_traversal_with_dots_blocked(self):
         # Arrange
         tool = Bash(command="echo 'bad' > /tmp/../etc/passwd")
@@ -324,6 +328,7 @@ class TestErrorMessageClarity:
         error_message = str(exc_info.value)
         assert "sudo" in error_message
 
+    @pytest.mark.skipif(not _SANDBOX_SUPPORTED, reason="Sandbox not supported on this host")
     def test_system_directory_error_message_shows_path(self):
         # Arrange
         tool = Bash(command="echo bad > /etc/shadow")
