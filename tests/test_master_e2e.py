@@ -256,7 +256,7 @@ result = process_data(None)
     def test_agent_communication_handoff(self):
         """Test agent handoff mechanism."""
         try:
-            from agency_swarm.tools import SendMessageHandoff
+            from shared.lean_adapter import SendMessageHandoff
 
             handoff = SendMessageHandoff()
             assert handoff is not None
@@ -273,7 +273,7 @@ result = process_data(None)
 
             # Test the key imports
             from shared.lean_adapter import Agency
-            from agency_swarm.tools import SendMessageHandoff
+            from shared.lean_adapter import SendMessageHandoff
 
             print("✅ Multi-Agent: Agency framework imports work")
 
