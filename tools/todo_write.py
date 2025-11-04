@@ -1,7 +1,7 @@
 from datetime import datetime
 from typing import Literal
 
-from agency_swarm.tools import BaseTool
+from shared.lean_adapter import BaseTool
 from pydantic import BaseModel, Field
 
 """TodoWrite tool - persists todos exclusively via Agency Swarm shared context.

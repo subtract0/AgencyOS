@@ -4,7 +4,7 @@ from datetime import UTC
 
 import litellm
 from shared.lean_adapter import Agent
-from agency_swarm.tools import BaseTool as Tool
+from shared.lean_adapter import BaseTool as Tool
 from pydantic import Field
 
 # Optional elevenlabs import (for TTS)

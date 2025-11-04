@@ -22,7 +22,7 @@ INTEGRATION:
 
 from enum import Enum
 
-from agency_swarm.tools import BaseTool
+from shared.lean_adapter import BaseTool
 from pydantic import BaseModel, Field, field_validator
 
 from shared.type_definitions import Err, Ok, Result

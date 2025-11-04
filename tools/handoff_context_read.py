@@ -3,7 +3,7 @@ import os
 from datetime import datetime
 from pathlib import Path
 
-from agency_swarm.tools import BaseTool
+from shared.lean_adapter import BaseTool
 from pydantic import Field
 
 

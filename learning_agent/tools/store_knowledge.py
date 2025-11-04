@@ -5,7 +5,7 @@ Store consolidated learnings in the VectorStore.
 import json
 from datetime import datetime
 
-from agency_swarm.tools import BaseTool
+from shared.lean_adapter import BaseTool
 from pydantic import Field
 
 from agency_memory import VectorStore

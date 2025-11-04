@@ -428,7 +428,7 @@ class TestExitPlanModeDocumentation:
     def test_inheritance(self):
         """Test proper inheritance from BaseTool."""
         # ExitPlanMode should inherit from agency_swarm.tools.BaseTool
-        from agency_swarm.tools import BaseTool
+        from shared.lean_adapter import BaseTool
 
         assert issubclass(ExitPlanMode, BaseTool)
 

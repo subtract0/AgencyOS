@@ -39,7 +39,7 @@ from datetime import UTC, datetime
 from enum import Enum
 from pathlib import Path
 
-from agency_swarm.tools import BaseTool
+from shared.lean_adapter import BaseTool
 from pydantic import BaseModel, Field
 
 from shared.tool_cache import with_cache

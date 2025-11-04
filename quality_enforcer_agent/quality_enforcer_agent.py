@@ -10,7 +10,7 @@ from datetime import UTC
 from subprocess import TimeoutExpired
 
 from shared.lean_adapter import Agent
-from agency_swarm.tools import BaseTool as Tool
+from shared.lean_adapter import BaseTool as Tool
 from pydantic import Field
 
 from shared.agent_context import AgentContext, create_agent_context

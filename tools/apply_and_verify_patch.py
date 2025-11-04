@@ -8,7 +8,7 @@ import os
 import subprocess
 from datetime import datetime
 
-from agency_swarm.tools import BaseTool as Tool
+from shared.lean_adapter import BaseTool as Tool
 from pydantic import Field
 
 from shared.type_definitions.json import JSONValue

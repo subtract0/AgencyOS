@@ -1,7 +1,7 @@
 import fnmatch
 import os
 
-from agency_swarm.tools import BaseTool
+from shared.lean_adapter import BaseTool
 from pydantic import Field
 
 from shared.tool_cache import with_cache
