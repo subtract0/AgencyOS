@@ -2911,7 +2911,12 @@ async def execute_primea_workflow(
             }
             for i, phase in enumerate(graph.phases)
         ]
-        TodoWrite(todos=phase_todos)
+        TodoWrite(
+            name="TodoWrite",
+            description="Task list management tool",
+            parameters={"type": "object"},
+            todos=phase_todos
+        )
 
     # 8. Task execution (call execute_task for each task with retry logic)
     total_tasks = len([t for phase in graph.phases for t in phase.tasks])
@@ -2924,7 +2929,12 @@ async def execute_primea_workflow(
             phase_idx = graph.phases.index(phase)
             if phase_idx < len(phase_todos):
                 phase_todos[phase_idx]["status"] = "in_progress"
-                TodoWrite(todos=phase_todos)
+                TodoWrite(
+                    name="TodoWrite",
+                    description="Task list management tool",
+                    parameters={"type": "object"},
+                    todos=phase_todos
+                )
 
         for task in phase.tasks:
             # Execute task with retry logic (Article I)
@@ -2945,7 +2955,12 @@ async def execute_primea_workflow(
     if enable_todos:
         for todo in phase_todos:
             todo["status"] = "completed"
-        TodoWrite(todos=phase_todos)
+        TodoWrite(
+            name="TodoWrite",
+            description="Task list management tool",
+            parameters={"type": "object"},
+            todos=phase_todos
+        )
 
     # Check if all tasks failed (permanent failure scenario)
     if completed_tasks == 0 and total_tasks > 0:

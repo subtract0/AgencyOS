@@ -27,7 +27,7 @@ class TestRunArchitectureLoop:
         tool = RunArchitectureLoop(
             name="RunArchitectureLoop",
             description="Architecture analysis tool",
-            parameters={}
+            parameters={"type": "object"}
         )
         assert tool.target_path == os.getcwd()
         assert tool.objective == "auto"
@@ -36,7 +36,7 @@ class TestRunArchitectureLoop:
         tool = RunArchitectureLoop(
             name="RunArchitectureLoop",
             description="Architecture analysis tool",
-            parameters={},
+            parameters={"type": "object"},
             target_path="/custom/path",
             objective="custom objective"
         )
