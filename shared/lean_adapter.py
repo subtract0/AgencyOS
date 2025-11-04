@@ -18,6 +18,9 @@ from typing import Any
 
 from shared.lean_agent import AgentConfig, LeanAgent, Tool
 
+# Backward compatibility alias for tools
+BaseTool = Tool
+
 
 class ToolWrapper:
     """Wrapper to add .name and .description attributes to tool classes/instances for backward compatibility."""
