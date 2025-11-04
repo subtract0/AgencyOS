@@ -39,9 +39,13 @@ Constitutional Requirements:
 import asyncio
 import re
 import subprocess
+import sys
 import time
 from pathlib import Path
 from unittest.mock import AsyncMock, patch
+
+
+REPO_ROOT = Path(__file__).resolve().parents[2]
 
 import pytest
 
@@ -70,16 +74,19 @@ def test_unit_tests_complete_instantly():
     # Act: Just collect tests to verify they exist and are marked correctly
     result = subprocess.run(
         [
-            "python", "-m", "pytest",
+            sys.executable,
+            "-m",
+            "pytest",
             "tests/integration/test_autonomous_audit_loop.py",
-            "-m", "not integration",  # Only unit tests
+            "-m",
+            "not integration",  # Only unit tests
             "--collect-only",  # Don't run, just collect
-            "-q"
+            "-q",
         ],
         capture_output=True,
         text=True,
         timeout=5,
-        cwd="/Users/am/Code/Agency"
+        cwd=str(REPO_ROOT),
     )
 
     # Assert: Collection should succeed
@@ -232,16 +239,19 @@ def test_integration_test_can_use_real_sleep():
     # Act: Collect integration tests to verify they exist
     result = subprocess.run(
         [
-            "python", "-m", "pytest",
+            sys.executable,
+            "-m",
+            "pytest",
             "tests/integration/test_autonomous_audit_loop.py",
-            "-m", "integration",  # Only integration tests
+            "-m",
+            "integration",  # Only integration tests
             "--collect-only",  # Don't run, just collect
-            "-q"
+            "-q",
         ],
         capture_output=True,
         text=True,
         timeout=5,
-        cwd="/Users/am/Code/Agency"
+        cwd=str(REPO_ROOT),
     )
 
     # Assert: Collection should succeed

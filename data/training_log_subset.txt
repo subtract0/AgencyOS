@@ -1,0 +1,67 @@
+
+⚡ FAST MODE: Training on 200-example subset
+   (Use for quick testing, then train on full dataset)
+
+======================================================================
+ESPER3.1 QLORA TRAINING (M4 Pro Optimized)
+======================================================================
+🔥 Using 10 CPU threads (M4 Pro performance cores)
+
+📦 Model: ValiantLabs/gpt-oss-20b-Esper3.1
+📊 Data: data/esper31_training_formatted.jsonl
+💾 Output: models/esper31-algorithms-qlora
+🔧 LoRA rank: 8 (reduced for memory)
+📈 Epochs: 3
+💪 Gradient accumulation: 32 (simulates batch=32)
+⏱️  Estimated time: 4-6 hours (CPU, full dataset, 10 threads)
+⚡ Subset mode: ~45 min (testing, 10 threads)
+
+🧠 Free memory: 9.4 GB
+⚠️  WARNING: Low memory. Close other applications!
+Continue anyway? [y/N]: `torch_dtype` is deprecated! Use `dtype` instead!
+
+📝 Loading tokenizer...
+📦 Loading base model in FP16...
+   (This may take 10-15 minutes - model is ~20GB)
+   Loading to CPU (MPS has compatibility issues)
+Loading checkpoint shards:   0%|          | 0/9 [00:00<?, ?it/s]Loading checkpoint shards:  11%|█         | 1/9 [00:02<00:18,  2.32s/it]Loading checkpoint shards:  22%|██▏       | 2/9 [00:04<00:15,  2.25s/it]Loading checkpoint shards:  33%|███▎      | 3/9 [00:06<00:13,  2.21s/it]Loading checkpoint shards:  44%|████▍     | 4/9 [00:08<00:10,  2.18s/it]Loading checkpoint shards:  56%|█████▌    | 5/9 [00:13<00:12,  3.02s/it]Loading checkpoint shards:  67%|██████▋   | 6/9 [00:17<00:09,  3.31s/it]Loading checkpoint shards:  78%|███████▊  | 7/9 [00:22<00:07,  3.89s/it]Loading checkpoint shards:  89%|████████▉ | 8/9 [00:30<00:05,  5.26s/it]Loading checkpoint shards: 100%|██████████| 9/9 [00:34<00:00,  4.92s/it]Loading checkpoint shards: 100%|██████████| 9/9 [00:34<00:00,  3.85s/it]
+/Users/am/Code/Agency/.venv-training/lib/python3.12/site-packages/bitsandbytes/cextension.py:34: UserWarning: The installed version of bitsandbytes was compiled without GPU support. 8-bit optimizers, 8-bit multiplication, and GPU quantization are unavailable.
+  warn("The installed version of bitsandbytes was compiled without GPU support. "
+✅ Model loaded on CPU in FP16 (~20GB)
+✅ Gradient checkpointing enabled (saves ~40% memory)
+
+🔧 Adding LoRA adapters...
+'NoneType' object has no attribute 'cadam32bit_grad_fp32'
+
+📊 Trainable Parameters:
+   Total: 20,916,747,840
+   Trainable: 1,990,656 (0.01%)
+   Memory for adapters: ~0.00 GB
+
+📊 Loading training data...
+⚠️  Using subset: 200 examples (faster iteration)
+🔄 Formatting data...
+Map:   0%|          | 0/200 [00:00<?, ? examples/s]Map: 100%|██████████| 200/200 [00:00<00:00, 6815.02 examples/s]
+🔄 Tokenizing...
+Map:   0%|          | 0/200 [00:00<?, ? examples/s]Map: 100%|██████████| 200/200 [00:00<00:00, 2828.09 examples/s]
+✅ Training samples: 180
+✅ Validation samples: 20
+
+⚙️  Configuring training...
+
+🚀 Starting training...
+   CPU threads: 10 (performance cores)
+   Data workers: 0 (single process - avoids macOS fork issues)
+   Effective batch size: 32
+   Steps per epoch: 5
+   Estimated time: ~45 minutes (subset)
+
+======================================================================
+💡 TIP: You can safely Ctrl+C and resume later from last checkpoint
+======================================================================
+
+  0%|          | 0/18 [00:00<?, ?it/s]/Users/am/Code/Agency/.venv-training/lib/python3.12/site-packages/torch/utils/data/dataloader.py:692: UserWarning: 'pin_memory' argument is set as true but not supported on MPS now, device pinned memory won't be used.
+  warnings.warn(warn_msg)
+`use_cache=True` is incompatible with gradient checkpointing. Setting `use_cache=False`.
+  6%|▌         | 1/18 [55:06<15:36:47, 3306.34s/it] 11%|█         | 2/18 [1:47:24<14:15:15, 3207.25s/it]/opt/homebrew/Cellar/python@3.12/3.12.11/Frameworks/Python.framework/Versions/3.12/lib/python3.12/multiprocessing/resource_tracker.py:279: UserWarning: resource_tracker: There appear to be 1 leaked semaphore objects to clean up at shutdown
+  warnings.warn('resource_tracker: There appear to be %d '

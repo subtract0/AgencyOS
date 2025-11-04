@@ -4,6 +4,7 @@ from pathlib import Path
 import pytest
 
 from tools import Bash
+from tools.bash import _SANDBOX_SUPPORTED
 
 
 def test_bash_default_timeout_and_exit_code():
@@ -338,8 +339,8 @@ def test_bash_sandbox_denies_write_outside_allowed():
     import os
     import sys
 
-    if sys.platform != "darwin" or not os.path.exists("/usr/bin/sandbox-exec"):
-        pytest.skip("Sandbox not available on this platform")
+    if not _SANDBOX_SUPPORTED:
+        pytest.skip("Sandbox not supported on this host")
 
     # Choose a path in HOME (outside CWD for repository tests)
     home = os.path.expanduser("~")

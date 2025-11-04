@@ -342,3 +342,18 @@ NEXT_SESSION_*.md
 
 # Demo/test files
 shared/demo_fixed_by_local_model.py
+.venv-training/
+
+# TRM Training Artifacts (Leap 8) - Local Only
+models/TinyRecursiveModels/
+models/trm-checkpoints/
+
+# Session logs
+logs/evolution_report_*.json
+
+# Local settings
+.claude/settings.local.json
+
+# Backup environments
+venv.backup-*/
+
