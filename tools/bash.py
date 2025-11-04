@@ -56,6 +56,9 @@ DANGEROUS_PATTERNS = [
     r"[;&|]+\s*rm\s+-[rf]",  # Chained dangerous rm commands
 ]
 
+# Detect sandbox support (macOS sandbox-exec)
+_SANDBOX_SUPPORTED = os.uname().sysname == "Darwin" and os.path.exists("/usr/bin/sandbox-exec")
+
 
 class CommandValidationError(Exception):
     """Raised when command validation fails."""
