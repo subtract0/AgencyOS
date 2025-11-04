@@ -971,11 +971,18 @@ class TestErrorConditions:
 
         mock_subprocess_run.side_effect = subprocess.TimeoutExpired("git", 10)
 
-        # Act
-        result = pr_creator.create_worktree(
-            task_description=pr_creator_config["task_description"],
-            branch_type=pr_creator_config["branch_type"],
-        )
+        # Mock .git directory existence check to allow test to proceed to subprocess call
+        def mock_exists(self):
+            if ".git" in str(self):
+                return True
+            return False
+
+        with patch.object(Path, "exists", mock_exists):
+            # Act
+            result = pr_creator.create_worktree(
+                task_description=pr_creator_config["task_description"],
+                branch_type=pr_creator_config["branch_type"],
+            )
 
         # Assert
         assert result.is_err()
@@ -996,11 +1003,18 @@ class TestErrorConditions:
 
         mock_subprocess_run.side_effect = FileNotFoundError("git: command not found")
 
-        # Act
-        result = pr_creator.create_worktree(
-            task_description=pr_creator_config["task_description"],
-            branch_type=pr_creator_config["branch_type"],
-        )
+        # Mock .git directory existence check to allow test to proceed to subprocess call
+        def mock_exists(self):
+            if ".git" in str(self):
+                return True
+            return False
+
+        with patch.object(Path, "exists", mock_exists):
+            # Act
+            result = pr_creator.create_worktree(
+                task_description=pr_creator_config["task_description"],
+                branch_type=pr_creator_config["branch_type"],
+            )
 
         # Assert
         assert result.is_err()
