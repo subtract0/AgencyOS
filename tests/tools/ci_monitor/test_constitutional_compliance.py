@@ -323,9 +323,10 @@ def test_article_iii_no_manual_override():
     controller = RetryController(policy=policy)
 
     # Article III: No force/skip flags
-    controller_source = Path(
-        "/Users/am/Code/Agency/tools/ci_monitor/retry_controller.py"
-    ).read_text()
+    # Dynamically resolve project root (handles both local and CI environments)
+    test_file = Path(__file__).resolve()
+    project_root = test_file.parent.parent.parent.parent  # tests/tools/ci_monitor/test_file.py -> tests/tools/ci_monitor -> tests/tools -> tests -> project_root
+    controller_source = (project_root / "tools" / "ci_monitor" / "retry_controller.py").read_text()
 
     assert "force" not in controller_source.lower(), (
         "Article III VIOLATION: Found 'force' bypass mechanism"
