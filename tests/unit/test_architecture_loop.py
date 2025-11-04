@@ -19,7 +19,13 @@ class TestRunArchitectureLoop:
     @pytest.fixture
     def tool_instance(self):
         """Create a RunArchitectureLoop instance."""
-        return RunArchitectureLoop(target_path="/test/path", objective="test objective")
+        return RunArchitectureLoop(
+            name="RunArchitectureLoop",
+            description="Architecture analysis tool",
+            parameters={"type": "object"},
+            target_path="/test/path",
+            objective="test objective"
+        )
 
     def test_initialization(self):
         """Test tool initialization with default and custom parameters."""
