@@ -184,7 +184,9 @@ class ClaudeMdValidator:
 @pytest.fixture
 def claude_md_path():
     """Path to CLAUDE.md file."""
-    return Path("/Users/am/Code/Agency/CLAUDE.md")
+    # Dynamically find repo root from test file location
+    repo_root = Path(__file__).parent.parent.parent
+    return repo_root / "CLAUDE.md"
 
 
 @pytest.fixture

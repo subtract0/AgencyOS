@@ -23,13 +23,23 @@ class TestRunArchitectureLoop:
 
     def test_initialization(self):
         """Test tool initialization with default and custom parameters."""
-        # Test with defaults
-        tool = RunArchitectureLoop()
+        # Test with defaults (must provide required BaseTool fields)
+        tool = RunArchitectureLoop(
+            name="RunArchitectureLoop",
+            description="Architecture analysis tool",
+            parameters={}
+        )
         assert tool.target_path == os.getcwd()
         assert tool.objective == "auto"
 
         # Test with custom parameters
-        tool = RunArchitectureLoop(target_path="/custom/path", objective="custom objective")
+        tool = RunArchitectureLoop(
+            name="RunArchitectureLoop",
+            description="Architecture analysis tool",
+            parameters={},
+            target_path="/custom/path",
+            objective="custom objective"
+        )
         assert tool.target_path == "/custom/path"
         assert tool.objective == "custom objective"
 
