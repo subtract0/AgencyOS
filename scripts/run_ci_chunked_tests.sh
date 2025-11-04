@@ -54,7 +54,10 @@ run_chunk() {
 
 # High-load suites executed individually
 run_chunk "orchestrator suite" tests/orchestrator
-run_chunk "tools suite" tests/tools
+# Split tools/ to prevent OOM (exit 137) - tools has many memory-heavy tests
+run_chunk "tools/ci_monitor suite" tests/tools/ci_monitor
+run_chunk "tools/orchestrator suite" tests/tools/orchestrator
+run_chunk "tools core suite" tests/tools/test_*.py
 run_chunk "integration suite" tests/integration
 run_chunk "unit suite" tests/unit
 
