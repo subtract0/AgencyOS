@@ -496,6 +496,7 @@ jobs:
           python -m pip install --upgrade pip
           python -m pip install -r requirements.txt
           python -m pip install git+https://github.com/openai/openai-agents-python.git@main
+          python -m pip install pytest-timeout
       - name: "Run miscellaneous tests"
         run: |
           export PYTHONPATH=${{ github.workspace }}
@@ -510,7 +511,8 @@ jobs:
             --ignore=tests/test_firestore_mock_integration.py \
             --ignore=tests/e2e \
             --ignore=tests/benchmarks \
-            -m "not slow" --ff --maxfail=1 -q
+            -m "not slow" --ff --maxfail=1 \
+            --timeout=30 --timeout-method=thread -vv
       - uses: actions/upload-artifact@v4
         if: always()
         with:
