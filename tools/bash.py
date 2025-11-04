@@ -6,7 +6,7 @@ import subprocess
 import threading
 from datetime import datetime, timedelta
 
-from agency_swarm.tools import BaseTool
+from shared.lean_adapter import BaseTool
 from pydantic import Field, field_validator
 
 from shared.timeout_wrapper import TimeoutConfig, with_constitutional_timeout
