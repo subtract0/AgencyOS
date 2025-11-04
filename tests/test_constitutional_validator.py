@@ -253,28 +253,30 @@ class TestArticleIVValidation:
 
     def test_validate_article_iv_rejects_disabled_learning(self):
         """Test that Article IV rejects DISABLE_LEARNING flag."""
-        from shared.constitutional_validator import ConstitutionalViolation, validate_article_iv
+        from shared.constitutional_validator import validate_article_iv
 
         with patch.dict("os.environ", {"DISABLE_LEARNING": "true"}):
-            with pytest.raises(ConstitutionalViolation, match="Article IV.*DISABLE_LEARNING"):
-                validate_article_iv()
+            result = validate_article_iv()
+            assert result.is_err()
+            assert "DISABLE_LEARNING" in result.unwrap_err()
 
     def test_validate_article_iv_requires_enhanced_memory_enabled(self):
         """Test that Article IV requires USE_ENHANCED_MEMORY to be true."""
-        from shared.constitutional_validator import ConstitutionalViolation, validate_article_iv
+        from shared.constitutional_validator import validate_article_iv
 
         # Test with explicit false
         with patch.dict("os.environ", {"USE_ENHANCED_MEMORY": "false"}):
-            with pytest.raises(ConstitutionalViolation, match="Article IV.*USE_ENHANCED_MEMORY"):
-                validate_article_iv()
+            result = validate_article_iv()
+            assert result.is_err()
+            assert "USE_ENHANCED_MEMORY" in result.unwrap_err()
 
     def test_validate_article_iv_passes_with_enhanced_memory_true(self):
         """Test that Article IV passes when USE_ENHANCED_MEMORY is true."""
         from shared.constitutional_validator import validate_article_iv
 
         with patch.dict("os.environ", {"USE_ENHANCED_MEMORY": "true"}):
-            # Should not raise
-            validate_article_iv()
+            result = validate_article_iv()
+            assert result.is_ok()
 
 
 class TestArticleVValidation:

@@ -140,13 +140,17 @@ class Memory:
     """
 
     def __init__(self, store: MemoryStore | None = None):
-        """Initialize with store backend.
-
-        Defaults to EnhancedMemoryStore for Article IV compliance (persistent cross-session learning).
-        Use explicit InMemoryStore() param for ephemeral memory (e.g., testing).
         """
+        Initialize with store backend. Defaults to EnhancedMemoryStore.
+
+        Article IV Compliance:
+            Defaults to EnhancedMemoryStore (VectorStore integration mandatory).
+            VectorStore enables institutional learning and cross-session knowledge.
+            InMemoryStore only used when explicitly specified (e.g., tests).
+        """
+        from agency_memory.enhanced_memory_store import EnhancedMemoryStore
+
         if store is None:
-            from agency_memory.enhanced_memory_store import EnhancedMemoryStore
             self._store = EnhancedMemoryStore()
         else:
             self._store = store
