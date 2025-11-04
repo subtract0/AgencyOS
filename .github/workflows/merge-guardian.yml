@@ -108,8 +108,21 @@ jobs:
           # Set timeout override for CI environment
           export AGENCY_TEST_TIMEOUT_OVERRIDE=300
 
-          # Run tests using run_tests.py for consistent execution (ADR-002)
-          python run_tests.py > test-results/test-output.log 2>&1
+          # CI-SAFE: Run pytest with single worker to avoid OOM (Exit 137)
+          # Background: run_tests.py uses memory-aware parallelism (up to 6 workers)
+          # This causes Out-of-Memory kills in CI's limited memory environment (~7GB)
+          # Solution: Direct pytest call with -n 1 (single worker) for CI stability
+          python -m pytest tests/ \
+            --ignore=tests/test_firestore_learning_persistence.py \
+            --ignore=tests/test_firestore_mock_integration.py \
+            --ignore=tests/e2e/ \
+            --ignore=tests/benchmarks/ \
+            -m "not slow" \
+            -n 1 \
+            --dist=loadgroup \
+            --tb=short \
+            -q \
+            > test-results/test-output.log 2>&1
           TEST_EXIT_CODE=$?
 
           # Parse test results for detailed analysis
