@@ -184,7 +184,7 @@ async def test_e2e_todowrite_synchronization_normal(
     # Arrange
     todo_states = []
 
-    def mock_todo_write(todos):
+    def mock_todo_write(todos, **kwargs):
         """Capture todo state changes for validation."""
         todo_states.append([t["status"] for t in todos])
 
