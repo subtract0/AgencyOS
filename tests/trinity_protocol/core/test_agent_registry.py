@@ -32,6 +32,12 @@ from trinity_protocol.core.agent_registry import (
 # ============================================================================
 
 
+@pytest.fixture(autouse=True)
+def mock_openai_api_key(monkeypatch):
+    """Set dummy OPENAI_API_KEY for all tests (makes tests hermetic, independent of CI secrets)."""
+    monkeypatch.setenv("OPENAI_API_KEY", "test-dummy-key-for-ci")
+
+
 @pytest.fixture
 def agent_context() -> AgentContext:
     """Provide a real AgentContext instance for testing."""
