@@ -75,9 +75,13 @@ run_chunk "integration suite (part 2)" \
   tests/integration/test_mock_asyncio_sleep.py \
   tests/integration/test_non_blocking_cleanup.py
 
-run_chunk "integration suite (part 3)" \
-  tests/integration/test_performance_regression.py \
-  tests/integration/test_remove_intentional_delays.py \
+run_chunk "integration suite (part 3a)" \
+  tests/integration/test_performance_regression.py
+
+run_chunk "integration suite (part 3b)" \
+  tests/integration/test_remove_intentional_delays.py
+
+run_chunk "integration suite (part 3c)" \
   tests/integration/test_unit_integration_separation.py
 run_chunk "unit suite" tests/unit
 
