@@ -47,9 +47,13 @@ run_chunk() {
     return
   fi
 
+  echo ">>> CHUNK START: ${label}"
   echo "Running ${PYTEST_BIN} ${targets[*]}"
   env PYTHONMALLOC=malloc "${PYTEST_CMD[@]}" "${targets[@]}" "${COMMON_ARGS[@]}"
+  local exit_code=$?
+  echo ">>> CHUNK END: ${label} (exit code: ${exit_code})"
   echo "::endgroup::"
+  return $exit_code
 }
 
 # High-load suites executed individually
@@ -58,7 +62,23 @@ run_chunk "orchestrator suite" tests/orchestrator
 run_chunk "tools/ci_monitor suite" tests/tools/ci_monitor
 run_chunk "tools/orchestrator suite" tests/tools/orchestrator
 run_chunk "tools core suite" tests/tools/test_*.py
-run_chunk "integration suite" tests/integration
+# Split integration/ to prevent OOM - died at 55% progress in run #19073096224
+run_chunk "integration suite (part 1)" \
+  tests/integration/test_ambient_to_witness.py \
+  tests/integration/test_autonomous_audit_loop.py \
+  tests/integration/test_ci_backlog_workflow.py \
+  tests/integration/test_epic4_2_complete.py
+
+run_chunk "integration suite (part 2)" \
+  tests/integration/test_function_timeouts.py \
+  tests/integration/test_memory_aware_integration.py \
+  tests/integration/test_mock_asyncio_sleep.py \
+  tests/integration/test_non_blocking_cleanup.py
+
+run_chunk "integration suite (part 3)" \
+  tests/integration/test_performance_regression.py \
+  tests/integration/test_remove_intentional_delays.py \
+  tests/integration/test_unit_integration_separation.py
 run_chunk "unit suite" tests/unit
 
 # Medium-size collections - split into smaller groups to prevent OOM
