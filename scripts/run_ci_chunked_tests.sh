@@ -61,19 +61,28 @@ run_chunk "tools core suite" tests/tools/test_*.py
 run_chunk "integration suite" tests/integration
 run_chunk "unit suite" tests/unit
 
-# Medium-size collections grouped together
-run_chunk "domain suites" \
+# Medium-size collections - split into smaller groups to prevent OOM
+# Memory-intensive test suites run separately
+run_chunk "chaos suite" tests/chaos
+run_chunk "stress suite" tests/stress
+
+# Documentation and governance suites
+run_chunk "adr/agents/commands/docs suites" \
   tests/adr \
   tests/agents \
-  tests/chaos \
   tests/commands \
-  tests/docs \
+  tests/docs
+
+# Foundation and meta learning suites
+run_chunk "foundation/meta/necessary/property suites" \
   tests/foundation_automation \
   tests/meta_learning \
   tests/necessary \
-  tests/property \
+  tests/property
+
+# Shared utilities and trinity protocol
+run_chunk "shared/trinity suites" \
   tests/shared \
-  tests/stress \
   tests/trinity_protocol
 
 # Top-level tests that live directly under tests/
