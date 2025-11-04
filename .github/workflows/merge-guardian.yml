@@ -27,6 +27,8 @@ env:
   # Enforce strict CI environment
   CI: true
   PYTHONPATH: ${{ github.workspace }}
+  # Article IV: VectorStore integration mandatory (constitutional mandate)
+  USE_ENHANCED_MEMORY: true
 
 jobs:
   # Core test verification job - enforces ADR-002 compliance
