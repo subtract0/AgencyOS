@@ -502,6 +502,7 @@ jobs:
           export PYTHONPATH=${{ github.workspace }}
           export USE_ENHANCED_MEMORY=true
           export AGENCY_TEST_TIMEOUT_OVERRIDE=300
+          export OPENAI_API_KEY=test-key-12345
           mkdir -p test-results
           env PYTHONMALLOC=malloc python -m pytest \
             tests/adr tests/agents tests/commands tests/docs \
