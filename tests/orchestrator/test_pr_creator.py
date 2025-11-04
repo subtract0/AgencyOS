@@ -53,10 +53,16 @@ def mock_temp_dir(tmp_path):
 
 
 @pytest.fixture
-def pr_creator_config():
-    """Fixture providing default PRCreator configuration."""
+def pr_creator_config(tmp_path):
+    """Fixture providing default PRCreator configuration with temp repo."""
+    # Create a temporary repository with .git directory
+    repo_root = tmp_path / "test_repo"
+    repo_root.mkdir(parents=True)
+    git_dir = repo_root / ".git"
+    git_dir.mkdir()
+
     return {
-        "repo_root": Path("/Users/am/Code/Agency"),
+        "repo_root": repo_root,
         "session_id": "test-session-123",
         "task_description": "jwt-authentication",
         "branch_type": "feat",
@@ -880,18 +886,11 @@ class TestCornerCases:
             session_id=pr_creator_config["session_id"],
         )
 
-        # Mock .git directory existence check to allow test to proceed to validation
-        def mock_exists(self):
-            if ".git" in str(self):
-                return True
-            return False
-
-        with patch.object(Path, "exists", mock_exists):
-            # Act
-            result = pr_creator.create_worktree(
-                task_description="test-feature",
-                branch_type="invalid_type",
-            )
+        # Act
+        result = pr_creator.create_worktree(
+            task_description="test-feature",
+            branch_type="invalid_type",
+        )
 
         # Assert
         assert result.is_err()
@@ -978,18 +977,11 @@ class TestErrorConditions:
 
         mock_subprocess_run.side_effect = subprocess.TimeoutExpired("git", 10)
 
-        # Mock .git directory existence check to allow test to proceed to subprocess call
-        def mock_exists(self):
-            if ".git" in str(self):
-                return True
-            return False
-
-        with patch.object(Path, "exists", mock_exists):
-            # Act
-            result = pr_creator.create_worktree(
-                task_description=pr_creator_config["task_description"],
-                branch_type=pr_creator_config["branch_type"],
-            )
+        # Act
+        result = pr_creator.create_worktree(
+            task_description=pr_creator_config["task_description"],
+            branch_type=pr_creator_config["branch_type"],
+        )
 
         # Assert
         assert result.is_err()
@@ -1010,18 +1002,11 @@ class TestErrorConditions:
 
         mock_subprocess_run.side_effect = FileNotFoundError("git: command not found")
 
-        # Mock .git directory existence check to allow test to proceed to subprocess call
-        def mock_exists(self):
-            if ".git" in str(self):
-                return True
-            return False
-
-        with patch.object(Path, "exists", mock_exists):
-            # Act
-            result = pr_creator.create_worktree(
-                task_description=pr_creator_config["task_description"],
-                branch_type=pr_creator_config["branch_type"],
-            )
+        # Act
+        result = pr_creator.create_worktree(
+            task_description=pr_creator_config["task_description"],
+            branch_type=pr_creator_config["branch_type"],
+        )
 
         # Assert
         assert result.is_err()
@@ -1169,18 +1154,11 @@ class TestStress:
 
         mock_subprocess_run.return_value = Mock(returncode=0, stdout="", stderr="")
 
-        # Mock .git directory existence check to allow test to proceed to subprocess call
-        def mock_exists(self):
-            if ".git" in str(self):
-                return True
-            return False
-
-        with patch.object(Path, "exists", mock_exists):
-            # Act
-            results = [
-                creator.create_worktree(task_description=f"feature-{i}", branch_type="feat")
-                for i, creator in enumerate(creators)
-            ]
+        # Act
+        results = [
+            creator.create_worktree(task_description=f"feature-{i}", branch_type="feat")
+            for i, creator in enumerate(creators)
+        ]
 
         # Assert
         for result in results:
