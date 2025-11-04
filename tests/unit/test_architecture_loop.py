@@ -338,11 +338,21 @@ class TestRunArchitectureLoop:
     def test_objective_parameter_usage(self):
         """Test that objective parameter is properly used."""
         # Test with auto objective
-        tool_auto = RunArchitectureLoop(objective="auto")
+        tool_auto = RunArchitectureLoop(
+            name="RunArchitectureLoop",
+            description="Architecture analysis tool",
+            parameters={"type": "object"},
+            objective="auto"
+        )
         assert tool_auto.objective == "auto"
 
         # Test with custom objective
-        tool_custom = RunArchitectureLoop(objective="Fix critical bug in authentication")
+        tool_custom = RunArchitectureLoop(
+            name="RunArchitectureLoop",
+            description="Architecture analysis tool",
+            parameters={"type": "object"},
+            objective="Fix critical bug in authentication"
+        )
         assert tool_custom.objective == "Fix critical bug in authentication"
 
         # Though the current implementation doesn't use objective in logic,
@@ -358,8 +368,18 @@ class TestRunArchitectureLoop:
 
     def test_concurrent_execution_safety(self):
         """Test that multiple instances can run safely."""
-        tool1 = RunArchitectureLoop(target_path="/path1")
-        tool2 = RunArchitectureLoop(target_path="/path2")
+        tool1 = RunArchitectureLoop(
+            name="RunArchitectureLoop",
+            description="Architecture analysis tool",
+            parameters={"type": "object"},
+            target_path="/path1"
+        )
+        tool2 = RunArchitectureLoop(
+            name="RunArchitectureLoop",
+            description="Architecture analysis tool",
+            parameters={"type": "object"},
+            target_path="/path2"
+        )
 
         with (
             patch(
