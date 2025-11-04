@@ -9,10 +9,12 @@ Performance: VectorStore caching with @lru_cache provides 5x query speedup.
 """
 
 import logging
+import os
 import threading
 from datetime import datetime
 from functools import lru_cache
 from typing import TYPE_CHECKING, Any
+from pathlib import Path
 
 from agency_memory import Memory
 from shared.type_definitions.json_value import JSONValue
@@ -172,8 +174,18 @@ class AgentContext:
                 "Install anthropic>=0.42.0: uv pip install 'anthropic>=0.42.0'"
             )
 
+        memory_base_dir = base_dir
+
+        if memory_base_dir is None:
+            env_data_dir = os.environ.get("AGENCY_DATA_DIR")
+            if env_data_dir:
+                session_component = self.session_id or "default"
+                memory_base_dir = str(Path(env_data_dir) / "memories" / session_component)
+                Path(memory_base_dir).mkdir(parents=True, exist_ok=True)
+
         self._anthropic_memory_tool = create_memory_tool(
-            session_id=self.session_id if base_dir is None else None, base_dir=base_dir
+            session_id=self.session_id if memory_base_dir is None else None,
+            base_dir=memory_base_dir,
         )
 
         logger.info(f"Anthropic Memory Tool enabled: {self._anthropic_memory_tool.base_dir}")

@@ -108,21 +108,10 @@ jobs:
           # Set timeout override for CI environment
           export AGENCY_TEST_TIMEOUT_OVERRIDE=300
 
-          # CI-SAFE: Run pytest with single worker to avoid OOM (Exit 137)
-          # Background: run_tests.py uses memory-aware parallelism (up to 6 workers)
-          # This causes Out-of-Memory kills in CI's limited memory environment (~7GB)
-          # Solution: Direct pytest call with -n 1 (single worker) for CI stability
-          python -m pytest tests/ \
-            --ignore=tests/test_firestore_learning_persistence.py \
-            --ignore=tests/test_firestore_mock_integration.py \
-            --ignore=tests/e2e/ \
-            --ignore=tests/benchmarks/ \
-            -m "not slow" \
-            -n 1 \
-            --dist=loadgroup \
-            --tb=short \
-            -q \
-            > test-results/test-output.log 2>&1
+          # CI-SAFE: Execute tests in memory-friendly chunks to avoid OOM (Exit 137)
+          # Background: The full suite exceeds the 7GB memory available on hosted runners.
+          # Solution: Run targeted pytest batches sequentially via helper script.
+          bash scripts/run_ci_chunked_tests.sh > test-results/test-output.log 2>&1
           TEST_EXIT_CODE=$?
 
           # Parse test results for detailed analysis
@@ -130,9 +119,16 @@ jobs:
 
           # Extract test statistics from pytest output
           # Use grep -o to extract numbers, default to 0 if not found
-          PASSED_TESTS=$(grep -o "[0-9]\+ passed" test-results/test-output.log | tail -1 | grep -o "[0-9]\+" || echo "0")
-          FAILED_TESTS=$(grep -o "[0-9]\+ failed" test-results/test-output.log | tail -1 | grep -o "[0-9]\+" || echo "0")
-          SKIPPED_TESTS=$(grep -o "[0-9]\+ skipped" test-results/test-output.log | tail -1 | grep -o "[0-9]\+" || echo "0")
+          sum_matches() {
+            local pattern=$1
+            local total
+            total=$(grep -oE "[0-9]+ ${pattern}" test-results/test-output.log | awk '{s+=$1} END {if (s=="") s=0; print s}')
+            echo "${total:-0}"
+          }
+
+          PASSED_TESTS=$(sum_matches "passed")
+          FAILED_TESTS=$(sum_matches "failed")
+          SKIPPED_TESTS=$(sum_matches "skipped")
 
           # Ensure variables are set to 0 if empty
           PASSED_TESTS=${PASSED_TESTS:-0}
@@ -147,6 +143,10 @@ jobs:
           echo "  ❌ Failed: $FAILED_TESTS"
           echo "  ⏭️ Skipped: $SKIPPED_TESTS"
           echo "  Exit Code: $TEST_EXIT_CODE"
+
+          if [[ "$TEST_EXIT_CODE" -eq 137 ]]; then
+            echo "⚠️ Detected exit code 137 (likely OOM). Consider adjusting test chunking."
+          fi
 
           # ADR-002 Compliance Check
           echo ""
