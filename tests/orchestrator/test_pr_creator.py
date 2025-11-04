@@ -524,11 +524,21 @@ class TestNormalOperation:
 
         mock_subprocess_run.return_value = Mock(returncode=0, stdout="", stderr="")
 
-        # Act
-        result = pr_creator.create_worktree(
-            task_description=pr_creator_config["task_description"],
-            branch_type=pr_creator_config["branch_type"],
-        )
+        # Mock .git directory and worktree path existence checks
+        original_exists = Path.exists
+
+        def mock_exists(self):
+            # .git directory exists, worktree path doesn't
+            if ".git" in str(self):
+                return True
+            return False
+
+        with patch.object(Path, "exists", mock_exists):
+            # Act
+            result = pr_creator.create_worktree(
+                task_description=pr_creator_config["task_description"],
+                branch_type=pr_creator_config["branch_type"],
+            )
 
         # Assert
         assert result.is_ok()
