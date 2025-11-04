@@ -880,11 +880,18 @@ class TestCornerCases:
             session_id=pr_creator_config["session_id"],
         )
 
-        # Act
-        result = pr_creator.create_worktree(
-            task_description="test-feature",
-            branch_type="invalid_type",
-        )
+        # Mock .git directory existence check to allow test to proceed to validation
+        def mock_exists(self):
+            if ".git" in str(self):
+                return True
+            return False
+
+        with patch.object(Path, "exists", mock_exists):
+            # Act
+            result = pr_creator.create_worktree(
+                task_description="test-feature",
+                branch_type="invalid_type",
+            )
 
         # Assert
         assert result.is_err()
@@ -1162,11 +1169,18 @@ class TestStress:
 
         mock_subprocess_run.return_value = Mock(returncode=0, stdout="", stderr="")
 
-        # Act
-        results = [
-            creator.create_worktree(task_description=f"feature-{i}", branch_type="feat")
-            for i, creator in enumerate(creators)
-        ]
+        # Mock .git directory existence check to allow test to proceed to subprocess call
+        def mock_exists(self):
+            if ".git" in str(self):
+                return True
+            return False
+
+        with patch.object(Path, "exists", mock_exists):
+            # Act
+            results = [
+                creator.create_worktree(task_description=f"feature-{i}", branch_type="feat")
+                for i, creator in enumerate(creators)
+            ]
 
         # Assert
         for result in results:
