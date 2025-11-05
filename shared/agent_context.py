@@ -27,6 +27,10 @@ if TYPE_CHECKING:
 
 logger = logging.getLogger(__name__)
 
+# Module-level singleton memory store for cross-session persistence (Article IV)
+_DEFAULT_MEMORY: Memory | None = None
+_memory_lock = threading.Lock()
+
 
 class AgentContext:
     """
@@ -104,9 +108,14 @@ class AgentContext:
         """
         tags = list(tags_tuple)
 
-        # Gather candidate set (session-scoped)
+        # Gather candidate set
         session_tag = f"session:{self.session_id}"
-        candidates = self.memory.search([session_tag]) if include_session else self.memory.get_all()
+        if include_session:
+            # Include memories across sessions (full institutional knowledge)
+            candidates = self.memory.get_all()
+        else:
+            # Restrict to current session only
+            candidates = self.memory.search([session_tag])
 
         req = set(tags or [])
         results: list[dict[str, JSONValue]] = []
@@ -132,7 +141,8 @@ class AgentContext:
         Search memories with optional session filtering.
 
         Semantics:
-        - Scope to current session when include_session=True.
+        - include_session=True: search across institutional memory (all sessions)
+        - include_session=False: restrict results to the current session only.
         - Return memories that contain ALL requested tags (conjunctive), not any-of.
         - Additionally, when searching for ["tool"] specifically, exclude error-tagged
           memories so that tool-only queries do not return error events.
@@ -633,11 +643,22 @@ def create_agent_context(
     Article IV Compliance:
         Creates EnhancedMemoryStore by default (VectorStore integration mandatory).
         VectorStore enables cross-session learning accumulation.
+
+    Cross-Session Persistence:
+        Uses module-level singleton memory store to ensure memories persist across
+        multiple agent sessions. All sessions share the same backing store unless
+        explicitly overridden.
     """
+    global _DEFAULT_MEMORY
+
     from agency_memory import EnhancedMemoryStore
     from agency_memory import Memory as MemoryClass
 
     if memory is None:
-        memory = MemoryClass(store=EnhancedMemoryStore())
+        # Thread-safe singleton initialization
+        with _memory_lock:
+            if _DEFAULT_MEMORY is None:
+                _DEFAULT_MEMORY = MemoryClass(store=EnhancedMemoryStore())
+            memory = _DEFAULT_MEMORY
 
     return AgentContext(memory=memory, session_id=session_id)
