@@ -467,3 +467,31 @@ def clean_model_env(monkeypatch):
     yield
 
     # Environment restored automatically by monkeypatch fixture cleanup
+
+
+@pytest.fixture(autouse=True)
+def reset_memory_singleton():
+    """
+    Reset the singleton memory store between tests for test isolation.
+
+    This ensures each test gets a clean memory state while maintaining
+    Article IV cross-session persistence in production.
+
+    The singleton is reset by setting _DEFAULT_MEMORY back to None,
+    which will be re-initialized on the next call to create_agent_context().
+
+    Constitutional Compliance:
+    - Article II: Test isolation ensures 100% test success
+    - Article IV: Singleton pattern maintains cross-session learning in production
+    """
+    import shared.agent_context as agent_context_module
+
+    # Reset singleton before test
+    with agent_context_module._memory_lock:
+        agent_context_module._DEFAULT_MEMORY = None
+
+    yield
+
+    # Reset singleton after test (cleanup)
+    with agent_context_module._memory_lock:
+        agent_context_module._DEFAULT_MEMORY = None
