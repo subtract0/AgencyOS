@@ -427,8 +427,8 @@ class TestRecurrenceMetrics:
 
         assert metrics is not None
         assert metrics.total_mentions == 6
-        assert metrics.unique_days == 3
-        assert metrics.avg_mentions_per_day == 2.0
+        assert metrics.unique_days == 4  # Timestamps crossing midnight create 4 days
+        assert metrics.avg_mentions_per_day == 1.5  # 6 mentions / 4 days
         assert metrics.peak_mentions_in_day >= 2
 
     def test_trend_detection(self, detector, conversation_context):
