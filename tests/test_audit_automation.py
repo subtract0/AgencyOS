@@ -129,6 +129,9 @@ class TestAuditOrchestrator:
         cache_path.parent.mkdir(parents=True, exist_ok=True)
         cache_path.write_text(json.dumps({"test1": {"duration_seconds": 0.5, "source": "junitxml"}}))
 
+        # Mock TestValueAuditorV5 to be None so orchestrator uses _create_mock_results()
+        monkeypatch.setattr("scripts.test_audit_automation.TestValueAuditorV5", None)
+
         orchestrator = AuditOrchestrator(config=mock_config)
 
         start_time = datetime.now()
