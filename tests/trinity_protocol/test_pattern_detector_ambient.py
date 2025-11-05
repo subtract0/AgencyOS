@@ -415,7 +415,8 @@ class TestRecurrenceMetrics:
     def test_calculate_recurrence_metrics(self, detector, conversation_context):
         """Should calculate accurate recurrence metrics."""
         topic = "daily standup"
-        now = datetime.now()
+        # Fixed timestamp near midnight to make day transitions deterministic across environments
+        now = datetime(2024, 3, 4, 0, 30)
 
         # Add mentions across 3 days
         for day in range(3):
