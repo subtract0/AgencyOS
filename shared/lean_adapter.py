@@ -16,6 +16,8 @@ Created: 2025-10-09
 
 from typing import Any
 
+from pydantic import Field
+
 from shared.lean_agent import AgentConfig, LeanAgent, Tool, ToolParameter
 
 
@@ -32,6 +34,9 @@ class BaseTool(Tool):
 
     Explicit overrides are preserved.
     """
+
+    # Execution context injected by runtime (exclude from schema)
+    context: dict[str, Any] | None = Field(default=None, exclude=True)
 
     def __init__(self, **kwargs):
         """Initialize BaseTool with auto-filled metadata for backward compatibility."""
