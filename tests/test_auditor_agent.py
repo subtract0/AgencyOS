@@ -146,8 +146,12 @@ def test_auditor_agent_initialization():
         assert len(agent.tools) > 0
 
 
-# test_analyze_codebase_tool_initialization removed - incompatible with lean_adapter Tool
-# base class requirements. Tool initialization is properly tested in integration tests.
+def test_analyze_codebase_tool_initialization():
+    """Test AnalyzeCodebase tool can be initialized."""
+    tool = AnalyzeCodebase(target_path="/test/path", mode="full")
+
+    assert tool.target_path == "/test/path"
+    assert tool.mode == "full"
 
 
 def test_analyze_codebase_nonexistent_path():
