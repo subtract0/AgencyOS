@@ -35,11 +35,17 @@ class BaseTool(Tool):
     Explicit overrides are preserved.
     """
 
-    # Execution context injected by runtime (exclude from schema)
-    context: dict[str, Any] | None = Field(default=None, exclude=True)
+    # Execution context injected by runtime (exclude from schema).
+    # Keep permissive typing (Any) so tool parameters that alias "context"
+    # continue to work without validation conflicts.
+    context: Any = Field(default=None, exclude=True)
 
     def __init__(self, **kwargs):
         """Initialize BaseTool with auto-filled metadata for backward compatibility."""
+        # Normalize legacy context alias before validation
+        if "_tool_exec_context" in kwargs and "context" not in kwargs:
+            kwargs["context"] = kwargs.pop("_tool_exec_context")
+
         # Auto-fill 'name' if not provided
         if "name" not in kwargs:
             kwargs["name"] = self.__class__.__name__
@@ -65,6 +71,11 @@ class BaseTool(Tool):
 
         # Call parent Tool.__init__ with filled metadata
         super().__init__(**kwargs)
+
+        # Provide legacy attribute expected by runtime/tooling
+        self._tool_exec_context = self.context
+
+        # Keep legacy attribute in sync for runtime hooks
 
 
 class ToolWrapper:
