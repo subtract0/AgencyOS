@@ -245,13 +245,14 @@ class ConversationContext:
         cutoff = datetime.now() - timedelta(minutes=time_window_minutes)
         return sum(1 for ts in mentions if ts >= cutoff)
 
-    def get_topic_cluster(self, topic: str, time_window_hours: float = 24.0) -> TopicCluster | None:
+    def get_topic_cluster(self, topic: str, time_window_hours: float = 24.0, current_time: datetime | None = None) -> TopicCluster | None:
         """
         Get topic cluster for recurrence analysis.
 
         Args:
             topic: Central topic
             time_window_hours: Time window for clustering
+            current_time: Reference time for window calculation (defaults to now)
 
         Returns:
             TopicCluster if topic has mentions, None otherwise
@@ -261,7 +262,10 @@ class ConversationContext:
         if topic_key not in self._topic_mentions:
             return None
 
-        cutoff = datetime.now() - timedelta(hours=time_window_hours)
+        if current_time is None:
+            current_time = datetime.now()
+
+        cutoff = current_time - timedelta(hours=time_window_hours)
         recent_mentions = [ts for ts in self._topic_mentions[topic_key] if ts >= cutoff]
 
         if not recent_mentions:
