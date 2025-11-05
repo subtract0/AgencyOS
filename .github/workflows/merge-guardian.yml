@@ -481,8 +481,8 @@ jobs:
           path: test-results/
           retention-days: 7
 
-  test-misc:
-    name: "🧪 Tests: adr/agents/commands/docs/foundation/meta/necessary/property/shared/trinity/top-level"
+  test-misc-adr-agents:
+    name: "🧪 Tests: adr+agents"
     needs: setup
     runs-on: ubuntu-latest
     timeout-minutes: 10
@@ -497,7 +497,7 @@ jobs:
           python -m pip install -r requirements.txt
           python -m pip install git+https://github.com/openai/openai-agents-python.git@main
           python -m pip install pytest-timeout
-      - name: "Run miscellaneous tests"
+      - name: "Run adr+agents tests"
         run: |
           export PYTHONPATH=${{ github.workspace }}
           export USE_ENHANCED_MEMORY=true
@@ -505,9 +505,7 @@ jobs:
           export OPENAI_API_KEY=test-key-12345
           mkdir -p test-results
           env PYTHONMALLOC=malloc python -m pytest \
-            tests/adr tests/agents tests/commands tests/docs \
-            tests/foundation_automation tests/meta_learning tests/necessary tests/property \
-            tests/shared tests/trinity_protocol tests/test_*.py \
+            tests/adr tests/agents \
             --ignore=tests/test_firestore_learning_persistence.py \
             --ignore=tests/test_firestore_mock_integration.py \
             --ignore=tests/e2e \
@@ -517,14 +515,166 @@ jobs:
       - uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: test-results-misc
+          name: test-results-misc-adr-agents
+          path: test-results/
+          retention-days: 7
+
+  test-misc-cmd-docs-foundation:
+    name: "🧪 Tests: commands+docs+foundation"
+    needs: setup
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+          cache: 'pip'
+      - run: |
+          python -m pip install --upgrade pip
+          python -m pip install -r requirements.txt
+          python -m pip install git+https://github.com/openai/openai-agents-python.git@main
+          python -m pip install pytest-timeout
+      - name: "Run commands+docs+foundation tests"
+        run: |
+          export PYTHONPATH=${{ github.workspace }}
+          export USE_ENHANCED_MEMORY=true
+          export AGENCY_TEST_TIMEOUT_OVERRIDE=300
+          export OPENAI_API_KEY=test-key-12345
+          mkdir -p test-results
+          env PYTHONMALLOC=malloc python -m pytest \
+            tests/commands tests/docs tests/foundation_automation \
+            --ignore=tests/test_firestore_learning_persistence.py \
+            --ignore=tests/test_firestore_mock_integration.py \
+            --ignore=tests/e2e \
+            --ignore=tests/benchmarks \
+            -m "not slow" --ff --maxfail=1 \
+            --timeout=30 --timeout-method=thread -vv
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: test-results-misc-cmd-docs-foundation
+          path: test-results/
+          retention-days: 7
+
+  test-misc-meta-necessary-property:
+    name: "🧪 Tests: meta+necessary+property"
+    needs: setup
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+          cache: 'pip'
+      - run: |
+          python -m pip install --upgrade pip
+          python -m pip install -r requirements.txt
+          python -m pip install git+https://github.com/openai/openai-agents-python.git@main
+          python -m pip install pytest-timeout
+      - name: "Run meta+necessary+property tests"
+        run: |
+          export PYTHONPATH=${{ github.workspace }}
+          export USE_ENHANCED_MEMORY=true
+          export AGENCY_TEST_TIMEOUT_OVERRIDE=300
+          export OPENAI_API_KEY=test-key-12345
+          mkdir -p test-results
+          env PYTHONMALLOC=malloc python -m pytest \
+            tests/meta_learning tests/necessary tests/property \
+            --ignore=tests/test_firestore_learning_persistence.py \
+            --ignore=tests/test_firestore_mock_integration.py \
+            --ignore=tests/e2e \
+            --ignore=tests/benchmarks \
+            -m "not slow" --ff --maxfail=1 \
+            --timeout=30 --timeout-method=thread -vv
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: test-results-misc-meta-necessary-property
+          path: test-results/
+          retention-days: 7
+
+  test-misc-shared-trinity:
+    name: "🧪 Tests: shared+trinity"
+    needs: setup
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+          cache: 'pip'
+      - run: |
+          python -m pip install --upgrade pip
+          python -m pip install -r requirements.txt
+          python -m pip install git+https://github.com/openai/openai-agents-python.git@main
+          python -m pip install pytest-timeout
+      - name: "Run shared+trinity tests"
+        run: |
+          export PYTHONPATH=${{ github.workspace }}
+          export USE_ENHANCED_MEMORY=true
+          export AGENCY_TEST_TIMEOUT_OVERRIDE=300
+          export OPENAI_API_KEY=test-key-12345
+          mkdir -p test-results
+          env PYTHONMALLOC=malloc python -m pytest \
+            tests/shared tests/trinity_protocol \
+            --ignore=tests/test_firestore_learning_persistence.py \
+            --ignore=tests/test_firestore_mock_integration.py \
+            --ignore=tests/e2e \
+            --ignore=tests/benchmarks \
+            -m "not slow" --ff --maxfail=1 \
+            --timeout=30 --timeout-method=thread -vv
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: test-results-misc-shared-trinity
+          path: test-results/
+          retention-days: 7
+
+  test-misc-toplevel:
+    name: "🧪 Tests: top-level files"
+    needs: setup
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+          cache: 'pip'
+      - run: |
+          python -m pip install --upgrade pip
+          python -m pip install -r requirements.txt
+          python -m pip install git+https://github.com/openai/openai-agents-python.git@main
+          python -m pip install pytest-timeout
+      - name: "Run top-level test files"
+        run: |
+          export PYTHONPATH=${{ github.workspace }}
+          export USE_ENHANCED_MEMORY=true
+          export AGENCY_TEST_TIMEOUT_OVERRIDE=300
+          export OPENAI_API_KEY=test-key-12345
+          mkdir -p test-results
+          env PYTHONMALLOC=malloc python -m pytest \
+            tests/test_*.py \
+            --ignore=tests/test_firestore_learning_persistence.py \
+            --ignore=tests/test_firestore_mock_integration.py \
+            --ignore=tests/e2e \
+            --ignore=tests/benchmarks \
+            -m "not slow" --ff --maxfail=1 \
+            --timeout=30 --timeout-method=thread -vv
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: test-results-misc-toplevel
           path: test-results/
           retention-days: 7
 
   # Consolidation job - aggregates all test job results
   test-verification:
     name: "ADR-002 Test Verification"
-    needs: [setup, test-orchestrator, test-tools-ci-monitor, test-tools-orchestrator, test-tools-core, test-integration-1, test-integration-2, test-integration-3a, test-integration-3b, test-integration-3c, test-unit, test-chaos, test-stress, test-misc]
+    needs: [setup, test-orchestrator, test-tools-ci-monitor, test-tools-orchestrator, test-tools-core, test-integration-1, test-integration-2, test-integration-3a, test-integration-3b, test-integration-3c, test-unit, test-chaos, test-stress, test-misc-adr-agents, test-misc-cmd-docs-foundation, test-misc-meta-necessary-property, test-misc-shared-trinity, test-misc-toplevel]
     runs-on: ubuntu-latest
     if: always()
     timeout-minutes: 5
@@ -562,7 +712,11 @@ jobs:
           echo "  test-unit: ${{ needs.test-unit.result }}"
           echo "  test-chaos: ${{ needs.test-chaos.result }}"
           echo "  test-stress: ${{ needs.test-stress.result }}"
-          echo "  test-misc: ${{ needs.test-misc.result }}"
+          echo "  test-misc-adr-agents: ${{ needs.test-misc-adr-agents.result }}"
+          echo "  test-misc-cmd-docs-foundation: ${{ needs.test-misc-cmd-docs-foundation.result }}"
+          echo "  test-misc-meta-necessary-property: ${{ needs.test-misc-meta-necessary-property.result }}"
+          echo "  test-misc-shared-trinity: ${{ needs.test-misc-shared-trinity.result }}"
+          echo "  test-misc-toplevel: ${{ needs.test-misc-toplevel.result }}"
 
           # Check if all jobs succeeded
           if [[ "${{ needs.test-orchestrator.result }}" == "success" ]] && \
@@ -577,7 +731,11 @@ jobs:
              [[ "${{ needs.test-unit.result }}" == "success" ]] && \
              [[ "${{ needs.test-chaos.result }}" == "success" ]] && \
              [[ "${{ needs.test-stress.result }}" == "success" ]] && \
-             [[ "${{ needs.test-misc.result }}" == "success" ]]; then
+             [[ "${{ needs.test-misc-adr-agents.result }}" == "success" ]] && \
+             [[ "${{ needs.test-misc-cmd-docs-foundation.result }}" == "success" ]] && \
+             [[ "${{ needs.test-misc-meta-necessary-property.result }}" == "success" ]] && \
+             [[ "${{ needs.test-misc-shared-trinity.result }}" == "success" ]] && \
+             [[ "${{ needs.test-misc-toplevel.result }}" == "success" ]]; then
             echo "✅ ADR-002 COMPLIANT: All test jobs passed"
             echo "status=success" >> $GITHUB_OUTPUT
             echo "summary=✅ ADR-002 COMPLIANT: All tests passed (job isolation approach)" >> $GITHUB_OUTPUT
