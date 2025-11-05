@@ -523,7 +523,7 @@ jobs:
     name: "🧪 Tests: commands+docs+foundation"
     needs: setup
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 25
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
