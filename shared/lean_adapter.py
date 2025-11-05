@@ -16,10 +16,50 @@ Created: 2025-10-09
 
 from typing import Any
 
-from shared.lean_agent import AgentConfig, LeanAgent, Tool
+from shared.lean_agent import AgentConfig, LeanAgent, Tool, ToolParameter
 
-# Backward compatibility alias for tools
-BaseTool = Tool
+
+class BaseTool(Tool):
+    """
+    Backward-compatible Tool subclass that auto-fills required Pydantic fields.
+
+    Legacy test pattern: tool = Bash(command="...")
+
+    This class auto-fills missing metadata:
+    - name: Defaults to class name
+    - description: Defaults to first line of docstring
+    - parameters: Defaults to permissive schema
+
+    Explicit overrides are preserved.
+    """
+
+    def __init__(self, **kwargs):
+        """Initialize BaseTool with auto-filled metadata for backward compatibility."""
+        # Auto-fill 'name' if not provided
+        if "name" not in kwargs:
+            kwargs["name"] = self.__class__.__name__
+
+        # Auto-fill 'description' if not provided
+        if "description" not in kwargs:
+            # Extract first non-empty line from docstring
+            docstring = self.__class__.__doc__
+            if docstring:
+                lines = docstring.strip().split('\n')
+                first_line = next((line.strip() for line in lines if line.strip()), None)
+                kwargs["description"] = first_line if first_line else f"{self.__class__.__name__} tool"
+            else:
+                kwargs["description"] = f"{self.__class__.__name__} tool"
+
+        # Auto-fill 'parameters' if not provided (permissive schema)
+        if "parameters" not in kwargs:
+            kwargs["parameters"] = ToolParameter(
+                type="object",
+                properties={},
+                required=[]
+            )
+
+        # Call parent Tool.__init__ with filled metadata
+        super().__init__(**kwargs)
 
 
 class ToolWrapper:
