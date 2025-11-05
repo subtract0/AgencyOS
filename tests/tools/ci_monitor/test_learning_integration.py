@@ -449,7 +449,7 @@ def test_session_continuity_across_restarts(agent_context):
     # Query patterns from new session (cross-session query)
     memories = new_context.search_memories(
         tags=["fix", "pattern", "format_error"],
-        include_session=False,  # Query across all sessions
+        include_session=True,  # Cross-session query (Article IV)
     )
 
     # Validate persistence
