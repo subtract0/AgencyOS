@@ -150,8 +150,14 @@ def test_auditor_agent_initialization():
 # base class requirements. Tool initialization is properly tested in integration tests.
 
 
-# test_analyze_codebase_nonexistent_path removed - incompatible with lean_adapter Tool
-# base class requirements. Nonexistent path handling is properly tested in integration tests.
+def test_analyze_codebase_nonexistent_path():
+    """Test AnalyzeCodebase handles nonexistent paths gracefully."""
+    tool = AnalyzeCodebase(target_path="/nonexistent/path")
+    result = tool.run()
+
+    result_data = json.loads(result)
+    assert "error" in result_data
+    assert "does not exist" in result_data["error"]
 
 
 def test_analyze_codebase_simple_analysis(temp_directory):
