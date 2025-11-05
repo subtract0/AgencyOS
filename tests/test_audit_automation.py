@@ -127,7 +127,7 @@ class TestAuditOrchestrator:
         # Setup runtime cache
         cache_path = tmp_path / ".audit" / "runtime_cache.json"
         cache_path.parent.mkdir(parents=True, exist_ok=True)
-        cache_path.write_text(json.dumps({"test1": {"duration_seconds": 0.5}}))
+        cache_path.write_text(json.dumps({"test1": {"duration_seconds": 0.5, "source": "junitxml"}}))
 
         orchestrator = AuditOrchestrator(config=mock_config)
 
