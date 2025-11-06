@@ -571,7 +571,7 @@ def test_snapshot_creation():
     from tools.quality_feedback.rule_refiner import RuleRefiner
 
     # Arrange
-    memory = Memory()
+    memory = Memory(store=InMemoryStore())
     context = create_agent_context(memory=memory, session_id="test")
     refiner = RuleRefiner(context)
 
@@ -602,7 +602,7 @@ def test_e2e_refine_operation():
     from tools.quality_feedback.rule_refiner import RuleRefiner
 
     # Arrange
-    memory = Memory()
+    memory = Memory(store=InMemoryStore())
     context = create_agent_context(memory=memory, session_id="test")
     refiner = RuleRefiner(context)
 
@@ -642,7 +642,7 @@ def test_convergence_simulation():
     from tools.quality_feedback.rule_refiner import RuleRefiner
 
     # Arrange
-    memory = Memory()
+    memory = Memory(store=InMemoryStore())
     context = create_agent_context(memory=memory, session_id="test")
     refiner = RuleRefiner(context)
 
@@ -681,7 +681,7 @@ def test_rollback_scenario():
     from tools.quality_feedback.rule_refiner import RuleRefiner
 
     # Arrange
-    memory = Memory()
+    memory = Memory(store=InMemoryStore())
     context = create_agent_context(memory=memory, session_id="test")
     refiner = RuleRefiner(context)
 
@@ -712,7 +712,7 @@ def test_threshold_tuning_integration():
     from tools.quality_feedback.rule_refiner import RuleRefiner
 
     # Arrange
-    memory = Memory()
+    memory = Memory(store=InMemoryStore())
     context = create_agent_context(memory=memory, session_id="test")
     refiner = RuleRefiner(context)
 
@@ -751,7 +751,7 @@ def test_vectorstore_learning_boost():
     from tools.quality_feedback.rule_refiner import RuleRefiner
 
     # Arrange
-    memory = Memory()
+    memory = Memory(store=InMemoryStore())
     context = create_agent_context(memory=memory, session_id="test")
     refiner = RuleRefiner(context)
 
@@ -871,7 +871,7 @@ def test_refinement_latency_under_50ms():
     from tools.quality_feedback.rule_refiner import RuleRefiner
 
     # Arrange
-    memory = Memory()
+    memory = Memory(store=InMemoryStore())
     context = create_agent_context(memory=memory, session_id="test")
     refiner = RuleRefiner(context)
 
