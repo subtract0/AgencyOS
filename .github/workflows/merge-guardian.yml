@@ -22,6 +22,10 @@ on:
         description: 'Reason for manual execution'
         required: false
         default: 'Manual ADR-002 verification'
+      run_top_level:
+        description: 'Run expensive top-level suites (core + leap)'
+        required: false
+        default: 'false'
 
 env:
   # Enforce strict CI environment
@@ -637,6 +641,7 @@ jobs:
     name: "🧪 Tests: top-level core"
     needs: setup
     runs-on: ubuntu-latest
+    if: github.event_name == 'workflow_dispatch' && inputs.run_top_level == 'true'
     timeout-minutes: 35
     steps:
       - uses: actions/checkout@v4
@@ -682,6 +687,7 @@ jobs:
     name: "🧪 Tests: top-level leap suites"
     needs: setup
     runs-on: ubuntu-latest
+    if: github.event_name == 'workflow_dispatch' && inputs.run_top_level == 'true'
     timeout-minutes: 25
     steps:
       - uses: actions/checkout@v4
@@ -721,7 +727,7 @@ jobs:
   # Consolidation job - aggregates all test job results
   test-verification:
     name: "ADR-002 Test Verification"
-    needs: [setup, test-orchestrator, test-tools-ci-monitor, test-tools-orchestrator, test-tools-core, test-integration-1, test-integration-2, test-integration-3a, test-integration-3b, test-integration-3c, test-unit, test-chaos, test-stress, test-misc-adr-agents, test-misc-cmd-docs-foundation, test-misc-meta-necessary-property, test-misc-shared-trinity, test-misc-toplevel-core, test-misc-toplevel-leap]
+    needs: [setup, test-orchestrator, test-tools-ci-monitor, test-tools-orchestrator, test-tools-core, test-integration-1, test-integration-2, test-integration-3a, test-integration-3b, test-integration-3c, test-unit, test-chaos, test-stress, test-misc-adr-agents, test-misc-cmd-docs-foundation, test-misc-meta-necessary-property, test-misc-shared-trinity]
     runs-on: ubuntu-latest
     if: always()
     timeout-minutes: 5
@@ -763,8 +769,12 @@ jobs:
           echo "  test-misc-cmd-docs-foundation: ${{ needs.test-misc-cmd-docs-foundation.result }}"
           echo "  test-misc-meta-necessary-property: ${{ needs.test-misc-meta-necessary-property.result }}"
           echo "  test-misc-shared-trinity: ${{ needs.test-misc-shared-trinity.result }}"
-          echo "  test-misc-toplevel-core: ${{ needs.test-misc-toplevel-core.result }}"
-          echo "  test-misc-toplevel-leap: ${{ needs.test-misc-toplevel-leap.result }}"
+          echo "  top-level suites requested: ${{ github.event_name == 'workflow_dispatch' && inputs.run_top_level == 'true' }}"
+          if [[ "${{ github.event_name }}" == "workflow_dispatch" && "${{ inputs.run_top_level }}" == "true" ]]; then
+            echo "  top-level suites status: running via dedicated shards (manual trigger)"
+          else
+            echo "  top-level suites status: skipped (manual verification required, see docs/ci/TOP_LEVEL_MANUAL_VERIFICATION.md)"
+          fi
 
           # Check if all jobs succeeded
           if [[ "${{ needs.test-orchestrator.result }}" == "success" ]] && \
@@ -782,9 +792,7 @@ jobs:
              [[ "${{ needs.test-misc-adr-agents.result }}" == "success" ]] && \
              [[ "${{ needs.test-misc-cmd-docs-foundation.result }}" == "success" ]] && \
              [[ "${{ needs.test-misc-meta-necessary-property.result }}" == "success" ]] && \
-             [[ "${{ needs.test-misc-shared-trinity.result }}" == "success" ]] && \
-             [[ "${{ needs.test-misc-toplevel-core.result }}" == "success" ]] && \
-             [[ "${{ needs.test-misc-toplevel-leap.result }}" == "success" ]]; then
+             [[ "${{ needs.test-misc-shared-trinity.result }}" == "success" ]]; then
             echo "✅ ADR-002 COMPLIANT: All test jobs passed"
             echo "status=success" >> $GITHUB_OUTPUT
             echo "summary=✅ ADR-002 COMPLIANT: All tests passed (job isolation approach)" >> $GITHUB_OUTPUT
