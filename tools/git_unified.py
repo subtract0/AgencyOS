@@ -170,13 +170,9 @@ class GitCore:
     # READ OPERATIONS
     # ========================================================================
 
-    @with_cache(ttl_seconds=5, file_dependencies=lambda self: [".git/index", ".git/HEAD"])
     def status(self) -> Result[str, GitError]:
         """
         Get git status (porcelain format).
-
-        Cached for 5 seconds with file dependency tracking on .git/index and .git/HEAD.
-        Cache invalidates when staging area or HEAD changes.
 
         Returns:
             Result[str, GitError]: Status output or error
