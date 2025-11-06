@@ -633,8 +633,53 @@ jobs:
           path: test-results/
           retention-days: 7
 
-  test-misc-toplevel:
-    name: "🧪 Tests: top-level files"
+  test-misc-toplevel-core:
+    name: "🧪 Tests: top-level core"
+    needs: setup
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+          cache: 'pip'
+      - run: |
+          python -m pip install --upgrade pip
+          python -m pip install -r requirements.txt
+          python -m pip install git+https://github.com/openai/openai-agents-python.git@main
+          python -m pip install pytest-timeout
+      - name: "Run top-level core tests"
+        run: |
+          export PYTHONPATH=${{ github.workspace }}
+          export USE_ENHANCED_MEMORY=true
+          export AGENCY_TEST_TIMEOUT_OVERRIDE=300
+          export OPENAI_API_KEY=test-key-12345
+          mkdir -p test-results
+          env PYTHONMALLOC=malloc python -m pytest \
+            tests/test_*.py \
+            --ignore=tests/test_firestore_learning_persistence.py \
+            --ignore=tests/test_firestore_mock_integration.py \
+            --ignore=tests/test_leap3_e2e_integration.py \
+            --ignore=tests/test_leap3_m5_validation.py \
+            --ignore=tests/test_leap4_e2e_quality_feedback.py \
+            --ignore=tests/test_leap5_phase1_integration.py \
+            --ignore=tests/test_leap5_phase2_integration.py \
+            --ignore=tests/test_leap5_phase3_e2e.py \
+            --ignore=tests/test_leap5_phase4_e2e.py \
+            --ignore=tests/e2e \
+            --ignore=tests/benchmarks \
+            -m "not slow" --ff --maxfail=1 \
+            --timeout=30 --timeout-method=thread -vv
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: test-results-misc-toplevel-core
+          path: test-results/
+          retention-days: 7
+
+  test-misc-toplevel-leap:
+    name: "🧪 Tests: top-level leap suites"
     needs: setup
     runs-on: ubuntu-latest
     timeout-minutes: 25
@@ -649,7 +694,7 @@ jobs:
           python -m pip install -r requirements.txt
           python -m pip install git+https://github.com/openai/openai-agents-python.git@main
           python -m pip install pytest-timeout
-      - name: "Run top-level test files"
+      - name: "Run leap validation tests"
         run: |
           export PYTHONPATH=${{ github.workspace }}
           export USE_ENHANCED_MEMORY=true
@@ -657,24 +702,26 @@ jobs:
           export OPENAI_API_KEY=test-key-12345
           mkdir -p test-results
           env PYTHONMALLOC=malloc python -m pytest \
-            tests/test_*.py \
-            --ignore=tests/test_firestore_learning_persistence.py \
-            --ignore=tests/test_firestore_mock_integration.py \
-            --ignore=tests/e2e \
-            --ignore=tests/benchmarks \
+            tests/test_leap3_e2e_integration.py \
+            tests/test_leap3_m5_validation.py \
+            tests/test_leap4_e2e_quality_feedback.py \
+            tests/test_leap5_phase1_integration.py \
+            tests/test_leap5_phase2_integration.py \
+            tests/test_leap5_phase3_e2e.py \
+            tests/test_leap5_phase4_e2e.py \
             -m "not slow" --ff --maxfail=1 \
             --timeout=30 --timeout-method=thread -vv
       - uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: test-results-misc-toplevel
+          name: test-results-misc-toplevel-leap
           path: test-results/
           retention-days: 7
 
   # Consolidation job - aggregates all test job results
   test-verification:
     name: "ADR-002 Test Verification"
-    needs: [setup, test-orchestrator, test-tools-ci-monitor, test-tools-orchestrator, test-tools-core, test-integration-1, test-integration-2, test-integration-3a, test-integration-3b, test-integration-3c, test-unit, test-chaos, test-stress, test-misc-adr-agents, test-misc-cmd-docs-foundation, test-misc-meta-necessary-property, test-misc-shared-trinity, test-misc-toplevel]
+    needs: [setup, test-orchestrator, test-tools-ci-monitor, test-tools-orchestrator, test-tools-core, test-integration-1, test-integration-2, test-integration-3a, test-integration-3b, test-integration-3c, test-unit, test-chaos, test-stress, test-misc-adr-agents, test-misc-cmd-docs-foundation, test-misc-meta-necessary-property, test-misc-shared-trinity, test-misc-toplevel-core, test-misc-toplevel-leap]
     runs-on: ubuntu-latest
     if: always()
     timeout-minutes: 5
@@ -716,7 +763,8 @@ jobs:
           echo "  test-misc-cmd-docs-foundation: ${{ needs.test-misc-cmd-docs-foundation.result }}"
           echo "  test-misc-meta-necessary-property: ${{ needs.test-misc-meta-necessary-property.result }}"
           echo "  test-misc-shared-trinity: ${{ needs.test-misc-shared-trinity.result }}"
-          echo "  test-misc-toplevel: ${{ needs.test-misc-toplevel.result }}"
+          echo "  test-misc-toplevel-core: ${{ needs.test-misc-toplevel-core.result }}"
+          echo "  test-misc-toplevel-leap: ${{ needs.test-misc-toplevel-leap.result }}"
 
           # Check if all jobs succeeded
           if [[ "${{ needs.test-orchestrator.result }}" == "success" ]] && \
@@ -735,7 +783,8 @@ jobs:
              [[ "${{ needs.test-misc-cmd-docs-foundation.result }}" == "success" ]] && \
              [[ "${{ needs.test-misc-meta-necessary-property.result }}" == "success" ]] && \
              [[ "${{ needs.test-misc-shared-trinity.result }}" == "success" ]] && \
-             [[ "${{ needs.test-misc-toplevel.result }}" == "success" ]]; then
+             [[ "${{ needs.test-misc-toplevel-core.result }}" == "success" ]] && \
+             [[ "${{ needs.test-misc-toplevel-leap.result }}" == "success" ]]; then
             echo "✅ ADR-002 COMPLIANT: All test jobs passed"
             echo "status=success" >> $GITHUB_OUTPUT
             echo "summary=✅ ADR-002 COMPLIANT: All tests passed (job isolation approach)" >> $GITHUB_OUTPUT
