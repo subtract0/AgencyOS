@@ -35,16 +35,17 @@ class BaseTool(Tool):
     Explicit overrides are preserved.
     """
 
-    # Execution context injected by runtime (exclude from schema).
-    # Keep permissive typing (Any) so tool parameters that alias "context"
-    # continue to work without validation conflicts.
-    context: Any = Field(default=None, exclude=True)
+    # Internal execution context injected by runtime (excluded from schema)
+    context_data: Any = Field(default=None, exclude=True, alias="_tool_exec_context")
 
     def __init__(self, **kwargs):
         """Initialize BaseTool with auto-filled metadata for backward compatibility."""
-        # Normalize legacy context alias before validation
-        if "_tool_exec_context" in kwargs and "context" not in kwargs:
-            kwargs["context"] = kwargs.pop("_tool_exec_context")
+        # Normalize legacy context aliases before validation
+        context_value = None
+        if "context" in kwargs:
+            context_value = kwargs.pop("context")
+        elif "_tool_exec_context" in kwargs:
+            context_value = kwargs.pop("_tool_exec_context")
 
         # Auto-fill 'name' if not provided
         if "name" not in kwargs:
@@ -72,10 +73,22 @@ class BaseTool(Tool):
         # Call parent Tool.__init__ with filled metadata
         super().__init__(**kwargs)
 
-        # Provide legacy attribute expected by runtime/tooling
-        self._tool_exec_context = self.context
+        # Apply incoming context after model initialization
+        if context_value is not None:
+            self.context = context_value
 
         # Keep legacy attribute in sync for runtime hooks
+        self._tool_exec_context = self.context_data
+
+    @property
+    def context(self) -> Any:
+        """Execution context accessor (backward compatibility)."""
+        return getattr(self, "context_data", None)
+
+    @context.setter
+    def context(self, value: Any) -> None:
+        self.context_data = value
+        self._tool_exec_context = value
 
 
 class ToolWrapper:
