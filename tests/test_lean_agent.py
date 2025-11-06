@@ -890,6 +890,17 @@ class TestEdgeCases:
 
 
 # Integration tests with real OpenAI API
+_REAL_OPENAI_KEY = os.getenv("OPENAI_API_KEY", "")
+_HAS_REAL_OPENAI_KEY = bool(_REAL_OPENAI_KEY) and not _REAL_OPENAI_KEY.startswith(
+    ("test-", "sk-test", "dummy", "placeholder")
+)
+
+
+@pytest.mark.integration
+@pytest.mark.skipif(
+    not _HAS_REAL_OPENAI_KEY,
+    reason="Requires valid OpenAI API key; skipped on CI placeholders",
+)
 class TestRealAPIIntegration:
     """Integration tests with real OpenAI API."""
 
