@@ -229,7 +229,11 @@ class TestInitOllamaModelIntegration:
         # Run script with non-existent container
         result = subprocess.run(
             ["bash", str(script_path)],
-            env={"OLLAMA_CONTAINER_NAME": "nonexistent-container"},
+            env={
+                "OLLAMA_CONTAINER_NAME": "nonexistent-container",
+                "OLLAMA_MAX_RETRIES": "1",
+                "OLLAMA_INITIAL_WAIT": "0",
+            },
             capture_output=True,
             text=True,
             timeout=30,
@@ -256,8 +260,8 @@ class TestInitOllamaModelIntegration:
             ["bash", str(script_path)],
             env={
                 "OLLAMA_CONTAINER_NAME": "nonexistent-test-container",
-                "MAX_RETRIES": "3",
-                "INITIAL_WAIT": "1",
+                "OLLAMA_MAX_RETRIES": "3",
+                "OLLAMA_INITIAL_WAIT": "1",
             },
             capture_output=True,
             text=True,

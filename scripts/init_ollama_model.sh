@@ -14,8 +14,8 @@ set -e
 CONTAINER_NAME="${OLLAMA_CONTAINER_NAME:-agency-ollama}"
 DEFAULT_MODEL="${OLLAMA_MODEL:-qwen3-coder:30b}"
 MODEL_NAME="${1:-$DEFAULT_MODEL}"
-MAX_RETRIES=10
-INITIAL_WAIT=5
+MAX_RETRIES="${OLLAMA_MAX_RETRIES:-10}"
+INITIAL_WAIT="${OLLAMA_INITIAL_WAIT:-5}"
 HEALTH_CHECK_URL="http://localhost:11434/api/tags"
 
 echo "🚀 Ollama Model Initialization Script"
