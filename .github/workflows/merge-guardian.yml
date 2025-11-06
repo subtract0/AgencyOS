@@ -663,7 +663,7 @@ jobs:
             --ignore=tests/e2e \
             --ignore=tests/benchmarks \
             -m "not slow" --ff --maxfail=1 \
-            -n ${PYTEST_WORKERS:-6} --dist loadfile \
+            -n ${PYTEST_WORKERS:-1} --dist loadfile \
             --timeout=30 --timeout-method=thread -vv
       - uses: actions/upload-artifact@v4
         if: always()
