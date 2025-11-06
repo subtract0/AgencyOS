@@ -357,3 +357,11 @@ logs/evolution_report_*.json
 # Backup environments
 venv.backup-*/
 
+# Documentation cleanup artifacts (2025-11-05)
+# Archives not preserved in git (legacy hardware docs, snapshots)
+archive/
+FACTUAL_ANALYSIS_2025-11-05.md
+ANALYSIS_LIMITATIONS_2025-11-05.md
+DOCUMENTATION_UPDATES_2025-11-05.md
+HARDWARE_REF_AUDIT_2025-11-05.md
+

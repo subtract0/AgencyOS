@@ -5,6 +5,7 @@ Tests in-memory store, tag search, timestamps, and fallback behavior.
 
 import os
 import tempfile
+import uuid
 from datetime import datetime
 from unittest.mock import MagicMock, patch
 
@@ -121,12 +122,14 @@ class TestMemoryClass:
     def test_memory_with_default_store(self):
         """Test Memory class with default InMemoryStore."""
         memory = Memory()
+        unique_tag = f"tag_{uuid.uuid4()}"
+        unique_key = f"test_{uuid.uuid4()}"
 
-        memory.store("test", "content", ["tag1"])
-        result = memory.search(["tag1"])
+        memory.store(unique_key, "content", [unique_tag])
+        result = memory.search([unique_tag])
 
         assert len(result) == 1
-        assert result[0]["key"] == "test"
+        assert result[0]["key"] == unique_key
 
     def test_memory_with_custom_store(self):
         """Test Memory class with custom store injection."""
@@ -448,7 +451,7 @@ class TestIntegration:
 
     def test_full_workflow(self):
         """Test complete workflow: store, search, analyze, transcript."""
-        memory = Memory()
+        memory = Memory(store=InMemoryStore())
 
         # Store some test data
         memory.store("task1", "Completed feature X", ["work", "completed"])

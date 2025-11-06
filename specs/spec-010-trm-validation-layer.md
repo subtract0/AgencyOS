@@ -456,7 +456,7 @@ TRMValidator.validate_and_refine()
 - **A-1**: TRM-7M research paper claims 87% accuracy on logical reasoning tasks (ARC, SUDOKU benchmarks)
 - **A-2**: Grid-based input format is sufficient for AgencyOS validation tasks
 - **A-3**: 16 refinement steps (from paper) provide optimal accuracy/latency trade-off
-- **A-4**: Local model execution on M4 Pro (48GB RAM) or similar hardware is feasible
+- **A-4**: Local model execution on current hardware (available memory RAM) or similar hardware is feasible
 
 ---
 

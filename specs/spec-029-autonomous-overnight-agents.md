@@ -7,7 +7,7 @@
 ## 1. Ziele
 
 - **G1: Kontinuierliche Codebase-Verbesserung:** Einrichten eines autonomen Prozesses, der über Nacht wichtige Wartungs- und Refactoring-Aufgaben in der `AgencyOS`-Codebase durchführt.
-- **G2: Verteilte Parallele Ausführung:** Nutzung der kombinierten Rechenleistung des MacBook Pro (M4 Pro) und MacBook Air (M4) für eine effiziente Abarbeitung.
+- **G2: Verteilte Parallele Ausführung:** Nutzung der kombinierten Rechenleistung des MacBook Pro (current hardware) und MacBook Air (M4) für eine effiziente Abarbeitung.
 - **G3: Nachvollziehbare Ergebnisse:** Jede abgeschlossene Mission wird in einem separaten, klar benannten Git-Branch isoliert, um eine einfache Überprüfung und ein sauberes Merging am nächsten Morgen zu ermöglichen.
 - **G4: Einfache Konfiguration und Erweiterbarkeit:** Der Pool der auszuführenden Missionen soll leicht über eine Konfigurationsdatei verwaltet und erweitert werden können.
 
@@ -24,7 +24,7 @@ Die "Nachtwache" besteht aus drei Hauptkomponenten: einem Orchestrator, verteilt
 Dies ist der Startpunkt. Er ruft das Orchestrator-Skript auf und übergibt Konfigurationsparameter.
 
 **Argumente:**
-- `--pro-threads <N>`: Anzahl der parallelen Worker auf dem M4 Pro (Standard: 2).
+- `--pro-threads <N>`: Anzahl der parallelen Worker auf dem current hardware (Standard: 2).
 - `--air-threads <N>`: Anzahl der parallelen Worker auf dem M4 Air (Standard: 1).
 - `--mission-set <name>`: Wählt ein vordefiniertes Set von Aufgaben (z.B. `refactoring`, `testing`, `docs`, `full`).
 

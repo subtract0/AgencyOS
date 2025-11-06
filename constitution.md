@@ -125,53 +125,60 @@ if [ $TEST_EXIT_CODE -ne 0 ]; then
 fi
 ```
 
-### Section 2.4: Hardware-Aware Execution (Amendment 2025-10-08, ADR-023)
+### Section 2.4: Hardware-Aware Execution (Updated 2025-11-05 for M4 Max 128GB)
 
-**Context**: Agency OS runs on Apple M4 Pro with 48GB unified memory. Operations must respect hardware constraints to ensure stability and test completion.
+**Context**: Agency OS runs on Mac Studio M4 Max with 128GB unified memory. Operations have massive memory headroom with no pressure concerns.
 
-#### Hardware Constraints
-- **Target System**: MacBook Pro M4 Pro, 48GB RAM, 273 GB/s memory bandwidth
-- **macOS Reserved**: ~8GB (system, WindowServer, background services)
-- **Available RAM**: 40GB (48GB - 8GB)
-- **Safe Budget**: 35GB (with 5GB safety margin for peaks)
+#### Hardware Constraints (Updated)
+- **Target System**: Mac Studio M4 Max, 128GB RAM, ~500 GB/s memory bandwidth
+- **macOS Reserved**: ~10GB (system, WindowServer, background services)
+- **Available RAM**: 118GB (128GB - 10GB)
+- **Safe Budget**: 111GB (with 7GB safety margin for peaks)
+- **Current Usage**: 5GB / 128GB (96% free - verified 2025-11-05)
 
-#### Memory-Aware Requirements
+#### Memory-Aware Requirements (M4 Max 128GB)
 
 **Local Model Execution**:
-- Local models MUST use optimized quantization (Q4_K_M weights + Q8_0 KV cache)
-- Model memory footprint MUST NOT exceed 37GB (19GB + 16GB + 2GB)
-- KV cache MUST use Q8_0 or Q4_0 quantization (not F16)
-- Configuration: `OLLAMA_KV_CACHE_TYPE="q8_0"`, `OLLAMA_FLASH_ATTENTION=1`
+- Current: vcoder-120b on REMOTE server (192.168.0.2) - 0GB local RAM
+- If local: Models up to ~100GB fit comfortably
+- Memory pressure: NOT a concern with 128GB
+- Configuration: Remote LM Studio (NOT Ollama)
 
 **Test Parallelism**:
-- Test workers MUST dynamically adjust based on local model state
-- With local model active: MAX 3 workers (9GB)
-- Without local model: MAX 10 workers (30GB)
-- Total memory usage MUST NOT exceed 40GB (85% of 48GB)
+- Test workers can scale to 20-30 workers comfortably
+- Current default: 6 workers (conservative, can increase)
+- Recommended: 20 workers for M4 Max 128GB
+- Maximum safe: 30-40 workers (90-120GB)
+- Total memory usage can safely reach 100GB (78% of 128GB)
 
-**Memory Pressure Response**:
-- Operations MUST check available memory before spawning parallel processes
-- Memory exhaustion MUST trigger cloud API fallback for P3 tasks
-- Kernel panics constitute BLOCKING violations requiring immediate mitigation
-- Test execution incomplete due to OOM = Article I violation (incomplete context)
+**Memory Pressure Response** (RARELY NEEDED):
+- Operations should check available memory before spawning >30 workers
+- Memory exhaustion: NOT expected with 128GB
+- Kernel panics: NOT expected with this hardware
+- OOM errors: Only if spawning >40 workers simultaneously
 
 #### Implementation Requirements
 ```python
-# Required memory check pattern
+# Updated memory check pattern for M4 Max 128GB
 import psutil
 
 def verify_memory_safe(required_gb: int) -> bool:
     mem = psutil.virtual_memory()
     available_gb = mem.available / (1024 ** 3)
-    return available_gb >= required_gb + 5  # 5GB safety margin
+
+    # M4 Max 128GB: Much more generous thresholds
+    if mem.total / (1024 ** 3) >= 120:  # M4 Max detected
+        return available_gb >= required_gb  # No safety margin needed
+    else:
+        return available_gb >= required_gb + 5  # 5GB safety for other hardware
 
 # Before parallel operations
-if not verify_memory_safe(required_gb=10):
-    # Fall back to cloud API or sequential execution
-    use_cloud_fallback()
+if not verify_memory_safe(required_gb=60):  # 20 workers * 3GB
+    # Reduce worker count or fall back to cloud
+    use_reduced_workers()
 ```
 
-**Reference**: `docs/HARDWARE_OPTIMIZATION.md` for complete memory budgets and optimization techniques.
+**Reference**: `docs/HARDWARE_OPTIMIZATION.md` for M4 Max 128GB optimizations (updated 2025-11-05).
 
 ---
 

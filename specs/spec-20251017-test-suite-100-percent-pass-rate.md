@@ -242,7 +242,7 @@ Focus on surgical precision to fix 64 failing tests. Expanding scope risks intro
 **NF-05: Scalability - Memory-Aware Execution**
 - Tests dynamically adjust worker count based on available memory (ADR-023)
 - No kernel panics or OOM errors during test execution
-- Total memory usage <40GB (85% of 48GB M4 Pro)
+- Total memory usage <40GB (85% of available memory current hardware)
 - Acceptance: `tools/memory_aware_test_runner.py` validates memory safety
 
 **NF-06: Error Handling - Result Pattern Compliance**
@@ -355,7 +355,7 @@ Focus on surgical precision to fix 64 failing tests. Expanding scope risks intro
 - **Behavior 2**: Achieves >1.3x speedup over sequential validation
 - **Behavior 3**: Thread-safe operation (no race conditions)
 - **Behavior 4**: Graceful handling of validation failures (partial success)
-- **Constraint**: Max concurrency limited by available CPU cores (14 on M4 Pro)
+- **Constraint**: Max concurrency limited by available CPU cores (14 on current hardware)
 
 **Test Strategy**:
 - Unit test: `concurrent_validate_graphs()` validates 5 graphs in parallel
@@ -635,7 +635,7 @@ Focus on surgical precision to fix 64 failing tests. Expanding scope risks intro
 
 ### NFR-05: Memory Safety - No OOM Errors
 
-**Target**: Total memory usage <40GB (85% of 48GB M4 Pro)
+**Target**: Total memory usage <40GB (85% of available memory current hardware)
 **Measurement**: `tools/memory_aware_test_runner.py` dynamic worker adjustment
 **Acceptance**: Zero kernel panics, zero OOM errors
 
@@ -840,12 +840,12 @@ Focus on surgical precision to fix 64 failing tests. Expanding scope risks intro
 
 ### Resource Constraints
 
-**Memory**: <40GB total usage (85% of 48GB M4 Pro, 5GB safety margin)
+**Memory**: <40GB total usage (85% of available memory current hardware, 5GB safety margin)
 - Breakdown: 19GB local model + 16GB KV cache + 9GB tests (3 workers) + 5GB safety = 49GB (over budget)
 - Mitigation: If local model active, reduce to 3 workers (9GB) → total 44GB (safe)
 - Mitigation: If local model inactive, use 10 workers (30GB) → total 30GB (safe)
 
-**CPU**: <100% average utilization (burst to 200% acceptable, M4 Pro has 14 cores)
+**CPU**: <100% average utilization (burst to 200% acceptable, current hardware has 14 cores)
 - Parallel test execution spreads load across cores
 - No single test should consume >10% CPU for >10 seconds
 

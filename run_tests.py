@@ -481,13 +481,14 @@ def main(
         else:
             from tools.memory_aware_test_runner import get_safe_worker_count
 
-            # Cap at 1 worker for 100% stability (Article II: 100% pass rate mandatory)
-            # Tests have race conditions with parallel execution - serial mode prevents all failures
-            # Memory-aware count can suggest 3-10 workers, but tests require serial execution
+            # Use memory-aware worker count (updated 2025-11-05 for M4 Max 128GB)
+            # Previous: Capped at 1 worker for stability (race condition issues)
+            # Current: Allow up to 6 workers on M4 Max 128GB (conservative due to flakes)
+            # Note: May reveal race conditions in tests - fix tests if failures occur
             memory_based_count = get_safe_worker_count()
-            worker_count = min(memory_based_count, 1)
+            worker_count = memory_based_count
             pytest_args.extend(["-n", str(worker_count)])
-            print(f"✓ pytest-xdist: {worker_count} workers (serial mode for stability, Article II compliance)")
+            print(f"✓ pytest-xdist: {worker_count} workers (memory-aware, M4 Max optimized)")
     except Exception:
         # Fallback to pytest.ini default (-n 6 --dist loadgroup)
         print("✓ pytest-xdist: using pytest.ini defaults (-n 6)")

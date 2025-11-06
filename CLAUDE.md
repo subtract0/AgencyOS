@@ -10,6 +10,7 @@ I am an elite autonomous agent, the primary interface for the subtract0/AgencyOS
 1. **Load City-Map**: `.claude/quick-ref/city-map.md` → Navigate the codebase (Tier 1-8 structure)
 2. **🔴 Check Constitution**: `.claude/quick-ref/constitution-checklist.md` → **Article VI (TDD) is HIGHEST PRIORITY** - Validate Articles I-VI before action
 3. **Prime Command**: Use `/primecc` to load essential context (10k tokens vs 140k previously)
+4. **Hardware Context**: Mac Studio M4 Max, 128GB RAM (NOT M4 Pro 48GB) - See `docs/HARDWARE_OPTIMIZATION.md`
 
 **🔴 ARTICLE VI MANDATE (RED-GREEN-REFACTOR TDD):**
 - **Tests written FIRST** (they MUST fail initially)
@@ -141,12 +142,13 @@ def process() -> Result[Data, Error]:
 
 ### **Test Execution**
 ```bash
-python run_tests.py --run-all    # 1,762 tests (unit only, skips 140 Ollama tests)
-python run_tests.py --with-docker --run-all    # 1,762 tests (full suite with Ollama)
+python run_tests.py --run-all    # ~6,496 test functions (verified 2025-11-05)
+python run_tests.py --with-docker --run-all    # Full suite with Ollama integration
 python run_tests.py              # Unit tests only
 python run_tests.py --with-docker --integration-only  # Ollama integration tests
-uv run pytest                    # Backend tests
+uv run pytest                    # Backend tests (requires dependencies)
 ```
+**Note**: Test count updated from outdated "1,762" claim. Actual: ~6,496 test functions in 297 files.
 
 ---
 
@@ -513,17 +515,24 @@ AUDITOR_MODEL=gpt-5                   # Quality analysis
 QUALITY_ENFORCER_MODEL=gpt-5          # Constitutional compliance
 SUMMARY_MODEL=gpt-5-mini              # Cost-efficient summaries
 
-# Local Model Integration (Phase 3: 96% cost reduction)
-USE_LOCAL_MODEL=true                  # Enable local Ollama for P3 tasks (default: true)
-LOCAL_MODEL_NAME=qwen3-coder:30b      # Official Ollama model (Q4_K_M, 19GB, Metal optimized)
-LOCAL_MODEL_TEST_WORKERS=3            # Test workers when local model active (prevents memory exhaustion)
-# P3 (simple): Fix typos, format code → $0 (local) - 60% of tasks
-# P2 (moderate): Feature impl, bug fixes → gpt-4o ($1.50/1M) - 30%
-# P1 (complex): Architecture, ADRs → gpt-5 ($4.00/1M) - 10%
+# Local Model Configuration (ACTUAL - Verified 2025-11-05)
+# Current: 100% vcoder-120b (remote LM Studio) - $0 cost
+AGENCY_MODEL=vcoder-120b-1.0-qx86-hi-mlx           # ALL agents use this model
+LOCAL_MODEL_NAME=vcoder-120b-1.0-qx86-hi-mlx       # 120B params (NOT 30B)
+LOCAL_MODEL_TEST_WORKERS=6                         # Current default (can increase to 20 for M4 Max 128GB)
+OPENAI_API_BASE=http://192.168.0.2:1234/v1        # Remote LM Studio server
+
+# REALITY (verified .env):
+# - 100% local network model (vcoder-120b) → $0 cost
+# - NO tier routing active (P1/P2/P3 code exists but disabled)
+# - Remote LM Studio (NOT Ollama)
+# - Memory: ~30GB remote, 128GB local Mac Studio (massive headroom)
 #
-# Apple Silicon Optimization (2025): KV cache Q8_0 quantization
-# Memory: 19GB (model) + 16GB (KV Q8_0) + 9GB (3 workers) = 44GB (safe for 48GB Mac)
-# Setup: bash scripts/setup_local_model.sh (see docs/LOCAL_MODEL_OPTIMIZATION.md)
+# THEORETICAL (code exists, not active):
+# - P3 (simple): Local model → $0 (60% of tasks)
+# - P2 (moderate): gpt-4o → $1.50/1M (30% of tasks)
+# - P1 (complex): gpt-5 → $4.00/1M (10% of tasks)
+# - Could enable tier routing by removing model env overrides
 
 # Memory & Learning (MANDATORY - Article IV)
 USE_ENHANCED_MEMORY=true              # REQUIRED: VectorStore integration (constitutional mandate)
@@ -570,14 +579,21 @@ ollama run hf.co/abirhossen/Qwen3-Coder-30B-A3B-Instruct-Q8_0-GGUF:Q8_0 \
 - Set `LOCAL_MODEL_TEST_WORKERS=2` for tighter memory constraints
 ```
 
-### **Docker Compose Setup (Recommended)**
+### **Docker Compose Setup (Optional)**
 
-**Setup:** `brew install --cask docker && docker compose up -d` → Enables 140 Ollama integration tests
+**Note**: Current system uses Remote LM Studio (192.168.0.2:1234), NOT Ollama.
+
+**Setup (if enabling Ollama tests):** `brew install --cask docker && docker compose up -d`
 **Usage:** `python run_tests.py --with-docker --run-all` (unit + integration)
 
-**Benefits:** Reproducible environments, auto lifecycle management, 32GB model persistence, 40GB memory limits (ADR-023)
+**Benefits:** Reproducible environments, auto lifecycle management, model persistence
 
-**Config** (`docker-compose.yml`):
+**Current Status**:
+- Ollama NOT installed locally (`ollama list` returns empty)
+- LM Studio running locally but model on remote server
+- Docker Compose available for optional Ollama integration tests
+
+**Config Reference** (`docker-compose.yml`):
 ```yaml
 services:
   ollama:
@@ -586,23 +602,15 @@ services:
     ports: ["11434:11434"]
     volumes: ["~/.ollama:/root/.ollama"]
     environment:
-      OLLAMA_KV_CACHE_TYPE: q8_0  # 2x memory savings
+      OLLAMA_KV_CACHE_TYPE: q8_0
       OLLAMA_FLASH_ATTENTION: 1
     deploy:
       resources:
         limits:
-          memory: 40G
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:11434/api/tags"]
-      start_period: 120s
+          memory: 60G  # Updated for M4 Max 128GB (was 40GB for M4 Pro)
 ```
 
-**Troubleshooting:**
-- **Port conflict**: `lsof -i :11434 && killall ollama`
-- **Memory issues**: `docker stats agency-ollama` (should be <40GB)
-- **Unhealthy container**: `docker compose logs ollama && docker compose restart`
-
-**Docs:** `specs/spec-023-ollama-docker-integration.md`, `docs/adr/ADR-023-memory-aware-test-execution.md`
+**Docs:** `specs/spec-023-ollama-docker-integration.md`
 
 ### **Running Commands**
 ```bash
@@ -639,13 +647,13 @@ python run_tests.py --run-all         # Must show 100% pass rate
 
 ## **🚀 Leap Evolution History**
 
-**Leap 8: Adaptive Routing Architecture** ⚡ (2025-10-25) - **PIVOTED** from TRM-7M (grid puzzles, not code) to adaptive complexity routing with Esper3.1. Heuristic classification (P1/P2/P3), dynamic params, 100% local inference ($0 cost). QLoRA training infrastructure validated (20B models on 48GB Mac). Future: custom code specialist when resources allow. *ADR-034 (amended), docs/TRM_PIVOT.md*
+**Leap 8: Adaptive Routing Architecture** ⚡ (2025-10-25) - **PIVOTED** from TRM-7M (grid puzzles, not code) to adaptive complexity routing with Esper3.1. Heuristic classification (P1/P2/P3), dynamic params, 100% local inference ($0 cost). QLoRA training infrastructure validated (20B models on M4 Max 128GB). Future: custom code specialist when resources allow. *ADR-034 (amended), docs/TRM_PIVOT.md*
 
 **Leap 7: Test-Driven Autonomy** ✅ (2025-10-11) - TDD protocol, NECESSARY validator, test gate, PR creator, two-stage workflow. +37 tests, +5 tools. *ADR-026*
 
 **Leap 4: Quality Feedback Loop** ✅ (2025-10-10) - Misclassification detection, VectorStore-driven refinement, real-time monitoring. +89 tests, ~12% cost reduction. *ADR-025*
 
-**Leap 3: Adaptive Model Router** ✅ (2025-10-07) - Three-tier classification (P1/P2/P3), skill evolution, cross-session learning. 96% cost reduction ($40K → $1.6K/month). *ADR-024*
+**Leap 3: Adaptive Model Router** ✅ (2025-10-07) - Three-tier classification (P1/P2/P3), skill evolution, cross-session learning. **CODE EXISTS** but DISABLED in current config. Theoretical: 96% cost reduction ($40K → $1.6K/month). **ACTUAL**: 100% reduction ($0, all vcoder-120b). *ADR-024*
 
 **Leap 2: Smart Factory** (Planned) - Task graph DSL, reusable templates, constitutional validation per node
 
@@ -653,22 +661,31 @@ python run_tests.py --run-all         # Must show 100% pass rate
 
 ---
 
-## **📊 Production Metrics**
+## **📊 Production Metrics** (Updated 2025-11-05)
 
-- **1,762+ tests** passing with 100% success rate (+37 new Leap 7 test-driven autonomy tests)
-- **Zero test failures** under constitutional enforcement (TDD protocol mandatory)
-- **<3 seconds** for constitutional test suite validation
-- **175 test files** total across codebase (+7 new Leap 7 test files)
-- **>95% healing success rate** for autonomous fixes
-- **100% constitutional compliance** across all agents (Articles I-V)
-- **41 production tools** with security hardening (+5 new Leap 7 TDD tools)
-- **Test-Driven Autonomy** operational (Leap 7 complete: TDD protocol, NECESSARY validator, test gate, PR creator, two-stage workflow)
-- **Quality Feedback Loop** operational (Leap 4 complete: misclassification detection, VectorStore refinement, real-time monitoring)
-- **Adaptive Routing Architecture** operational (Leap 8: QLoRA pipeline validated, complexity classification framework ready, pivot to code-optimized models)
+**Verified Metrics**:
+- **~6,496 test functions** in 297 test files (verified via grep, not 1,762)
+- **100% test pass rate**: ❓ UNVERIFIED (cannot run tests - missing dependencies)
+- **Cost tracking**: ✅ Implemented (124 entries in trinity_costs.db, last: 2025-11-05)
+- **Current cost**: $0/month (100% vcoder-120b local network model)
+- **64 production tools** in tools/ directory
+- **Hardware**: Mac Studio M4 Max, 128GB RAM (verified via system_profiler)
+- **Memory usage**: 5GB / 128GB (96% free - massive headroom)
+- **Test workers**: 6 (can increase to 20 for M4 Max)
+
+**Unverified Claims** (require runtime verification):
+- Constitutional compliance rate (logs exist but not analyzed)
+- Healing success rate (system operational but not measured)
+- Test execution time (cannot run without dependencies)
+
+**Operational Status**:
+- VectorStore: Code exists, operational status unverified
+- Adaptive routing: Code exists, DISABLED by env config
+- TDD protocol: Documented, enforcement rate unverified
 
 ---
 
-## **🚨 Critical Reminders**
+## **🚨 Critical Reminders** (Updated 2025-11-05)
 
 1. **ALWAYS** start with a `/prime` command (Prime-First Mandate)
 2. **ALWAYS** read `constitution.md` before planning or implementation
@@ -676,8 +693,9 @@ python run_tests.py --run-all         # Must show 100% pass rate
 4. **NEVER** proceed with incomplete context (retry timeouts 2x, 3x, 10x)
 5. **NEVER** merge without 100% test success (no exceptions)
 6. **ALWAYS** write tests BEFORE implementation (TDD is mandatory)
-7. **ALWAYS** validate against all 5 constitutional articles before action
+7. **ALWAYS** validate against all 7 constitutional articles before action (not 5 - Article VI & VII added)
 8. **NEVER STOP PREMATURELY** - Work until >85% context OR task complete OR blocked
+9. **HARDWARE AWARE** - M4 Max 128GB (NOT M4 Pro 48GB) - massive memory headroom available
 
 ## **🤖 Autonomous Execution Protocol (AEP)**
 

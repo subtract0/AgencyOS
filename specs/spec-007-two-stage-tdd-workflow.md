@@ -670,7 +670,7 @@ def test_missing_verification_target():
 
 **Before Implementation**:
 1. **Validate Task Graph Models**: Ensure Pydantic validators catch all edge cases
-2. **Memory Budget Analysis**: Calculate max parallelism for M4 Pro 48GB (Article II Section 2.4)
+2. **Memory Budget Analysis**: Calculate max parallelism for current hardware (see docs/HARDWARE_OPTIMIZATION.md) (Article II Section 2.4)
 3. **Git Worktree Testing**: Verify isolation on existing codebase
 4. **Backup Strategy**: Snapshot worktrees before execution
 
@@ -699,7 +699,7 @@ def test_missing_verification_target():
 - **ADR-002**: 100% Verification and Stability (test verification gate)
 - **ADR-004**: Continuous Learning (VectorStore pattern storage)
 - **ADR-005**: Per-Agent Model Policy (model selection for PlannerAgent)
-- **ADR-023**: Hardware-Aware Execution (M4 Pro memory constraints)
+- **ADR-023**: Hardware-Aware Execution (current hardware memory constraints)
 
 ### Specifications
 - **SPEC-001**: Spec-Driven Development (template for this spec)

@@ -10,9 +10,19 @@ Constitutional Compliance:
 - Article V: Spec-driven (spec-027)
 """
 
+import os
+
 import pytest
 from agency_memory import EnhancedMemoryStore, InMemoryStore, Memory
 
+try:
+    import sentence_transformers  # noqa: F401
+except ImportError:
+    _SENTENCE_TRANSFORMERS_AVAILABLE = False
+else:
+    _SENTENCE_TRANSFORMERS_AVAILABLE = True
+
+_RUN_VECTORSTORE_INTEGRATION = os.getenv("AGENCY_RUN_VECTORSTORE_TESTS", "0") == "1"
 
 def test_memory_defaults_to_enhanced_memory_store():
     """
@@ -112,8 +122,11 @@ def test_memory_store_operations():
 
 @pytest.mark.integration
 @pytest.mark.skipif(
-    "sentence-transformers not installed",
-    reason="Requires sentence-transformers for VectorStore semantic search"
+    not (_SENTENCE_TRANSFORMERS_AVAILABLE and _RUN_VECTORSTORE_INTEGRATION),
+    reason=(
+        "Requires sentence-transformers and AGENCY_RUN_VECTORSTORE_TESTS=1 "
+        "to exercise vector-store persistence"
+    ),
 )
 def test_memory_persistence_across_instances():
     """

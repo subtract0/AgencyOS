@@ -95,7 +95,7 @@ Define a mandatory test verification checkpoint that runs after all Code task co
 4. Gate validation:
    - Article I: ✅ Complete context (all tests ran to completion)
    - Article II: ✅ 100% verification (pass rate == 1.0)
-   - Memory safety: ✅ No crashes, 38GB peak memory usage (safe for 48GB Mac)
+   - Memory safety: ✅ No crashes, 38GB peak memory usage (safe for available memory Mac)
 5. Gate outcome:
    - Status: PASS ✅
    - TodoWrite task state: completed
@@ -148,7 +148,7 @@ Define a mandatory test verification checkpoint that runs after all Code task co
 2. Agent performs: Code changes in VectorStore module
 3. Test Verification Gate triggers:
    - System state: Ollama running (Qwen3-Coder Q8_0, 38GB loaded)
-   - Available memory: 12GB (48GB - 38GB model - 8GB system)
+   - Available memory: 12GB (available memory - 38GB model - 8GB system)
    - Memory-aware calculation: 3 workers (9GB budget, safe)
 4. Gate execution:
    - Runs tests with reduced parallelism: pytest -n 3
@@ -157,7 +157,7 @@ Define a mandatory test verification checkpoint that runs after all Code task co
 5. Gate validation:
    - Article I: ✅ Complete context
    - Article II: ✅ 100% pass rate
-   - Memory safety: ✅ No OOM, stayed under 48GB limit
+   - Memory safety: ✅ No OOM, stayed under available memory limit
 6. Agent achieves: Test execution without system crash
 ```
 
@@ -904,7 +904,7 @@ def store_verification_pattern(
 
 1. **Performance** ✅
    - [ ] Gate execution overhead < 5 seconds (excluding test time)
-   - [ ] Memory usage stays under 48GB limit (ADR-023)
+   - [ ] Memory usage stays under available memory limit (ADR-023)
    - [ ] No kernel panics or OOM errors
    - [ ] Retry logic completes within 42 minutes max (21x base)
 

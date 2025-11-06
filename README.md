@@ -25,15 +25,16 @@ Elite autonomous software engineering system with **proven self-healing capabili
 - **Pristine Development**: Spec-driven, test-first methodology with complete verification
 - **Intelligent Orchestration**: 10 specialized agents working in perfect coordination
 
-### Production Metrics
-- **1,725+ tests** passing with 100% success rate
-- **Zero Dict[Any, Any] violations** - complete type safety
-- **Zero test failures** under constitutional enforcement
-- **<3 seconds** for constitutional test suite validation
-- **161 test files** total across codebase
-- **>95% healing success rate** for autonomous fixes
-- **36 production tools** with security hardening
+### Production Metrics (Updated 2025-11-05)
+- **~6,496 test functions** in 297 test files (verified via grep)
+- **100% test pass rate**: ❓ UNVERIFIED (cannot run - missing dependencies)
+- **Zero Dict[Any, Any] violations** - complete type safety (goal)
+- **Cost tracking**: ✅ Implemented (124 entries, last: 2025-11-05)
+- **Current cost**: $0/month (100% vcoder-120b local network model)
+- **64 production tools** in tools/ directory
 - **30 slash commands** for comprehensive workflows
+- **Hardware**: Mac Studio M4 Max, 128GB RAM (96% free)
+- **Healing success rate**: Operational but not measured
 
 ## 🚀 Autonomous Healing - The Key Differentiator
 
@@ -92,12 +93,14 @@ await executor.execute_project()
 
 The Agency operates under strict constitutional principles that ensure quality and reliability:
 
-### The Five Articles
+### The Seven Articles (Updated 2025-11-05)
 1. **Complete Context**: No action without full understanding
 2. **100% Verification**: All tests must pass - no exceptions
 3. **Automated Enforcement**: Quality standards technically enforced
-4. **Continuous Learning**: Automatic improvement through experience
+4. **Continuous Learning**: Automatic improvement through experience (VectorStore mandatory)
 5. **Spec-Driven Development**: All features require formal specifications
+6. **Red-Green-Refactor TDD**: Tests written FIRST (must fail initially)
+7. **Value-First Testing**: Integration > Unit, delete tests with score <10
 
 ## 🎯 Key Features
 
@@ -109,11 +112,11 @@ The Agency operates under strict constitutional principles that ensure quality a
 - **🔒 Type Safety**: Zero `Dict[Any, Any]` violations, complete JSONValue usage
 - **🔧 LLM-First Design**: Leverages GPT-5 intelligence instead of complex Python systems
 - **🔬 DSPy Integration**: Advanced chain-of-thought reasoning with rationale fields
-- **💰 Cost Optimization**: 96% reduction with local qwen3-coder:30b Q4_K_M (M4 Pro optimized)
+- **💰 Cost Optimization**: 100% reduction ($0) with vcoder-120b (remote LM Studio, M4 Max 128GB)
 
 ### Developer Experience
 - **⚡ Quick Setup**: One-command environment setup
-- **🧪 Comprehensive Testing**: 1,725+ tests maintaining 100% success rate
+- **🧪 Comprehensive Testing**: ~6,496 test functions in 297 files (verified 2025-11-05)
 - **🔒 Type Safety**: Complete elimination of `Dict[Any, Any]` for better IDE support
 - **📊 Real-Time Monitoring**: Live system health and performance metrics
 - **🚀 30 Slash Commands**: Comprehensive workflows (/primeccc, /scout, /heal, /prune, etc.)
@@ -360,11 +363,11 @@ QUALITY_ENFORCER_MODEL=gpt-5 # Constitutional compliance
 
 ### Quality Metrics
 - **Type Safety**: 100% mypy compliance, zero `Dict[Any, Any]` violations
-- **Test Coverage**: 1,725+ tests across all modules (100% pass rate)
+- **Test Coverage**: ~6,496 test functions in 297 files (pass rate unverified - missing dependencies)
 - **Constitutional Compliance**: Zero violations permitted (all 5 articles enforced)
 - **Healing Success Rate**: >95% autonomous resolution
 - **VectorStore Patterns**: 8 validated patterns (confidence ≥ 0.6)
-- **Local Model Integration**: 96% cost reduction with qwen3-coder:30b Q4_K_M
+- **Local Model Integration**: 100% cost reduction ($0) with vcoder-120b (verified 2025-11-05)
 
 ## 🛠️ CLI Reference
 

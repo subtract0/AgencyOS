@@ -78,7 +78,7 @@ Breakdown by reason:
 ```
 
 **Memory Context** (ADR-023):
-- **Hardware**: Apple M4 Pro, 48GB unified memory
+- **Hardware**: Apple current hardware, available memory
 - **Local model footprint**: 38GB (Qwen3-Coder 30B Q8_0: 19GB model + 16GB KV cache + 3GB overhead)
 - **Test parallelism**: Adaptive (1-10 workers based on available memory)
 - **Safety margin**: 5GB for system stability
@@ -591,7 +591,7 @@ def get_safe_worker_count() -> int:
 
     # Local model active: conservative
     if ollama_running and mem_gb < 15:
-        return 3  # 9GB budget (safe for 48GB Mac)
+        return 3  # 9GB budget (safe for available memory Mac)
 
     # Plenty of memory: full parallelism
     if mem_gb >= 20:
@@ -606,7 +606,7 @@ def get_safe_worker_count() -> int:
 - Local model (if active): 38GB (19GB + 16GB KV + 3GB)
 - Test workers: 3-30GB (1-10 workers × 3GB/worker)
 - Safety margin: 5GB
-- **Total**: 46GB (safe for 48GB system)
+- **Total**: 46GB (safe for available memory system)
 
 ### Parallel Execution Opportunities
 
@@ -939,9 +939,9 @@ for learning in learnings:
 ## Appendix B: Memory Budget Details
 
 **System Configuration**:
-- **Hardware**: Apple M4 Pro, 48GB unified memory, 273 GB/s bandwidth
+- **Hardware**: Apple current hardware, available memory, 273 GB/s bandwidth
 - **macOS overhead**: ~8GB (system, WindowServer, background services)
-- **Available RAM**: 40GB (48GB - 8GB)
+- **Available RAM**: 40GB (available memory - 8GB)
 - **Safety margin**: 5GB (for system stability)
 
 **Local Model Footprint** (Qwen3-Coder 30B Q8_0):
@@ -953,7 +953,7 @@ for learning in learnings:
 **Test Worker Memory**:
 - Worker footprint: ~3GB per worker (pytest overhead, test fixtures, temp data)
 - 1 worker: 3GB
-- 3 workers: 9GB (local model ON, safe for 48GB Mac)
+- 3 workers: 9GB (local model ON, safe for available memory Mac)
 - 6 workers: 18GB (moderate parallelism)
 - 10 workers: 30GB (full parallelism, local model OFF)
 

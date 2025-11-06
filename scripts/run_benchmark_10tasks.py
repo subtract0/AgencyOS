@@ -111,7 +111,7 @@ BENCHMARK_TASKS = [
         "task_type": "GENERAL",
         "description": "Update documentation for Week 4 Day 2 benchmark results",
         "priority": "LOW",
-        "file": "docs/benchmarks/week4_day2_results.md",
+        "file": "archive/legacy-docs-2025-11-05/benchmarks/week4_day2_results.md",  # Archived 2025-11-05
         "expected_tier": "LOCAL",
     },
 ]
