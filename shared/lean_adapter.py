@@ -42,9 +42,7 @@ class BaseTool(Tool):
         """Initialize BaseTool with auto-filled metadata for backward compatibility."""
         # Normalize legacy context aliases before validation
         context_value = None
-        if "context" in kwargs:
-            context_value = kwargs.pop("context")
-        elif "_tool_exec_context" in kwargs:
+        if "_tool_exec_context" in kwargs:
             context_value = kwargs.pop("_tool_exec_context")
 
         # Auto-fill 'name' if not provided
