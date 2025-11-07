@@ -1,0 +1,35 @@
+{
+  "name": "AgencyOS Dev",
+  "dockerComposeFile": "docker-compose.yml",
+  "service": "app",
+  "workspaceFolder": "/workspace",
+  "features": {
+    "ghcr.io/devcontainers/features/common-utils:2": {
+      "installZsh": true,
+      "username": "vscode"
+    },
+    "ghcr.io/devcontainers/features/node:1": {
+      "version": "20"
+    }
+  },
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "ms-python.python",
+        "ms-azuretools.vscode-docker",
+        "GitHub.vscode-pull-request-github"
+      ],
+      "settings": {
+        "python.defaultInterpreterPath": "/usr/local/bin/python3",
+        "editor.formatOnSave": true
+      }
+    }
+  },
+  "postCreateCommand": "chmod +x scripts/setup_dev_env.sh && scripts/setup_dev_env.sh",
+  "forwardPorts": [11434, 5432],
+  "remoteUser": "vscode",
+  "mounts": [
+    "source=agencyos-uv-cache,target=/home/vscode/.cache/uv,type=volume",
+    "source=agencyos-poetry-cache,target=/home/vscode/.cache/pypoetry,type=volume"
+  ]
+}

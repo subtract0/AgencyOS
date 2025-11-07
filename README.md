@@ -16,6 +16,42 @@ Elite autonomous software engineering system with **proven self-healing capabili
 - **Green Main Enforcement**: Automated test validation before any merge
 - **Atomic Commits**: Constitutional compliance with clear, conventional commit messages
 - **Pull Request Automation**: GitHub CLI integration for seamless PR creation
+- **Intelligent CI**: Auto-generated test reports with instant failure diagnosis in PR comments
+
+### 🧪 CI/CD Pipeline (ADR-002 Enforcement)
+
+**Merge Guardian Workflow** - Zero-tolerance quality enforcement:
+- **16 parallel test shards** (~15 min 90th percentile runtime)
+- **Automatic failure reports** in PR comments (no manual log diving)
+- **Manual-only expensive suites** for cost optimization (40-50% savings)
+- **100% test pass requirement** before merge (branch protection enforced)
+
+**Auto-Generated Test Reports**:
+- JSON test results from each shard
+- Detailed failure logs with tracebacks
+- Combined failure summary in PR comments
+- Enables autonomous debugging without manual log inspection
+
+See `docs/ci/TOP_LEVEL_MANUAL_VERIFICATION.md` for manual suite details.
+
+### 🧰 Local Development Environments
+
+- **Dev Container (Recommended)**: Runs the entire stack (AgencyOS app + Postgres VectorStore + Ollama vcoder) inside Docker.  
+  ```bash
+  # Prerequisites: Docker Desktop (Apple Silicon) + VS Code Remote Containers
+  code .
+  # When prompted, “Reopen in Container” → provisioning takes <10 minutes
+  ```
+  - Base image: `mcr.microsoft.com/devcontainers/python:3.12`
+  - Post-create hook: `scripts/setup_dev_env.sh`
+  - Shared volumes: cached uv/pip data, Ollama models, Postgres data
+
+- **Nix Flake (Hermetic CLI)**: Pure shell with Python 3.12, Node 20, Docker Compose, and Ollama.  
+  ```bash
+  nix develop
+  ./scripts/setup_dev_env.sh
+  ```
+  Useful when you prefer native tooling on the M4 Max without Docker overhead.
 
 ## 🎯 Mission-Critical Features
 
