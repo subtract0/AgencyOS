@@ -57,9 +57,11 @@ jobs:
 
       - name: "⚙️ Install Dependencies"
         run: |
+          set -o pipefail
           python -m pip install --upgrade pip
           python -m pip install -r requirements.txt
           python -m pip install git+https://github.com/openai/openai-agents-python.git@main
+          python -m pip install pytest-timeout pytest-json-report
 
       - name: "📋 Output Cache Info"
         id: cache-info
@@ -81,8 +83,10 @@ jobs:
           python -m pip install --upgrade pip
           python -m pip install -r requirements.txt
           python -m pip install git+https://github.com/openai/openai-agents-python.git@main
+          python -m pip install pytest-timeout pytest-json-report
       - name: "Run orchestrator tests"
         run: |
+          set -o pipefail
           export PYTHONPATH=${{ github.workspace }}
           export USE_ENHANCED_MEMORY=true
           export AGENCY_TEST_TIMEOUT_OVERRIDE=300
@@ -92,7 +96,13 @@ jobs:
             --ignore=tests/test_firestore_mock_integration.py \
             --ignore=tests/e2e \
             --ignore=tests/benchmarks \
-            -m "not slow" --ff --maxfail=1 -q
+            -m "not slow" --ff --maxfail=1 -q \
+            --json-report --json-report-file=test-results/report.json
+      - name: "Generate test report"
+        if: always()
+        run: |
+          set -o pipefail
+          python .github/scripts/generate_test_report.py test-results/report.json > test-results/report.md || echo "⚠️ Report generation skipped"
       - uses: actions/upload-artifact@v4
         if: always()
         with:
@@ -115,8 +125,10 @@ jobs:
           python -m pip install --upgrade pip
           python -m pip install -r requirements.txt
           python -m pip install git+https://github.com/openai/openai-agents-python.git@main
+          python -m pip install pytest-timeout pytest-json-report
       - name: "Run tools/ci_monitor tests"
         run: |
+          set -o pipefail
           export PYTHONPATH=${{ github.workspace }}
           export USE_ENHANCED_MEMORY=true
           export AGENCY_TEST_TIMEOUT_OVERRIDE=300
@@ -126,7 +138,13 @@ jobs:
             --ignore=tests/test_firestore_mock_integration.py \
             --ignore=tests/e2e \
             --ignore=tests/benchmarks \
-            -m "not slow" --ff --maxfail=1 -q
+            -m "not slow" --ff --maxfail=1 -q \
+            --json-report --json-report-file=test-results/report.json
+      - name: "Generate test report"
+        if: always()
+        run: |
+          set -o pipefail
+          python .github/scripts/generate_test_report.py test-results/report.json > test-results/report.md || echo "⚠️ Report generation skipped"
       - uses: actions/upload-artifact@v4
         if: always()
         with:
@@ -149,8 +167,10 @@ jobs:
           python -m pip install --upgrade pip
           python -m pip install -r requirements.txt
           python -m pip install git+https://github.com/openai/openai-agents-python.git@main
+          python -m pip install pytest-timeout pytest-json-report
       - name: "Run tools/orchestrator tests"
         run: |
+          set -o pipefail
           export PYTHONPATH=${{ github.workspace }}
           export USE_ENHANCED_MEMORY=true
           export AGENCY_TEST_TIMEOUT_OVERRIDE=300
@@ -160,7 +180,13 @@ jobs:
             --ignore=tests/test_firestore_mock_integration.py \
             --ignore=tests/e2e \
             --ignore=tests/benchmarks \
-            -m "not slow" --ff --maxfail=1 -q
+            -m "not slow" --ff --maxfail=1 -q \
+            --json-report --json-report-file=test-results/report.json
+      - name: "Generate test report"
+        if: always()
+        run: |
+          set -o pipefail
+          python .github/scripts/generate_test_report.py test-results/report.json > test-results/report.md || echo "⚠️ Report generation skipped"
       - uses: actions/upload-artifact@v4
         if: always()
         with:
@@ -183,8 +209,10 @@ jobs:
           python -m pip install --upgrade pip
           python -m pip install -r requirements.txt
           python -m pip install git+https://github.com/openai/openai-agents-python.git@main
+          python -m pip install pytest-timeout pytest-json-report
       - name: "Run tools core tests"
         run: |
+          set -o pipefail
           export PYTHONPATH=${{ github.workspace }}
           export USE_ENHANCED_MEMORY=true
           export AGENCY_TEST_TIMEOUT_OVERRIDE=300
@@ -194,7 +222,13 @@ jobs:
             --ignore=tests/test_firestore_mock_integration.py \
             --ignore=tests/e2e \
             --ignore=tests/benchmarks \
-            -m "not slow" --ff --maxfail=1 -q
+            -m "not slow" --ff --maxfail=1 -q \
+            --json-report --json-report-file=test-results/report.json
+      - name: "Generate test report"
+        if: always()
+        run: |
+          set -o pipefail
+          python .github/scripts/generate_test_report.py test-results/report.json > test-results/report.md || echo "⚠️ Report generation skipped"
       - uses: actions/upload-artifact@v4
         if: always()
         with:
@@ -217,8 +251,10 @@ jobs:
           python -m pip install --upgrade pip
           python -m pip install -r requirements.txt
           python -m pip install git+https://github.com/openai/openai-agents-python.git@main
+          python -m pip install pytest-timeout pytest-json-report
       - name: "Run integration tests (part 1)"
         run: |
+          set -o pipefail
           export PYTHONPATH=${{ github.workspace }}
           export USE_ENHANCED_MEMORY=true
           export AGENCY_TEST_TIMEOUT_OVERRIDE=300
@@ -232,7 +268,13 @@ jobs:
             --ignore=tests/test_firestore_mock_integration.py \
             --ignore=tests/e2e \
             --ignore=tests/benchmarks \
-            -m "not slow" --ff --maxfail=1 -q
+            -m "not slow" --ff --maxfail=1 -q \
+            --json-report --json-report-file=test-results/report.json
+      - name: "Generate test report"
+        if: always()
+        run: |
+          set -o pipefail
+          python .github/scripts/generate_test_report.py test-results/report.json > test-results/report.md || echo "⚠️ Report generation skipped"
       - uses: actions/upload-artifact@v4
         if: always()
         with:
@@ -255,8 +297,10 @@ jobs:
           python -m pip install --upgrade pip
           python -m pip install -r requirements.txt
           python -m pip install git+https://github.com/openai/openai-agents-python.git@main
+          python -m pip install pytest-timeout pytest-json-report
       - name: "Run integration tests (part 2)"
         run: |
+          set -o pipefail
           export PYTHONPATH=${{ github.workspace }}
           export USE_ENHANCED_MEMORY=true
           export AGENCY_TEST_TIMEOUT_OVERRIDE=300
@@ -270,7 +314,13 @@ jobs:
             --ignore=tests/test_firestore_mock_integration.py \
             --ignore=tests/e2e \
             --ignore=tests/benchmarks \
-            -m "not slow" --ff --maxfail=1 -q
+            -m "not slow" --ff --maxfail=1 -q \
+            --json-report --json-report-file=test-results/report.json
+      - name: "Generate test report"
+        if: always()
+        run: |
+          set -o pipefail
+          python .github/scripts/generate_test_report.py test-results/report.json > test-results/report.md || echo "⚠️ Report generation skipped"
       - uses: actions/upload-artifact@v4
         if: always()
         with:
@@ -293,8 +343,10 @@ jobs:
           python -m pip install --upgrade pip
           python -m pip install -r requirements.txt
           python -m pip install git+https://github.com/openai/openai-agents-python.git@main
+          python -m pip install pytest-timeout pytest-json-report
       - name: "Run integration tests (part 3a)"
         run: |
+          set -o pipefail
           export PYTHONPATH=${{ github.workspace }}
           export USE_ENHANCED_MEMORY=true
           export AGENCY_TEST_TIMEOUT_OVERRIDE=300
@@ -305,7 +357,13 @@ jobs:
             --ignore=tests/test_firestore_mock_integration.py \
             --ignore=tests/e2e \
             --ignore=tests/benchmarks \
-            -m "not slow" --ff --maxfail=1 -q
+            -m "not slow" --ff --maxfail=1 -q \
+            --json-report --json-report-file=test-results/report.json
+      - name: "Generate test report"
+        if: always()
+        run: |
+          set -o pipefail
+          python .github/scripts/generate_test_report.py test-results/report.json > test-results/report.md || echo "⚠️ Report generation skipped"
       - uses: actions/upload-artifact@v4
         if: always()
         with:
@@ -328,8 +386,10 @@ jobs:
           python -m pip install --upgrade pip
           python -m pip install -r requirements.txt
           python -m pip install git+https://github.com/openai/openai-agents-python.git@main
+          python -m pip install pytest-timeout pytest-json-report
       - name: "Run integration tests (part 3b)"
         run: |
+          set -o pipefail
           export PYTHONPATH=${{ github.workspace }}
           export USE_ENHANCED_MEMORY=true
           export AGENCY_TEST_TIMEOUT_OVERRIDE=300
@@ -340,7 +400,13 @@ jobs:
             --ignore=tests/test_firestore_mock_integration.py \
             --ignore=tests/e2e \
             --ignore=tests/benchmarks \
-            -m "not slow" --ff --maxfail=1 -q
+            -m "not slow" --ff --maxfail=1 -q \
+            --json-report --json-report-file=test-results/report.json
+      - name: "Generate test report"
+        if: always()
+        run: |
+          set -o pipefail
+          python .github/scripts/generate_test_report.py test-results/report.json > test-results/report.md || echo "⚠️ Report generation skipped"
       - uses: actions/upload-artifact@v4
         if: always()
         with:
@@ -363,8 +429,10 @@ jobs:
           python -m pip install --upgrade pip
           python -m pip install -r requirements.txt
           python -m pip install git+https://github.com/openai/openai-agents-python.git@main
+          python -m pip install pytest-timeout pytest-json-report
       - name: "Run integration tests (part 3c)"
         run: |
+          set -o pipefail
           export PYTHONPATH=${{ github.workspace }}
           export USE_ENHANCED_MEMORY=true
           export AGENCY_TEST_TIMEOUT_OVERRIDE=300
@@ -375,7 +443,13 @@ jobs:
             --ignore=tests/test_firestore_mock_integration.py \
             --ignore=tests/e2e \
             --ignore=tests/benchmarks \
-            -m "not slow" --ff --maxfail=1 -q
+            -m "not slow" --ff --maxfail=1 -q \
+            --json-report --json-report-file=test-results/report.json
+      - name: "Generate test report"
+        if: always()
+        run: |
+          set -o pipefail
+          python .github/scripts/generate_test_report.py test-results/report.json > test-results/report.md || echo "⚠️ Report generation skipped"
       - uses: actions/upload-artifact@v4
         if: always()
         with:
@@ -398,8 +472,10 @@ jobs:
           python -m pip install --upgrade pip
           python -m pip install -r requirements.txt
           python -m pip install git+https://github.com/openai/openai-agents-python.git@main
+          python -m pip install pytest-timeout pytest-json-report
       - name: "Run unit tests"
         run: |
+          set -o pipefail
           export PYTHONPATH=${{ github.workspace }}
           export USE_ENHANCED_MEMORY=true
           export AGENCY_TEST_TIMEOUT_OVERRIDE=300
@@ -409,7 +485,13 @@ jobs:
             --ignore=tests/test_firestore_mock_integration.py \
             --ignore=tests/e2e \
             --ignore=tests/benchmarks \
-            -m "not slow" --ff --maxfail=1 -q
+            -m "not slow" --ff --maxfail=1 -q \
+            --json-report --json-report-file=test-results/report.json
+      - name: "Generate test report"
+        if: always()
+        run: |
+          set -o pipefail
+          python .github/scripts/generate_test_report.py test-results/report.json > test-results/report.md || echo "⚠️ Report generation skipped"
       - uses: actions/upload-artifact@v4
         if: always()
         with:
@@ -432,8 +514,10 @@ jobs:
           python -m pip install --upgrade pip
           python -m pip install -r requirements.txt
           python -m pip install git+https://github.com/openai/openai-agents-python.git@main
+          python -m pip install pytest-timeout pytest-json-report
       - name: "Run chaos tests"
         run: |
+          set -o pipefail
           export PYTHONPATH=${{ github.workspace }}
           export USE_ENHANCED_MEMORY=true
           export AGENCY_TEST_TIMEOUT_OVERRIDE=300
@@ -443,7 +527,13 @@ jobs:
             --ignore=tests/test_firestore_mock_integration.py \
             --ignore=tests/e2e \
             --ignore=tests/benchmarks \
-            -m "not slow" --ff --maxfail=1 -q
+            -m "not slow" --ff --maxfail=1 -q \
+            --json-report --json-report-file=test-results/report.json
+      - name: "Generate test report"
+        if: always()
+        run: |
+          set -o pipefail
+          python .github/scripts/generate_test_report.py test-results/report.json > test-results/report.md || echo "⚠️ Report generation skipped"
       - uses: actions/upload-artifact@v4
         if: always()
         with:
@@ -466,8 +556,10 @@ jobs:
           python -m pip install --upgrade pip
           python -m pip install -r requirements.txt
           python -m pip install git+https://github.com/openai/openai-agents-python.git@main
+          python -m pip install pytest-timeout pytest-json-report
       - name: "Run stress tests"
         run: |
+          set -o pipefail
           export PYTHONPATH=${{ github.workspace }}
           export USE_ENHANCED_MEMORY=true
           export AGENCY_TEST_TIMEOUT_OVERRIDE=300
@@ -477,7 +569,13 @@ jobs:
             --ignore=tests/test_firestore_mock_integration.py \
             --ignore=tests/e2e \
             --ignore=tests/benchmarks \
-            -m "not slow" --ff --maxfail=1 -q
+            -m "not slow" --ff --maxfail=1 -q \
+            --json-report --json-report-file=test-results/report.json
+      - name: "Generate test report"
+        if: always()
+        run: |
+          set -o pipefail
+          python .github/scripts/generate_test_report.py test-results/report.json > test-results/report.md || echo "⚠️ Report generation skipped"
       - uses: actions/upload-artifact@v4
         if: always()
         with:
@@ -500,9 +598,10 @@ jobs:
           python -m pip install --upgrade pip
           python -m pip install -r requirements.txt
           python -m pip install git+https://github.com/openai/openai-agents-python.git@main
-          python -m pip install pytest-timeout
+          python -m pip install pytest-timeout pytest-json-report
       - name: "Run adr+agents tests"
         run: |
+          set -o pipefail
           export PYTHONPATH=${{ github.workspace }}
           export USE_ENHANCED_MEMORY=true
           export AGENCY_TEST_TIMEOUT_OVERRIDE=300
@@ -515,7 +614,13 @@ jobs:
             --ignore=tests/e2e \
             --ignore=tests/benchmarks \
             -m "not slow" --ff --maxfail=1 \
-            --timeout=30 --timeout-method=thread -vv
+            --timeout=30 --timeout-method=thread -vv \
+            --json-report --json-report-file=test-results/report.json
+      - name: "Generate test report"
+        if: always()
+        run: |
+          set -o pipefail
+          python .github/scripts/generate_test_report.py test-results/report.json > test-results/report.md || echo "⚠️ Report generation skipped"
       - uses: actions/upload-artifact@v4
         if: always()
         with:
@@ -523,11 +628,11 @@ jobs:
           path: test-results/
           retention-days: 7
 
-  test-misc-cmd-docs-foundation:
-    name: "🧪 Tests: commands+docs+foundation"
+  test-foundation-fast:
+    name: "🧪 Tests: foundation (fast)"
     needs: setup
     runs-on: ubuntu-latest
-    timeout-minutes: 45
+    timeout-minutes: 5
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -538,26 +643,115 @@ jobs:
           python -m pip install --upgrade pip
           python -m pip install -r requirements.txt
           python -m pip install git+https://github.com/openai/openai-agents-python.git@main
-          python -m pip install pytest-timeout
-      - name: "Run commands+docs+foundation tests"
+          python -m pip install pytest-timeout pytest-json-report
+      - name: "Run foundation fast tests"
         run: |
+          set -o pipefail
           export PYTHONPATH=${{ github.workspace }}
           export USE_ENHANCED_MEMORY=true
           export AGENCY_TEST_TIMEOUT_OVERRIDE=300
           export OPENAI_API_KEY=test-key-12345
           mkdir -p test-results
           env PYTHONMALLOC=malloc python -m pytest \
-            tests/commands tests/docs tests/foundation_automation \
-            --ignore=tests/test_firestore_learning_persistence.py \
-            --ignore=tests/test_firestore_mock_integration.py \
-            --ignore=tests/e2e \
-            --ignore=tests/benchmarks \
+            tests/foundation_automation/test_git_validation.py \
+            tests/foundation_automation/test_flag_behavior.py \
+            tests/foundation_automation/test_backlog_auto_selection.py \
             -m "not slow" --ff --maxfail=1 \
-            --timeout=30 --timeout-method=thread -vv
+            --timeout=30 --timeout-method=thread -vv \
+            --json-report --json-report-file=test-results/report.json
+      - name: "Generate test report"
+        if: always()
+        run: |
+          set -o pipefail
+          python .github/scripts/generate_test_report.py test-results/report.json > test-results/report.md || echo "⚠️ Report generation skipped"
       - uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: test-results-misc-cmd-docs-foundation
+          name: test-results-foundation-fast
+          path: test-results/
+          retention-days: 7
+
+  test-foundation-commands:
+    name: "🧪 Tests: foundation commands+docs"
+    needs: setup
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+          cache: 'pip'
+      - run: |
+          python -m pip install --upgrade pip
+          python -m pip install -r requirements.txt
+          python -m pip install git+https://github.com/openai/openai-agents-python.git@main
+          python -m pip install pytest-timeout pytest-json-report
+      - name: "Run foundation commands+docs tests"
+        run: |
+          set -o pipefail
+          export PYTHONPATH=${{ github.workspace }}
+          export USE_ENHANCED_MEMORY=true
+          export AGENCY_TEST_TIMEOUT_OVERRIDE=300
+          export OPENAI_API_KEY=test-key-12345
+          mkdir -p test-results
+          env PYTHONMALLOC=malloc python -m pytest \
+            tests/commands tests/docs \
+            -m "not slow" --ff --maxfail=1 \
+            --timeout=30 --timeout-method=thread -vv \
+            --json-report --json-report-file=test-results/report.json
+      - name: "Generate test report"
+        if: always()
+        run: |
+          set -o pipefail
+          python .github/scripts/generate_test_report.py test-results/report.json > test-results/report.md || echo "⚠️ Report generation skipped"
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: test-results-foundation-commands
+          path: test-results/
+          retention-days: 7
+
+  test-foundation-gates:
+    name: "🧪 Tests: foundation E2E gates (manual-only)"
+    needs: setup
+    runs-on: ubuntu-latest
+    if: github.event_name == 'workflow_dispatch' && inputs.run_top_level == 'true'
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+          cache: 'pip'
+      - run: |
+          python -m pip install --upgrade pip
+          python -m pip install -r requirements.txt
+          python -m pip install git+https://github.com/openai/openai-agents-python.git@main
+          python -m pip install pytest-timeout pytest-json-report
+      - name: "Run foundation E2E gates"
+        run: |
+          set -o pipefail
+          export PYTHONPATH=${{ github.workspace }}
+          export USE_ENHANCED_MEMORY=true
+          export AGENCY_TEST_TIMEOUT_OVERRIDE=300
+          export OPENAI_API_KEY=test-key-12345
+          mkdir -p test-results
+          env PYTHONMALLOC=malloc python -m pytest \
+            tests/foundation_automation/test_e2e_natural_language_flow.py \
+            tests/foundation_automation/test_constitutional_gates.py \
+            -m "not slow" --ff --maxfail=1 \
+            --timeout=30 --timeout-method=thread -vv \
+            --json-report --json-report-file=test-results/report.json
+      - name: "Generate test report"
+        if: always()
+        run: |
+          set -o pipefail
+          python .github/scripts/generate_test_report.py test-results/report.json > test-results/report.md || echo "⚠️ Report generation skipped"
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: test-results-foundation-gates
           path: test-results/
           retention-days: 7
 
@@ -576,9 +770,10 @@ jobs:
           python -m pip install --upgrade pip
           python -m pip install -r requirements.txt
           python -m pip install git+https://github.com/openai/openai-agents-python.git@main
-          python -m pip install pytest-timeout
+          python -m pip install pytest-timeout pytest-json-report
       - name: "Run meta+necessary+property tests"
         run: |
+          set -o pipefail
           export PYTHONPATH=${{ github.workspace }}
           export USE_ENHANCED_MEMORY=true
           export AGENCY_TEST_TIMEOUT_OVERRIDE=300
@@ -591,7 +786,13 @@ jobs:
             --ignore=tests/e2e \
             --ignore=tests/benchmarks \
             -m "not slow" --ff --maxfail=1 \
-            --timeout=30 --timeout-method=thread -vv
+            --timeout=30 --timeout-method=thread -vv \
+            --json-report --json-report-file=test-results/report.json
+      - name: "Generate test report"
+        if: always()
+        run: |
+          set -o pipefail
+          python .github/scripts/generate_test_report.py test-results/report.json > test-results/report.md || echo "⚠️ Report generation skipped"
       - uses: actions/upload-artifact@v4
         if: always()
         with:
@@ -614,9 +815,10 @@ jobs:
           python -m pip install --upgrade pip
           python -m pip install -r requirements.txt
           python -m pip install git+https://github.com/openai/openai-agents-python.git@main
-          python -m pip install pytest-timeout
+          python -m pip install pytest-timeout pytest-json-report
       - name: "Run shared+trinity tests"
         run: |
+          set -o pipefail
           export PYTHONPATH=${{ github.workspace }}
           export USE_ENHANCED_MEMORY=true
           export AGENCY_TEST_TIMEOUT_OVERRIDE=300
@@ -629,7 +831,13 @@ jobs:
             --ignore=tests/e2e \
             --ignore=tests/benchmarks \
             -m "not slow" --ff --maxfail=1 \
-            --timeout=30 --timeout-method=thread -vv
+            --timeout=30 --timeout-method=thread -vv \
+            --json-report --json-report-file=test-results/report.json
+      - name: "Generate test report"
+        if: always()
+        run: |
+          set -o pipefail
+          python .github/scripts/generate_test_report.py test-results/report.json > test-results/report.md || echo "⚠️ Report generation skipped"
       - uses: actions/upload-artifact@v4
         if: always()
         with:
@@ -653,9 +861,10 @@ jobs:
           python -m pip install --upgrade pip
           python -m pip install -r requirements.txt
           python -m pip install git+https://github.com/openai/openai-agents-python.git@main
-          python -m pip install pytest-timeout
+          python -m pip install pytest-timeout pytest-json-report
       - name: "Run top-level core tests"
         run: |
+          set -o pipefail
           export PYTHONPATH=${{ github.workspace }}
           export USE_ENHANCED_MEMORY=true
           export AGENCY_TEST_TIMEOUT_OVERRIDE=300
@@ -675,7 +884,13 @@ jobs:
             --ignore=tests/e2e \
             --ignore=tests/benchmarks \
             -m "not slow" --ff --maxfail=1 \
-            --timeout=30 --timeout-method=thread -vv
+            --timeout=30 --timeout-method=thread -vv \
+            --json-report --json-report-file=test-results/report.json
+      - name: "Generate test report"
+        if: always()
+        run: |
+          set -o pipefail
+          python .github/scripts/generate_test_report.py test-results/report.json > test-results/report.md || echo "⚠️ Report generation skipped"
       - uses: actions/upload-artifact@v4
         if: always()
         with:
@@ -699,9 +914,10 @@ jobs:
           python -m pip install --upgrade pip
           python -m pip install -r requirements.txt
           python -m pip install git+https://github.com/openai/openai-agents-python.git@main
-          python -m pip install pytest-timeout
+          python -m pip install pytest-timeout pytest-json-report
       - name: "Run leap validation tests"
         run: |
+          set -o pipefail
           export PYTHONPATH=${{ github.workspace }}
           export USE_ENHANCED_MEMORY=true
           export AGENCY_TEST_TIMEOUT_OVERRIDE=300
@@ -716,7 +932,13 @@ jobs:
             tests/test_leap5_phase3_e2e.py \
             tests/test_leap5_phase4_e2e.py \
             -m "not slow" --ff --maxfail=1 \
-            --timeout=30 --timeout-method=thread -vv
+            --timeout=30 --timeout-method=thread -vv \
+            --json-report --json-report-file=test-results/report.json
+      - name: "Generate test report"
+        if: always()
+        run: |
+          set -o pipefail
+          python .github/scripts/generate_test_report.py test-results/report.json > test-results/report.md || echo "⚠️ Report generation skipped"
       - uses: actions/upload-artifact@v4
         if: always()
         with:
@@ -727,7 +949,7 @@ jobs:
   # Consolidation job - aggregates all test job results
   test-verification:
     name: "ADR-002 Test Verification"
-    needs: [setup, test-orchestrator, test-tools-ci-monitor, test-tools-orchestrator, test-tools-core, test-integration-1, test-integration-2, test-integration-3a, test-integration-3b, test-integration-3c, test-unit, test-chaos, test-stress, test-misc-adr-agents, test-misc-cmd-docs-foundation, test-misc-meta-necessary-property, test-misc-shared-trinity]
+    needs: [setup, test-orchestrator, test-tools-ci-monitor, test-tools-orchestrator, test-tools-core, test-integration-1, test-integration-2, test-integration-3a, test-integration-3b, test-integration-3c, test-unit, test-chaos, test-stress, test-misc-adr-agents, test-foundation-fast, test-foundation-commands, test-misc-meta-necessary-property, test-misc-shared-trinity]
     runs-on: ubuntu-latest
     if: always()
     timeout-minutes: 5
@@ -746,9 +968,37 @@ jobs:
       - name: "🔍 Checkout Repository"
         uses: actions/checkout@v4
 
+      - name: "📦 Download Test Artifacts"
+        if: always()
+        uses: actions/download-artifact@v4
+        with:
+          path: all-test-results
+          pattern: test-results-*
+          merge-multiple: false
+
+      - name: "📄 Collect Failure Reports"
+        if: always()
+        run: |
+          set -o pipefail
+          mkdir -p failure-reports
+          for shard_dir in all-test-results/test-results-*/; do
+            shard_name=$(basename "$shard_dir")
+            report_md="$shard_dir/report.md"
+            if [ -f "$report_md" ] && grep -q "❌" "$report_md"; then
+              {
+                echo "### ${shard_name}"
+                cat "$report_md"
+                echo ""
+              } > "failure-reports/${shard_name}.md"
+            fi
+          done
+          # Combine failure reports (if any)
+          cat failure-reports/*.md > combined-failures.md 2>/dev/null || echo "✅ All shards passed" > combined-failures.md
+
       - name: "📊 Aggregate Test Results"
         id: test-summary
         run: |
+          set -o pipefail
           echo "📊 Consolidating results from all test jobs..."
 
           # Check all job results (GitHub Actions context)
@@ -766,7 +1016,9 @@ jobs:
           echo "  test-chaos: ${{ needs.test-chaos.result }}"
           echo "  test-stress: ${{ needs.test-stress.result }}"
           echo "  test-misc-adr-agents: ${{ needs.test-misc-adr-agents.result }}"
-          echo "  test-misc-cmd-docs-foundation: ${{ needs.test-misc-cmd-docs-foundation.result }}"
+          echo "  test-foundation-fast: ${{ needs.test-foundation-fast.result }}"
+          echo "  test-foundation-commands: ${{ needs.test-foundation-commands.result }}"
+          echo "  test-foundation-gates: skipped (manual-only, see docs/ci/TOP_LEVEL_MANUAL_VERIFICATION.md)"
           echo "  test-misc-meta-necessary-property: ${{ needs.test-misc-meta-necessary-property.result }}"
           echo "  test-misc-shared-trinity: ${{ needs.test-misc-shared-trinity.result }}"
           echo "  top-level suites requested: ${{ github.event_name == 'workflow_dispatch' && inputs.run_top_level == 'true' }}"
@@ -790,7 +1042,8 @@ jobs:
              [[ "${{ needs.test-chaos.result }}" == "success" ]] && \
              [[ "${{ needs.test-stress.result }}" == "success" ]] && \
              [[ "${{ needs.test-misc-adr-agents.result }}" == "success" ]] && \
-             [[ "${{ needs.test-misc-cmd-docs-foundation.result }}" == "success" ]] && \
+             [[ "${{ needs.test-foundation-fast.result }}" == "success" ]] && \
+             [[ "${{ needs.test-foundation-commands.result }}" == "success" ]] && \
              [[ "${{ needs.test-misc-meta-necessary-property.result }}" == "success" ]] && \
              [[ "${{ needs.test-misc-shared-trinity.result }}" == "success" ]]; then
             echo "✅ ADR-002 COMPLIANT: All test jobs passed"
@@ -833,6 +1086,15 @@ jobs:
             *This PR meets all ADR-002 requirements and is approved for merge.*
             `;
             } else {
+              // Read failure details if available
+              const fs = require('fs');
+              let failureDetails = '';
+              try {
+                failureDetails = fs.readFileSync('combined-failures.md', 'utf8');
+              } catch (e) {
+                failureDetails = '_(Failure details not available - check job logs)_';
+              }
+
               commentBody = `## 🚫 ADR-002 Compliance: ❌ BLOCKED
 
             **Merge Guardian Status**: Merge blocked due to test failures! 🛑
@@ -840,6 +1102,10 @@ jobs:
             ### ⚠️ ADR-002 Violations Detected
 
             ❌ **One or more test jobs failed**
+
+            ### 🔍 Failure Details
+
+            ${failureDetails}
 
             ### Required Actions
             1. 🔧 **Fix all failing tests** - No exceptions
@@ -898,6 +1164,7 @@ jobs:
     steps:
       - name: "📋 Assess Merge Readiness"
         run: |
+          set -o pipefail
           echo "🔍 Evaluating merge readiness against ADR-002..."
 
           TEST_STATUS="${{ needs.test-verification.outputs.test-status }}"
@@ -964,6 +1231,7 @@ jobs:
       - name: "📝 Create Merge Readiness Report"
         if: always()
         run: |
+          set -o pipefail
           mkdir -p reports
 
           cat > reports/merge-readiness.md << EOF
