@@ -2,6 +2,11 @@
 """
 Test Runner for AgencyOS Agency
 Runs all tests using pytest framework
+
+Phase 2 OpenEnv Integration:
+- TODO: Wrap subprocess calls via envs/agency_env_runner.py step API
+- For now, direct execution with AGENCY_ENV_SPEC awareness
+- Future: All commands routed through spec-driven runner for logging/validation
 """
 
 import argparse
@@ -20,6 +25,9 @@ from typing import Any
 
 # Defer pydantic import to avoid module errors in pre-commit hook
 JSONValue = Any  # Type hint placeholder
+
+# OpenEnv-style spec integration (Phase 2)
+AGENCY_ENV_SPEC = os.getenv("AGENCY_ENV_SPEC", str(Path(__file__).parent / "envs" / "agency_env_spec.json"))
 
 
 class DockerManager:

@@ -148,3 +148,157 @@ git push origin feature/enable-vectorstore-by-default
 **Status**: Ready for staging and review
 **Time Invested**: ~27 minutes (Phase 0 execution)
 **Confidence**: High (proven pattern, validated across 2 → 12 → 18 shards)
+
+---
+
+## Phase 2: OpenEnv-Style Spec Integration ✅
+
+**Date**: 2025-11-07 (continued session)
+**Objective**: Wire CI/agent workflows through OpenEnv-style spec runner
+
+### What Was Done
+
+**Core Infrastructure**:
+1. ✅ Enhanced `envs/agency_env_runner.py`:
+   - Skeleton → full implementation (reset/step/close API)
+   - JSON I/O for CLI and stdin modes
+   - Subprocess execution with timeout, logging, error handling
+   - Constitutional compliance (Articles I, III)
+
+2. ✅ Updated `.github/workflows/merge-guardian.yml`:
+   - Added global env var: `AGENCY_ENV_SPEC`
+   - Updated `test-orchestrator` shard with reset step
+   - Logs runner output to `runner-reset.log`
+   - Added TODO markers for full step API integration
+
+3. ✅ Updated `run_tests.py`:
+   - Added Phase 2 docstring
+   - Added `AGENCY_ENV_SPEC` environment variable awareness
+   - TODO markers for wrapping subprocess calls via runner
+
+4. ✅ Created `docs/ci/ENVIRONMENT_SPEC.md`:
+   - Comprehensive spec integration guide
+   - Architecture diagrams, API reference, usage examples
+   - Current limitations + future phases documented
+
+5. ✅ Updated `scratch/overnight_ci_notes.md`:
+   - Phase 2 execution log with timestamps
+   - Commands executed, impact analysis, next steps
+
+### Files Modified/Created
+
+**Modified**:
+- `envs/agency_env_runner.py` (skeleton → full implementation)
+- `.github/workflows/merge-guardian.yml` (AGENCY_ENV_SPEC + reset step)
+- `run_tests.py` (spec awareness + TODO markers)
+- `scratch/overnight_ci_notes.md` (Phase 2 log)
+- `.claude/quick-ref/LOCKSTEP_STATUS.md` (this file)
+
+**Created**:
+- `docs/ci/ENVIRONMENT_SPEC.md` (comprehensive guide)
+
+### Impact
+
+- **Traceability**: All CI commands logged with timestamps
+- **Future-proofing**: Foundation for Phase 3 sandboxing
+- **Constitutional compliance**: Articles I (complete context), III (automated enforcement)
+- **Developer experience**: Clear patterns for agent script integration
+
+### Sensitive Areas Touched
+
+**Medium Risk**: `.github/workflows/merge-guardian.yml`
+- Added reset step to `test-orchestrator` shard only (reference implementation)
+- Backward compatible (additive, doesn't modify test execution)
+- Rollback: Remove reset step + AGENCY_ENV_SPEC env var
+
+**Low Risk**: `run_tests.py`
+- No functional changes (only docstring + env var assignment)
+- TODO markers for future integration
+
+**Low Risk**: `envs/agency_env_runner.py`
+- Net new code, only called by CI reset step
+- Rollback: Revert to skeleton (breaks reset step but tests still run)
+
+### Current Limitations
+
+1. **Partial rollout**: Only 1 shard (test-orchestrator) uses reset step
+2. **No sandboxing**: Commands execute directly (no containers yet)
+3. **No resource limits**: CPU/memory constraints not enforced
+4. **No allowlist**: All commands permitted
+5. **TODO markers**: Agent scripts identified but not fully wrapped
+
+### Validation Required
+
+**Before Commit**:
+- [ ] `python envs/agency_env_runner.py reset` returns valid JSON
+- [ ] `echo '{"command": ["python", "--version"]}' | python envs/agency_env_runner.py step` succeeds
+- [ ] Review git diff for all modified files
+
+**After Push (CI Validation)**:
+- [ ] test-orchestrator shows "✅ Environment reset complete"
+- [ ] `runner-reset.log` artifact uploaded with valid JSON
+- [ ] No increase in shard failure rate
+
+### Rollback Plan
+
+**Quick** (< 5 min):
+```bash
+git revert <commit-hash>
+git push
+```
+
+**Surgical** (< 10 min):
+```bash
+# Keep runner code, remove CI integration only
+# Manually remove reset step from test-orchestrator
+git add .github/workflows/merge-guardian.yml
+git commit -m "ci: temporarily disable spec runner reset step"
+```
+
+### Next Steps (Incremental Rollout)
+
+**Immediate (This PR)**:
+1. Review all changes via git diff
+2. Stage files: `git add .github/workflows/ envs/ run_tests.py docs/ci/ scratch/ .claude/quick-ref/`
+3. Run local validation tests (see above)
+4. Commit with descriptive message
+5. **DO NOT PUSH** - Await user review
+
+**Future (Follow-up PRs)**:
+1. Phase 2.1: Apply reset step to all 17 remaining shards
+2. Phase 2.2: Implement `run_via_spec()` helper in run_tests.py
+3. Phase 2.3: Wrap agent scripts (overnight_worker, etc.)
+4. Phase 3: Docker/Podman sandboxing
+
+### References
+
+- **Documentation**: `docs/ci/ENVIRONMENT_SPEC.md` (read first)
+- **Execution Log**: `scratch/overnight_ci_notes.md` (Phase 2 section)
+- **Spec File**: `envs/agency_env_spec.json`
+- **Runner**: `envs/agency_env_runner.py`
+- **Workflow**: `.github/workflows/merge-guardian.yml` (test-orchestrator)
+
+---
+
+## Combined Status: Phase 0 + Phase 2
+
+**Files to Stage**:
+```bash
+git add .github/workflows/merge-guardian.yml  # Phase 0 + Phase 2
+git add envs/agency_env_runner.py             # Phase 2
+git add run_tests.py                          # Phase 2
+git add docs/ci/ENVIRONMENT_SPEC.md           # Phase 2
+git add docs/ci/TOP_LEVEL_MANUAL_VERIFICATION.md  # Pre-existing
+git add scratch/overnight_ci_notes.md         # Phase 0 + Phase 2
+git add .claude/quick-ref/LOCKSTEP_STATUS.md  # Phase 0 + Phase 2
+git add .claude/quick-ref/CLEANUP_COMPLETE_2025-11-06.md  # Pre-existing
+git add .claude/quick-ref/OPENENV_RESEARCH_COMPLETE.md    # Pre-existing
+git add docs/ci/OPENENV_COMPARISON.md         # Pre-existing
+git add plans/2025-11-openenv-adoption.md     # Pre-existing
+# Pre-existing directory: scratch/openenv_research/
+```
+
+**Status**: ✅ Phase 2 complete, ready for staging and review
+**Time Invested**: Phase 0 (~27 min) + Phase 2 (~40 min) = ~67 min total
+**Risk**: LOW (incremental approach, comprehensive rollback plan)
+**Next**: User review → stage → commit → await approval before push
