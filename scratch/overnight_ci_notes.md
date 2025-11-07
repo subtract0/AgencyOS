@@ -415,3 +415,4 @@ These were NOT requested but could be beneficial:
 **Total Time**: ~1 hour 45 minutes (CI work: 30-40 min, OpenENV research: ~1 hour)
 **Status**: SUCCESS - Ready for review
 **Evidence**: All raw research artifacts saved with timestamps in scratch/openenv_research/
+[2025-11-07 12:15 CET] Phase 1 kick-off — added .devcontainer setup (app + vectorstore + vcoder) and nix flake dev shell. README updated with usage instructions. Next: validate devcontainer locally + record provisioning time.

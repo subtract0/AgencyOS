@@ -1,0 +1,35 @@
+{
+  "name": "AgencyOS CI Env",
+  "version": "0.1",
+  "tools": [
+    {
+      "name": "git",
+      "commands": ["git", "gh"],
+      "cwd": "/workspace"
+    },
+    {
+      "name": "pytest",
+      "commands": ["pytest", "python"],
+      "cwd": "/workspace"
+    },
+    {
+      "name": "merge_guardian",
+      "commands": ["gh", "python", "pytest"],
+      "env": {
+        "CI": "true",
+        "USE_ENHANCED_MEMORY": "true"
+      }
+    }
+  ],
+  "resources": {
+    "cpu_cores": 10,
+    "memory_gb": 120,
+    "fs_roots": ["/workspace"],
+    "scratch": "/tmp/agency"
+  },
+  "entrypoints": {
+    "reset": "python envs/agency_env_runner.py reset",
+    "step": "python envs/agency_env_runner.py step",
+    "close": "python envs/agency_env_runner.py close"
+  }
+}
