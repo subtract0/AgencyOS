@@ -253,10 +253,18 @@ def mock_agent_context():
 @pytest.fixture(scope="session")
 def ollama_available() -> bool:
     """
-    Check if Ollama service is available for tests.
+    Check if Ollama service is available for tests with fast-path optimization.
 
     Returns:
         bool: True if Ollama is running and inference is working, False otherwise.
+
+    Performance Optimization (Velocity Blocker #2 fix):
+    - Fast path 1: Environment variable (SKIP_OLLAMA_TESTS=1) → <1ms
+    - Fast path 2: Marker file (/tmp/ollama-running) → <1ms
+    - Slow path: Health check (2s timeout) → only if fast paths fail
+
+    This reduces fixture initialization from 5-10s to <1ms in most cases,
+    saving 30-60 seconds per full test run (6 workers * 5-10s).
 
     Usage:
         def test_ollama_integration(ollama_available):
@@ -271,19 +279,44 @@ def ollama_available() -> bool:
             assert ollama_available  # Will be skipped if False
 
     This fixture uses session scope to cache the result and avoid repeated
-    health checks during test execution. It has a short timeout (5s) and
-    single retry to fail fast if Ollama is not available.
+    health checks during test execution.
     """
     import asyncio
 
+    # Fast path 1: Environment variable override (for CI or explicit skipping)
+    if os.getenv("SKIP_OLLAMA_TESTS") == "1":
+        return False  # <1ms
+
+    # Fast path 2: Marker file created by docker-compose healthcheck
+    # docker-compose.yml healthcheck creates this when Ollama is healthy
+    marker_file = Path("/tmp/ollama-running")
+    if marker_file.exists():
+        # Check if marker is fresh (<5 min old)
+        try:
+            if time.time() - marker_file.stat().st_mtime < 300:  # 5 minutes
+                return True  # <1ms
+        except OSError:
+            pass  # File might be removed, continue to slow path
+
+    # Slow path: Health check (only if fast paths fail)
+    # Reduced timeout from 5s to 2s for faster failure detection
     try:
         from tools.ollama_health_check import check_ollama_health
 
-        result = asyncio.run(check_ollama_health(timeout=5, max_retries=1))
+        result = asyncio.run(check_ollama_health(timeout=2, max_retries=1))
 
         if result.is_ok():
             health_status = result.unwrap()
-            return health_status.is_running and health_status.inference_working
+            is_available = health_status.is_running and health_status.inference_working
+
+            # Cache result in marker file for future fast-path checks
+            if is_available:
+                try:
+                    marker_file.write_text(str(time.time()))
+                except OSError:
+                    pass  # Non-critical, continue without caching
+
+            return is_available
         return False
     except Exception:
         # Fail gracefully if health check raises an exception
