@@ -20,14 +20,30 @@
 - Post-fix behavior: No warning output, tests execute normally
 
 ### Available Test Artifacts ✅
-**Direct pytest run** (partial suite):
-- `test-results/full-suite-pytest-direct-20251108.json` (1.3M)
-- 256 tests collected and executed
-- Used for regression verification
 
-**Note**: Full `./run_tests.py --run-all` execution with JSON artifact generation
-is now possible (regression fixed) but takes significant time. The regression
-fix has been verified through targeted component testing.
+**Partial suite** (interim artifact from when regression was broken):
+- `test-results/full-suite-pytest-direct-20251108.json` (1.3M)
+- **Coverage**: ~256 tests (~3% of full suite)
+- **Method**: Direct `python -m pytest` (bypassed broken run_tests.py)
+- **Purpose**: Historical context - captured before regression fix
+- **Status**: Superseded by targeted verification below
+
+**Targeted verification** (post-fix):
+- Health check tests: `./run_tests.py tests/test_ollama_health_check.py`
+  - **Result**: 13/13 PASS (both with/without --no-sandbox)
+  - **Proves**: Both regressions fixed
+- Test collection: `pytest --collect-only`
+  - **Result**: Completes without warning output
+  - **Proves**: Discovery regression fixed
+
+**Full suite run** (authoritative - pending):
+- **Command**: `./run_tests.py --run-all --json-report --json-report-file=...`
+- **Status**: Now possible (regression fixed)
+- **Note**: Not yet captured - full suite takes significant time (~6,496 test functions)
+- **When needed**: Can be executed on demand for comprehensive validation
+
+**Current state**: Regression fixes verified through targeted component testing.
+Full-suite artifact generation is unblocked and available when needed.
 
 ---
 
