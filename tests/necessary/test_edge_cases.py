@@ -266,14 +266,21 @@ class TestModelPolicyEdgeCases:
         """Test agent_model with whitespace in key."""
         # Should not match any known key
         model = agent_model("  planner  ")
-        # Should fall back to default
-        assert model in ["gpt-5", "gpt-5-mini"]
+        # Should fall back to default (check it's a valid model string, not hardcoded list)
+        expected_default = agent_model("unknown_key_fallback")
+        assert isinstance(model, str)
+        assert len(model) > 0
+        # Model should be the default fallback (could be gpt-5, gpt-5-mini, or local model)
+        assert model == expected_default
 
     def test_agent_model_with_numeric_key(self):
         """Test agent_model with numeric key (as string)."""
         model = agent_model("123")
-        # Should fall back to default
-        assert model in ["gpt-5", "gpt-5-mini"]
+        # Should fall back to default (check it's a valid model string)
+        expected_default = agent_model("unknown_key_fallback")
+        assert isinstance(model, str)
+        assert len(model) > 0
+        assert model == expected_default
 
     def test_agent_model_all_valid_keys(self):
         """Test agent_model with all documented valid keys."""
@@ -303,9 +310,12 @@ class TestModelPolicyEdgeCases:
         model_upper = agent_model("PLANNER")
         model_mixed = agent_model("Planner")
 
-        # All non-matching should return default
-        assert model_lower != model_upper or model_upper in ["gpt-5", "gpt-5-mini"]
-        assert model_lower != model_mixed or model_mixed in ["gpt-5", "gpt-5-mini"]
+        # Get expected default for unknown keys
+        expected_default = agent_model("unknown_key_fallback")
+
+        # Upper and mixed case should fall back to default (case-sensitive matching)
+        assert model_upper == expected_default or model_upper == model_lower
+        assert model_mixed == expected_default or model_mixed == model_lower
 
 
 class TestAgentCreationEdgeCases:

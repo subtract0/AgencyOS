@@ -29,6 +29,8 @@ Author: CodingAgent
 Date: 2025-10-10
 """
 
+import time
+import uuid
 from datetime import UTC, datetime, timedelta
 
 import pytest
@@ -36,6 +38,22 @@ import pytest
 from agency_memory import Memory
 from shared.agent_context import AgentContext
 from shared.models.prediction_log import PredictionLog
+
+
+@pytest.fixture
+def unique_session_id():
+    """Generate unique session ID to prevent test state leakage."""
+    # Use UUID to guarantee uniqueness even with rapid test execution
+    return f"test_session_{uuid.uuid4().hex[:16]}"
+
+
+@pytest.fixture
+def isolated_context():
+    """Create fully isolated AgentContext with unique session ID and fresh memory store."""
+    # Use UUID to guarantee uniqueness even with rapid test execution
+    session_id = f"test_session_{uuid.uuid4().hex[:16]}"
+    # Use fresh Memory() instance for complete isolation
+    return AgentContext(memory=Memory(), session_id=session_id)
 
 # ============================================================================
 # Test Category 1: log_prediction() - Normal Operation (NECESSARY: N)
@@ -150,7 +168,7 @@ class TestLogPredictionNormalOperation:
 class TestGetPredictionsRetrieval:
     """Test get_predictions() retrieves and filters predictions from VectorStore."""
 
-    def test_get_predictions_retrieves_all(self):
+    def test_get_predictions_retrieves_all(self, unique_session_id):
         """
         Test AC-3.5: get_predictions() retrieves all predictions without filters.
 
@@ -160,7 +178,7 @@ class TestGetPredictionsRetrieval:
         # Arrange
         from tools.ml_routing.prediction_logger import get_predictions, log_prediction
 
-        context = AgentContext(memory=Memory(), session_id="test_session_004")
+        context = AgentContext(memory=Memory(), session_id=unique_session_id)
 
         # Log 3 predictions
         for i in range(3):
@@ -170,7 +188,7 @@ class TestGetPredictionsRetrieval:
                 confidence=0.80 + i * 0.05,
                 method="ml_model",
                 model_version="2025-10-10T12:00:00Z",
-                session_id="test_session_004",
+                session_id=unique_session_id,
             )
             log_prediction(context, prediction)
 
@@ -233,7 +251,7 @@ class TestGetPredictionsRetrieval:
         assert len(predictions) == 1
         assert predictions[0].task_id == "task_new"
 
-    def test_get_predictions_filter_by_tier(self):
+    def test_get_predictions_filter_by_tier(self, unique_session_id):
         """
         Test AC-3.5: get_predictions() filters by tier (tier_filter parameter).
 
@@ -242,7 +260,7 @@ class TestGetPredictionsRetrieval:
         # Arrange
         from tools.ml_routing.prediction_logger import get_predictions, log_prediction
 
-        context = AgentContext(memory=Memory(), session_id="test_session_006")
+        context = AgentContext(memory=Memory(), session_id=unique_session_id)
 
         # Log predictions with different tiers
         for tier in ["complex", "moderate", "simple"]:
@@ -252,7 +270,7 @@ class TestGetPredictionsRetrieval:
                 confidence=0.85,
                 method="ml_model",
                 model_version="2025-10-10T12:00:00Z",
-                session_id="test_session_006",
+                session_id=unique_session_id,
             )
             log_prediction(context, prediction)
 
@@ -265,7 +283,7 @@ class TestGetPredictionsRetrieval:
         assert len(predictions) == 1
         assert predictions[0].tier == "complex"
 
-    def test_get_predictions_empty_result(self):
+    def test_get_predictions_empty_result(self, isolated_context):
         """
         Test AC-3.5: get_predictions() returns empty list when no predictions match filters.
 
@@ -274,17 +292,15 @@ class TestGetPredictionsRetrieval:
         # Arrange
         from tools.ml_routing.prediction_logger import get_predictions
 
-        context = AgentContext(memory=Memory(), session_id="test_session_007")
-
         # Act: Retrieve predictions from empty VectorStore
-        result = get_predictions(context, since=None, tier_filter=None)
+        result = get_predictions(isolated_context, since=None, tier_filter=None)
 
         # Assert: Result is Ok with empty list
         assert result.is_ok()
         predictions = result.unwrap()
         assert len(predictions) == 0
 
-    def test_get_predictions_handles_invalid_data(self):
+    def test_get_predictions_handles_invalid_data(self, isolated_context):
         """
         Test AC-3.5: get_predictions() handles corrupted VectorStore data gracefully.
 
@@ -294,17 +310,15 @@ class TestGetPredictionsRetrieval:
         # Arrange
         from tools.ml_routing.prediction_logger import get_predictions
 
-        context = AgentContext(memory=Memory(), session_id="test_session_008")
-
         # Store invalid prediction data (missing required fields)
-        context.store_memory(
+        isolated_context.store_memory(
             key="corrupted_prediction",
             content={"task_id": "task_invalid"},  # Missing required fields
             tags=["prediction", "P2", "ml"],
         )
 
         # Store valid prediction data
-        context.store_memory(
+        isolated_context.store_memory(
             key="valid_prediction",
             content={
                 "task_id": "task_valid",
@@ -312,14 +326,14 @@ class TestGetPredictionsRetrieval:
                 "confidence": 0.90,
                 "method": "ml_model",
                 "model_version": "2025-10-10T12:00:00Z",
-                "session_id": "test_session_008",
+                "session_id": isolated_context.session_id,
                 "timestamp": datetime.now(UTC).isoformat() + "Z",
             },
             tags=["prediction", "simple", "ml_model"],
         )
 
         # Act: Retrieve predictions (should skip corrupted entry)
-        result = get_predictions(context, since=None, tier_filter=None)
+        result = get_predictions(isolated_context, since=None, tier_filter=None)
 
         # Assert: Result is Ok with only valid prediction
         assert result.is_ok()
@@ -336,7 +350,7 @@ class TestGetPredictionsRetrieval:
 class TestPredictionLoggerEdgeCases:
     """Test edge cases and error conditions for prediction logger."""
 
-    def test_log_prediction_with_actual_tier_populated(self):
+    def test_log_prediction_with_actual_tier_populated(self, isolated_context):
         """
         Test AC-3.5: log_prediction() stores prediction with actual_tier if provided.
 
@@ -345,22 +359,21 @@ class TestPredictionLoggerEdgeCases:
         # Arrange
         from tools.ml_routing.prediction_logger import get_predictions, log_prediction
 
-        context = AgentContext(memory=Memory(), session_id="test_session_009")
         prediction = PredictionLog(
             task_id="task_complete",
             tier="moderate",
             confidence=0.82,
             method="ml_model",
             model_version="2025-10-10T12:00:00Z",
-            session_id="test_session_009",
+            session_id=isolated_context.session_id,
         )
 
         # Act
-        result = log_prediction(context, prediction)
+        result = log_prediction(isolated_context, prediction)
         assert result.is_ok()
 
         # Retrieve and verify
-        predictions = get_predictions(context, since=None, tier_filter=None).unwrap()
+        predictions = get_predictions(isolated_context, since=None, tier_filter=None).unwrap()
         assert len(predictions) == 1
         assert predictions[0].tier == "moderate"
 
@@ -424,7 +437,7 @@ class TestPredictionLoggerEdgeCases:
         assert len(predictions) == 1
         assert predictions[0].task_id == "task_new_complex"
 
-    def test_log_prediction_batch_logging(self):
+    def test_log_prediction_batch_logging(self, isolated_context):
         """
         Test AC-3.5: log_prediction() handles batch logging efficiently.
 
@@ -432,11 +445,8 @@ class TestPredictionLoggerEdgeCases:
         NECESSARY: S (Stress test - batch operations).
         """
         # Arrange
-        import time
-
         from tools.ml_routing.prediction_logger import get_predictions, log_prediction
 
-        context = AgentContext(memory=Memory(), session_id="test_session_011")
         batch_size = 50
 
         # Act: Log 50 predictions
@@ -448,15 +458,15 @@ class TestPredictionLoggerEdgeCases:
                 confidence=0.80 + (i % 20) * 0.01,
                 method="ml_model",
                 model_version="2025-10-10T12:00:00Z",
-                session_id="test_session_011",
+                session_id=isolated_context.session_id,
             )
-            result = log_prediction(context, prediction)
+            result = log_prediction(isolated_context, prediction)
             assert result.is_ok()
 
         elapsed_ms = (time.perf_counter() - start_time) * 1000
 
         # Assert: All predictions logged and retrievable
-        predictions = get_predictions(context, since=None, tier_filter=None).unwrap()
+        predictions = get_predictions(isolated_context, since=None, tier_filter=None).unwrap()
         assert len(predictions) == batch_size
 
         # Performance: <500ms for 50 predictions (<10ms each)
