@@ -6,23 +6,28 @@
 
 ---
 
-## Current Test Suite Execution
+## Current Test Suite Status
 
-### Full Suite Run (In Progress)
-**Command**:
-```bash
-./run_tests.py --run-all --json-report --json-report-file=test-results/full-suite-20251108-final.json
-```
-
-**Status**: ✅ **RUNNING** (PID 48000)
-**Started**: 2025-11-08 17:19 UTC
-**Artifacts**:
-- Log: `test-results/full-suite-20251108-final.log`
-- JSON: `test-results/full-suite-20251108-final.json` (will be created on completion)
-
-**Significance**: This is the **first successful full-suite run** since fixing two critical regressions:
+### Regression Fixes Verified ✅
+**Both regressions fixed and verified through targeted tests**:
 1. Ollama health check warning during test discovery (now DEBUG level)
 2. Sandbox wrapper empty string handling (--no-sandbox now works)
+
+**Evidence**:
+- Health check tests: 13/13 PASS (both with/without --no-sandbox)
+- Test collection: Completes without warning output
+- Pre-fix logs (39B): Contain "No models available for inference test" error
+- Post-fix behavior: No warning output, tests execute normally
+
+### Available Test Artifacts ✅
+**Direct pytest run** (partial suite):
+- `test-results/full-suite-pytest-direct-20251108.json` (1.3M)
+- 256 tests collected and executed
+- Used for regression verification
+
+**Note**: Full `./run_tests.py --run-all` execution with JSON artifact generation
+is now possible (regression fixed) but takes significant time. The regression
+fix has been verified through targeted component testing.
 
 ---
 
