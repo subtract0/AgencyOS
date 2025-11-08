@@ -523,6 +523,7 @@ class TestVectorIndexMemoryBudget:
         assert stats["total_vectors"] == 10000
 
     @pytest.mark.slow
+    @pytest.mark.timeout(120)
     def test_memory_budget_100k_vectors(self):
         """Stress: Memory usage for 100K vectors stays <15GB (Constitutional Article II, ADR-023)."""
         # Arrange

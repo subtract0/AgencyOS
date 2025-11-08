@@ -105,7 +105,7 @@ jobs:
             --timeout 900 \
             --log-file test-results/runner-step.json \
             --env PYTHONMALLOC=malloc \
-            -- pytest tests/orchestrator \
+            -- python -m pytest tests/orchestrator \
               --ignore=tests/test_firestore_learning_persistence.py \
               --ignore=tests/test_firestore_mock_integration.py \
               --ignore=tests/e2e \
@@ -1277,6 +1277,20 @@ jobs:
             echo "  top-level suites status: skipped (manual verification required, see docs/ci/TOP_LEVEL_MANUAL_VERIFICATION.md)"
           fi
 
+          # Count passed and failed tests from JSON reports
+          PASSED_TESTS=0
+          FAILED_TESTS=0
+          for shard_dir in all-test-results/test-results-*/; do
+            report_json="$shard_dir/report.json"
+            if [ -f "$report_json" ]; then
+              passed=$(jq -r '.summary.passed // 0' "$report_json" 2>/dev/null || echo "0")
+              failed=$(jq -r '.summary.failed // 0' "$report_json" 2>/dev/null || echo "0")
+              PASSED_TESTS=$((PASSED_TESTS + passed))
+              FAILED_TESTS=$((FAILED_TESTS + failed))
+            fi
+          done
+          echo "Aggregated Results: PASSED_TESTS=$PASSED_TESTS, FAILED_TESTS=$FAILED_TESTS"
+
           # Check if all jobs succeeded
           if [[ "${{ needs.test-orchestrator.result }}" == "success" ]] && \
              [[ "${{ needs.test-tools-ci-monitor.result }}" == "success" ]] && \
@@ -1296,12 +1310,14 @@ jobs:
              [[ "${{ needs.test-misc-meta-necessary-property.result }}" == "success" ]] && \
              [[ "${{ needs.test-misc-shared-trinity.result }}" == "success" ]]; then
             echo "✅ ADR-002 COMPLIANT: All test jobs passed"
+            TEST_EXIT_CODE=0
             echo "status=success" >> $GITHUB_OUTPUT
             echo "summary=✅ ADR-002 COMPLIANT: All tests passed (job isolation approach)" >> $GITHUB_OUTPUT
             echo "failures=0" >> $GITHUB_OUTPUT
             exit 0
           else
             echo "❌ ADR-002 VIOLATION: One or more test jobs failed"
+            TEST_EXIT_CODE=1
             echo "status=failure" >> $GITHUB_OUTPUT
             echo "summary=❌ ADR-002 VIOLATION: Test failures detected" >> $GITHUB_OUTPUT
             echo "failures=1" >> $GITHUB_OUTPUT

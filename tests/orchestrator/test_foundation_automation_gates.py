@@ -372,10 +372,10 @@ def test_gate_008_main_branch_protection(isolated_git_repo: Path) -> None:
     Article III: "No bypass authority for anyone"
     Expected: Result<GateValidationResult, FoundationGateError> with Err
     """
-    # Arrange: Checkout main branch (violation)
+    # Arrange: Checkout main branch (violation) - create or reset if exists
     import subprocess
 
-    subprocess.run(["git", "checkout", "-b", "main"], cwd=isolated_git_repo, check=True)
+    subprocess.run(["git", "checkout", "-B", "main"], cwd=isolated_git_repo, check=True)
 
     # Act
     result = validate_gate_008_main_branch_protection(git_repo_path=isolated_git_repo)
