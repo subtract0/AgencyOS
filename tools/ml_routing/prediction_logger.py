@@ -141,8 +141,8 @@ def get_predictions(
         if tier_filter is not None:
             search_tags.append(tier_filter)
 
-        # Retrieve predictions from VectorStore
-        raw_predictions = context.search_memories(search_tags, include_session=True)
+        # Retrieve predictions from VectorStore (session-scoped for test isolation)
+        raw_predictions = context.search_memories(search_tags, include_session=False)
 
         # Filter and reconstruct PredictionLog objects
         predictions: list[PredictionLog] = []
