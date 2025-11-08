@@ -94,7 +94,7 @@ class CIFailureParser:
 
         # Check if gh CLI is available
         try:
-            subprocess.run(['gh', '--version'], capture_output=True, check=True)
+            run_spec_command(['gh', '--version'], capture_output=True, check=True)
         except (subprocess.CalledProcessError, FileNotFoundError):
             print("⚠️  GitHub CLI (gh) not available, falling back to local cache")
             return self._parse_local_pytest_cache()
@@ -109,7 +109,7 @@ class CIFailureParser:
 
         try:
             # List recent workflow runs
-            result = subprocess.run(
+            result = run_spec_command(
                 ['gh', 'run', 'list', '--repo', f'{owner}/{repo}',
                  '--limit', '100', '--json', 'databaseId,conclusion,createdAt,name'],
                 capture_output=True,
@@ -159,7 +159,7 @@ class CIFailureParser:
 
         try:
             # Get run logs
-            result = subprocess.run(
+            result = run_spec_command(
                 ['gh', 'run', 'view', str(run_id), '--repo', f'{owner}/{repo}', '--log'],
                 capture_output=True,
                 text=True,

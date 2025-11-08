@@ -1,0 +1,6 @@
+{
+  "checkpoint_id": "checkpoint_20251103_013346_437045",
+  "timestamp": "2025-11-03T01:33:46.437045",
+  "session_state_json": "{\n  \"session_id\": \"very_specific_session_id_12345\",\n  \"agent_name\": \"unknown\",\n  \"status\": \"running\",\n  \"created_at\": \"2025-11-03T01:33:46.436757\",\n  \"updated_at\": \"2025-11-03T01:33:46.436878\",\n  \"ttl_seconds\": 2592000,\n  \"expires_at\": \"2025-12-03T01:33:46.436757\",\n  \"metadata\": {\n    \"session_start_time\": \"2025-11-03T01:33:46.436531\",\n    \"checkpoint_count\": 0,\n    \"test\": \"data\"\n  },\n  \"memory_snapshots\": [],\n  \"tool_results\": [],\n  \"compression\": null,\n  \"checkpoint\": null,\n  \"task_id\": null,\n  \"task_type\": null,\n  \"task_progress_percent\": 0.0,\n  \"completed_steps\": [],\n  \"pending_steps\": [],\n  \"active_memory_refs\": [],\n  \"pinned_memories\": [],\n  \"memory_snapshot_id\": null,\n  \"agent_states\": {}\n}",
+  "checksum": "b59ce6387b55695620f6b91f45b3c2930f2ecd19f679099f8ab98df120a5fa24"
+}

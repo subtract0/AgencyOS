@@ -298,3 +298,65 @@ class TestCheckOllamaHealth:
         status = result.unwrap()
         assert status.is_running is True
         assert status.inference_working is False  # Inference failed but Ollama is up
+
+    @patch("aiohttp.ClientSession")
+    async def test_check_health_no_models_uses_debug_logging(self, mock_session_class, caplog):
+        """
+        Test that missing models logs at DEBUG level (not WARNING).
+
+        Regression fix for: ./run_tests.py --run-all abortion due to warning output
+        during test discovery. Missing models is an expected condition and should
+        use debug-level logging.
+
+        Constitutional Compliance:
+        - Article I: Complete context (test discovery must complete)
+        - Article II: 100% verification (all tests must be discoverable)
+        """
+        import logging
+
+        # Set log level to DEBUG to capture debug messages
+        caplog.set_level(logging.DEBUG)
+
+        mock_session = MagicMock()
+        mock_session_class.return_value.__aenter__.return_value = mock_session
+
+        # Tags endpoint succeeds but returns empty models list
+        mock_tags_response = AsyncMock()
+        mock_tags_response.status = 200
+        mock_tags_response.json = AsyncMock(return_value={"models": []})  # No models
+        mock_tags_response.raise_for_status = MagicMock()
+
+        # Create proper async context manager
+        mock_get_cm = MagicMock()
+        mock_get_cm.__aenter__ = AsyncMock(return_value=mock_tags_response)
+        mock_get_cm.__aexit__ = AsyncMock(return_value=None)
+
+        mock_session.get = MagicMock(return_value=mock_get_cm)
+
+        with patch("tools.ollama_health_check.detect_docker_ollama", return_value=False):
+            result = await check_ollama_health()
+
+        # Verify health check succeeds gracefully
+        assert result.is_ok()
+        status = result.unwrap()
+        assert status.is_running is True
+        assert status.models_available == []
+        assert status.inference_working is False  # Can't test inference without models
+
+        # CRITICAL: Verify DEBUG level used (not WARNING)
+        # This prevents test discovery abortion in ./run_tests.py --run-all
+        debug_messages = [
+            record for record in caplog.records
+            if "no models available" in record.message.lower()
+        ]
+        assert len(debug_messages) > 0, "Expected debug message about missing models"
+        assert all(record.levelname == "DEBUG" for record in debug_messages), \
+            "Missing models should log at DEBUG level, not WARNING"
+
+        # Verify NO warning-level messages about models
+        warning_messages = [
+            record for record in caplog.records
+            if record.levelname == "WARNING" and "models" in record.message.lower()
+        ]
+        assert len(warning_messages) == 0, \
+            "Should not log WARNING for missing models (causes test discovery failure)"

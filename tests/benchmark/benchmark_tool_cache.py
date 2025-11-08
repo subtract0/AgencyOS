@@ -17,7 +17,7 @@ sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from shared.tool_cache import clear_cache, get_cache_stats
 from tools.git_unified import GitCore
-from tools.glob import _find_files_cached
+from tools.glob_tool import _find_files_cached
 from tools.read import _read_file_lines_cached
 
 

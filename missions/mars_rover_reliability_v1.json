@@ -1,0 +1,1180 @@
+{
+  "mission": "Mars-Rover Reliability Infrastructure - 100% Regression-Safe Autonomous Development",
+  "leap_number": 9,
+  "phases": [
+    {
+      "id": "phase_0_foundation",
+      "title": "Foundation Validation & Baseline Metrics",
+      "tasks": [
+        {
+          "id": "validate_memory_system",
+          "title": "Validate memory system SOTA compliance",
+          "type": "Test",
+          "tier": "Tier 1",
+          "agent": "test_generator",
+          "description": "Validate three-tier memory architecture (Anthropic Memory Tool + VectorStore + Session) meets SOTA criteria: <50ms query latency, 100% persistence after crashes, cross-session learning with confidence ≥0.6",
+          "dependencies": [],
+          "acceptance_criteria": [
+            "VectorStore query latency <50ms for 1000+ patterns",
+            "Memory Tool files survive process crashes",
+            "Cross-session pattern retrieval works (query patterns from previous sessions)",
+            "Confidence scores ≥0.6 for production patterns",
+            "Memory security tests pass (no unauthorized access to ~/.agency/memories/)"
+          ],
+          "verification_target": "validate_memory_system"
+        },
+        {
+          "id": "validate_test_suite_baseline",
+          "title": "Establish test suite baseline (1,762 tests)",
+          "type": "Test",
+          "tier": "Tier 2",
+          "agent": "test_generator",
+          "description": "Run full test suite to establish baseline: 1,762 tests must pass 100%, <3 min duration with 20 workers on M4 MAX 128GB. Document current pass rate, flaky tests, and performance bottlenecks.",
+          "dependencies": [],
+          "acceptance_criteria": [
+            "1,762/1,762 tests pass (100% success rate)",
+            "Duration <3 minutes with 20 workers",
+            "Zero flaky tests (3 consecutive runs, same results)",
+            "Memory peak <110GB during test execution",
+            "Baseline metrics documented in /memories/test_suite_baseline.md"
+          ],
+          "verification_target": "validate_test_suite_baseline"
+        },
+        {
+          "id": "assess_autonomous_workers",
+          "title": "Assess autonomous worker operational status",
+          "type": "Code",
+          "tier": "Tier 2",
+          "agent": "coder",
+          "description": "Verify autonomous_worker_v2.py, autonomous_worker_v3.py, and intelligence_monitor.py are operational. Check process status, importability, coordination mechanisms, and resource usage. Document findings in AUTONOMOUS_SYSTEMS_INVENTORY.md",
+          "dependencies": [],
+          "acceptance_criteria": [
+            "All 3 autonomous systems importable without errors",
+            "Process status documented (running/stopped/crashed)",
+            "Memory footprint <5GB total for all workers",
+            "Coordination mechanisms tested (VectorStore, file-based state)",
+            "Health check commands created for monitoring"
+          ]
+        },
+        {
+          "id": "test_assess_autonomous_workers",
+          "title": "Test autonomous worker assessment",
+          "type": "Test",
+          "tier": "Tier 2",
+          "agent": "test_generator",
+          "description": "Write tests to verify autonomous worker assessment: import tests, process detection, health checks, resource limits",
+          "dependencies": ["assess_autonomous_workers"],
+          "acceptance_criteria": [
+            "Import tests pass for all 3 workers",
+            "Health check scripts work (exit 0 if healthy)",
+            "Resource limit tests prevent >5GB memory usage",
+            "Coordination tests verify VectorStore communication"
+          ],
+          "verification_target": "assess_autonomous_workers"
+        },
+        {
+          "id": "create_baseline_metrics_dashboard",
+          "title": "Create baseline metrics dashboard",
+          "type": "Code",
+          "tier": "Tier 2",
+          "agent": "coder",
+          "description": "Create metrics dashboard showing: test pass rate over time, memory usage, autonomous worker status, VectorStore pattern count, constitutional violations. Store in /memories/metrics/baseline.json",
+          "dependencies": [
+            "validate_memory_system",
+            "validate_test_suite_baseline",
+            "assess_autonomous_workers"
+          ],
+          "acceptance_criteria": [
+            "Metrics dashboard displays all 5 key metrics",
+            "JSON export works (baseline.json created)",
+            "Trend visualization for test pass rate (last 30 days)",
+            "Alert thresholds configured (test pass <100%, memory >110GB)",
+            "Dashboard accessible via CLI: python tools/metrics_dashboard.py"
+          ]
+        },
+        {
+          "id": "test_baseline_metrics_dashboard",
+          "title": "Test baseline metrics dashboard",
+          "type": "Test",
+          "tier": "Tier 2",
+          "agent": "test_generator",
+          "description": "Write tests for metrics dashboard: data collection, JSON export, visualization, alert thresholds",
+          "dependencies": ["create_baseline_metrics_dashboard"],
+          "acceptance_criteria": [
+            "Metrics collection tests pass (all 5 metrics)",
+            "JSON export format validated",
+            "Alert threshold tests trigger correctly",
+            "CLI integration tests work"
+          ],
+          "verification_target": "create_baseline_metrics_dashboard"
+        }
+      ]
+    },
+    {
+      "id": "phase_1_mars_rover_reliability",
+      "title": "Mars-Rover Reliability Layer",
+      "tasks": [
+        {
+          "id": "spec_watchdog_system",
+          "title": "Specification: Watchdog system for process health",
+          "type": "Spec",
+          "tier": "Tier 1",
+          "agent": "planner",
+          "description": "Create formal specification for watchdog system: monitors all autonomous processes (workers, evolution, monitor), auto-restarts on failure, exponential backoff, circuit breaker after 3 failures, launchd integration for 24/7 operation",
+          "dependencies": [],
+          "acceptance_criteria": [
+            "Specification defines process health criteria (memory, CPU, heartbeat)",
+            "Auto-restart policy documented (exponential backoff, max 3 retries)",
+            "Circuit breaker behavior specified (halt after 3 failures, alert user)",
+            "launchd plist configuration defined for macOS",
+            "Logging and alerting requirements specified"
+          ]
+        },
+        {
+          "id": "code_watchdog_system",
+          "title": "Implement watchdog system",
+          "type": "Code",
+          "tier": "Tier 1",
+          "agent": "coder",
+          "description": "Implement watchdog system per specification: process monitoring, auto-restart with exponential backoff, circuit breaker, launchd integration. Store in tools/watchdog.py",
+          "dependencies": ["spec_watchdog_system"],
+          "acceptance_criteria": [
+            "Watchdog detects crashed processes within 30 seconds",
+            "Auto-restart works with exponential backoff (30s, 60s, 120s)",
+            "Circuit breaker activates after 3 failures",
+            "launchd plist created for macOS (com.agency.watchdog.plist)",
+            "Health check endpoint responds (GET /health)"
+          ]
+        },
+        {
+          "id": "test_watchdog_system",
+          "title": "Test watchdog system",
+          "type": "Test",
+          "tier": "Tier 1",
+          "agent": "test_generator",
+          "description": "Write comprehensive tests for watchdog: crash detection, auto-restart, exponential backoff, circuit breaker, launchd integration",
+          "dependencies": ["code_watchdog_system"],
+          "acceptance_criteria": [
+            "Crash detection tests pass (simulated process kill)",
+            "Auto-restart tests verify exponential backoff timing",
+            "Circuit breaker tests halt after 3 failures",
+            "launchd integration tests work on macOS",
+            "100% code coverage for watchdog.py"
+          ],
+          "verification_target": "code_watchdog_system"
+        },
+        {
+          "id": "spec_regression_guard",
+          "title": "Specification: RegressionGuard - prevent ANY regression",
+          "type": "Spec",
+          "tier": "Tier 1",
+          "agent": "planner",
+          "description": "Create formal specification for RegressionGuard: pre-commit hook that blocks ANY commit reducing test pass rate, performance degradation >10%, or introducing constitutional violations. Zero-tolerance enforcement.",
+          "dependencies": [],
+          "acceptance_criteria": [
+            "Specification defines regression criteria (test pass rate, performance, constitution)",
+            "Pre-commit hook behavior documented (block commit, show diff, suggest fixes)",
+            "Performance baseline tracking specified (store per-commit metrics)",
+            "Constitutional violation detection defined (Articles I-VII)",
+            "Override mechanism for emergencies (requires justification + approval)"
+          ]
+        },
+        {
+          "id": "code_regression_guard",
+          "title": "Implement RegressionGuard pre-commit hook",
+          "type": "Code",
+          "tier": "Tier 1",
+          "agent": "coder",
+          "description": "Implement RegressionGuard pre-commit hook: run test suite, compare to baseline, detect performance degradation, check constitutional compliance. Block commit if ANY regression detected. Store in .git/hooks/pre-commit",
+          "dependencies": ["spec_regression_guard", "create_baseline_metrics_dashboard"],
+          "acceptance_criteria": [
+            "Pre-commit hook runs full test suite automatically",
+            "Regression detection works (test pass rate, performance, constitution)",
+            "Commit blocked if ANY regression detected (exit 1)",
+            "Performance comparison against baseline (<10% degradation allowed)",
+            "Constitutional violation check passes (no Dict[Any, Any], etc.)"
+          ]
+        },
+        {
+          "id": "test_regression_guard",
+          "title": "Test RegressionGuard",
+          "type": "Test",
+          "tier": "Tier 1",
+          "agent": "test_generator",
+          "description": "Write tests for RegressionGuard: regression detection, commit blocking, performance comparison, constitutional checks",
+          "dependencies": ["code_regression_guard"],
+          "acceptance_criteria": [
+            "Regression detection tests pass (simulated test failures)",
+            "Commit blocking tests verify exit code 1",
+            "Performance degradation tests trigger (>10% slower)",
+            "Constitutional violation tests block commit",
+            "Override mechanism tests work (emergency bypass)"
+          ],
+          "verification_target": "code_regression_guard"
+        },
+        {
+          "id": "spec_atomic_operations",
+          "title": "Specification: Atomic operations with checkpoint/rollback",
+          "type": "Spec",
+          "tier": "Tier 1",
+          "agent": "planner",
+          "description": "Create formal specification for atomic operations: checkpoint before any autonomous action, rollback on failure, provenance tracking (audit trail for all changes), git worktree isolation",
+          "dependencies": [],
+          "acceptance_criteria": [
+            "Checkpoint mechanism defined (git stash, file snapshots, VectorStore state)",
+            "Rollback procedure specified (restore from checkpoint, verify tests pass)",
+            "Provenance tracking documented (who, what, when, why for all changes)",
+            "Git worktree isolation explained (parallel agents, no conflicts)",
+            "Rollback verification criteria (tests pass, no broken windows)"
+          ]
+        },
+        {
+          "id": "code_atomic_operations",
+          "title": "Implement atomic operations framework",
+          "type": "Code",
+          "tier": "Tier 1",
+          "agent": "coder",
+          "description": "Implement atomic operations framework: checkpoint creation, rollback on failure, provenance tracking, git worktree integration. Store in tools/atomic_operations.py",
+          "dependencies": ["spec_atomic_operations"],
+          "acceptance_criteria": [
+            "Checkpoint creation works (git stash + file snapshots + VectorStore state)",
+            "Rollback on failure restores to checkpoint (verified by tests)",
+            "Provenance tracking logs all changes (JSON audit trail)",
+            "Git worktree isolation works (parallel agents, no file conflicts)",
+            "Rollback verification passes (tests run, all pass)"
+          ]
+        },
+        {
+          "id": "test_atomic_operations",
+          "title": "Test atomic operations",
+          "type": "Test",
+          "tier": "Tier 1",
+          "agent": "test_generator",
+          "description": "Write tests for atomic operations: checkpoint creation, rollback, provenance tracking, git worktree isolation",
+          "dependencies": ["code_atomic_operations"],
+          "acceptance_criteria": [
+            "Checkpoint tests verify state saved correctly",
+            "Rollback tests restore to exact checkpoint state",
+            "Provenance tests log all changes with timestamps",
+            "Git worktree tests verify isolation (no conflicts)",
+            "100% code coverage for atomic_operations.py"
+          ],
+          "verification_target": "code_atomic_operations"
+        },
+        {
+          "id": "spec_circuit_breakers",
+          "title": "Specification: Circuit breakers for graceful degradation",
+          "type": "Spec",
+          "tier": "Tier 1",
+          "agent": "planner",
+          "description": "Create formal specification for circuit breakers: detect resource exhaustion (memory >120GB, CPU >95%), fallback to cloud API if local model fails, auto-reduce worker count on memory pressure, halt new work on critical errors",
+          "dependencies": [],
+          "acceptance_criteria": [
+            "Resource thresholds defined (memory, CPU, disk, network)",
+            "Fallback behavior specified (cloud API, reduced workers, halt)",
+            "Recovery criteria documented (when to reset circuit breaker)",
+            "Alerting mechanism defined (user notification on circuit break)",
+            "Grace period specified (allow temporary spikes before breaking)"
+          ]
+        },
+        {
+          "id": "code_circuit_breakers",
+          "title": "Implement circuit breakers",
+          "type": "Code",
+          "tier": "Tier 1",
+          "agent": "coder",
+          "description": "Implement circuit breakers: resource monitoring, fallback mechanisms, auto-recovery, alerting. Store in tools/circuit_breakers.py",
+          "dependencies": ["spec_circuit_breakers"],
+          "acceptance_criteria": [
+            "Resource monitoring works (memory, CPU, disk, network)",
+            "Circuit breaker triggers on threshold violations",
+            "Fallback to cloud API works (USE_LOCAL_MODEL=false)",
+            "Worker count reduction works (20 → 10 → 5 → 1)",
+            "Auto-recovery works (reset after resource pressure subsides)"
+          ]
+        },
+        {
+          "id": "test_circuit_breakers",
+          "title": "Test circuit breakers",
+          "type": "Test",
+          "tier": "Tier 1",
+          "agent": "test_generator",
+          "description": "Write tests for circuit breakers: resource monitoring, threshold triggers, fallback, auto-recovery",
+          "dependencies": ["code_circuit_breakers"],
+          "acceptance_criteria": [
+            "Resource threshold tests trigger correctly",
+            "Fallback tests verify cloud API switch",
+            "Worker reduction tests work (20 → 10 → 5 → 1)",
+            "Auto-recovery tests reset circuit breaker",
+            "100% code coverage for circuit_breakers.py"
+          ],
+          "verification_target": "code_circuit_breakers"
+        }
+      ]
+    },
+    {
+      "id": "phase_2_autonomous_self_healing",
+      "title": "Autonomous Self-Healing Infrastructure",
+      "tasks": [
+        {
+          "id": "integrate_worker_v3_pattern_learning",
+          "title": "Integrate autonomous_worker_v3 with VectorStore pattern learning",
+          "type": "Code",
+          "tier": "Tier 2",
+          "agent": "coder",
+          "description": "Integrate autonomous_worker_v3 with VectorStore: query patterns before fixes (confidence ≥0.6), apply proven solutions, store successful fixes, learn from failures. Update worker to use enhanced memory.",
+          "dependencies": ["validate_memory_system", "assess_autonomous_workers"],
+          "acceptance_criteria": [
+            "Worker queries VectorStore before attempting fixes",
+            "Proven patterns (confidence ≥0.9) applied automatically",
+            "Successful fixes stored to VectorStore with confidence scores",
+            "Failed fix attempts logged for analysis",
+            "Worker respects constitutional compliance (no Dict[Any, Any] fixes)"
+          ]
+        },
+        {
+          "id": "test_worker_v3_integration",
+          "title": "Test autonomous_worker_v3 VectorStore integration",
+          "type": "Test",
+          "tier": "Tier 2",
+          "agent": "test_generator",
+          "description": "Write tests for worker V3 integration: VectorStore queries, pattern application, fix success storage, failure logging",
+          "dependencies": ["integrate_worker_v3_pattern_learning"],
+          "acceptance_criteria": [
+            "VectorStore query tests pass (retrieve patterns with confidence ≥0.6)",
+            "Pattern application tests verify proven solutions work",
+            "Fix storage tests save to VectorStore correctly",
+            "Failure logging tests capture root causes",
+            "Integration tests verify end-to-end workflow"
+          ],
+          "verification_target": "integrate_worker_v3_pattern_learning"
+        },
+        {
+          "id": "create_autonomous_test_generator",
+          "title": "Create autonomous test generator for gap detection",
+          "type": "Code",
+          "tier": "Tier 1",
+          "agent": "coder",
+          "description": "Create autonomous test generator: scans codebase for untested functions, generates tests using NECESSARY pattern (Normal/Edge/Security), runs tests to validate, stores to backlog if tests fail. Runs nightly via launchd.",
+          "dependencies": ["validate_test_suite_baseline"],
+          "acceptance_criteria": [
+            "Gap detection works (finds untested functions via AST analysis)",
+            "Test generation uses NECESSARY pattern (Normal/Edge/Security/etc.)",
+            "Generated tests run and validate (AAA pattern, Result<T,E>)",
+            "Failed tests stored to backlog (~/.agency/memories/agency_backlog/)",
+            "Nightly execution via launchd (3am daily)"
+          ]
+        },
+        {
+          "id": "test_autonomous_test_generator",
+          "title": "Test autonomous test generator",
+          "type": "Test",
+          "tier": "Tier 1",
+          "agent": "test_generator",
+          "description": "Write tests for autonomous test generator: gap detection, test generation, NECESSARY pattern compliance, backlog storage",
+          "dependencies": ["create_autonomous_test_generator"],
+          "acceptance_criteria": [
+            "Gap detection tests find untested functions",
+            "Test generation tests produce valid AAA pattern tests",
+            "NECESSARY pattern tests verify Normal/Edge/Security coverage",
+            "Backlog storage tests save gaps correctly",
+            "Integration tests verify nightly execution"
+          ],
+          "verification_target": "create_autonomous_test_generator"
+        },
+        {
+          "id": "create_self_healing_orchestrator",
+          "title": "Create self-healing orchestrator",
+          "type": "Code",
+          "tier": "Tier 1",
+          "agent": "coder",
+          "description": "Create self-healing orchestrator: monitors all systems (watchdog, workers, tests), detects anomalies (test failures, crashes, performance degradation), triggers autonomous fixes via workers, validates fixes, rollback on failure. Store in tools/self_healing_orchestrator.py",
+          "dependencies": [
+            "code_watchdog_system",
+            "integrate_worker_v3_pattern_learning",
+            "code_atomic_operations"
+          ],
+          "acceptance_criteria": [
+            "System monitoring works (watchdog, workers, tests, performance)",
+            "Anomaly detection triggers (test failures, crashes, degradation)",
+            "Autonomous fix workflow executes (worker spawned, fix applied, validated)",
+            "Validation works (tests run, all pass, no regressions)",
+            "Rollback on failure works (atomic operations restore checkpoint)"
+          ]
+        },
+        {
+          "id": "test_self_healing_orchestrator",
+          "title": "Test self-healing orchestrator",
+          "type": "Test",
+          "tier": "Tier 1",
+          "agent": "test_generator",
+          "description": "Write tests for self-healing orchestrator: monitoring, anomaly detection, fix workflow, validation, rollback",
+          "dependencies": ["create_self_healing_orchestrator"],
+          "acceptance_criteria": [
+            "Monitoring tests detect system issues",
+            "Anomaly detection tests trigger correctly",
+            "Fix workflow tests verify autonomous repair",
+            "Validation tests ensure fixes work",
+            "Rollback tests restore on failure"
+          ],
+          "verification_target": "create_self_healing_orchestrator"
+        }
+      ]
+    },
+    {
+      "id": "phase_3_memory_sota_excellence",
+      "title": "Memory System SOTA Excellence",
+      "tasks": [
+        {
+          "id": "optimize_vectorstore_query_latency",
+          "title": "Optimize VectorStore query latency to <50ms",
+          "type": "Code",
+          "tier": "Tier 1",
+          "agent": "coder",
+          "description": "Optimize VectorStore query performance: add caching layer (LRU cache, 1000 entries), batch queries, optimize embedding generation, add indexes for common queries. Target <50ms latency for 95th percentile.",
+          "dependencies": ["validate_memory_system"],
+          "acceptance_criteria": [
+            "Query latency <50ms for 95th percentile (1000+ patterns)",
+            "LRU cache works (hit rate >80% for repeated queries)",
+            "Batch queries reduce overhead (10 queries in 1 batch)",
+            "Embedding generation optimized (reuse cached embeddings)",
+            "Indexes created for common query patterns (tags, confidence)"
+          ]
+        },
+        {
+          "id": "test_vectorstore_optimization",
+          "title": "Test VectorStore optimization",
+          "type": "Test",
+          "tier": "Tier 1",
+          "agent": "test_generator",
+          "description": "Write performance tests for VectorStore: latency benchmarks, cache hit rate, batch query efficiency",
+          "dependencies": ["optimize_vectorstore_query_latency"],
+          "acceptance_criteria": [
+            "Latency benchmark tests verify <50ms 95th percentile",
+            "Cache hit rate tests achieve >80%",
+            "Batch query tests show efficiency gains",
+            "Embedding reuse tests prevent redundant generation",
+            "Load tests verify performance under 10,000+ patterns"
+          ],
+          "verification_target": "optimize_vectorstore_query_latency"
+        },
+        {
+          "id": "implement_memory_persistence_recovery",
+          "title": "Implement memory persistence and crash recovery",
+          "type": "Code",
+          "tier": "Tier 1",
+          "agent": "coder",
+          "description": "Implement memory persistence: periodic snapshots (every 5 minutes), crash recovery (restore from snapshot), transaction log for durability, verify persistence across process restarts",
+          "dependencies": ["validate_memory_system"],
+          "acceptance_criteria": [
+            "Periodic snapshots work (every 5 minutes, incremental)",
+            "Crash recovery restores to last snapshot (no data loss)",
+            "Transaction log ensures durability (all writes logged)",
+            "Process restart recovery works (VectorStore + Memory Tool)",
+            "Snapshot size optimized (compressed, incremental)"
+          ]
+        },
+        {
+          "id": "test_memory_persistence",
+          "title": "Test memory persistence and recovery",
+          "type": "Test",
+          "tier": "Tier 1",
+          "agent": "test_generator",
+          "description": "Write tests for memory persistence: snapshot creation, crash recovery, transaction log, process restart",
+          "dependencies": ["implement_memory_persistence_recovery"],
+          "acceptance_criteria": [
+            "Snapshot tests verify incremental backups",
+            "Crash recovery tests restore data correctly (simulated kill)",
+            "Transaction log tests ensure durability",
+            "Process restart tests verify full recovery",
+            "Data integrity tests verify no corruption"
+          ],
+          "verification_target": "implement_memory_persistence_recovery"
+        },
+        {
+          "id": "harden_memory_security",
+          "title": "Harden memory security (file permissions, encryption)",
+          "type": "Code",
+          "tier": "Tier 2",
+          "agent": "coder",
+          "description": "Harden memory security: restrict file permissions (700 for ~/.agency/memories/), encrypt sensitive data (API keys, secrets), validate file integrity (checksums), prevent unauthorized access",
+          "dependencies": ["validate_memory_system"],
+          "acceptance_criteria": [
+            "File permissions restricted to owner only (700)",
+            "Sensitive data encrypted at rest (AES-256)",
+            "File integrity validation works (SHA-256 checksums)",
+            "Unauthorized access blocked (non-owner cannot read)",
+            "Security tests pass (30 tests from test_anthropic_memory_security.py)"
+          ]
+        },
+        {
+          "id": "test_memory_security",
+          "title": "Test memory security hardening",
+          "type": "Test",
+          "tier": "Tier 2",
+          "agent": "test_generator",
+          "description": "Write security tests for memory: file permissions, encryption, integrity validation, unauthorized access prevention",
+          "dependencies": ["harden_memory_security"],
+          "acceptance_criteria": [
+            "Permission tests verify 700 on memory files",
+            "Encryption tests verify AES-256 at rest",
+            "Integrity tests detect file tampering",
+            "Unauthorized access tests block non-owner reads",
+            "All 30 existing security tests still pass"
+          ],
+          "verification_target": "harden_memory_security"
+        }
+      ]
+    },
+    {
+      "id": "phase_4_test_suite_excellence",
+      "title": "Test Suite Excellence (Article VII: Value-First)",
+      "tasks": [
+        {
+          "id": "audit_test_value_article_vii",
+          "title": "Audit test value per Article VII (delete score <10)",
+          "type": "Code",
+          "tier": "Tier 1",
+          "agent": "auditor",
+          "description": "Audit all 1,762 tests using Article VII scoring: integration >10, property-based >8, unit >5, trivial <5. Delete tests scoring <10, merge duplicates, enhance high-value tests. Document in /memories/test_value_audit.md",
+          "dependencies": ["validate_test_suite_baseline"],
+          "acceptance_criteria": [
+            "All 1,762 tests scored (integration/property/unit/trivial)",
+            "Low-value tests (<10 score) identified and deleted",
+            "Duplicate tests merged (consolidate redundant coverage)",
+            "High-value tests enhanced (add edge cases, security tests)",
+            "Test suite size reduced by ≥20% (keeping 100% coverage)"
+          ]
+        },
+        {
+          "id": "integrate_high_value_tests",
+          "title": "Add integration tests for critical paths",
+          "type": "Code",
+          "tier": "Tier 1",
+          "agent": "test_generator",
+          "description": "Add integration tests for critical autonomous paths: /primeA execution, autonomous healing, VectorStore learning, memory persistence, self-healing orchestrator. Focus on end-to-end workflows.",
+          "dependencies": ["audit_test_value_article_vii"],
+          "acceptance_criteria": [
+            "Integration tests cover /primeA execution (end-to-end)",
+            "Autonomous healing integration tests added (detect → fix → validate)",
+            "VectorStore learning tests verify cross-session patterns",
+            "Memory persistence tests verify crash recovery",
+            "Self-healing orchestrator tests verify anomaly → fix workflow"
+          ]
+        },
+        {
+          "id": "test_integration_suite",
+          "title": "Validate integration test suite",
+          "type": "Test",
+          "tier": "Tier 1",
+          "agent": "test_generator",
+          "description": "Validate integration tests: all pass, coverage >80% for critical paths, performance <5 min for full suite",
+          "dependencies": ["integrate_high_value_tests"],
+          "acceptance_criteria": [
+            "All integration tests pass (100% success rate)",
+            "Coverage >80% for autonomous orchestration paths",
+            "Performance <5 min for full integration suite",
+            "No flaky tests (3 consecutive runs, same results)",
+            "Integration tests documented in tests/integration/README.md"
+          ],
+          "verification_target": "integrate_high_value_tests"
+        },
+        {
+          "id": "eliminate_flaky_tests",
+          "title": "Eliminate flaky tests (100% deterministic)",
+          "type": "Code",
+          "tier": "Tier 2",
+          "agent": "coder",
+          "description": "Identify and fix flaky tests: run full suite 10 times, detect non-deterministic failures, fix root causes (race conditions, timeouts, environment dependencies), verify 100% deterministic",
+          "dependencies": ["validate_test_suite_baseline"],
+          "acceptance_criteria": [
+            "Flaky tests identified (10 runs, track failures)",
+            "Root causes fixed (race conditions, timeouts, env deps)",
+            "100% deterministic (10 runs, identical results)",
+            "No test depends on external state (all isolated)",
+            "Test isolation validated (parallel execution works)"
+          ]
+        },
+        {
+          "id": "test_flaky_elimination",
+          "title": "Validate flaky test elimination",
+          "type": "Test",
+          "tier": "Tier 2",
+          "agent": "test_generator",
+          "description": "Write tests to verify flaky test elimination: determinism validation, isolation tests, parallel execution",
+          "dependencies": ["eliminate_flaky_tests"],
+          "acceptance_criteria": [
+            "Determinism tests pass (10 runs, identical results)",
+            "Isolation tests verify no shared state",
+            "Parallel execution tests work (20 workers, no conflicts)",
+            "Environment independence tests pass (no external deps)",
+            "Meta-tests detect future flaky test additions"
+          ],
+          "verification_target": "eliminate_flaky_tests"
+        },
+        {
+          "id": "optimize_test_performance",
+          "title": "Optimize test performance to <3 min (20 workers)",
+          "type": "Code",
+          "tier": "Tier 2",
+          "agent": "coder",
+          "description": "Optimize test suite performance: parallelize slow tests, cache fixtures, optimize setup/teardown, use memory workers (3 local, 20 cloud). Target <3 min for 1,762 tests on M4 MAX 128GB.",
+          "dependencies": ["validate_test_suite_baseline", "eliminate_flaky_tests"],
+          "acceptance_criteria": [
+            "Test duration <3 min with 20 workers (M4 MAX 128GB)",
+            "Slow tests parallelized (pytest-xdist, loadgroup)",
+            "Fixtures cached (session-scoped where safe)",
+            "Setup/teardown optimized (reuse containers, mock APIs)",
+            "Memory usage <110GB peak during test runs"
+          ]
+        },
+        {
+          "id": "test_performance_optimization",
+          "title": "Validate test performance optimization",
+          "type": "Test",
+          "tier": "Tier 2",
+          "agent": "test_generator",
+          "description": "Write performance tests: duration benchmarks, parallelization efficiency, memory usage validation",
+          "dependencies": ["optimize_test_performance"],
+          "acceptance_criteria": [
+            "Duration benchmark tests verify <3 min target",
+            "Parallelization tests show linear speedup (20 workers)",
+            "Memory tests verify <110GB peak usage",
+            "Fixture caching tests validate session scope",
+            "Performance regression tests prevent slowdowns"
+          ],
+          "verification_target": "optimize_test_performance"
+        }
+      ]
+    },
+    {
+      "id": "phase_5_continuous_autonomous_operation",
+      "title": "24/7 Continuous Autonomous Operation",
+      "tasks": [
+        {
+          "id": "create_autonomous_orchestrator_daemon",
+          "title": "Create autonomous orchestrator daemon (24/7 operation)",
+          "type": "Code",
+          "tier": "Tier 1",
+          "agent": "coder",
+          "description": "Create autonomous orchestrator daemon: monitors backlog (~/.agency/memories/agency_backlog/), auto-selects P1 tasks (low risk), executes via /primeA, validates results, creates draft PRs. Runs continuously via launchd.",
+          "dependencies": [
+            "create_self_healing_orchestrator",
+            "code_watchdog_system",
+            "code_regression_guard"
+          ],
+          "acceptance_criteria": [
+            "Backlog monitoring works (polls every 5 minutes)",
+            "P1 task auto-selection works (low risk, high value)",
+            "Execution via /primeA integrated (spawn subagent)",
+            "Result validation works (tests pass, no regressions)",
+            "Draft PR creation works (gh pr create --draft)"
+          ]
+        },
+        {
+          "id": "test_autonomous_orchestrator",
+          "title": "Test autonomous orchestrator daemon",
+          "type": "Test",
+          "tier": "Tier 1",
+          "agent": "test_generator",
+          "description": "Write tests for autonomous orchestrator: backlog monitoring, task selection, execution, validation, PR creation",
+          "dependencies": ["create_autonomous_orchestrator_daemon"],
+          "acceptance_criteria": [
+            "Backlog monitoring tests detect new tasks",
+            "Task selection tests prioritize P1 correctly",
+            "Execution tests spawn /primeA successfully",
+            "Validation tests verify test pass rate",
+            "PR creation tests create draft PRs"
+          ],
+          "verification_target": "create_autonomous_orchestrator_daemon"
+        },
+        {
+          "id": "create_night_shift_backlog_automation",
+          "title": "Create night shift backlog automation",
+          "type": "Code",
+          "tier": "Tier 2",
+          "agent": "coder",
+          "description": "Create night shift automation: runs overnight (10pm-6am), processes max 5 P1 tasks from backlog, validates each before proceeding, halts on any failure, sends morning summary email. Runs via launchd.",
+          "dependencies": ["create_autonomous_orchestrator_daemon"],
+          "acceptance_criteria": [
+            "Night shift scheduling works (10pm-6am via launchd)",
+            "Task limit enforced (max 5 tasks per night)",
+            "Sequential validation works (halt on failure)",
+            "Morning summary email sent (completed tasks, failures, metrics)",
+            "Safety guarantees: no production deployments (draft PRs only)"
+          ]
+        },
+        {
+          "id": "test_night_shift_automation",
+          "title": "Test night shift automation",
+          "type": "Test",
+          "tier": "Tier 2",
+          "agent": "test_generator",
+          "description": "Write tests for night shift: scheduling, task limit, validation, summary email, safety guarantees",
+          "dependencies": ["create_night_shift_backlog_automation"],
+          "acceptance_criteria": [
+            "Scheduling tests verify 10pm-6am window",
+            "Task limit tests enforce max 5",
+            "Validation tests halt on failure",
+            "Summary email tests send correctly",
+            "Safety tests prevent production deployments"
+          ],
+          "verification_target": "create_night_shift_backlog_automation"
+        },
+        {
+          "id": "deploy_launchd_services",
+          "title": "Deploy launchd services for macOS 24/7 operation",
+          "type": "Code",
+          "tier": "Tier 2",
+          "agent": "coder",
+          "description": "Deploy launchd services for macOS: watchdog, autonomous orchestrator, night shift automation. Create plist files, install to ~/Library/LaunchAgents/, start services, verify health checks.",
+          "dependencies": [
+            "code_watchdog_system",
+            "create_autonomous_orchestrator_daemon",
+            "create_night_shift_backlog_automation"
+          ],
+          "acceptance_criteria": [
+            "Launchd plist files created (3 services)",
+            "Services installed to ~/Library/LaunchAgents/",
+            "Services start successfully (launchctl load)",
+            "Health checks pass (all 3 services running)",
+            "Auto-restart works (services restart on failure)"
+          ]
+        },
+        {
+          "id": "test_launchd_deployment",
+          "title": "Test launchd service deployment",
+          "type": "Test",
+          "tier": "Tier 2",
+          "agent": "test_generator",
+          "description": "Write tests for launchd deployment: plist validation, service installation, health checks, auto-restart",
+          "dependencies": ["deploy_launchd_services"],
+          "acceptance_criteria": [
+            "Plist validation tests verify XML format",
+            "Installation tests verify files in ~/Library/LaunchAgents/",
+            "Health check tests verify running status",
+            "Auto-restart tests kill service and verify recovery",
+            "Integration tests verify 24/7 operation"
+          ],
+          "verification_target": "deploy_launchd_services"
+        },
+        {
+          "id": "create_monitoring_dashboard",
+          "title": "Create monitoring & observability dashboard",
+          "type": "Code",
+          "tier": "Tier 2",
+          "agent": "coder",
+          "description": "Create monitoring dashboard: real-time metrics (test pass rate, autonomous worker status, memory usage, VectorStore size), alerting (email/SMS on failures), historical trends (last 30 days), accessible via CLI and web UI.",
+          "dependencies": [
+            "create_baseline_metrics_dashboard",
+            "deploy_launchd_services"
+          ],
+          "acceptance_criteria": [
+            "Real-time metrics displayed (test pass, workers, memory, VectorStore)",
+            "Alerting works (email on test failures, worker crashes)",
+            "Historical trends shown (last 30 days, charts)",
+            "CLI access works (python tools/monitoring_dashboard.py)",
+            "Web UI accessible (localhost:8080, optional)"
+          ]
+        },
+        {
+          "id": "test_monitoring_dashboard",
+          "title": "Test monitoring dashboard",
+          "type": "Test",
+          "tier": "Tier 2",
+          "agent": "test_generator",
+          "description": "Write tests for monitoring dashboard: metrics collection, alerting, trends, CLI/web UI",
+          "dependencies": ["create_monitoring_dashboard"],
+          "acceptance_criteria": [
+            "Metrics collection tests verify real-time data",
+            "Alerting tests trigger on failures",
+            "Trend tests validate historical data",
+            "CLI tests verify command-line access",
+            "Web UI tests verify localhost access (if enabled)"
+          ],
+          "verification_target": "create_monitoring_dashboard"
+        }
+      ]
+    },
+    {
+      "id": "phase_6_self_improvement_loop",
+      "title": "Meta-Learning & Self-Improvement Loop",
+      "tasks": [
+        {
+          "id": "create_meta_learning_agent",
+          "title": "Create meta-learning agent for pattern extraction",
+          "type": "Code",
+          "tier": "Tier 1",
+          "agent": "learning-agent",
+          "description": "Create meta-learning agent: analyzes successful autonomous operations, extracts reusable patterns (confidence ≥0.6), stores to VectorStore, proposes system improvements, learns from failures. Runs nightly.",
+          "dependencies": [
+            "optimize_vectorstore_query_latency",
+            "create_autonomous_orchestrator_daemon"
+          ],
+          "acceptance_criteria": [
+            "Operation analysis works (parse execution logs, extract patterns)",
+            "Pattern extraction identifies reusable strategies (confidence ≥0.6)",
+            "VectorStore storage works (patterns queryable by future agents)",
+            "Improvement proposals generated (based on failure analysis)",
+            "Nightly execution via launchd (2am daily)"
+          ]
+        },
+        {
+          "id": "test_meta_learning",
+          "title": "Test meta-learning agent",
+          "type": "Test",
+          "tier": "Tier 1",
+          "agent": "test_generator",
+          "description": "Write tests for meta-learning: operation analysis, pattern extraction, VectorStore storage, improvement proposals",
+          "dependencies": ["create_meta_learning_agent"],
+          "acceptance_criteria": [
+            "Operation analysis tests parse logs correctly",
+            "Pattern extraction tests identify reusable strategies",
+            "VectorStore storage tests save patterns with confidence scores",
+            "Improvement proposal tests generate actionable suggestions",
+            "Integration tests verify nightly execution"
+          ],
+          "verification_target": "create_meta_learning_agent"
+        },
+        {
+          "id": "implement_agent_self_improvement",
+          "title": "Implement agent self-improvement proposals",
+          "type": "Code",
+          "tier": "Tier 1",
+          "agent": "coder",
+          "description": "Implement agent self-improvement: agents propose changes to their own definitions (.claude/agents/), ChiefArchitect reviews proposals, validated changes merged automatically, rollback on failure. Aligned with /agent-self-improve command.",
+          "dependencies": ["create_meta_learning_agent"],
+          "acceptance_criteria": [
+            "Agents propose definition changes (improved prompts, better strategies)",
+            "ChiefArchitect review works (validate proposals against constitution)",
+            "Automatic merge works (validated proposals applied)",
+            "Rollback on failure works (atomic operations restore checkpoint)",
+            "Proposals logged to /memories/agent_improvements/"
+          ]
+        },
+        {
+          "id": "test_agent_self_improvement",
+          "title": "Test agent self-improvement",
+          "type": "Test",
+          "tier": "Tier 1",
+          "agent": "test_generator",
+          "description": "Write tests for agent self-improvement: proposal generation, review, merge, rollback",
+          "dependencies": ["implement_agent_self_improvement"],
+          "acceptance_criteria": [
+            "Proposal generation tests create valid changes",
+            "Review tests validate against constitution",
+            "Merge tests apply changes correctly",
+            "Rollback tests restore on failure",
+            "Integration tests verify end-to-end workflow"
+          ],
+          "verification_target": "implement_agent_self_improvement"
+        },
+        {
+          "id": "create_autonomous_documentation",
+          "title": "Create autonomous documentation generator",
+          "type": "Code",
+          "tier": "Tier 2",
+          "agent": "coder",
+          "description": "Create autonomous documentation generator: detects outdated docs (git diff age >30 days), generates updated docs via DocumentGenerator agent, validates accuracy, creates PR for review. Runs weekly.",
+          "dependencies": ["create_meta_learning_agent"],
+          "acceptance_criteria": [
+            "Outdated doc detection works (git diff age >30 days)",
+            "Doc generation uses DocumentGenerator agent",
+            "Accuracy validation works (check against actual code)",
+            "PR creation works (draft PR for human review)",
+            "Weekly execution via launchd (Sunday 1am)"
+          ]
+        },
+        {
+          "id": "test_autonomous_documentation",
+          "title": "Test autonomous documentation",
+          "type": "Test",
+          "tier": "Tier 2",
+          "agent": "test_generator",
+          "description": "Write tests for autonomous documentation: outdated detection, generation, validation, PR creation",
+          "dependencies": ["create_autonomous_documentation"],
+          "acceptance_criteria": [
+            "Outdated detection tests find stale docs",
+            "Generation tests produce accurate docs",
+            "Validation tests verify accuracy",
+            "PR creation tests create draft PRs",
+            "Integration tests verify weekly execution"
+          ],
+          "verification_target": "create_autonomous_documentation"
+        },
+        {
+          "id": "implement_performance_self_optimization",
+          "title": "Implement performance self-optimization",
+          "type": "Code",
+          "tier": "Tier 2",
+          "agent": "coder",
+          "description": "Implement performance self-optimization: monitors system performance (test duration, memory usage, VectorStore latency), detects degradation (>10% slower), applies optimizations automatically (cache tuning, index creation), validates improvements.",
+          "dependencies": [
+            "optimize_test_performance",
+            "optimize_vectorstore_query_latency"
+          ],
+          "acceptance_criteria": [
+            "Performance monitoring works (track test duration, memory, VectorStore)",
+            "Degradation detection triggers (>10% slower than baseline)",
+            "Auto-optimization applies (cache tuning, indexes, parallelism)",
+            "Validation works (performance improves or rollback)",
+            "Continuous monitoring via launchd (hourly checks)"
+          ]
+        },
+        {
+          "id": "test_performance_self_optimization",
+          "title": "Test performance self-optimization",
+          "type": "Test",
+          "tier": "Tier 2",
+          "agent": "test_generator",
+          "description": "Write tests for performance self-optimization: monitoring, degradation detection, optimization, validation",
+          "dependencies": ["implement_performance_self_optimization"],
+          "acceptance_criteria": [
+            "Monitoring tests track performance metrics",
+            "Degradation detection tests trigger correctly",
+            "Optimization tests apply improvements",
+            "Validation tests verify performance gains",
+            "Integration tests verify continuous monitoring"
+          ],
+          "verification_target": "implement_performance_self_optimization"
+        }
+      ]
+    },
+    {
+      "id": "phase_7_production_hardening",
+      "title": "Production Hardening & Chaos Engineering",
+      "tasks": [
+        {
+          "id": "create_chaos_engineering_suite",
+          "title": "Create chaos engineering test suite",
+          "type": "Code",
+          "tier": "Tier 1",
+          "agent": "test_generator",
+          "description": "Create chaos engineering suite: simulate failures (process crashes, network outages, disk full, memory exhaustion), verify graceful degradation, validate recovery mechanisms, measure MTTR (Mean Time To Recovery). Run via /chaos command.",
+          "dependencies": [
+            "code_watchdog_system",
+            "code_circuit_breakers",
+            "code_atomic_operations"
+          ],
+          "acceptance_criteria": [
+            "Chaos tests simulate all failure modes (crash, network, disk, memory)",
+            "Graceful degradation verified (fallback to cloud API works)",
+            "Recovery mechanisms validated (watchdog restarts, circuit breakers)",
+            "MTTR measured (<5 minutes for all scenarios)",
+            "/chaos command launches suite (python tools/chaos_engineering.py)"
+          ]
+        },
+        {
+          "id": "test_chaos_engineering",
+          "title": "Validate chaos engineering suite",
+          "type": "Test",
+          "tier": "Tier 1",
+          "agent": "test_generator",
+          "description": "Write meta-tests for chaos engineering: verify all failure modes covered, MTTR targets met, recovery mechanisms work",
+          "dependencies": ["create_chaos_engineering_suite"],
+          "acceptance_criteria": [
+            "Failure mode coverage tests verify all scenarios",
+            "MTTR tests verify <5 minute recovery",
+            "Recovery tests verify watchdog, circuit breakers work",
+            "Degradation tests verify fallback mechanisms",
+            "Integration tests verify end-to-end resilience"
+          ],
+          "verification_target": "create_chaos_engineering_suite"
+        },
+        {
+          "id": "create_load_testing_suite",
+          "title": "Create load testing suite (stress test autonomous systems)",
+          "type": "Code",
+          "tier": "Tier 2",
+          "agent": "test_generator",
+          "description": "Create load testing suite: stress test autonomous systems (10x normal load), measure throughput (tasks/hour), memory efficiency (GB/task), test suite parallelism (up to 30 workers). Identify bottlenecks.",
+          "dependencies": [
+            "create_autonomous_orchestrator_daemon",
+            "optimize_test_performance"
+          ],
+          "acceptance_criteria": [
+            "Load tests simulate 10x normal load (50 tasks queued)",
+            "Throughput measured (tasks completed per hour)",
+            "Memory efficiency measured (GB per task)",
+            "Parallelism tested (up to 30 workers on cloud-only mode)",
+            "Bottlenecks identified (CPU, memory, VectorStore, network)"
+          ]
+        },
+        {
+          "id": "test_load_testing",
+          "title": "Validate load testing suite",
+          "type": "Test",
+          "tier": "Tier 2",
+          "agent": "test_generator",
+          "description": "Write tests for load testing: throughput validation, memory efficiency, parallelism limits",
+          "dependencies": ["create_load_testing_suite"],
+          "acceptance_criteria": [
+            "Throughput tests verify >10 tasks/hour under load",
+            "Memory efficiency tests verify <5GB per task",
+            "Parallelism tests verify scaling to 30 workers",
+            "Bottleneck detection tests identify constraints",
+            "Integration tests verify system stability under load"
+          ],
+          "verification_target": "create_load_testing_suite"
+        },
+        {
+          "id": "harden_security_attack_surface",
+          "title": "Harden security & minimize attack surface",
+          "type": "Code",
+          "tier": "Tier 1",
+          "agent": "coder",
+          "description": "Harden security: input validation (all user inputs sanitized), principle of least privilege (restrict file permissions), secure secrets management (encrypted .env), audit logging (all actions logged), vulnerability scanning (bandit, safety).",
+          "dependencies": ["harden_memory_security"],
+          "acceptance_criteria": [
+            "Input validation sanitizes all user inputs (prevent injection)",
+            "Least privilege enforced (file permissions, process isolation)",
+            "Secrets encrypted at rest (AES-256 for .env)",
+            "Audit logging works (all actions logged to JSONL)",
+            "Vulnerability scanning passes (bandit, safety, no high/critical issues)"
+          ]
+        },
+        {
+          "id": "test_security_hardening",
+          "title": "Test security hardening",
+          "type": "Test",
+          "tier": "Tier 1",
+          "agent": "test_generator",
+          "description": "Write security tests: input validation, privilege enforcement, secrets encryption, audit logging, vulnerability scanning",
+          "dependencies": ["harden_security_attack_surface"],
+          "acceptance_criteria": [
+            "Input validation tests prevent injection attacks",
+            "Privilege tests verify least privilege enforcement",
+            "Secrets tests verify encryption at rest",
+            "Audit logging tests verify all actions logged",
+            "Vulnerability tests pass (bandit, safety)"
+          ],
+          "verification_target": "harden_security_attack_surface"
+        },
+        {
+          "id": "create_production_deployment_checklist",
+          "title": "Create production deployment checklist",
+          "type": "Spec",
+          "tier": "Tier 1",
+          "agent": "planner",
+          "description": "Create production deployment checklist: pre-flight checks (all tests pass, no security issues), deployment steps (launchd services, monitoring), post-deployment validation (health checks, smoke tests), rollback procedure.",
+          "dependencies": [
+            "deploy_launchd_services",
+            "create_monitoring_dashboard",
+            "test_security_hardening"
+          ],
+          "acceptance_criteria": [
+            "Pre-flight checklist defined (tests, security, performance)",
+            "Deployment steps documented (launchd, monitoring, config)",
+            "Post-deployment validation specified (health checks, smoke tests)",
+            "Rollback procedure defined (atomic operations restore)",
+            "Checklist saved to docs/PRODUCTION_DEPLOYMENT.md"
+          ]
+        },
+        {
+          "id": "execute_production_deployment",
+          "title": "Execute production deployment",
+          "type": "Code",
+          "tier": "Tier 1",
+          "agent": "coder",
+          "description": "Execute production deployment per checklist: verify all tests pass (1,762/1,762), deploy launchd services, start monitoring, run smoke tests, validate 24/7 operation. Document deployment in /memories/production_deployment.md",
+          "dependencies": ["create_production_deployment_checklist"],
+          "acceptance_criteria": [
+            "Pre-flight checks pass (all tests, security, performance)",
+            "Launchd services deployed and running",
+            "Monitoring dashboard operational",
+            "Smoke tests pass (autonomous orchestrator, night shift, watchdog)",
+            "24/7 operation validated (services run for 24 hours)"
+          ]
+        },
+        {
+          "id": "test_production_deployment",
+          "title": "Validate production deployment",
+          "type": "Test",
+          "tier": "Tier 1",
+          "agent": "test_generator",
+          "description": "Write tests for production deployment: pre-flight validation, service deployment, smoke tests, 24/7 operation",
+          "dependencies": ["execute_production_deployment"],
+          "acceptance_criteria": [
+            "Pre-flight tests verify all checks pass",
+            "Service deployment tests verify launchd services running",
+            "Smoke tests verify autonomous operations",
+            "24/7 operation tests verify continuous uptime",
+            "Rollback tests verify deployment reversal works"
+          ],
+          "verification_target": "execute_production_deployment"
+        },
+        {
+          "id": "create_handoff_documentation",
+          "title": "Create handoff documentation & runbooks",
+          "type": "Spec",
+          "tier": "Tier 2",
+          "agent": "planner",
+          "description": "Create handoff documentation: system architecture overview, operational runbooks (start/stop services, troubleshooting), monitoring guide, incident response playbooks, maintenance procedures. Store in docs/OPERATIONS.md",
+          "dependencies": [
+            "execute_production_deployment",
+            "create_monitoring_dashboard"
+          ],
+          "acceptance_criteria": [
+            "Architecture overview documented (components, data flows)",
+            "Operational runbooks created (start/stop, troubleshoot)",
+            "Monitoring guide explains dashboard metrics",
+            "Incident response playbooks defined (outage, crash, degradation)",
+            "Maintenance procedures documented (updates, backups)"
+          ]
+        }
+      ]
+    }
+  ],
+  "checkpoints": [
+    {
+      "after_phase": "phase_0_foundation",
+      "type": "human_review",
+      "prompt": "Review Phase 0 baseline metrics before proceeding to Mars-Rover reliability layer. Verify: (1) Memory system meets SOTA criteria, (2) Test suite baseline 100% pass rate, (3) Autonomous workers assessed. Proceed?"
+    },
+    {
+      "after_phase": "phase_2_autonomous_self_healing",
+      "type": "human_review",
+      "prompt": "Review Phase 2 self-healing infrastructure. Verify: (1) Watchdog operational, (2) RegressionGuard blocks commits, (3) Atomic operations work, (4) Worker V3 integrated with VectorStore. Proceed to memory optimization?"
+    },
+    {
+      "after_phase": "phase_4_test_suite_excellence",
+      "type": "human_review",
+      "prompt": "Review Phase 4 test suite excellence. Verify: (1) Article VII audit complete (low-value tests deleted), (2) Integration tests added, (3) Flaky tests eliminated, (4) Performance <3 min. Proceed to 24/7 operation?"
+    },
+    {
+      "after_phase": "phase_6_self_improvement_loop",
+      "type": "human_review",
+      "prompt": "Review Phase 6 self-improvement loop. Verify: (1) Meta-learning agent operational, (2) Agent self-improvement proposals working, (3) Autonomous documentation running, (4) Performance self-optimization active. Proceed to production hardening?"
+    }
+  ],
+  "metadata": {
+    "estimated_tokens": 450000,
+    "estimated_cost_usd": 85.00,
+    "complexity": "complex",
+    "budget_limit_usd": 150.00,
+    "preflight_checks": [
+      "slop_guardian.evaluate(graph) >= 3.5",
+      "test_suite_baseline.pass_rate == 1.0",
+      "memory_system.latency_ms < 50"
+    ],
+    "target_hardware": "M4 MAX Mac Studio 128GB",
+    "constitutional_articles": [
+      "Article I: Complete Context (all operations to completion)",
+      "Article II: 100% Verification (zero tolerance for regressions)",
+      "Article III: Automated Enforcement (RegressionGuard, watchdog, circuit breakers)",
+      "Article IV: Continuous Learning (VectorStore integration mandatory)",
+      "Article V: Spec-Driven (this TaskGraph is the specification)",
+      "Article VI: Red-Green-Refactor TDD (tests first, all pass)",
+      "Article VII: Value-First Testing (integration > unit, delete score <10)"
+    ],
+    "success_criteria": [
+      "100% test pass rate maintained throughout (1,762/1,762)",
+      "Zero regressions introduced (RegressionGuard blocks all)",
+      "Memory system <50ms query latency (SOTA performance)",
+      "24/7 autonomous operation (launchd services running)",
+      "Self-healing active (watchdog, circuit breakers, atomic ops)",
+      "Meta-learning operational (pattern extraction, agent self-improvement)",
+      "Production deployment complete (smoke tests pass, monitoring active)"
+    ]
+  }
+}

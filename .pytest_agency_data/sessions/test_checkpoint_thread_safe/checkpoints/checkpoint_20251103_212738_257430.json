@@ -1,0 +1,6 @@
+{
+  "checkpoint_id": "checkpoint_20251103_212738_257430",
+  "timestamp": "2025-11-03T21:27:38.257430",
+  "session_state_json": "{\n  \"session_id\": \"test_checkpoint_thread_safe\",\n  \"agent_name\": \"unknown\",\n  \"status\": \"running\",\n  \"created_at\": \"2025-11-03T21:27:38.257375\",\n  \"updated_at\": \"2025-11-03T21:27:38.257377\",\n  \"ttl_seconds\": 2592000,\n  \"expires_at\": \"2025-12-03T21:27:38.257375\",\n  \"metadata\": {\n    \"session_start_time\": \"2025-11-03T21:27:38.255360\",\n    \"checkpoint_count\": 1,\n    \"last_checkpoint_time\": \"2025-11-03T21:27:38.257323\",\n    \"last_checkpoint_id\": \"checkpoint_20251103_212738_255645\"\n  },\n  \"memory_snapshots\": [],\n  \"tool_results\": [],\n  \"compression\": null,\n  \"checkpoint\": null,\n  \"task_id\": null,\n  \"task_type\": null,\n  \"task_progress_percent\": 0.0,\n  \"completed_steps\": [],\n  \"pending_steps\": [],\n  \"active_memory_refs\": [],\n  \"pinned_memories\": [],\n  \"memory_snapshot_id\": null,\n  \"agent_states\": {}\n}",
+  "checksum": "d62d76ece95b795118a3eade5b3332a8cbfc8b86cbf3fa028555fa950c26dfc5"
+}

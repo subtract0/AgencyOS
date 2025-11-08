@@ -43,7 +43,7 @@ Formalize the Docker Compose architecture for Ollama local LLM service integrati
 - **Multi-Model Orchestration**: Single model deployment only (OLLAMA_MAX_LOADED_MODELS=1)
 - **Kubernetes/Swarm Deployment**: Docker Compose for development only, not production cluster
 - **Model Fine-Tuning Pipeline**: Using pre-trained models only (Qwen3-Coder 30B)
-- **Distributed Inference**: Single-node execution optimized for M4 Pro 48GB Mac
+- **Distributed Inference**: Single-node execution optimized for current hardware (see docs/HARDWARE_OPTIMIZATION.md) Mac
 - **Windows/Linux Native Support**: Mac-specific Metal GPU optimization (can be adapted later)
 
 ### Future Considerations
@@ -63,7 +63,7 @@ Formalize the Docker Compose architecture for Ollama local LLM service integrati
 - **Goals**: Reliable local model execution, fast startup, automatic recovery from failures
 - **Pain Points**: Manual Ollama startup, 32GB model re-downloads, unclear health status
 - **Technical Proficiency**: Expert in Docker, LLM deployment, Apple Silicon optimization
-- **Environment**: M4 Pro 48GB Mac, macOS 15.0, Docker Desktop 4.x
+- **Environment**: current hardware (see docs/HARDWARE_OPTIMIZATION.md) Mac, macOS 15.0, Docker Desktop 4.x
 
 #### Persona 2: CI/CD Pipeline (GitHub Actions)
 - **Description**: Automated testing infrastructure validating Ollama integration
@@ -141,7 +141,7 @@ Formalize the Docker Compose architecture for Ollama local LLM service integrati
    - Health status: OllamaHealthStatus(is_running=True, is_docker=True)
    - Worker adjustment: 3 workers (9GB test budget vs 30GB)
 5. Tool calculates:
-   - Memory budget: 48GB total - 38GB Ollama - 9GB tests = 1GB safety margin
+   - Memory budget: available memory total - 38GB Ollama - 9GB tests = 1GB safety margin
 6. Tool achieves: 0 kernel panics, 100% test completion (Article I compliance)
 ```
 
@@ -274,7 +274,7 @@ Formalize the Docker Compose architecture for Ollama local LLM service integrati
 - **GitHub Actions**: Ubuntu 22.04 runners with Docker support
 
 ### Technical Constraints
-- **Memory Budget**: 40GB limit for M4 Pro 48GB Mac (ADR-023 safety margin)
+- **Memory Budget**: 40GB limit for current hardware (see docs/HARDWARE_OPTIMIZATION.md) Mac (ADR-023 safety margin)
 - **Disk Space**: 30GB+ required for model storage (~/.ollama/models/)
 - **Network**: 19GB download for initial model pull (30B model)
 - **Port Availability**: Port 11434 must be free for Ollama API
@@ -420,7 +420,7 @@ Formalize the Docker Compose architecture for Ollama local LLM service integrati
 - **Memory Profiles**: psutil data with Ollama active/inactive
 
 ### Test Environment Requirements
-- **Local Development**: M4 Pro 48GB Mac, Docker Desktop 4.x+
+- **Local Development**: current hardware (see docs/HARDWARE_OPTIMIZATION.md) Mac, Docker Desktop 4.x+
 - **CI/CD**: GitHub Actions Ubuntu 22.04 runner, 7GB RAM
 - **Mock Services**: Mock Ollama API for unit tests (no actual model)
 
@@ -487,7 +487,7 @@ Formalize the Docker Compose architecture for Ollama local LLM service integrati
 
 ```
 ┌─────────────────────────────────────────────────────────────────┐
-│                         Host Machine (M4 Pro 48GB)              │
+│                         Host Machine (current hardware (see docs/HARDWARE_OPTIMIZATION.md))              │
 ├─────────────────────────────────────────────────────────────────┤
 │                                                                 │
 │  ┌───────────────────────────────────────────────────────────┐ │
@@ -854,14 +854,14 @@ services:
       - OLLAMA_KV_CACHE_TYPE=q8_0
       # Enable flash attention for better performance
       - OLLAMA_FLASH_ATTENTION=1
-      # Metal GPU acceleration (Apple Silicon M4 Pro optimization)
+      # Metal GPU acceleration (Apple Silicon current hardware optimization)
       - OLLAMA_NUM_GPU=1
       # Single model mode (memory budget optimization)
       - OLLAMA_MAX_LOADED_MODELS=1
     deploy:
       resources:
         limits:
-          # ADR-023: Memory-aware execution - 40GB limit (48GB total - 8GB safety)
+          # ADR-023: Memory-aware execution - 40GB limit (available memory total - 8GB safety)
           # Allocation: 19GB model + 16GB KV cache + 2GB runtime + 3GB overhead = 40GB
           memory: 40G
     healthcheck:
@@ -883,7 +883,7 @@ services:
 | `OLLAMA_MODELS` | `/root/.ollama/models` | Model storage path | Persists models across restarts |
 | `OLLAMA_KV_CACHE_TYPE` | `f16` | KV cache quantization | `q8_0` saves 2x memory, `q4_0` saves 3x |
 | `OLLAMA_FLASH_ATTENTION` | `0` | Flash attention | `1` enables ~20% faster inference |
-| `OLLAMA_NUM_GPU` | `auto` | GPU count | `1` forces Metal GPU on M4 Pro |
+| `OLLAMA_NUM_GPU` | `auto` | GPU count | `1` forces Metal GPU on current hardware |
 | `OLLAMA_MAX_LOADED_MODELS` | `5` | Max concurrent models | `1` prevents memory fragmentation |
 | `OLLAMA_HOST` | `http://localhost:11434` | API endpoint | Used by health check and test runner |
 

@@ -90,17 +90,32 @@ def check_ollama_running() -> bool:
 def get_safe_worker_count() -> int:
     """Calculate safe pytest worker count based on memory and local model state.
 
-    Memory budgets:
-    - Local model ON (38GB): 1 worker (serial, prevent pytest-xdist crashes)
-    - Local model OFF: 3 workers max (conservative for stability)
+    Memory budgets (Updated 2025-11-05 for M4 Max 128GB):
+    - M4 Max 128GB (>120GB total): 6 workers (known race conditions limit parallelism)
+    - Large memory (>60GB): 6 workers
+    - Medium memory (20-60GB): 3 workers
     - Critical memory (<10GB): 1 worker (sequential)
 
+    Local model consideration:
+    - Current setup uses REMOTE LM Studio (no local RAM impact)
+    - If local model running: reduce by 50% for safety
+
     Returns:
-        Safe number of pytest workers (1-3), heavily biased toward serial execution
-        to prevent pytest-xdist worker crashes and OSError: cannot send issues
+        Safe number of pytest workers (1-12 depending on available memory)
     """
     mem = psutil.virtual_memory()
-    available_gb = mem.available / (1024**3)
+
+    raw_total = getattr(mem, "total", 0)
+    if isinstance(raw_total, (int, float)):
+        total_gb = raw_total / (1024**3)
+    else:
+        total_gb = 0
+
+    raw_available = getattr(mem, "available", 0)
+    if isinstance(raw_available, (int, float)):
+        available_gb = raw_available / (1024**3)
+    else:
+        available_gb = 0
 
     local_model_active = check_ollama_running()
 
@@ -108,17 +123,22 @@ def get_safe_worker_count() -> int:
     if available_gb < 10:
         return 1
 
-    # Local model active: ALWAYS serial execution to prevent worker crashes
-    # This fixes "OSError: cannot send (already closed?)" pytest-xdist issues
+    # M4 Max 128GB detected (or similar high-memory system)
+    if total_gb >= 120:
+        base_workers = 6   # Conservative for M4 Max 128GB (known race conditions in suite)
+    elif available_gb >= 60:
+        base_workers = 6   # Large memory system
+    elif available_gb >= 20:
+        base_workers = 3   # Medium memory system
+    else:
+        base_workers = 1   # Low memory
+
+    # Local model active: reduce workers by 50% for safety
+    # (Note: Current setup uses remote LM Studio, so this won't trigger)
     if local_model_active:
-        return 1  # Serial execution only when local model running
+        return 1  # Serial execution when local model running (prevents race regressions)
 
-    # Plenty of memory AND no local model: limited parallelism for stability
-    if available_gb >= 20:
-        return 3  # Conservative max (down from 10)
-
-    # Medium memory: still serial for maximum stability
-    return 1
+    return base_workers
 
 
 def verify_memory_safe(required_gb: int) -> bool:

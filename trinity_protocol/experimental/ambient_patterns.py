@@ -516,12 +516,13 @@ class AmbientPatternDetector:
             # Note: Using print instead of logger since logger might not be configured
             print(f"Warning: Failed to persist pattern: {error}")
 
-    def get_recurrence_metrics(self, topic: str) -> RecurrenceMetrics | None:
+    def get_recurrence_metrics(self, topic: str, current_time: datetime | None = None) -> RecurrenceMetrics | None:
         """
         Get recurrence metrics for a topic.
 
         Args:
             topic: Topic to analyze
+            current_time: Reference time for window calculation (defaults to now)
 
         Returns:
             RecurrenceMetrics if topic tracked, None otherwise
@@ -529,6 +530,7 @@ class AmbientPatternDetector:
         cluster = self.conversation_context.get_topic_cluster(
             topic,
             time_window_hours=168.0,  # 7 days
+            current_time=current_time,
         )
 
         if not cluster:

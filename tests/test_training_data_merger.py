@@ -36,7 +36,7 @@ from unittest.mock import Mock, patch
 
 import pytest
 
-from agency_memory import Memory
+from agency_memory import InMemoryStore, Memory
 from shared.agent_context import AgentContext
 from shared.models.prediction_log import PredictionLog
 from shared.models.task_feature_vector import TaskFeatureVector
@@ -62,7 +62,7 @@ def mock_context():
     Returns:
         AgentContext: Configured context for testing
     """
-    return AgentContext(memory=Memory(), session_id="test_merger_session")
+    return AgentContext(memory=Memory(store=InMemoryStore()), session_id="test_merger_session")
 
 
 @pytest.fixture

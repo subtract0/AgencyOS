@@ -3,7 +3,7 @@ import glob as glob_module
 import os
 from datetime import datetime
 
-from agency_swarm.tools import BaseTool
+from shared.lean_adapter import BaseTool
 from pydantic import Field
 
 

@@ -221,16 +221,28 @@ class TestCachingIntegration:
         # Agent 1 stores memory
         agent1_context.store_memory("shared", "content", ["shared_tag"])
 
-        # Act - Both agents search
-        agent1_result = agent1_context.search_memories(["shared_tag"], include_session=True)
-        agent2_result = agent2_context.search_memories(["shared_tag"], include_session=True)
+        # Act - Both agents search (session-only vs cross-session)
+        agent1_session_only = agent1_context.search_memories(
+            ["shared_tag"], include_session=False
+        )
+        agent1_cross_session = agent1_context.search_memories(
+            ["shared_tag"], include_session=True
+        )
+        agent2_session_only = agent2_context.search_memories(
+            ["shared_tag"], include_session=False
+        )
+        agent2_cross_session = agent2_context.search_memories(
+            ["shared_tag"], include_session=True
+        )
 
-        # Assert - Each agent has independent cache
-        # Agent 1 should see memory (same session)
-        assert len(agent1_result) >= 1
+        # Assert - Cache isolation with explicit semantics
+        # Agent 1 (same session) should find the memory even without cross-session search
+        assert len(agent1_session_only) >= 1
+        assert len(agent1_cross_session) >= len(agent1_session_only)
 
-        # Agent 2 should NOT see memory (different session, include_session=True)
-        assert len(agent2_result) == 0
+        # Agent 2 (different session id) should only see the memory when cross-session search is enabled
+        assert len(agent2_session_only) == 0
+        assert len(agent2_cross_session) >= 1
 
     def test_caching_with_article_iv_compliance(self):
         """Test that caching maintains Article IV learning compliance."""

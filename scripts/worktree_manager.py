@@ -19,12 +19,12 @@ Created: 2025-10-08
 import json
 import os
 import shutil
-import subprocess
 import time
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Optional
 
+from envs.openenv_exec import run_command as run_spec_command
 from pydantic import BaseModel
 
 
@@ -130,7 +130,7 @@ class WorktreeManager:
         # Create git worktree
         print(f"📁 Creating worktree: {config.branch_name}")
         try:
-            result = subprocess.run(
+            result = run_spec_command(
                 ["git", "worktree", "add", str(worktree_path), "-b", config.branch_name],
                 check=True,
                 capture_output=True,
@@ -233,7 +233,7 @@ class WorktreeManager:
         # Run agent (blocks until completion)
         start_time = time.time()
         try:
-            result = subprocess.run(
+            result = run_spec_command(
                 ["python", "agency.py", "--mission-file", "mission.json"],
                 cwd=str(worktree_path),
                 capture_output=True,
@@ -317,7 +317,7 @@ class WorktreeManager:
 
         try:
             # Remove git worktree (--force handles uncommitted changes)
-            subprocess.run(
+            run_spec_command(
                 ["git", "worktree", "remove", str(worktree_path), "--force"],
                 check=True,
                 capture_output=True,
@@ -336,7 +336,7 @@ class WorktreeManager:
 
         # Delete branch if it exists (don't fail if branch doesn't exist)
         try:
-            subprocess.run(
+            run_spec_command(
                 ["git", "branch", "-D", branch_name], check=True, capture_output=True, text=True
             )
             print(f"   ✓ Branch deleted: {branch_name}")
@@ -383,7 +383,7 @@ class WorktreeManager:
 
         # Prune stale git worktree references
         try:
-            subprocess.run(["git", "worktree", "prune"], check=True, capture_output=True, text=True)
+            run_spec_command(["git", "worktree", "prune"], check=True, capture_output=True, text=True)
             print("   ✓ Pruned stale worktree references")
         except subprocess.CalledProcessError as e:
             print(f"   ⚠️  Failed to prune worktrees: {e.stderr}")

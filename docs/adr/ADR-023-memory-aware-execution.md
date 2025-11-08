@@ -5,6 +5,10 @@
 **Deciders**: @am, Agency OS Infrastructure Team
 **Constitutional Compliance**: Articles I (Complete Context), II (100% Verification)
 
+> **⚠️ Historical Note (2025-11-05)**: This ADR was written for M4 Pro 48GB hardware.
+> System has since upgraded to **Mac Studio M4 Max 128GB**.
+> Memory constraints described here no longer apply. See `docs/HARDWARE_OPTIMIZATION.md` for current specifications.
+
 ---
 
 ## Context

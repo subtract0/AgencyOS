@@ -5,6 +5,10 @@
 **Deciders**: Claude Code (Orchestrator), code-agent, test-generator
 **Related**: ADR-020 (Trinity Protocol), Phase 1+2 Implementation
 
+> **⚠️ Historical Note (2025-11-05)**: This ADR was written for M4 Pro 48GB hardware.
+> System has since upgraded to **Mac Studio M4 Max 128GB**.
+> See `docs/HARDWARE_OPTIMIZATION.md` for current specifications.
+
 ---
 
 ## Context

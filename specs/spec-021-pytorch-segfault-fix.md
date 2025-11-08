@@ -29,7 +29,7 @@ File "/Users/am/Code/Agency/agency_memory/vector_store.py", line 82 in _init_sen
 
 **Secondary Factors**:
 1. Python 3.13.7 (newer than tested versions)
-2. Apple Silicon (M4 Pro) Metal Performance Shaders
+2. Apple Silicon (current hardware) Metal Performance Shaders
 3. pytest-xdist parallel execution (-n 3)
 
 ## 3. Solution Options

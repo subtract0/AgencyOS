@@ -2,7 +2,7 @@ import os
 import subprocess
 from typing import Literal
 
-from agency_swarm.tools import BaseTool
+from shared.lean_adapter import BaseTool
 from pydantic import Field
 
 

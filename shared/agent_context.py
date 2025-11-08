@@ -9,10 +9,12 @@ Performance: VectorStore caching with @lru_cache provides 5x query speedup.
 """
 
 import logging
+import os
 import threading
 from datetime import datetime
 from functools import lru_cache
 from typing import TYPE_CHECKING, Any
+from pathlib import Path
 
 from agency_memory import Memory
 from shared.type_definitions.json_value import JSONValue
@@ -24,6 +26,10 @@ if TYPE_CHECKING:
     from shared.session_checkpoint import SessionCheckpoint
 
 logger = logging.getLogger(__name__)
+
+# Module-level singleton memory store for cross-session persistence (Article IV)
+_DEFAULT_MEMORY: Memory | None = None
+_memory_lock = threading.Lock()
 
 
 class AgentContext:
@@ -102,9 +108,14 @@ class AgentContext:
         """
         tags = list(tags_tuple)
 
-        # Gather candidate set (session-scoped)
+        # Gather candidate set
         session_tag = f"session:{self.session_id}"
-        candidates = self.memory.search([session_tag]) if include_session else self.memory.get_all()
+        if include_session:
+            # Include memories across sessions (full institutional knowledge)
+            candidates = self.memory.get_all()
+        else:
+            # Restrict to current session only
+            candidates = self.memory.search([session_tag])
 
         req = set(tags or [])
         results: list[dict[str, JSONValue]] = []
@@ -130,7 +141,8 @@ class AgentContext:
         Search memories with optional session filtering.
 
         Semantics:
-        - Scope to current session when include_session=True.
+        - include_session=True: search across institutional memory (all sessions)
+        - include_session=False: restrict results to the current session only.
         - Return memories that contain ALL requested tags (conjunctive), not any-of.
         - Additionally, when searching for ["tool"] specifically, exclude error-tagged
           memories so that tool-only queries do not return error events.
@@ -172,8 +184,18 @@ class AgentContext:
                 "Install anthropic>=0.42.0: uv pip install 'anthropic>=0.42.0'"
             )
 
+        memory_base_dir = base_dir
+
+        if memory_base_dir is None:
+            env_data_dir = os.environ.get("AGENCY_DATA_DIR")
+            if env_data_dir:
+                session_component = self.session_id or "default"
+                memory_base_dir = str(Path(env_data_dir) / "memories" / session_component)
+                Path(memory_base_dir).mkdir(parents=True, exist_ok=True)
+
         self._anthropic_memory_tool = create_memory_tool(
-            session_id=self.session_id if base_dir is None else None, base_dir=base_dir
+            session_id=self.session_id if memory_base_dir is None else None,
+            base_dir=memory_base_dir,
         )
 
         logger.info(f"Anthropic Memory Tool enabled: {self._anthropic_memory_tool.base_dir}")
@@ -612,18 +634,31 @@ def create_agent_context(
     Factory function to create an AgentContext instance.
 
     Args:
-        memory: Optional Memory instance (creates EnhancedMemoryStore by default for Article IV compliance)
+        memory: Optional Memory instance (creates default if None)
         session_id: Optional session identifier (generates if None)
 
     Returns:
         Configured AgentContext instance
 
     Article IV Compliance:
-        Defaults to EnhancedMemoryStore for persistent cross-session learning.
-        VectorStore integration is constitutionally mandatory (ADR-004).
+        Creates EnhancedMemoryStore by default (VectorStore integration mandatory).
+        VectorStore enables cross-session learning accumulation.
+
+    Cross-Session Persistence:
+        Uses module-level singleton memory store to ensure memories persist across
+        multiple agent sessions. All sessions share the same backing store unless
+        explicitly overridden.
     """
+    global _DEFAULT_MEMORY
+
+    from agency_memory import EnhancedMemoryStore
+    from agency_memory import Memory as MemoryClass
+
     if memory is None:
-        from agency_memory import EnhancedMemoryStore, Memory as MemoryClass
-        memory = MemoryClass(store=EnhancedMemoryStore())
+        # Thread-safe singleton initialization
+        with _memory_lock:
+            if _DEFAULT_MEMORY is None:
+                _DEFAULT_MEMORY = MemoryClass(store=EnhancedMemoryStore())
+            memory = _DEFAULT_MEMORY
 
     return AgentContext(memory=memory, session_id=session_id)

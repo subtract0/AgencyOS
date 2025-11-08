@@ -1,0 +1,43 @@
+version: '3.8'
+
+services:
+  app:
+    build:
+      context: ..
+      dockerfile: .devcontainer/Dockerfile
+    volumes:
+      - ..:/workspace:cached
+      - agencyos-poetry-cache:/home/vscode/.cache/pypoetry
+      - agencyos-uv-cache:/home/vscode/.cache/uv
+    command: sleep infinity
+    environment:
+      - DATABASE_URL=postgresql://agencyos:agencyos@vectorstore:5432/agencyos
+      - VECODER_BASE_URL=http://vcoder:11434
+    depends_on:
+      - vectorstore
+      - vcoder
+
+  vectorstore:
+    image: postgres:15
+    restart: unless-stopped
+    environment:
+      - POSTGRES_DB=agencyos
+      - POSTGRES_USER=agencyos
+      - POSTGRES_PASSWORD=agencyos
+    volumes:
+      - agencyos-vectorstore:/var/lib/postgresql/data
+
+  vcoder:
+    image: ollama/ollama:latest
+    restart: unless-stopped
+    ports:
+      - "11434:11434"
+    volumes:
+      - agencyos-ollama:/root/.ollama
+    entrypoint: ["/bin/sh", "-c", "ollama serve"]
+
+volumes:
+  agencyos-vectorstore:
+  agencyos-ollama:
+  agencyos-poetry-cache:
+  agencyos-uv-cache:

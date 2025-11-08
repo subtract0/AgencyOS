@@ -6,7 +6,7 @@ import subprocess
 import threading
 from datetime import datetime, timedelta
 
-from agency_swarm.tools import BaseTool
+from shared.lean_adapter import BaseTool
 from pydantic import Field, field_validator
 
 from shared.timeout_wrapper import TimeoutConfig, with_constitutional_timeout
@@ -55,6 +55,9 @@ DANGEROUS_PATTERNS = [
     r"eval\s*\$\(",  # Dynamic evaluation with substitution
     r"[;&|]+\s*rm\s+-[rf]",  # Chained dangerous rm commands
 ]
+
+# Detect sandbox support (macOS sandbox-exec)
+_SANDBOX_SUPPORTED = os.uname().sysname == "Darwin" and os.path.exists("/usr/bin/sandbox-exec")
 
 
 class CommandValidationError(Exception):

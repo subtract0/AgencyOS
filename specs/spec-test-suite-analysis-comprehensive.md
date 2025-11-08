@@ -195,7 +195,7 @@ Value Classification: HIGH (preserve and protect)
 - **Root Cause**: Insufficient memory, slow operations, deadlocks
 - **Severity**: 🟡 Medium (environment-specific)
 - **Remediation**: Adjust worker count, increase timeouts, optimize code
-- **Example**: Parallel tests exhausting 48GB RAM
+- **Example**: Parallel tests exhausting available memory RAM
 
 #### **Category 5: External Service Dependencies**
 - **Signature**: Connection errors, service unavailable
@@ -555,7 +555,7 @@ python -m pytest tests/ --durations=20 > test_durations.log 2>&1
 ## 9. Resource Requirements
 
 ### 9.1 Compute Resources
-- **Memory**: 48GB RAM (M4 Pro) - sufficient for max 3 parallel workers
+- **Memory**: available memory RAM (current hardware) - sufficient for max 3 parallel workers
 - **CPU**: Multi-core (pytest-xdist with `-n auto`)
 - **Time**: ~10-15 minutes for full test suite run
 - **Storage**: ~100MB for logs and reports

@@ -34,7 +34,7 @@ The MLModelTrainer component is Layer 4 of Leap 5's ML pipeline, responsible for
 |--------|--------|-------------------|
 | **Validation Accuracy** | >98% | Held-out validation set (20% of data) |
 | **False Negative Rate** | <2% | Complex tasks (label=2) misclassified as 0 or 1 |
-| **Training Time** | <5 minutes | Wall-clock time for 1,000 samples on M4 Pro |
+| **Training Time** | <5 minutes | Wall-clock time for 1,000 samples on current hardware |
 | **Cross-Validation Stability** | Std dev <3% | 5-fold CV accuracy variance |
 | **Model Size** | <50MB | Serialized .pkl file size |
 
@@ -189,8 +189,8 @@ The MLModelTrainer component is Layer 4 of Leap 5's ML pipeline, responsible for
 
 #### Performance
 
-- **AC-P.1**: Training time <5 minutes for 1,000 samples (n_jobs=-1 parallelism on 8-core M4 Pro)
-- **AC-P.2**: Memory usage <8GB peak during training (fits in 16GB M4 Pro with safety margin)
+- **AC-P.1**: Training time <5 minutes for 1,000 samples (n_jobs=-1 parallelism on 8-core current hardware)
+- **AC-P.2**: Memory usage <8GB peak during training (fits in 16GB current hardware with safety margin)
 - **AC-P.3**: Model size <50MB serialized (fast loading <1s in production)
 - **AC-P.4**: Cross-validation time <3 minutes (5 folds, no excessive overhead)
 
@@ -761,7 +761,7 @@ class EnsembleModel(BaseModel):
 ### Technical Constraints
 
 - **Constraint 1**: Training time <5 minutes for 1,000 samples (weekly retraining feasible)
-- **Constraint 2**: Memory usage <8GB peak during training (fits in 16GB M4 Pro)
+- **Constraint 2**: Memory usage <8GB peak during training (fits in 16GB current hardware)
 - **Constraint 3**: Model size <50MB serialized (fast loading <1s in production)
 - **Constraint 4**: Feature dimensionality fixed at 1644 (breaking change requires new spec)
 
@@ -835,7 +835,7 @@ class EnsembleModel(BaseModel):
 
 ### Test Environment Requirements
 
-- **Environment 1**: M4 Pro Mac with 16GB RAM (8 CPU cores for n_jobs=-1)
+- **Environment 1**: current hardware Mac with 16GB RAM (8 CPU cores for n_jobs=-1)
 - **Environment 2**: Scikit-learn 1.3.0, numpy 1.24.0, joblib 1.3.0
 - **Environment 3**: VectorStore with 1,000+ quality feedback records (Leap 4 data)
 

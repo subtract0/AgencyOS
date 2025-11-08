@@ -7,7 +7,7 @@ from .exit_plan_mode import ExitPlanMode
 from .git import Git
 from .git_unified import GitUnified, git_unified
 from .git_workflow_tool import GitWorkflowToolAgency
-from .glob import Glob
+from .glob_tool import Glob
 from .grep import Grep
 from .handoff_context_read import HandoffContextRead
 from .ls import LS

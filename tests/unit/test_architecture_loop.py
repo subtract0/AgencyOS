@@ -19,17 +19,33 @@ class TestRunArchitectureLoop:
     @pytest.fixture
     def tool_instance(self):
         """Create a RunArchitectureLoop instance."""
-        return RunArchitectureLoop(target_path="/test/path", objective="test objective")
+        return RunArchitectureLoop(
+            name="RunArchitectureLoop",
+            description="Architecture analysis tool",
+            parameters={"type": "object"},
+            target_path="/test/path",
+            objective="test objective"
+        )
 
     def test_initialization(self):
         """Test tool initialization with default and custom parameters."""
-        # Test with defaults
-        tool = RunArchitectureLoop()
+        # Test with defaults (must provide required BaseTool fields)
+        tool = RunArchitectureLoop(
+            name="RunArchitectureLoop",
+            description="Architecture analysis tool",
+            parameters={"type": "object"}
+        )
         assert tool.target_path == os.getcwd()
         assert tool.objective == "auto"
 
         # Test with custom parameters
-        tool = RunArchitectureLoop(target_path="/custom/path", objective="custom objective")
+        tool = RunArchitectureLoop(
+            name="RunArchitectureLoop",
+            description="Architecture analysis tool",
+            parameters={"type": "object"},
+            target_path="/custom/path",
+            objective="custom objective"
+        )
         assert tool.target_path == "/custom/path"
         assert tool.objective == "custom objective"
 
@@ -322,11 +338,21 @@ class TestRunArchitectureLoop:
     def test_objective_parameter_usage(self):
         """Test that objective parameter is properly used."""
         # Test with auto objective
-        tool_auto = RunArchitectureLoop(objective="auto")
+        tool_auto = RunArchitectureLoop(
+            name="RunArchitectureLoop",
+            description="Architecture analysis tool",
+            parameters={"type": "object"},
+            objective="auto"
+        )
         assert tool_auto.objective == "auto"
 
         # Test with custom objective
-        tool_custom = RunArchitectureLoop(objective="Fix critical bug in authentication")
+        tool_custom = RunArchitectureLoop(
+            name="RunArchitectureLoop",
+            description="Architecture analysis tool",
+            parameters={"type": "object"},
+            objective="Fix critical bug in authentication"
+        )
         assert tool_custom.objective == "Fix critical bug in authentication"
 
         # Though the current implementation doesn't use objective in logic,
@@ -342,8 +368,18 @@ class TestRunArchitectureLoop:
 
     def test_concurrent_execution_safety(self):
         """Test that multiple instances can run safely."""
-        tool1 = RunArchitectureLoop(target_path="/path1")
-        tool2 = RunArchitectureLoop(target_path="/path2")
+        tool1 = RunArchitectureLoop(
+            name="RunArchitectureLoop",
+            description="Architecture analysis tool",
+            parameters={"type": "object"},
+            target_path="/path1"
+        )
+        tool2 = RunArchitectureLoop(
+            name="RunArchitectureLoop",
+            description="Architecture analysis tool",
+            parameters={"type": "object"},
+            target_path="/path2"
+        )
 
         with (
             patch(

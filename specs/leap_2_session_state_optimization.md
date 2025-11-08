@@ -29,7 +29,7 @@ Design and specify an efficient session state management system with minimal mem
 - **Compression Ratio**: 60%+ size reduction via zlib compression (validated: 93.4% on sample data)
 - **Garbage Collection**: 100% expired sessions cleaned within 24 hours of TTL expiration
 - **Checkpoint Recovery**: 99%+ success rate with last-known-good fallback
-- **Serialization Performance**: <10ms for session save/load on M4 Pro (48GB RAM target)
+- **Serialization Performance**: <10ms for session save/load on current hardware (available memory RAM target)
 - **Memory Footprint**: <100MB total for 50 active sessions with compression
 - **Multi-Day Persistence**: Zero data loss across 30-day task spans
 
@@ -296,7 +296,7 @@ class SessionState(BaseModel):
 **Rationale**:
 - **Built-in**: No external dependencies, stdlib availability
 - **Performance**: 93% compression ratio on sample data (411 bytes → 27 bytes)
-- **Speed**: <5ms compression for 1MB JSON on M4 Pro
+- **Speed**: <5ms compression for 1MB JSON on current hardware
 - **Compatibility**: Universal support across Python versions
 
 **Compression Configuration**:
@@ -448,7 +448,7 @@ compressed = zlib.compress(json.dumps(original).encode())
 # - Original: 411 bytes
 # - Compressed: 27 bytes
 # - Ratio: 6.6% (93.4% reduction!)
-# - Time: <1ms on M4 Pro
+# - Time: <1ms on current hardware
 ```
 
 **Target Metrics**:
@@ -1110,7 +1110,7 @@ recovery_metrics = {
 - [ ] **AC-2.1**: zlib compression achieving 60%+ size reduction on typical session data
 - [ ] **AC-2.2**: compress_session_state() function with compression level parameter (1-9)
 - [ ] **AC-2.3**: decompress_session_state() function with checksum validation
-- [ ] **AC-2.4**: Compression time <10ms for 1MB session on M4 Pro
+- [ ] **AC-2.4**: Compression time <10ms for 1MB session on current hardware
 - [ ] **AC-2.5**: Backward compatibility with uncompressed JSON sessions
 
 #### Garbage Collection (AC-3.x)
@@ -1146,7 +1146,7 @@ recovery_metrics = {
 #### Performance (AC-P.x)
 - [ ] **AC-P.1**: Session save (compress + write): <10ms for 1MB session
 - [ ] **AC-P.2**: Session load (read + decompress): <8ms for 1MB compressed session
-- [ ] **AC-P.3**: GC scan rate: 100+ sessions/second on M4 Pro
+- [ ] **AC-P.3**: GC scan rate: 100+ sessions/second on current hardware
 - [ ] **AC-P.4**: Checkpoint save overhead: <5ms incremental cost vs full save
 
 #### Quality (AC-Q.x)
@@ -1359,8 +1359,8 @@ recovery_metrics = {
 - Original JSON: 1,247,832 bytes (1.2MB)
 - Compressed: 82,156 bytes (80KB)
 - Ratio: 6.6% (93.4% reduction!)
-- Compression time: 4.2ms (M4 Pro)
-- Decompression time: 2.8ms (M4 Pro)
+- Compression time: 4.2ms (current hardware)
+- Decompression time: 2.8ms (current hardware)
 
 **Conclusion**: 60%+ compression target exceeded (achieved 93%). Phase 4 JSON+zlib approach validated.
 

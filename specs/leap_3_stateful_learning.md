@@ -238,7 +238,7 @@ Design and implement a stateful learning system that enables agents to accumulat
 - **OpenAI API**: gpt-5 for P1, gpt-4o for P2 (fallback on local model failure)
 
 ### Technical Constraints
-- **Memory Budget**: 48GB M4 Pro unified memory (37GB available after system overhead)
+- **Memory Budget**: available memory current hardware unified memory (37GB available after system overhead)
 - **Local Model**: Qwen3-Coder-30B Q8_0 consumes 38GB (19GB model + 16GB KV cache + 3GB workers)
 - **Test Workers**: Reduce from 10 → 3 when local model active (prevent OOM)
 - **VectorStore Capacity**: 1M+ memories per agent (post-Leap 2 optimization)
@@ -256,7 +256,7 @@ Design and implement a stateful learning system that enables agents to accumulat
 
 ### High Risk Items
 - **Risk 1: VectorStore Latency**: VectorStore query >100ms degrades routing performance → *Mitigation*: LRU caching (128 entries, 5x speedup validated in Leap 2)
-- **Risk 2: Local Model OOM**: Qwen3-Coder-30B + test workers exceed 48GB RAM → *Mitigation*: Dynamic worker adjustment (3 workers max when local model active)
+- **Risk 2: Local Model OOM**: Qwen3-Coder-30B + test workers exceed available memory RAM → *Mitigation*: Dynamic worker adjustment (3 workers max when local model active)
 - **Risk 3: Routing Confidence**: Insufficient training data (<100 tasks) causes poor P1/P2/P3 decisions → *Mitigation*: Fallback to static classification until confidence threshold met
 
 ### Medium Risk Items
@@ -1006,7 +1006,7 @@ class CheckpointManager:
 - **Multi-Day Tasks**: Simulated 3-day task spans for resume testing
 
 ### Test Environment Requirements
-- **Local Environment**: M4 Pro with 48GB RAM, Ollama Qwen3-Coder-30B installed
+- **Local Environment**: current hardware with available memory RAM, Ollama Qwen3-Coder-30B installed
 - **CI Environment**: Cloud with VectorStore backend (Firestore), OpenAI API keys
 - **Test Workers**: 3 workers max when local model active (prevent OOM)
 

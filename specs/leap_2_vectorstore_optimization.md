@@ -8,7 +8,7 @@
 
 ## Executive Summary
 
-Optimize VectorStore for production-scale memory operations with sub-linear search complexity, intelligent batch processing, and memory-aware caching. Target: <100ms semantic queries at 100K+ memories with <40GB peak memory usage on M4 Pro 48GB systems.
+Optimize VectorStore for production-scale memory operations with sub-linear search complexity, intelligent batch processing, and memory-aware caching. Target: <100ms semantic queries at 100K+ memories with <40GB peak memory usage on current hardware (see docs/HARDWARE_OPTIMIZATION.md) systems.
 
 **Current State:**
 - O(n) linear scan for similarity search (no indexing)
@@ -20,7 +20,7 @@ Optimize VectorStore for production-scale memory operations with sub-linear sear
 - O(√t log t) indexed search via FAISS/HNSW
 - 10x throughput improvement via batch operations
 - LRU cache with 5x query speedup
-- Memory budget: <40GB peak usage (M4 Pro 48GB constraint)
+- Memory budget: <40GB peak usage (current hardware (see docs/HARDWARE_OPTIMIZATION.md) constraint)
 
 ---
 
@@ -72,7 +72,7 @@ Optimize VectorStore for production-scale memory operations with sub-linear sear
 ### Infrastructure Team (Secondary)
 **Who:** Maintaining production Agency deployments
 **Needs:**
-- Memory budget enforcement (M4 Pro 48GB limits)
+- Memory budget enforcement (current hardware (see docs/HARDWARE_OPTIMIZATION.md) limits)
 - Monitoring and observability (query latency, cache hit rate)
 - Graceful degradation under pressure
 - Clear upgrade path from current implementation
@@ -177,7 +177,7 @@ Optimize VectorStore for production-scale memory operations with sub-linear sear
 - THEN: Returns accurate estimate ±10%
 - AND: Estimate includes: embeddings + index + cache + overhead
 
-**Criterion 4.2: M4 Pro 48GB Compliance**
+**Criterion 4.2: current hardware (see docs/HARDWARE_OPTIMIZATION.md) Compliance**
 - GIVEN: VectorStore with 100K memories (1536-dim embeddings)
 - WHEN: FAISS index + embeddings + cache loaded
 - THEN: Peak memory usage <15GB (40GB budget - 25GB for model/tests)
@@ -210,7 +210,7 @@ Optimize VectorStore for production-scale memory operations with sub-linear sear
 - **Accuracy:** 95%+ recall at k=10 (vs brute force)
 - **Memory Efficiency:** ~4x smaller than flat index
 - **Incremental Updates:** Supports add without rebuild
-- **CPU-Only:** No GPU required (M4 Pro Metal compatibility)
+- **CPU-Only:** No GPU required (current hardware Metal compatibility)
 
 **Alternative Rejected: FAISS IVF**
 - Requires training data upfront (not incremental)
@@ -344,7 +344,7 @@ def estimate_peak_memory(
 #   "index": 2.40,
 #   "cache": 0.01,
 #   "overhead": 1.51,
-#   "total": 4.53 GB  ← Safe for 48GB M4 Pro
+#   "total": 4.53 GB  ← Safe for available memory current hardware
 # }
 ```
 
@@ -746,7 +746,7 @@ def semantic_search_with_fallback(
 
 **How this decision enables full verification:**
 - Memory budget enforcement prevents kernel panics during test execution
-- Dynamic scaling ensures VectorStore stays within M4 Pro 48GB limits
+- Dynamic scaling ensures VectorStore stays within current hardware (see docs/HARDWARE_OPTIMIZATION.md) limits
 - Graceful degradation maintains functionality under memory pressure
 - Example: Per ADR-023, VectorStore uses <15GB, leaving 25GB for model + tests
 
@@ -862,7 +862,7 @@ def semantic_search_with_fallback(
 
 **Success Metrics:**
 - Zero kernel panics during full test suite
-- Memory usage <40GB peak (M4 Pro 48GB)
+- Memory usage <40GB peak (current hardware (see docs/HARDWARE_OPTIMIZATION.md))
 - Graceful degradation under pressure
 
 ---
@@ -958,7 +958,7 @@ def test_learning_agent_batch_storage():
     assert len(results) >= 10_000
 
 def test_memory_safe_full_test_suite():
-    """Test VectorStore + local model + test suite stay within 48GB."""
+    """Test VectorStore + local model + test suite stay within available memory."""
     # Initialize VectorStore with 100K memories
     store = initialize_memory_aware_vectorstore(target_capacity=100_000)
 
@@ -975,7 +975,7 @@ def test_memory_safe_full_test_suite():
 
     # Verify no kernel panic and memory budget
     assert result.returncode == 0
-    assert mem_peak < 46.0  # <46GB (48GB - 2GB margin)
+    assert mem_peak < 46.0  # <46GB (available memory - 2GB margin)
 ```
 
 ### Performance Benchmarks
@@ -1117,7 +1117,7 @@ results = store.semantic_search("query", memories, top_k=10)  # Same API
 
 ## References
 
-- **ADR-023:** Memory-Aware Execution (M4 Pro 48GB constraints)
+- **ADR-023:** Memory-Aware Execution (current hardware (see docs/HARDWARE_OPTIMIZATION.md) constraints)
 - **MEMORY_ARCHITECTURE.md:** Three-tier memory design
 - **MEMORY_ARCHITECTURE_ANALYSIS.md:** Industry best practices comparison
 - **FAISS Documentation:** https://github.com/facebookresearch/faiss/wiki
@@ -1174,7 +1174,7 @@ Components:
 -------------------------------------------
 Total: ~9.6GB (~10GB) ⚠️ Requires careful management
 
-Memory-constrained mode (M4 Pro 48GB):
+Memory-constrained mode (current hardware (see docs/HARDWARE_OPTIMIZATION.md)):
 - VectorStore budget: 15GB max
 - Can support ~1M memories with margin
 - May require cache size reduction or index optimization

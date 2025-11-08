@@ -24,6 +24,7 @@ from typing import Optional
 
 from pydantic import BaseModel
 
+from envs.openenv_exec import run_command as run_spec_command
 from shared.models.night_watch import TaskQueue, TaskQueueItem, TaskStatus
 
 
@@ -204,7 +205,7 @@ def create_mission_branch(repo_path: str, mission_id: str, timestamp: str) -> st
     branch_name = generate_branch_name(mission_id, timestamp)
 
     # Check if branch exists
-    result = subprocess.run(
+    result = run_spec_command(
         ["git", "branch", "--list", branch_name],
         cwd=repo_path,
         capture_output=True,
@@ -218,7 +219,7 @@ def create_mission_branch(repo_path: str, mission_id: str, timestamp: str) -> st
         branch_name = f"{branch_name}-{suffix}"
 
     # Create and checkout branch
-    result = subprocess.run(
+    result = run_spec_command(
         ["git", "checkout", "-b", branch_name],
         cwd=repo_path,
         capture_output=True,
@@ -243,7 +244,7 @@ def create_and_checkout_branch(branch_name: str) -> bool:
         True if successful, False otherwise
     """
     try:
-        result = subprocess.run(
+        result = run_spec_command(
             ["git", "checkout", "-b", branch_name],
             capture_output=True,
             text=True,
@@ -271,7 +272,7 @@ def execute_primea_command(command: str, repo_path: str, timeout: int = 3600) ->
     # Expected format: "/primeA 'Task description'"
     cmd_parts = command.split(" ", 1)  # Split on first space only
 
-    result = subprocess.run(
+    result = run_spec_command(
         cmd_parts,
         shell=False,  # Security: No shell injection
         cwd=repo_path,
@@ -327,7 +328,7 @@ def push_branch_with_retry(
     """
     for attempt in range(max_retries):
         try:
-            result = subprocess.run(
+            result = run_spec_command(
                 ["git", "push", "-u", "origin", branch_name],
                 cwd=repo_path,
                 capture_output=True,
@@ -364,7 +365,7 @@ def execute_task_command(task: TaskQueueItem, log_file: str, timeout: int = 3600
         log_task_progress(log_file, task, f"Executing command: {task.command}")
 
         # Execute command
-        result = subprocess.run(
+        result = run_spec_command(
             task.command,
             shell=True,
             capture_output=True,
@@ -452,7 +453,7 @@ def verify_success_criteria(
     # Criterion 2: All tests pass
     if _run_tests:
         try:
-            result = subprocess.run(
+            result = run_spec_command(
                 ["python", "run_tests.py", "--run-all"],
                 capture_output=True,
                 text=True,
@@ -466,7 +467,7 @@ def verify_success_criteria(
     # Criterion 3: Git status clean
     if _check_git:
         try:
-            result = subprocess.run(
+            result = run_spec_command(
                 ["git", "status", "--porcelain"], capture_output=True, text=True, timeout=10
             )
             criteria.git_clean = len(result.stdout.strip()) == 0
@@ -477,14 +478,14 @@ def verify_success_criteria(
     # Criterion 4: Branch pushed
     if _push_branch:
         try:
-            current_branch = subprocess.run(
+            current_branch = run_spec_command(
                 ["git", "branch", "--show-current"],
                 capture_output=True,
                 text=True,
                 timeout=10,
             ).stdout.strip()
 
-            result = subprocess.run(
+            result = run_spec_command(
                 ["git", "push", "-u", "origin", current_branch],
                 capture_output=True,
                 text=True,

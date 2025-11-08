@@ -11,7 +11,7 @@ import warnings
 from datetime import datetime
 from typing import Optional
 
-from agency_swarm.tools import BaseTool as Tool
+from shared.lean_adapter import BaseTool as Tool
 from pydantic import Field
 
 from .read import Read

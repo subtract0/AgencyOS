@@ -1,0 +1,272 @@
+{
+  "mission": "Hardening CI, E2E coverage, and autonomous orchestration for AgencyOS",
+  "phases": [
+    {
+      "id": "phase_0",
+      "title": "Stabilize Continuous Integration",
+      "tasks": [
+        {
+          "id": "t0_healthcheck",
+          "title": "Audit CI telemetry & chunk runtime",
+          "type": "ANALYSIS",
+          "agent": "qa",
+          "tier": "TIER_1",
+          "description": "Review recent merge-guardian runs; capture memory usage per chunk; document flaky suites.",
+          "acceptance_criteria": [
+            "A run-history table with chunk duration/exit status",
+            "List of suites still approaching memory ceiling",
+            "Action items for remaining regressions"
+          ]
+        },
+        {
+          "id": "t0_runner_strategy",
+          "title": "Design long-term runner strategy",
+          "type": "ARCHITECTURE",
+          "agent": "chief_architect",
+          "tier": "TIER_1",
+          "dependencies": ["t0_healthcheck"],
+          "description": "Decide on hosted vs self-hosted runners; outline job/scaling plan for resilient CI.",
+          "acceptance_criteria": [
+            "Comparison of hosted vs self-hosted trade-offs",
+            "Recommended plan (short-term, long-term)",
+            "Checklist for migration/automation work"
+          ]
+        },
+        {
+          "id": "t0_workflow_refactor",
+          "title": "Refactor merge-guardian workflow",
+          "type": "CODE",
+          "agent": "coder",
+          "tier": "TIER_2",
+          "dependencies": ["t0_runner_strategy"],
+          "description": "Break long job into individual steps/jobs; add instrumentation; ensure concurrency cancellation does not discard latest logs.",
+          "acceptance_criteria": [
+            "Workflow YAML runs each chunk in isolated job or step",
+            "Chunk logs clearly labelled and persisted",
+            "pytest exit codes aggregated correctly",
+            "CI run for branch completes without manual cancellation"
+          ]
+        },
+        {
+          "id": "t0_ci_acceptance",
+          "title": "CI stabilization verification",
+          "type": "TEST",
+          "agent": "qa",
+          "tier": "TIER_2",
+          "dependencies": ["t0_workflow_refactor"],
+          "description": "Run full workflow twice back-to-back; capture telemetry; document proof of stability.",
+          "verification_target": "t0_workflow_refactor",
+          "acceptance_criteria": [
+            "Two consecutive successful runs (no manual cancel)",
+            "Runtime comparison vs baseline",
+            "Updated section in ACTUAL_TEST_STATUS.md"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "phase_1",
+      "title": "Modernize E2E and Integration Coverage",
+      "tasks": [
+        {
+          "id": "t1_catalogue",
+          "title": "Catalogue current E2E/integration tests",
+          "type": "ANALYSIS",
+          "agent": "qa",
+          "tier": "TIER_1",
+          "description": "Map existing coverage in tests/foundation_automation, tests/integration; note gaps against autonomous workflow requirements.",
+          "acceptance_criteria": [
+            "Matrix of current scenarios vs desired behaviors",
+            "Gaps prioritized by risk",
+            "Stakeholder sign-off on focus areas"
+          ]
+        },
+        {
+          "id": "t1_spec_autonomous_loop",
+          "title": "Spec: Autonomous fix loop E2E",
+          "type": "SPEC",
+          "agent": "planner",
+          "tier": "TIER_1",
+          "dependencies": ["t1_catalogue"],
+          "description": "Write spec for end-to-end autonomous bug fix scenario (backlog entry → planner/coder/tester → real pytest → commit).",
+          "acceptance_criteria": [
+            "spec/spec-autonomous-fix-loop.md drafted",
+            "Acceptance criteria for code/artifacts defined",
+            "Telemetry expectations noted"
+          ]
+        },
+        {
+          "id": "t1_impl_autonomous_loop",
+          "title": "Implement autonomous fix loop test",
+          "type": "CODE",
+          "agent": "coder",
+          "tier": "TIER_2",
+          "dependencies": ["t1_spec_autonomous_loop"],
+          "description": "Create temp repo fixture; orchestrate real planner/coder/tester calls; execute pytest for failing test; assert fix & commit generation.",
+          "acceptance_criteria": [
+            "New test under tests/e2e/test_autonomous_fix_loop.py",
+            "Uses real subprocess/git/pytest (not pure mocks)",
+            "Cleans up repo and artifacts",
+            "Passes locally and in CI"
+          ]
+        },
+        {
+          "id": "t1_spec_specdriven",
+          "title": "Spec: Spec-driven feature delivery E2E",
+          "type": "SPEC",
+          "agent": "planner",
+          "tier": "TIER_1",
+          "dependencies": ["t1_catalogue"],
+          "description": "Define scenario covering Article V: backlog with spec, planner generates tasks, coder implements feature + doc, QA verifies.",
+          "acceptance_criteria": [
+            "spec/spec-artv-feature-delivery.md with flow diagram",
+            "Defined telemetry & artifact expectations",
+            "Risk assessment recorded"
+          ]
+        },
+        {
+          "id": "t1_impl_specdriven",
+          "title": "Implement spec-driven feature delivery test",
+          "type": "CODE",
+          "agent": "coder",
+          "tier": "TIER_2",
+          "dependencies": ["t1_spec_specdriven"],
+          "description": "Create new E2E test that feeds structured spec through orchestrator; asserts code+docs+reports generated; checks vector store updates.",
+          "acceptance_criteria": [
+            "Test under tests/e2e/test_spec_driven_delivery.py",
+            "Validates spec artifacts, code changes, telemetry entries",
+            "Runs in CI (uses isolated environment) "
+          ]
+        },
+        {
+          "id": "t1_crossagent",
+          "title": "Cross-agent handoff E2E",
+          "type": "CODE",
+          "agent": "coder",
+          "tier": "TIER_2",
+          "dependencies": ["t1_catalogue"],
+          "description": "Add scenario with multiple specialized agents (frontend/backend QA, doc) and verify handoff log ordering and context persistence.",
+          "acceptance_criteria": [
+            "Test under tests/e2e/test_cross_agent_handoff.py",
+            "Assertions on log timeline + context payload",
+            "Telemetry includes agent handoff markers"
+          ]
+        },
+        {
+          "id": "t1_regression_suite",
+          "title": "E2E regression verification",
+          "type": "TEST",
+          "agent": "qa",
+          "tier": "TIER_2",
+          "dependencies": [
+            "t1_impl_autonomous_loop",
+            "t1_impl_specdriven",
+            "t1_crossagent"
+          ],
+          "description": "Run full E2E suite (new + existing) locally and in CI; document runbook & runtime impact.",
+          "verification_target": "t1_impl_autonomous_loop",
+          "acceptance_criteria": [
+            "All E2E tests pass locally and in CI",
+            "Runtime delta captured",
+            "Report added to ACTUAL_TEST_STATUS.md"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "phase_2",
+      "title": "Autonomous Work Cell & Orchestrator UI",
+      "tasks": [
+        {
+          "id": "t2_agentspecs",
+          "title": "Codify agent role specs",
+          "type": "SPEC",
+          "agent": "chief_architect",
+          "tier": "TIER_1",
+          "description": "Create YAML definitions for planner, coder, QA, doc, ops agents—including prompts, tools, and guardrails.",
+          "acceptance_criteria": [
+            "agents/*.yaml created for each role",
+            "Tool permissions & guardrails documented",
+            "Peer review by ops & QA leads"
+          ]
+        },
+        {
+          "id": "t2_orchestrator_cli",
+          "title": "Implement orchestrator CLI",
+          "type": "CODE",
+          "agent": "coder",
+          "tier": "TIER_2",
+          "dependencies": ["t2_agentspecs"],
+          "description": "Build scripts/orchestrate.py that reads backlog entries, instantiates role agents via Claude 4.5 Sonnet (Thinking) or local 120B, and logs events.",
+          "acceptance_criteria": [
+            "CLI supports backlog task selection (/primeA --graph execution)",
+            "Generates structured timeline logs",
+            "Handles retries, policy enforcement"
+          ]
+        },
+        {
+          "id": "t2_local_llm",
+          "title": "Integrate local 120B LLM for heavy roles",
+          "type": "CODE",
+          "agent": "coder",
+          "tier": "TIER_2",
+          "dependencies": ["t2_orchestrator_cli"],
+          "description": "Expose GPT-OSS120B via local HTTP/gRPC; update router so planner/auditor optionally use it; log token usage.",
+          "acceptance_criteria": [
+            "Local LLM server running with health check",
+            "Router policy configurable per task",
+            "Telemetry records model usage/cost"
+          ]
+        },
+        {
+          "id": "t2_autonomous_loop",
+          "title": "Deploy autonomous work cell",
+          "type": "CODE",
+          "agent": "coder",
+          "tier": "TIER_3",
+          "dependencies": [
+            "t0_ci_acceptance",
+            "t1_regression_suite",
+            "t2_orchestrator_cli",
+            "t2_local_llm"
+          ],
+          "description": "Automate backlog → spec → plan → code → audit → test → telemetry cycle; run continuously in tmux with guardrails.",
+          "acceptance_criteria": [
+            "Continuous loop processes backlog tasks autonomously",
+            "All changes gated by tests & policy checks",
+            "Failures surface alerts + backlog entries",
+            "Daily summary report generated"
+          ]
+        },
+        {
+          "id": "t2_daily_report",
+          "title": "Daily autonomous report generator",
+          "type": "CODE",
+          "agent": "doc",
+          "tier": "TIER_1",
+          "dependencies": ["t2_autonomous_loop"],
+          "description": "Summarize backlog status, telemetry anomalies, E2E outcomes; deliver via Markdown/Slack/email.",
+          "acceptance_criteria": [
+            "Report generated at scheduled time",
+            "Includes test status, backlog changes, alerts",
+            "Published to agreed channel"
+          ]
+        },
+        {
+          "id": "t2_governance_review",
+          "title": "Governance + policy review",
+          "type": "REVIEW",
+          "agent": "chief_architect",
+          "tier": "TIER_1",
+          "dependencies": ["t2_autonomous_loop"],
+          "description": "Ensure guardrails/policies enforced (schema changes, security, legal) before full autonomy rollout.",
+          "acceptance_criteria": [
+            "Policy checklist completed",
+            "Risk/mitigation doc updated",
+            "Approval from stakeholders"
+          ]
+        }
+      ]
+    }
+  ]
+}

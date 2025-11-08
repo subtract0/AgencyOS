@@ -964,7 +964,7 @@ def classify_with_fallback(task_description: str, agent_state: AgentStateLearnin
    - Success rate validation (2x target)
 
 **Test Environment**:
-- **Local**: M4 Pro 48GB RAM, Ollama Qwen3-Coder-30B installed
+- **Local**: current hardware (see docs/HARDWARE_OPTIMIZATION.md) RAM, Ollama Qwen3-Coder-30B installed
 - **CI/CD**: GitHub Actions with VectorStore backend (Firestore), OpenAI API keys
 - **Test Workers**: 3 workers when local model active (prevent OOM)
 
@@ -1052,7 +1052,7 @@ def classify_with_fallback(task_description: str, agent_state: AgentStateLearnin
 - **Impact**: High (test execution crashes, dev environment unusable)
 - **Mitigation Strategy**:
   - Reduce test workers from 10 → 3 when USE_LOCAL_MODEL=true
-  - Monitor memory usage (Qwen3-Coder 38GB + 3 workers 9GB = 47GB < 48GB limit)
+  - Monitor memory usage (Qwen3-Coder 38GB + 3 workers 9GB = 47GB < available memory limit)
   - Auto-disable local model if available RAM <45GB (graceful degradation)
 - **Contingency Plan**: Disable local model during test runs (export USE_LOCAL_MODEL=false)
 - **Validation Task**: M5.1 (E2E test with local model + 3 test workers)
@@ -1161,7 +1161,7 @@ def classify_with_fallback(task_description: str, agent_state: AgentStateLearnin
 | AgentStateLearning size | <10MB uncompressed | M1.3 | sys.getsizeof() assertion |
 | Compressed checkpoint | <4MB (60% reduction) | M2.3 | compression_ratio assertion |
 | VectorStore memory | <100MB per agent | M3.5 | Track ChromaDB memory usage |
-| Total system memory | <48GB (M4 Pro limit) | M5.1 | Monitor with psutil during E2E test |
+| Total system memory | <available memory (current hardware limit) | M5.1 | Monitor with psutil during E2E test |
 
 ---
 
@@ -1188,7 +1188,7 @@ def classify_with_fallback(task_description: str, agent_state: AgentStateLearnin
 ### Infrastructure Requirements
 
 **Compute Resources**:
-- **Local Development**: M4 Pro (48GB RAM, 14-core CPU)
+- **Local Development**: current hardware (available memory RAM, 14-core CPU)
   - Qwen3-Coder-30B Q8_0: 38GB (19GB model + 16GB KV cache + 3GB workers)
   - Remaining: 10GB for OS + IDE + test runners
   - Test workers: 3 max (prevent OOM)

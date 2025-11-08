@@ -15,7 +15,7 @@
 - **Goal 2**: Implement Docker-based Ollama lifecycle management for deterministic test execution
 - **Goal 3**: Maintain 100% test success rate (Article II) with memory-safe execution (ADR-023)
 - **Goal 4**: Zero kernel panics or OOM conditions during integration test execution
-- **Goal 5**: Integration tests complete in <5 minutes on M4 Pro (48GB) with parallel execution
+- **Goal 5**: Integration tests complete in <5 minutes on current hardware (available memory) with parallel execution
 
 ## Non-Goals
 
@@ -25,7 +25,7 @@
 - **Non-goal 2**: Upgrading Ollama version or changing model selection (use existing Qwen3-Coder)
 - **Non-goal 3**: Creating new tests beyond the 140 already written
 - **Non-goal 4**: Kubernetes orchestration or cloud deployment (Docker Compose only)
-- **Non-goal 5**: Windows/Linux test runner support (macOS M4 Pro primary target)
+- **Non-goal 5**: Windows/Linux test runner support (macOS current hardware primary target)
 
 ## Personas
 
@@ -63,7 +63,7 @@
 
 ### Non-Functional Criteria
 
-- [ ] **AC-006**: Integration tests complete in <5 minutes on M4 Pro (3 workers, ADR-023)
+- [ ] **AC-006**: Integration tests complete in <5 minutes on current hardware (3 workers, ADR-023)
 - [ ] **AC-007**: Memory usage stays ≤40GB (Ollama 38GB + 3 workers × 3GB = 47GB safe)
 - [ ] **AC-008**: Zero kernel panics during 10 consecutive test runs
 - [ ] **AC-009**: Docker cleanup succeeds 100% (no orphaned containers after pytest exit)
@@ -580,7 +580,7 @@ class TestIntegrationWorkflows:
 ### ADR-023: Memory-Aware Test Execution ✅
 - **Worker Adjustment**: Fixture respects 3-worker limit when Ollama active
 - **Memory Check**: `verify_memory_safe(38)` before Docker start
-- **Safety Margin**: 5GB buffer enforced (43GB required, 48GB available)
+- **Safety Margin**: 5GB buffer enforced (43GB required, available memory available)
 
 ## Success Metrics
 
@@ -607,7 +607,7 @@ class TestIntegrationWorkflows:
 
 **Constitutional Validation**: ✅ All 5 Articles verified
 **ADR Compliance**: ✅ ADR-023, ADR-001 integrated
-**Memory Safety**: ✅ 38GB Ollama + 9GB tests = 47GB < 48GB total
+**Memory Safety**: ✅ 38GB Ollama + 9GB tests = 47GB < available memory total
 **Implementation Ready**: ✅ Awaiting approval for plan.md creation
 
 ---

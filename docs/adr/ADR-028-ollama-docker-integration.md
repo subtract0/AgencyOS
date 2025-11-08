@@ -6,6 +6,10 @@
 **Constitutional Alignment**: Articles I, II, III, IV, V
 **Related**: ADR-023 (Memory-Aware Test Execution)
 
+> **⚠️ Historical Note (2025-11-05)**: This ADR references M4 Pro 48GB hardware.
+> System has since upgraded to **Mac Studio M4 Max 128GB**.
+> See `docs/HARDWARE_OPTIMIZATION.md` for current specifications.
+
 ---
 
 ## Context

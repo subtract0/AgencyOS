@@ -10,12 +10,20 @@ import logging
 import os
 from abc import ABC, abstractmethod
 from datetime import datetime
-from typing import cast
+from threading import Lock
+from typing import TYPE_CHECKING, cast
+
+if TYPE_CHECKING:
+    from agency_memory.enhanced_memory_store import EnhancedMemoryStore
 
 from shared.models.memory import MemoryMetadata, MemoryPriority, MemoryRecord, MemorySearchResult
 from shared.type_definitions.json import JSONValue
 
 logger = logging.getLogger(__name__)
+
+# Module-level singleton store for default EnhancedMemoryStore.
+_default_store_lock = Lock()
+_DEFAULT_ENHANCED_STORE: "EnhancedMemoryStore | None" = None
 
 
 class MemoryStore(ABC):
@@ -140,14 +148,25 @@ class Memory:
     """
 
     def __init__(self, store: MemoryStore | None = None):
-        """Initialize with store backend.
-
-        Defaults to EnhancedMemoryStore for Article IV compliance (persistent cross-session learning).
-        Use explicit InMemoryStore() param for ephemeral memory (e.g., testing).
         """
+        Initialize with store backend. Defaults to EnhancedMemoryStore.
+
+        Article IV Compliance:
+            Defaults to EnhancedMemoryStore (VectorStore integration mandatory).
+            VectorStore enables institutional learning and cross-session knowledge.
+            InMemoryStore only used when explicitly specified (e.g., tests).
+        """
+        from agency_memory.enhanced_memory_store import EnhancedMemoryStore
+
         if store is None:
-            from agency_memory.enhanced_memory_store import EnhancedMemoryStore
-            self._store = EnhancedMemoryStore()
+            global _DEFAULT_ENHANCED_STORE
+            # Lazily initialize shared EnhancedMemoryStore for cross-session persistence.
+            if _DEFAULT_ENHANCED_STORE is None:
+                with _default_store_lock:
+                    if _DEFAULT_ENHANCED_STORE is None:
+                        _DEFAULT_ENHANCED_STORE = EnhancedMemoryStore()
+                        logger.info("Initialized shared EnhancedMemoryStore singleton")
+            self._store = _DEFAULT_ENHANCED_STORE
         else:
             self._store = store
 

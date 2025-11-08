@@ -7,7 +7,7 @@ import json
 from datetime import datetime
 from typing import cast
 
-from agency_swarm.tools import BaseTool  # type: ignore
+from shared.lean_adapter import BaseTool  # type: ignore
 from pydantic import Field
 
 from learning_agent.json_utils import (

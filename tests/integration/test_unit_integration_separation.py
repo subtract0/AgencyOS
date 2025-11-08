@@ -11,15 +11,25 @@ This test validates the NECESSARY pattern for pytest marker usage:
 Constitutional Compliance:
 - Article II: TDD - Test written BEFORE marker implementation
 - Article IV: Learning - Query/store marker patterns
+
+NOTE: This test is memory-intensive and causes OOM in GitHub Actions CI (7GB limit).
+It is skipped in CI environments but runs locally.
 """
 
 import ast
+import os
 import subprocess
 import time
 from pathlib import Path
 from typing import List, Tuple
 
 import pytest
+
+# Skip entire module in CI due to OOM issues (exit code 137)
+pytestmark = pytest.mark.skipif(
+    os.environ.get("CI") == "true",
+    reason="Memory-intensive test causes OOM in CI (GitHub Actions 7GB limit)"
+)
 
 
 # ============================================================================

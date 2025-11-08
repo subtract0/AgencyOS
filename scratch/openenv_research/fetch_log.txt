@@ -1,0 +1,12 @@
+=== RESEARCH EVIDENCE LOG ===
+Timestamp: Fr.  7 Nov. 2025 09:05:58 CET
+
+Sources fetched:
+-rw-r--r--  1 am  staff   4,8K  7 Nov. 09:05 scratch/openenv_research/devcontainer_features.md
+-rw-r--r--  1 am  staff    89B  7 Nov. 09:05 scratch/openenv_research/fetch_log.txt
+-rw-r--r--  1 am  staff    61K  7 Nov. 09:05 scratch/openenv_research/github_bazel_ml.json
+-rw-r--r--  1 am  staff    66K  7 Nov. 09:05 scratch/openenv_research/github_devcontainer_ai.json
+-rw-r--r--  1 am  staff    13K  7 Nov. 09:05 scratch/openenv_research/github_nix_ai.json
+-rw-r--r--  1 am  staff   6,7K  7 Nov. 09:05 scratch/openenv_research/github_repos_summary.txt
+-rw-r--r--  1 am  staff    62K  7 Nov. 09:05 scratch/openenv_research/github_repos.json
+-rw-r--r--  1 am  staff   1,1K  7 Nov. 09:05 scratch/openenv_research/hackernews_openenv.xml

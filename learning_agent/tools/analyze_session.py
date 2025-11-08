@@ -7,7 +7,7 @@ import os
 from datetime import datetime
 from typing import cast
 
-from agency_swarm.tools import BaseTool
+from shared.lean_adapter import BaseTool
 from pydantic import Field
 
 from learning_agent.json_utils import (

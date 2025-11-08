@@ -282,8 +282,12 @@ def test_article_ii_no_simulation_in_production():
 
     Spec: All Phase 6 implementations use real gh CLI, real git commands
     """
+    # Dynamically resolve project root (handles both local and CI environments)
+    test_file = Path(__file__).resolve()
+    project_root = test_file.parent.parent.parent.parent
+
     # Verify no mock/simulation in production code
-    ci_monitor_path = Path("/Users/am/Code/Agency/tools/ci_monitor")
+    ci_monitor_path = project_root / "tools" / "ci_monitor"
 
     for py_file in ci_monitor_path.glob("*.py"):
         if py_file.name == "__init__.py":
@@ -323,9 +327,10 @@ def test_article_iii_no_manual_override():
     controller = RetryController(policy=policy)
 
     # Article III: No force/skip flags
-    controller_source = Path(
-        "/Users/am/Code/Agency/tools/ci_monitor/retry_controller.py"
-    ).read_text()
+    # Dynamically resolve project root (handles both local and CI environments)
+    test_file = Path(__file__).resolve()
+    project_root = test_file.parent.parent.parent.parent  # tests/tools/ci_monitor/test_file.py -> tests/tools/ci_monitor -> tests/tools -> tests -> project_root
+    controller_source = (project_root / "tools" / "ci_monitor" / "retry_controller.py").read_text()
 
     assert "force" not in controller_source.lower(), (
         "Article III VIOLATION: Found 'force' bypass mechanism"
@@ -533,7 +538,11 @@ def test_article_v_spec_exists():
 
     Spec: spec-autonomous-ci-feedback-loop.md
     """
-    spec_path = Path("/Users/am/Code/Agency/specs/spec-autonomous-ci-feedback-loop.md")
+    # Dynamically resolve project root (handles both local and CI environments)
+    test_file = Path(__file__).resolve()
+    project_root = test_file.parent.parent.parent.parent
+
+    spec_path = project_root / "specs" / "spec-autonomous-ci-feedback-loop.md"
 
     assert spec_path.exists(), "Article V VIOLATION: Spec file missing"
 
@@ -559,8 +568,12 @@ def test_article_v_traceability_to_spec():
 
     Spec: AC-1 through AC-5 in spec-autonomous-ci-feedback-loop.md
     """
+    # Dynamically resolve project root (handles both local and CI environments)
+    test_file = Path(__file__).resolve()
+    project_root = test_file.parent.parent.parent.parent
+
     # Verify status_poller traces to AC-1
-    status_poller_path = Path("/Users/am/Code/Agency/tools/ci_monitor/status_poller.py")
+    status_poller_path = project_root / "tools" / "ci_monitor" / "status_poller.py"
     status_poller_content = status_poller_path.read_text()
 
     assert "AC-1" in status_poller_content, "Article V: Missing AC-1 traceability"
@@ -569,13 +582,13 @@ def test_article_v_traceability_to_spec():
     )
 
     # Verify log_fetcher traces to AC-2
-    log_fetcher_path = Path("/Users/am/Code/Agency/tools/ci_monitor/log_fetcher.py")
+    log_fetcher_path = project_root / "tools" / "ci_monitor" / "log_fetcher.py"
     log_fetcher_content = log_fetcher_path.read_text()
 
     assert "AC-2" in log_fetcher_content, "Article V: Missing AC-2 traceability"
 
     # Verify retry_controller traces to AC-3
-    retry_controller_path = Path("/Users/am/Code/Agency/tools/ci_monitor/retry_controller.py")
+    retry_controller_path = project_root / "tools" / "ci_monitor" / "retry_controller.py"
     retry_controller_content = retry_controller_path.read_text()
 
     assert "AC-3" in retry_controller_content, "Article V: Missing AC-3 traceability"
@@ -592,7 +605,11 @@ def test_article_v_task_granularity():
 
     Spec: Phase 1-4 breakdown in spec-autonomous-ci-feedback-loop.md
     """
-    spec_path = Path("/Users/am/Code/Agency/specs/spec-autonomous-ci-feedback-loop.md")
+    # Dynamically resolve project root (handles both local and CI environments)
+    test_file = Path(__file__).resolve()
+    project_root = test_file.parent.parent.parent.parent
+
+    spec_path = project_root / "specs" / "spec-autonomous-ci-feedback-loop.md"
     spec_content = spec_path.read_text()
 
     # Verify task breakdown exists
@@ -620,6 +637,10 @@ async def test_all_five_articles_integrated(agent_context):
     - Article IV: VectorStore learning (query/store patterns)
     - Article V: Spec-driven (traceable to AC-1 through AC-5)
     """
+    # Dynamically resolve project root (handles both local and CI environments)
+    test_file = Path(__file__).resolve()
+    project_root = test_file.parent.parent.parent.parent
+
     # Create orchestrator
     orchestrator = FeedbackLoopOrchestrator(
         pr_number=123,
@@ -647,8 +668,8 @@ async def test_all_five_articles_integrated(agent_context):
     )
 
     # Article V: Spec traceability
-    orchestrator_source = Path(
-        "/Users/am/Code/Agency/tools/ci_monitor/feedback_loop_orchestrator.py"
+    orchestrator_source = (
+        project_root / "tools" / "ci_monitor" / "feedback_loop_orchestrator.py"
     ).read_text()
     assert "spec-autonomous-ci-feedback-loop.md" in orchestrator_source, (
         "Article V: Spec reference present"

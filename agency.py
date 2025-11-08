@@ -16,8 +16,7 @@ from typing import cast
 
 # Third-party imports
 import litellm
-from shared.lean_adapter import Agency
-from agency_swarm.tools import SendMessageHandoff
+from shared.lean_adapter import Agency, SendMessageHandoff
 from dotenv import load_dotenv
 
 # Agency imports - memory subsystem

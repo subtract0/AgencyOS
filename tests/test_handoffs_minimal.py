@@ -1,8 +1,7 @@
 from unittest.mock import MagicMock, create_autospec, patch
 
 import pytest
-from shared.lean_adapter import Agency, Agent
-from agency_swarm.tools import SendMessageHandoff
+from shared.lean_adapter import Agency, Agent, SendMessageHandoff
 
 
 def create_mock_agent(name: str, with_handoff: bool = True) -> MagicMock:

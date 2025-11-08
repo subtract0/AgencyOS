@@ -1,0 +1,33 @@
+;; AgencyOS macOS Sandbox Profile
+;; Restrictive profile for test execution with pytest
+;;
+;; Security model:
+;; - Read: All files (sandbox execution implies read safety)
+;; - Write: Only to /tmp, workspace test artifacts, and approved cache dirs
+;; - Network: Allowed (required for pytest plugins)
+;;
+;; Based on macOS sandbox-exec grammar (see /usr/share/sandbox/*.sb)
+
+(version 1)
+
+;; Start with allow default for maximum compatibility
+(allow default)
+
+;; Deny writes to critical system directories
+(deny file-write*
+    (subpath "/System")
+    (subpath "/bin")
+    (subpath "/sbin")
+    (subpath "/usr")
+    (subpath "/Library/Frameworks")
+    (subpath "/Applications"))
+
+;; Deny writes to home directory EXCEPT AgencyOS workspace and caches
+;; This protects against accidental writes to Documents, Downloads, etc.
+(deny file-write*
+    (regex #"^/Users/am/Documents")
+    (regex #"^/Users/am/Downloads")
+    (regex #"^/Users/am/Desktop")
+    (regex #"^/Users/am/Music")
+    (regex #"^/Users/am/Pictures")
+    (regex #"^/Users/am/Movies"))

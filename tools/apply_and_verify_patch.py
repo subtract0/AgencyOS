@@ -8,7 +8,8 @@ import os
 import subprocess
 from datetime import datetime
 
-from agency_swarm.tools import BaseTool as Tool
+from shared.lean_adapter import BaseTool as Tool
+from shared.lean_agent import ToolParameter
 from pydantic import Field
 
 from shared.type_definitions.json import JSONValue
@@ -24,6 +25,20 @@ class ApplyAndVerifyPatch(Tool):
     This tool completes the autonomous healing cycle.
     """
 
+    # Required Tool fields (from shared.lean_agent.Tool via BaseTool)
+    name: str = Field(
+        default="apply_and_verify_patch", description="Tool name for autonomous healing"
+    )
+    description: str = Field(
+        default="Apply a code patch, verify with tests, and commit if successful",
+        description="Tool description",
+    )
+    parameters: ToolParameter = Field(
+        default_factory=lambda: ToolParameter(type="object", properties={}, required=[]),
+        description="Tool parameters schema",
+    )
+
+    # ApplyAndVerifyPatch-specific fields
     file_path: str = Field(..., description="Path to the file to patch")
     original_code: str = Field(..., description="Original problematic code")
     fixed_code: str = Field(..., description="Fixed code to apply")
@@ -239,6 +254,21 @@ class AutonomousHealingOrchestrator(Tool):
     From error detection to final commit.
     """
 
+    # Required Tool fields (from shared.lean_agent.Tool via BaseTool)
+    name: str = Field(
+        default="autonomous_healing_orchestrator",
+        description="Tool name for autonomous healing orchestration",
+    )
+    description: str = Field(
+        default="Orchestrate the complete autonomous healing workflow from error detection to final commit",
+        description="Tool description",
+    )
+    parameters: ToolParameter = Field(
+        default_factory=lambda: ToolParameter(type="object", properties={}, required=[]),
+        description="Tool parameters schema",
+    )
+
+    # AutonomousHealingOrchestrator-specific fields
     error_log: str = Field(..., description="Error log or message to analyze and heal")
     file_context: str | None = Field(
         default=None, description="Optional file context for better analysis"

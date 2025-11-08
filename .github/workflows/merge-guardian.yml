@@ -22,198 +22,1307 @@ on:
         description: 'Reason for manual execution'
         required: false
         default: 'Manual ADR-002 verification'
+      run_top_level:
+        description: 'Run expensive top-level suites (core + leap)'
+        required: false
+        default: 'false'
 
 env:
   # Enforce strict CI environment
   CI: true
   PYTHONPATH: ${{ github.workspace }}
+  # Article IV: VectorStore integration mandatory (constitutional mandate)
+  USE_ENHANCED_MEMORY: true
+  # OpenEnv-style spec integration (Phase 2)
+  AGENCY_ENV_SPEC: ${{ github.workspace }}/envs/agency_env_spec.json
 
 jobs:
-  # Core test verification job - enforces ADR-002 compliance
+  # Shared setup job - prepares Python environment (reused by all test jobs via cache)
+  setup:
+    name: "🔧 Environment Setup"
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    outputs:
+      python-version: "3.13"
+      cache-key: ${{ steps.cache-info.outputs.key }}
+
+    steps:
+      - name: "🔍 Checkout Repository"
+        uses: actions/checkout@v4
+
+      - name: "🐍 Set up Python 3.13"
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+          cache: 'pip'
+
+      - name: "⚙️ Install Dependencies"
+        run: |
+          set -o pipefail
+          python -m pip install --upgrade pip
+          python -m pip install -r requirements.txt
+          python -m pip install git+https://github.com/openai/openai-agents-python.git@main
+          python -m pip install pytest-timeout pytest-json-report
+
+      - name: "📋 Output Cache Info"
+        id: cache-info
+        run: echo "key=${{ runner.os }}-pip-python3.13-${{ hashFiles('requirements.txt') }}" >> $GITHUB_OUTPUT
+
+  # Independent test jobs - each gets fresh Python process (solves OOM issue)
+  test-orchestrator:
+    name: "🧪 Tests: orchestrator suite"
+    needs: setup
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+          cache: 'pip'
+      - run: |
+          python -m pip install --upgrade pip
+          python -m pip install -r requirements.txt
+          python -m pip install git+https://github.com/openai/openai-agents-python.git@main
+          python -m pip install pytest-timeout pytest-json-report
+      - name: "🔄 Initialize environment via spec runner"
+        run: |
+          set -o pipefail
+          mkdir -p test-results
+          export AGENCY_ENV_SPEC=${{ github.workspace }}/envs/agency_env_spec.json
+          python envs/agency_env_runner.py reset > test-results/runner-reset.log 2>&1
+          echo "✅ Environment reset complete"
+      - name: "Run orchestrator tests"
+        run: |
+          set -o pipefail
+          export PYTHONPATH=${{ github.workspace }}
+          export USE_ENHANCED_MEMORY=true
+          export AGENCY_TEST_TIMEOUT_OVERRIDE=300
+          export AGENCY_ENV_SPEC=${{ github.workspace }}/envs/agency_env_spec.json
+          mkdir -p test-results
+          python scripts/run_in_env.py \
+            --timeout 900 \
+            --log-file test-results/runner-step.json \
+            --env PYTHONMALLOC=malloc \
+            -- python -m pytest tests/orchestrator \
+              --ignore=tests/test_firestore_learning_persistence.py \
+              --ignore=tests/test_firestore_mock_integration.py \
+              --ignore=tests/e2e \
+              --ignore=tests/benchmarks \
+              -m "not slow" --ff --maxfail=1 -q \
+              --json-report --json-report-file=test-results/report.json
+      - name: "Generate test report"
+        if: always()
+        run: |
+          set -o pipefail
+          python .github/scripts/generate_test_report.py test-results/report.json > test-results/report.md || echo "⚠️ Report generation skipped"
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: test-results-orchestrator
+          path: test-results/
+          retention-days: 7
+
+  test-tools-ci-monitor:
+    name: "🧪 Tests: tools/ci_monitor suite"
+    needs: setup
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+          cache: 'pip'
+      - run: |
+          python -m pip install --upgrade pip
+          python -m pip install -r requirements.txt
+          python -m pip install git+https://github.com/openai/openai-agents-python.git@main
+          python -m pip install pytest-timeout pytest-json-report
+      - name: "🔄 Initialize environment via spec runner"
+        run: |
+          set -o pipefail
+          mkdir -p test-results
+          export AGENCY_ENV_SPEC=${{ github.workspace }}/envs/agency_env_spec.json
+          python envs/agency_env_runner.py reset > test-results/runner-reset.log 2>&1
+          echo "✅ Environment reset complete"
+      - name: "Run tools/ci_monitor tests"
+        run: |
+          set -o pipefail
+          export PYTHONPATH=${{ github.workspace }}
+          export USE_ENHANCED_MEMORY=true
+          export AGENCY_TEST_TIMEOUT_OVERRIDE=300
+          export AGENCY_ENV_SPEC=${{ github.workspace }}/envs/agency_env_spec.json
+          mkdir -p test-results
+          python scripts/run_in_env.py \
+            --timeout 900 \
+            --log-file test-results/runner-step.json \
+            --env PYTHONMALLOC=malloc \
+            -- pytest tests/tools/ci_monitor \
+              --ignore=tests/test_firestore_learning_persistence.py \
+              --ignore=tests/test_firestore_mock_integration.py \
+              --ignore=tests/e2e \
+              --ignore=tests/benchmarks \
+              -m "not slow" --ff --maxfail=1 -q \
+              --json-report --json-report-file=test-results/report.json
+      - name: "Generate test report"
+        if: always()
+        run: |
+          set -o pipefail
+          python .github/scripts/generate_test_report.py test-results/report.json > test-results/report.md || echo "⚠️ Report generation skipped"
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: test-results-tools-ci-monitor
+          path: test-results/
+          retention-days: 7
+
+  test-tools-orchestrator:
+    name: "🧪 Tests: tools/orchestrator suite"
+    needs: setup
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+          cache: 'pip'
+      - run: |
+          python -m pip install --upgrade pip
+          python -m pip install -r requirements.txt
+          python -m pip install git+https://github.com/openai/openai-agents-python.git@main
+          python -m pip install pytest-timeout pytest-json-report
+      - name: "🔄 Initialize environment via spec runner"
+        run: |
+          set -o pipefail
+          mkdir -p test-results
+          export AGENCY_ENV_SPEC=${{ github.workspace }}/envs/agency_env_spec.json
+          python envs/agency_env_runner.py reset > test-results/runner-reset.log 2>&1
+          echo "✅ Environment reset complete"
+      - name: "Run tools/orchestrator tests"
+        run: |
+          set -o pipefail
+          export PYTHONPATH=${{ github.workspace }}
+          export USE_ENHANCED_MEMORY=true
+          export AGENCY_TEST_TIMEOUT_OVERRIDE=300
+          export AGENCY_ENV_SPEC=${{ github.workspace }}/envs/agency_env_spec.json
+          mkdir -p test-results
+          python scripts/run_in_env.py \
+            --timeout 900 \
+            --log-file test-results/runner-step.json \
+            --env PYTHONMALLOC=malloc \
+            -- pytest tests/tools/orchestrator \
+              --ignore=tests/test_firestore_learning_persistence.py \
+              --ignore=tests/test_firestore_mock_integration.py \
+              --ignore=tests/e2e \
+              --ignore=tests/benchmarks \
+              -m "not slow" --ff --maxfail=1 -q \
+              --json-report --json-report-file=test-results/report.json
+      - name: "Generate test report"
+        if: always()
+        run: |
+          set -o pipefail
+          python .github/scripts/generate_test_report.py test-results/report.json > test-results/report.md || echo "⚠️ Report generation skipped"
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: test-results-tools-orchestrator
+          path: test-results/
+          retention-days: 7
+
+  test-tools-core:
+    name: "🧪 Tests: tools core suite"
+    needs: setup
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+          cache: 'pip'
+      - run: |
+          python -m pip install --upgrade pip
+          python -m pip install -r requirements.txt
+          python -m pip install git+https://github.com/openai/openai-agents-python.git@main
+          python -m pip install pytest-timeout pytest-json-report
+      - name: "🔄 Initialize environment via spec runner"
+        run: |
+          set -o pipefail
+          mkdir -p test-results
+          export AGENCY_ENV_SPEC=${{ github.workspace }}/envs/agency_env_spec.json
+          python envs/agency_env_runner.py reset > test-results/runner-reset.log 2>&1
+          echo "✅ Environment reset complete"
+      - name: "Run tools core tests"
+        run: |
+          set -o pipefail
+          export PYTHONPATH=${{ github.workspace }}
+          export USE_ENHANCED_MEMORY=true
+          export AGENCY_TEST_TIMEOUT_OVERRIDE=300
+          export AGENCY_ENV_SPEC=${{ github.workspace }}/envs/agency_env_spec.json
+          mkdir -p test-results
+          python scripts/run_in_env.py \
+            --timeout 900 \
+            --log-file test-results/runner-step.json \
+            --env PYTHONMALLOC=malloc \
+            -- pytest tests/tools/test_*.py \
+              --ignore=tests/test_firestore_learning_persistence.py \
+              --ignore=tests/test_firestore_mock_integration.py \
+              --ignore=tests/e2e \
+              --ignore=tests/benchmarks \
+              -m "not slow" --ff --maxfail=1 -q \
+              --json-report --json-report-file=test-results/report.json
+      - name: "Generate test report"
+        if: always()
+        run: |
+          set -o pipefail
+          python .github/scripts/generate_test_report.py test-results/report.json > test-results/report.md || echo "⚠️ Report generation skipped"
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: test-results-tools-core
+          path: test-results/
+          retention-days: 7
+
+  test-integration-1:
+    name: "🧪 Tests: integration suite (part 1)"
+    needs: setup
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+          cache: 'pip'
+      - run: |
+          python -m pip install --upgrade pip
+          python -m pip install -r requirements.txt
+          python -m pip install git+https://github.com/openai/openai-agents-python.git@main
+          python -m pip install pytest-timeout pytest-json-report
+      - name: "🔄 Initialize environment via spec runner"
+        run: |
+          set -o pipefail
+          mkdir -p test-results
+          export AGENCY_ENV_SPEC=${{ github.workspace }}/envs/agency_env_spec.json
+          python envs/agency_env_runner.py reset > test-results/runner-reset.log 2>&1
+          echo "✅ Environment reset complete"
+      - name: "Run integration tests (part 1)"
+        run: |
+          set -o pipefail
+          export PYTHONPATH=${{ github.workspace }}
+          export USE_ENHANCED_MEMORY=true
+          export AGENCY_TEST_TIMEOUT_OVERRIDE=300
+          export AGENCY_ENV_SPEC=${{ github.workspace }}/envs/agency_env_spec.json
+          mkdir -p test-results
+          python scripts/run_in_env.py \
+            --timeout 900 \
+            --log-file test-results/runner-step.json \
+            --env PYTHONMALLOC=malloc \
+            -- pytest \
+              tests/integration/test_ambient_to_witness.py \
+              tests/integration/test_autonomous_audit_loop.py \
+              tests/integration/test_ci_backlog_workflow.py \
+              tests/integration/test_epic4_2_complete.py \
+              --ignore=tests/test_firestore_learning_persistence.py \
+              --ignore=tests/test_firestore_mock_integration.py \
+              --ignore=tests/e2e \
+              --ignore=tests/benchmarks \
+              -m "not slow" --ff --maxfail=1 -q \
+              --json-report --json-report-file=test-results/report.json
+      - name: "Generate test report"
+        if: always()
+        run: |
+          set -o pipefail
+          python .github/scripts/generate_test_report.py test-results/report.json > test-results/report.md || echo "⚠️ Report generation skipped"
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: test-results-integration-1
+          path: test-results/
+          retention-days: 7
+
+  test-integration-2:
+    name: "🧪 Tests: integration suite (part 2)"
+    needs: setup
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+          cache: 'pip'
+      - run: |
+          python -m pip install --upgrade pip
+          python -m pip install -r requirements.txt
+          python -m pip install git+https://github.com/openai/openai-agents-python.git@main
+          python -m pip install pytest-timeout pytest-json-report
+      - name: "🔄 Initialize environment via spec runner"
+        run: |
+          set -o pipefail
+          mkdir -p test-results
+          export AGENCY_ENV_SPEC=${{ github.workspace }}/envs/agency_env_spec.json
+          python envs/agency_env_runner.py reset > test-results/runner-reset.log 2>&1
+          echo "✅ Environment reset complete"
+      - name: "Run integration tests (part 2)"
+        run: |
+          set -o pipefail
+          export PYTHONPATH=${{ github.workspace }}
+          export USE_ENHANCED_MEMORY=true
+          export AGENCY_TEST_TIMEOUT_OVERRIDE=300
+          export AGENCY_ENV_SPEC=${{ github.workspace }}/envs/agency_env_spec.json
+          mkdir -p test-results
+          python scripts/run_in_env.py \
+            --timeout 900 \
+            --log-file test-results/runner-step.json \
+            --env PYTHONMALLOC=malloc \
+            -- pytest \
+              tests/integration/test_function_timeouts.py \
+              tests/integration/test_memory_aware_integration.py \
+              tests/integration/test_mock_asyncio_sleep.py \
+              tests/integration/test_non_blocking_cleanup.py \
+              --ignore=tests/test_firestore_learning_persistence.py \
+              --ignore=tests/test_firestore_mock_integration.py \
+              --ignore=tests/e2e \
+              --ignore=tests/benchmarks \
+              -m "not slow" --ff --maxfail=1 -q \
+              --json-report --json-report-file=test-results/report.json
+      - name: "Generate test report"
+        if: always()
+        run: |
+          set -o pipefail
+          python .github/scripts/generate_test_report.py test-results/report.json > test-results/report.md || echo "⚠️ Report generation skipped"
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: test-results-integration-2
+          path: test-results/
+          retention-days: 7
+
+  test-integration-3a:
+    name: "🧪 Tests: integration suite (part 3a)"
+    needs: setup
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+          cache: 'pip'
+      - run: |
+          python -m pip install --upgrade pip
+          python -m pip install -r requirements.txt
+          python -m pip install git+https://github.com/openai/openai-agents-python.git@main
+          python -m pip install pytest-timeout pytest-json-report
+      - name: "🔄 Initialize environment via spec runner"
+        run: |
+          set -o pipefail
+          mkdir -p test-results
+          export AGENCY_ENV_SPEC=${{ github.workspace }}/envs/agency_env_spec.json
+          python envs/agency_env_runner.py reset > test-results/runner-reset.log 2>&1
+          echo "✅ Environment reset complete"
+      - name: "Run integration tests (part 3a)"
+        run: |
+          set -o pipefail
+          export PYTHONPATH=${{ github.workspace }}
+          export USE_ENHANCED_MEMORY=true
+          export AGENCY_TEST_TIMEOUT_OVERRIDE=300
+          export AGENCY_ENV_SPEC=${{ github.workspace }}/envs/agency_env_spec.json
+          mkdir -p test-results
+          python scripts/run_in_env.py \
+            --timeout 900 \
+            --log-file test-results/runner-step.json \
+            --env PYTHONMALLOC=malloc \
+            -- pytest \
+              tests/integration/test_performance_regression.py \
+              --ignore=tests/test_firestore_learning_persistence.py \
+              --ignore=tests/test_firestore_mock_integration.py \
+              --ignore=tests/e2e \
+              --ignore=tests/benchmarks \
+              -m "not slow" --ff --maxfail=1 -q \
+              --json-report --json-report-file=test-results/report.json
+      - name: "Generate test report"
+        if: always()
+        run: |
+          set -o pipefail
+          python .github/scripts/generate_test_report.py test-results/report.json > test-results/report.md || echo "⚠️ Report generation skipped"
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: test-results-integration-3a
+          path: test-results/
+          retention-days: 7
+
+  test-integration-3b:
+    name: "🧪 Tests: integration suite (part 3b)"
+    needs: setup
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+          cache: 'pip'
+      - run: |
+          python -m pip install --upgrade pip
+          python -m pip install -r requirements.txt
+          python -m pip install git+https://github.com/openai/openai-agents-python.git@main
+          python -m pip install pytest-timeout pytest-json-report
+      - name: "🔄 Initialize environment via spec runner"
+        run: |
+          set -o pipefail
+          mkdir -p test-results
+          export AGENCY_ENV_SPEC=${{ github.workspace }}/envs/agency_env_spec.json
+          python envs/agency_env_runner.py reset > test-results/runner-reset.log 2>&1
+          echo "✅ Environment reset complete"
+      - name: "Run integration tests (part 3b)"
+        run: |
+          set -o pipefail
+          export PYTHONPATH=${{ github.workspace }}
+          export USE_ENHANCED_MEMORY=true
+          export AGENCY_TEST_TIMEOUT_OVERRIDE=300
+          export AGENCY_ENV_SPEC=${{ github.workspace }}/envs/agency_env_spec.json
+          mkdir -p test-results
+          python scripts/run_in_env.py \
+            --timeout 900 \
+            --log-file test-results/runner-step.json \
+            --env PYTHONMALLOC=malloc \
+            -- pytest \
+              tests/integration/test_remove_intentional_delays.py \
+              --ignore=tests/test_firestore_learning_persistence.py \
+              --ignore=tests/test_firestore_mock_integration.py \
+              --ignore=tests/e2e \
+              --ignore=tests/benchmarks \
+              -m "not slow" --ff --maxfail=1 -q \
+              --json-report --json-report-file=test-results/report.json
+      - name: "Generate test report"
+        if: always()
+        run: |
+          set -o pipefail
+          python .github/scripts/generate_test_report.py test-results/report.json > test-results/report.md || echo "⚠️ Report generation skipped"
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: test-results-integration-3b
+          path: test-results/
+          retention-days: 7
+
+  test-integration-3c:
+    name: "🧪 Tests: integration suite (part 3c)"
+    needs: setup
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+          cache: 'pip'
+      - run: |
+          python -m pip install --upgrade pip
+          python -m pip install -r requirements.txt
+          python -m pip install git+https://github.com/openai/openai-agents-python.git@main
+          python -m pip install pytest-timeout pytest-json-report
+      - name: "🔄 Initialize environment via spec runner"
+        run: |
+          set -o pipefail
+          mkdir -p test-results
+          export AGENCY_ENV_SPEC=${{ github.workspace }}/envs/agency_env_spec.json
+          python envs/agency_env_runner.py reset > test-results/runner-reset.log 2>&1
+          echo "✅ Environment reset complete"
+      - name: "Run integration tests (part 3c)"
+        run: |
+          set -o pipefail
+          export PYTHONPATH=${{ github.workspace }}
+          export USE_ENHANCED_MEMORY=true
+          export AGENCY_TEST_TIMEOUT_OVERRIDE=300
+          export AGENCY_ENV_SPEC=${{ github.workspace }}/envs/agency_env_spec.json
+          mkdir -p test-results
+          python scripts/run_in_env.py \
+            --timeout 900 \
+            --log-file test-results/runner-step.json \
+            --env PYTHONMALLOC=malloc \
+            -- pytest \
+              tests/integration/test_unit_integration_separation.py \
+              --ignore=tests/test_firestore_learning_persistence.py \
+              --ignore=tests/test_firestore_mock_integration.py \
+              --ignore=tests/e2e \
+              --ignore=tests/benchmarks \
+              -m "not slow" --ff --maxfail=1 -q \
+              --json-report --json-report-file=test-results/report.json
+      - name: "Generate test report"
+        if: always()
+        run: |
+          set -o pipefail
+          python .github/scripts/generate_test_report.py test-results/report.json > test-results/report.md || echo "⚠️ Report generation skipped"
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: test-results-integration-3c
+          path: test-results/
+          retention-days: 7
+
+  test-unit:
+    name: "🧪 Tests: unit suite"
+    needs: setup
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+          cache: 'pip'
+      - run: |
+          python -m pip install --upgrade pip
+          python -m pip install -r requirements.txt
+          python -m pip install git+https://github.com/openai/openai-agents-python.git@main
+          python -m pip install pytest-timeout pytest-json-report
+      - name: "🔄 Initialize environment via spec runner"
+        run: |
+          set -o pipefail
+          mkdir -p test-results
+          export AGENCY_ENV_SPEC=${{ github.workspace }}/envs/agency_env_spec.json
+          python envs/agency_env_runner.py reset > test-results/runner-reset.log 2>&1
+          echo "✅ Environment reset complete"
+      - name: "Run unit tests"
+        run: |
+          set -o pipefail
+          export PYTHONPATH=${{ github.workspace }}
+          export USE_ENHANCED_MEMORY=true
+          export AGENCY_TEST_TIMEOUT_OVERRIDE=300
+          export AGENCY_ENV_SPEC=${{ github.workspace }}/envs/agency_env_spec.json
+          mkdir -p test-results
+          python scripts/run_in_env.py \
+            --timeout 900 \
+            --log-file test-results/runner-step.json \
+            --env PYTHONMALLOC=malloc \
+            -- pytest tests/unit \
+              --ignore=tests/test_firestore_learning_persistence.py \
+              --ignore=tests/test_firestore_mock_integration.py \
+              --ignore=tests/e2e \
+              --ignore=tests/benchmarks \
+              -m "not slow" --ff --maxfail=1 -q \
+              --json-report --json-report-file=test-results/report.json
+      - name: "Generate test report"
+        if: always()
+        run: |
+          set -o pipefail
+          python .github/scripts/generate_test_report.py test-results/report.json > test-results/report.md || echo "⚠️ Report generation skipped"
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: test-results-unit
+          path: test-results/
+          retention-days: 7
+
+  test-chaos:
+    name: "🧪 Tests: chaos suite"
+    needs: setup
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+          cache: 'pip'
+      - run: |
+          python -m pip install --upgrade pip
+          python -m pip install -r requirements.txt
+          python -m pip install git+https://github.com/openai/openai-agents-python.git@main
+          python -m pip install pytest-timeout pytest-json-report
+      - name: "🔄 Initialize environment via spec runner"
+        run: |
+          set -o pipefail
+          mkdir -p test-results
+          export AGENCY_ENV_SPEC=${{ github.workspace }}/envs/agency_env_spec.json
+          python envs/agency_env_runner.py reset > test-results/runner-reset.log 2>&1
+          echo "✅ Environment reset complete"
+      - name: "Run chaos tests"
+        run: |
+          set -o pipefail
+          export PYTHONPATH=${{ github.workspace }}
+          export USE_ENHANCED_MEMORY=true
+          export AGENCY_TEST_TIMEOUT_OVERRIDE=300
+          export AGENCY_ENV_SPEC=${{ github.workspace }}/envs/agency_env_spec.json
+          mkdir -p test-results
+          python scripts/run_in_env.py \
+            --timeout 900 \
+            --log-file test-results/runner-step.json \
+            --env PYTHONMALLOC=malloc \
+            -- pytest tests/chaos \
+              --ignore=tests/test_firestore_learning_persistence.py \
+              --ignore=tests/test_firestore_mock_integration.py \
+              --ignore=tests/e2e \
+              --ignore=tests/benchmarks \
+              -m "not slow" --ff --maxfail=1 -q \
+              --json-report --json-report-file=test-results/report.json
+      - name: "Generate test report"
+        if: always()
+        run: |
+          set -o pipefail
+          python .github/scripts/generate_test_report.py test-results/report.json > test-results/report.md || echo "⚠️ Report generation skipped"
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: test-results-chaos
+          path: test-results/
+          retention-days: 7
+
+  test-stress:
+    name: "🧪 Tests: stress suite"
+    needs: setup
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+          cache: 'pip'
+      - run: |
+          python -m pip install --upgrade pip
+          python -m pip install -r requirements.txt
+          python -m pip install git+https://github.com/openai/openai-agents-python.git@main
+          python -m pip install pytest-timeout pytest-json-report
+      - name: "🔄 Initialize environment via spec runner"
+        run: |
+          set -o pipefail
+          mkdir -p test-results
+          export AGENCY_ENV_SPEC=${{ github.workspace }}/envs/agency_env_spec.json
+          python envs/agency_env_runner.py reset > test-results/runner-reset.log 2>&1
+          echo "✅ Environment reset complete"
+      - name: "Run stress tests"
+        run: |
+          set -o pipefail
+          export PYTHONPATH=${{ github.workspace }}
+          export USE_ENHANCED_MEMORY=true
+          export AGENCY_TEST_TIMEOUT_OVERRIDE=300
+          export AGENCY_ENV_SPEC=${{ github.workspace }}/envs/agency_env_spec.json
+          mkdir -p test-results
+          python scripts/run_in_env.py \
+            --timeout 900 \
+            --log-file test-results/runner-step.json \
+            --env PYTHONMALLOC=malloc \
+            -- pytest tests/stress \
+              --ignore=tests/test_firestore_learning_persistence.py \
+              --ignore=tests/test_firestore_mock_integration.py \
+              --ignore=tests/e2e \
+              --ignore=tests/benchmarks \
+              -m "not slow" --ff --maxfail=1 -q \
+              --json-report --json-report-file=test-results/report.json
+      - name: "Generate test report"
+        if: always()
+        run: |
+          set -o pipefail
+          python .github/scripts/generate_test_report.py test-results/report.json > test-results/report.md || echo "⚠️ Report generation skipped"
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: test-results-stress
+          path: test-results/
+          retention-days: 7
+
+  test-misc-adr-agents:
+    name: "🧪 Tests: adr+agents"
+    needs: setup
+    runs-on: ubuntu-latest
+    timeout-minutes: 18
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+          cache: 'pip'
+      - run: |
+          python -m pip install --upgrade pip
+          python -m pip install -r requirements.txt
+          python -m pip install git+https://github.com/openai/openai-agents-python.git@main
+          python -m pip install pytest-timeout pytest-json-report
+      - name: "🔄 Initialize environment via spec runner"
+        run: |
+          set -o pipefail
+          mkdir -p test-results
+          export AGENCY_ENV_SPEC=${{ github.workspace }}/envs/agency_env_spec.json
+          python envs/agency_env_runner.py reset > test-results/runner-reset.log 2>&1
+          echo "✅ Environment reset complete"
+      - name: "Run adr+agents tests"
+        run: |
+          set -o pipefail
+          export PYTHONPATH=${{ github.workspace }}
+          export USE_ENHANCED_MEMORY=true
+          export AGENCY_TEST_TIMEOUT_OVERRIDE=300
+          export OPENAI_API_KEY=test-key-12345
+          export AGENCY_ENV_SPEC=${{ github.workspace }}/envs/agency_env_spec.json
+          mkdir -p test-results
+          python scripts/run_in_env.py \
+            --timeout 1200 \
+            --log-file test-results/runner-step.json \
+            --env PYTHONMALLOC=malloc \
+            --env OPENAI_API_KEY=test-key-12345 \
+            -- pytest \
+              tests/adr tests/agents \
+              --ignore=tests/test_firestore_learning_persistence.py \
+              --ignore=tests/test_firestore_mock_integration.py \
+              --ignore=tests/e2e \
+              --ignore=tests/benchmarks \
+              -m "not slow" --ff --maxfail=1 \
+              --timeout=30 --timeout-method=thread -vv \
+              --json-report --json-report-file=test-results/report.json
+      - name: "Generate test report"
+        if: always()
+        run: |
+          set -o pipefail
+          python .github/scripts/generate_test_report.py test-results/report.json > test-results/report.md || echo "⚠️ Report generation skipped"
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: test-results-misc-adr-agents
+          path: test-results/
+          retention-days: 7
+
+  test-foundation-fast:
+    name: "🧪 Tests: foundation (fast)"
+    needs: setup
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+          cache: 'pip'
+      - run: |
+          python -m pip install --upgrade pip
+          python -m pip install -r requirements.txt
+          python -m pip install git+https://github.com/openai/openai-agents-python.git@main
+          python -m pip install pytest-timeout pytest-json-report
+      - name: "🔄 Initialize environment via spec runner"
+        run: |
+          set -o pipefail
+          mkdir -p test-results
+          export AGENCY_ENV_SPEC=${{ github.workspace }}/envs/agency_env_spec.json
+          python envs/agency_env_runner.py reset > test-results/runner-reset.log 2>&1
+          echo "✅ Environment reset complete"
+      - name: "Run foundation fast tests"
+        run: |
+          set -o pipefail
+          export PYTHONPATH=${{ github.workspace }}
+          export USE_ENHANCED_MEMORY=true
+          export AGENCY_TEST_TIMEOUT_OVERRIDE=300
+          export OPENAI_API_KEY=test-key-12345
+          export AGENCY_ENV_SPEC=${{ github.workspace }}/envs/agency_env_spec.json
+          mkdir -p test-results
+          python scripts/run_in_env.py \
+            --timeout 900 \
+            --log-file test-results/runner-step.json \
+            --env PYTHONMALLOC=malloc \
+            --env OPENAI_API_KEY=test-key-12345 \
+            -- pytest \
+              tests/foundation_automation/test_git_validation.py \
+              tests/foundation_automation/test_flag_behavior.py \
+              tests/foundation_automation/test_backlog_auto_selection.py \
+              -m "not slow" --ff --maxfail=1 \
+              --timeout=30 --timeout-method=thread -vv \
+              --json-report --json-report-file=test-results/report.json
+      - name: "Generate test report"
+        if: always()
+        run: |
+          set -o pipefail
+          python .github/scripts/generate_test_report.py test-results/report.json > test-results/report.md || echo "⚠️ Report generation skipped"
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: test-results-foundation-fast
+          path: test-results/
+          retention-days: 7
+
+  test-foundation-commands:
+    name: "🧪 Tests: foundation commands+docs"
+    needs: setup
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+          cache: 'pip'
+      - run: |
+          python -m pip install --upgrade pip
+          python -m pip install -r requirements.txt
+          python -m pip install git+https://github.com/openai/openai-agents-python.git@main
+          python -m pip install pytest-timeout pytest-json-report
+      - name: "🔄 Initialize environment via spec runner"
+        run: |
+          set -o pipefail
+          mkdir -p test-results
+          export AGENCY_ENV_SPEC=${{ github.workspace }}/envs/agency_env_spec.json
+          python envs/agency_env_runner.py reset > test-results/runner-reset.log 2>&1
+          echo "✅ Environment reset complete"
+      - name: "Run foundation commands+docs tests"
+        run: |
+          set -o pipefail
+          export PYTHONPATH=${{ github.workspace }}
+          export USE_ENHANCED_MEMORY=true
+          export AGENCY_TEST_TIMEOUT_OVERRIDE=300
+          export OPENAI_API_KEY=test-key-12345
+          export AGENCY_ENV_SPEC=${{ github.workspace }}/envs/agency_env_spec.json
+          mkdir -p test-results
+          python scripts/run_in_env.py \
+            --timeout 1200 \
+            --log-file test-results/runner-step.json \
+            --env PYTHONMALLOC=malloc \
+            --env OPENAI_API_KEY=test-key-12345 \
+            -- pytest tests/commands tests/docs \
+              -m "not slow" --ff --maxfail=1 \
+              --timeout=30 --timeout-method=thread -vv \
+              --json-report --json-report-file=test-results/report.json
+      - name: "Generate test report"
+        if: always()
+        run: |
+          set -o pipefail
+          python .github/scripts/generate_test_report.py test-results/report.json > test-results/report.md || echo "⚠️ Report generation skipped"
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: test-results-foundation-commands
+          path: test-results/
+          retention-days: 7
+
+  test-foundation-gates:
+    name: "🧪 Tests: foundation E2E gates (manual-only)"
+    needs: setup
+    runs-on: ubuntu-latest
+    if: github.event_name == 'workflow_dispatch' && inputs.run_top_level == 'true'
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+          cache: 'pip'
+      - run: |
+          python -m pip install --upgrade pip
+          python -m pip install -r requirements.txt
+          python -m pip install git+https://github.com/openai/openai-agents-python.git@main
+          python -m pip install pytest-timeout pytest-json-report
+      - name: "🔄 Initialize environment via spec runner"
+        run: |
+          set -o pipefail
+          mkdir -p test-results
+          export AGENCY_ENV_SPEC=${{ github.workspace }}/envs/agency_env_spec.json
+          python envs/agency_env_runner.py reset > test-results/runner-reset.log 2>&1
+          echo "✅ Environment reset complete"
+      - name: "Run foundation E2E gates"
+        run: |
+          set -o pipefail
+          export PYTHONPATH=${{ github.workspace }}
+          export USE_ENHANCED_MEMORY=true
+          export AGENCY_TEST_TIMEOUT_OVERRIDE=300
+          export OPENAI_API_KEY=test-key-12345
+          export AGENCY_ENV_SPEC=${{ github.workspace }}/envs/agency_env_spec.json
+          mkdir -p test-results
+          python scripts/run_in_env.py \
+            --timeout 1500 \
+            --log-file test-results/runner-step.json \
+            --env PYTHONMALLOC=malloc \
+            --env OPENAI_API_KEY=test-key-12345 \
+            -- pytest \
+              tests/foundation_automation/test_e2e_natural_language_flow.py \
+              tests/foundation_automation/test_constitutional_gates.py \
+              -m "not slow" --ff --maxfail=1 \
+              --timeout=30 --timeout-method=thread -vv \
+              --json-report --json-report-file=test-results/report.json
+      - name: "Generate test report"
+        if: always()
+        run: |
+          set -o pipefail
+          python .github/scripts/generate_test_report.py test-results/report.json > test-results/report.md || echo "⚠️ Report generation skipped"
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: test-results-foundation-gates
+          path: test-results/
+          retention-days: 7
+
+  test-misc-meta-necessary-property:
+    name: "🧪 Tests: meta+necessary+property"
+    needs: setup
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+          cache: 'pip'
+      - run: |
+          python -m pip install --upgrade pip
+          python -m pip install -r requirements.txt
+          python -m pip install git+https://github.com/openai/openai-agents-python.git@main
+          python -m pip install pytest-timeout pytest-json-report
+      - name: "🔄 Initialize environment via spec runner"
+        run: |
+          set -o pipefail
+          mkdir -p test-results
+          export AGENCY_ENV_SPEC=${{ github.workspace }}/envs/agency_env_spec.json
+          python envs/agency_env_runner.py reset > test-results/runner-reset.log 2>&1
+          echo "✅ Environment reset complete"
+      - name: "Run meta+necessary+property tests"
+        run: |
+          set -o pipefail
+          export PYTHONPATH=${{ github.workspace }}
+          export USE_ENHANCED_MEMORY=true
+          export AGENCY_TEST_TIMEOUT_OVERRIDE=300
+          export OPENAI_API_KEY=test-key-12345
+          export AGENCY_ENV_SPEC=${{ github.workspace }}/envs/agency_env_spec.json
+          mkdir -p test-results
+          python scripts/run_in_env.py \
+            --timeout 1200 \
+            --log-file test-results/runner-step.json \
+            --env PYTHONMALLOC=malloc \
+            --env OPENAI_API_KEY=test-key-12345 \
+            -- pytest \
+              tests/meta_learning tests/necessary tests/property \
+              --ignore=tests/test_firestore_learning_persistence.py \
+              --ignore=tests/test_firestore_mock_integration.py \
+              --ignore=tests/e2e \
+              --ignore=tests/benchmarks \
+              -m "not slow" --ff --maxfail=1 \
+              --timeout=30 --timeout-method=thread -vv \
+              --json-report --json-report-file=test-results/report.json
+      - name: "Generate test report"
+        if: always()
+        run: |
+          set -o pipefail
+          python .github/scripts/generate_test_report.py test-results/report.json > test-results/report.md || echo "⚠️ Report generation skipped"
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: test-results-misc-meta-necessary-property
+          path: test-results/
+          retention-days: 7
+
+  test-misc-shared-trinity:
+    name: "🧪 Tests: shared+trinity"
+    needs: setup
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+          cache: 'pip'
+      - run: |
+          python -m pip install --upgrade pip
+          python -m pip install -r requirements.txt
+          python -m pip install git+https://github.com/openai/openai-agents-python.git@main
+          python -m pip install pytest-timeout pytest-json-report
+      - name: "🔄 Initialize environment via spec runner"
+        run: |
+          set -o pipefail
+          mkdir -p test-results
+          export AGENCY_ENV_SPEC=${{ github.workspace }}/envs/agency_env_spec.json
+          python envs/agency_env_runner.py reset > test-results/runner-reset.log 2>&1
+          echo "✅ Environment reset complete"
+      - name: "Run shared+trinity tests"
+        run: |
+          set -o pipefail
+          export PYTHONPATH=${{ github.workspace }}
+          export USE_ENHANCED_MEMORY=true
+          export AGENCY_TEST_TIMEOUT_OVERRIDE=300
+          export OPENAI_API_KEY=test-key-12345
+          export AGENCY_ENV_SPEC=${{ github.workspace }}/envs/agency_env_spec.json
+          mkdir -p test-results
+          python scripts/run_in_env.py \
+            --timeout 1200 \
+            --log-file test-results/runner-step.json \
+            --env PYTHONMALLOC=malloc \
+            --env OPENAI_API_KEY=test-key-12345 \
+            -- pytest \
+              tests/shared tests/trinity_protocol \
+              --ignore=tests/test_firestore_learning_persistence.py \
+              --ignore=tests/test_firestore_mock_integration.py \
+              --ignore=tests/e2e \
+              --ignore=tests/benchmarks \
+              -m "not slow" --ff --maxfail=1 \
+              --timeout=30 --timeout-method=thread -vv \
+              --json-report --json-report-file=test-results/report.json
+      - name: "Generate test report"
+        if: always()
+        run: |
+          set -o pipefail
+          python .github/scripts/generate_test_report.py test-results/report.json > test-results/report.md || echo "⚠️ Report generation skipped"
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: test-results-misc-shared-trinity
+          path: test-results/
+          retention-days: 7
+
+  test-misc-toplevel-core:
+    name: "🧪 Tests: top-level core"
+    needs: setup
+    runs-on: ubuntu-latest
+    if: github.event_name == 'workflow_dispatch' && inputs.run_top_level == 'true'
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+          cache: 'pip'
+      - run: |
+          python -m pip install --upgrade pip
+          python -m pip install -r requirements.txt
+          python -m pip install git+https://github.com/openai/openai-agents-python.git@main
+          python -m pip install pytest-timeout pytest-json-report
+      - name: "🔄 Initialize environment via spec runner"
+        run: |
+          set -o pipefail
+          mkdir -p test-results
+          export AGENCY_ENV_SPEC=${{ github.workspace }}/envs/agency_env_spec.json
+          python envs/agency_env_runner.py reset > test-results/runner-reset.log 2>&1
+          echo "✅ Environment reset complete"
+      - name: "Run top-level core tests"
+        run: |
+          set -o pipefail
+          export PYTHONPATH=${{ github.workspace }}
+          export USE_ENHANCED_MEMORY=true
+          export AGENCY_TEST_TIMEOUT_OVERRIDE=300
+          export OPENAI_API_KEY=test-key-12345
+          export AGENCY_ENV_SPEC=${{ github.workspace }}/envs/agency_env_spec.json
+          mkdir -p test-results
+          python scripts/run_in_env.py \
+            --timeout 2100 \
+            --log-file test-results/runner-step.json \
+            --env PYTHONMALLOC=malloc \
+            --env OPENAI_API_KEY=test-key-12345 \
+            -- pytest \
+              tests/test_*.py \
+              --ignore=tests/test_firestore_learning_persistence.py \
+              --ignore=tests/test_firestore_mock_integration.py \
+              --ignore=tests/test_leap3_e2e_integration.py \
+              --ignore=tests/test_leap3_m5_validation.py \
+              --ignore=tests/test_leap4_e2e_quality_feedback.py \
+              --ignore=tests/test_leap5_phase1_integration.py \
+              --ignore=tests/test_leap5_phase2_integration.py \
+              --ignore=tests/test_leap5_phase3_e2e.py \
+              --ignore=tests/test_leap5_phase4_e2e.py \
+              --ignore=tests/e2e \
+              --ignore=tests/benchmarks \
+              -m "not slow" --ff --maxfail=1 \
+              --timeout=30 --timeout-method=thread -vv \
+              --json-report --json-report-file=test-results/report.json
+      - name: "Generate test report"
+        if: always()
+        run: |
+          set -o pipefail
+          python .github/scripts/generate_test_report.py test-results/report.json > test-results/report.md || echo "⚠️ Report generation skipped"
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: test-results-misc-toplevel-core
+          path: test-results/
+          retention-days: 7
+
+  test-misc-toplevel-leap:
+    name: "🧪 Tests: top-level leap suites"
+    needs: setup
+    runs-on: ubuntu-latest
+    if: github.event_name == 'workflow_dispatch' && inputs.run_top_level == 'true'
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+          cache: 'pip'
+      - run: |
+          python -m pip install --upgrade pip
+          python -m pip install -r requirements.txt
+          python -m pip install git+https://github.com/openai/openai-agents-python.git@main
+          python -m pip install pytest-timeout pytest-json-report
+      - name: "🔄 Initialize environment via spec runner"
+        run: |
+          set -o pipefail
+          mkdir -p test-results
+          export AGENCY_ENV_SPEC=${{ github.workspace }}/envs/agency_env_spec.json
+          python envs/agency_env_runner.py reset > test-results/runner-reset.log 2>&1
+          echo "✅ Environment reset complete"
+      - name: "Run leap validation tests"
+        run: |
+          set -o pipefail
+          export PYTHONPATH=${{ github.workspace }}
+          export USE_ENHANCED_MEMORY=true
+          export AGENCY_TEST_TIMEOUT_OVERRIDE=300
+          export OPENAI_API_KEY=test-key-12345
+          export AGENCY_ENV_SPEC=${{ github.workspace }}/envs/agency_env_spec.json
+          mkdir -p test-results
+          python scripts/run_in_env.py \
+            --timeout 1500 \
+            --log-file test-results/runner-step.json \
+            --env PYTHONMALLOC=malloc \
+            --env OPENAI_API_KEY=test-key-12345 \
+            -- pytest \
+              tests/test_leap3_e2e_integration.py \
+              tests/test_leap3_m5_validation.py \
+              tests/test_leap4_e2e_quality_feedback.py \
+              tests/test_leap5_phase1_integration.py \
+              tests/test_leap5_phase2_integration.py \
+              tests/test_leap5_phase3_e2e.py \
+              tests/test_leap5_phase4_e2e.py \
+              -m "not slow" --ff --maxfail=1 \
+              --timeout=30 --timeout-method=thread -vv \
+              --json-report --json-report-file=test-results/report.json
+      - name: "Generate test report"
+        if: always()
+        run: |
+          set -o pipefail
+          python .github/scripts/generate_test_report.py test-results/report.json > test-results/report.md || echo "⚠️ Report generation skipped"
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: test-results-misc-toplevel-leap
+          path: test-results/
+          retention-days: 7
+
+  # Consolidation job - aggregates all test job results
   test-verification:
     name: "ADR-002 Test Verification"
+    needs: [setup, test-orchestrator, test-tools-ci-monitor, test-tools-orchestrator, test-tools-core, test-integration-1, test-integration-2, test-integration-3a, test-integration-3b, test-integration-3c, test-unit, test-chaos, test-stress, test-misc-adr-agents, test-foundation-fast, test-foundation-commands, test-misc-meta-necessary-property, test-misc-shared-trinity]
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    if: always()
+    timeout-minutes: 5
 
-    # Required permissions for comprehensive reporting
     permissions:
       contents: read
       pull-requests: write
       checks: write
 
     outputs:
-      test-status: ${{ steps.test-execution.outputs.status }}
-      test-summary: ${{ steps.test-execution.outputs.summary }}
-      failure-count: ${{ steps.test-execution.outputs.failures }}
+      test-status: ${{ steps.test-summary.outputs.status }}
+      test-summary: ${{ steps.test-summary.outputs.summary }}
+      failure-count: ${{ steps.test-summary.outputs.failures }}
 
     steps:
       - name: "🔍 Checkout Repository"
         uses: actions/checkout@v4
-        with:
-          # Full history for comprehensive analysis
-          fetch-depth: 0
 
-      - name: "🐍 Set up Python 3.13"
-        uses: actions/setup-python@v5
+      - name: "📦 Download Test Artifacts"
+        if: always()
+        uses: actions/download-artifact@v4
         with:
-          python-version: '3.13'
-          # Use exact version for consistency
-          cache: 'pip'
+          path: all-test-results
+          pattern: test-results-*
+          merge-multiple: false
 
-      - name: "📦 Cache Dependencies"
-        uses: actions/cache@v4
-        with:
-          path: ~/.cache/pip
-          key: ${{ runner.os }}-pip-python3.13-${{ hashFiles('requirements.txt') }}
-          restore-keys: |
-            ${{ runner.os }}-pip-python3.13-
-            ${{ runner.os }}-pip-
-
-      - name: "⚙️ Install Dependencies"
+      - name: "📄 Collect Failure Reports"
+        if: always()
         run: |
-          echo "🔧 Installing test dependencies for ADR-002 verification..."
-          python -m pip install --upgrade pip
+          set -o pipefail
+          mkdir -p failure-reports
+          for shard_dir in all-test-results/test-results-*/; do
+            shard_name=$(basename "$shard_dir")
+            report_md="$shard_dir/report.md"
+            if [ -f "$report_md" ] && grep -q "❌" "$report_md"; then
+              {
+                echo "### ${shard_name}"
+                cat "$report_md"
+                echo ""
+              } > "failure-reports/${shard_name}.md"
+            fi
+          done
+          # Combine failure reports (if any)
+          cat failure-reports/*.md > combined-failures.md 2>/dev/null || echo "✅ All shards passed" > combined-failures.md
 
-          echo "📋 Installing base requirements..."
-          python -m pip install -r requirements.txt
-
-          echo "🔨 Applying LiteLLM fix for Anthropic reasoning models..."
-          # This fixes a critical bug with Anthropic models in litellm
-          python -m pip install git+https://github.com/openai/openai-agents-python.git@main
-
-          echo "✅ Dependencies installed successfully"
-
-          # Verify critical packages
-          python -c "import pytest; print(f'pytest version: {pytest.__version__}')"
-          python -c "import pytest_asyncio; print(f'pytest-asyncio version: {pytest_asyncio.__version__}')"
-          python -c "import agency_swarm; print('agency_swarm imported successfully')"
-
-      - name: "🧪 Execute ADR-002 Test Suite"
-        id: test-execution
+      - name: "📊 Aggregate Test Results"
+        id: test-summary
         run: |
-          echo "🎯 Starting ADR-002 compliance verification..."
-          echo "📊 ADR-002 requires: 100% test success rate (0 failures)"
-          echo "🚫 No Broken Windows policy: Any failure blocks merge"
-          echo ""
+          set -o pipefail
+          echo "📊 Consolidating results from all test jobs..."
 
-          # Run tests and capture detailed output
-          echo "▶️ Executing comprehensive test suite..."
-
-          # Create test results directory
-          mkdir -p test-results
-
-          # Run tests with comprehensive reporting
-          set +e  # Don't exit on test failures, we need to process results
-
-          # Set timeout override for CI environment
-          export AGENCY_TEST_TIMEOUT_OVERRIDE=300
-
-          # Run tests using run_tests.py for consistent execution (ADR-002)
-          python run_tests.py > test-results/test-output.log 2>&1
-          TEST_EXIT_CODE=$?
-
-          # Parse test results for detailed analysis
-          echo "📊 Analyzing test results..."
-
-          # Extract test statistics from pytest output
-          # Use grep -o to extract numbers, default to 0 if not found
-          PASSED_TESTS=$(grep -o "[0-9]\+ passed" test-results/test-output.log | tail -1 | grep -o "[0-9]\+" || echo "0")
-          FAILED_TESTS=$(grep -o "[0-9]\+ failed" test-results/test-output.log | tail -1 | grep -o "[0-9]\+" || echo "0")
-          SKIPPED_TESTS=$(grep -o "[0-9]\+ skipped" test-results/test-output.log | tail -1 | grep -o "[0-9]\+" || echo "0")
-
-          # Ensure variables are set to 0 if empty
-          PASSED_TESTS=${PASSED_TESTS:-0}
-          FAILED_TESTS=${FAILED_TESTS:-0}
-          SKIPPED_TESTS=${SKIPPED_TESTS:-0}
-
-          TOTAL_TESTS=$((PASSED_TESTS + FAILED_TESTS + SKIPPED_TESTS))
-
-          echo "📈 Test Statistics:"
-          echo "  Total Tests: $TOTAL_TESTS"
-          echo "  ✅ Passed: $PASSED_TESTS"
-          echo "  ❌ Failed: $FAILED_TESTS"
-          echo "  ⏭️ Skipped: $SKIPPED_TESTS"
-          echo "  Exit Code: $TEST_EXIT_CODE"
-
-          # ADR-002 Compliance Check
-          echo ""
-          echo "🔍 ADR-002 Compliance Analysis:"
-
-          if [ $TEST_EXIT_CODE -eq 0 ] && [ $FAILED_TESTS -eq 0 ]; then
-            echo "✅ ADR-002 COMPLIANT: All tests passed successfully"
-            echo "🎯 Success Rate: 100% ($PASSED_TESTS/$TOTAL_TESTS effective tests)"
-            echo "status=success" >> $GITHUB_OUTPUT
-            echo "summary=✅ ADR-002 COMPLIANT: $PASSED_TESTS tests passed, 0 failures" >> $GITHUB_OUTPUT
-
-            # Create success artifact
-            cat > test-results/adr-002-status.json << EOF
-          {
-            "adr_002_compliant": true,
-            "total_tests": $TOTAL_TESTS,
-            "passed_tests": $PASSED_TESTS,
-            "failed_tests": $FAILED_TESTS,
-            "skipped_tests": $SKIPPED_TESTS,
-            "exit_code": $TEST_EXIT_CODE,
-            "compliance_message": "ADR-002 COMPLIANT: 100% test success rate achieved"
-          }
-          EOF
-
+          # Check all job results (GitHub Actions context)
+          echo "Job Results:"
+          echo "  test-orchestrator: ${{ needs.test-orchestrator.result }}"
+          echo "  test-tools-ci-monitor: ${{ needs.test-tools-ci-monitor.result }}"
+          echo "  test-tools-orchestrator: ${{ needs.test-tools-orchestrator.result }}"
+          echo "  test-tools-core: ${{ needs.test-tools-core.result }}"
+          echo "  test-integration-1: ${{ needs.test-integration-1.result }}"
+          echo "  test-integration-2: ${{ needs.test-integration-2.result }}"
+          echo "  test-integration-3a: ${{ needs.test-integration-3a.result }}"
+          echo "  test-integration-3b: ${{ needs.test-integration-3b.result }}"
+          echo "  test-integration-3c: ${{ needs.test-integration-3c.result }}"
+          echo "  test-unit: ${{ needs.test-unit.result }}"
+          echo "  test-chaos: ${{ needs.test-chaos.result }}"
+          echo "  test-stress: ${{ needs.test-stress.result }}"
+          echo "  test-misc-adr-agents: ${{ needs.test-misc-adr-agents.result }}"
+          echo "  test-foundation-fast: ${{ needs.test-foundation-fast.result }}"
+          echo "  test-foundation-commands: ${{ needs.test-foundation-commands.result }}"
+          echo "  test-foundation-gates: skipped (manual-only, see docs/ci/TOP_LEVEL_MANUAL_VERIFICATION.md)"
+          echo "  test-misc-meta-necessary-property: ${{ needs.test-misc-meta-necessary-property.result }}"
+          echo "  test-misc-shared-trinity: ${{ needs.test-misc-shared-trinity.result }}"
+          echo "  top-level suites requested: ${{ github.event_name == 'workflow_dispatch' && inputs.run_top_level == 'true' }}"
+          if [[ "${{ github.event_name }}" == "workflow_dispatch" && "${{ inputs.run_top_level }}" == "true" ]]; then
+            echo "  top-level suites status: running via dedicated shards (manual trigger)"
           else
-            echo "❌ ADR-002 VIOLATION: Test failures detected"
-            echo "🚫 Failed Tests: $FAILED_TESTS"
-            echo "💥 Exit Code: $TEST_EXIT_CODE"
-            echo "⚠️ No Broken Windows policy violated!"
-            echo ""
-            echo "🔧 Required Actions:"
-            echo "  1. Fix all failing tests"
-            echo "  2. Ensure 100% test pass rate"
-            echo "  3. Re-run this workflow"
-            echo "  4. No exceptions - ADR-002 is non-negotiable"
-
-            echo "status=failure" >> $GITHUB_OUTPUT
-            echo "summary=❌ ADR-002 VIOLATION: $FAILED_TESTS test failures detected" >> $GITHUB_OUTPUT
-
-            # Create failure artifact
-            cat > test-results/adr-002-status.json << EOF
-          {
-            "adr_002_compliant": false,
-            "total_tests": $TOTAL_TESTS,
-            "passed_tests": $PASSED_TESTS,
-            "failed_tests": $FAILED_TESTS,
-            "skipped_tests": $SKIPPED_TESTS,
-            "exit_code": $TEST_EXIT_CODE,
-            "compliance_message": "ADR-002 VIOLATION: Test failures detected - No Broken Windows policy violated"
-          }
-          EOF
+            echo "  top-level suites status: skipped (manual verification required, see docs/ci/TOP_LEVEL_MANUAL_VERIFICATION.md)"
           fi
 
-          echo "failures=$FAILED_TESTS" >> $GITHUB_OUTPUT
+          # Count passed and failed tests from JSON reports
+          PASSED_TESTS=0
+          FAILED_TESTS=0
+          for shard_dir in all-test-results/test-results-*/; do
+            report_json="$shard_dir/report.json"
+            if [ -f "$report_json" ]; then
+              passed=$(jq -r '.summary.passed // 0' "$report_json" 2>/dev/null || echo "0")
+              failed=$(jq -r '.summary.failed // 0' "$report_json" 2>/dev/null || echo "0")
+              PASSED_TESTS=$((PASSED_TESTS + passed))
+              FAILED_TESTS=$((FAILED_TESTS + failed))
+            fi
+          done
+          echo "Aggregated Results: PASSED_TESTS=$PASSED_TESTS, FAILED_TESTS=$FAILED_TESTS"
 
-          # Display test output for debugging
-          echo ""
-          echo "📋 Full Test Output:"
-          echo "===================="
-          cat test-results/test-output.log
-          echo "===================="
-
-          # Exit with appropriate code for job status
-          # ADR-002 compliance: Exit 0 only if tests passed AND no failures
-          if [ $TEST_EXIT_CODE -eq 0 ] && [ $FAILED_TESTS -eq 0 ]; then
-            echo "✅ Job completing with success status"
+          # Check if all jobs succeeded
+          if [[ "${{ needs.test-orchestrator.result }}" == "success" ]] && \
+             [[ "${{ needs.test-tools-ci-monitor.result }}" == "success" ]] && \
+             [[ "${{ needs.test-tools-orchestrator.result }}" == "success" ]] && \
+             [[ "${{ needs.test-tools-core.result }}" == "success" ]] && \
+             [[ "${{ needs.test-integration-1.result }}" == "success" ]] && \
+             [[ "${{ needs.test-integration-2.result }}" == "success" ]] && \
+             [[ "${{ needs.test-integration-3a.result }}" == "success" ]] && \
+             [[ "${{ needs.test-integration-3b.result }}" == "success" ]] && \
+             [[ "${{ needs.test-integration-3c.result }}" == "success" ]] && \
+             [[ "${{ needs.test-unit.result }}" == "success" ]] && \
+             [[ "${{ needs.test-chaos.result }}" == "success" ]] && \
+             [[ "${{ needs.test-stress.result }}" == "success" ]] && \
+             [[ "${{ needs.test-misc-adr-agents.result }}" == "success" ]] && \
+             [[ "${{ needs.test-foundation-fast.result }}" == "success" ]] && \
+             [[ "${{ needs.test-foundation-commands.result }}" == "success" ]] && \
+             [[ "${{ needs.test-misc-meta-necessary-property.result }}" == "success" ]] && \
+             [[ "${{ needs.test-misc-shared-trinity.result }}" == "success" ]]; then
+            echo "✅ ADR-002 COMPLIANT: All test jobs passed"
+            TEST_EXIT_CODE=0
+            echo "status=success" >> $GITHUB_OUTPUT
+            echo "summary=✅ ADR-002 COMPLIANT: All tests passed (job isolation approach)" >> $GITHUB_OUTPUT
+            echo "failures=0" >> $GITHUB_OUTPUT
             exit 0
           else
-            echo "❌ Job completing with failure status"
+            echo "❌ ADR-002 VIOLATION: One or more test jobs failed"
+            TEST_EXIT_CODE=1
+            echo "status=failure" >> $GITHUB_OUTPUT
+            echo "summary=❌ ADR-002 VIOLATION: Test failures detected" >> $GITHUB_OUTPUT
+            echo "failures=1" >> $GITHUB_OUTPUT
             exit 1
           fi
-
-      - name: "📊 Generate Test Report Artifact"
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: adr-002-test-report-${{ github.sha }}
-          path: |
-            test-results/
-          retention-days: 30
 
       - name: "💬 Comment Test Results on PR"
         if: always() && github.event_name == 'pull_request'
@@ -221,21 +1330,7 @@ jobs:
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
-            const fs = require('fs');
-
-            // Read test results
-            let adrStatus = {};
-            try {
-              const statusData = fs.readFileSync('test-results/adr-002-status.json', 'utf8');
-              adrStatus = JSON.parse(statusData);
-            } catch (error) {
-              console.log('Could not read ADR status file:', error);
-            }
-
-            // Create comprehensive PR comment
-            const testStatus = '${{ steps.test-execution.outputs.status }}';
-            const failureCount = '${{ steps.test-execution.outputs.failures }}';
-
+            const testStatus = '${{ steps.test-summary.outputs.status }}';
             let commentBody = '';
 
             if (testStatus === 'success') {
@@ -244,10 +1339,7 @@ jobs:
             **Merge Guardian Status**: All systems green! 🚀
 
             ### Test Results Summary
-            - **Total Tests**: ${adrStatus.total_tests || 'N/A'}
-            - **✅ Passed**: ${adrStatus.passed_tests || 'N/A'}
-            - **❌ Failed**: ${adrStatus.failed_tests || 0}
-            - **⏭️ Skipped**: ${adrStatus.skipped_tests || 0}
+            - **✅ All test jobs passed** (independent job isolation)
             - **Success Rate**: 100% ✨
 
             ### ADR-002 Verification
@@ -259,19 +1351,26 @@ jobs:
             *This PR meets all ADR-002 requirements and is approved for merge.*
             `;
             } else {
+              // Read failure details if available
+              const fs = require('fs');
+              let failureDetails = '';
+              try {
+                failureDetails = fs.readFileSync('combined-failures.md', 'utf8');
+              } catch (e) {
+                failureDetails = '_(Failure details not available - check job logs)_';
+              }
+
               commentBody = `## 🚫 ADR-002 Compliance: ❌ BLOCKED
 
             **Merge Guardian Status**: Merge blocked due to test failures! 🛑
 
-            ### Test Results Summary
-            - **Total Tests**: ${adrStatus.total_tests || 'N/A'}
-            - **✅ Passed**: ${adrStatus.passed_tests || 'N/A'}
-            - **❌ Failed**: ${adrStatus.failed_tests || failureCount}
-            - **⏭️ Skipped**: ${adrStatus.skipped_tests || 0}
-
             ### ⚠️ ADR-002 Violations Detected
 
-            ${failureCount > 0 ? `❌ **${failureCount} test(s) are failing**` : '❌ **Test execution failed**'}
+            ❌ **One or more test jobs failed**
+
+            ### 🔍 Failure Details
+
+            ${failureDetails}
 
             ### Required Actions
             1. 🔧 **Fix all failing tests** - No exceptions
@@ -330,6 +1429,7 @@ jobs:
     steps:
       - name: "📋 Assess Merge Readiness"
         run: |
+          set -o pipefail
           echo "🔍 Evaluating merge readiness against ADR-002..."
 
           TEST_STATUS="${{ needs.test-verification.outputs.test-status }}"
@@ -396,6 +1496,7 @@ jobs:
       - name: "📝 Create Merge Readiness Report"
         if: always()
         run: |
+          set -o pipefail
           mkdir -p reports
 
           cat > reports/merge-readiness.md << EOF

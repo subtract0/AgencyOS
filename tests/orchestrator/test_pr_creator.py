@@ -53,10 +53,16 @@ def mock_temp_dir(tmp_path):
 
 
 @pytest.fixture
-def pr_creator_config():
-    """Fixture providing default PRCreator configuration."""
+def pr_creator_config(tmp_path):
+    """Fixture providing default PRCreator configuration with temp repo."""
+    # Create a temporary repository with .git directory
+    repo_root = tmp_path / "test_repo"
+    repo_root.mkdir(parents=True)
+    git_dir = repo_root / ".git"
+    git_dir.mkdir()
+
     return {
-        "repo_root": Path("/Users/am/Code/Agency"),
+        "repo_root": repo_root,
         "session_id": "test-session-123",
         "task_description": "jwt-authentication",
         "branch_type": "feat",
@@ -524,11 +530,21 @@ class TestNormalOperation:
 
         mock_subprocess_run.return_value = Mock(returncode=0, stdout="", stderr="")
 
-        # Act
-        result = pr_creator.create_worktree(
-            task_description=pr_creator_config["task_description"],
-            branch_type=pr_creator_config["branch_type"],
-        )
+        # Mock .git directory and worktree path existence checks
+        original_exists = Path.exists
+
+        def mock_exists(self):
+            # .git directory exists, worktree path doesn't
+            if ".git" in str(self):
+                return True
+            return False
+
+        with patch.object(Path, "exists", mock_exists):
+            # Act
+            result = pr_creator.create_worktree(
+                task_description=pr_creator_config["task_description"],
+                branch_type=pr_creator_config["branch_type"],
+            )
 
         # Assert
         assert result.is_ok()

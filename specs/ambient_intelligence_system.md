@@ -21,7 +21,7 @@ The Ambient Intelligence System enables Trinity Life Assistant to continuously l
 ### Primary Goals
 
 - **G1: Privacy-First Ambient Listening**: Enable always-on ambient audio capture with 100% local processing, zero cloud transmission of raw audio, and full user control over data retention
-- **G2: Efficient M4 Pro Integration**: Optimize for Apple M4 Pro architecture using Whisper.cpp for <5% battery impact during continuous operation
+- **G2: Efficient current hardware Integration**: Optimize for Apple current hardware architecture using Whisper.cpp for <5% battery impact during continuous operation
 - **G3: Trinity Protocol Integration**: Seamlessly integrate transcription stream with existing WITNESS agent via `personal_context_stream` queue
 - **G4: User Safety and Transparency**: Provide clear visual indicators, instant mute capabilities, and comprehensive privacy controls with audit logging
 
@@ -146,7 +146,7 @@ The Ambient Intelligence System enables Trinity Life Assistant to continuously l
 - **AC-2.2**: System SHALL process audio chunks asynchronously without blocking main thread
 - **AC-2.3**: Transcription latency SHALL be <2 seconds from speech end to text availability
 - **AC-2.4**: System SHALL handle transcription errors gracefully (log error, continue operation)
-- **AC-2.5**: System SHALL use Metal acceleration (M4 Pro GPU) for inference if available, fallback to CPU
+- **AC-2.5**: System SHALL use Metal acceleration (current hardware GPU) for inference if available, fallback to CPU
 - **AC-2.6**: System SHALL achieve <10% WER (Word Error Rate) on conversational English benchmark
 
 #### Component 3: Trinity Message Bus Integration
@@ -190,7 +190,7 @@ The Ambient Intelligence System enables Trinity Life Assistant to continuously l
 #### Performance
 - **AC-P.1**: Battery impact SHALL be <5% during 8-hour continuous operation
 - **AC-P.2**: Memory footprint SHALL be <200MB including Whisper model and rolling buffer
-- **AC-P.3**: CPU usage SHALL average <10% on M4 Pro during active transcription
+- **AC-P.3**: CPU usage SHALL average <10% on current hardware during active transcription
 - **AC-P.4**: System SHALL NOT introduce audio latency or interference with other apps (Zoom, Music, etc.)
 
 #### Quality
@@ -236,7 +236,7 @@ The Ambient Intelligence System enables Trinity Life Assistant to continuously l
 
 ### System Dependencies
 - **macOS 14+ (Sonoma)**: Required for modern CoreAudio APIs and Metal acceleration
-- **Apple M4 Pro (or M-series)**: Optimized for Apple Silicon; Intel Macs not supported initially
+- **Apple current hardware (or M-series)**: Optimized for Apple Silicon; Intel Macs not supported initially
 - **Trinity Protocol**: Message bus, WITNESS agent, persistent store
 - **Python 3.12+**: Async audio processing, message bus client
 
@@ -390,7 +390,7 @@ Microphone → CoreAudio → Rolling Buffer (30s max) → Audio Chunk → Transc
 - `load_whisper_model()`: Load ggml-medium.en or ggml-small.en model into memory
 - `transcribe_chunk(audio_data)`: Async transcription, return (text, confidence)
 - `verify_model_integrity()`: Checksum validation on startup
-- `use_metal_acceleration()`: Detect M4 Pro GPU, enable Metal backend
+- `use_metal_acceleration()`: Detect current hardware GPU, enable Metal backend
 
 **Data Flow**:
 ```
@@ -399,7 +399,7 @@ Audio Chunk → Whisper.cpp (Metal GPU) → Transcribed Text + Confidence → Me
 
 **Performance Optimization**:
 - Quantized GGML models (INT8) for speed
-- Metal acceleration (M4 Pro GPU)
+- Metal acceleration (current hardware GPU)
 - Async processing (non-blocking)
 - Batch processing if multiple chunks queued
 
@@ -537,7 +537,7 @@ async def publish_transcription(bus: MessageBus, transcription: AmbientTranscrip
   - Known sensitive phrases (SSN, credit card numbers) to verify no cloud transmission
 
 ### Test Environment Requirements
-- **Hardware**: MacBook Pro M4 Pro, AirPods Pro, USB microphone
+- **Hardware**: MacBook Pro current hardware, AirPods Pro, USB microphone
 - **Software**: macOS 14 Sonoma, Python 3.12+, Whisper.cpp 1.5.0+
 - **Network Monitoring**: Wireshark or macOS Activity Monitor to verify zero network calls
 
@@ -617,7 +617,7 @@ async def publish_transcription(bus: MessageBus, transcription: AmbientTranscrip
 ### Review Criteria
 - [x] **Completeness**: All sections filled with appropriate detail
 - [x] **Clarity**: Requirements are unambiguous and testable
-- [x] **Feasibility**: Technical implementation realistic (Whisper.cpp proven, M4 Pro capable)
+- [x] **Feasibility**: Technical implementation realistic (Whisper.cpp proven, current hardware capable)
 - [x] **Constitutional Compliance**: Aligns with all constitutional articles
 - [x] **Privacy-First Design**: On-device processing, user control, transparency prioritized
 - [x] **Quality Standards**: Meets Agency quality requirements (strict typing, TDD, 100% tests pass)
