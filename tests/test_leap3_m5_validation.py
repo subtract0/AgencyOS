@@ -11,8 +11,12 @@ Validates:
 import os
 import sys
 from datetime import datetime
+from pathlib import Path
 
 import pytest
+
+# Project root for subprocess PYTHONPATH (fixes ModuleNotFoundError for 'shared' module)
+PROJECT_ROOT = Path(__file__).parent.parent
 
 from shared.adaptive_model_router import ModelRouter
 from shared.agent_context import create_agent_context
@@ -215,12 +219,18 @@ class TestCostSavingsValidation:
         """Test that cost validation tool executes without errors."""
         import subprocess
 
+        # Arrange: Set up environment with PYTHONPATH for subprocess to find 'shared' module
+        env = os.environ.copy()
+        env["PYTHONPATH"] = str(PROJECT_ROOT)
+
         # Act
         result = subprocess.run(
             [sys.executable, "tools/validate_cost_savings.py", "--synthetic"],
             capture_output=True,
             text=True,
             timeout=60,
+            env=env,
+            cwd=PROJECT_ROOT,
         )
 
         # Assert
@@ -246,12 +256,18 @@ class TestSkillDashboardVisualization:
         """Test that skill dashboard executes without errors."""
         import subprocess
 
+        # Arrange: Set up environment with PYTHONPATH for subprocess to find 'shared' module
+        env = os.environ.copy()
+        env["PYTHONPATH"] = str(PROJECT_ROOT)
+
         # Act
         result = subprocess.run(
             [sys.executable, "tools/skill_dashboard.py", "--agent", "coder"],
             capture_output=True,
             text=True,
             timeout=30,
+            env=env,
+            cwd=PROJECT_ROOT,
         )
 
         # Assert
@@ -266,12 +282,18 @@ class TestSkillDashboardVisualization:
         """Test that skill dashboard comparison mode works."""
         import subprocess
 
+        # Arrange: Set up environment with PYTHONPATH for subprocess to find 'shared' module
+        env = os.environ.copy()
+        env["PYTHONPATH"] = str(PROJECT_ROOT)
+
         # Act
         result = subprocess.run(
             [sys.executable, "tools/skill_dashboard.py", "--compare", "coder", "planner"],
             capture_output=True,
             text=True,
             timeout=30,
+            env=env,
+            cwd=PROJECT_ROOT,
         )
 
         # Assert
