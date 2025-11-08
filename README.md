@@ -1,6 +1,6 @@
 # AgencyOS - Autonomous Multi-Agent Development Platform
 
-**Status**: Active Development | **Test Suite**: 5,822 tests passing | **Focus**: Claude API Orchestration + Local Model Integration
+**Status**: Active Development | **Test Suite**: 5,822 passing (164 skipped) - 100% pass rate | **Focus**: Claude API Orchestration + Local Model Integration
 
 ---
 
@@ -18,9 +18,10 @@ AgencyOS is an experimental platform for orchestrating multiple AI agents to per
 ## **Quick Start**
 
 ### Prerequisites
-- Python 3.12 or 3.13
+- **Python 3.12** (recommended) or 3.13 (has known segfault issues with agency-swarm)
 - An Anthropic API key (agents currently require Claude)
 - Git
+- `uv` package manager (for test execution)
 
 ### Setup (5 minutes)
 ```bash
@@ -41,7 +42,12 @@ export OPENAI_API_KEY=your_key_here
 python run_tests.py --run-all
 ```
 
-**Expected**: Tests should run successfully. Note: Current test runner may require `uv` for optimal execution.
+**Expected**: 5,822 tests passing, 164 skipped, 0 failures (100% pass rate)
+
+**⚠️ IMPORTANT**:
+- **MUST** use `python run_tests.py` (NOT direct `pytest`)
+- Direct pytest causes segfaults due to Python 3.13 + agency-swarm incompatibility
+- Test runner uses `uv run pytest` for proper environment isolation
 
 ---
 
@@ -52,7 +58,7 @@ python run_tests.py --run-all
 2. **Memory Systems** - VectorStore and EnhancedMemoryStore for pattern storage
 3. **Constitutional Framework** - 7 Articles defining governance (see [`constitution.md`](constitution.md))
 4. **Tool Ecosystem** - 56 production tools for file ops, git, testing
-5. **Test Infrastructure** - Comprehensive test suite (5,822 tests)
+5. **Test Infrastructure** - Comprehensive test suite (5,822 passing, 164 skipped, 100% pass rate)
 
 ### What's In Progress 🚧
 1. **Local Model Integration** - Ollama integration documented but partially implemented
@@ -141,7 +147,14 @@ python run_tests.py --unit
 python run_tests.py --with-docker --run-all
 ```
 
-**Current Status**: Test suite is comprehensive with 5,822 tests. Some test infrastructure quirks exist (see `docs/testing/KNOWN_TEST_ISSUES.md` for details).
+**Current Status**: 5,822 tests passing (164 skipped), 100% pass rate.
+
+**Known Issues**:
+- Python 3.13 + agency-swarm causes segfaults (use Python 3.12 or custom test runner)
+- Direct pytest execution fails - **MUST** use `python run_tests.py`
+- CI/CD blocked by GitHub Actions billing (external issue, manual verification required)
+
+See `docs/testing/ACTUAL_TEST_STATUS.md` for complete technical details.
 
 ---
 
@@ -157,9 +170,9 @@ python run_tests.py --with-docker --run-all
 
 **Gaps**:
 - **Cloud Dependency**: All agents currently require Claude API
-- **Test Infrastructure**: Some quirks with test runner (requires `uv` or specific setup)
+- **Test Infrastructure**: Python 3.13 segfaults, must use custom test runner
+- **CI/CD Blocked**: GitHub Actions billing issue prevents automated validation
 - **Documentation Overload**: Previously 101 files in root directory (now organized)
-- **Claims vs Reality**: Some documentation overstated capabilities
 
 ### Honest Assessment
 
