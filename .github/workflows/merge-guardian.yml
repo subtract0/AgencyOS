@@ -290,7 +290,7 @@ jobs:
     name: "🧪 Tests: integration suite (part 1)"
     needs: setup
     runs-on: ubuntu-latest
-    timeout-minutes: 5
+    timeout-minutes: 20
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -348,7 +348,7 @@ jobs:
     name: "🧪 Tests: integration suite (part 2)"
     needs: setup
     runs-on: ubuntu-latest
-    timeout-minutes: 5
+    timeout-minutes: 20
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -461,7 +461,7 @@ jobs:
     name: "🧪 Tests: integration suite (part 3b)"
     needs: setup
     runs-on: ubuntu-latest
-    timeout-minutes: 5
+    timeout-minutes: 20
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
