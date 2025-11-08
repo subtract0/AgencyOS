@@ -154,6 +154,12 @@ def _apply_sandbox_wrapper(cmd: List[str], spec: Dict[str, Any]) -> List[str]:
         return cmd
 
     profile_path = Path(profile).expanduser()
+
+    # Resolve relative paths to absolute (relative to spec file's directory)
+    if not profile_path.is_absolute():
+        spec_dir = Path(__file__).parent
+        profile_path = (spec_dir / profile_path).resolve()
+
     if not profile_path.exists():
         print(f"⚠️ Sandbox profile not found: {profile_path}", file=sys.stderr)
         return cmd
