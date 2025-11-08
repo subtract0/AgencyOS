@@ -989,10 +989,16 @@ Validate fixes pass type checker before committing
 ### **STEP 6: Reflection & Evolution** 🧠 (Article IV)
 
 ```python
+from tools.orchestrator.article_iv_enforcer import create_article_iv_enforcer
+
 TodoWrite([
     ...phases marked completed...,
     {"content": "Post-execution reflection and learning", "status": "in_progress", "activeForm": "Extracting patterns and proposing next mission"}
 ])
+
+# 6.0 Initialize Article IV Enforcer (MANDATORY)
+enforcer = create_article_iv_enforcer(mission_name=graph.mission, session_id=context.session_id)
+print("✅ Article IV Enforcer initialized - pattern storage will be validated")
 
 # 6.1 Pattern Extraction
 Task(
@@ -1069,6 +1075,149 @@ Generate proposal:
 
 Store to: ~/.agency/memories/agency_backlog/leap_{next_leap}_proposal.md
 """
+)
+
+# 6.4 Store Execution Patterns (MANDATORY Article IV)
+# After successful execution, EXPLICITLY store patterns to VectorStore
+# This is NOT optional - Article IV requires VectorStore learning
+
+# Example pattern 1: Successful quality gate application
+enforcer.store_pattern(
+    pattern_key=f"pattern_quality_gate_{graph.mission}_{int(time.time())}",
+    pattern_content={
+        "type": "quality_gate",
+        "description": f"Applied quality gates for {graph.mission}",
+        "gates_used": ["slop_immunity", "budget_guard", "completion_validator"],
+        "effectiveness": "100% (prevented premature stopping)",
+        "mission": graph.mission,
+    },
+    tags=["pattern", "quality", "blocking_gate", graph.mission.split()[0].lower()],
+    confidence=1.0
+)
+
+# Example pattern 2: Cost optimization technique
+if graph.metadata.get("actual_cost_usd", 0) < graph.metadata.get("estimated_cost_usd", 0):
+    savings_pct = ((graph.metadata["estimated_cost_usd"] - graph.metadata["actual_cost_usd"]) / graph.metadata["estimated_cost_usd"]) * 100
+    enforcer.store_pattern(
+        pattern_key=f"pattern_cost_optimization_{graph.mission}_{int(time.time())}",
+        pattern_content={
+            "type": "cost_optimization",
+            "description": f"Achieved {savings_pct:.1f}% cost savings on {graph.mission}",
+            "estimated": graph.metadata["estimated_cost_usd"],
+            "actual": graph.metadata["actual_cost_usd"],
+            "technique": "Adaptive model routing (P1/P2/P3 tier classification)",
+        },
+        tags=["pattern", "cost", "optimization", "adaptive_routing"],
+        confidence=0.9
+    )
+
+# Example pattern 3: Successful task decomposition
+enforcer.store_pattern(
+    pattern_key=f"pattern_task_decomposition_{graph.mission}_{int(time.time())}",
+    pattern_content={
+        "type": "task_decomposition",
+        "description": f"Decomposed {graph.mission} into {len(graph.all_tasks())} tasks across {len(graph.phases)} phases",
+        "task_breakdown": {
+            "spec": len([t for t in graph.all_tasks() if t.type == "Spec"]),
+            "code": len([t for t in graph.all_tasks() if t.type == "Code"]),
+            "test": len([t for t in graph.all_tasks() if t.type == "Test"]),
+        },
+        "parallelism": max(len(layer) for layer in graph.topological_sort()),
+    },
+    tags=["pattern", "planning", "decomposition", "task_graph"],
+    confidence=0.8
+)
+
+print(f"\n✅ Stored {len(enforcer.patterns_stored)} patterns to VectorStore")
+print(enforcer.get_stored_patterns_summary())
+```
+
+---
+
+### **STEP 6.4: Validate Article IV Compliance** 🛡️ **MANDATORY**
+
+**Constitutional Gate**: Before completion validation, ensure VectorStore learning happened.
+
+**Why This Matters**: In previous executions, /primeA CLAIMED patterns were stored but never actually called `context.store_memory()`. This was vaporware - documentation without enforcement.
+
+**This gate ensures**: Article IV is not just aspirational, but ENFORCED with code execution.
+
+```python
+from tools.orchestrator.article_iv_enforcer import ArticleIVViolation
+
+# CRITICAL: Validate Article IV compliance before STEP 6.5
+print("\n" + "="*70)
+print("🛡️ STEP 6.4: VALIDATING ARTICLE IV COMPLIANCE")
+print("="*70 + "\n")
+
+try:
+    validation_result = enforcer.validate_article_iv_compliance(min_patterns=1)
+
+    if validation_result.is_ok():
+        report = validation_result.unwrap()
+        print("✅ Article IV Compliance Validated")
+        print(f"   Patterns Stored: {report['patterns_stored']}")
+        print(f"   Patterns Verified: {report['patterns_verified']}")
+        print(f"   Average Confidence: {report['average_confidence']:.2f}")
+        print(f"   Pattern Types: {', '.join(set(report['pattern_types']))}")
+        print("\n" + enforcer.get_stored_patterns_summary())
+        print("\n✅ Proceeding to STEP 6.5 (Completion Validation)")
+    else:
+        # This shouldn't happen - ArticleIVViolation is raised instead
+        raise RuntimeError("Unexpected validation failure without exception")
+
+except ArticleIVViolation as e:
+    # BLOCKING ERROR - Cannot proceed without Article IV compliance
+    print(f"❌ ARTICLE IV VIOLATION")
+    print(f"   Reason: {e.reason}")
+    print(f"   Mission: {e.mission}")
+    print("\n   Suggestions:")
+    for suggestion in e.suggestions:
+        print(f"   - {suggestion}")
+
+    print("\n⚠️ BLOCKING: Cannot proceed to STEP 7 without Article IV compliance")
+    print("⚠️ Article IV requires MANDATORY VectorStore learning (not optional)")
+    print("⚠️ Use enforcer.store_pattern() to store at least 1 pattern")
+    print("\n⚠️ This is a PERMANENT FIX - vaporware claims are no longer acceptable")
+
+    # Store violation for institutional learning
+    context.store_memory(
+        key=f"article_iv_violation_{graph.mission}_{int(time.time())}",
+        content={
+            "violation_type": "no_patterns_stored",
+            "mission": e.mission,
+            "reason": e.reason,
+            "systemic_issue": "Protocol claimed Article IV compliance but didn't enforce it",
+            "fix_applied": "Added ArticleIVEnforcer tool with blocking validation gate"
+        },
+        tags=["violation", "article_iv", "systemic_issue", "enforcement_gap"]
+    )
+
+    # HALT EXECUTION
+    raise
+```
+
+**Pattern Storage Examples** (for future /primeA executions):
+
+```python
+# Always store at least these pattern categories:
+# 1. Quality gates used (slop immunity, budget guard, completion validator)
+# 2. Cost optimization (if actual < estimated)
+# 3. Task decomposition strategy (task graph structure)
+# 4. Successful recovery from errors (if applicable)
+# 5. TRM-7M validation effectiveness (if used)
+
+# Minimum viable pattern (if mission was simple):
+enforcer.store_pattern(
+    pattern_key=f"pattern_execution_success_{graph.mission}_{int(time.time())}",
+    pattern_content={
+        "type": "execution_success",
+        "description": f"Successfully completed {graph.mission}",
+        "tasks_completed": len(graph.all_tasks()),
+        "constitutional_compliance": "Articles I-V validated",
+    },
+    tags=["pattern", "success", "execution"],
+    confidence=1.0
 )
 ```
 
