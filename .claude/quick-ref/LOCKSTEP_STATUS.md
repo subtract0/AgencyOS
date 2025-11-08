@@ -57,6 +57,37 @@ python -m pip install pytest-json-report
 
 ---
 
+## Phase 2.1 – Runner Enforcement ✅ (2025-11-07 PM)
+
+**Delta**
+- Added OpenEnv reset + `scripts/run_in_env.py` execution pattern to **all remaining shards** (integration-2 ➜ top-level suites).
+- Reset logs now saved inside each shard's `test-results/runner-reset.log`; `runner-step.json` captured everywhere (audit-ready).
+- `run_tests.py` now wraps every subprocess call via `run_command()` helper that delegates to the runner when `AGENCY_ENV_SPEC` is set.
+- `docs/ci/ENVIRONMENT_SPEC.md` updated to reflect 100% CI coverage + new agent-script guidelines.
+- `scratch/overnight_ci_notes.md` + this file capture verification commands + rollback plan.
+
+**Verification Notes**
+- `rg "run_in_env" .github/workflows/merge-guardian.yml | wc -l = 20` (every shard + manual suites).
+- `rg "runner-reset.log" .github/workflows/merge-guardian.yml | wc -l = 20` (reset logs inside artifacts).
+- `python envs/agency_env_runner.py reset` and `echo '{"command": ["python", "--version"]}' | python envs/agency_env_runner.py step` both succeed locally.
+- `python run_tests.py --help` exercises runner shim without regression.
+
+**Risk**: Low – change is systematic + reversible per shard. Runner still executes on host (sandboxing deferred to Phase 3).
+
+---
+
+## Phase 2.2 – Automation Script Retrofit (in progress)
+
+- Added shared helper `envs/openenv_exec.py` so Python tools can call the runner without re-implementing subprocess glue.
+- Migrated `run_tests.py` to the helper (no more bespoke logic) and converted `scripts/overnight_worker.py` so all of its git + pytest commands are spec-compliant (shell pipelines still fall back automatically).
+- Wrapped `scripts/autonomous_worker.py` git commits via the helper, keeping worktree actions on the runner path.
+- `scripts/worktree_manager.py` and `scripts/ci_failure_parser.py` now use the helper for all git / gh invocations.
+- Reworked `run_tests.py` to re-exec under the active venv, allow forcing `RUN_TESTS_USE_UV=0`, and split `--run-all` into `--fast` + `--integration-only` subruns so macOS stops killing the process mid-flight.
+- Added `envs/sandbox_profile.sb` + runner support so setting `AGENCY_SANDBOX_PROFILE` (or relying on the spec entry) wraps every command in `sandbox-exec` when we’re ready to enforce isolation.
+- Created `docker/openenv-runner.Dockerfile` + `scripts/run_in_docker.sh` for the upcoming Docker-based sandbox: one script builds/launches the containerized runner mounting the repo at /workspace.
+- Remaining targets: `scripts/autonomous_worker.py`, `scripts/worktree_manager.py`, `scripts/ci_failure_parser.py`.
+- After those are wrapped, we can start enforcing sandboxing / allowlists with confidence.
+
 ## Files Modified
 
 1. `.github/workflows/merge-guardian.yml` - 20 shard edits (JSON-report pattern)
@@ -265,10 +296,10 @@ git commit -m "ci: temporarily disable spec runner reset step"
 5. **DO NOT PUSH** - Await user review
 
 **Future (Follow-up PRs)**:
-1. Phase 2.1: Apply reset step to all 17 remaining shards
-2. Phase 2.2: Implement `run_via_spec()` helper in run_tests.py
-3. Phase 2.3: Wrap agent scripts (overnight_worker, etc.)
-4. Phase 3: Docker/Podman sandboxing
+1. Phase 2.2: Wrap overnight/autonomous/worktree tooling via runner (same pattern as `run_tests.py`).
+2. Phase 2.3: Pipe runner logs into Merge Guardian PR comment + VectorStore.
+3. Phase 3: macOS sandbox-exec profiles + Docker/Podman isolation (install Docker Desktop, create containerized runner).
+4. Phase 3b: Introduce command allowlist + spec validation before execution.
 
 ### References
 
@@ -289,6 +320,7 @@ git add envs/agency_env_runner.py             # Phase 2
 git add run_tests.py                          # Phase 2
 git add docs/ci/ENVIRONMENT_SPEC.md           # Phase 2
 git add docs/ci/TOP_LEVEL_MANUAL_VERIFICATION.md  # Pre-existing
+git add scripts/run_in_env.py                 # Phase 2 helper
 git add scratch/overnight_ci_notes.md         # Phase 0 + Phase 2
 git add .claude/quick-ref/LOCKSTEP_STATUS.md  # Phase 0 + Phase 2
 git add .claude/quick-ref/CLEANUP_COMPLETE_2025-11-06.md  # Pre-existing

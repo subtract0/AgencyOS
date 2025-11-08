@@ -31,5 +31,10 @@
     "reset": "python envs/agency_env_runner.py reset",
     "step": "python envs/agency_env_runner.py step",
     "close": "python envs/agency_env_runner.py close"
+  },
+  "sandbox": {
+    "profile": "envs/sandbox_profile.sb",
+    "type": "macos_sandbox_exec",
+    "notes": "Apply sandbox-exec profile when available to restrict filesystem writes."
   }
 }

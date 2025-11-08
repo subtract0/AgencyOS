@@ -11,11 +11,12 @@ from __future__ import annotations
 
 import json
 import os
+import shutil
 import subprocess
 import sys
 from datetime import UTC, datetime
 from pathlib import Path
-from typing import Any, Dict
+from typing import Any, Dict, List
 
 SPEC_PATH = Path(__file__).with_name("agency_env_spec.json")
 
@@ -80,6 +81,8 @@ def step(action: Dict[str, Any]) -> Dict[str, Any]:
     else:
         cmd_parts = command
 
+    cmd_parts = _apply_sandbox_wrapper(cmd_parts, spec)
+
     # Validate command against spec tools (future: enforce allowlist)
     # For now, just log and execute
 
@@ -124,6 +127,39 @@ def step(action: Dict[str, Any]) -> Dict[str, Any]:
             "timestamp": timestamp,
             "command": cmd_parts,
         }
+
+
+def _apply_sandbox_wrapper(cmd: List[str], spec: Dict[str, Any]) -> List[str]:
+    """
+    Apply sandbox-exec wrapper if sandbox profile is configured.
+
+    Sandbox control logic:
+    - AGENCY_SANDBOX_PROFILE="" (empty string) → sandbox DISABLED (user override)
+    - AGENCY_SANDBOX_PROFILE="/path" → use that profile
+    - AGENCY_SANDBOX_PROFILE not set → use spec's profile (if available)
+    """
+    sandbox_env = os.getenv("AGENCY_SANDBOX_PROFILE")
+
+    # Check if user explicitly disabled sandbox with empty string
+    if sandbox_env is not None and sandbox_env == "":
+        # User explicitly set AGENCY_SANDBOX_PROFILE="" to disable sandbox
+        return cmd
+
+    # Use env var if set (and non-empty), otherwise fall back to spec
+    profile = sandbox_env if sandbox_env else spec.get("sandbox", {}).get("profile")
+    if not profile:
+        return cmd
+
+    if not shutil.which("sandbox-exec"):
+        return cmd
+
+    profile_path = Path(profile).expanduser()
+    if not profile_path.exists():
+        print(f"⚠️ Sandbox profile not found: {profile_path}", file=sys.stderr)
+        return cmd
+
+    sandbox_exec = ["sandbox-exec", "-f", str(profile_path)]
+    return sandbox_exec + cmd
 
 
 def close() -> Dict[str, Any]:

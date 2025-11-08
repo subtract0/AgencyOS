@@ -89,8 +89,9 @@ jobs:
       - name: "🔄 Initialize environment via spec runner"
         run: |
           set -o pipefail
+          mkdir -p test-results
           export AGENCY_ENV_SPEC=${{ github.workspace }}/envs/agency_env_spec.json
-          python envs/agency_env_runner.py reset > runner-reset.log 2>&1
+          python envs/agency_env_runner.py reset > test-results/runner-reset.log 2>&1
           echo "✅ Environment reset complete"
       - name: "Run orchestrator tests"
         run: |
@@ -100,15 +101,17 @@ jobs:
           export AGENCY_TEST_TIMEOUT_OVERRIDE=300
           export AGENCY_ENV_SPEC=${{ github.workspace }}/envs/agency_env_spec.json
           mkdir -p test-results
-          # TODO: Wrap pytest invocation via runner step API
-          # For now, direct execution with spec awareness
-          env PYTHONMALLOC=malloc python -m pytest tests/orchestrator \
-            --ignore=tests/test_firestore_learning_persistence.py \
-            --ignore=tests/test_firestore_mock_integration.py \
-            --ignore=tests/e2e \
-            --ignore=tests/benchmarks \
-            -m "not slow" --ff --maxfail=1 -q \
-            --json-report --json-report-file=test-results/report.json 2>&1 | tee test-results/runner-step.log
+          python scripts/run_in_env.py \
+            --timeout 900 \
+            --log-file test-results/runner-step.json \
+            --env PYTHONMALLOC=malloc \
+            -- pytest tests/orchestrator \
+              --ignore=tests/test_firestore_learning_persistence.py \
+              --ignore=tests/test_firestore_mock_integration.py \
+              --ignore=tests/e2e \
+              --ignore=tests/benchmarks \
+              -m "not slow" --ff --maxfail=1 -q \
+              --json-report --json-report-file=test-results/report.json
       - name: "Generate test report"
         if: always()
         run: |
@@ -137,20 +140,32 @@ jobs:
           python -m pip install -r requirements.txt
           python -m pip install git+https://github.com/openai/openai-agents-python.git@main
           python -m pip install pytest-timeout pytest-json-report
+      - name: "🔄 Initialize environment via spec runner"
+        run: |
+          set -o pipefail
+          mkdir -p test-results
+          export AGENCY_ENV_SPEC=${{ github.workspace }}/envs/agency_env_spec.json
+          python envs/agency_env_runner.py reset > test-results/runner-reset.log 2>&1
+          echo "✅ Environment reset complete"
       - name: "Run tools/ci_monitor tests"
         run: |
           set -o pipefail
           export PYTHONPATH=${{ github.workspace }}
           export USE_ENHANCED_MEMORY=true
           export AGENCY_TEST_TIMEOUT_OVERRIDE=300
+          export AGENCY_ENV_SPEC=${{ github.workspace }}/envs/agency_env_spec.json
           mkdir -p test-results
-          env PYTHONMALLOC=malloc python -m pytest tests/tools/ci_monitor \
-            --ignore=tests/test_firestore_learning_persistence.py \
-            --ignore=tests/test_firestore_mock_integration.py \
-            --ignore=tests/e2e \
-            --ignore=tests/benchmarks \
-            -m "not slow" --ff --maxfail=1 -q \
-            --json-report --json-report-file=test-results/report.json
+          python scripts/run_in_env.py \
+            --timeout 900 \
+            --log-file test-results/runner-step.json \
+            --env PYTHONMALLOC=malloc \
+            -- pytest tests/tools/ci_monitor \
+              --ignore=tests/test_firestore_learning_persistence.py \
+              --ignore=tests/test_firestore_mock_integration.py \
+              --ignore=tests/e2e \
+              --ignore=tests/benchmarks \
+              -m "not slow" --ff --maxfail=1 -q \
+              --json-report --json-report-file=test-results/report.json
       - name: "Generate test report"
         if: always()
         run: |
@@ -179,20 +194,32 @@ jobs:
           python -m pip install -r requirements.txt
           python -m pip install git+https://github.com/openai/openai-agents-python.git@main
           python -m pip install pytest-timeout pytest-json-report
+      - name: "🔄 Initialize environment via spec runner"
+        run: |
+          set -o pipefail
+          mkdir -p test-results
+          export AGENCY_ENV_SPEC=${{ github.workspace }}/envs/agency_env_spec.json
+          python envs/agency_env_runner.py reset > test-results/runner-reset.log 2>&1
+          echo "✅ Environment reset complete"
       - name: "Run tools/orchestrator tests"
         run: |
           set -o pipefail
           export PYTHONPATH=${{ github.workspace }}
           export USE_ENHANCED_MEMORY=true
           export AGENCY_TEST_TIMEOUT_OVERRIDE=300
+          export AGENCY_ENV_SPEC=${{ github.workspace }}/envs/agency_env_spec.json
           mkdir -p test-results
-          env PYTHONMALLOC=malloc python -m pytest tests/tools/orchestrator \
-            --ignore=tests/test_firestore_learning_persistence.py \
-            --ignore=tests/test_firestore_mock_integration.py \
-            --ignore=tests/e2e \
-            --ignore=tests/benchmarks \
-            -m "not slow" --ff --maxfail=1 -q \
-            --json-report --json-report-file=test-results/report.json
+          python scripts/run_in_env.py \
+            --timeout 900 \
+            --log-file test-results/runner-step.json \
+            --env PYTHONMALLOC=malloc \
+            -- pytest tests/tools/orchestrator \
+              --ignore=tests/test_firestore_learning_persistence.py \
+              --ignore=tests/test_firestore_mock_integration.py \
+              --ignore=tests/e2e \
+              --ignore=tests/benchmarks \
+              -m "not slow" --ff --maxfail=1 -q \
+              --json-report --json-report-file=test-results/report.json
       - name: "Generate test report"
         if: always()
         run: |
@@ -221,20 +248,32 @@ jobs:
           python -m pip install -r requirements.txt
           python -m pip install git+https://github.com/openai/openai-agents-python.git@main
           python -m pip install pytest-timeout pytest-json-report
+      - name: "🔄 Initialize environment via spec runner"
+        run: |
+          set -o pipefail
+          mkdir -p test-results
+          export AGENCY_ENV_SPEC=${{ github.workspace }}/envs/agency_env_spec.json
+          python envs/agency_env_runner.py reset > test-results/runner-reset.log 2>&1
+          echo "✅ Environment reset complete"
       - name: "Run tools core tests"
         run: |
           set -o pipefail
           export PYTHONPATH=${{ github.workspace }}
           export USE_ENHANCED_MEMORY=true
           export AGENCY_TEST_TIMEOUT_OVERRIDE=300
+          export AGENCY_ENV_SPEC=${{ github.workspace }}/envs/agency_env_spec.json
           mkdir -p test-results
-          env PYTHONMALLOC=malloc python -m pytest tests/tools/test_*.py \
-            --ignore=tests/test_firestore_learning_persistence.py \
-            --ignore=tests/test_firestore_mock_integration.py \
-            --ignore=tests/e2e \
-            --ignore=tests/benchmarks \
-            -m "not slow" --ff --maxfail=1 -q \
-            --json-report --json-report-file=test-results/report.json
+          python scripts/run_in_env.py \
+            --timeout 900 \
+            --log-file test-results/runner-step.json \
+            --env PYTHONMALLOC=malloc \
+            -- pytest tests/tools/test_*.py \
+              --ignore=tests/test_firestore_learning_persistence.py \
+              --ignore=tests/test_firestore_mock_integration.py \
+              --ignore=tests/e2e \
+              --ignore=tests/benchmarks \
+              -m "not slow" --ff --maxfail=1 -q \
+              --json-report --json-report-file=test-results/report.json
       - name: "Generate test report"
         if: always()
         run: |
@@ -263,24 +302,36 @@ jobs:
           python -m pip install -r requirements.txt
           python -m pip install git+https://github.com/openai/openai-agents-python.git@main
           python -m pip install pytest-timeout pytest-json-report
+      - name: "🔄 Initialize environment via spec runner"
+        run: |
+          set -o pipefail
+          mkdir -p test-results
+          export AGENCY_ENV_SPEC=${{ github.workspace }}/envs/agency_env_spec.json
+          python envs/agency_env_runner.py reset > test-results/runner-reset.log 2>&1
+          echo "✅ Environment reset complete"
       - name: "Run integration tests (part 1)"
         run: |
           set -o pipefail
           export PYTHONPATH=${{ github.workspace }}
           export USE_ENHANCED_MEMORY=true
           export AGENCY_TEST_TIMEOUT_OVERRIDE=300
+          export AGENCY_ENV_SPEC=${{ github.workspace }}/envs/agency_env_spec.json
           mkdir -p test-results
-          env PYTHONMALLOC=malloc python -m pytest \
-            tests/integration/test_ambient_to_witness.py \
-            tests/integration/test_autonomous_audit_loop.py \
-            tests/integration/test_ci_backlog_workflow.py \
-            tests/integration/test_epic4_2_complete.py \
-            --ignore=tests/test_firestore_learning_persistence.py \
-            --ignore=tests/test_firestore_mock_integration.py \
-            --ignore=tests/e2e \
-            --ignore=tests/benchmarks \
-            -m "not slow" --ff --maxfail=1 -q \
-            --json-report --json-report-file=test-results/report.json
+          python scripts/run_in_env.py \
+            --timeout 900 \
+            --log-file test-results/runner-step.json \
+            --env PYTHONMALLOC=malloc \
+            -- pytest \
+              tests/integration/test_ambient_to_witness.py \
+              tests/integration/test_autonomous_audit_loop.py \
+              tests/integration/test_ci_backlog_workflow.py \
+              tests/integration/test_epic4_2_complete.py \
+              --ignore=tests/test_firestore_learning_persistence.py \
+              --ignore=tests/test_firestore_mock_integration.py \
+              --ignore=tests/e2e \
+              --ignore=tests/benchmarks \
+              -m "not slow" --ff --maxfail=1 -q \
+              --json-report --json-report-file=test-results/report.json
       - name: "Generate test report"
         if: always()
         run: |
@@ -309,24 +360,36 @@ jobs:
           python -m pip install -r requirements.txt
           python -m pip install git+https://github.com/openai/openai-agents-python.git@main
           python -m pip install pytest-timeout pytest-json-report
+      - name: "🔄 Initialize environment via spec runner"
+        run: |
+          set -o pipefail
+          mkdir -p test-results
+          export AGENCY_ENV_SPEC=${{ github.workspace }}/envs/agency_env_spec.json
+          python envs/agency_env_runner.py reset > test-results/runner-reset.log 2>&1
+          echo "✅ Environment reset complete"
       - name: "Run integration tests (part 2)"
         run: |
           set -o pipefail
           export PYTHONPATH=${{ github.workspace }}
           export USE_ENHANCED_MEMORY=true
           export AGENCY_TEST_TIMEOUT_OVERRIDE=300
+          export AGENCY_ENV_SPEC=${{ github.workspace }}/envs/agency_env_spec.json
           mkdir -p test-results
-          env PYTHONMALLOC=malloc python -m pytest \
-            tests/integration/test_function_timeouts.py \
-            tests/integration/test_memory_aware_integration.py \
-            tests/integration/test_mock_asyncio_sleep.py \
-            tests/integration/test_non_blocking_cleanup.py \
-            --ignore=tests/test_firestore_learning_persistence.py \
-            --ignore=tests/test_firestore_mock_integration.py \
-            --ignore=tests/e2e \
-            --ignore=tests/benchmarks \
-            -m "not slow" --ff --maxfail=1 -q \
-            --json-report --json-report-file=test-results/report.json
+          python scripts/run_in_env.py \
+            --timeout 900 \
+            --log-file test-results/runner-step.json \
+            --env PYTHONMALLOC=malloc \
+            -- pytest \
+              tests/integration/test_function_timeouts.py \
+              tests/integration/test_memory_aware_integration.py \
+              tests/integration/test_mock_asyncio_sleep.py \
+              tests/integration/test_non_blocking_cleanup.py \
+              --ignore=tests/test_firestore_learning_persistence.py \
+              --ignore=tests/test_firestore_mock_integration.py \
+              --ignore=tests/e2e \
+              --ignore=tests/benchmarks \
+              -m "not slow" --ff --maxfail=1 -q \
+              --json-report --json-report-file=test-results/report.json
       - name: "Generate test report"
         if: always()
         run: |
@@ -355,21 +418,33 @@ jobs:
           python -m pip install -r requirements.txt
           python -m pip install git+https://github.com/openai/openai-agents-python.git@main
           python -m pip install pytest-timeout pytest-json-report
+      - name: "🔄 Initialize environment via spec runner"
+        run: |
+          set -o pipefail
+          mkdir -p test-results
+          export AGENCY_ENV_SPEC=${{ github.workspace }}/envs/agency_env_spec.json
+          python envs/agency_env_runner.py reset > test-results/runner-reset.log 2>&1
+          echo "✅ Environment reset complete"
       - name: "Run integration tests (part 3a)"
         run: |
           set -o pipefail
           export PYTHONPATH=${{ github.workspace }}
           export USE_ENHANCED_MEMORY=true
           export AGENCY_TEST_TIMEOUT_OVERRIDE=300
+          export AGENCY_ENV_SPEC=${{ github.workspace }}/envs/agency_env_spec.json
           mkdir -p test-results
-          env PYTHONMALLOC=malloc python -m pytest \
-            tests/integration/test_performance_regression.py \
-            --ignore=tests/test_firestore_learning_persistence.py \
-            --ignore=tests/test_firestore_mock_integration.py \
-            --ignore=tests/e2e \
-            --ignore=tests/benchmarks \
-            -m "not slow" --ff --maxfail=1 -q \
-            --json-report --json-report-file=test-results/report.json
+          python scripts/run_in_env.py \
+            --timeout 900 \
+            --log-file test-results/runner-step.json \
+            --env PYTHONMALLOC=malloc \
+            -- pytest \
+              tests/integration/test_performance_regression.py \
+              --ignore=tests/test_firestore_learning_persistence.py \
+              --ignore=tests/test_firestore_mock_integration.py \
+              --ignore=tests/e2e \
+              --ignore=tests/benchmarks \
+              -m "not slow" --ff --maxfail=1 -q \
+              --json-report --json-report-file=test-results/report.json
       - name: "Generate test report"
         if: always()
         run: |
@@ -398,21 +473,33 @@ jobs:
           python -m pip install -r requirements.txt
           python -m pip install git+https://github.com/openai/openai-agents-python.git@main
           python -m pip install pytest-timeout pytest-json-report
+      - name: "🔄 Initialize environment via spec runner"
+        run: |
+          set -o pipefail
+          mkdir -p test-results
+          export AGENCY_ENV_SPEC=${{ github.workspace }}/envs/agency_env_spec.json
+          python envs/agency_env_runner.py reset > test-results/runner-reset.log 2>&1
+          echo "✅ Environment reset complete"
       - name: "Run integration tests (part 3b)"
         run: |
           set -o pipefail
           export PYTHONPATH=${{ github.workspace }}
           export USE_ENHANCED_MEMORY=true
           export AGENCY_TEST_TIMEOUT_OVERRIDE=300
+          export AGENCY_ENV_SPEC=${{ github.workspace }}/envs/agency_env_spec.json
           mkdir -p test-results
-          env PYTHONMALLOC=malloc python -m pytest \
-            tests/integration/test_remove_intentional_delays.py \
-            --ignore=tests/test_firestore_learning_persistence.py \
-            --ignore=tests/test_firestore_mock_integration.py \
-            --ignore=tests/e2e \
-            --ignore=tests/benchmarks \
-            -m "not slow" --ff --maxfail=1 -q \
-            --json-report --json-report-file=test-results/report.json
+          python scripts/run_in_env.py \
+            --timeout 900 \
+            --log-file test-results/runner-step.json \
+            --env PYTHONMALLOC=malloc \
+            -- pytest \
+              tests/integration/test_remove_intentional_delays.py \
+              --ignore=tests/test_firestore_learning_persistence.py \
+              --ignore=tests/test_firestore_mock_integration.py \
+              --ignore=tests/e2e \
+              --ignore=tests/benchmarks \
+              -m "not slow" --ff --maxfail=1 -q \
+              --json-report --json-report-file=test-results/report.json
       - name: "Generate test report"
         if: always()
         run: |
@@ -441,21 +528,33 @@ jobs:
           python -m pip install -r requirements.txt
           python -m pip install git+https://github.com/openai/openai-agents-python.git@main
           python -m pip install pytest-timeout pytest-json-report
+      - name: "🔄 Initialize environment via spec runner"
+        run: |
+          set -o pipefail
+          mkdir -p test-results
+          export AGENCY_ENV_SPEC=${{ github.workspace }}/envs/agency_env_spec.json
+          python envs/agency_env_runner.py reset > test-results/runner-reset.log 2>&1
+          echo "✅ Environment reset complete"
       - name: "Run integration tests (part 3c)"
         run: |
           set -o pipefail
           export PYTHONPATH=${{ github.workspace }}
           export USE_ENHANCED_MEMORY=true
           export AGENCY_TEST_TIMEOUT_OVERRIDE=300
+          export AGENCY_ENV_SPEC=${{ github.workspace }}/envs/agency_env_spec.json
           mkdir -p test-results
-          env PYTHONMALLOC=malloc python -m pytest \
-            tests/integration/test_unit_integration_separation.py \
-            --ignore=tests/test_firestore_learning_persistence.py \
-            --ignore=tests/test_firestore_mock_integration.py \
-            --ignore=tests/e2e \
-            --ignore=tests/benchmarks \
-            -m "not slow" --ff --maxfail=1 -q \
-            --json-report --json-report-file=test-results/report.json
+          python scripts/run_in_env.py \
+            --timeout 900 \
+            --log-file test-results/runner-step.json \
+            --env PYTHONMALLOC=malloc \
+            -- pytest \
+              tests/integration/test_unit_integration_separation.py \
+              --ignore=tests/test_firestore_learning_persistence.py \
+              --ignore=tests/test_firestore_mock_integration.py \
+              --ignore=tests/e2e \
+              --ignore=tests/benchmarks \
+              -m "not slow" --ff --maxfail=1 -q \
+              --json-report --json-report-file=test-results/report.json
       - name: "Generate test report"
         if: always()
         run: |
@@ -484,20 +583,32 @@ jobs:
           python -m pip install -r requirements.txt
           python -m pip install git+https://github.com/openai/openai-agents-python.git@main
           python -m pip install pytest-timeout pytest-json-report
+      - name: "🔄 Initialize environment via spec runner"
+        run: |
+          set -o pipefail
+          mkdir -p test-results
+          export AGENCY_ENV_SPEC=${{ github.workspace }}/envs/agency_env_spec.json
+          python envs/agency_env_runner.py reset > test-results/runner-reset.log 2>&1
+          echo "✅ Environment reset complete"
       - name: "Run unit tests"
         run: |
           set -o pipefail
           export PYTHONPATH=${{ github.workspace }}
           export USE_ENHANCED_MEMORY=true
           export AGENCY_TEST_TIMEOUT_OVERRIDE=300
+          export AGENCY_ENV_SPEC=${{ github.workspace }}/envs/agency_env_spec.json
           mkdir -p test-results
-          env PYTHONMALLOC=malloc python -m pytest tests/unit \
-            --ignore=tests/test_firestore_learning_persistence.py \
-            --ignore=tests/test_firestore_mock_integration.py \
-            --ignore=tests/e2e \
-            --ignore=tests/benchmarks \
-            -m "not slow" --ff --maxfail=1 -q \
-            --json-report --json-report-file=test-results/report.json
+          python scripts/run_in_env.py \
+            --timeout 900 \
+            --log-file test-results/runner-step.json \
+            --env PYTHONMALLOC=malloc \
+            -- pytest tests/unit \
+              --ignore=tests/test_firestore_learning_persistence.py \
+              --ignore=tests/test_firestore_mock_integration.py \
+              --ignore=tests/e2e \
+              --ignore=tests/benchmarks \
+              -m "not slow" --ff --maxfail=1 -q \
+              --json-report --json-report-file=test-results/report.json
       - name: "Generate test report"
         if: always()
         run: |
@@ -526,20 +637,32 @@ jobs:
           python -m pip install -r requirements.txt
           python -m pip install git+https://github.com/openai/openai-agents-python.git@main
           python -m pip install pytest-timeout pytest-json-report
+      - name: "🔄 Initialize environment via spec runner"
+        run: |
+          set -o pipefail
+          mkdir -p test-results
+          export AGENCY_ENV_SPEC=${{ github.workspace }}/envs/agency_env_spec.json
+          python envs/agency_env_runner.py reset > test-results/runner-reset.log 2>&1
+          echo "✅ Environment reset complete"
       - name: "Run chaos tests"
         run: |
           set -o pipefail
           export PYTHONPATH=${{ github.workspace }}
           export USE_ENHANCED_MEMORY=true
           export AGENCY_TEST_TIMEOUT_OVERRIDE=300
+          export AGENCY_ENV_SPEC=${{ github.workspace }}/envs/agency_env_spec.json
           mkdir -p test-results
-          env PYTHONMALLOC=malloc python -m pytest tests/chaos \
-            --ignore=tests/test_firestore_learning_persistence.py \
-            --ignore=tests/test_firestore_mock_integration.py \
-            --ignore=tests/e2e \
-            --ignore=tests/benchmarks \
-            -m "not slow" --ff --maxfail=1 -q \
-            --json-report --json-report-file=test-results/report.json
+          python scripts/run_in_env.py \
+            --timeout 900 \
+            --log-file test-results/runner-step.json \
+            --env PYTHONMALLOC=malloc \
+            -- pytest tests/chaos \
+              --ignore=tests/test_firestore_learning_persistence.py \
+              --ignore=tests/test_firestore_mock_integration.py \
+              --ignore=tests/e2e \
+              --ignore=tests/benchmarks \
+              -m "not slow" --ff --maxfail=1 -q \
+              --json-report --json-report-file=test-results/report.json
       - name: "Generate test report"
         if: always()
         run: |
@@ -568,20 +691,32 @@ jobs:
           python -m pip install -r requirements.txt
           python -m pip install git+https://github.com/openai/openai-agents-python.git@main
           python -m pip install pytest-timeout pytest-json-report
+      - name: "🔄 Initialize environment via spec runner"
+        run: |
+          set -o pipefail
+          mkdir -p test-results
+          export AGENCY_ENV_SPEC=${{ github.workspace }}/envs/agency_env_spec.json
+          python envs/agency_env_runner.py reset > test-results/runner-reset.log 2>&1
+          echo "✅ Environment reset complete"
       - name: "Run stress tests"
         run: |
           set -o pipefail
           export PYTHONPATH=${{ github.workspace }}
           export USE_ENHANCED_MEMORY=true
           export AGENCY_TEST_TIMEOUT_OVERRIDE=300
+          export AGENCY_ENV_SPEC=${{ github.workspace }}/envs/agency_env_spec.json
           mkdir -p test-results
-          env PYTHONMALLOC=malloc python -m pytest tests/stress \
-            --ignore=tests/test_firestore_learning_persistence.py \
-            --ignore=tests/test_firestore_mock_integration.py \
-            --ignore=tests/e2e \
-            --ignore=tests/benchmarks \
-            -m "not slow" --ff --maxfail=1 -q \
-            --json-report --json-report-file=test-results/report.json
+          python scripts/run_in_env.py \
+            --timeout 900 \
+            --log-file test-results/runner-step.json \
+            --env PYTHONMALLOC=malloc \
+            -- pytest tests/stress \
+              --ignore=tests/test_firestore_learning_persistence.py \
+              --ignore=tests/test_firestore_mock_integration.py \
+              --ignore=tests/e2e \
+              --ignore=tests/benchmarks \
+              -m "not slow" --ff --maxfail=1 -q \
+              --json-report --json-report-file=test-results/report.json
       - name: "Generate test report"
         if: always()
         run: |
@@ -610,6 +745,13 @@ jobs:
           python -m pip install -r requirements.txt
           python -m pip install git+https://github.com/openai/openai-agents-python.git@main
           python -m pip install pytest-timeout pytest-json-report
+      - name: "🔄 Initialize environment via spec runner"
+        run: |
+          set -o pipefail
+          mkdir -p test-results
+          export AGENCY_ENV_SPEC=${{ github.workspace }}/envs/agency_env_spec.json
+          python envs/agency_env_runner.py reset > test-results/runner-reset.log 2>&1
+          echo "✅ Environment reset complete"
       - name: "Run adr+agents tests"
         run: |
           set -o pipefail
@@ -617,16 +759,22 @@ jobs:
           export USE_ENHANCED_MEMORY=true
           export AGENCY_TEST_TIMEOUT_OVERRIDE=300
           export OPENAI_API_KEY=test-key-12345
+          export AGENCY_ENV_SPEC=${{ github.workspace }}/envs/agency_env_spec.json
           mkdir -p test-results
-          env PYTHONMALLOC=malloc python -m pytest \
-            tests/adr tests/agents \
-            --ignore=tests/test_firestore_learning_persistence.py \
-            --ignore=tests/test_firestore_mock_integration.py \
-            --ignore=tests/e2e \
-            --ignore=tests/benchmarks \
-            -m "not slow" --ff --maxfail=1 \
-            --timeout=30 --timeout-method=thread -vv \
-            --json-report --json-report-file=test-results/report.json
+          python scripts/run_in_env.py \
+            --timeout 1200 \
+            --log-file test-results/runner-step.json \
+            --env PYTHONMALLOC=malloc \
+            --env OPENAI_API_KEY=test-key-12345 \
+            -- pytest \
+              tests/adr tests/agents \
+              --ignore=tests/test_firestore_learning_persistence.py \
+              --ignore=tests/test_firestore_mock_integration.py \
+              --ignore=tests/e2e \
+              --ignore=tests/benchmarks \
+              -m "not slow" --ff --maxfail=1 \
+              --timeout=30 --timeout-method=thread -vv \
+              --json-report --json-report-file=test-results/report.json
       - name: "Generate test report"
         if: always()
         run: |
@@ -655,6 +803,13 @@ jobs:
           python -m pip install -r requirements.txt
           python -m pip install git+https://github.com/openai/openai-agents-python.git@main
           python -m pip install pytest-timeout pytest-json-report
+      - name: "🔄 Initialize environment via spec runner"
+        run: |
+          set -o pipefail
+          mkdir -p test-results
+          export AGENCY_ENV_SPEC=${{ github.workspace }}/envs/agency_env_spec.json
+          python envs/agency_env_runner.py reset > test-results/runner-reset.log 2>&1
+          echo "✅ Environment reset complete"
       - name: "Run foundation fast tests"
         run: |
           set -o pipefail
@@ -662,14 +817,20 @@ jobs:
           export USE_ENHANCED_MEMORY=true
           export AGENCY_TEST_TIMEOUT_OVERRIDE=300
           export OPENAI_API_KEY=test-key-12345
+          export AGENCY_ENV_SPEC=${{ github.workspace }}/envs/agency_env_spec.json
           mkdir -p test-results
-          env PYTHONMALLOC=malloc python -m pytest \
-            tests/foundation_automation/test_git_validation.py \
-            tests/foundation_automation/test_flag_behavior.py \
-            tests/foundation_automation/test_backlog_auto_selection.py \
-            -m "not slow" --ff --maxfail=1 \
-            --timeout=30 --timeout-method=thread -vv \
-            --json-report --json-report-file=test-results/report.json
+          python scripts/run_in_env.py \
+            --timeout 900 \
+            --log-file test-results/runner-step.json \
+            --env PYTHONMALLOC=malloc \
+            --env OPENAI_API_KEY=test-key-12345 \
+            -- pytest \
+              tests/foundation_automation/test_git_validation.py \
+              tests/foundation_automation/test_flag_behavior.py \
+              tests/foundation_automation/test_backlog_auto_selection.py \
+              -m "not slow" --ff --maxfail=1 \
+              --timeout=30 --timeout-method=thread -vv \
+              --json-report --json-report-file=test-results/report.json
       - name: "Generate test report"
         if: always()
         run: |
@@ -698,6 +859,13 @@ jobs:
           python -m pip install -r requirements.txt
           python -m pip install git+https://github.com/openai/openai-agents-python.git@main
           python -m pip install pytest-timeout pytest-json-report
+      - name: "🔄 Initialize environment via spec runner"
+        run: |
+          set -o pipefail
+          mkdir -p test-results
+          export AGENCY_ENV_SPEC=${{ github.workspace }}/envs/agency_env_spec.json
+          python envs/agency_env_runner.py reset > test-results/runner-reset.log 2>&1
+          echo "✅ Environment reset complete"
       - name: "Run foundation commands+docs tests"
         run: |
           set -o pipefail
@@ -705,12 +873,17 @@ jobs:
           export USE_ENHANCED_MEMORY=true
           export AGENCY_TEST_TIMEOUT_OVERRIDE=300
           export OPENAI_API_KEY=test-key-12345
+          export AGENCY_ENV_SPEC=${{ github.workspace }}/envs/agency_env_spec.json
           mkdir -p test-results
-          env PYTHONMALLOC=malloc python -m pytest \
-            tests/commands tests/docs \
-            -m "not slow" --ff --maxfail=1 \
-            --timeout=30 --timeout-method=thread -vv \
-            --json-report --json-report-file=test-results/report.json
+          python scripts/run_in_env.py \
+            --timeout 1200 \
+            --log-file test-results/runner-step.json \
+            --env PYTHONMALLOC=malloc \
+            --env OPENAI_API_KEY=test-key-12345 \
+            -- pytest tests/commands tests/docs \
+              -m "not slow" --ff --maxfail=1 \
+              --timeout=30 --timeout-method=thread -vv \
+              --json-report --json-report-file=test-results/report.json
       - name: "Generate test report"
         if: always()
         run: |
@@ -740,6 +913,13 @@ jobs:
           python -m pip install -r requirements.txt
           python -m pip install git+https://github.com/openai/openai-agents-python.git@main
           python -m pip install pytest-timeout pytest-json-report
+      - name: "🔄 Initialize environment via spec runner"
+        run: |
+          set -o pipefail
+          mkdir -p test-results
+          export AGENCY_ENV_SPEC=${{ github.workspace }}/envs/agency_env_spec.json
+          python envs/agency_env_runner.py reset > test-results/runner-reset.log 2>&1
+          echo "✅ Environment reset complete"
       - name: "Run foundation E2E gates"
         run: |
           set -o pipefail
@@ -747,13 +927,19 @@ jobs:
           export USE_ENHANCED_MEMORY=true
           export AGENCY_TEST_TIMEOUT_OVERRIDE=300
           export OPENAI_API_KEY=test-key-12345
+          export AGENCY_ENV_SPEC=${{ github.workspace }}/envs/agency_env_spec.json
           mkdir -p test-results
-          env PYTHONMALLOC=malloc python -m pytest \
-            tests/foundation_automation/test_e2e_natural_language_flow.py \
-            tests/foundation_automation/test_constitutional_gates.py \
-            -m "not slow" --ff --maxfail=1 \
-            --timeout=30 --timeout-method=thread -vv \
-            --json-report --json-report-file=test-results/report.json
+          python scripts/run_in_env.py \
+            --timeout 1500 \
+            --log-file test-results/runner-step.json \
+            --env PYTHONMALLOC=malloc \
+            --env OPENAI_API_KEY=test-key-12345 \
+            -- pytest \
+              tests/foundation_automation/test_e2e_natural_language_flow.py \
+              tests/foundation_automation/test_constitutional_gates.py \
+              -m "not slow" --ff --maxfail=1 \
+              --timeout=30 --timeout-method=thread -vv \
+              --json-report --json-report-file=test-results/report.json
       - name: "Generate test report"
         if: always()
         run: |
@@ -782,6 +968,13 @@ jobs:
           python -m pip install -r requirements.txt
           python -m pip install git+https://github.com/openai/openai-agents-python.git@main
           python -m pip install pytest-timeout pytest-json-report
+      - name: "🔄 Initialize environment via spec runner"
+        run: |
+          set -o pipefail
+          mkdir -p test-results
+          export AGENCY_ENV_SPEC=${{ github.workspace }}/envs/agency_env_spec.json
+          python envs/agency_env_runner.py reset > test-results/runner-reset.log 2>&1
+          echo "✅ Environment reset complete"
       - name: "Run meta+necessary+property tests"
         run: |
           set -o pipefail
@@ -789,16 +982,22 @@ jobs:
           export USE_ENHANCED_MEMORY=true
           export AGENCY_TEST_TIMEOUT_OVERRIDE=300
           export OPENAI_API_KEY=test-key-12345
+          export AGENCY_ENV_SPEC=${{ github.workspace }}/envs/agency_env_spec.json
           mkdir -p test-results
-          env PYTHONMALLOC=malloc python -m pytest \
-            tests/meta_learning tests/necessary tests/property \
-            --ignore=tests/test_firestore_learning_persistence.py \
-            --ignore=tests/test_firestore_mock_integration.py \
-            --ignore=tests/e2e \
-            --ignore=tests/benchmarks \
-            -m "not slow" --ff --maxfail=1 \
-            --timeout=30 --timeout-method=thread -vv \
-            --json-report --json-report-file=test-results/report.json
+          python scripts/run_in_env.py \
+            --timeout 1200 \
+            --log-file test-results/runner-step.json \
+            --env PYTHONMALLOC=malloc \
+            --env OPENAI_API_KEY=test-key-12345 \
+            -- pytest \
+              tests/meta_learning tests/necessary tests/property \
+              --ignore=tests/test_firestore_learning_persistence.py \
+              --ignore=tests/test_firestore_mock_integration.py \
+              --ignore=tests/e2e \
+              --ignore=tests/benchmarks \
+              -m "not slow" --ff --maxfail=1 \
+              --timeout=30 --timeout-method=thread -vv \
+              --json-report --json-report-file=test-results/report.json
       - name: "Generate test report"
         if: always()
         run: |
@@ -827,6 +1026,13 @@ jobs:
           python -m pip install -r requirements.txt
           python -m pip install git+https://github.com/openai/openai-agents-python.git@main
           python -m pip install pytest-timeout pytest-json-report
+      - name: "🔄 Initialize environment via spec runner"
+        run: |
+          set -o pipefail
+          mkdir -p test-results
+          export AGENCY_ENV_SPEC=${{ github.workspace }}/envs/agency_env_spec.json
+          python envs/agency_env_runner.py reset > test-results/runner-reset.log 2>&1
+          echo "✅ Environment reset complete"
       - name: "Run shared+trinity tests"
         run: |
           set -o pipefail
@@ -834,16 +1040,22 @@ jobs:
           export USE_ENHANCED_MEMORY=true
           export AGENCY_TEST_TIMEOUT_OVERRIDE=300
           export OPENAI_API_KEY=test-key-12345
+          export AGENCY_ENV_SPEC=${{ github.workspace }}/envs/agency_env_spec.json
           mkdir -p test-results
-          env PYTHONMALLOC=malloc python -m pytest \
-            tests/shared tests/trinity_protocol \
-            --ignore=tests/test_firestore_learning_persistence.py \
-            --ignore=tests/test_firestore_mock_integration.py \
-            --ignore=tests/e2e \
-            --ignore=tests/benchmarks \
-            -m "not slow" --ff --maxfail=1 \
-            --timeout=30 --timeout-method=thread -vv \
-            --json-report --json-report-file=test-results/report.json
+          python scripts/run_in_env.py \
+            --timeout 1200 \
+            --log-file test-results/runner-step.json \
+            --env PYTHONMALLOC=malloc \
+            --env OPENAI_API_KEY=test-key-12345 \
+            -- pytest \
+              tests/shared tests/trinity_protocol \
+              --ignore=tests/test_firestore_learning_persistence.py \
+              --ignore=tests/test_firestore_mock_integration.py \
+              --ignore=tests/e2e \
+              --ignore=tests/benchmarks \
+              -m "not slow" --ff --maxfail=1 \
+              --timeout=30 --timeout-method=thread -vv \
+              --json-report --json-report-file=test-results/report.json
       - name: "Generate test report"
         if: always()
         run: |
@@ -873,6 +1085,13 @@ jobs:
           python -m pip install -r requirements.txt
           python -m pip install git+https://github.com/openai/openai-agents-python.git@main
           python -m pip install pytest-timeout pytest-json-report
+      - name: "🔄 Initialize environment via spec runner"
+        run: |
+          set -o pipefail
+          mkdir -p test-results
+          export AGENCY_ENV_SPEC=${{ github.workspace }}/envs/agency_env_spec.json
+          python envs/agency_env_runner.py reset > test-results/runner-reset.log 2>&1
+          echo "✅ Environment reset complete"
       - name: "Run top-level core tests"
         run: |
           set -o pipefail
@@ -880,23 +1099,29 @@ jobs:
           export USE_ENHANCED_MEMORY=true
           export AGENCY_TEST_TIMEOUT_OVERRIDE=300
           export OPENAI_API_KEY=test-key-12345
+          export AGENCY_ENV_SPEC=${{ github.workspace }}/envs/agency_env_spec.json
           mkdir -p test-results
-          env PYTHONMALLOC=malloc python -m pytest \
-            tests/test_*.py \
-            --ignore=tests/test_firestore_learning_persistence.py \
-            --ignore=tests/test_firestore_mock_integration.py \
-            --ignore=tests/test_leap3_e2e_integration.py \
-            --ignore=tests/test_leap3_m5_validation.py \
-            --ignore=tests/test_leap4_e2e_quality_feedback.py \
-            --ignore=tests/test_leap5_phase1_integration.py \
-            --ignore=tests/test_leap5_phase2_integration.py \
-            --ignore=tests/test_leap5_phase3_e2e.py \
-            --ignore=tests/test_leap5_phase4_e2e.py \
-            --ignore=tests/e2e \
-            --ignore=tests/benchmarks \
-            -m "not slow" --ff --maxfail=1 \
-            --timeout=30 --timeout-method=thread -vv \
-            --json-report --json-report-file=test-results/report.json
+          python scripts/run_in_env.py \
+            --timeout 2100 \
+            --log-file test-results/runner-step.json \
+            --env PYTHONMALLOC=malloc \
+            --env OPENAI_API_KEY=test-key-12345 \
+            -- pytest \
+              tests/test_*.py \
+              --ignore=tests/test_firestore_learning_persistence.py \
+              --ignore=tests/test_firestore_mock_integration.py \
+              --ignore=tests/test_leap3_e2e_integration.py \
+              --ignore=tests/test_leap3_m5_validation.py \
+              --ignore=tests/test_leap4_e2e_quality_feedback.py \
+              --ignore=tests/test_leap5_phase1_integration.py \
+              --ignore=tests/test_leap5_phase2_integration.py \
+              --ignore=tests/test_leap5_phase3_e2e.py \
+              --ignore=tests/test_leap5_phase4_e2e.py \
+              --ignore=tests/e2e \
+              --ignore=tests/benchmarks \
+              -m "not slow" --ff --maxfail=1 \
+              --timeout=30 --timeout-method=thread -vv \
+              --json-report --json-report-file=test-results/report.json
       - name: "Generate test report"
         if: always()
         run: |
@@ -926,6 +1151,13 @@ jobs:
           python -m pip install -r requirements.txt
           python -m pip install git+https://github.com/openai/openai-agents-python.git@main
           python -m pip install pytest-timeout pytest-json-report
+      - name: "🔄 Initialize environment via spec runner"
+        run: |
+          set -o pipefail
+          mkdir -p test-results
+          export AGENCY_ENV_SPEC=${{ github.workspace }}/envs/agency_env_spec.json
+          python envs/agency_env_runner.py reset > test-results/runner-reset.log 2>&1
+          echo "✅ Environment reset complete"
       - name: "Run leap validation tests"
         run: |
           set -o pipefail
@@ -933,18 +1165,24 @@ jobs:
           export USE_ENHANCED_MEMORY=true
           export AGENCY_TEST_TIMEOUT_OVERRIDE=300
           export OPENAI_API_KEY=test-key-12345
+          export AGENCY_ENV_SPEC=${{ github.workspace }}/envs/agency_env_spec.json
           mkdir -p test-results
-          env PYTHONMALLOC=malloc python -m pytest \
-            tests/test_leap3_e2e_integration.py \
-            tests/test_leap3_m5_validation.py \
-            tests/test_leap4_e2e_quality_feedback.py \
-            tests/test_leap5_phase1_integration.py \
-            tests/test_leap5_phase2_integration.py \
-            tests/test_leap5_phase3_e2e.py \
-            tests/test_leap5_phase4_e2e.py \
-            -m "not slow" --ff --maxfail=1 \
-            --timeout=30 --timeout-method=thread -vv \
-            --json-report --json-report-file=test-results/report.json
+          python scripts/run_in_env.py \
+            --timeout 1500 \
+            --log-file test-results/runner-step.json \
+            --env PYTHONMALLOC=malloc \
+            --env OPENAI_API_KEY=test-key-12345 \
+            -- pytest \
+              tests/test_leap3_e2e_integration.py \
+              tests/test_leap3_m5_validation.py \
+              tests/test_leap4_e2e_quality_feedback.py \
+              tests/test_leap5_phase1_integration.py \
+              tests/test_leap5_phase2_integration.py \
+              tests/test_leap5_phase3_e2e.py \
+              tests/test_leap5_phase4_e2e.py \
+              -m "not slow" --ff --maxfail=1 \
+              --timeout=30 --timeout-method=thread -vv \
+              --json-report --json-report-file=test-results/report.json
       - name: "Generate test report"
         if: always()
         run: |

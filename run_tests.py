@@ -4,15 +4,17 @@ Test Runner for AgencyOS Agency
 Runs all tests using pytest framework
 
 Phase 2 OpenEnv Integration:
-- TODO: Wrap subprocess calls via envs/agency_env_runner.py step API
-- For now, direct execution with AGENCY_ENV_SPEC awareness
-- Future: All commands routed through spec-driven runner for logging/validation
+- All subprocess executions route through envs/agency_env_runner.py when available
+- Falls back to native subprocess.run when the spec is absent (local dev)
+- Future: add sandbox profiles + allowlist enforcement per OpenEnv spec
 """
 
 import argparse
 import atexit
 import json
 import os
+import shlex
+import shutil
 import signal
 import subprocess
 import sys
@@ -28,6 +30,16 @@ JSONValue = Any  # Type hint placeholder
 
 # OpenEnv-style spec integration (Phase 2)
 AGENCY_ENV_SPEC = os.getenv("AGENCY_ENV_SPEC", str(Path(__file__).parent / "envs" / "agency_env_spec.json"))
+
+# Re-exec within the active virtual environment Python when necessary
+_active_venv = os.environ.get("VIRTUAL_ENV")
+if _active_venv and os.environ.get("RUN_TESTS_REEXEC") != "1":
+    venv_python = Path(_active_venv) / ("Scripts" if os.name == "nt" else "bin") / ("python.exe" if os.name == "nt" else "python")
+    if venv_python.exists() and Path(sys.executable).resolve() != venv_python.resolve():
+        os.environ["RUN_TESTS_REEXEC"] = "1"
+        os.execv(str(venv_python), [str(venv_python), *sys.argv])
+
+from envs.openenv_exec import run_command
 
 
 class DockerManager:
@@ -50,7 +62,7 @@ class DockerManager:
         """
         # Check if docker is installed
         try:
-            subprocess.run(
+            run_command(
                 ["docker", "--version"],
                 check=True,
                 capture_output=True,
@@ -61,7 +73,7 @@ class DockerManager:
 
         # Check if Docker daemon is running
         try:
-            subprocess.run(
+            run_command(
                 ["docker", "ps"],
                 check=True,
                 capture_output=True,
@@ -79,7 +91,7 @@ class DockerManager:
         docker_compose_cmd = None
         for cmd in [["docker", "compose"], ["docker-compose"]]:
             try:
-                result = subprocess.run(
+                result = run_command(
                     cmd + ["version"],
                     check=True,
                     capture_output=True,
@@ -112,7 +124,7 @@ class DockerManager:
 
         try:
             # Start docker-compose services
-            subprocess.run(
+            run_command(
                 self.docker_compose_cmd + ["-f", str(self.compose_file), "up", "-d"],
                 check=True,
                 capture_output=True,
@@ -155,7 +167,7 @@ class DockerManager:
         while elapsed < max_wait_seconds:
             try:
                 # Check service health via docker-compose ps
-                result = subprocess.run(
+                result = run_command(
                     self.docker_compose_cmd
                     + ["-f", str(self.compose_file), "ps", "--format", "json"],
                     check=True,
@@ -198,7 +210,7 @@ class DockerManager:
 
         try:
             print("\n🧹 Stopping Docker Compose services...")
-            subprocess.run(
+            run_command(
                 self.docker_compose_cmd + ["-f", str(self.compose_file), "down"],
                 check=True,
                 capture_output=True,
@@ -274,6 +286,7 @@ def main(
     timeout_multiplier: float = 1.0,
     json_report: bool = False,
     json_report_file: str = ".report.json",
+    no_sandbox: bool = False,
 ) -> int:
     # RECURSION GUARDS: Prevent nested test runs
     if os.environ.get("AGENCY_NESTED_TEST") == "1":
@@ -314,7 +327,7 @@ def main(
         try:
             cleanup_script = Path(__file__).parent / "scripts" / "cleanup_compiled_files.py"
             if cleanup_script.exists():
-                subprocess.run(
+                run_command(
                     [sys.executable, str(cleanup_script), "--quiet"],
                     timeout=30,
                     capture_output=True
@@ -382,6 +395,8 @@ def main(
     mode_descriptions = {
         "unit": "Unit Tests Only (excluding integration, slow, and benchmark tests)",
         "integration": "Integration Tests Only",
+        "integration-part1": "Integration Tests Part 1 (~67 tests, heavier suite)",
+        "integration-part2": "Integration Tests Part 2 (~67 tests, lighter suite)",
         "all": "All Tests (Unit + Integration)",
         "fast": "Fast Unit Tests Only (excluding slow, benchmark, integration)",
         "slow": "Slow Tests Only",
@@ -449,14 +464,22 @@ def main(
     is_ci = os.environ.get("CI") == "true"
 
     if is_ci:
-        # CI environment - use python -m pytest
         pytest_args = [python_executable, "-m", "pytest"]
     else:
-        # Local development - use uv run pytest for better dependency management
-        pytest_args = ["uv", "run", "pytest"]
+        use_uv = os.environ.get("RUN_TESTS_USE_UV", "1").lower() not in {"0", "false", "no"}
+        uv_path = shutil.which("uv") if use_uv else None
+        if uv_path:
+            pytest_args = [uv_path, "run", "pytest"]
+        else:
+            if use_uv:
+                print("⚠️  'uv' not found; falling back to python -m pytest")
+            else:
+                print("⚙️  RUN_TESTS_USE_UV=0 → using python -m pytest")
+            pytest_args = [python_executable, "-m", "pytest"]
 
-    # Test directory (explicit, not in pytest.ini)
-    pytest_args.append("tests/")
+    # Test targets - default to entire suite unless overridden
+    test_targets: list[str] = []
+    integration_batch_targets: list[str] | None = None
 
     # Verbosity override (only for fast mode, otherwise defer to pytest.ini -q)
     if test_mode != "fast":
@@ -476,9 +499,20 @@ def main(
         ]
     )
 
+    if args.pytest_args:
+        extra_args: list[str] = []
+        for entry in args.pytest_args:
+            extra_args.extend(shlex.split(entry))
+        pytest_args.extend(extra_args)
+
     # Memory-aware worker selection (ADR-023 integration)
     # Overrides pytest.ini static config (-n 6) with dynamic adjustment
     # PYTEST_WORKERS env var overrides memory-aware selection (for CI)
+    integration_modes = {"integration", "integration-only", "integration-part1", "integration-part2"}
+    if test_mode in integration_modes and "PYTEST_WORKERS" not in os.environ:
+        os.environ["PYTEST_WORKERS"] = "1"
+        print("⚙️ Integration mode: forcing 1 worker to avoid macOS resource kills")
+
     try:
         # Check for explicit worker override (CI environment)
         worker_override = os.environ.get("PYTEST_WORKERS")
@@ -528,6 +562,12 @@ def main(
         # No Docker services: skip Ollama tests (default behavior)
         env["SKIP_OLLAMA_TESTS"] = "1"
 
+    # Sandbox control: Disable OpenEnv sandbox-exec wrapper if requested
+    if no_sandbox:
+        env["AGENCY_SANDBOX_PROFILE"] = ""
+        print("⚙️  Sandbox DISABLED (--no-sandbox flag set)")
+        print("   OpenEnv runner will skip sandbox-exec wrapper")
+
     # ============================================================================
     # MARKER SELECTION (Test Mode Filtering)
     # ============================================================================
@@ -539,6 +579,27 @@ def main(
         pytest_args.extend(["-m", "not integration and not slow and not benchmark"])
     elif test_mode == "integration" or test_mode == "integration-only":
         pytest_args.extend(["-m", "integration"])
+    elif test_mode == "integration-part1":
+        # Part 1: Larger/heavier integration tests (67 tests)
+        pytest_args.extend(["-m", "integration"])
+        integration_batch_targets = [
+            "tests/integration/test_non_blocking_cleanup.py",
+            "tests/integration/test_ci_backlog_workflow.py",
+            "tests/integration/test_unit_integration_separation.py",
+        ]
+    elif test_mode == "integration-part2":
+        # Part 2: Smaller/lighter integration tests (67 tests)
+        pytest_args.extend(["-m", "integration"])
+        integration_batch_targets = [
+            "tests/integration/test_mock_asyncio_sleep.py",
+            "tests/integration/test_remove_intentional_delays.py",
+            "tests/integration/test_function_timeouts.py",
+            "tests/integration/test_performance_regression.py",
+            "tests/integration/test_ambient_to_witness.py",
+            "tests/integration/test_autonomous_audit_loop.py",
+            "tests/integration/test_epic4_2_complete.py",
+            "tests/integration/test_memory_aware_integration.py",
+        ]
     elif test_mode == "fast":
         # Fast unit tests: exclude integration, slow, benchmark, and github
         pytest_args.extend(["-m", "not integration and not slow and not benchmark and not github"])
@@ -562,10 +623,34 @@ def main(
         print("   This will make real API calls and may incur costs")
     # Default: no marker filtering - pytest.ini controls default behavior
 
+    if not test_targets and integration_batch_targets is None:
+        test_targets.append("tests/")
+
     # JSON report generation (if requested)
     if json_report:
         pytest_args.extend(["--json-report", f"--json-report-file={json_report_file}"])
         print(f"📊 JSON report will be saved to: {json_report_file}")
+
+    default_timeout = calculate_dynamic_timeout(multiplier=timeout_multiplier)
+
+    if integration_batch_targets:
+        overall_exit = 0
+        for target in integration_batch_targets:
+            batch_args = pytest_args + [target]
+            print("🔍 Running command:", " ".join(batch_args))
+            result = subprocess.run(
+                batch_args,
+                env=env,
+                timeout=default_timeout,
+                check=False,
+                capture_output=False,
+            )
+            if result.returncode != 0:
+                overall_exit = result.returncode
+        cleanup_pid_file()
+        return overall_exit
+
+    pytest_args.extend(test_targets)
 
     try:
         # Calculate timeout based on empirical test execution data
@@ -583,7 +668,7 @@ def main(
         # Debug: Print the exact command being run
         print(f"🔍 Running command: {' '.join(pytest_args)}\n")
 
-        result = subprocess.run(
+        result = run_command(
             pytest_args,
             check=False,
             env=env,
@@ -641,7 +726,7 @@ def main(
     except FileNotFoundError:
         print("❌ pytest not found! Installing pytest...")
         try:
-            subprocess.run(
+            run_command(
                 [sys.executable, "-m", "pip", "install", "pytest", "pytest-asyncio"],
                 check=True,
             )
@@ -687,7 +772,7 @@ def run_specific_test(test_name: str, timed: bool = False) -> int:
 
         # Add timeout for safety (5 minutes for specific tests)
         t0 = time.time()
-        result = subprocess.run(
+        result = run_command(
             pytest_args,
             check=False,
             env=env,
@@ -736,6 +821,7 @@ def create_parser() -> argparse.ArgumentParser:
   python run_tests.py --run-integration  # Run integration tests only (legacy)
   python run_tests.py --run-all          # Run all tests
   python run_tests.py --with-docker      # Run with Docker services (enables Ollama tests)
+  python run_tests.py --no-sandbox       # Disable sandbox-exec wrapper (fix Signal(9) kills)
   python run_tests.py test_specific.py   # Run specific test file""",
     )
 
@@ -755,6 +841,16 @@ def create_parser() -> argparse.ArgumentParser:
         "--integration-only",
         action="store_true",
         help="Run ONLY integration tests (what we normally skip)",
+    )
+    test_group.add_argument(
+        "--integration-part1",
+        action="store_true",
+        help="Run ONLY integration tests part 1 (first half of integration suite, ~67 tests)",
+    )
+    test_group.add_argument(
+        "--integration-part2",
+        action="store_true",
+        help="Run ONLY integration tests part 2 (second half of integration suite, ~67 tests)",
     )
     test_group.add_argument(
         "--run-integration", action="store_true", help="Run ONLY integration tests (legacy option)"
@@ -802,6 +898,19 @@ def create_parser() -> argparse.ArgumentParser:
         help="Path to JSON report file (default: .report.json)",
     )
 
+    parser.add_argument(
+        "--pytest-args",
+        action="append",
+        default=[],
+        help="Additional pytest arguments (repeatable, e.g. --pytest-args \"-k agency_env\")",
+    )
+
+    parser.add_argument(
+        "--no-sandbox",
+        action="store_true",
+        help="Disable OpenEnv sandbox-exec wrapper (macOS only). Useful when sandbox causes Signal(9) kills. Sets AGENCY_SANDBOX_PROFILE='' to bypass sandbox profile.",
+    )
+
     return parser
 
 
@@ -822,23 +931,55 @@ if __name__ == "__main__":
         test_mode = "github"
     elif args.integration_only or args.run_integration:
         test_mode = "integration"
+    elif args.integration_part1:
+        test_mode = "integration-part1"
+    elif args.integration_part2:
+        test_mode = "integration-part2"
     elif args.run_all:
         test_mode = "all"
 
     # Execute the appropriate test mode
     if args.specific_test:
         exit_code = run_specific_test(args.specific_test, timed=args.timed)
-    else:
-        # Default behavior excludes slow and benchmark tests automatically
-        fast_only = test_mode == "unit"
-        exit_code = main(
-            test_mode,
-            fast_only=fast_only,
-            timed=args.timed,
-            with_docker=args.with_docker,
-            timeout_multiplier=args.timeout_multiplier,
-            json_report=args.json_report,
-            json_report_file=args.json_report_file,
-        )
+        sys.exit(exit_code)
+
+    if test_mode == "all" and os.environ.get("RUN_TESTS_SUBRUN") != "1":
+        sub_suites = [
+            ("--fast", "Fast/unit suite"),
+            ("--integration-only", "Integration suite"),
+        ]
+        for flag, label in sub_suites:
+            print(f"\n➡️  Running sub-suite: {label}")
+            child_cmd = [sys.executable, __file__, flag]
+            if args.timed:
+                child_cmd.append("--timed")
+            if args.with_docker:
+                child_cmd.append("--with-docker")
+            for extra in args.pytest_args:
+                child_cmd.extend(["--pytest-args", extra])
+
+            env = os.environ.copy()
+            env.setdefault("RUN_TESTS_USE_UV", os.environ.get("RUN_TESTS_USE_UV", "0"))
+            env["RUN_TESTS_SUBRUN"] = "1"
+
+            result = subprocess.run(child_cmd, env=env)
+            if result.returncode != 0:
+                sys.exit(result.returncode)
+
+        print("\n✅ All sub-suites completed")
+        sys.exit(0)
+
+    # Default behavior excludes slow and benchmark tests automatically
+    fast_only = test_mode == "unit"
+    exit_code = main(
+        test_mode,
+        fast_only=fast_only,
+        timed=args.timed,
+        with_docker=args.with_docker,
+        timeout_multiplier=args.timeout_multiplier,
+        json_report=args.json_report,
+        json_report_file=args.json_report_file,
+        no_sandbox=args.no_sandbox,
+    )
 
     sys.exit(exit_code)

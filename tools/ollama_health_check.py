@@ -177,7 +177,7 @@ async def check_ollama_health(
                         inference_result = await check_inference(endpoint, timeout)
                         inference_working = inference_result.is_ok()
                     else:
-                        logger.warning("No models available for inference test")
+                        logger.debug("No models available for inference test - inference checks skipped")
 
                     # Success - return healthy status
                     return Ok(
