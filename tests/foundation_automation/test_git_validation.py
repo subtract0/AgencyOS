@@ -323,13 +323,29 @@ def test_main_branch_raises_validation_error(isolated_git_repo: Path) -> None:
 
     Expected: Result<str, GitValidationError> with Err(GitValidationError)
     """
-    # Arrange: Switch to main branch
-    subprocess.run(
-        ["git", "checkout", "-b", "main"],
+    # Arrange: Switch to main branch (create if doesn't exist, otherwise switch)
+    # Check if main branch exists
+    check_branch = subprocess.run(
+        ["git", "rev-parse", "--verify", "main"],
         cwd=isolated_git_repo,
-        check=True,
         capture_output=True,
     )
+    if check_branch.returncode == 0:
+        # Branch exists, just checkout
+        subprocess.run(
+            ["git", "checkout", "main"],
+            cwd=isolated_git_repo,
+            check=True,
+            capture_output=True,
+        )
+    else:
+        # Branch doesn't exist, create it
+        subprocess.run(
+            ["git", "checkout", "-b", "main"],
+            cwd=isolated_git_repo,
+            check=True,
+            capture_output=True,
+        )
 
     # Act
     result = validate_branch_safety(repo_path=isolated_git_repo)
@@ -634,13 +650,26 @@ def test_symlink_to_protected_branch_rejected(isolated_git_repo: Path, tmp_path:
     main_ref = isolated_git_repo / ".git" / "refs" / "heads" / "main"
     symlink_ref = isolated_git_repo / ".git" / "refs" / "heads" / "feat" / "symlink-test"
 
-    # Create main branch first
-    subprocess.run(
-        ["git", "checkout", "-b", "main"],
+    # Create main branch first (or switch if exists)
+    check_branch = subprocess.run(
+        ["git", "rev-parse", "--verify", "main"],
         cwd=isolated_git_repo,
-        check=True,
         capture_output=True,
     )
+    if check_branch.returncode == 0:
+        subprocess.run(
+            ["git", "checkout", "main"],
+            cwd=isolated_git_repo,
+            check=True,
+            capture_output=True,
+        )
+    else:
+        subprocess.run(
+            ["git", "checkout", "-b", "main"],
+            cwd=isolated_git_repo,
+            check=True,
+            capture_output=True,
+        )
 
     # Create feat directory
     symlink_ref.parent.mkdir(parents=True, exist_ok=True)
@@ -810,13 +839,26 @@ def test_error_message_explains_article_iii_violation(isolated_git_repo: Path) -
 
     Expected: Error message contains "Article III", "protected", "checkout"
     """
-    # Arrange
-    subprocess.run(
-        ["git", "checkout", "-b", "main"],
+    # Arrange: Switch to main branch (create if doesn't exist)
+    check_branch = subprocess.run(
+        ["git", "rev-parse", "--verify", "main"],
         cwd=isolated_git_repo,
-        check=True,
         capture_output=True,
     )
+    if check_branch.returncode == 0:
+        subprocess.run(
+            ["git", "checkout", "main"],
+            cwd=isolated_git_repo,
+            check=True,
+            capture_output=True,
+        )
+    else:
+        subprocess.run(
+            ["git", "checkout", "-b", "main"],
+            cwd=isolated_git_repo,
+            check=True,
+            capture_output=True,
+        )
 
     # Act
     result = validate_branch_safety(repo_path=isolated_git_repo)
@@ -913,13 +955,26 @@ def test_validation_runs_before_planner_execution(
 
     Expected: Validation halts orchestrator on main branch BEFORE Planner call
     """
-    # Arrange: Switch to main branch
-    subprocess.run(
-        ["git", "checkout", "-b", "main"],
+    # Arrange: Switch to main branch (create if doesn't exist)
+    check_branch = subprocess.run(
+        ["git", "rev-parse", "--verify", "main"],
         cwd=isolated_git_repo,
-        check=True,
         capture_output=True,
     )
+    if check_branch.returncode == 0:
+        subprocess.run(
+            ["git", "checkout", "main"],
+            cwd=isolated_git_repo,
+            check=True,
+            capture_output=True,
+        )
+    else:
+        subprocess.run(
+            ["git", "checkout", "-b", "main"],
+            cwd=isolated_git_repo,
+            check=True,
+            capture_output=True,
+        )
 
     # Act: Attempt validation (should fail before orchestrator even initializes)
     result = validate_branch_safety(repo_path=isolated_git_repo)
