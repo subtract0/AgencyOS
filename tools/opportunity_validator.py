@@ -139,7 +139,7 @@ class OpportunityValidator:
         return []
 
     def search_reddit_for_solutions(self, problem_domain: str) -> List[Dict]:
-        """Search Reddit for discussions about successful solutions"""
+        """Search Reddit for discussions about successful solutions - DEEP SCRAPING"""
         results = []
 
         # Search subreddits where people discuss successful tools
@@ -151,38 +151,58 @@ class OpportunityValidator:
             "r/SideProject"
         ]
 
+        # Time filters to scrape (most recent to oldest)
+        time_filters = ["month", "year", "all"]
+
         for subreddit in subreddits:
-            try:
-                url = f"https://www.reddit.com/{subreddit}/top.json?t=year&limit=25"
-                headers = {'User-Agent': 'OpportunityValidator/1.0'}
+            subreddit_results = []
 
-                response = requests.get(url, headers=headers, timeout=10)
-                response.raise_for_status()
+            for time_filter in time_filters:
+                try:
+                    # Reddit API limit is 100 per request
+                    url = f"https://www.reddit.com/{subreddit}/top.json?t={time_filter}&limit=100"
+                    headers = {'User-Agent': 'OpportunityValidator/1.0'}
 
-                data = response.json()
-                posts = data.get('data', {}).get('children', [])
+                    self.logger.info(f"Scraping {subreddit} (t={time_filter}, limit=100)")
 
-                for post in posts:
-                    post_data = post.get('data', {})
-                    title = post_data.get('title', '').lower()
-                    selftext = post_data.get('selftext', '').lower()
+                    response = requests.get(url, headers=headers, timeout=10)
+                    response.raise_for_status()
 
-                    # Look for revenue/profit mentions
-                    if any(keyword in title or keyword in selftext for keyword in
-                           ['revenue', 'profit', 'mrr', 'arr', 'users', 'paying customers']):
-                        results.append({
-                            'title': post_data.get('title'),
-                            'url': f"https://reddit.com{post_data.get('permalink', '')}",
-                            'text': selftext[:500],
-                            'upvotes': post_data.get('ups', 0),
-                            'subreddit': subreddit
-                        })
+                    data = response.json()
+                    posts = data.get('data', {}).get('children', [])
 
-                self.logger.info(f"Reddit {subreddit}: Found {len([r for r in results if r['subreddit'] == subreddit])} posts")
-                time.sleep(2)  # Rate limiting
+                    for post in posts:
+                        post_data = post.get('data', {})
+                        title = post_data.get('title', '').lower()
+                        selftext = post_data.get('selftext', '').lower()
 
-            except Exception as e:
-                self.logger.error(f"Reddit search error ({subreddit}): {e}")
+                        # Look for revenue/profit mentions
+                        if any(keyword in title or keyword in selftext for keyword in
+                               ['revenue', 'profit', 'mrr', 'arr', 'users', 'paying customers',
+                                'sold', '$', 'bootstrapped', 'saas', 'maker', 'indie']):
+
+                            post_url = f"https://reddit.com{post_data.get('permalink', '')}"
+
+                            # Deduplicate by URL
+                            if not any(r['url'] == post_url for r in subreddit_results):
+                                subreddit_results.append({
+                                    'title': post_data.get('title'),
+                                    'url': post_url,
+                                    'text': selftext[:1000],  # Increased from 500
+                                    'upvotes': post_data.get('ups', 0),
+                                    'subreddit': subreddit
+                                })
+
+                    self.logger.info(f"  {subreddit} ({time_filter}): +{len([p for p in posts if any(k in p.get('data', {}).get('title', '').lower() or k in p.get('data', {}).get('selftext', '').lower() for k in ['revenue', 'profit', 'mrr', 'arr', 'users', 'paying customers', 'sold', '$'])])} relevant posts")
+
+                    time.sleep(2)  # Rate limiting between time filters
+
+                except Exception as e:
+                    self.logger.error(f"Reddit search error ({subreddit}, {time_filter}): {e}")
+
+            results.extend(subreddit_results)
+            self.logger.info(f"✓ {subreddit}: {len(subreddit_results)} unique posts collected")
+            time.sleep(3)  # Longer delay between subreddits
 
         return results
 
@@ -331,53 +351,71 @@ IMPORTANT: Return ONLY the JSON object, nothing else."""
         self.logger.info(f"Checkpoint saved: {checkpoint_file}")
 
     def run(self):
-        """Main validation loop"""
+        """Main validation loop - EXHAUST ALL SOURCES"""
         self.logger.info("=" * 80)
         self.logger.info("OPPORTUNITY VALIDATOR STARTED")
         self.logger.info("=" * 80)
         self.logger.info(f"Runtime: {self.runtime_hours} hours")
         self.logger.info("Searching for: Proven, profitable, fully digital solutions")
+        self.logger.info("Strategy: DEEP SCRAPING - Exhaust all Reddit sources")
         self.logger.info("=" * 80)
 
-        iteration = 0
-
-        # For now, focus on Reddit (easiest to scrape without API keys)
-        # TODO: Add Google/Brave search when API keys are available
-
+        # PHASE 1: Deep Reddit scraping (exhaust all available content)
         self.logger.info("\n" + "=" * 80)
-        self.logger.info("PHASE 1: Reddit Analysis")
+        self.logger.info("PHASE 1: Deep Reddit Analysis")
+        self.logger.info("Scraping 5 subreddits × 3 time filters (month/year/all)")
+        self.logger.info("Max: ~1500 posts, expected: 200-500 relevant posts")
         self.logger.info("=" * 80)
 
         # Search Reddit for successful SaaS/digital product discussions
         reddit_results = self.search_reddit_for_solutions("saas")
 
-        self.logger.info(f"\nFound {len(reddit_results)} Reddit posts to analyze")
+        self.logger.info(f"\n{'='*80}")
+        self.logger.info(f"COLLECTION COMPLETE: {len(reddit_results)} unique posts")
+        self.logger.info(f"{'='*80}")
+
+        # Sort by upvotes (quality signal)
+        reddit_results.sort(key=lambda x: x['upvotes'], reverse=True)
+
+        # PHASE 2: LLM Analysis (process ALL collected posts)
+        self.logger.info("\n" + "=" * 80)
+        self.logger.info("PHASE 2: Local LLM Analysis (vcoder-120b)")
+        self.logger.info(f"Processing {len(reddit_results)} posts...")
+        self.logger.info("=" * 80)
 
         # Analyze each with local LLM
-        for i, result in enumerate(reddit_results[:20]):  # Limit to 20 for first run
-            self.logger.info(f"\nAnalyzing {i+1}/{min(20, len(reddit_results))}: {result['title'][:60]}...")
+        for i, result in enumerate(reddit_results, 1):
+            self.logger.info(f"\n[{i}/{len(reddit_results)}] {result['title'][:70]}...")
+            self.logger.info(f"  Source: {result['subreddit']} | Upvotes: {result['upvotes']}")
 
             text = f"{result['title']}\n\n{result['text']}"
             opportunity = self.analyze_opportunity_with_llm(text, result['url'])
 
             if opportunity and self.validate_opportunity(opportunity):
                 self.opportunities.append(opportunity)
-                self.logger.info(f"✅ VALIDATED: {opportunity.solution_name} (score: {opportunity.overall_score:.2f})")
+                self.logger.info(f"  ✅ VALIDATED: {opportunity.solution_name} (score: {opportunity.overall_score:.2f})")
             elif opportunity:
-                self.logger.info(f"⚠️  WEAK: {opportunity.solution_name} (score: {opportunity.overall_score:.2f})")
+                self.logger.info(f"  ⚠️  WEAK: {opportunity.solution_name} (score: {opportunity.overall_score:.2f})")
             else:
-                self.logger.info("❌ NO OPPORTUNITY DETECTED")
+                self.logger.info("  ❌ NO OPPORTUNITY DETECTED")
+
+            # Save checkpoint every 25 posts
+            if i % 25 == 0:
+                self.save_checkpoint()
+                self.logger.info(f"\n  💾 Checkpoint saved ({len(self.opportunities)} validated so far)")
 
             time.sleep(3)  # Rate limiting for LLM
 
-        # Save results
+        # Final checkpoint
         self.save_checkpoint()
 
-        # Summary
+        # SUMMARY
         self.logger.info("\n" + "=" * 80)
         self.logger.info("VALIDATOR COMPLETE")
         self.logger.info("=" * 80)
-        self.logger.info(f"Total opportunities found: {len(self.opportunities)}")
+        self.logger.info(f"Posts analyzed: {len(reddit_results)}")
+        self.logger.info(f"Opportunities validated: {len(self.opportunities)}")
+        self.logger.info(f"Success rate: {len(self.opportunities)/len(reddit_results)*100:.1f}%")
 
         if self.opportunities:
             # Sort by score
