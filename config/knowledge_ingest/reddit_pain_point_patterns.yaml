@@ -1,0 +1,192 @@
+# Reddit Pain Point Mining Patterns
+# Source: Proven search pattern for extracting authentic coaching insights
+# Created: 2025-11-09
+# Purpose: Pattern-based filtering for knowledge ingestion
+
+patterns:
+  experience_markers:
+    description: "First-person experiences that indicate authentic insights"
+    keywords:
+      - "I think"
+      - "I feel"
+      - "I was"
+      - "I have been"
+      - "I experienced"
+      - "my experience"
+      - "in my opinion"
+      - "IMO"
+      - "my biggest struggle"
+      - "my biggest fear"
+      - "I found that"
+      - "I learned"
+      - "I realized"
+      - "my advice"
+
+    usage: "Filter for posts/comments containing these phrases"
+    weight: 1.0  # High priority - these are direct experiences
+
+  pain_signals:
+    description: "Direct indicators of coaching opportunities"
+    keywords:
+      - "struggles"
+      - "problems"
+      - "issues"
+      - "challenge"
+      - "difficulties"
+      - "hardships"
+      - "pain point"
+
+    usage: "Primary pain point extraction targets"
+    weight: 1.5  # Very high priority - explicit pain points
+
+  emotional_depth:
+    description: "Reveals unmet needs and knowledge gaps"
+    keywords:
+      - "barriers"
+      - "obstacles"
+      - "concerns"
+      - "frustrations"
+      - "worries"
+      - "hesitations"
+      - "what I wish I knew"
+      - "what I regret"
+
+    usage: "Secondary extraction for emotional context"
+    weight: 1.2  # High priority - emotional intelligence
+
+# Reddit Search Query Template
+reddit_search_template: |
+  "{topic}" (
+    site:reddit.com
+    inurl:comments|inurl:thread
+    | intext:"I think"|"I feel"|"I was"|"I have been"|"I experienced"|"my experience"|"in my opinion"|"IMO"|"my biggest struggle"|"my biggest fear"|"I found that"|"I learned"|"I realized"|"my advice"|
+
+    "struggles"|"problems"|"issues"|"challenge"|"difficulties"|"hardships"|"pain point"|
+
+    "barriers"|"obstacles"|"concerns"|"frustrations"|"worries"|"hesitations"|"what I wish I knew"|"what I regret"
+  )
+
+# Topic-Specific Configurations
+topics:
+  co_parenting:
+    subreddits:
+      - r/coparenting
+      - r/Parenting
+      - r/breakingmom
+      - r/daddit
+      - r/SingleParents
+
+    additional_keywords:
+      - "ex partner"
+      - "custody"
+      - "visitation"
+      - "communication breakdown"
+      - "parenting plan"
+
+    extraction_focus:
+      - communication_issues
+      - boundary_setting
+      - child_wellbeing
+      - conflict_resolution
+
+  conscious_uncoupling:
+    subreddits:
+      - r/Divorce
+      - r/BreakUps
+      - r/relationships
+
+    additional_keywords:
+      - "ending relationship"
+      - "conscious separation"
+      - "peaceful divorce"
+      - "healthy breakup"
+
+    extraction_focus:
+      - emotional_processing
+      - practical_logistics
+      - children_impact
+      - self_care
+
+  acim:
+    subreddits:
+      - r/ACIM
+      - r/spirituality
+      - r/awakened
+
+    additional_keywords:
+      - "forgiveness practice"
+      - "miracle"
+      - "holy spirit"
+      - "ego dissolution"
+
+    extraction_focus:
+      - forgiveness_challenges
+      - practice_difficulties
+      - conceptual_questions
+      - real_world_application
+
+  open_relationships:
+    subreddits:
+      - r/polyamory
+      - r/nonmonogamy
+      - r/relationship_advice
+
+    additional_keywords:
+      - "ethical non-monogamy"
+      - "jealousy"
+      - "boundaries"
+      - "communication agreements"
+
+    extraction_focus:
+      - jealousy_management
+      - boundary_negotiation
+      - communication_strategies
+      - partner_balance
+
+  love_and_forgiveness:
+    subreddits:
+      - r/selfimprovement
+      - r/DecidingToBeBetter
+      - r/relationships
+
+    additional_keywords:
+      - "letting go"
+      - "healing from hurt"
+      - "self-forgiveness"
+      - "compassion practice"
+
+    extraction_focus:
+      - self_forgiveness
+      - releasing_resentment
+      - compassion_development
+      - healing_process
+
+# Integration Points
+integration:
+  vectorstore:
+    enabled: true
+    tags_format: ["topic:{topic}", "source:reddit", "type:pain_point"]
+    embedding_model: "sentence-transformers/all-MiniLM-L6-v2"
+
+  memory_tool:
+    enabled: true
+    path: "~/.agency/memories/coaching_knowledge/{topic}/"
+    format: "markdown"
+
+  overnight_worker:
+    enabled: true
+    schedule: "nightly"
+    max_posts_per_topic: 20
+    rate_limit_seconds: 2
+
+# Quality Filters
+quality_filters:
+  min_upvotes: 5
+  min_comment_length: 100
+  exclude_patterns:
+    - "removed by moderator"
+    - "[deleted]"
+    - "spam"
+
+  sentiment_threshold: -0.3  # Allow negative sentiment (pain points)
+  authenticity_score_min: 0.6  # Based on experience marker density
