@@ -1,275 +1,283 @@
-# Testing Documentation Index
+# Testing Documentation
 
-**Quick access to all test-related documentation and tools**
-
----
-
-## 🚀 Quick Start
-
-**Want to speed up tests immediately?**
-
-```bash
-# 1. Install parallel execution (5 min)
-pip install pytest-xdist
-pytest -n auto  # 2-4x faster
-
-# 2. Use smart test selection (200x faster for dev!)
-./scripts/run_smart_tests.sh
-```
-
-→ **[Quick Start Guide](QUICK_START_PROFILING.md)**
+Complete guide to AgencyOS test infrastructure, execution, and standards.
 
 ---
 
-## 📚 Documentation
+## Quick Start
 
-### Performance Optimization
+```bash
+# Run full test suite (RECOMMENDED)
+python run_tests.py --run-all
 
-| Document | Purpose | When to Use |
-|----------|---------|-------------|
-| **[Quick Start Guide](QUICK_START_PROFILING.md)** | TL;DR commands and quick wins | Start here! |
-| **[Optimization Plan](PERFORMANCE_OPTIMIZATION.md)** | 3-phase roadmap to <60s | Planning optimizations |
-| **[Tools Summary](PROFILING_TOOLS_SUMMARY.md)** | Complete implementation details | Understanding the tools |
+# Run unit tests only
+python run_tests.py
 
-### Testing Strategy
+# Run with Docker (enables Ollama integration tests)
+python run_tests.py --with-docker --run-all
+```
 
-| Document | Purpose | When to Use |
-|----------|---------|-------------|
-| **[Constitution](../../constitution.md)** | TDD requirements, Article II | Before writing tests |
-| **[pytest.ini](../../pytest.ini)** | Test configuration and markers | Configuring test runs |
-| **[Run Tests Guide](../../run_tests.py)** | Test runner documentation | Running test suites |
+**Expected Results**: 5,822 tests passing, 164 skipped, 0 failures (100% pass rate)
 
 ---
 
-## 🔧 Available Tools
+## Current Test Status
 
-### Python Modules (`/tools/`)
+**Latest Status**: See [ACTUAL_TEST_STATUS.md](ACTUAL_TEST_STATUS.md)
 
-#### 1. Performance Profiler
-**File**: `tools/performance_profiling.py`
-
-**Purpose**: Profile test suite and identify bottlenecks
-
-```bash
-# Profile full suite
-python -m tools.performance_profiling
-
-# With custom settings
-python -m tools.performance_profiling \
-  --test-path tests/ \
-  --output docs/testing/PERFORMANCE_PROFILE.md \
-  --threshold 1.0
-```
-
-**Output**:
-- `PERFORMANCE_PROFILE.md` - Slowest tests, bottlenecks
-- `PERFORMANCE_PROFILE.json` - Raw profiling data
-
-#### 2. Test Optimizer
-**File**: `tools/test_optimizer.py`
-
-**Purpose**: Analyze test suite for optimization opportunities
-
-```bash
-# Analyze full suite
-python -m tools.test_optimizer \
-  --test-dir tests/ \
-  --output docs/testing/TEST_OPTIMIZATION.md
-```
-
-**Output**:
-- `TEST_OPTIMIZATION.md` - Parallelization, mocking, consolidation opportunities
-
-**Real Results**:
-- 1,340 parallelizable tests
-- 141 tests needing mocks
-- 137.5s potential savings
-
-#### 3. Smart Test Selector
-**File**: `tools/smart_test_selection.py`
-
-**Purpose**: Run only tests affected by code changes
-
-```bash
-# Compare to last commit
-python -m tools.smart_test_selection \
-  --since HEAD~1 \
-  --output selected_tests.txt \
-  --report docs/testing/SMART_SELECTION.md
-
-# Run selected tests
-pytest $(cat selected_tests.txt)
-```
-
-**Output**:
-- `selected_tests.txt` - List of affected tests
-- `SMART_SELECTION.md` - Selection report
-
-**Real Results**:
-- 17 files changed → 12 tests (0.5% of suite)
-- **203x speedup** for incremental development
-
-### Shell Scripts (`/scripts/`)
-
-#### 1. Profile Tests
-**File**: `scripts/profile_tests.sh`
-
-```bash
-# Profile full suite
-./scripts/profile_tests.sh
-
-# With custom threshold
-./scripts/profile_tests.sh tests/ 0.5
-```
-
-#### 2. Run Smart Tests
-**File**: `scripts/run_smart_tests.sh`
-
-```bash
-# Compare to last commit
-./scripts/run_smart_tests.sh
-
-# Compare to main branch
-./scripts/run_smart_tests.sh main
-
-# With pytest options
-./scripts/run_smart_tests.sh HEAD~1 -v --tb=short
-```
-
-#### 3. Optimize Tests
-**File**: `scripts/optimize_tests.sh`
-
-```bash
-# Analyze full suite
-./scripts/optimize_tests.sh
-
-# Analyze specific directory
-./scripts/optimize_tests.sh tests/unit/
-```
+**Key Metrics**:
+- **5,822 tests** passing (100% pass rate)
+- **164 tests** skipped (Ollama integration tests without Docker)
+- **3:51 execution time** for full suite
+- **175+ test files** across codebase
 
 ---
 
-## 📊 Performance Metrics
+## Critical Requirements
 
-### Current Baseline
-- **Runtime**: 226 seconds
-- **Test Count**: 2,438 tests
-- **Average**: 0.09s per test
+### MUST Use Official Test Runner
 
-### Optimization Potential
-
-| Phase | Duration | Actions | Runtime | Speedup |
-|-------|----------|---------|---------|---------|
-| Current | - | Baseline | 226s | 1.0x |
-| Phase 1 | 1 day | Parallel + mocks | ~100s | 2.3x |
-| Phase 2 | 3 days | Fixtures + E2E | ~70s | 3.2x |
-| Phase 3 | 1 week | Consolidation | <60s | **3.8x** ✅ |
-
-### Already Achieved
-- ✅ Smart selection: **203x speedup**
-- ✅ 1,340 parallelizable tests identified
-- ✅ 141 mocking opportunities found
-- ✅ 137.5s savings potential
-
----
-
-## 🎯 Common Workflows
-
-### Development Workflow
-
+**✅ CORRECT:**
 ```bash
-# 1. Make code changes
-vim coding_agent/coder.py
-
-# 2. Run affected tests only (fast!)
-./scripts/run_smart_tests.sh
-
-# 3. Before commit: full validation
 python run_tests.py --run-all
 ```
 
-### Profiling Workflow
-
+**❌ INCORRECT (Will Segfault):**
 ```bash
-# 1. Identify bottlenecks
-./scripts/profile_tests.sh
-
-# 2. Analyze optimizations
-./scripts/optimize_tests.sh
-
-# 3. Review reports
-cat docs/testing/PERFORMANCE_PROFILE.md
-cat docs/testing/TEST_OPTIMIZATION.md
-
-# 4. Implement fixes and re-profile
-./scripts/profile_tests.sh
+.venv/bin/python -m pytest tests/  # AVOID - Python 3.13 incompatibility
 ```
+
+### Why Direct pytest Fails
+
+Python 3.13.7 + agency-swarm has threading bugs in `agents/tracing/processors.py:268`:
+- Direct pytest execution causes segmentation faults at ~74% progress
+- Official test runner uses `uv run pytest` with proper environment isolation
+- Memory-aware parallelism prevents resource contention
 
 ---
 
-**Start Here**: [Quick Start Guide](QUICK_START_PROFILING.md) 🚀
+## Test Categories
+
+### Unit Tests (5,822 total)
+- **Agent Tests**: 10 agent modules with factory pattern tests
+- **Tool Tests**: 56+ production tools with security/validation tests
+- **Memory Tests**: VectorStore, EnhancedMemoryStore, Anthropic Memory Tool
+- **Infrastructure Tests**: Shared modules, model policy, type definitions
+- **Constitutional Tests**: Governance framework enforcement
+
+### Integration Tests (164 - Requires Docker)
+- **Ollama Tests**: Local model integration (Q8_0 quantization)
+- **End-to-End Workflows**: Multi-agent orchestration scenarios
+- **Docker Compose**: Automated Ollama container lifecycle
 
 ---
 
-## Phase 2A: Test Bloat Removal
+## Test Execution Modes
 
-**Status**: READY FOR EXECUTION
-**Goal**: Remove 731 experimental tests (24.7% reduction) to achieve Mars-ready efficiency
-
-### Quick Access
-
-- **Executive Summary**: [PHASE_2A_EXECUTIVE_SUMMARY.md](PHASE_2A_EXECUTIVE_SUMMARY.md) - Start here (5 min read)
-- **Quick Reference**: [PHASE_2A_QUICK_REFERENCE.md](PHASE_2A_QUICK_REFERENCE.md) - Fast lookup table
-- **Full Analysis**: [PHASE_2A_BLOAT_ANALYSIS.md](PHASE_2A_BLOAT_ANALYSIS.md) - Complete report
-- **Data (JSON)**: [phase_2a_bloat_detailed.json](phase_2a_bloat_detailed.json) - Machine-readable
-- **Execution Script**: [../scripts/phase_2a_delete_bloat.sh](../../scripts/phase_2a_delete_bloat.sh)
-
-### Analysis Results
-
-```
-Current State:  2,965 tests, 153 files, ~296s runtime
-After Phase 2A: 2,234 tests, 118 files, ~223s runtime
-Impact:         -731 tests (-24.7%), 1.33x faster
-```
-
-### Bloat Breakdown
-
-| Category | Files | Tests | Lines | Action |
-|----------|-------|-------|-------|--------|
-| Trinity Protocol | 19 | 139 | 9,364 | DELETE |
-| DSPy A/B Testing | 6 | 248 | 6,469 | DELETE |
-| Archived Legacy | 7 | 24 | 4,514 | DELETE |
-| Other Experimental | 3 | 320 | 2,500 | DELETE |
-| **Total** | **35** | **731** | **22,847** | **REMOVE** |
-
-### Execute Now
-
+### Standard (Unit Tests Only)
 ```bash
-cd /Users/am/Code/Agency
-bash scripts/phase_2a_delete_bloat.sh
+python run_tests.py --run-all
 ```
+- Fastest execution (~4 minutes)
+- Skips 164 Ollama integration tests
+- Safe for CI/CD environments without Docker
 
-### NECESSARY Framework
+### With Docker (Full Suite)
+```bash
+python run_tests.py --with-docker --run-all
+```
+- Enables 164 Ollama integration tests
+- Requires Docker Desktop or Docker Engine
+- Auto-manages Ollama container lifecycle
 
-Tests scored 0-9 on these criteria:
-1. **N**ecessary - Tests production code (not experimental)
-2. **E**xplicit - Clear what's being tested
-3. **C**omplete - Tests full behavior
-4. **E**fficient - Fast execution (<1s ideal)
-5. **S**table - No flaky/timing dependencies
-6. **S**coped - One concern per test
-7. **A**ctionable - Clear failure messages
-8. **R**elevant - Tests current architecture
-9. **Y**ieldful - Catches real bugs
-
-**Threshold**: Tests scoring <4 are bloat. However, experimental tests are removed regardless of score.
-
-### Next Phases
-
-- **Phase 2A.2**: Consolidate 10 duplicate test groups (~100 tests)
-- **Phase 2B**: Optimize slow/complex tests
-- **Phase 2C**: Mars-ready parallelization and caching
+### Fast Mode
+```bash
+python run_tests.py --fast
+```
+- Quick smoke tests for rapid feedback
+- Useful during active development
 
 ---
 
-*Generated by Auditor Agent - 2025-10-03*
+## Test Runner Architecture
+
+### Memory-Aware Parallelism
+
+The test runner automatically adjusts worker count based on system resources:
+
+```python
+from tools.memory_aware_test_runner import get_safe_worker_count
+
+worker_count = get_safe_worker_count()
+# Returns:
+# - 1 worker if <10GB RAM available
+# - 3 workers if local model active (prevents exhaustion)
+# - 10 workers for cloud-only execution
+# - 6 workers for moderate systems
+```
+
+**Benefits**:
+- Prevents OOM crashes
+- Optimizes for M1/M2/M3 Mac unified memory
+- Adapts to local Ollama model presence
+
+### Test Runner Features
+
+1. **Environment Isolation**: Uses `uv run pytest` for clean environments
+2. **Threading Safety**: Avoids Python 3.13 + agency-swarm conflicts
+3. **Docker Integration**: Auto-detects and manages Ollama containers
+4. **Progress Tracking**: Real-time test execution feedback
+5. **Result Aggregation**: Clear pass/fail/skip reporting
+
+---
+
+## Constitutional Requirements
+
+### Article I: Complete Context Before Action
+- **ALL tests MUST run to completion** (never partial results)
+- Retry on timeout (2x, 3x, up to 10x)
+- Fix failing tests BEFORE new features
+
+### Article II: 100% Verification and Stability
+- **Main branch: 100% test success ALWAYS** (no exceptions)
+- No merge without 100% test pass
+- Definition of Done: Code + Tests + Pass + Review ✓
+
+### Article III: Automated Local Enforcement
+- Pre-commit hooks validate test success
+- No manual overrides for quality standards
+- CI/CD is OPTIONAL (local enforcement sufficient)
+
+---
+
+## Python Version Compatibility
+
+### Recommended: Python 3.12
+- ✅ Stable with agency-swarm
+- ✅ No known threading issues
+- ✅ Production-ready
+
+### Python 3.13 (Known Issues)
+- ⚠️ **Segfaults** with direct pytest execution
+- ⚠️ Threading bugs in agency-swarm dependency
+- ⚠️ Requires official test runner (`python run_tests.py`)
+
+**Workaround**: Always use `python run_tests.py` on Python 3.13
+
+---
+
+## CI/CD Status
+
+### GitHub Actions: ❌ BLOCKED
+- **Issue**: Billing/payment failure
+- **Impact**: No automated test runs on push
+- **Workaround**: Manual local validation required
+- **Status**: External blocker, requires repository owner action
+
+### Local Enforcement: ✅ ACTIVE
+- Pre-commit hooks validate changes
+- Branch protection via local tests
+- Constitutional compliance enforced locally
+
+---
+
+## Troubleshooting
+
+### Segmentation Faults
+**Symptom**: Tests crash at ~74% progress with "Fatal Python error: Segmentation fault"
+
+**Solution**:
+```bash
+# Use official test runner (NOT direct pytest)
+python run_tests.py --run-all
+```
+
+### Collection Errors
+**Symptom**: `ImportError: No module named 'sklearn'`
+
+**Solution**:
+```bash
+pip install scikit-learn>=1.0.0
+```
+
+### Docker Integration Issues
+**Symptom**: Ollama tests skipped or container unhealthy
+
+**Solution**:
+```bash
+# Start Ollama container
+docker compose up -d
+
+# Verify health
+docker compose ps
+docker compose logs ollama
+
+# Run tests with Docker
+python run_tests.py --with-docker --run-all
+```
+
+---
+
+## Test Writing Standards
+
+### TDD Workflow (Article VI)
+1. **RED**: Write failing test first
+2. **GREEN**: Implement minimum code to pass
+3. **REFACTOR**: Improve while maintaining green
+
+### Value-First Testing (Article VII)
+- Test NECESSARY functionality (not trivial behavior)
+- Focus on business value scenarios
+- Avoid testing framework internals
+
+### Test Patterns
+
+**AAA Pattern** (Arrange-Act-Assert):
+```python
+def test_feature():
+    # Arrange: Set up test data
+    context = create_agent_context()
+
+    # Act: Execute functionality
+    result = some_function(context)
+
+    # Assert: Verify outcomes
+    assert result.is_ok()
+    assert result.unwrap() == expected_value
+```
+
+**Result Pattern** (Type-Safe Errors):
+```python
+def test_error_handling():
+    result = risky_operation()
+
+    assert result.is_err()
+    assert isinstance(result.unwrap_err(), ExpectedError)
+```
+
+---
+
+## Related Documentation
+
+- **Test Status**: [ACTUAL_TEST_STATUS.md](ACTUAL_TEST_STATUS.md) - Current test health
+- **Architecture**: [../ARCHITECTURE.md](../ARCHITECTURE.md) - Technical architecture overview
+- **Constitution**: [../../constitution.md](../../constitution.md) - Testing governance (Articles I-VII)
+- **ADR-002**: Verification and stability mandate
+- **ADR-023**: Memory-aware test execution
+
+---
+
+## Quick Reference
+
+| Command | Purpose | Duration |
+|---------|---------|----------|
+| `python run_tests.py --run-all` | Full unit suite | ~4 min |
+| `python run_tests.py --fast` | Quick smoke tests | <1 min |
+| `python run_tests.py --with-docker --run-all` | Full suite + integration | ~5 min |
+| `python run_tests.py --integration-only` | Ollama tests only | ~1 min |
+
+---
+
+**Last Updated**: 2025-01-30
+**Status**: 100% pass rate maintained
+**Next Milestone**: CI/CD billing resolution

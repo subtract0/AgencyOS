@@ -72,7 +72,7 @@ agency.py                   Main orchestration, agent wiring, shared context
 
 ### **Governance & Specifications**
 ```
-constitution.md             5 Articles (MUST READ before action)
+constitution.md             7 Articles (MUST READ before action)
 docs/adr/                   15 ADRs (context, verification, learning, spec-driven, SDK)
 specs/                      Formal specifications (spec-kit: Goals, Personas, Criteria)
 plans/                      Technical plans (architecture, agents, tools, contracts)
@@ -98,7 +98,7 @@ logs/telemetry/             Metrics, events, performance data
 ## **🎯 Quick Reference Card**
 
 ### **Critical Files** (Read These First)
-1. **`constitution.md`** - 5 Articles, MANDATORY compliance before any action
+1. **`constitution.md`** - 7 Articles, MANDATORY compliance before any action
 2. **`docs/adr/ADR-INDEX.md`** - 15 architectural decisions (context, verification, learning)
 3. **`agency.py`** - Agent orchestration, shared memory/context initialization
 4. **`shared/model_policy.py`** - Per-agent model selection (gpt-5, gpt-5-mini)
@@ -141,8 +141,8 @@ def process() -> Result[Data, Error]:
 
 ### **Test Execution**
 ```bash
-python run_tests.py --run-all    # 1,762 tests (unit only, skips 140 Ollama tests)
-python run_tests.py --with-docker --run-all    # 1,762 tests (full suite with Ollama)
+python run_tests.py --run-all    # 5,822 tests passing (164 skipped, 100% pass rate)
+python run_tests.py --with-docker --run-all    # Full suite with Ollama integration tests
 python run_tests.py              # Unit tests only
 python run_tests.py --with-docker --integration-only  # Ollama integration tests
 uv run pytest                    # Backend tests
@@ -188,7 +188,19 @@ Read **`constitution.md`** in full before any action. Summary:
 - All implementation traces to specification
 - Living documents updated during implementation
 
-**Validation**: Every agent MUST validate actions against all 5 articles before proceeding.
+### **Article VI: Red-Green-Refactor TDD Workflow**
+- Tests written FIRST (they MUST fail initially - RED phase)
+- Implementation SECOND (iterate until 100% pass - GREEN phase)
+- Refactor THIRD (improve code while maintaining green tests - REFACTOR phase)
+- NO "pragmatic shortcuts" that skip RED phase
+
+### **Article VII: Value-First Testing Philosophy**
+- Tests validate NECESSARY functionality (not trivial/obvious behavior)
+- Focus on value-adding scenarios
+- Avoid testing framework internals or language primitives
+- Each test should answer: "What business value does this protect?"
+
+**Validation**: Every agent MUST validate actions against all 7 articles before proceeding.
 
 ---
 
@@ -530,7 +542,7 @@ USE_ENHANCED_MEMORY=true              # REQUIRED: VectorStore integration (const
 FRESH_USE_FIRESTORE=false             # Optional Firestore backend
 
 # Testing
-FORCE_RUN_ALL_TESTS=1                 # Full test suite (1,562 tests)
+FORCE_RUN_ALL_TESTS=1                 # Full test suite (5,822 tests passing, 164 skipped)
 ```
 
 ### **Local Model Setup (96% Cost Reduction)**
@@ -611,7 +623,7 @@ python agency.py run                  # Interactive demo
 python agency.py health               # System health check
 
 # Testing (MUST be 100% pass rate)
-python run_tests.py --run-all         # Full validation (1,562 tests)
+python run_tests.py --run-all         # Full validation (5,822 passing, 164 skipped, 100% pass rate)
 python run_tests.py                   # Unit tests only
 python run_tests.py --integration-only
 
@@ -649,19 +661,19 @@ python run_tests.py --run-all         # Must show 100% pass rate
 
 **Leap 2: Smart Factory** (Planned) - Task graph DSL, reusable templates, constitutional validation per node
 
-**Leap 1: Foundation** ✅ (2024-2025) - 10 agents, 5-Article Constitution, three-tier memory, 1,636 tests
+**Leap 1: Foundation** ✅ (2024-2025) - 10 agents, 7-Article Constitution, three-tier memory, 5,822 tests (164 skipped)
 
 ---
 
 ## **📊 Production Metrics**
 
-- **1,762+ tests** passing with 100% success rate (+37 new Leap 7 test-driven autonomy tests)
+- **5,822 tests** passing (164 skipped) with 100% pass rate
 - **Zero test failures** under constitutional enforcement (TDD protocol mandatory)
-- **<3 seconds** for constitutional test suite validation
-- **175 test files** total across codebase (+7 new Leap 7 test files)
+- **<4 minutes** for full test suite execution (3:51 with proper test runner)
+- **175+ test files** total across codebase
 - **>95% healing success rate** for autonomous fixes
-- **100% constitutional compliance** across all agents (Articles I-V)
-- **41 production tools** with security hardening (+5 new Leap 7 TDD tools)
+- **100% constitutional compliance** across all agents (Articles I-VII)
+- **56+ production tools** with security hardening
 - **Test-Driven Autonomy** operational (Leap 7 complete: TDD protocol, NECESSARY validator, test gate, PR creator, two-stage workflow)
 - **Quality Feedback Loop** operational (Leap 4 complete: misclassification detection, VectorStore refinement, real-time monitoring)
 - **Adaptive Routing Architecture** operational (Leap 8: QLoRA pipeline validated, complexity classification framework ready, pivot to code-optimized models)
@@ -676,7 +688,7 @@ python run_tests.py --run-all         # Must show 100% pass rate
 4. **NEVER** proceed with incomplete context (retry timeouts 2x, 3x, 10x)
 5. **NEVER** merge without 100% test success (no exceptions)
 6. **ALWAYS** write tests BEFORE implementation (TDD is mandatory)
-7. **ALWAYS** validate against all 5 constitutional articles before action
+7. **ALWAYS** validate against all 7 constitutional articles before action
 8. **NEVER STOP PREMATURELY** - Work until >85% context OR task complete OR blocked
 
 ## **🤖 Autonomous Execution Protocol (AEP)**
