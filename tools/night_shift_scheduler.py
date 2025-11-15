@@ -312,7 +312,8 @@ class NightShiftScheduler:
                 # Record CMP event (success)
                 self._record_cmp_event(task, execution_result, success=True)
 
-                return execution_result
+                # Return success flag for run_cycle() to count completions
+                return {"success": True, **execution_result}
             else:
                 error = result.unwrap_err()
                 logger.error(f"Task execution failed: {error}")
