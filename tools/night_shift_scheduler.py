@@ -42,6 +42,8 @@ from shared.type_definitions.result import Err, Ok, Result
 from tools.backlog_agent import BacklogStorage
 from tools.health_monitor import HealthMonitor
 from tools.primex_orchestrator import PrimeXOrchestrator
+from tools.auto_recovery import AutoRecovery
+from agency_memory.learning import CmpStore
 
 logger = logging.getLogger(__name__)
 
@@ -108,6 +110,8 @@ class NightShiftScheduler:
         self.backlog_storage = BacklogStorage()
         self.orchestrator = PrimeXOrchestrator(backlog_storage=self.backlog_storage)
         self.health_monitor = HealthMonitor(state_dir=str(self.state_dir))
+        self.auto_recovery = AutoRecovery(state_dir=str(self.state_dir))
+        self.cmp_store = CmpStore()
 
         # Setup logging
         self._setup_logging()
@@ -116,6 +120,7 @@ class NightShiftScheduler:
         """Setup logging to file and console."""
         log_file = self.log_dir / f"{datetime.now().strftime('%Y-%m-%d')}.log"
 
+        # Primary log handler (~/.agency/logs/night_shift/)
         file_handler = logging.FileHandler(log_file)
         file_handler.setLevel(logging.INFO)
         file_handler.setFormatter(
@@ -124,6 +129,19 @@ class NightShiftScheduler:
 
         logger.addHandler(file_handler)
         logger.setLevel(logging.INFO)
+
+        # Mirror log handler (workspace logs/night_shift/)
+        workspace_log_dir = Path.cwd() / "logs" / "night_shift"
+        workspace_log_dir.mkdir(parents=True, exist_ok=True)
+        workspace_log_file = workspace_log_dir / f"{datetime.now().strftime('%Y-%m-%d')}.log"
+
+        workspace_handler = logging.FileHandler(workspace_log_file)
+        workspace_handler.setLevel(logging.INFO)
+        workspace_handler.setFormatter(
+            logging.Formatter("%(asctime)s - %(name)s - %(levelname)s - %(message)s")
+        )
+
+        logger.addHandler(workspace_handler)
 
     def _handle_shutdown_signal(self, signum, frame):
         """Handle shutdown signals (SIGTERM, SIGINT)."""
@@ -260,7 +278,7 @@ class NightShiftScheduler:
 
     def _execute_task(self, task) -> dict[str, Any]:
         """
-        Execute a single task using primeX orchestrator.
+        Execute a single task using primeX orchestrator with AutoRecovery and CMP tracking.
 
         Args:
             task: Task to execute
@@ -268,29 +286,98 @@ class NightShiftScheduler:
         Returns:
             dict: Execution result
         """
+        snapshot = None
+        start_time = datetime.now()
+
         try:
             # Set current task
             self.state.current_task_id = task.id
             self.save_state()
 
-            # Execute via primeX orchestrator
+            # Phase 1: Create snapshot before execution (AutoRecovery)
+            logger.info(f"Creating snapshot for task {task.id}")
+            snapshot = self.auto_recovery.create_snapshot(task.id)
+            logger.info(f"Snapshot created: {snapshot}")
+
+            # Phase 2: Execute via primeX orchestrator
             # Note: Task status is updated to IN_PROGRESS inside execute_task()
             # Execute THE SPECIFIC TASK (not auto-select)
             result = self.orchestrator.execute_task(task)
 
+            # Phase 3: Handle result
             if result.is_ok():
-                return result.unwrap()
+                execution_result = result.unwrap()
+
+                # Record CMP event (success)
+                self._record_cmp_event(task, execution_result, success=True)
+
+                return execution_result
             else:
-                return {"success": False, "error": str(result.unwrap_err())}
+                error = result.unwrap_err()
+                logger.error(f"Task execution failed: {error}")
+
+                # Record CMP event (failure)
+                self._record_cmp_event(task, {"error": str(error)}, success=False)
+
+                # Phase 4: Auto-recovery on failure
+                if snapshot:
+                    logger.info("Attempting auto-recovery...")
+                    self.state.total_escalations += 1
+                    # Note: For now we just log the failure and move on
+                    # Future: Implement retry logic and rollback
+
+                return {"success": False, "error": str(error)}
 
         except Exception as e:
-            logger.error(f"Task execution failed: {e}", exc_info=True)
+            logger.error(f"Task execution failed with exception: {e}", exc_info=True)
+
+            # Record CMP event (exception)
+            self._record_cmp_event(task, {"error": str(e), "exception": True}, success=False)
+
+            # Escalate on exception
+            if snapshot:
+                self.state.total_escalations += 1
+
             return {"success": False, "error": str(e)}
 
         finally:
             # Clear current task
             self.state.current_task_id = None
             self.save_state()
+
+    def _record_cmp_event(self, task, execution_result: dict[str, Any], success: bool):
+        """
+        Record CMP (Clade Metaproductivity) event for learning.
+
+        Args:
+            task: Task that was executed
+            execution_result: Execution result dictionary
+            success: Whether the task succeeded
+        """
+        try:
+            # Generate clade ID (simplified version)
+            # Format: agent::model::task_type::strategy
+            clade_id = f"night_shift::primex::{task.task_type.value}::auto"
+
+            # Record event
+            self.cmp_store.record_event(
+                clade_id=clade_id,
+                task_type=f"night_shift_{task.task_type.value}",
+                outcome="approved" if success else "rejected",
+                metadata={
+                    "task_id": task.id,
+                    "task_title": task.title,
+                    "task_priority": task.priority.value,
+                    "pr_url": execution_result.get("pr_url"),
+                    "tests_passed": execution_result.get("tests_passed", False),
+                    "error": execution_result.get("error") if not success else None,
+                },
+            )
+
+            logger.info(f"CMP event recorded: {clade_id} - {task.id} - {'success' if success else 'failure'}")
+
+        except Exception as e:
+            logger.warning(f"Failed to record CMP event: {e}")
 
     def run(self):
         """
