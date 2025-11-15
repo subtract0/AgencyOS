@@ -1,0 +1,234 @@
+{
+  "runtime_hours": 1,
+  "opportunities_collected": 12,
+  "opportunities": [
+    {
+      "problem": "Real estate investors struggle to find and evaluate profitable deals quickly.",
+      "solution_name": "DealFlow Pro",
+      "solution_category": "Real Estate SaaS",
+      "source_url": "https://reddit.com/r/Entrepreneur/comments/16vjoj8/my_secret_steps_to_becoming_a_millionaire/",
+      "evidence": {
+        "revenue": null,
+        "users": null,
+        "growth": null,
+        "testimonials": [],
+        "market_size": null
+      },
+      "maintainability_score": 0.6,
+      "profitability_score": 0.9,
+      "digital_score": 1.0,
+      "overall_score": 0.8400000000000001,
+      "collected_at": 1762653919,
+      "metadata": {}
+    },
+    {
+      "problem": "It eliminates the need for physical inventory when selling custom-designed products on Amazon.",
+      "solution_name": "Shopify\u2011Amazon Print\u2011on\u2011Demand Integration",
+      "solution_category": "SaaS",
+      "source_url": "https://reddit.com/r/Entrepreneur/comments/5ob55t/3_months_ago_i_posted_the_exact_process_on_how_i/",
+      "evidence": {
+        "revenue": null,
+        "users": null,
+        "growth": null,
+        "testimonials": [],
+        "market_size": null
+      },
+      "maintainability_score": 0.6,
+      "profitability_score": 0.9,
+      "digital_score": 1.0,
+      "overall_score": 0.8400000000000001,
+      "collected_at": 1762653925,
+      "metadata": {}
+    },
+    {
+      "problem": "People struggle to build sustainable side businesses with realistic expectations and support, leading to burnout and disillusionment.",
+      "solution_name": "SideHustleSense",
+      "solution_category": "SaaS",
+      "source_url": "https://reddit.com/r/Entrepreneur/comments/9p8g63/so_im_done_with_all_this_hustle_lifestyle/",
+      "evidence": {
+        "revenue": "$48k/month",
+        "users": "11k users",
+        "growth": "14% MoM",
+        "testimonials": [],
+        "market_size": null
+      },
+      "maintainability_score": 0.6,
+      "profitability_score": 0.9,
+      "digital_score": 1.0,
+      "overall_score": 0.8400000000000001,
+      "collected_at": 1762653963,
+      "metadata": {}
+    },
+    {
+      "problem": "People need a way to store passwords securely without using obvious text.",
+      "solution_name": "Mojicode",
+      "solution_category": "SaaS",
+      "source_url": "https://reddit.com/r/SideProject/comments/1mium40/my_silly_secret_chat_app_got_its_first_paying/",
+      "evidence": {
+        "revenue": null,
+        "users": null,
+        "growth": null,
+        "testimonials": [],
+        "market_size": null
+      },
+      "maintainability_score": 0.6,
+      "profitability_score": 0.9,
+      "digital_score": 1.0,
+      "overall_score": 0.8400000000000001,
+      "collected_at": 1762653976,
+      "metadata": {}
+    },
+    {
+      "problem": "Beginners struggle to find a clear, step-by-step SEO process that consistently ranks sites.",
+      "solution_name": "Secret Sauce: The Ultimate Growth Hacking Guide (SEO tutorial chapter)",
+      "solution_category": null,
+      "source_url": "https://reddit.com/r/Entrepreneur/comments/4wbdcz/seo_is_not_hard_a_stepbystep_seo_tutorial_for/",
+      "evidence": {
+        "revenue": null,
+        "users": null,
+        "growth": null,
+        "testimonials": [],
+        "market_size": null
+      },
+      "maintainability_score": 0.6,
+      "profitability_score": 0.6,
+      "digital_score": 1.0,
+      "overall_score": 0.72,
+      "collected_at": 1762653992,
+      "metadata": {}
+    },
+    {
+      "problem": "People miss out on quickly selling out nicotine pouch stock due to lack of real-time availability alerts.",
+      "solution_name": "Nicotine Pouch Stock Alert Bot",
+      "solution_category": "SaaS",
+      "source_url": "https://reddit.com/r/Entrepreneur/comments/1gjap3l/how_i_made_15k_in_a_month_with_a_simple_python/",
+      "evidence": {
+        "revenue": "$15k/month",
+        "users": null,
+        "growth": null,
+        "testimonials": [],
+        "market_size": null
+      },
+      "maintainability_score": 0.6,
+      "profitability_score": 0.9,
+      "digital_score": 1.0,
+      "overall_score": 0.8400000000000001,
+      "collected_at": 1762654015,
+      "metadata": {}
+    },
+    {
+      "problem": "How to create and run a profitable online business without technical or coding expertise.",
+      "solution_name": "Unnamed No-code App Builder",
+      "solution_category": "SaaS",
+      "source_url": "https://reddit.com/r/Entrepreneur/comments/g2ukmw/alright_you_fucks/",
+      "evidence": {
+        "revenue": null,
+        "users": null,
+        "growth": null,
+        "testimonials": [],
+        "market_size": null
+      },
+      "maintainability_score": 0.6,
+      "profitability_score": 0.9,
+      "digital_score": 1.0,
+      "overall_score": 0.8400000000000001,
+      "collected_at": 1762654023,
+      "metadata": {}
+    },
+    {
+      "problem": "People constantly seek ways to satisfy deep desires or alleviate fears, driving endless demand.",
+      "solution_name": "DesireSync",
+      "solution_category": "SaaS",
+      "source_url": "https://reddit.com/r/Entrepreneur/comments/1imyvf0/like_it_or_not_these_6_industries_will_always/",
+      "evidence": {
+        "revenue": null,
+        "users": null,
+        "growth": null,
+        "testimonials": [],
+        "market_size": null
+      },
+      "maintainability_score": 0.6,
+      "profitability_score": 0.9,
+      "digital_score": 1.0,
+      "overall_score": 0.8400000000000001,
+      "collected_at": 1762654031,
+      "metadata": {}
+    },
+    {
+      "problem": "Event organizers struggle to quickly find and book reliable valet services for one\u2011off or high\u2011end events.",
+      "solution_name": "ValetHub",
+      "solution_category": "SaaS",
+      "source_url": "https://reddit.com/r/Entrepreneur/comments/aylx5g/how_i_made_2k_in_a_day_pretending_to_own_a_valet/",
+      "evidence": {
+        "revenue": null,
+        "users": null,
+        "growth": null,
+        "testimonials": [],
+        "market_size": null
+      },
+      "maintainability_score": 0.6,
+      "profitability_score": 0.9,
+      "digital_score": 1.0,
+      "overall_score": 0.8400000000000001,
+      "collected_at": 1762654055,
+      "metadata": {}
+    },
+    {
+      "problem": "It helps entrepreneurs and marketers easily grow website traffic and business metrics with simple, free tools.",
+      "solution_name": "Sumo",
+      "solution_category": "SaaS",
+      "source_url": "https://reddit.com/r/Entrepreneur/comments/6d24rb/11_years_ago_i_got_a_428_million_dollar_lesson/",
+      "evidence": {
+        "revenue": null,
+        "users": null,
+        "growth": null,
+        "testimonials": [],
+        "market_size": null
+      },
+      "maintainability_score": 0.6,
+      "profitability_score": 0.9,
+      "digital_score": 1.0,
+      "overall_score": 0.8400000000000001,
+      "collected_at": 1762654062,
+      "metadata": {}
+    },
+    {
+      "problem": "People need instant, human-like conversational assistance without hiring staff.",
+      "solution_name": "AI Chatbot SaaS",
+      "solution_category": "SaaS",
+      "source_url": "https://reddit.com/r/SideProject/comments/1o3zs4w/someone_just_took_a_1bn_lifetime_plan_of_my_ai/",
+      "evidence": {
+        "revenue": null,
+        "users": null,
+        "growth": null,
+        "testimonials": [],
+        "market_size": null
+      },
+      "maintainability_score": 0.6,
+      "profitability_score": 0.6,
+      "digital_score": 1.0,
+      "overall_score": 0.72,
+      "collected_at": 1762654069,
+      "metadata": {}
+    },
+    {
+      "problem": "People lack a clear, proven method to launch and profitably grow an ecommerce store from zero experience using Google traffic.",
+      "solution_name": "Zero\u2011Experience Ecommerce Ranking Process",
+      "solution_category": null,
+      "source_url": "https://reddit.com/r/Entrepreneur/comments/5vtkwo/for_11_years_i_have_been_ranking_ecommerce_stores/",
+      "evidence": {
+        "revenue": null,
+        "users": null,
+        "growth": null,
+        "testimonials": [],
+        "market_size": null
+      },
+      "maintainability_score": 0.6,
+      "profitability_score": 0.9,
+      "digital_score": 1.0,
+      "overall_score": 0.8400000000000001,
+      "collected_at": 1762654093,
+      "metadata": {}
+    }
+  ]
+}

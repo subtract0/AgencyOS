@@ -1,0 +1,367 @@
+{
+  "runtime_hours": 3,
+  "opportunities_collected": 19,
+  "opportunities": [
+    {
+      "problem": "It addresses the risk that losing net neutrality will disadvantage small businesses by increasing costs and threatening their online viability.",
+      "solution_name": "Battle for the Net",
+      "solution_category": null,
+      "source_url": "https://reddit.com/r/Entrepreneur/comments/7ekxi7/hey_if_anyone_should_care_about_net_neutrality/",
+      "evidence": {
+        "revenue": null,
+        "users": null,
+        "growth": null,
+        "testimonials": [],
+        "market_size": null
+      },
+      "maintainability_score": 0.6,
+      "profitability_score": 0.6,
+      "digital_score": 1.0,
+      "overall_score": 0.72,
+      "collected_at": 1762891877,
+      "metadata": {}
+    },
+    {
+      "problem": "People struggle to find a clear, actionable roadmap for building wealth from scratch.",
+      "solution_name": "Millionaire Blueprint Course",
+      "solution_category": "SaaS",
+      "source_url": "https://reddit.com/r/Entrepreneur/comments/16vjoj8/my_secret_steps_to_becoming_a_millionaire/",
+      "evidence": {
+        "revenue": null,
+        "users": null,
+        "growth": null,
+        "testimonials": [],
+        "market_size": null
+      },
+      "maintainability_score": 0.6,
+      "profitability_score": 0.9,
+      "digital_score": 1.0,
+      "overall_score": 0.8400000000000001,
+      "collected_at": 1762891883,
+      "metadata": {}
+    },
+    {
+      "problem": "It lets creators sell custom merchandise online without holding inventory or upfront production costs.",
+      "solution_name": "Shopify\u2011Amazon Print\u2011on\u2011Demand Integration",
+      "solution_category": "SaaS",
+      "source_url": "https://reddit.com/r/Entrepreneur/comments/5ob55t/3_months_ago_i_posted_the_exact_process_on_how_i/",
+      "evidence": {
+        "revenue": null,
+        "users": null,
+        "growth": null,
+        "testimonials": [],
+        "market_size": null
+      },
+      "maintainability_score": 0.6,
+      "profitability_score": 0.9,
+      "digital_score": 1.0,
+      "overall_score": 0.8400000000000001,
+      "collected_at": 1762891890,
+      "metadata": {}
+    },
+    {
+      "problem": "Entrepreneurs suffer from burnout, isolation, and misleading hustle culture that skews expectations of success.",
+      "solution_name": "HustleGuard",
+      "solution_category": "SaaS",
+      "source_url": "https://reddit.com/r/Entrepreneur/comments/9p8g63/so_im_done_with_all_this_hustle_lifestyle/",
+      "evidence": {
+        "revenue": null,
+        "users": null,
+        "growth": null,
+        "testimonials": [],
+        "market_size": null
+      },
+      "maintainability_score": 0.6,
+      "profitability_score": 0.9,
+      "digital_score": 1.0,
+      "overall_score": 0.8400000000000001,
+      "collected_at": 1762891924,
+      "metadata": {}
+    },
+    {
+      "problem": "It provides a fun, memorable way to store passwords by encrypting them into harmless emoji strings.",
+      "solution_name": "Mojicode",
+      "solution_category": "SaaS",
+      "source_url": "https://reddit.com/r/SideProject/comments/1mium40/my_silly_secret_chat_app_got_its_first_paying/",
+      "evidence": {
+        "revenue": null,
+        "users": null,
+        "growth": null,
+        "testimonials": [],
+        "market_size": null
+      },
+      "maintainability_score": 0.6,
+      "profitability_score": 0.9,
+      "digital_score": 1.0,
+      "overall_score": 0.8400000000000001,
+      "collected_at": 1762891938,
+      "metadata": {}
+    },
+    {
+      "problem": "People miss out on quickly selling out nicotine pouch stock and need instant alerts to purchase them before they run out",
+      "solution_name": "Nicotine Pouch Stock Alert Bot",
+      "solution_category": "SaaS",
+      "source_url": "https://reddit.com/r/Entrepreneur/comments/1gjap3l/how_i_made_15k_in_a_month_with_a_simple_python/",
+      "evidence": {
+        "revenue": "$15k/month",
+        "users": "5k followers (potential users)",
+        "growth": "~5000% increase in followers over two weeks",
+        "testimonials": [],
+        "market_size": null
+      },
+      "maintainability_score": 0.6,
+      "profitability_score": 0.9,
+      "digital_score": 1.0,
+      "overall_score": 0.8400000000000001,
+      "collected_at": 1762891979,
+      "metadata": {}
+    },
+    {
+      "problem": "Event organizers struggle to find reliable valet services for private parties.",
+      "solution_name": "QuickValet",
+      "solution_category": "SaaS",
+      "source_url": "https://reddit.com/r/Entrepreneur/comments/aylx5g/how_i_made_2k_in_a_day_pretending_to_own_a_valet/",
+      "evidence": {
+        "revenue": null,
+        "users": null,
+        "growth": null,
+        "testimonials": [],
+        "market_size": null
+      },
+      "maintainability_score": 0.6,
+      "profitability_score": 0.9,
+      "digital_score": 1.0,
+      "overall_score": 0.8400000000000001,
+      "collected_at": 1762892020,
+      "metadata": {}
+    },
+    {
+      "problem": "It helps entrepreneurs and marketers grow their websites and businesses more effectively.",
+      "solution_name": "Sumo",
+      "solution_category": "SaaS",
+      "source_url": "https://reddit.com/r/Entrepreneur/comments/6d24rb/11_years_ago_i_got_a_428_million_dollar_lesson/",
+      "evidence": {
+        "revenue": null,
+        "users": null,
+        "growth": null,
+        "testimonials": [],
+        "market_size": null
+      },
+      "maintainability_score": 0.6,
+      "profitability_score": 0.9,
+      "digital_score": 1.0,
+      "overall_score": 0.8400000000000001,
+      "collected_at": 1762892027,
+      "metadata": {}
+    },
+    {
+      "problem": "People need instant, intelligent conversational assistance without waiting for human support.",
+      "solution_name": "AI Chatbot SaaS",
+      "solution_category": "SaaS",
+      "source_url": "https://reddit.com/r/SideProject/comments/1o3zs4w/someone_just_took_a_1bn_lifetime_plan_of_my_ai/",
+      "evidence": {
+        "revenue": null,
+        "users": null,
+        "growth": null,
+        "testimonials": [],
+        "market_size": null
+      },
+      "maintainability_score": 0.6,
+      "profitability_score": 0.9,
+      "digital_score": 1.0,
+      "overall_score": 0.8400000000000001,
+      "collected_at": 1762892033,
+      "metadata": {}
+    },
+    {
+      "problem": "People lack the knowledge and proven methods to launch and profit from an ecommerce store using Google organic traffic without prior experience.",
+      "solution_name": "Zero\u2011Experience Ecommerce Google Ranking Process",
+      "solution_category": "Ecommerce Consulting / Online Course",
+      "source_url": "https://reddit.com/r/Entrepreneur/comments/5vtkwo/for_11_years_i_have_been_ranking_ecommerce_stores/",
+      "evidence": {
+        "revenue": null,
+        "users": null,
+        "growth": null,
+        "testimonials": [],
+        "market_size": null
+      },
+      "maintainability_score": 0.6,
+      "profitability_score": 0.9,
+      "digital_score": 1.0,
+      "overall_score": 0.8400000000000001,
+      "collected_at": 1762892059,
+      "metadata": {}
+    },
+    {
+      "problem": "Finding affordable, convenient short-term housing near campus during high-demand events like graduation.",
+      "solution_name": "CampusStay",
+      "solution_category": "SaaS",
+      "source_url": "https://reddit.com/r/Entrepreneur/comments/ako3dd/how_i_made_10k_in_one_weekend_as_a_college/",
+      "evidence": {
+        "revenue": null,
+        "users": null,
+        "growth": null,
+        "testimonials": [],
+        "market_size": null
+      },
+      "maintainability_score": 0.6,
+      "profitability_score": 0.9,
+      "digital_score": 1.0,
+      "overall_score": 0.8400000000000001,
+      "collected_at": 1762892083,
+      "metadata": {}
+    },
+    {
+      "problem": "How can a college student generate substantial income without leaving school?",
+      "solution_name": "White-labelled Ecommerce Store",
+      "solution_category": "E-commerce",
+      "source_url": "https://reddit.com/r/Entrepreneur/comments/10mxbuk/made_200k_last_year_while_still_in_college/",
+      "evidence": {
+        "revenue": "$16.7k/month",
+        "users": null,
+        "growth": "700% YoY",
+        "testimonials": [],
+        "market_size": null
+      },
+      "maintainability_score": 0.6,
+      "profitability_score": 0.9,
+      "digital_score": 1.0,
+      "overall_score": 0.8400000000000001,
+      "collected_at": 1762892106,
+      "metadata": {}
+    },
+    {
+      "problem": "It eliminates the time-consuming effort of manually creating landing pages by instantly generating copy and images from simple text inputs.",
+      "solution_name": "makelanding",
+      "solution_category": "SaaS",
+      "source_url": "https://reddit.com/r/Entrepreneur/comments/186nc6f/i_sold_my_ai_tool_for_35000/",
+      "evidence": {
+        "revenue": null,
+        "users": null,
+        "growth": null,
+        "testimonials": [],
+        "market_size": null
+      },
+      "maintainability_score": 0.6,
+      "profitability_score": 0.9,
+      "digital_score": 1.0,
+      "overall_score": 0.8400000000000001,
+      "collected_at": 1762892122,
+      "metadata": {}
+    },
+    {
+      "problem": "People struggle to preserve cherished memories as tangible, high-quality 3D representations.",
+      "solution_name": "3D Bust Maker",
+      "solution_category": "SaaS",
+      "source_url": "https://reddit.com/r/SideProject/comments/1m35078/i_made_3d_bust_maker_immortalize_your_special/",
+      "evidence": {
+        "revenue": null,
+        "users": null,
+        "growth": null,
+        "testimonials": [],
+        "market_size": null
+      },
+      "maintainability_score": 0.6,
+      "profitability_score": 0.9,
+      "digital_score": 1.0,
+      "overall_score": 0.8400000000000001,
+      "collected_at": 1762892128,
+      "metadata": {}
+    },
+    {
+      "problem": "It attempts to solve the absurd notion of enabling dolphins to write software code.",
+      "solution_name": "DolphinCode AI",
+      "solution_category": "SaaS",
+      "source_url": "https://reddit.com/r/SideProject/comments/1hhgr6g/built_an_ai_last_night_that_teaches_dolphins_to/",
+      "evidence": {
+        "revenue": "$1M/month",
+        "users": null,
+        "growth": null,
+        "testimonials": [],
+        "market_size": null
+      },
+      "maintainability_score": 0.6,
+      "profitability_score": 0.9,
+      "digital_score": 1.0,
+      "overall_score": 0.8400000000000001,
+      "collected_at": 1762892143,
+      "metadata": {}
+    },
+    {
+      "problem": "Businesses struggle to monitor and maintain their search ranking as zero-click results reduce visibility.",
+      "solution_name": "SEO RankWatch",
+      "solution_category": "SaaS",
+      "source_url": "https://reddit.com/r/Entrepreneur/comments/1hwa8be/kanye_just_pulled_off_the_greatest_seo_hack_of/",
+      "evidence": {
+        "revenue": null,
+        "users": null,
+        "growth": null,
+        "testimonials": [],
+        "market_size": null
+      },
+      "maintainability_score": 0.6,
+      "profitability_score": 0.9,
+      "digital_score": 1.0,
+      "overall_score": 0.8400000000000001,
+      "collected_at": 1762892156,
+      "metadata": {}
+    },
+    {
+      "problem": "It helps job seekers create resumes that bypass applicant tracking systems and secure more interview opportunities.",
+      "solution_name": "Rezi",
+      "solution_category": "SaaS",
+      "source_url": "https://reddit.com/r/SaaS/comments/1ictasz/im_jacob_i_made_an_ai_resume_saas_that_bypasses/",
+      "evidence": {
+        "revenue": null,
+        "users": "3M+ users",
+        "growth": null,
+        "testimonials": [],
+        "market_size": null
+      },
+      "maintainability_score": 0.6,
+      "profitability_score": 0.9,
+      "digital_score": 1.0,
+      "overall_score": 0.8400000000000001,
+      "collected_at": 1762892170,
+      "metadata": {}
+    },
+    {
+      "problem": "It helps people who lack time or expertise to monitor and care for their houseplants by providing automated visual growth updates.",
+      "solution_name": "PlantTimelapse",
+      "solution_category": "IoT",
+      "source_url": "https://reddit.com/r/SideProject/comments/1nhy9nn/i_invented_a_timelapse_camera_for_houseplants_and/",
+      "evidence": {
+        "revenue": null,
+        "users": null,
+        "growth": null,
+        "testimonials": [],
+        "market_size": null
+      },
+      "maintainability_score": 0.6,
+      "profitability_score": 0.9,
+      "digital_score": 1.0,
+      "overall_score": 0.8400000000000001,
+      "collected_at": 1762892239,
+      "metadata": {}
+    },
+    {
+      "problem": "Creators struggle to craft headlines and thumbnails that consistently attract clicks and retain viewers.",
+      "solution_name": "MrBeast Content Psychological Framework",
+      "solution_category": null,
+      "source_url": "https://reddit.com/r/Entrepreneur/comments/179uxji/watched_8_hours_of_mrbeasts_content_here_are_7/",
+      "evidence": {
+        "revenue": null,
+        "users": null,
+        "growth": null,
+        "testimonials": [],
+        "market_size": null
+      },
+      "maintainability_score": 0.6,
+      "profitability_score": 0.6,
+      "digital_score": 1.0,
+      "overall_score": 0.72,
+      "collected_at": 1762892246,
+      "metadata": {}
+    }
+  ]
+}

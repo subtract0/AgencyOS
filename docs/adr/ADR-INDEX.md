@@ -589,6 +589,20 @@ This index catalogs all Architecture Decision Records for the Agency multi-agent
 
 ---
 
+---
+
+### ADR-037: Prioritize Metaproductivity 2.0 Over Skills/Revenue Path
+**Status:** Accepted
+**Date:** 2025-11-12
+**Decision:** Suspend the three-Skill revenue experiment and dedicate engineering capacity to Metaproductivity 2.0 Missions 0-1.
+
+**Key Requirements:**
+- Archive existing Skill assets/documentation for revisit after Mission 2
+- Execute Mission 0 CMP scaffolding immediately (docs/cmp_schema.md, CMP types, cmp_console)
+- Mission 1 readiness work begins immediately after Mission 0 completes
+- Skills/Opportunity Report only resumes post-Mission 2 with validated demand and ≥8/10 landing pages
+- ADR-037 referenced by docs/skills/pain-point-offer-web-skill-suite.md to explain parked status
+
 ## Review Schedule
 
 - **Weekly:** Review new ADR proposals
@@ -606,5 +620,5 @@ This index catalogs all Architecture Decision Records for the Agency multi-agent
 
 ---
 
-*Last Updated: 2025-10-14*
-*Next Review: 2025-11-01*
+*Last Updated: 2025-11-12*
+*Next Review: 2025-12-01*

@@ -1,0 +1,12 @@
+[
+  {
+    "content": "I think I have a problem\n\nThis is frustrating",
+    "source_url": "https://reddit.com/r/test/comments/post1/test",
+    "topic": "test_topic",
+    "authenticity_score": 0.29279279279279274,
+    "experience_marker_score": 0.3333333333333333,
+    "pain_signal_score": 0.5,
+    "emotional_depth_score": 0.0,
+    "created_at": 1762306183
+  }
+]
