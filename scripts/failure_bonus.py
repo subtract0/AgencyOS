@@ -20,7 +20,31 @@ import sys
 if __name__ == '__main__':
     sys.path.insert(0, str(Path(__file__).parent))
 
-from ci_failure_parser import CIFailureParser
+try:
+    from ci_failure_parser import CIFailureParser
+except ImportError:  # pragma: no cover - lightweight fallback for local/dev
+    class CIFailureParser:  # type: ignore[override]
+        """Fallback parser when CI dependencies are unavailable."""
+
+        def __init__(self, db_path: Path):  # noqa: D401 - mimic real signature
+            self.db_path = Path(db_path)
+
+        def is_flaky(self, test_id: str) -> bool:  # noqa: ARG002
+            return False
+
+        def get_fixed_failure_count(self, test_id: str, lookback_days: int) -> int:  # noqa: ARG002
+            return 0
+
+        def get_failure_count(self, test_id: str, lookback_days: int) -> int:  # noqa: ARG002
+            return 0
+
+        def get_database_stats(self) -> Dict[str, int]:
+            return {
+                "total_failures": 0,
+                "fixed_failures": 0,
+                "flaky_tests": 0,
+                "unique_tests": 0,
+            }
 
 
 class FailureBonusCalculator:
