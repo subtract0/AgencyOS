@@ -274,12 +274,9 @@ class NightShiftScheduler:
             self.save_state()
 
             # Execute via primeX orchestrator
-            # Note: We need to update task in backlog first to IN_PROGRESS
-            task.status = "in_progress"
-            self.backlog_storage.update_task(task)
-
-            # Execute
-            result = self.orchestrator.execute(task_intent=None)
+            # Note: Task status is updated to IN_PROGRESS inside execute_task()
+            # Execute THE SPECIFIC TASK (not auto-select)
+            result = self.orchestrator.execute_task(task)
 
             if result.is_ok():
                 return result.unwrap()

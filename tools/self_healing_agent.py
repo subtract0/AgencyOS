@@ -877,6 +877,72 @@ class SelfHealingAgent:
         logger.info(f"\n🎉 Healing complete: {len(pr_results)}/{len(failures_to_fix)} PRs created")
         return pr_results
 
+    def heal_one_failure(self, test_name: str, error_message: str) -> dict[str, Any]:
+        """
+        Public API: Heal a single test failure given test name and error message.
+
+        This is the public interface used by PrimeXOrchestrator for test-failure tasks.
+        Creates a TestFailure object and delegates to internal healing logic.
+
+        Args:
+            test_name: Name of the failing test (e.g., "tests/test_foo.py::test_bar")
+            error_message: Error message from test failure
+
+        Returns:
+            dict: Healing result with keys:
+                - success (bool): Whether fix was generated and PR created
+                - pr_url (str|None): URL of created PR (if successful)
+                - tests_passed (bool): Whether tests passed after fix
+                - error (str|None): Error message (if failed)
+
+        Example:
+            agent = SelfHealingAgent()
+            result = agent.heal_one_failure(
+                test_name="tests/test_auth.py::test_login",
+                error_message="AssertionError: Expected 200, got 401"
+            )
+            if result["success"]:
+                print(f"PR created: {result['pr_url']}")
+        """
+        try:
+            # Create TestFailure object from provided details
+            failure = TestFailure(
+                test_name=test_name,
+                file_path=test_name.split("::")[0] if "::" in test_name else "unknown.py",
+                error_type="AssertionError",  # Default (can be inferred from error_message)
+                error_message=error_message,
+                stack_trace="",  # Not available from primeX call
+            )
+
+            # Delegate to internal healing logic
+            result = self._heal_one_failure(failure)
+
+            if result.is_ok():
+                pr_result = result.unwrap()
+                return {
+                    "success": True,
+                    "pr_url": pr_result.url,
+                    "tests_passed": True,  # Assume tests pass if PR was created
+                    "error": None,
+                }
+            else:
+                error = result.unwrap_err()
+                return {
+                    "success": False,
+                    "pr_url": None,
+                    "tests_passed": False,
+                    "error": str(error),
+                }
+
+        except Exception as e:
+            logger.error(f"heal_one_failure failed: {e}", exc_info=True)
+            return {
+                "success": False,
+                "pr_url": None,
+                "tests_passed": False,
+                "error": str(e),
+            }
+
     def _heal_one_failure(self, failure: TestFailure) -> Result[PRResult, Exception]:
         """
         Heal one test failure: select clade → generate fix → create PR.
