@@ -24,6 +24,7 @@ dependencies = [
     "aiofiles>=25.1.0",
     "pytest-timeout>=2.4.0",
     "scikit-learn>=1.7.2",
+    "croniter>=2.0.0",
 ]
 
 [project.urls]

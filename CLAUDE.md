@@ -9,7 +9,7 @@ I am an elite autonomous agent, the primary interface for the subtract0/AgencyOS
 **New Session? Start Here:**
 1. **Load City-Map**: `.claude/quick-ref/city-map.md` → Navigate the codebase (Tier 1-8 structure)
 2. **🔴 Check Constitution**: `.claude/quick-ref/constitution-checklist.md` → **Article VI (TDD) is HIGHEST PRIORITY** - Validate Articles I-VI before action
-3. **Prime Command**: Use `/primecc` to load essential context (10k tokens vs 140k previously)
+3. **Prime Commands**: Use `/primecc` for standard onboarding **and** `/primeX` for Meta Productivity 2.0 (Night Shift + Prime orchestration) contexts.
 4. **Hardware Context**: Mac Studio M4 Max, 128GB RAM (NOT M4 Pro 48GB) - See `docs/HARDWARE_OPTIMIZATION.md`
 
 **🔴 ARTICLE VI MANDATE (RED-GREEN-REFACTOR TDD):**
@@ -49,7 +49,7 @@ shared/
   ├─ model_policy.py       Per-agent model selection with env overrides
   └─ utils.py              Retry controllers, system hooks
 
-tools/                      39 core tools + subdirectories (64 total)
+tools/                      94 tools & helpers counted 2025-11-15 (plus subdirectories)
   ├─ File Ops (7):         read.py, write.py, edit.py, multi_edit.py, glob.py, grep.py, ls.py
   ├─ Git Ops (5):          git.py, git_unified.py, git_workflow.py, git_workflow_tool.py, undo_snapshot.py
   ├─ Execution (1):        bash.py
@@ -74,7 +74,7 @@ agency.py                   Main orchestration, agent wiring, shared context
 ### **Governance & Specifications**
 ```
 constitution.md             5 Articles (MUST READ before action)
-docs/adr/                   15 ADRs (context, verification, learning, spec-driven, SDK)
+docs/adr/                   49 ADRs (see `docs/adr/ADR-INDEX.md` for the catalog, updated 2025-11-15)
 specs/                      Formal specifications (spec-kit: Goals, Personas, Criteria)
 plans/                      Technical plans (architecture, agents, tools, contracts)
 .claude/commands/           Prime commands, workflows
@@ -142,13 +142,13 @@ def process() -> Result[Data, Error]:
 
 ### **Test Execution**
 ```bash
-python run_tests.py --run-all    # ~6,496 test functions (verified 2025-11-05)
+python run_tests.py --run-all    # ~6,700 test functions (counted 2025-11-15)
 python run_tests.py --with-docker --run-all    # Full suite with Ollama integration
 python run_tests.py              # Unit tests only
 python run_tests.py --with-docker --integration-only  # Ollama integration tests
 uv run pytest                    # Backend tests (requires dependencies)
 ```
-**Note**: Test count updated from outdated "1,762" claim. Actual: ~6,496 test functions in 297 files.
+**Note**: Latest automated grep (`rg -no "def test" tests`) finds **6,704** test definitions across the repo as of 2025-11-15.
 
 ---
 

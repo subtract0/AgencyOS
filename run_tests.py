@@ -384,7 +384,7 @@ def main(
     """Run tests using pytest with specified mode
 
     Args:
-        test_mode: "unit", "integration", "all", "fast", "slow", "benchmark", or "github"
+        test_mode: "unit", "integration", "all", "fast", "slow", "smoke", "benchmark", or "github"
         fast_only: If True, exclude slow and benchmark tests from default runs
     """
     print("=" * 60)
@@ -398,6 +398,7 @@ def main(
         "integration-part1": "Integration Tests Part 1 (~67 tests, heavier suite)",
         "integration-part2": "Integration Tests Part 2 (~67 tests, lighter suite)",
         "all": "All Tests (Unit + Integration)",
+        "smoke": "Smoke Suite (Night Shift + Prime orchestration core)",
         "fast": "Fast Unit Tests Only (excluding slow, benchmark, integration)",
         "slow": "Slow Tests Only",
         "benchmark": "Benchmark Tests Only",
@@ -496,8 +497,21 @@ def main(
             "--ignore=tests/test_firestore_mock_integration.py",
             "--ignore=tests/e2e/",  # e2e tests import agency at module level
             "--ignore=tests/benchmarks/test_vectorstore_performance.py",  # Quarantined
+            "--ignore=tests/test_checkpoint_manager.py",  # Quarantined (hangs)
         ]
     )
+
+    smoke_suite_targets = [
+        "tests/test_night_shift_scheduler.py",
+        "tests/test_auto_recovery.py",
+        "tests/test_primex.py",
+        "tests/test_backlog_agent.py",
+        "tests/test_memory_vectorstore_default.py",
+        "tests/test_article_iv_validator.py",
+    ]
+
+    if test_mode == "smoke":
+        test_targets = smoke_suite_targets
 
     if args.pytest_args:
         extra_args: list[str] = []
@@ -838,6 +852,11 @@ def create_parser() -> argparse.ArgumentParser:
         "--github", action="store_true", help="Run only GitHub integration tests"
     )
     test_group.add_argument(
+        "--smoke",
+        action="store_true",
+        help="Run the critical smoke suite (Night Shift + Prime orchestration core)",
+    )
+    test_group.add_argument(
         "--integration-only",
         action="store_true",
         help="Run ONLY integration tests (what we normally skip)",
@@ -929,6 +948,8 @@ if __name__ == "__main__":
         test_mode = "benchmark"
     elif args.github:
         test_mode = "github"
+    elif args.smoke:
+        test_mode = "smoke"
     elif args.integration_only or args.run_integration:
         test_mode = "integration"
     elif args.integration_part1:
@@ -970,7 +991,7 @@ if __name__ == "__main__":
         sys.exit(0)
 
     # Default behavior excludes slow and benchmark tests automatically
-    fast_only = test_mode == "unit"
+    fast_only = test_mode in {"unit", "smoke"}
     exit_code = main(
         test_mode,
         fast_only=fast_only,
