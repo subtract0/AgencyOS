@@ -907,11 +907,12 @@ class SelfHealingAgent:
         try:
             # Create TestFailure object from provided details
             failure = TestFailure(
-                test=test_name,
-                file=test_name.split("::")[0] if "::" in test_name else "unknown.py",
-                line=None,  # Not available from primeX call
-                error=error_message,
-                recommended_fix=None,
+                test_name=test_name,
+                file_path=test_name.split("::")[0] if "::" in test_name else "unknown.py",
+                line_number=0,  # Default to 0 (not available from primeX call)
+                error_type="AssertionError",  # Default (can be inferred from error_message)
+                error_message=error_message,
+                test_code=None,  # Not available from primeX call
             )
 
             # Delegate to internal healing logic
