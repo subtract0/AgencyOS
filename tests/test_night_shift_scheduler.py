@@ -129,28 +129,21 @@ class TestNightShiftScheduler:
                     assert scheduler.state.tasks_completed_this_cycle == 3
 
     def test_min_interval_enforcement(self):
-        """Test that scheduler enforces minimum interval between executions."""
+        """Test should_execute_now respects configured min interval."""
         with tempfile.TemporaryDirectory() as tmpdir:
-            config = NightShiftConfig(
-                schedule="* * * * *",  # Every minute
-                min_interval_minutes=15,
-            )
+            config = NightShiftConfig(schedule="* * * * *", min_interval_minutes=15)
             scheduler = ns.NightShiftScheduler(config=config, state_dir=tmpdir)
 
-            # Run first cycle
             with patch.object(scheduler, "_execute_task", return_value={"success": True}):
                 scheduler.run_cycle()
-                first_execution = scheduler.state.last_execution_time
+                assert scheduler.state.tasks_completed_this_cycle == 0
 
-                # Try to run again immediately
-                scheduler.run_cycle()
-                second_execution = scheduler.state.last_execution_time
+            # Immediately after a run the scheduler should refuse to execute
+            assert scheduler.should_execute_now() is False
 
-                # Second execution should be same as first (not allowed due to min interval)
-                # OR should be at least 15 minutes after first
-                time_diff = (second_execution - first_execution).total_seconds() / 60
-
-                assert time_diff == 0 or time_diff >= 15
+            # Move the clock forward beyond the min interval and expect True
+            scheduler.state.last_execution_time -= timedelta(minutes=16)
+            assert scheduler.should_execute_now() is True
 
     def test_sequential_execution(self):
         """Test that tasks execute sequentially (no concurrent operations)."""
