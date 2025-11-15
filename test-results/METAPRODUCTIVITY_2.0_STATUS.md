@@ -8,7 +8,7 @@
 
 ## Executive Summary
 
-**Current Status**: **Missions 0-3 COMPLETE**
+**Current Status**: **Missions 0-4 COMPLETE**
 
 | Mission | Status | Completion | Details |
 |---------|--------|------------|---------|
@@ -16,8 +16,8 @@
 | **Mission 1** | ✅ COMPLETE | 100% | All 6 tasks delivered, PII filter + readiness tool implemented |
 | **Mission 2** | ✅ COMPLETE | 100% | Learning Coach & CMP Pipeline operational, 15/15 tests passing |
 | **Mission 3** | ✅ COMPLETE | 100% | Self-Healing Agent operational, 19/19 tests passing |
-| **Mission 4** | ⏸️ READY | 0% | Backlog Agent & primeX (ready to start) |
-| **Mission 5** | ⏸️ READY | 0% | Night Shift & Auto-Recovery (blocked on M4) |
+| **Mission 4** | ✅ COMPLETE | 100% | Backlog Agent & primeX orchestrator, 27/27 tests passing |
+| **Mission 5** | ⏸️ READY | 0% | Night Shift & Auto-Recovery (ready to start) |
 
 ---
 
@@ -363,6 +363,69 @@ Detected 26 failing tests
 
 ---
 
+## Mission 4: Backlog Agent & primeX Orchestrator ✅ COMPLETE
+
+**Goal**: Intelligent task prioritization and autonomous orchestration
+
+### Deliverables
+
+| Component | Status | Location | Tests |
+|-----------|--------|----------|-------|
+| Task Data Models | ✅ | `shared/models/backlog.py` | 27/27 ✅ |
+| BacklogStorage (JSONL) | ✅ | `tools/backlog_agent.py` | 18/18 ✅ |
+| PriorityQueue (CMP-aware) | ✅ | `tools/backlog_agent.py` | 18/18 ✅ |
+| PrimeXOrchestrator | ✅ | `tools/primex_orchestrator.py` | 9/9 ✅ |
+| /primeX Command | ✅ | `.claude/commands/primeX.md` | N/A |
+| Mission 4 Spec | ✅ | `specs/spec-mission-4-backlog-primex.md` | N/A |
+
+### Mission 4 Core Verification
+
+```bash
+$ pytest tests/test_backlog_agent.py tests/test_primex.py -v
+========================= 27 passed in 3.58s =========================
+```
+
+### Key Features
+
+**Priority Formula**:
+```
+score = (cmp_avg * 0.4) + (business_value/10 * 0.3) + (1/complexity * 0.3)
+```
+
+**Selection Rules**:
+- P1 tasks ALWAYS selected first (regardless of score)
+- Highest score wins within same priority
+- Ties broken by created_at (oldest first)
+
+**Usage**:
+```bash
+# Auto-select from backlog
+/primeX
+
+# Explicit task intent
+/primeX "fix auth bug in login flow"
+```
+
+**Integration**:
+- Mission 0: CmpStore, CladeSelector (epsilon-greedy bandit)
+- Mission 2: LearningCoach (pattern extraction, future)
+- Mission 3: SelfHealingAgent (test failure fixing)
+- VectorStore: Completion metadata storage (Article IV)
+
+**Workflow**:
+```
+1. Task Selection → Auto-select OR explicit intent
+2. Status Update → PENDING → IN_PROGRESS
+3. Routing → SelfHealingAgent (TEST_FAILURE) or PrimeCCC (others)
+4. Execution → Run agent workflow
+5. On Success → COMPLETED + VectorStore metadata
+6. On Failure → Keep PENDING (not marked complete)
+```
+
+**Mission 4 Status**: ✅ **100% COMPLETE** (all tests passing, operational)
+
+---
+
 ## Next Steps
 
 ### Mission 3 Implementation Plan (Draft)
@@ -397,16 +460,17 @@ Detected 26 failing tests
 
 **Current Context Usage**: ~90k / 200k tokens (45% after Mission 3 FR compliance fixes)
 
-**Current Status**: Mission 3 complete with full FR compliance
+**Current Status**: Mission 4 complete - Backlog Agent & primeX operational
 
 **Decision Factors**:
 - ✅ Mission 0: 100% COMPLETE (CMP scaffolding)
 - ✅ Mission 1: 100% COMPLETE (foundation + M4 baseline)
 - ✅ Mission 2: 100% COMPLETE (learning coach)
 - ✅ Mission 3: 100% COMPLETE (self-healing agent, all FRs met)
-- ✅ Context budget: 55% remaining (ample headroom for Mission 4)
+- ✅ Mission 4: 100% COMPLETE (backlog agent & primeX, 27/27 tests passing)
+- ✅ Context budget: 40% remaining (ample headroom for Mission 5)
 
-**Recommendation**: Mission 4 (Backlog Agent & primeX) ready to start.
+**Recommendation**: Mission 5 (Night Shift & Auto-Recovery) ready to start.
 
 ---
 
