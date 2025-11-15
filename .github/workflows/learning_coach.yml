@@ -1,0 +1,86 @@
+name: Learning Coach - CMP Event Recorder
+
+# Mission 2.3: Learning Coach GitHub Workflow
+# Automatically records PR outcomes as CMP events for clade performance tracking
+
+on:
+  pull_request:
+    types: [closed]  # Triggered when PR is closed (merged or rejected)
+
+permissions:
+  pull-requests: read
+  contents: read
+
+jobs:
+  record-cmp-event:
+    name: Record CMP Event
+    runs-on: ubuntu-latest
+
+    # Only run for autonomous agent PRs (autogen/* branches)
+    if: startsWith(github.event.pull_request.head.ref, 'autogen/')
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+
+      - name: Install uv
+        run: |
+          curl -LsSf https://astral.sh/uv/install.sh | sh
+          echo "$HOME/.cargo/bin" >> $GITHUB_PATH
+
+      - name: Install dependencies
+        run: |
+          uv pip install --system -r requirements.txt
+          uv pip install --system -e .
+
+      - name: Determine reinforcement signal
+        id: signal
+        run: |
+          if [ "${{ github.event.pull_request.merged }}" == "true" ]; then
+            echo "signal=approved" >> $GITHUB_OUTPUT
+            echo "PR #${{ github.event.pull_request.number }} was MERGED → signal=approved"
+          else
+            echo "signal=rejected" >> $GITHUB_OUTPUT
+            echo "PR #${{ github.event.pull_request.number }} was CLOSED without merge → signal=rejected"
+          fi
+
+      - name: Record CMP event
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          python tools/auto_supervise_hook.py \
+            --signal=${{ steps.signal.outputs.signal }} \
+            --pr-id=${{ github.event.pull_request.number }}
+
+      - name: Upload CMP event log (artifact)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: cmp-event-log-pr-${{ github.event.pull_request.number }}
+          path: data/cmp_events.jsonl
+          retention-days: 90
+
+  # Future: Smoke test revert detection
+  # If smoke tests fail after merge, call auto_supervise_hook.py with --reverted=true
+  # This updates the original CmpEvent to mark reverted=true
+  detect-revert:
+    name: Detect Smoke Test Revert
+    runs-on: ubuntu-latest
+    needs: record-cmp-event
+    if: false  # Disabled for now (implement in Mission 5)
+
+    steps:
+      - name: Placeholder for revert detection
+        run: |
+          echo "Revert detection will be implemented in Mission 5"
+          echo "When smoke tests fail, this job will:"
+          echo "  1. Detect which PR caused the failure"
+          echo "  2. Call auto_supervise_hook.py --signal=rejected --pr-id=N --reverted=true"
+          echo "  3. Update original CmpEvent with reverted=true flag"

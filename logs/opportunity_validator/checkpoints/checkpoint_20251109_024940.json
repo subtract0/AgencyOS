@@ -1,0 +1,25 @@
+{
+  "runtime_hours": 0.1,
+  "opportunities_collected": 1,
+  "opportunities": [
+    {
+      "problem": "Transcribing spoken audio (speech\u2011to\u2011text) for any web content, originally used to transcribe adult videos.",
+      "solution_name": "Voicy",
+      "solution_category": "SaaS",
+      "source_url": "https://reddit.com/r/SaaS/comments/1nx6kxx/my_saas_was_used_for_prn_and_now_it_makes_3kmonth/",
+      "evidence": {
+        "revenue": "$3k/month",
+        "users": "1k users (free) within the first month",
+        "growth": null,
+        "testimonials": [],
+        "market_size": null
+      },
+      "maintainability_score": 0.6,
+      "profitability_score": 0.9,
+      "digital_score": 1.0,
+      "overall_score": 0.8400000000000001,
+      "collected_at": 1762652876,
+      "metadata": {}
+    }
+  ]
+}

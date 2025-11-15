@@ -1,0 +1,13 @@
+{
+  "total_opportunities": 296,
+  "chunks": 6,
+  "chunk_size": 50,
+  "files": [
+    "opportunities_20251111_030906_chunk_1_of_6.json",
+    "opportunities_20251111_030906_chunk_2_of_6.json",
+    "opportunities_20251111_030906_chunk_3_of_6.json",
+    "opportunities_20251111_030906_chunk_4_of_6.json",
+    "opportunities_20251111_030906_chunk_5_of_6.json",
+    "opportunities_20251111_030906_chunk_6_of_6.json"
+  ]
+}

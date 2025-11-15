@@ -124,10 +124,29 @@ class FirestoreStore(MemoryStore):
             "FirestoreStore: Using InMemoryStore fallback - data will not persist between sessions"
         )
 
-    def store(self, key: str, content: Any, tags: list[str]) -> None:
-        """Store content with timestamp and tags."""
+    def store(
+        self,
+        key: str,
+        content: Any,
+        tags: list[str],
+        agent_id: str | None = None,
+        clade_id: str | None = None,
+        task_type: str | None = None,
+        reinforcement_signal: str | None = None,
+        provenance_id: str | None = None,
+    ) -> None:
+        """Store content with timestamp, tags, and optional CMP metadata."""
         if self._fallback_store:
-            return self._fallback_store.store(key, content, tags)
+            return self._fallback_store.store(
+                key,
+                content,
+                tags,
+                agent_id=agent_id,
+                clade_id=clade_id,
+                task_type=task_type,
+                reinforcement_signal=reinforcement_signal,
+                provenance_id=provenance_id,
+            )
 
         memory_record = {
             "key": key,
@@ -146,7 +165,16 @@ class FirestoreStore(MemoryStore):
             # Initialize fallback if Firestore fails during operation
             if not self._fallback_store:
                 self._initialize_fallback()
-            self._fallback_store.store(key, content, tags)  # type: ignore
+            self._fallback_store.store(
+                key,
+                content,
+                tags,
+                agent_id=agent_id,
+                clade_id=clade_id,
+                task_type=task_type,
+                reinforcement_signal=reinforcement_signal,
+                provenance_id=provenance_id,
+            )  # type: ignore
 
     def search(self, tags: list[str]) -> MemorySearchResult:
         """Search memories by tags using Firestore array-contains-any."""

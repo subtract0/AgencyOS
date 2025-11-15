@@ -12,6 +12,7 @@ import logging
 from datetime import datetime
 from typing import cast
 
+from shared.memory_filter import redact, redact_dict
 from shared.models.memory import MemorySearchResult
 from shared.type_definitions.json import JSONValue
 
@@ -94,7 +95,17 @@ class EnhancedMemoryStore(MemoryStore):
             f"faiss_enabled={self.use_faiss_index}"
         )
 
-    def store(self, key: str, content: JSONValue, tags: list[str]) -> None:
+    def store(
+        self,
+        key: str,
+        content: JSONValue,
+        tags: list[str],
+        agent_id: str | None = None,
+        clade_id: str | None = None,
+        task_type: str | None = None,
+        reinforcement_signal: str | None = None,
+        provenance_id: str | None = None,
+    ) -> None:
         """
         Store content with automatic VectorStore integration.
 
@@ -102,14 +113,50 @@ class EnhancedMemoryStore(MemoryStore):
             key: Unique memory key
             content: Content to store
             tags: Tags for categorization
+            agent_id: Optional agent identifier for CMP tracking (e.g., "self_healer_v1")
+            clade_id: Optional clade identifier for CMP tracking
+            task_type: Optional task type for CMP tracking (e.g., "self_heal")
+            reinforcement_signal: Optional reinforcement signal ("approved" or "rejected")
+            provenance_id: Optional provenance ID linking to CmpEvent
+
+        CMP (Clade Metaproductivity) Integration:
+            When CMP fields are provided, memory is tracked for autonomous PR experiments.
+            reinforcement_signal is set by supervise() after PR merge/rejection.
+
+        Privacy Protection (Mission 1.5):
+            All content is automatically redacted for PII (emails, phones, SSNs, API keys)
+            before storage. This protects user privacy in learning systems (Article IV).
         """
+        # Apply PII redaction to content (Mission 1.5 - Privacy protection)
+        redacted_content: JSONValue
+        if isinstance(content, str):
+            redacted_content = redact(content)
+        elif isinstance(content, dict):
+            redacted_content = redact_dict(content)
+        else:
+            # For other types (list, int, float, bool, None), store as-is
+            # (PII typically in strings/dicts)
+            redacted_content = content
+
         # Create memory record with timestamp
-        memory_record = {
+        memory_record: dict[str, JSONValue] = {
             "key": key,
-            "content": content,
+            "content": redacted_content,
             "tags": tags,
             "timestamp": datetime.now().isoformat(),
         }
+
+        # Add CMP fields if provided (optional, for autonomous PR tracking)
+        if agent_id is not None:
+            memory_record["agent_id"] = agent_id
+        if clade_id is not None:
+            memory_record["clade_id"] = clade_id
+        if task_type is not None:
+            memory_record["task_type"] = task_type
+        if reinforcement_signal is not None:
+            memory_record["reinforcement_signal"] = reinforcement_signal
+        if provenance_id is not None:
+            memory_record["provenance_id"] = provenance_id
 
         # Store in traditional memory
         self._memories[key] = memory_record
@@ -914,6 +961,47 @@ class EnhancedMemoryStore(MemoryStore):
         except Exception as e:
             logger.error(f"Failed to get FAISS index stats: {e}")
             return {"error": str(e), "faiss_enabled": True}
+
+    def set_reinforcement(self, memory_id: str, signal: str) -> None:
+        """
+        Update memory's reinforcement_signal field.
+
+        Called by auto_supervise_hook.py after PR is merged/rejected.
+        This method updates the reinforcement signal for a previously stored memory,
+        linking autonomous PR outcomes to their associated memories.
+
+        Args:
+            memory_id: ID of memory to update (memory key)
+            signal: "approved" (PR merged) or "rejected" (PR closed without merge)
+
+        Raises:
+            ValueError: If memory_id not found or signal is invalid
+
+        Example:
+            >>> store = EnhancedMemoryStore()
+            >>> store.store("mem_001", content, tags, agent_id="self_healer_v1")
+            >>> # Later, after PR merged:
+            >>> store.set_reinforcement("mem_001", "approved")
+        """
+        if signal not in ("approved", "rejected"):
+            raise ValueError(f"Invalid reinforcement signal: {signal}. Must be 'approved' or 'rejected'")
+
+        if memory_id not in self._memories:
+            raise ValueError(f"Memory not found: {memory_id}")
+
+        # Update memory record
+        self._memories[memory_id]["reinforcement_signal"] = signal
+
+        # Update VectorStore if integrated
+        try:
+            if self.vector_store:
+                # VectorStore update (if it stores a copy of the memory record)
+                # For now, VectorStore stores embeddings separately, so we just log
+                logger.debug(f"Updated reinforcement signal for memory {memory_id}: {signal}")
+        except Exception as e:
+            logger.warning(f"Failed to update VectorStore reinforcement: {e}")
+
+        logger.info(f"Set reinforcement signal for memory {memory_id}: {signal}")
 
 
 def create_enhanced_memory_store(

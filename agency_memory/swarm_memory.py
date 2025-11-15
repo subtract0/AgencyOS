@@ -84,6 +84,10 @@ class SwarmMemoryStore(MemoryStore):
         agent_id: str = "default",
         priority: MemoryPriority = MemoryPriority.NORMAL,
         is_shared: bool = False,
+        clade_id: str | None = None,
+        task_type: str | None = None,
+        reinforcement_signal: str | None = None,
+        provenance_id: str | None = None,
     ) -> None:
         """
         Store content with agent namespace, priority, and sharing options.
@@ -117,6 +121,15 @@ class SwarmMemoryStore(MemoryStore):
             "access_count": 0,
             "last_accessed": datetime.now().isoformat(),
         }
+
+        if clade_id is not None:
+            memory_record["clade_id"] = clade_id
+        if task_type is not None:
+            memory_record["task_type"] = task_type
+        if reinforcement_signal is not None:
+            memory_record["reinforcement_signal"] = reinforcement_signal
+        if provenance_id is not None:
+            memory_record["provenance_id"] = provenance_id
 
         # Store in main memory
         self._memories[namespaced_key] = memory_record
@@ -816,6 +829,10 @@ class SwarmMemory(Memory):
         priority: MemoryPriority = MemoryPriority.NORMAL,
         is_shared: bool = False,
         agent_id: str | None = None,
+        clade_id: str | None = None,
+        task_type: str | None = None,
+        reinforcement_signal: str | None = None,
+        provenance_id: str | None = None,
     ) -> None:
         """
         Store memory with swarm features.
@@ -833,7 +850,18 @@ class SwarmMemory(Memory):
         """
         effective_agent_id = agent_id or self.agent_id
         tags = tags or []  # Handle None case
-        self._store.store(key, content, tags, effective_agent_id, priority, is_shared)
+        self._store.store(
+            key,
+            content,
+            tags,
+            effective_agent_id,
+            priority,
+            is_shared,
+            clade_id=clade_id,
+            task_type=task_type,
+            reinforcement_signal=reinforcement_signal,
+            provenance_id=provenance_id,
+        )
 
     def search(
         self,

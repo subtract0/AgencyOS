@@ -40,18 +40,32 @@ class AgentContext:
     global state. Each agent session can have its own context instance.
     """
 
-    def __init__(self, memory: Memory | None = None, session_id: str | None = None):
+    def __init__(
+        self,
+        memory: Memory | None = None,
+        session_id: str | None = None,
+        agent_id: str | None = None,
+        task_type: str | None = None,
+    ):
         """
         Initialize agent context.
 
         Args:
             memory: Memory instance for this context (creates default if None)
             session_id: Unique identifier for this agent session
+            agent_id: Agent identifier (e.g., "self_healer_v1", "backlog_v1")
+            task_type: Task type (e.g., "self_heal", "backlog", "refactor")
         """
         self.memory = memory or Memory()
         self.session_id = session_id or self._generate_session_id()
         self._metadata: dict[str, JSONValue] = {}
         self._anthropic_memory_tool: Any | None = None  # Lazy initialization
+
+        # CMP (Clade Metaproductivity) fields for autonomous PR tracking
+        self.agent_id: str | None = agent_id  # e.g., "self_healer_v1"
+        self.clade_id: str | None = None  # e.g., "self_healer_v1::qwen-32b::prompt_small_diff_v1::strategy_minimal"
+        self.task_type: str | None = task_type  # e.g., "self_heal"
+        self.provenance_id: str | None = None  # Links to CmpEvent.id (set after PR creation)
 
         # Cache for search_memories - 5x performance improvement
         self._search_cache = lru_cache(maxsize=128)(self._search_memories_impl)
@@ -93,7 +107,15 @@ class AgentContext:
         """
         # Always include session tag
         all_tags = tags + [f"session:{self.session_id}"]
-        self.memory.store(key, content, all_tags)
+        self.memory.store(
+            key,
+            content,
+            all_tags,
+            agent_id=self.agent_id,
+            clade_id=self.clade_id,
+            task_type=self.task_type,
+            provenance_id=self.provenance_id,
+        )
 
         # Invalidate cache after storing new memory
         self._search_cache.cache_clear()
@@ -626,9 +648,45 @@ class AgentContext:
 
         return agent_model(agent_key)
 
+    def build_clade_id(
+        self,
+        model_name: str,
+        prompt_profile: str,
+        strategy: str
+    ) -> str:
+        """
+        Build clade identifier from agent_id and configuration.
+
+        Format: <agent_id>::<model_name>::<prompt_profile>::<strategy>
+        Example: "self_healer_v1::qwen-32b::prompt_small_diff_v1::strategy_minimal"
+
+        Args:
+            model_name: Model name (e.g., "qwen-32b", "gpt-5")
+            prompt_profile: Prompt profile identifier (e.g., "prompt_small_diff_v1")
+            strategy: Strategy tag (e.g., "strategy_minimal", "strategy_careful")
+
+        Returns:
+            Clade identifier string
+
+        Side Effects:
+            Sets self.clade_id to the built identifier
+
+        Raises:
+            ValueError: If agent_id is not set (required to build clade_id)
+        """
+        if self.agent_id is None:
+            raise ValueError("agent_id must be set before building clade_id")
+
+        clade_id = f"{self.agent_id}::{model_name}::{prompt_profile}::{strategy}"
+        self.clade_id = clade_id
+        return clade_id
+
 
 def create_agent_context(
-    memory: Memory | None = None, session_id: str | None = None
+    memory: Memory | None = None,
+    session_id: str | None = None,
+    agent_id: str | None = None,
+    task_type: str | None = None,
 ) -> AgentContext:
     """
     Factory function to create an AgentContext instance.
@@ -636,6 +694,8 @@ def create_agent_context(
     Args:
         memory: Optional Memory instance (creates default if None)
         session_id: Optional session identifier (generates if None)
+        agent_id: Optional agent identifier for CMP tracking (e.g., "self_healer_v1")
+        task_type: Optional task type for CMP tracking (e.g., "self_heal", "backlog")
 
     Returns:
         Configured AgentContext instance
@@ -648,6 +708,10 @@ def create_agent_context(
         Uses module-level singleton memory store to ensure memories persist across
         multiple agent sessions. All sessions share the same backing store unless
         explicitly overridden.
+
+    CMP (Clade Metaproductivity) Integration:
+        When agent_id and task_type are provided, context is configured for autonomous
+        PR tracking via CmpEvent logging. Use build_clade_id() to complete clade setup.
     """
     global _DEFAULT_MEMORY
 
@@ -661,4 +725,9 @@ def create_agent_context(
                 _DEFAULT_MEMORY = MemoryClass(store=EnhancedMemoryStore())
             memory = _DEFAULT_MEMORY
 
-    return AgentContext(memory=memory, session_id=session_id)
+    return AgentContext(
+        memory=memory,
+        session_id=session_id,
+        agent_id=agent_id,
+        task_type=task_type
+    )

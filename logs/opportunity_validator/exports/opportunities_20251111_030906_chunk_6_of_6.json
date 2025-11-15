@@ -1,0 +1,876 @@
+[
+  {
+    "problem": "Small companies struggle to raise capital efficiently, and individual investors lack easy access to startup investments.",
+    "solution_name": "Regulation A+ Online Fundraising Platform",
+    "solution_category": "SaaS",
+    "source_url": "https://reddit.com/r/startups/comments/30clrk/regular_americans_can_now_invest_in_startups_sec/",
+    "evidence": {
+      "revenue": null,
+      "users": null,
+      "growth": null,
+      "testimonials": [],
+      "market_size": null
+    },
+    "maintainability_score": 0.6,
+    "profitability_score": 0.6,
+    "digital_score": 1.0,
+    "overall_score": 0.72,
+    "collected_at": 1762824079,
+    "metadata": {}
+  },
+  {
+    "problem": "Founders struggle to find a focused, visible community for feedback, networking, and resource sharing.",
+    "solution_name": "r/startups monthly startup showcase thread",
+    "solution_category": "Community Platform",
+    "source_url": "https://reddit.com/r/startups/comments/15niyme/share_your_startup_august_2023_upvote_for_maximum/",
+    "evidence": {
+      "revenue": null,
+      "users": null,
+      "growth": null,
+      "testimonials": [],
+      "market_size": null
+    },
+    "maintainability_score": 0.6,
+    "profitability_score": 0.6,
+    "digital_score": 1.0,
+    "overall_score": 0.72,
+    "collected_at": 1762824148,
+    "metadata": {}
+  },
+  {
+    "problem": "Businesses struggle to acquire, retain, and grow customers efficiently.",
+    "solution_name": "ZeroToCustomers",
+    "solution_category": "SaaS",
+    "source_url": "https://reddit.com/r/SaaS/comments/1lb1fvo/my_lessons_from_building_8_saas_products_4_failed/",
+    "evidence": {
+      "revenue": null,
+      "users": null,
+      "growth": null,
+      "testimonials": [],
+      "market_size": null
+    },
+    "maintainability_score": 0.6,
+    "profitability_score": 0.6,
+    "digital_score": 1.0,
+    "overall_score": 0.72,
+    "collected_at": 1762824292,
+    "metadata": {}
+  },
+  {
+    "problem": "People struggle with unrealistic expectations of building a high-revenue SaaS instantly without proper planning or effort.",
+    "solution_name": "JobGPT",
+    "solution_category": "SaaS",
+    "source_url": "https://reddit.com/r/SaaS/comments/1mvagpp/i_asked_chatgpt_how_to_build_a_500k_mrr_saas_in/",
+    "evidence": {
+      "revenue": null,
+      "users": null,
+      "growth": null,
+      "testimonials": [],
+      "market_size": null
+    },
+    "maintainability_score": 0.6,
+    "profitability_score": 0.6,
+    "digital_score": 1.0,
+    "overall_score": 0.72,
+    "collected_at": 1762824340,
+    "metadata": {}
+  },
+  {
+    "problem": "Busy people struggle to maintain healthy eating habits due to time constraints.",
+    "solution_name": "easychef",
+    "solution_category": "SaaS",
+    "source_url": "https://reddit.com/r/SaaS/comments/1h5ljyt/just_launched_my_first_app_got_20_paying_users_i/",
+    "evidence": {
+      "revenue": null,
+      "users": null,
+      "growth": null,
+      "testimonials": [],
+      "market_size": null
+    },
+    "maintainability_score": 0.6,
+    "profitability_score": 0.6,
+    "digital_score": 1.0,
+    "overall_score": 0.72,
+    "collected_at": 1762824384,
+    "metadata": {}
+  },
+  {
+    "problem": "Founders struggle to understand what makes a startup qualify for Y Combinator.",
+    "solution_name": "Y Combinator application guidelines",
+    "solution_category": null,
+    "source_url": "https://reddit.com/r/startups/comments/1hgxwp5/has_yc_lost_its_aura/",
+    "evidence": {
+      "revenue": null,
+      "users": null,
+      "growth": null,
+      "testimonials": [],
+      "market_size": null
+    },
+    "maintainability_score": 0.6,
+    "profitability_score": 0.6,
+    "digital_score": 1.0,
+    "overall_score": 0.72,
+    "collected_at": 1762824509,
+    "metadata": {}
+  },
+  {
+    "problem": "Lack of continuous user feedback and effective marketing hinders product growth.",
+    "solution_name": "User Feedback & Marketing SaaS",
+    "solution_category": "SaaS",
+    "source_url": "https://reddit.com/r/indiehackers/comments/1kbnqrt/i_made_3000_just_one_month_after_launching_my_app/",
+    "evidence": {
+      "revenue": null,
+      "users": null,
+      "growth": null,
+      "testimonials": [],
+      "market_size": null
+    },
+    "maintainability_score": 0.6,
+    "profitability_score": 0.6,
+    "digital_score": 1.0,
+    "overall_score": 0.72,
+    "collected_at": 1762824563,
+    "metadata": {}
+  },
+  {
+    "problem": "Sharing files directly without intermediary servers or account requirements.",
+    "solution_name": "alt-sendme",
+    "solution_category": "Peer-to-Peer File Sharing SaaS",
+    "source_url": "https://reddit.com/r/SideProject/comments/1oo1ziw/my_opensource_peertopeer_file_sharing_side/",
+    "evidence": {
+      "revenue": null,
+      "users": "2k users",
+      "growth": null,
+      "testimonials": [],
+      "market_size": null
+    },
+    "maintainability_score": 0.6,
+    "profitability_score": 0.6,
+    "digital_score": 1.0,
+    "overall_score": 0.72,
+    "collected_at": 1762824705,
+    "metadata": {}
+  },
+  {
+    "problem": "Manually building and managing the entire machine learning lifecycle is time\u2011consuming and error\u2011prone.",
+    "solution_name": "ML Automation Platform",
+    "solution_category": "SaaS",
+    "source_url": "https://reddit.com/r/startups/comments/1idszp8/my_cofounder_threw_away_90_of_the_code_i_wrote_i/",
+    "evidence": {
+      "revenue": null,
+      "users": null,
+      "growth": null,
+      "testimonials": [],
+      "market_size": null
+    },
+    "maintainability_score": 0.6,
+    "profitability_score": 0.6,
+    "digital_score": 1.0,
+    "overall_score": 0.72,
+    "collected_at": 1762824740,
+    "metadata": {}
+  },
+  {
+    "problem": "Finding cost-effective, organic marketing channels to launch and scale a product without a budget.",
+    "solution_name": "21 Organic Marketing Channels Guide",
+    "solution_category": "SaaS",
+    "source_url": "https://reddit.com/r/startups/comments/1jdadxj/21_channels_to_grow_your_product_i_will_not/",
+    "evidence": {
+      "revenue": null,
+      "users": null,
+      "growth": null,
+      "testimonials": [],
+      "market_size": null
+    },
+    "maintainability_score": 0.6,
+    "profitability_score": 0.6,
+    "digital_score": 1.0,
+    "overall_score": 0.72,
+    "collected_at": 1762824748,
+    "metadata": {}
+  },
+  {
+    "problem": "People struggle to find movies, books, games, and TV shows that align with specific real-world locations and historical time periods.",
+    "solution_name": "Storyterra",
+    "solution_category": "SaaS",
+    "source_url": "https://reddit.com/r/SideProject/comments/1oe2agf/i_made_an_interactive_map_that_lets_you_explore/",
+    "evidence": {
+      "revenue": null,
+      "users": null,
+      "growth": null,
+      "testimonials": [],
+      "market_size": null
+    },
+    "maintainability_score": 0.6,
+    "profitability_score": 0.6,
+    "digital_score": 1.0,
+    "overall_score": 0.72,
+    "collected_at": 1762824823,
+    "metadata": {}
+  },
+  {
+    "problem": "It helps founders avoid burnout and financial ruin by setting realistic startup timeline expectations.",
+    "solution_name": "Realistic Startup Timeline Guide",
+    "solution_category": null,
+    "source_url": "https://reddit.com/r/startups/comments/1oqqkln/the_actual_timeline_of_building_a_startup_not_the/",
+    "evidence": {
+      "revenue": null,
+      "users": null,
+      "growth": null,
+      "testimonials": [],
+      "market_size": null
+    },
+    "maintainability_score": 0.6,
+    "profitability_score": 0.6,
+    "digital_score": 1.0,
+    "overall_score": 0.72,
+    "collected_at": 1762824914,
+    "metadata": {}
+  },
+  {
+    "problem": "Scaling product development efficiently without the overhead of a large team.",
+    "solution_name": "Relens AI",
+    "solution_category": "SaaS",
+    "source_url": "https://reddit.com/r/indiehackers/comments/1nl0nod/i_burned_800k_on_6_employees_in_2_years_heres_why/",
+    "evidence": {
+      "revenue": null,
+      "users": null,
+      "growth": null,
+      "testimonials": [],
+      "market_size": null
+    },
+    "maintainability_score": 0.6,
+    "profitability_score": 0.6,
+    "digital_score": 1.0,
+    "overall_score": 0.72,
+    "collected_at": 1762824934,
+    "metadata": {}
+  },
+  {
+    "problem": "Entrepreneurs need to create product images for social media quickly and cheaply.",
+    "solution_name": "AI Product Image Generator",
+    "solution_category": "SaaS",
+    "source_url": "https://reddit.com/r/indiehackers/comments/1jko192/openai_just_killed_my_product_before_shipping/",
+    "evidence": {
+      "revenue": null,
+      "users": null,
+      "growth": null,
+      "testimonials": [],
+      "market_size": null
+    },
+    "maintainability_score": 0.6,
+    "profitability_score": 0.6,
+    "digital_score": 1.0,
+    "overall_score": 0.72,
+    "collected_at": 1762825036,
+    "metadata": {}
+  },
+  {
+    "problem": "It helps technical founders avoid partnering with cofounders who could jeopardize their startup.",
+    "solution_name": "Cofounder Red Flag Guide",
+    "solution_category": null,
+    "source_url": "https://reddit.com/r/startups/comments/1hmoi5e/red_flags_when_choosing_business_cofounders_a/",
+    "evidence": {
+      "revenue": null,
+      "users": null,
+      "growth": null,
+      "testimonials": [],
+      "market_size": null
+    },
+    "maintainability_score": 0.6,
+    "profitability_score": 0.6,
+    "digital_score": 1.0,
+    "overall_score": 0.72,
+    "collected_at": 1762825052,
+    "metadata": {}
+  },
+  {
+    "problem": "Provides a free, community-driven alternative to paid SaaS tools that many users rely on.",
+    "solution_name": "MyOpenSourceProject",
+    "solution_category": "SaaS",
+    "source_url": "https://reddit.com/r/SideProject/comments/1o8khar/when_everyones_posting_about_their_10k_mrr_and/",
+    "evidence": {
+      "revenue": null,
+      "users": null,
+      "growth": null,
+      "testimonials": [],
+      "market_size": null
+    },
+    "maintainability_score": 0.6,
+    "profitability_score": 0.6,
+    "digital_score": 1.0,
+    "overall_score": 0.72,
+    "collected_at": 1762825250,
+    "metadata": {}
+  },
+  {
+    "problem": "It lets users monitor and manage their health data in a single digital platform.",
+    "solution_name": "Vibe Health App",
+    "solution_category": "SaaS",
+    "source_url": "https://reddit.com/r/indiehackers/comments/1mro82z/i_built_a_semisuccessful_health_app_which_does_2k/",
+    "evidence": {
+      "revenue": "$2k/month",
+      "users": "0.3k users",
+      "growth": null,
+      "testimonials": [],
+      "market_size": null
+    },
+    "maintainability_score": 0.6,
+    "profitability_score": 0.6,
+    "digital_score": 1.0,
+    "overall_score": 0.72,
+    "collected_at": 1762825339,
+    "metadata": {}
+  },
+  {
+    "problem": "Inability to retrieve and surface relevant meeting context in real-time, forcing awkward pauses or vague responses during calls.",
+    "solution_name": "Convo",
+    "solution_category": "SaaS",
+    "source_url": "https://reddit.com/r/SideProject/comments/1ojixog/built_a_mac_app_that_helps_you_during_meetings_in/",
+    "evidence": {
+      "revenue": null,
+      "users": "0.6k users (public beta)",
+      "growth": null,
+      "testimonials": [],
+      "market_size": null
+    },
+    "maintainability_score": 0.6,
+    "profitability_score": 0.6,
+    "digital_score": 1.0,
+    "overall_score": 0.72,
+    "collected_at": 1762825346,
+    "metadata": {}
+  },
+  {
+    "problem": "Learners struggle to find a free, engaging, and accessible tool for practicing Japanese kana.",
+    "solution_name": "Kana-Dojo",
+    "solution_category": "SaaS",
+    "source_url": "https://reddit.com/r/SideProject/comments/1oqn2pt/someone_donated_300_usd_in_one_go_to_my/",
+    "evidence": {
+      "revenue": null,
+      "users": null,
+      "growth": null,
+      "testimonials": [],
+      "market_size": null
+    },
+    "maintainability_score": 0.6,
+    "profitability_score": 0.6,
+    "digital_score": 1.0,
+    "overall_score": 0.72,
+    "collected_at": 1762825413,
+    "metadata": {}
+  },
+  {
+    "problem": "Kids lack personalized coloring pages that let them color their own photos and creations.",
+    "solution_name": "Lumo",
+    "solution_category": "SaaS",
+    "source_url": "https://reddit.com/r/SideProject/comments/1ob40ml/i_built_an_ai_app_that_turns_photos_into_coloring/",
+    "evidence": {
+      "revenue": null,
+      "users": null,
+      "growth": null,
+      "testimonials": [],
+      "market_size": null
+    },
+    "maintainability_score": 0.6,
+    "profitability_score": 0.6,
+    "digital_score": 1.0,
+    "overall_score": 0.72,
+    "collected_at": 1762825558,
+    "metadata": {}
+  },
+  {
+    "problem": "People struggle to create, organize, and retain information using flashcards efficiently.",
+    "solution_name": "FlashcardsAI",
+    "solution_category": "SaaS",
+    "source_url": "https://reddit.com/r/indiehackers/comments/1h0fi1s/i_got_my_first_paying_user/",
+    "evidence": {
+      "revenue": null,
+      "users": null,
+      "growth": null,
+      "testimonials": [],
+      "market_size": null
+    },
+    "maintainability_score": 0.6,
+    "profitability_score": 0.6,
+    "digital_score": 1.0,
+    "overall_score": 0.72,
+    "collected_at": 1762825579,
+    "metadata": {}
+  },
+  {
+    "problem": "A tangled legacy SaaS stack that was hard to maintain and type-safe.",
+    "solution_name": "2025 Type-Safe SaaS Stack",
+    "solution_category": "SaaS",
+    "source_url": "https://reddit.com/r/SaaS/comments/1opp9eh/why_i_rebuilt_my_saas_stack_for_2025_and_the/",
+    "evidence": {
+      "revenue": null,
+      "users": null,
+      "growth": null,
+      "testimonials": [],
+      "market_size": null
+    },
+    "maintainability_score": 0.6,
+    "profitability_score": 0.6,
+    "digital_score": 1.0,
+    "overall_score": 0.72,
+    "collected_at": 1762825587,
+    "metadata": {}
+  },
+  {
+    "problem": "Founders waste time and resources trying to raise venture capital before they have a viable product or traction.",
+    "solution_name": "Pre-seed fundraising advice",
+    "solution_category": null,
+    "source_url": "https://reddit.com/r/startups/comments/1ooy3c8/how_to_raise_money_from_vcs_at_preseed_dont_i/",
+    "evidence": {
+      "revenue": null,
+      "users": null,
+      "growth": null,
+      "testimonials": [],
+      "market_size": null
+    },
+    "maintainability_score": 0.6,
+    "profitability_score": 0.6,
+    "digital_score": 1.0,
+    "overall_score": 0.72,
+    "collected_at": 1762825634,
+    "metadata": {}
+  },
+  {
+    "problem": "Learning materials become fragmented across many formats and locations, making organization and retrieval difficult.",
+    "solution_name": "kuse",
+    "solution_category": "SaaS",
+    "source_url": "https://reddit.com/r/SideProject/comments/1og9759/visual_workspace_designed_to_be_your_own_study/",
+    "evidence": {
+      "revenue": null,
+      "users": null,
+      "growth": null,
+      "testimonials": [],
+      "market_size": null
+    },
+    "maintainability_score": 0.6,
+    "profitability_score": 0.6,
+    "digital_score": 1.0,
+    "overall_score": 0.72,
+    "collected_at": 1762825773,
+    "metadata": {}
+  },
+  {
+    "problem": "Finding and connecting with genuine, high-quality customer inquiries without the noise of automated or irrelevant responses.",
+    "solution_name": "RedditConnect",
+    "solution_category": "SaaS",
+    "source_url": "https://reddit.com/r/indiehackers/comments/1lqka0s/after_making_0_last_month_i_realized_my_real/",
+    "evidence": {
+      "revenue": null,
+      "users": null,
+      "growth": null,
+      "testimonials": [],
+      "market_size": null
+    },
+    "maintainability_score": 0.6,
+    "profitability_score": 0.6,
+    "digital_score": 1.0,
+    "overall_score": 0.72,
+    "collected_at": 1762825811,
+    "metadata": {}
+  },
+  {
+    "problem": "IndieHackers lack a simple, high\u2011engagement platform like Hacker News to share and discover projects within their community.",
+    "solution_name": "Daily Pings",
+    "solution_category": "SaaS",
+    "source_url": "https://reddit.com/r/indiehackers/comments/1h5prpe/i_built_the_hackernews_for_indiehackers_and/",
+    "evidence": {
+      "revenue": null,
+      "users": null,
+      "growth": null,
+      "testimonials": [],
+      "market_size": null
+    },
+    "maintainability_score": 0.6,
+    "profitability_score": 0.6,
+    "digital_score": 1.0,
+    "overall_score": 0.72,
+    "collected_at": 1762825826,
+    "metadata": {}
+  },
+  {
+    "problem": "Small businesses need affordable customer acquisition and lead generation.",
+    "solution_name": "Custom Marketing Agency (unspecified name)",
+    "solution_category": null,
+    "source_url": "https://reddit.com/r/Entrepreneur/comments/1oka9pu/i_left_my_6k_per_month_fulltime_remote_job_and/",
+    "evidence": {
+      "revenue": null,
+      "users": null,
+      "growth": null,
+      "testimonials": [],
+      "market_size": null
+    },
+    "maintainability_score": 0.6,
+    "profitability_score": 0.6,
+    "digital_score": 1.0,
+    "overall_score": 0.72,
+    "collected_at": 1762825881,
+    "metadata": {}
+  },
+  {
+    "problem": "Authors and creators lack a simple way to instantly protect, verify, and manage the integrity and copyright of their work while collaborating.",
+    "solution_name": "Research Integrity Chain (RICH)",
+    "solution_category": "SaaS",
+    "source_url": "https://reddit.com/r/indiehackers/comments/1jvycda/built_a_platform_to_help_authors_and_creators/",
+    "evidence": {
+      "revenue": null,
+      "users": null,
+      "growth": null,
+      "testimonials": [],
+      "market_size": null
+    },
+    "maintainability_score": 0.6,
+    "profitability_score": 0.6,
+    "digital_score": 1.0,
+    "overall_score": 0.72,
+    "collected_at": 1762825919,
+    "metadata": {}
+  },
+  {
+    "problem": "Enables non-technical users to create Telegram bots quickly without writing code.",
+    "solution_name": "ShellAgent",
+    "solution_category": "SaaS",
+    "source_url": "https://reddit.com/r/indiehackers/comments/1ntlffm/what_are_you_building_in_2025_drop_your_project/",
+    "evidence": {
+      "revenue": null,
+      "users": null,
+      "growth": null,
+      "testimonials": [],
+      "market_size": null
+    },
+    "maintainability_score": 0.6,
+    "profitability_score": 0.6,
+    "digital_score": 1.0,
+    "overall_score": 0.72,
+    "collected_at": 1762825925,
+    "metadata": {}
+  },
+  {
+    "problem": "Website owners need an easy, no\u2011code way to understand user behavior and get actionable improvement ideas.",
+    "solution_name": "Skippership",
+    "solution_category": "SaaS",
+    "source_url": "https://reddit.com/r/SaaS/comments/1oobjae/after_11_failures_we_built_a_product_loved_by_18k/",
+    "evidence": {
+      "revenue": null,
+      "users": "1.8K users",
+      "growth": null,
+      "testimonials": [],
+      "market_size": null
+    },
+    "maintainability_score": 0.6,
+    "profitability_score": 0.6,
+    "digital_score": 1.0,
+    "overall_score": 0.72,
+    "collected_at": 1762826054,
+    "metadata": {}
+  },
+  {
+    "problem": "It eliminates the need for full\u2011time engineers to build and maintain GTM data workflows, allowing marketers to generate intent lists and trigger actions instantly.",
+    "solution_name": "Floqer",
+    "solution_category": "SaaS",
+    "source_url": "https://reddit.com/r/SaaS/comments/1ooyazr/which_gtm_tools_actually_talk_to_each_other/",
+    "evidence": {
+      "revenue": null,
+      "users": null,
+      "growth": null,
+      "testimonials": [],
+      "market_size": null
+    },
+    "maintainability_score": 0.6,
+    "profitability_score": 0.6,
+    "digital_score": 1.0,
+    "overall_score": 0.72,
+    "collected_at": 1762826141,
+    "metadata": {}
+  },
+  {
+    "problem": "Brands find it difficult and expensive to source authentic user-generated content from creators.",
+    "solution_name": "Stacks",
+    "solution_category": "SaaS",
+    "source_url": "https://reddit.com/r/SaaS/comments/1ohzug0/if_you_run_a_saas_consumer_app_and_need_ugc_i/",
+    "evidence": {
+      "revenue": null,
+      "users": "2k creators",
+      "growth": null,
+      "testimonials": [],
+      "market_size": null
+    },
+    "maintainability_score": 0.6,
+    "profitability_score": 0.6,
+    "digital_score": 1.0,
+    "overall_score": 0.72,
+    "collected_at": 1762826223,
+    "metadata": {}
+  },
+  {
+    "problem": "Developers struggle with slow, non-intuitive database tools that lack modern AI-powered assistance.",
+    "solution_name": "db pro",
+    "solution_category": "SaaS",
+    "source_url": "https://reddit.com/r/SaaS/comments/1o90s1o/month_2_of_building_our_saas_devlog_2/",
+    "evidence": {
+      "revenue": null,
+      "users": null,
+      "growth": null,
+      "testimonials": [],
+      "market_size": null
+    },
+    "maintainability_score": 0.6,
+    "profitability_score": 0.6,
+    "digital_score": 1.0,
+    "overall_score": 0.72,
+    "collected_at": 1762826282,
+    "metadata": {}
+  },
+  {
+    "problem": "Finding accurate email addresses of CEOs, founders, and business owners for B2B sales is time-consuming and unreliable.",
+    "solution_name": "javos.io",
+    "solution_category": "SaaS",
+    "source_url": "https://reddit.com/r/SaaS/comments/1omw7p8/just_got_my_first_40_users/",
+    "evidence": {
+      "revenue": null,
+      "users": null,
+      "growth": null,
+      "testimonials": [],
+      "market_size": null
+    },
+    "maintainability_score": 0.6,
+    "profitability_score": 0.6,
+    "digital_score": 1.0,
+    "overall_score": 0.72,
+    "collected_at": 1762826302,
+    "metadata": {}
+  },
+  {
+    "problem": "Developers struggle with clunky terminal-based SQL workbenches and need a modern, design-friendly interface for database interaction.",
+    "solution_name": "db pro",
+    "solution_category": "SaaS",
+    "source_url": "https://reddit.com/r/indiehackers/comments/1o87xgj/were_recording_our_entire_journey_building_a_new/",
+    "evidence": {
+      "revenue": null,
+      "users": null,
+      "growth": null,
+      "testimonials": [],
+      "market_size": null
+    },
+    "maintainability_score": 0.6,
+    "profitability_score": 0.6,
+    "digital_score": 1.0,
+    "overall_score": 0.72,
+    "collected_at": 1762826343,
+    "metadata": {}
+  },
+  {
+    "problem": "Creating and distributing marketing videos, visuals, and posts manually is time-consuming and resource-intensive.",
+    "solution_name": "AutoMarketing System",
+    "solution_category": "SaaS",
+    "source_url": "https://reddit.com/r/indiehackers/comments/1o4rv1v/were_picking_20_startups_to_test_a_fully/",
+    "evidence": {
+      "revenue": null,
+      "users": null,
+      "growth": null,
+      "testimonials": [],
+      "market_size": null
+    },
+    "maintainability_score": 0.6,
+    "profitability_score": 0.6,
+    "digital_score": 1.0,
+    "overall_score": 0.72,
+    "collected_at": 1762826404,
+    "metadata": {}
+  },
+  {
+    "problem": "It enables SaaS founders to acquire customers from Reddit without logging into their own Reddit account, protecting their personal credentials.",
+    "solution_name": "LeadLee",
+    "solution_category": "SaaS",
+    "source_url": "https://reddit.com/r/indiehackers/comments/1o90p98/what_are_you_building_lets_self_promote/",
+    "evidence": {
+      "revenue": null,
+      "users": null,
+      "growth": null,
+      "testimonials": [],
+      "market_size": null
+    },
+    "maintainability_score": 0.6,
+    "profitability_score": 0.6,
+    "digital_score": 1.0,
+    "overall_score": 0.72,
+    "collected_at": 1762826540,
+    "metadata": {}
+  },
+  {
+    "problem": "It helps teams quickly generate and validate UI flows by reading existing screens and tokens and proposing pattern-based designs.",
+    "solution_name": "figr.design",
+    "solution_category": "SaaS",
+    "source_url": "https://reddit.com/r/indiehackers/comments/1on7vip/drop_your_product_url/",
+    "evidence": {
+      "revenue": null,
+      "users": null,
+      "growth": null,
+      "testimonials": [],
+      "market_size": null
+    },
+    "maintainability_score": 0.6,
+    "profitability_score": 0.6,
+    "digital_score": 1.0,
+    "overall_score": 0.72,
+    "collected_at": 1762826564,
+    "metadata": {}
+  },
+  {
+    "problem": "SaaS and startup founders lack a quick, affordable SEO strategy to drive organic growth.",
+    "solution_name": "Free Quick SEO Strategy for SaaS",
+    "solution_category": "SaaS",
+    "source_url": "https://reddit.com/r/indiehackers/comments/1olwbqn/i_will_design_a_quick_seo_strategy_for_your/",
+    "evidence": {
+      "revenue": null,
+      "users": null,
+      "growth": null,
+      "testimonials": [],
+      "market_size": null
+    },
+    "maintainability_score": 0.6,
+    "profitability_score": 0.6,
+    "digital_score": 1.0,
+    "overall_score": 0.72,
+    "collected_at": 1762826595,
+    "metadata": {}
+  },
+  {
+    "problem": "People struggle to consistently write social media captions that match their personal style.",
+    "solution_name": "CaptionCraft",
+    "solution_category": "SaaS",
+    "source_url": "https://reddit.com/r/indiehackers/comments/1o8x5xz/what_are_you_building_lets_promote_each_other/",
+    "evidence": {
+      "revenue": null,
+      "users": null,
+      "growth": null,
+      "testimonials": [],
+      "market_size": null
+    },
+    "maintainability_score": 0.6,
+    "profitability_score": 0.6,
+    "digital_score": 1.0,
+    "overall_score": 0.72,
+    "collected_at": 1762826602,
+    "metadata": {}
+  },
+  {
+    "problem": "Founders struggle to efficiently move from idea to product, users, revenue, and funding without dedicated resources.",
+    "solution_name": "Aurelia Launchpad",
+    "solution_category": "SaaS",
+    "source_url": "https://reddit.com/r/indiehackers/comments/1ornf55/show_me_what_you_built/",
+    "evidence": {
+      "revenue": null,
+      "users": null,
+      "growth": null,
+      "testimonials": [],
+      "market_size": null
+    },
+    "maintainability_score": 0.6,
+    "profitability_score": 0.6,
+    "digital_score": 1.0,
+    "overall_score": 0.72,
+    "collected_at": 1762826664,
+    "metadata": {}
+  },
+  {
+    "problem": "Manually parsing and extracting actionable insights from AWS logs is time-consuming and complex.",
+    "solution_name": "Logsense",
+    "solution_category": "SaaS",
+    "source_url": "https://reddit.com/r/indiehackers/comments/1oaz4ii/what_you_are_buidling/",
+    "evidence": {
+      "revenue": null,
+      "users": null,
+      "growth": null,
+      "testimonials": [],
+      "market_size": null
+    },
+    "maintainability_score": 0.6,
+    "profitability_score": 0.6,
+    "digital_score": 1.0,
+    "overall_score": 0.72,
+    "collected_at": 1762826726,
+    "metadata": {}
+  },
+  {
+    "problem": "It helps people get small, non-essential packages delivered quickly and cheaply by leveraging drivers already on their route.",
+    "solution_name": "Peer-to-Peer Package Delivery App",
+    "solution_category": "SaaS",
+    "source_url": "https://reddit.com/r/startups/comments/1oijf4h/developed_an_mvp_now_what_i_will_not_promote/",
+    "evidence": {
+      "revenue": null,
+      "users": null,
+      "growth": null,
+      "testimonials": [],
+      "market_size": null
+    },
+    "maintainability_score": 0.6,
+    "profitability_score": 0.6,
+    "digital_score": 1.0,
+    "overall_score": 0.72,
+    "collected_at": 1762826733,
+    "metadata": {}
+  },
+  {
+    "problem": "It automates the creation of pattern\u2011backed user flows and screens from existing product designs, speeding up delivery.",
+    "solution_name": "figr.design",
+    "solution_category": "SaaS",
+    "source_url": "https://reddit.com/r/indiehackers/comments/1ojv1vt/pitch_time_drop_links/",
+    "evidence": {
+      "revenue": null,
+      "users": null,
+      "growth": null,
+      "testimonials": [],
+      "market_size": null
+    },
+    "maintainability_score": 0.6,
+    "profitability_score": 0.6,
+    "digital_score": 1.0,
+    "overall_score": 0.72,
+    "collected_at": 1762826817,
+    "metadata": {}
+  },
+  {
+    "problem": "People have to track health metrics like sleep, workouts, nutrition, HRV, and bloodwork in separate apps, making it impossible to see correlations.",
+    "solution_name": "Neura",
+    "solution_category": "SaaS",
+    "source_url": "https://reddit.com/r/indiehackers/comments/1ocnqk3/what_are_you_working_on_this_week_selfpromotion/",
+    "evidence": {
+      "revenue": null,
+      "users": null,
+      "growth": null,
+      "testimonials": [],
+      "market_size": null
+    },
+    "maintainability_score": 0.6,
+    "profitability_score": 0.6,
+    "digital_score": 1.0,
+    "overall_score": 0.72,
+    "collected_at": 1762826870,
+    "metadata": {}
+  },
+  {
+    "problem": "Provides screen-free brain stimulation for parents and senior adults to stay mentally sharp.",
+    "solution_name": "Brainerr",
+    "solution_category": "SaaS",
+    "source_url": "https://reddit.com/r/indiehackers/comments/1onlybm/curious_what_everyone_here_is_building/",
+    "evidence": {
+      "revenue": null,
+      "users": null,
+      "growth": null,
+      "testimonials": [],
+      "market_size": null
+    },
+    "maintainability_score": 0.6,
+    "profitability_score": 0.6,
+    "digital_score": 1.0,
+    "overall_score": 0.72,
+    "collected_at": 1762826943,
+    "metadata": {}
+  }
+]

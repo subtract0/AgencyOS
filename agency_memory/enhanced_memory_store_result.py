@@ -221,7 +221,17 @@ class EnhancedMemoryStoreResult(MemoryStore):
         return Err(f"{MemoryStoreError.SEARCH_FAILED}: Unexpected search parameters")
 
     # Legacy interface methods for compatibility
-    def store(self, key: str, content: Any, tags: list[str]) -> None:
+    def store(
+        self,
+        key: str,
+        content: Any,
+        tags: list[str],
+        agent_id: str | None = None,
+        clade_id: str | None = None,
+        task_type: str | None = None,
+        reinforcement_signal: str | None = None,
+        provenance_id: str | None = None,
+    ) -> None:
         """Legacy store method - logs errors instead of raising exceptions."""
         result = self.store_result(key, content, tags)
         if result.is_err():

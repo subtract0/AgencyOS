@@ -35,7 +35,17 @@ class MemoryStore(ABC):
     """
 
     @abstractmethod
-    def store(self, key: str, content: JSONValue, tags: list[str]) -> None:
+    def store(
+        self,
+        key: str,
+        content: JSONValue,
+        tags: list[str],
+        agent_id: str | None = None,
+        clade_id: str | None = None,
+        task_type: str | None = None,
+        reinforcement_signal: str | None = None,
+        provenance_id: str | None = None,
+    ) -> None:
         """Store content with key, tags, and automatic timestamp.
 
         Implements MCP tool pattern for memory operations.
@@ -70,7 +80,17 @@ class InMemoryStore(MemoryStore):
         self._memories: dict[str, MemoryRecord] = {}
         logger.info("InMemoryStore initialized - data will not persist between sessions")
 
-    def store(self, key: str, content: JSONValue, tags: list[str]) -> None:
+    def store(
+        self,
+        key: str,
+        content: JSONValue,
+        tags: list[str],
+        agent_id: str | None = None,
+        clade_id: str | None = None,
+        task_type: str | None = None,
+        reinforcement_signal: str | None = None,
+        provenance_id: str | None = None,
+    ) -> None:
         """Store content with timestamp and tags.
 
         Implements MCP-compatible memory storage with structured metadata.
@@ -170,10 +190,30 @@ class Memory:
         else:
             self._store = store
 
-    def store(self, key: str, content: JSONValue, tags: list[str] | None = None) -> None:
-        """Store content with key and optional tags."""
+    def store(
+        self,
+        key: str,
+        content: JSONValue,
+        tags: list[str] | None = None,
+        *,
+        agent_id: str | None = None,
+        clade_id: str | None = None,
+        task_type: str | None = None,
+        reinforcement_signal: str | None = None,
+        provenance_id: str | None = None,
+    ) -> None:
+        """Store content with key, tags, and optional CMP metadata."""
         tags = tags or []  # Default to empty list if not provided
-        self._store.store(key, content, tags)
+        self._store.store(
+            key,
+            content,
+            tags,
+            agent_id=agent_id,
+            clade_id=clade_id,
+            task_type=task_type,
+            reinforcement_signal=reinforcement_signal,
+            provenance_id=provenance_id,
+        )
 
     def search(self, tags: list[str]) -> list[dict[str, JSONValue]]:
         """Search memories by tags."""
