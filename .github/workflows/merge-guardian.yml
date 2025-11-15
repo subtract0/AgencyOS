@@ -330,6 +330,7 @@ jobs:
               --ignore=tests/test_firestore_mock_integration.py \
               --ignore=tests/e2e \
               --ignore=tests/benchmarks \
+              -n 1 \
               -m "not slow" --ff --maxfail=1 -q \
               --json-report --json-report-file=test-results/report.json
       - name: "Generate test report"
@@ -388,6 +389,7 @@ jobs:
               --ignore=tests/test_firestore_mock_integration.py \
               --ignore=tests/e2e \
               --ignore=tests/benchmarks \
+              -n 1 \
               -m "not slow" --ff --maxfail=1 -q \
               --json-report --json-report-file=test-results/report.json
       - name: "Generate test report"
@@ -498,6 +500,7 @@ jobs:
               --ignore=tests/test_firestore_mock_integration.py \
               --ignore=tests/e2e \
               --ignore=tests/benchmarks \
+              -n 1 \
               -m "not slow" --ff --maxfail=1 -q \
               --json-report --json-report-file=test-results/report.json
       - name: "Generate test report"
