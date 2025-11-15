@@ -26,9 +26,9 @@ class NightShiftConfig(BaseModel):
         description="Max tasks to execute per cycle",
     )
     min_interval_minutes: int = Field(
-        default=15,
-        ge=5,
-        description="Minimum interval between executions",
+        default=1,
+        ge=1,
+        description="Minimum interval between executions (reduced to 1 min for faster iteration)",
     )
     max_task_duration_minutes: int = Field(
         default=60,
@@ -76,7 +76,7 @@ class NightShiftState(BaseModel):
         default=0,
         description="Total escalations to user",
     )
-    health_status: dict[str, bool] = Field(
+    health_status: dict[str, bool | float | str | list] = Field(
         default_factory=dict,
-        description="Latest health check results",
+        description="Latest health check results (mixed types: bools, floats, strings, lists)",
     )
