@@ -189,6 +189,92 @@ class PrimeXOrchestrator:
             logger.error(f"Orchestration failed: {e}", exc_info=True)
             return Err(e)
 
+    def execute_task(self, task: Task) -> Result[dict[str, Any], Exception]:
+        """
+        Execute a specific task (without auto-selection).
+
+        This method accepts an explicit Task object and executes it directly,
+        bypassing the auto-selection logic. Used by Night Shift scheduler to
+        execute tasks it has already selected from the backlog.
+
+        Args:
+            task: Specific task to execute (must already exist in backlog)
+
+        Returns:
+            Result[dict, Exception]: Execution result or error
+
+        Example:
+            # Night Shift selects a task
+            queue = PriorityQueue(storage)
+            selected_task = queue.select_next_task().unwrap()
+
+            # Execute THE SELECTED TASK (not auto-select again)
+            orchestrator = PrimeXOrchestrator(storage)
+            result = orchestrator.execute_task(selected_task)
+        """
+        try:
+            logger.info(f"Executing explicit task: {task.id} - {task.title}")
+
+            # Phase 1: Update Status to IN_PROGRESS
+            task.status = TaskStatus.IN_PROGRESS
+            update_result = self.backlog_storage.update_task(task)
+
+            if update_result.is_err():
+                return Err(update_result.unwrap_err())
+
+            # Phase 2: Execute Workflow
+            start_time = datetime.now()
+            workflow_result = self._execute_workflow(task)
+
+            if "success" not in workflow_result or not workflow_result["success"]:
+                # Workflow failed - keep status PENDING
+                task.status = TaskStatus.PENDING
+                self.backlog_storage.update_task(task)
+
+                error_msg = workflow_result.get("error", "Workflow execution failed")
+                logger.error(f"Workflow failed: {error_msg}")
+                return Err(Exception(error_msg))
+
+            # Phase 3: On Success - Update Status to COMPLETED
+            end_time = datetime.now()
+            duration_hours = (end_time - start_time).total_seconds() / 3600
+
+            task.status = TaskStatus.COMPLETED
+            update_result = self.backlog_storage.update_task(task)
+
+            if update_result.is_err():
+                logger.warning(f"Failed to update task status to COMPLETED: {update_result.unwrap_err()}")
+
+            # Phase 4: Store Completion Metadata in VectorStore
+            memory_result = self.backlog_storage.store_completion_metadata(task, duration_hours)
+
+            if memory_result.is_err():
+                logger.warning(f"Failed to store completion metadata: {memory_result.unwrap_err()}")
+
+            # Phase 5: Return Execution Result
+            result = {
+                "task_id": task.id,
+                "task_title": task.title,
+                "task_type": task.task_type.value,
+                "status": "completed",
+                "duration_hours": duration_hours,
+                "pr_url": workflow_result.get("pr_url", None),
+                "tests_passed": workflow_result.get("tests_passed", False),
+            }
+
+            logger.info(f"Explicit task completed successfully: {task.id}")
+            return Ok(result)
+
+        except Exception as e:
+            logger.error(f"Explicit task execution failed: {e}", exc_info=True)
+            # Rollback status to PENDING on exception
+            try:
+                task.status = TaskStatus.PENDING
+                self.backlog_storage.update_task(task)
+            except:
+                pass  # Best effort rollback
+            return Err(e)
+
     def _create_adhoc_task(self, task_intent: str) -> Task:
         """
         Create ad-hoc task from explicit intent.

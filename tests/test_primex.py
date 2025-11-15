@@ -320,3 +320,128 @@ class TestPrimeXExplicitIntent:
             # This is done via BacklogStorage.store_completion_metadata()
             # which will be called even for ad-hoc tasks
             assert mock_memory.store.call_count >= 1 or True  # Relaxed assertion
+
+
+class TestProductionBugFixes:
+    """
+    Tests for production bugs found in Mission 5 integration:
+    1. Night Shift ignores selected tasks (calls execute(None) instead of execute_task(task))
+    2. primeX calls non-existent heal_one_failure() method on SelfHealingAgent
+
+    TDD Protocol: Tests written FIRST (RED phase) - these will fail until bugs are fixed.
+    """
+
+    def test_execute_task_accepts_explicit_task_object(self):
+        """
+        Test that primeX can execute an explicit Task object.
+
+        Bug: Night Shift calls execute(task_intent=None) which auto-selects,
+        ignoring the task it just selected. We need execute_task(task) method.
+        """
+        with tempfile.TemporaryDirectory() as tmpdir:
+            storage = BacklogStorage(data_dir=tmpdir)
+
+            # Create specific task
+            task = Task(
+                id="explicit-task-123",
+                title="Explicit task execution test",
+                description="Test that we can execute a specific task",
+                task_type=TaskType.BUG_FIX,
+                priority=TaskPriority.P1,
+                estimated_complexity=3,
+            )
+            storage.add_task(task)
+
+            # Create orchestrator
+            orchestrator = px.PrimeXOrchestrator(backlog_storage=storage)
+
+            # Mock workflow execution
+            with patch.object(orchestrator, "_execute_workflow", return_value={"success": True}):
+                # This should execute THE EXACT task we pass, not auto-select
+                result = orchestrator.execute_task(task)
+
+                assert result.is_ok()
+
+                # Verify the EXACT task was executed (not auto-selected different one)
+                retrieved = storage.get_task("explicit-task-123").unwrap()
+                assert retrieved.status == TaskStatus.COMPLETED
+
+    @patch("tools.primex_orchestrator.SelfHealingAgent")
+    def test_self_healing_agent_has_heal_one_failure_method(self, mock_healer_class):
+        """
+        Test that SelfHealingAgent.heal_one_failure() method exists.
+
+        Bug: primeX calls agent.heal_one_failure() but this method doesn't exist
+        on SelfHealingAgent (only detect_failures() and run_healing_loop() exist).
+        This will cause AttributeError in production.
+        """
+        from tools.self_healing_agent import SelfHealingAgent
+
+        # Create real agent instance (not mock)
+        agent = SelfHealingAgent()
+
+        # Verify public API exists
+        assert hasattr(agent, "heal_one_failure"), \
+            "SelfHealingAgent missing heal_one_failure() method - primeX will crash"
+
+        # Verify method is callable
+        assert callable(getattr(agent, "heal_one_failure")), \
+            "heal_one_failure() exists but is not callable"
+
+    def test_night_shift_executes_selected_task_not_auto_select(self):
+        """
+        Integration test: Night Shift should execute the task it selected,
+        not auto-select a different one.
+
+        Bug: Night Shift calls orchestrator.execute(task_intent=None) which
+        throws away the task it just selected and auto-selects from backlog again.
+        """
+        with tempfile.TemporaryDirectory() as tmpdir:
+            storage = BacklogStorage(data_dir=tmpdir)
+
+            # Add TWO tasks to backlog
+            task1 = Task(
+                id="task-1-high-priority",
+                title="Task 1 - Selected by Night Shift",
+                description="This task should be executed",
+                task_type=TaskType.BUG_FIX,
+                priority=TaskPriority.P1,  # High priority
+                estimated_complexity=3,
+                business_value=10,
+            )
+            task2 = Task(
+                id="task-2-low-priority",
+                title="Task 2 - Should NOT be executed",
+                description="This task should stay pending",
+                task_type=TaskType.TECH_DEBT,
+                priority=TaskPriority.P3,  # Low priority
+                estimated_complexity=2,
+                business_value=3,
+            )
+            storage.add_task(task1)
+            storage.add_task(task2)
+
+            # Create orchestrator
+            orchestrator = px.PrimeXOrchestrator(backlog_storage=storage)
+
+            # Simulate Night Shift: select task1, then execute it
+            from tools.backlog_agent import PriorityQueue
+            queue = PriorityQueue(storage)
+            selected_task = queue.select_next_task().unwrap()
+
+            assert selected_task.id == "task-1-high-priority", "Priority queue should select P1 task"
+
+            # Execute THE SELECTED TASK (not auto-select again)
+            with patch.object(orchestrator, "_execute_workflow", return_value={"success": True}):
+                result = orchestrator.execute_task(selected_task)
+
+                assert result.is_ok()
+
+            # Verify task1 was completed, task2 still pending
+            task1_final = storage.get_task("task-1-high-priority").unwrap()
+            task2_final = storage.get_task("task-2-low-priority").unwrap()
+
+            assert task1_final.status == TaskStatus.COMPLETED, \
+                "Selected task should be completed"
+            assert task2_final.status == TaskStatus.PENDING, \
+                "Non-selected task should still be pending"
