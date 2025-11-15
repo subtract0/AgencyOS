@@ -43,7 +43,8 @@ from tools.backlog_agent import BacklogStorage
 from tools.health_monitor import HealthMonitor
 from tools.primex_orchestrator import PrimeXOrchestrator
 from tools.auto_recovery import AutoRecovery
-from agency_memory.learning import CmpStore
+from agency_memory.learning import CmpStore, CmpEvent
+import uuid
 
 logger = logging.getLogger(__name__)
 
@@ -355,29 +356,45 @@ class NightShiftScheduler:
             success: Whether the task succeeded
         """
         try:
-            # Generate clade ID (simplified version)
+            # Generate clade ID
             # Format: agent::model::task_type::strategy
             clade_id = f"night_shift::primex::{task.task_type.value}::auto"
 
-            # Record event
-            self.cmp_store.record_event(
+            # Create CmpEvent instance (required by CmpStore.record_event)
+            event = CmpEvent(
+                id=str(uuid.uuid4()),
+                pr_id=-1,  # Placeholder (Night Shift doesn't create PRs yet)
+                branch_name="night_shift_auto",
+                agent_id="night_shift",
                 clade_id=clade_id,
                 task_type=f"night_shift_{task.task_type.value}",
-                outcome="approved" if success else "rejected",
-                metadata={
+                created_at=int(datetime.now().timestamp()),
+                closed_at=int(datetime.now().timestamp()),
+                reinforcement_signal="approved" if success else "rejected",
+                reverted=False,
+                size_loc_delta=0,  # Unknown until PR created
+                files_touched=[],  # Unknown until PR created
+                test_status="pass" if execution_result.get("tests_passed", False) else "fail",
+                test_suites=["night_shift"],
+                human_review_time_sec=None,
+                extra_metadata={
                     "task_id": task.id,
                     "task_title": task.title,
                     "task_priority": task.priority.value,
+                    "task_complexity": task.estimated_complexity,
+                    "task_business_value": task.business_value,
                     "pr_url": execution_result.get("pr_url"),
-                    "tests_passed": execution_result.get("tests_passed", False),
                     "error": execution_result.get("error") if not success else None,
                 },
             )
 
-            logger.info(f"CMP event recorded: {clade_id} - {task.id} - {'success' if success else 'failure'}")
+            # Record event to CmpStore
+            self.cmp_store.record_event(event)
+
+            logger.info(f"CMP event recorded: {event.id} - {clade_id} - {'success' if success else 'failure'}")
 
         except Exception as e:
-            logger.warning(f"Failed to record CMP event: {e}")
+            logger.warning(f"Failed to record CMP event: {e}", exc_info=True)
 
     def run(self):
         """
