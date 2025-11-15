@@ -496,8 +496,6 @@ def main(
             "--ignore=tests/test_firestore_learning_persistence.py",
             "--ignore=tests/test_firestore_mock_integration.py",
             "--ignore=tests/e2e/",  # e2e tests import agency at module level
-            "--ignore=tests/benchmarks/test_vectorstore_performance.py",  # Quarantined
-            "--ignore=tests/test_checkpoint_manager.py",  # Quarantined (hangs)
         ]
     )
 
