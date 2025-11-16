@@ -754,7 +754,7 @@ async def test_autonomous_loop_full_cycle():
     - Post-flight cleanup
     """
     result = await autonomous_audit_loop(
-        codebase_path="/Users/am/Code/Agency",
+        codebase_path=CODEBASE_ROOT,
         local_model="gpt-oss-20b",
         max_iterations=3,
         context_budget=0.95
