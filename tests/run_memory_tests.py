@@ -7,6 +7,7 @@ Runs all memory-related tests and provides a summary report.
 
 import subprocess
 import sys
+from pathlib import Path
 
 
 def run_test_file(test_file: str) -> tuple[bool, str]:
@@ -20,7 +21,7 @@ def run_test_file(test_file: str) -> tuple[bool, str]:
             [sys.executable, "-m", "pytest", test_file, "-v"],
             capture_output=True,
             text=True,
-            cwd="/Users/am/Code/Agency",
+            cwd=str(Path(__file__).resolve().parents[1].parent),
         )
 
         print(result.stdout)

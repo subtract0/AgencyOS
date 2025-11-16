@@ -366,3 +366,4 @@ ANALYSIS_LIMITATIONS_2025-11-05.md
 DOCUMENTATION_UPDATES_2025-11-05.md
 HARDWARE_REF_AUDIT_2025-11-05.md
 data/cmp_events.jsonl
+logs/knowledge_ingest/exports/
