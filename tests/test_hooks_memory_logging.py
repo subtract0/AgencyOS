@@ -8,12 +8,15 @@ memory records during agent lifecycle events and tool invocations.
 # Import the modules we're testing
 import sys
 import tempfile
+from pathlib import Path
 from datetime import datetime
 from unittest.mock import MagicMock, patch
 
 import pytest
 
-sys.path.append("/Users/am/Code/Agency")
+project_root = Path(__file__).resolve().parents[1].parent
+if str(project_root) not in sys.path:
+    sys.path.append(str(project_root))
 
 from agency_memory import InMemoryStore, Memory
 from shared.agent_context import AgentContext, create_agent_context

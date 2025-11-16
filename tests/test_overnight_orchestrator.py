@@ -222,14 +222,17 @@ def test_start_local_workers(orchestrator_config):
 def test_generate_remote_worker_command():
     """Test generating command for remote worker execution."""
     from scripts.overnight_orchestrator import generate_remote_worker_command
+    from pathlib import Path
+
+    queue_path = str(Path(__file__).resolve().parents[1].parent / "task_queue.json")
 
     command = generate_remote_worker_command(
-        air_threads=1, queue_path="/Users/am/Code/Agency/task_queue.json"
+        air_threads=1, queue_path=queue_path
     )
 
     assert "ssh" in command or "python" in command
     assert "overnight_worker.py" in command
-    assert "/Users/am/Code/Agency/task_queue.json" in command
+    assert queue_path in command
 
 
 # Test 10: Aggregate worker results

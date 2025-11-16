@@ -159,6 +159,8 @@ from typing import List, Optional
 import psutil
 import pytest
 
+CODEBASE_ROOT = str(Path(__file__).resolve().parents[2])
+
 from shared.type_definitions import Result, Ok, Err
 
 
@@ -644,7 +646,7 @@ async def test_post_flight_cleanup():
 async def test_intelligent_audit():
     """Test audit cycle with issue detection."""
     result = await run_intelligent_audit(
-        codebase_path="/Users/am/Code/Agency",
+        codebase_path=CODEBASE_ROOT,
         local_model="gpt-oss-20b"
     )
 

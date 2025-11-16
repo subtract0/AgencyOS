@@ -122,8 +122,10 @@ def benchmark_glob_caching():
 
     clear_cache()
 
-    # Use current directory for realistic test
-    search_dir = "/Users/am/Code/Agency"
+    # Use repository root for realistic test
+    from pathlib import Path
+
+    search_dir = str(Path(__file__).resolve().parents[2])
     pattern = "**/*.py"
 
     # First search (cache miss)

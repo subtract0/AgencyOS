@@ -26,6 +26,7 @@ Target Performance:
 
 import asyncio
 import time
+from pathlib import Path
 from typing import List, Optional
 from unittest.mock import AsyncMock, patch
 
@@ -40,6 +41,9 @@ from tests.integration.test_autonomous_audit_loop import (
     pre_flight_cleanup,
     post_flight_cleanup,
 )
+
+
+CODEBASE_ROOT = str(Path(__file__).resolve().parents[2])
 
 
 # ============================================================================
@@ -70,7 +74,7 @@ async def test_no_intentional_delays_with_mocked_sleep():
 
         # Act: Run the autonomous audit loop (3 cycles)
         result = await autonomous_audit_loop(
-            codebase_path="/Users/am/Code/Agency",
+            codebase_path=CODEBASE_ROOT,
             local_model="gpt-oss-20b",
             max_iterations=3,
             context_budget=0.95
@@ -164,7 +168,7 @@ async def test_edge_case_zero_cycles():
 
         start_time = time.time()
         result = await autonomous_audit_loop(
-            codebase_path="/Users/am/Code/Agency",
+            codebase_path=CODEBASE_ROOT,
             local_model="gpt-oss-20b",
             max_iterations=0,  # Zero cycles
             context_budget=0.95
@@ -191,7 +195,7 @@ async def test_edge_case_single_cycle():
 
         start_time = time.time()
         result = await autonomous_audit_loop(
-            codebase_path="/Users/am/Code/Agency",
+            codebase_path=CODEBASE_ROOT,
             local_model="gpt-oss-20b",
             max_iterations=1,  # Single cycle
             context_budget=0.95
@@ -223,7 +227,7 @@ async def test_edge_case_many_cycles():
 
         start_time = time.time()
         result = await autonomous_audit_loop(
-            codebase_path="/Users/am/Code/Agency",
+            codebase_path=CODEBASE_ROOT,
             local_model="gpt-oss-20b",
             max_iterations=10,  # Multiple cycles (reduced from 1000 for test speed)
             context_budget=0.95
@@ -268,7 +272,7 @@ async def test_error_sleep_exception_handling():
         # This should either handle the exception or propagate it properly
         with pytest.raises(RuntimeError):
             await autonomous_audit_loop(
-                codebase_path="/Users/am/Code/Agency",
+                codebase_path=CODEBASE_ROOT,
                 local_model="gpt-oss-20b",
                 max_iterations=1,
                 context_budget=0.95
@@ -291,7 +295,7 @@ async def test_error_partial_mock_failure():
 
         # Should still work because we're patching at module level
         result = await autonomous_audit_loop(
-            codebase_path="/Users/am/Code/Agency",
+            codebase_path=CODEBASE_ROOT,
             local_model="gpt-oss-20b",
             max_iterations=1,
             context_budget=0.95
@@ -379,7 +383,7 @@ async def test_scale_linear_performance():
         for cycles in cycle_counts:
             start = time.time()
             result = await autonomous_audit_loop(
-                codebase_path="/Users/am/Code/Agency",
+                codebase_path=CODEBASE_ROOT,
                 local_model="gpt-oss-20b",
                 max_iterations=cycles,
                 context_budget=0.95
@@ -424,7 +428,7 @@ async def test_regression_real_sleep_takes_longer():
     # NO mocking - use real asyncio.sleep
     start_time = time.time()
     result = await autonomous_audit_loop(
-        codebase_path="/Users/am/Code/Agency",
+        codebase_path=CODEBASE_ROOT,
         local_model="gpt-oss-20b",
         max_iterations=3,
         context_budget=0.95
@@ -488,7 +492,7 @@ async def test_yield_output_correctness():
         mock_sleep.return_value = None
 
         result = await autonomous_audit_loop(
-            codebase_path="/Users/am/Code/Agency",
+            codebase_path=CODEBASE_ROOT,
             local_model="gpt-oss-20b",
             max_iterations=3,
             context_budget=0.95
@@ -537,7 +541,7 @@ async def test_yield_timing_consistency():
         for _ in range(5):
             start = time.time()
             result = await autonomous_audit_loop(
-                codebase_path="/Users/am/Code/Agency",
+                codebase_path=CODEBASE_ROOT,
                 local_model="gpt-oss-20b",
                 max_iterations=3,
                 context_budget=0.95
