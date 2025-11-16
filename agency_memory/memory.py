@@ -10,6 +10,7 @@ import logging
 import os
 from abc import ABC, abstractmethod
 from datetime import datetime
+from pathlib import Path
 from threading import Lock
 from typing import TYPE_CHECKING, cast
 
@@ -261,7 +262,9 @@ def create_session_transcript(memories: list[dict[str, JSONValue]], session_id: 
     """
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
     filename = f"{timestamp}_{session_id}.md"
-    filepath = os.path.join("/Users/am/Code/Agency/logs/sessions", filename)
+    # Use dynamic repository root resolution
+    repo_root = Path(__file__).resolve().parents[1]  # agency_memory/ -> AgencyOS/
+    filepath = os.path.join(str(repo_root / "logs" / "sessions"), filename)
     # Ensure filepath is a concrete string even if os.path.join is monkey-patched
     if not isinstance(filepath, str):
         base = os.getenv("TMPDIR", "/tmp")

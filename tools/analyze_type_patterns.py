@@ -164,7 +164,8 @@ def main():
     print("=" * 50)
 
     # Find all Python files with Dict usage
-    project_root = Path("/Users/am/Code/Agency")
+    # Use dynamic repository root resolution
+    project_root = Path(__file__).resolve().parents[1]  # tools/ -> AgencyOS/
     exclude_dirs = {".venv", "__pycache__", ".pytest_cache", "logs", "data"}
 
     all_patterns = []

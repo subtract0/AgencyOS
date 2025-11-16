@@ -1,6 +1,7 @@
 import logging
 import os
 from datetime import datetime
+from pathlib import Path
 
 from agents import AgentHooks, RunContextWrapper
 
@@ -391,7 +392,9 @@ class MemoryIntegrationHook(AgentHooks):
                 return
 
             # Ensure logs/sessions directory exists
-            transcript_dir = "/Users/am/Code/Agency/logs/sessions"
+            # Use dynamic repository root resolution
+            repo_root = Path(__file__).resolve().parents[1]  # shared/ -> AgencyOS/
+            transcript_dir = repo_root / "logs" / "sessions"
             os.makedirs(transcript_dir, exist_ok=True)
 
             # Create transcript
