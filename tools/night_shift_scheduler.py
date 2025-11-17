@@ -365,7 +365,7 @@ class NightShiftScheduler:
             event = CmpEvent(
                 id=str(uuid.uuid4()),
                 pr_id=-1,  # Placeholder (Night Shift doesn't create PRs yet)
-                branch_name="night_shift_auto",
+                branch_name="nightshift-auto",
                 agent_id="night_shift",
                 clade_id=clade_id,
                 task_type=f"night_shift_{task.task_type.value}",
@@ -374,7 +374,7 @@ class NightShiftScheduler:
                 reinforcement_signal="approved" if success else "rejected",
                 reverted=False,
                 size_loc_delta=0,  # Unknown until PR created
-                files_touched=[],  # Unknown until PR created
+                files_touched=execution_result.get("files_changed", []),  # Now captured from PrimeCCCAgent
                 test_status="pass" if execution_result.get("tests_passed", False) else "fail",
                 test_suites=["night_shift"],
                 human_review_time_sec=None,
@@ -385,6 +385,7 @@ class NightShiftScheduler:
                     "task_complexity": task.estimated_complexity,
                     "task_business_value": task.business_value,
                     "pr_url": execution_result.get("pr_url"),
+                    "commit_sha": execution_result.get("commit_sha"),  # Now logged!
                     "error": execution_result.get("error") if not success else None,
                 },
             )

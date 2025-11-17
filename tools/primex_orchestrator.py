@@ -56,13 +56,378 @@ try:
 except ImportError:
     SelfHealingAgent = None  # type: ignore
 
-# Placeholder for PrimeCCCAgent (future integration)
+# Import agents for PrimeCCCAgent implementation
+try:
+    from planner_agent.planner_agent import create_planner_agent
+    from coding_agent.coding_agent import create_coding_agent
+    from test_generator_agent.test_generator_agent import create_test_generator_agent
+    from shared.agent_context import create_agent_context
+    from shared.model_policy import agent_model
+except ImportError:
+    create_planner_agent = None  # type: ignore
+    create_coding_agent = None  # type: ignore
+    create_test_generator_agent = None  # type: ignore
+
+import subprocess
+
+
 class PrimeCCCAgent:
-    """Placeholder for PrimeCCC agent integration."""
+    """
+    PrimeCCC Agent - Autonomous development agent for Night Shift.
+
+    Orchestrates: Planner → Coder → Test Generator → Smoke Tests → Git Commit
+
+    Methods:
+        execute(task): Main workflow execution
+    """
+
+    def __init__(self, agent_context: Optional[Any] = None):
+        """
+        Initialize PrimeCCC agent.
+
+        Args:
+            agent_context: Shared agent context for memory/learning
+        """
+        if agent_context is None and create_agent_context:
+            agent_context = create_agent_context(session_id=f"primeccc-{uuid.uuid4().hex[:8]}")
+
+        self.context = agent_context
+
+        # Initialize agents if available
+        self.planner = None
+        self.coder = None
+        self.test_generator = None
+
+        if create_planner_agent and agent_model:
+            self.planner = create_planner_agent(
+                model=agent_model("planner"),
+                reasoning_effort="high",
+                agent_context=agent_context
+            )
+
+        if create_coding_agent and agent_model:
+            self.coder = create_coding_agent(
+                model=agent_model("coder"),
+                reasoning_effort="medium",
+                agent_context=agent_context
+            )
+
+        if create_test_generator_agent and agent_model:
+            self.test_generator = create_test_generator_agent(
+                model=agent_model("test_generator"),
+                reasoning_effort="medium",
+                agent_context=agent_context
+            )
 
     def execute(self, task: Any) -> dict[str, Any]:
-        """Execute feature/bug fix workflow (not yet implemented)."""
-        return {"success": True, "pr_url": None, "tests_passed": True}
+        """
+        Execute feature/bug fix workflow.
+
+        Workflow:
+            1. Planner: Generate plan from task description
+            2. Coder: Implement the plan
+            3. Test Generator: Generate tests if needed
+            4. Run smoke tests
+            5. Git commit to nightshift-auto branch
+            6. Return results
+
+        Args:
+            task: Task object with title/description
+
+        Returns:
+            dict: {"success": bool, "pr_url": str | None, "tests_passed": bool, "commit_sha": str | None, "error": str | None, "files_changed": list[str]}
+        """
+        try:
+            logger.info(f"PrimeCCCAgent executing task: {task.title}")
+
+            # Validate agents are available
+            if not all([self.planner, self.coder]):
+                return {
+                    "success": False,
+                    "error": "Required agents not available (planner, coder)",
+                    "tests_passed": False,
+                    "commit_sha": None,
+                    "pr_url": None,
+                    "files_changed": []
+                }
+
+            # Phase 1: Planning
+            logger.info("Phase 1: Generating plan...")
+            plan_prompt = f"""Create implementation plan for task:
+
+Title: {task.title}
+Description: {task.description}
+Type: {task.task_type}
+
+Generate a concise implementation plan including:
+1. Files to modify/create
+2. Key changes needed
+3. Test strategy
+
+Keep the plan focused and actionable."""
+
+            plan_result = self.planner.run(plan_prompt)
+            logger.info(f"Plan generated: {len(str(plan_result))} chars")
+
+            # Phase 2: Implementation
+            logger.info("Phase 2: Implementing solution...")
+            code_prompt = f"""Implement the following task:
+
+Task: {task.title}
+Description: {task.description}
+
+Plan:
+{plan_result}
+
+Requirements:
+1. Follow TDD: Write tests FIRST
+2. Implement minimal code to pass tests
+3. Use Result<T,E> pattern for error handling
+4. No Dict[Any, Any] - use Pydantic models
+5. Functions < 50 lines
+
+Implement the solution now."""
+
+            code_result = self.coder.run(code_prompt)
+            logger.info(f"Implementation complete: {len(str(code_result))} chars")
+
+            # Phase 3: Run smoke tests
+            logger.info("Phase 3: Running smoke tests...")
+            test_result = self._run_smoke_tests()
+
+            if not test_result["success"]:
+                return {
+                    "success": False,
+                    "error": f"Smoke tests failed: {test_result['error']}",
+                    "tests_passed": False,
+                    "commit_sha": None,
+                    "pr_url": None,
+                    "files_changed": []
+                }
+
+            logger.info(f"Smoke tests passed: {test_result['tests_passed']}/{test_result['tests_total']}")
+
+            # Phase 4: Git commit
+            logger.info("Phase 4: Committing changes...")
+            commit_result = self._commit_changes(task)
+
+            if not commit_result["success"]:
+                return {
+                    "success": False,
+                    "error": f"Git commit failed: {commit_result['error']}",
+                    "tests_passed": True,  # Tests passed, but commit failed
+                    "commit_sha": None,
+                    "pr_url": None,
+                    "files_changed": commit_result.get("files_changed", [])
+                }
+
+            logger.info(f"Changes committed: {commit_result['commit_sha']}")
+
+            return {
+                "success": True,
+                "tests_passed": True,
+                "commit_sha": commit_result["commit_sha"],
+                "pr_url": None,  # No PRs for now (per user requirement)
+                "files_changed": commit_result["files_changed"],
+                "error": None
+            }
+
+        except Exception as e:
+            logger.error(f"PrimeCCCAgent execution failed: {e}", exc_info=True)
+            return {
+                "success": False,
+                "error": str(e),
+                "tests_passed": False,
+                "commit_sha": None,
+                "pr_url": None,
+                "files_changed": []
+            }
+
+    def _run_smoke_tests(self) -> dict[str, Any]:
+        """
+        Run smoke test suite.
+
+        Returns:
+            dict: {"success": bool, "tests_passed": int, "tests_total": int, "error": str | None}
+        """
+        try:
+            # Run smoke tests
+            result = subprocess.run(
+                ["python", "run_tests.py", "--smoke"],
+                capture_output=True,
+                text=True,
+                timeout=300  # 5 minute timeout
+            )
+
+            # Parse test results from output
+            # Look for pytest summary line like: "=== 42 passed in 12.34s ==="
+            output = result.stdout + result.stderr
+
+            if result.returncode == 0:
+                # Tests passed
+                return {
+                    "success": True,
+                    "tests_passed": self._extract_test_count(output, "passed"),
+                    "tests_total": self._extract_test_count(output, "passed"),
+                    "error": None
+                }
+            else:
+                # Tests failed
+                return {
+                    "success": False,
+                    "tests_passed": self._extract_test_count(output, "passed"),
+                    "tests_total": self._extract_test_count(output, "passed") + self._extract_test_count(output, "failed"),
+                    "error": f"Test failures detected. Exit code: {result.returncode}"
+                }
+
+        except subprocess.TimeoutExpired:
+            return {
+                "success": False,
+                "tests_passed": 0,
+                "tests_total": 0,
+                "error": "Smoke tests timed out after 5 minutes"
+            }
+        except Exception as e:
+            return {
+                "success": False,
+                "tests_passed": 0,
+                "tests_total": 0,
+                "error": str(e)
+            }
+
+    def _extract_test_count(self, output: str, status: str) -> int:
+        """
+        Extract test count from pytest output.
+
+        Args:
+            output: pytest stdout/stderr
+            status: "passed" or "failed"
+
+        Returns:
+            int: Number of tests with given status
+        """
+        import re
+
+        # Look for patterns like "42 passed" or "5 failed"
+        pattern = rf"(\d+) {status}"
+        match = re.search(pattern, output)
+
+        if match:
+            return int(match.group(1))
+        return 0
+
+    def _commit_changes(self, task: Any) -> dict[str, Any]:
+        """
+        Commit changes to nightshift-auto branch.
+
+        Args:
+            task: Task object
+
+        Returns:
+            dict: {"success": bool, "commit_sha": str | None, "files_changed": list[str], "error": str | None}
+        """
+        try:
+            # Ensure we're on nightshift-auto branch
+            branch_result = subprocess.run(
+                ["git", "rev-parse", "--abbrev-ref", "HEAD"],
+                capture_output=True,
+                text=True,
+                timeout=10
+            )
+
+            current_branch = branch_result.stdout.strip()
+
+            if current_branch != "nightshift-auto":
+                # Create or switch to nightshift-auto branch
+                subprocess.run(
+                    ["git", "checkout", "-B", "nightshift-auto"],
+                    capture_output=True,
+                    text=True,
+                    timeout=10,
+                    check=True
+                )
+
+            # Get list of changed files
+            status_result = subprocess.run(
+                ["git", "status", "--porcelain"],
+                capture_output=True,
+                text=True,
+                timeout=10,
+                check=True
+            )
+
+            files_changed = []
+            for line in status_result.stdout.strip().split("\n"):
+                if line.strip():
+                    # Format: " M file.py" or "?? file.py"
+                    files_changed.append(line[3:].strip())
+
+            if not files_changed:
+                return {
+                    "success": True,
+                    "commit_sha": "no-changes",
+                    "files_changed": [],
+                    "error": None
+                }
+
+            # Stage all changes
+            subprocess.run(
+                ["git", "add", "."],
+                capture_output=True,
+                text=True,
+                timeout=10,
+                check=True
+            )
+
+            # Commit with task info
+            commit_message = f"""feat(nightshift): {task.title}
+
+{task.description[:200]}
+
+Task ID: {task.id}
+Task Type: {task.task_type}
+Automated by: Night Shift + PrimeCCCAgent"""
+
+            commit_result = subprocess.run(
+                ["git", "commit", "-m", commit_message],
+                capture_output=True,
+                text=True,
+                timeout=10,
+                check=True
+            )
+
+            # Get commit SHA
+            sha_result = subprocess.run(
+                ["git", "rev-parse", "HEAD"],
+                capture_output=True,
+                text=True,
+                timeout=10,
+                check=True
+            )
+
+            commit_sha = sha_result.stdout.strip()
+
+            return {
+                "success": True,
+                "commit_sha": commit_sha,
+                "files_changed": files_changed,
+                "error": None
+            }
+
+        except subprocess.CalledProcessError as e:
+            return {
+                "success": False,
+                "commit_sha": None,
+                "files_changed": [],
+                "error": f"Git command failed: {e.stderr if e.stderr else str(e)}"
+            }
+        except Exception as e:
+            return {
+                "success": False,
+                "commit_sha": None,
+                "files_changed": [],
+                "error": str(e)
+            }
 
 
 logger = logging.getLogger(__name__)
