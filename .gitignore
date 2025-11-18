@@ -367,3 +367,13 @@ DOCUMENTATION_UPDATES_2025-11-05.md
 HARDWARE_REF_AUDIT_2025-11-05.md
 data/cmp_events.jsonl
 logs/knowledge_ingest/exports/
+
+# Goldminer artifacts
+goldminer_*.out
+start_goldminer_24h.sh
+tools/pain_point_goldminer_v*.py
+logs/goldminer/checkpoints_v*/
+
+# HGM exploration (not part of main codebase)
+HGM-main/
+HGM-main.zip
