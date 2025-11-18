@@ -302,7 +302,9 @@ class LeanAgent:
         }
 
         # Check if this is an o1/o3/gpt-5 model (reasoning models have restrictions)
-        is_reasoning_model = any(m in self.config.model.lower() for m in ["o1", "o3", "gpt-5"])
+        # Handle both string models and LitellmModel objects
+        model_str = self.config.model.model if hasattr(self.config.model, 'model') else self.config.model
+        is_reasoning_model = any(m in model_str.lower() for m in ["o1", "o3", "gpt-5"])
 
         if is_reasoning_model:
             # Reasoning models don't support temperature, tools, or max_tokens
