@@ -263,6 +263,24 @@ Implement the solution now by EDITING FILES."""
                     "pr_url": None,
                     "files_changed": []
                 }
+            artifact_files = [Path(f) for f in materialize_result.get("files", [])]
+            logger.info("Final verification before commit...")
+            final_verify = self._verify_source_files_changed()
+            if not final_verify["success"]:
+                logger.error(f"Final verification failed: {final_verify['error']}")
+                for artifact in artifact_files:
+                    try:
+                        (Path.cwd() / artifact).unlink(missing_ok=True)
+                    except Exception:
+                        logger.debug("Failed to remove artifact file %s after verification error", artifact)
+                return {
+                    "success": False,
+                    "error": final_verify["error"],
+                    "tests_passed": True,
+                    "commit_sha": None,
+                    "pr_url": None,
+                    "files_changed": []
+                }
 
             # Phase 4: Git commit
             logger.info("Phase 4: Committing changes...")

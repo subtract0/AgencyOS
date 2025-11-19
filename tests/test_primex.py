@@ -459,7 +459,7 @@ class TestPrimeXApplyHelpers:
     def test_parse_file_blocks_extracts_paths_and_content(self, tmp_path: Path):
         agent = self._make_agent()
         payload = (
-            "File: src/example.py\n"
+            "**File: src/example.py**\n"
             "```python\nprint('hello')\n```\n"
             "File: tests/test_example.py\n"
             "```python\nassert True\n```\n"
