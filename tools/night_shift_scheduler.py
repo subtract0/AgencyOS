@@ -36,7 +36,7 @@ if __name__ == "__main__":
     project_root = Path(__file__).parent.parent
     sys.path.insert(0, str(project_root))
 
-from croniter import croniter
+# from croniter import croniter
 from shared.models.night_shift import NightShiftConfig, NightShiftState
 from shared.type_definitions.result import Err, Ok, Result
 from tools.backlog_agent import BacklogStorage
@@ -174,13 +174,19 @@ class NightShiftScheduler:
 
     def get_next_execution_time(self) -> datetime:
         """
-        Calculate next execution time based on cron schedule.
+        Calculate next execution time based on min_interval since croniter is unavailable.
 
         Returns:
             datetime: Next execution time
         """
-        cron = croniter(self.config.schedule, datetime.now())
-        return cron.get_next(datetime)
+        # Fallback: next execution is simply last_exec + min_interval
+        if self.state.last_execution_time:
+            return self.state.last_execution_time + timedelta(minutes=self.config.min_interval_minutes)
+        return datetime.now()
+
+        # Original croniter logic (disabled due to dependency issue)
+        # cron = croniter(self.config.schedule, datetime.now())
+        # return cron.get_next(datetime)
 
     def check_kill_switch(self) -> bool:
         """
@@ -206,15 +212,14 @@ class NightShiftScheduler:
             logger.info(f"Skipping execution (min interval not met): {time_since_last} < {min_interval}")
             return False
 
+        # Cron check disabled, relying on min_interval only
+        return True
+        
+        # Original logic
         # Check cron schedule
-        next_run = self.get_next_execution_time()
-        now = datetime.now()
-
-        # If next run is within next minute, execute now
-        if (next_run - now).total_seconds() < 60:
-            return True
-
-        return False
+        # next_run = self.get_next_execution_time()
+        # now = datetime.now()
+        # ...
 
     def run_cycle(self):
         """

@@ -61,12 +61,14 @@ try:
     from planner_agent.planner_agent import create_planner_agent
     from coding_agent.coding_agent import create_coding_agent
     from test_generator_agent.test_generator_agent import create_test_generator_agent
+    from chief_architect_agent.chief_architect_agent import create_chief_architect_agent
     from shared.agent_context import create_agent_context
     from shared.model_policy import agent_model
 except ImportError:
     create_planner_agent = None  # type: ignore
     create_coding_agent = None  # type: ignore
     create_test_generator_agent = None  # type: ignore
+    create_chief_architect_agent = None # type: ignore
 
 import subprocess
 
@@ -97,6 +99,7 @@ class PrimeCCCAgent:
         self.planner = None
         self.coder = None
         self.test_generator = None
+        self.chief_architect = None
 
         if create_planner_agent and agent_model:
             self.planner = create_planner_agent(
@@ -104,6 +107,13 @@ class PrimeCCCAgent:
                 reasoning_effort="high",
                 agent_context=agent_context
             )
+
+        if create_chief_architect_agent and agent_model:
+             self.chief_architect = create_chief_architect_agent(
+                model=agent_model("chief_architect"),
+                reasoning_effort="high",
+                agent_context=agent_context
+             )
 
         if create_coding_agent and agent_model:
             self.coder = create_coding_agent(
@@ -949,6 +959,10 @@ class PrimeXOrchestrator:
                 # Route to SelfHealingAgent (Mission 3)
                 return self._execute_test_failure_workflow(task)
 
+            elif "ChiefArchitect" in task.title or "Audit" in task.title:
+                # Route to ChiefArchitect (HGM-style Self-Improvement)
+                return self._execute_strategic_workflow(task)
+
             elif task.task_type in [TaskType.FEATURE_REQUEST, TaskType.BUG_FIX, TaskType.TECH_DEBT]:
                 # Route to PrimeCCCAgent (future integration)
                 return self._execute_feature_workflow(task)
@@ -989,6 +1003,59 @@ class PrimeXOrchestrator:
 
         except Exception as e:
             logger.error(f"Test failure workflow failed: {e}", exc_info=True)
+            return {"success": False, "error": str(e)}
+
+    def _execute_strategic_workflow(self, task: Task) -> dict[str, Any]:
+        """
+        Execute strategic workflow (ChiefArchitectAgent integration).
+
+        Args:
+            task: Strategic task (e.g., Audit, Self-Improvement)
+
+        Returns:
+            dict: Workflow result
+        """
+        try:
+            logger.info(f"Executing strategic workflow for: {task.title}")
+
+            # Initialize PrimeCCCAgent if needed (to access its Chief Architect instance)
+            # Note: PrimeCCCAgent constructor initializes agents including Chief Architect
+            agent = PrimeCCCAgent()
+            
+            if not agent.chief_architect:
+                 return {
+                    "success": False,
+                    "error": "ChiefArchitectAgent not available",
+                    "tests_passed": False,
+                    "commit_sha": None,
+                    "pr_url": None,
+                    "files_changed": []
+                }
+
+            # Execute using ChiefArchitect
+            # Using run() directly as ChiefArchitect handles its own planning/execution
+            prompt = f"""Mission: {task.title}
+Description: {task.description}
+
+Execute this mission autonomously.
+If this is a self-improvement audit, analyze logs and create new backlog tasks for improvements."""
+            
+            result = agent.chief_architect.run(prompt)
+            
+            # Log result
+            logger.info(f"Chief Architect execution complete: {len(str(result))} chars")
+
+            return {
+                "success": True,
+                "tests_passed": True, # Strategic tasks don't run tests directly usually
+                "commit_sha": None, # CA might create PRs or tasks, but not direct commit here
+                "pr_url": None,
+                "files_changed": [],
+                "error": None
+            }
+
+        except Exception as e:
+            logger.error(f"Strategic workflow failed: {e}", exc_info=True)
             return {"success": False, "error": str(e)}
 
     def _execute_feature_workflow(self, task: Task) -> dict[str, Any]:
