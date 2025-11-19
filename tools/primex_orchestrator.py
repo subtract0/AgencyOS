@@ -427,28 +427,41 @@ Implement the solution now by EDITING FILES."""
     def _parse_file_blocks(self, code_text: str) -> list[tuple[str, str]]:
         """
         Extract (path, contents) tuples from structured coder output.
+        Handles both "File: path" and "**File: path**" (markdown bold).
         """
         lines = code_text.splitlines()
         blocks: list[tuple[str, str]] = []
         i = 0
         while i < len(lines):
             line = lines[i].strip()
-            if line.lower().startswith("file:"):
-                rel_path = line.split(":", 1)[1].strip()
+            # Strip markdown bold markers if present
+            clean_line = line.strip("*").strip()
+
+            if clean_line.lower().startswith("file:"):
+                # Extract path after "File:" marker
+                rel_path = clean_line.split(":", 1)[1].strip()
                 i += 1
+
+                # Skip blank lines
                 while i < len(lines) and lines[i].strip() == "":
                     i += 1
+
+                # Expect code fence
                 if i >= len(lines) or not lines[i].strip().startswith("```"):
                     raise ValueError(f"Missing code fence after File: {rel_path}")
-                i += 1
+                i += 1  # Skip opening fence
+
+                # Collect content lines
                 content_lines = []
-                while i < len(lines) and not lines[i].startswith("```"):
+                while i < len(lines) and not lines[i].strip().startswith("```"):
                     content_lines.append(lines[i])
                     i += 1
+
                 if i >= len(lines):
                     raise ValueError(f"Unterminated code fence for {rel_path}")
+
                 blocks.append((rel_path, "\n".join(content_lines).rstrip() + "\n"))
-                i += 1
+                i += 1  # Skip closing fence
             else:
                 i += 1
         return blocks
