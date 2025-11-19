@@ -447,3 +447,50 @@ class TestProductionBugFixes:
                 "Selected task should be completed"
             assert task2_final.status == TaskStatus.PENDING, \
                 "Non-selected task should still be pending"
+
+
+class TestPrimeXApplyHelpers:
+    """Unit tests for coder output parsing and file application helpers."""
+
+    def _make_agent(self):
+        """Create an uninitialized PrimeCCCAgent without invoking __init__."""
+        return object.__new__(px.PrimeCCCAgent)
+
+    def test_parse_file_blocks_extracts_paths_and_content(self, tmp_path: Path):
+        agent = self._make_agent()
+        payload = (
+            "File: src/example.py\n"
+            "```python\nprint('hello')\n```\n"
+            "File: tests/test_example.py\n"
+            "```python\nassert True\n```\n"
+        )
+
+        files = agent._parse_file_blocks(payload)
+        assert files == [
+            ("src/example.py", "print('hello')\n"),
+            ("tests/test_example.py", "assert True\n"),
+        ]
+
+    def test_apply_generated_changes_writes_files(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
+        agent = self._make_agent()
+        monkeypatch.chdir(tmp_path)
+        payload = (
+            "File: src/example.py\n"
+            "```python\nprint('hello world')\n```\n"
+            "File: tests/test_example.py\n"
+            "```python\nassert 1 == 1\n```\n"
+        )
+
+        result = agent._apply_generated_changes(payload)
+        assert result["success"] is True
+        assert sorted(result["files_changed"]) == ["src/example.py", "tests/test_example.py"]
+        assert (tmp_path / "src/example.py").read_text() == "print('hello world')\n"
+        assert (tmp_path / "tests/test_example.py").read_text() == "assert 1 == 1\n"
+
+    def test_apply_generated_changes_without_blocks_fails(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
+        agent = self._make_agent()
+        monkeypatch.chdir(tmp_path)
+
+        result = agent._apply_generated_changes("print('no markers')")
+        assert result["success"] is False
+        assert "did not include any 'File: <path>' blocks" in result["error"]

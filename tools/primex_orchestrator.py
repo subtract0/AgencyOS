@@ -172,7 +172,7 @@ Keep the plan focused and actionable."""
 
             # Phase 2: Implementation
             logger.info("Phase 2: Implementing solution...")
-            code_prompt = f"""Implement the following task:
+            code_prompt = f"""Implement the following task BY EDITING ACTUAL SOURCE FILES:
 
 Task: {task.title}
 Description: {task.description}
@@ -180,18 +180,45 @@ Description: {task.description}
 Plan:
 {plan_result}
 
-Requirements:
-1. Follow TDD: Write tests FIRST
-2. Implement minimal code to pass tests
-3. Use Result<T,E> pattern for error handling
-4. No Dict[Any, Any] - use Pydantic models
-5. Functions < 50 lines
+CRITICAL: You have file editing tools (Read, Write, Edit, MultiEdit).
+USE THEM to make ACTUAL code changes to the repository.
 
-Implement the solution now."""
+DO NOT just output code as text - make real file edits.
+
+Output format (repeat for each file you modify):
+File: relative/path/to/file.py
+```python
+<complete file contents>
+```
+
+Requirements:
+1. Use Read tool to understand existing files
+2. Use Write/Edit tools to create/modify files
+3. Follow TDD: Write tests FIRST
+4. Implement minimal code to pass tests
+5. Use Result<T,E> pattern for error handling
+6. No Dict[Any, Any] - use Pydantic models
+7. Functions < 50 lines
+
+Implement the solution now by EDITING FILES."""
 
             code_result = self.coder.run(code_prompt)
             logger.info(f"Implementation complete: {len(str(code_result))} chars")
             code_text = str(code_result)
+
+            logger.info("Applying generated file changes...")
+            apply_result = self._apply_generated_changes(code_text)
+            if not apply_result["success"]:
+                logger.error(f"Failed to apply generated changes: {apply_result['error']}")
+                return {
+                    "success": False,
+                    "error": apply_result["error"],
+                    "tests_passed": False,
+                    "commit_sha": None,
+                    "pr_url": None,
+                    "files_changed": []
+                }
+            logger.info(f"Applied files: {apply_result['files_changed']}")
 
             # Verify that source files were actually modified (not just text output)
             logger.info("Verifying source files were modified...")
@@ -357,6 +384,74 @@ Implement the solution now."""
             return {"success": True, "files": [str(target_file)]}
         except Exception as e:
             return {"success": False, "error": str(e)}
+
+    def _apply_generated_changes(self, code_text: str) -> dict[str, Any]:
+        """
+        Parse coder output and apply file edits in the repo.
+
+        Expects repeated blocks:
+        File: path/to/file.py
+        ```python
+        ... contents ...
+        ```
+        """
+        try:
+            repo_root = Path.cwd().resolve()
+            files = self._parse_file_blocks(code_text)
+            if not files:
+                return {
+                    "success": False,
+                    "error": "Coder output did not include any 'File: <path>' blocks with code fences. Ensure the output follows the required format.",
+                    "files_changed": []
+                }
+
+            written: list[str] = []
+            for rel_path, contents in files:
+                target_path = Path(rel_path)
+                if not target_path.is_absolute():
+                    target_path = (repo_root / target_path).resolve()
+                if not str(target_path).startswith(str(repo_root)):
+                    return {
+                        "success": False,
+                        "error": f"Refusing to write outside repository root: {rel_path}",
+                        "files_changed": []
+                    }
+                target_path.parent.mkdir(parents=True, exist_ok=True)
+                target_path.write_text(contents)
+                written.append(str(target_path.relative_to(repo_root)))
+
+            return {"success": True, "files_changed": written}
+        except Exception as e:
+            return {"success": False, "error": f"Failed to apply generated changes: {e}", "files_changed": []}
+
+    def _parse_file_blocks(self, code_text: str) -> list[tuple[str, str]]:
+        """
+        Extract (path, contents) tuples from structured coder output.
+        """
+        lines = code_text.splitlines()
+        blocks: list[tuple[str, str]] = []
+        i = 0
+        while i < len(lines):
+            line = lines[i].strip()
+            if line.lower().startswith("file:"):
+                rel_path = line.split(":", 1)[1].strip()
+                i += 1
+                while i < len(lines) and lines[i].strip() == "":
+                    i += 1
+                if i >= len(lines) or not lines[i].strip().startswith("```"):
+                    raise ValueError(f"Missing code fence after File: {rel_path}")
+                i += 1
+                content_lines = []
+                while i < len(lines) and not lines[i].startswith("```"):
+                    content_lines.append(lines[i])
+                    i += 1
+                if i >= len(lines):
+                    raise ValueError(f"Unterminated code fence for {rel_path}")
+                blocks.append((rel_path, "\n".join(content_lines).rstrip() + "\n"))
+                i += 1
+            else:
+                i += 1
+        return blocks
 
     def _verify_source_files_changed(self) -> dict[str, Any]:
         """
