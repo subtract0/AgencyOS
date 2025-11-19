@@ -295,16 +295,17 @@ class LeanAgent:
             else None
         )
 
-        # Call API with model-specific parameters
-        call_kwargs = {
-            "model": self.config.model,
-            "messages": openai_messages,
-        }
-
         # Check if this is an o1/o3/gpt-5 model (reasoning models have restrictions)
-        # Handle both string models and LitellmModel objects
+        # Handle both string models and LitellmModel objects - extract string for API call
         model_str = self.config.model.model if hasattr(self.config.model, 'model') else self.config.model
         is_reasoning_model = any(m in model_str.lower() for m in ["o1", "o3", "gpt-5"])
+
+        # Call API with model-specific parameters
+        # IMPORTANT: Use model_str (string) not self.config.model (may be LitellmModel object)
+        call_kwargs = {
+            "model": model_str,
+            "messages": openai_messages,
+        }
 
         if is_reasoning_model:
             # Reasoning models don't support temperature, tools, or max_tokens
