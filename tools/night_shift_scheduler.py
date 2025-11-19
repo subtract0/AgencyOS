@@ -40,6 +40,7 @@ from croniter import croniter
 from shared.models.night_shift import NightShiftConfig, NightShiftState
 from shared.type_definitions.result import Err, Ok, Result
 from tools.backlog_agent import BacklogStorage
+from shared.models.backlog import Task, TaskPriority, TaskStatus, TaskType
 from tools.health_monitor import HealthMonitor
 from tools.primex_orchestrator import PrimeXOrchestrator
 from tools.auto_recovery import AutoRecovery
@@ -246,6 +247,17 @@ class NightShiftScheduler:
         all_tasks = tasks_result.unwrap()
         pending_tasks = [t for t in all_tasks if t.status.value == "pending"]
 
+        # If no pending tasks, auto-seed discovery/audit work so Night Shift never idles
+        if not pending_tasks:
+            self._seed_backlog_if_empty(existing_tasks=all_tasks)
+            # Reload tasks after seeding
+            tasks_result = self.backlog_storage.list_tasks()
+            if tasks_result.is_err():
+                logger.error(f"Failed to list tasks after seeding: {tasks_result.unwrap_err()}")
+                return
+            all_tasks = tasks_result.unwrap()
+            pending_tasks = [t for t in all_tasks if t.status.value == "pending"]
+
         # Limit to max_tasks_per_execution
         tasks_to_execute = pending_tasks[: self.config.max_tasks_per_execution]
 
@@ -276,6 +288,62 @@ class NightShiftScheduler:
         self.save_state()
 
         logger.info(f"Cycle complete: {self.state.tasks_completed_this_cycle} tasks completed")
+
+    def _seed_backlog_if_empty(self, existing_tasks: list[Task]) -> None:
+        """
+        Seed the backlog with discovery/audit tasks when empty.
+
+        This prevents idle cycles and bootstraps new work by asking the system
+        to audit the codebase and propose concrete backlog items.
+        """
+        try:
+            existing_titles = {t.title for t in existing_tasks}
+            seeds = [
+                {
+                    "title": "Auto-seed: Audit codebase for new backlog items",
+                    "description": (
+                        "Run an agentic audit of the repository to propose specific tasks "
+                        "(bugs, tech debt, test gaps). Produce concrete backlog entries "
+                        "with file paths and expected outcomes."
+                    ),
+                    "task_type": TaskType.TECH_DEBT,
+                    "priority": TaskPriority.P1,
+                    "estimated_complexity": 3,
+                    "business_value": 8,
+                },
+                {
+                    "title": "Auto-seed: Generate backlog from recent logs/issues",
+                    "description": (
+                        "Ingest local logs and recent task history to surface actionable items. "
+                        "Create backlog entries that reference the evidence found."
+                    ),
+                    "task_type": TaskType.TECH_DEBT,
+                    "priority": TaskPriority.P2,
+                    "estimated_complexity": 2,
+                    "business_value": 6,
+                },
+            ]
+
+            for seed in seeds:
+                if seed["title"] in existing_titles:
+                    continue
+                task = Task(
+                    id=str(uuid.uuid4()),
+                    title=seed["title"],
+                    description=seed["description"],
+                    task_type=seed["task_type"],
+                    priority=seed["priority"],
+                    estimated_complexity=seed["estimated_complexity"],
+                    business_value=seed["business_value"],
+                    metadata={"auto_seeded": True},
+                )
+                add_result = self.backlog_storage.add_task(task)
+                if add_result.is_ok():
+                    logger.info(f"Auto-seeded backlog task: {task.title}")
+                else:
+                    logger.error(f"Failed to auto-seed task {task.title}: {add_result.unwrap_err()}")
+        except Exception as e:
+            logger.error(f"Failed to seed backlog: {e}", exc_info=True)
 
     def _execute_task(self, task) -> dict[str, Any]:
         """
