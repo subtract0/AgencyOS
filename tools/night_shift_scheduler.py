@@ -109,7 +109,7 @@ class NightShiftScheduler:
         signal.signal(signal.SIGINT, self._handle_shutdown_signal)
 
         # Initialize components
-        self.backlog_storage = BacklogStorage()
+        self.backlog_storage = BacklogStorage(data_dir=str(self.state_dir / "memories" / "agency_backlog"))
         self.orchestrator = PrimeXOrchestrator(backlog_storage=self.backlog_storage)
         self.health_monitor = HealthMonitor(state_dir=str(self.state_dir))
         self.auto_recovery = AutoRecovery(state_dir=str(self.state_dir))
