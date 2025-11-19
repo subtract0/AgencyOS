@@ -48,9 +48,19 @@ def silence_warnings_and_logs() -> None:
     try:
 
         def _noop_showwarning(*_args, **_kwargs):
-            return None
+            pass
 
         warnings.showwarning = _noop_showwarning
-    except (AttributeError, TypeError) as e:
+    except (AttributeError, ValueError) as e:
         logger = logging.getLogger(__name__)
-        logger.debug(f"Failed to override warning display function: {e}")
+        logger.warning(f"Failed to replace showwarning: {e}")
+
+
+def hello_world() -> str:
+    """
+    Simple hello world function for testing Night Shift autonomous development.
+
+    Returns:
+        str: "Hello, World!"
+    """
+    return "Hello, World!"
