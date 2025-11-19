@@ -133,6 +133,7 @@ class TestNightShiftScheduler:
         with tempfile.TemporaryDirectory() as tmpdir:
             config = NightShiftConfig(schedule="* * * * *", min_interval_minutes=15)
             scheduler = ns.NightShiftScheduler(config=config, state_dir=tmpdir)
+            scheduler.auto_seed_enabled = False
 
             with patch.object(scheduler, "_execute_task", return_value={"success": True}):
                 scheduler.run_cycle()
@@ -193,6 +194,7 @@ class TestNightShiftScheduler:
         with tempfile.TemporaryDirectory() as tmpdir:
             config = NightShiftConfig(schedule="* * * * *")
             scheduler = ns.NightShiftScheduler(config=config, state_dir=tmpdir)
+            scheduler.auto_seed_enabled = False
 
             # Mock resource monitoring to return critical levels
             with patch("tools.night_shift_scheduler.HealthMonitor") as MockHealthMonitor:

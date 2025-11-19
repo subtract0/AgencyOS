@@ -114,6 +114,7 @@ class NightShiftScheduler:
         self.health_monitor = HealthMonitor(state_dir=str(self.state_dir))
         self.auto_recovery = AutoRecovery(state_dir=str(self.state_dir))
         self.cmp_store = CmpStore()
+        self.auto_seed_enabled = True  # Allow tests to disable auto-seeding
 
         # Setup logging
         self._setup_logging()
@@ -248,7 +249,7 @@ class NightShiftScheduler:
         pending_tasks = [t for t in all_tasks if t.status.value == "pending"]
 
         # If no pending tasks, auto-seed discovery/audit work so Night Shift never idles
-        if not pending_tasks:
+        if not pending_tasks and self.auto_seed_enabled:
             self._seed_backlog_if_empty(existing_tasks=all_tasks)
             # Reload tasks after seeding
             tasks_result = self.backlog_storage.list_tasks()
