@@ -1,68 +1,38 @@
 import threading
 import time
+from night_shift.tui.dashboard import run_dashboard
+from night_shift.artifacts.cycle import set_current_cycle
+from night_shift.artifacts.backlog import add_backlog, remove_backlog
+from night_shift.signals.cmp import add_cmp_signal
+from datetime import datetime
 
-from night_shift.tui.dashboard import (
-    CycleSummary,
-    BacklogCounts,
-    CMPSignal,
-    CMPSignals,
-    CommitInfo,
-    Result,
-    get_cycle_summary,
-    get_backlog_counts,
-    get_cmp_signals,
-    get_recent_commits,
-    run_dashboard,
-)
-
-
-def test_result_pattern() -> None:
-    ok = Result.Ok(123)
-    err = Result.Err("boom")
-    assert ok.is_ok()
-    assert not ok.is_err()
-    assert ok.unwrap() == 123
-    assert err.is_err()
-    assert err.unwrap_err() == "boom"
-
-
-def test_cycle_summary_adapter() -> None:
-    res: Result[CycleSummary, str] = get_cycle_summary()
-    assert res.is_ok()
-    cs = res.unwrap()
-    assert isinstance(cs.current, int)
-    assert cs.next == cs.current + 1
-
-
-def test_backlog_counts_adapter() -> None:
-    res = get_backlog_counts()
-    assert res.is_ok()
-    bc = res.unwrap()
-    assert bc.todo >= 0 and bc.blocked >= 0
-
-
-def test_cmp_signals_adapter() -> None:
-    res = get_cmp_signals()
-    assert res.is_ok()
-    cmp = res.unwrap()
-    assert isinstance(cmp.signals, list)
-    assert all(isinstance(s, CMPSignal) for s in cmp.signals)
-
-
-def test_recent_commits_adapter() -> None:
-    res = get_recent_commits(limit=2)
-    assert res.is_ok()
-    commits = res.unwrap()
-    assert len(commits) == 2
-    assert all(isinstance(c, CommitInfo) for c in commits)
-
-
-def test_dashboard_runs_and_stops() -> None:
-    """Run the dashboard in a background thread and stop it quickly."""
-    stop_evt = threading.Event()
-    thread = threading.Thread(target=run_dashboard, args=(stop_evt,))
+def test_dashboard_runs_and_stops():
+    stop_event = threading.Event()
+    def target():
+        run_dashboard(stop_event=stop_event)
+    thread = threading.Thread(target=target, daemon=True)
     thread.start()
-    time.sleep(0.2)  # Let it start and render at least once.
-    stop_evt.set()
+    time.sleep(3)
+    stop_event.set()
     thread.join(timeout=2)
     assert not thread.is_alive()
+
+def test_data_providers_return_results():
+    class MockCycle:
+        name = "Sprint 42"
+    set_current_cycle(MockCycle())
+    add_backlog("Task B")
+    remove_backlog("Task A") if "Task A" in [] else None
+    add_cmp_signal(datetime.utcnow(), 3.14)
+    from night_shift.artifacts.cycle import get_current_cycle_result
+    from night_shift.artifacts.backlog import backlog_count_result
+    from night_shift.signals.cmp import latest_cmp_signal_result
+    cycle_res = get_current_cycle_result()
+    backlog_res = backlog_count_result()
+    cmp_res = latest_cmp_signal_result()
+    assert cycle_res.is_ok() and cycle_res.ok == "Sprint 42"
+    assert backlog_res.is_ok() and backlog_res.ok == 1
+    assert cmp_res.is_ok()
+    ts, val = cmp_res.ok
+    assert isinstance(ts, datetime)
+    assert isinstance(val, float) and abs(val - 3.14) < 1e-6

@@ -1,192 +1,47 @@
-from dataclasses import dataclass
-from time import sleep
-from threading import Event
+import time
+import threading
 from typing import List
-
 from rich.console import Console
-from rich.live import Live
 from rich.table import Table
+from rich.live import Live
+from night_shift.util.result import Result, Ok, Err
+from night_shift.artifacts.cycle import get_current_cycle_result
+from night_shift.artifacts.backlog import backlog_count_result
+from night_shift.signals.cmp import latest_cmp_signal_result
+from night_shift.vcs.git import recent_commits_result
 
-# ----------------------------------------------------------------------
-# Data models – Pydantic‑style (no external dependency required for simple cases)
-# ----------------------------------------------------------------------
-@dataclass(frozen=True)
-class CycleSummary:
-    current: int
-    next: int
-    remaining: int
-
-
-@dataclass(frozen=True)
-class BacklogCounts:
-    todo: int
-    in_progress: int
-    blocked: int
-
-
-@dataclass(frozen=True)
-class CMPSignal:
-    name: str
-    value: str
-
-
-@dataclass(frozen=True)
-class CMPSignals:
-    signals: List[CMPSignal]
-
-
-@dataclass(frozen=True)
-class CommitInfo:
-    sha: str
-    message: str
-
-
-# ----------------------------------------------------------------------
-# Result type for error handling
-# ----------------------------------------------------------------------
-class Result:
-    """Simple Result<T, E> pattern."""
-
-    __slots__ = ("_value", "_error", "_is_ok")
-
-    def __init__(self, value=None, error=None):
-        self._value = value
-        self._error = error
-        self._is_ok = error is None
-
-    @staticmethod
-    def Ok(value):
-        return Result(value=value)
-
-    @staticmethod
-    def Err(error):
-        return Result(error=error)
-
-    def is_ok(self):
-        return self._is_ok
-
-    def is_err(self):
-        return not self._is_ok
-
-    def unwrap(self):
-        if self._is_ok:
-            return self._value
-        raise RuntimeError(f"Unwrapped Err: {self._error}")
-
-    def unwrap_err(self):
-        if self._is_ok:
-            raise RuntimeError("Unwrapped Ok result")
-        return self._error
-
-
-# ----------------------------------------------------------------------
-# Artifact adapters – thin wrappers around existing Night Shift data sources
-# ----------------------------------------------------------------------
-def get_cycle_summary() -> Result[CycleSummary, str]:
-    """Retrieve a simple cycle summary from Night Shift artifacts."""
-    try:
-        # Placeholder implementation – replace with real artifact access.
-        cs = CycleSummary(current=42, next=43, remaining=5)
-        return Result.Ok(cs)
-    except Exception as exc:
-        return Result.Err(str(exc))
-
-
-def get_backlog_counts() -> Result[BacklogCounts, str]:
-    """Retrieve backlog counts from Night Shift artifacts."""
-    try:
-        bc = BacklogCounts(todo=12, in_progress=7, blocked=2)
-        return Result.Ok(bc)
-    except Exception as exc:
-        return Result.Err(str(exc))
-
-
-def get_cmp_signals() -> Result[CMPSignals, str]:
-    """Retrieve CMP signals from Night Shift artifacts."""
-    try:
-        signals = [
-            CMPSignal(name="CPU", value="45%"),
-            CMPSignal(name="MEM", value="68%"),
-            CMPSignal(name="IO", value="23%"),
-        ]
-        return Result.Ok(CMPSignals(signals=signals))
-    except Exception as exc:
-        return Result.Err(str(exc))
-
-
-def get_recent_commits(limit: int = 3) -> Result[List[CommitInfo], str]:
-    """Retrieve recent git commits – dummy data for demo purposes."""
-    try:
-        dummy = [
-            CommitInfo(sha="a1b2c3d", message="Fix dashboard refresh logic"),
-            CommitInfo(sha="d4e5f6g", message="Add backlog count adapters"),
-            CommitInfo(sha="h7i8j9k", message="Initial Night Shift TUI commit"),
-        ]
-        return Result.Ok(dummy[:limit])
-    except Exception as exc:
-        return Result.Err(str(exc))
-
-
-# ----------------------------------------------------------------------
-# Dashboard construction & run loop
-# ----------------------------------------------------------------------
-REFRESH_SECONDS = 5
-
+REFRESH_SEC = 2.0
 
 def _build_table() -> Table:
-    table = Table(title="Night Shift Status", expand=True)
-
-    # Cycle summary
-    cs_res = get_cycle_summary()
-    if cs_res.is_ok():
-        cs = cs_res.unwrap()
-        table.add_column("Cycle", justify="center")
-        table.add_row(f"Cur:{cs.current}  Next:{cs.next}  Rem:{cs.remaining}")
-    else:
-        table.add_column("Cycle", justify="center")
-        table.add_row(f"Error: {cs_res.unwrap_err()}")
-
-    # Backlog counts
-    bc_res = get_backlog_counts()
-    if bc_res.is_ok():
-        bc = bc_res.unwrap()
-        table.add_column("Backlog", justify="center")
-        table.add_row(f"🟦{bc.todo} 🟨{bc.in_progress} 🟥{bc.blocked}")
-    else:
-        table.add_column("Backlog", justify="center")
-        table.add_row(f"Error: {bc_res.unwrap_err()}")
-
-    # CMP signals
-    cmp_res = get_cmp_signals()
+    table = Table(title="🌙 Night Shift Status", expand=True)
+    table.add_column("Metric", style="cyan", no_wrap=True)
+    table.add_column("Value", style="magenta")
+    cycle_res: Result[str, str] = get_current_cycle_result()
+    table.add_row("Current Cycle", cycle_res.ok if cycle_res.is_ok() else f"Error: {cycle_res.err}")
+    backlog_res: Result[int, str] = backlog_count_result()
+    table.add_row("Backlog Items", str(backlog_res.ok) if backlog_res.is_ok() else f"Error: {backlog_res.err}")
+    cmp_res: Result[tuple[time.struct_time, float], str] = latest_cmp_signal_result()
     if cmp_res.is_ok():
-        cmp = cmp_res.unwrap()
-        table.add_column("CMP", justify="center")
-        table.add_row(" ".join(f"{s.name}:{s.value}" for s in cmp.signals))
+        ts, val = cmp_res.ok
+        table.add_row("Latest CMP", f"{time.strftime('%Y-%m-%d', ts)} → {val:.2f}")
     else:
-        table.add_column("CMP", justify="center")
-        table.add_row(f"Error: {cmp_res.unwrap_err()}")
-
-    # Recent commits
-    commit_res = get_recent_commits(limit=3)
-    if commit_res.is_ok():
-        commits = commit_res.unwrap()
-        table.add_column("Commits", justify="left")
-        table.add_row("\n".join(f"- {c.sha[:7]} {c.message}" for c in commits))
+        table.add_row("Latest CMP", f"Error: {cmp_res.err}")
+    commits_res: Result[List[object], str] = recent_commits_result()
+    if commits_res.is_ok():
+        lines = "\n".join(f"[{c.sha[:7]}] {c.author} {c.date} • {c.message}" for c in commits_res.ok)
     else:
-        table.add_column("Commits", justify="left")
-        table.add_row(f"Error: {commit_res.unwrap_err()}")
-
+        lines = f"Error: {commits_res.err}"
+    table.add_row("Recent Git Commits", lines)
     return table
 
-
-def run_dashboard(stop_event: Event | None = None) -> None:
-    """Launch the live-updating dashboard.
-
-    Args:
-        stop_event: Optional threading.Event that, when set, stops the loop.
-    """
+def run_dashboard(stop_event: threading.Event | None = None) -> None:
     console = Console()
     with Live(_build_table(), console=console, refresh_per_second=4) as live:
-        while not (stop_event and stop_event.is_set()):
-            sleep(REFRESH_SECONDS)
-            live.update(_build_table())
+        try:
+            while True:
+                if stop_event and stop_event.is_set():
+                    break
+                time.sleep(REFRESH_SEC)
+                live.update(_build_table())
+        except KeyboardInterrupt:
+            console.print("\n[bold red]Dashboard stopped.[/]")
