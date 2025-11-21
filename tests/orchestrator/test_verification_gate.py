@@ -99,7 +99,7 @@ class VerificationResult(BaseModel):
     timeout_multiplier_used: int = Field(ge=1, le=10)
 
     memory_safe: bool = Field(description="Execution completed without memory exhaustion")
-    worker_count_used: int = Field(ge=1, le=10)
+    worker_count_used: int = Field(ge=1, le=12)
 
     rollback_performed: bool = Field(default=False)
     failure_report: str | None = Field(default=None)
@@ -393,7 +393,7 @@ class TestVerificationResult:
             retry_attempts=1,
             timeout_multiplier_used=1,
             memory_safe=True,
-            worker_count_used=10,
+            worker_count_used=12,
         )
 
         # Assert
@@ -418,7 +418,7 @@ class TestVerificationResult:
             retry_attempts=1,
             timeout_multiplier_used=1,
             memory_safe=True,
-            worker_count_used=10,
+            worker_count_used=12,
             blocking_reason="Article II: Test pass rate 98.0% (required: 100%)",
         )
 
@@ -468,7 +468,7 @@ class TestVerificationResult:
             retry_attempts=1,
             timeout_multiplier_used=1,
             memory_safe=True,
-            worker_count_used=10,
+            worker_count_used=12,
             rollback_performed=True,
         )
 
@@ -513,13 +513,13 @@ class TestMemoryAwareWorkerCalculation:
         mock_ollama.return_value = False  # Local model OFF
         mock_vm.return_value = Mock(available=25 * 1024**3)  # 25GB available
         mock_verify.return_value = True
-        mock_worker_count.return_value = 10
+        mock_worker_count.return_value = 12
 
         # Act
         worker_count, memory_safe, rationale = calculate_test_workers()
 
         # Assert
-        assert worker_count == 10  # Full parallelism
+        assert worker_count == 12  # Full parallelism
         assert "Local model OFF" in rationale
 
     @patch("tools.memory_aware_test_runner.check_ollama_running")
@@ -962,7 +962,7 @@ class TestEdgeCases:
     def test_worker_count_boundaries(
         self, mock_vm: Mock, mock_worker_count: Mock, mock_verify: Mock, mock_ollama: Mock
     ) -> None:
-        """Test worker count stays within 1-10 boundaries."""
+        """Test worker count stays within 1-12 boundaries."""
         # Arrange
         mock_ollama.return_value = False
 
@@ -970,16 +970,16 @@ class TestEdgeCases:
         mock_vm.return_value = Mock(available=8 * 1024**3)
         mock_verify.return_value = False  # Critical memory
         worker_count, _, _ = calculate_test_workers()
-        assert 1 <= worker_count <= 10
+        assert 1 <= worker_count <= 12
         assert worker_count == 1
 
-        # Act & Assert: Maximum (10 workers)
+        # Act & Assert: Maximum (12 workers)
         mock_vm.return_value = Mock(available=25 * 1024**3)
         mock_verify.return_value = True
-        mock_worker_count.return_value = 10
+        mock_worker_count.return_value = 12
         worker_count, _, _ = calculate_test_workers()
-        assert 1 <= worker_count <= 10
-        assert worker_count == 10
+        assert 1 <= worker_count <= 12
+        assert worker_count == 12
 
 
 if __name__ == "__main__":

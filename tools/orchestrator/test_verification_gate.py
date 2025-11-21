@@ -41,7 +41,7 @@ class VerificationResults(BaseModel):
     )
     timed_out: bool = Field(default=False, description="Whether execution timed out")
     exit_code: int = Field(description="Process exit code")
-    worker_count: int = Field(ge=1, le=10, description="Number of pytest workers used")
+    worker_count: int = Field(ge=1, le=12, description="Number of pytest workers used")
     retry_count: int = Field(default=0, ge=0, le=3, description="Number of retries performed (Article I)")
     output: str = Field(default="", description="Raw test output for debugging")
 

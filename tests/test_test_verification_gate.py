@@ -61,7 +61,7 @@ class TestTestResults:
             )
 
     def test_invalid_worker_count(self):
-        """Test that worker count outside 1-10 range is rejected."""
+        """Test that worker count outside 1-12 range is rejected."""
         with pytest.raises(ValueError):
             VerificationResults(
                 passed=10,
@@ -79,7 +79,7 @@ class TestTestResults:
                 skipped=0,
                 duration=10.0,
                 exit_code=0,
-                worker_count=11,  # Above maximum
+                worker_count=13,  # Above maximum
             )
 
     def test_is_constitutional_pass(self):

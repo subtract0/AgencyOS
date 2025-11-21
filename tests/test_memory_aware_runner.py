@@ -17,7 +17,7 @@ pytestmark = pytest.mark.timeout(30)
 
 
 def test_get_safe_worker_count_with_local_model():
-    """When local model active, always use 1 worker (serial) for stability."""
+    """High-memory Apple Silicon should still use all 12 workers even with local model active."""
     # Import at module level to avoid circular imports from tools/__init__.py
     import importlib.util
     import sys
@@ -32,12 +32,44 @@ def test_get_safe_worker_count_with_local_model():
     get_safe_worker_count = runner_module.get_safe_worker_count
 
     with patch("psutil.virtual_memory") as mock_mem:
-        # Simulate 12GB available (local model uses 38GB, total 48GB)
-        mock_mem.return_value = MagicMock(available=12 * 1024**3)
+        # Simulate M4 Max 128GB (enough memory for all performance cores)
+        mock_mem.return_value = MagicMock(
+            available=110 * 1024**3,
+            total=128 * 1024**3,
+        )
 
-        with patch("os.path.exists", return_value=True):  # Ollama running
+        with patch.object(runner_module, "check_ollama_running", return_value=True):
             workers = get_safe_worker_count()
-            assert workers == 1, "Should use serial execution when local model active (prevents pytest-xdist crashes)"
+            assert (
+                workers == 12
+            ), "High-memory configuration should leverage all 12 workers even if local model is running"
+
+
+def test_get_safe_worker_count_with_local_model_medium_memory_reduces_workers():
+    """Medium-memory systems still reduce workers when local model active."""
+    import importlib.util
+    import sys
+
+    spec = importlib.util.spec_from_file_location(
+        "memory_aware_test_runner",
+        Path(__file__).parent.parent / "tools" / "memory_aware_test_runner.py",
+    )
+    runner_module = importlib.util.module_from_spec(spec)
+    sys.modules["memory_aware_test_runner"] = runner_module
+    spec.loader.exec_module(runner_module)
+    get_safe_worker_count = runner_module.get_safe_worker_count
+
+    with patch("psutil.virtual_memory") as mock_mem:
+        mock_mem.return_value = MagicMock(
+            available=70 * 1024**3,
+            total=96 * 1024**3,
+        )
+
+        with patch.object(runner_module, "check_ollama_running", return_value=True):
+            workers = get_safe_worker_count()
+            assert (
+                workers == 3
+            ), "Medium-memory setup should reduce workers by 50% when local model is active"
 
 
 def test_get_safe_worker_count_without_local_model():

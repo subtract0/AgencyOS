@@ -21,13 +21,15 @@ from pydantic import BaseModel, Field
 from shared.type_definitions.result import Err, Ok, Result
 from tools.ollama_health_check import check_ollama_health
 
+MAX_WORKERS = 12
+
 
 class TestExecutionConfig(BaseModel):
     """Configuration for memory-aware test execution."""
 
     __test__ = False  # Tell pytest this is not a test class
 
-    worker_count: int = Field(ge=1, le=10)
+    worker_count: int = Field(ge=1, le=MAX_WORKERS)
     memory_budget_gb: int = Field(ge=0)
     local_model_active: bool
     execution_mode: Literal["parallel", "serial", "adaptive"]
@@ -90,8 +92,8 @@ def check_ollama_running() -> bool:
 def get_safe_worker_count() -> int:
     """Calculate safe pytest worker count based on memory and local model state.
 
-    Memory budgets (Updated 2025-11-05 for M4 Max 128GB):
-    - M4 Max 128GB (>120GB total): 6 workers (known race conditions limit parallelism)
+    Memory budgets (Updated 2025-11-21 for M4 Max 128GB):
+    - M4 Max 128GB (>120GB total): 12 workers (full performance cores)
     - Large memory (>60GB): 6 workers
     - Medium memory (20-60GB): 3 workers
     - Critical memory (<10GB): 1 worker (sequential)
@@ -119,24 +121,35 @@ def get_safe_worker_count() -> int:
 
     local_model_active = check_ollama_running()
 
+    # Manual override for advanced scenarios (use with caution)
+    forced_workers = os.getenv("AGENCY_FORCE_TEST_WORKERS")
+    if forced_workers:
+        try:
+            return max(1, min(MAX_WORKERS, int(forced_workers)))
+        except ValueError:
+            pass  # Ignore invalid overrides and fall through to auto-detection
+
     # Critical memory: sequential execution
     if available_gb < 10:
         return 1
 
+    cpu_count = os.cpu_count() or 12
+
+    high_memory_mode = total_gb >= 120
+
     # M4 Max 128GB detected (or similar high-memory system)
-    if total_gb >= 120:
-        base_workers = 6   # Conservative for M4 Max 128GB (known race conditions in suite)
+    if high_memory_mode:
+        base_workers = min(MAX_WORKERS, cpu_count)   # Utilize all performance cores
     elif available_gb >= 60:
-        base_workers = 6   # Large memory system
+        base_workers = min(6, cpu_count)   # Large memory system
     elif available_gb >= 20:
-        base_workers = 3   # Medium memory system
+        base_workers = min(3, cpu_count)   # Medium memory system
     else:
         base_workers = 1   # Low memory
 
-    # Local model active: reduce workers by 50% for safety
-    # (Note: Current setup uses remote LM Studio, so this won't trigger)
-    if local_model_active:
-        return 1  # Serial execution when local model running (prevents race regressions)
+    # Local model active: reduce workers by 50% for safety unless we're on a high-memory config
+    if local_model_active and not high_memory_mode:
+        return max(1, base_workers // 2)
 
     return base_workers
 
