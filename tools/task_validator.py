@@ -128,16 +128,19 @@ class TaskValidator:
         if not file_path:
             return {"already_completed": False, "reason": "No file specified", "evidence": "", "confidence": 0.0}
 
-        # Extract what import to check for
+        # Extract what import to check for (take last token before "import")
         import_match = re.search(r"(missing|add|fix)\s+(.+?)\s+import", task.title.lower())
         if not import_match:
             return {"already_completed": False, "reason": "Cannot parse import name", "evidence": "", "confidence": 0.0}
 
-        import_name = import_match.group(2).strip()
+        import_tokens = import_match.group(2).strip().split()
+        import_name = import_tokens[-1] if import_tokens else import_match.group(2).strip()
 
         # Check if file exists
         project_root = Path.cwd()
-        full_path = project_root / file_path
+        full_path = Path(file_path)
+        if not full_path.is_absolute():
+            full_path = project_root / full_path
 
         if not full_path.exists():
             return {"already_completed": False, "reason": f"File not found: {file_path}", "evidence": "", "confidence": 0.0}

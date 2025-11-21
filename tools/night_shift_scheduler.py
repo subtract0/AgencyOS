@@ -45,6 +45,8 @@ from shared.models.backlog import Task, TaskPriority, TaskStatus, TaskType
 from tools.health_monitor import HealthMonitor
 from tools.primex_orchestrator import PrimeXOrchestrator
 from tools.auto_recovery import AutoRecovery
+from tools.task_validator import TaskValidator
+from tools.night_shift_watchdog import NightShiftWatchdog
 from agency_memory.learning import CmpStore, CmpEvent
 import uuid
 
@@ -116,6 +118,9 @@ class NightShiftScheduler:
         self.auto_recovery = AutoRecovery(state_dir=str(self.state_dir))
         self.cmp_store = CmpStore()
         self.auto_seed_enabled = True  # Allow tests to disable auto-seeding
+        self.task_validator = TaskValidator()
+        self.validation_confidence_threshold = 0.9
+        self.watchdog = NightShiftWatchdog(timeout_minutes=self.config.max_task_duration_minutes)
 
         # Setup logging
         self._setup_logging()
@@ -326,23 +331,75 @@ class NightShiftScheduler:
 
             if self.config.dry_run:
                 logger.info(f"[DRY RUN] Would execute task: {task.id} - {task.title}")
-            else:
-                logger.info(f"Executing task: {task.id} - {task.title}")
+                continue
+
+            # Pre-flight validation (skip if already completed)
+            if self._auto_complete_task_if_applicable(task):
+                continue
+
+            logger.info(f"Executing task: {task.id} - {task.title}")
+            with self.watchdog.monitor(task.id):
                 result = self._execute_task(task)
 
-                if result.get("success", False):
-                    self.state.tasks_completed_this_cycle += 1
-                    self.state.total_tasks_completed += 1
-                    logger.info(f"Task completed successfully: {task.id}")
-                else:
-                    self.state.total_failures += 1
-                    logger.error(f"Task failed: {task.id}, error: {result.get('error', 'unknown')}")
+            if result.get("success", False):
+                self.state.tasks_completed_this_cycle += 1
+                self.state.total_tasks_completed += 1
+                logger.info(f"Task completed successfully: {task.id}")
+            else:
+                self.state.total_failures += 1
+                logger.error(f"Task failed: {task.id}, error: {result.get('error', 'unknown')}")
 
         # Update state
         self.state.last_execution_time = datetime.now()
         self.save_state()
 
         logger.info(f"Cycle complete: {self.state.tasks_completed_this_cycle} tasks completed")
+
+    def _auto_complete_task_if_applicable(self, task: Task) -> bool:
+        """
+        Run pre-flight validation; auto-complete task if validator is confident it's already done.
+        """
+        if not hasattr(self, "task_validator"):
+            return False
+
+        validation = self.task_validator.validate(task)
+        if validation.get("already_completed") and validation.get("confidence", 0.0) >= self.validation_confidence_threshold:
+            return self._complete_task_without_execution(task, validation)
+        return False
+
+    def _complete_task_without_execution(self, task: Task, validation: Dict[str, Any]) -> bool:
+        """Mark task as completed without execution and record CMP event."""
+        try:
+            logger.info(f"Auto-completing task {task.id} ({task.title}) - {validation.get('reason')}")
+            task.status = TaskStatus.COMPLETED
+            task.updated_at = datetime.now()
+            metadata = task.metadata or {}
+            metadata["auto_complete_reason"] = validation.get("reason", "")
+            metadata["auto_complete_confidence"] = validation.get("confidence", 0.0)
+            metadata["auto_complete_evidence"] = validation.get("evidence", "")
+            task.metadata = metadata
+
+            update_result = self.backlog_storage.update_task(task)
+            if update_result.is_err():
+                logger.error(f"Failed to auto-complete task {task.id}: {update_result.unwrap_err()}")
+                return False
+
+            self.state.tasks_completed_this_cycle += 1
+            self.state.total_tasks_completed += 1
+            self._record_cmp_event(
+                task,
+                {
+                    "auto_completed": True,
+                    "reason": validation.get("reason", ""),
+                    "confidence": validation.get("confidence", 0.0),
+                    "evidence": validation.get("evidence", ""),
+                },
+                success=True,
+            )
+            return True
+        except Exception as e:
+            logger.error(f"Auto-complete failed for task {task.id}: {e}", exc_info=True)
+            return False
 
     def _seed_backlog_if_empty(self, existing_tasks: list[Task]) -> None:
         """
@@ -351,6 +408,7 @@ class NightShiftScheduler:
         This prevents idle cycles and bootstraps new work by asking the system
         to audit the codebase and propose concrete backlog items.
         """
+        # method body ...
         try:
             existing_titles = {t.title for t in existing_tasks}
             seeds = [
@@ -422,11 +480,15 @@ class NightShiftScheduler:
             logger.info(f"Creating snapshot for task {task.id}")
             snapshot = self.auto_recovery.create_snapshot(task.id)
             logger.info(f"Snapshot created: {snapshot}")
+            if hasattr(self, "watchdog"):
+                self.watchdog.heartbeat()
 
             # Phase 2: Execute via primeX orchestrator
             # Note: Task status is updated to IN_PROGRESS inside execute_task()
             # Execute THE SPECIFIC TASK (not auto-select)
             result = self.orchestrator.execute_task(task)
+            if hasattr(self, "watchdog"):
+                self.watchdog.heartbeat()
 
             # Phase 3: Handle result
             if result.is_ok():
