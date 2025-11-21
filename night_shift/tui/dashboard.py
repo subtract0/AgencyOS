@@ -1,47 +1,111 @@
-import time
 import threading
-from typing import List
+import time
+from typing import Optional
+
 from rich.console import Console
 from rich.table import Table
 from rich.live import Live
-from night_shift.util.result import Result, Ok, Err
-from night_shift.artifacts.cycle import get_current_cycle_result
-from night_shift.artifacts.backlog import backlog_count_result
-from night_shift.signals.cmp import latest_cmp_signal_result
-from night_shift.vcs.git import recent_commits_result
+from rich.panel import Panel
 
-REFRESH_SEC = 2.0
+from night_shift.artifact.cycle import get_cycle_summary
+from night_shift.artifact.backlog import get_backlog_counts
+from night_shift.artifact.cmp import get_latest_signals
+from night_shift.artifact.git import get_recent_commits
 
-def _build_table() -> Table:
-    table = Table(title="🌙 Night Shift Status", expand=True)
-    table.add_column("Metric", style="cyan", no_wrap=True)
-    table.add_column("Value", style="magenta")
-    cycle_res: Result[str, str] = get_current_cycle_result()
-    table.add_row("Current Cycle", cycle_res.ok if cycle_res.is_ok() else f"Error: {cycle_res.err}")
-    backlog_res: Result[int, str] = backlog_count_result()
-    table.add_row("Backlog Items", str(backlog_res.ok) if backlog_res.is_ok() else f"Error: {backlog_res.err}")
-    cmp_res: Result[tuple[time.struct_time, float], str] = latest_cmp_signal_result()
-    if cmp_res.is_ok():
-        ts, val = cmp_res.ok
-        table.add_row("Latest CMP", f"{time.strftime('%Y-%m-%d', ts)} → {val:.2f}")
+console = Console()
+
+
+def _build_cycle_panel() -> Panel:
+    res = get_cycle_summary()
+    table = Table(title="Cycle")
+    table.add_column("Field")
+    table.add_column("Value")
+    if res.is_ok():
+        c = res.unwrap()
+        table.add_row("ID", str(c.id))
+        table.add_row("Name", c.name)
+        table.add_row("Status", c.status)
     else:
-        table.add_row("Latest CMP", f"Error: {cmp_res.err}")
-    commits_res: Result[List[object], str] = recent_commits_result()
-    if commits_res.is_ok():
-        lines = "\n".join(f"[{c.sha[:7]}] {c.author} {c.date} • {c.message}" for c in commits_res.ok)
-    else:
-        lines = f"Error: {commits_res.err}"
-    table.add_row("Recent Git Commits", lines)
-    return table
+        table.add_row("Error", res.unwrap_err())
+    return Panel(table)
 
-def run_dashboard(stop_event: threading.Event | None = None) -> None:
-    console = Console()
-    with Live(_build_table(), console=console, refresh_per_second=4) as live:
-        try:
-            while True:
-                if stop_event and stop_event.is_set():
-                    break
-                time.sleep(REFRESH_SEC)
-                live.update(_build_table())
-        except KeyboardInterrupt:
-            console.print("\n[bold red]Dashboard stopped.[/]")
+
+def _build_backlog_panel() -> Panel:
+    res = get_backlog_counts()
+    table = Table(title="Backlog")
+    table.add_column("Priority")
+    table.add_column("Count")
+    if res.is_ok():
+        b = res.unwrap()
+        table.add_row("High", str(b.high))
+        table.add_row("Medium", str(b.medium))
+        table.add_row("Low", str(b.low))
+    else:
+        table.add_row("Error", res.unwrap_err())
+    return Panel(table)
+
+
+def _build_cmp_panel() -> Panel:
+    res = get_latest_signals()
+    table = Table(title="CMP Signals")
+    table.add_column("Signal")
+    table.add_column("Value", justify="right")
+    if res.is_ok():
+        for sig in res.unwrap():
+            table.add_row(sig.signal, f"{sig.value:.2f}")
+    else:
+        table.add_row("Error", res.unwrap_err())
+    return Panel(table)
+
+
+def _build_commits_panel() -> Panel:
+    res = get_recent_commits(limit=5)
+    table = Table(title="Recent Commits")
+    table.add_column("SHA")
+    table.add_column("Author")
+    table.add_column("Message")
+    if res.is_ok():
+        for com in res.unwrap():
+            table.add_row(com.sha, com.author, com.message)
+    else:
+        table.add_row("Error", res.unwrap_err(), "")
+    return Panel(table)
+
+
+def _render_dashboard() -> Table:
+    grid = Table.grid(expand=True)
+    grid.add_row(_build_cycle_panel(), _build_backlog_panel(),
+                 _build_cmp_panel(), _build_commits_panel())
+    return grid
+
+
+def run_dashboard(max_duration: Optional[float] = None) -> None:
+    """Run the TUI dashboard.
+
+    Press ``q`` to quit.  If ``max_duration`` is provided, the dashboard
+    will automatically exit after that many seconds (useful for tests).
+    """
+    stop_event = threading.Event()
+
+    # Input thread only when not in timed test mode
+    if max_duration is None:
+        def input_thread() -> None:
+            while not stop_event.is_set():
+                try:
+                    ch = console.input("", markup=False)
+                    if ch.lower() == "q":
+                        stop_event.set()
+                except (KeyboardInterrupt, EOFError):
+                    stop_event.set()
+
+        threading.Thread(target=input_thread, daemon=True).start()
+
+    start = time.time()
+    with Live(_render_dashboard(), refresh_per_second=1, console=console) as live:
+        while not stop_event.is_set():
+            live.update(_render_dashboard())
+            if max_duration is not None and (time.time() - start) >= max_duration:
+                stop_event.set()
+                break
+            time.sleep(0.5)
+    console.clear()
