@@ -24,12 +24,13 @@ Usage:
 
 import json
 import logging
+import os
 import signal
 import sys
 import time
 from datetime import datetime, timedelta
 from pathlib import Path
-from typing import Any, Optional
+from typing import Any, Dict, Optional
 
 # Add project root to path for imports
 if __name__ == "__main__":
@@ -119,6 +120,9 @@ class NightShiftScheduler:
         # Setup logging
         self._setup_logging()
 
+        # Hot reload: track modification times of critical files
+        self.watched_files: Dict[Path, float] = self._init_file_tracking()
+
     def _setup_logging(self):
         """Setup logging to file and console."""
         log_file = self.log_dir / f"{datetime.now().strftime('%Y-%m-%d')}.log"
@@ -145,6 +149,51 @@ class NightShiftScheduler:
         )
 
         logger.addHandler(workspace_handler)
+
+    def _init_file_tracking(self) -> Dict[Path, float]:
+        """
+        Initialize file tracking for hot reload.
+
+        Returns:
+            Dict mapping file paths to their modification times
+        """
+        watched_files = [
+            Path(__file__),  # This file (night_shift_scheduler.py)
+            Path(__file__).parent / "primex_orchestrator.py",
+            Path(__file__).parent / "backlog_agent.py",
+            Path(__file__).parent / "auto_recovery.py",
+            Path(__file__).parent / "health_monitor.py",
+        ]
+
+        file_mtimes = {}
+        for file_path in watched_files:
+            if file_path.exists():
+                file_mtimes[file_path] = file_path.stat().st_mtime
+            else:
+                logger.warning(f"Watched file not found: {file_path}")
+
+        logger.info(f"Hot reload enabled, watching {len(file_mtimes)} files")
+        return file_mtimes
+
+    def _check_for_code_changes(self) -> bool:
+        """
+        Check if any watched files have changed since startup.
+
+        Returns:
+            True if code changed and restart is needed, False otherwise
+        """
+        for file_path, original_mtime in self.watched_files.items():
+            if not file_path.exists():
+                logger.warning(f"Watched file disappeared: {file_path}")
+                continue
+
+            current_mtime = file_path.stat().st_mtime
+            if current_mtime > original_mtime:
+                logger.info(f"Code change detected: {file_path} (mtime: {original_mtime} -> {current_mtime})")
+                logger.info("Initiating hot reload (auto-restart)...")
+                return True
+
+        return False
 
     def _handle_shutdown_signal(self, signum, frame):
         """Handle shutdown signals (SIGTERM, SIGINT)."""
@@ -488,6 +537,12 @@ class NightShiftScheduler:
             if self.check_kill_switch():
                 logger.info("Kill switch detected, shutting down")
                 break
+
+            # Hot reload: check for code changes and restart if needed
+            if self._check_for_code_changes():
+                logger.info("Restarting Night Shift with updated code...")
+                self.save_state()  # Save state before restart
+                os.execv(sys.executable, [sys.executable] + sys.argv)
 
             # Check if should execute now
             if self.should_execute_now():
