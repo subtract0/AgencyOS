@@ -37,13 +37,12 @@ class TestTaskValidator:
             task_type=TaskType.BUG_FIX,
             priority=TaskPriority.P1,
             status=TaskStatus.PENDING,
-            metadata={"file": str(test_file.relative_to(Path.cwd()))}
+            estimated_complexity=3,
+            metadata={"file": str(test_file)}
         )
 
         validator = TaskValidator()
-
-        with patch('pathlib.Path.cwd', return_value=tmp_path):
-            result = validator.validate(task)
+        result = validator.validate(task)
 
         # Should detect import already exists
         assert result["already_completed"] is True
@@ -65,13 +64,12 @@ class TestTaskValidator:
             task_type=TaskType.BUG_FIX,
             priority=TaskPriority.P1,
             status=TaskStatus.PENDING,
-            metadata={"file": str(test_file.relative_to(Path.cwd()))}
+            estimated_complexity=3,
+            metadata={"file": str(test_file)}
         )
 
         validator = TaskValidator()
-
-        with patch('pathlib.Path.cwd', return_value=tmp_path):
-            result = validator.validate(task)
+        result = validator.validate(task)
 
         # Should detect import is still missing
         assert result["already_completed"] is False
@@ -86,7 +84,8 @@ class TestTaskValidator:
             description="Implement feature X",
             task_type=TaskType.FEATURE_REQUEST,
             priority=TaskPriority.P2,
-            status=TaskStatus.PENDING
+            status=TaskStatus.PENDING,
+            estimated_complexity=5
         )
 
         validator = TaskValidator()
@@ -104,6 +103,7 @@ class TestTaskValidator:
             task_type=TaskType.BUG_FIX,
             priority=TaskPriority.P1,
             status=TaskStatus.PENDING,
+            estimated_complexity=2,
             metadata={"file": "nonexistent.py"}
         )
 
