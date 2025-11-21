@@ -1,6 +1,6 @@
 import subprocess
 from typing import List
-from night_shift.utils.result import Result
+from shared.type_definitions.result import Err, Ok, Result
 from night_shift.models import GitCommit
 
 
@@ -19,8 +19,8 @@ def get_recent_commits(limit: int = 10) -> Result[List[GitCommit], str]:
                 continue
             sha, author, message = line.split("|", 2)
             commits.append(GitCommit(sha=sha, author=author, message=message))
-        return Result.Ok(commits)
+        return Ok(commits)
     except subprocess.CalledProcessError as e:
-        return Result.Err(f"Git command failed: {e}")
+        return Err(f"Git command failed: {e}")
     except Exception as exc:
-        return Result.Err(str(exc))
+        return Err(str(exc))

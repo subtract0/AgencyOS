@@ -26,10 +26,13 @@ from typing import List, Tuple
 import pytest
 
 # Skip entire module in CI due to OOM issues (exit code 137)
-pytestmark = pytest.mark.skipif(
-    os.environ.get("CI") == "true",
-    reason="Memory-intensive test causes OOM in CI (GitHub Actions 7GB limit)"
-)
+pytestmark = [
+    pytest.mark.integration,
+    pytest.mark.skipif(
+        os.environ.get("CI") == "true",
+        reason="Memory-intensive test causes OOM in CI (GitHub Actions 7GB limit)",
+    ),
+]
 
 
 # ============================================================================

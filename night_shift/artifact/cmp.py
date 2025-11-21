@@ -1,5 +1,5 @@
 from typing import List
-from night_shift.utils.result import Result
+from shared.type_definitions.result import Err, Ok, Result
 from night_shift.models import CMPSignal
 
 
@@ -11,6 +11,6 @@ def get_latest_signals() -> Result[List[CMPSignal], str]:
             {"signal": "S2", "value": 0.42},
         ]
         signals = [CMPSignal(**item) for item in raw]
-        return Result.Ok(signals)
+        return Ok(signals)
     except Exception as exc:
-        return Result.Err(str(exc))
+        return Err(str(exc))

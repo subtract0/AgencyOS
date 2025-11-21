@@ -1,4 +1,4 @@
-from night_shift.utils.result import Result
+from shared.type_definitions.result import Err, Ok, Result
 from night_shift.models import CycleSummary
 
 
@@ -8,6 +8,6 @@ def get_cycle_summary() -> Result[CycleSummary, str]:
         # Placeholder logic – replace with real data source
         data = {"id": 1, "name": "Cycle 1", "status": "active"}
         summary = CycleSummary(**data)
-        return Result.Ok(summary)
+        return Ok(summary)
     except Exception as exc:
-        return Result.Err(str(exc))
+        return Err(str(exc))

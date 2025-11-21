@@ -51,6 +51,7 @@ from agency_memory.learning import CmpStore, CmpEvent
 import uuid
 
 logger = logging.getLogger(__name__)
+_MAX_CRON_LOOKAHEAD_MINUTES = 60 * 24 * 366  # look ahead up to one year
 
 
 class NightShiftScheduler:
@@ -214,9 +215,8 @@ class NightShiftScheduler:
                     return NightShiftState(**state_data)
             except Exception as e:
                 logger.warning(f"Failed to load state: {e}, creating new state")
-                return NightShiftState()
-        else:
-            return NightShiftState()
+        baseline = datetime.now() - timedelta(minutes=self.config.min_interval_minutes)
+        return NightShiftState(last_execution_time=baseline)
 
     def save_state(self):
         """Save current state to file."""
@@ -228,19 +228,119 @@ class NightShiftScheduler:
 
     def get_next_execution_time(self) -> datetime:
         """
-        Calculate next execution time based on min_interval since croniter is unavailable.
-
-        Returns:
-            datetime: Next execution time
+        Calculate next execution time respecting cron-like schedule and min interval.
         """
-        # Fallback: next execution is simply last_exec + min_interval
-        if self.state.last_execution_time:
-            return self.state.last_execution_time + timedelta(minutes=self.config.min_interval_minutes)
-        return datetime.now()
+        now = datetime.now().replace(second=0, microsecond=0)
+        scheduled_time = self._compute_next_run_from_schedule(start_from=self.state.last_execution_time)
+        if scheduled_time < now:
+            scheduled_time = now
+        interval_time = self.state.last_execution_time + timedelta(
+            minutes=self.config.min_interval_minutes
+        )
+        return max(scheduled_time, interval_time)
 
-        # Original croniter logic (disabled due to dependency issue)
-        # cron = croniter(self.config.schedule, datetime.now())
-        # return cron.get_next(datetime)
+    def _compute_next_run_from_schedule(self, start_from: Optional[datetime] = None) -> datetime:
+        """Compute next run time that matches the configured cron expression."""
+        schedule = (self.config.schedule or "* * * * *").strip()
+        if start_from is None:
+            start = datetime.now()
+        else:
+            start = start_from
+        start = start.replace(second=0, microsecond=0)
+        fields = schedule.split()
+        if len(fields) != 5:
+            logger.warning("Invalid schedule '%s', falling back to min interval", schedule)
+            return start + timedelta(minutes=self.config.min_interval_minutes)
+
+        minute_field, hour_field, dom_field, month_field, dow_field = fields
+
+        for offset in range(1, _MAX_CRON_LOOKAHEAD_MINUTES):
+            candidate = start + timedelta(minutes=offset)
+            if self._schedule_matches_datetime(
+                candidate, minute_field, hour_field, dom_field, month_field, dow_field
+            ):
+                return candidate
+
+        # Fallback if no match found in reasonable window
+        logger.warning(
+            "Failed to find schedule match for '%s', defaulting to min interval window",
+            schedule,
+        )
+        return start + timedelta(minutes=self.config.min_interval_minutes)
+
+    @staticmethod
+    def _cron_weekday(dt: datetime) -> int:
+        """Convert datetime.weekday() (Mon=0) to cron format (Sun=0)."""
+        return (dt.weekday() + 1) % 7
+
+    def _schedule_matches_datetime(
+        self,
+        dt: datetime,
+        minute_field: str,
+        hour_field: str,
+        dom_field: str,
+        month_field: str,
+        dow_field: str,
+    ) -> bool:
+        """Check if datetime matches cron-like fields."""
+        minute_match = self._match_cron_field(dt.minute, minute_field, 0, 59)
+        hour_match = self._match_cron_field(dt.hour, hour_field, 0, 23)
+        month_match = self._match_cron_field(dt.month, month_field, 1, 12)
+
+        day_match_dom = self._match_cron_field(dt.day, dom_field, 1, 31)
+        day_match_dow = self._match_cron_field(self._cron_weekday(dt), dow_field, 0, 6)
+
+        if dom_field != "*" and dow_field != "*":
+            day_match = day_match_dom or day_match_dow
+        else:
+            day_match = day_match_dom and day_match_dow
+
+        return minute_match and hour_match and month_match and day_match
+
+    def _match_cron_field(self, value: int, token: str, minimum: int, maximum: int) -> bool:
+        """Evaluate a cron field token against a specific value."""
+        token = token.strip()
+        if token == "*":
+            return True
+
+        parts = [part.strip() for part in token.split(",") if part.strip()]
+        if not parts:
+            return False
+
+        for part in parts:
+            if part == "*":
+                return True
+            if part.startswith("*/"):
+                try:
+                    step = int(part[2:])
+                except ValueError:
+                    continue
+                if step > 0 and (value - minimum) % step == 0:
+                    return True
+                continue
+            if "-" in part:
+                try:
+                    start_str, end_str = part.split("-", 1)
+                    start = int(start_str)
+                    end = int(end_str)
+                except ValueError:
+                    continue
+                if start <= value <= end:
+                    return True
+                continue
+            try:
+                exact = int(part)
+            except ValueError:
+                continue
+
+            if minimum <= exact <= maximum:
+                if exact == value:
+                    return True
+                # Cron allows Sunday to be 0 or 7
+                if maximum == 6 and exact == 7 and value == 0:
+                    return True
+
+        return False
 
     def check_kill_switch(self) -> bool:
         """
@@ -258,22 +358,17 @@ class NightShiftScheduler:
         Returns:
             bool: True if should execute, False otherwise
         """
-        # Check min interval since last execution
-        time_since_last = datetime.now() - self.state.last_execution_time
-        min_interval = timedelta(minutes=self.config.min_interval_minutes)
+        next_run = self.get_next_execution_time()
+        now = datetime.now()
+        if now >= next_run:
+            return True
 
-        if time_since_last < min_interval:
-            logger.info(f"Skipping execution (min interval not met): {time_since_last} < {min_interval}")
-            return False
-
-        # Cron check disabled, relying on min_interval only
-        return True
-        
-        # Original logic
-        # Check cron schedule
-        # next_run = self.get_next_execution_time()
-        # now = datetime.now()
-        # ...
+        logger.info(
+            "Skipping execution (next run scheduled for %s, now=%s)",
+            next_run,
+            now,
+        )
+        return False
 
     def run_cycle(self):
         """
@@ -290,70 +385,70 @@ class NightShiftScheduler:
         # Reset cycle counter
         self.state.tasks_completed_this_cycle = 0
 
-        # Health check
-        health = self.health_monitor.check_health()
-        self.state.health_status = health
+        try:
+            # Health check
+            health = self.health_monitor.check_health()
+            self.state.health_status = health
 
-        if not health.get("healthy", False):
-            logger.warning(f"Health check failed: {health}, aborting cycle")
-            return
+            if not health.get("healthy", False):
+                logger.warning(f"Health check failed: {health}, aborting cycle")
+                return
 
-        # Get tasks from backlog
-        tasks_result = self.backlog_storage.list_tasks()
-        if tasks_result.is_err():
-            logger.error(f"Failed to list tasks: {tasks_result.unwrap_err()}")
-            return
-
-        all_tasks = tasks_result.unwrap()
-        pending_tasks = [t for t in all_tasks if t.status.value == "pending"]
-
-        # If no pending tasks, auto-seed discovery/audit work so Night Shift never idles
-        if not pending_tasks and self.auto_seed_enabled:
-            self._seed_backlog_if_empty(existing_tasks=all_tasks)
-            # Reload tasks after seeding
+            # Get tasks from backlog
             tasks_result = self.backlog_storage.list_tasks()
             if tasks_result.is_err():
-                logger.error(f"Failed to list tasks after seeding: {tasks_result.unwrap_err()}")
+                logger.error(f"Failed to list tasks: {tasks_result.unwrap_err()}")
                 return
+
             all_tasks = tasks_result.unwrap()
             pending_tasks = [t for t in all_tasks if t.status.value == "pending"]
 
-        # Limit to max_tasks_per_execution
-        tasks_to_execute = pending_tasks[: self.config.max_tasks_per_execution]
+            # If no pending tasks, auto-seed discovery/audit work so Night Shift never idles
+            if not pending_tasks and self.auto_seed_enabled:
+                self._seed_backlog_if_empty(existing_tasks=all_tasks)
+                # Reload tasks after seeding
+                tasks_result = self.backlog_storage.list_tasks()
+                if tasks_result.is_err():
+                    logger.error(f"Failed to list tasks after seeding: {tasks_result.unwrap_err()}")
+                    return
+                all_tasks = tasks_result.unwrap()
+                pending_tasks = [t for t in all_tasks if t.status.value == "pending"]
 
-        logger.info(f"Found {len(pending_tasks)} pending tasks, executing {len(tasks_to_execute)}")
+            # Limit to max_tasks_per_execution
+            tasks_to_execute = pending_tasks[: self.config.max_tasks_per_execution]
 
-        # Execute tasks
-        for task in tasks_to_execute:
-            if self.shutdown_requested or self.check_kill_switch():
-                logger.info("Shutdown requested, stopping task execution")
-                break
+            logger.info(f"Found {len(pending_tasks)} pending tasks, executing {len(tasks_to_execute)}")
 
-            if self.config.dry_run:
-                logger.info(f"[DRY RUN] Would execute task: {task.id} - {task.title}")
-                continue
+            # Execute tasks
+            for task in tasks_to_execute:
+                if self.shutdown_requested or self.check_kill_switch():
+                    logger.info("Shutdown requested, stopping task execution")
+                    break
 
-            # Pre-flight validation (skip if already completed)
-            if self._auto_complete_task_if_applicable(task):
-                continue
+                if self.config.dry_run:
+                    logger.info(f"[DRY RUN] Would execute task: {task.id} - {task.title}")
+                    continue
 
-            logger.info(f"Executing task: {task.id} - {task.title}")
-            with self.watchdog.monitor(task.id):
-                result = self._execute_task(task)
+                # Pre-flight validation (skip if already completed)
+                if self._auto_complete_task_if_applicable(task):
+                    continue
 
-            if result.get("success", False):
-                self.state.tasks_completed_this_cycle += 1
-                self.state.total_tasks_completed += 1
-                logger.info(f"Task completed successfully: {task.id}")
-            else:
-                self.state.total_failures += 1
-                logger.error(f"Task failed: {task.id}, error: {result.get('error', 'unknown')}")
+                logger.info(f"Executing task: {task.id} - {task.title}")
+                with self.watchdog.monitor(task.id):
+                    result = self._execute_task(task)
 
-        # Update state
-        self.state.last_execution_time = datetime.now()
-        self.save_state()
+                if result.get("success", False):
+                    self.state.tasks_completed_this_cycle += 1
+                    self.state.total_tasks_completed += 1
+                    logger.info(f"Task completed successfully: {task.id}")
+                else:
+                    self.state.total_failures += 1
+                    logger.error(f"Task failed: {task.id}, error: {result.get('error', 'unknown')}")
 
-        logger.info(f"Cycle complete: {self.state.tasks_completed_this_cycle} tasks completed")
+            logger.info(f"Cycle complete: {self.state.tasks_completed_this_cycle} tasks completed")
+        finally:
+            self.state.last_execution_time = datetime.now()
+            self.save_state()
 
     def _auto_complete_task_if_applicable(self, task: Task) -> bool:
         """

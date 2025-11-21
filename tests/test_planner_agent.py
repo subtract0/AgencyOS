@@ -20,6 +20,11 @@ ci_skip = pytest.mark.skipif(
     os.environ.get("CI") == "true", reason="Requires OpenAI API access not available in CI"
 )
 
+pytestmark = pytest.mark.skipif(
+    os.environ.get("AGENCY_ENABLE_PLANNER_E2E") != "1",
+    reason="Planner agent tests require live OpenAI access. Set AGENCY_ENABLE_PLANNER_E2E=1 to enable.",
+)
+
 
 @pytest.fixture(autouse=True)
 def cleanup_fib():
