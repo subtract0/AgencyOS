@@ -33,7 +33,7 @@
     "close": "python envs/agency_env_runner.py close"
   },
   "sandbox": {
-    "profile": "envs/sandbox_profile.sb",
+    "profile": "sandbox_profile.sb",
     "type": "macos_sandbox_exec",
     "notes": "Apply sandbox-exec profile when available to restrict filesystem writes."
   }
