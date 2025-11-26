@@ -20,7 +20,7 @@ import pytest
 # Add scripts to path
 sys.path.insert(0, str(Path(__file__).parent.parent / "scripts"))
 
-from generate_deletion_pr import PRGenerator
+from scripts.generate_deletion_pr import PRGenerator
 
 
 class TestPRGenerator:

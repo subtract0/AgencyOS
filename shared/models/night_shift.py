@@ -47,6 +47,17 @@ class NightShiftConfig(BaseModel):
         default=None,
         description="Email for escalation notifications",
     )
+    stale_task_minutes: int = Field(
+        default=30,
+        ge=5,
+        description="Minutes before an in-progress task is auto-released back to pending",
+    )
+    max_failures_before_block: int = Field(
+        default=2,
+        ge=1,
+        le=5,
+        description="Number of failures before a task is blocked and escalated",
+    )
 
 
 class NightShiftState(BaseModel):

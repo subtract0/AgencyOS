@@ -48,6 +48,7 @@ from tools.auto_recovery import AutoRecovery
 from tools.task_validator import TaskValidator
 from tools.night_shift_watchdog import NightShiftWatchdog
 from agency_memory.learning import CmpStore, CmpEvent
+from tools.escalation_helper import escalate_with_llm
 import uuid
 
 logger = logging.getLogger(__name__)
@@ -381,6 +382,16 @@ class NightShiftScheduler:
         4. Update state
         """
         logger.info("Starting Night Shift cycle")
+        if self.config.stale_task_minutes > 0:
+            released = self.backlog_storage.release_stale_tasks(self.config.stale_task_minutes)
+            if released:
+                released_titles = ", ".join(t.title for t in released[:5])
+                logger.info(
+                    "Released %d stale tasks back to pending: %s%s",
+                    len(released),
+                    released_titles,
+                    "…" if len(released) > 5 else "",
+                )
 
         # Reset cycle counter
         self.state.tasks_completed_this_cycle = 0
@@ -437,13 +448,19 @@ class NightShiftScheduler:
                 with self.watchdog.monitor(task.id):
                     result = self._execute_task(task)
 
-                if result.get("success", False):
-                    self.state.tasks_completed_this_cycle += 1
-                    self.state.total_tasks_completed += 1
-                    logger.info(f"Task completed successfully: {task.id}")
-                else:
-                    self.state.total_failures += 1
-                    logger.error(f"Task failed: {task.id}, error: {result.get('error', 'unknown')}")
+            if result.get("success", False):
+                self.state.tasks_completed_this_cycle += 1
+                self.state.total_tasks_completed += 1
+                logger.info(f"Task completed successfully: {task.id}")
+                try:
+                    self.backlog_storage.reset_task_failures(task.id)
+                except Exception as e:  # pragma: no cover - filesystem edge
+                    logger.warning(f"Failed to reset failure metadata for {task.id}: {e}")
+            else:
+                self.state.total_failures += 1
+                error_reason = result.get("error", "unknown")
+                logger.error(f"Task failed: {task.id}, error: {error_reason}")
+                self._handle_task_failure(task, error_reason)
 
             logger.info(f"Cycle complete: {self.state.tasks_completed_this_cycle} tasks completed")
         finally:
@@ -626,6 +643,49 @@ class NightShiftScheduler:
             # Clear current task
             self.state.current_task_id = None
             self.save_state()
+
+    def _handle_task_failure(self, task: Task, reason: str) -> None:
+        """Record failure metadata and escalate if the task keeps failing."""
+        try:
+            updated_task, needs_escalation = self.backlog_storage.record_task_failure(
+                task_id=task.id,
+                reason=reason,
+                max_failures_before_block=self.config.max_failures_before_block,
+            )
+        except Exception as e:  # pragma: no cover - filesystem edge
+            logger.error(f"Failed to record task failure for {task.id}: {e}")
+            return
+
+        if not needs_escalation:
+            return
+
+        log_excerpt = self._read_recent_logs()
+        try:
+            escalation = escalate_with_llm(updated_task, reason, log_excerpt)
+            self.backlog_storage.append_escalation_note(
+                updated_task.id, escalation.provider, escalation.analysis
+            )
+            logger.warning(
+                "Task %s escalated via %s after %d failures",
+                updated_task.id,
+                escalation.provider,
+                updated_task.metadata.get("failure_count", 0),
+            )
+        except Exception as e:  # pragma: no cover - external services
+            logger.error(f"Failed to escalate task {task.id}: {e}")
+
+    def _read_recent_logs(self, max_lines: int = 40) -> str:
+        """Read tail of Night Shift log for escalation context."""
+        log_path = Path("/tmp/night_shift_hot_reload.log")
+        if not log_path.exists():
+            return ""
+
+        try:
+            with open(log_path, "r") as f:
+                lines = f.readlines()[-max_lines:]
+            return "".join(lines)
+        except Exception:
+            return ""
 
     def _record_cmp_event(self, task, execution_result: dict[str, Any], success: bool):
         """
