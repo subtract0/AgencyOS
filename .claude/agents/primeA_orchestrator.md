@@ -514,8 +514,8 @@ def calculate_safe_workers(layer_size: int) -> int:
     if not use_local:
         return min(10, layer_size)  # Aggressive parallelism
 
-    # Local model: conservative (M4 Pro 48GB)
-    max_workers = int(os.getenv("LOCAL_MODEL_TEST_WORKERS", "3"))
+    # Local model: M4 Max 128GB (remote LM Studio, 0GB local RAM)
+    max_workers = int(os.getenv("LOCAL_MODEL_TEST_WORKERS", "20"))  # Can scale to 30
     return min(max_workers, layer_size)
 ```
 
