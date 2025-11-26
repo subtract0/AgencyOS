@@ -21,7 +21,7 @@ from pydantic import BaseModel, Field
 from shared.type_definitions.result import Err, Ok, Result
 from tools.ollama_health_check import check_ollama_health
 
-MAX_WORKERS = 12
+MAX_WORKERS = 1
 
 
 class TestExecutionConfig(BaseModel):
@@ -92,10 +92,10 @@ def check_ollama_running() -> bool:
 def get_safe_worker_count() -> int:
     """Calculate safe pytest worker count based on memory and local model state.
 
-    Memory budgets (Updated 2025-11-21 for M4 Max 128GB):
-    - M4 Max 128GB (>120GB total): 12 workers (full performance cores)
-    - Large memory (>60GB): 6 workers
-    - Medium memory (20-60GB): 3 workers
+    Memory budgets (Updated 2025-11-24 for M4 Max 128GB stability):
+    - M4 Max 128GB (>120GB total): 1 worker (serial for stability)
+    - Large memory (>60GB): 1 worker
+    - Medium memory (20-60GB): 1 worker
     - Critical memory (<10GB): 1 worker (sequential)
 
     Local model consideration:
@@ -103,7 +103,7 @@ def get_safe_worker_count() -> int:
     - If local model running: reduce by 50% for safety
 
     Returns:
-        Safe number of pytest workers (1-12 depending on available memory)
+        Safe number of pytest workers (1 only)
     """
     mem = psutil.virtual_memory()
 

@@ -27,6 +27,7 @@ class TaskStatus(str, Enum):
     IN_PROGRESS = "in_progress"  # Currently being worked on
     COMPLETED = "completed"  # Successfully finished
     FAILED = "failed"  # Attempted but failed
+    BLOCKED = "blocked"  # Escalated / awaiting intervention
 
 
 class TaskType(str, Enum):
@@ -95,6 +96,7 @@ class BacklogMetrics(BaseModel):
     in_progress_tasks: int
     completed_tasks: int
     failed_tasks: int
+    blocked_tasks: int
     avg_completion_time_hours: float
     p1_count: int
     p2_count: int

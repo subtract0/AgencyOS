@@ -194,6 +194,55 @@ class TestBacklogStorage:
                 result = storage.get_task(task_id)
                 assert result.is_ok()
 
+    def test_release_stale_tasks_moves_tasks_back_to_pending(self):
+        with tempfile.TemporaryDirectory() as tmpdir:
+            storage = ba.BacklogStorage(data_dir=tmpdir)
+            task = Task(
+                id=str(uuid.uuid4()),
+                title="Long running",
+                description="stuck task",
+                task_type=TaskType.TECH_DEBT,
+                estimated_complexity=2,
+            )
+            storage.add_task(task)
+            tasks = storage._load_all_tasks()
+            tasks[0].status = TaskStatus.IN_PROGRESS
+            tasks[0].updated_at = datetime.now() - timedelta(minutes=90)
+            storage._write_all_tasks(tasks)
+
+            released = storage.release_stale_tasks(max_age_minutes=30)
+            assert len(released) == 1
+            refreshed = storage.get_task(task.id).unwrap()
+            assert refreshed.status == TaskStatus.PENDING
+            assert refreshed.metadata.get("stale_release_count") == 1
+
+    def test_record_task_failure_blocks_after_threshold(self):
+        with tempfile.TemporaryDirectory() as tmpdir:
+            storage = ba.BacklogStorage(data_dir=tmpdir)
+            task = Task(
+                id=str(uuid.uuid4()),
+                title="Flaky task",
+                description="fails often",
+                task_type=TaskType.TECH_DEBT,
+                estimated_complexity=3,
+            )
+            storage.add_task(task)
+
+            updated, escalated = storage.record_task_failure(task.id, "boom", max_failures_before_block=2)
+            assert not escalated
+            assert updated.status == TaskStatus.PENDING
+            assert updated.metadata["failure_count"] == 1
+
+            updated, escalated = storage.record_task_failure(task.id, "boom again", max_failures_before_block=2)
+            assert escalated
+            assert updated.status == TaskStatus.BLOCKED
+            assert updated.metadata["failure_count"] == 2
+            assert updated.metadata["failure_history"][-1]["reason"] == "boom again"
+
+            storage.reset_task_failures(task.id)
+            refreshed = storage.get_task(task.id).unwrap()
+            assert refreshed.metadata.get("failure_count", 0) == 0
+
 
 class TestPriorityQueue:
     """Tests for priority queue and task selection logic."""

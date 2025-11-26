@@ -13,7 +13,7 @@ TDD Protocol (Article VI):
 
 import json
 import logging
-from datetime import datetime
+from datetime import datetime, timedelta
 from pathlib import Path
 from typing import Optional
 
@@ -230,6 +230,7 @@ class BacklogStorage:
                         in_progress_tasks=0,
                         completed_tasks=0,
                         failed_tasks=0,
+                        blocked_tasks=0,
                         avg_completion_time_hours=0.0,
                         p1_count=0,
                         p2_count=0,
@@ -243,6 +244,7 @@ class BacklogStorage:
             in_progress = [t for t in tasks if t.status == TaskStatus.IN_PROGRESS]
             completed = [t for t in tasks if t.status == TaskStatus.COMPLETED]
             failed = [t for t in tasks if t.status == TaskStatus.FAILED]
+            blocked = [t for t in tasks if t.status == TaskStatus.BLOCKED]
 
             # Calculate priority counts
             p1 = [t for t in tasks if t.priority == TaskPriority.P1]
@@ -273,6 +275,7 @@ class BacklogStorage:
                     in_progress_tasks=len(in_progress),
                     completed_tasks=len(completed),
                     failed_tasks=len(failed),
+                    blocked_tasks=len(blocked),
                     avg_completion_time_hours=avg_completion_time,
                     p1_count=len(p1),
                     p2_count=len(p2),
@@ -440,6 +443,140 @@ class BacklogStorage:
 
         # Atomic rename
         temp_file.replace(self.tasks_file)
+
+    def release_stale_tasks(self, max_age_minutes: int = 30) -> list[Task]:
+        """
+        Release tasks stuck in IN_PROGRESS state for longer than max_age_minutes.
+
+        Args:
+            max_age_minutes: Maximum allowed age for in-progress tasks
+
+        Returns:
+            list[Task]: Tasks that were released
+        """
+        tasks = self._load_all_tasks()
+        if not tasks:
+            return []
+
+        now = datetime.now()
+        threshold = timedelta(minutes=max_age_minutes)
+        released: list[Task] = []
+        updated = False
+
+        for task in tasks:
+            if task.status == TaskStatus.IN_PROGRESS:
+                if now - task.updated_at > threshold:
+                    task.status = TaskStatus.PENDING
+                    task.updated_at = now
+                    metadata = dict(task.metadata or {})
+                    metadata["stale_release_count"] = metadata.get("stale_release_count", 0) + 1
+                    metadata["last_stale_release_at"] = now.isoformat()
+                    task.metadata = metadata
+                    released.append(task)
+                    updated = True
+
+        if updated:
+            self._write_all_tasks(tasks)
+            logger.info(f"Released {len(released)} stale tasks exceeding {max_age_minutes} minutes")
+
+        return released
+
+    def record_task_failure(
+        self, task_id: str, reason: str, max_failures_before_block: int
+    ) -> tuple[Task, bool]:
+        """
+        Increment failure metadata for a task.
+
+        Args:
+            task_id: ID of the task
+            reason: Failure reason
+            max_failures_before_block: Threshold before blocking/escalation
+
+        Returns:
+            tuple[Task, bool]: (Updated task, whether escalation/blocking is required)
+        """
+        tasks = self._load_all_tasks()
+        now = datetime.now()
+        updated_task: Task | None = None
+
+        for task in tasks:
+            if task.id != task_id:
+                continue
+
+            metadata = dict(task.metadata or {})
+            failure_count = int(metadata.get("failure_count", 0)) + 1
+            metadata["failure_count"] = failure_count
+            metadata["last_failure_reason"] = reason
+            failure_history = metadata.get("failure_history", [])
+            failure_history.append({"timestamp": now.isoformat(), "reason": reason})
+            metadata["failure_history"] = failure_history[-10:]
+            task.metadata = metadata
+            task.updated_at = now
+
+            if failure_count >= max_failures_before_block:
+                task.status = TaskStatus.BLOCKED
+                metadata["blocked_at"] = now.isoformat()
+                escalate = True
+            else:
+                task.status = TaskStatus.PENDING
+                escalate = False
+
+            updated_task = task
+            break
+
+        if updated_task is None:
+            raise ValueError(f"Task not found: {task_id}")
+
+        self._write_all_tasks(tasks)
+        return updated_task, escalate
+
+    def reset_task_failures(self, task_id: str) -> None:
+        """Reset failure metadata after a successful run."""
+        tasks = self._load_all_tasks()
+        updated = False
+        for task in tasks:
+            if task.id != task_id:
+                continue
+
+            metadata = dict(task.metadata or {})
+            if metadata.get("failure_count"):
+                metadata["failure_count"] = 0
+            metadata.pop("last_failure_reason", None)
+            task.metadata = metadata
+            updated = True
+            break
+
+        if updated:
+            self._write_all_tasks(tasks)
+
+    def append_escalation_note(self, task_id: str, provider: str, analysis: str) -> None:
+        """Append escalation details to task metadata."""
+        tasks = self._load_all_tasks()
+        updated = False
+        now_dt = datetime.now()
+        now_iso = now_dt.isoformat()
+
+        for task in tasks:
+            if task.id != task_id:
+                continue
+
+            metadata = dict(task.metadata or {})
+            history = metadata.get("escalation_history", [])
+            history.append(
+                {
+                    "provider": provider,
+                    "analysis": analysis,
+                    "timestamp": now_iso,
+                }
+            )
+            metadata["escalation_history"] = history[-10:]
+            task.metadata = metadata
+            task.updated_at = now_dt
+            updated = True
+            break
+
+        if updated:
+            self._write_all_tasks(tasks)
 
 
 class PriorityQueue:

@@ -541,8 +541,11 @@ def main(
             # Note: May reveal race conditions in tests - fix tests if failures occur
             memory_based_count = get_safe_worker_count()
             worker_count = memory_based_count
-            pytest_args.extend(["-n", str(worker_count)])
-            print(f"✓ pytest-xdist: {worker_count} workers (memory-aware, M4 Max optimized)")
+            if worker_count > 1:
+                pytest_args.extend(["-n", str(worker_count)])
+                print(f"✓ pytest-xdist: {worker_count} workers (memory-aware, M4 Max optimized)")
+            else:
+                print("✓ pytest-xdist: DISABLED (1 worker selected for stability)")
     except Exception:
         # Fallback to pytest.ini default (-n 6 --dist loadgroup)
         print("✓ pytest-xdist: using pytest.ini defaults (-n 6)")
