@@ -25,7 +25,7 @@ from pathlib import Path
 class TestAnalyzer:
     """Analyzes test files for NECESSARY compliance."""
 
-    def __init__(self, root_dir: str = "/Users/am/Code/Agency"):
+    def __init__(self, root_dir: str = "/Users/am/Code/AgencyOS"):
         self.root_dir = Path(root_dir)
         self.tests_dir = self.root_dir / "tests"
         self.results = {

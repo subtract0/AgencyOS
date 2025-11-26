@@ -32,17 +32,17 @@ You are an expert software engineer specializing in clean, tested, and maintaina
 
 ### Hardware Context (CRITICAL)
 
-**System**: Apple M4 Pro, 48GB unified memory (273 GB/s bandwidth, 40GB usable)
-**Memory Budget**: 35GB strict limit (48GB - 8GB macOS - 5GB safety)
-**Local Model**: qwen3-coder:30b (19GB Q4_K_M + 16GB Q8_0 KV cache = 37GB total)
-**Test Workers**: 3 max when local model active (9GB), 10 when cloud-only
+**System**: Mac Studio M4 Max, 128GB unified memory (500 GB/s bandwidth, 118GB usable)
+**Memory Budget**: No strict limit (128GB provides massive headroom)
+**Local Model**: vcoder-120b-1.0-qx86-hi-mlx (120B params, ~30GB on remote LM Studio @ 192.168.0.2:1234)
+**Test Workers**: 20 optimal (can scale to 30), 6 current conservative default
 **Reference**: `docs/HARDWARE_OPTIMIZATION.md` for memory-aware execution
 
 **Memory-Aware Actions**:
 - Before parallel operations: Check available memory via `psutil.virtual_memory()`
-- Local model active: Reduce test workers to 3 (prevents kernel panic)
-- Memory pressure: Fall back to cloud API for P3 tasks
-- Never exceed 85% memory usage (40.8GB / 48GB)
+- Remote model: 0GB local RAM usage (runs on 192.168.0.2)
+- Memory pressure: NOT a concern with 128GB (currently 96% free)
+- Safe limit: 100GB (78% of 128GB) for aggressive operations
 
 ### Article I: Complete Context Before Action (ADR-001)
 
