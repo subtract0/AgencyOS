@@ -35,6 +35,10 @@ from tools import (
     Read,
     TodoWrite,
     Write,
+    # Life OS tools (ambient life assistant)
+    CalendarTool,
+    EmailTool,
+    BrowserTool,
 )
 
 # Get the absolute path to the current file's directory
@@ -109,7 +113,9 @@ def create_coding_agent(
             "Maintains real-time cost tracking for all LLM operations and enforces zero Dict[Any, Any] usage per constitutional requirements. "
             "Works from detailed plans in /plans/ and ensures all code meets Article II (100% test success) before handoff to MergerAgent. "
             "When prompting, provide file paths, code requirements, and architectural constraints. Has full tool access including Git, "
-            "file operations, web search, and TodoWrite for task coordination."
+            "file operations, web search, and TodoWrite for task coordination. "
+            "LIFE OS CAPABILITIES: Also equipped with Life Tools (Calendar, Email, Browser) for ambient life assistance - "
+            "can schedule events, draft/send emails, and search the web with HITL safety gates."
         ),
         instructions=instructions,
         tools_folder=os.path.join(current_dir, "tools"),
@@ -131,6 +137,10 @@ def create_coding_agent(
             NotebookEdit,
             TodoWrite,
             Git,
+            # Life OS tools - ambient life assistant capabilities
+            CalendarTool(),
+            EmailTool(),
+            BrowserTool(),
         ]
         + ([WebSearchTool()] if is_openai else [])
         + ([ClaudeWebSearch] if is_claude else []),
