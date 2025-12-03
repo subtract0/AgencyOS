@@ -288,6 +288,8 @@ def main(
     json_report_file: str = ".report.json",
     no_sandbox: bool = False,
     sequential: bool = False,
+    max_duration: int | None = None,
+    include_legacy: bool = False,
 ) -> int:
     # RECURSION GUARDS: Prevent nested test runs
     if os.environ.get("AGENCY_NESTED_TEST") == "1":
@@ -499,6 +501,11 @@ def main(
             "--ignore=tests/e2e/",  # e2e tests import agency at module level
         ]
     )
+    # Legacy tests: excluded by default, include with --legacy flag
+    if not include_legacy:
+        pytest_args.append("--ignore=tests/legacy/")
+    else:
+        print("📦 Legacy tests INCLUDED (--legacy flag set)")
 
     smoke_suite_targets = [
         "tests/test_night_shift_scheduler.py",
@@ -681,6 +688,13 @@ def main(
         # Calculate timeout based on empirical test execution data
         default_timeout = calculate_dynamic_timeout(multiplier=timeout_multiplier)
         timeout_seconds = int(os.environ.get("AGENCY_TEST_TIMEOUT_OVERRIDE", str(default_timeout)))
+
+        # Soft duration limit (--max-duration): exit cleanly instead of hard timeout
+        if max_duration is not None:
+            soft_limit_seconds = max_duration * 60
+            if soft_limit_seconds < timeout_seconds:
+                timeout_seconds = soft_limit_seconds
+                print(f"⏰ Soft duration limit: {max_duration} minutes ({soft_limit_seconds}s)")
 
         if timeout_multiplier > 1.0:
             print(f"⏰ Timeout multiplier: {timeout_multiplier}x")
@@ -949,6 +963,19 @@ def create_parser() -> argparse.ArgumentParser:
         help="Run tests sequentially (1 worker). Prevents macOS Signal(9) kills from pytest-xdist. Auto-enabled on macOS for fast mode when PYTEST_WORKERS not set.",
     )
 
+    parser.add_argument(
+        "--max-duration",
+        type=int,
+        default=None,
+        help="Soft duration limit in minutes. If tests exceed this, exit cleanly with status 124 instead of running to timeout. Useful for autonomous runs.",
+    )
+
+    parser.add_argument(
+        "--legacy",
+        action="store_true",
+        help="Include legacy tests from tests/legacy/ (normally excluded from fast mode)",
+    )
+
     return parser
 
 
@@ -1021,6 +1048,8 @@ if __name__ == "__main__":
         json_report_file=args.json_report_file,
         no_sandbox=args.no_sandbox,
         sequential=args.sequential,
+        max_duration=args.max_duration,
+        include_legacy=args.legacy,
     )
 
     sys.exit(exit_code)
