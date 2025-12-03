@@ -21,7 +21,10 @@ class TestInitOllamaModelScript:
     @pytest.fixture
     def script_path(self) -> Path:
         """Return path to init_ollama_model.sh script."""
-        return Path(__file__).parent.parent / "scripts" / "init_ollama_model.sh"
+        path = Path(__file__).parent.parent / "scripts" / "init_ollama_model.sh"
+        if not path.exists():
+            pytest.skip("init_ollama_model.sh not present (legacy flow removed)")
+        return path
 
     @pytest.fixture
     def mock_docker_exec(self):
@@ -217,7 +220,10 @@ class TestInitOllamaModelIntegration:
     @pytest.fixture
     def script_path(self) -> Path:
         """Return path to init_ollama_model.sh script."""
-        return Path(__file__).parent.parent / "scripts" / "init_ollama_model.sh"
+        path = Path(__file__).parent.parent / "scripts" / "init_ollama_model.sh"
+        if not path.exists():
+            pytest.skip("init_ollama_model.sh not present (legacy flow removed)")
+        return path
 
     @pytest.mark.integration
     @pytest.mark.skipif(
@@ -289,6 +295,8 @@ class TestInitOllamaModelDockerCompose:
         # Note: Script is designed to be called externally, not as entrypoint
         # Verify script is compatible with external invocation
         script_path = Path(__file__).parent.parent / "scripts" / "init_ollama_model.sh"
+        if not script_path.exists():
+            pytest.skip("init_ollama_model.sh not present (legacy flow removed)")
         assert script_path.exists(), "Init script must exist for Docker integration"
 
 
@@ -298,7 +306,10 @@ class TestConstitutionalCompliance:
     @pytest.fixture
     def script_path(self) -> Path:
         """Return path to init_ollama_model.sh script."""
-        return Path(__file__).parent.parent / "scripts" / "init_ollama_model.sh"
+        path = Path(__file__).parent.parent / "scripts" / "init_ollama_model.sh"
+        if not path.exists():
+            pytest.skip("init_ollama_model.sh not present (legacy flow removed)")
+        return path
 
     def test_article_i_complete_context(self, script_path: Path):
         """Test Article I: Script never proceeds with incomplete context."""

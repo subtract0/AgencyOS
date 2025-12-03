@@ -21,7 +21,8 @@ from pydantic import BaseModel, Field
 from shared.type_definitions.result import Err, Ok, Result
 from tools.ollama_health_check import check_ollama_health
 
-MAX_WORKERS = 1
+# Allow full use of performance cores on high-memory hosts (M4 Max: 12)
+MAX_WORKERS = 12
 
 
 class TestExecutionConfig(BaseModel):

@@ -88,7 +88,6 @@ class TestToolCache:
         cached = self.cache.get("nonexistent_key")
         assert cached is None
 
-    @pytest.mark.usefixtures("fast_test_setup")
     def test_cache_ttl_expiration(self):
         """Test cache entry expires after TTL (uses manual timestamp manipulation)."""
         key = "expiring_key"
