@@ -17,7 +17,15 @@ Design:
 from typing import List, Dict, Any, Optional
 import requests
 from bs4 import BeautifulSoup
-from googlesearch import search as google_search
+
+# Optional dependency - falls back to mock mode if not installed
+try:
+    from googlesearch import search as google_search
+    HAS_GOOGLE_SEARCH = True
+except ImportError:
+    google_search = None
+    HAS_GOOGLE_SEARCH = False
+
 from .base import LifeTool, ToolResult
 
 class BrowserTool(LifeTool):
@@ -50,11 +58,11 @@ class BrowserTool(LifeTool):
             query: The search term.
             num_results: Number of results to return.
         """
-        if self.mock_mode:
-            # Return stable mock data for demos
+        if self.mock_mode or not HAS_GOOGLE_SEARCH:
+            # Return stable mock data for demos or when googlesearch not installed
             return ToolResult(
                 success=True,
-                message=f"Found 1 mock result for '{query}'",
+                message=f"Found 1 mock result for '{query}'" + (" (mock mode - googlesearch not installed)" if not HAS_GOOGLE_SEARCH else ""),
                 data=[{
                     "title": "Luigi's Trattoria - Best Italian in SF",
                     "url": "https://luigis-sf-mock.com",

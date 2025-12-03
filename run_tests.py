@@ -287,6 +287,7 @@ def main(
     json_report: bool = False,
     json_report_file: str = ".report.json",
     no_sandbox: bool = False,
+    sequential: bool = False,
 ) -> int:
     # RECURSION GUARDS: Prevent nested test runs
     if os.environ.get("AGENCY_NESTED_TEST") == "1":
@@ -525,11 +526,20 @@ def main(
         os.environ["PYTEST_WORKERS"] = "1"
         print("⚙️ Integration mode: forcing 1 worker to avoid macOS resource kills")
 
+    # Auto-enable sequential mode on macOS for fast tests (prevents Signal 9 kills from xdist)
+    is_macos = sys.platform == "darwin"
+    if is_macos and test_mode == "fast" and not sequential and "PYTEST_WORKERS" not in os.environ:
+        sequential = True
+        print("⚙️ macOS detected: auto-enabling sequential mode for fast tests (prevents Signal 9)")
+
     try:
+        # Sequential mode: force 1 worker (prevents macOS Signal 9 kills)
+        if sequential:
+            pytest_args.extend(["-n", "1"])
+            print("✓ pytest-xdist: 1 worker (--sequential mode, macOS-safe)")
         # Check for explicit worker override (CI environment)
-        worker_override = os.environ.get("PYTEST_WORKERS")
-        if worker_override:
-            worker_count = int(worker_override)
+        elif os.environ.get("PYTEST_WORKERS"):
+            worker_count = int(os.environ["PYTEST_WORKERS"])
             pytest_args.extend(["-n", str(worker_count)])
             print(f"✓ pytest-xdist: {worker_count} workers (PYTEST_WORKERS override for CI)")
         else:
@@ -828,7 +838,8 @@ def create_parser() -> argparse.ArgumentParser:
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""Examples:
   python run_tests.py                    # Run unit tests only (default)
-  python run_tests.py --fast             # Run fast unit tests only
+  python run_tests.py --fast             # Run fast unit tests only (auto-sequential on macOS)
+  python run_tests.py --fast --sequential # Force sequential mode (1 worker, prevents Signal 9)
   python run_tests.py --slow             # Run slow tests only
   python run_tests.py --benchmark        # Run benchmark tests only
   python run_tests.py --github           # Run GitHub integration tests only
@@ -837,6 +848,7 @@ def create_parser() -> argparse.ArgumentParser:
   python run_tests.py --run-all          # Run all tests
   python run_tests.py --with-docker      # Run with Docker services (enables Ollama tests)
   python run_tests.py --no-sandbox       # Disable sandbox-exec wrapper (fix Signal(9) kills)
+  python run_tests.py --sequential       # Run sequentially (macOS-safe, prevents xdist kills)
   python run_tests.py test_specific.py   # Run specific test file""",
     )
 
@@ -931,6 +943,12 @@ def create_parser() -> argparse.ArgumentParser:
         help="Disable OpenEnv sandbox-exec wrapper (macOS only). Useful when sandbox causes Signal(9) kills. Sets AGENCY_SANDBOX_PROFILE='' to bypass sandbox profile.",
     )
 
+    parser.add_argument(
+        "--sequential",
+        action="store_true",
+        help="Run tests sequentially (1 worker). Prevents macOS Signal(9) kills from pytest-xdist. Auto-enabled on macOS for fast mode when PYTEST_WORKERS not set.",
+    )
+
     return parser
 
 
@@ -1002,6 +1020,7 @@ if __name__ == "__main__":
         json_report=args.json_report,
         json_report_file=args.json_report_file,
         no_sandbox=args.no_sandbox,
+        sequential=args.sequential,
     )
 
     sys.exit(exit_code)

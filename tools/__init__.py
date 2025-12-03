@@ -19,6 +19,12 @@ from .todo_write import TodoWrite
 from .undo_snapshot import WorkspaceSnapshot, WorkspaceUndo
 from .write import Write
 
+# Life OS tools (Steve Jobs-inspired ambient life assistant)
+from .life.base import LifeTool, ToolResult
+from .life.calendar_tool import CalendarTool
+from .life.email_tool import EmailTool
+from .life.browser_tool import BrowserTool
+
 __all__ = [
     "Bash",
     "Glob",
@@ -42,4 +48,10 @@ __all__ = [
     "WorkspaceSnapshot",
     "WorkspaceUndo",
     "HandoffContextRead",
+    # Life OS tools
+    "LifeTool",
+    "ToolResult",
+    "CalendarTool",
+    "EmailTool",
+    "BrowserTool",
 ]
