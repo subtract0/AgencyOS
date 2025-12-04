@@ -102,6 +102,14 @@ def isolated_git_repo(tmp_path: Path) -> Path:
         capture_output=True,
         timeout=10,
     )
+    # Disable commit signing for tests (avoids CI signing server issues)
+    subprocess.run(
+        ["git", "config", "commit.gpgsign", "false"],
+        cwd=repo,
+        check=True,
+        capture_output=True,
+        timeout=10,
+    )
 
     # Create initial commit
     (repo / "README.md").write_text("# Test Repo")
