@@ -297,7 +297,7 @@ class {self.component_name}(Static):
         # Format data beautifully
         lines = []
         for key, value in self.data.items():
-            lines.append(f"[bold]{key}:[/bold] {value}")
+            lines.append(f"[bold]{{key}}:[/bold] {{value}}")
 
         return "\\n".join(lines)
 
