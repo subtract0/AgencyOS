@@ -70,6 +70,13 @@ except ImportError:
     create_test_generator_agent = None  # type: ignore
     create_chief_architect_agent = None # type: ignore
 
+# Import NightShiftWatchdog for timeout protection
+try:
+    from tools.night_shift_watchdog import NightShiftWatchdog, WatchdogTimeout
+except ImportError:
+    NightShiftWatchdog = None  # type: ignore
+    WatchdogTimeout = Exception  # type: ignore
+
 import subprocess
 
 
@@ -720,12 +727,18 @@ class PrimeXOrchestrator:
     - _update_task_status(task_id, status): Update task status in backlog
     """
 
-    def __init__(self, backlog_storage: Optional[BacklogStorage] = None):
+    def __init__(
+        self,
+        backlog_storage: Optional[BacklogStorage] = None,
+        timeout_minutes: int = 15
+    ):
         """
         Initialize primeX orchestrator.
 
         Args:
             backlog_storage: Backlog storage instance (default: create new)
+            timeout_minutes: Task execution timeout in minutes (default: 15).
+                             Set to 0 to disable watchdog timeout protection.
         """
         if backlog_storage is None:
             backlog_storage = BacklogStorage()
@@ -733,6 +746,14 @@ class PrimeXOrchestrator:
         self.backlog_storage = backlog_storage
         self.priority_queue = PriorityQueue(backlog_storage)
         self.memory_store: Optional[EnhancedMemoryStore] = None
+
+        # Initialize watchdog for timeout protection (Mission 4 requirement)
+        if timeout_minutes > 0 and NightShiftWatchdog is not None:
+            self.watchdog: Optional[NightShiftWatchdog] = NightShiftWatchdog(
+                timeout_minutes=timeout_minutes
+            )
+        else:
+            self.watchdog = None
 
     def execute(self, task_intent: Optional[str] = None) -> Result[dict[str, Any], Exception]:
         """
@@ -857,9 +878,15 @@ class PrimeXOrchestrator:
             if update_result.is_err():
                 return Err(update_result.unwrap_err())
 
-            # Phase 2: Execute Workflow
+            # Phase 2: Execute Workflow (with watchdog timeout protection)
             start_time = datetime.now()
-            workflow_result = self._execute_workflow(task)
+
+            # Wrap workflow execution with watchdog if enabled
+            if self.watchdog is not None:
+                with self.watchdog.monitor(task.id):
+                    workflow_result = self._execute_workflow(task)
+            else:
+                workflow_result = self._execute_workflow(task)
 
             if "success" not in workflow_result or not workflow_result["success"]:
                 # Workflow failed - keep status PENDING
@@ -899,6 +926,16 @@ class PrimeXOrchestrator:
 
             logger.info(f"Explicit task completed successfully: {task.id}")
             return Ok(result)
+
+        except WatchdogTimeout as e:
+            # Handle timeout specifically - task exceeded time limit
+            logger.error(f"Task {task.id} exceeded timeout: {e}")
+            try:
+                task.status = TaskStatus.PENDING
+                self.backlog_storage.update_task(task)
+            except:
+                pass  # Best effort rollback
+            return Err(Exception(f"Task execution timeout: {e}"))
 
         except Exception as e:
             logger.error(f"Explicit task execution failed: {e}", exc_info=True)
