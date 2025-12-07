@@ -372,6 +372,33 @@ class Agency:
         # Run synchronously and return result
         return self.get_completion(message, recipient_agent)
 
+    def terminal_demo(self, show_reasoning: bool = False):
+        """
+        Interactive terminal demo (backward compatibility).
+        """
+        print(f"\n🤖 AgencyOS Interactive Demo (Lite Mode)")
+        print(f"Agent: {self.agent.name}")
+        print("Type 'exit' or 'quit' to end session.\n")
+        
+        while True:
+            try:
+                user_input = input("User: ")
+                if user_input.strip().lower() in ('exit', 'quit'):
+                    print("Goodbye!")
+                    break
+                
+                if not user_input.strip():
+                    continue
+                
+                response = self.get_completion(user_input)
+                print(f"\n{self.agent.name}: {response}\n")
+                
+            except KeyboardInterrupt:
+                print("\nGoodbye!")
+                break
+            except Exception as e:
+                print(f"\nError: {e}\n")
+
 
 class SendMessageHandoff(Tool):
     """

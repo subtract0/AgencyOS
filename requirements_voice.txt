@@ -1,0 +1,5 @@
+
+sounddevice
+mlx
+mlx-whisper
+scipy

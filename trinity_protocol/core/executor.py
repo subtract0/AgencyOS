@@ -42,6 +42,7 @@ from shared.type_definitions import JSONValue
 from test_generator_agent import create_test_generator_agent
 from toolsmith_agent import create_toolsmith_agent
 from work_completion_summary_agent import create_work_completion_summary_agent
+from life_agent.life_agent import create_life_agent
 
 logger = logging.getLogger(__name__)
 
@@ -55,6 +56,7 @@ class SubAgentType(Enum):
     IMMUNITY_ENFORCER = "ImmunityEnforcer"
     RELEASE_MANAGER = "ReleaseManager"
     TASK_SUMMARIZER = "TaskSummarizer"
+    LIFE_ASSISTANT = "LifeAssistant"
 
 
 @dataclass
@@ -88,6 +90,7 @@ AGENT_MODEL_MAP = {
     SubAgentType.IMMUNITY_ENFORCER: "quality_enforcer",
     SubAgentType.RELEASE_MANAGER: "merger",
     SubAgentType.TASK_SUMMARIZER: "summary",
+    SubAgentType.LIFE_ASSISTANT: "life_assistant",
 }
 
 # Task type to sub-agent mapping
@@ -107,6 +110,10 @@ TASK_TYPE_AGENTS = {
     "verification": {
         "agents": [SubAgentType.IMMUNITY_ENFORCER],
         "parallel": [[SubAgentType.IMMUNITY_ENFORCER.value]],
+    },
+    "life_mission": {
+        "agents": [SubAgentType.LIFE_ASSISTANT],
+        "parallel": [[SubAgentType.LIFE_ASSISTANT.value]],
     },
 }
 
@@ -184,6 +191,11 @@ class ExecutorAgent:
             ),
             SubAgentType.TASK_SUMMARIZER: create_work_completion_summary_agent(
                 model=agent_model("summary"),
+                agent_context=self.agent_context,
+                cost_tracker=self.cost_tracker,
+            ),
+            SubAgentType.LIFE_ASSISTANT: create_life_agent(
+                model=agent_model("life_assistant"),
                 agent_context=self.agent_context,
                 cost_tracker=self.cost_tracker,
             ),

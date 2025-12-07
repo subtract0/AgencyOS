@@ -225,10 +225,20 @@ summary = create_work_completion_summary_agent(
 toolsmith = create_toolsmith_agent(
     model=agent_model("toolsmith"), reasoning_effort="medium", agent_context=shared_context
 )
+# ... (existing imports)
+from life_agent.life_agent import create_life_agent
+
+# ... (existing code)
+
 quality_enforcer = create_quality_enforcer_agent(
     model=agent_model("quality_enforcer"), reasoning_effort="high", agent_context=shared_context
 )
+life_assistant = create_life_agent(
+    model=agent_model("life_assistant"), agent_context=shared_context, cost_tracker=shared_cost_tracker
+)
+
 agency = Agency(
+    life_assistant,  # <--- Make LifeAssistant the primary agent for "Life OS" experience
     chief_architect,
     coder,
     planner,

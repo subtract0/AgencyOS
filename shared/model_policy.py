@@ -18,7 +18,7 @@ import re
 #
 # Agent keys supported:
 #   planner, chief_architect, coder, auditor, quality_enforcer,
-#   merger, learning, test_generator, summary, toolsmith
+#   merger, learning, test_generator, summary, toolsmith, life_assistant
 
 DEFAULT_GLOBAL = os.getenv("AGENCY_MODEL", "gpt-5")
 
@@ -33,6 +33,7 @@ DEFAULTS: dict[str, str] = {
     "test_generator": os.getenv("TEST_GENERATOR_MODEL", "gpt-5"),
     "summary": os.getenv("SUMMARY_MODEL", "gpt-5-mini"),  # Changed from non-existent "gpt-5-nano"
     "toolsmith": os.getenv("TOOLSMITH_MODEL", "gpt-5"),
+    "life_assistant": os.getenv("LIFE_ASSISTANT_MODEL", "gpt-5"),
 }
 
 

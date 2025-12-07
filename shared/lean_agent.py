@@ -169,13 +169,21 @@ class LeanAgent:
 
         # Validate API key exists
         api_key = os.getenv("OPENAI_API_KEY")
+        base_url = os.getenv("OPENAI_API_BASE")
+        
+        # Check for Ollama model
+        model_name = config.model.model if hasattr(config.model, 'model') else config.model
+        if isinstance(model_name, str) and model_name.startswith("ollama/"):
+            base_url = "http://localhost:11434/v1"
+            api_key = "ollama"  # Dummy key for Ollama
+        
         if not api_key:
             raise ValueError(
                 "OPENAI_API_KEY not found in environment. "
                 "Set it with: export OPENAI_API_KEY='your-key-here'"
             )
 
-        self.client = OpenAI(api_key=api_key)
+        self.client = OpenAI(api_key=api_key, base_url=base_url)
 
         # Add system instructions as first message
         self.messages.append(Message(role="system", content=config.instructions))
@@ -303,7 +311,7 @@ class LeanAgent:
         # Call API with model-specific parameters
         # IMPORTANT: Use model_str (string) not self.config.model (may be LitellmModel object)
         call_kwargs = {
-            "model": model_str,
+            "model": model_str.replace("ollama/", "") if model_str.startswith("ollama/") else model_str,
             "messages": openai_messages,
         }
 

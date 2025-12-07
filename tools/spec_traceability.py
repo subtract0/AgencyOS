@@ -37,9 +37,14 @@ class SpecTraceabilityValidator(BaseModel):
         description="File patterns to exclude from validation",
     )
 
+    exclude_dirs: list[str] = Field(
+        default_factory=lambda: [".git", "venv", ".venv", "__pycache__", "node_modules", ".pytest_cache", ".mypy_cache", "logs", "dist", "build"],
+        description="Directories to exclude from validation",
+    )
+
     def validate_file(self, file_path: Path) -> bool:
         """Check if file contains spec reference.
-
+        
         Valid spec references:
         - # Spec: specs/feature-name.md
         - # Specification: specs/feature-name.md
@@ -47,7 +52,7 @@ class SpecTraceabilityValidator(BaseModel):
         - Docstring with "Specification:" or "Spec:"
         """
         try:
-            content = file_path.read_text()
+            content = file_path.read_text(errors='ignore')
 
             # Pattern 1: Comment-based spec reference
             comment_pattern = r"#\s*(Spec|Specification|See):\s*specs/[\w\-]+\.md"
@@ -73,16 +78,27 @@ class SpecTraceabilityValidator(BaseModel):
     def validate_codebase(self, root_path: Path) -> Result[SpecTraceabilityReport, str]:
         """Validate spec traceability across entire codebase."""
         try:
-            python_files = list(root_path.rglob("*.py"))
+            python_files = []
+            
+            # Use os.walk for manual directory pruning (much faster than rglob with excludes)
+            import os
+            for dirpath, dirnames, filenames in os.walk(root_path):
+                # Prune excluded directories
+                # Modify dirnames in-place to prevent os.walk from visiting them
+                dirnames[:] = [d for d in dirnames if d not in self.exclude_dirs and not d.startswith('.')]
+                
+                for filename in filenames:
+                    if filename.endswith(".py"):
+                        file_path = Path(dirpath) / filename
+                        # Check file exclusions
+                        if not self.should_exclude(file_path):
+                            python_files.append(file_path)
 
             total = 0
             with_refs = 0
             violations = []
 
             for file_path in python_files:
-                if self.should_exclude(file_path):
-                    continue
-
                 total += 1
                 if self.validate_file(file_path):
                     with_refs += 1
