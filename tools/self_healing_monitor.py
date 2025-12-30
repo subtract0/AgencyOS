@@ -336,6 +336,115 @@ class SelfHealingMonitor:
         return "\n".join(lines)
 
 
+def check_vlm_health() -> dict[str, Any]:
+    """Check VLM/LM Studio health status."""
+    import time
+
+    status = {
+        "service": "VLM/LM Studio",
+        "timestamp": datetime.now().isoformat(),
+        "checks": {},
+    }
+
+    try:
+        from openai import OpenAI
+
+        client = OpenAI(
+            api_key="lm-studio",
+            base_url="http://127.0.0.1:1234/v1",
+            timeout=10.0,
+        )
+
+        # Check 1: API connectivity
+        try:
+            models = client.models.list()
+            status["checks"]["api"] = {
+                "status": "ok",
+                "models": len(models.data),
+            }
+        except Exception as e:
+            status["checks"]["api"] = {"status": "error", "error": str(e)}
+            status["overall"] = "error"
+            return status
+
+        # Check 2: Embedding model
+        try:
+            start = time.time()
+            response = client.embeddings.create(
+                model="text-embedding-nomic-embed-text-v1.5",
+                input="health check",
+            )
+            latency = int((time.time() - start) * 1000)
+            status["checks"]["embedding"] = {
+                "status": "ok",
+                "dimension": len(response.data[0].embedding),
+                "latency_ms": latency,
+            }
+        except Exception as e:
+            status["checks"]["embedding"] = {"status": "error", "error": str(e)}
+
+        status["overall"] = "healthy" if all(
+            c.get("status") == "ok" for c in status["checks"].values()
+        ) else "degraded"
+
+    except ImportError:
+        status["overall"] = "unavailable"
+        status["checks"]["import"] = {"status": "error", "error": "openai not installed"}
+
+    return status
+
+
+def run_daemon(interval_seconds: int = 300, max_cycles: int = 0):
+    """Run continuous health monitoring daemon.
+
+    Args:
+        interval_seconds: Seconds between health checks (default: 5 min)
+        max_cycles: Maximum cycles to run (0 = infinite)
+    """
+    import time
+
+    monitor = SelfHealingMonitor()
+    cycle = 0
+
+    print("=" * 60)
+    print("AgencyOS Self-Healing Daemon Started")
+    print(f"Interval: {interval_seconds}s | Max cycles: {'∞' if max_cycles == 0 else max_cycles}")
+    print("=" * 60)
+
+    try:
+        while max_cycles == 0 or cycle < max_cycles:
+            cycle += 1
+            print(f"\n[Cycle {cycle}] {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
+
+            # Check test health
+            health_result = monitor.check_health()
+            if health_result.is_ok():
+                report = health_result.unwrap()
+                print(f"  Tests: {report.test_pass_rate*100:.0f}% pass ({report.tests_passed}/{report.tests_passed + report.tests_failed})")
+
+                if report.auto_fixable:
+                    print(f"  Auto-fixing {len(report.auto_fixable)} issues...")
+                    fix_result = monitor.auto_heal(dry_run=False)
+                    if fix_result.is_ok():
+                        fixes = fix_result.unwrap()
+                        success_count = sum(1 for f in fixes if f.success)
+                        print(f"  Fixed: {success_count}/{len(fixes)}")
+            else:
+                print(f"  Health check failed: {health_result.unwrap_err()}")
+
+            # Check VLM health
+            vlm_status = check_vlm_health()
+            vlm_icon = "✓" if vlm_status.get("overall") == "healthy" else "✗"
+            print(f"  VLM: {vlm_icon} {vlm_status.get('overall', 'unknown')}")
+
+            if max_cycles == 0 or cycle < max_cycles:
+                print(f"  Next check in {interval_seconds}s...")
+                time.sleep(interval_seconds)
+
+    except KeyboardInterrupt:
+        print("\n\nDaemon stopped by user.")
+
+
 def main():
     """Run health monitor from command line."""
     import argparse
@@ -343,7 +452,23 @@ def main():
     parser = argparse.ArgumentParser(description="AgencyOS Self-Healing Monitor")
     parser.add_argument("--heal", action="store_true", help="Attempt auto-healing")
     parser.add_argument("--dry-run", action="store_true", help="Show what would be fixed")
+    parser.add_argument("--daemon", action="store_true", help="Run as continuous daemon")
+    parser.add_argument("--interval", type=int, default=300, help="Daemon interval in seconds")
+    parser.add_argument("--cycles", type=int, default=0, help="Max daemon cycles (0=infinite)")
+    parser.add_argument("--vlm", action="store_true", help="Check VLM health only")
     args = parser.parse_args()
+
+    if args.vlm:
+        status = check_vlm_health()
+        print(f"VLM Status: {status.get('overall', 'unknown')}")
+        for check, data in status.get("checks", {}).items():
+            icon = "✓" if data.get("status") == "ok" else "✗"
+            print(f"  {icon} {check}: {data}")
+        return
+
+    if args.daemon:
+        run_daemon(interval_seconds=args.interval, max_cycles=args.cycles)
+        return
 
     monitor = SelfHealingMonitor()
 
