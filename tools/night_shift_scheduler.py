@@ -39,7 +39,6 @@ if __name__ == "__main__":
 
 # from croniter import croniter
 from shared.models.night_shift import NightShiftConfig, NightShiftState
-from shared.type_definitions.result import Err, Ok, Result
 from tools.backlog_agent import BacklogStorage
 from shared.models.backlog import Task, TaskPriority, TaskStatus, TaskType
 from tools.health_monitor import HealthMonitor

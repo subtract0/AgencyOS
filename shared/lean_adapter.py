@@ -319,10 +319,10 @@ class Agency:
         # Validate all agents (allow mocks for testing)
         from unittest.mock import Mock
         for idx, agent in enumerate(agents):
-            # Allow real Agent instances or Mock objects (for testing)
-            if not isinstance(agent, (Agent, Mock)) and not hasattr(agent, '_spec_class'):
+            # Allow real Agent instances, LeanAgent, or Mock objects (for testing)
+            if not isinstance(agent, (Agent, LeanAgent, Mock)) and not hasattr(agent, '_spec_class'):
                 raise TypeError(
-                    f"Agent at position {idx} must be Agent or Mock, got {type(agent).__name__}"
+                    f"Agent at position {idx} must be Agent, LeanAgent, or Mock, got {type(agent).__name__}"
                 )
 
         # Use first agent (for lean_adapter compatibility)

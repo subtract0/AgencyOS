@@ -24,7 +24,6 @@ from shared.models.backlog import (
     Task,
     TaskPriority,
     TaskStatus,
-    TaskType,
 )
 from shared.type_definitions.result import Err, Ok, Result
 

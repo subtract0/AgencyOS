@@ -30,6 +30,11 @@ def clean_model_env():
         "QUALITY_ENFORCER_MODEL",
         "SUMMARY_MODEL",
         "FORCE_MODEL",
+        "CHIEF_ARCHITECT_MODEL",
+        "TOOLSMITH_MODEL",
+        "MERGER_MODEL",
+        "TEST_GENERATOR_MODEL",
+        "LEARNING_MODEL",
     ]
 
     for var in model_vars:

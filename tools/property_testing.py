@@ -132,73 +132,70 @@ else:  # hypothesis IS available
             error = draw(error_strategy)
             return Err(error)
 
+    @st.composite
+    def json_value_strategy(draw, max_leaves=10):
+        """
+        Generate valid JSONValue instances for property testing.
 
-@st.composite
-def json_value_strategy(draw, max_leaves=10):
-    """
-    Generate valid JSONValue instances for property testing.
+        Generates recursive JSON structures: primitives, lists, and dicts.
+        Ensures all values are JSON-serializable.
 
-    Generates recursive JSON structures: primitives, lists, and dicts.
-    Ensures all values are JSON-serializable.
+        Args:
+            draw: Hypothesis draw function
+            max_leaves: Maximum leaf nodes in recursive structures
 
-    Args:
-        draw: Hypothesis draw function
-        max_leaves: Maximum leaf nodes in recursive structures
+        Returns:
+            JSONValue instance
 
-    Returns:
-        JSONValue instance
-
-    Example:
-        @given(json_value_strategy())
-        def test_json_serialization(value):
-            import json
-            assert json.loads(json.dumps(value)) == value
-    """
-    return draw(
-        st.recursive(
-            st.one_of(
-                st.none(),
-                st.booleans(),
-                st.integers(),
-                st.floats(allow_nan=False, allow_infinity=False),
-                st.text(),
-            ),
-            lambda children: st.one_of(st.lists(children), st.dictionaries(st.text(), children)),
-            max_leaves=max_leaves,
+        Example:
+            @given(json_value_strategy())
+            def test_json_serialization(value):
+                import json
+                assert json.loads(json.dumps(value)) == value
+        """
+        return draw(
+            st.recursive(
+                st.one_of(
+                    st.none(),
+                    st.booleans(),
+                    st.integers(),
+                    st.floats(allow_nan=False, allow_infinity=False),
+                    st.text(),
+                ),
+                lambda children: st.one_of(st.lists(children), st.dictionaries(st.text(), children)),
+                max_leaves=max_leaves,
+            )
         )
-    )
 
+    @st.composite
+    def memory_record_strategy(draw):
+        """
+        Generate memory record structures for VectorStore testing.
 
-@st.composite
-def memory_record_strategy(draw):
-    """
-    Generate memory record structures for VectorStore testing.
+        Returns:
+            Dict with key, content, tags, and metadata
+        """
+        return {
+            "key": draw(st.text(min_size=1, max_size=50)),
+            "content": draw(st.text(min_size=0, max_size=500)),
+            "tags": draw(st.lists(st.text(min_size=1, max_size=20), max_size=10)),
+            "metadata": draw(
+                st.dictionaries(st.text(min_size=1, max_size=20), st.text(max_size=100), max_size=5)
+            ),
+        }
 
-    Returns:
-        Dict with key, content, tags, and metadata
-    """
-    return {
-        "key": draw(st.text(min_size=1, max_size=50)),
-        "content": draw(st.text(min_size=0, max_size=500)),
-        "tags": draw(st.lists(st.text(min_size=1, max_size=20), max_size=10)),
-        "metadata": draw(
-            st.dictionaries(st.text(min_size=1, max_size=20), st.text(max_size=100), max_size=5)
-        ),
-    }
+    @st.composite
+    def agent_context_strategy(draw):
+        """
+        Generate AgentContext-compatible data.
 
-
-@st.composite
-def agent_context_strategy(draw):
-    """
-    Generate AgentContext-compatible data.
-
-    Returns:
-        Dict with session_id and metadata
-    """
-    return {
-        "session_id": draw(st.text(min_size=10, max_size=100)),
-        "metadata": draw(st.dictionaries(st.text(min_size=1), json_value_strategy(), max_size=10)),
-    }
+        Returns:
+            Dict with session_id and metadata
+        """
+        return {
+            "session_id": draw(st.text(min_size=10, max_size=100)),
+            "metadata": draw(st.dictionaries(st.text(min_size=1), json_value_strategy(), max_size=10)),
+        }
 
 
 # ============================================================================

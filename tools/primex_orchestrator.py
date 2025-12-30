@@ -27,7 +27,6 @@ Usage:
     python tools/primex_orchestrator.py --help
 """
 
-import json
 import logging
 import sys
 import uuid
