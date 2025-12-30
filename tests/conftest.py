@@ -386,14 +386,21 @@ def mock_expensive_external_apis(request):
                 ),
             ),
         ),
-        # Firestore
-        patch("google.cloud.firestore.Client", return_value=mock_firestore_client),
         # Requests library
         patch("requests.get", return_value=mock_requests_response),
         patch("requests.post", return_value=mock_requests_response),
         patch("requests.put", return_value=mock_requests_response),
         patch("requests.delete", return_value=mock_requests_response),
     ]
+
+    # Conditionally patch Firestore if the module is available
+    try:
+        import google.cloud.firestore  # noqa: F401
+        patches.append(
+            patch("google.cloud.firestore.Client", return_value=mock_firestore_client)
+        )
+    except (ImportError, AttributeError):
+        pass  # Firestore not installed, skip patching
 
     # Start all patches
     mocks = [p.start() for p in patches]
