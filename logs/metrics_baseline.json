@@ -1,0 +1,25 @@
+{
+  "timestamp": "2025-12-31T00:18:05.876056",
+  "version": "baseline",
+  "tests": {
+    "total_collected": 0,
+    "passed": 1,
+    "failed": 0,
+    "skipped": 1,
+    "pass_rate": 1.0
+  },
+  "quality": {
+    "total_issues": 106,
+    "high": 67,
+    "medium": 5,
+    "low": 34
+  },
+  "codebase": {
+    "python_files": 1033,
+    "total_lines": 385489
+  },
+  "git": {
+    "current_ref": "d9527c905394f777266e60a9cf3ef9b8c713d616",
+    "commit_count": 545
+  }
+}
