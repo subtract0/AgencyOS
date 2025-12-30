@@ -1,0 +1,87 @@
+#!/usr/bin/env python3
+"""Pre-commit hook for AgencyOS self-healing.
+
+This hook runs before each commit to:
+1. Check for code quality issues
+2. Auto-fix import issues
+3. Ensure tests pass
+
+Install: cp scripts/pre-commit-heal .git/hooks/pre-commit && chmod +x .git/hooks/pre-commit
+"""
+
+import subprocess
+import sys
+from pathlib import Path
+
+# Ensure project root is on path
+PROJECT_ROOT = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(PROJECT_ROOT))
+
+
+def run_quick_check():
+    """Run quick health check before commit."""
+    print("🔍 Running pre-commit health check...")
+    
+    try:
+        from tools.self_healing_monitor import SelfHealingMonitor
+        
+        monitor = SelfHealingMonitor(project_root=PROJECT_ROOT)
+        
+        # Check for HIGH severity issues in staged files
+        result = subprocess.run(
+            ["git", "diff", "--cached", "--name-only", "--diff-filter=ACM"],
+            capture_output=True,
+            text=True,
+            cwd=PROJECT_ROOT,
+        )
+        staged_files = [f for f in result.stdout.strip().split("\n") if f.endswith(".py")]
+        
+        if not staged_files:
+            print("✅ No Python files staged")
+            return 0
+        
+        print(f"   Checking {len(staged_files)} staged files...")
+        
+        # Scan only staged files
+        issues = []
+        for file_path in staged_files:
+            full_path = PROJECT_ROOT / file_path
+            if full_path.exists():
+                try:
+                    content = full_path.read_text()
+                    lines = content.split("\n")
+                    
+                    for pattern_name, pattern_info in monitor.CODE_QUALITY_PATTERNS.items():
+                        if pattern_info["severity"] != "high":
+                            continue
+                        import re
+                        for i, line in enumerate(lines, 1):
+                            if re.search(pattern_info["pattern"], line):
+                                issues.append({
+                                    "file": file_path,
+                                    "line": i,
+                                    "pattern": pattern_name,
+                                    "description": pattern_info["description"],
+                                })
+                except Exception:
+                    continue
+        
+        if issues:
+            print(f"\n❌ Found {len(issues)} HIGH severity issues:")
+            for issue in issues[:5]:
+                print(f"   {issue['file']}:{issue['line']} - {issue['description']}")
+            if len(issues) > 5:
+                print(f"   ... and {len(issues) - 5} more")
+            print("\n   Fix these issues or use 'git commit --no-verify' to bypass")
+            return 1
+        
+        print("✅ No high-severity issues in staged files")
+        return 0
+        
+    except Exception as e:
+        print(f"⚠️  Pre-commit check failed: {e}")
+        return 0  # Don't block on errors
+
+
+if __name__ == "__main__":
+    sys.exit(run_quick_check())

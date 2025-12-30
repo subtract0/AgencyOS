@@ -205,3 +205,141 @@ class TestDaemonMode:
 
                     # Should have been called exactly once
                     assert mock_check.call_count == 1
+
+
+class TestCodeQualityScan:
+    """Tests for code quality scanning."""
+
+    def test_scan_code_quality_returns_list(self):
+        """Test that scan_code_quality returns a list of issues."""
+        from tools.self_healing_monitor import SelfHealingMonitor
+
+        monitor = SelfHealingMonitor()
+        issues = monitor.scan_code_quality(paths=["tools/"])
+
+        assert isinstance(issues, list)
+
+    def test_scan_detects_dict_any_any(self, tmp_path):
+        """Test that scanner detects Dict[Any, Any] violations."""
+        from tools.self_healing_monitor import SelfHealingMonitor
+
+        # Create a test file with a violation
+        test_file = tmp_path / "test_bad.py"
+        test_file.write_text("from typing import Dict, Any\nx: Dict[Any, Any] = {}")
+
+        monitor = SelfHealingMonitor(project_root=tmp_path)
+        issues = monitor.scan_code_quality(paths=["."])
+
+        dict_issues = [i for i in issues if i["pattern"] == "dict_any_any"]
+        assert len(dict_issues) >= 1
+        assert dict_issues[0]["severity"] == "high"
+
+    def test_code_quality_patterns_structure(self):
+        """Test that CODE_QUALITY_PATTERNS has correct structure."""
+        from tools.self_healing_monitor import SelfHealingMonitor
+
+        monitor = SelfHealingMonitor()
+
+        for name, info in monitor.CODE_QUALITY_PATTERNS.items():
+            assert "pattern" in info
+            assert "description" in info
+            assert "severity" in info
+            assert info["severity"] in ["high", "medium", "low"]
+
+
+class TestSemanticClustering:
+    """Tests for semantic clustering functionality."""
+
+    def test_get_semantic_clusters_empty(self):
+        """Test clustering with empty list."""
+        from tools.self_healing_monitor import SelfHealingMonitor
+
+        monitor = SelfHealingMonitor()
+        clusters = monitor.get_semantic_clusters([])
+
+        assert clusters == {}
+
+    def test_get_semantic_clusters_fallback(self):
+        """Test fallback clustering by pattern type."""
+        from tools.self_healing_monitor import SelfHealingMonitor
+
+        monitor = SelfHealingMonitor()
+
+        issues = [
+            {"pattern": "dict_any_any", "description": "Test 1", "content": "x"},
+            {"pattern": "dict_any_any", "description": "Test 2", "content": "y"},
+            {"pattern": "bare_except", "description": "Test 3", "content": "z"},
+        ]
+
+        # This will use fallback if VLM is not available
+        clusters = monitor.get_semantic_clusters(issues)
+
+        assert isinstance(clusters, dict)
+        assert len(clusters) >= 1
+
+
+class TestDashboard:
+    """Tests for dashboard generation."""
+
+    def test_generate_dashboard_returns_string(self):
+        """Test that dashboard generation returns markdown string."""
+        from tools.self_healing_monitor import SelfHealingMonitor, generate_dashboard
+        from tools.self_healing_monitor import HealthReport
+        from shared.type_definitions.result import Ok
+
+        monitor = SelfHealingMonitor()
+
+        with patch.object(monitor, "check_health") as mock_check:
+            with patch("tools.self_healing_monitor.check_vlm_health") as mock_vlm:
+                with patch.object(monitor, "scan_code_quality") as mock_scan:
+                    mock_check.return_value = Ok(HealthReport(
+                        timestamp=datetime.now(),
+                        test_pass_rate=1.0,
+                        tests_passed=100,
+                        tests_failed=0,
+                        tests_skipped=0,
+                        tests_error=0,
+                        collection_errors=0,
+                        issues_detected=[],
+                        recommendations=[],
+                        auto_fixable=[],
+                    ))
+                    mock_vlm.return_value = {"overall": "healthy", "checks": {"api": {"status": "ok"}}}
+                    mock_scan.return_value = []
+
+                    dashboard = generate_dashboard(monitor)
+
+                    assert isinstance(dashboard, str)
+                    assert "# AgencyOS Health Dashboard" in dashboard
+                    assert "## System Status" in dashboard
+
+
+class TestLearning:
+    """Tests for VectorStore learning integration."""
+
+    def test_store_learning_requires_success(self):
+        """Test that store_learning only stores successful fixes."""
+        from tools.self_healing_monitor import SelfHealingMonitor, FixAttempt
+
+        monitor = SelfHealingMonitor()
+
+        failed_fix = FixAttempt(
+            issue_type="import_error",
+            file_path="test.py",
+            description="Failed fix",
+            fix_applied="pip install x",
+            success=False,
+            error_message="Error",
+        )
+
+        result = monitor.store_learning(failed_fix)
+        assert result == False  # Should not store failed fixes
+
+    def test_query_past_fixes_returns_list(self):
+        """Test that query_past_fixes returns a list."""
+        from tools.self_healing_monitor import SelfHealingMonitor
+
+        monitor = SelfHealingMonitor()
+        results = monitor.query_past_fixes("import_error")
+
+        assert isinstance(results, list)

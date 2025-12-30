@@ -78,6 +78,51 @@ class SelfHealingMonitor:
         "pytest_asyncio": "pytest-asyncio",
         "pytest_timeout": "pytest-timeout",
         "hypothesis": "hypothesis",
+        "PIL": "Pillow",
+        "cv2": "opencv-python",
+        "yaml": "pyyaml",
+        "dotenv": "python-dotenv",
+        "bs4": "beautifulsoup4",
+        "dateutil": "python-dateutil",
+        "jwt": "pyjwt",
+        "redis": "redis",
+        "celery": "celery",
+        "numpy": "numpy",
+        "pandas": "pandas",
+        "torch": "torch",
+        "transformers": "transformers",
+        "sentence_transformers": "sentence-transformers",
+        "openai": "openai",
+        "anthropic": "anthropic",
+        "httpx": "httpx",
+        "aiohttp": "aiohttp",
+        "pydantic": "pydantic",
+        "fastapi": "fastapi",
+        "uvicorn": "uvicorn",
+    }
+
+    # Code quality patterns to detect and fix
+    CODE_QUALITY_PATTERNS = {
+        "dict_any_any": {
+            "pattern": r"Dict\[Any,\s*Any\]",
+            "description": "Dict[Any, Any] violates Constitutional Article IV",
+            "severity": "high",
+        },
+        "bare_except": {
+            "pattern": r"except\s*:",
+            "description": "Bare except catches all exceptions including KeyboardInterrupt",
+            "severity": "medium",
+        },
+        "todo_fixme": {
+            "pattern": r"#\s*(TODO|FIXME|XXX|HACK):",
+            "description": "Unresolved TODO/FIXME comment",
+            "severity": "low",
+        },
+        "print_debug": {
+            "pattern": r"\bprint\s*\([^)]*debug",
+            "description": "Debug print statement left in code",
+            "severity": "medium",
+        },
     }
 
     def __init__(self, project_root: Path | None = None):
@@ -291,6 +336,174 @@ class SelfHealingMonitor:
 
         return errors
 
+    def scan_code_quality(self, paths: list[str] | None = None) -> list[dict[str, Any]]:
+        """Scan code for quality issues.
+
+        Args:
+            paths: List of paths to scan (defaults to common source dirs)
+
+        Returns:
+            List of detected issues with file, line, pattern, and severity
+        """
+        if paths is None:
+            paths = ["tools/", "shared/", "coding_agent/", "planner_agent/"]
+
+        issues = []
+
+        for base_path in paths:
+            full_path = self.project_root / base_path
+            if not full_path.exists():
+                continue
+
+            for py_file in full_path.rglob("*.py"):
+                try:
+                    content = py_file.read_text()
+                    lines = content.split("\n")
+
+                    for pattern_name, pattern_info in self.CODE_QUALITY_PATTERNS.items():
+                        for i, line in enumerate(lines, 1):
+                            if re.search(pattern_info["pattern"], line):
+                                issues.append({
+                                    "file": str(py_file.relative_to(self.project_root)),
+                                    "line": i,
+                                    "pattern": pattern_name,
+                                    "description": pattern_info["description"],
+                                    "severity": pattern_info["severity"],
+                                    "content": line.strip()[:100],
+                                })
+                except Exception:
+                    continue  # Skip files that can't be read
+
+        return issues
+
+    def get_semantic_clusters(self, issues: list[dict[str, Any]]) -> dict[str, list[dict[str, Any]]]:
+        """Cluster similar issues using VLM embeddings.
+
+        Args:
+            issues: List of issues to cluster
+
+        Returns:
+            Dict mapping cluster names to lists of similar issues
+        """
+        if not issues:
+            return {}
+
+        try:
+            from openai import OpenAI
+            import numpy as np
+
+            client = OpenAI(
+                api_key="lm-studio",
+                base_url="http://127.0.0.1:1234/v1",
+                timeout=30.0,
+            )
+
+            # Get embeddings for each issue description
+            embeddings = []
+            for issue in issues:
+                text = f"{issue.get('description', '')} {issue.get('content', '')}"
+                try:
+                    resp = client.embeddings.create(
+                        model="text-embedding-nomic-embed-text-v1.5",
+                        input=text[:500],  # Limit input size
+                    )
+                    embeddings.append(np.array(resp.data[0].embedding))
+                except Exception:
+                    embeddings.append(None)
+
+            # Simple clustering based on cosine similarity
+            clusters: dict[str, list[dict[str, Any]]] = {}
+
+            def cosine_sim(a, b):
+                if a is None or b is None:
+                    return 0.0
+                return float(np.dot(a, b) / (np.linalg.norm(a) * np.linalg.norm(b)))
+
+            assigned = [False] * len(issues)
+            cluster_id = 0
+
+            for i, issue in enumerate(issues):
+                if assigned[i]:
+                    continue
+
+                cluster_name = f"cluster_{cluster_id}"
+                clusters[cluster_name] = [issue]
+                assigned[i] = True
+
+                # Find similar issues
+                for j, other_issue in enumerate(issues):
+                    if not assigned[j] and i != j:
+                        sim = cosine_sim(embeddings[i], embeddings[j])
+                        if sim > 0.7:  # High similarity threshold
+                            clusters[cluster_name].append(other_issue)
+                            assigned[j] = True
+
+                cluster_id += 1
+
+            return clusters
+
+        except ImportError:
+            # Fallback: cluster by pattern type
+            clusters: dict[str, list[dict[str, Any]]] = {}
+            for issue in issues:
+                pattern = issue.get("pattern", "unknown")
+                if pattern not in clusters:
+                    clusters[pattern] = []
+                clusters[pattern].append(issue)
+            return clusters
+
+    def store_learning(self, fix: FixAttempt) -> bool:
+        """Store successful fix pattern in VectorStore for future learning.
+
+        Args:
+            fix: The fix attempt to store
+
+        Returns:
+            True if stored successfully
+        """
+        if not fix.success:
+            return False
+
+        try:
+            from shared.agent_context import create_agent_context
+
+            context = create_agent_context(session_id="self_healing")
+            context.store_memory(
+                key=f"fix_{fix.issue_type}_{datetime.now().isoformat()}",
+                content={
+                    "issue_type": fix.issue_type,
+                    "file_path": fix.file_path,
+                    "fix_applied": fix.fix_applied,
+                    "description": fix.description,
+                    "timestamp": datetime.now().isoformat(),
+                },
+                tags=["self_healing", "auto_fix", fix.issue_type],
+            )
+            return True
+        except Exception:
+            return False  # VectorStore not available
+
+    def query_past_fixes(self, issue_type: str) -> list[dict[str, Any]]:
+        """Query VectorStore for past successful fixes of this type.
+
+        Args:
+            issue_type: Type of issue to look up
+
+        Returns:
+            List of past fix patterns
+        """
+        try:
+            from shared.agent_context import create_agent_context
+
+            context = create_agent_context(session_id="self_healing")
+            results = context.search_memories(
+                query_terms=["self_healing", "auto_fix", issue_type],
+                include_session=False,
+            )
+            return results
+        except Exception:
+            return []
+
     def generate_report(self) -> str:
         """Generate a human-readable health report."""
         result = self.check_health()
@@ -445,6 +658,98 @@ def run_daemon(interval_seconds: int = 300, max_cycles: int = 0):
         print("\n\nDaemon stopped by user.")
 
 
+def generate_dashboard(monitor: SelfHealingMonitor) -> str:
+    """Generate a comprehensive health dashboard.
+
+    Returns:
+        Markdown-formatted dashboard report
+    """
+    lines = [
+        "# AgencyOS Health Dashboard",
+        f"Generated: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}",
+        "",
+        "## System Status",
+        "",
+    ]
+
+    # Test health
+    health_result = monitor.check_health()
+    if health_result.is_ok():
+        report = health_result.unwrap()
+        status_icon = "✅" if report.test_pass_rate >= 0.95 else "⚠️" if report.test_pass_rate >= 0.8 else "❌"
+        lines.extend([
+            f"| Metric | Value |",
+            f"|--------|-------|",
+            f"| Test Pass Rate | {status_icon} {report.test_pass_rate*100:.1f}% |",
+            f"| Tests Passed | {report.tests_passed} |",
+            f"| Tests Failed | {report.tests_failed} |",
+            f"| Tests Skipped | {report.tests_skipped} |",
+            f"| Collection Errors | {report.collection_errors} |",
+            "",
+        ])
+
+    # VLM health
+    vlm_status = check_vlm_health()
+    vlm_icon = "✅" if vlm_status.get("overall") == "healthy" else "❌"
+    lines.extend([
+        "## VLM Status",
+        "",
+        f"| Check | Status |",
+        f"|-------|--------|",
+    ])
+    for check, data in vlm_status.get("checks", {}).items():
+        check_icon = "✅" if data.get("status") == "ok" else "❌"
+        lines.append(f"| {check} | {check_icon} {data.get('status', 'unknown')} |")
+    lines.append("")
+
+    # Code quality issues
+    issues = monitor.scan_code_quality()
+    by_severity = {"high": [], "medium": [], "low": []}
+    for issue in issues:
+        by_severity[issue["severity"]].append(issue)
+
+    lines.extend([
+        "## Code Quality",
+        "",
+        f"| Severity | Count |",
+        f"|----------|-------|",
+        f"| 🔴 High | {len(by_severity['high'])} |",
+        f"| 🟡 Medium | {len(by_severity['medium'])} |",
+        f"| 🔵 Low | {len(by_severity['low'])} |",
+        f"| **Total** | **{len(issues)}** |",
+        "",
+    ])
+
+    # Top issues
+    if by_severity["high"]:
+        lines.extend([
+            "### Top High-Severity Issues",
+            "",
+        ])
+        for issue in by_severity["high"][:5]:
+            lines.append(f"- `{issue['file']}:{issue['line']}` - {issue['description']}")
+        lines.append("")
+
+    # Auto-fixable summary
+    if health_result.is_ok():
+        report = health_result.unwrap()
+        if report.auto_fixable:
+            lines.extend([
+                "## Auto-Fixable Issues",
+                "",
+            ])
+            for fix in report.auto_fixable:
+                lines.append(f"- `{fix['fix']}`")
+            lines.append("")
+
+    lines.extend([
+        "---",
+        f"*Dashboard generated by AgencyOS Self-Healing Monitor*",
+    ])
+
+    return "\n".join(lines)
+
+
 def main():
     """Run health monitor from command line."""
     import argparse
@@ -456,7 +761,14 @@ def main():
     parser.add_argument("--interval", type=int, default=300, help="Daemon interval in seconds")
     parser.add_argument("--cycles", type=int, default=0, help="Max daemon cycles (0=infinite)")
     parser.add_argument("--vlm", action="store_true", help="Check VLM health only")
+    parser.add_argument("--scan", action="store_true", help="Scan code for quality issues")
+    parser.add_argument("--cluster", action="store_true", help="Cluster issues by semantic similarity")
+    parser.add_argument("--paths", nargs="+", help="Paths to scan (default: tools/, shared/)")
+    parser.add_argument("--dashboard", action="store_true", help="Generate health dashboard")
+    parser.add_argument("--output", type=str, help="Output file for dashboard (default: stdout)")
     args = parser.parse_args()
+
+    monitor = SelfHealingMonitor()
 
     if args.vlm:
         status = check_vlm_health()
@@ -466,11 +778,55 @@ def main():
             print(f"  {icon} {check}: {data}")
         return
 
+    if args.dashboard:
+        dashboard = generate_dashboard(monitor)
+        if args.output:
+            Path(args.output).write_text(dashboard)
+            print(f"✅ Dashboard saved to {args.output}")
+        else:
+            print(dashboard)
+        return
+
     if args.daemon:
         run_daemon(interval_seconds=args.interval, max_cycles=args.cycles)
         return
 
-    monitor = SelfHealingMonitor()
+    if args.scan:
+        print("=" * 60)
+        print("Code Quality Scan")
+        print("=" * 60)
+        issues = monitor.scan_code_quality(paths=args.paths)
+
+        if not issues:
+            print("\n✅ No code quality issues detected!")
+        else:
+            # Group by severity
+            by_severity = {"high": [], "medium": [], "low": []}
+            for issue in issues:
+                by_severity[issue["severity"]].append(issue)
+
+            for severity in ["high", "medium", "low"]:
+                if by_severity[severity]:
+                    icon = "🔴" if severity == "high" else "🟡" if severity == "medium" else "🔵"
+                    print(f"\n{icon} {severity.upper()} ({len(by_severity[severity])} issues):")
+                    for issue in by_severity[severity][:10]:  # Limit display
+                        print(f"  {issue['file']}:{issue['line']}")
+                        print(f"    {issue['description']}")
+                    if len(by_severity[severity]) > 10:
+                        print(f"  ... and {len(by_severity[severity]) - 10} more")
+
+            if args.cluster:
+                print("\n" + "=" * 60)
+                print("Semantic Clustering (using VLM)")
+                print("=" * 60)
+                clusters = monitor.get_semantic_clusters(issues)
+                for cluster_name, cluster_issues in clusters.items():
+                    print(f"\n📦 {cluster_name} ({len(cluster_issues)} issues):")
+                    for ci in cluster_issues[:5]:
+                        print(f"  - {ci['file']}:{ci['line']} ({ci['pattern']})")
+
+            print(f"\nTotal: {len(issues)} issues found")
+        return
 
     print(monitor.generate_report())
 
@@ -483,6 +839,11 @@ def main():
             for fix in fixes:
                 status = "✅" if fix.success else "❌"
                 print(f"  {status} {fix.description}")
+
+                # Store successful fixes for learning
+                if fix.success and not args.dry_run:
+                    if monitor.store_learning(fix):
+                        print(f"    📚 Stored in VectorStore for future learning")
         else:
             print(f"\n❌ Auto-healing failed: {result.unwrap_err()}")
 
