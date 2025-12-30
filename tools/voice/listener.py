@@ -10,8 +10,15 @@ from typing import Optional, Callable
 # Constants
 SAMPLE_RATE = 16000  # Whisper expects 16kHz
 CHANNELS = 1
-SILENCE_THRESHOLD = 0.01  # Amplitude threshold for silence detection
+SILENCE_THRESHOLD = 0.02  # Increased from 0.01 to avoid noise triggering
 SILENCE_DURATION = 2.0    # Seconds of silence to trigger stop
+
+# Known Whisper hallucinations when fed silence/noise
+HALLUCINATIONS = [
+    "Thank you.", "You", "Let's go.", "I'm going to show you how to use the",
+    "MBC News", "Subtitles by", "Thank you for watching", "Start.",
+    "Copyright", "All rights reserved", "you", "Okay.", "So, let's go."
+]
 
 class VoiceListener:
     def __init__(self, model_path: str = "mlx-community/whisper-turbo"):
@@ -26,12 +33,7 @@ class VoiceListener:
 
     def record_audio(self, duration: Optional[float] = None, max_duration: float = 30.0) -> np.ndarray:
         """
-        Record audio from the microphone.
-        Args:
-            duration: Fixed duration to record (if set).
-            max_duration: Maximum duration if using VAD (auto-stop).
-        Returns:
-            Numpy array of audio data (float32).
+        Record audio from the microphone. Returns None if mostly silence.
         """
         if duration:
             print(f"🔴 Recording for {duration} seconds...")
@@ -40,22 +42,27 @@ class VoiceListener:
             print("⏹️ Recording stopped.")
             return audio.flatten()
         else:
-            print("🔴 Listening (speak now, stops after silence)...")
+            print("🔴 Listening (speak now)...")
             frames = []
             silent_chunks = 0
             chunk_size = int(SAMPLE_RATE * 0.5) # 0.5s chunks
             max_chunks = int(max_duration * 2)
+            
+            # Track if we actually heard anything significant
+            max_amplitude_detected = 0.0
             
             with sd.InputStream(samplerate=SAMPLE_RATE, channels=CHANNELS, dtype='float32') as stream:
                 for _ in range(max_chunks):
                     data, overflowed = stream.read(chunk_size)
                     if overflowed:
                         print("Warning: Audio buffer overflow")
-                        
+                    
                     frames.append(data)
                     
                     # Simple VAD
                     amplitude = np.max(np.abs(data))
+                    max_amplitude_detected = max(max_amplitude_detected, amplitude)
+                    
                     if amplitude < SILENCE_THRESHOLD:
                         silent_chunks += 1
                     else:
@@ -63,27 +70,47 @@ class VoiceListener:
                         
                     # Stop if silence persists > SILENCE_DURATION
                     if silent_chunks > (SILENCE_DURATION * 2):
-                        print("⏹️ Silence detected. Stopping.")
+                        # print("⏹️ Silence detected. Stopping.")
                         break
             
-            return np.concatenate(frames).flatten()
+            audio_data = np.concatenate(frames).flatten()
+            
+            # OPTIMIZATION: If audio was mostly silence, don't even transcribe.
+            # This saves massive M4 compute and prevents hallucinations.
+            if max_amplitude_detected < SILENCE_THRESHOLD:
+                print("💤 Ignored (Silence).")
+                return None
+                
+            return audio_data
 
-    def transcribe(self, audio_data: np.ndarray) -> str:
+    def transcribe(self, audio_data: Optional[np.ndarray]) -> str:
         """
         Transcribe audio data using MLX Whisper.
         """
+        if audio_data is None or len(audio_data) == 0:
+            return ""
+
         print("⚡ Transcribing on M4 Neural Engine...")
-        
-        # MLX Whisper expects the text or path, but for raw audio we might need to save or pass directly
-        # mlx_whisper.transcribe supports numpy array input directly from 0.4.0+
         
         try:
             result = mlx_whisper.transcribe(
                 audio_data,
                 path_or_hf_repo=self.model_path,
-                verbose=False
+                verbose=False,
+                language="en"
             )
             text = result['text'].strip()
+            
+            # Anti-Hallucination Filter
+            if text in HALLUCINATIONS or len(text) < 2:
+                print(f"👻 Ignored Hallucination: '{text}'")
+                return ""
+            
+            # Check for repeated hallucinations (e.g. "Thank you. Thank you.")
+            if "Thank you." in text and len(text) < 25:
+                 print(f"👻 Ignored Hallucination: '{text}'")
+                 return ""
+
             print(f"🗣️ You said: '{text}'")
             return text
         except Exception as e:

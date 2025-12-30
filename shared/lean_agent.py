@@ -106,6 +106,7 @@ class AgentConfig(BaseModel):
     model: Union[str, LitellmModel] = "gpt-4o"  # Accept both str and LitellmModel (no quotes!)
     temperature: float = 0.7
     max_tokens: int = 4000
+    stop: list[str] | str | None = None
     tools: list[Tool] = Field(default_factory=list)
 
     class Config:
@@ -217,9 +218,12 @@ class LeanAgent:
             self.messages.append(Message(role="user", content=user_message))
 
             # Run agent loop with tool calling
-            for _ in range(max_iterations):
+            for i in range(max_iterations):
                 # Call LLM
                 response = self._call_llm()
+                
+                content_preview = (response.content or "")[:100].replace("\n", " ")
+                print(f"DEBUG: Loop {i} Response: {content_preview}... Calls: {len(response.tool_calls or [])}")
 
                 # Check if done (no tool calls)
                 if not response.tool_calls:
@@ -250,6 +254,7 @@ class LeanAgent:
                 )
 
                 for tool_call in typed_tool_calls:
+                    print(f"DEBUG: Executing {tool_call.function.name} args={tool_call.function.arguments[:50]}")
                     # Execute tool with Result pattern
                     tool_result = self._execute_tool(
                         tool_call.function.name, tool_call.function.arguments
@@ -260,6 +265,8 @@ class LeanAgent:
                         result_str = str(tool_result.unwrap())
                     else:
                         result_str = f"Error: {tool_result.unwrap_err()}"
+                    
+                    print(f"DEBUG: Tool Result: {result_str[:100]}...")
 
                     # Add tool result to messages
                     self.messages.append(
@@ -323,12 +330,99 @@ class LeanAgent:
             # Standard models support all parameters
             call_kwargs["temperature"] = self.config.temperature
             call_kwargs["max_tokens"] = self.config.max_tokens
+            if self.config.stop:
+                call_kwargs["stop"] = self.config.stop
             if tools:
                 call_kwargs["tools"] = tools
 
         response = self.client.chat.completions.create(**call_kwargs)
+        
+        message = response.choices[0].message
+        
+        # Robustness: Enforce stop sequences client-side if the API leaked them
+        if self.config.stop and message.content:
+            stop_sequences = [self.config.stop] if isinstance(self.config.stop, str) else self.config.stop
+            for seq in stop_sequences:
+                if message.content.endswith(seq):
+                    message.content = message.content[:-len(seq)].strip()
 
-        return response.choices[0].message
+        # Fallback: Check for raw JSON tool calls (common with local MLX models)
+        if not message.tool_calls and message.content:
+            try:
+                import json
+                import re
+                
+                content = message.content.strip()
+                data = None
+                
+                # Attempt 1: Direct JSON parse
+                if content.startswith("{"):
+                    try:
+                        data = json.loads(content)
+                    except json.JSONDecodeError:
+                        pass
+                
+                # Attempt 2: Regex extraction (looking for first {...} block)
+                if not data:
+                    match = re.search(r"(\{.*?\})", content, re.DOTALL)
+                    if match:
+                        try:
+                            # Verify if it's valid JSON
+                            candidate = match.group(1)
+                            data = json.loads(candidate)
+                        except json.JSONDecodeError:
+                            pass
+
+                if isinstance(data, dict):
+                    # Check if it looks like a tool call structure
+                    # Schema 1: {"type": "function", "name": "...", "parameters": {...}}
+                    # Schema 2: {"name": "...", "parameters": {...}} (Implicit function)
+                    
+                    is_tool = False
+                    fn_name = ""
+                    fn_args = ""
+                    
+                    if data.get("type") == "function" and "name" in data:
+                        is_tool = True
+                        fn_name = data["name"]
+                        # OpenAI expects 'arguments' as string, but here likely 'parameters' dict
+                        params = data.get("parameters", {})
+                        fn_args = json.dumps(params) if isinstance(params, dict) else str(params)
+                    elif "name" in data and "parameters" in data:
+                        is_tool = True
+                        fn_name = data["name"]
+                        params = data["parameters"]
+                        fn_args = json.dumps(params) if isinstance(params, dict) else str(params)
+
+                    if is_tool:
+                        # Construct a mock Call object compatible with OpenAI structure
+                        class MockFunction:
+                            def __init__(self, name, arguments):
+                                self.name = name
+                                self.arguments = arguments
+                        
+                        class MockToolCall:
+                            def __init__(self, id, function):
+                                self.id = id
+                                self.type = 'function'
+                                self.function = function
+
+                        import uuid
+                        call_id = f"call_{uuid.uuid4().hex[:8]}"
+                        
+                        # Create the proper structure expected by the loop
+                        # We need to match the object interface expected by the loop (tc.function.name)
+                        message.tool_calls = [
+                            MockToolCall(call_id, MockFunction(fn_name, fn_args))
+                        ]
+                        # Clear content so we don't output the raw JSON to user
+                        message.content = None 
+
+            except Exception:
+                # Not valid JSON or not a tool call, treat as normal text
+                pass
+                    
+        return message
 
     def _execute_tool(self, tool_name: str, arguments: str) -> Result[str, str]:
         """

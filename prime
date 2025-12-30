@@ -1,0 +1,13 @@
+#!/bin/bash
+# The Prime Command - Activates the Agentic Layer
+# Class 1 Grade 1
+
+echo "Initializing Agentic Layer..."
+echo "Loading Memory: agent_memory.md"
+cat agent_memory.md
+
+echo ""
+echo "---"
+echo "USER INSTRUCTION: $@"
+echo "---"
+echo "Agent active."

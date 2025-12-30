@@ -120,6 +120,7 @@ class DaemonConfig:
     # Behavior
     dry_run: bool = False
     verbose: bool = False
+    allow_dirty: bool = False  # Allow running with uncommitted changes
 
     def __post_init__(self):
         # Scale test workers based on available memory
@@ -511,7 +512,23 @@ class AgencyDaemon:
         try:
             # Phase 1: Health check
             health = self.health_monitor.check_health()
-            if not health.get("healthy", False):
+
+            # If allow_dirty is set, ignore git_clean status
+            is_healthy = health.get("healthy", False)
+            if not is_healthy and self.config.allow_dirty:
+                # Re-evaluate health without git_clean requirement
+                git_dirty_only = (
+                    not health.get("git_clean", True) and
+                    health.get("disk_free_gb", 0) >= 10 and
+                    health.get("memory_percent", 100) < 80 and
+                    health.get("cpu_percent", 100) < 90 and
+                    health.get("dependencies_ok", True)
+                )
+                if git_dirty_only:
+                    is_healthy = True
+                    self.logger.info("Health check passed (allow_dirty mode, ignoring uncommitted changes)")
+
+            if not is_healthy:
                 self.logger.warning(f"Health check failed: {health}")
                 return
 
@@ -731,6 +748,7 @@ The daemon will:
     parser.add_argument("--dry-run", action="store_true", help="Preview without executing")
     parser.add_argument("--verbose", "-v", action="store_true", help="Verbose logging")
     parser.add_argument("--cycle-interval", type=int, default=60, help="Seconds between cycles")
+    parser.add_argument("--allow-dirty", action="store_true", help="Allow running with uncommitted git changes")
 
     args = parser.parse_args()
 
@@ -738,6 +756,7 @@ The daemon will:
         dry_run=args.dry_run,
         verbose=args.verbose,
         cycle_interval_seconds=args.cycle_interval,
+        allow_dirty=args.allow_dirty,
     )
 
     daemon = AgencyDaemon(config)
