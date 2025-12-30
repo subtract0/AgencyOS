@@ -173,7 +173,7 @@ class ConstitutionalEnforcer:
                                 suggested_fix="Fix all failing tests before proceeding",
                             )
                         )
-                    except:
+                    except Exception:
                         self.violations.append(
                             ViolationReport(
                                 article="Article II",

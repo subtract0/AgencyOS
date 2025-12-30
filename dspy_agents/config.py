@@ -144,7 +144,7 @@ class DSPyConfig:
         # Return the default configured LM
         try:
             return dspy.settings.lm
-        except:
+        except Exception:
             return None
 
     @classmethod

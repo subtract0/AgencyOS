@@ -231,7 +231,7 @@ def check_speaker_match(audio_data, profile):
 
         return similarity > SPEAKER_SIMILARITY_THRESHOLD, similarity
 
-    except:
+    except Exception:
         return True, 0.0
 
 
@@ -244,7 +244,7 @@ def transcribe_local(audio_data):
         samples = np.frombuffer(audio_data, dtype=np.int16).astype(np.float32) / 32768.0
         result = model.transcribe(samples, language=None)
         return result["text"].strip(), result.get("language", "unknown")
-    except:
+    except Exception:
         return "", "unknown"
 
 

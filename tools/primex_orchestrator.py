@@ -932,7 +932,7 @@ class PrimeXOrchestrator:
             try:
                 task.status = TaskStatus.PENDING
                 self.backlog_storage.update_task(task)
-            except:
+            except Exception:
                 pass  # Best effort rollback
             return Err(Exception(f"Task execution timeout: {e}"))
 
@@ -942,7 +942,7 @@ class PrimeXOrchestrator:
             try:
                 task.status = TaskStatus.PENDING
                 self.backlog_storage.update_task(task)
-            except:
+            except Exception:
                 pass  # Best effort rollback
             return Err(e)
 

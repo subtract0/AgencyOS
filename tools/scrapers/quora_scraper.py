@@ -134,7 +134,7 @@ class QuoraScraper:
                 upvote_elem = self.driver.find_element(By.CSS_SELECTOR, "[class*='upvote']")
                 upvote_text = upvote_elem.text
                 upvotes = int(''.join(filter(str.isdigit, upvote_text))) if upvote_text else 0
-            except:
+            except Exception:
                 pass
 
             return QuoraAnswer(
