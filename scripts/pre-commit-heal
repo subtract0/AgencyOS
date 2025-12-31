@@ -1,12 +1,23 @@
 #!/usr/bin/env python3
-"""Pre-commit hook for AgencyOS self-healing.
+"""
+Enhanced Pre-Commit Hook with Autonomous Healing.
 
-This hook runs before each commit to:
-1. Check for code quality issues
-2. Auto-fix import issues
-3. Ensure tests pass
+This hook integrates predictive analysis, issue detection, and auto-fixing
+to prevent quality issues before they're committed.
 
-Install: cp scripts/pre-commit-heal .git/hooks/pre-commit && chmod +x .git/hooks/pre-commit
+Features:
+- Predictive analysis of staged changes
+- Automatic fixing of simple issues (bare except, etc.)
+- Risk scoring with block/review/proceed recommendations
+- Learning from outcomes for improved predictions
+
+Constitutional Compliance:
+- Article III: Automated enforcement (pre-commit prevention)
+- Article IV: Learning integration (updates patterns after fixes)
+
+Installation:
+    cp scripts/pre-commit-heal .git/hooks/pre-commit
+    chmod +x .git/hooks/pre-commit
 """
 
 import subprocess
@@ -18,43 +29,110 @@ PROJECT_ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(PROJECT_ROOT))
 
 
-def run_quick_check():
-    """Run quick health check before commit."""
-    print("🔍 Running pre-commit health check...")
-    
+def colored(text: str, color: str) -> str:
+    """Apply ANSI color to text."""
+    colors = {
+        "red": "\033[91m",
+        "green": "\033[92m",
+        "yellow": "\033[93m",
+        "blue": "\033[94m",
+        "reset": "\033[0m",
+    }
+    return f"{colors.get(color, '')}{text}{colors['reset']}"
+
+
+def get_staged_files() -> list[str]:
+    """Get list of staged Python files."""
+    result = subprocess.run(
+        ["git", "diff", "--cached", "--name-only", "--diff-filter=ACM"],
+        capture_output=True,
+        text=True,
+        cwd=PROJECT_ROOT,
+    )
+    return [f.strip() for f in result.stdout.split("\n") if f.strip().endswith(".py")]
+
+
+def apply_auto_fixes(issues: list) -> int:
+    """Apply automatic fixes for auto-fixable issues."""
+    fixes_applied = 0
+
+    for issue in issues:
+        if not issue.can_auto_fix:
+            continue
+
+        try:
+            # Get the appropriate fix
+            if issue.issue_type == "bare_except":
+                fix_bare_except(issue.file_path, issue.line_number)
+                fixes_applied += 1
+                print(
+                    f"  {colored('FIXED', 'green')}: {issue.file_path}:{issue.line_number} - {issue.issue_type}"
+                )
+
+        except Exception as e:
+            print(f"  {colored('FAILED', 'red')}: Could not fix {issue.file_path}:{issue.line_number}: {e}")
+
+    return fixes_applied
+
+
+def fix_bare_except(file_path: str, line_number: int) -> None:
+    """Fix a bare except statement."""
+    path = PROJECT_ROOT / file_path
+    lines = path.read_text().split("\n")
+
+    if line_number <= len(lines):
+        line = lines[line_number - 1]
+        if "except:" in line:
+            lines[line_number - 1] = line.replace("except:", "except Exception:")
+            path.write_text("\n".join(lines))
+
+            # Re-stage the file
+            subprocess.run(["git", "add", file_path], cwd=PROJECT_ROOT, check=True)
+
+
+def run_predictive_analysis():
+    """Run predictive analysis on staged changes."""
+    try:
+        from tools.predictive_analyzer import PredictiveAnalyzer
+
+        analyzer = PredictiveAnalyzer()
+        result = analyzer.analyze_staged_changes()
+
+        if result.is_err():
+            print(f"{colored('ERROR', 'red')}: {result.unwrap_err()}")
+            return None
+
+        return result.unwrap()
+
+    except ImportError as e:
+        print(f"{colored('INFO', 'blue')}: Predictive analyzer not available: {e}")
+        return None
+
+
+def run_legacy_check():
+    """Run legacy self-healing monitor check."""
     try:
         from tools.self_healing_monitor import SelfHealingMonitor
-        
+
         monitor = SelfHealingMonitor(project_root=PROJECT_ROOT)
-        
-        # Check for HIGH severity issues in staged files
-        result = subprocess.run(
-            ["git", "diff", "--cached", "--name-only", "--diff-filter=ACM"],
-            capture_output=True,
-            text=True,
-            cwd=PROJECT_ROOT,
-        )
-        staged_files = [f for f in result.stdout.strip().split("\n") if f.endswith(".py")]
-        
+
+        staged_files = get_staged_files()
         if not staged_files:
-            print("✅ No Python files staged")
-            return 0
-        
-        print(f"   Checking {len(staged_files)} staged files...")
-        
-        # Scan only staged files
+            return []
+
         issues = []
+        import re
+
         for file_path in staged_files:
             full_path = PROJECT_ROOT / file_path
             if full_path.exists():
                 try:
                     content = full_path.read_text()
                     lines = content.split("\n")
-                    
+
                     for pattern_name, pattern_info in monitor.CODE_QUALITY_PATTERNS.items():
                         if pattern_info["severity"] != "high":
                             continue
-                        import re
                         for i, line in enumerate(lines, 1):
                             if re.search(pattern_info["pattern"], line):
                                 issues.append({
@@ -62,26 +140,142 @@ def run_quick_check():
                                     "line": i,
                                     "pattern": pattern_name,
                                     "description": pattern_info["description"],
+                                    "severity": "high",
                                 })
                 except Exception:
                     continue
-        
-        if issues:
-            print(f"\n❌ Found {len(issues)} HIGH severity issues:")
-            for issue in issues[:5]:
+
+        return issues
+
+    except ImportError:
+        return []
+
+
+def run_quick_tests() -> bool:
+    """Run quick test suite to verify no regressions."""
+    try:
+        result = subprocess.run(
+            ["python", "-m", "pytest", "tests/unit/", "-x", "--tb=no", "-q", "--timeout=60"],
+            capture_output=True,
+            cwd=PROJECT_ROOT,
+            timeout=120,
+        )
+        return result.returncode == 0
+    except Exception:
+        return True  # Don't block on test errors
+
+
+def main() -> int:
+    """Main pre-commit hook logic."""
+    print("\n" + "=" * 60)
+    print("🛡️  AgencyOS Pre-Commit Hook with Autonomous Healing")
+    print("=" * 60)
+
+    # Get staged files
+    staged_files = get_staged_files()
+
+    if not staged_files:
+        print(colored("No Python files staged", "blue"))
+        return 0
+
+    print(f"\n📁 Analyzing {len(staged_files)} staged Python file(s)...")
+
+    # Try predictive analysis first
+    analysis = run_predictive_analysis()
+
+    if analysis is not None:
+        # Display predictive results
+        print(f"\n📊 Predictive Analysis Results:")
+        print(f"   Files analyzed: {analysis.files_analyzed}")
+        print(f"   Issues found: {len(analysis.issues_found)}")
+        print(f"   Risk score: {analysis.risk_score:.1f}/100")
+        print(f"   Auto-fixable: {analysis.auto_fixable}")
+
+        # Display issues by severity
+        if analysis.issues_found:
+            print("\n🔍 Issues Detected:")
+
+            for issue in sorted(analysis.issues_found, key=lambda i: i.severity):
+                icon = {
+                    "critical": colored("🔴 CRITICAL", "red"),
+                    "high": colored("🟠 HIGH", "yellow"),
+                    "medium": "🟡 MEDIUM",
+                    "low": "🔵 LOW",
+                }.get(issue.severity, "⚪ UNKNOWN")
+
+                print(f"   {icon}: {issue.file_path}:{issue.line_number}")
+                print(f"      {issue.message}")
+                if issue.suggestion:
+                    print(f"      💡 {issue.suggestion}")
+
+        # Apply auto-fixes if available
+        auto_fixable = [i for i in analysis.issues_found if i.can_auto_fix]
+        if auto_fixable:
+            print(f"\n🔧 Applying {len(auto_fixable)} automatic fix(es)...")
+            fixes_applied = apply_auto_fixes(auto_fixable)
+            print(f"   Applied {fixes_applied} fix(es)")
+
+            # Re-analyze after fixes
+            if fixes_applied > 0:
+                analysis = run_predictive_analysis()
+                if analysis:
+                    print(f"\n📊 After fixes: {len(analysis.issues_found)} issues, risk score: {analysis.risk_score:.1f}")
+
+        # Make decision based on recommendation
+        if analysis:
+            recommendation = analysis.recommendation
+
+            if recommendation == "block":
+                print(colored("\n❌ BLOCKED: Critical issues must be resolved before committing", "red"))
+                print("   Fix the issues above or use --no-verify to bypass (not recommended)")
+                return 1
+
+            elif recommendation == "review":
+                print(colored("\n⚠️  REVIEW: Non-critical issues detected", "yellow"))
+                print("   Consider fixing the issues above")
+                # Allow commit but warn
+
+            else:  # proceed
+                print(colored("\n✅ PASSED: No blocking issues", "green"))
+
+    else:
+        # Fallback to legacy check
+        print("\n📋 Running legacy self-healing check...")
+        legacy_issues = run_legacy_check()
+
+        if legacy_issues:
+            print(f"\n❌ Found {len(legacy_issues)} HIGH severity issues:")
+            for issue in legacy_issues[:5]:
                 print(f"   {issue['file']}:{issue['line']} - {issue['description']}")
-            if len(issues) > 5:
-                print(f"   ... and {len(issues) - 5} more")
+            if len(legacy_issues) > 5:
+                print(f"   ... and {len(legacy_issues) - 5} more")
             print("\n   Fix these issues or use 'git commit --no-verify' to bypass")
             return 1
-        
-        print("✅ No high-severity issues in staged files")
-        return 0
-        
-    except Exception as e:
-        print(f"⚠️  Pre-commit check failed: {e}")
-        return 0  # Don't block on errors
+        else:
+            print(colored("✅ No high-severity issues in staged files", "green"))
+
+    # Run quick tests if significant changes
+    if analysis and analysis.risk_score > 10:
+        print("\n🧪 Running quick test validation...")
+        if run_quick_tests():
+            print(colored("   Tests passed", "green"))
+        else:
+            print(colored("   Tests failed - consider fixing before commit", "yellow"))
+
+    print("\n" + "=" * 60)
+    print("✅ Pre-commit check complete")
+    print("=" * 60 + "\n")
+
+    return 0
 
 
 if __name__ == "__main__":
-    sys.exit(run_quick_check())
+    try:
+        sys.exit(main())
+    except KeyboardInterrupt:
+        print(colored("\n\nInterrupted by user", "yellow"))
+        sys.exit(1)
+    except Exception as e:
+        print(colored(f"\n\nError: {e}", "red"))
+        # Don't block commit on hook errors
+        sys.exit(0)

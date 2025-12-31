@@ -1,0 +1,198 @@
+{
+  "bare_except": [
+    {
+      "issue_type": "bare_except",
+      "original_pattern": "except:",
+      "fixed_template": "except Exception:",
+      "confidence": 1.0,
+      "success_count": 3,
+      "failure_count": 0,
+      "last_used": "2025-12-31T10:27:42.457133",
+      "created": "2025-12-31T10:14:01.621210",
+      "examples": [
+        {
+          "original": "except:",
+          "fixed": "except Exception:",
+          "timestamp": "2025-12-31T10:14:01.621210"
+        },
+        {
+          "original": "    except:",
+          "fixed": "    except Exception:",
+          "timestamp": "2025-12-31T10:14:01.621418"
+        },
+        {
+          "original": "        except:",
+          "fixed": "        except Exception:",
+          "timestamp": "2025-12-31T10:14:01.621729"
+        }
+      ]
+    },
+    {
+      "issue_type": "bare_except",
+      "original_pattern": "except\\ Exception:",
+      "fixed_template": "except Exception as e:",
+      "confidence": 0.8,
+      "success_count": 1,
+      "failure_count": 0,
+      "last_used": "2025-12-31T10:14:01.621827",
+      "created": "2025-12-31T10:14:01.621827",
+      "examples": [
+        {
+          "original": "except Exception:",
+          "fixed": "except Exception as e:",
+          "timestamp": "2025-12-31T10:14:01.621827"
+        }
+      ]
+    }
+  ],
+  "dict_any_any": [
+    {
+      "issue_type": "dict_any_any",
+      "original_pattern": "Dict\\[Any,\\ Any\\]",
+      "fixed_template": "dict[str, Any]",
+      "confidence": 0.8,
+      "success_count": 1,
+      "failure_count": 0,
+      "last_used": "2025-12-31T10:14:01.621914",
+      "created": "2025-12-31T10:14:01.621914",
+      "examples": [
+        {
+          "original": "Dict[Any, Any]",
+          "fixed": "dict[str, Any]",
+          "timestamp": "2025-12-31T10:14:01.621914"
+        }
+      ]
+    },
+    {
+      "issue_type": "dict_any_any",
+      "original_pattern": "Dict\\[str,\\ Any\\]",
+      "fixed_template": "dict[str, Any]",
+      "confidence": 0.8,
+      "success_count": 1,
+      "failure_count": 0,
+      "last_used": "2025-12-31T10:14:01.622021",
+      "created": "2025-12-31T10:14:01.622022",
+      "examples": [
+        {
+          "original": "Dict[str, Any]",
+          "fixed": "dict[str, Any]",
+          "timestamp": "2025-12-31T10:14:01.622022"
+        }
+      ]
+    }
+  ],
+  "missing_return_type": [
+    {
+      "issue_type": "missing_return_type",
+      "original_pattern": "def\\ func\\(self\\):",
+      "fixed_template": "def func(self) -> None:",
+      "confidence": 0.8,
+      "success_count": 1,
+      "failure_count": 0,
+      "last_used": "2025-12-31T10:14:01.622110",
+      "created": "2025-12-31T10:14:01.622111",
+      "examples": [
+        {
+          "original": "def func(self):",
+          "fixed": "def func(self) -> None:",
+          "timestamp": "2025-12-31T10:14:01.622111"
+        }
+      ]
+    }
+  ],
+  "unused_import": [
+    {
+      "issue_type": "unused_import",
+      "original_pattern": "from\\ typing\\ import\\ Dict,\\ Any",
+      "fixed_template": "from typing import Any",
+      "confidence": 0.8,
+      "success_count": 1,
+      "failure_count": 0,
+      "last_used": "2025-12-31T10:14:01.622212",
+      "created": "2025-12-31T10:14:01.622212",
+      "examples": [
+        {
+          "original": "from typing import Dict, Any",
+          "fixed": "from typing import Any",
+          "timestamp": "2025-12-31T10:14:01.622213"
+        }
+      ]
+    }
+  ],
+  "bare_assert": [
+    {
+      "issue_type": "bare_assert",
+      "original_pattern": "assert\\ x",
+      "fixed_template": "assert x, \"assertion failed\"",
+      "confidence": 0.8,
+      "success_count": 1,
+      "failure_count": 0,
+      "last_used": "2025-12-31T10:14:01.622318",
+      "created": "2025-12-31T10:14:01.622318",
+      "examples": [
+        {
+          "original": "assert x",
+          "fixed": "assert x, \"assertion failed\"",
+          "timestamp": "2025-12-31T10:14:01.622319"
+        }
+      ]
+    }
+  ],
+  "type_ignore": [
+    {
+      "issue_type": "type_ignore",
+      "original_pattern": "\\#\\ type:\\ ignore",
+      "fixed_template": "# type: ignore[misc]",
+      "confidence": 0.8,
+      "success_count": 1,
+      "failure_count": 0,
+      "last_used": "2025-12-31T10:14:01.622426",
+      "created": "2025-12-31T10:14:01.622427",
+      "examples": [
+        {
+          "original": "# type: ignore",
+          "fixed": "# type: ignore[misc]",
+          "timestamp": "2025-12-31T10:14:01.622427"
+        }
+      ]
+    }
+  ],
+  "print_debug": [
+    {
+      "issue_type": "print_debug",
+      "original_pattern": "print\\(f\"DEBUG",
+      "fixed_template": "# print(f\"DEBUG",
+      "confidence": 0.8,
+      "success_count": 1,
+      "failure_count": 0,
+      "last_used": "2025-12-31T10:14:01.622559",
+      "created": "2025-12-31T10:14:01.622560",
+      "examples": [
+        {
+          "original": "print(f\"DEBUG",
+          "fixed": "# print(f\"DEBUG",
+          "timestamp": "2025-12-31T10:14:01.622560"
+        }
+      ]
+    }
+  ],
+  "bare_raise": [
+    {
+      "issue_type": "bare_raise",
+      "original_pattern": "raise",
+      "fixed_template": "raise ValueError(\"error\")",
+      "confidence": 0.8,
+      "success_count": 1,
+      "failure_count": 0,
+      "last_used": "2025-12-31T10:14:01.622684",
+      "created": "2025-12-31T10:14:01.622685",
+      "examples": [
+        {
+          "original": "raise",
+          "fixed": "raise ValueError(\"error\")",
+          "timestamp": "2025-12-31T10:14:01.622685"
+        }
+      ]
+    }
+  ]
+}

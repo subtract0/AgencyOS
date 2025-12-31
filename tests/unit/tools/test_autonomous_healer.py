@@ -318,17 +318,20 @@ class TestAutonomousHealer:
 
 
 class TestFixPatternStore:
-    """Tests for pattern store integration (placeholder for Phase 2)."""
+    """Tests for pattern store integration (Phase 2 complete)."""
 
-    def test_pattern_store_import_handles_missing(self):
-        """Test that missing pattern store is handled gracefully."""
+    def test_pattern_store_finds_matching_pattern(self):
+        """Test that pattern store finds matching patterns."""
         from tools.llm_code_fixer import LLMCodeFixer
 
         fixer = LLMCodeFixer()
         result = fixer._try_pattern_fix("tools/test.py", 10, "bare_except", "except:")
 
-        # Should fail gracefully since pattern store doesn't exist yet
-        assert result.is_err()
+        # Pattern store should find a match for bare_except (seeded in Phase 2)
+        assert result.is_ok()
+        fix = result.unwrap()
+        assert "Exception" in fix.fixed
+        assert fix.method == "pattern"
 
 
 class TestIntegration:
