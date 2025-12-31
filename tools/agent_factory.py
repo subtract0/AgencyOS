@@ -454,7 +454,7 @@ class AgentFactory:
             if instance.state in (AgentState.COMPLETED, AgentState.FAILED, AgentState.TERMINATED):
                 if instance.completed_at:
                     age = (now - instance.completed_at).total_seconds()
-                    if age > max_age_seconds:
+                    if age >= max_age_seconds:
                         to_remove.append(agent_id)
 
         for agent_id in to_remove:
