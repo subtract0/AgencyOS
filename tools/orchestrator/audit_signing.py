@@ -1,7 +1,7 @@
 """
 Audit Signing for Bulletproof Orchestrator - Cryptographic Reproducibility
 
-Implements SHA256 signing for audit trail entries with reproducibility snapshots.
+Implements HMAC-SHA256 signing for audit trail entries with reproducibility snapshots.
 Part of Leap 6: Bulletproof Orchestrator - Production Hardening.
 
 Constitutional Compliance:
@@ -36,6 +36,7 @@ Example:
 from __future__ import annotations
 
 import hashlib
+import hmac
 import json
 import os
 from pathlib import Path
@@ -110,7 +111,7 @@ class SignedAuditEntry(BaseModel):
 
 class AuditSigner:
     """
-    SHA256-based signer for audit entries.
+    HMAC-SHA256 signer for audit entries.
 
     Provides deterministic signing (same input = same signature) and
     tamper detection through signature verification.
@@ -140,7 +141,7 @@ class AuditSigner:
 
     def sign(self, data: dict) -> str:
         """
-        Create deterministic SHA256 HMAC signature for data.
+        Create deterministic HMAC-SHA256 signature for data.
 
         Args:
             data: Dictionary to sign (will be JSON-serialized)
@@ -156,7 +157,11 @@ class AuditSigner:
         json_data = json.dumps(data, sort_keys=True, ensure_ascii=False)
 
         # Create HMAC-SHA256 signature
-        signature = hashlib.sha256((self.secret + json_data).encode("utf-8")).hexdigest()
+        signature = hmac.new(
+            self.secret.encode("utf-8"),
+            json_data.encode("utf-8"),
+            hashlib.sha256,
+        ).hexdigest()
 
         return signature
 
@@ -175,7 +180,7 @@ class AuditSigner:
         - Article II: Tamper detection
         """
         expected_signature = self.sign(data)
-        return signature == expected_signature
+        return hmac.compare_digest(signature, expected_signature)
 
 
 def sign_audit_entry(

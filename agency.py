@@ -99,11 +99,11 @@ if _tel_emit is None:
     def _tel_emit(event: dict) -> None:
         try:
             base = os.path.join(os.getcwd(), "logs", "telemetry")
-            os.makedirs(base, exist_ok=True)
             ts = datetime.now(UTC)
             event = dict(event)
             event["ts"] = ts.isoformat(timespec="milliseconds").replace("+00:00", "Z")
             fname = os.path.join(base, f"events-{ts:%Y%m%d}.jsonl")
+            os.makedirs(base, exist_ok=True)
             with open(fname, "a", encoding="utf-8") as f:
                 f.write(_json.dumps(event) + "\n")
         except OSError as e:
