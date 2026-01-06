@@ -2,7 +2,7 @@
 import os
 import sys
 import time
-from dotenv import load_dotenv
+from shared.env_loader import load_agency_env
 
 # Ensure imports work from root
 sys.path.append(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
@@ -308,5 +308,5 @@ def run_voice_loop():
             server_process.wait()
 
 if __name__ == "__main__":
-    load_dotenv()
+    load_agency_env()
     run_voice_loop()

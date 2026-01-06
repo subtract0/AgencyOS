@@ -5,7 +5,7 @@ from pathlib import Path
 from unittest.mock import MagicMock, Mock, patch
 
 import pytest
-from dotenv import load_dotenv
+from shared.env_loader import load_agency_env
 
 # Ensure project root is on sys.path so `coding_agent` can be imported
 project_root = Path(__file__).resolve().parents[1]
@@ -13,7 +13,7 @@ if str(project_root) not in sys.path:
     sys.path.insert(0, str(project_root))
 
 # Load environment variables for tests (e.g., OPENAI_API_KEY)
-load_dotenv()
+load_agency_env()
 
 # Skip spec traceability validation during tests for performance
 # (validation takes ~30s on large codebases)

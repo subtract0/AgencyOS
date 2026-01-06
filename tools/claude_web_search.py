@@ -69,9 +69,9 @@ class ClaudeWebSearch(BaseTool):  # type: ignore[misc]
 claude_web_search = ClaudeWebSearch
 
 if __name__ == "__main__":
-    from dotenv import load_dotenv
+    from shared.env_loader import load_agency_env
 
-    load_dotenv()
+    load_agency_env()
     # Test the tool
     # Test with current file
     current_file = __file__

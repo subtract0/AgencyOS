@@ -1,7 +1,7 @@
 
 import os
 import sys
-from dotenv import load_dotenv
+from shared.env_loader import load_agency_env
 
 # Ensure we can import from the root
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
@@ -62,5 +62,5 @@ def run_daily_briefing():
         traceback.print_exc()
 
 if __name__ == "__main__":
-    load_dotenv()
+    load_agency_env()
     run_daily_briefing()

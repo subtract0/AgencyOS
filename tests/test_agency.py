@@ -7,10 +7,10 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 from shared.lean_adapter import Agency
-from dotenv import load_dotenv
+from shared.env_loader import load_agency_env
 
 # Load environment variables
-load_dotenv()
+load_agency_env()
 
 
 @pytest.fixture

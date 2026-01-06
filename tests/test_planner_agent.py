@@ -7,13 +7,13 @@ import os
 
 import pytest
 from shared.lean_adapter import Agency
-from dotenv import load_dotenv
+from shared.env_loader import load_agency_env
 
 from coding_agent.coding_agent import create_coding_agent
 from planner_agent.planner_agent import create_planner_agent
 
 # Load environment variables
-load_dotenv()
+load_agency_env()
 
 # CI skip marker for tests requiring OpenAI API
 ci_skip = pytest.mark.skipif(

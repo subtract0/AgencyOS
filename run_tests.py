@@ -576,10 +576,10 @@ def main(
     env["PYTHONUNBUFFERED"] = "1"  # Disable output buffering for immediate feedback
 
     # VectorStore configuration: Respect CI/environment settings (Article IV compliance)
-    # Default to 'false' for local dev (performance), but allow CI override
+    # Default to 'true' to honor the constitutional mandate.
     if "USE_ENHANCED_MEMORY" not in os.environ:
-        env["USE_ENHANCED_MEMORY"] = "false"  # Local dev: disable for speed
-    # else: Keep CI value ('true' for Article IV constitutional compliance)
+        env["USE_ENHANCED_MEMORY"] = "true"
+    # else: Keep caller override
 
     # Prevent PyTorch/transformers segfault with parallel testing (SPEC-021)
     env["TOKENIZERS_PARALLELISM"] = "false"  # Disable tokenizer parallelism

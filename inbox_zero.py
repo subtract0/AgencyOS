@@ -2,7 +2,7 @@
 import os
 import sys
 import json
-from dotenv import load_dotenv
+from shared.env_loader import load_agency_env
 
 # Ensure imports work from root
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
@@ -116,5 +116,5 @@ def run_inbox_cleaner():
         print("❌ Aborted.")
 
 if __name__ == "__main__":
-    load_dotenv()
+    load_agency_env()
     run_inbox_cleaner()

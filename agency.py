@@ -16,8 +16,8 @@ from typing import cast
 
 # Third-party imports
 import litellm
+from shared.env_loader import load_agency_env
 from shared.lean_adapter import Agency, SendMessageHandoff
-from dotenv import load_dotenv
 
 # Agency imports - memory subsystem
 from agency_memory import (
@@ -165,7 +165,7 @@ def _cli_event_scope(command: str | None = None, args_dict: dict[str, JSONValue]
 
 
 # Initialize environment and configuration
-load_dotenv()
+load_agency_env()
 current_dir = os.path.dirname(os.path.abspath(__file__))
 litellm.modify_params = True
 model = os.getenv("AGENCY_MODEL", "gpt-5")
