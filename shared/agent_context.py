@@ -17,6 +17,7 @@ from typing import TYPE_CHECKING, Any
 from pathlib import Path
 
 from agency_memory import Memory
+from agency_memory.pattern_memory import Pattern, PatternMemory, get_pattern_memory
 from shared.type_definitions.json_value import JSONValue
 from shared.type_definitions.result import Result
 
@@ -183,6 +184,87 @@ class AgentContext:
     def get_session_memories(self) -> list[dict[str, JSONValue]]:
         """Get all memories for this session."""
         return self.memory.search([f"session:{self.session_id}"])
+
+    # =========================================================================
+    # PatternMemory Integration (Article IV: Institutional Learning)
+    # =========================================================================
+
+    def query_patterns(
+        self,
+        tags: list[str],
+        min_confidence: float = 0.6,
+        limit: int = 20,
+    ) -> list[Pattern]:
+        """
+        Query institutional patterns before taking action (Article IV compliance).
+
+        Searches the PatternMemory for patterns matching any of the given tags,
+        filtered by minimum confidence threshold.
+
+        Args:
+            tags: Tags to search for (OR logic - matches any tag)
+            min_confidence: Minimum confidence threshold (default: 0.6 per Article IV)
+            limit: Maximum number of results to return
+
+        Returns:
+            List of Pattern objects sorted by confidence (highest first)
+
+        Example:
+            >>> context = create_agent_context()
+            >>> patterns = context.query_patterns(["tdd", "testing"])
+            >>> for p in patterns:
+            ...     print(f"{p.id}: {p.confidence:.2f}")
+
+        Article IV Compliance:
+            - MANDATORY: Query patterns BEFORE implementing similar functionality
+            - Enables institutional learning across sessions
+            - Patterns with confidence >= 0.6 are considered validated
+        """
+        pattern_memory = get_pattern_memory()
+        return pattern_memory.query(tags, min_confidence=min_confidence, limit=limit)
+
+    def store_pattern(self, pattern: Pattern) -> None:
+        """
+        Store a learned pattern after successful operation (Article IV compliance).
+
+        Persists pattern to disk and updates in-memory index. If pattern.id
+        already exists, increments evidence_count and boosts confidence.
+
+        Args:
+            pattern: Pattern object to store
+
+        Example:
+            >>> context = create_agent_context()
+            >>> pattern = Pattern(
+            ...     id="jwt_auth_rsa256_success",
+            ...     content={"description": "RSA-256 JWT implementation pattern"},
+            ...     tags=["auth", "jwt", "security"],
+            ...     confidence=0.85
+            ... )
+            >>> context.store_pattern(pattern)
+
+        Article IV Compliance:
+            - MANDATORY: Store patterns AFTER successful operations
+            - Enables institutional learning across sessions
+            - Confidence increases with evidence (repeated successes)
+        """
+        pattern_memory = get_pattern_memory()
+        pattern_memory.store(pattern)
+        logger.debug(f"Stored pattern: {pattern.id} (tags={pattern.tags})")
+
+    def get_pattern_stats(self) -> dict[str, Any]:
+        """
+        Get statistics about the pattern memory.
+
+        Returns:
+            Dictionary with total_patterns, avg_confidence, top_tags, storage_path
+
+        Example:
+            >>> stats = context.get_pattern_stats()
+            >>> print(f"Patterns: {stats['total_patterns']}, Avg confidence: {stats['avg_confidence']:.2f}")
+        """
+        pattern_memory = get_pattern_memory()
+        return pattern_memory.stats()
 
     def enable_anthropic_memory(self, base_dir: str | None = None) -> None:
         """

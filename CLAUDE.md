@@ -365,9 +365,9 @@ MergerAgent → Git commit/PR
 
 ---
 
-## **🧠 Three-Tier Memory Architecture** (State-of-the-Art)
+## **🧠 Two-Tier Memory Architecture** (Simplified)
 
-**ADR-006 Integration:** Claude Agent SDK + Anthropic Memory Tool + VectorStore
+**ADR-006 Integration:** Anthropic Memory Tool + PatternMemory (file-based persistence)
 
 Agency employs a **unified memory system** for exponential autonomous growth:
 
@@ -375,14 +375,16 @@ Agency employs a **unified memory system** for exponential autonomous growth:
 
 | Tier | System | Purpose | Persistence | Example Use |
 |------|--------|---------|-------------|-------------|
-| **1** | Memory Tool | Cross-conversation knowledge | Indefinite | Technical debt, ADRs, coding standards |
-| **2** | VectorStore | Institutional learning | Session + archive | Auto-extracted patterns, semantic search |
-| **3** | Session | Working context | Session only | Temp state, progress tracking |
+| **1** | Memory Tool | Cross-conversation knowledge | Indefinite (files) | Technical debt, ADRs, coding standards |
+| **2** | PatternMemory | Institutional learning patterns | Indefinite (files) | Validated patterns, tag-based queries |
+
+**Note:** Session memory is handled via `context.set_metadata()` for temporary state.
 
 ### **Quick Usage**
 
 ```python
 from shared.agent_context import create_agent_context
+from agency_memory.pattern_memory import Pattern
 
 context = create_agent_context(session_id="feature_dev")
 
@@ -391,11 +393,21 @@ context.enable_anthropic_memory()
 tool = context.get_anthropic_memory_tool()
 tool.create("/memories/agency_backlog/feature_x.md", "TODO: Implement...")
 
-# Tier 2: Institutional learning (auto-extracted, searchable)
-context.store_memory("pattern_result", {"type": "Result<T,E>"}, tags=["pattern"])
-learnings = context.search_memories(["pattern", "error_handling"])
+# Tier 2: Institutional learning patterns (Article IV)
+# Query patterns BEFORE action
+patterns = context.query_patterns(["tdd", "testing"], min_confidence=0.6)
+for p in patterns:
+    print(f"Found pattern: {p.id} (confidence: {p.confidence:.2f})")
 
-# Tier 3: Session context (temporary)
+# Store patterns AFTER success
+context.store_pattern(Pattern(
+    id="jwt_auth_success",
+    content={"description": "RSA-256 JWT implementation"},
+    tags=["auth", "jwt", "security"],
+    confidence=0.85
+))
+
+# Session context (temporary)
 context.set_metadata("tests_fixed", 47)
 ```
 
@@ -406,7 +418,10 @@ context.set_metadata("tests_fixed", 47)
 ├── agency_backlog/         # Tech debt, TODOs (MANDATORY for gaps)
 │   ├── test_suite_gaps.md  # Track skipped tests, unimplemented features
 │   └── architecture_todo.md
-├── patterns/               # Reusable code patterns (Result<T,E>, Pydantic, etc.)
+├── patterns/               # Institutional learning patterns (JSON files)
+│   ├── tdd_catches_infrastructure_bugs_early.json
+│   ├── result_pattern_composable_error_handling.json
+│   └── ...                 # Auto-persisted, loaded on startup
 ├── institutional/          # Coding standards, git workflow, testing rules
 └── sessions/              # Session-specific progress (multi-day tasks)
 ```
@@ -414,36 +429,37 @@ context.set_metadata("tests_fixed", 47)
 ### **Constitutional Requirement (Article IV)**
 
 ```python
-# VectorStore integration is MANDATORY - no disable flags
-assert os.getenv("USE_ENHANCED_MEMORY") == "true"
+# PatternMemory is MANDATORY for institutional learning
+# Patterns persist to ~/.agency/memories/patterns/ and load on startup
 
 # Agents MUST:
-# 1. Query learnings before decisions
-# 2. Store successful patterns after operations
+# 1. Query patterns before decisions: context.query_patterns(tags)
+# 2. Store successful patterns after operations: context.store_pattern(pattern)
 # 3. Update backlog memories when gaps are found
 ```
 
 ### **Best Practices**
 
 **DO:**
-- ✅ Store technical debt in `/memories/agency_backlog/` (e.g., 191 skipped tests analysis)
-- ✅ Auto-extract patterns to VectorStore after successful fixes
-- ✅ Query VectorStore for similar past solutions before implementing
-- ✅ Use Result<T,E> pattern, store learnings for future agents
+- ✅ Query patterns before implementing: `context.query_patterns(["auth", "jwt"])`
+- ✅ Store patterns after success: `context.store_pattern(pattern)`
+- ✅ Store technical debt in `/memories/agency_backlog/`
+- ✅ Use confidence >= 0.6 for pattern application (Article IV minimum)
 
 **DON'T:**
-- ❌ Store temporary state in Memory Tool (use Session tier)
-- ❌ Manually document every pattern (VectorStore auto-extracts)
+- ❌ Use VectorStore directly (deprecated, use PatternMemory via AgentContext)
+- ❌ Store temporary state in Memory Tool (use `set_metadata()`)
 - ❌ Ignore past learnings (query before action, constitutional law)
 
 ### **Implementation Files**
+- **PatternMemory**: `agency_memory/pattern_memory.py` (file-based persistence + in-memory index)
 - **Memory Tool**: `tools/anthropic_memory_tool.py`, `tools/anthropic_agent_with_memory.py`
-- **SDK Integration**: `tools/anthropic_agent.py`, `shared/agent_context.py`
-- **Security**: `tests/test_anthropic_memory_security.py` (30 tests, 100% pass)
-- **Docs**: `docs/{MEMORY_ARCHITECTURE, ANTHROPIC_MEMORY_TOOL}.md`, `docs/reference/claude-agent-sdk-python.md`
+- **AgentContext Integration**: `shared/agent_context.py` (`query_patterns()`, `store_pattern()`)
+- **Tests**: `tests/test_pattern_memory.py` (5 tests, 100% pass)
+- **VectorStore**: `agency_memory/vector_store.py` (DEPRECATED - do not use directly)
 
 ### **Requirements**
-- `anthropic>=0.42.0`, `USE_ENHANCED_MEMORY=true` (Article IV constitutional requirement)
+- `anthropic>=0.42.0` (for Memory Tool)
 - Beta header: `context-management-2025-06-27`, Models: Claude Sonnet 4.5, Opus 4.1
 
 ---

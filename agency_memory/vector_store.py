@@ -10,6 +10,7 @@ import json
 import logging
 import os
 import threading
+import warnings
 from collections.abc import Callable
 from dataclasses import dataclass
 from datetime import datetime
@@ -56,6 +57,9 @@ class VectorStore:
     """
     Lightweight vector store for semantic memory search.
 
+    DEPRECATED: Use agency_memory.pattern_memory.PatternMemory instead.
+    This class is ephemeral and loses data on restart.
+
     Features:
     - Text embeddings for semantic search
     - Keyword-based fallback
@@ -70,6 +74,15 @@ class VectorStore:
         Args:
             embedding_provider: Optional embedding provider ('openai', 'sentence-transformers', etc.)
         """
+        warnings.warn(
+            "VectorStore is deprecated and will be removed in a future version. "
+            "Use PatternMemory via AgentContext instead:\n"
+            "  - context.query_patterns(tags) for querying\n"
+            "  - context.store_pattern(pattern) for storing\n"
+            "See: agency_memory/pattern_memory.py",
+            DeprecationWarning,
+            stacklevel=2,
+        )
         self._embeddings: dict[str, list[float]] = {}
         self._memory_texts: dict[str, str] = {}
         self._memory_records: dict[str, dict[str, JSONValue]] = {}
@@ -79,6 +92,9 @@ class VectorStore:
         # Try to initialize embedding function
         self._initialize_embeddings()
 
+        logger.warning(
+            "VectorStore is DEPRECATED. Use PatternMemory for persistent storage."
+        )
         logger.info(
             f"VectorStore initialized with provider: {embedding_provider or 'keyword-only'}"
         )
@@ -114,7 +130,15 @@ class VectorStore:
 
             # Use a lightweight model for efficiency
             model_name = "all-MiniLM-L6-v2"  # 22MB, fast, good quality
-            self._embedding_model = SentenceTransformer(model_name)
+            local_only = (
+                os.getenv("PYTEST_CURRENT_TEST") is not None
+                or os.getenv("HF_HUB_OFFLINE") == "1"
+                or os.getenv("TRANSFORMERS_OFFLINE") == "1"
+                or os.getenv("AGENCY_OFFLINE") == "1"
+            )
+            self._embedding_model = SentenceTransformer(
+                model_name, local_files_only=local_only
+            )
 
             def embed_texts(texts: list[str]) -> list[list[float]]:
                 embeddings = self._embedding_model.encode(texts, convert_to_tensor=False)
@@ -127,6 +151,9 @@ class VectorStore:
             raise ImportError(
                 "sentence-transformers not available. Install with: pip install sentence-transformers"
             ) from e
+        except Exception as e:
+            logger.warning(f"Failed to initialize sentence-transformers: {e}")
+            logger.info("Falling back to keyword-only search")
 
     def _init_openai_embeddings(self) -> None:
         """Initialize OpenAI embeddings."""
