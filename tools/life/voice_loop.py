@@ -131,10 +131,10 @@ def run_voice_loop():
     
     agent = LeanAgent(
         AgentConfig(
-            name="Jarvis",
+            name="Operator",
             model=MODEL_ID, # MUST match the server's loaded model
             instructions="""
-            You are J.A.R.V.I.S, an AI orchestrator.
+            You are Operator, an AI orchestrator for AgencyOS.
             Capabilities:
             - CLOCK: get_current_time (Use this for date/time questions).
             - EMAIL: list_unread, fetch_recent_threads, trash_threads, archive_threads.
@@ -185,7 +185,7 @@ def run_voice_loop():
             if not text:
                 continue
                 
-            is_wake_word = "operator" in text.lower() or "jarvis" in text.lower()
+            is_wake_word = "operator" in text.lower()
             
             # Wake Word Check Logic
             if not conversation_active and not is_wake_word:
@@ -197,7 +197,7 @@ def run_voice_loop():
             last_interaction_time = time.time()
                 
             # C. Think & Act
-            clean_text = text.replace("Operator", "").replace("operator", "").replace("Jarvis", "").replace("jarvis", "").strip()
+            clean_text = text.replace("Operator", "").replace("operator", "").replace("Operator,", "").replace("operator,", "").strip()
             
             if not clean_text:
                 speaker.speak("Yes, I'm listening.")
@@ -294,7 +294,7 @@ def run_voice_loop():
                  # Fallback
                  speaker.speak("I am trying to use a tool but getting stuck.")
             else:
-                print(f"\n🤖 JARVIS: {response}\n")
+                print(f"\n🤖 Operator: {response}\n")
                 speaker.speak(response)
             
             time.sleep(1)

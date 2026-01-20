@@ -47,6 +47,27 @@ def main():
     # 2. INTENT PARSING (Simulated Trinity Brain)
     print_step("🧠 THINKING (Trinity)", "Analyzing intent...\n   -> Intent: Book Dinner\n   -> Cuisine: Italian\n   -> When: Tonight @ 7pm\n   -> Party: 2\n   -> Missing Info: Which restaurant?")
 
+    # 2.5 SEMANTIC ENRICHMENT (The Empath)
+    # Demonstrate batch enrichment usage
+    user_data = {"id": "msg_1", "content": user_voice, "timestamp": datetime.now().isoformat()}
+    print_step("❤️ FEELING (Empath)", f"Enriching input: '{user_voice}'...")
+    
+    # In a real app, this would happen in the background. 
+    # Here we mock the result to show the structure since the server might not be running.
+    # enriched_items = EmpathEnricher().batch_enrich([user_data]) 
+    
+    # Mocking the output for the demo to ensure it runs without the 70B model server active
+    mock_analysis = {
+        "suffering_score": 2,
+        "primary_pain": "hunger", # Playful analysis
+        "seeking": "sustenance and connection",
+        "coaching_hooks": ["nourish the body", "savor the moment"]
+    }
+    
+    print(f"   -> Suffering Score: {mock_analysis['suffering_score']}/10")
+    print(f"   -> Deeper Need: {mock_analysis['seeking']}")
+    print(f"   -> Context: {mock_analysis['primary_pain']}")
+
     # 3. RESEARCH (The New Capability)
     print_step("🌐 RESEARCHING", "Searching for 'best italian restaurant nearby'...")
     search_result = browser.search("best italian restaurant San Francisco") # Hardcoded location for demo

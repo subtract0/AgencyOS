@@ -1,0 +1,24 @@
+<svg width="512" height="512" viewBox="0 0 512 512" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Background -->
+  <rect width="512" height="512" rx="108" fill="#1e242f"/>
+
+  <!-- Moon/night theme -->
+  <circle cx="256" cy="220" r="100" fill="#374457"/>
+  <circle cx="300" cy="180" r="80" fill="#1e242f"/>
+
+  <!-- Small step dots -->
+  <circle cx="180" cy="380" r="16" fill="#617a99"/>
+  <circle cx="240" cy="380" r="16" fill="#8198b3"/>
+  <circle cx="300" cy="380" r="16" fill="#adbcce"/>
+  <circle cx="360" cy="380" r="16" fill="#d3dae5"/>
+
+  <!-- Gentle glow -->
+  <circle cx="256" cy="220" r="120" fill="url(#glow)" opacity="0.3"/>
+
+  <defs>
+    <radialGradient id="glow" cx="0.5" cy="0.5" r="0.5">
+      <stop offset="0%" stop-color="#adbcce"/>
+      <stop offset="100%" stop-color="#1e242f" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+</svg>

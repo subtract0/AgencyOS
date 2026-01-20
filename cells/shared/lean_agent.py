@@ -1,0 +1,512 @@
+"""
+Lean Agent Implementation - Replace Agency Swarm
+
+A minimal, robust agent system that directly uses OpenAI/Anthropic APIs
+without the bloat of agency-swarm framework.
+
+Key principles:
+- Direct API calls (no framework overhead)
+- Simple, predictable behavior
+- Easy to debug and maintain
+- Type-safe with Pydantic models
+- Thread-safe execution
+- Result<T,E> pattern for error handling
+
+Version: 1.1.0
+Created: 2025-10-09
+Updated: 2025-10-09 - Added thread safety, input validation, Result pattern
+"""
+
+import json
+import os
+import threading
+from collections.abc import Callable
+from typing import TYPE_CHECKING, Union
+
+from openai import OpenAI
+from pydantic import BaseModel, Field
+
+from cells.shared.type_definitions.result import Err, Ok, Result
+
+# Import LitellmModel at runtime for Pydantic model resolution
+# (not just TYPE_CHECKING, as Pydantic needs to resolve Union[str, LitellmModel])
+try:
+    from agents.extensions.models.litellm_model import LitellmModel
+except ImportError:
+    # Fallback: Define a placeholder type if agents package not installed
+    # This allows the module to load, but LitellmModel won't be usable
+    LitellmModel = type("LitellmModel", (), {})  # type: ignore
+
+
+class ToolParameter(BaseModel):
+    """Parameter definition for a tool."""
+
+    type: str
+    properties: dict[str, "ToolPropertySchema"] = Field(default_factory=dict)
+    required: list[str] = Field(default_factory=list)
+
+    class Config:
+        """Pydantic config."""
+
+        arbitrary_types_allowed = True
+
+
+class ToolPropertySchema(BaseModel):
+    """Schema for a single tool property."""
+
+    type: str
+    description: str | None = None
+    enum: list[str] | None = None
+
+
+class OpenAIToolFormat(BaseModel):
+    """OpenAI tool format schema."""
+
+    type: str
+    function: "FunctionDefinition"
+
+
+class FunctionDefinition(BaseModel):
+    """Function definition in OpenAI format."""
+
+    name: str
+    description: str
+    parameters: ToolParameter
+
+
+class Tool(BaseModel):
+    """Tool definition for agent."""
+
+    name: str
+    description: str
+    parameters: ToolParameter
+    function: Callable | None = Field(default=None, exclude=True)
+
+    def to_openai_format(self) -> OpenAIToolFormat:
+        """Convert to OpenAI tool format."""
+        return OpenAIToolFormat(
+            type="function",
+            function=FunctionDefinition(
+                name=self.name,
+                description=self.description,
+                parameters=self.parameters,
+            ),
+        )
+
+
+class AgentConfig(BaseModel):
+    """Agent configuration.
+
+    Note: model field accepts both str (e.g., "gpt-4o") and LitellmModel objects
+    to support Trinity Protocol's adaptive model routing with local models.
+    """
+
+    name: str
+    instructions: str
+    model: Union[str, LitellmModel] = "gpt-4o"  # Accept both str and LitellmModel (no quotes!)
+    temperature: float = 0.7
+    max_tokens: int = 4000
+    stop: list[str] | str | None = None
+    tools: list[Tool] = Field(default_factory=list)
+
+    class Config:
+        """Pydantic config."""
+
+        arbitrary_types_allowed = True  # Allow LitellmModel objects
+
+
+class ToolCall(BaseModel):
+    """Tool call from LLM (typed replacement for dict)."""
+
+    id: str
+    type: str = "function"
+    function: "FunctionCall"
+
+
+class FunctionCall(BaseModel):
+    """Function call details."""
+
+    name: str
+    arguments: str  # JSON string
+
+
+class Message(BaseModel):
+    """Chat message."""
+
+    role: str  # "user", "assistant", "system", "tool"
+    content: str
+    tool_calls: list[ToolCall] | None = None
+    tool_call_id: str | None = None
+
+
+class LeanAgent:
+    """
+    Minimal agent implementation using direct OpenAI API.
+
+    This replaces agency_swarm.Agent with a lean, predictable implementation.
+
+    Example:
+        >>> agent = LeanAgent(AgentConfig(
+        ...     name="coder",
+        ...     instructions="You are a Python expert",
+        ...     model="gpt-4o"
+        ... ))
+        >>> response = agent.run("Write a function to add two numbers")
+    """
+
+    def __init__(self, config: AgentConfig):
+        """
+        Initialize agent.
+
+        Args:
+            config: Agent configuration
+
+        Raises:
+            ValueError: If OPENAI_API_KEY is missing from environment
+        """
+        self.config = config
+        self.messages: list[Message] = []
+        self._lock = threading.Lock()  # Thread-safe message handling
+
+        # Validate API key exists
+        api_key = os.getenv("OPENAI_API_KEY")
+        base_url = os.getenv("OPENAI_API_BASE")
+        
+        # Check for Ollama model
+        model_name = config.model.model if hasattr(config.model, 'model') else config.model
+        if isinstance(model_name, str) and model_name.startswith("ollama/"):
+            base_url = "http://localhost:11434/v1"
+            api_key = "ollama"  # Dummy key for Ollama
+        
+        if not api_key:
+            raise ValueError(
+                "OPENAI_API_KEY not found in environment. "
+                "Set it with: export OPENAI_API_KEY='your-key-here'"
+            )
+
+        self.client = OpenAI(api_key=api_key, base_url=base_url)
+
+        # Add system instructions as first message
+        self.messages.append(Message(role="system", content=config.instructions))
+
+    def run(self, user_message: str, max_iterations: int = 10) -> str:
+        """
+        Execute agent with user message (thread-safe).
+
+        Handles tool calls automatically in a loop until completion.
+
+        Args:
+            user_message: User's input message
+            max_iterations: Max tool call iterations (prevent infinite loops)
+
+        Returns:
+            Final assistant response
+
+        Raises:
+            ValueError: If max_iterations <= 0 or user_message is None
+            RuntimeError: If agent exceeds max iterations (possible infinite loop)
+        """
+        # Input validation
+        if user_message is None:
+            raise ValueError("user_message cannot be None")
+        if max_iterations <= 0:
+            raise ValueError(f"max_iterations must be > 0, got {max_iterations}")
+
+        # Thread-safe execution
+        with self._lock:
+            # Add user message
+            self.messages.append(Message(role="user", content=user_message))
+
+            # Run agent loop with tool calling
+            for i in range(max_iterations):
+                # Call LLM
+                response = self._call_llm()
+                
+                content_preview = (response.content or "")[:100].replace("\n", " ")
+                print(f"DEBUG: Loop {i} Response: {content_preview}... Calls: {len(response.tool_calls or [])}")
+
+                # Check if done (no tool calls)
+                if not response.tool_calls:
+                    # Add assistant response and return
+                    self.messages.append(Message(role="assistant", content=response.content or ""))
+                    return response.content or ""
+
+                # Process tool calls - Convert OpenAI format to our ToolCall model
+                typed_tool_calls = []
+                for tc in response.tool_calls:
+                    typed_tool_calls.append(
+                        ToolCall(
+                            id=tc.id,
+                            type="function",
+                            function=FunctionCall(
+                                name=tc.function.name,
+                                arguments=tc.function.arguments,
+                            ),
+                        )
+                    )
+
+                self.messages.append(
+                    Message(
+                        role="assistant",
+                        content=response.content or "",
+                        tool_calls=typed_tool_calls,
+                    )
+                )
+
+                for tool_call in typed_tool_calls:
+                    print(f"DEBUG: Executing {tool_call.function.name} args={tool_call.function.arguments[:50]}")
+                    # Execute tool with Result pattern
+                    tool_result = self._execute_tool(
+                        tool_call.function.name, tool_call.function.arguments
+                    )
+
+                    # Handle Result - convert to string for message
+                    if tool_result.is_ok():
+                        result_str = str(tool_result.unwrap())
+                    else:
+                        result_str = f"Error: {tool_result.unwrap_err()}"
+                    
+                    print(f"DEBUG: Tool Result: {result_str[:100]}...")
+
+                    # Add tool result to messages
+                    self.messages.append(
+                        Message(role="tool", content=result_str, tool_call_id=tool_call.id)
+                    )
+
+            raise RuntimeError(
+                f"Agent exceeded max iterations ({max_iterations}). "
+                f"Possible infinite loop or complex task requiring more iterations."
+            )
+
+    def _call_llm(self):
+        """Call OpenAI API with current messages."""
+        # Convert messages to OpenAI format
+        openai_messages = []
+        for msg in self.messages:
+            if msg.role == "tool":
+                openai_messages.append(
+                    {"role": "tool", "content": msg.content, "tool_call_id": msg.tool_call_id}
+                )
+            elif msg.tool_calls:
+                # Convert ToolCall models to dicts for OpenAI API
+                tool_calls_dicts = [tc.model_dump() for tc in msg.tool_calls]
+                openai_messages.append(
+                    {
+                        "role": "assistant",
+                        "content": msg.content,
+                        "tool_calls": tool_calls_dicts,
+                    }
+                )
+            else:
+                openai_messages.append({"role": msg.role, "content": msg.content})
+
+        # Prepare tools
+        tools = (
+            [
+                tool.to_openai_format().model_dump(exclude_none=True, mode="json")
+                for tool in self.config.tools
+            ]
+            if self.config.tools
+            else None
+        )
+
+        # Check if this is an o1/o3/gpt-5 model (reasoning models have restrictions)
+        # Handle both string models and LitellmModel objects - extract string for API call
+        model_str = self.config.model.model if hasattr(self.config.model, 'model') else self.config.model
+        is_reasoning_model = any(m in model_str.lower() for m in ["o1", "o3", "gpt-5"])
+
+        # Call API with model-specific parameters
+        # IMPORTANT: Use model_str (string) not self.config.model (may be LitellmModel object)
+        call_kwargs = {
+            "model": model_str.replace("ollama/", "") if model_str.startswith("ollama/") else model_str,
+            "messages": openai_messages,
+        }
+
+        if is_reasoning_model:
+            # Reasoning models don't support temperature, tools, or max_tokens
+            # They use max_completion_tokens and default temperature=1
+            call_kwargs["max_completion_tokens"] = self.config.max_tokens
+        else:
+            # Standard models support all parameters
+            call_kwargs["temperature"] = self.config.temperature
+            call_kwargs["max_tokens"] = self.config.max_tokens
+            if self.config.stop:
+                call_kwargs["stop"] = self.config.stop
+            if tools:
+                call_kwargs["tools"] = tools
+
+        response = self.client.chat.completions.create(**call_kwargs)
+        
+        message = response.choices[0].message
+        
+        # Robustness: Enforce stop sequences client-side if the API leaked them
+        if self.config.stop and message.content:
+            stop_sequences = [self.config.stop] if isinstance(self.config.stop, str) else self.config.stop
+            for seq in stop_sequences:
+                if message.content.endswith(seq):
+                    message.content = message.content[:-len(seq)].strip()
+
+        # Fallback: Check for raw JSON tool calls (common with local MLX models)
+        if not message.tool_calls and message.content:
+            try:
+                import json
+                import re
+                
+                content = message.content.strip()
+                data = None
+                
+                # Attempt 1: Direct JSON parse
+                if content.startswith("{"):
+                    try:
+                        data = json.loads(content)
+                    except json.JSONDecodeError:
+                        pass
+                
+                # Attempt 2: Robust brace counting extraction
+                if not data:
+                    try:
+                        # Find first {
+                        start = content.find("{")
+                        if start != -1:
+                            depth = 0
+                            end = -1
+                            for i, char in enumerate(content[start:], start=start):
+                                if char == "{":
+                                    depth += 1
+                                elif char == "}":
+                                    depth -= 1
+                                    if depth == 0:
+                                        end = i + 1
+                                        break
+                            
+                            if end != -1:
+                                candidate = content[start:end]
+                                data = json.loads(candidate)
+                    except Exception:
+                        pass
+
+                if isinstance(data, dict):
+                    # Check if it looks like a tool call structure
+                    # Schema 1: {"type": "function", "name": "...", "parameters": {...}}
+                    # Schema 2: {"name": "...", "parameters": {...}} (Implicit function)
+                    
+                    is_tool = False
+                    fn_name = ""
+                    fn_args = ""
+                    
+                    if data.get("type") == "function" and "name" in data:
+                        is_tool = True
+                        fn_name = data["name"]
+                        # OpenAI expects 'arguments' as string, but here likely 'parameters' dict
+                        params = data.get("parameters", {})
+                        fn_args = json.dumps(params) if isinstance(params, dict) else str(params)
+                    elif "name" in data and ("parameters" in data or "arguments" in data):
+                        is_tool = True
+                        fn_name = data["name"]
+                        # Handle both 'parameters' (standard) and 'arguments' (Qwen/others)
+                        if "parameters" in data:
+                            params = data["parameters"]
+                        else:
+                            params = data["arguments"]
+                        
+                        fn_args = json.dumps(params) if isinstance(params, dict) else str(params)
+
+                    if is_tool:
+                        # Construct a mock Call object compatible with OpenAI structure
+                        class MockFunction:
+                            def __init__(self, name, arguments):
+                                self.name = name
+                                self.arguments = arguments
+                        
+                        class MockToolCall:
+                            def __init__(self, id, function):
+                                self.id = id
+                                self.type = 'function'
+                                self.function = function
+
+                        import uuid
+                        call_id = f"call_{uuid.uuid4().hex[:8]}"
+                        
+                        # Create the proper structure expected by the loop
+                        # We need to match the object interface expected by the loop (tc.function.name)
+                        message.tool_calls = [
+                            MockToolCall(call_id, MockFunction(fn_name, fn_args))
+                        ]
+                        # Clear content so we don't output the raw JSON to user
+                        message.content = None 
+
+            except Exception:
+                # Not valid JSON or not a tool call, treat as normal text
+                pass
+                    
+        return message
+
+    def _execute_tool(self, tool_name: str, arguments: str) -> Result[str, str]:
+        """
+        Execute a tool call with Result<T,E> pattern.
+
+        Args:
+            tool_name: Name of tool to execute
+            arguments: JSON string of arguments
+
+        Returns:
+            Result[str, str]: Ok(result) if successful, Err(error_message) if failed
+        """
+        # Find tool
+        tool = next((t for t in self.config.tools if t.name == tool_name), None)
+        if not tool:
+            return Err(f"Tool '{tool_name}' not found in agent tools")
+
+        if not tool.function:
+            return Err(f"Tool '{tool_name}' has no function implementation")
+
+        # Parse arguments
+        try:
+            args = json.loads(arguments)
+        except json.JSONDecodeError as e:
+            return Err(f"Invalid JSON arguments: {e}")
+
+        # Validate args is a dict (required for **kwargs)
+        if not isinstance(args, dict):
+            return Err(f"Arguments must be JSON object, got {type(args).__name__}")
+
+        # Execute function
+        try:
+            result = tool.function(**args)
+            return Ok(str(result))
+        except TypeError as e:
+            # Better error for argument mismatch
+            return Err(f"Argument mismatch for {tool_name}: {e}")
+        except Exception as e:
+            # Include exception type for debugging
+            return Err(f"{type(e).__name__} in {tool_name}: {e}")
+
+    def clear_history(self):
+        """Clear message history (keep system prompt)."""
+        system_msg = self.messages[0]
+        self.messages = [system_msg]
+
+
+# Helper function to create tool from Python function
+def tool(name: str, description: str, parameters: ToolParameter):
+    """
+    Decorator to convert Python function to Tool.
+
+    Example:
+        >>> param = ToolParameter(
+        ...     type="object",
+        ...     properties={
+        ...         "a": ToolPropertySchema(type="number"),
+        ...         "b": ToolPropertySchema(type="number")
+        ...     },
+        ...     required=["a", "b"]
+        ... )
+        >>> @tool("add", "Add two numbers", param)
+        ... def add(a: float, b: float) -> float:
+        ...     return a + b
+    """
+
+    def decorator(func: Callable) -> Tool:
+        return Tool(name=name, description=description, parameters=parameters, function=func)
+
+    return decorator
