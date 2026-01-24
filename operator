@@ -1,0 +1,67 @@
+#!/bin/bash
+# Operator - Quick launcher for AgencyOS AI Assistant
+#
+# Usage:
+#   ./operator                    # Interactive text mode
+#   ./operator "what time is it"  # Single command
+#   ./operator --voice            # Voice mode (requires mic)
+#   ./operator --setup            # Setup Google OAuth
+#   ./operator --brain "thought"  # Capture to Second Brain
+
+cd "$(dirname "$0")"
+export PYTHONPATH="$PWD"
+
+case "${1:-}" in
+    --voice|-v)
+        echo "🎤 Starting voice mode..."
+        python tools/life/voice_loop.py
+        ;;
+    --brain|-b)
+        shift
+        if [ -z "$1" ]; then
+            echo "Usage: ./operator --brain 'your thought here'"
+            exit 1
+        fi
+        python second_brain/brain.py capture "$@"
+        ;;
+    --daily)
+        python second_brain/brain.py daily
+        ;;
+    --weekly)
+        python second_brain/brain.py weekly
+        ;;
+    --setup|-s)
+        python tools/life/operator_cli.py --setup
+        ;;
+    --help|-h)
+        cat << 'EOF'
+🤖 Operator - AgencyOS AI Assistant
+
+Usage:
+  ./operator                      Interactive text mode
+  ./operator "check my email"     Single command
+  ./operator --voice              Voice mode (say "Operator, ...")
+  ./operator --setup              Configure Google OAuth
+
+Second Brain:
+  ./operator --brain "thought"    Capture a thought
+  ./operator --daily              Daily digest
+  ./operator --weekly             Weekly review
+
+Commands in text mode:
+  "what time is it"               Get current time
+  "check my email"                List unread emails (needs Google)
+  "my calendar"                   Show upcoming events (needs Google)
+  "status"                        Show system status
+  "help"                          Show available commands
+
+Examples:
+  ./operator "status"
+  ./operator --brain "Call Sarah about the project"
+  ./operator --daily
+EOF
+        ;;
+    *)
+        python tools/life/operator_cli.py "$@"
+        ;;
+esac
