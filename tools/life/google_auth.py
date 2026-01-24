@@ -65,7 +65,16 @@ def get_credentials():
     if not creds or not creds.valid:
         if creds and creds.expired and creds.refresh_token:
             print("🔄 Refreshing Google Access Token...")
-            creds.refresh(Request())
+            try:
+                creds.refresh(Request())
+            except Exception as e:
+                # Token refresh failed - likely expired or revoked
+                # Delete token and force re-auth
+                print(f"⚠️  Token refresh failed: {e}")
+                print("🔄 Deleting expired token and re-authenticating...")
+                if token_path.exists():
+                    token_path.unlink()
+                creds = None  # Force new login flow below
         else:
             # OPTION A: Look for OAuth Client Secrets (for User Login)
             selected_credentials = None
