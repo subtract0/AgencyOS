@@ -11,6 +11,11 @@ from typing import List
 from pathlib import Path
 import time
 
+# Add project root to path
+import sys
+from pathlib import Path
+sys.path.insert(0, str(Path(__file__).parents[2])) # /Users/am/Code/AgencyOS
+
 app = FastAPI()
 
 # Mount static for CSS/JS
@@ -203,9 +208,119 @@ class CompassionEngine:
 
 compassion_engine = CompassionEngine()
 
+# Memory Monitor
+class MemoryMonitor:
+    def __init__(self):
+        self.check_interval = 10
+        # Lazy import to avoid circular dependency issues if any
+        # But here we just need to read stats from the class interface if possible
+        # Or more safely, just instantiate PatternMemory briefly or depend on file system
+        
+    async def run(self):
+        while True:
+            try:
+                self._update_stats()
+            except Exception as e:
+                print(f"Memory Monitor Error: {e}")
+            await asyncio.sleep(self.check_interval)
+
+    def _update_stats(self):
+        # We need to import here to ensure paths are set up
+        import sys
+        sys.path.append(os.getcwd())
+        from agency_memory.pattern_memory import get_pattern_memory
+        
+        mem = get_pattern_memory()
+        stats = mem.stats()
+        
+        SYSTEM_STATE["memory"] = {
+            "total_patterns": stats["total_patterns"],
+            "avg_confidence": f"{stats['avg_confidence']:.2f}",
+            "top_tags": [f"{t[0]} ({t[1]})" for t in stats["top_tags"][:5]],
+            "graph_nodes": stats.get("graph_nodes", 0),
+            "graph_edges": stats.get("graph_edges", 0)
+        }
+        asyncio.create_task(manager.broadcast({"type": "update", "data": SYSTEM_STATE}))
+
+memory_monitor = MemoryMonitor()
+
+class HiveMonitor:
+    def __init__(self):
+        self.check_interval = 5
+        
+    async def run(self):
+        while True:
+            try:
+                self._update_stats()
+            except Exception as e:
+                print(f"Hive Monitor Error: {e}")
+            await asyncio.sleep(self.check_interval)
+            
+    def _update_stats(self):
+        from cells.manager.process_manager import get_process_manager
+        mgr = get_process_manager()
+        agents = mgr.list_agents()
+        
+        SYSTEM_STATE["hive"] = {
+            "active_count": len(agents),
+            "agents": agents
+        }
+        asyncio.create_task(manager.broadcast({"type": "update", "data": SYSTEM_STATE}))
+
+from cells.visual.bus_bridge import BusBridge
+
+hive_monitor = HiveMonitor()
+bus_bridge = BusBridge() # broadcast_func set later to avoid circular/init issues? 
+# Actually we can pass manager.broadcast directly if manager is defined above.
+# manager is defined on line 45.
+
+# Maintenance Scheduler (The Immune System)
+class MaintenanceScheduler:
+    def __init__(self):
+        # Run every 60 minutes in production, but for now let's say 30 mins
+        self.interval = 1800 
+        self.supervisor = None
+
+    async def run(self):
+        """Background loop to trigger maintenance."""
+        print("🛡️ Maintenance Scheduler Online.")
+        while True:
+            await asyncio.sleep(60) # Initial delay
+            try:
+                # Lazy load to avoid startup circular imports or heavy blocking
+                if not self.supervisor:
+                    from cells.maintenance.supervisor import MaintenanceSupervisor
+                    self.supervisor = MaintenanceSupervisor()
+                
+                # Run the cycle in a thread to not block the event loop
+                SYSTEM_STATE["logs"].append("🛡️ Auto-Maintenance Started...")
+                await manager.broadcast({"type": "update", "data": SYSTEM_STATE})
+                
+                report = await asyncio.to_thread(self.supervisor.run_cycle)
+                
+                # Log log LOG!
+                SYSTEM_STATE["logs"].append(f"🛡️ Maintenance Report:\n{report}")
+                SYSTEM_STATE["last_maintenance"] = time.strftime("%H:%M:%S")
+                await manager.broadcast({"type": "update", "data": SYSTEM_STATE})
+                
+            except Exception as e:
+                print(f"Maintenance Scheduler Error: {e}")
+                SYSTEM_STATE["logs"].append(f"❌ Maintenance Error: {e}")
+            
+            await asyncio.sleep(self.interval)
+
+maintenance_scheduler = MaintenanceScheduler()
+
 @app.on_event("startup")
 async def startup_event():
+    # Link bridge to manager
+    bus_bridge.broadcast_func = manager.broadcast
+    
     asyncio.create_task(compassion_engine.run())
+    asyncio.create_task(memory_monitor.run())
+    asyncio.create_task(maintenance_scheduler.run())
+    asyncio.create_task(hive_monitor.run())
+    asyncio.create_task(bus_bridge.run())
 
 if __name__ == "__main__":
     uvicorn.run(app, host="127.0.0.1", port=8000)

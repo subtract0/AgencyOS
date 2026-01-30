@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AgencyOS - The Agentic Operating System</title>
+    <style>
+        :root {
+            --bg-primary: #0f172a;
+            --bg-secondary: #1e293b;
+            --text-primary: #f8fafc;
+            --text-secondary: #cbd5e1;
+            --accent: #3b82f6;
+            --accent-hover: #2563eb;
+            --card-bg: #1e293b;
+        }
+
+        body {
+            font-family: 'Inter', system-ui, -apple-system, sans-serif;
+            background-color: var(--bg-primary);
+            color: var(--text-primary);
+            line-height: 1.6;
+            margin: 0;
+            padding: 0;
+        }
+
+        header {
+            background-color: var(--bg-primary);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            padding: 1.5rem 2rem;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo {
+            font-weight: 700;
+            font-size: 1.5rem;
+            color: var(--text-primary);
+            letter-spacing: -0.05em;
+        }
+
+        .logo span {
+            color: var(--accent);
+        }
+
+        .hero {
+            padding: 6rem 2rem;
+            text-align: center;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        h1 {
+            font-size: 3.5rem;
+            font-weight: 800;
+            line-height: 1.1;
+            margin-bottom: 1.5rem;
+            background: linear-gradient(to right, #fff, #94a3b8);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        h2.subtitle {
+            font-size: 1.5rem;
+            color: var(--text-secondary);
+            font-weight: 400;
+            max-width: 800px;
+            margin: 0 auto 3rem;
+        }
+
+        .cta-button {
+            display: inline-block;
+            background-color: var(--accent);
+            color: white;
+            padding: 1rem 2.5rem;
+            border-radius: 9999px;
+            font-weight: 600;
+            font-size: 1.1rem;
+            text-decoration: none;
+            transition: all 0.2s;
+            box-shadow: 0 4px 14px 0 rgba(59, 130, 246, 0.39);
+        }
+
+        .cta-button:hover {
+            background-color: var(--accent-hover);
+            transform: translateY(-2px);
+        }
+
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 2rem;
+            padding: 4rem 2rem;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .feature-card {
+            background-color: var(--card-bg);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            border-radius: 1rem;
+            padding: 2rem;
+            transition: transform 0.2s;
+        }
+
+        .feature-card:hover {
+            transform: translateY(-5px);
+            border-color: rgba(255, 255, 255, 0.1);
+        }
+
+        .feature-card h3 {
+            font-size: 1.25rem;
+            margin-top: 0;
+            margin-bottom: 1rem;
+            color: var(--text-primary);
+        }
+
+        .feature-card p {
+            color: var(--text-secondary);
+            font-size: 0.95rem;
+            margin: 0;
+        }
+
+        .section-header {
+            text-align: center;
+            padding: 4rem 2rem 2rem;
+        }
+
+        blockquote {
+            background: rgba(255, 255, 255, 0.03);
+            border-left: 4px solid var(--accent);
+            margin: 1.5rem 0;
+            padding: 1rem 1.5rem;
+            font-style: italic;
+            color: var(--text-secondary);
+        }
+
+        .testimonials {
+            padding: 4rem 2rem;
+            background-color: rgba(255, 255, 255, 0.02);
+        }
+
+        footer {
+            text-align: center;
+            padding: 4rem 2rem;
+            color: var(--text-secondary);
+            border-top: 1px solid rgba(255, 255, 255, 0.05);
+        }
+    </style>
+</head>
+
+<body>
+
+    <header>
+        <div class="logo">Agency<span>OS</span></div>
+        <a href="#" class="cta-button" style="padding: 0.5rem 1.5rem; font-size: 0.9rem;">Get Access</a>
+    </header>
+
+    <section class="hero">
+        <h1>Unlock the Full Potential of Your Digital Agency</h1>
+        <h2 class="subtitle">Streamline Operations. Automate the Mundane. Scale Without Limits.</h2>
+        <p style="color: var(--text-secondary); max-width: 600px; margin: 0 auto 2rem;">
+            AgencyOS is the centralized nervous system for modern agencies.
+            Stop juggling spreadshets and tools. Start orchestrating intelligence.
+        </p>
+        <a href="#" class="cta-button">Start Free Trial</a>
+    </section>
+
+    <div class="section-header">
+        <h2 style="font-size: 2.5rem;">Why AgencyOS?</h2>
+    </div>
+
+    <section class="features-grid">
+        <div class="feature-card">
+            <h3>Save Valuable Time</h3>
+            <p>No more manual data entry or tedious scheduling. Automation takes care of repetitive tasks, so you can
+                focus on what you do best.</p>
+        </div>
+        <div class="feature-card">
+            <h3>Boost Efficiency</h3>
+            <p>Cut costs and increase productivity with a system designed to optimize your workflows from day one.</p>
+        </div>
+        <div class="feature-card">
+            <h3>Tailored Solutions</h3>
+            <p>AgencyOS adapts to your specific business model, whether you’re a full-service agency or a niche
+                consultant.</p>
+        </div>
+        <div class="feature-card">
+            <h3>Scale Without Limits</h3>
+            <p>Easily scale your operations to handle increased demand without compromising quality or efficiency.</p>
+        </div>
+        <div class="feature-card">
+            <h3>Actionable Insights</h3>
+            <p>Get real-time analytics and actionable insights to inform your marketing strategies based on data, not
+                intuition.</p>
+        </div>
+        <div class="feature-card">
+            <h3>Flexible Integration</h3>
+            <p>Seamlessly integrate with your preferred tools and platforms, ensuring a smooth workflow from start to
+                finish.</p>
+        </div>
+    </section>
+
+    <section class="testimonials">
+        <div class="section-header" style="padding-top: 0;">
+            <h2 style="font-size: 2.5rem;">Trusted by Leaders</h2>
+        </div>
+        <div class="features-grid">
+            <div class="feature-card">
+                <blockquote>“AgencyOS has revolutionized our workflow, allowing us to focus on what we do
+                    best—delivering exceptional results for our clients.”</blockquote>
+                <p>—John Doe, Marketing Director</p>
+            </div>
+            <div class="feature-card">
+                <blockquote>“The level of customization and integration options with AgencyOS has been a game-changer
+                    for my consultancy.”</blockquote>
+                <p>—Jane Smith, Freelance Consultant</p>
+            </div>
+            <div class="feature-card">
+                <blockquote>“We needed a solution that could grow with us, and AgencyOS has delivered.”</blockquote>
+                <p>—Mike Johnson, Business Owner</p>
+            </div>
+        </div>
+    </section>
+
+    <footer>
+        <p>&copy; 2026 AgencyOS. The Agentic Operating System.</p>
+    </footer>
+
+</body>
+
+</html>

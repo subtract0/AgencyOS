@@ -12,6 +12,10 @@ from cells.governor.budget import BudgetManager
 from cells.shared.model_profiles import MODELS
 import subprocess
 import requests # For Dashboard Communication
+from agency_memory.pattern_memory import get_pattern_memory, Pattern
+from cells.maintenance.supervisor import run_maintenance_cycle_tool
+from cells.shared.message_bus import MessageBus, async_message_bus
+from cells.action.speak_tool import speak
 
 DASHBOARD_URL = "http://127.0.0.1:8000/api/status"
 
@@ -211,6 +215,167 @@ def talk(message: str) -> str:
 def audit_codebase() -> str:
     return subprocess.run(["./skills/audit.sh"], capture_output=True, text=True).stdout
 
+@tool(
+    name="consult_memory",
+    description="Search core memory for similar patterns or solutions. Use this BEFORE starting a complex task.",
+    parameters=ToolParameter(
+        type="object",
+        properties={
+            "query": ToolPropertySchema(type="string", description="The problem or topic to search for"),
+            "tags": ToolPropertySchema(type="array", items={"type": "string"}, description="Optional tags to filter by")
+        },
+        required=["query"]
+    )
+)
+def consult_memory(query: str, tags: list[str] = []) -> str:
+    print(f"🧠 Consulting Memory: {query} (Tags: {tags})")
+    send_dashboard_update("hand", {"state": "Remembering", "log": f"Recalling: {query}"})
+    
+    try:
+        mem = get_pattern_memory()
+        
+        if not tags:
+            return "Please provide at least one relevant tag using the 'tags' argument (e.g. ['python', 'error', 'deploy'])"
+            
+        patterns = mem.query(tags, limit=5)
+        
+        if not patterns:
+            return "No relevant memories found."
+            
+        results = []
+        for p in patterns:
+            results.append(f"--- Pattern {p.id} (Confidence: {p.confidence:.2f}) ---\nTags: {p.tags}\nContent: {p.content}")
+            
+        return "\n\n".join(results)
+    except Exception as e:
+        return f"Error accessing memory: {e}"
+
+@tool(
+    name="save_pattern",
+    description="Save a useful solution, insight, or pattern to long-term memory.",
+    parameters=ToolParameter(
+        type="object",
+        properties={
+            "title": ToolPropertySchema(type="string", description="Short title for the pattern"),
+            "problem": ToolPropertySchema(type="string", description="The problem or context"),
+            "solution": ToolPropertySchema(type="string", description="The solution or insight"),
+            "tags": ToolPropertySchema(type="array", items={"type": "string"}, description="Tags for retrieval")
+        },
+        required=["title", "problem", "solution", "tags"]
+    )
+)
+def save_pattern(title: str, problem: str, solution: str, tags: list[str]) -> str:
+    print(f"💾 Saving Pattern: {title}")
+    try:
+        mem = get_pattern_memory()
+        
+        # Create meaningful ID
+        import uuid
+        pattern_id = f"pat_{uuid.uuid4().hex[:8]}"
+        
+        pattern = Pattern(
+            id=pattern_id,
+            content={
+                "title": title,
+                "problem": problem,
+                "solution": solution
+            },
+            tags=tags,
+            confidence=0.9 # High confidence for explicit saves
+        )
+        
+        mem.store(pattern)
+        return f"Pattern saved as {pattern_id}."
+    except Exception as e:
+        return f"Error saving pattern: {e}"
+
+@tool(
+    name="spawn_agent",
+    description="Spawn a new autonomous background agent (Class 17 Hive).",
+    parameters=ToolParameter(
+        type="object",
+        properties={
+            "name": ToolPropertySchema(type="string", description="Name of the agent (e.g. 'CryptoWatcher')"),
+            "instructions": ToolPropertySchema(type="string", description="System instructions/role"),
+            "tools": ToolPropertySchema(type="array", description="List of tool names to give the agent"),
+            "schedule": ToolPropertySchema(type="string", description="Optional: Schedule (cron or 'loop_60s'). Default is 60s loop.")
+        },
+        required=["name", "instructions"]
+    )
+)
+def spawn_agent(name: str, instructions: str, tools: list[str] = [], schedule: str = None) -> str:
+    from cells.manager.process_manager import get_process_manager
+    
+    print(f"🐝 Spawning Agent: {name}")
+    manager = get_process_manager()
+    
+    # Construct Manifest
+    manifest = {
+        "name": name,
+        "instructions": instructions,
+        "tools": tools,
+        "model": "gpt-4o", # Default for now
+        "loop_interval_seconds": 60 # Default
+    }
+    
+    try:
+        agent_id = manager.spawn_agent(manifest)
+        
+        # Publish Event to Bus
+        async def _notify():
+            async with async_message_bus() as bus:
+                await bus.publish("hive", {
+                    "event": "spawn",
+                    "agent_id": agent_id,
+                    "name": name
+                })
+        # We are in a sync function, so we need to run async code appropriately.
+        # ActionCell isn't fully async context yet, but tools are synchronous (mostly).
+        # We can use requests to bridge or just fire-and-forget via a helper?
+        # Or better: MessageBus is persistent SQLite. We can just open a connection and publish synchronously if we had a sync wrapper.
+        # But MessageBus is async.
+        # Hack for MVP: import asyncio and run.
+        import asyncio
+        try:
+             asyncio.run(_notify())
+        except Exception as e:
+             print(f"Bus Error: {e}")
+             
+        return f"Successfully spawned agent '{name}' (ID: {agent_id}). It is now running in the background."
+    except Exception as e:
+        return f"Failed to spawn agent: {e}"
+@tool(
+    name="link_patterns",
+    description="Create a semantic link between two memory patterns (e.g. 'Fix A' causes 'Bug B' or 'Concept X' relates to 'Concept Y').",
+    parameters=ToolParameter(
+        type="object",
+        properties={
+            "source_id": ToolPropertySchema(type="string", description="ID of the source pattern or concept"),
+            "target_id": ToolPropertySchema(type="string", description="ID of the target pattern or concept"),
+            "relation": ToolPropertySchema(type="string", description="Relationship type: 'fixes', 'relates_to', 'caused_by'")
+        },
+        required=["source_id", "target_id", "relation"]
+    )
+)
+def link_patterns(source_id: str, target_id: str, relation: str = "relates_to") -> str:
+    print(f"🔗 Linking: {source_id} --[{relation}]--> {target_id}")
+    try:
+        from agency_memory.knowledge_graph import EdgeType
+        mem = get_pattern_memory()
+        
+        # Validate relation
+        try:
+            edge_type = EdgeType(relation.lower())
+        except ValueError:
+            return f"Invalid relation '{relation}'. Valid types: {[t.value for t in EdgeType]}"
+        
+        mem.graph.add_edge(source_id, target_id, edge_type)
+        mem.graph.save()
+        
+        return f"Link created: {source_id} -> {relation} -> {target_id}"
+    except Exception as e:
+        return f"Error linking patterns: {e}"
+
 class ActionCell:
     """
     The 'Hand' of the organism.
@@ -257,10 +422,27 @@ class ActionCell:
                 take_screenshot,
                 verify_with_vision,
                 talk,
-                audit_codebase
+                talk,
+                audit_codebase,
+                consult_memory,
+                save_pattern,
+                link_patterns,
+                run_maintenance_cycle_tool,
+                spawn_agent,
+                speak
             ],
-            max_iterations=30  # Bumped to 30
+            max_iterations=30
         )
+        
+        # Integrate Tool Registry (Class 4 Upgrade)
+        from cells.action.tool_registry import ToolRegistry
+        self.registry = ToolRegistry()
+        discovered_tools = self.registry.scan_and_register()
+        
+        # Extend agent tools with discovered ones
+        config.tools.extend(discovered_tools)
+        
+        print(f"🧬 Action Cell: Evolved with {len(discovered_tools)} external tools.")
         
         self.agent = LeanAgent(config)
         self.memory_path = Path(".agency/cells/action_memory.json")
@@ -282,7 +464,6 @@ class ActionCell:
         # 2. Think & Act (The Loop)
         prompt = f"OBJECTIVE: {signal}\n\nExecute."
         
-        # Run the agent (loops internally)
         try:
             send_dashboard_update("hand", {"state": "Working", "log": "Engaging Agent Loop..."})
             result = self.agent.run(prompt)

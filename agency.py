@@ -29,7 +29,9 @@ from auditor_agent import create_auditor_agent
 from chief_architect_agent import create_chief_architect_agent
 
 # Agency imports - specialized agents
+from alchemist_agent import create_alchemist_agent
 from coding_agent.coding_agent import create_coding_agent
+from cells.governor.gatekeeper import create_gatekeeper_agent
 from learning_agent import create_learning_agent
 from merger_agent.merger_agent import create_merger_agent
 from planner_agent.planner_agent import create_planner_agent
@@ -236,9 +238,17 @@ quality_enforcer = create_quality_enforcer_agent(
 life_assistant = create_life_agent(
     model=agent_model("life_assistant"), agent_context=shared_context, cost_tracker=shared_cost_tracker
 )
+gatekeeper = create_gatekeeper_agent(
+    model=agent_model("gatekeeper"), reasoning_effort="low", agent_context=shared_context
+)
+alchemist = create_alchemist_agent(
+    model=agent_model("alchemist"), reasoning_effort="medium", agent_context=shared_context
+)
 
 agency = Agency(
     life_assistant,  # <--- Make LifeAssistant the primary agent for "Life OS" experience
+    gatekeeper,
+    alchemist,
     chief_architect,
     coder,
     planner,
@@ -325,6 +335,30 @@ def _cmd_run(args: argparse.Namespace) -> None:
     show_reasoning = False if model.startswith("anthropic") else True
     with _cli_event_scope("run", {"show_reasoning": show_reasoning}):
         agency.terminal_demo(show_reasoning=show_reasoning)
+
+
+def _build_single_agent(agent_key: str):
+    agent_key = agent_key.strip().lower()
+    if agent_key == "gatekeeper":
+        selected_model = agent_model("gatekeeper")
+        return create_gatekeeper_agent(
+            model=selected_model, reasoning_effort="low", agent_context=shared_context
+        )
+    if agent_key == "alchemist":
+        selected_model = agent_model("alchemist")
+        return create_alchemist_agent(
+            model=selected_model, reasoning_effort="medium", agent_context=shared_context
+        )
+    raise ValueError(f"Unknown agent: {agent_key}")
+
+
+def _cmd_agent(args: argparse.Namespace) -> None:
+    agent_key = args.name.strip().lower()
+    selected_model = agent_model(agent_key)
+    show_reasoning = False if str(selected_model).startswith("anthropic") else True
+    with _cli_event_scope("agent", {"agent": agent_key, "show_reasoning": show_reasoning}):
+        solo_agent = _build_single_agent(agent_key)
+        Agency(solo_agent, name=f"{agent_key}_solo").terminal_demo(show_reasoning=show_reasoning)
 
 
 def _cmd_dashboard(args: argparse.Namespace) -> None:
@@ -572,6 +606,9 @@ def _build_arg_parser() -> argparse.ArgumentParser:
     sub = p.add_subparsers(dest="command")
     sp = sub.add_parser("run", help="Start the Agency interactive demo")
     sp.set_defaults(func=_cmd_run)
+    sp = sub.add_parser("agent", help="Start a single agent interactive demo")
+    sp.add_argument("name", choices=["gatekeeper", "alchemist"], help="Agent name")
+    sp.set_defaults(func=_cmd_agent)
 
     # Feedback subcommand (User Feedback CLI for Quality Feedback Loop)
     from tools.agency_cli.feedback_command import (

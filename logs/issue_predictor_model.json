@@ -1,0 +1,212 @@
+{
+  "class_counts": {
+    "bare_except": 3,
+    "dict_any_any": 3,
+    "security_eval": 1,
+    "security_exec": 1,
+    "security_shell": 1,
+    "clean": 7,
+    "todo_comment": 2,
+    "debug_print": 2,
+    "long_function": 1
+  },
+  "total_samples": 21,
+  "feature_counts": {
+    "bare_except": {
+      "try": 3,
+      "except": 3,
+      "pass": 1,
+      "bare_except": 3,
+      "short_code": 3,
+      "return": 1
+    },
+    "dict_any_any": {
+      "type_dict": 3,
+      "type_any": 6,
+      "short_code": 3,
+      "def": 1
+    },
+    "security_eval": {
+      "uses_eval": 1,
+      "short_code": 1
+    },
+    "security_exec": {
+      "uses_exec": 1,
+      "short_code": 1
+    },
+    "security_shell": {
+      "shell_true": 1,
+      "short_code": 1
+    },
+    "clean": {
+      "def": 4,
+      "return": 3,
+      "short_code": 7,
+      "try": 1,
+      "except": 1,
+      "type_dict": 2,
+      "for": 1,
+      "in": 1,
+      "class": 1,
+      "private_func": 1,
+      "import": 1,
+      "async": 2,
+      "with": 1,
+      "await": 1
+    },
+    "todo_comment": {
+      "def": 1,
+      "pass": 1,
+      "short_code": 2
+    },
+    "debug_print": {
+      "has_print": 2,
+      "short_code": 2
+    },
+    "long_function": {
+      "long_code": 1
+    }
+  },
+  "feature_totals": {
+    "bare_except": 14,
+    "dict_any_any": 13,
+    "security_eval": 2,
+    "security_exec": 2,
+    "security_shell": 2,
+    "clean": 27,
+    "todo_comment": 4,
+    "debug_print": 4,
+    "long_function": 1
+  },
+  "vocabulary": [
+    "def",
+    "try",
+    "long_code",
+    "except",
+    "private_func",
+    "pass",
+    "has_print",
+    "short_code",
+    "uses_exec",
+    "async",
+    "uses_eval",
+    "for",
+    "bare_except",
+    "import",
+    "type_any",
+    "shell_true",
+    "type_dict",
+    "in",
+    "return",
+    "with",
+    "class",
+    "await"
+  ],
+  "training_history": [
+    {
+      "timestamp": "2025-12-31T10:53:28.578292",
+      "issue_type": "bare_except",
+      "tokens": 5
+    },
+    {
+      "timestamp": "2025-12-31T10:53:28.578309",
+      "issue_type": "bare_except",
+      "tokens": 4
+    },
+    {
+      "timestamp": "2025-12-31T10:53:28.578319",
+      "issue_type": "bare_except",
+      "tokens": 5
+    },
+    {
+      "timestamp": "2025-12-31T10:53:28.578327",
+      "issue_type": "dict_any_any",
+      "tokens": 4
+    },
+    {
+      "timestamp": "2025-12-31T10:53:28.578335",
+      "issue_type": "dict_any_any",
+      "tokens": 5
+    },
+    {
+      "timestamp": "2025-12-31T10:53:28.578341",
+      "issue_type": "dict_any_any",
+      "tokens": 4
+    },
+    {
+      "timestamp": "2025-12-31T10:53:28.578347",
+      "issue_type": "security_eval",
+      "tokens": 2
+    },
+    {
+      "timestamp": "2025-12-31T10:53:28.578353",
+      "issue_type": "security_exec",
+      "tokens": 2
+    },
+    {
+      "timestamp": "2025-12-31T10:53:28.578359",
+      "issue_type": "security_shell",
+      "tokens": 2
+    },
+    {
+      "timestamp": "2025-12-31T10:53:28.578368",
+      "issue_type": "clean",
+      "tokens": 3
+    },
+    {
+      "timestamp": "2025-12-31T10:53:28.578617",
+      "issue_type": "clean",
+      "tokens": 3
+    },
+    {
+      "timestamp": "2025-12-31T10:53:28.578624",
+      "issue_type": "clean",
+      "tokens": 2
+    },
+    {
+      "timestamp": "2025-12-31T10:53:28.578631",
+      "issue_type": "clean",
+      "tokens": 3
+    },
+    {
+      "timestamp": "2025-12-31T10:53:28.578641",
+      "issue_type": "clean",
+      "tokens": 4
+    },
+    {
+      "timestamp": "2025-12-31T10:53:28.578650",
+      "issue_type": "todo_comment",
+      "tokens": 3
+    },
+    {
+      "timestamp": "2025-12-31T10:53:28.578655",
+      "issue_type": "todo_comment",
+      "tokens": 1
+    },
+    {
+      "timestamp": "2025-12-31T10:53:28.578660",
+      "issue_type": "debug_print",
+      "tokens": 2
+    },
+    {
+      "timestamp": "2025-12-31T10:53:28.578665",
+      "issue_type": "debug_print",
+      "tokens": 2
+    },
+    {
+      "timestamp": "2025-12-31T10:53:28.578725",
+      "issue_type": "long_function",
+      "tokens": 1
+    },
+    {
+      "timestamp": "2025-12-31T10:53:28.578736",
+      "issue_type": "clean",
+      "tokens": 5
+    },
+    {
+      "timestamp": "2025-12-31T10:53:28.578949",
+      "issue_type": "clean",
+      "tokens": 7
+    }
+  ]
+}

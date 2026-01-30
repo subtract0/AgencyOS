@@ -19,6 +19,8 @@ from pipecat.frames.frames import EndFrame
 from tools.voice_v2.services.mlx_stt import MLXWhisperService
 from tools.voice_v2.services.agency_llm import AgencyLLMService
 from tools.voice_v2.services.kokoro_tts import KokoroTTSService
+from tools.voice_v2.services.qwen_tts import Qwen3TTSService
+from tools.voice_v2.services.qwen_tts import Qwen3TTSService
 from tools.voice_v2.vad_processor import VADProcessor
 
 from tools.voice_v2.services.thermal_watchdog import ThermalWatchdogService
@@ -59,13 +61,25 @@ async def main():
     
     # Kokoro paths
     # Assuming running from repo root
-    kokoro_model = "experiments/models/kokoro/kokoro-v0_19.onnx"
-    kokoro_voices = "experiments/models/kokoro/voices.bin"
-    tts = KokoroTTSService(
-        model_path=kokoro_model,
-        voices_path=kokoro_voices,
-        voice="af_sky"
-    )
+    # Qwen3-TTS (The Upgrade)
+    qwen_model_path = "experiments/models/qwen3_tts"
+    
+    # Toggle between Kokoro and Qwen3
+    USE_QWEN_TTS = True
+    
+    if USE_QWEN_TTS:
+        tts = Qwen3TTSService(
+            model_path=qwen_model_path,
+            reference_audio="experiments/voices/klara_reference.wav" 
+        )
+    else:
+        kokoro_model = "experiments/models/kokoro/kokoro-v0_19.onnx"
+        kokoro_voices = "experiments/models/kokoro/voices.bin"
+        tts = KokoroTTSService(
+            model_path=kokoro_model,
+            voices_path=kokoro_voices,
+            voice="af_sky"
+        )
     
     # 3. Pipeline
     # Input -> VAD -> STT -> Watchdog -> Scheduler -> LLM -> TTS -> Output

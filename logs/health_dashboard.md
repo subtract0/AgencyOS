@@ -1,12 +1,12 @@
 # AgencyOS Health Dashboard
-Generated: 2025-12-30 23:22:06
+Generated: 2025-12-31 00:36:53
 
 ## System Status
 
 | Metric | Value |
 |--------|-------|
 | Test Pass Rate | ✅ 100.0% |
-| Tests Passed | 419 |
+| Tests Passed | 507 |
 | Tests Failed | 0 |
 | Tests Skipped | 2 |
 | Collection Errors | 0 |
@@ -22,9 +22,9 @@ Generated: 2025-12-30 23:22:06
 
 | Severity | Count |
 |----------|-------|
-| 🔴 High | 65 |
-| 🟡 Medium | 5 |
-| 🔵 Low | 32 |
+| 🔴 High | 67 |
+| 🟡 Medium | 1 |
+| 🔵 Low | 34 |
 | **Total** | **102** |
 
 ### Top High-Severity Issues

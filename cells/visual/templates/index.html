@@ -97,6 +97,10 @@
             <div id="heart-pill" class="panel px-3 py-1.5 text-xs font-mono flex items-center text-muted">
                 <span class="pulse-dot bg-zinc-600"></span> HEART: IDLE
             </div>
+            <div id="voice-pill"
+                class="panel px-3 py-1.5 text-xs font-mono flex items-center text-purple-900/50 border-purple-900/30">
+                <span class="pulse-dot bg-purple-600"></span> VOICE: IDLE
+            </div>
         </div>
     </header>
 
@@ -158,6 +162,20 @@
                         <span class="text-zinc-500">Eye (Port 8084)</span>
                         <span class="text-emerald-500">Connected</span>
                     </div>
+                </div>
+            </div>
+
+            <!-- Hive Panel -->
+            <div class="panel p-4 flex-1 flex flex-col">
+                <div class="flex justify-between items-center mb-4">
+                    <h2 class="text-xs font-mono font-medium text-muted uppercase tracking-wider">The Hive</h2>
+                    <span id="hive-count" class="text-[10px] bg-zinc-800 text-zinc-400 px-2 py-0.5 rounded-full">0
+                        Active</span>
+                </div>
+
+                <div id="hive-feed" class="flex-1 overflow-y-auto space-y-2">
+                    <!-- Hive Agents Rendered Here -->
+                    <div class="text-[10px] text-zinc-600 font-mono text-center pt-4">No active background agents</div>
                 </div>
             </div>
 
@@ -255,89 +273,157 @@
             addLog("System_Raw", "Connected to Visual Cortex.");
         }
 
-        ws.onmessage = function (event) {
-            var msg = JSON.parse(event.data);
-            if (msg.type === "update") {
-                var state = msg.data;
+        if (msg.type === "bus_event") {
+            console.log("Bus Event:", msg);
+            if (msg.channel === "voice") {
+                var action = msg.data.action;
+                var text = msg.data.text;
 
-                // Clear logs for sync (MVP)
-                logContainer.innerHTML = "";
+                if (action === "speak") {
+                    updatePill(voicePill, "VOICE", "SPEAKING");
+                    addLog("System", "🗣️ " + text);
 
-                state.logs.forEach(function (log) {
-                    if (log.startsWith("🧠 User: ")) {
-                        addLog("User", log.replace("🧠 User: ", ""));
-                    } else if (log.startsWith("✋ ")) {
-                        var cleanLog = log.replace("✋ ", "");
-                        // Differentiate "Thinking" vs "Working" if possible, but for now:
-                        if (cleanLog.includes("Complete") || cleanLog.includes("Result")) {
-                            addLog("System", cleanLog);
-                        } else {
-                            addLog("System_Raw", cleanLog);
-                        }
-                    } else {
-                        addLog("System_Raw", log);
-                    }
-                });
+                    // Auto-reset after rough duration estimate (or wait for stop)
+                    // Assuming 150wpm -> 2.5 words/sec. 
+                    var duration = Math.max(2000, (text.split(" ").length / 2.5) * 1000);
 
-                updatePill(handPill, "HAND", state.hand_status);
-                updatePill(eyePill, "EYE", state.eye_status);
-
-                if (state.compassion_status) {
-                    updatePill(heartPill, "HEART", state.compassion_status);
-                }
-
-                if (state.compassion) {
-                    document.getElementById("avg-suffering").innerText = state.compassion.avg_suffering;
-                    document.getElementById("total-analyzed").innerText = state.compassion.total_analyzed;
-                    document.getElementById("compassion-last-updated").innerText = "UPDATED: " + state.compassion.last_updated;
-
-                    var feed = document.getElementById("distress-feed");
-                    feed.innerHTML = "";
-
-                    state.compassion.distress_signals.forEach(function (signal) {
-                        var item = document.createElement("div");
-                        item.className = "bg-pink-950/20 border border-pink-900/30 p-2 rounded flex justify-between items-center group hover:bg-pink-950/30 transition-colors";
-
-                        var left = document.createElement("div");
-                        left.className = "flex-1 mr-2";
-                        // Pain Type
-                        var pain = document.createElement("div");
-                        pain.className = "text-[10px] text-pink-400 font-mono uppercase tracking-wider mb-0.5";
-                        pain.textContent = signal.pain;
-                        left.appendChild(pain);
-                        // Title
-                        var title = document.createElement("div");
-                        title.className = "text-xs text-pink-100 line-clamp-1";
-                        title.textContent = signal.title;
-                        left.appendChild(title);
-
-                        var score = document.createElement("div");
-                        score.className = "text-sm font-bold text-pink-500 font-mono bg-pink-950/50 px-2 py-1 rounded";
-                        score.textContent = signal.score;
-
-                        item.appendChild(left);
-                        item.appendChild(score);
-                        feed.appendChild(item);
-                    });
-                }
-
-                if (state.last_screenshot && state.last_screenshot.startsWith("data:image")) {
-                    eyeFeed.src = state.last_screenshot;
-                    eyeFeed.style.display = "block";
-                    eyePlaceholder.style.display = "none";
+                    setTimeout(function () {
+                        updatePill(voicePill, "VOICE", "IDLE");
+                    }, duration);
                 }
             }
+        } else if (msg.type === "update") {
+            var state = msg.data;
+
+            // Clear logs for sync (MVP)
+            // logContainer.innerHTML = ""; // DISABLED CLEARING to keep history 
+            // Actually, dashboard.py sends ALL logs every update? 
+            // If so, we must clear. If it sends incremental, we append.
+            // Assuming it sends FULL state.logs based on previous code:
+            logContainer.innerHTML = "";
+
+            state.logs.forEach(function (log) {
+                if (log.startsWith("🧠 User: ")) {
+                    addLog("User", log.replace("🧠 User: ", ""));
+                } else if (log.startsWith("✋ ")) {
+                    var cleanLog = log.replace("✋ ", "");
+                    // Differentiate "Thinking" vs "Working" if possible, but for now:
+                    if (cleanLog.includes("Complete") || cleanLog.includes("Result")) {
+                        addLog("System", cleanLog);
+                    } else {
+                        addLog("System_Raw", cleanLog);
+                    }
+                } else {
+                    addLog("System_Raw", log);
+                }
+            });
+
+            updatePill(handPill, "HAND", state.hand_status);
+            updatePill(eyePill, "EYE", state.eye_status);
+
+            if (state.compassion_status) {
+                updatePill(heartPill, "HEART", state.compassion_status);
+            }
+
+            if (state.compassion) {
+                document.getElementById("avg-suffering").innerText = state.compassion.avg_suffering;
+                document.getElementById("total-analyzed").innerText = state.compassion.total_analyzed;
+                document.getElementById("compassion-last-updated").innerText = "UPDATED: " + state.compassion.last_updated;
+
+                var feed = document.getElementById("distress-feed");
+                feed.innerHTML = "";
+
+                state.compassion.distress_signals.forEach(function (signal) {
+                    var item = document.createElement("div");
+                    item.className = "bg-pink-950/20 border border-pink-900/30 p-2 rounded flex justify-between items-center group hover:bg-pink-950/30 transition-colors";
+
+                    var left = document.createElement("div");
+                    left.className = "flex-1 mr-2";
+                    // Pain Type
+                    var pain = document.createElement("div");
+                    pain.className = "text-[10px] text-pink-400 font-mono uppercase tracking-wider mb-0.5";
+                    pain.textContent = signal.pain;
+                    left.appendChild(pain);
+                    // Title
+                    var title = document.createElement("div");
+                    title.className = "text-xs text-pink-100 line-clamp-1";
+                    title.textContent = signal.title;
+                    left.appendChild(title);
+
+                    var score = document.createElement("div");
+                    score.className = "text-sm font-bold text-pink-500 font-mono bg-pink-950/50 px-2 py-1 rounded";
+                    score.textContent = signal.score;
+
+                    item.appendChild(left);
+                    item.appendChild(score);
+                    feed.appendChild(item);
+                });
+            }
+
+            if (state.last_screenshot && state.last_screenshot.startsWith("data:image")) {
+                eyeFeed.src = state.last_screenshot;
+                eyeFeed.style.display = "block";
+                eyePlaceholder.style.display = "none";
+            }
+
+            if (state.hive) {
+                document.getElementById("hive-count").innerText = state.hive.active_count + " Active";
+                var hiveFeed = document.getElementById("hive-feed");
+
+                if (state.hive.agents.length > 0) {
+                    hiveFeed.innerHTML = "";
+                    state.hive.agents.forEach(function (agent) {
+                        var div = document.createElement("div");
+                        div.className = "p-2 bg-zinc-900 border border-zinc-800 rounded flex justify-between items-center";
+
+                        var left = document.createElement("div");
+                        var name = document.createElement("div");
+                        name.className = "text-xs text-zinc-300 font-medium";
+                        name.innerText = agent.id;
+                        left.appendChild(name);
+
+                        var pid = document.createElement("div");
+                        pid.className = "text-[10px] text-zinc-600 font-mono";
+                        pid.innerText = "PID: " + agent.pid;
+                        left.appendChild(pid);
+
+                        var status = document.createElement("div");
+                        var isRunning = agent.status === "Running";
+                        status.className = "text-[10px] font-mono px-1.5 py-0.5 rounded " + (isRunning ? "text-emerald-400 bg-emerald-950/30" : "text-red-400 bg-red-950/30");
+                        status.innerText = agent.status.toUpperCase();
+
+                        div.appendChild(left);
+                        div.appendChild(status);
+                        hiveFeed.appendChild(div);
+                    });
+                }
+            }
+        }
         };
 
         var heartPill = document.getElementById("heart-pill");
+        var voicePill = document.getElementById("voice-pill");
 
         function updatePill(el, label, status) {
-            var isBusy = (status === "Thinking" || status === "Working" || status === "Observing" || status === "Active");
+            var isBusy = (status === "Thinking" || status === "Working" || status === "Observing" || status === "Active" || status === "SPEAKING");
             var isError = status === "Error" || status.includes("Error") || status === "No Data";
 
-            var colorClass = isBusy ? (label === "HEART" ? "text-pink-400" : "text-emerald-400") : (isError ? "text-red-400" : "text-zinc-400");
-            var dotClass = isBusy ? (label === "HEART" ? "bg-pink-400 animate-pulse" : "bg-emerald-400 animate-pulse") : (isError ? "bg-red-400" : "bg-zinc-600");
-            var borderClass = isError ? "border-red-900/50 bg-red-950/30" : (isBusy ? (label === "HEART" ? "border-pink-900/50 bg-pink-950/30" : "border-emerald-900/50 bg-emerald-950/30") : "border-zinc-800 bg-zinc-900");
+            // Custom colors for Voice
+            var isVoice = label === "VOICE";
+
+            var colorClass;
+            var dotClass;
+            var borderClass;
+
+            if (isVoice) {
+                colorClass = isBusy ? "text-purple-400" : "text-zinc-400";
+                dotClass = isBusy ? "bg-purple-400 animate-pulse" : "bg-zinc-600";
+                borderClass = isBusy ? "border-purple-900/50 bg-purple-950/30" : "border-zinc-800 bg-zinc-900";
+            } else {
+                colorClass = isBusy ? (label === "HEART" ? "text-pink-400" : "text-emerald-400") : (isError ? "text-red-400" : "text-zinc-400");
+                dotClass = isBusy ? (label === "HEART" ? "bg-pink-400 animate-pulse" : "bg-emerald-400 animate-pulse") : (isError ? "bg-red-400" : "bg-zinc-600");
+                borderClass = isError ? "border-red-900/50 bg-red-950/30" : (isBusy ? (label === "HEART" ? "border-pink-900/50 bg-pink-950/30" : "border-emerald-900/50 bg-emerald-950/30") : "border-zinc-800 bg-zinc-900");
+            }
 
             el.className = "panel px-3 py-1.5 text-xs font-mono flex items-center " + colorClass + " " + borderClass;
             el.innerHTML = '<span class="pulse-dot ' + dotClass + '"></span> ' + label + ': ' + status.toUpperCase();

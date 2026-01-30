@@ -21,7 +21,7 @@ import json
 import os
 import threading
 from collections.abc import Callable
-from typing import TYPE_CHECKING, Union
+from typing import TYPE_CHECKING, Union, Any
 
 from openai import OpenAI
 from pydantic import BaseModel, Field
@@ -103,7 +103,7 @@ class AgentConfig(BaseModel):
 
     name: str
     instructions: str
-    model: Union[str, LitellmModel] = "gpt-4o"  # Accept both str and LitellmModel (no quotes!)
+    model: Union[str, Any] = "gpt-4o"  # Accept both str and objects (LitellmModel, ModelProfile)
     temperature: float = 0.7
     max_tokens: int = 4000
     stop: list[str] | str | None = None
@@ -172,19 +172,29 @@ class LeanAgent:
         api_key = os.getenv("OPENAI_API_KEY")
         base_url = os.getenv("OPENAI_API_BASE")
         
+        # Check for ModelProfile (LitellmModel/ModelProfile duck typing)
+        if hasattr(config.model, 'api_base') and config.model.api_base:
+             base_url = config.model.api_base
+        if hasattr(config.model, 'api_key') and config.model.api_key and config.model.api_key != "not-needed":
+             api_key = config.model.api_key
+
         # Check for Ollama model
         model_name = config.model.model if hasattr(config.model, 'model') else config.model
         if isinstance(model_name, str) and model_name.startswith("ollama/"):
             base_url = "http://localhost:11434/v1"
             api_key = "ollama"  # Dummy key for Ollama
         
+        # Fallback for MLX if no key but base_url is set to localhost
+        if not api_key and base_url and "localhost" in base_url:
+            api_key = "mlx"
+
         if not api_key:
             raise ValueError(
                 "OPENAI_API_KEY not found in environment. "
                 "Set it with: export OPENAI_API_KEY='your-key-here'"
             )
 
-        self.client = OpenAI(api_key=api_key, base_url=base_url)
+        self.client = OpenAI(api_key=api_key, base_url=base_url, timeout=600.0)
 
         # Add system instructions as first message
         self.messages.append(Message(role="system", content=config.instructions))
@@ -312,8 +322,14 @@ class LeanAgent:
 
         # Check if this is an o1/o3/gpt-5 model (reasoning models have restrictions)
         # Handle both string models and LitellmModel objects - extract string for API call
-        model_str = self.config.model.model if hasattr(self.config.model, 'model') else self.config.model
-        is_reasoning_model = any(m in model_str.lower() for m in ["o1", "o3", "gpt-5"])
+        if hasattr(self.config.model, 'model'):
+            model_str = self.config.model.model
+        elif hasattr(self.config.model, 'name'):
+            model_str = self.config.model.name
+        else:
+             model_str = self.config.model
+             
+        is_reasoning_model = any(m in str(model_str).lower() for m in ["o1", "o3", "gpt-5"])
 
         # Call API with model-specific parameters
         # IMPORTANT: Use model_str (string) not self.config.model (may be LitellmModel object)
@@ -335,6 +351,7 @@ class LeanAgent:
             if tools:
                 call_kwargs["tools"] = tools
 
+        print(f"DEBUG: LeanAgent calling LLM. URL: {self.client.base_url} Model: {model_str}")
         response = self.client.chat.completions.create(**call_kwargs)
         
         message = response.choices[0].message
@@ -481,6 +498,21 @@ class LeanAgent:
             # Include exception type for debugging
             return Err(f"{type(e).__name__} in {tool_name}: {e}")
 
+    def register_tools(self, tools: list[Tool] | Tool):
+        """
+        Dynamically register tools to the agent.
+        
+        Args:
+            tools: Single Tool object or list of Tool objects
+        """
+        if isinstance(tools, Tool):
+            tools = [tools]
+            
+        for new_tool in tools:
+            # Check for duplicates by name
+            if not any(t.name == new_tool.name for t in self.config.tools):
+                self.config.tools.append(new_tool)
+                
     def clear_history(self):
         """Clear message history (keep system prompt)."""
         system_msg = self.messages[0]

@@ -49,6 +49,14 @@ MODELS = {
         name="mlx-community/Llama-3.3-70B-Instruct-4bit",
         api_base="http://127.0.0.1:8086/v1",
         max_tokens=4096
+    ),
+
+    # THE ARCHITECT (Deep Reasoning, Memory Consolidation)
+    # Model: Llama-3.3-70B-Instruct
+    "architect": ModelProfile(
+        name="mlx-community/Llama-3.3-70B-Instruct-4bit",
+        api_base="http://127.0.0.1:8083/v1",
+        max_tokens=16000 # Extended context for memory processing
     )
 }
 

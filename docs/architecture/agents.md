@@ -258,6 +258,34 @@ The Agency uses a **simplified, focused multi-agent architecture** with clear re
 - **Route-Aware**: Activated via "tts" or "audio summary" intents
 - **Outbound**: User (completion summaries)
 
+## ✨ Specialized Agents
+
+### Gatekeeper
+**Role**: Empathic door opener
+
+**Key Responsibilities**:
+- Validates user emotions without coaching or advice
+- Reflects pain and asks for consent to proceed
+- Offers a gentle handoff to Klara when appropriate
+
+**Communication Patterns**:
+- **Inbound**: User (emotional intake)
+- **Outbound**: Klara (handoff offer only)
+
+---
+
+### Alchemist
+**Role**: Pain-to-hook converter
+
+**Key Responsibilities**:
+- Extracts core pain points from raw Reddit text
+- Converts pain into high-performing marketing headlines
+- Outputs structured JSON for downstream systems
+
+**Communication Patterns**:
+- **Inbound**: User or data pipeline (raw text)
+- **Outbound**: Marketing workflows (JSON output)
+
 ## 🔄 Primary Workflows
 
 ### Development Workflow

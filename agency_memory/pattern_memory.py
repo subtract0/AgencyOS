@@ -17,6 +17,10 @@ logger = logging.getLogger(__name__)
 SCHEMA_VERSION = 1
 
 
+
+# Import AgencyGraph 
+from agency_memory.knowledge_graph import AgencyGraph
+
 @dataclass
 class Pattern:
     """A learned pattern with metadata for retrieval and scoring."""
@@ -45,28 +49,13 @@ class Pattern:
 
 class PatternMemory:
     """
-    Unified pattern memory with file persistence and in-memory index.
+    Unified pattern memory with file persistence, in-memory index, AND knowledge graph.
 
     Features:
     - Loads patterns from disk on startup
     - Fast tag-based queries via in-memory index
+    - Knowledge Graph integration for semantic linking
     - Automatic ADD/UPDATE logic on store
-    - Confidence and recency scoring
-    - Thread-safe with file locking
-
-    Usage:
-        memory = PatternMemory()
-
-        # Query patterns (Article IV: before action)
-        patterns = memory.query(["tdd", "testing"], min_confidence=0.6)
-
-        # Store pattern (Article IV: after success)
-        memory.store(Pattern(
-            id="new_pattern",
-            content={"description": "..."},
-            tags=["tdd"],
-            confidence=0.9
-        ))
     """
 
     def __init__(self, base_dir: Optional[str | Path] = None):
@@ -78,6 +67,9 @@ class PatternMemory:
         # In-memory storage
         self._patterns: Dict[str, Pattern] = {}
         self._tag_index: Dict[str, set[str]] = {}
+        
+        # Knowledge Graph
+        self.graph = AgencyGraph(self.base_dir)
 
         # Load on startup
         self._load_all()
@@ -88,13 +80,21 @@ class PatternMemory:
         failed = 0
 
         for file_path in self.base_dir.glob("*.json"):
-            if file_path.name.startswith("_"):  # Skip manifest, etc.
+            if file_path.name.startswith("_") or file_path.name == "knowledge_graph.json":  # Skip manifest, graph
                 continue
 
             try:
                 data = json.loads(file_path.read_text())
                 pattern = Pattern.from_dict(data)
                 self._add_to_index(pattern)
+                
+                # Check consistency: Ensure pattern is in graph
+                # If loading from old files, we might need to populate the graph
+                # But for now, assume graph persists itself.
+                # If graph is empty but we have files, we should backfill.
+                # Simplification: Always add to graph in memory (idempotent usually)
+                self.graph.add_pattern(pattern.id, pattern.tags)
+                
                 loaded += 1
             except Exception as e:
                 logger.warning(f"Failed to load pattern {file_path.name}: {e}")
@@ -122,23 +122,37 @@ class PatternMemory:
         limit: int = 20,
     ) -> List[Pattern]:
         """
-        Find patterns matching any of the given tags.
-
-        Args:
-            tags: Tags to search for (OR logic)
-            min_confidence: Minimum confidence threshold
-            limit: Maximum number of results
-
-        Returns:
-            Patterns sorted by confidence (highest first)
+        Find patterns matching tags AND their semantic neighbors in the graph.
         """
         if not tags:
             return []
 
-        # Find all patterns matching any tag
+        # 1. Direct Hit: Find patterns matching given tags
         matching_ids: set[str] = set()
         for tag in tags:
-            matching_ids.update(self._tag_index.get(tag.lower(), set()))
+            tag = tag.lower().strip()
+            # Direct tag lookup
+            matching_ids.update(self._tag_index.get(tag, set()))
+            
+            # 2. Semantic Expansion: Find patterns connected to this Concept via Graph
+            # The graph knows which patterns are tagged with 'tag' (NodeType.CONCEPT)
+            # This overlaps with _tag_index but is the "Graph Way"
+            related_via_concept = self.graph.search_by_concept(tag)
+            matching_ids.update(related_via_concept)
+
+        # 3. Graph Traversal: Find patterns related to the *found* patterns
+        # e.g. If Pattern A is found, and Pattern A -> CAUSES -> Pattern B, include B.
+        # Limit recursion to avoid explosion.
+        expansion_ids = set()
+        for pid in list(matching_ids):
+            related = self.graph.find_related(pid, max_hops=1)
+            # Filter for only Patterns (ignore Concepts for result list)
+            # Actually find_related returns IDs.
+            for rid in related:
+                if rid in self._patterns:
+                    expansion_ids.add(rid)
+        
+        matching_ids.update(expansion_ids)
 
         # Filter and sort
         patterns = [
@@ -146,6 +160,9 @@ class PatternMemory:
             for pid in matching_ids
             if pid in self._patterns and self._patterns[pid].confidence >= min_confidence
         ]
+        
+        # Sort by confidence + semantic relevance (todo)
+        # For now, pure confidence
         patterns.sort(key=lambda p: p.confidence, reverse=True)
 
         return patterns[:limit]
@@ -153,14 +170,6 @@ class PatternMemory:
     def store(self, pattern: Pattern) -> None:
         """
         Store pattern with ADD/UPDATE logic.
-
-        If pattern.id exists:
-        - Increment evidence_count
-        - Boost confidence slightly
-        - Update updated_at
-
-        If pattern.id is new:
-        - Create new pattern file
         """
         existing = self._patterns.get(pattern.id)
 
@@ -182,6 +191,10 @@ class PatternMemory:
 
         # Update index
         self._add_to_index(pattern)
+        
+        # Update Knowledge Graph
+        self.graph.add_pattern(pattern.id, pattern.tags)
+        self.graph.save() # Persist graph immediately
 
         logger.debug(f"Stored pattern: {pattern.id} (confidence={pattern.confidence:.2f})")
 
@@ -195,6 +208,9 @@ class PatternMemory:
         file_path = self.base_dir / f"{pattern_id}.json"
         if file_path.exists():
             file_path.unlink()
+            
+        # TODO: Remove from graph as well?
+        # For now, leaving nodes in graph is okay (orphaned knowledge history)
 
         return True
 
@@ -205,6 +221,35 @@ class PatternMemory:
     def count(self) -> int:
         """Return total number of patterns."""
         return len(self._patterns)
+
+    def get_all_patterns(self) -> List[Pattern]:
+        """Return all patterns in memory."""
+        return list(self._patterns.values())
+
+    def bulk_store(self, patterns: List[Pattern]) -> int:
+        """
+        Store multiple patterns efficiently.
+        Returns number of patterns stored.
+        """
+        count = 0
+        for p in patterns:
+            try:
+                self.store(p)
+                count += 1
+            except Exception as e:
+                logger.error(f"Failed to store pattern {p.id}: {e}")
+        return count
+
+    def bulk_delete(self, pattern_ids: List[str]) -> int:
+        """
+        Delete multiple patterns by ID.
+        Returns number of patterns deleted.
+        """
+        count = 0
+        for pid in pattern_ids:
+            if self.delete(pid):
+                count += 1
+        return count
 
     def stats(self) -> Dict[str, Any]:
         """Return memory statistics."""
@@ -224,6 +269,8 @@ class PatternMemory:
             "avg_confidence": sum(confidences) / len(confidences),
             "top_tags": top_tags,
             "storage_path": str(self.base_dir),
+            "graph_nodes": len(self.graph.graph.nodes),
+            "graph_edges": len(self.graph.graph.edges)
         }
 
 

@@ -23,6 +23,8 @@ class AgentCapability(str, Enum):
     SESSION_ANALYSIS = "session_analysis"
     E2E_ORCHESTRATION = "e2e_orchestration"
     WORK_SUMMARIZATION = "work_summarization"
+    EMPATHETIC_INTAKE = "empathic_intake"
+    MARKETING_COPY = "marketing_copy"
 
 
 class AgentMetadata(BaseModel):
@@ -161,5 +163,25 @@ AGENT_REGISTRY: dict[str, AgentMetadata] = {
         preferred_model="gpt-5-mini",
         avg_execution_time_minutes=8.0,
         success_rate=0.94,
+    ),
+    "gatekeeper": AgentMetadata(
+        name="gatekeeper",
+        role="Empathic door opener",
+        capabilities=[AgentCapability.EMPATHETIC_INTAKE],
+        parallel_safe=True,
+        dependencies=[],
+        preferred_model="gpt-5",
+        avg_execution_time_minutes=5.0,
+        success_rate=0.92,
+    ),
+    "alchemist": AgentMetadata(
+        name="alchemist",
+        role="Pain-to-hook marketing converter",
+        capabilities=[AgentCapability.MARKETING_COPY],
+        parallel_safe=True,
+        dependencies=[],
+        preferred_model="gpt-5",
+        avg_execution_time_minutes=10.0,
+        success_rate=0.92,
     ),
 }
