@@ -50,13 +50,14 @@ Do not optimize for agent busyness. DONE means validated by reproducible evidenc
 
 Read these in order:
 
-1. `LAUNCH_ONE_LINER.md`
+1. `LAUNCH_ONE_LINER.txt`
 2. `HERMES_GPT55_MASTER_PROMPT.md`
 3. `OPERATING_POLICY.md`
 4. `KANBAN_AND_WORKER_PROTOCOL.md`
 5. `MULTI_MACHINE_TOPOLOGY.md`
-6. `SEED_BACKLOG.jsonl`
-7. `RETURN_DASHBOARD_TEMPLATE.md`
+6. `SEED_BACKLOG.txt`
+7. `SAFE_MODE_BACKLOG.md`
+8. `DASHBOARD_TEMPLATE.txt`
 
 ## Governance model
 
@@ -66,3 +67,7 @@ Read these in order:
 - GPT-5.5 Hermes governs every 5 hours or on explicit operator request.
 - RED-SAFE freezes only unsafe subsystems and continues safe productive backlog.
 - BLACK halt is reserved for security, money, publication, deletion, external upload, credential, destructive, or unrecoverable corruption risks.
+
+## Repository scope
+
+This package is additive. It defines launch policy, worker protocol, topology, seed tasks, and return-report structure. It does not change production code.
