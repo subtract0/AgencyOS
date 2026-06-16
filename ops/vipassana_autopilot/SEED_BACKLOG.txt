@@ -1,0 +1,43 @@
+Seed Backlog
+
+AUTO-001 Create append-only Kanban task schema.
+Track: reliability scaffold.
+Role: implementation.
+Priority: 1.
+Expected artifacts: ops/fleet/task_schema.yaml and schema tests.
+Done when required fields are defined and invalid examples are rejected.
+
+AUTO-002 Create state validator for Kanban and claims.
+Track: reliability scaffold.
+Role: implementation.
+Priority: 1.
+Expected artifacts: ops/fleet/state_validator.py, state validator tests, and a short report.
+Done when malformed records, duplicate claims, stale claims, and invalid status transitions are detected.
+
+AUTO-003 Draft Completion Bench v0 taxonomy.
+Track: completion bench.
+Role: architecture.
+Priority: 1.
+Expected artifact: ops/completion_bench/COMPLETION_BENCH_V0.md.
+Done when at least six categories exist and each category has input template, output expectation, rubric, and validator checklist.
+
+AUTO-004 Create return dashboard template.
+Track: reporting.
+Role: synthesis.
+Priority: 2.
+Expected artifact: ops/reports/vipassana_autopilot_final/01_EXECUTIVE_SUMMARY.md.
+Done when the template includes run window, final verdict, validated artifacts, model performance, killed workstreams, review queue, and next plan.
+
+AUTO-005 Create gap matrix row schema.
+Track: evals.
+Role: implementation.
+Priority: 2.
+Expected artifacts: ops/evals/gap_matrix_schema.yaml and schema tests.
+Done when schema includes benchmark, problem_id, model, domain, pass, failure_type, and artifact_path.
+
+AUTO-006 Create safe fallback backlog.
+Track: reliability scaffold.
+Role: synthesis.
+Priority: 2.
+Expected artifact: ops/fleet/SAFE_FALLBACK_BACKLOG.md.
+Done when it contains report, rubric, failure analysis, trace packet, reproduction, and repair-plan tasks.
