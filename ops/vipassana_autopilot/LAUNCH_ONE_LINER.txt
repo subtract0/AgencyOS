@@ -1,0 +1,3 @@
+Launch note
+
+Ask the supervising Hermes agent to read the master prompt in this folder, follow the safety policy, keep state append-only, require reproducible validation for every completed item, use safe fallback work during degraded modes, and prepare the final evidence package under ops/reports/vipassana_autopilot_final/.
