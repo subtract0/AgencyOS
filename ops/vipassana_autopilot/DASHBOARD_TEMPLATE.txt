@@ -1,0 +1,12 @@
+Autopilot dashboard template.
+
+Sections:
+- run window
+- final verdict
+- validated artifacts
+- fleet performance
+- completion bench status
+- gap matrix findings
+- human review queue
+- next thirty day plan
+- evidence index
