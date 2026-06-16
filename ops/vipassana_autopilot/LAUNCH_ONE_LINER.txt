@@ -1,3 +1,1 @@
-Launch note
-
-Ask the supervising Hermes agent to read the master prompt in this folder, follow the safety policy, keep state append-only, require reproducible validation for every completed item, use safe fallback work during degraded modes, and prepare the final evidence package under ops/reports/vipassana_autopilot_final/.
+Read `ops/vipassana_autopilot/HERMES_GPT55_MASTER_PROMPT.md` and run AgencyOS Autopilot under its safety policy: govern the continuous Kanban worker pool, keep state append-only, require reproducible validation for every DONE item, freeze only unsafe subsystems, keep safe fallback work moving during degraded modes, and prepare the final evidence package under `ops/reports/vipassana_autopilot_final/`.
